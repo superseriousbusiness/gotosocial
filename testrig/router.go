@@ -20,10 +20,8 @@ package testrig
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -54,25 +52,7 @@ func NewTestRouter(db db.DB) router.Router {
 }
 
 // ConfigureTemplatesWithGin will panic on any errors related to template loading during tests
-func ConfigureTemplatesWithGin(engine *gin.Engine) {
+func ConfigureTemplatesWithGin(engine *gin.Engine, templatePath string) {
 	router.LoadTemplateFunctions(engine)
-
-	templateBaseDir := config.GetWebTemplateBaseDir()
-
-	if !filepath.IsAbs(templateBaseDir) {
-		// https://stackoverflow.com/questions/31873396/is-it-possible-to-get-the-current-root-of-package-structure-as-a-string-in-golan
-		_, runtimeCallerLocation, _, _ := runtime.Caller(0)
-		projectRoot, err := filepath.Abs(filepath.Join(filepath.Dir(runtimeCallerLocation), "../"))
-		if err != nil {
-			panic(err)
-		}
-
-		templateBaseDir = filepath.Join(projectRoot, templateBaseDir)
-	}
-
-	if _, err := os.Stat(filepath.Join(templateBaseDir, "index.tmpl")); err != nil {
-		panic(fmt.Errorf("%s doesn't seem to contain the templates; index.tmpl is missing: %w", templateBaseDir, err))
-	}
-
-	engine.LoadHTMLGlob(filepath.Join(templateBaseDir, "*"))
+	engine.LoadHTMLGlob(filepath.Join(templatePath, "*"))
 }

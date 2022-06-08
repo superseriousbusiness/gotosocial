@@ -3,9 +3,9 @@ package instance
 import (
 	"net/http"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,22 +30,19 @@ import (
 //     description: "Instance information."
 //     schema:
 //       "$ref": "#/definitions/instance"
+//   '406':
+//      description: not acceptable
 //   '500':
 //      description: internal error
 func (m *Module) InstanceInformationGETHandler(c *gin.Context) {
-	l := logrus.WithField("func", "InstanceInformationGETHandler")
-
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	host := config.GetHost()
-
-	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
-	if err != nil {
-		l.Debugf("error getting instance from processor: %s", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+	instance, errWithCode := m.processor.InstanceGet(c.Request.Context(), config.GetHost())
+	if errWithCode != nil {
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

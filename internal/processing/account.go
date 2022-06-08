@@ -26,7 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (p *processor) AccountCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.AccountCreateRequest) (*apimodel.Token, error) {
+func (p *processor) AccountCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.AccountCreateRequest) (*apimodel.Token, gtserror.WithCode) {
 	return p.accountProcessor.Create(ctx, authed.Token, authed.Application, form)
 }
 
@@ -42,7 +42,7 @@ func (p *processor) AccountGetLocalByUsername(ctx context.Context, authed *oauth
 	return p.accountProcessor.GetLocalByUsername(ctx, authed.Account, username)
 }
 
-func (p *processor) AccountUpdate(ctx context.Context, authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, error) {
+func (p *processor) AccountUpdate(ctx context.Context, authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, gtserror.WithCode) {
 	return p.accountProcessor.Update(ctx, authed.Account, form)
 }
 

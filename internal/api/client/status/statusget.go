@@ -19,11 +19,12 @@
 package status
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -54,45 +55,40 @@ import (
 //     description: "The requested created status."
 //     schema:
 //       "$ref": "#/definitions/status"
-//   '401':
-//      description: unauthorized
 //   '400':
 //      description: bad request
+//   '401':
+//      description: unauthorized
+//   '403':
+//      description: forbidden
 //   '404':
 //      description: not found
+//   '406':
+//      description: not acceptable
 //   '500':
-//      description: internal error
+//      description: internal server error
 func (m *Module) StatusGETHandler(c *gin.Context) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":        "statusGETHandler",
-		"request_uri": c.Request.RequestURI,
-		"user_agent":  c.Request.UserAgent(),
-		"origin_ip":   c.ClientIP(),
-	})
-	l.Debugf("entering function")
-
-	authed, err := oauth.Authed(c, false, false, false, false)
+	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		l.Errorf("error authing status faved by request: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "not authed"})
+		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	targetStatusID := c.Param(IDKey)
 	if targetStatusID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no status id provided"})
+		err := errors.New("no status id specified")
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	apiStatus, err := m.processor.StatusGet(c.Request.Context(), authed, targetStatusID)
-	if err != nil {
-		l.Debugf("error processing status get: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})
+	apiStatus, errWithCode := m.processor.StatusGet(c.Request.Context(), authed, targetStatusID)
+	if errWithCode != nil {
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

@@ -232,7 +232,7 @@ func (suite *MediaUpdateTestSuite) TestUpdateImageShortDescription() {
 	suite.NoError(err)
 
 	// reply should be an error message
-	suite.Equal(`{"error":"image description length must be between 50 and 500 characters (inclusive), but provided image description was 16 chars"}`, string(b))
+	suite.Equal(`{"error":"Bad Request: image description length must be between 50 and 500 characters (inclusive), but provided image description was 16 chars"}`, string(b))
 }
 
 func TestMediaUpdateTestSuite(t *testing.T) {

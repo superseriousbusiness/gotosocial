@@ -30,6 +30,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -94,7 +95,7 @@ func dereferenceByAPIV1Instance(ctx context.Context, t *transport, iri *url.URL)
 		return nil, err
 	}
 
-	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Accept", string(api.AppJSON))
 	req.Header.Add("User-Agent", t.controller.userAgent)
 	req.Header.Set("Host", cleanIRI.Host)
 
@@ -245,7 +246,7 @@ func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*ur
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Accept", string(api.AppJSON))
 	req.Header.Add("User-Agent", t.controller.userAgent)
 	req.Header.Set("Host", cleanIRI.Host)
 
@@ -297,7 +298,7 @@ func callNodeInfo(ctx context.Context, t *transport, iri *url.URL) (*apimodel.No
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Accept", string(api.AppJSON))
 	req.Header.Add("User-Agent", t.controller.userAgent)
 	req.Header.Set("Host", iri.Host)
 

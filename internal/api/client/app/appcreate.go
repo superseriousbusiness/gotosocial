@@ -22,18 +22,16 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
+// these consts are used to ensure users can't spam huge entries into our database
 const (
-	// permitted length for most fields
-	formFieldLen = 64
-	// redirect can be a bit bigger because we probably need to encode data in the redirect uri
+	formFieldLen    = 64
 	formRedirectLen = 512
 )
 
@@ -64,56 +62,63 @@ const (
 //     description: "The newly-created application."
 //     schema:
 //       "$ref": "#/definitions/application"
-//   '401':
-//      description: unauthorized
 //   '400':
 //      description: bad request
-//   '422':
-//      description: unprocessable
+//   '401':
+//      description: unauthorized
+//   '403':
+//      description: forbidden
+//   '404':
+//      description: not found
+//   '406':
+//      description: not acceptable
 //   '500':
-//      description: internal error
+//      description: internal server error
 func (m *Module) AppsPOSTHandler(c *gin.Context) {
-	l := logrus.WithField("func", "AppsPOSTHandler")
-	l.Trace("entering AppsPOSTHandler")
-
 	authed, err := oauth.Authed(c, false, false, false, false)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	form := &model.ApplicationCreateRequest{}
 	if err := c.ShouldBind(form); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	// check lengths of fields before proceeding so the user can't spam huge entries into the database
 	if len(form.ClientName) > formFieldLen {
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("client_name must be less than %d bytes", formFieldLen)})
-		return
-	}
-	if len(form.Website) > formFieldLen {
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("website must be less than %d bytes", formFieldLen)})
-		return
-	}
-	if len(form.RedirectURIs) > formRedirectLen {
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("redirect_uris must be less than %d bytes", formRedirectLen)})
-		return
-	}
-	if len(form.Scopes) > formFieldLen {
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("scopes must be less than %d bytes", formFieldLen)})
+		err := fmt.Errorf("client_name must be less than %d bytes", formFieldLen)
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	apiApp, err := m.processor.AppCreate(c.Request.Context(), authed, form)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if len(form.RedirectURIs) > formRedirectLen {
+		err := fmt.Errorf("redirect_uris must be less than %d bytes", formRedirectLen)
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		return
+	}
+
+	if len(form.Scopes) > formFieldLen {
+		err := fmt.Errorf("scopes must be less than %d bytes", formFieldLen)
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		return
+	}
+
+	if len(form.Website) > formFieldLen {
+		err := fmt.Errorf("website must be less than %d bytes", formFieldLen)
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		return
+	}
+
+	apiApp, errWithCode := m.processor.AppCreate(c.Request.Context(), authed, form)
+	if errWithCode != nil {
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

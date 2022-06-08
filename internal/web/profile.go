@@ -21,59 +21,60 @@ package web
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (m *Module) profileTemplateHandler(c *gin.Context) {
-	l := logrus.WithField("func", "profileTemplateHandler")
-	l.Trace("rendering profile template")
+func (m *Module) profileGETHandler(c *gin.Context) {
 	ctx := c.Request.Context()
-
-	username := c.Param(usernameKey)
-	if username == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no account username specified"})
-		return
-	}
 
 	authed, err := oauth.Authed(c, false, false, false, false)
 	if err != nil {
-		l.Errorf("error authing profile GET request: %s", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	instance, errWithCode := m.processor.InstanceGet(ctx, config.GetHost())
-	if errWithCode != nil {
-		l.Debugf("error getting instance from processor: %s", errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+	// usernames on our instance will always be lowercase
+	username := strings.ToLower(c.Param(usernameKey))
+	if username == "" {
+		err := errors.New("no account username specified")
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
+	}
+
+	host := config.GetHost()
+	instance, err := m.processor.InstanceGet(ctx, host)
+	if err != nil {
+		api.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+		return
+	}
+
+	instanceGet := func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode) {
+		return instance, nil
 	}
 
 	account, errWithCode := m.processor.AccountGetLocalByUsername(ctx, authed, username)
 	if errWithCode != nil {
-		l.Debugf("error getting account from processor: %s", errWithCode.Error())
-		if errWithCode.Code() == http.StatusNotFound {
-			m.NotFoundHandler(c)
-			return
-		}
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		api.ErrorHandler(c, errWithCode, instanceGet)
 		return
 	}
 
-	// if we're getting an AP request on this endpoint we should render the account's AP representation instead
+	// if we're getting an AP request on this endpoint we
+	// should render the account's AP representation instead
 	accept := c.NegotiateFormat(string(api.TextHTML), string(api.AppActivityJSON), string(api.AppActivityLDJSON))
 	if accept == string(api.AppActivityJSON) || accept == string(api.AppActivityLDJSON) {
-		m.returnAPRepresentation(ctx, c, username, accept)
+		m.returnAPProfile(ctx, c, username, accept)
 		return
 	}
 
@@ -82,8 +83,7 @@ func (m *Module) profileTemplateHandler(c *gin.Context) {
 	// with or without media
 	statusResp, errWithCode := m.processor.AccountStatusesGet(ctx, authed, account.ID, 10, true, true, "", "", false, false, true)
 	if errWithCode != nil {
-		l.Debugf("error getting statuses from processor: %s", errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		api.ErrorHandler(c, errWithCode, instanceGet)
 		return
 	}
 
@@ -114,7 +114,7 @@ func (m *Module) profileTemplateHandler(c *gin.Context) {
 	})
 }
 
-func (m *Module) returnAPRepresentation(ctx context.Context, c *gin.Context, username string, accept string) {
+func (m *Module) returnAPProfile(ctx context.Context, c *gin.Context, username string, accept string) {
 	verifier, signed := c.Get(string(ap.ContextRequestingPublicKeyVerifier))
 	if signed {
 		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeyVerifier, verifier)
@@ -125,17 +125,16 @@ func (m *Module) returnAPRepresentation(ctx context.Context, c *gin.Context, use
 		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeySignature, signature)
 	}
 
-	user, errWithCode := m.processor.GetFediUser(ctx, username, c.Request.URL) // GetFediUser handles auth as well
+	user, errWithCode := m.processor.GetFediUser(ctx, username, c.Request.URL)
 	if errWithCode != nil {
-		logrus.Infof(errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 
 	b, mErr := json.Marshal(user)
 	if mErr != nil {
 		err := fmt.Errorf("could not marshal json: %s", mErr)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
 		return
 	}
 

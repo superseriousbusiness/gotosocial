@@ -692,7 +692,7 @@ definitions:
       text_url:
         description: |-
           A shorter URL for the attachment.
-          Not currently used.
+          In our case, we just give the URL again since we don't create smaller URLs.
         type: string
         x-go-name: TextURL
       type:
@@ -1894,8 +1894,10 @@ paths:
           description: unauthorized
         "404":
           description: not found
+        "406":
+          description: not acceptable
         "500":
-          description: internal error
+          description: internal server error
       security:
       - OAuth2 Application:
         - write:accounts
@@ -1924,6 +1926,10 @@ paths:
           description: unauthorized
         "404":
           description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - read:accounts
@@ -1952,6 +1958,10 @@ paths:
           description: unauthorized
         "404":
           description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - write:blocks
@@ -1999,6 +2009,10 @@ paths:
           description: unauthorized
         "404":
           description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - write:follows
@@ -2029,6 +2043,10 @@ paths:
           description: unauthorized
         "404":
           description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - read:accounts
@@ -2059,6 +2077,10 @@ paths:
           description: unauthorized
         "404":
           description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - read:accounts
@@ -2134,6 +2156,10 @@ paths:
           description: unauthorized
         "404":
           description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - read:accounts
@@ -2162,6 +2188,10 @@ paths:
           description: unauthorized
         "404":
           description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - write:blocks
@@ -2190,6 +2220,10 @@ paths:
           description: unauthorized
         "404":
           description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - write:follows
@@ -2215,6 +2249,12 @@ paths:
           description: bad request
         "401":
           description: unauthorized
+        "404":
+          description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - write:accounts
@@ -2247,6 +2287,10 @@ paths:
           description: unauthorized
         "404":
           description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - read:accounts
@@ -2313,6 +2357,12 @@ paths:
           description: bad request
         "401":
           description: unauthorized
+        "404":
+          description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - write:accounts
@@ -2335,6 +2385,10 @@ paths:
           description: unauthorized
         "404":
           description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - read:accounts
@@ -2372,6 +2426,12 @@ paths:
           description: unauthorized
         "403":
           description: forbidden
+        "404":
+          description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - admin
@@ -2406,10 +2466,18 @@ paths:
             $ref: '#/definitions/emoji'
         "400":
           description: bad request
+        "401":
+          description: unauthorized
         "403":
           description: forbidden
+        "404":
+          description: not found
+        "406":
+          description: not acceptable
         "409":
           description: conflict -- domain/shortcode combo for emoji already exists
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - admin
@@ -2439,10 +2507,16 @@ paths:
             type: array
         "400":
           description: bad request
+        "401":
+          description: unauthorized
         "403":
           description: forbidden
         "404":
           description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - admin
@@ -2511,8 +2585,16 @@ paths:
             $ref: '#/definitions/domainBlock'
         "400":
           description: bad request
+        "401":
+          description: unauthorized
         "403":
           description: forbidden
+        "404":
+          description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - admin
@@ -2537,10 +2619,16 @@ paths:
             $ref: '#/definitions/domainBlock'
         "400":
           description: bad request
+        "401":
+          description: unauthorized
         "403":
           description: forbidden
         "404":
           description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - admin
@@ -2564,10 +2652,16 @@ paths:
             $ref: '#/definitions/domainBlock'
         "400":
           description: bad request
+        "401":
+          description: unauthorized
         "403":
           description: forbidden
         "404":
           description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - admin
@@ -2599,8 +2693,16 @@ paths:
             asynchronously after the request completes.
         "400":
           description: bad request
+        "401":
+          description: unauthorized
         "403":
           description: forbidden
+        "404":
+          description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - admin
@@ -2660,10 +2762,14 @@ paths:
           description: bad request
         "401":
           description: unauthorized
-        "422":
-          description: unprocessable
+        "403":
+          description: forbidden
+        "404":
+          description: not found
+        "406":
+          description: not acceptable
         "500":
-          description: internal error
+          description: internal server error
       summary: Register a new application on this instance.
       tags:
       - apps
@@ -2714,6 +2820,10 @@ paths:
           description: unauthorized
         "404":
           description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - read:blocks
@@ -2753,10 +2863,12 @@ paths:
           description: bad request
         "401":
           description: unauthorized
-        "403":
-          description: forbidden
         "404":
           description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - read:follows
@@ -2785,10 +2897,10 @@ paths:
           description: bad request
         "401":
           description: unauthorized
-        "403":
-          description: forbidden
         "404":
           description: not found
+        "406":
+          description: not acceptable
         "500":
           description: internal server error
       security:
@@ -2817,10 +2929,10 @@ paths:
           description: bad request
         "401":
           description: unauthorized
-        "403":
-          description: forbidden
         "404":
           description: not found
+        "406":
+          description: not acceptable
         "500":
           description: internal server error
       security:
@@ -2843,6 +2955,8 @@ paths:
           description: Instance information.
           schema:
             $ref: '#/definitions/instance'
+        "406":
+          description: not acceptable
         "500":
           description: internal error
       summary: View instance information.
@@ -2909,6 +3023,14 @@ paths:
           description: bad request
         "401":
           description: unauthorized
+        "403":
+          description: forbidden
+        "404":
+          description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - admin
@@ -2952,10 +3074,10 @@ paths:
           description: bad request
         "401":
           description: unauthorized
-        "403":
-          description: forbidden
         "422":
           description: unprocessable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - write:media
@@ -2982,10 +3104,12 @@ paths:
           description: bad request
         "401":
           description: unauthorized
-        "403":
-          description: forbidden
-        "422":
-          description: unprocessable
+        "404":
+          description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - read:media
@@ -3036,10 +3160,12 @@ paths:
           description: bad request
         "401":
           description: unauthorized
-        "403":
-          description: forbidden
-        "422":
-          description: unprocessable
+        "404":
+          description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - write:media
@@ -3141,6 +3267,12 @@ paths:
           description: bad request
         "401":
           description: unauthorized
+        "404":
+          description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - read:search
@@ -3226,10 +3358,14 @@ paths:
           description: bad request
         "401":
           description: unauthorized
+        "403":
+          description: forbidden
         "404":
           description: not found
+        "406":
+          description: not acceptable
         "500":
-          description: internal error
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - write:statuses
@@ -3263,6 +3399,10 @@ paths:
           description: forbidden
         "404":
           description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - write:statuses
@@ -3288,10 +3428,14 @@ paths:
           description: bad request
         "401":
           description: unauthorized
+        "403":
+          description: forbidden
         "404":
           description: not found
+        "406":
+          description: not acceptable
         "500":
-          description: internal error
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - read:statuses
@@ -3324,6 +3468,10 @@ paths:
           description: forbidden
         "404":
           description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - read:statuses
@@ -3354,6 +3502,10 @@ paths:
           description: forbidden
         "404":
           description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - write:statuses
@@ -3386,6 +3538,10 @@ paths:
           description: forbidden
         "404":
           description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - read:accounts
@@ -3419,6 +3575,10 @@ paths:
           description: forbidden
         "404":
           description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - write:statuses
@@ -3481,6 +3641,10 @@ paths:
           description: forbidden
         "404":
           description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - write:statuses
@@ -3511,6 +3675,10 @@ paths:
           description: forbidden
         "404":
           description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       security:
       - OAuth2 Bearer:
         - write:statuses
@@ -3778,6 +3946,8 @@ paths:
           description: unauthorized
         "403":
           description: forbidden
+        "406":
+          description: not acceptable
         "500":
           description: internal error
       security:

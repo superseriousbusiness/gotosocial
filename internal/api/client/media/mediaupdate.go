@@ -23,12 +23,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -89,50 +88,45 @@ import (
 //      description: bad request
 //   '401':
 //      description: unauthorized
-//   '403':
-//      description: forbidden
-//   '422':
-//      description: unprocessable
+//   '404':
+//      description: not found
+//   '406':
+//      description: not acceptable
+//   '500':
+//      description: internal server error
 func (m *Module) MediaPUTHandler(c *gin.Context) {
-	l := logrus.WithField("func", "MediaGETHandler")
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		l.Debugf("couldn't auth: %s", err)
-		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	attachmentID := c.Param(IDKey)
 	if attachmentID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no attachment ID given in request"})
+		err := errors.New("no attachment id specified")
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	// extract the media update form from the request context
-	l.Tracef("parsing request form: %s", c.Request.Form)
-	var form model.AttachmentUpdateRequest
-	if err := c.ShouldBind(&form); err != nil {
-		l.Debugf("could not parse form from request: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "missing one or more required form values"})
+	form := &model.AttachmentUpdateRequest{}
+	if err := c.ShouldBind(form); err != nil {
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	// Give the fields on the request form a first pass to make sure the request is superficially valid.
-	l.Tracef("validating form %+v", form)
-	if err := validateUpdateMedia(&form); err != nil {
-		l.Debugf("error validating form: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := validateUpdateMedia(form); err != nil {
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	attachment, errWithCode := m.processor.MediaUpdate(c.Request.Context(), authed, attachmentID, &form)
+	attachment, errWithCode := m.processor.MediaUpdate(c.Request.Context(), authed, attachmentID, form)
 	if errWithCode != nil {
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

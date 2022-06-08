@@ -19,65 +19,88 @@
 package web
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (m *Module) threadTemplateHandler(c *gin.Context) {
-	l := logrus.WithField("func", "threadTemplateGET")
-	l.Trace("rendering thread template")
-
+func (m *Module) threadGETHandler(c *gin.Context) {
 	ctx := c.Request.Context()
+
+	authed, err := oauth.Authed(c, false, false, false, false)
+	if err != nil {
+		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
+		return
+	}
 
 	// usernames on our instance will always be lowercase
 	username := strings.ToLower(c.Param(usernameKey))
 	if username == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no account username specified"})
+		err := errors.New("no account username specified")
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	// status ids will always be uppercase
 	statusID := strings.ToUpper(c.Param(statusIDKey))
 	if statusID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no status id specified"})
-		return
-	}
-
-	authed, err := oauth.Authed(c, false, false, false, false)
-	if err != nil {
-		l.Errorf("error authing status GET request: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "status not found"})
+		err := errors.New("no status id specified")
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	host := config.GetHost()
 	instance, err := m.processor.InstanceGet(ctx, host)
 	if err != nil {
-		l.Debugf("error getting instance from processor: %s", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		api.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
 		return
 	}
 
-	status, err := m.processor.StatusGet(ctx, authed, statusID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "status not found"})
+	instanceGet := func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode) {
+		return instance, nil
+	}
+
+	// do this check to make sure the status is actually from a local account,
+	// we shouldn't render threads from statuses that don't belong to us!
+	if _, errWithCode := m.processor.AccountGetLocalByUsername(ctx, authed, username); errWithCode != nil {
+		api.ErrorHandler(c, errWithCode, instanceGet)
+		return
+	}
+
+	status, errWithCode := m.processor.StatusGet(ctx, authed, statusID)
+	if errWithCode != nil {
+		api.ErrorHandler(c, errWithCode, instanceGet)
 		return
 	}
 
 	if !strings.EqualFold(username, status.Account.Username) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "status not found"})
+		err := gtserror.NewErrorNotFound(errors.New("path username not equal to status author username"))
+		api.ErrorHandler(c, gtserror.NewErrorNotFound(err), instanceGet)
 		return
 	}
 
-	context, err := m.processor.StatusGetContext(ctx, authed, statusID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "status not found"})
+	// if we're getting an AP request on this endpoint we
+	// should render the status's AP representation instead
+	accept := c.NegotiateFormat(string(api.TextHTML), string(api.AppActivityJSON), string(api.AppActivityLDJSON))
+	if accept == string(api.AppActivityJSON) || accept == string(api.AppActivityLDJSON) {
+		m.returnAPStatus(ctx, c, username, statusID, accept)
+		return
+	}
+
+	context, errWithCode := m.processor.StatusGetContext(ctx, authed, statusID)
+	if errWithCode != nil {
+		api.ErrorHandler(c, errWithCode, instanceGet)
 		return
 	}
 
@@ -87,4 +110,31 @@ func (m *Module) threadTemplateHandler(c *gin.Context) {
 		"context":     context,
 		"stylesheets": []string{"/assets/Fork-Awesome/css/fork-awesome.min.css", "/assets/status.css"},
 	})
+}
+
+func (m *Module) returnAPStatus(ctx context.Context, c *gin.Context, username string, statusID string, accept string) {
+	verifier, signed := c.Get(string(ap.ContextRequestingPublicKeyVerifier))
+	if signed {
+		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeyVerifier, verifier)
+	}
+
+	signature, signed := c.Get(string(ap.ContextRequestingPublicKeySignature))
+	if signed {
+		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeySignature, signature)
+	}
+
+	status, errWithCode := m.processor.GetFediStatus(ctx, username, statusID, c.Request.URL)
+	if errWithCode != nil {
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		return
+	}
+
+	b, mErr := json.Marshal(status)
+	if mErr != nil {
+		err := fmt.Errorf("could not marshal json: %s", mErr)
+		api.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+		return
+	}
+
+	c.Data(http.StatusOK, accept, b)
 }

@@ -23,12 +23,13 @@ import (
 
 	"github.com/google/uuid"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (p *processor) AppCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, error) {
+func (p *processor) AppCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, gtserror.WithCode) {
 	// set default 'read' for scopes if it's not set
 	var scopes string
 	if form.Scopes == "" {
@@ -40,13 +41,13 @@ func (p *processor) AppCreate(ctx context.Context, authed *oauth.Auth, form *api
 	// generate new IDs for this application and its associated client
 	clientID, err := id.NewRandomULID()
 	if err != nil {
-		return nil, err
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 	clientSecret := uuid.NewString()
 
 	appID, err := id.NewRandomULID()
 	if err != nil {
-		return nil, err
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// generate the application to put in the database
@@ -62,7 +63,7 @@ func (p *processor) AppCreate(ctx context.Context, authed *oauth.Auth, form *api
 
 	// chuck it in the db
 	if err := p.db.Put(ctx, app); err != nil {
-		return nil, err
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// now we need to model an oauth client from the application that the oauth library can use
@@ -70,17 +71,18 @@ func (p *processor) AppCreate(ctx context.Context, authed *oauth.Auth, form *api
 		ID:     clientID,
 		Secret: clientSecret,
 		Domain: form.RedirectURIs,
-		UserID: "", // This client isn't yet associated with a specific user,  it's just an app client right now
+		// This client isn't yet associated with a specific user,  it's just an app client right now
+		UserID: "",
 	}
 
 	// chuck it in the db
 	if err := p.db.Put(ctx, oc); err != nil {
-		return nil, err
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	apiApp, err := p.tc.AppToAPIAppSensitive(ctx, app)
 	if err != nil {
-		return nil, err
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	return apiApp, nil

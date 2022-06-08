@@ -42,7 +42,7 @@ func (p *processor) GetFollowers(ctx context.Context, requestedUsername string, 
 
 	requestingAccount, err := p.federator.GetRemoteAccount(ctx, requestedUsername, requestingAccountURI, false, false)
 	if err != nil {
-		return nil, gtserror.NewErrorNotAuthorized(err)
+		return nil, gtserror.NewErrorUnauthorized(err)
 	}
 
 	blocked, err := p.db.IsBlocked(ctx, requestedAccount.ID, requestingAccount.ID, true)
@@ -51,7 +51,7 @@ func (p *processor) GetFollowers(ctx context.Context, requestedUsername string, 
 	}
 
 	if blocked {
-		return nil, gtserror.NewErrorNotAuthorized(fmt.Errorf("block exists between accounts %s and %s", requestedAccount.ID, requestingAccount.ID))
+		return nil, gtserror.NewErrorUnauthorized(fmt.Errorf("block exists between accounts %s and %s", requestedAccount.ID, requestingAccount.ID))
 	}
 
 	requestedAccountURI, err := url.Parse(requestedAccount.URI)

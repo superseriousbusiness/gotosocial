@@ -49,7 +49,7 @@ func (suite *PasswordChangeTestSuite) TestPasswordChangePOST() {
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", user.PasswordChangePath), nil)
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", user.PasswordChangePath), nil)
 	ctx.Request.Header.Set("accept", "application/json")
 	ctx.Request.Form = url.Values{
 		"old_password": {"password"},
@@ -83,7 +83,7 @@ func (suite *PasswordChangeTestSuite) TestPasswordMissingOldPassword() {
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", user.PasswordChangePath), nil)
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", user.PasswordChangePath), nil)
 	ctx.Request.Header.Set("accept", "application/json")
 	ctx.Request.Form = url.Values{
 		"new_password": {"peepeepoopoopassword"},
@@ -97,7 +97,7 @@ func (suite *PasswordChangeTestSuite) TestPasswordMissingOldPassword() {
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
-	suite.Equal(`{"error":"missing one or more required form values"}`, string(b))
+	suite.Equal(`{"error":"Bad Request: password change request missing field old_password"}`, string(b))
 }
 
 func (suite *PasswordChangeTestSuite) TestPasswordIncorrectOldPassword() {
@@ -110,7 +110,7 @@ func (suite *PasswordChangeTestSuite) TestPasswordIncorrectOldPassword() {
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", user.PasswordChangePath), nil)
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", user.PasswordChangePath), nil)
 	ctx.Request.Header.Set("accept", "application/json")
 	ctx.Request.Form = url.Values{
 		"old_password": {"notright"},
@@ -125,7 +125,7 @@ func (suite *PasswordChangeTestSuite) TestPasswordIncorrectOldPassword() {
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
-	suite.Equal(`{"error":"bad request: old password did not match"}`, string(b))
+	suite.Equal(`{"error":"Bad Request: old password did not match"}`, string(b))
 }
 
 func (suite *PasswordChangeTestSuite) TestPasswordWeakNewPassword() {
@@ -138,7 +138,7 @@ func (suite *PasswordChangeTestSuite) TestPasswordWeakNewPassword() {
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", user.PasswordChangePath), nil)
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", user.PasswordChangePath), nil)
 	ctx.Request.Header.Set("accept", "application/json")
 	ctx.Request.Form = url.Values{
 		"old_password": {"password"},
@@ -153,7 +153,7 @@ func (suite *PasswordChangeTestSuite) TestPasswordWeakNewPassword() {
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
-	suite.Equal(`{"error":"bad request: password is 94% strength, try including more special characters, using uppercase letters, using numbers or using a longer password"}`, string(b))
+	suite.Equal(`{"error":"Bad Request: password is 94% strength, try including more special characters, using uppercase letters, using numbers or using a longer password"}`, string(b))
 }
 
 func TestPasswordChangeTestSuite(t *testing.T) {

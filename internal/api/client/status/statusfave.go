@@ -19,11 +19,12 @@
 package status
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -62,37 +63,32 @@ import (
 //      description: forbidden
 //   '404':
 //      description: not found
+//   '406':
+//      description: not acceptable
+//   '500':
+//      description: internal server error
 func (m *Module) StatusFavePOSTHandler(c *gin.Context) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":        "StatusFavePOSTHandler",
-		"request_uri": c.Request.RequestURI,
-		"user_agent":  c.Request.UserAgent(),
-		"origin_ip":   c.ClientIP(),
-	})
-	l.Debugf("entering function")
-
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		l.Debug("not authed so can't fave status")
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "not authorized"})
+		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	targetStatusID := c.Param(IDKey)
 	if targetStatusID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no status id provided"})
+		err := errors.New("no status id specified")
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	apiStatus, err := m.processor.StatusFave(c.Request.Context(), authed, targetStatusID)
-	if err != nil {
-		l.Debugf("error processing status fave: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})
+	apiStatus, errWithCode := m.processor.StatusFave(c.Request.Context(), authed, targetStatusID)
+	if errWithCode != nil {
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

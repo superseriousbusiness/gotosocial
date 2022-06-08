@@ -7,9 +7,9 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -86,33 +86,33 @@ import (
 //       Note that if a list has been imported, then an `array` of newly created domain blocks will be returned instead.
 //     schema:
 //       "$ref": "#/definitions/domainBlock"
-//   '403':
-//      description: forbidden
 //   '400':
 //      description: bad request
+//   '401':
+//      description: unauthorized
+//   '403':
+//      description: forbidden
+//   '404':
+//      description: not found
+//   '406':
+//      description: not acceptable
+//   '500':
+//      description: internal server error
 func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":        "DomainBlocksPOSTHandler",
-		"request_uri": c.Request.RequestURI,
-		"user_agent":  c.Request.UserAgent(),
-		"origin_ip":   c.ClientIP(),
-	})
-
-	// make sure we're authed with an admin account
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		l.Debugf("couldn't auth: %s", err)
-		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
+
 	if !authed.User.Admin {
-		l.Debugf("user %s not an admin", authed.User.ID)
-		c.JSON(http.StatusForbidden, gin.H{"error": "not an admin"})
+		err := fmt.Errorf("user %s not an admin", authed.User.ID)
+		api.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
@@ -121,49 +121,43 @@ func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
 	if importString != "" {
 		i, err := strconv.ParseBool(importString)
 		if err != nil {
-			l.Debugf("error parsing import string: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "couldn't parse import query param"})
+			err := fmt.Errorf("error parsing %s: %s", ImportQueryKey, err)
+			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
 		imp = i
 	}
 
-	// extract the media create form from the request context
-	l.Tracef("parsing request form: %+v", c.Request.Form)
 	form := &model.DomainBlockCreateRequest{}
 	if err := c.ShouldBind(form); err != nil {
-		l.Debugf("error parsing form %+v: %s", c.Request.Form, err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("could not parse form: %s", err)})
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	// Give the fields on the request form a first pass to make sure the request is superficially valid.
-	l.Tracef("validating form %+v", form)
 	if err := validateCreateDomainBlock(form, imp); err != nil {
-		l.Debugf("error validating form: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		err := fmt.Errorf("error validating form: %s", err)
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if imp {
 		// we're importing multiple blocks
-		domainBlocks, err := m.processor.AdminDomainBlocksImport(c.Request.Context(), authed, form)
-		if err != nil {
-			l.Debugf("error importing domain blocks: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		domainBlocks, errWithCode := m.processor.AdminDomainBlocksImport(c.Request.Context(), authed, form)
+		if errWithCode != nil {
+			api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 			return
 		}
 		c.JSON(http.StatusOK, domainBlocks)
-	} else {
-		// we're just creating one block
-		domainBlock, err := m.processor.AdminDomainBlockCreate(c.Request.Context(), authed, form)
-		if err != nil {
-			l.Debugf("error creating domain block: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, domainBlock)
+		return
 	}
+
+	// we're just creating one block
+	domainBlock, errWithCode := m.processor.AdminDomainBlockCreate(c.Request.Context(), authed, form)
+	if errWithCode != nil {
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		return
+	}
+	c.JSON(http.StatusOK, domainBlock)
 }
 
 func validateCreateDomainBlock(form *model.DomainBlockCreateRequest, imp bool) error {

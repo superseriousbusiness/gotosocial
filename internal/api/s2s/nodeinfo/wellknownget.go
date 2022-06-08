@@ -22,8 +22,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // NodeInfoWellKnownGETHandler swagger:operation GET /.well-known/nodeinfo nodeInfoWellKnownGet
@@ -45,19 +45,14 @@ import (
 //     schema:
 //       "$ref": "#/definitions/wellKnownResponse"
 func (m *Module) NodeInfoWellKnownGETHandler(c *gin.Context) {
-	l := logrus.WithFields(logrus.Fields{
-		"func": "NodeInfoWellKnownGETHandler",
-	})
-
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	niRel, err := m.processor.GetNodeInfoRel(c.Request.Context(), c.Request)
-	if err != nil {
-		l.Debugf("error with get node info rel request: %s", err)
-		c.JSON(err.Code(), err.Safe())
+	niRel, errWithCode := m.processor.GetNodeInfoRel(c.Request.Context(), c.Request)
+	if errWithCode != nil {
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

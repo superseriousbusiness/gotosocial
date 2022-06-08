@@ -34,7 +34,7 @@ import (
 // Processor wraps a bunch of functions for processing media actions.
 type Processor interface {
 	// Create creates a new media attachment belonging to the given account, using the request form.
-	Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error)
+	Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.AttachmentRequest) (*apimodel.Attachment, gtserror.WithCode)
 	// Delete deletes the media attachment with the given ID, including all files pertaining to that attachment.
 	Delete(ctx context.Context, mediaAttachmentID string) gtserror.WithCode
 	// GetFile retrieves a file from storage and streams it back to the caller via an io.reader embedded in *apimodel.Content.

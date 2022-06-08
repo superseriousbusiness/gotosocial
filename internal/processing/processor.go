@@ -72,7 +72,7 @@ type Processor interface {
 	*/
 
 	// AccountCreate processes the given form for creating a new account, returning an oauth token for that account if successful.
-	AccountCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.AccountCreateRequest) (*apimodel.Token, error)
+	AccountCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.AccountCreateRequest) (*apimodel.Token, gtserror.WithCode)
 	// AccountDeleteLocal processes the delete of a LOCAL account using the given form.
 	AccountDeleteLocal(ctx context.Context, authed *oauth.Auth, form *apimodel.AccountDeleteRequest) gtserror.WithCode
 	// AccountGet processes the given request for account information.
@@ -80,7 +80,7 @@ type Processor interface {
 	// AccountGet processes the given request for account information.
 	AccountGetLocalByUsername(ctx context.Context, authed *oauth.Auth, username string) (*apimodel.Account, gtserror.WithCode)
 	// AccountUpdate processes the update of an account with the given form
-	AccountUpdate(ctx context.Context, authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, error)
+	AccountUpdate(ctx context.Context, authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, gtserror.WithCode)
 	// AccountStatusesGet fetches a number of statuses (in time descending order) from the given account, filtered by visibility for
 	// the account given in authed.
 	AccountStatusesGet(ctx context.Context, authed *oauth.Auth, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinned bool, mediaOnly bool, publicOnly bool) (*apimodel.TimelineResponse, gtserror.WithCode)
@@ -117,7 +117,7 @@ type Processor interface {
 	AdminMediaPrune(ctx context.Context, mediaRemoteCacheDays int) gtserror.WithCode
 
 	// AppCreate processes the creation of a new API application
-	AppCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, error)
+	AppCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, gtserror.WithCode)
 
 	// BlocksGet returns a list of accounts blocked by the requesting account.
 	BlocksGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, limit int) (*apimodel.BlocksResponse, gtserror.WithCode)
@@ -143,7 +143,7 @@ type Processor interface {
 	InstancePatch(ctx context.Context, form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.Instance, gtserror.WithCode)
 
 	// MediaCreate handles the creation of a media attachment, using the given form.
-	MediaCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error)
+	MediaCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.AttachmentRequest) (*apimodel.Attachment, gtserror.WithCode)
 	// MediaGet handles the GET of a media attachment with the given ID
 	MediaGet(ctx context.Context, authed *oauth.Auth, attachmentID string) (*apimodel.Attachment, gtserror.WithCode)
 	// MediaUpdate handles the PUT of a media attachment with the given ID and form
@@ -156,11 +156,11 @@ type Processor interface {
 	SearchGet(ctx context.Context, authed *oauth.Auth, searchQuery *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode)
 
 	// StatusCreate processes the given form to create a new status, returning the api model representation of that status if it's OK.
-	StatusCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, error)
+	StatusCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, gtserror.WithCode)
 	// StatusDelete processes the delete of a given status, returning the deleted status if the delete goes through.
-	StatusDelete(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
+	StatusDelete(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
 	// StatusFave processes the faving of a given status, returning the updated status if the fave goes through.
-	StatusFave(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
+	StatusFave(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
 	// StatusBoost processes the boost/reblog of a given status, returning the newly-created boost if all is well.
 	StatusBoost(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
 	// StatusUnboost processes the unboost/unreblog of a given status, returning the status if all is well.
@@ -168,11 +168,11 @@ type Processor interface {
 	// StatusBoostedBy returns a slice of accounts that have boosted the given status, filtered according to privacy settings.
 	StatusBoostedBy(ctx context.Context, authed *oauth.Auth, targetStatusID string) ([]*apimodel.Account, gtserror.WithCode)
 	// StatusFavedBy returns a slice of accounts that have liked the given status, filtered according to privacy settings.
-	StatusFavedBy(ctx context.Context, authed *oauth.Auth, targetStatusID string) ([]*apimodel.Account, error)
+	StatusFavedBy(ctx context.Context, authed *oauth.Auth, targetStatusID string) ([]*apimodel.Account, gtserror.WithCode)
 	// StatusGet gets the given status, taking account of privacy settings and blocks etc.
-	StatusGet(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
+	StatusGet(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
 	// StatusUnfave processes the unfaving of a given status, returning the updated status if the fave goes through.
-	StatusUnfave(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
+	StatusUnfave(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
 	// StatusGetContext returns the context (previous and following posts) from the given status ID
 	StatusGetContext(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Context, gtserror.WithCode)
 
@@ -184,7 +184,7 @@ type Processor interface {
 	FavedTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.TimelineResponse, gtserror.WithCode)
 
 	// AuthorizeStreamingRequest returns a gotosocial account in exchange for an access token, or an error if the given token is not valid.
-	AuthorizeStreamingRequest(ctx context.Context, accessToken string) (*gtsmodel.Account, error)
+	AuthorizeStreamingRequest(ctx context.Context, accessToken string) (*gtsmodel.Account, gtserror.WithCode)
 	// OpenStreamForAccount opens a new stream for the given account, with the given stream type.
 	OpenStreamForAccount(ctx context.Context, account *gtsmodel.Account, streamType string) (*stream.Stream, gtserror.WithCode)
 

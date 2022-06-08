@@ -23,9 +23,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
-
-	"github.com/sirupsen/logrus"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -33,18 +30,22 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
+
+// helpfulAdvice is a handy hint to users;
+// particularly important during the login flow
+var helpfulAdvice = "If you arrived at this error during a login/oauth flow, please try clearing your session cookies and logging in again; if problems persist, make sure you're using the correct credentials"
 
 // AuthorizeGETHandler should be served as GET at https://example.org/oauth/authorize
 // The idea here is to present an oauth authorize page to the user, with a button
 // that they have to click to accept.
 func (m *Module) AuthorizeGETHandler(c *gin.Context) {
-	l := logrus.WithField("func", "AuthorizeGETHandler")
 	s := sessions.Default(c)
 
 	if _, err := api.NegotiateAccept(c, api.HTMLAcceptHeaders...); err != nil {
-		c.HTML(http.StatusNotAcceptable, "error.tmpl", gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
@@ -52,56 +53,75 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	// If it's not set, then we don't know yet who the user is, so we need to redirect them to the sign in page.
 	userID, ok := s.Get(sessionUserID).(string)
 	if !ok || userID == "" {
-		l.Trace("userid was empty, parsing form then redirecting to sign in page")
 		form := &model.OAuthAuthorize{}
-		if err := c.Bind(form); err != nil {
-			l.Debugf("invalid auth form: %s", err)
+		if err := c.ShouldBind(form); err != nil {
 			m.clearSession(s)
-			c.HTML(http.StatusBadRequest, "error.tmpl", gin.H{"error": err.Error()})
+			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, helpfulAdvice), m.processor.InstanceGet)
 			return
 		}
-		l.Debugf("parsed auth form: %+v", form)
 
-		if err := extractAuthForm(s, form); err != nil {
-			l.Debugf(fmt.Sprintf("error parsing form at /oauth/authorize: %s", err))
+		if errWithCode := saveAuthFormToSession(s, form); errWithCode != nil {
 			m.clearSession(s)
-			c.HTML(http.StatusBadRequest, "error.tmpl", gin.H{"error": err.Error()})
+			api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 			return
 		}
+
 		c.Redirect(http.StatusSeeOther, AuthSignInPath)
 		return
 	}
 
-	// We can use the client_id on the session to retrieve info about the app associated with the client_id
+	// use session information to validate app, user, and account for this request
 	clientID, ok := s.Get(sessionClientID).(string)
 	if !ok || clientID == "" {
-		c.HTML(http.StatusInternalServerError, "error.tmpl", gin.H{"error": "no client_id found in session"})
-		return
-	}
-	app := &gtsmodel.Application{}
-	if err := m.db.GetWhere(c.Request.Context(), []db.Where{{Key: sessionClientID, Value: clientID}}, app); err != nil {
 		m.clearSession(s)
-		c.HTML(http.StatusInternalServerError, "error.tmpl", gin.H{
-			"error": fmt.Sprintf("no application found for client id %s", clientID),
-		})
+		err := fmt.Errorf("key %s was not found in session", sessionClientID)
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, helpfulAdvice), m.processor.InstanceGet)
 		return
 	}
 
-	// redirect the user if they have not confirmed their email yet, thier account has not been approved yet,
-	// or thier account has been disabled.
+	app := &gtsmodel.Application{}
+	if err := m.db.GetWhere(c.Request.Context(), []db.Where{{Key: sessionClientID, Value: clientID}}, app); err != nil {
+		m.clearSession(s)
+		safe := fmt.Sprintf("application for %s %s could not be retrieved", sessionClientID, clientID)
+		var errWithCode gtserror.WithCode
+		if err == db.ErrNoEntries {
+			errWithCode = gtserror.NewErrorBadRequest(err, safe, helpfulAdvice)
+		} else {
+			errWithCode = gtserror.NewErrorInternalError(err, safe, helpfulAdvice)
+		}
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		return
+	}
+
 	user := &gtsmodel.User{}
 	if err := m.db.GetByID(c.Request.Context(), userID, user); err != nil {
 		m.clearSession(s)
-		c.HTML(http.StatusInternalServerError, "error.tmpl", gin.H{"error": err.Error()})
+		safe := fmt.Sprintf("user with id %s could not be retrieved", userID)
+		var errWithCode gtserror.WithCode
+		if err == db.ErrNoEntries {
+			errWithCode = gtserror.NewErrorBadRequest(err, safe, helpfulAdvice)
+		} else {
+			errWithCode = gtserror.NewErrorInternalError(err, safe, helpfulAdvice)
+		}
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
+
 	acct, err := m.db.GetAccountByID(c.Request.Context(), user.AccountID)
 	if err != nil {
 		m.clearSession(s)
-		c.HTML(http.StatusInternalServerError, "error.tmpl", gin.H{"error": err.Error()})
+		safe := fmt.Sprintf("account with id %s could not be retrieved", user.AccountID)
+		var errWithCode gtserror.WithCode
+		if err == db.ErrNoEntries {
+			errWithCode = gtserror.NewErrorBadRequest(err, safe, helpfulAdvice)
+		} else {
+			errWithCode = gtserror.NewErrorInternalError(err, safe, helpfulAdvice)
+		}
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
-	if !ensureUserIsAuthorizedOrRedirect(c, user, acct) {
+
+	if ensureUserIsAuthorizedOrRedirect(c, user, acct) {
 		return
 	}
 
@@ -109,25 +129,27 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	redirect, ok := s.Get(sessionRedirectURI).(string)
 	if !ok || redirect == "" {
 		m.clearSession(s)
-		c.HTML(http.StatusInternalServerError, "error.tmpl", gin.H{"error": "no redirect_uri found in session"})
+		err := fmt.Errorf("key %s was not found in session", sessionRedirectURI)
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, helpfulAdvice), m.processor.InstanceGet)
 		return
 	}
+
 	scope, ok := s.Get(sessionScope).(string)
 	if !ok || scope == "" {
 		m.clearSession(s)
-		c.HTML(http.StatusInternalServerError, "error.tmpl", gin.H{"error": "no scope found in session"})
+		err := fmt.Errorf("key %s was not found in session", sessionScope)
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, helpfulAdvice), m.processor.InstanceGet)
 		return
 	}
 
 	// the authorize template will display a form to the user where they can get some information
 	// about the app that's trying to authorize, and the scope of the request.
 	// They can then approve it if it looks OK to them, which will POST to the AuthorizePOSTHandler
-	l.Trace("serving authorize html")
 	c.HTML(http.StatusOK, "authorize.tmpl", gin.H{
 		"appname":    app.Name,
 		"appwebsite": app.Website,
 		"redirect":   redirect,
-		sessionScope: scope,
+		"scope":      scope,
 		"user":       acct.Username,
 	})
 }
@@ -136,13 +158,10 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 // At this point we assume that the user has A) logged in and B) accepted that the app should act for them,
 // so we should proceed with the authentication flow and generate an oauth token for them if we can.
 func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
-	l := logrus.WithField("func", "AuthorizePOSTHandler")
 	s := sessions.Default(c)
 
 	// We need to retrieve the original form submitted to the authorizeGEThandler, and
 	// recreate it on the request so that it can be used further by the oauth2 library.
-	// So first fetch all the values from the session.
-
 	errs := []string{}
 
 	forceLogin, ok := s.Get(sessionForceLogin).(string)
@@ -152,77 +171,107 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 
 	responseType, ok := s.Get(sessionResponseType).(string)
 	if !ok || responseType == "" {
-		errs = append(errs, "session missing response_type")
+		errs = append(errs, fmt.Sprintf("key %s was not found in session", sessionResponseType))
 	}
 
 	clientID, ok := s.Get(sessionClientID).(string)
 	if !ok || clientID == "" {
-		errs = append(errs, "session missing client_id")
+		errs = append(errs, fmt.Sprintf("key %s was not found in session", sessionClientID))
 	}
 
 	redirectURI, ok := s.Get(sessionRedirectURI).(string)
 	if !ok || redirectURI == "" {
-		errs = append(errs, "session missing redirect_uri")
+		errs = append(errs, fmt.Sprintf("key %s was not found in session", sessionRedirectURI))
 	}
 
 	scope, ok := s.Get(sessionScope).(string)
 	if !ok {
-		errs = append(errs, "session missing scope")
+		errs = append(errs, fmt.Sprintf("key %s was not found in session", sessionScope))
 	}
 
 	userID, ok := s.Get(sessionUserID).(string)
 	if !ok {
-		errs = append(errs, "session missing userid")
+		errs = append(errs, fmt.Sprintf("key %s was not found in session", sessionUserID))
 	}
 
-	// redirect the user if they have not confirmed their email yet, thier account has not been approved yet,
-	// or thier account has been disabled.
+	if len(errs) != 0 {
+		errs = append(errs, helpfulAdvice)
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(errors.New("one or more missing keys on session during AuthorizePOSTHandler"), errs...), m.processor.InstanceGet)
+		return
+	}
+
 	user := &gtsmodel.User{}
 	if err := m.db.GetByID(c.Request.Context(), userID, user); err != nil {
 		m.clearSession(s)
-		c.HTML(http.StatusInternalServerError, "error.tmpl", gin.H{"error": err.Error()})
+		safe := fmt.Sprintf("user with id %s could not be retrieved", userID)
+		var errWithCode gtserror.WithCode
+		if err == db.ErrNoEntries {
+			errWithCode = gtserror.NewErrorBadRequest(err, safe, helpfulAdvice)
+		} else {
+			errWithCode = gtserror.NewErrorInternalError(err, safe, helpfulAdvice)
+		}
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
+
 	acct, err := m.db.GetAccountByID(c.Request.Context(), user.AccountID)
 	if err != nil {
 		m.clearSession(s)
-		c.HTML(http.StatusInternalServerError, "error.tmpl", gin.H{"error": err.Error()})
-		return
-	}
-	if !ensureUserIsAuthorizedOrRedirect(c, user, acct) {
+		safe := fmt.Sprintf("account with id %s could not be retrieved", user.AccountID)
+		var errWithCode gtserror.WithCode
+		if err == db.ErrNoEntries {
+			errWithCode = gtserror.NewErrorBadRequest(err, safe, helpfulAdvice)
+		} else {
+			errWithCode = gtserror.NewErrorInternalError(err, safe, helpfulAdvice)
+		}
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 
+	if ensureUserIsAuthorizedOrRedirect(c, user, acct) {
+		return
+	}
+
+	// we're done with the session now, so just clear it out
 	m.clearSession(s)
 
-	if len(errs) != 0 {
-		c.HTML(http.StatusBadRequest, "error.tmpl", gin.H{"error": strings.Join(errs, ": ")})
-		return
+	// we have to set the values on the request form
+	// so that they're picked up by the oauth server
+	c.Request.Form = url.Values{
+		sessionForceLogin:   {forceLogin},
+		sessionResponseType: {responseType},
+		sessionClientID:     {clientID},
+		sessionRedirectURI:  {redirectURI},
+		sessionScope:        {scope},
+		sessionUserID:       {userID},
 	}
 
-	// now set the values on the request
-	values := url.Values{}
-	values.Set(sessionForceLogin, forceLogin)
-	values.Set(sessionResponseType, responseType)
-	values.Set(sessionClientID, clientID)
-	values.Set(sessionRedirectURI, redirectURI)
-	values.Set(sessionScope, scope)
-	values.Set(sessionUserID, userID)
-	c.Request.Form = values
-	l.Tracef("values on request set to %+v", c.Request.Form)
-
-	// and proceed with authorization using the oauth2 library
 	if err := m.server.HandleAuthorizeRequest(c.Writer, c.Request); err != nil {
-		c.HTML(http.StatusBadRequest, "error.tmpl", gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error(), helpfulAdvice), m.processor.InstanceGet)
 	}
 }
 
-// extractAuthForm checks the given OAuthAuthorize form, and stores
-// the values in the form into the session.
-func extractAuthForm(s sessions.Session, form *model.OAuthAuthorize) error {
-	// these fields are *required* so check 'em
-	if form.ResponseType == "" || form.ClientID == "" || form.RedirectURI == "" {
-		return errors.New("missing one of: response_type, client_id or redirect_uri")
+// saveAuthFormToSession checks the given OAuthAuthorize form,
+// and stores the values in the form into the session.
+func saveAuthFormToSession(s sessions.Session, form *model.OAuthAuthorize) gtserror.WithCode {
+	if form == nil {
+		err := errors.New("OAuthAuthorize form was nil")
+		return gtserror.NewErrorBadRequest(err, err.Error(), helpfulAdvice)
+	}
+
+	if form.ResponseType == "" {
+		err := errors.New("field response_type was not set on OAuthAuthorize form")
+		return gtserror.NewErrorBadRequest(err, err.Error(), helpfulAdvice)
+	}
+
+	if form.ClientID == "" {
+		err := errors.New("field client_id was not set on OAuthAuthorize form")
+		return gtserror.NewErrorBadRequest(err, err.Error(), helpfulAdvice)
+	}
+
+	if form.RedirectURI == "" {
+		err := errors.New("field redirect_uri was not set on OAuthAuthorize form")
+		return gtserror.NewErrorBadRequest(err, err.Error(), helpfulAdvice)
 	}
 
 	// set default scope to read
@@ -237,29 +286,33 @@ func extractAuthForm(s sessions.Session, form *model.OAuthAuthorize) error {
 	s.Set(sessionRedirectURI, form.RedirectURI)
 	s.Set(sessionScope, form.Scope)
 	s.Set(sessionState, uuid.NewString())
-	return s.Save()
+
+	if err := s.Save(); err != nil {
+		err := fmt.Errorf("error saving form values onto session: %s", err)
+		return gtserror.NewErrorInternalError(err, helpfulAdvice)
+	}
+
+	return nil
 }
 
-func ensureUserIsAuthorizedOrRedirect(ctx *gin.Context, user *gtsmodel.User, account *gtsmodel.Account) bool {
+func ensureUserIsAuthorizedOrRedirect(ctx *gin.Context, user *gtsmodel.User, account *gtsmodel.Account) (redirected bool) {
 	if user.ConfirmedAt.IsZero() {
 		ctx.Redirect(http.StatusSeeOther, CheckYourEmailPath)
-		return false
+		redirected = true
+		return
 	}
 
 	if !user.Approved {
 		ctx.Redirect(http.StatusSeeOther, WaitForApprovalPath)
-		return false
+		redirected = true
+		return
 	}
 
-	if user.Disabled {
+	if user.Disabled || !account.SuspendedAt.IsZero() {
 		ctx.Redirect(http.StatusSeeOther, AccountDisabledPath)
-		return false
+		redirected = true
+		return
 	}
 
-	if !account.SuspendedAt.IsZero() {
-		ctx.Redirect(http.StatusSeeOther, AccountDisabledPath)
-		return false
-	}
-
-	return true
+	return
 }
