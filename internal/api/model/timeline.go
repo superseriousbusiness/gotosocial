@@ -18,9 +18,11 @@
 
 package model
 
-// StatusTimelineResponse wraps a slice of statuses, ready to be serialized, along with the Link
+import "github.com/superseriousbusiness/gotosocial/internal/timeline"
+
+// TimelineResponse wraps a slice of timelineables, ready to be serialized, along with the Link
 // header for the previous and next queries, to be returned to the client.
-type StatusTimelineResponse struct {
-	Statuses   []*Status
+type TimelineResponse struct {
+	Items      []timeline.Timelineable
 	LinkHeader string
 }

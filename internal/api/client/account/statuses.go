@@ -222,12 +222,15 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 		publicOnly = i
 	}
 
-	statuses, errWithCode := m.processor.AccountStatusesGet(c.Request.Context(), authed, targetAcctID, limit, excludeReplies, excludeReblogs, maxID, minID, pinnedOnly, mediaOnly, publicOnly)
+	resp, errWithCode := m.processor.AccountStatusesGet(c.Request.Context(), authed, targetAcctID, limit, excludeReplies, excludeReblogs, maxID, minID, pinnedOnly, mediaOnly, publicOnly)
 	if errWithCode != nil {
 		l.Debugf("error from processor account statuses get: %s", errWithCode)
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return
 	}
 
-	c.JSON(http.StatusOK, statuses)
+	if resp.LinkHeader != "" {
+		c.Header("Link", resp.LinkHeader)
+	}
+	c.JSON(http.StatusOK, resp.Items)
 }
