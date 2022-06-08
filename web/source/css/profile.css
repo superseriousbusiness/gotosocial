@@ -1,131 +1,131 @@
 /*
-   GoToSocial
-   Copyright (C) 2021-2022 GoToSocial Authors admin@gotosocial.org
+	GoToSocial
+	Copyright (C) 2021-2022 GoToSocial Authors admin@gotosocial.org
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU Affero General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU Affero General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU Affero General Public License for more details.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU Affero General Public License for more details.
 
-   You should have received a copy of the GNU Affero General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU Affero General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 main {
-  background: transparent;
+	background: transparent;
 }
 
 .headerimage {
-  img {
-    width: 100%;
-    height: 15em;
-    object-fit: cover;
-    border-radius: 10px;
-  }
+	img {
+		width: 100%;
+		height: 15em;
+		object-fit: cover;
+		border-radius: 10px;
+	}
 }
 
 .profile {
-  position: relative;
-  background: $bg_darker3;
-  padding: 2rem;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-around;
-  gap: 0.5rem;
-  margin-bottom: 0.2rem;
+	position: relative;
+	background: $bg_darker3;
+	padding: 2rem;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-around;
+	gap: 0.5rem;
+	margin-bottom: 0.2rem;
 
-  .basic {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 25em;
-    gap: 0.5rem;
+	.basic {
+		display: flex;
+		flex-direction: column;
+		flex: 1 1 25em;
+		gap: 0.5rem;
 
-    a {
-      position: relative;
-      z-index: 1;
-      color: inherit;
-      text-decoration: none;
-    }
+		a {
+			position: relative;
+			z-index: 1;
+			color: inherit;
+			text-decoration: none;
+		}
 
-    .avatar-container {
-      position: relative;
-      width: 100%;
-      max-width: 25em;
+		.avatar-container {
+			position: relative;
+			width: 100%;
+			max-width: 25em;
 
-      .avatar {
-        position: absolute;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        right: 0;
+			.avatar {
+				position: absolute;
+				top: 0;
+				left: 0;
+				bottom: 0;
+				right: 0;
 
-        img {
-          object-fit: cover;
-          border-radius: 10px;
-          width: 100%;
-          height: 100%;
-        }
-      }
-    }
+				img {
+					object-fit: cover;
+					border-radius: 10px;
+					width: 100%;
+					height: 100%;
+				}
+			}
+		}
 
-    .avatar-container:before {
-      content: "";
-      float: left;
-      padding-top: 100%;
-    }
+		.avatar-container:before {
+			content: "";
+			float: left;
+			padding-top: 100%;
+		}
 
 
-    .displayname {
-      font-weight: bold;
-      font-size: 1.6rem;
-      align-self: start;
-    }
-  }
+		.displayname {
+			font-weight: bold;
+			font-size: 1.6rem;
+			align-self: start;
+		}
+	}
 
-  .detailed {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 25em;
+	.detailed {
+		display: flex;
+		flex-direction: column;
+		flex: 1 1 25em;
 
-    h2 {
-      margin-top: 0;
-    }
+		h2 {
+			margin-top: 0;
+		}
 
-    .bio {
-      margin: 0;
+		.bio {
+			margin: 0;
 
-      a {
-        color: $acc1;
-        text-decoration: underline;
-      }
-    }
-  }
+			a {
+				color: $acc1;
+				text-decoration: underline;
+			}
+		}
+	}
 }
 
 .accountstats {
-  position: relative;
-  background: $bg_darker3;
-  padding: 0.5rem;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-evenly;
-  gap: 0.5rem;
-  margin-bottom: 0.2rem;
+	position: relative;
+	background: $bg_darker3;
+	padding: 0.5rem;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-evenly;
+	gap: 0.5rem;
+	margin-bottom: 0.2rem;
 
-  .entry {
-    background: $bg_lighter3;
-    padding: 0.5rem;
-    flex-grow: 1;
-    text-align: center;
-  }
+	.entry {
+		background: $bg_lighter3;
+		padding: 0.5rem;
+		flex-grow: 1;
+		text-align: center;
+	}
 }
 
 footer + div {
-  /* something weird from the devstack.. */
-  display: none;
+	/* something weird from the devstack.. */
+	display: none;
 }
