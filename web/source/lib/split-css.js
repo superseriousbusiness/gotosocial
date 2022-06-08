@@ -49,6 +49,8 @@ module.exports = function splitCSS() {
 				}
 			}
 
+			const cssDir = path.join(__dirname, "../css");
+
 			stream.split("\n").forEach((line) => {
 				if (line.startsWith("/* from")) {
 					let found = fromRegex.exec(line);
@@ -56,10 +58,12 @@ module.exports = function splitCSS() {
 						write();
 
 						let parts = path.parse(found[1]);
-						if (parts.dir == "css") {
+						if (path.relative(cssDir, path.join(process.cwd(), parts.dir)) == "") {
 							input = parts.base;
 						} else {
-							input = found[1].replace(/\//g, "-");
+							// prefix filename with path
+							let relative = path.relative(path.join(__dirname, "../"), path.join(process.cwd(), found[1]));
+							input = relative.replace(/\//g, "-");
 						}
 					}
 				} else {
@@ -69,4 +73,4 @@ module.exports = function splitCSS() {
 			write();
 		}
 	});
-}
+};

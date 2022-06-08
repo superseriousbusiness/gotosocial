@@ -17,3 +17,7 @@
 */
 
 "use strict";
+
+
+// WARNING: currently dependencies get deduplicated with factor-bundle, but 
+// our frontend templates don't load the common bundle.js since it contains React etc

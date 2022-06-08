@@ -75,6 +75,10 @@ fs.readdirSync(path.join(__dirname, "./css")).forEach((file) => {
 	entryFiles.push(path.join(__dirname, "./css", file));
 });
 
+if (!fs.existsSync(out())){
+	fs.mkdirSync(out(), { recursive: true });
+}
+
 const server = budoExpress({
 	port: 8081,
 	host: "localhost",
