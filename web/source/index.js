@@ -27,8 +27,7 @@ const budoExpress = require('@f0x52/budo-express');
 const babelify = require('babelify');
 const icssify = require("icssify");
 const fs = require("fs");
-
-const {Writable} = require("stream");
+const EventEmitter = require('events');
 
 function out(name = "") {
 	return path.join(__dirname, "../assets/dist/", name);
@@ -112,7 +111,7 @@ fs.readdirSync(path.join(__dirname, "./css")).forEach((file) => {
 	entryFiles.push(path.join(__dirname, "./css", file));
 });
 
-budoExpress({
+const server = budoExpress({
 	port: 8081,
 	host: "localhost",
 	entryFiles: entryFiles,
@@ -122,7 +121,11 @@ budoExpress({
 	expressApp: require("./dev-server.js"),
 	browserify: browserifyConfig,
 	livereloadPattern: "**/*.{html,js,svg}"
-}).on("update", (contents) => {
+});
+
+if (server instanceof EventEmitter) {
+	server.on("update", (contents) => {
 	console.log("writing bundle.js to dist/");
 	fs.writeFileSync(out("bundle.js"), contents);
 });
+}
