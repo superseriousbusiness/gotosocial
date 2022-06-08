@@ -1,27 +1,12 @@
 # syntax=docker/dockerfile:1.3
+FROM --platform=${TARGETPLATFORM} alpine:3.15.0
 
-# bundle the admin webapp
-FROM --platform=${BUILDPLATFORM} node:17.6.0-alpine3.15 AS admin_builder
-RUN apk update && apk upgrade --no-cache
-RUN apk add git
-
-FROM --platform=${TARGETPLATFORM} alpine:3.15.0 AS executor
-
-# copy over the binary from the first stage
+# copy the dist binary created by goreleaser or build.sh
 COPY --chown=1000:1000 gotosocial /gotosocial/gotosocial
 
-# bundle frontend stuff
-WORKDIR "web/source"
-RUN yarn install
-RUN BUDO_BUILD=1 node index.js
-# sources no longer needed
-RUN rm -rf web/source
-
-# copy over the web directory with templates etc
-COPY --chown=1000:1000 web /gotosocial/web
-
-# copy over the admin directory
-COPY --chown=1000:1000 --from=admin_builder /gotosocial-admin/public /gotosocial/web/assets/admin
+# copy over the web directories with templates, assets etc
+COPY --chown=1000:1000 web/assets /gotosocial/web/assets
+COPY --chown=1000:1000 web/template /gotosocial/web/template
 
 WORKDIR "/gotosocial"
 ENTRYPOINT [ "/gotosocial/gotosocial", "server", "start" ]

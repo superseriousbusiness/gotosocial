@@ -3,16 +3,13 @@ project_name: gotosocial
 before:
   # https://goreleaser.com/customization/hooks/
   hooks:
-  # tidy up and lint
-  - go mod tidy
-  - go fmt ./...
   # generate the swagger.yaml file using go-swagger and bundle it into the assets directory
   - swagger generate spec -o docs/api/swagger.yaml --scan-models
   - sed -i "s/REPLACE_ME/{{ incpatch .Version }}/" docs/api/swagger.yaml
   - cp docs/api/swagger.yaml web/assets/swagger.yaml
-  # install and bundle the web assets and styling
+  # bundle web assets
   - yarn install --cwd web/source
-  - BUDO_BUILD=1 node web/source
+  - scripts/bundle.sh
 builds:
   # https://goreleaser.com/customization/build/
   -
@@ -66,7 +63,8 @@ dockers:
     - "--label=org.opencontainers.image.revision={{.FullCommit}}"
     - "--label=org.opencontainers.image.version={{.Version}}"
     extra_files:
-    - web
+    - web/assets
+    - web/template
   -
     use: buildx
     goos: linux
@@ -81,7 +79,8 @@ dockers:
     - "--label=org.opencontainers.image.revision={{.FullCommit}}"
     - "--label=org.opencontainers.image.version={{.Version}}"
     extra_files:
-    - web
+    - web/assets
+    - web/template
   -
     use: buildx
     goos: linux
@@ -97,7 +96,8 @@ dockers:
     - "--label=org.opencontainers.image.revision={{.FullCommit}}"
     - "--label=org.opencontainers.image.version={{.Version}}"
     extra_files:
-    - web
+    - web/assets
+    - web/template
   -
     use: buildx
     goos: linux
@@ -113,7 +113,8 @@ dockers:
     - "--label=org.opencontainers.image.revision={{.FullCommit}}"
     - "--label=org.opencontainers.image.version={{.Version}}"
     extra_files:
-    - web
+    - web/assets
+    - web/template
 docker_manifests:
   - name_template: superseriousbusiness/{{ .ProjectName }}:{{ .Version }}
     image_templates:
@@ -136,7 +137,8 @@ archives:
     - README.md
     - CHANGELOG*
     # web assets
-    - web
+    - web/assets
+    - web/template
     # example config files
     - example/config.yaml
     - example/gotosocial.service
