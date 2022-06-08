@@ -121,7 +121,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 		return
 	}
 
-	if !ensureUserIsAuthorizedOrRedirect(c, user, acct) {
+	if ensureUserIsAuthorizedOrRedirect(c, user, acct) {
 		return
 	}
 
@@ -228,7 +228,7 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	if !ensureUserIsAuthorizedOrRedirect(c, user, acct) {
+	if ensureUserIsAuthorizedOrRedirect(c, user, acct) {
 		return
 	}
 
