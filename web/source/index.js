@@ -53,7 +53,18 @@ const postcssPlugins = [
 ].map((plugin) => require(plugin)());
 
 const browserifyConfig = {
-	transform: babelify.configure({ presets: [require.resolve("@babel/preset-env"), require.resolve("@babel/preset-react")] }),
+	transform: [
+		babelify.configure({
+			presets: [
+				require.resolve("@babel/preset-env"),
+				require.resolve("@babel/preset-react")
+			]
+		}),
+		["uglifyify", {
+			global: true,
+			exts: ".js"
+		}]
+	],
 	plugin: [
 		[icssify, {
 			parser: require('postcss-scss'),
@@ -61,6 +72,7 @@ const browserifyConfig = {
 			mode: 'global'
 		}],
 		[require("css-extract"), { out: splitCSS }],
+
 		[require("factor-bundle"), {
 			outputs: Object.values(bundles).map((file) => {
 				return out(file);
