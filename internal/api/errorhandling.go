@@ -100,7 +100,7 @@ func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet fun
 	if statusCode == http.StatusInternalServerError {
 		l.Error("Internal Server Error")
 	} else {
-		l.Trace("handling error")
+		l.Debug("handling error")
 	}
 
 	// if we panic for any reason during error handling,
