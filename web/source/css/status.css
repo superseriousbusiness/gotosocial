@@ -28,7 +28,7 @@ main {
 
 .toot {
 	position: relative;
-	background: color($bg lightness(-3%));
+	background: $bg_darker3;
 	padding: 2rem;
 	/* padding-bottom: 0; */
 	display: grid;

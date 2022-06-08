@@ -19,7 +19,7 @@
 html, body {
 	padding: 0;
 	margin: 0;
-	background: $bg_accent;
+	background: $bg_darker5;
 	color: $fg;
 	font-family: sans-serif;
 }
@@ -66,7 +66,7 @@ main {
 }
 
 header {
-	background: $bg_accent;
+	background: $bg_darker5;
 	padding: 2rem 0;
 	padding-bottom: 0;
 	display: flex;
@@ -120,7 +120,7 @@ a {
 }
 
 .count {
-	background: $bg_accent;
+	background: $bg_darker5;
 	border-radius: 0.3rem;
 	padding: 0.2rem;
 }
@@ -154,7 +154,7 @@ section.apps {
 			grid-template-columns: 30% 1fr;
 			gap: 0.5rem;
 			padding: 0.5rem;
-			background: $bg_accent;
+			background: $bg_darker5;
 			border-radius: 0.5rem;
 
 			.logo {

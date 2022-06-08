@@ -31,7 +31,7 @@ main {
 
 .profile {
   position: relative;
-  background: color($bg lightness(-3%));
+  background: $bg_darker3;
   padding: 2rem;
   display: flex;
   flex-wrap: wrap;
@@ -109,7 +109,7 @@ main {
 
 .accountstats {
   position: relative;
-  background: color($bg lightness(-3%));
+  background: $bg_darker3;
   padding: 0.5rem;
   display: flex;
   flex-wrap: wrap;
@@ -118,7 +118,7 @@ main {
   margin-bottom: 0.2rem;
 
   .entry {
-    background: color($bg lightness(+3%));
+    background: $bg_lighter3;
     padding: 0.5rem;
     flex-grow: 1;
     text-align: center;
