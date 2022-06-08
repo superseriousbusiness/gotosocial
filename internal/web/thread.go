@@ -112,6 +112,9 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 			"/assets/Fork-Awesome/css/fork-awesome.min.css",
 			"/assets/dist/status.css",
 		},
+		"javascript": []string{
+			"/assets/dist/frontend.js",
+		},
 	})
 }
 
