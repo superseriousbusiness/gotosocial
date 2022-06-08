@@ -24,9 +24,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
@@ -69,59 +69,52 @@ import (
 //     description: The newly-created emoji.
 //     schema:
 //       "$ref": "#/definitions/emoji"
-//   '403':
-//      description: forbidden
 //   '400':
 //      description: bad request
+//   '401':
+//      description: unauthorized
+//   '403':
+//      description: forbidden
+//   '404':
+//      description: not found
+//   '406':
+//      description: not acceptable
 //   '409':
 //      description: conflict -- domain/shortcode combo for emoji already exists
+//   '500':
+//      description: internal server error
 func (m *Module) EmojiCreatePOSTHandler(c *gin.Context) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":        "emojiCreatePOSTHandler",
-		"request_uri": c.Request.RequestURI,
-		"user_agent":  c.Request.UserAgent(),
-		"origin_ip":   c.ClientIP(),
-	})
-
-	// make sure we're authed with an admin account
-	authed, err := oauth.Authed(c, true, true, true, true) // posting a status is serious business so we want *everything*
+	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		l.Debugf("couldn't auth: %s", err)
-		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
+
 	if !authed.User.Admin {
-		l.Debugf("user %s not an admin", authed.User.ID)
-		c.JSON(http.StatusForbidden, gin.H{"error": "not an admin"})
+		err := fmt.Errorf("user %s not an admin", authed.User.ID)
+		api.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	// extract the media create form from the request context
-	l.Tracef("parsing request form: %+v", c.Request.Form)
 	form := &model.EmojiCreateRequest{}
 	if err := c.ShouldBind(form); err != nil {
-		l.Debugf("error parsing form %+v: %s", c.Request.Form, err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("could not parse form: %s", err)})
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	// Give the fields on the request form a first pass to make sure the request is superficially valid.
-	l.Tracef("validating form %+v", form)
 	if err := validateCreateEmoji(form); err != nil {
-		l.Debugf("error validating form: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	apiEmoji, errWithCode := m.processor.AdminEmojiCreate(c.Request.Context(), authed, form)
 	if errWithCode != nil {
-		l.Debugf("error creating emoji: %s", errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 
@@ -129,7 +122,6 @@ func (m *Module) EmojiCreatePOSTHandler(c *gin.Context) {
 }
 
 func validateCreateEmoji(form *model.EmojiCreateRequest) error {
-	// check there actually is an image attached and it's not size 0
 	if form.Image == nil || form.Image.Size == 0 {
 		return errors.New("no emoji given")
 	}

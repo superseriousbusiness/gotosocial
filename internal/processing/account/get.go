@@ -94,5 +94,6 @@ func (p *processor) getAccountFor(ctx context.Context, requestingAccount *gtsmod
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting account: %s", err))
 	}
+
 	return apiAccount, nil
 }

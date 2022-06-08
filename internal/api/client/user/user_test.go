@@ -56,8 +56,8 @@ type UserStandardTestSuite struct {
 }
 
 func (suite *UserStandardTestSuite) SetupTest() {
-	testrig.InitTestLog()
 	testrig.InitTestConfig()
+	testrig.InitTestLog()
 	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
 	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
 	suite.testTokens = testrig.NewTestTokens()

@@ -130,12 +130,3 @@ func (cfg *Configuration) MarshalMap() (map[string]interface{}, error) {
 	}
 	return dst, nil
 }
-
-// UnmarshalMap will unmarshal a map structure into the receiving Configuration.
-func (cfg *Configuration) UnmarshalMap(src map[string]interface{}) error {
-	dec, _ := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		TagName: "name",
-		Result:  cfg,
-	})
-	return dec.Decode(src)
-}

@@ -134,13 +134,13 @@ func (suite *StatusBoostTestSuite) TestPostUnboostable() {
 	suite.statusModule.StatusBoostPOSTHandler(ctx)
 
 	// check response
-	suite.EqualValues(http.StatusForbidden, recorder.Code) // we 403 unboostable statuses
+	suite.Equal(http.StatusForbidden, recorder.Code) // we 403 unboostable statuses
 
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), `{"error":"forbidden"}`, string(b))
+	assert.Equal(suite.T(), `{"error":"Forbidden"}`, string(b))
 }
 
 // try to boost a status that's not visible to the user
@@ -177,13 +177,7 @@ func (suite *StatusBoostTestSuite) TestPostNotVisible() {
 	suite.statusModule.StatusBoostPOSTHandler(ctx)
 
 	// check response
-	suite.EqualValues(http.StatusNotFound, recorder.Code) // we 404 statuses that aren't visible
-
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), `{"error":"404 not found"}`, string(b))
+	suite.Equal(http.StatusNotFound, recorder.Code) // we 404 statuses that aren't visible
 }
 
 func TestStatusBoostTestSuite(t *testing.T) {

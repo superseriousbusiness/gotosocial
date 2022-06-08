@@ -19,11 +19,10 @@
 package auth
 
 import (
-	"net/http"
 	"net/url"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 
 	"github.com/gin-gonic/gin"
 )
@@ -40,38 +39,40 @@ type tokenBody struct {
 // TokenPOSTHandler should be served as a POST at https://example.org/oauth/token
 // The idea here is to serve an oauth access token to a user, which can be used for authorizing against non-public APIs.
 func (m *Module) TokenPOSTHandler(c *gin.Context) {
-	l := logrus.WithField("func", "TokenPOSTHandler")
-	l.Trace("entered TokenPOSTHandler")
-
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	form := &tokenBody{}
-	if err := c.ShouldBind(form); err == nil {
-		c.Request.Form = url.Values{}
-		if form.ClientID != nil {
-			c.Request.Form.Set("client_id", *form.ClientID)
-		}
-		if form.ClientSecret != nil {
-			c.Request.Form.Set("client_secret", *form.ClientSecret)
-		}
-		if form.Code != nil {
-			c.Request.Form.Set("code", *form.Code)
-		}
-		if form.GrantType != nil {
-			c.Request.Form.Set("grant_type", *form.GrantType)
-		}
-		if form.RedirectURI != nil {
-			c.Request.Form.Set("redirect_uri", *form.RedirectURI)
-		}
-		if form.Scope != nil {
-			c.Request.Form.Set("scope", *form.Scope)
-		}
+	if err := c.ShouldBind(form); err != nil {
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, helpfulAdvice), m.processor.InstanceGet)
+		return
 	}
 
+	c.Request.Form = url.Values{}
+	if form.ClientID != nil {
+		c.Request.Form.Set("client_id", *form.ClientID)
+	}
+	if form.ClientSecret != nil {
+		c.Request.Form.Set("client_secret", *form.ClientSecret)
+	}
+	if form.Code != nil {
+		c.Request.Form.Set("code", *form.Code)
+	}
+	if form.GrantType != nil {
+		c.Request.Form.Set("grant_type", *form.GrantType)
+	}
+	if form.RedirectURI != nil {
+		c.Request.Form.Set("redirect_uri", *form.RedirectURI)
+	}
+	if form.Scope != nil {
+		c.Request.Form.Set("scope", *form.Scope)
+	}
+
+	// pass the writer and request into the oauth server handler, which will
+	// take care of writing the oauth token into the response etc
 	if err := m.server.HandleTokenRequest(c.Writer, c.Request); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorInternalError(err, helpfulAdvice), m.processor.InstanceGet)
 	}
 }

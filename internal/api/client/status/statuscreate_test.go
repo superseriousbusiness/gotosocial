@@ -256,7 +256,7 @@ func (suite *StatusCreateTestSuite) TestReplyToNonexistentStatus() {
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
-	suite.Equal(`{"error":"bad request"}`, string(b))
+	suite.Equal(`{"error":"Bad Request: status with id 3759e7ef-8ee1-4c0c-86f6-8b70b9ad3d50 not replyable because it doesn't exist"}`, string(b))
 }
 
 // Post a reply to the status of a local user that allows replies.

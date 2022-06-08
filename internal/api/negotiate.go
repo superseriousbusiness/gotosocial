@@ -25,31 +25,38 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Offer represents an offered mime-type.
-type Offer string
-
-const (
-	AppJSON           Offer = `application/json`                                                     // AppJSON is the mime type for 'application/json'.
-	AppActivityJSON   Offer = `application/activity+json`                                            // AppActivityJSON is the mime type for 'application/activity+json'.
-	AppActivityLDJSON Offer = `application/ld+json; profile="https://www.w3.org/ns/activitystreams"` // AppActivityLDJSON is the mime type for 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
-	TextHTML          Offer = `text/html`                                                            // TextHTML is the mime type for 'text/html'.
-)
-
 // ActivityPubAcceptHeaders represents the Accept headers mentioned here:
-// https://www.w3.org/TR/activitypub/#retrieving-objects
-var ActivityPubAcceptHeaders = []Offer{
+//
+var ActivityPubAcceptHeaders = []MIME{
 	AppActivityJSON,
 	AppActivityLDJSON,
 }
 
 // JSONAcceptHeaders is a slice of offers that just contains application/json types.
-var JSONAcceptHeaders = []Offer{
+var JSONAcceptHeaders = []MIME{
+	AppJSON,
+}
+
+// HTMLOrJSONAcceptHeaders is a slice of offers that prefers TextHTML and will
+// fall back to JSON if necessary. This is useful for error handling, since it can
+// be used to serve a nice HTML page if the caller accepts that, or just JSON if not.
+var HTMLOrJSONAcceptHeaders = []MIME{
+	TextHTML,
 	AppJSON,
 }
 
 // HTMLAcceptHeaders is a slice of offers that just contains text/html types.
-var HTMLAcceptHeaders = []Offer{
+var HTMLAcceptHeaders = []MIME{
 	TextHTML,
+}
+
+// HTMLOrActivityPubHeaders matches text/html first, then activitypub types.
+// This is useful for user URLs that a user might go to in their browser.
+// https://www.w3.org/TR/activitypub/#retrieving-objects
+var HTMLOrActivityPubHeaders = []MIME{
+	TextHTML,
+	AppActivityJSON,
+	AppActivityLDJSON,
 }
 
 // NegotiateAccept takes the *gin.Context from an incoming request, and a
@@ -73,7 +80,7 @@ var HTMLAcceptHeaders = []Offer{
 // often-used Accept types.
 //
 // See https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation#server-driven_content_negotiation
-func NegotiateAccept(c *gin.Context, offers ...Offer) (string, error) {
+func NegotiateAccept(c *gin.Context, offers ...MIME) (string, error) {
 	if len(offers) == 0 {
 		return "", errors.New("no format offered")
 	}

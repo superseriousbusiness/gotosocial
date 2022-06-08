@@ -118,13 +118,13 @@ func (suite *StatusFaveTestSuite) TestPostUnfaveable() {
 	suite.statusModule.StatusFavePOSTHandler(ctx)
 
 	// check response
-	suite.EqualValues(http.StatusBadRequest, recorder.Code)
+	suite.EqualValues(http.StatusForbidden, recorder.Code)
 
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), `{"error":"bad request"}`, string(b))
+	assert.Equal(suite.T(), `{"error":"Forbidden"}`, string(b))
 }
 
 func TestStatusFaveTestSuite(t *testing.T) {

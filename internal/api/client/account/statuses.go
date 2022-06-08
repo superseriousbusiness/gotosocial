@@ -19,13 +19,14 @@
 package account
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -110,31 +111,32 @@ import (
 //       type: array
 //       items:
 //         "$ref": "#/definitions/status"
-//   '401':
-//      description: unauthorized
 //   '400':
 //      description: bad request
+//   '401':
+//      description: unauthorized
 //   '404':
 //      description: not found
+//   '406':
+//      description: not acceptable
+//   '500':
+//      description: internal server error
 func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
-	l := logrus.WithField("func", "AccountStatusesGETHandler")
-
 	authed, err := oauth.Authed(c, false, false, false, false)
 	if err != nil {
-		l.Debugf("error authing: %s", err)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	targetAcctID := c.Param(IDKey)
 	if targetAcctID == "" {
-		l.Debug("no account id specified in query")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no account id specified"})
+		err := errors.New("no account id specified")
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
@@ -143,8 +145,8 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 	if limitString != "" {
 		i, err := strconv.ParseInt(limitString, 10, 64)
 		if err != nil {
-			l.Debugf("error parsing limit string: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "couldn't parse limit query param"})
+			err := fmt.Errorf("error parsing %s: %s", LimitKey, err)
+			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
 		limit = int(i)
@@ -155,8 +157,8 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 	if excludeRepliesString != "" {
 		i, err := strconv.ParseBool(excludeRepliesString)
 		if err != nil {
-			l.Debugf("error parsing exclude replies string: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "couldn't parse exclude replies query param"})
+			err := fmt.Errorf("error parsing %s: %s", ExcludeRepliesKey, err)
+			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
 		excludeReplies = i
@@ -167,8 +169,8 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 	if excludeReblogsString != "" {
 		i, err := strconv.ParseBool(excludeReblogsString)
 		if err != nil {
-			l.Debugf("error parsing exclude reblogs string: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "couldn't parse exclude reblogs query param"})
+			err := fmt.Errorf("error parsing %s: %s", ExcludeReblogsKey, err)
+			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
 		excludeReblogs = i
@@ -191,8 +193,8 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 	if pinnedString != "" {
 		i, err := strconv.ParseBool(pinnedString)
 		if err != nil {
-			l.Debugf("error parsing pinned string: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "couldn't parse pinned query param"})
+			err := fmt.Errorf("error parsing %s: %s", PinnedKey, err)
+			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
 		pinnedOnly = i
@@ -203,8 +205,8 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 	if mediaOnlyString != "" {
 		i, err := strconv.ParseBool(mediaOnlyString)
 		if err != nil {
-			l.Debugf("error parsing media only string: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "couldn't parse media only query param"})
+			err := fmt.Errorf("error parsing %s: %s", OnlyMediaKey, err)
+			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
 		mediaOnly = i
@@ -215,19 +217,21 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 	if publicOnlyString != "" {
 		i, err := strconv.ParseBool(publicOnlyString)
 		if err != nil {
-			l.Debugf("error parsing public only string: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "couldn't parse public only query param"})
+			err := fmt.Errorf("error parsing %s: %s", OnlyPublicKey, err)
+			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
 		publicOnly = i
 	}
 
-	statuses, errWithCode := m.processor.AccountStatusesGet(c.Request.Context(), authed, targetAcctID, limit, excludeReplies, excludeReblogs, maxID, minID, pinnedOnly, mediaOnly, publicOnly)
+	resp, errWithCode := m.processor.AccountStatusesGet(c.Request.Context(), authed, targetAcctID, limit, excludeReplies, excludeReblogs, maxID, minID, pinnedOnly, mediaOnly, publicOnly)
 	if errWithCode != nil {
-		l.Debugf("error from processor account statuses get: %s", errWithCode)
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 
-	c.JSON(http.StatusOK, statuses)
+	if resp.LinkHeader != "" {
+		c.Header("Link", resp.LinkHeader)
+	}
+	c.JSON(http.StatusOK, resp.Items)
 }

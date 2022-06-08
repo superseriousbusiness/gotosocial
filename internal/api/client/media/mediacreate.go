@@ -23,12 +23,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -80,46 +79,36 @@ import (
 //      description: bad request
 //   '401':
 //      description: unauthorized
-//   '403':
-//      description: forbidden
 //   '422':
 //      description: unprocessable
+//   '500':
+//      description: internal server error
 func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
-	l := logrus.WithField("func", "statusCreatePOSTHandler")
-	authed, err := oauth.Authed(c, true, true, true, true) // posting new media is serious business so we want *everything*
+	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		l.Debugf("couldn't auth: %s", err)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	// extract the media create form from the request context
-	l.Tracef("parsing request form: %s", c.Request.Form)
 	form := &model.AttachmentRequest{}
 	if err := c.ShouldBind(&form); err != nil {
-		l.Debugf("error parsing form: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Errorf("could not parse form: %s", err)})
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	// Give the fields on the request form a first pass to make sure the request is superficially valid.
-	l.Tracef("validating form %+v", form)
 	if err := validateCreateMedia(form); err != nil {
-		l.Debugf("error validating form: %s", err)
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	l.Debug("calling processor media create func")
-	apiAttachment, err := m.processor.MediaCreate(c.Request.Context(), authed, form)
+	apiAttachment, errWithCode := m.processor.MediaCreate(c.Request.Context(), authed, form)
 	if err != nil {
-		l.Debugf("error creating attachment: %s", err)
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 
@@ -143,6 +132,7 @@ func validateCreateMedia(form *model.AttachmentRequest) error {
 	if maxImageSize > maxSize {
 		maxSize = maxImageSize
 	}
+
 	if form.File.Size > int64(maxSize) {
 		return fmt.Errorf("file size limit exceeded: limit is %d bytes but attachment was %d bytes", maxSize, form.File.Size)
 	}

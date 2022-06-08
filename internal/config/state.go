@@ -22,6 +22,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -129,8 +130,10 @@ func (st *ConfigState) reloadToViper() {
 
 // reloadFromViper will reload Configuration{} values from viper.
 func (st *ConfigState) reloadFromViper() {
-	err := st.config.UnmarshalMap(st.viper.AllSettings())
-	if err != nil {
+	if err := st.viper.Unmarshal(&st.config, func(c *mapstructure.DecoderConfig) {
+		c.TagName = "name"
+		c.ZeroFields = true // empty the config struct before we marshal values into it
+	}); err != nil {
 		panic(err)
 	}
 }

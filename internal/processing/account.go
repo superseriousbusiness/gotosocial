@@ -26,7 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (p *processor) AccountCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.AccountCreateRequest) (*apimodel.Token, error) {
+func (p *processor) AccountCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.AccountCreateRequest) (*apimodel.Token, gtserror.WithCode) {
 	return p.accountProcessor.Create(ctx, authed.Token, authed.Application, form)
 }
 
@@ -42,11 +42,11 @@ func (p *processor) AccountGetLocalByUsername(ctx context.Context, authed *oauth
 	return p.accountProcessor.GetLocalByUsername(ctx, authed.Account, username)
 }
 
-func (p *processor) AccountUpdate(ctx context.Context, authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, error) {
+func (p *processor) AccountUpdate(ctx context.Context, authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, gtserror.WithCode) {
 	return p.accountProcessor.Update(ctx, authed.Account, form)
 }
 
-func (p *processor) AccountStatusesGet(ctx context.Context, authed *oauth.Auth, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinnedOnly bool, mediaOnly bool, publicOnly bool) ([]apimodel.Status, gtserror.WithCode) {
+func (p *processor) AccountStatusesGet(ctx context.Context, authed *oauth.Auth, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinnedOnly bool, mediaOnly bool, publicOnly bool) (*apimodel.TimelineResponse, gtserror.WithCode) {
 	return p.accountProcessor.StatusesGet(ctx, authed.Account, targetAccountID, limit, excludeReplies, excludeReblogs, maxID, minID, pinnedOnly, mediaOnly, publicOnly)
 }
 

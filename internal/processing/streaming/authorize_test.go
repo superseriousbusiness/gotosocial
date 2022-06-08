@@ -39,7 +39,7 @@ func (suite *AuthorizeTestSuite) TestAuthorize() {
 	suite.Equal(suite.testAccounts["local_account_2"].ID, account2.ID)
 
 	noAccount, err := suite.streamingProcessor.AuthorizeStreamingRequest(context.Background(), "aaaaaaaaaaaaaaaaaaaaa!!")
-	suite.EqualError(err, "AuthorizeStreamingRequest: error loading access token: no entries")
+	suite.EqualError(err, "could not load access token: no entries")
 	suite.Nil(noAccount)
 }
 

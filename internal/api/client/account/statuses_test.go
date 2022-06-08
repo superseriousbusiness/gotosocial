@@ -37,7 +37,47 @@ type AccountStatusesTestSuite struct {
 	AccountStandardTestSuite
 }
 
-func (suite *AccountStatusesTestSuite) TestGetStatusesMediaOnly() {
+func (suite *AccountStatusesTestSuite) TestGetStatusesPublicOnly() {
+	// set up the request
+	// we're getting statuses of admin
+	targetAccount := suite.testAccounts["admin_account"]
+	recorder := httptest.NewRecorder()
+	ctx := suite.newContext(recorder, http.MethodGet, nil, fmt.Sprintf("/api/v1/accounts/%s/statuses?limit=20&only_media=false&only_public=true", targetAccount.ID), "")
+	ctx.Params = gin.Params{
+		gin.Param{
+			Key:   account.IDKey,
+			Value: targetAccount.ID,
+		},
+	}
+
+	// call the handler
+	suite.accountModule.AccountStatusesGETHandler(ctx)
+
+	// 1. we should have OK because our request was valid
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	// 2. we should have no error message in the result body
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	// check the response
+	b, err := ioutil.ReadAll(result.Body)
+	assert.NoError(suite.T(), err)
+
+	// unmarshal the returned statuses
+	apimodelStatuses := []*apimodel.Status{}
+	err = json.Unmarshal(b, &apimodelStatuses)
+	suite.NoError(err)
+	suite.NotEmpty(apimodelStatuses)
+
+	for _, s := range apimodelStatuses {
+		suite.Equal(apimodel.VisibilityPublic, s.Visibility)
+	}
+
+	suite.Equal(`<http://localhost:8080/api/v1/accounts/01F8MH17FWEB39HZJ76B6VXSKF/statuses?limit=20&max_id=01F8MH75CBF9JFX4ZAD54N0W0R&exclude_replies=false&exclude_reblogs=false&pinned_only=false&only_media=false&only_public=true>; rel="next", <http://localhost:8080/api/v1/accounts/01F8MH17FWEB39HZJ76B6VXSKF/statuses?limit=20&min_id=01G36SF3V6Y6V5BF9P4R7PQG7G&exclude_replies=false&exclude_reblogs=false&pinned_only=false&only_media=false&only_public=true>; rel="prev"`, result.Header.Get("link"))
+}
+
+func (suite *AccountStatusesTestSuite) TestGetStatusesPublicOnlyMediaOnly() {
 	// set up the request
 	// we're getting statuses of admin
 	targetAccount := suite.testAccounts["admin_account"]
@@ -74,6 +114,8 @@ func (suite *AccountStatusesTestSuite) TestGetStatusesMediaOnly() {
 		suite.NotEmpty(s.MediaAttachments)
 		suite.Equal(apimodel.VisibilityPublic, s.Visibility)
 	}
+
+	suite.Equal(`<http://localhost:8080/api/v1/accounts/01F8MH17FWEB39HZJ76B6VXSKF/statuses?limit=20&max_id=01F8MH75CBF9JFX4ZAD54N0W0R&exclude_replies=false&exclude_reblogs=false&pinned_only=false&only_media=true&only_public=true>; rel="next", <http://localhost:8080/api/v1/accounts/01F8MH17FWEB39HZJ76B6VXSKF/statuses?limit=20&min_id=01F8MH75CBF9JFX4ZAD54N0W0R&exclude_replies=false&exclude_reblogs=false&pinned_only=false&only_media=true&only_public=true>; rel="prev"`, result.Header.Get("link"))
 }
 
 func TestAccountStatusesTestSuite(t *testing.T) {

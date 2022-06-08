@@ -19,35 +19,35 @@
 package web
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 func (m *Module) confirmEmailGETHandler(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	// if there's no token in the query, just serve the 404 web handler
 	token := c.Query(tokenParam)
 	if token == "" {
-		m.NotFoundHandler(c)
+		api.ErrorHandler(c, gtserror.NewErrorNotFound(errors.New(http.StatusText(http.StatusNotFound))), m.processor.InstanceGet)
 		return
 	}
 
-	ctx := c.Request.Context()
-
 	user, errWithCode := m.processor.UserConfirmEmail(ctx, token)
 	if errWithCode != nil {
-		logrus.Debugf("error confirming email: %s", errWithCode.Error())
-		// if something goes wrong, just log it and direct to the 404 handler to not give anything away
-		m.NotFoundHandler(c)
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 
 	host := config.GetHost()
 	instance, err := m.processor.InstanceGet(ctx, host)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
 		return
 	}
 

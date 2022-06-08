@@ -82,6 +82,34 @@ func (suite *AuthorizeTestSuite) TestAuthorize() {
 	suite.Equal(`{"id":"01FHMQX3GAABWSM0S2VZEC2SWC","following":false,"showing_reblogs":false,"notifying":false,"followed_by":true,"blocking":false,"blocked_by":false,"muting":false,"muting_notifications":false,"requested":false,"domain_blocking":false,"endorsed":false,"note":""}`, string(b))
 }
 
+func (suite *AuthorizeTestSuite) TestAuthorizeNoFR() {
+	requestingAccount := suite.testAccounts["remote_account_2"]
+
+	recorder := httptest.NewRecorder()
+	ctx := suite.newContext(recorder, http.MethodPost, []byte{}, fmt.Sprintf("/api/v1/follow_requests/%s/authorize", requestingAccount.ID), "")
+
+	ctx.Params = gin.Params{
+		gin.Param{
+			Key:   followrequest.IDKey,
+			Value: requestingAccount.ID,
+		},
+	}
+
+	// call the handler
+	suite.followRequestModule.FollowRequestAuthorizePOSTHandler(ctx)
+
+	suite.Equal(http.StatusNotFound, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	// check the response
+	b, err := ioutil.ReadAll(result.Body)
+	assert.NoError(suite.T(), err)
+
+	suite.Equal(`{"error":"Not Found"}`, string(b))
+}
+
 func TestAuthorizeTestSuite(t *testing.T) {
 	suite.Run(t, &AuthorizeTestSuite{})
 }

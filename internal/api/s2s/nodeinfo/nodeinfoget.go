@@ -23,8 +23,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // NodeInfoGETHandler swagger:operation GET /nodeinfo/2.0 nodeInfoGet
@@ -45,26 +45,21 @@ import (
 //     schema:
 //       "$ref": "#/definitions/nodeinfo"
 func (m *Module) NodeInfoGETHandler(c *gin.Context) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":       "NodeInfoGETHandler",
-		"user-agent": c.Request.UserAgent(),
-	})
-
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	ni, err := m.processor.GetNodeInfo(c.Request.Context(), c.Request)
+	ni, errWithCode := m.processor.GetNodeInfo(c.Request.Context(), c.Request)
+	if errWithCode != nil {
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		return
+	}
+
+	b, err := json.Marshal(ni)
 	if err != nil {
-		l.Debugf("error with get node info request: %s", err)
-		c.JSON(err.Code(), err.Safe())
+		api.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
 		return
-	}
-
-	b, jsonErr := json.Marshal(ni)
-	if jsonErr != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": jsonErr.Error()})
 	}
 
 	c.Data(http.StatusOK, `application/json; profile="http://nodeinfo.diaspora.software/ns/schema/2.0#"`, b)

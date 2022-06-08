@@ -19,6 +19,7 @@
 package web
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -29,6 +30,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
@@ -118,24 +120,6 @@ func (m *Module) baseHandler(c *gin.Context) {
 	})
 }
 
-// NotFoundHandler serves a 404 html page instead of a blank 404 error.
-func (m *Module) NotFoundHandler(c *gin.Context) {
-	l := logrus.WithField("func", "404")
-	l.Trace("serving 404 html")
-
-	host := config.GetHost()
-	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
-	if err != nil {
-		l.Debugf("error getting instance from processor: %s", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
-		return
-	}
-
-	c.HTML(404, "404.tmpl", gin.H{
-		"instance": instance,
-	})
-}
-
 // TODO: abstract the {admin, user}panel handlers in some way
 func (m *Module) AdminPanelHandler(c *gin.Context) {
 	l := logrus.WithField("func", "admin-panel")
@@ -210,16 +194,18 @@ func (m *Module) Route(s router.Router) error {
 	s.AttachHandler(http.MethodGet, "/", m.baseHandler)
 
 	// serve profile pages at /@username
-	s.AttachHandler(http.MethodGet, profilePath, m.profileTemplateHandler)
+	s.AttachHandler(http.MethodGet, profilePath, m.profileGETHandler)
 
 	// serve statuses
-	s.AttachHandler(http.MethodGet, statusPath, m.threadTemplateHandler)
+	s.AttachHandler(http.MethodGet, statusPath, m.threadGETHandler)
 
 	// serve email confirmation page at /confirm_email?token=whatever
 	s.AttachHandler(http.MethodGet, confirmEmailPath, m.confirmEmailGETHandler)
 
 	// 404 handler
-	s.AttachNoRouteHandler(m.NotFoundHandler)
+	s.AttachNoRouteHandler(func(c *gin.Context) {
+		api.ErrorHandler(c, gtserror.NewErrorNotFound(errors.New(http.StatusText(http.StatusNotFound))), m.processor.InstanceGet)
+	})
 
 	return nil
 }

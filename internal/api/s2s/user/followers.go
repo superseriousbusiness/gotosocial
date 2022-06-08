@@ -20,48 +20,45 @@ package user
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // FollowersGETHandler returns a collection of URIs for followers of the target user, formatted so that other AP servers can understand it.
 func (m *Module) FollowersGETHandler(c *gin.Context) {
-	l := logrus.WithFields(logrus.Fields{
-		"func": "FollowersGETHandler",
-		"url":  c.Request.RequestURI,
-	})
-
-	requestedUsername := c.Param(UsernameKey)
+	// usernames on our instance are always lowercase
+	requestedUsername := strings.ToLower(c.Param(UsernameKey))
 	if requestedUsername == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no username specified in request"})
+		err := errors.New("no username specified in request")
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	format, err := api.NegotiateAccept(c, api.ActivityPubAcceptHeaders...)
+	format, err := api.NegotiateAccept(c, api.HTMLOrActivityPubHeaders...)
 	if err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
-	l.Tracef("negotiated format: %s", format)
 
-	ctx := transferContext(c)
+	if format == string(api.TextHTML) {
+		// redirect to the user's profile
+		c.Redirect(http.StatusSeeOther, "/@"+requestedUsername)
+	}
 
-	followers, errWithCode := m.processor.GetFediFollowers(ctx, requestedUsername, c.Request.URL)
+	resp, errWithCode := m.processor.GetFediFollowers(transferContext(c), requestedUsername, c.Request.URL)
 	if errWithCode != nil {
-		l.Info(errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 
-	b, mErr := json.Marshal(followers)
-	if mErr != nil {
-		err := fmt.Errorf("could not marshal json: %s", mErr)
-		l.Error(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	b, err := json.Marshal(resp)
+	if err != nil {
+		api.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
 		return
 	}
 

@@ -60,7 +60,7 @@ func (e withCode) Code() int {
 
 // NewErrorBadRequest returns an ErrorWithCode 400 with the given original error and optional help text.
 func NewErrorBadRequest(original error, helpText ...string) WithCode {
-	safe := "bad request"
+	safe := http.StatusText(http.StatusBadRequest)
 	if helpText != nil {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
@@ -71,9 +71,9 @@ func NewErrorBadRequest(original error, helpText ...string) WithCode {
 	}
 }
 
-// NewErrorNotAuthorized returns an ErrorWithCode 401 with the given original error and optional help text.
-func NewErrorNotAuthorized(original error, helpText ...string) WithCode {
-	safe := "not authorized"
+// NewErrorUnauthorized returns an ErrorWithCode 401 with the given original error and optional help text.
+func NewErrorUnauthorized(original error, helpText ...string) WithCode {
+	safe := http.StatusText(http.StatusUnauthorized)
 	if helpText != nil {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
@@ -86,7 +86,7 @@ func NewErrorNotAuthorized(original error, helpText ...string) WithCode {
 
 // NewErrorForbidden returns an ErrorWithCode 403 with the given original error and optional help text.
 func NewErrorForbidden(original error, helpText ...string) WithCode {
-	safe := "forbidden"
+	safe := http.StatusText(http.StatusForbidden)
 	if helpText != nil {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
@@ -99,7 +99,7 @@ func NewErrorForbidden(original error, helpText ...string) WithCode {
 
 // NewErrorNotFound returns an ErrorWithCode 404 with the given original error and optional help text.
 func NewErrorNotFound(original error, helpText ...string) WithCode {
-	safe := "404 not found"
+	safe := http.StatusText(http.StatusNotFound)
 	if helpText != nil {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
@@ -112,7 +112,7 @@ func NewErrorNotFound(original error, helpText ...string) WithCode {
 
 // NewErrorInternalError returns an ErrorWithCode 500 with the given original error and optional help text.
 func NewErrorInternalError(original error, helpText ...string) WithCode {
-	safe := "internal server error"
+	safe := http.StatusText(http.StatusInternalServerError)
 	if helpText != nil {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
@@ -125,7 +125,7 @@ func NewErrorInternalError(original error, helpText ...string) WithCode {
 
 // NewErrorConflict returns an ErrorWithCode 409 with the given original error and optional help text.
 func NewErrorConflict(original error, helpText ...string) WithCode {
-	safe := "conflict"
+	safe := http.StatusText(http.StatusConflict)
 	if helpText != nil {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
@@ -133,5 +133,31 @@ func NewErrorConflict(original error, helpText ...string) WithCode {
 		original: original,
 		safe:     errors.New(safe),
 		code:     http.StatusConflict,
+	}
+}
+
+// NewErrorNotAcceptable returns an ErrorWithCode 406 with the given original error and optional help text.
+func NewErrorNotAcceptable(original error, helpText ...string) WithCode {
+	safe := http.StatusText(http.StatusNotAcceptable)
+	if helpText != nil {
+		safe = safe + ": " + strings.Join(helpText, ": ")
+	}
+	return withCode{
+		original: original,
+		safe:     errors.New(safe),
+		code:     http.StatusNotAcceptable,
+	}
+}
+
+// NewErrorUnprocessableEntity returns an ErrorWithCode 422 with the given original error and optional help text.
+func NewErrorUnprocessableEntity(original error, helpText ...string) WithCode {
+	safe := http.StatusText(http.StatusUnprocessableEntity)
+	if helpText != nil {
+		safe = safe + ": " + strings.Join(helpText, ": ")
+	}
+	return withCode{
+		original: original,
+		safe:     errors.New(safe),
+		code:     http.StatusUnprocessableEntity,
 	}
 }
