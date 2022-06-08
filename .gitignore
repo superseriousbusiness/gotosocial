@@ -24,3 +24,6 @@ example/docker-compose/docker-volume
 
 # excludes debug build
 cmd/gotosocial/__debug_bin
+
+# ignore f0x' nix-shell
+shell.nix
