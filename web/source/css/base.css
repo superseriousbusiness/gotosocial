@@ -70,6 +70,7 @@ header {
 
 		h1 {
 			align-self: center;
+			color: $fg;
 		}
 	}
 }
