@@ -7,11 +7,18 @@ html, body {
 }
 
 body {
+	line-height: 1.5em;
+	min-height: 100vh;
+	position: relative;
+}
+
+.page {
+	position: absolute;
 	display: grid;
+	min-height: 100%;
+	min-width: 100%;
 
 	grid-template-rows: auto 1fr auto;
-	min-height: 100vh;
-	line-height: 1.5em;
 }
 
 main {
