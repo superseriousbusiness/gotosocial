@@ -55,13 +55,13 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	if !ok || userID == "" {
 		form := &model.OAuthAuthorize{}
 		if err := c.ShouldBind(form); err != nil {
-			defer m.clearSession(s)
+			m.clearSession(s)
 			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, helpfulAdvice), m.processor.InstanceGet)
 			return
 		}
 
 		if errWithCode := saveAuthFormToSession(s, form); errWithCode != nil {
-			defer m.clearSession(s)
+			m.clearSession(s)
 			api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 			return
 		}
@@ -73,7 +73,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	// use session information to validate app, user, and account for this request
 	clientID, ok := s.Get(sessionClientID).(string)
 	if !ok || clientID == "" {
-		defer m.clearSession(s)
+		m.clearSession(s)
 		err := fmt.Errorf("key %s was not found in session", sessionClientID)
 		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, helpfulAdvice), m.processor.InstanceGet)
 		return
@@ -81,7 +81,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 
 	app := &gtsmodel.Application{}
 	if err := m.db.GetWhere(c.Request.Context(), []db.Where{{Key: sessionClientID, Value: clientID}}, app); err != nil {
-		defer m.clearSession(s)
+		m.clearSession(s)
 		safe := fmt.Sprintf("application for %s %s could not be retrieved", sessionClientID, clientID)
 		var errWithCode gtserror.WithCode
 		if err == db.ErrNoEntries {
@@ -95,7 +95,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 
 	user := &gtsmodel.User{}
 	if err := m.db.GetByID(c.Request.Context(), userID, user); err != nil {
-		defer m.clearSession(s)
+		m.clearSession(s)
 		safe := fmt.Sprintf("user with id %s could not be retrieved", userID)
 		var errWithCode gtserror.WithCode
 		if err == db.ErrNoEntries {
@@ -109,7 +109,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 
 	acct, err := m.db.GetAccountByID(c.Request.Context(), user.AccountID)
 	if err != nil {
-		defer m.clearSession(s)
+		m.clearSession(s)
 		safe := fmt.Sprintf("account with id %s could not be retrieved", user.AccountID)
 		var errWithCode gtserror.WithCode
 		if err == db.ErrNoEntries {
@@ -128,7 +128,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	// Finally we should also get the redirect and scope of this particular request, as stored in the session.
 	redirect, ok := s.Get(sessionRedirectURI).(string)
 	if !ok || redirect == "" {
-		defer m.clearSession(s)
+		m.clearSession(s)
 		err := fmt.Errorf("key %s was not found in session", sessionRedirectURI)
 		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, helpfulAdvice), m.processor.InstanceGet)
 		return
@@ -136,7 +136,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 
 	scope, ok := s.Get(sessionScope).(string)
 	if !ok || scope == "" {
-		defer m.clearSession(s)
+		m.clearSession(s)
 		err := fmt.Errorf("key %s was not found in session", sessionScope)
 		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, helpfulAdvice), m.processor.InstanceGet)
 		return
@@ -202,7 +202,7 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 
 	user := &gtsmodel.User{}
 	if err := m.db.GetByID(c.Request.Context(), userID, user); err != nil {
-		defer m.clearSession(s)
+		m.clearSession(s)
 		safe := fmt.Sprintf("user with id %s could not be retrieved", userID)
 		var errWithCode gtserror.WithCode
 		if err == db.ErrNoEntries {
@@ -216,7 +216,7 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 
 	acct, err := m.db.GetAccountByID(c.Request.Context(), user.AccountID)
 	if err != nil {
-		defer m.clearSession(s)
+		m.clearSession(s)
 		safe := fmt.Sprintf("account with id %s could not be retrieved", user.AccountID)
 		var errWithCode gtserror.WithCode
 		if err == db.ErrNoEntries {
