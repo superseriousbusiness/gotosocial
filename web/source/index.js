@@ -27,12 +27,21 @@ const budoExpress = require('@f0x52/budo-express');
 const babelify = require('babelify');
 const icssify = require("icssify");
 const fs = require("fs");
-
-const {Writable} = require("stream");
+const EventEmitter = require('events');
 
 function out(name = "") {
 	return path.join(__dirname, "../assets/dist/", name);
 }
+
+module.exports = {out};
+
+const splitCSS = require("./lib/split-css.js");
+
+const bundles = {
+	"./frontend/index.js": "frontend.js",
+	"./panels/admin/index.js": "admin-panel.js",
+	"./panels/user/index.js": "user-panel.js",
+};
 
 const postcssPlugins = [
 	"postcss-import",
@@ -43,53 +52,6 @@ const postcssPlugins = [
 	"postcss-color-mod-function"
 ].map((plugin) => require(plugin)());
 
-const fromRegex = /\/\* from (.+?) \*\//;
-function splitCSS() {
-	let chunks = [];
-	return new Writable({
-		write: function(chunk, encoding, next) {
-			chunks.push(chunk);
-			next();
-		},
-		final: function() {
-			let stream = chunks.join("");
-			let input;
-			let content = [];
-
-			function write() {
-				if (content.length != 0) {
-					if (input == undefined) {
-						throw new Error("Got CSS content without filename, can't output: ", content);
-					} else {
-						console.log("writing to", out(input));
-						fs.writeFileSync(out(input), content.join("\n"));
-					}
-					content = [];
-				}
-			}
-
-			stream.split("\n").forEach((line) => {
-				if (line.startsWith("/* from")) {
-					let found = fromRegex.exec(line);
-					if (found != null) {
-						write();
-
-						let parts = path.parse(found[1]);
-						if (parts.dir == "css") {
-							input = parts.base;
-						} else {
-							input = found[1].replace(/\//g, "-");
-						}
-					}
-				} else {
-					content.push(line);
-				}
-			});
-			write();
-		}
-	});
-}
-
 const browserifyConfig = {
 	transform: babelify.configure({ presets: [require.resolve("@babel/preset-env"), require.resolve("@babel/preset-react")] }),
 	plugin: [
@@ -99,20 +61,25 @@ const browserifyConfig = {
 			mode: 'global'
 		}],
 		[require("css-extract"), { out: splitCSS }],
-		[require("factor-bundle"), { outputs: [out("/admin-panel.js"), out("user-panel.js")] }]
+		[require("factor-bundle"), {
+			outputs: Object.values(bundles).map((file) => {
+				return out(file);
+			})
+		}]
 	]
 };
 
-const entryFiles = [
-	'./panels/admin/index.js',
-	'./panels/user/index.js',
-];
+const entryFiles = Object.keys(bundles);
 
 fs.readdirSync(path.join(__dirname, "./css")).forEach((file) => {
 	entryFiles.push(path.join(__dirname, "./css", file));
 });
 
-budoExpress({
+if (!fs.existsSync(out())){
+	fs.mkdirSync(out(), { recursive: true });
+}
+
+const server = budoExpress({
 	port: 8081,
 	host: "localhost",
 	entryFiles: entryFiles,
@@ -122,7 +89,10 @@ budoExpress({
 	expressApp: require("./dev-server.js"),
 	browserify: browserifyConfig,
 	livereloadPattern: "**/*.{html,js,svg}"
-}).on("update", (contents) => {
-	console.log("writing bundle.js to dist/");
-	fs.writeFileSync(out("bundle.js"), contents);
 });
+
+if (server instanceof EventEmitter) {
+	server.on("update", (contents) => {
+		fs.writeFileSync(out("bundle.js"), contents);
+	});
+}
