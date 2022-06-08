@@ -111,6 +111,9 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 			"/assets/dist/status.css",
 			"/assets/dist/profile.css",
 		},
+		"javascript": []string{
+			"/assets/dist/frontend.js",
+		},
 	})
 }
 
