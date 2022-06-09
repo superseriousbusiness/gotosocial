@@ -1,7 +1,7 @@
 {
-  "name": "gotosocial-admin",
-  "version": "0.0.1",
-  "description": "GoToSocial Admin Panel",
+  "name": "gotosocial-frontend",
+  "version": "0.3.4",
+  "description": "GoToSocial frontend sources",
   "main": "index.js",
   "author": "f0x",
   "license": "AGPL-3.0",
