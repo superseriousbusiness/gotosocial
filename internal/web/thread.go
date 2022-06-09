@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"strings"
 
@@ -34,6 +35,20 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
+
+var randAvatars = make(map[string]string)
+
+func (m *Module) ensureAvatar(status apimodel.Status) {
+	if status.Account.Avatar == "" && len(m.defaultAvatars) > 0 {
+		avatar, ok := randAvatars[status.Account.ID]
+		if !ok {
+			randomIndex := rand.Intn(len(m.defaultAvatars))
+			avatar = m.defaultAvatars[randomIndex]
+			randAvatars[status.Account.ID] = avatar
+		}
+		status.Account.Avatar = avatar
+	}
+}
 
 func (m *Module) threadGETHandler(c *gin.Context) {
 	ctx := c.Request.Context()
@@ -102,6 +117,16 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	if errWithCode != nil {
 		api.ErrorHandler(c, errWithCode, instanceGet)
 		return
+	}
+
+	m.ensureAvatar(*status)
+
+	for _, status := range context.Descendants {
+		m.ensureAvatar(status)
+	}
+
+	for _, status := range context.Ancestors {
+		m.ensureAvatar(status)
 	}
 
 	c.HTML(http.StatusOK, "thread.tmpl", gin.H{
