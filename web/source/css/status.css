@@ -32,9 +32,10 @@ main {
 	padding: 2rem;
 	/* padding-bottom: 0; */
 	display: grid;
-	grid-template-columns: 3.2rem auto 1fr;
+	grid-template-columns: 4rem auto 1fr;
 	column-gap: 0.5rem;
 	margin-bottom: 0.2rem;
+	border-radius: $br;
 
 	a {
 		position: relative;
@@ -47,9 +48,13 @@ main {
 		grid-row: span 2;
 
 		img {
-			height: 3.2rem;
-			width: 3.2rem;
+			height: 4rem;
+			width: 4rem;
 			object-fit: cover;
+			background: $acc2;
+			padding: 0.1rem;
+			box-sizing: border-box;
+			border-radius: calc($br / 1.5);
 		}
 	}
 
@@ -77,6 +82,9 @@ main {
 			position: relative;
 			z-index: 2;
 			cursor: pointer;
+		}
+		label:hover {
+			background: $acc2;
 		}
 	}
 

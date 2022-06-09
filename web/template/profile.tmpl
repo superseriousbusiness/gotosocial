@@ -1,28 +1,25 @@
 {{ template "header.tmpl" .}}
 <main>
-    {{ if .account.Header }}<a href="{{.account.Header}}" class="headerimage"><img src="{{.account.Header}}"></a>{{ end }}
     <div class="profile">
+        {{ if .account.Header }}<div href="{{.account.Header}}" class="headerimage"><img src="{{.account.Header}}"></div>{{ end }}
         <div class="basic">
+            <a href="{{.account.Avatar}}" class="avatar"><img src="{{.account.Avatar}}"></a>
             <a href="{{.account.URL}}" class="displayname">{{if .account.DisplayName}}{{.account.DisplayName}}{{else}}{{.account.Username}}{{end}}</a>
             <a href="{{.account.URL}}" class="username">@{{.account.Username}}</a>
-            <div class="avatar-container">
-                <a href="{{.account.Avatar}}" class="avatar"><img src="{{.account.Avatar}}"></a>
-            </div>
         </div>
         <div class="detailed">
-            <h2>About @{{.account.Username}}</h2>
             <div class="bio">
                 {{ if .account.Note }}{{ .account.Note | noescape }}{{else}}This GoToSocial user hasn't written a bio yet!{{end}}
             </div>
         </div>
+        <div class="accountstats">
+            <div class="entry">Joined <b>{{.account.CreatedAt | timestampShort}}</b></div>
+            <div class="entry">Followed by <b>{{.account.FollowersCount}}</b></div>
+            <div class="entry">Following <b>{{.account.FollowingCount}}</b></div>
+            <div class="entry">Posted <b>{{.account.StatusesCount}}</b></div>
+        </div>
     </div>
-    <div class="accountstats">
-        <div class="entry">Joined {{.account.CreatedAt | timestampShort}}</div>
-        <div class="entry">Followed by {{.account.FollowersCount}}</div>
-        <div class="entry">Following {{.account.FollowingCount}}</div>
-        <div class="entry">Posted {{.account.StatusesCount}}</div>
-    </div>
-    <h2>Recent public posts by @{{.account.Username}}</h2>
+    <h2 id="recent">Recent public toots</h2>
 	<div class="thread">
 		{{range .statuses}}
 		<div class="toot expanded">

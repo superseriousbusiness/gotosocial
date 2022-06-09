@@ -18,76 +18,87 @@
 
 main {
 	background: transparent;
-}
-
-.headerimage {
-	img {
-		width: 100%;
-		height: 15em;
-		object-fit: cover;
-		border-radius: 10px;
-	}
+	padding-top: 0;
 }
 
 .profile {
 	position: relative;
 	background: $bg_darker3;
-	padding: 2rem;
-	display: flex;
+	display: grid;
+	grid-template-rows: minmax(6rem, 20%) auto auto;
+	grid-template-columns: 1fr;
 	flex-wrap: wrap;
 	justify-content: space-around;
 	gap: 0.5rem;
 	margin-bottom: 0.2rem;
+	border-radius: $br;
+
+	box-shadow: $boxshadow;
+
+	.headerimage {
+		aspect-ratio: 3 / 1;
+		overflow: hidden;
+		box-shadow: $boxshadow;
+
+		img {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			border-radius: $br $br 0 0;
+		}
+	}
 
 	.basic {
-		display: flex;
-		flex-direction: column;
-		flex: 1 1 25em;
-		gap: 0.5rem;
+		margin-top: -7rem;
+		padding: 0 1rem;
+
+		display: grid;
+		grid-template-columns: auto 1fr;
+		grid-template-rows: 6.5rem auto;
+
+		.avatar {
+			box-sizing: border-box;
+			height: 8.5rem;
+			width: 8.5rem;
+			grid-row: 1 / span 2;
+			background: $acc2;
+			padding: 0.2rem;
+			border-radius: $br;
+			position: relative;
+
+			box-shadow: $boxshadow;
+			img {
+				object-fit: cover;
+				border-radius: $br;
+				width: 100%;
+				height: 100%;
+			}
+		}
 
 		a {
 			position: relative;
 			z-index: 1;
 			color: inherit;
 			text-decoration: none;
+			padding: 0.5rem;
 		}
-
-		.avatar-container {
-			position: relative;
-			width: 100%;
-			max-width: 25em;
-
-			.avatar {
-				position: absolute;
-				top: 0;
-				left: 0;
-				bottom: 0;
-				right: 0;
-
-				img {
-					object-fit: cover;
-					border-radius: 10px;
-					width: 100%;
-					height: 100%;
-				}
-			}
-		}
-
-		.avatar-container:before {
-			content: "";
-			float: left;
-			padding-top: 100%;
-		}
-
 
 		.displayname {
+			align-self: end;
 			font-weight: bold;
-			font-size: 1.6rem;
-			align-self: start;
+			font-size: 2rem;
+			line-height: 2.2rem;
+		}
+
+		.username {
+			padding-top: 0.25rem;
+			color: $acc1;
+			font-weight: bold;
 		}
 	}
 
 	.detailed {
+		padding: 0 1rem;
 		display: flex;
 		flex-direction: column;
 		flex: 1 1 25em;
@@ -108,24 +119,25 @@ main {
 }
 
 .accountstats {
-	position: relative;
-	background: $bg_darker3;
-	padding: 0.5rem;
+	background: $bg_lighter3;
 	display: flex;
 	flex-wrap: wrap;
-	justify-content: space-evenly;
-	gap: 0.5rem;
-	margin-bottom: 0.2rem;
+	justify-content: space-between;
+	padding: 0 1.2rem;
+	border-radius: 0 0 $br $br;
 
 	.entry {
-		background: $bg_lighter3;
-		padding: 0.5rem;
-		flex-grow: 1;
+		padding: 1rem 0;
 		text-align: center;
 	}
 }
 
-footer + div {
-	/* something weird from the devstack.. */
-	display: none;
+.toot, .toot:last-child {
+	padding: 1.5rem;
+	border-radius: $br;
+	box-shadow: $boxshadow;
+}
+
+#recent {
+	margin-left: 1rem;
 }
