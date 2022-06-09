@@ -1,0 +1,141 @@
+/*
+   GoToSocial
+   Copyright (C) 2021-2022 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+body {
+	grid-template-rows: auto 1fr;
+}
+
+.capitalize {
+	text-transform: capitalize;
+}
+
+section {
+	margin-bottom: 1rem;
+}
+
+input, select, textarea {
+	box-sizing: border-box;
+}
+
+section.info {
+	form {
+		grid-template-columns: auto 1fr;
+		width: calc(100% - 0.35rem);
+
+		input {
+			width: 100%;
+			line-height: 1.5rem;
+		}
+
+		label, input {
+			padding: 0.2rem 0.5rem;
+		}
+
+		input[type=checkbox] {
+			justify-self: start;
+			width: initial;
+		}
+
+		input:read-only {
+			border: none;
+		}
+
+		input:invalid {
+			border-color: red;
+		}
+	}
+
+	textarea {
+		width: 100%;
+		height: 8rem;
+	}
+
+	h1 {
+		display: flex;
+		justify-content: space-between;
+		margin-bottom: 0.5rem;
+	}
+}
+
+section.blocks {
+	.overflow {
+		max-height: 80vh;
+		overflow-y: auto;
+	}
+
+	.blocklist {
+		display: grid;
+		grid-template-columns: auto 1fr auto;
+		grid-gap: 0.35rem 0;
+		
+		div {
+			background: rgb(70, 79, 88);
+			padding: 0.2rem 0.4rem;
+		}
+	}
+
+	.addblock {
+		display: grid;
+		grid-template-columns: 1fr auto auto;
+		grid-gap: 0.35rem;
+
+		input, select {
+			font-size: 1.2rem;
+		}
+
+		input, select, textarea {
+			padding: 0.5rem;
+		}
+
+		div {
+			grid-column: 1/4;
+		}
+
+		div.single input {
+			width: initial;
+		}
+	}
+
+	h3 {
+		margin-bottom: 0;
+	}
+
+	.controls {
+		display: flex;
+		gap: 0.5rem;
+	}
+}
+
+.error {
+	font-weight: bold;
+}
+
+.hidden {
+	display: none;
+}
+
+.notImplemented {
+	border: 2px solid rgb(70, 79, 88);
+	background: repeating-linear-gradient(
+		-45deg,
+		#525c66,
+		#525c66 10px,
+		rgb(70, 79, 88) 10px,
+		rgb(70, 79, 88) 20px
+	) !important;
+}

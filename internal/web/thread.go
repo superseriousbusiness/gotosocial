@@ -105,10 +105,16 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "thread.tmpl", gin.H{
-		"instance":    instance,
-		"status":      status,
-		"context":     context,
-		"stylesheets": []string{"/assets/Fork-Awesome/css/fork-awesome.min.css", "/assets/status.css"},
+		"instance": instance,
+		"status":   status,
+		"context":  context,
+		"stylesheets": []string{
+			"/assets/Fork-Awesome/css/fork-awesome.min.css",
+			"/assets/dist/status.css",
+		},
+		"javascript": []string{
+			"/assets/dist/frontend.js",
+		},
 	})
 }
 

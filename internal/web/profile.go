@@ -108,8 +108,11 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		"statuses": statusResp.Items,
 		"stylesheets": []string{
 			"/assets/Fork-Awesome/css/fork-awesome.min.css",
-			"/assets/status.css",
-			"/assets/profile.css",
+			"/assets/dist/status.css",
+			"/assets/dist/profile.css",
+		},
+		"javascript": []string{
+			"/assets/dist/frontend.js",
 		},
 	})
 }
