@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -72,13 +71,6 @@ func (m *Module) DomainBlocksGETHandler(c *gin.Context) {
 
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
 		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
-		return
-	}
-
-	domainBlockID := c.Param(IDKey)
-	if domainBlockID == "" {
-		err := errors.New("no domain block id specified")
-		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
