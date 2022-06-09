@@ -24,17 +24,19 @@ main {
 .thread {
 	display: flex;
 	flex-direction: column;
+	border-radius: $br;
+	background: $bg_darker5;
+	box-shadow: $boxshadow;
 }
 
 .toot {
 	position: relative;
 	background: $bg_darker3;
-	padding: 2rem;
-	/* padding-bottom: 0; */
+	padding: 1.5rem;
 	display: grid;
 	grid-template-columns: 4rem auto 1fr;
 	column-gap: 0.5rem;
-	margin-bottom: 0.2rem;
+	margin-bottom: $br;
 	border-radius: $br;
 
 	a {
@@ -211,16 +213,16 @@ main {
 		z-index: 0;
 	}
 
-	$border-radius: 0.3rem;
 	&:first-child {
 		/* top left, top right */
-		border-radius: $border-radius $border-radius 0 0;
+		border-radius: $br $br 0 0;
 	}
 
 	&:last-child {
 		/* bottom left, bottom right */
-		border-radius: 0 0 $border-radius $border-radius;
+		border-radius: 0 0 $br $br;
 		padding-bottom: 1.5rem;
+		margin-bottom: 0;
 	}
 
 	&.expanded {

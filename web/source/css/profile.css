@@ -133,8 +133,6 @@ main {
 }
 
 .toot, .toot:last-child {
-	padding: 1.5rem;
-	border-radius: $br;
 	box-shadow: $boxshadow;
 }
 
