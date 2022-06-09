@@ -27,7 +27,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -104,14 +103,10 @@ func New(processor processing.Processor) (api.ClientModule, error) {
 }
 
 func (m *Module) baseHandler(c *gin.Context) {
-	l := logrus.WithField("func", "BaseGETHandler")
-	l.Trace("serving index html")
-
 	host := config.GetHost()
 	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
 	if err != nil {
-		l.Debugf("error getting instance from processor: %s", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		api.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
 		return
 	}
 
@@ -122,14 +117,10 @@ func (m *Module) baseHandler(c *gin.Context) {
 
 // TODO: abstract the {admin, user}panel handlers in some way
 func (m *Module) AdminPanelHandler(c *gin.Context) {
-	l := logrus.WithField("func", "admin-panel")
-	l.Trace("serving admin panel")
-
 	host := config.GetHost()
 	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
 	if err != nil {
-		l.Debugf("error getting instance from processor: %s", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		api.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
 		return
 	}
 
@@ -147,14 +138,10 @@ func (m *Module) AdminPanelHandler(c *gin.Context) {
 }
 
 func (m *Module) UserPanelHandler(c *gin.Context) {
-	l := logrus.WithField("func", "user-panel")
-	l.Trace("serving user panel")
-
 	host := config.GetHost()
 	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
 	if err != nil {
-		l.Debugf("error getting instance from processor: %s", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		api.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
 		return
 	}
 
