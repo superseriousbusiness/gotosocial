@@ -36,6 +36,7 @@ main {
 	box-shadow: $boxshadow;
 
 	.headerimage {
+		height: 100%;
 		aspect-ratio: 3 / 1;
 		overflow: hidden;
 		box-shadow: $boxshadow;
@@ -134,6 +135,11 @@ main {
 
 .toot, .toot:last-child {
 	box-shadow: $boxshadow;
+
+	.avatar img {
+		padding-right: 0.15rem;
+		padding-top: 0.15rem;
+	}
 }
 
 #recent {

@@ -1,7 +1,11 @@
 {{ template "header.tmpl" .}}
 <main>
     <div class="profile">
-        {{ if .account.Header }}<div href="{{.account.Header}}" class="headerimage"><img src="{{.account.Header}}"></div>{{ end }}
+        <div class="headerimage">
+            {{ if .account.Header }}
+            <img src="{{.account.Header}}"/>
+            {{ end }}
+        </div>
         <div class="basic">
             <a href="{{.account.Avatar}}" class="avatar"><img src="{{.account.Avatar}}"></a>
             <a href="{{.account.URL}}" class="displayname">{{if .account.DisplayName}}{{.account.DisplayName}}{{else}}{{.account.Username}}{{end}}</a>
