@@ -25,7 +25,6 @@
 const path = require('path');
 const budoExpress = require('@f0x52/budo-express');
 const babelify = require('babelify');
-const icssify = require("icssify");
 const fs = require("fs");
 const EventEmitter = require('events');
 
@@ -60,13 +59,13 @@ const browserifyConfig = {
 				require.resolve("@babel/preset-react")
 			]
 		}),
-		["uglifyify", {
+		[require("uglifyify"), {
 			global: true,
 			exts: ".js"
 		}]
 	],
 	plugin: [
-		[icssify, {
+		[require("icssify"), {
 			parser: require('postcss-scss'),
 			before: postcssPlugins,
 			mode: 'global'
