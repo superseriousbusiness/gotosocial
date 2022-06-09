@@ -28,7 +28,8 @@ Check the [issues](https://github.com/superseriousbusiness/gotosocial/issues) to
 - [Updating Swagger docs](#updating-swagger-docs)
 - [CI/CD configuration](#cicd-configuration)
 - [Release Checklist](#release-checklist)
-- [Building releases and Docker containers](#building-releases-and-docker-containers)
+  - [What if something goes wrong?](#what-if-something-goes-wrong)
+- [Building Docker containers](#building-docker-containers)
   - [With GoReleaser](#with-goreleaser)
   - [Manually](#manually)
 - [Financial Compensation](#financial-compensation)
@@ -187,7 +188,7 @@ Finally, to run tests against both database types one after the other, use:
 
 ### CLI Tests
 
-In [./test/cliparsing.sh](./test/cliparsing.sh) there are a bunch of tests for making sure that CLI flags, config, and environment variables get parsed as expected.
+In [./test/cliparsing.sh](./test/cliparsing.sh) and [./test/envparsing.sh](./test/envparsing.sh) there are a bunch of tests for making sure that CLI flags, config, and environment variables get parsed as expected.
 
 Although these tests *are* part of the CI/CD testing process, you probably won't need to worry too much about running them yourself. That is, unless you're messing about with code inside the `main` package in `cmd/gotosocial`, or inside the `config` package in `internal/config`.
 
@@ -301,7 +302,9 @@ That is: Delete the tag.
 
 Either way, once we've fixed the issue, we just start from the top of this list again. Version numbers are cheap. It's cheap to burn them.
 
-## Building releases and Docker containers
+## Building Docker containers
+
+For both of the below methods, you need to have [Docker buildx](https://docs.docker.com/buildx/working-with-buildx/) installed.
 
 ### With GoReleaser
 
@@ -313,21 +316,29 @@ Normally, these processes are handled by Drone (see CI/CD above). However, you c
 
 To do this, first [install GoReleaser](https://goreleaser.com/install/).
 
-Then, to create snapshot builds, do:
+Then install GoSwagger as described in [the Swagger section](#updating-swagger-docs).
+
+Then install Node and Yarn as described in [Stylesheet / Web dev](#stylesheet--web-dev).
+
+Finally, to create a snapshot build, do:
 
 ```bash
-goreleaser release --rm-dist --snapshot
+goreleaser --rm-dist --snapshot
 ```
 
-If all goes according to plan, you should now have a bunch of multiple-architecture binaries and tars inside the `./dist` folder, and a snapshot Docker image should be built (check your terminal output for version).
+If all goes according to plan, you should now have a bunch of multiple-architecture binaries and tars inside the `./dist` folder, and snapshot Docker images should be built (check your terminal output for version).
 
 ### Manually
 
-If you prefer a simple approach with fewer dependencies, you can also just build a Docker container manually in the following way:
+If you prefer a simple approach to building a Docker container, with fewer dependencies, you can also just build in the following way:
 
 ```bash
-./scripts/build.sh && docker build -t superseriousbusiness/gotosocial:latest .
+./scripts/build.sh && docker buildx build -t superseriousbusiness/gotosocial:latest .
 ```
+
+The above command first builds the `gotosocial` binary, then invokes Docker buildx to build the container image.
+
+You don't need to install go-swagger, Node, or Yarn to build Docker images this way.
 
 ## Financial Compensation
 
