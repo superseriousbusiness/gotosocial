@@ -42,6 +42,7 @@ func (m *Module) ensureAvatar(status apimodel.Status) {
 	if status.Account.Avatar == "" && len(m.defaultAvatars) > 0 {
 		avatar, ok := randAvatars[status.Account.ID]
 		if !ok {
+			//nolint:gosec
 			randomIndex := rand.Intn(len(m.defaultAvatars))
 			avatar = m.defaultAvatars[randomIndex]
 			randAvatars[status.Account.ID] = avatar
