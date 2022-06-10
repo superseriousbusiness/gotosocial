@@ -48,14 +48,15 @@ main {
 
 	.avatar {
 		grid-row: span 2;
+		aspect-ratio: 1/1;
 
 		img {
-			height: 4rem;
-			width: 4rem;
+			height: 100%;
+			width: 100%;
 			object-fit: cover;
-			background: $acc2;
-			padding: 0.1rem;
-			box-sizing: border-box;
+			background: $bg;
+			border: 0.1rem solid $acc2;
+			/* box-sizing: border-box; */
 			border-radius: calc($br / 1.5);
 		}
 	}

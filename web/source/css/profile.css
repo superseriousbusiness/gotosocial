@@ -62,8 +62,9 @@ main {
 			height: 8.5rem;
 			width: 8.5rem;
 			grid-row: 1 / span 2;
-			background: $acc2;
-			padding: 0.2rem;
+			background: $bg;
+			border: 0.2rem solid $acc2;
+			padding: 0;
 			border-radius: $br;
 			position: relative;
 
@@ -135,11 +136,6 @@ main {
 
 .toot, .toot:last-child {
 	box-shadow: $boxshadow;
-
-	.avatar img {
-		padding-right: 0.15rem;
-		padding-top: 0.15rem;
-	}
 }
 
 #recent {
