@@ -99,7 +99,7 @@ func (suite *AuthStandardTestSuite) SetupTest() {
 	if err != nil {
 		panic(err)
 	}
-	suite.authModule = auth.New(suite.db, suite.oauthServer, suite.idp, suite.processor).(*auth.Module)
+	suite.authModule = auth.New(suite.db, suite.idp, suite.processor).(*auth.Module)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 }
 

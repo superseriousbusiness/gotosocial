@@ -152,6 +152,9 @@ type Processor interface {
 	// NotificationsGet
 	NotificationsGet(ctx context.Context, authed *oauth.Auth, limit int, maxID string, sinceID string) (*apimodel.TimelineResponse, gtserror.WithCode)
 
+	OAuthHandleTokenRequest(w http.ResponseWriter, r *http.Request) gtserror.WithCode
+	OAuthHandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) gtserror.WithCode
+
 	// SearchGet performs a search with the given params, resolving/dereferencing remotely as desired
 	SearchGet(ctx context.Context, authed *oauth.Auth, searchQuery *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode)
 

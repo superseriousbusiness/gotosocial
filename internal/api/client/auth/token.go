@@ -72,7 +72,7 @@ func (m *Module) TokenPOSTHandler(c *gin.Context) {
 
 	// pass the writer and request into the oauth server handler, which will
 	// take care of writing the oauth token into the response etc
-	if err := m.server.HandleTokenRequest(c.Writer, c.Request); err != nil {
+	if err := m.processor.OAuthHandleTokenRequest(c.Writer, c.Request); err != nil {
 		api.ErrorHandler(c, gtserror.NewErrorInternalError(err, helpfulAdvice), m.processor.InstanceGet)
 	}
 }
