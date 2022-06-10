@@ -40,6 +40,12 @@ func (suite *AccountTestSuite) TestGetAccountStatuses() {
 	suite.Len(statuses, 5)
 }
 
+func (suite *AccountTestSuite) TestGetAccountStatusesMediaOnly() {
+	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, false, false, "", "", false, true, false)
+	suite.NoError(err)
+	suite.Len(statuses, 1)
+}
+
 func (suite *AccountTestSuite) TestGetAccountByIDWithExtras() {
 	account, err := suite.db.GetAccountByID(context.Background(), suite.testAccounts["local_account_1"].ID)
 	if err != nil {

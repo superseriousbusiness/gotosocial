@@ -25,11 +25,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect"
 )
 
 type accountDB struct {
@@ -268,14 +270,24 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 	if mediaOnly {
 		// attachments are stored as a json object;
 		// this implementation differs between sqlite and postgres,
-		// so we have to be very thorough to cover all eventualities
+		// so we have to be thorough to cover all eventualities
 		q = q.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.
-				Where("? IS NOT NULL", bun.Ident("attachments")).
-				Where("? != ''", bun.Ident("attachments")).
-				Where("? != 'null'", bun.Ident("attachments")).
-				Where("? != '{}'", bun.Ident("attachments")).
-				Where("? != '[]'", bun.Ident("attachments"))
+			switch a.conn.Dialect().Name() {
+			case dialect.PG:
+				return q.
+					Where("? IS NOT NULL", bun.Ident("attachments")).
+					Where("? != '{}'", bun.Ident("attachments"))
+			case dialect.SQLite:
+				return q.
+					Where("? IS NOT NULL", bun.Ident("attachments")).
+					Where("? != ''", bun.Ident("attachments")).
+					Where("? != 'null'", bun.Ident("attachments")).
+					Where("? != '{}'", bun.Ident("attachments")).
+					Where("? != '[]'", bun.Ident("attachments"))
+			default:
+				logrus.Panic("db dialect was neither pg nor sqlite")
+				return q
+			}
 		})
 	}
 
