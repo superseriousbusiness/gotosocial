@@ -29,7 +29,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type tokenBody struct {
+type tokenRequestForm struct {
 	GrantType    *string `form:"grant_type" json:"grant_type" xml:"grant_type"`
 	Code         *string `form:"code" json:"code" xml:"code"`
 	RedirectURI  *string `form:"redirect_uri" json:"redirect_uri" xml:"redirect_uri"`
@@ -48,7 +48,7 @@ func (m *Module) TokenPOSTHandler(c *gin.Context) {
 
 	help := []string{}
 
-	form := &tokenBody{}
+	form := &tokenRequestForm{}
 	if err := c.ShouldBind(form); err != nil {
 		api.OAuthErrorHandler(c, gtserror.NewErrorBadRequest(oauth.InvalidRequest(), err.Error()))
 		return
@@ -56,33 +56,42 @@ func (m *Module) TokenPOSTHandler(c *gin.Context) {
 
 	c.Request.Form = url.Values{}
 
-	// required parameters: https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3
+	var grantType string
 	if form.GrantType != nil {
-		c.Request.Form.Set("grant_type", *form.GrantType)
+		grantType = *form.GrantType
+		c.Request.Form.Set("grant_type", grantType)
 	} else {
-		help = append(help, "grant_type was not set in the token request, but must be set to authorization_code or client_credentials")
+		help = append(help, "grant_type was not set in the token request form, but must be set to authorization_code or client_credentials")
 	}
 
 	if form.ClientID != nil {
 		c.Request.Form.Set("client_id", *form.ClientID)
 	} else {
-		help = append(help, "client_id was not set in the token request body")
+		help = append(help, "client_id was not set in the token request form")
 	}
 
 	if form.ClientSecret != nil {
 		c.Request.Form.Set("client_secret", *form.ClientSecret)
 	} else {
-		help = append(help, "client_secret was not set in the token request body")
+		help = append(help, "client_secret was not set in the token request form")
 	}
 
 	if form.RedirectURI != nil {
 		c.Request.Form.Set("redirect_uri", *form.RedirectURI)
 	} else {
-		help = append(help, "redirect_uri was not set in the token request body")
+		help = append(help, "redirect_uri was not set in the token request form")
 	}
 
+	var code string
 	if form.Code != nil {
-		c.Request.Form.Set("code", *form.Code)
+		if grantType != "authorization_code" {
+			help = append(help, "a code was provided in the token request form, but grant_type was not set to authorization_code")
+		} else {
+			code = *form.Code
+			c.Request.Form.Set("code", code)
+		}
+	} else if grantType == "authorization_code" {
+		help = append(help, "code was not set in the token request form, but must be set since grant_type is authorization_code")
 	}
 
 	if form.Scope != nil {

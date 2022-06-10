@@ -121,7 +121,7 @@ func (suite *AuthStandardTestSuite) newContext(requestMethod string, requestPath
 	host := config.GetHost()
 	baseURI := fmt.Sprintf("%s://%s", protocol, host)
 	requestURI := fmt.Sprintf("%s/%s", baseURI, requestPath)
-	
+
 	ctx.Request = httptest.NewRequest(requestMethod, requestURI, bytes.NewReader(requestBody)) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "text/html")
 
