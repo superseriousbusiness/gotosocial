@@ -16,20 +16,11 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package processing
+package oauth
 
-import (
-	"net/http"
+import "github.com/superseriousbusiness/oauth2/v4/errors"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-)
-
-func (p *processor) OAuthHandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) error {
-	// todo: some kind of metrics stuff here
-	return p.oauthServer.HandleAuthorizeRequest(w, r)
-}
-
-func (p *processor) OAuthHandleTokenRequest(r *http.Request) (map[string]interface{}, gtserror.WithCode) {
-	// todo: some kind of metrics stuff here
-	return p.oauthServer.HandleTokenRequest(r)
+// InvalidRequest returns an oauth spec compliant 'invalid_request' error.
+func InvalidRequest() error {
+	return errors.New("invalid_request")
 }

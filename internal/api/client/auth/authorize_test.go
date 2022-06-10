@@ -69,7 +69,7 @@ func (suite *AuthAuthorizeTestSuite) TestAccountAuthorizeHandler() {
 	}
 
 	doTest := func(testCase authorizeHandlerTestCase) {
-		ctx, recorder := suite.newContext(http.MethodGet, auth.OauthAuthorizePath)
+		ctx, recorder := suite.newContext(http.MethodGet, auth.OauthAuthorizePath, nil, "")
 
 		user := suite.testUsers["unconfirmed_account"]
 		account := suite.testAccounts["unconfirmed_account"]

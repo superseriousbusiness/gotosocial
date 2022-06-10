@@ -25,6 +25,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/oauth2/v4"
 	"github.com/superseriousbusiness/oauth2/v4/errors"
 	"github.com/superseriousbusiness/oauth2/v4/manage"
@@ -52,7 +53,7 @@ const (
 
 // Server wraps some oauth2 server functions in an interface, exposing only what is needed
 type Server interface {
-	HandleTokenRequest(w http.ResponseWriter, r *http.Request) error
+	HandleTokenRequest(r *http.Request) (map[string]interface{}, gtserror.WithCode)
 	HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) error
 	ValidationBearerToken(r *http.Request) (oauth2.TokenInfo, error)
 	GenerateUserAccessToken(ctx context.Context, ti oauth2.TokenInfo, clientSecret string, userID string) (accessToken oauth2.TokenInfo, err error)
@@ -116,8 +117,25 @@ func New(ctx context.Context, database db.Basic) Server {
 }
 
 // HandleTokenRequest wraps the oauth2 library's HandleTokenRequest function
-func (s *s) HandleTokenRequest(w http.ResponseWriter, r *http.Request) error {
-	return s.server.HandleTokenRequest(w, r)
+func (s *s) HandleTokenRequest(r *http.Request) (map[string]interface{}, gtserror.WithCode) {
+	ctx := r.Context()
+
+	gt, tgr, err := s.server.ValidationTokenRequest(r)
+	if err != nil {
+		help := fmt.Sprintf("could not validate token request: %s", err)
+		return nil, gtserror.NewErrorBadRequest(err, help)
+	}
+
+	ti, err := s.server.GetAccessToken(ctx, gt, tgr)
+	if err != nil {
+		help := fmt.Sprintf("could not get access token: %s", err)
+		return nil, gtserror.NewErrorBadRequest(err, help)
+	}
+
+	data := s.server.GetTokenData(ti)
+	data["created_at"] = ti.GetAccessCreateAt().Unix()
+
+	return data, nil
 }
 
 // HandleAuthorizeRequest wraps the oauth2 library's HandleAuthorizeRequest function

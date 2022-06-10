@@ -19,6 +19,7 @@
 package auth_test
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/http/httptest"
@@ -107,7 +108,7 @@ func (suite *AuthStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 }
 
-func (suite *AuthStandardTestSuite) newContext(requestMethod string, requestPath string) (*gin.Context, *httptest.ResponseRecorder) {
+func (suite *AuthStandardTestSuite) newContext(requestMethod string, requestPath string, requestBody []byte, bodyContentType string) (*gin.Context, *httptest.ResponseRecorder) {
 	// create the recorder and gin test context
 	recorder := httptest.NewRecorder()
 	ctx, engine := gin.CreateTestContext(recorder)
@@ -120,8 +121,13 @@ func (suite *AuthStandardTestSuite) newContext(requestMethod string, requestPath
 	host := config.GetHost()
 	baseURI := fmt.Sprintf("%s://%s", protocol, host)
 	requestURI := fmt.Sprintf("%s/%s", baseURI, requestPath)
-	ctx.Request = httptest.NewRequest(requestMethod, requestURI, nil) // the endpoint we're hitting
+	
+	ctx.Request = httptest.NewRequest(requestMethod, requestURI, bytes.NewReader(requestBody)) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "text/html")
+
+	if bodyContentType != "" {
+		ctx.Request.Header.Set("Content-Type", bodyContentType)
+	}
 
 	// trigger the session middleware on the context
 	store := memstore.NewStore(make([]byte, 32), make([]byte, 32))
