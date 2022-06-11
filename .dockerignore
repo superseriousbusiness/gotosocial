@@ -1,8 +1,9 @@
 .github
-cmd
+.vscode
+archive
+dist
 docs
 example
-internal
 scripts
 test
 testrig

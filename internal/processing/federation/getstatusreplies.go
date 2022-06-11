@@ -48,7 +48,7 @@ func (p *processor) GetStatusReplies(ctx context.Context, requestedUsername stri
 		RemoteAccountID:    requestingAccountURI,
 	})
 	if err != nil {
-		return nil, gtserror.NewErrorNotAuthorized(err)
+		return nil, gtserror.NewErrorUnauthorized(err)
 	}
 
 	// authorize the request:
@@ -59,7 +59,7 @@ func (p *processor) GetStatusReplies(ctx context.Context, requestedUsername stri
 	}
 
 	if blocked {
-		return nil, gtserror.NewErrorNotAuthorized(fmt.Errorf("block exists between accounts %s and %s", requestedAccount.ID, requestingAccount.ID))
+		return nil, gtserror.NewErrorUnauthorized(fmt.Errorf("block exists between accounts %s and %s", requestedAccount.ID, requestingAccount.ID))
 	}
 
 	// get the status out of the database here

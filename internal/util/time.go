@@ -21,7 +21,7 @@ package util
 import "time"
 
 // ISO8601 is a formatter for serializing times that forces ISO8601 behavior.
-const ISO8601 = "2006-01-02T15:04:05.00Z"
+const ISO8601 = "2006-01-02T15:04:05.000Z"
 
 // FormatISO8601 converts the given time to UTC and then formats it
 // using the ISO8601 const, which the Mastodon API is able to understand.

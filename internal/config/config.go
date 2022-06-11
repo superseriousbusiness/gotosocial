@@ -114,6 +114,8 @@ type Configuration struct {
 	AdminAccountEmail    string `name:"email" usage:"the email address of this account"`
 	AdminAccountPassword string `name:"password" usage:"the password to set for this account"`
 	AdminTransPath       string `name:"path" usage:"the path of the file to import from/export to"`
+
+	AdvancedCookiesSamesite string `name:"advanced-cookies-samesite" usage:"'strict' or 'lax', see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite"`
 }
 
 // MarshalMap will marshal current Configuration into a map structure (useful for JSON).
@@ -127,13 +129,4 @@ func (cfg *Configuration) MarshalMap() (map[string]interface{}, error) {
 		return nil, err
 	}
 	return dst, nil
-}
-
-// UnmarshalMap will unmarshal a map structure into the receiving Configuration.
-func (cfg *Configuration) UnmarshalMap(src map[string]interface{}) error {
-	dec, _ := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		TagName: "name",
-		Result:  cfg,
-	})
-	return dec.Decode(src)
 }

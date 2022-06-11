@@ -1,12 +1,31 @@
+/*
+   GoToSocial
+   Copyright (C) 2021-2022 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package admin
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -43,35 +62,33 @@ import (
 //       type: array
 //       items:
 //         "$ref": "#/definitions/domainBlock"
-//   '403':
-//      description: forbidden
 //   '400':
 //      description: bad request
+//   '401':
+//      description: unauthorized
+//   '403':
+//      description: forbidden
 //   '404':
 //      description: not found
+//   '406':
+//      description: not acceptable
+//   '500':
+//      description: internal server error
 func (m *Module) DomainBlocksGETHandler(c *gin.Context) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":        "DomainBlocksGETHandler",
-		"request_uri": c.Request.RequestURI,
-		"user_agent":  c.Request.UserAgent(),
-		"origin_ip":   c.ClientIP(),
-	})
-
-	// make sure we're authed with an admin account
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		l.Debugf("couldn't auth: %s", err)
-		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
+
 	if !authed.User.Admin {
-		l.Debugf("user %s not an admin", authed.User.ID)
-		c.JSON(http.StatusForbidden, gin.H{"error": "not an admin"})
+		err := fmt.Errorf("user %s not an admin", authed.User.ID)
+		api.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
@@ -80,17 +97,16 @@ func (m *Module) DomainBlocksGETHandler(c *gin.Context) {
 	if exportString != "" {
 		i, err := strconv.ParseBool(exportString)
 		if err != nil {
-			l.Debugf("error parsing export string: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "couldn't parse export query param"})
+			err := fmt.Errorf("error parsing %s: %s", ExportQueryKey, err)
+			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
 		export = i
 	}
 
-	domainBlocks, err := m.processor.AdminDomainBlocksGet(c.Request.Context(), authed, export)
-	if err != nil {
-		l.Debugf("error getting domain blocks: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	domainBlocks, errWithCode := m.processor.AdminDomainBlocksGet(c.Request.Context(), authed, export)
+	if errWithCode != nil {
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

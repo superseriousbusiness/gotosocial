@@ -1492,3 +1492,28 @@ func GetAdminTransPath() string { return global.GetAdminTransPath() }
 
 // SetAdminTransPath safely sets the value for global configuration 'AdminTransPath' field
 func SetAdminTransPath(v string) { global.SetAdminTransPath(v) }
+
+// GetAdvancedCookiesSamesite safely fetches the Configuration value for state's 'AdvancedCookiesSamesite' field
+func (st *ConfigState) GetAdvancedCookiesSamesite() (v string) {
+	st.mutex.Lock()
+	v = st.config.AdvancedCookiesSamesite
+	st.mutex.Unlock()
+	return
+}
+
+// SetAdvancedCookiesSamesite safely sets the Configuration value for state's 'AdvancedCookiesSamesite' field
+func (st *ConfigState) SetAdvancedCookiesSamesite(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.AdvancedCookiesSamesite = v
+	st.reloadToViper()
+}
+
+// AdvancedCookiesSamesiteFlag returns the flag name for the 'AdvancedCookiesSamesite' field
+func AdvancedCookiesSamesiteFlag() string { return "advanced-cookies-samesite" }
+
+// GetAdvancedCookiesSamesite safely fetches the value for global configuration 'AdvancedCookiesSamesite' field
+func GetAdvancedCookiesSamesite() string { return global.GetAdvancedCookiesSamesite() }
+
+// SetAdvancedCookiesSamesite safely sets the value for global configuration 'AdvancedCookiesSamesite' field
+func SetAdvancedCookiesSamesite(v string) { global.SetAdvancedCookiesSamesite(v) }

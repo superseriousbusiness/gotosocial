@@ -33,7 +33,7 @@ import (
 // Processor wraps a bunch of functions for processing streaming.
 type Processor interface {
 	// AuthorizeStreamingRequest returns an oauth2 token info in response to an access token query from the streaming API
-	AuthorizeStreamingRequest(ctx context.Context, accessToken string) (*gtsmodel.Account, error)
+	AuthorizeStreamingRequest(ctx context.Context, accessToken string) (*gtsmodel.Account, gtserror.WithCode)
 	// OpenStreamForAccount returns a new Stream for the given account, which will contain a channel for passing messages back to the caller.
 	OpenStreamForAccount(ctx context.Context, account *gtsmodel.Account, timeline string) (*stream.Stream, gtserror.WithCode)
 	// StreamUpdateToAccount streams the given update to any open, appropriate streams belonging to the given account.

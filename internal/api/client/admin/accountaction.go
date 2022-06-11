@@ -19,12 +19,14 @@
 package admin
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -72,53 +74,47 @@ import (
 //      description: unauthorized
 //   '403':
 //      description: forbidden
+//   '404':
+//      description: not found
+//   '406':
+//      description: not acceptable
+//   '500':
+//      description: internal server error
 func (m *Module) AccountActionPOSTHandler(c *gin.Context) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":        "AccountActionPOSTHandler",
-		"request_uri": c.Request.RequestURI,
-		"user_agent":  c.Request.UserAgent(),
-		"origin_ip":   c.ClientIP(),
-	})
-
-	// make sure we're authed...
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		l.Debugf("couldn't auth: %s", err)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	// with an admin account
 	if !authed.User.Admin {
-		l.Debugf("user %s not an admin", authed.User.ID)
-		c.JSON(http.StatusForbidden, gin.H{"error": "not an admin"})
+		err := fmt.Errorf("user %s not an admin", authed.User.ID)
+		api.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	// extract the form from the request context
-	l.Tracef("parsing request form: %+v", c.Request.Form)
 	form := &model.AdminAccountActionRequest{}
 	if err := c.ShouldBind(form); err != nil {
-		l.Debugf("error parsing form %+v: %s", c.Request.Form, err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("could not parse form: %s", err)})
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if form.Type == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no type specified"})
+		err := errors.New("no type specified")
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	targetAcctID := c.Param(IDKey)
 	if targetAcctID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no account id specified"})
+		err := errors.New("no account id specified")
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 	form.TargetAccountID = targetAcctID
 
 	if errWithCode := m.processor.AdminAccountAction(c.Request.Context(), authed, form); errWithCode != nil {
-		l.Debugf("error performing account action: %s", errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

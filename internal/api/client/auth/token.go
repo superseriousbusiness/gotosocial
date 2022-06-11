@@ -22,56 +22,94 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 
 	"github.com/gin-gonic/gin"
 )
 
-type tokenBody struct {
+type tokenRequestForm struct {
+	GrantType    *string `form:"grant_type" json:"grant_type" xml:"grant_type"`
+	Code         *string `form:"code" json:"code" xml:"code"`
+	RedirectURI  *string `form:"redirect_uri" json:"redirect_uri" xml:"redirect_uri"`
 	ClientID     *string `form:"client_id" json:"client_id" xml:"client_id"`
 	ClientSecret *string `form:"client_secret" json:"client_secret" xml:"client_secret"`
-	Code         *string `form:"code" json:"code" xml:"code"`
-	GrantType    *string `form:"grant_type" json:"grant_type" xml:"grant_type"`
-	RedirectURI  *string `form:"redirect_uri" json:"redirect_uri" xml:"redirect_uri"`
 	Scope        *string `form:"scope" json:"scope" xml:"scope"`
 }
 
 // TokenPOSTHandler should be served as a POST at https://example.org/oauth/token
 // The idea here is to serve an oauth access token to a user, which can be used for authorizing against non-public APIs.
 func (m *Module) TokenPOSTHandler(c *gin.Context) {
-	l := logrus.WithField("func", "TokenPOSTHandler")
-	l.Trace("entered TokenPOSTHandler")
-
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	form := &tokenBody{}
-	if err := c.ShouldBind(form); err == nil {
-		c.Request.Form = url.Values{}
-		if form.ClientID != nil {
-			c.Request.Form.Set("client_id", *form.ClientID)
-		}
-		if form.ClientSecret != nil {
-			c.Request.Form.Set("client_secret", *form.ClientSecret)
-		}
-		if form.Code != nil {
-			c.Request.Form.Set("code", *form.Code)
-		}
-		if form.GrantType != nil {
-			c.Request.Form.Set("grant_type", *form.GrantType)
-		}
-		if form.RedirectURI != nil {
-			c.Request.Form.Set("redirect_uri", *form.RedirectURI)
-		}
-		if form.Scope != nil {
-			c.Request.Form.Set("scope", *form.Scope)
-		}
+	help := []string{}
+
+	form := &tokenRequestForm{}
+	if err := c.ShouldBind(form); err != nil {
+		api.OAuthErrorHandler(c, gtserror.NewErrorBadRequest(oauth.InvalidRequest(), err.Error()))
+		return
 	}
 
-	if err := m.server.HandleTokenRequest(c.Writer, c.Request); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	c.Request.Form = url.Values{}
+
+	var grantType string
+	if form.GrantType != nil {
+		grantType = *form.GrantType
+		c.Request.Form.Set("grant_type", grantType)
+	} else {
+		help = append(help, "grant_type was not set in the token request form, but must be set to authorization_code or client_credentials")
 	}
+
+	if form.ClientID != nil {
+		c.Request.Form.Set("client_id", *form.ClientID)
+	} else {
+		help = append(help, "client_id was not set in the token request form")
+	}
+
+	if form.ClientSecret != nil {
+		c.Request.Form.Set("client_secret", *form.ClientSecret)
+	} else {
+		help = append(help, "client_secret was not set in the token request form")
+	}
+
+	if form.RedirectURI != nil {
+		c.Request.Form.Set("redirect_uri", *form.RedirectURI)
+	} else {
+		help = append(help, "redirect_uri was not set in the token request form")
+	}
+
+	var code string
+	if form.Code != nil {
+		if grantType != "authorization_code" {
+			help = append(help, "a code was provided in the token request form, but grant_type was not set to authorization_code")
+		} else {
+			code = *form.Code
+			c.Request.Form.Set("code", code)
+		}
+	} else if grantType == "authorization_code" {
+		help = append(help, "code was not set in the token request form, but must be set since grant_type is authorization_code")
+	}
+
+	if form.Scope != nil {
+		c.Request.Form.Set("scope", *form.Scope)
+	}
+
+	if len(help) != 0 {
+		api.OAuthErrorHandler(c, gtserror.NewErrorBadRequest(oauth.InvalidRequest(), help...))
+		return
+	}
+
+	token, errWithCode := m.processor.OAuthHandleTokenRequest(c.Request)
+	if errWithCode != nil {
+		api.OAuthErrorHandler(c, errWithCode)
+		return
+	}
+
+	c.Header("Cache-Control", "no-store")
+	c.Header("Pragma", "no-cache")
+	c.JSON(http.StatusOK, token)
 }

@@ -26,6 +26,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/instance"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -62,7 +63,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch1() {
 	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 
-	suite.Equal(`{"uri":"http://localhost:8080","title":"Example Instance","description":"","short_description":"","email":"someone@example.org","version":"","registrations":true,"approval_required":true,"invites_enabled":false,"urls":{"streaming_api":"wss://localhost:8080"},"stats":{"domain_count":0,"status_count":16,"user_count":4},"thumbnail":"","contact_account":{"id":"01F8MH17FWEB39HZJ76B6VXSKF","username":"admin","acct":"admin","display_name":"","locked":false,"bot":false,"created_at":"2022-05-17T13:10:59.00Z","note":"","url":"http://localhost:8080/@admin","avatar":"","avatar_static":"","header":"","header_static":"","followers_count":1,"following_count":1,"statuses_count":4,"last_status_at":"2021-10-20T10:41:37.00Z","emojis":[],"fields":[]},"max_toot_chars":5000}`, string(b))
+	suite.Equal(`{"uri":"http://localhost:8080","title":"Example Instance","description":"","short_description":"","email":"someone@example.org","version":"","registrations":true,"approval_required":true,"invites_enabled":false,"urls":{"streaming_api":"wss://localhost:8080"},"stats":{"domain_count":0,"status_count":16,"user_count":4},"thumbnail":"","contact_account":{"id":"01F8MH17FWEB39HZJ76B6VXSKF","username":"admin","acct":"admin","display_name":"","locked":false,"bot":false,"created_at":"2022-05-17T13:10:59.000Z","note":"","url":"http://localhost:8080/@admin","avatar":"","avatar_static":"","header":"","header_static":"","followers_count":1,"following_count":1,"statuses_count":4,"last_status_at":"2021-10-20T10:41:37.000Z","emojis":[],"fields":[]},"max_toot_chars":5000}`, string(b))
 }
 
 func (suite *InstancePatchTestSuite) TestInstancePatch2() {
@@ -123,6 +124,67 @@ func (suite *InstancePatchTestSuite) TestInstancePatch3() {
 	suite.NoError(err)
 
 	suite.Equal(`{"uri":"http://localhost:8080","title":"localhost:8080","description":"","short_description":"\u003cp\u003eThis is some html, which is \u003cem\u003eallowed\u003c/em\u003e in short descriptions.\u003c/p\u003e","email":"","version":"","registrations":true,"approval_required":true,"invites_enabled":false,"urls":{"streaming_api":"wss://localhost:8080"},"stats":{"domain_count":0,"status_count":16,"user_count":4},"thumbnail":"","max_toot_chars":5000}`, string(b))
+}
+
+func (suite *InstancePatchTestSuite) TestInstancePatch4() {
+	requestBody, w, err := testrig.CreateMultipartFormData(
+		"", "",
+		map[string]string{})
+	if err != nil {
+		panic(err)
+	}
+	bodyBytes := requestBody.Bytes()
+
+	// set up the request
+	recorder := httptest.NewRecorder()
+	ctx := suite.newContext(recorder, http.MethodPatch, bodyBytes, instance.InstanceInformationPath, w.FormDataContentType())
+
+	// call the handler
+	suite.instanceModule.InstanceUpdatePATCHHandler(ctx)
+
+	suite.Equal(http.StatusBadRequest, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	b, err := io.ReadAll(result.Body)
+	suite.NoError(err)
+
+	suite.Equal(`{"error":"Bad Request: empty form submitted"}`, string(b))
+}
+
+func (suite *InstancePatchTestSuite) TestInstancePatch5() {
+	requestBody, w, err := testrig.CreateMultipartFormData(
+		"", "",
+		map[string]string{
+			"short_description": "<p>This is some html, which is <em>allowed</em> in short descriptions.</p>",
+		})
+	if err != nil {
+		panic(err)
+	}
+	bodyBytes := requestBody.Bytes()
+
+	// set up the request
+	recorder := httptest.NewRecorder()
+	ctx := suite.newContext(recorder, http.MethodPatch, bodyBytes, instance.InstanceInformationPath, w.FormDataContentType())
+
+	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
+	ctx.Set(oauth.SessionAuthorizedToken, oauth.DBTokenToToken(suite.testTokens["local_account_1"]))
+	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
+	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
+
+	// call the handler
+	suite.instanceModule.InstanceUpdatePATCHHandler(ctx)
+
+	suite.Equal(http.StatusForbidden, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	b, err := io.ReadAll(result.Body)
+	suite.NoError(err)
+
+	suite.Equal(`{"error":"Forbidden: user is not an admin so cannot update instance settings"}`, string(b))
 }
 
 func TestInstancePatchTestSuite(t *testing.T) {

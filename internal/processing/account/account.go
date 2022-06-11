@@ -40,7 +40,7 @@ import (
 // Processor wraps a bunch of functions for processing account actions.
 type Processor interface {
 	// Create processes the given form for creating a new account, returning an oauth token for that account if successful.
-	Create(ctx context.Context, applicationToken oauth2.TokenInfo, application *gtsmodel.Application, form *apimodel.AccountCreateRequest) (*apimodel.Token, error)
+	Create(ctx context.Context, applicationToken oauth2.TokenInfo, application *gtsmodel.Application, form *apimodel.AccountCreateRequest) (*apimodel.Token, gtserror.WithCode)
 	// Delete deletes an account, and all of that account's statuses, media, follows, notifications, etc etc etc.
 	// The origin passed here should be either the ID of the account doing the delete (can be itself), or the ID of a domain block.
 	Delete(ctx context.Context, account *gtsmodel.Account, origin string) gtserror.WithCode
@@ -52,10 +52,10 @@ type Processor interface {
 	// GetLocalByUsername processes the given request for account information targeting a local account by username.
 	GetLocalByUsername(ctx context.Context, requestingAccount *gtsmodel.Account, username string) (*apimodel.Account, gtserror.WithCode)
 	// Update processes the update of an account with the given form
-	Update(ctx context.Context, account *gtsmodel.Account, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, error)
+	Update(ctx context.Context, account *gtsmodel.Account, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, gtserror.WithCode)
 	// StatusesGet fetches a number of statuses (in time descending order) from the given account, filtered by visibility for
 	// the account given in authed.
-	StatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinned bool, mediaOnly bool, publicOnly bool) ([]apimodel.Status, gtserror.WithCode)
+	StatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinned bool, mediaOnly bool, publicOnly bool) (*apimodel.TimelineResponse, gtserror.WithCode)
 	// FollowersGet fetches a list of the target account's followers.
 	FollowersGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) ([]apimodel.Account, gtserror.WithCode)
 	// FollowingGet fetches a list of the accounts that target account is following.

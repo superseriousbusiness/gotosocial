@@ -19,13 +19,13 @@
 package timeline
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -105,17 +105,14 @@ import (
 //   '400':
 //      description: bad request
 func (m *Module) PublicTimelineGETHandler(c *gin.Context) {
-	l := logrus.WithField("func", "PublicTimelineGETHandler")
-
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		l.Debugf("error authing: %s", err)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
@@ -142,8 +139,8 @@ func (m *Module) PublicTimelineGETHandler(c *gin.Context) {
 	if limitString != "" {
 		i, err := strconv.ParseInt(limitString, 10, 64)
 		if err != nil {
-			l.Debugf("error parsing limit string: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "couldn't parse limit query param"})
+			err := fmt.Errorf("error parsing %s: %s", LimitKey, err)
+			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
 		limit = int(i)
@@ -154,8 +151,8 @@ func (m *Module) PublicTimelineGETHandler(c *gin.Context) {
 	if localString != "" {
 		i, err := strconv.ParseBool(localString)
 		if err != nil {
-			l.Debugf("error parsing local string: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "couldn't parse local query param"})
+			err := fmt.Errorf("error parsing %s: %s", LocalKey, err)
+			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
 		local = i
@@ -163,13 +160,12 @@ func (m *Module) PublicTimelineGETHandler(c *gin.Context) {
 
 	resp, errWithCode := m.processor.PublicTimelineGet(c.Request.Context(), authed, maxID, sinceID, minID, limit, local)
 	if errWithCode != nil {
-		l.Debugf("error from processor PublicTimelineGet: %s", errWithCode)
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 
 	if resp.LinkHeader != "" {
 		c.Header("Link", resp.LinkHeader)
 	}
-	c.JSON(http.StatusOK, resp.Statuses)
+	c.JSON(http.StatusOK, resp.Items)
 }

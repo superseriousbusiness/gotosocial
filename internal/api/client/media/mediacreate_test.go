@@ -247,15 +247,14 @@ func (suite *MediaCreateTestSuite) TestMediaCreateLongDescription() {
 	suite.mediaModule.MediaCreatePOSTHandler(ctx)
 
 	// check response
-	suite.EqualValues(http.StatusUnprocessableEntity, recorder.Code)
+	suite.EqualValues(http.StatusBadRequest, recorder.Code)
 
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
 
-	expectedErr := fmt.Sprintf(`{"error":"image description length must be between 0 and 500 characters (inclusive), but provided image description was %d chars"}`, len(description))
-	suite.Equal(expectedErr, string(b))
+	suite.Equal(`{"error":"Bad Request: image description length must be between 0 and 500 characters (inclusive), but provided image description was 6667 chars"}`, string(b))
 }
 
 func (suite *MediaCreateTestSuite) TestMediaCreateTooShortDescription() {

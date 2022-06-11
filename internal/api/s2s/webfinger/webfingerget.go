@@ -26,6 +26,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -91,8 +92,7 @@ func (m *Module) WebfingerGETRequest(c *gin.Context) {
 
 	resp, errWithCode := m.processor.GetWebfingerAccount(ctx, requestedUsername)
 	if errWithCode != nil {
-		l.Debugf("aborting request with an error: %s", err.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

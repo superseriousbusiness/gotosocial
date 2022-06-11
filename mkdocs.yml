@@ -35,6 +35,7 @@ nav:
     - "configuration/oidc.md"
     - "configuration/smtp.md"
     - "configuration/syslog.md"
+    - "configuration/advanced.md"
   - "Admin":
     - "admin/admin_panel.md"
     - "admin/cli.md"

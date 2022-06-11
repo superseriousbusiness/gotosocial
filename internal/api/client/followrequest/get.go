@@ -21,10 +21,9 @@ package followrequest
 import (
 	"net/http"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -71,34 +70,27 @@ import (
 //      description: bad request
 //   '401':
 //      description: unauthorized
-//   '403':
-//      description: forbidden
 //   '404':
 //      description: not found
+//   '406':
+//      description: not acceptable
+//   '500':
+//      description: internal server error
 func (m *Module) FollowRequestGETHandler(c *gin.Context) {
-	l := logrus.WithField("func", "FollowRequestGETHandler")
-
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		l.Debugf("couldn't auth: %s", err)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
-		return
-	}
-
-	if authed.User.Disabled || !authed.User.Approved || !authed.Account.SuspendedAt.IsZero() {
-		l.Debugf("couldn't auth: %s", err)
-		c.JSON(http.StatusForbidden, gin.H{"error": "account is disabled, not yet approved, or suspended"})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	accts, errWithCode := m.processor.FollowRequestsGet(c.Request.Context(), authed)
 	if errWithCode != nil {
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

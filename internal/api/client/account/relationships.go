@@ -1,13 +1,13 @@
 package account
 
 import (
+	"errors"
 	"net/http"
-
-	"github.com/sirupsen/logrus"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -43,24 +43,25 @@ import (
 //       type: array
 //       items:
 //         "$ref": "#/definitions/accountRelationship"
-//   '401':
-//      description: unauthorized
 //   '400':
 //      description: bad request
+//   '401':
+//      description: unauthorized
 //   '404':
 //      description: not found
+//   '406':
+//      description: not acceptable
+//   '500':
+//      description: internal server error
 func (m *Module) AccountRelationshipsGETHandler(c *gin.Context) {
-	l := logrus.WithField("func", "AccountRelationshipsGETHandler")
-
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		l.Debugf("error authing: %s", err)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
@@ -69,8 +70,8 @@ func (m *Module) AccountRelationshipsGETHandler(c *gin.Context) {
 		// check fallback -- let's be generous and see if maybe it's just set as 'id'?
 		id := c.Query("id")
 		if id == "" {
-			l.Debug("no account id specified in query")
-			c.JSON(http.StatusBadRequest, gin.H{"error": "no account id specified"})
+			err = errors.New("no account id(s) specified in query")
+			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
 		targetAccountIDs = append(targetAccountIDs, id)
@@ -80,8 +81,8 @@ func (m *Module) AccountRelationshipsGETHandler(c *gin.Context) {
 
 	for _, targetAccountID := range targetAccountIDs {
 		r, errWithCode := m.processor.AccountRelationshipGet(c.Request.Context(), authed, targetAccountID)
-		if err != nil {
-			c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		if errWithCode != nil {
+			api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 			return
 		}
 		relationships = append(relationships, *r)

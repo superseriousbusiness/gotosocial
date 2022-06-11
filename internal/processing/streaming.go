@@ -26,7 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
 )
 
-func (p *processor) AuthorizeStreamingRequest(ctx context.Context, accessToken string) (*gtsmodel.Account, error) {
+func (p *processor) AuthorizeStreamingRequest(ctx context.Context, accessToken string) (*gtsmodel.Account, gtserror.WithCode) {
 	return p.streamingProcessor.AuthorizeStreamingRequest(ctx, accessToken)
 }
 

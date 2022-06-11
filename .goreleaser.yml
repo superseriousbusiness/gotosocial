@@ -3,16 +3,12 @@ project_name: gotosocial
 before:
   # https://goreleaser.com/customization/hooks/
   hooks:
-  # tidy up and lint
-  - go mod tidy
-  - go fmt ./...
   # generate the swagger.yaml file using go-swagger and bundle it into the assets directory
-  - swagger generate spec -o docs/api/swagger.yaml --scan-models
-  - sed -i "s/REPLACE_ME/{{ incpatch .Version }}/" docs/api/swagger.yaml
-  - cp docs/api/swagger.yaml web/assets/swagger.yaml
-  # install and bundle the web assets and styling
-  - yarn install --cwd web/gotosocial-styling
-  - node web/gotosocial-styling/index.js --build-dir="web/assets"
+  - swagger generate spec -o web/assets/swagger.yaml --scan-models
+  - sed -i "s/REPLACE_ME/{{ incpatch .Version }}/" web/assets/swagger.yaml
+  # bundle web assets
+  - yarn install --cwd web/source
+  - scripts/bundle.sh
 builds:
   # https://goreleaser.com/customization/build/
   -
@@ -67,6 +63,10 @@ dockers:
     - "--label=org.opencontainers.image.version={{.Version}}"
     extra_files:
     - web
+    - go.mod
+    - go.sum
+    - cmd
+    - internal
   -
     use: buildx
     goos: linux
@@ -82,6 +82,10 @@ dockers:
     - "--label=org.opencontainers.image.version={{.Version}}"
     extra_files:
     - web
+    - go.mod
+    - go.sum
+    - cmd
+    - internal
   -
     use: buildx
     goos: linux
@@ -98,6 +102,10 @@ dockers:
     - "--label=org.opencontainers.image.version={{.Version}}"
     extra_files:
     - web
+    - go.mod
+    - go.sum
+    - cmd
+    - internal
   -
     use: buildx
     goos: linux
@@ -114,6 +122,10 @@ dockers:
     - "--label=org.opencontainers.image.version={{.Version}}"
     extra_files:
     - web
+    - go.mod
+    - go.sum
+    - cmd
+    - internal
 docker_manifests:
   - name_template: superseriousbusiness/{{ .ProjectName }}:{{ .Version }}
     image_templates:
@@ -136,7 +148,8 @@ archives:
     - README.md
     - CHANGELOG*
     # web assets
-    - web
+    - web/assets
+    - web/template
     # example config files
     - example/config.yaml
     - example/gotosocial.service

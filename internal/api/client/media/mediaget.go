@@ -19,12 +19,12 @@
 package media
 
 import (
+	"errors"
 	"net/http"
-
-	"github.com/sirupsen/logrus"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -59,33 +59,34 @@ import (
 //      description: bad request
 //   '401':
 //      description: unauthorized
-//   '403':
-//      description: forbidden
-//   '422':
-//      description: unprocessable
+//   '404':
+//      description: not found
+//   '406':
+//      description: not acceptable
+//   '500':
+//      description: internal server error
 func (m *Module) MediaGETHandler(c *gin.Context) {
-	l := logrus.WithField("func", "MediaGETHandler")
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		l.Debugf("couldn't auth: %s", err)
-		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	attachmentID := c.Param(IDKey)
 	if attachmentID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no attachment ID given in request"})
+		err := errors.New("no attachment id specified")
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	attachment, errWithCode := m.processor.MediaGet(c.Request.Context(), authed, attachmentID)
 	if errWithCode != nil {
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

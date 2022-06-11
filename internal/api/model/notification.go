@@ -43,3 +43,24 @@ type Notification struct {
 	// Status that was the object of the notification, e.g. in mentions, reblogs, favourites, or polls.
 	Status *Status `json:"status,omitempty"`
 }
+
+/*
+	The below functions are added onto the apimodel notification so that it satisfies
+	the Timelineable interface in internal/timeline.
+*/
+
+func (n *Notification) GetID() string {
+	return n.ID
+}
+
+func (n *Notification) GetAccountID() string {
+	return ""
+}
+
+func (n *Notification) GetBoostOfID() string {
+	return ""
+}
+
+func (n *Notification) GetBoostOfAccountID() string {
+	return ""
+}

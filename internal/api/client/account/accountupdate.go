@@ -19,15 +19,15 @@
 package account
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -98,66 +98,65 @@ import (
 //     description: "The newly updated account."
 //     schema:
 //       "$ref": "#/definitions/account"
-//   '401':
-//      description: unauthorized
 //   '400':
 //      description: bad request
+//   '401':
+//      description: unauthorized
+//   '404':
+//      description: not found
+//   '406':
+//      description: not acceptable
+//   '500':
+//      description: internal server error
 func (m *Module) AccountUpdateCredentialsPATCHHandler(c *gin.Context) {
-	l := logrus.WithField("func", "accountUpdateCredentialsPATCHHandler")
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		l.Debugf("couldn't auth: %s", err)
-		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
-	l.Tracef("retrieved account %+v", authed.Account.ID)
 
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	form, err := parseUpdateAccountForm(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	// if everything on the form is nil, then nothing has been set and we shouldn't continue
-	if form.Discoverable == nil &&
-		form.Bot == nil &&
-		form.DisplayName == nil &&
-		form.Note == nil &&
-		form.Avatar == nil &&
-		form.Header == nil &&
-		form.Locked == nil &&
-		form.Source.Privacy == nil &&
-		form.Source.Sensitive == nil &&
-		form.Source.Language == nil &&
-		form.FieldsAttributes == nil {
-		l.Debugf("could not parse form from request")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "empty form submitted"})
+	acctSensitive, errWithCode := m.processor.AccountUpdate(c.Request.Context(), authed, form)
+	if errWithCode != nil {
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 
-	acctSensitive, err := m.processor.AccountUpdate(c.Request.Context(), authed, form)
-	if err != nil {
-		l.Debugf("could not update account: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	l.Tracef("conversion successful, returning OK and apisensitive account %+v", acctSensitive)
 	c.JSON(http.StatusOK, acctSensitive)
 }
 
 func parseUpdateAccountForm(c *gin.Context) (*model.UpdateCredentialsRequest, error) {
-	// parse main fields from request
 	form := &model.UpdateCredentialsRequest{
 		Source: &model.UpdateSource{},
 	}
-	if err := c.ShouldBind(&form); err != nil || form == nil {
+
+	if err := c.ShouldBind(&form); err != nil {
 		return nil, fmt.Errorf("could not parse form from request: %s", err)
+	}
+
+	if form == nil ||
+		(form.Discoverable == nil &&
+			form.Bot == nil &&
+			form.DisplayName == nil &&
+			form.Note == nil &&
+			form.Avatar == nil &&
+			form.Header == nil &&
+			form.Locked == nil &&
+			form.Source.Privacy == nil &&
+			form.Source.Sensitive == nil &&
+			form.Source.Language == nil &&
+			form.FieldsAttributes == nil) {
+		return nil, errors.New("empty form submitted")
 	}
 
 	// parse source field-by-field

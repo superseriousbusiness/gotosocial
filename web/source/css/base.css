@@ -1,17 +1,42 @@
+/*
+   GoToSocial
+   Copyright (C) 2021-2022 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 html, body {
 	padding: 0;
 	margin: 0;
-	background: $bg_accent;
+	background: $bg_darker5;
 	color: $fg;
 	font-family: sans-serif;
 }
 
 body {
+	line-height: 1.5em;
+	min-height: 100vh;
+	position: relative;
+}
+
+.page {
+	position: absolute;
 	display: grid;
+	min-height: 100%;
+	min-width: 100%;
 
 	grid-template-rows: auto 1fr auto;
-	min-height: 100vh;
-	line-height: 1.5em;
 }
 
 main {
@@ -41,7 +66,7 @@ main {
 }
 
 header {
-	background: $bg_accent;
+	background: $bg_darker5;
 	padding: 2rem 0;
 	padding-bottom: 0;
 	display: flex;
@@ -63,6 +88,7 @@ header {
 
 		h1 {
 			align-self: center;
+			color: $fg;
 		}
 	}
 }
@@ -94,7 +120,7 @@ a {
 }
 
 .count {
-	background: $bg_accent;
+	background: $bg_darker5;
 	border-radius: 0.3rem;
 	padding: 0.2rem;
 }
@@ -128,7 +154,7 @@ section.apps {
 			grid-template-columns: 30% 1fr;
 			gap: 0.5rem;
 			padding: 0.5rem;
-			background: $bg_accent;
+			background: $bg_darker5;
 			border-radius: 0.5rem;
 
 			.logo {

@@ -1,27 +1,31 @@
 <!DOCTYPE html>
 
-<!-- Header tmpl -->
+<!-- header.tmpl -->
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta name="og:title" content="GoToSocial Testing Instance">
-	<meta name="og:description" content="">
+	<meta name="og:title" content="{{.instance.Title}} - GoToSocial">
+	<meta name="og:description" content="{{.instance.ShortDescription}}">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" href="/assets/base.css">
+	<link rel="stylesheet" href="/assets/dist/_colors.css">
+	<link rel="stylesheet" href="/assets/dist/base.css">
 	{{range .stylesheets}}<link rel="stylesheet" href="{{.}}">
 	{{end}}
 	<link rel="shortcut icon" href="/assets/logo.png" type="image/png">
 	<title>{{.instance.Title}} - GoToSocial</title>
 </head>
 <body>
-	<header>
-		<img src="/assets/logo.png" alt="Instance Logo"/>
-		<div>
-			<h1>
-				{{.instance.Title}}
-			</h1>
-		</div>
-		<div></div>
-	</header>
+	<div class="page">
+		<a href="/" class="nounderline">
+			<header>
+				<img src="/assets/logo.png" alt="Instance Logo"/>
+				<div>
+					<h1>
+						{{.instance.Title}}
+					</h1>
+				</div>
+				<div></div>
+			</header>
+		</a>

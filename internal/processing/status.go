@@ -26,15 +26,15 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (p *processor) StatusCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, error) {
+func (p *processor) StatusCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, gtserror.WithCode) {
 	return p.statusProcessor.Create(ctx, authed.Account, authed.Application, form)
 }
 
-func (p *processor) StatusDelete(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error) {
+func (p *processor) StatusDelete(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
 	return p.statusProcessor.Delete(ctx, authed.Account, targetStatusID)
 }
 
-func (p *processor) StatusFave(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error) {
+func (p *processor) StatusFave(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
 	return p.statusProcessor.Fave(ctx, authed.Account, targetStatusID)
 }
 
@@ -50,15 +50,15 @@ func (p *processor) StatusBoostedBy(ctx context.Context, authed *oauth.Auth, tar
 	return p.statusProcessor.BoostedBy(ctx, authed.Account, targetStatusID)
 }
 
-func (p *processor) StatusFavedBy(ctx context.Context, authed *oauth.Auth, targetStatusID string) ([]*apimodel.Account, error) {
+func (p *processor) StatusFavedBy(ctx context.Context, authed *oauth.Auth, targetStatusID string) ([]*apimodel.Account, gtserror.WithCode) {
 	return p.statusProcessor.FavedBy(ctx, authed.Account, targetStatusID)
 }
 
-func (p *processor) StatusGet(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error) {
+func (p *processor) StatusGet(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
 	return p.statusProcessor.Get(ctx, authed.Account, targetStatusID)
 }
 
-func (p *processor) StatusUnfave(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error) {
+func (p *processor) StatusUnfave(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
 	return p.statusProcessor.Unfave(ctx, authed.Account, targetStatusID)
 }
 

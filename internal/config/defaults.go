@@ -87,4 +87,6 @@ var Defaults = Configuration{
 	SyslogEnabled:  false,
 	SyslogProtocol: "udp",
 	SyslogAddress:  "localhost:514",
+
+	AdvancedCookiesSamesite: "lax",
 }
