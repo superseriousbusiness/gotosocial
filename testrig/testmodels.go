@@ -1909,6 +1909,25 @@ func NewTestFediAttachments(relativePath string) map[string]RemoteAttachmentFile
 
 func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 	return map[string]vocab.ActivityStreamsNote{
+		"http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1": NewAPNote(
+			URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1"),
+			URLMustParse("http://example.org/@some_user/afaba698-5740-4e32-a702-af61aa543bc1"),
+			time.Now(),
+			"this is a public status, please forward it!",
+			"",
+			URLMustParse("http://example.org/users/some_user"),
+			[]*url.URL{URLMustParse(pub.PublicActivityPubIRI)},
+			nil,
+			false,
+			[]vocab.ActivityStreamsMention{},
+			[]vocab.ActivityStreamsImage{
+				newAPImage(
+					URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1/attachment1.jpeg"),
+					"image/jpeg",
+					"trent reznor looking handsome as balls",
+					"LEDara58O=t5EMSOENEN9]}?aK%0"),
+			},
+		),
 		"https://unknown-instance.com/users/brand_new_person/statuses/01FE4NTHKWW7THT67EF10EB839": NewAPNote(
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/statuses/01FE4NTHKWW7THT67EF10EB839"),
 			URLMustParse("https://unknown-instance.com/users/@brand_new_person/01FE4NTHKWW7THT67EF10EB839"),

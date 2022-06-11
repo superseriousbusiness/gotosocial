@@ -19,18 +19,8 @@
 package status_test
 
 import (
-	"bytes"
-	"context"
-	"encoding/json"
-	"fmt"
-	"io"
-	"io/ioutil"
-	"net/http"
-
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/activity/pub"
-	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -94,7 +84,7 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
 
 	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
-	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(suite.testHttpClient(), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
+	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, suite.mediaManager, clientWorker, fedWorker)
 	suite.statusModule = status.New(suite.processor).(*status.Module)
@@ -103,89 +93,4 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 func (suite *StatusStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
-}
-
-func (suite *StatusStandardTestSuite) testHttpClient() pub.HttpClient {
-	remoteAccount := suite.testAccounts["remote_account_1"]
-	remoteAccountNamestring := fmt.Sprintf("acct:%s@%s", remoteAccount.Username, remoteAccount.Domain)
-	remoteAccountWebfingerURI := fmt.Sprintf("https://%s/.well-known/webfinger?resource=%s", remoteAccount.Domain, remoteAccountNamestring)
-
-	fmt.Println(remoteAccountWebfingerURI)
-
-	httpClient := testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
-		// respond correctly to a webfinger lookup
-		if req.URL.String() == remoteAccountWebfingerURI {
-			responseJson := fmt.Sprintf(`
-			{
-				"subject": "%s",
-				"aliases": [
-				  "%s",
-				  "%s"
-				],
-				"links": [
-				  {
-					"rel": "http://webfinger.net/rel/profile-page",
-					"type": "text/html",
-					"href": "%s"
-				  },
-				  {
-					"rel": "self",
-					"type": "application/activity+json",
-					"href": "%s"
-				  }
-				]
-			}`, remoteAccountNamestring, remoteAccount.URI, remoteAccount.URL, remoteAccount.URL, remoteAccount.URI)
-			responseType := "application/json"
-
-			reader := bytes.NewReader([]byte(responseJson))
-			readCloser := io.NopCloser(reader)
-			response := &http.Response{
-				StatusCode:    200,
-				Body:          readCloser,
-				ContentLength: int64(len(responseJson)),
-				Header: http.Header{
-					"content-type": {responseType},
-				},
-			}
-			return response, nil
-		}
-
-		// respond correctly to an account dereference
-		if req.URL.String() == remoteAccount.URI {
-			satanAS, err := suite.tc.AccountToAS(context.Background(), remoteAccount)
-			if err != nil {
-				panic(err)
-			}
-
-			satanI, err := streams.Serialize(satanAS)
-			if err != nil {
-				panic(err)
-			}
-			satanJson, err := json.Marshal(satanI)
-			if err != nil {
-				panic(err)
-			}
-			responseType := "application/activity+json"
-
-			reader := bytes.NewReader(satanJson)
-			readCloser := io.NopCloser(reader)
-			response := &http.Response{
-				StatusCode:    200,
-				Body:          readCloser,
-				ContentLength: int64(len(satanJson)),
-				Header: http.Header{
-					"content-type": {responseType},
-				},
-			}
-			return response, nil
-		}
-
-		r := ioutil.NopCloser(bytes.NewReader([]byte{}))
-		return &http.Response{
-			StatusCode: 200,
-			Body:       r,
-		}, nil
-	})
-
-	return httpClient
 }

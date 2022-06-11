@@ -19,12 +19,7 @@
 package media_test
 
 import (
-	"bytes"
-	"io"
-	"net/http"
-
 	"codeberg.org/gruf/go-store/kv"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -79,7 +74,7 @@ func (suite *MediaStandardTestSuite) SetupTest() {
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.storage = testrig.NewTestStorage()
 	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
-	suite.transportController = suite.mockTransportController()
+	suite.transportController = testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../testrig/media"), suite.db, concurrency.NewWorkerPool[messages.FromFederator](-1, -1))
 	suite.mediaProcessor = mediaprocessing.New(suite.db, suite.tc, suite.mediaManager, suite.transportController, suite.storage)
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
@@ -88,41 +83,4 @@ func (suite *MediaStandardTestSuite) SetupTest() {
 func (suite *MediaStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
-}
-
-func (suite *MediaStandardTestSuite) mockTransportController() transport.Controller {
-	do := func(req *http.Request) (*http.Response, error) {
-		logrus.Debugf("received request for %s", req.URL)
-
-		responseBytes := []byte{}
-		responseType := ""
-		responseLength := 0
-
-		if attachment, ok := suite.testRemoteAttachments[req.URL.String()]; ok {
-			responseBytes = attachment.Data
-			responseType = attachment.ContentType
-		}
-
-		if len(responseBytes) != 0 {
-			// we found something, so print what we're going to return
-			logrus.Debugf("returning response %s", string(responseBytes))
-		}
-		responseLength = len(responseBytes)
-
-		reader := bytes.NewReader(responseBytes)
-		readCloser := io.NopCloser(reader)
-		response := &http.Response{
-			StatusCode:    200,
-			Body:          readCloser,
-			ContentLength: int64(responseLength),
-			Header: http.Header{
-				"content-type": {responseType},
-			},
-		}
-
-		return response, nil
-	}
-	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
-	mockClient := testrig.NewMockHTTPClient(do)
-	return testrig.NewTestTransportController(mockClient, suite.db, fedWorker)
 }

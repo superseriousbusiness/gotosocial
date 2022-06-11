@@ -20,16 +20,25 @@ package testrig
 
 import (
 	"bytes"
-	"io/ioutil"
+	"encoding/json"
+	"io"
 	"net/http"
+	"strings"
 
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/activity/pub"
+	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/activity/streams/vocab"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
+
+const applicationJSON = "application/json"
+const applicationActivityJSON = "application/activity+json"
 
 // NewTestTransportController returns a test transport controller with the given http client.
 //
@@ -44,33 +53,232 @@ func NewTestTransportController(client pub.HttpClient, db db.DB, fedWorker *conc
 	return transport.NewController(db, NewTestFederatingDB(db, fedWorker), &federation.Clock{}, client)
 }
 
-// NewMockHTTPClient returns a client that conforms to the pub.HttpClient interface,
-// but will always just execute the given `do` function, allowing responses to be mocked.
+type MockHTTPClient struct {
+	do func(req *http.Request) (*http.Response, error)
+
+	testRemoteStatuses    map[string]vocab.ActivityStreamsNote
+	testRemotePeople      map[string]vocab.ActivityStreamsPerson
+	testRemoteGroups      map[string]vocab.ActivityStreamsGroup
+	testRemoteServices    map[string]vocab.ActivityStreamsService
+	testRemoteAttachments map[string]RemoteAttachmentFile
+
+	SentMessages map[string][]byte
+}
+
+// NewMockHTTPClient returns a client that conforms to the pub.HttpClient interface.
 //
-// If 'do' is nil, then a no-op function will be used instead, that just returns status 200.
+// If do is nil, then a standard response set will be mocked out, which includes models stored in the
+// testrig, and webfinger responses as well.
+//
+// If do is not nil, then the given do function will always be used, which allows callers
+// to customize how the client is mocked.
 //
 // Note that you should never ever make ACTUAL http calls with this thing.
-func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error)) pub.HttpClient {
-	if do == nil {
-		return &mockHTTPClient{
-			do: func(req *http.Request) (*http.Response, error) {
-				r := ioutil.NopCloser(bytes.NewReader([]byte{}))
-				return &http.Response{
-					StatusCode: 200,
-					Body:       r,
-				}, nil
+func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relativeMediaPath string) *MockHTTPClient {
+	mockHTTPClient := &MockHTTPClient{}
+
+	if do != nil {
+		mockHTTPClient.do = do
+		return mockHTTPClient
+	}
+
+	mockHTTPClient.testRemoteStatuses = NewTestFediStatuses()
+	mockHTTPClient.testRemotePeople = NewTestFediPeople()
+	mockHTTPClient.testRemoteGroups = NewTestFediGroups()
+	mockHTTPClient.testRemoteServices = NewTestFediServices()
+	mockHTTPClient.testRemoteAttachments = NewTestFediAttachments(relativeMediaPath)
+
+	mockHTTPClient.SentMessages = make(map[string][]byte)
+
+	mockHTTPClient.do = func(req *http.Request) (*http.Response, error) {
+		responseCode := http.StatusNotFound
+		responseBytes := []byte(`{"error":"404 not found"}`)
+		responseContentType := applicationJSON
+		responseContentLength := len(responseBytes)
+
+		if req.Method == http.MethodPost {
+			b, err := io.ReadAll(req.Body)
+			if err != nil {
+				panic(err)
+			}
+			mockHTTPClient.SentMessages[req.URL.String()] = b
+
+			responseCode = http.StatusOK
+			responseBytes = []byte(`{"ok":"accepted"}`)
+			responseContentType = applicationJSON
+			responseContentLength = len(responseBytes)
+		} else if strings.Contains(req.URL.String(), ".well-known/webfinger") {
+			responseCode, responseBytes, responseContentType, responseContentLength = WebfingerResponse(req)
+		} else if note, ok := mockHTTPClient.testRemoteStatuses[req.URL.String()]; ok {
+			// the request is for a note that we have stored
+			noteI, err := streams.Serialize(note)
+			if err != nil {
+				panic(err)
+			}
+			noteJSON, err := json.Marshal(noteI)
+			if err != nil {
+				panic(err)
+			}
+			responseCode = http.StatusOK
+			responseBytes = noteJSON
+			responseContentType = applicationActivityJSON
+			responseContentLength = len(noteJSON)
+		} else if person, ok := mockHTTPClient.testRemotePeople[req.URL.String()]; ok {
+			// the request is for a person that we have stored
+			personI, err := streams.Serialize(person)
+			if err != nil {
+				panic(err)
+			}
+			personJSON, err := json.Marshal(personI)
+			if err != nil {
+				panic(err)
+			}
+			responseCode = http.StatusOK
+			responseBytes = personJSON
+			responseContentType = applicationActivityJSON
+			responseContentLength = len(personJSON)
+		} else if group, ok := mockHTTPClient.testRemoteGroups[req.URL.String()]; ok {
+			// the request is for a person that we have stored
+			groupI, err := streams.Serialize(group)
+			if err != nil {
+				panic(err)
+			}
+			groupJSON, err := json.Marshal(groupI)
+			if err != nil {
+				panic(err)
+			}
+			responseCode = http.StatusOK
+			responseBytes = groupJSON
+			responseContentType = applicationActivityJSON
+			responseContentLength = len(groupJSON)
+		} else if service, ok := mockHTTPClient.testRemoteServices[req.URL.String()]; ok {
+			serviceI, err := streams.Serialize(service)
+			if err != nil {
+				panic(err)
+			}
+			serviceJSON, err := json.Marshal(serviceI)
+			if err != nil {
+				panic(err)
+			}
+			responseCode = http.StatusOK
+			responseBytes = serviceJSON
+			responseContentType = applicationActivityJSON
+			responseContentLength = len(serviceJSON)
+		} else if attachment, ok := mockHTTPClient.testRemoteAttachments[req.URL.String()]; ok {
+			responseCode = http.StatusOK
+			responseBytes = attachment.Data
+			responseContentType = attachment.ContentType
+			responseContentLength = len(attachment.Data)
+		}
+
+		logrus.Debugf("returning response %s", string(responseBytes))
+		reader := bytes.NewReader(responseBytes)
+		readCloser := io.NopCloser(reader)
+		return &http.Response{
+			StatusCode:    responseCode,
+			Body:          readCloser,
+			ContentLength: int64(responseContentLength),
+			Header: http.Header{
+				"content-type": {responseContentType},
+			},
+		}, nil
+	}
+
+	return mockHTTPClient
+}
+
+func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
+	return m.do(req)
+}
+
+func WebfingerResponse(req *http.Request) (responseCode int, responseBytes []byte, responseContentType string, responseContentLength int) {
+	var wfr *apimodel.WellKnownResponse
+
+	switch req.URL.String() {
+	case "https://unknown-instance.com/.well-known/webfinger?resource=acct:some_group@unknown-instance.com":
+		wfr = &apimodel.WellKnownResponse{
+			Subject: "acct:some_group@unknown-instance.com",
+			Links: []apimodel.Link{
+				{
+					Rel:  "self",
+					Type: applicationActivityJSON,
+					Href: "https://unknown-instance.com/groups/some_group",
+				},
+			},
+		}
+	case "https://owncast.example.org/.well-known/webfinger?resource=acct:rgh@owncast.example.org":
+		wfr = &apimodel.WellKnownResponse{
+			Subject: "acct:rgh@example.org",
+			Links: []apimodel.Link{
+				{
+					Rel:  "self",
+					Type: applicationActivityJSON,
+					Href: "https://owncast.example.org/federation/user/rgh",
+				},
+			},
+		}
+	case "https://unknown-instance.com/.well-known/webfinger?resource=acct:brand_new_person@unknown-instance.com":
+		wfr = &apimodel.WellKnownResponse{
+			Subject: "acct:brand_new_person@unknown-instance.com",
+			Links: []apimodel.Link{
+				{
+					Rel:  "self",
+					Type: applicationActivityJSON,
+					Href: "https://unknown-instance.com/users/brand_new_person",
+				},
+			},
+		}
+	case "https://turnip.farm/.well-known/webfinger?resource=acct:turniplover6969@turnip.farm":
+		wfr = &apimodel.WellKnownResponse{
+			Subject: "acct:turniplover6969@turnip.farm",
+			Links: []apimodel.Link{
+				{
+					Rel:  "self",
+					Type: applicationActivityJSON,
+					Href: "https://turnip.farm/users/turniplover6969",
+				},
+			},
+		}
+	case "https://fossbros-anonymous.io/.well-known/webfinger?resource=acct:foss_satan@fossbros-anonymous.io":
+		wfr = &apimodel.WellKnownResponse{
+			Subject: "acct:foss_satan@fossbros-anonymous.io",
+			Links: []apimodel.Link{
+				{
+					Rel:  "self",
+					Type: applicationActivityJSON,
+					Href: "https://fossbros-anonymous.io/users/foss_satan",
+				},
+			},
+		}
+	case "https://example.org/.well-known/webfinger?resource=acct:some_user@example.org":
+		wfr = &apimodel.WellKnownResponse{
+			Subject: "acct:some_user@example.org",
+			Links: []apimodel.Link{
+				{
+					Rel:  "self",
+					Type: applicationActivityJSON,
+					Href: "https://example.org/users/some_user",
+				},
 			},
 		}
 	}
-	return &mockHTTPClient{
-		do: do,
+
+	if wfr == nil {
+		logrus.Debugf("webfinger response not available for %s", req.URL)
+		responseCode = http.StatusNotFound
+		responseBytes = []byte(`{"error":"not found"}`)
+		responseContentType = applicationJSON
+		responseContentLength = len(responseBytes)
+		return
 	}
-}
 
-type mockHTTPClient struct {
-	do func(req *http.Request) (*http.Response, error)
-}
-
-func (m *mockHTTPClient) Do(req *http.Request) (*http.Response, error) {
-	return m.do(req)
+	wfrJSON, err := json.Marshal(wfr)
+	if err != nil {
+		panic(err)
+	}
+	responseCode = http.StatusOK
+	responseBytes = wfrJSON
+	responseContentType = applicationJSON
+	responseContentLength = len(wfrJSON)
+	return
 }

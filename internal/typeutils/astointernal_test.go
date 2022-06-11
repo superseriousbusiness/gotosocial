@@ -38,7 +38,7 @@ type ASToInternalTestSuite struct {
 func (suite *ASToInternalTestSuite) TestParsePerson() {
 	testPerson := suite.testPeople["https://unknown-instance.com/users/brand_new_person"]
 
-	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), testPerson, false)
+	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), testPerson, "", false)
 	suite.NoError(err)
 
 	suite.Equal("https://unknown-instance.com/users/brand_new_person", acct.URI)
@@ -106,7 +106,7 @@ func (suite *ASToInternalTestSuite) TestParseGargron() {
 	rep, ok := t.(ap.Accountable)
 	suite.True(ok)
 
-	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), rep, false)
+	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), rep, "", false)
 	suite.NoError(err)
 
 	fmt.Printf("%+v", acct)
@@ -168,7 +168,7 @@ func (suite *ASToInternalTestSuite) TestParseOwncastService() {
 	rep, ok := t.(ap.Accountable)
 	suite.True(ok)
 
-	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), rep, false)
+	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), rep, "", false)
 	suite.NoError(err)
 
 	suite.Equal("rgh", acct.Username)

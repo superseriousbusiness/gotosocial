@@ -52,7 +52,7 @@ func (suite *RepliesGetTestSuite) TestGetReplies() {
 	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
 	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
 
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db, fedWorker)
+	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker)
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager, fedWorker)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager, clientWorker, fedWorker)
@@ -116,7 +116,7 @@ func (suite *RepliesGetTestSuite) TestGetRepliesNext() {
 	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
 	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
 
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db, fedWorker)
+	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker)
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager, fedWorker)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager, clientWorker, fedWorker)
@@ -183,7 +183,7 @@ func (suite *RepliesGetTestSuite) TestGetRepliesLast() {
 	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
 	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
 
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db, fedWorker)
+	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker)
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager, fedWorker)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager, clientWorker, fedWorker)

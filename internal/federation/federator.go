@@ -53,14 +53,10 @@ type Federator interface {
 	// If something goes wrong during authentication, nil, false, and an error will be returned.
 	AuthenticateFederatedRequest(ctx context.Context, username string) (*url.URL, gtserror.WithCode)
 
-	// FingerRemoteAccount performs a webfinger lookup for a remote account, using the .well-known path. It will return the ActivityPub URI for that
-	// account, or an error if it doesn't exist or can't be retrieved.
-	FingerRemoteAccount(ctx context.Context, requestingUsername string, targetUsername string, targetDomain string) (*url.URL, error)
-
 	DereferenceRemoteThread(ctx context.Context, username string, statusURI *url.URL) error
 	DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) error
 
-	GetRemoteAccount(ctx context.Context, username string, remoteAccountID *url.URL, blocking bool, refresh bool) (*gtsmodel.Account, error)
+	GetRemoteAccount(ctx context.Context, params dereferencing.GetRemoteAccountParams) (*gtsmodel.Account, error)
 
 	GetRemoteStatus(ctx context.Context, username string, remoteStatusID *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, error)
 	EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status, includeParent bool) (*gtsmodel.Status, error)

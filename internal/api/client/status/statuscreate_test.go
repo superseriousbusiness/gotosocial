@@ -128,7 +128,7 @@ func (suite *StatusCreateTestSuite) TestMentionUnknownAccount() {
 	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", status.BasePath), nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/json")
 	ctx.Request.Form = url.Values{
-		"status":     {"hello @foss_satan@fossbros-anonymous.io"},
+		"status":     {"hello @brand_new_person@unknown-instance.com"},
 		"visibility": {string(model.VisibilityPublic)},
 	}
 	suite.statusModule.StatusCreatePOSTHandler(ctx)
@@ -145,7 +145,7 @@ func (suite *StatusCreateTestSuite) TestMentionUnknownAccount() {
 	suite.NoError(err)
 
 	// if the status is properly formatted, that means the account has been put in the db
-	suite.Equal("<p>hello <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span></p>", statusReply.Content)
+	suite.Equal(`<p>hello <span class="h-card"><a href="https://unknown-instance.com/@brand_new_person" class="u-url mention" rel="nofollow noreferrer noopener" target="_blank">@<span>brand_new_person</span></a></span></p>`, statusReply.Content)
 	suite.Equal(model.VisibilityPublic, statusReply.Visibility)
 }
 

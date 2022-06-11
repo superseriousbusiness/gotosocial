@@ -19,10 +19,7 @@
 package federation_test
 
 import (
-	"bytes"
 	"context"
-	"io/ioutil"
-	"net/http"
 	"net/url"
 	"testing"
 	"time"
@@ -60,15 +57,9 @@ func (suite *FederatingActorTestSuite) TestSendNoRemoteFollowers() {
 	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
 
 	// setup transport controller with a no-op client so we don't make external calls
-	sentMessages := []*url.URL{}
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
-		sentMessages = append(sentMessages, req.URL)
-		r := ioutil.NopCloser(bytes.NewReader([]byte{}))
-		return &http.Response{
-			StatusCode: 200,
-			Body:       r,
-		}, nil
-	}), suite.db, fedWorker)
+	httpClient := testrig.NewMockHTTPClient(nil, "../../testrig/media")
+	tc := testrig.NewTestTransportController(httpClient, suite.db, fedWorker)
+
 	// setup module being tested
 	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
 
@@ -77,7 +68,7 @@ func (suite *FederatingActorTestSuite) TestSendNoRemoteFollowers() {
 	suite.NotNil(activity)
 
 	// because zork has no remote followers, sent messages should be empty (no messages sent to own instance)
-	suite.Empty(sentMessages)
+	suite.Empty(httpClient.SentMessages)
 }
 
 func (suite *FederatingActorTestSuite) TestSendRemoteFollower() {
@@ -87,8 +78,8 @@ func (suite *FederatingActorTestSuite) TestSendRemoteFollower() {
 
 	err := suite.db.Put(ctx, &gtsmodel.Follow{
 		ID:              "01G1TRWV4AYCDBX5HRWT2EVBCV",
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		CreatedAt:       testrig.TimeMustParse("2022-06-02T12:22:21+02:00"),
+		UpdatedAt:       testrig.TimeMustParse("2022-06-02T12:22:21+02:00"),
 		AccountID:       testRemoteAccount.ID,
 		TargetAccountID: testAccount.ID,
 		ShowReblogs:     true,
@@ -100,7 +91,7 @@ func (suite *FederatingActorTestSuite) TestSendRemoteFollower() {
 	testNote := testrig.NewAPNote(
 		testrig.URLMustParse("http://localhost:8080/users/the_mighty_zork/statuses/01G1TR6BADACCZWQMNF9X21TV5"),
 		testrig.URLMustParse("http://localhost:8080/@the_mighty_zork/statuses/01G1TR6BADACCZWQMNF9X21TV5"),
-		time.Now(),
+		testrig.TimeMustParse("2022-06-02T12:22:21+02:00"),
 		"boobies",
 		"",
 		testrig.URLMustParse(testAccount.URI),
@@ -110,20 +101,12 @@ func (suite *FederatingActorTestSuite) TestSendRemoteFollower() {
 		nil,
 		nil,
 	)
-	testActivity := testrig.WrapAPNoteInCreate(testrig.URLMustParse("http://localhost:8080/whatever_some_create"), testrig.URLMustParse(testAccount.URI), time.Now(), testNote)
+	testActivity := testrig.WrapAPNoteInCreate(testrig.URLMustParse("http://localhost:8080/whatever_some_create"), testrig.URLMustParse(testAccount.URI), testrig.TimeMustParse("2022-06-02T12:22:21+02:00"), testNote)
 
 	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
 
-	// setup transport controller with a no-op client so we don't make external calls
-	sentMessages := []*url.URL{}
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
-		sentMessages = append(sentMessages, req.URL)
-		r := ioutil.NopCloser(bytes.NewReader([]byte{}))
-		return &http.Response{
-			StatusCode: 200,
-			Body:       r,
-		}, nil
-	}), suite.db, fedWorker)
+	httpClient := testrig.NewMockHTTPClient(nil, "../../testrig/media")
+	tc := testrig.NewTestTransportController(httpClient, suite.db, fedWorker)
 	// setup module being tested
 	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
 
@@ -132,8 +115,10 @@ func (suite *FederatingActorTestSuite) TestSendRemoteFollower() {
 	suite.NotNil(activity)
 
 	// because we added 1 remote follower for zork, there should be a url in sentMessage
-	suite.Len(sentMessages, 1)
-	suite.Equal(testRemoteAccount.InboxURI, sentMessages[0].String())
+	suite.Len(httpClient.SentMessages, 1)
+	msg, ok := httpClient.SentMessages[testRemoteAccount.InboxURI]
+	suite.True(ok)
+	suite.Equal(`{"@context":"https://www.w3.org/ns/activitystreams","actor":"http://localhost:8080/users/the_mighty_zork","id":"http://localhost:8080/whatever_some_create","object":{"attributedTo":"http://localhost:8080/users/the_mighty_zork","content":"boobies","id":"http://localhost:8080/users/the_mighty_zork/statuses/01G1TR6BADACCZWQMNF9X21TV5","published":"2022-06-02T12:22:21+02:00","tag":[],"to":"http://localhost:8080/users/the_mighty_zork/followers","type":"Note","url":"http://localhost:8080/@the_mighty_zork/statuses/01G1TR6BADACCZWQMNF9X21TV5"},"published":"2022-06-02T12:22:21+02:00","to":"http://localhost:8080/users/the_mighty_zork/followers","type":"Create"}`, string(msg))
 }
 
 func TestFederatingActorTestSuite(t *testing.T) {

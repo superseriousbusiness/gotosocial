@@ -60,7 +60,7 @@ func (suite *AccountTestSuite) TestAccountDeleteLocal() {
 	time.Sleep(1 * time.Second) // wait a sec for the delete to process
 
 	// the delete should be federated outwards to the following account's inbox
-	sent, ok := suite.sentHTTPRequests[followingAccount.InboxURI]
+	sent, ok := suite.httpClient.SentMessages[followingAccount.InboxURI]
 	suite.True(ok)
 	delete := &struct {
 		Actor  string `json:"actor"`

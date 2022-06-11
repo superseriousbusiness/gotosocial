@@ -99,7 +99,10 @@ type TypeConverter interface {
 	// If update is false, and the account is already known in the database, then the existing account entry will be returned.
 	// If update is true, then even if the account is already known, all fields in the accountable will be parsed and a new *gtsmodel.Account
 	// will be generated. This is useful when one needs to force refresh of an account, eg., during an Update of a Profile.
-	ASRepresentationToAccount(ctx context.Context, accountable ap.Accountable, update bool) (*gtsmodel.Account, error)
+	//
+	// If accountDomain is set (not an empty string) then this value will be used as the account's Domain. If not set,
+	// then the Host of the accountable's AP ID will be used instead.
+	ASRepresentationToAccount(ctx context.Context, accountable ap.Accountable, accountDomain string, update bool) (*gtsmodel.Account, error)
 	// ASStatus converts a remote activitystreams 'status' representation into a gts model status.
 	ASStatusToStatus(ctx context.Context, statusable ap.Statusable) (*gtsmodel.Status, error)
 	// ASFollowToFollowRequest converts a remote activitystreams `follow` representation into gts model follow request.

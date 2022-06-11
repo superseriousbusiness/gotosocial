@@ -19,7 +19,6 @@
 package util
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
@@ -58,20 +57,4 @@ func DeriveEmojisFromText(text string) []string {
 		emojis = append(emojis, m[1])
 	}
 	return UniqueStrings(emojis)
-}
-
-// ExtractMentionParts extracts the username test_user and the domain example.org
-// from a mention string like @test_user@example.org.
-//
-// If nothing is matched, it will return an error.
-func ExtractMentionParts(mention string) (username, domain string, err error) {
-	matches := regexes.MentionName.FindStringSubmatch(mention)
-	switch len(matches) {
-	case 2:
-		return matches[1], "", nil
-	case 3:
-		return matches[1], matches[2], nil
-	default:
-		return "", "", fmt.Errorf("couldn't match mention %s", mention)
-	}
 }

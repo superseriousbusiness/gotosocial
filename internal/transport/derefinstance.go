@@ -206,7 +206,7 @@ func dereferenceByNodeInfo(c context.Context, t *transport, iri *url.URL) (*gtsm
 			// see if there's a 'name' in the map
 			if name, present := v["name"]; present {
 				// name could be just a username, or could be a mention string eg @whatever@aaaa.com
-				username, _, err := util.ExtractMentionParts(name)
+				username, _, err := util.ExtractNamestringParts(name)
 				if err == nil {
 					// it was a mention string
 					contactAccountUsername = username

@@ -423,7 +423,7 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestLocked() {
 	suite.Equal(originAccount.ID, notif.Account.ID)
 
 	// no messages should have been sent out, since we didn't need to federate an accept
-	suite.Empty(suite.sentHTTPRequests)
+	suite.Empty(suite.httpClient.SentMessages)
 }
 
 func (suite *FromFederatorTestSuite) TestProcessFollowRequestUnlocked() {
@@ -474,8 +474,8 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestUnlocked() {
 	suite.Equal(originAccount.ID, notif.Account.ID)
 
 	// an accept message should be sent to satan's inbox
-	suite.Len(suite.sentHTTPRequests, 1)
-	acceptBytes := suite.sentHTTPRequests[originAccount.InboxURI]
+	suite.Len(suite.httpClient.SentMessages, 1)
+	acceptBytes := suite.httpClient.SentMessages[originAccount.InboxURI]
 	accept := &struct {
 		Actor  string `json:"actor"`
 		ID     string `json:"id"`

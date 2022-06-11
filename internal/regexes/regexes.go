@@ -61,7 +61,7 @@ var (
 		return rgx
 	}()
 
-	mentionName = `^@(\w+)(?:@([a-zA-Z0-9_\-\.:]+))?$`
+	mentionName = `^@([\w\-\.]+)(?:@([\w\-\.:]+))?$`
 	// MentionName captures the username and domain part from a mention string
 	// such as @whatever_user@example.org, returning whatever_user and example.org (without the @ symbols)
 	MentionName = regexp.MustCompile(mentionName)

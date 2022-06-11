@@ -19,22 +19,14 @@
 package dereferencing_test
 
 import (
-	"bytes"
-	"encoding/json"
-	"io"
-	"net/http"
-
 	"codeberg.org/gruf/go-store/kv"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -66,106 +58,10 @@ func (suite *DereferencerStandardTestSuite) SetupTest() {
 
 	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewTestStorage()
-	suite.dereferencer = dereferencing.NewDereferencer(suite.db, testrig.NewTestTypeConverter(suite.db), suite.mockTransportController(), testrig.NewTestMediaManager(suite.db, suite.storage))
+	suite.dereferencer = dereferencing.NewDereferencer(suite.db, testrig.NewTestTypeConverter(suite.db), testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../testrig/media"), suite.db, concurrency.NewWorkerPool[messages.FromFederator](-1, -1)), testrig.NewTestMediaManager(suite.db, suite.storage))
 	testrig.StandardDBSetup(suite.db, nil)
 }
 
 func (suite *DereferencerStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
-}
-
-// mockTransportController returns basically a miniature muxer, which returns a different
-// value based on the request URL. It can be used to return remote statuses, profiles, etc,
-// as though they were actually being dereferenced. If the URL doesn't correspond to any person
-// or note or attachment that we have stored, then just a 200 code will be returned, with an empty body.
-func (suite *DereferencerStandardTestSuite) mockTransportController() transport.Controller {
-	do := func(req *http.Request) (*http.Response, error) {
-		logrus.Debugf("received request for %s", req.URL)
-
-		responseBytes := []byte{}
-		responseType := ""
-		responseLength := 0
-
-		if note, ok := suite.testRemoteStatuses[req.URL.String()]; ok {
-			// the request is for a note that we have stored
-			noteI, err := streams.Serialize(note)
-			if err != nil {
-				panic(err)
-			}
-			noteJson, err := json.Marshal(noteI)
-			if err != nil {
-				panic(err)
-			}
-			responseBytes = noteJson
-			responseType = "application/activity+json"
-		}
-
-		if person, ok := suite.testRemotePeople[req.URL.String()]; ok {
-			// the request is for a person that we have stored
-			personI, err := streams.Serialize(person)
-			if err != nil {
-				panic(err)
-			}
-			personJson, err := json.Marshal(personI)
-			if err != nil {
-				panic(err)
-			}
-			responseBytes = personJson
-			responseType = "application/activity+json"
-		}
-
-		if group, ok := suite.testRemoteGroups[req.URL.String()]; ok {
-			// the request is for a person that we have stored
-			groupI, err := streams.Serialize(group)
-			if err != nil {
-				panic(err)
-			}
-			groupJson, err := json.Marshal(groupI)
-			if err != nil {
-				panic(err)
-			}
-			responseBytes = groupJson
-			responseType = "application/activity+json"
-		}
-
-		if service, ok := suite.testRemoteServices[req.URL.String()]; ok {
-			serviceI, err := streams.Serialize(service)
-			if err != nil {
-				panic(err)
-			}
-			serviceJson, err := json.Marshal(serviceI)
-			if err != nil {
-				panic(err)
-			}
-			responseBytes = serviceJson
-			responseType = "application/activity+json"
-		}
-
-		if attachment, ok := suite.testRemoteAttachments[req.URL.String()]; ok {
-			responseBytes = attachment.Data
-			responseType = attachment.ContentType
-		}
-
-		if len(responseBytes) != 0 {
-			// we found something, so print what we're going to return
-			logrus.Debugf("returning response %s", string(responseBytes))
-		}
-		responseLength = len(responseBytes)
-
-		reader := bytes.NewReader(responseBytes)
-		readCloser := io.NopCloser(reader)
-		response := &http.Response{
-			StatusCode:    200,
-			Body:          readCloser,
-			ContentLength: int64(responseLength),
-			Header: http.Header{
-				"content-type": {responseType},
-			},
-		}
-
-		return response, nil
-	}
-	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
-	mockClient := testrig.NewMockHTTPClient(do)
-	return testrig.NewTestTransportController(mockClient, suite.db, fedWorker)
 }

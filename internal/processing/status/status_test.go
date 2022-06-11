@@ -80,7 +80,7 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 	suite.db = testrig.NewTestDB()
 	suite.typeConverter = testrig.NewTestTypeConverter(suite.db)
 	suite.clientWorker = concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
-	suite.tc = testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db, fedWorker)
+	suite.tc = testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../testrig/media"), suite.db, fedWorker)
 	suite.storage = testrig.NewTestStorage()
 	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
 	suite.federator = testrig.NewTestFederator(suite.db, suite.tc, suite.storage, suite.mediaManager, fedWorker)

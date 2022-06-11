@@ -23,7 +23,6 @@ import (
 
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -48,7 +47,6 @@ type AccountStandardTestSuite struct {
 	mediaManager        media.Manager
 	oauthServer         oauth.Server
 	fromClientAPIChan   chan messages.FromClientAPI
-	httpClient          pub.HttpClient
 	transportController transport.Controller
 	federator           federation.Federator
 	emailSender         email.Sender
@@ -97,8 +95,7 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	suite.fromClientAPIChan = make(chan messages.FromClientAPI, 100)
-	suite.httpClient = testrig.NewMockHTTPClient(nil)
-	suite.transportController = testrig.NewTestTransportController(suite.httpClient, suite.db, fedWorker)
+	suite.transportController = testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../testrig/media"), suite.db, fedWorker)
 	suite.federator = testrig.NewTestFederator(suite.db, suite.transportController, suite.storage, suite.mediaManager, fedWorker)
 	suite.sentEmails = make(map[string]string)
 	suite.emailSender = testrig.NewEmailSender("../../../web/template/", suite.sentEmails)
