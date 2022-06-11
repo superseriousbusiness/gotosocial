@@ -108,7 +108,7 @@ func (d *deref) iterateAncestors(ctx context.Context, username string, statusIRI
 	// If we reach here, we're looking at a remote status
 	_, statusable, err := d.GetRemoteStatus(ctx, username, &statusIRI, true, false)
 	if err != nil {
-		l.Debugf("couldn't get remote status %s: %s; can't iterate any more ancestors", statusIRI, err)
+		l.Debugf("couldn't get remote status %s: %s; can't iterate any more ancestors", statusIRI.String(), err)
 		return nil
 	}
 
@@ -171,7 +171,7 @@ func (d *deref) iterateDescendants(ctx context.Context, username string, statusI
 
 pageLoop:
 	for {
-		l.Trace("dereferencing page %s", currentPageIRI)
+		l.Tracef("dereferencing page %s", currentPageIRI)
 		collectionPage, err := d.DereferenceCollectionPage(ctx, username, currentPageIRI)
 		if err != nil {
 			l.Debugf("couldn't get remote collection page %s: %s; breaking pageLoop", currentPageIRI, err)
@@ -227,7 +227,7 @@ pageLoop:
 		nextPage := collectionPage.GetActivityStreamsNext()
 		if nextPage != nil && nextPage.IsIRI() {
 			nextPageIRI := nextPage.GetIRI()
-			l.Trace("moving on to next page %s", nextPageIRI)
+			l.Tracef("moving on to next page %s", nextPageIRI)
 			currentPageIRI = nextPageIRI
 		} else {
 			l.Trace("no next page, bailing")
