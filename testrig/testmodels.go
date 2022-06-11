@@ -56,6 +56,23 @@ func NewTestTokens() map[string]*gtsmodel.Token {
 			AccessCreateAt:  time.Now(),
 			AccessExpiresAt: time.Now().Add(72 * time.Hour),
 		},
+		"local_account_1_client_application_token": {
+			ID:              "01P9SVWS9J3SPHZQ3KCMBEN70N",
+			ClientID:        "01F8MGV8AC3NGSJW0FE8W1BV70",
+			RedirectURI:     "http://localhost:8080",
+			Access:          "ZTK1MWMWZDGTMGMXOS0ZY2UXLWI5ZWETMWEZYZZIYTLHMZI4",
+			AccessCreateAt:  TimeMustParse("2022-06-10T15:22:08Z"),
+			AccessExpiresAt: TimeMustParse("2050-01-01T15:22:08Z"),
+		},
+		"local_account_1_user_authorization_token": {
+			ID:            "01G574M2VTV66YZBC9AZ7HY3FV",
+			ClientID:      "01F8MGV8AC3NGSJW0FE8W1BV70",
+			UserID:        "01F8MGVGPHQ2D3P3X0454H54Z5",
+			RedirectURI:   "http://localhost:8080",
+			Code:          "ZJYYMZQ0MTQTZTU1NC0ZNJK4LWE2ZWITYTM1MDHHOTAXNJHL",
+			CodeCreateAt:  TimeMustParse("2022-06-10T15:22:08Z"),
+			CodeExpiresAt: TimeMustParse("2050-01-01T15:22:08Z"),
+		},
 		"local_account_2": {
 			ID:              "01F8MGVVM1EDVYET710J27XY5R",
 			ClientID:        "01F8MGW47HN8ZXNHNZ7E47CDMQ",

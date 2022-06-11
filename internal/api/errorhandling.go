@@ -125,3 +125,30 @@ func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet fun
 		genericErrorHandler(c, instanceGet, accept, errWithCode)
 	}
 }
+
+// OAuthErrorHandler is a lot like ErrorHandler, but it specifically returns errors
+// that are compatible with https://datatracker.ietf.org/doc/html/rfc6749#section-5.2,
+// but serializing errWithCode.Error() in the 'error' field, and putting any help text
+// from the error in the 'error_description' field. This means you should be careful not
+// to pass any detailed errors (that might contain sensitive information) into the
+// errWithCode.Error() field, since the client will see this. Use your noggin!
+func OAuthErrorHandler(c *gin.Context, errWithCode gtserror.WithCode) {
+	l := logrus.WithFields(logrus.Fields{
+		"path":  c.Request.URL.Path,
+		"error": errWithCode.Error(),
+		"help":  errWithCode.Safe(),
+	})
+
+	statusCode := errWithCode.Code()
+
+	if statusCode == http.StatusInternalServerError {
+		l.Error("Internal Server Error")
+	} else {
+		l.Debug("handling OAuth error")
+	}
+
+	c.JSON(statusCode, gin.H{
+		"error":             errWithCode.Error(),
+		"error_description": errWithCode.Safe(),
+	})
+}

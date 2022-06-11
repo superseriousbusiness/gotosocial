@@ -246,7 +246,7 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 		sessionUserID:       {userID},
 	}
 
-	if err := m.server.HandleAuthorizeRequest(c.Writer, c.Request); err != nil {
+	if err := m.processor.OAuthHandleAuthorizeRequest(c.Writer, c.Request); err != nil {
 		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error(), helpfulAdvice), m.processor.InstanceGet)
 	}
 }
