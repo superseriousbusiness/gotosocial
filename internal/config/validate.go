@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/miekg/dns"
 	"github.com/sirupsen/logrus"
 )
 
@@ -31,8 +32,21 @@ func Validate() error {
 	errs := []error{}
 
 	// host
-	if GetHost() == "" {
+	host := GetHost()
+	if host == "" {
 		errs = append(errs, fmt.Errorf("%s must be set", HostFlag()))
+	}
+
+	// accountDomain; only check if host was set, otherwise there's no point
+	if host != "" {
+		switch ad := GetAccountDomain(); ad {
+		case "":
+			SetAccountDomain(GetHost())
+		default:
+			if !dns.IsSubDomain(ad, host) {
+				errs = append(errs, fmt.Errorf("%s was %s and %s was %s, but %s is not a valid subdomain of %s", HostFlag(), host, AccountDomainFlag(), ad, host, ad))
+			}
+		}
 	}
 
 	// protocol

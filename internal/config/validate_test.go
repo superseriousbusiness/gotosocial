@@ -46,6 +46,54 @@ func (suite *ConfigValidateTestSuite) TestValidateConfigNoHost() {
 	suite.EqualError(err, "host must be set")
 }
 
+func (suite *ConfigValidateTestSuite) TestValidateAccountDomainOK1() {
+	testrig.InitTestConfig()
+
+	err := config.Validate()
+	suite.NoError(err)
+
+	suite.Equal(config.GetHost(), config.GetAccountDomain())
+}
+
+func (suite *ConfigValidateTestSuite) TestValidateAccountDomainOK2() {
+	testrig.InitTestConfig()
+
+	config.SetAccountDomain("localhost:8080")
+
+	err := config.Validate()
+	suite.NoError(err)
+}
+
+func (suite *ConfigValidateTestSuite) TestValidateAccountDomainOK3() {
+	testrig.InitTestConfig()
+
+	config.SetHost("gts.example.org")
+	config.SetAccountDomain("example.org")
+
+	err := config.Validate()
+	suite.NoError(err)
+}
+
+func (suite *ConfigValidateTestSuite) TestValidateAccountDomainNotSubdomain1() {
+	testrig.InitTestConfig()
+
+	config.SetHost("gts.example.org")
+	config.SetAccountDomain("example.com")
+
+	err := config.Validate()
+	suite.EqualError(err, "host was gts.example.org and account-domain was example.com, but gts.example.org is not a valid subdomain of example.com")
+}
+
+func (suite *ConfigValidateTestSuite) TestValidateAccountDomainNotSubdomain2() {
+	testrig.InitTestConfig()
+
+	config.SetHost("example.org")
+	config.SetAccountDomain("gts.example.org")
+
+	err := config.Validate()
+	suite.EqualError(err, "host was example.org and account-domain was gts.example.org, but example.org is not a valid subdomain of gts.example.org")
+}
+
 func (suite *ConfigValidateTestSuite) TestValidateConfigNoProtocol() {
 	testrig.InitTestConfig()
 
