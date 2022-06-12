@@ -19,6 +19,9 @@
 package testrig
 
 import (
+	"os"
+	"path"
+
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
@@ -64,7 +67,7 @@ var TestDefaults = config.Configuration{
 	MediaRemoteCacheDays:     30,
 
 	StorageBackend:       "local",
-	StorageLocalBasePath: "/gotosocial/storage",
+	StorageLocalBasePath: path.Join(os.TempDir(), "gotosocial"),
 
 	StatusesMaxChars:           5000,
 	StatusesCWMaxChars:         100,
