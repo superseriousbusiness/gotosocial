@@ -20,7 +20,6 @@ package migrations
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"path"
 
@@ -49,12 +48,6 @@ func init() {
 			WherePK().
 			Exec(ctx); err != nil {
 			l.Infof("error deleting attachment with id %s: %s", a.ID, err)
-		}
-	}
-
-	deleteAttachments := func(ctx context.Context, l *logrus.Entry, as []*gtsmodel.MediaAttachment, s *kv.KVStore, tx bun.Tx) {
-		for _, a := range as {
-			deleteAttachment(ctx, l, a, s, tx)
 		}
 	}
 
@@ -102,17 +95,18 @@ func init() {
 				}
 				l.Debugf("found %d duplicates of attachment with remote url %s", len(dupedAttachments), dupedRemoteURL.RemoteURL)
 
+				statusID := dupedAttachments[0].StatusID
+				if statusID == "" {
+					l.Debugf("%s not associated with a status, moving on", dupedRemoteURL.RemoteURL)
+					continue
+				}
+
 				// step 3: get the status that these attachments are supposedly associated with
 				status := &gtsmodel.Status{}
 				if err := tx.NewSelect().
 					Model(status).
-					Where("id = ?", dupedAttachments[0].StatusID).
+					Where("id = ?", statusID).
 					Scan(ctx); err != nil {
-					if err == sql.ErrNoRows {
-						l.Debug("media attachments' parent status no longer exists in the db, deleting all attachments associated with it")
-						deleteAttachments(ctx, l, dupedAttachments, s, tx)
-						continue
-					}
 					l.Infof("error selecting status with id %s: %s", dupedAttachments[0].StatusID, err)
 					continue
 				}
