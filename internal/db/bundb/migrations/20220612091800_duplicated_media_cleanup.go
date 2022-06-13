@@ -115,21 +115,21 @@ func init() {
 					continue
 				}
 
-				// step 4: for each attachment, check if it's actually the one that the status is currently set to use, and delete if not
-				for _, a := range dupedAttachments {
-					var current bool
+				// step 4: for each attachment, check if it's actually one that the status is currently set to use, and delete if not
+				for _, dupe := range dupedAttachments {
+					var currentlyUsed bool
 					for _, attachmentID := range status.AttachmentIDs {
-						if attachmentID == a.ID {
-							current = true
+						if attachmentID == dupe.ID {
+							currentlyUsed = true
 						}
 					}
 
-					if current {
-						l.Debugf("attachment with id %s is the correct current attachment, leaving it alone!", a.ID)
+					if currentlyUsed {
+						l.Debugf("attachment with id %s is a correct current attachment, leaving it alone!", dupe.ID)
 						continue
 					}
 
-					deleteAttachment(ctx, l, a, s, tx)
+					deleteAttachment(ctx, l, dupe, s, tx)
 				}
 			}
 			return nil
