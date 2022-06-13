@@ -116,13 +116,15 @@ func init() {
 				}
 				l.Debugf("%s is associated with status %s", dupedRemoteURL.RemoteURL, statusID)
 
-				// step 3: get the status that these attachments are supposedly associated with
+				// step 3: get the status that these attachments are supposedly associated with, bail if we can't get it
 				status := &gtsmodel.Status{}
 				if err := tx.NewSelect().
 					Model(status).
 					Where("id = ?", statusID).
 					Scan(ctx); err != nil {
-					l.Errorf("error selecting status with id %s: %s", statusID, err)
+					if err != sql.ErrNoRows {
+						l.Errorf("error selecting status with id %s: %s", statusID, err)
+					}
 					continue
 				}
 
