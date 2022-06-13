@@ -20,6 +20,7 @@ package migrations
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"path"
 
