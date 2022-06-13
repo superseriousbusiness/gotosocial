@@ -58,8 +58,12 @@ func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		l := logrus.WithField("migration", "20220612091800_duplicated_media_cleanup")
 
+		storageBasePath := config.GetStorageLocalBasePath()
+		if storageBasePath == "" {
+			return fmt.Errorf("%s must be set to do storage migration", config.StorageLocalBasePathFlag())
+		}
+
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			storageBasePath := config.GetStorageLocalBasePath()
 			s, err := kv.OpenFile(storageBasePath, &storage.DiskConfig{
 				LockFile: path.Join(storageBasePath, "store.lock"),
 			})
