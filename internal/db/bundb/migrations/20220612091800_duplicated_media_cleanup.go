@@ -103,11 +103,18 @@ func init() {
 				}
 				l.Debugf("found %d duplicates of attachment with remote url %s", len(dupedAttachments), dupedRemoteURL.RemoteURL)
 
-				statusID := dupedAttachments[0].StatusID
+				var statusID string
+				for _, dupe := range dupedAttachments {
+					if statusID == "" && dupe.StatusID != "" {
+						statusID = dupe.StatusID
+					}
+				}
+
 				if statusID == "" {
 					l.Debugf("%s not associated with a status, moving on", dupedRemoteURL.RemoteURL)
 					continue
 				}
+				l.Debugf("%s is associated with status %s", dupedRemoteURL.RemoteURL, statusID)
 
 				// step 3: get the status that these attachments are supposedly associated with
 				status := &gtsmodel.Status{}
