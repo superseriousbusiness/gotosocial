@@ -47,7 +47,7 @@ func init() {
 			Model(a).
 			WherePK().
 			Exec(ctx); err != nil {
-			l.Infof("error deleting attachment with id %s: %s", a.ID, err)
+			l.Errorf("error deleting attachment with id %s: %s", a.ID, err)
 		}
 	}
 
@@ -90,7 +90,7 @@ func init() {
 					Model(&dupedAttachments).
 					Where("remote_url = ?", dupedRemoteURL.RemoteURL).
 					Scan(ctx); err != nil {
-					l.Infof("error running same attachments query: %s", err)
+					l.Errorf("error running same attachments query: %s", err)
 					continue
 				}
 				l.Debugf("found %d duplicates of attachment with remote url %s", len(dupedAttachments), dupedRemoteURL.RemoteURL)
@@ -107,7 +107,7 @@ func init() {
 					Model(status).
 					Where("id = ?", statusID).
 					Scan(ctx); err != nil {
-					l.Infof("error selecting status with id %s: %s", dupedAttachments[0].StatusID, err)
+					l.Errorf("error selecting status with id %s: %s", statusID, err)
 					continue
 				}
 
