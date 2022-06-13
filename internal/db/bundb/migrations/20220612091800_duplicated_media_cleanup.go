@@ -35,19 +35,23 @@ func init() {
 	deleteAttachment := func(ctx context.Context, l *logrus.Entry, a *gtsmodel.MediaAttachment, s *kv.KVStore, tx bun.Tx) {
 		if err := s.Delete(a.File.Path); err != nil && err != storage.ErrNotFound {
 			l.Errorf("error removing file %s: %s", a.File.Path, err)
+		} else {
+			l.Debugf("deleted %s", a.File.Path)
 		}
-		l.Debugf("deleted %s", a.File.Path)
 
 		if err := s.Delete(a.Thumbnail.Path); err != nil && err != storage.ErrNotFound {
 			l.Errorf("error removing file %s: %s", a.Thumbnail.Path, err)
+		} else {
+			l.Debugf("deleted %s", a.Thumbnail.Path)
 		}
-		l.Debugf("deleted %s", a.Thumbnail.Path)
 
 		if _, err := tx.NewDelete().
 			Model(a).
 			WherePK().
 			Exec(ctx); err != nil {
 			l.Errorf("error deleting attachment with id %s: %s", a.ID, err)
+		} else {
+			l.Debugf("deleted attachment with id %s", a.ID)
 		}
 	}
 
