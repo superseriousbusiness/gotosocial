@@ -29,6 +29,10 @@ import (
 const (
 	// InstanceInformationPath is for serving instance info requests
 	InstanceInformationPath = "api/v1/instance"
+	// InstancePeersPath is for serving instance peers requests.
+	InstancePeersPath = InstanceInformationPath + "/peers"
+	// PeersFilterKey is used to provide filters to /api/v1/instance/peers
+	PeersFilterKey = "filter"
 )
 
 // Module implements the ClientModule interface

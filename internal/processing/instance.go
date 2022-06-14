@@ -21,13 +21,16 @@ package processing
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
@@ -45,8 +48,42 @@ func (p *processor) InstanceGet(ctx context.Context, domain string) (*apimodel.I
 	return ai, nil
 }
 
-func (p *processor) InstancePeersGet(ctx context.Context) (interface{}, gtserror.WithCode) {
-	return nil, nil
+func (p *processor) InstancePeersGet(ctx context.Context, authed *oauth.Auth, includeSuspended bool, includeOpen bool) ([]*apimodel.Domain, gtserror.WithCode) {
+	domains := []*apimodel.Domain{}
+
+	if includeOpen {
+		instances, err := p.db.GetInstancePeers(ctx, false)
+		if err != nil && err != db.ErrNoEntries {
+			err = fmt.Errorf("error selecting instance peers: %s", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
+		for _, i := range instances {
+			domain := &apimodel.Domain{Domain: i.Domain}
+			domains = append(domains, domain)
+		}
+	}
+
+	if includeSuspended {
+		domainBlocks := []*gtsmodel.DomainBlock{}
+		if err := p.db.GetAll(ctx, &domainBlocks); err != nil && err != db.ErrNoEntries {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
+		for _, d := range domainBlocks {
+			domain := &apimodel.Domain{
+				Domain:      d.Domain,
+				SuspendedAt: util.FormatISO8601(d.CreatedAt),
+			}
+			domains = append(domains, domain)
+		}
+	}
+
+	sort.Slice(domains, func(i, j int) bool {
+		return domains[i].Domain < domains[j].Domain
+	})
+
+	return domains, nil
 }
 
 func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.Instance, gtserror.WithCode) {
