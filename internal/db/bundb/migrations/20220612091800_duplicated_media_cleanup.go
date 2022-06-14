@@ -134,9 +134,11 @@ func init() {
 				// step 4: for each attachment, check if it's actually one that the status is currently set to use, and delete if not
 				for _, dupe := range dupedAttachments {
 					var currentlyUsed bool
+				currentlyUsedLoop:
 					for _, attachmentID := range status.AttachmentIDs {
 						if attachmentID == dupe.ID {
 							currentlyUsed = true
+							break currentlyUsedLoop
 						}
 					}
 
