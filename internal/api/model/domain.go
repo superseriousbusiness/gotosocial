@@ -27,6 +27,12 @@ type Domain struct {
 	// The hostname of the domain.
 	// example: example.org
 	Domain string `form:"domain" json:"domain" validate:"required"`
+	// Time at which this domain was suspended. Key will not be present on open domains.
+	// example: 2021-07-30T09:20:25+00:00
+	SuspendedAt string `json:"suspended_at,omitempty"`
+	// Time at which this domain was silenced. Key will not be present on open domains.
+	// example: 2021-07-30T09:20:25+00:00
+	SilencedAt string `json:"silenced_at,omitempty"`
 }
 
 // DomainBlock represents a block on one domain
