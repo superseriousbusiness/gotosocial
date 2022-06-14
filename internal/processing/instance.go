@@ -45,6 +45,10 @@ func (p *processor) InstanceGet(ctx context.Context, domain string) (*apimodel.I
 	return ai, nil
 }
 
+func (p *processor) InstancePeersGet(ctx context.Context) (interface{}, gtserror.WithCode) {
+	return nil, nil
+}
+
 func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.Instance, gtserror.WithCode) {
 	// fetch the instance entry from the db for processing
 	i := &gtsmodel.Instance{}
