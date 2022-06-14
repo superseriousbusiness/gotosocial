@@ -105,9 +105,11 @@ func init() {
 				l.Debugf("found %d duplicates of attachment with remote url %s", len(dupedAttachments), dupedRemoteURL.RemoteURL)
 
 				var statusID string
+			statusIDLoop:
 				for _, dupe := range dupedAttachments {
-					if statusID == "" && dupe.StatusID != "" {
+					if dupe.StatusID != "" {
 						statusID = dupe.StatusID
+						break statusIDLoop
 					}
 				}
 
