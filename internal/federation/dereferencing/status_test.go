@@ -21,7 +21,6 @@ package dereferencing_test
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -122,8 +121,6 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithMention() {
 	suite.Equal(account.ID, m.OriginAccountID)
 	suite.Equal(fetchingAccount.ID, m.TargetAccountID)
 	suite.Equal(account.URI, m.OriginAccountURI)
-	suite.WithinDuration(time.Now(), m.CreatedAt, 5*time.Minute)
-	suite.WithinDuration(time.Now(), m.UpdatedAt, 5*time.Minute)
 	suite.False(m.Silent)
 }
 
