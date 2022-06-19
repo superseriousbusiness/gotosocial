@@ -3,11 +3,14 @@
     <div class="profile">
         <div class="headerimage">
             {{ if .account.Header }}
-            <img src="{{.account.Header}}"/>
+            <img
+                src="{{.account.Header}}"
+                alt="{{if .account.DisplayName}}{{.account.DisplayName}}{{else}}{{.account.Username}}{{end}}'s header"
+            />
             {{ end }}
         </div>
         <div class="basic">
-            <a href="{{.account.Avatar}}" class="avatar"><img src="{{.account.Avatar}}"></a>
+            <a href="{{.account.Avatar}}" class="avatar"><img src="{{.account.Avatar}}" alt="{{if .account.DisplayName}}{{.account.DisplayName}}{{else}}{{.account.Username}}{{end}}'s avatar"></a>
             <a href="{{.account.URL}}" class="displayname">{{if .account.DisplayName}}{{.account.DisplayName}}{{else}}{{.account.Username}}{{end}}</a>
             <a href="{{.account.URL}}" class="username">@{{.account.Username}}</a>
         </div>
