@@ -81,7 +81,7 @@ func (suite *MediaCleanupTestSuite) TestMediaCleanupNoArg() {
 	suite.NoError(err)
 
 	// the media should no longer be cached
-	suite.True(prunedAttachment.Cached)
+	suite.False(prunedAttachment.Cached)
 }
 
 func (suite *MediaCleanupTestSuite) TestMediaCleanupNotOldEnough() {
@@ -90,7 +90,7 @@ func (suite *MediaCleanupTestSuite) TestMediaCleanupNotOldEnough() {
 
 	// set up the request
 	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodPost, []byte("{\"remote_cache_days\": 3}"), admin.EmojiPath, "application/json")
+	ctx := suite.newContext(recorder, http.MethodPost, []byte("{\"remote_cache_days\": 10000}"), admin.EmojiPath, "application/json")
 
 	// call the handler
 	suite.adminModule.MediaCleanupPOSTHandler(ctx)
