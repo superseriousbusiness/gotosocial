@@ -149,7 +149,7 @@ module.exports = function oauthClient(config, initState) {
 		return (state.access_token != undefined);
 	}
 
-	function apiRequest(path, method, data, type="json") {
+	function apiRequest(path, method, data, type="json", accept="json") {
 		if (!isAuthorized()) {
 			throw new Error("Not Authenticated");
 		}
@@ -160,7 +160,8 @@ module.exports = function oauthClient(config, initState) {
 			url.search = s;
 		}
 		let headers = {
-			"Authorization": `Bearer ${state.access_token}`
+			"Authorization": `Bearer ${state.access_token}`,
+			"Accept": accept == "json" ? "application/json" : "*/*"
 		};
 		let body = data;
 		if (type == "json" && body != undefined) {
