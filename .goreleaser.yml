@@ -142,17 +142,27 @@ docker_manifests:
 archives:
   # https://goreleaser.com/customization/archive/
   -
+    id: binary-release
     files:
     # standard release files
     - LICENSE
     - README.md
     - CHANGELOG*
-    # web assets
+    # web stuff minus source
     - web/assets
     - web/template
     # example config files
     - example/config.yaml
     - example/gotosocial.service
+  -
+    id: web-assets
+    files:
+    - LICENSE
+    # just the web stuff minus source
+    - web/assets
+    - web/template
+    meta: true
+    name_template: "{{ .ProjectName }}_{{ .Version }}_web-assets"
 checksum:
   # https://goreleaser.com/customization/checksum/
   name_template: 'checksums.txt'
@@ -161,4 +171,4 @@ snapshot:
   name_template: "{{ incpatch .Version }}-SNAPSHOT"
 source:
   # https://goreleaser.com/customization/source/
-  enabled: true
+  enabled: false
