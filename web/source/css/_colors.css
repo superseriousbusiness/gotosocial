@@ -21,15 +21,35 @@
    postcss-custom-prop-vars will transpile these to css --variables
 */
 
-$bg: #525c66;
-$fg: #fafaff;
-$fg_dark: #b0b0b5;
+/* Color definitions */
 
-$bg_darker3: color-mod($bg lightness(-3%));
-$bg_darker5: color-mod($bg lightness(-5%));
+$near_white: #fafaff;
 
-$bg_lighter3: color-mod($bg lightness(+3%));
+$sloth_gray1: #b0b0b5;
+$sloth_gray2: #525c66;
 
-$acc1: #de8957; // sloth light orange
-$acc2: #c76d33; // sloth dark orange
-$blue: #5897df;
+$sloth_orange1: #de8957;
+$sloth_orange2: #c76d33;
+$lightblue: #5897df;
+
+/* derivative colors */
+
+$sloth_gray2_darker3: color-mod($sloth_gray2 lightness(-3%));
+$sloth_gray2_darker5: color-mod($sloth_gray2 lightness(-5%));
+$sloth_gray2_lighter3: color-mod($sloth_gray2 lightness(+3%));
+
+$fg: $near_white;
+$bg: $sloth_gray2_darker5;
+
+$bg_accent: $sloth_gray2_lighter3;
+$fg_accent: $sloth_orange1;
+
+/* Color variables as used in a specific location */
+
+$header_bg: $sloth_gray2_darker5;
+$footer_bg: $sloth_gray2_darker3;
+
+$link_fg: $fg_accent;
+
+$button_bg: $sloth_orange1;
+$button_hover_bg: $sloth_orange2;

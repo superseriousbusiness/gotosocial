@@ -1,19 +1,19 @@
 {{ template "header.tmpl" .}}
+<section class="excerpt_top">
+	home to <span class="count">{{.instance.Stats.user_count}}</span> users
+		who posted <span class="count">{{.instance.Stats.status_count}}</span> statuses,
+		federating with  <span class="count">{{.instance.Stats.domain_count}}</span> other instances.
+</section>
 <main class="lightgray">
-
 	<section>
-		<h1>Home to <span class="count">{{.instance.Stats.user_count}}</span> users
-			who posted <span class="count">{{.instance.Stats.status_count}}</span> statuses,
-			federating with  <span class="count">{{.instance.Stats.domain_count}}</span> other instances.</h1>
 		<div className="short-description">
 			{{.instance.ShortDescription |noescape}}
 		</div>
 	</section>
-	
 	<section class="apps">
 		<p>
-			GoToSocial does not provide its own frontend, but implements the Mastodon client API.
-			You can use this server through a variety of clients:
+			GoToSocial does not provide its own webclient, but implements the Mastodon client API.
+			You can use this server through a variety of other clients:
 		</p>
 		<div class="applist">
 			<div class="entry">
