@@ -2,19 +2,20 @@
 		</div>
 		<footer>
 			<div id="version">
-				GoToSocial <span class="accent">{{.instance.Version}}</span><br>
-				<a href="https://github.com/superseriousbusiness/gotosocial">Source Code</a>
+				<a name="Source code" href="https://github.com/superseriousbusiness/gotosocial">
+					GoToSocial <span class="accent">{{.instance.Version}}</span>
+				</a>
 			</div>
-			<div id="contact">
-				{{ if .instance.ContactAccount }} 
-				Contact: <a href="{{.instance.ContactAccount.URL}}" class="nounderline">{{.instance.ContactAccount.Username}}</a><br>
-				{{ end }}
-			</div>
-			<div id="email">
-				{{ if .instance.Email }} 
-				Email: <a href="mailto:{{.instance.Email}}" class="nounderline">{{.instance.Email}}</a><br>
-				{{ end }}
-			</div>
+			{{ if .instance.ContactAccount }} 
+				<div id="contact">
+					Contact: <a href="{{.instance.ContactAccount.URL}}" class="nounderline">{{.instance.ContactAccount.Username}}</a><br>
+				</div>
+			{{ end }}
+			{{ if .instance.Email }} 
+				<div id="email">
+					Email: <a href="mailto:{{.instance.Email}}" class="nounderline">{{.instance.Email}}</a><br>
+				</div>
+			{{ end }}
 		</footer>
 	</div>
 	{{ if .javascript }}

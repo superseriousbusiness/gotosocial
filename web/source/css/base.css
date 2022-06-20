@@ -17,7 +17,7 @@
 */
 
 $br: 0.4rem;
-$boxshadow: 0 0.4rem 1rem -0.2rem rgba(0,0,0,0.2);
+$boxshadow: 0 0.4rem 1rem -0.1rem rgba(0,0,0,0.15);
 
 html, body {
 	padding: 0;
@@ -123,7 +123,7 @@ main {
 .button, button {
 	border-radius: 0.2rem;
 	color: $fg;
-	background: $sloth_orange1;
+	background: $button_bg;
 	text-decoration: none;
 	font-size: 1.2rem;
 	font-weight: bold;
@@ -240,9 +240,6 @@ footer {
 	div {
 		margin: 0 2rem;
 		padding: 1rem;
-		background: $footer_bg;
-		box-shadow: $boxshadow;
-		border-radius: $br;
 	}
 
 	a {

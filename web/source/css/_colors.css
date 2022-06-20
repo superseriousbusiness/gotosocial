@@ -28,8 +28,8 @@ $near_white: #fafaff;
 $sloth_gray1: #b0b0b5;
 $sloth_gray2: #525c66;
 
-$sloth_orange1: #de8957;
-$sloth_orange2: #c76d33;
+$sloth_orange1: #e78b55;
+$sloth_orange2: #D87841;
 $lightblue: #5897df;
 
 /* derivative colors */
@@ -46,10 +46,9 @@ $fg_accent: $sloth_orange1;
 
 /* Color variables as used in a specific location */
 
-$header_bg: $sloth_gray2_darker5;
-$footer_bg: $sloth_gray2_darker3;
+$footer_bg: $bg_accent;
 
 $link_fg: $fg_accent;
 
-$button_bg: $sloth_orange1;
-$button_hover_bg: $sloth_orange2;
+$button_bg: $sloth_orange2;
+$button_hover_bg: $sloth_orange1;
