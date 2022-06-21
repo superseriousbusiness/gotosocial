@@ -19,6 +19,7 @@
 package instance_test
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -29,6 +30,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/instance"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type InstancePeersGetTestSuite struct {
@@ -118,7 +121,7 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetOnlySuspended() {
 	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 
-	suite.Equal(`[{"domain":"replyguys.com","suspended_at":"2020-05-13T13:29:12.000Z"}]`, string(b))
+	suite.Equal(`[{"domain":"replyguys.com","suspended_at":"2020-05-13T13:29:12.000Z","public_comment":"reply-guying to tech posts"}]`, string(b))
 }
 
 func (suite *InstancePeersGetTestSuite) TestInstancePeersGetOnlySuspendedUnauthorized() {
@@ -162,7 +165,7 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetOnlySuspendedAuthori
 	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 
-	suite.Equal(`[{"domain":"replyguys.com","suspended_at":"2020-05-13T13:29:12.000Z"}]`, string(b))
+	suite.Equal(`[{"domain":"replyguys.com","suspended_at":"2020-05-13T13:29:12.000Z","public_comment":"reply-guying to tech posts"}]`, string(b))
 }
 
 func (suite *InstancePeersGetTestSuite) TestInstancePeersGetAll() {
@@ -183,7 +186,39 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetAll() {
 	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 
-	suite.Equal(`[{"domain":"example.org"},{"domain":"fossbros-anonymous.io"},{"domain":"replyguys.com","suspended_at":"2020-05-13T13:29:12.000Z"}]`, string(b))
+	suite.Equal(`[{"domain":"example.org"},{"domain":"fossbros-anonymous.io"},{"domain":"replyguys.com","suspended_at":"2020-05-13T13:29:12.000Z","public_comment":"reply-guying to tech posts"}]`, string(b))
+}
+
+func (suite *InstancePeersGetTestSuite) TestInstancePeersGetAllWithObfuscated() {
+	err := suite.db.Put(context.Background(), &gtsmodel.DomainBlock{
+		ID:                 "01G633XTNK51GBADQZFZQDP6WR",
+		CreatedAt:          testrig.TimeMustParse("2021-06-09T12:34:55+02:00"),
+		UpdatedAt:          testrig.TimeMustParse("2021-06-09T12:34:55+02:00"),
+		Domain:             "omg.just.the.worst.org.ever",
+		CreatedByAccountID: "01F8MH17FWEB39HZJ76B6VXSKF",
+		PublicComment:      "just absolutely the worst, wowza",
+		Obfuscate:          true,
+	})
+	suite.NoError(err)
+
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+
+	baseURI := fmt.Sprintf("%s://%s", config.GetProtocol(), config.GetHost())
+	requestURI := fmt.Sprintf("%s/%s?filter=suspended,open", baseURI, instance.InstancePeersPath)
+	ctx.Request = httptest.NewRequest(http.MethodGet, requestURI, nil)
+
+	suite.instanceModule.InstancePeersGETHandler(ctx)
+
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	b, err := io.ReadAll(result.Body)
+	suite.NoError(err)
+
+	suite.Equal(`[{"domain":"example.org"},{"domain":"fossbros-anonymous.io"},{"domain":"o*g.*u**.t**.*or*t.*r**ev**","suspended_at":"2021-06-09T10:34:55.000Z","public_comment":"just absolutely the worst, wowza"},{"domain":"replyguys.com","suspended_at":"2020-05-13T13:29:12.000Z","public_comment":"reply-guying to tech posts"}]`, string(b))
 }
 
 func (suite *InstancePeersGetTestSuite) TestInstancePeersGetFunkyParams() {

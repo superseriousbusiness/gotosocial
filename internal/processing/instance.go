@@ -81,7 +81,13 @@ func (p *processor) InstancePeersGet(ctx context.Context, authed *oauth.Auth, in
 		}
 
 		for _, d := range domainBlocks {
+			if d.Obfuscate {
+				d.Domain = obfuscate(d.Domain)
+			}
+
 			domain := &apimodel.Domain{
+				Domain:        d.Domain,
+				SuspendedAt:   util.FormatISO8601(d.CreatedAt),
 				PublicComment: d.PublicComment,
 			}
 			domains = append(domains, domain)
@@ -209,4 +215,17 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 	}
 
 	return ai, nil
+}
+
+func obfuscate(domain string) string {
+	obfuscated := make([]rune, len(domain))
+	for i, r := range domain {
+		// obfuscate every second + fifth character
+		if i%3 == 1 || i%5 == 1 {
+			obfuscated[i] = '*'
+		} else {
+			obfuscated[i] = r
+		}
+	}
+	return string(obfuscated)
 }
