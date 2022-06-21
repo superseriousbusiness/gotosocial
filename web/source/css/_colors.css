@@ -36,6 +36,7 @@ $lightblue: #5897df;
 
 $sloth_gray2_darker3: color-mod($sloth_gray2 lightness(-3%));
 $sloth_gray2_darker5: color-mod($sloth_gray2 lightness(-5%));
+$sloth_gray2_darker10: color-mod($sloth_gray2 lightness(-15%));
 $sloth_gray2_lighter3: color-mod($sloth_gray2 lightness(+3%));
 
 $fg: $near_white;
@@ -51,4 +52,8 @@ $footer_bg: $bg_accent;
 $link_fg: $fg_accent;
 
 $button_bg: $sloth_orange2;
+$button_border: color-mod($sloth_orange2 lightness(-15%));
 $button_hover_bg: $sloth_orange1;
+
+$boxshadow: 0 0.4rem 1rem -0.1rem rgba(0,0,0,0.15);
+$boxshadow_border: $sloth_gray2_darker5;

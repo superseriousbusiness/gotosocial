@@ -17,7 +17,6 @@
 */
 
 $br: 0.4rem;
-$boxshadow: 0 0.4rem 1rem -0.1rem rgba(0,0,0,0.15);
 
 html, body {
 	padding: 0;
@@ -106,6 +105,7 @@ main {
 	section {
 		background: $bg_accent;
 		box-shadow: $boxshadow;
+		border: 0.08rem solid $boxshadow_border;
 		border-radius: $br;
 		padding: 2rem;
 		margin-bottom: 2rem;
@@ -124,6 +124,8 @@ main {
 	border-radius: 0.2rem;
 	color: $fg;
 	background: $button_bg;
+	box-shadow: $boxshadow;
+	border: 0.08rem solid $button_border;
 	text-decoration: none;
 	font-size: 1.2rem;
 	font-weight: bold;
