@@ -52,6 +52,11 @@ func (p *processor) InstancePeersGet(ctx context.Context, authed *oauth.Auth, in
 	domains := []*apimodel.Domain{}
 
 	if includeOpen {
+		if !config.GetInstanceExposePeers() && (authed.Account == nil || authed.User == nil) {
+			err := fmt.Errorf("peers open query requires an authenticated account/user")
+			return nil, gtserror.NewErrorUnauthorized(err, err.Error())
+		}
+
 		instances, err := p.db.GetInstancePeers(ctx, false)
 		if err != nil && err != db.ErrNoEntries {
 			err = fmt.Errorf("error selecting instance peers: %s", err)
@@ -65,6 +70,11 @@ func (p *processor) InstancePeersGet(ctx context.Context, authed *oauth.Auth, in
 	}
 
 	if includeSuspended {
+		if !config.GetInstanceExposeSuspended() && (authed.Account == nil || authed.User == nil) {
+			err := fmt.Errorf("peers suspended query requires an authenticated account/user")
+			return nil, gtserror.NewErrorUnauthorized(err, err.Error())
+		}
+
 		domainBlocks := []*gtsmodel.DomainBlock{}
 		if err := p.db.GetAll(ctx, &domainBlocks); err != nil && err != db.ErrNoEntries {
 			return nil, gtserror.NewErrorInternalError(err)

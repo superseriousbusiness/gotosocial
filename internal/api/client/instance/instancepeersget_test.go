@@ -56,6 +56,50 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetNoParams() {
 	suite.Equal(`[{"domain":"example.org"},{"domain":"fossbros-anonymous.io"}]`, string(b))
 }
 
+func (suite *InstancePeersGetTestSuite) TestInstancePeersGetNoParamsUnauthorized() {
+	config.SetInstanceExposePeers(false)
+
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+
+	baseURI := fmt.Sprintf("%s://%s", config.GetProtocol(), config.GetHost())
+	requestURI := fmt.Sprintf("%s/%s", baseURI, instance.InstancePeersPath)
+	ctx.Request = httptest.NewRequest(http.MethodGet, requestURI, nil)
+
+	suite.instanceModule.InstancePeersGETHandler(ctx)
+
+	suite.Equal(http.StatusUnauthorized, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	b, err := io.ReadAll(result.Body)
+	suite.NoError(err)
+
+	suite.Equal(`{"error":"Unauthorized: peers open query requires an authenticated account/user"}`, string(b))
+}
+
+func (suite *InstancePeersGetTestSuite) TestInstancePeersGetNoParamsAuthorized() {
+	config.SetInstanceExposePeers(false)
+
+	recorder := httptest.NewRecorder()
+	baseURI := fmt.Sprintf("%s://%s", config.GetProtocol(), config.GetHost())
+	requestURI := fmt.Sprintf("%s/%s", baseURI, instance.InstancePeersPath)
+	ctx := suite.newContext(recorder, http.MethodGet, []byte{}, requestURI, "")
+
+	suite.instanceModule.InstancePeersGETHandler(ctx)
+
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	b, err := io.ReadAll(result.Body)
+	suite.NoError(err)
+
+	suite.Equal(`[{"domain":"example.org"},{"domain":"fossbros-anonymous.io"}]`, string(b))
+}
+
 func (suite *InstancePeersGetTestSuite) TestInstancePeersGetOnlySuspended() {
 	recorder := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(recorder)
@@ -63,6 +107,50 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetOnlySuspended() {
 	baseURI := fmt.Sprintf("%s://%s", config.GetProtocol(), config.GetHost())
 	requestURI := fmt.Sprintf("%s/%s?filter=suspended", baseURI, instance.InstancePeersPath)
 	ctx.Request = httptest.NewRequest(http.MethodGet, requestURI, nil)
+
+	suite.instanceModule.InstancePeersGETHandler(ctx)
+
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	b, err := io.ReadAll(result.Body)
+	suite.NoError(err)
+
+	suite.Equal(`[{"domain":"replyguys.com","suspended_at":"2020-05-13T13:29:12.000Z"}]`, string(b))
+}
+
+func (suite *InstancePeersGetTestSuite) TestInstancePeersGetOnlySuspendedUnauthorized() {
+	config.SetInstanceExposeSuspended(false)
+
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+
+	baseURI := fmt.Sprintf("%s://%s", config.GetProtocol(), config.GetHost())
+	requestURI := fmt.Sprintf("%s/%s?filter=suspended", baseURI, instance.InstancePeersPath)
+	ctx.Request = httptest.NewRequest(http.MethodGet, requestURI, nil)
+
+	suite.instanceModule.InstancePeersGETHandler(ctx)
+
+	suite.Equal(http.StatusUnauthorized, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	b, err := io.ReadAll(result.Body)
+	suite.NoError(err)
+
+	suite.Equal(`{"error":"Unauthorized: peers suspended query requires an authenticated account/user"}`, string(b))
+}
+
+func (suite *InstancePeersGetTestSuite) TestInstancePeersGetOnlySuspendedAuthorized() {
+	config.SetInstanceExposeSuspended(false)
+
+	recorder := httptest.NewRecorder()
+	baseURI := fmt.Sprintf("%s://%s", config.GetProtocol(), config.GetHost())
+	requestURI := fmt.Sprintf("%s/%s?filter=suspended", baseURI, instance.InstancePeersPath)
+	ctx := suite.newContext(recorder, http.MethodGet, []byte{}, requestURI, "")
 
 	suite.instanceModule.InstancePeersGETHandler(ctx)
 
