@@ -67,6 +67,9 @@ type Configuration struct {
 	WebTemplateBaseDir string `name:"web-template-base-dir" usage:"Basedir for html templating files for rendering pages and composing emails."`
 	WebAssetBaseDir    string `name:"web-asset-base-dir" usage:"Directory to serve static assets from, accessible at example.org/assets/"`
 
+	InstanceExposePeers     bool `name:"instance-expose-peers" usage:"Allow unauthenticated users to query /api/v1/instance/peers?filter=open"`
+	InstanceExposeSuspended bool `name:"instance-expose-suspended" usage:"Expose suspended instances via web UI, and allow unauthenticated users to query /api/v1/instance/peers?filter=suspended"`
+
 	AccountsRegistrationOpen bool `name:"accounts-registration-open" usage:"Allow anyone to submit an account signup request. If false, server will be invite-only."`
 	AccountsApprovalRequired bool `name:"accounts-approval-required" usage:"Do account signups require approval by an admin or moderator before user can log in? If false, new registrations will be automatically approved."`
 	AccountsReasonRequired   bool `name:"accounts-reason-required" usage:"Do new account signups require a reason to be submitted on registration?"`
