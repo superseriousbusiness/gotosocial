@@ -792,6 +792,12 @@ definitions:
         example: example.org
         type: string
         x-go-name: Domain
+      public_comment:
+        description: If the domain is blocked, what's the publicly-stated reason for
+          the block.
+        example: they smell
+        type: string
+        x-go-name: PublicComment
       silenced_at:
         description: Time at which this domain was silenced. Key will not be present
           on open domains.
@@ -845,8 +851,8 @@ definitions:
         type: string
         x-go-name: PrivateComment
       public_comment:
-        description: Public comment for this block, visible if domain blocks are served
-          publicly.
+        description: If the domain is blocked, what's the publicly-stated reason for
+          the block.
         example: they smell
         type: string
         x-go-name: PublicComment
@@ -3097,6 +3103,9 @@ paths:
             Domains that are silenced or suspended will also have a key
             'suspended_at' or 'silenced_at' that contains an iso8601 date string.
             If one of these keys is not present on the domain object, it is open.
+            Suspended instances may in some cases be obfuscated, which means they
+            will have some letters replaced by '*' to make it more difficult for
+            bad actors to target instances with harassment.
           schema:
             items:
               $ref: '#/definitions/domain'

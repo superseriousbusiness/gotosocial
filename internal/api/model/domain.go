@@ -33,7 +33,7 @@ type Domain struct {
 	// Time at which this domain was silenced. Key will not be present on open domains.
 	// example: 2021-07-30T09:20:25+00:00
 	SilencedAt string `json:"silenced_at,omitempty"`
-	// Public comment for this block, visible if domain blocks are served publicly.
+	// If the domain is blocked, what's the publicly-stated reason for the block.
 	// example: they smell
 	PublicComment string `form:"public_comment" json:"public_comment,omitempty"`
 }

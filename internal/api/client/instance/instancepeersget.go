@@ -60,6 +60,9 @@ import (
 //       Domains that are silenced or suspended will also have a key
 //       'suspended_at' or 'silenced_at' that contains an iso8601 date string.
 //       If one of these keys is not present on the domain object, it is open.
+//       Suspended instances may in some cases be obfuscated, which means they
+//       will have some letters replaced by '*' to make it more difficult for
+//       bad actors to target instances with harassment.
 //     schema:
 //       type: array
 //       items:
