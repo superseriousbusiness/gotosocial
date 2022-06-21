@@ -82,8 +82,7 @@ func (p *processor) InstancePeersGet(ctx context.Context, authed *oauth.Auth, in
 
 		for _, d := range domainBlocks {
 			domain := &apimodel.Domain{
-				Domain:      d.Domain,
-				SuspendedAt: util.FormatISO8601(d.CreatedAt),
+				PublicComment: d.PublicComment,
 			}
 			domains = append(domains, domain)
 		}

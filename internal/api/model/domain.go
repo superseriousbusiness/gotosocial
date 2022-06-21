@@ -33,6 +33,9 @@ type Domain struct {
 	// Time at which this domain was silenced. Key will not be present on open domains.
 	// example: 2021-07-30T09:20:25+00:00
 	SilencedAt string `json:"silenced_at,omitempty"`
+	// Public comment for this block, visible if domain blocks are served publicly.
+	// example: they smell
+	PublicComment string `form:"public_comment" json:"public_comment,omitempty"`
 }
 
 // DomainBlock represents a block on one domain
@@ -51,9 +54,6 @@ type DomainBlock struct {
 	// Private comment for this block, visible to our instance admins only.
 	// example: they are poopoo
 	PrivateComment string `json:"private_comment,omitempty"`
-	// Public comment for this block, visible if domain blocks are served publicly.
-	// example: they smell
-	PublicComment string `form:"public_comment" json:"public_comment,omitempty"`
 	// The ID of the subscription that created/caused this domain block.
 	// example: 01FBW25TF5J67JW3HFHZCSD23K
 	SubscriptionID string `json:"subscription_id,omitempty"`
