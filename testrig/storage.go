@@ -21,6 +21,7 @@ package testrig
 import (
 	"fmt"
 	"os"
+	"path"
 
 	"codeberg.org/gruf/go-store/kv"
 	"codeberg.org/gruf/go-store/storage"
@@ -94,6 +95,8 @@ func StandardStorageSetup(s *kv.KVStore, relativePath string) {
 
 // StandardStorageTeardown deletes everything in storage so that it's clean for the next test
 func StandardStorageTeardown(s *kv.KVStore) {
+	defer os.RemoveAll(path.Join(os.TempDir(), "gotosocial"))
+
 	iter, err := s.Iterator(nil)
 	if err != nil {
 		panic(err)
