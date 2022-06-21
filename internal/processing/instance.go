@@ -220,7 +220,6 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 func obfuscate(domain string) string {
 	obfuscated := make([]rune, len(domain))
 	for i, r := range domain {
-		// obfuscate every second + fifth character
 		if i%3 == 1 || i%5 == 1 {
 			obfuscated[i] = '*'
 		} else {
