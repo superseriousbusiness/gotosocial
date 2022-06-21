@@ -51,5 +51,6 @@ func New(processor processing.Processor) api.ClientModule {
 func (m *Module) Route(s router.Router) error {
 	s.AttachHandler(http.MethodGet, InstanceInformationPath, m.InstanceInformationGETHandler)
 	s.AttachHandler(http.MethodPatch, InstanceInformationPath, m.InstanceUpdatePATCHHandler)
+	s.AttachHandler(http.MethodGet, InstancePeersPath, m.InstancePeersGETHandler)
 	return nil
 }
