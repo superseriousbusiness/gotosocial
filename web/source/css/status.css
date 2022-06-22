@@ -1,19 +1,19 @@
 /*
-   GoToSocial
-   Copyright (C) 2021-2022 GoToSocial Authors admin@gotosocial.org
+	GoToSocial
+	Copyright (C) 2021-2022 GoToSocial Authors admin@gotosocial.org
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU Affero General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU Affero General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU Affero General Public License for more details.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU Affero General Public License for more details.
 
-   You should have received a copy of the GNU Affero General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU Affero General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 main {
@@ -24,17 +24,20 @@ main {
 .thread {
 	display: flex;
 	flex-direction: column;
+	border-radius: $br;
+	background: $bg_darker5;
+	box-shadow: $boxshadow;
 }
 
 .toot {
 	position: relative;
 	background: $bg_darker3;
-	padding: 2rem;
-	/* padding-bottom: 0; */
+	padding: 1.5rem;
 	display: grid;
-	grid-template-columns: 3.2rem auto 1fr;
+	grid-template-columns: 4rem auto 1fr;
 	column-gap: 0.5rem;
-	margin-bottom: 0.2rem;
+	margin-bottom: $br;
+	border-radius: $br;
 
 	a {
 		position: relative;
@@ -45,11 +48,16 @@ main {
 
 	.avatar {
 		grid-row: span 2;
+		aspect-ratio: 1/1;
 
 		img {
-			height: 3.2rem;
-			width: 3.2rem;
+			height: 100%;
+			width: 100%;
 			object-fit: cover;
+			background: $bg;
+			border: 0.1rem solid $acc2;
+			/* box-sizing: border-box; */
+			border-radius: calc($br / 1.5);
 		}
 	}
 
@@ -77,6 +85,9 @@ main {
 			position: relative;
 			z-index: 2;
 			cursor: pointer;
+		}
+		label:hover {
+			background: $acc2;
 		}
 	}
 
@@ -203,16 +214,16 @@ main {
 		z-index: 0;
 	}
 
-	$border-radius: 0.3rem;
 	&:first-child {
 		/* top left, top right */
-		border-radius: $border-radius $border-radius 0 0;
+		border-radius: $br $br 0 0;
 	}
 
 	&:last-child {
 		/* bottom left, bottom right */
-		border-radius: 0 0 $border-radius $border-radius;
+		border-radius: 0 0 $br $br;
 		padding-bottom: 1.5rem;
+		margin-bottom: 0;
 	}
 
 	&.expanded {
