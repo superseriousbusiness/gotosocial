@@ -10,9 +10,10 @@
             {{ end }}
         </div>
         <div class="basic">
+            <div id="profile-basic-filler2"></div>
             <a href="{{.account.Avatar}}" class="avatar"><img src="{{.account.Avatar}}" alt="{{if .account.DisplayName}}{{.account.DisplayName}}{{else}}{{.account.Username}}{{end}}'s avatar"></a>
-            <a href="{{.account.URL}}" class="displayname">{{if .account.DisplayName}}{{.account.DisplayName}}{{else}}{{.account.Username}}{{end}}</a>
-            <a href="{{.account.URL}}" class="username">@{{.account.Username}}</a>
+            <div class="displayname">{{if .account.DisplayName}}{{.account.DisplayName}}{{else}}{{.account.Username}}{{end}}</div>
+            <div class="username">@{{.account.Username}}@{{.instance.Title}}</div>
         </div>
         <div class="detailed">
             <div class="bio">

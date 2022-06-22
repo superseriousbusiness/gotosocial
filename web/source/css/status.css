@@ -25,19 +25,16 @@ main {
 	display: flex;
 	flex-direction: column;
 	border-radius: $br;
-	background: $bg_darker5;
-	box-shadow: $boxshadow;
 }
 
 .toot {
+	background: $bg_accent;
+	box-shadow: $boxshadow;
+	border: $boxshadow_border;
 	position: relative;
-	background: $bg_darker3;
-	padding: 1.5rem;
-	display: grid;
-	grid-template-columns: 4rem auto 1fr;
-	column-gap: 0.5rem;
 	margin-bottom: $br;
 	border-radius: $br;
+	padding-top: 1.5rem;
 
 	a {
 		position: relative;
@@ -46,10 +43,17 @@ main {
 		text-decoration: none;
 	}
 
+	.contentgrid {
+		padding: 0 1.5rem;
+		display: grid;
+		grid-template-columns: 4rem auto 1fr;
+		column-gap: 0.5rem;
+	}
+
 	.avatar {
 		grid-row: span 2;
 		aspect-ratio: 1/1;
-
+	
 		img {
 			height: 100%;
 			width: 100%;
@@ -60,13 +64,13 @@ main {
 			border-radius: calc($br / 1.5);
 		}
 	}
-
+	
 	.displayname {
 		font-weight: bold;
 		font-size: 1.2rem;
 		align-self: start;
 	}
-
+	
 	.username {
 		color: $fg_dark;
 		justify-self: start;
@@ -78,16 +82,18 @@ main {
 
 	.spoiler {
 		label {
-			background: $acc1;
+			background: $button_bg;
+			color: $bg;
+			box-shadow: $boxshadow;
 			border-radius: 0.3rem;
-			padding: 0.3rem;
+			padding: 0.2rem 0.4rem;
 			margin-left: 0.4rem;
 			position: relative;
 			z-index: 2;
 			cursor: pointer;
 		}
 		label:hover {
-			background: $acc2;
+			background: $button_hover_bg;
 		}
 	}
 
@@ -96,7 +102,7 @@ main {
 		grid-column: span 2;
 
 		a {
-			color: $acc1;
+			color: $link_fg;
 			text-decoration: underline;
 		}
 	}
@@ -161,6 +167,8 @@ main {
 
 	.info {
 		display: none;
+		border-top: 0.1rem solid $bg;
+		padding: 0.5rem 1.5rem;
 
 		div {
 			position: relative;
@@ -171,7 +179,7 @@ main {
 			display: flex;
 		}
 
-		color: #b0b0b5;
+		color: #c8c8d5;
 		grid-column: span 3;
 		margin-top: 0.5rem;
 		flex-wrap: wrap;
@@ -216,19 +224,19 @@ main {
 
 	&:first-child {
 		/* top left, top right */
-		border-radius: $br $br 0 0;
+		border-top-left-radius: $br;
+		border-top-right-radius: $br;
 	}
 
 	&:last-child {
 		/* bottom left, bottom right */
-		border-radius: 0 0 $br $br;
-		padding-bottom: 1.5rem;
+		border-bottom-left-radius: $br;
+		border-bottom-right-radius: $br;
 		margin-bottom: 0;
 	}
 
 	&.expanded {
-		background: $bg;
-		padding-bottom: 1.5rem;
+		/* background: $bg; */
 
 		.displayname {
 			grid-column: span 2;

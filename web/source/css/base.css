@@ -105,7 +105,7 @@ main {
 	section {
 		background: $bg_accent;
 		box-shadow: $boxshadow;
-		border: 0.08rem solid $boxshadow_border;
+		border: $boxshadow_border;
 		border-radius: $br;
 		padding: 2rem;
 		margin-bottom: 2rem;
@@ -125,7 +125,7 @@ main {
 	color: $fg;
 	background: $button_bg;
 	box-shadow: $boxshadow;
-	border: 0.08rem solid $button_border;
+	border: $button_border;
 	text-decoration: none;
 	font-size: 1.2rem;
 	font-weight: bold;

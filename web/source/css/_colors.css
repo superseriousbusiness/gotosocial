@@ -26,24 +26,29 @@
 $near_white: #fafaff;
 
 $sloth_gray1: #b0b0b5;
-$sloth_gray2: #525c66;
+$sloth_gray2: #4d4e56;
 
-$sloth_orange1: #e78b55;
+$sloth_orange1: #e78e5a;
 $sloth_orange2: #D87841;
-$lightblue: #5897df;
+$blue: #63b1de; // complementary color to $sloth_orange1
 
 /* derivative colors */
 
 $sloth_gray2_darker3: color-mod($sloth_gray2 lightness(-3%));
 $sloth_gray2_darker5: color-mod($sloth_gray2 lightness(-5%));
 $sloth_gray2_darker10: color-mod($sloth_gray2 lightness(-15%));
-$sloth_gray2_lighter3: color-mod($sloth_gray2 lightness(+3%));
+$sloth_gray2_lighter2: color-mod($sloth_gray2 lightness(+2%));
+
+$blue_lighter8: color-mod($blue lightness(+4%));
+$lightblue: color-mod($blue lightness(+16%));
 
 $fg: $near_white;
 $bg: $sloth_gray2_darker5;
 
-$bg_accent: $sloth_gray2_lighter3;
-$fg_accent: $sloth_orange1;
+$bg_trans: color-mod($sloth_gray2 alpha(62%));
+
+$bg_accent: $sloth_gray2_lighter2;
+$fg_accent: $lightblue;
 
 /* Color variables as used in a specific location */
 
@@ -51,9 +56,11 @@ $footer_bg: $bg_accent;
 
 $link_fg: $fg_accent;
 
-$button_bg: $sloth_orange2;
-$button_border: color-mod($sloth_orange2 lightness(-15%));
-$button_hover_bg: $sloth_orange1;
+$button_border: 0.08rem solid color-mod($sloth_orange2 lightness(-15%));
+$button_bg: $blue_lighter8;
+$button_hover_bg: $lightblue;
 
 $boxshadow: 0 0.4rem 1rem -0.1rem rgba(0,0,0,0.15);
-$boxshadow_border: $sloth_gray2_darker5;
+$boxshadow_border: 0.08rem solid $sloth_gray2_darker5;
+
+$profile_avatar_border: 0.2rem solid $sloth_orange2;
