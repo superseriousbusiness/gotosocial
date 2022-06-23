@@ -19,10 +19,12 @@
 package terminator
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
 
+	exif "github.com/dsoprea/go-exif/v3"
 	jpegstructure "github.com/superseriousbusiness/go-jpeg-image-structure/v2"
 )
 
@@ -121,17 +123,128 @@ func (v *jpegVisitor) writeSegment(s *jpegstructure.Segment) error {
 		}
 	}
 
-	if s.IsExif() {
-		// if this segment is exif data, write blank bytes
-		blank := make([]byte, len(s.Data))
-		if _, err := w.Write(blank); err != nil {
+	if !s.IsExif() {
+		// if this isn't exif data just copy it over and bail
+		_, err := w.Write(s.Data)
+		return err
+	}
+
+	ifd, _, err := s.Exif()
+	if err != nil {
+		return err
+	}
+
+	// amount of bytes we've written into the exif body
+	var written int
+
+	if orientationEntries, err := ifd.FindTagWithName("Orientation"); err == nil && len(orientationEntries) == 1 {
+		// If we have an orientation entry, we don't want to completely obliterate the exif data.
+		// Instead, we want to surgically obliterate everything *except* the orientation tag, so
+		// that the image will still be rotated correctly when shown in client applications etc.
+		//
+		// To accomplish this, we're going to extract just the bytes that we need and write them
+		// in according to the exif specification, then fill in the rest of the space with empty
+		// bytes.
+		//
+		// First we need to write the exif prefix for this segment.
+		//
+		// Then we write the exif header which contains the byte order and offset of the first ifd.
+		//
+		// Then we write the ifd0 entry which contains the orientation data.
+		//
+		// After that we just fill fill fill.
+
+		newData := &bytes.Buffer{}
+
+		// 1. Write exif prefix.
+		// https://www.ozhiker.com/electronics/pjmt/jpeg_info/app_segments.html
+		prefix := []byte{'E', 'x', 'i', 'f', 0, 0}
+		if err := binary.Write(newData, ifd.ByteOrder(), &prefix); err != nil {
 			return err
 		}
-	} else {
-		// otherwise write the data
-		if _, err := w.Write(s.Data); err != nil {
+		written += 6
+
+		// 2. Write exif header, taking the existing byte order.
+		exifHeader, err := exif.BuildExifHeader(ifd.ByteOrder(), exif.ExifDefaultFirstIfdOffset)
+		if err != nil {
 			return err
 		}
+		hWritten, err := newData.Write(exifHeader)
+		if err != nil {
+			return err
+		}
+		written += hWritten
+
+		// https://web.archive.org/web/20190624045241if_/http://www.cipa.jp:80/std/documents/e/DC-008-Translation-2019-E.pdf
+		//
+		// An ifd with one orientation entry is structured like this:
+		// 		2 bytes: the number of entries in the ifd	uint16(1)
+		// 		2 bytes: the tag id							uint16(274)
+		// 		2 bytes: the tag type						uint16(3)
+		//      4 bytes: the tag count						uint32(1)
+		// 		4 bytes: the tag value offset:				uint32(one of the below with padding on the end)
+		// 			1 = Horizontal (normal)
+		// 			2 = Mirror horizontal
+		// 			3 = Rotate 180
+		// 			4 = Mirror vertical
+		// 			5 = Mirror horizontal and rotate 270 CW
+		// 			6 = Rotate 90 CW
+		// 			7 = Mirror horizontal and rotate 90 CW
+		// 			8 = Rotate 270 CW
+		orientationEntry := orientationEntries[0]
+
+		ifdCount := uint16(1) // we're only adding one entry into the ifd
+		if err := binary.Write(newData, ifd.ByteOrder(), &ifdCount); err != nil {
+			return err
+		}
+		written += 2
+
+		tagID := orientationEntry.TagId()
+		if err := binary.Write(newData, ifd.ByteOrder(), &tagID); err != nil {
+			return err
+		}
+		written += 2
+
+		tagType := orientationEntry.TagType()
+		if err := binary.Write(newData, ifd.ByteOrder(), &tagType); err != nil {
+			return err
+		}
+		written += 2
+
+		tagCount := orientationEntry.UnitCount()
+		if err := binary.Write(newData, ifd.ByteOrder(), &tagCount); err != nil {
+			return err
+		}
+		written += 4
+
+		valueOffset, err := orientationEntry.GetRawBytes()
+		if err != nil {
+			return err
+		}
+
+		vWritten, err := newData.Write(valueOffset)
+		if err != nil {
+			return err
+		}
+		written += vWritten
+
+		valuePad := make([]byte, 4-vWritten)
+		pWritten, err := newData.Write(valuePad)
+		if err != nil {
+			return err
+		}
+		written += pWritten
+
+		// write everything in
+		if _, err := io.Copy(w, newData); err != nil {
+			return err
+		}
+	}
+
+	// fill in the (remaining) exif body with blank bytes
+	blank := make([]byte, len(s.Data)-written)
+	if _, err := w.Write(blank); err != nil {
+		return err
 	}
 
 	return nil
