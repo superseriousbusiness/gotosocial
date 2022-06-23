@@ -56,7 +56,7 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetNoParams() {
 	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 
-	suite.Equal(`[{"domain":"example.org"},{"domain":"fossbros-anonymous.io"}]`, string(b))
+	suite.Equal(`["example.org","fossbros-anonymous.io"]`, string(b))
 }
 
 func (suite *InstancePeersGetTestSuite) TestInstancePeersGetNoParamsUnauthorized() {
@@ -100,7 +100,7 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetNoParamsAuthorized()
 	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 
-	suite.Equal(`[{"domain":"example.org"},{"domain":"fossbros-anonymous.io"}]`, string(b))
+	suite.Equal(`["example.org","fossbros-anonymous.io"]`, string(b))
 }
 
 func (suite *InstancePeersGetTestSuite) TestInstancePeersGetOnlySuspended() {

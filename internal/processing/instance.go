@@ -48,7 +48,7 @@ func (p *processor) InstanceGet(ctx context.Context, domain string) (*apimodel.I
 	return ai, nil
 }
 
-func (p *processor) InstancePeersGet(ctx context.Context, authed *oauth.Auth, includeSuspended bool, includeOpen bool) ([]*apimodel.Domain, gtserror.WithCode) {
+func (p *processor) InstancePeersGet(ctx context.Context, authed *oauth.Auth, includeSuspended bool, includeOpen bool, flat bool) (interface{}, gtserror.WithCode) {
 	domains := []*apimodel.Domain{}
 
 	if includeOpen {
@@ -97,6 +97,14 @@ func (p *processor) InstancePeersGet(ctx context.Context, authed *oauth.Auth, in
 	sort.Slice(domains, func(i, j int) bool {
 		return domains[i].Domain < domains[j].Domain
 	})
+
+	if flat {
+		flattened := []string{}
+		for _, d := range domains {
+			flattened = append(flattened, d.Domain)
+		}
+		return flattened, nil
+	}
 
 	return domains, nil
 }

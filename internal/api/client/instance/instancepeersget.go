@@ -56,13 +56,22 @@ import (
 // responses:
 //   '200':
 //     description: |-
-//       An array of objects with at least a `domain` key will be returned.
+//       If no filter parameter is provided, or filter is empty, then a legacy,
+//       Mastodon-API compatible response will be returned. This will consist of
+//       just a 'flat' array of strings like `["example.com", "example.org"]`.
+//
+//       If a filter parameter is provided, then an array of objects with at least
+//       a `domain` key set on each object will be returned.
+//
 //       Domains that are silenced or suspended will also have a key
 //       'suspended_at' or 'silenced_at' that contains an iso8601 date string.
 //       If one of these keys is not present on the domain object, it is open.
 //       Suspended instances may in some cases be obfuscated, which means they
 //       will have some letters replaced by '*' to make it more difficult for
 //       bad actors to target instances with harassment.
+//
+//       Whether a flat response or a more detailed response is returned, domains
+//       will be sorted alphabetically by hostname.
 //     schema:
 //       type: array
 //       items:
@@ -93,6 +102,7 @@ func (m *Module) InstancePeersGETHandler(c *gin.Context) {
 
 	var includeSuspended bool
 	var includeOpen bool
+	var flat bool
 	if filterParam := c.Query(PeersFilterKey); filterParam != "" {
 		filters := strings.Split(filterParam, ",")
 		for _, f := range filters {
@@ -109,11 +119,14 @@ func (m *Module) InstancePeersGETHandler(c *gin.Context) {
 			}
 		}
 	} else {
-		// default is to only include open domains
+		// default is to only include open domains, and present
+		// them in a 'flat' manner (just an array of strings),
+		// to maintain compatibility with mastodon API
 		includeOpen = true
+		flat = true
 	}
 
-	data, errWithCode := m.processor.InstancePeersGet(c.Request.Context(), authed, includeSuspended, includeOpen)
+	data, errWithCode := m.processor.InstancePeersGet(c.Request.Context(), authed, includeSuspended, includeOpen, flat)
 	if errWithCode != nil {
 		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
