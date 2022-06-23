@@ -36,7 +36,7 @@ require (
 	github.com/spf13/viper v1.11.0
 	github.com/stretchr/testify v1.7.1
 	github.com/superseriousbusiness/activity v1.1.0-gts
-	github.com/superseriousbusiness/exif-terminator v0.2.0
+	github.com/superseriousbusiness/exif-terminator v0.3.0
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB
 	github.com/tdewolff/minify/v2 v2.11.2
 	github.com/uptrace/bun v1.1.3

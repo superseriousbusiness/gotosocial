@@ -53,10 +53,14 @@ Exif removal is a pain in the arse. Most other libraries seem to parse the whole
 
 `exif-terminator` differs in that it removes exif data *while scanning through the image bytes*, and it doesn't do any reencoding of the image. Bytes of exif data are simply all set to 0, and the image data is piped back out again into the returned reader.
 
+The only exception is orientation data: if an image contains orientation data, this and only this data will be preserved since it's *actually useful*.
+
 ## Example
 
+You can run the following example with `go run ./example/main.go`:
+
 ```go
-package test
+package main
 
 import (
   "io"
@@ -71,6 +75,7 @@ func main() {
   if err != nil {
     panic(err)
   }
+  defer sloth.Close()
 
   // get the length of the file
   stat, err := sloth.Stat()
@@ -103,6 +108,7 @@ func main() {
 
 `exif-terminator` borrows heavily from the two [`dsoprea`](https://github.com/dsoprea) libraries credited below. In fact, it's basically a hack on top of those libraries. Thanks `dsoprea`!
 
+- [dsoprea/go-exif](https://github.com/dsoprea/go-exif): exif header reconstruction. [MIT License](https://spdx.org/licenses/MIT.html).
 - [dsoprea/go-jpeg-image-structure](https://github.com/dsoprea/go-jpeg-image-structure): jpeg structure parsing. [MIT License](https://spdx.org/licenses/MIT.html).
 - [dsoprea/go-png-image-structure](https://github.com/dsoprea/go-png-image-structure): png structure parsing. [MIT License](https://spdx.org/licenses/MIT.html).
 - [stretchr/testify](https://github.com/stretchr/testify); test framework. [MIT License](https://spdx.org/licenses/MIT.html).
