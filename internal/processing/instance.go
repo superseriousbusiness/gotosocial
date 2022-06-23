@@ -21,13 +21,16 @@ package processing
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
@@ -43,6 +46,67 @@ func (p *processor) InstanceGet(ctx context.Context, domain string) (*apimodel.I
 	}
 
 	return ai, nil
+}
+
+func (p *processor) InstancePeersGet(ctx context.Context, authed *oauth.Auth, includeSuspended bool, includeOpen bool, flat bool) (interface{}, gtserror.WithCode) {
+	domains := []*apimodel.Domain{}
+
+	if includeOpen {
+		if !config.GetInstanceExposePeers() && (authed.Account == nil || authed.User == nil) {
+			err := fmt.Errorf("peers open query requires an authenticated account/user")
+			return nil, gtserror.NewErrorUnauthorized(err, err.Error())
+		}
+
+		instances, err := p.db.GetInstancePeers(ctx, false)
+		if err != nil && err != db.ErrNoEntries {
+			err = fmt.Errorf("error selecting instance peers: %s", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
+		for _, i := range instances {
+			domain := &apimodel.Domain{Domain: i.Domain}
+			domains = append(domains, domain)
+		}
+	}
+
+	if includeSuspended {
+		if !config.GetInstanceExposeSuspended() && (authed.Account == nil || authed.User == nil) {
+			err := fmt.Errorf("peers suspended query requires an authenticated account/user")
+			return nil, gtserror.NewErrorUnauthorized(err, err.Error())
+		}
+
+		domainBlocks := []*gtsmodel.DomainBlock{}
+		if err := p.db.GetAll(ctx, &domainBlocks); err != nil && err != db.ErrNoEntries {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
+		for _, d := range domainBlocks {
+			if d.Obfuscate {
+				d.Domain = obfuscate(d.Domain)
+			}
+
+			domain := &apimodel.Domain{
+				Domain:        d.Domain,
+				SuspendedAt:   util.FormatISO8601(d.CreatedAt),
+				PublicComment: d.PublicComment,
+			}
+			domains = append(domains, domain)
+		}
+	}
+
+	sort.Slice(domains, func(i, j int) bool {
+		return domains[i].Domain < domains[j].Domain
+	})
+
+	if flat {
+		flattened := []string{}
+		for _, d := range domains {
+			flattened = append(flattened, d.Domain)
+		}
+		return flattened, nil
+	}
+
+	return domains, nil
 }
 
 func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.Instance, gtserror.WithCode) {
@@ -159,4 +223,16 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 	}
 
 	return ai, nil
+}
+
+func obfuscate(domain string) string {
+	obfuscated := make([]rune, len(domain))
+	for i, r := range domain {
+		if i%3 == 1 || i%5 == 1 {
+			obfuscated[i] = '*'
+		} else {
+			obfuscated[i] = r
+		}
+	}
+	return string(obfuscated)
 }
