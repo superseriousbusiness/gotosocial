@@ -25,6 +25,7 @@ require (
 	github.com/jackc/pgconn v1.11.0
 	github.com/jackc/pgx/v4 v4.15.0
 	github.com/microcosm-cc/bluemonday v1.0.18
+	github.com/miekg/dns v1.1.49
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/oklog/ulid v1.3.1
@@ -35,7 +36,7 @@ require (
 	github.com/spf13/viper v1.11.0
 	github.com/stretchr/testify v1.7.1
 	github.com/superseriousbusiness/activity v1.1.0-gts
-	github.com/superseriousbusiness/exif-terminator v0.2.0
+	github.com/superseriousbusiness/exif-terminator v0.3.0
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB
 	github.com/tdewolff/minify/v2 v2.11.2
 	github.com/uptrace/bun v1.1.3
@@ -94,7 +95,6 @@ require (
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
-	github.com/miekg/dns v1.1.49 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
