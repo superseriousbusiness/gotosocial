@@ -284,7 +284,12 @@ func (p *processor) processDeleteStatusFromClientAPI(ctx context.Context, client
 		statusToDelete.Account = clientMsg.OriginAccount
 	}
 
-	if err := p.wipeStatus(ctx, statusToDelete); err != nil {
+	// don't delete attachments, just unattach them;
+	// since this request comes from the client API
+	// and the poster might want to use the attachments
+	// again in a new post
+	deleteAttachments := false
+	if err := p.wipeStatus(ctx, statusToDelete, deleteAttachments); err != nil {
 		return err
 	}
 
