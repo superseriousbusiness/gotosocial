@@ -167,10 +167,13 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 
 	// validate & update site contact email if it's set on the form
 	if form.ContactEmail != nil {
-		if err := validate.Email(*form.ContactEmail); err != nil {
-			return nil, gtserror.NewErrorBadRequest(err, err.Error())
+		contactEmail := *form.ContactEmail
+		if contactEmail != "" {
+			if err := validate.Email(contactEmail); err != nil {
+				return nil, gtserror.NewErrorBadRequest(err, err.Error())
+			}
 		}
-		i.ContactEmail = *form.ContactEmail
+		i.ContactEmail = contactEmail
 	}
 
 	// validate & update site short description if it's set on the form
