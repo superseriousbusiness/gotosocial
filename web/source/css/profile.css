@@ -29,7 +29,7 @@ main {
 
 .profile {
 	position: relative;
-	background: $bg_darker3;
+	background: $bg_accent;
 	display: grid;
 	grid-template-rows: minmax(6rem, 20%) auto auto;
 	grid-template-columns: 1fr;
