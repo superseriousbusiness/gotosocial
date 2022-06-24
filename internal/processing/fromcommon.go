@@ -444,11 +444,23 @@ func (p *processor) deleteStatusFromTimelines(ctx context.Context, status *gtsmo
 
 // wipeStatus contains common logic used to totally delete a status
 // + all its attachments, notifications, boosts, and timeline entries.
-func (p *processor) wipeStatus(ctx context.Context, statusToDelete *gtsmodel.Status) error {
-	// delete all attachments for this status
-	for _, a := range statusToDelete.AttachmentIDs {
-		if err := p.mediaProcessor.Delete(ctx, a); err != nil {
-			return err
+func (p *processor) wipeStatus(ctx context.Context, statusToDelete *gtsmodel.Status, deleteAttachments bool) error {
+	// either delete all attachments for this status, or simply
+	// unattach all attachments for this status, so they'll be
+	// cleaned later by a separate process; reason to unattach rather
+	// than delete is that the poster might want to reattach them
+	// to another status immediately (in case of delete + redraft)
+	if deleteAttachments {
+		for _, a := range statusToDelete.AttachmentIDs {
+			if err := p.mediaProcessor.Delete(ctx, a); err != nil {
+				return err
+			}
+		}
+	} else {
+		for _, a := range statusToDelete.AttachmentIDs {
+			if _, err := p.mediaProcessor.Unattach(ctx, statusToDelete.Account, a); err != nil {
+				return err
+			}
 		}
 	}
 
