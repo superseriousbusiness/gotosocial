@@ -187,6 +187,65 @@ func (suite *InstancePatchTestSuite) TestInstancePatch5() {
 	suite.Equal(`{"error":"Forbidden: user is not an admin so cannot update instance settings"}`, string(b))
 }
 
+func (suite *InstancePatchTestSuite) TestInstancePatch6() {
+	requestBody, w, err := testrig.CreateMultipartFormData(
+		"", "",
+		map[string]string{
+			"contact_email": "",
+		})
+	if err != nil {
+		panic(err)
+	}
+	bodyBytes := requestBody.Bytes()
+
+	// set up the request
+	recorder := httptest.NewRecorder()
+	ctx := suite.newContext(recorder, http.MethodPatch, bodyBytes, instance.InstanceInformationPath, w.FormDataContentType())
+
+	// call the handler
+	suite.instanceModule.InstanceUpdatePATCHHandler(ctx)
+
+	// we should have OK because our request was valid
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	b, err := io.ReadAll(result.Body)
+	suite.NoError(err)
+
+	suite.Equal(`{"uri":"http://localhost:8080","title":"localhost:8080","description":"","short_description":"","email":"","version":"","registrations":true,"approval_required":true,"invites_enabled":false,"urls":{"streaming_api":"wss://localhost:8080"},"stats":{"domain_count":2,"status_count":16,"user_count":4},"thumbnail":"","max_toot_chars":5000}`, string(b))
+}
+
+func (suite *InstancePatchTestSuite) TestInstancePatch7() {
+	requestBody, w, err := testrig.CreateMultipartFormData(
+		"", "",
+		map[string]string{
+			"contact_email": "not.an.email.address",
+		})
+	if err != nil {
+		panic(err)
+	}
+	bodyBytes := requestBody.Bytes()
+
+	// set up the request
+	recorder := httptest.NewRecorder()
+	ctx := suite.newContext(recorder, http.MethodPatch, bodyBytes, instance.InstanceInformationPath, w.FormDataContentType())
+
+	// call the handler
+	suite.instanceModule.InstanceUpdatePATCHHandler(ctx)
+
+	suite.Equal(http.StatusBadRequest, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	b, err := io.ReadAll(result.Body)
+	suite.NoError(err)
+
+	suite.Equal(`{"error":"Bad Request: mail: missing '@' or angle-addr"}`, string(b))
+}
+
 func TestInstancePatchTestSuite(t *testing.T) {
 	suite.Run(t, &InstancePatchTestSuite{})
 }
