@@ -701,8 +701,10 @@ func (c *converter) NotificationToAPINotification(ctx context.Context, n *gtsmod
 
 func (c *converter) DomainBlockToAPIDomainBlock(ctx context.Context, b *gtsmodel.DomainBlock, export bool) (*model.DomainBlock, error) {
 	domainBlock := &model.DomainBlock{
-		Domain:        b.Domain,
-		PublicComment: b.PublicComment,
+		Domain: model.Domain{
+			Domain:        b.Domain,
+			PublicComment: b.PublicComment,
+		},
 	}
 
 	// if we're exporting a domain block, return it with minimal information attached

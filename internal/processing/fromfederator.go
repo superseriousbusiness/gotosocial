@@ -367,7 +367,11 @@ func (p *processor) processDeleteStatusFromFederator(ctx context.Context, federa
 		return errors.New("note was not parseable as *gtsmodel.Status")
 	}
 
-	return p.wipeStatus(ctx, statusToDelete)
+	// delete attachments from this status since this request
+	// comes from the federating API, and there's no way the
+	// poster can do a delete + redraft for it on our instance
+	deleteAttachments := true
+	return p.wipeStatus(ctx, statusToDelete, deleteAttachments)
 }
 
 // processDeleteAccountFromFederator handles Activity Delete and Object Profile

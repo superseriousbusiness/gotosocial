@@ -543,6 +543,56 @@ func GetWebAssetBaseDir() string { return global.GetWebAssetBaseDir() }
 // SetWebAssetBaseDir safely sets the value for global configuration 'WebAssetBaseDir' field
 func SetWebAssetBaseDir(v string) { global.SetWebAssetBaseDir(v) }
 
+// GetInstanceExposePeers safely fetches the Configuration value for state's 'InstanceExposePeers' field
+func (st *ConfigState) GetInstanceExposePeers() (v bool) {
+	st.mutex.Lock()
+	v = st.config.InstanceExposePeers
+	st.mutex.Unlock()
+	return
+}
+
+// SetInstanceExposePeers safely sets the Configuration value for state's 'InstanceExposePeers' field
+func (st *ConfigState) SetInstanceExposePeers(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceExposePeers = v
+	st.reloadToViper()
+}
+
+// InstanceExposePeersFlag returns the flag name for the 'InstanceExposePeers' field
+func InstanceExposePeersFlag() string { return "instance-expose-peers" }
+
+// GetInstanceExposePeers safely fetches the value for global configuration 'InstanceExposePeers' field
+func GetInstanceExposePeers() bool { return global.GetInstanceExposePeers() }
+
+// SetInstanceExposePeers safely sets the value for global configuration 'InstanceExposePeers' field
+func SetInstanceExposePeers(v bool) { global.SetInstanceExposePeers(v) }
+
+// GetInstanceExposeSuspended safely fetches the Configuration value for state's 'InstanceExposeSuspended' field
+func (st *ConfigState) GetInstanceExposeSuspended() (v bool) {
+	st.mutex.Lock()
+	v = st.config.InstanceExposeSuspended
+	st.mutex.Unlock()
+	return
+}
+
+// SetInstanceExposeSuspended safely sets the Configuration value for state's 'InstanceExposeSuspended' field
+func (st *ConfigState) SetInstanceExposeSuspended(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceExposeSuspended = v
+	st.reloadToViper()
+}
+
+// InstanceExposeSuspendedFlag returns the flag name for the 'InstanceExposeSuspended' field
+func InstanceExposeSuspendedFlag() string { return "instance-expose-suspended" }
+
+// GetInstanceExposeSuspended safely fetches the value for global configuration 'InstanceExposeSuspended' field
+func GetInstanceExposeSuspended() bool { return global.GetInstanceExposeSuspended() }
+
+// SetInstanceExposeSuspended safely sets the value for global configuration 'InstanceExposeSuspended' field
+func SetInstanceExposeSuspended(v bool) { global.SetInstanceExposeSuspended(v) }
+
 // GetAccountsRegistrationOpen safely fetches the Configuration value for state's 'AccountsRegistrationOpen' field
 func (st *ConfigState) GetAccountsRegistrationOpen() (v bool) {
 	st.mutex.Lock()

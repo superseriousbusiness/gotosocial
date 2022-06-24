@@ -55,7 +55,7 @@ func (p *processor) DomainBlocksImport(ctx context.Context, account *gtsmodel.Ac
 
 	blocks := []*apimodel.DomainBlock{}
 	for _, d := range d {
-		block, err := p.DomainBlockCreate(ctx, account, d.Domain, false, d.PublicComment, "", "")
+		block, err := p.DomainBlockCreate(ctx, account, d.Domain.Domain, false, d.PublicComment, "", "")
 
 		if err != nil {
 			return nil, err

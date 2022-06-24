@@ -936,10 +936,31 @@ func NewTestEmojis() map[string]*gtsmodel.Emoji {
 	}
 }
 
+func NewTestInstances() map[string]*gtsmodel.Instance {
+	return map[string]*gtsmodel.Instance{
+		"fossbros-anonymous.io": {
+			ID:        "01G5H6YMJQKR86QZKXXQ2S95FZ",
+			CreatedAt: TimeMustParse("2021-09-20T12:40:37+02:00"),
+			UpdatedAt: TimeMustParse("2021-09-20T12:40:37+02:00"),
+			Domain:    "fossbros-anonymous.io",
+			URI:       "http://fossbros-anonymous.io",
+		},
+		"example.org": {
+			ID:        "01G5H71G52DJKVBYKXPNPNDN1G",
+			CreatedAt: TimeMustParse("2020-05-13T15:29:12+02:00"),
+			UpdatedAt: TimeMustParse("2020-05-13T15:29:12+02:00"),
+			Domain:    "example.org",
+			URI:       "http://example.org",
+		},
+	}
+}
+
 func NewTestDomainBlocks() map[string]*gtsmodel.DomainBlock {
 	return map[string]*gtsmodel.DomainBlock{
 		"replyguys.com": {
 			ID:                 "01FF22EQM7X8E3RX1XGPN7S87D",
+			CreatedAt:          TimeMustParse("2020-05-13T15:29:12+02:00"),
+			UpdatedAt:          TimeMustParse("2020-05-13T15:29:12+02:00"),
 			Domain:             "replyguys.com",
 			CreatedByAccountID: "01F8MH17FWEB39HZJ76B6VXSKF",
 			PrivateComment:     "i blocked this domain because they keep replying with pushy + unwarranted linux advice",
