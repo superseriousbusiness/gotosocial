@@ -1132,26 +1132,30 @@ definitions:
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   instanceConfigurationPolls:
     properties:
-      MaxCharactersPerOption:
+      max_characters_per_option:
         description: Number of characters allowed per option in the poll.
         example: 50
         format: int64
         type: integer
-      MaxExpiration:
+        x-go-name: MaxCharactersPerOption
+      max_expiration:
         description: Maximum expiration time of the poll in seconds.
         example: 2629746
         format: int64
         type: integer
-      MaxOptions:
+        x-go-name: MaxExpiration
+      max_options:
         description: Number of options permitted in a poll on this instance.
         example: 4
         format: int64
         type: integer
-      MinExpiration:
+        x-go-name: MaxOptions
+      min_expiration:
         description: Minimum expiration time of the poll in seconds.
         example: 300
         format: int64
         type: integer
+        x-go-name: MinExpiration
     title: InstanceConfigurationPolls models instance poll config parameters.
     type: object
     x-go-name: InstanceConfigurationPolls
