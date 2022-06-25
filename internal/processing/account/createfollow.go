@@ -65,6 +65,11 @@ func (p *processor) FollowCreate(ctx context.Context, requestingAccount *gtsmode
 		return p.RelationshipGet(ctx, requestingAccount, form.ID)
 	}
 
+	// check for attempt to follow self
+	if requestingAccount.ID == targetAcct.ID {
+		return nil, gtserror.NewErrorNotAcceptable(fmt.Errorf("accountfollowcreate: account %s cannot follow itself", requestingAccount.ID))
+	}
+
 	// make the follow request
 	newFollowID, err := id.NewRandomULID()
 	if err != nil {
