@@ -26,6 +26,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// AllSupportedMIMETypes just returns all media
+// MIME types supported by this instance.
+func AllSupportedMIMETypes() []string {
+	return []string{
+		mimeImageJpeg,
+		mimeImageGif,
+		mimeImagePng,
+	}
+}
+
 // parseContentType parses the MIME content type from a file, returning it as a string in the form (eg., "image/jpeg").
 // Returns an error if the content type is not something we can process.
 //
