@@ -154,19 +154,19 @@ type InstanceConfigurationPolls struct {
 	// Number of options permitted in a poll on this instance.
 	//
 	// example: 4
-	MaxOptions int
+	MaxOptions int `json:"max_options"`
 	// Number of characters allowed per option in the poll.
 	//
 	// example: 50
-	MaxCharactersPerOption int
+	MaxCharactersPerOption int `json:"max_characters_per_option"`
 	// Minimum expiration time of the poll in seconds.
 	//
 	// example: 300
-	MinExpiration int
+	MinExpiration int `json:"min_expiration"`
 	// Maximum expiration time of the poll in seconds.
 	//
 	// example: 2629746
-	MaxExpiration int
+	MaxExpiration int `json:"max_expiration"`
 }
 
 // InstanceURLs models instance-relevant URLs for client application consumption.
