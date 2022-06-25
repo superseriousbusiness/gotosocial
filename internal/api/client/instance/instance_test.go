@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"net/http/httptest"
 
-	"codeberg.org/gruf/go-store/kv"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/instance"
@@ -37,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -44,7 +44,7 @@ type InstanceStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
 	db           db.DB
-	storage      *kv.KVStore
+	storage      storage.Driver
 	mediaManager media.Manager
 	federator    federation.Federator
 	processor    processing.Processor

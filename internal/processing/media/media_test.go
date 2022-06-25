@@ -19,7 +19,6 @@
 package media_test
 
 import (
-	"codeberg.org/gruf/go-store/kv"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -27,6 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	mediaprocessing "github.com/superseriousbusiness/gotosocial/internal/processing/media"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -37,7 +37,7 @@ type MediaStandardTestSuite struct {
 	suite.Suite
 	db                  db.DB
 	tc                  typeutils.TypeConverter
-	storage             *kv.KVStore
+	storage             storage.Driver
 	mediaManager        media.Manager
 	transportController transport.Controller
 

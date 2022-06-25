@@ -25,19 +25,32 @@ import (
 
 	"codeberg.org/gruf/go-store/kv"
 	"codeberg.org/gruf/go-store/storage"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
+	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
 // NewTestStorage returns a new in memory storage with the default test config
-func NewTestStorage() *kv.KVStore {
-	storage, err := kv.OpenStorage(storage.OpenMemory(200, false))
+func NewTestStorage() gtsstorage.Driver {
+	if backend := os.Getenv("GTS_STORAGE_BACKEND"); backend != "s3" {
+		storage, err := kv.OpenStorage(storage.OpenMemory(200, false))
+		if err != nil {
+			panic(err)
+		}
+		return &gtsstorage.Local{KVStore: storage}
+	}
+	mc, err := minio.New(os.Getenv("GTS_STORAGE_S3_ENDPOINT"), &minio.Options{
+		Creds:  credentials.NewStaticV4(os.Getenv("GTS_STORAGE_S3_ACCESS_KEY"), os.Getenv("GTS_STORAGE_S3_SECRET_KEY"), ""),
+		Secure: false,
+	})
 	if err != nil {
 		panic(err)
 	}
-	return storage
+	return gtsstorage.NewS3(mc, os.Getenv("GTS_STORAGE_S3_BUCKET"))
 }
 
 // StandardStorageSetup populates the storage with standard test entries from the given directory.
-func StandardStorageSetup(s *kv.KVStore, relativePath string) {
+func StandardStorageSetup(s gtsstorage.Driver, relativePath string) {
 	storedA := newTestStoredAttachments()
 	a := NewTestAttachments()
 	for k, paths := range storedA {
@@ -94,7 +107,7 @@ func StandardStorageSetup(s *kv.KVStore, relativePath string) {
 }
 
 // StandardStorageTeardown deletes everything in storage so that it's clean for the next test
-func StandardStorageTeardown(s *kv.KVStore) {
+func StandardStorageTeardown(s gtsstorage.Driver) {
 	defer os.RemoveAll(path.Join(os.TempDir(), "gotosocial"))
 
 	iter, err := s.Iterator(nil)

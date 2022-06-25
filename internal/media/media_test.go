@@ -19,11 +19,11 @@
 package media_test
 
 import (
-	"codeberg.org/gruf/go-store/kv"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -31,7 +31,7 @@ type MediaStandardTestSuite struct {
 	suite.Suite
 
 	db              db.DB
-	storage         *kv.KVStore
+	storage         storage.Driver
 	manager         media.Manager
 	testAttachments map[string]*gtsmodel.MediaAttachment
 	testAccounts    map[string]*gtsmodel.Account

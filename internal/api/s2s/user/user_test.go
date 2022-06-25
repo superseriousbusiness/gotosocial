@@ -19,7 +19,6 @@
 package user_test
 
 import (
-	"codeberg.org/gruf/go-store/kv"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/user"
 	"github.com/superseriousbusiness/gotosocial/internal/api/security"
@@ -32,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -45,7 +45,7 @@ type UserStandardTestSuite struct {
 	federator      federation.Federator
 	emailSender    email.Sender
 	processor      processing.Processor
-	storage        *kv.KVStore
+	storage        storage.Driver
 	oauthServer    oauth.Server
 	securityModule *security.Module
 

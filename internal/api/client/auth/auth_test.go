@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"net/http/httptest"
 
-	"codeberg.org/gruf/go-store/kv"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
@@ -42,13 +41,14 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type AuthStandardTestSuite struct {
 	suite.Suite
 	db           db.DB
-	storage      *kv.KVStore
+	storage      storage.Driver
 	mediaManager media.Manager
 	federator    federation.Federator
 	processor    processing.Processor

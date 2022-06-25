@@ -30,7 +30,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"codeberg.org/gruf/go-store/kv"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
@@ -46,6 +45,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -54,7 +54,7 @@ type MediaCreateTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
 	db           db.DB
-	storage      *kv.KVStore
+	storage      storage.Driver
 	mediaManager media.Manager
 	federator    federation.Federator
 	tc           typeutils.TypeConverter

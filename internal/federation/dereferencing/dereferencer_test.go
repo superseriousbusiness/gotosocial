@@ -19,7 +19,6 @@
 package dereferencing_test
 
 import (
-	"codeberg.org/gruf/go-store/kv"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
@@ -27,13 +26,14 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type DereferencerStandardTestSuite struct {
 	suite.Suite
 	db      db.DB
-	storage *kv.KVStore
+	storage storage.Driver
 
 	testRemoteStatuses    map[string]vocab.ActivityStreamsNote
 	testRemotePeople      map[string]vocab.ActivityStreamsPerson

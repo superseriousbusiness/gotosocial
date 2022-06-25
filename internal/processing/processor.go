@@ -23,7 +23,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"codeberg.org/gruf/go-store/kv"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -41,6 +40,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/streaming"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/user"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -251,7 +251,7 @@ type processor struct {
 	tc              typeutils.TypeConverter
 	oauthServer     oauth.Server
 	mediaManager    media.Manager
-	storage         *kv.KVStore
+	storage         storage.Driver
 	statusTimelines timeline.Manager
 	db              db.DB
 	filter          visibility.Filter
@@ -275,7 +275,7 @@ func NewProcessor(
 	federator federation.Federator,
 	oauthServer oauth.Server,
 	mediaManager media.Manager,
-	storage *kv.KVStore,
+	storage storage.Driver,
 	db db.DB,
 	emailSender email.Sender,
 	clientWorker *concurrency.WorkerPool[messages.FromClientAPI],

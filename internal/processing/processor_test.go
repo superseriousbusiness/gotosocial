@@ -19,7 +19,6 @@
 package processing_test
 
 import (
-	"codeberg.org/gruf/go-store/kv"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -30,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -39,7 +39,7 @@ type ProcessingStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
 	db                  db.DB
-	storage             *kv.KVStore
+	storage             storage.Driver
 	mediaManager        media.Manager
 	typeconverter       typeutils.TypeConverter
 	httpClient          *testrig.MockHTTPClient

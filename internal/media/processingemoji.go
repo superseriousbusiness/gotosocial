@@ -28,10 +28,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"codeberg.org/gruf/go-store/kv"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
@@ -64,7 +64,7 @@ type ProcessingEmoji struct {
 	*/
 
 	database db.DB
-	storage  *kv.KVStore
+	storage  storage.Driver
 
 	err error // error created during processing, if any
 
