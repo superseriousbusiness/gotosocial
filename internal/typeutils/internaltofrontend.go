@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -595,9 +596,32 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 		mi.InvitesEnabled = false // TODO
 		mi.MaxTootChars = uint(config.GetStatusesMaxChars())
 		mi.URLS = &model.InstanceURLs{
-			StreamingAPI: fmt.Sprintf("wss://%s", host),
+			StreamingAPI: "wss://" + host,
 		}
 		mi.Version = config.GetSoftwareVersion()
+
+		// todo: remove hardcoded values and put them in config somewhere
+		mi.Configuration = &model.InstanceConfiguration{
+			Statuses: &model.InstanceConfigurationStatuses{
+				MaxCharacters:            config.GetStatusesMaxChars(),
+				MaxMediaAttachments:      config.GetStatusesMediaMaxFiles(),
+				CharactersReservedPerURL: 999,
+			},
+			MediaAttachments: &model.InstanceConfigurationMediaAttachments{
+				SupportedMimeTypes:  media.AllSupportedMIMETypes(),
+				ImageSizeLimit:      config.GetMediaImageMaxSize(),
+				ImageMatrixLimit:    16777216, // height*width
+				VideoSizeLimit:      config.GetMediaVideoMaxSize(),
+				VideoFrameRateLimit: 60,
+				VideoMatrixLimit:    16777216, // height*width
+			},
+			Polls: &model.InstanceConfigurationPolls{
+				MaxOptions:             config.GetStatusesPollMaxOptions(),
+				MaxCharactersPerOption: config.GetStatusesPollOptionMaxChars(),
+				MinExpiration:          300,     // seconds
+				MaxExpiration:          2629746, // seconds
+			},
+		}
 	}
 
 	// get the instance account if it exists and just skip if it doesn't
