@@ -74,7 +74,7 @@ func (suite *InternalToFrontendTestSuite) TestInstanceToFrontend() {
 	b, err := json.Marshal(apiInstance)
 	suite.NoError(err)
 
-	suite.Equal(`{"uri":"https://example.org","title":"example instance","description":"a much longer description","short_description":"a little description","email":"someone@example.org","version":"software-from-hell 0.666","registrations":false,"approval_required":false,"invites_enabled":false,"thumbnail":"","max_toot_chars":0}`, string(b))
+	suite.Equal(`{"uri":"https://example.org","title":"example instance","description":"a much longer description","short_description":"a little description","email":"someone@example.org","version":"software-from-hell 0.666","registrations":false,"approval_required":false,"invites_enabled":false,"configuration":null,"thumbnail":"","max_toot_chars":0}`, string(b))
 }
 
 func (suite *InternalToFrontendTestSuite) TestInstanceToFrontendWithAdminAccount() {
@@ -97,7 +97,7 @@ func (suite *InternalToFrontendTestSuite) TestInstanceToFrontendWithAdminAccount
 	b, err := json.Marshal(apiInstance)
 	suite.NoError(err)
 
-	suite.Equal(`{"uri":"https://example.org","title":"example instance","description":"a much longer description","short_description":"a little description","email":"someone@example.org","version":"software-from-hell 0.666","registrations":false,"approval_required":false,"invites_enabled":false,"thumbnail":"","contact_account":{"id":"01FHMQX3GAABWSM0S2VZEC2SWC","username":"some_user","acct":"some_user@example.org","display_name":"some user","locked":true,"bot":false,"created_at":"2020-08-10T12:13:28.000Z","note":"i'm a real son of a gun","url":"http://example.org/@some_user","avatar":"","avatar_static":"","header":"","header_static":"","followers_count":0,"following_count":0,"statuses_count":0,"last_status_at":"","emojis":[],"fields":[]},"max_toot_chars":0}`, string(b))
+	suite.Equal(`{"uri":"https://example.org","title":"example instance","description":"a much longer description","short_description":"a little description","email":"someone@example.org","version":"software-from-hell 0.666","registrations":false,"approval_required":false,"invites_enabled":false,"configuration":null,"thumbnail":"","contact_account":{"id":"01FHMQX3GAABWSM0S2VZEC2SWC","username":"some_user","acct":"some_user@example.org","display_name":"some user","locked":true,"bot":false,"created_at":"2020-08-10T12:13:28.000Z","note":"i'm a real son of a gun","url":"http://example.org/@some_user","avatar":"","avatar_static":"","header":"","header_static":"","followers_count":0,"following_count":0,"statuses_count":0,"last_status_at":"","emojis":[],"fields":[]},"max_toot_chars":0}`, string(b))
 }
 
 func TestInternalToFrontendTestSuite(t *testing.T) {
