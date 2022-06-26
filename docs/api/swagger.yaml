@@ -975,6 +975,8 @@ definitions:
         description: New account registrations require admin approval.
         type: boolean
         x-go-name: ApprovalRequired
+      configuration:
+        $ref: '#/definitions/instanceConfiguration'
       contact_account:
         $ref: '#/definitions/account'
       description:
@@ -1061,6 +1063,126 @@ definitions:
     title: Instance models information about this or another instance.
     type: object
     x-go-name: Instance
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  instanceConfiguration:
+    properties:
+      media_attachments:
+        $ref: '#/definitions/instanceConfigurationMediaAttachments'
+      polls:
+        $ref: '#/definitions/instanceConfigurationPolls'
+      statuses:
+        $ref: '#/definitions/instanceConfigurationStatuses'
+    title: InstanceConfiguration models instance configuration parameters.
+    type: object
+    x-go-name: InstanceConfiguration
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  instanceConfigurationMediaAttachments:
+    properties:
+      image_matrix_limit:
+        description: |-
+          Max allowed image size in pixels as height*width.
+
+          GtS doesn't set a limit on this, but for compatibility
+          we give Mastodon's 4096x4096px value here.
+        example: 16777216
+        format: int64
+        type: integer
+        x-go-name: ImageMatrixLimit
+      image_size_limit:
+        description: Max allowed image size in bytes
+        example: 2097152
+        format: int64
+        type: integer
+        x-go-name: ImageSizeLimit
+      supported_mime_types:
+        description: List of mime types that it's possible to upload to this instance.
+        example:
+        - image/jpeg
+        - image/gif
+        items:
+          type: string
+        type: array
+        x-go-name: SupportedMimeTypes
+      video_frame_rate_limit:
+        description: Max allowed video frame rate.
+        example: 60
+        format: int64
+        type: integer
+        x-go-name: VideoFrameRateLimit
+      video_matrix_limit:
+        description: |-
+          Max allowed video size in pixels as height*width.
+
+          GtS doesn't set a limit on this, but for compatibility
+          we give Mastodon's 4096x4096px value here.
+        example: 16777216
+        format: int64
+        type: integer
+        x-go-name: VideoMatrixLimit
+      video_size_limit:
+        description: Max allowed video size in bytes
+        example: 10485760
+        format: int64
+        type: integer
+        x-go-name: VideoSizeLimit
+    title: InstanceConfigurationMediaAttachments models instance media attachment
+      config parameters.
+    type: object
+    x-go-name: InstanceConfigurationMediaAttachments
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  instanceConfigurationPolls:
+    properties:
+      max_characters_per_option:
+        description: Number of characters allowed per option in the poll.
+        example: 50
+        format: int64
+        type: integer
+        x-go-name: MaxCharactersPerOption
+      max_expiration:
+        description: Maximum expiration time of the poll in seconds.
+        example: 2629746
+        format: int64
+        type: integer
+        x-go-name: MaxExpiration
+      max_options:
+        description: Number of options permitted in a poll on this instance.
+        example: 4
+        format: int64
+        type: integer
+        x-go-name: MaxOptions
+      min_expiration:
+        description: Minimum expiration time of the poll in seconds.
+        example: 300
+        format: int64
+        type: integer
+        x-go-name: MinExpiration
+    title: InstanceConfigurationPolls models instance poll config parameters.
+    type: object
+    x-go-name: InstanceConfigurationPolls
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  instanceConfigurationStatuses:
+    properties:
+      characters_reserved_per_url:
+        description: Amount of characters that a URL will be compressed to.
+        example: 999
+        format: int64
+        type: integer
+        x-go-name: CharactersReservedPerURL
+      max_characters:
+        description: Maximum allowed length of a post on this instance, in characters.
+        example: 5000
+        format: int64
+        type: integer
+        x-go-name: MaxCharacters
+      max_media_attachments:
+        description: Max number of attachments allowed on a status.
+        example: 4
+        format: int64
+        type: integer
+        x-go-name: MaxMediaAttachments
+    title: InstanceConfigurationStatuses models instance status config parameters.
+    type: object
+    x-go-name: InstanceConfigurationStatuses
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   instanceURLs:
     properties:
