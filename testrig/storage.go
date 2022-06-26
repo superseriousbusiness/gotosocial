@@ -107,7 +107,9 @@ func StandardStorageSetup(s gtsstorage.Driver, relativePath string) {
 	}
 }
 
-// StandardStorageTeardown deletes everything in storage so that it's clean for the next test
+// StandardStorageTeardown deletes everything in storage so that it's clean for
+// the next test
+// nolint:gocritic // complains about the type switch, but it's the cleanest solution
 func StandardStorageTeardown(s gtsstorage.Driver) {
 	defer os.RemoveAll(path.Join(os.TempDir(), "gotosocial"))
 

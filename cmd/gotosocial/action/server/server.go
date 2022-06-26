@@ -23,11 +23,8 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"path"
 	"syscall"
 
-	"codeberg.org/gruf/go-store/kv"
-	"codeberg.org/gruf/go-store/storage"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
@@ -107,24 +104,17 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	typeConverter := typeutils.NewConverter(dbService)
 
 	// Open the storage backend
-	storageBasePath := config.GetStorageLocalBasePath()
-	storage, err := kv.OpenFile(storageBasePath, &storage.DiskConfig{
-		// Put the store lockfile in the storage dir itself.
-		// Normally this would not be safe, since we could end up
-		// overwriting the lockfile if we store a file called 'store.lock'.
-		// However, in this case it's OK because the keys are set by
-		// GtS and not the user, so we know we're never going to overwrite it.
-		LockFile: path.Join(storageBasePath, "store.lock"),
-	})
+
+	storage, err := gtsstorage.AutoConfig()
 	if err != nil {
-		return fmt.Errorf("error creating storage backend: %s", err)
+		return fmt.Errorf("error creating storage backend: %w", err)
 	}
 
 	// Build HTTP client (TODO: add configurables here)
 	client := httpclient.New(httpclient.Config{})
 
 	// build backend handlers
-	mediaManager, err := media.NewManager(dbService, &gtsstorage.Local{KVStore: storage})
+	mediaManager, err := media.NewManager(dbService, storage)
 	if err != nil {
 		return fmt.Errorf("error creating media manager: %s", err)
 	}
@@ -149,7 +139,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	// create and start the message processor using the other services we've created so far
-	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaManager, &gtsstorage.Local{KVStore: storage}, dbService, emailSender, clientWorker, fedWorker)
+	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaManager, storage, dbService, emailSender, clientWorker, fedWorker)
 	if err := processor.Start(); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)
 	}
