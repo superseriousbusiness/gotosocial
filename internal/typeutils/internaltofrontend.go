@@ -576,6 +576,16 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 
 	// if the requested instance is *this* instance, we can add some extra information
 	if host := config.GetHost(); i.Domain == host {
+		if ia, err := c.db.GetInstanceAccount(ctx, ""); err == nil {
+			if ia.HeaderMediaAttachment != nil {
+				// take instance account header as instance thumbnail
+				mi.Thumbnail = ia.HeaderMediaAttachment.URL
+			} else {
+				// or just use a default
+				mi.Thumbnail = config.GetProtocol() + "://" + host + "/assets/logo.png"
+			}
+		}
+
 		userCount, err := c.db.CountInstanceUsers(ctx, host)
 		if err == nil {
 			mi.Stats["user_count"] = userCount
@@ -621,14 +631,6 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 				MinExpiration:          300,     // seconds
 				MaxExpiration:          2629746, // seconds
 			},
-		}
-	}
-
-	// get the instance account if it exists and just skip if it doesn't
-	ia, err := c.db.GetInstanceAccount(ctx, "")
-	if err == nil {
-		if ia.HeaderMediaAttachment != nil {
-			mi.Thumbnail = ia.HeaderMediaAttachment.URL
 		}
 	}
 
