@@ -1,9 +1,13 @@
 package storage
 
 import (
+	"errors"
 	"io"
+	"net/url"
+)
 
-	"codeberg.org/gruf/go-store/kv"
+var (
+	ErrNotSupported = errors.New("driver does not suppport functionality")
 )
 
 // Driver implements the functionality to store and retrieve blobs
@@ -14,5 +18,5 @@ type Driver interface {
 	PutStream(key string, r io.Reader) error
 	Put(key string, value []byte) error
 	Delete(key string) error
-	Iterator(matchFn func(string) bool) (*kv.KVIterator, error)
+	URL(key string) *url.URL
 }

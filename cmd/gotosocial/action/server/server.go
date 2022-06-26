@@ -68,6 +68,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
+	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/web"
@@ -123,7 +124,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	client := httpclient.New(httpclient.Config{})
 
 	// build backend handlers
-	mediaManager, err := media.NewManager(dbService, storage)
+	mediaManager, err := media.NewManager(dbService, &gtsstorage.Local{KVStore: storage})
 	if err != nil {
 		return fmt.Errorf("error creating media manager: %s", err)
 	}
@@ -148,7 +149,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	// create and start the message processor using the other services we've created so far
-	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaManager, storage, dbService, emailSender, clientWorker, fedWorker)
+	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaManager, &gtsstorage.Local{KVStore: storage}, dbService, emailSender, clientWorker, fedWorker)
 	if err := processor.Start(); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)
 	}

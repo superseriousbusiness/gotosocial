@@ -110,7 +110,7 @@ func StandardStorageSetup(s gtsstorage.Driver, relativePath string) {
 func StandardStorageTeardown(s gtsstorage.Driver) {
 	defer os.RemoveAll(path.Join(os.TempDir(), "gotosocial"))
 
-	iter, err := s.Iterator(nil)
+	iter, err := s.(*gtsstorage.Local).Iterator(nil)
 	if err != nil {
 		panic(err)
 	}

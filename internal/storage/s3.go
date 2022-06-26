@@ -5,8 +5,11 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"mime"
+	"net/url"
+	"path"
+	"time"
 
-	"codeberg.org/gruf/go-store/kv"
 	"github.com/minio/minio-go/v7"
 )
 
@@ -54,9 +57,13 @@ func (s *s3) Put(key string, value []byte) error {
 	return nil
 }
 func (s *s3) Delete(key string) error {
-	s.mc.RemoveObject(context.TODO(), s.bucket, key, minio.RemoveObjectOptions{})
-	return nil
+	return s.mc.RemoveObject(context.TODO(), s.bucket, key, minio.RemoveObjectOptions{})
 }
-func (s *s3) Iterator(matchFn func(string) bool) (*kv.KVIterator, error) {
-	return nil, fmt.Errorf("iteration not possible on s3")
+func (s *s3) URL(key string) *url.URL {
+	// it's safe to ignore the error here, as we just fall back to fetching the
+	// file if the url request fails
+	url, _ := s.mc.PresignedGetObject(context.TODO(), s.bucket, key, time.Hour, url.Values{
+		"response-content-type": []string{mime.TypeByExtension(path.Ext(key))},
+	})
+	return url
 }

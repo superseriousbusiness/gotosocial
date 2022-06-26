@@ -18,7 +18,10 @@
 
 package model
 
-import "io"
+import (
+	"io"
+	"net/url"
+)
 
 // Content wraps everything needed to serve a blob of content (some kind of media) through the API.
 type Content struct {
@@ -28,6 +31,8 @@ type Content struct {
 	ContentLength int64
 	// Actual content
 	Content io.Reader
+	// Resource URL if file can be served directly
+	URL *url.URL
 }
 
 // GetContentRequestForm describes a piece of content desired by the caller of the fileserver API.

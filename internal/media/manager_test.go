@@ -33,6 +33,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
 type ManagerTestSuite struct {
@@ -523,7 +524,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
 		panic(err)
 	}
 
-	diskManager, err := media.NewManager(suite.db, diskStorage)
+	diskManager, err := media.NewManager(suite.db, &gtsstorage.Local{KVStore: diskStorage})
 	if err != nil {
 		panic(err)
 	}
