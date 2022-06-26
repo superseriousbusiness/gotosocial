@@ -30,15 +30,16 @@ import (
 	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
-// NewTestStorage returns a new in memory storage with the default test config
-func NewTestStorage() gtsstorage.Driver {
-	if backend := os.Getenv("GTS_STORAGE_BACKEND"); backend != "s3" {
-		storage, err := kv.OpenStorage(storage.OpenMemory(200, false))
-		if err != nil {
-			panic(err)
-		}
-		return &gtsstorage.Local{KVStore: storage}
+// NewInMemoryStorage returns a new in memory storage with the default test config
+func NewInMemoryStorage() *gtsstorage.Local {
+	storage, err := kv.OpenStorage(storage.OpenMemory(200, false))
+	if err != nil {
+		panic(err)
 	}
+	return &gtsstorage.Local{KVStore: storage}
+}
+
+func NewS3Storage() gtsstorage.Driver {
 	mc, err := minio.New(os.Getenv("GTS_STORAGE_S3_ENDPOINT"), &minio.Options{
 		Creds:  credentials.NewStaticV4(os.Getenv("GTS_STORAGE_S3_ACCESS_KEY"), os.Getenv("GTS_STORAGE_S3_SECRET_KEY"), ""),
 		Secure: false,
@@ -110,18 +111,21 @@ func StandardStorageSetup(s gtsstorage.Driver, relativePath string) {
 func StandardStorageTeardown(s gtsstorage.Driver) {
 	defer os.RemoveAll(path.Join(os.TempDir(), "gotosocial"))
 
-	iter, err := s.(*gtsstorage.Local).Iterator(nil)
-	if err != nil {
-		panic(err)
-	}
-	keys := []string{}
-	for iter.Next() {
-		keys = append(keys, iter.Key())
-	}
-	iter.Release()
-	for _, k := range keys {
-		if err := s.Delete(k); err != nil {
+	switch st := s.(type) {
+	case *gtsstorage.Local:
+		iter, err := st.Iterator(nil)
+		if err != nil {
 			panic(err)
+		}
+		keys := []string{}
+		for iter.Next() {
+			keys = append(keys, iter.Key())
+		}
+		iter.Release()
+		for _, k := range keys {
+			if err := s.Delete(k); err != nil {
+				panic(err)
+			}
 		}
 	}
 }

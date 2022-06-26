@@ -54,7 +54,7 @@ type MediaCreateTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
 	db           db.DB
-	storage      storage.Driver
+	storage      *storage.Local
 	mediaManager media.Manager
 	federator    federation.Federator
 	tc           typeutils.TypeConverter
@@ -87,7 +87,7 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
 
 	suite.db = testrig.NewTestDB()
-	suite.storage = testrig.NewTestStorage()
+	suite.storage = testrig.NewInMemoryStorage()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
@@ -138,7 +138,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessful() {
 
 	// see what's in storage *before* the request
 	storageKeysBeforeRequest := []string{}
-	iter, err := suite.storage.(*storage.Local).Iterator(nil)
+	iter, err := suite.storage.Iterator(nil)
 	if err != nil {
 		panic(err)
 	}
@@ -164,7 +164,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessful() {
 
 	// check what's in storage *after* the request
 	storageKeysAfterRequest := []string{}
-	iter, err = suite.storage.(*storage.Local).Iterator(nil)
+	iter, err = suite.storage.Iterator(nil)
 	if err != nil {
 		panic(err)
 	}

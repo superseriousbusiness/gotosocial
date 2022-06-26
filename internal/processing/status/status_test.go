@@ -81,7 +81,7 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 	suite.typeConverter = testrig.NewTestTypeConverter(suite.db)
 	suite.clientWorker = concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
 	suite.tc = testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../testrig/media"), suite.db, fedWorker)
-	suite.storage = testrig.NewTestStorage()
+	suite.storage = testrig.NewInMemoryStorage()
 	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
 	suite.federator = testrig.NewTestFederator(suite.db, suite.tc, suite.storage, suite.mediaManager, fedWorker)
 	suite.status = status.New(suite.db, suite.typeConverter, suite.clientWorker, processing.GetParseMentionFunc(suite.db, suite.federator))

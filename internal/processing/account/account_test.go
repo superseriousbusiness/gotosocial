@@ -91,7 +91,7 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 
 	suite.db = testrig.NewTestDB()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
-	suite.storage = testrig.NewTestStorage()
+	suite.storage = testrig.NewInMemoryStorage()
 	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	suite.fromClientAPIChan = make(chan messages.FromClientAPI, 100)

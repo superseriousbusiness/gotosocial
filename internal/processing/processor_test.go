@@ -91,7 +91,7 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 
 	suite.db = testrig.NewTestDB()
 	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
-	suite.storage = testrig.NewTestStorage()
+	suite.storage = testrig.NewInMemoryStorage()
 	suite.typeconverter = testrig.NewTestTypeConverter(suite.db)
 	suite.httpClient = testrig.NewMockHTTPClient(nil, "../../testrig/media")
 

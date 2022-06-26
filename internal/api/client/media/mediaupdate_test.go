@@ -85,7 +85,7 @@ func (suite *MediaUpdateTestSuite) SetupSuite() {
 	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
 
 	suite.db = testrig.NewTestDB()
-	suite.storage = testrig.NewTestStorage()
+	suite.storage = testrig.NewInMemoryStorage()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)

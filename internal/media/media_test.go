@@ -42,7 +42,7 @@ func (suite *MediaStandardTestSuite) SetupSuite() {
 	testrig.InitTestLog()
 
 	suite.db = testrig.NewTestDB()
-	suite.storage = testrig.NewTestStorage()
+	suite.storage = testrig.NewInMemoryStorage()
 }
 
 func (suite *MediaStandardTestSuite) SetupTest() {

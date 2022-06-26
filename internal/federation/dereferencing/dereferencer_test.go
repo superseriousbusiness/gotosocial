@@ -57,7 +57,7 @@ func (suite *DereferencerStandardTestSuite) SetupTest() {
 	suite.testRemoteAttachments = testrig.NewTestFediAttachments("../../../testrig/media")
 
 	suite.db = testrig.NewTestDB()
-	suite.storage = testrig.NewTestStorage()
+	suite.storage = testrig.NewInMemoryStorage()
 	suite.dereferencer = dereferencing.NewDereferencer(suite.db, testrig.NewTestTypeConverter(suite.db), testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../testrig/media"), suite.db, concurrency.NewWorkerPool[messages.FromFederator](-1, -1)), testrig.NewTestMediaManager(suite.db, suite.storage))
 	testrig.StandardDBSetup(suite.db, nil)
 }

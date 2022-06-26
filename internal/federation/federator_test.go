@@ -41,7 +41,7 @@ type FederatorStandardTestSuite struct {
 // SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
 func (suite *FederatorStandardTestSuite) SetupSuite() {
 	// setup standard items
-	suite.storage = testrig.NewTestStorage()
+	suite.storage = testrig.NewInMemoryStorage()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.testAccounts = testrig.NewTestAccounts()
 	suite.testStatuses = testrig.NewTestStatuses()
