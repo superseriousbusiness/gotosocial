@@ -63,7 +63,8 @@ type Instance struct {
 	// Invites are enabled on this instance.
 	InvitesEnabled bool `json:"invites_enabled"`
 	// Configuration object containing values about status limits etc.
-	Configuration *InstanceConfiguration `json:"configuration"`
+	// This key/value will be omitted for remote instances.
+	Configuration *InstanceConfiguration `json:"configuration,omitempty"`
 	// URLs of interest for client applications.
 	URLS *InstanceURLs `json:"urls,omitempty"`
 	// Statistics about the instance: number of posts, accounts, etc.
