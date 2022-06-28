@@ -28,15 +28,15 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (m *manager) PruneUnusedLocalAttachments(ctx context.Context, olderThanDays int) (int, error) {
+func (m *manager) PruneUnusedLocalAttachments(ctx context.Context) (int, error) {
 	var totalPruned int
 	var maxID string
 	var attachments []*gtsmodel.MediaAttachment
 	var err error
 
-	olderThan, err := parseOlderThan(olderThanDays)
+	olderThan, err := parseOlderThan(UnusedLocalAttachmentCacheDays)
 	if err != nil {
-		return totalPruned, fmt.Errorf("PruneUnusedLocalAttachments: error parsing olderThanDays %d: %s", olderThanDays, err)
+		return totalPruned, fmt.Errorf("PruneUnusedLocalAttachments: error parsing olderThanDays %d: %s", UnusedLocalAttachmentCacheDays, err)
 	}
 	logrus.Infof("PruneUnusedLocalAttachments: pruning unused local attachments older than %s", olderThan)
 
