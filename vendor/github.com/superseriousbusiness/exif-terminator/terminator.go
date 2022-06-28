@@ -25,8 +25,8 @@ import (
 	"fmt"
 	"io"
 
-	jpegstructure "github.com/superseriousbusiness/go-jpeg-image-structure/v2"
 	pngstructure "github.com/dsoprea/go-png-image-structure/v2"
+	jpegstructure "github.com/superseriousbusiness/go-jpeg-image-structure/v2"
 )
 
 func Terminate(in io.Reader, fileSize int, mediaType string) (io.Reader, error) {

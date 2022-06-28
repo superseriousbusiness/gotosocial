@@ -21,7 +21,6 @@ package instance_test
 import (
 	"bytes"
 	"fmt"
-	"net/http"
 	"net/http/httptest"
 
 	"codeberg.org/gruf/go-store/kv"
@@ -113,7 +112,7 @@ func (suite *InstanceStandardTestSuite) newContext(recorder *httptest.ResponseRe
 	baseURI := fmt.Sprintf("%s://%s", protocol, host)
 	requestURI := fmt.Sprintf("%s/%s", baseURI, requestPath)
 
-	ctx.Request = httptest.NewRequest(http.MethodPatch, requestURI, bytes.NewReader(requestBody)) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(requestMethod, requestURI, bytes.NewReader(requestBody)) // the endpoint we're hitting
 
 	if bodyContentType != "" {
 		ctx.Request.Header.Set("Content-Type", bodyContentType)
