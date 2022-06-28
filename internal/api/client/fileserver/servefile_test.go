@@ -160,7 +160,7 @@ func (suite *ServeFileTestSuite) TestServeOriginalFileSuccessful() {
 	suite.NoError(err)
 	suite.NotNil(b)
 
-	fileInStorage, err := suite.storage.Get(targetAttachment.File.Path)
+	fileInStorage, err := suite.storage.Get(ctx, targetAttachment.File.Path)
 	suite.NoError(err)
 	suite.NotNil(fileInStorage)
 	suite.Equal(b, fileInStorage)
@@ -206,7 +206,7 @@ func (suite *ServeFileTestSuite) TestServeSmallFileSuccessful() {
 	suite.NoError(err)
 	suite.NotNil(b)
 
-	fileInStorage, err := suite.storage.Get(targetAttachment.Thumbnail.Path)
+	fileInStorage, err := suite.storage.Get(ctx, targetAttachment.Thumbnail.Path)
 	suite.NoError(err)
 	suite.NotNil(fileInStorage)
 	suite.Equal(b, fileInStorage)

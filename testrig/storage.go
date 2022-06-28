@@ -19,6 +19,7 @@
 package testrig
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path"
@@ -67,14 +68,14 @@ func StandardStorageSetup(s gtsstorage.Driver, relativePath string) {
 		if err != nil {
 			panic(err)
 		}
-		if err := s.Put(pathOriginal, bOriginal); err != nil {
+		if err := s.Put(context.TODO(), pathOriginal, bOriginal); err != nil {
 			panic(err)
 		}
 		bSmall, err := os.ReadFile(fmt.Sprintf("%s/%s", relativePath, filenameSmall))
 		if err != nil {
 			panic(err)
 		}
-		if err := s.Put(pathSmall, bSmall); err != nil {
+		if err := s.Put(context.TODO(), pathSmall, bSmall); err != nil {
 			panic(err)
 		}
 	}
@@ -94,14 +95,14 @@ func StandardStorageSetup(s gtsstorage.Driver, relativePath string) {
 		if err != nil {
 			panic(err)
 		}
-		if err := s.Put(pathOriginal, bOriginal); err != nil {
+		if err := s.Put(context.TODO(), pathOriginal, bOriginal); err != nil {
 			panic(err)
 		}
 		bStatic, err := os.ReadFile(fmt.Sprintf("%s/%s", relativePath, filenameStatic))
 		if err != nil {
 			panic(err)
 		}
-		if err := s.Put(pathStatic, bStatic); err != nil {
+		if err := s.Put(context.TODO(), pathStatic, bStatic); err != nil {
 			panic(err)
 		}
 	}
@@ -115,7 +116,7 @@ func StandardStorageTeardown(s gtsstorage.Driver) {
 
 	switch st := s.(type) {
 	case *gtsstorage.Local:
-		iter, err := st.Iterator(nil)
+		iter, err := st.KVStore.Iterator(nil)
 		if err != nil {
 			panic(err)
 		}
@@ -125,7 +126,7 @@ func StandardStorageTeardown(s gtsstorage.Driver) {
 		}
 		iter.Release()
 		for _, k := range keys {
-			if err := s.Delete(k); err != nil {
+			if err := s.Delete(context.TODO(), k); err != nil {
 				panic(err)
 			}
 		}

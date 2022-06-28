@@ -88,7 +88,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlocking() {
 	suite.NotNil(dbAttachment)
 
 	// make sure the processed file is in storage
-	processedFullBytes, err := suite.storage.Get(attachment.File.Path)
+	processedFullBytes, err := suite.storage.Get(ctx, attachment.File.Path)
 	suite.NoError(err)
 	suite.NotEmpty(processedFullBytes)
 
@@ -101,7 +101,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlocking() {
 	suite.Equal(processedFullBytesExpected, processedFullBytes)
 
 	// now do the same for the thumbnail and make sure it's what we expected
-	processedThumbnailBytes, err := suite.storage.Get(attachment.Thumbnail.Path)
+	processedThumbnailBytes, err := suite.storage.Get(ctx, attachment.Thumbnail.Path)
 	suite.NoError(err)
 	suite.NotEmpty(processedThumbnailBytes)
 
@@ -160,7 +160,7 @@ func (suite *ManagerTestSuite) TestPngNoAlphaChannelProcessBlocking() {
 	suite.NotNil(dbAttachment)
 
 	// make sure the processed file is in storage
-	processedFullBytes, err := suite.storage.Get(attachment.File.Path)
+	processedFullBytes, err := suite.storage.Get(ctx, attachment.File.Path)
 	suite.NoError(err)
 	suite.NotEmpty(processedFullBytes)
 
@@ -173,7 +173,7 @@ func (suite *ManagerTestSuite) TestPngNoAlphaChannelProcessBlocking() {
 	suite.Equal(processedFullBytesExpected, processedFullBytes)
 
 	// now do the same for the thumbnail and make sure it's what we expected
-	processedThumbnailBytes, err := suite.storage.Get(attachment.Thumbnail.Path)
+	processedThumbnailBytes, err := suite.storage.Get(ctx, attachment.Thumbnail.Path)
 	suite.NoError(err)
 	suite.NotEmpty(processedThumbnailBytes)
 
@@ -232,7 +232,7 @@ func (suite *ManagerTestSuite) TestPngAlphaChannelProcessBlocking() {
 	suite.NotNil(dbAttachment)
 
 	// make sure the processed file is in storage
-	processedFullBytes, err := suite.storage.Get(attachment.File.Path)
+	processedFullBytes, err := suite.storage.Get(ctx, attachment.File.Path)
 	suite.NoError(err)
 	suite.NotEmpty(processedFullBytes)
 
@@ -245,7 +245,7 @@ func (suite *ManagerTestSuite) TestPngAlphaChannelProcessBlocking() {
 	suite.Equal(processedFullBytesExpected, processedFullBytes)
 
 	// now do the same for the thumbnail and make sure it's what we expected
-	processedThumbnailBytes, err := suite.storage.Get(attachment.Thumbnail.Path)
+	processedThumbnailBytes, err := suite.storage.Get(ctx, attachment.Thumbnail.Path)
 	suite.NoError(err)
 	suite.NotEmpty(processedThumbnailBytes)
 
@@ -315,7 +315,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithCallback() {
 	suite.NotNil(dbAttachment)
 
 	// make sure the processed file is in storage
-	processedFullBytes, err := suite.storage.Get(attachment.File.Path)
+	processedFullBytes, err := suite.storage.Get(ctx, attachment.File.Path)
 	suite.NoError(err)
 	suite.NotEmpty(processedFullBytes)
 
@@ -328,7 +328,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithCallback() {
 	suite.Equal(processedFullBytesExpected, processedFullBytes)
 
 	// now do the same for the thumbnail and make sure it's what we expected
-	processedThumbnailBytes, err := suite.storage.Get(attachment.Thumbnail.Path)
+	processedThumbnailBytes, err := suite.storage.Get(ctx, attachment.Thumbnail.Path)
 	suite.NoError(err)
 	suite.NotEmpty(processedThumbnailBytes)
 
@@ -394,7 +394,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessAsync() {
 	suite.NotNil(dbAttachment)
 
 	// make sure the processed file is in storage
-	processedFullBytes, err := suite.storage.Get(attachment.File.Path)
+	processedFullBytes, err := suite.storage.Get(ctx, attachment.File.Path)
 	suite.NoError(err)
 	suite.NotEmpty(processedFullBytes)
 
@@ -407,7 +407,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessAsync() {
 	suite.Equal(processedFullBytesExpected, processedFullBytes)
 
 	// now do the same for the thumbnail and make sure it's what we expected
-	processedThumbnailBytes, err := suite.storage.Get(attachment.Thumbnail.Path)
+	processedThumbnailBytes, err := suite.storage.Get(ctx, attachment.Thumbnail.Path)
 	suite.NoError(err)
 	suite.NotEmpty(processedThumbnailBytes)
 
@@ -475,7 +475,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegQueueSpamming() {
 		suite.NotNil(dbAttachment)
 
 		// make sure the processed file is in storage
-		processedFullBytes, err := suite.storage.Get(attachment.File.Path)
+		processedFullBytes, err := suite.storage.Get(ctx, attachment.File.Path)
 		suite.NoError(err)
 		suite.NotEmpty(processedFullBytes)
 
@@ -488,7 +488,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegQueueSpamming() {
 		suite.Equal(processedFullBytesExpected, processedFullBytes)
 
 		// now do the same for the thumbnail and make sure it's what we expected
-		processedThumbnailBytes, err := suite.storage.Get(attachment.Thumbnail.Path)
+		processedThumbnailBytes, err := suite.storage.Get(ctx, attachment.Thumbnail.Path)
 		suite.NoError(err)
 		suite.NotEmpty(processedThumbnailBytes)
 

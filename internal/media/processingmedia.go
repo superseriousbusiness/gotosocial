@@ -138,7 +138,7 @@ func (p *ProcessingMedia) loadThumb(ctx context.Context) error {
 
 		// stream the original file out of storage
 		logrus.Tracef("loadThumb: fetching attachment from storage %s", p.attachment.URL)
-		stored, err := p.storage.GetStream(p.attachment.File.Path)
+		stored, err := p.storage.GetStream(ctx, p.attachment.File.Path)
 		if err != nil {
 			p.err = fmt.Errorf("loadThumb: error fetching file from storage: %s", err)
 			atomic.StoreInt32(&p.thumbState, int32(errored))
@@ -164,7 +164,7 @@ func (p *ProcessingMedia) loadThumb(ctx context.Context) error {
 
 		// put the thumbnail in storage
 		logrus.Tracef("loadThumb: storing new thumbnail %s", p.attachment.URL)
-		if err := p.storage.Put(p.attachment.Thumbnail.Path, thumb.small); err != nil {
+		if err := p.storage.Put(ctx, p.attachment.Thumbnail.Path, thumb.small); err != nil {
 			p.err = fmt.Errorf("loadThumb: error storing thumbnail: %s", err)
 			atomic.StoreInt32(&p.thumbState, int32(errored))
 			return p.err
@@ -203,7 +203,7 @@ func (p *ProcessingMedia) loadFullSize(ctx context.Context) error {
 		var decoded *imageMeta
 
 		// stream the original file out of storage...
-		stored, err := p.storage.GetStream(p.attachment.File.Path)
+		stored, err := p.storage.GetStream(ctx, p.attachment.File.Path)
 		if err != nil {
 			p.err = fmt.Errorf("loadFullSize: error fetching file from storage: %s", err)
 			atomic.StoreInt32(&p.fullSizeState, int32(errored))
@@ -343,7 +343,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	p.attachment.File.FileSize = fileSize
 
 	// store this for now -- other processes can pull it out of storage as they please
-	if err := p.storage.PutStream(p.attachment.File.Path, clean); err != nil {
+	if err := p.storage.PutStream(ctx, p.attachment.File.Path, clean); err != nil {
 		return fmt.Errorf("store: error storing stream: %s", err)
 	}
 	p.attachment.Cached = true

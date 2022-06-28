@@ -113,7 +113,7 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 
 	// if we have the media cached on our server already, we can now simply return it from storage
 	if a.Cached {
-		return p.retrieveFromStorage(storagePath, attachmentContent)
+		return p.retrieveFromStorage(ctx, storagePath, attachmentContent)
 	}
 
 	// if we don't have it cached, then we can assume two things:
@@ -221,7 +221,7 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("error loading recached attachment: %s", err))
 		}
 		// ... so now we can safely return it
-		return p.retrieveFromStorage(storagePath, attachmentContent)
+		return p.retrieveFromStorage(ctx, storagePath, attachmentContent)
 	}
 
 	return attachmentContent, nil
@@ -253,15 +253,15 @@ func (p *processor) getEmojiContent(ctx context.Context, wantedEmojiID string, e
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("media size %s not recognized for emoji", emojiSize))
 	}
 
-	return p.retrieveFromStorage(storagePath, emojiContent)
+	return p.retrieveFromStorage(ctx, storagePath, emojiContent)
 }
 
-func (p *processor) retrieveFromStorage(storagePath string, content *apimodel.Content) (*apimodel.Content, gtserror.WithCode) {
-	if url := p.storage.URL(storagePath); url != nil {
+func (p *processor) retrieveFromStorage(ctx context.Context, storagePath string, content *apimodel.Content) (*apimodel.Content, gtserror.WithCode) {
+	if url := p.storage.URL(ctx, storagePath); url != nil {
 		content.URL = url
 		return content, nil
 	}
-	reader, err := p.storage.GetStream(storagePath)
+	reader, err := p.storage.GetStream(ctx, storagePath)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error retrieving from storage: %s", err))
 	}

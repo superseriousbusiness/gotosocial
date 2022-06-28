@@ -73,7 +73,7 @@ func (m *manager) pruneOneRemote(ctx context.Context, attachment *gtsmodel.Media
 	if attachment.File.Path != "" {
 		// delete the full size attachment from storage
 		logrus.Tracef("pruneOneRemote: deleting %s", attachment.File.Path)
-		if err := m.storage.Delete(attachment.File.Path); err != nil && err != storage.ErrNotFound {
+		if err := m.storage.Delete(ctx, attachment.File.Path); err != nil && err != storage.ErrNotFound {
 			return err
 		}
 		attachment.Cached = false
@@ -82,7 +82,7 @@ func (m *manager) pruneOneRemote(ctx context.Context, attachment *gtsmodel.Media
 	if attachment.Thumbnail.Path != "" {
 		// delete the thumbnail from storage
 		logrus.Tracef("pruneOneRemote: deleting %s", attachment.Thumbnail.Path)
-		if err := m.storage.Delete(attachment.Thumbnail.Path); err != nil && err != storage.ErrNotFound {
+		if err := m.storage.Delete(ctx, attachment.Thumbnail.Path); err != nil && err != storage.ErrNotFound {
 			return err
 		}
 		attachment.Cached = false

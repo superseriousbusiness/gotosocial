@@ -113,7 +113,7 @@ func (p *ProcessingEmoji) loadStatic(ctx context.Context) error {
 	switch processState(staticState) {
 	case received:
 		// stream the original file out of storage...
-		stored, err := p.storage.GetStream(p.emoji.ImagePath)
+		stored, err := p.storage.GetStream(ctx, p.emoji.ImagePath)
 		if err != nil {
 			p.err = fmt.Errorf("loadStatic: error fetching file from storage: %s", err)
 			atomic.StoreInt32(&p.staticState, int32(errored))
@@ -135,7 +135,7 @@ func (p *ProcessingEmoji) loadStatic(ctx context.Context) error {
 		}
 
 		// put the static in storage
-		if err := p.storage.Put(p.emoji.ImageStaticPath, static.small); err != nil {
+		if err := p.storage.Put(ctx, p.emoji.ImageStaticPath, static.small); err != nil {
 			p.err = fmt.Errorf("loadStatic: error storing static: %s", err)
 			atomic.StoreInt32(&p.staticState, int32(errored))
 			return p.err
@@ -211,7 +211,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	multiReader := io.MultiReader(bytes.NewBuffer(firstBytes), reader)
 
 	// store this for now -- other processes can pull it out of storage as they please
-	if err := p.storage.PutStream(p.emoji.ImagePath, multiReader); err != nil {
+	if err := p.storage.PutStream(ctx, p.emoji.ImagePath, multiReader); err != nil {
 		return fmt.Errorf("store: error storing stream: %s", err)
 	}
 

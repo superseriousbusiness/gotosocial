@@ -103,10 +103,10 @@ func (suite *EmojiCreateTestSuite) TestEmojiCreate() {
 	suite.Empty(dbEmoji.CategoryID)
 
 	// emoji should be in storage
-	emojiBytes, err := suite.storage.Get(dbEmoji.ImagePath)
+	emojiBytes, err := suite.storage.Get(ctx, dbEmoji.ImagePath)
 	suite.NoError(err)
 	suite.Len(emojiBytes, dbEmoji.ImageFileSize)
-	emojiStaticBytes, err := suite.storage.Get(dbEmoji.ImageStaticPath)
+	emojiStaticBytes, err := suite.storage.Get(ctx, dbEmoji.ImageStaticPath)
 	suite.NoError(err)
 	suite.Len(emojiStaticBytes, dbEmoji.ImageStaticFileSize)
 }

@@ -70,9 +70,9 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncached() {
 	testAttachment.Cached = false
 	err := suite.db.UpdateByPrimaryKey(ctx, testAttachment)
 	suite.NoError(err)
-	err = suite.storage.Delete(testAttachment.File.Path)
+	err = suite.storage.Delete(ctx, testAttachment.File.Path)
 	suite.NoError(err)
-	err = suite.storage.Delete(testAttachment.Thumbnail.Path)
+	err = suite.storage.Delete(ctx, testAttachment.Thumbnail.Path)
 	suite.NoError(err)
 
 	// now fetch it
@@ -106,7 +106,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncached() {
 	suite.True(dbAttachment.Cached)
 
 	// the file should be back in storage at the same path as before
-	refreshedBytes, err := suite.storage.Get(testAttachment.File.Path)
+	refreshedBytes, err := suite.storage.Get(ctx, testAttachment.File.Path)
 	suite.NoError(err)
 	suite.Equal(suite.testRemoteAttachments[testAttachment.RemoteURL].Data, refreshedBytes)
 }
@@ -119,9 +119,9 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncachedInterrupted() {
 	testAttachment.Cached = false
 	err := suite.db.UpdateByPrimaryKey(ctx, testAttachment)
 	suite.NoError(err)
-	err = suite.storage.Delete(testAttachment.File.Path)
+	err = suite.storage.Delete(ctx, testAttachment.File.Path)
 	suite.NoError(err)
-	err = suite.storage.Delete(testAttachment.Thumbnail.Path)
+	err = suite.storage.Delete(ctx, testAttachment.Thumbnail.Path)
 	suite.NoError(err)
 
 	// now fetch it
@@ -156,7 +156,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncachedInterrupted() {
 	suite.True(dbAttachment.Cached)
 
 	// the file should be back in storage at the same path as before
-	refreshedBytes, err := suite.storage.Get(testAttachment.File.Path)
+	refreshedBytes, err := suite.storage.Get(ctx, testAttachment.File.Path)
 	suite.NoError(err)
 	suite.Equal(suite.testRemoteAttachments[testAttachment.RemoteURL].Data, refreshedBytes)
 }
@@ -166,16 +166,16 @@ func (suite *GetFileTestSuite) TestGetRemoteFileThumbnailUncached() {
 	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
 
 	// fetch the existing thumbnail bytes from storage first
-	thumbnailBytes, err := suite.storage.Get(testAttachment.Thumbnail.Path)
+	thumbnailBytes, err := suite.storage.Get(ctx, testAttachment.Thumbnail.Path)
 	suite.NoError(err)
 
 	// uncache the file from local
 	testAttachment.Cached = false
 	err = suite.db.UpdateByPrimaryKey(ctx, testAttachment)
 	suite.NoError(err)
-	err = suite.storage.Delete(testAttachment.File.Path)
+	err = suite.storage.Delete(ctx, testAttachment.File.Path)
 	suite.NoError(err)
-	err = suite.storage.Delete(testAttachment.Thumbnail.Path)
+	err = suite.storage.Delete(ctx, testAttachment.Thumbnail.Path)
 	suite.NoError(err)
 
 	// now fetch the thumbnail

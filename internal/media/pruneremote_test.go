@@ -68,9 +68,9 @@ func (suite *PruneRemoteTestSuite) TestPruneAndRecache() {
 	suite.Equal(2, totalPruned)
 
 	// media should no longer be stored
-	_, err = suite.storage.Get(testAttachment.File.Path)
+	_, err = suite.storage.Get(ctx, testAttachment.File.Path)
 	suite.ErrorIs(err, storage.ErrNotFound)
-	_, err = suite.storage.Get(testAttachment.Thumbnail.Path)
+	_, err = suite.storage.Get(ctx, testAttachment.Thumbnail.Path)
 	suite.ErrorIs(err, storage.ErrNotFound)
 
 	// now recache the image....
@@ -98,9 +98,9 @@ func (suite *PruneRemoteTestSuite) TestPruneAndRecache() {
 	suite.EqualValues(testAttachment.FileMeta, recachedAttachment.FileMeta)       // and the filemeta should be the same
 
 	// recached files should be back in storage
-	_, err = suite.storage.Get(recachedAttachment.File.Path)
+	_, err = suite.storage.Get(ctx, recachedAttachment.File.Path)
 	suite.NoError(err)
-	_, err = suite.storage.Get(recachedAttachment.Thumbnail.Path)
+	_, err = suite.storage.Get(ctx, recachedAttachment.Thumbnail.Path)
 	suite.NoError(err)
 }
 
@@ -112,7 +112,7 @@ func (suite *PruneRemoteTestSuite) TestPruneOneNonExistent() {
 	media, err := suite.db.GetAttachmentByID(ctx, testAttachment.ID)
 	suite.NoError(err)
 	suite.True(media.Cached)
-	err = suite.storage.Delete(media.File.Path)
+	err = suite.storage.Delete(ctx, media.File.Path)
 	suite.NoError(err)
 
 	// Now attempt to prune remote for item with db entry no file

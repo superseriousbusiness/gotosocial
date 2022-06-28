@@ -19,6 +19,7 @@
 package storage
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -39,12 +40,12 @@ var (
 // Driver implements the functionality to store and retrieve blobs
 // (images,video,audio)
 type Driver interface {
-	Get(key string) ([]byte, error)
-	GetStream(key string) (io.ReadCloser, error)
-	PutStream(key string, r io.Reader) error
-	Put(key string, value []byte) error
-	Delete(key string) error
-	URL(key string) *url.URL
+	Get(ctx context.Context, key string) ([]byte, error)
+	GetStream(ctx context.Context, key string) (io.ReadCloser, error)
+	PutStream(ctx context.Context, key string, r io.Reader) error
+	Put(ctx context.Context, key string, value []byte) error
+	Delete(ctx context.Context, key string) error
+	URL(ctx context.Context, key string) *url.URL
 }
 
 func AutoConfig() (Driver, error) {
