@@ -85,7 +85,7 @@ func (m *FileServer) ServeFile(c *gin.Context) {
 	}
 
 	if content.URL != nil {
-		c.Redirect(http.StatusTemporaryRedirect, content.URL.String())
+		c.Redirect(http.StatusFound, content.URL.String())
 		return
 	}
 
