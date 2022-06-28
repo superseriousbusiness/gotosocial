@@ -215,6 +215,19 @@ func scheduleCleanupJobs(m *manager) error {
 		return fmt.Errorf("error starting media manager meta cleanup job: %s", err)
 	}
 
+	if _, err := c.AddFunc("@midnight", func() {
+		begin := time.Now()
+		pruned, err := m.PruneUnusedLocalAttachments(pruneCtx)
+		if err != nil {
+			logrus.Errorf("media manager: error pruning unused local attachments: %s", err)
+			return
+		}
+		logrus.Infof("media manager: pruned %d unused local attachments in %s", pruned, time.Since(begin))
+	}); err != nil {
+		pruneCancel()
+		return fmt.Errorf("error starting media manager unused local attachments cleanup job: %s", err)
+	}
+
 	// start remote cache cleanup cronjob if configured
 	if mediaRemoteCacheDays := config.GetMediaRemoteCacheDays(); mediaRemoteCacheDays > 0 {
 		if _, err := c.AddFunc("@midnight", func() {
