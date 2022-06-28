@@ -75,11 +75,16 @@ type Manager interface {
 	//
 	// The returned int is the amount of media that was pruned by this function.
 	PruneAllRemote(ctx context.Context, olderThanDays int) (int, error)
-	// PruneAllMeta prunes unused meta media -- currently, this means unused avatars + headers, but can also be extended
-	// to include things like attachments that were uploaded on this server but left unused, etc.
+	// PruneAllMeta prunes unused/out of date headers and avatars cached on this instance.
 	//
 	// The returned int is the amount of media that was pruned by this function.
 	PruneAllMeta(ctx context.Context) (int, error)
+	// PruneUnusedLocalAttachments prunes unused media attachments that were uploaded by
+	// a user on this instance, but never actually attached to a status, or attached but
+	// later detached.
+	//
+	// The returned int is the amount of media that was pruned by this function.
+	PruneUnusedLocalAttachments(ctx context.Context, olderThanDays int) (int, error)
 
 	// Stop stops the underlying worker pool of the manager. It should be called
 	// when closing GoToSocial in order to cleanly finish any in-progress jobs.
