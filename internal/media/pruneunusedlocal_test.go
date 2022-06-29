@@ -34,7 +34,7 @@ func (suite *PruneUnusedLocalTestSuite) TestPruneUnusedLocal() {
 	testAttachment := suite.testAttachments["local_account_1_unattached_1"]
 	suite.True(testAttachment.Cached)
 
-	totalPruned, err := suite.manager.PruneUnusedLocalAttachments(context.Background(), 1)
+	totalPruned, err := suite.manager.PruneUnusedLocalAttachments(context.Background())
 	suite.NoError(err)
 	suite.Equal(1, totalPruned)
 
@@ -43,12 +43,12 @@ func (suite *PruneUnusedLocalTestSuite) TestPruneUnusedLocal() {
 }
 
 func (suite *PruneUnusedLocalTestSuite) TestPruneRemoteTwice() {
-	totalPruned, err := suite.manager.PruneUnusedLocalAttachments(context.Background(), 1)
+	totalPruned, err := suite.manager.PruneUnusedLocalAttachments(context.Background())
 	suite.NoError(err)
 	suite.Equal(1, totalPruned)
 
 	// final prune should prune nothing, since the first prune already happened
-	totalPrunedAgain, err := suite.manager.PruneUnusedLocalAttachments(context.Background(), 1)
+	totalPrunedAgain, err := suite.manager.PruneUnusedLocalAttachments(context.Background())
 	suite.NoError(err)
 	suite.Equal(0, totalPrunedAgain)
 }
@@ -65,7 +65,7 @@ func (suite *PruneUnusedLocalTestSuite) TestPruneOneNonExistent() {
 	suite.NoError(err)
 
 	// Now attempt to prune for item with db entry no file
-	totalPruned, err := suite.manager.PruneUnusedLocalAttachments(ctx, 1)
+	totalPruned, err := suite.manager.PruneUnusedLocalAttachments(ctx)
 	suite.NoError(err)
 	suite.Equal(1, totalPruned)
 }
