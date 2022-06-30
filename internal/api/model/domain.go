@@ -20,17 +20,33 @@ package model
 
 import "mime/multipart"
 
+// Domain represents a remote domain
+//
+// swagger:model domain
+type Domain struct {
+	// The hostname of the domain.
+	// example: example.org
+	Domain string `form:"domain" json:"domain" validate:"required"`
+	// Time at which this domain was suspended. Key will not be present on open domains.
+	// example: 2021-07-30T09:20:25+00:00
+	SuspendedAt string `json:"suspended_at,omitempty"`
+	// Time at which this domain was silenced. Key will not be present on open domains.
+	// example: 2021-07-30T09:20:25+00:00
+	SilencedAt string `json:"silenced_at,omitempty"`
+	// If the domain is blocked, what's the publicly-stated reason for the block.
+	// example: they smell
+	PublicComment string `form:"public_comment" json:"public_comment,omitempty"`
+}
+
 // DomainBlock represents a block on one domain
 //
 // swagger:model domainBlock
 type DomainBlock struct {
+	Domain
 	// The ID of the domain block.
 	// example: 01FBW21XJA09XYX51KV5JVBW0F
 	// readonly: true
 	ID string `json:"id,omitempty"`
-	// The hostname of the blocked domain.
-	// example: example.org
-	Domain string `form:"domain" json:"domain" validation:"required"`
 	// Obfuscate the domain name when serving this domain block publicly.
 	// A useful anti-harassment tool.
 	// example: false
@@ -38,9 +54,6 @@ type DomainBlock struct {
 	// Private comment for this block, visible to our instance admins only.
 	// example: they are poopoo
 	PrivateComment string `json:"private_comment,omitempty"`
-	// Public comment for this block, visible if domain blocks are served publicly.
-	// example: they smell
-	PublicComment string `form:"public_comment" json:"public_comment,omitempty"`
 	// The ID of the subscription that created/caused this domain block.
 	// example: 01FBW25TF5J67JW3HFHZCSD23K
 	SubscriptionID string `json:"subscription_id,omitempty"`

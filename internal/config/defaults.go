@@ -46,6 +46,9 @@ var Defaults = Configuration{
 	WebTemplateBaseDir: "./web/template/",
 	WebAssetBaseDir:    "./web/assets/",
 
+	InstanceExposePeers:     false,
+	InstanceExposeSuspended: false,
+
 	AccountsRegistrationOpen: true,
 	AccountsApprovalRequired: true,
 	AccountsReasonRequired:   true,

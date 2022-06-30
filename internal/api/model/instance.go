@@ -62,6 +62,9 @@ type Instance struct {
 	ApprovalRequired bool `json:"approval_required"`
 	// Invites are enabled on this instance.
 	InvitesEnabled bool `json:"invites_enabled"`
+	// Configuration object containing values about status limits etc.
+	// This key/value will be omitted for remote instances.
+	Configuration *InstanceConfiguration `json:"configuration,omitempty"`
 	// URLs of interest for client applications.
 	URLS *InstanceURLs `json:"urls,omitempty"`
 	// Statistics about the instance: number of posts, accounts, etc.
@@ -77,6 +80,94 @@ type Instance struct {
 	//
 	// example: 5000
 	MaxTootChars uint `json:"max_toot_chars"`
+}
+
+// InstanceConfiguration models instance configuration parameters.
+//
+// swagger:model instanceConfiguration
+type InstanceConfiguration struct {
+	// Instance configuration pertaining to status limits.
+	Statuses *InstanceConfigurationStatuses `json:"statuses"`
+	// Instance configuration pertaining to media attachment types + size limits.
+	MediaAttachments *InstanceConfigurationMediaAttachments `json:"media_attachments"`
+	// Instance configuration pertaining to poll limits.
+	Polls *InstanceConfigurationPolls `json:"polls"`
+}
+
+// InstanceConfigurationStatuses models instance status config parameters.
+//
+// swagger:model instanceConfigurationStatuses
+type InstanceConfigurationStatuses struct {
+	// Maximum allowed length of a post on this instance, in characters.
+	//
+	// example: 5000
+	MaxCharacters int `json:"max_characters"`
+	// Max number of attachments allowed on a status.
+	//
+	// example: 4
+	MaxMediaAttachments int `json:"max_media_attachments"`
+	// Amount of characters that a URL will be compressed to.
+	//
+	// example: 999
+	CharactersReservedPerURL int `json:"characters_reserved_per_url"`
+}
+
+// InstanceConfigurationMediaAttachments models instance media attachment config parameters.
+//
+// swagger:model instanceConfigurationMediaAttachments
+type InstanceConfigurationMediaAttachments struct {
+	// List of mime types that it's possible to upload to this instance.
+	//
+	// example: ["image/jpeg","image/gif"]
+	SupportedMimeTypes []string `json:"supported_mime_types"`
+	// Max allowed image size in bytes
+	//
+	// example: 2097152
+	ImageSizeLimit int `json:"image_size_limit"`
+	// Max allowed image size in pixels as height*width.
+	//
+	// GtS doesn't set a limit on this, but for compatibility
+	// we give Mastodon's 4096x4096px value here.
+	//
+	// example: 16777216
+	ImageMatrixLimit int `json:"image_matrix_limit"`
+	// Max allowed video size in bytes
+	//
+	// example: 10485760
+	VideoSizeLimit int `json:"video_size_limit"`
+	// Max allowed video frame rate.
+	//
+	// example: 60
+	VideoFrameRateLimit int `json:"video_frame_rate_limit"`
+	// Max allowed video size in pixels as height*width.
+	//
+	// GtS doesn't set a limit on this, but for compatibility
+	// we give Mastodon's 4096x4096px value here.
+	//
+	// example: 16777216
+	VideoMatrixLimit int `json:"video_matrix_limit"`
+}
+
+// InstanceConfigurationPolls models instance poll config parameters.
+//
+// swagger:model instanceConfigurationPolls
+type InstanceConfigurationPolls struct {
+	// Number of options permitted in a poll on this instance.
+	//
+	// example: 4
+	MaxOptions int `json:"max_options"`
+	// Number of characters allowed per option in the poll.
+	//
+	// example: 50
+	MaxCharactersPerOption int `json:"max_characters_per_option"`
+	// Minimum expiration time of the poll in seconds.
+	//
+	// example: 300
+	MinExpiration int `json:"min_expiration"`
+	// Maximum expiration time of the poll in seconds.
+	//
+	// example: 2629746
+	MaxExpiration int `json:"max_expiration"`
 }
 
 // InstanceURLs models instance-relevant URLs for client application consumption.

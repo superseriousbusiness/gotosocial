@@ -28,26 +28,27 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (m *manager) PruneAllRemote(ctx context.Context, olderThanDays int) (int, error) {
+func (m *manager) PruneUnusedLocalAttachments(ctx context.Context) (int, error) {
 	var totalPruned int
+	var maxID string
+	var attachments []*gtsmodel.MediaAttachment
+	var err error
 
-	olderThan, err := parseOlderThan(olderThanDays)
+	olderThan, err := parseOlderThan(UnusedLocalAttachmentCacheDays)
 	if err != nil {
-		return totalPruned, fmt.Errorf("PruneAllRemote: error parsing olderThanDays %d: %s", olderThanDays, err)
+		return totalPruned, fmt.Errorf("PruneUnusedLocalAttachments: error parsing olderThanDays %d: %s", UnusedLocalAttachmentCacheDays, err)
 	}
-	logrus.Infof("PruneAllRemote: pruning media older than %s", olderThan)
+	logrus.Infof("PruneUnusedLocalAttachments: pruning unused local attachments older than %s", olderThan)
 
 	// select 20 attachments at a time and prune them
-	for attachments, err := m.db.GetRemoteOlderThan(ctx, olderThan, selectPruneLimit); err == nil && len(attachments) != 0; attachments, err = m.db.GetRemoteOlderThan(ctx, olderThan, selectPruneLimit) {
-
-		// use the age of the oldest attachment (the last one in the slice) as the next 'older than' value
+	for attachments, err = m.db.GetLocalUnattachedOlderThan(ctx, olderThan, maxID, selectPruneLimit); err == nil && len(attachments) != 0; attachments, err = m.db.GetLocalUnattachedOlderThan(ctx, olderThan, maxID, selectPruneLimit) {
+		// use the id of the last attachment in the slice as the next 'maxID' value
 		l := len(attachments)
-		logrus.Tracef("PruneAllRemote: got %d attachments older than %s", l, olderThan)
-		olderThan = attachments[l-1].CreatedAt
+		maxID = attachments[l-1].ID
+		logrus.Tracef("PruneUnusedLocalAttachments: got %d unused local attachments older than %s with maxID < %s", l, olderThan, maxID)
 
-		// prune each attachment
 		for _, attachment := range attachments {
-			if err := m.pruneOneRemote(ctx, attachment); err != nil {
+			if err := m.pruneOneLocal(ctx, attachment); err != nil {
 				return totalPruned, err
 			}
 			totalPruned++
@@ -59,29 +60,27 @@ func (m *manager) PruneAllRemote(ctx context.Context, olderThanDays int) (int, e
 		return totalPruned, err
 	}
 
-	logrus.Infof("PruneAllRemote: finished pruning remote media: pruned %d entries", totalPruned)
+	logrus.Infof("PruneUnusedLocalAttachments: finished pruning: pruned %d entries", totalPruned)
 	return totalPruned, nil
 }
 
-func (m *manager) pruneOneRemote(ctx context.Context, attachment *gtsmodel.MediaAttachment) error {
+func (m *manager) pruneOneLocal(ctx context.Context, attachment *gtsmodel.MediaAttachment) error {
 	if attachment.File.Path != "" {
 		// delete the full size attachment from storage
-		logrus.Tracef("pruneOneRemote: deleting %s", attachment.File.Path)
+		logrus.Tracef("pruneOneLocal: deleting %s", attachment.File.Path)
 		if err := m.storage.Delete(attachment.File.Path); err != nil && err != storage.ErrNotFound {
 			return err
 		}
-		attachment.Cached = false
 	}
 
 	if attachment.Thumbnail.Path != "" {
 		// delete the thumbnail from storage
-		logrus.Tracef("pruneOneRemote: deleting %s", attachment.Thumbnail.Path)
+		logrus.Tracef("pruneOneLocal: deleting %s", attachment.Thumbnail.Path)
 		if err := m.storage.Delete(attachment.Thumbnail.Path); err != nil && err != storage.ErrNotFound {
 			return err
 		}
-		attachment.Cached = false
 	}
 
-	// update the attachment to reflect that we no longer have it cached
-	return m.db.UpdateByPrimaryKey(ctx, attachment)
+	// delete the attachment completely
+	return m.db.DeleteByID(ctx, attachment.ID, attachment)
 }

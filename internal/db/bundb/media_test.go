@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type MediaTestSuite struct {
@@ -49,6 +50,14 @@ func (suite *MediaTestSuite) TestGetAvisAndHeaders() {
 	attachments, err := suite.db.GetAvatarsAndHeaders(ctx, "", 20)
 	suite.NoError(err)
 	suite.Len(attachments, 2)
+}
+
+func (suite *MediaTestSuite) TestGetLocalUnattachedOlderThan() {
+	ctx := context.Background()
+
+	attachments, err := suite.db.GetLocalUnattachedOlderThan(ctx, testrig.TimeMustParse("2090-06-04T13:12:00Z"), "", 10)
+	suite.NoError(err)
+	suite.Len(attachments, 1)
 }
 
 func TestMediaTestSuite(t *testing.T) {
