@@ -39,9 +39,6 @@ codeberg.org/gruf/go-runners
 codeberg.org/gruf/go-store/kv
 codeberg.org/gruf/go-store/storage
 codeberg.org/gruf/go-store/util
-# github.com/ReneKroon/ttlcache v1.7.0
-## explicit; go 1.14
-github.com/ReneKroon/ttlcache
 # github.com/aymerick/douceur v0.2.0
 ## explicit
 github.com/aymerick/douceur/css

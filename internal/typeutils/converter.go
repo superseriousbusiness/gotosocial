@@ -21,11 +21,12 @@ package typeutils
 import (
 	"context"
 	"net/url"
+	"time"
 
+	"codeberg.org/gruf/go-cache/v2"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -194,14 +195,17 @@ type TypeConverter interface {
 }
 
 type converter struct {
-	db      db.DB
-	asCache cache.Cache
+	db        db.DB
+	noteCache cache.Cache[string, vocab.ActivityStreamsNote]
 }
 
 // NewConverter returns a new Converter
 func NewConverter(db db.DB) TypeConverter {
+	noteCache := cache.New[string, vocab.ActivityStreamsNote]()
+	noteCache.SetTTL(time.Minute*5, false)
+	noteCache.Start(time.Second * 10)
 	return &converter{
-		db:      db,
-		asCache: cache.New(),
+		db:        db,
+		noteCache: noteCache,
 	}
 }

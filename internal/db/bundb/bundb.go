@@ -31,7 +31,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ReneKroon/ttlcache"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/sirupsen/logrus"
@@ -46,6 +45,7 @@ import (
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/migrate"
 
+	grufcache "codeberg.org/gruf/go-cache/v2"
 	"modernc.org/sqlite"
 )
 
@@ -157,6 +157,16 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 
 	accounts := &accountDB{conn: conn, cache: cache.NewAccountCache()}
 
+	// Prepare mentions cache
+	mentionCache := grufcache.New[string, *gtsmodel.Mention]()
+	mentionCache.SetTTL(time.Minute*5, false)
+	mentionCache.Start(time.Second * 10)
+
+	// Prepare notifications cache
+	notifCache := grufcache.New[string, *gtsmodel.Notification]()
+	notifCache.SetTTL(time.Minute*5, false)
+	notifCache.Start(time.Second * 10)
+
 	ps := &bunDBService{
 		Account: accounts,
 		Admin: &adminDB{
@@ -179,11 +189,11 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 		},
 		Mention: &mentionDB{
 			conn:  conn,
-			cache: ttlcache.NewCache(),
+			cache: mentionCache,
 		},
 		Notification: &notificationDB{
 			conn:  conn,
-			cache: ttlcache.NewCache(),
+			cache: notifCache,
 		},
 		Relationship: &relationshipDB{
 			conn: conn,
