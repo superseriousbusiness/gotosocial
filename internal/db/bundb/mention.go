@@ -22,6 +22,7 @@ import (
 	"context"
 
 	"codeberg.org/gruf/go-cache/v2"
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/uptrace/bun"
@@ -51,7 +52,9 @@ func (m *mentionDB) getMentionDB(ctx context.Context, id string) (*gtsmodel.Ment
 		return nil, m.conn.ProcessError(err)
 	}
 
-	m.cache.Set(mention.ID, mention)
+	copy := *mention
+	m.cache.Set(mention.ID, &copy)
+
 	return mention, nil
 }
 
@@ -69,7 +72,8 @@ func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.
 		// Attempt fetch from DB
 		mention, err := m.GetMention(ctx, id)
 		if err != nil {
-			return nil, err
+			logrus.Errorf("GetMentions: error getting mention %q: %v", id, err)
+			continue
 		}
 
 		// Append mention

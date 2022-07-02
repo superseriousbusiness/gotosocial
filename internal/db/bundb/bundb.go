@@ -156,6 +156,12 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 	}
 
 	accounts := &accountDB{conn: conn, cache: cache.NewAccountCache()}
+	status := &statusDB{conn: conn, cache: cache.NewStatusCache()}
+	timeline := &timelineDB{conn: conn}
+
+	accounts.status = status
+	status.accounts = accounts
+	timeline.status = status
 
 	// Prepare mentions cache
 	mentionCache := grufcache.New[string, *gtsmodel.Mention]()
@@ -201,15 +207,9 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 		Session: &sessionDB{
 			conn: conn,
 		},
-		Status: &statusDB{
-			conn:     conn,
-			cache:    cache.NewStatusCache(),
-			accounts: accounts,
-		},
-		Timeline: &timelineDB{
-			conn: conn,
-		},
-		conn: conn,
+		Status:   status,
+		Timeline: timeline,
+		conn:     conn,
 	}
 
 	// we can confidently return this useable service now

@@ -21,6 +21,7 @@ package bundb
 import (
 	"container/list"
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -219,21 +220,32 @@ func (s *statusDB) GetStatusChildren(ctx context.Context, status *gtsmodel.Statu
 }
 
 func (s *statusDB) statusChildren(ctx context.Context, status *gtsmodel.Status, foundStatuses *list.List, onlyDirect bool, minID string) {
-	immediateChildren := []*gtsmodel.Status{}
+	childIDs := []string{}
 
 	q := s.conn.
 		NewSelect().
-		Model(&immediateChildren).
+		Table("statuses").
+		Column("id").
 		Where("in_reply_to_id = ?", status.ID)
 	if minID != "" {
-		q = q.Where("status.id > ?", minID)
+		q = q.Where("id > ?", minID)
 	}
 
-	if err := q.Scan(ctx); err != nil {
+	if err := q.Scan(ctx, &childIDs); err != nil {
+		if err != sql.ErrNoRows {
+			logrus.Errorf("statusChildren: error getting children for %q: %v", status.ID, err)
+		}
 		return
 	}
 
-	for _, child := range immediateChildren {
+	for _, id := range childIDs {
+		// Fetch child with ID from database
+		child, err := s.GetStatusByID(ctx, id)
+		if err != nil {
+			logrus.Errorf("statusChildren: error getting child status %q: %v", id, err)
+			continue
+		}
+
 	insertLoop:
 		for e := foundStatuses.Front(); e != nil; e = e.Next() {
 			entry, ok := e.Value.(*gtsmodel.Status)
