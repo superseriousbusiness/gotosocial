@@ -348,11 +348,6 @@ func (c *converter) AccountToASMinimal(ctx context.Context, a *gtsmodel.Account)
 }
 
 func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.ActivityStreamsNote, error) {
-	// first check if we have this note in our asCache already
-	if note, ok := c.noteCache.Get(s.ID); ok {
-		return note, nil
-	}
-
 	// ensure prerequisites here before we get stuck in
 
 	// check if author account is already attached to status and attach it if not
@@ -546,9 +541,6 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 	sensitiveProp := streams.NewActivityStreamsSensitiveProperty()
 	sensitiveProp.AppendXMLSchemaBoolean(s.Sensitive)
 	status.SetActivityStreamsSensitive(sensitiveProp)
-
-	// put the note in our cache in case we need it again soon
-	c.noteCache.Set(s.ID, status)
 
 	return status, nil
 }
