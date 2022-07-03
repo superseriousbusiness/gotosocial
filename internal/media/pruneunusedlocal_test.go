@@ -61,7 +61,7 @@ func (suite *PruneUnusedLocalTestSuite) TestPruneOneNonExistent() {
 	media, err := suite.db.GetAttachmentByID(ctx, testAttachment.ID)
 	suite.NoError(err)
 	suite.True(media.Cached)
-	err = suite.storage.Delete(media.File.Path)
+	err = suite.storage.Delete(ctx, media.File.Path)
 	suite.NoError(err)
 
 	// Now attempt to prune for item with db entry no file
