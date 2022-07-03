@@ -28,13 +28,13 @@ main {
 }
 
 .toot {
-	background: $bg_accent;
+	background: $status_unfocus_bg;
 	box-shadow: $boxshadow;
 	border: $boxshadow_border;
 	position: relative;
 	margin-bottom: $br;
 	border-radius: $br;
-	padding-top: 1.5rem;
+	padding: 1.5rem 0;
 
 	a {
 		position: relative;
@@ -75,7 +75,9 @@ main {
 	}
 	
 	.username {
-		color: $fg_dark;
+		color: $link_fg;
+		line-height: 2rem;
+		margin-top: -0.5rem;
 		justify-self: start;
 		align-self: start;
 	}
@@ -99,6 +101,7 @@ main {
 
 	.text {
 		margin: 0;
+		margin-top: 0.5rem;
 		grid-column: span 2;
 
 		a {
@@ -236,16 +239,17 @@ main {
 	}
 
 	&.expanded {
-		/* background: $bg; */
+		background: $status_focus_bg;
+		padding-bottom: 0;
 
 		.displayname {
 			grid-column: span 2;
 		}
 
 		.text {
+			margin-top: 0;
 			grid-column: span 3;
 			grid-row: span 1;
-			margin-top: 0.3rem;
 		}
 
 		.info {

@@ -36,8 +36,9 @@ $blue: #63b1de; // complementary color to $sloth_orange1
 
 $sloth_gray2_darker3: color-mod($sloth_gray2 lightness(-3%));
 $sloth_gray2_darker5: color-mod($sloth_gray2 lightness(-5%));
-$sloth_gray2_darker10: color-mod($sloth_gray2 lightness(-15%));
-$sloth_gray2_lighter2: color-mod($sloth_gray2 lightness(+2%));
+$sloth_gray2_darker15: color-mod($sloth_gray2 lightness(-15%));
+$sloth_gray2_lighter3: color-mod($sloth_gray2 lightness(+3%));
+$sloth_gray2_lighter5: color-mod($sloth_gray2 lightness(+5%));
 
 $blue_lighter8: color-mod($blue lightness(+4%));
 $lightblue: color-mod($blue lightness(+16%));
@@ -47,7 +48,7 @@ $bg: $sloth_gray2_darker5;
 
 $bg_trans: color-mod($sloth_gray2 alpha(62%));
 
-$bg_accent: $sloth_gray2_lighter2;
+$bg_accent: $sloth_gray2_lighter3;
 $fg_accent: $lightblue;
 
 /* Color variables as used in a specific location */
@@ -58,8 +59,11 @@ $link_fg: $fg_accent;
 
 $button_border: 0.08rem solid color-mod($sloth_orange2 lightness(-15%));
 $button_bg: $blue_lighter8;
-$button_fg: $sloth_gray2_darker10;
+$button_fg: $sloth_gray2_darker15;
 $button_hover_bg: $lightblue;
+
+$status_focus_bg: $sloth_gray2_lighter5;
+$status_unfocus_bg: $sloth_gray2;
 
 $boxshadow: 0 0.4rem 1rem -0.1rem rgba(0,0,0,0.15);
 $boxshadow_border: 0.08rem solid $sloth_gray2_darker5;
