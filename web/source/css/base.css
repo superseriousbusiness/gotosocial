@@ -122,7 +122,7 @@ main {
 
 .button, button {
 	border-radius: 0.2rem;
-	color: $fg;
+	color: $button_fg;
 	background: $button_bg;
 	box-shadow: $boxshadow;
 	border: $button_border;
@@ -164,8 +164,8 @@ section.apps {
 
 		.entry {
 			display: grid;
-			grid-template-columns: 30% 1fr;
-			gap: 0.5rem;
+			grid-template-columns: 25% 1fr;
+			gap: 1.5rem;
 			padding: 0.5rem;
 			background: $bg_accent;
 			border-radius: 0.5rem;
@@ -180,6 +180,10 @@ section.apps {
 			.logo.redraw {
 				fill: $fg;
 				stroke: $fg;
+			}
+
+			a {
+				font-weight: bold;
 			}
 
 			div {

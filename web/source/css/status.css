@@ -82,18 +82,14 @@ main {
 
 	.spoiler {
 		label {
-			background: $button_bg;
-			color: $bg;
-			box-shadow: $boxshadow;
-			border-radius: 0.3rem;
-			padding: 0.2rem 0.4rem;
+			padding: 0.2rem 0.3rem;
 			margin-left: 0.4rem;
 			position: relative;
 			z-index: 2;
 			cursor: pointer;
+			font-size: 1rem;
 		}
 		label:hover {
-			background: $button_hover_bg;
 		}
 	}
 

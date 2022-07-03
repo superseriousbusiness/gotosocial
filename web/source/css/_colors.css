@@ -58,6 +58,7 @@ $link_fg: $fg_accent;
 
 $button_border: 0.08rem solid color-mod($sloth_orange2 lightness(-15%));
 $button_bg: $blue_lighter8;
+$button_fg: $sloth_gray2_darker10;
 $button_hover_bg: $lightblue;
 
 $boxshadow: 0 0.4rem 1rem -0.1rem rgba(0,0,0,0.15);

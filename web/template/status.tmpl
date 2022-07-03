@@ -6,7 +6,7 @@
 		{{if .SpoilerText}}
 		<input class="spoiler" id="hideSpoiler-{{.ID}}" type="checkbox" style="display: none" aria-hidden="true" checked="true" />
 		<div class="spoiler">
-			<span>{{.SpoilerText}}</span><label class="spoiler-label" for="hideSpoiler-{{.ID}}">Toggle visibility</label>
+			<span>{{.SpoilerText}}</span><label class="button spoiler-label" for="hideSpoiler-{{.ID}}">Toggle visibility</label>
 		</div>
 		{{end}}
 		<div class="content">
