@@ -171,4 +171,5 @@ snapshot:
   name_template: "{{ incpatch .Version }}-SNAPSHOT"
 source:
   # https://goreleaser.com/customization/source/
-  enabled: false
+  enabled: true
+  name_template: "{{ .ProjectName }}-{{ .Version }}-source-code"
