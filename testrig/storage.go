@@ -19,25 +19,40 @@
 package testrig
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path"
 
 	"codeberg.org/gruf/go-store/kv"
 	"codeberg.org/gruf/go-store/storage"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
+	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
-// NewTestStorage returns a new in memory storage with the default test config
-func NewTestStorage() *kv.KVStore {
+// NewInMemoryStorage returns a new in memory storage with the default test config
+func NewInMemoryStorage() *gtsstorage.Local {
 	storage, err := kv.OpenStorage(storage.OpenMemory(200, false))
 	if err != nil {
 		panic(err)
 	}
-	return storage
+	return &gtsstorage.Local{KVStore: storage}
+}
+
+func NewS3Storage() gtsstorage.Driver {
+	mc, err := minio.New(os.Getenv("GTS_STORAGE_S3_ENDPOINT"), &minio.Options{
+		Creds:  credentials.NewStaticV4(os.Getenv("GTS_STORAGE_S3_ACCESS_KEY"), os.Getenv("GTS_STORAGE_S3_SECRET_KEY"), ""),
+		Secure: false,
+	})
+	if err != nil {
+		panic(err)
+	}
+	return gtsstorage.NewS3(mc, os.Getenv("GTS_STORAGE_S3_BUCKET"))
 }
 
 // StandardStorageSetup populates the storage with standard test entries from the given directory.
-func StandardStorageSetup(s *kv.KVStore, relativePath string) {
+func StandardStorageSetup(s gtsstorage.Driver, relativePath string) {
 	storedA := newTestStoredAttachments()
 	a := NewTestAttachments()
 	for k, paths := range storedA {
@@ -53,14 +68,14 @@ func StandardStorageSetup(s *kv.KVStore, relativePath string) {
 		if err != nil {
 			panic(err)
 		}
-		if err := s.Put(pathOriginal, bOriginal); err != nil {
+		if err := s.Put(context.TODO(), pathOriginal, bOriginal); err != nil {
 			panic(err)
 		}
 		bSmall, err := os.ReadFile(fmt.Sprintf("%s/%s", relativePath, filenameSmall))
 		if err != nil {
 			panic(err)
 		}
-		if err := s.Put(pathSmall, bSmall); err != nil {
+		if err := s.Put(context.TODO(), pathSmall, bSmall); err != nil {
 			panic(err)
 		}
 	}
@@ -80,35 +95,40 @@ func StandardStorageSetup(s *kv.KVStore, relativePath string) {
 		if err != nil {
 			panic(err)
 		}
-		if err := s.Put(pathOriginal, bOriginal); err != nil {
+		if err := s.Put(context.TODO(), pathOriginal, bOriginal); err != nil {
 			panic(err)
 		}
 		bStatic, err := os.ReadFile(fmt.Sprintf("%s/%s", relativePath, filenameStatic))
 		if err != nil {
 			panic(err)
 		}
-		if err := s.Put(pathStatic, bStatic); err != nil {
+		if err := s.Put(context.TODO(), pathStatic, bStatic); err != nil {
 			panic(err)
 		}
 	}
 }
 
-// StandardStorageTeardown deletes everything in storage so that it's clean for the next test
-func StandardStorageTeardown(s *kv.KVStore) {
+// StandardStorageTeardown deletes everything in storage so that it's clean for
+// the next test
+// nolint:gocritic // complains about the type switch, but it's the cleanest solution
+func StandardStorageTeardown(s gtsstorage.Driver) {
 	defer os.RemoveAll(path.Join(os.TempDir(), "gotosocial"))
 
-	iter, err := s.Iterator(nil)
-	if err != nil {
-		panic(err)
-	}
-	keys := []string{}
-	for iter.Next() {
-		keys = append(keys, iter.Key())
-	}
-	iter.Release()
-	for _, k := range keys {
-		if err := s.Delete(k); err != nil {
+	switch st := s.(type) {
+	case *gtsstorage.Local:
+		iter, err := st.KVStore.Iterator(nil)
+		if err != nil {
 			panic(err)
+		}
+		keys := []string{}
+		for iter.Next() {
+			keys = append(keys, iter.Key())
+		}
+		iter.Release()
+		for _, k := range keys {
+			if err := s.Delete(context.TODO(), k); err != nil {
+				panic(err)
+			}
 		}
 	}
 }

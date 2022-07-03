@@ -84,6 +84,11 @@ func (m *FileServer) ServeFile(c *gin.Context) {
 		return
 	}
 
+	if content.URL != nil {
+		c.Redirect(http.StatusFound, content.URL.String())
+		return
+	}
+
 	defer func() {
 		// if the content is a ReadCloser, close it when we're done
 		if closer, ok := content.Content.(io.ReadCloser); ok {

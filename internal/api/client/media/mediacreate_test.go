@@ -30,7 +30,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"codeberg.org/gruf/go-store/kv"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
@@ -46,6 +45,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -54,7 +54,7 @@ type MediaCreateTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
 	db           db.DB
-	storage      *kv.KVStore
+	storage      *storage.Local
 	mediaManager media.Manager
 	federator    federation.Federator
 	tc           typeutils.TypeConverter
@@ -87,7 +87,7 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
 
 	suite.db = testrig.NewTestDB()
-	suite.storage = testrig.NewTestStorage()
+	suite.storage = testrig.NewInMemoryStorage()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
@@ -138,7 +138,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessful() {
 
 	// see what's in storage *before* the request
 	storageKeysBeforeRequest := []string{}
-	iter, err := suite.storage.Iterator(nil)
+	iter, err := suite.storage.KVStore.Iterator(nil)
 	if err != nil {
 		panic(err)
 	}
@@ -164,7 +164,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessful() {
 
 	// check what's in storage *after* the request
 	storageKeysAfterRequest := []string{}
-	iter, err = suite.storage.Iterator(nil)
+	iter, err = suite.storage.KVStore.Iterator(nil)
 	if err != nil {
 		panic(err)
 	}

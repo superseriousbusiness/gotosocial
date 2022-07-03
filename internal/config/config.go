@@ -82,6 +82,11 @@ type Configuration struct {
 
 	StorageBackend       string `name:"storage-backend" usage:"Storage backend to use for media attachments"`
 	StorageLocalBasePath string `name:"storage-local-base-path" usage:"Full path to an already-created directory where gts should store/retrieve media files. Subfolders will be created within this dir."`
+	StorageS3Endpoint    string `name:"storage-s3-endpoint" usage:"S3 Endpoint URL (e.g 'minio.example.org:9000')"`
+	StorageS3AccessKey   string `name:"storage-s3-access-key" usage:"S3 Access Key"`
+	StorageS3SecretKey   string `name:"storage-s3-secret-key" usage:"S3 Secret Key"`
+	StorageS3UseSSL      bool   `name:"storage-s3-use-ssl" usage:"Use SSL for S3 connections. Only set this to 'false' when testing locally"`
+	StorageS3BucketName  string `name:"storage-s3-bucket" usage:"Place blobs in this bucket"`
 
 	StatusesMaxChars           int `name:"statuses-max-chars" usage:"Max permitted characters for posted statuses"`
 	StatusesCWMaxChars         int `name:"statuses-cw-max-chars" usage:"Max permitted characters for content/spoiler warnings on statuses"`
