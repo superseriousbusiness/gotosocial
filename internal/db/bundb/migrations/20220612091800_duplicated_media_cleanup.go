@@ -59,6 +59,11 @@ func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		l := logrus.WithField("migration", "20220612091800_duplicated_media_cleanup")
 
+		if config.GetStorageBackend() != "local" {
+			// this migration only affects versions which only supported local storage
+			return nil
+		}
+
 		storageBasePath := config.GetStorageLocalBasePath()
 		if storageBasePath == "" {
 			return fmt.Errorf("%s must be set to do storage migration", config.StorageLocalBasePathFlag())

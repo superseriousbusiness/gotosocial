@@ -98,3 +98,29 @@ func (m *mediaDB) GetAvatarsAndHeaders(ctx context.Context, maxID string, limit 
 
 	return attachments, nil
 }
+
+func (m *mediaDB) GetLocalUnattachedOlderThan(ctx context.Context, olderThan time.Time, maxID string, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {
+	attachments := []*gtsmodel.MediaAttachment{}
+
+	q := m.newMediaQ(&attachments).
+		Where("media_attachment.cached = true").
+		Where("media_attachment.avatar = false").
+		Where("media_attachment.header = false").
+		Where("media_attachment.created_at < ?", olderThan).
+		Where("media_attachment.remote_url IS NULL").
+		Where("media_attachment.status_id IS NULL")
+
+	if maxID != "" {
+		q = q.Where("media_attachment.id < ?", maxID)
+	}
+
+	if limit != 0 {
+		q = q.Limit(limit)
+	}
+
+	if err := q.Scan(ctx); err != nil {
+		return nil, m.conn.ProcessError(err)
+	}
+
+	return attachments, nil
+}

@@ -98,6 +98,25 @@ func (i *instanceDB) CountInstanceDomains(ctx context.Context, domain string) (i
 	return count, nil
 }
 
+func (i *instanceDB) GetInstancePeers(ctx context.Context, includeSuspended bool) ([]*gtsmodel.Instance, db.Error) {
+	instances := []*gtsmodel.Instance{}
+
+	q := i.conn.
+		NewSelect().
+		Model(&instances).
+		Where("domain != ?", config.GetHost())
+
+	if !includeSuspended {
+		q = q.Where("? IS NULL", bun.Ident("suspended_at"))
+	}
+
+	if err := q.Scan(ctx); err != nil {
+		return nil, i.conn.ProcessError(err)
+	}
+
+	return instances, nil
+}
+
 func (i *instanceDB) GetInstanceAccounts(ctx context.Context, domain string, maxID string, limit int) ([]*gtsmodel.Account, db.Error) {
 	logrus.Debug("GetAccountsForInstance")
 

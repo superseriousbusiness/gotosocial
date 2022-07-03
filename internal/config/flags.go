@@ -60,6 +60,10 @@ func AddServerFlags(cmd *cobra.Command) {
 		cmd.Flags().String(WebTemplateBaseDirFlag(), cfg.WebTemplateBaseDir, fieldtag("WebTemplateBaseDir", "usage"))
 		cmd.Flags().String(WebAssetBaseDirFlag(), cfg.WebAssetBaseDir, fieldtag("WebAssetBaseDir", "usage"))
 
+		// Instance
+		cmd.Flags().Bool(InstanceExposePeersFlag(), cfg.InstanceExposePeers, fieldtag("InstanceExposePeers", "usage"))
+		cmd.Flags().Bool(InstanceExposeSuspendedFlag(), cfg.InstanceExposeSuspended, fieldtag("InstanceExposeSuspended", "usage"))
+
 		// Accounts
 		cmd.Flags().Bool(AccountsRegistrationOpenFlag(), cfg.AccountsRegistrationOpen, fieldtag("AccountsRegistrationOpen", "usage"))
 		cmd.Flags().Bool(AccountsApprovalRequiredFlag(), cfg.AccountsApprovalRequired, fieldtag("AccountsApprovalRequired", "usage"))

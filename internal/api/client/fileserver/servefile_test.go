@@ -26,7 +26,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"codeberg.org/gruf/go-store/kv"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
@@ -40,6 +39,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -48,7 +48,7 @@ type ServeFileTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
 	db           db.DB
-	storage      *kv.KVStore
+	storage      storage.Driver
 	federator    federation.Federator
 	tc           typeutils.TypeConverter
 	processor    processing.Processor
@@ -81,7 +81,7 @@ func (suite *ServeFileTestSuite) SetupSuite() {
 	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
 
 	suite.db = testrig.NewTestDB()
-	suite.storage = testrig.NewTestStorage()
+	suite.storage = testrig.NewInMemoryStorage()
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
 
@@ -160,7 +160,7 @@ func (suite *ServeFileTestSuite) TestServeOriginalFileSuccessful() {
 	suite.NoError(err)
 	suite.NotNil(b)
 
-	fileInStorage, err := suite.storage.Get(targetAttachment.File.Path)
+	fileInStorage, err := suite.storage.Get(ctx, targetAttachment.File.Path)
 	suite.NoError(err)
 	suite.NotNil(fileInStorage)
 	suite.Equal(b, fileInStorage)
@@ -206,7 +206,7 @@ func (suite *ServeFileTestSuite) TestServeSmallFileSuccessful() {
 	suite.NoError(err)
 	suite.NotNil(b)
 
-	fileInStorage, err := suite.storage.Get(targetAttachment.Thumbnail.Path)
+	fileInStorage, err := suite.storage.Get(ctx, targetAttachment.Thumbnail.Path)
 	suite.NoError(err)
 	suite.NotNil(fileInStorage)
 	suite.Equal(b, fileInStorage)

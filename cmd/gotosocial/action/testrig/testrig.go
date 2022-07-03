@@ -58,6 +58,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/web"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -70,7 +71,12 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	dbService := testrig.NewTestDB()
 	testrig.StandardDBSetup(dbService, nil)
 	router := testrig.NewTestRouter(dbService)
-	storageBackend := testrig.NewTestStorage()
+	var storageBackend storage.Driver
+	if os.Getenv("GTS_STORAGE_BACKEND") == "s3" {
+		storageBackend = testrig.NewS3Storage()
+	} else {
+		storageBackend = testrig.NewInMemoryStorage()
+	}
 	testrig.StandardStorageSetup(storageBackend, "./testrig/media")
 
 	// Create client API and federator worker pools

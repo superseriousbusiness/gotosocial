@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -575,6 +576,16 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 
 	// if the requested instance is *this* instance, we can add some extra information
 	if host := config.GetHost(); i.Domain == host {
+		if ia, err := c.db.GetInstanceAccount(ctx, ""); err == nil {
+			if ia.HeaderMediaAttachment != nil {
+				// take instance account header as instance thumbnail
+				mi.Thumbnail = ia.HeaderMediaAttachment.URL
+			} else {
+				// or just use a default
+				mi.Thumbnail = config.GetProtocol() + "://" + host + "/assets/logo.png"
+			}
+		}
+
 		userCount, err := c.db.CountInstanceUsers(ctx, host)
 		if err == nil {
 			mi.Stats["user_count"] = userCount
@@ -595,16 +606,31 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 		mi.InvitesEnabled = false // TODO
 		mi.MaxTootChars = uint(config.GetStatusesMaxChars())
 		mi.URLS = &model.InstanceURLs{
-			StreamingAPI: fmt.Sprintf("wss://%s", host),
+			StreamingAPI: "wss://" + host,
 		}
 		mi.Version = config.GetSoftwareVersion()
-	}
 
-	// get the instance account if it exists and just skip if it doesn't
-	ia, err := c.db.GetInstanceAccount(ctx, "")
-	if err == nil {
-		if ia.HeaderMediaAttachment != nil {
-			mi.Thumbnail = ia.HeaderMediaAttachment.URL
+		// todo: remove hardcoded values and put them in config somewhere
+		mi.Configuration = &model.InstanceConfiguration{
+			Statuses: &model.InstanceConfigurationStatuses{
+				MaxCharacters:            config.GetStatusesMaxChars(),
+				MaxMediaAttachments:      config.GetStatusesMediaMaxFiles(),
+				CharactersReservedPerURL: 999,
+			},
+			MediaAttachments: &model.InstanceConfigurationMediaAttachments{
+				SupportedMimeTypes:  media.AllSupportedMIMETypes(),
+				ImageSizeLimit:      config.GetMediaImageMaxSize(),
+				ImageMatrixLimit:    16777216, // height*width
+				VideoSizeLimit:      config.GetMediaVideoMaxSize(),
+				VideoFrameRateLimit: 60,
+				VideoMatrixLimit:    16777216, // height*width
+			},
+			Polls: &model.InstanceConfigurationPolls{
+				MaxOptions:             config.GetStatusesPollMaxOptions(),
+				MaxCharactersPerOption: config.GetStatusesPollOptionMaxChars(),
+				MinExpiration:          300,     // seconds
+				MaxExpiration:          2629746, // seconds
+			},
 		}
 	}
 
@@ -701,8 +727,10 @@ func (c *converter) NotificationToAPINotification(ctx context.Context, n *gtsmod
 
 func (c *converter) DomainBlockToAPIDomainBlock(ctx context.Context, b *gtsmodel.DomainBlock, export bool) (*model.DomainBlock, error) {
 	domainBlock := &model.DomainBlock{
-		Domain:        b.Domain,
-		PublicComment: b.PublicComment,
+		Domain: model.Domain{
+			Domain:        b.Domain,
+			PublicComment: b.PublicComment,
+		},
 	}
 
 	// if we're exporting a domain block, return it with minimal information attached

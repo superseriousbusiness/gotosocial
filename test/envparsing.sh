@@ -2,7 +2,7 @@
 
 set -eu
 
-EXPECTED='{"account-domain":"peepee","accounts-approval-required":false,"accounts-reason-required":false,"accounts-registration-open":true,"advanced-cookies-samesite":"strict","application-name":"gts","bind-address":"127.0.0.1","config-path":"./test/test.yaml","db-address":":memory:","db-database":"gotosocial_prod","db-password":"hunter2","db-port":6969,"db-tls-ca-cert":"","db-tls-mode":"disable","db-type":"sqlite","db-user":"sex-haver","email":"","host":"example.com","letsencrypt-cert-dir":"/gotosocial/storage/certs","letsencrypt-email-address":"","letsencrypt-enabled":true,"letsencrypt-port":80,"log-db-queries":true,"log-level":"info","media-description-max-chars":5000,"media-description-min-chars":69,"media-image-max-size":420,"media-remote-cache-days":30,"media-video-max-size":420,"oidc-client-id":"1234","oidc-client-secret":"shhhh its a secret","oidc-enabled":true,"oidc-idp-name":"sex-haver","oidc-issuer":"whoknows","oidc-scopes":["read","write"],"oidc-skip-verification":true,"password":"","path":"","port":6969,"protocol":"http","smtp-from":"queen@terfisland.org","smtp-host":"example.com","smtp-password":"hunter2","smtp-port":4269,"smtp-username":"sex-haver","software-version":"","statuses-cw-max-chars":420,"statuses-max-chars":69,"statuses-media-max-files":1,"statuses-poll-max-options":1,"statuses-poll-option-max-chars":50,"storage-backend":"local","storage-local-base-path":"/root/store","syslog-address":"127.0.0.1:6969","syslog-enabled":true,"syslog-protocol":"udp","trusted-proxies":["127.0.0.1/32","0.0.0.0/0"],"username":"","web-asset-base-dir":"/root","web-template-base-dir":"/root"}'
+EXPECTED='{"account-domain":"peepee","accounts-approval-required":false,"accounts-reason-required":false,"accounts-registration-open":true,"advanced-cookies-samesite":"strict","application-name":"gts","bind-address":"127.0.0.1","config-path":"./test/test.yaml","db-address":":memory:","db-database":"gotosocial_prod","db-password":"hunter2","db-port":6969,"db-tls-ca-cert":"","db-tls-mode":"disable","db-type":"sqlite","db-user":"sex-haver","email":"","host":"example.com","instance-expose-peers":true,"instance-expose-suspended":true,"letsencrypt-cert-dir":"/gotosocial/storage/certs","letsencrypt-email-address":"","letsencrypt-enabled":true,"letsencrypt-port":80,"log-db-queries":true,"log-level":"info","media-description-max-chars":5000,"media-description-min-chars":69,"media-image-max-size":420,"media-remote-cache-days":30,"media-video-max-size":420,"oidc-client-id":"1234","oidc-client-secret":"shhhh its a secret","oidc-enabled":true,"oidc-idp-name":"sex-haver","oidc-issuer":"whoknows","oidc-scopes":["read","write"],"oidc-skip-verification":true,"password":"","path":"","port":6969,"protocol":"http","smtp-from":"queen@terfisland.org","smtp-host":"example.com","smtp-password":"hunter2","smtp-port":4269,"smtp-username":"sex-haver","software-version":"","statuses-cw-max-chars":420,"statuses-max-chars":69,"statuses-media-max-files":1,"statuses-poll-max-options":1,"statuses-poll-option-max-chars":50,"storage-backend":"local","storage-local-base-path":"/root/store","storage-s3-access-key":"minio","storage-s3-bucket":"gts","storage-s3-endpoint":"localhost:9000","storage-s3-secret-key":"miniostorage","storage-s3-use-ssl":false,"syslog-address":"127.0.0.1:6969","syslog-enabled":true,"syslog-protocol":"udp","trusted-proxies":["127.0.0.1/32","0.0.0.0/0"],"username":"","web-asset-base-dir":"/root","web-template-base-dir":"/root"}'
 
 # Set all the environment variables to 
 # ensure that these are parsed without panic
@@ -25,6 +25,8 @@ GTS_TLS_MODE='' \
 GTS_DB_TLS_CA_CERT='' \
 GTS_WEB_TEMPLATE_BASE_DIR='/root' \
 GTS_WEB_ASSET_BASE_DIR='/root' \
+GTS_INSTANCE_EXPOSE_PEERS=true \
+GTS_INSTANCE_EXPOSE_SUSPENDED=true \
 GTS_ACCOUNTS_REGISTRATION_OPEN=true \
 GTS_ACCOUNTS_APPROVAL_REQUIRED=false \
 GTS_ACCOUNTS_REASON_REQUIRED=false \
@@ -35,6 +37,11 @@ GTS_MEDIA_DESCRIPTION_MAX_CHARS=5000 \
 GTS_MEDIA_REMOTE_CACHE_DAYS=30 \
 GTS_STORAGE_BACKEND='local' \
 GTS_STORAGE_LOCAL_BASE_PATH='/root/store' \
+GTS_STORAGE_S3_ACCESS_KEY='minio' \
+GTS_STORAGE_S3_SECRET_KEY='miniostorage' \
+GTS_STORAGE_S3_ENDPOINT='localhost:9000' \
+GTS_STORAGE_S3_USE_SSL='false' \
+GTS_STORAGE_S3_BUCKET='gts' \
 GTS_STATUSES_MAX_CHARS=69 \
 GTS_STATUSES_CW_MAX_CHARS=420 \
 GTS_STATUSES_POLL_MAX_OPTIONS=1 \

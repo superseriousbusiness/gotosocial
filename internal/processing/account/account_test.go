@@ -21,7 +21,6 @@ package account_test
 import (
 	"context"
 
-	"codeberg.org/gruf/go-store/kv"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -33,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -43,7 +43,7 @@ type AccountStandardTestSuite struct {
 	suite.Suite
 	db                  db.DB
 	tc                  typeutils.TypeConverter
-	storage             *kv.KVStore
+	storage             storage.Driver
 	mediaManager        media.Manager
 	oauthServer         oauth.Server
 	fromClientAPIChan   chan messages.FromClientAPI
@@ -91,7 +91,7 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 
 	suite.db = testrig.NewTestDB()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
-	suite.storage = testrig.NewTestStorage()
+	suite.storage = testrig.NewInMemoryStorage()
 	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	suite.fromClientAPIChan = make(chan messages.FromClientAPI, 100)

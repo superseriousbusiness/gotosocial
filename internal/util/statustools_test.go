@@ -83,15 +83,20 @@ func (suite *StatusTestSuite) TestDeriveHashtagsOK() {
 
 #ThisShouldAlsoWork #not_this_though
 
-#111111 thisalsoshouldn'twork#### ##`
+#111111 thisalsoshouldn'twork#### ##
+
+#alimentación, #saúde
+`
 
 	tags := util.DeriveHashtagsFromText(statusText)
-	assert.Len(suite.T(), tags, 5)
+	assert.Len(suite.T(), tags, 7)
 	assert.Equal(suite.T(), "testing123", tags[0])
 	assert.Equal(suite.T(), "also", tags[1])
 	assert.Equal(suite.T(), "thisshouldwork", tags[2])
 	assert.Equal(suite.T(), "ThisShouldAlsoWork", tags[3])
 	assert.Equal(suite.T(), "111111", tags[4])
+	assert.Equal(suite.T(), "alimentación", tags[5])
+	assert.Equal(suite.T(), "saúde", tags[6])
 }
 
 func (suite *StatusTestSuite) TestDeriveEmojiOK() {

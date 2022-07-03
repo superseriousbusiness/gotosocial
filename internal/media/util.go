@@ -21,10 +21,21 @@ package media
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/h2non/filetype"
 	"github.com/sirupsen/logrus"
 )
+
+// AllSupportedMIMETypes just returns all media
+// MIME types supported by this instance.
+func AllSupportedMIMETypes() []string {
+	return []string{
+		mimeImageJpeg,
+		mimeImageGif,
+		mimeImagePng,
+	}
+}
 
 // parseContentType parses the MIME content type from a file, returning it as a string in the form (eg., "image/jpeg").
 // Returns an error if the content type is not something we can process.
@@ -117,4 +128,20 @@ func (l *logrusWrapper) Info(msg string, keysAndValues ...interface{}) {
 // Error logs an error condition.
 func (l *logrusWrapper) Error(err error, msg string, keysAndValues ...interface{}) {
 	logrus.Error("media manager cron logger: ", err, msg, keysAndValues)
+}
+
+func parseOlderThan(olderThanDays int) (time.Time, error) {
+	// convert days into a duration string
+	olderThanHoursString := fmt.Sprintf("%dh", olderThanDays*24)
+
+	// parse the duration string into a duration
+	olderThanHours, err := time.ParseDuration(olderThanHoursString)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	// 'subtract' that from the time now to give our threshold
+	olderThan := time.Now().Add(-olderThanHours)
+
+	return olderThan, nil
 }

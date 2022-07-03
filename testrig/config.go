@@ -56,6 +56,9 @@ var TestDefaults = config.Configuration{
 	WebTemplateBaseDir: "./web/template/",
 	WebAssetBaseDir:    "./web/assets/",
 
+	InstanceExposePeers:     true,
+	InstanceExposeSuspended: true,
+
 	AccountsRegistrationOpen: true,
 	AccountsApprovalRequired: true,
 	AccountsReasonRequired:   true,

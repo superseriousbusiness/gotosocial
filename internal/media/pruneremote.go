@@ -21,7 +21,6 @@ package media
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"codeberg.org/gruf/go-store/storage"
 	"github.com/sirupsen/logrus"
@@ -32,15 +31,10 @@ import (
 func (m *manager) PruneAllRemote(ctx context.Context, olderThanDays int) (int, error) {
 	var totalPruned int
 
-	// convert days into a duration string
-	olderThanHoursString := fmt.Sprintf("%dh", olderThanDays*24)
-	// parse the duration string into a duration
-	olderThanHours, err := time.ParseDuration(olderThanHoursString)
+	olderThan, err := parseOlderThan(olderThanDays)
 	if err != nil {
-		return totalPruned, fmt.Errorf("PruneAllRemote: %d", err)
+		return totalPruned, fmt.Errorf("PruneAllRemote: error parsing olderThanDays %d: %s", olderThanDays, err)
 	}
-	// 'subtract' that from the time now to give our threshold
-	olderThan := time.Now().Add(-olderThanHours)
 	logrus.Infof("PruneAllRemote: pruning media older than %s", olderThan)
 
 	// select 20 attachments at a time and prune them
@@ -73,7 +67,7 @@ func (m *manager) pruneOneRemote(ctx context.Context, attachment *gtsmodel.Media
 	if attachment.File.Path != "" {
 		// delete the full size attachment from storage
 		logrus.Tracef("pruneOneRemote: deleting %s", attachment.File.Path)
-		if err := m.storage.Delete(attachment.File.Path); err != nil && err != storage.ErrNotFound {
+		if err := m.storage.Delete(ctx, attachment.File.Path); err != nil && err != storage.ErrNotFound {
 			return err
 		}
 		attachment.Cached = false
@@ -82,7 +76,7 @@ func (m *manager) pruneOneRemote(ctx context.Context, attachment *gtsmodel.Media
 	if attachment.Thumbnail.Path != "" {
 		// delete the thumbnail from storage
 		logrus.Tracef("pruneOneRemote: deleting %s", attachment.Thumbnail.Path)
-		if err := m.storage.Delete(attachment.Thumbnail.Path); err != nil && err != storage.ErrNotFound {
+		if err := m.storage.Delete(ctx, attachment.Thumbnail.Path); err != nil && err != storage.ErrNotFound {
 			return err
 		}
 		attachment.Cached = false
