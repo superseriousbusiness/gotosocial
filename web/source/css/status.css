@@ -47,6 +47,7 @@ main {
 		padding: 0 1.5rem;
 		display: grid;
 		grid-template-columns: 4rem auto 1fr;
+		grid-template-rows: 1.5rem auto auto;
 		column-gap: 0.5rem;
 	}
 
@@ -68,12 +69,15 @@ main {
 	.displayname {
 		font-weight: bold;
 		font-size: 1.2rem;
+		line-height: 2rem;
+		margin-top: -0.5rem;
 		align-self: start;
 	}
 	
 	.username {
 		color: $fg_dark;
 		justify-self: start;
+		align-self: start;
 	}
 
 	input.spoiler:checked ~ .content {
