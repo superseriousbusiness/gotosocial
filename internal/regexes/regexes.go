@@ -71,8 +71,8 @@ var (
 	// MentionFinder extracts mentions from a piece of text.
 	MentionFinder = regexp.MustCompile(mentionFinder)
 
-	// hashtag regex can be played with here: https://regex101.com/r/bPxeca/1
-	hashtagFinder = fmt.Sprintf(`(?:^|\s)(?:#*)(#[a-zA-Z0-9]{1,%d})(?:#|\b)`, maximumHashtagLength)
+	// hashtag regex can be played with here: https://regex101.com/r/bpyGlj/1
+	hashtagFinder = fmt.Sprintf(`(?:^|\s)(?:#*)(#[\p{L}\p{N}]{1,%d})(?:#|\b)`, maximumHashtagLength)
 	// HashtagFinder finds possible hashtags in a string.
 	// It returns just the string part of the hashtag, not the # symbol.
 	HashtagFinder = regexp.MustCompile(hashtagFinder)
