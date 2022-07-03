@@ -68,7 +68,7 @@ func (m *manager) pruneOneLocal(ctx context.Context, attachment *gtsmodel.MediaA
 	if attachment.File.Path != "" {
 		// delete the full size attachment from storage
 		logrus.Tracef("pruneOneLocal: deleting %s", attachment.File.Path)
-		if err := m.storage.Delete(attachment.File.Path); err != nil && err != storage.ErrNotFound {
+		if err := m.storage.Delete(ctx, attachment.File.Path); err != nil && err != storage.ErrNotFound {
 			return err
 		}
 	}
@@ -76,7 +76,7 @@ func (m *manager) pruneOneLocal(ctx context.Context, attachment *gtsmodel.MediaA
 	if attachment.Thumbnail.Path != "" {
 		// delete the thumbnail from storage
 		logrus.Tracef("pruneOneLocal: deleting %s", attachment.Thumbnail.Path)
-		if err := m.storage.Delete(attachment.Thumbnail.Path); err != nil && err != storage.ErrNotFound {
+		if err := m.storage.Delete(ctx, attachment.Thumbnail.Path); err != nil && err != storage.ErrNotFound {
 			return err
 		}
 	}
