@@ -65,6 +65,7 @@ $button_hover_bg: $lightblue;
 
 $status_focus_bg: $bg_accent;
 $status_unfocus_bg: $sloth_gray2_darker3;
+$status_info_fg: #CBCBD7;
 
 $boxshadow: 0 0.4rem 1rem -0.1rem rgba(0,0,0,0.15);
 $boxshadow_border: 0.08rem solid $sloth_gray2_darker5;

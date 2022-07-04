@@ -170,7 +170,7 @@ main {
 
 	.info {
 		display: none;
-		border-top: 0.1rem solid $bg;
+		border-top: 0.15rem solid $status_unfocus_bg;
 		padding: 0.5rem 1.5rem;
 
 		div {
@@ -182,7 +182,6 @@ main {
 			display: flex;
 		}
 
-		color: #c8c8d5;
 		grid-column: span 3;
 		margin-top: 0.5rem;
 		flex-wrap: wrap;
