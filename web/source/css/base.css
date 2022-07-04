@@ -16,6 +16,18 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+@font-face {
+	font-family: "Noto Sans";
+	font-weight: 400;
+	src: url(../NotoSans-Regular.ttf) format('truetype');
+}
+
+@font-face {
+	font-family: "Noto Sans";
+	font-weight: bold;
+	src: url(../NotoSans-Bold.ttf) format('truetype');
+}
+
 $br: 0.4rem;
 
 html, body {
@@ -23,7 +35,7 @@ html, body {
 	margin: 0;
 	background: $bg;
 	color: $fg;
-	font-family: sans-serif;
+	font-family: "Noto Sans", sans-serif;
 }
 
 body {
