@@ -16,6 +16,12 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+header {
+	a img {
+		height: 5rem;
+	}
+}
+
 main {
 	background: transparent;
 	padding-top: 0;
@@ -23,7 +29,7 @@ main {
 
 .profile {
 	position: relative;
-	background: $bg_darker3;
+	background: $bg_accent;
 	display: grid;
 	grid-template-rows: minmax(6rem, 20%) auto auto;
 	grid-template-columns: 1fr;
@@ -34,6 +40,7 @@ main {
 	border-radius: $br;
 
 	box-shadow: $boxshadow;
+	border: $boxshadow_border;
 
 	.headerimage {
 		height: 100%;
@@ -50,20 +57,31 @@ main {
 	}
 
 	.basic {
+		max-height: 10rem;
 		margin-top: -7rem;
-		padding: 0 1rem;
 
 		display: grid;
-		grid-template-columns: auto 1fr;
-		grid-template-rows: 6.5rem auto;
+		grid-template-columns: 1rem auto 1fr;
+		grid-template-rows: 1fr auto auto;
+
+		grid-template-areas:
+			". avatar ."
+			"filler2 avatar displayname"
+			". avatar username";
+
+		#profile-basic-filler2 {
+			grid-area: filler2;
+			background: $bg_trans;
+			margin-top: 0.3rem;
+		}
 
 		.avatar {
 			box-sizing: border-box;
 			height: 8.5rem;
 			width: 8.5rem;
-			grid-row: 1 / span 2;
+			grid-area: avatar;
 			background: $bg;
-			border: 0.2rem solid $acc2;
+			border: $profile_avatar_border;
 			padding: 0;
 			border-radius: $br;
 			position: relative;
@@ -77,24 +95,33 @@ main {
 			}
 		}
 
-		a {
-			position: relative;
-			z-index: 1;
+		a, div {
 			color: inherit;
 			text-decoration: none;
 			padding: 0.5rem;
 		}
 
 		.displayname {
+			grid-area: displayname;
+			padding-right: 1rem;
 			align-self: end;
 			font-weight: bold;
 			font-size: 2rem;
+			margin-top: 0.3rem;
 			line-height: 2.2rem;
+			background: $bg_trans;
+			word-break: break-all;
+			text-overflow: ellipsis;
+			overflow: hidden;
+			max-height: 6rem;
 		}
 
 		.username {
-			padding-top: 0.25rem;
-			color: $acc1;
+			grid-area: username;
+			padding-top: 0;
+			margin-top: 0.25rem;
+			padding-bottom: 0.25rem;
+			color: $fg_accent;
 			font-weight: bold;
 		}
 	}
@@ -110,7 +137,7 @@ main {
 		}
 
 		.bio {
-			margin: 0;
+			margin: 0.5rem 0;
 
 			a {
 				color: $acc1;
@@ -121,15 +148,14 @@ main {
 }
 
 .accountstats {
-	background: $bg_lighter3;
 	display: flex;
 	flex-wrap: wrap;
-	justify-content: space-between;
-	padding: 0 1.2rem;
+	justify-content: space-around;
 	border-radius: 0 0 $br $br;
+	border-top: 0.1rem solid $bg;
 
 	.entry {
-		padding: 1rem 0;
+		padding: 1rem 1.2rem;
 		text-align: center;
 	}
 }

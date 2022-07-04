@@ -16,15 +16,26 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+@font-face {
+	font-family: "Noto Sans";
+	font-weight: 400;
+	src: url(../NotoSans-Regular.ttf) format('truetype');
+}
+
+@font-face {
+	font-family: "Noto Sans";
+	font-weight: bold;
+	src: url(../NotoSans-Bold.ttf) format('truetype');
+}
+
 $br: 0.4rem;
-$boxshadow: 0 0.4rem 1rem -0.2rem rgba(0,0,0,0.2);
 
 html, body {
 	padding: 0;
 	margin: 0;
-	background: $bg_darker5;
+	background: $bg;
 	color: $fg;
-	font-family: sans-serif;
+	font-family: "Noto Sans", sans-serif;
 }
 
 body {
@@ -39,52 +50,44 @@ body {
 	min-height: 100%;
 	min-width: 100%;
 
-	grid-template-rows: auto 1fr auto;
-}
-
-main {
-	background: $bg;
-	display: grid;
-	padding-top: 2rem;
-	padding-bottom: 2rem;
 	grid-template-columns: 1fr 50% 1fr;
 	grid-template-columns: auto min(92%, 90ch) auto;
 
-	.left {
-		grid-column: 1;
-	}
-
-	.right {
-		grid-column: 3;
-	}
-
-	&.lightgray {
-		background: $bg;
-	}
-
-	& > * {
-		align-self: start;
-		grid-column: 2;
-	}
+	grid-template-rows: auto 1fr auto;
 }
 
-header {
-	background: $bg_darker5;
-	padding: 2rem 0;
-	padding-bottom: 0;
+h1 {
+	margin: 0;
+	line-height: 2.4rem;
+}
+
+a {
+	color: $link_fg;
+}
+
+header, footer {
+	grid-column: 1 / span 3;
+}
+
+.content {
+	grid-column: 2;
+	align-self: start;
+}
+
+header a {
+	margin: 2rem;
+	/* background: $header_bg; */
 	display: flex;
+	flex-direction: column;
 	flex-wrap: wrap;
 
 	img {
-		height: 4rem;
-		padding-left: 2rem;
-		padding-bottom: 2rem;
+		margin-bottom: 1rem;
+		align-self: center;
+		height: 6rem;
 	}
 
 	div {
-		height: 100%;
-		margin: 0 2rem;
-		margin-top: -2rem;
 		flex-grow: 1;
 		align-self: center;
 		display: flex;
@@ -96,20 +99,45 @@ header {
 	}
 }
 
-h1 {
-	/* color: $acc1; */
-	margin: 0;
-	line-height: 2.4rem;
+.excerpt_top {
+	margin-top: -1rem;
+	margin-bottom: 2rem;
+	font-style: italic;
+	font-weight: normal;
+	text-align: center;
+	font-size: 1.2rem;
+
+	.count {
+		font-weight: bold;
+		color: $fg_accent;
+	}
 }
 
-a {
-	color: $acc1;
+main {
+	section {
+		background: $bg_accent;
+		box-shadow: $boxshadow;
+		border: $boxshadow_border;
+		border-radius: $br;
+		padding: 2rem;
+		margin-bottom: 2rem;
+	}
+
+	p:first-child {
+		margin-top: 0;
+	}
+
+	p:last-child {
+		margin-bottom: 0;
+	}
 }
 
 .button, button {
 	border-radius: 0.2rem;
-	background: $acc1;
-	color: $fg;
+	color: $button_fg;
+	background: $button_bg;
+	box-shadow: $boxshadow;
+	border: $button_border;
 	text-decoration: none;
 	font-size: 1.2rem;
 	font-weight: bold;
@@ -118,14 +146,8 @@ a {
 	cursor: pointer;
 
 	&:hover {
-		background: $acc2;
+		background: $button_hover_bg;
 	}
-}
-
-.count {
-	background: $bg_darker5;
-	border-radius: 0.3rem;
-	padding: 0.2rem;
 }
 
 .nounderline {
@@ -154,10 +176,10 @@ section.apps {
 
 		.entry {
 			display: grid;
-			grid-template-columns: 30% 1fr;
-			gap: 0.5rem;
+			grid-template-columns: 25% 1fr;
+			gap: 1.5rem;
 			padding: 0.5rem;
-			background: $bg_darker5;
+			background: $bg_accent;
 			border-radius: 0.5rem;
 
 			.logo {
@@ -170,6 +192,10 @@ section.apps {
 			.logo.redraw {
 				fill: $fg;
 				stroke: $fg;
+			}
+
+			a {
+				font-weight: bold;
 			}
 
 			div {
@@ -199,18 +225,18 @@ section.error {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-  span {
-	font-size: 2em;
-  }
-  pre {
-	border: 1px solid #ff000080;
-	margin-left: 1em;
-	padding: 0 0.7em;
-	border-radius: 0.5em;
-	background-color: #ff000010;
-	font-size: 1.3em;
-	white-space: pre-wrap;
-  }
+	span {
+		font-size: 2em;
+	}
+	pre {
+		border: 1px solid #ff000080;
+		margin-left: 1em;
+		padding: 0 0.7em;
+		border-radius: 0.5em;
+		background-color: #ff000010;
+		font-size: 1.3em;
+		white-space: pre-wrap;
+	}
 }
 
 input, select, textarea {
@@ -224,8 +250,13 @@ footer {
 	align-self: end;
 
 	padding: 2rem;
-	display: grid;
-	grid-template-columns: 1fr 1fr 1fr 1fr;
+	display: flex;
+	justify-content: center;
+
+	div {
+		margin: 0 2rem;
+		padding: 1rem;
+	}
 
 	a {
 		font-weight: bold;
@@ -233,7 +264,7 @@ footer {
 }
 
 @media screen and (orientation: portrait) {
-	main {
+	.page {
 		grid-template-columns: 1fr 92% 1fr;
 	}
 
