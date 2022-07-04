@@ -74,6 +74,5 @@ func (d *domainDB) AreURIsBlocked(ctx context.Context, uris []*url.URL) (bool, d
 	for _, uri := range uris {
 		domains = append(domains, uri.Hostname())
 	}
-
 	return d.AreDomainsBlocked(ctx, domains)
 }

@@ -1,7 +1,7 @@
 package bitutil
 
 import (
-	"codeberg.org/gruf/go-bytes"
+	"codeberg.org/gruf/go-byteutil"
 )
 
 // Flags8 is a type-casted unsigned integer with helper
@@ -173,7 +173,7 @@ func (f Flags8) Unset7() Flags8 {
 // String returns a human readable representation of Flags8.
 func (f Flags8) String() string {
 	var val bool
-	var buf bytes.Buffer
+	var buf byteutil.Buffer
 
 	buf.WriteByte('{')
 
@@ -210,7 +210,7 @@ func (f Flags8) String() string {
 // GoString returns a more verbose human readable representation of Flags8.
 func (f Flags8) GoString() string {
 	var val bool
-	var buf bytes.Buffer
+	var buf byteutil.Buffer
 
 	buf.WriteString("bitutil.Flags8{")
 
@@ -557,7 +557,7 @@ func (f Flags16) Unset15() Flags16 {
 // String returns a human readable representation of Flags16.
 func (f Flags16) String() string {
 	var val bool
-	var buf bytes.Buffer
+	var buf byteutil.Buffer
 
 	buf.WriteByte('{')
 
@@ -618,7 +618,7 @@ func (f Flags16) String() string {
 // GoString returns a more verbose human readable representation of Flags16.
 func (f Flags16) GoString() string {
 	var val bool
-	var buf bytes.Buffer
+	var buf byteutil.Buffer
 
 	buf.WriteString("bitutil.Flags16{")
 
@@ -1277,7 +1277,7 @@ func (f Flags32) Unset31() Flags32 {
 // String returns a human readable representation of Flags32.
 func (f Flags32) String() string {
 	var val bool
-	var buf bytes.Buffer
+	var buf byteutil.Buffer
 
 	buf.WriteByte('{')
 
@@ -1386,7 +1386,7 @@ func (f Flags32) String() string {
 // GoString returns a more verbose human readable representation of Flags32.
 func (f Flags32) GoString() string {
 	var val bool
-	var buf bytes.Buffer
+	var buf byteutil.Buffer
 
 	buf.WriteString("bitutil.Flags32{")
 
@@ -2669,7 +2669,7 @@ func (f Flags64) Unset63() Flags64 {
 // String returns a human readable representation of Flags64.
 func (f Flags64) String() string {
 	var val bool
-	var buf bytes.Buffer
+	var buf byteutil.Buffer
 
 	buf.WriteByte('{')
 
@@ -2874,7 +2874,7 @@ func (f Flags64) String() string {
 // GoString returns a more verbose human readable representation of Flags64.
 func (f Flags64) GoString() string {
 	var val bool
-	var buf bytes.Buffer
+	var buf byteutil.Buffer
 
 	buf.WriteString("bitutil.Flags64{")
 

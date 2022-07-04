@@ -136,11 +136,8 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 		return nil, fmt.Errorf("database type %s not supported for bundb", dbType)
 	}
 
-	// add a hook to log queries and the time they take
-	// only do this for logging where performance isn't 1st concern
-	if logrus.GetLevel() >= logrus.DebugLevel && config.GetLogDbQueries() {
-		conn.DB.AddQueryHook(newDebugQueryHook())
-	}
+	// Add database query hook
+	conn.DB.AddQueryHook(queryHook{})
 
 	// table registration is needed for many-to-many, see:
 	// https://bun.uptrace.dev/orm/many-to-many-relation/
@@ -155,20 +152,24 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 		return nil, fmt.Errorf("db migration error: %s", err)
 	}
 
+	// Create DB structs that require ptrs to each other
 	accounts := &accountDB{conn: conn, cache: cache.NewAccountCache()}
 	status := &statusDB{conn: conn, cache: cache.NewStatusCache()}
 	timeline := &timelineDB{conn: conn}
 
+	// Setup DB cross-referencing
 	accounts.status = status
 	status.accounts = accounts
 	timeline.status = status
 
 	// Prepare mentions cache
+	// TODO: move into internal/cache
 	mentionCache := grufcache.New[string, *gtsmodel.Mention]()
 	mentionCache.SetTTL(time.Minute*5, false)
 	mentionCache.Start(time.Second * 10)
 
 	// Prepare notifications cache
+	// TODO: move into internal/cache
 	notifCache := grufcache.New[string, *gtsmodel.Notification]()
 	notifCache.SetTTL(time.Minute*5, false)
 	notifCache.Start(time.Second * 10)

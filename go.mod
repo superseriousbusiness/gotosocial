@@ -3,13 +3,13 @@ module github.com/superseriousbusiness/gotosocial
 go 1.18
 
 require (
-	codeberg.org/gruf/go-byteutil v1.0.1
-	codeberg.org/gruf/go-cache/v2 v2.0.1
-	codeberg.org/gruf/go-debug v1.1.2
-	codeberg.org/gruf/go-errors/v2 v2.0.1
+	codeberg.org/gruf/go-byteutil v1.0.2
+	codeberg.org/gruf/go-cache/v2 v2.1.1
+	codeberg.org/gruf/go-debug v1.2.0
+	codeberg.org/gruf/go-errors/v2 v2.0.2
 	codeberg.org/gruf/go-mutexes v1.1.2
 	codeberg.org/gruf/go-runners v1.2.1
-	codeberg.org/gruf/go-store v1.3.7
+	codeberg.org/gruf/go-store v1.3.8
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/coreos/go-oidc/v3 v3.1.0
 	github.com/gin-contrib/cors v1.3.1
@@ -53,12 +53,14 @@ require (
 )
 
 require (
-	codeberg.org/gruf/go-bitutil v1.0.0 // indirect
+	codeberg.org/gruf/go-atomics v1.1.0 // indirect
+	codeberg.org/gruf/go-bitutil v1.0.1 // indirect
 	codeberg.org/gruf/go-bytes v1.0.2 // indirect
 	codeberg.org/gruf/go-fastcopy v1.1.1 // indirect
 	codeberg.org/gruf/go-fastpath v1.0.3 // indirect
 	codeberg.org/gruf/go-hashenc v1.0.2 // indirect
 	codeberg.org/gruf/go-pools v1.1.0 // indirect
+	codeberg.org/gruf/go-sched v1.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dsoprea/go-exif/v3 v3.0.0-20210625224831-a6301f85c82b // indirect
