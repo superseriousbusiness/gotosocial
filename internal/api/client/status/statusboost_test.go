@@ -26,7 +26,6 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -72,36 +71,101 @@ func (suite *StatusBoostTestSuite) TestPostBoost() {
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	statusReply := &model.Status{}
 	err = json.Unmarshal(b, statusReply)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
-	assert.False(suite.T(), statusReply.Sensitive)
-	assert.Equal(suite.T(), model.VisibilityPublic, statusReply.Visibility)
+	suite.False(statusReply.Sensitive)
+	suite.Equal(model.VisibilityPublic, statusReply.Visibility)
 
-	assert.Equal(suite.T(), targetStatus.ContentWarning, statusReply.SpoilerText)
-	assert.Equal(suite.T(), targetStatus.Content, statusReply.Content)
-	assert.Equal(suite.T(), "the_mighty_zork", statusReply.Account.Username)
-	assert.Len(suite.T(), statusReply.MediaAttachments, 0)
-	assert.Len(suite.T(), statusReply.Mentions, 0)
-	assert.Len(suite.T(), statusReply.Emojis, 0)
-	assert.Len(suite.T(), statusReply.Tags, 0)
+	suite.Equal(targetStatus.ContentWarning, statusReply.SpoilerText)
+	suite.Equal(targetStatus.Content, statusReply.Content)
+	suite.Equal("the_mighty_zork", statusReply.Account.Username)
+	suite.Len(statusReply.MediaAttachments, 0)
+	suite.Len(statusReply.Mentions, 0)
+	suite.Len(statusReply.Emojis, 0)
+	suite.Len(statusReply.Tags, 0)
 
-	assert.NotNil(suite.T(), statusReply.Application)
-	assert.Equal(suite.T(), "really cool gts application", statusReply.Application.Name)
+	suite.NotNil(statusReply.Application)
+	suite.Equal("really cool gts application", statusReply.Application.Name)
 
-	assert.NotNil(suite.T(), statusReply.Reblog)
-	assert.Equal(suite.T(), 1, statusReply.Reblog.ReblogsCount)
-	assert.Equal(suite.T(), 1, statusReply.Reblog.FavouritesCount)
-	assert.Equal(suite.T(), targetStatus.Content, statusReply.Reblog.Content)
-	assert.Equal(suite.T(), targetStatus.ContentWarning, statusReply.Reblog.SpoilerText)
-	assert.Equal(suite.T(), targetStatus.AccountID, statusReply.Reblog.Account.ID)
-	assert.Len(suite.T(), statusReply.Reblog.MediaAttachments, 1)
-	assert.Len(suite.T(), statusReply.Reblog.Tags, 1)
-	assert.Len(suite.T(), statusReply.Reblog.Emojis, 1)
-	assert.Equal(suite.T(), "superseriousbusiness", statusReply.Reblog.Application.Name)
+	suite.NotNil(statusReply.Reblog)
+	suite.Equal(1, statusReply.Reblog.ReblogsCount)
+	suite.Equal(1, statusReply.Reblog.FavouritesCount)
+	suite.Equal(targetStatus.Content, statusReply.Reblog.Content)
+	suite.Equal(targetStatus.ContentWarning, statusReply.Reblog.SpoilerText)
+	suite.Equal(targetStatus.AccountID, statusReply.Reblog.Account.ID)
+	suite.Len(statusReply.Reblog.MediaAttachments, 1)
+	suite.Len(statusReply.Reblog.Tags, 1)
+	suite.Len(statusReply.Reblog.Emojis, 1)
+	suite.Equal("superseriousbusiness", statusReply.Reblog.Application.Name)
+}
+
+func (suite *StatusBoostTestSuite) TestPostBoostOwnFollowersOnly() {
+	t := suite.testTokens["local_account_1"]
+	oauthToken := oauth.DBTokenToToken(t)
+
+	testStatus := suite.testStatuses["local_account_1_status_5"]
+	testAccount := suite.testAccounts["local_account_1"]
+	testUser := suite.testUsers["local_account_1"]
+
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
+	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
+	ctx.Set(oauth.SessionAuthorizedUser, testUser)
+	ctx.Set(oauth.SessionAuthorizedAccount, testAccount)
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(status.ReblogPath, ":id", testStatus.ID, 1)), nil)
+	ctx.Request.Header.Set("accept", "application/json")
+
+	ctx.Params = gin.Params{
+		gin.Param{
+			Key:   status.IDKey,
+			Value: testStatus.ID,
+		},
+	}
+
+	suite.statusModule.StatusBoostPOSTHandler(ctx)
+
+	// check response
+	suite.EqualValues(http.StatusOK, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+	b, err := ioutil.ReadAll(result.Body)
+	suite.NoError(err)
+
+	responseStatus := &model.Status{}
+	err = json.Unmarshal(b, responseStatus)
+	suite.NoError(err)
+
+	suite.False(responseStatus.Sensitive)
+	suite.Equal(suite.tc.VisToAPIVis(context.Background(), testStatus.Visibility), responseStatus.Visibility)
+
+	suite.Equal(testStatus.ContentWarning, responseStatus.SpoilerText)
+	suite.Equal(testStatus.Content, responseStatus.Content)
+	suite.Equal("the_mighty_zork", responseStatus.Account.Username)
+	suite.Len(responseStatus.MediaAttachments, 0)
+	suite.Len(responseStatus.Mentions, 0)
+	suite.Len(responseStatus.Emojis, 0)
+	suite.Len(responseStatus.Tags, 0)
+
+	suite.NotNil(responseStatus.Application)
+	suite.Equal("really cool gts application", responseStatus.Application.Name)
+
+	suite.NotNil(responseStatus.Reblog)
+	suite.Equal(1, responseStatus.Reblog.ReblogsCount)
+	suite.Equal(0, responseStatus.Reblog.FavouritesCount)
+	suite.Equal(testStatus.Content, responseStatus.Reblog.Content)
+	suite.Equal(testStatus.ContentWarning, responseStatus.Reblog.SpoilerText)
+	suite.Equal(testStatus.AccountID, responseStatus.Reblog.Account.ID)
+	suite.Equal(suite.tc.VisToAPIVis(context.Background(), testStatus.Visibility), responseStatus.Reblog.Visibility)
+	suite.Empty(responseStatus.Reblog.MediaAttachments)
+	suite.Empty(responseStatus.Reblog.Tags)
+	suite.Empty(responseStatus.Reblog.Emojis)
+	suite.Equal("really cool gts application", responseStatus.Reblog.Application.Name)
 }
 
 // try to boost a status that's not boostable
@@ -139,8 +203,8 @@ func (suite *StatusBoostTestSuite) TestPostUnboostable() {
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), `{"error":"Forbidden"}`, string(b))
+	suite.NoError(err)
+	suite.Equal(`{"error":"Forbidden"}`, string(b))
 }
 
 // try to boost a status that's not visible to the user
