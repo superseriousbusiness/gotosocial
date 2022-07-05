@@ -938,6 +938,19 @@ func NewTestEmojis() map[string]*gtsmodel.Emoji {
 
 func NewTestInstances() map[string]*gtsmodel.Instance {
 	return map[string]*gtsmodel.Instance{
+		"localhost:8080": {
+			ID:                     "01G774F5TSHJ2ZSF7XRC5EMT6K",
+			CreatedAt:              TimeMustParse("2020-01-20T13:12:00+02:00"),
+			UpdatedAt:              TimeMustParse("2020-01-20T13:12:00+02:00"),
+			Domain:                 "localhost:8080",
+			URI:                    "http://localhost:8080",
+			Title:                  "GoToSocial Testrig Instance",
+			ShortDescription:       "<p>This is the GoToSocial testrig. It doesn't federate or anything.</p><p>When the testrig is shut down, all data on it will be deleted.</p><p>Don't use this in production!</p>",
+			Description:            "<p>This is the GoToSocial testrig. It doesn't federate or anything.</p><p>When the testrig is shut down, all data on it will be deleted.</p><p>Don't use this in production!</p>",
+			ContactEmail:           "admin@example.org",
+			ContactAccountUsername: "admin",
+			ContactAccountID:       "01F8MH17FWEB39HZJ76B6VXSKF",
+		},
 		"fossbros-anonymous.io": {
 			ID:        "01G5H6YMJQKR86QZKXXQ2S95FZ",
 			CreatedAt: TimeMustParse("2021-09-20T12:40:37+02:00"),
