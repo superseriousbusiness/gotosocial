@@ -19,7 +19,6 @@
 package user_test
 
 import (
-	"codeberg.org/gruf/go-store/kv"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/user"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
@@ -30,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -42,7 +42,7 @@ type UserStandardTestSuite struct {
 	federator    federation.Federator
 	emailSender  email.Sender
 	processor    processing.Processor
-	storage      *kv.KVStore
+	storage      storage.Driver
 
 	testTokens       map[string]*gtsmodel.Token
 	testClients      map[string]*gtsmodel.Client
@@ -66,7 +66,7 @@ func (suite *UserStandardTestSuite) SetupTest() {
 	suite.testUsers = testrig.NewTestUsers()
 	suite.testAccounts = testrig.NewTestAccounts()
 	suite.db = testrig.NewTestDB()
-	suite.storage = testrig.NewTestStorage()
+	suite.storage = testrig.NewInMemoryStorage()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)

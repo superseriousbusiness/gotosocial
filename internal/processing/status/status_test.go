@@ -19,7 +19,6 @@
 package status_test
 
 import (
-	"codeberg.org/gruf/go-store/kv"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -29,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -39,7 +39,7 @@ type StatusStandardTestSuite struct {
 	db            db.DB
 	typeConverter typeutils.TypeConverter
 	tc            transport.Controller
-	storage       *kv.KVStore
+	storage       storage.Driver
 	mediaManager  media.Manager
 	federator     federation.Federator
 	clientWorker  *concurrency.WorkerPool[messages.FromClientAPI]
@@ -81,7 +81,7 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 	suite.typeConverter = testrig.NewTestTypeConverter(suite.db)
 	suite.clientWorker = concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
 	suite.tc = testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../testrig/media"), suite.db, fedWorker)
-	suite.storage = testrig.NewTestStorage()
+	suite.storage = testrig.NewInMemoryStorage()
 	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
 	suite.federator = testrig.NewTestFederator(suite.db, suite.tc, suite.storage, suite.mediaManager, fedWorker)
 	suite.status = status.New(suite.db, suite.typeConverter, suite.clientWorker, processing.GetParseMentionFunc(suite.db, suite.federator))

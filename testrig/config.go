@@ -102,4 +102,6 @@ var TestDefaults = config.Configuration{
 	SyslogAddress:  "localhost:514",
 
 	AdvancedCookiesSamesite: "lax",
+
+	SoftwareVersion: "0.0.0-testrig",
 }

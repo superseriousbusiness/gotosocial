@@ -23,7 +23,6 @@ import (
 	"crypto/rsa"
 	"time"
 
-	"codeberg.org/gruf/go-store/kv"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/webfinger"
@@ -37,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -50,7 +50,7 @@ type WebfingerStandardTestSuite struct {
 	federator      federation.Federator
 	emailSender    email.Sender
 	processor      processing.Processor
-	storage        *kv.KVStore
+	storage        storage.Driver
 	oauthServer    oauth.Server
 	securityModule *security.Module
 
@@ -86,7 +86,7 @@ func (suite *WebfingerStandardTestSuite) SetupTest() {
 
 	suite.db = testrig.NewTestDB()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
-	suite.storage = testrig.NewTestStorage()
+	suite.storage = testrig.NewInMemoryStorage()
 	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
