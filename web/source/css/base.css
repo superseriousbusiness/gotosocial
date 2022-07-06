@@ -93,6 +93,7 @@ header a {
 		display: flex;
 
 		h1 {
+			word-wrap: anywhere;
 			align-self: center;
 			color: $fg;
 		}
