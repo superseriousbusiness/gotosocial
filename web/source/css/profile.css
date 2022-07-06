@@ -126,6 +126,38 @@ main {
 		}
 	}
 
+	@media screen and (max-width: 600px) {
+		.basic {
+			margin-top: 0;
+			max-height: initial;
+
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+
+			#profile-basic-filler2 {
+				display: none;
+			}
+
+			.avatar {
+				height: 22vw;
+				width: 22vw;
+			}
+
+			.displayname {
+				font-size: 5vw;
+				text-align: center;
+				align-self: stretch;
+			}
+
+			.username {
+				word-break: break-all;
+				text-overflow: ellipsis;
+				overflow: hidden;
+			}
+		}
+	}
+
 	.detailed {
 		padding: 0 1rem;
 		display: flex;
