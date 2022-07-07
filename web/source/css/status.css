@@ -67,6 +67,7 @@ main {
 	}
 	
 	.displayname {
+		grid-column: span 2;
 		font-weight: bold;
 		font-size: 1.2rem;
 		line-height: 2rem;
@@ -247,10 +248,6 @@ main {
 	&.expanded {
 		background: $status_focus_bg;
 		padding-bottom: 0;
-
-		.displayname {
-			grid-column: span 2;
-		}
 
 		.text {
 			margin-top: 0;
