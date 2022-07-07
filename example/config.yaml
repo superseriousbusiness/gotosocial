@@ -265,7 +265,7 @@ storage-local-base-path: "/gotosocial/storage"
 
 # String. API endpoint of the S3 compatible service.
 # Only required when running with the s3 storage backend.
-# Examples: ["minio:9000", "s3.nl-ams.scw.cloud", "s3.us-west-002.backblazeb2.com"]
+# Examples: ["minio:9000", "s3.nl-ams.scw.cloud", "s3.us-west-002.backblazeb2.com", "storage.googleapis.com/mycoolbucket"]
 # Default: ""
 storage-s3-endpoint: ""
 
