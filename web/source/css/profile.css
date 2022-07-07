@@ -131,7 +131,7 @@ main {
 
 	@media screen and (max-width: 600px) {
 		.basic {
-			margin-top: 0;
+			margin-top: -7vh;
 			max-height: initial;
 
 			display: flex;
@@ -143,6 +143,8 @@ main {
 			}
 
 			.avatar {
+				align-self: flex-start;
+				margin-left: 1rem;
 				height: 22vw;
 				width: 22vw;
 			}
