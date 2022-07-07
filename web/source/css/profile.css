@@ -123,6 +123,9 @@ main {
 			padding-bottom: 0.25rem;
 			color: $fg_accent;
 			font-weight: bold;
+			word-break: break-all;
+			text-overflow: ellipsis;
+			overflow: hidden;
 		}
 	}
 
@@ -148,12 +151,6 @@ main {
 				font-size: 5vw;
 				text-align: center;
 				align-self: stretch;
-			}
-
-			.username {
-				word-break: break-all;
-				text-overflow: ellipsis;
-				overflow: hidden;
 			}
 		}
 	}
