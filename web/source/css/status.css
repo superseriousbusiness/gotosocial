@@ -61,7 +61,6 @@ main {
 			object-fit: cover;
 			background: $bg;
 			border: 0.1rem solid $acc2;
-			/* box-sizing: border-box; */
 			border-radius: calc($br / 1.5);
 		}
 	}
