@@ -94,9 +94,6 @@ main {
 
 		label {
 			padding: 0.2rem 0.3rem;
-			margin-left: 0.4rem;
-			position: relative;
-			z-index: 2;
 			cursor: pointer;
 			font-size: 1rem;
 		}
@@ -108,6 +105,9 @@ main {
 		margin: 0;
 		margin-top: 0.5rem;
 		grid-column: span 2;
+
+		position: relative;
+		z-index: 2;
 
 		a {
 			color: $link_fg;
