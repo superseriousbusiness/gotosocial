@@ -145,6 +145,8 @@ main {
 	padding: 0.5rem;
 	border: none;
 	cursor: pointer;
+	text-align: center;
+	font-family: 'Noto Sans', sans-serif;
 
 	&:hover {
 		background: $button_hover_bg;
@@ -245,6 +247,7 @@ input, select, textarea {
 	color: $fg;
 	background: $bg;
 	width: 100%;
+	font-family: 'Noto Sans', sans-serif;
 }
 
 footer {
