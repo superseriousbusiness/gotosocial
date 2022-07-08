@@ -25,8 +25,13 @@ import "mime/multipart"
 // swagger:model instance
 type Instance struct {
 	// The URI of the instance.
-	// example: https://example.org
+	// example: https://gts.example.org
 	URI string `json:"uri,omitempty"`
+	// The domain of accounts on this instance.
+	// This will not necessarily be the same as
+	// simply the Host part of the URI.
+	// example: example.org
+	AccountDomain string `json:"account_domain,omitempty"`
 	// The title of the instance.
 	// example: GoToSocial Example Instance
 	Title string `json:"title,omitempty"`

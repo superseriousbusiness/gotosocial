@@ -576,6 +576,8 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 
 	// if the requested instance is *this* instance, we can add some extra information
 	if host := config.GetHost(); i.Domain == host {
+		mi.AccountDomain = config.GetAccountDomain()
+
 		if ia, err := c.db.GetInstanceAccount(ctx, ""); err == nil {
 			if ia.HeaderMediaAttachment != nil {
 				// take instance account header as instance thumbnail
