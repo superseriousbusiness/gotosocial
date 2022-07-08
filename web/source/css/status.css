@@ -92,6 +92,10 @@ main {
 		flex-wrap: wrap;
 		gap: 0.4rem;
 
+		.spoiler-text {
+			word-break: break-word;
+		}
+
 		label {
 			padding: 0.2rem 0.3rem;
 			cursor: pointer;
