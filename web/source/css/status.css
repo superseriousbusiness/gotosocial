@@ -87,6 +87,11 @@ main {
 	}
 
 	.spoiler {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+
 		label {
 			padding: 0.2rem 0.3rem;
 			margin-left: 0.4rem;
