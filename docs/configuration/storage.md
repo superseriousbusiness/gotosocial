@@ -12,7 +12,6 @@
 # String. Type of storage backend to use.
 # Examples: ["local", "s3"]
 # Default: "local" (storage on local disk)
-# NOTE: s3 storage is not yet supported!
 storage-backend: "local"
 
 # String. Directory to use as a base path for storing files.
@@ -25,6 +24,10 @@ storage-local-base-path: "/gotosocial/storage"
 
 # String. API endpoint of the S3 compatible service.
 # Only required when running with the s3 storage backend.
+#
+# If your endpoint contains the bucket name, all files will be put into a
+# subdirectory with the name of `storage-s3-bucket`
+#
 # Examples: ["minio:9000", "s3.nl-ams.scw.cloud", "s3.us-west-002.backblazeb2.com"]
 # Default: ""
 storage-s3-endpoint: ""
@@ -53,3 +56,23 @@ storage-s3-secret-key: ""
 # Default: ""
 storage-s3-bucket: ""
 ```
+
+### Migrating between backends
+
+Currently, migration between backends is freely possible. To do so, you only
+have to move the directories (and their contents) between the different implementations.
+
+One way to do so, is by utilizing the [MinIO
+Client](https://docs.min.io/docs/minio-client-complete-guide.html). The
+migration process might look something like this:
+
+```bash
+# 1. Change the GoToSocial configuration to the new backend (and restart)
+# 2. Register the S3 Backend with the MinIO client
+mc alias set scw https://s3.nl-ams.scw.cloud
+# 3. Mirror the folder structure to the remote bucket
+mc mirror /gotosocial/storage/ scw/example-bucket/
+# 4. Aaaand we're done!
+```
+
+If you want to migrate back, switch around the arguments of the `mc mirror` command.

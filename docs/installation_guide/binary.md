@@ -24,16 +24,16 @@ Now, download the latest GoToSocial release archive corresponding to the operati
 
 (You can find the list of releases [right here](https://github.com/superseriousbusiness/gotosocial/releases), arranged with the newest release at the top.)
 
-For example, to download version 0.3.1 for running on 64-bit Linux:
+For example, to download version 0.3.7 for running on 64-bit Linux:
 
 ```bash
-wget https://github.com/superseriousbusiness/gotosocial/releases/download/v0.3.1/gotosocial_0.3.1_linux_amd64.tar.gz
+wget https://github.com/superseriousbusiness/gotosocial/releases/download/v0.3.7/gotosocial_0.3.7_linux_amd64.tar.gz
 ```
 
 Then extract it:
 
 ```bash
-tar -xzf gotosocial_0.3.1_linux_amd64.tar.gz
+tar -xzf gotosocial_0.3.7_linux_amd64.tar.gz
 ```
 
 This will put the `gotosocial` binary in your current directory, in addition to the `web` folder, which contains assets for the web frontend, and an `example` folder, which contains a sample configuration file.
@@ -136,10 +136,6 @@ After you're done enable the service.
 sudo systemctl enable --now gotosocial.service
 ```
 
-## 8. Install the Admin Control Panel (optional)
+## 8. Reverse proxy (optional)
 
-At some point you'll likely want to do things like change instance information, and block domains you don't want to interact with. See the [admin panel](../admin/admin_panel.md) instructions for this.
-
-## 9. Reverse proxy (optional)
-
-If you want to run other webservers on port 443 or want to add an additional layer of security you might want to use [nginx](./nginx.md) or [Apache httpd](./apache-httpd.md) as reverse proxy
+If you want to run other webservers on port 443 or want to add an additional layer of security you might want to use [nginx](./nginx.md), [Caddy](./caddy.md) or [Apache httpd](./apache-httpd.md) as reverse proxy

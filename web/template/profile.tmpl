@@ -13,7 +13,7 @@
             <div id="profile-basic-filler2"></div>
             <a href="{{.account.Avatar}}" class="avatar"><img src="{{.account.Avatar}}" alt="{{if .account.DisplayName}}{{.account.DisplayName}}{{else}}{{.account.Username}}{{end}}'s avatar"></a>
             <div class="displayname">{{if .account.DisplayName}}{{.account.DisplayName}}{{else}}{{.account.Username}}{{end}}</div>
-            <div class="username">@{{.account.Username}}@{{.instance.AccountDomain}}</div>
+            <div class="username"><span>@{{.account.Username}}</span><span>@{{.instance.AccountDomain}}</span></div>
         </div>
         <div class="detailed">
             <div class="bio">
