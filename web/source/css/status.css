@@ -61,25 +61,32 @@ main {
 			object-fit: cover;
 			background: $bg;
 			border: 0.1rem solid $acc2;
-			/* box-sizing: border-box; */
 			border-radius: calc($br / 1.5);
 		}
 	}
 	
 	.displayname {
+		grid-column: span 2;
 		font-weight: bold;
 		font-size: 1.2rem;
 		line-height: 2rem;
 		margin-top: -0.5rem;
 		align-self: start;
+
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 	
 	.username {
 		color: $link_fg;
 		line-height: 2rem;
 		margin-top: -0.5rem;
-		justify-self: start;
 		align-self: start;
+		
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	input.spoiler:checked ~ .content {
@@ -87,11 +94,17 @@ main {
 	}
 
 	.spoiler {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+
+		.spoiler-text {
+			word-break: break-word;
+		}
+
 		label {
 			padding: 0.2rem 0.3rem;
-			margin-left: 0.4rem;
-			position: relative;
-			z-index: 2;
 			cursor: pointer;
 			font-size: 1rem;
 		}
@@ -103,6 +116,9 @@ main {
 		margin: 0;
 		margin-top: 0.5rem;
 		grid-column: span 2;
+
+		position: relative;
+		z-index: 2;
 
 		a {
 			color: $link_fg;
@@ -240,10 +256,6 @@ main {
 	&.expanded {
 		background: $status_focus_bg;
 		padding-bottom: 0;
-
-		.displayname {
-			grid-column: span 2;
-		}
 
 		.text {
 			margin-top: 0;
