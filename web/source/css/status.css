@@ -61,25 +61,32 @@ main {
 			object-fit: cover;
 			background: $bg;
 			border: 0.1rem solid $acc2;
-			/* box-sizing: border-box; */
 			border-radius: calc($br / 1.5);
 		}
 	}
 	
 	.displayname {
+		grid-column: span 2;
 		font-weight: bold;
 		font-size: 1.2rem;
 		line-height: 2rem;
 		margin-top: -0.5rem;
 		align-self: start;
+
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 	
 	.username {
 		color: $link_fg;
 		line-height: 2rem;
 		margin-top: -0.5rem;
-		justify-self: start;
 		align-self: start;
+		
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	input.spoiler:checked ~ .content {
@@ -249,10 +256,6 @@ main {
 	&.expanded {
 		background: $status_focus_bg;
 		padding-bottom: 0;
-
-		.displayname {
-			grid-column: span 2;
-		}
 
 		.text {
 			margin-top: 0;
