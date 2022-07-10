@@ -24,6 +24,7 @@ import (
 	"log/syslog"
 	"os"
 
+	"codeberg.org/gruf/go-debug"
 	"github.com/sirupsen/logrus"
 	lSyslog "github.com/sirupsen/logrus/hooks/syslog"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -43,8 +44,12 @@ func Initialize() error {
 
 	logrus.SetFormatter(&logrus.TextFormatter{
 		DisableColors: true,
-		DisableQuote:  false,
 		FullTimestamp: true,
+
+		// We disable quoting on debug builds, as this
+		// allows for easier copy and pasting of queries
+		// from debug log output to the database :)
+		DisableQuote: !debug.DEBUG(),
 	})
 
 	// check if a desired log level has been set
