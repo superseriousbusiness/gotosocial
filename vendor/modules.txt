@@ -1,19 +1,22 @@
-# codeberg.org/gruf/go-bitutil v1.0.0
+# codeberg.org/gruf/go-atomics v1.1.0
+## explicit; go 1.16
+codeberg.org/gruf/go-atomics
+# codeberg.org/gruf/go-bitutil v1.0.1
 ## explicit; go 1.16
 codeberg.org/gruf/go-bitutil
 # codeberg.org/gruf/go-bytes v1.0.2
 ## explicit; go 1.14
 codeberg.org/gruf/go-bytes
-# codeberg.org/gruf/go-byteutil v1.0.1
+# codeberg.org/gruf/go-byteutil v1.0.2
 ## explicit; go 1.16
 codeberg.org/gruf/go-byteutil
-# codeberg.org/gruf/go-cache/v2 v2.0.1
+# codeberg.org/gruf/go-cache/v2 v2.1.1
 ## explicit; go 1.18
 codeberg.org/gruf/go-cache/v2
-# codeberg.org/gruf/go-debug v1.1.2
+# codeberg.org/gruf/go-debug v1.2.0
 ## explicit; go 1.16
 codeberg.org/gruf/go-debug
-# codeberg.org/gruf/go-errors/v2 v2.0.1
+# codeberg.org/gruf/go-errors/v2 v2.0.2
 ## explicit; go 1.16
 codeberg.org/gruf/go-errors/v2
 # codeberg.org/gruf/go-fastcopy v1.1.1
@@ -34,14 +37,14 @@ codeberg.org/gruf/go-pools
 # codeberg.org/gruf/go-runners v1.2.1
 ## explicit; go 1.14
 codeberg.org/gruf/go-runners
-# codeberg.org/gruf/go-store v1.3.7
+# codeberg.org/gruf/go-sched v1.0.1
+## explicit; go 1.18
+codeberg.org/gruf/go-sched
+# codeberg.org/gruf/go-store v1.3.8
 ## explicit; go 1.14
 codeberg.org/gruf/go-store/kv
 codeberg.org/gruf/go-store/storage
 codeberg.org/gruf/go-store/util
-# github.com/ReneKroon/ttlcache v1.7.0
-## explicit; go 1.14
-github.com/ReneKroon/ttlcache
 # github.com/aymerick/douceur v0.2.0
 ## explicit
 github.com/aymerick/douceur/css
@@ -601,6 +604,10 @@ golang.org/x/crypto/ripemd160
 golang.org/x/crypto/sha3
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
+# golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
+## explicit; go 1.18
+golang.org/x/exp/constraints
+golang.org/x/exp/slices
 # golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4
 ## explicit; go 1.17
 golang.org/x/mod/semver

@@ -1,11 +1,8 @@
 package cache
 
 import (
-	"context"
 	"sync"
 	"time"
-
-	"codeberg.org/gruf/go-runners"
 )
 
 // TTLCache is the underlying Cache implementation, providing both the base
@@ -16,11 +13,11 @@ type TTLCache[Key comparable, Value any] struct {
 	evict   Hook[Key, Value] // the evict hook is called when an item is evicted from the cache, includes manual delete
 	invalid Hook[Key, Value] // the invalidate hook is called when an item's data in the cache is invalidated
 	ttl     time.Duration    // ttl is the item TTL
-	svc     runners.Service  // svc manages running of the cache eviction routine
+	stop    func()           // stop is the cancel function for the scheduled eviction routine
 	mu      sync.Mutex       // mu protects TTLCache for concurrent access
 }
 
-// Init performs Cache initialization, this MUST be called.
+// Init performs Cache initialization. MUST be called.
 func (c *TTLCache[K, V]) Init() {
 	c.cache = make(map[K](*entry[V]), 100)
 	c.evict = emptyHook[K, V]
@@ -28,67 +25,47 @@ func (c *TTLCache[K, V]) Init() {
 	c.ttl = time.Minute * 5
 }
 
-func (c *TTLCache[K, V]) Start(freq time.Duration) bool {
+func (c *TTLCache[K, V]) Start(freq time.Duration) (ok bool) {
 	// Nothing to start
 	if freq <= 0 {
 		return false
 	}
 
-	// Track state of starting
-	done := make(chan struct{})
-	started := false
+	// Safely start
+	c.mu.Lock()
 
-	go func() {
-		ran := c.svc.Run(func(ctx context.Context) {
-			// Successfully started
-			started = true
-			close(done)
-
-			// start routine
-			c.run(ctx, freq)
-		})
-
-		// failed to start
-		if !ran {
-			close(done)
-		}
-	}()
-
-	<-done
-	return started
-}
-
-func (c *TTLCache[K, V]) Stop() bool {
-	return c.svc.Stop()
-}
-
-func (c *TTLCache[K, V]) run(ctx context.Context, freq time.Duration) {
-	t := time.NewTimer(freq)
-	for {
-		select {
-		// we got stopped
-		case <-ctx.Done():
-			if !t.Stop() {
-				<-t.C
-			}
-			return
-
-		// next tick
-		case <-t.C:
-			c.sweep()
-			t.Reset(freq)
-		}
+	if ok = c.stop == nil; ok {
+		// Not yet running, schedule us
+		c.stop = schedule(c.sweep, freq)
 	}
+
+	// Done with lock
+	c.mu.Unlock()
+
+	return
+}
+
+func (c *TTLCache[K, V]) Stop() (ok bool) {
+	// Safely stop
+	c.mu.Lock()
+
+	if ok = c.stop != nil; ok {
+		// We're running, cancel evicts
+		c.stop()
+		c.stop = nil
+	}
+
+	// Done with lock
+	c.mu.Unlock()
+
+	return
 }
 
 // sweep attempts to evict expired items (with callback!) from cache.
-func (c *TTLCache[K, V]) sweep() {
+func (c *TTLCache[K, V]) sweep(now time.Time) {
 	// Lock and defer unlock (in case of hook panic)
 	c.mu.Lock()
 	defer c.mu.Unlock()
-
-	// Fetch current time for TTL check
-	now := time.Now()
 
 	// Sweep the cache for old items!
 	for key, item := range c.cache {
@@ -116,9 +93,9 @@ func (c *TTLCache[K, V]) SetEvictionCallback(hook Hook[K, V]) {
 	}
 
 	// Safely set evict hook
-	c.Lock()
+	c.mu.Lock()
 	c.evict = hook
-	c.Unlock()
+	c.mu.Unlock()
 }
 
 func (c *TTLCache[K, V]) SetInvalidateCallback(hook Hook[K, V]) {
@@ -128,14 +105,14 @@ func (c *TTLCache[K, V]) SetInvalidateCallback(hook Hook[K, V]) {
 	}
 
 	// Safely set invalidate hook
-	c.Lock()
+	c.mu.Lock()
 	c.invalid = hook
-	c.Unlock()
+	c.mu.Unlock()
 }
 
 func (c *TTLCache[K, V]) SetTTL(ttl time.Duration, update bool) {
 	// Safely update TTL
-	c.Lock()
+	c.mu.Lock()
 	diff := ttl - c.ttl
 	c.ttl = ttl
 
@@ -147,13 +124,13 @@ func (c *TTLCache[K, V]) SetTTL(ttl time.Duration, update bool) {
 	}
 
 	// We're done
-	c.Unlock()
+	c.mu.Unlock()
 }
 
 func (c *TTLCache[K, V]) Get(key K) (V, bool) {
-	c.Lock()
+	c.mu.Lock()
 	value, ok := c.GetUnsafe(key)
-	c.Unlock()
+	c.mu.Unlock()
 	return value, ok
 }
 
@@ -169,9 +146,9 @@ func (c *TTLCache[K, V]) GetUnsafe(key K) (V, bool) {
 }
 
 func (c *TTLCache[K, V]) Put(key K, value V) bool {
-	c.Lock()
+	c.mu.Lock()
 	success := c.PutUnsafe(key, value)
-	c.Unlock()
+	c.mu.Unlock()
 	return success
 }
 
@@ -192,8 +169,8 @@ func (c *TTLCache[K, V]) PutUnsafe(key K, value V) bool {
 }
 
 func (c *TTLCache[K, V]) Set(key K, value V) {
-	c.Lock()
-	defer c.Unlock() // defer in case of hook panic
+	c.mu.Lock()
+	defer c.mu.Unlock() // defer in case of hook panic
 	c.SetUnsafe(key, value)
 }
 
@@ -215,9 +192,9 @@ func (c *TTLCache[K, V]) SetUnsafe(key K, value V) {
 }
 
 func (c *TTLCache[K, V]) CAS(key K, cmp V, swp V) bool {
-	c.Lock()
+	c.mu.Lock()
 	ok := c.CASUnsafe(key, cmp, swp)
-	c.Unlock()
+	c.mu.Unlock()
 	return ok
 }
 
@@ -240,9 +217,9 @@ func (c *TTLCache[K, V]) CASUnsafe(key K, cmp V, swp V) bool {
 }
 
 func (c *TTLCache[K, V]) Swap(key K, swp V) V {
-	c.Lock()
+	c.mu.Lock()
 	old := c.SwapUnsafe(key, swp)
-	c.Unlock()
+	c.mu.Unlock()
 	return old
 }
 
@@ -267,9 +244,9 @@ func (c *TTLCache[K, V]) SwapUnsafe(key K, swp V) V {
 }
 
 func (c *TTLCache[K, V]) Has(key K) bool {
-	c.Lock()
+	c.mu.Lock()
 	ok := c.HasUnsafe(key)
-	c.Unlock()
+	c.mu.Unlock()
 	return ok
 }
 
@@ -280,8 +257,8 @@ func (c *TTLCache[K, V]) HasUnsafe(key K) bool {
 }
 
 func (c *TTLCache[K, V]) Invalidate(key K) bool {
-	c.Lock()
-	defer c.Unlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	return c.InvalidateUnsafe(key)
 }
 
@@ -300,8 +277,8 @@ func (c *TTLCache[K, V]) InvalidateUnsafe(key K) bool {
 }
 
 func (c *TTLCache[K, V]) Clear() {
-	c.Lock()
-	defer c.Unlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	c.ClearUnsafe()
 }
 
@@ -314,9 +291,9 @@ func (c *TTLCache[K, V]) ClearUnsafe() {
 }
 
 func (c *TTLCache[K, V]) Size() int {
-	c.Lock()
+	c.mu.Lock()
 	sz := c.SizeUnsafe()
-	c.Unlock()
+	c.mu.Unlock()
 	return sz
 }
 

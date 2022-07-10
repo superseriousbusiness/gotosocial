@@ -40,9 +40,9 @@ type LookupCache[OGKey, AltKey comparable, Value any] interface {
 }
 
 type lookupTTLCache[OK, AK comparable, V any] struct {
+	TTLCache[OK, V]
 	config LookupCfg[OK, AK, V]
 	lookup LookupMap[OK, AK]
-	TTLCache[OK, V]
 }
 
 // NewLookup returns a new initialized LookupCache.
@@ -55,14 +55,13 @@ func NewLookup[OK, AK comparable, V any](cfg LookupCfg[OK, AK, V]) LookupCache[O
 	case cfg.DeleteLookups == nil:
 		panic("cache: nil delete lookups function")
 	}
-	c := lookupTTLCache[OK, AK, V]{config: cfg}
+	c := &lookupTTLCache[OK, AK, V]{config: cfg}
 	c.TTLCache.Init()
 	c.lookup.lookup = make(map[string]map[AK]OK)
 	c.config.RegisterLookups(&c.lookup)
 	c.SetEvictionCallback(nil)
 	c.SetInvalidateCallback(nil)
-	c.lookup.initd = true
-	return &c
+	return c
 }
 
 func (c *lookupTTLCache[OK, AK, V]) SetEvictionCallback(hook Hook[OK, V]) {
@@ -158,16 +157,13 @@ func (c *lookupTTLCache[OK, AK, V]) InvalidateBy(lookup string, key AK) bool {
 // keys to primary keys under supplied lookup identifiers.
 // This is essentially a wrapper around map[string](map[K1]K2).
 type LookupMap[OK comparable, AK comparable] struct {
-	initd  bool
 	lookup map[string](map[AK]OK)
 }
 
 // RegisterLookup registers a lookup identifier in the LookupMap,
 // note this can only be doing during the cfg.RegisterLookups() hook.
 func (l *LookupMap[OK, AK]) RegisterLookup(id string) {
-	if l.initd {
-		panic("cache: cannot register lookup after initialization")
-	} else if _, ok := l.lookup[id]; ok {
+	if _, ok := l.lookup[id]; ok {
 		panic("cache: lookup mapping already exists for identifier")
 	}
 	l.lookup[id] = make(map[AK]OK, 100)

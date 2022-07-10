@@ -21,7 +21,8 @@ package bundb
 import (
 	"context"
 
-	"github.com/ReneKroon/ttlcache"
+	"codeberg.org/gruf/go-cache/v2"
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/uptrace/bun"
@@ -29,7 +30,7 @@ import (
 
 type mentionDB struct {
 	conn  *DBConn
-	cache *ttlcache.Cache
+	cache cache.Cache[string, *gtsmodel.Mention]
 }
 
 func (m *mentionDB) newMentionQ(i interface{}) *bun.SelectQuery {
@@ -41,40 +42,24 @@ func (m *mentionDB) newMentionQ(i interface{}) *bun.SelectQuery {
 		Relation("TargetAccount")
 }
 
-func (m *mentionDB) getMentionCached(id string) (*gtsmodel.Mention, bool) {
-	v, ok := m.cache.Get(id)
-	if !ok {
-		return nil, false
-	}
-
-	mention, ok := v.(*gtsmodel.Mention)
-	if !ok {
-		panic("mention cache entry was not a mention")
-	}
-
-	return mention, true
-}
-
-func (m *mentionDB) putMentionCache(mention *gtsmodel.Mention) {
-	m.cache.Set(mention.ID, mention)
-}
-
 func (m *mentionDB) getMentionDB(ctx context.Context, id string) (*gtsmodel.Mention, db.Error) {
-	mention := &gtsmodel.Mention{}
+	mention := gtsmodel.Mention{}
 
-	q := m.newMentionQ(mention).
+	q := m.newMentionQ(&mention).
 		Where("mention.id = ?", id)
 
 	if err := q.Scan(ctx); err != nil {
 		return nil, m.conn.ProcessError(err)
 	}
 
-	m.putMentionCache(mention)
-	return mention, nil
+	copy := mention
+	m.cache.Set(mention.ID, &copy)
+
+	return &mention, nil
 }
 
 func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mention, db.Error) {
-	if mention, cached := m.getMentionCached(id); cached {
+	if mention, ok := m.cache.Get(id); ok {
 		return mention, nil
 	}
 	return m.getMentionDB(ctx, id)
@@ -84,16 +69,11 @@ func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.
 	mentions := make([]*gtsmodel.Mention, 0, len(ids))
 
 	for _, id := range ids {
-		// Attempt fetch from cache
-		mention, cached := m.getMentionCached(id)
-		if cached {
-			mentions = append(mentions, mention)
-		}
-
 		// Attempt fetch from DB
-		mention, err := m.getMentionDB(ctx, id)
+		mention, err := m.GetMention(ctx, id)
 		if err != nil {
-			return nil, err
+			logrus.Errorf("GetMentions: error getting mention %q: %v", id, err)
+			continue
 		}
 
 		// Append mention

@@ -18,14 +18,21 @@ import (
 func Is(err error, targets ...error) bool {
 	var flags bitutil.Flags64
 
+	// Flags only has 64 bit slots
 	if len(targets) > 64 {
 		panic("too many targets")
 	}
 
-	// Determine if each of targets are comparable
+	// Check if error is nil so we can catch
+	// the fast-case where a target is nil
+	isNil := (err == nil)
+
 	for i := 0; i < len(targets); {
-		// Drop nil errors
+		// Drop nil targets
 		if targets[i] == nil {
+			if isNil /* match! */ {
+				return true
+			}
 			targets = append(targets[:i], targets[i+1:]...)
 			continue
 		}

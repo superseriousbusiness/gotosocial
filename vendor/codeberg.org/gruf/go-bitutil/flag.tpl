@@ -3,7 +3,7 @@ package bitutil
 import (
     "strings"
 
-    "codeberg.org/gruf/go-bytes"
+    "codeberg.org/gruf/go-byteutil"
 )
 
 {{ range $idx, $size := . }}
@@ -55,7 +55,7 @@ func (f Flags{{ $size.Size }}) Unset{{ $idx }}() Flags{{ $size.Size }} {
 // String returns a human readable representation of Flags{{ $size.Size }}.
 func (f Flags{{ $size.Size }}) String() string {
     var val bool
-    var buf bytes.Buffer
+    var buf byteutil.Buffer
 
     buf.WriteByte('{')
     {{ range $idx := .Bits }}
@@ -71,7 +71,7 @@ func (f Flags{{ $size.Size }}) String() string {
 // GoString returns a more verbose human readable representation of Flags{{ $size.Size }}.
 func (f Flags{{ $size.Size }})GoString() string {
     var val bool
-    var buf bytes.Buffer
+    var buf byteutil.Buffer
 
     buf.WriteString("bitutil.Flags{{ $size.Size }}{")
     {{ range $idx := .Bits }}
