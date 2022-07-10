@@ -25,19 +25,16 @@ main {
 	display: flex;
 	flex-direction: column;
 	border-radius: $br;
-	background: $bg_darker5;
-	box-shadow: $boxshadow;
 }
 
 .toot {
+	background: $status_unfocus_bg;
+	box-shadow: $boxshadow;
+	border: $boxshadow_border;
 	position: relative;
-	background: $bg_darker3;
-	padding: 1.5rem;
-	display: grid;
-	grid-template-columns: 4rem auto 1fr;
-	column-gap: 0.5rem;
 	margin-bottom: $br;
 	border-radius: $br;
+	padding: 1.5rem 0;
 
 	a {
 		position: relative;
@@ -46,30 +43,50 @@ main {
 		text-decoration: none;
 	}
 
+	.contentgrid {
+		padding: 0 1.5rem;
+		display: grid;
+		grid-template-columns: 4rem auto 1fr;
+		grid-template-rows: 1.5rem auto auto;
+		column-gap: 0.5rem;
+	}
+
 	.avatar {
 		grid-row: span 2;
 		aspect-ratio: 1/1;
-
+	
 		img {
 			height: 100%;
 			width: 100%;
 			object-fit: cover;
 			background: $bg;
 			border: 0.1rem solid $acc2;
-			/* box-sizing: border-box; */
 			border-radius: calc($br / 1.5);
 		}
 	}
-
+	
 	.displayname {
+		grid-column: span 2;
 		font-weight: bold;
 		font-size: 1.2rem;
+		line-height: 2rem;
+		margin-top: -0.5rem;
 		align-self: start;
-	}
 
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	
 	.username {
-		color: $fg_dark;
-		justify-self: start;
+		color: $link_fg;
+		line-height: 2rem;
+		margin-top: -0.5rem;
+		align-self: start;
+		
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	input.spoiler:checked ~ .content {
@@ -77,26 +94,34 @@ main {
 	}
 
 	.spoiler {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+
+		.spoiler-text {
+			word-break: break-word;
+		}
+
 		label {
-			background: $acc1;
-			border-radius: 0.3rem;
-			padding: 0.3rem;
-			margin-left: 0.4rem;
-			position: relative;
-			z-index: 2;
+			padding: 0.2rem 0.3rem;
 			cursor: pointer;
+			font-size: 1rem;
 		}
 		label:hover {
-			background: $acc2;
 		}
 	}
 
 	.text {
 		margin: 0;
+		margin-top: 0.5rem;
 		grid-column: span 2;
 
+		position: relative;
+		z-index: 2;
+
 		a {
-			color: $acc1;
+			color: $link_fg;
 			text-decoration: underline;
 		}
 	}
@@ -161,6 +186,8 @@ main {
 
 	.info {
 		display: none;
+		border-top: 0.15rem solid $status_unfocus_bg;
+		padding: 0.5rem 1.5rem;
 
 		div {
 			position: relative;
@@ -171,7 +198,6 @@ main {
 			display: flex;
 		}
 
-		color: #b0b0b5;
 		grid-column: span 3;
 		margin-top: 0.5rem;
 		flex-wrap: wrap;
@@ -216,28 +242,25 @@ main {
 
 	&:first-child {
 		/* top left, top right */
-		border-radius: $br $br 0 0;
+		border-top-left-radius: $br;
+		border-top-right-radius: $br;
 	}
 
 	&:last-child {
 		/* bottom left, bottom right */
-		border-radius: 0 0 $br $br;
-		padding-bottom: 1.5rem;
+		border-bottom-left-radius: $br;
+		border-bottom-right-radius: $br;
 		margin-bottom: 0;
 	}
 
 	&.expanded {
-		background: $bg;
-		padding-bottom: 1.5rem;
-
-		.displayname {
-			grid-column: span 2;
-		}
+		background: $status_focus_bg;
+		padding-bottom: 0;
 
 		.text {
+			margin-top: 0;
 			grid-column: span 3;
 			grid-row: span 1;
-			margin-top: 0.3rem;
 		}
 
 		.info {

@@ -802,19 +802,23 @@ func (c *converter) BoostToAS(ctx context.Context, boostWrapperStatus *gtsmodel.
 	announce.SetActivityStreamsTo(toProp)
 
 	// set the cc
-	boostedURI, err := url.Parse(boostedAccount.URI)
+	ccProp := streams.NewActivityStreamsCcProperty()
+	boostedAccountURI, err := url.Parse(boostedAccount.URI)
 	if err != nil {
 		return nil, fmt.Errorf("BoostToAS: error parsing uri %s: %s", boostedAccount.URI, err)
 	}
+	ccProp.AppendIRI(boostedAccountURI)
 
-	publicURI, err := url.Parse(pub.PublicActivityPubIRI)
-	if err != nil {
-		return nil, fmt.Errorf("BoostToAS: error parsing uri %s: %s", pub.PublicActivityPubIRI, err)
+	// maybe CC it to public depending on the boosted status visibility
+	switch boostWrapperStatus.BoostOf.Visibility {
+	case gtsmodel.VisibilityPublic, gtsmodel.VisibilityUnlocked:
+		publicURI, err := url.Parse(pub.PublicActivityPubIRI)
+		if err != nil {
+			return nil, fmt.Errorf("BoostToAS: error parsing uri %s: %s", pub.PublicActivityPubIRI, err)
+		}
+		ccProp.AppendIRI(publicURI)
 	}
 
-	ccProp := streams.NewActivityStreamsCcProperty()
-	ccProp.AppendIRI(boostedURI)
-	ccProp.AppendIRI(publicURI)
 	announce.SetActivityStreamsCc(ccProp)
 
 	return announce, nil

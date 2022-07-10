@@ -21,15 +21,53 @@
    postcss-custom-prop-vars will transpile these to css --variables
 */
 
-$bg: #525c66;
-$fg: #fafaff;
-$fg_dark: #b0b0b5;
+/* Color definitions */
 
-$bg_darker3: color-mod($bg lightness(-3%));
-$bg_darker5: color-mod($bg lightness(-5%));
+$near_white: #fafaff;
 
-$bg_lighter3: color-mod($bg lightness(+3%));
+$sloth_gray1: #b0b0b5;
+$sloth_gray2: #4d4e56;
 
-$acc1: #de8957; // sloth light orange
-$acc2: #c76d33; // sloth dark orange
-$blue: #5897df;
+$sloth_orange1: #e78e5a;
+$sloth_orange2: #D87841;
+$blue: #63b1de; // complementary color to $sloth_orange1
+
+/* derivative colors */
+
+$sloth_gray2_darker3: color-mod($sloth_gray2 lightness(-3%));
+$sloth_gray2_darker5: color-mod($sloth_gray2 lightness(-5%));
+$sloth_gray2_darker7: color-mod($sloth_gray2 lightness(-7%));
+$sloth_gray2_darker15: color-mod($sloth_gray2 lightness(-15%));
+$sloth_gray2_lighter3: color-mod($sloth_gray2 lightness(+3%));
+$sloth_gray2_lighter5: color-mod($sloth_gray2 lightness(+5%));
+
+$blue_lighter8: color-mod($blue lightness(+4%));
+$lightblue: color-mod($blue lightness(+16%));
+
+$fg: $near_white;
+$bg: $sloth_gray2_darker7;
+
+$bg_trans: color-mod($sloth_gray2 alpha(62%));
+
+$bg_accent: $sloth_gray2_lighter3;
+$fg_accent: $lightblue;
+
+/* Color variables as used in a specific location */
+
+$footer_bg: $bg_accent;
+
+$link_fg: $fg_accent;
+
+$button_border: 0.08rem solid color-mod($sloth_orange2 lightness(-15%));
+$button_bg: $blue_lighter8;
+$button_fg: $sloth_gray2_darker15;
+$button_hover_bg: $lightblue;
+
+$status_focus_bg: $bg_accent;
+$status_unfocus_bg: $sloth_gray2_darker3;
+$status_info_fg: #CBCBD7;
+
+$boxshadow: 0 0.4rem 1rem -0.1rem rgba(0,0,0,0.15);
+$boxshadow_border: 0.08rem solid $sloth_gray2_darker5;
+
+$profile_avatar_border: 0.2rem solid $sloth_orange2;

@@ -46,6 +46,9 @@ var Defaults = Configuration{
 	WebTemplateBaseDir: "./web/template/",
 	WebAssetBaseDir:    "./web/assets/",
 
+	InstanceExposePeers:     false,
+	InstanceExposeSuspended: false,
+
 	AccountsRegistrationOpen: true,
 	AccountsApprovalRequired: true,
 	AccountsReasonRequired:   true,
@@ -58,6 +61,7 @@ var Defaults = Configuration{
 
 	StorageBackend:       "local",
 	StorageLocalBasePath: "/gotosocial/storage",
+	StorageS3UseSSL:      true,
 
 	StatusesMaxChars:           5000,
 	StatusesCWMaxChars:         100,

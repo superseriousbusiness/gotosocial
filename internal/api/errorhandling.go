@@ -22,6 +22,7 @@ import (
 	"context"
 	"net/http"
 
+	"codeberg.org/gruf/go-errors/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -107,7 +108,14 @@ func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet fun
 	// we should still try to return a basic code
 	defer func() {
 		if p := recover(); p != nil {
-			l.Warnf("recovered from panic: %s", p)
+			// Fetch stacktrace up to this point
+			callers := errors.GetCallers(3, 10)
+
+			// Log this panic to the standard log
+			l = l.WithField("stacktrace", callers)
+			l.Errorf("recovered from panic: %v", p)
+
+			// Respond with determined error code
 			c.JSON(statusCode, gin.H{"error": errWithCode.Safe()})
 		}
 	}()

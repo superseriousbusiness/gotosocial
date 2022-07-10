@@ -784,6 +784,35 @@ definitions:
     type: object
     x-go-name: Card
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  domain:
+    description: Domain represents a remote domain
+    properties:
+      domain:
+        description: The hostname of the domain.
+        example: example.org
+        type: string
+        x-go-name: Domain
+      public_comment:
+        description: If the domain is blocked, what's the publicly-stated reason for
+          the block.
+        example: they smell
+        type: string
+        x-go-name: PublicComment
+      silenced_at:
+        description: Time at which this domain was silenced. Key will not be present
+          on open domains.
+        example: "2021-07-30T09:20:25+00:00"
+        type: string
+        x-go-name: SilencedAt
+      suspended_at:
+        description: Time at which this domain was suspended. Key will not be present
+          on open domains.
+        example: "2021-07-30T09:20:25+00:00"
+        type: string
+        x-go-name: SuspendedAt
+    type: object
+    x-go-name: Domain
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   domainBlock:
     description: DomainBlock represents a block on one domain
     properties:
@@ -798,7 +827,7 @@ definitions:
         type: string
         x-go-name: CreatedBy
       domain:
-        description: The hostname of the blocked domain.
+        description: The hostname of the domain.
         example: example.org
         type: string
         x-go-name: Domain
@@ -822,16 +851,28 @@ definitions:
         type: string
         x-go-name: PrivateComment
       public_comment:
-        description: Public comment for this block, visible if domain blocks are served
-          publicly.
+        description: If the domain is blocked, what's the publicly-stated reason for
+          the block.
         example: they smell
         type: string
         x-go-name: PublicComment
+      silenced_at:
+        description: Time at which this domain was silenced. Key will not be present
+          on open domains.
+        example: "2021-07-30T09:20:25+00:00"
+        type: string
+        x-go-name: SilencedAt
       subscription_id:
         description: The ID of the subscription that created/caused this domain block.
         example: 01FBW25TF5J67JW3HFHZCSD23K
         type: string
         x-go-name: SubscriptionID
+      suspended_at:
+        description: Time at which this domain was suspended. Key will not be present
+          on open domains.
+        example: "2021-07-30T09:20:25+00:00"
+        type: string
+        x-go-name: SuspendedAt
     type: object
     x-go-name: DomainBlock
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
@@ -934,6 +975,8 @@ definitions:
         description: New account registrations require admin approval.
         type: boolean
         x-go-name: ApprovalRequired
+      configuration:
+        $ref: '#/definitions/instanceConfiguration'
       contact_account:
         $ref: '#/definitions/account'
       description:
@@ -1020,6 +1063,126 @@ definitions:
     title: Instance models information about this or another instance.
     type: object
     x-go-name: Instance
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  instanceConfiguration:
+    properties:
+      media_attachments:
+        $ref: '#/definitions/instanceConfigurationMediaAttachments'
+      polls:
+        $ref: '#/definitions/instanceConfigurationPolls'
+      statuses:
+        $ref: '#/definitions/instanceConfigurationStatuses'
+    title: InstanceConfiguration models instance configuration parameters.
+    type: object
+    x-go-name: InstanceConfiguration
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  instanceConfigurationMediaAttachments:
+    properties:
+      image_matrix_limit:
+        description: |-
+          Max allowed image size in pixels as height*width.
+
+          GtS doesn't set a limit on this, but for compatibility
+          we give Mastodon's 4096x4096px value here.
+        example: 16777216
+        format: int64
+        type: integer
+        x-go-name: ImageMatrixLimit
+      image_size_limit:
+        description: Max allowed image size in bytes
+        example: 2097152
+        format: int64
+        type: integer
+        x-go-name: ImageSizeLimit
+      supported_mime_types:
+        description: List of mime types that it's possible to upload to this instance.
+        example:
+        - image/jpeg
+        - image/gif
+        items:
+          type: string
+        type: array
+        x-go-name: SupportedMimeTypes
+      video_frame_rate_limit:
+        description: Max allowed video frame rate.
+        example: 60
+        format: int64
+        type: integer
+        x-go-name: VideoFrameRateLimit
+      video_matrix_limit:
+        description: |-
+          Max allowed video size in pixels as height*width.
+
+          GtS doesn't set a limit on this, but for compatibility
+          we give Mastodon's 4096x4096px value here.
+        example: 16777216
+        format: int64
+        type: integer
+        x-go-name: VideoMatrixLimit
+      video_size_limit:
+        description: Max allowed video size in bytes
+        example: 10485760
+        format: int64
+        type: integer
+        x-go-name: VideoSizeLimit
+    title: InstanceConfigurationMediaAttachments models instance media attachment
+      config parameters.
+    type: object
+    x-go-name: InstanceConfigurationMediaAttachments
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  instanceConfigurationPolls:
+    properties:
+      max_characters_per_option:
+        description: Number of characters allowed per option in the poll.
+        example: 50
+        format: int64
+        type: integer
+        x-go-name: MaxCharactersPerOption
+      max_expiration:
+        description: Maximum expiration time of the poll in seconds.
+        example: 2629746
+        format: int64
+        type: integer
+        x-go-name: MaxExpiration
+      max_options:
+        description: Number of options permitted in a poll on this instance.
+        example: 4
+        format: int64
+        type: integer
+        x-go-name: MaxOptions
+      min_expiration:
+        description: Minimum expiration time of the poll in seconds.
+        example: 300
+        format: int64
+        type: integer
+        x-go-name: MinExpiration
+    title: InstanceConfigurationPolls models instance poll config parameters.
+    type: object
+    x-go-name: InstanceConfigurationPolls
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  instanceConfigurationStatuses:
+    properties:
+      characters_reserved_per_url:
+        description: Amount of characters that a URL will be compressed to.
+        example: 999
+        format: int64
+        type: integer
+        x-go-name: CharactersReservedPerURL
+      max_characters:
+        description: Maximum allowed length of a post on this instance, in characters.
+        example: 5000
+        format: int64
+        type: integer
+        x-go-name: MaxCharacters
+      max_media_attachments:
+        description: Max number of attachments allowed on a status.
+        example: 4
+        format: int64
+        type: integer
+        x-go-name: MaxMediaAttachments
+    title: InstanceConfigurationStatuses models instance status config parameters.
+    type: object
+    x-go-name: InstanceConfigurationStatuses
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   instanceURLs:
     properties:
@@ -3036,6 +3199,60 @@ paths:
         - admin
       summary: Update your instance information and/or upload a new avatar/header
         for the instance.
+      tags:
+      - instance
+  /api/v1/instance/peers:
+    get:
+      operationId: instancePeersGet
+      parameters:
+      - description: |-
+          Comma-separated list of filters to apply to results. Recognized values are:
+          'open' -- include peers that are not suspended or silenced
+          'suspended' -- include peers that have been suspended.
+          If filter is 'open', only instances that haven't been suspended or silenced will be returned.
+          If filter is 'suspended', only suspended instances will be shown.
+          If filter is 'open,suspended', then all known instances will be returned.
+          If filter is an empty string or not set, then 'open' will be assumed as the default.
+        in: query
+        name: filter
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: |-
+            If no filter parameter is provided, or filter is empty, then a legacy,
+            Mastodon-API compatible response will be returned. This will consist of
+            just a 'flat' array of strings like `["example.com", "example.org"]`.
+
+            If a filter parameter is provided, then an array of objects with at least
+            a `domain` key set on each object will be returned.
+
+            Domains that are silenced or suspended will also have a key
+            'suspended_at' or 'silenced_at' that contains an iso8601 date string.
+            If one of these keys is not present on the domain object, it is open.
+            Suspended instances may in some cases be obfuscated, which means they
+            will have some letters replaced by '*' to make it more difficult for
+            bad actors to target instances with harassment.
+
+            Whether a flat response or a more detailed response is returned, domains
+            will be sorted alphabetically by hostname.
+          schema:
+            items:
+              $ref: '#/definitions/domain'
+            type: array
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden
+        "404":
+          description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
       tags:
       - instance
   /api/v1/media:

@@ -24,9 +24,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type InternalToASTestSuite struct {
@@ -60,7 +60,7 @@ func (suite *InternalToASTestSuite) TestOutboxToASCollection() {
 	suite.NoError(err)
 
 	ser, err := streams.Serialize(collection)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	bytes, err := json.Marshal(ser)
 	suite.NoError(err)
@@ -86,7 +86,7 @@ func (suite *InternalToASTestSuite) TestStatusToAS() {
 	suite.NoError(err)
 
 	ser, err := streams.Serialize(asStatus)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	bytes, err := json.Marshal(ser)
 	suite.NoError(err)
@@ -105,7 +105,7 @@ func (suite *InternalToASTestSuite) TestStatusToASWithMentions() {
 	suite.NoError(err)
 
 	ser, err := streams.Serialize(asStatus)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	bytes, err := json.Marshal(ser)
 	suite.NoError(err)
@@ -122,7 +122,7 @@ func (suite *InternalToASTestSuite) TestStatusToASNotSensitive() {
 	suite.NoError(err)
 
 	ser, err := streams.Serialize(asStatus)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	bytes, err := json.Marshal(ser)
 	suite.NoError(err)
@@ -142,7 +142,7 @@ func (suite *InternalToASTestSuite) TestStatusesToASOutboxPage() {
 	suite.NoError(err)
 
 	ser, err := streams.Serialize(page)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	bytes, err := json.Marshal(ser)
 	suite.NoError(err)
@@ -182,6 +182,32 @@ func (suite *InternalToASTestSuite) TestStatusesToASOutboxPage() {
 	*/
 
 	suite.Equal(`{"@context":"https://www.w3.org/ns/activitystreams","id":"http://localhost:8080/users/admin/outbox?page=true","next":"http://localhost:8080/users/admin/outbox?page=true\u0026max_id=01F8MH75CBF9JFX4ZAD54N0W0R","orderedItems":[{"actor":"http://localhost:8080/users/admin","cc":"http://localhost:8080/users/admin/followers","id":"http://localhost:8080/users/admin/statuses/01F8MHAAY43M6RJ473VQFCVH37/activity","object":"http://localhost:8080/users/admin/statuses/01F8MHAAY43M6RJ473VQFCVH37","published":"2021-10-20T12:36:45Z","to":"https://www.w3.org/ns/activitystreams#Public","type":"Create"},{"actor":"http://localhost:8080/users/admin","cc":"http://localhost:8080/users/admin/followers","id":"http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R/activity","object":"http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R","published":"2021-10-20T11:36:45Z","to":"https://www.w3.org/ns/activitystreams#Public","type":"Create"}],"partOf":"http://localhost:8080/users/admin/outbox","prev":"http://localhost:8080/users/admin/outbox?page=true\u0026min_id=01F8MHAAY43M6RJ473VQFCVH37","type":"OrderedCollectionPage"}`, string(bytes))
+}
+
+func (suite *InternalToASTestSuite) TestSelfBoostFollowersOnlyToAS() {
+	ctx := context.Background()
+
+	testStatus := suite.testStatuses["local_account_1_status_5"]
+	testAccount := suite.testAccounts["local_account_1"]
+
+	boostWrapperStatus, err := suite.typeconverter.StatusToBoost(ctx, testStatus, testAccount)
+	suite.NoError(err)
+	suite.NotNil(boostWrapperStatus)
+
+	boostWrapperStatus.ID = "01G74JJ1KS331G2JXHRMZCE0ER"
+	boostWrapperStatus.URI = "http://localhost:8080/users/the_mighty_zork/statuses/01G74JJ1KS331G2JXHRMZCE0ER"
+	boostWrapperStatus.CreatedAt = testrig.TimeMustParse("2022-06-09T13:12:00Z")
+
+	asBoost, err := suite.typeconverter.BoostToAS(ctx, boostWrapperStatus, testAccount, testAccount)
+	suite.NoError(err)
+
+	ser, err := streams.Serialize(asBoost)
+	suite.NoError(err)
+
+	bytes, err := json.Marshal(ser)
+	suite.NoError(err)
+
+	suite.Equal(`{"@context":"https://www.w3.org/ns/activitystreams","actor":"http://localhost:8080/users/the_mighty_zork","cc":"http://localhost:8080/users/the_mighty_zork","id":"http://localhost:8080/users/the_mighty_zork/statuses/01G74JJ1KS331G2JXHRMZCE0ER","object":"http://localhost:8080/users/the_mighty_zork/statuses/01FCTA44PW9H1TB328S9AQXKDS","published":"2022-06-09T13:12:00Z","to":"http://localhost:8080/users/the_mighty_zork/followers","type":"Announce"}`, string(bytes))
 }
 
 func TestInternalToASTestSuite(t *testing.T) {

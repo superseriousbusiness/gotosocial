@@ -23,16 +23,20 @@ import (
 	"fmt"
 	"time"
 
-	"codeberg.org/gruf/go-store/kv"
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
 // selectPruneLimit is the amount of media entries to select at a time from the db when pruning
 const selectPruneLimit = 20
+
+// UnusedLocalAttachmentCacheDays is the amount of days to keep local media in storage if it
+// is not attached to a status, or was never attached to a status.
+const UnusedLocalAttachmentCacheDays = 3
 
 // Manager provides an interface for managing media: parsing, storing, and retrieving media objects like photos, videos, and gifs.
 type Manager interface {
@@ -75,11 +79,16 @@ type Manager interface {
 	//
 	// The returned int is the amount of media that was pruned by this function.
 	PruneAllRemote(ctx context.Context, olderThanDays int) (int, error)
-	// PruneAllMeta prunes unused meta media -- currently, this means unused avatars + headers, but can also be extended
-	// to include things like attachments that were uploaded on this server but left unused, etc.
+	// PruneAllMeta prunes unused/out of date headers and avatars cached on this instance.
 	//
 	// The returned int is the amount of media that was pruned by this function.
 	PruneAllMeta(ctx context.Context) (int, error)
+	// PruneUnusedLocalAttachments prunes unused media attachments that were uploaded by
+	// a user on this instance, but never actually attached to a status, or attached but
+	// later detached.
+	//
+	// The returned int is the amount of media that was pruned by this function.
+	PruneUnusedLocalAttachments(ctx context.Context) (int, error)
 
 	// Stop stops the underlying worker pool of the manager. It should be called
 	// when closing GoToSocial in order to cleanly finish any in-progress jobs.
@@ -89,7 +98,7 @@ type Manager interface {
 
 type manager struct {
 	db           db.DB
-	storage      *kv.KVStore
+	storage      storage.Driver
 	emojiWorker  *concurrency.WorkerPool[*ProcessingEmoji]
 	mediaWorker  *concurrency.WorkerPool[*ProcessingMedia]
 	stopCronJobs func() error
@@ -101,7 +110,7 @@ type manager struct {
 // a limited number of media will be processed in parallel. The numbers of workers
 // is determined from the $GOMAXPROCS environment variable (usually no. CPU cores).
 // See internal/concurrency.NewWorkerPool() documentation for further information.
-func NewManager(database db.DB, storage *kv.KVStore) (Manager, error) {
+func NewManager(database db.DB, storage storage.Driver) (Manager, error) {
 	m := &manager{
 		db:      database,
 		storage: storage,
@@ -208,6 +217,19 @@ func scheduleCleanupJobs(m *manager) error {
 	}); err != nil {
 		pruneCancel()
 		return fmt.Errorf("error starting media manager meta cleanup job: %s", err)
+	}
+
+	if _, err := c.AddFunc("@midnight", func() {
+		begin := time.Now()
+		pruned, err := m.PruneUnusedLocalAttachments(pruneCtx)
+		if err != nil {
+			logrus.Errorf("media manager: error pruning unused local attachments: %s", err)
+			return
+		}
+		logrus.Infof("media manager: pruned %d unused local attachments in %s", pruned, time.Since(begin))
+	}); err != nil {
+		pruneCancel()
+		return fmt.Errorf("error starting media manager unused local attachments cleanup job: %s", err)
 	}
 
 	// start remote cache cleanup cronjob if configured

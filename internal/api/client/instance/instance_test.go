@@ -21,10 +21,8 @@ package instance_test
 import (
 	"bytes"
 	"fmt"
-	"net/http"
 	"net/http/httptest"
 
-	"codeberg.org/gruf/go-store/kv"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/instance"
@@ -38,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -45,7 +44,7 @@ type InstanceStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
 	db           db.DB
-	storage      *kv.KVStore
+	storage      storage.Driver
 	mediaManager media.Manager
 	federator    federation.Federator
 	processor    processing.Processor
@@ -83,7 +82,7 @@ func (suite *InstanceStandardTestSuite) SetupTest() {
 	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
 
 	suite.db = testrig.NewTestDB()
-	suite.storage = testrig.NewTestStorage()
+	suite.storage = testrig.NewInMemoryStorage()
 	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
 	suite.sentEmails = make(map[string]string)
@@ -113,7 +112,7 @@ func (suite *InstanceStandardTestSuite) newContext(recorder *httptest.ResponseRe
 	baseURI := fmt.Sprintf("%s://%s", protocol, host)
 	requestURI := fmt.Sprintf("%s/%s", baseURI, requestPath)
 
-	ctx.Request = httptest.NewRequest(http.MethodPatch, requestURI, bytes.NewReader(requestBody)) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(requestMethod, requestURI, bytes.NewReader(requestBody)) // the endpoint we're hitting
 
 	if bodyContentType != "" {
 		ctx.Request.Header.Set("Content-Type", bodyContentType)

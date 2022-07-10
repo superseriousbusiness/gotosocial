@@ -65,13 +65,7 @@ While editing the file above, you should replace 'example.org' with your domain.
 The file you're about to create should look like this:
 
 ```Caddyfile
-# Because we use a reverse proxy, Caddy won't redirect port 80 to 443 by default unless we tell it to.
-example.org:80 {
-	redir https://example.org/{uri}
-}
-
-# The actual host configuration
-example.org:443 {
+example.org {
 	# Optional, but recommended, compress the traffic using proper protocols
 	encode zstd gzip
 

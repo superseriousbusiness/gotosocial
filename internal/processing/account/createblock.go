@@ -46,6 +46,11 @@ func (p *processor) BlockCreate(ctx context.Context, requestingAccount *gtsmodel
 		return p.RelationshipGet(ctx, requestingAccount, targetAccountID)
 	}
 
+	// don't block yourself, silly
+	if requestingAccount.ID == targetAccountID {
+		return nil, gtserror.NewErrorNotAcceptable(fmt.Errorf("BlockCreate: account %s cannot block itself", requestingAccount.ID))
+	}
+
 	// make the block
 	block := &gtsmodel.Block{}
 	newBlockID, err := id.NewULID()

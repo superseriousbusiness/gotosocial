@@ -69,7 +69,7 @@ func (m *manager) pruneOneAvatarOrHeader(ctx context.Context, attachment *gtsmod
 	if attachment.File.Path != "" {
 		// delete the full size attachment from storage
 		logrus.Tracef("pruneOneAvatarOrHeader: deleting %s", attachment.File.Path)
-		if err := m.storage.Delete(attachment.File.Path); err != nil && err != storage.ErrNotFound {
+		if err := m.storage.Delete(ctx, attachment.File.Path); err != nil && err != storage.ErrNotFound {
 			return err
 		}
 	}
@@ -77,7 +77,7 @@ func (m *manager) pruneOneAvatarOrHeader(ctx context.Context, attachment *gtsmod
 	if attachment.Thumbnail.Path != "" {
 		// delete the thumbnail from storage
 		logrus.Tracef("pruneOneAvatarOrHeader: deleting %s", attachment.Thumbnail.Path)
-		if err := m.storage.Delete(attachment.Thumbnail.Path); err != nil && err != storage.ErrNotFound {
+		if err := m.storage.Delete(ctx, attachment.Thumbnail.Path); err != nil && err != storage.ErrNotFound {
 			return err
 		}
 	}

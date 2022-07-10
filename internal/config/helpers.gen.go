@@ -543,6 +543,56 @@ func GetWebAssetBaseDir() string { return global.GetWebAssetBaseDir() }
 // SetWebAssetBaseDir safely sets the value for global configuration 'WebAssetBaseDir' field
 func SetWebAssetBaseDir(v string) { global.SetWebAssetBaseDir(v) }
 
+// GetInstanceExposePeers safely fetches the Configuration value for state's 'InstanceExposePeers' field
+func (st *ConfigState) GetInstanceExposePeers() (v bool) {
+	st.mutex.Lock()
+	v = st.config.InstanceExposePeers
+	st.mutex.Unlock()
+	return
+}
+
+// SetInstanceExposePeers safely sets the Configuration value for state's 'InstanceExposePeers' field
+func (st *ConfigState) SetInstanceExposePeers(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceExposePeers = v
+	st.reloadToViper()
+}
+
+// InstanceExposePeersFlag returns the flag name for the 'InstanceExposePeers' field
+func InstanceExposePeersFlag() string { return "instance-expose-peers" }
+
+// GetInstanceExposePeers safely fetches the value for global configuration 'InstanceExposePeers' field
+func GetInstanceExposePeers() bool { return global.GetInstanceExposePeers() }
+
+// SetInstanceExposePeers safely sets the value for global configuration 'InstanceExposePeers' field
+func SetInstanceExposePeers(v bool) { global.SetInstanceExposePeers(v) }
+
+// GetInstanceExposeSuspended safely fetches the Configuration value for state's 'InstanceExposeSuspended' field
+func (st *ConfigState) GetInstanceExposeSuspended() (v bool) {
+	st.mutex.Lock()
+	v = st.config.InstanceExposeSuspended
+	st.mutex.Unlock()
+	return
+}
+
+// SetInstanceExposeSuspended safely sets the Configuration value for state's 'InstanceExposeSuspended' field
+func (st *ConfigState) SetInstanceExposeSuspended(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceExposeSuspended = v
+	st.reloadToViper()
+}
+
+// InstanceExposeSuspendedFlag returns the flag name for the 'InstanceExposeSuspended' field
+func InstanceExposeSuspendedFlag() string { return "instance-expose-suspended" }
+
+// GetInstanceExposeSuspended safely fetches the value for global configuration 'InstanceExposeSuspended' field
+func GetInstanceExposeSuspended() bool { return global.GetInstanceExposeSuspended() }
+
+// SetInstanceExposeSuspended safely sets the value for global configuration 'InstanceExposeSuspended' field
+func SetInstanceExposeSuspended(v bool) { global.SetInstanceExposeSuspended(v) }
+
 // GetAccountsRegistrationOpen safely fetches the Configuration value for state's 'AccountsRegistrationOpen' field
 func (st *ConfigState) GetAccountsRegistrationOpen() (v bool) {
 	st.mutex.Lock()
@@ -792,6 +842,131 @@ func GetStorageLocalBasePath() string { return global.GetStorageLocalBasePath() 
 
 // SetStorageLocalBasePath safely sets the value for global configuration 'StorageLocalBasePath' field
 func SetStorageLocalBasePath(v string) { global.SetStorageLocalBasePath(v) }
+
+// GetStorageS3Endpoint safely fetches the Configuration value for state's 'StorageS3Endpoint' field
+func (st *ConfigState) GetStorageS3Endpoint() (v string) {
+	st.mutex.Lock()
+	v = st.config.StorageS3Endpoint
+	st.mutex.Unlock()
+	return
+}
+
+// SetStorageS3Endpoint safely sets the Configuration value for state's 'StorageS3Endpoint' field
+func (st *ConfigState) SetStorageS3Endpoint(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.StorageS3Endpoint = v
+	st.reloadToViper()
+}
+
+// StorageS3EndpointFlag returns the flag name for the 'StorageS3Endpoint' field
+func StorageS3EndpointFlag() string { return "storage-s3-endpoint" }
+
+// GetStorageS3Endpoint safely fetches the value for global configuration 'StorageS3Endpoint' field
+func GetStorageS3Endpoint() string { return global.GetStorageS3Endpoint() }
+
+// SetStorageS3Endpoint safely sets the value for global configuration 'StorageS3Endpoint' field
+func SetStorageS3Endpoint(v string) { global.SetStorageS3Endpoint(v) }
+
+// GetStorageS3AccessKey safely fetches the Configuration value for state's 'StorageS3AccessKey' field
+func (st *ConfigState) GetStorageS3AccessKey() (v string) {
+	st.mutex.Lock()
+	v = st.config.StorageS3AccessKey
+	st.mutex.Unlock()
+	return
+}
+
+// SetStorageS3AccessKey safely sets the Configuration value for state's 'StorageS3AccessKey' field
+func (st *ConfigState) SetStorageS3AccessKey(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.StorageS3AccessKey = v
+	st.reloadToViper()
+}
+
+// StorageS3AccessKeyFlag returns the flag name for the 'StorageS3AccessKey' field
+func StorageS3AccessKeyFlag() string { return "storage-s3-access-key" }
+
+// GetStorageS3AccessKey safely fetches the value for global configuration 'StorageS3AccessKey' field
+func GetStorageS3AccessKey() string { return global.GetStorageS3AccessKey() }
+
+// SetStorageS3AccessKey safely sets the value for global configuration 'StorageS3AccessKey' field
+func SetStorageS3AccessKey(v string) { global.SetStorageS3AccessKey(v) }
+
+// GetStorageS3SecretKey safely fetches the Configuration value for state's 'StorageS3SecretKey' field
+func (st *ConfigState) GetStorageS3SecretKey() (v string) {
+	st.mutex.Lock()
+	v = st.config.StorageS3SecretKey
+	st.mutex.Unlock()
+	return
+}
+
+// SetStorageS3SecretKey safely sets the Configuration value for state's 'StorageS3SecretKey' field
+func (st *ConfigState) SetStorageS3SecretKey(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.StorageS3SecretKey = v
+	st.reloadToViper()
+}
+
+// StorageS3SecretKeyFlag returns the flag name for the 'StorageS3SecretKey' field
+func StorageS3SecretKeyFlag() string { return "storage-s3-secret-key" }
+
+// GetStorageS3SecretKey safely fetches the value for global configuration 'StorageS3SecretKey' field
+func GetStorageS3SecretKey() string { return global.GetStorageS3SecretKey() }
+
+// SetStorageS3SecretKey safely sets the value for global configuration 'StorageS3SecretKey' field
+func SetStorageS3SecretKey(v string) { global.SetStorageS3SecretKey(v) }
+
+// GetStorageS3UseSSL safely fetches the Configuration value for state's 'StorageS3UseSSL' field
+func (st *ConfigState) GetStorageS3UseSSL() (v bool) {
+	st.mutex.Lock()
+	v = st.config.StorageS3UseSSL
+	st.mutex.Unlock()
+	return
+}
+
+// SetStorageS3UseSSL safely sets the Configuration value for state's 'StorageS3UseSSL' field
+func (st *ConfigState) SetStorageS3UseSSL(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.StorageS3UseSSL = v
+	st.reloadToViper()
+}
+
+// StorageS3UseSSLFlag returns the flag name for the 'StorageS3UseSSL' field
+func StorageS3UseSSLFlag() string { return "storage-s3-use-ssl" }
+
+// GetStorageS3UseSSL safely fetches the value for global configuration 'StorageS3UseSSL' field
+func GetStorageS3UseSSL() bool { return global.GetStorageS3UseSSL() }
+
+// SetStorageS3UseSSL safely sets the value for global configuration 'StorageS3UseSSL' field
+func SetStorageS3UseSSL(v bool) { global.SetStorageS3UseSSL(v) }
+
+// GetStorageS3BucketName safely fetches the Configuration value for state's 'StorageS3BucketName' field
+func (st *ConfigState) GetStorageS3BucketName() (v string) {
+	st.mutex.Lock()
+	v = st.config.StorageS3BucketName
+	st.mutex.Unlock()
+	return
+}
+
+// SetStorageS3BucketName safely sets the Configuration value for state's 'StorageS3BucketName' field
+func (st *ConfigState) SetStorageS3BucketName(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.StorageS3BucketName = v
+	st.reloadToViper()
+}
+
+// StorageS3BucketNameFlag returns the flag name for the 'StorageS3BucketName' field
+func StorageS3BucketNameFlag() string { return "storage-s3-bucket" }
+
+// GetStorageS3BucketName safely fetches the value for global configuration 'StorageS3BucketName' field
+func GetStorageS3BucketName() string { return global.GetStorageS3BucketName() }
+
+// SetStorageS3BucketName safely sets the value for global configuration 'StorageS3BucketName' field
+func SetStorageS3BucketName(v string) { global.SetStorageS3BucketName(v) }
 
 // GetStatusesMaxChars safely fetches the Configuration value for state's 'StatusesMaxChars' field
 func (st *ConfigState) GetStatusesMaxChars() (v int) {

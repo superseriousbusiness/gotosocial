@@ -56,6 +56,9 @@ var TestDefaults = config.Configuration{
 	WebTemplateBaseDir: "./web/template/",
 	WebAssetBaseDir:    "./web/assets/",
 
+	InstanceExposePeers:     true,
+	InstanceExposeSuspended: true,
+
 	AccountsRegistrationOpen: true,
 	AccountsApprovalRequired: true,
 	AccountsReasonRequired:   true,
@@ -99,4 +102,6 @@ var TestDefaults = config.Configuration{
 	SyslogAddress:  "localhost:514",
 
 	AdvancedCookiesSamesite: "lax",
+
+	SoftwareVersion: "0.0.0-testrig",
 }

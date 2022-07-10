@@ -49,13 +49,13 @@ func (suite *PruneMetaTestSuite) TestPruneMeta() {
 	suite.Equal(2, totalPruned)
 
 	// media should no longer be stored
-	_, err = suite.storage.Get(zorkOldAvatar.File.Path)
+	_, err = suite.storage.Get(ctx, zorkOldAvatar.File.Path)
 	suite.ErrorIs(err, storage.ErrNotFound)
-	_, err = suite.storage.Get(zorkOldAvatar.Thumbnail.Path)
+	_, err = suite.storage.Get(ctx, zorkOldAvatar.Thumbnail.Path)
 	suite.ErrorIs(err, storage.ErrNotFound)
-	_, err = suite.storage.Get(zorkOldHeader.File.Path)
+	_, err = suite.storage.Get(ctx, zorkOldHeader.File.Path)
 	suite.ErrorIs(err, storage.ErrNotFound)
-	_, err = suite.storage.Get(zorkOldHeader.Thumbnail.Path)
+	_, err = suite.storage.Get(ctx, zorkOldHeader.Thumbnail.Path)
 	suite.ErrorIs(err, storage.ErrNotFound)
 
 	// attachments should no longer be in the db
@@ -110,13 +110,13 @@ func (suite *PruneMetaTestSuite) TestPruneMetaMultipleAccounts() {
 	suite.Equal(2, totalPruned)
 
 	// media should no longer be stored
-	_, err = suite.storage.Get(zorkOldAvatar.File.Path)
+	_, err = suite.storage.Get(ctx, zorkOldAvatar.File.Path)
 	suite.ErrorIs(err, storage.ErrNotFound)
-	_, err = suite.storage.Get(zorkOldAvatar.Thumbnail.Path)
+	_, err = suite.storage.Get(ctx, zorkOldAvatar.Thumbnail.Path)
 	suite.ErrorIs(err, storage.ErrNotFound)
-	_, err = suite.storage.Get(zorkOldHeader.File.Path)
+	_, err = suite.storage.Get(ctx, zorkOldHeader.File.Path)
 	suite.ErrorIs(err, storage.ErrNotFound)
-	_, err = suite.storage.Get(zorkOldHeader.Thumbnail.Path)
+	_, err = suite.storage.Get(ctx, zorkOldHeader.Thumbnail.Path)
 	suite.ErrorIs(err, storage.ErrNotFound)
 
 	// attachments should no longer be in the db

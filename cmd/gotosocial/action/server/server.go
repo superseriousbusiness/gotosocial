@@ -23,11 +23,8 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"path"
 	"syscall"
 
-	"codeberg.org/gruf/go-store/kv"
-	"codeberg.org/gruf/go-store/storage"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
@@ -68,6 +65,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
+	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/web"
@@ -106,17 +104,10 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	typeConverter := typeutils.NewConverter(dbService)
 
 	// Open the storage backend
-	storageBasePath := config.GetStorageLocalBasePath()
-	storage, err := kv.OpenFile(storageBasePath, &storage.DiskConfig{
-		// Put the store lockfile in the storage dir itself.
-		// Normally this would not be safe, since we could end up
-		// overwriting the lockfile if we store a file called 'store.lock'.
-		// However, in this case it's OK because the keys are set by
-		// GtS and not the user, so we know we're never going to overwrite it.
-		LockFile: path.Join(storageBasePath, "store.lock"),
-	})
+
+	storage, err := gtsstorage.AutoConfig()
 	if err != nil {
-		return fmt.Errorf("error creating storage backend: %s", err)
+		return fmt.Errorf("error creating storage backend: %w", err)
 	}
 
 	// Build HTTP client (TODO: add configurables here)
