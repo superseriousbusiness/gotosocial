@@ -49,7 +49,7 @@ func loggingMiddleware(c *gin.Context) {
 			}
 
 			// Append panic information to the request ctx
-			c.Error(fmt.Errorf("recovered panic: %v", r))
+			_ = c.Error(fmt.Errorf("recovered panic: %v", r))
 
 			// Dump a stacktrace to stderr
 			callers := errors.GetCallers(3, 10)
