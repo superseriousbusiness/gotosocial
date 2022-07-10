@@ -29,11 +29,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// skipPaths is a map of HTTP paths to skip logging for.
-var skipPaths = map[string]struct{}{
-	"/api/v1/streaming": {},
-}
-
 // loggingMiddleware provides a request logging and panic recovery gin handler.
 func loggingMiddleware(c *gin.Context) {
 	// Initialize the logging fields
@@ -59,11 +54,6 @@ func loggingMiddleware(c *gin.Context) {
 			callers := errors.GetCallers(3, 10)
 			fmt.Fprintf(os.Stderr, "recovered panic: %v\n%s", r, callers)
 		}
-
-		// Check if this should skip logging
-		// if _, ok := skipPaths[path]; ok {
-		// 	return
-		// }
 
 		// Set request logging fields
 		fields["latency"] = time.Since(before)
