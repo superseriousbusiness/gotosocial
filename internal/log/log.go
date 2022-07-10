@@ -43,7 +43,7 @@ func Initialize() error {
 
 	logrus.SetFormatter(&logrus.TextFormatter{
 		DisableColors: true,
-		DisableQuote:  true,
+		DisableQuote:  false,
 		FullTimestamp: true,
 	})
 
