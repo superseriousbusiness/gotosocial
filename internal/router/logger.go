@@ -24,6 +24,7 @@ import (
 	"os"
 	"time"
 
+	"codeberg.org/gruf/go-bytesize"
 	"codeberg.org/gruf/go-errors/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -77,8 +78,11 @@ func loggingMiddleware(c *gin.Context) {
 			}
 		}
 
+		// Generate a nicer looking bytecount
+		size := bytesize.Size(c.Writer.Size())
+
 		// Finally, write log entry with status text body size
-		l.Log(l.Level, "%s: wrote %d bytes", http.StatusText(code), c.Writer.Size())
+		l.Logf(l.Level, "%s: wrote %s", http.StatusText(code), size)
 	}()
 
 	// Process request
