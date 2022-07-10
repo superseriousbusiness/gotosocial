@@ -24,7 +24,6 @@ import (
 	"log/syslog"
 	"os"
 
-	"codeberg.org/gruf/go-debug"
 	"github.com/sirupsen/logrus"
 	lSyslog "github.com/sirupsen/logrus/hooks/syslog"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -42,16 +41,6 @@ func Initialize() error {
 	out := SplitErrOutputs(os.Stdout, os.Stderr)
 	logrus.SetOutput(out)
 
-	logrus.SetFormatter(&logrus.TextFormatter{
-		DisableColors: true,
-		FullTimestamp: true,
-
-		// We disable quoting on debug builds, as this
-		// allows for easier copy and pasting of queries
-		// from debug log output to the database :)
-		DisableQuote: !debug.DEBUG(),
-	})
-
 	// check if a desired log level has been set
 	if lvl := config.GetLogLevel(); lvl != "" {
 		level, err := logrus.ParseLevel(lvl)
@@ -64,6 +53,17 @@ func Initialize() error {
 			logrus.SetReportCaller(true)
 		}
 	}
+
+	// set our custom formatter options
+	logrus.SetFormatter(&logrus.TextFormatter{
+		DisableColors: true,
+		FullTimestamp: true,
+
+		// we disable quoting on debug builds, as this
+		// allows for easier copy and pasting of queries
+		// from debug log output to the database :)
+		DisableQuote: logrus.GetLevel() >= logrus.DebugLevel,
+	})
 
 	// check if syslog has been enabled, and configure it if so
 	if config.GetSyslogEnabled() {
