@@ -19,55 +19,78 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
+	"os"
 	"time"
 
+	"codeberg.org/gruf/go-errors/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
 
-var skipPaths = map[string]interface{}{
-	"/api/v1/streaming": nil,
+// skipPaths is a map of HTTP paths to skip logging for.
+var skipPaths = map[string]struct{}{
+	"/api/v1/streaming": {},
 }
 
-func loggingMiddleware() gin.HandlerFunc {
-	logHandler := func(c *gin.Context) {
-		start := time.Now()
+// loggingMiddleware provides a request logging and panic recovery gin handler.
+func loggingMiddleware(c *gin.Context) {
+	// Initialize the logging fields
+	fields := make(logrus.Fields, 7)
+
+	// Determine pre-handler time
+	before := time.Now()
+
+	defer func() {
+		code := c.Writer.Status()
 		path := c.Request.URL.Path
-		raw := c.Request.URL.RawQuery
 
-		// Process request
-		c.Next()
-
-		// Log only when path is not being skipped
-		if _, ok := skipPaths[path]; !ok {
-			latency := time.Since(start)
-			clientIP := c.ClientIP()
-			userAgent := c.Request.UserAgent()
-			method := c.Request.Method
-			statusCode := c.Writer.Status()
-			errorMessage := c.Errors.ByType(gin.ErrorTypePrivate).String()
-			bodySize := c.Writer.Size()
-			if raw != "" {
-				path = path + "?" + raw
+		if r := recover(); r != nil {
+			if c.Writer.Status() == 0 {
+				// No response was written, send a generic Internal Error
+				c.Writer.WriteHeader(http.StatusInternalServerError)
 			}
 
-			l := logrus.WithFields(logrus.Fields{
-				"latency":    latency,
-				"clientIP":   clientIP,
-				"userAgent":  userAgent,
-				"method":     method,
-				"statusCode": statusCode,
-				"path":       path,
-			})
+			// Append panic information to the request ctx
+			c.Error(fmt.Errorf("recovered panic: %v", r))
 
-			if errorMessage == "" {
-				l.Infof("[%s] %s: wrote %d bytes", latency, http.StatusText(statusCode), bodySize)
-			} else {
-				l.Errorf("[%s] %s: %s", latency, http.StatusText(statusCode), errorMessage)
+			// Dump a stacktrace to stderr
+			callers := errors.GetCallers(3, 10)
+			fmt.Fprintf(os.Stderr, "recovered panic: %v\n%s", r, callers)
+		}
+
+		// Check if this should skip logging
+		// if _, ok := skipPaths[path]; ok {
+		// 	return
+		// }
+
+		// Set request logging fields
+		fields["latency"] = time.Since(before)
+		fields["clientIP"] = c.ClientIP()
+		fields["userAgent"] = c.Request.UserAgent()
+		fields["method"] = c.Request.Method
+		fields["statusCode"] = code
+		fields["path"] = path
+
+		// Create a log entry with fields
+		l := logrus.WithFields(fields)
+		l.Level = logrus.InfoLevel
+
+		if code >= 500 {
+			// This is a server error
+			l.Level = logrus.ErrorLevel
+
+			if len(c.Errors) > 0 {
+				// Add an error string log field
+				fields["error"] = c.Errors.String()
 			}
 		}
-	}
 
-	return logHandler
+		// Finally, write log entry with status text body size
+		l.Log(l.Level, "%s: wrote %d bytes", http.StatusText(code), c.Writer.Size())
+	}()
+
+	// Process request
+	c.Next()
 }
