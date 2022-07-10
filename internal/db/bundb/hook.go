@@ -26,35 +26,33 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func newDebugQueryHook() bun.QueryHook {
-	return &debugQueryHook{}
-}
+// queryHook implements bun.QueryHook
+type queryHook struct{}
 
-// debugQueryHook implements bun.QueryHook
-type debugQueryHook struct {
-}
-
-func (q *debugQueryHook) BeforeQuery(ctx context.Context, _ *bun.QueryEvent) context.Context {
-	// do nothing
-	return ctx
+func (queryHook) BeforeQuery(ctx context.Context, _ *bun.QueryEvent) context.Context {
+	return ctx // do nothing
 }
 
 // AfterQuery logs the time taken to query, the operation (select, update, etc), and the query itself as translated by bun.
-func (q *debugQueryHook) AfterQuery(_ context.Context, event *bun.QueryEvent) {
-	dur := time.Since(event.StartTime).Round(time.Microsecond)
-	l := logrus.WithFields(logrus.Fields{
-		"duration":  dur,
-		"operation": event.Operation(),
-	})
+func (queryHook) AfterQuery(_ context.Context, event *bun.QueryEvent) {
+	// Get the DB query duration
+	dur := time.Since(event.StartTime)
 
-	if dur > 1*time.Second {
-		l.Warnf("SLOW DATABASE QUERY [%s] %s", dur, event.Query)
-		return
+	log := func(lvl logrus.Level, msg string) {
+		logrus.WithFields(logrus.Fields{
+			"duration":  dur,
+			"operation": event.Operation(),
+			"query":     event.Query,
+		}).Log(lvl, msg)
 	}
 
-	if logrus.GetLevel() == logrus.TraceLevel {
-		l.Tracef("[%s] %s", dur, event.Query)
-	} else {
-		l.Debugf("[%s] %s", dur, event.Operation())
+	switch {
+	// Warn on slow database queries
+	case dur > time.Second:
+		log(logrus.WarnLevel, "SLOW DATABASE QUERY")
+
+	// On trace, we log query information
+	case logrus.GetLevel() == logrus.TraceLevel:
+		log(logrus.TraceLevel, "database query")
 	}
 }

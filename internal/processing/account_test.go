@@ -57,10 +57,14 @@ func (suite *AccountTestSuite) TestAccountDeleteLocal() {
 		DeleteOriginID: deletingAccount.ID,
 	})
 	suite.NoError(errWithCode)
-	time.Sleep(1 * time.Second) // wait a sec for the delete to process
 
 	// the delete should be federated outwards to the following account's inbox
-	sent, ok := suite.httpClient.SentMessages[followingAccount.InboxURI]
+	var sent []byte
+	var ok bool
+	for !ok {
+		sent, ok = suite.httpClient.SentMessages[followingAccount.InboxURI]
+	}
+
 	suite.True(ok)
 	delete := &struct {
 		Actor  string `json:"actor"`
@@ -78,6 +82,9 @@ func (suite *AccountTestSuite) TestAccountDeleteLocal() {
 	suite.Equal(deletingAccount.FollowersURI, delete.To)
 	suite.Equal(pub.PublicActivityPubIRI, delete.CC)
 	suite.Equal("Delete", delete.Type)
+
+	// wait for the delete to go through
+	time.Sleep(1 * time.Second)
 
 	// the deleted account should be deleted
 	dbAccount, err := suite.db.GetAccountByID(ctx, deletingAccount.ID)

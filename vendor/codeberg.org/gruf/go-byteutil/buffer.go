@@ -127,3 +127,8 @@ func (buf *Buffer) Reset() {
 func (buf *Buffer) String() string {
 	return B2S(buf.B)
 }
+
+// Full returns the full capacity byteslice allocated for this buffer.
+func (buf *Buffer) Full() []byte {
+	return buf.B[0:cap(buf.B)]
+}

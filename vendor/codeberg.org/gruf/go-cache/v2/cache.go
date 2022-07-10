@@ -61,7 +61,7 @@ type Cache[Key comparable, Value any] interface {
 
 // New returns a new initialized Cache.
 func New[K comparable, V any]() Cache[K, V] {
-	c := TTLCache[K, V]{}
+	c := &TTLCache[K, V]{}
 	c.Init()
-	return &c
+	return c
 }
