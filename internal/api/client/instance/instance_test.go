@@ -24,6 +24,7 @@ import (
 	"net/http/httptest"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/render"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/instance"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
@@ -98,24 +99,27 @@ func (suite *InstanceStandardTestSuite) TearDownTest() {
 	testrig.StandardStorageTeardown(suite.storage)
 }
 
-func (suite *InstanceStandardTestSuite) newContext(recorder *httptest.ResponseRecorder, requestMethod string, requestBody []byte, requestPath string, bodyContentType string) *gin.Context {
-	ctx, _ := gin.CreateTestContext(recorder)
+func (suite *InstanceStandardTestSuite) newContext(recorder *httptest.ResponseRecorder, method string, path string, body []byte, contentType string, auth bool) *gin.Context {
+	ctx, e := gin.CreateTestContext(recorder)
+	e.HTMLRender = render.HTMLDebug{}
 
-	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["admin_account"])
-	ctx.Set(oauth.SessionAuthorizedToken, oauth.DBTokenToToken(suite.testTokens["admin_account"]))
-	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["admin_account"])
-	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["admin_account"])
+	if auth {
+		ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["admin_account"])
+		ctx.Set(oauth.SessionAuthorizedToken, oauth.DBTokenToToken(suite.testTokens["admin_account"]))
+		ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["admin_account"])
+		ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["admin_account"])
+	}
 
 	protocol := config.GetProtocol()
 	host := config.GetHost()
 
 	baseURI := fmt.Sprintf("%s://%s", protocol, host)
-	requestURI := fmt.Sprintf("%s/%s", baseURI, requestPath)
+	requestURI := fmt.Sprintf("%s/%s", baseURI, path)
 
-	ctx.Request = httptest.NewRequest(requestMethod, requestURI, bytes.NewReader(requestBody)) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(method, requestURI, bytes.NewReader(body)) // the endpoint we're hitting
 
-	if bodyContentType != "" {
-		ctx.Request.Header.Set("Content-Type", bodyContentType)
+	if contentType != "" {
+		ctx.Request.Header.Set("Content-Type", contentType)
 	}
 
 	ctx.Request.Header.Set("accept", "application/json")
