@@ -43,19 +43,19 @@ func (m *mentionDB) newMentionQ(i interface{}) *bun.SelectQuery {
 }
 
 func (m *mentionDB) getMentionDB(ctx context.Context, id string) (*gtsmodel.Mention, db.Error) {
-	mention := &gtsmodel.Mention{}
+	mention := gtsmodel.Mention{}
 
-	q := m.newMentionQ(mention).
+	q := m.newMentionQ(&mention).
 		Where("mention.id = ?", id)
 
 	if err := q.Scan(ctx); err != nil {
 		return nil, m.conn.ProcessError(err)
 	}
 
-	copy := *mention
+	copy := mention
 	m.cache.Set(mention.ID, &copy)
 
-	return mention, nil
+	return &mention, nil
 }
 
 func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mention, db.Error) {

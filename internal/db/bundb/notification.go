@@ -37,10 +37,10 @@ func (n *notificationDB) GetNotification(ctx context.Context, id string) (*gtsmo
 		return notification, nil
 	}
 
-	dst := &gtsmodel.Notification{ID: id}
+	dst := gtsmodel.Notification{ID: id}
 
 	q := n.conn.NewSelect().
-		Model(dst).
+		Model(&dst).
 		Relation("OriginAccount").
 		Relation("TargetAccount").
 		Relation("Status").
@@ -50,10 +50,10 @@ func (n *notificationDB) GetNotification(ctx context.Context, id string) (*gtsmo
 		return nil, n.conn.ProcessError(err)
 	}
 
-	copy := *dst
+	copy := dst
 	n.cache.Set(id, &copy)
 
-	return dst, nil
+	return &dst, nil
 }
 
 func (n *notificationDB) GetNotifications(ctx context.Context, accountID string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, db.Error) {
@@ -86,8 +86,7 @@ func (n *notificationDB) GetNotifications(ctx context.Context, accountID string,
 		q = q.Limit(limit)
 	}
 
-	err := q.Scan(ctx, &notifIDs)
-	if err != nil {
+	if err := q.Scan(ctx, &notifIDs); err != nil {
 		return nil, n.conn.ProcessError(err)
 	}
 

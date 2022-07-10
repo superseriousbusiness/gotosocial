@@ -301,6 +301,11 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 		return nil, a.conn.ProcessError(err)
 	}
 
+	// Catch case of no statuses early
+	if len(statusIDs) == 0 {
+		return nil, db.ErrNoEntries
+	}
+
 	// Allocate return slice (will be at most len statusIDS)
 	statuses := make([]*gtsmodel.Status, 0, len(statusIDs))
 
