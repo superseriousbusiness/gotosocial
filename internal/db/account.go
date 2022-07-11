@@ -54,6 +54,11 @@ type Account interface {
 	// In case of no entries, a 'no entries' error will be returned
 	GetAccountStatuses(ctx context.Context, accountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinnedOnly bool, mediaOnly bool, publicOnly bool) ([]*gtsmodel.Status, Error)
 
+	// GetAccountWebStatuses is similar to GetAccountStatuses, but it's specifically for returning statuses that
+	// should be visible via the web view of an account. So, only public, federated statuses that aren't boosts
+	// or replies.
+	GetAccountWebStatuses(ctx context.Context, accountID string, limit int, maxID string, minID string) ([]*gtsmodel.Status, Error)
+
 	GetAccountBlocks(ctx context.Context, accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, Error)
 
 	// GetAccountLastPosted simply gets the timestamp of the most recent post by the account.
