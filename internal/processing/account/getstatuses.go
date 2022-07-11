@@ -84,3 +84,45 @@ func (p *processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 		},
 	})
 }
+
+func (p *processor) WebStatusesGet(ctx context.Context, targetAccountID string, maxID string, minID string) (*apimodel.TimelineResponse, gtserror.WithCode) {
+	acct, err := p.db.GetAccountByID(ctx, targetAccountID)
+	if err != nil {
+		if err == db.ErrNoEntries {
+			err := fmt.Errorf("account %s not found in the db, not getting web statuses for it", targetAccountID)
+			return nil, gtserror.NewErrorNotFound(err)
+		}
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if acct.Domain != "" {
+		err := fmt.Errorf("account %s was not a local account, not getting web statuses for it", targetAccountID)
+		return nil, gtserror.NewErrorNotFound(err)
+	}
+
+	statuses, err := p.db.GetAccountWebStatuses(ctx, targetAccountID, 10, maxID, minID)
+	if err != nil {
+		if err == db.ErrNoEntries {
+			return util.EmptyTimelineResponse(), nil
+		}
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	timelineables := []timeline.Timelineable{}
+	for _, i := range statuses {
+		apiStatus, err := p.tc.StatusToAPIStatus(ctx, i, nil)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status to api: %s", err))
+		}
+
+		timelineables = append(timelineables, apiStatus)
+	}
+
+	return util.PackageTimelineableResponse(util.TimelineableResponseParams{
+		Items:            timelineables,
+		Path:             "/@" + acct.Username,
+		NextMaxIDValue:   timelineables[len(timelineables)-1].GetID(),
+		PrevMinIDValue:   timelineables[0].GetID(),
+		ExtraQueryParams: []string{},
+	})
+}

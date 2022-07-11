@@ -50,6 +50,10 @@ func (p *processor) AccountStatusesGet(ctx context.Context, authed *oauth.Auth, 
 	return p.accountProcessor.StatusesGet(ctx, authed.Account, targetAccountID, limit, excludeReplies, excludeReblogs, maxID, minID, pinnedOnly, mediaOnly, publicOnly)
 }
 
+func (p *processor) AccountWebStatusesGet(ctx context.Context, targetAccountID string, maxID string, minID string)(*apimodel.TimelineResponse, gtserror.WithCode) {
+	return p.accountProcessor.WebStatusesGet(ctx, targetAccountID, maxID, minID)
+}
+
 func (p *processor) AccountFollowersGet(ctx context.Context, authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, gtserror.WithCode) {
 	return p.accountProcessor.FollowersGet(ctx, authed.Account, targetAccountID)
 }
