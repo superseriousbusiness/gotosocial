@@ -33,7 +33,8 @@ func init() {
 				NewCreateIndex().
 				Model(&gtsmodel.Status{}).
 				Index("statuses_profile_web_view_idx").
-				Column("account_id", "in_reply_to_id", "boost_of_id", "visibility", "federated", "id").
+				Column("account_id", "visibility").
+				ColumnExpr("id DESC").
 				Exec(ctx)
 
 			return err
