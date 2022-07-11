@@ -36,6 +36,13 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
+const (
+	// MaxStatusIDKey is for specifying the maximum ID of the status to retrieve.
+	MaxStatusIDKey = "max_id"
+	// MinStatusIDKey is for specifying the minimum ID of the status to retrieve.
+	MinStatusIDKey = "min_id"
+)
+
 func (m *Module) profileGETHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -78,13 +85,30 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		return
 	}
 
-	// get latest 10 top-level public statuses;
-	// ie., exclude replies and boosts, public only,
-	// with or without media
-	statusResp, errWithCode := m.processor.AccountStatusesGet(ctx, authed, account.ID, 10, true, true, "", "", false, false, true)
+	maxStatusID := ""
+	maxStatusIDString := c.Query(MaxStatusIDKey)
+	if maxStatusIDString != "" {
+		maxStatusID = maxStatusIDString
+	}
+
+	minStatusID := ""
+	minStatusIDString := c.Query(MinStatusIDKey)
+	if minStatusIDString != "" {
+		minStatusID = minStatusIDString
+	}
+
+	statusResp, errWithCode := m.processor.AccountWebStatusesGet(ctx, account.ID, maxStatusID, minStatusID)
 	if errWithCode != nil {
 		api.ErrorHandler(c, errWithCode, instanceGet)
 		return
+	}
+
+	var nextMaxStatusID string
+	var prevMinStatusID string
+	if statusResp.LinkHeader != "" {
+		c.Header("Link", statusResp.LinkHeader)
+		nextMaxStatusID = statusResp.Items[len(statusResp.Items)-1].GetID()
+		prevMinStatusID = statusResp.Items[0].GetID()
 	}
 
 	// pick a random dummy avatar if this account avatar isn't set yet
@@ -103,9 +127,11 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "profile.tmpl", gin.H{
-		"instance": instance,
-		"account":  account,
-		"statuses": statusResp.Items,
+		"instance":             instance,
+		"account":              account,
+		"statuses":             statusResp.Items,
+		"statuses_next_max_id": nextMaxStatusID,
+		"statuses_prev_min_id": prevMinStatusID,
 		"stylesheets": []string{
 			"/assets/Fork-Awesome/css/fork-awesome.min.css",
 			"/assets/dist/status.css",
