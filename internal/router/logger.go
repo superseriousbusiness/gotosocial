@@ -56,6 +56,12 @@ func loggingMiddleware(c *gin.Context) {
 			fmt.Fprintf(os.Stderr, "recovered panic: %v\n%s", r, callers)
 		}
 
+		// NOTE:
+		// It is very important here that we are ONLY logging
+		// the request path, and none of the query parameters.
+		// Query parameters can contain sensitive information
+		// and could lead to storing plaintext API keys in logs
+
 		// Set request logging fields
 		fields["latency"] = time.Since(before)
 		fields["clientIP"] = c.ClientIP()
