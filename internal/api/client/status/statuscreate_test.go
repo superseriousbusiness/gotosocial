@@ -28,7 +28,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -52,13 +51,12 @@ https://docs.gotosocial.org/en/latest/user_guide/posts/#links
 
 // Post a new status with some custom visibility settings
 func (suite *StatusCreateTestSuite) TestPostNewStatus() {
-
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.DBTokenToToken(t)
 
 	// setup
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
@@ -108,7 +106,6 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 
 // mention an account that is not yet known to the instance -- it should be looked up and put in the db
 func (suite *StatusCreateTestSuite) TestMentionUnknownAccount() {
-
 	// first remove remote account 1 from the database so it gets looked up again
 	remoteAccount := suite.testAccounts["remote_account_1"]
 	if err := suite.db.DeleteByID(context.Background(), remoteAccount.ID, &gtsmodel.Account{}); err != nil {
@@ -120,7 +117,7 @@ func (suite *StatusCreateTestSuite) TestMentionUnknownAccount() {
 
 	// setup
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
@@ -150,13 +147,12 @@ func (suite *StatusCreateTestSuite) TestMentionUnknownAccount() {
 }
 
 func (suite *StatusCreateTestSuite) TestPostAnotherNewStatus() {
-
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.DBTokenToToken(t)
 
 	// setup
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
@@ -186,13 +182,12 @@ func (suite *StatusCreateTestSuite) TestPostAnotherNewStatus() {
 }
 
 func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
-
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.DBTokenToToken(t)
 
 	// setup
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
@@ -234,7 +229,7 @@ func (suite *StatusCreateTestSuite) TestReplyToNonexistentStatus() {
 
 	// setup
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
@@ -266,7 +261,7 @@ func (suite *StatusCreateTestSuite) TestReplyToLocalStatus() {
 
 	// setup
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
@@ -309,7 +304,7 @@ func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
 
 	// setup
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])

@@ -31,7 +31,7 @@ import (
 )
 
 // LoadTemplates loads html templates for use by the given engine
-func loadTemplates(engine *gin.Engine) error {
+func LoadTemplates(engine *gin.Engine) error {
 	templateBaseDir := config.GetWebTemplateBaseDir()
 	if templateBaseDir == "" {
 		return fmt.Errorf("%s cannot be empty and must be a relative or absolute path", config.WebTemplateBaseDirFlag())

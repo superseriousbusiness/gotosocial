@@ -33,6 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type StatusFaveTestSuite struct {
@@ -41,7 +42,6 @@ type StatusFaveTestSuite struct {
 
 // fave a status
 func (suite *StatusFaveTestSuite) TestPostFave() {
-
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.DBTokenToToken(t)
 
@@ -49,7 +49,7 @@ func (suite *StatusFaveTestSuite) TestPostFave() {
 
 	// setup
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
@@ -90,7 +90,6 @@ func (suite *StatusFaveTestSuite) TestPostFave() {
 
 // try to fave a status that's not faveable
 func (suite *StatusFaveTestSuite) TestPostUnfaveable() {
-
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.DBTokenToToken(t)
 
@@ -98,7 +97,7 @@ func (suite *StatusFaveTestSuite) TestPostUnfaveable() {
 
 	// setup
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])

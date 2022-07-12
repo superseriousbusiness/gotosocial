@@ -41,12 +41,6 @@ func Initialize() error {
 	out := SplitErrOutputs(os.Stdout, os.Stderr)
 	logrus.SetOutput(out)
 
-	logrus.SetFormatter(&logrus.TextFormatter{
-		DisableColors: true,
-		DisableQuote:  true,
-		FullTimestamp: true,
-	})
-
 	// check if a desired log level has been set
 	if lvl := config.GetLogLevel(); lvl != "" {
 		level, err := logrus.ParseLevel(lvl)
@@ -59,6 +53,18 @@ func Initialize() error {
 			logrus.SetReportCaller(true)
 		}
 	}
+
+	// set our custom formatter options
+	logrus.SetFormatter(&logrus.TextFormatter{
+		DisableColors: true,
+		FullTimestamp: true,
+
+		// By default, quoting is enabled to help differentiate key-value
+		// fields in log lines. But when debug (or higher, e.g. trace) logging
+		// is enabled, we disable this. This allows easier copy-pasting of
+		// entry fields without worrying about escaped quotes.
+		DisableQuote: logrus.GetLevel() >= logrus.DebugLevel,
+	})
 
 	// check if syslog has been enabled, and configure it if so
 	if config.GetSyslogEnabled() {

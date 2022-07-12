@@ -143,9 +143,7 @@ func New(ctx context.Context, db db.DB) (Router, error) {
 
 	// create the actual engine here -- this is the core request routing handler for gts
 	engine := gin.New()
-
-	engine.Use(gin.RecoveryWithWriter(logrus.StandardLogger().Writer()))
-	engine.Use(loggingMiddleware())
+	engine.Use(loggingMiddleware)
 
 	// 8 MiB
 	engine.MaxMultipartMemory = 8 << 20
@@ -175,7 +173,7 @@ func New(ctx context.Context, db db.DB) (Router, error) {
 	LoadTemplateFunctions(engine)
 
 	// load templates onto the engine
-	if err := loadTemplates(engine); err != nil {
+	if err := LoadTemplates(engine); err != nil {
 		return nil, err
 	}
 

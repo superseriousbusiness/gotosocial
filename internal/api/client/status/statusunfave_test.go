@@ -33,6 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type StatusUnfaveTestSuite struct {
@@ -41,7 +42,6 @@ type StatusUnfaveTestSuite struct {
 
 // unfave a status
 func (suite *StatusUnfaveTestSuite) TestPostUnfave() {
-
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.DBTokenToToken(t)
 
@@ -50,7 +50,7 @@ func (suite *StatusUnfaveTestSuite) TestPostUnfave() {
 
 	// setup
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
@@ -91,7 +91,6 @@ func (suite *StatusUnfaveTestSuite) TestPostUnfave() {
 
 // try to unfave a status that's already not faved
 func (suite *StatusUnfaveTestSuite) TestPostAlreadyNotFaved() {
-
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.DBTokenToToken(t)
 
@@ -100,7 +99,7 @@ func (suite *StatusUnfaveTestSuite) TestPostAlreadyNotFaved() {
 
 	// setup
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])

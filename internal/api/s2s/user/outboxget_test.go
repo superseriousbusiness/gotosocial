@@ -57,7 +57,7 @@ func (suite *OutboxGetTestSuite) TestGetOutbox() {
 
 	// setup request
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Request = httptest.NewRequest(http.MethodGet, targetAccount.OutboxURI, nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/activity+json")
 	ctx.Request.Header.Set("Signature", signedRequest.SignatureHeader)
@@ -115,7 +115,7 @@ func (suite *OutboxGetTestSuite) TestGetOutboxFirstPage() {
 
 	// setup request
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Request = httptest.NewRequest(http.MethodGet, targetAccount.OutboxURI+"?page=true", nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/activity+json")
 	ctx.Request.Header.Set("Signature", signedRequest.SignatureHeader)
@@ -173,7 +173,7 @@ func (suite *OutboxGetTestSuite) TestGetOutboxNextPage() {
 
 	// setup request
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Request = httptest.NewRequest(http.MethodGet, targetAccount.OutboxURI+"?page=true&max_id=01F8MHAMCHF6Y650WCRSCP4WMY", nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/activity+json")
 	ctx.Request.Header.Set("Signature", signedRequest.SignatureHeader)

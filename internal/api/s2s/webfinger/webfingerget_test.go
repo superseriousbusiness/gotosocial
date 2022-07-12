@@ -26,7 +26,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/webfinger"
@@ -49,7 +48,7 @@ func (suite *WebfingerGetTestSuite) TestFingerUser() {
 	requestPath := fmt.Sprintf("/%s?resource=acct:%s@%s", webfinger.WebfingerBasePath, targetAccount.Username, host)
 
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Request = httptest.NewRequest(http.MethodGet, requestPath, nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/json")
 
@@ -86,7 +85,7 @@ func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByHo
 	requestPath := fmt.Sprintf("/%s?resource=acct:%s@%s", webfinger.WebfingerBasePath, targetAccount.Username, host)
 
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Request = httptest.NewRequest(http.MethodGet, requestPath, nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/json")
 
@@ -123,7 +122,7 @@ func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByAc
 	requestPath := fmt.Sprintf("/%s?resource=acct:%s@%s", webfinger.WebfingerBasePath, targetAccount.Username, accountDomain)
 
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Request = httptest.NewRequest(http.MethodGet, requestPath, nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/json")
 
@@ -149,7 +148,7 @@ func (suite *WebfingerGetTestSuite) TestFingerUserWithoutAcct() {
 	requestPath := fmt.Sprintf("/%s?resource=%s@%s", webfinger.WebfingerBasePath, targetAccount.Username, host)
 
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Request = httptest.NewRequest(http.MethodGet, requestPath, nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/json")
 

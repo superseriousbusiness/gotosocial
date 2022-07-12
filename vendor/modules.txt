@@ -7,6 +7,9 @@ codeberg.org/gruf/go-bitutil
 # codeberg.org/gruf/go-bytes v1.0.2
 ## explicit; go 1.14
 codeberg.org/gruf/go-bytes
+# codeberg.org/gruf/go-bytesize v0.2.1
+## explicit; go 1.17
+codeberg.org/gruf/go-bytesize
 # codeberg.org/gruf/go-byteutil v1.0.2
 ## explicit; go 1.16
 codeberg.org/gruf/go-byteutil
