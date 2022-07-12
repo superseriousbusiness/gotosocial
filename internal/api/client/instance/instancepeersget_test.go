@@ -26,7 +26,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/render"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/instance"
@@ -41,7 +40,7 @@ type InstancePeersGetTestSuite struct {
 
 func (suite *InstancePeersGetTestSuite) TestInstancePeersGetNoParams() {
 	recorder := httptest.NewRecorder()
-	ctx, r := gin.CreateTestContext(recorder)
+	ctx, r := testrig.CreateGinTestContext(recorder, nil)
 	r.HTMLRender = render.HTMLDebug{}
 
 	baseURI := fmt.Sprintf("%s://%s", config.GetProtocol(), config.GetHost())

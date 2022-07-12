@@ -130,7 +130,7 @@ func (suite *MediaUpdateTestSuite) TestUpdateImage() {
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.DBTokenToToken(t)
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
@@ -195,7 +195,7 @@ func (suite *MediaUpdateTestSuite) TestUpdateImageShortDescription() {
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.DBTokenToToken(t)
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])

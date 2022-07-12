@@ -59,7 +59,7 @@ func (suite *StatusGetTestSuite) TestGetStatus() {
 
 	// setup request
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Request = httptest.NewRequest(http.MethodGet, targetStatus.URI, nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/activity+json")
 	ctx.Request.Header.Set("Signature", signedRequest.SignatureHeader)
@@ -127,7 +127,7 @@ func (suite *StatusGetTestSuite) TestGetStatusLowercase() {
 
 	// setup request
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Request = httptest.NewRequest(http.MethodGet, strings.ToLower(targetStatus.URI), nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/activity+json")
 	ctx.Request.Header.Set("Signature", signedRequest.SignatureHeader)

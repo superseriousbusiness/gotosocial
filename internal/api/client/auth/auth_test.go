@@ -111,7 +111,7 @@ func (suite *AuthStandardTestSuite) TearDownTest() {
 func (suite *AuthStandardTestSuite) newContext(requestMethod string, requestPath string, requestBody []byte, bodyContentType string) (*gin.Context, *httptest.ResponseRecorder) {
 	// create the recorder and gin test context
 	recorder := httptest.NewRecorder()
-	ctx, engine := gin.CreateTestContext(recorder)
+	ctx, engine := testrig.CreateGinTestContext(recorder, nil)
 
 	// load templates into the engine
 	testrig.ConfigureTemplatesWithGin(engine, "../../../../web/template")

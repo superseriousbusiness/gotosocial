@@ -60,7 +60,7 @@ func (suite *UserGetTestSuite) TestGetUser() {
 
 	// setup request
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Request = httptest.NewRequest(http.MethodGet, targetAccount.URI, nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/activity+json")
 	ctx.Request.Header.Set("Signature", signedRequest.SignatureHeader)
@@ -141,7 +141,7 @@ func (suite *UserGetTestSuite) TestGetUserPublicKeyDeleted() {
 
 	// setup request
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Request = httptest.NewRequest(http.MethodGet, targetAccount.PublicKeyURI, nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/activity+json")
 	ctx.Request.Header.Set("Signature", signedRequest.SignatureHeader)

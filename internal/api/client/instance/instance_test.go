@@ -24,7 +24,6 @@ import (
 	"net/http/httptest"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/render"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/instance"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
@@ -100,8 +99,21 @@ func (suite *InstanceStandardTestSuite) TearDownTest() {
 }
 
 func (suite *InstanceStandardTestSuite) newContext(recorder *httptest.ResponseRecorder, method string, path string, body []byte, contentType string, auth bool) *gin.Context {
-	ctx, e := gin.CreateTestContext(recorder)
-	e.HTMLRender = render.HTMLDebug{}
+	protocol := config.GetProtocol()
+	host := config.GetHost()
+
+	baseURI := fmt.Sprintf("%s://%s", protocol, host)
+	requestURI := fmt.Sprintf("%s/%s", baseURI, path)
+
+	req := httptest.NewRequest(method, requestURI, bytes.NewReader(body)) // the endpoint we're hitting
+
+	if contentType != "" {
+		req.Header.Set("Content-Type", contentType)
+	}
+
+	req.Header.Set("accept", "application/json")
+
+	ctx, _ := testrig.CreateGinTestContext(recorder, req)
 
 	if auth {
 		ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["admin_account"])
@@ -109,20 +121,6 @@ func (suite *InstanceStandardTestSuite) newContext(recorder *httptest.ResponseRe
 		ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["admin_account"])
 		ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["admin_account"])
 	}
-
-	protocol := config.GetProtocol()
-	host := config.GetHost()
-
-	baseURI := fmt.Sprintf("%s://%s", protocol, host)
-	requestURI := fmt.Sprintf("%s/%s", baseURI, path)
-
-	ctx.Request = httptest.NewRequest(method, requestURI, bytes.NewReader(body)) // the endpoint we're hitting
-
-	if contentType != "" {
-		ctx.Request.Header.Set("Content-Type", contentType)
-	}
-
-	ctx.Request.Header.Set("accept", "application/json")
 
 	return ctx
 }
