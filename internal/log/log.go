@@ -59,9 +59,10 @@ func Initialize() error {
 		DisableColors: true,
 		FullTimestamp: true,
 
-		// we disable quoting on debug builds, as this
-		// allows for easier copy and pasting of queries
-		// from debug log output to the database :)
+		// By default, quoting is enabled to help differentiate key-value
+		// fields in log lines. But when debug (or higher, e.g. trace) logging
+		// is enabled, we disable this. This allows easier copy-pasting of
+		// entry fields without worrying about escaped quotes.
 		DisableQuote: logrus.GetLevel() >= logrus.DebugLevel,
 	})
 
