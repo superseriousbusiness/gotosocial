@@ -50,7 +50,7 @@ func (p *processor) AccountStatusesGet(ctx context.Context, authed *oauth.Auth, 
 	return p.accountProcessor.StatusesGet(ctx, authed.Account, targetAccountID, limit, excludeReplies, excludeReblogs, maxID, minID, pinnedOnly, mediaOnly, publicOnly)
 }
 
-func (p *processor) AccountWebStatusesGet(ctx context.Context, targetAccountID string, maxID string)(*apimodel.TimelineResponse, gtserror.WithCode) {
+func (p *processor) AccountWebStatusesGet(ctx context.Context, targetAccountID string, maxID string) (*apimodel.TimelineResponse, gtserror.WithCode) {
 	return p.accountProcessor.WebStatusesGet(ctx, targetAccountID, maxID)
 }
 
