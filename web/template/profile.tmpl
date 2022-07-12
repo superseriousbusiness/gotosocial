@@ -39,5 +39,13 @@
             {{ end }}
         </div>
         {{ end }}
+    <div class="backnextlinks">
+        {{ if .show_back_to_top }}
+        <a href="/@{{ .account.Username }}">Back to top</a>
+        {{ end }}
+        {{ if .statuses_next }}
+        <a href="{{ .statuses_next }}" class="next">Show older</a>
+        {{ end }}
+    </div>
 </main>
 {{ template "footer.tmpl" .}}

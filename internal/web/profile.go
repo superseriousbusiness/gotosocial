@@ -39,8 +39,6 @@ import (
 const (
 	// MaxStatusIDKey is for specifying the maximum ID of the status to retrieve.
 	MaxStatusIDKey = "max_id"
-	// MinStatusIDKey is for specifying the minimum ID of the status to retrieve.
-	MinStatusIDKey = "min_id"
 )
 
 func (m *Module) profileGETHandler(c *gin.Context) {
@@ -85,30 +83,21 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		return
 	}
 
+	// we should only show the 'back to top' button if the
+	// profile visitor is paging through statuses
+	showBackToTop := false
+
 	maxStatusID := ""
 	maxStatusIDString := c.Query(MaxStatusIDKey)
 	if maxStatusIDString != "" {
 		maxStatusID = maxStatusIDString
+		showBackToTop = true
 	}
 
-	minStatusID := ""
-	minStatusIDString := c.Query(MinStatusIDKey)
-	if minStatusIDString != "" {
-		minStatusID = minStatusIDString
-	}
-
-	statusResp, errWithCode := m.processor.AccountWebStatusesGet(ctx, account.ID, maxStatusID, minStatusID)
+	statusResp, errWithCode := m.processor.AccountWebStatusesGet(ctx, account.ID, maxStatusID)
 	if errWithCode != nil {
 		api.ErrorHandler(c, errWithCode, instanceGet)
 		return
-	}
-
-	var nextMaxStatusID string
-	var prevMinStatusID string
-	if statusResp.LinkHeader != "" {
-		c.Header("Link", statusResp.LinkHeader)
-		nextMaxStatusID = statusResp.Items[len(statusResp.Items)-1].GetID()
-		prevMinStatusID = statusResp.Items[0].GetID()
 	}
 
 	// pick a random dummy avatar if this account avatar isn't set yet
@@ -127,11 +116,11 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "profile.tmpl", gin.H{
-		"instance":             instance,
-		"account":              account,
-		"statuses":             statusResp.Items,
-		"statuses_next_max_id": nextMaxStatusID,
-		"statuses_prev_min_id": prevMinStatusID,
+		"instance":         instance,
+		"account":          account,
+		"statuses":         statusResp.Items,
+		"statuses_next":    statusResp.NextLink,
+		"show_back_to_top": showBackToTop,
 		"stylesheets": []string{
 			"/assets/Fork-Awesome/css/fork-awesome.min.css",
 			"/assets/dist/status.css",
