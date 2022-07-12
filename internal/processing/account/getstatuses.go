@@ -85,7 +85,7 @@ func (p *processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 	})
 }
 
-func (p *processor) WebStatusesGet(ctx context.Context, targetAccountID string, maxID string, minID string) (*apimodel.TimelineResponse, gtserror.WithCode) {
+func (p *processor) WebStatusesGet(ctx context.Context, targetAccountID string, maxID string) (*apimodel.TimelineResponse, gtserror.WithCode) {
 	acct, err := p.db.GetAccountByID(ctx, targetAccountID)
 	if err != nil {
 		if err == db.ErrNoEntries {
@@ -100,7 +100,7 @@ func (p *processor) WebStatusesGet(ctx context.Context, targetAccountID string, 
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	statuses, err := p.db.GetAccountWebStatuses(ctx, targetAccountID, 10, maxID, minID)
+	statuses, err := p.db.GetAccountWebStatuses(ctx, targetAccountID, 10, maxID)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return util.EmptyTimelineResponse(), nil

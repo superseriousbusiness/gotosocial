@@ -58,7 +58,7 @@ type Processor interface {
 	StatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinned bool, mediaOnly bool, publicOnly bool) (*apimodel.TimelineResponse, gtserror.WithCode)
 	// WebStatusesGet fetches a number of statuses (in descending order) from the given account. It selects only
 	// statuses which are suitable for showing on the public web profile of an account.
-	WebStatusesGet(ctx context.Context, targetAccountID string, maxID string, minID string) (*apimodel.TimelineResponse, gtserror.WithCode)
+	WebStatusesGet(ctx context.Context, targetAccountID string, maxID string) (*apimodel.TimelineResponse, gtserror.WithCode)
 	// FollowersGet fetches a list of the target account's followers.
 	FollowersGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) ([]apimodel.Account, gtserror.WithCode)
 	// FollowingGet fetches a list of the accounts that target account is following.

@@ -304,7 +304,7 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 	return a.statusesFromIDs(ctx, statusIDs)
 }
 
-func (a *accountDB) GetAccountWebStatuses(ctx context.Context, accountID string, limit int, maxID string, minID string) ([]*gtsmodel.Status, db.Error) {
+func (a *accountDB) GetAccountWebStatuses(ctx context.Context, accountID string, limit int, maxID string) ([]*gtsmodel.Status, db.Error) {
 	statusIDs := []string{}
 
 	q := a.conn.
@@ -319,10 +319,6 @@ func (a *accountDB) GetAccountWebStatuses(ctx context.Context, accountID string,
 
 	if maxID != "" {
 		q = q.Where("id < ?", maxID)
-	}
-
-	if minID != "" {
-		q = q.Where("id > ?", minID)
 	}
 
 	q = q.Limit(limit).Order("id DESC")
