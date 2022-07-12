@@ -28,12 +28,16 @@
         </div>
     </div>
     <h2 id="recent">Recent public toots</h2>
-	<div class="thread">
-		{{range .statuses}}
-		<div class="toot expanded">
-			{{ template "status.tmpl" .}}
-		</div>
-		{{end}}
-	</div>
+	    {{ if not .statuses }}
+        <div class="nothinghere">Nothing here!</div>
+        {{ else }}
+        <div class="thread">
+            {{ range .statuses }}
+            <div class="toot expanded">
+                {{ template "status.tmpl" .}}
+            </div>
+            {{ end }}
+        </div>
+        {{ end }}
 </main>
 {{ template "footer.tmpl" .}}

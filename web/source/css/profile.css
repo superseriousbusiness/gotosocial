@@ -160,6 +160,10 @@ main {
 	}
 }
 
+.nothinghere {
+	margin-left: 1rem;
+}
+
 .toot, .toot:last-child {
 	box-shadow: $boxshadow;
 }
