@@ -28,22 +28,20 @@ main {
 }
 
 .profile {
-	position: relative;
 	background: $bg_accent;
 	display: grid;
-	grid-template-rows: minmax(6rem, 20%) auto auto;
-	grid-template-columns: 1fr;
-	flex-wrap: wrap;
-	justify-content: space-around;
+	grid-template-rows: auto auto auto;
+	grid-template-columns: auto;
 	gap: 0.5rem;
 	margin-bottom: 0.2rem;
-	border-radius: $br;
+	overflow-x: hidden;
 
+	border-radius: $br;
 	box-shadow: $boxshadow;
 	border: $boxshadow_border;
 
 	.headerimage {
-		height: 100%;
+		width: 100%;
 		aspect-ratio: 3 / 1;
 		overflow: hidden;
 		box-shadow: $boxshadow;
@@ -62,20 +60,20 @@ main {
 
 		display: grid;
 		grid-template-columns: 1rem auto 1fr;
-		grid-template-rows: 1fr auto auto;
+		grid-template-rows: auto auto auto;
 
 		grid-template-areas:
-			". avatar ."
+			".       avatar ."
 			"filler2 avatar displayname"
-			". avatar username";
+			".       avatar username";
 
 		#profile-basic-filler2 {
 			grid-area: filler2;
 			background: $bg_trans;
-			margin-top: 0.3rem;
 		}
 
 		.avatar {
+			align-self: end;
 			box-sizing: border-box;
 			height: 8.5rem;
 			width: 8.5rem;
@@ -104,10 +102,8 @@ main {
 		.displayname {
 			grid-area: displayname;
 			padding-right: 1rem;
-			align-self: end;
 			font-weight: bold;
 			font-size: 2rem;
-			margin-top: 0.3rem;
 			line-height: 2.2rem;
 			background: $bg_trans;
 			word-break: break-all;
@@ -117,17 +113,53 @@ main {
 		}
 
 		.username {
+			display: flex;
+			flex-wrap: wrap;
+
 			grid-area: username;
 			padding-top: 0;
 			margin-top: 0.25rem;
 			padding-bottom: 0.25rem;
 			color: $fg_accent;
 			font-weight: bold;
+			word-break: break-all;
+			text-overflow: ellipsis;
+			overflow: hidden;
+		}
+	}
+
+	@media screen and (max-width: 600px) {
+		.basic {
+			max-height: initial;
+			margin-top: -7.5vh;
+
+			display: flex;
+			flex-direction: column;
+
+			#profile-basic-filler2 {
+				display: none;
+			}
+
+			.avatar {
+				align-self: flex-start;
+				margin-left: 1rem;
+				height: 22vw;
+				width: 22vw;
+			}
+
+			.displayname {
+				padding-left: 1rem;
+				font-size: 5vw;
+				align-self: stretch;
+			}
+
+			.username {
+				padding-left: 1rem;
+			}
 		}
 	}
 
 	.detailed {
-		padding: 0 1rem;
 		display: flex;
 		flex-direction: column;
 		flex: 1 1 25em;
@@ -137,7 +169,11 @@ main {
 		}
 
 		.bio {
-			margin: 0.5rem 0;
+			margin-top: 0.5rem;
+			margin-bottom: 0.5rem;
+			margin-left: 1rem;
+			margin-right: 1rem;
+			word-break: break-word;
 
 			a {
 				color: $acc1;
