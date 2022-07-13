@@ -301,27 +301,33 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 		return nil, a.conn.ProcessError(err)
 	}
 
-	// Catch case of no statuses early
-	if len(statusIDs) == 0 {
-		return nil, db.ErrNoEntries
+	return a.statusesFromIDs(ctx, statusIDs)
+}
+
+func (a *accountDB) GetAccountWebStatuses(ctx context.Context, accountID string, limit int, maxID string) ([]*gtsmodel.Status, db.Error) {
+	statusIDs := []string{}
+
+	q := a.conn.
+		NewSelect().
+		Table("statuses").
+		Column("id").
+		Where("account_id = ?", accountID).
+		WhereGroup(" AND ", whereEmptyOrNull("in_reply_to_id")).
+		WhereGroup(" AND ", whereEmptyOrNull("boost_of_id")).
+		Where("visibility = ?", gtsmodel.VisibilityPublic).
+		Where("federated = ?", true)
+
+	if maxID != "" {
+		q = q.Where("id < ?", maxID)
 	}
 
-	// Allocate return slice (will be at most len statusIDS)
-	statuses := make([]*gtsmodel.Status, 0, len(statusIDs))
+	q = q.Limit(limit).Order("id DESC")
 
-	for _, id := range statusIDs {
-		// Fetch from status from database by ID
-		status, err := a.status.GetStatusByID(ctx, id)
-		if err != nil {
-			logrus.Errorf("GetAccountStatuses: error getting status %q: %v", id, err)
-			continue
-		}
-
-		// Append to return slice
-		statuses = append(statuses, status)
+	if err := q.Scan(ctx, &statusIDs); err != nil {
+		return nil, a.conn.ProcessError(err)
 	}
 
-	return statuses, nil
+	return a.statusesFromIDs(ctx, statusIDs)
 }
 
 func (a *accountDB) GetAccountBlocks(ctx context.Context, accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, db.Error) {
@@ -362,4 +368,28 @@ func (a *accountDB) GetAccountBlocks(ctx context.Context, accountID string, maxI
 	nextMaxID := blocks[len(blocks)-1].ID
 	prevMinID := blocks[0].ID
 	return accounts, nextMaxID, prevMinID, nil
+}
+
+func (a *accountDB) statusesFromIDs(ctx context.Context, statusIDs []string) ([]*gtsmodel.Status, db.Error) {
+	// Catch case of no statuses early
+	if len(statusIDs) == 0 {
+		return nil, db.ErrNoEntries
+	}
+
+	// Allocate return slice (will be at most len statusIDS)
+	statuses := make([]*gtsmodel.Status, 0, len(statusIDs))
+
+	for _, id := range statusIDs {
+		// Fetch from status from database by ID
+		status, err := a.status.GetStatusByID(ctx, id)
+		if err != nil {
+			logrus.Errorf("statusesFromIDs: error getting status %q: %v", id, err)
+			continue
+		}
+
+		// Append to return slice
+		statuses = append(statuses, status)
+	}
+
+	return statuses, nil
 }

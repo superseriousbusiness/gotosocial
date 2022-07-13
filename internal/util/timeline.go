@@ -61,12 +61,15 @@ func PackageTimelineableResponse(params TimelineableResponseParams) (*apimodel.T
 		Items: params.Items,
 	}
 
-	// prepare the next and previous links
 	if len(params.Items) != 0 {
 		protocol := config.GetProtocol()
 		host := config.GetHost()
 
-		nextRaw := fmt.Sprintf("limit=%d&%s=%s", params.Limit, params.NextMaxIDKey, params.NextMaxIDValue)
+		// next
+		nextRaw := params.NextMaxIDKey + "=" + params.NextMaxIDValue
+		if params.Limit != 0 {
+			nextRaw = fmt.Sprintf("limit=%d&", params.Limit) + nextRaw
+		}
 		for _, p := range params.ExtraQueryParams {
 			nextRaw = nextRaw + "&" + p
 		}
@@ -76,9 +79,14 @@ func PackageTimelineableResponse(params TimelineableResponseParams) (*apimodel.T
 			Path:     params.Path,
 			RawQuery: nextRaw,
 		}
-		next := fmt.Sprintf("<%s>; rel=\"next\"", nextLink.String())
+		nextLinkString := nextLink.String()
+		timelineResponse.NextLink = nextLinkString
 
-		prevRaw := fmt.Sprintf("limit=%d&%s=%s", params.Limit, params.PrevMinIDKey, params.PrevMinIDValue)
+		// prev
+		prevRaw := params.PrevMinIDKey + "=" + params.PrevMinIDValue
+		if params.Limit != 0 {
+			prevRaw = fmt.Sprintf("limit=%d&", params.Limit) + prevRaw
+		}
 		for _, p := range params.ExtraQueryParams {
 			prevRaw = prevRaw + "&" + p
 		}
@@ -88,7 +96,12 @@ func PackageTimelineableResponse(params TimelineableResponseParams) (*apimodel.T
 			Path:     params.Path,
 			RawQuery: prevRaw,
 		}
-		prev := fmt.Sprintf("<%s>; rel=\"prev\"", prevLink.String())
+		prevLinkString := prevLink.String()
+		timelineResponse.PrevLink = prevLinkString
+
+		// link header
+		next := fmt.Sprintf("<%s>; rel=\"next\"", nextLinkString)
+		prev := fmt.Sprintf("<%s>; rel=\"prev\"", prevLinkString)
 		timelineResponse.LinkHeader = next + ", " + prev
 	}
 
