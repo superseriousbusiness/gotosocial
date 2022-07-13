@@ -124,6 +124,10 @@ main {
 			color: $link_fg;
 			text-decoration: underline;
 		}
+
+		.content {
+			word-break: break-word;
+		}
 	}
 
 	.media {
