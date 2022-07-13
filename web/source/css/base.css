@@ -273,7 +273,6 @@ footer {
 	}
 
 	footer {
-		margin-top: 2rem;
 		grid-template-columns: 1fr;
 
 		div {
