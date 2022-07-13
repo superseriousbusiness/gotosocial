@@ -145,11 +145,12 @@ selectStatusesLoop:
 	for {
 		statuses, err := p.db.GetAccountStatuses(ctx, account.ID, 20, false, false, maxID, "", false, false, false)
 		if err != nil {
-			if err == db.ErrNoEntries {
+			if errors.Is(err, db.ErrNoEntries) {
 				// no statuses left for this instance so we're done
 				l.Infof("Delete: done iterating through statuses for account %s", account.Username)
 				break selectStatusesLoop
 			}
+
 			// an actual error has occurred
 			l.Errorf("Delete: db error selecting statuses for account %s: %s", account.Username, err)
 			break selectStatusesLoop
@@ -158,6 +159,7 @@ selectStatusesLoop:
 		for i, s := range statuses {
 			// pass the status delete through the client api channel for processing
 			s.Account = account
+
 			l.Debug("putting status in the client api channel")
 			p.clientWorker.Queue(messages.FromClientAPI{
 				APObjectType:   ap.ObjectNote,
@@ -168,20 +170,20 @@ selectStatusesLoop:
 			})
 
 			if err := p.db.DeleteByID(ctx, s.ID, s); err != nil {
-				if err != db.ErrNoEntries {
+				if !errors.Is(err, db.ErrNoEntries) {
 					// actual error has occurred
-					l.Errorf("Delete: db error status %s for account %s: %s", s.ID, account.Username, err)
-					break selectStatusesLoop
+					l.Errorf("Delete: db error deleting status %s for account %s: %s", s.ID, account.Username, err)
+					continue
 				}
 			}
 
 			// if there are any boosts of this status, delete them as well
 			boosts := []*gtsmodel.Status{}
 			if err := p.db.GetWhere(ctx, []db.Where{{Key: "boost_of_id", Value: s.ID}}, &boosts); err != nil {
-				if err != db.ErrNoEntries {
+				if !errors.Is(err, db.ErrNoEntries) {
 					// an actual error has occurred
 					l.Errorf("Delete: db error selecting boosts of status %s for account %s: %s", s.ID, account.Username, err)
-					break selectStatusesLoop
+					continue
 				}
 			}
 
@@ -189,8 +191,10 @@ selectStatusesLoop:
 				if b.Account == nil {
 					bAccount, err := p.db.GetAccountByID(ctx, b.AccountID)
 					if err != nil {
+						l.Errorf("Delete: db error populating boosted status account: %v", err)
 						continue
 					}
+
 					b.Account = bAccount
 				}
 
@@ -207,7 +211,7 @@ selectStatusesLoop:
 					if err != db.ErrNoEntries {
 						// actual error has occurred
 						l.Errorf("Delete: db error deleting boost with id %s: %s", b.ID, err)
-						break selectStatusesLoop
+						continue
 					}
 				}
 			}

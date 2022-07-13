@@ -25,4 +25,6 @@ import "github.com/superseriousbusiness/gotosocial/internal/timeline"
 type TimelineResponse struct {
 	Items      []timeline.Timelineable
 	LinkHeader string
+	NextLink   string
+	PrevLink   string
 }

@@ -98,27 +98,29 @@ func (suite *InstanceStandardTestSuite) TearDownTest() {
 	testrig.StandardStorageTeardown(suite.storage)
 }
 
-func (suite *InstanceStandardTestSuite) newContext(recorder *httptest.ResponseRecorder, requestMethod string, requestBody []byte, requestPath string, bodyContentType string) *gin.Context {
-	ctx, _ := gin.CreateTestContext(recorder)
-
-	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["admin_account"])
-	ctx.Set(oauth.SessionAuthorizedToken, oauth.DBTokenToToken(suite.testTokens["admin_account"]))
-	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["admin_account"])
-	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["admin_account"])
-
+func (suite *InstanceStandardTestSuite) newContext(recorder *httptest.ResponseRecorder, method string, path string, body []byte, contentType string, auth bool) *gin.Context {
 	protocol := config.GetProtocol()
 	host := config.GetHost()
 
 	baseURI := fmt.Sprintf("%s://%s", protocol, host)
-	requestURI := fmt.Sprintf("%s/%s", baseURI, requestPath)
+	requestURI := fmt.Sprintf("%s/%s", baseURI, path)
 
-	ctx.Request = httptest.NewRequest(requestMethod, requestURI, bytes.NewReader(requestBody)) // the endpoint we're hitting
+	req := httptest.NewRequest(method, requestURI, bytes.NewReader(body)) // the endpoint we're hitting
 
-	if bodyContentType != "" {
-		ctx.Request.Header.Set("Content-Type", bodyContentType)
+	if contentType != "" {
+		req.Header.Set("Content-Type", contentType)
 	}
 
-	ctx.Request.Header.Set("accept", "application/json")
+	req.Header.Set("accept", "application/json")
+
+	ctx, _ := testrig.CreateGinTestContext(recorder, req)
+
+	if auth {
+		ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["admin_account"])
+		ctx.Set(oauth.SessionAuthorizedToken, oauth.DBTokenToToken(suite.testTokens["admin_account"]))
+		ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["admin_account"])
+		ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["admin_account"])
+	}
 
 	return ctx
 }

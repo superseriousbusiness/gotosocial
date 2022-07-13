@@ -26,7 +26,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/render"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/instance"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -40,7 +40,8 @@ type InstancePeersGetTestSuite struct {
 
 func (suite *InstancePeersGetTestSuite) TestInstancePeersGetNoParams() {
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, r := testrig.CreateGinTestContext(recorder, nil)
+	r.HTMLRender = render.HTMLDebug{}
 
 	baseURI := fmt.Sprintf("%s://%s", config.GetProtocol(), config.GetHost())
 	requestURI := fmt.Sprintf("%s/%s", baseURI, instance.InstancePeersPath)
@@ -63,11 +64,9 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetNoParamsUnauthorized
 	config.SetInstanceExposePeers(false)
 
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
-
 	baseURI := fmt.Sprintf("%s://%s", config.GetProtocol(), config.GetHost())
 	requestURI := fmt.Sprintf("%s/%s", baseURI, instance.InstancePeersPath)
-	ctx.Request = httptest.NewRequest(http.MethodGet, requestURI, nil)
+	ctx := suite.newContext(recorder, http.MethodGet, requestURI, nil, "", false)
 
 	suite.instanceModule.InstancePeersGETHandler(ctx)
 
@@ -88,7 +87,7 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetNoParamsAuthorized()
 	recorder := httptest.NewRecorder()
 	baseURI := fmt.Sprintf("%s://%s", config.GetProtocol(), config.GetHost())
 	requestURI := fmt.Sprintf("%s/%s", baseURI, instance.InstancePeersPath)
-	ctx := suite.newContext(recorder, http.MethodGet, []byte{}, requestURI, "")
+	ctx := suite.newContext(recorder, http.MethodGet, requestURI, nil, "", true)
 
 	suite.instanceModule.InstancePeersGETHandler(ctx)
 
@@ -105,11 +104,9 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetNoParamsAuthorized()
 
 func (suite *InstancePeersGetTestSuite) TestInstancePeersGetOnlySuspended() {
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
-
 	baseURI := fmt.Sprintf("%s://%s", config.GetProtocol(), config.GetHost())
 	requestURI := fmt.Sprintf("%s/%s?filter=suspended", baseURI, instance.InstancePeersPath)
-	ctx.Request = httptest.NewRequest(http.MethodGet, requestURI, nil)
+	ctx := suite.newContext(recorder, http.MethodGet, requestURI, nil, "", false)
 
 	suite.instanceModule.InstancePeersGETHandler(ctx)
 
@@ -128,11 +125,9 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetOnlySuspendedUnautho
 	config.SetInstanceExposeSuspended(false)
 
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
-
 	baseURI := fmt.Sprintf("%s://%s", config.GetProtocol(), config.GetHost())
 	requestURI := fmt.Sprintf("%s/%s?filter=suspended", baseURI, instance.InstancePeersPath)
-	ctx.Request = httptest.NewRequest(http.MethodGet, requestURI, nil)
+	ctx := suite.newContext(recorder, http.MethodGet, requestURI, nil, "", false)
 
 	suite.instanceModule.InstancePeersGETHandler(ctx)
 
@@ -153,7 +148,7 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetOnlySuspendedAuthori
 	recorder := httptest.NewRecorder()
 	baseURI := fmt.Sprintf("%s://%s", config.GetProtocol(), config.GetHost())
 	requestURI := fmt.Sprintf("%s/%s?filter=suspended", baseURI, instance.InstancePeersPath)
-	ctx := suite.newContext(recorder, http.MethodGet, []byte{}, requestURI, "")
+	ctx := suite.newContext(recorder, http.MethodGet, requestURI, nil, "", true)
 
 	suite.instanceModule.InstancePeersGETHandler(ctx)
 
@@ -170,11 +165,9 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetOnlySuspendedAuthori
 
 func (suite *InstancePeersGetTestSuite) TestInstancePeersGetAll() {
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
-
 	baseURI := fmt.Sprintf("%s://%s", config.GetProtocol(), config.GetHost())
 	requestURI := fmt.Sprintf("%s/%s?filter=suspended,open", baseURI, instance.InstancePeersPath)
-	ctx.Request = httptest.NewRequest(http.MethodGet, requestURI, nil)
+	ctx := suite.newContext(recorder, http.MethodGet, requestURI, nil, "", false)
 
 	suite.instanceModule.InstancePeersGETHandler(ctx)
 
@@ -202,11 +195,9 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetAllWithObfuscated() 
 	suite.NoError(err)
 
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
-
 	baseURI := fmt.Sprintf("%s://%s", config.GetProtocol(), config.GetHost())
 	requestURI := fmt.Sprintf("%s/%s?filter=suspended,open", baseURI, instance.InstancePeersPath)
-	ctx.Request = httptest.NewRequest(http.MethodGet, requestURI, nil)
+	ctx := suite.newContext(recorder, http.MethodGet, requestURI, nil, "", false)
 
 	suite.instanceModule.InstancePeersGETHandler(ctx)
 
@@ -223,11 +214,9 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetAllWithObfuscated() 
 
 func (suite *InstancePeersGetTestSuite) TestInstancePeersGetFunkyParams() {
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
-
 	baseURI := fmt.Sprintf("%s://%s", config.GetProtocol(), config.GetHost())
 	requestURI := fmt.Sprintf("%s/%s?filter=aaaaaaaaaaaaaaaaa,open", baseURI, instance.InstancePeersPath)
-	ctx.Request = httptest.NewRequest(http.MethodGet, requestURI, nil)
+	ctx := suite.newContext(recorder, http.MethodGet, requestURI, nil, "", true)
 
 	suite.instanceModule.InstancePeersGETHandler(ctx)
 

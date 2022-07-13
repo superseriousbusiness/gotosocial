@@ -31,6 +31,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/account"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type BlockTestSuite struct {
@@ -40,7 +41,7 @@ type BlockTestSuite struct {
 func (suite *BlockTestSuite) TestBlockSelf() {
 	testAcct := suite.testAccounts["local_account_1"]
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Set(oauth.SessionAuthorizedAccount, testAcct)
 	ctx.Set(oauth.SessionAuthorizedToken, oauth.DBTokenToToken(suite.testTokens["local_account_1"]))
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])

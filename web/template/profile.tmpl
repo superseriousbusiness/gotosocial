@@ -27,13 +27,25 @@
             <div class="entry">Posted <b>{{.account.StatusesCount}}</b></div>
         </div>
     </div>
-    <h2 id="recent">Recent public toots</h2>
-	<div class="thread">
-		{{range .statuses}}
-		<div class="toot expanded">
-			{{ template "status.tmpl" .}}
-		</div>
-		{{end}}
-	</div>
+    <h2 id="recent">Latest public toots</h2>
+	    {{ if not .statuses }}
+        <div class="nothinghere">Nothing here!</div>
+        {{ else }}
+        <div class="thread">
+            {{ range .statuses }}
+            <div class="toot expanded">
+                {{ template "status.tmpl" .}}
+            </div>
+            {{ end }}
+        </div>
+        {{ end }}
+    <div class="backnextlinks">
+        {{ if .show_back_to_top }}
+        <a href="/@{{ .account.Username }}">Back to top</a>
+        {{ end }}
+        {{ if .statuses_next }}
+        <a href="{{ .statuses_next }}" class="next">Show older</a>
+        {{ end }}
+    </div>
 </main>
 {{ template "footer.tmpl" .}}

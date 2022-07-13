@@ -31,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type StatusBoostTestSuite struct {
@@ -38,7 +39,6 @@ type StatusBoostTestSuite struct {
 }
 
 func (suite *StatusBoostTestSuite) TestPostBoost() {
-
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.DBTokenToToken(t)
 
@@ -46,7 +46,7 @@ func (suite *StatusBoostTestSuite) TestPostBoost() {
 
 	// setup
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
@@ -112,7 +112,7 @@ func (suite *StatusBoostTestSuite) TestPostBoostOwnFollowersOnly() {
 	testUser := suite.testUsers["local_account_1"]
 
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, testUser)
@@ -170,7 +170,6 @@ func (suite *StatusBoostTestSuite) TestPostBoostOwnFollowersOnly() {
 
 // try to boost a status that's not boostable
 func (suite *StatusBoostTestSuite) TestPostUnboostable() {
-
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.DBTokenToToken(t)
 
@@ -178,7 +177,7 @@ func (suite *StatusBoostTestSuite) TestPostUnboostable() {
 
 	// setup
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
@@ -209,7 +208,6 @@ func (suite *StatusBoostTestSuite) TestPostUnboostable() {
 
 // try to boost a status that's not visible to the user
 func (suite *StatusBoostTestSuite) TestPostNotVisible() {
-
 	// stop local_account_2 following zork
 	err := suite.db.DeleteByID(context.Background(), suite.testFollows["local_account_2_local_account_1"].ID, &gtsmodel.Follow{})
 	suite.NoError(err)
@@ -221,7 +219,7 @@ func (suite *StatusBoostTestSuite) TestPostNotVisible() {
 
 	// setup
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_2"])

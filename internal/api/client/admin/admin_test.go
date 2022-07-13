@@ -100,7 +100,7 @@ func (suite *AdminStandardTestSuite) TearDownTest() {
 }
 
 func (suite *AdminStandardTestSuite) newContext(recorder *httptest.ResponseRecorder, requestMethod string, requestBody []byte, requestPath string, bodyContentType string) *gin.Context {
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["admin_account"])
 	ctx.Set(oauth.SessionAuthorizedToken, oauth.DBTokenToToken(suite.testTokens["admin_account"]))

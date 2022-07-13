@@ -126,7 +126,7 @@ func (suite *ServeFileTestSuite) TestServeOriginalFileSuccessful() {
 	suite.NotNil(targetAttachment)
 
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Request = httptest.NewRequest(http.MethodGet, targetAttachment.URL, nil)
 	ctx.Request.Header.Set("accept", "*/*")
 
@@ -172,7 +172,7 @@ func (suite *ServeFileTestSuite) TestServeSmallFileSuccessful() {
 	suite.NotNil(targetAttachment)
 
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Request = httptest.NewRequest(http.MethodGet, targetAttachment.Thumbnail.URL, nil)
 	ctx.Request.Header.Set("accept", "*/*")
 

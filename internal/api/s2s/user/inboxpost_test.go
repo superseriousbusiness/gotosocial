@@ -96,7 +96,7 @@ func (suite *InboxPostTestSuite) TestPostBlock() {
 
 	// setup request
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Request = httptest.NewRequest(http.MethodPost, targetURI.String(), body) // the endpoint we're hitting
 	ctx.Request.Header.Set("Signature", signature)
 	ctx.Request.Header.Set("Date", dateHeader)
@@ -199,7 +199,7 @@ func (suite *InboxPostTestSuite) TestPostUnblock() {
 
 	// setup request
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Request = httptest.NewRequest(http.MethodPost, targetURI.String(), body) // the endpoint we're hitting
 	ctx.Request.Header.Set("Signature", signature)
 	ctx.Request.Header.Set("Date", dateHeader)
@@ -292,7 +292,7 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 
 	// setup request
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Request = httptest.NewRequest(http.MethodPost, targetURI.String(), body) // the endpoint we're hitting
 	ctx.Request.Header.Set("Signature", signature)
 	ctx.Request.Header.Set("Date", dateHeader)
@@ -416,7 +416,7 @@ func (suite *InboxPostTestSuite) TestPostDelete() {
 
 	// setup request
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Request = httptest.NewRequest(http.MethodPost, targetURI.String(), body) // the endpoint we're hitting
 	ctx.Request.Header.Set("Signature", signature)
 	ctx.Request.Header.Set("Date", dateHeader)

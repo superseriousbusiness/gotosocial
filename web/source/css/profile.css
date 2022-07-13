@@ -193,6 +193,24 @@ main {
 	}
 }
 
+.nothinghere {
+	margin-left: 1rem;
+}
+
+.backnextlinks {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+
+	a {
+		padding: 1rem;
+	}
+
+	.next {
+		margin-left: auto;
+	}
+}
+
 .toot, .toot:last-child {
 	box-shadow: $boxshadow;
 }

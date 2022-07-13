@@ -16,30 +16,38 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package cache
+package migrations
 
 import (
-	"time"
+	"context"
 
-	"github.com/ReneKroon/ttlcache"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/uptrace/bun"
 )
 
-// Cache defines an in-memory cache that is safe to be wiped when the application is restarted
-type Cache interface {
-	Store(k string, v interface{}) error
-	Fetch(k string) (interface{}, error)
-}
+func init() {
+	up := func(ctx context.Context, db *bun.DB) error {
+		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			// profile web view index for statuses
+			_, err := tx.
+				NewCreateIndex().
+				Model(&gtsmodel.Status{}).
+				Index("statuses_profile_web_view_idx").
+				Column("account_id", "visibility").
+				ColumnExpr("id DESC").
+				Exec(ctx)
 
-type cache struct {
-	c *ttlcache.Cache
-}
-
-// New returns a new in-memory cache.
-func New() Cache {
-	c := ttlcache.NewCache()
-	c.SetTTL(5 * time.Minute)
-	cache := &cache{
-		c: c,
+			return err
+		})
 	}
-	return cache
+
+	down := func(ctx context.Context, db *bun.DB) error {
+		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			return nil
+		})
+	}
+
+	if err := Migrations.Register(up, down); err != nil {
+		panic(err)
+	}
 }

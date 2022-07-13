@@ -16,13 +16,22 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package cache
+package testrig
 
-func (c *cache) Fetch(k string) (interface{}, error) {
-	i, stored := c.c.Get(k)
-	if !stored {
-		return nil, ErrNotFound
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/router"
+)
+
+// CreateGinTextContext creates a new gin.Context suitable for a test, with an instantiated gin.Engine.
+func CreateGinTestContext(rw http.ResponseWriter, r *http.Request) (*gin.Context, *gin.Engine) {
+	ctx, eng := gin.CreateTestContext(rw)
+	router.LoadTemplateFunctions(eng)
+	if err := router.LoadTemplates(eng); err != nil {
+		panic(err)
 	}
-
-	return i, nil
+	ctx.Request = r
+	return ctx, eng
 }
