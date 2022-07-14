@@ -40,6 +40,7 @@ codeberg.org/gruf/go-atomics v1.1.0/go.mod h1:a/4/y/LgvjxjQVnpoy1VVkOSzLS1W9i1g4
 codeberg.org/gruf/go-bitutil v1.0.0/go.mod h1:sb8IjlDnjVTz8zPK/8lmHesKxY0Yb3iqHWjUM/SkphA=
 codeberg.org/gruf/go-bitutil v1.0.1 h1:l8z9nOvCpHhicU2LZyJ6jLK03UNzCF6bxVCwu+VEenQ=
 codeberg.org/gruf/go-bitutil v1.0.1/go.mod h1:3ezHnADoiRJs9jgn65AEZ3HY7dsabAYLmmnIvseCGJI=
+codeberg.org/gruf/go-buf v1.0.0/go.mod h1:9fuVcFZsqnuXyeNFr9DtrxR4c6MIRoDE37YV7B2egD0=
 codeberg.org/gruf/go-bytes v1.0.0/go.mod h1:1v/ibfaosfXSZtRdW2rWaVrDXMc9E3bsi/M9Ekx39cg=
 codeberg.org/gruf/go-bytes v1.0.2 h1:malqE42Ni+h1nnYWBUAJaDDtEzF4aeN4uPN8DfMNNvo=
 codeberg.org/gruf/go-bytes v1.0.2/go.mod h1:1v/ibfaosfXSZtRdW2rWaVrDXMc9E3bsi/M9Ekx39cg=
@@ -51,6 +52,7 @@ codeberg.org/gruf/go-byteutil v1.0.2/go.mod h1:cWM3tgMCroSzqoBXUXMhvxTxYJp+TbCr6
 codeberg.org/gruf/go-cache v1.1.2/go.mod h1:/Dbc+xU72Op3hMn6x2PXF3NE9uIDFeS+sXPF00hN/7o=
 codeberg.org/gruf/go-cache/v2 v2.1.1 h1:Ate0URlO6dVTYGxcIST9sDKtwOqrqBmlm73zy3Bq1+k=
 codeberg.org/gruf/go-cache/v2 v2.1.1/go.mod h1:XstSofaENTH3PNBoMrBcowFJ339OcJfTwO0PCOp5lKQ=
+codeberg.org/gruf/go-ctx v1.0.2/go.mod h1:iMyid3m2Rr1wSWL+snliBK5qE51b4pLY5CozVUrb/QU=
 codeberg.org/gruf/go-debug v1.2.0 h1:WBbTMnK1ArFKUmgv04aO2JiC/daTOB8zQGi521qb7OU=
 codeberg.org/gruf/go-debug v1.2.0/go.mod h1:N+vSy9uJBQgpQcJUqjctvqFz7tBHJf+S/PIjLILzpLg=
 codeberg.org/gruf/go-errors/v2 v2.0.0/go.mod h1:ZRhbdhvgoUA3Yw6e56kd9Ox984RrvbEFC2pOXyHDJP4=
@@ -63,6 +65,15 @@ codeberg.org/gruf/go-fastpath v1.0.3 h1:3Iftz9Z2suCEgTLkQMucew+2+4Oe46JPbAM2JEhn
 codeberg.org/gruf/go-fastpath v1.0.3/go.mod h1:edveE/Kp3Eqi0JJm0lXYdkVrB28cNUkcb/bRGFTPqeI=
 codeberg.org/gruf/go-hashenc v1.0.2 h1:U3jH6zMXZiL96czD/qaJd8OR2h7LlBzGv/2WxnMHI/g=
 codeberg.org/gruf/go-hashenc v1.0.2/go.mod h1:eK+A8clLcEN/m1nftNsRId0kfYDQnETnuIfBGZ8Gvsg=
+codeberg.org/gruf/go-kv v1.2.0/go.mod h1:z2+9sJc3cWuW9vUZI5tX0Uc9DNgmDdFihsThkShUk6w=
+codeberg.org/gruf/go-kv v1.2.1/go.mod h1:nTmEd529nq8jV8jXwrr7HXR5nHRnKA9jPR0R8PX/EYw=
+codeberg.org/gruf/go-kv v1.3.0 h1:3s42ck6RZHQH7ZeRy/p9KjtHdUQExj6U5tOmBDrq6MQ=
+codeberg.org/gruf/go-kv v1.3.0/go.mod h1:nTmEd529nq8jV8jXwrr7HXR5nHRnKA9jPR0R8PX/EYw=
+codeberg.org/gruf/go-log v1.0.4 h1:yp1LpF22auJSe0Opg9aOcrGQgXPDyM2WmeW1zsme30U=
+codeberg.org/gruf/go-log v1.0.4/go.mod h1:XOkZfvx78Q214dWVKuaPFqkRWJQBipsdou+LrDRlwB8=
+codeberg.org/gruf/go-logger/v2 v2.0.6 h1:uKpfwQufP76avJ326WUWI40T1qIh7UbxpPlA9UQ8zr8=
+codeberg.org/gruf/go-logger/v2 v2.0.6/go.mod h1:9kg3GVDGzBXsrv1vALNRm/NJAkPvs5P000DLzladkb0=
+codeberg.org/gruf/go-middleware v1.1.0/go.mod h1:6D5GVA+qdg/xd+FP+6RgX61mWaMlZZ2Jz6dowJs0rPI=
 codeberg.org/gruf/go-mutexes v1.1.2 h1:AMC1CFV6kMi+iBjR3yQv8yIagG3lWm68U6sQHYFHEf4=
 codeberg.org/gruf/go-mutexes v1.1.2/go.mod h1:1j/6/MBeBQUedAtAtysLLnBKogfOZAxdym0E3wlaBD8=
 codeberg.org/gruf/go-nowish v1.0.0/go.mod h1:70nvICNcqQ9OHpF07N614Dyk7cpL5ToWU1K1ZVCec2s=
@@ -76,6 +87,7 @@ codeberg.org/gruf/go-sched v1.0.1 h1:+EAXSVI4orY5lMNX2Vrke/UxF2qjmEy6gHcyySZg/3k
 codeberg.org/gruf/go-sched v1.0.1/go.mod h1:LFzosJL0yrCNtXg9Vq9iwr4q6ANuRirO2cVwKYH7CLs=
 codeberg.org/gruf/go-store v1.3.8 h1:7Hzzsa8gaOc6spuGWXJVUWRAyKiOR/m60/jNYrD8cT0=
 codeberg.org/gruf/go-store v1.3.8/go.mod h1:Fy5pXEHiIVFRWDx8DfILwXS1ulrj/jLdSK2C2oElz3I=
+codeberg.org/gruf/go-ulid v1.0.0/go.mod h1:dVNsZJpVTge8+jfBTjAMpnscYSiCqk+g32ZgtorCAMs=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
@@ -140,6 +152,7 @@ github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7
 github.com/fasthttp-contrib/websocket v0.0.0-20160511215533-1f3b11f56072/go.mod h1:duJ4Jxv5lDcvg4QuQr0oowTf7dz4/CR8NtyCooz9HL8=
 github.com/fatih/structs v1.1.0 h1:Q7juDM0QtcnhCpeyLGQKyg4TOIghuNXrkL32pHAUMxo=
 github.com/fatih/structs v1.1.0/go.mod h1:9NiDSp5zOcgEDl+j00MP/WkGVPOlPRLejGD8Ga6PJ7M=
+github.com/felixge/httpsnoop v1.0.2/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/fsnotify/fsnotify v1.4.9/go.mod h1:znqG4EE+3YCdAaPaxE2ZRY/06pZUdp0tY4IgpuI1SZQ=
 github.com/fsnotify/fsnotify v1.5.3/go.mod h1:T3375wBYaZdLLcVNkcVbzGHY7f1l/uK5T5Ai1i3InKU=

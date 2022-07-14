@@ -1,113 +1,157 @@
-/*
-   GoToSocial
-   Copyright (C) 2021-2022 GoToSocial Authors admin@gotosocial.org
-
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU Affero General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU Affero General Public License for more details.
-
-   You should have received a copy of the GNU Affero General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
 package log
 
 import (
-	"bytes"
-	"io"
 	"log/syslog"
 	"os"
+	"syscall"
 
-	"github.com/sirupsen/logrus"
-	lSyslog "github.com/sirupsen/logrus/hooks/syslog"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"codeberg.org/gruf/go-kv"
+	"codeberg.org/gruf/go-logger/v2"
+	"codeberg.org/gruf/go-logger/v2/entry"
+	"codeberg.org/gruf/go-logger/v2/level"
 )
 
-// Initialize initializes the global Logrus logger, reading the desired
-// log level from the viper store, or using a default if the level
-// has not been set in viper.
-//
-// It also sets the output to log.SplitErrOutputs(...)
-// so you get error logs on stderr and normal logs on stdout.
-//
-// If syslog settings are also in viper, then Syslog will be initialized as well.
-func Initialize() error {
-	out := SplitErrOutputs(os.Stdout, os.Stderr)
-	logrus.SetOutput(out)
+var (
 
-	// check if a desired log level has been set
-	if lvl := config.GetLogLevel(); lvl != "" {
-		level, err := logrus.ParseLevel(lvl)
-		if err != nil {
-			return err
-		}
-		logrus.SetLevel(level)
-
-		if level == logrus.TraceLevel {
-			logrus.SetReportCaller(true)
-		}
+	// Default log config with field formatter.
+	cfg = logger.Config{
+		Format: entry.NewFieldFormatter(nil),
 	}
 
-	// set our custom formatter options
-	logrus.SetFormatter(&logrus.TextFormatter{
-		DisableColors: true,
-		FullTimestamp: true,
+	// Default logger flags (includes timestamp).
+	flags = logger.Flags(0).SetTime()
 
-		// By default, quoting is enabled to help differentiate key-value
-		// fields in log lines. But when debug (or higher, e.g. trace) logging
-		// is enabled, we disable this. This allows easier copy-pasting of
-		// entry fields without worrying about escaped quotes.
-		DisableQuote: logrus.GetLevel() >= logrus.DebugLevel,
-	})
+	// Preprepared stdout/stderr logs, customized in Initialize().
+	stdout = logger.NewWith(os.Stdout, cfg, 0, flags)
+	stderr = logger.NewWith(os.Stderr, cfg, 0, flags)
 
-	// check if syslog has been enabled, and configure it if so
-	if config.GetSyslogEnabled() {
-		protocol := config.GetSyslogProtocol()
-		address := config.GetSyslogAddress()
+	// Syslog output, only set if enabled.
+	sysout *syslog.Writer
+)
 
-		hook, err := lSyslog.NewSyslogHook(protocol, address, syslog.LOG_INFO, "")
-		if err != nil {
-			return err
-		}
-
-		logrus.AddHook(&trimHook{hook})
-	}
-
-	return nil
+func With(key string, value interface{}) Entry {
+	return Entry{fields: []kv.Field{{K: key, V: value}}}
 }
 
-// SplitErrOutputs returns an OutputSplitFunc that splits output to either one of
-// two given outputs depending on whether the level is "error","fatal","panic".
-func SplitErrOutputs(out, err io.Writer) OutputSplitFunc {
-	return func(lvl []byte) io.Writer {
-		switch string(lvl) /* convert to str for compare is no-alloc */ {
-		case "error", "fatal", "panic":
-			return err
-		default:
-			return out
-		}
-	}
+func WithFields(fields ...kv.Field) Entry {
+	return Entry{fields: fields}
 }
 
-// OutputSplitFunc implements the io.Writer interface for use with Logrus, and simply
-// splits logs between stdout and stderr depending on their severity.
-type OutputSplitFunc func(lvl []byte) io.Writer
+func Trace(a ...interface{}) {
+	log(level.TRACE, nil, a...)
+}
 
-var levelBytes = []byte("level=")
+func Tracef(s string, a ...interface{}) {
+	logf(level.TRACE, nil, s, a...)
+}
 
-func (fn OutputSplitFunc) Write(b []byte) (int, error) {
-	var lvl []byte
-	if i := bytes.Index(b, levelBytes); i >= 0 {
-		blvl := b[i+len(levelBytes):]
-		if i := bytes.IndexByte(blvl, ' '); i >= 0 {
-			lvl = blvl[:i]
-		}
+func Debug(a ...interface{}) {
+	log(level.DEBUG, nil, a...)
+}
+
+func Debugf(s string, a ...interface{}) {
+	logf(level.DEBUG, nil, s, a...)
+}
+
+func Info(a ...interface{}) {
+	log(level.INFO, nil, a...)
+}
+
+func Infof(s string, a ...interface{}) {
+	logf(level.INFO, nil, s, a...)
+}
+
+func Warn(a ...interface{}) {
+	log(level.WARN, nil, a...)
+}
+
+func Warnf(s string, a ...interface{}) {
+	logf(level.WARN, nil, s, a...)
+}
+
+func Error(a ...interface{}) {
+	log(level.ERROR, nil, a...)
+}
+
+func Errorf(s string, a ...interface{}) {
+	logf(level.ERROR, nil, s, a...)
+}
+
+func Fatal(a ...interface{}) {
+	defer syscall.Exit(1)
+	log(level.FATAL, nil, a...)
+}
+
+func Fatalf(s string, a ...interface{}) {
+	defer syscall.Exit(1)
+	logf(level.FATAL, nil, s, a...)
+}
+
+func log(lvl level.LEVEL, fields []kv.Field, a ...interface{}) {
+	var out *logger.Logger
+
+	if lvl <= level.ERROR {
+		out = stderr
+	} else {
+		out = stdout
 	}
-	return fn(lvl).Write(b)
+
+	// Acquire entry from pool
+	entry := out.Entry(4)
+
+	// Write formatted entry
+	entry.Timestamp()
+	entry.WithLevel(lvl)
+	entry.Fields(fields...)
+	entry.Msg(a...)
+
+	if sysout != nil {
+		// Log this entry to syslog
+		logsys(lvl, entry.String())
+	}
+
+	// Write to main log
+	out.Write(entry)
+}
+
+func logf(lvl level.LEVEL, fields []kv.Field, s string, a ...interface{}) {
+	var out *logger.Logger
+
+	if lvl <= level.ERROR {
+		out = stderr
+	} else {
+		out = stdout
+	}
+
+	// Acquire entry from pool
+	entry := out.Entry(4)
+
+	// Write formatted entry
+	entry.Timestamp()
+	entry.WithLevel(lvl)
+	entry.Fields(fields...)
+	entry.Msgf(s, a...)
+
+	if sysout != nil {
+		// Log this entry to syslog
+		logsys(lvl, entry.String())
+	}
+
+	// Write to main log
+	out.Write(entry)
+}
+
+func logsys(lvl level.LEVEL, msg string) {
+	switch lvl {
+	case level.DEBUG:
+		sysout.Debug(msg)
+	case level.INFO:
+		sysout.Info(msg)
+	case level.WARN:
+		sysout.Warning(msg)
+	case level.ERROR:
+		sysout.Err(msg)
+	case level.FATAL:
+		sysout.Crit(msg)
+	}
 }
