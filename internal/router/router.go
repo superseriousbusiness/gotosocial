@@ -64,7 +64,20 @@ type router struct {
 
 // Add Gin StaticFS handler
 func (r *router) AttachStaticFS(relativePath string, fs http.FileSystem) {
-	r.engine.StaticFS(relativePath, fs)
+	// create a group so that we can attach a middleware to it
+	// group will consiste of endpoints under relativePath, so
+	// something like "/assets"
+	group := r.engine.Group(relativePath)
+	group.Use(func(c *gin.Context) {
+		// file system will already set 'last-modified' headers,
+		// but we want to set cache-control too to make sure callers
+		// understand they can cache static assets
+		c.Header("Cache-Control", "max-age=604800")
+	})
+
+	// serve static file system in the root of this group,
+	// will end up being something like "/assets/"
+	group.StaticFS("/", fs)
 }
 
 // Start starts the router nicely. It will serve two handlers if letsencrypt is enabled, and only the web/API handler if letsencrypt is not enabled.

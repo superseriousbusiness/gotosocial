@@ -19,10 +19,13 @@
 package web
 
 import (
+	"crypto/sha1"
 	"errors"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -48,6 +51,7 @@ const (
 type Module struct {
 	processor      processing.Processor
 	assetsPath     string
+	assetsEtags    map[string]string
 	adminPath      string
 	defaultAvatars []string
 }
@@ -63,6 +67,29 @@ func New(processor processing.Processor) (api.ClientModule, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error getting absolute path of %s: %s", assetsBaseDir, err)
 	}
+
+	assetsEtags := make(map[string]string)
+	walk := func(path string, info fs.FileInfo, err error) error {
+		if !info.IsDir() {
+			b, err := os.ReadFile(path)
+			if err != nil {
+				return fmt.Errorf("err reading assets file %s: %s", path, err)
+			}
+
+			// filepath.Split()
+
+			// nolint:gosec
+			sum := sha1.Sum(b)
+			etag := fmt.Sprintf("%d-%x", len(b), sum)
+			assetsEtags[path] = etag
+		}
+		return nil
+	}
+
+	if err := filepath.Walk(assetsPath, walk); err != nil {
+		return nil, fmt.Errorf("error walking assets path %s: %s", assetsPath, err)
+	}
+	fmt.Printf("\n\n\n %+v \n\n\n", assetsEtags)
 
 	defaultAvatarsPath := filepath.Join(assetsPath, "default_avatars")
 	defaultAvatarFiles, err := ioutil.ReadDir(defaultAvatarsPath)
