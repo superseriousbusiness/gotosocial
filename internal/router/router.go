@@ -68,12 +68,9 @@ func (r *router) AttachStaticFS(relativePath string, fs http.FileSystem) {
 	// group will consiste of endpoints under relativePath, so
 	// something like "/assets"
 	group := r.engine.Group(relativePath)
-	group.Use(func(c *gin.Context) {
-		// file system will already set 'last-modified' headers,
-		// but we want to set cache-control too to make sure callers
-		// understand they can cache static assets
-		c.Header("Cache-Control", "max-age=604800")
-	})
+
+	// use the cache middleware on all handlers in this group
+	group.Use(cacheMiddleware(fs))
 
 	// serve static file system in the root of this group,
 	// will end up being something like "/assets/"
