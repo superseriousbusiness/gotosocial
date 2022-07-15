@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -47,7 +48,11 @@ func cacheMiddleware(fs http.FileSystem) gin.HandlerFunc {
 		c.Header("Cache-Control", "no-cache")
 
 		// pull some variables out of the request
-		urlString := c.Request.URL.String()
+		upath := c.Request.URL.Path
+		if !strings.HasPrefix(upath, "/") {
+			upath = "/" + upath
+		}
+		filePath := path.Clean(upath)
 		reqEtag := c.Request.Header.Get("If-None-Match")
 		sinceString := c.Request.Header.Get("If-Modified-Since")
 
@@ -61,7 +66,7 @@ func cacheMiddleware(fs http.FileSystem) gin.HandlerFunc {
 		// See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-Modified-Since
 		// and: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-None-Match
 
-		file, err := fs.Open(strings.TrimPrefix(urlString, "/assets"))
+		file, err := fs.Open(strings.TrimPrefix(filePath, "/assets"))
 		if err != nil {
 			logrus.Errorf("error opening asset: %s", err)
 			return
