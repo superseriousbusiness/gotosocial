@@ -250,15 +250,16 @@ input, select, textarea {
 
 footer {
 	align-self: end;
+	padding: 2rem 0 1rem 0;
 
-	padding: 2rem;
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: center;
 
 	div {
-		margin: 0 2rem;
+		text-align: center;
 		padding: 1rem;
+		flex-grow: 1;
 	}
 
 	a {
@@ -266,17 +267,17 @@ footer {
 	}
 }
 
-@media screen and (orientation: portrait) {
+@media screen and (max-width: 600px) {
 	header {
 		text-align: center;
 	}
 
 	footer {
-		margin-top: 2rem;
 		grid-template-columns: 1fr;
 
 		div {
-			margin: 0.3rem 0;
+			text-align: initial;
+			width: 100%;
 		}
 	}
 
