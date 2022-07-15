@@ -107,5 +107,11 @@ func (m *FileServer) ServeFile(c *gin.Context) {
 		return
 	}
 
-	c.DataFromReader(http.StatusOK, content.ContentLength, format, content.Content, nil)
+	c.DataFromReader(http.StatusOK, content.ContentLength, format, content.Content, map[string]string{
+		// since we'll never host different files at the same
+		// URL (bc the ULIDs are generated per piece of media),
+		// it's sensible and safe to use a long cache here, so
+		// that clients don't keep fetching files over + over again
+		"Cache-Control": "max-age=604800",
+	})
 }
