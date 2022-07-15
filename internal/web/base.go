@@ -48,7 +48,6 @@ const (
 type Module struct {
 	processor      processing.Processor
 	assetsPath     string
-	assetsEtags    map[string]string
 	adminPath      string
 	defaultAvatars []string
 }
