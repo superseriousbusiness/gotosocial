@@ -25,7 +25,9 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"codeberg.org/gruf/go-cache/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -98,10 +100,14 @@ func New(processor processing.Processor) (api.ClientModule, error) {
 		}
 	}
 
+	assetsFileInfoCache := cache.New[string, assetFileInfo]()
+	assetsFileInfoCache.SetTTL(time.Minute*5, false)
+	assetsFileInfoCache.Start(time.Second * 10)
+
 	return &Module{
 		processor:            processor,
 		webAssetsAbsFilePath: webAssetsAbsFilePath,
-		adminPath:      filepath.Join(assetsPath, "admin"),
+		assetsFileInfoCache:  assetsFileInfoCache,
 		defaultAvatars:       defaultAvatars,
 	}, nil
 }
