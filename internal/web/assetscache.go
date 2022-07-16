@@ -83,7 +83,9 @@ func (m *Module) getAssetFileInfo(filePath string, fs http.FileSystem) (assetFil
 	return afi, nil
 }
 
-// cacheControlMiddleware
+// cacheControlMiddleware implements Cache-Control header setting, and etag/last-modified
+// checks for files inside the given http.FileSystem.
+//
 // First check if the file has been modified using If-None-Match etag, if present.
 // If the file hasn't been modified, bail with a 304.
 //
