@@ -64,21 +64,6 @@ type router struct {
 	certManager *autocert.Manager
 }
 
-// Add Gin StaticFS handler
-func (r *router) AttachStaticFS(relativePath string, fs http.FileSystem) {
-	// create a group so that we can attach a middleware to it
-	// group will consiste of endpoints under relativePath, so
-	// something like "/assets"
-	group := r.engine.Group(relativePath)
-
-	// use the cache middleware on all handlers in this group
-	group.Use(cacheMiddleware(fs))
-
-	// serve static file system in the root of this group,
-	// will end up being something like "/assets/"
-	group.StaticFS("/", fs)
-}
-
 // Start starts the router nicely. It will serve two handlers if letsencrypt is enabled, and only the web/API handler if letsencrypt is not enabled.
 func (r *router) Start() {
 	// listen is the server start function, by
