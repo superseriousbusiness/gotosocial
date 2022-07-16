@@ -47,8 +47,10 @@ type Router interface {
 	AttachMiddleware(handler gin.HandlerFunc)
 	// Attach 404 NoRoute handler
 	AttachNoRouteHandler(handler gin.HandlerFunc)
-	// Add Gin StaticFS handler
-	AttachStaticFS(relativePath string, fs http.FileSystem)
+	// Attach a router group, and receive that group back.
+	// More middlewares and handlers can then be attached on
+	// the group by the caller.
+	AttachGroup(path string, handlers ...gin.HandlerFunc) *gin.RouterGroup
 	// Start the router
 	Start()
 	// Stop the router
