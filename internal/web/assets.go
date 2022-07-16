@@ -53,3 +53,14 @@ func (fs fileSystem) Open(path string) (http.File, error) {
 
 	return f, nil
 }
+
+func (m *Module) mountAssetsFilesystem(group *gin.RouterGroup) {
+	fs := fileSystem{http.Dir(m.webAssetsAbsFilePath)}
+
+	// use the cache middleware on all handlers in this group
+	group.Use(m.cacheControlMiddleware(fs))
+
+	// serve static file system in the root of this group,
+	// will end up being something like "/assets/"
+	group.StaticFS("/", fs)
+}
