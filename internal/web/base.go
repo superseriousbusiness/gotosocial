@@ -37,37 +37,41 @@ import (
 
 const (
 	confirmEmailPath = "/" + uris.ConfirmEmailPath
-	tokenParam       = "token"
-	usernameKey      = "username"
-	statusIDKey      = "status"
 	profilePath      = "/@:" + usernameKey
 	statusPath       = profilePath + "/statuses/:" + statusIDKey
+	adminPanelPath   = "/admin"
+	userPanelpath    = "/user"
+	assetsPath       = "/assets"
+
+	tokenParam  = "token"
+	usernameKey = "username"
+	statusIDKey = "status"
 )
 
 // Module implements the api.ClientModule interface for web pages.
 type Module struct {
-	processor      processing.Processor
-	assetsPath     string
-	adminPath      string
-	defaultAvatars []string
+	processor            processing.Processor
+	webAssetsAbsFilePath string
+	assetsFileInfoCache  cache.Cache[string, assetFileInfo]
+	defaultAvatars       []string
 }
 
 // New returns a new api.ClientModule for web pages.
 func New(processor processing.Processor) (api.ClientModule, error) {
-	assetsBaseDir := config.GetWebAssetBaseDir()
-	if assetsBaseDir == "" {
+	webAssetsBaseDir := config.GetWebAssetBaseDir()
+	if webAssetsBaseDir == "" {
 		return nil, fmt.Errorf("%s cannot be empty and must be a relative or absolute path", config.WebAssetBaseDirFlag())
 	}
 
-	assetsPath, err := filepath.Abs(assetsBaseDir)
+	webAssetsAbsFilePath, err := filepath.Abs(webAssetsBaseDir)
 	if err != nil {
-		return nil, fmt.Errorf("error getting absolute path of %s: %s", assetsBaseDir, err)
+		return nil, fmt.Errorf("error getting absolute path of %s: %s", webAssetsBaseDir, err)
 	}
 
-	defaultAvatarsPath := filepath.Join(assetsPath, "default_avatars")
-	defaultAvatarFiles, err := ioutil.ReadDir(defaultAvatarsPath)
+	defaultAvatarsAbsFilePath := filepath.Join(webAssetsAbsFilePath, "default_avatars")
+	defaultAvatarFiles, err := ioutil.ReadDir(defaultAvatarsAbsFilePath)
 	if err != nil {
-		return nil, fmt.Errorf("error reading default avatars at %s: %s", defaultAvatarsPath, err)
+		return nil, fmt.Errorf("error reading default avatars at %s: %s", defaultAvatarsAbsFilePath, err)
 	}
 
 	defaultAvatars := []string{}
@@ -87,18 +91,18 @@ func New(processor processing.Processor) (api.ClientModule, error) {
 		// take only files with simple extensions
 		switch extension {
 		case "svg", "jpeg", "jpg", "gif", "png":
-			defaultAvatarPath := fmt.Sprintf("/assets/default_avatars/%s", f.Name())
-			defaultAvatars = append(defaultAvatars, defaultAvatarPath)
+			avatar := fmt.Sprintf("%s/default_avatars/%s", assetsPath, f.Name())
+			defaultAvatars = append(defaultAvatars, avatar)
 		default:
 			continue
 		}
 	}
 
 	return &Module{
-		processor:      processor,
-		assetsPath:     assetsPath,
+		processor:            processor,
+		webAssetsAbsFilePath: webAssetsAbsFilePath,
 		adminPath:      filepath.Join(assetsPath, "admin"),
-		defaultAvatars: defaultAvatars,
+		defaultAvatars:       defaultAvatars,
 	}, nil
 }
 
@@ -115,66 +119,22 @@ func (m *Module) baseHandler(c *gin.Context) {
 	})
 }
 
-// TODO: abstract the {admin, user}panel handlers in some way
-func (m *Module) AdminPanelHandler(c *gin.Context) {
-	host := config.GetHost()
-	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
-	if err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
-		return
-	}
-
-	c.HTML(http.StatusOK, "frontend.tmpl", gin.H{
-		"instance": instance,
-		"stylesheets": []string{
-			"/assets/Fork-Awesome/css/fork-awesome.min.css",
-			"/assets/dist/panels-admin-style.css",
-		},
-		"javascript": []string{
-			"/assets/dist/bundle.js",
-			"/assets/dist/admin-panel.js",
-		},
-	})
-}
-
-func (m *Module) UserPanelHandler(c *gin.Context) {
-	host := config.GetHost()
-	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
-	if err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
-		return
-	}
-
-	c.HTML(http.StatusOK, "frontend.tmpl", gin.H{
-		"instance": instance,
-		"stylesheets": []string{
-			"/assets/Fork-Awesome/css/fork-awesome.min.css",
-			"/assets/dist/_colors.css",
-			"/assets/dist/base.css",
-			"/assets/dist/panels-user-style.css",
-		},
-		"javascript": []string{
-			"/assets/dist/bundle.js",
-			"/assets/dist/user-panel.js",
-		},
-	})
-}
-
 // Route satisfies the RESTAPIModule interface
 func (m *Module) Route(s router.Router) error {
 	// serve static files from assets dir at /assets
-	s.AttachStaticFS("/assets", fileSystem{http.Dir(m.assetsPath)})
+	assetsGroup := s.AttachGroup(assetsPath)
+	m.mountAssetsFilesystem(assetsGroup)
 
-	s.AttachHandler(http.MethodGet, "/admin", m.AdminPanelHandler)
+	s.AttachHandler(http.MethodGet, adminPanelPath, m.AdminPanelHandler)
 	// redirect /admin/ to /admin
-	s.AttachHandler(http.MethodGet, "/admin/", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, "/admin")
+	s.AttachHandler(http.MethodGet, adminPanelPath+"/", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, adminPanelPath)
 	})
 
-	s.AttachHandler(http.MethodGet, "/user", m.UserPanelHandler)
+	s.AttachHandler(http.MethodGet, userPanelpath, m.UserPanelHandler)
 	// redirect /settings/ to /settings
-	s.AttachHandler(http.MethodGet, "/user/", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, "/user")
+	s.AttachHandler(http.MethodGet, userPanelpath+"/", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, userPanelpath)
 	})
 
 	// serve front-page
