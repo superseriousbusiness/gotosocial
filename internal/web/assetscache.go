@@ -21,7 +21,6 @@ package web
 import (
 	// nolint:gosec
 	"crypto/sha1"
-	"encoding/hex"
 	"fmt"
 	"net/http"
 	"path"
@@ -38,13 +37,7 @@ func generateEtag(filePath string, lastModified time.Time) (string, error) {
 	b := []byte(fmt.Sprintf("%s%d", filePath, lastModified.Unix()))
 
 	// nolint:gosec
-	hash := sha1.New()
-
-	if _, err := hash.Write(b); err != nil {
-		return "", err
-	}
-
-	return `/W"` + hex.EncodeToString(hash.Sum(nil)) + `"`, nil
+	return fmt.Sprintf(`/W"%s"`, sha1.Sum(b)), nil
 }
 
 // getAssetFileInfo tries to fetch info for the given filePath from the module's
