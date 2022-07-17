@@ -27,10 +27,16 @@ import (
 	"net/http"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
+
+type eTagCacheEntry struct {
+	eTag             string
+	fileLastModified time.Time
+}
 
 // generateEtag generates a strong (byte-for-byte) etag using
 // the entirety of the provided reader.
@@ -50,16 +56,25 @@ func generateEtag(r io.Reader) (string, error) {
 // assetsETagCache. If it can't be found there, it uses the provided http.FileSystem
 // to generate a new ETag to go in the cache, which it then returns.
 func (m *Module) getAssetETag(filePath string, fs http.FileSystem) (string, error) {
-	// return fileinfo from cache directly if we have it
-	if cachedETag, ok := m.assetsETagCache.Get(filePath); ok {
-		return cachedETag, nil
-	}
-
 	file, err := fs.Open(filePath)
 	if err != nil {
 		return "", fmt.Errorf("error opening %s: %s", filePath, err)
 	}
 	defer file.Close()
+
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return "", fmt.Errorf("error statting %s: %s", filePath, err)
+	}
+
+	fileLastModified := fileInfo.ModTime()
+
+	if cachedETag, ok := m.assetsETagCache.Get(filePath); ok && !fileLastModified.After(cachedETag.fileLastModified) {
+		// only return our cached etag if the file wasn't
+		// modified since last time, otherwise generate a
+		// new one; eat fresh!
+		return cachedETag.eTag, nil
+	}
 
 	eTag, err := generateEtag(file)
 	if err != nil {
@@ -67,7 +82,11 @@ func (m *Module) getAssetETag(filePath string, fs http.FileSystem) (string, erro
 	}
 
 	// put new entry in cache before we return
-	m.assetsETagCache.Set(filePath, eTag)
+	m.assetsETagCache.Set(filePath, eTagCacheEntry{
+		eTag:             eTag,
+		fileLastModified: fileLastModified,
+	})
+
 	return eTag, nil
 }
 

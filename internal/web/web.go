@@ -54,7 +54,7 @@ const (
 type Module struct {
 	processor            processing.Processor
 	webAssetsAbsFilePath string
-	assetsETagCache      cache.Cache[string, string]
+	assetsETagCache      cache.Cache[string, eTagCacheEntry]
 	defaultAvatars       []string
 }
 
@@ -100,7 +100,7 @@ func New(processor processing.Processor) (api.ClientModule, error) {
 		}
 	}
 
-	assetsETagCache := cache.New[string, string]()
+	assetsETagCache := cache.New[string, eTagCacheEntry]()
 	assetsETagCache.SetTTL(time.Hour, false)
 	assetsETagCache.Start(time.Minute)
 
