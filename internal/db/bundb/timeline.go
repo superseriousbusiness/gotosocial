@@ -21,9 +21,9 @@ package bundb
 import (
 	"context"
 
-	log "github.com/dsoprea/go-logging"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 	"golang.org/x/exp/slices"
 )

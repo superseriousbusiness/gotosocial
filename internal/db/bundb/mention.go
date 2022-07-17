@@ -22,9 +22,9 @@ import (
 	"context"
 
 	"codeberg.org/gruf/go-cache/v2"
-	log "github.com/dsoprea/go-logging"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 )
 
