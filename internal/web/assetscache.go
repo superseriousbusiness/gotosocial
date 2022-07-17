@@ -49,7 +49,7 @@ func generateEtag(r io.Reader) (string, error) {
 	// nolint:gosec
 	sum := sha1.Sum(b)
 
-	return hex.EncodeToString(sum[:]), nil
+	return `"` + hex.EncodeToString(sum[:]) + `"`, nil
 }
 
 // getAssetFileInfo tries to fetch the ETag for the given filePath from the module's
