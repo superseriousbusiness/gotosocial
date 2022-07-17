@@ -21,73 +21,63 @@ package web
 import (
 	// nolint:gosec
 	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"net/http"
 	"path"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
 
-// generateEtag generates a weak etag by concatenating the given filePath string
-// with the unix timestamp of the given time, then doing a sha1 hash on the result.
-func generateEtag(filePath string, lastModified time.Time) (string, error) {
-	b := []byte(fmt.Sprintf("%s%d", filePath, lastModified.Unix()))
-
-	// nolint:gosec
-	return fmt.Sprintf(`/W"%x"`, sha1.Sum(b)), nil
-}
-
-// getAssetFileInfo tries to fetch info for the given filePath from the module's
-// assetsFileInfoCache. If it can't be found there, it uses the provided http.FileSystem
-// to generate a new assetFileInfo entry to go in the cache, which it then returns.
-func (m *Module) getAssetFileInfo(filePath string, fs http.FileSystem) (assetFileInfo, error) {
-	// return fileinfo from cache directly if we have it
-	if cachedFileInfo, ok := m.assetsFileInfoCache.Get(filePath); ok {
-		return cachedFileInfo, nil
+// generateEtag generates a strong (byte-for-byte) etag using
+// the entirety of the provided reader.
+func generateEtag(r io.Reader) (string, error) {
+	b, err := io.ReadAll(r)
+	if err != nil {
+		return "", err
 	}
 
-	// we don't have it, create a new one
-	afi := assetFileInfo{}
+	// nolint:gosec
+	sum := sha1.Sum(b)
+
+	return hex.EncodeToString(sum[:]), nil
+}
+
+// getAssetFileInfo tries to fetch the ETag for the given filePath from the module's
+// assetsETagCache. If it can't be found there, it uses the provided http.FileSystem
+// to generate a new ETag to go in the cache, which it then returns.
+func (m *Module) getAssetETag(filePath string, fs http.FileSystem) (string, error) {
+	// return fileinfo from cache directly if we have it
+	if cachedETag, ok := m.assetsETagCache.Get(filePath); ok {
+		return cachedETag, nil
+	}
 
 	file, err := fs.Open(filePath)
 	if err != nil {
-		return afi, fmt.Errorf("error opening %s: %s", filePath, err)
+		return "", fmt.Errorf("error opening %s: %s", filePath, err)
 	}
 	defer file.Close()
 
-	fileInfo, err := file.Stat()
+	eTag, err := generateEtag(file)
 	if err != nil {
-		return afi, fmt.Errorf("error statting %s: %s", filePath, err)
+		return "", fmt.Errorf("error generating etag: %s", err)
 	}
-
-	afi.lastModified = fileInfo.ModTime()
-
-	etag, err := generateEtag(filePath, afi.lastModified)
-	if err != nil {
-		return afi, fmt.Errorf("error generating etag: %s", err)
-	}
-	afi.etag = etag
 
 	// put new entry in cache before we return
-	m.assetsFileInfoCache.Set(filePath, afi)
-	return afi, nil
+	m.assetsETagCache.Set(filePath, eTag)
+	return eTag, nil
 }
 
-// cacheControlMiddleware implements Cache-Control header setting, and etag/last-modified
-// checks for files inside the given http.FileSystem.
+// cacheControlMiddleware implements Cache-Control header setting, and checks for
+// files inside the given http.FileSystem.
 //
-// First check if the file has been modified using If-None-Match etag, if present.
-// If the file hasn't been modified, bail with a 304.
+// The middleware checks if the file has been modified using If-None-Match etag,
+// if present. If the file hasn't been modified, the middleware returns 304.
 //
-// Then, check if the file has been modified using If-Modified-Since, if present.
-// If the file hasn't been modified since the given date, bail with a 304.
-// We only do this second check if If-None-Match wasn't set.
-//
-// See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-Modified-Since
-// and: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-None-Match
+// See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-None-Match
 // and: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
 func (m *Module) cacheControlMiddleware(fs http.FileSystem) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -96,9 +86,7 @@ func (m *Module) cacheControlMiddleware(fs http.FileSystem) gin.HandlerFunc {
 		// the version stored on the server to keep up to date.
 		c.Header("Cache-Control", "no-cache")
 
-		// pull some variables out of the request
 		ifNoneMatch := c.Request.Header.Get("If-None-Match")
-		ifModifiedSinceString := c.Request.Header.Get("If-Modified-Since")
 
 		// derive the path of the requested asset inside the provided filesystem
 		upath := c.Request.URL.Path
@@ -107,40 +95,23 @@ func (m *Module) cacheControlMiddleware(fs http.FileSystem) gin.HandlerFunc {
 		}
 		assetFilePath := strings.TrimPrefix(path.Clean(upath), assetsPath)
 
-		// generate etag/last modified or fetch from ttlcache
-		assetFileInfo, err := m.getAssetFileInfo(assetFilePath, fs)
+		// either fetch etag from ttlcache or generate it
+		eTag, err := m.getAssetETag(assetFilePath, fs)
 		if err != nil {
-			logrus.Errorf("error getting file info for %s: %s", assetFilePath, err)
+			logrus.Errorf("error getting ETag for %s: %s", assetFilePath, err)
 			return
 		}
 
 		// Regardless of what happens further down, set the etag header
 		// so that the client has the up-to-date version.
-		c.Header("Etag", assetFileInfo.etag)
+		c.Header("Etag", eTag)
 
 		// If client already has latest version of the asset, 304 + bail.
-		if ifNoneMatch == assetFileInfo.etag {
+		if ifNoneMatch == eTag {
 			c.AbortWithStatus(http.StatusNotModified)
 			return
 		}
 
-		// only fall back to using If-Modifed-Since if If-None-Match wasn't set.
-		if ifNoneMatch == "" && ifModifiedSinceString != "" {
-			ifModifiedSince, err := http.ParseTime(ifModifiedSinceString)
-			if err != nil {
-				logrus.Debugf("If-Modifed-Since header could not be parsed: %s", err)
-				return
-			}
-
-			// If client already has latest version of the asset, 304 + bail.
-			if assetFileInfo.lastModified.Before(ifModifiedSince) {
-				c.AbortWithStatus(http.StatusNotModified)
-				return
-			}
-		}
-
-		// if we reach this point, either the file has been modified, or we don't have
-		// enough information from the caller to determine caching; either way, let the
-		// request proceed as normal
+		// else let the rest of the request be processed normally
 	}
 }

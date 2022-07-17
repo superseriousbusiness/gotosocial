@@ -54,7 +54,7 @@ const (
 type Module struct {
 	processor            processing.Processor
 	webAssetsAbsFilePath string
-	assetsFileInfoCache  cache.Cache[string, assetFileInfo]
+	assetsETagCache      cache.Cache[string, string]
 	defaultAvatars       []string
 }
 
@@ -100,14 +100,14 @@ func New(processor processing.Processor) (api.ClientModule, error) {
 		}
 	}
 
-	assetsFileInfoCache := cache.New[string, assetFileInfo]()
-	assetsFileInfoCache.SetTTL(time.Minute*5, false)
-	assetsFileInfoCache.Start(time.Second * 10)
+	assetsETagCache := cache.New[string, string]()
+	assetsETagCache.SetTTL(time.Hour, false)
+	assetsETagCache.Start(time.Minute)
 
 	return &Module{
 		processor:            processor,
 		webAssetsAbsFilePath: webAssetsAbsFilePath,
-		assetsFileInfoCache:  assetsFileInfoCache,
+		assetsETagCache:      assetsETagCache,
 		defaultAvatars:       defaultAvatars,
 	}, nil
 }

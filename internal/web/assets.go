@@ -21,15 +21,9 @@ package web
 import (
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
-
-type assetFileInfo struct {
-	etag         string
-	lastModified time.Time
-}
 
 type fileSystem struct {
 	fs http.FileSystem
