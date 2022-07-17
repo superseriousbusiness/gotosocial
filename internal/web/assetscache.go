@@ -37,7 +37,7 @@ func generateEtag(filePath string, lastModified time.Time) (string, error) {
 	b := []byte(fmt.Sprintf("%s%d", filePath, lastModified.Unix()))
 
 	// nolint:gosec
-	return fmt.Sprintf(`/W"%s"`, sha1.Sum(b)), nil
+	return fmt.Sprintf(`/W"%x"`, sha1.Sum(b)), nil
 }
 
 // getAssetFileInfo tries to fetch info for the given filePath from the module's
