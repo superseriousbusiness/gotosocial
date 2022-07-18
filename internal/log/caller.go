@@ -42,7 +42,7 @@ func Caller(depth int) string {
 	var rpc [1]uintptr
 
 	// Fetch pcs of callers
-	n := runtime.Callers(depth+1, rpc[:])
+	n := runtime.Callers(depth, rpc[:])
 
 	if n > 0 {
 		// Look for value in cache

@@ -75,7 +75,7 @@ func (suite *SyslogTestSuite) TestSyslog() {
 func (suite *SyslogTestSuite) TestSyslogLongMessage() {
 	log.Warn(longMessage)
 
-	funcName := log.Caller(1)
+	funcName := log.Caller(2)
 	prefix := fmt.Sprintf(`timestamp="02/01/2006 15:04:05.000" func=%s level=WARN msg="`, funcName)
 
 	entry := <-suite.syslogChannel
@@ -106,7 +106,7 @@ func (suite *SyslogTestSuite) TestSyslogLongMessageUnixgram() {
 
 	log.Warn(longMessage)
 
-	funcName := log.Caller(1)
+	funcName := log.Caller(2)
 	prefix := fmt.Sprintf(`timestamp="02/01/2006 15:04:05.000" func=%s level=WARN msg="`, funcName)
 
 	entry := <-syslogChannel
