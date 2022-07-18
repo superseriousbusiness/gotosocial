@@ -20,30 +20,13 @@ package text_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-const (
-	simpleMarkdown = `# Title
-
-Here's a simple text in markdown.
-
-Here's a [link](https://example.org).`
-
-	simpleMarkdownExpected = "<h1>Title</h1><p>Here’s a simple text in markdown.</p><p>Here’s a <a href=\"https://example.org\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">link</a>.</p>"
-
-	withCodeBlockExpected = "<h1>Title</h1><p>Below is some JSON.</p><pre><code class=\"language-json\">{\n  \"key\": \"value\",\n  \"another_key\": [\n    \"value1\",\n    \"value2\"\n  ]\n}\n</code></pre><p>that was some JSON :)</p>"
-
-	withHashtag         = "# Title\n\nhere's a simple status that uses hashtag #Hashtag!"
-	withHashtagExpected = "<h1>Title</h1><p>here’s a simple status that uses hashtag <a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a>!</p>"
-)
-
-var (
-	withCodeBlock = `# Title
+var withCodeBlock = `# Title
 
 Below is some JSON.
 
@@ -59,6 +42,15 @@ Below is some JSON.
 
 that was some JSON :)
 `
+
+const (
+	simpleMarkdown         = "# Title\n\nHere's a simple text in markdown.\n\nHere's a [link](https://example.org)."
+	simpleMarkdownExpected = "<h1>Title</h1>\n\n<p>Here’s a simple text in markdown.</p>\n\n<p>Here’s a <a href=\"https://example.org\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">link</a>.</p>\n"
+	withCodeBlockExpected  = "<h1>Title</h1>\n\n<p>Below is some JSON.</p>\n\n<pre><code class=\"language-json\">{\n  &#34;key&#34;: &#34;value&#34;,\n  &#34;another_key&#34;: [\n    &#34;value1&#34;,\n    &#34;value2&#34;\n  ]\n}\n</code></pre>\n\n<p>that was some JSON :)</p>\n"
+	withInlineCode         = "`Nobody tells you about the <code><del>SECRET CODE</del></code>, do they?`"
+	withInlineCodeExpected = "<p><code>Nobody tells you about the &lt;code&gt;&lt;del&gt;SECRET CODE&lt;/del&gt;&lt;/code&gt;, do they?</code></p>\n"
+	withHashtag            = "# Title\n\nhere's a simple status that uses hashtag #Hashtag!"
+	withHashtagExpected    = "<h1>Title</h1>\n\n<p>here’s a simple status that uses hashtag <a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a>!</p>\n"
 )
 
 type MarkdownTestSuite struct {
@@ -71,9 +63,13 @@ func (suite *MarkdownTestSuite) TestParseSimple() {
 }
 
 func (suite *MarkdownTestSuite) TestParseWithCodeBlock() {
-	fmt.Println(withCodeBlock)
 	s := suite.formatter.FromMarkdown(context.Background(), withCodeBlock, nil, nil)
 	suite.Equal(withCodeBlockExpected, s)
+}
+
+func (suite *MarkdownTestSuite) TestParseWithInlineCode() {
+	s := suite.formatter.FromMarkdown(context.Background(), withInlineCode, nil, nil)
+	suite.Equal(withInlineCodeExpected, s)
 }
 
 func (suite *MarkdownTestSuite) TestParseWithHashtag() {
