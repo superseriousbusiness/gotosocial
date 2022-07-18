@@ -217,6 +217,7 @@ The following libraries and frameworks are used by GoToSocial, with gratitude ðŸ
 - [go-playground/validator](https://github.com/go-playground/validator); struct validation. [MIT License](https://spdx.org/licenses/MIT.html)
 - [gorilla/websocket](https://github.com/gorilla/websocket); Websocket connectivity. [BSD-2-Clause License](https://spdx.org/licenses/BSD-2-Clause.html).
 - [gruf/go-debug](https://codeberg.org/gruf/go-debug); profiling support in debug builds. [MIT License](https://spdx.org/licenses/MIT.html).
+- [gruf/go-kv](https://codeberg.org/gruf/go-kv); key-value field formatting. [MIT License](https://spdx.org/licenses/MIT.html).
 - [gruf/go-mutexes](https://codeberg.org/gruf/go-mutexes); mutex map. [MIT License](https://spdx.org/licenses/MIT.html).
 - [gruf/go-runners](https://codeberg.org/gruf/go-runners); worker pool library. [MIT License](https://spdx.org/licenses/MIT.html).
 - [gruf/go-store](https://codeberg.org/gruf/go-store); local media store. [MIT License](https://spdx.org/licenses/MIT.html).
@@ -235,7 +236,6 @@ The following libraries and frameworks are used by GoToSocial, with gratitude ðŸ
 - [ReneKroon/ttlcache](https://github.com/ReneKroon/ttlcache); in-memory caching. [MIT License](https://spdx.org/licenses/MIT.html).
 - [robfig/cron](https://github.com/robfig/cron); cron job scheduling. [MIT License](https://spdx.org/licenses/MIT.html).
 - [russross/blackfriday](https://github.com/russross/blackfriday); markdown parsing for statuses. [Simplified BSD License](https://spdx.org/licenses/BSD-2-Clause.html).
-- [sirupsen/logrus](https://github.com/sirupsen/logrus); logging. [MIT License](https://spdx.org/licenses/MIT.html).
 - [spf13/cobra](https://github.com/spf13/cobra); command-line tooling. [Apache-2.0 License](https://spdx.org/licenses/Apache-2.0.html).
 - [spf13/pflag](https://github.com/spf13/pflag); command-line flag utilities. [Apache-2.0 License](https://spdx.org/licenses/Apache-2.0.html).
 - [spf13/viper](https://github.com/spf13/viper); configuration management. [Apache-2.0 License](https://spdx.org/licenses/Apache-2.0.html).
