@@ -37,13 +37,6 @@ var ErrReservedAddr = errors.New("dial within blocked / reserved IP range")
 // ErrBodyTooLarge is returned when a received response body is above predefined limit (default 40MB).
 var ErrBodyTooLarge = errors.New("body size too large")
 
-// dialer is the base net.Dialer used by all package-created http.Transports.
-var dialer = &net.Dialer{
-	Timeout:   30 * time.Second,
-	KeepAlive: 30 * time.Second,
-	Resolver:  &net.Resolver{Dial: nil},
-}
-
 // Config provides configuration details for setting up a new
 // instance of httpclient.Client{}. Within are a subset of the
 // configuration values passed to initialized http.Transport{}
@@ -95,8 +88,11 @@ type Client struct {
 func New(cfg Config) *Client {
 	var c Client
 
-	// Copy global
-	d := dialer
+	d := &net.Dialer{
+		Timeout:   30 * time.Second,
+		KeepAlive: 30 * time.Second,
+		Resolver:  &net.Resolver{},
+	}
 
 	if cfg.MaxOpenConns <= 0 {
 		// By default base this value on GOMAXPROCS.
