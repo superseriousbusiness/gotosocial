@@ -88,10 +88,18 @@ func New(processor processing.Processor) (api.ClientModule, error) {
 			continue
 		}
 
-		extension := strings.TrimPrefix(strings.ToLower(filepath.Ext(f.Name())), ".")
+		// get the name of the file, eg avatar.jpeg
+		fileName := f.Name()
+
+		// get just the .jpeg, for example, from avatar.jpeg
+		extensionWithDot := filepath.Ext(fileName)
+
+		// remove the leading . to just get, eg, jpeg
+		extension := strings.TrimPrefix(extensionWithDot, ".")
 
 		// take only files with simple extensions
-		switch extension {
+		// that we know will work OK as avatars
+		switch strings.ToLower(extension) {
 		case "svg", "jpeg", "jpg", "gif", "png":
 			avatar := fmt.Sprintf("%s/default_avatars/%s", assetsPath, f.Name())
 			defaultAvatars = append(defaultAvatars, avatar)
