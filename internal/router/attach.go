@@ -39,3 +39,10 @@ func (r *router) AttachMiddleware(middleware gin.HandlerFunc) {
 func (r *router) AttachNoRouteHandler(handler gin.HandlerFunc) {
 	r.engine.NoRoute(handler)
 }
+
+// AttachGroup attaches the given handlers into a group with the given relativePath as
+// base path for that group. It then returns the *gin.RouterGroup so that the caller
+// can add any extra middlewares etc specific to that group, as desired.
+func (r *router) AttachGroup(relativePath string, handlers ...gin.HandlerFunc) *gin.RouterGroup {
+	return r.engine.Group(relativePath, handlers...)
+}
