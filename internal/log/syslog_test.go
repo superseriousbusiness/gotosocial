@@ -19,6 +19,7 @@
 package log_test
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"regexp"
@@ -65,17 +66,20 @@ func (suite *SyslogTestSuite) TearDownTest() {
 }
 
 func (suite *SyslogTestSuite) TestSyslog() {
-	log.Warn("this is a test of the emergency broadcast system!")
+	log.Info("this is a test of the emergency broadcast system!")
 
 	entry := <-suite.syslogChannel
-	suite.Regexp(regexp.MustCompile(`time=.* msg=this is a test of the emergency broadcast system! func=.*`), entry["content"])
+	suite.Regexp(regexp.MustCompile(`timestamp=.* func=.* level=INFO msg="this is a test of the emergency broadcast system!"`), entry["content"])
 }
 
 func (suite *SyslogTestSuite) TestSyslogLongMessage() {
 	log.Warn(longMessage)
 
+	const str = `timestamp="18/07/2022 19:08:14.699" func=log_test.(*SyslogTestSuite).TestSyslogLongMessage level=WARN msg="`
+
 	entry := <-suite.syslogChannel
-	suite.Regexp(regexp.MustCompile(`time=.* msg=condimentum lacinia quis vel eros donec ac odio tempor orci dapibus ultrices in iaculis nunc sed augue lacus viverra vitae congue eu consequat ac felis donec et odio pellentesque diam volutpat commodo sed egestas egestas fringilla phasellus faucibus scelerisque eleifend donec pretium vulputate sapien nec sagittis aliquam malesuada bibendum arcu vitae elementum curabitur vitae nunc sed velit dignissim sodales ut eu sem integer vitae justo eget magna fermentum iaculis eu non diam phasellus vestibulum lorem sed risus ultricies tristique nulla aliquet enim tortor at auctor urna nunc id cursus metus aliquam eleifend mi in nulla posuere sollicitudin aliquam ultrices sagittis orci a scelerisque purus semper eget duis at tellus at urna condimentum mattis pellentesque id nibh tortor id aliquet lectus proin nibh nisl condimentum id venenatis a condimentum vitae sapien pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas sed tempus urna et pharetra pharetra massa massa ultricies mi quis hendrerit dolor magna eget est lorem ipsum dolor sit amet consectetur adipiscing elit pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas integer eget aliquet nibh praesent tristique magna sit amet purus gravida quis blandit turpis cursus in hac habitasse platea dictumst quisque sagittis purus sit amet volutpat consequat mauris nunc congue nisi vitae suscipit tellus mauris a diam maecenas sed enim ut sem viverra aliquet eget sit amet tellus cras adipiscing enim eu turpis egestas pretium aenean pharetra magna ac placerat vestibulum lectus mauris ultrices eros in cursus turpis massa tincidunt dui ut ornare lectus sit a\.\.\. func=.*`), entry["content"])
+	regex := fmt.Sprintf(`timestamp=.* func=.* level=WARN msg="%s\.\.\.`, longMessage[:1700-len(str)-3])
+	suite.Regexp(regexp.MustCompile(regex), entry["content"])
 }
 
 func (suite *SyslogTestSuite) TestSyslogLongMessageUnixgram() {
@@ -101,8 +105,12 @@ func (suite *SyslogTestSuite) TestSyslogLongMessageUnixgram() {
 
 	log.Warn(longMessage)
 
+	const str = `timestamp="18/07/2022 19:08:14.699" func=log_test.(*SyslogTestSuite).TestSyslogLongMessageUnixgram level=WARN msg="`
+
 	entry := <-syslogChannel
-	suite.Regexp(regexp.MustCompile(`time=.* msg=condimentum lacinia quis vel eros donec ac odio tempor orci dapibus ultrices in iaculis nunc sed augue lacus viverra vitae congue eu consequat ac felis donec et odio pellentesque diam volutpat commodo sed egestas egestas fringilla phasellus faucibus scelerisque eleifend donec pretium vulputate sapien nec sagittis aliquam malesuada bibendum arcu vitae elementum curabitur vitae nunc sed velit dignissim sodales ut eu sem integer vitae justo eget magna fermentum iaculis eu non diam phasellus vestibulum lorem sed risus ultricies tristique nulla aliquet enim tortor at auctor urna nunc id cursus metus aliquam eleifend mi in nulla posuere sollicitudin aliquam ultrices sagittis orci a scelerisque purus semper eget duis at tellus at urna condimentum mattis pellentesque id nibh tortor id aliquet lectus proin nibh nisl condimentum id venenatis a condimentum vitae sapien pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas sed tempus urna et pharetra pharetra massa massa ultricies mi quis hendrerit dolor magna eget est lorem ipsum dolor sit amet consectetur adipiscing elit pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas integer eget aliquet nibh praesent tristique magna sit amet purus gravida quis blandit turpis cursus in hac habitasse platea dictumst quisque sagittis purus sit amet volutpat consequat mauris nunc congue nisi vitae suscipit tellus mauris a diam maecenas sed enim ut sem viverra aliquet eget sit amet tellus cras adipiscing enim eu turpis egestas pretium aenean pharetra magna ac placerat vestibulum lectus mauris ultrices eros in cursus turpis massa tincidunt dui ut ornare lectus sit a\.\.\. func=.*`), entry["content"])
+	regex := fmt.Sprintf(`timestamp=.* func=.* level=WARN msg="%s\.\.\.`, longMessage[:1700-len(str)-3])
+
+	suite.Regexp(regexp.MustCompile(regex), entry["content"])
 
 	if err := syslogServer.Kill(); err != nil {
 		panic(err)
