@@ -242,13 +242,13 @@ func logsys(lvl level.LEVEL, msg string) {
 	case level.TRACE:
 	case level.DEBUG:
 	case level.INFO:
-		sysout.Info(msg)
+		_ = sysout.Info(msg)
 	case level.WARN:
-		sysout.Warning(msg)
+		_ = sysout.Warning(msg)
 	case level.ERROR:
-		sysout.Err(msg)
+		_ = sysout.Err(msg)
 	case level.FATAL:
-		sysout.Crit(msg)
+		_ = sysout.Crit(msg)
 	}
 }
 
