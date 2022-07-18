@@ -36,7 +36,6 @@ import (
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 	l := log.WithFields(kv.Fields{
-
 		{K: "id", V: id},
 	}...)
 	l.Debug("entering Owns")

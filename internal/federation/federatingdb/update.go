@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 
-	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -43,9 +42,7 @@ import (
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
-	l := log.WithFields(kv.Fields{
-
-	}...)
+	l := log.Entry{}
 
 	if log.Level() >= level.DEBUG {
 		i, err := marshalItem(asType)

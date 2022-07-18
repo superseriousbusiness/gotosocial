@@ -25,7 +25,6 @@ import (
 	"fmt"
 	"net/url"
 
-	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
@@ -65,16 +64,12 @@ func sameActor(activityActor vocab.ActivityStreamsActorProperty, followActor voc
 // The go-fed library will handle setting the 'id' property on the
 // activity or object provided with the value returned.
 func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL, err error) {
-	l := log.WithFields(kv.Fields{
-
-	}...)
-
 	if log.Level() >= level.DEBUG {
 		i, err := marshalItem(t)
 		if err != nil {
 			return nil, err
 		}
-		l = l.WithField("newID", i)
+		l := log.WithField("newID", i)
 		l.Debug("entering NewID")
 	}
 
