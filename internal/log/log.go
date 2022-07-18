@@ -162,7 +162,7 @@ func printf(fields []kv.Field, s string, a ...interface{}) {
 
 	if len(fields) > 0 {
 		// Append formatted fields
-		kv.Fields(fields).AppendFormat(buf)
+		kv.Fields(fields).AppendFormat(buf, false)
 		buf.B = append(buf.B, ' ')
 	}
 
@@ -215,7 +215,7 @@ func logf(lvl level.LEVEL, fields []kv.Field, s string, a ...interface{}) {
 	// Append formatted fields with msg
 	kv.Fields(append(fields, kv.Field{
 		"msg", fmt.Sprintf(s, a...),
-	})).AppendFormat(buf)
+	})).AppendFormat(buf, false)
 
 	// Append a final newline
 	buf.B = append(buf.B, '\n')

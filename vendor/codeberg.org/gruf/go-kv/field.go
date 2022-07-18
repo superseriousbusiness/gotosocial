@@ -1,7 +1,6 @@
 package kv
 
 import (
-	"codeberg.org/gruf/go-bitutil"
 	"codeberg.org/gruf/go-byteutil"
 )
 
@@ -41,9 +40,9 @@ func (f *Fields) Set(key string, value interface{}) {
 }
 
 // AppendFormat appends a string representation of receiving Field(s) to 'b'.
-func (f Fields) AppendFormat(buf *byteutil.Buffer) {
+func (f Fields) AppendFormat(buf *byteutil.Buffer, vbose bool) {
 	for i := 0; i < len(f); i++ {
-		f[i].AppendFormat(buf)
+		f[i].AppendFormat(buf, vbose)
 		buf.WriteByte(' ')
 	}
 	if len(f) > 0 {
@@ -55,20 +54,22 @@ func (f Fields) AppendFormat(buf *byteutil.Buffer) {
 func (f Fields) String() string {
 	b := make([]byte, 0, bufsize*len(f))
 	buf := byteutil.Buffer{B: b}
-	f.AppendFormat(&buf)
+	f.AppendFormat(&buf, false)
 	return buf.String()
 }
 
 // GoString performs .String() but with type prefix.
 func (f Fields) GoString() string {
-	return "kv.Fields{" + f.String() + "}"
+	b := make([]byte, 0, bufsize*len(f))
+	buf := byteutil.Buffer{B: b}
+	f.AppendFormat(&buf, true)
+	return "kv.Fields{" + buf.String() + "}"
 }
 
 // Field represents an individual key-value field.
 type Field struct {
-	K string         // Field key
-	V interface{}    // Field value
-	x bitutil.Flags8 // flags (0=verbose)
+	K string      // Field key
+	V interface{} // Field value
 }
 
 // Key returns the formatted key string of this Field.
@@ -76,12 +77,6 @@ func (f Field) Key() string {
 	buf := byteutil.Buffer{B: make([]byte, 0, bufsize/2)}
 	appendQuoteKey(&buf, f.K)
 	return buf.String()
-}
-
-// Verbose returns Field with the verbose value printing flag set.
-func (f Field) Verbose() Field {
-	f.x = f.x.Set0()
-	return f
 }
 
 // String will return a string representation of this Field
@@ -97,11 +92,14 @@ func (f Field) Verbose() Field {
 func (f Field) String() string {
 	b := make([]byte, 0, bufsize)
 	buf := byteutil.Buffer{B: b}
-	f.AppendFormat(&buf)
+	f.AppendFormat(&buf, false)
 	return buf.String()
 }
 
 // GoString performs .String() but with verbose always enabled.
 func (f Field) GoString() string {
-	return f.Verbose().String()
+	b := make([]byte, 0, bufsize)
+	buf := byteutil.Buffer{B: b}
+	f.AppendFormat(&buf, true)
+	return buf.String()
 }

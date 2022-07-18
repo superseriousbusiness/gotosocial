@@ -10,9 +10,9 @@ import (
 )
 
 // AppendFormat will append formatted format of Field to 'buf'. See .String() for details.
-func (f Field) AppendFormat(buf *byteutil.Buffer) {
+func (f Field) AppendFormat(buf *byteutil.Buffer, vbose bool) {
 	var fmtstr string
-	if f.x.Get0() /* verbose */ {
+	if vbose /* verbose */ {
 		fmtstr = `%#v`
 	} else /* regular */ {
 		fmtstr = `%+v`
@@ -23,9 +23,9 @@ func (f Field) AppendFormat(buf *byteutil.Buffer) {
 }
 
 // Value returns the formatted value string of this Field.
-func (f Field) Value() string {
+func (f Field) Value(vbose bool) string {
 	var fmtstr string
-	if f.x.Get0() /* verbose */ {
+	if vbose /* verbose */ {
 		fmtstr = `%#v`
 	} else /* regular */ {
 		fmtstr = `%+v`
