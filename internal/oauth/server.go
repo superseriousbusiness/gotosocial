@@ -23,9 +23,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/oauth2/v4"
 	"github.com/superseriousbusiness/oauth2/v4/errors"
 	"github.com/superseriousbusiness/oauth2/v4/manage"
@@ -95,12 +95,12 @@ func New(ctx context.Context, database db.Basic) Server {
 
 	srv := server.NewServer(sc, manager)
 	srv.SetInternalErrorHandler(func(err error) *errors.Response {
-		logrus.Errorf("internal oauth error: %s", err)
+		log.Errorf("internal oauth error: %s", err)
 		return nil
 	})
 
 	srv.SetResponseErrorHandler(func(re *errors.Response) {
-		logrus.Errorf("internal response error: %s", re.Error)
+		log.Errorf("internal response error: %s", re.Error)
 	})
 
 	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (string, error) {
@@ -155,7 +155,6 @@ func (s *s) ValidationBearerToken(r *http.Request) (oauth2.TokenInfo, error) {
 // The ti parameter refers to an existing Application token that was used to make the upstream
 // request. This token needs to be validated and exist in database in order to create a new token.
 func (s *s) GenerateUserAccessToken(ctx context.Context, ti oauth2.TokenInfo, clientSecret string, userID string) (oauth2.TokenInfo, error) {
-
 	authToken, err := s.server.Manager.GenerateAuthToken(ctx, oauth2.Code, &oauth2.TokenGenerateRequest{
 		ClientID:     ti.GetClientID(),
 		ClientSecret: clientSecret,
@@ -169,7 +168,7 @@ func (s *s) GenerateUserAccessToken(ctx context.Context, ti oauth2.TokenInfo, cl
 	if authToken == nil {
 		return nil, errors.New("generated auth token was empty")
 	}
-	logrus.Tracef("obtained auth token: %+v", authToken)
+	log.Tracef("obtained auth token: %+v", authToken)
 
 	accessToken, err := s.server.Manager.GenerateAccessToken(ctx, oauth2.AuthorizationCode, &oauth2.TokenGenerateRequest{
 		ClientID:     authToken.GetClientID(),
@@ -178,14 +177,13 @@ func (s *s) GenerateUserAccessToken(ctx context.Context, ti oauth2.TokenInfo, cl
 		Scope:        authToken.GetScope(),
 		Code:         authToken.GetCode(),
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("error generating user-level access token: %s", err)
 	}
 	if accessToken == nil {
 		return nil, errors.New("generated user-level access token was empty")
 	}
-	logrus.Tracef("obtained user-level access token: %+v", accessToken)
+	log.Tracef("obtained user-level access token: %+v", accessToken)
 	return accessToken, nil
 }
 

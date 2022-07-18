@@ -45,7 +45,6 @@ func loadTemplates(templateBaseDir string) (*template.Template, error) {
 // https://pkg.go.dev/net/smtp#SendMail
 // and it did seem to work.
 func assembleMessage(mailSubject string, mailBody string, mailTo string, mailFrom string) ([]byte, error) {
-
 	if strings.Contains(mailSubject, "\r") || strings.Contains(mailSubject, "\n") {
 		return nil, errors.New("email subject must not contain newline characters")
 	}

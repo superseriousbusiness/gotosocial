@@ -29,13 +29,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
@@ -79,7 +79,6 @@ type GetRemoteAccountParams struct {
 // GetRemoteAccount completely dereferences a remote account, converts it to a GtS model account,
 // puts or updates it in the database (if necessary), and returns it to a caller.
 func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountParams) (remoteAccount *gtsmodel.Account, err error) {
-
 	/*
 		In this function we want to retrieve a gtsmodel representation of a remote account, with its proper
 		accountDomain set, while making as few calls to remote instances as possible to save time and bandwidth.
@@ -454,7 +453,7 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 			go func() {
 				dlCtx, done := context.WithDeadline(context.Background(), time.Now().Add(1*time.Minute))
 				if err := lockAndLoad(dlCtx, d.dereferencingAvatarsLock, processingMedia, d.dereferencingAvatars, targetAccount.ID); err != nil {
-					logrus.Errorf("fetchRemoteAccountMedia: error during async lock and load of avatar: %s", err)
+					log.Errorf("fetchRemoteAccountMedia: error during async lock and load of avatar: %s", err)
 				}
 				done()
 			}()
@@ -512,7 +511,7 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 			go func() {
 				dlCtx, done := context.WithDeadline(context.Background(), time.Now().Add(1*time.Minute))
 				if err := lockAndLoad(dlCtx, d.dereferencingHeadersLock, processingMedia, d.dereferencingHeaders, targetAccount.ID); err != nil {
-					logrus.Errorf("fetchRemoteAccountMedia: error during async lock and load of header: %s", err)
+					log.Errorf("fetchRemoteAccountMedia: error during async lock and load of header: %s", err)
 				}
 				done()
 			}()

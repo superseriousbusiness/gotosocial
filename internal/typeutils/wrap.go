@@ -14,7 +14,6 @@ import (
 )
 
 func (c *converter) WrapPersonInUpdate(person vocab.ActivityStreamsPerson, originAccount *gtsmodel.Account) (vocab.ActivityStreamsUpdate, error) {
-
 	update := streams.NewActivityStreamsUpdate()
 
 	// set the actor

@@ -42,8 +42,7 @@ Here's a [link](https://example.org).`
 	withHashtagExpected = "<h1>Title</h1><p>here’s a simple status that uses hashtag <a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a>!</p>"
 )
 
-var (
-	withCodeBlock = `# Title
+var withCodeBlock = `# Title
 
 Below is some JSON.
 
@@ -59,7 +58,6 @@ Below is some JSON.
 
 that was some JSON :)
 `
-)
 
 type MarkdownTestSuite struct {
 	TextStandardTestSuite

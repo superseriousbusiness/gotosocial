@@ -23,12 +23,13 @@ import (
 	"errors"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -55,14 +56,16 @@ import (
 // 17. Delete account's timeline
 // 18. Delete account itself
 func (p *processor) Delete(ctx context.Context, account *gtsmodel.Account, origin string) gtserror.WithCode {
-	fields := logrus.Fields{
-		"func":     "Delete",
-		"username": account.Username,
+	fields := kv.Fields{
+
+		{K: "username", V: account.Username},
 	}
 	if account.Domain != "" {
-		fields["domain"] = account.Domain
+		fields = append(fields, kv.Field{
+			K: "domain", V: account.Domain,
+		})
 	}
-	l := logrus.WithFields(fields)
+	l := log.WithFields(fields...)
 
 	l.Debug("beginning account delete process")
 

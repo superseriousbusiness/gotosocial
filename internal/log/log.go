@@ -1,35 +1,45 @@
 package log
 
 import (
+	"fmt"
+	"io"
 	"log/syslog"
 	"os"
+	"strings"
 	"syscall"
+	"time"
 
+	"codeberg.org/gruf/go-atomics"
 	"codeberg.org/gruf/go-kv"
-	"codeberg.org/gruf/go-logger/v2"
-	"codeberg.org/gruf/go-logger/v2/entry"
 	"codeberg.org/gruf/go-logger/v2/level"
 )
 
 var (
+	// loglvl is the currently set logging level.
+	loglvl atomics.Uint32
 
-	// Default log config with field formatter.
-	cfg = logger.Config{
-		Format: entry.NewFieldFormatter(nil),
-	}
+	// lvlstrs is the lookup table of log levels to strings.
+	lvlstrs = level.Default()
 
-	// Default logger flags (includes timestamp).
-	flags = logger.Flags(0).SetTime()
-
-	// Preprepared stdout/stderr logs, customized in Initialize().
-	stdout = logger.NewWith(os.Stdout, cfg, 0, flags)
-	stderr = logger.NewWith(os.Stderr, cfg, 0, flags)
+	// Preprepared stdout/stderr log writers.
+	stdout = &safewriter{w: os.Stdout}
+	stderr = &safewriter{w: os.Stderr}
 
 	// Syslog output, only set if enabled.
 	sysout *syslog.Writer
 )
 
-func With(key string, value interface{}) Entry {
+// Level returns the currently set log level.
+func Level() level.LEVEL {
+	return level.LEVEL(loglvl.Load())
+}
+
+// SetLevel sets the max logging level.
+func SetLevel(lvl level.LEVEL) {
+	loglvl.Store(uint32(lvl))
+}
+
+func WithField(key string, value interface{}) Entry {
 	return Entry{fields: []kv.Field{{K: key, V: value}}}
 }
 
@@ -38,7 +48,7 @@ func WithFields(fields ...kv.Field) Entry {
 }
 
 func Trace(a ...interface{}) {
-	log(level.TRACE, nil, a...)
+	logf(level.TRACE, nil, args(len(a)), a...)
 }
 
 func Tracef(s string, a ...interface{}) {
@@ -46,7 +56,7 @@ func Tracef(s string, a ...interface{}) {
 }
 
 func Debug(a ...interface{}) {
-	log(level.DEBUG, nil, a...)
+	logf(level.DEBUG, nil, args(len(a)), a...)
 }
 
 func Debugf(s string, a ...interface{}) {
@@ -54,7 +64,7 @@ func Debugf(s string, a ...interface{}) {
 }
 
 func Info(a ...interface{}) {
-	log(level.INFO, nil, a...)
+	logf(level.INFO, nil, args(len(a)), a...)
 }
 
 func Infof(s string, a ...interface{}) {
@@ -62,7 +72,7 @@ func Infof(s string, a ...interface{}) {
 }
 
 func Warn(a ...interface{}) {
-	log(level.WARN, nil, a...)
+	logf(level.WARN, nil, args(len(a)), a...)
 }
 
 func Warnf(s string, a ...interface{}) {
@@ -70,7 +80,7 @@ func Warnf(s string, a ...interface{}) {
 }
 
 func Error(a ...interface{}) {
-	log(level.ERROR, nil, a...)
+	logf(level.ERROR, nil, args(len(a)), a...)
 }
 
 func Errorf(s string, a ...interface{}) {
@@ -79,7 +89,7 @@ func Errorf(s string, a ...interface{}) {
 
 func Fatal(a ...interface{}) {
 	defer syscall.Exit(1)
-	log(level.FATAL, nil, a...)
+	logf(level.FATAL, nil, args(len(a)), a...)
 }
 
 func Fatalf(s string, a ...interface{}) {
@@ -87,64 +97,132 @@ func Fatalf(s string, a ...interface{}) {
 	logf(level.FATAL, nil, s, a...)
 }
 
-func log(lvl level.LEVEL, fields []kv.Field, a ...interface{}) {
-	var out *logger.Logger
+func Panic(a ...interface{}) {
+	defer panic(fmt.Sprint(a...))
+	logf(level.PANIC, nil, args(len(a)), a...)
+}
 
-	if lvl <= level.ERROR {
-		out = stderr
-	} else {
-		out = stdout
+func Panicf(s string, a ...interface{}) {
+	defer panic(fmt.Sprintf(s, a...))
+	logf(level.PANIC, nil, s, a...)
+}
+
+// Log will log formatted args as 'msg' field to the log at given level.
+func Log(lvl level.LEVEL, a ...interface{}) {
+	logf(lvl, nil, args(len(a)), a...)
+}
+
+// Logf will log format string as 'msg' field to the log at given level.
+func Logf(lvl level.LEVEL, s string, a ...interface{}) {
+	logf(lvl, nil, s, a...)
+}
+
+// Print will log formatted args to the stdout log output.
+func Print(a ...interface{}) {
+	printf(nil, args(len(a)), a...)
+}
+
+// Print will log format string to the stdout log output.
+func Printf(s string, a ...interface{}) {
+	printf(nil, s, a...)
+}
+
+func printf(fields []kv.Field, s string, a ...interface{}) {
+	// Acquire buffer
+	buf := getBuf()
+
+	// Append formatted timestamp
+	now := time.Now().Format("02/01/2006 15:04:05.000")
+	buf.B = append(buf.B, `timestamp="`...)
+	buf.B = append(buf.B, now...)
+	buf.B = append(buf.B, `" `...)
+
+	// Append formatted caller func
+	buf.B = append(buf.B, `func=`...)
+	buf.B = append(buf.B, caller(3)...)
+	buf.B = append(buf.B, ' ')
+
+	if len(fields) > 0 {
+		// Append formatted fields
+		kv.Fields(fields).AppendFormat(buf)
+		buf.B = append(buf.B, ' ')
 	}
 
-	// Acquire entry from pool
-	entry := out.Entry(4)
+	// Append formatted args
+	fmt.Fprintf(buf, s, a...)
 
-	// Write formatted entry
-	entry.Timestamp()
-	entry.WithLevel(lvl)
-	entry.Fields(fields...)
-	entry.Msg(a...)
+	// Append a final newline
+	buf.B = append(buf.B, '\n')
 
-	if sysout != nil {
-		// Log this entry to syslog
-		logsys(lvl, entry.String())
-	}
-
-	// Write to main log
-	out.Write(entry)
+	// Write to log and release
+	_, _ = stdout.Write(buf.B)
+	putBuf(buf)
 }
 
 func logf(lvl level.LEVEL, fields []kv.Field, s string, a ...interface{}) {
-	var out *logger.Logger
+	var out io.Writer
 
+	// Check if enabled.
+	if lvl > Level() {
+		return
+	}
+
+	// Split errors to stderr,
+	// all else goes to stdout.
 	if lvl <= level.ERROR {
 		out = stderr
 	} else {
 		out = stdout
 	}
 
-	// Acquire entry from pool
-	entry := out.Entry(4)
+	// Acquire buffer
+	buf := getBuf()
 
-	// Write formatted entry
-	entry.Timestamp()
-	entry.WithLevel(lvl)
-	entry.Fields(fields...)
-	entry.Msgf(s, a...)
+	// Append formatted timestamp
+	now := time.Now().Format("02/01/2006 15:04:05.000")
+	buf.B = append(buf.B, `timestamp="`...)
+	buf.B = append(buf.B, now...)
+	buf.B = append(buf.B, `" `...)
+
+	// Append formatted caller func
+	buf.B = append(buf.B, `func=`...)
+	buf.B = append(buf.B, caller(3)...)
+	buf.B = append(buf.B, ' ')
+
+	// Append formatted level string
+	buf.B = append(buf.B, `level=`...)
+	buf.B = append(buf.B, lvlstrs[lvl]...)
+	buf.B = append(buf.B, ' ')
+
+	// Append formatted fields with msg
+	kv.Fields(append(fields, kv.Field{
+		K: "msg", V: fmt.Sprintf(s, a...),
+	})).AppendFormat(buf)
+
+	// Append a final newline
+	buf.B = append(buf.B, '\n')
 
 	if sysout != nil {
-		// Log this entry to syslog
-		logsys(lvl, entry.String())
+		// Write log entry to syslog
+		logsys(lvl, buf.String())
 	}
 
-	// Write to main log
-	out.Write(entry)
+	// Write to log and release
+	_, _ = out.Write(buf.B)
+	putBuf(buf)
 }
 
+// logsys will log given msg at given severity to the syslog.
 func logsys(lvl level.LEVEL, msg string) {
+	// Truncate message if > 1700 chars
+	if len(msg) > 1700 {
+		msg = msg[:1697] + "..."
+	}
+
+	// Log at appropriate syslog severity
 	switch lvl {
+	case level.TRACE:
 	case level.DEBUG:
-		sysout.Debug(msg)
 	case level.INFO:
 		sysout.Info(msg)
 	case level.WARN:
@@ -154,4 +232,28 @@ func logsys(lvl level.LEVEL, msg string) {
 	case level.FATAL:
 		sysout.Crit(msg)
 	}
+}
+
+// args returns an args format string of format '%v' * count.
+func args(count int) string {
+	const args = `%v%v%v%v%v%v%v%v%v%v` +
+		`%v%v%v%v%v%v%v%v%v%v` +
+		`%v%v%v%v%v%v%v%v%v%v` +
+		`%v%v%v%v%v%v%v%v%v%v`
+
+	// Use predetermined args str
+	if count < len(args) {
+		return args[:count*2]
+	}
+
+	// Allocate buffer of needed len
+	var buf strings.Builder
+	buf.Grow(count * 2)
+
+	// Manually build an args str
+	for i := 0; i < count; i++ {
+		buf.WriteString(`%v`)
+	}
+
+	return buf.String()
 }

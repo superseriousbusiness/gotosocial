@@ -23,14 +23,15 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 func (f *filter) StatusBoostable(ctx context.Context, targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account) (bool, error) {
-	l := logrus.WithFields(logrus.Fields{
-		"func": "StatusBoostable",
-	})
+	l := log.WithFields(kv.Fields{
+
+	}...)
 
 	// if the status isn't visible, it certainly isn't boostable
 	visible, err := f.StatusVisible(ctx, targetStatus, requestingAccount)

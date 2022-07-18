@@ -22,15 +22,16 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 func (f *filter) StatusPublictimelineable(ctx context.Context, targetStatus *gtsmodel.Status, timelineOwnerAccount *gtsmodel.Account) (bool, error) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":     "StatusPublictimelineable",
-		"statusID": targetStatus.ID,
-	})
+	l := log.WithFields(kv.Fields{
+
+		{K: "statusID", V: targetStatus.ID},
+	}...)
 
 	// Don't timeline boosted statuses
 	if targetStatus.BoostOfID != "" {

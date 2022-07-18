@@ -24,7 +24,6 @@ import (
 	"strings"
 
 	"github.com/miekg/dns"
-	"github.com/sirupsen/logrus"
 )
 
 // Validate validates global config settings which don't have defaults, to make sure they are set sensibly.
@@ -55,7 +54,7 @@ func Validate() error {
 		// no problem
 		break
 	case "http":
-		logrus.Warnf("%s was set to 'http'; this should *only* be used for debugging and tests!", ProtocolFlag())
+		//log.Warnf("%s was set to 'http'; this should *only* be used for debugging and tests!", ProtocolFlag())
 	case "":
 		errs = append(errs, fmt.Errorf("%s must be set", ProtocolFlag()))
 	default:

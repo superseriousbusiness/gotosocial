@@ -24,12 +24,12 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/url"
 	"time"
 
 	"codeberg.org/gruf/go-byteutil"
 	"codeberg.org/gruf/go-cache/v2"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -73,7 +73,7 @@ func NewController(db db.DB, federatingDB federatingdb.DB, clock pub.Clock, clie
 	// Transport cache has TTL=1hr freq=1m
 	c.cache.SetTTL(time.Hour, false)
 	if !c.cache.Start(time.Minute) {
-		logrus.Panic("failed to start transport controller cache")
+		log.Panic("failed to start transport controller cache")
 	}
 
 	return c

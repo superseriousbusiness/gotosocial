@@ -33,13 +33,13 @@ import (
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
@@ -89,8 +89,6 @@ type bunDBService struct {
 }
 
 func doMigration(ctx context.Context, db *bun.DB) error {
-	l := logrus.WithField("func", "doMigration")
-
 	migrator := migrate.NewMigrator(db, migrations.Migrations)
 
 	if err := migrator.Init(ctx); err != nil {
@@ -106,11 +104,11 @@ func doMigration(ctx context.Context, db *bun.DB) error {
 	}
 
 	if group.ID == 0 {
-		l.Info("there are no new migrations to run")
+		log.Info("there are no new migrations to run")
 		return nil
 	}
 
-	l.Infof("MIGRATED DATABASE TO %s", group)
+	log.Infof("MIGRATED DATABASE TO %s", group)
 	return nil
 }
 
@@ -243,7 +241,7 @@ func sqliteConn(ctx context.Context) (*DBConn, error) {
 	tweakConnectionValues(sqldb)
 
 	if dbAddress == "file::memory:?cache=shared" {
-		logrus.Warn("sqlite in-memory database should only be used for debugging")
+		log.Warn("sqlite in-memory database should only be used for debugging")
 		// don't close connections on disconnect -- otherwise
 		// the SQLite database will be deleted when there
 		// are no active connections
@@ -260,7 +258,7 @@ func sqliteConn(ctx context.Context) (*DBConn, error) {
 		return nil, fmt.Errorf("sqlite ping: %s", err)
 	}
 
-	logrus.Info("connected to SQLITE database")
+	log.Info("connected to SQLITE database")
 	return conn, nil
 }
 
@@ -281,7 +279,7 @@ func pgConn(ctx context.Context) (*DBConn, error) {
 		return nil, fmt.Errorf("postgres ping: %s", err)
 	}
 
-	logrus.Info("connected to POSTGRES database")
+	log.Info("connected to POSTGRES database")
 	return conn, nil
 }
 
@@ -436,7 +434,7 @@ func (ps *bunDBService) EmojiStringsToEmojis(ctx context.Context, emojis []strin
 		if err != nil {
 			if err == sql.ErrNoRows {
 				// no result found for this username/domain so just don't include it as an emoji and carry on about our business
-				logrus.Debugf("no emoji found with shortcode %s, skipping it", e)
+				log.Debugf("no emoji found with shortcode %s, skipping it", e)
 				continue
 			}
 			// a serious error has happened so bail

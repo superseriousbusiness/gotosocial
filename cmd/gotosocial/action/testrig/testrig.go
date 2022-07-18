@@ -28,7 +28,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/account"
@@ -56,6 +55,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/security"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
@@ -189,7 +189,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
 	sig := <-sigs
-	logrus.Infof("received signal %s, shutting down", sig)
+	log.Infof("received signal %s, shutting down", sig)
 
 	testrig.StandardDBTeardown(dbService)
 	testrig.StandardStorageTeardown(storageBackend)
@@ -199,6 +199,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error closing gotosocial service: %s", err)
 	}
 
-	logrus.Info("done! exiting...")
+	log.Info("done! exiting...")
 	return nil
 }

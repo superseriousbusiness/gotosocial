@@ -25,9 +25,8 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 )
 
@@ -105,7 +104,7 @@ func (f *formatter) ReplaceMentions(ctx context.Context, in string, mentions []*
 				if menchie.TargetAccount == nil {
 					a, err := f.db.GetAccountByID(ctx, menchie.TargetAccountID)
 					if err != nil {
-						logrus.Errorf("error getting account with id %s from the db: %s", menchie.TargetAccountID, err)
+						log.Errorf("error getting account with id %s from the db: %s", menchie.TargetAccountID, err)
 						return match
 					}
 					menchie.TargetAccount = a

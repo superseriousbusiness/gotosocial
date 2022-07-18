@@ -5,9 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -144,12 +145,12 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 		return
 	}
 
-	l := logrus.WithFields(logrus.Fields{
-		"account":    account.Username,
-		"path":       BasePath,
-		"streamID":   stream.ID,
-		"streamType": streamType,
-	})
+	l := log.WithFields(kv.Fields{
+		{K: "account", V: account.Username},
+		{K: "path", V: BasePath},
+		{K: "streamID", V: stream.ID},
+		{K: "streamType", V: streamType},
+	}...)
 
 	wsConn, err := wsUpgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {

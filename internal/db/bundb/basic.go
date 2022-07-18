@@ -22,10 +22,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 )
 
@@ -165,6 +164,6 @@ func (b *basicDB) IsHealthy(ctx context.Context) db.Error {
 }
 
 func (b *basicDB) Stop(ctx context.Context) db.Error {
-	logrus.Info("closing db connection")
+	log.Info("closing db connection")
 	return b.conn.Close()
 }

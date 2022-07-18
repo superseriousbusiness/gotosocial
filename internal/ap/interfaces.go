@@ -261,8 +261,7 @@ type WithSensitive interface {
 }
 
 // WithConversation ...
-type WithConversation interface {
-	// TODO
+type WithConversation interface { // TODO
 }
 
 // WithContent represents an activity with ActivityStreamsContentProperty

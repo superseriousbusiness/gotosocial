@@ -24,7 +24,7 @@ import (
 	"time"
 
 	"github.com/h2non/filetype"
-	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // AllSupportedMIMETypes just returns all media
@@ -117,17 +117,16 @@ func ParseMediaSize(s string) (Size, error) {
 }
 
 // logrusWrapper is just a util for passing the logrus logger into the cron logging system.
-type logrusWrapper struct {
-}
+type logrusWrapper struct{}
 
 // Info logs routine messages about cron's operation.
 func (l *logrusWrapper) Info(msg string, keysAndValues ...interface{}) {
-	logrus.Info("media manager cron logger: ", msg, keysAndValues)
+	log.Info("media manager cron logger: ", msg, keysAndValues)
 }
 
 // Error logs an error condition.
 func (l *logrusWrapper) Error(err error, msg string, keysAndValues ...interface{}) {
-	logrus.Error("media manager cron logger: ", err, msg, keysAndValues)
+	log.Error("media manager cron logger: ", err, msg, keysAndValues)
 }
 
 func parseOlderThan(olderThanDays int) (time.Time, error) {

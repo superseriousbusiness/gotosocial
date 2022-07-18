@@ -24,20 +24,21 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 const retries = 5
 
 func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID string, minID string, prepareNext bool) ([]Preparable, error) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":      "Get",
-		"accountID": t.accountID,
-		"amount":    amount,
-		"maxID":     maxID,
-		"sinceID":   sinceID,
-		"minID":     minID,
-	})
+	l := log.WithFields(kv.Fields{
+
+		{K: "accountID", V: t.accountID},
+		{K: "amount", V: amount},
+		{K: "maxID", V: maxID},
+		{K: "sinceID", V: sinceID},
+		{K: "minID", V: minID},
+	}...)
 	l.Debug("entering get")
 
 	var items []Preparable
@@ -136,12 +137,12 @@ func (t *timeline) GetXFromTop(ctx context.Context, amount int) ([]Preparable, e
 }
 
 func (t *timeline) GetXBehindID(ctx context.Context, amount int, behindID string, attempts *int) ([]Preparable, error) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":     "GetXBehindID",
-		"amount":   amount,
-		"behindID": behindID,
-		"attempts": *attempts,
-	})
+	l := log.WithFields(kv.Fields{
+
+		{K: "amount", V: amount},
+		{K: "behindID", V: behindID},
+		{K: "attempts", V: attempts},
+	}...)
 
 	newAttempts := *attempts
 	newAttempts++

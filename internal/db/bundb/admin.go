@@ -29,13 +29,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -87,7 +86,7 @@ func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) (bool, db.
 func (a *adminDB) NewSignup(ctx context.Context, username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string, emailVerified bool, admin bool) (*gtsmodel.User, db.Error) {
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
-		logrus.Errorf("error creating new rsa key: %s", err)
+		log.Errorf("error creating new rsa key: %s", err)
 		return nil, err
 	}
 
@@ -190,13 +189,13 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 		return err
 	}
 	if exists {
-		logrus.Infof("instance account %s already exists", username)
+		log.Infof("instance account %s already exists", username)
 		return nil
 	}
 
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
-		logrus.Errorf("error creating new rsa key: %s", err)
+		log.Errorf("error creating new rsa key: %s", err)
 		return err
 	}
 
@@ -231,7 +230,7 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 		return a.conn.ProcessError(err)
 	}
 
-	logrus.Infof("instance account %s CREATED with id %s", username, acct.ID)
+	log.Infof("instance account %s CREATED with id %s", username, acct.ID)
 	return nil
 }
 
@@ -250,7 +249,7 @@ func (a *adminDB) CreateInstanceInstance(ctx context.Context) db.Error {
 		return err
 	}
 	if exists {
-		logrus.Infof("instance entry already exists")
+		log.Infof("instance entry already exists")
 		return nil
 	}
 
@@ -275,6 +274,6 @@ func (a *adminDB) CreateInstanceInstance(ctx context.Context) db.Error {
 		return a.conn.ProcessError(err)
 	}
 
-	logrus.Infof("created instance instance %s with id %s", host, i.ID)
+	log.Infof("created instance instance %s with id %s", host, i.ID)
 	return nil
 }

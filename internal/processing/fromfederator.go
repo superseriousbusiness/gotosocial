@@ -24,11 +24,13 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
+	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
@@ -36,12 +38,30 @@ import (
 // and directs the message into the appropriate side effect handler function, or simply does nothing if there's
 // no handler function defined for the combination of Activity and Object.
 func (p *processor) ProcessFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
-	l := logrus.WithFields(logrus.Fields{
-		"func":           "processFromFederator",
-		"APActivityType": federatorMsg.APActivityType,
-		"APObjectType":   federatorMsg.APObjectType,
-	})
-	l.Trace("processing message from federator")
+	// Allocate new log fields slice
+	fields := make([]kv.Field, 3, 5)
+	fields[0] = kv.Field{K: "activityType", V: federatorMsg.APActivityType}
+	fields[1] = kv.Field{K: "objectType", V: federatorMsg.APObjectType}
+	fields[2] = kv.Field{K: "toAccount", V: federatorMsg.ReceivingAccount.Username}
+
+	if federatorMsg.APIri != nil {
+		// An IRI was supplied, append to log
+		fields = append(fields, kv.Field{
+			K: "iri", V: federatorMsg.APIri,
+		})
+	}
+
+	if federatorMsg.GTSModel != nil &&
+		log.Level() >= level.DEBUG {
+		// Append converted model to log
+		fields = append(fields, kv.Field{
+			K: "model", V: federatorMsg.GTSModel,
+		})
+	}
+
+	// Log this federated message
+	l := log.WithFields(fields...)
+	l.Info("processing from federator")
 
 	switch federatorMsg.APActivityType {
 	case ap.ActivityCreate:

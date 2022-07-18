@@ -23,10 +23,11 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
@@ -34,12 +35,10 @@ import (
 // the database has an entry for the IRI.
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
-	l := logrus.WithFields(
-		logrus.Fields{
-			"func": "Owns",
-			"id":   id,
-		},
-	)
+	l := log.WithFields(kv.Fields{
+
+		{K: "id", V: id},
+	}...)
 	l.Debug("entering Owns")
 
 	// if the id host isn't this instance host, we don't own this IRI

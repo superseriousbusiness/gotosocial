@@ -22,10 +22,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
@@ -105,7 +104,7 @@ func (m *Module) Route(r router.Router) error {
 
 // muxHandler is a little workaround to overcome the limitations of Gin
 func (m *Module) muxHandler(c *gin.Context) {
-	logrus.Debug("entering mux handler")
+	log.Debug("entering mux handler")
 	ru := c.Request.RequestURI
 
 	if c.Request.Method == http.MethodGet {

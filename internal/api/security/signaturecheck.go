@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-fed/httpsig"
@@ -15,8 +15,6 @@ import (
 // that signed the request is permitted to access the server. If it is permitted, the handler will set the key
 // verifier and the signature in the gin context for use down the line.
 func (m *Module) SignatureCheck(c *gin.Context) {
-	l := logrus.WithField("func", "DomainBlockChecker")
-
 	// create the verifier from the request
 	// if the request is signed, it will have a signature header
 	verifier, err := httpsig.NewVerifier(c.Request)
@@ -32,12 +30,12 @@ func (m *Module) SignatureCheck(c *gin.Context) {
 			// if the domain is blocked we want to bail as early as possible
 			blocked, err := m.db.IsURIBlocked(c.Request.Context(), requestingPublicKeyID)
 			if err != nil {
-				l.Errorf("could not tell if domain %s was blocked or not: %s", requestingPublicKeyID.Host, err)
+				log.Errorf("could not tell if domain %s was blocked or not: %s", requestingPublicKeyID.Host, err)
 				c.AbortWithStatus(http.StatusInternalServerError)
 				return
 			}
 			if blocked {
-				l.Infof("domain %s is blocked", requestingPublicKeyID.Host)
+				log.Infof("domain %s is blocked", requestingPublicKeyID.Host)
 				c.AbortWithStatus(http.StatusForbidden)
 				return
 			}

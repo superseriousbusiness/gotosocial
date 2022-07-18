@@ -28,9 +28,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
@@ -174,7 +174,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	defer func() {
 		if rc, ok := reader.(io.ReadCloser); ok {
 			if err := rc.Close(); err != nil {
-				logrus.Errorf("store: error closing readcloser: %s", err)
+				log.Errorf("store: error closing readcloser: %s", err)
 			}
 		}
 	}()

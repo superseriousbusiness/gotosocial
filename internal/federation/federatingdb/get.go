@@ -23,8 +23,9 @@ import (
 	"errors"
 	"net/url"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
@@ -32,12 +33,10 @@ import (
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, err error) {
-	l := logrus.WithFields(
-		logrus.Fields{
-			"func": "Get",
-			"id":   id,
-		},
-	)
+	l := log.WithFields(kv.Fields{
+
+		{K: "id", V: id},
+	}...)
 	l.Debug("entering Get")
 
 	if uris.IsUserPath(id) {

@@ -24,12 +24,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
+	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
@@ -46,13 +48,9 @@ import (
 // Under certain conditions and network activities, Create may be called
 // multiple times for the same ActivityStreams object.
 func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
-	l := logrus.WithFields(
-		logrus.Fields{
-			"func": "Create",
-		},
-	)
+	l := log.WithFields(kv.Fields{}...)
 
-	if logrus.GetLevel() >= logrus.DebugLevel {
+	if log.Level() >= level.DEBUG {
 		i, err := marshalItem(asType)
 		if err != nil {
 			return err
@@ -169,11 +167,10 @@ func (f *federatingDB) activityCreate(ctx context.Context, asType vocab.Type, re
 
 // createNote handles a Create activity with a Note type.
 func (f *federatingDB) createNote(ctx context.Context, note vocab.ActivityStreamsNote, receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) error {
-	l := logrus.WithFields(logrus.Fields{
-		"func":              "createNote",
-		"receivingAccount":  receivingAccount.URI,
-		"requestingAccount": requestingAccount.URI,
-	})
+	l := log.WithFields(kv.Fields{
+		{K: "receivingAccount", V: receivingAccount.URI},
+		{K: "requestingAccount", V: requestingAccount.URI},
+	}...)
 
 	// Check if we have a forward.
 	// In other words, was the note posted to our inbox by at least one actor who actually created the note, or are they just forwarding it?

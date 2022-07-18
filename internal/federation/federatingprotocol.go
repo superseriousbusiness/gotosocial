@@ -25,7 +25,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
@@ -33,6 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -137,11 +138,11 @@ func (f *federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Reques
 // authenticated must be true and error nil. The request will continue
 // to be processed.
 func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":      "AuthenticatePostInbox",
-		"useragent": r.UserAgent(),
-		"url":       r.URL.String(),
-	})
+	l := log.WithFields(kv.Fields{
+
+		{K: "useragent", V: r.UserAgent()},
+		{K: "url", V: r.URL.String()},
+	}...)
 	l.Trace("received request to authenticate")
 
 	if !uris.IsInboxPath(r.URL) {
@@ -226,9 +227,9 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 // blocked must be false and error nil. The request will continue
 // to be processed.
 func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, error) {
-	l := logrus.WithFields(logrus.Fields{
-		"func": "Blocked",
-	})
+	l := log.WithFields(kv.Fields{
+
+	}...)
 	l.Debugf("entering BLOCKED function with IRI list: %+v", actorIRIs)
 
 	// check domain blocks first for the given actor IRIs
@@ -371,10 +372,10 @@ func (f *federator) FederatingCallbacks(ctx context.Context) (wrapped pub.Federa
 // type and extension, so the unhandled ones are passed to
 // DefaultCallback.
 func (f *federator) DefaultCallback(ctx context.Context, activity pub.Activity) error {
-	l := logrus.WithFields(logrus.Fields{
-		"func":   "DefaultCallback",
-		"aptype": activity.GetTypeName(),
-	})
+	l := log.WithFields(kv.Fields{
+
+		{K: "aptype", V: activity.GetTypeName()},
+	}...)
 	l.Debugf("received unhandle-able activity type so ignoring it")
 	return nil
 }

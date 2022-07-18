@@ -22,11 +22,12 @@ import (
 	"context"
 	"net/http"
 
+	"codeberg.org/gruf/go-kv"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // TODO: add more templated html pages here for different error types
@@ -106,11 +107,11 @@ func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet fun
 // to pass any detailed errors (that might contain sensitive information) into the
 // errWithCode.Error() field, since the client will see this. Use your noggin!
 func OAuthErrorHandler(c *gin.Context, errWithCode gtserror.WithCode) {
-	l := logrus.WithFields(logrus.Fields{
-		"path":  c.Request.URL.Path,
-		"error": errWithCode.Error(),
-		"help":  errWithCode.Safe(),
-	})
+	l := log.WithFields(kv.Fields{
+		{K: "path", V: c.Request.URL.Path},
+		{K: "error", V: errWithCode.Error()},
+		{K: "help", V: errWithCode.Safe()},
+	}...)
 
 	statusCode := errWithCode.Code()
 

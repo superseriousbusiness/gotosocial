@@ -20,9 +20,9 @@ package security
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -32,7 +32,6 @@ import (
 // If user or account can't be found, then the handler won't *fail*, in case the server wants to allow
 // public requests that don't have a Bearer token set (eg., for public instance information and so on).
 func (m *Module) TokenCheck(c *gin.Context) {
-	l := logrus.WithField("func", "OauthTokenMiddleware")
 	ctx := c.Request.Context()
 	defer c.Next()
 
@@ -43,38 +42,38 @@ func (m *Module) TokenCheck(c *gin.Context) {
 
 	ti, err := m.server.ValidationBearerToken(c.Copy().Request)
 	if err != nil {
-		l.Infof("token was passed in Authorization header but we could not validate it: %s", err)
+		log.Infof("token was passed in Authorization header but we could not validate it: %s", err)
 		return
 	}
 	c.Set(oauth.SessionAuthorizedToken, ti)
 
 	// check for user-level token
 	if userID := ti.GetUserID(); userID != "" {
-		l.Tracef("authenticated user %s with bearer token, scope is %s", userID, ti.GetScope())
+		log.Tracef("authenticated user %s with bearer token, scope is %s", userID, ti.GetScope())
 
 		// fetch user for this token
 		user := &gtsmodel.User{}
 		if err := m.db.GetByID(ctx, userID, user); err != nil {
 			if err != db.ErrNoEntries {
-				l.Errorf("database error looking for user with id %s: %s", userID, err)
+				log.Errorf("database error looking for user with id %s: %s", userID, err)
 				return
 			}
-			l.Warnf("no user found for userID %s", userID)
+			log.Warnf("no user found for userID %s", userID)
 			return
 		}
 
 		if user.ConfirmedAt.IsZero() {
-			l.Warnf("authenticated user %s has never confirmed thier email address", userID)
+			log.Warnf("authenticated user %s has never confirmed thier email address", userID)
 			return
 		}
 
 		if !user.Approved {
-			l.Warnf("authenticated user %s's account was never approved by an admin", userID)
+			log.Warnf("authenticated user %s's account was never approved by an admin", userID)
 			return
 		}
 
 		if user.Disabled {
-			l.Warnf("authenticated user %s's account was disabled'", userID)
+			log.Warnf("authenticated user %s's account was disabled'", userID)
 			return
 		}
 
@@ -84,15 +83,15 @@ func (m *Module) TokenCheck(c *gin.Context) {
 		acct, err := m.db.GetAccountByID(ctx, user.AccountID)
 		if err != nil {
 			if err != db.ErrNoEntries {
-				l.Errorf("database error looking for account with id %s: %s", user.AccountID, err)
+				log.Errorf("database error looking for account with id %s: %s", user.AccountID, err)
 				return
 			}
-			l.Warnf("no account found for userID %s", userID)
+			log.Warnf("no account found for userID %s", userID)
 			return
 		}
 
 		if !acct.SuspendedAt.IsZero() {
-			l.Warnf("authenticated user %s's account (accountId=%s) has been suspended", userID, user.AccountID)
+			log.Warnf("authenticated user %s's account (accountId=%s) has been suspended", userID, user.AccountID)
 			return
 		}
 
@@ -101,16 +100,16 @@ func (m *Module) TokenCheck(c *gin.Context) {
 
 	// check for application token
 	if clientID := ti.GetClientID(); clientID != "" {
-		l.Tracef("authenticated client %s with bearer token, scope is %s", clientID, ti.GetScope())
+		log.Tracef("authenticated client %s with bearer token, scope is %s", clientID, ti.GetScope())
 
 		// fetch app for this token
 		app := &gtsmodel.Application{}
 		if err := m.db.GetWhere(ctx, []db.Where{{Key: "client_id", Value: clientID}}, app); err != nil {
 			if err != db.ErrNoEntries {
-				l.Errorf("database error looking for application with clientID %s: %s", clientID, err)
+				log.Errorf("database error looking for application with clientID %s: %s", clientID, err)
 				return
 			}
-			l.Warnf("no app found for client %s", clientID)
+			log.Warnf("no app found for client %s", clientID)
 			return
 		}
 		c.Set(oauth.SessionAuthorizedApplication, app)

@@ -23,9 +23,10 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
@@ -36,11 +37,11 @@ import (
 // presented by remote instances as part of their replies collections, and will likely involve making several calls to
 // multiple different hosts.
 func (d *deref) DereferenceThread(ctx context.Context, username string, statusIRI *url.URL) error {
-	l := logrus.WithFields(logrus.Fields{
-		"func":      "DereferenceThread",
-		"username":  username,
-		"statusIRI": statusIRI.String(),
-	})
+	l := log.WithFields(kv.Fields{
+
+		{K: "username", V: username},
+		{K: "statusIRI", V: statusIRI},
+	}...)
 	l.Trace("entering DereferenceThread")
 
 	// if it's our status we already have everything stashed so we can bail early
@@ -70,11 +71,11 @@ func (d *deref) DereferenceThread(ctx context.Context, username string, statusIR
 
 // iterateAncestors has the goal of reaching the oldest ancestor of a given status, and stashing all statuses along the way.
 func (d *deref) iterateAncestors(ctx context.Context, username string, statusIRI url.URL) error {
-	l := logrus.WithFields(logrus.Fields{
-		"func":      "iterateAncestors",
-		"username":  username,
-		"statusIRI": statusIRI.String(),
-	})
+	l := log.WithFields(kv.Fields{
+
+		{K: "username", V: username},
+		{K: "statusIRI", V: statusIRI},
+	}...)
 	l.Trace("entering iterateAncestors")
 
 	// if it's our status we don't need to dereference anything so we can immediately move up the chain
@@ -123,11 +124,11 @@ func (d *deref) iterateAncestors(ctx context.Context, username string, statusIRI
 }
 
 func (d *deref) iterateDescendants(ctx context.Context, username string, statusIRI url.URL, statusable ap.Statusable) error {
-	l := logrus.WithFields(logrus.Fields{
-		"func":      "iterateDescendants",
-		"username":  username,
-		"statusIRI": statusIRI.String(),
-	})
+	l := log.WithFields(kv.Fields{
+
+		{K: "username", V: username},
+		{K: "statusIRI", V: statusIRI},
+	}...)
 	l.Trace("entering iterateDescendants")
 
 	// if it's our status we already have descendants stashed so we can bail early

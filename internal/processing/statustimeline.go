@@ -23,12 +23,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
-
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -73,7 +72,7 @@ func StatusFilterFunction(database db.DB, filter visibility.Filter) timeline.Fil
 
 		timelineable, err := filter.StatusHometimelineable(ctx, status, requestingAccount)
 		if err != nil {
-			logrus.Warnf("error checking hometimelineability of status %s for account %s: %s", status.ID, timelineAccountID, err)
+			log.Warnf("error checking hometimelineability of status %s for account %s: %s", status.ID, timelineAccountID, err)
 		}
 
 		return timelineable, nil // we don't return the error here because we want to just skip this item if something goes wrong
@@ -235,14 +234,12 @@ func (p *processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, ma
 }
 
 func (p *processor) filterPublicStatuses(ctx context.Context, authed *oauth.Auth, statuses []*gtsmodel.Status) ([]*apimodel.Status, error) {
-	l := logrus.WithField("func", "filterPublicStatuses")
-
 	apiStatuses := []*apimodel.Status{}
 	for _, s := range statuses {
 		targetAccount := &gtsmodel.Account{}
 		if err := p.db.GetByID(ctx, s.AccountID, targetAccount); err != nil {
 			if err == db.ErrNoEntries {
-				l.Debugf("filterPublicStatuses: skipping status %s because account %s can't be found in the db", s.ID, s.AccountID)
+				log.Debugf("filterPublicStatuses: skipping status %s because account %s can't be found in the db", s.ID, s.AccountID)
 				continue
 			}
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("filterPublicStatuses: error getting status author: %s", err))
@@ -250,7 +247,7 @@ func (p *processor) filterPublicStatuses(ctx context.Context, authed *oauth.Auth
 
 		timelineable, err := p.filter.StatusPublictimelineable(ctx, s, authed.Account)
 		if err != nil {
-			l.Debugf("filterPublicStatuses: skipping status %s because of an error checking status visibility: %s", s.ID, err)
+			log.Debugf("filterPublicStatuses: skipping status %s because of an error checking status visibility: %s", s.ID, err)
 			continue
 		}
 		if !timelineable {
@@ -259,7 +256,7 @@ func (p *processor) filterPublicStatuses(ctx context.Context, authed *oauth.Auth
 
 		apiStatus, err := p.tc.StatusToAPIStatus(ctx, s, authed.Account)
 		if err != nil {
-			l.Debugf("filterPublicStatuses: skipping status %s because it couldn't be converted to its api representation: %s", s.ID, err)
+			log.Debugf("filterPublicStatuses: skipping status %s because it couldn't be converted to its api representation: %s", s.ID, err)
 			continue
 		}
 
@@ -270,14 +267,12 @@ func (p *processor) filterPublicStatuses(ctx context.Context, authed *oauth.Auth
 }
 
 func (p *processor) filterFavedStatuses(ctx context.Context, authed *oauth.Auth, statuses []*gtsmodel.Status) ([]*apimodel.Status, error) {
-	l := logrus.WithField("func", "filterFavedStatuses")
-
 	apiStatuses := []*apimodel.Status{}
 	for _, s := range statuses {
 		targetAccount := &gtsmodel.Account{}
 		if err := p.db.GetByID(ctx, s.AccountID, targetAccount); err != nil {
 			if err == db.ErrNoEntries {
-				l.Debugf("filterFavedStatuses: skipping status %s because account %s can't be found in the db", s.ID, s.AccountID)
+				log.Debugf("filterFavedStatuses: skipping status %s because account %s can't be found in the db", s.ID, s.AccountID)
 				continue
 			}
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("filterPublicStatuses: error getting status author: %s", err))
@@ -285,7 +280,7 @@ func (p *processor) filterFavedStatuses(ctx context.Context, authed *oauth.Auth,
 
 		timelineable, err := p.filter.StatusVisible(ctx, s, authed.Account)
 		if err != nil {
-			l.Debugf("filterFavedStatuses: skipping status %s because of an error checking status visibility: %s", s.ID, err)
+			log.Debugf("filterFavedStatuses: skipping status %s because of an error checking status visibility: %s", s.ID, err)
 			continue
 		}
 		if !timelineable {
@@ -294,7 +289,7 @@ func (p *processor) filterFavedStatuses(ctx context.Context, authed *oauth.Auth,
 
 		apiStatus, err := p.tc.StatusToAPIStatus(ctx, s, authed.Account)
 		if err != nil {
-			l.Debugf("filterFavedStatuses: skipping status %s because it couldn't be converted to its api representation: %s", s.ID, err)
+			log.Debugf("filterFavedStatuses: skipping status %s because it couldn't be converted to its api representation: %s", s.ID, err)
 			continue
 		}
 

@@ -23,19 +23,20 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
 )
 
 func (p *processor) OpenStreamForAccount(ctx context.Context, account *gtsmodel.Account, streamTimeline string) (*stream.Stream, gtserror.WithCode) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":       "OpenStreamForAccount",
-		"account":    account.ID,
-		"streamType": streamTimeline,
-	})
+	l := log.WithFields(kv.Fields{
+
+		{K: "account", V:    account.ID},
+		{K: "streamType", V: streamTimeline},
+	}...)
 	l.Debug("received open stream request")
 
 	// each stream needs a unique ID so we know to close it

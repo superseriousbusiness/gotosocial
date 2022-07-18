@@ -22,7 +22,5 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-var (
-	// Migrations provides migration logic for bun
-	Migrations = migrate.NewMigrations()
-)
+// Migrations provides migration logic for bun
+var Migrations = migrate.NewMigrations()

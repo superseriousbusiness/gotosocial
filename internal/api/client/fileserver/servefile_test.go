@@ -22,12 +22,12 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/fileserver"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
@@ -96,7 +96,7 @@ func (suite *ServeFileTestSuite) SetupSuite() {
 
 func (suite *ServeFileTestSuite) TearDownSuite() {
 	if err := suite.db.Stop(context.Background()); err != nil {
-		logrus.Panicf("error closing db connection: %s", err)
+		log.Panicf("error closing db connection: %s", err)
 	}
 }
 

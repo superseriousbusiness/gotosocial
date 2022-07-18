@@ -23,9 +23,10 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // Following obtains the Following Collection for an actor with the
@@ -35,12 +36,10 @@ import (
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Following(ctx context.Context, actorIRI *url.URL) (following vocab.ActivityStreamsCollection, err error) {
-	l := logrus.WithFields(
-		logrus.Fields{
-			"func": "Following",
-			"id":   actorIRI,
-		},
-	)
+	l := log.WithFields(kv.Fields{
+
+		{K: "id", V: actorIRI},
+	}...)
 	l.Debug("entering Following")
 
 	acct, err := f.getAccountForIRI(ctx, actorIRI)

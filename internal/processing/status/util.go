@@ -23,11 +23,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -204,12 +204,12 @@ func (p *processor) ProcessMentions(ctx context.Context, form *apimodel.Advanced
 	for _, mentionedAccountName := range mentionedAccountNames {
 		gtsMention, err := p.parseMention(ctx, mentionedAccountName, accountID, status.ID)
 		if err != nil {
-			logrus.Errorf("ProcessMentions: error parsing mention %s from status: %s", mentionedAccountName, err)
+			log.Errorf("ProcessMentions: error parsing mention %s from status: %s", mentionedAccountName, err)
 			continue
 		}
 
 		if err := p.db.Put(ctx, gtsMention); err != nil {
-			logrus.Errorf("ProcessMentions: error putting mention in db: %s", err)
+			log.Errorf("ProcessMentions: error putting mention in db: %s", err)
 		}
 
 		mentions = append(mentions, gtsMention)

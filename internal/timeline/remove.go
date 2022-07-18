@@ -23,15 +23,17 @@ import (
 	"context"
 	"errors"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 func (t *timeline) Remove(ctx context.Context, statusID string) (int, error) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":            "Remove",
-		"accountTimeline": t.accountID,
-		"statusID":        statusID,
-	})
+	l := log.WithFields(kv.Fields{
+
+		{K: "accountTimeline", V: t.accountID},
+		{K: "statusID", V:        statusID},
+	}...)
+
 	t.Lock()
 	defer t.Unlock()
 	var removed int
@@ -79,11 +81,11 @@ func (t *timeline) Remove(ctx context.Context, statusID string) (int, error) {
 }
 
 func (t *timeline) RemoveAllBy(ctx context.Context, accountID string) (int, error) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":            "RemoveAllBy",
-		"accountTimeline": t.accountID,
-		"accountID":       accountID,
-	})
+	l := log.WithFields(kv.Fields{
+
+		{K: "accountTimeline", V: t.accountID},
+		{K: "accountID", V:       accountID},
+	}...)
 	t.Lock()
 	defer t.Unlock()
 	var removed int

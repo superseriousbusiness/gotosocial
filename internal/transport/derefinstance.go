@@ -28,19 +28,16 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
 func (t *transport) DereferenceInstance(ctx context.Context, iri *url.URL) (*gtsmodel.Instance, error) {
-	l := logrus.WithField("func", "DereferenceInstance")
-
 	var i *gtsmodel.Instance
 	var err error
 
@@ -48,26 +45,26 @@ func (t *transport) DereferenceInstance(ctx context.Context, iri *url.URL) (*gts
 	// This will provide the most complete picture of an instance, and avoid unnecessary api calls.
 	//
 	// This will only work with Mastodon-api compatible instances: Mastodon, some Pleroma instances, GoToSocial.
-	l.Debugf("trying to dereference instance %s by /api/v1/instance", iri.Host)
+	log.Debugf("trying to dereference instance %s by /api/v1/instance", iri.Host)
 	i, err = dereferenceByAPIV1Instance(ctx, t, iri)
 	if err == nil {
-		l.Debugf("successfully dereferenced instance using /api/v1/instance")
+		log.Debugf("successfully dereferenced instance using /api/v1/instance")
 		return i, nil
 	}
-	l.Debugf("couldn't dereference instance using /api/v1/instance: %s", err)
+	log.Debugf("couldn't dereference instance using /api/v1/instance: %s", err)
 
 	// If that doesn't work, try to dereference using /.well-known/nodeinfo.
 	// This will involve two API calls and return less info overall, but should be more widely compatible.
-	l.Debugf("trying to dereference instance %s by /.well-known/nodeinfo", iri.Host)
+	log.Debugf("trying to dereference instance %s by /.well-known/nodeinfo", iri.Host)
 	i, err = dereferenceByNodeInfo(ctx, t, iri)
 	if err == nil {
-		l.Debugf("successfully dereferenced instance using /.well-known/nodeinfo")
+		log.Debugf("successfully dereferenced instance using /.well-known/nodeinfo")
 		return i, nil
 	}
-	l.Debugf("couldn't dereference instance using /.well-known/nodeinfo: %s", err)
+	log.Debugf("couldn't dereference instance using /.well-known/nodeinfo: %s", err)
 
 	// we couldn't dereference the instance using any of the known methods, so just return a minimal representation
-	l.Debugf("returning minimal representation of instance %s", iri.Host)
+	log.Debugf("returning minimal representation of instance %s", iri.Host)
 	id, err := id.NewRandomULID()
 	if err != nil {
 		return nil, fmt.Errorf("error creating new id for instance %s: %s", iri.Host, err)

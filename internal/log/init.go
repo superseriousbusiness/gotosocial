@@ -38,30 +38,22 @@ import (
 func Initialize() error {
 	// check if a desired log level has been set
 	if lvlStr := config.GetLogLevel(); lvlStr != "" {
-		var lvl level.LEVEL
-
 		switch strings.ToLower(lvlStr) {
 		case "trace":
-			lvl = level.TRACE
-			stdout.SetFlags(flags.SetCaller())
-			stderr.SetFlags(flags.SetCaller())
+			SetLevel(level.TRACE)
 		case "debug":
-			lvl = level.DEBUG
+			SetLevel(level.DEBUG)
 		case "", "info":
-			lvl = level.INFO
+			SetLevel(level.INFO)
 		case "warn":
-			lvl = level.WARN
+			SetLevel(level.WARN)
 		case "error":
-			lvl = level.ERROR
+			SetLevel(level.ERROR)
 		case "fatal":
-			lvl = level.FATAL
+			SetLevel(level.FATAL)
 		default:
 			return fmt.Errorf("unknown log level: %q", lvlStr)
 		}
-
-		// Set the log output level
-		stdout.SetLevel(lvl)
-		stderr.SetLevel(lvl)
 	}
 
 	// check if syslog has been enabled, and configure it if so

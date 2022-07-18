@@ -34,8 +34,11 @@ const statusText1 = `Another test @foss_satan@fossbros-anonymous.io
 #Hashtag
 
 Text`
-const statusText1ExpectedFull = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br><br><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a><br><br>Text</p>"
-const statusText1ExpectedPartial = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br><br>#Hashtag<br><br>Text</p>"
+
+const (
+	statusText1ExpectedFull    = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br><br><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a><br><br>Text</p>"
+	statusText1ExpectedPartial = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br><br>#Hashtag<br><br>Text</p>"
+)
 
 const statusText2 = `Another test @foss_satan@fossbros-anonymous.io
 
@@ -97,7 +100,6 @@ func (suite *UtilTestSuite) TestProcessMentions1() {
 }
 
 func (suite *UtilTestSuite) TestProcessContentFull1() {
-
 	/*
 		TEST PREPARATION
 	*/
@@ -146,7 +148,6 @@ func (suite *UtilTestSuite) TestProcessContentFull1() {
 }
 
 func (suite *UtilTestSuite) TestProcessContentPartial1() {
-
 	/*
 		TEST PREPARATION
 	*/
@@ -238,7 +239,6 @@ func (suite *UtilTestSuite) TestProcessMentions2() {
 }
 
 func (suite *UtilTestSuite) TestProcessContentFull2() {
-
 	/*
 		TEST PREPARATION
 	*/
@@ -288,7 +288,6 @@ func (suite *UtilTestSuite) TestProcessContentFull2() {
 }
 
 func (suite *UtilTestSuite) TestProcessContentPartial2() {
-
 	/*
 		TEST PREPARATION
 	*/

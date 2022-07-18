@@ -24,10 +24,10 @@ import (
 	"time"
 
 	"github.com/robfig/cron/v3"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
@@ -210,10 +210,10 @@ func scheduleCleanupJobs(m *manager) error {
 		begin := time.Now()
 		pruned, err := m.PruneAllMeta(pruneCtx)
 		if err != nil {
-			logrus.Errorf("media manager: error pruning meta: %s", err)
+			log.Errorf("media manager: error pruning meta: %s", err)
 			return
 		}
-		logrus.Infof("media manager: pruned %d meta entries in %s", pruned, time.Since(begin))
+		log.Infof("media manager: pruned %d meta entries in %s", pruned, time.Since(begin))
 	}); err != nil {
 		pruneCancel()
 		return fmt.Errorf("error starting media manager meta cleanup job: %s", err)
@@ -223,10 +223,10 @@ func scheduleCleanupJobs(m *manager) error {
 		begin := time.Now()
 		pruned, err := m.PruneUnusedLocalAttachments(pruneCtx)
 		if err != nil {
-			logrus.Errorf("media manager: error pruning unused local attachments: %s", err)
+			log.Errorf("media manager: error pruning unused local attachments: %s", err)
 			return
 		}
-		logrus.Infof("media manager: pruned %d unused local attachments in %s", pruned, time.Since(begin))
+		log.Infof("media manager: pruned %d unused local attachments in %s", pruned, time.Since(begin))
 	}); err != nil {
 		pruneCancel()
 		return fmt.Errorf("error starting media manager unused local attachments cleanup job: %s", err)
@@ -238,10 +238,10 @@ func scheduleCleanupJobs(m *manager) error {
 			begin := time.Now()
 			pruned, err := m.PruneAllRemote(pruneCtx, mediaRemoteCacheDays)
 			if err != nil {
-				logrus.Errorf("media manager: error pruning remote cache: %s", err)
+				log.Errorf("media manager: error pruning remote cache: %s", err)
 				return
 			}
-			logrus.Infof("media manager: pruned %d remote cache entries in %s", pruned, time.Since(begin))
+			log.Infof("media manager: pruned %d remote cache entries in %s", pruned, time.Since(begin))
 		}); err != nil {
 			pruneCancel()
 			return fmt.Errorf("error starting media manager remote cache cleanup job: %s", err)
@@ -254,9 +254,9 @@ func scheduleCleanupJobs(m *manager) error {
 
 		select {
 		case <-cronCtx.Done():
-			logrus.Infof("media manager: cron finished jobs and stopped gracefully")
+			log.Infof("media manager: cron finished jobs and stopped gracefully")
 		case <-time.After(1 * time.Minute):
-			logrus.Infof("media manager: cron didn't stop after 60 seconds, will force close jobs")
+			log.Infof("media manager: cron didn't stop after 60 seconds, will force close jobs")
 			break
 		}
 

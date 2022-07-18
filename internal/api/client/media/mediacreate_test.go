@@ -26,11 +26,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	mediamodule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -100,7 +100,7 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 
 func (suite *MediaCreateTestSuite) TearDownSuite() {
 	if err := suite.db.Stop(context.Background()); err != nil {
-		logrus.Panicf("error closing db connection: %s", err)
+		log.Panicf("error closing db connection: %s", err)
 	}
 }
 

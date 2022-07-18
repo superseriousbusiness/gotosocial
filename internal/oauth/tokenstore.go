@@ -24,10 +24,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/oauth2/v4"
 	"github.com/superseriousbusiness/oauth2/v4/models"
 )
@@ -53,12 +53,12 @@ func newTokenStore(ctx context.Context, db db.Basic) oauth2.TokenStore {
 		for {
 			select {
 			case <-ctx.Done():
-				logrus.Info("breaking cleanloop")
+				log.Info("breaking cleanloop")
 				break cleanloop
 			case <-time.After(1 * time.Minute):
-				logrus.Trace("sweeping out old oauth entries broom broom")
+				log.Trace("sweeping out old oauth entries broom broom")
 				if err := ts.sweep(ctx); err != nil {
-					logrus.Errorf("error while sweeping oauth entries: %s", err)
+					log.Errorf("error while sweeping oauth entries: %s", err)
 				}
 			}
 		}

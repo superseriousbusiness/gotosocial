@@ -23,11 +23,12 @@ import (
 	"fmt"
 	"net/http"
 
+	"codeberg.org/gruf/go-kv"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -55,10 +56,10 @@ import (
 //     schema:
 //       "$ref": "#/definitions/wellKnownResponse"
 func (m *Module) WebfingerGETRequest(c *gin.Context) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":       "WebfingerGETRequest",
-		"user-agent": c.Request.UserAgent(),
-	})
+	l := log.WithFields(kv.Fields{
+
+		{K: "user-agent", V: c.Request.UserAgent()},
+	}...)
 
 	resourceQuery, set := c.GetQuery("resource")
 	if !set || resourceQuery == "" {
