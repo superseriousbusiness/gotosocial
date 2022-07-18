@@ -24,3 +24,8 @@ linters:
     - nilerr
     - revive
     - wastedassign
+
+linters-settings:
+  govet:
+    disable:
+      - composites
