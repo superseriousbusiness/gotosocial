@@ -41,15 +41,17 @@ type eTagCacheEntry struct {
 // generateEtag generates a strong (byte-for-byte) etag using
 // the entirety of the provided reader.
 func generateEtag(r io.Reader) (string, error) {
-	b, err := io.ReadAll(r)
-	if err != nil {
+	// nolint:gosec
+	hash := sha1.New()
+
+	if _, err := io.Copy(hash, r); err != nil {
 		return "", err
 	}
 
-	// nolint:gosec
-	sum := sha1.Sum(b)
+	b := make([]byte, 0, sha1.Size)
+	b = hash.Sum(b)
 
-	return `"` + hex.EncodeToString(sum[:]) + `"`, nil
+	return `"` + hex.EncodeToString(b) + `"`, nil
 }
 
 // getAssetFileInfo tries to fetch the ETag for the given filePath from the module's
