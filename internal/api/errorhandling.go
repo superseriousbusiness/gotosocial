@@ -108,9 +108,9 @@ func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet fun
 // errWithCode.Error() field, since the client will see this. Use your noggin!
 func OAuthErrorHandler(c *gin.Context, errWithCode gtserror.WithCode) {
 	l := log.WithFields(kv.Fields{
-		{K: "path", V: c.Request.URL.Path},
-		{K: "error", V: errWithCode.Error()},
-		{K: "help", V: errWithCode.Safe()},
+		{"path", c.Request.URL.Path},
+		{"error", errWithCode.Error()},
+		{"help", errWithCode.Safe()},
 	}...)
 
 	statusCode := errWithCode.Code()

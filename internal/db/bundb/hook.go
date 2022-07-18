@@ -44,8 +44,8 @@ func (queryHook) AfterQuery(_ context.Context, event *bun.QueryEvent) {
 	// Warn on slow database queries
 	case dur > time.Second:
 		log.WithFields(kv.Fields{
-			{K: "duration", V: dur},
-			{K: "query", V: event.Query},
+			{"duration", dur},
+			{"query", event.Query},
 		}...).Warn("SLOW DATABASE QUERY")
 
 	// On trace, we log query information,

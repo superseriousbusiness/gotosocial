@@ -93,7 +93,7 @@ func (p *processor) DomainBlockCreate(ctx context.Context, account *gtsmodel.Acc
 func (p *processor) initiateDomainBlockSideEffects(ctx context.Context, account *gtsmodel.Account, block *gtsmodel.DomainBlock) {
 	l := log.WithFields(kv.Fields{
 
-		{K: "domain", V: block.Domain},
+		{"domain", block.Domain},
 	}...)
 
 	l.Debug("processing domain block side effects")

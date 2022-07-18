@@ -32,10 +32,10 @@ import (
 func (t *timeline) prepareNextQuery(ctx context.Context, amount int, maxID string, sinceID string, minID string) error {
 	l := log.WithFields(kv.Fields{
 
-		{K: "amount", V: amount},
-		{K: "maxID", V: maxID},
-		{K: "sinceID", V: sinceID},
-		{K: "minID", V: minID},
+		{"amount", amount},
+		{"maxID", maxID},
+		{"sinceID", sinceID},
+		{"minID", minID},
 	}...)
 
 	var err error
@@ -172,7 +172,7 @@ prepareloop:
 func (t *timeline) PrepareFromTop(ctx context.Context, amount int) error {
 	l := log.WithFields(kv.Fields{
 
-		{K: "amount", V: amount},
+		{"amount", amount},
 	}...)
 
 	// lazily initialize prepared posts if it hasn't been done already

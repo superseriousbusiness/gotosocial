@@ -31,7 +31,7 @@ codeberg.org/gruf/go-fastpath
 # codeberg.org/gruf/go-hashenc v1.0.2
 ## explicit; go 1.16
 codeberg.org/gruf/go-hashenc
-# codeberg.org/gruf/go-kv v1.3.0
+# codeberg.org/gruf/go-kv v1.3.1
 ## explicit; go 1.16
 codeberg.org/gruf/go-kv
 codeberg.org/gruf/go-kv/format

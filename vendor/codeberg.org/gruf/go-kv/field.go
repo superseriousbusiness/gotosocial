@@ -1,6 +1,7 @@
 package kv
 
 import (
+	"codeberg.org/gruf/go-bitutil"
 	"codeberg.org/gruf/go-byteutil"
 )
 
@@ -65,9 +66,9 @@ func (f Fields) GoString() string {
 
 // Field represents an individual key-value field.
 type Field struct {
-	K string      // Field key
-	V interface{} // Field value
-	X bool        // Verbose flag
+	K string         // Field key
+	V interface{}    // Field value
+	x bitutil.Flags8 // flags (0=verbose)
 }
 
 // Key returns the formatted key string of this Field.
@@ -75,6 +76,12 @@ func (f Field) Key() string {
 	buf := byteutil.Buffer{B: make([]byte, 0, bufsize/2)}
 	appendQuoteKey(&buf, f.K)
 	return buf.String()
+}
+
+// Verbose returns Field with the verbose value printing flag set.
+func (f Field) Verbose() Field {
+	f.x = f.x.Set0()
+	return f
 }
 
 // String will return a string representation of this Field
@@ -96,6 +103,5 @@ func (f Field) String() string {
 
 // GoString performs .String() but with verbose always enabled.
 func (f Field) GoString() string {
-	f.X = true // vbose
-	return f.String()
+	return f.Verbose().String()
 }

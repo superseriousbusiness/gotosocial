@@ -139,8 +139,8 @@ func (f *federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Reques
 // to be processed.
 func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
 	l := log.WithFields(kv.Fields{
-		{K: "useragent", V: r.UserAgent()},
-		{K: "url", V: r.URL.String()},
+		{"useragent", r.UserAgent()},
+		{"url", r.URL.String()},
 	}...)
 	l.Trace("received request to authenticate")
 
@@ -369,7 +369,7 @@ func (f *federator) FederatingCallbacks(ctx context.Context) (wrapped pub.Federa
 // DefaultCallback.
 func (f *federator) DefaultCallback(ctx context.Context, activity pub.Activity) error {
 	l := log.WithFields(kv.Fields{
-		{K: "aptype", V: activity.GetTypeName()},
+		{"aptype", activity.GetTypeName()},
 	}...)
 	l.Debugf("received unhandle-able activity type so ignoring it")
 	return nil

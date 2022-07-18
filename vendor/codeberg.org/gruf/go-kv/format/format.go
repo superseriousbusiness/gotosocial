@@ -13,11 +13,11 @@ const (
 	IsKeyBit = uint8(1) << 0 // set to indicate key formatting
 	VboseBit = uint8(1) << 1 // set to indicate verbose formatting
 	IsValBit = uint8(1) << 2 // set to indicate value formatting
-	PanicBit = uint8(1) << 3 // set after panic to prevent recursion)
+	PanicBit = uint8(1) << 3 // set after panic to prevent recursion
 )
 
-// Format provides formatting of values into a Buffer.
-type Format struct {
+// format provides formatting of values into a Buffer.
+type format struct {
 	// Flags are the currently set value flags.
 	Flags uint8
 
@@ -38,36 +38,36 @@ type Format struct {
 }
 
 // AtMaxDepth returns whether format is currently at max depth.
-func (f Format) AtMaxDepth() bool {
+func (f format) AtMaxDepth() bool {
 	return f.CurDepth > f.Config.MaxDepth
 }
 
 // Key returns whether the isKey flag is set.
-func (f Format) Key() bool {
+func (f format) Key() bool {
 	return (f.Flags & IsKeyBit) != 0
 }
 
 // Value returns whether the isVal flag is set.
-func (f Format) Value() bool {
+func (f format) Value() bool {
 	return (f.Flags & IsValBit) != 0
 }
 
 // Verbose returns whether the verbose flag is set.
-func (f Format) Verbose() bool {
+func (f format) Verbose() bool {
 	return (f.Flags & VboseBit) != 0
 }
 
 // Panic returns whether the panic flag is set.
-func (f Format) Panic() bool {
+func (f format) Panic() bool {
 	return (f.Flags & PanicBit) != 0
 }
 
 // SetKey returns format instance with the IsKey bit set to true,
 // note this resets the dereference count.
-func (f Format) SetKey() Format {
+func (f format) SetKey() format {
 	flags := f.Flags | IsKeyBit
 	flags &= ^IsValBit
-	return Format{
+	return format{
 		Flags:    flags,
 		CurDepth: f.CurDepth,
 		Config:   f.Config,
@@ -77,10 +77,10 @@ func (f Format) SetKey() Format {
 
 // SetValue returns format instance with the IsVal bit set to true,
 // note this resets the dereference count.
-func (f Format) SetValue() Format {
+func (f format) SetValue() format {
 	flags := f.Flags | IsValBit
 	flags &= ^IsKeyBit
-	return Format{
+	return format{
 		Flags:    flags,
 		CurDepth: f.CurDepth,
 		Config:   f.Config,
@@ -90,8 +90,8 @@ func (f Format) SetValue() Format {
 
 // SetVerbose returns format instance with the Vbose bit set to true,
 // note this resets the dereference count.
-func (f Format) SetVerbose() Format {
-	return Format{
+func (f format) SetVerbose() format {
+	return format{
 		Flags:    f.Flags | VboseBit,
 		CurDepth: f.CurDepth,
 		Config:   f.Config,
@@ -101,11 +101,11 @@ func (f Format) SetVerbose() Format {
 
 // SetPanic returns format instance with the panic bit set to true,
 // note this resets the dereference count and sets IsVal (unsetting IsKey) bit.
-func (f Format) SetPanic() Format {
+func (f format) SetPanic() format {
 	flags := f.Flags | PanicBit
 	flags |= IsValBit
 	flags &= ^IsKeyBit
-	return Format{
+	return format{
 		Flags:    flags,
 		CurDepth: f.CurDepth,
 		Config:   f.Config,
@@ -114,8 +114,8 @@ func (f Format) SetPanic() Format {
 }
 
 // IncrDepth returns format instance with depth incremented and derefs reset.
-func (f Format) IncrDepth() Format {
-	return Format{
+func (f format) IncrDepth() format {
+	return format{
 		Flags:    f.Flags,
 		Derefs:   f.Derefs,
 		CurDepth: f.CurDepth + 1,
@@ -125,8 +125,8 @@ func (f Format) IncrDepth() Format {
 }
 
 // IncrDerefs returns format instance with dereference count incremented.
-func (f Format) IncrDerefs() Format {
-	return Format{
+func (f format) IncrDerefs() format {
+	return format{
 		Flags:    f.Flags,
 		Derefs:   f.Derefs + 1,
 		CurDepth: f.CurDepth,
@@ -135,49 +135,61 @@ func (f Format) IncrDerefs() Format {
 	}
 }
 
-func (f Format) AppendType() {
-	for i := uint8(0); i < f.Derefs; i++ {
-		// add each dereference
-		f.Buffer.WriteByte('*')
-	}
-	f.Buffer.WriteString(f.VType)
+func (f format) AppendType() {
+	const derefs = `********************************` +
+		`********************************` +
+		`********************************` +
+		`********************************` +
+		`********************************` +
+		`********************************` +
+		`********************************` +
+		`********************************`
+	f.Buffer.B = append(f.Buffer.B, derefs[:f.Derefs]...)
+	f.Buffer.B = append(f.Buffer.B, f.VType...)
 }
 
-func (f Format) AppendNil() {
+func (f format) AppendNil() {
 	if !f.Verbose() {
-		f.Buffer.WriteString(`nil`)
+		f.Buffer.B = append(f.Buffer.B, `nil`...)
 		return
 	}
 
 	// Append nil with type
-	f.Buffer.WriteByte('(')
+	f.Buffer.B = append(f.Buffer.B, '(')
 	f.AppendType()
-	f.Buffer.WriteString(`)(nil)`)
+	f.Buffer.B = append(f.Buffer.B, `)(nil`...)
+	f.Buffer.B = append(f.Buffer.B, ')')
 }
 
-func (f Format) AppendByte(b byte) {
+func (f format) AppendByte(b byte) {
 	switch {
 	// Always quoted
 	case f.Key():
-		f.Buffer.WriteString(`'` + byte2str(b) + `'`)
+		f.Buffer.B = append(f.Buffer.B, '\'')
+		f.Buffer.B = append(f.Buffer.B, byte2str(b)...)
+		f.Buffer.B = append(f.Buffer.B, '\'')
 
 	// Always quoted ASCII with type
 	case f.Verbose():
-		f._AppendPrimitiveTyped(func(f Format) {
-			f.Buffer.WriteString(`'` + byte2str(b) + `'`)
+		f._AppendPrimitiveTyped(func(f format) {
+			f.Buffer.B = append(f.Buffer.B, '\'')
+			f.Buffer.B = append(f.Buffer.B, byte2str(b)...)
+			f.Buffer.B = append(f.Buffer.B, '\'')
 		})
 
 	// Always quoted
 	case f.Value():
-		f.Buffer.WriteString(`'` + byte2str(b) + `'`)
+		f.Buffer.B = append(f.Buffer.B, '\'')
+		f.Buffer.B = append(f.Buffer.B, byte2str(b)...)
+		f.Buffer.B = append(f.Buffer.B, '\'')
 
 	// Append as raw byte
 	default:
-		f.Buffer.WriteByte(b)
+		f.Buffer.B = append(f.Buffer.B, b)
 	}
 }
 
-func (f Format) AppendBytes(b []byte) {
+func (f format) AppendBytes(b []byte) {
 	switch {
 	// Bytes CAN be nil formatted
 	case b == nil:
@@ -189,10 +201,11 @@ func (f Format) AppendBytes(b []byte) {
 
 	// Append as separate ASCII quoted bytes in slice
 	case f.Verbose():
-		f._AppendArrayTyped(func(f Format) {
+		f._AppendArrayTyped(func(f format) {
 			for i := 0; i < len(b); i++ {
-				f.Buffer.WriteString(`'` + byte2str(b[i]) + `'`)
-				f.Buffer.WriteByte(',')
+				f.Buffer.B = append(f.Buffer.B, '\'')
+				f.Buffer.B = append(f.Buffer.B, byte2str(b[i])...)
+				f.Buffer.B = append(f.Buffer.B, `',`...)
 			}
 			if len(b) > 0 {
 				f.Buffer.Truncate(1)
@@ -205,11 +218,11 @@ func (f Format) AppendBytes(b []byte) {
 
 	// Append as raw bytes
 	default:
-		f.Buffer.Write(b)
+		f.Buffer.B = append(f.Buffer.B, b...)
 	}
 }
 
-func (f Format) AppendRune(r rune) {
+func (f format) AppendRune(r rune) {
 	switch {
 	// Quoted only if spaces/requires escaping
 	case f.Key():
@@ -217,7 +230,7 @@ func (f Format) AppendRune(r rune) {
 
 	// Always quoted ASCII with type
 	case f.Verbose():
-		f._AppendPrimitiveTyped(func(f Format) {
+		f._AppendPrimitiveTyped(func(f format) {
 			f.Buffer.B = strconv.AppendQuoteRuneToASCII(f.Buffer.B, r)
 		})
 
@@ -231,7 +244,7 @@ func (f Format) AppendRune(r rune) {
 	}
 }
 
-func (f Format) AppendRuneKey(r rune) {
+func (f format) AppendRuneKey(r rune) {
 	if utf8.RuneLen(r) > 1 && (r < ' ' && r != '\t') || r == '`' || r == '\u007F' {
 		// Quote and escape this rune
 		f.Buffer.B = strconv.AppendQuoteRuneToASCII(f.Buffer.B, r)
@@ -241,7 +254,7 @@ func (f Format) AppendRuneKey(r rune) {
 	}
 }
 
-func (f Format) AppendRunes(r []rune) {
+func (f format) AppendRunes(r []rune) {
 	switch {
 	// Runes CAN be nil formatted
 	case r == nil:
@@ -253,10 +266,10 @@ func (f Format) AppendRunes(r []rune) {
 
 	// Append as separate ASCII quoted bytes in slice
 	case f.Verbose():
-		f._AppendArrayTyped(func(f Format) {
+		f._AppendArrayTyped(func(f format) {
 			for i := 0; i < len(r); i++ {
 				f.Buffer.B = strconv.AppendQuoteRuneToASCII(f.Buffer.B, r[i])
-				f.Buffer.WriteByte(',')
+				f.Buffer.B = append(f.Buffer.B, ',')
 			}
 			if len(r) > 0 {
 				f.Buffer.Truncate(1)
@@ -275,7 +288,7 @@ func (f Format) AppendRunes(r []rune) {
 	}
 }
 
-func (f Format) AppendString(s string) {
+func (f format) AppendString(s string) {
 	switch {
 	// Quoted only if spaces/requires escaping
 	case f.Key():
@@ -283,7 +296,7 @@ func (f Format) AppendString(s string) {
 
 	// Always quoted with type
 	case f.Verbose():
-		f._AppendPrimitiveTyped(func(f Format) {
+		f._AppendPrimitiveTyped(func(f format) {
 			f.AppendStringQuoted(s)
 		})
 
@@ -293,11 +306,11 @@ func (f Format) AppendString(s string) {
 
 	// All else
 	default:
-		f.Buffer.WriteString(s)
+		f.Buffer.B = append(f.Buffer.B, s...)
 	}
 }
 
-func (f Format) AppendStringKey(s string) {
+func (f format) AppendStringKey(s string) {
 	if !strconv.CanBackquote(s) {
 		// Requires quoting AND escaping
 		f.Buffer.B = strconv.AppendQuote(f.Buffer.B, s)
@@ -306,14 +319,16 @@ func (f Format) AppendStringKey(s string) {
 		f.Buffer.B = AppendEscape(f.Buffer.B, s)
 	} else if len(s) < 1 || ContainsSpaceOrTab(s) {
 		// Contains space, needs quotes
-		f.Buffer.WriteString(`"` + s + `"`)
+		f.Buffer.B = append(f.Buffer.B, '"')
+		f.Buffer.B = append(f.Buffer.B, s...)
+		f.Buffer.B = append(f.Buffer.B, '"')
 	} else {
 		// All else write as-is
-		f.Buffer.WriteString(s)
+		f.Buffer.B = append(f.Buffer.B, s...)
 	}
 }
 
-func (f Format) AppendStringQuoted(s string) {
+func (f format) AppendStringQuoted(s string) {
 	if !strconv.CanBackquote(s) {
 		// Requires quoting AND escaping
 		f.Buffer.B = strconv.AppendQuote(f.Buffer.B, s)
@@ -324,14 +339,16 @@ func (f Format) AppendStringQuoted(s string) {
 		f.Buffer.B = append(f.Buffer.B, '"')
 	} else {
 		// Simply append with quotes
-		f.Buffer.WriteString(`"` + s + `"`)
+		f.Buffer.B = append(f.Buffer.B, '"')
+		f.Buffer.B = append(f.Buffer.B, s...)
+		f.Buffer.B = append(f.Buffer.B, '"')
 	}
 }
 
-func (f Format) AppendBool(b bool) {
+func (f format) AppendBool(b bool) {
 	if f.Verbose() {
 		// Append as bool with type information
-		f._AppendPrimitiveTyped(func(f Format) {
+		f._AppendPrimitiveTyped(func(f format) {
 			f.Buffer.B = strconv.AppendBool(f.Buffer.B, b)
 		})
 	} else {
@@ -340,61 +357,61 @@ func (f Format) AppendBool(b bool) {
 	}
 }
 
-func (f Format) AppendInt(i int64) {
-	f._AppendPrimitiveType(func(f Format) {
+func (f format) AppendInt(i int64) {
+	f._AppendPrimitiveType(func(f format) {
 		f.Buffer.B = strconv.AppendInt(f.Buffer.B, i, 10)
 	})
 }
 
-func (f Format) AppendUint(u uint64) {
-	f._AppendPrimitiveType(func(f Format) {
+func (f format) AppendUint(u uint64) {
+	f._AppendPrimitiveType(func(f format) {
 		f.Buffer.B = strconv.AppendUint(f.Buffer.B, u, 10)
 	})
 }
 
-func (f Format) AppendFloat(l float64) {
-	f._AppendPrimitiveType(func(f Format) {
+func (f format) AppendFloat(l float64) {
+	f._AppendPrimitiveType(func(f format) {
 		f.AppendFloatValue(l)
 	})
 }
 
-func (f Format) AppendFloatValue(l float64) {
+func (f format) AppendFloatValue(l float64) {
 	f.Buffer.B = strconv.AppendFloat(f.Buffer.B, l, 'f', -1, 64)
 }
 
-func (f Format) AppendComplex(c complex128) {
-	f._AppendPrimitiveType(func(f Format) {
+func (f format) AppendComplex(c complex128) {
+	f._AppendPrimitiveType(func(f format) {
 		f.AppendFloatValue(real(c))
-		f.Buffer.WriteByte('+')
+		f.Buffer.B = append(f.Buffer.B, '+')
 		f.AppendFloatValue(imag(c))
-		f.Buffer.WriteByte('i')
+		f.Buffer.B = append(f.Buffer.B, 'i')
 	})
 }
 
-func (f Format) AppendPtr(u uint64) {
-	f._AppendPtrType(func(f Format) {
+func (f format) AppendPtr(u uint64) {
+	f._AppendPtrType(func(f format) {
 		if u == 0 {
 			// Append as nil
-			f.Buffer.WriteString(`nil`)
+			f.Buffer.B = append(f.Buffer.B, `nil`...)
 		} else {
 			// Append as hex number
-			f.Buffer.WriteString(`0x`)
+			f.Buffer.B = append(f.Buffer.B, `0x`...)
 			f.Buffer.B = strconv.AppendUint(f.Buffer.B, u, 16)
 		}
 	})
 }
 
-func (f Format) AppendInterfaceOrReflect(i interface{}) {
+func (f format) AppendInterfaceOrReflect(i interface{}) {
 	if !f.AppendInterface(i) {
-		// Interface append failed, used reflected
-		f.AppendReflectValue(reflect.ValueOf(i))
+		// Interface append failed, used reflected value + type
+		f.AppendReflectValue(reflect.ValueOf(i), reflect.TypeOf(i))
 	}
 }
 
-func (f Format) AppendInterfaceOrReflectNext(v reflect.Value) {
+func (f format) AppendInterfaceOrReflectNext(v reflect.Value, t reflect.Type) {
 	// Check we haven't hit max
 	if f.AtMaxDepth() {
-		f.Buffer.WriteString("...")
+		f.Buffer.B = append(f.Buffer.B, `...`...)
 		return
 	}
 
@@ -402,27 +419,27 @@ func (f Format) AppendInterfaceOrReflectNext(v reflect.Value) {
 	f = f.IncrDepth()
 
 	// Make actual call
-	f.AppendReflectOrInterface(v)
+	f.AppendReflectOrInterface(v, t)
 }
 
-func (f Format) AppendReflectOrInterface(v reflect.Value) {
+func (f format) AppendReflectOrInterface(v reflect.Value, t reflect.Type) {
 	if !v.CanInterface() ||
 		!f.AppendInterface(v.Interface()) {
 		// Interface append failed, use reflect
-		f.AppendReflectValue(v)
+		f.AppendReflectValue(v, t)
 	}
 }
 
-func (f Format) AppendInterface(i interface{}) bool {
+func (f format) AppendInterface(i interface{}) bool {
 	switch i := i.(type) {
 	// Reflect types
 	case reflect.Type:
 		f.AppendReflectType(i)
 	case reflect.Value:
-		f.Buffer.WriteString(`reflect.Value`)
-		f.Buffer.WriteByte('(')
-		f.Buffer.WriteString(i.String())
-		f.Buffer.WriteByte(')')
+		f.Buffer.B = append(f.Buffer.B, `reflect.Value`...)
+		f.Buffer.B = append(f.Buffer.B, '(')
+		f.Buffer.B = append(f.Buffer.B, i.String()...)
+		f.Buffer.B = append(f.Buffer.B, ')')
 
 	// Bytes, runes and string types
 	case rune:
@@ -508,116 +525,118 @@ func (f Format) AppendInterface(i interface{}) bool {
 	return true
 }
 
-func (f Format) AppendReflectType(t reflect.Type) {
-	f.VType = `reflect.Type`
-	switch {
+func (f format) AppendReflectType(t reflect.Type) {
+	switch f.VType = `reflect.Type`; {
 	case isNil(t) /* safer nil check */ :
 		f.AppendNil()
 	case f.Verbose():
 		f.AppendType()
-		f.Buffer.WriteString(`(` + t.String() + `)`)
+		f.Buffer.B = append(f.Buffer.B, '(')
+		f.Buffer.B = append(f.Buffer.B, t.String()...)
+		f.Buffer.B = append(f.Buffer.B, ')')
 	default:
-		f.Buffer.WriteString(t.String())
+		f.Buffer.B = append(f.Buffer.B, t.String()...)
 	}
 }
 
-func (f Format) AppendReflectValue(v reflect.Value) {
+func (f format) AppendReflectValue(v reflect.Value, t reflect.Type) {
 	switch v.Kind() {
 	// String/byte types
 	case reflect.String:
-		f.VType = v.Type().String()
+		f.VType = t.String()
 		f.AppendString(v.String())
 	case reflect.Uint8:
-		f.VType = v.Type().String()
+		f.VType = t.String()
 		f.AppendByte(byte(v.Uint()))
 	case reflect.Int32:
-		f.VType = v.Type().String()
+		f.VType = t.String()
 		f.AppendRune(rune(v.Int()))
 
 	// Float tpyes
 	case reflect.Float32, reflect.Float64:
-		f.VType = v.Type().String()
+		f.VType = t.String()
 		f.AppendFloat(v.Float())
 
 	// Int types
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int64:
-		f.VType = v.Type().String()
+		f.VType = t.String()
 		f.AppendInt(v.Int())
 
 	// Uint types
 	case reflect.Uint, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		f.VType = v.Type().String()
+		f.VType = t.String()
 		f.AppendUint(v.Uint())
 
 	// Complex types
 	case reflect.Complex64, reflect.Complex128:
-		f.VType = v.Type().String()
+		f.VType = t.String()
 		f.AppendComplex(v.Complex())
 
 	// Bool type
 	case reflect.Bool:
-		f.VType = v.Type().String()
+		f.VType = t.String()
 		f.AppendBool(v.Bool())
 
 	// Slice and array types
 	case reflect.Array:
-		f.AppendArray(v)
+		f.AppendArray(v, t)
 	case reflect.Slice:
-		f.AppendSlice(v)
+		f.AppendSlice(v, t)
 
 	// Map types
 	case reflect.Map:
-		f.AppendMap(v)
+		f.AppendMap(v, t)
 
 	// Struct types
 	case reflect.Struct:
-		f.AppendStruct(v)
+		f.AppendStruct(v, t)
 
 	// Interface type
 	case reflect.Interface:
 		if v.IsNil() {
 			// Append nil ptr type
-			f.VType = v.Type().String()
+			f.VType = t.String()
 			f.AppendNil()
 		} else {
 			// Append interface
-			f.AppendReflectOrInterface(v.Elem())
+			v = v.Elem()
+			t = v.Type()
+			f.AppendReflectOrInterface(v, t)
 		}
 
 	// Deref'able ptr type
 	case reflect.Ptr:
 		if v.IsNil() {
 			// Append nil ptr type
-			f.VType = v.Type().String()
+			f.VType = t.String()
 			f.AppendNil()
 		} else {
 			// Deref to next level
 			f = f.IncrDerefs()
-			f.AppendReflectOrInterface(v.Elem())
+			v, t = v.Elem(), t.Elem()
+			f.AppendReflectOrInterface(v, t)
 		}
 
 	// 'raw' pointer types
 	case reflect.UnsafePointer, reflect.Func, reflect.Chan:
-		f.VType = v.Type().String()
+		f.VType = t.String()
 		f.AppendPtr(uint64(v.Pointer()))
 	case reflect.Uintptr:
-		f.VType = v.Type().String()
+		f.VType = t.String()
 		f.AppendPtr(v.Uint())
 
 	// Zero reflect value
 	case reflect.Invalid:
-		f.Buffer.WriteString(`nil`)
+		f.Buffer.B = append(f.Buffer.B, `nil`...)
 
 	// All others
 	default:
-		f.VType = v.Type().String()
+		f.VType = t.String()
 		f.AppendType()
 	}
 }
 
-func (f Format) AppendSlice(v reflect.Value) {
-	t := v.Type()
-
+func (f format) AppendSlice(v reflect.Value, t reflect.Type) {
 	// Get slice value type
 	f.VType = t.String()
 
@@ -635,42 +654,45 @@ func (f Format) AppendSlice(v reflect.Value) {
 
 	if f.Verbose() {
 		// Append array with type information
-		f._AppendArrayTyped(func(f Format) {
-			f.AppendArrayElems(v)
+		f._AppendArrayTyped(func(f format) {
+			f.AppendArrayElems(v, t)
 		})
 	} else {
 		// Simply append array as elems
-		f._AppendArray(func(f Format) {
-			f.AppendArrayElems(v)
+		f._AppendArray(func(f format) {
+			f.AppendArrayElems(v, t)
 		})
 	}
 }
 
-func (f Format) AppendArray(v reflect.Value) {
+func (f format) AppendArray(v reflect.Value, t reflect.Type) {
 	// Get array value type
-	f.VType = v.Type().String()
+	f.VType = t.String()
 
 	if f.Verbose() {
 		// Append array with type information
-		f._AppendArrayTyped(func(f Format) {
-			f.AppendArrayElems(v)
+		f._AppendArrayTyped(func(f format) {
+			f.AppendArrayElems(v, t)
 		})
 	} else {
 		// Simply append array as elems
-		f._AppendArray(func(f Format) {
-			f.AppendArrayElems(v)
+		f._AppendArray(func(f format) {
+			f.AppendArrayElems(v, t)
 		})
 	}
 }
 
-func (f Format) AppendArrayElems(v reflect.Value) {
+func (f format) AppendArrayElems(v reflect.Value, t reflect.Type) {
 	// Get no. elems
 	n := v.Len()
 
+	// Get elem type
+	et := t.Elem()
+
 	// Append values
 	for i := 0; i < n; i++ {
-		f.SetValue().AppendInterfaceOrReflectNext(v.Index(i))
-		f.Buffer.WriteByte(',')
+		f.SetValue().AppendInterfaceOrReflectNext(v.Index(i), et)
+		f.Buffer.B = append(f.Buffer.B, ',')
 	}
 
 	// Drop last comma
@@ -679,9 +701,8 @@ func (f Format) AppendArrayElems(v reflect.Value) {
 	}
 }
 
-func (f Format) AppendMap(v reflect.Value) {
+func (f format) AppendMap(v reflect.Value, t reflect.Type) {
 	// Get value type
-	t := v.Type()
 	f.VType = t.String()
 
 	if v.IsNil() {
@@ -691,22 +712,26 @@ func (f Format) AppendMap(v reflect.Value) {
 	}
 
 	// Append field formatted map fields
-	f._AppendFieldType(func(f Format) {
-		f.AppendMapFields(v)
+	f._AppendFieldType(func(f format) {
+		f.AppendMapFields(v, t)
 	})
 }
 
-func (f Format) AppendMapFields(v reflect.Value) {
+func (f format) AppendMapFields(v reflect.Value, t reflect.Type) {
 	// Get a map iterator
 	r := v.MapRange()
 	n := v.Len()
 
+	// Get key/val types
+	kt := t.Key()
+	kv := t.Elem()
+
 	// Iterate pairs
 	for r.Next() {
-		f.SetKey().AppendInterfaceOrReflectNext(r.Key())
-		f.Buffer.WriteByte('=')
-		f.SetValue().AppendInterfaceOrReflectNext(r.Value())
-		f.Buffer.WriteByte(' ')
+		f.SetKey().AppendInterfaceOrReflectNext(r.Key(), kt)
+		f.Buffer.B = append(f.Buffer.B, '=')
+		f.SetValue().AppendInterfaceOrReflectNext(r.Value(), kv)
+		f.Buffer.B = append(f.Buffer.B, ' ')
 	}
 
 	// Drop last space
@@ -715,18 +740,17 @@ func (f Format) AppendMapFields(v reflect.Value) {
 	}
 }
 
-func (f Format) AppendStruct(v reflect.Value) {
+func (f format) AppendStruct(v reflect.Value, t reflect.Type) {
 	// Get value type
-	t := v.Type()
 	f.VType = t.String()
 
 	// Append field formatted struct fields
-	f._AppendFieldType(func(f Format) {
-		f.AppendStructFields(t, v)
+	f._AppendFieldType(func(f format) {
+		f.AppendStructFields(v, t)
 	})
 }
 
-func (f Format) AppendStructFields(t reflect.Type, v reflect.Value) {
+func (f format) AppendStructFields(v reflect.Value, t reflect.Type) {
 	// Get field no.
 	n := v.NumField()
 
@@ -737,11 +761,11 @@ func (f Format) AppendStructFields(t reflect.Type, v reflect.Value) {
 
 		// Append field name
 		f.AppendStringKey(tfield.Name)
-		f.Buffer.WriteByte('=')
-		f.SetValue().AppendInterfaceOrReflectNext(vfield)
+		f.Buffer.B = append(f.Buffer.B, '=')
+		f.SetValue().AppendInterfaceOrReflectNext(vfield, tfield.Type)
 
 		// Append separator
-		f.Buffer.WriteByte(' ')
+		f.Buffer.B = append(f.Buffer.B, ' ')
 	}
 
 	// Drop last space
@@ -750,7 +774,7 @@ func (f Format) AppendStructFields(t reflect.Type, v reflect.Value) {
 	}
 }
 
-func (f Format) _AppendMethodType(method func() string, i interface{}) (ok bool) {
+func (f format) _AppendMethodType(method func() string, i interface{}) (ok bool) {
 	// Verbose -- no methods
 	if f.Verbose() {
 		return false
@@ -771,9 +795,9 @@ func (f Format) _AppendMethodType(method func() string, i interface{}) (ok bool)
 			}
 
 			// Attempt to decode panic into buf
-			f.Buffer.WriteString(`!{PANIC=`)
+			f.Buffer.B = append(f.Buffer.B, `!{PANIC=`...)
 			f.SetPanic().AppendInterfaceOrReflect(r)
-			f.Buffer.WriteByte('}')
+			f.Buffer.B = append(f.Buffer.B, '}')
 
 			// Ensure no further attempts
 			// to format after return
@@ -795,14 +819,14 @@ func (f Format) _AppendMethodType(method func() string, i interface{}) (ok bool)
 
 	// Append as-is
 	default:
-		f.Buffer.WriteString(result)
+		f.Buffer.B = append(f.Buffer.B, result...)
 	}
 
 	return true
 }
 
 // _AppendPrimitiveType is a helper to append prefix/suffix for primitives (numbers/bools/bytes/runes).
-func (f Format) _AppendPrimitiveType(appendPrimitive func(Format)) {
+func (f format) _AppendPrimitiveType(appendPrimitive func(format)) {
 	if f.Verbose() {
 		// Append value with type information
 		f._AppendPrimitiveTyped(appendPrimitive)
@@ -813,14 +837,14 @@ func (f Format) _AppendPrimitiveType(appendPrimitive func(Format)) {
 }
 
 // _AppendPrimitiveTyped is a helper to append prefix/suffix for primitives (numbers/bools/bytes/runes) with their types (if deref'd).
-func (f Format) _AppendPrimitiveTyped(appendPrimitive func(Format)) {
+func (f format) _AppendPrimitiveTyped(appendPrimitive func(format)) {
 	if f.Derefs > 0 {
 		// Is deref'd, append type info
-		f.Buffer.WriteByte('(')
+		f.Buffer.B = append(f.Buffer.B, '(')
 		f.AppendType()
 		f.Buffer.WriteString(`)(`)
 		appendPrimitive(f)
-		f.Buffer.WriteByte(')')
+		f.Buffer.B = append(f.Buffer.B, ')')
 	} else {
 		// Simply append value
 		appendPrimitive(f)
@@ -828,14 +852,14 @@ func (f Format) _AppendPrimitiveTyped(appendPrimitive func(Format)) {
 }
 
 // _AppendPtrType is a helper to append prefix/suffix for ptr types (with type if necessary).
-func (f Format) _AppendPtrType(appendPtr func(Format)) {
+func (f format) _AppendPtrType(appendPtr func(format)) {
 	if f.Verbose() {
 		// Append value with type information
-		f.Buffer.WriteByte('(')
+		f.Buffer.B = append(f.Buffer.B, '(')
 		f.AppendType()
 		f.Buffer.WriteString(`)(`)
 		appendPtr(f)
-		f.Buffer.WriteByte(')')
+		f.Buffer.B = append(f.Buffer.B, ')')
 	} else {
 		// Append simply as-is
 		appendPtr(f)
@@ -843,28 +867,28 @@ func (f Format) _AppendPtrType(appendPtr func(Format)) {
 }
 
 // _AppendArray is a helper to append prefix/suffix for array-types.
-func (f Format) _AppendArray(appendArray func(Format)) {
-	f.Buffer.WriteByte('[')
+func (f format) _AppendArray(appendArray func(format)) {
+	f.Buffer.B = append(f.Buffer.B, '[')
 	appendArray(f)
-	f.Buffer.WriteByte(']')
+	f.Buffer.B = append(f.Buffer.B, ']')
 }
 
 // _AppendArrayTyped is a helper to append prefix/suffix for array-types with their types.
-func (f Format) _AppendArrayTyped(appendArray func(Format)) {
+func (f format) _AppendArrayTyped(appendArray func(format)) {
 	f.AppendType()
-	f.Buffer.WriteByte('{')
+	f.Buffer.B = append(f.Buffer.B, '{')
 	appendArray(f)
-	f.Buffer.WriteByte('}')
+	f.Buffer.B = append(f.Buffer.B, '}')
 }
 
 // _AppendFields is a helper to append prefix/suffix for field-types (with type if necessary).
-func (f Format) _AppendFieldType(appendFields func(Format)) {
+func (f format) _AppendFieldType(appendFields func(format)) {
 	if f.Verbose() {
 		f.AppendType()
 	}
-	f.Buffer.WriteByte('{')
+	f.Buffer.B = append(f.Buffer.B, '{')
 	appendFields(f)
-	f.Buffer.WriteByte('}')
+	f.Buffer.B = append(f.Buffer.B, '}')
 }
 
 // byte2str returns 'c' as a string, escaping if necessary.

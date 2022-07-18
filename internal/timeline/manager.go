@@ -101,8 +101,8 @@ type manager struct {
 func (m *manager) Ingest(ctx context.Context, item Timelineable, timelineAccountID string) (bool, error) {
 	l := log.WithFields(kv.Fields{
 
-		{K: "timelineAccountID", V: timelineAccountID},
-		{K: "itemID", V: item.GetID()},
+		{"timelineAccountID", timelineAccountID},
+		{"itemID", item.GetID()},
 	}...)
 
 	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
@@ -117,8 +117,8 @@ func (m *manager) Ingest(ctx context.Context, item Timelineable, timelineAccount
 func (m *manager) IngestAndPrepare(ctx context.Context, item Timelineable, timelineAccountID string) (bool, error) {
 	l := log.WithFields(kv.Fields{
 
-		{K: "timelineAccountID", V: timelineAccountID},
-		{K: "itemID", V: item.GetID()},
+		{"timelineAccountID", timelineAccountID},
+		{"itemID", item.GetID()},
 	}...)
 
 	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
@@ -133,8 +133,8 @@ func (m *manager) IngestAndPrepare(ctx context.Context, item Timelineable, timel
 func (m *manager) Remove(ctx context.Context, timelineAccountID string, itemID string) (int, error) {
 	l := log.WithFields(kv.Fields{
 
-		{K: "timelineAccountID", V: timelineAccountID},
-		{K: "itemID", V: itemID},
+		{"timelineAccountID", timelineAccountID},
+		{"itemID", itemID},
 	}...)
 
 	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
@@ -149,7 +149,7 @@ func (m *manager) Remove(ctx context.Context, timelineAccountID string, itemID s
 func (m *manager) GetTimeline(ctx context.Context, timelineAccountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]Preparable, error) {
 	l := log.WithFields(kv.Fields{
 
-		{K: "timelineAccountID", V: timelineAccountID},
+		{"timelineAccountID", timelineAccountID},
 	}...)
 
 	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)

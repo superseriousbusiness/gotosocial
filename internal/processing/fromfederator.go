@@ -40,14 +40,14 @@ import (
 func (p *processor) ProcessFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
 	// Allocate new log fields slice
 	fields := make([]kv.Field, 3, 5)
-	fields[0] = kv.Field{K: "activityType", V: federatorMsg.APActivityType}
-	fields[1] = kv.Field{K: "objectType", V: federatorMsg.APObjectType}
-	fields[2] = kv.Field{K: "toAccount", V: federatorMsg.ReceivingAccount.Username}
+	fields[0] = kv.Field{"activityType", federatorMsg.APActivityType}
+	fields[1] = kv.Field{"objectType", federatorMsg.APObjectType}
+	fields[2] = kv.Field{"toAccount", federatorMsg.ReceivingAccount.Username}
 
 	if federatorMsg.APIri != nil {
 		// An IRI was supplied, append to log
 		fields = append(fields, kv.Field{
-			K: "iri", V: federatorMsg.APIri,
+			"iri", federatorMsg.APIri,
 		})
 	}
 
@@ -55,7 +55,7 @@ func (p *processor) ProcessFromFederator(ctx context.Context, federatorMsg messa
 		log.Level() >= level.DEBUG {
 		// Append converted model to log
 		fields = append(fields, kv.Field{
-			K: "model", V: federatorMsg.GTSModel,
+			"model", federatorMsg.GTSModel,
 		})
 	}
 

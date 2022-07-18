@@ -30,10 +30,10 @@ type Formatter struct {
 
 // Append will append formatted form of supplied values into 'buf'.
 func (f *Formatter) Append(buf *byteutil.Buffer, v ...interface{}) {
-	fmt := Format{Buffer: buf, Config: f}
+	fmt := format{Buffer: buf, Config: f}
 	for i := 0; i < len(v); i++ {
 		fmt.AppendInterfaceOrReflect(v[i])
-		fmt.Buffer.WriteByte(' ')
+		fmt.Buffer.B = append(fmt.Buffer.B, ' ')
 	}
 	if len(v) > 0 {
 		fmt.Buffer.Truncate(1)
@@ -90,7 +90,7 @@ func (f *Formatter) Appendf(buf *byteutil.Buffer, s string, a ...interface{}) {
 		idx int
 
 		// fmt is the base argument formatter
-		fmt = Format{
+		fmt = format{
 			Config: f,
 			Buffer: buf,
 		}
@@ -188,7 +188,7 @@ func (f *Formatter) Appendf(buf *byteutil.Buffer, s string, a ...interface{}) {
 				fmt.AppendInterfaceOrReflect(a[carg])
 			} else {
 				// No argument found for index
-				fmt.Buffer.WriteString(`!{MISSING_ARG}`)
+				fmt.Buffer.B = append(fmt.Buffer.B, `!{MISSING_ARG}`...)
 			}
 		}
 
@@ -214,12 +214,12 @@ func (f *Formatter) Appendf(buf *byteutil.Buffer, s string, a ...interface{}) {
 			switch c {
 			case '{':
 				// Enter open mode
-				fmt.Buffer.WriteString(Str())
+				fmt.Buffer.B = append(fmt.Buffer.B, Str()...)
 				mode = modeOpen
 				MoveUp()
 			case '}':
 				// Enter close mode
-				fmt.Buffer.WriteString(Str())
+				fmt.Buffer.B = append(fmt.Buffer.B, Str()...)
 				mode = modeClose
 				MoveUp()
 			}
@@ -233,7 +233,7 @@ func (f *Formatter) Appendf(buf *byteutil.Buffer, s string, a ...interface{}) {
 				MoveUp()
 			case '{':
 				// Escaped bracket
-				fmt.Buffer.WriteByte('{')
+				fmt.Buffer.B = append(fmt.Buffer.B, '{')
 				mode = modeNone
 				MoveUp()
 			case '}':
@@ -247,7 +247,7 @@ func (f *Formatter) Appendf(buf *byteutil.Buffer, s string, a ...interface{}) {
 				MoveUp()
 			default:
 				// Bad char, missing a close
-				fmt.Buffer.WriteString(`!{MISSING_CLOSE}`)
+				fmt.Buffer.B = append(fmt.Buffer.B, `!{MISSING_CLOSE}`...)
 				mode = modeNone
 				MoveUpTo()
 			}
@@ -257,12 +257,12 @@ func (f *Formatter) Appendf(buf *byteutil.Buffer, s string, a ...interface{}) {
 			switch c {
 			case '}':
 				// Escaped close bracket
-				fmt.Buffer.WriteByte('}')
+				fmt.Buffer.B = append(fmt.Buffer.B, '}')
 				mode = modeNone
 				MoveUp()
 			default:
 				// Missing an open bracket
-				fmt.Buffer.WriteString(`!{MISSING_OPEN}`)
+				fmt.Buffer.B = append(fmt.Buffer.B, `!{MISSING_OPEN}`...)
 				mode = modeNone
 				MoveUp()
 			}
@@ -274,7 +274,7 @@ func (f *Formatter) Appendf(buf *byteutil.Buffer, s string, a ...interface{}) {
 			case ':':
 				if !ParseIndex() {
 					// Unable to parse an integer
-					fmt.Buffer.WriteString(`!{BAD_INDEX}`)
+					fmt.Buffer.B = append(fmt.Buffer.B, `!{BAD_INDEX}`...)
 					mode = modeNone
 					MoveUpTo()
 				} else {
@@ -285,7 +285,7 @@ func (f *Formatter) Appendf(buf *byteutil.Buffer, s string, a ...interface{}) {
 			case '}':
 				if !ParseIndex() {
 					// Unable to parse an integer
-					fmt.Buffer.WriteString(`!{BAD_INDEX}`)
+					fmt.Buffer.B = append(fmt.Buffer.B, `!{BAD_INDEX}`...)
 				} else {
 					// Format arg
 					AppendArg()
@@ -294,7 +294,7 @@ func (f *Formatter) Appendf(buf *byteutil.Buffer, s string, a ...interface{}) {
 				MoveUp()
 			default:
 				// Not a valid index character
-				fmt.Buffer.WriteString(`!{BAD_INDEX}`)
+				fmt.Buffer.B = append(fmt.Buffer.B, `!{BAD_INDEX}`...)
 				mode = modeNone
 				MoveUpTo()
 			}
@@ -311,7 +311,7 @@ func (f *Formatter) Appendf(buf *byteutil.Buffer, s string, a ...interface{}) {
 			case '}':
 				if !ValidOp() {
 					// Bad operands parsed
-					fmt.Buffer.WriteString(`!{BAD_OPERAND}`)
+					fmt.Buffer.B = append(fmt.Buffer.B, `!{BAD_OPERAND}`...)
 				} else {
 					// Format arg
 					AppendArg()
@@ -320,7 +320,7 @@ func (f *Formatter) Appendf(buf *byteutil.Buffer, s string, a ...interface{}) {
 				MoveUp()
 			default:
 				// Not a valid operand char
-				fmt.Buffer.WriteString(`!{BAD_OPERAND}`)
+				fmt.Buffer.B = append(fmt.Buffer.B, `!{BAD_OPERAND}`...)
 				Reset()
 				MoveUpTo()
 			}
@@ -328,7 +328,7 @@ func (f *Formatter) Appendf(buf *byteutil.Buffer, s string, a ...interface{}) {
 	}
 
 	// Append any remaining
-	fmt.Buffer.WriteString(s[last:])
+	fmt.Buffer.B = append(fmt.Buffer.B, s[last:]...)
 }
 
 // formatter is the default formatter instance.

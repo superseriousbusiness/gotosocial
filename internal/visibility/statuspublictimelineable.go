@@ -30,7 +30,7 @@ import (
 func (f *filter) StatusPublictimelineable(ctx context.Context, targetStatus *gtsmodel.Status, timelineOwnerAccount *gtsmodel.Account) (bool, error) {
 	l := log.WithFields(kv.Fields{
 
-		{K: "statusID", V: targetStatus.ID},
+		{"statusID", targetStatus.ID},
 	}...)
 
 	// Don't timeline boosted statuses

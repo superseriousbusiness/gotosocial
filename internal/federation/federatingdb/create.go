@@ -166,8 +166,8 @@ func (f *federatingDB) activityCreate(ctx context.Context, asType vocab.Type, re
 // createNote handles a Create activity with a Note type.
 func (f *federatingDB) createNote(ctx context.Context, note vocab.ActivityStreamsNote, receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) error {
 	l := log.WithFields(kv.Fields{
-		{K: "receivingAccount", V: receivingAccount.URI},
-		{K: "requestingAccount", V: requestingAccount.URI},
+		{"receivingAccount", receivingAccount.URI},
+		{"requestingAccount", requestingAccount.URI},
 	}...)
 
 	// Check if we have a forward.

@@ -67,8 +67,8 @@ codeberg.org/gruf/go-hashenc v1.0.2 h1:U3jH6zMXZiL96czD/qaJd8OR2h7LlBzGv/2WxnMHI
 codeberg.org/gruf/go-hashenc v1.0.2/go.mod h1:eK+A8clLcEN/m1nftNsRId0kfYDQnETnuIfBGZ8Gvsg=
 codeberg.org/gruf/go-kv v1.2.0/go.mod h1:z2+9sJc3cWuW9vUZI5tX0Uc9DNgmDdFihsThkShUk6w=
 codeberg.org/gruf/go-kv v1.2.1/go.mod h1:nTmEd529nq8jV8jXwrr7HXR5nHRnKA9jPR0R8PX/EYw=
-codeberg.org/gruf/go-kv v1.3.0 h1:3s42ck6RZHQH7ZeRy/p9KjtHdUQExj6U5tOmBDrq6MQ=
-codeberg.org/gruf/go-kv v1.3.0/go.mod h1:nTmEd529nq8jV8jXwrr7HXR5nHRnKA9jPR0R8PX/EYw=
+codeberg.org/gruf/go-kv v1.3.1 h1:PHEDoxPtrdOXKgoXGshyASQEYr2cEci+uP2wBqAs1ZQ=
+codeberg.org/gruf/go-kv v1.3.1/go.mod h1:0I7qkI6eLpUtv940vrPasHFhMqlZojGlHf7iF2/Z86A=
 codeberg.org/gruf/go-log v1.0.4/go.mod h1:XOkZfvx78Q214dWVKuaPFqkRWJQBipsdou+LrDRlwB8=
 codeberg.org/gruf/go-logger/v2 v2.0.6 h1:uKpfwQufP76avJ326WUWI40T1qIh7UbxpPlA9UQ8zr8=
 codeberg.org/gruf/go-logger/v2 v2.0.6/go.mod h1:9kg3GVDGzBXsrv1vALNRm/NJAkPvs5P000DLzladkb0=

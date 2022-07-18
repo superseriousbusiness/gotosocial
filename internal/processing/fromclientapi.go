@@ -38,15 +38,15 @@ import (
 func (p *processor) ProcessFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
 	// Allocate new log fields slice
 	fields := make([]kv.Field, 3, 4)
-	fields[0] = kv.Field{K: "activityType", V: clientMsg.APActivityType}
-	fields[1] = kv.Field{K: "objectType", V: clientMsg.APObjectType}
-	fields[2] = kv.Field{K: "fromAccount", V: clientMsg.OriginAccount.Username}
+	fields[0] = kv.Field{"activityType", clientMsg.APActivityType}
+	fields[1] = kv.Field{"objectType", clientMsg.APObjectType}
+	fields[2] = kv.Field{"fromAccount", clientMsg.OriginAccount.Username}
 
 	if clientMsg.GTSModel != nil &&
 		log.Level() >= level.DEBUG {
 		// Append converted model to log
 		fields = append(fields, kv.Field{
-			K: "model", V: clientMsg.GTSModel,
+			"model", clientMsg.GTSModel,
 		})
 	}
 

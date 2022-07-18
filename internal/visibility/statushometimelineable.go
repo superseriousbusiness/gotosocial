@@ -30,7 +30,7 @@ import (
 func (f *filter) StatusHometimelineable(ctx context.Context, targetStatus *gtsmodel.Status, timelineOwnerAccount *gtsmodel.Account) (bool, error) {
 	l := log.WithFields(kv.Fields{
 
-		{K: "statusID", V: targetStatus.ID},
+		{"statusID", targetStatus.ID},
 	}...)
 
 	// status owner should always be able to see their own status in their timeline so we can return early if this is the case

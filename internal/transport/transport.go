@@ -92,9 +92,9 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 
 	// Start a log entry for this request
 	l := log.WithFields(kv.Fields{
-		{K: "pubKeyID", V: t.pubKeyID},
-		{K: "method", V: r.Method},
-		{K: "url", V: r.URL.String()},
+		{"pubKeyID", t.pubKeyID},
+		{"method", r.Method},
+		{"url", r.URL.String()},
 	}...)
 
 	for i := 0; i < maxRetries; i++ {

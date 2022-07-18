@@ -40,7 +40,7 @@ import (
 func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode) {
 	l := log.WithFields(kv.Fields{
 
-		{K: "query", V: search.Query},
+		{"query", search.Query},
 	}...)
 
 	// tidy up the query and make sure it wasn't just spaces
@@ -136,8 +136,8 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 func (p *processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Status, error) {
 	l := log.WithFields(kv.Fields{
 
-		{K: "uri", V: uri.String()},
-		{K: "resolve", V: resolve},
+		{"uri", uri.String()},
+		{"resolve", resolve},
 	}...)
 
 	if maybeStatus, err := p.db.GetStatusByURI(ctx, uri.String()); err == nil {

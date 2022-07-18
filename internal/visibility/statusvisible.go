@@ -33,7 +33,7 @@ func (f *filter) StatusVisible(ctx context.Context, targetStatus *gtsmodel.Statu
 
 	l := log.WithFields(kv.Fields{
 
-		{K: "statusID", V: targetStatus.ID},
+		{"statusID", targetStatus.ID},
 	}...)
 
 	// Fetch any relevant accounts for the target status

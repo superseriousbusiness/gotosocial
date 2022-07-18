@@ -39,7 +39,7 @@ import (
 func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 	l := log.WithFields(kv.Fields{
 
-		{K: "id", V: id},
+		{"id", id},
 	}...)
 	l.Debug("entering Delete")
 

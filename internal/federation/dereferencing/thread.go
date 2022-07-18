@@ -39,8 +39,8 @@ import (
 func (d *deref) DereferenceThread(ctx context.Context, username string, statusIRI *url.URL) error {
 	l := log.WithFields(kv.Fields{
 
-		{K: "username", V: username},
-		{K: "statusIRI", V: statusIRI},
+		{"username", username},
+		{"statusIRI", statusIRI},
 	}...)
 	l.Trace("entering DereferenceThread")
 
@@ -73,8 +73,8 @@ func (d *deref) DereferenceThread(ctx context.Context, username string, statusIR
 func (d *deref) iterateAncestors(ctx context.Context, username string, statusIRI url.URL) error {
 	l := log.WithFields(kv.Fields{
 
-		{K: "username", V: username},
-		{K: "statusIRI", V: statusIRI},
+		{"username", username},
+		{"statusIRI", statusIRI},
 	}...)
 	l.Trace("entering iterateAncestors")
 
@@ -126,8 +126,8 @@ func (d *deref) iterateAncestors(ctx context.Context, username string, statusIRI
 func (d *deref) iterateDescendants(ctx context.Context, username string, statusIRI url.URL, statusable ap.Statusable) error {
 	l := log.WithFields(kv.Fields{
 
-		{K: "username", V: username},
-		{K: "statusIRI", V: statusIRI},
+		{"username", username},
+		{"statusIRI", statusIRI},
 	}...)
 	l.Trace("entering iterateDescendants")
 

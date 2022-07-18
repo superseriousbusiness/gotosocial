@@ -67,9 +67,9 @@ import (
 func (m *Module) StatusBoostedByGETHandler(c *gin.Context) {
 	l := log.WithFields(kv.Fields{
 
-		{K: "request_uri", V: c.Request.RequestURI},
-		{K: "user_agent", V: c.Request.UserAgent()},
-		{K: "origin_ip", V: c.ClientIP()},
+		{"request_uri", c.Request.RequestURI},
+		{"user_agent", c.Request.UserAgent()},
+		{"origin_ip", c.ClientIP()},
 	}...)
 	l.Debugf("entering function")
 

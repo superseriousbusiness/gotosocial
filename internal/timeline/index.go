@@ -31,7 +31,7 @@ import (
 func (t *timeline) IndexBefore(ctx context.Context, itemID string, amount int) error {
 	l := log.WithFields(kv.Fields{
 
-		{K: "amount", V: amount},
+		{"amount", amount},
 	}...)
 
 	// lazily initialize index if it hasn't been done already
@@ -84,7 +84,7 @@ grabloop:
 func (t *timeline) IndexBehind(ctx context.Context, itemID string, amount int) error {
 	l := log.WithFields(kv.Fields{
 
-		{K: "amount", V: amount},
+		{"amount", amount},
 	}...)
 
 	// lazily initialize index if it hasn't been done already

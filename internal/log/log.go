@@ -214,7 +214,7 @@ func logf(lvl level.LEVEL, fields []kv.Field, s string, a ...interface{}) {
 
 	// Append formatted fields with msg
 	kv.Fields(append(fields, kv.Field{
-		K: "msg", V: fmt.Sprintf(s, a...),
+		"msg", fmt.Sprintf(s, a...),
 	})).AppendFormat(buf)
 
 	// Append a final newline

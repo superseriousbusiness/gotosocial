@@ -227,7 +227,7 @@ func (d *deref) dereferenceStatusable(ctx context.Context, username string, remo
 func (d *deref) populateStatusFields(ctx context.Context, status *gtsmodel.Status, requestingUsername string, includeParent bool) error {
 	l := log.WithFields(kv.Fields{
 
-		{K: "status", V: status},
+		{"status", status},
 	}...)
 	l.Debug("entering function")
 

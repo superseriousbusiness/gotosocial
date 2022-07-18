@@ -58,11 +58,11 @@ import (
 func (p *processor) Delete(ctx context.Context, account *gtsmodel.Account, origin string) gtserror.WithCode {
 	fields := kv.Fields{
 
-		{K: "username", V: account.Username},
+		{"username", account.Username},
 	}
 	if account.Domain != "" {
 		fields = append(fields, kv.Field{
-			K: "domain", V: account.Domain,
+			"domain", account.Domain,
 		})
 	}
 	l := log.WithFields(fields...)

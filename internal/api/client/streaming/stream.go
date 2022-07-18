@@ -146,10 +146,10 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 	}
 
 	l := log.WithFields(kv.Fields{
-		{K: "account", V: account.Username},
-		{K: "path", V: BasePath},
-		{K: "streamID", V: stream.ID},
-		{K: "streamType", V: streamType},
+		{"account", account.Username},
+		{"path", BasePath},
+		{"streamID", stream.ID},
+		{"streamType", streamType},
 	}...)
 
 	wsConn, err := wsUpgrader.Upgrade(c.Writer, c.Request, nil)

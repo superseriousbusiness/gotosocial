@@ -65,12 +65,12 @@ func loggingMiddleware(c *gin.Context) {
 		// and could lead to storing plaintext API keys in logs
 
 		// Set request logging fields
-		fields[0] = kv.Field{K: "latency", V: time.Since(before)}
-		fields[1] = kv.Field{K: "clientIP", V: c.ClientIP()}
-		fields[2] = kv.Field{K: "userAgent", V: c.Request.UserAgent()}
-		fields[3] = kv.Field{K: "method", V: c.Request.Method}
-		fields[4] = kv.Field{K: "statusCode", V: code}
-		fields[5] = kv.Field{K: "path", V: path}
+		fields[0] = kv.Field{"latency", time.Since(before)}
+		fields[1] = kv.Field{"clientIP", c.ClientIP()}
+		fields[2] = kv.Field{"userAgent", c.Request.UserAgent()}
+		fields[3] = kv.Field{"method", c.Request.Method}
+		fields[4] = kv.Field{"statusCode", code}
+		fields[5] = kv.Field{"path", path}
 
 		var lvl level.LEVEL
 
@@ -84,7 +84,7 @@ func loggingMiddleware(c *gin.Context) {
 			if len(c.Errors) > 0 {
 				// Add an error string log field
 				fields = append(fields, kv.Field{
-					K: "error", V: c.Errors.String(),
+					"error", c.Errors.String(),
 				})
 			}
 		}
