@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 
-	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -33,9 +32,7 @@ import (
 )
 
 func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo) error {
-	l := log.WithFields(kv.Fields{
-
-	}...)
+	l := log.Entry{}
 
 	if log.Level() >= level.DEBUG {
 		i, err := marshalItem(undo)

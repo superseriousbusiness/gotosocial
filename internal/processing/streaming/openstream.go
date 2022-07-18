@@ -34,7 +34,7 @@ import (
 func (p *processor) OpenStreamForAccount(ctx context.Context, account *gtsmodel.Account, streamTimeline string) (*stream.Stream, gtserror.WithCode) {
 	l := log.WithFields(kv.Fields{
 
-		{K: "account", V:    account.ID},
+		{K: "account", V: account.ID},
 		{K: "streamType", V: streamTimeline},
 	}...)
 	l.Debug("received open stream request")

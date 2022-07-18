@@ -37,8 +37,6 @@ type PgClientStoreTestSuite struct {
 	testClientUserID string
 }
 
-const ()
-
 // SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
 func (suite *PgClientStoreTestSuite) SetupSuite() {
 	suite.testClientID = "01FCVB74EW6YBYAEY7QG9CQQF6"

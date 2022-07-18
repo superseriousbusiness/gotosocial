@@ -32,10 +32,10 @@ import (
 func (t *timeline) prepareNextQuery(ctx context.Context, amount int, maxID string, sinceID string, minID string) error {
 	l := log.WithFields(kv.Fields{
 
-		{K: "amount", V:  amount},
-		{K: "maxID", V:   maxID},
+		{K: "amount", V: amount},
+		{K: "maxID", V: maxID},
 		{K: "sinceID", V: sinceID},
-		{K: "minID", V:   minID},
+		{K: "minID", V: minID},
 	}...)
 
 	var err error

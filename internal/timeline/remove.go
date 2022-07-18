@@ -31,7 +31,7 @@ func (t *timeline) Remove(ctx context.Context, statusID string) (int, error) {
 	l := log.WithFields(kv.Fields{
 
 		{K: "accountTimeline", V: t.accountID},
-		{K: "statusID", V:        statusID},
+		{K: "statusID", V: statusID},
 	}...)
 
 	t.Lock()
@@ -84,7 +84,7 @@ func (t *timeline) RemoveAllBy(ctx context.Context, accountID string) (int, erro
 	l := log.WithFields(kv.Fields{
 
 		{K: "accountTimeline", V: t.accountID},
-		{K: "accountID", V:       accountID},
+		{K: "accountID", V: accountID},
 	}...)
 	t.Lock()
 	defer t.Unlock()
