@@ -157,7 +157,7 @@ func printf(fields []kv.Field, s string, a ...interface{}) {
 
 	// Append formatted caller func
 	buf.B = append(buf.B, `func=`...)
-	buf.B = append(buf.B, caller(3)...)
+	buf.B = append(buf.B, Caller(3)...)
 	buf.B = append(buf.B, ' ')
 
 	if len(fields) > 0 {
@@ -204,7 +204,7 @@ func logf(lvl level.LEVEL, fields []kv.Field, s string, a ...interface{}) {
 
 	// Append formatted caller func
 	buf.B = append(buf.B, `func=`...)
-	buf.B = append(buf.B, caller(3)...)
+	buf.B = append(buf.B, Caller(3)...)
 	buf.B = append(buf.B, ' ')
 
 	// Append formatted level string

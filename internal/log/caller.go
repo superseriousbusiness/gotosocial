@@ -37,8 +37,8 @@ var (
 	cacheMu sync.Mutex
 )
 
-// caller fetches the calling function name, skipping 'depth'.
-func caller(depth int) string {
+// Caller fetches the calling function name, skipping 'depth'. Results are cached per PC.
+func Caller(depth int) string {
 	var rpc [1]uintptr
 
 	// Fetch pcs of callers
