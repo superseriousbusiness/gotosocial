@@ -91,6 +91,7 @@ func New(cfg Config) *Client {
 	d := &net.Dialer{
 		Timeout:   30 * time.Second,
 		KeepAlive: 30 * time.Second,
+		Resolver:  &net.Resolver{},
 	}
 
 	if cfg.MaxOpenConns <= 0 {
