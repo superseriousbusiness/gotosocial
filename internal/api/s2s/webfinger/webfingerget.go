@@ -57,7 +57,6 @@ import (
 //       "$ref": "#/definitions/wellKnownResponse"
 func (m *Module) WebfingerGETRequest(c *gin.Context) {
 	l := log.WithFields(kv.Fields{
-
 		{K: "user-agent", V: c.Request.UserAgent()},
 	}...)
 

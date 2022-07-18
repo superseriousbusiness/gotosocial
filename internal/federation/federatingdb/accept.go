@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 
-	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -35,14 +34,12 @@ import (
 )
 
 func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) error {
-	l := log.WithFields(kv.Fields{}...)
-
 	if log.Level() >= level.DEBUG {
 		i, err := marshalItem(accept)
 		if err != nil {
 			return err
 		}
-		l = l.WithField("accept", i)
+		l := log.WithField("accept", i)
 		l.Debug("entering Accept")
 	}
 

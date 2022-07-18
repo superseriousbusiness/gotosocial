@@ -48,14 +48,12 @@ import (
 // Under certain conditions and network activities, Create may be called
 // multiple times for the same ActivityStreams object.
 func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
-	l := log.WithFields(kv.Fields{}...)
-
 	if log.Level() >= level.DEBUG {
 		i, err := marshalItem(asType)
 		if err != nil {
 			return err
 		}
-		l = l.WithField("create", i)
+		l := log.WithField("create", i)
 		l.Debug("entering Create")
 	}
 

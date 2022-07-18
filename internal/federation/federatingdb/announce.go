@@ -22,7 +22,6 @@ import (
 	"context"
 	"fmt"
 
-	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -31,14 +30,12 @@ import (
 )
 
 func (f *federatingDB) Announce(ctx context.Context, announce vocab.ActivityStreamsAnnounce) error {
-	l := log.WithFields(kv.Fields{}...)
-
 	if log.Level() >= level.DEBUG {
 		i, err := marshalItem(announce)
 		if err != nil {
 			return err
 		}
-		l = l.WithField("announce", i)
+		l := log.WithField("announce", i)
 		l.Debug("entering Announce")
 	}
 
