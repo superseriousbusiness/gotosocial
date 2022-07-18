@@ -24,52 +24,39 @@ import (
 	"strings"
 
 	"codeberg.org/gruf/go-logger/v2/level"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
-// Initialize initializes the global Logrus logger, reading the desired
-// log level from the viper store, or using a default if the level
-// has not been set in viper.
-//
-// It also sets the output to log.SplitErrOutputs(...)
-// so you get error logs on stderr and normal logs on stdout.
-//
-// If syslog settings are also in viper, then Syslog will be initialized as well.
-func Initialize() error {
-	// check if a desired log level has been set
-	if lvlStr := config.GetLogLevel(); lvlStr != "" {
-		switch strings.ToLower(lvlStr) {
-		case "trace":
-			SetLevel(level.TRACE)
-		case "debug":
-			SetLevel(level.DEBUG)
-		case "", "info":
-			SetLevel(level.INFO)
-		case "warn":
-			SetLevel(level.WARN)
-		case "error":
-			SetLevel(level.ERROR)
-		case "fatal":
-			SetLevel(level.FATAL)
-		default:
-			return fmt.Errorf("unknown log level: %q", lvlStr)
-		}
+// ParseLevel will parse the log level from given string and set to appropriate level.
+func ParseLevel(str string) error {
+	switch strings.ToLower(str) {
+	case "trace":
+		SetLevel(level.TRACE)
+	case "debug":
+		SetLevel(level.DEBUG)
+	case "", "info":
+		SetLevel(level.INFO)
+	case "warn":
+		SetLevel(level.WARN)
+	case "error":
+		SetLevel(level.ERROR)
+	case "fatal":
+		SetLevel(level.FATAL)
+	default:
+		return fmt.Errorf("unknown log level: %q", str)
+	}
+	return nil
+}
+
+// EnableSyslog will enabling logging to the syslog at given address.
+func EnableSyslog(proto, addr string) error {
+	// Dial a connection to the syslog daemon
+	writer, err := syslog.Dial(proto, addr, 0, "gotosocial")
+	if err != nil {
+		return err
 	}
 
-	// check if syslog has been enabled, and configure it if so
-	if config.GetSyslogEnabled() {
-		protocol := config.GetSyslogProtocol()
-		address := config.GetSyslogAddress()
-
-		// Dial a connection to the syslog daemon
-		writer, err := syslog.Dial(protocol, address, 0, "gotosocial")
-		if err != nil {
-			return err
-		}
-
-		// Set the syslog writer
-		sysout = writer
-	}
+	// Set the syslog writer
+	sysout = writer
 
 	return nil
 }

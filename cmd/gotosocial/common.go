@@ -64,8 +64,19 @@ func preRun(a preRunArgs) error {
 // The idea here is to take a GTSAction and run it with the given
 // context, after initializing any last-minute things like loggers etc.
 func run(ctx context.Context, action action.GTSAction) error {
-	if err := log.Initialize(); err != nil {
-		return fmt.Errorf("error initializing log: %s", err)
+	// Set the global log level from configuration
+	if err := log.ParseLevel(config.GetLogLevel()); err != nil {
+		return fmt.Errorf("error parsing log level: %w", err)
+	}
+
+	if config.GetSyslogEnabled() {
+		// Enable logging to syslog
+		if err := log.EnableSyslog(
+			config.GetSyslogProtocol(),
+			config.GetSyslogAddress(),
+		); err != nil {
+			return fmt.Errorf("error enabling syslogging: %w", err)
+		}
 	}
 
 	return action(ctx)
