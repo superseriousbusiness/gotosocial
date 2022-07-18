@@ -75,10 +75,11 @@ func (suite *SyslogTestSuite) TestSyslog() {
 func (suite *SyslogTestSuite) TestSyslogLongMessage() {
 	log.Warn(longMessage)
 
-	const str = `timestamp="18/07/2022 19:08:14.699" func=log_test.(*SyslogTestSuite).TestSyslogLongMessage level=WARN msg="`
+	funcName := log.Caller(1)
+	prefix := fmt.Sprintf(`timestamp="02/01/2006 15:04:05.000" func=%s level=WARN msg="`, funcName)
 
 	entry := <-suite.syslogChannel
-	regex := fmt.Sprintf(`timestamp=.* func=.* level=WARN msg="%s\.\.\.`, longMessage[:1700-len(str)-3])
+	regex := fmt.Sprintf(`timestamp=.* func=.* level=WARN msg="%s\.\.\.`, longMessage[:1700-len(prefix)-3])
 	suite.Regexp(regexp.MustCompile(regex), entry["content"])
 }
 
@@ -105,10 +106,11 @@ func (suite *SyslogTestSuite) TestSyslogLongMessageUnixgram() {
 
 	log.Warn(longMessage)
 
-	const str = `timestamp="18/07/2022 19:08:14.699" func=log_test.(*SyslogTestSuite).TestSyslogLongMessageUnixgram level=WARN msg="`
+	funcName := log.Caller(1)
+	prefix := fmt.Sprintf(`timestamp="02/01/2006 15:04:05.000" func=%s level=WARN msg="`, funcName)
 
 	entry := <-syslogChannel
-	regex := fmt.Sprintf(`timestamp=.* func=.* level=WARN msg="%s\.\.\.`, longMessage[:1700-len(str)-3])
+	regex := fmt.Sprintf(`timestamp=.* func=.* level=WARN msg="%s\.\.\.`, longMessage[:1700-len(prefix)-3])
 
 	suite.Regexp(regexp.MustCompile(regex), entry["content"])
 
