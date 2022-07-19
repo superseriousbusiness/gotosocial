@@ -37,5 +37,5 @@ func (f *formatter) FromMarkdown(ctx context.Context, md string, mentions []*gts
 	// format mentions nicely
 	content = f.ReplaceMentions(ctx, content, mentions)
 
-	return postformat(content)
+	return SanitizeHTML(content)
 }
