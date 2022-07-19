@@ -20,6 +20,7 @@ package text
 
 import (
 	"context"
+	"html"
 	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -32,10 +33,11 @@ var breakReplacer = strings.NewReplacer(
 )
 
 func (f *formatter) FromPlain(ctx context.Context, plain string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string {
-	content := preformat(plain)
+	// trim any crap
+	content := strings.TrimSpace(plain)
 
-	// sanitize any html elements
-	content = removeHTML(content)
+	// clean 'er up
+	content = html.EscapeString(content)
 
 	// format links nicely
 	content = f.ReplaceLinks(ctx, content)
@@ -52,5 +54,5 @@ func (f *formatter) FromPlain(ctx context.Context, plain string, mentions []*gts
 	// wrap the whole thing in a pee
 	content = `<p>` + content + `</p>`
 
-	return postformat(content)
+	return SanitizeHTML(content)
 }

@@ -26,13 +26,11 @@ import (
 )
 
 func (f *formatter) FromMarkdown(ctx context.Context, md string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string {
-	content := preformat(md)
-
 	// do the markdown parsing *first*
-	contentBytes := blackfriday.Run([]byte(content))
+	contentBytes := blackfriday.Run([]byte(md))
 
 	// format tags nicely
-	content = f.ReplaceTags(ctx, string(contentBytes), tags)
+	content := f.ReplaceTags(ctx, string(contentBytes), tags)
 
 	// format mentions nicely
 	content = f.ReplaceMentions(ctx, content, mentions)
