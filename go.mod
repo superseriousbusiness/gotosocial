@@ -41,7 +41,6 @@ require (
 	github.com/superseriousbusiness/activity v1.1.0-gts
 	github.com/superseriousbusiness/exif-terminator v0.3.0
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB
-	github.com/tdewolff/minify/v2 v2.11.2
 	github.com/uptrace/bun v1.1.3
 	github.com/uptrace/bun/dialect/pgdialect v1.1.3
 	github.com/uptrace/bun/dialect/sqlitedialect v1.1.3
@@ -121,7 +120,6 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/superseriousbusiness/go-jpeg-image-structure/v2 v2.0.0-20220321154430-d89a106fdabe // indirect
-	github.com/tdewolff/parse/v2 v2.5.29 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
