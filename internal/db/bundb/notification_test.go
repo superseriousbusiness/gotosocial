@@ -118,6 +118,18 @@ func (suite *NotificationTestSuite) TestGetNotificationsWithoutSpam() {
 	}
 }
 
+func (suite *NotificationTestSuite) TestClearNotificationsWithSpam() {
+	suite.spamNotifs()
+	testAccount := suite.testAccounts["local_account_1"]
+	err := suite.db.ClearNotifications(context.Background(), testAccount.ID)
+	suite.NoError(err)
+
+	notifications, err := suite.db.GetNotifications(context.Background(), testAccount.ID, 20, "ZZZZZZZZZZZZZZZZZZZZZZZZZZ", "00000000000000000000000000")
+	suite.NoError(err)
+	suite.NotNil(notifications)
+	suite.Empty(notifications)
+}
+
 func TestNotificationTestSuite(t *testing.T) {
 	suite.Run(t, new(NotificationTestSuite))
 }

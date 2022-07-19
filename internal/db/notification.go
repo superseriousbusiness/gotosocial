@@ -32,4 +32,6 @@ type Notification interface {
 	GetNotifications(ctx context.Context, accountID string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, Error)
 	// GetNotification returns one notification according to its id.
 	GetNotification(ctx context.Context, id string) (*gtsmodel.Notification, Error)
+	// ClearNotifications deletes every notification that pertain to the given accountID.
+	ClearNotifications(ctx context.Context, accountID string) Error
 }
