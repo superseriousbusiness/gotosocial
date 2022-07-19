@@ -25,22 +25,23 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":  "SearchGet",
-		"query": search.Query,
-	})
+	l := log.WithFields(kv.Fields{
+
+		{"query", search.Query},
+	}...)
 
 	// tidy up the query and make sure it wasn't just spaces
 	query := strings.TrimSpace(search.Query)
@@ -133,11 +134,11 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 }
 
 func (p *processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Status, error) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":    "searchStatusByURI",
-		"uri":     uri.String(),
-		"resolve": resolve,
-	})
+	l := log.WithFields(kv.Fields{
+
+		{"uri", uri.String()},
+		{"resolve", resolve},
+	}...)
 
 	if maybeStatus, err := p.db.GetStatusByURI(ctx, uri.String()); err == nil {
 		return maybeStatus, nil

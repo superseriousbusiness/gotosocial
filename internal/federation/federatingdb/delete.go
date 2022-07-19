@@ -23,9 +23,10 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
@@ -36,12 +37,10 @@ import (
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
-	l := logrus.WithFields(
-		logrus.Fields{
-			"func": "Delete",
-			"id":   id,
-		},
-	)
+	l := log.WithFields(kv.Fields{
+
+		{"id", id},
+	}...)
 	l.Debug("entering Delete")
 
 	receivingAccount, _ := extractFromCtx(ctx)

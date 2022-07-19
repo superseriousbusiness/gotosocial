@@ -26,12 +26,13 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 )
 
@@ -224,10 +225,10 @@ func (d *deref) dereferenceStatusable(ctx context.Context, username string, remo
 // and attach them to the status. The status itself will not be added to the database yet,
 // that's up the caller to do.
 func (d *deref) populateStatusFields(ctx context.Context, status *gtsmodel.Status, requestingUsername string, includeParent bool) error {
-	l := logrus.WithFields(logrus.Fields{
-		"func":   "dereferenceStatusFields",
-		"status": fmt.Sprintf("%+v", status),
-	})
+	l := log.WithFields(kv.Fields{
+
+		{"status", status},
+	}...)
 	l.Debug("entering function")
 
 	statusIRI, err := url.Parse(status.URI)
@@ -288,20 +289,20 @@ func (d *deref) populateStatusMentions(ctx context.Context, status *gtsmodel.Sta
 	for _, m := range status.Mentions {
 		if m.ID != "" {
 			// we've already populated this mention, since it has an ID
-			logrus.Debug("populateStatusMentions: mention already populated")
+			log.Debug("populateStatusMentions: mention already populated")
 			mentionIDs = append(mentionIDs, m.ID)
 			newMentions = append(newMentions, m)
 			continue
 		}
 
 		if m.TargetAccountURI == "" {
-			logrus.Debug("populateStatusMentions: target URI not set on mention")
+			log.Debug("populateStatusMentions: target URI not set on mention")
 			continue
 		}
 
 		targetAccountURI, err := url.Parse(m.TargetAccountURI)
 		if err != nil {
-			logrus.Debugf("populateStatusMentions: error parsing mentioned account uri %s: %s", m.TargetAccountURI, err)
+			log.Debugf("populateStatusMentions: error parsing mentioned account uri %s: %s", m.TargetAccountURI, err)
 			continue
 		}
 
@@ -312,7 +313,7 @@ func (d *deref) populateStatusMentions(ctx context.Context, status *gtsmodel.Sta
 		if a, err := d.db.GetAccountByURI(ctx, targetAccountURI.String()); err != nil {
 			errs = append(errs, err.Error())
 		} else {
-			logrus.Debugf("populateStatusMentions: got target account %s with id %s through GetAccountByURI", targetAccountURI, a.ID)
+			log.Debugf("populateStatusMentions: got target account %s with id %s through GetAccountByURI", targetAccountURI, a.ID)
 			targetAccount = a
 		}
 
@@ -325,13 +326,13 @@ func (d *deref) populateStatusMentions(ctx context.Context, status *gtsmodel.Sta
 			}); err != nil {
 				errs = append(errs, err.Error())
 			} else {
-				logrus.Debugf("populateStatusMentions: got target account %s with id %s through GetRemoteAccount", targetAccountURI, a.ID)
+				log.Debugf("populateStatusMentions: got target account %s with id %s through GetRemoteAccount", targetAccountURI, a.ID)
 				targetAccount = a
 			}
 		}
 
 		if targetAccount == nil {
-			logrus.Debugf("populateStatusMentions: couldn't get target account %s: %s", m.TargetAccountURI, strings.Join(errs, " : "))
+			log.Debugf("populateStatusMentions: couldn't get target account %s: %s", m.TargetAccountURI, strings.Join(errs, " : "))
 			continue
 		}
 
@@ -392,13 +393,13 @@ func (d *deref) populateStatusAttachments(ctx context.Context, status *gtsmodel.
 			Blurhash:    &a.Blurhash,
 		})
 		if err != nil {
-			logrus.Errorf("populateStatusAttachments: couldn't get remote media %s: %s", a.RemoteURL, err)
+			log.Errorf("populateStatusAttachments: couldn't get remote media %s: %s", a.RemoteURL, err)
 			continue
 		}
 
 		attachment, err := processingMedia.LoadAttachment(ctx)
 		if err != nil {
-			logrus.Errorf("populateStatusAttachments: couldn't load remote attachment %s: %s", a.RemoteURL, err)
+			log.Errorf("populateStatusAttachments: couldn't load remote attachment %s: %s", a.RemoteURL, err)
 			continue
 		}
 

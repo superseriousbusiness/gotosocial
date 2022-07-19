@@ -25,7 +25,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -33,6 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
@@ -63,18 +64,12 @@ func sameActor(activityActor vocab.ActivityStreamsActorProperty, followActor voc
 // The go-fed library will handle setting the 'id' property on the
 // activity or object provided with the value returned.
 func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL, err error) {
-	l := logrus.WithFields(
-		logrus.Fields{
-			"func": "NewID",
-		},
-	)
-
-	if logrus.GetLevel() >= logrus.DebugLevel {
+	if log.Level() >= level.DEBUG {
 		i, err := marshalItem(t)
 		if err != nil {
 			return nil, err
 		}
-		l = l.WithField("newID", i)
+		l := log.WithField("newID", i)
 		l.Debug("entering NewID")
 	}
 
@@ -312,7 +307,7 @@ func extractFromCtx(ctx context.Context) (receivingAccount, requestingAccount *g
 		var ok bool
 		receivingAccount, ok = receivingAccountI.(*gtsmodel.Account)
 		if !ok {
-			logrus.Panicf("extractFromCtx: context entry with key %s could not be asserted to *gtsmodel.Account", ap.ContextReceivingAccount)
+			log.Panicf("extractFromCtx: context entry with key %s could not be asserted to *gtsmodel.Account", ap.ContextReceivingAccount)
 		}
 	}
 
@@ -321,7 +316,7 @@ func extractFromCtx(ctx context.Context) (receivingAccount, requestingAccount *g
 		var ok bool
 		requestingAccount, ok = requestingAcctI.(*gtsmodel.Account)
 		if !ok {
-			logrus.Panicf("extractFromCtx: context entry with key %s could not be asserted to *gtsmodel.Account", ap.ContextRequestingAccount)
+			log.Panicf("extractFromCtx: context entry with key %s could not be asserted to *gtsmodel.Account", ap.ContextRequestingAccount)
 		}
 	}
 

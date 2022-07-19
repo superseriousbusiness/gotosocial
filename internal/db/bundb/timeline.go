@@ -21,9 +21,9 @@ package bundb
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 	"golang.org/x/exp/slices"
 )
@@ -96,7 +96,7 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 		// Fetch status from db for ID
 		status, err := t.status.GetStatusByID(ctx, id)
 		if err != nil {
-			logrus.Errorf("GetHomeTimeline: error fetching status %q: %v", id, err)
+			log.Errorf("GetHomeTimeline: error fetching status %q: %v", id, err)
 			continue
 		}
 
@@ -156,7 +156,7 @@ func (t *timelineDB) GetPublicTimeline(ctx context.Context, accountID string, ma
 		// Fetch status from db for ID
 		status, err := t.status.GetStatusByID(ctx, id)
 		if err != nil {
-			logrus.Errorf("GetPublicTimeline: error fetching status %q: %v", id, err)
+			log.Errorf("GetPublicTimeline: error fetching status %q: %v", id, err)
 			continue
 		}
 
@@ -216,7 +216,7 @@ func (t *timelineDB) GetFavedTimeline(ctx context.Context, accountID string, max
 		// Fetch status from db for corresponding favourite
 		status, err := t.status.GetStatusByID(ctx, fave.StatusID)
 		if err != nil {
-			logrus.Errorf("GetFavedTimeline: error fetching status for fave %q: %v", fave.ID, err)
+			log.Errorf("GetFavedTimeline: error fetching status for fave %q: %v", fave.ID, err)
 			continue
 		}
 

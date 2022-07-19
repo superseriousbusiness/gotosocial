@@ -29,9 +29,9 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"golang.org/x/net/idna"
 )
 
@@ -44,7 +44,7 @@ func SessionOptions() sessions.Options {
 	case "strict":
 		samesite = http.SameSiteStrictMode
 	default:
-		logrus.Warnf("%s set to %s which is not recognized, defaulting to 'lax'", config.AdvancedCookiesSamesiteFlag(), config.GetAdvancedCookiesSamesite())
+		log.Warnf("%s set to %s which is not recognized, defaulting to 'lax'", config.AdvancedCookiesSamesiteFlag(), config.GetAdvancedCookiesSamesite())
 		samesite = http.SameSiteLaxMode
 	}
 

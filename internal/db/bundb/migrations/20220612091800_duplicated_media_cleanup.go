@@ -26,14 +26,14 @@ import (
 
 	"codeberg.org/gruf/go-store/kv"
 	"codeberg.org/gruf/go-store/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 )
 
 func init() {
-	deleteAttachment := func(ctx context.Context, l *logrus.Entry, a *gtsmodel.MediaAttachment, s *kv.KVStore, tx bun.Tx) {
+	deleteAttachment := func(ctx context.Context, l log.Entry, a *gtsmodel.MediaAttachment, s *kv.KVStore, tx bun.Tx) {
 		if err := s.Delete(a.File.Path); err != nil && err != storage.ErrNotFound {
 			l.Errorf("error removing file %s: %s", a.File.Path, err)
 		} else {
@@ -57,7 +57,7 @@ func init() {
 	}
 
 	up := func(ctx context.Context, db *bun.DB) error {
-		l := logrus.WithField("migration", "20220612091800_duplicated_media_cleanup")
+		l := log.WithField("migration", "20220612091800_duplicated_media_cleanup")
 
 		if config.GetStorageBackend() != "local" {
 			// this migration only affects versions which only supported local storage

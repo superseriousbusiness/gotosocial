@@ -19,95 +19,259 @@
 package log
 
 import (
-	"bytes"
+	"fmt"
 	"io"
 	"log/syslog"
 	"os"
+	"strings"
+	"syscall"
+	"time"
 
-	"github.com/sirupsen/logrus"
-	lSyslog "github.com/sirupsen/logrus/hooks/syslog"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"codeberg.org/gruf/go-atomics"
+	"codeberg.org/gruf/go-kv"
+	"codeberg.org/gruf/go-logger/v2/level"
 )
 
-// Initialize initializes the global Logrus logger, reading the desired
-// log level from the viper store, or using a default if the level
-// has not been set in viper.
-//
-// It also sets the output to log.SplitErrOutputs(...)
-// so you get error logs on stderr and normal logs on stdout.
-//
-// If syslog settings are also in viper, then Syslog will be initialized as well.
-func Initialize() error {
-	out := SplitErrOutputs(os.Stdout, os.Stderr)
-	logrus.SetOutput(out)
+var (
+	// loglvl is the currently set logging level.
+	loglvl atomics.Uint32
 
-	// check if a desired log level has been set
-	if lvl := config.GetLogLevel(); lvl != "" {
-		level, err := logrus.ParseLevel(lvl)
-		if err != nil {
-			return err
-		}
-		logrus.SetLevel(level)
+	// lvlstrs is the lookup table of log levels to strings.
+	lvlstrs = level.Default()
 
-		if level == logrus.TraceLevel {
-			logrus.SetReportCaller(true)
-		}
-	}
+	// Preprepared stdout/stderr log writers.
+	stdout = &safewriter{w: os.Stdout}
+	stderr = &safewriter{w: os.Stderr}
 
-	// set our custom formatter options
-	logrus.SetFormatter(&logrus.TextFormatter{
-		DisableColors: true,
-		FullTimestamp: true,
+	// Syslog output, only set if enabled.
+	sysout *syslog.Writer
+)
 
-		// By default, quoting is enabled to help differentiate key-value
-		// fields in log lines. But when debug (or higher, e.g. trace) logging
-		// is enabled, we disable this. This allows easier copy-pasting of
-		// entry fields without worrying about escaped quotes.
-		DisableQuote: logrus.GetLevel() >= logrus.DebugLevel,
-	})
-
-	// check if syslog has been enabled, and configure it if so
-	if config.GetSyslogEnabled() {
-		protocol := config.GetSyslogProtocol()
-		address := config.GetSyslogAddress()
-
-		hook, err := lSyslog.NewSyslogHook(protocol, address, syslog.LOG_INFO, "")
-		if err != nil {
-			return err
-		}
-
-		logrus.AddHook(&trimHook{hook})
-	}
-
-	return nil
+// Level returns the currently set log level.
+func Level() level.LEVEL {
+	return level.LEVEL(loglvl.Load())
 }
 
-// SplitErrOutputs returns an OutputSplitFunc that splits output to either one of
-// two given outputs depending on whether the level is "error","fatal","panic".
-func SplitErrOutputs(out, err io.Writer) OutputSplitFunc {
-	return func(lvl []byte) io.Writer {
-		switch string(lvl) /* convert to str for compare is no-alloc */ {
-		case "error", "fatal", "panic":
-			return err
-		default:
-			return out
-		}
+// SetLevel sets the max logging level.
+func SetLevel(lvl level.LEVEL) {
+	loglvl.Store(uint32(lvl))
+}
+
+func WithField(key string, value interface{}) Entry {
+	return Entry{fields: []kv.Field{{K: key, V: value}}}
+}
+
+func WithFields(fields ...kv.Field) Entry {
+	return Entry{fields: fields}
+}
+
+func Trace(a ...interface{}) {
+	logf(level.TRACE, nil, args(len(a)), a...)
+}
+
+func Tracef(s string, a ...interface{}) {
+	logf(level.TRACE, nil, s, a...)
+}
+
+func Debug(a ...interface{}) {
+	logf(level.DEBUG, nil, args(len(a)), a...)
+}
+
+func Debugf(s string, a ...interface{}) {
+	logf(level.DEBUG, nil, s, a...)
+}
+
+func Info(a ...interface{}) {
+	logf(level.INFO, nil, args(len(a)), a...)
+}
+
+func Infof(s string, a ...interface{}) {
+	logf(level.INFO, nil, s, a...)
+}
+
+func Warn(a ...interface{}) {
+	logf(level.WARN, nil, args(len(a)), a...)
+}
+
+func Warnf(s string, a ...interface{}) {
+	logf(level.WARN, nil, s, a...)
+}
+
+func Error(a ...interface{}) {
+	logf(level.ERROR, nil, args(len(a)), a...)
+}
+
+func Errorf(s string, a ...interface{}) {
+	logf(level.ERROR, nil, s, a...)
+}
+
+func Fatal(a ...interface{}) {
+	defer syscall.Exit(1)
+	logf(level.FATAL, nil, args(len(a)), a...)
+}
+
+func Fatalf(s string, a ...interface{}) {
+	defer syscall.Exit(1)
+	logf(level.FATAL, nil, s, a...)
+}
+
+func Panic(a ...interface{}) {
+	defer panic(fmt.Sprint(a...))
+	logf(level.PANIC, nil, args(len(a)), a...)
+}
+
+func Panicf(s string, a ...interface{}) {
+	defer panic(fmt.Sprintf(s, a...))
+	logf(level.PANIC, nil, s, a...)
+}
+
+// Log will log formatted args as 'msg' field to the log at given level.
+func Log(lvl level.LEVEL, a ...interface{}) {
+	logf(lvl, nil, args(len(a)), a...)
+}
+
+// Logf will log format string as 'msg' field to the log at given level.
+func Logf(lvl level.LEVEL, s string, a ...interface{}) {
+	logf(lvl, nil, s, a...)
+}
+
+// Print will log formatted args to the stdout log output.
+func Print(a ...interface{}) {
+	printf(nil, args(len(a)), a...)
+}
+
+// Print will log format string to the stdout log output.
+func Printf(s string, a ...interface{}) {
+	printf(nil, s, a...)
+}
+
+func printf(fields []kv.Field, s string, a ...interface{}) {
+	// Acquire buffer
+	buf := getBuf()
+
+	// Append formatted timestamp
+	now := time.Now().Format("02/01/2006 15:04:05.000")
+	buf.B = append(buf.B, `timestamp="`...)
+	buf.B = append(buf.B, now...)
+	buf.B = append(buf.B, `" `...)
+
+	// Append formatted caller func
+	buf.B = append(buf.B, `func=`...)
+	buf.B = append(buf.B, Caller(4)...)
+	buf.B = append(buf.B, ' ')
+
+	if len(fields) > 0 {
+		// Append formatted fields
+		kv.Fields(fields).AppendFormat(buf, false)
+		buf.B = append(buf.B, ' ')
+	}
+
+	// Append formatted args
+	fmt.Fprintf(buf, s, a...)
+
+	// Append a final newline
+	buf.B = append(buf.B, '\n')
+
+	// Write to log and release
+	_, _ = stdout.Write(buf.B)
+	putBuf(buf)
+}
+
+func logf(lvl level.LEVEL, fields []kv.Field, s string, a ...interface{}) {
+	var out io.Writer
+
+	// Check if enabled.
+	if lvl > Level() {
+		return
+	}
+
+	// Split errors to stderr,
+	// all else goes to stdout.
+	if lvl <= level.ERROR {
+		out = stderr
+	} else {
+		out = stdout
+	}
+
+	// Acquire buffer
+	buf := getBuf()
+
+	// Append formatted timestamp
+	now := time.Now().Format("02/01/2006 15:04:05.000")
+	buf.B = append(buf.B, `timestamp="`...)
+	buf.B = append(buf.B, now...)
+	buf.B = append(buf.B, `" `...)
+
+	// Append formatted caller func
+	buf.B = append(buf.B, `func=`...)
+	buf.B = append(buf.B, Caller(4)...)
+	buf.B = append(buf.B, ' ')
+
+	// Append formatted level string
+	buf.B = append(buf.B, `level=`...)
+	buf.B = append(buf.B, lvlstrs[lvl]...)
+	buf.B = append(buf.B, ' ')
+
+	// Append formatted fields with msg
+	kv.Fields(append(fields, kv.Field{
+		"msg", fmt.Sprintf(s, a...),
+	})).AppendFormat(buf, false)
+
+	// Append a final newline
+	buf.B = append(buf.B, '\n')
+
+	if sysout != nil {
+		// Write log entry to syslog
+		logsys(lvl, buf.String())
+	}
+
+	// Write to log and release
+	_, _ = out.Write(buf.B)
+	putBuf(buf)
+}
+
+// logsys will log given msg at given severity to the syslog.
+func logsys(lvl level.LEVEL, msg string) {
+	// Truncate message if > 1700 chars
+	if len(msg) > 1700 {
+		msg = msg[:1697] + "..."
+	}
+
+	// Log at appropriate syslog severity
+	switch lvl {
+	case level.TRACE:
+	case level.DEBUG:
+	case level.INFO:
+		_ = sysout.Info(msg)
+	case level.WARN:
+		_ = sysout.Warning(msg)
+	case level.ERROR:
+		_ = sysout.Err(msg)
+	case level.FATAL:
+		_ = sysout.Crit(msg)
 	}
 }
 
-// OutputSplitFunc implements the io.Writer interface for use with Logrus, and simply
-// splits logs between stdout and stderr depending on their severity.
-type OutputSplitFunc func(lvl []byte) io.Writer
+// args returns an args format string of format '%v' * count.
+func args(count int) string {
+	const args = `%v%v%v%v%v%v%v%v%v%v` +
+		`%v%v%v%v%v%v%v%v%v%v` +
+		`%v%v%v%v%v%v%v%v%v%v` +
+		`%v%v%v%v%v%v%v%v%v%v`
 
-var levelBytes = []byte("level=")
-
-func (fn OutputSplitFunc) Write(b []byte) (int, error) {
-	var lvl []byte
-	if i := bytes.Index(b, levelBytes); i >= 0 {
-		blvl := b[i+len(levelBytes):]
-		if i := bytes.IndexByte(blvl, ' '); i >= 0 {
-			lvl = blvl[:i]
-		}
+	// Use predetermined args str
+	if count < len(args) {
+		return args[:count*2]
 	}
-	return fn(lvl).Write(b)
+
+	// Allocate buffer of needed len
+	var buf strings.Builder
+	buf.Grow(count * 2)
+
+	// Manually build an args str
+	for i := 0; i < count; i++ {
+		buf.WriteString(`%v`)
+	}
+
+	return buf.String()
 }

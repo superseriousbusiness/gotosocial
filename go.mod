@@ -3,11 +3,14 @@ module github.com/superseriousbusiness/gotosocial
 go 1.18
 
 require (
+	codeberg.org/gruf/go-atomics v1.1.0
 	codeberg.org/gruf/go-bytesize v0.2.1
 	codeberg.org/gruf/go-byteutil v1.0.2
 	codeberg.org/gruf/go-cache/v2 v2.1.1
 	codeberg.org/gruf/go-debug v1.2.0
 	codeberg.org/gruf/go-errors/v2 v2.0.2
+	codeberg.org/gruf/go-kv v1.3.2
+	codeberg.org/gruf/go-logger/v2 v2.0.6
 	codeberg.org/gruf/go-mutexes v1.1.2
 	codeberg.org/gruf/go-runners v1.2.1
 	codeberg.org/gruf/go-store v1.3.8
@@ -32,7 +35,6 @@ require (
 	github.com/oklog/ulid v1.3.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/russross/blackfriday/v2 v2.1.0
-	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/viper v1.11.0
 	github.com/stretchr/testify v1.7.1
@@ -55,7 +57,6 @@ require (
 )
 
 require (
-	codeberg.org/gruf/go-atomics v1.1.0 // indirect
 	codeberg.org/gruf/go-bitutil v1.0.1 // indirect
 	codeberg.org/gruf/go-bytes v1.0.2 // indirect
 	codeberg.org/gruf/go-fastcopy v1.1.1 // indirect
@@ -113,6 +114,7 @@ require (
 	github.com/quasoft/memstore v0.0.0-20191010062613-2bce066d2b0b // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
 	github.com/rs/xid v1.2.1 // indirect
+	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect

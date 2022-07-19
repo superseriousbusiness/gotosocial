@@ -24,10 +24,10 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 )
 
@@ -208,7 +208,7 @@ func (s *statusDB) GetStatusChildren(ctx context.Context, status *gtsmodel.Statu
 		// only append children, not the overall parent status
 		entry, ok := e.Value.(*gtsmodel.Status)
 		if !ok {
-			logrus.Panic("GetStatusChildren: found status could not be asserted to *gtsmodel.Status")
+			log.Panic("GetStatusChildren: found status could not be asserted to *gtsmodel.Status")
 		}
 
 		if entry.ID != status.ID {
@@ -233,7 +233,7 @@ func (s *statusDB) statusChildren(ctx context.Context, status *gtsmodel.Status, 
 
 	if err := q.Scan(ctx, &childIDs); err != nil {
 		if err != sql.ErrNoRows {
-			logrus.Errorf("statusChildren: error getting children for %q: %v", status.ID, err)
+			log.Errorf("statusChildren: error getting children for %q: %v", status.ID, err)
 		}
 		return
 	}
@@ -242,7 +242,7 @@ func (s *statusDB) statusChildren(ctx context.Context, status *gtsmodel.Status, 
 		// Fetch child with ID from database
 		child, err := s.GetStatusByID(ctx, id)
 		if err != nil {
-			logrus.Errorf("statusChildren: error getting child status %q: %v", id, err)
+			log.Errorf("statusChildren: error getting child status %q: %v", id, err)
 			continue
 		}
 
@@ -250,7 +250,7 @@ func (s *statusDB) statusChildren(ctx context.Context, status *gtsmodel.Status, 
 		for e := foundStatuses.Front(); e != nil; e = e.Next() {
 			entry, ok := e.Value.(*gtsmodel.Status)
 			if !ok {
-				logrus.Panic("statusChildren: found status could not be asserted to *gtsmodel.Status")
+				log.Panic("statusChildren: found status could not be asserted to *gtsmodel.Status")
 			}
 
 			if child.InReplyToAccountID != "" && entry.ID == child.InReplyToID {

@@ -22,15 +22,16 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 func (f *filter) StatusHometimelineable(ctx context.Context, targetStatus *gtsmodel.Status, timelineOwnerAccount *gtsmodel.Account) (bool, error) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":     "StatusHometimelineable",
-		"statusID": targetStatus.ID,
-	})
+	l := log.WithFields(kv.Fields{
+
+		{"statusID", targetStatus.ID},
+	}...)
 
 	// status owner should always be able to see their own status in their timeline so we can return early if this is the case
 	if targetStatus.AccountID == timelineOwnerAccount.ID {

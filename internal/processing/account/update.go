@@ -24,13 +24,12 @@ import (
 	"io"
 	"mime/multipart"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
@@ -39,8 +38,6 @@ import (
 )
 
 func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, gtserror.WithCode) {
-	l := logrus.WithField("func", "AccountUpdate")
-
 	if form.Discoverable != nil {
 		account.Discoverable = *form.Discoverable
 	}
@@ -81,7 +78,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		}
 		account.AvatarMediaAttachmentID = avatarInfo.ID
 		account.AvatarMediaAttachment = avatarInfo
-		l.Tracef("new avatar info for account %s is %+v", account.ID, avatarInfo)
+		log.Tracef("new avatar info for account %s is %+v", account.ID, avatarInfo)
 	}
 
 	if form.Header != nil && form.Header.Size != 0 {
@@ -91,7 +88,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		}
 		account.HeaderMediaAttachmentID = headerInfo.ID
 		account.HeaderMediaAttachment = headerInfo
-		l.Tracef("new header info for account %s is %+v", account.ID, headerInfo)
+		log.Tracef("new header info for account %s is %+v", account.ID, headerInfo)
 	}
 
 	if form.Locked != nil {

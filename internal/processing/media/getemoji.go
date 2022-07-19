@@ -22,10 +22,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 func (p *processor) GetCustomEmojis(ctx context.Context) ([]*apimodel.Emoji, gtserror.WithCode) {
@@ -40,7 +40,7 @@ func (p *processor) GetCustomEmojis(ctx context.Context) ([]*apimodel.Emoji, gts
 	for _, gtsEmoji := range emojis {
 		apiEmoji, err := p.tc.EmojiToAPIEmoji(ctx, gtsEmoji)
 		if err != nil {
-			logrus.Errorf("error converting emoji with id %s: %s", gtsEmoji.ID, err)
+			log.Errorf("error converting emoji with id %s: %s", gtsEmoji.ID, err)
 			continue
 		}
 		apiEmojis = append(apiEmojis, &apiEmoji)

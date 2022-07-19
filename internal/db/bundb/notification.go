@@ -22,9 +22,9 @@ import (
 	"context"
 
 	"codeberg.org/gruf/go-cache/v2"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 type notificationDB struct {
@@ -98,7 +98,7 @@ func (n *notificationDB) GetNotifications(ctx context.Context, accountID string,
 		// Attempt fetch from DB
 		notif, err := n.GetNotification(ctx, id)
 		if err != nil {
-			logrus.Errorf("GetNotifications: error getting notification %q: %v", id, err)
+			log.Errorf("GetNotifications: error getting notification %q: %v", id, err)
 			continue
 		}
 

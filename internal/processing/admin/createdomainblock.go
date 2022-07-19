@@ -24,13 +24,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
@@ -90,10 +91,10 @@ func (p *processor) DomainBlockCreate(ctx context.Context, account *gtsmodel.Acc
 // 2. Delete the instance account for that instance if it exists.
 // 3. Select all accounts from this instance and pass them through the delete functionality of the processor.
 func (p *processor) initiateDomainBlockSideEffects(ctx context.Context, account *gtsmodel.Account, block *gtsmodel.DomainBlock) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":   "domainBlockProcessSideEffects",
-		"domain": block.Domain,
-	})
+	l := log.WithFields(kv.Fields{
+
+		{"domain", block.Domain},
+	}...)
 
 	l.Debug("processing domain block side effects")
 

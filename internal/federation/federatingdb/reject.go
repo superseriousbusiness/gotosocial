@@ -23,27 +23,22 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsReject) error {
-	l := logrus.WithFields(
-		logrus.Fields{
-			"func": "Reject",
-		},
-	)
-
-	if logrus.GetLevel() >= logrus.DebugLevel {
+	if log.Level() >= level.DEBUG {
 		i, err := marshalItem(reject)
 		if err != nil {
 			return err
 		}
-		l = l.WithField("reject", i)
+		l := log.WithField("reject", i)
 		l.Debug("entering Reject")
 	}
 

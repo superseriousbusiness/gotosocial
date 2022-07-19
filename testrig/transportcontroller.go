@@ -25,7 +25,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
@@ -33,12 +32,15 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
-const applicationJSON = "application/json"
-const applicationActivityJSON = "application/activity+json"
+const (
+	applicationJSON         = "application/json"
+	applicationActivityJSON = "application/activity+json"
+)
 
 // NewTestTransportController returns a test transport controller with the given http client.
 //
@@ -171,7 +173,7 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 			responseContentLength = len(attachment.Data)
 		}
 
-		logrus.Debugf("returning response %s", string(responseBytes))
+		log.Debugf("returning response %s", string(responseBytes))
 		reader := bytes.NewReader(responseBytes)
 		readCloser := io.NopCloser(reader)
 		return &http.Response{
@@ -264,7 +266,7 @@ func WebfingerResponse(req *http.Request) (responseCode int, responseBytes []byt
 	}
 
 	if wfr == nil {
-		logrus.Debugf("webfinger response not available for %s", req.URL)
+		log.Debugf("webfinger response not available for %s", req.URL)
 		responseCode = http.StatusNotFound
 		responseBytes = []byte(`{"error":"not found"}`)
 		responseContentType = applicationJSON

@@ -26,9 +26,9 @@ import (
 
 	"codeberg.org/gruf/go-debug"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -94,10 +94,10 @@ func (r *router) Start() {
 			)
 
 			// Start the LetsEncrypt autocert manager HTTP server.
-			logrus.Infof("letsencrypt listening on %s", srv.Addr)
+			log.Infof("letsencrypt listening on %s", srv.Addr)
 			if err := srv.ListenAndServe(); err != nil &&
 				err != http.ErrServerClosed {
-				logrus.Fatalf("letsencrypt: listen: %s", err)
+				log.Fatalf("letsencrypt: listen: %s", err)
 			}
 		}()
 
@@ -112,16 +112,16 @@ func (r *router) Start() {
 	r.srv.Handler = debug.WithPprof(r.srv.Handler)
 	if debug.DEBUG() {
 		// Profiling requires timeouts longer than 30s, so reset these.
-		logrus.Warn("resetting http.Server{} timeout to support profiling")
+		log.Warn("resetting http.Server{} timeout to support profiling")
 		r.srv.ReadTimeout = 0
 		r.srv.WriteTimeout = 0
 	}
 
 	// Start the main listener.
 	go func() {
-		logrus.Infof("listening on %s", r.srv.Addr)
+		log.Infof("listening on %s", r.srv.Addr)
 		if err := listen(); err != nil && err != http.ErrServerClosed {
-			logrus.Fatalf("listen: %s", err)
+			log.Fatalf("listen: %s", err)
 		}
 	}()
 }

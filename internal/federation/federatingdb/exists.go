@@ -22,7 +22,8 @@ import (
 	"context"
 	"net/url"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // Exists returns true if the database has an entry for the specified
@@ -32,12 +33,9 @@ import (
 //
 // Implementation note: this just straight up isn't implemented, and doesn't *really* need to be either.
 func (f *federatingDB) Exists(c context.Context, id *url.URL) (exists bool, err error) {
-	l := logrus.WithFields(
-		logrus.Fields{
-			"func": "Exists",
-			"id":   id,
-		},
-	)
+	l := log.WithFields(kv.Fields{
+		{"id", id},
+	}...)
 	l.Debug("entering Exists")
 	return false, nil
 }

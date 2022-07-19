@@ -30,7 +30,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 type eTagCacheEntry struct {
@@ -119,7 +119,7 @@ func (m *Module) cacheControlMiddleware(fs http.FileSystem) gin.HandlerFunc {
 		// either fetch etag from ttlcache or generate it
 		eTag, err := m.getAssetETag(assetFilePath, fs)
 		if err != nil {
-			logrus.Errorf("error getting ETag for %s: %s", assetFilePath, err)
+			log.Errorf("error getting ETag for %s: %s", assetFilePath, err)
 			return
 		}
 

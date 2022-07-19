@@ -24,15 +24,36 @@ import (
 	"fmt"
 	"net/url"
 
+	"codeberg.org/gruf/go-kv"
+	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
 func (p *processor) ProcessFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+	// Allocate new log fields slice
+	fields := make([]kv.Field, 3, 4)
+	fields[0] = kv.Field{"activityType", clientMsg.APActivityType}
+	fields[1] = kv.Field{"objectType", clientMsg.APObjectType}
+	fields[2] = kv.Field{"fromAccount", clientMsg.OriginAccount.Username}
+
+	if clientMsg.GTSModel != nil &&
+		log.Level() >= level.DEBUG {
+		// Append converted model to log
+		fields = append(fields, kv.Field{
+			"model", clientMsg.GTSModel,
+		})
+	}
+
+	// Log this federated message
+	l := log.WithFields(fields...)
+	l.Info("processing from client")
+
 	switch clientMsg.APActivityType {
 	case ap.ActivityCreate:
 		// CREATE

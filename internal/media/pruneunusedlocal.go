@@ -23,9 +23,9 @@ import (
 	"fmt"
 
 	"codeberg.org/gruf/go-store/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 func (m *manager) PruneUnusedLocalAttachments(ctx context.Context) (int, error) {
@@ -38,14 +38,14 @@ func (m *manager) PruneUnusedLocalAttachments(ctx context.Context) (int, error) 
 	if err != nil {
 		return totalPruned, fmt.Errorf("PruneUnusedLocalAttachments: error parsing olderThanDays %d: %s", UnusedLocalAttachmentCacheDays, err)
 	}
-	logrus.Infof("PruneUnusedLocalAttachments: pruning unused local attachments older than %s", olderThan)
+	log.Infof("PruneUnusedLocalAttachments: pruning unused local attachments older than %s", olderThan)
 
 	// select 20 attachments at a time and prune them
 	for attachments, err = m.db.GetLocalUnattachedOlderThan(ctx, olderThan, maxID, selectPruneLimit); err == nil && len(attachments) != 0; attachments, err = m.db.GetLocalUnattachedOlderThan(ctx, olderThan, maxID, selectPruneLimit) {
 		// use the id of the last attachment in the slice as the next 'maxID' value
 		l := len(attachments)
 		maxID = attachments[l-1].ID
-		logrus.Tracef("PruneUnusedLocalAttachments: got %d unused local attachments older than %s with maxID < %s", l, olderThan, maxID)
+		log.Tracef("PruneUnusedLocalAttachments: got %d unused local attachments older than %s with maxID < %s", l, olderThan, maxID)
 
 		for _, attachment := range attachments {
 			if err := m.pruneOneLocal(ctx, attachment); err != nil {
@@ -60,14 +60,14 @@ func (m *manager) PruneUnusedLocalAttachments(ctx context.Context) (int, error) 
 		return totalPruned, err
 	}
 
-	logrus.Infof("PruneUnusedLocalAttachments: finished pruning: pruned %d entries", totalPruned)
+	log.Infof("PruneUnusedLocalAttachments: finished pruning: pruned %d entries", totalPruned)
 	return totalPruned, nil
 }
 
 func (m *manager) pruneOneLocal(ctx context.Context, attachment *gtsmodel.MediaAttachment) error {
 	if attachment.File.Path != "" {
 		// delete the full size attachment from storage
-		logrus.Tracef("pruneOneLocal: deleting %s", attachment.File.Path)
+		log.Tracef("pruneOneLocal: deleting %s", attachment.File.Path)
 		if err := m.storage.Delete(ctx, attachment.File.Path); err != nil && err != storage.ErrNotFound {
 			return err
 		}
@@ -75,7 +75,7 @@ func (m *manager) pruneOneLocal(ctx context.Context, attachment *gtsmodel.MediaA
 
 	if attachment.Thumbnail.Path != "" {
 		// delete the thumbnail from storage
-		logrus.Tracef("pruneOneLocal: deleting %s", attachment.Thumbnail.Path)
+		log.Tracef("pruneOneLocal: deleting %s", attachment.Thumbnail.Path)
 		if err := m.storage.Delete(ctx, attachment.Thumbnail.Path); err != nil && err != storage.ErrNotFound {
 			return err
 		}

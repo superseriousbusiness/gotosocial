@@ -85,6 +85,7 @@ func (suite *PruneMetaTestSuite) TestPruneMetaTwice() {
 	suite.NoError(err)
 	suite.Equal(0, totalPruned)
 }
+
 func (suite *PruneMetaTestSuite) TestPruneMetaMultipleAccounts() {
 	ctx := context.Background()
 

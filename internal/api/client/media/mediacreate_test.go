@@ -30,7 +30,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	mediamodule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -40,6 +39,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -100,7 +100,7 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 
 func (suite *MediaCreateTestSuite) TearDownSuite() {
 	if err := suite.db.Stop(context.Background()); err != nil {
-		logrus.Panicf("error closing db connection: %s", err)
+		log.Panicf("error closing db connection: %s", err)
 	}
 }
 

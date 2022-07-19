@@ -29,12 +29,12 @@ import (
 
 	"codeberg.org/gruf/go-byteutil"
 	"codeberg.org/gruf/go-cache/v2"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // Controller generates transports for use in making federation requests to other servers.
@@ -73,7 +73,7 @@ func NewController(db db.DB, federatingDB federatingdb.DB, clock pub.Clock, clie
 	// Transport cache has TTL=1hr freq=1m
 	c.cache.SetTTL(time.Hour, false)
 	if !c.cache.Start(time.Minute) {
-		logrus.Panic("failed to start transport controller cache")
+		log.Panic("failed to start transport controller cache")
 	}
 
 	return c

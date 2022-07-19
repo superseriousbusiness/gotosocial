@@ -33,9 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
-var (
-	ErrNotSupported = errors.New("driver does not suppport functionality")
-)
+var ErrNotSupported = errors.New("driver does not suppport functionality")
 
 // Driver implements the functionality to store and retrieve blobs
 // (images,video,audio)

@@ -24,10 +24,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -93,7 +93,7 @@ func (m *FileServer) ServeFile(c *gin.Context) {
 		// if the content is a ReadCloser, close it when we're done
 		if closer, ok := content.Content.(io.ReadCloser); ok {
 			if err := closer.Close(); err != nil {
-				logrus.Errorf("ServeFile: error closing readcloser: %s", err)
+				log.Errorf("ServeFile: error closing readcloser: %s", err)
 			}
 		}
 	}()

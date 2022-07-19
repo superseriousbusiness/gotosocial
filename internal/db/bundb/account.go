@@ -25,11 +25,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
 )
@@ -287,7 +287,7 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 					Where("? != '{}'", bun.Ident("attachments")).
 					Where("? != '[]'", bun.Ident("attachments"))
 			default:
-				logrus.Panic("db dialect was neither pg nor sqlite")
+				log.Panic("db dialect was neither pg nor sqlite")
 				return q
 			}
 		})
@@ -383,7 +383,7 @@ func (a *accountDB) statusesFromIDs(ctx context.Context, statusIDs []string) ([]
 		// Fetch from status from database by ID
 		status, err := a.status.GetStatusByID(ctx, id)
 		if err != nil {
-			logrus.Errorf("statusesFromIDs: error getting status %q: %v", id, err)
+			log.Errorf("statusesFromIDs: error getting status %q: %v", id, err)
 			continue
 		}
 

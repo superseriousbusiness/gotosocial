@@ -24,14 +24,15 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 func (t *timeline) IndexBefore(ctx context.Context, itemID string, amount int) error {
-	l := logrus.WithFields(logrus.Fields{
-		"func":   "IndexBefore",
-		"amount": amount,
-	})
+	l := log.WithFields(kv.Fields{
+
+		{"amount", amount},
+	}...)
 
 	// lazily initialize index if it hasn't been done already
 	if t.itemIndex.data == nil {
@@ -81,10 +82,10 @@ grabloop:
 }
 
 func (t *timeline) IndexBehind(ctx context.Context, itemID string, amount int) error {
-	l := logrus.WithFields(logrus.Fields{
-		"func":   "IndexBehind",
-		"amount": amount,
-	})
+	l := log.WithFields(kv.Fields{
+
+		{"amount", amount},
+	}...)
 
 	// lazily initialize index if it hasn't been done already
 	if t.itemIndex.data == nil {

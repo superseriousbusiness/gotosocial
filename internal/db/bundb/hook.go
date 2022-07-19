@@ -22,7 +22,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
+	"codeberg.org/gruf/go-logger/v2/level"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 )
 
@@ -38,21 +40,17 @@ func (queryHook) AfterQuery(_ context.Context, event *bun.QueryEvent) {
 	// Get the DB query duration
 	dur := time.Since(event.StartTime)
 
-	log := func(lvl logrus.Level, msg string) {
-		logrus.WithFields(logrus.Fields{
-			"duration":  dur,
-			"operation": event.Operation(),
-			"query":     event.Query,
-		}).Log(lvl, msg)
-	}
-
 	switch {
 	// Warn on slow database queries
 	case dur > time.Second:
-		log(logrus.WarnLevel, "SLOW DATABASE QUERY")
+		log.WithFields(kv.Fields{
+			{"duration", dur},
+			{"query", event.Query},
+		}...).Warn("SLOW DATABASE QUERY")
 
-	// On trace, we log query information
-	case logrus.GetLevel() == logrus.TraceLevel:
-		log(logrus.TraceLevel, "database query")
+	// On trace, we log query information,
+	// manually crafting so DB query not escaped.
+	case log.Level() >= level.TRACE:
+		log.Printf("level=TRACE duration=%s query=%s", dur, event.Query)
 	}
 }

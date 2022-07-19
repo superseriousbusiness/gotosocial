@@ -24,18 +24,19 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 func (t *timeline) prepareNextQuery(ctx context.Context, amount int, maxID string, sinceID string, minID string) error {
-	l := logrus.WithFields(logrus.Fields{
-		"func":    "prepareNextQuery",
-		"amount":  amount,
-		"maxID":   maxID,
-		"sinceID": sinceID,
-		"minID":   minID,
-	})
+	l := log.WithFields(kv.Fields{
+
+		{"amount", amount},
+		{"maxID", maxID},
+		{"sinceID", sinceID},
+		{"minID", minID},
+	}...)
 
 	var err error
 
@@ -169,10 +170,10 @@ prepareloop:
 }
 
 func (t *timeline) PrepareFromTop(ctx context.Context, amount int) error {
-	l := logrus.WithFields(logrus.Fields{
-		"func":   "PrepareFromTop",
-		"amount": amount,
-	})
+	l := log.WithFields(kv.Fields{
+
+		{"amount", amount},
+	}...)
 
 	// lazily initialize prepared posts if it hasn't been done already
 	if t.preparedItems.data == nil {

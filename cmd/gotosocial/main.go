@@ -19,10 +19,10 @@
 package main
 
 import (
+	"log"
 	"runtime/debug"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	_ "github.com/superseriousbusiness/gotosocial/docs"
@@ -66,7 +66,7 @@ func main() {
 
 	// run
 	if err := rootCmd.Execute(); err != nil {
-		logrus.Fatalf("error executing command: %s", err)
+		log.Fatalf("error executing command: %s", err)
 	}
 }
 

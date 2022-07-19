@@ -21,11 +21,10 @@ package bundb
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 )
 
@@ -118,7 +117,7 @@ func (i *instanceDB) GetInstancePeers(ctx context.Context, includeSuspended bool
 }
 
 func (i *instanceDB) GetInstanceAccounts(ctx context.Context, domain string, maxID string, limit int) ([]*gtsmodel.Account, db.Error) {
-	logrus.Debug("GetAccountsForInstance")
+	log.Debug("GetAccountsForInstance")
 
 	accounts := []*gtsmodel.Account{}
 

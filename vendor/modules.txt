@@ -31,6 +31,13 @@ codeberg.org/gruf/go-fastpath
 # codeberg.org/gruf/go-hashenc v1.0.2
 ## explicit; go 1.16
 codeberg.org/gruf/go-hashenc
+# codeberg.org/gruf/go-kv v1.3.2
+## explicit; go 1.16
+codeberg.org/gruf/go-kv
+codeberg.org/gruf/go-kv/format
+# codeberg.org/gruf/go-logger/v2 v2.0.6
+## explicit; go 1.16
+codeberg.org/gruf/go-logger/v2/level
 # codeberg.org/gruf/go-mutexes v1.1.2
 ## explicit; go 1.14
 codeberg.org/gruf/go-mutexes
@@ -309,7 +316,6 @@ github.com/russross/blackfriday/v2
 # github.com/sirupsen/logrus v1.8.1
 ## explicit; go 1.13
 github.com/sirupsen/logrus
-github.com/sirupsen/logrus/hooks/syslog
 # github.com/spf13/afero v1.8.2
 ## explicit; go 1.13
 github.com/spf13/afero

@@ -22,8 +22,8 @@ import (
 	"bytes"
 	"text/template"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // NewNoopSender returns a no-op email sender that will just execute the given sendCallback
@@ -61,7 +61,7 @@ func (s *noopSender) SendConfirmEmail(toAddress string, data ConfirmData) error 
 		return err
 	}
 
-	logrus.Tracef("NOT SENDING confirmation email to %s with contents: %s", toAddress, msg)
+	log.Tracef("NOT SENDING confirmation email to %s with contents: %s", toAddress, msg)
 
 	if s.sendCallback != nil {
 		s.sendCallback(toAddress, string(msg))
@@ -81,7 +81,7 @@ func (s *noopSender) SendResetEmail(toAddress string, data ResetData) error {
 		return err
 	}
 
-	logrus.Tracef("NOT SENDING reset email to %s with contents: %s", toAddress, msg)
+	log.Tracef("NOT SENDING reset email to %s with contents: %s", toAddress, msg)
 
 	if s.sendCallback != nil {
 		s.sendCallback(toAddress, string(msg))

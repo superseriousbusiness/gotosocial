@@ -31,11 +31,12 @@ import (
 	"time"
 
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
+	"codeberg.org/gruf/go-kv"
 	"github.com/go-fed/httpsig"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // Transport wraps the pub.Transport interface with some additional functionality for fetching remote media.
@@ -90,11 +91,11 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 	backoff := time.Second * 2
 
 	// Start a log entry for this request
-	l := logrus.WithFields(logrus.Fields{
-		"pubKeyID": t.pubKeyID,
-		"method":   r.Method,
-		"url":      r.URL.String(),
-	})
+	l := log.WithFields(kv.Fields{
+		{"pubKeyID", t.pubKeyID},
+		{"method", r.Method},
+		{"url", r.URL.String()},
+	}...)
 
 	for i := 0; i < maxRetries; i++ {
 		// Reset signing header fields

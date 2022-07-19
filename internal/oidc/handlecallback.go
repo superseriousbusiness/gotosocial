@@ -23,34 +23,33 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 func (i *idp) HandleCallback(ctx context.Context, code string) (*Claims, gtserror.WithCode) {
-	l := logrus.WithField("func", "HandleCallback")
 	if code == "" {
 		err := errors.New("code was empty string")
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
-	l.Debug("exchanging code for oauth2token")
+	log.Debug("exchanging code for oauth2token")
 	oauth2Token, err := i.oauth2Config.Exchange(ctx, code)
 	if err != nil {
 		err := fmt.Errorf("error exchanging code for oauth2token: %s", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	l.Debug("extracting id_token")
+	log.Debug("extracting id_token")
 	rawIDToken, ok := oauth2Token.Extra("id_token").(string)
 	if !ok {
 		err := errors.New("no id_token in oauth2token")
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
-	l.Debugf("raw id token: %s", rawIDToken)
+	log.Debugf("raw id token: %s", rawIDToken)
 
 	// Parse and verify ID Token payload.
-	l.Debug("verifying id_token")
+	log.Debug("verifying id_token")
 	idTokenVerifier := i.provider.Verifier(i.oidcConf)
 	idToken, err := idTokenVerifier.Verify(ctx, rawIDToken)
 	if err != nil {
@@ -58,7 +57,7 @@ func (i *idp) HandleCallback(ctx context.Context, code string) (*Claims, gtserro
 		return nil, gtserror.NewErrorUnauthorized(err, err.Error())
 	}
 
-	l.Debug("extracting claims from id_token")
+	log.Debug("extracting claims from id_token")
 	claims := &Claims{}
 	if err := idToken.Claims(claims); err != nil {
 		err := fmt.Errorf("could not parse claims from idToken: %s", err)

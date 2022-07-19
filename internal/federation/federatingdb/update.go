@@ -23,11 +23,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
@@ -41,13 +42,9 @@ import (
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
-	l := logrus.WithFields(
-		logrus.Fields{
-			"func": "Update",
-		},
-	)
+	l := log.Entry{}
 
-	if logrus.GetLevel() >= logrus.DebugLevel {
+	if log.Level() >= level.DEBUG {
 		i, err := marshalItem(asType)
 		if err != nil {
 			return err

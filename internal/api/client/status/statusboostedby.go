@@ -21,9 +21,10 @@ package status
 import (
 	"net/http"
 
+	"codeberg.org/gruf/go-kv"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -64,12 +65,12 @@ import (
 //   '404':
 //      description: not found
 func (m *Module) StatusBoostedByGETHandler(c *gin.Context) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":        "StatusBoostedByGETHandler",
-		"request_uri": c.Request.RequestURI,
-		"user_agent":  c.Request.UserAgent(),
-		"origin_ip":   c.ClientIP(),
-	})
+	l := log.WithFields(kv.Fields{
+
+		{"request_uri", c.Request.RequestURI},
+		{"user_agent", c.Request.UserAgent()},
+		{"origin_ip", c.ClientIP()},
+	}...)
 	l.Debugf("entering function")
 
 	authed, err := oauth.Authed(c, true, true, true, true) // we don't really need an app here but we want everything else

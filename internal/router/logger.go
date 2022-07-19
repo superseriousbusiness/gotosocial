@@ -21,19 +21,20 @@ package router
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"codeberg.org/gruf/go-bytesize"
 	"codeberg.org/gruf/go-errors/v2"
+	"codeberg.org/gruf/go-kv"
+	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // loggingMiddleware provides a request logging and panic recovery gin handler.
 func loggingMiddleware(c *gin.Context) {
 	// Initialize the logging fields
-	fields := make(logrus.Fields, 7)
+	fields := make(kv.Fields, 6, 7)
 
 	// Determine pre-handler time
 	before := time.Now()
@@ -49,11 +50,12 @@ func loggingMiddleware(c *gin.Context) {
 			}
 
 			// Append panic information to the request ctx
-			_ = c.Error(fmt.Errorf("recovered panic: %v", r))
+			err := fmt.Errorf("recovered panic: %v", r)
+			_ = c.Error(err)
 
-			// Dump a stacktrace to stderr
+			// Dump a stacktrace to error log
 			callers := errors.GetCallers(3, 10)
-			fmt.Fprintf(os.Stderr, "recovered panic: %v\n%s", r, callers)
+			log.WithField("stacktrace", callers).Error(err)
 		}
 
 		// NOTE:
@@ -63,32 +65,38 @@ func loggingMiddleware(c *gin.Context) {
 		// and could lead to storing plaintext API keys in logs
 
 		// Set request logging fields
-		fields["latency"] = time.Since(before)
-		fields["clientIP"] = c.ClientIP()
-		fields["userAgent"] = c.Request.UserAgent()
-		fields["method"] = c.Request.Method
-		fields["statusCode"] = code
-		fields["path"] = path
+		fields[0] = kv.Field{"latency", time.Since(before)}
+		fields[1] = kv.Field{"clientIP", c.ClientIP()}
+		fields[2] = kv.Field{"userAgent", c.Request.UserAgent()}
+		fields[3] = kv.Field{"method", c.Request.Method}
+		fields[4] = kv.Field{"statusCode", code}
+		fields[5] = kv.Field{"path", path}
 
-		// Create a log entry with fields
-		l := logrus.WithFields(fields)
-		l.Level = logrus.InfoLevel
+		var lvl level.LEVEL
+
+		// Default is info
+		lvl = level.INFO
 
 		if code >= 500 {
 			// This is a server error
-			l.Level = logrus.ErrorLevel
+			lvl = level.ERROR
 
 			if len(c.Errors) > 0 {
 				// Add an error string log field
-				fields["error"] = c.Errors.String()
+				fields = append(fields, kv.Field{
+					"error", c.Errors.String(),
+				})
 			}
 		}
 
 		// Generate a nicer looking bytecount
 		size := bytesize.Size(c.Writer.Size())
 
+		// Create log entry with fields
+		l := log.WithFields(fields...)
+
 		// Finally, write log entry with status text body size
-		l.Logf(l.Level, "%s: wrote %s", http.StatusText(code), size)
+		l.Logf(lvl, "%s: wrote %s", http.StatusText(code), size)
 	}()
 
 	// Process request

@@ -22,18 +22,19 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 func (f *filter) StatusVisible(ctx context.Context, targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account) (bool, error) {
 	const getBoosted = true
 
-	l := logrus.WithFields(logrus.Fields{
-		"func":     "StatusVisible",
-		"statusID": targetStatus.ID,
-	})
+	l := log.WithFields(kv.Fields{
+
+		{"statusID", targetStatus.ID},
+	}...)
 
 	// Fetch any relevant accounts for the target status
 	relevantAccounts, err := f.relevantAccounts(ctx, targetStatus, getBoosted)

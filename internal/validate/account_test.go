@@ -31,7 +31,6 @@ import (
 )
 
 func happyAccount() *gtsmodel.Account {
-
 	priv, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		panic(err)

@@ -22,9 +22,9 @@ import (
 	"context"
 
 	"codeberg.org/gruf/go-store/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 func (m *manager) PruneAllMeta(ctx context.Context) (int, error) {
@@ -37,7 +37,7 @@ func (m *manager) PruneAllMeta(ctx context.Context) (int, error) {
 	for attachments, err = m.db.GetAvatarsAndHeaders(ctx, maxID, selectPruneLimit); err == nil && len(attachments) != 0; attachments, err = m.db.GetAvatarsAndHeaders(ctx, maxID, selectPruneLimit) {
 		// use the id of the last attachment in the slice as the next 'maxID' value
 		l := len(attachments)
-		logrus.Tracef("PruneAllMeta: got %d attachments with maxID < %s", l, maxID)
+		log.Tracef("PruneAllMeta: got %d attachments with maxID < %s", l, maxID)
 		maxID = attachments[l-1].ID
 
 		// prune each attachment that meets one of the following criteria:
@@ -61,14 +61,14 @@ func (m *manager) PruneAllMeta(ctx context.Context) (int, error) {
 		return totalPruned, err
 	}
 
-	logrus.Infof("PruneAllMeta: finished pruning avatars + headers: pruned %d entries", totalPruned)
+	log.Infof("PruneAllMeta: finished pruning avatars + headers: pruned %d entries", totalPruned)
 	return totalPruned, nil
 }
 
 func (m *manager) pruneOneAvatarOrHeader(ctx context.Context, attachment *gtsmodel.MediaAttachment) error {
 	if attachment.File.Path != "" {
 		// delete the full size attachment from storage
-		logrus.Tracef("pruneOneAvatarOrHeader: deleting %s", attachment.File.Path)
+		log.Tracef("pruneOneAvatarOrHeader: deleting %s", attachment.File.Path)
 		if err := m.storage.Delete(ctx, attachment.File.Path); err != nil && err != storage.ErrNotFound {
 			return err
 		}
@@ -76,7 +76,7 @@ func (m *manager) pruneOneAvatarOrHeader(ctx context.Context, attachment *gtsmod
 
 	if attachment.Thumbnail.Path != "" {
 		// delete the thumbnail from storage
-		logrus.Tracef("pruneOneAvatarOrHeader: deleting %s", attachment.Thumbnail.Path)
+		log.Tracef("pruneOneAvatarOrHeader: deleting %s", attachment.Thumbnail.Path)
 		if err := m.storage.Delete(ctx, attachment.Thumbnail.Path); err != nil && err != storage.ErrNotFound {
 			return err
 		}

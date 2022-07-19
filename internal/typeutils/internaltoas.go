@@ -25,13 +25,13 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // const (
@@ -219,7 +219,7 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 			if err == nil {
 				a.AvatarMediaAttachment = avatar
 			} else {
-				logrus.Errorf("AccountToAS: error getting Avatar with id %s: %s", a.AvatarMediaAttachmentID, err)
+				log.Errorf("AccountToAS: error getting Avatar with id %s: %s", a.AvatarMediaAttachmentID, err)
 			}
 		}
 
@@ -253,7 +253,7 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 			if err == nil {
 				a.HeaderMediaAttachment = header
 			} else {
-				logrus.Errorf("AccountToAS: error getting Header with id %s: %s", a.HeaderMediaAttachmentID, err)
+				log.Errorf("AccountToAS: error getting Header with id %s: %s", a.HeaderMediaAttachmentID, err)
 			}
 		}
 

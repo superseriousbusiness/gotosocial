@@ -24,7 +24,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/sirupsen/logrus"
+	"codeberg.org/gruf/go-kv"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 const (
@@ -98,11 +99,11 @@ type manager struct {
 }
 
 func (m *manager) Ingest(ctx context.Context, item Timelineable, timelineAccountID string) (bool, error) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":              "Ingest",
-		"timelineAccountID": timelineAccountID,
-		"itemID":            item.GetID(),
-	})
+	l := log.WithFields(kv.Fields{
+
+		{"timelineAccountID", timelineAccountID},
+		{"itemID", item.GetID()},
+	}...)
 
 	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
 	if err != nil {
@@ -114,11 +115,11 @@ func (m *manager) Ingest(ctx context.Context, item Timelineable, timelineAccount
 }
 
 func (m *manager) IngestAndPrepare(ctx context.Context, item Timelineable, timelineAccountID string) (bool, error) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":              "IngestAndPrepare",
-		"timelineAccountID": timelineAccountID,
-		"itemID":            item.GetID(),
-	})
+	l := log.WithFields(kv.Fields{
+
+		{"timelineAccountID", timelineAccountID},
+		{"itemID", item.GetID()},
+	}...)
 
 	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
 	if err != nil {
@@ -130,11 +131,11 @@ func (m *manager) IngestAndPrepare(ctx context.Context, item Timelineable, timel
 }
 
 func (m *manager) Remove(ctx context.Context, timelineAccountID string, itemID string) (int, error) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":              "Remove",
-		"timelineAccountID": timelineAccountID,
-		"itemID":            itemID,
-	})
+	l := log.WithFields(kv.Fields{
+
+		{"timelineAccountID", timelineAccountID},
+		{"itemID", itemID},
+	}...)
 
 	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
 	if err != nil {
@@ -146,10 +147,10 @@ func (m *manager) Remove(ctx context.Context, timelineAccountID string, itemID s
 }
 
 func (m *manager) GetTimeline(ctx context.Context, timelineAccountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]Preparable, error) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":              "GetTimeline",
-		"timelineAccountID": timelineAccountID,
-	})
+	l := log.WithFields(kv.Fields{
+
+		{"timelineAccountID", timelineAccountID},
+	}...)
 
 	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
 	if err != nil {
