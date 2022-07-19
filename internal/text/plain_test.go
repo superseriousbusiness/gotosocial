@@ -20,27 +20,21 @@ package text_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 const (
-	simple         = "this is a plain and simple status"
-	simpleExpected = "<p>this is a plain and simple status</p>"
-
-	withTag         = "here's a simple status that uses hashtag #welcome!"
-	withTagExpected = "<p>here's a simple status that uses hashtag <a href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>welcome</span></a>!</p>"
-
-	moreComplex = `Another test @foss_satan@fossbros-anonymous.io
-
-#Hashtag
-
-Text`
-	moreComplexFull = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br><br><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a><br><br>Text</p>"
+	simple           = "this is a plain and simple status"
+	simpleExpected   = "<p>this is a plain and simple status</p>"
+	withTag          = "here's a simple status that uses hashtag #welcome!"
+	withTagExpected  = "<p>here&#39;s a simple status that uses hashtag <a href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>welcome</span></a>!</p>"
+	withHTML         = "<div>blah this should just be html escaped blah</div>"
+	withHTMLExpected = "<p>&lt;div&gt;blah this should just be html escaped blah&lt;/div&gt;</p>"
+	moreComplex      = "Another test @foss_satan@fossbros-anonymous.io\n\n#Hashtag\n\nText"
+	moreComplexFull  = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br/><br/><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a><br/><br/>Text</p>"
 )
 
 type PlainTestSuite struct {
@@ -49,7 +43,7 @@ type PlainTestSuite struct {
 
 func (suite *PlainTestSuite) TestParseSimple() {
 	f := suite.formatter.FromPlain(context.Background(), simple, nil, nil)
-	assert.Equal(suite.T(), simpleExpected, f)
+	suite.Equal(simpleExpected, f)
 }
 
 func (suite *PlainTestSuite) TestParseWithTag() {
@@ -58,7 +52,12 @@ func (suite *PlainTestSuite) TestParseWithTag() {
 	}
 
 	f := suite.formatter.FromPlain(context.Background(), withTag, nil, foundTags)
-	assert.Equal(suite.T(), withTagExpected, f)
+	suite.Equal(withTagExpected, f)
+}
+
+func (suite *PlainTestSuite) TestParseWithHTML() {
+	f := suite.formatter.FromPlain(context.Background(), withHTML, nil, nil)
+	suite.Equal(withHTMLExpected, f)
 }
 
 func (suite *PlainTestSuite) TestParseMoreComplex() {
@@ -71,10 +70,7 @@ func (suite *PlainTestSuite) TestParseMoreComplex() {
 	}
 
 	f := suite.formatter.FromPlain(context.Background(), moreComplex, foundMentions, foundTags)
-
-	fmt.Println(f)
-
-	assert.Equal(suite.T(), moreComplexFull, f)
+	suite.Equal(moreComplexFull, f)
 }
 
 func TestPlainTestSuite(t *testing.T) {
