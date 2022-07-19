@@ -19,7 +19,9 @@
 package text
 
 import (
+	"html"
 	"regexp"
+	"strings"
 
 	"github.com/microcosm-cc/bluemonday"
 )
@@ -59,7 +61,8 @@ func SanitizeHTML(in string) string {
 // SanitizePlaintext runs text through basic sanitization. This removes
 // any html elements that were in the string, and returns clean plaintext.
 func SanitizePlaintext(in string) string {
-	content := preformat(in)
+	content := html.UnescapeString(in)
 	content = removeHTML(content)
-	return postformat(content)
+	content = html.UnescapeString(content)
+	return strings.TrimSpace(content)
 }

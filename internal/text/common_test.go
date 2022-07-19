@@ -28,44 +28,14 @@ import (
 )
 
 const (
-	replaceMentionsString = `Another test @foss_satan@fossbros-anonymous.io
-
-#Hashtag
-
-Text`
-	replaceMentionsExpected = `Another test <span class="h-card"><a href="http://fossbros-anonymous.io/@foss_satan" class="u-url mention">@<span>foss_satan</span></a></span>
-
-#Hashtag
-
-Text`
-
-	replaceHashtagsExpected = `Another test @foss_satan@fossbros-anonymous.io
-
-<a href="http://localhost:8080/tags/Hashtag" class="mention hashtag" rel="tag">#<span>Hashtag</span></a>
-
-Text`
-
-	replaceHashtagsAfterMentionsExpected = `Another test <span class="h-card"><a href="http://fossbros-anonymous.io/@foss_satan" class="u-url mention">@<span>foss_satan</span></a></span>
-
-<a href="http://localhost:8080/tags/Hashtag" class="mention hashtag" rel="tag">#<span>Hashtag</span></a>
-
-Text`
-
-	replaceMentionsWithLinkString = `Another test @foss_satan@fossbros-anonymous.io
-
-http://fossbros-anonymous.io/@foss_satan/statuses/6675ee73-fccc-4562-a46a-3e8cd9798060`
-
-	replaceMentionsWithLinkStringExpected = `Another test <span class="h-card"><a href="http://fossbros-anonymous.io/@foss_satan" class="u-url mention">@<span>foss_satan</span></a></span>
-
-http://fossbros-anonymous.io/@foss_satan/statuses/6675ee73-fccc-4562-a46a-3e8cd9798060`
-
-	replaceMentionsWithLinkSelfString = `Mentioning myself: @the_mighty_zork
-
-and linking to my own status: https://localhost:8080/@the_mighty_zork/statuses/01FGXKJRX2PMERJQ9EQF8Y6HCR`
-
-	replaceMemtionsWithLinkSelfExpected = `Mentioning myself: <span class="h-card"><a href="http://localhost:8080/@the_mighty_zork" class="u-url mention">@<span>the_mighty_zork</span></a></span>
-
-and linking to my own status: https://localhost:8080/@the_mighty_zork/statuses/01FGXKJRX2PMERJQ9EQF8Y6HCR`
+	replaceMentionsString                 = "Another test @foss_satan@fossbros-anonymous.io\n\n#Hashtag\n\nText"
+	replaceMentionsExpected               = "Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\">@<span>foss_satan</span></a></span>\n\n#Hashtag\n\nText"
+	replaceHashtagsExpected               = "Another test @foss_satan@fossbros-anonymous.io\n\n<a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag\">#<span>Hashtag</span></a>\n\nText"
+	replaceHashtagsAfterMentionsExpected  = "Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\">@<span>foss_satan</span></a></span>\n\n<a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag\">#<span>Hashtag</span></a>\n\nText"
+	replaceMentionsWithLinkString         = "Another test @foss_satan@fossbros-anonymous.io\n\nhttp://fossbros-anonymous.io/@foss_satan/statuses/6675ee73-fccc-4562-a46a-3e8cd9798060"
+	replaceMentionsWithLinkStringExpected = "Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\">@<span>foss_satan</span></a></span>\n\nhttp://fossbros-anonymous.io/@foss_satan/statuses/6675ee73-fccc-4562-a46a-3e8cd9798060"
+	replaceMentionsWithLinkSelfString     = "Mentioning myself: @the_mighty_zork\n\nand linking to my own status: https://localhost:8080/@the_mighty_zork/statuses/01FGXKJRX2PMERJQ9EQF8Y6HCR"
+	replaceMemtionsWithLinkSelfExpected   = "Mentioning myself: <span class=\"h-card\"><a href=\"http://localhost:8080/@the_mighty_zork\" class=\"u-url mention\">@<span>the_mighty_zork</span></a></span>\n\nand linking to my own status: https://localhost:8080/@the_mighty_zork/statuses/01FGXKJRX2PMERJQ9EQF8Y6HCR"
 )
 
 type CommonTestSuite struct {

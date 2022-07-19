@@ -21,7 +21,6 @@ package text
 import (
 	"bytes"
 	"context"
-	"html"
 	"strings"
 	"unicode"
 
@@ -29,38 +28,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 )
-
-// preformat contains some common logic for making a string ready for formatting, which should be used for all user-input text.
-func preformat(in string) string {
-	// do some preformatting of the text
-
-	// 1. unescape everything that might be html escaped
-	s := html.UnescapeString(in)
-
-	// 2. trim leading or trailing whitespace
-	s = strings.TrimSpace(s)
-	return s
-}
-
-// postformat contains some common logic for html sanitization of text, wrapping elements, and trimming newlines and whitespace
-func postformat(in string) string {
-	// do some postformatting of the text
-
-	// 1. sanitize html to remove potentially dangerous elements
-	s := SanitizeHTML(in)
-
-	// 2. the sanitize step tends to escape characters inside codeblocks, which is behavior we don't want, so unescape everything again
-	s = html.UnescapeString(s)
-
-	// 3. minify html to remove any trailing newlines, spaces, unnecessary elements, etc etc
-	mini, err := MinifyHTML(s)
-	if err != nil {
-		// if the minify failed, just return what we have
-		return s
-	}
-	// return minified version of the html
-	return mini
-}
 
 func (f *formatter) ReplaceTags(ctx context.Context, in string, tags []*gtsmodel.Tag) string {
 	return regexes.ReplaceAllStringFunc(regexes.HashtagFinder, in, func(match string, buf *bytes.Buffer) string {

@@ -71,16 +71,16 @@ type LinkTestSuite struct {
 
 func (suite *LinkTestSuite) TestParseSimple() {
 	f := suite.formatter.FromPlain(context.Background(), simple, nil, nil)
-	assert.Equal(suite.T(), simpleExpected, f)
+	suite.Equal(simpleExpected, f)
 }
 
 func (suite *LinkTestSuite) TestParseURLsFromText1() {
 	urls := text.FindLinks(text1)
 
-	assert.Equal(suite.T(), "https://example.org/link/to/something#fragment", urls[0].String())
-	assert.Equal(suite.T(), "http://test.example.org?q=bahhhhhhhhhhhh", urls[1].String())
-	assert.Equal(suite.T(), "https://another.link.example.org/with/a/pretty/long/path/at/the/end/of/it", urls[2].String())
-	assert.Equal(suite.T(), "https://example.orghttps://google.com", urls[3].String())
+	suite.Equal("https://example.org/link/to/something#fragment", urls[0].String())
+	suite.Equal("http://test.example.org?q=bahhhhhhhhhhhh", urls[1].String())
+	suite.Equal("https://another.link.example.org/with/a/pretty/long/path/at/the/end/of/it", urls[2].String())
+	suite.Equal("https://example.orghttps://google.com", urls[3].String())
 }
 
 func (suite *LinkTestSuite) TestParseURLsFromText2() {
@@ -99,7 +99,7 @@ func (suite *LinkTestSuite) TestParseURLsFromText3() {
 
 func (suite *LinkTestSuite) TestReplaceLinksFromText1() {
 	replaced := suite.formatter.ReplaceLinks(context.Background(), text1)
-	assert.Equal(suite.T(), `
+	suite.Equal(`
 This is a text with some links in it. Here's link number one: <a href="https://example.org/link/to/something#fragment" rel="noopener">example.org/link/to/something#fragment</a>
 
 Here's link number two: <a href="http://test.example.org?q=bahhhhhhhhhhhh" rel="noopener">test.example.org?q=bahhhhhhhhhhhh</a>
@@ -114,7 +114,7 @@ really.cool.website <-- this one shouldn't be parsed as a link because it doesn'
 
 func (suite *LinkTestSuite) TestReplaceLinksFromText2() {
 	replaced := suite.formatter.ReplaceLinks(context.Background(), text2)
-	assert.Equal(suite.T(), `
+	suite.Equal(`
 this is one link: <a href="https://example.org" rel="noopener">example.org</a>
 
 this is the same link again: <a href="https://example.org" rel="noopener">example.org</a>
@@ -126,14 +126,14 @@ these should be deduplicated
 func (suite *LinkTestSuite) TestReplaceLinksFromText3() {
 	// we know mailto links won't be replaced with hrefs -- we only accept https and http
 	replaced := suite.formatter.ReplaceLinks(context.Background(), text3)
-	assert.Equal(suite.T(), `
+	suite.Equal(`
 here's a mailto link: mailto:whatever@test.org
 `, replaced)
 }
 
 func (suite *LinkTestSuite) TestReplaceLinksFromText4() {
 	replaced := suite.formatter.ReplaceLinks(context.Background(), text4)
-	assert.Equal(suite.T(), `
+	suite.Equal(`
 two similar links:
 
 <a href="https://example.org" rel="noopener">example.org</a>
@@ -145,7 +145,7 @@ two similar links:
 func (suite *LinkTestSuite) TestReplaceLinksFromText5() {
 	// we know this one doesn't work properly, which is why html should always be sanitized before being passed into the ReplaceLinks function
 	replaced := suite.formatter.ReplaceLinks(context.Background(), text5)
-	assert.Equal(suite.T(), `
+	suite.Equal(`
 what happens when we already have a link within an href?
 
 <a href="<a href="https://example.org" rel="noopener">example.org</a>"><a href="https://example.org" rel="noopener">example.org</a></a>
