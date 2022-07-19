@@ -23,30 +23,19 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-const statusText1 = `Another test @foss_satan@fossbros-anonymous.io
-
-#Hashtag
-
-Text`
-
 const (
-	statusText1ExpectedFull    = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br><br><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a><br><br>Text</p>"
-	statusText1ExpectedPartial = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br><br>#Hashtag<br><br>Text</p>"
+	statusText1                = "Another test @foss_satan@fossbros-anonymous.io\n\n#Hashtag\n\nText"
+	statusText1ExpectedFull    = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br/><br/><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a><br/><br/>Text</p>"
+	statusText1ExpectedPartial = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br/><br/>#Hashtag<br/><br/>Text</p>"
+	statusText2                = "Another test @foss_satan@fossbros-anonymous.io\n\n#Hashtag\n\n#hashTAG"
+	status2TextExpectedFull    = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br/><br/><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a><br/><br/><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashTAG</span></a></p>"
+	status2TextExpectedPartial = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br/><br/>#Hashtag<br/><br/>#hashTAG</p>"
 )
-
-const statusText2 = `Another test @foss_satan@fossbros-anonymous.io
-
-#Hashtag
-
-#hashTAG`
-
-const status2TextExpectedFull = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br><br><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a><br><br><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashTAG</span></a></p>"
 
 type UtilTestSuite struct {
 	StatusStandardTestSuite
@@ -82,21 +71,21 @@ func (suite *UtilTestSuite) TestProcessMentions1() {
 	}
 
 	err := suite.status.ProcessMentions(context.Background(), form, creatingAccount.ID, status)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
-	assert.Len(suite.T(), status.Mentions, 1)
+	suite.Len(status.Mentions, 1)
 	newMention := status.Mentions[0]
-	assert.Equal(suite.T(), mentionedAccount.ID, newMention.TargetAccountID)
-	assert.Equal(suite.T(), creatingAccount.ID, newMention.OriginAccountID)
-	assert.Equal(suite.T(), creatingAccount.URI, newMention.OriginAccountURI)
-	assert.Equal(suite.T(), status.ID, newMention.StatusID)
-	assert.Equal(suite.T(), fmt.Sprintf("@%s@%s", mentionedAccount.Username, mentionedAccount.Domain), newMention.NameString)
-	assert.Equal(suite.T(), mentionedAccount.URI, newMention.TargetAccountURI)
-	assert.Equal(suite.T(), mentionedAccount.URL, newMention.TargetAccountURL)
-	assert.NotNil(suite.T(), newMention.OriginAccount)
+	suite.Equal(mentionedAccount.ID, newMention.TargetAccountID)
+	suite.Equal(creatingAccount.ID, newMention.OriginAccountID)
+	suite.Equal(creatingAccount.URI, newMention.OriginAccountURI)
+	suite.Equal(status.ID, newMention.StatusID)
+	suite.Equal(fmt.Sprintf("@%s@%s", mentionedAccount.Username, mentionedAccount.Domain), newMention.NameString)
+	suite.Equal(mentionedAccount.URI, newMention.TargetAccountURI)
+	suite.Equal(mentionedAccount.URL, newMention.TargetAccountURL)
+	suite.NotNil(newMention.OriginAccount)
 
-	assert.Len(suite.T(), status.MentionIDs, 1)
-	assert.Equal(suite.T(), newMention.ID, status.MentionIDs[0])
+	suite.Len(status.MentionIDs, 1)
+	suite.Equal(newMention.ID, status.MentionIDs[0])
 }
 
 func (suite *UtilTestSuite) TestProcessContentFull1() {
@@ -131,20 +120,20 @@ func (suite *UtilTestSuite) TestProcessContentFull1() {
 	}
 
 	err := suite.status.ProcessMentions(context.Background(), form, creatingAccount.ID, status)
-	assert.NoError(suite.T(), err)
-	assert.Empty(suite.T(), status.Content) // shouldn't be set yet
+	suite.NoError(err)
+	suite.Empty(status.Content) // shouldn't be set yet
 
 	err = suite.status.ProcessTags(context.Background(), form, creatingAccount.ID, status)
-	assert.NoError(suite.T(), err)
-	assert.Empty(suite.T(), status.Content) // shouldn't be set yet
+	suite.NoError(err)
+	suite.Empty(status.Content) // shouldn't be set yet
 
 	/*
 		ACTUAL TEST
 	*/
 
 	err = suite.status.ProcessContent(context.Background(), form, creatingAccount.ID, status)
-	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), statusText1ExpectedFull, status.Content)
+	suite.NoError(err)
+	suite.Equal(statusText1ExpectedFull, status.Content)
 }
 
 func (suite *UtilTestSuite) TestProcessContentPartial1() {
@@ -179,16 +168,16 @@ func (suite *UtilTestSuite) TestProcessContentPartial1() {
 	}
 
 	err := suite.status.ProcessMentions(context.Background(), form, creatingAccount.ID, status)
-	assert.NoError(suite.T(), err)
-	assert.Empty(suite.T(), status.Content) // shouldn't be set yet
+	suite.NoError(err)
+	suite.Empty(status.Content) // shouldn't be set yet
 
 	/*
 		ACTUAL TEST
 	*/
 
 	err = suite.status.ProcessContent(context.Background(), form, creatingAccount.ID, status)
-	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), statusText1ExpectedPartial, status.Content)
+	suite.NoError(err)
+	suite.Equal(statusText1ExpectedPartial, status.Content)
 }
 
 func (suite *UtilTestSuite) TestProcessMentions2() {
@@ -221,21 +210,21 @@ func (suite *UtilTestSuite) TestProcessMentions2() {
 	}
 
 	err := suite.status.ProcessMentions(context.Background(), form, creatingAccount.ID, status)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
-	assert.Len(suite.T(), status.Mentions, 1)
+	suite.Len(status.Mentions, 1)
 	newMention := status.Mentions[0]
-	assert.Equal(suite.T(), mentionedAccount.ID, newMention.TargetAccountID)
-	assert.Equal(suite.T(), creatingAccount.ID, newMention.OriginAccountID)
-	assert.Equal(suite.T(), creatingAccount.URI, newMention.OriginAccountURI)
-	assert.Equal(suite.T(), status.ID, newMention.StatusID)
-	assert.Equal(suite.T(), fmt.Sprintf("@%s@%s", mentionedAccount.Username, mentionedAccount.Domain), newMention.NameString)
-	assert.Equal(suite.T(), mentionedAccount.URI, newMention.TargetAccountURI)
-	assert.Equal(suite.T(), mentionedAccount.URL, newMention.TargetAccountURL)
-	assert.NotNil(suite.T(), newMention.OriginAccount)
+	suite.Equal(mentionedAccount.ID, newMention.TargetAccountID)
+	suite.Equal(creatingAccount.ID, newMention.OriginAccountID)
+	suite.Equal(creatingAccount.URI, newMention.OriginAccountURI)
+	suite.Equal(status.ID, newMention.StatusID)
+	suite.Equal(fmt.Sprintf("@%s@%s", mentionedAccount.Username, mentionedAccount.Domain), newMention.NameString)
+	suite.Equal(mentionedAccount.URI, newMention.TargetAccountURI)
+	suite.Equal(mentionedAccount.URL, newMention.TargetAccountURL)
+	suite.NotNil(newMention.OriginAccount)
 
-	assert.Len(suite.T(), status.MentionIDs, 1)
-	assert.Equal(suite.T(), newMention.ID, status.MentionIDs[0])
+	suite.Len(status.MentionIDs, 1)
+	suite.Equal(newMention.ID, status.MentionIDs[0])
 }
 
 func (suite *UtilTestSuite) TestProcessContentFull2() {
@@ -270,21 +259,21 @@ func (suite *UtilTestSuite) TestProcessContentFull2() {
 	}
 
 	err := suite.status.ProcessMentions(context.Background(), form, creatingAccount.ID, status)
-	assert.NoError(suite.T(), err)
-	assert.Empty(suite.T(), status.Content) // shouldn't be set yet
+	suite.NoError(err)
+	suite.Empty(status.Content) // shouldn't be set yet
 
 	err = suite.status.ProcessTags(context.Background(), form, creatingAccount.ID, status)
-	assert.NoError(suite.T(), err)
-	assert.Empty(suite.T(), status.Content) // shouldn't be set yet
+	suite.NoError(err)
+	suite.Empty(status.Content) // shouldn't be set yet
 
 	/*
 		ACTUAL TEST
 	*/
 
 	err = suite.status.ProcessContent(context.Background(), form, creatingAccount.ID, status)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
-	assert.Equal(suite.T(), status2TextExpectedFull, status.Content)
+	suite.Equal(status2TextExpectedFull, status.Content)
 }
 
 func (suite *UtilTestSuite) TestProcessContentPartial2() {
@@ -319,18 +308,13 @@ func (suite *UtilTestSuite) TestProcessContentPartial2() {
 	}
 
 	err := suite.status.ProcessMentions(context.Background(), form, creatingAccount.ID, status)
-	assert.NoError(suite.T(), err)
-	assert.Empty(suite.T(), status.Content) // shouldn't be set yet
-
-	/*
-		ACTUAL TEST
-	*/
+	suite.NoError(err)
+	suite.Empty(status.Content)
 
 	err = suite.status.ProcessContent(context.Background(), form, creatingAccount.ID, status)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
-	fmt.Println(status.Content)
-	// assert.Equal(suite.T(), statusText2ExpectedPartial, status.Content)
+	suite.Equal(status2TextExpectedPartial, status.Content)
 }
 
 func TestUtilTestSuite(t *testing.T) {
