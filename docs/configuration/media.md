@@ -11,13 +11,13 @@
 
 # Int. Maximum allowed image upload size in bytes.
 # Examples: [2097152, 10485760]
-# Default: 2097152 -- aka 2MB
-media-image-max-size: 2097152
+# Default: 10485760 -- aka 10MB
+media-image-max-size: 10485760
 
 # Int. Maximum allowed video upload size in bytes.
 # Examples: [2097152, 10485760]
-# Default: 10485760 -- aka 10MB
-media-video-max-size: 10485760
+# Default: 41943040 -- aka 40MB
+media-video-max-size: 41943040
 
 # Int. Minimum amount of characters required as an image or video description.
 # Examples: [500, 1000, 1500]
