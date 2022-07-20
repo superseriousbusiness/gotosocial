@@ -74,11 +74,23 @@ Thanks to everyone who has used GtS, opened an issue, suggested something, given
 
 ## Sponsorship + Funding
 
-Currently, this project is funded using Liberapay, to put bread on the table while work continues on it.
+### OpenCollective
 
-If you want to sponsor this project, you can do so [here](https://liberapay.com/GoToSocial/)! `<3`
+![open collective Standard Sloth badge](https://opencollective.com/gotosocial/tiers/standard-sloth/badge.svg?label=Standard%20Sloth&color=brightgreen) ![open collective Stable Sloth badge](https://opencollective.com/gotosocial/tiers/stable-sloth/badge.svg?label=Stable%20Sloth&color=green) ![open collective Special Sloth badge](https://opencollective.com/gotosocial/tiers/special-sloth/badge.svg?label=Special%20Sloth&color=yellowgreen) ![open collective Sugar Sloth badge](https://opencollective.com/gotosocial/tiers/sugar-sloth/badge.svg?label=Sugar%20Sloth&color=blue)
 
-**GoToSocial has NO CORPORATE SPONSORS and does not desire corporate sponsorship.**
+Currently, work on GoToSocial is funded through donations to our [OpenCollective](https://opencollective.com/) page.
+
+If you would like to donate to GoToSocial to keep the lights on during development, [you can do so here](https://opencollective.com/gotosocial)! 💕 🦥 💕 Thank you!
+
+### LiberaPay
+
+![LiberaPay patrons](https://img.shields.io/liberapay/patrons/GoToSocial.svg?logo=liberapay) ![receives via LiberaPay](https://img.shields.io/liberapay/receives/GoToSocial.svg?logo=liberapay)
+
+If you prefer, we also have an account on LiberaPay! You can find that [right here](https://liberapay.com/GoToSocial/).
+
+### Provisos
+
+**Please note: GoToSocial has NO CORPORATE SPONSORS and does not desire corporate sponsorship. In addition, we do not take donations from any of the following: adult websites, affiliate and review websites, casinos and gambling, insurance and financial products (credit), pharmacy products, SEO services and social media buying, VPN and proxy services, and essay writing services. Donations from such sources will be automatically rejected.**
 
 ## License
 
