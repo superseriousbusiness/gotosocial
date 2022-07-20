@@ -63,8 +63,8 @@ var TestDefaults = config.Configuration{
 	AccountsApprovalRequired: true,
 	AccountsReasonRequired:   true,
 
-	MediaImageMaxSize:        1048576, // 1mb
-	MediaVideoMaxSize:        5242880, // 5mb
+	MediaImageMaxSize:        10485760, // 10mb
+	MediaVideoMaxSize:        41943040, // 40mb
 	MediaDescriptionMinChars: 0,
 	MediaDescriptionMaxChars: 500,
 	MediaRemoteCacheDays:     30,

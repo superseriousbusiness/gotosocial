@@ -53,8 +53,8 @@ var Defaults = Configuration{
 	AccountsApprovalRequired: true,
 	AccountsReasonRequired:   true,
 
-	MediaImageMaxSize:        2097152,  // 2mb
-	MediaVideoMaxSize:        10485760, // 10mb
+	MediaImageMaxSize:        10485760, // 10mb
+	MediaVideoMaxSize:        41943040, // 40mb
 	MediaDescriptionMinChars: 0,
 	MediaDescriptionMaxChars: 500,
 	MediaRemoteCacheDays:     30,
