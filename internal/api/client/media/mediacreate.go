@@ -124,6 +124,15 @@ func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
+	if apiVersion == "v2" {
+		// the mastodon v2 media API specifies that the URL should be null
+		// and that the client should call /api/v1/media/:id to get the URL
+		//
+		// so even though we have the URL already, remove it now to comply
+		// with the api
+		apiAttachment.URL = nil
+	}
+
 	c.JSON(http.StatusOK, apiAttachment)
 }
 
