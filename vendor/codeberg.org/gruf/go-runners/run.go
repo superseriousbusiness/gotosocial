@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
+
+	"codeberg.org/gruf/go-atomics"
 )
 
 // FuncRunner provides a means of managing long-running functions e.g. main logic loops.
@@ -17,9 +18,8 @@ type FuncRunner struct {
 	// provided function. This can be used both for logging, and for error filtering
 	ErrorHandler func(err error) error
 
-	svc Service    // underlying service to manage start/stop
-	err error      // last-set error
-	mu  sync.Mutex // protects err
+	svc Service // underlying service to manage start/stop
+	err atomics.Error
 }
 
 // Go will attempt to run 'fn' asynchronously. The provided context is used to propagate requested
@@ -28,22 +28,20 @@ type FuncRunner struct {
 // time before considering the function as handed off. Returned bool is success state, i.e. returns true
 // if function is successfully handed off or returns within hand off time with nil error.
 func (r *FuncRunner) Go(fn func(ctx context.Context) error) bool {
+	var has bool
+
 	done := make(chan struct{})
 
 	go func() {
 		var cancelled bool
 
-		has := r.svc.Run(func(ctx context.Context) {
+		has = r.svc.Run(func(ctx context.Context) {
 			// reset error
-			r.mu.Lock()
-			r.err = nil
-			r.mu.Unlock()
+			r.err.Store(nil)
 
 			// Run supplied func and set errror if returned
 			if err := Run(func() error { return fn(ctx) }); err != nil {
-				r.mu.Lock()
-				r.err = err
-				r.mu.Unlock()
+				r.err.Store(err)
 			}
 
 			// signal done
@@ -61,18 +59,17 @@ func (r *FuncRunner) Go(fn func(ctx context.Context) error) bool {
 		switch has {
 		// returned after starting
 		case true:
-			r.mu.Lock()
+			// Load set error
+			err := r.err.Load()
 
 			// filter out errors due FuncRunner.Stop() being called
-			if cancelled && errors.Is(r.err, context.Canceled) {
+			if cancelled && errors.Is(err, context.Canceled) {
 				// filter out errors from FuncRunner.Stop() being called
-				r.err = nil
-			} else if r.err != nil && r.ErrorHandler != nil {
+				r.err.Store(nil)
+			} else if err != nil && r.ErrorHandler != nil {
 				// pass any non-nil error to set handler
-				r.err = r.ErrorHandler(r.err)
+				r.err.Store(r.ErrorHandler(err))
 			}
-
-			r.mu.Unlock()
 
 		// already running
 		case false:
@@ -93,7 +90,7 @@ func (r *FuncRunner) Go(fn func(ctx context.Context) error) bool {
 
 	// 'fn' returned, check error
 	case <-done:
-		return (r.Err() == nil)
+		return has
 	}
 }
 
@@ -104,10 +101,7 @@ func (r *FuncRunner) Stop() bool {
 
 // Err returns the last-set error value.
 func (r *FuncRunner) Err() error {
-	r.mu.Lock()
-	err := r.err
-	r.mu.Unlock()
-	return err
+	return r.err.Load()
 }
 
 // Run will execute the supplied 'fn' catching any panics. Returns either function-returned error or formatted panic.

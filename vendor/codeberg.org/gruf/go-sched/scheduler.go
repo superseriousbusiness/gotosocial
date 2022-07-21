@@ -132,7 +132,13 @@ func (sch *Scheduler) run(ctx context.Context) {
 			// Get next job time
 			next := sch.jobs[0].Next()
 
-			if until := next.Sub(now); until <= 0 {
+			// If this job is _just_ about to be ready, we
+			// don't bother sleeping. It's wasted cycles only
+			// sleeping for some obscenely tiny amount of time
+			// we can't guarantee precision for.
+			const precision = time.Millisecond
+
+			if until := next.Sub(now); until <= precision/1e3 {
 				// This job is behind schedule,
 				// set timer to always tick
 				tch = alwaysticks
@@ -155,6 +161,10 @@ func (sch *Scheduler) run(ctx context.Context) {
 
 		// Timer ticked, run scheduled
 		case now := <-tch:
+			if !timerset {
+				// alwaysticks returns zero times
+				now = time.Now()
+			}
 			sch.schedule(now)
 
 		// Received update, handle job/id
@@ -213,7 +223,7 @@ func (sch *Scheduler) schedule(now time.Time) {
 		// Run this job async!
 		go job.Run(now)
 
-		if job.Next().IsZero() {
+		if next.IsZero() {
 			// Zero time, this job is done and can be dropped
 			sch.jobs = append(sch.jobs[:i], sch.jobs[i+1:]...)
 			continue

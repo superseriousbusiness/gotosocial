@@ -13,7 +13,7 @@ codeberg.org/gruf/go-bytesize
 # codeberg.org/gruf/go-byteutil v1.0.2
 ## explicit; go 1.16
 codeberg.org/gruf/go-byteutil
-# codeberg.org/gruf/go-cache/v2 v2.1.1
+# codeberg.org/gruf/go-cache/v2 v2.1.2
 ## explicit; go 1.18
 codeberg.org/gruf/go-cache/v2
 # codeberg.org/gruf/go-debug v1.2.0
@@ -44,11 +44,11 @@ codeberg.org/gruf/go-mutexes
 # codeberg.org/gruf/go-pools v1.1.0
 ## explicit; go 1.16
 codeberg.org/gruf/go-pools
-# codeberg.org/gruf/go-runners v1.2.1
+# codeberg.org/gruf/go-runners v1.2.2
 ## explicit; go 1.14
 codeberg.org/gruf/go-runners
-# codeberg.org/gruf/go-sched v1.0.1
-## explicit; go 1.18
+# codeberg.org/gruf/go-sched v1.0.3
+## explicit; go 1.16
 codeberg.org/gruf/go-sched
 # codeberg.org/gruf/go-store v1.3.8
 ## explicit; go 1.14
