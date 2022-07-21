@@ -233,14 +233,11 @@ func (c *converter) AppToAPIAppPublic(ctx context.Context, a *gtsmodel.Applicati
 }
 
 func (c *converter) AttachmentToAPIAttachment(ctx context.Context, a *gtsmodel.MediaAttachment) (model.Attachment, error) {
-	return model.Attachment{
-		ID:               a.ID,
-		Type:             strings.ToLower(string(a.Type)),
-		URL:              a.URL,
-		TextURL:          a.URL,
-		PreviewURL:       a.Thumbnail.URL,
-		RemoteURL:        a.RemoteURL,
-		PreviewRemoteURL: a.Thumbnail.RemoteURL,
+	apiAttachment := model.Attachment{
+		ID:         a.ID,
+		Type:       strings.ToLower(string(a.Type)),
+		TextURL:    a.URL,
+		PreviewURL: a.Thumbnail.URL,
 		Meta: model.MediaMeta{
 			Original: model.MediaDimensions{
 				Width:  a.FileMeta.Original.Width,
@@ -259,9 +256,31 @@ func (c *converter) AttachmentToAPIAttachment(ctx context.Context, a *gtsmodel.M
 				Y: a.FileMeta.Focus.Y,
 			},
 		},
-		Description: a.Description,
-		Blurhash:    a.Blurhash,
-	}, nil
+		Blurhash: a.Blurhash,
+	}
+
+	// nullable fields
+	if a.URL != "" {
+		i := a.URL
+		apiAttachment.URL = &i
+	}
+
+	if a.RemoteURL != "" {
+		i := a.RemoteURL
+		apiAttachment.RemoteURL = &i
+	}
+
+	if a.Thumbnail.RemoteURL != "" {
+		i := a.Thumbnail.RemoteURL
+		apiAttachment.PreviewRemoteURL = &i
+	}
+
+	if a.Description != "" {
+		i := a.Description
+		apiAttachment.Description = &i
+	}
+
+	return apiAttachment, nil
 }
 
 func (c *converter) MentionToAPIMention(ctx context.Context, m *gtsmodel.Mention) (model.Mention, error) {

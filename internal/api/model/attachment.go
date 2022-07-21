@@ -68,7 +68,7 @@ type Attachment struct {
 	Type string `json:"type"`
 	// The location of the original full-size attachment.
 	// example: https://example.org/fileserver/some_id/attachments/some_id/original/attachment.jpeg
-	URL string `json:"url"`
+	URL *string `json:"url"`
 	// A shorter URL for the attachment.
 	// In our case, we just give the URL again since we don't create smaller URLs.
 	TextURL string `json:"text_url"`
@@ -78,16 +78,16 @@ type Attachment struct {
 	// The location of the full-size original attachment on the remote server.
 	// Only defined for instances other than our own.
 	// example: https://some-other-server.org/attachments/original/ahhhhh.jpeg
-	RemoteURL string `json:"remote_url"`
+	RemoteURL *string `json:"remote_url"`
 	// The location of a scaled-down preview of the attachment on the remote server.
 	// Only defined for instances other than our own.
 	// example: https://some-other-server.org/attachments/small/ahhhhh.jpeg
-	PreviewRemoteURL string `json:"preview_remote_url"`
+	PreviewRemoteURL *string `json:"preview_remote_url"`
 	// Metadata for this attachment.
 	Meta MediaMeta `json:"meta,omitempty"`
 	// Alt text that describes what is in the media attachment.
 	// example: This is a picture of a kitten.
-	Description string `json:"description"`
+	Description *string `json:"description"`
 	// A hash computed by the BlurHash algorithm, for generating colorful preview thumbnails when media has not been downloaded yet.
 	// See https://github.com/woltapp/blurhash
 	Blurhash string `json:"blurhash,omitempty"`
