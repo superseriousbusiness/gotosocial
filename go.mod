@@ -62,7 +62,7 @@ require (
 	codeberg.org/gruf/go-fastpath v1.0.3 // indirect
 	codeberg.org/gruf/go-hashenc v1.0.2 // indirect
 	codeberg.org/gruf/go-pools v1.1.0 // indirect
-	codeberg.org/gruf/go-sched v1.0.3 // indirect
+	codeberg.org/gruf/go-sched v1.0.4 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dsoprea/go-exif/v3 v3.0.0-20210625224831-a6301f85c82b // indirect
