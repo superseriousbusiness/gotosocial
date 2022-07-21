@@ -971,6 +971,14 @@ definitions:
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   instance:
     properties:
+      account_domain:
+        description: |-
+          The domain of accounts on this instance.
+          This will not necessarily be the same as
+          simply the Host part of the URI.
+        example: example.org
+        type: string
+        x-go-name: AccountDomain
       approval_required:
         description: New account registrations require admin approval.
         type: boolean
@@ -1045,7 +1053,7 @@ definitions:
         x-go-name: Title
       uri:
         description: The URI of the instance.
-        example: https://example.org
+        example: https://gts.example.org
         type: string
         x-go-name: URI
       urls:
@@ -2000,6 +2008,57 @@ paths:
       summary: Handles webfinger account lookup requests.
       tags:
       - webfinger
+  /api/{api_version}/media:
+    post:
+      consumes:
+      - multipart/form-data
+      operationId: mediaCreate
+      parameters:
+      - description: Version of the API to use. Must be one of v1 or v2.
+        in: path
+        name: api version
+        required: true
+        type: string
+      - description: |-
+          Image or media description to use as alt-text on the attachment.
+          This is very useful for users of screenreaders.
+          May or may not be required, depending on your instance settings.
+        in: formData
+        name: description
+        type: string
+      - description: |-
+          Focus of the media file.
+          If present, it should be in the form of two comma-separated floats between -1 and 1.
+          For example: `-0.5,0.25`.
+        in: formData
+        name: focus
+        type: string
+      - description: The media attachment to upload.
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: The newly-created media attachment.
+          schema:
+            $ref: '#/definitions/attachment'
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+        "422":
+          description: unprocessable
+        "500":
+          description: internal server error
+      security:
+      - OAuth2 Bearer:
+        - write:media
+      summary: Upload a new media attachment.
+      tags:
+      - media
   /api/v1/accounts:
     post:
       consumes:
@@ -3255,52 +3314,6 @@ paths:
           description: internal server error
       tags:
       - instance
-  /api/v1/media:
-    post:
-      consumes:
-      - multipart/form-data
-      operationId: mediaCreate
-      parameters:
-      - description: |-
-          Image or media description to use as alt-text on the attachment.
-          This is very useful for users of screenreaders.
-          May or may not be required, depending on your instance settings.
-        in: formData
-        name: description
-        type: string
-      - description: |-
-          Focus of the media file.
-          If present, it should be in the form of two comma-separated floats between -1 and 1.
-          For example: `-0.5,0.25`.
-        in: formData
-        name: focus
-        type: string
-      - description: The media attachment to upload.
-        in: formData
-        name: file
-        required: true
-        type: file
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: The newly-created media attachment.
-          schema:
-            $ref: '#/definitions/attachment'
-        "400":
-          description: bad request
-        "401":
-          description: unauthorized
-        "422":
-          description: unprocessable
-        "500":
-          description: internal server error
-      security:
-      - OAuth2 Bearer:
-        - write:media
-      summary: Upload a new media attachment.
-      tags:
-      - media
   /api/v1/media/{id}:
     get:
       operationId: mediaGet

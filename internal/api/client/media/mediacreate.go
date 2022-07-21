@@ -31,7 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// MediaCreatePOSTHandler swagger:operation POST /api/v1/media mediaCreate
+// MediaCreatePOSTHandler swagger:operation POST /api/{api_version}/media mediaCreate
 //
 // Upload a new media attachment.
 //
@@ -46,6 +46,11 @@ import (
 // - application/json
 //
 // parameters:
+// - name: api version
+//   type: string
+//   in: path
+//   description: Version of the API to use. Must be one of v1 or v2.
+//   required: true
 // - name: description
 //   in: formData
 //   description: |-
