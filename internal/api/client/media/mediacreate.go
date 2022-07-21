@@ -100,6 +100,13 @@ func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
+	apiVersion := c.Param(APIVersionKey)
+	if apiVersion != "v1" && apiVersion != "v2" {
+		err := errors.New("api version must be one of v1 or v2")
+		api.ErrorHandler(c, gtserror.NewErrorNotFound(err, err.Error()), m.processor.InstanceGet)
+		return
+	}
+
 	form := &model.AttachmentRequest{}
 	if err := c.ShouldBind(&form); err != nil {
 		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
