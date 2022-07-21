@@ -30,6 +30,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
 	mediamodule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -154,9 +155,15 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessful() {
 	if err != nil {
 		panic(err)
 	}
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", mediamodule.BasePathV1), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, "http://localhost:8080/api/v1/media", bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 	ctx.Request.Header.Set("accept", "application/json")
+	ctx.Params = gin.Params{
+		gin.Param{
+			Key:   mediamodule.APIVersionKey,
+			Value: "v1",
+		},
+	}
 
 	// do the actual request
 	suite.mediaModule.MediaCreatePOSTHandler(ctx)
@@ -185,7 +192,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessful() {
 	err = json.Unmarshal(b, attachmentReply)
 	suite.NoError(err)
 
-	suite.Equal("this is a test image -- a cool background from somewhere", attachmentReply.Description)
+	suite.Equal("this is a test image -- a cool background from somewhere", *attachmentReply.Description)
 	suite.Equal("image", attachmentReply.Type)
 	suite.EqualValues(model.MediaMeta{
 		Original: model.MediaDimensions{
@@ -208,6 +215,100 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessful() {
 	suite.Equal("LjBzUo#6RQR._NvzRjWF?urqV@a$", attachmentReply.Blurhash)
 	suite.NotEmpty(attachmentReply.ID)
 	suite.NotEmpty(attachmentReply.URL)
+	suite.NotEmpty(attachmentReply.PreviewURL)
+	suite.Equal(len(storageKeysBeforeRequest)+2, len(storageKeysAfterRequest)) // 2 images should be added to storage: the original and the thumbnail
+}
+
+func (suite *MediaCreateTestSuite) TestMediaCreateSuccessfulV2() {
+	// set up the context for the request
+	t := suite.testTokens["local_account_1"]
+	oauthToken := oauth.DBTokenToToken(t)
+	recorder := httptest.NewRecorder()
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
+	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
+	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
+	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
+	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
+
+	// see what's in storage *before* the request
+	storageKeysBeforeRequest := []string{}
+	iter, err := suite.storage.KVStore.Iterator(nil)
+	if err != nil {
+		panic(err)
+	}
+	for iter.Next() {
+		storageKeysBeforeRequest = append(storageKeysBeforeRequest, iter.Key())
+	}
+	iter.Release()
+
+	// create the request
+	buf, w, err := testrig.CreateMultipartFormData("file", "../../../../testrig/media/test-jpeg.jpg", map[string]string{
+		"description": "this is a test image -- a cool background from somewhere",
+		"focus":       "-0.5,0.5",
+	})
+	if err != nil {
+		panic(err)
+	}
+	ctx.Request = httptest.NewRequest(http.MethodPost, "http://localhost:8080/api/v2/media", bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
+	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
+	ctx.Request.Header.Set("accept", "application/json")
+	ctx.Params = gin.Params{
+		gin.Param{
+			Key:   mediamodule.APIVersionKey,
+			Value: "v2",
+		},
+	}
+
+	// do the actual request
+	suite.mediaModule.MediaCreatePOSTHandler(ctx)
+
+	// check what's in storage *after* the request
+	storageKeysAfterRequest := []string{}
+	iter, err = suite.storage.KVStore.Iterator(nil)
+	if err != nil {
+		panic(err)
+	}
+	for iter.Next() {
+		storageKeysAfterRequest = append(storageKeysAfterRequest, iter.Key())
+	}
+	iter.Release()
+
+	// check response
+	suite.EqualValues(http.StatusOK, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+	b, err := ioutil.ReadAll(result.Body)
+	suite.NoError(err)
+	fmt.Println(string(b))
+
+	attachmentReply := &model.Attachment{}
+	err = json.Unmarshal(b, attachmentReply)
+	suite.NoError(err)
+
+	suite.Equal("this is a test image -- a cool background from somewhere", *attachmentReply.Description)
+	suite.Equal("image", attachmentReply.Type)
+	suite.EqualValues(model.MediaMeta{
+		Original: model.MediaDimensions{
+			Width:  1920,
+			Height: 1080,
+			Size:   "1920x1080",
+			Aspect: 1.7777778,
+		},
+		Small: model.MediaDimensions{
+			Width:  512,
+			Height: 288,
+			Size:   "512x288",
+			Aspect: 1.7777778,
+		},
+		Focus: model.MediaFocus{
+			X: -0.5,
+			Y: 0.5,
+		},
+	}, attachmentReply.Meta)
+	suite.Equal("LjBzUo#6RQR._NvzRjWF?urqV@a$", attachmentReply.Blurhash)
+	suite.NotEmpty(attachmentReply.ID)
+	suite.Nil(attachmentReply.URL)
 	suite.NotEmpty(attachmentReply.PreviewURL)
 	suite.Equal(len(storageKeysBeforeRequest)+2, len(storageKeysAfterRequest)) // 2 images should be added to storage: the original and the thumbnail
 }
@@ -238,9 +339,15 @@ func (suite *MediaCreateTestSuite) TestMediaCreateLongDescription() {
 	if err != nil {
 		panic(err)
 	}
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", mediamodule.BasePathV1), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, "http://localhost:8080/api/v1/media", bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 	ctx.Request.Header.Set("accept", "application/json")
+	ctx.Params = gin.Params{
+		gin.Param{
+			Key:   mediamodule.APIVersionKey,
+			Value: "v1",
+		},
+	}
 
 	// do the actual request
 	suite.mediaModule.MediaCreatePOSTHandler(ctx)
@@ -278,9 +385,15 @@ func (suite *MediaCreateTestSuite) TestMediaCreateTooShortDescription() {
 	if err != nil {
 		panic(err)
 	}
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", mediamodule.BasePathV1), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, "http://localhost:8080/api/v1/media", bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 	ctx.Request.Header.Set("accept", "application/json")
+	ctx.Params = gin.Params{
+		gin.Param{
+			Key:   mediamodule.APIVersionKey,
+			Value: "v1",
+		},
+	}
 
 	// do the actual request
 	suite.mediaModule.MediaCreatePOSTHandler(ctx)
