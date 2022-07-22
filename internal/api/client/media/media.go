@@ -26,20 +26,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
-// BasePathV1 is the base API path for making media requests through v1 of the api (for mastodon API compatibility)
-const BasePathV1 = "/api/v1/media"
-
-// BasePathV2 is the base API path for making media requests through v2 of the api (for mastodon API compatibility)
-const BasePathV2 = "/api/v2/media"
-
-// IDKey is the key for media attachment IDs
-const IDKey = "id"
-
-// BasePathWithIDV1 corresponds to a media attachment with the given ID
-const BasePathWithIDV1 = BasePathV1 + "/:" + IDKey
-
-// BasePathWithIDV2 corresponds to a media attachment with the given ID
-const BasePathWithIDV2 = BasePathV2 + "/:" + IDKey
+const (
+	IDKey                  = "id"                                // IDKey is the key for media attachment IDs
+	APIVersionKey          = "api_version"                       // APIVersionKey is the key for which version of the API to use (v1 or v2)
+	BasePathWithAPIVersion = "/api/:" + APIVersionKey + "/media" // BasePathWithAPIVersion is the base API path for making media requests through v1 or v2 of the api (for mastodon API compatibility)
+	BasePathWithIDV1       = "/api/v1/media/:" + IDKey           // BasePathWithID corresponds to a media attachment with the given ID
+)
 
 // Module implements the ClientAPIModule interface for media
 type Module struct {
@@ -55,15 +47,8 @@ func New(processor processing.Processor) api.ClientModule {
 
 // Route satisfies the RESTAPIModule interface
 func (m *Module) Route(s router.Router) error {
-	// v1 handlers
-	s.AttachHandler(http.MethodPost, BasePathV1, m.MediaCreatePOSTHandler)
+	s.AttachHandler(http.MethodPost, BasePathWithAPIVersion, m.MediaCreatePOSTHandler)
 	s.AttachHandler(http.MethodGet, BasePathWithIDV1, m.MediaGETHandler)
 	s.AttachHandler(http.MethodPut, BasePathWithIDV1, m.MediaPUTHandler)
-
-	// v2 handlers
-	s.AttachHandler(http.MethodPost, BasePathV2, m.MediaCreatePOSTHandler)
-	s.AttachHandler(http.MethodGet, BasePathWithIDV2, m.MediaGETHandler)
-	s.AttachHandler(http.MethodPut, BasePathWithIDV2, m.MediaPUTHandler)
-
 	return nil
 }

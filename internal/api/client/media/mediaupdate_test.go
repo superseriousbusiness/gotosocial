@@ -145,7 +145,7 @@ func (suite *MediaUpdateTestSuite) TestUpdateImage() {
 	if err != nil {
 		panic(err)
 	}
-	ctx.Request = httptest.NewRequest(http.MethodPut, fmt.Sprintf("http://localhost:8080/%s/%s", mediamodule.BasePathV1, toUpdate.ID), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPut, fmt.Sprintf("http://localhost:8080/api/v1/media/%s", toUpdate.ID), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 	ctx.Request.Header.Set("accept", "application/json")
 	ctx.Params = gin.Params{
@@ -172,7 +172,7 @@ func (suite *MediaUpdateTestSuite) TestUpdateImage() {
 	suite.NoError(err)
 
 	// the reply should contain the updated fields
-	suite.Equal("new description!", attachmentReply.Description)
+	suite.Equal("new description!", *attachmentReply.Description)
 	suite.EqualValues("gif", attachmentReply.Type)
 	suite.EqualValues(model.MediaMeta{
 		Original: model.MediaDimensions{Width: 800, Height: 450, FrameRate: "", Duration: 0, Bitrate: 0, Size: "800x450", Aspect: 1.7777778},
@@ -181,7 +181,7 @@ func (suite *MediaUpdateTestSuite) TestUpdateImage() {
 	}, attachmentReply.Meta)
 	suite.Equal(toUpdate.Blurhash, attachmentReply.Blurhash)
 	suite.Equal(toUpdate.ID, attachmentReply.ID)
-	suite.Equal(toUpdate.URL, attachmentReply.URL)
+	suite.Equal(toUpdate.URL, *attachmentReply.URL)
 	suite.NotEmpty(toUpdate.Thumbnail.URL, attachmentReply.PreviewURL)
 }
 
@@ -210,7 +210,7 @@ func (suite *MediaUpdateTestSuite) TestUpdateImageShortDescription() {
 	if err != nil {
 		panic(err)
 	}
-	ctx.Request = httptest.NewRequest(http.MethodPut, fmt.Sprintf("http://localhost:8080/%s/%s", mediamodule.BasePathV1, toUpdate.ID), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPut, fmt.Sprintf("http://localhost:8080/api/v1/media/%s", toUpdate.ID), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 	ctx.Request.Header.Set("accept", "application/json")
 	ctx.Params = gin.Params{

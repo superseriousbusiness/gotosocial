@@ -31,7 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// MediaCreatePOSTHandler swagger:operation POST /api/v1/media mediaCreate
+// MediaCreatePOSTHandler swagger:operation POST /api/{api_version}/media mediaCreate
 //
 // Upload a new media attachment.
 //
@@ -46,6 +46,11 @@ import (
 // - application/json
 //
 // parameters:
+// - name: api version
+//   type: string
+//   in: path
+//   description: Version of the API to use. Must be one of v1 or v2.
+//   required: true
 // - name: description
 //   in: formData
 //   description: |-
@@ -95,6 +100,13 @@ func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
+	apiVersion := c.Param(APIVersionKey)
+	if apiVersion != "v1" && apiVersion != "v2" {
+		err := errors.New("api version must be one of v1 or v2")
+		api.ErrorHandler(c, gtserror.NewErrorNotFound(err, err.Error()), m.processor.InstanceGet)
+		return
+	}
+
 	form := &model.AttachmentRequest{}
 	if err := c.ShouldBind(&form); err != nil {
 		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
@@ -110,6 +122,15 @@ func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
 	if err != nil {
 		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
+	}
+
+	if apiVersion == "v2" {
+		// the mastodon v2 media API specifies that the URL should be null
+		// and that the client should call /api/v1/media/:id to get the URL
+		//
+		// so even though we have the URL already, remove it now to comply
+		// with the api
+		apiAttachment.URL = nil
 	}
 
 	c.JSON(http.StatusOK, apiAttachment)
