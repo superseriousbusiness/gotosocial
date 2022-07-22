@@ -68,6 +68,7 @@ server {
     proxy_set_header X-Forwarded-For $remote_addr;
     proxy_set_header X-Forwarded-Proto $scheme;
   }
+  client_max_body_size 40M;
 }
 ```
 
@@ -82,6 +83,8 @@ If you're running GoToSocial on another machine with the local ip of 192.168.178
 **Note**: `proxy_set_header Host $host;` is essential. It guarantees that the proxy and GoToSocial use the same server name. If not, GoToSocial will build the wrong authentication headers, and all attempts at federation will be rejected with 401.
 
 **Note**: The `Connection` and `Upgrade` headers are used for WebSocket connections. See the [WebSocket docs](./websocket.md).
+
+**Note**: `client_max_body_size` is set to 40M in this example, which is the default max video upload size for GoToSocial. You can make this value larger or smaller if necessary. The nginx default is only 1M, which is rather too small.
 
 Next we'll need to link the file we just created to the folder that nginx reads configurations for active sites from.
 
@@ -152,6 +155,7 @@ server {
     proxy_set_header X-Forwarded-For $remote_addr;
     proxy_set_header X-Forwarded-Proto $scheme;
   }
+  client_max_body_size 40M;
 
   listen [::]:443 ssl ipv6only=on; # managed by Certbot
   listen 443 ssl; # managed by Certbot
