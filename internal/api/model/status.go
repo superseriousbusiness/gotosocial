@@ -144,8 +144,12 @@ type StatusCreateRequest struct {
 	Status string `form:"status" json:"status" xml:"status"`
 	// Array of Attachment ids to be attached as media.
 	// If provided, status becomes optional, and poll cannot be used.
+	//
+	// If the status is being submitted as a form, the key is 'media_ids[]',
+	// but if it's json or xml, the key is 'media_ids'.
+	//
 	// in: formData
-	MediaIDs []string `form:"media_ids" json:"media_ids" xml:"media_ids"`
+	MediaIDs []string `form:"media_ids[]" json:"media_ids" xml:"media_ids"`
 	// Poll to include with this status.
 	// swagger:ignore
 	Poll *PollRequest `form:"poll" json:"poll" xml:"poll"`
