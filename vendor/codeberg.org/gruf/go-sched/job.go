@@ -1,6 +1,9 @@
 package sched
 
 import (
+	"reflect"
+	"strconv"
+	"strings"
 	"time"
 
 	"codeberg.org/gruf/go-atomics"
@@ -96,4 +99,20 @@ func (job *Job) Run(now time.Time) {
 		}
 	}()
 	job.call(now)
+}
+
+// String provides a debuggable string representation of Job including ID, next time and Timing type.
+func (job *Job) String() string {
+	var buf strings.Builder
+	buf.WriteByte('{')
+	buf.WriteString("id=")
+	buf.WriteString(strconv.FormatUint(job.id, 10))
+	buf.WriteByte(' ')
+	buf.WriteString("next=")
+	buf.WriteString(job.next.Load().Format(time.StampMicro))
+	buf.WriteByte(' ')
+	buf.WriteString("timing=")
+	buf.WriteString(reflect.TypeOf(job.timing).String())
+	buf.WriteByte('}')
+	return buf.String()
 }

@@ -50,8 +50,8 @@ codeberg.org/gruf/go-byteutil v1.0.0/go.mod h1:cWM3tgMCroSzqoBXUXMhvxTxYJp+TbCr6
 codeberg.org/gruf/go-byteutil v1.0.2 h1:OesVyK5VKWeWdeDR00zRJ+Oy8hjXx1pBhn7WVvcZWVE=
 codeberg.org/gruf/go-byteutil v1.0.2/go.mod h1:cWM3tgMCroSzqoBXUXMhvxTxYJp+TbCr6ioISRY5vSU=
 codeberg.org/gruf/go-cache v1.1.2/go.mod h1:/Dbc+xU72Op3hMn6x2PXF3NE9uIDFeS+sXPF00hN/7o=
-codeberg.org/gruf/go-cache/v2 v2.1.1 h1:Ate0URlO6dVTYGxcIST9sDKtwOqrqBmlm73zy3Bq1+k=
-codeberg.org/gruf/go-cache/v2 v2.1.1/go.mod h1:XstSofaENTH3PNBoMrBcowFJ339OcJfTwO0PCOp5lKQ=
+codeberg.org/gruf/go-cache/v2 v2.1.2 h1:MjnnsrZit4WYN4E6pZhcw3YY2QXNBRG5Ijz7z3r6z2o=
+codeberg.org/gruf/go-cache/v2 v2.1.2/go.mod h1:bFZSpjN9cszV3ArmHW7IwvcDDn/SklfECv0U1FMRMdU=
 codeberg.org/gruf/go-ctx v1.0.2/go.mod h1:iMyid3m2Rr1wSWL+snliBK5qE51b4pLY5CozVUrb/QU=
 codeberg.org/gruf/go-debug v1.2.0 h1:WBbTMnK1ArFKUmgv04aO2JiC/daTOB8zQGi521qb7OU=
 codeberg.org/gruf/go-debug v1.2.0/go.mod h1:N+vSy9uJBQgpQcJUqjctvqFz7tBHJf+S/PIjLILzpLg=
@@ -80,10 +80,11 @@ codeberg.org/gruf/go-nowish v1.1.2/go.mod h1:70nvICNcqQ9OHpF07N614Dyk7cpL5ToWU1K
 codeberg.org/gruf/go-pools v1.1.0 h1:LbYP24eQLl/YI1fSU2pafiwhGol1Z1zPjRrMsXpF88s=
 codeberg.org/gruf/go-pools v1.1.0/go.mod h1:ZMYpt/DjQWYC3zFD3T97QWSFKs62zAUGJ/tzvgB9D68=
 codeberg.org/gruf/go-runners v1.1.1/go.mod h1:9gTrmMnO3d+50C+hVzcmGBf+zTuswReS278E2EMvnmw=
-codeberg.org/gruf/go-runners v1.2.1 h1:eXXofOMkLTkrdqI0qFYm00hP9IW42JZbc+IRKgVyQ28=
 codeberg.org/gruf/go-runners v1.2.1/go.mod h1:9gTrmMnO3d+50C+hVzcmGBf+zTuswReS278E2EMvnmw=
-codeberg.org/gruf/go-sched v1.0.1 h1:+EAXSVI4orY5lMNX2Vrke/UxF2qjmEy6gHcyySZg/3k=
-codeberg.org/gruf/go-sched v1.0.1/go.mod h1:LFzosJL0yrCNtXg9Vq9iwr4q6ANuRirO2cVwKYH7CLs=
+codeberg.org/gruf/go-runners v1.2.2 h1:o0u8ggAeT5j8R0oaND961OeWEZOzW9wqwhmnVEeteqs=
+codeberg.org/gruf/go-runners v1.2.2/go.mod h1:rl0EdZNozkRMb21DAtOL5L4oTfmslYQdZgq2RMMc/H4=
+codeberg.org/gruf/go-sched v1.0.4 h1:gEfbDQbPUhCE+JPTo28l3eTaNilP+YXMjXS2e3KOtDQ=
+codeberg.org/gruf/go-sched v1.0.4/go.mod h1:5C2IQtzxSPR0Q5+EWTAY5HcxZIIFr5B6MtFwL9FtsoA=
 codeberg.org/gruf/go-store v1.3.8 h1:7Hzzsa8gaOc6spuGWXJVUWRAyKiOR/m60/jNYrD8cT0=
 codeberg.org/gruf/go-store v1.3.8/go.mod h1:Fy5pXEHiIVFRWDx8DfILwXS1ulrj/jLdSK2C2oElz3I=
 codeberg.org/gruf/go-ulid v1.0.0/go.mod h1:dVNsZJpVTge8+jfBTjAMpnscYSiCqk+g32ZgtorCAMs=
