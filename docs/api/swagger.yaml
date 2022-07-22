@@ -161,6 +161,10 @@ definitions:
         description: |-
           Array of Attachment ids to be attached as media.
           If provided, status becomes optional, and poll cannot be used.
+
+          If the status is being submitted as a form, the key is 'media_ids[]',
+          but if it's json or xml, the key is 'media_ids'.
+
           in: formData
         items:
           type: string
@@ -422,6 +426,10 @@ definitions:
         description: |-
           Array of Attachment ids to be attached as media.
           If provided, status becomes optional, and poll cannot be used.
+
+          If the status is being submitted as a form, the key is 'media_ids[]',
+          but if it's json or xml, the key is 'media_ids'.
+
           in: formData
         items:
           type: string
@@ -3531,6 +3539,9 @@ paths:
       - description: |-
           Array of Attachment ids to be attached as media.
           If provided, status becomes optional, and poll cannot be used.
+
+          If the status is being submitted as a form, the key is 'media_ids[]',
+          but if it's json or xml, the key is 'media_ids'.
         in: formData
         items:
           type: string
