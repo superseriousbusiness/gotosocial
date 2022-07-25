@@ -133,6 +133,23 @@ func (s *s) HandleTokenRequest(r *http.Request) (map[string]interface{}, gtserro
 	}
 
 	data := s.server.GetTokenData(ti)
+
+	if expiresInI, ok := data["expires_in"]; ok {
+		switch expiresIn := expiresInI.(type) {
+		case int64:
+			// remove this key from the returned map
+			// if the value is 0 or less, so that clients
+			// don't interpret the token as already expired
+			if expiresIn <= 0 {
+				delete(data, "expires_in")
+			}
+		default:
+			err := errors.New("expires_in was set on token response, but was not an int64")
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+	}
+
+	// add this for mastodon api compatibility
 	data["created_at"] = ti.GetAccessCreateAt().Unix()
 
 	return data, nil
