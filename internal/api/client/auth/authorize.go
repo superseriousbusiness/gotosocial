@@ -189,6 +189,11 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 		errs = append(errs, fmt.Sprintf("key %s was not found in session", sessionScope))
 	}
 
+	var clientState string
+	if s, ok := s.Get(sessionClientState).(string); ok {
+		clientState = s
+	}
+
 	userID, ok := s.Get(sessionUserID).(string)
 	if !ok {
 		errs = append(errs, fmt.Sprintf("key %s was not found in session", sessionUserID))
@@ -246,6 +251,10 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 		sessionUserID:       {userID},
 	}
 
+	if clientState != "" {
+		c.Request.Form.Set("state", clientState)
+	}
+
 	if err := m.processor.OAuthHandleAuthorizeRequest(c.Writer, c.Request); err != nil {
 		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error(), helpfulAdvice), m.processor.InstanceGet)
 	}
@@ -285,7 +294,8 @@ func saveAuthFormToSession(s sessions.Session, form *model.OAuthAuthorize) gtser
 	s.Set(sessionClientID, form.ClientID)
 	s.Set(sessionRedirectURI, form.RedirectURI)
 	s.Set(sessionScope, form.Scope)
-	s.Set(sessionState, uuid.NewString())
+	s.Set(sessionInternalState, uuid.NewString())
+	s.Set(sessionClientState, form.State)
 
 	if err := s.Save(); err != nil {
 		err := fmt.Errorf("error saving form values onto session: %s", err)

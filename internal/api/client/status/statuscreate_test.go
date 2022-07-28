@@ -312,7 +312,7 @@ func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
 	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", status.BasePath), nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/json")
 	ctx.Request.Form = url.Values{
-		"status":    {"here's an image attachment"},
+		"status":      {"here's an image attachment"},
 		"media_ids[]": {attachment.ID},
 	}
 	suite.statusModule.StatusCreatePOSTHandler(ctx)

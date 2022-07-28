@@ -33,4 +33,8 @@ type OAuthAuthorize struct {
 	// List of requested OAuth scopes, separated by spaces (or by pluses, if using query parameters).
 	// Must be a subset of scopes declared during app registration. If not provided, defaults to read.
 	Scope string `form:"scope" json:"scope"`
+	// State is used by the application to store request-specific data and/or prevent CSRF attacks.
+	// The authorization server must return the unmodified state value back to the application.
+	// See https://www.oauth.com/oauth2-servers/authorization/the-authorization-request/
+	State string `form:"state" json:"state"`
 }
