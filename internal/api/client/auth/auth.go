@@ -55,13 +55,14 @@ const (
 	callbackStateParam = "state"
 	callbackCodeParam  = "code"
 
-	sessionUserID       = "userid"
-	sessionClientID     = "client_id"
-	sessionRedirectURI  = "redirect_uri"
-	sessionForceLogin   = "force_login"
-	sessionResponseType = "response_type"
-	sessionScope        = "scope"
-	sessionState        = "state"
+	sessionUserID        = "userid"
+	sessionClientID      = "client_id"
+	sessionRedirectURI   = "redirect_uri"
+	sessionForceLogin    = "force_login"
+	sessionResponseType  = "response_type"
+	sessionScope         = "scope"
+	sessionInternalState = "internal_state"
+	sessionClientState   = "client_state"
 )
 
 // Module implements the ClientAPIModule interface for

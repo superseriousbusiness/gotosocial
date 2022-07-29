@@ -45,26 +45,26 @@ func (m *Module) CallbackGETHandler(c *gin.Context) {
 	// check the query vs session state parameter to mitigate csrf
 	// https://auth0.com/docs/secure/attack-protection/state-parameters
 
-	state := c.Query(callbackStateParam)
-	if state == "" {
+	returnedInternalState := c.Query(callbackStateParam)
+	if returnedInternalState == "" {
 		m.clearSession(s)
 		err := fmt.Errorf("%s parameter not found on callback query", callbackStateParam)
 		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	savedStateI := s.Get(sessionState)
-	savedState, ok := savedStateI.(string)
+	savedInternalStateI := s.Get(sessionInternalState)
+	savedInternalState, ok := savedInternalStateI.(string)
 	if !ok {
 		m.clearSession(s)
-		err := fmt.Errorf("key %s was not found in session", sessionState)
+		err := fmt.Errorf("key %s was not found in session", sessionInternalState)
 		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	if state != savedState {
+	if returnedInternalState != savedInternalState {
 		m.clearSession(s)
-		err := errors.New("mismatch between query state and session state")
+		err := errors.New("mismatch between callback state and saved state")
 		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}

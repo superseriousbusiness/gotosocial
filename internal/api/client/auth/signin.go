@@ -58,16 +58,16 @@ func (m *Module) SignInGETHandler(c *gin.Context) {
 	// idp provider is in use, so redirect to it
 	s := sessions.Default(c)
 
-	stateI := s.Get(sessionState)
-	state, ok := stateI.(string)
+	internalStateI := s.Get(sessionInternalState)
+	internalState, ok := internalStateI.(string)
 	if !ok {
 		m.clearSession(s)
-		err := fmt.Errorf("key %s was not found in session", sessionState)
+		err := fmt.Errorf("key %s was not found in session", sessionInternalState)
 		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	c.Redirect(http.StatusSeeOther, m.idp.AuthCodeURL(state))
+	c.Redirect(http.StatusSeeOther, m.idp.AuthCodeURL(internalState))
 }
 
 // SignInPOSTHandler should be served at https://example.org/auth/sign_in.
