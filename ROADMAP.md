@@ -65,7 +65,7 @@ Each quarter contains one 'big feature' which will probably take the longest amo
 
 ### Q3 2023
 
-- **Big Feature** -- Instance announcements. Allow admins to create/edit/delete announcements that are shown to all users on an instance.
+- **Big Feature** -- Support the `Move` Activity, to allow users to move across instances and Fediverse implementations.
 - More to be confirmed.
 
 ## Detailed To-do List
