@@ -8,11 +8,11 @@ All the dates contained in this document are best-guess only. It's useful to hav
 
 - [Beta Aims](#beta-aims)
 - [Timeline](#timeline)
-  - [Q2 2022](#q2-2022)
   - [Q3 2022](#q3-2022)
   - [Q4 2022](#q4-2022)
   - [Q1 2023](#q1-2023)
   - [Q2 2023](#q2-2023)
+  - [Q3 2023](#q3-2023)
 - [Detailed To-do List](#detailed-to-do-list)
   - [API Groups + Endpoints](#api-groups--endpoints)
   - [Non-API tasks](#non-api-tasks)
@@ -38,32 +38,32 @@ Each quarter contains one 'big feature' which will probably take the longest amo
 
 **This timeline is a best-guess about when things will be implemented. The order of feature releases may change. It may go faster or slower depending on the amount of hurdles we run into, and the amount of help we receive from community contribitions of code. The timeline also does not include background tasks like admin, polishing existing features, refactoring code, and ensuring compatibility with other AP implementations.**
 
-### Q2 2022
+### Q3 2022
 
 - **Big Feature** -- User settings page: allow users to edit their profile page and settings through a web page served by the GtS instance, for cases where client apps don't implement their own settings page.
 - Blocklist subscription support: allow instance admins to subscribe their instance to plaintext domain blocklists (much of the work for this is already in place).
 - Tag support: implement federating hashtags and viewing hashtags to allow users to discover posts that they might be interested in.
 
-### Q3 2022
+### Q4 2022
 
 - **Big Feature** -- Video support: allow users to view + post videos (before we only implemented images and gifs).
 - Custom emoji support: allow users to use custom emojis in posts. Fetch custom emojis from remote instances and display them properly.
 - Pinned posts: allow users to 'feature' or 'pin' posts on their profile, and serve these featured posts via AP for other servers to see.
 - Profile fields: allow users to set 'fields' on their profile: short key/value items that can display pronouns, links to websites, etc.
 
-### Q4 2022
+### Q1 2023
 
 - **Big Feature** -- Reports: allow users to file reports for abusive behavior etc. Expose the API for admins to view + act on reports. Handle federation of reports.
 - List support: allow users to create lists of other users which they can view as separate timelines.
 - Polls support: allow users to create polls and vote in existing polls; federate the polls correctly via AP.
 
-### Q1 2023
+### Q2 2023
 
 - **Big Feature** -- Sign-up flow. Allow users to submit a sign up request to an instance. Allow admins to moderate sign-up requests.
 - Direct conversations: Allow users to see all direct-message conversations they're a part of.
 - Muting conversations: Allow users to mute notifications for conversations they're no longer interested in.
 
-### Q2 2023
+### Q3 2023
 
 - **Big Feature** -- Instance announcements. Allow admins to create/edit/delete announcements that are shown to all users on an instance.
 - More to be confirmed.
@@ -114,7 +114,7 @@ Crossed out    - will not be implemented / will be stubbed only.
     - [ ] /api/v1/mutes GET                                 (See list of muted accounts)
   - [x] Blocks
     - [x] /api/v1/blocks GET                                (See list of blocked accounts)
-  - [ ] Domain Blocks
+  - [x] Domain Blocks
     - [x] /api/v1/domain_blocks GET                         (See list of domain blocks)
     - [x] /api/v1/domain_blocks POST                        (Create a domain block)
     - [x] /api/v1/domain_blocks DELETE                      (Remove a domain block)
@@ -126,7 +126,7 @@ Crossed out    - will not be implemented / will be stubbed only.
     - [ ] /api/v1/filters/:id DELETE                        (Remove a filter)
   - [ ] Reports
     - [ ] /api/v1/reports POST                              (File a report)
-  - [ ] Follow Requests
+  - [x] Follow Requests
     - [x] /api/v1/follow_requests GET                       (View pending follow requests)
     - [x] /api/v1/follow_requests/:id/authorize POST        (Accept a follow request)
     - [x] /api/v1/follow_requests/:id/reject POST           (Reject a follow request)
@@ -194,10 +194,10 @@ Crossed out    - will not be implemented / will be stubbed only.
   - [ ] Instance
     - [x] /api/v1/instance GET                              (Get instance information)
     - [x] /api/v1/instance PATCH                            (Update instance information)
-    - [ ] /api/v1/instance/peers GET                        (Get list of federated servers)
-    - [ ] /api/v1/instance/activity GET                     (Instance activity over the last 3 months, binned weekly.)
-  - [ ] Custom Emojis
-    - [ ] /api/v1/custom_emojis GET                         (Show this server's custom emoji)
+    - [x] /api/v1/instance/peers GET                        (Get list of federated servers)
+    - ~~ /api/v1/instance/activity GET                      (Instance activity over the last 3 months, binned weekly.)~~
+  - [x] Custom Emojis
+    - [x] /api/v1/custom_emojis GET                         (Show this server's custom emoji)
   - [ ] Admin
     - [x] /api/v1/admin/custom_emojis POST                  (Upload a custom emoji for instance-wide usage)
     - [ ] /api/v1/admin/accounts GET                        (View accounts filtered by criteria)
@@ -257,12 +257,13 @@ Crossed out    - will not be implemented / will be stubbed only.
     - [ ] No federation (insulate this instance from the Fediverse)
       - [ ] Allowlist
   - [x] Secure HTTP signatures (creation and validation)
-- [ ] Storage
+- [x] Storage
   - [x] Internal/statuses/preferences etc
     - [x] Postgres interface
+    - [x] SQLite interface
   - [x] Media storage
     - [x] Local storage interface
-    - [ ] S3 storage interface
+    - [x] S3 storage interface
 - [x] Cache
   - [x] In-memory cache
 - [ ] Security features
