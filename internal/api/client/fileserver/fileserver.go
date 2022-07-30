@@ -59,5 +59,6 @@ func (m *FileServer) Route(s router.Router) error {
 	// something like "/fileserver/:account_id/:media_type/:media_size/:file_name"
 	fileServePath := fmt.Sprintf("%s/:%s/:%s/:%s/:%s", FileServeBasePath, AccountIDKey, MediaTypeKey, MediaSizeKey, FileNameKey)
 	s.AttachHandler(http.MethodGet, fileServePath, m.ServeFile)
+	s.AttachHandler(http.MethodHead, fileServePath, m.ServeFile)
 	return nil
 }

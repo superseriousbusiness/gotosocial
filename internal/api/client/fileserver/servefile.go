@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
@@ -107,11 +108,18 @@ func (m *FileServer) ServeFile(c *gin.Context) {
 		return
 	}
 
-	c.DataFromReader(http.StatusOK, content.ContentLength, format, content.Content, map[string]string{
-		// since we'll never host different files at the same
-		// URL (bc the ULIDs are generated per piece of media),
-		// it's sensible and safe to use a long cache here, so
-		// that clients don't keep fetching files over + over again
-		"Cache-Control": "max-age=604800",
-	})
+	// since we'll never host different files at the same
+	// URL (bc the ULIDs are generated per piece of media),
+	// it's sensible and safe to use a long cache here, so
+	// that clients don't keep fetching files over + over again
+	c.Header("Cache-Control", "max-age=604800")
+
+	if c.Request.Method == http.MethodHead {
+		c.Header("Content-Type", format)
+		c.Header("Content-Length", strconv.FormatInt(content.ContentLength, 10))
+		c.Status(http.StatusOK)
+		return
+	}
+
+	c.DataFromReader(http.StatusOK, content.ContentLength, format, content.Content, nil)
 }
