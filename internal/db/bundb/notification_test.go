@@ -130,6 +130,23 @@ func (suite *NotificationTestSuite) TestClearNotificationsWithSpam() {
 	suite.Empty(notifications)
 }
 
+func (suite *NotificationTestSuite) TestClearNotificationsWithTwoAccounts() {
+	suite.spamNotifs()
+	testAccount := suite.testAccounts["local_account_1"]
+	err := suite.db.ClearNotifications(context.Background(), testAccount.ID)
+	suite.NoError(err)
+
+	notifications, err := suite.db.GetNotifications(context.Background(), testAccount.ID, 20, "ZZZZZZZZZZZZZZZZZZZZZZZZZZ", "00000000000000000000000000")
+	suite.NoError(err)
+	suite.NotNil(notifications)
+	suite.Empty(notifications)
+
+	notif := []*gtsmodel.Notification{}
+	err = suite.db.GetAll(context.Background(), &notif)
+	suite.NoError(err)
+	suite.NotEmpty(notif)
+}
+
 func TestNotificationTestSuite(t *testing.T) {
 	suite.Run(t, new(NotificationTestSuite))
 }
