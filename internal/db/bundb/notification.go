@@ -118,5 +118,7 @@ func (n *notificationDB) ClearNotifications(ctx context.Context, accountID strin
 		return n.conn.ProcessError(err)
 	}
 
+	n.cache.Clear()
+
 	return nil
 }
