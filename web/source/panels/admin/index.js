@@ -27,6 +27,7 @@ const Auth = require("./auth");
 const Settings = require("./settings");
 const Blocks = require("./blocks");
 
+require("../base.css");
 require("./style.css");
 
 function App() {
