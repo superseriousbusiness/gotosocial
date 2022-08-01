@@ -25,6 +25,7 @@ const ReactDom = require("react-dom");
 const oauthLib = require("../../lib/oauth.js");
 const Auth = require("./auth");
 const Basic = require("./basic")
+const Posts = require("./posts")
 
 require("../base.css");
 require("./style.css");
@@ -79,7 +80,8 @@ function UserPanel({oauth}) {
 
 	return (
 		<React.Fragment>
-         <Basic oauth={oauth} account={account}/>
+            <Basic oauth={oauth} account={account}/>
+			<Posts oauth={oauth} account={account}/>
 		</React.Fragment>
 	);
 }
