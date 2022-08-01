@@ -58,3 +58,12 @@ func (p *processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, li
 		Limit:          limit,
 	})
 }
+
+func (p *processor) NotificationsClear(ctx context.Context, authed *oauth.Auth) gtserror.WithCode {
+	err := p.db.ClearNotifications(ctx, authed.Account.ID)
+	if err != nil {
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	return nil
+}

@@ -33,7 +33,8 @@ const (
 	BasePath = "/api/v1/notifications"
 	// BasePathWithID is just the base path with the ID key in it.
 	// Use this anywhere you need to know the ID of the notification being queried.
-	BasePathWithID = BasePath + "/:" + IDKey
+	BasePathWithID    = BasePath + "/:" + IDKey
+	BasePathWithClear = BasePath + "/clear"
 
 	// MaxIDKey is the url query for setting a max notification ID to return
 	MaxIDKey = "max_id"
@@ -58,5 +59,6 @@ func New(processor processing.Processor) api.ClientModule {
 // Route attaches all routes from this module to the given router
 func (m *Module) Route(r router.Router) error {
 	r.AttachHandler(http.MethodGet, BasePath, m.NotificationsGETHandler)
+	r.AttachHandler(http.MethodPost, BasePathWithClear, m.NotificationsClearPOSTHandler)
 	return nil
 }
