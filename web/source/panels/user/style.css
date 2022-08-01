@@ -16,11 +16,12 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-section.basic {
+section {
 	form {
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
+		padding-bottom: 1rem;
 
 		label, input, textarea {
 			padding-left: 0.2rem;
@@ -57,7 +58,7 @@ section.basic {
 	}
 }
 
-.labelinput {
+.labelinput, .labelselect {
 	display: flex;
 	flex-direction: column;
 	gap: 0.4rem;
@@ -73,4 +74,24 @@ section.basic {
 	width: 8.5rem;
 	object-fit: cover;
 	border-radius: 0.2rem;
+}
+
+.headerpreview {
+	width: 100%;
+	aspect-ratio: 3 / 1;
+	overflow: hidden;
+	object-fit: cover;
+	border-radius: 0.2rem;
+}
+
+.titlesave {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+}
+
+.messagebutton {
+	display: flex;
+	gap: 2rem;
+	align-items: center;
 }

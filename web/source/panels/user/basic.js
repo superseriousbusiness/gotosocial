@@ -23,23 +23,50 @@ const Promise = require("bluebird");
 
 module.exports = function Basic({oauth, account}) {
 	const [errorMsg, setError] = React.useState("");
-	const [statusMsg, setStatus] = React.useState("Fetching instance info");
+	const [statusMsg, setStatus] = React.useState("");
+
+    const [headerFile, setHeaderFile] = React.useState(undefined);
+    const [headerSrc, setHeaderSrc] = React.useState("");
+
+    const [avatarFile, setAvatarFile] = React.useState(undefined);
+    const [avatarSrc, setAvatarSrc] = React.useState("");
 
     const [displayName, setDisplayName] = React.useState("");
     const [bio, setBio] = React.useState("");
     const [locked, setLocked] = React.useState(false);
 
     React.useEffect(() => {
+        setHeaderSrc(account.header);
+        setAvatarSrc(account.avatar);
+
         setDisplayName(account.display_name);
         setBio(account.source ? account.source.note : "");
         setLocked(account.locked);
-    }, [account, setDisplayName, setBio, setLocked]);
+    }, [account, setHeaderSrc, setAvatarSrc, setDisplayName, setBio, setLocked]);
+
+    const headerOnChange = (e) => {
+        setHeaderFile(e.target.files[0]);
+        setHeaderSrc(URL.createObjectURL(e.target.files[0]));
+    }
+
+    const avatarOnChange = (e) => {
+        setAvatarFile(e.target.files[0]);
+        setAvatarSrc(URL.createObjectURL(e.target.files[0]));
+    }
 
 	function submit() {
 		setStatus("PATCHing");
 		setError("");
 		return Promise.try(() => {
 			let formDataInfo = new FormData();
+
+            if (headerFile) {
+                formDataInfo.set("header", headerFile);
+            }
+
+            if (avatarFile) {
+                formDataInfo.set("avatar", avatarFile);
+            }
 
             formDataInfo.set("display_name", displayName);
             formDataInfo.set("note", bio);
@@ -48,9 +75,13 @@ module.exports = function Basic({oauth, account}) {
 			return oauth.apiRequest("/api/v1/accounts/update_credentials", "PATCH", formDataInfo, "form");
 		}).then((json) => {
 			setStatus("Saved!");
-            setDisplayName(json.display_name)
-            setBio(json.source.note)
-            setLocked(json.locked)
+
+            setHeaderSrc(json.header);
+            setAvatarSrc(json.avatar);
+
+            setDisplayName(json.display_name);
+            setBio(json.source.note);
+            setLocked(json.locked);
 		}).catch((e) => {
 			setError(e.message);
 			setStatus("");
@@ -58,14 +89,18 @@ module.exports = function Basic({oauth, account}) {
 	}
 
     return (
-        <section className="basic">
-            <h1>@{account.username}<button onClick={submit}>Save</button></h1>
-            <div className="error accent">{errorMsg}</div>
+        <section>
+            <h1>@{account.username}'s Profile</h1>
             <form>
                 <div className="labelinput">
+                    <label htmlFor="header">Header</label>
+                    <img className="headerpreview" src={headerSrc}/>
+                    <input id="header" type="file" accept="image/*" onChange={headerOnChange}/>
+                </div>
+                <div className="labelinput">
                     <label htmlFor="avatar">Avatar</label>
-                    <img className="avatarpreview" src={account.avatar}/>
-                    <input id="avatar" type="file"/>
+                    <img className="avatarpreview" src={avatarSrc}/>
+                    <input id="avatar" type="file" accept="image/*" onChange={avatarOnChange}/>
                 </div>
                 <div className="labelinput">
                     <label htmlFor="displayname">Display Name</label>
@@ -80,7 +115,10 @@ module.exports = function Basic({oauth, account}) {
                     <input id="locked" type="checkbox" checked={locked} onChange={(e) => setLocked(e.target.checked)}/>
                 </div>
             </form>
+            <div className="messagebutton">
+                <button onClick={submit}>Save</button>
+                <div className="error accent">{errorMsg ? errorMsg : statusMsg}</div>
+            </div>
         </section>
 	);
 }
-
