@@ -155,6 +155,8 @@ type Processor interface {
 
 	// NotificationsGet
 	NotificationsGet(ctx context.Context, authed *oauth.Auth, limit int, maxID string, sinceID string) (*apimodel.TimelineResponse, gtserror.WithCode)
+	// NotificationsClear
+	NotificationsClear(ctx context.Context, authed *oauth.Auth) gtserror.WithCode
 
 	OAuthHandleTokenRequest(r *http.Request) (map[string]interface{}, gtserror.WithCode)
 	OAuthHandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) error

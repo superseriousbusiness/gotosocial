@@ -108,3 +108,17 @@ func (n *notificationDB) GetNotifications(ctx context.Context, accountID string,
 
 	return notifs, nil
 }
+
+func (n *notificationDB) ClearNotifications(ctx context.Context, accountID string) db.Error {
+	if _, err := n.conn.
+		NewDelete().
+		Table("notifications").
+		Where("target_account_id = ?", accountID).
+		Exec(ctx); err != nil {
+		return n.conn.ProcessError(err)
+	}
+
+	n.cache.Clear()
+
+	return nil
+}
