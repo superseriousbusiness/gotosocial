@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-section {
+section.basic, section.posts, section.security {
 	form {
 		display: flex;
 		flex-direction: column;
@@ -52,36 +52,29 @@ section {
 	}
 
 	h1 {
-		display: flex;
-		justify-content: space-between;
 		margin-bottom: 0.5rem;
 	}
-}
 
-.labelinput, .labelselect {
-	display: flex;
-	flex-direction: column;
-	gap: 0.4rem;
+	img {
+		text-align: center;
+		border: 1px solid red;
+		object-fit: cover;
+		border-radius: 0.2rem;
+		border: $profile_avatar_border;
+		box-sizing: border-box;
+	}
+	
+	.avatarpreview {
+		height: 8.5rem;
+		width: 8.5rem;
+	}
+	
+	.headerpreview {
+		width: 100%;
+		aspect-ratio: 3 / 1;
+		overflow: hidden;
+	}
 }
-
-.labelcheckbox {
-	display: flex;
-	gap: 0.4rem;
-}
-
-.avatarpreview {
-	height: 8.5rem;
-	width: 8.5rem;
-	object-fit: cover;
-	border-radius: 0.2rem;
-}
-
-.headerpreview {
-	width: 100%;
-	aspect-ratio: 3 / 1;
-	overflow: hidden;
-	object-fit: cover;
-	border-radius: 0.2rem;
 }
 
 .titlesave {

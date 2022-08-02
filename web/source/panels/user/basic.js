@@ -89,17 +89,17 @@ module.exports = function Basic({oauth, account}) {
 	}
 
     return (
-        <section>
+        <section className="basic">
             <h1>@{account.username}'s Profile</h1>
             <form>
                 <div className="labelinput">
                     <label htmlFor="header">Header</label>
-                    <img className="headerpreview" src={headerSrc}/>
+                    <img className="headerpreview" src={headerSrc} alt={headerSrc ? `header image for ${account.username}` : "None set"}/>
                     <input id="header" type="file" accept="image/*" onChange={headerOnChange}/>
                 </div>
                 <div className="labelinput">
                     <label htmlFor="avatar">Avatar</label>
-                    <img className="avatarpreview" src={avatarSrc}/>
+                    <img className="avatarpreview" src={avatarSrc} alt={headerSrc ? `avatar image for ${account.username}` : "None set"}/>
                     <input id="avatar" type="file" accept="image/*" onChange={avatarOnChange}/>
                 </div>
                 <div className="labelinput">
