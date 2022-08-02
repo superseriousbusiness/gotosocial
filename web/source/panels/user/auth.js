@@ -87,9 +87,11 @@ module.exports = function Auth({setOauth}) {
 		<section className="login">
 			<h1>OAUTH Login:</h1>
 			<form onSubmit={(e) => e.preventDefault()}>
-				<label htmlFor="instance">Instance: </label>
-				<input value={instance} onChange={updateInstance} id="instance"/>
-				<button onClick={doAuth}>Authenticate</button>
+				<div className="labelinput">
+					<label htmlFor="instance">Instance</label>
+					<input value={instance} onChange={updateInstance} id="instance"/>
+				</div>
+				<button className="btn" onClick={doAuth}>Authenticate</button>
 			</form>
 		</section>
 	);
