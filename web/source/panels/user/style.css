@@ -75,6 +75,16 @@ section.basic, section.posts, section.security {
 		overflow: hidden;
 	}
 }
+
+.labelinput, .labelselect {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.labelcheckbox {
+	display: flex;
+	gap: 0.4rem;
 }
 
 .titlesave {

@@ -63,7 +63,7 @@ module.exports = function Posts({oauth, account}) {
 	}
 
     return (
-        <section>
+        <section className="posts">
             <h1>Post Settings</h1>
             <form>
                 <div className="labelselect">
