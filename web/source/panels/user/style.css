@@ -88,3 +88,7 @@ section.basic, section.posts, section.security {
 	gap: 2rem;
 	align-items: center;
 }
+
+.logout {
+	margin-bottom: 2rem;
+}
