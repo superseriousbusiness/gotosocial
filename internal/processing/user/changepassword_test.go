@@ -56,17 +56,35 @@ func (suite *ChangePasswordTestSuite) TestChangePasswordIncorrectOld() {
 
 	errWithCode := suite.user.ChangePassword(context.Background(), user, "ooooopsydoooopsy", "verygoodnewpassword")
 	suite.EqualError(errWithCode, "crypto/bcrypt: hashedPassword is not the hash of the given password")
-	suite.Equal(http.StatusBadRequest, errWithCode.Code())
-	suite.Equal("Bad Request: old password did not match", errWithCode.Safe())
+	suite.Equal(http.StatusUnauthorized, errWithCode.Code())
+	suite.Equal("Unauthorized: old password was incorrect", errWithCode.Safe())
+
+	// get user from the db again
+	dbUser := &gtsmodel.User{}
+	err := suite.db.GetByID(context.Background(), user.ID, dbUser)
+	suite.NoError(err)
+
+	// check the password has not changed
+	err = bcrypt.CompareHashAndPassword([]byte(dbUser.EncryptedPassword), []byte("password"))
+	suite.NoError(err)
 }
 
 func (suite *ChangePasswordTestSuite) TestChangePasswordWeakNew() {
 	user := suite.testUsers["local_account_1"]
 
 	errWithCode := suite.user.ChangePassword(context.Background(), user, "password", "1234")
-	suite.EqualError(errWithCode, "password is 11% strength, try including more special characters, using lowercase letters, using uppercase letters or using a longer password")
+	suite.EqualError(errWithCode, "password is only 11% strength, try including more special characters, using lowercase letters, using uppercase letters or using a longer password")
 	suite.Equal(http.StatusBadRequest, errWithCode.Code())
-	suite.Equal("Bad Request: password is 11% strength, try including more special characters, using lowercase letters, using uppercase letters or using a longer password", errWithCode.Safe())
+	suite.Equal("Bad Request: password is only 11% strength, try including more special characters, using lowercase letters, using uppercase letters or using a longer password", errWithCode.Safe())
+
+	// get user from the db again
+	dbUser := &gtsmodel.User{}
+	err := suite.db.GetByID(context.Background(), user.ID, dbUser)
+	suite.NoError(err)
+
+	// check the password has not changed
+	err = bcrypt.CompareHashAndPassword([]byte(dbUser.EncryptedPassword), []byte("password"))
+	suite.NoError(err)
 }
 
 func TestChangePasswordTestSuite(t *testing.T) {
