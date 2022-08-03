@@ -21,6 +21,8 @@
 const React = require("react");
 const Promise = require("bluebird");
 
+const Submit = require("../../lib/submit")
+
 module.exports = function Basic({oauth, account}) {
 	const [errorMsg, setError] = React.useState("");
 	const [statusMsg, setStatus] = React.useState("");
@@ -54,7 +56,9 @@ module.exports = function Basic({oauth, account}) {
         setAvatarSrc(URL.createObjectURL(e.target.files[0]));
     }
 
-	function submit() {
+	const submit = (e) => {
+        e.preventDefault();
+
 		setStatus("PATCHing");
 		setError("");
 		return Promise.try(() => {
@@ -114,11 +118,8 @@ module.exports = function Basic({oauth, account}) {
                     <label htmlFor="locked">Manually approve follow requests</label>
                     <input id="locked" type="checkbox" checked={locked} onChange={(e) => setLocked(e.target.checked)}/>
                 </div>
+                <Submit onClick={submit} label="Save profile info" errorMsg={errorMsg} statusMsg={statusMsg}/>
             </form>
-            <div className="messagebutton">
-                <button onClick={submit}>Save profile info</button>
-                <div className="error accent">{errorMsg ? errorMsg : statusMsg}</div>
-            </div>
         </section>
 	);
 }

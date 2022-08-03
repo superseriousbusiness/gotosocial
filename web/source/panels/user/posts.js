@@ -22,6 +22,7 @@ const React = require("react");
 const Promise = require("bluebird");
 
 const Languages = require("./languages")
+const Submit = require("../../lib/submit")
 
 module.exports = function Posts({oauth, account}) {
 	const [errorMsg, setError] = React.useState("");
@@ -40,7 +41,9 @@ module.exports = function Posts({oauth, account}) {
         
     }, [account, setSensitive, setPrivacy]);
 
-	function submit() {
+	const submit = (e) => {
+        e.preventDefault();
+
 		setStatus("PATCHing");
 		setError("");
 		return Promise.try(() => {
@@ -55,7 +58,7 @@ module.exports = function Posts({oauth, account}) {
 			setStatus("Saved!");
             setLanguage(json.source.language.toUpperCase());
             setPrivacy(json.source.privacy);
-            setSensitive(json.source.sensitive);
+            setSensitive(json.source.sensitive ? json.source.sensitive : false);
 		}).catch((e) => {
 			setError(e.message);
 			setStatus("");
@@ -68,7 +71,7 @@ module.exports = function Posts({oauth, account}) {
             <form>
                 <div className="labelselect">
                     <label htmlFor="language">Default post language</label>
-                    <select id="language" value={language} onChange={(e) => setLanguage(e.target.value)}>
+                    <select id="language" autoComplete="language" value={language} onChange={(e) => setLanguage(e.target.value)}>
                         <Languages />
                     </select>
                 </div>
@@ -85,11 +88,8 @@ module.exports = function Posts({oauth, account}) {
                     <label htmlFor="sensitive">Mark my posts as sensitive by default</label>
                     <input id="sensitive" type="checkbox" checked={sensitive} onChange={(e) => setSensitive(e.target.checked)}/>
                 </div>
+                <Submit onClick={submit} label="Save post settings" errorMsg={errorMsg} statusMsg={statusMsg}/>
             </form>
-            <div className="messagebutton">
-                <button onClick={submit}>Save post settings</button>
-                <div className="error accent">{errorMsg ? errorMsg : statusMsg}</div>
-            </div>
         </section>
 	);
 }

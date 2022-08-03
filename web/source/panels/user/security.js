@@ -21,6 +21,8 @@
 const React = require("react");
 const Promise = require("bluebird");
 
+const Submit = require("../../lib/submit")
+
 module.exports = function Security({oauth}) {
 	const [errorMsg, setError] = React.useState("");
 	const [statusMsg, setStatus] = React.useState("");
@@ -29,7 +31,9 @@ module.exports = function Security({oauth}) {
    const [newPassword, setNewPassword] = React.useState("");
    const [newPasswordConfirm, setNewPasswordConfirm] = React.useState("");
 
-   function submit() {
+   const submit = (e) => {
+      e.preventDefault();
+
 		if (newPassword !== newPasswordConfirm) {
          setError("New password and confirm new password did not match!");
          return
@@ -69,11 +73,8 @@ module.exports = function Security({oauth}) {
                   <label htmlFor="newpasswordconfirm">Confirm new password</label>
                   <input id="newpasswordconfirm" type="password" value={newPasswordConfirm} onChange={(e) => setNewPasswordConfirm(e.target.value)} />
                </div>
+               <Submit onClick={submit} label="Save new password" errorMsg={errorMsg} statusMsg={statusMsg}/>
             </form>
-            <div className="messagebutton">
-               <button onClick={submit}>Save new password</button>
-               <div className="error accent">{errorMsg ? errorMsg : statusMsg}</div>
-            </div>
         </section>
    )
 }
