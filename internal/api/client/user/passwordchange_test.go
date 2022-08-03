@@ -119,13 +119,13 @@ func (suite *PasswordChangeTestSuite) TestPasswordIncorrectOldPassword() {
 	suite.userModule.PasswordChangePOSTHandler(ctx)
 
 	// check response
-	suite.EqualValues(http.StatusBadRequest, recorder.Code)
+	suite.EqualValues(http.StatusUnauthorized, recorder.Code)
 
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
-	suite.Equal(`{"error":"Bad Request: old password did not match"}`, string(b))
+	suite.Equal(`{"error":"Unauthorized: old password was incorrect"}`, string(b))
 }
 
 func (suite *PasswordChangeTestSuite) TestPasswordWeakNewPassword() {
@@ -153,7 +153,7 @@ func (suite *PasswordChangeTestSuite) TestPasswordWeakNewPassword() {
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
-	suite.Equal(`{"error":"Bad Request: password is 94% strength, try including more special characters, using uppercase letters, using numbers or using a longer password"}`, string(b))
+	suite.Equal(`{"error":"Bad Request: password is only 94% strength, try including more special characters, using uppercase letters, using numbers or using a longer password"}`, string(b))
 }
 
 func TestPasswordChangeTestSuite(t *testing.T) {
