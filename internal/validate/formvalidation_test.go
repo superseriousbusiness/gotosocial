@@ -50,22 +50,22 @@ func (suite *ValidationTestSuite) TestCheckPasswordStrength() {
 
 	err = validate.NewPassword(terriblePassword)
 	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("password is 62% strength, try including more special characters, using uppercase letters, using numbers or using a longer password"), err)
+		assert.Equal(suite.T(), errors.New("password is only 62% strength, try including more special characters, using uppercase letters, using numbers or using a longer password"), err)
 	}
 
 	err = validate.NewPassword(weakPassword)
 	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("password is 95% strength, try including more special characters, using numbers or using a longer password"), err)
+		assert.Equal(suite.T(), errors.New("password is only 95% strength, try including more special characters, using numbers or using a longer password"), err)
 	}
 
 	err = validate.NewPassword(shortPassword)
 	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("password is 39% strength, try including more special characters or using a longer password"), err)
+		assert.Equal(suite.T(), errors.New("password is only 39% strength, try including more special characters or using a longer password"), err)
 	}
 
 	err = validate.NewPassword(specialPassword)
 	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("password is 53% strength, try including more special characters or using a longer password"), err)
+		assert.Equal(suite.T(), errors.New("password is only 53% strength, try including more special characters or using a longer password"), err)
 	}
 
 	err = validate.NewPassword(longPassword)
