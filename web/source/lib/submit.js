@@ -16,48 +16,15 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-body {
-	grid-template-rows: auto 1fr;
-}
+"use strict";
 
-.capitalize {
-	text-transform: capitalize;
-}
+const React = require("react");
 
-section {
-	margin-bottom: 1rem;
-}
-
-input, select, textarea {
-	box-sizing: border-box;
-}
-
-.error {
-	font-weight: bold;
-}
-
-.hidden {
-	display: none;
-}
-
-.messagebutton {
-	margin-top: 1rem;
-	display: flex;
-	gap: 1rem;
-	align-items: center;
-
-	button {
-		white-space: nowrap;
-	}
-}
-
-.notImplemented {
-	border: 2px solid rgb(70, 79, 88);
-	background: repeating-linear-gradient(
-		-45deg,
-		#525c66,
-		#525c66 10px,
-		rgb(70, 79, 88) 10px,
-		rgb(70, 79, 88) 20px
-	) !important;
+module.exports = function Submit({onClick, label, errorMsg, statusMsg}) {
+    return (
+        <div className="messagebutton">
+            <button type="submit" onClick={onClick}>{ label }</button>
+            <div className="error accent">{errorMsg ? errorMsg : statusMsg}</div>
+        </div>
+    )
 }
