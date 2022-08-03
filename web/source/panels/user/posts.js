@@ -68,17 +68,18 @@ module.exports = function Posts({oauth, account}) {
             <form>
                 <div className="labelselect">
                     <label htmlFor="language">Default post language</label>
-                    <select id="languages" value={language} onChange={(e) => setLanguage(e.target.value)}>
+                    <select id="language" value={language} onChange={(e) => setLanguage(e.target.value)}>
                         <Languages />
                     </select>
                 </div>
                 <div className="labelselect">
                     <label htmlFor="privacy">Default post privacy</label>
                     <select id="privacy" value={privacy} onChange={(e) => setPrivacy(e.target.value)}>
-                        <option value="private">Private (followers-only)</option>
-                        <option value="unlisted">Unlocked (unlisted)</option>
+                        <option value="private">Private / followers-only)</option>
+                        <option value="unlisted">Unlisted</option>
                         <option value="public">Public</option>
                     </select>
+                    <a href="https://docs.gotosocial.org/en/latest/user_guide/posts/#privacy-settings" target="_blank" className="moreinfolink">Learn more about post privacy settings (opens in a new tab)</a>
                 </div>
                 <div className="labelcheckbox">
                     <label htmlFor="sensitive">Mark my posts as sensitive by default</label>
@@ -86,7 +87,7 @@ module.exports = function Posts({oauth, account}) {
                 </div>
             </form>
             <div className="messagebutton">
-                <button onClick={submit}>Save</button>
+                <button onClick={submit}>Save post settings</button>
                 <div className="error accent">{errorMsg ? errorMsg : statusMsg}</div>
             </div>
         </section>

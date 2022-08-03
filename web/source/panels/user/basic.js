@@ -90,7 +90,7 @@ module.exports = function Basic({oauth, account}) {
 
     return (
         <section className="basic">
-            <h1>@{account.username}'s Profile</h1>
+            <h1>@{account.username}'s Profile Info</h1>
             <form>
                 <div className="labelinput">
                     <label htmlFor="header">Header</label>
@@ -116,7 +116,7 @@ module.exports = function Basic({oauth, account}) {
                 </div>
             </form>
             <div className="messagebutton">
-                <button onClick={submit}>Save</button>
+                <button onClick={submit}>Save profile info</button>
                 <div className="error accent">{errorMsg ? errorMsg : statusMsg}</div>
             </div>
         </section>

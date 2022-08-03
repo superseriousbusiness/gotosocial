@@ -71,7 +71,7 @@ module.exports = function Security({oauth}) {
                </div>
             </form>
             <div className="messagebutton">
-               <button onClick={submit}>Save</button>
+               <button onClick={submit}>Save new password</button>
                <div className="error accent">{errorMsg ? errorMsg : statusMsg}</div>
             </div>
         </section>

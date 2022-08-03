@@ -82,7 +82,7 @@ function UserPanel({oauth}) {
 	return (
 		<React.Fragment>
 			<div>
-				<button className="logout" onClick={oauth.logout}>Logout</button>
+				<button className="logout" onClick={oauth.logout}>Log out of settings panel</button>
 			</div>
             <Basic oauth={oauth} account={account}/>
 			<Posts oauth={oauth} account={account}/>
