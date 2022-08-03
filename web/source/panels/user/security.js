@@ -62,16 +62,16 @@ module.exports = function Security({oauth}) {
             <h1>Password Change</h1>
             <form>
                <div className="labelinput">
-                  <label htmlFor="oldpassword">Old password</label>
-                  <input id="oldpassword" type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
+                  <label htmlFor="password">Current password</label>
+                  <input name="password" id="password" type="password" autoComplete="current-password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
                </div>
                <div className="labelinput">
-                  <label htmlFor="newpassword">New password</label>
-                  <input id="newpassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                  <label htmlFor="new-password">New password</label>
+                  <input name="new-password" id="new-password" type="password" autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                </div>
                <div className="labelinput">
-                  <label htmlFor="newpasswordconfirm">Confirm new password</label>
-                  <input id="newpasswordconfirm" type="password" value={newPasswordConfirm} onChange={(e) => setNewPasswordConfirm(e.target.value)} />
+                  <label htmlFor="confirm-new-password">Confirm new password</label>
+                  <input name="confirm-new-password" id="confirm-new-password" type="password" autoComplete="new-password" value={newPasswordConfirm} onChange={(e) => setNewPasswordConfirm(e.target.value)} />
                </div>
                <Submit onClick={submit} label="Save new password" errorMsg={errorMsg} statusMsg={statusMsg}/>
             </form>
