@@ -23,14 +23,13 @@
 // our frontend templates don't load the common bundle.js since it contains React etc
 // so we can't use any dependencies that would deduplicate with the other files
 
-const Photoswipe = require("../node_modules/photoswipe/dist/umd/photoswipe.umd.min.js");
-const PhotoSwipeLightbox = require("../node_modules/photoswipe/dist/umd/photoswipe-lightbox.umd.min.js");
+const Photoswipe = require("photoswipe/dist/umd/photoswipe.umd.min.js");
+const PhotoswipeLightbox = require("photoswipe/dist/umd/photoswipe-lightbox.umd.min.js");
 
-const lightbox = new PhotoSwipeLightbox({
+const lightbox = new PhotoswipeLightbox({
 	gallery: '.photoswipe-gallery',
 	children: 'a',
 	pswpModule: Photoswipe,
-	// initialZoomLevel: "fit"
 });
 lightbox.init();
 

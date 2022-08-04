@@ -16,7 +16,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-@import "../node_modules/photoswipe/dist/photoswipe.css";
+@import "photoswipe/dist/photoswipe.css";
 
 main {
 	background: transparent;

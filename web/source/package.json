@@ -1,6 +1,6 @@
 {
   "name": "gotosocial-frontend",
-  "version": "0.3.4",
+  "version": "0.3.8",
   "description": "GoToSocial frontend sources",
   "main": "index.js",
   "author": "f0x",
