@@ -64,12 +64,12 @@ function App() {
 }
 
 function UserPanel({oauth}) {
-   const [account, setAccount] = React.useState({});
+	const [account, setAccount] = React.useState({});
 	const [errorMsg, setError] = React.useState("");
 	const [statusMsg, setStatus] = React.useState("Fetching user info");
 
-   React.useEffect(() => {
-      Promise.try(() => {
+	React.useEffect(() => {
+		Promise.try(() => {
 			return oauth.apiRequest("/api/v1/accounts/verify_credentials", "GET");
 		}).then((json) => {
 			setAccount(json);
@@ -77,14 +77,14 @@ function UserPanel({oauth}) {
 			setError(e.message);
 			setStatus("");
 		});
-   }, [oauth, setAccount, setError, setStatus])
+	}, [oauth, setAccount, setError, setStatus]);
 
 	return (
 		<React.Fragment>
 			<div>
 				<button className="logout" onClick={oauth.logout}>Log out of settings panel</button>
 			</div>
-            <Basic oauth={oauth} account={account}/>
+			<Basic oauth={oauth} account={account}/>
 			<Posts oauth={oauth} account={account}/>
 			<Security oauth={oauth}/>
 		</React.Fragment>

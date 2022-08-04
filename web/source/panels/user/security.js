@@ -21,60 +21,60 @@
 const React = require("react");
 const Promise = require("bluebird");
 
-const Submit = require("../../lib/submit")
+const Submit = require("../../lib/submit");
 
 module.exports = function Security({oauth}) {
 	const [errorMsg, setError] = React.useState("");
 	const [statusMsg, setStatus] = React.useState("");
 
-   const [oldPassword, setOldPassword] = React.useState("");
-   const [newPassword, setNewPassword] = React.useState("");
-   const [newPasswordConfirm, setNewPasswordConfirm] = React.useState("");
+	const [oldPassword, setOldPassword] = React.useState("");
+	const [newPassword, setNewPassword] = React.useState("");
+	const [newPasswordConfirm, setNewPasswordConfirm] = React.useState("");
 
-   const submit = (e) => {
-      e.preventDefault();
+	const submit = (e) => {
+		e.preventDefault();
 
 		if (newPassword !== newPasswordConfirm) {
-         setError("New password and confirm new password did not match!");
-         return
-      }
+			setError("New password and confirm new password did not match!");
+			return;
+		}
       
-      setStatus("PATCHing");
+		setStatus("PATCHing");
 		setError("");
 		return Promise.try(() => {
 			let formDataInfo = new FormData();
-         formDataInfo.set("old_password", oldPassword);
-         formDataInfo.set("new_password", newPassword);
+			formDataInfo.set("old_password", oldPassword);
+			formDataInfo.set("new_password", newPassword);
 			return oauth.apiRequest("/api/v1/user/password_change", "POST", formDataInfo, "form");
 		}).then((json) => {
 			setStatus("Saved!");
-         setOldPassword("");
-         setNewPassword("");
-         setNewPasswordConfirm("");
+			setOldPassword("");
+			setNewPassword("");
+			setNewPasswordConfirm("");
 		}).catch((e) => {
 			setError(e.message);
 			setStatus("");
 		});
-	}
+	};
 
-   return (
-      <section className="security">
-            <h1>Password Change</h1>
-            <form>
-               <div className="labelinput">
-                  <label htmlFor="password">Current password</label>
-                  <input name="password" id="password" type="password" autoComplete="current-password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
-               </div>
-               <div className="labelinput">
-                  <label htmlFor="new-password">New password</label>
-                  <input name="new-password" id="new-password" type="password" autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-               </div>
-               <div className="labelinput">
-                  <label htmlFor="confirm-new-password">Confirm new password</label>
-                  <input name="confirm-new-password" id="confirm-new-password" type="password" autoComplete="new-password" value={newPasswordConfirm} onChange={(e) => setNewPasswordConfirm(e.target.value)} />
-               </div>
-               <Submit onClick={submit} label="Save new password" errorMsg={errorMsg} statusMsg={statusMsg}/>
-            </form>
-        </section>
-   )
-}
+	return (
+		<section className="security">
+			<h1>Password Change</h1>
+			<form>
+				<div className="labelinput">
+					<label htmlFor="password">Current password</label>
+					<input name="password" id="password" type="password" autoComplete="current-password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
+				</div>
+				<div className="labelinput">
+					<label htmlFor="new-password">New password</label>
+					<input name="new-password" id="new-password" type="password" autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+				</div>
+				<div className="labelinput">
+					<label htmlFor="confirm-new-password">Confirm new password</label>
+					<input name="confirm-new-password" id="confirm-new-password" type="password" autoComplete="new-password" value={newPasswordConfirm} onChange={(e) => setNewPasswordConfirm(e.target.value)} />
+				</div>
+				<Submit onClick={submit} label="Save new password" errorMsg={errorMsg} statusMsg={statusMsg}/>
+			</form>
+		</section>
+	);
+};

@@ -21,10 +21,10 @@
 const React = require("react");
 
 module.exports = function Submit({onClick, label, errorMsg, statusMsg}) {
-    return (
-        <div className="messagebutton">
-            <button type="submit" onClick={onClick}>{ label }</button>
-            <div className="error accent">{errorMsg ? errorMsg : statusMsg}</div>
-        </div>
-    )
-}
+	return (
+		<div className="messagebutton">
+			<button type="submit" onClick={onClick}>{ label }</button>
+			<div className="error accent">{errorMsg ? errorMsg : statusMsg}</div>
+		</div>
+	);
+};
