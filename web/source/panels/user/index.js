@@ -22,46 +22,14 @@ const Promise = require("bluebird");
 const React = require("react");
 const ReactDom = require("react-dom");
 
-const oauthLib = require("../../lib/oauth.js");
-const Auth = require("./auth");
+const createPanel = require("../lib/panel");
+
 const Basic = require("./basic");
 const Posts = require("./posts");
 const Security = require("./security");
 
 require("../base.css");
 require("./style.css");
-
-function App() {
-	const [oauth, setOauth] = React.useState();
-	const [hasAuth, setAuth] = React.useState(false);
-	const [oauthState, setOauthState] = React.useState(localStorage.getItem("oauth"));
-
-	React.useEffect(() => {
-		let state = localStorage.getItem("oauth");
-		if (state != undefined) {
-			state = JSON.parse(state);
-			let restoredOauth = oauthLib(state.config, state);
-			Promise.try(() => {
-				return restoredOauth.callback();
-			}).then(() => {
-				setAuth(true);
-			});
-			setOauth(restoredOauth);
-		}
-	}, [setAuth, setOauth]);
-
-	if (!hasAuth && oauth && oauth.isAuthorized()) {
-		setAuth(true);
-	}
-
-	if (oauth && oauth.isAuthorized()) {
-		return <UserPanel oauth={oauth} />;
-	} else if (oauthState != undefined) {
-		return "processing oauth...";
-	} else {
-		return <Auth setOauth={setOauth} />;
-	}
-}
 
 function UserPanel({oauth}) {
 	const [account, setAccount] = React.useState({});
@@ -91,4 +59,4 @@ function UserPanel({oauth}) {
 	);
 }
 
-ReactDom.render(<App/>, document.getElementById("root"));
+createPanel("GoToSocial User Panel", ["read write"], UserPanel);
