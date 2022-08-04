@@ -4616,6 +4616,11 @@ pem@^1.13.2:
     os-tmpdir "^1.0.1"
     which "^2.0.2"
 
+photoswipe@^5.3.0:
+  version "5.3.0"
+  resolved "https://registry.yarnpkg.com/photoswipe/-/photoswipe-5.3.0.tgz#fe118b147dddaf58ccc17c9403c7d7148805f8d2"
+  integrity sha512-vZMwziQorjiagzX7EvWimVT0YHO0DWNtR9UT6cv3yW1FA199LgsTpj4ziB2oJ/X/197gKmi56Oux5PudWUAmuw==
+
 picocolors@^0.2.1:
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/picocolors/-/picocolors-0.2.1.tgz#570670f793646851d1ba135996962abad587859f"

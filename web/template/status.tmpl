@@ -15,9 +15,9 @@
 		</div>
 	</div>
 	{{with .MediaAttachments}}
-		<div class="media {{(len .) | oddOrEven }}{{if eq (len .) 1}} single{{end}}{{if eq (len .) 2}} double{{end}}">
+		<div class="media photoswipe-gallery {{(len .) | oddOrEven }}{{if eq (len .) 1}} single{{end}}{{if eq (len .) 2}} double{{end}}">
 			{{range .}}
-				<a href="{{.URL}}" target="_blank" title="{{.Description}}">
+				<a href="{{.URL}}" target="_blank" title="{{.Description}}" data-pswp-width="{{.Meta.Original.Width}}px" data-pswp-height="{{.Meta.Original.Height}}px">
 						{{if not .Description}}
 			 			<div class="no-image-desc" aria-hidden="true" ><i class="fa fa-info-circle"></i><span>Missing image description</span></div>
 					{{end}}

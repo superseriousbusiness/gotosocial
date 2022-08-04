@@ -23,9 +23,19 @@
 // our frontend templates don't load the common bundle.js since it contains React etc
 // so we can't use any dependencies that would deduplicate with the other files
 
+const Photoswipe = require("../node_modules/photoswipe/dist/umd/photoswipe.umd.min.js");
+const PhotoSwipeLightbox = require("../node_modules/photoswipe/dist/umd/photoswipe-lightbox.umd.min.js");
+
+const lightbox = new PhotoSwipeLightbox({
+	gallery: '.photoswipe-gallery',
+	children: 'a',
+	pswpModule: Photoswipe,
+	// initialZoomLevel: "fit"
+});
+lightbox.init();
+
 Array.from(document.getElementsByClassName("spoiler-label")).forEach((label) => {
 	let checkbox = document.getElementById(label.htmlFor);
-	console.log(label, checkbox);
 	if (checkbox != undefined) {
 		function update() {
 			if(checkbox.checked) {
