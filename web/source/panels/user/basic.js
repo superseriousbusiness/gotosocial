@@ -94,7 +94,7 @@ module.exports = function Basic({oauth, account}) {
 
 	return (
 		<section className="basic">
-			<h1>@{account.username}'s Profile Info</h1>
+			<h1>@{account.username}&apos;s Profile Info</h1>
 			<form>
 				<div className="labelinput">
 					<label htmlFor="header">Header</label>
