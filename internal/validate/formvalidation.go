@@ -144,7 +144,19 @@ func Privacy(privacy string) error {
 	case apimodel.VisibilityDirect, apimodel.VisibilityMutualsOnly, apimodel.VisibilityPrivate, apimodel.VisibilityPublic, apimodel.VisibilityUnlisted:
 		return nil
 	}
-	return fmt.Errorf("privacy %s was not recognized", privacy)
+	return fmt.Errorf("privacy '%s' was not recognized, valid options are 'direct', 'mutuals_only', 'private', 'public', 'unlisted'", privacy)
+}
+
+// StatusFormat checks that the desired status format setting is valid.
+func StatusFormat(statusFormat string) error {
+	if statusFormat == "" {
+		return fmt.Errorf("empty string for status format not allowed")
+	}
+	switch apimodel.StatusFormat(statusFormat) {
+	case apimodel.StatusFormatPlain, apimodel.StatusFormatMarkdown:
+		return nil
+	}
+	return fmt.Errorf("status format '%s' was not recognized, valid options are 'plain', 'markdown'", statusFormat)
 }
 
 // EmojiShortcode just runs the given shortcode through the regular expression
