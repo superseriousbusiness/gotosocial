@@ -88,6 +88,10 @@ import (
 //   in: formData
 //   description: Default language to use for authored statuses (ISO 6391).
 //   type: string
+// - name: source[status_format]
+//   in: formData
+//   description: Default format to use for authored statuses (plain or markdown).
+//   type: string
 //
 // security:
 // - OAuth2 Bearer:
@@ -163,6 +167,10 @@ func parseUpdateAccountForm(c *gin.Context) (*model.UpdateCredentialsRequest, er
 		form.Source.Language = &language
 	}
 
+	if statusFormat, ok := sourceMap["status_format"]; ok {
+		form.Source.StatusFormat = &statusFormat
+	}
+
 	if form == nil ||
 		(form.Discoverable == nil &&
 			form.Bot == nil &&
@@ -174,6 +182,7 @@ func parseUpdateAccountForm(c *gin.Context) (*model.UpdateCredentialsRequest, er
 			form.Source.Privacy == nil &&
 			form.Source.Sensitive == nil &&
 			form.Source.Language == nil &&
+			form.Source.StatusFormat == nil &&
 			form.FieldsAttributes == nil) {
 		return nil, errors.New("empty form submitted")
 	}
