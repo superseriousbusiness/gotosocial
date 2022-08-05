@@ -277,7 +277,7 @@ func (p *processor) ProcessContent(ctx context.Context, form *apimodel.AdvancedS
 			return fmt.Errorf("error processing new content: couldn't retrieve account from db to check post format: %s", err)
 		}
 
-		switch acct.PostFormat {
+		switch acct.StatusFormat {
 		case "plain":
 			form.Format = model.StatusFormatPlain
 		case "markdown":
