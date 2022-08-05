@@ -144,21 +144,6 @@ func parseUpdateAccountForm(c *gin.Context) (*model.UpdateCredentialsRequest, er
 		return nil, fmt.Errorf("could not parse form from request: %s", err)
 	}
 
-	if form == nil ||
-		(form.Discoverable == nil &&
-			form.Bot == nil &&
-			form.DisplayName == nil &&
-			form.Note == nil &&
-			form.Avatar == nil &&
-			form.Header == nil &&
-			form.Locked == nil &&
-			form.Source.Privacy == nil &&
-			form.Source.Sensitive == nil &&
-			form.Source.Language == nil &&
-			form.FieldsAttributes == nil) {
-		return nil, errors.New("empty form submitted")
-	}
-
 	// parse source field-by-field
 	sourceMap := c.PostFormMap("source")
 
@@ -176,6 +161,21 @@ func parseUpdateAccountForm(c *gin.Context) (*model.UpdateCredentialsRequest, er
 
 	if language, ok := sourceMap["language"]; ok {
 		form.Source.Language = &language
+	}
+
+	if form == nil ||
+		(form.Discoverable == nil &&
+			form.Bot == nil &&
+			form.DisplayName == nil &&
+			form.Note == nil &&
+			form.Avatar == nil &&
+			form.Header == nil &&
+			form.Locked == nil &&
+			form.Source.Privacy == nil &&
+			form.Source.Sensitive == nil &&
+			form.Source.Language == nil &&
+			form.FieldsAttributes == nil) {
+		return nil, errors.New("empty form submitted")
 	}
 
 	return form, nil
