@@ -20,6 +20,7 @@ package security
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -45,6 +46,11 @@ func New(db db.DB, server oauth.Server) api.ClientModule {
 
 // Route attaches security middleware to the given router
 func (m *Module) Route(s router.Router) error {
+	s.AttachMiddleware(m.RateLimit(RateLimitOptions{
+		// accept a maximum of 300 requests in 5 minutes window
+		Period: 5 * time.Minute,
+		Limit:  300,
+	}))
 	s.AttachMiddleware(m.SignatureCheck)
 	s.AttachMiddleware(m.FlocBlock)
 	s.AttachMiddleware(m.ExtraHeaders)
