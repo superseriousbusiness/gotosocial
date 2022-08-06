@@ -114,6 +114,14 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 			privacy := p.tc.APIVisToVis(apimodel.Visibility(*form.Source.Privacy))
 			account.Privacy = privacy
 		}
+
+		if form.Source.StatusFormat != nil {
+			if err := validate.StatusFormat(*form.Source.StatusFormat); err != nil {
+				return nil, gtserror.NewErrorBadRequest(err, err.Error())
+			}
+
+			account.StatusFormat = *form.Source.StatusFormat
+		}
 	}
 
 	updatedAccount, err := p.db.UpdateAccount(ctx, account)

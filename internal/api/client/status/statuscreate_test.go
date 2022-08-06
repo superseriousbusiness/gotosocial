@@ -41,13 +41,11 @@ type StatusCreateTestSuite struct {
 	StatusStandardTestSuite
 }
 
-var statusWithLinksAndTags = `#test alright, should be able to post #links with fragments in them now, let's see........
-
-https://docs.gotosocial.org/en/latest/user_guide/posts/#links
-
-#gotosocial
-
-(tobi remember to pull the docker image challenge)`
+const (
+	statusWithLinksAndTags = "#test alright, should be able to post #links with fragments in them now, let's see........\n\nhttps://docs.gotosocial.org/en/latest/user_guide/posts/#links\n\n#gotosocial\n\n(tobi remember to pull the docker image challenge)"
+	statusMarkdown         = "# Title\n\n## Smaller title\n\nThis is a post written in [markdown](https://www.markdownguide.org/)\n\n<img src=\"https://d33wubrfki0l68.cloudfront.net/f1f475a6fda1c2c4be4cac04033db5c3293032b4/513a4/assets/images/markdown-mark-white.svg\"/>"
+	statusMarkdownExpected = "<h1>Title</h1>\n\n<h2>Smaller title</h2>\n\n<p>This is a post written in <a href=\"https://www.markdownguide.org/\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">markdown</a></p>\n\n<p><img src=\"https://d33wubrfki0l68.cloudfront.net/f1f475a6fda1c2c4be4cac04033db5c3293032b4/513a4/assets/images/markdown-mark-white.svg\" crossorigin=\"anonymous\"/></p>\n"
+)
 
 // Post a new status with some custom visibility settings
 func (suite *StatusCreateTestSuite) TestPostNewStatus() {
@@ -102,6 +100,49 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 	err = suite.db.GetWhere(context.Background(), []db.Where{{Key: "name", Value: "helloworld"}}, gtsTag)
 	suite.NoError(err)
 	suite.Equal(statusReply.Account.ID, gtsTag.FirstSeenFromAccountID)
+}
+
+func (suite *StatusCreateTestSuite) TestPostNewStatusMarkdown() {
+	// set default post language of account 1 to markdown
+	testAccount := suite.testAccounts["local_account_1"]
+	testAccount.StatusFormat = "markdown"
+
+	a, err := suite.db.UpdateAccount(context.Background(), testAccount)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.Equal(a.StatusFormat, "markdown")
+
+	t := suite.testTokens["local_account_1"]
+	oauthToken := oauth.DBTokenToToken(t)
+
+	recorder := httptest.NewRecorder()
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
+	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
+	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
+	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
+	ctx.Set(oauth.SessionAuthorizedAccount, a)
+
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", status.BasePath), nil)
+	ctx.Request.Header.Set("accept", "application/json")
+	ctx.Request.Form = url.Values{
+		"status":     {statusMarkdown},
+		"visibility": {string(model.VisibilityPublic)},
+	}
+	suite.statusModule.StatusCreatePOSTHandler(ctx)
+
+	suite.EqualValues(http.StatusOK, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+	b, err := ioutil.ReadAll(result.Body)
+	suite.NoError(err)
+
+	statusReply := &model.Status{}
+	err = json.Unmarshal(b, statusReply)
+	suite.NoError(err)
+
+	suite.Equal(statusMarkdownExpected, statusReply.Content)
 }
 
 // mention an account that is not yet known to the instance -- it should be looked up and put in the db

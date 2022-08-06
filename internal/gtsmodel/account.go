@@ -54,6 +54,7 @@ type Account struct {
 	Privacy                 Visibility       `validate:"required_without=Domain,omitempty,oneof=public unlocked followers_only mutuals_only direct" bun:",nullzero"` // Default post privacy for this account
 	Sensitive               bool             `validate:"-" bun:",default:false"`                                                                                     // Set posts from this account to sensitive by default?
 	Language                string           `validate:"omitempty,bcp47_language_tag" bun:",nullzero,notnull,default:'en'"`                                          // What language does this account post in?
+	StatusFormat            string           `validate:"required_without=Domain,omitempty,oneof=plain markdown" bun:",nullzero"`                                     // What is the default format for statuses posted by this account (only for local accounts).
 	URI                     string           `validate:"required,url" bun:",nullzero,notnull,unique"`                                                                // ActivityPub URI for this account.
 	URL                     string           `validate:"required_without=Domain,omitempty,url" bun:",nullzero,unique"`                                               // Web URL for this account's profile
 	LastWebfingeredAt       time.Time        `validate:"required_with=Domain" bun:"type:timestamptz,nullzero"`                                                       // Last time this account was refreshed/located with webfinger.
