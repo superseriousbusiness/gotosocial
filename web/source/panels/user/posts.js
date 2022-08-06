@@ -30,6 +30,7 @@ module.exports = function Posts({oauth, account}) {
 
 	const [language, setLanguage] = React.useState("");
 	const [privacy, setPrivacy] = React.useState("");
+	const [format, setFormat] = React.useState("");
 	const [sensitive, setSensitive] = React.useState(false);
 
 	React.useEffect(() => {
@@ -37,6 +38,7 @@ module.exports = function Posts({oauth, account}) {
 			setLanguage(account.source.language.toUpperCase());
 			setPrivacy(account.source.privacy);
 			setSensitive(account.source.sensitive ? account.source.sensitive : false);
+			setFormat(account.source.status_format ? account.source.status_format : "plain");
 		}
         
 	}, [account, setSensitive, setPrivacy]);
@@ -52,6 +54,7 @@ module.exports = function Posts({oauth, account}) {
 			formDataInfo.set("source[language]", language);
 			formDataInfo.set("source[privacy]", privacy);
 			formDataInfo.set("source[sensitive]", sensitive);
+			formDataInfo.set("source[status_format]", format);
 
 			return oauth.apiRequest("/api/v1/accounts/update_credentials", "PATCH", formDataInfo, "form");
 		}).then((json) => {
@@ -59,6 +62,7 @@ module.exports = function Posts({oauth, account}) {
 			setLanguage(json.source.language.toUpperCase());
 			setPrivacy(json.source.privacy);
 			setSensitive(json.source.sensitive ? json.source.sensitive : false);
+			setFormat(json.source.status_format ? json.source.status_format : "plain");
 		}).catch((e) => {
 			setError(e.message);
 			setStatus("");
@@ -84,6 +88,14 @@ module.exports = function Posts({oauth, account}) {
 					</select>
 					<a href="https://docs.gotosocial.org/en/latest/user_guide/posts/#privacy-settings" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about post privacy settings (opens in a new tab)</a>
 				</div>
+				<div className="labelselect">
+					<label htmlFor="format">Default post format</label>
+					<select id="format" value={format} onChange={(e) => setFormat(e.target.value)}>
+						<option value="plain">Plain (default)</option>
+						<option value="markdown">Markdown</option>
+					</select>
+					<a href="https://docs.gotosocial.org/en/latest/user_guide/posts/#input-types" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about post format settings (opens in a new tab)</a>
+				</div>				
 				<div className="labelcheckbox">
 					<label htmlFor="sensitive">Mark my posts as sensitive by default</label>
 					<input id="sensitive" type="checkbox" checked={sensitive} onChange={(e) => setSensitive(e.target.checked)}/>
