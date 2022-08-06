@@ -138,6 +138,10 @@ definitions:
         description: Whether new statuses should be marked sensitive by default.
         type: boolean
         x-go-name: Sensitive
+      status_format:
+        description: The default posting format for new statuses.
+        type: string
+        x-go-name: StatusFormat
     title: Source represents display or publishing preferences of user's own account.
     type: object
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
@@ -1941,6 +1945,10 @@ definitions:
         description: Mark authored statuses as sensitive by default.
         type: boolean
         x-go-name: Sensitive
+      status_format:
+        description: Default format for authored statuses (plain or markdown).
+        type: string
+        x-go-name: StatusFormat
     title: UpdateSource is to be used specifically in an UpdateCredentialsRequest.
     type: object
     x-go-name: UpdateSource
@@ -2575,6 +2583,10 @@ paths:
       - description: Default language to use for authored statuses (ISO 6391).
         in: formData
         name: source[language]
+        type: string
+      - description: Default format to use for authored statuses (plain or markdown).
+        in: formData
+        name: source[status_format]
         type: string
       produces:
       - application/json

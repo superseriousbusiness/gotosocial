@@ -31,6 +31,8 @@ type Source struct {
 	Sensitive bool `json:"sensitive,omitempty"`
 	// The default posting language for new statuses.
 	Language string `json:"language,omitempty"`
+	// The default posting format for new statuses.
+	StatusFormat string `json:"status_format"`
 	// Profile bio.
 	Note string `json:"note"`
 	// Metadata about the account.

@@ -43,6 +43,17 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontend() {
 	suite.Equal(`{"id":"01F8MH1H7YV1Z7D2C8K2730QBF","username":"the_mighty_zork","acct":"the_mighty_zork","display_name":"original zork (he/they)","locked":false,"bot":false,"created_at":"2022-05-20T11:09:18.000Z","note":"\u003cp\u003ehey yo this is my profile!\u003c/p\u003e","url":"http://localhost:8080/@the_mighty_zork","avatar":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpeg","avatar_static":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpeg","header":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpeg","header_static":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpeg","followers_count":2,"following_count":2,"statuses_count":5,"last_status_at":"2022-05-20T11:37:55.000Z","emojis":[],"fields":[]}`, string(b))
 }
 
+func (suite *InternalToFrontendTestSuite) TestAccountToFrontendSensitive() {
+	testAccount := suite.testAccounts["local_account_1"] // take zork for this test
+	apiAccount, err := suite.typeconverter.AccountToAPIAccountSensitive(context.Background(), testAccount)
+	suite.NoError(err)
+	suite.NotNil(apiAccount)
+
+	b, err := json.Marshal(apiAccount)
+	suite.NoError(err)
+	suite.Equal(`{"id":"01F8MH1H7YV1Z7D2C8K2730QBF","username":"the_mighty_zork","acct":"the_mighty_zork","display_name":"original zork (he/they)","locked":false,"bot":false,"created_at":"2022-05-20T11:09:18.000Z","note":"\u003cp\u003ehey yo this is my profile!\u003c/p\u003e","url":"http://localhost:8080/@the_mighty_zork","avatar":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpeg","avatar_static":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpeg","header":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpeg","header_static":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpeg","followers_count":2,"following_count":2,"statuses_count":5,"last_status_at":"2022-05-20T11:37:55.000Z","emojis":[],"fields":[],"source":{"privacy":"public","language":"en","status_format":"plain","note":"hey yo this is my profile!","fields":[]}}`, string(b))
+}
+
 func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
 	testStatus := suite.testStatuses["admin_account_status_1"]
 	requestingAccount := suite.testAccounts["local_account_1"]
