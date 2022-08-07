@@ -273,10 +273,16 @@ input, select, textarea {
 	width: 100%;
 	font-family: 'Noto Sans', sans-serif;
 	font-size: 1rem;
+	padding: 0.3rem;
 
 	&:focus {
 		border-color: $fg_accent;
 	}
+}
+
+input, textarea {
+	padding-top: 0.1rem;
+	padding-bottom: 0.1rem;
 }
 
 footer {

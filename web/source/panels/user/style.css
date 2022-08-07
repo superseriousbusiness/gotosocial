@@ -81,7 +81,7 @@ section.basic, section.posts, section.security {
 .labelinput .border {
 	border-radius: 0.2rem;
 	border: 0.15rem solid $border_accent;
-	padding: 0.5rem;
+	padding: 0.3rem;
 	display: flex;
 	flex-direction: column;
 }
