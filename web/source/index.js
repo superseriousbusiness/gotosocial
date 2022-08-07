@@ -23,7 +23,7 @@
 */
 
 const path = require('path');
-const budoExpress = require('@f0x52/budo-express');
+const budoExpress = require('budo-express');
 const babelify = require('babelify');
 const fs = require("fs");
 const EventEmitter = require('events');
@@ -44,7 +44,6 @@ const bundles = {
 
 const postcssPlugins = [
 	"postcss-import",
-	"postcss-strip-inline-comments",
 	"postcss-nested",
 	"autoprefixer",
 	"postcss-custom-prop-vars",
@@ -77,7 +76,7 @@ const browserifyConfig = {
 	],
 	plugin: [
 		[require("icssify"), {
-			parser: require('postcss-scss'),
+			parser: require("postcss-scss"),
 			before: postcssPlugins,
 			mode: 'global'
 		}],
