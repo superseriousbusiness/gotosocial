@@ -19,6 +19,7 @@
 package security
 
 import (
+	"net"
 	"net/http"
 	"time"
 
@@ -52,7 +53,12 @@ func (m *Module) RateLimit(rateOptions RateLimitOptions) func(c *gin.Context) {
 
 	store := memory.NewStore()
 
-	limiterInstance := limiter.New(store, rate)
+	limiterInstance := limiter.New(
+		store,
+		rate,
+		// apply /64 mask to IPv6 addresses
+		limiter.WithIPv6Mask(net.CIDRMask(64, 128)),
+	)
 
 	middleware := mgin.NewMiddleware(
 		limiterInstance,
