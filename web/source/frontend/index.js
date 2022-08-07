@@ -25,12 +25,18 @@
 
 const Photoswipe = require("photoswipe/dist/umd/photoswipe.umd.min.js");
 const PhotoswipeLightbox = require("photoswipe/dist/umd/photoswipe-lightbox.umd.min.js");
+const PhotoswipeCaptionPlugin = require("photoswipe-dynamic-caption-plugin").default;
 
 const lightbox = new PhotoswipeLightbox({
 	gallery: '.photoswipe-gallery',
 	children: 'a',
 	pswpModule: Photoswipe,
 });
+
+new PhotoswipeCaptionPlugin(lightbox, {
+	type: 'auto',
+});
+
 lightbox.init();
 
 Array.from(document.getElementsByClassName("spoiler-label")).forEach((label) => {

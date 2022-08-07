@@ -4616,6 +4616,11 @@ pem@^1.13.2:
     os-tmpdir "^1.0.1"
     which "^2.0.2"
 
+photoswipe-dynamic-caption-plugin@^1.2.4:
+  version "1.2.4"
+  resolved "https://registry.yarnpkg.com/photoswipe-dynamic-caption-plugin/-/photoswipe-dynamic-caption-plugin-1.2.4.tgz#51488139550776a03436333ad9158786e3e0e21c"
+  integrity sha512-7gPO8BHnOGZ0nXVhziltDqe7cAhDmaolGaU6LC3vggi4dcTHJBsGnxuqpk2EXw6vJ/JOeS0MqyGGUXupYbZk5w==
+
 photoswipe@^5.3.0:
   version "5.3.0"
   resolved "https://registry.yarnpkg.com/photoswipe/-/photoswipe-5.3.0.tgz#fe118b147dddaf58ccc17c9403c7d7148805f8d2"

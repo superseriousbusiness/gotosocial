@@ -17,6 +17,7 @@
 */
 
 @import "photoswipe/dist/photoswipe.css";
+@import "photoswipe-dynamic-caption-plugin/photoswipe-dynamic-caption-plugin.css";
 
 main {
 	background: transparent;
