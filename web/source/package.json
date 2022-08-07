@@ -1,6 +1,6 @@
 {
   "name": "gotosocial-frontend",
-  "version": "0.3.4",
+  "version": "0.3.8",
   "description": "GoToSocial frontend sources",
   "main": "index.js",
   "author": "f0x",
@@ -22,6 +22,8 @@
     "from2-string": "^1.1.0",
     "icssify": "^1.2.1",
     "js-file-download": "^0.4.12",
+    "photoswipe": "^5.3.0",
+    "photoswipe-dynamic-caption-plugin": "^1.2.4",
     "postcss": "^8.3.5",
     "postcss-color-function": "^4.1.0",
     "postcss-color-mod-function": "3.0.0",

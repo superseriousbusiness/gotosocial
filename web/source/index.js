@@ -53,12 +53,23 @@ const postcssPlugins = [
 
 const browserifyConfig = {
 	transform: [
-		babelify.configure({
-			presets: [
-				require.resolve("@babel/preset-env"),
-				require.resolve("@babel/preset-react")
-			]
-		}),
+		[
+			babelify.configure({
+				presets: [
+					[
+						require.resolve("@babel/preset-env"),
+						{
+							modules: "cjs"
+						}
+					],
+					require.resolve("@babel/preset-react")
+				]
+			}),
+			{
+				global: true,
+				exclude: /node_modules\/(?!photoswipe-dynamic-caption-plugin)/,
+			}
+		],
 		[require("uglifyify"), {
 			global: true,
 			exts: ".js"
