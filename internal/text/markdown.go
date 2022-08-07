@@ -23,17 +23,39 @@ import (
 
 	"github.com/russross/blackfriday/v2"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/tdewolff/minify/v2"
+	"github.com/tdewolff/minify/v2/html"
 )
 
-func (f *formatter) FromMarkdown(ctx context.Context, md string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string {
-	// do the markdown parsing *first*
-	contentBytes := blackfriday.Run([]byte(md))
+var m *minify.M
 
+func (f *formatter) FromMarkdown(ctx context.Context, md string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string {
 	// format tags nicely
-	content := f.ReplaceTags(ctx, string(contentBytes), tags)
+	content := f.ReplaceTags(ctx, md, tags)
 
 	// format mentions nicely
 	content = f.ReplaceMentions(ctx, content, mentions)
 
-	return SanitizeHTML(content)
+	// parse markdown
+	contentBytes := blackfriday.Run([]byte(content))
+
+	// clean anything dangerous out of it
+	content = SanitizeHTML(string(contentBytes))
+
+	if m == nil {
+		m = minify.New()
+		m.Add("text/html", &html.Minifier{
+			KeepEndTags:    true,
+			KeepQuotes:     true,
+			KeepWhitespace: true,
+		})
+	}
+
+	minified, err := m.String("text/html", content)
+	if err != nil {
+		log.Errorf("error minifying markdown text: %s", err)
+	}
+
+	return minified
 }
