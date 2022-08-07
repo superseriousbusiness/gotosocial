@@ -48,6 +48,10 @@ body {
 	position: relative;
 }
 
+.hidden {
+	display: none;
+}
+
 .page {
 	position: absolute;
 	display: grid;
@@ -258,11 +262,13 @@ section.error {
 }
 
 input, select, textarea {
-	border: 1px solid $fg;
+	border: 0.15rem solid $border_accent;
+	border-radius: 0.1rem;
 	color: $fg;
-	background: $bg;
+	background: $input_bg;
 	width: 100%;
 	font-family: 'Noto Sans', sans-serif;
+	font-size: 1rem;
 }
 
 footer {
