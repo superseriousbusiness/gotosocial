@@ -16,6 +16,9 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+@import "photoswipe/dist/photoswipe.css";
+@import "photoswipe-dynamic-caption-plugin/photoswipe-dynamic-caption-plugin.css";
+
 main {
 	background: transparent;
 	grid-auto-rows: auto;
@@ -127,6 +130,13 @@ main {
 
 		.content {
 			word-break: break-word;
+
+			blockquote {
+				padding: 0.5rem 0 0.5rem 1.5rem;
+				border-left: 0.2rem solid $sloth_orange1;
+				margin-left: 1rem;
+				font-style: italic;
+			}
 		}
 	}
 
