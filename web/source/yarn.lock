@@ -4801,10 +4801,10 @@ postcss-color-mod-function@^3.0.3:
     postcss "^7.0.2"
     postcss-values-parser "^2.0.0"
 
-postcss-custom-prop-vars@^0.0.4:
-  version "0.0.4"
-  resolved "https://registry.yarnpkg.com/postcss-custom-prop-vars/-/postcss-custom-prop-vars-0.0.4.tgz#84f40b4bbad4e3a1426c9d364606aaa6576f6f79"
-  integrity sha512-i3QjvqXFi+zCV1xctL8Q7wto923KrNomczbttIcLyFp6+BNvQ7gsfhIgvJAxUOT1r9c+LSpakQhcaxfjln+68g==
+postcss-custom-prop-vars@^0.0.5:
+  version "0.0.5"
+  resolved "https://registry.yarnpkg.com/postcss-custom-prop-vars/-/postcss-custom-prop-vars-0.0.5.tgz#b8c025d673fb59eb7a544da467c7587424808c4a"
+  integrity sha512-ZaQAF1M5qo3LHVhTzZVW6feDz2sOzcyVQgzITSycLAVXeDylvQLac4VPy3olyB+ejjQiYl0eJN7eX2/kkfMt0A==
 
 postcss-import@^14.1.0:
   version "14.1.0"
