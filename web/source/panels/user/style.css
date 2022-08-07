@@ -54,12 +54,12 @@ section.basic, section.posts, section.security {
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		border: 1px solid red;
+		border: $boxshadow_border;
+		box-shadow: $box-shadow;
 		object-fit: cover;
 		border-radius: 0.2rem;
-		border: 0.15rem solid $border_accent;
 		box-sizing: border-box;
-		margin-bottom: 0.2rem;
+		margin-bottom: 0.5rem;
 	}
 
 	.avatarpreview {
@@ -78,12 +78,21 @@ section.basic, section.posts, section.security {
 	}
 }
 
+.labelinput .border {
+	border-radius: 0.2rem;
+	border: 0.15rem solid $border_accent;
+	padding: 0.5rem;
+	display: flex;
+	flex-direction: column;
+}
+
 .file-input.button {
+	display: inline-block;
 	font-size: 1rem;
 	font-weight: normal;
 	padding: 0.3rem 0.3rem;
 	align-self: flex-start;
-	background: $border_accent;
+	/* background: $border_accent; */
 	margin-right: 0.2rem;
 }
 

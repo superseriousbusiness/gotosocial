@@ -16,6 +16,8 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+@import "modern-normalize/modern-normalize.css";
+
 @font-face {
 	font-family: "Noto Sans";
 	font-weight: 400;
@@ -262,13 +264,19 @@ section.error {
 }
 
 input, select, textarea {
+	box-sizing: border-box;
 	border: 0.15rem solid $border_accent;
 	border-radius: 0.1rem;
 	color: $fg;
-	background: $input_bg;
+	/* background: $input_bg; */
+	background: $bg_accent;
 	width: 100%;
 	font-family: 'Noto Sans', sans-serif;
 	font-size: 1rem;
+
+	&:focus {
+		border-color: $fg_accent;
+	}
 }
 
 footer {

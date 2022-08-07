@@ -98,19 +98,23 @@ module.exports = function Basic({oauth, account}) {
 			<form>
 				<div className="labelinput">
 					<label htmlFor="header">Header</label>
-					<img className="headerpreview" src={headerSrc} alt={headerSrc ? `header image for ${account.username}` : "None set"}/>
-					<div>
-						<label htmlFor="header" className="file-input button">Browse…</label>
-						<span>{headerFile ? headerFile.name : ""}</span>
+					<div className="border">
+						<img className="headerpreview" src={headerSrc} alt={headerSrc ? `header image for ${account.username}` : "None set"}/>
+						<div>
+							<label htmlFor="header" className="file-input button">Browse…</label>
+							<span>{headerFile ? headerFile.name : ""}</span>
+						</div>
 					</div>
 					<input className="hidden" id="header" type="file" accept="image/*" onChange={headerOnChange}/>
 				</div>
 				<div className="labelinput">
 					<label htmlFor="avatar">Avatar</label>
-					<img className="avatarpreview" src={avatarSrc} alt={headerSrc ? `avatar image for ${account.username}` : "None set"}/>
-					<div>
-						<label htmlFor="avatar" className="file-input button">Browse…</label>
-						<span>{avatarFile ? avatarFile.name : ""}</span>
+					<div className="border">
+						<img className="avatarpreview" src={avatarSrc} alt={headerSrc ? `avatar image for ${account.username}` : "None set"}/>
+						<div>
+							<label htmlFor="avatar" className="file-input button">Browse…</label>
+							<span>{avatarFile ? avatarFile.name : ""}</span>
+						</div>
 					</div>
 					<input className="hidden" id="avatar" type="file" accept="image/*" onChange={avatarOnChange}/>
 				</div>
