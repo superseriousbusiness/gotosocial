@@ -120,11 +120,11 @@ module.exports = function Basic({oauth, account}) {
 				</div>
 				<div className="labelinput">
 					<label htmlFor="displayname">Display Name</label>
-					<input id="displayname" type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeHolder="A GoToSocial user"/>
+					<input id="displayname" type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="A GoToSocial user"/>
 				</div>
 				<div className="labelinput">
 					<label htmlFor="bio">Bio</label>
-					<textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeHolder="Just trying out GoToSocial, my pronouns are they/them and I like sloths."/>
+					<textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Just trying out GoToSocial, my pronouns are they/them and I like sloths."/>
 				</div>
 				<div className="labelcheckbox">
 					<label htmlFor="locked">Manually approve follow requests</label>
