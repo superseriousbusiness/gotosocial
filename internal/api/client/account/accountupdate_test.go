@@ -362,6 +362,81 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerUpd
 	suite.True(apimodelAccount.Locked)
 }
 
+func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerUpdateStatusFormatOK() {
+	// set up the request
+	// we're updating the language of zork
+	requestBody, w, err := testrig.CreateMultipartFormData(
+		"", "",
+		map[string]string{
+			"source[status_format]": "markdown",
+		})
+	if err != nil {
+		panic(err)
+	}
+	bodyBytes := requestBody.Bytes()
+	recorder := httptest.NewRecorder()
+	ctx := suite.newContext(recorder, http.MethodPatch, bodyBytes, account.UpdateCredentialsPath, w.FormDataContentType())
+
+	// call the handler
+	suite.accountModule.AccountUpdateCredentialsPATCHHandler(ctx)
+
+	// 1. we should have OK because our request was valid
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	// 2. we should have no error message in the result body
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	// check the response
+	b, err := ioutil.ReadAll(result.Body)
+	suite.NoError(err)
+
+	// unmarshal the returned account
+	apimodelAccount := &apimodel.Account{}
+	err = json.Unmarshal(b, apimodelAccount)
+	suite.NoError(err)
+
+	// check the returned api model account
+	// fields should be updated
+	suite.Equal("markdown", apimodelAccount.Source.StatusFormat)
+
+	dbAccount, err := suite.db.GetAccountByID(context.Background(), suite.testAccounts["local_account_1"].ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.Equal(dbAccount.StatusFormat, "markdown")
+}
+
+func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerUpdateStatusFormatBad() {
+	// set up the request
+	// we're updating the language of zork
+	requestBody, w, err := testrig.CreateMultipartFormData(
+		"", "",
+		map[string]string{
+			"source[status_format]": "peepeepoopoo",
+		})
+	if err != nil {
+		panic(err)
+	}
+	bodyBytes := requestBody.Bytes()
+	recorder := httptest.NewRecorder()
+	ctx := suite.newContext(recorder, http.MethodPatch, bodyBytes, account.UpdateCredentialsPath, w.FormDataContentType())
+
+	// call the handler
+	suite.accountModule.AccountUpdateCredentialsPATCHHandler(ctx)
+
+	suite.Equal(http.StatusBadRequest, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	// check the response
+	b, err := ioutil.ReadAll(result.Body)
+	suite.NoError(err)
+
+	suite.Equal(`{"error":"Bad Request: status format 'peepeepoopoo' was not recognized, valid options are 'plain', 'markdown'"}`, string(b))
+}
+
 func TestAccountUpdateTestSuite(t *testing.T) {
 	suite.Run(t, new(AccountUpdateTestSuite))
 }

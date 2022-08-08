@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -269,9 +270,21 @@ func (p *processor) ProcessContent(ctx context.Context, form *apimodel.AdvancedS
 		return nil
 	}
 
-	// if format wasn't specified we should set the default
+	// if format wasn't specified we should try to figure out what format this user prefers
 	if form.Format == "" {
-		form.Format = apimodel.StatusFormatDefault
+		acct, err := p.db.GetAccountByID(ctx, accountID)
+		if err != nil {
+			return fmt.Errorf("error processing new content: couldn't retrieve account from db to check post format: %s", err)
+		}
+
+		switch acct.StatusFormat {
+		case "plain":
+			form.Format = model.StatusFormatPlain
+		case "markdown":
+			form.Format = model.StatusFormatMarkdown
+		default:
+			form.Format = model.StatusFormatDefault
+		}
 	}
 
 	// parse content out of the status depending on what format has been submitted

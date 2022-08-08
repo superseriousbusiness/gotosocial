@@ -3,11 +3,14 @@
     <section class="login">
         <h1>Login</h1>
         <form action="/auth/sign_in" method="POST">
-            <label for="email">Email</label>
-            <input type="email" class="form-control" name="username" required placeholder="Please enter your email address">
-        
-            <label for="password">Password</label>
-            <input type="password" class="form-control" name="password" required placeholder="Please enter your password">
+            <div class="labelinput">
+                <label for="email">Email</label>
+                <input type="email" class="form-control" name="username" required placeholder="Please enter your email address">
+            </div>
+            <div class="labelinput">
+                <label for="password">Password</label>
+                <input type="password" class="form-control" name="password" required placeholder="Please enter your password">
+            </div>
             <button type="submit" class="btn btn-success">Login</button>
         </form>
     </section>

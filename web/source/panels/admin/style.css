@@ -16,22 +16,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-body {
-	grid-template-rows: auto 1fr;
-}
-
-.capitalize {
-	text-transform: capitalize;
-}
-
-section {
-	margin-bottom: 1rem;
-}
-
-input, select, textarea {
-	box-sizing: border-box;
-}
-
 section.info {
 	form {
 		grid-template-columns: auto 1fr;
@@ -119,23 +103,4 @@ section.blocks {
 		display: flex;
 		gap: 0.5rem;
 	}
-}
-
-.error {
-	font-weight: bold;
-}
-
-.hidden {
-	display: none;
-}
-
-.notImplemented {
-	border: 2px solid rgb(70, 79, 88);
-	background: repeating-linear-gradient(
-		-45deg,
-		#525c66,
-		#525c66 10px,
-		rgb(70, 79, 88) 10px,
-		rgb(70, 79, 88) 20px
-	) !important;
 }

@@ -51,6 +51,7 @@ $bg_trans: color-mod($sloth_gray2 alpha(62%));
 
 $bg_accent: $sloth_gray2_lighter3;
 $fg_accent: $lightblue;
+$border_accent: $sloth_orange2;
 
 /* Color variables as used in a specific location */
 
@@ -70,4 +71,6 @@ $status_info_fg: #CBCBD7;
 $boxshadow: 0 0.4rem 1rem -0.1rem rgba(0,0,0,0.15);
 $boxshadow_border: 0.08rem solid $sloth_gray2_darker5;
 
-$profile_avatar_border: 0.2rem solid $sloth_orange2;
+$profile_avatar_border: 0.2rem solid $border_accent;
+
+$input_bg: $sloth_gray2_darker3;

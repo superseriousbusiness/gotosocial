@@ -22,10 +22,41 @@ const Promise = require("bluebird");
 const React = require("react");
 const ReactDom = require("react-dom");
 
-// require("./style.css");
+const createPanel = require("../lib/panel");
 
-function App() {
-	return "hello world - user panel";
+const Basic = require("./basic");
+const Posts = require("./posts");
+const Security = require("./security");
+
+require("../base.css");
+require("./style.css");
+
+function UserPanel({oauth}) {
+	const [account, setAccount] = React.useState({});
+	const [errorMsg, setError] = React.useState("");
+	const [statusMsg, setStatus] = React.useState("Fetching user info");
+
+	React.useEffect(() => {
+		Promise.try(() => {
+			return oauth.apiRequest("/api/v1/accounts/verify_credentials", "GET");
+		}).then((json) => {
+			setAccount(json);
+		}).catch((e) => {
+			setError(e.message);
+			setStatus("");
+		});
+	}, [oauth, setAccount, setError, setStatus]);
+
+	return (
+		<React.Fragment>
+			<div>
+				<button className="logout" onClick={oauth.logout}>Log out of settings panel</button>
+			</div>
+			<Basic oauth={oauth} account={account}/>
+			<Posts oauth={oauth} account={account}/>
+			<Security oauth={oauth}/>
+		</React.Fragment>
+	);
 }
 
-ReactDom.render(<App/>, document.getElementById("root"));
+createPanel("GoToSocial User Panel", ["read write"], UserPanel);

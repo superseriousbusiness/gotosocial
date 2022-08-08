@@ -181,8 +181,8 @@ type StatusCreateRequest struct {
 	Language string `form:"language" json:"language" xml:"language"`
 	// Format to use when parsing this status.
 	// enum:
-	// - markdown
 	// - plain
+	// - markdown
 	// in: formData
 	Format StatusFormat `form:"format" json:"format" xml:"format"`
 }
@@ -245,11 +245,9 @@ type AdvancedVisibilityFlagsForm struct {
 // example: plain
 type StatusFormat string
 
-// StatusFormatPlain expects a plaintext status which will then be formatted into html.
-const StatusFormatPlain StatusFormat = "plain"
-
-// StatusFormatMarkdown expects a markdown formatted status, which will then be formatted into html.
-const StatusFormatMarkdown StatusFormat = "markdown"
-
-// StatusFormatDefault is the format that should be used when nothing else is specified.
-const StatusFormatDefault StatusFormat = StatusFormatPlain
+// Format to use when parsing submitted status into an html-formatted status
+const (
+	StatusFormatPlain    StatusFormat = "plain"
+	StatusFormatMarkdown StatusFormat = "markdown"
+	StatusFormatDefault  StatusFormat = StatusFormatPlain
+)

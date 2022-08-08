@@ -114,6 +114,7 @@ func copyAccount(account *gtsmodel.Account) *gtsmodel.Account {
 		Privacy:                 account.Privacy,
 		Sensitive:               account.Sensitive,
 		Language:                account.Language,
+		StatusFormat:            account.StatusFormat,
 		URI:                     account.URI,
 		URL:                     account.URL,
 		LastWebfingeredAt:       account.LastWebfingeredAt,
