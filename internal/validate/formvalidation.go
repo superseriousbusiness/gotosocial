@@ -60,7 +60,7 @@ func NewPassword(password string) error {
 		return errors.New(strings.ReplaceAll(
 			err.Error(),
 			"insecure password",
-			fmt.Sprintf("password is %d%% strength", percent)))
+			fmt.Sprintf("password is only %d%% strength", percent)))
 	}
 
 	return nil // pasword OK

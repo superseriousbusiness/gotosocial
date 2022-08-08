@@ -41,6 +41,7 @@ func (m *Module) UserPanelHandler(c *gin.Context) {
 			assetsPath + "/Fork-Awesome/css/fork-awesome.min.css",
 			assetsPath + "/dist/_colors.css",
 			assetsPath + "/dist/base.css",
+			assetsPath + "/dist/panels-base.css",
 			assetsPath + "/dist/panels-user-style.css",
 		},
 		"javascript": []string{
@@ -63,6 +64,9 @@ func (m *Module) AdminPanelHandler(c *gin.Context) {
 		"instance": instance,
 		"stylesheets": []string{
 			assetsPath + "/Fork-Awesome/css/fork-awesome.min.css",
+			assetsPath + "/dist/_colors.css",
+			assetsPath + "/dist/base.css",
+			assetsPath + "/dist/panels-base.css",
 			assetsPath + "/dist/panels-admin-style.css",
 		},
 		"javascript": []string{

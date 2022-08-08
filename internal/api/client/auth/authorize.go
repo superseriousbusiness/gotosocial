@@ -29,6 +29,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -142,6 +143,12 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 		return
 	}
 
+	instance, errWithCode := m.processor.InstanceGet(c.Request.Context(), config.GetHost())
+	if errWithCode != nil {
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		return
+	}
+
 	// the authorize template will display a form to the user where they can get some information
 	// about the app that's trying to authorize, and the scope of the request.
 	// They can then approve it if it looks OK to them, which will POST to the AuthorizePOSTHandler
@@ -151,6 +158,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 		"redirect":   redirect,
 		"scope":      scope,
 		"user":       acct.Username,
+		"instance":   instance,
 	})
 }
 

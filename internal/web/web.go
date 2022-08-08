@@ -133,8 +133,12 @@ func (m *Module) Route(s router.Router) error {
 	})
 
 	s.AttachHandler(http.MethodGet, userPanelpath, m.UserPanelHandler)
-	// redirect /settings/ to /settings
+	// redirect /user/ to /user
 	s.AttachHandler(http.MethodGet, userPanelpath+"/", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, userPanelpath)
+	})
+	// redirect /auth/edit to /user
+	s.AttachHandler(http.MethodGet, "/auth/edit", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, userPanelpath)
 	})
 

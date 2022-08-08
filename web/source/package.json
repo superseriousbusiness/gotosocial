@@ -22,6 +22,7 @@
     "from2-string": "^1.1.0",
     "icssify": "^2.0.0",
     "js-file-download": "^0.4.12",
+    "modern-normalize": "^1.1.0",
     "photoswipe": "^5.3.0",
     "photoswipe-dynamic-caption-plugin": "^1.2.4",
     "postcss-color-mod-function": "^3.0.3",

@@ -27,6 +27,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -50,8 +51,16 @@ func (m *Module) SignInGETHandler(c *gin.Context) {
 	}
 
 	if m.idp == nil {
+		instance, errWithCode := m.processor.InstanceGet(c.Request.Context(), config.GetHost())
+		if errWithCode != nil {
+			api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+			return
+		}
+
 		// no idp provider, use our own funky little sign in page
-		c.HTML(http.StatusOK, "sign-in.tmpl", gin.H{})
+		c.HTML(http.StatusOK, "sign-in.tmpl", gin.H{
+			"instance": instance,
+		})
 		return
 	}
 

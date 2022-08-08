@@ -100,5 +100,5 @@ func (m *Module) PasswordChangePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	c.Status(http.StatusOK)
+	c.JSON(http.StatusOK, gin.H{"status": "OK"})
 }
