@@ -29,7 +29,7 @@ import (
 	"io"
 
 	"github.com/buckket/go-blurhash"
-	"github.com/nfnt/resize"
+	"github.com/disintegration/imaging"
 )
 
 const (
@@ -114,33 +114,40 @@ func deriveThumbnail(r io.Reader, contentType string, createBlurhash bool) (*ima
 	var err error
 
 	switch contentType {
-	case mimeImageJpeg:
-		i, err = jpeg.Decode(r)
+	case mimeImageJpeg, mimeImageGif:
+		i, err = imaging.Decode(r, imaging.AutoOrientation(true))
 	case mimeImagePng:
-		i, err = StrippedPngDecode(r)
-	case mimeImageGif:
-		i, err = gif.Decode(r)
+		strippedPngReader := io.Reader(&PNGAncillaryChunkStripper{
+			Reader: r,
+		})
+		i, err = imaging.Decode(strippedPngReader, imaging.AutoOrientation(true))
 	default:
 		err = fmt.Errorf("content type %s can't be thumbnailed", contentType)
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("error decoding image as %s: %s", contentType, err)
+		return nil, fmt.Errorf("error decoding %s: %s", contentType, err)
 	}
 
-	if i == nil {
-		return nil, errors.New("processed image was nil")
+	originalX := i.Bounds().Size().X
+	originalY := i.Bounds().Size().Y
+
+	var thumb image.Image
+	if originalX <= thumbnailMaxWidth && originalY <= thumbnailMaxHeight {
+		// it's already small, no need to resize
+		thumb = i
+	} else {
+		thumb = imaging.Fit(i, thumbnailMaxWidth, thumbnailMaxHeight, imaging.Linear)
 	}
 
-	thumb := resize.Thumbnail(thumbnailMaxWidth, thumbnailMaxHeight, i, resize.NearestNeighbor)
-	width := thumb.Bounds().Size().X
-	height := thumb.Bounds().Size().Y
-	size := width * height
-	aspect := float64(width) / float64(height)
+	thumbX := thumb.Bounds().Size().X
+	thumbY := thumb.Bounds().Size().Y
+	size := thumbX * thumbY
+	aspect := float64(thumbX) / float64(thumbY)
 
 	im := &imageMeta{
-		width:  width,
-		height: height,
+		width:  thumbX,
+		height: thumbY,
 		size:   size,
 		aspect: aspect,
 	}
@@ -148,7 +155,7 @@ func deriveThumbnail(r io.Reader, contentType string, createBlurhash bool) (*ima
 	if createBlurhash {
 		// for generating blurhashes, it's more cost effective to lose detail rather than
 		// pass a big image into the blurhash algorithm, so make a teeny tiny version
-		tiny := resize.Thumbnail(32, 32, thumb, resize.NearestNeighbor)
+		tiny := imaging.Resize(thumb, 32, 0, imaging.NearestNeighbor)
 		bh, err := blurhash.Encode(4, 3, tiny)
 		if err != nil {
 			return nil, fmt.Errorf("error creating blurhash: %s", err)

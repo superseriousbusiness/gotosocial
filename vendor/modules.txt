@@ -69,6 +69,9 @@ github.com/coreos/go-oidc/v3/oidc
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
+# github.com/disintegration/imaging v1.6.2
+## explicit
+github.com/disintegration/imaging
 # github.com/dsoprea/go-exif/v3 v3.0.0-20210625224831-a6301f85c82b
 ## explicit; go 1.12
 github.com/dsoprea/go-exif/v3
@@ -282,7 +285,6 @@ github.com/modern-go/concurrent
 github.com/modern-go/reflect2
 # github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 ## explicit
-github.com/nfnt/resize
 # github.com/oklog/ulid v1.3.1
 ## explicit
 github.com/oklog/ulid
@@ -617,6 +619,12 @@ golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 ## explicit; go 1.18
 golang.org/x/exp/constraints
 golang.org/x/exp/slices
+# golang.org/x/image v0.0.0-20191009234506-e7c1f5e7dbb8
+## explicit; go 1.12
+golang.org/x/image/bmp
+golang.org/x/image/ccitt
+golang.org/x/image/tiff
+golang.org/x/image/tiff/lzw
 # golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4
 ## explicit; go 1.17
 golang.org/x/mod/semver
