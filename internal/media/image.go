@@ -72,9 +72,12 @@ func decodeImage(r io.Reader, contentType string) (*imageMeta, error) {
 
 	switch contentType {
 	case mimeImageJpeg:
-		i, err = jpeg.Decode(r)
+		i, err = imaging.Decode(r, imaging.AutoOrientation(true))
 	case mimeImagePng:
-		i, err = StrippedPngDecode(r)
+		strippedPngReader := io.Reader(&PNGAncillaryChunkStripper{
+			Reader: r,
+		})
+		i, err = imaging.Decode(strippedPngReader, imaging.AutoOrientation(true))
 	default:
 		err = fmt.Errorf("content type %s not recognised", contentType)
 	}
