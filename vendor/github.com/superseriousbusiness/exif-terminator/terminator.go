@@ -42,7 +42,7 @@ func Terminate(in io.Reader, fileSize int, mediaType string) (io.Reader, error) 
 
 	switch mediaType {
 	case "image/jpeg", "jpeg", "jpg":
-		err = terminateJpeg(scanner, pipeWriter)
+		err = terminateJpeg(scanner, pipeWriter, fileSize)
 	case "image/png", "png":
 		// for pngs we need to skip the header bytes, so read them in
 		// and check we're really dealing with a png here
@@ -65,10 +65,11 @@ func Terminate(in io.Reader, fileSize int, mediaType string) (io.Reader, error) 
 	return pipeReader, err
 }
 
-func terminateJpeg(scanner *bufio.Scanner, writer io.WriteCloser) error {
+func terminateJpeg(scanner *bufio.Scanner, writer io.WriteCloser, expectedFileSize int) error {
 	// jpeg visitor is where the spicy hack of streaming the de-exifed data is contained
 	v := &jpegVisitor{
-		writer: writer,
+		writer:           writer,
+		expectedFileSize: expectedFileSize,
 	}
 
 	// provide the visitor to the splitter so that it triggers on every section scan

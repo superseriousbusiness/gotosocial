@@ -71,23 +71,48 @@ var markerLen = map[byte]int{
 }
 
 type jpegVisitor struct {
-	js     *jpegstructure.JpegSplitter
-	writer io.Writer
+	js                *jpegstructure.JpegSplitter
+	writer            io.Writer
+	expectedFileSize  int
+	writtenTotalBytes int
 }
 
 // HandleSegment satisfies the visitor interface{} of the jpegstructure library.
 //
-// We don't really care about any of the parameters, since all we're interested
+// We don't really care about many of the parameters, since all we're interested
 // in here is the very last segment that was scanned.
-func (v *jpegVisitor) HandleSegment(_ byte, _ string, _ int, _ bool) error {
-	// all we want to do here is get the last segment that was scanned, and then manipulate it
+func (v *jpegVisitor) HandleSegment(segmentMarker byte, _ string, _ int, _ bool) error {
+	// get the most recent segment scanned (ie., last in the segments list)
 	segmentList := v.js.Segments()
 	segments := segmentList.Segments()
-	lastSegment := segments[len(segments)-1]
-	return v.writeSegment(lastSegment)
+	mostRecentSegment := segments[len(segments)-1]
+
+	// check if we've written the expected number of bytes by EOI
+	if segmentMarker == jpegstructure.MARKER_EOI {
+		// take account of the last 2 bytes taken up by the EOI
+		eoiLength := 2
+		
+		// this is the total file size we will
+		// have written including the EOI
+		willHaveWritten := v.writtenTotalBytes + eoiLength
+
+		if willHaveWritten < v.expectedFileSize {
+			// if we won't have written enough,
+			// pad the final segment before EOI
+			// so that we meet expected file size
+			missingBytes := make([]byte, v.expectedFileSize-willHaveWritten)
+			if _, err := v.writer.Write(missingBytes); err != nil {
+				return err
+			}
+		}
+	}
+
+	// process the segment
+	return v.writeSegment(mostRecentSegment)
 }
 
 func (v *jpegVisitor) writeSegment(s *jpegstructure.Segment) error {
+	var writtenSegmentData int
 	w := v.writer
 
 	defer func() {
@@ -98,9 +123,11 @@ func (v *jpegVisitor) writeSegment(s *jpegstructure.Segment) error {
 
 	// The scan-data will have a marker-ID of (0) because it doesn't have a marker-ID or length.
 	if s.MarkerId != 0 {
-		if _, err := w.Write([]byte{0xff, s.MarkerId}); err != nil {
+		markerIDWritten, err := w.Write([]byte{0xff, s.MarkerId})
+		if err != nil {
 			return err
 		}
+		writtenSegmentData += markerIDWritten
 
 		sizeLen, found := markerLen[s.MarkerId]
 		if !found || sizeLen == 2 {
@@ -111,6 +138,7 @@ func (v *jpegVisitor) writeSegment(s *jpegstructure.Segment) error {
 				return err
 			}
 
+			writtenSegmentData += 2
 		} else if sizeLen == 4 {
 			l := uint32(len(s.Data) + sizeLen)
 
@@ -118,6 +146,7 @@ func (v *jpegVisitor) writeSegment(s *jpegstructure.Segment) error {
 				return err
 			}
 
+			writtenSegmentData += 4
 		} else if sizeLen != 0 {
 			return fmt.Errorf("not a supported marker-size: MARKER-ID=(0x%02x) MARKER-SIZE-LEN=(%d)", s.MarkerId, sizeLen)
 		}
@@ -125,8 +154,14 @@ func (v *jpegVisitor) writeSegment(s *jpegstructure.Segment) error {
 
 	if !s.IsExif() {
 		// if this isn't exif data just copy it over and bail
-		_, err := w.Write(s.Data)
-		return err
+		writtenNormalData, err := w.Write(s.Data)
+		if err != nil {
+			return err
+		}
+
+		writtenSegmentData += writtenNormalData
+		v.writtenTotalBytes += writtenSegmentData
+		return nil
 	}
 
 	ifd, _, err := s.Exif()
@@ -134,8 +169,8 @@ func (v *jpegVisitor) writeSegment(s *jpegstructure.Segment) error {
 		return err
 	}
 
-	// amount of bytes we've written into the exif body
-	var written int
+	// amount of bytes we've writtenExifData into the exif body, we'll update this as we go
+	var writtenExifData int
 
 	if orientationEntries, err := ifd.FindTagWithName("Orientation"); err == nil && len(orientationEntries) == 1 {
 		// If we have an orientation entry, we don't want to completely obliterate the exif data.
@@ -152,30 +187,31 @@ func (v *jpegVisitor) writeSegment(s *jpegstructure.Segment) error {
 		//
 		// Then we write the ifd0 entry which contains the orientation data.
 		//
-		// After that we just fill fill fill.
+		// After that we just fill.
 
-		newData := &bytes.Buffer{}
+		newExifData := &bytes.Buffer{}
+		byteOrder := ifd.ByteOrder()
 
 		// 1. Write exif prefix.
 		// https://www.ozhiker.com/electronics/pjmt/jpeg_info/app_segments.html
 		prefix := []byte{'E', 'x', 'i', 'f', 0, 0}
-		if err := binary.Write(newData, ifd.ByteOrder(), &prefix); err != nil {
+		if err := binary.Write(newExifData, byteOrder, &prefix); err != nil {
 			return err
 		}
-		written += 6
+		writtenExifData += len(prefix)
 
 		// 2. Write exif header, taking the existing byte order.
-		exifHeader, err := exif.BuildExifHeader(ifd.ByteOrder(), exif.ExifDefaultFirstIfdOffset)
+		exifHeader, err := exif.BuildExifHeader(byteOrder, exif.ExifDefaultFirstIfdOffset)
 		if err != nil {
 			return err
 		}
-		hWritten, err := newData.Write(exifHeader)
+		hWritten, err := newExifData.Write(exifHeader)
 		if err != nil {
 			return err
 		}
-		written += hWritten
+		writtenExifData += hWritten
 
-		// https://web.archive.org/web/20190624045241if_/http://www.cipa.jp:80/std/documents/e/DC-008-Translation-2019-E.pdf
+		// 3. Write in the new ifd
 		//
 		// An ifd with one orientation entry is structured like this:
 		// 		2 bytes: the number of entries in the ifd	uint16(1)
@@ -191,61 +227,69 @@ func (v *jpegVisitor) writeSegment(s *jpegstructure.Segment) error {
 		// 			6 = Rotate 90 CW
 		// 			7 = Mirror horizontal and rotate 90 CW
 		// 			8 = Rotate 270 CW
+		//
+		// see https://web.archive.org/web/20190624045241if_/http://www.cipa.jp:80/std/documents/e/DC-008-Translation-2019-E.pdf - p24-25
 		orientationEntry := orientationEntries[0]
 
 		ifdCount := uint16(1) // we're only adding one entry into the ifd
-		if err := binary.Write(newData, ifd.ByteOrder(), &ifdCount); err != nil {
+		if err := binary.Write(newExifData, byteOrder, &ifdCount); err != nil {
 			return err
 		}
-		written += 2
+		writtenExifData += 2
 
 		tagID := orientationEntry.TagId()
-		if err := binary.Write(newData, ifd.ByteOrder(), &tagID); err != nil {
+		if err := binary.Write(newExifData, byteOrder, &tagID); err != nil {
 			return err
 		}
-		written += 2
+		writtenExifData += 2
 
-		tagType := orientationEntry.TagType()
-		if err := binary.Write(newData, ifd.ByteOrder(), &tagType); err != nil {
+		tagType := uint16(orientationEntry.TagType())
+		if err := binary.Write(newExifData, byteOrder, &tagType); err != nil {
 			return err
 		}
-		written += 2
+		writtenExifData += 2
 
 		tagCount := orientationEntry.UnitCount()
-		if err := binary.Write(newData, ifd.ByteOrder(), &tagCount); err != nil {
+		if err := binary.Write(newExifData, byteOrder, &tagCount); err != nil {
 			return err
 		}
-		written += 4
+		writtenExifData += 4
 
 		valueOffset, err := orientationEntry.GetRawBytes()
 		if err != nil {
 			return err
 		}
 
-		vWritten, err := newData.Write(valueOffset)
+		vWritten, err := newExifData.Write(valueOffset)
 		if err != nil {
 			return err
 		}
-		written += vWritten
+		writtenExifData += vWritten
 
 		valuePad := make([]byte, 4-vWritten)
-		pWritten, err := newData.Write(valuePad)
+		pWritten, err := newExifData.Write(valuePad)
 		if err != nil {
 			return err
 		}
-		written += pWritten
+		writtenExifData += pWritten
 
-		// write everything in
-		if _, err := io.Copy(w, newData); err != nil {
+		// write all the new data into the writer from the segment
+		writtenNewExifData, err := io.Copy(w, newExifData)
+		if err != nil {
 			return err
 		}
+
+		writtenSegmentData += int(writtenNewExifData)
 	}
 
-	// fill in the (remaining) exif body with blank bytes
-	blank := make([]byte, len(s.Data)-written)
-	if _, err := w.Write(blank); err != nil {
+	// fill in any remaining exif body with blank bytes
+	blank := make([]byte, len(s.Data)-writtenExifData)
+	writtenPadding, err := w.Write(blank)
+	if err != nil {
 		return err
 	}
 
+	writtenSegmentData += writtenPadding
+	v.writtenTotalBytes += writtenSegmentData
 	return nil
 }
