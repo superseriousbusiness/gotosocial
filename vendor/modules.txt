@@ -533,7 +533,7 @@ github.com/superseriousbusiness/activity/streams/values/rfc2045
 github.com/superseriousbusiness/activity/streams/values/rfc5988
 github.com/superseriousbusiness/activity/streams/values/string
 github.com/superseriousbusiness/activity/streams/vocab
-# github.com/superseriousbusiness/exif-terminator v0.3.0
+# github.com/superseriousbusiness/exif-terminator v0.4.0
 ## explicit; go 1.17
 github.com/superseriousbusiness/exif-terminator
 # github.com/superseriousbusiness/go-jpeg-image-structure/v2 v2.0.0-20220321154430-d89a106fdabe

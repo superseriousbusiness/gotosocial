@@ -512,8 +512,8 @@ github.com/subosito/gotenv v1.2.0 h1:Slr1R9HxAlEKefgq5jn9U+DnETlIUa6HfgEzj0g5d7s
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
 github.com/superseriousbusiness/activity v1.1.0-gts h1:BSnMzs/84s0Zme7BngE9iJAHV7g1Bv1nhLCP0aJtU3I=
 github.com/superseriousbusiness/activity v1.1.0-gts/go.mod h1:AZw0Xb4Oju8rmaJCZ21gc5CPg47MmNgyac+Hx5jo8VM=
-github.com/superseriousbusiness/exif-terminator v0.3.0 h1:ej7YePEB2UnAGPal5s7CnoN8eMFmDFESEAEJmbFoHh0=
-github.com/superseriousbusiness/exif-terminator v0.3.0/go.mod h1:OPfOSEDWjXaW3BILJBN89j0VLD8bglmHwHHwwwSLb5A=
+github.com/superseriousbusiness/exif-terminator v0.4.0 h1:pzAg7luCi8oc2LVDwgTLvTinh/+/2UuWgJZrM8MMaT4=
+github.com/superseriousbusiness/exif-terminator v0.4.0/go.mod h1:OPfOSEDWjXaW3BILJBN89j0VLD8bglmHwHHwwwSLb5A=
 github.com/superseriousbusiness/go-jpeg-image-structure/v2 v2.0.0-20220321154430-d89a106fdabe h1:ksl2oCx/Qo8sNDc3Grb8WGKBM9nkvhCm25uvlT86azE=
 github.com/superseriousbusiness/go-jpeg-image-structure/v2 v2.0.0-20220321154430-d89a106fdabe/go.mod h1:gH4P6gN1V+wmIw5o97KGaa1RgXB/tVpC2UNzijhg3E4=
 github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB h1:PtW2w6budTvRV2J5QAoSvThTHBuvh8t/+BXIZFAaBSc=
