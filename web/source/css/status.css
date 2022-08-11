@@ -205,7 +205,8 @@ main {
 		input.sensitive-checkbox:checked { /* Media is shown */
 			& ~ .sensitive {
 				.closed {
-					z-index: initial;
+					transition: 0.8s;
+					pointer-events: none;
 					opacity: 0;
 
 					& > * {
@@ -245,7 +246,7 @@ main {
 			}
 
 			.closed {
-				transition: 0.2s;
+				transition: 0.3s;
 				background: $bg_sensitive;
 				@supports (backdrop-filter: blur(2rem)) {
 					background: transparent;
@@ -256,10 +257,6 @@ main {
 					align-self: center;
 					justify-self: center;
 				}
-			}
-
-			.open {
-
 			}
 		}
 
