@@ -119,6 +119,7 @@ main {
 		margin: 0;
 		margin-top: 0.5rem;
 		grid-column: span 2;
+		overflow: hidden;
 
 		position: relative;
 		z-index: 2;
@@ -155,22 +156,21 @@ main {
 			}
 
 			pre {
-				display: block;
-				padding: 1rem;
+				padding: 1rem 1rem 0 1rem;
 				border-radius: $br;
-				word-break: normal;
-				overflow: hidden;
 
 				code {	
 					display: block;				
+					white-space: pre;
 					padding: initial;
+					padding-bottom: 1rem;
 					border-radius: initial;
 
 					max-width: 100%;
 					min-width: 100px;
 					overflow-x: scroll;
 					-webkit-overflow-scrolling: touch;
-					white-space: pre;
+					scrollbar-color: $sloth_orange1 $sloth_gray2_darker3;
 				}
 			}
 		}
