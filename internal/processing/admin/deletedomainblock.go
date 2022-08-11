@@ -47,8 +47,8 @@ func (p *processor) DomainBlockDelete(ctx context.Context, account *gtsmodel.Acc
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// delete the domain block
-	if err := p.db.DeleteByID(ctx, id, domainBlock); err != nil {
+	// Delete the domain block
+	if err := p.db.DeleteDomainBlock(ctx, domainBlock.Domain); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 

@@ -24,7 +24,7 @@ import (
 	"net/url"
 	"strings"
 
-	"codeberg.org/gruf/go-cache/v2"
+	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -32,7 +32,7 @@ import (
 
 type domainDB struct {
 	conn  *DBConn
-	cache cache.Cache[string, *gtsmodel.DomainBlock]
+	cache *cache.DomainBlockCache
 }
 
 func (d *domainDB) CreateDomainBlock(ctx context.Context, block gtsmodel.DomainBlock) db.Error {
@@ -48,7 +48,7 @@ func (d *domainDB) CreateDomainBlock(ctx context.Context, block gtsmodel.DomainB
 	}
 
 	// Cache this domain block
-	d.cache.Set(block.Domain, &block)
+	d.cache.Put(&block)
 
 	return nil
 }
@@ -63,7 +63,7 @@ func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel
 	}
 
 	// Check for already cached rblock
-	if block, ok := d.cache.Get(domain); ok {
+	if block, ok := d.cache.GetByDomain(domain); ok {
 		// A 'nil' return value is a sentinel value for no block
 		if block == nil {
 			return nil, db.ErrNoEntries
@@ -85,12 +85,12 @@ func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel
 	switch err := q.Scan(ctx); err {
 	// No error, block found
 	case nil:
-		d.cache.Set(domain, block)
+		d.cache.Put(block)
 		return block, nil
 
 	// No error, simply not found
 	case sql.ErrNoRows:
-		d.cache.Set(domain, nil)
+		d.cache.Put(nil)
 		return nil, db.ErrNoEntries
 
 	// Any other db error
@@ -113,7 +113,7 @@ func (d *domainDB) DeleteDomainBlock(ctx context.Context, domain string) db.Erro
 	}
 
 	// Clear domain from cache
-	d.cache.Invalidate(domain)
+	d.cache.InvalidateByDomain(domain)
 
 	return nil
 }

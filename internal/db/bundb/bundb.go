@@ -160,12 +160,6 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 	status.accounts = accounts
 	timeline.status = status
 
-	// Prepare domain block cache
-	// TODO: move into internal/cache
-	blockCache := grufcache.New[string, *gtsmodel.DomainBlock]()
-	blockCache.SetTTL(time.Minute*30, false)
-	blockCache.Start(time.Minute)
-
 	// Prepare mentions cache
 	// TODO: move into internal/cache
 	mentionCache := grufcache.New[string, *gtsmodel.Mention]()
@@ -177,6 +171,9 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 	notifCache := grufcache.New[string, *gtsmodel.Notification]()
 	notifCache.SetTTL(time.Minute*5, false)
 	notifCache.Start(time.Second * 10)
+
+	// Prepare domain block cache
+	blockCache := cache.NewDomainBlockCache()
 
 	ps := &bunDBService{
 		Account: accounts,
