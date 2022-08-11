@@ -15,16 +15,31 @@
 		</div>
 	</div>
 	{{with .MediaAttachments}}
-		<div class="media photoswipe-gallery {{(len .) | oddOrEven }}{{if eq (len .) 1}} single{{end}}{{if eq (len .) 2}} double{{end}}">
-			{{range .}}
-				<a href="{{.URL}}" target="_blank" title="{{.Description}}" data-pswp-width="{{.Meta.Original.Width}}px" data-pswp-height="{{.Meta.Original.Height}}px">
-						{{if not .Description}}
-			 			<div class="no-image-desc" aria-hidden="true" ><i class="fa fa-info-circle"></i><span>Missing image description</span></div>
-					{{end}}
-					<img src="{{.PreviewURL}}" alt="{{.Description}}"/>
-				</a>
+	<div class="media photoswipe-gallery {{(len .) | oddOrEven }}{{if eq (len .) 1}} single{{end}}{{if eq (len .) 2}} double{{end}}">
+		{{range .}}
+		<div class="media-wrapper">
+			{{if not .Description}}
+			<div class="no-image-desc" aria-hidden="true" ><i class="fa fa-info-circle"></i><span>Missing image description</span></div>
 			{{end}}
+			{{if $.Sensitive}}
+			<input type="checkbox" id="sensitiveMedia-{{.ID}}" class="sensitive-checkbox hidden"/>
+			<div class="sensitive">
+				<div class="open">
+					<label for="sensitiveMedia-{{.ID}}" class="button">
+						<i class="fa fa-eye-slash"></i>
+					</label>
+				</div>
+				<div class="closed">
+					<label for="sensitiveMedia-{{.ID}}" class="button">Show media</label>
+				</div>
+			</div>
+			{{end}}
+			<a href="{{.URL}}" target="_blank" {{if .Description}}title="{{.Description}}"{{end}} data-pswp-width="{{.Meta.Original.Width}}px" data-pswp-height="{{.Meta.Original.Height}}px">
+				<img src="{{.PreviewURL}}" {{if .Description}}alt="{{.Description}}"{{end}} data-blurhash="{{.Blurhash}}"/>
+			</a>
 		</div>
+		{{end}}
+	</div>
 	{{end}}
 </div>
 <div class="info">
