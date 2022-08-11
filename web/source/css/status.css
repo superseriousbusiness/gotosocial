@@ -137,6 +137,10 @@ main {
 				margin-left: 1rem;
 				font-style: italic;
 			}
+
+			hr {
+				border: 1px dashed $sloth_orange1;
+			} 
 		}
 	}
 
