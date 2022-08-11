@@ -24,12 +24,12 @@
 			<input type="checkbox" id="sensitiveMedia-{{.ID}}" class="sensitive-checkbox hidden" {{if not $.Sensitive}}checked{{end}}/>
 			<div class="sensitive">
 				<div class="open">
-					<label for="sensitiveMedia-{{.ID}}" class="button">
-						<i class="fa fa-eye-slash"></i>
+					<label for="sensitiveMedia-{{.ID}}" class="button" role="button">
+						<i class="fa fa-eye-slash" title="Hide media"></i>
 					</label>
 				</div>
 				<div class="closed">
-					<label for="sensitiveMedia-{{.ID}}" class="button">Show media</label>
+					<label for="sensitiveMedia-{{.ID}}" class="button" role="button">Show media</label>
 				</div>
 			</div>
 			<a href="{{.URL}}" target="_blank" {{if .Description}}title="{{.Description}}"{{end}} data-pswp-width="{{.Meta.Original.Width}}px" data-pswp-height="{{.Meta.Original.Height}}px">
