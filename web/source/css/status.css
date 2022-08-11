@@ -141,6 +141,32 @@ main {
 			hr {
 				border: 1px dashed $sloth_orange1;
 			} 
+
+			pre, code {
+				background-color: $sloth_gray2_darker7;
+			}
+
+			code {
+				padding: 0.25rem;
+			}
+
+			pre {
+				display: block;
+				padding: 1rem;
+				border-radius: $br;
+				word-break: normal;
+				overflow: hidden;
+
+				code {	
+					display: block;				
+					padding: initial;
+					max-width: 100%;
+					min-width: 100px;
+					overflow-x: scroll;
+					-webkit-overflow-scrolling: touch;
+					white-space: pre;
+				}
+			}
 		}
 	}
 
