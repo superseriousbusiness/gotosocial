@@ -119,6 +119,7 @@ main {
 		margin: 0;
 		margin-top: 0.5rem;
 		grid-column: span 2;
+		overflow: hidden;
 
 		position: relative;
 		z-index: 2;
@@ -129,6 +130,9 @@ main {
 		}
 
 		.content {
+			padding-top: 0.5rem;
+			padding-bottom: 0.5rem;
+
 			word-break: break-word;
 
 			blockquote {
@@ -136,6 +140,34 @@ main {
 				border-left: 0.2rem solid $sloth_orange1;
 				margin-left: 1rem;
 				font-style: italic;
+			}
+
+			hr {
+				border: 1px dashed $sloth_orange1;
+			} 
+
+			pre, code {
+				background-color: $sloth_gray2_darker7;
+			}
+
+			code {
+				padding: 0.25rem;
+				border-radius: $br_inner;
+			}
+
+			pre {
+				display: flex;
+				border-radius: $br;
+				padding: 0.5rem;
+
+				code {	
+					padding: 0.5rem;
+					white-space: pre;
+					border-radius: 0;
+					overflow-x: auto;
+					-webkit-overflow-scrolling: touch;
+					scrollbar-color: $sloth_orange1 $sloth_gray2_darker3;
+				}
 			}
 		}
 	}
