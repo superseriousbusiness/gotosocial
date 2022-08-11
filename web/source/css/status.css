@@ -151,6 +151,7 @@ main {
 
 			code {
 				padding: 0.25rem;
+				border-radius: $br_inner;
 			}
 
 			pre {
@@ -163,6 +164,8 @@ main {
 				code {	
 					display: block;				
 					padding: initial;
+					border-radius: initial;
+
 					max-width: 100%;
 					min-width: 100px;
 					overflow-x: scroll;
