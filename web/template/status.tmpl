@@ -20,9 +20,8 @@
 		<div class="media-wrapper">
 			{{if not .Description}}
 			<div class="no-image-desc" aria-hidden="true" ><i class="fa fa-info-circle"></i><span>Missing image description</span></div>
-			{{end}}
-			{{if $.Sensitive}}
-			<input type="checkbox" id="sensitiveMedia-{{.ID}}" class="sensitive-checkbox hidden"/>
+			{{end}}	
+			<input type="checkbox" id="sensitiveMedia-{{.ID}}" class="sensitive-checkbox hidden" {{if not $.Sensitive}}checked{{end}}/>
 			<div class="sensitive">
 				<div class="open">
 					<label for="sensitiveMedia-{{.ID}}" class="button">
@@ -33,7 +32,6 @@
 					<label for="sensitiveMedia-{{.ID}}" class="button">Show media</label>
 				</div>
 			</div>
-			{{end}}
 			<a href="{{.URL}}" target="_blank" {{if .Description}}title="{{.Description}}"{{end}} data-pswp-width="{{.Meta.Original.Width}}px" data-pswp-height="{{.Meta.Original.Height}}px">
 				<img src="{{.PreviewURL}}" {{if .Description}}alt="{{.Description}}"{{end}} data-blurhash="{{.Blurhash}}"/>
 			</a>
