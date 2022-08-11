@@ -7,7 +7,7 @@
 		<input class="spoiler" id="hideSpoiler-{{.ID}}" type="checkbox" style="display: none" aria-hidden="true" checked="true" />
 		<div class="spoiler">
 			<span class="spoiler-text">{{.SpoilerText}}</span>
-			<label class="button spoiler-label" for="hideSpoiler-{{.ID}}">Toggle visibility</label>
+			<label class="button spoiler-label" for="hideSpoiler-{{.ID}}" tabindex="0">Toggle visibility</label>
 		</div>
 		{{end}}
 		<div class="content">
@@ -24,12 +24,12 @@
 			<input type="checkbox" id="sensitiveMedia-{{.ID}}" class="sensitive-checkbox hidden" {{if not $.Sensitive}}checked{{end}}/>
 			<div class="sensitive">
 				<div class="open">
-					<label for="sensitiveMedia-{{.ID}}" class="button" role="button">
+					<label for="sensitiveMedia-{{.ID}}" class="button" role="button" tabindex="0">
 						<i class="fa fa-eye-slash" title="Hide media"></i>
 					</label>
 				</div>
 				<div class="closed">
-					<label for="sensitiveMedia-{{.ID}}" class="button" role="button">Show media</label>
+					<label for="sensitiveMedia-{{.ID}}" class="button" role="button" tabindex="0">Show media</label>
 				</div>
 			</div>
 			<a href="{{.URL}}" target="_blank" {{if .Description}}title="{{.Description}}"{{end}} data-pswp-width="{{.Meta.Original.Width}}px" data-pswp-height="{{.Meta.Original.Height}}px">
