@@ -161,14 +161,12 @@ main {
 
 				code {	
 					display: block;				
+					width: 100%;
 					white-space: pre;
-					padding: initial;
-					padding-bottom: 1rem;
+					padding: 0 0 1rem 0;
 					border-radius: initial;
 
-					max-width: 100%;
-					min-width: 100px;
-					overflow-x: scroll;
+					overflow-x: auto;
 					-webkit-overflow-scrolling: touch;
 					scrollbar-color: $sloth_orange1 $sloth_gray2_darker3;
 				}
