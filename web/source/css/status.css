@@ -156,16 +156,14 @@ main {
 			}
 
 			pre {
-				padding: 1rem 1rem 0 1rem;
+				display: flex;
 				border-radius: $br;
+				padding: 0.5rem;
 
 				code {	
-					display: block;				
-					width: 100%;
+					padding: 0.5rem;
 					white-space: pre;
-					padding: 0 0 1rem 0;
-					border-radius: initial;
-
+					border-radius: 0;
 					overflow-x: auto;
 					-webkit-overflow-scrolling: touch;
 					scrollbar-color: $sloth_orange1 $sloth_gray2_darker3;
