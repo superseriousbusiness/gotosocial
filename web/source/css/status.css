@@ -166,7 +166,6 @@ main {
 					border-radius: 0;
 					overflow-x: auto;
 					-webkit-overflow-scrolling: touch;
-					scrollbar-color: $sloth_orange1 $sloth_gray2_darker3;
 				}
 			}
 		}
