@@ -353,6 +353,9 @@ func (t *Table) newField(f reflect.StructField, prefix string, index []int) *Fie
 		field.AutoIncrement = true
 		field.NullZero = true
 	}
+	if tag.HasOption("identity") {
+		field.Identity = true
+	}
 
 	if v, ok := tag.Options["unique"]; ok {
 		var names []string
@@ -374,6 +377,7 @@ func (t *Table) newField(f reflect.StructField, prefix string, index []int) *Fie
 	}
 	if s, ok := tag.Option("default"); ok {
 		field.SQLDefault = s
+		field.NullZero = true
 	}
 	if s, ok := field.Tag.Option("type"); ok {
 		field.UserSQLType = s
@@ -478,6 +482,39 @@ func (t *Table) belongsToRelation(field *Field) *Relation {
 		JoinTable: joinTable,
 	}
 
+	if field.Tag.HasOption("join_on") {
+		rel.Condition = field.Tag.Options["join_on"]
+	}
+
+	rel.OnUpdate = "ON UPDATE NO ACTION"
+	if onUpdate, ok := field.Tag.Options["on_update"]; ok {
+		if len(onUpdate) > 1 {
+			panic(fmt.Errorf("bun: %s belongs-to %s: on_update option must be a single field", t.TypeName, field.GoName))
+		}
+
+		rule := strings.ToUpper(onUpdate[0])
+		if !isKnownFKRule(rule) {
+			internal.Warn.Printf("bun: %s belongs-to %s: unknown on_update rule %s", t.TypeName, field.GoName, rule)
+		}
+
+		s := fmt.Sprintf("ON UPDATE %s", rule)
+		rel.OnUpdate = s
+	}
+
+	rel.OnDelete = "ON DELETE NO ACTION"
+	if onDelete, ok := field.Tag.Options["on_delete"]; ok {
+		if len(onDelete) > 1 {
+			panic(fmt.Errorf("bun: %s belongs-to %s: on_delete option must be a single field", t.TypeName, field.GoName))
+		}
+
+		rule := strings.ToUpper(onDelete[0])
+		if !isKnownFKRule(rule) {
+			internal.Warn.Printf("bun: %s belongs-to %s: unknown on_delete rule %s", t.TypeName, field.GoName, rule)
+		}
+		s := fmt.Sprintf("ON DELETE %s", rule)
+		rel.OnDelete = s
+	}
+
 	if join, ok := field.Tag.Options["join"]; ok {
 		baseColumns, joinColumns := parseRelationJoin(join)
 		for i, baseColumn := range baseColumns {
@@ -537,6 +574,10 @@ func (t *Table) hasOneRelation(field *Field) *Relation {
 		Type:      BelongsToRelation,
 		Field:     field,
 		JoinTable: joinTable,
+	}
+
+	if field.Tag.HasOption("join_on") {
+		rel.Condition = field.Tag.Options["join_on"]
 	}
 
 	if join, ok := field.Tag.Options["join"]; ok {
@@ -605,6 +646,11 @@ func (t *Table) hasManyRelation(field *Field) *Relation {
 		Field:     field,
 		JoinTable: joinTable,
 	}
+
+	if field.Tag.HasOption("join_on") {
+		rel.Condition = field.Tag.Options["join_on"]
+	}
+
 	var polymorphicColumn string
 
 	if join, ok := field.Tag.Options["join"]; ok {
@@ -715,6 +761,11 @@ func (t *Table) m2mRelation(field *Field) *Relation {
 		JoinTable: joinTable,
 		M2MTable:  m2mTable,
 	}
+
+	if field.Tag.HasOption("join_on") {
+		rel.Condition = field.Tag.Options["join_on"]
+	}
+
 	var leftColumn, rightColumn string
 
 	if join, ok := field.Tag.Options["join"]; ok {
@@ -853,13 +904,29 @@ func isKnownFieldOption(name string) bool {
 		"unique",
 		"soft_delete",
 		"scanonly",
+		"skipupdate",
 
 		"pk",
 		"autoincrement",
 		"rel",
 		"join",
+		"join_on",
+		"on_update",
+		"on_delete",
 		"m2m",
-		"polymorphic":
+		"polymorphic",
+		"identity":
+		return true
+	}
+	return false
+}
+
+func isKnownFKRule(name string) bool {
+	switch name {
+	case "CASCADE",
+		"RESTRICT",
+		"SET NULL",
+		"SET DEFAULT":
 		return true
 	}
 	return false

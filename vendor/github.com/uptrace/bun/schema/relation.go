@@ -18,6 +18,9 @@ type Relation struct {
 	JoinTable  *Table
 	BaseFields []*Field
 	JoinFields []*Field
+	OnUpdate   string
+	OnDelete   string
+	Condition  []string
 
 	PolymorphicField *Field
 	PolymorphicValue string

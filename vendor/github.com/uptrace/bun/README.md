@@ -1,13 +1,14 @@
-# SQL-first Go ORM for PostgreSQL, MySQL, MSSQL, and SQLite
+# SQL-first Golang ORM for PostgreSQL, MySQL, MSSQL, and SQLite
 
 [![build workflow](https://github.com/uptrace/bun/actions/workflows/build.yml/badge.svg)](https://github.com/uptrace/bun/actions)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/uptrace/bun)](https://pkg.go.dev/github.com/uptrace/bun)
 [![Documentation](https://img.shields.io/badge/bun-documentation-informational)](https://bun.uptrace.dev/)
 [![Chat](https://discordapp.com/api/guilds/752070105847955518/widget.png)](https://discord.gg/rWtp5Aj)
 
-Bun is brought to you by :star: [**uptrace/uptrace**](https://github.com/uptrace/uptrace). Uptrace
-is an open source and blazingly fast **distributed tracing** backend powered by OpenTelemetry and
-ClickHouse. Give it a star as well!
+> Bun is brought to you by :star: [**uptrace/uptrace**](https://github.com/uptrace/uptrace). Uptrace
+> is an open source and blazingly fast
+> [distributed tracing tool](https://get.uptrace.dev/compare/distributed-tracing-tools.html) powered
+> by OpenTelemetry and ClickHouse. Give it a star as well!
 
 ## Features
 
@@ -26,7 +27,7 @@ ClickHouse. Give it a star as well!
 
 Resources:
 
-- [**Get started**](https://bun.uptrace.dev/guide/getting-started.html)
+- [**Get started**](https://bun.uptrace.dev/guide/golang-orm.html)
 - [Examples](https://github.com/uptrace/bun/tree/master/example)
 - [Discussions](https://github.com/uptrace/bun/discussions)
 - [Chat](https://discord.gg/rWtp5Aj)
@@ -253,7 +254,7 @@ topRegions := db.NewSelect().
 	TableExpr("regional_sales").
 	Where("total_sales > (SELECT SUM(total_sales) / 10 FROM regional_sales)")
 
-var items map[string]interface{}
+var items []map[string]interface{}
 err := db.NewSelect().
 	With("regional_sales", regionalSales).
 	With("top_regions", topRegions).
@@ -301,8 +302,14 @@ if err := db.NewSelect().Model(user1).Where("id = ?", 1).Scan(ctx); err != nil {
 }
 ```
 
-See [**Getting started**](https://bun.uptrace.dev/guide/getting-started.html) guide and check
+See [**Getting started**](https://bun.uptrace.dev/guide/golang-orm.html) guide and check
 [examples](example).
+
+## See also
+
+- [Golang HTTP router](https://github.com/uptrace/bunrouter)
+- [Golang ClickHouse ORM](https://github.com/uptrace/go-clickhouse)
+- [Golang msgpack](https://github.com/vmihailenco/msgpack)
 
 ## Contributors
 
