@@ -20,6 +20,7 @@ package user
 
 import (
 	"context"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -42,7 +43,9 @@ func (p *processor) ChangePassword(ctx context.Context, user *gtsmodel.User, old
 	}
 
 	user.EncryptedPassword = string(newPasswordHash)
-	if err := p.db.UpdateByPrimaryKey(ctx, user); err != nil {
+	user.UpdatedAt = time.Now()
+
+	if err := p.db.UpdateByPrimaryKey(ctx, user, "encrypted_password", "updated_at"); err != nil {
 		return gtserror.NewErrorInternalError(err, "database error")
 	}
 

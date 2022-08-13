@@ -40,8 +40,8 @@ type UserStandardTestSuite struct {
 }
 
 func (suite *UserStandardTestSuite) SetupTest() {
-	testrig.InitTestLog()
 	testrig.InitTestConfig()
+	testrig.InitTestLog()
 
 	suite.db = testrig.NewTestDB()
 	suite.sentEmails = make(map[string]string)
