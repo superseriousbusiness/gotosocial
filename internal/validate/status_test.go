@@ -26,6 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 func happyStatus() *gtsmodel.Status {
@@ -44,7 +45,7 @@ func happyStatus() *gtsmodel.Status {
 		Mentions:                 nil,
 		EmojiIDs:                 nil,
 		Emojis:                   nil,
-		Local:                    true,
+		Local:                    testrig.TrueBool(),
 		AccountID:                "01FEBBQ4KEP3824WW61MF52638",
 		Account:                  nil,
 		AccountURI:               "https://example.org/users/test_user",
@@ -59,17 +60,17 @@ func happyStatus() *gtsmodel.Status {
 		BoostOfAccount:           nil,
 		ContentWarning:           "hello world test post",
 		Visibility:               gtsmodel.VisibilityPublic,
-		Sensitive:                false,
+		Sensitive:                testrig.FalseBool(),
 		Language:                 "en",
 		CreatedWithApplicationID: "01FEBBZHF4GFVRXSJVXD0JTZZ2",
 		CreatedWithApplication:   nil,
-		Federated:                true,
-		Boostable:                true,
-		Replyable:                true,
-		Likeable:                 true,
+		Federated:                testrig.TrueBool(),
+		Boostable:                testrig.TrueBool(),
+		Replyable:                testrig.TrueBool(),
+		Likeable:                 testrig.TrueBool(),
 		ActivityStreamsType:      ap.ObjectNote,
 		Text:                     "Test status! #hello",
-		Pinned:                   false,
+		Pinned:                   testrig.FalseBool(),
 	}
 }
 
@@ -127,7 +128,7 @@ func (suite *StatusValidateTestSuite) TestStatusApplicationID() {
 	err := validate.Struct(s)
 	suite.EqualError(err, "Key: 'Status.CreatedWithApplicationID' Error:Field validation for 'CreatedWithApplicationID' failed on the 'required_if' tag")
 
-	s.Local = false
+	s.Local = testrig.FalseBool()
 	err = validate.Struct(s)
 	suite.NoError(err)
 }

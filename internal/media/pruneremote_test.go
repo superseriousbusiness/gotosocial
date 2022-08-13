@@ -35,7 +35,7 @@ type PruneRemoteTestSuite struct {
 
 func (suite *PruneRemoteTestSuite) TestPruneRemote() {
 	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
-	suite.True(testAttachment.Cached)
+	suite.True(*testAttachment.Cached)
 
 	totalPruned, err := suite.manager.PruneAllRemote(context.Background(), 1)
 	suite.NoError(err)
@@ -45,7 +45,7 @@ func (suite *PruneRemoteTestSuite) TestPruneRemote() {
 	suite.NoError(err)
 
 	// the media should no longer be cached
-	suite.False(prunedAttachment.Cached)
+	suite.False(*prunedAttachment.Cached)
 }
 
 func (suite *PruneRemoteTestSuite) TestPruneRemoteTwice() {
@@ -91,7 +91,7 @@ func (suite *PruneRemoteTestSuite) TestPruneAndRecache() {
 	suite.NotNil(recachedAttachment)
 
 	// recachedAttachment should be basically the same as the old attachment
-	suite.True(recachedAttachment.Cached)
+	suite.True(*recachedAttachment.Cached)
 	suite.Equal(testAttachment.ID, recachedAttachment.ID)
 	suite.Equal(testAttachment.File.Path, recachedAttachment.File.Path)           // file should be stored in the same place
 	suite.Equal(testAttachment.Thumbnail.Path, recachedAttachment.Thumbnail.Path) // as should the thumbnail
@@ -111,7 +111,7 @@ func (suite *PruneRemoteTestSuite) TestPruneOneNonExistent() {
 	// Delete this attachment cached on disk
 	media, err := suite.db.GetAttachmentByID(ctx, testAttachment.ID)
 	suite.NoError(err)
-	suite.True(media.Cached)
+	suite.True(*media.Cached)
 	err = suite.storage.Delete(ctx, media.File.Path)
 	suite.NoError(err)
 

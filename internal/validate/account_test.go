@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 func happyAccount() *gtsmodel.Account {
@@ -52,15 +53,15 @@ func happyAccount() *gtsmodel.Account {
 		DisplayName:             "original zork (he/they)",
 		Fields:                  []gtsmodel.Field{},
 		Note:                    "hey yo this is my profile!",
-		Memorial:                false,
+		Memorial:                testrig.FalseBool(),
 		AlsoKnownAs:             "",
 		MovedToAccountID:        "",
-		Bot:                     false,
+		Bot:                     testrig.FalseBool(),
 		Reason:                  "I wanna be on this damned webbed site so bad! Please! Wow",
-		Locked:                  false,
-		Discoverable:            true,
+		Locked:                  testrig.FalseBool(),
+		Discoverable:            testrig.TrueBool(),
 		Privacy:                 gtsmodel.VisibilityPublic,
-		Sensitive:               false,
+		Sensitive:               testrig.FalseBool(),
 		Language:                "en",
 		StatusFormat:            "plain",
 		URI:                     "http://localhost:8080/users/the_mighty_zork",
@@ -78,7 +79,7 @@ func happyAccount() *gtsmodel.Account {
 		SensitizedAt:            time.Time{},
 		SilencedAt:              time.Time{},
 		SuspendedAt:             time.Time{},
-		HideCollections:         false,
+		HideCollections:         testrig.FalseBool(),
 		SuspensionOrigin:        "",
 	}
 }

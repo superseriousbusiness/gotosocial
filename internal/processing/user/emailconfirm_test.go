@@ -95,13 +95,14 @@ func (suite *EmailConfirmTestSuite) TestConfirmEmailOldToken() {
 	user := suite.testUsers["local_account_1"]
 
 	// set a bunch of stuff on the user as though zork hasn't been confirmed yet, but has had an email sent 8 days ago
+	updatingColumns := []string{"unconfirmed_email", "email", "confirmed_at", "confirmation_sent_at", "confirmation_token"}
 	user.UnconfirmedEmail = "some.email@example.org"
 	user.Email = ""
 	user.ConfirmedAt = time.Time{}
 	user.ConfirmationSentAt = time.Now().Add(-192 * time.Hour)
 	user.ConfirmationToken = "1d1aa44b-afa4-49c8-ac4b-eceb61715cc6"
 
-	err := suite.db.UpdateByPrimaryKey(ctx, user)
+	err := suite.db.UpdateByPrimaryKey(ctx, user, updatingColumns...)
 	suite.NoError(err)
 
 	// confirm with the token set above

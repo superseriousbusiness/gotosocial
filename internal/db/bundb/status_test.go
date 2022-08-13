@@ -43,10 +43,10 @@ func (suite *StatusTestSuite) TestGetStatusByID() {
 	suite.Nil(status.BoostOfAccount)
 	suite.Nil(status.InReplyTo)
 	suite.Nil(status.InReplyToAccount)
-	suite.True(status.Federated)
-	suite.True(status.Boostable)
-	suite.True(status.Replyable)
-	suite.True(status.Likeable)
+	suite.True(*status.Federated)
+	suite.True(*status.Boostable)
+	suite.True(*status.Replyable)
+	suite.True(*status.Likeable)
 }
 
 func (suite *StatusTestSuite) TestGetStatusByURI() {
@@ -61,10 +61,10 @@ func (suite *StatusTestSuite) TestGetStatusByURI() {
 	suite.Nil(status.BoostOfAccount)
 	suite.Nil(status.InReplyTo)
 	suite.Nil(status.InReplyToAccount)
-	suite.True(status.Federated)
-	suite.True(status.Boostable)
-	suite.False(status.Replyable)
-	suite.False(status.Likeable)
+	suite.True(*status.Federated)
+	suite.True(*status.Boostable)
+	suite.False(*status.Replyable)
+	suite.False(*status.Likeable)
 }
 
 func (suite *StatusTestSuite) TestGetStatusWithExtras() {
@@ -78,10 +78,10 @@ func (suite *StatusTestSuite) TestGetStatusWithExtras() {
 	suite.NotEmpty(status.Tags)
 	suite.NotEmpty(status.Attachments)
 	suite.NotEmpty(status.Emojis)
-	suite.True(status.Federated)
-	suite.True(status.Boostable)
-	suite.True(status.Replyable)
-	suite.True(status.Likeable)
+	suite.True(*status.Federated)
+	suite.True(*status.Boostable)
+	suite.True(*status.Replyable)
+	suite.True(*status.Likeable)
 }
 
 func (suite *StatusTestSuite) TestGetStatusWithMention() {
@@ -95,10 +95,10 @@ func (suite *StatusTestSuite) TestGetStatusWithMention() {
 	suite.NotEmpty(status.MentionIDs)
 	suite.NotEmpty(status.InReplyToID)
 	suite.NotEmpty(status.InReplyToAccountID)
-	suite.True(status.Federated)
-	suite.True(status.Boostable)
-	suite.True(status.Replyable)
-	suite.True(status.Likeable)
+	suite.True(*status.Federated)
+	suite.True(*status.Boostable)
+	suite.True(*status.Replyable)
+	suite.True(*status.Likeable)
 }
 
 func (suite *StatusTestSuite) TestGetStatusTwice() {
