@@ -164,15 +164,15 @@ func (a *accountDB) GetAccountLastPosted(ctx context.Context, accountID string) 
 }
 
 func (a *accountDB) SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachment *gtsmodel.MediaAttachment, accountID string) db.Error {
-	if mediaAttachment.Avatar && mediaAttachment.Header {
+	if *mediaAttachment.Avatar && *mediaAttachment.Header {
 		return errors.New("one media attachment cannot be both header and avatar")
 	}
 
 	var headerOrAVI string
 	switch {
-	case mediaAttachment.Avatar:
+	case *mediaAttachment.Avatar:
 		headerOrAVI = "avatar"
-	case mediaAttachment.Header:
+	case *mediaAttachment.Header:
 		headerOrAVI = "header"
 	default:
 		return errors.New("given media attachment was neither a header nor an avatar")

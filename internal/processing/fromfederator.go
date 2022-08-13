@@ -259,7 +259,7 @@ func (p *processor) processCreateFollowRequestFromFederator(ctx context.Context,
 		followRequest.TargetAccount = a
 	}
 
-	if followRequest.TargetAccount.Locked {
+	if *followRequest.TargetAccount.Locked {
 		// if the account is locked just notify the follow request and nothing else
 		return p.notifyFollowRequest(ctx, followRequest)
 	}

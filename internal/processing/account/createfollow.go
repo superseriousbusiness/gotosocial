@@ -97,7 +97,7 @@ func (p *processor) FollowCreate(ctx context.Context, requestingAccount *gtsmode
 	}
 
 	// if it's a local account that's not locked we can just straight up accept the follow request
-	if !targetAcct.Locked && targetAcct.Domain == "" {
+	if !*targetAcct.Locked && targetAcct.Domain == "" {
 		if _, err := p.db.AcceptFollowRequest(ctx, requestingAccount.ID, form.ID); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("accountfollowcreate: error accepting folow request for local unlocked account: %s", err))
 		}

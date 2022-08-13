@@ -99,29 +99,46 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 	switch accountable.GetTypeName() {
 	case ap.ActorPerson, ap.ActorGroup, ap.ActorOrganization:
 		// people, groups, and organizations aren't bots
-		acct.Bot = false
+		bot := false
+		acct.Bot = &bot
 		// apps and services are
 	case ap.ActorApplication, ap.ActorService:
-		acct.Bot = true
+		bot := true
+		acct.Bot = &bot
 	default:
 		// we don't know what this is!
 		return nil, fmt.Errorf("type name %s not recognised or not convertible to ap.ActivityStreamsActor", accountable.GetTypeName())
 	}
 	acct.ActorType = accountable.GetTypeName()
 
+	// assume not memorial (todo)
+	memorial := false
+	acct.Memorial = &memorial
+
+	// assume not sensitive (todo)
+	sensitive := false
+	acct.Sensitive = &sensitive
+
+	// assume not hide collections (todo)
+	hideCollections := false
+	acct.HideCollections = &hideCollections
+
 	// locked aka manuallyApprovesFollowers
-	acct.Locked = true // assume locked by default
+	locked := true
+	acct.Locked = &locked // assume locked by default
 	maf := accountable.GetActivityStreamsManuallyApprovesFollowers()
 	if maf != nil && maf.IsXMLSchemaBoolean() {
-		acct.Locked = maf.Get()
+		locked = maf.Get()
+		acct.Locked = &locked
 	}
 
 	// discoverable
 	// default to false -- take custom value if it's set though
-	acct.Discoverable = false
-	discoverable, err := ap.ExtractDiscoverable(accountable)
+	discoverable := false
+	acct.Discoverable = &discoverable
+	d, err := ap.ExtractDiscoverable(accountable)
 	if err == nil {
-		acct.Discoverable = discoverable
+		acct.Discoverable = &d
 	}
 
 	// url property
@@ -289,13 +306,20 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	// advanced visibility for this status
 	// TODO: a lot of work to be done here -- a new type needs to be created for this in go-fed/activity using ASTOOL
 	// for now we just set everything to true
-	status.Federated = true
-	status.Boostable = true
-	status.Replyable = true
-	status.Likeable = true
+	pinned := false
+	federated := true
+	boostable := true
+	replyable := true
+	likeable := true
 
+	status.Pinned = &pinned
+	status.Federated = &federated
+	status.Boostable = &boostable
+	status.Replyable = &replyable
+	status.Likeable = &likeable
 	// sensitive
-	status.Sensitive = ap.ExtractSensitive(statusable)
+	sensitive := ap.ExtractSensitive(statusable)
+	status.Sensitive = &sensitive
 
 	// language
 	// we might be able to extract this from the contentMap field

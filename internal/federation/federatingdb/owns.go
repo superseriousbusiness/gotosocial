@@ -62,7 +62,7 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 			// an actual error happened
 			return false, fmt.Errorf("database error fetching status with id %s: %s", uid, err)
 		}
-		return status.Local, nil
+		return *status.Local, nil
 	}
 
 	if uris.IsUserPath(id) {

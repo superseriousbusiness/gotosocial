@@ -41,9 +41,9 @@ type MediaAttachment struct {
 	Processing        ProcessingStatus `validate:"oneof=0 1 2 666" bun:",notnull,default:2"`                                           // What is the processing status of this attachment
 	File              File             `validate:"required" bun:",embed:file_,notnull,nullzero"`                                       // metadata for the whole file
 	Thumbnail         Thumbnail        `validate:"required" bun:",embed:thumbnail_,notnull,nullzero"`                                  // small image thumbnail derived from a larger image, video, or audio file.
-	Avatar            bool             `validate:"-" bun:",notnull,default:false"`                                                     // Is this attachment being used as an avatar?
-	Header            bool             `validate:"-" bun:",notnull,default:false"`                                                     // Is this attachment being used as a header?
-	Cached            bool             `validate:"-" bun:",notnull"`                                                                   // Is this attachment currently cached by our instance?
+	Avatar            *bool            `validate:"-" bun:",nullzero,notnull,default:false"`                                            // Is this attachment being used as an avatar?
+	Header            *bool            `validate:"-" bun:",nullzero,notnull,default:false"`                                            // Is this attachment being used as a header?
+	Cached            *bool            `validate:"-" bun:",nullzero,notnull,default:false"`                                            // Is this attachment currently cached by our instance?
 }
 
 // File refers to the metadata for the whole file

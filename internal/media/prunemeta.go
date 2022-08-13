@@ -46,8 +46,8 @@ func (m *manager) PruneAllMeta(ctx context.Context) (int, error) {
 		// - is an avatar but isn't the owning account's current avatar
 		for _, attachment := range attachments {
 			if attachment.Account == nil ||
-				(attachment.Header && attachment.ID != attachment.Account.HeaderMediaAttachmentID) ||
-				(attachment.Avatar && attachment.ID != attachment.Account.AvatarMediaAttachmentID) {
+				(*attachment.Header && attachment.ID != attachment.Account.HeaderMediaAttachmentID) ||
+				(*attachment.Avatar && attachment.ID != attachment.Account.AvatarMediaAttachmentID) {
 				if err := m.pruneOneAvatarOrHeader(ctx, attachment); err != nil {
 					return totalPruned, err
 				}

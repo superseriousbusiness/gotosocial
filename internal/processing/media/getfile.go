@@ -112,7 +112,7 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 	}
 
 	// if we have the media cached on our server already, we can now simply return it from storage
-	if a.Cached {
+	if *a.Cached {
 		return p.retrieveFromStorage(ctx, storagePath, attachmentContent)
 	}
 

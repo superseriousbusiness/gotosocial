@@ -46,7 +46,7 @@ func (c *converter) StatusToBoost(ctx context.Context, s *gtsmodel.Status, boost
 		// the boosted status is not created now, but the boost certainly is
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
-		Local:      local,
+		Local:      &local,
 		AccountID:  boostingAccount.ID,
 		AccountURI: boostingAccount.URI,
 

@@ -285,8 +285,10 @@ selectStatusesLoop:
 	account.HeaderRemoteURL = ""
 	account.Reason = ""
 	account.Fields = []gtsmodel.Field{}
-	account.HideCollections = true
-	account.Discoverable = false
+	hideCollections := true
+	account.HideCollections = &hideCollections
+	discoverable := false
+	account.Discoverable = &discoverable
 
 	account.SuspendedAt = time.Now()
 	account.SuspensionOrigin = origin
