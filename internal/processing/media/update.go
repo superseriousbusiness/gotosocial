@@ -44,11 +44,11 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, media
 		return nil, gtserror.NewErrorNotFound(errors.New("attachment not owned by requesting account"))
 	}
 
+	columnsUpdated := []string{}
+
 	if form.Description != nil {
 		attachment.Description = text.SanitizePlaintext(*form.Description)
-		if err := p.db.UpdateByPrimaryKey(ctx, attachment); err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("database error updating description: %s", err))
-		}
+		columnsUpdated = append(columnsUpdated, "description")
 	}
 
 	if form.Focus != nil {
@@ -58,9 +58,11 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, media
 		}
 		attachment.FileMeta.Focus.X = focusx
 		attachment.FileMeta.Focus.Y = focusy
-		if err := p.db.UpdateByPrimaryKey(ctx, attachment); err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("database error updating focus: %s", err))
-		}
+		columnsUpdated = append(columnsUpdated, "focus_x", "focus_y")
+	}
+
+	if err := p.db.UpdateByPrimaryKey(ctx, attachment, columnsUpdated...); err != nil {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("database error updating media: %s", err))
 	}
 
 	a, err := p.tc.AttachmentToAPIAttachment(ctx, attachment)

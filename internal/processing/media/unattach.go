@@ -43,10 +43,11 @@ func (p *processor) Unattach(ctx context.Context, account *gtsmodel.Account, med
 		return nil, gtserror.NewErrorNotFound(errors.New("attachment not owned by requesting account"))
 	}
 
+	columnsUpdated := []string{"updated_at", "status_id"}
 	attachment.UpdatedAt = time.Now()
 	attachment.StatusID = ""
 
-	if err := p.db.UpdateByPrimaryKey(ctx, attachment); err != nil {
+	if err := p.db.UpdateByPrimaryKey(ctx, attachment, columnsUpdated...); err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("db error updating attachment: %s", err))
 	}
 
