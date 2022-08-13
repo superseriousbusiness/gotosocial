@@ -98,11 +98,8 @@ func (b *basicDB) UpdateByPrimaryKey(ctx context.Context, i interface{}, columns
 	q := b.conn.
 		NewUpdate().
 		Model(i).
+		Column(columns...).
 		WherePK()
-
-	if columns != nil {
-		q = q.Column(columns...)
-	}
 
 	_, err := q.Exec(ctx)
 	return b.conn.ProcessError(err)
