@@ -84,7 +84,7 @@ func (suite *FromFederatorTestSuite) TestProcessFederationAnnounce() {
 	suite.Equal(boostedStatus.AccountID, notif.TargetAccountID)
 	suite.Equal(announceStatus.AccountID, notif.OriginAccountID)
 	suite.Equal(announceStatus.ID, notif.StatusID)
-	suite.False(notif.Read)
+	suite.False(*notif.Read)
 }
 
 func (suite *FromFederatorTestSuite) TestProcessReplyMention() {
@@ -157,7 +157,7 @@ func (suite *FromFederatorTestSuite) TestProcessReplyMention() {
 	suite.Equal(replyingStatus.InReplyToAccountID, notif.TargetAccountID)
 	suite.Equal(replyingStatus.AccountID, notif.OriginAccountID)
 	suite.Equal(replyingStatus.ID, notif.StatusID)
-	suite.False(notif.Read)
+	suite.False(*notif.Read)
 
 	// the notification should be streamed
 	var msg *stream.Message
@@ -230,7 +230,7 @@ func (suite *FromFederatorTestSuite) TestProcessFave() {
 	suite.Equal(fave.TargetAccountID, notif.TargetAccountID)
 	suite.Equal(fave.AccountID, notif.OriginAccountID)
 	suite.Equal(fave.StatusID, notif.StatusID)
-	suite.False(notif.Read)
+	suite.False(*notif.Read)
 
 	// 2. a notification should be streamed
 	var msg *stream.Message
@@ -303,7 +303,7 @@ func (suite *FromFederatorTestSuite) TestProcessFaveWithDifferentReceivingAccoun
 	suite.Equal(fave.TargetAccountID, notif.TargetAccountID)
 	suite.Equal(fave.AccountID, notif.OriginAccountID)
 	suite.Equal(fave.StatusID, notif.StatusID)
-	suite.False(notif.Read)
+	suite.False(*notif.Read)
 
 	// 2. no notification should be streamed to the account that received the fave message, because they weren't the target
 	suite.Empty(wssStream.Messages)
@@ -323,9 +323,9 @@ func (suite *FromFederatorTestSuite) TestProcessAccountDelete() {
 		UpdatedAt:       time.Now().Add(-1 * time.Hour),
 		AccountID:       deletedAccount.ID,
 		TargetAccountID: receivingAccount.ID,
-		ShowReblogs:     true,
+		ShowReblogs:     testrig.TrueBool(),
 		URI:             fmt.Sprintf("%s/follows/01FGRY72ASHBSET64353DPHK9T", deletedAccount.URI),
-		Notify:          false,
+		Notify:          testrig.FalseBool(),
 	}
 	err := suite.db.Put(ctx, zorkFollowSatan)
 	suite.NoError(err)
@@ -336,9 +336,9 @@ func (suite *FromFederatorTestSuite) TestProcessAccountDelete() {
 		UpdatedAt:       time.Now().Add(-1 * time.Hour),
 		AccountID:       receivingAccount.ID,
 		TargetAccountID: deletedAccount.ID,
-		ShowReblogs:     true,
+		ShowReblogs:     testrig.TrueBool(),
 		URI:             fmt.Sprintf("%s/follows/01FGRYAVAWWPP926J175QGM0WV", receivingAccount.URI),
-		Notify:          false,
+		Notify:          testrig.FalseBool(),
 	}
 	err = suite.db.Put(ctx, satanFollowZork)
 	suite.NoError(err)
@@ -409,9 +409,9 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestLocked() {
 		Account:         originAccount,
 		TargetAccountID: targetAccount.ID,
 		TargetAccount:   targetAccount,
-		ShowReblogs:     true,
+		ShowReblogs:     testrig.TrueBool(),
 		URI:             fmt.Sprintf("%s/follows/01FGRYAVAWWPP926J175QGM0WV", originAccount.URI),
-		Notify:          false,
+		Notify:          testrig.FalseBool(),
 	}
 
 	err := suite.db.Put(ctx, satanFollowRequestTurtle)
@@ -466,9 +466,9 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestUnlocked() {
 		Account:         originAccount,
 		TargetAccountID: targetAccount.ID,
 		TargetAccount:   targetAccount,
-		ShowReblogs:     true,
+		ShowReblogs:     testrig.TrueBool(),
 		URI:             fmt.Sprintf("%s/follows/01FGRYAVAWWPP926J175QGM0WV", originAccount.URI),
-		Notify:          false,
+		Notify:          testrig.FalseBool(),
 	}
 
 	err := suite.db.Put(ctx, satanFollowRequestTurtle)

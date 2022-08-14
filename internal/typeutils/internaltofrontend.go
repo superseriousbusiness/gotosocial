@@ -323,7 +323,7 @@ func (c *converter) EmojiToAPIEmoji(ctx context.Context, e *gtsmodel.Emoji) (mod
 		Shortcode:       e.Shortcode,
 		URL:             e.ImageURL,
 		StaticURL:       e.ImageStaticURL,
-		VisibleInPicker: e.VisibleInPicker,
+		VisibleInPicker: *e.VisibleInPicker,
 		Category:        e.CategoryID,
 	}, nil
 }
@@ -762,7 +762,7 @@ func (c *converter) DomainBlockToAPIDomainBlock(ctx context.Context, b *gtsmodel
 	// if we're exporting a domain block, return it with minimal information attached
 	if !export {
 		domainBlock.ID = b.ID
-		domainBlock.Obfuscate = b.Obfuscate
+		domainBlock.Obfuscate = *b.Obfuscate
 		domainBlock.PrivateComment = b.PrivateComment
 		domainBlock.SubscriptionID = b.SubscriptionID
 		domainBlock.CreatedBy = b.CreatedByAccountID

@@ -230,6 +230,9 @@ func (m *manager) preProcessEmoji(ctx context.Context, data DataFunc, postData P
 		return nil, fmt.Errorf("preProcessEmoji: error fetching this instance account from the db: %s", err)
 	}
 
+	disabled := false
+	visibleInPicker := true
+
 	// populate initial fields on the emoji -- some of these will be overwritten as we proceed
 	emoji := &gtsmodel.Emoji{
 		ID:                     id,
@@ -248,9 +251,9 @@ func (m *manager) preProcessEmoji(ctx context.Context, data DataFunc, postData P
 		ImageFileSize:          0,
 		ImageStaticFileSize:    0,
 		ImageUpdatedAt:         time.Now(),
-		Disabled:               false,
+		Disabled:               &disabled,
 		URI:                    uri,
-		VisibleInPicker:        true,
+		VisibleInPicker:        &visibleInPicker,
 		CategoryID:             "",
 	}
 
@@ -274,11 +277,11 @@ func (m *manager) preProcessEmoji(ctx context.Context, data DataFunc, postData P
 		}
 
 		if ai.Disabled != nil {
-			emoji.Disabled = *ai.Disabled
+			emoji.Disabled = ai.Disabled
 		}
 
 		if ai.VisibleInPicker != nil {
-			emoji.VisibleInPicker = *ai.VisibleInPicker
+			emoji.VisibleInPicker = ai.VisibleInPicker
 		}
 
 		if ai.CategoryID != nil {

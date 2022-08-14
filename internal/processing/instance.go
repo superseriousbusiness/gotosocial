@@ -81,7 +81,7 @@ func (p *processor) InstancePeersGet(ctx context.Context, authed *oauth.Auth, in
 		}
 
 		for _, d := range domainBlocks {
-			if d.Obfuscate {
+			if *d.Obfuscate {
 				d.Domain = obfuscate(d.Domain)
 			}
 

@@ -30,6 +30,6 @@ type FollowRequest struct {
 	Account         *Account  `validate:"-" bun:"rel:belongs-to"`                                                // Account corresponding to accountID
 	TargetAccountID string    `validate:"required,ulid" bun:"type:CHAR(26),unique:frsrctarget,notnull,nullzero"` // Who is the target of this follow request?
 	TargetAccount   *Account  `validate:"-" bun:"rel:belongs-to"`                                                // Account corresponding to targetAccountID
-	ShowReblogs     bool      `validate:"-" bun:",default:true"`                                                 // Does this follow also want to see reblogs and not just posts?
-	Notify          bool      `validate:"-" bun:",default:false"`                                                // does the following account want to be notified when the followed account posts?
+	ShowReblogs     *bool     `validate:"-" bun:",nullzero,notnull,default:true"`                                // Does this follow also want to see reblogs and not just posts?
+	Notify          *bool     `validate:"-" bun:",nullzero,notnull,default:false"`                               // does the following account want to be notified when the followed account posts?
 }

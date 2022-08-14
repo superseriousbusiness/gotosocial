@@ -84,7 +84,7 @@ func (suite *BasicTestSuite) TestPutAccountWithBunDefaultFields() {
 	suite.Empty(a.Reason)
 	// Locked is especially important, since it's a bool that defaults
 	// to true, which is why we use pointers for bools in the first place
-	suite.True(*a.Locked) 
+	suite.True(*a.Locked)
 	suite.False(*a.Discoverable)
 	suite.Empty(a.Privacy)
 	suite.False(*a.Sensitive)

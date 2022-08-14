@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 func happyDomainBlock() *gtsmodel.DomainBlock {
@@ -36,7 +37,7 @@ func happyDomainBlock() *gtsmodel.DomainBlock {
 		CreatedByAccountID: "01FEED79PRMVWPRMFHFQM8MJQN",
 		PrivateComment:     "we don't like em",
 		PublicComment:      "poo poo dudes",
-		Obfuscate:          false,
+		Obfuscate:          testrig.FalseBool(),
 		SubscriptionID:     "",
 	}
 }

@@ -940,9 +940,9 @@ func NewTestEmojis() map[string]*gtsmodel.Emoji {
 			ImageFileSize:          36702,
 			ImageStaticFileSize:    10413,
 			ImageUpdatedAt:         TimeMustParse("2021-09-20T12:40:37+02:00"),
-			Disabled:               false,
+			Disabled:               FalseBool(),
 			URI:                    "http://localhost:8080/emoji/01F8MH9H8E4VG3KDYJR9EGPXCQ",
-			VisibleInPicker:        true,
+			VisibleInPicker:        TrueBool(),
 			CategoryID:             "",
 		},
 	}
@@ -990,7 +990,7 @@ func NewTestDomainBlocks() map[string]*gtsmodel.DomainBlock {
 			CreatedByAccountID: "01F8MH17FWEB39HZJ76B6VXSKF",
 			PrivateComment:     "i blocked this domain because they keep replying with pushy + unwarranted linux advice",
 			PublicComment:      "reply-guying to tech posts",
-			Obfuscate:          false,
+			Obfuscate:          FalseBool(),
 		},
 	}
 }
@@ -1489,8 +1489,8 @@ func NewTestTags() map[string]*gtsmodel.Tag {
 			FirstSeenFromAccountID: "",
 			CreatedAt:              TimeMustParse("2022-05-14T13:21:09+02:00"),
 			UpdatedAt:              TimeMustParse("2022-05-14T13:21:09+02:00"),
-			Useable:                true,
-			Listable:               true,
+			Useable:                TrueBool(),
+			Listable:               TrueBool(),
 			LastStatusAt:           TimeMustParse("2022-05-14T13:21:09+02:00"),
 		},
 		"Hashtag": {
@@ -1500,8 +1500,8 @@ func NewTestTags() map[string]*gtsmodel.Tag {
 			FirstSeenFromAccountID: "",
 			CreatedAt:              TimeMustParse("2022-05-14T13:21:09+02:00"),
 			UpdatedAt:              TimeMustParse("2022-05-14T13:21:09+02:00"),
-			Useable:                true,
-			Listable:               true,
+			Useable:                TrueBool(),
+			Listable:               TrueBool(),
 			LastStatusAt:           TimeMustParse("2022-05-14T13:21:09+02:00"),
 		},
 	}
@@ -1593,7 +1593,7 @@ func NewTestNotifications() map[string]*gtsmodel.Notification {
 			TargetAccountID:  "01F8MH1H7YV1Z7D2C8K2730QBF",
 			OriginAccountID:  "01F8MH17FWEB39HZJ76B6VXSKF",
 			StatusID:         "01F8MHAMCHF6Y650WCRSCP4WMY",
-			Read:             false,
+			Read:             FalseBool(),
 		},
 	}
 }
@@ -1607,9 +1607,9 @@ func NewTestFollows() map[string]*gtsmodel.Follow {
 			UpdatedAt:       TimeMustParse("2022-05-14T13:21:09+02:00"),
 			AccountID:       "01F8MH1H7YV1Z7D2C8K2730QBF",
 			TargetAccountID: "01F8MH17FWEB39HZJ76B6VXSKF",
-			ShowReblogs:     true,
+			ShowReblogs:     TrueBool(),
 			URI:             "http://localhost:8080/users/the_mighty_zork/follow/01F8PY8RHWRQZV038T4E8T9YK8",
-			Notify:          false,
+			Notify:          FalseBool(),
 		},
 		"local_account_1_local_account_2": {
 			ID:              "01F8PYDCE8XE23GRE5DPZJDZDP",
@@ -1617,9 +1617,9 @@ func NewTestFollows() map[string]*gtsmodel.Follow {
 			UpdatedAt:       TimeMustParse("2022-05-14T13:21:09+02:00"),
 			AccountID:       "01F8MH1H7YV1Z7D2C8K2730QBF",
 			TargetAccountID: "01F8MH5NBDF2MV7CTC4Q5128HF",
-			ShowReblogs:     true,
+			ShowReblogs:     TrueBool(),
 			URI:             "http://localhost:8080/users/the_mighty_zork/follow/01F8PYDCE8XE23GRE5DPZJDZDP",
-			Notify:          false,
+			Notify:          FalseBool(),
 		},
 		"local_account_2_local_account_1": {
 			ID:              "01G1TK1RS4K3E0MSFTXBFWAH9Q",
@@ -1627,9 +1627,9 @@ func NewTestFollows() map[string]*gtsmodel.Follow {
 			UpdatedAt:       TimeMustParse("2022-05-14T13:21:09+02:00"),
 			AccountID:       "01F8MH5NBDF2MV7CTC4Q5128HF",
 			TargetAccountID: "01F8MH1H7YV1Z7D2C8K2730QBF",
-			ShowReblogs:     true,
+			ShowReblogs:     TrueBool(),
 			URI:             "http://localhost:8080/users/1happyturtle/follow/01F8PYDCE8XE23GRE5DPZJDZDP",
-			Notify:          false,
+			Notify:          FalseBool(),
 		},
 		"admin_account_local_account_1": {
 			ID:              "01G1TK3PQKFW1BQZ9WVYRTFECK",
@@ -1637,9 +1637,9 @@ func NewTestFollows() map[string]*gtsmodel.Follow {
 			UpdatedAt:       TimeMustParse("2022-05-14T13:21:09+02:00"),
 			AccountID:       "01F8MH17FWEB39HZJ76B6VXSKF",
 			TargetAccountID: "01F8MH1H7YV1Z7D2C8K2730QBF",
-			ShowReblogs:     true,
+			ShowReblogs:     TrueBool(),
 			URI:             "http://localhost:8080/users/admin/follow/01G1TK3PQKFW1BQZ9WVYRTFECK",
-			Notify:          false,
+			Notify:          FalseBool(),
 		},
 	}
 }

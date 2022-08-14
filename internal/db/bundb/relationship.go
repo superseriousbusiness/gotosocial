@@ -114,8 +114,8 @@ func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount 
 	} else {
 		// follow exists so we can fill these fields out...
 		rel.Following = true
-		rel.ShowingReblogs = follow.ShowReblogs
-		rel.Notifying = follow.Notify
+		rel.ShowingReblogs = *follow.ShowReblogs
+		rel.Notifying = *follow.Notify
 	}
 
 	// check if the target account follows the requesting account

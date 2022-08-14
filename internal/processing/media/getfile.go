@@ -236,7 +236,7 @@ func (p *processor) getEmojiContent(ctx context.Context, wantedEmojiID string, e
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("emoji %s could not be taken from the db: %s", wantedEmojiID, err))
 	}
 
-	if e.Disabled {
+	if *e.Disabled {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("emoji %s has been disabled", wantedEmojiID))
 	}
 

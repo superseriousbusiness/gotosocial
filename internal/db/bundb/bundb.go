@@ -409,15 +409,17 @@ func (ps *bunDBService) TagStringsToTags(ctx context.Context, tags []string, ori
 				tag.FirstSeenFromAccountID = originAccountID
 				tag.CreatedAt = time.Now()
 				tag.UpdatedAt = time.Now()
-				tag.Useable = true
-				tag.Listable = true
+				useable := true
+				tag.Useable = &useable
+				listable := true
+				tag.Listable = &listable
 			} else {
 				return nil, fmt.Errorf("error getting tag with name %s: %s", t, err)
 			}
 		}
 
 		// bail already if the tag isn't useable
-		if !tag.Useable {
+		if !*tag.Useable {
 			continue
 		}
 		tag.LastStatusAt = time.Now()

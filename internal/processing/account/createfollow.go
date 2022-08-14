@@ -76,19 +76,21 @@ func (p *processor) FollowCreate(ctx context.Context, requestingAccount *gtsmode
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	showReblogs := true
+	notify := false
 	fr := &gtsmodel.FollowRequest{
 		ID:              newFollowID,
 		AccountID:       requestingAccount.ID,
 		TargetAccountID: form.ID,
-		ShowReblogs:     true,
+		ShowReblogs:     &showReblogs,
 		URI:             uris.GenerateURIForFollow(requestingAccount.Username, newFollowID),
-		Notify:          false,
+		Notify:          &notify,
 	}
 	if form.Reblogs != nil {
-		fr.ShowReblogs = *form.Reblogs
+		fr.ShowReblogs = form.Reblogs
 	}
 	if form.Notify != nil {
-		fr.Notify = *form.Notify
+		fr.Notify = form.Notify
 	}
 
 	// whack it in the database

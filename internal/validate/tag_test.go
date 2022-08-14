@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 func happyTag() *gtsmodel.Tag {
@@ -35,8 +36,8 @@ func happyTag() *gtsmodel.Tag {
 		URL:                    "https://example.org/tags/some_tag",
 		Name:                   "some_tag",
 		FirstSeenFromAccountID: "01FE91SR5P2GW06K3AJ98P72MT",
-		Useable:                true,
-		Listable:               true,
+		Useable:                testrig.TrueBool(),
+		Listable:               testrig.TrueBool(),
 		LastStatusAt:           time.Now(),
 	}
 }

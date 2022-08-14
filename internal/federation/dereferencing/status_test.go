@@ -121,7 +121,7 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithMention() {
 	suite.Equal(account.ID, m.OriginAccountID)
 	suite.Equal(fetchingAccount.ID, m.TargetAccountID)
 	suite.Equal(account.URI, m.OriginAccountURI)
-	suite.False(m.Silent)
+	suite.False(*m.Silent)
 }
 
 func (suite *StatusTestSuite) TestDereferenceStatusWithImageAndNoContent() {
