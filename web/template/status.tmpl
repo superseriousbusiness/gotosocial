@@ -28,7 +28,7 @@
 						<i class="fa fa-eye-slash" title="Hide sensitive media"></i>
 					</label>
 				</div>
-				<div class="closed">
+				<div class="closed" {{if .Description}}title="{{.Description}}"{{end}}>
 					<label for="sensitiveMedia-{{.ID}}" class="button" role="button" tabindex="0">Show sensitive media</label>
 				</div>
 			</div>
