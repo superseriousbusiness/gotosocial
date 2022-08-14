@@ -21,6 +21,7 @@ package bundb_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -37,6 +38,75 @@ func (suite *BasicTestSuite) TestGetAccountByID() {
 	a := &gtsmodel.Account{}
 	err := suite.db.GetByID(context.Background(), testAccount.ID, a)
 	suite.NoError(err)
+}
+
+func (suite *BasicTestSuite) TestPutAccountWithBunDefaultFields() {
+	testAccount := &gtsmodel.Account{
+		ID:           "01GADR1AH9VCKH8YYCM86XSZ00",
+		Username:     "test",
+		URI:          "https://example.org/users/test",
+		URL:          "https://example.org/@test",
+		InboxURI:     "https://example.org/users/test/inbox",
+		OutboxURI:    "https://example.org/users/test/outbox",
+		ActorType:    "Person",
+		PublicKeyURI: "https://example.org/test#main-key",
+	}
+
+	if err := suite.db.Put(context.Background(), testAccount); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	a := &gtsmodel.Account{}
+	if err := suite.db.GetByID(context.Background(), testAccount.ID, a); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// check all fields are set as expected, including database defaults
+	suite.Equal(testAccount.ID, a.ID)
+	suite.WithinDuration(time.Now(), a.CreatedAt, 5*time.Second)
+	suite.WithinDuration(time.Now(), a.UpdatedAt, 5*time.Second)
+	suite.Equal(testAccount.Username, a.Username)
+	suite.Empty(a.Domain)
+	suite.Empty(a.AvatarMediaAttachmentID)
+	suite.Nil(a.AvatarMediaAttachment)
+	suite.Empty(a.AvatarRemoteURL)
+	suite.Empty(a.HeaderMediaAttachmentID)
+	suite.Nil(a.HeaderMediaAttachment)
+	suite.Empty(a.HeaderRemoteURL)
+	suite.Empty(a.DisplayName)
+	suite.Nil(a.Fields)
+	suite.Empty(a.Note)
+	suite.Empty(a.NoteRaw)
+	suite.False(*a.Memorial)
+	suite.Empty(a.AlsoKnownAs)
+	suite.Empty(a.MovedToAccountID)
+	suite.False(*a.Bot)
+	suite.Empty(a.Reason)
+	// Locked is especially important, since it's a bool that defaults
+	// to true, which is why we use pointers for bools in the first place
+	suite.True(*a.Locked) 
+	suite.False(*a.Discoverable)
+	suite.Empty(a.Privacy)
+	suite.False(*a.Sensitive)
+	suite.Equal("en", a.Language)
+	suite.Empty(a.StatusFormat)
+	suite.Equal(testAccount.URI, a.URI)
+	suite.Equal(testAccount.URL, a.URL)
+	suite.Zero(testAccount.LastWebfingeredAt)
+	suite.Equal(testAccount.InboxURI, a.InboxURI)
+	suite.Equal(testAccount.OutboxURI, a.OutboxURI)
+	suite.Empty(a.FollowingURI)
+	suite.Empty(a.FollowersURI)
+	suite.Empty(a.FeaturedCollectionURI)
+	suite.Equal(testAccount.ActorType, a.ActorType)
+	suite.Nil(a.PrivateKey)
+	suite.Nil(a.PublicKey)
+	suite.Equal(testAccount.PublicKeyURI, a.PublicKeyURI)
+	suite.Zero(a.SensitizedAt)
+	suite.Zero(a.SilencedAt)
+	suite.Zero(a.SuspendedAt)
+	suite.False(*a.HideCollections)
+	suite.Empty(a.SuspensionOrigin)
 }
 
 func (suite *BasicTestSuite) TestGetAllStatuses() {
