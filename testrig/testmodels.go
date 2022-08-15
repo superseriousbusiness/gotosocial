@@ -45,14 +45,14 @@ import (
 
 // TrueBool just returns a pointer to boolean true.
 func TrueBool() *bool {
-	b := true
-	return &b
+	b := new(bool)
+	*b = true
+	return b
 }
 
 // FalseBool just returns a pointer to boolean false.
 func FalseBool() *bool {
-	b := false
-	return &b
+	return new(bool)
 }
 
 // NewTestTokens returns a map of tokens keyed according to which account the token belongs to.

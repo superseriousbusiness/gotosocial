@@ -529,11 +529,9 @@ func ExtractEmoji(i Emojiable) (*gtsmodel.Emoji, error) {
 	}
 	emoji.ImageRemoteURL = imageURL.String()
 
-	disabled := false
-	visibleInPicker := false
-
-	emoji.Disabled = &disabled
-	emoji.VisibleInPicker = &visibleInPicker
+	// assume false for both to begin
+	emoji.Disabled = new(bool)
+	emoji.VisibleInPicker = new(bool)
 
 	return emoji, nil
 }
