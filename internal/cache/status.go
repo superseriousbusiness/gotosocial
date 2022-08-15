@@ -89,7 +89,7 @@ func (c *StatusCache) Put(status *gtsmodel.Status) {
 // due to all the data being copied being 99% primitive types or strings (which are immutable and passed by ptr)
 // this should be a relatively cheap process
 func copyStatus(status *gtsmodel.Status) *gtsmodel.Status {
-	s := &gtsmodel.Status{
+	return &gtsmodel.Status{
 		ID:                       status.ID,
 		URI:                      status.URI,
 		URL:                      status.URL,
@@ -102,6 +102,7 @@ func copyStatus(status *gtsmodel.Status) *gtsmodel.Status {
 		Mentions:                 nil,
 		EmojiIDs:                 status.EmojiIDs,
 		Emojis:                   nil,
+		Local:                    copyBoolPtr(status.Local),
 		CreatedAt:                status.CreatedAt,
 		UpdatedAt:                status.UpdatedAt,
 		AccountID:                status.AccountID,
@@ -118,46 +119,15 @@ func copyStatus(status *gtsmodel.Status) *gtsmodel.Status {
 		BoostOfAccount:           nil,
 		ContentWarning:           status.ContentWarning,
 		Visibility:               status.Visibility,
+		Sensitive:                copyBoolPtr(status.Sensitive),
 		Language:                 status.Language,
 		CreatedWithApplicationID: status.CreatedWithApplicationID,
 		ActivityStreamsType:      status.ActivityStreamsType,
 		Text:                     status.Text,
+		Pinned:                   copyBoolPtr(status.Pinned),
+		Federated:                copyBoolPtr(status.Federated),
+		Boostable:                copyBoolPtr(status.Boostable),
+		Replyable:                copyBoolPtr(status.Replyable),
+		Likeable:                 copyBoolPtr(status.Likeable),
 	}
-
-	if status.Local != nil {
-		local := *status.Local
-		s.Local = &local
-	}
-
-	if status.Sensitive != nil {
-		sensitive := *status.Sensitive
-		s.Sensitive = &sensitive
-	}
-
-	if status.Pinned != nil {
-		pinned := *status.Pinned
-		s.Pinned = &pinned
-	}
-
-	if status.Federated != nil {
-		federated := *status.Federated
-		s.Federated = &federated
-	}
-
-	if status.Boostable != nil {
-		boostable := *status.Boostable
-		s.Boostable = &boostable
-	}
-
-	if status.Replyable != nil {
-		replyable := *status.Replyable
-		s.Replyable = &replyable
-	}
-
-	if status.Likeable != nil {
-		likeable := *status.Likeable
-		s.Likeable = &likeable
-	}
-
-	return s
 }

@@ -89,7 +89,7 @@ func (c *AccountCache) Put(account *gtsmodel.Account) {
 // due to all the data being copied being 99% primitive types or strings (which are immutable and passed by ptr)
 // this should be a relatively cheap process
 func copyAccount(account *gtsmodel.Account) *gtsmodel.Account {
-	a := &gtsmodel.Account{
+	return &gtsmodel.Account{
 		ID:                      account.ID,
 		Username:                account.Username,
 		Domain:                  account.Domain,
@@ -103,11 +103,16 @@ func copyAccount(account *gtsmodel.Account) *gtsmodel.Account {
 		Fields:                  account.Fields,
 		Note:                    account.Note,
 		NoteRaw:                 account.NoteRaw,
+		Memorial:                copyBoolPtr(account.Memorial),
 		MovedToAccountID:        account.MovedToAccountID,
+		Bot:                     copyBoolPtr(account.Bot),
 		CreatedAt:               account.CreatedAt,
 		UpdatedAt:               account.UpdatedAt,
 		Reason:                  account.Reason,
+		Locked:                  copyBoolPtr(account.Locked),
+		Discoverable:            copyBoolPtr(account.Discoverable),
 		Privacy:                 account.Privacy,
+		Sensitive:               copyBoolPtr(account.Sensitive),
 		Language:                account.Language,
 		StatusFormat:            account.StatusFormat,
 		URI:                     account.URI,
@@ -126,38 +131,7 @@ func copyAccount(account *gtsmodel.Account) *gtsmodel.Account {
 		SensitizedAt:            account.SensitizedAt,
 		SilencedAt:              account.SilencedAt,
 		SuspendedAt:             account.SuspendedAt,
+		HideCollections:         copyBoolPtr(account.HideCollections),
 		SuspensionOrigin:        account.SuspensionOrigin,
 	}
-
-	if account.Memorial != nil {
-		memorial := *account.Memorial
-		a.Memorial = &memorial
-	}
-
-	if account.Bot != nil {
-		bot := *account.Bot
-		a.Bot = &bot
-	}
-
-	if account.Locked != nil {
-		locked := *account.Locked
-		a.Locked = &locked
-	}
-
-	if account.Discoverable != nil {
-		discoverable := *account.Discoverable
-		a.Discoverable = &discoverable
-	}
-
-	if account.Sensitive != nil {
-		sensitive := *account.Sensitive
-		a.Sensitive = &sensitive
-	}
-
-	if account.HideCollections != nil {
-		hideCollections := *account.HideCollections
-		a.HideCollections = &hideCollections
-	}
-
-	return a
 }
