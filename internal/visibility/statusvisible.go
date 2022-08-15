@@ -79,7 +79,7 @@ func (f *filter) StatusVisible(ctx context.Context, targetStatus *gtsmodel.Statu
 
 		// if target user is disabled, not yet approved, or not confirmed then don't show the status
 		// (although in the latter two cases it's unlikely they posted a status yet anyway, but you never know!)
-		if targetUser.Disabled || !targetUser.Approved || targetUser.ConfirmedAt.IsZero() {
+		if *targetUser.Disabled || !*targetUser.Approved || targetUser.ConfirmedAt.IsZero() {
 			l.Trace("target user is disabled, not approved, or not confirmed")
 			return false, nil
 		}
@@ -108,7 +108,7 @@ func (f *filter) StatusVisible(ctx context.Context, targetStatus *gtsmodel.Statu
 			return false, fmt.Errorf("StatusVisible: db error selecting user for local requesting account %s: %s", requestingAccount.ID, err)
 		}
 		// okay, user exists, so make sure it has full privileges/is confirmed/approved
-		if requestingUser.Disabled || !requestingUser.Approved || requestingUser.ConfirmedAt.IsZero() {
+		if *requestingUser.Disabled || !*requestingUser.Approved || requestingUser.ConfirmedAt.IsZero() {
 			l.Trace("requesting account is local but corresponding user is either disabled, not approved, or not confirmed")
 			return false, nil
 		}

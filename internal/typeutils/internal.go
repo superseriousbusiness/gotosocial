@@ -11,15 +11,18 @@ import (
 )
 
 func (c *converter) FollowRequestToFollow(ctx context.Context, f *gtsmodel.FollowRequest) *gtsmodel.Follow {
+	showReblogs := *f.ShowReblogs
+	notify := *f.Notify
+
 	return &gtsmodel.Follow{
 		ID:              f.ID,
 		CreatedAt:       f.CreatedAt,
 		UpdatedAt:       f.UpdatedAt,
 		AccountID:       f.AccountID,
 		TargetAccountID: f.TargetAccountID,
-		ShowReblogs:     f.ShowReblogs,
+		ShowReblogs:     &showReblogs,
 		URI:             f.URI,
-		Notify:          f.Notify,
+		Notify:          &notify,
 	}
 }
 
@@ -38,6 +41,13 @@ func (c *converter) StatusToBoost(ctx context.Context, s *gtsmodel.Status, boost
 		local = false
 	}
 
+	sensitive := *s.Sensitive
+	pinned := false // can't pin a boost
+	federated := *s.Federated
+	boostable := *s.Boostable
+	replyable := *s.Replyable
+	likeable := *s.Likeable
+
 	boostWrapperStatus := &gtsmodel.Status{
 		ID:  boostWrapperStatusID,
 		URI: boostWrapperStatusURI,
@@ -46,7 +56,7 @@ func (c *converter) StatusToBoost(ctx context.Context, s *gtsmodel.Status, boost
 		// the boosted status is not created now, but the boost certainly is
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
-		Local:      local,
+		Local:      &local,
 		AccountID:  boostingAccount.ID,
 		AccountURI: boostingAccount.URI,
 
@@ -64,16 +74,17 @@ func (c *converter) StatusToBoost(ctx context.Context, s *gtsmodel.Status, boost
 		Content:             s.Content,
 		ContentWarning:      s.ContentWarning,
 		ActivityStreamsType: s.ActivityStreamsType,
-		Sensitive:           s.Sensitive,
+		Sensitive:           &sensitive,
 		Language:            s.Language,
 		Text:                s.Text,
 		BoostOfID:           s.ID,
 		BoostOfAccountID:    s.AccountID,
 		Visibility:          s.Visibility,
-		Federated:           s.Federated,
-		Boostable:           s.Boostable,
-		Replyable:           s.Replyable,
-		Likeable:            s.Likeable,
+		Pinned:              &pinned,
+		Federated:           &federated,
+		Boostable:           &boostable,
+		Replyable:           &replyable,
+		Likeable:            &likeable,
 
 		// attach these here for convenience -- the boosted status/account won't go in the DB
 		// but they're needed in the processor and for the frontend. Since we have them, we can

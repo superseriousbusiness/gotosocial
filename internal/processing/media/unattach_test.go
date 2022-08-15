@@ -30,7 +30,7 @@ type UnattachTestSuite struct {
 	MediaStandardTestSuite
 }
 
-func (suite *GetFileTestSuite) TestUnattachMedia() {
+func (suite *UnattachTestSuite) TestUnattachMedia() {
 	ctx := context.Background()
 
 	testAttachment := suite.testAttachments["admin_account_status_1_attachment_1"]

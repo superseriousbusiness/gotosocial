@@ -346,7 +346,9 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	if err := p.storage.PutStream(ctx, p.attachment.File.Path, clean); err != nil {
 		return fmt.Errorf("store: error storing stream: %s", err)
 	}
-	p.attachment.Cached = true
+
+	cached := true
+	p.attachment.Cached = &cached
 	p.read = true
 
 	if p.postData != nil {
@@ -376,6 +378,10 @@ func (m *manager) preProcessMedia(ctx context.Context, data DataFunc, postData P
 		UpdatedAt:   time.Now(),
 	}
 
+	avatar := false
+	header := false
+	cached := false
+
 	// populate initial fields on the media attachment -- some of these will be overwritten as we proceed
 	attachment := &gtsmodel.MediaAttachment{
 		ID:                id,
@@ -393,9 +399,9 @@ func (m *manager) preProcessMedia(ctx context.Context, data DataFunc, postData P
 		Processing:        gtsmodel.ProcessingStatusReceived,
 		File:              file,
 		Thumbnail:         thumbnail,
-		Avatar:            false,
-		Header:            false,
-		Cached:            false,
+		Avatar:            &avatar,
+		Header:            &header,
+		Cached:            &cached,
 	}
 
 	// check if we have additional info to add to the attachment,
@@ -426,11 +432,11 @@ func (m *manager) preProcessMedia(ctx context.Context, data DataFunc, postData P
 		}
 
 		if ai.Avatar != nil {
-			attachment.Avatar = *ai.Avatar
+			attachment.Avatar = ai.Avatar
 		}
 
 		if ai.Header != nil {
-			attachment.Header = *ai.Header
+			attachment.Header = ai.Header
 		}
 
 		if ai.FocusX != nil {

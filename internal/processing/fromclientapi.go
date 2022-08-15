@@ -392,7 +392,7 @@ func (p *processor) federateAccountDelete(ctx context.Context, account *gtsmodel
 
 func (p *processor) federateStatus(ctx context.Context, status *gtsmodel.Status) error {
 	// do nothing if the status shouldn't be federated
-	if !status.Federated {
+	if !*status.Federated {
 		return nil
 	}
 

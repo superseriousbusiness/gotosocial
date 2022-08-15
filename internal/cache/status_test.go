@@ -72,6 +72,32 @@ func (suite *StatusCacheTestSuite) TestStatusCache() {
 	}
 }
 
+func (suite *StatusCacheTestSuite) TestBoolPointerCopying() {
+	originalStatus := suite.data["local_account_1_status_1"]
+
+	// mark the status as pinned + cache it
+	pinned := true
+	originalStatus.Pinned = &pinned
+	suite.cache.Put(originalStatus)
+
+	// retrieve it
+	cachedStatus, ok := suite.cache.GetByID(originalStatus.ID)
+	if !ok {
+		suite.FailNow("status wasn't retrievable from cache")
+	}
+
+	// we should be able to change the original status values + cached
+	// values independently since they use different pointers
+	suite.True(*cachedStatus.Pinned)
+	*originalStatus.Pinned = false
+	suite.False(*originalStatus.Pinned)
+	suite.True(*cachedStatus.Pinned)
+	*originalStatus.Pinned = true
+	*cachedStatus.Pinned = false
+	suite.True(*originalStatus.Pinned)
+	suite.False(*cachedStatus.Pinned)
+}
+
 func TestStatusCache(t *testing.T) {
 	suite.Run(t, &StatusCacheTestSuite{})
 }

@@ -38,7 +38,7 @@ type Status struct {
 	Mentions                 []*Mention         `validate:"-" bun:"attached_mentions,rel:has-many"`                                                    // Mentions corresponding to mentionIDs
 	EmojiIDs                 []string           `validate:"dive,ulid" bun:"emojis,array"`                                                              // Database IDs of any emojis used in this status
 	Emojis                   []*Emoji           `validate:"-" bun:"attached_emojis,m2m:status_to_emojis"`                                              // Emojis corresponding to emojiIDs. https://bun.uptrace.dev/guide/relations.html#many-to-many-relation
-	Local                    bool               `validate:"-" bun:",notnull,default:false"`                                                            // is this status from a local account?
+	Local                    *bool              `validate:"-" bun:",nullzero,notnull,default:false"`                                                   // is this status from a local account?
 	AccountID                string             `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                                        // which account posted this status?
 	Account                  *Account           `validate:"-" bun:"rel:belongs-to"`                                                                    // account corresponding to accountID
 	AccountURI               string             `validate:"required,url" bun:",nullzero,notnull"`                                                      // activitypub uri of the owner of this status
@@ -53,17 +53,17 @@ type Status struct {
 	BoostOfAccount           *Account           `validate:"-" bun:"rel:belongs-to"`                                                                    // account that corresponds to boostOfAccountID
 	ContentWarning           string             `validate:"-" bun:",nullzero"`                                                                         // cw string for this status
 	Visibility               Visibility         `validate:"oneof=public unlocked followers_only mutuals_only direct" bun:",nullzero,notnull"`          // visibility entry for this status
-	Sensitive                bool               `validate:"-" bun:",notnull,default:false"`                                                            // mark the status as sensitive?
+	Sensitive                *bool              `validate:"-" bun:",nullzero,notnull,default:false"`                                                   // mark the status as sensitive?
 	Language                 string             `validate:"-" bun:",nullzero"`                                                                         // what language is this status written in?
 	CreatedWithApplicationID string             `validate:"required_if=Local true,omitempty,ulid" bun:"type:CHAR(26),nullzero"`                        // Which application was used to create this status?
 	CreatedWithApplication   *Application       `validate:"-" bun:"rel:belongs-to"`                                                                    // application corresponding to createdWithApplicationID
 	ActivityStreamsType      string             `validate:"required" bun:",nullzero,notnull"`                                                          // What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types. Will probably almost always be Note but who knows!.
 	Text                     string             `validate:"-" bun:""`                                                                                  // Original text of the status without formatting
-	Pinned                   bool               `validate:"-" bun:",notnull,default:false"`                                                            // Has this status been pinned by its owner?
-	Federated                bool               `validate:"-" bun:",notnull"`                                                                          // This status will be federated beyond the local timeline(s)
-	Boostable                bool               `validate:"-" bun:",notnull"`                                                                          // This status can be boosted/reblogged
-	Replyable                bool               `validate:"-" bun:",notnull"`                                                                          // This status can be replied to
-	Likeable                 bool               `validate:"-" bun:",notnull"`                                                                          // This status can be liked/faved
+	Pinned                   *bool              `validate:"-" bun:",nullzero,notnull,default:false"`                                                   // Has this status been pinned by its owner?
+	Federated                *bool              `validate:"-" bun:",notnull"`                                                                          // This status will be federated beyond the local timeline(s)
+	Boostable                *bool              `validate:"-" bun:",notnull"`                                                                          // This status can be boosted/reblogged
+	Replyable                *bool              `validate:"-" bun:",notnull"`                                                                          // This status can be replied to
+	Likeable                 *bool              `validate:"-" bun:",notnull"`                                                                          // This status can be liked/faved
 }
 
 /*

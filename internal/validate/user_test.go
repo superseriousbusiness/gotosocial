@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 func happyUser() *gtsmodel.User {
@@ -54,10 +55,10 @@ func happyUser() *gtsmodel.User {
 		ConfirmedAt:            time.Now(),
 		ConfirmationSentAt:     time.Time{},
 		UnconfirmedEmail:       "",
-		Moderator:              false,
-		Admin:                  false,
-		Disabled:               false,
-		Approved:               true,
+		Moderator:              testrig.FalseBool(),
+		Admin:                  testrig.FalseBool(),
+		Disabled:               testrig.FalseBool(),
+		Approved:               testrig.TrueBool(),
 	}
 }
 

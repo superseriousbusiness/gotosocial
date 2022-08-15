@@ -67,12 +67,12 @@ func (m *Module) TokenCheck(c *gin.Context) {
 			return
 		}
 
-		if !user.Approved {
+		if !*user.Approved {
 			log.Warnf("authenticated user %s's account was never approved by an admin", userID)
 			return
 		}
 
-		if user.Disabled {
+		if *user.Disabled {
 			log.Warnf("authenticated user %s's account was disabled'", userID)
 			return
 		}

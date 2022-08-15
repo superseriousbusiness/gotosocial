@@ -30,6 +30,6 @@ type DomainBlock struct {
 	CreatedByAccount   *Account  `validate:"-" bun:"rel:belongs-to"`                                              // Account corresponding to createdByAccountID
 	PrivateComment     string    `validate:"-" bun:""`                                                            // Private comment on this block, viewable to admins
 	PublicComment      string    `validate:"-" bun:""`                                                            // Public comment on this block, viewable (optionally) by everyone
-	Obfuscate          bool      `validate:"-" bun:",default:false"`                                              // whether the domain name should appear obfuscated when displaying it publicly
+	Obfuscate          *bool     `validate:"-" bun:",nullzero,notnull,default:false"`                             // whether the domain name should appear obfuscated when displaying it publicly
 	SubscriptionID     string    `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                         // if this block was created through a subscription, what's the subscription ID?
 }

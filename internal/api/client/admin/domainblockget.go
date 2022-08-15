@@ -76,7 +76,7 @@ func (m *Module) DomainBlockGETHandler(c *gin.Context) {
 		return
 	}
 
-	if !authed.User.Admin {
+	if !*authed.User.Admin {
 		err := fmt.Errorf("user %s not an admin", authed.User.ID)
 		api.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGet)
 		return

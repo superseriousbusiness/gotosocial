@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 func happyMediaAttachment() *gtsmodel.MediaAttachment {
@@ -97,8 +98,8 @@ func happyMediaAttachment() *gtsmodel.MediaAttachment {
 			URL:         "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.jpeg",
 			RemoteURL:   "",
 		},
-		Avatar: false,
-		Header: false,
+		Avatar: testrig.FalseBool(),
+		Header: testrig.FalseBool(),
 	}
 }
 

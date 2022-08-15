@@ -40,18 +40,21 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, appli
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	local := true
+	sensitive := form.Sensitive
+
 	newStatus := &gtsmodel.Status{
 		ID:                       thisStatusID,
 		URI:                      accountURIs.StatusesURI + "/" + thisStatusID,
 		URL:                      accountURIs.StatusesURL + "/" + thisStatusID,
 		CreatedAt:                time.Now(),
 		UpdatedAt:                time.Now(),
-		Local:                    true,
+		Local:                    &local,
 		AccountID:                account.ID,
 		AccountURI:               account.URI,
 		ContentWarning:           text.SanitizePlaintext(form.SpoilerText),
 		ActivityStreamsType:      ap.ObjectNote,
-		Sensitive:                form.Sensitive,
+		Sensitive:                &sensitive,
 		Language:                 form.Language,
 		CreatedWithApplicationID: application.ID,
 		Text:                     form.Status,

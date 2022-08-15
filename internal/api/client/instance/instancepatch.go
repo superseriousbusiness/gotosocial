@@ -124,7 +124,7 @@ func (m *Module) InstanceUpdatePATCHHandler(c *gin.Context) {
 		return
 	}
 
-	if !authed.User.Admin {
+	if !*authed.User.Admin {
 		err := errors.New("user is not an admin so cannot update instance settings")
 		api.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGet)
 		return

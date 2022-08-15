@@ -97,9 +97,9 @@ func (suite *EmojiCreateTestSuite) TestEmojiCreate() {
 	suite.Equal("image/png", dbEmoji.ImageStaticContentType)
 	suite.Equal(36702, dbEmoji.ImageFileSize)
 	suite.Equal(10413, dbEmoji.ImageStaticFileSize)
-	suite.False(dbEmoji.Disabled)
+	suite.False(*dbEmoji.Disabled)
 	suite.NotEmpty(dbEmoji.URI)
-	suite.True(dbEmoji.VisibleInPicker)
+	suite.True(*dbEmoji.VisibleInPicker)
 	suite.Empty(dbEmoji.CategoryID)
 
 	// emoji should be in storage

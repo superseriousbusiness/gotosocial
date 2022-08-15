@@ -98,10 +98,10 @@ func (p *processor) ProcessVisibility(ctx context.Context, form *apimodel.Advanc
 	}
 
 	status.Visibility = vis
-	status.Federated = federated
-	status.Boostable = boostable
-	status.Replyable = replyable
-	status.Likeable = likeable
+	status.Federated = &federated
+	status.Boostable = &boostable
+	status.Replyable = &replyable
+	status.Likeable = &likeable
 	return nil
 }
 
@@ -128,7 +128,7 @@ func (p *processor) ProcessReplyToID(ctx context.Context, form *apimodel.Advance
 		err := fmt.Errorf("db error fetching status with id %s: %s", form.InReplyToID, err)
 		return gtserror.NewErrorInternalError(err)
 	}
-	if !repliedStatus.Replyable {
+	if !*repliedStatus.Replyable {
 		err := fmt.Errorf("status with id %s is marked as not replyable", form.InReplyToID)
 		return gtserror.NewErrorForbidden(err, err.Error())
 	}

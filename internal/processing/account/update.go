@@ -39,11 +39,11 @@ import (
 
 func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, gtserror.WithCode) {
 	if form.Discoverable != nil {
-		account.Discoverable = *form.Discoverable
+		account.Discoverable = form.Discoverable
 	}
 
 	if form.Bot != nil {
-		account.Bot = *form.Bot
+		account.Bot = form.Bot
 	}
 
 	if form.DisplayName != nil {
@@ -92,7 +92,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	if form.Locked != nil {
-		account.Locked = *form.Locked
+		account.Locked = form.Locked
 	}
 
 	if form.Source != nil {
@@ -104,7 +104,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		}
 
 		if form.Source.Sensitive != nil {
-			account.Sensitive = *form.Source.Sensitive
+			account.Sensitive = form.Source.Sensitive
 		}
 
 		if form.Source.Privacy != nil {

@@ -81,7 +81,7 @@ func (p *processor) InstancePeersGet(ctx context.Context, authed *oauth.Auth, in
 		}
 
 		for _, d := range domainBlocks {
-			if d.Obfuscate {
+			if *d.Obfuscate {
 				d.Domain = obfuscate(d.Domain)
 			}
 
@@ -123,11 +123,14 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance account %s: %s", host, err))
 	}
 
+	updatingColumns := []string{}
+
 	// validate & update site title if it's set on the form
 	if form.Title != nil {
 		if err := validate.SiteTitle(*form.Title); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, fmt.Sprintf("site title invalid: %s", err))
 		}
+		updatingColumns = append(updatingColumns, "title")
 		i.Title = text.SanitizePlaintext(*form.Title) // don't allow html in site title
 	}
 
@@ -153,15 +156,16 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 			err := fmt.Errorf("user of selected contact account %s is not confirmed", contactAccount.Username)
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
-		if !contactUser.Approved {
+		if !*contactUser.Approved {
 			err := fmt.Errorf("user of selected contact account %s is not approved", contactAccount.Username)
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
 		// contact account user must be admin or moderator otherwise what's the point of contacting them
-		if !contactUser.Admin && !contactUser.Moderator {
+		if !*contactUser.Admin && !*contactUser.Moderator {
 			err := fmt.Errorf("user of selected contact account %s is neither admin nor moderator", contactAccount.Username)
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
+		updatingColumns = append(updatingColumns, "contact_account_id")
 		i.ContactAccountID = contactAccount.ID
 	}
 
@@ -173,6 +177,7 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 				return nil, gtserror.NewErrorBadRequest(err, err.Error())
 			}
 		}
+		updatingColumns = append(updatingColumns, "contact_email")
 		i.ContactEmail = contactEmail
 	}
 
@@ -181,6 +186,7 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 		if err := validate.SiteShortDescription(*form.ShortDescription); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
+		updatingColumns = append(updatingColumns, "short_description")
 		i.ShortDescription = text.SanitizeHTML(*form.ShortDescription) // html is OK in site description, but we should sanitize it
 	}
 
@@ -189,6 +195,7 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 		if err := validate.SiteDescription(*form.Description); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
+		updatingColumns = append(updatingColumns, "description")
 		i.Description = text.SanitizeHTML(*form.Description) // html is OK in site description, but we should sanitize it
 	}
 
@@ -197,6 +204,7 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 		if err := validate.SiteTerms(*form.Terms); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
+		updatingColumns = append(updatingColumns, "terms")
 		i.Terms = text.SanitizeHTML(*form.Terms) // html is OK in site terms, but we should sanitize it
 	}
 
@@ -216,7 +224,7 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 		}
 	}
 
-	if err := p.db.UpdateByPrimaryKey(ctx, i); err != nil {
+	if err := p.db.UpdateByPrimaryKey(ctx, i, updatingColumns...); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error updating instance %s: %s", host, err))
 	}
 

@@ -62,9 +62,11 @@ type Basic interface {
 	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
 	Put(ctx context.Context, i interface{}) Error
 
-	// UpdateByPrimaryKey updates all values of i based on its primary key.
+	// UpdateByPrimaryKey updates values of i based on its primary key.
+	// If any columns are specified, these will be updated exclusively.
+	// Otherwise, the whole model will be updated.
 	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
-	UpdateByPrimaryKey(ctx context.Context, i interface{}) Error
+	UpdateByPrimaryKey(ctx context.Context, i interface{}, columns ...string) Error
 
 	// UpdateWhere updates column key of interface i with the given value, where the given parameters apply.
 	UpdateWhere(ctx context.Context, where []Where, key string, value interface{}, i interface{}) Error

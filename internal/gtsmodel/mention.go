@@ -35,7 +35,7 @@ type Mention struct {
 	OriginAccount    *Account  `validate:"-" bun:"rel:belongs-to"`                                              // account referred to by originAccountID
 	TargetAccountID  string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                  // Mention target/receiver account ID
 	TargetAccount    *Account  `validate:"-" bun:"rel:belongs-to"`                                              // account referred to by targetAccountID
-	Silent           bool      `validate:"-" bun:",notnull,default:false"`                                      // Prevent this mention from generating a notification?
+	Silent           *bool     `validate:"-" bun:",nullzero,notnull,default:false"`                             // Prevent this mention from generating a notification?
 
 	/*
 		NON-DATABASE CONVENIENCE FIELDS

@@ -84,13 +84,14 @@ func (suite *FromFederatorTestSuite) TestProcessFederationAnnounce() {
 	suite.Equal(boostedStatus.AccountID, notif.TargetAccountID)
 	suite.Equal(announceStatus.AccountID, notif.OriginAccountID)
 	suite.Equal(announceStatus.ID, notif.StatusID)
-	suite.False(notif.Read)
+	suite.False(*notif.Read)
 }
 
 func (suite *FromFederatorTestSuite) TestProcessReplyMention() {
 	repliedAccount := suite.testAccounts["local_account_1"]
 	repliedStatus := suite.testStatuses["local_account_1_status_1"]
 	replyingAccount := suite.testAccounts["remote_account_1"]
+
 	replyingStatus := &gtsmodel.Status{
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -110,10 +111,10 @@ func (suite *FromFederatorTestSuite) TestProcessReplyMention() {
 		InReplyToAccountID:  repliedAccount.ID,
 		Visibility:          gtsmodel.VisibilityUnlocked,
 		ActivityStreamsType: ap.ObjectNote,
-		Federated:           true,
-		Boostable:           true,
-		Replyable:           true,
-		Likeable:            true,
+		Federated:           testrig.TrueBool(),
+		Boostable:           testrig.TrueBool(),
+		Replyable:           testrig.TrueBool(),
+		Likeable:            testrig.FalseBool(),
 	}
 
 	wssStream, errWithCode := suite.processor.OpenStreamForAccount(context.Background(), repliedAccount, stream.TimelineHome)
@@ -156,10 +157,17 @@ func (suite *FromFederatorTestSuite) TestProcessReplyMention() {
 	suite.Equal(replyingStatus.InReplyToAccountID, notif.TargetAccountID)
 	suite.Equal(replyingStatus.AccountID, notif.OriginAccountID)
 	suite.Equal(replyingStatus.ID, notif.StatusID)
-	suite.False(notif.Read)
+	suite.False(*notif.Read)
 
-	// the notification should also be streamed
-	msg := <-wssStream.Messages
+	// the notification should be streamed
+	var msg *stream.Message
+	select {
+	case msg = <-wssStream.Messages:
+		// fine
+	case <-time.After(5 * time.Second):
+		suite.FailNow("no message from wssStream")
+	}
+
 	suite.Equal(stream.EventTypeNotification, msg.Event)
 	suite.NotEmpty(msg.Payload)
 	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)
@@ -222,10 +230,16 @@ func (suite *FromFederatorTestSuite) TestProcessFave() {
 	suite.Equal(fave.TargetAccountID, notif.TargetAccountID)
 	suite.Equal(fave.AccountID, notif.OriginAccountID)
 	suite.Equal(fave.StatusID, notif.StatusID)
-	suite.False(notif.Read)
+	suite.False(*notif.Read)
 
 	// 2. a notification should be streamed
-	msg := <-wssStream.Messages
+	var msg *stream.Message
+	select {
+	case msg = <-wssStream.Messages:
+		// fine
+	case <-time.After(5 * time.Second):
+		suite.FailNow("no message from wssStream")
+	}
 	suite.Equal(stream.EventTypeNotification, msg.Event)
 	suite.NotEmpty(msg.Payload)
 	suite.EqualValues([]string{stream.TimelineNotifications}, msg.Stream)
@@ -289,7 +303,7 @@ func (suite *FromFederatorTestSuite) TestProcessFaveWithDifferentReceivingAccoun
 	suite.Equal(fave.TargetAccountID, notif.TargetAccountID)
 	suite.Equal(fave.AccountID, notif.OriginAccountID)
 	suite.Equal(fave.StatusID, notif.StatusID)
-	suite.False(notif.Read)
+	suite.False(*notif.Read)
 
 	// 2. no notification should be streamed to the account that received the fave message, because they weren't the target
 	suite.Empty(wssStream.Messages)
@@ -309,9 +323,9 @@ func (suite *FromFederatorTestSuite) TestProcessAccountDelete() {
 		UpdatedAt:       time.Now().Add(-1 * time.Hour),
 		AccountID:       deletedAccount.ID,
 		TargetAccountID: receivingAccount.ID,
-		ShowReblogs:     true,
+		ShowReblogs:     testrig.TrueBool(),
 		URI:             fmt.Sprintf("%s/follows/01FGRY72ASHBSET64353DPHK9T", deletedAccount.URI),
-		Notify:          false,
+		Notify:          testrig.FalseBool(),
 	}
 	err := suite.db.Put(ctx, zorkFollowSatan)
 	suite.NoError(err)
@@ -322,9 +336,9 @@ func (suite *FromFederatorTestSuite) TestProcessAccountDelete() {
 		UpdatedAt:       time.Now().Add(-1 * time.Hour),
 		AccountID:       receivingAccount.ID,
 		TargetAccountID: deletedAccount.ID,
-		ShowReblogs:     true,
+		ShowReblogs:     testrig.TrueBool(),
 		URI:             fmt.Sprintf("%s/follows/01FGRYAVAWWPP926J175QGM0WV", receivingAccount.URI),
-		Notify:          false,
+		Notify:          testrig.FalseBool(),
 	}
 	err = suite.db.Put(ctx, satanFollowZork)
 	suite.NoError(err)
@@ -369,8 +383,8 @@ func (suite *FromFederatorTestSuite) TestProcessAccountDelete() {
 	suite.Empty(dbAccount.HeaderRemoteURL)
 	suite.Empty(dbAccount.Reason)
 	suite.Empty(dbAccount.Fields)
-	suite.True(dbAccount.HideCollections)
-	suite.False(dbAccount.Discoverable)
+	suite.True(*dbAccount.HideCollections)
+	suite.False(*dbAccount.Discoverable)
 	suite.WithinDuration(time.Now(), dbAccount.SuspendedAt, 30*time.Second)
 	suite.Equal(dbAccount.ID, dbAccount.SuspensionOrigin)
 }
@@ -395,9 +409,9 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestLocked() {
 		Account:         originAccount,
 		TargetAccountID: targetAccount.ID,
 		TargetAccount:   targetAccount,
-		ShowReblogs:     true,
+		ShowReblogs:     testrig.TrueBool(),
 		URI:             fmt.Sprintf("%s/follows/01FGRYAVAWWPP926J175QGM0WV", originAccount.URI),
-		Notify:          false,
+		Notify:          testrig.FalseBool(),
 	}
 
 	err := suite.db.Put(ctx, satanFollowRequestTurtle)
@@ -412,7 +426,13 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestLocked() {
 	suite.NoError(err)
 
 	// a notification should be streamed
-	msg := <-wssStream.Messages
+	var msg *stream.Message
+	select {
+	case msg = <-wssStream.Messages:
+		// fine
+	case <-time.After(5 * time.Second):
+		suite.FailNow("no message from wssStream")
+	}
 	suite.Equal(stream.EventTypeNotification, msg.Event)
 	suite.NotEmpty(msg.Payload)
 	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)
@@ -446,9 +466,9 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestUnlocked() {
 		Account:         originAccount,
 		TargetAccountID: targetAccount.ID,
 		TargetAccount:   targetAccount,
-		ShowReblogs:     true,
+		ShowReblogs:     testrig.TrueBool(),
 		URI:             fmt.Sprintf("%s/follows/01FGRYAVAWWPP926J175QGM0WV", originAccount.URI),
-		Notify:          false,
+		Notify:          testrig.FalseBool(),
 	}
 
 	err := suite.db.Put(ctx, satanFollowRequestTurtle)
@@ -463,7 +483,13 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestUnlocked() {
 	suite.NoError(err)
 
 	// a notification should be streamed
-	msg := <-wssStream.Messages
+	var msg *stream.Message
+	select {
+	case msg = <-wssStream.Messages:
+		// fine
+	case <-time.After(5 * time.Second):
+		suite.FailNow("no message from wssStream")
+	}
 	suite.Equal(stream.EventTypeNotification, msg.Event)
 	suite.NotEmpty(msg.Payload)
 	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)

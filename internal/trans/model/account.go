@@ -34,7 +34,7 @@ type Account struct {
 	Domain                string          `json:"domain,omitempty" bun:",nullzero"`
 	HeaderRemoteURL       string          `json:"headerRemoteURL,omitempty" bun:",nullzero"`
 	AvatarRemoteURL       string          `json:"avatarRemoteURL,omitempty" bun:",nullzero"`
-	Locked                bool            `json:"locked"`
+	Locked                *bool           `json:"locked" bun:",nullzero,notnull,default:true"`
 	Language              string          `json:"language,omitempty" bun:",nullzero"`
 	URI                   string          `json:"uri" bun:",nullzero"`
 	URL                   string          `json:"url" bun:",nullzero"`

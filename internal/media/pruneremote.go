@@ -64,13 +64,17 @@ func (m *manager) PruneAllRemote(ctx context.Context, olderThanDays int) (int, e
 }
 
 func (m *manager) pruneOneRemote(ctx context.Context, attachment *gtsmodel.MediaAttachment) error {
+	var changed bool
+
 	if attachment.File.Path != "" {
 		// delete the full size attachment from storage
 		log.Tracef("pruneOneRemote: deleting %s", attachment.File.Path)
 		if err := m.storage.Delete(ctx, attachment.File.Path); err != nil && err != storage.ErrNotFound {
 			return err
 		}
-		attachment.Cached = false
+		cached := false
+		attachment.Cached = &cached
+		changed = true
 	}
 
 	if attachment.Thumbnail.Path != "" {
@@ -79,9 +83,15 @@ func (m *manager) pruneOneRemote(ctx context.Context, attachment *gtsmodel.Media
 		if err := m.storage.Delete(ctx, attachment.Thumbnail.Path); err != nil && err != storage.ErrNotFound {
 			return err
 		}
-		attachment.Cached = false
+		cached := false
+		attachment.Cached = &cached
+		changed = true
 	}
 
 	// update the attachment to reflect that we no longer have it cached
-	return m.db.UpdateByPrimaryKey(ctx, attachment)
+	if changed {
+		return m.db.UpdateByPrimaryKey(ctx, attachment, "updated_at", "cached")
+	}
+
+	return nil
 }
