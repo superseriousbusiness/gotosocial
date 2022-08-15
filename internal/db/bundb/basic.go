@@ -94,10 +94,11 @@ func (b *basicDB) DeleteWhere(ctx context.Context, where []db.Where, i interface
 	return b.conn.ProcessError(err)
 }
 
-func (b *basicDB) UpdateByPrimaryKey(ctx context.Context, i interface{}) db.Error {
+func (b *basicDB) UpdateByPrimaryKey(ctx context.Context, i interface{}, columns ...string) db.Error {
 	q := b.conn.
 		NewUpdate().
 		Model(i).
+		Column(columns...).
 		WherePK()
 
 	_, err := q.Exec(ctx)

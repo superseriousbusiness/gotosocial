@@ -32,6 +32,7 @@ type Field struct {
 	NotNull       bool
 	NullZero      bool
 	AutoIncrement bool
+	Identity      bool
 
 	Append AppenderFunc
 	Scan   ScannerFunc
@@ -118,6 +119,10 @@ func (f *Field) ScanValue(strct reflect.Value, src interface{}) error {
 
 	fv := fieldByIndexAlloc(strct, f.Index)
 	return f.ScanWithCheck(fv, src)
+}
+
+func (f *Field) SkipUpdate() bool {
+	return f.Tag.HasOption("skipupdate")
 }
 
 func indexEqual(ind1, ind2 []int) bool {

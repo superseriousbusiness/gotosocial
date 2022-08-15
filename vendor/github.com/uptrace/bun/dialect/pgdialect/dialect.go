@@ -46,7 +46,8 @@ func New() *Dialect {
 		feature.TableTruncate |
 		feature.TableNotExists |
 		feature.InsertOnConflict |
-		feature.SelectExists
+		feature.SelectExists |
+		feature.GeneratedIdentity
 	return d
 }
 
@@ -73,7 +74,7 @@ func (d *Dialect) OnTable(table *schema.Table) {
 func (d *Dialect) onField(field *schema.Field) {
 	field.DiscoveredSQLType = fieldSQLType(field)
 
-	if field.AutoIncrement {
+	if field.AutoIncrement && !field.Identity {
 		switch field.DiscoveredSQLType {
 		case sqltype.SmallInt:
 			field.CreateTableSQLType = pgTypeSmallSerial
@@ -87,6 +88,11 @@ func (d *Dialect) onField(field *schema.Field) {
 	if field.Tag.HasOption("array") || strings.HasSuffix(field.UserSQLType, "[]") {
 		field.Append = d.arrayAppender(field.StructField.Type)
 		field.Scan = arrayScanner(field.StructField.Type)
+	}
+
+	if field.DiscoveredSQLType == sqltype.HSTORE {
+		field.Append = d.hstoreAppender(field.StructField.Type)
+		field.Scan = hstoreScanner(field.StructField.Type)
 	}
 }
 

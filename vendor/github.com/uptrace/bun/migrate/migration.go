@@ -25,11 +25,11 @@ type Migration struct {
 	Down MigrationFunc `bun:"-"`
 }
 
-func (m *Migration) String() string {
+func (m Migration) String() string {
 	return m.Name
 }
 
-func (m *Migration) IsApplied() bool {
+func (m Migration) IsApplied() bool {
 	return m.ID > 0
 }
 
@@ -89,6 +89,22 @@ func NewSQLMigrationFunc(fsys fs.FS, name string) MigrationFunc {
 			idb = conn
 		}
 
+		var retErr error
+
+		defer func() {
+			if tx, ok := idb.(bun.Tx); ok {
+				retErr = tx.Commit()
+				return
+			}
+
+			if conn, ok := idb.(bun.Conn); ok {
+				retErr = conn.Close()
+				return
+			}
+
+			panic("not reached")
+		}()
+
 		for _, q := range queries {
 			_, err = idb.ExecContext(ctx, q)
 			if err != nil {
@@ -96,13 +112,7 @@ func NewSQLMigrationFunc(fsys fs.FS, name string) MigrationFunc {
 			}
 		}
 
-		if tx, ok := idb.(bun.Tx); ok {
-			return tx.Commit()
-		} else if conn, ok := idb.(bun.Conn); ok {
-			return conn.Close()
-		}
-
-		panic("not reached")
+		return retErr
 	}
 }
 
@@ -222,11 +232,11 @@ type MigrationGroup struct {
 	Migrations MigrationSlice
 }
 
-func (g *MigrationGroup) IsZero() bool {
+func (g MigrationGroup) IsZero() bool {
 	return g.ID == 0 && len(g.Migrations) == 0
 }
 
-func (g *MigrationGroup) String() string {
+func (g MigrationGroup) String() string {
 	if g.IsZero() {
 		return "nil"
 	}

@@ -190,7 +190,7 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetAllWithObfuscated() 
 		Domain:             "omg.just.the.worst.org.ever",
 		CreatedByAccountID: "01F8MH17FWEB39HZJ76B6VXSKF",
 		PublicComment:      "just absolutely the worst, wowza",
-		Obfuscate:          true,
+		Obfuscate:          testrig.TrueBool(),
 	})
 	suite.NoError(err)
 

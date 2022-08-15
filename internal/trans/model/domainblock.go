@@ -29,6 +29,6 @@ type DomainBlock struct {
 	CreatedByAccountID string     `json:"createdByAccountID" bun:",nullzero"`
 	PrivateComment     string     `json:"privateComment,omitempty" bun:",nullzero"`
 	PublicComment      string     `json:"publicComment,omitempty" bun:",nullzero"`
-	Obfuscate          bool       `json:"obfuscate" bun:",nullzero"`
+	Obfuscate          *bool      `json:"obfuscate" bun:",nullzero,notnull,default:false"`
 	SubscriptionID     string     `json:"subscriptionID,omitempty" bun:",nullzero"`
 }

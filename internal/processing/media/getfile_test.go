@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type GetFileTestSuite struct {
@@ -67,8 +68,8 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncached() {
 
 	// uncache the file from local
 	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
-	testAttachment.Cached = false
-	err := suite.db.UpdateByPrimaryKey(ctx, testAttachment)
+	testAttachment.Cached = testrig.FalseBool()
+	err := suite.db.UpdateByPrimaryKey(ctx, testAttachment, "cached")
 	suite.NoError(err)
 	err = suite.storage.Delete(ctx, testAttachment.File.Path)
 	suite.NoError(err)
@@ -103,7 +104,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncached() {
 	// the attachment should be updated in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, testAttachment.ID)
 	suite.NoError(err)
-	suite.True(dbAttachment.Cached)
+	suite.True(*dbAttachment.Cached)
 
 	// the file should be back in storage at the same path as before
 	refreshedBytes, err := suite.storage.Get(ctx, testAttachment.File.Path)
@@ -116,8 +117,8 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncachedInterrupted() {
 
 	// uncache the file from local
 	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
-	testAttachment.Cached = false
-	err := suite.db.UpdateByPrimaryKey(ctx, testAttachment)
+	testAttachment.Cached = testrig.FalseBool()
+	err := suite.db.UpdateByPrimaryKey(ctx, testAttachment, "cached")
 	suite.NoError(err)
 	err = suite.storage.Delete(ctx, testAttachment.File.Path)
 	suite.NoError(err)
@@ -153,7 +154,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncachedInterrupted() {
 	// the attachment should still be updated in the database even though the caller hung up
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, testAttachment.ID)
 	suite.NoError(err)
-	suite.True(dbAttachment.Cached)
+	suite.True(*dbAttachment.Cached)
 
 	// the file should be back in storage at the same path as before
 	refreshedBytes, err := suite.storage.Get(ctx, testAttachment.File.Path)
@@ -170,8 +171,8 @@ func (suite *GetFileTestSuite) TestGetRemoteFileThumbnailUncached() {
 	suite.NoError(err)
 
 	// uncache the file from local
-	testAttachment.Cached = false
-	err = suite.db.UpdateByPrimaryKey(ctx, testAttachment)
+	testAttachment.Cached = testrig.FalseBool()
+	err = suite.db.UpdateByPrimaryKey(ctx, testAttachment, "cached")
 	suite.NoError(err)
 	err = suite.storage.Delete(ctx, testAttachment.File.Path)
 	suite.NoError(err)

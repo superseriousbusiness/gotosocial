@@ -49,7 +49,7 @@ func (p *processor) Fave(ctx context.Context, requestingAccount *gtsmodel.Accoun
 	if !visible {
 		return nil, gtserror.NewErrorNotFound(errors.New("status is not visible"))
 	}
-	if !targetStatus.Likeable {
+	if !*targetStatus.Likeable {
 		return nil, gtserror.NewErrorForbidden(errors.New("status is not faveable"))
 	}
 

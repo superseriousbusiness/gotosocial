@@ -76,19 +76,21 @@ func (p *processor) FollowCreate(ctx context.Context, requestingAccount *gtsmode
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	showReblogs := true
+	notify := false
 	fr := &gtsmodel.FollowRequest{
 		ID:              newFollowID,
 		AccountID:       requestingAccount.ID,
 		TargetAccountID: form.ID,
-		ShowReblogs:     true,
+		ShowReblogs:     &showReblogs,
 		URI:             uris.GenerateURIForFollow(requestingAccount.Username, newFollowID),
-		Notify:          false,
+		Notify:          &notify,
 	}
 	if form.Reblogs != nil {
-		fr.ShowReblogs = *form.Reblogs
+		fr.ShowReblogs = form.Reblogs
 	}
 	if form.Notify != nil {
-		fr.Notify = *form.Notify
+		fr.Notify = form.Notify
 	}
 
 	// whack it in the database
@@ -97,7 +99,7 @@ func (p *processor) FollowCreate(ctx context.Context, requestingAccount *gtsmode
 	}
 
 	// if it's a local account that's not locked we can just straight up accept the follow request
-	if !targetAcct.Locked && targetAcct.Domain == "" {
+	if !*targetAcct.Locked && targetAcct.Domain == "" {
 		if _, err := p.db.AcceptFollowRequest(ctx, requestingAccount.ID, form.ID); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("accountfollowcreate: error accepting folow request for local unlocked account: %s", err))
 		}

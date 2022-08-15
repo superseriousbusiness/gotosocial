@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 func happyEmoji() *gtsmodel.Emoji {
@@ -73,9 +74,9 @@ func happyEmoji() *gtsmodel.Emoji {
 		ImageFileSize:          1024,
 		ImageStaticFileSize:    256,
 		ImageUpdatedAt:         time.Now(),
-		Disabled:               false,
+		Disabled:               testrig.FalseBool(),
 		URI:                    "https://example.org/emojis/blob_test",
-		VisibleInPicker:        true,
+		VisibleInPicker:        testrig.TrueBool(),
 		CategoryID:             "01FEE47ZH70PWDSEAVBRFNX325",
 	}
 }

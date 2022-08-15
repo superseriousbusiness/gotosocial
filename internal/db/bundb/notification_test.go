@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 func (suite *NotificationTestSuite) spamNotifs() {
@@ -71,7 +72,7 @@ func (suite *NotificationTestSuite) spamNotifs() {
 			TargetAccountID:  targetAccountID,
 			OriginAccountID:  originAccountID,
 			StatusID:         statusID,
-			Read:             false,
+			Read:             testrig.FalseBool(),
 		}
 
 		if err := suite.db.Put(context.Background(), notif); err != nil {

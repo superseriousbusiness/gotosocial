@@ -97,10 +97,13 @@ var Confirm action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	u.Approved = true
+	updatingColumns := []string{"approved", "email", "confirmed_at", "updated_at"}
+	approved := true
+	u.Approved = &approved
 	u.Email = u.UnconfirmedEmail
 	u.ConfirmedAt = time.Now()
-	if err := dbConn.UpdateByPrimaryKey(ctx, u); err != nil {
+	u.UpdatedAt = time.Now()
+	if err := dbConn.UpdateByPrimaryKey(ctx, u, updatingColumns...); err != nil {
 		return err
 	}
 
@@ -131,8 +134,12 @@ var Promote action.GTSAction = func(ctx context.Context) error {
 	if err := dbConn.GetWhere(ctx, []db.Where{{Key: "account_id", Value: a.ID}}, u); err != nil {
 		return err
 	}
-	u.Admin = true
-	if err := dbConn.UpdateByPrimaryKey(ctx, u); err != nil {
+
+	updatingColumns := []string{"admin", "updated_at"}
+	admin := true
+	u.Admin = &admin
+	u.UpdatedAt = time.Now()
+	if err := dbConn.UpdateByPrimaryKey(ctx, u, updatingColumns...); err != nil {
 		return err
 	}
 
@@ -163,8 +170,12 @@ var Demote action.GTSAction = func(ctx context.Context) error {
 	if err := dbConn.GetWhere(ctx, []db.Where{{Key: "account_id", Value: a.ID}}, u); err != nil {
 		return err
 	}
-	u.Admin = false
-	if err := dbConn.UpdateByPrimaryKey(ctx, u); err != nil {
+
+	updatingColumns := []string{"admin", "updated_at"}
+	admin := false
+	u.Admin = &admin
+	u.UpdatedAt = time.Now()
+	if err := dbConn.UpdateByPrimaryKey(ctx, u, updatingColumns...); err != nil {
 		return err
 	}
 
@@ -195,8 +206,12 @@ var Disable action.GTSAction = func(ctx context.Context) error {
 	if err := dbConn.GetWhere(ctx, []db.Where{{Key: "account_id", Value: a.ID}}, u); err != nil {
 		return err
 	}
-	u.Disabled = true
-	if err := dbConn.UpdateByPrimaryKey(ctx, u); err != nil {
+
+	updatingColumns := []string{"disabled", "updated_at"}
+	disabled := true
+	u.Disabled = &disabled
+	u.UpdatedAt = time.Now()
+	if err := dbConn.UpdateByPrimaryKey(ctx, u, updatingColumns...); err != nil {
 		return err
 	}
 
@@ -247,9 +262,10 @@ var Password action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error hashing password: %s", err)
 	}
 
+	updatingColumns := []string{"encrypted_password", "updated_at"}
 	u.EncryptedPassword = string(pw)
-
-	if err := dbConn.UpdateByPrimaryKey(ctx, u); err != nil {
+	u.UpdatedAt = time.Now()
+	if err := dbConn.UpdateByPrimaryKey(ctx, u, updatingColumns...); err != nil {
 		return err
 	}
 

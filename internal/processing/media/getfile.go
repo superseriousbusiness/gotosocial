@@ -112,7 +112,7 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 	}
 
 	// if we have the media cached on our server already, we can now simply return it from storage
-	if a.Cached {
+	if *a.Cached {
 		return p.retrieveFromStorage(ctx, storagePath, attachmentContent)
 	}
 
@@ -236,7 +236,7 @@ func (p *processor) getEmojiContent(ctx context.Context, wantedEmojiID string, e
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("emoji %s could not be taken from the db: %s", wantedEmojiID, err))
 	}
 
-	if e.Disabled {
+	if *e.Disabled {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("emoji %s has been disabled", wantedEmojiID))
 	}
 

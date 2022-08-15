@@ -57,5 +57,5 @@ func (f *filter) StatusBoostable(ctx context.Context, targetStatus *gtsmodel.Sta
 
 	// otherwise, status is as boostable as it says it is
 	log.Trace("defaulting to status.boostable value")
-	return targetStatus.Boostable, nil
+	return *targetStatus.Boostable, nil
 }

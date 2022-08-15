@@ -32,7 +32,7 @@ type PruneUnusedLocalTestSuite struct {
 
 func (suite *PruneUnusedLocalTestSuite) TestPruneUnusedLocal() {
 	testAttachment := suite.testAttachments["local_account_1_unattached_1"]
-	suite.True(testAttachment.Cached)
+	suite.True(*testAttachment.Cached)
 
 	totalPruned, err := suite.manager.PruneUnusedLocalAttachments(context.Background())
 	suite.NoError(err)
@@ -60,7 +60,7 @@ func (suite *PruneUnusedLocalTestSuite) TestPruneOneNonExistent() {
 	// Delete this attachment cached on disk
 	media, err := suite.db.GetAttachmentByID(ctx, testAttachment.ID)
 	suite.NoError(err)
-	suite.True(media.Cached)
+	suite.True(*media.Cached)
 	err = suite.storage.Delete(ctx, media.File.Path)
 	suite.NoError(err)
 

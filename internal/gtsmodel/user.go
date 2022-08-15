@@ -50,10 +50,10 @@ type User struct {
 	ConfirmationSentAt     time.Time    `validate:"required_with=ConfirmationToken" bun:"type:timestamptz,nullzero"`     // When did we send email confirmation to this user?
 	ConfirmedAt            time.Time    `validate:"required_with=Email" bun:"type:timestamptz,nullzero"`                 // When did the user confirm their email address
 	UnconfirmedEmail       string       `validate:"required_without=Email" bun:",nullzero"`                              // Email address that hasn't yet been confirmed
-	Moderator              bool         `validate:"-" bun:",notnull,default:false"`                                      // Is this user a moderator?
-	Admin                  bool         `validate:"-" bun:",notnull,default:false"`                                      // Is this user an admin?
-	Disabled               bool         `validate:"-" bun:",notnull,default:false"`                                      // Is this user disabled from posting?
-	Approved               bool         `validate:"-" bun:",notnull,default:false"`                                      // Has this user been approved by a moderator?
+	Moderator              *bool        `validate:"-" bun:",nullzero,notnull,default:false"`                             // Is this user a moderator?
+	Admin                  *bool        `validate:"-" bun:",nullzero,notnull,default:false"`                             // Is this user an admin?
+	Disabled               *bool        `validate:"-" bun:",nullzero,notnull,default:false"`                             // Is this user disabled from posting?
+	Approved               *bool        `validate:"-" bun:",nullzero,notnull,default:false"`                             // Has this user been approved by a moderator?
 	ResetPasswordToken     string       `validate:"required_with=ResetPasswordSentAt" bun:",nullzero"`                   // The generated token that the user can use to reset their password
 	ResetPasswordSentAt    time.Time    `validate:"required_with=ResetPasswordToken" bun:"type:timestamptz,nullzero"`    // When did we email the user their reset-password email?
 }

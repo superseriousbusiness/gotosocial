@@ -145,13 +145,13 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 	// manuallyApprovesFollowers
 	// Will be shown as a locked account.
 	manuallyApprovesFollowersProp := streams.NewActivityStreamsManuallyApprovesFollowersProperty()
-	manuallyApprovesFollowersProp.Set(a.Locked)
+	manuallyApprovesFollowersProp.Set(*a.Locked)
 	person.SetActivityStreamsManuallyApprovesFollowers(manuallyApprovesFollowersProp)
 
 	// discoverable
 	// Will be shown in the profile directory.
 	discoverableProp := streams.NewTootDiscoverableProperty()
-	discoverableProp.Set(a.Discoverable)
+	discoverableProp.Set(*a.Discoverable)
 	person.SetTootDiscoverable(discoverableProp)
 
 	// devices
@@ -539,7 +539,7 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 
 	// sensitive
 	sensitiveProp := streams.NewActivityStreamsSensitiveProperty()
-	sensitiveProp.AppendXMLSchemaBoolean(s.Sensitive)
+	sensitiveProp.AppendXMLSchemaBoolean(*s.Sensitive)
 	status.SetActivityStreamsSensitive(sensitiveProp)
 
 	return status, nil

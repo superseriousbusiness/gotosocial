@@ -65,7 +65,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateSimple() {
 	// fields should be updated in the database as well
 	dbAccount, err := suite.db.GetAccountByID(context.Background(), testAccount.ID)
 	suite.NoError(err)
-	suite.True(dbAccount.Locked)
+	suite.True(*dbAccount.Locked)
 	suite.Equal(displayName, dbAccount.DisplayName)
 	suite.Equal(`<p><a href="http://localhost:8080/tags/hello" class="mention hashtag" rel="tag nofollow noreferrer noopener" target="_blank">#<span>hello</span></a> here i am!</p>`, dbAccount.Note)
 }
@@ -107,7 +107,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithMention() {
 	// fields should be updated in the database as well
 	dbAccount, err := suite.db.GetAccountByID(context.Background(), testAccount.ID)
 	suite.NoError(err)
-	suite.True(dbAccount.Locked)
+	suite.True(*dbAccount.Locked)
 	suite.Equal(displayName, dbAccount.DisplayName)
 	suite.Equal(noteExpected, dbAccount.Note)
 }

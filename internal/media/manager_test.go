@@ -80,7 +80,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlocking() {
 	suite.Equal("image/jpeg", attachment.File.ContentType)
 	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
 	suite.Equal(269739, attachment.File.FileSize)
-	suite.Equal("LjBzUo#6RQR._NvzRjWF?urqV@a$", attachment.Blurhash)
+	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
@@ -152,7 +152,7 @@ func (suite *ManagerTestSuite) TestPngNoAlphaChannelProcessBlocking() {
 	suite.Equal("image/png", attachment.File.ContentType)
 	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
 	suite.Equal(17471, attachment.File.FileSize)
-	suite.Equal("LFP?{^.A-?xd.9o#RVRQ~oj:_0xW", attachment.Blurhash)
+	suite.Equal("LFQT7e.A%O%4?co$M}M{_1W9~TxV", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
@@ -224,7 +224,7 @@ func (suite *ManagerTestSuite) TestPngAlphaChannelProcessBlocking() {
 	suite.Equal("image/png", attachment.File.ContentType)
 	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
 	suite.Equal(18904, attachment.File.FileSize)
-	suite.Equal("LFP?{^.A-?xd.9o#RVRQ~oj:_0xW", attachment.Blurhash)
+	suite.Equal("LFQT7e.A%O%4?co$M}M{_1W9~TxV", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
@@ -307,7 +307,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithCallback() {
 	suite.Equal("image/jpeg", attachment.File.ContentType)
 	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
 	suite.Equal(269739, attachment.File.FileSize)
-	suite.Equal("LjBzUo#6RQR._NvzRjWF?urqV@a$", attachment.Blurhash)
+	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
@@ -386,7 +386,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessAsync() {
 	suite.Equal("image/jpeg", attachment.File.ContentType)
 	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
 	suite.Equal(269739, attachment.File.FileSize)
-	suite.Equal("LjBzUo#6RQR._NvzRjWF?urqV@a$", attachment.Blurhash)
+	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
@@ -467,7 +467,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegQueueSpamming() {
 		suite.Equal("image/jpeg", attachment.File.ContentType)
 		suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
 		suite.Equal(269739, attachment.File.FileSize)
-		suite.Equal("LjBzUo#6RQR._NvzRjWF?urqV@a$", attachment.Blurhash)
+		suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", attachment.Blurhash)
 
 		// now make sure the attachment is in the database
 		dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
@@ -556,7 +556,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
 	suite.Equal("image/jpeg", attachment.File.ContentType)
 	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
 	suite.Equal(269739, attachment.File.FileSize)
-	suite.Equal("LjBzUo#6RQR._NvzRjWF?urqV@a$", attachment.Blurhash)
+	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)

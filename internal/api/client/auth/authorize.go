@@ -320,13 +320,13 @@ func ensureUserIsAuthorizedOrRedirect(ctx *gin.Context, user *gtsmodel.User, acc
 		return
 	}
 
-	if !user.Approved {
+	if !*user.Approved {
 		ctx.Redirect(http.StatusSeeOther, WaitForApprovalPath)
 		redirected = true
 		return
 	}
 
-	if user.Disabled || !account.SuspendedAt.IsZero() {
+	if *user.Disabled || !account.SuspendedAt.IsZero() {
 		ctx.Redirect(http.StatusSeeOther, AccountDisabledPath)
 		redirected = true
 		return

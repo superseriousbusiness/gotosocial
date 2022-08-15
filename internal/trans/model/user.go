@@ -41,10 +41,10 @@ type User struct {
 	ConfirmationSentAt  *time.Time `json:"confirmationTokenSentAt,omitempty" bun:",nullzero"`
 	ConfirmedAt         *time.Time `json:"confirmedAt,omitempty" bun:",nullzero"`
 	UnconfirmedEmail    string     `json:"unconfirmedEmail,omitempty" bun:",nullzero"`
-	Moderator           bool       `json:"moderator"`
-	Admin               bool       `json:"admin"`
-	Disabled            bool       `json:"disabled"`
-	Approved            bool       `json:"approved"`
+	Moderator           *bool      `json:"moderator" bun:",nullzero,notnull,default:false"`
+	Admin               *bool      `json:"admin" bun:",nullzero,notnull,default:false"`
+	Disabled            *bool      `json:"disabled" bun:",nullzero,notnull,default:false"`
+	Approved            *bool      `json:"approved" bun:",nullzero,notnull,default:false"`
 	ResetPasswordToken  string     `json:"resetPasswordToken,omitempty" bun:",nullzero"`
 	ResetPasswordSentAt *time.Time `json:"resetPasswordSentAt,omitempty" bun:",nullzero"`
 }

@@ -62,7 +62,7 @@ func (p *processor) DomainBlockCreate(ctx context.Context, account *gtsmodel.Acc
 			CreatedByAccountID: account.ID,
 			PrivateComment:     text.SanitizePlaintext(privateComment),
 			PublicComment:      text.SanitizePlaintext(publicComment),
-			Obfuscate:          obfuscate,
+			Obfuscate:          &obfuscate,
 			SubscriptionID:     subscriptionID,
 		}
 
@@ -101,6 +101,19 @@ func (p *processor) initiateDomainBlockSideEffects(ctx context.Context, account 
 	// if we have an instance entry for this domain, update it with the new block ID and clear all fields
 	instance := &gtsmodel.Instance{}
 	if err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: block.Domain}}, instance); err == nil {
+		updatingColumns := []string{
+			"title",
+			"updated_at",
+			"suspended_at",
+			"domain_block_id",
+			"short_description",
+			"description",
+			"terms",
+			"contact_email",
+			"contact_account_username",
+			"contact_account_id",
+			"version",
+		}
 		instance.Title = ""
 		instance.UpdatedAt = time.Now()
 		instance.SuspendedAt = time.Now()
@@ -112,7 +125,7 @@ func (p *processor) initiateDomainBlockSideEffects(ctx context.Context, account 
 		instance.ContactAccountUsername = ""
 		instance.ContactAccountID = ""
 		instance.Version = ""
-		if err := p.db.UpdateByPrimaryKey(ctx, instance); err != nil {
+		if err := p.db.UpdateByPrimaryKey(ctx, instance, updatingColumns...); err != nil {
 			l.Errorf("domainBlockProcessSideEffects: db error updating instance: %s", err)
 		}
 		l.Debug("domainBlockProcessSideEffects: instance entry updated")

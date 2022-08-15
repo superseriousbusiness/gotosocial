@@ -142,6 +142,8 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 		return nil, err
 	}
 
+	// if we don't require moderator approval, just pre-approve the user
+	approved := !requireApproval
 	u := &gtsmodel.User{
 		ID:                     newUserID,
 		AccountID:              acct.ID,
@@ -151,7 +153,7 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 		Locale:                 locale,
 		UnconfirmedEmail:       email,
 		CreatedByApplicationID: appID,
-		Approved:               !requireApproval, // if we don't require moderator approval, just pre-approve the user
+		Approved:               &approved,
 	}
 
 	if emailVerified {
@@ -161,8 +163,10 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 	}
 
 	if admin {
-		u.Admin = true
-		u.Moderator = true
+		admin := true
+		moderator := true
+		u.Admin = &admin
+		u.Moderator = &moderator
 	}
 
 	if _, err = a.conn.

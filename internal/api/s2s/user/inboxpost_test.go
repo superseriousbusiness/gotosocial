@@ -469,8 +469,8 @@ func (suite *InboxPostTestSuite) TestPostDelete() {
 	suite.Empty(dbAccount.HeaderRemoteURL)
 	suite.Empty(dbAccount.Reason)
 	suite.Empty(dbAccount.Fields)
-	suite.True(dbAccount.HideCollections)
-	suite.False(dbAccount.Discoverable)
+	suite.True(*dbAccount.HideCollections)
+	suite.False(*dbAccount.Discoverable)
 	suite.WithinDuration(time.Now(), dbAccount.SuspendedAt, 30*time.Second)
 	suite.Equal(dbAccount.ID, dbAccount.SuspensionOrigin)
 }

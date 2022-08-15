@@ -69,6 +69,9 @@ github.com/coreos/go-oidc/v3/oidc
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
+# github.com/disintegration/imaging v1.6.2
+## explicit
+github.com/disintegration/imaging
 # github.com/dsoprea/go-exif/v3 v3.0.0-20210625224831-a6301f85c82b
 ## explicit; go 1.12
 github.com/dsoprea/go-exif/v3
@@ -280,9 +283,6 @@ github.com/modern-go/concurrent
 # github.com/modern-go/reflect2 v1.0.2
 ## explicit; go 1.12
 github.com/modern-go/reflect2
-# github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
-## explicit
-github.com/nfnt/resize
 # github.com/oklog/ulid v1.3.1
 ## explicit
 github.com/oklog/ulid
@@ -536,7 +536,7 @@ github.com/superseriousbusiness/activity/streams/values/rfc2045
 github.com/superseriousbusiness/activity/streams/values/rfc5988
 github.com/superseriousbusiness/activity/streams/values/string
 github.com/superseriousbusiness/activity/streams/vocab
-# github.com/superseriousbusiness/exif-terminator v0.3.0
+# github.com/superseriousbusiness/exif-terminator v0.4.0
 ## explicit; go 1.17
 github.com/superseriousbusiness/exif-terminator
 # github.com/superseriousbusiness/go-jpeg-image-structure/v2 v2.0.0-20220321154430-d89a106fdabe
@@ -573,7 +573,7 @@ github.com/ulule/limiter/v3/drivers/middleware/gin
 github.com/ulule/limiter/v3/drivers/store/common
 github.com/ulule/limiter/v3/drivers/store/memory
 github.com/ulule/limiter/v3/internal/bytebuffer
-# github.com/uptrace/bun v1.1.3
+# github.com/uptrace/bun v1.1.7
 ## explicit; go 1.17
 github.com/uptrace/bun
 github.com/uptrace/bun/dialect
@@ -585,10 +585,10 @@ github.com/uptrace/bun/internal/parser
 github.com/uptrace/bun/internal/tagparser
 github.com/uptrace/bun/migrate
 github.com/uptrace/bun/schema
-# github.com/uptrace/bun/dialect/pgdialect v1.1.3
+# github.com/uptrace/bun/dialect/pgdialect v1.1.7
 ## explicit; go 1.17
 github.com/uptrace/bun/dialect/pgdialect
-# github.com/uptrace/bun/dialect/sqlitedialect v1.1.3
+# github.com/uptrace/bun/dialect/sqlitedialect v1.1.7
 ## explicit; go 1.17
 github.com/uptrace/bun/dialect/sqlitedialect
 # github.com/vmihailenco/msgpack/v5 v5.3.5
@@ -627,6 +627,12 @@ golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 ## explicit; go 1.18
 golang.org/x/exp/constraints
 golang.org/x/exp/slices
+# golang.org/x/image v0.0.0-20191009234506-e7c1f5e7dbb8
+## explicit; go 1.12
+golang.org/x/image/bmp
+golang.org/x/image/ccitt
+golang.org/x/image/tiff
+golang.org/x/image/tiff/lzw
 # golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4
 ## explicit; go 1.17
 golang.org/x/mod/semver
@@ -648,7 +654,7 @@ golang.org/x/net/publicsuffix
 ## explicit; go 1.11
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20220429233432-b5fbb4746d32
+# golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
@@ -753,10 +759,10 @@ lukechampine.com/uint128
 # modernc.org/cc/v3 v3.36.0
 ## explicit; go 1.15
 modernc.org/cc/v3
-# modernc.org/ccgo/v3 v3.16.6
+# modernc.org/ccgo/v3 v3.16.8
 ## explicit; go 1.16
 modernc.org/ccgo/v3/lib
-# modernc.org/libc v1.16.7
+# modernc.org/libc v1.16.19
 ## explicit; go 1.16
 modernc.org/libc
 modernc.org/libc/errno
@@ -793,8 +799,8 @@ modernc.org/memory
 # modernc.org/opt v0.1.3
 ## explicit; go 1.13
 modernc.org/opt
-# modernc.org/sqlite v1.17.2
-## explicit; go 1.16
+# modernc.org/sqlite v1.18.1
+## explicit; go 1.17
 modernc.org/sqlite
 modernc.org/sqlite/lib
 # modernc.org/strutil v1.1.1
