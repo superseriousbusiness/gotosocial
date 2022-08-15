@@ -173,7 +173,7 @@ main {
 
 	.media {
 		margin-top: 0.6rem;
-		border-radius: 0.2rem;
+		border-radius: $br;
 		grid-column: span 3;
 		display: grid;
 		grid-template-columns: 50% 50%;
@@ -181,24 +181,101 @@ main {
 		overflow: hidden;
 		gap: 0.3rem;
 
-		a {
+		.media-wrapper {
 			position: relative;
 		}
 
+		&.single .media-wrapper {
+			grid-column: span 2;
+		}
+
+		&.odd .media-wrapper:first-child, &.double .media-wrapper {
+			grid-row: span 2;
+		}
+
+		.open, .open .button {
+			display: none;
+		}
+
+		.closed {
+			z-index: 2;
+		}
+
+		input.sensitive-checkbox:checked { /* Media is shown */
+			& ~ .sensitive {
+				.closed {
+					transition: 0.8s;
+					pointer-events: none;
+					opacity: 0;
+
+					& > * {
+						display: none;
+					}
+				}
+
+				.open {
+					display: flex;
+					justify-content: flex-start;
+
+					.button {
+						align-self: flex-start;
+						display: initial;
+						z-index: 4;
+					}
+				}
+			}
+		}
+
+		.sensitive {
+			position: absolute;
+			height: 100%;
+			width: 100%;
+
+			.open, .closed {
+				display: flex;
+				position: absolute;
+				height: 100%;
+				width: 100%;
+				justify-content: center;
+				padding: 1rem;
+
+				label {
+					z-index: 3;
+				}
+			}
+
+			.closed {
+				transition: 0.3s;
+				background: $bg_sensitive;
+				@supports (backdrop-filter: blur(2rem)) {
+					background: transparent;
+					backdrop-filter: blur(2rem);
+				}
+
+				.button {
+					align-self: center;
+					justify-self: center;
+				}
+			}
+		}
+
 		.no-image-desc {
+			color: $button_fg;
 			display: flex;
 			position: absolute;
 			bottom: 0.1rem;
 			right: 0.4rem;
-			color: white;
-			background: $blue;
-			padding: 0.2rem 0.4rem;
+			margin-bottom: 0.4rem;
+			margin-right: 0.4rem;
+			background: $bg_no_img_desc;
+			padding: 0.1rem 0.45rem;
 			border-radius: 100%;
+			border: 0.2rem solid $button_fg;
 			z-index: 3;
 
 			i.fa {
 				display: block;
-				line-height: 1.3rem;
+				line-height: 1.6rem;
 			}
 
 			span {
@@ -219,14 +296,6 @@ main {
 			height: 100%;
 			object-fit: cover;
 		}
-
-		&.single a {
-			grid-column: span 2;
-		}
-
-		&.odd a:first-child, &.double a {
-			grid-row: span 2;
-		}
 	}
 
 	.info {
@@ -244,7 +313,7 @@ main {
 		}
 
 		grid-column: span 3;
-		margin-top: 0.5rem;
+		margin-top: 1.5rem;
 		flex-wrap: wrap;
 
 		div.stats::after {
@@ -313,8 +382,8 @@ main {
 		}
 
 		.media {
-			grid-auto-rows: 1fr;
-			max-height: 120rem;
+			/* grid-auto-rows: 1fr; */
+			/* max-height: 120rem; */
 		}
 	}
 }
