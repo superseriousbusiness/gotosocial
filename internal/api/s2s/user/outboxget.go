@@ -99,6 +99,7 @@ func (m *Module) OutboxGETHandler(c *gin.Context) {
 	if format == string(api.TextHTML) {
 		// redirect to the user's profile
 		c.Redirect(http.StatusSeeOther, "/@"+requestedUsername)
+		return
 	}
 
 	var page bool

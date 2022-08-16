@@ -56,6 +56,7 @@ func (m *Module) StatusGETHandler(c *gin.Context) {
 	if format == string(api.TextHTML) {
 		// redirect to the status
 		c.Redirect(http.StatusSeeOther, "/@"+requestedUsername+"/statuses/"+requestedStatusID)
+		return
 	}
 
 	resp, errWithCode := m.processor.GetFediStatus(transferContext(c), requestedUsername, requestedStatusID, c.Request.URL)
