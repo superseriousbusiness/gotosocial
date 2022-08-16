@@ -2,7 +2,7 @@
 
 Hey! Welcome to the CONTRIBUTING.md for GoToSocial :) Thanks for taking a look, that kicks ass.
 
-This document will expand as the project expands, so for now this is basically a stub.
+This document will expand as the project expands, so for now, this is basically a stub.
 
 Contributions are welcome at this point, since the API is fairly stable now and the structure is somewhat coherent.
 
@@ -80,7 +80,7 @@ To recompile bundles:
 BUDO_BUILD=1 node web/source 
 ```
 
-Or you can run livereloading in development. It will start a webserver (ip/port printed in console, default localhost:8081), while also keeping the bundles
+Or you can run live reloading in development. It will start a webserver (ip/port printed in console, default localhost:8081), while also keeping the bundles
 up-to-date on disk. You can access the user/admin panels at localhost:8080/user, localhost:8080/admin, or run in tandem with the GoToSocial testrig, which will also
 serve the updated bundles from disk.
 
@@ -96,7 +96,7 @@ Let's say you fork GoToSocial to `github.com/yourgithubname/gotosocial`, and the
 
 The correct solution to this is to fork, then clone the upstream repository, then set `origin` of the upstream repository to that of your fork.
 
-See [this blogpost](https://blog.sgmansfield.com/2016/06/working-with-forks-in-go/) for more details.
+See [this blog post](https://blog.sgmansfield.com/2016/06/working-with-forks-in-go/) for more details.
 
 In case this post disappears, here are the steps (slightly modified):
 
@@ -105,7 +105,7 @@ In case this post disappears, here are the steps (slightly modified):
 >
 > `go get github.com/superseriousbusiness/gotosocial`
 >
-> Fork the repository on Github or set up whatever other remote git repo you will be using. In this case, I would go to Github and fork the repository.
+> Fork the repository on GitHub or set up whatever other remote git repo you will be using. In this case, I would go to GitHub and fork the repository.
 >
 > Navigate to the top level of the repository on your computer. Note that this might not be the specific package you’re using:
 >
@@ -122,9 +122,9 @@ In case this post disappears, here are the steps (slightly modified):
 
 ## Setting up your test environment
 
-GoToSocial provides a [testrig](https://github.com/superseriousbusiness/gotosocial/tree/main/testrig) with a bunch of mock packages you can use in integration tests.
+GoToSocial provides a [testrig](https://github.com/superseriousbusiness/gotosocial/tree/main/testrig) with a number of mock packages you can use in integration tests.
 
-One thing that *isn't* mocked is the Database interface, because it's just easier to use an in-memory SQLite database than to mock everything out.
+One thing that *isn't* mocked is the Database interface because it's just easier to use an in-memory SQLite database than to mock everything out.
 
 ### Standalone Testrig with Pinafore
 
@@ -154,7 +154,7 @@ Note the following constraints:
 
 - Since the testrig uses an in-memory database, the database will be destroyed when the testrig is stopped.
 - If you stop the testrig and start it again, any tokens or applications you created during your tests will also be removed. As such, you need to log out and in again every time you stop/start the rig.
-- The testrig does not make any actual external http calls, so federation will not work from a testrig.
+- The testrig does not make any actual external HTTP calls, so federation will not work from a testrig.
 
 ### Running automated tests
 
@@ -162,7 +162,7 @@ There are a few different ways of running tests. Each requires the use of the `-
 
 #### SQLite
 
-If you want to run tests as quickly as possible, using an SQLite in-memory database, use:
+If you would like to run tests as quickly as possible, using an SQLite in-memory database, use:
 
 ```bash
 GTS_DB_TYPE="sqlite" GTS_DB_ADDRESS=":memory:" go test ./...
@@ -194,7 +194,7 @@ Although these tests *are* part of the CI/CD testing process, you probably won't
 
 ## Project Structure
 
-For project structure, GoToSocial follows a standard and widely-accepted project layout [defined here](https://github.com/golang-standards/project-layout). As the author writes:
+For project structure, GoToSocial follows a standard and widely accepted project layout [defined here](https://github.com/golang-standards/project-layout). As the author writes:
 
 > This is a basic layout for Go application projects. It's not an official standard defined by the core Go dev team; however, it is a set of common historical and emerging project layout patterns in the Go ecosystem.
 
@@ -233,7 +233,7 @@ Then, you can run the linter with:
 golangci-lint run
 ```
 
-If there's no output, great! It passed :)
+If there's no output, great! It passed :).
 
 ## Updating Swagger docs
 
@@ -251,13 +251,13 @@ swagger generate spec -o docs/api/swagger.yaml --scan-models
 
 GoToSocial uses [Drone](https://www.drone.io/) for CI/CD tasks like running tests, linting, and building Docker containers.
 
-These runs are integrated with Github, and will be run on opening a pull request or merging into main.
+These runs are integrated with GitHub, and will be run on opening a pull request or merging into main.
 
 The Drone instance for GoToSocial is [here](https://drone.superseriousbusiness.org/superseriousbusiness/gotosocial).
 
-The `drone.yml` file is [here](./.drone.yml) -- this defines how and when Drone should run. Documentation for Drone is [here](https://docs.drone.io/).
+The `drone.yml` file is [here](./.drone.yml) — this defines how and when Drone should run. Documentation for Drone is [here](https://docs.drone.io/).
 
-Please note that the `drone.yml` file must be signed by the Drone admin account in order to be considered valid. This must be done every time the file is changed. This is to prevent tampering and hijacking of the Drone instance. See [here](https://docs.drone.io/signature/).
+It is worth noting that the `drone.yml` file must be signed by the Drone admin account to be considered valid. This must be done every time the file is changed. This is to prevent tampering and hijacking of the Drone instance. See [here](https://docs.drone.io/signature/).
 
 To sign the file, first install and setup the [drone cli tool](https://docs.drone.io/cli/install/). Then, run:
 
@@ -267,29 +267,29 @@ drone -t PUT_YOUR_DRONE_ADMIN_TOKEN_HERE -s https://drone.superseriousbusiness.o
 
 ## Release Checklist
 
-First things first: If this is a security hot-fix, we'll probably rush thru this list, and make a prettier release a few days later.
+First things first: If this is a security hot-fix, we'll probably rush through this list, and make a prettier release a few days later.
 
 Now, with that out of the way, here's our Checklist.
 
 GoToSocial follows [Semantic Versioning](https://semver.org/).
 So our first concern on the Checklist is:
 
-- what version are we releasing?
+- What version are we releasing?
 
 Next we need to check:
 
-- do the assets need to be rebuilt and committed to the repository.
-- do the swagger docs need to be rebuilt?
+- Do the assets have to be rebuilt and committed to the repository.
+- Do the swagger docs have to be rebuilt?
 
 On the project management side:
 
-- are there any issues that need to be moved to a different milestone?
-- are there any things on the [Roadmap](./ROADMAP.md) that can be ticked off?
+- Are there any issues that have to be moved to a different milestone?
+- Are there any things on the [Roadmap](./ROADMAP.md) that can be ticked off?
 
 Once we're happy with our Checklist, we can create the tag, and push it.
 And the rest [is automation](./.drone.yml).
 
-We can now head to github, and add some personality to the release notes.
+We can now head to GitHub, and add some personality to the release notes.
 Finally, we make announcements on the all our channels that the release is out!
 
 ### What if something goes wrong?
@@ -300,7 +300,7 @@ We release a buggy release, we forgot something ­ something important.
 If the release is so bad that it's unusable ­ or dangerous! ­ to a great part of our user-base, we can pull.
 That is: Delete the tag.
 
-Either way, once we've fixed the issue, we just start from the top of this list again. Version numbers are cheap. It's cheap to burn them.
+Either way, once we've resolved the issue, we just start from the top of this list again. Version numbers are cheap. It's cheap to burn them.
 
 ## Building Docker containers
 
@@ -326,7 +326,7 @@ Finally, to create a snapshot build, do:
 goreleaser --rm-dist --snapshot
 ```
 
-If all goes according to plan, you should now have a bunch of multiple-architecture binaries and tars inside the `./dist` folder, and snapshot Docker images should be built (check your terminal output for version).
+If all goes according to plan, you should now have a number of multiple-architecture binaries and tars inside the `./dist` folder, and snapshot Docker images should be built (check your terminal output for version).
 
 ### Manually
 
@@ -342,6 +342,6 @@ You don't need to install go-swagger, Node, or Yarn to build Docker images this 
 
 ## Financial Compensation
 
-Right now there's no structure in place for financial compensation for pull requests and code. This is simply because there's no money being made on the project apart from the very small weekly Liberapay donations.
+Right now, there's no structure in place for financial compensation for pull requests and code. This is simply because there's no money being made on the project, apart from the very small weekly Liberapay donations.
 
-If money starts coming in, I'll start looking at proper financial structures, but for now code is considered to be a donation in itself.
+If money starts coming in, I'll start looking at proper financial structures, but for now, code is considered to be a donation in itself.
