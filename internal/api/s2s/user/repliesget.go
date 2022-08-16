@@ -113,6 +113,7 @@ func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
 	if format == string(api.TextHTML) {
 		// redirect to the status
 		c.Redirect(http.StatusSeeOther, "/@"+requestedUsername+"/statuses/"+requestedStatusID)
+		return
 	}
 
 	var page bool

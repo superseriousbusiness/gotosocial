@@ -48,6 +48,7 @@ func (m *Module) FollowingGETHandler(c *gin.Context) {
 	if format == string(api.TextHTML) {
 		// redirect to the user's profile
 		c.Redirect(http.StatusSeeOther, "/@"+requestedUsername)
+		return
 	}
 
 	resp, errWithCode := m.processor.GetFediFollowing(transferContext(c), requestedUsername, c.Request.URL)

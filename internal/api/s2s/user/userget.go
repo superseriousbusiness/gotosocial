@@ -56,6 +56,7 @@ func (m *Module) UsersGETHandler(c *gin.Context) {
 	if format == string(api.TextHTML) {
 		// redirect to the user's profile
 		c.Redirect(http.StatusSeeOther, "/@"+requestedUsername)
+		return
 	}
 
 	resp, errWithCode := m.processor.GetFediUser(transferContext(c), requestedUsername, c.Request.URL)
