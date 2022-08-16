@@ -21,17 +21,22 @@ package trans_test
 import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type TransTestSuite struct {
 	suite.Suite
-	db db.DB
+	db           db.DB
+	testAccounts map[string]*gtsmodel.Account
 }
 
 func (suite *TransTestSuite) SetupTest() {
-	testrig.InitTestLog()
 	testrig.InitTestConfig()
+   testrig.InitTestLog()
+
+   suite.testAccounts = testrig.NewTestAccounts()
+
 	suite.db = testrig.NewTestDB()
 	testrig.StandardDBSetup(suite.db, nil)
 }
