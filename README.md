@@ -57,7 +57,7 @@ If you've ever used something like Twitter or Tumblr (or even Myspace!) GoToSoci
 
 **GoToSocial does NOT use algorithms or collect data about you to suggest content or 'improve your experience'**. The timeline is chronological: whatever you see at the top of your timeline is there because it's *just been posted*, not because it's been selected as interesting (or controversial) based on your personal profile.
 
-GoToSocial is not designed for 'must-follow' influencers with tens of thousands of followers, and it's not designed to be addictive. Your timeline and your experience is shaped by who you follow and how you interact with people, not by metrics of engagement!
+GoToSocial is not designed for 'must-follow' influencers with tens of thousands of followers, and it's not designed to be addictive. Your timeline and your experience are shaped by who you follow and how you interact with people, not by metrics of engagement!
 
 GoToSocial doesn't claim to be *better* than any other application, but it offers something that might be better *for you* in particular.
 
@@ -67,7 +67,7 @@ Because GoToSocial uses [ActivityPub](https://activitypub.rocks/), you can hang 
 
 ![the activitypub logo](docs/assets/ap_logo.svg)
 
-Federation means that your home server is part of a network of servers all over the world that all communicate using the same protocol. Your data is no longer centralized on one company's servers, but resides on your own server and is shared -- as you see fit -- across a resilient web of servers run by other people.
+Federation means that your home server is part of a network of servers all over the world that all communicate using the same protocol. Your data is no longer centralized on one company's servers, but resides on your own server and is shared — as you see fit — across a resilient web of servers run by other people.
 
 This federated approach also means that you aren't beholden to arbitrary rules from some gigantic corporation potentially thousands of miles away. Your server has its own rules and culture; your fellow server residents are your neighbors; you will likely get to know your server admins and moderators, or be an admin yourself.
 
@@ -87,9 +87,9 @@ For a detailed view on what's implemented and what's not, and progress made towa
 
 ### Mastodon API compatibility
 
-The Mastodon API has become the de-facto standard for client communication with federated servers, so GoToSocial has implemented and extended the API with custom functionality.
+The Mastodon API has become the de facto standard for client communication with federated servers, so GoToSocial has implemented and extended the API with custom functionality.
 
-In short this means full support for modern, beautiful apps like [Tusky](https://tusky.app/) and [Pinafore](https://pinafore.social/).
+In short, this means full support for modern, beautiful apps like [Tusky](https://tusky.app/) and [Pinafore](https://pinafore.social/).
 
 Tusky                                                        |  Pinafore
 :-----------------------------------------------------------:|:------------------------------------------------------------------:
@@ -112,9 +112,9 @@ It also allows you to customize how people interact with your posts:
 
 ### Customizability for admins
 
-Lots of [config options](./example/config.yaml) for admins to play around with, including:
+Plenty of [config options](./example/config.yaml) for admins to play around with, including:
 
-- Easily-adjustable post length.
+- Easily adjustable post length.
 - Media upload size settings.
 
 ### Easy to run
@@ -125,9 +125,9 @@ GoToSocial plays nice with lower-powered machines like Raspberry Pi, old laptops
 
 ### Safety + security features
 
-- Built-in, automatic support for secure HTTPS with [LetsEncrypt](https://letsencrypt.org/).
+- Built-in, automatic support for secure HTTPS with [Let's Encrypt](https://letsencrypt.org/).
 - Strict privacy enforcement for posts and strict blocking logic.
-- Import and export allowlists and denylists. Subscribe to community-created blocklists (think Adblocker, but for federation!).
+- Import and export allow lists and deny lists. Subscribe to community-created block lists (think Ad blocker, but for federation!).
 - HTTP signature authentication: GoToSocial requires [HTTP Signatures](https://tools.ietf.org/id/draft-cavage-http-signatures-01.html) when sending and receiving messages, to ensure that your messages can't be tampered with and your identity can't be forged.
 
 ### Various federation modes
@@ -135,16 +135,16 @@ GoToSocial plays nice with lower-powered machines like Raspberry Pi, old laptops
 GoToSocial doesn't apply a one-size-fits-all approach to federation. Who your server federates with should be up to you.
 
 - 'Normal' federation; discover new servers.
-- Allowlist-only federation; choose which servers you talk to.
+- *Allow list*-only federation; choose which servers you talk to.
 - Zero federation; keep your server private.
 
 ### OIDC integration
 
-GoToSocial supports [OpenID Connect (OIDC)](https://openid.net/connect/) identity providers, meaning you can integrate it with existing user management services like [Auth0](https://auth0.com/), [Gitlab](https://docs.gitlab.com/ee/integration/openid_connect_provider.html), etc, or run your own and hook GtS up to that (we recommend [Dex](https://dexidp.io/)).
+GoToSocial supports [OpenID Connect (OIDC)](https://openid.net/connect/) identity providers, meaning you can integrate it with existing user management services like [Auth0](https://auth0.com/), [Gitlab](https://docs.gitlab.com/ee/integration/openid_connect_provider.html), etc., or run your own and hook GtS up to that (we recommend [Dex](https://dexidp.io/)).
 
 ### Backend-first design
 
-Unlike other federated server projects, GoToSocial doesn't include an integrated client front-end (ie., a webapp).
+Unlike other federated server projects, GoToSocial doesn't include an integrated client front-end (i.e., a web app).
 
 Instead, like Matrix.org's [Synapse](https://github.com/matrix-org/synapse) project, it provides a relatively generic backend server implementation, some beautiful static pages for profiles and posts, and a [well-documented API](https://docs.gotosocial.org/en/latest/api/swagger/).
 
@@ -156,7 +156,7 @@ These cool things will be implemented if time allows (because we really want the
 
 - **Groups** and group posting!
 - Reputation-based 'slow' federation.
-- Community decision making for federation and moderation actions.
+- Community decision-making for federation and moderation actions.
 - User-selectable custom templates for rendering public posts:
   - Twitter-style
   - Blogpost
@@ -179,7 +179,7 @@ These packages are not maintained by GoToSocial, so please direct questions and 
 
 ## Known Issues
 
-Since GoToSocial is still in alpha, there are plenty of bugs. We use Github issues to track these. [Check them out here](https://github.com/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug).
+Since GoToSocial is still in alpha, there are plenty of bugs. We use GitHub issues to track these. [Check them out here](https://github.com/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug).
 
 ### Client App Issues
 
@@ -187,11 +187,11 @@ GoToSocial works great with Tusky and Pinafore, but some other client applicatio
 
 ### Federation Issues
 
-Since every ActivityPub server implementation has a slightly different interpretation of the protocol, some servers don't quite federate properly with GoToSocial yet. We're tracking these issues [in this project](https://github.com/superseriousbusiness/gotosocial/projects/4). Eventually we want to make sure that any implementation that can federate nicely with Mastodon should also be able to federate with GoToSocial.
+Since every ActivityPub server implementation has a slightly different interpretation of the protocol, some servers don't quite federate properly with GoToSocial yet. We're tracking these issues [in this project](https://github.com/superseriousbusiness/gotosocial/projects/4). Eventually, we want to make sure that any implementation that can federate nicely with Mastodon should also be able to federate with GoToSocial.
 
 ## Contributing
 
-You wanna contribute to GtS? Great! ❤️❤️❤️ Check out the issues page to see if there's anything you wanna jump in on, and read the [CONTRIBUTING.md](./CONTRIBUTING.md) file for guidelines and setting up your dev environment.
+You would like to contribute to GtS? Great! ❤️❤️❤️ Check out the issues page to see if there's anything you intend to jump in on, and read the [CONTRIBUTING.md](./CONTRIBUTING.md) file for guidelines and setting up your dev environment.
 
 ## Contact
 
@@ -211,12 +211,12 @@ The following libraries and frameworks are used by GoToSocial, with gratitude �
 - [gin-gonic/gin](https://github.com/gin-gonic/gin); speedy router engine. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gin-contrib/cors](https://github.com/gin-contrib/cors); Gin CORS middleware. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gin-contrib/gzip](https://github.com/gin-contrib/gzip); Gin gzip middleware. [MIT License](https://spdx.org/licenses/MIT.html).
-  - [gin-contrib/sessions](https://github.com/gin-contrib/sessions); Gin sessions middleware. [MIT License](https://spdx.org/licenses/MIT.html)
-  - [gin-contrib/static](https://github.com/gin-contrib/static); Gin static page middleware. [MIT License](https://spdx.org/licenses/MIT.html)
+  - [gin-contrib/sessions](https://github.com/gin-contrib/sessions); Gin sessions middleware. [MIT License](https://spdx.org/licenses/MIT.html).
+  - [gin-contrib/static](https://github.com/gin-contrib/static); Gin static page middleware. [MIT License](https://spdx.org/licenses/MIT.html).
 - [go-fed/httpsig](https://github.com/go-fed/httpsig); secure HTTP signature library. [BSD-3-Clause License](https://spdx.org/licenses/BSD-3-Clause.html).
-- [google/uuid](https://github.com/google/uuid); UUID generation. [BSD-3-Clause License](https://spdx.org/licenses/BSD-3-Clause.html)
+- [google/uuid](https://github.com/google/uuid); UUID generation. [BSD-3-Clause License](https://spdx.org/licenses/BSD-3-Clause.html).
 - [google/wuffs](https://github.com/google/wuffs); png-stripping code. [Apache-2.0 License](https://spdx.org/licenses/Apache-2.0.html).
-- [go-playground/validator](https://github.com/go-playground/validator); struct validation. [MIT License](https://spdx.org/licenses/MIT.html)
+- [go-playground/validator](https://github.com/go-playground/validator); struct validation. [MIT License](https://spdx.org/licenses/MIT.html).
 - [gorilla/websocket](https://github.com/gorilla/websocket); Websocket connectivity. [BSD-2-Clause License](https://spdx.org/licenses/BSD-2-Clause.html).
 - [gruf/go-debug](https://codeberg.org/gruf/go-debug); profiling support in debug builds. [MIT License](https://spdx.org/licenses/MIT.html).
 - [gruf/go-kv](https://codeberg.org/gruf/go-kv); key-value field formatting. [MIT License](https://spdx.org/licenses/MIT.html).
@@ -243,7 +243,7 @@ The following libraries and frameworks are used by GoToSocial, with gratitude �
 - [stretchr/testify](https://github.com/stretchr/testify); test framework. [MIT License](https://spdx.org/licenses/MIT.html).
 - [superseriousbusiness/exif-terminator](https://github.com/superseriousbusiness/exif-terminator); EXIF data removal. [GNU AGPL v3 LICENSE](https://spdx.org/licenses/AGPL-3.0-or-later.html).
 - [superseriousbusiness/activity](https://github.com/superseriousbusiness/activity) forked from [go-fed/activity](https://github.com/go-fed/activity); Golang ActivityPub/ActivityStreams library. [BSD-3-Clause License](https://spdx.org/licenses/BSD-3-Clause.html).
-- [superseriousbusiness/oauth2](https://github.com/superseriousbusiness/oauth2) forked from [go-oauth2/oauth2](https://github.com/go-oauth2/oauth2); oauth server framework and token handling. [MIT License](https://spdx.org/licenses/MIT.html).
+- [superseriousbusiness/oauth2](https://github.com/superseriousbusiness/oauth2) forked from [go-oauth2/oauth2](https://github.com/go-oauth2/oauth2); OAuth server framework and token handling. [MIT License](https://spdx.org/licenses/MIT.html).
 - [go-swagger/go-swagger](https://github.com/go-swagger/go-swagger); Swagger OpenAPI spec generation. [Apache-2.0 License](https://spdx.org/licenses/Apache-2.0.html).
 - [tdewolff/minify](https://github.com/tdewolff/minify); HTML minification for Markdown-submitted posts. [MIT License](https://spdx.org/licenses/MIT.html).
 - [uptrace/bun](https://github.com/uptrace/bun); database ORM. [BSD-2-Clause License](https://spdx.org/licenses/BSD-2-Clause.html).
@@ -263,7 +263,7 @@ In alphabetical order:
 
 ### Special Thanks
 
-A huge thank you to CJ from [go-fed](https://github.com/go-fed/activity): without your work GoToSocial would not have been possible.
+A huge thank you to CJ from [go-fed](https://github.com/go-fed/activity): without your work, GoToSocial would not have been possible.
 
 Thanks to everyone who has used GtS, opened an issue, suggested something, given funding, and otherwise encouraged or supported the project!
 

@@ -19,7 +19,7 @@ All the dates contained in this document are best-guess only. It's useful to hav
 
 ## Beta Aims
 
-The milestone for beta in GoToSocial's case is to have a feature set that roughly compares to existing popular ActivityPub server implementations (minus features which we don't see as particularly important or useful). The beta milestone also includes GoToSocial-specific features which we believe are vital for user safety, such as local-only posting, blocklist subscriptions, and so on.
+The milestone for beta in GoToSocial's case is to have a feature set that roughly compares to existing popular ActivityPub server implementations (minus features which we don't see as particularly important or useful). The beta milestone also includes GoToSocial-specific features which, we believe, are vital for user safety, such as local-only posting, block list subscriptions, and so on.
 
 Once feature parity is roughly in place, we will use beta time to start adding and polishing bonus features like slow federation, group moderation decisions, migration tooling, etc.
 
@@ -36,36 +36,36 @@ What follows is a per-quarter timeline of features that will be implemented on t
 
 Each quarter contains one 'big feature' which will probably take the longest amount of time that quarter.
 
-**This timeline is a best-guess about when things will be implemented. The order of feature releases may change. It may go faster or slower depending on the amount of hurdles we run into, and the amount of help we receive from community contribitions of code. The timeline also does not include background tasks like admin, polishing existing features, refactoring code, and ensuring compatibility with other AP implementations.**
+**This timeline is a best-guess about when things will be implemented. The order of feature releases may change. It may go faster or slower depending on the number of hurdles we run into, and the amount of help we receive from community contributions of code. The timeline also does not include background tasks like admin, polishing existing features, refactoring code, and ensuring compatibility with other AP implementations.**
 
 ### Q3 2022
 
 - **Big Feature** -- User settings page: allow users to edit their profile page and settings through a web page served by the GtS instance, for cases where client apps don't implement their own settings page.
-- Blocklist subscription support: allow instance admins to subscribe their instance to plaintext domain blocklists (much of the work for this is already in place).
+- Block list subscription support: allow instance admins to subscribe their instance to plaintext domain block lists (much of the work for this is already in place).
 - Tag support: implement federating hashtags and viewing hashtags to allow users to discover posts that they might be interested in.
 
 ### Q4 2022
 
-- **Big Feature** -- Video support: allow users to view + post videos (before we only implemented images and gifs).
+- **Big Feature** — Video support: allow users to view + post videos (before we only implemented images and gifs).
 - Custom emoji support: allow users to use custom emojis in posts. Fetch custom emojis from remote instances and display them properly.
 - Pinned posts: allow users to 'feature' or 'pin' posts on their profile, and serve these featured posts via AP for other servers to see.
 - Profile fields: allow users to set 'fields' on their profile: short key/value items that can display pronouns, links to websites, etc.
 
 ### Q1 2023
 
-- **Big Feature** -- Reports: allow users to file reports for abusive behavior etc. Expose the API for admins to view + act on reports. Handle federation of reports.
-- List support: allow users to create lists of other users which they can view as separate timelines.
+- **Big Feature** — Reports: allow users to file reports for abusive behavior etc. Expose the API for admins to view + act on reports. Handle federation of reports.
+- List support: allow users to create lists of other users, which they can view as separate timelines.
 - Polls support: allow users to create polls and vote in existing polls; federate the polls correctly via AP.
 
 ### Q2 2023
 
-- **Big Feature** -- Sign-up flow. Allow users to submit a sign up request to an instance. Allow admins to moderate sign-up requests.
+- **Big Feature** — Sign-up flow. Allow users to submit a sign-up request to an instance. Allow admins to moderate sign-up requests.
 - Direct conversations: Allow users to see all direct-message conversations they're a part of.
 - Muting conversations: Allow users to mute notifications for conversations they're no longer interested in.
 
 ### Q3 2023
 
-- **Big Feature** -- Support the `Move` Activity, to allow users to move across instances and Fediverse implementations.
+- **Big Feature** — Support the `Move` Activity, to allow users to move across instances and Fediverse implementations.
 - More to be confirmed.
 
 ## Detailed To-do List
@@ -81,10 +81,10 @@ Crossed out    - will not be implemented / will be stubbed only.
     - [x] /api/v1/apps POST                                 (Create an application)
     - [ ] /api/v1/apps/verify_credentials GET               (Verify an application works)
     - [x] /oauth/authorize GET                              (Show authorize page to user)
-    - [x] /oauth/authorize POST                             (Get an oauth access code for an app/user)
+    - [x] /oauth/authorize POST                             (Get an OAuth access code for an app/user)
     - [x] /oauth/token POST                                 (Obtain a user-level access token)
     - [ ] /oauth/revoke POST                                (Revoke a user-level access token)
-    - [x] /auth/sign_in GET                                 (Show form for user signin)
+    - [x] /auth/sign_in GET                                 (Show form for user sign-in)
     - [x] /auth/sign_in POST                                (Validate username and password and sign user in)
   - [ ] Accounts
     - [x] /api/v1/accounts POST                             (Register a new account)
@@ -205,7 +205,7 @@ Crossed out    - will not be implemented / will be stubbed only.
     - [x] /api/v1/admin/accounts/:id/action POST            (Perform an admin action on account)
     - [ ] /api/v1/admin/accounts/:id/approve POST           (Approve pending account)
     - [ ] /api/v1/admin/accounts/:id/reject POST            (Deny pending account)
-    - [ ] /api/v1/admin/accounts/:id/enable POST            (Reenable a disabled account)
+    - [ ] /api/v1/admin/accounts/:id/enable POST            (Re-enable a disabled account)
     - [ ] /api/v1/admin/accounts/:id/unsilence POST         (Unsilence a silenced account)
     - [ ] /api/v1/admin/accounts/:id/unsuspend POST         (Unsuspend a suspended account)
     - [ ] /api/v1/admin/reports GET                         (View all reports)
@@ -255,7 +255,7 @@ Crossed out    - will not be implemented / will be stubbed only.
       - [ ] Reputation scoring system for instances
     - [x] 'Greedy' federation
     - [ ] No federation (insulate this instance from the Fediverse)
-      - [ ] Allowlist
+      - [ ] Allow list
   - [x] Secure HTTP signatures (creation and validation)
 - [x] Storage
   - [x] Internal/statuses/preferences etc
@@ -270,7 +270,7 @@ Crossed out    - will not be implemented / will be stubbed only.
   - [x] Authorization middleware
   - [ ] Rate limiting middleware
   - [ ] Scope middleware
-  - [x] Permissions/acl middleware for admins+moderators
+  - [x] Permissions/ACL middleware for admins+moderators
 - [ ] Documentation
   - [x] Swagger API documentation
   - [x] ReadTheDocs.io documentation
