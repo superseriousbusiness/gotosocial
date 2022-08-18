@@ -165,6 +165,15 @@ func (p *processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, 
 		return maybeAccount, nil
 	}
 
+	if uri.Host == config.GetHost() || uri.Host == config.GetAccountDomain() {
+		// this is a local account; if we don't have it now then
+		// we should just bail instead of trying to get it remote
+		if maybeAccount, err := p.db.GetAccountByURI(ctx, uri.String()); err == nil {
+			return maybeAccount, nil
+		}
+		return nil, nil
+	}
+
 	// we don't have it yet, try to find it remotely
 	return p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
 		RequestingUsername: authed.Account.Username,
