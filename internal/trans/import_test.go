@@ -58,9 +58,7 @@ func (suite *ImportMinimalTestSuite) TestImportMinimalOK() {
 	fmt.Println(string(b))
 
 	// create a new database with just the tables created, no entries
-	testrig.StandardDBTeardown(suite.db)
 	newDB := testrig.NewTestDB()
-	testrig.CreateTestTables(newDB)
 
 	importer := trans.NewImporter(newDB)
 	err = importer.Import(ctx, tempFilePath)
