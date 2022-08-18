@@ -36,6 +36,9 @@ type Account interface {
 	// GetAccountByURL returns one account with the given URL, or an error if something goes wrong.
 	GetAccountByURL(ctx context.Context, uri string) (*gtsmodel.Account, Error)
 
+	// GetAccountByUsernameDomain returns one account with the given username and domain, or an error if something goes wrong.
+	GetAccountByUsernameDomain(ctx context.Context, username string, domain string) (*gtsmodel.Account, Error)
+
 	// UpdateAccount updates one account by ID.
 	UpdateAccount(ctx context.Context, account *gtsmodel.Account) (*gtsmodel.Account, Error)
 

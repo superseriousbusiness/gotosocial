@@ -69,6 +69,10 @@ func (suite *AccountCacheTestSuite) TestAccountCache() {
 		if account.URL != "" && !ok && !accountIs(account, check) {
 			suite.Fail("Failed to fetch expected account with URL: %s", account.URL)
 		}
+		check, ok = suite.cache.GetByUsernameDomain(account.Username, account.Domain)
+		if !ok && !accountIs(account, check) {
+			suite.Fail("Failed to fetch expected account with username/domain: %s/%s", account.Username, account.Domain)
+		}
 	}
 }
 

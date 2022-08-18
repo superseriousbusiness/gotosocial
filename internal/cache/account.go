@@ -37,6 +37,7 @@ func NewAccountCache() *AccountCache {
 		RegisterLookups: func(lm *cache.LookupMap[string, string]) {
 			lm.RegisterLookup("uri")
 			lm.RegisterLookup("url")
+			lm.RegisterLookup("usernamedomain")
 		},
 
 		AddLookups: func(lm *cache.LookupMap[string, string], acc *gtsmodel.Account) {
@@ -46,6 +47,7 @@ func NewAccountCache() *AccountCache {
 			if url := acc.URL; url != "" {
 				lm.Set("url", url, acc.ID)
 			}
+			lm.Set("usernamedomain", usernameDomainKey(acc.Username, acc.Domain), acc.ID)
 		},
 
 		DeleteLookups: func(lm *cache.LookupMap[string, string], acc *gtsmodel.Account) {
@@ -55,6 +57,7 @@ func NewAccountCache() *AccountCache {
 			if url := acc.URL; url != "" {
 				lm.Delete("url", url)
 			}
+			lm.Delete("usernamedomain", usernameDomainKey(acc.Username, acc.Domain))
 		},
 	})
 	c.cache.SetTTL(time.Minute*5, false)
@@ -75,6 +78,10 @@ func (c *AccountCache) GetByURL(url string) (*gtsmodel.Account, bool) {
 // GetByURI attempts to fetch a account from the cache by its URI, you will receive a copy for thread-safety
 func (c *AccountCache) GetByURI(uri string) (*gtsmodel.Account, bool) {
 	return c.cache.GetBy("uri", uri)
+}
+
+func (c *AccountCache) GetByUsernameDomain(username string, domain string) (*gtsmodel.Account, bool) {
+	return c.cache.GetBy("usernamedomain", usernameDomainKey(username, domain))
 }
 
 // Put places a account in the cache, ensuring that the object place is a copy for thread-safety
@@ -134,4 +141,12 @@ func copyAccount(account *gtsmodel.Account) *gtsmodel.Account {
 		HideCollections:         copyBoolPtr(account.HideCollections),
 		SuspensionOrigin:        account.SuspensionOrigin,
 	}
+}
+
+func usernameDomainKey(username string, domain string) string {
+	u := "@" + username
+	if domain != "" {
+		return u + "@" + domain
+	}
+	return u
 }

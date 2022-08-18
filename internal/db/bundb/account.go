@@ -84,6 +84,26 @@ func (a *accountDB) GetAccountByURL(ctx context.Context, url string) (*gtsmodel.
 	)
 }
 
+func (a *accountDB) GetAccountByUsernameDomain(ctx context.Context, username string, domain string) (*gtsmodel.Account, db.Error) {
+	return a.getAccount(
+		ctx,
+		func() (*gtsmodel.Account, bool) {
+			return a.cache.GetByUsernameDomain(username, domain)
+		},
+		func(account *gtsmodel.Account) error {
+			q := a.newAccountQ(account).Where("account.username = ?", username)
+
+			if domain != "" {
+				q = q.Where("account.domain = ?", domain)
+			} else {
+				q = q.Where("account.domain IS NULL")
+			}
+
+			return q.Scan(ctx)
+		},
+	)
+}
+
 func (a *accountDB) getAccount(ctx context.Context, cacheGet func() (*gtsmodel.Account, bool), dbQuery func(*gtsmodel.Account) error) (*gtsmodel.Account, db.Error) {
 	// Attempt to fetch cached account
 	account, cached := cacheGet()
