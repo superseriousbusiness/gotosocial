@@ -21,9 +21,11 @@ package dereferencing_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -42,11 +44,11 @@ func (suite *AccountTestSuite) TestDereferenceGroup() {
 	})
 	suite.NoError(err)
 	suite.NotNil(group)
-	suite.NotNil(group)
 
 	// group values should be set
 	suite.Equal("https://unknown-instance.com/groups/some_group", group.URI)
 	suite.Equal("https://unknown-instance.com/@some_group", group.URL)
+	suite.WithinDuration(time.Now(), group.LastWebfingeredAt, 5*time.Second)
 
 	// group should be in the database
 	dbGroup, err := suite.db.GetAccountByURI(context.Background(), group.URI)
@@ -65,11 +67,11 @@ func (suite *AccountTestSuite) TestDereferenceService() {
 	})
 	suite.NoError(err)
 	suite.NotNil(service)
-	suite.NotNil(service)
 
 	// service values should be set
 	suite.Equal("https://owncast.example.org/federation/user/rgh", service.URI)
 	suite.Equal("https://owncast.example.org/federation/user/rgh", service.URL)
+	suite.WithinDuration(time.Now(), service.LastWebfingeredAt, 5*time.Second)
 
 	// service should be in the database
 	dbService, err := suite.db.GetAccountByURI(context.Background(), service.URI)
@@ -77,6 +79,102 @@ func (suite *AccountTestSuite) TestDereferenceService() {
 	suite.Equal(service.ID, dbService.ID)
 	suite.Equal(ap.ActorService, dbService.ActorType)
 	suite.Equal("example.org", dbService.Domain)
+}
+
+/*
+	We shouldn't try webfingering or making http calls to dereference local accounts
+	that might be passed into GetRemoteAccount for whatever reason, so these tests are
+	here to make sure that such cases are (basically) short-circuit evaluated and given
+	back as-is without trying to make any calls to one's own instance.
+*/
+
+func (suite *AccountTestSuite) TestDereferenceLocalAccountAsRemoteURL() {
+	fetchingAccount := suite.testAccounts["local_account_1"]
+	targetAccount := suite.testAccounts["local_account_2"]
+
+	fetchedAccount, err := suite.dereferencer.GetRemoteAccount(context.Background(), dereferencing.GetRemoteAccountParams{
+		RequestingUsername: fetchingAccount.Username,
+		RemoteAccountID:    testrig.URLMustParse(targetAccount.URI),
+	})
+	suite.NoError(err)
+	suite.NotNil(fetchedAccount)
+	suite.Empty(fetchedAccount.Domain)
+}
+
+func (suite *AccountTestSuite) TestDereferenceLocalAccountAsUsername() {
+	fetchingAccount := suite.testAccounts["local_account_1"]
+	targetAccount := suite.testAccounts["local_account_2"]
+
+	fetchedAccount, err := suite.dereferencer.GetRemoteAccount(context.Background(), dereferencing.GetRemoteAccountParams{
+		RequestingUsername:    fetchingAccount.Username,
+		RemoteAccountUsername: targetAccount.Username,
+	})
+	suite.NoError(err)
+	suite.NotNil(fetchedAccount)
+	suite.Empty(fetchedAccount.Domain)
+}
+
+func (suite *AccountTestSuite) TestDereferenceLocalAccountAsUsernameDomain() {
+	fetchingAccount := suite.testAccounts["local_account_1"]
+	targetAccount := suite.testAccounts["local_account_2"]
+
+	fetchedAccount, err := suite.dereferencer.GetRemoteAccount(context.Background(), dereferencing.GetRemoteAccountParams{
+		RequestingUsername:    fetchingAccount.Username,
+		RemoteAccountUsername: targetAccount.Username,
+		RemoteAccountHost:     config.GetHost(),
+	})
+	suite.NoError(err)
+	suite.NotNil(fetchedAccount)
+	suite.Empty(fetchedAccount.Domain)
+}
+
+func (suite *AccountTestSuite) TestDereferenceLocalAccountAsUsernameDomainAndURL() {
+	fetchingAccount := suite.testAccounts["local_account_1"]
+	targetAccount := suite.testAccounts["local_account_2"]
+
+	fetchedAccount, err := suite.dereferencer.GetRemoteAccount(context.Background(), dereferencing.GetRemoteAccountParams{
+		RequestingUsername:    fetchingAccount.Username,
+		RemoteAccountID:       testrig.URLMustParse(targetAccount.URI),
+		RemoteAccountUsername: targetAccount.Username,
+		RemoteAccountHost:     config.GetHost(),
+	})
+	suite.NoError(err)
+	suite.NotNil(fetchedAccount)
+	suite.Empty(fetchedAccount.Domain)
+}
+
+func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUsername() {
+	fetchingAccount := suite.testAccounts["local_account_1"]
+
+	fetchedAccount, err := suite.dereferencer.GetRemoteAccount(context.Background(), dereferencing.GetRemoteAccountParams{
+		RequestingUsername:    fetchingAccount.Username,
+		RemoteAccountUsername: "thisaccountdoesnotexist",
+	})
+	suite.EqualError(err, "GetRemoteAccount: couldn't retrieve account locally and won't try to resolve it")
+	suite.Nil(fetchedAccount)
+}
+
+func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUsernameDomain() {
+	fetchingAccount := suite.testAccounts["local_account_1"]
+
+	fetchedAccount, err := suite.dereferencer.GetRemoteAccount(context.Background(), dereferencing.GetRemoteAccountParams{
+		RequestingUsername:    fetchingAccount.Username,
+		RemoteAccountUsername: "thisaccountdoesnotexist",
+		RemoteAccountHost:     "localhost:8080",
+	})
+	suite.EqualError(err, "GetRemoteAccount: couldn't retrieve account locally and won't try to resolve it")
+	suite.Nil(fetchedAccount)
+}
+
+func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUserURI() {
+	fetchingAccount := suite.testAccounts["local_account_1"]
+
+	fetchedAccount, err := suite.dereferencer.GetRemoteAccount(context.Background(), dereferencing.GetRemoteAccountParams{
+		RequestingUsername: fetchingAccount.Username,
+		RemoteAccountID:    testrig.URLMustParse("http://localhost:8080/users/thisaccountdoesnotexist"),
+	})
+	suite.EqualError(err, "GetRemoteAccount: couldn't retrieve account locally and won't try to resolve it")
+	suite.Nil(fetchedAccount)
 }
 
 func TestAccountTestSuite(t *testing.T) {
