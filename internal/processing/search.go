@@ -39,7 +39,6 @@ import (
 
 func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode) {
 	l := log.WithFields(kv.Fields{
-
 		{"query", search.Query},
 	}...)
 
@@ -62,7 +61,7 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 
 	/*
 		SEARCH BY MENTION
-		check if the query is something like @whatever_username@example.org -- this means it's a remote account
+		check if the query is something like @whatever_username@example.org -- this means it's likely a remote account
 	*/
 	maybeNamestring := query
 	if maybeNamestring[0] != '@' {
@@ -135,7 +134,6 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 
 func (p *processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Status, error) {
 	l := log.WithFields(kv.Fields{
-
 		{"uri", uri.String()},
 		{"resolve", resolve},
 	}...)
@@ -161,67 +159,46 @@ func (p *processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, u
 }
 
 func (p *processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Account, error) {
-	if maybeAccount, err := p.db.GetAccountByURI(ctx, uri.String()); err == nil {
-		return maybeAccount, nil
-	} else if maybeAccount, err := p.db.GetAccountByURL(ctx, uri.String()); err == nil {
+	// it might be a web url like http://example.org/@user instead
+	// of an AP uri like http://example.org/users/user, check first
+	if maybeAccount, err := p.db.GetAccountByURL(ctx, uri.String()); err == nil {
 		return maybeAccount, nil
 	}
 
-	if resolve {
-		// we don't have it locally so try and dereference it
-		account, err := p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
-			RequestingUsername: authed.Account.Username,
-			RemoteAccountID:    uri,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("searchAccountByURI: error dereferencing account with uri %s: %s", uri.String(), err)
+	if uri.Host == config.GetHost() || uri.Host == config.GetAccountDomain() {
+		// this is a local account; if we don't have it now then
+		// we should just bail instead of trying to get it remote
+		if maybeAccount, err := p.db.GetAccountByURI(ctx, uri.String()); err == nil {
+			return maybeAccount, nil
 		}
-		return account, nil
+		return nil, nil
 	}
-	return nil, nil
+
+	// we don't have it yet, try to find it remotely
+	return p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+		RequestingUsername: authed.Account.Username,
+		RemoteAccountID:    uri,
+		Blocking:           true,
+		SkipResolve:        !resolve,
+	})
 }
 
 func (p *processor) searchAccountByMention(ctx context.Context, authed *oauth.Auth, username string, domain string, resolve bool) (*gtsmodel.Account, error) {
-	maybeAcct := &gtsmodel.Account{}
-	var err error
-
 	// if it's a local account we can skip a whole bunch of stuff
 	if domain == config.GetHost() || domain == config.GetAccountDomain() || domain == "" {
-		maybeAcct, err = p.db.GetLocalAccountByUsername(ctx, username)
-		if err != nil && err != db.ErrNoEntries {
-			return nil, fmt.Errorf("searchAccountByMention: error getting local account by username: %s", err)
+		maybeAcct, err := p.db.GetLocalAccountByUsername(ctx, username)
+		if err == nil || err == db.ErrNoEntries {
+			return maybeAcct, nil
 		}
-		return maybeAcct, nil
+		return nil, fmt.Errorf("searchAccountByMention: error getting local account by username: %s", err)
 	}
 
-	// it's not a local account so first we'll check if it's in the database already...
-	where := []db.Where{
-		{Key: "username", Value: username, CaseInsensitive: true},
-		{Key: "domain", Value: domain, CaseInsensitive: true},
-	}
-	err = p.db.GetWhere(ctx, where, maybeAcct)
-	if err == nil {
-		// we've got it stored locally already!
-		return maybeAcct, nil
-	}
-
-	if err != db.ErrNoEntries {
-		// if it's  not errNoEntries there's been a real database error so bail at this point
-		return nil, fmt.Errorf("searchAccountByMention: database error: %s", err)
-	}
-
-	// we got a db.ErrNoEntries, so we just don't have the account locally stored -- check if we can dereference it
-	if resolve {
-		maybeAcct, err = p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
-			RequestingUsername:    authed.Account.Username,
-			RemoteAccountUsername: username,
-			RemoteAccountHost:     domain,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("searchAccountByMention: error getting remote account: %s", err)
-		}
-		return maybeAcct, nil
-	}
-
-	return nil, nil
+	// we don't have it yet, try to find it remotely
+	return p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+		RequestingUsername:    authed.Account.Username,
+		RemoteAccountUsername: username,
+		RemoteAccountHost:     domain,
+		Blocking:              true,
+		SkipResolve:           !resolve,
+	})
 }

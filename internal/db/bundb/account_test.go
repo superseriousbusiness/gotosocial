@@ -58,6 +58,18 @@ func (suite *AccountTestSuite) TestGetAccountByIDWithExtras() {
 	suite.NotEmpty(account.HeaderMediaAttachment.URL)
 }
 
+func (suite *AccountTestSuite) TestGetAccountByUsernameDomain() {
+	testAccount1 := suite.testAccounts["local_account_1"]
+	account1, err := suite.db.GetAccountByUsernameDomain(context.Background(), testAccount1.Username, testAccount1.Domain)
+	suite.NoError(err)
+	suite.NotNil(account1)
+
+	testAccount2 := suite.testAccounts["remote_account_1"]
+	account2, err := suite.db.GetAccountByUsernameDomain(context.Background(), testAccount2.Username, testAccount2.Domain)
+	suite.NoError(err)
+	suite.NotNil(account2)
+}
+
 func (suite *AccountTestSuite) TestUpdateAccount() {
 	testAccount := suite.testAccounts["local_account_1"]
 
