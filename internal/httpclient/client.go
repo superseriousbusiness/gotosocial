@@ -71,13 +71,13 @@ type Config struct {
 }
 
 // Client wraps an underlying http.Client{} to provide the following:
-// - setting a maximum received request body size, returning error on
-//   large content lengths, and using a limited reader in all other
-//   cases to protect against forged / unknown content-lengths
-// - protection from server side request forgery (SSRF) by only dialing
-//   out to known public IP prefixes, configurable with allows/blocks
-// - limit number of concurrent requests, else blocking until a slot
-//   is available (context channels still respected)
+//   - setting a maximum received request body size, returning error on
+//     large content lengths, and using a limited reader in all other
+//     cases to protect against forged / unknown content-lengths
+//   - protection from server side request forgery (SSRF) by only dialing
+//     out to known public IP prefixes, configurable with allows/blocks
+//   - limit number of concurrent requests, else blocking until a slot
+//     is available (context channels still respected)
 type Client struct {
 	client http.Client
 	queue  chan struct{}
@@ -97,7 +97,7 @@ func New(cfg Config) *Client {
 	if cfg.MaxOpenConns <= 0 {
 		// By default base this value on GOMAXPROCS.
 		maxprocs := runtime.GOMAXPROCS(0)
-		cfg.MaxOpenConns = maxprocs * 10
+		cfg.MaxOpenConns = maxprocs * 50
 	}
 
 	if cfg.MaxIdleConns <= 0 {
