@@ -209,6 +209,6 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 		io.Closer
 	}{rbody, cbody}
 
-	l.Tracef("client returning from successful request")
+	l.Tracef("client returning from request")
 	return rsp, nil
 }
