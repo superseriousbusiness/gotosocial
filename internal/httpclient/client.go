@@ -26,6 +26,9 @@ import (
 	"net/netip"
 	"runtime"
 	"time"
+
+	"codeberg.org/gruf/go-kv"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // ErrInvalidRequest is returned if a given HTTP request is invalid and cannot be performed.
@@ -71,13 +74,13 @@ type Config struct {
 }
 
 // Client wraps an underlying http.Client{} to provide the following:
-// - setting a maximum received request body size, returning error on
-//   large content lengths, and using a limited reader in all other
-//   cases to protect against forged / unknown content-lengths
-// - protection from server side request forgery (SSRF) by only dialing
-//   out to known public IP prefixes, configurable with allows/blocks
-// - limit number of concurrent requests, else blocking until a slot
-//   is available (context channels still respected)
+//   - setting a maximum received request body size, returning error on
+//     large content lengths, and using a limited reader in all other
+//     cases to protect against forged / unknown content-lengths
+//   - protection from server side request forgery (SSRF) by only dialing
+//     out to known public IP prefixes, configurable with allows/blocks
+//   - limit number of concurrent requests, else blocking until a slot
+//     is available (context channels still respected)
 type Client struct {
 	client http.Client
 	queue  chan struct{}
@@ -143,13 +146,20 @@ func New(cfg Config) *Client {
 // as the standard http.Client{}.Do() implementation except that response body will
 // be wrapped by an io.LimitReader() to limit response body sizes.
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
-	select {
-	// Request context cancelled
-	case <-req.Context().Done():
-		return nil, req.Context().Err()
+	l := log.WithFields(kv.Fields{
+		{"url", req.URL},
+		{"headers", req.Header},
+	}...)
+	l.Trace("client waiting for place in request queue")
 
+	select {
+	case <-req.Context().Done():
+		err := req.Context().Err()
+		l.Tracef("client could not get place in request queue: %s", err)
+		return nil, err
 	// Slot in queue acquired
 	case c.queue <- struct{}{}:
+		l.Tracef("client obtained place in request queue")
 		// NOTE:
 		// Ideally here we would set the slot release to happen either
 		// on error return, or via callback from the response body closer.
@@ -199,5 +209,6 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 		io.Closer
 	}{rbody, cbody}
 
+	l.Tracef("client returning from successful request")
 	return rsp, nil
 }
