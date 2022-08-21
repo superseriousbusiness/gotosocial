@@ -83,7 +83,7 @@ type Config struct {
 //     is available (context channels still respected)
 type Client struct {
 	client http.Client
-	queue  chan struct{}
+	rc     *requestQueue
 	bmax   int64
 }
 
@@ -121,7 +121,9 @@ func New(cfg Config) *Client {
 
 	// Prepare client fields
 	c.bmax = cfg.MaxBodySize
-	c.queue = make(chan struct{}, cfg.MaxOpenConns)
+	c.rc = &requestQueue{
+		maxOpenConns: cfg.MaxOpenConns,
+	}
 	c.client.Timeout = cfg.Timeout
 
 	// Set underlying HTTP client roundtripper
@@ -146,20 +148,24 @@ func New(cfg Config) *Client {
 // as the standard http.Client{}.Do() implementation except that response body will
 // be wrapped by an io.LimitReader() to limit response body sizes.
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
-	l := log.WithFields(kv.Fields{
-		{"url", req.URL},
-		{"headers", req.Header},
-	}...)
-	l.Trace("client waiting for place in request queue")
+	method := req.Method
+	host := req.Host
 
+	l := log.WithFields(kv.Fields{
+		{"host", host},
+		{"method", method},
+	}...)
+
+	wait, done := c.rc.getWaitSpot(host, method)
+
+	l.Trace("client waiting for slot in request queue")
 	select {
 	case <-req.Context().Done():
 		err := req.Context().Err()
-		l.Tracef("client could not get place in request queue: %s", err)
+		l.Warnf("client could not get slot in request queue: %s", err)
 		return nil, err
-	// Slot in queue acquired
-	case c.queue <- struct{}{}:
-		l.Tracef("client obtained place in request queue")
+	case wait <- struct{}{}:
+		l.Tracef("client obtained slot in request queue")
 		// NOTE:
 		// Ideally here we would set the slot release to happen either
 		// on error return, or via callback from the response body closer.
@@ -170,7 +176,7 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 		// that connections may not be closed until response body is closed.
 		// The current implementation will reduce the viability of denial of
 		// service attacks, but if there are future issues heed this advice :]
-		defer func() { <-c.queue }()
+		defer done()
 	}
 
 	// Firstly, ensure this is a valid request
