@@ -74,13 +74,13 @@ type Config struct {
 }
 
 // Client wraps an underlying http.Client{} to provide the following:
-//   - setting a maximum received request body size, returning error on
-//     large content lengths, and using a limited reader in all other
-//     cases to protect against forged / unknown content-lengths
-//   - protection from server side request forgery (SSRF) by only dialing
-//     out to known public IP prefixes, configurable with allows/blocks
-//   - limit number of concurrent requests, else blocking until a slot
-//     is available (context channels still respected)
+// - setting a maximum received request body size, returning error on
+//   large content lengths, and using a limited reader in all other
+//   cases to protect against forged / unknown content-lengths
+// - protection from server side request forgery (SSRF) by only dialing
+//   out to known public IP prefixes, configurable with allows/blocks
+// - limit number of concurrent requests, else blocking until a slot
+//   is available (context channels still respected)
 type Client struct {
 	client http.Client
 	rc     *requestQueue
