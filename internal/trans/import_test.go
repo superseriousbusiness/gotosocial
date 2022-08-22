@@ -38,12 +38,17 @@ type ImportMinimalTestSuite struct {
 func (suite *ImportMinimalTestSuite) TestImportMinimalOK() {
 	ctx := context.Background()
 
+	testAccountBefore, err := suite.db.GetAccountByID(ctx, suite.testAccounts["local_account_1"].ID)
+	if err != nil {
+		suite.FailNow("couldn't get testAccountBefore")
+	}
+
 	// use a temporary file path
 	tempFilePath := fmt.Sprintf("%s/%s", suite.T().TempDir(), uuid.NewString())
 
 	// export to the tempFilePath
 	exporter := trans.NewExporter(suite.db)
-	err := exporter.ExportMinimal(ctx, tempFilePath)
+	err = exporter.ExportMinimal(ctx, tempFilePath)
 	suite.NoError(err)
 
 	// we should have some bytes in that file now
@@ -53,9 +58,7 @@ func (suite *ImportMinimalTestSuite) TestImportMinimalOK() {
 	fmt.Println(string(b))
 
 	// create a new database with just the tables created, no entries
-	testrig.StandardDBTeardown(suite.db)
 	newDB := testrig.NewTestDB()
-	testrig.CreateTestTables(newDB)
 
 	importer := trans.NewImporter(newDB)
 	err = importer.Import(ctx, tempFilePath)
@@ -84,6 +87,41 @@ func (suite *ImportMinimalTestSuite) TestImportMinimalOK() {
 	err = newDB.GetAll(ctx, &domainBlocks)
 	suite.NoError(err)
 	suite.NotEmpty(domainBlocks)
+
+	// compare test account before + after
+	testAccountAfter, err := newDB.GetAccountByID(ctx, suite.testAccounts["local_account_1"].ID)
+	if err != nil {
+		suite.FailNow("couldn't get testAccountAfter")
+	}
+
+	suite.Equal(testAccountBefore.ID, testAccountAfter.ID)
+	suite.Equal(testAccountBefore.Username, testAccountAfter.Username)
+	suite.Equal(testAccountBefore.Domain, testAccountAfter.Domain)
+	suite.Equal(testAccountBefore.DisplayName, testAccountAfter.DisplayName)
+	suite.Equal(testAccountBefore.Note, testAccountAfter.Note)
+	suite.Equal(testAccountBefore.NoteRaw, testAccountAfter.NoteRaw)
+	suite.Equal(testAccountBefore.Memorial, testAccountAfter.Memorial)
+	suite.Equal(testAccountBefore.Bot, testAccountAfter.Bot)
+	suite.Equal(testAccountBefore.Locked, testAccountAfter.Locked)
+	suite.Equal(testAccountBefore.Reason, testAccountAfter.Reason)
+	suite.Equal(testAccountBefore.Privacy, testAccountAfter.Privacy)
+	suite.Equal(testAccountBefore.Sensitive, testAccountAfter.Sensitive)
+	suite.Equal(testAccountBefore.Language, testAccountAfter.Language)
+	suite.Equal(testAccountBefore.StatusFormat, testAccountAfter.StatusFormat)
+	suite.Equal(testAccountBefore.URI, testAccountAfter.URI)
+	suite.Equal(testAccountBefore.URL, testAccountAfter.URL)
+	suite.Equal(testAccountBefore.InboxURI, testAccountAfter.InboxURI)
+	suite.Equal(testAccountBefore.OutboxURI, testAccountAfter.OutboxURI)
+	suite.Equal(testAccountBefore.FollowingURI, testAccountAfter.FollowingURI)
+	suite.Equal(testAccountBefore.FollowersURI, testAccountAfter.FollowersURI)
+	suite.Equal(testAccountBefore.FeaturedCollectionURI, testAccountAfter.FeaturedCollectionURI)
+	suite.Equal(testAccountBefore.ActorType, testAccountAfter.ActorType)
+	suite.Equal(testAccountBefore.PrivateKey, testAccountAfter.PrivateKey)
+	suite.Equal(testAccountBefore.PublicKey, testAccountAfter.PublicKey)
+	suite.Equal(testAccountBefore.PublicKeyURI, testAccountAfter.PublicKeyURI)
+	suite.Equal(testAccountBefore.SuspendedAt, testAccountAfter.SuspendedAt)
+	suite.Equal(testAccountBefore.HideCollections, testAccountAfter.HideCollections)
+	suite.Equal(testAccountBefore.SuspensionOrigin, testAccountAfter.SuspensionOrigin)
 }
 
 func TestImportMinimalTestSuite(t *testing.T) {

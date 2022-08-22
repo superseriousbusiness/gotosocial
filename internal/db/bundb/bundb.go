@@ -31,6 +31,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
@@ -229,6 +230,15 @@ func sqliteConn(ctx context.Context) (*DBConn, error) {
 	// Append our own SQLite preferences
 	dbAddress = "file:" + dbAddress + "?cache=shared"
 
+	var inMem bool
+
+	if dbAddress == "file::memory:?cache=shared" {
+		dbAddress = fmt.Sprintf("file:%s?mode=memory&cache=shared", uuid.NewString())
+		log.Infof("using in-memory database address " + dbAddress)
+		log.Warn("sqlite in-memory database should only be used for debugging")
+		inMem = true
+	}
+
 	// Open new DB instance
 	sqldb, err := sql.Open("sqlite", dbAddress)
 	if err != nil {
@@ -240,8 +250,7 @@ func sqliteConn(ctx context.Context) (*DBConn, error) {
 
 	tweakConnectionValues(sqldb)
 
-	if dbAddress == "file::memory:?cache=shared" {
-		log.Warn("sqlite in-memory database should only be used for debugging")
+	if inMem {
 		// don't close connections on disconnect -- otherwise
 		// the SQLite database will be deleted when there
 		// are no active connections
