@@ -29,15 +29,24 @@ type Account struct {
 	ID                    string          `json:"id" bun:",nullzero"`
 	CreatedAt             *time.Time      `json:"createdAt" bun:",nullzero"`
 	Username              string          `json:"username" bun:",nullzero"`
-	DisplayName           string          `json:"displayName,omitempty" bun:",nullzero"`
-	Note                  string          `json:"note,omitempty" bun:",nullzero"`
 	Domain                string          `json:"domain,omitempty" bun:",nullzero"`
 	HeaderRemoteURL       string          `json:"headerRemoteURL,omitempty" bun:",nullzero"`
 	AvatarRemoteURL       string          `json:"avatarRemoteURL,omitempty" bun:",nullzero"`
-	Locked                *bool           `json:"locked" bun:",nullzero,notnull,default:true"`
+	DisplayName           string          `json:"displayName,omitempty" bun:",nullzero"`
+	Note                  string          `json:"note,omitempty" bun:",nullzero"`
+	NoteRaw               string          `json:"noteRaw,omitempty" bun:",nullzero"`
+	Memorial              *bool           `json:"memorial"`
+	Bot                   *bool           `json:"bot"`
+	Reason                string          `json:"reason,omitempty" bun:",nullzero"`
+	Locked                *bool           `json:"locked"`
+	Discoverable          *bool           `json:"discoverable"`
+	Privacy               string          `json:"privacy,omitempty" bun:",nullzero"`
+	Sensitive             *bool           `json:"sensitive"`
 	Language              string          `json:"language,omitempty" bun:",nullzero"`
+	StatusFormat          string          `json:"statusFormat,omitempty" bun:",nullzero"`
 	URI                   string          `json:"uri" bun:",nullzero"`
 	URL                   string          `json:"url" bun:",nullzero"`
+	LastWebfingeredAt     *time.Time      `json:"lastWebfingeredAt,omitempty" bun:",nullzero"`
 	InboxURI              string          `json:"inboxURI" bun:",nullzero"`
 	OutboxURI             string          `json:"outboxURI" bun:",nullzero"`
 	FollowingURI          string          `json:"followingUri" bun:",nullzero"`
@@ -49,6 +58,9 @@ type Account struct {
 	PublicKey             *rsa.PublicKey  `json:"-" mapstructure:"-"`
 	PublicKeyString       string          `json:"publicKey,omitempty" mapstructure:"publicKey" bun:"-"`
 	PublicKeyURI          string          `json:"publicKeyUri" bun:",nullzero"`
+	SensitizedAt          *time.Time      `json:"sensitizedAt,omitempty" bun:",nullzero"`
+	SilencedAt            *time.Time      `json:"silencedAt,omitempty" bun:",nullzero"`
 	SuspendedAt           *time.Time      `json:"suspendedAt,omitempty" bun:",nullzero"`
+	HideCollections       *bool           `json:"hideCollections"`
 	SuspensionOrigin      string          `json:"suspensionOrigin,omitempty" bun:",nullzero"`
 }
