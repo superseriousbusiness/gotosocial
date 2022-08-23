@@ -137,6 +137,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 		"stylesheets": []string{
 			"/assets/Fork-Awesome/css/fork-awesome.min.css",
 			"/assets/dist/status.css",
+			"/@" + username + "/custom.css",
 		},
 		"javascript": []string{
 			"/assets/dist/frontend.js",

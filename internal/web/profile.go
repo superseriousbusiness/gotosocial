@@ -125,6 +125,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 			"/assets/Fork-Awesome/css/fork-awesome.min.css",
 			"/assets/dist/status.css",
 			"/assets/dist/profile.css",
+			"/@" + account.Username + "/custom.css",
 		},
 		"javascript": []string{
 			"/assets/dist/frontend.js",
