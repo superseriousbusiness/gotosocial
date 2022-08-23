@@ -36,6 +36,7 @@ module.exports = function Basic({oauth, account}) {
 	const [displayName, setDisplayName] = React.useState("");
 	const [bio, setBio] = React.useState("");
 	const [locked, setLocked] = React.useState(false);
+	const [customCSS, setCustomCSS] = React.useState("");
 
 	React.useEffect(() => {
 		setHeaderSrc(account.header);
@@ -44,7 +45,8 @@ module.exports = function Basic({oauth, account}) {
 		setDisplayName(account.display_name);
 		setBio(account.source ? account.source.note : "");
 		setLocked(account.locked);
-	}, [account, setHeaderSrc, setAvatarSrc, setDisplayName, setBio, setLocked]);
+		setCustomCSS(account.customCSS ? account.customCSS : "");
+	}, [account, setHeaderSrc, setAvatarSrc, setDisplayName, setBio, setLocked, setCustomCSS]);
 
 	const headerOnChange = (e) => {
 		setHeaderFile(e.target.files[0]);
@@ -75,6 +77,7 @@ module.exports = function Basic({oauth, account}) {
 			formDataInfo.set("display_name", displayName);
 			formDataInfo.set("note", bio);
 			formDataInfo.set("locked", locked);
+			formDataInfo.set("custom_css", customCSS);
 
 			return oauth.apiRequest("/api/v1/accounts/update_credentials", "PATCH", formDataInfo, "form");
 		}).then((json) => {
@@ -86,6 +89,7 @@ module.exports = function Basic({oauth, account}) {
 			setDisplayName(json.display_name);
 			setBio(json.source.note);
 			setLocked(json.locked);
+			setCustomCSS(json.custom_css ? json.custom_css : "");
 		}).catch((e) => {
 			setError(e.message);
 			setStatus("");
@@ -129,6 +133,10 @@ module.exports = function Basic({oauth, account}) {
 				<div className="labelcheckbox">
 					<label htmlFor="locked">Manually approve follow requests</label>
 					<input id="locked" type="checkbox" checked={locked} onChange={(e) => setLocked(e.target.checked)}/>
+				</div>
+				<div className="labelinput">
+					<label htmlFor="customcss">Custom CSS</label>
+					<textarea id="customcss" value={customCSS} onChange={(e) => setCustomCSS(e.target.value)}/>
 				</div>
 				<Submit onClick={submit} label="Save profile info" errorMsg={errorMsg} statusMsg={statusMsg}/>
 			</form>

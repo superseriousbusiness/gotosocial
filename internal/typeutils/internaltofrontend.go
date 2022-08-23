@@ -188,6 +188,7 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		Emojis:         emojis, // TODO: implement this
 		Fields:         fields,
 		Suspended:      suspended,
+		CustomCSS:      a.CustomCSS,
 	}
 
 	return accountFrontend, nil

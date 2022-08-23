@@ -40,8 +40,7 @@ const (
 	maximumDescriptionLength      = 5000
 	maximumSiteTermsLength        = 5000
 	maximumUsernameLength         = 64
-	// maximumEmojiShortcodeLength   = 30
-	// maximumHashtagLength          = 30
+	maximumCustomCSSLength        = 5000
 )
 
 // NewPassword returns an error if the given password is not sufficiently strong, or nil if it's ok.
@@ -157,6 +156,13 @@ func StatusFormat(statusFormat string) error {
 		return nil
 	}
 	return fmt.Errorf("status format '%s' was not recognized, valid options are 'plain', 'markdown'", statusFormat)
+}
+
+func CustomCSS(customCSS string) error {
+	if length := len(customCSS); length > maximumCustomCSSLength {
+		return fmt.Errorf("custom_css must be less than %d characters, but submitted custom_css was %d characters", maximumCustomCSSLength, length)
+	}
+	return nil
 }
 
 // EmojiShortcode just runs the given shortcode through the regular expression

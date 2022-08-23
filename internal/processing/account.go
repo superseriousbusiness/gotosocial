@@ -42,6 +42,10 @@ func (p *processor) AccountGetLocalByUsername(ctx context.Context, authed *oauth
 	return p.accountProcessor.GetLocalByUsername(ctx, authed.Account, username)
 }
 
+func (p *processor) AccountGetCustomCSSForUsername(ctx context.Context, username string) (string, gtserror.WithCode) {
+	return p.accountProcessor.GetCustomCSSForUsername(ctx, username)
+}
+
 func (p *processor) AccountUpdate(ctx context.Context, authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, gtserror.WithCode) {
 	return p.accountProcessor.Update(ctx, authed.Account, form)
 }

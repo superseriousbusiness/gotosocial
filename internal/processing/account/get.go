@@ -55,6 +55,18 @@ func (p *processor) GetLocalByUsername(ctx context.Context, requestingAccount *g
 	return p.getAccountFor(ctx, requestingAccount, targetAccount)
 }
 
+func (p *processor) GetCustomCSSForUsername(ctx context.Context, username string) (string, gtserror.WithCode) {
+	customCSS, err := p.db.GetAccountCustomCSSByUsername(ctx, username)
+	if err != nil {
+		if err == db.ErrNoEntries {
+			return "", gtserror.NewErrorNotFound(errors.New("account not found"))
+		}
+		return "", gtserror.NewErrorInternalError(fmt.Errorf("db error: %s", err))
+	}
+
+	return customCSS, nil
+}
+
 func (p *processor) getAccountFor(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (*apimodel.Account, gtserror.WithCode) {
 	var blocked bool
 	var err error
