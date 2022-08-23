@@ -39,6 +39,21 @@ func (p *processor) Boost(ctx context.Context, requestingAccount *gtsmodel.Accou
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("no status owner for status %s", targetStatusID))
 	}
 
+	// if targetStatusID refers to a boost, then we should redirect
+	// the target to being the status that was boosted; if we don't
+	// do this, then we end up in weird situations where people
+	// boost boosts, and it looks absolutely bizarre in the UI
+	if targetStatus.BoostOfID != "" {
+		if targetStatus.BoostOf == nil {
+			b, err := p.db.GetStatusByID(ctx, targetStatus.BoostOfID)
+			if err != nil {
+				return nil, gtserror.NewErrorNotFound(fmt.Errorf("couldn't fetch boosted status %s", targetStatus.BoostOfID))
+			}
+			targetStatus.BoostOf = b
+		}
+		targetStatus = targetStatus.BoostOf
+	}
+
 	boostable, err := p.filter.StatusBoostable(ctx, targetStatus, requestingAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is boostable: %s", targetStatus.ID, err))
