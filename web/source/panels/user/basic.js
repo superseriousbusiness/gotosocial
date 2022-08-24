@@ -45,7 +45,7 @@ module.exports = function Basic({oauth, account}) {
 		setDisplayName(account.display_name);
 		setBio(account.source ? account.source.note : "");
 		setLocked(account.locked);
-		setCustomCSS(account.customCSS ? account.customCSS : "");
+		setCustomCSS(account.custom_css ? account.custom_css : "");
 	}, [account, setHeaderSrc, setAvatarSrc, setDisplayName, setBio, setLocked, setCustomCSS]);
 
 	const headerOnChange = (e) => {
