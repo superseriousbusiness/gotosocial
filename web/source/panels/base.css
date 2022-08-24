@@ -61,3 +61,7 @@ input, select, textarea {
 		rgb(70, 79, 88) 20px
 	) !important;
 }
+
+.mono {
+	font-family: monospace;
+}

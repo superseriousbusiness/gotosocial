@@ -130,13 +130,14 @@ module.exports = function Basic({oauth, account}) {
 					<label htmlFor="bio">Bio</label>
 					<textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Just trying out GoToSocial, my pronouns are they/them and I like sloths."/>
 				</div>
+				<div className="labelinput">
+					<label htmlFor="customcss">Custom CSS</label>
+					<textarea className="mono" id="customcss" value={customCSS} onChange={(e) => setCustomCSS(e.target.value)}/>
+					<a href="https://docs.gotosocial.org/en/latest/user_guide/custom_css" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about custom CSS (opens in a new tab)</a>
+				</div>
 				<div className="labelcheckbox">
 					<label htmlFor="locked">Manually approve follow requests</label>
 					<input id="locked" type="checkbox" checked={locked} onChange={(e) => setLocked(e.target.checked)}/>
-				</div>
-				<div className="labelinput">
-					<label htmlFor="customcss">Custom CSS</label>
-					<textarea id="customcss" value={customCSS} onChange={(e) => setCustomCSS(e.target.value)}/>
 				</div>
 				<Submit onClick={submit} label="Save profile info" errorMsg={errorMsg} statusMsg={statusMsg}/>
 			</form>
