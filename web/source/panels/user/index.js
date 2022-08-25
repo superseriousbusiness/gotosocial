@@ -33,6 +33,7 @@ require("./style.css");
 
 function UserPanel({oauth}) {
 	const [account, setAccount] = React.useState({});
+	const [allowCustomCSS, setAllowCustomCSS] = React.useState(false);
 	const [errorMsg, setError] = React.useState("");
 	const [statusMsg, setStatus] = React.useState("Fetching user info");
 
@@ -47,12 +48,23 @@ function UserPanel({oauth}) {
 		});
 	}, [oauth, setAccount, setError, setStatus]);
 
+	React.useEffect(() => {
+		Promise.try(() => {
+			return oauth.apiRequest("/api/v1/instance", "GET");
+		}).then((json) => {
+			setAllowCustomCSS(json.configuration.accounts.allow_custom_css);
+		}).catch((e) => {
+			setError(e.message);
+			setStatus("");
+		});
+	}, []);
+
 	return (
 		<React.Fragment>
 			<div>
 				<button className="logout" onClick={oauth.logout}>Log out of settings panel</button>
 			</div>
-			<Basic oauth={oauth} account={account}/>
+			<Basic oauth={oauth} account={account} allowCustomCSS={allowCustomCSS}/>
 			<Posts oauth={oauth} account={account}/>
 			<Security oauth={oauth}/>
 		</React.Fragment>
