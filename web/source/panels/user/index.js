@@ -38,26 +38,28 @@ function UserPanel({oauth}) {
 	const [statusMsg, setStatus] = React.useState("Fetching user info");
 
 	React.useEffect(() => {
-		Promise.try(() => {
-			return oauth.apiRequest("/api/v1/accounts/verify_credentials", "GET");
-		}).then((json) => {
-			setAccount(json);
-		}).catch((e) => {
-			setError(e.message);
-			setStatus("");
-		});
-	}, [oauth, setAccount, setError, setStatus]);
+
+	}, [oauth, setAllowCustomCSS, setError, setStatus]);
 
 	React.useEffect(() => {
 		Promise.try(() => {
 			return oauth.apiRequest("/api/v1/instance", "GET");
 		}).then((json) => {
 			setAllowCustomCSS(json.configuration.accounts.allow_custom_css);
+			Promise.try(() => {
+				return oauth.apiRequest("/api/v1/accounts/verify_credentials", "GET");
+			}).then((json) => {
+				setAccount(json);
+			}).catch((e) => {
+				setError(e.message);
+				setStatus("");
+			});
 		}).catch((e) => {
 			setError(e.message);
 			setStatus("");
 		});
-	}, []);
+
+	}, [oauth, setAllowCustomCSS, setAccount, setError, setStatus]);
 
 	return (
 		<React.Fragment>
