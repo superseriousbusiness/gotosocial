@@ -73,6 +73,7 @@ type Configuration struct {
 	AccountsRegistrationOpen bool `name:"accounts-registration-open" usage:"Allow anyone to submit an account signup request. If false, server will be invite-only."`
 	AccountsApprovalRequired bool `name:"accounts-approval-required" usage:"Do account signups require approval by an admin or moderator before user can log in? If false, new registrations will be automatically approved."`
 	AccountsReasonRequired   bool `name:"accounts-reason-required" usage:"Do new account signups require a reason to be submitted on registration?"`
+	AccountsAllowCustomCSS   bool `name:"accounts-allow-custom-css" usage:"Allow accounts to enable custom CSS for their profile pages and statuses."`
 
 	MediaImageMaxSize        int `name:"media-image-max-size" usage:"Max size of accepted images in bytes"`
 	MediaVideoMaxSize        int `name:"media-video-max-size" usage:"Max size of accepted videos in bytes"`

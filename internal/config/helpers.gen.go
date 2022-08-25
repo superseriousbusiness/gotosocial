@@ -668,6 +668,31 @@ func GetAccountsReasonRequired() bool { return global.GetAccountsReasonRequired(
 // SetAccountsReasonRequired safely sets the value for global configuration 'AccountsReasonRequired' field
 func SetAccountsReasonRequired(v bool) { global.SetAccountsReasonRequired(v) }
 
+// GetAccountsAllowCustomCSS safely fetches the Configuration value for state's 'AccountsAllowCustomCSS' field
+func (st *ConfigState) GetAccountsAllowCustomCSS() (v bool) {
+	st.mutex.Lock()
+	v = st.config.AccountsAllowCustomCSS
+	st.mutex.Unlock()
+	return
+}
+
+// SetAccountsAllowCustomCSS safely sets the Configuration value for state's 'AccountsAllowCustomCSS' field
+func (st *ConfigState) SetAccountsAllowCustomCSS(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.AccountsAllowCustomCSS = v
+	st.reloadToViper()
+}
+
+// AccountsAllowCustomCSSFlag returns the flag name for the 'AccountsAllowCustomCSS' field
+func AccountsAllowCustomCSSFlag() string { return "accounts-allow-custom-css" }
+
+// GetAccountsAllowCustomCSS safely fetches the value for global configuration 'AccountsAllowCustomCSS' field
+func GetAccountsAllowCustomCSS() bool { return global.GetAccountsAllowCustomCSS() }
+
+// SetAccountsAllowCustomCSS safely sets the value for global configuration 'AccountsAllowCustomCSS' field
+func SetAccountsAllowCustomCSS(v bool) { global.SetAccountsAllowCustomCSS(v) }
+
 // GetMediaImageMaxSize safely fetches the Configuration value for state's 'MediaImageMaxSize' field
 func (st *ConfigState) GetMediaImageMaxSize() (v int) {
 	st.mutex.Lock()
