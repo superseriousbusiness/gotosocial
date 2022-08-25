@@ -97,6 +97,8 @@ type InstanceConfiguration struct {
 	MediaAttachments *InstanceConfigurationMediaAttachments `json:"media_attachments"`
 	// Instance configuration pertaining to poll limits.
 	Polls *InstanceConfigurationPolls `json:"polls"`
+	// Instance configuration pertaining to accounts.
+	Accounts *InstanceConfigurationAccounts `json:"accounts"`
 }
 
 // InstanceConfigurationStatuses models instance status config parameters.
@@ -173,6 +175,14 @@ type InstanceConfigurationPolls struct {
 	//
 	// example: 2629746
 	MaxExpiration int `json:"max_expiration"`
+}
+
+// InstanceConfigurationAccounts models instance account config parameters.
+type InstanceConfigurationAccounts struct {
+	// Whether or not accounts on this instance are allowed to upload custom CSS for profiles and statuses.
+	//
+	// example: false
+	AllowCustomCSS bool `json:"allow_custom_css"`
 }
 
 // InstanceURLs models instance-relevant URLs for client application consumption.

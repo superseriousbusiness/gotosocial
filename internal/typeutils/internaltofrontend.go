@@ -658,6 +658,9 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 				MinExpiration:          300,     // seconds
 				MaxExpiration:          2629746, // seconds
 			},
+			Accounts: &model.InstanceConfigurationAccounts{
+				AllowCustomCSS: config.GetAccountsAllowCustomCSS(),
+			},
 		}
 	}
 
