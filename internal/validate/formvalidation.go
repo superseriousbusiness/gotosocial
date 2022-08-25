@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 	pwv "github.com/wagslane/go-password-validator"
 	"golang.org/x/text/language"
@@ -159,6 +160,10 @@ func StatusFormat(statusFormat string) error {
 }
 
 func CustomCSS(customCSS string) error {
+	if !config.GetAccountsAllowCustomCSS() {
+		return errors.New("accounts-allow-custom-css is not enabled for this instance")
+	}
+
 	if length := len(customCSS); length > maximumCustomCSSLength {
 		return fmt.Errorf("custom_css must be less than %d characters, but submitted custom_css was %d characters", maximumCustomCSSLength, length)
 	}

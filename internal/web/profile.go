@@ -115,18 +115,22 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		}
 	}
 
+	stylesheets := []string{
+		"/assets/Fork-Awesome/css/fork-awesome.min.css",
+		"/assets/dist/status.css",
+		"/assets/dist/profile.css",
+	}
+	if config.GetAccountsAllowCustomCSS() {
+		stylesheets = append(stylesheets, "/@"+account.Username+"/custom.css")
+	}
+
 	c.HTML(http.StatusOK, "profile.tmpl", gin.H{
 		"instance":         instance,
 		"account":          account,
 		"statuses":         statusResp.Items,
 		"statuses_next":    statusResp.NextLink,
 		"show_back_to_top": showBackToTop,
-		"stylesheets": []string{
-			"/assets/Fork-Awesome/css/fork-awesome.min.css",
-			"/assets/dist/status.css",
-			"/assets/dist/profile.css",
-			"/@" + account.Username + "/custom.css",
-		},
+		"stylesheets":      stylesheets,
 		"javascript": []string{
 			"/assets/dist/frontend.js",
 		},

@@ -25,11 +25,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 func (m *Module) customCSSGETHandler(c *gin.Context) {
-	ctx := c.Request.Context()
+	if !config.GetAccountsAllowCustomCSS() {
+		err := errors.New("accounts-allow-custom-css is not enabled on this instance")
+		api.ErrorHandler(c, gtserror.NewErrorNotFound(err), m.processor.InstanceGet)
+		return
+	}
 
 	if _, err := api.NegotiateAccept(c, api.TextCSS); err != nil {
 		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
@@ -44,7 +49,7 @@ func (m *Module) customCSSGETHandler(c *gin.Context) {
 		return
 	}
 
-	customCSS, errWithCode := m.processor.AccountGetCustomCSSForUsername(ctx, username)
+	customCSS, errWithCode := m.processor.AccountGetCustomCSSForUsername(c.Request.Context(), username)
 	if errWithCode != nil {
 		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return

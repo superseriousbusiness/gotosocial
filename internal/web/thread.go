@@ -130,15 +130,19 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 		m.ensureAvatar(status)
 	}
 
+	stylesheets := []string{
+		"/assets/Fork-Awesome/css/fork-awesome.min.css",
+		"/assets/dist/status.css",
+	}
+	if config.GetAccountsAllowCustomCSS() {
+		stylesheets = append(stylesheets, "/@"+username+"/custom.css")
+	}
+
 	c.HTML(http.StatusOK, "thread.tmpl", gin.H{
-		"instance": instance,
-		"status":   status,
-		"context":  context,
-		"stylesheets": []string{
-			"/assets/Fork-Awesome/css/fork-awesome.min.css",
-			"/assets/dist/status.css",
-			"/@" + username + "/custom.css",
-		},
+		"instance":    instance,
+		"status":      status,
+		"context":     context,
+		"stylesheets": stylesheets,
 		"javascript": []string{
 			"/assets/dist/frontend.js",
 		},
