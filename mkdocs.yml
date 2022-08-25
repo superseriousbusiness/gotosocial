@@ -44,6 +44,7 @@ nav:
   - "User Guide":
     - "user_guide/posts.md"
     - "user_guide/password_management.md"
+    - "user_guide/custom_css.md"
   - "Federation":
     - "federation/index.md"
     - "federation/glossary.md"
