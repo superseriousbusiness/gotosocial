@@ -56,11 +56,15 @@ const (
 	mdWithHTML                      = "# Title\n\nHere's a simple text in markdown.\n\nHere's a <a href=\"https://example.org\">link</a>.\n\nHere's an image: <img src=\"https://gts.superseriousbusiness.org/assets/logo.png\" alt=\"The GoToSocial sloth logo.\" width=\"500\" height=\"600\">"
 	mdWithHTMLExpected              = "<h1>Title</h1><p>Here’s a simple text in markdown.</p><p>Here’s a <a href=\"https://example.org\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">link</a>.</p><p>Here’s an image: <img src=\"https://gts.superseriousbusiness.org/assets/logo.png\" alt=\"The GoToSocial sloth logo.\" width=\"500\" height=\"600\" crossorigin=\"anonymous\"></p>"
 	mdWithCheekyHTML                = "# Title\n\nHere's a simple text in markdown.\n\nHere's a cheeky little script: <script>alert(ahhhh)</script>"
-	mdWithCheekyHTMLExpected        = "<h1>Title</h1><p>Here’s a simple text in markdown.</p><p>Here’s a cheeky little script: </p>"
+	mdWithCheekyHTMLExpected        = "<h1>Title</h1><p>Here’s a simple text in markdown.</p><p>Here’s a cheeky little script:</p>"
 	mdWithHashtagInitial            = "#welcome #Hashtag"
 	mdWithHashtagInitialExpected    = "<p><a href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>welcome</span></a> <a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a></p>"
 	mdCodeBlockWithNewlines         = "some code coming up\n\n```\n\n\n\n```\nthat was some code"
 	mdCodeBlockWithNewlinesExpected = "<p>some code coming up</p><pre><code>\n\n\n</code></pre><p>that was some code</p>"
+	mdWithFootnote                  = "fox mulder,fbi.[^1]\n\n[^1]: federated bureau of investigation"
+	mdWithFootnoteExpected          = "<p>fox mulder,fbi.<sup id=\"fnref:1\"><a href=\"#fn:1\" rel=\"nofollow noreferrer\">1</a></sup></p><div><hr><ol><li id=\"fn:1\">federated bureau of investigation<br></li></ol></div>"
+	mdWithBlockQuote                = "get ready, there's a block quote coming:\n\n>line1\n>line2\n>\n>line3\n\n"
+	mdWithBlockQuoteExpected        = "<p>get ready, there’s a block quote coming:</p><blockquote><p>line1<br>line2</p><p>line3</p></blockquote>"
 )
 
 type MarkdownTestSuite struct {
@@ -117,6 +121,16 @@ func (suite *MarkdownTestSuite) TestParseWithHashtagInitial() {
 func (suite *MarkdownTestSuite) TestParseCodeBlockWithNewlines() {
 	s := suite.formatter.FromMarkdown(context.Background(), mdCodeBlockWithNewlines, nil, nil)
 	suite.Equal(mdCodeBlockWithNewlinesExpected, s)
+}
+
+func (suite *MarkdownTestSuite) TestParseWithFootnote() {
+	s := suite.formatter.FromMarkdown(context.Background(), mdWithFootnote, nil, nil)
+	suite.Equal(mdWithFootnoteExpected, s)
+}
+
+func (suite *MarkdownTestSuite) TestParseWithBlockquote() {
+	s := suite.formatter.FromMarkdown(context.Background(), mdWithBlockQuote, nil, nil)
+	suite.Equal(mdWithBlockQuoteExpected, s)
 }
 
 func TestMarkdownTestSuite(t *testing.T) {
