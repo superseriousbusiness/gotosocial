@@ -49,9 +49,8 @@ func (f *formatter) FromMarkdown(ctx context.Context, md string, mentions []*gts
 	if m == nil {
 		m = minify.New()
 		m.Add("text/html", &html.Minifier{
-			KeepEndTags:    true,
-			KeepQuotes:     true,
-			KeepWhitespace: true,
+			KeepEndTags: true,
+			KeepQuotes:  true,
 		})
 	}
 
