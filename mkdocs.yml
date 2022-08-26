@@ -43,6 +43,7 @@ nav:
     - "admin/backup_and_restore.md"
   - "User Guide":
     - "user_guide/posts.md"
+    - "user_guide/user_panel.md"
     - "user_guide/password_management.md"
   - "Federation":
     - "federation/index.md"
