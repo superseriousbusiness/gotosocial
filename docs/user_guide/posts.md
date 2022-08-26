@@ -115,7 +115,13 @@ Plain is the default method of posting: GtS accepts some plain looking text, and
 
 Markdown is a more complex way of organizing text, which gives you more control over how your text is parsed and formatted.
 
-For more information on markdown, see [The Markdown Guide](https://www.markdownguide.org/).
+GoToSocial supports the [Basic Markdown Syntax](https://www.markdownguide.org/basic-syntax), and some of the [Extended Markdown Syntax](https://www.markdownguide.org/extended-syntax/) as well, including fenced code blocks, footnotes, strikethrough, subscript, superscript, and automated URL linking.
+
+You can also include snippets of basic HTML in your markdown!
+
+For more information on Markdown, see [The Markdown Guide](https://www.markdownguide.org/).
+
+For a quick reference on Markdown syntax, see the [Markdown Cheat Sheet](https://www.markdownguide.org/cheat-sheet).
 
 ## Formatting
 
