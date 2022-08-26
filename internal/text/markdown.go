@@ -28,7 +28,10 @@ import (
 	"github.com/tdewolff/minify/v2/html"
 )
 
-var m *minify.M
+var (
+	bfExtensions = blackfriday.CommonExtensions | blackfriday.HardLineBreak | blackfriday.Footnotes
+	m            *minify.M
+)
 
 func (f *formatter) FromMarkdown(ctx context.Context, md string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string {
 	// format tags nicely
@@ -38,7 +41,7 @@ func (f *formatter) FromMarkdown(ctx context.Context, md string, mentions []*gts
 	content = f.ReplaceMentions(ctx, content, mentions)
 
 	// parse markdown
-	contentBytes := blackfriday.Run([]byte(content))
+	contentBytes := blackfriday.Run([]byte(content), blackfriday.WithExtensions(bfExtensions))
 
 	// clean anything dangerous out of it
 	content = SanitizeHTML(string(contentBytes))
@@ -46,9 +49,8 @@ func (f *formatter) FromMarkdown(ctx context.Context, md string, mentions []*gts
 	if m == nil {
 		m = minify.New()
 		m.Add("text/html", &html.Minifier{
-			KeepEndTags:    true,
-			KeepQuotes:     true,
-			KeepWhitespace: true,
+			KeepEndTags: true,
+			KeepQuotes:  true,
 		})
 	}
 
