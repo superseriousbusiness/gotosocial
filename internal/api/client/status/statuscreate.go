@@ -105,11 +105,15 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 }
 
 func validateCreateStatus(form *model.AdvancedStatusCreateForm) error {
-	if form.Status == "" && form.MediaIDs == nil && form.Poll == nil {
+	hasStatus := form.Status != ""
+	hasMedia := len(form.MediaIDs) != 0
+	hasPoll := form.Poll != nil
+
+	if !hasStatus && !hasMedia && !hasPoll {
 		return errors.New("no status, media, or poll provided")
 	}
 
-	if form.MediaIDs != nil && form.Poll != nil {
+	if hasMedia && hasPoll {
 		return errors.New("can't post media + poll in same status")
 	}
 
