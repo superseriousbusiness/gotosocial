@@ -285,7 +285,14 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 	}
 
 	if excludeReplies {
-		q = q.WhereGroup(" AND ", whereEmptyOrNull("in_reply_to_id"))
+		// include self-replies (threads)
+		whereGroup := func(*bun.SelectQuery) *bun.SelectQuery {
+			return q.
+				WhereOr("in_reply_to_account_id = ?", accountID).
+				WhereGroup(" OR ", whereEmptyOrNull("in_reply_to_uri"))
+		}
+
+		q = q.WhereGroup(" AND ", whereGroup)
 	}
 
 	if excludeReblogs {
@@ -347,7 +354,7 @@ func (a *accountDB) GetAccountWebStatuses(ctx context.Context, accountID string,
 		Table("statuses").
 		Column("id").
 		Where("account_id = ?", accountID).
-		WhereGroup(" AND ", whereEmptyOrNull("in_reply_to_id")).
+		WhereGroup(" AND ", whereEmptyOrNull("in_reply_to_uri")).
 		WhereGroup(" AND ", whereEmptyOrNull("boost_of_id")).
 		Where("visibility = ?", gtsmodel.VisibilityPublic).
 		Where("federated = ?", true)

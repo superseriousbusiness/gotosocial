@@ -97,6 +97,8 @@ main {
 	}
 
 	.spoiler {
+		padding-bottom: 0.5rem;
+		
 		display: flex;
 		align-items: center;
 		flex-wrap: wrap;
@@ -118,7 +120,8 @@ main {
 	.text {
 		margin: 0;
 		margin-top: 0.5rem;
-		grid-column: span 2;
+		grid-column: span 3;
+		grid-row: span 1;
 		overflow: hidden;
 
 		position: relative;
@@ -313,7 +316,6 @@ main {
 		}
 
 		grid-column: span 3;
-		margin-top: 1.5rem;
 		flex-wrap: wrap;
 
 		div.stats::after {
@@ -371,19 +373,12 @@ main {
 		background: $status_focus_bg;
 		padding-bottom: 0;
 
-		.text {
-			margin-top: 0;
-			grid-column: span 3;
-			grid-row: span 1;
+		.contentgrid {
+			padding-bottom: 1rem;
 		}
 
 		.info {
 			display: flex;
-		}
-
-		.media {
-			/* grid-auto-rows: 1fr; */
-			/* max-height: 120rem; */
 		}
 	}
 }
