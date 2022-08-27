@@ -26,9 +26,6 @@ import (
 	"net/netip"
 	"runtime"
 	"time"
-
-	"codeberg.org/gruf/go-kv"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // ErrInvalidRequest is returned if a given HTTP request is invalid and cannot be performed.
@@ -150,22 +147,13 @@ func New(cfg Config) *Client {
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	method := req.Method
 	host := req.Host
-
-	l := log.WithFields(kv.Fields{
-		{"host", host},
-		{"method", method},
-	}...)
-
 	wait, done := c.rc.getWaitSpot(host, method)
 
-	l.Trace("client waiting for slot in request queue")
 	select {
 	case <-req.Context().Done():
 		err := req.Context().Err()
-		l.Warnf("client could not get slot in request queue: %s", err)
 		return nil, err
 	case wait <- struct{}{}:
-		l.Tracef("client obtained slot in request queue")
 		// NOTE:
 		// Ideally here we would set the slot release to happen either
 		// on error return, or via callback from the response body closer.
@@ -215,6 +203,5 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 		io.Closer
 	}{rbody, cbody}
 
-	l.Tracef("client returning from request")
 	return rsp, nil
 }
