@@ -13,6 +13,10 @@ extra_css:
 
 nav:
   - "Home": "index.md"
+  - "User Guide":
+    - "user_guide/posts.md"
+    - "user_guide/user_panel.md"
+    - "user_guide/password_management.md"
   - "Installation Guide":
     - "installation_guide/index.md"
     - "installation_guide/binary.md"
@@ -41,9 +45,6 @@ nav:
     - "admin/admin_panel.md"
     - "admin/cli.md"
     - "admin/backup_and_restore.md"
-  - "User Guide":
-    - "user_guide/posts.md"
-    - "user_guide/password_management.md"
   - "Federation":
     - "federation/index.md"
     - "federation/glossary.md"
