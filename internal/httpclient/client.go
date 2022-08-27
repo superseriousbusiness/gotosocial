@@ -80,7 +80,7 @@ type Config struct {
 //   is available (context channels still respected)
 type Client struct {
 	client http.Client
-	queue  chan struct{}
+	rc     *requestQueue
 	bmax   int64
 }
 
@@ -118,7 +118,9 @@ func New(cfg Config) *Client {
 
 	// Prepare client fields
 	c.bmax = cfg.MaxBodySize
-	c.queue = make(chan struct{}, cfg.MaxOpenConns)
+	c.rc = &requestQueue{
+		maxOpenConns: cfg.MaxOpenConns,
+	}
 	c.client.Timeout = cfg.Timeout
 
 	// Set underlying HTTP client roundtripper
@@ -143,13 +145,18 @@ func New(cfg Config) *Client {
 // as the standard http.Client{}.Do() implementation except that response body will
 // be wrapped by an io.LimitReader() to limit response body sizes.
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
-	select {
-	// Request context cancelled
-	case <-req.Context().Done():
-		return nil, req.Context().Err()
+	// request a spot in the wait queue...
+	wait, release := c.rc.getWaitSpot(req.Host, req.Method)
 
-	// Slot in queue acquired
-	case c.queue <- struct{}{}:
+	// ... and wait our turn
+	select {
+	case <-req.Context().Done():
+		// the request was canceled before we
+		// got to our turn: no need to release
+		return nil, req.Context().Err()
+	case wait <- struct{}{}:
+		// it's our turn!
+
 		// NOTE:
 		// Ideally here we would set the slot release to happen either
 		// on error return, or via callback from the response body closer.
@@ -160,7 +167,7 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 		// that connections may not be closed until response body is closed.
 		// The current implementation will reduce the viability of denial of
 		// service attacks, but if there are future issues heed this advice :]
-		defer func() { <-c.queue }()
+		defer release()
 	}
 
 	// Firstly, ensure this is a valid request
