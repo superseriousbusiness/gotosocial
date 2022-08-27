@@ -151,6 +151,7 @@ func (p *processor) ProcessReplyToID(ctx context.Context, form *apimodel.Advance
 	}
 
 	status.InReplyToID = repliedStatus.ID
+	status.InReplyToURI = repliedStatus.URI
 	status.InReplyToAccountID = repliedAccount.ID
 
 	return nil
