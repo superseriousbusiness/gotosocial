@@ -39,13 +39,13 @@ func (suite *QueueTestSuite) TestQueue() {
 	}
 
 	// fill all the open connections
-	var done func()
+	var release func()
 	for i, n := range make([]interface{}, maxOpenConns) {
-		w, d := rc.getWaitSpot("example.org", http.MethodPost)
+		w, r := rc.getWaitSpot("example.org", http.MethodPost)
 		w <- n
 		if i == maxOpenConns-1 {
-			// save the last done function
-			done = d
+			// save the last release function
+			release = r
 		}
 	}
 
@@ -59,8 +59,8 @@ func (suite *QueueTestSuite) TestQueue() {
 		break
 	}
 
-	// now close the final done that we derived earlier
-	done()
+	// now close the final release that we derived earlier
+	release()
 
 	// try waiting again, it should work this time
 	select {
@@ -74,7 +74,7 @@ func (suite *QueueTestSuite) TestQueue() {
 	suite.Len(waitAgain, maxOpenConns)
 
 	// we should still be able to make a GET for the same host though
-	getWait, getDone := rc.getWaitSpot("example.org", http.MethodGet)
+	getWait, getRelease := rc.getWaitSpot("example.org", http.MethodGet)
 	select {
 	case getWait <- struct{}{}:
 		break
@@ -85,7 +85,7 @@ func (suite *QueueTestSuite) TestQueue() {
 	// the GET queue has one request waiting
 	suite.Len(getWait, 1)
 	// clear it...
-	getDone()
+	getRelease()
 	suite.Empty(getWait)
 
 	// even though the POST queue for example.org is full, we

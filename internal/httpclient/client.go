@@ -145,15 +145,18 @@ func New(cfg Config) *Client {
 // as the standard http.Client{}.Do() implementation except that response body will
 // be wrapped by an io.LimitReader() to limit response body sizes.
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
-	method := req.Method
-	host := req.Host
-	wait, done := c.rc.getWaitSpot(host, method)
+	// request a spot in the wait queue...
+	wait, release := c.rc.getWaitSpot(req.Host, req.Method)
 
+	// ... and wait our turn
 	select {
 	case <-req.Context().Done():
-		err := req.Context().Err()
-		return nil, err
+		// the request was canceled before we
+		// got to our turn: no need to release
+		return nil, req.Context().Err()
 	case wait <- struct{}{}:
+		// it's our turn!
+
 		// NOTE:
 		// Ideally here we would set the slot release to happen either
 		// on error return, or via callback from the response body closer.
@@ -164,7 +167,7 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 		// that connections may not be closed until response body is closed.
 		// The current implementation will reduce the viability of denial of
 		// service attacks, but if there are future issues heed this advice :]
-		defer done()
+		defer release()
 	}
 
 	// Firstly, ensure this is a valid request
