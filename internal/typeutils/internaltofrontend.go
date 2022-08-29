@@ -742,6 +742,11 @@ func (c *converter) NotificationToAPINotification(ctx context.Context, n *gtsmod
 		}
 	}
 
+	if apiStatus != nil && apiStatus.Reblog != nil {
+		// use the actual reblog status for the notifications endpoint
+		apiStatus = apiStatus.Reblog.Status
+	}
+
 	return &model.Notification{
 		ID:        n.ID,
 		Type:      string(n.NotificationType),
