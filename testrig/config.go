@@ -19,9 +19,6 @@
 package testrig
 
 import (
-	"os"
-	"path"
-
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
@@ -29,12 +26,11 @@ import (
 // InitTestConfig initializes viper configuration with test defaults.
 func InitTestConfig() {
 	config.Config(func(cfg *config.Configuration) {
-		*cfg = TestDefaults
+		*cfg = testDefaults
 	})
 }
 
-// TestDefaults returns a Values struct with values set that are suitable for local testing.
-var TestDefaults = config.Configuration{
+var testDefaults = config.Configuration{
 	LogLevel:        "trace",
 	LogDbQueries:    true,
 	ApplicationName: "gotosocial",
@@ -69,8 +65,11 @@ var TestDefaults = config.Configuration{
 	MediaDescriptionMaxChars: 500,
 	MediaRemoteCacheDays:     30,
 
-	StorageBackend:       "local",
-	StorageLocalBasePath: path.Join(os.TempDir(), "gotosocial"),
+	// the testrig only uses in-memory storage, so we can
+	// safely set this value to 'test' to avoid running storage
+	// migrations, and other silly things like that
+	StorageBackend:       "test",
+	StorageLocalBasePath: "",
 
 	StatusesMaxChars:           5000,
 	StatusesCWMaxChars:         100,
