@@ -646,7 +646,7 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 		mi.URLS = &model.InstanceURLs{
 			StreamingAPI: "wss://" + host,
 		}
-		mi.Version = config.GetSoftwareVersion()
+		mi.Version = c.VersionToAPIVersion(config.GetSoftwareVersion())
 
 		// todo: remove hardcoded values and put them in config somewhere
 		mi.Configuration = &model.InstanceConfiguration{
@@ -687,6 +687,12 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 	}
 
 	return mi, nil
+}
+
+func (c *converter) VersionToAPIVersion(version string) string {
+	// many clients check for a mastodon symver, so we need to advertise the API level we support
+	mastodonAPILevel := "2.7.2"
+	return mastodonAPILevel + " (compatible; GoToSocial " + version + ")"
 }
 
 func (c *converter) RelationshipToAPIRelationship(ctx context.Context, r *gtsmodel.Relationship) (*model.Relationship, error) {

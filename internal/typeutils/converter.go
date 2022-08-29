@@ -76,6 +76,8 @@ type TypeConverter interface {
 	VisToAPIVis(ctx context.Context, m gtsmodel.Visibility) model.Visibility
 	// InstanceToAPIInstance converts a gts instance into its api equivalent for serving at /api/v1/instance
 	InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Instance) (*model.Instance, error)
+	// VersionToAPIVersion converts the gts version to an advertised version that includes a compatible mastodon version number
+	VersionToAPIVersion(version string) string
 	// RelationshipToAPIRelationship converts a gts relationship into its api equivalent for serving in various places
 	RelationshipToAPIRelationship(ctx context.Context, r *gtsmodel.Relationship) (*model.Relationship, error)
 	// NotificationToAPINotification converts a gts notification into a api notification
