@@ -19,6 +19,7 @@
 package router
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
 	"os"
@@ -28,6 +29,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 )
 
 // LoadTemplates loads html templates for use by the given engine
@@ -55,6 +57,11 @@ func oddOrEven(n int) string {
 		return "even"
 	}
 	return "odd"
+}
+
+func escape(str string) template.HTML {
+	/* #nosec G203 */
+	return template.HTML(template.HTMLEscapeString(str))
 }
 
 func noescape(str string) template.HTML {
@@ -97,12 +104,43 @@ func visibilityIcon(visibility model.Visibility) template.HTML {
 	return template.HTML(fmt.Sprintf(`<i aria-label="Visibility: %v" class="fa fa-%v"></i>`, icon.label, icon.faIcon))
 }
 
+// replaces shortcodes in `text` with the emoji in `emojis`
+// text is a template.HTML to affirm that the input of this function is already escaped
+func emojify(emojis []model.Emoji, text template.HTML) template.HTML {
+	emojisMap := make(map[string]model.Emoji)
+	for _, emoji := range emojis {
+		shortcode := ":" + emoji.Shortcode + ":"
+		emojisMap[shortcode] = emoji
+	}
+
+	emojiTemplate, _ := template.New("emojiTemplate").Parse(`{{define "Emoji"}}<img src="{{.URL}}" title=":{{.Shortcode}}:" alt=":{{.Shortcode}}:" class="emoji"/>{{end}}`)
+
+	emojifyer := func(shortcode string) string {
+		emoji, ok := emojisMap[shortcode]
+		if ok == false {
+			return shortcode
+		}
+		var buff bytes.Buffer
+		err := emojiTemplate.ExecuteTemplate(&buff, "Emoji", emoji)
+		if err != nil {
+			return shortcode
+		}
+		return buff.String()
+	}
+
+	out := regexes.EmojiFinder.ReplaceAllStringFunc(string(text), emojifyer)
+	/* #nosec G203 */
+	return template.HTML(out)
+}
+
 func LoadTemplateFunctions(engine *gin.Engine) {
 	engine.SetFuncMap(template.FuncMap{
+		"escape":         escape,
 		"noescape":       noescape,
 		"oddOrEven":      oddOrEven,
 		"visibilityIcon": visibilityIcon,
 		"timestamp":      timestamp,
 		"timestampShort": timestampShort,
+		"emojify":        emojify,
 	})
 }
