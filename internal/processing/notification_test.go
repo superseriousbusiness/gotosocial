@@ -33,7 +33,7 @@ type NotificationTestSuite struct {
 // get a notification where someone has liked our status
 func (suite *NotificationTestSuite) TestGetNotifications() {
 	receivingAccount := suite.testAccounts["local_account_1"]
-	notifsResponse, err := suite.processor.NotificationsGet(context.Background(), suite.testAutheds["local_account_1"], 10, "", "")
+	notifsResponse, err := suite.processor.NotificationsGet(context.Background(), suite.testAutheds["local_account_1"], []string{}, 10, "", "")
 	suite.NoError(err)
 	suite.Len(notifsResponse.Items, 1)
 	notif, ok := notifsResponse.Items[0].(*apimodel.Notification)

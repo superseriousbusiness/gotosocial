@@ -66,7 +66,9 @@ func (m *Module) NotificationsGETHandler(c *gin.Context) {
 		sinceID = sinceIDString
 	}
 
-	resp, errWithCode := m.processor.NotificationsGet(c.Request.Context(), authed, limit, maxID, sinceID)
+	excludeTypes := c.QueryArray(ExcludeTypesKey)
+
+	resp, errWithCode := m.processor.NotificationsGet(c.Request.Context(), authed, excludeTypes, limit, maxID, sinceID)
 	if errWithCode != nil {
 		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
