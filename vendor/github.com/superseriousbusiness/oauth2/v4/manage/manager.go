@@ -294,6 +294,8 @@ func (m *Manager) GenerateAccessToken(ctx context.Context, gt oauth2.GrantType, 
 		if err := m.validateURI(cli.GetDomain(), tgr.RedirectURI); err != nil {
 			return nil, err
 		}
+	} else {
+		tgr.RedirectURI = cli.GetDomain()
 	}
 
 	if gt == oauth2.AuthorizationCode {

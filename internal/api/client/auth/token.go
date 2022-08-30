@@ -76,10 +76,9 @@ func (m *Module) TokenPOSTHandler(c *gin.Context) {
 		help = append(help, "client_secret was not set in the token request form")
 	}
 
+	// redirect_uri is optional
 	if form.RedirectURI != nil {
 		c.Request.Form.Set("redirect_uri", *form.RedirectURI)
-	} else {
-		help = append(help, "redirect_uri was not set in the token request form")
 	}
 
 	var code string
