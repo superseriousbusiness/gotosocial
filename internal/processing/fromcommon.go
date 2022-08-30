@@ -203,6 +203,11 @@ func (p *processor) notifyFollow(ctx context.Context, follow *gtsmodel.Follow, t
 }
 
 func (p *processor) notifyFave(ctx context.Context, fave *gtsmodel.StatusFave) error {
+	// ignore self-faves
+	if fave.TargetAccountID == fave.AccountID {
+		return nil
+	}
+
 	if fave.TargetAccount == nil {
 		a, err := p.db.GetAccountByID(ctx, fave.TargetAccountID)
 		if err != nil {
