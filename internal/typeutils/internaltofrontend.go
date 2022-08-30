@@ -740,10 +740,15 @@ func (c *converter) NotificationToAPINotification(ctx context.Context, n *gtsmod
 		}
 
 		var err error
-		apiStatus, err = c.StatusToAPIStatus(ctx, n.Status, nil)
+		apiStatus, err = c.StatusToAPIStatus(ctx, n.Status, n.TargetAccount)
 		if err != nil {
 			return nil, fmt.Errorf("NotificationToapi: error converting status to api: %s", err)
 		}
+	}
+
+	if apiStatus != nil && apiStatus.Reblog != nil {
+		// use the actual reblog status for the notifications endpoint
+		apiStatus = apiStatus.Reblog.Status
 	}
 
 	return &model.Notification{

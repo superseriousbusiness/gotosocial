@@ -85,6 +85,7 @@ function editableObject(obj, path=[]) {
 	const hiddenKeys = ["contact_account_", "urls"];
 	const explicitShownKeys = ["contact_account_username"];
 	const implementedKeys = "title, contact_account_username, email, short_description, description, terms, avatar, header".split(", ");
+	const textareaKeys = ["short_description", "description"]
 
 	let listing = Object.entries(obj).map(([key, val]) => {
 		let fullkey = [...path, key].join("_");
@@ -155,11 +156,17 @@ function editableObject(obj, path=[]) {
 			}
 		}
 
+		let field;
+		if (textareaKeys.includes(fullkey)) {
+			field = <textarea className={isImplemented} ref={setRef} {...inputProps}></textarea>
+		} else {
+			field = <input className={isImplemented} ref={setRef} {...inputProps} />
+		}
 		return (
 			<React.Fragment key={fullkey}>
 				<label htmlFor={key} className="capitalize">{label}</label>
 				<div className={isImplemented}>
-					<input className={isImplemented} ref={setRef} {...inputProps} />
+					{field}
 				</div>
 			</React.Fragment>
 		);
