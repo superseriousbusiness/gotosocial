@@ -482,6 +482,47 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestUnlocked() {
 	})
 	suite.NoError(err)
 
+	// an accept message should be sent to satan's inbox
+	var sent [][]byte
+	if !testrig.WaitFor(func() bool {
+		sentI, ok := suite.httpClient.SentMessages.Load(originAccount.InboxURI)
+		if ok {
+			sent, ok = sentI.([][]byte)
+			if !ok {
+				panic("SentMessages entry was not []byte")
+			}
+			return true
+		}
+		return false
+	}) {
+		suite.FailNow("timed out waiting for message")
+	}
+
+	accept := &struct {
+		Actor  string `json:"actor"`
+		ID     string `json:"id"`
+		Object struct {
+			Actor  string `json:"actor"`
+			ID     string `json:"id"`
+			Object string `json:"object"`
+			To     string `json:"to"`
+			Type   string `json:"type"`
+		}
+		To   string `json:"to"`
+		Type string `json:"type"`
+	}{}
+	err = json.Unmarshal(sent[0], accept)
+	suite.NoError(err)
+
+	suite.Equal(targetAccount.URI, accept.Actor)
+	suite.Equal(originAccount.URI, accept.Object.Actor)
+	suite.Equal(satanFollowRequestTurtle.URI, accept.Object.ID)
+	suite.Equal(targetAccount.URI, accept.Object.Object)
+	suite.Equal(targetAccount.URI, accept.Object.To)
+	suite.Equal("Follow", accept.Object.Type)
+	suite.Equal(originAccount.URI, accept.To)
+	suite.Equal("Accept", accept.Type)
+
 	// a notification should be streamed
 	var msg *stream.Message
 	select {
@@ -498,34 +539,6 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestUnlocked() {
 	suite.NoError(err)
 	suite.Equal("follow", notif.Type)
 	suite.Equal(originAccount.ID, notif.Account.ID)
-
-	// an accept message should be sent to satan's inbox
-	suite.Len(suite.httpClient.SentMessages, 1)
-	acceptBytes := suite.httpClient.SentMessages[originAccount.InboxURI]
-	accept := &struct {
-		Actor  string `json:"actor"`
-		ID     string `json:"id"`
-		Object struct {
-			Actor  string `json:"actor"`
-			ID     string `json:"id"`
-			Object string `json:"object"`
-			To     string `json:"to"`
-			Type   string `json:"type"`
-		}
-		To   string `json:"to"`
-		Type string `json:"type"`
-	}{}
-	err = json.Unmarshal(acceptBytes, accept)
-	suite.NoError(err)
-
-	suite.Equal(targetAccount.URI, accept.Actor)
-	suite.Equal(originAccount.URI, accept.Object.Actor)
-	suite.Equal(satanFollowRequestTurtle.URI, accept.Object.ID)
-	suite.Equal(targetAccount.URI, accept.Object.Object)
-	suite.Equal(targetAccount.URI, accept.Object.To)
-	suite.Equal("Follow", accept.Object.Type)
-	suite.Equal(originAccount.URI, accept.To)
-	suite.Equal("Accept", accept.Type)
 }
 
 // TestCreateStatusFromIRI checks if a forwarded status can be dereferenced by the processor.

@@ -444,14 +444,15 @@ func (suite *InboxPostTestSuite) TestPostDelete() {
 	suite.Empty(b)
 	suite.Equal(http.StatusOK, result.StatusCode)
 
-	// sleep for a sec so side effects can process in the background
-	time.Sleep(2 * time.Second)
-
-	// local account 2 blocked foss_satan, that block should be gone now
-	testBlock := suite.testBlocks["local_account_2_block_remote_account_1"]
-	dbBlock := &gtsmodel.Block{}
-	err = suite.db.GetByID(ctx, testBlock.ID, dbBlock)
-	suite.ErrorIs(err, db.ErrNoEntries)
+	if !testrig.WaitFor(func() bool {
+		// local account 2 blocked foss_satan, that block should be gone now
+		testBlock := suite.testBlocks["local_account_2_block_remote_account_1"]
+		dbBlock := &gtsmodel.Block{}
+		err = suite.db.GetByID(ctx, testBlock.ID, dbBlock)
+		return suite.ErrorIs(err, db.ErrNoEntries)
+	}) {
+		suite.FailNow("timed out waiting for block to be removed")
+	}
 
 	// no statuses from foss satan should be left in the database
 	dbStatuses, err := suite.db.GetAccountStatuses(ctx, deletedAccount.ID, 0, false, false, "", "", false, false, false)

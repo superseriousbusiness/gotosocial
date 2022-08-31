@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/activity/pub"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type AccountTestSuite struct {
@@ -59,23 +60,30 @@ func (suite *AccountTestSuite) TestAccountDeleteLocal() {
 	suite.NoError(errWithCode)
 
 	// the delete should be federated outwards to the following account's inbox
-	var sent []byte
-	var ok bool
-	for !ok {
-		sent, ok = suite.httpClient.SentMessages[followingAccount.InboxURI]
-	}
-
-	suite.True(ok)
-	delete := &struct {
+	var sent [][]byte
+	delete := new(struct {
 		Actor  string `json:"actor"`
 		ID     string `json:"id"`
 		Object string `json:"object"`
 		To     string `json:"to"`
 		CC     string `json:"cc"`
 		Type   string `json:"type"`
-	}{}
-	err = json.Unmarshal(sent, delete)
-	suite.NoError(err)
+	})
+
+	if !testrig.WaitFor(func() bool {
+		sentI, ok := suite.httpClient.SentMessages.Load(followingAccount.InboxURI)
+		if ok {
+			sent, ok = sentI.([][]byte)
+			if !ok {
+				panic("SentMessages entry was not [][]byte")
+			}
+			err = json.Unmarshal(sent[0], delete)
+			return err == nil
+		}
+		return false
+	}) {
+		suite.FailNow("timed out waiting for message")
+	}
 
 	suite.Equal(deletingAccount.URI, delete.Actor)
 	suite.Equal(deletingAccount.URI, delete.Object)
@@ -83,13 +91,12 @@ func (suite *AccountTestSuite) TestAccountDeleteLocal() {
 	suite.Equal(pub.PublicActivityPubIRI, delete.CC)
 	suite.Equal("Delete", delete.Type)
 
-	// wait for the delete to go through
-	time.Sleep(1 * time.Second)
-
-	// the deleted account should be deleted
-	dbAccount, err := suite.db.GetAccountByID(ctx, deletingAccount.ID)
-	suite.NoError(err)
-	suite.WithinDuration(dbAccount.SuspendedAt, time.Now(), 30*time.Second)
+	if !testrig.WaitFor(func() bool {
+		dbAccount, _ := suite.db.GetAccountByID(ctx, deletingAccount.ID)
+		return suite.WithinDuration(dbAccount.SuspendedAt, time.Now(), 30*time.Second)
+	}) {
+		suite.FailNow("timed out waiting for account to be deleted")
+	}
 }
 
 func TestAccountTestSuite(t *testing.T) {
