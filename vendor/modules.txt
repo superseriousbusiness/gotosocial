@@ -230,7 +230,7 @@ github.com/json-iterator/go
 # github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 ## explicit
 github.com/kballard/go-shellquote
-# github.com/klauspost/compress v1.13.6
+# github.com/klauspost/compress v1.15.0
 ## explicit; go 1.15
 github.com/klauspost/compress/s2
 # github.com/klauspost/cpuid v1.3.1
@@ -295,6 +295,9 @@ github.com/pelletier/go-toml/v2
 github.com/pelletier/go-toml/v2/internal/ast
 github.com/pelletier/go-toml/v2/internal/danger
 github.com/pelletier/go-toml/v2/internal/tracker
+# github.com/pkg/errors v0.9.1
+## explicit
+github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
@@ -343,7 +346,7 @@ github.com/spf13/viper/internal/encoding/javaproperties
 github.com/spf13/viper/internal/encoding/json
 github.com/spf13/viper/internal/encoding/toml
 github.com/spf13/viper/internal/encoding/yaml
-# github.com/stretchr/testify v1.7.1
+# github.com/stretchr/testify v1.8.0
 ## explicit; go 1.13
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
@@ -563,6 +566,13 @@ github.com/tmthrgd/go-hex
 # github.com/ugorji/go/codec v1.2.7
 ## explicit; go 1.11
 github.com/ugorji/go/codec
+# github.com/ulule/limiter/v3 v3.10.0
+## explicit; go 1.17
+github.com/ulule/limiter/v3
+github.com/ulule/limiter/v3/drivers/middleware/gin
+github.com/ulule/limiter/v3/drivers/store/common
+github.com/ulule/limiter/v3/drivers/store/memory
+github.com/ulule/limiter/v3/internal/bytebuffer
 # github.com/uptrace/bun v1.1.7
 ## explicit; go 1.17
 github.com/uptrace/bun
@@ -740,7 +750,7 @@ gopkg.in/square/go-jose.v2/json
 # gopkg.in/yaml.v2 v2.4.0
 ## explicit; go 1.15
 gopkg.in/yaml.v2
-# gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+# gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
 # lukechampine.com/uint128 v1.2.0

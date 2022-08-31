@@ -19,7 +19,9 @@
 package text
 
 import (
+	"bytes"
 	"context"
+	"io"
 
 	"github.com/russross/blackfriday/v2"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -33,18 +35,51 @@ var (
 	m            *minify.M
 )
 
+type renderer struct {
+	f        *formatter
+	ctx      context.Context
+	mentions []*gtsmodel.Mention
+	tags     []*gtsmodel.Tag
+	blackfriday.HTMLRenderer
+}
+
+func (r *renderer) RenderNode(w io.Writer, node *blackfriday.Node, entering bool) blackfriday.WalkStatus {
+	if node.Type == blackfriday.Text {
+		// call RenderNode to do the html escaping
+		var buff bytes.Buffer
+		status := r.HTMLRenderer.RenderNode(&buff, node, entering)
+
+		html := buff.String()
+		html = r.f.ReplaceTags(r.ctx, html, r.tags)
+		html = r.f.ReplaceMentions(r.ctx, html, r.mentions)
+
+		// we don't have much recourse if this fails
+		_, err := io.WriteString(w, html)
+		if err != nil {
+			log.Errorf("error outputting markdown text: %s", err)
+		}
+		return status
+	}
+	return r.HTMLRenderer.RenderNode(w, node, entering)
+}
+
 func (f *formatter) FromMarkdown(ctx context.Context, md string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string {
-	// format tags nicely
-	content := f.ReplaceTags(ctx, md, tags)
 
-	// format mentions nicely
-	content = f.ReplaceMentions(ctx, content, mentions)
+	renderer := &renderer{
+		f:        f,
+		ctx:      ctx,
+		mentions: mentions,
+		tags:     tags,
+		HTMLRenderer: *blackfriday.NewHTMLRenderer(blackfriday.HTMLRendererParameters{
+			Flags: blackfriday.CommonHTMLFlags,
+		}),
+	}
 
-	// parse markdown
-	contentBytes := blackfriday.Run([]byte(content), blackfriday.WithExtensions(bfExtensions))
+	// parse markdown, use custom renderer to add hashtag/mention links
+	contentBytes := blackfriday.Run([]byte(md), blackfriday.WithExtensions(bfExtensions), blackfriday.WithRenderer(renderer))
 
 	// clean anything dangerous out of it
-	content = SanitizeHTML(string(contentBytes))
+	content := SanitizeHTML(string(contentBytes))
 
 	if m == nil {
 		m = minify.New()

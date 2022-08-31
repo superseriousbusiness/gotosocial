@@ -115,10 +115,22 @@ func (suite *FederatingActorTestSuite) TestSendRemoteFollower() {
 	suite.NotNil(activity)
 
 	// because we added 1 remote follower for zork, there should be a url in sentMessage
-	suite.Len(httpClient.SentMessages, 1)
-	msg, ok := httpClient.SentMessages[testRemoteAccount.InboxURI]
-	suite.True(ok)
-	suite.Equal(`{"@context":"https://www.w3.org/ns/activitystreams","actor":"http://localhost:8080/users/the_mighty_zork","id":"http://localhost:8080/whatever_some_create","object":{"attributedTo":"http://localhost:8080/users/the_mighty_zork","content":"boobies","id":"http://localhost:8080/users/the_mighty_zork/statuses/01G1TR6BADACCZWQMNF9X21TV5","published":"2022-06-02T12:22:21+02:00","tag":[],"to":"http://localhost:8080/users/the_mighty_zork/followers","type":"Note","url":"http://localhost:8080/@the_mighty_zork/statuses/01G1TR6BADACCZWQMNF9X21TV5"},"published":"2022-06-02T12:22:21+02:00","to":"http://localhost:8080/users/the_mighty_zork/followers","type":"Create"}`, string(msg))
+	var sent [][]byte
+	if !testrig.WaitFor(func() bool {
+		sentI, ok := httpClient.SentMessages.Load(testRemoteAccount.InboxURI)
+		if ok {
+			sent, ok = sentI.([][]byte)
+			if !ok {
+				panic("SentMessages entry was not []byte")
+			}
+			return true
+		}
+		return false
+	}) {
+		suite.FailNow("timed out waiting for message")
+	}
+
+	suite.Equal(`{"@context":"https://www.w3.org/ns/activitystreams","actor":"http://localhost:8080/users/the_mighty_zork","id":"http://localhost:8080/whatever_some_create","object":{"attributedTo":"http://localhost:8080/users/the_mighty_zork","content":"boobies","id":"http://localhost:8080/users/the_mighty_zork/statuses/01G1TR6BADACCZWQMNF9X21TV5","published":"2022-06-02T12:22:21+02:00","tag":[],"to":"http://localhost:8080/users/the_mighty_zork/followers","type":"Note","url":"http://localhost:8080/@the_mighty_zork/statuses/01G1TR6BADACCZWQMNF9X21TV5"},"published":"2022-06-02T12:22:21+02:00","to":"http://localhost:8080/users/the_mighty_zork/followers","type":"Create"}`, string(sent[0]))
 }
 
 func TestFederatingActorTestSuite(t *testing.T) {

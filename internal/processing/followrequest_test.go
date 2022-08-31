@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type FollowRequestTestSuite struct {
@@ -54,11 +55,22 @@ func (suite *FollowRequestTestSuite) TestFollowRequestAccept() {
 	relationship, errWithCode := suite.processor.FollowRequestAccept(context.Background(), suite.testAutheds["local_account_1"], requestingAccount.ID)
 	suite.NoError(errWithCode)
 	suite.EqualValues(&apimodel.Relationship{ID: "01FHMQX3GAABWSM0S2VZEC2SWC", Following: false, ShowingReblogs: false, Notifying: false, FollowedBy: true, Blocking: false, BlockedBy: false, Muting: false, MutingNotifications: false, Requested: false, DomainBlocking: false, Endorsed: false, Note: ""}, relationship)
-	time.Sleep(1 * time.Second)
 
 	// accept should be sent to some_user
-	sent, ok := suite.httpClient.SentMessages[requestingAccount.InboxURI]
-	suite.True(ok)
+	var sent [][]byte
+	if !testrig.WaitFor(func() bool {
+		sentI, ok := suite.httpClient.SentMessages.Load(requestingAccount.InboxURI)
+		if ok {
+			sent, ok = sentI.([][]byte)
+			if !ok {
+				panic("SentMessages entry was not []byte")
+			}
+			return true
+		}
+		return false
+	}) {
+		suite.FailNow("timed out waiting for message")
+	}
 
 	accept := &struct {
 		Actor  string `json:"actor"`
@@ -73,7 +85,7 @@ func (suite *FollowRequestTestSuite) TestFollowRequestAccept() {
 		To   string `json:"to"`
 		Type string `json:"type"`
 	}{}
-	err = json.Unmarshal(sent, accept)
+	err = json.Unmarshal(sent[0], accept)
 	suite.NoError(err)
 
 	suite.Equal(targetAccount.URI, accept.Actor)
@@ -106,11 +118,22 @@ func (suite *FollowRequestTestSuite) TestFollowRequestReject() {
 	relationship, errWithCode := suite.processor.FollowRequestReject(context.Background(), suite.testAutheds["local_account_1"], requestingAccount.ID)
 	suite.NoError(errWithCode)
 	suite.EqualValues(&apimodel.Relationship{ID: "01FHMQX3GAABWSM0S2VZEC2SWC", Following: false, ShowingReblogs: false, Notifying: false, FollowedBy: false, Blocking: false, BlockedBy: false, Muting: false, MutingNotifications: false, Requested: false, DomainBlocking: false, Endorsed: false, Note: ""}, relationship)
-	time.Sleep(1 * time.Second)
 
 	// reject should be sent to some_user
-	sent, ok := suite.httpClient.SentMessages[requestingAccount.InboxURI]
-	suite.True(ok)
+	var sent [][]byte
+	if !testrig.WaitFor(func() bool {
+		sentI, ok := suite.httpClient.SentMessages.Load(requestingAccount.InboxURI)
+		if ok {
+			sent, ok = sentI.([][]byte)
+			if !ok {
+				panic("SentMessages entry was not []byte")
+			}
+			return true
+		}
+		return false
+	}) {
+		suite.FailNow("timed out waiting for message")
+	}
 
 	reject := &struct {
 		Actor  string `json:"actor"`
@@ -125,7 +148,7 @@ func (suite *FollowRequestTestSuite) TestFollowRequestReject() {
 		To   string `json:"to"`
 		Type string `json:"type"`
 	}{}
-	err = json.Unmarshal(sent, reject)
+	err = json.Unmarshal(sent[0], reject)
 	suite.NoError(err)
 
 	suite.Equal(targetAccount.URI, reject.Actor)

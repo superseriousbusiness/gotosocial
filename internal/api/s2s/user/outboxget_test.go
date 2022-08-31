@@ -46,15 +46,6 @@ func (suite *OutboxGetTestSuite) TestGetOutbox() {
 	signedRequest := derefRequests["foss_satan_dereference_zork_outbox"]
 	targetAccount := suite.testAccounts["local_account_1"]
 
-	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
-	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
-
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker)
-	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager, fedWorker)
-	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager, clientWorker, fedWorker)
-	userModule := user.New(processor).(*user.Module)
-
 	// setup request
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
@@ -76,7 +67,7 @@ func (suite *OutboxGetTestSuite) TestGetOutbox() {
 	}
 
 	// trigger the function being tested
-	userModule.OutboxGETHandler(ctx)
+	suite.userModule.OutboxGETHandler(ctx)
 
 	// check response
 	suite.EqualValues(http.StatusOK, recorder.Code)

@@ -36,6 +36,8 @@ const (
 	BasePathWithID    = BasePath + "/:" + IDKey
 	BasePathWithClear = BasePath + "/clear"
 
+	// ExcludeTypes is an array specifying notification types to exclude
+	ExcludeTypesKey = "exclude_types[]"
 	// MaxIDKey is the url query for setting a max notification ID to return
 	MaxIDKey = "max_id"
 	// LimitKey is for specifying maximum number of notifications to return.

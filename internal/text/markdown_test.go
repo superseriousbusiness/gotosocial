@@ -65,6 +65,10 @@ const (
 	mdWithFootnoteExpected          = "<p>fox mulder,fbi.<sup id=\"fnref:1\"><a href=\"#fn:1\" rel=\"nofollow noreferrer\">1</a></sup></p><div><hr><ol><li id=\"fn:1\">federated bureau of investigation<br></li></ol></div>"
 	mdWithBlockQuote                = "get ready, there's a block quote coming:\n\n>line1\n>line2\n>\n>line3\n\n"
 	mdWithBlockQuoteExpected        = "<p>get ready, there’s a block quote coming:</p><blockquote><p>line1<br>line2</p><p>line3</p></blockquote>"
+	mdHashtagAndCodeBlock           = "#Hashtag\n\n```\n#Hashtag\n```"
+	mdHashtagAndCodeBlockExpected   = "<p><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a></p><pre><code>#Hashtag\n</code></pre>"
+	mdMentionAndCodeBlock           = "@the_mighty_zork\n\n```\n@the_mighty_zork\n```"
+	mdMentionAndCodeBlockExpected   = "<p><span class=\"h-card\"><a href=\"http://localhost:8080/@the_mighty_zork\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>the_mighty_zork</span></a></span></p><pre><code>@the_mighty_zork\n</code></pre>"
 )
 
 type MarkdownTestSuite struct {
@@ -131,6 +135,20 @@ func (suite *MarkdownTestSuite) TestParseWithFootnote() {
 func (suite *MarkdownTestSuite) TestParseWithBlockquote() {
 	s := suite.formatter.FromMarkdown(context.Background(), mdWithBlockQuote, nil, nil)
 	suite.Equal(mdWithBlockQuoteExpected, s)
+}
+
+func (suite *MarkdownTestSuite) TestParseHashtagWithCodeBlock() {
+	s := suite.formatter.FromMarkdown(context.Background(), mdHashtagAndCodeBlock, nil, []*gtsmodel.Tag{
+		suite.testTags["Hashtag"],
+	})
+	suite.Equal(mdHashtagAndCodeBlockExpected, s)
+}
+
+func (suite *MarkdownTestSuite) TestParseMentionWithCodeBlock() {
+	s := suite.formatter.FromMarkdown(context.Background(), mdMentionAndCodeBlock, []*gtsmodel.Mention{
+		suite.testMentions["local_user_2_mention_zork"],
+	}, nil)
+	suite.Equal(mdMentionAndCodeBlockExpected, s)
 }
 
 func TestMarkdownTestSuite(t *testing.T) {

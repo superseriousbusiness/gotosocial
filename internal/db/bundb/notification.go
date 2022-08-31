@@ -56,7 +56,7 @@ func (n *notificationDB) GetNotification(ctx context.Context, id string) (*gtsmo
 	return &dst, nil
 }
 
-func (n *notificationDB) GetNotifications(ctx context.Context, accountID string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, db.Error) {
+func (n *notificationDB) GetNotifications(ctx context.Context, accountID string, excludeTypes []string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, db.Error) {
 	// Ensure reasonable
 	if limit < 0 {
 		limit = 0
@@ -76,6 +76,10 @@ func (n *notificationDB) GetNotifications(ctx context.Context, accountID string,
 
 	if sinceID != "" {
 		q = q.Where("id > ?", sinceID)
+	}
+
+	for _, excludeType := range excludeTypes {
+		q = q.Where("notification_type != ?", excludeType)
 	}
 
 	q = q.

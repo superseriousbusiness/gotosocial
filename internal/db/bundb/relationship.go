@@ -292,7 +292,8 @@ func (r *relationshipDB) GetAccountFollowRequests(ctx context.Context, accountID
 	followRequests := []*gtsmodel.FollowRequest{}
 
 	q := r.newFollowQ(&followRequests).
-		Where("target_account_id = ?", accountID)
+		Where("target_account_id = ?", accountID).
+		Order("follow_request.updated_at DESC")
 
 	if err := q.Scan(ctx); err != nil {
 		return nil, r.conn.ProcessError(err)
@@ -304,7 +305,8 @@ func (r *relationshipDB) GetAccountFollows(ctx context.Context, accountID string
 	follows := []*gtsmodel.Follow{}
 
 	q := r.newFollowQ(&follows).
-		Where("account_id = ?", accountID)
+		Where("account_id = ?", accountID).
+		Order("follow.updated_at DESC")
 
 	if err := q.Scan(ctx); err != nil {
 		return nil, r.conn.ProcessError(err)
@@ -325,7 +327,8 @@ func (r *relationshipDB) GetAccountFollowedBy(ctx context.Context, accountID str
 
 	q := r.conn.
 		NewSelect().
-		Model(&follows)
+		Model(&follows).
+		Order("follow.updated_at DESC")
 
 	if localOnly {
 		q = q.ColumnExpr("follow.*").

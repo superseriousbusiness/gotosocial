@@ -26,7 +26,6 @@ import (
 	"os"
 	"path"
 	"testing"
-	"time"
 
 	"codeberg.org/gruf/go-store/kv"
 	"codeberg.org/gruf/go-store/storage"
@@ -34,6 +33,7 @@ import (
 	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type ManagerTestSuite struct {
@@ -360,11 +360,11 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessAsync() {
 	attachmentID := processingMedia.AttachmentID()
 
 	// wait for the media to finish processing
-	for finished := processingMedia.Finished(); !finished; finished = processingMedia.Finished() {
-		time.Sleep(10 * time.Millisecond)
-		fmt.Printf("\n\nnot finished yet...\n\n")
+	if !testrig.WaitFor(func() bool {
+		return processingMedia.Finished()
+	}) {
+		suite.FailNow("timed out waiting for media to be processed")
 	}
-	fmt.Printf("\n\nfinished!\n\n")
 
 	// fetch the attachment from the database
 	attachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
