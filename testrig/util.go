@@ -87,3 +87,28 @@ func TimeMustParse(timeString string) time.Time {
 	}
 	return t
 }
+
+// WaitFor calls condition every 200ms, returning true
+// when condition() returns true, or false after 5s.
+//
+// It's useful for when you're waiting for something to
+// happen, but you don't know exactly how long it will take,
+// and you want to fail if the thing doesn't happen within 5s.
+func WaitFor(condition func() bool) bool {
+	tick := time.NewTicker(200 * time.Millisecond)
+	defer tick.Stop()
+
+	timeout := time.NewTimer(5 * time.Second)
+	defer timeout.Stop()
+
+	for {
+		select {
+		case <-tick.C:
+			if condition() {
+				return true
+			}
+		case <-timeout.C:
+			return false
+		}
+	}
+}
