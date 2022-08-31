@@ -54,6 +54,13 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 		Statuses: []apimodel.Status{},
 		Hashtags: []apimodel.Tag{},
 	}
+
+	// currently the search will only ever return one result,
+	// so return nothing if the offset is greater than 0
+	if search.Offset > 0 {
+		return searchResult, nil
+	}
+
 	foundAccounts := []*gtsmodel.Account{}
 	foundStatuses := []*gtsmodel.Status{}
 
