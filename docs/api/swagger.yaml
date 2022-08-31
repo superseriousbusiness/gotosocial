@@ -1401,6 +1401,36 @@ definitions:
     type: object
     x-go-name: Nodeinfo
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  notification:
+    properties:
+      account:
+        $ref: '#/definitions/account'
+      created_at:
+        description: The timestamp of the notification (ISO 8601 Datetime)
+        type: string
+        x-go-name: CreatedAt
+      id:
+        description: The id of the notification in the database.
+        type: string
+        x-go-name: ID
+      status:
+        $ref: '#/definitions/status'
+      type:
+        description: |-
+          The type of event that resulted in the notification.
+          follow = Someone followed you
+          follow_request = Someone requested to follow you
+          mention = Someone mentioned you in their status
+          reblog = Someone boosted one of your statuses
+          favourite = Someone favourited one of your statuses
+          poll = A poll you have voted in or created has ended
+          status = Someone you enabled notifications for has posted a status
+        type: string
+        x-go-name: Type
+    title: Notification represents a notification of an event relevant to the user.
+    type: object
+    x-go-name: Notification
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   oauthToken:
     properties:
       access_token:
@@ -3422,6 +3452,61 @@ paths:
       summary: Update a media attachment.
       tags:
       - media
+  /api/v1/notifications:
+    get:
+      description: The notifications will be returned in descending chronological
+        order (newest first), with sequential IDs (bigger = newer).
+      operationId: notifications
+      parameters:
+      - default: 20
+        description: Number of notifications to return.
+        in: query
+        name: limit
+        type: integer
+      - description: Array of types of notifications to exclude (follow, favourite,
+          reblog, mention, poll, follow_request)
+        in: query
+        items:
+          type: string
+        name: exclude_types
+        type: array
+      - description: |-
+          Return only notifications *OLDER* than the given max status ID.
+          The status with the specified ID will not be included in the response.
+        in: query
+        name: max_id
+        type: string
+      - description: |-
+          Return only notifications *NEWER* than the given since status ID.
+          The status with the specified ID will not be included in the response.
+        in: query
+        name: since_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Array of notifications.
+          schema:
+            items:
+              $ref: '#/definitions/notification'
+            type: array
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+        "404":
+          description: not found
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
+      security:
+      - OAuth2 Bearer:
+        - read:notifications
+      summary: Get notifications for currently authorized user.
+      tags:
+      - notifications
   /api/v1/search:
     get:
       description: If statuses are in the result, they will be returned in descending
@@ -4341,6 +4426,7 @@ securityDefinitions:
       read:accounts: grants read access to accounts
       read:blocks: grant read access to blocks
       read:media: grant read access to media
+      read:notifications: grants read access to notifications
       read:search: grant read access to searches
       read:statuses: grants read access to statuses
       read:streaming: grants read access to streaming api

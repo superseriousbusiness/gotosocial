@@ -41,6 +41,7 @@
 //           read:statuses: grants read access to statuses
 //           read:streaming: grants read access to streaming api
 //           read:user: grants read access to user-level info
+//           read:notifications: grants read access to notifications
 //           write: grants write access to everything
 //           write:accounts: grants write access to accounts
 //           write:blocks: grants write access to blocks

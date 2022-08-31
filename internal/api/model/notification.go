@@ -19,6 +19,8 @@
 package model
 
 // Notification represents a notification of an event relevant to the user.
+//
+// swagger:model notification
 type Notification struct {
 	// REQUIRED
 
