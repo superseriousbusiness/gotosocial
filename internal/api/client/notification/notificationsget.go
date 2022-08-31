@@ -29,7 +29,70 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// NotificationsGETHandler serves a list of notifications to the caller, with the desired query parameters
+// NotificationsGETHandler swagger:operation GET /api/v1/notifications notifications
+//
+// Get notifications for currently authorized user.
+//
+// The notifications will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
+//
+// ---
+// tags:
+// - notifications
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: limit
+//   type: integer
+//   description: Number of notifications to return.
+//   default: 20
+//   in: query
+//   required: false
+// - name: exclude_types
+//   type: array
+//   items:
+//     type: string
+//   description: Array of types of notifications to exclude (follow, favourite, reblog, mention, poll, follow_request)
+//   in: query
+//   required: false
+// - name: max_id
+//   type: string
+//   description: |-
+//     Return only notifications *OLDER* than the given max status ID.
+//     The status with the specified ID will not be included in the response.
+//   in: query
+//   required: false
+// - name: since_id
+//   type: string
+//   description: |-
+//     Return only notifications *NEWER* than the given since status ID.
+//     The status with the specified ID will not be included in the response.
+//   in: query
+//   required: false
+//
+// security:
+// - OAuth2 Bearer:
+//   - read:notifications
+//
+// responses:
+//   '200':
+//     name: notifications
+//     description: Array of notifications.
+//     schema:
+//       type: array
+//       items:
+//         "$ref": "#/definitions/notification"
+//   '400':
+//      description: bad request
+//   '401':
+//      description: unauthorized
+//   '404':
+//      description: not found
+//   '406':
+//      description: not acceptable
+//   '500':
+//      description: internal server error
 func (m *Module) NotificationsGETHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
