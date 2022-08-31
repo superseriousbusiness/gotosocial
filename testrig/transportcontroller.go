@@ -24,6 +24,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
@@ -64,7 +65,7 @@ type MockHTTPClient struct {
 	testRemoteServices    map[string]vocab.ActivityStreamsService
 	testRemoteAttachments map[string]RemoteAttachmentFile
 
-	SentMessages map[string][]byte
+	SentMessages sync.Map
 }
 
 // NewMockHTTPClient returns a client that conforms to the pub.HttpClient interface.
@@ -90,8 +91,6 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 	mockHTTPClient.testRemoteServices = NewTestFediServices()
 	mockHTTPClient.testRemoteAttachments = NewTestFediAttachments(relativeMediaPath)
 
-	mockHTTPClient.SentMessages = make(map[string][]byte)
-
 	mockHTTPClient.do = func(req *http.Request) (*http.Response, error) {
 		responseCode := http.StatusNotFound
 		responseBytes := []byte(`{"error":"404 not found"}`)
@@ -103,7 +102,15 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 			if err != nil {
 				panic(err)
 			}
-			mockHTTPClient.SentMessages[req.URL.String()] = b
+
+			if sI, loaded := mockHTTPClient.SentMessages.LoadOrStore(req.URL.String(), [][]byte{b}); loaded {
+				s, ok := sI.([][]byte)
+				if !ok {
+					panic("SentMessages entry wasn't [][]byte")
+				}
+				s = append(s, b)
+				mockHTTPClient.SentMessages.Store(req.URL.String(), s)
+			}
 
 			responseCode = http.StatusOK
 			responseBytes = []byte(`{"ok":"accepted"}`)

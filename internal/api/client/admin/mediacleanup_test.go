@@ -27,6 +27,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type MediaCleanupTestSuite struct {
@@ -47,15 +48,15 @@ func (suite *MediaCleanupTestSuite) TestMediaCleanup() {
 	// we should have OK because our request was valid
 	suite.Equal(http.StatusOK, recorder.Code)
 
-	// Wait for async task to finish
-	time.Sleep(1 * time.Second)
-
-	// Get media we prunes
-	prunedAttachment, err := suite.db.GetAttachmentByID(context.Background(), testAttachment.ID)
-	suite.NoError(err)
-
-	// the media should no longer be cached
-	suite.False(*prunedAttachment.Cached)
+	// the attachment should be updated in the database
+	if !testrig.WaitFor(func() bool {
+		if prunedAttachment, _ := suite.db.GetAttachmentByID(context.Background(), testAttachment.ID); prunedAttachment != nil {
+			return !*prunedAttachment.Cached
+		}
+		return false
+	}) {
+		suite.FailNow("timed out waiting for attachment to be pruned")
+	}
 }
 
 func (suite *MediaCleanupTestSuite) TestMediaCleanupNoArg() {
@@ -73,15 +74,14 @@ func (suite *MediaCleanupTestSuite) TestMediaCleanupNoArg() {
 	// we should have OK because our request was valid
 	suite.Equal(http.StatusOK, recorder.Code)
 
-	// Wait for async task to finish
-	time.Sleep(1 * time.Second)
-
-	// Get media we prunes
-	prunedAttachment, err := suite.db.GetAttachmentByID(context.Background(), testAttachment.ID)
-	suite.NoError(err)
-
-	// the media should no longer be cached
-	suite.False(*prunedAttachment.Cached)
+	if !testrig.WaitFor(func() bool {
+		if prunedAttachment, _ := suite.db.GetAttachmentByID(context.Background(), testAttachment.ID); prunedAttachment != nil {
+			return !*prunedAttachment.Cached
+		}
+		return false
+	}) {
+		suite.FailNow("timed out waiting for attachment to be pruned")
+	}
 }
 
 func (suite *MediaCleanupTestSuite) TestMediaCleanupNotOldEnough() {
@@ -101,7 +101,7 @@ func (suite *MediaCleanupTestSuite) TestMediaCleanupNotOldEnough() {
 	// Wait for async task to finish
 	time.Sleep(1 * time.Second)
 
-	// Get media we prunes
+	// Get media we pruned
 	prunedAttachment, err := suite.db.GetAttachmentByID(context.Background(), testAttachment.ID)
 	suite.NoError(err)
 

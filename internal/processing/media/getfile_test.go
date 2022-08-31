@@ -23,10 +23,10 @@ import (
 	"io"
 	"path"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/suite"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -99,10 +99,16 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncached() {
 	suite.Equal(suite.testRemoteAttachments[testAttachment.RemoteURL].Data, b)
 	suite.Equal(suite.testRemoteAttachments[testAttachment.RemoteURL].ContentType, content.ContentType)
 	suite.EqualValues(len(suite.testRemoteAttachments[testAttachment.RemoteURL].Data), content.ContentLength)
-	time.Sleep(2 * time.Second) // wait a few seconds for the media manager to finish doing stuff
 
 	// the attachment should be updated in the database
-	dbAttachment, err := suite.db.GetAttachmentByID(ctx, testAttachment.ID)
+	var dbAttachment *gtsmodel.MediaAttachment
+	if !testrig.WaitFor(func() bool {
+		dbAttachment, err = suite.db.GetAttachmentByID(ctx, testAttachment.ID)
+		return dbAttachment != nil
+	}) {
+		suite.FailNow("timed out waiting for updated attachment")
+	}
+
 	suite.NoError(err)
 	suite.True(*dbAttachment.Cached)
 
@@ -149,12 +155,13 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncachedInterrupted() {
 		suite.NoError(closer.Close())
 	}
 
-	time.Sleep(2 * time.Second) // wait a few seconds for the media manager to finish doing stuff
-
 	// the attachment should still be updated in the database even though the caller hung up
-	dbAttachment, err := suite.db.GetAttachmentByID(ctx, testAttachment.ID)
-	suite.NoError(err)
-	suite.True(*dbAttachment.Cached)
+	if !testrig.WaitFor(func() bool {
+		dbAttachment, _ := suite.db.GetAttachmentByID(ctx, testAttachment.ID)
+		return *dbAttachment.Cached
+	}) {
+		suite.FailNow("timed out waiting for attachment to be updated")
+	}
 
 	// the file should be back in storage at the same path as before
 	refreshedBytes, err := suite.storage.Get(ctx, testAttachment.File.Path)

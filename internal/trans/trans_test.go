@@ -33,9 +33,9 @@ type TransTestSuite struct {
 
 func (suite *TransTestSuite) SetupTest() {
 	testrig.InitTestConfig()
-   testrig.InitTestLog()
+	testrig.InitTestLog()
 
-   suite.testAccounts = testrig.NewTestAccounts()
+	suite.testAccounts = testrig.NewTestAccounts()
 
 	suite.db = testrig.NewTestDB()
 	testrig.StandardDBSetup(suite.db, nil)

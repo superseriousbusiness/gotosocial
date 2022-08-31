@@ -25,7 +25,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
@@ -33,8 +32,6 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/user"
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -48,15 +45,6 @@ func (suite *UserGetTestSuite) TestGetUser() {
 	derefRequests := testrig.NewTestDereferenceRequests(suite.testAccounts)
 	signedRequest := derefRequests["foss_satan_dereference_zork"]
 	targetAccount := suite.testAccounts["local_account_1"]
-
-	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
-	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
-
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker)
-	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager, fedWorker)
-	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager, clientWorker, fedWorker)
-	userModule := user.New(processor).(*user.Module)
 
 	// setup request
 	recorder := httptest.NewRecorder()
@@ -79,7 +67,7 @@ func (suite *UserGetTestSuite) TestGetUser() {
 	}
 
 	// trigger the function being tested
-	userModule.UsersGETHandler(ctx)
+	suite.userModule.UsersGETHandler(ctx)
 
 	// check response
 	suite.EqualValues(http.StatusOK, recorder.Code)
@@ -110,6 +98,12 @@ func (suite *UserGetTestSuite) TestGetUser() {
 // TestGetUserPublicKeyDeleted checks whether the public key of a deleted account can still be dereferenced.
 // This is needed by remote instances for authenticating delete requests and stuff like that.
 func (suite *UserGetTestSuite) TestGetUserPublicKeyDeleted() {
+	if err := suite.processor.Start(); err != nil {
+		suite.FailNow(err.Error())
+	}
+	defer suite.processor.Stop()
+
+	userModule := user.New(suite.processor).(*user.Module)
 	targetAccount := suite.testAccounts["local_account_1"]
 
 	// first delete the account, as though zork had deleted himself
@@ -123,21 +117,17 @@ func (suite *UserGetTestSuite) TestGetUserPublicKeyDeleted() {
 		DeleteOriginID: targetAccount.ID,
 	})
 
-	// now wait just a sec for it to go through....
-	time.Sleep(1 * time.Second)
+	// wait for the account delete to be processed
+	if !testrig.WaitFor(func() bool {
+		a, _ := suite.db.GetAccountByID(context.Background(), targetAccount.ID)
+		return !a.SuspendedAt.IsZero()
+	}) {
+		suite.FailNow("delete of account timed out")
+	}
 
 	// the dereference we're gonna use
 	derefRequests := testrig.NewTestDereferenceRequests(suite.testAccounts)
 	signedRequest := derefRequests["foss_satan_dereference_zork_public_key"]
-
-	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
-	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
-
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker)
-	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager, fedWorker)
-	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager, clientWorker, fedWorker)
-	userModule := user.New(processor).(*user.Module)
 
 	// setup request
 	recorder := httptest.NewRecorder()
