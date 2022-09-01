@@ -48,7 +48,7 @@ func (d *domainDB) CreateDomainBlock(ctx context.Context, block gtsmodel.DomainB
 	}
 
 	// Cache this domain block
-	d.cache.Put(&block)
+	d.cache.Put(block.Domain, &block)
 
 	return nil
 }
@@ -85,12 +85,12 @@ func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel
 	switch err := q.Scan(ctx); err {
 	// No error, block found
 	case nil:
-		d.cache.Put(block)
+		d.cache.Put(domain, block)
 		return block, nil
 
 	// No error, simply not found
 	case sql.ErrNoRows:
-		d.cache.Put(nil)
+		d.cache.Put(domain, nil)
 		return nil, db.ErrNoEntries
 
 	// Any other db error

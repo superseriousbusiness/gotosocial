@@ -39,13 +39,15 @@ func NewDomainBlockCache() *DomainBlockCache {
 		},
 
 		AddLookups: func(lm *cache.LookupMap[string, string], block *gtsmodel.DomainBlock) {
-			if block.ID != "" {
+			// Block can be equal to nil when sentinel
+			if block != nil && block.ID != "" {
 				lm.Set("id", block.ID, block.Domain)
 			}
 		},
 
 		DeleteLookups: func(lm *cache.LookupMap[string, string], block *gtsmodel.DomainBlock) {
-			if block.ID != "" {
+			// Block can be equal to nil when sentinel
+			if block != nil && block.ID != "" {
 				lm.Delete("id", block.ID)
 			}
 		},
@@ -66,11 +68,18 @@ func (c *DomainBlockCache) GetByDomain(domain string) (*gtsmodel.DomainBlock, bo
 }
 
 // Put places a status in the cache, ensuring that the object place is a copy for thread-safety
-func (c *DomainBlockCache) Put(block *gtsmodel.DomainBlock) {
-	if block == nil || block.Domain == "" {
+func (c *DomainBlockCache) Put(domain string, block *gtsmodel.DomainBlock) {
+	if domain == "" {
 		panic("invalid domain")
 	}
-	c.cache.Set(block.Domain, copyDomainBlock(block))
+
+	if block == nil {
+		// This is a sentinel value for (no block)
+		c.cache.Set(domain, nil)
+	} else {
+		// This is a valid domain block
+		c.cache.Set(domain, copyDomainBlock(block))
+	}
 }
 
 // InvalidateByDomain will invalidate a domain block from the cache by domain name.
