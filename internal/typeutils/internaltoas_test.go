@@ -94,6 +94,25 @@ func (suite *InternalToASTestSuite) TestStatusToAS() {
 	suite.Equal(`{"@context":"https://www.w3.org/ns/activitystreams","attachment":[],"attributedTo":"http://localhost:8080/users/the_mighty_zork","cc":"http://localhost:8080/users/the_mighty_zork/followers","content":"hello everyone!","id":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY","published":"2021-10-20T12:40:37+02:00","replies":{"first":{"id":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?page=true","next":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?only_other_accounts=false\u0026page=true","partOf":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies","type":"CollectionPage"},"id":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies","type":"Collection"},"sensitive":true,"summary":"introduction post","tag":[],"to":"https://www.w3.org/ns/activitystreams#Public","type":"Note","url":"http://localhost:8080/@the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY"}`, string(bytes))
 }
 
+
+func (suite *InternalToASTestSuite) TestStatusWithTagsToAS() {
+	ctx := context.Background()
+	//get the entire status with all tags
+	testStatus, err := suite.db.GetStatusByID(ctx, suite.testStatuses["admin_account_status_1"].ID)
+	suite.NoError(err)
+
+	asStatus, err := suite.typeconverter.StatusToAS(ctx, testStatus)
+	suite.NoError(err)
+
+	ser, err := streams.Serialize(asStatus)
+	suite.NoError(err)
+
+	bytes, err := json.Marshal(ser)
+	suite.NoError(err)
+
+	suite.Equal(`{"@context":["https://www.w3.org/ns/activitystreams","http://joinmastodon.org/ns"],"attachment":{"blurhash":"LNJRdVM{00Rj%Mayt7j[4nWBofRj","mediaType":"image/jpeg","name":"Black and white image of some 50's style text saying: Welcome On Board","type":"Document","url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpeg"},"attributedTo":"http://localhost:8080/users/admin","cc":"http://localhost:8080/users/admin/followers","content":"hello world! #welcome ! first post on the instance :rainbow: !","id":"http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R","published":"2021-10-20T11:36:45Z","replies":{"first":{"id":"http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R/replies?page=true","next":"http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R/replies?only_other_accounts=false\u0026page=true","partOf":"http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R/replies","type":"CollectionPage"},"id":"http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R/replies","type":"Collection"},"sensitive":false,"summary":"","tag":{"icon":{"mediaType":"image/png","type":"Image","url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png"},"id":"http://localhost:8080/emoji/01F8MH9H8E4VG3KDYJR9EGPXCQ","name":":rainbow:","type":"Emoji"},"to":"https://www.w3.org/ns/activitystreams#Public","type":"Note","url":"http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R"}`, string(bytes))
+}
+
 func (suite *InternalToASTestSuite) TestStatusToASWithMentions() {
 	testStatusID := suite.testStatuses["admin_account_status_3"].ID
 	ctx := context.Background()
