@@ -104,6 +104,18 @@ func (a *accountDB) GetAccountByUsernameDomain(ctx context.Context, username str
 	)
 }
 
+func (a *accountDB) GetAccountByPubkeyID(ctx context.Context, id string) (*gtsmodel.Account, db.Error) {
+	return a.getAccount(
+		ctx,
+		func() (*gtsmodel.Account, bool) {
+			return a.cache.GetByPubkeyID(id)
+		},
+		func(account *gtsmodel.Account) error {
+			return a.newAccountQ(account).Where("account.public_key_uri = ?", id).Scan(ctx)
+		},
+	)
+}
+
 func (a *accountDB) getAccount(ctx context.Context, cacheGet func() (*gtsmodel.Account, bool), dbQuery func(*gtsmodel.Account) error) (*gtsmodel.Account, db.Error) {
 	// Attempt to fetch cached account
 	account, cached := cacheGet()

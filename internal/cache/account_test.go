@@ -19,6 +19,7 @@
 package cache_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -59,19 +60,23 @@ func (suite *AccountCacheTestSuite) TestAccountCache() {
 		// Check we can retrieve
 		check, ok = suite.cache.GetByID(account.ID)
 		if !ok && !accountIs(account, check) {
-			suite.Fail("Failed to fetch expected account with ID: %s", account.ID)
+			suite.Fail(fmt.Sprintf("Failed to fetch expected account with ID: %s", account.ID))
 		}
 		check, ok = suite.cache.GetByURI(account.URI)
 		if account.URI != "" && !ok && !accountIs(account, check) {
-			suite.Fail("Failed to fetch expected account with URI: %s", account.URI)
+			suite.Fail(fmt.Sprintf("Failed to fetch expected account with URI: %s", account.URI))
 		}
 		check, ok = suite.cache.GetByURL(account.URL)
 		if account.URL != "" && !ok && !accountIs(account, check) {
-			suite.Fail("Failed to fetch expected account with URL: %s", account.URL)
+			suite.Fail(fmt.Sprintf("Failed to fetch expected account with URL: %s", account.URL))
+		}
+		check, ok = suite.cache.GetByPubkeyID(account.PublicKeyURI)
+		if account.PublicKeyURI != "" && !ok && !accountIs(account, check) {
+			suite.Fail(fmt.Sprintf("Failed to fetch expected account with public key URI: %s", account.PublicKeyURI))
 		}
 		check, ok = suite.cache.GetByUsernameDomain(account.Username, account.Domain)
 		if !ok && !accountIs(account, check) {
-			suite.Fail("Failed to fetch expected account with username/domain: %s/%s", account.Username, account.Domain)
+			suite.Fail(fmt.Sprintf("Failed to fetch expected account with username/domain: %s/%s", account.Username, account.Domain))
 		}
 	}
 }
@@ -81,5 +86,11 @@ func TestAccountCache(t *testing.T) {
 }
 
 func accountIs(account1, account2 *gtsmodel.Account) bool {
-	return account1.ID == account2.ID && account1.URI == account2.URI && account1.URL == account2.URL
+	if account1 == nil || account2 == nil {
+		return account1 == account2
+	}
+	return account1.ID == account2.ID &&
+		account1.URI == account2.URI &&
+		account1.URL == account2.URL &&
+		account1.PublicKeyURI == account2.PublicKeyURI
 }

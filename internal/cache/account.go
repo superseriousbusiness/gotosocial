@@ -37,6 +37,7 @@ func NewAccountCache() *AccountCache {
 		RegisterLookups: func(lm *cache.LookupMap[string, string]) {
 			lm.RegisterLookup("uri")
 			lm.RegisterLookup("url")
+			lm.RegisterLookup("pubkeyid")
 			lm.RegisterLookup("usernamedomain")
 		},
 
@@ -47,6 +48,7 @@ func NewAccountCache() *AccountCache {
 			if url := acc.URL; url != "" {
 				lm.Set("url", url, acc.ID)
 			}
+			lm.Set("pubkeyid", acc.PublicKeyURI, acc.ID)
 			lm.Set("usernamedomain", usernameDomainKey(acc.Username, acc.Domain), acc.ID)
 		},
 
@@ -57,6 +59,7 @@ func NewAccountCache() *AccountCache {
 			if url := acc.URL; url != "" {
 				lm.Delete("url", url)
 			}
+			lm.Delete("pubkeyid", acc.PublicKeyURI)
 			lm.Delete("usernamedomain", usernameDomainKey(acc.Username, acc.Domain))
 		},
 	})
@@ -80,8 +83,14 @@ func (c *AccountCache) GetByURI(uri string) (*gtsmodel.Account, bool) {
 	return c.cache.GetBy("uri", uri)
 }
 
+// GettByUsernameDomain attempts to fetch an account from the cache by its username@domain combo (or just username), you will receive a copy for thread-safety.
 func (c *AccountCache) GetByUsernameDomain(username string, domain string) (*gtsmodel.Account, bool) {
 	return c.cache.GetBy("usernamedomain", usernameDomainKey(username, domain))
+}
+
+// GetByPubkeyID attempts to fetch an account from the cache by its public key URI (ID), you will receive a copy for thread-safety.
+func (c *AccountCache) GetByPubkeyID(id string) (*gtsmodel.Account, bool) {
+	return c.cache.GetBy("pubkeyid", id)
 }
 
 // Put places a account in the cache, ensuring that the object place is a copy for thread-safety

@@ -39,6 +39,9 @@ type Account interface {
 	// GetAccountByUsernameDomain returns one account with the given username and domain, or an error if something goes wrong.
 	GetAccountByUsernameDomain(ctx context.Context, username string, domain string) (*gtsmodel.Account, Error)
 
+	// GetAccountByPubkeyID returns one account with the given public key URI (ID), or an error if something goes wrong.
+	GetAccountByPubkeyID(ctx context.Context, id string) (*gtsmodel.Account, Error)
+
 	// UpdateAccount updates one account by ID.
 	UpdateAccount(ctx context.Context, account *gtsmodel.Account) (*gtsmodel.Account, Error)
 
