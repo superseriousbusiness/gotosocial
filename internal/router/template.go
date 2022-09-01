@@ -21,6 +21,7 @@ package router
 import (
 	"bytes"
 	"fmt"
+	"html"
 	"html/template"
 	"os"
 	"path/filepath"
@@ -107,29 +108,42 @@ func visibilityIcon(visibility model.Visibility) template.HTML {
 // replaces shortcodes in `text` with the emoji in `emojis`
 // text is a template.HTML to affirm that the input of this function is already escaped
 func emojify(emojis []model.Emoji, text template.HTML) template.HTML {
-	emojisMap := make(map[string]model.Emoji)
+	emojisMap := make(map[string]model.Emoji, len(emojis))
+
 	for _, emoji := range emojis {
 		shortcode := ":" + emoji.Shortcode + ":"
 		emojisMap[shortcode] = emoji
 	}
 
-	emojiTemplate, _ := template.New("emojiTemplate").Parse(`{{define "Emoji"}}<img src="{{.URL}}" title=":{{.Shortcode}}:" alt=":{{.Shortcode}}:" class="emoji"/>{{end}}`)
+	out := regexes.ReplaceAllStringFunc(
+		regexes.EmojiFinder,
+		string(text),
+		func(shortcode string, buf *bytes.Buffer) string {
+			// Look for emoji according to this shortcode
+			emoji, ok := emojisMap[shortcode]
+			if !ok {
+				return shortcode
+			}
 
-	emojifyer := func(shortcode string) string {
-		emoji, ok := emojisMap[shortcode]
-		if ok == false {
-			return shortcode
-		}
-		var buff bytes.Buffer
-		err := emojiTemplate.ExecuteTemplate(&buff, "Emoji", emoji)
-		if err != nil {
-			return shortcode
-		}
-		return buff.String()
-	}
+			// Escape raw emoji content
+			safeURL := html.EscapeString(emoji.URL)
+			safeCode := html.EscapeString(emoji.Shortcode)
 
-	out := regexes.EmojiFinder.ReplaceAllStringFunc(string(text), emojifyer)
+			// Write HTML emoji repr to buffer
+			buf.WriteString(`<img src="`)
+			buf.WriteString(safeURL)
+			buf.WriteString(`" title=":`)
+			buf.WriteString(safeCode)
+			buf.WriteString(`:" alt=":`)
+			buf.WriteString(safeCode)
+			buf.WriteString(`:" class="emoji"/>`)
+
+			return buf.String()
+		},
+	)
+
 	/* #nosec G203 */
+	// (this is escaped above)
 	return template.HTML(out)
 }
 
