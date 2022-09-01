@@ -44,7 +44,7 @@ func (p *processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account
 }
 
 func (p *processor) GetLocalByUsername(ctx context.Context, requestingAccount *gtsmodel.Account, username string) (*apimodel.Account, gtserror.WithCode) {
-	targetAccount, err := p.db.GetLocalAccountByUsername(ctx, username)
+	targetAccount, err := p.db.GetAccountByUsernameDomain(ctx, username, "")
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return nil, gtserror.NewErrorNotFound(errors.New("account not found"))

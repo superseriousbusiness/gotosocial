@@ -85,7 +85,7 @@ func (f *federatingDB) InboxesForIRI(c context.Context, iri *url.URL) (inboxIRIs
 			return nil, fmt.Errorf("couldn't extract local account username from uri %s: %s", iri, err)
 		}
 
-		account, err := f.db.GetLocalAccountByUsername(c, localAccountUsername)
+		account, err := f.db.GetAccountByUsernameDomain(c, localAccountUsername, "")
 		if err != nil {
 			return nil, fmt.Errorf("couldn't find local account with username %s: %s", localAccountUsername, err)
 		}

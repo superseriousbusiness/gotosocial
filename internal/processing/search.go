@@ -193,7 +193,7 @@ func (p *processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, 
 func (p *processor) searchAccountByMention(ctx context.Context, authed *oauth.Auth, username string, domain string, resolve bool) (*gtsmodel.Account, error) {
 	// if it's a local account we can skip a whole bunch of stuff
 	if domain == config.GetHost() || domain == config.GetAccountDomain() || domain == "" {
-		maybeAcct, err := p.db.GetLocalAccountByUsername(ctx, username)
+		maybeAcct, err := p.db.GetAccountByUsernameDomain(ctx, username, "")
 		if err == nil || err == db.ErrNoEntries {
 			return maybeAcct, nil
 		}
