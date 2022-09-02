@@ -331,8 +331,8 @@ func (suite *StatusCreateTestSuite) TestReplyToLocalStatus() {
 	suite.Equal(fmt.Sprintf("<p>hello <span class=\"h-card\"><a href=\"http://localhost:8080/@%s\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>%s</span></a></span> this reply should work!</p>", testrig.NewTestAccounts()["local_account_2"].Username, testrig.NewTestAccounts()["local_account_2"].Username), statusReply.Content)
 	suite.False(statusReply.Sensitive)
 	suite.Equal(model.VisibilityPublic, statusReply.Visibility)
-	suite.Equal(testrig.NewTestStatuses()["local_account_2_status_1"].ID, statusReply.InReplyToID)
-	suite.Equal(testrig.NewTestAccounts()["local_account_2"].ID, statusReply.InReplyToAccountID)
+	suite.Equal(testrig.NewTestStatuses()["local_account_2_status_1"].ID, *statusReply.InReplyToID)
+	suite.Equal(testrig.NewTestAccounts()["local_account_2"].ID, *statusReply.InReplyToAccountID)
 	suite.Len(statusReply.Mentions, 1)
 }
 
