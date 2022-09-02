@@ -34,23 +34,22 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 /*
-	publicKeyer is BORROWED DIRECTLY FROM https://github.com/go-fed/apcore/blob/master/ap/util.go
-	Thank you @cj@mastodon.technology ! <3
+publicKeyer is BORROWED DIRECTLY FROM https://github.com/go-fed/apcore/blob/master/ap/util.go
+Thank you @cj@mastodon.technology ! <3
 */
 type publicKeyer interface {
 	GetW3IDSecurityV1PublicKey() vocab.W3IDSecurityV1PublicKeyProperty
 }
 
 /*
-	getPublicKeyFromResponse is adapted from https://github.com/go-fed/apcore/blob/master/ap/util.go
-	Thank you @cj@mastodon.technology ! <3
+getPublicKeyFromResponse is adapted from https://github.com/go-fed/apcore/blob/master/ap/util.go
+Thank you @cj@mastodon.technology ! <3
 */
 func getPublicKeyFromResponse(c context.Context, b []byte, keyID *url.URL) (vocab.W3IDSecurityV1PublicKey, error) {
 	m := make(map[string]interface{})
@@ -161,26 +160,33 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		return nil, errWithCode
 	}
 
-	requestingRemoteAccount := &gtsmodel.Account{}
-	requestingLocalAccount := &gtsmodel.Account{}
-	requestingHost := requestingPublicKeyID.Host
+	var (
+		requestingLocalAccount  *gtsmodel.Account
+		requestingRemoteAccount *gtsmodel.Account
+		requestingHost          = requestingPublicKeyID.Host
+	)
+
 	if host := config.GetHost(); strings.EqualFold(requestingHost, host) {
 		// LOCAL ACCOUNT REQUEST
 		// the request is coming from INSIDE THE HOUSE so skip the remote dereferencing
 		log.Tracef("proceeding without dereference for local public key %s", requestingPublicKeyID)
-		if err := f.db.GetWhere(ctx, []db.Where{{Key: "public_key_uri", Value: requestingPublicKeyID.String()}}, requestingLocalAccount); err != nil {
+
+		requestingLocalAccount, err = f.db.GetAccountByPubkeyID(ctx, requestingPublicKeyID.String())
+		if err != nil {
 			errWithCode := gtserror.NewErrorInternalError(fmt.Errorf("couldn't get account with public key uri %s from the database: %s", requestingPublicKeyID.String(), err))
 			log.Debug(errWithCode)
 			return nil, errWithCode
 		}
+
 		publicKey = requestingLocalAccount.PublicKey
+
 		pkOwnerURI, err = url.Parse(requestingLocalAccount.URI)
 		if err != nil {
 			errWithCode := gtserror.NewErrorBadRequest(err, fmt.Sprintf("couldn't parse public key owner URL %s", requestingLocalAccount.URI))
 			log.Debug(errWithCode)
 			return nil, errWithCode
 		}
-	} else if err := f.db.GetWhere(ctx, []db.Where{{Key: "public_key_uri", Value: requestingPublicKeyID.String()}}, requestingRemoteAccount); err == nil {
+	} else if requestingRemoteAccount, err = f.db.GetAccountByPubkeyID(ctx, requestingPublicKeyID.String()); err == nil {
 		// REMOTE ACCOUNT REQUEST WITH KEY CACHED LOCALLY
 		// this is a remote account and we already have the public key for it so use that
 		log.Tracef("proceeding without dereference for cached public key %s", requestingPublicKeyID)

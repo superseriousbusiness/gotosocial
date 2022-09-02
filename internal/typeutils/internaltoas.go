@@ -439,7 +439,13 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 	}
 
 	// tag -- emojis
-	// TODO
+	for _, emoji := range s.Emojis {
+		asMention, err := c.EmojiToAS(ctx, emoji)
+		if err != nil {
+			return nil, fmt.Errorf("StatusToAS: error converting emoji to AS emoji: %s", err)
+		}
+		tagProp.AppendTootEmoji(asMention)
+	}
 
 	// tag -- hashtags
 	// TODO
@@ -632,6 +638,58 @@ func (c *converter) MentionToAS(ctx context.Context, m *gtsmodel.Mention) (vocab
 	return mention, nil
 }
 
+/*
+	 we're making something like this:
+		{
+			"id": "https://example.com/emoji/123",
+			"type": "Emoji",
+			"name": ":kappa:",
+			"icon": {
+				"type": "Image",
+				"mediaType": "image/png",
+				"url": "https://example.com/files/kappa.png"
+			}
+		}
+*/
+func (c *converter) EmojiToAS(ctx context.Context, e *gtsmodel.Emoji) (vocab.TootEmoji, error) {
+	// create the emoji
+	emoji := streams.NewTootEmoji()
+
+	// set the ID property to the blocks's URI
+	idProp := streams.NewJSONLDIdProperty()
+	idIRI, err := url.Parse(e.URI)
+	if err != nil {
+		return nil, fmt.Errorf("EmojiToAS: error parsing uri %s: %s", e.URI, err)
+	}
+	idProp.Set(idIRI)
+	emoji.SetJSONLDId(idProp)
+
+	nameProp := streams.NewActivityStreamsNameProperty()
+	nameString := fmt.Sprintf(":%s:", e.Shortcode)
+	nameProp.AppendXMLSchemaString(nameString)
+	emoji.SetActivityStreamsName(nameProp)
+
+	iconProperty := streams.NewActivityStreamsIconProperty()
+	iconImage := streams.NewActivityStreamsImage()
+
+	mediaType := streams.NewActivityStreamsMediaTypeProperty()
+	mediaType.Set(e.ImageContentType)
+	iconImage.SetActivityStreamsMediaType(mediaType)
+
+	emojiURLProperty := streams.NewActivityStreamsUrlProperty()
+	emojiURL, err := url.Parse(e.ImageURL)
+	if err != nil {
+		return nil, fmt.Errorf("EmojiToAS: error parsing url %s: %s", e.ImageURL, err)
+	}
+	emojiURLProperty.AppendIRI(emojiURL)
+	iconImage.SetActivityStreamsUrl(emojiURLProperty)
+
+	iconProperty.AppendActivityStreamsImage(iconImage)
+	emoji.SetActivityStreamsIcon(iconProperty)
+
+	return emoji, nil
+}
+
 func (c *converter) AttachmentToAS(ctx context.Context, a *gtsmodel.MediaAttachment) (vocab.ActivityStreamsDocument, error) {
 	// type -- Document
 	doc := streams.NewActivityStreamsDocument()
@@ -667,15 +725,15 @@ func (c *converter) AttachmentToAS(ctx context.Context, a *gtsmodel.MediaAttachm
 }
 
 /*
-	We want to end up with something like this:
+We want to end up with something like this:
 
-	{
-	"@context": "https://www.w3.org/ns/activitystreams",
-	"actor": "https://ondergrond.org/users/dumpsterqueer",
-	"id": "https://ondergrond.org/users/dumpsterqueer#likes/44584",
-	"object": "https://testingtesting123.xyz/users/gotosocial_test_account/statuses/771aea80-a33d-4d6d-8dfd-57d4d2bfcbd4",
-	"type": "Like"
-	}
+{
+"@context": "https://www.w3.org/ns/activitystreams",
+"actor": "https://ondergrond.org/users/dumpsterqueer",
+"id": "https://ondergrond.org/users/dumpsterqueer#likes/44584",
+"object": "https://testingtesting123.xyz/users/gotosocial_test_account/statuses/771aea80-a33d-4d6d-8dfd-57d4d2bfcbd4",
+"type": "Like"
+}
 */
 func (c *converter) FaveToAS(ctx context.Context, f *gtsmodel.StatusFave) (vocab.ActivityStreamsLike, error) {
 	// check if targetStatus is already pinned to this fave, and fetch it if not
@@ -825,7 +883,7 @@ func (c *converter) BoostToAS(ctx context.Context, boostWrapperStatus *gtsmodel.
 }
 
 /*
-	we want to end up with something like this:
+we want to end up with something like this:
 
 	{
 		"@context": "https://www.w3.org/ns/activitystreams",
@@ -895,7 +953,7 @@ func (c *converter) BlockToAS(ctx context.Context, b *gtsmodel.Block) (vocab.Act
 }
 
 /*
-	the goal is to end up with something like this:
+the goal is to end up with something like this:
 
 	{
 		"@context": "https://www.w3.org/ns/activitystreams",
@@ -960,7 +1018,8 @@ func (c *converter) StatusToASRepliesCollection(ctx context.Context, status *gts
 }
 
 /*
-	the goal is to end up with something like this:
+the goal is to end up with something like this:
+
 	{
 		"@context": "https://www.w3.org/ns/activitystreams",
 		"id": "https://example.org/users/whatever/statuses/01FCNEXAGAKPEX1J7VJRPJP490/replies?only_other_accounts=true&page=true",
@@ -1030,7 +1089,8 @@ func (c *converter) StatusURIsToASRepliesPage(ctx context.Context, status *gtsmo
 }
 
 /*
-	the goal is to end up with something like this:
+the goal is to end up with something like this:
+
 	{
 		"id": "https://example.org/users/whatever/outbox?page=true",
 		"type": "OrderedCollectionPage",
@@ -1134,7 +1194,7 @@ func (c *converter) StatusesToASOutboxPage(ctx context.Context, outboxID string,
 }
 
 /*
-	we want something that looks like this:
+we want something that looks like this:
 
 	{
 		"@context": "https://www.w3.org/ns/activitystreams",

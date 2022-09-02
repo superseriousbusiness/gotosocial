@@ -91,15 +91,29 @@ func (a *accountDB) GetAccountByUsernameDomain(ctx context.Context, username str
 			return a.cache.GetByUsernameDomain(username, domain)
 		},
 		func(account *gtsmodel.Account) error {
-			q := a.newAccountQ(account).Where("account.username = ?", username)
+			q := a.newAccountQ(account)
 
 			if domain != "" {
+				q = q.Where("account.username = ?", username)
 				q = q.Where("account.domain = ?", domain)
 			} else {
+				q = q.Where("account.username = ?", strings.ToLower(username))
 				q = q.Where("account.domain IS NULL")
 			}
 
 			return q.Scan(ctx)
+		},
+	)
+}
+
+func (a *accountDB) GetAccountByPubkeyID(ctx context.Context, id string) (*gtsmodel.Account, db.Error) {
+	return a.getAccount(
+		ctx,
+		func() (*gtsmodel.Account, bool) {
+			return a.cache.GetByPubkeyID(id)
+		},
+		func(account *gtsmodel.Account) error {
+			return a.newAccountQ(account).Where("account.public_key_uri = ?", id).Scan(ctx)
 		},
 	)
 }
@@ -215,19 +229,6 @@ func (a *accountDB) SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachmen
 	}
 
 	return nil
-}
-
-func (a *accountDB) GetLocalAccountByUsername(ctx context.Context, username string) (*gtsmodel.Account, db.Error) {
-	account := new(gtsmodel.Account)
-
-	q := a.newAccountQ(account).
-		Where("username = ?", strings.ToLower(username)). // usernames on our instance will always be lowercase
-		WhereGroup(" AND ", whereEmptyOrNull("domain"))
-
-	if err := q.Scan(ctx); err != nil {
-		return nil, a.conn.ProcessError(err)
-	}
-	return account, nil
 }
 
 func (a *accountDB) GetAccountCustomCSSByUsername(ctx context.Context, username string) (string, db.Error) {

@@ -323,3 +323,11 @@ footer {
 		grid-template-columns: 1fr;
 	}
 }
+
+.emoji {
+	width: 2.5ex;
+	height: 2.5ex;
+	margin: -0.5ex 0 0;
+	object-fit: contain;
+	vertical-align: middle;
+}

@@ -129,7 +129,7 @@ func (c *controller) NewTransportForUsername(ctx context.Context, username strin
 		u = username
 	}
 
-	ourAccount, err := c.db.GetLocalAccountByUsername(ctx, u)
+	ourAccount, err := c.db.GetAccountByUsernameDomain(ctx, u, "")
 	if err != nil {
 		return nil, fmt.Errorf("error getting account %s from db: %s", username, err)
 	}
@@ -138,6 +138,7 @@ func (c *controller) NewTransportForUsername(ctx context.Context, username strin
 	if err != nil {
 		return nil, fmt.Errorf("error creating transport for user %s: %s", username, err)
 	}
+
 	return transport, nil
 }
 

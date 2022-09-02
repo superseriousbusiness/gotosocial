@@ -19,6 +19,7 @@
 package cache_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -59,15 +60,15 @@ func (suite *StatusCacheTestSuite) TestStatusCache() {
 		// Check we can retrieve
 		check, ok = suite.cache.GetByID(status.ID)
 		if !ok && !statusIs(status, check) {
-			suite.Fail("Failed to fetch expected account with ID: %s", status.ID)
+			suite.Fail(fmt.Sprintf("Failed to fetch expected account with ID: %s", status.ID))
 		}
 		check, ok = suite.cache.GetByURI(status.URI)
 		if status.URI != "" && !ok && !statusIs(status, check) {
-			suite.Fail("Failed to fetch expected account with URI: %s", status.URI)
+			suite.Fail(fmt.Sprintf("Failed to fetch expected account with URI: %s", status.URI))
 		}
 		check, ok = suite.cache.GetByURL(status.URL)
 		if status.URL != "" && !ok && !statusIs(status, check) {
-			suite.Fail("Failed to fetch expected account with URL: %s", status.URL)
+			suite.Fail(fmt.Sprintf("Failed to fetch expected account with URL: %s", status.URL))
 		}
 	}
 }
@@ -103,5 +104,10 @@ func TestStatusCache(t *testing.T) {
 }
 
 func statusIs(status1, status2 *gtsmodel.Status) bool {
-	return status1.ID == status2.ID && status1.URI == status2.URI && status1.URL == status2.URL
+	if status1 == nil || status2 == nil {
+		return status1 == status2
+	}
+	return status1.ID == status2.ID &&
+		status1.URI == status2.URI &&
+		status1.URL == status2.URL
 }

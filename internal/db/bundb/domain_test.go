@@ -21,6 +21,7 @@ package bundb_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -33,10 +34,15 @@ type DomainTestSuite struct {
 func (suite *DomainTestSuite) TestIsDomainBlocked() {
 	ctx := context.Background()
 
+	now := time.Now()
+
 	domainBlock := &gtsmodel.DomainBlock{
 		ID:                 "01G204214Y9TNJEBX39C7G88SW",
 		Domain:             "some.bad.apples",
+		CreatedAt:          now,
+		UpdatedAt:          now,
 		CreatedByAccountID: suite.testAccounts["admin_account"].ID,
+		CreatedByAccount:   suite.testAccounts["admin_account"],
 	}
 
 	// no domain block exists for the given domain yet
@@ -44,7 +50,8 @@ func (suite *DomainTestSuite) TestIsDomainBlocked() {
 	suite.NoError(err)
 	suite.False(blocked)
 
-	suite.db.Put(ctx, domainBlock)
+	err = suite.db.CreateDomainBlock(ctx, *domainBlock)
+	suite.NoError(err)
 
 	// domain block now exists
 	blocked, err = suite.db.IsDomainBlocked(ctx, domainBlock.Domain)
