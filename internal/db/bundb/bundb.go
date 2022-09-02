@@ -173,6 +173,9 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 	notifCache.SetTTL(time.Minute*5, false)
 	notifCache.Start(time.Second * 10)
 
+	// Prepare domain block cache
+	blockCache := cache.NewDomainBlockCache()
+
 	ps := &bunDBService{
 		Account: accounts,
 		Admin: &adminDB{
@@ -182,7 +185,8 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 			conn: conn,
 		},
 		Domain: &domainDB{
-			conn: conn,
+			conn:  conn,
+			cache: blockCache,
 		},
 		Emoji: &emojiDB{
 			conn: conn,

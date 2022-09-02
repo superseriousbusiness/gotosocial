@@ -20,6 +20,7 @@ package admin
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -41,22 +42,21 @@ func (p *processor) DomainBlockCreate(ctx context.Context, account *gtsmodel.Acc
 	domain = strings.ToLower(domain)
 
 	// first check if we already have a block -- if err == nil we already had a block so we can skip a whole lot of work
-	domainBlock := &gtsmodel.DomainBlock{}
-	err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: domain}}, domainBlock)
+	block, err := p.db.GetDomainBlock(ctx, domain)
 	if err != nil {
-		if err != db.ErrNoEntries {
+		if !errors.Is(err, db.ErrNoEntries) {
 			// something went wrong in the DB
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("DomainBlockCreate: db error checking for existence of domain block %s: %s", domain, err))
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error checking for existence of domain block %s: %s", domain, err))
 		}
 
 		// there's no block for this domain yet so create one
 		// note: we take a new ulid from timestamp here in case we need to sort blocks
 		blockID, err := id.NewULID()
 		if err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("DomainBlockCreate: error creating id for new domain block %s: %s", domain, err))
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error creating id for new domain block %s: %s", domain, err))
 		}
 
-		domainBlock = &gtsmodel.DomainBlock{
+		newBlock := gtsmodel.DomainBlock{
 			ID:                 blockID,
 			Domain:             domain,
 			CreatedByAccountID: account.ID,
@@ -66,20 +66,22 @@ func (p *processor) DomainBlockCreate(ctx context.Context, account *gtsmodel.Acc
 			SubscriptionID:     subscriptionID,
 		}
 
-		// put the new block in the database
-		if err := p.db.Put(ctx, domainBlock); err != nil {
-			if err != db.ErrNoEntries {
-				// there's a real error creating the block
-				return nil, gtserror.NewErrorInternalError(fmt.Errorf("DomainBlockCreate: db error putting new domain block %s: %s", domain, err))
-			}
+		// Insert the new block into the database
+		if err := p.db.CreateDomainBlock(ctx, newBlock); err != nil {
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error putting new domain block %s: %s", domain, err))
 		}
-		// process the side effects of the domain block asynchronously since it might take a while
-		go p.initiateDomainBlockSideEffects(context.Background(), account, domainBlock) // TODO: add this to a queuing system so it can retry/resume
+
+		// Set the newly created block
+		block = &newBlock
+
+		// Process the side effects of the domain block asynchronously since it might take a while
+		go p.initiateDomainBlockSideEffects(ctx, account, block)
 	}
 
-	apiDomainBlock, err := p.tc.DomainBlockToAPIDomainBlock(ctx, domainBlock, false)
+	// Convert our gts model domain block into an API model
+	apiDomainBlock, err := p.tc.DomainBlockToAPIDomainBlock(ctx, block, false)
 	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("DomainBlockCreate: error converting domain block to frontend/api representation %s: %s", domain, err))
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting domain block to frontend/api representation %s: %s", domain, err))
 	}
 
 	return apiDomainBlock, nil
@@ -92,7 +94,6 @@ func (p *processor) DomainBlockCreate(ctx context.Context, account *gtsmodel.Acc
 // 3. Select all accounts from this instance and pass them through the delete functionality of the processor.
 func (p *processor) initiateDomainBlockSideEffects(ctx context.Context, account *gtsmodel.Account, block *gtsmodel.DomainBlock) {
 	l := log.WithFields(kv.Fields{
-
 		{"domain", block.Domain},
 	}...)
 

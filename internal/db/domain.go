@@ -21,10 +21,21 @@ package db
 import (
 	"context"
 	"net/url"
+
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 // Domain contains DB functions related to domains and domain blocks.
 type Domain interface {
+	// CreateDomainBlock ...
+	CreateDomainBlock(ctx context.Context, block gtsmodel.DomainBlock) Error
+
+	// GetDomainBlock ...
+	GetDomainBlock(ctx context.Context, domain string) (*gtsmodel.DomainBlock, Error)
+
+	// DeleteDomainBlock ...
+	DeleteDomainBlock(ctx context.Context, domain string) Error
+
 	// IsDomainBlocked checks if an instance-level domain block exists for the given domain string (eg., `example.org`).
 	IsDomainBlocked(ctx context.Context, domain string) (bool, Error)
 
