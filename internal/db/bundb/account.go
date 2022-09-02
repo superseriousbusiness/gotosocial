@@ -232,15 +232,9 @@ func (a *accountDB) SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachmen
 }
 
 func (a *accountDB) GetAccountCustomCSSByUsername(ctx context.Context, username string) (string, db.Error) {
-	account := new(gtsmodel.Account)
-
-	if err := a.conn.NewSelect().
-		Model(account).
-		Column("custom_css").
-		Where("username = ?", strings.ToLower(username)). // usernames on our instance will always be lowercase
-		WhereGroup(" AND ", whereEmptyOrNull("domain")).
-		Scan(ctx); err != nil {
-		return "", a.conn.ProcessError(err)
+	account, err := a.GetAccountByUsernameDomain(ctx, username, "")
+	if err != nil {
+		return "", err
 	}
 
 	return account.CustomCSS, nil
