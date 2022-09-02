@@ -157,7 +157,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		return nil, false, errors.New("username was empty")
 	}
 
-	receivingAccount, err := f.db.GetLocalAccountByUsername(ctx, username)
+	receivingAccount, err := f.db.GetAccountByUsernameDomain(ctx, username, "")
 	if err != nil {
 		return nil, false, fmt.Errorf("could not fetch receiving account with username %s: %s", username, err)
 	}

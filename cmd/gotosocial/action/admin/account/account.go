@@ -87,7 +87,7 @@ var Confirm action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	a, err := dbConn.GetLocalAccountByUsername(ctx, username)
+	a, err := dbConn.GetAccountByUsernameDomain(ctx, username, "")
 	if err != nil {
 		return err
 	}
@@ -125,7 +125,7 @@ var Promote action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	a, err := dbConn.GetLocalAccountByUsername(ctx, username)
+	a, err := dbConn.GetAccountByUsernameDomain(ctx, username, "")
 	if err != nil {
 		return err
 	}
@@ -161,7 +161,7 @@ var Demote action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	a, err := dbConn.GetLocalAccountByUsername(ctx, username)
+	a, err := dbConn.GetAccountByUsernameDomain(ctx, username, "")
 	if err != nil {
 		return err
 	}
@@ -197,7 +197,7 @@ var Disable action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	a, err := dbConn.GetLocalAccountByUsername(ctx, username)
+	a, err := dbConn.GetAccountByUsernameDomain(ctx, username, "")
 	if err != nil {
 		return err
 	}
@@ -247,7 +247,7 @@ var Password action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	a, err := dbConn.GetLocalAccountByUsername(ctx, username)
+	a, err := dbConn.GetAccountByUsernameDomain(ctx, username, "")
 	if err != nil {
 		return err
 	}

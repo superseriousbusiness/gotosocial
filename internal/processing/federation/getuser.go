@@ -32,7 +32,7 @@ import (
 
 func (p *processor) GetUser(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
 	// get the account the request is referring to
-	requestedAccount, err := p.db.GetLocalAccountByUsername(ctx, requestedUsername)
+	requestedAccount, err := p.db.GetAccountByUsernameDomain(ctx, requestedUsername, "")
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
 	}

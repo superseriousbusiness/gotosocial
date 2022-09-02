@@ -46,7 +46,7 @@ func GetParseMentionFunc(dbConn db.DB, federator federation.Federator) gtsmodel.
 
 		var mentionedAccount *gtsmodel.Account
 		if domain == "" || domain == config.GetHost() || domain == config.GetAccountDomain() {
-			localAccount, err := dbConn.GetLocalAccountByUsername(ctx, username)
+			localAccount, err := dbConn.GetAccountByUsernameDomain(ctx, username, "")
 			if err != nil {
 				return nil, err
 			}

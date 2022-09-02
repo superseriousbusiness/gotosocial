@@ -127,7 +127,7 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 		// to be a local account, so don't resolve
 		skipResolve = true
 
-		if a, dbErr := d.db.GetLocalAccountByUsername(ctx, params.RemoteAccountUsername); dbErr == nil {
+		if a, dbErr := d.db.GetAccountByUsernameDomain(ctx, params.RemoteAccountUsername, ""); dbErr == nil {
 			foundAccount = a
 		} else if dbErr != db.ErrNoEntries {
 			err = fmt.Errorf("GetRemoteAccount: database error looking for local account with username %s: %s", params.RemoteAccountUsername, err)

@@ -137,7 +137,7 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 	// validate & update site contact account if it's set on the form
 	if form.ContactUsername != nil {
 		// make sure the account with the given username exists in the db
-		contactAccount, err := p.db.GetLocalAccountByUsername(ctx, *form.ContactUsername)
+		contactAccount, err := p.db.GetAccountByUsernameDomain(ctx, *form.ContactUsername, "")
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, fmt.Sprintf("account with username %s not retrievable", *form.ContactUsername))
 		}

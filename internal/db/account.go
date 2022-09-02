@@ -42,9 +42,6 @@ type Account interface {
 	// UpdateAccount updates one account by ID.
 	UpdateAccount(ctx context.Context, account *gtsmodel.Account) (*gtsmodel.Account, Error)
 
-	// GetLocalAccountByUsername returns an account on this instance by its username.
-	GetLocalAccountByUsername(ctx context.Context, username string) (*gtsmodel.Account, Error)
-
 	// GetAccountFaves fetches faves/likes created by the target accountID.
 	GetAccountFaves(ctx context.Context, accountID string) ([]*gtsmodel.StatusFave, Error)
 

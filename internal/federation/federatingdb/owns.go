@@ -70,7 +70,7 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 		if err != nil {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
-		if _, err := f.db.GetLocalAccountByUsername(ctx, username); err != nil {
+		if _, err := f.db.GetAccountByUsernameDomain(ctx, username, ""); err != nil {
 			if err == db.ErrNoEntries {
 				// there are no entries for this username
 				return false, nil
@@ -87,7 +87,7 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 		if err != nil {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
-		if _, err := f.db.GetLocalAccountByUsername(ctx, username); err != nil {
+		if _, err := f.db.GetAccountByUsernameDomain(ctx, username, ""); err != nil {
 			if err == db.ErrNoEntries {
 				// there are no entries for this username
 				return false, nil
@@ -104,7 +104,7 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 		if err != nil {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
-		if _, err := f.db.GetLocalAccountByUsername(ctx, username); err != nil {
+		if _, err := f.db.GetAccountByUsernameDomain(ctx, username, ""); err != nil {
 			if err == db.ErrNoEntries {
 				// there are no entries for this username
 				return false, nil
@@ -121,7 +121,7 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 		if err != nil {
 			return false, fmt.Errorf("error parsing like path for url %s: %s", id.String(), err)
 		}
-		if _, err := f.db.GetLocalAccountByUsername(ctx, username); err != nil {
+		if _, err := f.db.GetAccountByUsernameDomain(ctx, username, ""); err != nil {
 			if err == db.ErrNoEntries {
 				// there are no entries for this username
 				return false, nil
@@ -146,7 +146,7 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 		if err != nil {
 			return false, fmt.Errorf("error parsing block path for url %s: %s", id.String(), err)
 		}
-		if _, err := f.db.GetLocalAccountByUsername(ctx, username); err != nil {
+		if _, err := f.db.GetAccountByUsernameDomain(ctx, username, ""); err != nil {
 			if err == db.ErrNoEntries {
 				// there are no entries for this username
 				return false, nil
