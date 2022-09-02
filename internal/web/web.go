@@ -52,7 +52,7 @@ type Module struct {
 }
 
 // New returns a new api.ClientModule for web pages.
-func New(processor processing.Processor) (api.ClientModule, error) {
+func New(processor processing.Processor) api.ClientModule {
 	assetsETagCache := cache.New[string, eTagCacheEntry]()
 	assetsETagCache.SetTTL(time.Hour, false)
 	assetsETagCache.Start(time.Minute)
@@ -60,7 +60,7 @@ func New(processor processing.Processor) (api.ClientModule, error) {
 	return &Module{
 		processor:       processor,
 		assetsETagCache: assetsETagCache,
-	}, nil
+	}
 }
 
 // Route satisfies the RESTAPIModule interface
