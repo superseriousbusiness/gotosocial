@@ -6,12 +6,12 @@
 		{{if .SpoilerText}}
 		<input class="spoiler" id="hideSpoiler-{{.ID}}" type="checkbox" style="display: none" aria-hidden="true" checked="true" />
 		<div class="spoiler">
-			<span class="spoiler-text">{{.SpoilerText}}</span>
+			<span class="spoiler-text">{{emojify .Emojis (escape .SpoilerText)}}</span>
 			<label class="button spoiler-label" for="hideSpoiler-{{.ID}}" tabindex="0">Toggle visibility</label>
 		</div>
 		{{end}}
 		<div class="content">
-			{{.Content |noescape}}
+			{{emojify .Emojis (noescape .Content)}}
 		</div>
 	</div>
 	{{with .MediaAttachments}}
