@@ -103,6 +103,15 @@ func (suite *ConfigValidateTestSuite) TestValidateConfigNoProtocol() {
 	suite.EqualError(err, "protocol must be set")
 }
 
+func (suite *ConfigValidateTestSuite) TestValidateConfigNoWebAssetBaseDir() {
+	testrig.InitTestConfig()
+
+	config.SetWebAssetBaseDir("")
+
+	err := config.Validate()
+	suite.EqualError(err, "web-asset-base-dir must be set")
+}
+
 func (suite *ConfigValidateTestSuite) TestValidateConfigNoProtocolOrHost() {
 	testrig.InitTestConfig()
 
