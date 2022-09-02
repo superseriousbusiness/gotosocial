@@ -144,6 +144,8 @@ type TypeConverter interface {
 	FollowToAS(ctx context.Context, f *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (vocab.ActivityStreamsFollow, error)
 	// MentionToAS converts a gts model mention into an activity streams Mention, suitable for federation
 	MentionToAS(ctx context.Context, m *gtsmodel.Mention) (vocab.ActivityStreamsMention, error)
+	// EmojiToAS converts a gts emoji into a mastodon ns Emoji, suitable for federation
+	EmojiToAS(ctx context.Context, e *gtsmodel.Emoji) (vocab.TootEmoji, error)
 	// AttachmentToAS converts a gts model media attachment into an activity streams Attachment, suitable for federation
 	AttachmentToAS(ctx context.Context, a *gtsmodel.MediaAttachment) (vocab.ActivityStreamsDocument, error)
 	// FaveToAS converts a gts model status fave into an activityStreams LIKE, suitable for federation.
