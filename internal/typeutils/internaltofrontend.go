@@ -190,6 +190,9 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		Suspended:      suspended,
 	}
 
+	c.ensureAvatar(accountFrontend)
+	c.ensureHeader(accountFrontend)
+
 	return accountFrontend, nil
 }
 
