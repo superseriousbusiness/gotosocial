@@ -23,7 +23,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"strings"
 
@@ -98,21 +97,6 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 	if errWithCode != nil {
 		api.ErrorHandler(c, errWithCode, instanceGet)
 		return
-	}
-
-	// pick a random dummy avatar if this account avatar isn't set yet
-	if account.Avatar == "" && len(m.defaultAvatars) > 0 {
-		//nolint:gosec
-		randomIndex := rand.Intn(len(m.defaultAvatars))
-		dummyAvatar := m.defaultAvatars[randomIndex]
-		account.Avatar = dummyAvatar
-		for _, i := range statusResp.Items {
-			s, ok := i.(*apimodel.Status)
-			if !ok {
-				panic("timelineable was not *apimodel.Status")
-			}
-			s.Account.Avatar = dummyAvatar
-		}
 	}
 
 	c.HTML(http.StatusOK, "profile.tmpl", gin.H{

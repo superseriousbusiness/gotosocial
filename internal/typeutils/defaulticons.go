@@ -1,0 +1,138 @@
+/*
+   GoToSocial
+   Copyright (C) 2021-2022 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+package typeutils
+
+import (
+	"io/ioutil"
+	"math/rand"
+	"path/filepath"
+	"strings"
+
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
+)
+
+const defaultHeaderPath = "/assets/default_header.png"
+
+// populateDefaultAvatars returns a slice of standard avatars found
+// in the path [web-assets-base-dir]/default_avatars. The slice
+// entries correspond to the relative url via which they can be
+// retrieved from the server.
+//
+// So for example, an avatar called default.jpeg would be returned
+// in the slice as "/assets/default_avatars/default.jpeg".
+func populateDefaultAvatars() (defaultAvatars []string) {
+	webAssetsAbsFilePath, err := filepath.Abs(config.GetWebAssetBaseDir())
+	if err != nil {
+		log.Panicf("populateDefaultAvatars: error getting abs path for web assets: %s", err)
+	}
+
+	defaultAvatarsAbsFilePath := filepath.Join(webAssetsAbsFilePath, "default_avatars")
+	defaultAvatarFiles, err := ioutil.ReadDir(defaultAvatarsAbsFilePath)
+	if err != nil {
+		log.Warnf("populateDefaultAvatars: error reading default avatars at %s: %s", defaultAvatarsAbsFilePath, err)
+		return
+	}
+
+	for _, f := range defaultAvatarFiles {
+		// ignore directories
+		if f.IsDir() {
+			continue
+		}
+
+		// ignore files bigger than 50kb
+		if f.Size() > 50000 {
+			continue
+		}
+
+		// get the name of the file, eg avatar.jpeg
+		fileName := f.Name()
+
+		// get just the .jpeg, for example, from avatar.jpeg
+		extensionWithDot := filepath.Ext(fileName)
+
+		// remove the leading . to just get, eg, jpeg
+		extension := strings.TrimPrefix(extensionWithDot, ".")
+
+		// take only files with simple extensions
+		// that we know will work OK as avatars
+		switch strings.ToLower(extension) {
+		case "svg", "jpeg", "jpg", "gif", "png":
+			avatarURL := config.GetProtocol() + "://" + config.GetHost() + "/assets/default_avatars/" + fileName
+			defaultAvatars = append(defaultAvatars, avatarURL)
+		default:
+			continue
+		}
+	}
+
+	return
+}
+
+// ensureAvatar ensures that the given account has a value set
+// for the avatar URL.
+//
+// If no value is set, an avatar will be selected at random from
+// the available default avatars. This selection is 'sticky', so
+// the same account will get the same result on subsequent calls.
+//
+// If a value for the avatar URL is already set, this function is
+// a no-op.
+//
+// If there are no default avatars available, this function is a
+// no-op.
+func (c *converter) ensureAvatar(account *apimodel.Account) {
+	if account.Avatar == "" {
+		if len(c.defaultAvatars) == 0 {
+			// we can't ensure dick
+			return
+		}
+
+		if avatarI, ok := c.randAvatars.Load(account.ID); ok {
+			avatar, ok := avatarI.(string)
+			if !ok {
+				panic("avatarI was not a string")
+			}
+			account.Avatar = avatar
+			account.AvatarStatic = avatar
+		} else {
+			//nolint:gosec
+			randomIndex := rand.Intn(len(c.defaultAvatars))
+			avatar := c.defaultAvatars[randomIndex]
+			account.Avatar = avatar
+			account.AvatarStatic = avatar
+			c.randAvatars.Store(account.ID, avatar)
+		}
+	}
+}
+
+// EnsureAvatar ensures that the given account has a value set
+// for the header URL.
+//
+// If no value is set, the default header will be set.
+//
+// If a value for the header URL is already set, this function is
+// a no-op.
+func (c *converter) ensureHeader(account *apimodel.Account) {
+	if account.Header == "" && account.HeaderStatic == "" {
+		h := config.GetProtocol() + "://" + config.GetHost() + defaultHeaderPath
+		account.Header = h
+		account.HeaderStatic = h
+	}
+}

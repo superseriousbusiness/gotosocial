@@ -38,15 +38,15 @@ func (m *Module) UserPanelHandler(c *gin.Context) {
 	c.HTML(http.StatusOK, "frontend.tmpl", gin.H{
 		"instance": instance,
 		"stylesheets": []string{
-			assetsPath + "/Fork-Awesome/css/fork-awesome.min.css",
-			assetsPath + "/dist/_colors.css",
-			assetsPath + "/dist/base.css",
-			assetsPath + "/dist/panels-base.css",
-			assetsPath + "/dist/panels-user-style.css",
+			assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
+			assetsPathPrefix + "/dist/_colors.css",
+			assetsPathPrefix + "/dist/base.css",
+			assetsPathPrefix + "/dist/panels-base.css",
+			assetsPathPrefix + "/dist/panels-user-style.css",
 		},
 		"javascript": []string{
-			assetsPath + "/dist/bundle.js",
-			assetsPath + "/dist/user-panel.js",
+			assetsPathPrefix + "/dist/bundle.js",
+			assetsPathPrefix + "/dist/user-panel.js",
 		},
 	})
 }
@@ -63,15 +63,15 @@ func (m *Module) AdminPanelHandler(c *gin.Context) {
 	c.HTML(http.StatusOK, "frontend.tmpl", gin.H{
 		"instance": instance,
 		"stylesheets": []string{
-			assetsPath + "/Fork-Awesome/css/fork-awesome.min.css",
-			assetsPath + "/dist/_colors.css",
-			assetsPath + "/dist/base.css",
-			assetsPath + "/dist/panels-base.css",
-			assetsPath + "/dist/panels-admin-style.css",
+			assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
+			assetsPathPrefix + "/dist/_colors.css",
+			assetsPathPrefix + "/dist/base.css",
+			assetsPathPrefix + "/dist/panels-base.css",
+			assetsPathPrefix + "/dist/panels-admin-style.css",
 		},
 		"javascript": []string{
-			assetsPath + "/dist/bundle.js",
-			assetsPath + "/dist/admin-panel.js",
+			assetsPathPrefix + "/dist/bundle.js",
+			assetsPathPrefix + "/dist/admin-panel.js",
 		},
 	})
 }
