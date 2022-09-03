@@ -31,7 +31,7 @@ type MediaAttachment struct {
 	StatusID          string           `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                        // ID of the status to which this is attached
 	URL               string           `validate:"required_without=RemoteURL,omitempty,url" bun:",nullzero"`                           // Where can the attachment be retrieved on *this* server
 	RemoteURL         string           `validate:"required_without=URL,omitempty,url" bun:",nullzero"`                                 // Where can the attachment be retrieved on a remote server (empty for local media)
-	Type              FileType         `validate:"oneof=Image Gif Audio Video Unknown" bun:",nullzero,notnull"`                        // Type of file (image/gif/audio/video)
+	Type              FileType         `validate:"oneof=Image Gifv Audio Video Unknown" bun:",nullzero,notnull"`                       // Type of file (image/gifv/audio/video)
 	FileMeta          FileMeta         `validate:"required" bun:",embed:filemeta_,nullzero,notnull"`                                   // Metadata about the file
 	AccountID         string           `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                                 // To which account does this attachment belong
 	Account           *Account         `validate:"-" bun:"rel:belongs-to,join:account_id=id"`                                          // Account corresponding to accountID
@@ -80,8 +80,8 @@ type FileType string
 
 // MediaAttachment file types.
 const (
-	FileTypeImage   FileType = "Image"   // FileTypeImage is for jpegs and pngs
-	FileTypeGif     FileType = "Gif"     // FileTypeGif is for native gifs and soundless videos that have been converted to gifs
+	FileTypeImage   FileType = "Image"   // FileTypeImage is for jpegs, pngs, and standard gifs
+	FileTypeGifv    FileType = "Gifv"    // FileTypeGif is for soundless looping videos that behave like gifs
 	FileTypeAudio   FileType = "Audio"   // FileTypeAudio is for audio-only files (no video)
 	FileTypeVideo   FileType = "Video"   // FileTypeVideo is for files with audio + visual
 	FileTypeUnknown FileType = "Unknown" // FileTypeUnknown is for unknown file types (surprise surprise!)
