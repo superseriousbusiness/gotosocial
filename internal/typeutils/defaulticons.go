@@ -98,28 +98,26 @@ func populateDefaultAvatars() (defaultAvatars []string) {
 // If there are no default avatars available, this function is a
 // no-op.
 func (c *converter) ensureAvatar(account *apimodel.Account) {
-	if account.Avatar == "" {
-		if len(c.defaultAvatars) == 0 {
-			// we can't ensure dick
-			return
-		}
-
-		if avatarI, ok := c.randAvatars.Load(account.ID); ok {
-			avatar, ok := avatarI.(string)
-			if !ok {
-				panic("avatarI was not a string")
-			}
-			account.Avatar = avatar
-			account.AvatarStatic = avatar
-		} else {
-			//nolint:gosec
-			randomIndex := rand.Intn(len(c.defaultAvatars))
-			avatar := c.defaultAvatars[randomIndex]
-			account.Avatar = avatar
-			account.AvatarStatic = avatar
-			c.randAvatars.Store(account.ID, avatar)
-		}
+	if (account.Avatar != "" && account.AvatarStatic != "") || len(c.defaultAvatars) == 0 {
+		return
 	}
+
+	var avatar string
+	if avatarI, ok := c.randAvatars.Load(account.ID); ok {
+		// we already have a default avatar stored for this account
+		avatar, ok = avatarI.(string)
+		if !ok {
+			panic("avatarI was not a string")
+		}
+	} else {
+		// select + store a default avatar for this account at random
+		randomIndex := rand.Intn(len(c.defaultAvatars)) //nolint:gosec
+		avatar = c.defaultAvatars[randomIndex]
+		c.randAvatars.Store(account.ID, avatar)
+	}
+
+	account.Avatar = avatar
+	account.AvatarStatic = avatar
 }
 
 // EnsureAvatar ensures that the given account has a value set
@@ -130,9 +128,11 @@ func (c *converter) ensureAvatar(account *apimodel.Account) {
 // If a value for the header URL is already set, this function is
 // a no-op.
 func (c *converter) ensureHeader(account *apimodel.Account) {
-	if account.Header == "" && account.HeaderStatic == "" {
-		h := config.GetProtocol() + "://" + config.GetHost() + defaultHeaderPath
-		account.Header = h
-		account.HeaderStatic = h
+	if account.Header != "" && account.HeaderStatic != "" {
+		return
 	}
+
+	h := config.GetProtocol() + "://" + config.GetHost() + defaultHeaderPath
+	account.Header = h
+	account.HeaderStatic = h
 }
