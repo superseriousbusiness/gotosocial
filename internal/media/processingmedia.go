@@ -313,7 +313,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	var clean io.Reader
 	switch extension {
 	case mimeGif:
-		p.attachment.Type = gtsmodel.FileTypeGif
+		p.attachment.Type = gtsmodel.FileTypeImage
 		clean = multiReader // nothing to clean from a gif
 	case mimeJpeg, mimePng:
 		p.attachment.Type = gtsmodel.FileTypeImage
