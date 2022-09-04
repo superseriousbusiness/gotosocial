@@ -30,10 +30,12 @@ type Status struct {
 	CreatedAt string `json:"created_at"`
 	// ID of the status being replied to.
 	// example: 01FBVD42CQ3ZEEVMW180SBX03B
-	InReplyToID string `json:"in_reply_to_id"`
+	// nullable: true
+	InReplyToID *string `json:"in_reply_to_id"`
 	// ID of the account being replied to.
 	// example: 01FBVD42CQ3ZEEVMW180SBX03B
-	InReplyToAccountID string `json:"in_reply_to_account_id"`
+	// nullable: true
+	InReplyToAccountID *string `json:"in_reply_to_account_id"`
 	// Status contains sensitive content.
 	// example: false
 	Sensitive bool `json:"sensitive"`
@@ -75,7 +77,7 @@ type Status struct {
 	// nullable: true
 	Reblog *StatusReblogged `json:"reblog"`
 	// The application used to post this status, if visible.
-	Application *Application `json:"application"`
+	Application *Application `json:"application,omitempty"`
 	// The account that authored this status.
 	Account *Account `json:"account"`
 	// Media that is attached to this status.
@@ -87,13 +89,15 @@ type Status struct {
 	// Custom emoji to be used when rendering status content.
 	Emojis []Emoji `json:"emojis"`
 	// Preview card for links included within status content.
+	// nullable: true
 	Card *Card `json:"card"`
 	// The poll attached to the status.
+	// nullable: true
 	Poll *Poll `json:"poll"`
 	// Plain-text source of a status. Returned instead of content when status is deleted,
 	// so the user may redraft from the source text without the client having to reverse-engineer
 	// the original text from the HTML content.
-	Text string `json:"text"`
+	Text string `json:"text,omitempty"`
 }
 
 /*

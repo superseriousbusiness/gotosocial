@@ -108,10 +108,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	// build web module
-	webModule, err := web.New(processor)
-	if err != nil {
-		return fmt.Errorf("error creating web module: %s", err)
-	}
+	webModule := web.New(processor)
 
 	// build client api modules
 	authModule := auth.New(dbService, idp, processor)

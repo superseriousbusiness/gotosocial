@@ -114,7 +114,7 @@ func (m *Module) cacheControlMiddleware(fs http.FileSystem) gin.HandlerFunc {
 		if !strings.HasPrefix(upath, "/") {
 			upath = "/" + upath
 		}
-		assetFilePath := strings.TrimPrefix(path.Clean(upath), assetsPath)
+		assetFilePath := strings.TrimPrefix(path.Clean(upath), assetsPathPrefix)
 
 		// either fetch etag from ttlcache or generate it
 		eTag, err := m.getAssetETag(assetFilePath, fs)

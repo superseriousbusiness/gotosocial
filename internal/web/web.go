@@ -20,17 +20,12 @@ package web
 
 import (
 	"errors"
-	"fmt"
-	"io/ioutil"
 	"net/http"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"codeberg.org/gruf/go-cache/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
@@ -44,7 +39,7 @@ const (
 	statusPath       = profilePath + "/statuses/:" + statusIDKey
 	adminPanelPath   = "/admin"
 	userPanelpath    = "/user"
-	assetsPath       = "/assets"
+	assetsPathPrefix = "/assets"
 
 	tokenParam  = "token"
 	usernameKey = "username"
@@ -53,78 +48,26 @@ const (
 
 // Module implements the api.ClientModule interface for web pages.
 type Module struct {
-	processor            processing.Processor
-	webAssetsAbsFilePath string
-	assetsETagCache      cache.Cache[string, eTagCacheEntry]
-	defaultAvatars       []string
+	processor       processing.Processor
+	assetsETagCache cache.Cache[string, eTagCacheEntry]
 }
 
 // New returns a new api.ClientModule for web pages.
-func New(processor processing.Processor) (api.ClientModule, error) {
-	webAssetsBaseDir := config.GetWebAssetBaseDir()
-	if webAssetsBaseDir == "" {
-		return nil, fmt.Errorf("%s cannot be empty and must be a relative or absolute path", config.WebAssetBaseDirFlag())
-	}
-
-	webAssetsAbsFilePath, err := filepath.Abs(webAssetsBaseDir)
-	if err != nil {
-		return nil, fmt.Errorf("error getting absolute path of %s: %s", webAssetsBaseDir, err)
-	}
-
-	defaultAvatarsAbsFilePath := filepath.Join(webAssetsAbsFilePath, "default_avatars")
-	defaultAvatarFiles, err := ioutil.ReadDir(defaultAvatarsAbsFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("error reading default avatars at %s: %s", defaultAvatarsAbsFilePath, err)
-	}
-
-	defaultAvatars := []string{}
-	for _, f := range defaultAvatarFiles {
-		// ignore directories
-		if f.IsDir() {
-			continue
-		}
-
-		// ignore files bigger than 50kb
-		if f.Size() > 50000 {
-			continue
-		}
-
-		// get the name of the file, eg avatar.jpeg
-		fileName := f.Name()
-
-		// get just the .jpeg, for example, from avatar.jpeg
-		extensionWithDot := filepath.Ext(fileName)
-
-		// remove the leading . to just get, eg, jpeg
-		extension := strings.TrimPrefix(extensionWithDot, ".")
-
-		// take only files with simple extensions
-		// that we know will work OK as avatars
-		switch strings.ToLower(extension) {
-		case "svg", "jpeg", "jpg", "gif", "png":
-			avatar := fmt.Sprintf("%s/default_avatars/%s", assetsPath, f.Name())
-			defaultAvatars = append(defaultAvatars, avatar)
-		default:
-			continue
-		}
-	}
-
+func New(processor processing.Processor) api.ClientModule {
 	assetsETagCache := cache.New[string, eTagCacheEntry]()
 	assetsETagCache.SetTTL(time.Hour, false)
 	assetsETagCache.Start(time.Minute)
 
 	return &Module{
-		processor:            processor,
-		webAssetsAbsFilePath: webAssetsAbsFilePath,
-		assetsETagCache:      assetsETagCache,
-		defaultAvatars:       defaultAvatars,
-	}, nil
+		processor:       processor,
+		assetsETagCache: assetsETagCache,
+	}
 }
 
 // Route satisfies the RESTAPIModule interface
 func (m *Module) Route(s router.Router) error {
 	// serve static files from assets dir at /assets
-	assetsGroup := s.AttachGroup(assetsPath)
+	assetsGroup := s.AttachGroup(assetsPathPrefix)
 	m.mountAssetsFilesystem(assetsGroup)
 
 	s.AttachHandler(http.MethodGet, adminPanelPath, m.AdminPanelHandler)

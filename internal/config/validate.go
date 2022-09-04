@@ -62,6 +62,11 @@ func Validate() error {
 		errs = append(errs, fmt.Errorf("%s must be set to either http or https, provided value was %s", ProtocolFlag(), proto))
 	}
 
+	webAssetsBaseDir := GetWebAssetBaseDir()
+	if webAssetsBaseDir == "" {
+		errs = append(errs, fmt.Errorf("%s must be set", WebAssetBaseDirFlag()))
+	}
+
 	if len(errs) > 0 {
 		errStrings := []string{}
 		for _, err := range errs {

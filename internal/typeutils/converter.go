@@ -21,6 +21,7 @@ package typeutils
 import (
 	"context"
 	"net/url"
+	"sync"
 
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -195,10 +196,15 @@ type TypeConverter interface {
 }
 
 type converter struct {
-	db db.DB
+	db             db.DB
+	defaultAvatars []string
+	randAvatars    sync.Map
 }
 
 // NewConverter returns a new Converter
 func NewConverter(db db.DB) TypeConverter {
-	return &converter{db: db}
+	return &converter{
+		db:             db,
+		defaultAvatars: populateDefaultAvatars(),
+	}
 }

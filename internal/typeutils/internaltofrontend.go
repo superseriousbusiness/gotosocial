@@ -191,6 +191,9 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		CustomCSS:      a.CustomCSS,
 	}
 
+	c.ensureAvatar(accountFrontend)
+	c.ensureHeader(accountFrontend)
+
 	return accountFrontend, nil
 }
 
@@ -526,9 +529,6 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		}
 	}
 
-	var apiCard *model.Card
-	var apiPoll *model.Poll
-
 	statusInteractions := &statusInteractions{}
 	si, err := c.interactionsWithStatusForAccount(ctx, s, requestingAccount)
 	if err == nil {
@@ -538,8 +538,8 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 	apiStatus := &model.Status{
 		ID:                 s.ID,
 		CreatedAt:          util.FormatISO8601(s.CreatedAt),
-		InReplyToID:        s.InReplyToID,
-		InReplyToAccountID: s.InReplyToAccountID,
+		InReplyToID:        nil,
+		InReplyToAccountID: nil,
 		Sensitive:          *s.Sensitive,
 		SpoilerText:        s.ContentWarning,
 		Visibility:         c.VisToAPIVis(ctx, s.Visibility),
@@ -555,15 +555,27 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		Reblogged:          statusInteractions.Reblogged,
 		Pinned:             *s.Pinned,
 		Content:            s.Content,
+		Reblog:             nil,
 		Application:        apiApplication,
 		Account:            apiAuthorAccount,
 		MediaAttachments:   apiAttachments,
 		Mentions:           apiMentions,
 		Tags:               apiTags,
 		Emojis:             apiEmojis,
-		Card:               apiCard, // TODO: implement cards
-		Poll:               apiPoll, // TODO: implement polls
+		Card:               nil, // TODO: implement cards
+		Poll:               nil, // TODO: implement polls
 		Text:               s.Text,
+	}
+
+	// nullable fields
+	if s.InReplyToID != "" {
+		i := s.InReplyToID
+		apiStatus.InReplyToID = &i
+	}
+
+	if s.InReplyToAccountID != "" {
+		i := s.InReplyToAccountID
+		apiStatus.InReplyToAccountID = &i
 	}
 
 	if apiRebloggedStatus != nil {
