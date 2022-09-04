@@ -74,7 +74,7 @@ func populateDefaultAvatars() (defaultAvatars []string) {
 		// take only files with simple extensions
 		// that we know will work OK as avatars
 		switch strings.ToLower(extension) {
-		case "svg", "jpeg", "jpg", "gif", "png":
+		case "jpeg", "jpg", "gif", "png":
 			avatarURL := config.GetProtocol() + "://" + config.GetHost() + "/assets/default_avatars/" + fileName
 			defaultAvatars = append(defaultAvatars, avatarURL)
 		default:
