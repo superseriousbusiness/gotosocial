@@ -630,7 +630,7 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			RemoteURL: "",
 			CreatedAt: TimeMustParse("2022-06-09T13:12:00Z"),
 			UpdatedAt: TimeMustParse("2022-06-09T13:12:00Z"),
-			Type:      gtsmodel.FileTypeGif,
+			Type:      gtsmodel.FileTypeImage,
 			FileMeta: gtsmodel.FileMeta{
 				Original: gtsmodel.Original{
 					Width:  400,
@@ -679,7 +679,7 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			RemoteURL: "",
 			CreatedAt: TimeMustParse("2022-06-09T13:12:00Z"),
 			UpdatedAt: TimeMustParse("2022-06-09T13:12:00Z"),
-			Type:      gtsmodel.FileTypeGif,
+			Type:      gtsmodel.FileTypeImage,
 			FileMeta: gtsmodel.FileMeta{
 				Original: gtsmodel.Original{
 					Width:  800,
