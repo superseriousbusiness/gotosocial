@@ -32,7 +32,7 @@
 					<label for="sensitiveMedia-{{.ID}}" class="button" role="button" tabindex="0">Show sensitive media</label>
 				</div>
 			</div>
-			<a href="{{.URL}}" target="_blank" {{if .Description}}title="{{.Description}}"{{end}} data-pswp-width="{{.Meta.Original.Width}}px" data-pswp-height="{{.Meta.Original.Height}}px">
+			<a href="{{.URL}}" target="_blank" {{if .Description}}title="{{.Description}}"{{end}} data-pswp-width="{{.Meta.Original.Width}}px" data-pswp-height="{{.Meta.Original.Height}}px" data-cropped="true">
 				<img src="{{.PreviewURL}}" {{if .Description}}alt="{{.Description}}"{{end}} data-blurhash="{{.Blurhash}}"/>
 			</a>
 		</div>
