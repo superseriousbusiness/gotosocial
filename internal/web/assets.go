@@ -20,9 +20,12 @@ package web
 
 import (
 	"net/http"
+	"path/filepath"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 type fileSystem struct {
@@ -49,7 +52,12 @@ func (fs fileSystem) Open(path string) (http.File, error) {
 }
 
 func (m *Module) mountAssetsFilesystem(group *gin.RouterGroup) {
-	fs := fileSystem{http.Dir(m.webAssetsAbsFilePath)}
+	webAssetsAbsFilePath, err := filepath.Abs(config.GetWebAssetBaseDir())
+	if err != nil {
+		log.Panicf("mountAssetsFilesystem: error getting absolute path of assets dir: %s", err)
+	}
+
+	fs := fileSystem{http.Dir(webAssetsAbsFilePath)}
 
 	// use the cache middleware on all handlers in this group
 	group.Use(m.cacheControlMiddleware(fs))
