@@ -40,6 +40,15 @@ func (e *emojiDB) newEmojiQ(emoji *gtsmodel.Emoji) *bun.SelectQuery {
 		Model(emoji)
 }
 
+func (e *emojiDB) PutEmoji(ctx context.Context, emoji *gtsmodel.Emoji) db.Error {
+	if _, err := e.conn.NewInsert().Model(emoji).Exec(ctx); err != nil {
+		return e.conn.ProcessError(err)
+	}
+
+	e.cache.Put(emoji)
+	return nil
+}
+
 func (e *emojiDB) GetCustomEmojis(ctx context.Context) ([]*gtsmodel.Emoji, db.Error) {
 	emojiIDs := []string{}
 

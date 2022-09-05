@@ -26,6 +26,8 @@ import (
 
 // Emoji contains functions for getting emoji in the database.
 type Emoji interface {
+	// PutEmoji puts one emoji in the database.
+	PutEmoji(ctx context.Context, emoji *gtsmodel.Emoji) Error
 	// GetCustomEmojis gets all custom emoji for the instance
 	GetCustomEmojis(ctx context.Context) ([]*gtsmodel.Emoji, Error)
 	// GetEmojiByID gets a specific emoji by its database ID.
