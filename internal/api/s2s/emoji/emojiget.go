@@ -31,7 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-// EmojiGetHandler 
+// EmojiGetHandler
 func (m *Module) EmojiGetHandler(c *gin.Context) {
 	// usernames on our instance are always lowercase
 	requestedEmojiID := strings.ToUpper(c.Param(EmojiIDKey))
