@@ -30,4 +30,7 @@ type Emoji interface {
 	GetCustomEmojis(ctx context.Context) ([]*gtsmodel.Emoji, Error)
 	// GetEmojiByID gets a specific emoji by its database ID.
 	GetEmojiByID(ctx context.Context, id string) (*gtsmodel.Emoji, Error)
+	// GetEmojiByShortcodeDomain gets an emoji based on its shortcode and domain.
+	// For local emoji, domain should be an empty string.
+	GetEmojiByShortcodeDomain(ctx context.Context, shortcode string, domain string) (*gtsmodel.Emoji, Error)
 }

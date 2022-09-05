@@ -36,17 +36,20 @@ func NewEmojiCache() *EmojiCache {
 	c.cache = cache.NewLookup(cache.LookupCfg[string, string, *gtsmodel.Emoji]{
 		RegisterLookups: func(lm *cache.LookupMap[string, string]) {
 			lm.RegisterLookup("uri")
+			lm.RegisterLookup("shortcodedomain")
 		},
 
 		AddLookups: func(lm *cache.LookupMap[string, string], emoji *gtsmodel.Emoji) {
 			if uri := emoji.URI; uri != "" {
 				lm.Set("uri", uri, emoji.URI)
+				lm.Set("shortcodedomain", shortcodeDomainKey(emoji.Shortcode, emoji.Domain), emoji.ID)
 			}
 		},
 
 		DeleteLookups: func(lm *cache.LookupMap[string, string], emoji *gtsmodel.Emoji) {
 			if uri := emoji.URI; uri != "" {
 				lm.Delete("uri", uri)
+				lm.Delete("shortcodedomain", shortcodeDomainKey(emoji.Shortcode, emoji.Domain))
 			}
 		},
 	})
@@ -63,6 +66,10 @@ func (c *EmojiCache) GetByID(id string) (*gtsmodel.Emoji, bool) {
 // GetByURI attempts to fetch an emoji from the cache by its URI, you will receive a copy for thread-safety
 func (c *EmojiCache) GetByURI(uri string) (*gtsmodel.Emoji, bool) {
 	return c.cache.GetBy("uri", uri)
+}
+
+func (c *EmojiCache) GetByShortcodeDomain(shortcode string, domain string) (*gtsmodel.Emoji, bool) {
+	return c.cache.GetBy("shortcodedomain", shortcodeDomainKey(shortcode, domain))
 }
 
 // Put places an emoji in the cache, ensuring that the object place is a copy for thread-safety
@@ -99,4 +106,11 @@ func copyEmoji(emoji *gtsmodel.Emoji) *gtsmodel.Emoji {
 		VisibleInPicker:        copyBoolPtr(emoji.VisibleInPicker),
 		CategoryID:             emoji.CategoryID,
 	}
+}
+
+func shortcodeDomainKey(shortcode string, domain string) string {
+	if domain != "" {
+		return shortcode + "@" + domain
+	}
+	return shortcode
 }

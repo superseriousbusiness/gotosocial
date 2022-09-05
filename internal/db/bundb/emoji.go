@@ -20,6 +20,7 @@ package bundb
 
 import (
 	"context"
+	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -78,6 +79,28 @@ func (e *emojiDB) GetEmojiByURI(ctx context.Context, uri string) (*gtsmodel.Emoj
 		},
 		func(emoji *gtsmodel.Emoji) error {
 			return e.newEmojiQ(emoji).Where("emoji.uri = ?", uri).Scan(ctx)
+		},
+	)
+}
+
+func (e *emojiDB) GetEmojiByShortcodeDomain(ctx context.Context, shortcode string, domain string) (*gtsmodel.Emoji, db.Error) {
+	return e.getEmoji(
+		ctx,
+		func() (*gtsmodel.Emoji, bool) {
+			return e.cache.GetByShortcodeDomain(shortcode, domain)
+		},
+		func(emoji *gtsmodel.Emoji) error {
+			q := e.newEmojiQ(emoji)
+
+			if domain != "" {
+				q = q.Where("emoji.shortcode = ?", shortcode)
+				q = q.Where("emoji.domain = ?", domain)
+			} else {
+				q = q.Where("emoji.shortcode = ?", strings.ToLower(shortcode))
+				q = q.Where("emoji.domain IS NULL")
+			}
+
+			return q.Scan(ctx)
 		},
 	)
 }
