@@ -184,6 +184,12 @@ module.exports = function oauthClient(config, initState) {
 			} else {
 				return json;
 			}
+		}).catch(e => {
+			if (e instanceof SyntaxError) {
+				throw new Error("Error: The GtS API returned a non-json error. This usually means an issue with your instance's reverse proxy.");
+			} else {
+				throw e;
+			}
 		});
 	}
 
