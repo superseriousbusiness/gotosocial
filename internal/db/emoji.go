@@ -28,4 +28,6 @@ import (
 type Emoji interface {
 	// GetCustomEmojis gets all custom emoji for the instance
 	GetCustomEmojis(ctx context.Context) ([]*gtsmodel.Emoji, Error)
+	// GetEmojiByID gets a specific emoji by its database ID.
+	GetEmojiByID(ctx context.Context, id string) (*gtsmodel.Emoji, Error)
 }
