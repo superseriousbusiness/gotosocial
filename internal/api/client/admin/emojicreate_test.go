@@ -29,8 +29,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -79,8 +77,7 @@ func (suite *EmojiCreateTestSuite) TestEmojiCreate() {
 	suite.True(apiEmoji.VisibleInPicker)
 
 	// emoji should be in the db
-	dbEmoji := &gtsmodel.Emoji{}
-	err = suite.db.GetWhere(context.Background(), []db.Where{{Key: "shortcode", Value: "new_emoji"}}, dbEmoji)
+	dbEmoji, err := suite.db.GetEmojiByShortcodeDomain(context.Background(), apiEmoji.Shortcode, "")
 	suite.NoError(err)
 
 	// check fields on the emoji
