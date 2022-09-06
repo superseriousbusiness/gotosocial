@@ -51,6 +51,10 @@ func (p *processor) GetFediOutbox(ctx context.Context, requestedUsername string,
 	return p.federationProcessor.GetOutbox(ctx, requestedUsername, page, maxID, minID, requestURL)
 }
 
+func (p *processor) GetFediEmoji(ctx context.Context, requestedEmojiID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
+	return p.federationProcessor.GetEmoji(ctx, requestedEmojiID, requestURL)
+}
+
 func (p *processor) GetWebfingerAccount(ctx context.Context, requestedUsername string) (*apimodel.WellKnownResponse, gtserror.WithCode) {
 	return p.federationProcessor.GetWebfingerAccount(ctx, requestedUsername)
 }

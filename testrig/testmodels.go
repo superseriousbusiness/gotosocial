@@ -2056,6 +2056,7 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 	var sig, digest, date string
 	var target *url.URL
 	statuses := NewTestStatuses()
+	emojis := NewTestEmojis()
 
 	target = URLMustParse(accounts["local_account_1"].URI)
 	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
@@ -2137,6 +2138,14 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 		DateHeader:      date,
 	}
 
+	target = URLMustParse(emojis["rainbow"].URI)
+	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
+	fossSatanDereferenceEmoji := ActivityWithSignature{
+		SignatureHeader: sig,
+		DigestHeader:    digest,
+		DateHeader:      date,
+	}
+
 	return map[string]ActivityWithSignature{
 		"foss_satan_dereference_zork":                                  fossSatanDereferenceZork,
 		"foss_satan_dereference_zork_public_key":                       fossSatanDereferenceZorkPublicKey,
@@ -2148,6 +2157,7 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 		"foss_satan_dereference_zork_outbox":                           fossSatanDereferenceZorkOutbox,
 		"foss_satan_dereference_zork_outbox_first":                     fossSatanDereferenceZorkOutboxFirst,
 		"foss_satan_dereference_zork_outbox_next":                      fossSatanDereferenceZorkOutboxNext,
+		"foss_satan_dereference_emoji":                                 fossSatanDereferenceEmoji,
 	}
 }
 

@@ -93,7 +93,7 @@ func (p *ProcessingEmoji) LoadEmoji(ctx context.Context) (*gtsmodel.Emoji, error
 
 	// store the result in the database before returning it
 	if !p.insertedInDB {
-		if err := p.database.Put(ctx, p.emoji); err != nil {
+		if err := p.database.PutEmoji(ctx, p.emoji); err != nil {
 			return nil, err
 		}
 		p.insertedInDB = true
