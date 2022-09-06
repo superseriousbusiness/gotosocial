@@ -26,7 +26,6 @@ import (
 	"net/url"
 	"strings"
 
-	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -46,11 +45,7 @@ func (d *deref) EnrichRemoteStatus(ctx context.Context, username string, status 
 		return nil, err
 	}
 
-	if err := d.db.UpdateByPrimaryKey(ctx, status); err != nil {
-		return nil, fmt.Errorf("EnrichRemoteStatus: error updating status: %s", err)
-	}
-
-	return status, nil
+	return d.db.UpdateStatus(ctx, status)
 }
 
 // GetRemoteStatus completely dereferences a remote status, converts it to a GtS model status,
@@ -225,12 +220,6 @@ func (d *deref) dereferenceStatusable(ctx context.Context, username string, remo
 // and attach them to the status. The status itself will not be added to the database yet,
 // that's up the caller to do.
 func (d *deref) populateStatusFields(ctx context.Context, status *gtsmodel.Status, requestingUsername string, includeParent bool) error {
-	l := log.WithFields(kv.Fields{
-
-		{"status", status},
-	}...)
-	l.Debug("entering function")
-
 	statusIRI, err := url.Parse(status.URI)
 	if err != nil {
 		return fmt.Errorf("populateStatusFields: couldn't parse status URI %s: %s", status.URI, err)
@@ -262,7 +251,9 @@ func (d *deref) populateStatusFields(ctx context.Context, status *gtsmodel.Statu
 	// TODO
 
 	// 3. Emojis
-	// TODO
+	if err := d.populateStatusEmojis(ctx, status, requestingUsername); err != nil {
+		return fmt.Errorf("populateStatusFields: error populating status emojis: %s", err)
+	}
 
 	// 4. Mentions
 	// TODO: do we need to handle removing empty mention objects and just using mention IDs slice?
@@ -410,6 +401,63 @@ func (d *deref) populateStatusAttachments(ctx context.Context, status *gtsmodel.
 	status.AttachmentIDs = attachmentIDs
 	status.Attachments = attachments
 
+	return nil
+}
+
+func (d *deref) populateStatusEmojis(ctx context.Context, status *gtsmodel.Status, requestingUsername string) error {
+	// At this point we should know:
+	// * the AP uri of the emoji
+	// * the domain of the emoji
+	// * the shortcode of the emoji
+	// * the remote URL of the image
+	// This should be enough to dereference the emoji
+
+	gotEmojis := make([]*gtsmodel.Emoji, 0, len(status.Emojis))
+	emojiIDs := make([]string, 0, len(status.Emojis))
+
+	for _, e := range status.Emojis {
+		var gotEmoji *gtsmodel.Emoji
+		var err error
+
+		// check if we've already got this emoji in the db
+		if gotEmoji, err = d.db.GetEmojiByURI(ctx, e.URI); err == nil {
+
+		}
+
+		if gotEmoji == nil {
+			newEmojiID, err := id.NewRandomULID()
+			if err != nil {
+				log.Errorf("populateStatusEmojis: error generating id for remote emoji %s: %s", e.URI, err)
+				continue
+			}
+
+			processingEmoji, err := d.GetRemoteEmoji(ctx, requestingUsername, e.ImageRemoteURL, e.Shortcode, newEmojiID, e.URI, &media.AdditionalEmojiInfo{
+				Domain:               &e.Domain,
+				ImageRemoteURL:       &e.ImageRemoteURL,
+				ImageStaticRemoteURL: &e.ImageRemoteURL,
+				Disabled:             e.Disabled,
+				VisibleInPicker:      e.VisibleInPicker,
+			})
+
+			if err != nil {
+				log.Errorf("populateStatusEmojis: couldn't get remote emoji %s: %s", e.URI, err)
+				continue
+			}
+
+			if gotEmoji, err = processingEmoji.LoadEmoji(ctx); err != nil {
+				log.Errorf("populateStatusEmojis: couldn't load remote emoji %s: %s", e.URI, err)
+				continue
+			}
+		}
+
+		if gotEmoji != nil {
+			gotEmojis = append(gotEmojis, gotEmoji)
+			emojiIDs = append(emojiIDs, gotEmoji.ID)
+		}
+	}
+
+	status.Emojis = gotEmojis
+	status.EmojiIDs = emojiIDs
 	return nil
 }
 

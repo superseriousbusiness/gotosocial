@@ -38,6 +38,9 @@ type Status interface {
 	// PutStatus stores one status in the database.
 	PutStatus(ctx context.Context, status *gtsmodel.Status) Error
 
+	// UpdateStatus updates one status in the database and returns it to the caller.
+	UpdateStatus(ctx context.Context, status *gtsmodel.Status) (*gtsmodel.Status, Error)
+
 	// CountStatusReplies returns the amount of replies recorded for a status, or an error if something goes wrong
 	CountStatusReplies(ctx context.Context, status *gtsmodel.Status) (int, Error)
 

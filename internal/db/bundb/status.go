@@ -22,6 +22,7 @@ import (
 	"container/list"
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
@@ -173,6 +174,59 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Er
 		_, err := tx.NewInsert().Model(status).Exec(ctx)
 		return err
 	})
+}
+
+func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status) (*gtsmodel.Status, db.Error) {
+	err := s.conn.RunInTx(ctx, func(tx bun.Tx) error {
+		// create links between this status and any emojis it uses
+		for _, i := range status.EmojiIDs {
+			if _, err := tx.NewInsert().Model(&gtsmodel.StatusToEmoji{
+				StatusID: status.ID,
+				EmojiID:  i,
+			}).Exec(ctx); err != nil {
+				err = s.conn.errProc(err)
+				var alreadyExistsError *db.ErrAlreadyExists
+				if !errors.As(err, &alreadyExistsError) {
+					return err
+				}
+			}
+		}
+
+		// create links between this status and any tags it uses
+		for _, i := range status.TagIDs {
+			if _, err := tx.NewInsert().Model(&gtsmodel.StatusToTag{
+				StatusID: status.ID,
+				TagID:    i,
+			}).Exec(ctx); err != nil {
+				err = s.conn.errProc(err)
+				var alreadyExistsError *db.ErrAlreadyExists
+				if !errors.As(err, &alreadyExistsError) {
+					return err
+				}
+			}
+		}
+
+		// change the status ID of the media attachments to this status
+		for _, a := range status.Attachments {
+			a.StatusID = status.ID
+			a.UpdatedAt = time.Now()
+			if _, err := tx.NewUpdate().Model(a).
+				Where("id = ?", a.ID).
+				Exec(ctx); err != nil {
+				return err
+			}
+		}
+
+		// Finally, update the status itself
+		if _, err := tx.NewUpdate().Model(status).Exec(ctx); err != nil {
+			return err
+		}
+
+		s.cache.Put(status)
+		return nil
+	})
+
+	return status, err
 }
 
 func (s *statusDB) GetStatusParents(ctx context.Context, status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, db.Error) {
