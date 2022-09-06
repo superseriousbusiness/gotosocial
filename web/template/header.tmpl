@@ -12,9 +12,10 @@
 	{{if .meta.description}}<meta name="og:description" content="{{.meta.description |noescape}}">
 	{{else}}<meta name="og:description" content="{{.instance.ShortDescription |noescape}}">
 	{{end}}
-	{{if .meta.icon}}<link rel="shortcut icon" href="{{.meta.icon}}" type="image/png">
-	{{else}}<link rel="shortcut icon" href="/assets/logo.png" type="image/png">
+	{{if .meta.image}}<meta name="og:image" content="{{.meta.image}}" />
+	{{else}}<meta name="og:image" content="/assets/logo.png" />
 	{{end}}
+	<link rel="shortcut icon" href="/assets/logo.png" type="image/png">
 	<link rel="stylesheet" href="/assets/dist/_colors.css">
 	<link rel="stylesheet" href="/assets/dist/base.css">
 	{{range .stylesheets}}<link rel="stylesheet" href="{{.}}">

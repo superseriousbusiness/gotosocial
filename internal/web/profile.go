@@ -118,7 +118,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		"meta": map[string]string{
 			"title":       title,
 			"description": account.Note,
-			"icon":        account.Avatar,
+			"image":        account.Avatar,
 		},
 		"statuses":         statusResp.Items,
 		"statuses_next":    statusResp.NextLink,
