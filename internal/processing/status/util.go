@@ -249,18 +249,27 @@ func (p *processor) ProcessTags(ctx context.Context, form *apimodel.AdvancedStat
 }
 
 func (p *processor) ProcessEmojis(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
-	gtsEmojis, err := p.db.EmojiStringsToEmojis(ctx, util.DeriveEmojisFromText(form.Status))
-	if err != nil {
-		return fmt.Errorf("error generating emojis from status: %s", err)
+	// for each emoji shortcode in the text, check if it's an enabled
+	// emoji on this instance, and if so, add it to the status
+	emojiShortcodes := util.DeriveEmojisFromText(form.Status)
+	status.Emojis = make([]*gtsmodel.Emoji, 0, len(emojiShortcodes))
+	status.EmojiIDs = make([]string, 0, len(emojiShortcodes))
+
+	for _, shortcode := range emojiShortcodes {
+		emoji, err := p.db.GetEmojiByShortcodeDomain(ctx, shortcode, "")
+		if err != nil {
+			if err != db.ErrNoEntries {
+				log.Errorf("error getting local emoji with shortcode %s: %s", shortcode, err)
+			}
+			continue
+		}
+
+		if *emoji.VisibleInPicker && !*emoji.Disabled {
+			status.Emojis = append(status.Emojis, emoji)
+			status.EmojiIDs = append(status.EmojiIDs, emoji.ID)
+		}
 	}
-	emojis := make([]string, 0, len(gtsEmojis))
-	for _, e := range gtsEmojis {
-		emojis = append(emojis, e.ID)
-	}
-	// add full populated gts emojis to the status for passing them around conveniently
-	status.Emojis = gtsEmojis
-	// add just the ids of the used emojis to the status for putting in the db
-	status.EmojiIDs = emojis
+
 	return nil
 }
 

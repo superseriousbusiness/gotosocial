@@ -57,12 +57,4 @@ type DB interface {
 	// Note: this func doesn't/shouldn't do any manipulation of the tags in the DB, it's just for checking
 	// if they exist in the db already, and conveniently returning them, or creating new tag structs.
 	TagStringsToTags(ctx context.Context, tags []string, originAccountID string) ([]*gtsmodel.Tag, error)
-
-	// EmojiStringsToEmojis takes a slice of deduplicated, lowercase emojis in the form ":emojiname:", which have been
-	// used in a status. It takes the id of the account that wrote the status, and the id of the status itself, and then
-	// returns a slice of *model.Emoji corresponding to the given emojis.
-	//
-	// Note: this func doesn't/shouldn't do any manipulation of the emoji in the DB, it's just for checking
-	// if they exist in the db and conveniently returning them if they do.
-	EmojiStringsToEmojis(ctx context.Context, emojis []string) ([]*gtsmodel.Emoji, error)
 }

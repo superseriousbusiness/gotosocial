@@ -439,22 +439,3 @@ func (ps *bunDBService) TagStringsToTags(ctx context.Context, tags []string, ori
 	}
 	return newTags, nil
 }
-
-func (ps *bunDBService) EmojiStringsToEmojis(ctx context.Context, emojis []string) ([]*gtsmodel.Emoji, error) {
-	newEmojis := []*gtsmodel.Emoji{}
-	for _, e := range emojis {
-		emoji := &gtsmodel.Emoji{}
-		err := ps.conn.NewSelect().Model(emoji).Where("shortcode = ?", e).Where("visible_in_picker = true").Where("disabled = false").Scan(ctx)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				// no result found for this username/domain so just don't include it as an emoji and carry on about our business
-				log.Debugf("no emoji found with shortcode %s, skipping it", e)
-				continue
-			}
-			// a serious error has happened so bail
-			return nil, fmt.Errorf("error getting emoji with shortcode %s: %s", e, err)
-		}
-		newEmojis = append(newEmojis, emoji)
-	}
-	return newEmojis, nil
-}
