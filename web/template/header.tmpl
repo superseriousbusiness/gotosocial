@@ -9,12 +9,16 @@
 	{{if .meta.title}}<meta name="og:title" content="{{.meta.title |noescape}}">
 	{{else}}<meta name="og:title" content="{{.instance.Title}} - GoToSocial">
 	{{end}}
-	{{if .meta.description}}<meta name="og:description" content="{{.meta.description |noescape}}">{{end}}
+	{{if .meta.description}}<meta name="og:description" content="{{.meta.description |noescape}}">
+	{{else}}<meta name="og:description" content="{{.instance.ShortDescription |noescape}}">
+	{{end}}
+	{{if .meta.icon}}<link rel="shortcut icon" href="{{.meta.icon}}" type="image/png">
+	{{else}}<link rel="shortcut icon" href="/assets/logo.png" type="image/png">
+	{{end}}
 	<link rel="stylesheet" href="/assets/dist/_colors.css">
 	<link rel="stylesheet" href="/assets/dist/base.css">
 	{{range .stylesheets}}<link rel="stylesheet" href="{{.}}">
 	{{end}}
-	<link rel="shortcut icon" href="/assets/logo.png" type="image/png">
 	<title>{{.instance.Title}} - GoToSocial</title>
 </head>
 <body>
