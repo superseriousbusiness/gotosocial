@@ -218,7 +218,7 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status) (*
 		}
 
 		// Finally, update the status itself
-		if _, err := tx.NewUpdate().Model(status).Exec(ctx); err != nil {
+		if _, err := tx.NewUpdate().WherePK().Model(status).Exec(ctx); err != nil {
 			return err
 		}
 
