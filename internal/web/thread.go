@@ -124,7 +124,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 		"meta": map[string]string{
 			"title":       title,
 			"description": status.Content,
-			"image":        status.Account.Avatar,
+			"image":       status.Account.Avatar,
 		},
 		"stylesheets": []string{
 			"/assets/Fork-Awesome/css/fork-awesome.min.css",
