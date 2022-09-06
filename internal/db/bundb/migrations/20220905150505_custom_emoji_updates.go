@@ -90,7 +90,7 @@ func init() {
 				NewCreateIndex().
 				Model(&gtsmodel.Emoji{}).
 				Index("emojis_available_custom_idx").
-				Column("visible_in_picker", "disabled", "domain", "shortcode ASC").
+				Column("visible_in_picker", "disabled", "shortcode").
 				Exec(ctx); err != nil {
 				return err
 			}
