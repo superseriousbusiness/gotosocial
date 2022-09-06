@@ -26,6 +26,13 @@ import (
 
 // Emoji contains functions for getting emoji in the database.
 type Emoji interface {
+	// PutEmoji puts one emoji in the database.
+	PutEmoji(ctx context.Context, emoji *gtsmodel.Emoji) Error
 	// GetCustomEmojis gets all custom emoji for the instance
 	GetCustomEmojis(ctx context.Context) ([]*gtsmodel.Emoji, Error)
+	// GetEmojiByID gets a specific emoji by its database ID.
+	GetEmojiByID(ctx context.Context, id string) (*gtsmodel.Emoji, Error)
+	// GetEmojiByShortcodeDomain gets an emoji based on its shortcode and domain.
+	// For local emoji, domain should be an empty string.
+	GetEmojiByShortcodeDomain(ctx context.Context, shortcode string, domain string) (*gtsmodel.Emoji, Error)
 }

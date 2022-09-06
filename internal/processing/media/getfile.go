@@ -231,8 +231,8 @@ func (p *processor) getEmojiContent(ctx context.Context, wantedEmojiID string, e
 	emojiContent := &apimodel.Content{}
 	var storagePath string
 
-	e := &gtsmodel.Emoji{}
-	if err := p.db.GetByID(ctx, wantedEmojiID, e); err != nil {
+	e, err := p.db.GetEmojiByID(ctx, wantedEmojiID)
+	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("emoji %s could not be taken from the db: %s", wantedEmojiID, err))
 	}
 

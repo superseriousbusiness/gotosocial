@@ -20,7 +20,6 @@ package admin
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 
@@ -37,9 +36,13 @@ func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, 
 		return nil, gtserror.NewErrorUnauthorized(fmt.Errorf("user %s not an admin", user.ID), "user is not an admin")
 	}
 
-	data := func(innerCtx context.Context) (io.Reader, int, error) {
-		f, err := form.Image.Open()
-		return f, int(form.Image.Size), err
+	maybeExisting, err := p.db.GetEmojiByShortcodeDomain(ctx, form.Shortcode, "")
+	if maybeExisting != nil {
+		return nil, gtserror.NewErrorConflict(fmt.Errorf("emoji with shortcode %s already exists", form.Shortcode), fmt.Sprintf("emoji with shortcode %s already exists", form.Shortcode))
+	}
+
+	if err != nil && err != db.ErrNoEntries {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking existence of emoji with shortcode %s: %s", form.Shortcode, err))
 	}
 
 	emojiID, err := id.NewRandomULID()
@@ -49,6 +52,11 @@ func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, 
 
 	emojiURI := uris.GenerateURIForEmoji(emojiID)
 
+	data := func(innerCtx context.Context) (io.Reader, int, error) {
+		f, err := form.Image.Open()
+		return f, int(form.Image.Size), err
+	}
+
 	processingEmoji, err := p.mediaManager.ProcessEmoji(ctx, data, nil, form.Shortcode, emojiID, emojiURI, nil)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error processing emoji: %s", err), "error processing emoji")
@@ -56,10 +64,6 @@ func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, 
 
 	emoji, err := processingEmoji.LoadEmoji(ctx)
 	if err != nil {
-		var alreadyExistsError *db.ErrAlreadyExists
-		if errors.As(err, &alreadyExistsError) {
-			return nil, gtserror.NewErrorConflict(fmt.Errorf("emoji with shortcode %s already exists", form.Shortcode), fmt.Sprintf("emoji with shortcode %s already exists", form.Shortcode))
-		}
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error loading emoji: %s", err), "error loading emoji")
 	}
 
