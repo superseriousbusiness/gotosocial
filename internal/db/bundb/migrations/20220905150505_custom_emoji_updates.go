@@ -22,7 +22,7 @@ import (
 	"context"
 	"database/sql"
 
-	newgtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20220905150505_custom_emoji_updates"
+	"github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20220905150505_custom_emoji_updates"
 	"github.com/uptrace/bun"
 )
 
@@ -32,33 +32,33 @@ func init() {
 			// create the new emojis table
 			if _, err := tx.
 				NewCreateTable().
+				Model(&gtsmodel.Emoji{}).
 				ModelTableExpr("new_emojis").
-				Model(&newgtsmodel.Emoji{}).
-				IfNotExists().
 				Exec(ctx); err != nil {
 				return err
 			}
 
 			// move all old emojis to the new table
-			oldEmojis := []*newgtsmodel.Emoji{}
+			currentEmojis := []*gtsmodel.Emoji{}
 			if err := tx.
 				NewSelect().
-				Model(&oldEmojis).
+				Model(&currentEmojis).
 				Scan(ctx); err != nil && err != sql.ErrNoRows {
 				return err
 			}
 
-			for _, emoji := range oldEmojis {
+			for _, currentEmoji := range currentEmojis {
 				if _, err := tx.
 					NewInsert().
-					Model(emoji).
+					Model(currentEmoji).
+					ModelTableExpr("new_emojis").
 					Exec(ctx); err != nil {
 					return err
 				}
 			}
 
 			// we have all the data we need from the old table, so we can safely drop it now
-			if _, err := tx.NewDropTable().Model(&newgtsmodel.Emoji{}).Exec(ctx); err != nil {
+			if _, err := tx.NewDropTable().Model(&gtsmodel.Emoji{}).Exec(ctx); err != nil {
 				return err
 			}
 
@@ -70,7 +70,7 @@ func init() {
 			// add indexes to the new table
 			if _, err := tx.
 				NewCreateIndex().
-				Model(&newgtsmodel.Emoji{}).
+				Model(&gtsmodel.Emoji{}).
 				Index("emojis_id_idx").
 				Column("id").
 				Exec(ctx); err != nil {
@@ -79,7 +79,7 @@ func init() {
 
 			if _, err := tx.
 				NewCreateIndex().
-				Model(&newgtsmodel.Emoji{}).
+				Model(&gtsmodel.Emoji{}).
 				Index("emojis_uri_idx").
 				Column("uri").
 				Exec(ctx); err != nil {
@@ -88,7 +88,7 @@ func init() {
 
 			if _, err := tx.
 				NewCreateIndex().
-				Model(&newgtsmodel.Emoji{}).
+				Model(&gtsmodel.Emoji{}).
 				Index("emojis_available_custom_idx").
 				Column("visible_in_picker", "disabled", "domain", "shortcode ASC").
 				Exec(ctx); err != nil {
