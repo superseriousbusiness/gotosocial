@@ -58,7 +58,7 @@ const emojiLocalMaxSize = 51200
 //   required: true
 // - name: image
 //   in: formData
-//   description: |- 
+//   description: |-
 //     A png or gif image of the emoji. Animated pngs work too!
 //     To ensure compatibility with other fedi implementations, emoji size limit is 50kb.
 //   type: file
