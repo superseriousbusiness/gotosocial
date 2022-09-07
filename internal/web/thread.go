@@ -108,6 +108,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 		"instance": instance,
 		"status":   status,
 		"context":  context,
+		"ogMeta":   ogBase(instance).withStatus(status),
 		"stylesheets": []string{
 			"/assets/Fork-Awesome/css/fork-awesome.min.css",
 			"/assets/dist/status.css",
