@@ -102,6 +102,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 	c.HTML(http.StatusOK, "profile.tmpl", gin.H{
 		"instance":         instance,
 		"account":          account,
+		"ogMeta":           ogBase(instance).withAccount(account),
 		"statuses":         statusResp.Items,
 		"statuses_next":    statusResp.NextLink,
 		"show_back_to_top": showBackToTop,
