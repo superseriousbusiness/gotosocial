@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -420,11 +421,13 @@ func (d *deref) populateStatusEmojis(ctx context.Context, status *gtsmodel.Statu
 		var err error
 
 		// check if we've already got this emoji in the db
-		if gotEmoji, err = d.db.GetEmojiByURI(ctx, e.URI); err == nil {
-
+		if gotEmoji, err = d.db.GetEmojiByURI(ctx, e.URI); err != nil && err != db.ErrNoEntries {
+			log.Errorf("populateStatusEmojis: error checking database for emoji %s: %s", e.URI, err)
+			continue
 		}
 
 		if gotEmoji == nil {
+			// it's new! go get it!
 			newEmojiID, err := id.NewRandomULID()
 			if err != nil {
 				log.Errorf("populateStatusEmojis: error generating id for remote emoji %s: %s", e.URI, err)
@@ -450,10 +453,9 @@ func (d *deref) populateStatusEmojis(ctx context.Context, status *gtsmodel.Statu
 			}
 		}
 
-		if gotEmoji != nil {
-			gotEmojis = append(gotEmojis, gotEmoji)
-			emojiIDs = append(emojiIDs, gotEmoji.ID)
-		}
+		// if we get here, we either had the emoji already or we successfully fetched it
+		gotEmojis = append(gotEmojis, gotEmoji)
+		emojiIDs = append(emojiIDs, gotEmoji.ID)
 	}
 
 	status.Emojis = gotEmojis
