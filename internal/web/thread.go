@@ -104,28 +104,11 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 		return
 	}
 
-	var title string
-	user := status.Account.Acct
-
-	if user == status.Account.Username { // local user
-		user += "@" + instance.AccountDomain
-	}
-
-	if len(status.Account.DisplayName) > 0 {
-		title = status.Account.DisplayName + " (@" + user + ")"
-	} else {
-		title = "@" + user
-	}
-
 	c.HTML(http.StatusOK, "thread.tmpl", gin.H{
 		"instance": instance,
 		"status":   status,
 		"context":  context,
-		"meta": map[string]string{
-			"title":       title,
-			"description": status.Content,
-			"image":       status.Account.Avatar,
-		},
+		"ogMeta":   ogBase(instance).withStatus(status),
 		"stylesheets": []string{
 			"/assets/Fork-Awesome/css/fork-awesome.min.css",
 			"/assets/dist/status.css",

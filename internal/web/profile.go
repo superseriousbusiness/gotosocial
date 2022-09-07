@@ -99,27 +99,10 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		return
 	}
 
-	var title string
-	user := account.Acct
-
-	if user == account.Username { // local user
-		user += "@" + instance.AccountDomain
-	}
-
-	if len(account.DisplayName) > 0 {
-		title = account.DisplayName + " (@" + user + ")"
-	} else {
-		title = "@" + user
-	}
-
 	c.HTML(http.StatusOK, "profile.tmpl", gin.H{
-		"instance": instance,
-		"account":  account,
-		"meta": map[string]string{
-			"title":       title,
-			"description": account.Note,
-			"image":       account.Avatar,
-		},
+		"instance":         instance,
+		"account":          account,
+		"ogMeta":           ogBase(instance).withAccount(account),
 		"statuses":         statusResp.Items,
 		"statuses_next":    statusResp.NextLink,
 		"show_back_to_top": showBackToTop,

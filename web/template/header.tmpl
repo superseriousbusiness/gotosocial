@@ -6,21 +6,24 @@
 	<meta charset="UTF-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	{{if .meta.title}}<meta name="og:title" content="{{.meta.title |noescape}}">
-	{{else}}<meta name="og:title" content="{{.instance.Title}} - GoToSocial">
-	{{end}}
-	{{if .meta.description}}<meta name="og:description" content="{{.meta.description |noescape}}">
-	{{else}}<meta name="og:description" content="{{.instance.ShortDescription |noescape}}">
-	{{end}}
-	{{if .meta.image}}<meta name="og:image" content="{{.meta.image}}" />
-	{{else}}<meta name="og:image" content="/assets/logo.png" />
-	{{end}}
-	<link rel="shortcut icon" href="/assets/logo.png" type="image/png">
+	{{ if .ogMeta }}{{ if .ogMeta.Locale }}<meta name="og:locale" content="{{ .ogMeta.Locale }}">
+	{{ end }}<meta name="og:type" content="{{ .ogMeta.ResourceType }}">
+	<meta name="og:title" content="{{ .ogMeta.Title }}">
+	<meta name="og:url" content="{{ .ogMeta.URL }}">
+	<meta name="og:site_name" content="{{ .ogMeta.SiteName }}">
+	<meta name="og:description" {{ .ogMeta.Description | noescapeAttr }}>
+	{{ if .ogMeta.ArticlePublisher }}<meta name="og:article:publisher" content="{{ .ogMeta.ArticlePublisher }}">
+	<meta name="og:article:author" content="{{ .ogMeta.ArticleAuthor }}">
+	<meta name="og:article:modified_time" content="{{ .ogMeta.ArticleModifiedTime }}">
+	<meta name="og:article:published_time" content="{{ .ogMeta.ArticlePublishedTime }}">
+	{{ end }}<meta name="og:image" content="{{ .ogMeta.Image }}">
+	{{ if .ogMeta.ImageWidth }}<meta name="og:image:width" content="{{ .ogMeta.ImageWidth }}">
+	<meta name="og:image:height" content="{{ .ogMeta.ImageHeight }}">
+	{{ end }}{{ end }}<link rel="shortcut icon" href="/assets/logo.png" type="image/png">
 	<link rel="stylesheet" href="/assets/dist/_colors.css">
 	<link rel="stylesheet" href="/assets/dist/base.css">
 	{{range .stylesheets}}<link rel="stylesheet" href="{{.}}">
-	{{end}}
-	<title>{{.instance.Title}} - GoToSocial</title>
+	{{end}}<title>{{ if .ogMeta }}{{ .ogMeta.Title }}{{ else }}{{.instance.Title}} - GoToSocial{{ end }}</title>
 </head>
 <body>
 	<div class="page">
