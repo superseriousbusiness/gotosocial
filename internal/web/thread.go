@@ -116,6 +116,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 		"instance":    instance,
 		"status":      status,
 		"context":     context,
+		"ogMeta":      ogBase(instance).withStatus(status),
 		"stylesheets": stylesheets,
 		"javascript": []string{
 			"/assets/dist/frontend.js",
