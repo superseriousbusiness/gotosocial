@@ -27,6 +27,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
+const maxOGDescriptionLength = 300
+
 // ogMeta represents supported OpenGraph Meta tags
 //
 // see eg https://developer.yoast.com/features/opengraph/functional-specification/
@@ -127,13 +129,15 @@ func parseTitle(account *apimodel.Account, accountDomain string) string {
 	return account.DisplayName + " (" + user + ")"
 }
 
+// parseDescription returns a string description which is
+// safe to use as a template.HTMLAttr inside templates.
 func parseDescription(in string) string {
 	i := html.UnescapeString(in)
 	i = text.SanitizePlaintext(i)
 	i = strings.ReplaceAll(i, "\"", "'")
 	i = strings.ReplaceAll(i, `\`, "")
 	i = strings.ReplaceAll(i, "\n", " ")
-	i = trim(i, 160)
+	i = trim(i, maxOGDescriptionLength)
 	return `content="` + i + `"`
 }
 
