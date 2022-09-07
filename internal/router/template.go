@@ -70,6 +70,11 @@ func noescape(str string) template.HTML {
 	return template.HTML(str)
 }
 
+func noescapeAttr(str string) template.HTMLAttr {
+	/* #nosec G203 */
+	return template.HTMLAttr(str)
+}
+
 func timestamp(stamp string) string {
 	t, _ := time.Parse(time.RFC3339, stamp)
 	return t.Format("January 2, 2006, 15:04:05")
@@ -151,6 +156,7 @@ func LoadTemplateFunctions(engine *gin.Engine) {
 	engine.SetFuncMap(template.FuncMap{
 		"escape":         escape,
 		"noescape":       noescape,
+		"noescapeAttr":   noescapeAttr,
 		"oddOrEven":      oddOrEven,
 		"visibilityIcon": visibilityIcon,
 		"timestamp":      timestamp,
