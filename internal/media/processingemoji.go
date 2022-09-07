@@ -35,6 +35,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
+const emojiRemoteMaxSize = 102400
+
 // ProcessingEmoji represents an emoji currently processing. It exposes
 // various functions for retrieving data from the process.
 type ProcessingEmoji struct {
@@ -168,6 +170,10 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	reader, fileSize, err := p.data(ctx)
 	if err != nil {
 		return fmt.Errorf("store: error executing data function: %s", err)
+	}
+
+	if fileSize > emojiRemoteMaxSize {
+		return fmt.Errorf("store: emoji size (%d) is larger than allowed emojiRemoteMaxSize (%d)", fileSize, emojiRemoteMaxSize)
 	}
 
 	// defer closing the reader when we're done with it
