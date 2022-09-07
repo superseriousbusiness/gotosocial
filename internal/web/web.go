@@ -70,23 +70,12 @@ func (m *Module) Route(s router.Router) error {
 	assetsGroup := s.AttachGroup(assetsPathPrefix)
 	m.mountAssetsFilesystem(assetsGroup)
 
-	s.AttachHandler(http.MethodGet, adminPanelPath, m.AdminPanelHandler)
-	// redirect /admin/ to /admin
-	s.AttachHandler(http.MethodGet, adminPanelPath+"/", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, adminPanelPath)
-	})
-
 	s.AttachHandler(http.MethodGet, "/settings", m.SettingsPanelHandler)
 	s.AttachHandler(http.MethodGet, "/settings/*panel", m.SettingsPanelHandler)
 
-	s.AttachHandler(http.MethodGet, userPanelpath, m.UserPanelHandler)
-	// redirect /user/ to /user
-	s.AttachHandler(http.MethodGet, userPanelpath+"/", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, userPanelpath)
-	})
-	// redirect /auth/edit to /user
+	// redirect /auth/edit to /settings/user
 	s.AttachHandler(http.MethodGet, "/auth/edit", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, userPanelpath)
+		c.Redirect(http.StatusMovedPermanently, "/settings/user")
 	})
 
 	// serve front-page
