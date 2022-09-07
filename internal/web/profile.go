@@ -117,6 +117,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		"show_back_to_top": showBackToTop,
 		"stylesheets":      stylesheets,
 		"javascript": []string{
+			"/assets/dist/bundle.js",
 			"/assets/dist/frontend.js",
 		},
 	})

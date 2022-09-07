@@ -1,0 +1,158 @@
+/*
+   GoToSocial
+   Copyright (C) 2021-2022 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+body {
+	grid-template-rows: auto 1fr;
+}
+
+.content {
+	grid-column: 1 / span 3; /* stretch entire width, to fit panel + sidebar nav */
+}
+
+section {
+	grid-column: 2;
+}
+
+#root {
+	display: grid;
+	grid-template-columns: 1fr min(92%, 90ch) 1fr;
+
+	section {
+		border-left: none;
+		border-top-left-radius: 0;
+		border-bottom-left-radius: 0;
+	}
+
+	.sidebar {
+		align-self: start; // vertical
+		justify-self: end; // horizontal
+		background: $settings-nav-bg;
+		border: $boxshadow_border;
+		box-shadow: $boxshadow;
+		border-radius: $br;
+		border-top-right-radius: 0;
+		border-bottom-right-radius: 0;
+		display: flex;
+		flex-direction: column;
+
+		a {
+			text-decoration: none;
+		}
+
+		a:first-child h2 {
+			border-top-left-radius: $br;
+		}
+
+		h2 {
+			margin: 0;
+			padding: 0.5rem;
+			font-size: 0.9rem;
+			font-weight: bold;
+			text-transform: uppercase;
+			color: $settings-nav-header-fg;
+			background: $settings-nav-header-bg;
+			border-bottom: 0.1rem solid $sloth_gray2_darker7;
+		}
+		
+		nav {
+			display: flex;
+			flex-direction: column;
+
+			a {
+				border-bottom: 0.1rem solid $sloth_gray2_darker3;
+				padding: 1rem;
+				text-decoration: none;
+				transition: 0.1s;
+				color: $fg;
+	
+				&:hover {
+					color: $settings-nav-fg-hover;
+					background: $settings-nav-bg-hover;
+				}
+				
+				&.active {
+					color: $settings-nav-fg-active;
+					background: $settings-nav-bg-active;
+					font-weight: bold;
+					text-decoration: underline;
+				}
+	
+				/* reserve space for bold version of the element, so .active doesn't
+					 change container size */
+				&::after { 
+					font-weight: bold;
+					text-decoration: underline;
+					display: block;
+					content: attr(data-content);
+					height: 1px;
+					color: transparent;
+					overflow: hidden;
+					visibility: hidden;
+				}
+			}
+		}
+
+
+		nav:last-child a:last-child {
+			border-bottom-left-radius: $br;
+			border-bottom: none;
+		}
+	}
+}
+
+.capitalize {
+	text-transform: capitalize;
+}
+
+section {
+	margin-bottom: 1rem;
+}
+
+input, select, textarea {
+	box-sizing: border-box;
+}
+
+.error {
+	font-weight: bold;
+}
+
+.hidden {
+	display: none;
+}
+
+.messagebutton {
+	margin-top: 1rem;
+	display: flex;
+	gap: 1rem;
+	align-items: center;
+
+	button {
+		white-space: nowrap;
+	}
+}
+
+.notImplemented {
+	border: 2px solid rgb(70, 79, 88);
+	background: repeating-linear-gradient(
+		-45deg,
+		#525c66,
+		#525c66 10px,
+		rgb(70, 79, 88) 10px,
+		rgb(70, 79, 88) 20px
+	) !important;
+}

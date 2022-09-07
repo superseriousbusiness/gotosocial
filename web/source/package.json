@@ -35,7 +35,8 @@
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "reactify": "^1.1.1",
-    "uglifyify": "^5.0.2"
+    "uglifyify": "^5.0.2",
+    "wouter": "^2.8.0-alpha.2"
   },
   "devDependencies": {
     "@f0x52/eslint-config-react": "^1.1.0",

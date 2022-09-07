@@ -119,6 +119,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 		"ogMeta":      ogBase(instance).withStatus(status),
 		"stylesheets": stylesheets,
 		"javascript": []string{
+			"/assets/dist/bundle.js",
 			"/assets/dist/frontend.js",
 		},
 	})

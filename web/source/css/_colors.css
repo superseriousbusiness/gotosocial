@@ -77,3 +77,13 @@ $boxshadow_border: 0.08rem solid $sloth_gray2_darker5;
 $profile_avatar_border: 0.2rem solid $border_accent;
 
 $input_bg: $sloth_gray2_darker3;
+
+$settings-nav-bg: $bg_accent;
+$settings-nav-header-fg: $sloth_gray2_darker15;
+$settings-nav-header-bg: $sloth_orange2;
+
+$settings-nav-bg-active: $sloth_gray2_darker3;
+$settings-nav-fg-active: $fg;
+
+$settings-nav-bg-hover: $sloth_gray2;
+/* $settings-nav-fg-hover: $sloth_gray2; */

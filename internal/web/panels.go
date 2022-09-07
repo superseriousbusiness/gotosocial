@@ -27,6 +27,29 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
+func (m *Module) SettingsPanelHandler(c *gin.Context) {
+	host := config.GetHost()
+	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
+	if err != nil {
+		api.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+		return
+	}
+
+	c.HTML(http.StatusOK, "frontend.tmpl", gin.H{
+		"instance": instance,
+		"stylesheets": []string{
+			assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
+			assetsPathPrefix + "/dist/_colors.css",
+			assetsPathPrefix + "/dist/base.css",
+			assetsPathPrefix + "/dist/settings-panel-style.css",
+		},
+		"javascript": []string{
+			assetsPathPrefix + "/dist/bundle.js",
+			assetsPathPrefix + "/dist/settings.js",
+		},
+	})
+}
+
 func (m *Module) UserPanelHandler(c *gin.Context) {
 	host := config.GetHost()
 	instance, err := m.processor.InstanceGet(c.Request.Context(), host)

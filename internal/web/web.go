@@ -76,6 +76,9 @@ func (m *Module) Route(s router.Router) error {
 		c.Redirect(http.StatusMovedPermanently, adminPanelPath)
 	})
 
+	s.AttachHandler(http.MethodGet, "/settings", m.SettingsPanelHandler)
+	s.AttachHandler(http.MethodGet, "/settings/*panel", m.SettingsPanelHandler)
+
 	s.AttachHandler(http.MethodGet, userPanelpath, m.UserPanelHandler)
 	// redirect /user/ to /user
 	s.AttachHandler(http.MethodGet, userPanelpath+"/", func(c *gin.Context) {

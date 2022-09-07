@@ -38,8 +38,9 @@ const splitCSS = require("./lib/split-css.js");
 
 const bundles = {
 	"./frontend/index.js": "frontend.js",
-	"./panels/admin/index.js": "admin-panel.js",
-	"./panels/user/index.js": "user-panel.js",
+	"./settings-panel/index.js": "settings.js",
+	// "./panels/admin/index.js": "admin-panel.js",
+	// "./panels/user/index.js": "user-panel.js",
 };
 
 const postcssPlugins = [
@@ -49,6 +50,18 @@ const postcssPlugins = [
 	"postcss-custom-prop-vars",
 	"postcss-color-mod-function"
 ].map((plugin) => require(plugin)());
+
+let uglifyifyInProduction;
+
+if (process.env.NODE_ENV != "development") {
+	console.log("uglifyify'ing production bundles");
+	uglifyifyInProduction = [
+		require("uglifyify"), {
+			global: true,
+			exts: ".js"
+		}
+	];
+}
 
 const browserifyConfig = {
 	transform: [
@@ -69,10 +82,7 @@ const browserifyConfig = {
 				exclude: /node_modules\/(?!photoswipe-dynamic-caption-plugin)/,
 			}
 		],
-		[require("uglifyify"), {
-			global: true,
-			exts: ".js"
-		}]
+		uglifyifyInProduction
 	],
 	plugin: [
 		[require("icssify"), {
