@@ -35,7 +35,7 @@ var acceptedAttachmentTypes = []string{
 
 // AllSupportedMIMETypes just returns all attachment MIME types supported by this instance.
 func AllSupportedMIMETypes() []string {
-	i := []string{}
+	i := make([]string, len(acceptedAttachmentTypes))
 	copy(i, acceptedAttachmentTypes)
 	return i
 }
