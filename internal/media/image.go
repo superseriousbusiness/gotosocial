@@ -210,20 +210,16 @@ func deriveStaticEmoji(r io.Reader, contentType string) (*imageMeta, error) {
 }
 
 func checkAndClean(extension string, reader io.Reader, fileSize int) (clean io.Reader, attachmentType gtsmodel.FileType, err error) {
+	// start by assuming no cleaning, and image type
+	clean = reader
+	attachmentType = gtsmodel.FileTypeImage
+
 	switch extension {
-	case mimeGif:
-		attachmentType = gtsmodel.FileTypeImage
-		clean = reader // nothing to clean from a gif
 	case mimeJpeg, mimePng:
-		attachmentType = gtsmodel.FileTypeImage
-		purged, err := terminator.Terminate(reader, fileSize, extension)
-		if err != nil {
-			err = fmt.Errorf("exif error: %s", err)
-		}
-		clean = purged
+		// these can be cleaned
+		clean, err = terminator.Terminate(reader, fileSize, extension)
 	default:
 		attachmentType = gtsmodel.FileTypeUnknown
-		clean = reader // nothing to clean from unknown
 	}
 
 	return
