@@ -161,6 +161,78 @@ func (suite *AttachmentTestSuite) TestDereferenceAttachmentAsync() {
 	suite.NotEmpty(attachment.Type)
 }
 
+func (suite *AttachmentTestSuite) TestDereferenceCommunismBlocking() {
+	ctx := context.Background()
+
+	fetchingAccount := suite.testAccounts["local_account_1"]
+
+	attachmentOwner := "01FENS9F666SEQ6TYQWEEY78GM"
+	attachmentStatus := "01FENS9NTTVNEX1YZV7GB63MT8"
+	attachmentContentType := "application/pdf"
+	attachmentURL := "https://turnip.farm/attachments/communist_manifesto.pdf"
+	attachmentDescription := "The Communist Manifesto"
+	attachmentBlurhash := ""
+
+	media, err := suite.dereferencer.GetRemoteMedia(ctx, fetchingAccount.Username, attachmentOwner, attachmentURL, &media.AdditionalMediaInfo{
+		StatusID:    &attachmentStatus,
+		RemoteURL:   &attachmentURL,
+		Description: &attachmentDescription,
+		Blurhash:    &attachmentBlurhash,
+	})
+	suite.NoError(err)
+
+	// make a blocking call to load the attachment from the in-process media
+	attachment, err := media.LoadAttachment(ctx)
+	suite.NoError(err)
+
+	suite.NotNil(attachment)
+
+	suite.Equal(attachmentOwner, attachment.AccountID)
+	suite.Equal(attachmentStatus, attachment.StatusID)
+	suite.Equal(attachmentURL, attachment.RemoteURL)
+	suite.NotEmpty(attachment.URL)
+	suite.Empty(attachment.Blurhash)
+	suite.NotEmpty(attachment.ID)
+	suite.NotEmpty(attachment.CreatedAt)
+	suite.NotEmpty(attachment.UpdatedAt)
+	suite.Empty(attachment.FileMeta.Original.Aspect)
+	suite.Empty(attachment.FileMeta.Original.Size)
+	suite.Empty(attachment.FileMeta.Original.Height)
+	suite.Empty(attachment.FileMeta.Original.Width)
+	suite.Equal(gtsmodel.ProcessingStatusProcessed, attachment.Processing)
+	suite.NotEmpty(attachment.File.Path)
+	suite.Equal(attachmentContentType, attachment.File.ContentType)
+	suite.Equal(attachmentDescription, attachment.Description)
+
+	suite.NotEmpty(attachment.Thumbnail.Path)
+	suite.NotEmpty(attachment.Type)
+
+	// attachment should also now be in the database
+	dbAttachment, err := suite.db.GetAttachmentByID(context.Background(), attachment.ID)
+	suite.NoError(err)
+	suite.NotNil(dbAttachment)
+
+	suite.Equal(attachmentOwner, dbAttachment.AccountID)
+	suite.Equal(attachmentStatus, dbAttachment.StatusID)
+	suite.Equal(attachmentURL, dbAttachment.RemoteURL)
+	suite.NotEmpty(dbAttachment.URL)
+	suite.Empty(dbAttachment.Blurhash)
+	suite.NotEmpty(dbAttachment.ID)
+	suite.NotEmpty(dbAttachment.CreatedAt)
+	suite.NotEmpty(dbAttachment.UpdatedAt)
+	suite.Empty(dbAttachment.FileMeta.Original.Aspect)
+	suite.Empty(dbAttachment.FileMeta.Original.Size)
+	suite.Empty(dbAttachment.FileMeta.Original.Height)
+	suite.Empty(dbAttachment.FileMeta.Original.Width)
+	suite.Equal(gtsmodel.ProcessingStatusProcessed, dbAttachment.Processing)
+	suite.NotEmpty(dbAttachment.File.Path)
+	suite.Equal(attachmentContentType, dbAttachment.File.ContentType)
+	suite.Equal(attachmentDescription, dbAttachment.Description)
+
+	suite.NotEmpty(dbAttachment.Thumbnail.Path)
+	suite.NotEmpty(dbAttachment.Type)
+}
+
 func TestAttachmentTestSuite(t *testing.T) {
 	suite.Run(t, new(AttachmentTestSuite))
 }
