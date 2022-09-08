@@ -32,6 +32,15 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
+const (
+	instanceStatusesCharactersReservedPerURL    = 25
+	instanceMediaAttachmentsImageMatrixLimit    = 16777216 // width * height
+	instanceMediaAttachmentsVideoMatrixLimit    = 16777216 // width * height
+	instanceMediaAttachmentsVideoFrameRateLimit = 60
+	instancePollsMinExpiration                  = 300     // seconds
+	instancePollsMaxExpiration                  = 2629746 // seconds
+)
+
 func (c *converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmodel.Account) (*model.Account, error) {
 	// we can build this sensitive account easily by first getting the public account....
 	apiAccount, err := c.AccountToAPIAccountPublic(ctx, a)
@@ -653,21 +662,21 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 			Statuses: &model.InstanceConfigurationStatuses{
 				MaxCharacters:            config.GetStatusesMaxChars(),
 				MaxMediaAttachments:      config.GetStatusesMediaMaxFiles(),
-				CharactersReservedPerURL: 999,
+				CharactersReservedPerURL: instanceStatusesCharactersReservedPerURL,
 			},
 			MediaAttachments: &model.InstanceConfigurationMediaAttachments{
 				SupportedMimeTypes:  media.AllSupportedMIMETypes(),
 				ImageSizeLimit:      config.GetMediaImageMaxSize(),
-				ImageMatrixLimit:    16777216, // height*width
+				ImageMatrixLimit:    instanceMediaAttachmentsImageMatrixLimit, // height*width
 				VideoSizeLimit:      config.GetMediaVideoMaxSize(),
-				VideoFrameRateLimit: 60,
-				VideoMatrixLimit:    16777216, // height*width
+				VideoFrameRateLimit: instanceMediaAttachmentsVideoFrameRateLimit,
+				VideoMatrixLimit:    instanceMediaAttachmentsVideoMatrixLimit, // height*width
 			},
 			Polls: &model.InstanceConfigurationPolls{
 				MaxOptions:             config.GetStatusesPollMaxOptions(),
 				MaxCharactersPerOption: config.GetStatusesPollOptionMaxChars(),
-				MinExpiration:          300,     // seconds
-				MaxExpiration:          2629746, // seconds
+				MinExpiration:          instancePollsMinExpiration, // seconds
+				MaxExpiration:          instancePollsMaxExpiration, // seconds
 			},
 		}
 	}
