@@ -118,10 +118,17 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 
 	// if we don't have it cached, then we can assume two things:
 	// 1. this is remote media, since local media should never be uncached
-	// 2. we need to fetch it again using a transport and the media manager
+	// 2. we need to either redirect the caller to it, OR cache it again using a transport and the media manager
 	remoteMediaIRI, err := url.Parse(a.RemoteURL)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error parsing remote media iri %s: %s", a.RemoteURL, err))
+	}
+
+	// if it's not cached but we don't know what it actually is (ie., we can't
+	// process it) we should just redirect to the server that owns it
+	if a.Type == gtsmodel.FileTypeUnknown {
+		attachmentContent.URL = remoteMediaIRI
+		return attachmentContent, nil
 	}
 
 	// use an empty string as requestingUsername to use the instance account, unless the request for this

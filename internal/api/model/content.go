@@ -31,7 +31,9 @@ type Content struct {
 	ContentLength int64
 	// Actual content
 	Content io.Reader
-	// Resource URL to forward to if the file can be fetched from the storage directly (e.g signed S3 URL)
+	// Resource URL to forward to. This is used in cases where:
+	// a) file can be fetched from the storage directly (e.g signed S3 URL) OR
+	// b) file can't be cached by our instance, so it must be fetched from owner
 	URL *url.URL
 }
 
