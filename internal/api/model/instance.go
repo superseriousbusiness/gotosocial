@@ -111,9 +111,9 @@ type InstanceConfigurationStatuses struct {
 	//
 	// example: 4
 	MaxMediaAttachments int `json:"max_media_attachments"`
-	// Amount of characters that a URL will be compressed to.
+	// Amount of characters clients should assume a url takes up.
 	//
-	// example: 999
+	// example: 25
 	CharactersReservedPerURL int `json:"characters_reserved_per_url"`
 }
 
