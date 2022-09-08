@@ -22,23 +22,35 @@ const Promise = require("bluebird");
 const React = require("react");
 const ReactDom = require("react-dom");
 const { Link, Route, Switch, useRoute, Redirect } = require("wouter");
+const { ErrorBoundary } = require("react-error-boundary");
 
 const Auth = require("./components/auth");
+const ErrorFallback = require("./components/error");
+
 const oauthLib = require("./lib/oauth");
 
 require("./style.css");
 
+const UserPanel = require("./user");
+const AdminPanel = require("./admin");
+
 const nav = {
-	"User": [
-		["Profile", require("./user/profile.js")],
-		["Settings", require("./user/settings.js")],
-		["Customization", require("./user/customization.js")]
-	],
-	"Admin": [
-		["Instance Settings", require("./admin/settings.js")],
-		["Federation", require("./admin/federation.js")],
-		["Customization", require("./admin/customization.js")]
-	]
+	"User": {
+		Component: require("./user"),
+		entries: {
+			"Profile": require("./user/profile.js"),
+			"Settings": require("./user/settings.js"),
+			"Customization": require("./user/customization.js")
+		}
+	},
+	"Admin": {
+		Component: require("./admin"),
+		entries: {
+			"Instance Settings": require("./admin/settings.js"),
+			"Federation": require("./admin/federation.js"),
+			"Customization": require("./admin/customization.js")
+		}
+	}
 };
 
 function urlSafe(str) {
@@ -49,31 +61,50 @@ function urlSafe(str) {
 const sidebar = [];
 const panelRouter = [];
 
-Object.entries(nav).forEach(([category, entries]) => {
-	let base = `/settings/${urlSafe(category)}`;
+// Generate component tree from `nav` object once, as it won't change
+Object.entries(nav).forEach(([name, {Component, entries}]) => {
+	let base = `/settings/${urlSafe(name)}`;
 
-	// Category header goes to first page in category
+	let links = [];
+	let routes = [];
+
+	let firstRoute;
+
+	Object.entries(entries).forEach(([name, component]) => {
+		let url = `${base}/${urlSafe(name)}`;
+
+		if (firstRoute == undefined) {
+			firstRoute = `${base}/${urlSafe(name)}`;
+		}
+
+		routes.push([url, component]);
+
+		links.push(
+			<NavButton key={url} href={url} name={name} />
+		);
+	});
+
 	panelRouter.push(
 		<Route key={base} path={base}>
-			<Redirect to={`${base}/${urlSafe(entries[0][0])}`}/>
+			<Redirect to={firstRoute}/>
 		</Route>
 	);
 
-	let links = entries.map(([name, component]) => {
-		let url = `${base}/${urlSafe(name)}`;
-
-		panelRouter.push(
-			<Route key={url} path={url} component={component}/>
-		);
-
-		return <NavButton key={url} href={url} name={name} />;
-	});
+	let childrenPath = `${base}/:section`;
+	panelRouter.push(
+		<Route key={childrenPath} path={childrenPath}>
+			<ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => {}}>
+				{/* FIXME: implement onReset */}
+				<Component routes={routes}/>
+			</ErrorBoundary>
+		</Route>
+	);
 
 	sidebar.push(
-		<React.Fragment key={category}>
-			<Link href={`${base}/${urlSafe(entries[0][0])}`}>
+		<React.Fragment key={name}>
+			<Link href={firstRoute}>
 				<a>
-					<h2>{category}</h2>
+					<h2>{name}</h2>
 				</a>
 			</Link>
 			<nav>

@@ -129,6 +129,13 @@ input, select, textarea {
 
 .error {
 	font-weight: bold;
+
+	pre {
+		background: $bg;
+		padding: 1rem;
+		overflow: auto;
+		margin: 0;
+	}
 }
 
 .hidden {
