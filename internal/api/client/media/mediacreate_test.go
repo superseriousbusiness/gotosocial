@@ -194,7 +194,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessful() {
 
 	suite.Equal("this is a test image -- a cool background from somewhere", *attachmentReply.Description)
 	suite.Equal("image", attachmentReply.Type)
-	suite.EqualValues(model.MediaMeta{
+	suite.EqualValues(&model.MediaMeta{
 		Original: model.MediaDimensions{
 			Width:  1920,
 			Height: 1080,
@@ -212,7 +212,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessful() {
 			Y: 0.5,
 		},
 	}, attachmentReply.Meta)
-	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", attachmentReply.Blurhash)
+	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", *attachmentReply.Blurhash)
 	suite.NotEmpty(attachmentReply.ID)
 	suite.NotEmpty(attachmentReply.URL)
 	suite.NotEmpty(attachmentReply.PreviewURL)
@@ -288,7 +288,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessfulV2() {
 
 	suite.Equal("this is a test image -- a cool background from somewhere", *attachmentReply.Description)
 	suite.Equal("image", attachmentReply.Type)
-	suite.EqualValues(model.MediaMeta{
+	suite.EqualValues(&model.MediaMeta{
 		Original: model.MediaDimensions{
 			Width:  1920,
 			Height: 1080,
@@ -306,7 +306,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessfulV2() {
 			Y: 0.5,
 		},
 	}, attachmentReply.Meta)
-	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", attachmentReply.Blurhash)
+	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", *attachmentReply.Blurhash)
 	suite.NotEmpty(attachmentReply.ID)
 	suite.Nil(attachmentReply.URL)
 	suite.NotEmpty(attachmentReply.PreviewURL)
