@@ -66,6 +66,32 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
 	suite.Equal(`{"id":"01F8MH75CBF9JFX4ZAD54N0W0R","created_at":"2021-10-20T11:36:45.000Z","in_reply_to_id":null,"in_reply_to_account_id":null,"sensitive":false,"spoiler_text":"","visibility":"public","language":"en","uri":"http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R","url":"http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R","replies_count":0,"reblogs_count":0,"favourites_count":1,"favourited":true,"reblogged":false,"muted":false,"bookmarked":false,"pinned":false,"content":"hello world! #welcome ! first post on the instance :rainbow: !","reblog":null,"application":{"name":"superseriousbusiness","website":"https://superserious.business"},"account":{"id":"01F8MH17FWEB39HZJ76B6VXSKF","username":"admin","acct":"admin","display_name":"","locked":false,"bot":false,"created_at":"2022-05-17T13:10:59.000Z","note":"","url":"http://localhost:8080/@admin","avatar":"","avatar_static":"","header":"http://localhost:8080/assets/default_header.png","header_static":"http://localhost:8080/assets/default_header.png","followers_count":1,"following_count":1,"statuses_count":4,"last_status_at":"2021-10-20T10:41:37.000Z","emojis":[],"fields":[]},"media_attachments":[{"id":"01F8MH6NEM8D7527KZAECTCR76","type":"image","url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpeg","text_url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpeg","preview_url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.jpeg","remote_url":null,"preview_remote_url":null,"meta":{"original":{"width":1200,"height":630,"size":"1200x630","aspect":1.9047619},"small":{"width":256,"height":134,"size":"256x134","aspect":1.9104477},"focus":{"x":0,"y":0}},"description":"Black and white image of some 50's style text saying: Welcome On Board","blurhash":"LNJRdVM{00Rj%Mayt7j[4nWBofRj"}],"mentions":[],"tags":[{"name":"welcome","url":"http://localhost:8080/tags/welcome"}],"emojis":[{"shortcode":"rainbow","url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","static_url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","visible_in_picker":true}],"card":null,"poll":null}`, string(b))
 }
 
+func (suite *InternalToFrontendTestSuite) TestUnknownAttachmentToFrontend() {
+	testAttachment := &gtsmodel.MediaAttachment{
+		ID: "01GCFER1G1DSZQWKDG0K99QM1G",
+		CreatedAt: testrig.TimeMustParse("2021-10-20T11:36:45Z"),
+		UpdatedAt: testrig.TimeMustParse("2021-10-20T11:36:45Z"),
+		StatusID: "01GCFESDFEZB9MPB1S0V7QW46R",
+		URL: "http://localhost:8080/broken_ass_attachment",
+		RemoteURL: "https://turnip.farm/attachments/communist_manifesto.pdf",
+		Type: gtsmodel.FileTypeUnknown,
+		AccountID: "01GCFEW76SD22D5ETHVSNQSE9V",
+		Description: "The Communist Manifesto",
+		Thumbnail: gtsmodel.Thumbnail{
+			URL: "http://localhost:8080/broken_ass_attachment_preview",
+		},
+	}
+
+	apiAttachment, err := suite.typeconverter.AttachmentToAPIAttachment(context.Background(), testAttachment)
+	suite.NoError(err)
+
+	b, err := json.Marshal(apiAttachment)
+	suite.NoError(err)
+
+	suite.Equal(`{"id":"01GCFER1G1DSZQWKDG0K99QM1G","type":"unknown","url":"http://localhost:8080/broken_ass_attachment","text_url":null,"preview_url":"http://localhost:8080/broken_ass_attachment_preview","remote_url":"https://turnip.farm/attachments/communist_manifesto.pdf","preview_remote_url":null,"meta":null,"description":"The Communist Manifesto","blurhash":null}`, string(b))
+
+}
+
 func (suite *InternalToFrontendTestSuite) TestInstanceToFrontend() {
 	testInstance := &gtsmodel.Instance{
 		CreatedAt:        testrig.TimeMustParse("2021-10-20T11:36:45Z"),

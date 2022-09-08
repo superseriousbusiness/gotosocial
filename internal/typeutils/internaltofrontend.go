@@ -254,9 +254,13 @@ func (c *converter) AttachmentToAPIAttachment(ctx context.Context, a *gtsmodel.M
 	apiAttachment := model.Attachment{
 		ID:         a.ID,
 		Type:       strings.ToLower(string(a.Type)),
-		TextURL:    a.URL,
 		PreviewURL: a.Thumbnail.URL,
-		Meta: model.MediaMeta{
+	}
+
+	switch a.Type {
+	case gtsmodel.FileTypeImage:
+		apiAttachment.TextURL = &a.URL
+		apiAttachment.Meta = &model.MediaMeta{
 			Original: model.MediaDimensions{
 				Width:  a.FileMeta.Original.Width,
 				Height: a.FileMeta.Original.Height,
@@ -273,8 +277,8 @@ func (c *converter) AttachmentToAPIAttachment(ctx context.Context, a *gtsmodel.M
 				X: a.FileMeta.Focus.X,
 				Y: a.FileMeta.Focus.Y,
 			},
-		},
-		Blurhash: a.Blurhash,
+		}
+	default:
 	}
 
 	// nullable fields
@@ -296,6 +300,11 @@ func (c *converter) AttachmentToAPIAttachment(ctx context.Context, a *gtsmodel.M
 	if a.Description != "" {
 		i := a.Description
 		apiAttachment.Description = &i
+	}
+
+	if a.Blurhash != "" {
+		i := a.Blurhash
+		apiAttachment.Blurhash = &i
 	}
 
 	return apiAttachment, nil
