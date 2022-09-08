@@ -192,7 +192,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	}
 
 	// bail if this is a type we can't process
-	if !supportedEmoji(contentType) {
+	if !supportedEmojiMIME(contentType) {
 		return fmt.Errorf("store: content type %s was not valid for an emoji", contentType)
 	}
 

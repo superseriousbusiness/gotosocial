@@ -27,14 +27,17 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-// AllSupportedMIMETypes just returns all media
-// MIME types supported by this instance.
+var acceptedAttachmentTypes = []string{
+	mimeImageJpeg,
+	mimeImageGif,
+	mimeImagePng,
+}
+
+// AllSupportedMIMETypes just returns all attachment MIME types supported by this instance.
 func AllSupportedMIMETypes() []string {
-	return []string{
-		mimeImageJpeg,
-		mimeImageGif,
-		mimeImagePng,
-	}
+	i := []string{}
+	copy(i, acceptedAttachmentTypes)
+	return i
 }
 
 // parseContentType parses the MIME content type from a file, returning it as a string in the form (eg., "image/jpeg").
@@ -58,24 +61,8 @@ func parseContentType(fileHeader []byte) (string, error) {
 	return kind.MIME.Value, nil
 }
 
-// supportedImage checks mime type of an image against a slice of accepted types,
-// and returns True if the mime type is accepted.
-func supportedImage(mimeType string) bool {
-	acceptedImageTypes := []string{
-		mimeImageJpeg,
-		mimeImageGif,
-		mimeImagePng,
-	}
-	for _, accepted := range acceptedImageTypes {
-		if mimeType == accepted {
-			return true
-		}
-	}
-	return false
-}
-
-// supportedEmoji checks that the content type is image/png or image/gif -- the only types supported for emoji.
-func supportedEmoji(mimeType string) bool {
+// supportedEmojiMIME checks that the content type is image/png or image/gif -- the only types supported for emoji.
+func supportedEmojiMIME(mimeType string) bool {
 	acceptedEmojiTypes := []string{
 		mimeImageGif,
 		mimeImagePng,

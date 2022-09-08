@@ -30,6 +30,8 @@ import (
 
 	"github.com/buckket/go-blurhash"
 	"github.com/disintegration/imaging"
+	terminator "github.com/superseriousbusiness/exif-terminator"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 const (
@@ -205,4 +207,24 @@ func deriveStaticEmoji(r io.Reader, contentType string) (*imageMeta, error) {
 	return &imageMeta{
 		small: out.Bytes(),
 	}, nil
+}
+
+func checkAndClean(extension string, reader io.Reader, fileSize int) (clean io.Reader, attachmentType gtsmodel.FileType, err error) {
+	switch extension {
+	case mimeGif:
+		attachmentType = gtsmodel.FileTypeImage
+		clean = reader // nothing to clean from a gif
+	case mimeJpeg, mimePng:
+		attachmentType = gtsmodel.FileTypeImage
+		purged, err := terminator.Terminate(reader, fileSize, extension)
+		if err != nil {
+			err = fmt.Errorf("exif error: %s", err)
+		}
+		clean = purged
+	default:
+		attachmentType = gtsmodel.FileTypeUnknown
+		clean = reader // nothing to clean from unknown
+	}
+
+	return
 }
