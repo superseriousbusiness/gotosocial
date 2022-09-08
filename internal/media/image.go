@@ -108,6 +108,8 @@ func decodeImage(r io.Reader, contentType string) (*imageMeta, error) {
 // deriveThumbnail returns a byte slice and metadata for a thumbnail
 // of a given jpeg, png, or gif, or an error if something goes wrong.
 //
+// Thumbnail images are always jpegs.
+//
 // If createBlurhash is true, then a blurhash will also be generated from a tiny
 // version of the image. This costs precious CPU cycles, so only use it if you
 // really need a blurhash and don't have one already.

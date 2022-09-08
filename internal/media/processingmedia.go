@@ -123,7 +123,7 @@ func (p *ProcessingMedia) loadThumb(ctx context.Context) error {
 	thumbState := atomic.LoadInt32(&p.thumbState)
 	switch processState(thumbState) {
 	case received:
-		defer atomic.StoreInt32(&p.thumbState, int32(complete))
+		atomic.StoreInt32(&p.thumbState, int32(complete))
 
 		if p.attachment.Type == gtsmodel.FileTypeUnknown {
 			return nil
@@ -182,6 +182,7 @@ func (p *ProcessingMedia) loadThumb(ctx context.Context) error {
 			Aspect: thumb.aspect,
 		}
 		p.attachment.Thumbnail.FileSize = len(thumb.small)
+		p.attachment.Thumbnail.ContentType = mimeImageJpeg
 
 		fallthrough
 	case complete:
@@ -197,7 +198,7 @@ func (p *ProcessingMedia) loadFullSize(ctx context.Context) error {
 	fullSizeState := atomic.LoadInt32(&p.fullSizeState)
 	switch processState(fullSizeState) {
 	case received:
-		defer atomic.StoreInt32(&p.fullSizeState, int32(complete))
+		atomic.StoreInt32(&p.fullSizeState, int32(complete))
 
 		if p.attachment.Type == gtsmodel.FileTypeUnknown {
 			return nil
@@ -301,19 +302,13 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	}
 	extension := split[1] // something like 'jpeg'
 
-	// we know what the final url of this will be now
-	p.attachment.URL = uris.GenerateURIForAttachment(p.attachment.AccountID, string(TypeAttachment), string(SizeOriginal), p.attachment.ID, extension)
-
 	// concatenate the cleaned up first bytes with the existing bytes still in the reader (thanks Mara)
 	multiReader := io.MultiReader(bytes.NewBuffer(firstBytes), reader)
-
 	clean, attachmentType, err := checkAndClean(extension, multiReader, fileSize)
 	if err != nil {
 		return err
 	}
-	p.attachment.Type = attachmentType
 
-	// defer closing the clean reader when we're done with it
 	defer func() {
 		if rc, ok := clean.(io.ReadCloser); ok {
 			if err := rc.Close(); err != nil {
@@ -322,15 +317,31 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		}
 	}()
 
-	if p.attachment.Type != gtsmodel.FileTypeUnknown {
-		// now set some additional fields on the attachment since
-		// we know more about what the underlying media actually is,
-		// and we know that we're going to store it on disk
-		p.attachment.File.Path = fmt.Sprintf("%s/%s/%s/%s.%s", p.attachment.AccountID, TypeAttachment, SizeOriginal, p.attachment.ID, extension)
-		p.attachment.File.ContentType = contentType
-		p.attachment.File.FileSize = fileSize
+	var thumbnailExtension string
+	if attachmentType == gtsmodel.FileTypeImage {
+		thumbnailExtension = mimeJpeg
+	} else {
+		thumbnailExtension = extension
+	}
 
-		// store this for now -- other processes can pull it out of storage as they please
+	// set some additional fields on the attachment since we know more about what
+	// the underlying media actually is, and where we would store it on disk
+	p.attachment.Type = attachmentType
+
+	p.attachment.URL = uris.GenerateURIForAttachment(p.attachment.AccountID, string(TypeAttachment), string(SizeOriginal), p.attachment.ID, extension)
+	p.attachment.File.Path = fmt.Sprintf("%s/%s/%s/%s.%s", p.attachment.AccountID, TypeAttachment, SizeOriginal, p.attachment.ID, extension)
+	p.attachment.File.FileSize = fileSize
+	p.attachment.File.ContentType = contentType
+
+	p.attachment.Thumbnail.Path = fmt.Sprintf("%s/%s/%s/%s.%s", p.attachment.AccountID, TypeAttachment, SizeSmall, p.attachment.ID, thumbnailExtension)
+	p.attachment.Thumbnail.URL = uris.GenerateURIForAttachment(p.attachment.AccountID, string(TypeAttachment), string(SizeSmall), p.attachment.ID, thumbnailExtension)
+	// these two values will be overwritten if the
+	// file is something we can actually thumbnail
+	p.attachment.Thumbnail.FileSize = fileSize
+	p.attachment.Thumbnail.ContentType = contentType
+
+	if p.attachment.Type != gtsmodel.FileTypeUnknown {
+		// only store known file types
 		if err := p.storage.PutStream(ctx, p.attachment.File.Path, clean); err != nil {
 			return fmt.Errorf("store: error storing stream: %s", err)
 		}
@@ -361,9 +372,9 @@ func (m *manager) preProcessMedia(ctx context.Context, data DataFunc, postData P
 	}
 
 	thumbnail := gtsmodel.Thumbnail{
-		URL:         uris.GenerateURIForAttachment(accountID, string(TypeAttachment), string(SizeSmall), id, mimeJpeg), // all thumbnails are encoded as jpeg,
-		Path:        fmt.Sprintf("%s/%s/%s/%s.%s", accountID, TypeAttachment, SizeSmall, id, mimeJpeg),                 // all thumbnails are encoded as jpeg,
-		ContentType: mimeImageJpeg,
+		URL:         "", // we don't know yet because it depends on the uncalled DataFunc
+		Path:        "", // we don't know yet because it depends on the uncalled DataFunc
+		ContentType: "", // we don't know yet because it depends on the uncalled DataFunc,
 		UpdatedAt:   time.Now(),
 	}
 
