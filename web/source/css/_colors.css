@@ -23,57 +23,70 @@
 
 /* Color definitions */
 
-$near_white: #fafaff;
+/* Foreground */
+$white1: #fafaff; /* default text color, contrast >= 5.0 with all $grays */
+$white2: #b3b5c6; /* less important text, can be used with $gray1 (6.8), $gray2 (5.5), $gray3 (4.9), $gray4 (4.5) */
 
-$sloth_gray1: #b0b0b5;
-$sloth_gray2: #4d4e56;
+/* Background shades, contrast >= 5.0 with $white1 (#fafaff) */
+$gray1: #2a2b2f;
+$gray2: #35363b;
+$gray3: #3a3b41;
+$gray4: #45464e;
+$gray5: #4d4e56;
+$gray6: #575861;
+$gray7: #5d5e67;
+$gray8: #696a75;
 
-$sloth_orange1: #e78e5a;
-$sloth_orange2: #D87841;
-$blue: #63b1de; // complementary color to $sloth_orange1
+$orange1: #fd6a00; /* Used for non-text accent colors, can be used as background: $gray1 for text color (contrast 4.6)*/
+$orange2: #ff853e; /* hover/selected accent to $orange1, can be used with $gray1 (5.7), $gray2 (4.6) */
 
-/* derivative colors */
+$blue1: #3a9fde; /* darker blue for smaller elements (borders), can only be used with $gray1 (4.7) */
+$blue2: #66befe; /* all-round accent color, can be used with $gray1 (6.8), $gray2 (5.5), $gray3 (4.9), $gray4 (4.5) */
+$blue3: #89caff; /* hover/selected accent to $blue2, can be used with $gray1 (7.9), $gray2 (6.3), $gray3 (5.6), $gray4 (5.2), $gray5 (4.7) */
 
-$sloth_gray2_darker3: color-mod($sloth_gray2 lightness(-3%));
-$sloth_gray2_darker5: color-mod($sloth_gray2 lightness(-5%));
-$sloth_gray2_darker7: color-mod($sloth_gray2 lightness(-7%));
-$sloth_gray2_darker15: color-mod($sloth_gray2 lightness(-15%));
-$sloth_gray2_lighter3: color-mod($sloth_gray2 lightness(+3%));
-$sloth_gray2_lighter5: color-mod($sloth_gray2 lightness(+5%));
+$fg: $white1;
+$bg: $gray1;
 
-$blue_lighter8: color-mod($blue lightness(+4%));
-$lightblue: color-mod($blue lightness(+16%));
+$bg-trans: color-mod($gray5 alpha(62%));
 
-$fg: $near_white;
-$bg: $sloth_gray2_darker7;
-
-$bg_trans: color-mod($sloth_gray2 alpha(62%));
-
-$bg_accent: $sloth_gray2_lighter3;
-$fg_accent: $lightblue;
-$border_accent: $sloth_orange2;
+$bg-accent: $gray5;
+$fg-accent: $blue3;
+$fg-reduced: $white2;
+$border-accent: $orange2;
 
 /* Color variables as used in a specific location */
 
-$footer_bg: $bg_accent;
+$link-fg: $fg-accent;
 
-$link_fg: $fg_accent;
+$button-bg: $blue2;
+$button-fg: $gray1;
+$button-hover-bg: $blue3;
 
-$button_border: 0.08rem solid color-mod($sloth_orange2 lightness(-15%));
-$button_bg: $blue_lighter8;
-$button_fg: $sloth_gray2_darker15;
-$button_hover_bg: $lightblue;
+$toot-focus-bg: $gray5;
+$toot-unfocus-bg: $gray3;
 
-$status_focus_bg: $bg_accent;
-$status_unfocus_bg: $sloth_gray2_darker3;
-$status_info_fg: #CBCBD7;
+$toot-info-bg: $gray4;
 
-$bg_no_img_desc: $sloth_orange2;
-$bg_sensitive: $sloth_gray2_darker15;
+$no-img-desc-bg: $orange1;
+$no-img-desc-fg: $gray1;
+
+$bg-sensitive: $gray1;
 
 $boxshadow: 0 0.4rem 1rem -0.1rem rgba(0,0,0,0.15);
-$boxshadow_border: 0.08rem solid $sloth_gray2_darker5;
+$boxshadow-border: 0.08rem solid $gray1;
 
-$profile_avatar_border: 0.2rem solid $border_accent;
+$avatar-border: $orange2;
 
-$input_bg: $sloth_gray2_darker3;
+$input-bg: $gray4;
+$input-border: $blue1;
+$input-focus-border: $blue3;
+
+$settings-nav-bg: $bg-accent;
+$settings-nav-header-fg: $white1;
+$settings-nav-header-bg: $gray3;
+
+$settings-nav-bg-hover: $orange2;
+$settings-nav-fg-hover: $gray1;
+
+$settings-nav-bg-active: $orange1;
+$settings-nav-fg-active: $gray1;

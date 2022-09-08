@@ -31,13 +31,13 @@ main {
 }
 
 .toot {
-	background: $status_unfocus_bg;
+	background: $toot-unfocus-bg;
 	box-shadow: $boxshadow;
-	border: $boxshadow_border;
+	border: $boxshadow-border;
 	position: relative;
 	margin-bottom: $br;
-	border-radius: $br;
-	padding: 1.5rem 0;
+	padding-top: 1.5rem;
+	padding-bottom: 0.7rem;
 
 	a {
 		position: relative;
@@ -49,27 +49,35 @@ main {
 	.contentgrid {
 		padding: 0 1.5rem;
 		display: grid;
-		grid-template-columns: 4rem auto 1fr;
-		grid-template-rows: 1.5rem auto auto;
+		grid-template-columns: 4rem 1fr auto;
+		grid-template-rows: 1.5rem auto auto auto;
 		column-gap: 0.5rem;
 	}
 
+	.not-expanded {
+		color: $fg-reduced;
+		grid-column: 3;
+		grid-row: 1;
+	}
+
 	.avatar {
-		grid-row: span 2;
+		grid-row: span 3;
 		aspect-ratio: 1/1;
+		display: flex;
+		border: 0.2rem solid $avatar-border;
+		border-radius: 0.4rem;
+		overflow: hidden; /* hides corners from img overflowing */
 	
 		img {
 			height: 100%;
 			width: 100%;
 			object-fit: cover;
 			background: $bg;
-			border: 0.1rem solid $acc2;
-			border-radius: calc($br / 1.5);
 		}
 	}
 	
 	.displayname {
-		grid-column: span 2;
+		/* grid-column: span 2; */
 		font-weight: bold;
 		font-size: 1.2rem;
 		line-height: 2rem;
@@ -82,7 +90,7 @@ main {
 	}
 	
 	.username {
-		color: $link_fg;
+		color: $link-fg;
 		line-height: 2rem;
 		margin-top: -0.5rem;
 		align-self: start;
@@ -119,8 +127,8 @@ main {
 
 	.text {
 		margin: 0;
-		margin-top: 0.5rem;
-		grid-column: span 3;
+		/* margin-top: 0.5rem; */
+		grid-column: 2 / span 2;
 		grid-row: span 1;
 		overflow: hidden;
 
@@ -128,34 +136,34 @@ main {
 		z-index: 2;
 
 		a {
-			color: $link_fg;
+			color: $link-fg;
 			text-decoration: underline;
 		}
 
 		.content {
-			padding-top: 0.5rem;
+			/* padding-top: 0.5rem; */
 			padding-bottom: 0.5rem;
 
 			word-break: break-word;
 
 			blockquote {
 				padding: 0.5rem 0 0.5rem 1.5rem;
-				border-left: 0.2rem solid $sloth_orange1;
+				border-left: 0.2rem solid $sloth-orange1;
 				margin-left: 1rem;
 				font-style: italic;
 			}
 
 			hr {
-				border: 1px dashed $sloth_orange1;
+				border: 1px dashed $sloth-orange1;
 			} 
 
 			pre, code {
-				background-color: $sloth_gray2_darker7;
+				background-color: $sloth-gray2-darker7;
 			}
 
 			code {
 				padding: 0.25rem;
-				border-radius: $br_inner;
+				border-radius: $br-inner;
 			}
 
 			pre {
@@ -249,7 +257,7 @@ main {
 
 			.closed {
 				transition: 0.3s;
-				background: $bg_sensitive;
+				background: $bg-sensitive;
 				@supports (backdrop-filter: blur(2rem)) {
 					background: transparent;
 					backdrop-filter: blur(2rem);
@@ -263,17 +271,17 @@ main {
 		}
 
 		.no-image-desc {
-			color: $button_fg;
+			color: $no-img-desc-fg;
+			background: $no-img-desc-bg;
 			display: flex;
 			position: absolute;
 			bottom: 0.1rem;
 			right: 0.4rem;
 			margin-bottom: 0.4rem;
 			margin-right: 0.4rem;
-			background: $bg_no_img_desc;
 			padding: 0.1rem 0.45rem;
 			border-radius: 100%;
-			border: 0.2rem solid $button_fg;
+			border: 0.2rem solid $button-fg;
 			z-index: 3;
 
 			i.fa {
@@ -302,12 +310,13 @@ main {
 	}
 
 	.info {
+		background: $toot-info-bg;
+		color: $fg-reduced;
 		display: none;
-		border-top: 0.15rem solid $status_unfocus_bg;
+		border-top: 0.15rem solid $toot-info-border;
 		padding: 0.5rem 1.5rem;
 
 		div {
-			position: relative;
 			padding-right: 1.3rem;
 		}
 
@@ -317,30 +326,6 @@ main {
 
 		grid-column: span 3;
 		flex-wrap: wrap;
-
-		div.stats::after {
-			display: none;
-		}
-
-		div::after {
-			$size: 0.25rem;
-			display: block;
-			background: $fg_dark;
-			height: $size;
-			width: $size;
-			content: "";
-			position: absolute;
-			top: calc((1.5rem - $size) / 2);
-			right: 0.55rem;
-			border-radius: 1rem;
-		}
-
-		div:last-child {
-			&::after {
-				display: none;
-			}
-			margin-right: 0;
-		}
 	}
 
 	.toot-link {
@@ -362,7 +347,7 @@ main {
 		border-top-right-radius: $br;
 	}
 
-	&:last-child {
+	&:last-child, &:last-child .info {
 		/* bottom left, bottom right */
 		border-bottom-left-radius: $br;
 		border-bottom-right-radius: $br;
@@ -370,11 +355,21 @@ main {
 	}
 
 	&.expanded {
-		background: $status_focus_bg;
+		background: $toot-focus-bg;
 		padding-bottom: 0;
 
 		.contentgrid {
-			padding-bottom: 1rem;
+			.displayname {
+				grid-column: span 2;
+			}
+
+			.text {
+				grid-column: 1 / span 3;
+			}
+
+			.not-expanded {
+				display: none;
+			}
 		}
 
 		.info {

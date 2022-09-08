@@ -28,7 +28,7 @@ main {
 }
 
 .profile {
-	background: $bg_accent;
+	background: $bg-accent;
 	display: grid;
 	grid-template-rows: auto auto auto;
 	grid-template-columns: auto;
@@ -38,7 +38,7 @@ main {
 
 	border-radius: $br;
 	box-shadow: $boxshadow;
-	border: $boxshadow_border;
+	border: $boxshadow-border;
 
 	.headerimage {
 		width: 100%;
@@ -50,7 +50,7 @@ main {
 			width: 100%;
 			height: 100%;
 			object-fit: cover;
-			border-radius: $br_inner $br_inner 0 0;
+			border-radius: $br-inner $br-inner 0 0;
 		}
 	}
 
@@ -69,7 +69,7 @@ main {
 
 		#profile-basic-filler2 {
 			grid-area: filler2;
-			background: $bg_trans;
+			background: $bg-trans;
 		}
 
 		.avatar {
@@ -79,7 +79,7 @@ main {
 			width: 8.5rem;
 			grid-area: avatar;
 			background: $bg;
-			border: $profile_avatar_border;
+			border: 0.2rem solid $avatar-border;
 			padding: 0;
 			border-radius: $br;
 			position: relative;
@@ -87,7 +87,7 @@ main {
 			box-shadow: $boxshadow;
 			img {
 				object-fit: cover;
-				border-radius: $br_inner;
+				border-radius: $br-inner;
 				width: 100%;
 				height: 100%;
 			}
@@ -105,7 +105,7 @@ main {
 			font-weight: bold;
 			font-size: 2rem;
 			line-height: 2.2rem;
-			background: $bg_trans;
+			background: $bg-trans;
 			word-break: break-all;
 			text-overflow: ellipsis;
 			overflow: hidden;
@@ -120,7 +120,7 @@ main {
 			padding-top: 0;
 			margin-top: 0.25rem;
 			padding-bottom: 0.25rem;
-			color: $fg_accent;
+			color: $fg-accent;
 			font-weight: bold;
 			word-break: break-all;
 			text-overflow: ellipsis;

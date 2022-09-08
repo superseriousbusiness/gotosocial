@@ -34,7 +34,7 @@
 $br: 0.4rem;
 // border radius for items that are framed/bordered
 // inside something with $br, eg avatar, header img
-$br_inner: 0.2rem; 
+$br-inner: 0.2rem; 
 
 html, body {
 	padding: 0;
@@ -42,7 +42,7 @@ html, body {
 	background: $bg;
 	color: $fg;
 	font-family: "Noto Sans", sans-serif;
-	scrollbar-color: $sloth_orange1 $sloth_gray2_darker3;
+	scrollbar-color: $sloth-orange1 $sloth-gray2-darker3;
 }
 
 body {
@@ -71,7 +71,7 @@ h1 {
 }
 
 a {
-	color: $link_fg;
+	color: $link-fg;
 }
 
 header, footer {
@@ -85,7 +85,7 @@ header, footer {
 
 header a {
 	margin: 2rem;
-	/* background: $header_bg; */
+	/* background: $header-bg; */
 	display: flex;
 	flex-direction: column;
 	flex-wrap: wrap;
@@ -109,7 +109,7 @@ header a {
 	}
 }
 
-.excerpt_top {
+.excerpt-top {
 	margin-top: -1rem;
 	margin-bottom: 2rem;
 	font-style: italic;
@@ -119,15 +119,15 @@ header a {
 
 	.count {
 		font-weight: bold;
-		color: $fg_accent;
+		color: $fg-accent;
 	}
 }
 
 main {
 	section {
-		background: $bg_accent;
+		background: $bg-accent;
 		box-shadow: $boxshadow;
-		border: $boxshadow_border;
+		border: $boxshadow-border;
 		border-radius: $br;
 		padding: 2rem;
 		margin-bottom: 2rem;
@@ -144,10 +144,10 @@ main {
 
 .button, button {
 	border-radius: 0.2rem;
-	color: $button_fg;
-	background: $button_bg;
+	color: $button-fg;
+	background: $button-bg;
 	box-shadow: $boxshadow;
-	border: $button_border;
+	border: $button-border;
 	text-decoration: none;
 	font-size: 1.2rem;
 	font-weight: bold;
@@ -158,7 +158,7 @@ main {
 	font-family: 'Noto Sans', sans-serif;
 
 	&:hover {
-		background: $button_hover_bg;
+		background: $button-hover-bg;
 	}
 }
 
@@ -191,7 +191,7 @@ section.apps {
 			grid-template-columns: 25% 1fr;
 			gap: 1.5rem;
 			padding: 0.5rem;
-			background: $bg_accent;
+			background: $bg-accent;
 			border-radius: 0.5rem;
 
 			.logo {
@@ -266,18 +266,17 @@ section.error {
 
 input, select, textarea {
 	box-sizing: border-box;
-	border: 0.15rem solid $border_accent;
+	border: 0.15rem solid $input-border;
 	border-radius: 0.1rem;
 	color: $fg;
-	/* background: $input_bg; */
-	background: $bg_accent;
+	background: $input-bg;
 	width: 100%;
 	font-family: 'Noto Sans', sans-serif;
 	font-size: 1rem;
 	padding: 0.3rem;
 
 	&:focus {
-		border-color: $fg_accent;
+		border-color: $input-focus-border;
 	}
 }
 
