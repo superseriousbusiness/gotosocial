@@ -552,6 +552,9 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		statusInteractions = si
 	}
 
+	// if the status contains unknown attachment types, mention this
+	content := s.Content + generateUnknownAttachmentHelperText(apiAttachments)
+
 	apiStatus := &model.Status{
 		ID:                 s.ID,
 		CreatedAt:          util.FormatISO8601(s.CreatedAt),
@@ -571,7 +574,7 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		Muted:              statusInteractions.Muted,
 		Reblogged:          statusInteractions.Reblogged,
 		Pinned:             *s.Pinned,
-		Content:            s.Content,
+		Content:            content,
 		Reblog:             nil,
 		Application:        apiApplication,
 		Account:            apiAuthorAccount,
