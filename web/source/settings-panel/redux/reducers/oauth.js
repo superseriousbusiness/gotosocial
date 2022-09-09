@@ -18,6 +18,25 @@
 
 "use strict";
 
-module.exports = function AdminSettings() {
-	return "admin settings";
-};
+const {createSlice} = require("@reduxjs/toolkit");
+
+module.exports = createSlice({
+	name: "oauth",
+	initialState: {
+		loggedIn: false
+	},
+	reducers: {
+		setInstance: (state, {payload}) => {
+			return {
+				...state,
+				instance: payload
+			};
+		},
+		setRegistration: (state, {payload}) => {
+			return {
+				...state,
+
+			}
+		}
+	}
+});

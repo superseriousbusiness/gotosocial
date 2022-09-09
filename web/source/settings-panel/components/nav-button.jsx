@@ -18,6 +18,16 @@
 
 "use strict";
 
-module.exports = function AdminSettings() {
-	return "admin settings";
+const React = require("react");
+const { Link, useRoute } = require("wouter");
+
+module.exports = function NavButton({href, name}) {
+	const [isActive] = useRoute(href);
+	return (
+		<Link href={href}>
+			<a className={isActive ? "active" : ""} data-content={name}>
+				{name}
+			</a>
+		</Link>
+	);
 };

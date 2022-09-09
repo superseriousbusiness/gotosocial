@@ -12,12 +12,12 @@
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU Affero General Public License for more details.
 
-	You should have received a copy of the GNU Affero General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
+	
 "use strict";
 
-module.exports = function AdminSettings() {
-	return "admin settings";
+module.exports = function Login() {
+	return (null);
 };
