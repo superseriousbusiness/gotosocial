@@ -37,8 +37,6 @@ const (
 	profilePath      = "/@:" + usernameKey
 	customCSSPath    = profilePath + "/custom.css"
 	statusPath       = profilePath + "/statuses/:" + statusIDKey
-	adminPanelPath   = "/admin"
-	userPanelpath    = "/user"
 	assetsPathPrefix = "/assets"
 
 	tokenParam  = "token"
