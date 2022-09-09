@@ -97,7 +97,8 @@ const browserifyConfig = {
 				return out(file);
 			})
 		}]
-	]
+	],
+	extensions: [".js", ".jsx", ".css"]
 };
 
 const entryFiles = Object.keys(bundles);
