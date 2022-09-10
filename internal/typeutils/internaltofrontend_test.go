@@ -67,32 +67,43 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
 }
 
 func (suite *InternalToFrontendTestSuite) TestStatusToFrontendWithUnkownAttachment() {
+	ctx := context.Background()
+
 	testAttachment := &gtsmodel.MediaAttachment{
 		ID:          "01GCFER1G1DSZQWKDG0K99QM1G",
 		CreatedAt:   testrig.TimeMustParse("2021-10-20T11:36:45Z"),
 		UpdatedAt:   testrig.TimeMustParse("2021-10-20T11:36:45Z"),
 		StatusID:    "01GCFESDFEZB9MPB1S0V7QW46R",
-		URL:         "http://localhost:8080/broken_ass_attachment",
+		URL:         "http://localhost:8080/fileserver/01GCFEW76SD22D5ETHVSNQSE9V/attachment/original/01GCFER1G1DSZQWKDG0K99QM1G.pdf",
 		RemoteURL:   "https://turnip.farm/attachments/communist_manifesto.pdf",
 		Type:        gtsmodel.FileTypeUnknown,
 		AccountID:   "01GCFEW76SD22D5ETHVSNQSE9V",
 		Description: "The Communist Manifesto",
-		Thumbnail: gtsmodel.Thumbnail{
-			URL: "http://localhost:8080/broken_ass_attachment_preview",
+		File: gtsmodel.File{
+			Path:        "01GCFEW76SD22D5ETHVSNQSE9V/attachment/original/01GCFER1G1DSZQWKDG0K99QM1G.pdf",
+			ContentType: "application/pdf",
 		},
+		Thumbnail: gtsmodel.Thumbnail{
+			URL:         "http://localhost:8080/fileserver/01GCFEW76SD22D5ETHVSNQSE9V/attachment/small/01GCFER1G1DSZQWKDG0K99QM1G.pdf",
+			Path:        "01GCFEW76SD22D5ETHVSNQSE9V/attachment/small/01GCFER1G1DSZQWKDG0K99QM1G.pdf",
+			ContentType: "application/pdf",
+		},
+	}
+
+	if err := suite.db.Put(ctx, testAttachment); err != nil {
+		suite.FailNow(err.Error())
 	}
 
 	testStatus := suite.testStatuses["admin_account_status_1"]
 	testStatus.AttachmentIDs = append(testStatus.AttachmentIDs, testAttachment.ID)
-	testStatus.Attachments = append(testStatus.Attachments, testAttachment)
 	requestingAccount := suite.testAccounts["local_account_1"]
-	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount)
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(ctx, testStatus, requestingAccount)
 	suite.NoError(err)
 
 	b, err := json.Marshal(apiStatus)
 	suite.NoError(err)
 
-	suite.Equal(`{"id":"01F8MH75CBF9JFX4ZAD54N0W0R","created_at":"2021-10-20T11:36:45.000Z","in_reply_to_id":null,"in_reply_to_account_id":null,"sensitive":false,"spoiler_text":"","visibility":"public","language":"en","uri":"http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R","url":"http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R","replies_count":0,"reblogs_count":0,"favourites_count":1,"favourited":true,"reblogged":false,"muted":false,"bookmarked":false,"pinned":false,"content":"hello world! #welcome ! first post on the instance :rainbow: !\u003cp\u003e[GoToSocial (localhost:8080): This post contains one or more media attachment types that could not be recognized by the server. These are linked below. These links lead outside of localhost:8080, so check them carefully and click on them at your own risk.]\u003c/p\u003e\u003cul\u003e\u003cli\u003e[\u003ca href=\"https://turnip.farm/attachments/communist_manifesto.pdf\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003ehttps://turnip.farm/attachments/communist_manifesto.pdf\u003c/a\u003e]\u003c/li\u003e\u003c/ul\u003e","reblog":null,"application":{"name":"superseriousbusiness","website":"https://superserious.business"},"account":{"id":"01F8MH17FWEB39HZJ76B6VXSKF","username":"admin","acct":"admin","display_name":"","locked":false,"bot":false,"created_at":"2022-05-17T13:10:59.000Z","note":"","url":"http://localhost:8080/@admin","avatar":"","avatar_static":"","header":"http://localhost:8080/assets/default_header.png","header_static":"http://localhost:8080/assets/default_header.png","followers_count":1,"following_count":1,"statuses_count":4,"last_status_at":"2021-10-20T10:41:37.000Z","emojis":[],"fields":[]},"media_attachments":[{"id":"01GCFER1G1DSZQWKDG0K99QM1G","type":"unknown","url":"http://localhost:8080/broken_ass_attachment","text_url":null,"preview_url":"http://localhost:8080/broken_ass_attachment_preview","remote_url":"https://turnip.farm/attachments/communist_manifesto.pdf","preview_remote_url":null,"meta":null,"description":"The Communist Manifesto","blurhash":null}],"mentions":[],"tags":[{"name":"welcome","url":"http://localhost:8080/tags/welcome"}],"emojis":[{"shortcode":"rainbow","url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","static_url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","visible_in_picker":true}],"card":null,"poll":null}`, string(b))
+	suite.Equal(`{"id":"01F8MH75CBF9JFX4ZAD54N0W0R","created_at":"2021-10-20T11:36:45.000Z","in_reply_to_id":null,"in_reply_to_account_id":null,"sensitive":false,"spoiler_text":"","visibility":"public","language":"en","uri":"http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R","url":"http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R","replies_count":0,"reblogs_count":0,"favourites_count":1,"favourited":true,"reblogged":false,"muted":false,"bookmarked":false,"pinned":false,"content":"hello world! #welcome ! first post on the instance :rainbow: !\u003chr/\u003e\u003cp\u003eGoToSocial (localhost:8080): This post contains 1 attachment(s) not recognized by the server. Check external link(s) carefully and click at your own risk.\u003c/p\u003e\u003cul\u003e\u003cli\u003e\u003ca href=\"https://turnip.farm/attachments/communist_manifesto.pdf\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003ehttps://turnip.farm/attachments/communist_manifesto.pdf\u003c/a\u003e\u003c/li\u003e\u003c/ul\u003e","reblog":null,"application":{"name":"superseriousbusiness","website":"https://superserious.business"},"account":{"id":"01F8MH17FWEB39HZJ76B6VXSKF","username":"admin","acct":"admin","display_name":"","locked":false,"bot":false,"created_at":"2022-05-17T13:10:59.000Z","note":"","url":"http://localhost:8080/@admin","avatar":"","avatar_static":"","header":"http://localhost:8080/assets/default_header.png","header_static":"http://localhost:8080/assets/default_header.png","followers_count":1,"following_count":1,"statuses_count":4,"last_status_at":"2021-10-20T10:41:37.000Z","emojis":[],"fields":[]},"media_attachments":[{"id":"01F8MH6NEM8D7527KZAECTCR76","type":"image","url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpeg","text_url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpeg","preview_url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.jpeg","remote_url":null,"preview_remote_url":null,"meta":{"original":{"width":1200,"height":630,"size":"1200x630","aspect":1.9047619},"small":{"width":256,"height":134,"size":"256x134","aspect":1.9104477},"focus":{"x":0,"y":0}},"description":"Black and white image of some 50's style text saying: Welcome On Board","blurhash":"LNJRdVM{00Rj%Mayt7j[4nWBofRj"},{"id":"01GCFER1G1DSZQWKDG0K99QM1G","type":"unknown","url":"http://localhost:8080/fileserver/01GCFEW76SD22D5ETHVSNQSE9V/attachment/original/01GCFER1G1DSZQWKDG0K99QM1G.pdf","text_url":null,"preview_url":"http://localhost:8080/fileserver/01GCFEW76SD22D5ETHVSNQSE9V/attachment/small/01GCFER1G1DSZQWKDG0K99QM1G.pdf","remote_url":"https://turnip.farm/attachments/communist_manifesto.pdf","preview_remote_url":null,"meta":null,"description":"The Communist Manifesto","blurhash":null}],"mentions":[],"tags":[{"name":"welcome","url":"http://localhost:8080/tags/welcome"}],"emojis":[{"shortcode":"rainbow","url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","static_url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","visible_in_picker":true}],"card":null,"poll":null}`, string(b))
 }
 
 func (suite *InternalToFrontendTestSuite) TestUnknownAttachmentToFrontend() {
@@ -101,13 +112,19 @@ func (suite *InternalToFrontendTestSuite) TestUnknownAttachmentToFrontend() {
 		CreatedAt:   testrig.TimeMustParse("2021-10-20T11:36:45Z"),
 		UpdatedAt:   testrig.TimeMustParse("2021-10-20T11:36:45Z"),
 		StatusID:    "01GCFESDFEZB9MPB1S0V7QW46R",
-		URL:         "http://localhost:8080/broken_ass_attachment",
+		URL:         "http://localhost:8080/fileserver/01GCFEW76SD22D5ETHVSNQSE9V/attachment/original/01GCFER1G1DSZQWKDG0K99QM1G.pdf",
 		RemoteURL:   "https://turnip.farm/attachments/communist_manifesto.pdf",
 		Type:        gtsmodel.FileTypeUnknown,
 		AccountID:   "01GCFEW76SD22D5ETHVSNQSE9V",
 		Description: "The Communist Manifesto",
+		File: gtsmodel.File{
+			Path:        "01GCFEW76SD22D5ETHVSNQSE9V/attachment/original/01GCFER1G1DSZQWKDG0K99QM1G.pdf",
+			ContentType: "application/pdf",
+		},
 		Thumbnail: gtsmodel.Thumbnail{
-			URL: "http://localhost:8080/broken_ass_attachment_preview",
+			URL:         "http://localhost:8080/fileserver/01GCFEW76SD22D5ETHVSNQSE9V/attachment/small/01GCFER1G1DSZQWKDG0K99QM1G.pdf",
+			Path:        "01GCFEW76SD22D5ETHVSNQSE9V/attachment/small/01GCFER1G1DSZQWKDG0K99QM1G.pdf",
+			ContentType: "application/pdf",
 		},
 	}
 
@@ -117,7 +134,7 @@ func (suite *InternalToFrontendTestSuite) TestUnknownAttachmentToFrontend() {
 	b, err := json.Marshal(apiAttachment)
 	suite.NoError(err)
 
-	suite.Equal(`{"id":"01GCFER1G1DSZQWKDG0K99QM1G","type":"unknown","url":"http://localhost:8080/broken_ass_attachment","text_url":null,"preview_url":"http://localhost:8080/broken_ass_attachment_preview","remote_url":"https://turnip.farm/attachments/communist_manifesto.pdf","preview_remote_url":null,"meta":null,"description":"The Communist Manifesto","blurhash":null}`, string(b))
+	suite.Equal(`{"id":"01GCFER1G1DSZQWKDG0K99QM1G","type":"unknown","url":"http://localhost:8080/fileserver/01GCFEW76SD22D5ETHVSNQSE9V/attachment/original/01GCFER1G1DSZQWKDG0K99QM1G.pdf","text_url":null,"preview_url":"http://localhost:8080/fileserver/01GCFEW76SD22D5ETHVSNQSE9V/attachment/small/01GCFER1G1DSZQWKDG0K99QM1G.pdf","remote_url":"https://turnip.farm/attachments/communist_manifesto.pdf","preview_remote_url":null,"meta":null,"description":"The Communist Manifesto","blurhash":null}`, string(b))
 }
 
 func (suite *InternalToFrontendTestSuite) TestInstanceToFrontend() {
