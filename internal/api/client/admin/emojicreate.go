@@ -26,12 +26,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
-
-const emojiLocalMaxSize = 51200
 
 // EmojiCreatePOSTHandler swagger:operation POST /api/v1/admin/custom_emojis emojiCreate
 //
@@ -60,7 +59,7 @@ const emojiLocalMaxSize = 51200
 //   in: formData
 //   description: |-
 //     A png or gif image of the emoji. Animated pngs work too!
-//     To ensure compatibility with other fedi implementations, emoji size limit is 50kb.
+//     To ensure compatibility with other fedi implementations, emoji size limit is 50kb by default.
 //   type: file
 //   required: true
 //
@@ -130,8 +129,9 @@ func validateCreateEmoji(form *model.EmojiCreateRequest) error {
 		return errors.New("no emoji given")
 	}
 
-	if form.Image.Size > emojiLocalMaxSize {
-		return fmt.Errorf("emoji image too large: image is %dKB but size limit for custom emojis is %dKB", form.Image.Size/1024, emojiLocalMaxSize/1024)
+	maxSize := config.GetMediaEmojiLocalMaxSize()
+	if form.Image.Size > int64(maxSize) {
+		return fmt.Errorf("emoji image too large: image is %dKB but size limit for custom emojis is %dKB", form.Image.Size/1024, maxSize/1024)
 	}
 
 	return validate.EmojiShortcode(form.Shortcode)

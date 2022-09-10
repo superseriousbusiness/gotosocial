@@ -84,7 +84,7 @@ func (suite *EmojiTestSuite) TestDereferenceEmojiBlocking() {
 	stored, err := suite.storage.Get(ctx, emoji.ImagePath)
 	suite.NoError(err)
 	suite.Len(stored, emoji.ImageFileSize)
-	
+
 	storedStatic, err := suite.storage.Get(ctx, emoji.ImageStaticPath)
 	suite.NoError(err)
 	suite.Len(storedStatic, emoji.ImageStaticFileSize)

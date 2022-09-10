@@ -28,14 +28,13 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
-
-const emojiRemoteMaxSize = 102400
 
 // ProcessingEmoji represents an emoji currently processing. It exposes
 // various functions for retrieving data from the process.
@@ -172,8 +171,9 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 		return fmt.Errorf("store: error executing data function: %s", err)
 	}
 
-	if fileSize > emojiRemoteMaxSize {
-		return fmt.Errorf("store: emoji size (%d) is larger than allowed emojiRemoteMaxSize (%d)", fileSize, emojiRemoteMaxSize)
+	maxSize := config.GetMediaEmojiRemoteMaxSize()
+	if fileSize > maxSize {
+		return fmt.Errorf("store: emoji size (%db) is larger than allowed emojiRemoteMaxSize (%db)", fileSize, maxSize)
 	}
 
 	// defer closing the reader when we're done with it
