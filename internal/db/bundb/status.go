@@ -185,8 +185,7 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status) (*
 				EmojiID:  i,
 			}).Exec(ctx); err != nil {
 				err = s.conn.errProc(err)
-				var alreadyExistsError *db.ErrAlreadyExists
-				if !errors.As(err, &alreadyExistsError) {
+				if !errors.Is(err, db.ErrAlreadyExists) {
 					return err
 				}
 			}
@@ -199,8 +198,7 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status) (*
 				TagID:    i,
 			}).Exec(ctx); err != nil {
 				err = s.conn.errProc(err)
-				var alreadyExistsError *db.ErrAlreadyExists
-				if !errors.As(err, &alreadyExistsError) {
+				if !errors.Is(err, db.ErrAlreadyExists) {
 					return err
 				}
 			}
