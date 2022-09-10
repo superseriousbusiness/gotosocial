@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -58,22 +59,22 @@ func generateUnknownAttachmentHelperText(apiAttachments []model.Attachment) stri
 		if a.Type == "unknown" && a.RemoteURL != nil {
 			buf := &bytes.Buffer{}
 			buf.WriteString(`<li>`)
-			buf.WriteString(`[<a href="` + *a.RemoteURL + `">`)
-			buf.WriteString(*a.RemoteURL)
-			buf.WriteString(`</a>]`)
+			buf.WriteString(`<a href="` + *a.RemoteURL + `">` + *a.RemoteURL + `</a>`)
 			buf.WriteString(`</li>`)
 			unknownAttachmentEntries = append(unknownAttachmentEntries, buf.String())
 		}
 	}
 
 	var unknownAttachmentHelperText string
-	if len(unknownAttachmentEntries) != 0 {
+	if count := len(unknownAttachmentEntries); count != 0 {
 		ac := config.GetAccountDomain()
 		buf := &bytes.Buffer{}
-		buf.WriteString(`<p>[GoToSocial (` + ac + `): `)
-		buf.WriteString(`This post contains one or more media attachment types that could not be recognized by the server. These are linked below. `)
-		buf.WriteString(`These links lead outside of ` + ac + `, so check them carefully and click on them at your own risk.`)
-		buf.WriteString(`]</p>`)
+		buf.WriteString(`<hr />`)
+		buf.WriteString(`<p>`)
+		buf.WriteString(`GoToSocial (` + ac + `): `)
+		buf.WriteString(`This post contains ` + strconv.Itoa(count) + ` attachment(s) not recognized by the server. `)
+		buf.WriteString(`Check external link(s) carefully and click at your own risk.`)
+		buf.WriteString(`</p>`)
 		buf.WriteString(`<ul>` + strings.Join(unknownAttachmentEntries, "") + `</ul>`)
 		unknownAttachmentHelperText = buf.String()
 	}
