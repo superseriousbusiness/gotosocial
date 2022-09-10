@@ -38,7 +38,9 @@
     "react-error-boundary": "^3.1.4",
     "react-redux": "^8.0.2",
     "reactify": "^1.1.1",
+    "redux-devtools-extension": "^2.13.9",
     "redux-persist": "^6.0.0",
+    "redux-thunk": "^2.4.1",
     "uglifyify": "^5.0.2",
     "wouter": "^2.8.0-alpha.2"
   },

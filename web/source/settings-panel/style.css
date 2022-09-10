@@ -32,7 +32,7 @@ section {
 	display: grid;
 	grid-template-columns: 1fr min(92%, 90ch) 1fr;
 
-	section {
+	section.with-sidebar {
 		border-left: none;
 		border-top-left-radius: 0;
 		border-bottom-left-radius: 0;
@@ -128,10 +128,16 @@ input, select, textarea {
 }
 
 .error {
+	background: $error2;
+	border: 1px solid $error1;
+	border-radius: $br;
+	color: $error1;
 	font-weight: bold;
+	padding: 0.5rem;
 
 	pre {
 		background: $bg;
+		color: $fg;
 		padding: 1rem;
 		overflow: auto;
 		margin: 0;

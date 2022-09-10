@@ -44,6 +44,9 @@ $blue1: #3a9fde; /* darker blue for smaller elements (borders), can only be used
 $blue2: #66befe; /* all-round accent color, can be used with $gray1 (6.8), $gray2 (5.5), $gray3 (4.9), $gray4 (4.5) */
 $blue3: #89caff; /* hover/selected accent to $blue2, can be used with $gray1 (7.9), $gray2 (6.3), $gray3 (5.6), $gray4 (5.2), $gray5 (4.7) */
 
+$error1: #860000; /* Error border/foreground text, can be used with $error2 (5.0), $white1 (10), $white2 (5.1) */
+$error2: #ff9796; /* Error background text, can be used with $error1 (5.0), $gray1 (6.6), $gray2 (5.3), $gray3 (4.8) */
+
 $fg: $white1;
 $bg: $gray1;
 

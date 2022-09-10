@@ -21,15 +21,18 @@
 const {createSlice} = require("@reduxjs/toolkit");
 
 module.exports = createSlice({
-	name: "oauth",
+	name: "instances",
 	initialState: {
-		loggedIn: false,
-		registrations: {}
+		info: {},
+		current: undefined
 	},
 	reducers: {
-		setRegistration: (state, {payload}) => {
+		setInstance: (state, {payload}) => {
+			state.current = payload;
+		},
+		setInstanceInfo: (state, {payload}) => {
 			let [key, info] = payload;
-			state.instanceRegistration[key] = info;
-		}
+			state.info[key] = info;
+		},
 	}
 });

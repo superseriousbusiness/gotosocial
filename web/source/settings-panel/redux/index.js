@@ -18,22 +18,27 @@
 
 "use strict";
 
-const { createStore, combineReducers } = require("redux");
+const { createStore, combineReducers, applyMiddleware } = require("redux");
 const { persistStore, persistReducer } = require("redux-persist");
+const thunk = require("redux-thunk").default;
+const { composeWithDevTools } = require("redux-devtools-extension");
 
 const persistConfig = {
 	key: "gotosocial-settings",
 	storage: require("redux-persist/lib/storage").default,
-	stateReconciler: require("redux-persist/lib/stateReconciler/autoMergeLevel2").default
+	stateReconciler: require("redux-persist/lib/stateReconciler/autoMergeLevel2").default,
+	whitelist: ['oauth']
 };
 
 const combinedReducers = combineReducers({
-	oauth: require("./reducers/oauth").reducer
+	oauth: require("./reducers/oauth").reducer,
+	instances: require("./reducers/instances").reducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, combinedReducers);
+const composedEnhancer = composeWithDevTools(applyMiddleware(thunk));
 
-const store = createStore(persistedReducer, window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__());
+const store = createStore(persistedReducer, composedEnhancer);
 const persistor = persistStore(store);
 
 module.exports = { store, persistor };

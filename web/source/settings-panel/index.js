@@ -33,7 +33,7 @@ const ErrorFallback = require("./components/error");
 
 const oauthLib = require("./lib/oauth");
 
-// require("./style.css");
+require("./style.css");
 
 // TODO: nested categories?
 const nav = {
@@ -90,7 +90,7 @@ function App() {
 					{sidebar}
 					{/* <button className="logout" onClick={oauth.logout}>Log out</button> */}
 				</div>
-				<section>
+				<section className="with-sidebar">
 					<Switch>
 						{panelRouter}
 					</Switch>
@@ -98,7 +98,9 @@ function App() {
 			</>
 		);
 	} else {
-		return <Login />;
+		return (
+			<Login />
+		);
 	}
 }
 

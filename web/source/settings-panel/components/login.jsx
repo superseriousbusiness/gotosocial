@@ -18,6 +18,76 @@
 	
 "use strict";
 
+const Promise = require("bluebird");
+const React = require("react");
+const Redux = require("react-redux");
+
+const { setInstance } = require("../redux/reducers/instances").actions;
+const { updateInstance, updateRegistration } = require("../lib/api");
+
 module.exports = function Login() {
-	return (null);
+	const dispatch = Redux.useDispatch();
+	const [ instanceField, setInstanceField ] = React.useState("");
+	const [ errorMsg, setErrorMsg ] = React.useState();
+	const instanceFieldRef = React.useRef("");
+
+	React.useEffect(() => {
+		// check if current domain runs an instance
+		Promise.try(() => {
+			console.log("trying", window.location.origin);
+			return dispatch(updateInstance(window.location.origin));
+		}).then((json) => {
+			if (instanceFieldRef.current.length == 0) { // user hasn't started typing yet
+				dispatch(setInstance(json.uri));
+				instanceFieldRef.current = json.uri;
+				setInstanceField(json.uri);
+			}
+		}).catch((e) => {
+			console.log("Current domain does not host a valid instance: ", e);
+		});
+	}, []);
+
+	function tryInstance() {
+		Promise.try(() => {
+			return dispatch(updateInstance(instanceFieldRef.current)).catch((e) => {
+				// TODO: clearer error messages for common errors
+				console.log(e);
+				throw e;
+			});
+		}).then((instance) => {
+			// return dispatch(updateRegistration);
+		}).catch((e) => {
+			setErrorMsg(
+				<>
+					<b>{e.type}</b>
+					<span>{e.message}</span>
+				</>
+			);
+		});
+	}
+
+	function updateInstanceField(e) {
+		if (e.key == "Enter") {
+			tryInstance(instanceField);
+		} else {
+			setInstanceField(e.target.value);
+			instanceFieldRef.current = e.target.value;
+		}
+	}
+
+	return (
+		<section className="login">
+			<h1>OAUTH Login:</h1>
+			<form onSubmit={(e) => e.preventDefault()}>
+				<label htmlFor="instance">Instance: </label>
+				<input value={instanceField} onChange={updateInstanceField} id="instance"/>
+				{errorMsg && 
+				<div className="error">
+					{errorMsg}
+				</div>
+				}
+				<button onClick={tryInstance}>Authenticate</button>
+			</form>
+		</section>
+	);
 };
