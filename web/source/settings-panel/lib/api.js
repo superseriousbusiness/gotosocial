@@ -19,10 +19,17 @@
 "use strict";
 
 const Promise = require("bluebird");
-const { setRegistration } = require("../redux/reducers/oauth").actions;
+
+const { APIError, OAUTHError } = require("./errors");
+const oauth = require("../redux/reducers/oauth").actions;
+const temporary = require("../redux/reducers/temporary").actions;
 const { setInstanceInfo } = require("../redux/reducers/instances").actions;
 
-function apiCall(base, method, route, {payload, headers={}}) {
+function apiCall(state, method, route, payload) {
+	let base = state.oauth.instance;
+	let auth = state.oauth.token;
+	console.log(method, base, route, auth);
+
 	return Promise.try(() => {
 		let url = new URL(base);
 		url.pathname = route;
@@ -32,21 +39,34 @@ function apiCall(base, method, route, {payload, headers={}}) {
 			body = JSON.stringify(payload);
 		}
 
-		let fetchHeaders = {
-			"Content-Type": "application/json",
-			...headers
+		let headers = {
+			"Accept": "application/json",
+			"Content-Type": "application/json"
 		};
 
+		if (auth != undefined) {
+			headers["Authorization"] = auth;
+		}
+
 		return fetch(url.toString(), {
-			method: method,
-			headers: fetchHeaders,
-			body: body
+			method,
+			headers,
+			body
 		});
 	}).then((res) => {
-		if (res.status == 200) {
-			return res.json();
+		let ok = res.ok;
+
+		// try parse json even with error
+		let json = res.json().catch((e) => {
+			throw new APIError(`JSON parsing error: ${e.message}`);
+		});
+
+		return Promise.all([ok, json]);
+	}).then(([ok, json]) => {
+		if (!ok) {
+			throw new APIError(json.error, {json});
 		} else {
-			throw res;
+			return json;
 		}
 	});
 }
@@ -55,40 +75,122 @@ function getCurrentUrl() {
 	return `${window.location.origin}${window.location.pathname}`;
 }
 
-function updateInstance(domain) {
+function fetchInstance(domain) {
 	return function(dispatch, getState) {
-		/* check if domain is valid instance, then register client if needed  */
-
 		return Promise.try(() => {
-			return apiCall(domain, "GET", "/api/v1/instance", {
-				headers: {
-					"Content-Type": "text/plain"
-				}
-			});
+			let lookup = getState().instances.info[domain];
+			if (lookup != undefined) {
+				return lookup;
+			}
+
+			// apiCall expects to pull the domain from state,
+			// but we don't want to store it there yet
+			// so we mock the API here with our function argument
+			let fakeState = {
+				oauth: {instance: domain}
+			};
+
+			return apiCall(fakeState, "GET", "/api/v1/instance");
 		}).then((json) => {
 			if (json && json.uri) { // TODO: validate instance json more?
-				dispatch(setInstanceInfo(json.uri, json));
+				dispatch(setInstanceInfo([json.uri, json]));
 				return json;
 			}
 		});
 	};
 }
 
-function updateRegistration() {
+function fetchRegistration(scopes=[]) {
 	return function(dispatch, getState) {
-		let base = getState().oauth.instance;
 		return Promise.try(() => {
-			return apiCall(base, "POST", "/api/v1/apps", {
+			return apiCall(getState(), "POST", "/api/v1/apps", {
 				client_name: "GoToSocial Settings",
-				scopes: "write admin",
+				scopes: scopes.join(" "),
 				redirect_uris: getCurrentUrl(),
 				website: getCurrentUrl()
 			});
 		}).then((json) => {
-			console.log(json);
-			dispatch(setRegistration(base, json));
+			json.scopes = scopes;
+			dispatch(oauth.setRegistration(json));
 		});
 	};
 }
 
-module.exports = { updateInstance, updateRegistration };
+function startAuthorize() {
+	return function(dispatch, getState) {
+		let state = getState();
+		let reg = state.oauth.registration;
+		let base = new URL(state.oauth.instance);
+
+		base.pathname = "/oauth/authorize";
+		base.searchParams.set("client_id", reg.client_id);
+		base.searchParams.set("redirect_uri", getCurrentUrl());
+		base.searchParams.set("response_type", "code");
+		base.searchParams.set("scope", reg.scopes.join(" "));
+	
+		dispatch(oauth.setLoginState("callback"));
+		dispatch(temporary.setStatus("Redirecting to instance login..."));
+
+		// send user to instance's login flow
+		window.location.assign(base.href);
+	};
+}
+
+function fetchToken(code) {
+	return function(dispatch, getState) {
+		let reg = getState().oauth.registration;
+
+		return Promise.try(() => {
+			if (reg == undefined || reg.client_id == undefined) {
+				throw new OAUTHError("Callback code present, but no client registration is available from localStorage. \nNote: localStorage is unavailable in Private Browsing.");
+			}
+	
+			return apiCall(getState(), "POST", "/oauth/token", {
+				client_id: reg.client_id,
+				client_secret: reg.client_secret,
+				redirect_uri: getCurrentUrl(),
+				grant_type: "authorization_code",
+				code: code
+			});
+		}).then((json) => {
+			console.log(json);
+			window.history.replaceState({}, document.title, window.location.pathname);
+			return dispatch(oauth.login(json));
+		});
+	};
+}
+
+function verifyAuth() {
+	return function(dispatch, getState) {
+		console.log(getState());
+		return Promise.try(() => {
+			return apiCall(getState(), "GET", "/api/v1/accounts/verify_credentials");
+		}).then((account) => {
+			console.log(account);
+		}).catch((e) => {
+			dispatch(oauth.remove());
+			throw e;
+		});
+	};
+}
+
+function oauthLogout() {
+	return function(dispatch, _getState) {
+		// TODO: GoToSocial does not have a logout API route yet
+
+		return dispatch(oauth.remove());
+	};
+}
+
+module.exports = {
+	instance: {
+		fetch: fetchInstance
+	},
+	oauth: {
+		register: fetchRegistration,
+		authorize: startAuthorize,
+		fetchToken,
+		verify: verifyAuth,
+		logout: oauthLogout
+	}
+};

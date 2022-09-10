@@ -27,11 +27,9 @@ const { Provider } = require("react-redux");
 const { PersistGate } = require("redux-persist/integration/react");
 
 const { store, persistor } = require("./redux");
+const api = require("./lib/api");
 
 const Login = require("./components/login");
-const ErrorFallback = require("./components/error");
-
-const oauthLib = require("./lib/oauth");
 
 require("./style.css");
 
@@ -59,49 +57,99 @@ const nav = {
 const { sidebar, panelRouter } = require("./lib/generate-views")(nav);
 
 function App() {
-	const { loggedIn } = Redux.useSelector((state) => state.oauth);
+	const dispatch = Redux.useDispatch();
+	const { loginState } = Redux.useSelector((state) => state.oauth);
+	const reduxTempStatus = Redux.useSelector((state) => state.temporary.status);
+	const [ errorMsg, setErrorMsg ] = React.useState();
+	const [ tokenChecked, setTokenChecked ] = React.useState(false);
 
-	// const [oauth, setOauth] = React.useState();
-	// const [hasAuth, setAuth] = React.useState(false);
-	// const [oauthState, _setOauthState] = React.useState(localStorage.getItem("oauth"));
+	React.useEffect(() => {
+		Promise.try(() => {
+			// Process OAUTH authorization token from URL if available
+			if (loginState == "callback") {
+				let urlParams = new URLSearchParams(window.location.search);
+				let code = urlParams.get("code");
+	
+				if (code == undefined) {
+					setErrorMsg(new Error("Waiting for OAUTH callback but no ?code= provided. You can try logging in again:"));
+				} else {
+					return dispatch(api.oauth.fetchToken(code));
+				}
+			}
+		}).then(() => {
+			// Check currently stored auth token for validity if available
+			if (loginState == "callback" || loginState == "login") {
+				return dispatch(api.oauth.verify());
+			}
+		}).then(() => {
+			setTokenChecked(true);
+		}).catch((e) => {
+			setErrorMsg(e);
+			console.error(e.message);
+		});
+	}, []);
 
-	// React.useEffect(() => {
-	// 	let state = localStorage.getItem("oauth");
-	// 	if (state != undefined) {
-	// 		state = JSON.parse(state);
-	// 		let restoredOauth = oauthLib(state.config, state);
-	// 		Promise.try(() => {
-	// 			return restoredOauth.callback();
-	// 		}).then(() => {
-	// 			setAuth(true);
-	// 		});
-	// 		setOauth(restoredOauth);
-	// 	}
-	// }, [setAuth, setOauth]);
+	let ErrorElement = null;
+	if (errorMsg != undefined) {
+		ErrorElement = (
+			<div className="error">
+				<b>{errorMsg.type}</b>
+				<span>{errorMsg.message}</span>
+			</div>
+		);
+	}
 
-	// if (!hasAuth && oauth && oauth.isAuthorized()) {
-	// 	setAuth(true);
-	// }
+	const LogoutElement = (
+		<button className="logout" onClick={() => {dispatch(api.oauth.logout());}}>
+			Log out
+		</button>
+	);
 
-	if (loggedIn) {
+	if (reduxTempStatus != undefined) {
+		return (
+			<section>
+				{reduxTempStatus}
+			</section>
+		);
+	} else if (tokenChecked && loginState == "login") {
 		return (
 			<>
 				<div className="sidebar">
 					{sidebar}
-					{/* <button className="logout" onClick={oauth.logout}>Log out</button> */}
+					{LogoutElement}
 				</div>
 				<section className="with-sidebar">
+					{ErrorElement}
 					<Switch>
 						{panelRouter}
 					</Switch>
 				</section>
 			</>
 		);
-	} else {
+	} else if (loginState == "none") {
 		return (
-			<Login />
+			<Login error={ErrorElement}/>
+		);
+	} else {
+		let status;
+		
+		if (loginState == "login") {
+			status = "Verifying stored login...";
+		} else if (loginState == "callback") {
+			status = "Processing OAUTH callback...";
+		}
+
+		return (
+			<section>
+				<div>
+					{status}
+				</div>
+				{ErrorElement}
+				{LogoutElement}
+			</section>
 		);
 	}
+
 }
 
 function Main() {

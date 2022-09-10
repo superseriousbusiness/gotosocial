@@ -27,12 +27,14 @@ const persistConfig = {
 	key: "gotosocial-settings",
 	storage: require("redux-persist/lib/storage").default,
 	stateReconciler: require("redux-persist/lib/stateReconciler/autoMergeLevel2").default,
-	whitelist: ['oauth']
+	whitelist: ["oauth"],
+	blacklist: ["temporary"]
 };
 
 const combinedReducers = combineReducers({
 	oauth: require("./reducers/oauth").reducer,
 	instances: require("./reducers/instances").reducer,
+	temporary: require("./reducers/temporary").reducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, combinedReducers);

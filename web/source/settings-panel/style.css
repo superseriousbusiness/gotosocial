@@ -31,6 +31,8 @@ section {
 #root {
 	display: grid;
 	grid-template-columns: 1fr min(92%, 90ch) 1fr;
+	width: 100vw;
+	max-width: 100vw;
 
 	section.with-sidebar {
 		border-left: none;
@@ -128,12 +130,17 @@ input, select, textarea {
 }
 
 .error {
-	background: $error2;
-	border: 1px solid $error1;
+	color: $error-fg;
+	background: $error-bg;
+	border: 0.02rem solid $error-fg;
 	border-radius: $br;
-	color: $error1;
 	font-weight: bold;
 	padding: 0.5rem;
+	white-space: pre-wrap; // to show \n in json errors
+
+	a {
+		color: $error-link;
+	}
 
 	pre {
 		background: $bg;

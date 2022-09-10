@@ -21,28 +21,12 @@
 const {createSlice} = require("@reduxjs/toolkit");
 
 module.exports = createSlice({
-	name: "oauth",
+	name: "temporary",
 	initialState: {
-		loginState: 'none'
 	},
 	reducers: {
-		setInstance: (state, {payload}) => {
-			state.instance = payload;
-		},
-		setRegistration: (state, {payload}) => {
-			state.registration = payload;
-		},
-		setLoginState: (state, {payload}) => {
-			state.loginState = payload;
-		},
-		login: (state, {payload}) => {
-			state.token = `${payload.token_type} ${payload.access_token}`;
-			state.loginState = "login";
-		},
-		remove: (state, {_payload}) => {
-			delete state.token;
-			delete state.registration;
-			state.loginState = "none";
+		setStatus: function(state, {payload}) {
+			state.status = payload;
 		}
 	}
 });

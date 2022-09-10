@@ -22,10 +22,10 @@ const Promise = require("bluebird");
 const React = require("react");
 const Redux = require("react-redux");
 
-const { setInstance } = require("../redux/reducers/instances").actions;
-const { updateInstance, updateRegistration } = require("../lib/api");
+const { setInstance } = require("../redux/reducers/oauth").actions;
+const api = require("../lib/api");
 
-module.exports = function Login() {
+module.exports = function Login({error}) {
 	const dispatch = Redux.useDispatch();
 	const [ instanceField, setInstanceField ] = React.useState("");
 	const [ errorMsg, setErrorMsg ] = React.useState();
@@ -35,7 +35,7 @@ module.exports = function Login() {
 		// check if current domain runs an instance
 		Promise.try(() => {
 			console.log("trying", window.location.origin);
-			return dispatch(updateInstance(window.location.origin));
+			return dispatch(api.instance.fetch(window.location.origin));
 		}).then((json) => {
 			if (instanceFieldRef.current.length == 0) { // user hasn't started typing yet
 				dispatch(setInstance(json.uri));
@@ -49,13 +49,20 @@ module.exports = function Login() {
 
 	function tryInstance() {
 		Promise.try(() => {
-			return dispatch(updateInstance(instanceFieldRef.current)).catch((e) => {
+			return dispatch(api.instance.fetch(instanceFieldRef.current)).catch((e) => {
 				// TODO: clearer error messages for common errors
 				console.log(e);
 				throw e;
 			});
 		}).then((instance) => {
-			// return dispatch(updateRegistration);
+			dispatch(setInstance(instance.uri));
+
+			return dispatch(api.oauth.register()).catch((e) => {
+				console.log(e);
+				throw e;
+			});
+		}).then(() => {
+			return dispatch(api.oauth.authorize()); // will send user off-page
 		}).catch((e) => {
 			setErrorMsg(
 				<>
@@ -78,6 +85,7 @@ module.exports = function Login() {
 	return (
 		<section className="login">
 			<h1>OAUTH Login:</h1>
+			{error}
 			<form onSubmit={(e) => e.preventDefault()}>
 				<label htmlFor="instance">Instance: </label>
 				<input value={instanceField} onChange={updateInstanceField} id="instance"/>
