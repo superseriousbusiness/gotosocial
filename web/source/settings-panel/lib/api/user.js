@@ -19,10 +19,11 @@
 "use strict";
 
 const Promise = require("bluebird");
+const d = require("dotty");
 
 const user = require("../../redux/reducers/user").actions;
 
-module.exports = function({apiCall}) {
+module.exports = function ({ apiCall }) {
 	return {
 		fetchAccount: function fetchAccount() {
 			return function (dispatch, _getState) {
@@ -33,10 +34,34 @@ module.exports = function({apiCall}) {
 				});
 			};
 		},
-		updateAccount: function updateAccount(newAccount) {
-			return function (dispatch, _getSate) {
+		updateAccount: function updateAccount() {
+			const formKeys = ["display_name", "locked"];
+			const renamedKeys = [["note", "source.note"]];
+			const fileKeys = ["header", "avatar"];
+
+			return function (dispatch, getState) {
 				return Promise.try(() => {
-					return dispatch(apiCall("PATCH", "/api/v1/accounts/update_credentials", newAccount, "form"));
+					const { account } = getState().user;
+
+					const update = {};
+
+					formKeys.forEach((key) => {
+						d.put(update, key, d.get(account, key));
+						update[key] = account[key];
+					});
+
+					renamedKeys.forEach(([sendKey, intKey]) => {
+						d.put(update, sendKey, d.get(account, intKey));
+					});
+
+					fileKeys.forEach((key) => {
+						let file = d.get(account, `${key}File`);
+						if (file != undefined) {
+							d.put(update, key, file);
+						}
+					});
+
+					return dispatch(apiCall("PATCH", "/api/v1/accounts/update_credentials", update, "form"));
 				}).then((account) => {
 					console.log(account);
 					return dispatch(user.setAccount(account));

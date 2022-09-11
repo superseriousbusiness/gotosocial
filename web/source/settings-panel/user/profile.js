@@ -21,10 +21,12 @@
 const Promise = require("bluebird");
 const React = require("react");
 const Redux = require("react-redux");
+const d = require("dotty");
 
 const Submit = require("../components/submit");
 
 const api = require("../lib/api");
+const user = require("../redux/reducers/user").actions;
 
 module.exports = function UserProfile() {
 	const dispatch = Redux.useDispatch();
@@ -33,29 +35,30 @@ module.exports = function UserProfile() {
 	const [errorMsg, setError] = React.useState("");
 	const [statusMsg, setStatus] = React.useState("");
 
-	const [headerFile, setHeaderFile] = React.useState(undefined);
-	const [avatarFile, setAvatarFile] = React.useState(undefined);
+	function onTextChange(key) {
+		return function (e) {
+			dispatch(user.setAccountVal([key, e.target.value]));
+		};
+	}
 
-	const [displayName, setDisplayName] = React.useState("");
-	const [bio, setBio] = React.useState("");
-	const [locked, setLocked] = React.useState(false);
+	function onCheckChange(key) {
+		return function (e) {
+			dispatch(user.setAccountVal([key, e.target.checked]));
+		};
+	}
 
-	React.useEffect(() => {
-
-		setDisplayName(account.display_name);
-		setBio(account.source ? account.source.note : "");
-		setLocked(account.locked);
-	}, []);
-
-	const headerOnChange = (e) => {
-		setHeaderFile(e.target.files[0]);
-		// setHeaderSrc(URL.createObjectURL(e.target.files[0]));
-	};
-
-	const avatarOnChange = (e) => {
-		setAvatarFile(e.target.files[0]);
-		// setAvatarSrc(URL.createObjectURL(e.target.files[0]));
-	};
+	function onFileChange(key) {
+		return function (e) {
+			let old = d.get(account, key);
+			if (old != undefined) {
+				URL.revokeObjectURL(old); // no error revoking a non-Object URL as provided by instance
+			}
+			let file = e.target.files[0];
+			let objectURL = URL.createObjectURL(file);
+			dispatch(user.setAccountVal([key, objectURL]));
+			dispatch(user.setAccountVal([`${key}File`, file]));
+		};
+	}
 
 	const submit = (e) => {
 		e.preventDefault();
@@ -63,21 +66,7 @@ module.exports = function UserProfile() {
 		setStatus("PATCHing");
 		setError("");
 		return Promise.try(() => {
-			let payload = {
-				display_name: displayName,
-				note: bio,
-				locked: locked
-			};
-
-			if (headerFile) {
-				payload.header = headerFile;
-			}
-
-			if (avatarFile) {
-				payload.avatar = avatarFile;
-			}
-
-			return dispatch(api.user.updateAccount(payload));
+			return dispatch(api.user.updateAccount());
 		}).then(() => {
 			setStatus("Saved!");
 		}).catch((e) => {
@@ -105,26 +94,28 @@ module.exports = function UserProfile() {
 					<div>
 						<h3>Header</h3>
 						<label htmlFor="header" className="file-input button">Browse…</label>
-						<span>{headerFile ? headerFile.name : "no file selected"}</span>
+						<span>{account.headerFile ? account.headerFile.name : "no file selected"}</span>
+						<input className="hidden" id="header" type="file" accept="image/*" onChange={onFileChange("header")}/>
 					</div>
 					<div>
 						<h3>Avatar</h3>
 						<label htmlFor="avatar" className="file-input button">Browse…</label>
-						<span>{avatarFile ? avatarFile.name : "no file selected"}</span>
+						<span>{account.avatarFile ? account.avatarFile.name : "no file selected"}</span>
+						<input className="hidden" id="avatar" type="file" accept="image/*" onChange={onFileChange("avatar")}/>
 					</div>
 				</div>
 			</div>
 			<div className="labelinput">
 				<label htmlFor="displayname">Name</label>
-				<input id="displayname" type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="A GoToSocial user"/>
+				<input id="displayname" type="text" value={account.display_name} onChange={onTextChange("display_name")} placeholder="A GoToSocial user"/>
 			</div>
 			<div className="labelinput">
 				<label htmlFor="bio">Bio</label>
-				<textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Just trying out GoToSocial, my pronouns are they/them and I like sloths."/>
+				<textarea id="bio" value={account.source.note} onChange={onTextChange("source.note")} placeholder="Just trying out GoToSocial, my pronouns are they/them and I like sloths."/>
 			</div>
 			<div className="labelcheckbox">
 				<label htmlFor="locked">Manually approve follow requests?</label>
-				<input id="locked" type="checkbox" checked={locked} onChange={(e) => setLocked(e.target.checked)}/>
+				<input id="locked" type="checkbox" checked={account.locked} onChange={onCheckChange("locked")}/>
 			</div>
 			<Submit onClick={submit} label="Save profile info" errorMsg={errorMsg} statusMsg={statusMsg}/>
 		</div>

@@ -19,6 +19,7 @@
 "use strict";
 
 const {createSlice} = require("@reduxjs/toolkit");
+const d = require("dotty");
 
 module.exports = createSlice({
 	name: "user",
@@ -27,6 +28,9 @@ module.exports = createSlice({
 	reducers: {
 		setAccount: (state, {payload}) => {
 			state.account = payload;
+		},
+		setAccountVal: (state, {payload: [key, val]}) => {
+			d.put(state.account, key, val);
 		}
 	}
 });
