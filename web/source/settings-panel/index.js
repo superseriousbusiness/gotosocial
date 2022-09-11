@@ -73,7 +73,7 @@ function App() {
 				if (code == undefined) {
 					setErrorMsg(new Error("Waiting for OAUTH callback but no ?code= provided. You can try logging in again:"));
 				} else {
-					return dispatch(api.oauth.fetchToken(code));
+					return dispatch(api.oauth.tokenize(code));
 				}
 			}
 		}).then(() => {
