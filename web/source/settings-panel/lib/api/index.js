@@ -24,7 +24,7 @@ const { APIError } = require("../errors");
 const { setInstanceInfo } = require("../../redux/reducers/instances").actions;
 const oauth = require("../../redux/reducers/oauth").actions;
 
-function apiCall(method, route, payload) {
+function apiCall(method, route, payload, type="json") {
 	return function (dispatch, getState) {
 		const state = getState();
 		let base = state.oauth.instance;
@@ -36,14 +36,22 @@ function apiCall(method, route, payload) {
 			url.pathname = route;
 			let body;
 	
-			if (payload != undefined) {
-				body = JSON.stringify(payload);
-			}
-	
 			let headers = {
 				"Accept": "application/json",
-				"Content-Type": "application/json"
 			};
+
+			if (payload != undefined) {
+				if (type == "json") {
+					headers["Content-Type"] = "application/json";
+					body = JSON.stringify(payload);
+				} else if (type == "form") {
+					const formData = new FormData();
+					Object.entries(payload).forEach(([key, val]) => {
+						formData.set(key, val);
+					});
+					body = formData;
+				}
+			}
 	
 			if (auth != undefined) {
 				headers["Authorization"] = auth;
