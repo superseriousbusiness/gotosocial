@@ -106,7 +106,7 @@ function fetchInstance(domain) {
 			return apiCall("GET", "/api/v1/instance")(dispatch, () => fakeState);
 		}).then((json) => {
 			if (json && json.uri) { // TODO: validate instance json more?
-				dispatch(setInstanceInfo([json.uri, json]));
+				dispatch(setInstanceInfo([domain, json]));
 				return json;
 			}
 		});

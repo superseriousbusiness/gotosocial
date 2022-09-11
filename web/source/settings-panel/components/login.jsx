@@ -33,14 +33,15 @@ module.exports = function Login({error}) {
 
 	React.useEffect(() => {
 		// check if current domain runs an instance
+		let currentDomain = window.location.origin;
 		Promise.try(() => {
-			console.log("trying", window.location.origin);
-			return dispatch(api.instance.fetch(window.location.origin));
-		}).then((json) => {
+			console.log("trying", currentDomain);
+			return dispatch(api.instance.fetch(currentDomain));
+		}).then(() => {
 			if (instanceFieldRef.current.length == 0) { // user hasn't started typing yet
-				dispatch(setInstance(json.uri));
-				instanceFieldRef.current = json.uri;
-				setInstanceField(json.uri);
+				dispatch(setInstance(currentDomain));
+				instanceFieldRef.current = currentDomain;
+				setInstanceField(currentDomain);
 			}
 		}).catch((e) => {
 			console.log("Current domain does not host a valid instance: ", e);
@@ -48,14 +49,15 @@ module.exports = function Login({error}) {
 	}, []);
 
 	function tryInstance() {
+		let domain = instanceFieldRef.current;
 		Promise.try(() => {
-			return dispatch(api.instance.fetch(instanceFieldRef.current)).catch((e) => {
+			return dispatch(api.instance.fetch(domain)).catch((e) => {
 				// TODO: clearer error messages for common errors
 				console.log(e);
 				throw e;
 			});
-		}).then((instance) => {
-			dispatch(setInstance(instance.uri));
+		}).then(() => {
+			dispatch(setInstance(domain));
 
 			return dispatch(api.oauth.register()).catch((e) => {
 				console.log(e);
