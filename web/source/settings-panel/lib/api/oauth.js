@@ -24,19 +24,20 @@ const { OAUTHError } = require("../errors");
 
 const oauth = require("../../redux/reducers/oauth").actions;
 const temporary = require("../../redux/reducers/temporary").actions;
+const user = require("../../redux/reducers/user").actions;
 
 module.exports = function oauthAPI({apiCall, getCurrentUrl}) {
 	return {
 
 		register: function register(scopes = []) {
-			return function (dispatch, getState) {
+			return function (dispatch, _getState) {
 				return Promise.try(() => {
-					return apiCall(getState(), "POST", "/api/v1/apps", {
+					return dispatch(apiCall("POST", "/api/v1/apps", {
 						client_name: "GoToSocial Settings",
 						scopes: scopes.join(" "),
 						redirect_uris: getCurrentUrl(),
 						website: getCurrentUrl()
-					});
+					}));
 				}).then((json) => {
 					json.scopes = scopes;
 					dispatch(oauth.setRegistration(json));
@@ -73,31 +74,17 @@ module.exports = function oauthAPI({apiCall, getCurrentUrl}) {
 						throw new OAUTHError("Callback code present, but no client registration is available from localStorage. \nNote: localStorage is unavailable in Private Browsing.");
 					}
 	
-					return apiCall(getState(), "POST", "/oauth/token", {
+					return dispatch(apiCall("POST", "/oauth/token", {
 						client_id: reg.client_id,
 						client_secret: reg.client_secret,
 						redirect_uri: getCurrentUrl(),
 						grant_type: "authorization_code",
 						code: code
-					});
+					}));
 				}).then((json) => {
 					console.log(json);
 					window.history.replaceState({}, document.title, window.location.pathname);
 					return dispatch(oauth.login(json));
-				});
-			};
-		},
-	
-		verify: function verify() {
-			return function (dispatch, getState) {
-				console.log(getState());
-				return Promise.try(() => {
-					return apiCall(getState(), "GET", "/api/v1/accounts/verify_credentials");
-				}).then((account) => {
-					console.log(account);
-				}).catch((e) => {
-					dispatch(oauth.remove());
-					throw e;
 				});
 			};
 		},

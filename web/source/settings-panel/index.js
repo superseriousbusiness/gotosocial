@@ -79,7 +79,7 @@ function App() {
 		}).then(() => {
 			// Check currently stored auth token for validity if available
 			if (loginState == "callback" || loginState == "login") {
-				return dispatch(api.oauth.verify());
+				return dispatch(api.user.fetchAccount());
 			}
 		}).then(() => {
 			setTokenChecked(true);

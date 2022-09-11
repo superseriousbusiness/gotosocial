@@ -18,14 +18,15 @@
 
 "use strict";
 
-const Promise = require("bluebird");
-const React = require("react");
-const { Switch } = require("wouter");
+const {createSlice} = require("@reduxjs/toolkit");
 
-module.exports = function UserPanel({routes}) {
-	return (
-		<Switch>
-			{routes}
-		</Switch>
-	);
-};
+module.exports = createSlice({
+	name: "user",
+	initialState: {
+	},
+	reducers: {
+		setAccount: (state, {payload}) => {
+			state.account = payload;
+		}
+	}
+});

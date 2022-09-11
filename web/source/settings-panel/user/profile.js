@@ -20,11 +20,14 @@
 
 const Promise = require("bluebird");
 const React = require("react");
+const Redux = require("react-redux");
 const { useErrorHandler } = require("react-error-boundary");
 
 const Submit = require("../components/submit");
 
-module.exports = function UserProfile({account, oauth}) {
+module.exports = function UserProfile() {
+	const account = Redux.useSelector(state => state.user.account);
+
 	const [errorMsg, setError] = React.useState("");
 	const [statusMsg, setStatus] = React.useState("");
 

@@ -19,13 +19,19 @@
 "use strict";
 
 const Promise = require("bluebird");
-const React = require("react");
-const { Switch } = require("wouter");
 
-module.exports = function UserPanel({routes}) {
-	return (
-		<Switch>
-			{routes}
-		</Switch>
-	);
+const user = require("../../redux/reducers/user").actions;
+
+module.exports = function({apiCall}) {
+	return {
+		fetchAccount: function fetchAccount() {
+			return function (dispatch, _getState) {
+				return Promise.try(() => {
+					return dispatch(apiCall("GET", "/api/v1/accounts/verify_credentials"));
+				}).then((account) => {
+					return dispatch(user.setAccount(account));
+				});
+			};
+		}	
+	};
 };

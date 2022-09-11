@@ -22,51 +22,58 @@ const Promise = require("bluebird");
 
 const { APIError } = require("../errors");
 const { setInstanceInfo } = require("../../redux/reducers/instances").actions;
+const oauth = require("../../redux/reducers/oauth").actions;
 
-function apiCall(state, method, route, payload) {
-	let base = state.oauth.instance;
-	let auth = state.oauth.token;
-	console.log(method, base, route, auth);
-
-	return Promise.try(() => {
-		let url = new URL(base);
-		url.pathname = route;
-		let body;
-
-		if (payload != undefined) {
-			body = JSON.stringify(payload);
-		}
-
-		let headers = {
-			"Accept": "application/json",
-			"Content-Type": "application/json"
-		};
-
-		if (auth != undefined) {
-			headers["Authorization"] = auth;
-		}
-
-		return fetch(url.toString(), {
-			method,
-			headers,
-			body
+function apiCall(method, route, payload) {
+	return function (dispatch, getState) {
+		const state = getState();
+		let base = state.oauth.instance;
+		let auth = state.oauth.token;
+		console.log(method, base, route, "auth:", auth != undefined);
+	
+		return Promise.try(() => {
+			let url = new URL(base);
+			url.pathname = route;
+			let body;
+	
+			if (payload != undefined) {
+				body = JSON.stringify(payload);
+			}
+	
+			let headers = {
+				"Accept": "application/json",
+				"Content-Type": "application/json"
+			};
+	
+			if (auth != undefined) {
+				headers["Authorization"] = auth;
+			}
+	
+			return fetch(url.toString(), {
+				method,
+				headers,
+				body
+			});
+		}).then((res) => {
+			// try parse json even with error
+			let json = res.json().catch((e) => {
+				throw new APIError(`JSON parsing error: ${e.message}`);
+			});
+	
+			return Promise.all([res, json]);
+		}).then(([res, json]) => {
+			if (!res.ok) {
+				if (auth != undefined && res.status == 401) {
+					// stored access token is invalid
+					dispatch(oauth.remove());
+					throw new APIError("Stored OAUTH login was no longer valid, please log in again.");
+				}
+				throw new APIError(json.error, {json});
+			} else {
+				return json;
+			}
 		});
-	}).then((res) => {
-		let ok = res.ok;
-
-		// try parse json even with error
-		let json = res.json().catch((e) => {
-			throw new APIError(`JSON parsing error: ${e.message}`);
-		});
-
-		return Promise.all([ok, json]);
-	}).then(([ok, json]) => {
-		if (!ok) {
-			throw new APIError(json.error, {json});
-		} else {
-			return json;
-		}
-	});
+	};
 }
 
 function getCurrentUrl() {
@@ -88,7 +95,7 @@ function fetchInstance(domain) {
 				oauth: {instance: domain}
 			};
 
-			return apiCall(fakeState, "GET", "/api/v1/instance");
+			return apiCall("GET", "/api/v1/instance")(dispatch, () => fakeState);
 		}).then((json) => {
 			if (json && json.uri) { // TODO: validate instance json more?
 				dispatch(setInstanceInfo([json.uri, json]));
@@ -102,5 +109,6 @@ module.exports = {
 	instance: {
 		fetch: fetchInstance
 	},
-	oauth: require("./oauth")({apiCall, getCurrentUrl})
+	oauth: require("./oauth")({apiCall, getCurrentUrl}),
+	user: require("./user")({apiCall})
 };

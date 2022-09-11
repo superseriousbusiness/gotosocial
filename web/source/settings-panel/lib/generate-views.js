@@ -48,7 +48,6 @@ module.exports = function generateViews(struct) {
 				firstRoute = `${base}/${urlSafe(name)}`;
 			}
 
-			console.log(name, ViewComponent);
 			routes.push((
 				<Route path={url} key={url}>
 					<ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => {}}>
