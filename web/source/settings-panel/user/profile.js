@@ -21,7 +21,6 @@
 const Promise = require("bluebird");
 const React = require("react");
 const Redux = require("react-redux");
-const { useErrorHandler } = require("react-error-boundary");
 
 const Submit = require("../components/submit");
 
@@ -89,31 +88,34 @@ module.exports = function UserProfile() {
 
 	return (
 		<div className="user-profile">
-			<h1>@{account.username}&apos;s Profile Info</h1>
-			<div className="labelinput">
-				<label htmlFor="header">Header</label>
-				<div className="border">
-					<img className="headerpreview" src={account.header} alt={account.header ? `header image for ${account.username}` : "None set"}/>
+			<h1>Profile</h1>
+			<div className="overview">
+				<div className="profile">
+        	<div className="headerimage">
+						<img className="headerpreview" src={account.header} alt={account.header ? `header image for ${account.username}` : "None set"}/>
+        	</div>
+        	<div className="basic">
+           	<div id="profile-basic-filler2"></div>
+						<span className="avatar"><img className="avatarpreview" src={account.avatar} alt={account.avatar ? `avatar image for ${account.username}` : "None set"}/></span>
+           	<div className="displayname">{account.display_name.trim().length > 0 ? account.display_name : account.username}</div>
+           	<div className="username"><span>@{account.username}</span></div>
+        	</div>
+				</div>
+				<div className="files">
 					<div>
+						<h3>Header</h3>
 						<label htmlFor="header" className="file-input button">Browse…</label>
-						<span>{headerFile ? headerFile.name : ""}</span>
+						<span>{headerFile ? headerFile.name : "no file selected"}</span>
 					</div>
-				</div>
-				<input className="hidden" id="header" type="file" accept="image/*" onChange={headerOnChange}/>
-			</div>
-			<div className="labelinput">
-				<label htmlFor="avatar">Avatar</label>
-				<div className="border">
-					<img className="avatarpreview" src={account.avatar} alt={account.avatar ? `avatar image for ${account.username}` : "None set"}/>
 					<div>
+						<h3>Avatar</h3>
 						<label htmlFor="avatar" className="file-input button">Browse…</label>
-						<span>{avatarFile ? avatarFile.name : ""}</span>
+						<span>{avatarFile ? avatarFile.name : "no file selected"}</span>
 					</div>
 				</div>
-				<input className="hidden" id="avatar" type="file" accept="image/*" onChange={avatarOnChange}/>
 			</div>
 			<div className="labelinput">
-				<label htmlFor="displayname">Display Name</label>
+				<label htmlFor="displayname">Name</label>
 				<input id="displayname" type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="A GoToSocial user"/>
 			</div>
 			<div className="labelinput">
@@ -121,7 +123,7 @@ module.exports = function UserProfile() {
 				<textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Just trying out GoToSocial, my pronouns are they/them and I like sloths."/>
 			</div>
 			<div className="labelcheckbox">
-				<label htmlFor="locked">Manually approve follow requests</label>
+				<label htmlFor="locked">Manually approve follow requests?</label>
 				<input id="locked" type="checkbox" checked={locked} onChange={(e) => setLocked(e.target.checked)}/>
 			</div>
 			<Submit onClick={submit} label="Save profile info" errorMsg={errorMsg} statusMsg={statusMsg}/>

@@ -280,6 +280,11 @@ input, select, textarea {
 	}
 }
 
+::placeholder {
+	opacity: 1;
+	color: $fg-reduced
+}
+
 input, textarea {
 	padding-top: 0.1rem;
 	padding-bottom: 0.1rem;

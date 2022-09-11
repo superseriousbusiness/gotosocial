@@ -41,6 +41,7 @@ func (m *Module) SettingsPanelHandler(c *gin.Context) {
 			assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
 			assetsPathPrefix + "/dist/_colors.css",
 			assetsPathPrefix + "/dist/base.css",
+			assetsPathPrefix + "/dist/profile.css",
 			assetsPathPrefix + "/dist/settings-panel-style.css",
 		},
 		"javascript": []string{

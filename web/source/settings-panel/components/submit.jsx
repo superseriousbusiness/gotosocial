@@ -24,7 +24,12 @@ module.exports = function Submit({onClick, label, errorMsg, statusMsg}) {
 	return (
 		<div className="messagebutton">
 			<button type="submit" onClick={onClick}>{ label }</button>
-			<div className="error accent">{errorMsg ? errorMsg : statusMsg}</div>
+			{errorMsg.length > 0 && 
+				<div className="error accent">{errorMsg}</div>
+			}
+			{statusMsg.length > 0 &&
+				<div className="accent">{statusMsg}</div>
+			}
 		</div>
 	);
 };
