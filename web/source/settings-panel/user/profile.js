@@ -50,6 +50,14 @@ module.exports = function UserProfile() {
 		});
 	}
 
+	// function removeFile(name) {
+	// 	return function(e) {
+	// 		e.preventDefault();
+	// 		dispatch(user.setProfileVal([name, ""]));
+	// 		dispatch(user.setProfileVal([`${name}File`, ""]));
+	// 	};
+	// }
+
 	return (
 		<div className="user-profile">
 			<h1>Profile</h1>
@@ -72,6 +80,7 @@ module.exports = function UserProfile() {
 							<label htmlFor="header" className="file-input button">Browse</label>
 							<span>{account.headerFile ? account.headerFile.name : "no file selected"}</span>
 						</div>
+						{/* <a onClick={removeFile("header")} href="#">remove</a> */}
 						<input className="hidden" id="header" type="file" accept="image/*" onChange={onFileChange("header")} />
 					</div>
 					<div>
@@ -80,6 +89,7 @@ module.exports = function UserProfile() {
 							<label htmlFor="avatar" className="file-input button">Browse</label>
 							<span>{account.avatarFile ? account.avatarFile.name : "no file selected"}</span>
 						</div>
+						{/* <a onClick={removeFile("avatar")} href="#">remove</a> */}
 						<input className="hidden" id="avatar" type="file" accept="image/*" onChange={onFileChange("avatar")} />
 					</div>
 				</div>
