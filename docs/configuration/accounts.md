@@ -23,4 +23,20 @@ accounts-approval-required: true
 # Options: [true, false]
 # Default: true
 accounts-reason-required: true
+
+# Bool. Allow accounts on this instance to set custom CSS for their profile pages and statuses.
+# Enabling this setting will allow accounts to upload custom CSS via the /user settings page,
+# which will then be rendered on the web view of the account's profile and statuses.
+#
+# For instances with public sign ups, it is **HIGHLY RECOMMENDED** to leave this setting on 'false',
+# since setting it to true allows malicious accounts to make their profile pages misleading, unusable
+# or even dangerous to visitors. In other words, you should only enable this setting if you trust
+# the users on your instance not to produce harmful CSS.
+#
+# Regardless of what this value is set to, any uploaded CSS will not be federated to other instances,
+# it will only be shown on profiles and statuses on *this* instance.
+#
+# Options: [true, false]
+# Default: false
+accounts-allow-custom-css: false
 ```

@@ -231,6 +231,15 @@ func (a *accountDB) SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachmen
 	return nil
 }
 
+func (a *accountDB) GetAccountCustomCSSByUsername(ctx context.Context, username string) (string, db.Error) {
+	account, err := a.GetAccountByUsernameDomain(ctx, username, "")
+	if err != nil {
+		return "", err
+	}
+
+	return account.CustomCSS, nil
+}
+
 func (a *accountDB) GetAccountFaves(ctx context.Context, accountID string) ([]*gtsmodel.StatusFave, db.Error) {
 	faves := new([]*gtsmodel.StatusFave)
 

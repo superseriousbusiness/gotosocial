@@ -28,6 +28,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -168,6 +169,11 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	reader, fileSize, err := p.data(ctx)
 	if err != nil {
 		return fmt.Errorf("store: error executing data function: %s", err)
+	}
+
+	maxSize := config.GetMediaEmojiRemoteMaxSize()
+	if fileSize > maxSize {
+		return fmt.Errorf("store: emoji size (%db) is larger than allowed emojiRemoteMaxSize (%db)", fileSize, maxSize)
 	}
 
 	// defer closing the reader when we're done with it

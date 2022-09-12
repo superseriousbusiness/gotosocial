@@ -58,12 +58,15 @@ var testDefaults = config.Configuration{
 	AccountsRegistrationOpen: true,
 	AccountsApprovalRequired: true,
 	AccountsReasonRequired:   true,
+	AccountsAllowCustomCSS:   true,
 
 	MediaImageMaxSize:        10485760, // 10mb
 	MediaVideoMaxSize:        41943040, // 40mb
 	MediaDescriptionMinChars: 0,
 	MediaDescriptionMaxChars: 500,
 	MediaRemoteCacheDays:     30,
+	MediaEmojiLocalMaxSize:   51200,  // 50kb
+	MediaEmojiRemoteMaxSize:  102400, // 100kb
 
 	// the testrig only uses in-memory storage, so we can
 	// safely set this value to 'test' to avoid running storage

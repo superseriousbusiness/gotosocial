@@ -73,12 +73,15 @@ type Configuration struct {
 	AccountsRegistrationOpen bool `name:"accounts-registration-open" usage:"Allow anyone to submit an account signup request. If false, server will be invite-only."`
 	AccountsApprovalRequired bool `name:"accounts-approval-required" usage:"Do account signups require approval by an admin or moderator before user can log in? If false, new registrations will be automatically approved."`
 	AccountsReasonRequired   bool `name:"accounts-reason-required" usage:"Do new account signups require a reason to be submitted on registration?"`
+	AccountsAllowCustomCSS   bool `name:"accounts-allow-custom-css" usage:"Allow accounts to enable custom CSS for their profile pages and statuses."`
 
 	MediaImageMaxSize        int `name:"media-image-max-size" usage:"Max size of accepted images in bytes"`
 	MediaVideoMaxSize        int `name:"media-video-max-size" usage:"Max size of accepted videos in bytes"`
 	MediaDescriptionMinChars int `name:"media-description-min-chars" usage:"Min required chars for an image description"`
 	MediaDescriptionMaxChars int `name:"media-description-max-chars" usage:"Max permitted chars for an image description"`
 	MediaRemoteCacheDays     int `name:"media-remote-cache-days" usage:"Number of days to locally cache media from remote instances. If set to 0, remote media will be kept indefinitely."`
+	MediaEmojiLocalMaxSize   int `name:"media-emoji-local-max-size" usage:"Max size in bytes of emojis uploaded to this instance via the admin API."`
+	MediaEmojiRemoteMaxSize  int `name:"media-emoji-remote-max-size" usage:"Max size in bytes of emojis to download from other instances."`
 
 	StorageBackend       string `name:"storage-backend" usage:"Storage backend to use for media attachments"`
 	StorageLocalBasePath string `name:"storage-local-base-path" usage:"Full path to an already-created directory where gts should store/retrieve media files. Subfolders will be created within this dir."`

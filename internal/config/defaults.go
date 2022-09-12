@@ -52,12 +52,15 @@ var Defaults = Configuration{
 	AccountsRegistrationOpen: true,
 	AccountsApprovalRequired: true,
 	AccountsReasonRequired:   true,
+	AccountsAllowCustomCSS:   false,
 
 	MediaImageMaxSize:        10485760, // 10mb
 	MediaVideoMaxSize:        41943040, // 40mb
 	MediaDescriptionMinChars: 0,
 	MediaDescriptionMaxChars: 500,
 	MediaRemoteCacheDays:     30,
+	MediaEmojiLocalMaxSize:   51200,  // 50kb
+	MediaEmojiRemoteMaxSize:  102400, // 100kb
 
 	StorageBackend:       "local",
 	StorageLocalBasePath: "/gotosocial/storage",

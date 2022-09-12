@@ -668,6 +668,31 @@ func GetAccountsReasonRequired() bool { return global.GetAccountsReasonRequired(
 // SetAccountsReasonRequired safely sets the value for global configuration 'AccountsReasonRequired' field
 func SetAccountsReasonRequired(v bool) { global.SetAccountsReasonRequired(v) }
 
+// GetAccountsAllowCustomCSS safely fetches the Configuration value for state's 'AccountsAllowCustomCSS' field
+func (st *ConfigState) GetAccountsAllowCustomCSS() (v bool) {
+	st.mutex.Lock()
+	v = st.config.AccountsAllowCustomCSS
+	st.mutex.Unlock()
+	return
+}
+
+// SetAccountsAllowCustomCSS safely sets the Configuration value for state's 'AccountsAllowCustomCSS' field
+func (st *ConfigState) SetAccountsAllowCustomCSS(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.AccountsAllowCustomCSS = v
+	st.reloadToViper()
+}
+
+// AccountsAllowCustomCSSFlag returns the flag name for the 'AccountsAllowCustomCSS' field
+func AccountsAllowCustomCSSFlag() string { return "accounts-allow-custom-css" }
+
+// GetAccountsAllowCustomCSS safely fetches the value for global configuration 'AccountsAllowCustomCSS' field
+func GetAccountsAllowCustomCSS() bool { return global.GetAccountsAllowCustomCSS() }
+
+// SetAccountsAllowCustomCSS safely sets the value for global configuration 'AccountsAllowCustomCSS' field
+func SetAccountsAllowCustomCSS(v bool) { global.SetAccountsAllowCustomCSS(v) }
+
 // GetMediaImageMaxSize safely fetches the Configuration value for state's 'MediaImageMaxSize' field
 func (st *ConfigState) GetMediaImageMaxSize() (v int) {
 	st.mutex.Lock()
@@ -792,6 +817,56 @@ func GetMediaRemoteCacheDays() int { return global.GetMediaRemoteCacheDays() }
 
 // SetMediaRemoteCacheDays safely sets the value for global configuration 'MediaRemoteCacheDays' field
 func SetMediaRemoteCacheDays(v int) { global.SetMediaRemoteCacheDays(v) }
+
+// GetMediaEmojiLocalMaxSize safely fetches the Configuration value for state's 'MediaEmojiLocalMaxSize' field
+func (st *ConfigState) GetMediaEmojiLocalMaxSize() (v int) {
+	st.mutex.Lock()
+	v = st.config.MediaEmojiLocalMaxSize
+	st.mutex.Unlock()
+	return
+}
+
+// SetMediaEmojiLocalMaxSize safely sets the Configuration value for state's 'MediaEmojiLocalMaxSize' field
+func (st *ConfigState) SetMediaEmojiLocalMaxSize(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.MediaEmojiLocalMaxSize = v
+	st.reloadToViper()
+}
+
+// MediaEmojiLocalMaxSizeFlag returns the flag name for the 'MediaEmojiLocalMaxSize' field
+func MediaEmojiLocalMaxSizeFlag() string { return "media-emoji-local-max-size" }
+
+// GetMediaEmojiLocalMaxSize safely fetches the value for global configuration 'MediaEmojiLocalMaxSize' field
+func GetMediaEmojiLocalMaxSize() int { return global.GetMediaEmojiLocalMaxSize() }
+
+// SetMediaEmojiLocalMaxSize safely sets the value for global configuration 'MediaEmojiLocalMaxSize' field
+func SetMediaEmojiLocalMaxSize(v int) { global.SetMediaEmojiLocalMaxSize(v) }
+
+// GetMediaEmojiRemoteMaxSize safely fetches the Configuration value for state's 'MediaEmojiRemoteMaxSize' field
+func (st *ConfigState) GetMediaEmojiRemoteMaxSize() (v int) {
+	st.mutex.Lock()
+	v = st.config.MediaEmojiRemoteMaxSize
+	st.mutex.Unlock()
+	return
+}
+
+// SetMediaEmojiRemoteMaxSize safely sets the Configuration value for state's 'MediaEmojiRemoteMaxSize' field
+func (st *ConfigState) SetMediaEmojiRemoteMaxSize(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.MediaEmojiRemoteMaxSize = v
+	st.reloadToViper()
+}
+
+// MediaEmojiRemoteMaxSizeFlag returns the flag name for the 'MediaEmojiRemoteMaxSize' field
+func MediaEmojiRemoteMaxSizeFlag() string { return "media-emoji-remote-max-size" }
+
+// GetMediaEmojiRemoteMaxSize safely fetches the value for global configuration 'MediaEmojiRemoteMaxSize' field
+func GetMediaEmojiRemoteMaxSize() int { return global.GetMediaEmojiRemoteMaxSize() }
+
+// SetMediaEmojiRemoteMaxSize safely sets the value for global configuration 'MediaEmojiRemoteMaxSize' field
+func SetMediaEmojiRemoteMaxSize(v int) { global.SetMediaEmojiRemoteMaxSize(v) }
 
 // GetStorageBackend safely fetches the Configuration value for state's 'StorageBackend' field
 func (st *ConfigState) GetStorageBackend() (v string) {

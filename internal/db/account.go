@@ -45,6 +45,9 @@ type Account interface {
 	// UpdateAccount updates one account by ID.
 	UpdateAccount(ctx context.Context, account *gtsmodel.Account) (*gtsmodel.Account, Error)
 
+	// GetAccountCustomCSSByUsername returns the custom css of an account on this instance with the given username.
+	GetAccountCustomCSSByUsername(ctx context.Context, username string) (string, Error)
+
 	// GetAccountFaves fetches faves/likes created by the target accountID.
 	GetAccountFaves(ctx context.Context, accountID string) ([]*gtsmodel.StatusFave, Error)
 

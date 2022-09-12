@@ -33,26 +33,40 @@ require("./style.css");
 
 function UserPanel({oauth}) {
 	const [account, setAccount] = React.useState({});
+	const [allowCustomCSS, setAllowCustomCSS] = React.useState(false);
 	const [errorMsg, setError] = React.useState("");
 	const [statusMsg, setStatus] = React.useState("Fetching user info");
 
 	React.useEffect(() => {
+
+	}, [oauth, setAllowCustomCSS, setError, setStatus]);
+
+	React.useEffect(() => {
 		Promise.try(() => {
-			return oauth.apiRequest("/api/v1/accounts/verify_credentials", "GET");
+			return oauth.apiRequest("/api/v1/instance", "GET");
 		}).then((json) => {
-			setAccount(json);
+			setAllowCustomCSS(json.configuration.accounts.allow_custom_css);
+			Promise.try(() => {
+				return oauth.apiRequest("/api/v1/accounts/verify_credentials", "GET");
+			}).then((json) => {
+				setAccount(json);
+			}).catch((e) => {
+				setError(e.message);
+				setStatus("");
+			});
 		}).catch((e) => {
 			setError(e.message);
 			setStatus("");
 		});
-	}, [oauth, setAccount, setError, setStatus]);
+
+	}, [oauth, setAllowCustomCSS, setAccount, setError, setStatus]);
 
 	return (
 		<React.Fragment>
 			<div>
 				<button className="logout" onClick={oauth.logout}>Log out of settings panel</button>
 			</div>
-			<Basic oauth={oauth} account={account}/>
+			<Basic oauth={oauth} account={account} allowCustomCSS={allowCustomCSS}/>
 			<Posts oauth={oauth} account={account}/>
 			<Security oauth={oauth}/>
 		</React.Fragment>

@@ -1959,6 +1959,11 @@ func NewTestFediAttachments(relativePath string) map[string]RemoteAttachmentFile
 		panic(err)
 	}
 
+	peglinBytes, err := os.ReadFile(fmt.Sprintf("%s/peglin.gif", relativePath))
+	if err != nil {
+		panic(err)
+	}
+
 	return map[string]RemoteAttachmentFile{
 		"https://s3-us-west-2.amazonaws.com/plushcity/media_attachments/files/106/867/380/219/163/828/original/88e8758c5f011439.jpg": {
 			Data:        beeBytes,
@@ -1975,6 +1980,10 @@ func NewTestFediAttachments(relativePath string) map[string]RemoteAttachmentFile
 		"https://turnip.farm/attachments/communist_manifesto.pdf": {
 			Data:        communistBytes,
 			ContentType: "application/pdf",
+		},
+		"http://example.org/media/emojis/1781772.gif": {
+			Data:        peglinBytes,
+			ContentType: "image/gif",
 		},
 	}
 }

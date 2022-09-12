@@ -12,6 +12,17 @@ definitions:
     title: A FileHeader describes a file part of a multipart request.
     type: object
     x-go-package: mime/multipart
+  InstanceConfigurationAccounts:
+    properties:
+      allow_custom_css:
+        description: Whether or not accounts on this instance are allowed to upload
+          custom CSS for profiles and statuses.
+        example: false
+        type: boolean
+        x-go-name: AllowCustomCSS
+    title: InstanceConfigurationAccounts models instance account config parameters.
+    type: object
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   Link:
     description: See https://webfinger.net/
     properties:
@@ -240,6 +251,11 @@ definitions:
         example: "2021-07-30T09:20:25+00:00"
         type: string
         x-go-name: CreatedAt
+      custom_css:
+        description: CustomCSS to include when rendering this account's profile or
+          statuses.
+        type: string
+        x-go-name: CustomCSS
       discoverable:
         description: Account has opted into discovery features.
         type: boolean
@@ -1086,6 +1102,8 @@ definitions:
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   instanceConfiguration:
     properties:
+      accounts:
+        $ref: '#/definitions/InstanceConfigurationAccounts'
       media_attachments:
         $ref: '#/definitions/instanceConfigurationMediaAttachments'
       polls:
@@ -2618,6 +2636,12 @@ paths:
         in: formData
         name: source[status_format]
         type: string
+      - description: |-
+          Custom CSS to use when rendering this account's profile or statuses.
+          String must be no more than 5,000 characters (~5kb).
+        in: formData
+        name: custom_css
+        type: string
       produces:
       - application/json
       responses:
@@ -2724,7 +2748,9 @@ paths:
         pattern: \w{2,30}
         required: true
         type: string
-      - description: A png or gif image of the emoji. Animated pngs work too!
+      - description: |-
+          A png or gif image of the emoji. Animated pngs work too!
+          To ensure compatibility with other fedi implementations, emoji size limit is 50kb by default.
         in: formData
         name: image
         required: true

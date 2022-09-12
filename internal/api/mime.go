@@ -31,4 +31,5 @@ const (
 	MultipartForm     MIME = `multipart/form-data`
 	TextXML           MIME = `text/xml`
 	TextHTML          MIME = `text/html`
+	TextCSS           MIME = `text/css`
 )

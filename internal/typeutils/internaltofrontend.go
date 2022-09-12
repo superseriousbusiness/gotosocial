@@ -197,6 +197,7 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		Emojis:         emojis, // TODO: implement this
 		Fields:         fields,
 		Suspended:      suspended,
+		CustomCSS:      a.CustomCSS,
 	}
 
 	c.ensureAvatar(accountFrontend)
@@ -689,6 +690,9 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 				MaxCharactersPerOption: config.GetStatusesPollOptionMaxChars(),
 				MinExpiration:          instancePollsMinExpiration, // seconds
 				MaxExpiration:          instancePollsMaxExpiration, // seconds
+			},
+			Accounts: &model.InstanceConfigurationAccounts{
+				AllowCustomCSS: config.GetAccountsAllowCustomCSS(),
 			},
 		}
 	}
