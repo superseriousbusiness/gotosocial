@@ -35,4 +35,6 @@ type Emoji interface {
 	// GetEmojiByShortcodeDomain gets an emoji based on its shortcode and domain.
 	// For local emoji, domain should be an empty string.
 	GetEmojiByShortcodeDomain(ctx context.Context, shortcode string, domain string) (*gtsmodel.Emoji, Error)
+	// GetEmojiByURI returns one emoji based on its ActivityPub URI.
+	GetEmojiByURI(ctx context.Context, uri string) (*gtsmodel.Emoji, Error)
 }

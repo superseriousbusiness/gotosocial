@@ -234,8 +234,7 @@ func (p *processor) ProcessTags(ctx context.Context, form *apimodel.AdvancedStat
 	}
 	for _, tag := range gtsTags {
 		if err := p.db.Put(ctx, tag); err != nil {
-			var alreadyExistsError *db.ErrAlreadyExists
-			if !errors.As(err, &alreadyExistsError) {
+			if !errors.Is(err, db.ErrAlreadyExists) {
 				return fmt.Errorf("error putting tags in db: %s", err)
 			}
 		}

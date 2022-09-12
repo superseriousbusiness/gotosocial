@@ -59,6 +59,8 @@ var Defaults = Configuration{
 	MediaDescriptionMinChars: 0,
 	MediaDescriptionMaxChars: 500,
 	MediaRemoteCacheDays:     30,
+	MediaEmojiLocalMaxSize:   51200,  // 50kb
+	MediaEmojiRemoteMaxSize:  102400, // 100kb
 
 	StorageBackend:       "local",
 	StorageLocalBasePath: "/gotosocial/storage",
