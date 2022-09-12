@@ -28,19 +28,8 @@ var (
 	ErrNoEntries Error = fmt.Errorf("no entries")
 	// ErrMultipleEntries is returned when a caller expected ONE entry for a query, but multiples were found.
 	ErrMultipleEntries Error = fmt.Errorf("multiple entries")
+	// ErrAlreadyExists is returned when a conflict was encountered in the db when doing an insert.
+	ErrAlreadyExists Error = fmt.Errorf("already exists")
 	// ErrUnknown denotes an unknown database error.
 	ErrUnknown Error = fmt.Errorf("unknown error")
 )
-
-// ErrAlreadyExists is returned when a caller tries to insert a database entry that already exists in the db.
-type ErrAlreadyExists struct {
-	message string
-}
-
-func (e *ErrAlreadyExists) Error() string {
-	return e.message
-}
-
-func NewErrAlreadyExists(msg string) error {
-	return &ErrAlreadyExists{message: msg}
-}

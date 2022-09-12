@@ -20,7 +20,7 @@ package gtsmodel
 
 import "time"
 
-// Emoji represents a custom emoji that's been uploaded through the admin UI, and is useable by instance denizens.
+// Emoji represents a custom emoji that's been uploaded through the admin UI or downloaded from a remote instance.
 type Emoji struct {
 	ID                     string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                                // id of this item in the database
 	CreatedAt              time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                         // when was item created

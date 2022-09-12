@@ -2724,7 +2724,9 @@ paths:
         pattern: \w{2,30}
         required: true
         type: string
-      - description: A png or gif image of the emoji. Animated pngs work too!
+      - description: |-
+          A png or gif image of the emoji. Animated pngs work too!
+          To ensure compatibility with other fedi implementations, emoji size limit is 50kb by default.
         in: formData
         name: image
         required: true

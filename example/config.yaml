@@ -211,7 +211,7 @@ accounts-reason-required: true
 ##### MEDIA CONFIG #####
 ########################
 
-# Config pertaining to user media uploads (videos, image, image descriptions).
+# Config pertaining to media uploads (videos, image, image descriptions, emoji).
 
 # Int. Maximum allowed image upload size in bytes.
 # Examples: [2097152, 10485760]
@@ -243,6 +243,22 @@ media-description-max-chars: 500
 # Examples: [30, 60, 7, 0]
 # Default: 30
 media-remote-cache-days: 30
+
+# Int. Max size in bytes of emojis uploaded to this instance via the admin API.
+# The default is the same as the Mastodon size limit for emojis (50kb), which allows
+# for good interoperability. Raising this limit may cause issues with federation
+# of your emojis to other instances, so beware.
+# Examples: [51200, 102400]
+# Default: 51200
+media-emoji-local-max-size: 51200
+
+# Int. Max size in bytes of emojis to download from other instances.
+# By default this is 100kb, or twice the size of the default for media-emoji-local-max-size.
+# This strikes a good balance between decent interoperability with instances that have
+# higher emoji size limits, and not taking up too much space in storage.
+# Examples: [51200, 102400]
+# Default: 51200
+media-emoji-remote-max-size: 102400
 
 ##########################
 ##### STORAGE CONFIG #####
