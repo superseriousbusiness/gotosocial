@@ -46,11 +46,8 @@ module.exports = function ({ apiCall }) {
 					}
 				});
 
-				console.log(update);
-
 				return dispatch(apiCall("PATCH", "/api/v1/accounts/update_credentials", update, "form"));
 			}).then((account) => {
-				console.log(account);
 				return dispatch(user.setAccount(account));
 			});
 		};
