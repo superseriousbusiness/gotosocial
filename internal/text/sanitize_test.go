@@ -94,6 +94,35 @@ func (suite *SanitizeTestSuite) TestSanitizeCaption6() {
 	suite.Equal("hello world", sanitized)
 }
 
+func (suite *SanitizeTestSuite) TestSanitizeCustomCSS() {
+	customCSS := `.toot .username {
+	color: var(--link_fg);
+	line-height: 2rem;
+	margin-top: -0.5rem;
+	align-self: start;
+	
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}`
+	sanitized := text.SanitizePlaintext(customCSS)
+	suite.Equal(customCSS, sanitized) // should be the same as it was before
+}
+
+func (suite *SanitizeTestSuite) TestSanitizeNaughtyCustomCSS1() {
+	// try to break out of <style> into <head> and change the document title
+	customCSS := "</style><title>pee pee poo poo</title><style>"
+	sanitized := text.SanitizePlaintext(customCSS)
+	suite.Empty(sanitized)
+}
+
+func (suite *SanitizeTestSuite) TestSanitizeNaughtyCustomCSS2() {
+	// try to break out of <style> into <head> and change the document title
+	customCSS := "pee pee poo poo</style><title></title><style>"
+	sanitized := text.SanitizePlaintext(customCSS)
+	suite.Equal("pee pee poo poo", sanitized)
+}
+
 func TestSanitizeTestSuite(t *testing.T) {
 	suite.Run(t, new(SanitizeTestSuite))
 }

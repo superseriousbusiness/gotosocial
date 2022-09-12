@@ -35,6 +35,7 @@ import (
 const (
 	confirmEmailPath = "/" + uris.ConfirmEmailPath
 	profilePath      = "/@:" + usernameKey
+	customCSSPath    = profilePath + "/custom.css"
 	statusPath       = profilePath + "/statuses/:" + statusIDKey
 	adminPanelPath   = "/admin"
 	userPanelpath    = "/user"
@@ -90,6 +91,9 @@ func (m *Module) Route(s router.Router) error {
 
 	// serve profile pages at /@username
 	s.AttachHandler(http.MethodGet, profilePath, m.profileGETHandler)
+
+	// serve custom css at /@username/custom.css
+	s.AttachHandler(http.MethodGet, customCSSPath, m.customCSSGETHandler)
 
 	// serve statuses
 	s.AttachHandler(http.MethodGet, statusPath, m.threadGETHandler)

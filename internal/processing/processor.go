@@ -79,6 +79,7 @@ type Processor interface {
 	AccountGet(ctx context.Context, authed *oauth.Auth, targetAccountID string) (*apimodel.Account, gtserror.WithCode)
 	// AccountGet processes the given request for account information.
 	AccountGetLocalByUsername(ctx context.Context, authed *oauth.Auth, username string) (*apimodel.Account, gtserror.WithCode)
+	AccountGetCustomCSSForUsername(ctx context.Context, username string) (string, gtserror.WithCode)
 	// AccountUpdate processes the update of an account with the given form
 	AccountUpdate(ctx context.Context, authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, gtserror.WithCode)
 	// AccountStatusesGet fetches a number of statuses (in time descending order) from the given account, filtered by visibility for

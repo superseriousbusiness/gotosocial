@@ -131,6 +131,7 @@ func copyAccount(account *gtsmodel.Account) *gtsmodel.Account {
 		Sensitive:               copyBoolPtr(account.Sensitive),
 		Language:                account.Language,
 		StatusFormat:            account.StatusFormat,
+		CustomCSS:               account.CustomCSS,
 		URI:                     account.URI,
 		URL:                     account.URL,
 		LastWebfingeredAt:       account.LastWebfingeredAt,

@@ -92,6 +92,12 @@ import (
 //   in: formData
 //   description: Default format to use for authored statuses (plain or markdown).
 //   type: string
+// - name: custom_css
+//   in: formData
+//   description: |-
+//     Custom CSS to use when rendering this account's profile or statuses.
+//     String must be no more than 5,000 characters (~5kb).
+//   type: string
 //
 // security:
 // - OAuth2 Bearer:
@@ -183,7 +189,8 @@ func parseUpdateAccountForm(c *gin.Context) (*model.UpdateCredentialsRequest, er
 			form.Source.Sensitive == nil &&
 			form.Source.Language == nil &&
 			form.Source.StatusFormat == nil &&
-			form.FieldsAttributes == nil) {
+			form.FieldsAttributes == nil &&
+			form.CustomCSS == nil) {
 		return nil, errors.New("empty form submitted")
 	}
 

@@ -16,52 +16,31 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-body {
-	grid-template-rows: auto 1fr;
-}
+package migrations
 
-.capitalize {
-	text-transform: capitalize;
-}
+import (
+	"context"
+	"strings"
 
-section {
-	margin-bottom: 1rem;
-}
+	"github.com/uptrace/bun"
+)
 
-input, select, textarea {
-	box-sizing: border-box;
-}
-
-.error {
-	font-weight: bold;
-}
-
-.hidden {
-	display: none;
-}
-
-.messagebutton {
-	margin-top: 1rem;
-	display: flex;
-	gap: 1rem;
-	align-items: center;
-
-	button {
-		white-space: nowrap;
+func init() {
+	up := func(ctx context.Context, db *bun.DB) error {
+		_, err := db.ExecContext(ctx, "ALTER TABLE ? ADD COLUMN ? TEXT", bun.Ident("accounts"), bun.Ident("custom_css"))
+		if err != nil && !(strings.Contains(err.Error(), "already exists") || strings.Contains(err.Error(), "duplicate column name") || strings.Contains(err.Error(), "SQLSTATE 42701")) {
+			return err
+		}
+		return nil
 	}
-}
 
-.notImplemented {
-	border: 2px solid rgb(70, 79, 88);
-	background: repeating-linear-gradient(
-		-45deg,
-		#525c66,
-		#525c66 10px,
-		rgb(70, 79, 88) 10px,
-		rgb(70, 79, 88) 20px
-	) !important;
-}
+	down := func(ctx context.Context, db *bun.DB) error {
+		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			return nil
+		})
+	}
 
-.mono {
-	font-family: monospace;
+	if err := Migrations.Register(up, down); err != nil {
+		panic(err)
+	}
 }

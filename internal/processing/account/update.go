@@ -124,6 +124,14 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		}
 	}
 
+	if form.CustomCSS != nil {
+		customCSS := *form.CustomCSS
+		if err := validate.CustomCSS(customCSS); err != nil {
+			return nil, gtserror.NewErrorBadRequest(err, err.Error())
+		}
+		account.CustomCSS = text.SanitizePlaintext(customCSS)
+	}
+
 	updatedAccount, err := p.db.UpdateAccount(ctx, account)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("could not update account %s: %s", account.ID, err))

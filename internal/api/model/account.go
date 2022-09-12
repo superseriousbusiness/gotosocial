@@ -90,6 +90,8 @@ type Account struct {
 	MuteExpiresAt string `json:"mute_expires_at,omitempty"`
 	// Extra profile information. Shown only if the requester owns the account being requested.
 	Source *Source `json:"source,omitempty"`
+	// CustomCSS to include when rendering this account's profile or statuses.
+	CustomCSS string `json:"custom_css,omitempty"`
 }
 
 // AccountCreateRequest models account creation parameters.
@@ -151,6 +153,8 @@ type UpdateCredentialsRequest struct {
 	Source *UpdateSource `form:"source" json:"source" xml:"source"`
 	// Profile metadata name and value
 	FieldsAttributes *[]UpdateField `form:"fields_attributes" json:"fields_attributes" xml:"fields_attributes"`
+	// Custom CSS to be included when rendering this account's profile or statuses.
+	CustomCSS *string `form:"custom_css" json:"custom_css" xml:"custom_css"`
 }
 
 // UpdateSource is to be used specifically in an UpdateCredentialsRequest.
