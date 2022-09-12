@@ -82,6 +82,64 @@ module.exports = function UserSettings() {
 				<input id="sensitive" type="checkbox" checked={account.source.sensitive} onChange={onCheckChange("source.sensitive")}/>
 			</div>
 			<Submit onClick={submit} label="Save post settings" errorMsg={errorMsg} statusMsg={statusMsg}/>
+
+			<hr/>
+			<PasswordChange/>
 		</div>
 	);
 };
+
+function PasswordChange({oauth}) {
+	const dispatch = Redux.useDispatch();
+
+	const [errorMsg, setError] = React.useState("");
+	const [statusMsg, setStatus] = React.useState("");
+
+	const [oldPassword, setOldPassword] = React.useState("");
+	const [newPassword, setNewPassword] = React.useState("");
+	const [newPasswordConfirm, setNewPasswordConfirm] = React.useState("");
+
+	function submit() {
+		if (newPassword !== newPasswordConfirm) {
+			setError("New password and confirm new password did not match!");
+			return;
+		}
+		
+		setStatus("PATCHing");
+		setError("");
+		return Promise.try(() => {
+			let data = {
+				old_password: oldPassword,
+				new_password: newPassword
+			};
+			return dispatch(api.apiCall("POST", "/api/v1/user/password_change", data, "form"));
+		}).then(() => {
+			setStatus("Saved!");
+			setOldPassword("");
+			setNewPassword("");
+			setNewPasswordConfirm("");
+		}).catch((e) => {
+			setError(e.message);
+			setStatus("");
+		});
+	}
+
+	return (
+		<>
+			<h1>Change password</h1>
+			<div className="labelinput">
+				<label htmlFor="password">Current password</label>
+				<input name="password" id="password" type="password" autoComplete="current-password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
+			</div>
+			<div className="labelinput">
+				<label htmlFor="new-password">New password</label>
+				<input name="new-password" id="new-password" type="password" autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+			</div>
+			<div className="labelinput">
+				<label htmlFor="confirm-new-password">Confirm new password</label>
+				<input name="confirm-new-password" id="confirm-new-password" type="password" autoComplete="new-password" value={newPasswordConfirm} onChange={(e) => setNewPasswordConfirm(e.target.value)} />
+			</div>
+			<Submit onClick={submit} label="Save new password" errorMsg={errorMsg} statusMsg={statusMsg}/>
+		</>
+	);
+}

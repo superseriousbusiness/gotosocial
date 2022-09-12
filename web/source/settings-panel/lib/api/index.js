@@ -125,5 +125,6 @@ module.exports = {
 		fetch: fetchInstance
 	},
 	oauth: require("./oauth")({apiCall, getCurrentUrl}),
-	user: require("./user")({apiCall})
+	user: require("./user")({apiCall}),
+	apiCall
 };

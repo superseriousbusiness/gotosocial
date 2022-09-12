@@ -290,6 +290,12 @@ input, textarea {
 	padding-bottom: 0.1rem;
 }
 
+hr {
+	color: transparent;
+	width: 100%;
+	border-bottom: 0.02rem solid $border-accent;
+}
+
 footer {
 	align-self: end;
 	padding: 2rem 0 1rem 0;
