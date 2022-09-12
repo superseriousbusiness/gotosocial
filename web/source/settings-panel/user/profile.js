@@ -21,103 +21,82 @@
 const Promise = require("bluebird");
 const React = require("react");
 const Redux = require("react-redux");
-const d = require("dotty");
 
 const Submit = require("../components/submit");
 
 const api = require("../lib/api");
+const formFields = require("../lib/form-fields");
 const user = require("../redux/reducers/user").actions;
 
 module.exports = function UserProfile() {
 	const dispatch = Redux.useDispatch();
-	const account = Redux.useSelector(state => state.user.account);
+	const account = Redux.useSelector(state => state.user.profile);
+
+	const { onTextChange, onCheckChange, onFileChange } = formFields(dispatch, user.setProfileVal, account);
 
 	const [errorMsg, setError] = React.useState("");
 	const [statusMsg, setStatus] = React.useState("");
 
-	function onTextChange(key) {
-		return function (e) {
-			dispatch(user.setAccountVal([key, e.target.value]));
-		};
-	}
-
-	function onCheckChange(key) {
-		return function (e) {
-			dispatch(user.setAccountVal([key, e.target.checked]));
-		};
-	}
-
-	function onFileChange(key) {
-		return function (e) {
-			let old = d.get(account, key);
-			if (old != undefined) {
-				URL.revokeObjectURL(old); // no error revoking a non-Object URL as provided by instance
-			}
-			let file = e.target.files[0];
-			let objectURL = URL.createObjectURL(file);
-			dispatch(user.setAccountVal([key, objectURL]));
-			dispatch(user.setAccountVal([`${key}File`, file]));
-		};
-	}
-
-	const submit = (e) => {
-		e.preventDefault();
-
+	function submit() {
 		setStatus("PATCHing");
 		setError("");
 		return Promise.try(() => {
-			return dispatch(api.user.updateAccount());
+			return dispatch(api.user.updateProfile());
 		}).then(() => {
 			setStatus("Saved!");
 		}).catch((e) => {
 			setError(e.message);
 			setStatus("");
 		});
-	};
+	}
 
 	return (
 		<div className="user-profile">
 			<h1>Profile</h1>
 			<div className="overview">
 				<div className="profile">
-        	<div className="headerimage">
-						<img className="headerpreview" src={account.header} alt={account.header ? `header image for ${account.username}` : "None set"}/>
-        	</div>
-        	<div className="basic">
-           	<div id="profile-basic-filler2"></div>
-						<span className="avatar"><img className="avatarpreview" src={account.avatar} alt={account.avatar ? `avatar image for ${account.username}` : "None set"}/></span>
-           	<div className="displayname">{account.display_name.trim().length > 0 ? account.display_name : account.username}</div>
-           	<div className="username"><span>@{account.username}</span></div>
-        	</div>
+					<div className="headerimage">
+						<img className="headerpreview" src={account.header} alt={account.header ? `header image for ${account.username}` : "None set"} />
+					</div>
+					<div className="basic">
+						<div id="profile-basic-filler2"></div>
+						<span className="avatar"><img className="avatarpreview" src={account.avatar} alt={account.avatar ? `avatar image for ${account.username}` : "None set"} /></span>
+						<div className="displayname">{account.display_name.trim().length > 0 ? account.display_name : account.username}</div>
+						<div className="username"><span>@{account.username}</span></div>
+					</div>
 				</div>
 				<div className="files">
 					<div>
 						<h3>Header</h3>
-						<label htmlFor="header" className="file-input button">Browse…</label>
-						<span>{account.headerFile ? account.headerFile.name : "no file selected"}</span>
-						<input className="hidden" id="header" type="file" accept="image/*" onChange={onFileChange("header")}/>
+						<div className="picker">
+							<label htmlFor="header" className="file-input button">Browse</label>
+							<span>{account.headerFile ? account.headerFile.name : "no file selected"}</span>
+						</div>
+						<input className="hidden" id="header" type="file" accept="image/*" onChange={onFileChange("header")} />
 					</div>
 					<div>
 						<h3>Avatar</h3>
-						<label htmlFor="avatar" className="file-input button">Browse…</label>
-						<span>{account.avatarFile ? account.avatarFile.name : "no file selected"}</span>
-						<input className="hidden" id="avatar" type="file" accept="image/*" onChange={onFileChange("avatar")}/>
+						<div className="picker">
+							<label htmlFor="avatar" className="file-input button">Browse</label>
+							<span>{account.avatarFile ? account.avatarFile.name : "no file selected"}</span>
+						</div>
+						<input className="hidden" id="avatar" type="file" accept="image/*" onChange={onFileChange("avatar")} />
 					</div>
 				</div>
 			</div>
 			<div className="labelinput">
 				<label htmlFor="displayname">Name</label>
-				<input id="displayname" type="text" value={account.display_name} onChange={onTextChange("display_name")} placeholder="A GoToSocial user"/>
+				<input id="displayname" type="text" value={account.display_name} onChange={onTextChange("display_name")} placeholder="A GoToSocial user" />
 			</div>
 			<div className="labelinput">
 				<label htmlFor="bio">Bio</label>
-				<textarea id="bio" value={account.source.note} onChange={onTextChange("source.note")} placeholder="Just trying out GoToSocial, my pronouns are they/them and I like sloths."/>
+				<textarea id="bio" value={account.source.note} onChange={onTextChange("source.note")} placeholder="Just trying out GoToSocial, my pronouns are they/them and I like sloths." />
 			</div>
 			<div className="labelcheckbox">
 				<label htmlFor="locked">Manually approve follow requests?</label>
-				<input id="locked" type="checkbox" checked={account.locked} onChange={onCheckChange("locked")}/>
+				<input id="locked" type="checkbox" checked={account.locked} onChange={onCheckChange("locked")} />
 			</div>
-			<Submit onClick={submit} label="Save profile info" errorMsg={errorMsg} statusMsg={statusMsg}/>
+			<Submit onClick={submit} label="Save profile info" errorMsg={errorMsg} statusMsg={statusMsg} />
 		</div>
 	);
 };

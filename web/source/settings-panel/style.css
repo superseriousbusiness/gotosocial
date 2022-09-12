@@ -177,47 +177,10 @@ input, select, textarea {
 	) !important;
 }
 
-.user-profile {
+section.with-sidebar > div {
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
-
-	.overview {
-		display: grid;
-		grid-template-columns: 1fr auto;
-
-		.basic {
-			margin-top: -4.5rem;
-
-			.avatar {
-				height: 5rem;
-				width: 5rem;
-			}
-	
-			.displayname {
-				font-size: 1.3rem;
-				padding-top: 0;
-				padding-bottom: 0;
-				margin-top: 0.7rem;
-			}
-		}
-
-		.files {
-			padding: 1rem;
-
-			h3 {
-				margin-top: 0;
-			}
-
-			div:first-child {
-				margin-bottom: 1rem;
-			}
-
-			span {
-				font-style: italic;
-			}
-		}
-	}
 
 	input, textarea {
 		width: 100%;
@@ -236,6 +199,7 @@ input, select, textarea {
 	input:invalid {
 		border-color: red;
 	}
+
 	textarea {
 		width: 100%;
 		height: 8rem;
@@ -243,29 +207,6 @@ input, select, textarea {
 	
 	h1 {
 		margin-bottom: 0.5rem;
-	}
-	
-	img {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		border: $boxshadow_border;
-		box-shadow: $box-shadow;
-		object-fit: cover;
-		border-radius: 0.2rem;
-		box-sizing: border-box;
-		margin-bottom: 0.5rem;
-	}
-	
-	.avatarpreview {
-		height: 8.5rem;
-		width: 8.5rem;
-	}
-	
-	.headerpreview {
-		width: 100%;
-		aspect-ratio: 3 / 1;
-		overflow: hidden;
 	}
 	
 	.moreinfolink {
@@ -305,5 +246,62 @@ input, select, textarea {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.4rem;
+	}
+}
+
+.user-profile {
+	.overview {
+		display: grid;
+		grid-template-columns: 70% 30%;
+
+		.basic {
+			margin-top: -4.5rem;
+
+			.avatar {
+				height: 5rem;
+				width: 5rem;
+			}
+	
+			.displayname {
+				font-size: 1.3rem;
+				padding-top: 0;
+				padding-bottom: 0;
+				margin-top: 0.7rem;
+			}
+		}
+
+		.files {
+			margin: 1rem;
+			margin-right: 0;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+
+			div.picker {
+				width: 100%;
+				display: flex;
+
+				span {
+					flex: 1 1 auto;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
+					padding: 0.3rem 0;
+				}
+			}
+
+			h3 {
+				margin-top: 0;
+				margin-bottom: 0.5rem;
+			}
+
+			div:first-child {
+				margin-bottom: 1rem;
+			}
+
+			span {
+				font-style: italic;
+			}
+		}
 	}
 }

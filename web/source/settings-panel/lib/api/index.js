@@ -19,6 +19,7 @@
 "use strict";
 
 const Promise = require("bluebird");
+const { isPlainObject } = require("is-plain-object");
 
 const { APIError } = require("../errors");
 const { setInstanceInfo } = require("../../redux/reducers/instances").actions;
@@ -47,7 +48,13 @@ function apiCall(method, route, payload, type="json") {
 				} else if (type == "form") {
 					const formData = new FormData();
 					Object.entries(payload).forEach(([key, val]) => {
-						formData.set(key, val);
+						if (isPlainObject(val)) {
+							Object.entries(val).forEach(([key2, val2]) => {
+								formData.set(`${key}[${key2}]`, val2);
+							});
+						} else {
+							formData.set(key, val);
+						}
 					});
 					body = formData;
 				}

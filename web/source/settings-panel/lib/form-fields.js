@@ -18,28 +18,33 @@
 
 "use strict";
 
-const {createSlice} = require("@reduxjs/toolkit");
 const d = require("dotty");
 
-module.exports = createSlice({
-	name: "user",
-	initialState: {
-		profile: {},
-		settings: {}
-	},
-	reducers: {
-		setAccount: (state, {payload}) => {
-			state.profile = payload;
-			// /user/settings only needs a copy of the 'source' obj
-			state.settings = {
-				source: payload.source
+module.exports = function(dispatch, setter, obj) {
+	return {
+		onTextChange: function (key) {
+			return function (e) {
+				dispatch(setter([key, e.target.value]));
 			};
 		},
-		setProfileVal: (state, {payload: [key, val]}) => {
-			d.put(state.profile, key, val);
+	
+		onCheckChange: function (key) {
+			return function (e) {
+				dispatch(setter([key, e.target.checked]));
+			};
 		},
-		setSettingsVal: (state, {payload: [key, val]}) => {
-			d.put(state.settings, key, val);
+	
+		onFileChange: function (key) {
+			return function (e) {
+				let old = d.get(obj, key);
+				if (old != undefined) {
+					URL.revokeObjectURL(old); // no error revoking a non-Object URL as provided by instance
+				}
+				let file = e.target.files[0];
+				let objectURL = URL.createObjectURL(file);
+				dispatch(setter([key, objectURL]));
+				dispatch(setter([`${key}File`, file]));
+			};
 		}
-	}
-});
+	};
+};

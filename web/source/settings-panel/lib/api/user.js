@@ -24,6 +24,38 @@ const d = require("dotty");
 const user = require("../../redux/reducers/user").actions;
 
 module.exports = function ({ apiCall }) {
+	function updateCredentials(selector, {formKeys=[], renamedKeys=[], fileKeys=[]}) {
+		return function (dispatch, getState) {
+			return Promise.try(() => {
+				const state = selector(getState());
+
+				const update = {};
+
+				formKeys.forEach((key) => {
+					d.put(update, key, d.get(state, key));
+				});
+
+				renamedKeys.forEach(([sendKey, intKey]) => {
+					d.put(update, sendKey, d.get(state, intKey));
+				});
+
+				fileKeys.forEach((key) => {
+					let file = d.get(state, `${key}File`);
+					if (file != undefined) {
+						d.put(update, key, file);
+					}
+				});
+
+				console.log(update);
+
+				return dispatch(apiCall("PATCH", "/api/v1/accounts/update_credentials", update, "form"));
+			}).then((account) => {
+				console.log(account);
+				return dispatch(user.setAccount(account));
+			});
+		};
+	}
+
 	return {
 		fetchAccount: function fetchAccount() {
 			return function (dispatch, _getState) {
@@ -34,39 +66,17 @@ module.exports = function ({ apiCall }) {
 				});
 			};
 		},
-		updateAccount: function updateAccount() {
-			const formKeys = ["display_name", "locked"];
+		updateProfile: function updateProfile() {
+			const formKeys = ["display_name", "locked", "source"];
 			const renamedKeys = [["note", "source.note"]];
 			const fileKeys = ["header", "avatar"];
 
-			return function (dispatch, getState) {
-				return Promise.try(() => {
-					const { account } = getState().user;
+			return updateCredentials((state) => state.user.profile, {formKeys, renamedKeys, fileKeys});
+		},
+		updateSettings: function updateProfile() {
+			const formKeys = ["source"];
 
-					const update = {};
-
-					formKeys.forEach((key) => {
-						d.put(update, key, d.get(account, key));
-						update[key] = account[key];
-					});
-
-					renamedKeys.forEach(([sendKey, intKey]) => {
-						d.put(update, sendKey, d.get(account, intKey));
-					});
-
-					fileKeys.forEach((key) => {
-						let file = d.get(account, `${key}File`);
-						if (file != undefined) {
-							d.put(update, key, file);
-						}
-					});
-
-					return dispatch(apiCall("PATCH", "/api/v1/accounts/update_credentials", update, "form"));
-				}).then((account) => {
-					console.log(account);
-					return dispatch(user.setAccount(account));
-				});
-			};
+			return updateCredentials((state) => state.user.settings, {formKeys});
 		}
 	};
 };
