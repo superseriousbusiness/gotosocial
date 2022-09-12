@@ -36,7 +36,7 @@ module.exports = function Login({error}) {
 		let currentDomain = window.location.origin;
 		Promise.try(() => {
 			console.log("trying", currentDomain);
-			return dispatch(api.instance.fetch(currentDomain));
+			return dispatch(api.instance.fetchWithoutStore(currentDomain));
 		}).then(() => {
 			if (instanceFieldRef.current.length == 0) { // user hasn't started typing yet
 				dispatch(setInstance(currentDomain));
@@ -51,7 +51,7 @@ module.exports = function Login({error}) {
 	function tryInstance() {
 		let domain = instanceFieldRef.current;
 		Promise.try(() => {
-			return dispatch(api.instance.fetch(domain)).catch((e) => {
+			return dispatch(api.instance.fetchWithoutStore(domain)).catch((e) => {
 				// TODO: clearer error messages for common errors
 				console.log(e);
 				throw e;

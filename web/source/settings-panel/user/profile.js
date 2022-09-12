@@ -31,6 +31,9 @@ const user = require("../redux/reducers/user").actions;
 module.exports = function UserProfile() {
 	const dispatch = Redux.useDispatch();
 	const account = Redux.useSelector(state => state.user.profile);
+	const instance = Redux.useSelector(state => state.instances.current);
+
+	const allowCustomCSS = instance.configuration.accounts.allow_custom_css;
 
 	const { onTextChange, onCheckChange, onFileChange } = formFields(dispatch, user.setProfileVal, account);
 
@@ -106,6 +109,13 @@ module.exports = function UserProfile() {
 				<label htmlFor="locked">Manually approve follow requests?</label>
 				<input id="locked" type="checkbox" checked={account.locked} onChange={onCheckChange("locked")} />
 			</div>
+			{ !allowCustomCSS ? null :  
+				<div className="labelinput">
+					<label htmlFor="customcss">Custom CSS</label>
+					<textarea className="mono" id="customcss" value={account.custom_css} onChange={onTextChange("custom_css")}/>
+					<a href="https://docs.gotosocial.org/en/latest/user_guide/custom_css" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about custom CSS (opens in a new tab)</a>
+				</div>
+			}
 			<Submit onClick={submit} label="Save profile info" errorMsg={errorMsg} statusMsg={statusMsg} />
 		</div>
 	);

@@ -40,7 +40,6 @@ const nav = {
 		entries: {
 			"Profile": require("./user/profile.js"),
 			"Settings": require("./user/settings.js"),
-			"Customization": require("./user/customization.js")
 		}
 	},
 	"Admin": {
@@ -76,6 +75,9 @@ function App() {
 					return dispatch(api.oauth.tokenize(code));
 				}
 			}
+		}).then(() => {
+			// Fetch current instance info
+			return dispatch(api.instance.fetch());
 		}).then(() => {
 			// Check currently stored auth token for validity if available
 			if (loginState == "callback" || loginState == "login") {

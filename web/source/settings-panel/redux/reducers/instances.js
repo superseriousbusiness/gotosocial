@@ -26,9 +26,12 @@ module.exports = createSlice({
 		info: {},
 	},
 	reducers: {
-		setInstanceInfo: (state, {payload}) => {
+		setNamedInstanceInfo: (state, {payload}) => {
 			let [key, info] = payload;
 			state.info[key] = info;
 		},
+		setInstanceInfo: (state, {payload}) => {
+			state.current = payload;
+		}
 	}
 });

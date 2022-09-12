@@ -22,7 +22,7 @@ const Promise = require("bluebird");
 const { isPlainObject } = require("is-plain-object");
 
 const { APIError } = require("../errors");
-const { setInstanceInfo } = require("../../redux/reducers/instances").actions;
+const { setInstanceInfo, setNamedInstanceInfo } = require("../../redux/reducers/instances").actions;
 const oauth = require("../../redux/reducers/oauth").actions;
 
 function apiCall(method, route, payload, type="json") {
@@ -95,7 +95,7 @@ function getCurrentUrl() {
 	return `${window.location.origin}${window.location.pathname}`;
 }
 
-function fetchInstance(domain) {
+function fetchInstanceWithoutStore(domain) {
 	return function(dispatch, getState) {
 		return Promise.try(() => {
 			let lookup = getState().instances.info[domain];
@@ -113,7 +113,20 @@ function fetchInstance(domain) {
 			return apiCall("GET", "/api/v1/instance")(dispatch, () => fakeState);
 		}).then((json) => {
 			if (json && json.uri) { // TODO: validate instance json more?
-				dispatch(setInstanceInfo([domain, json]));
+				dispatch(setNamedInstanceInfo([domain, json]));
+				return json;
+			}
+		});
+	};
+}
+
+function fetchInstance() {
+	return function(dispatch, _getState) {
+		return Promise.try(() => {
+			return dispatch(apiCall("GET", "/api/v1/instance"));
+		}).then((json) => {
+			if (json && json.uri) {
+				dispatch(setInstanceInfo(json));
 				return json;
 			}
 		});
@@ -122,6 +135,7 @@ function fetchInstance(domain) {
 
 module.exports = {
 	instance: {
+		fetchWithoutStore: fetchInstanceWithoutStore,
 		fetch: fetchInstance
 	},
 	oauth: require("./oauth")({apiCall, getCurrentUrl}),

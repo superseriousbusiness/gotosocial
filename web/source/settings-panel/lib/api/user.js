@@ -64,7 +64,7 @@ module.exports = function ({ apiCall }) {
 			};
 		},
 		updateProfile: function updateProfile() {
-			const formKeys = ["display_name", "locked", "source"];
+			const formKeys = ["display_name", "locked", "source", "custom_css"];
 			const renamedKeys = [["note", "source.note"]];
 			const fileKeys = ["header", "avatar"];
 
