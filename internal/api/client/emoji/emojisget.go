@@ -9,7 +9,34 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// EmojisGETHandler returns a list of custom emojis enabled on the instance
+// EmojisGETHandler swagger:operation GET /api/v1/custom_emojis customEmojisGet
+//
+// Get an array of custom emojis available on the instance.
+//
+// ---
+// tags:
+// - custom_emojis
+//
+// produces:
+// - application/json
+//
+// security:
+// - OAuth2 Bearer:
+//   - read:custom_emojis
+//
+// responses:
+//   '200':
+//     description: Array of custom emojis.
+//     schema:
+//       type: array
+//       items:
+//         "$ref": "#/definitions/emoji"
+//   '401':
+//      description: unauthorized
+//   '406':
+//      description: not acceptable
+//   '500':
+//      description: internal server error
 func (m *Module) EmojisGETHandler(c *gin.Context) {
 	if _, err := oauth.Authed(c, true, true, true, true); err != nil {
 		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)

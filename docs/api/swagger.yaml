@@ -3128,6 +3128,30 @@ paths:
       summary: Get an array of accounts that requesting account has blocked.
       tags:
       - blocks
+  /api/v1/custom_emojis:
+    get:
+      operationId: customEmojisGet
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Array of custom emojis.
+          schema:
+            items:
+              $ref: '#/definitions/emoji'
+            type: array
+        "401":
+          description: unauthorized
+        "406":
+          description: not acceptable
+        "500":
+          description: internal server error
+      security:
+      - OAuth2 Bearer:
+        - read:custom_emojis
+      summary: Get an array of custom emojis available on the instance.
+      tags:
+      - custom_emojis
   /api/v1/follow_requests:
     get:
       description: |-
@@ -4451,6 +4475,7 @@ securityDefinitions:
       read: grants read access to everything
       read:accounts: grants read access to accounts
       read:blocks: grant read access to blocks
+      read:custom_emojis: grant read access to custom_emojis
       read:media: grant read access to media
       read:notifications: grants read access to notifications
       read:search: grant read access to searches
