@@ -169,7 +169,7 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		// the caller will read from the buffered reader, so it doesn't matter if they drop out without reading everything
 		attachmentContent.Content = bufferedReader
 
-		data = func(innerCtx context.Context) (io.Reader, int, error) {
+		data = func(innerCtx context.Context) (io.Reader, int64, error) {
 			transport, err := p.transportController.NewTransportForUsername(innerCtx, requestingUsername)
 			if err != nil {
 				return nil, 0, err
