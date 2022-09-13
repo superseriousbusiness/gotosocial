@@ -71,7 +71,7 @@ function get(state, id) {
 
 module.exports = {
 	formFields: function formFields(setter, selector) {
-		function FormField({type, id, name, className="", placeHolder="", fileType="", children=null}) {
+		function FormField({type, id, name, className="", placeHolder="", fileType="", children=null, options={}}) {
 			const dispatch = Redux.useDispatch();
 			let state = Redux.useSelector(selector);
 			let {
@@ -88,6 +88,12 @@ module.exports = {
 				field = <textarea type="text" id={id} value={get(state, id)} placeholder={placeHolder} className={className} onChange={onTextChange(id)}/>;
 			} else if (type == "checkbox") {
 				field = <input type="checkbox" id={id} checked={get(state, id)} className={className} onChange={onCheckChange(id)}/>;
+			} else if (type == "select") {
+				field = (
+					<select id={id} checked={get(state, id)} className={className} onChange={onTextChange(id)}>
+						{options}
+					</select>
+				);
 			} else if (type == "file") {
 				defaultLabel = false;
 				let file = get(state, `${id}File`);
@@ -126,6 +132,10 @@ module.exports = {
 	
 			Checkbox: function(props) {
 				return <FormField type="checkbox" {...props} />;
+			},
+	
+			Select: function(props) {
+				return <FormField type="select" {...props} />;
 			},
 	
 			File: function(props) {

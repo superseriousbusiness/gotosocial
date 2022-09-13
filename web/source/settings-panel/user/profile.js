@@ -43,8 +43,6 @@ module.exports = function UserProfile() {
 
 	const allowCustomCSS = instance.configuration.accounts.allow_custom_css;
 
-	const { onTextChange, onCheckChange, onFileChange } = formFields(dispatch, user.setProfileVal, account);
-
 	const [errorMsg, setError] = React.useState("");
 	const [statusMsg, setStatus] = React.useState("");
 
