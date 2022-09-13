@@ -36,6 +36,7 @@
 //           read: grants read access to everything
 //           read:accounts: grants read access to accounts
 //           read:blocks: grant read access to blocks
+//           read:custom_emojis: grant read access to custom_emojis
 //           read:media: grant read access to media
 //           read:search: grant read access to searches
 //           read:statuses: grants read access to statuses
