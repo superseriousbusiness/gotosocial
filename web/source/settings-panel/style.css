@@ -249,6 +249,24 @@ section.with-sidebar > div {
 	}
 }
 
+.file-upload > div {
+	display: flex;
+	gap: 1rem;
+
+	img {
+		height: 8rem;
+		border: 0.2rem solid $border-accent;
+	}
+
+	img.avatar {
+		width: 8rem;
+	}
+
+	img.header {
+		width: 24rem;
+	}
+}
+
 .user-profile {
 	.overview {
 		display: grid;

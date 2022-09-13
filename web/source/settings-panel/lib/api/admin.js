@@ -24,14 +24,14 @@ const d = require("dotty");
 const user = require("../../redux/reducers/user").actions;
 
 module.exports = function ({ apiCall, getChanges }) {
-	function updateCredentials(selector, keys) {
+	function updateInstance(selector, keys) {
 		return function (dispatch, getState) {
 			return Promise.try(() => {
 				const state = selector(getState());
 
 				const update = getChanges(state, keys);
 
-				return dispatch(apiCall("PATCH", "/api/v1/accounts/update_credentials", update, "form"));
+				return dispatch(apiCall("PATCH", "/api/v1/instance", update, "form"));
 			}).then((account) => {
 				return dispatch(user.setAccount(account));
 			});
