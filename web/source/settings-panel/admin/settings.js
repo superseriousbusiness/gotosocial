@@ -18,6 +18,51 @@
 
 "use strict";
 
+const Promise = require("bluebird");
+const React = require("react");
+const Redux = require("react-redux");
+
+const Submit = require("../components/submit");
+
+const api = require("../lib/api");
+const formFields = require("../lib/form-fields");
+const adminActions = require("../redux/reducers/instances").actions;
+
 module.exports = function AdminSettings() {
-	return "admin settings";
+	const dispatch = Redux.useDispatch();
+	const instance = Redux.useSelector(state => state.instances.adminSettings);
+
+	const { onTextChange, onCheckChange, onFileChange } = formFields(dispatch, adminActions.setAdminSettingsVal, instance);
+
+	const [errorMsg, setError] = React.useState("");
+	const [statusMsg, setStatus] = React.useState("");
+
+	function submit() {
+		setStatus("PATCHing");
+		setError("");
+		return Promise.try(() => {
+			return dispatch(api.user.updateProfile());
+		}).then(() => {
+			setStatus("Saved!");
+		}).catch((e) => {
+			setError(e.message);
+			setStatus("");
+		});
+	}
+
+	// function removeFile(name) {
+	// 	return function(e) {
+	// 		e.preventDefault();
+	// 		dispatch(user.setProfileVal([name, ""]));
+	// 		dispatch(user.setProfileVal([`${name}File`, ""]));
+	// 	};
+	// }
+
+	return (
+		<div className="user-profile">
+			<h1>Instance Settings</h1>
+
+			<Submit onClick={submit} label="Save" errorMsg={errorMsg} statusMsg={statusMsg} />
+		</div>
+	);
 };
