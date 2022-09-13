@@ -317,7 +317,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		clean = multiReader // nothing to clean from a gif
 	case mimeJpeg, mimePng:
 		p.attachment.Type = gtsmodel.FileTypeImage
-		purged, err := terminator.Terminate(multiReader, fileSize, extension)
+		purged, err := terminator.Terminate(multiReader, int(fileSize), extension)
 		if err != nil {
 			return fmt.Errorf("store: exif error: %s", err)
 		}
@@ -340,7 +340,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	p.attachment.URL = uris.GenerateURIForAttachment(p.attachment.AccountID, string(TypeAttachment), string(SizeOriginal), p.attachment.ID, extension)
 	p.attachment.File.Path = fmt.Sprintf("%s/%s/%s/%s.%s", p.attachment.AccountID, TypeAttachment, SizeOriginal, p.attachment.ID, extension)
 	p.attachment.File.ContentType = contentType
-	p.attachment.File.FileSize = fileSize
+	p.attachment.File.FileSize = int(fileSize)
 
 	// store this for now -- other processes can pull it out of storage as they please
 	if err := p.storage.PutStream(ctx, p.attachment.File.Path, clean); err != nil {

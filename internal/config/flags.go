@@ -19,6 +19,7 @@
 package config
 
 import (
+	"codeberg.org/gruf/go-bytesize"
 	"github.com/spf13/cobra"
 )
 
@@ -71,13 +72,13 @@ func AddServerFlags(cmd *cobra.Command) {
 		cmd.Flags().Bool(AccountsAllowCustomCSSFlag(), cfg.AccountsAllowCustomCSS, fieldtag("AccountsAllowCustomCSS", "usage"))
 
 		// Media
-		cmd.Flags().Int(MediaImageMaxSizeFlag(), cfg.MediaImageMaxSize, fieldtag("MediaImageMaxSize", "usage"))
-		cmd.Flags().Int(MediaVideoMaxSizeFlag(), cfg.MediaVideoMaxSize, fieldtag("MediaVideoMaxSize", "usage"))
+		cmd.Flags().Var((*size)(&cfg.MediaImageMaxSize), MediaImageMaxSizeFlag(), fieldtag("MediaImageMaxSize", "usage"))
+		cmd.Flags().Var((*size)(&cfg.MediaVideoMaxSize), MediaVideoMaxSizeFlag(), fieldtag("MediaVideoMaxSize", "usage"))
 		cmd.Flags().Int(MediaDescriptionMinCharsFlag(), cfg.MediaDescriptionMinChars, fieldtag("MediaDescriptionMinChars", "usage"))
 		cmd.Flags().Int(MediaDescriptionMaxCharsFlag(), cfg.MediaDescriptionMaxChars, fieldtag("MediaDescriptionMaxChars", "usage"))
 		cmd.Flags().Int(MediaRemoteCacheDaysFlag(), cfg.MediaRemoteCacheDays, fieldtag("MediaRemoteCacheDays", "usage"))
-		cmd.Flags().Int(MediaEmojiLocalMaxSizeFlag(), cfg.MediaEmojiLocalMaxSize, fieldtag("MediaEmojiLocalMaxSize", "usage"))
-		cmd.Flags().Int(MediaEmojiRemoteMaxSizeFlag(), cfg.MediaEmojiRemoteMaxSize, fieldtag("MediaEmojiRemoteMaxSize", "usage"))
+		cmd.Flags().Var((*size)(&cfg.MediaEmojiLocalMaxSize), MediaEmojiLocalMaxSizeFlag(), fieldtag("MediaEmojiLocalMaxSize", "usage"))
+		cmd.Flags().Var((*size)(&cfg.MediaEmojiRemoteMaxSize), MediaEmojiRemoteMaxSizeFlag(), fieldtag("MediaEmojiRemoteMaxSize", "usage"))
 
 		// Storage
 		cmd.Flags().String(StorageBackendFlag(), cfg.StorageBackend, fieldtag("StorageBackend", "usage"))
@@ -164,4 +165,23 @@ func AddAdminTrans(cmd *cobra.Command) {
 	if err := cmd.MarkFlagRequired(name); err != nil {
 		panic(err)
 	}
+}
+
+type size bytesize.Size
+
+func (sz *size) Set(in string) error {
+	s, err := bytesize.ParseSize(in)
+	if err != nil {
+		return err
+	}
+	*sz = size(s)
+	return nil
+}
+
+func (sz size) String() string {
+	return (bytesize.Size)(sz).StringIEC()
+}
+
+func (sz size) Type() string {
+	return "bytes"
 }

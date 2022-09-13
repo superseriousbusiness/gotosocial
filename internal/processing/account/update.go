@@ -156,13 +156,13 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 // the account's new avatar image.
 func (p *processor) UpdateAvatar(ctx context.Context, avatar *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error) {
 	maxImageSize := config.GetMediaImageMaxSize()
-	if int(avatar.Size) > maxImageSize {
+	if avatar.Size > int64(maxImageSize) {
 		return nil, fmt.Errorf("UpdateAvatar: avatar with size %d exceeded max image size of %d bytes", avatar.Size, maxImageSize)
 	}
 
-	dataFunc := func(innerCtx context.Context) (io.Reader, int, error) {
+	dataFunc := func(innerCtx context.Context) (io.Reader, int64, error) {
 		f, err := avatar.Open()
-		return f, int(avatar.Size), err
+		return f, avatar.Size, err
 	}
 
 	isAvatar := true
@@ -183,13 +183,13 @@ func (p *processor) UpdateAvatar(ctx context.Context, avatar *multipart.FileHead
 // the account's new header image.
 func (p *processor) UpdateHeader(ctx context.Context, header *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error) {
 	maxImageSize := config.GetMediaImageMaxSize()
-	if int(header.Size) > maxImageSize {
+	if header.Size > int64(maxImageSize) {
 		return nil, fmt.Errorf("UpdateHeader: header with size %d exceeded max image size of %d bytes", header.Size, maxImageSize)
 	}
 
-	dataFunc := func(innerCtx context.Context) (io.Reader, int, error) {
+	dataFunc := func(innerCtx context.Context) (io.Reader, int64, error) {
 		f, err := header.Open()
-		return f, int(header.Size), err
+		return f, header.Size, err
 	}
 
 	isHeader := true

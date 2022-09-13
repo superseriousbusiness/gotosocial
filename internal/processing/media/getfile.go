@@ -138,7 +138,7 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		// if it's the thumbnail that's requested then the user will have to wait a bit while we process the
 		// large version and derive a thumbnail from it, so use the normal recaching procedure: fetch the media,
 		// process it, then return the thumbnail data
-		data = func(innerCtx context.Context) (io.Reader, int, error) {
+		data = func(innerCtx context.Context) (io.Reader, int64, error) {
 			transport, err := p.transportController.NewTransportForUsername(innerCtx, requestingUsername)
 			if err != nil {
 				return nil, 0, err

@@ -43,13 +43,13 @@ type ManagerTestSuite struct {
 func (suite *ManagerTestSuite) TestSimpleJpegProcessBlocking() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.Reader, int, error) {
+	data := func(_ context.Context) (io.Reader, int64, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-jpeg.jpg")
 		if err != nil {
 			panic(err)
 		}
-		return bytes.NewBuffer(b), len(b), nil
+		return bytes.NewBuffer(b), int64(len(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -115,13 +115,13 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlocking() {
 func (suite *ManagerTestSuite) TestPngNoAlphaChannelProcessBlocking() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.Reader, int, error) {
+	data := func(_ context.Context) (io.Reader, int64, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-png-noalphachannel.png")
 		if err != nil {
 			panic(err)
 		}
-		return bytes.NewBuffer(b), len(b), nil
+		return bytes.NewBuffer(b), int64(len(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -187,13 +187,13 @@ func (suite *ManagerTestSuite) TestPngNoAlphaChannelProcessBlocking() {
 func (suite *ManagerTestSuite) TestPngAlphaChannelProcessBlocking() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.Reader, int, error) {
+	data := func(_ context.Context) (io.Reader, int64, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-png-alphachannel.png")
 		if err != nil {
 			panic(err)
 		}
-		return bytes.NewBuffer(b), len(b), nil
+		return bytes.NewBuffer(b), int64(len(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -259,13 +259,13 @@ func (suite *ManagerTestSuite) TestPngAlphaChannelProcessBlocking() {
 func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithCallback() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.Reader, int, error) {
+	data := func(_ context.Context) (io.Reader, int64, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-jpeg.jpg")
 		if err != nil {
 			panic(err)
 		}
-		return bytes.NewBuffer(b), len(b), nil
+		return bytes.NewBuffer(b), int64(len(b)), nil
 	}
 
 	// test the callback function by setting a simple boolean
@@ -342,13 +342,13 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithCallback() {
 func (suite *ManagerTestSuite) TestSimpleJpegProcessAsync() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.Reader, int, error) {
+	data := func(_ context.Context) (io.Reader, int64, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-jpeg.jpg")
 		if err != nil {
 			panic(err)
 		}
-		return bytes.NewBuffer(b), len(b), nil
+		return bytes.NewBuffer(b), int64(len(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -427,9 +427,9 @@ func (suite *ManagerTestSuite) TestSimpleJpegQueueSpamming() {
 		panic(err)
 	}
 
-	data := func(_ context.Context) (io.Reader, int, error) {
+	data := func(_ context.Context) (io.Reader, int64, error) {
 		// load bytes from a test image
-		return bytes.NewReader(b), len(b), nil
+		return bytes.NewReader(b), int64(len(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -503,13 +503,13 @@ func (suite *ManagerTestSuite) TestSimpleJpegQueueSpamming() {
 func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.Reader, int, error) {
+	data := func(_ context.Context) (io.Reader, int64, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-jpeg.jpg")
 		if err != nil {
 			panic(err)
 		}
-		return bytes.NewBuffer(b), len(b), nil
+		return bytes.NewBuffer(b), int64(len(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"

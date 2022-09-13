@@ -67,14 +67,6 @@ func Validate() error {
 		errs = append(errs, fmt.Errorf("%s must be set", WebAssetBaseDirFlag()))
 	}
 
-	if m := GetMediaEmojiLocalMaxSize(); m < 0 {
-		errs = append(errs, fmt.Errorf("%s must not be less than 0", MediaEmojiLocalMaxSizeFlag()))
-	}
-
-	if m := GetMediaEmojiRemoteMaxSize(); m < 0 {
-		errs = append(errs, fmt.Errorf("%s must not be less than 0", MediaEmojiRemoteMaxSizeFlag()))
-	}
-
 	if len(errs) > 0 {
 		errStrings := []string{}
 		for _, err := range errs {

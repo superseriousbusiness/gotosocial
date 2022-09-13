@@ -172,7 +172,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	}
 
 	maxSize := config.GetMediaEmojiRemoteMaxSize()
-	if fileSize > maxSize {
+	if fileSize > int64(maxSize) {
 		return fmt.Errorf("store: emoji size (%db) is larger than allowed emojiRemoteMaxSize (%db)", fileSize, maxSize)
 	}
 
@@ -211,7 +211,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	p.emoji.ImageURL = uris.GenerateURIForAttachment(p.instanceAccountID, string(TypeEmoji), string(SizeOriginal), p.emoji.ID, extension)
 	p.emoji.ImagePath = fmt.Sprintf("%s/%s/%s/%s.%s", p.instanceAccountID, TypeEmoji, SizeOriginal, p.emoji.ID, extension)
 	p.emoji.ImageContentType = contentType
-	p.emoji.ImageFileSize = fileSize
+	p.emoji.ImageFileSize = int(fileSize)
 
 	// concatenate the first bytes with the existing bytes still in the reader (thanks Mara)
 	multiReader := io.MultiReader(bytes.NewBuffer(firstBytes), reader)

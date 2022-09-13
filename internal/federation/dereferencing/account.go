@@ -445,7 +445,7 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 				return changed, err
 			}
 
-			data := func(innerCtx context.Context) (io.Reader, int, error) {
+			data := func(innerCtx context.Context) (io.Reader, int64, error) {
 				return t.DereferenceMedia(innerCtx, avatarIRI)
 			}
 
@@ -503,7 +503,7 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 				return changed, err
 			}
 
-			data := func(innerCtx context.Context) (io.Reader, int, error) {
+			data := func(innerCtx context.Context) (io.Reader, int64, error) {
 				return t.DereferenceMedia(innerCtx, headerIRI)
 			}
 
