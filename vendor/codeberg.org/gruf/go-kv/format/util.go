@@ -5,6 +5,19 @@ import (
 	"unsafe"
 )
 
+const (
+	// SingleTermLine: beyond a certain length of string, all of the
+	// extra checks to handle quoting/not-quoting add a significant
+	// amount of extra processing time. Quoting in this manner only really
+	// effects readability on a single line, so a max string length that
+	// encompasses the maximum number of columns on *most* terminals was
+	// selected. This was chosen using the metric that 1080p is one of the
+	// most common display resolutions, and that a relatively small font size
+	// of 7 requires 223 columns. So 256 should be >= $COLUMNS (fullscreen)
+	// in 99% of usecases (these figures all pulled out of my ass).
+	SingleTermLine = 256
+)
+
 // ContainsSpaceOrTab checks if "s" contains space or tabs.
 func ContainsSpaceOrTab(s string) bool {
 	if i := strings.IndexByte(s, ' '); i != -1 {

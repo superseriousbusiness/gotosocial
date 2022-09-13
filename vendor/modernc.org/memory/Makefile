@@ -38,6 +38,7 @@ editor:
 	GOOS=darwin GOARCH=arm64 go build
 	GOOS=freebsd GOARCH=386 go build
 	GOOS=freebsd GOARCH=amd64 go build
+	GOOS=freebsd GOARCH=arm go build
 	GOOS=linux GOARCH=386 go build
 	GOOS=linux GOARCH=amd64 go build
 	GOOS=linux GOARCH=arm go build
@@ -51,6 +52,7 @@ editor:
 	GOOS=netbsd GOARCH=amd64 go build
 	GOOS=openbsd GOARCH=386 go build
 	GOOS=openbsd GOARCH=amd64 go build
+	GOOS=openbsd GOARCH=arm64 go build
 	GOOS=windows GOARCH=386 go build
 	GOOS=windows GOARCH=amd64 go build
 

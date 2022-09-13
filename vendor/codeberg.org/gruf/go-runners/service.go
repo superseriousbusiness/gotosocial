@@ -15,7 +15,7 @@ type Service struct {
 	mu    sync.Mutex         // mu protects state changes
 }
 
-// Run will run the supplied function until completion, use given context to propagate cancel.
+// Run will run the supplied function until completion, using given context to propagate cancel.
 // Immediately returns false if the Service is already running, and true after completed run.
 func (svc *Service) Run(fn func(context.Context)) bool {
 	// Attempt to start the svc
@@ -36,6 +36,33 @@ func (svc *Service) Run(fn func(context.Context)) bool {
 	if fn != nil {
 		fn(ctx)
 	}
+	return true
+}
+
+// GoRun will run the supplied function until completion in a goroutine, using given context to
+// propagate cancel. Immediately returns boolean indicating success, or that service is already running.
+func (svc *Service) GoRun(fn func(context.Context)) bool {
+	// Attempt to start the svc
+	ctx, ok := svc.doStart()
+	if !ok {
+		return false
+	}
+
+	go func() {
+		defer func() {
+			// unlock single wait
+			svc.wait.Unlock()
+
+			// ensure stopped
+			svc.Stop()
+		}()
+
+		// Run user func
+		if fn != nil {
+			fn(ctx)
+		}
+	}()
+
 	return true
 }
 

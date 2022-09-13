@@ -61,6 +61,11 @@ func (job *Job) With(t Timing) *Job {
 		panic("nil Timing")
 	}
 
+	if job.id != 0 {
+		// Cannot update scheduled job
+		panic("job already scheduled")
+	}
+
 	if job.timing == emptytiming {
 		// Set new timing
 		job.timing = t
@@ -76,12 +81,18 @@ func (job *Job) With(t Timing) *Job {
 	return job
 }
 
-// Panic specifics how this job handles panics, default is an actual panic.
-func (job *Job) Panic(fn func(interface{})) *Job {
+// OnPanic specifies how this job handles panics, default is an actual panic.
+func (job *Job) OnPanic(fn func(interface{})) *Job {
 	if fn == nil {
 		// Ensure a function
 		panic("nil func")
 	}
+
+	if job.id != 0 {
+		// Cannot update scheduled job
+		panic("job already scheduled")
+	}
+
 	job.panic = fn
 	return job
 }

@@ -409,7 +409,7 @@ func X__builtin_object_size(t *TLS, p uintptr, typ int32) types.Size_t {
 
 var atomicLoadStore16 sync.Mutex
 
-func AtomicLoadNUint16(ptr uintptr, memorder int16) uint16 {
+func AtomicLoadNUint16(ptr uintptr, memorder int32) uint16 {
 	atomicLoadStore16.Lock()
 	r := *(*uint16)(unsafe.Pointer(ptr))
 	atomicLoadStore16.Unlock()
@@ -1223,8 +1223,9 @@ func Xreadv(t *TLS, fd int32, iov uintptr, iovcnt int32) types.Ssize_t {
 }
 
 // int openpty(int *amaster, int *aslave, char *name,
-//                    const struct termios *termp,
-//                    const struct winsize *winp);
+//
+//	const struct termios *termp,
+//	const struct winsize *winp);
 func Xopenpty(t *TLS, amaster, aslave, name, termp, winp uintptr) int32 {
 	panic(todo(""))
 }
@@ -1235,8 +1236,9 @@ func Xsetsid(t *TLS) types.Pid_t {
 }
 
 // int pselect(int nfds, fd_set *readfds, fd_set *writefds,
-//                    fd_set *exceptfds, const struct timespec *timeout,
-//                    const sigset_t *sigmask);
+//
+//	fd_set *exceptfds, const struct timespec *timeout,
+//	const sigset_t *sigmask);
 func Xpselect(t *TLS, nfds int32, readfds, writefds, exceptfds, timeout, sigmask uintptr) int32 {
 	panic(todo(""))
 }
