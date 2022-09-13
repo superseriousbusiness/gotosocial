@@ -277,7 +277,7 @@ section.with-sidebar > div {
 			flex-direction: column;
 			justify-content: center;
 
-			div.picker {
+			div.form-field {
 				width: 100%;
 				display: flex;
 

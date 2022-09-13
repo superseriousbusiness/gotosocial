@@ -25,8 +25,16 @@ const Redux = require("react-redux");
 const Submit = require("../components/submit");
 
 const api = require("../lib/api");
-const formFields = require("../lib/form-fields");
 const user = require("../redux/reducers/user").actions;
+
+const { formFields } = require("../components/form-fields");
+
+const {
+	TextInput,
+	TextArea,
+	Checkbox,
+	File
+} = formFields(user.setProfileVal, (state) => state.user.profile);
 
 module.exports = function UserProfile() {
 	const dispatch = Redux.useDispatch();
@@ -53,14 +61,6 @@ module.exports = function UserProfile() {
 		});
 	}
 
-	// function removeFile(name) {
-	// 	return function(e) {
-	// 		e.preventDefault();
-	// 		dispatch(user.setProfileVal([name, ""]));
-	// 		dispatch(user.setProfileVal([`${name}File`, ""]));
-	// 	};
-	// }
-
 	return (
 		<div className="user-profile">
 			<h1>Profile</h1>
@@ -79,42 +79,42 @@ module.exports = function UserProfile() {
 				<div className="files">
 					<div>
 						<h3>Header</h3>
-						<div className="picker">
-							<label htmlFor="header" className="file-input button">Browse</label>
-							<span>{account.headerFile ? account.headerFile.name : "no file selected"}</span>
-						</div>
-						{/* <a onClick={removeFile("header")} href="#">remove</a> */}
-						<input className="hidden" id="header" type="file" accept="image/*" onChange={onFileChange("header")} />
+						<File 
+							id="header"
+							fileType="image/*"
+						/>
 					</div>
 					<div>
 						<h3>Avatar</h3>
-						<div className="picker">
-							<label htmlFor="avatar" className="file-input button">Browse</label>
-							<span>{account.avatarFile ? account.avatarFile.name : "no file selected"}</span>
-						</div>
-						{/* <a onClick={removeFile("avatar")} href="#">remove</a> */}
-						<input className="hidden" id="avatar" type="file" accept="image/*" onChange={onFileChange("avatar")} />
+						<File 
+							id="avatar"
+							fileType="image/*"
+						/>
 					</div>
 				</div>
 			</div>
-			<div className="labelinput">
-				<label htmlFor="displayname">Name</label>
-				<input id="displayname" type="text" value={account.display_name} onChange={onTextChange("display_name")} placeholder="A GoToSocial user" />
-			</div>
-			<div className="labelinput">
-				<label htmlFor="bio">Bio</label>
-				<textarea id="bio" value={account.source.note} onChange={onTextChange("source.note")} placeholder="Just trying out GoToSocial, my pronouns are they/them and I like sloths." />
-			</div>
-			<div className="labelcheckbox">
-				<label htmlFor="locked">Manually approve follow requests?</label>
-				<input id="locked" type="checkbox" checked={account.locked} onChange={onCheckChange("locked")} />
-			</div>
+			<TextInput
+				id="display_name"
+				name="Name"
+				placeHolder="A GoToSocial user"
+			/>
+			<TextArea
+				id="source.note"
+				name="Bio"
+				placeHolder="Just trying out GoToSocial, my pronouns are they/them and I like sloths."
+			/>
+			<Checkbox
+				id="locked"
+				name="Manually approve follow requests? "
+			/>
 			{ !allowCustomCSS ? null :  
-				<div className="labelinput">
-					<label htmlFor="customcss">Custom CSS</label>
-					<textarea className="mono" id="customcss" value={account.custom_css} onChange={onTextChange("custom_css")}/>
-					<a href="https://docs.gotosocial.org/en/latest/user_guide/custom_css" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about custom CSS (opens in a new tab)</a>
-				</div>
+				<TextArea
+					id="custom_css"
+					name="Custom CSS"
+					className="monospace"
+				>
+					<a href="https://docs.gotosocial.org/en/latest/user_guide/custom_css" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about custom profile CSS (opens in a new tab)</a>
+				</TextArea>
 			}
 			<Submit onClick={submit} label="Save profile info" errorMsg={errorMsg} statusMsg={statusMsg} />
 		</div>

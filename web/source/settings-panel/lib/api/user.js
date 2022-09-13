@@ -23,28 +23,13 @@ const d = require("dotty");
 
 const user = require("../../redux/reducers/user").actions;
 
-module.exports = function ({ apiCall }) {
-	function updateCredentials(selector, {formKeys=[], renamedKeys=[], fileKeys=[]}) {
+module.exports = function ({ apiCall, getChanges }) {
+	function updateCredentials(selector, keys) {
 		return function (dispatch, getState) {
 			return Promise.try(() => {
 				const state = selector(getState());
 
-				const update = {};
-
-				formKeys.forEach((key) => {
-					d.put(update, key, d.get(state, key));
-				});
-
-				renamedKeys.forEach(([sendKey, intKey]) => {
-					d.put(update, sendKey, d.get(state, intKey));
-				});
-
-				fileKeys.forEach((key) => {
-					let file = d.get(state, `${key}File`);
-					if (file != undefined) {
-						d.put(update, key, file);
-					}
-				});
+				const update = getChanges(state, keys);
 
 				return dispatch(apiCall("PATCH", "/api/v1/accounts/update_credentials", update, "form"));
 			}).then((account) => {
@@ -63,13 +48,17 @@ module.exports = function ({ apiCall }) {
 				});
 			};
 		},
+
 		updateProfile: function updateProfile() {
-			const formKeys = ["display_name", "locked", "source", "custom_css"];
-			const renamedKeys = [["note", "source.note"]];
+			const formKeys = ["display_name", "locked", "source", "custom_css", "source.note"];
+			const renamedKeys = {
+				"source.note": "note"
+			};
 			const fileKeys = ["header", "avatar"];
 
 			return updateCredentials((state) => state.user.profile, {formKeys, renamedKeys, fileKeys});
 		},
+
 		updateSettings: function updateProfile() {
 			const formKeys = ["source"];
 

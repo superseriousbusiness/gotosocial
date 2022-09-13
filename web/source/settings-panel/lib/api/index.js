@@ -20,23 +20,24 @@
 
 const Promise = require("bluebird");
 const { isPlainObject } = require("is-plain-object");
+const d = require("dotty");
 
 const { APIError } = require("../errors");
 const { setInstanceInfo, setNamedInstanceInfo } = require("../../redux/reducers/instances").actions;
 const oauth = require("../../redux/reducers/oauth").actions;
 
-function apiCall(method, route, payload, type="json") {
+function apiCall(method, route, payload, type = "json") {
 	return function (dispatch, getState) {
 		const state = getState();
 		let base = state.oauth.instance;
 		let auth = state.oauth.token;
 		console.log(method, base, route, "auth:", auth != undefined);
-	
+
 		return Promise.try(() => {
 			let url = new URL(base);
 			url.pathname = route;
 			let body;
-	
+
 			let headers = {
 				"Accept": "application/json",
 			};
@@ -50,20 +51,24 @@ function apiCall(method, route, payload, type="json") {
 					Object.entries(payload).forEach(([key, val]) => {
 						if (isPlainObject(val)) {
 							Object.entries(val).forEach(([key2, val2]) => {
-								formData.set(`${key}[${key2}]`, val2);
+								if (val2 != undefined) {
+									formData.set(`${key}[${key2}]`, val2);
+								}
 							});
 						} else {
-							formData.set(key, val);
+							if (val != undefined) {
+								formData.set(key, val);
+							}
 						}
 					});
 					body = formData;
 				}
 			}
-	
+
 			if (auth != undefined) {
 				headers["Authorization"] = auth;
 			}
-	
+
 			return fetch(url.toString(), {
 				method,
 				headers,
@@ -74,7 +79,7 @@ function apiCall(method, route, payload, type="json") {
 			let json = res.json().catch((e) => {
 				throw new APIError(`JSON parsing error: ${e.message}`);
 			});
-	
+
 			return Promise.all([res, json]);
 		}).then(([res, json]) => {
 			if (!res.ok) {
@@ -83,7 +88,7 @@ function apiCall(method, route, payload, type="json") {
 					dispatch(oauth.remove());
 					throw new APIError("Stored OAUTH login was no longer valid, please log in again.");
 				}
-				throw new APIError(json.error, {json});
+				throw new APIError(json.error, { json });
 			} else {
 				return json;
 			}
@@ -91,12 +96,40 @@ function apiCall(method, route, payload, type="json") {
 	};
 }
 
+function getChanges(state, keys) {
+	const { formKeys = [], fileKeys = [], renamedKeys = {} } = keys;
+	const update = {};
+
+	formKeys.forEach((key) => {
+		let value = d.get(state, key);
+		if (value == undefined) {
+			return;
+		}
+		if (renamedKeys[key]) {
+			key = renamedKeys[key];
+		}
+		d.put(update, key, value);
+	});
+
+	fileKeys.forEach((key) => {
+		let file = d.get(state, `${key}File`);
+		if (file != undefined) {
+			if (renamedKeys[key]) {
+				key = renamedKeys[key];
+			}
+			d.put(update, key, file);
+		}
+	});
+
+	return update;
+}
+
 function getCurrentUrl() {
 	return `${window.location.origin}${window.location.pathname}`;
 }
 
 function fetchInstanceWithoutStore(domain) {
-	return function(dispatch, getState) {
+	return function (dispatch, getState) {
 		return Promise.try(() => {
 			let lookup = getState().instances.info[domain];
 			if (lookup != undefined) {
@@ -107,7 +140,7 @@ function fetchInstanceWithoutStore(domain) {
 			// but we don't want to store it there yet
 			// so we mock the API here with our function argument
 			let fakeState = {
-				oauth: {instance: domain}
+				oauth: { instance: domain }
 			};
 
 			return apiCall("GET", "/api/v1/instance")(dispatch, () => fakeState);
@@ -121,7 +154,7 @@ function fetchInstanceWithoutStore(domain) {
 }
 
 function fetchInstance() {
-	return function(dispatch, _getState) {
+	return function (dispatch, _getState) {
 		return Promise.try(() => {
 			return dispatch(apiCall("GET", "/api/v1/instance"));
 		}).then((json) => {
@@ -133,12 +166,15 @@ function fetchInstance() {
 	};
 }
 
+let submoduleArgs = { apiCall, getCurrentUrl, getChanges };
+
 module.exports = {
 	instance: {
 		fetchWithoutStore: fetchInstanceWithoutStore,
 		fetch: fetchInstance
 	},
-	oauth: require("./oauth")({apiCall, getCurrentUrl}),
-	user: require("./user")({apiCall}),
-	apiCall
+	oauth: require("./oauth")(submoduleArgs),
+	user: require("./user")(submoduleArgs),
+	apiCall,
+	getChanges
 };

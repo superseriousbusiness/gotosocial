@@ -341,3 +341,7 @@ footer {
 	object-fit: contain;
 	vertical-align: middle;
 }
+
+.monospace {
+	font-family: monospace;
+}
