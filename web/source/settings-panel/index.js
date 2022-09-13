@@ -36,19 +36,13 @@ require("./style.css");
 // TODO: nested categories?
 const nav = {
 	"User": {
-		Component: require("./user"),
-		entries: {
-			"Profile": require("./user/profile.js"),
-			"Settings": require("./user/settings.js"),
-		}
+		"Profile": require("./user/profile.js"),
+		"Settings": require("./user/settings.js"),
 	},
 	"Admin": {
-		Component: require("./admin"),
-		entries: {
-			"Instance Settings": require("./admin/settings.js"),
-			"Federation": require("./admin/federation.js"),
-			"Customization": require("./admin/customization.js")
-		}
+		"Instance Settings": require("./admin/settings.js"),
+		"Federation": require("./admin/federation.js"),
+		"Customization": require("./admin/customization.js")
 	}
 };
 

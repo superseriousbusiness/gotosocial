@@ -19,7 +19,7 @@
 "use strict";
 
 const React = require("react");
-const { Link, Route, Redirect } = require("wouter");
+const { Link, Route, Switch, Redirect } = require("wouter");
 const { ErrorBoundary } = require("react-error-boundary");
 
 const ErrorFallback = require("../components/error");
@@ -33,7 +33,7 @@ module.exports = function generateViews(struct) {
 	const sidebar = [];
 	const panelRouter = [];
 
-	Object.entries(struct).forEach(([name, {Component, entries}]) => {
+	Object.entries(struct).forEach(([name, entries]) => {
 		let base = `/settings/${urlSafe(name)}`;
 
 		let links = [];
@@ -50,9 +50,9 @@ module.exports = function generateViews(struct) {
 
 			routes.push((
 				<Route path={url} key={url}>
-					<ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => {}}>
+					<ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => { }}>
 						{/* FIXME: implement onReset */}
-						<ViewComponent/>
+						<ViewComponent />
 					</ErrorBoundary>
 				</Route>
 			));
@@ -64,14 +64,16 @@ module.exports = function generateViews(struct) {
 
 		panelRouter.push(
 			<Route key={base} path={base}>
-				<Redirect to={firstRoute}/>
+				<Redirect to={firstRoute} />
 			</Route>
 		);
 
 		let childrenPath = `${base}/:section`;
 		panelRouter.push(
 			<Route key={childrenPath} path={childrenPath}>
-				<Component routes={routes}/>
+				<Switch>
+					{routes}
+				</Switch>
 			</Route>
 		);
 
@@ -89,5 +91,5 @@ module.exports = function generateViews(struct) {
 		);
 	});
 
-	return {sidebar, panelRouter};
+	return { sidebar, panelRouter };
 };
