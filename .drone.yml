@@ -28,7 +28,7 @@ steps:
           - pull_request
 
   - name: test
-    image: golang:1.18.3-alpine
+    image: golang:1.19.1-alpine
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
