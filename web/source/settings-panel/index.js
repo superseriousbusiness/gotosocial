@@ -22,7 +22,7 @@ const Promise = require("bluebird");
 const React = require("react");
 const ReactDom = require("react-dom");
 const Redux = require("react-redux");
-const { Switch } = require("wouter");
+const { Switch, Route, Redirect } = require("wouter");
 const { Provider } = require("react-redux");
 const { PersistGate } = require("redux-persist/integration/react");
 
@@ -118,6 +118,9 @@ function App() {
 				<section className="with-sidebar">
 					{ErrorElement}
 					<Switch>
+						<Route path="/settings">
+							<Redirect to="/settings/user" />
+						</Route>
 						{panelRouter}
 					</Switch>
 				</section>
