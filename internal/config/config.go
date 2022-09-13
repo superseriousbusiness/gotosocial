@@ -134,8 +134,9 @@ type Configuration struct {
 func (cfg *Configuration) MarshalMap() (map[string]interface{}, error) {
 	var dst map[string]interface{}
 	dec, _ := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		TagName: "name",
-		Result:  &dst,
+		TagName:    "name",
+		Result:     &dst,
+		DecodeHook: mapstructure.TextUnmarshallerHookFunc(),
 	})
 	if err := dec.Decode(cfg); err != nil {
 		return nil, err
