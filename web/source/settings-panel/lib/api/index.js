@@ -175,6 +175,7 @@ module.exports = {
 	},
 	oauth: require("./oauth")(submoduleArgs),
 	user: require("./user")(submoduleArgs),
+	admin: require("./admin")(submoduleArgs),
 	apiCall,
 	getChanges
 };

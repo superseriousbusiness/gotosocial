@@ -19,52 +19,26 @@
 "use strict";
 
 const Promise = require("bluebird");
-const d = require("dotty");
 
-const user = require("../../redux/reducers/user").actions;
+const instance = require("../../redux/reducers/instances").actions;
 
 module.exports = function ({ apiCall, getChanges }) {
-	function updateInstance(selector, keys) {
-		return function (dispatch, getState) {
-			return Promise.try(() => {
-				const state = selector(getState());
-
-				const update = getChanges(state, keys);
-
-				return dispatch(apiCall("PATCH", "/api/v1/instance", update, "form"));
-			}).then((account) => {
-				return dispatch(user.setAccount(account));
-			});
-		};
-	}
-
 	return {
-		fetchAccount: function fetchAccount() {
-			return function (dispatch, _getState) {
+		updateInstance: function updateInstance() {
+			return function (dispatch, getState) {
 				return Promise.try(() => {
-					return dispatch(apiCall("GET", "/api/v1/accounts/verify_credentials"));
-				}).then((account) => {
-					return dispatch(user.setAccount(account));
+					const state = getState().instances.adminSettings;
+
+					const update = getChanges(state, {
+						formKeys: ["title", "short_description", "description", "contact_username", "email", "terms"],
+						// fileKeys: ["avatar", "header"]
+					});
+
+					return dispatch(apiCall("PATCH", "/api/v1/instance", update, "form"));
+				}).then((data) => {
+					return dispatch(instance.setInstanceInfo(data));
 				});
 			};
-		},
-
-		updateProfile: function updateProfile() {
-			const formKeys = ["display_name", "locked", "source", "custom_css", "note"];
-
-			const renamedKeys = {
-				note: "source.note"
-			};
-
-			const fileKeys = ["header", "avatar"];
-
-			return updateCredentials((state) => state.user.profile, {formKeys, renamedKeys, fileKeys});
-		},
-
-		updateSettings: function updateProfile() {
-			const formKeys = ["source"];
-
-			return updateCredentials((state) => state.user.settings, {formKeys});
 		}
 	};
 };

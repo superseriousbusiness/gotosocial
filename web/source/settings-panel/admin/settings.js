@@ -30,7 +30,6 @@ const adminActions = require("../redux/reducers/instances").actions;
 const {
 	TextInput,
 	TextArea,
-	Checkbox,
 	File
 } = require("../components/form-fields").formFields(adminActions.setAdminSettingsVal, (state) => state.instances.adminSettings);
 
@@ -45,7 +44,7 @@ module.exports = function AdminSettings() {
 		setStatus("PATCHing");
 		setError("");
 		return Promise.try(() => {
-			return dispatch(api.admin.updateProfile());
+			return dispatch(api.admin.updateInstance());
 		}).then(() => {
 			setStatus("Saved!");
 		}).catch((e) => {
@@ -91,7 +90,7 @@ module.exports = function AdminSettings() {
 				placeHolder=""
 			/>
 
-			<div className="file-upload">
+			{/* <div className="file-upload">
 				<h3>Instance avatar</h3>
 				<div>
 					<img className="preview avatar" src={instance.avatar} alt={instance.avatar ? `Avatar image for the instance` : "No instance avatar image set"} />
@@ -111,7 +110,7 @@ module.exports = function AdminSettings() {
 						fileType="image/*"
 					/>
 				</div>
-			</div>
+			</div> */}
 			<Submit onClick={submit} label="Save" errorMsg={errorMsg} statusMsg={statusMsg} />
 		</div>
 	);
