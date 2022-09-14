@@ -275,7 +275,7 @@ func sqliteConn(ctx context.Context) (*DBConn, error) {
 }
 
 func pgConn(ctx context.Context) (*DBConn, error) {
-	opts, err := deriveBunDBPGOptions()
+	opts, err := deriveBunDBPGOptions() //nolint:contextcheck
 	if err != nil {
 		return nil, fmt.Errorf("could not create bundb postgres options: %s", err)
 	}
