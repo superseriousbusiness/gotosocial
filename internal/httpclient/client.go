@@ -83,7 +83,7 @@ type Config struct {
 //     is available (context channels still respected)
 type Client struct {
 	client http.Client
-	queue  cache.Cache[string, chan struct{}]
+	queue  cache.TTLCache[string, chan struct{}]
 	bmax   int64 // max response body size
 	cmax   int   // max open conns per host
 }
@@ -122,8 +122,8 @@ func New(cfg Config) *Client {
 
 	// Prepare client fields
 	c.bmax = cfg.MaxBodySize
-	c.queue = cache.New[string, chan struct{}]()
 	c.client.Timeout = cfg.Timeout
+	c.queue.Init()
 
 	// Start cache sweep routines
 	c.queue.SetTTL(time.Minute*10, true)
@@ -217,20 +217,19 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 
 // wait acquires the 'wait' queue for the given host string, or allocates new.
 func (c *Client) wait(host string) chan struct{} {
+	// Acquire cache lock
+	c.queue.Lock()
+	defer c.queue.Unlock()
+
 	// Look for an existing queue for host
-	queue, ok := c.queue.Get(host)
+	queue, ok := c.queue.GetUnsafe(host)
 	if ok {
 		return queue
 	}
 
 	// Allocate a new host queue
 	queue = make(chan struct{}, c.cmax)
-
-	// Attempt to cache this queue by host
-	if !c.queue.Put(host, queue) {
-		// Someone beat us to the punch...
-		queue, _ = c.queue.Get(host)
-	}
+	c.queue.Set(host, queue)
 
 	return queue
 }
