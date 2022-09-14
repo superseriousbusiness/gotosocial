@@ -73,10 +73,10 @@ GTS_ADVANCED_COOKIES_SAMESITE='strict' \
 go run ./cmd/gotosocial/... --config-path $(dirname ${0})/test.yaml debug config)
 
 OUTPUT_OUT=$(mktemp)
-echo "$OUTPUT" | jq > "$OUTPUT_OUT"
+echo "$OUTPUT" > "$OUTPUT_OUT"
 
 EXPECT_OUT=$(mktemp)
-echo "$EXPECT" | jq > "$EXPECT_OUT"
+echo "$EXPECT" > "$EXPECT_OUT"
 
 if ! DIFF=$(diff "$OUTPUT_OUT" "$EXPECT_OUT"); then
     echo "OUTPUT not equal EXPECTED"
