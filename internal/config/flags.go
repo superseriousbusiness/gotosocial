@@ -19,7 +19,6 @@
 package config
 
 import (
-	"codeberg.org/gruf/go-bytesize"
 	"github.com/spf13/cobra"
 )
 
@@ -165,27 +164,4 @@ func AddAdminTrans(cmd *cobra.Command) {
 	if err := cmd.MarkFlagRequired(name); err != nil {
 		panic(err)
 	}
-}
-
-type size bytesize.Size
-
-func (sz *size) Set(in string) error {
-	s, err := bytesize.ParseSize(in)
-	if err != nil {
-		return err
-	}
-	*sz = size(s)
-	return nil
-}
-
-func (sz size) String() string {
-	return (bytesize.Size)(sz).StringIEC()
-}
-
-func (sz size) Type() string {
-	return "bytes"
-}
-
-func (sz *size) UnmarshalText(text []byte) error {
-	return sz.UnmarshalText(text)
 }
