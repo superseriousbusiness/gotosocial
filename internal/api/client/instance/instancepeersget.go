@@ -32,62 +32,72 @@ import (
 
 // InstancePeersGETHandler swagger:operation GET /api/v1/instance/peers instancePeersGet
 //
-// ---
-// tags:
-// - instance
+//	---
+//	tags:
+//	- instance
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// parameters:
-// - name: filter
-//   type: string
-//   description: |-
-//     Comma-separated list of filters to apply to results. Recognized values are:
-//     'open' -- include peers that are not suspended or silenced
-//     'suspended' -- include peers that have been suspended.
-//     If filter is 'open', only instances that haven't been suspended or silenced will be returned.
-//     If filter is 'suspended', only suspended instances will be shown.
-//     If filter is 'open,suspended', then all known instances will be returned.
-//     If filter is an empty string or not set, then 'open' will be assumed as the default.
-//   in: query
-//   required: false
+//	parameters:
+//	-
+//		name: filter
+//		type: string
+//		description: |-
+//			Comma-separated list of filters to apply to results. Recognized filters are:
+//				- `open` -- include peers that are not suspended or silenced
+//				- `suspended` -- include peers that have been suspended.
 //
-// responses:
-//   '200':
-//     description: |-
-//       If no filter parameter is provided, or filter is empty, then a legacy,
-//       Mastodon-API compatible response will be returned. This will consist of
-//       just a 'flat' array of strings like `["example.com", "example.org"]`.
+//			If filter is `open`, only instances that haven't been suspended or silenced will be returned.
 //
-//       If a filter parameter is provided, then an array of objects with at least
-//       a `domain` key set on each object will be returned.
+//			If filter is `suspended`, only suspended instances will be shown.
 //
-//       Domains that are silenced or suspended will also have a key
-//       'suspended_at' or 'silenced_at' that contains an iso8601 date string.
-//       If one of these keys is not present on the domain object, it is open.
-//       Suspended instances may in some cases be obfuscated, which means they
-//       will have some letters replaced by '*' to make it more difficult for
-//       bad actors to target instances with harassment.
+//			If filter is `open,suspended`, then all known instances will be returned.
 //
-//       Whether a flat response or a more detailed response is returned, domains
-//       will be sorted alphabetically by hostname.
-//     schema:
-//       type: array
-//       items:
-//         "$ref": "#/definitions/domain"
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '403':
-//      description: forbidden
-//   '404':
-//      description: not found
-//   '406':
-//      description: not acceptable
-//   '500':
-//      description: internal server error
+//			If filter is an empty string or not set, then `open` will be assumed as the default.
+//		in: query
+//		required: false
+//		default: "open"
+//
+//	responses:
+//		'200':
+//			description: >-
+//				If no filter parameter is provided, or filter is empty, then a legacy,
+//				Mastodon-API compatible response will be returned. This will consist of
+//				just a 'flat' array of strings like `["example.com", "example.org"]`,
+//				which corresponds to domains this instance peers with.
+//
+//
+//				If a filter parameter is provided, then an array of objects with at least
+//				a `domain` key set on each object will be returned.
+//
+//
+//				Domains that are silenced or suspended will also have a key
+//				`suspended_at` or `silenced_at` that contains an iso8601 date string.
+//				If one of these keys is not present on the domain object, it is open.
+//				Suspended instances may in some cases be obfuscated, which means they
+//				will have some letters replaced by `*` to make it more difficult for
+//				bad actors to target instances with harassment.
+//
+//
+//				Whether a flat response or a more detailed response is returned, domains
+//				will be sorted alphabetically by hostname.
+//			schema:
+//				type: array
+//				items:
+//					"$ref": "#/definitions/domain"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'403':
+//			description: forbidden
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) InstancePeersGETHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, false, false, false, false)
 	if err != nil {

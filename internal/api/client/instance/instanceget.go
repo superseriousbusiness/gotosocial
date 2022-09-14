@@ -32,26 +32,22 @@ import (
 //
 // View instance information.
 //
-// This is mostly provided for Mastodon application compatibility, since many apps that work with Mastodon use `/api/v1/instance` to inform their connection parameters.
+//	---
+//	tags:
+//	- instance
 //
-// However, it can also be used by other instances for gathering instance information and representing instances in some UI or other.
+//	produces:
+//	- application/json
 //
-// ---
-// tags:
-// - instance
-//
-// produces:
-// - application/json
-//
-// responses:
-//   '200':
-//     description: "Instance information."
-//     schema:
-//       "$ref": "#/definitions/instance"
-//   '406':
-//      description: not acceptable
-//   '500':
-//      description: internal error
+//	responses:
+//		'200':
+//			description: "Instance information."
+//			schema:
+//				"$ref": "#/definitions/instance"
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal error
 func (m *Module) InstanceInformationGETHandler(c *gin.Context) {
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
 		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)

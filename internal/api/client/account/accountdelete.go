@@ -33,37 +33,38 @@ import (
 //
 // Delete your account.
 //
-// ---
-// tags:
-// - accounts
+//	---
+//	tags:
+//	- accounts
 //
-// consumes:
-// - multipart/form-data
+//	consumes:
+//	- multipart/form-data
 //
-// parameters:
-// - name: password
-//   in: formData
-//   description: Password of the account user, for confirmation.
-//   type: string
-//   required: true
+//	parameters:
+//	-
+//		name: password
+//		in: formData
+//		description: Password of the account user, for confirmation.
+//		type: string
+//		required: true
 //
-// security:
-// - OAuth2 Bearer:
-//   - write:accounts
+//	security:
+//	- OAuth2 Bearer:
+//		- write:accounts
 //
-// responses:
-//   '202':
-//     description: "The account deletion has been accepted and the account will be deleted."
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '404':
-//      description: not found
-//   '406':
-//      description: not acceptable
-//   '500':
-//      description: internal server error
+//	responses:
+//		'202':
+//			description: "The account deletion has been accepted and the account will be deleted."
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) AccountDeletePOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

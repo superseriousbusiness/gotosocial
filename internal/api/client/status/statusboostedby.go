@@ -32,38 +32,39 @@ import (
 //
 // View accounts that have reblogged/boosted the target status.
 //
-// ---
-// tags:
-// - statuses
+//	---
+//	tags:
+//	- statuses
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// parameters:
-// - name: id
-//   type: string
-//   description: Target status ID.
-//   in: path
-//   required: true
+//	parameters:
+//	-
+//		name: id
+//		type: string
+//		description: Target status ID.
+//		in: path
+//		required: true
 //
-// security:
-// - OAuth2 Bearer:
-//   - read:accounts
+//	security:
+//	- OAuth2 Bearer:
+//		- read:accounts
 //
-// responses:
-//   '200':
-//     schema:
-//       type: array
-//       items:
-//         "$ref": "#/definitions/account"
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '403':
-//      description: forbidden
-//   '404':
-//      description: not found
+//	responses:
+//		'200':
+//			schema:
+//				type: array
+//				items:
+//					"$ref": "#/definitions/account"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'403':
+//			description: forbidden
+//		'404':
+//			description: not found
 func (m *Module) StatusBoostedByGETHandler(c *gin.Context) {
 	l := log.WithFields(kv.Fields{
 

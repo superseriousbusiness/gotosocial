@@ -35,87 +35,94 @@ import (
 //
 // Create one or more domain blocks, from a string or a file.
 //
-// Note that you have two options when using this endpoint: either you can set `import` to true
-// and upload a file containing multiple domain blocks, JSON-formatted, or you can leave import as
-// false, and just add one domain block.
+// You have two options when using this endpoint: either you can set `import` to `true` and
+// upload a file containing multiple domain blocks, JSON-formatted, or you can leave import as
+// `false`, and just add one domain block.
 //
 // The format of the json file should be something like: `[{"domain":"example.org"},{"domain":"whatever.com","public_comment":"they smell"}]`
 //
-// ---
-// tags:
-// - admin
+//	---
+//	tags:
+//	- admin
 //
-// consumes:
-// - multipart/form-data
+//	consumes:
+//	- multipart/form-data
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// parameters:
-// - name: import
-//   in: query
-//   description: |-
-//     Signal that a list of domain blocks is being imported as a file.
-//     If set to true, then 'domains' must be present as a JSON-formatted file.
-//     If set to false, then 'domains' will be ignored, and 'domain' must be present.
-//   type: boolean
-// - name: domains
-//   in: formData
-//   description: |-
-//     JSON-formatted list of domain blocks to import.
-//     This is only used if `import` is set to true.
-//   type: file
-// - name: domain
-//   in: formData
-//   description: |-
-//     Single domain to block.
-//     Used only if `import` is not true.
-//   type: string
-// - name: obfuscate
-//   in: formData
-//   description: |-
-//     Obfuscate the name of the domain when serving it publicly.
-//     Eg., 'example.org' becomes something like 'ex***e.org'.
-//     Used only if `import` is not true.
-//   type: boolean
-// - name: public_comment
-//   in: formData
-//   description: |-
-//     Public comment about this domain block.
-//     Will be displayed alongside the domain block if you choose to share blocks.
-//     Used only if `import` is not true.
-//   type: string
-// - name: private_comment
-//   in: formData
-//   description: |-
-//     Private comment about this domain block. Will only be shown to other admins, so this
-//     is a useful way of internally keeping track of why a certain domain ended up blocked.
-//     Used only if `import` is not true.
-//   type: string
+//	parameters:
+//	-
+//		name: import
+//		in: query
+//		description: >-
+//			Signal that a list of domain blocks is being imported as a file.
+//			If set to `true`, then 'domains' must be present as a JSON-formatted file.
+//			If set to `false`, then `domains` will be ignored, and `domain` must be present.
+//		type: boolean
+//		default: false
+//	-
+//		name: domains
+//		in: formData
+//		description: >-
+//			JSON-formatted list of domain blocks to import.
+//			This is only used if `import` is set to `true`.
+//		type: file
+//	-
+//		name: domain
+//		in: formData
+//		description: >-
+//			Single domain to block.
+//			Used only if `import` is not `true`.
+//		type: string
+//	-
+//		name: obfuscate
+//		in: formData
+//		description: >-
+//			Obfuscate the name of the domain when serving it publicly.
+//			Eg., `example.org` becomes something like `ex***e.org`.
+//			Used only if `import` is not `true`.
+//		type: boolean
+//	-
+//		name: public_comment
+//		in: formData
+//		description: >-
+//			Public comment about this domain block.
+//			This will be displayed alongside the domain block if you choose to share blocks.
+//			Used only if `import` is not `true`.
+//		type: string
+//	-
+//		name: private_comment
+//		in: formData
+//		description: >-
+//			Private comment about this domain block. Will only be shown to other admins, so this
+//			is a useful way of internally keeping track of why a certain domain ended up blocked.
+//			Used only if `import` is not `true`.
+//		type: string
 //
-// security:
-// - OAuth2 Bearer:
-//   - admin
+//	security:
+//	- OAuth2 Bearer:
+//		- admin
 //
-// responses:
-//   '200':
-//     description: |-
-//       The newly created domain block, if `import` != `true`.
-//       Note that if a list has been imported, then an `array` of newly created domain blocks will be returned instead.
-//     schema:
-//       "$ref": "#/definitions/domainBlock"
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '403':
-//      description: forbidden
-//   '404':
-//      description: not found
-//   '406':
-//      description: not acceptable
-//   '500':
-//      description: internal server error
+//	responses:
+//		'200':
+//			description: >-
+//				The newly created domain block, if `import` != `true`.
+//				If a list has been imported, then an `array` of newly created domain blocks will be returned instead.
+//			schema:
+//				"$ref": "#/definitions/domainBlock"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'403':
+//			description: forbidden
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

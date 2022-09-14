@@ -36,57 +36,58 @@ import (
 // The parameters can also be given in the body of the request, as JSON, if the content-type is set to 'application/json'.
 // The parameters can also be given in the body of the request, as XML, if the content-type is set to 'application/xml'.
 //
-// ---
-// tags:
-// - accounts
+//	---
+//	tags:
+//	- accounts
 //
-// consumes:
-// - application/json
-// - application/xml
-// - application/x-www-form-urlencoded
+//	consumes:
+//	- application/json
+//	- application/xml
+//	- application/x-www-form-urlencoded
 //
-// parameters:
-// - name: id
-//   required: true
-//   in: path
-//   description: ID of the account to follow.
-//   type: string
-// - default: true
-//   description: Show reblogs from this account.
-//   in: formData
-//   name: reblogs
-//   type: boolean
-//   x-go-name: Reblogs
-// - default: false
-//   description: Notify when this account posts.
-//   in: formData
-//   name: notify
-//   type: boolean
-//   x-go-name: Notify
+//	parameters:
+//	-
+//		name: id
+//		required: true
+//		in: path
+//		description: ID of the account to follow.
+//		type: string
+//	-
+//		name: reblogs
+//		type: boolean
+//		default: true
+//		description: Show reblogs from this account.
+//		in: formData
+//	-
+//		default: false
+//		description: Notify when this account posts.
+//		in: formData
+//		name: notify
+//		type: boolean
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// security:
-// - OAuth2 Bearer:
-//   - write:follows
+//	security:
+//	- OAuth2 Bearer:
+//		- write:follows
 //
-// responses:
-//   '200':
-//     name: account relationship
-//     description: Your relationship to this account.
-//     schema:
-//       "$ref": "#/definitions/accountRelationship"
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '404':
-//      description: not found
-//   '406':
-//      description: not acceptable
-//   '500':
-//      description: internal server error
+//	responses:
+//		'200':
+//			name: account relationship
+//			description: Your relationship to this account.
+//			schema:
+//				"$ref": "#/definitions/accountRelationship"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) AccountFollowPOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

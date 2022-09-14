@@ -35,41 +35,42 @@ import (
 // The deleted status will be returned in the response. The `text` field will contain the original text of the status as it was submitted.
 // This is useful when doing a 'delete and redraft' type operation.
 //
-// ---
-// tags:
-// - statuses
+//	---
+//	tags:
+//	- statuses
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// parameters:
-// - name: id
-//   type: string
-//   description: Target status ID.
-//   in: path
-//   required: true
+//	parameters:
+//	-
+//		name: id
+//		type: string
+//		description: Target status ID.
+//		in: path
+//		required: true
 //
-// security:
-// - OAuth2 Bearer:
-//   - write:statuses
+//	security:
+//	- OAuth2 Bearer:
+//		- write:statuses
 //
-// responses:
-//   '200':
-//     description: "The newly deleted status."
-//     schema:
-//       "$ref": "#/definitions/status"
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '403':
-//      description: forbidden
-//   '404':
-//      description: not found
-//   '406':
-//      description: not acceptable
-//   '500':
-//      description: internal server error
+//	responses:
+//		'200':
+//			description: "The status that was just deleted."
+//			schema:
+//				"$ref": "#/definitions/status"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'403':
+//			description: forbidden
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) StatusDELETEHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

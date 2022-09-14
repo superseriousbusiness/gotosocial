@@ -34,41 +34,42 @@ import (
 //
 // View domain block with the given ID.
 //
-// ---
-// tags:
-// - admin
+//	---
+//	tags:
+//	- admin
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// parameters:
-// - name: id
-//   type: string
-//   description: The id of the domain block.
-//   in: path
-//   required: true
+//	parameters:
+//	-
+//		name: id
+//		type: string
+//		description: The id of the domain block.
+//		in: path
+//		required: true
 //
-// security:
-// - OAuth2 Bearer:
-//   - admin
+//	security:
+//	- OAuth2 Bearer:
+//		- admin
 //
-// responses:
-//   '200':
-//     description: The requested domain block.
-//     schema:
-//       "$ref": "#/definitions/domainBlock"
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '403':
-//      description: forbidden
-//   '404':
-//      description: not found
-//   '406':
-//      description: not acceptable
-//   '500':
-//      description: internal server error
+//	responses:
+//		'200':
+//			description: The requested domain block.
+//			schema:
+//				"$ref": "#/definitions/domainBlock"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'403':
+//			description: forbidden
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) DomainBlockGETHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

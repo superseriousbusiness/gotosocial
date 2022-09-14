@@ -34,52 +34,54 @@ import (
 //
 // Perform an admin action on an account.
 //
-// ---
-// tags:
-// - admin
+//	---
+//	tags:
+//	- admin
 //
-// consumes:
-// - multipart/form-data
+//	consumes:
+//	- multipart/form-data
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// parameters:
-// - name: id
-//   required: true
-//   in: path
-//   description: ID of the account.
-//   type: string
-// - name: type
-//   in: formData
-//   description: |-
-//     Type of action to be taken. One of: disable, silence, suspend.
-//   type: string
-//   required: true
-// - name: text
-//   in: formData
-//   description: Optional text describing why this action was taken.
-//   type: string
+//	parameters:
+//	-
+//		name: id
+//		required: true
+//		in: path
+//		description: ID of the account.
+//		type: string
+//	-
+//		name: type
+//		in: formData
+//		description: Type of action to be taken (`disable`, `silence`, or `suspend`).
+//		type: string
+//		required: true
+//	-
+//		name: text
+//		in: formData
+//		description: Optional text describing why this action was taken.
+//		type: string
 //
-// security:
-// - OAuth2 Bearer:
-//   - admin
+//	security:
+//	- OAuth2 Bearer:
+//		- admin
 //
-// responses:
-//   '200':
-//     description: OK
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '403':
-//      description: forbidden
-//   '404':
-//      description: not found
-//   '406':
-//      description: not acceptable
-//   '500':
-//      description: internal server error
+//	responses:
+//		'200':
+//			description: OK
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'403':
+//			description: forbidden
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) AccountActionPOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

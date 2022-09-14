@@ -36,35 +36,35 @@ import (
 // The parameters can also be given in the body of the request, as JSON, if the content-type is set to 'application/json'.
 // The parameters can also be given in the body of the request, as XML, if the content-type is set to 'application/xml'.
 //
-// ---
-// tags:
-// - user
+//	---
+//	tags:
+//	- user
 //
-// consumes:
-// - application/json
-// - application/xml
-// - application/x-www-form-urlencoded
+//	consumes:
+//	- application/json
+//	- application/xml
+//	- application/x-www-form-urlencoded
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// security:
-// - OAuth2 Bearer:
-//   - write:user
+//	security:
+//	- OAuth2 Bearer:
+//		- write:user
 //
-// responses:
-//   '200':
-//     description: Change successful
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '403':
-//      description: forbidden
-//   '406':
-//      description: not acceptable
-//   '500':
-//      description: internal error
+//	responses:
+//		'200':
+//			description: Change successful
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'403':
+//			description: forbidden
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal error
 func (m *Module) PasswordChangePOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
