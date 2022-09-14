@@ -4286,11 +4286,6 @@ paths:
             operationId: nodeInfoGet
             produces:
                 - application/json; profile="http://nodeinfo.diaspora.software/ns/schema/2.0#"
-            responses:
-                "200":
-                    description: ""
-                    schema:
-                        $ref: '#/definitions/nodeinfo'
             summary: Returns a compliant nodeinfo response to node info queries.
             tags:
                 - nodeinfo
