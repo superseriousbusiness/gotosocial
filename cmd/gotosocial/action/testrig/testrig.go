@@ -22,7 +22,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"os/signal"
@@ -86,7 +86,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// build backend handlers
 	oauthServer := testrig.NewTestOauthServer(dbService)
 	transportController := testrig.NewTestTransportController(testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
-		r := ioutil.NopCloser(bytes.NewReader([]byte{}))
+		r := io.NopCloser(bytes.NewReader([]byte{}))
 		return &http.Response{
 			StatusCode: 200,
 			Body:       r,

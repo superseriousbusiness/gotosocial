@@ -21,7 +21,7 @@ package transport
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -71,5 +71,5 @@ func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, erro
 		return nil, fmt.Errorf("GET request to %s failed (%d): %s", iriStr, rsp.StatusCode, rsp.Status)
 	}
 
-	return ioutil.ReadAll(rsp.Body)
+	return io.ReadAll(rsp.Body)
 }
