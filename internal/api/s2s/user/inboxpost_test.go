@@ -353,7 +353,6 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 	suite.EqualValues(updatedAccount.Language, dbUpdatedAccount.Language)
 	suite.EqualValues(updatedAccount.URI, dbUpdatedAccount.URI)
 	suite.EqualValues(updatedAccount.URL, dbUpdatedAccount.URL)
-	suite.EqualValues(updatedAccount.LastWebfingeredAt, dbUpdatedAccount.LastWebfingeredAt)
 	suite.EqualValues(updatedAccount.InboxURI, dbUpdatedAccount.InboxURI)
 	suite.EqualValues(updatedAccount.OutboxURI, dbUpdatedAccount.OutboxURI)
 	suite.EqualValues(updatedAccount.FollowingURI, dbUpdatedAccount.FollowingURI)
