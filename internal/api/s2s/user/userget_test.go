@@ -98,11 +98,6 @@ func (suite *UserGetTestSuite) TestGetUser() {
 // TestGetUserPublicKeyDeleted checks whether the public key of a deleted account can still be dereferenced.
 // This is needed by remote instances for authenticating delete requests and stuff like that.
 func (suite *UserGetTestSuite) TestGetUserPublicKeyDeleted() {
-	if err := suite.processor.Start(); err != nil {
-		suite.FailNow(err.Error())
-	}
-	defer suite.processor.Stop()
-
 	userModule := user.New(suite.processor).(*user.Module)
 	targetAccount := suite.testAccounts["local_account_1"]
 

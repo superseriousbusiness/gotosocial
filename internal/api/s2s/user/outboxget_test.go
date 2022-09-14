@@ -103,6 +103,7 @@ func (suite *OutboxGetTestSuite) TestGetOutboxFirstPage() {
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager, clientWorker, fedWorker)
 	userModule := user.New(processor).(*user.Module)
+	suite.NoError(processor.Start())
 
 	// setup request
 	recorder := httptest.NewRecorder()
@@ -161,6 +162,7 @@ func (suite *OutboxGetTestSuite) TestGetOutboxNextPage() {
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager, clientWorker, fedWorker)
 	userModule := user.New(processor).(*user.Module)
+	suite.NoError(processor.Start())
 
 	// setup request
 	recorder := httptest.NewRecorder()
