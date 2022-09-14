@@ -12,7 +12,7 @@ steps:
   # We use golangci-lint for linting.
   # See: https://golangci-lint.run/
   - name: lint
-    image: golangci/golangci-lint:v1.45.2
+    image: golangci/golangci-lint:v1.49.0
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
