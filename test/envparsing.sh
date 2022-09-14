@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -eux
+set -eu
 
 EXPECT='{"account-domain":"peepee","accounts-allow-custom-css":true,"accounts-approval-required":false,"accounts-reason-required":false,"accounts-registration-open":true,"advanced-cookies-samesite":"strict","application-name":"gts","bind-address":"127.0.0.1","config-path":"test/test.yaml","db-address":":memory:","db-database":"gotosocial_prod","db-password":"hunter2","db-port":6969,"db-tls-ca-cert":"","db-tls-mode":"disable","db-type":"sqlite","db-user":"sex-haver","email":"","host":"example.com","instance-expose-peers":true,"instance-expose-suspended":true,"letsencrypt-cert-dir":"/gotosocial/storage/certs","letsencrypt-email-address":"","letsencrypt-enabled":true,"letsencrypt-port":80,"log-db-queries":true,"log-level":"info","media-description-max-chars":5000,"media-description-min-chars":69,"media-emoji-local-max-size":420,"media-emoji-remote-max-size":420,"media-image-max-size":420,"media-remote-cache-days":30,"media-video-max-size":420,"oidc-client-id":"1234","oidc-client-secret":"shhhh its a secret","oidc-enabled":true,"oidc-idp-name":"sex-haver","oidc-issuer":"whoknows","oidc-scopes":["read","write"],"oidc-skip-verification":true,"password":"","path":"","port":6969,"protocol":"http","smtp-from":"queen@terfisland.org","smtp-host":"example.com","smtp-password":"hunter2","smtp-port":4269,"smtp-username":"sex-haver","software-version":"","statuses-cw-max-chars":420,"statuses-max-chars":69,"statuses-media-max-files":1,"statuses-poll-max-options":1,"statuses-poll-option-max-chars":50,"storage-backend":"local","storage-local-base-path":"/root/store","storage-s3-access-key":"minio","storage-s3-bucket":"gts","storage-s3-endpoint":"localhost:9000","storage-s3-secret-key":"miniostorage","storage-s3-use-ssl":false,"syslog-address":"127.0.0.1:6969","syslog-enabled":true,"syslog-protocol":"udp","trusted-proxies":["127.0.0.1/32","0.0.0.0/0"],"username":"","web-asset-base-dir":"/root","web-template-base-dir":"/root"}'
 
@@ -78,9 +78,7 @@ echo "$OUTPUT" | jq > "$OUTPUT_OUT"
 EXPECT_OUT=$(mktemp)
 echo "$EXPECT" | jq > "$EXPECT_OUT"
 
-DIFF=$(diff "$OUTPUT_OUT" "$EXPECT_OUT")
-
-if [ ! -z "$DIFF" ]; then
+if ! DIFF=$(diff "$OUTPUT_OUT" "$EXPECT_OUT"); then
     echo "OUTPUT not equal EXPECTED"
     echo "$DIFF"
     exit 1
