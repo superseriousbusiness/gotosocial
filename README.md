@@ -219,6 +219,8 @@ The following libraries and frameworks are used by GoToSocial, with gratitude ðŸ
 - [go-playground/validator](https://github.com/go-playground/validator); struct validation. [MIT License](https://spdx.org/licenses/MIT.html).
 - [gorilla/websocket](https://github.com/gorilla/websocket); Websocket connectivity. [BSD-2-Clause License](https://spdx.org/licenses/BSD-2-Clause.html).
 - [gruf/go-debug](https://codeberg.org/gruf/go-debug); profiling support in debug builds. [MIT License](https://spdx.org/licenses/MIT.html).
+- [gruf/go-bytesize](https://codeberg.org/gruf/go-bytesize); byte size parsing / formatting. [MIT License](https://spdx.org/licenses/MIT.html).
+- [gruf/go-cache](https://codeberg.org/gruf/go-cache); object caching. [MIT License](https://spdx.org/licenses/MIT.html).
 - [gruf/go-kv](https://codeberg.org/gruf/go-kv); key-value field formatting. [MIT License](https://spdx.org/licenses/MIT.html).
 - [gruf/go-mutexes](https://codeberg.org/gruf/go-mutexes); mutex map. [MIT License](https://spdx.org/licenses/MIT.html).
 - [gruf/go-runners](https://codeberg.org/gruf/go-runners); worker pool library. [MIT License](https://spdx.org/licenses/MIT.html).
