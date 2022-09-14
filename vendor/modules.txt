@@ -44,7 +44,7 @@ codeberg.org/gruf/go-mutexes
 # codeberg.org/gruf/go-pools v1.1.0
 ## explicit; go 1.16
 codeberg.org/gruf/go-pools
-# codeberg.org/gruf/go-runners v1.3.0
+# codeberg.org/gruf/go-runners v1.3.1
 ## explicit; go 1.14
 codeberg.org/gruf/go-runners
 # codeberg.org/gruf/go-sched v1.1.1

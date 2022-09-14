@@ -37,7 +37,8 @@ func (pool *WorkerPool) Start(workers int, queue int) bool {
 	}
 
 	// Allocate pool queue of given size
-	pool.fns = make(chan WorkerFunc, queue)
+	fns := make(chan WorkerFunc, queue)
+	pool.fns = fns
 
 	go func() {
 		defer func() {
@@ -53,19 +54,12 @@ func (pool *WorkerPool) Start(workers int, queue int) bool {
 		// Start goroutine worker functions
 		for i := 0; i < workers; i++ {
 			go func() {
-				// Signal start/stop
+				// Trigger start / stop
 				wait.Add(1)
 				defer wait.Done()
 
-				for {
-					// Fetch next func from stack
-					fn, ok := <-pool.fns
-					if !ok {
-						return
-					}
-
-					// Run with ctx
-					fn(ctx)
+				// Keep workers running on panic
+				for !workerstart(ctx, fns) {
 				}
 			}()
 		}
@@ -84,6 +78,23 @@ func (pool *WorkerPool) Start(workers int, queue int) bool {
 	}()
 
 	return true
+}
+
+// workerstart is the main worker runner routine, accepting functions from 'fns' until it is closed.
+func workerstart(ctx context.Context, fns <-chan WorkerFunc) bool {
+	// Recover and drop any panic
+	defer func() { recover() }()
+
+	for {
+		// Wait on next func
+		fn, ok := <-fns
+		if !ok {
+			return true
+		}
+
+		// Run with ctx
+		fn(ctx)
+	}
 }
 
 // Stop will stop the WorkerPool management loop, blocking until stopped.
