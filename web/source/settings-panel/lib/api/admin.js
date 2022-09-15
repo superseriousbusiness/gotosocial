@@ -21,6 +21,7 @@
 const Promise = require("bluebird");
 
 const instance = require("../../redux/reducers/instances").actions;
+const admin = require("../../redux/reducers/admin").actions;
 
 module.exports = function ({ apiCall, getChanges }) {
 	return {
@@ -45,6 +46,8 @@ module.exports = function ({ apiCall, getChanges }) {
 			return function (dispatch, _getState) {
 				return Promise.try(() => {
 					return dispatch(apiCall("GET", "/api/v1/admin/domain_blocks"));
+				}).then((data) => {
+					return dispatch(admin.setBlockedInstances(data));
 				});
 			};
 		}

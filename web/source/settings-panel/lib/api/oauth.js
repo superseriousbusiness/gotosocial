@@ -24,7 +24,7 @@ const { OAUTHError, AuthenticationError } = require("../errors");
 
 const oauth = require("../../redux/reducers/oauth").actions;
 const temporary = require("../../redux/reducers/temporary").actions;
-const user = require("../../redux/reducers/user").actions;
+const admin = require("../../redux/reducers/admin").actions;
 
 module.exports = function oauthAPI({ apiCall, getCurrentUrl }) {
 	return {
@@ -103,8 +103,11 @@ module.exports = function oauthAPI({ apiCall, getCurrentUrl }) {
 				// no role info, try fetching an admin-only route and see if we get an error
 				return Promise.try(() => {
 					return dispatch(apiCall("GET", "/api/v1/admin/domain_blocks"));
-				}).then(() => {
-					return dispatch(oauth.setAdmin(true));
+				}).then((data) => {
+					return Promise.all([
+						dispatch(oauth.setAdmin(true)),
+						dispatch(admin.setBlockedInstances(data))
+					]);
 				}).catch(AuthenticationError, () => {
 					return dispatch(oauth.setAdmin(false));
 				}).catch((e) => {

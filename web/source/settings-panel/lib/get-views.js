@@ -64,11 +64,11 @@ module.exports = function getViews(struct) {
 			let url = `${base}/${urlSafe(name)}`;
 
 			if (firstRoute == undefined) {
-				firstRoute = `${base}/${urlSafe(name)}`;
+				firstRoute = url;
 			}
 
-			routes.push((
-				<Route path={url} key={url}>
+			panelRouterEl.push((
+				<Route path={`${url}/:page?`} key={url}>
 					<ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => { }}>
 						{/* FIXME: implement onReset */}
 						<ViewComponent />
@@ -87,14 +87,15 @@ module.exports = function getViews(struct) {
 			</Route>
 		);
 
-		let childrenPath = `${base}/:section`;
-		panelRouterEl.push(
-			<Route key={childrenPath} path={childrenPath}>
-				<Switch>
-					{routes}
-				</Switch>
-			</Route>
-		);
+		// let childrenPath = `${base}/:section`;
+		// panelRouterEl.push(...routes);
+		console.log(panelRouterEl);
+		// 	<Route key={childrenPath} path={childrenPath}>
+		// 		<Switch id="childrenPath-switch">
+		// 			{routes}
+		// 		</Switch>
+		// 	</Route>
+		// );
 
 		sidebarEl.push(
 			<React.Fragment key={name}>

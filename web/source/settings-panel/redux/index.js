@@ -36,6 +36,7 @@ const combinedReducers = combineReducers({
 	instances: require("./reducers/instances").reducer,
 	temporary: require("./reducers/temporary").reducer,
 	user: require("./reducers/user").reducer,
+	admin: require("./reducers/admin").reducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, combinedReducers);

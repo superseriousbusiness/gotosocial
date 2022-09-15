@@ -18,16 +18,32 @@
 
 "use strict";
 
-const React = require("react");
-const { Link, useRoute } = require("wouter");
+const {createSlice} = require("@reduxjs/toolkit");
+// const d = require("dotty");
 
-module.exports = function NavButton({href, name}) {
-	const [isActive] = useRoute(`${href}/:anything?`);
-	return (
-		<Link href={href}>
-			<a className={isActive ? "active" : ""} data-content={name}>
-				{name}
-			</a>
-		</Link>
-	);
-};
+function sortBlocks(blocks) {
+	return blocks.sort((a, b) => { // alphabetical sort
+		return a.domain.localeCompare(b.domain);
+	});
+}
+
+// function deduplicateBlocks(blocks) {
+// 	let a = new Map();
+// 	blocks.forEach((block) => {
+// 		a.set(block.id, block);
+// 	});
+// 	return Array.from(a.values());
+// }
+
+module.exports = createSlice({
+	name: "admin",
+	initialState: {
+		blockedInstances: undefined,
+		blockedInstancesMap: {}
+	},
+	reducers: {
+		setBlockedInstances: (state, {payload}) => {
+			state.blockedInstances = sortBlocks(payload);
+		},
+	}
+});
