@@ -23,7 +23,7 @@ const {createSlice} = require("@reduxjs/toolkit");
 module.exports = createSlice({
 	name: "oauth",
 	initialState: {
-		loginState: 'none'
+		loginState: 'none',
 	},
 	reducers: {
 		setInstance: (state, {payload}) => {
@@ -42,7 +42,11 @@ module.exports = createSlice({
 		remove: (state, {_payload}) => {
 			delete state.token;
 			delete state.registration;
+			delete state.isAdmin;
 			state.loginState = "none";
+		},
+		setAdmin: (state, {payload}) => {
+			state.isAdmin = payload;
 		}
 	}
 });

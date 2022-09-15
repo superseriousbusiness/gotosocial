@@ -28,6 +28,8 @@ const { PersistGate } = require("redux-persist/integration/react");
 
 const { store, persistor } = require("./redux");
 const api = require("./lib/api");
+const oauth = require("./redux/reducers/oauth").actions;
+const { AuthenticationError } = require("./lib/errors");
 
 const Login = require("./components/login");
 
@@ -40,6 +42,7 @@ const nav = {
 		"Settings": require("./user/settings.js"),
 	},
 	"Admin": {
+		adminOnly: true,
 		"Instance Settings": require("./admin/settings.js"),
 		"Federation": require("./admin/federation.js"),
 		"Custom Emoji": require("./admin/emoji.js"),
@@ -47,15 +50,16 @@ const nav = {
 	}
 };
 
-// Generate component tree from `nav` object once, as it won't change
-const { sidebar, panelRouter } = require("./lib/generate-views")(nav);
+const { sidebar, panelRouter } = require("./lib/get-views")(nav);
 
 function App() {
 	const dispatch = Redux.useDispatch();
-	const { loginState } = Redux.useSelector((state) => state.oauth);
+
+	const { loginState, isAdmin } = Redux.useSelector((state) => state.oauth);
 	const reduxTempStatus = Redux.useSelector((state) => state.temporary.status);
-	const [ errorMsg, setErrorMsg ] = React.useState();
-	const [ tokenChecked, setTokenChecked ] = React.useState(false);
+
+	const [errorMsg, setErrorMsg] = React.useState();
+	const [tokenChecked, setTokenChecked] = React.useState(false);
 
 	React.useEffect(() => {
 		if (loginState == "login" || loginState == "callback") {
@@ -64,7 +68,7 @@ function App() {
 				if (loginState == "callback") {
 					let urlParams = new URLSearchParams(window.location.search);
 					let code = urlParams.get("code");
-		
+
 					if (code == undefined) {
 						setErrorMsg(new Error("Waiting for OAUTH callback but no ?code= provided. You can try logging in again:"));
 					} else {
@@ -79,7 +83,13 @@ function App() {
 				return dispatch(api.user.fetchAccount());
 			}).then(() => {
 				setTokenChecked(true);
+
+				return dispatch(api.oauth.checkIfAdmin());
 			}).catch((e) => {
+				if (e instanceof AuthenticationError) {
+					dispatch(oauth.remove());
+					e.message = "Stored OAUTH token no longer valid, please log in again.";
+				}
 				setErrorMsg(e);
 				console.error(e.message);
 			});
@@ -97,7 +107,7 @@ function App() {
 	}
 
 	const LogoutElement = (
-		<button className="logout" onClick={() => {dispatch(api.oauth.logout());}}>
+		<button className="logout" onClick={() => { dispatch(api.oauth.logout()); }}>
 			Log out
 		</button>
 	);
@@ -112,27 +122,29 @@ function App() {
 		return (
 			<>
 				<div className="sidebar">
-					{sidebar}
+					{sidebar.all}
+					{isAdmin && sidebar.admin}
 					{LogoutElement}
 				</div>
 				<section className="with-sidebar">
 					{ErrorElement}
 					<Switch>
-						<Route path="/settings">
+						{panelRouter.all}
+						{isAdmin && panelRouter.admin}
+						<Route> {/* default route */}
 							<Redirect to="/settings/user" />
 						</Route>
-						{panelRouter}
 					</Switch>
 				</section>
 			</>
 		);
 	} else if (loginState == "none") {
 		return (
-			<Login error={ErrorElement}/>
+			<Login error={ErrorElement} />
 		);
 	} else {
 		let status;
-		
+
 		if (loginState == "login") {
 			status = "Verifying stored login...";
 		} else if (loginState == "callback") {

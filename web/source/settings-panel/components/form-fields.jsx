@@ -71,7 +71,7 @@ function get(state, id) {
 
 module.exports = {
 	formFields: function formFields(setter, selector) {
-		function FormField({type, id, name, className="", placeHolder="", fileType="", children=null, options={}}) {
+		function FormField({type, id, name, className="", placeHolder="", fileType="", children=null, options=null}) {
 			const dispatch = Redux.useDispatch();
 			let state = Redux.useSelector(selector);
 			let {
@@ -111,7 +111,6 @@ module.exports = {
 			}
 
 			let label = <label htmlFor={id}>{name}</label>;
-	
 			return (
 				<div className={`form-field ${type}`}>
 					{defaultLabel ? label : null}

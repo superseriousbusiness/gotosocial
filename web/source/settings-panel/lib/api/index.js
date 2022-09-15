@@ -22,7 +22,7 @@ const Promise = require("bluebird");
 const { isPlainObject } = require("is-plain-object");
 const d = require("dotty");
 
-const { APIError } = require("../errors");
+const { APIError, AuthenticationError } = require("../errors");
 const { setInstanceInfo, setNamedInstanceInfo } = require("../../redux/reducers/instances").actions;
 const oauth = require("../../redux/reducers/oauth").actions;
 
@@ -83,12 +83,12 @@ function apiCall(method, route, payload, type = "json") {
 			return Promise.all([res, json]);
 		}).then(([res, json]) => {
 			if (!res.ok) {
-				if (auth != undefined && res.status == 401) {
+				if (auth != undefined && (res.status == 401 || res.status == 403)) {
 					// stored access token is invalid
-					dispatch(oauth.remove());
-					throw new APIError("Stored OAUTH login was no longer valid, please log in again.");
+					throw new AuthenticationError("401: Authentication error", {json, status: res.status});
+				} else {
+					throw new APIError(json.error, { json });
 				}
-				throw new APIError(json.error, { json });
 			} else {
 				return json;
 			}

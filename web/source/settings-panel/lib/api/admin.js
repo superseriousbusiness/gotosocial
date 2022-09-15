@@ -39,6 +39,14 @@ module.exports = function ({ apiCall, getChanges }) {
 					return dispatch(instance.setInstanceInfo(data));
 				});
 			};
+		},
+
+		fetchDomainBlocks: function fetchDomainBlocks() {
+			return function (dispatch, _getState) {
+				return Promise.try(() => {
+					return dispatch(apiCall("GET", "/api/v1/admin/domain_blocks"));
+				});
+			};
 		}
 	};
 };

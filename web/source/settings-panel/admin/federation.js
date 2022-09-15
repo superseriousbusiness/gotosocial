@@ -18,6 +18,65 @@
 
 "use strict";
 
-module.exports = function Federation() {
-	return "federation";
+const Promise = require("bluebird");
+const React = require("react");
+const Redux = require("react-redux");
+
+const Submit = require("../components/submit");
+
+const api = require("../lib/api");
+const adminActions = require("../redux/reducers/instances").actions;
+
+const {
+	TextInput,
+	TextArea,
+	File
+} = require("../components/form-fields").formFields(adminActions.setAdminSettingsVal, (state) => state.instances.adminSettings);
+
+module.exports = function AdminSettings() {
+	const dispatch = Redux.useDispatch();
+	const instance = Redux.useSelector(state => state.instances.adminSettings);
+
+	const [loaded, setLoaded] = React.useState(false);
+
+	const [errorMsg, setError] = React.useState("");
+	const [statusMsg, setStatus] = React.useState("");
+
+	React.useEffect(() => {
+		Promise.try(() => {
+			return dispatch(api.admin.fetchDomainBlocks());
+		}).then(() => {
+			setLoaded(true);
+		}).catch((e) => {
+			console.log(e);
+		});
+	}, []);
+
+	function submit() {
+		setStatus("PATCHing");
+		setError("");
+		return Promise.try(() => {
+			return dispatch(api.admin.updateInstance());
+		}).then(() => {
+			setStatus("Saved!");
+		}).catch((e) => {
+			setError(e.message);
+			setStatus("");
+		});
+	}
+
+	if (!loaded) {
+		return (
+			<div>
+				<h1>Federation</h1>
+				Loading instance blocks...
+			</div>
+		);
+	}
+
+	return (
+		<div>
+			<h1>Federation</h1>
+		</div>
+	);
 };

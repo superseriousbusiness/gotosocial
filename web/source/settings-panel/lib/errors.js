@@ -23,4 +23,5 @@ const createError = require("create-error");
 module.exports = {
 	APIError: createError("APIError"),
 	OAUTHError: createError("OAUTHError"),
+	AuthenticationError: createError("AuthenticationError"),
 };

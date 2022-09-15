@@ -19,6 +19,7 @@
 "use strict";
 
 const React = require("react");
+const Redux = require("react-redux");
 const { Link, Route, Switch, Redirect } = require("wouter");
 const { ErrorBoundary } = require("react-error-boundary");
 
@@ -29,11 +30,29 @@ function urlSafe(str) {
 	return str.toLowerCase().replace(/\s+/g, "-");
 }
 
-module.exports = function generateViews(struct) {
-	const sidebar = [];
-	const panelRouter = [];
+module.exports = function getViews(struct) {
+	const sidebar = {
+		all: [],
+		admin: [],
+	};
+
+	const panelRouter = {
+		all: [],
+		admin: [],
+	};
 
 	Object.entries(struct).forEach(([name, entries]) => {
+		let sidebarEl = sidebar.all;
+		let panelRouterEl = panelRouter.all;
+
+		if (entries.adminOnly) {
+			sidebarEl = sidebar.admin;
+			panelRouterEl = panelRouter.admin;
+			delete entries.adminOnly;
+		}
+
+		console.log(name, entries);
+
 		let base = `/settings/${urlSafe(name)}`;
 
 		let links = [];
@@ -62,14 +81,14 @@ module.exports = function generateViews(struct) {
 			);
 		});
 
-		panelRouter.push(
+		panelRouterEl.push(
 			<Route key={base} path={base}>
 				<Redirect to={firstRoute} />
 			</Route>
 		);
 
 		let childrenPath = `${base}/:section`;
-		panelRouter.push(
+		panelRouterEl.push(
 			<Route key={childrenPath} path={childrenPath}>
 				<Switch>
 					{routes}
@@ -77,7 +96,7 @@ module.exports = function generateViews(struct) {
 			</Route>
 		);
 
-		sidebar.push(
+		sidebarEl.push(
 			<React.Fragment key={name}>
 				<Link href={firstRoute}>
 					<a>

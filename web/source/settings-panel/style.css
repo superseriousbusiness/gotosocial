@@ -51,6 +51,7 @@ section {
 		border-bottom-right-radius: 0;
 		display: flex;
 		flex-direction: column;
+		min-width: 12rem;
 
 		a {
 			text-decoration: none;

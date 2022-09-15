@@ -55,8 +55,9 @@ module.exports = function UserSettings() {
 	return (
 		<div className="user-settings">
 			<h1>Post settings</h1>
-			<Select id="language" name="Default post language">
+			<Select id="language" name="Default post language" options={
 				<Languages/>
+			}>
 			</Select>
 			<Select id="privacy" name="Default post privacy" options={
 				<>
