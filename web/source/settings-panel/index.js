@@ -58,32 +58,32 @@ function App() {
 	const [ tokenChecked, setTokenChecked ] = React.useState(false);
 
 	React.useEffect(() => {
-		Promise.try(() => {
-			// Process OAUTH authorization token from URL if available
-			if (loginState == "callback") {
-				let urlParams = new URLSearchParams(window.location.search);
-				let code = urlParams.get("code");
-	
-				if (code == undefined) {
-					setErrorMsg(new Error("Waiting for OAUTH callback but no ?code= provided. You can try logging in again:"));
-				} else {
-					return dispatch(api.oauth.tokenize(code));
+		if (loginState == "login" || loginState == "callback") {
+			Promise.try(() => {
+				// Process OAUTH authorization token from URL if available
+				if (loginState == "callback") {
+					let urlParams = new URLSearchParams(window.location.search);
+					let code = urlParams.get("code");
+		
+					if (code == undefined) {
+						setErrorMsg(new Error("Waiting for OAUTH callback but no ?code= provided. You can try logging in again:"));
+					} else {
+						return dispatch(api.oauth.tokenize(code));
+					}
 				}
-			}
-		}).then(() => {
-			// Fetch current instance info
-			return dispatch(api.instance.fetch());
-		}).then(() => {
-			// Check currently stored auth token for validity if available
-			if (loginState == "callback" || loginState == "login") {
+			}).then(() => {
+				// Fetch current instance info
+				return dispatch(api.instance.fetch());
+			}).then(() => {
+				// Check currently stored auth token for validity if available
 				return dispatch(api.user.fetchAccount());
-			}
-		}).then(() => {
-			setTokenChecked(true);
-		}).catch((e) => {
-			setErrorMsg(e);
-			console.error(e.message);
-		});
+			}).then(() => {
+				setTokenChecked(true);
+			}).catch((e) => {
+				setErrorMsg(e);
+				console.error(e.message);
+			});
+		}
 	}, []);
 
 	let ErrorElement = null;
