@@ -88,7 +88,7 @@ func genericErrorHandler(c *gin.Context, instanceGet func(ctx context.Context, d
 func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode)) {
 	// set the error on the gin context so that it can be logged
 	// in the gin logger middleware (internal/router/logger.go)
-	c.Error(errWithCode)
+	c.Error(errWithCode) //nolint:errcheck
 
 	// discover if we're allowed to serve a nice html error page,
 	// or if we should just use a json. Normally we would want to
