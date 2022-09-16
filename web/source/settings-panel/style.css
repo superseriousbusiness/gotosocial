@@ -70,7 +70,7 @@ section {
 		align-self: start; // vertical
 		justify-self: end; // horizontal
 		background: $settings-nav-bg;
-		border: $boxshadow_border;
+		border: $boxshadow-border;
 		box-shadow: $boxshadow;
 		border-radius: $br;
 		border-top-right-radius: 0;
