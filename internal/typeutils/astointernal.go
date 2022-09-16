@@ -87,6 +87,13 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 		acct.DisplayName = displayName
 	}
 
+	// account emojis (used in bio, display name, fields)
+	if emojis, err := ap.ExtractEmojis(accountable); err != nil {
+		log.Infof("ASRepresentationToAccount: error extracting account emojis: %s", err)
+	} else {
+		acct.Emojis = emojis
+	}
+
 	// TODO: fields aka attachment array
 
 	// note aka summary

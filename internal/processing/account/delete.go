@@ -284,6 +284,8 @@ selectStatusesLoop:
 	account.HeaderMediaAttachmentID = ""
 	account.HeaderRemoteURL = ""
 	account.Reason = ""
+	account.Emojis = []*gtsmodel.Emoji{}
+	account.EmojiIDs = []string{}
 	account.Fields = []gtsmodel.Field{}
 	hideCollections := true
 	account.HideCollections = &hideCollections

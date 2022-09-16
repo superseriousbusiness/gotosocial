@@ -25,6 +25,8 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"reflect"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -260,7 +262,7 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 		foundAccount.LastWebfingeredAt = fingered
 		foundAccount.UpdatedAt = time.Now()
 
-		err = d.db.Put(ctx, foundAccount)
+		foundAccount, err = d.db.PutAccount(ctx, foundAccount)
 		if err != nil {
 			err = fmt.Errorf("GetRemoteAccount: error putting new account: %s", err)
 			return
@@ -270,13 +272,10 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 	}
 
 	// we had the account already, but now we know the account domain, so update it if it's different
+	var accountDomainChanged bool
 	if !strings.EqualFold(foundAccount.Domain, accountDomain) {
+		accountDomainChanged = true
 		foundAccount.Domain = accountDomain
-		foundAccount, err = d.db.UpdateAccount(ctx, foundAccount)
-		if err != nil {
-			err = fmt.Errorf("GetRemoteAccount: error updating account: %s", err)
-			return
-		}
 	}
 
 	// make sure the account fields are populated before returning:
@@ -293,8 +292,8 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 		foundAccount.LastWebfingeredAt = fingered
 	}
 
-	if fieldsChanged || fingeredChanged {
-		foundAccount.UpdatedAt = time.Now()
+	if accountDomainChanged || fieldsChanged || fingeredChanged {
+		foundAccount.Domain = accountDomain
 		foundAccount, err = d.db.UpdateAccount(ctx, foundAccount)
 		if err != nil {
 			return nil, fmt.Errorf("GetRemoteAccount: error updating remoteAccount: %s", err)
@@ -389,15 +388,20 @@ func (d *deref) populateAccountFields(ctx context.Context, account *gtsmodel.Acc
 		return false, fmt.Errorf("populateAccountFields: domain %s is blocked", accountURI.Host)
 	}
 
-	t, err := d.transportController.NewTransportForUsername(ctx, requestingUsername)
-	if err != nil {
-		return false, fmt.Errorf("populateAccountFields: error getting transport for user: %s", err)
-	}
+	var changed bool
 
 	// fetch the header and avatar
-	changed, err := d.fetchRemoteAccountMedia(ctx, account, t, blocking)
-	if err != nil {
+	if mediaChanged, err := d.fetchRemoteAccountMedia(ctx, account, requestingUsername, blocking); err != nil {
 		return false, fmt.Errorf("populateAccountFields: error fetching header/avi for account: %s", err)
+	} else if mediaChanged {
+		changed = mediaChanged
+	}
+
+	// fetch any emojis used in note, fields, display name, etc
+	if emojisChanged, err := d.fetchRemoteAccountEmojis(ctx, account, requestingUsername); err != nil {
+		return false, fmt.Errorf("populateAccountFields: error fetching emojis for account: %s", err)
+	} else if emojisChanged {
+		changed = emojisChanged
 	}
 
 	return changed, nil
@@ -415,17 +419,11 @@ func (d *deref) populateAccountFields(ctx context.Context, account *gtsmodel.Acc
 //
 // If blocking is true, then the calls to the media manager made by this function will be blocking:
 // in other words, the function won't return until the header and the avatar have been fully processed.
-func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsmodel.Account, t transport.Transport, blocking bool) (bool, error) {
-	changed := false
-
-	accountURI, err := url.Parse(targetAccount.URI)
-	if err != nil {
-		return changed, fmt.Errorf("fetchRemoteAccountMedia: couldn't parse account URI %s: %s", targetAccount.URI, err)
-	}
-
-	if blocked, err := d.db.IsDomainBlocked(ctx, accountURI.Host); blocked || err != nil {
-		return changed, fmt.Errorf("fetchRemoteAccountMedia: domain %s is blocked", accountURI.Host)
-	}
+func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsmodel.Account, requestingUsername string, blocking bool) (bool, error) {
+	var (
+		changed bool
+		t transport.Transport
+	)
 
 	if targetAccount.AvatarRemoteURL != "" && (targetAccount.AvatarMediaAttachmentID == "") {
 		var processingMedia *media.ProcessingMedia
@@ -443,6 +441,14 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 			if err != nil {
 				d.dereferencingAvatarsLock.Unlock()
 				return changed, err
+			}
+
+			if t == nil {
+				var err error
+				t, err = d.transportController.NewTransportForUsername(ctx, requestingUsername)
+				if err != nil {
+					return false, fmt.Errorf("fetchRemoteAccountMedia: error getting transport for user: %s", err)
+				}
 			}
 
 			data := func(innerCtx context.Context) (io.Reader, int, error) {
@@ -503,6 +509,14 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 				return changed, err
 			}
 
+			if t == nil {
+				var err error
+				t, err = d.transportController.NewTransportForUsername(ctx, requestingUsername)
+				if err != nil {
+					return false, fmt.Errorf("fetchRemoteAccountMedia: error getting transport for user: %s", err)
+				}
+			}
+
 			data := func(innerCtx context.Context) (io.Reader, int, error) {
 				return t.DereferenceMedia(innerCtx, headerIRI)
 			}
@@ -541,6 +555,63 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 
 		targetAccount.HeaderMediaAttachmentID = processingMedia.AttachmentID()
 		changed = true
+	}
+
+	return changed, nil
+}
+
+func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gtsmodel.Account, requestingUsername string) (bool, error) {	
+	maybeEmojis := targetAccount.Emojis
+	maybeEmojiIDs := targetAccount.EmojiIDs
+	
+	gotEmojis, err := d.populateEmojis(ctx, targetAccount.Emojis, requestingUsername)
+	if err != nil {
+		return false, err
+	}
+
+	gotEmojiIDs := make([]string, 0, len(gotEmojis))
+	for _, e := range gotEmojis {
+		gotEmojiIDs = append(gotEmojiIDs, e.ID)
+	}
+
+	var changed bool
+
+	// if the amount of emojis on the account has changed, then the got emojis
+	// are definitely different from the previous ones (if there were any) --
+	// the account has either more or fewer emojis set on it now, so take the
+	// discovered emojis as the new correct ones.
+	if len(maybeEmojis) != len(gotEmojis) && len(maybeEmojiIDs) != len(gotEmojiIDs) {
+		changed = true
+		targetAccount.Emojis = gotEmojis
+		targetAccount.EmojiIDs = gotEmojiIDs
+		return changed, nil
+	}
+
+	// if the lengths of everything are zero, this is simple - nothing has changed
+	// and there's nothing to do
+	if len(maybeEmojis) == 0 && len(gotEmojis) == 0 && len(maybeEmojiIDs) == 0 && len(gotEmojiIDs) == 0 {
+		changed = false
+		return changed, nil	
+	}
+
+	// if the lengths are the same but none of the slices are zero, something *might*
+	// have changed, so we have to check
+	sort.SliceStable(maybeEmojis, func(i, j int) bool {
+		return maybeEmojis[i].URI < maybeEmojis[j].URI
+	})
+	sort.SliceStable(gotEmojis, func(i, j int) bool {
+		return gotEmojis[i].URI < gotEmojis[j].URI
+	})
+	sort.SliceStable(maybeEmojiIDs, func(i, j int) bool {
+		return maybeEmojiIDs[i] < maybeEmojiIDs[j]
+	})
+	sort.SliceStable(gotEmojiIDs, func(i, j int) bool {
+		return gotEmojiIDs[i] < gotEmojiIDs[j]
+	})
+	if !reflect.DeepEqual(maybeEmojis, gotEmojis) || !reflect.DeepEqual(maybeEmojiIDs, gotEmojiIDs) {
+		changed = true
+		targetAccount.Emojis = gotEmojis
+		targetAccount.EmojiIDs = gotEmojiIDs
 	}
 
 	return changed, nil

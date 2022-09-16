@@ -67,6 +67,7 @@ const (
 )
 
 var registerTables = []interface{}{
+	&gtsmodel.AccountToEmoji{},
 	&gtsmodel.StatusToEmoji{},
 	&gtsmodel.StatusToTag{},
 }

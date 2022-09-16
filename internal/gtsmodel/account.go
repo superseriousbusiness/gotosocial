@@ -41,6 +41,8 @@ type Account struct {
 	HeaderMediaAttachment   *MediaAttachment `validate:"-" bun:"rel:belongs-to"`                                                                                     // MediaAttachment corresponding to headerMediaAttachmentID
 	HeaderRemoteURL         string           `validate:"omitempty,url" bun:",nullzero"`                                                                              // For a non-local account, where can the header be fetched?
 	DisplayName             string           `validate:"-" bun:""`                                                                                                   // DisplayName for this account. Can be empty, then just the Username will be used for display purposes.
+	EmojiIDs                []string         `validate:"dive,ulid" bun:"emojis,array"`                                                                               // Database IDs of any emojis used in this account's bio, display name, etc
+	Emojis                  []*Emoji         `validate:"-" bun:"attached_emojis,m2m:account_to_emojis"`                                                              // Emojis corresponding to emojiIDs. https://bun.uptrace.dev/guide/relations.html#many-to-many-relation
 	Fields                  []Field          `validate:"-"`                                                                                                          // a key/value map of fields that this account has added to their profile
 	Note                    string           `validate:"-" bun:""`                                                                                                   // A note that this account has on their profile (ie., the account's bio/description of themselves)
 	NoteRaw                 string           `validate:"-" bun:""`                                                                                                   // The raw contents of .Note without conversion to HTML, only available when requester = target
@@ -73,6 +75,14 @@ type Account struct {
 	SuspendedAt             time.Time        `validate:"-" bun:"type:timestamptz,nullzero"`                                                                          // When was this account suspended (eg., don't allow it to log in/post, don't accept media/posts from this account)
 	HideCollections         *bool            `validate:"-" bun:",default:false"`                                                                                     // Hide this account's collections
 	SuspensionOrigin        string           `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                                                // id of the database entry that caused this account to become suspended -- can be an account ID or a domain block ID
+}
+
+// AccountToEmoji is an intermediate struct to facilitate the many2many relationship between an account and one or more emojis.
+type AccountToEmoji struct {
+	AccountID string   `validate:"ulid,required" bun:"type:CHAR(26),unique:accountemoji,nullzero,notnull"`
+	Account   *Account `validate:"-" bun:"rel:belongs-to"`
+	EmojiID   string   `validate:"ulid,required" bun:"type:CHAR(26),unique:accountemoji,nullzero,notnull"`
+	Emoji     *Emoji   `validate:"-" bun:"rel:belongs-to"`
 }
 
 // Field represents a key value field on an account, for things like pronouns, website, etc.

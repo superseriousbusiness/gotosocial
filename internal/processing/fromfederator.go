@@ -369,6 +369,7 @@ func (p *processor) processUpdateAccountFromFederator(ctx context.Context, feder
 		return err
 	}
 
+	// the actual database update occurs inside GetRemoteAccount
 	if _, err := p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
 		RequestingUsername: federatorMsg.ReceivingAccount.Username,
 		RemoteAccountID:    incomingAccountURL,
