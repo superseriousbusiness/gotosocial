@@ -131,7 +131,7 @@ function NewEmoji() {
 		<div>
 			<h2>Add new custom emoji</h2>
 
-			<FakeToot content="bazinga">
+			<FakeToot>
 				Look at this new custom emoji {emojiOrShortcode} isn&apos;t it cool?
 			</FakeToot>
 

@@ -28,7 +28,7 @@ module.exports = function FakeToot({children}) {
 		<div className="toot expanded">
 			<div className="contentgrid">
 				<span className="avatar">
-					<img src="http://localhost:8080/assets/default_avatars/GoToSocial_icon6.png" alt=""/>
+					<img src={account.avatar} alt=""/>
 				</span>
 				<span className="displayname">{account.display_name.trim().length > 0 ? account.display_name : account.username}</span>
 				<span className="username">@{account.username}</span>
