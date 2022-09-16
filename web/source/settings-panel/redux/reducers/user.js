@@ -18,8 +18,9 @@
 
 "use strict";
 
-const {createSlice} = require("@reduxjs/toolkit");
+const { createSlice } = require("@reduxjs/toolkit");
 const d = require("dotty");
+const defaultValue = require("default-value");
 
 module.exports = createSlice({
 	name: "user",
@@ -28,20 +29,22 @@ module.exports = createSlice({
 		settings: {}
 	},
 	reducers: {
-		setAccount: (state, {payload}) => {
-			if (payload.source != undefined && payload.source.language != undefined) {
-				payload.source.language = payload.source.language.toUpperCase();
-			}
+		setAccount: (state, { payload }) => {
+			payload.source = defaultValue(payload.source, {});
+			payload.source.language = defaultValue(payload.source.language.toUpperCase(), "EN");
+			payload.source.status_format = defaultValue(payload.source.status_format, "plain");
+			payload.source.sensitive = defaultValue(payload.source.sensitive, false);
+
 			state.profile = payload;
 			// /user/settings only needs a copy of the 'source' obj
 			state.settings = {
 				source: payload.source
 			};
 		},
-		setProfileVal: (state, {payload: [key, val]}) => {
+		setProfileVal: (state, { payload: [key, val] }) => {
 			d.put(state.profile, key, val);
 		},
-		setSettingsVal: (state, {payload: [key, val]}) => {
+		setSettingsVal: (state, { payload: [key, val] }) => {
 			d.put(state.settings, key, val);
 		}
 	}
