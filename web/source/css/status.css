@@ -148,17 +148,17 @@ main {
 
 			blockquote {
 				padding: 0.5rem 0 0.5rem 1.5rem;
-				border-left: 0.2rem solid $sloth-orange1;
+				border-left: 0.2rem solid $border-accent;
 				margin-left: 1rem;
 				font-style: italic;
 			}
 
 			hr {
-				border: 1px dashed $sloth-orange1;
+				border: 1px dashed $border-accent;
 			} 
 
 			pre, code {
-				background-color: $sloth-gray2-darker7;
+				background-color: $gray2;
 			}
 
 			code {

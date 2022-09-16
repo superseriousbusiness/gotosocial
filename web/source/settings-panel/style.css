@@ -95,7 +95,6 @@ section {
 			text-transform: uppercase;
 			color: $settings-nav-header-fg;
 			background: $settings-nav-header-bg;
-			border-bottom: 0.1rem solid $sloth_gray2_darker7;
 		}
 		
 		nav {
@@ -103,7 +102,6 @@ section {
 			flex-direction: column;
 
 			a {
-				border-bottom: 0.1rem solid $sloth_gray2_darker3;
 				padding: 1rem;
 				text-decoration: none;
 				transition: 0.1s;

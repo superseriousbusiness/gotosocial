@@ -42,7 +42,7 @@ html, body {
 	background: $bg;
 	color: $fg;
 	font-family: "Noto Sans", sans-serif;
-	scrollbar-color: $sloth-orange1 $sloth-gray2-darker3;
+	scrollbar-color: $orange1 $gray3;
 }
 
 body {
