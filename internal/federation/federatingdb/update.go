@@ -121,7 +121,7 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 			return fmt.Errorf("UPDATE: error converting to account: %s", err)
 		}
 
-		if updatedAcct.Domain == config.GetHost() {
+		if updatedAcct.Domain == config.GetHost() || updatedAcct.Domain == config.GetAccountDomain() {
 			// no need to update local accounts
 			// in fact, if we do this will break the shit out of things so do NOT
 			return nil
@@ -137,6 +137,7 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 		updatedAcct.Language = requestingAcct.Language
 
 		// pass to the processor for further updating of eg., avatar/header, emojis
+		// the actual db insert/update will take place a bit later
 		f.fedWorker.Queue(messages.FromFederator{
 			APObjectType:     ap.ObjectProfile,
 			APActivityType:   ap.ActivityUpdate,

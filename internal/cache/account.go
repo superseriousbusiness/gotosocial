@@ -116,6 +116,8 @@ func copyAccount(account *gtsmodel.Account) *gtsmodel.Account {
 		HeaderMediaAttachment:   nil,
 		HeaderRemoteURL:         account.HeaderRemoteURL,
 		DisplayName:             account.DisplayName,
+		EmojiIDs:                account.EmojiIDs,
+		Emojis:                  nil,
 		Fields:                  account.Fields,
 		Note:                    account.Note,
 		NoteRaw:                 account.NoteRaw,

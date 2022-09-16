@@ -45,7 +45,8 @@ func (a *accountDB) newAccountQ(account *gtsmodel.Account) *bun.SelectQuery {
 		NewSelect().
 		Model(account).
 		Relation("AvatarMediaAttachment").
-		Relation("HeaderMediaAttachment")
+		Relation("HeaderMediaAttachment").
+		Relation("Emojis")
 }
 
 func (a *accountDB) GetAccountByID(ctx context.Context, id string) (*gtsmodel.Account, db.Error) {
@@ -169,7 +170,7 @@ func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account
 		// create links between this account and any emojis it uses
 		// first clear out any old emoji links
 		if _, err := tx.NewDelete().
-			Model([]*gtsmodel.AccountToEmoji{}).
+			Model(&[]*gtsmodel.AccountToEmoji{}).
 			Where("account_id = ?", account.ID).
 			Exec(ctx); err != nil {
 			return err

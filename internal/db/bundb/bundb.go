@@ -72,8 +72,8 @@ var registerTables = []interface{}{
 	&gtsmodel.StatusToTag{},
 }
 
-// bunDBService satisfies the DB interface
-type bunDBService struct {
+// DBService satisfies the DB interface
+type DBService struct {
 	db.Account
 	db.Admin
 	db.Basic
@@ -88,6 +88,12 @@ type bunDBService struct {
 	db.Status
 	db.Timeline
 	conn *DBConn
+}
+
+// GetConn returns the underlying bun connection.
+// Should only be used in testing + exceptional circumstance.
+func (dbService *DBService) GetConn() *DBConn {
+	return dbService.conn
 }
 
 func doMigration(ctx context.Context, db *bun.DB) error {
@@ -178,7 +184,7 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 	// Prepare domain block cache
 	blockCache := cache.NewDomainBlockCache()
 
-	ps := &bunDBService{
+	ps := &DBService{
 		Account: accounts,
 		Admin: &adminDB{
 			conn: conn,
@@ -400,7 +406,7 @@ func tweakConnectionValues(sqldb *sql.DB) {
 	CONVERSION FUNCTIONS
 */
 
-func (ps *bunDBService) TagStringsToTags(ctx context.Context, tags []string, originAccountID string) ([]*gtsmodel.Tag, error) {
+func (ps *DBService) TagStringsToTags(ctx context.Context, tags []string, originAccountID string) ([]*gtsmodel.Tag, error) {
 	protocol := config.GetProtocol()
 	host := config.GetHost()
 

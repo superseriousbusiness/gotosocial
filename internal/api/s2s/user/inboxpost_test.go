@@ -237,6 +237,8 @@ func (suite *InboxPostTestSuite) TestPostUnblock() {
 func (suite *InboxPostTestSuite) TestPostUpdate() {
 	updatedAccount := *suite.testAccounts["remote_account_1"]
 	updatedAccount.DisplayName = "updated display name!"
+	testEmoji := testrig.NewTestEmojis()["rainbow"]
+	updatedAccount.Emojis = []*gtsmodel.Emoji{testEmoji}
 
 	asAccount, err := suite.tc.AccountToAS(context.Background(), &updatedAccount)
 	suite.NoError(err)
@@ -288,6 +290,15 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager, fedWorker)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager, clientWorker, fedWorker)
+	if err := processor.Start(); err != nil {
+		panic(err)
+	}
+	defer func() {
+		if err := processor.Stop(); err != nil {
+			panic(err)
+		}
+	}()
+
 	userModule := user.New(processor).(*user.Module)
 
 	// setup request
@@ -322,11 +333,21 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 	suite.Equal(http.StatusOK, result.StatusCode)
 
 	// account should be changed in the database now
-	dbUpdatedAccount, err := suite.db.GetAccountByID(context.Background(), updatedAccount.ID)
-	suite.NoError(err)
+	var dbUpdatedAccount *gtsmodel.Account
 
-	// displayName should be updated
-	suite.Equal("updated display name!", dbUpdatedAccount.DisplayName)
+	if !testrig.WaitFor(func() bool {
+		// displayName should be updated
+		dbUpdatedAccount, _ = suite.db.GetAccountByID(context.Background(), updatedAccount.ID)
+		return dbUpdatedAccount.DisplayName == "updated display name!"
+	}) {
+		suite.FailNow("timed out waiting for account update")
+	}
+
+	// emojis should be updated
+	suite.Contains(dbUpdatedAccount.EmojiIDs, testEmoji.ID)
+
+	// account should be freshly webfingered
+	suite.WithinDuration(time.Now(), dbUpdatedAccount.LastWebfingeredAt, 10*time.Second)
 
 	// everything else should be the same as it was before
 	suite.EqualValues(updatedAccount.Username, dbUpdatedAccount.Username)
@@ -350,7 +371,6 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 	suite.EqualValues(updatedAccount.Language, dbUpdatedAccount.Language)
 	suite.EqualValues(updatedAccount.URI, dbUpdatedAccount.URI)
 	suite.EqualValues(updatedAccount.URL, dbUpdatedAccount.URL)
-	suite.EqualValues(updatedAccount.LastWebfingeredAt, dbUpdatedAccount.LastWebfingeredAt)
 	suite.EqualValues(updatedAccount.InboxURI, dbUpdatedAccount.InboxURI)
 	suite.EqualValues(updatedAccount.OutboxURI, dbUpdatedAccount.OutboxURI)
 	suite.EqualValues(updatedAccount.FollowingURI, dbUpdatedAccount.FollowingURI)

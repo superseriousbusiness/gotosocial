@@ -369,11 +369,14 @@ func (p *processor) processUpdateAccountFromFederator(ctx context.Context, feder
 		return err
 	}
 
-	// the actual database update occurs inside GetRemoteAccount
+	// further database updates occur inside getremoteaccount
 	if _, err := p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
-		RequestingUsername: federatorMsg.ReceivingAccount.Username,
-		RemoteAccountID:    incomingAccountURL,
-		Blocking:           true,
+		RequestingUsername:    federatorMsg.ReceivingAccount.Username,
+		RemoteAccountID:       incomingAccountURL,
+		RemoteAccountHost:     incomingAccount.Domain,
+		RemoteAccountUsername: incomingAccount.Username,
+		PartialAccount:        incomingAccount,
+		Blocking:              true,
 	}); err != nil {
 		return fmt.Errorf("error enriching updated account from federator: %s", err)
 	}

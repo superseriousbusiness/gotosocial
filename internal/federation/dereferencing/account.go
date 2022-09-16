@@ -77,6 +77,11 @@ type GetRemoteAccountParams struct {
 	// quickly fetch a remote account from the database or fail, and don't want to cause
 	// http requests to go flying around.
 	SkipResolve bool
+	// PartialAccount can be used if the GetRemoteAccount call results from a federated/ap
+	// account update. In this case, we will already have a partial representation of the account,
+	// derived from converting the AP representation to a gtsmodel representation. If this field
+	// is provided, then GetRemoteAccount will use this as a basis for building the full account.
+	PartialAccount *gtsmodel.Account
 }
 
 // GetRemoteAccount completely dereferences a remote account, converts it to a GtS model account,
@@ -108,8 +113,16 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 	skipResolve := params.SkipResolve
 
 	// this first step checks if we have the
-	// account in the database somewhere already
+	// account in the database somewhere already,
+	// or if we've been provided it as a partial
 	switch {
+	case params.PartialAccount != nil:
+		foundAccount = params.PartialAccount
+		if foundAccount.Domain == "" || foundAccount.Domain == config.GetHost() || foundAccount.Domain == config.GetAccountDomain() {
+			// this is actually a local account,
+			// make sure we don't try to resolve
+			skipResolve = true
+		}
 	case params.RemoteAccountID != nil:
 		uri := params.RemoteAccountID
 		host := uri.Host
@@ -164,7 +177,7 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 		params.RemoteAccountHost = params.RemoteAccountID.Host
 		// ... but we still need the username so we can do a finger for the accountDomain
 
-		// check if we had the account stored already and got it earlier
+		// check if we got the account earlier
 		if foundAccount != nil {
 			params.RemoteAccountUsername = foundAccount.Username
 		} else {
@@ -199,10 +212,10 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 		accountDomain = params.RemoteAccountHost
 	}
 
-	// to save on remote calls: only webfinger if we don't have a remoteAccount yet, or if we haven't
-	// fingered the remote account for at least 2 days; don't finger instance accounts
+	// to save on remote calls: only webfinger if we don't have a remoteAccount yet, if the remote account was only a
+	// partial, or if we haven't fingered the remote account for at least 2 days (and don't finger instance accounts)
 	var fingered time.Time
-	if foundAccount == nil || (foundAccount.LastWebfingeredAt.Before(time.Now().Add(webfingerInterval)) && !instanceAccount(foundAccount)) {
+	if foundAccount == nil || params.PartialAccount != nil || (foundAccount.LastWebfingeredAt.Before(time.Now().Add(webfingerInterval)) && !instanceAccount(foundAccount)) {
 		accountDomain, params.RemoteAccountID, err = d.fingerRemoteAccount(ctx, params.RequestingUsername, params.RemoteAccountUsername, params.RemoteAccountHost)
 		if err != nil {
 			err = fmt.Errorf("GetRemoteAccount: error while fingering: %s", err)
@@ -422,7 +435,7 @@ func (d *deref) populateAccountFields(ctx context.Context, account *gtsmodel.Acc
 func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsmodel.Account, requestingUsername string, blocking bool) (bool, error) {
 	var (
 		changed bool
-		t transport.Transport
+		t       transport.Transport
 	)
 
 	if targetAccount.AvatarRemoteURL != "" && (targetAccount.AvatarMediaAttachmentID == "") {
@@ -560,10 +573,10 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 	return changed, nil
 }
 
-func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gtsmodel.Account, requestingUsername string) (bool, error) {	
+func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gtsmodel.Account, requestingUsername string) (bool, error) {
 	maybeEmojis := targetAccount.Emojis
 	maybeEmojiIDs := targetAccount.EmojiIDs
-	
+
 	gotEmojis, err := d.populateEmojis(ctx, targetAccount.Emojis, requestingUsername)
 	if err != nil {
 		return false, err
@@ -591,7 +604,7 @@ func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gts
 	// and there's nothing to do
 	if len(maybeEmojis) == 0 && len(gotEmojis) == 0 && len(maybeEmojiIDs) == 0 && len(gotEmojiIDs) == 0 {
 		changed = false
-		return changed, nil	
+		return changed, nil
 	}
 
 	// if the lengths are the same but none of the slices are zero, something *might*

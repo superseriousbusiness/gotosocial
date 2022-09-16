@@ -48,6 +48,7 @@ func init() {
 			if _, err := tx.
 				NewCreateTable().
 				Model(&gtsmodel.AccountToEmoji{}).
+				IfNotExists().
 				Exec(ctx); err != nil {
 				return err
 			}
