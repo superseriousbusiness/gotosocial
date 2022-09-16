@@ -43,7 +43,8 @@ module.exports = createSlice({
 			list: "",
 			exportType: "plain",
 			...emptyBlock()
-		}
+		},
+		emoji: []
 	},
 	reducers: {
 		setBlockedInstances: (state, { payload }) => {
@@ -86,6 +87,10 @@ module.exports = createSlice({
 			state.bulkBlock.list = Object.values(state.blockedInstances).map((entry) => {
 				return entry.domain;
 			}).join("\n");
+		},
+
+		setEmoji: (state, {payload}) => {
+			state.emoji = payload;
 		}
 	}
 });

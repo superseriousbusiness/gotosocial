@@ -18,6 +18,39 @@
 
 "use strict";
 
-module.exports = function AdminCustomization() {
-	return "custom emoji";
+const Promise = require("bluebird");
+const React = require("react");
+const Redux = require("react-redux");
+
+const api = require("../lib/api");
+const adminActions = require("../redux/reducers/admin").actions;
+
+module.exports = function CustomEmoji() {
+	return (
+		<>
+			<h1>Custom Emoji</h1>
+			<div>
+				<EmojiOverview/>
+			</div>
+			<div>
+				<h2>Upload</h2>
+			</div>
+		</>
+	);
 };
+
+function EmojiOverview() {
+	const dispatch = Redux.useDispatch();
+	const emoji = Redux.useSelector((state) => state.admin.emoji);
+	console.log(emoji);
+
+	React.useEffect(() => {
+		dispatch(api.admin.fetchCustomEmoji());
+	}, []);
+
+	return (
+		<>
+
+		</>
+	);
+}

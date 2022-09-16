@@ -147,6 +147,16 @@ module.exports = function ({ apiCall, getChanges }) {
 					return dispatch(apiCall("POST", `/api/v1/admin/media_cleanup?remote_cache_days=${days}`));
 				});
 			};
+		},
+
+		fetchCustomEmoji: function fetchCustomEmoji() {
+			return function (dispatch, _getState) {
+				return Promise.try(() => {
+					return dispatch(apiCall("GET", "/api/v1/custom_emojis"));
+				}).then((emoji) => {
+					return dispatch(admin.setEmoji(emoji));
+				});
+			};
 		}
 	};
 	return adminAPI;
