@@ -72,25 +72,20 @@ func loggingMiddleware(c *gin.Context) {
 		fields[4] = kv.Field{"statusCode", code}
 		fields[5] = kv.Field{"path", path}
 
-		var lvl level.LEVEL
+		// Create log entry with fields
+		l := log.WithFields(fields...)
 
 		// Default is info
-		lvl = level.INFO
+		lvl := level.INFO
 
 		if code >= 500 {
 			// This is a server error
 			lvl = level.ERROR
-
-			// Log as separate error with details
-			log.WithField("error", c.Errors).
-				Error("http handler error")
+			l = l.WithField("error", c.Errors)
 		}
 
 		// Generate a nicer looking bytecount
 		size := bytesize.Size(c.Writer.Size())
-
-		// Create log entry with fields
-		l := log.WithFields(fields...)
 
 		// Finally, write log entry with status text body size
 		l.Logf(lvl, "%s: wrote %s", http.StatusText(code), size)
