@@ -20,7 +20,7 @@
 
 const Promise = require("bluebird");
 const React = require("react");
-const ReactDom = require("react-dom");
+const ReactDom = require("react-dom/client");
 const Redux = require("react-redux");
 const { Switch, Route, Redirect } = require("wouter");
 const { Provider } = require("react-redux");
@@ -174,4 +174,5 @@ function Main() {
 	);
 }
 
-ReactDom.render(<React.StrictMode><Main /></React.StrictMode>, document.getElementById("root"));
+const root = ReactDom.createRoot(document.getElementById("root"));
+root.render(<React.StrictMode><Main /></React.StrictMode>);
