@@ -192,9 +192,14 @@ input, select, textarea {
 	}
 
 	button, .button {
-		margin-top: 1rem;
-		margin-right: 1rem;
 		white-space: nowrap;
+		margin-right: 1rem;
+	}
+}
+
+.messagebutton > div {
+	button, .button {
+		margin-top: 1rem;
 	}
 }
 
@@ -359,6 +364,23 @@ section.with-sidebar > div {
 	font-weight: bold;
 }
 
+.list {
+	display: flex;
+	flex-direction: column;
+	margin-top: 0.5rem;
+	max-height: 40rem;
+	overflow: auto;
+
+	.entry {
+		display: flex;
+		background: $settings-entry-bg;
+
+		&:hover {
+			background: $settings-entry-hover-bg;
+		}
+	}
+}
+
 .instance-list {
 	.filter {
 		display: flex;
@@ -370,20 +392,9 @@ section.with-sidebar > div {
 		}
 	}
 
-	.list {
-		display: flex;
-		flex-direction: column;
-		margin-top: 0.5rem;
-		max-height: 40rem;
-		overflow: auto;
-	}
-
 	.entry {
 		padding: 0.3rem;
 		margin: 0.2rem 0;
-		background: $settings-entry-bg;
-
-		display: flex;
 
 		#domain {
 			flex: 1 1 auto;
@@ -391,14 +402,49 @@ section.with-sidebar > div {
 			white-space: nowrap;
 			text-overflow: ellipsis;
 		}
-
-		&:hover {
-			background: $settings-entry-hover-bg;
-		}
 	}
 }
 
 .bulk h2 {
 	display: flex;
 	justify-content: space-between;
+}
+
+.emoji-list {
+	background: $settings-entry-bg;
+
+	.entry {
+		padding: 0.5rem;
+		flex-direction: column;
+
+		.emoji-group {
+			display: flex;
+	
+			a {
+				border-radius: $br;
+				padding: 0.4rem;
+				line-height: 0;
+	
+				img {
+					height: 2rem;
+					width: 2rem;
+				}
+
+				&:hover {
+					background: $settings-entry-hover-bg;
+				}
+			}
+		}
+
+		&:hover {
+			background: inherit;
+		}
+	}
+}
+
+.toot {
+	padding-top: 0.5rem;
+	.contentgrid {
+		padding: 0 0.5rem;
+	}
 }

@@ -287,7 +287,6 @@ function BackButton() {
 	);
 }
 
-
 function InstancePageWrapped() {
 	/* We wrap the component to generate formFields with a setter depending on the domain
 		 if formFields() is used inside the same component that is re-rendered with their state,

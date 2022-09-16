@@ -42,6 +42,7 @@ func (m *Module) SettingsPanelHandler(c *gin.Context) {
 			assetsPathPrefix + "/dist/_colors.css",
 			assetsPathPrefix + "/dist/base.css",
 			assetsPathPrefix + "/dist/profile.css",
+			assetsPathPrefix + "/dist/status.css",
 			assetsPathPrefix + "/dist/settings-panel-style.css",
 		},
 		"javascript": []string{

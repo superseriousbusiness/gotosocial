@@ -157,6 +157,23 @@ module.exports = function ({ apiCall, getChanges }) {
 					return dispatch(admin.setEmoji(emoji));
 				});
 			};
+		},
+
+		newEmoji: function newEmoji() {
+			return function (dispatch, getState) {
+				return Promise.try(() => {
+					const state = getState().admin.newEmoji;
+
+					const update = getChanges(state, {
+						formKeys: ["shortcode"],
+						fileKeys: ["image"]
+					});
+
+					return dispatch(apiCall("POST", "/api/v1/admin/custom_emojis", update, "form"));
+				}).then((emoji) => {
+					return dispatch(admin.addEmoji(emoji));
+				});
+			};
 		}
 	};
 	return adminAPI;

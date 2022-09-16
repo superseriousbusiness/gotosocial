@@ -92,7 +92,7 @@ function App() {
 					e.message = "Stored OAUTH token no longer valid, please log in again.";
 				}
 				setErrorMsg(e);
-				console.error(e.message);
+				console.error(e);
 			});
 		}
 	}, []);

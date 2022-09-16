@@ -21,6 +21,7 @@
 const React = require("react");
 const Redux = require("react-redux");
 const d = require("dotty");
+const prettierBytes = require("prettier-bytes");
 
 function eventListeners(dispatch, setter, obj) {
 	return {
@@ -78,7 +79,7 @@ module.exports = {
 	formFields: function formFields(setter, selector) {
 		function FormField({
 			type, id, name, className="", placeHolder="", fileType="", children=null,
-			options=null, inputProps={}, withPreview=true
+			options=null, inputProps={}, withPreview=true, showSize=false, maxSize=Infinity
 		}) {
 			const dispatch = Redux.useDispatch();
 			let state = Redux.useSelector(selector);
@@ -105,10 +106,22 @@ module.exports = {
 			} else if (type == "file") {
 				defaultLabel = false;
 				let file = get(state, `${id}File`);
+
+				let size = null;
+				if (showSize && file) {
+					size = `(${prettierBytes(file.size)})`;
+
+					if (file.size > maxSize) {
+						size = <span className="error-text">{size}</span>;
+					}
+				}
+
 				field = (
 					<>
 						<label htmlFor={id} className="file-input button">Browse</label>
-						<span>{file ? file.name : "no file selected"}</span>
+						<span>
+							{file ? file.name : "no file selected"} {size}
+						</span>
 						{/* <a onClick={removeFile("header")}>remove</a> */}
 						<input className="hidden" id={id} type="file" accept={fileType} onChange={onFileChange(id, withPreview)}  {...inputProps}/>
 					</>

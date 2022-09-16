@@ -278,6 +278,13 @@ section.error {
 	}
 }
 
+.error-text {
+	color: $error1;
+	background: $error2;
+	border-radius: 0.1rem;
+	font-weight: bold;
+}
+
 input, select, textarea {
 	box-sizing: border-box;
 	border: 0.15rem solid $input-border;
