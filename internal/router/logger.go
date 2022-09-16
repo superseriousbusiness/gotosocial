@@ -81,12 +81,9 @@ func loggingMiddleware(c *gin.Context) {
 			// This is a server error
 			lvl = level.ERROR
 
-			if len(c.Errors) > 0 {
-				// Add an error string log field
-				fields = append(fields, kv.Field{
-					"error", c.Errors.String(),
-				})
-			}
+			// Log as separate error with details
+			log.WithField("error", c.Errors).
+				Error("http handler error")
 		}
 
 		// Generate a nicer looking bytecount
