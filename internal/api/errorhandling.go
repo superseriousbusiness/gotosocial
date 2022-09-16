@@ -86,6 +86,13 @@ func genericErrorHandler(c *gin.Context, instanceGet func(ctx context.Context, d
 // if something goes wrong during the function, it will recover and just try to serve
 // an appropriate application/json content-type error.
 func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode)) {
+	if errWithCode.Code() == http.StatusInternalServerError {
+		log.WithFields(kv.Fields{
+			{"path", c.Request.URL.Path},
+			{"error", errWithCode.Error()},
+		}...).Error("Internal Server Error")
+	}
+
 	// discover if we're allowed to serve a nice html error page,
 	// or if we should just use a json. Normally we would want to
 	// check for a returned error, but if an error occurs here we
