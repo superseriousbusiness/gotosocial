@@ -107,7 +107,7 @@ func (d *domainDB) DeleteDomainBlock(ctx context.Context, domain string) db.Erro
 	_, err := d.conn.NewDelete().
 		Model((*gtsmodel.DomainBlock)(nil)).
 		Where("domain = ?", domain).
-		Exec(ctx, nil)
+		Exec(ctx)
 	if err != nil {
 		return d.conn.ProcessError(err)
 	}
