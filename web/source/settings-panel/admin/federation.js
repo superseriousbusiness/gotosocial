@@ -44,7 +44,7 @@ module.exports = function AdminSettings() {
 
 	React.useEffect(() => {
 		if (!loadedBlockedInstances ) {
-			return Promise.try(() => {
+			Promise.try(() => {
 				return dispatch(api.admin.fetchDomainBlocks());
 			});
 		}
@@ -320,7 +320,7 @@ function InstancePage({domain, Form}) {
 
 	React.useEffect(() => {
 		if (entry == undefined) {
-			return dispatch(adminActions.newDomainBlock(domain));
+			dispatch(adminActions.newDomainBlock(domain));
 		}
 	}, []);
 
