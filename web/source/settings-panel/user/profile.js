@@ -26,6 +26,7 @@ const Submit = require("../components/submit");
 
 const api = require("../lib/api");
 const user = require("../redux/reducers/user").actions;
+const submit = require("../lib/submit");
 
 const { formFields } = require("../components/form-fields");
 
@@ -46,18 +47,10 @@ module.exports = function UserProfile() {
 	const [errorMsg, setError] = React.useState("");
 	const [statusMsg, setStatus] = React.useState("");
 
-	function submit() {
-		setStatus("PATCHing");
-		setError("");
-		return Promise.try(() => {
-			return dispatch(api.user.updateProfile());
-		}).then(() => {
-			setStatus("Saved!");
-		}).catch((e) => {
-			setError(e.message);
-			setStatus("");
-		});
-	}
+	const saveProfile = submit(
+		() => dispatch(api.user.updateProfile()),
+		{setStatus, setError}
+	);
 
 	return (
 		<div className="user-profile">
@@ -114,7 +107,7 @@ module.exports = function UserProfile() {
 					<a href="https://docs.gotosocial.org/en/latest/user_guide/custom_css" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about custom profile CSS (opens in a new tab)</a>
 				</TextArea>
 			}
-			<Submit onClick={submit} label="Save profile info" errorMsg={errorMsg} statusMsg={statusMsg} />
+			<Submit onClick={saveProfile} label="Save profile info" errorMsg={errorMsg} statusMsg={statusMsg} />
 		</div>
 	);
 };

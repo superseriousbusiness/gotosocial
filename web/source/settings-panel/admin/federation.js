@@ -28,6 +28,7 @@ const { formFields } = require("../components/form-fields");
 
 const api = require("../lib/api");
 const adminActions = require("../redux/reducers/admin").actions;
+const submit = require("../lib/submit");
 
 const base = "/settings/admin/federation";
 
@@ -334,31 +335,15 @@ function InstancePage({domain, Form}) {
 		}
 	}
 
-	function submit() {
-		setStatus("PATCHing");
-		setError("");
-		return Promise.try(() => {
-			return dispatch(api.admin.updateDomainBlock(domain));
-		}).then(() => {
-			setStatus("Saved!");
-		}).catch((e) => {
-			setError(e.message);
-			setStatus("");
-		});
-	}
+	const updateBlock = submit(
+		() => dispatch(api.admin.updateDomainBlock(domain)),
+		{setStatus, setError}
+	);
 
-	function removeBlock() {
-		setStatus("removing");
-		setError("");
-		return Promise.try(() => {
-			return dispatch(api.admin.removeDomainBlock(domain));
-		}).then(() => {
-			setStatus("removed");
-		}).catch((e) => {
-			setError(e.message);
-			setStatus("");
-		});
-	}
+	const removeBlock = submit(
+		() => dispatch(api.admin.removeDomainBlock(domain)),
+		{setStatus, setError, startStatus: "Removing", successStatus: "Removed!"}
+	);
 
 	return (
 		<div>
@@ -381,7 +366,7 @@ function InstancePage({domain, Form}) {
 			/>
 
 			<div className="messagebutton">
-				<button type="submit" onClick={submit}>{entry.new ? "Add block" : "Save block"}</button>
+				<button type="submit" onClick={updateBlock}>{entry.new ? "Add block" : "Save block"}</button>
 
 				{!entry.new &&
 					<button className="danger" onClick={removeBlock}>Remove block</button>

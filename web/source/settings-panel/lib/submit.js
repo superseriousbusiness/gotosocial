@@ -34,7 +34,6 @@ module.exports = function submit(func, {
 		}).then(() => {
 			setStatus(successStatus);
 			if (onSuccess != undefined) {
-				console.log("running", onSuccess);
 				return onSuccess();
 			}
 		}).catch((e) => {

@@ -24,6 +24,7 @@ const Redux = require("react-redux");
 
 const api = require("../lib/api");
 const user = require("../redux/reducers/user").actions;
+const submit = require("../lib/submit");
 
 const Languages = require("../components/languages");
 const Submit = require("../components/submit");
@@ -39,18 +40,10 @@ module.exports = function UserSettings() {
 	const [errorMsg, setError] = React.useState("");
 	const [statusMsg, setStatus] = React.useState("");
 
-	function submit() {
-		setStatus("PATCHing");
-		setError("");
-		return Promise.try(() => {
-			return dispatch(api.user.updateSettings());
-		}).then(() => {
-			setStatus("Saved!");
-		}).catch((e) => {
-			setError(e.message);
-			setStatus("");
-		});
-	}
+	const updateSettings = submit(
+		() => dispatch(api.user.updateSettings()),
+		{setStatus, setError}
+	);
 
 	return (
 		<>
@@ -82,7 +75,7 @@ module.exports = function UserSettings() {
 					name="Mark my posts as sensitive by default"
 				/>
 
-				<Submit onClick={submit} label="Save post settings" errorMsg={errorMsg} statusMsg={statusMsg}/>
+				<Submit onClick={updateSettings} label="Save post settings" errorMsg={errorMsg} statusMsg={statusMsg}/>
 			</div>
 			<div>
 				<PasswordChange/>
@@ -101,7 +94,7 @@ function PasswordChange() {
 	const [newPassword, setNewPassword] = React.useState("");
 	const [newPasswordConfirm, setNewPasswordConfirm] = React.useState("");
 
-	function submit() {
+	function changePassword() {
 		if (newPassword !== newPasswordConfirm) {
 			setError("New password and confirm new password did not match!");
 			return;
@@ -141,7 +134,7 @@ function PasswordChange() {
 				<label htmlFor="confirm-new-password">Confirm new password</label>
 				<input name="confirm-new-password" id="confirm-new-password" type="password" autoComplete="new-password" value={newPasswordConfirm} onChange={(e) => setNewPasswordConfirm(e.target.value)} />
 			</div>
-			<Submit onClick={submit} label="Save new password" errorMsg={errorMsg} statusMsg={statusMsg}/>
+			<Submit onClick={changePassword} label="Save new password" errorMsg={errorMsg} statusMsg={statusMsg}/>
 		</>
 	);
 }

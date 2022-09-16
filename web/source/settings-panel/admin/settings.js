@@ -25,6 +25,8 @@ const Redux = require("react-redux");
 const Submit = require("../components/submit");
 
 const api = require("../lib/api");
+const submit = require("../lib/submit");
+
 const adminActions = require("../redux/reducers/instances").actions;
 
 const {
@@ -35,23 +37,14 @@ const {
 
 module.exports = function AdminSettings() {
 	const dispatch = Redux.useDispatch();
-	const instance = Redux.useSelector(state => state.instances.adminSettings);
 
 	const [errorMsg, setError] = React.useState("");
 	const [statusMsg, setStatus] = React.useState("");
 
-	function submit() {
-		setStatus("PATCHing");
-		setError("");
-		return Promise.try(() => {
-			return dispatch(api.admin.updateInstance());
-		}).then(() => {
-			setStatus("Saved!");
-		}).catch((e) => {
-			setError(e.message);
-			setStatus("");
-		});
-	}
+	const updateSettings = submit(
+		() => dispatch(api.admin.updateInstance()),
+		{setStatus, setError}
+	);
 
 	return (
 		<div>
@@ -111,7 +104,7 @@ module.exports = function AdminSettings() {
 					/>
 				</div>
 			</div> */}
-			<Submit onClick={submit} label="Save" errorMsg={errorMsg} statusMsg={statusMsg} />
+			<Submit onClick={updateSettings} label="Save" errorMsg={errorMsg} statusMsg={statusMsg} />
 		</div>
 	);
 };

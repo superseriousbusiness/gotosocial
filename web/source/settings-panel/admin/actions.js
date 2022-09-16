@@ -25,6 +25,7 @@ const Redux = require("react-redux");
 const Submit = require("../components/submit");
 
 const api = require("../lib/api");
+const submit = require("../lib/submit");
 
 module.exports = function AdminActionPanel() {
 	const dispatch = Redux.useDispatch();
@@ -34,18 +35,10 @@ module.exports = function AdminActionPanel() {
 	const [errorMsg, setError] = React.useState("");
 	const [statusMsg, setStatus] = React.useState("");
 
-	function submit() {
-		setStatus("PATCHing");
-		setError("");
-		return Promise.try(() => {
-			return dispatch(api.admin.mediaCleanup(days));
-		}).then(() => {
-			setStatus("Saved!");
-		}).catch((e) => {
-			setError(e.message);
-			setStatus("");
-		});
-	}
+	const removeMedia = submit(
+		() => dispatch(api.admin.mediaCleanup(days)),
+		{setStatus, setError}
+	);
 
 	return (
 		<>
@@ -61,7 +54,7 @@ module.exports = function AdminActionPanel() {
 					<label htmlFor="days">Days: </label>
 					<input id="days" type="number" value={days} onChange={(e) => setDays(e.target.value)}/>
 				</div>
-				<Submit onClick={submit} label="Remove media" errorMsg={errorMsg} statusMsg={statusMsg} />
+				<Submit onClick={removeMedia} label="Remove media" errorMsg={errorMsg} statusMsg={statusMsg} />
 			</div>
 		</>
 	);
