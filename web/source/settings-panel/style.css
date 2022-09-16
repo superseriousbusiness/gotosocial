@@ -426,6 +426,8 @@ section.with-sidebar > div {
 				img {
 					height: 2rem;
 					width: 2rem;
+					object-fit: contain;
+					vertical-align: middle;
 				}
 
 				&:hover {
