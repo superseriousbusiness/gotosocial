@@ -32,7 +32,7 @@ const Submit = require("../components/submit");
 const {
 	Checkbox,
 	Select,
-} = require("../components/form-fields").formFields(user.setProfileVal, (state) => state.user.profile);
+} = require("../components/form-fields").formFields(user.setSettingsVal, (state) => state.user.settings);
 
 module.exports = function UserSettings() {
 	const dispatch = Redux.useDispatch();
@@ -49,11 +49,11 @@ module.exports = function UserSettings() {
 		<>
 			<div className="user-settings">
 				<h1>Post settings</h1>
-				<Select id="language" name="Default post language" options={
+				<Select id="source.language" name="Default post language" options={
 					<Languages/>
 				}>
 				</Select>
-				<Select id="privacy" name="Default post privacy" options={
+				<Select id="source.privacy" name="Default post privacy" options={
 					<>
 						<option value="private">Private / followers-only</option>
 						<option value="unlisted">Unlisted</option>
@@ -62,7 +62,7 @@ module.exports = function UserSettings() {
 				}>
 					<a href="https://docs.gotosocial.org/en/latest/user_guide/posts/#privacy-settings" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about post privacy settings (opens in a new tab)</a>
 				</Select>
-				<Select id="format" name="Default post format" options={
+				<Select id="source.format" name="Default post format" options={
 					<>
 						<option value="plain">Plain (default)</option>
 						<option value="markdown">Markdown</option>
@@ -71,7 +71,7 @@ module.exports = function UserSettings() {
 					<a href="https://docs.gotosocial.org/en/latest/user_guide/posts/#input-types" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about post format settings (opens in a new tab)</a>
 				</Select>
 				<Checkbox
-					id="sensitive"
+					id="source.sensitive"
 					name="Mark my posts as sensitive by default"
 				/>
 

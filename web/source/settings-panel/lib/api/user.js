@@ -19,7 +19,6 @@
 "use strict";
 
 const Promise = require("bluebird");
-const d = require("dotty");
 
 const user = require("../../redux/reducers/user").actions;
 

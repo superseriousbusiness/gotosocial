@@ -134,8 +134,7 @@ module.exports = {
 			let label = <label htmlFor={id}>{name}</label>;
 			return (
 				<div className={`form-field ${type}`}>
-					{defaultLabel ? label : null}
-					{field}
+					{defaultLabel ? label : null}	{field}
 					{children}
 				</div>
 			);

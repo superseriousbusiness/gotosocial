@@ -29,6 +29,9 @@ module.exports = createSlice({
 	},
 	reducers: {
 		setAccount: (state, {payload}) => {
+			if (payload.source != undefined && payload.source.language != undefined) {
+				payload.source.language = payload.source.language.toUpperCase();
+			}
 			state.profile = payload;
 			// /user/settings only needs a copy of the 'source' obj
 			state.settings = {
