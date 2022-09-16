@@ -38,6 +38,32 @@ section {
 		border-left: none;
 		border-top-left-radius: 0;
 		border-bottom-left-radius: 0;
+
+		& > div {
+			border-left: 0.2rem solid $border-accent;
+			padding-left: 0.4rem;
+			display: flex;
+			flex-direction: column;
+			gap: 0.5rem;
+			margin: 2rem 0;
+
+			h2 {
+				margin: 0;
+				margin-bottom: 0.5rem;
+			}
+
+			&:only-child {
+				border-left: none;
+			}
+
+			&:first-child {
+				margin-top: 0;
+			}
+
+			&:last-child {
+				margin-bottom: 0;
+			}
+		}
 	}
 
 	.sidebar {
@@ -156,13 +182,18 @@ input, select, textarea {
 	display: none;
 }
 
-.messagebutton {
-	margin-top: 1rem;
+.messagebutton, .messagebutton > div {
 	display: flex;
-	gap: 1rem;
 	align-items: center;
+	flex-wrap: wrap;
 
-	button {
+	div.padded {
+		margin-left: 1rem;
+	}
+
+	button, .button {
+		margin-top: 1rem;
+		margin-right: 1rem;
 		white-space: nowrap;
 	}
 }
@@ -203,7 +234,6 @@ section.with-sidebar > div {
 
 	textarea {
 		width: 100%;
-		height: 8rem;
 	}
 	
 	h1 {
@@ -323,4 +353,52 @@ section.with-sidebar > div {
 			}
 		}
 	}
+}
+
+.form-field label {
+	font-weight: bold;
+}
+
+.instance-list {
+	.filter {
+		display: flex;
+		gap: 0.5rem;
+
+		input {
+			width: auto;
+			flex: 1 1 auto;
+		}
+	}
+
+	.list {
+		display: flex;
+		flex-direction: column;
+		margin-top: 0.5rem;
+		max-height: 40rem;
+		overflow: auto;
+	}
+
+	.entry {
+		padding: 0.3rem;
+		margin: 0.2rem 0;
+		background: $settings-entry-bg;
+
+		display: flex;
+
+		#domain {
+			flex: 1 1 auto;
+			overflow: hidden;
+			white-space: nowrap;
+			text-overflow: ellipsis;
+		}
+
+		&:hover {
+			background: $settings-entry-hover-bg;
+		}
+	}
+}
+
+.bulk h2 {
+	display: flex;
+	justify-content: space-between;
 }

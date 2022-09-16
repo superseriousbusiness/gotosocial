@@ -18,8 +18,8 @@
 
 "use strict";
 
-const {createSlice} = require("@reduxjs/toolkit");
-// const d = require("dotty");
+const { createSlice } = require("@reduxjs/toolkit");
+const defaultValue = require("default-value");
 
 function sortBlocks(blocks) {
 	return blocks.sort((a, b) => { // alphabetical sort
@@ -27,23 +27,66 @@ function sortBlocks(blocks) {
 	});
 }
 
-// function deduplicateBlocks(blocks) {
-// 	let a = new Map();
-// 	blocks.forEach((block) => {
-// 		a.set(block.id, block);
-// 	});
-// 	return Array.from(a.values());
-// }
+function emptyBlock() {
+	return {
+		public_comment: "",
+		private_comment: "",
+		obfuscate: false
+	};
+}
 
 module.exports = createSlice({
 	name: "admin",
 	initialState: {
+		loadedBlockedInstances: false,
 		blockedInstances: undefined,
-		blockedInstancesMap: {}
+		bulkBlock: {
+			list: "",
+			exportType: "plain",
+			...emptyBlock()
+		}
 	},
 	reducers: {
-		setBlockedInstances: (state, {payload}) => {
-			state.blockedInstances = sortBlocks(payload);
+		setBlockedInstances: (state, { payload }) => {
+			state.blockedInstances = {};
+			sortBlocks(payload).forEach((entry) => {
+				state.blockedInstances[entry.domain] = entry;
+			});
+			state.loadedBlockedInstances = true;
 		},
+
+		newDomainBlock: (state, { payload: domain }) => {
+			state.blockedInstances[domain] = {
+				domain,
+				new: true,
+				...emptyBlock()
+			};
+		},
+
+		setDomainBlock: (state, { payload: [domain, data = {}] }) => {
+			state.blockedInstances[domain] = data;
+		},
+
+		updateDomainBlockVal: (state, { payload: [domain, key, val] }) => {
+			state.blockedInstances[domain][key] = val;
+		},
+
+		updateBulkBlockVal: (state, { payload: [key, val] }) => {
+			state.bulkBlock[key] = val;
+		},
+
+		resetBulkBlockVal: (state, { _payload }) => {
+			state.bulkBlock = {
+				list: "",
+				exportType: "plain",
+				...emptyBlock()
+			};
+		},
+
+		exportToField: (state, { _payload }) => {
+			state.bulkBlock.list = Object.values(state.blockedInstances).map((entry) => {
+				return entry.domain;
+			}).join("\n");
+		}
 	}
 });

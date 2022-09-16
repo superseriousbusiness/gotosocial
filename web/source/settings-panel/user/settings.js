@@ -53,38 +53,41 @@ module.exports = function UserSettings() {
 	}
 
 	return (
-		<div className="user-settings">
-			<h1>Post settings</h1>
-			<Select id="language" name="Default post language" options={
-				<Languages/>
-			}>
-			</Select>
-			<Select id="privacy" name="Default post privacy" options={
-				<>
-					<option value="private">Private / followers-only)</option>
-					<option value="unlisted">Unlisted</option>
-					<option value="public">Public</option>
-				</>
-			}>
-				<a href="https://docs.gotosocial.org/en/latest/user_guide/posts/#privacy-settings" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about post privacy settings (opens in a new tab)</a>
-			</Select>
-			<Select id="format" name="Default post format" options={
-				<>
-					<option value="plain">Plain (default)</option>
-					<option value="markdown">Markdown</option>
-				</>
-			}>
-				<a href="https://docs.gotosocial.org/en/latest/user_guide/posts/#input-types" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about post format settings (opens in a new tab)</a>
-			</Select>
-			<Checkbox
-				id="sensitive"
-				name="Mark my posts as sensitive by default"
-			/>
+		<>
+			<div className="user-settings">
+				<h1>Post settings</h1>
+				<Select id="language" name="Default post language" options={
+					<Languages/>
+				}>
+				</Select>
+				<Select id="privacy" name="Default post privacy" options={
+					<>
+						<option value="private">Private / followers-only</option>
+						<option value="unlisted">Unlisted</option>
+						<option value="public">Public</option>
+					</>
+				}>
+					<a href="https://docs.gotosocial.org/en/latest/user_guide/posts/#privacy-settings" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about post privacy settings (opens in a new tab)</a>
+				</Select>
+				<Select id="format" name="Default post format" options={
+					<>
+						<option value="plain">Plain (default)</option>
+						<option value="markdown">Markdown</option>
+					</>
+				}>
+					<a href="https://docs.gotosocial.org/en/latest/user_guide/posts/#input-types" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about post format settings (opens in a new tab)</a>
+				</Select>
+				<Checkbox
+					id="sensitive"
+					name="Mark my posts as sensitive by default"
+				/>
 
-			<Submit onClick={submit} label="Save post settings" errorMsg={errorMsg} statusMsg={statusMsg}/>
-			<hr/>
-			<PasswordChange/>
-		</div>
+				<Submit onClick={submit} label="Save post settings" errorMsg={errorMsg} statusMsg={statusMsg}/>
+			</div>
+			<div>
+				<PasswordChange/>
+			</div>
+		</>
 	);
 };
 

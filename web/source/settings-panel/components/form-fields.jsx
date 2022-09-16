@@ -36,27 +36,32 @@ function eventListeners(dispatch, setter, obj) {
 			};
 		},
 		
-		onFileChange: function (key) {
+		onFileChange: function (key, withPreview) {
 			return function (e) {
-				let old = d.get(obj, key);
-				if (old != undefined) {
-					URL.revokeObjectURL(old); // no error revoking a non-Object URL as provided by instance
-				}
 				let file = e.target.files[0];
-				let objectURL = URL.createObjectURL(file);
-				dispatch(setter([key, objectURL]));
+				if (withPreview) {
+					let old = d.get(obj, key);
+					if (old != undefined) {
+						URL.revokeObjectURL(old); // no error revoking a non-Object URL as provided by instance
+					}
+					let objectURL = URL.createObjectURL(file);
+					dispatch(setter([key, objectURL]));
+				}
 				dispatch(setter([`${key}File`, file]));
 			};
 		}
 	};
 }
 
-function get(state, id) {
+function get(state, id, defaultVal) {
 	let value;
 	if (id.includes(".")) {
 		value = d.get(state, id);
 	} else {
 		value = state[id];
+	}
+	if (value == undefined) {
+		value = defaultVal;
 	}
 	return value;
 }
@@ -71,7 +76,10 @@ function get(state, id) {
 
 module.exports = {
 	formFields: function formFields(setter, selector) {
-		function FormField({type, id, name, className="", placeHolder="", fileType="", children=null, options=null}) {
+		function FormField({
+			type, id, name, className="", placeHolder="", fileType="", children=null,
+			options=null, inputProps={}, withPreview=true
+		}) {
 			const dispatch = Redux.useDispatch();
 			let state = Redux.useSelector(selector);
 			let {
@@ -83,14 +91,14 @@ module.exports = {
 			let field;
 			let defaultLabel = true;
 			if (type == "text") {
-				field = <input type="text" id={id} value={get(state, id)} placeholder={placeHolder} className={className} onChange={onTextChange(id)}/>;
+				field = <input type="text" id={id} value={get(state, id, "")} placeholder={placeHolder} className={className} onChange={onTextChange(id)} {...inputProps}/>;
 			} else if (type == "textarea") {
-				field = <textarea type="text" id={id} value={get(state, id)} placeholder={placeHolder} className={className} onChange={onTextChange(id)}/>;
+				field = <textarea type="text" id={id} value={get(state, id, "")} placeholder={placeHolder} className={className} onChange={onTextChange(id)} rows={8} {...inputProps}/>;
 			} else if (type == "checkbox") {
-				field = <input type="checkbox" id={id} checked={get(state, id)} className={className} onChange={onCheckChange(id)}/>;
+				field = <input type="checkbox" id={id} checked={get(state, id, false)} className={className} onChange={onCheckChange(id)} {...inputProps}/>;
 			} else if (type == "select") {
 				field = (
-					<select id={id} checked={get(state, id)} className={className} onChange={onTextChange(id)}>
+					<select id={id} value={get(state, id, "")} className={className} onChange={onTextChange(id)} {...inputProps}>
 						{options}
 					</select>
 				);
@@ -101,8 +109,8 @@ module.exports = {
 					<>
 						<label htmlFor={id} className="file-input button">Browse</label>
 						<span>{file ? file.name : "no file selected"}</span>
-						{/* <a onClick={removeFile("header")} href="#">remove</a> */}
-						<input className="hidden" id={id} type="file" accept={fileType} onChange={onFileChange(id)} />
+						{/* <a onClick={removeFile("header")}>remove</a> */}
+						<input className="hidden" id={id} type="file" accept={fileType} onChange={onFileChange(id, withPreview)}  {...inputProps}/>
 					</>
 				);
 			} else {

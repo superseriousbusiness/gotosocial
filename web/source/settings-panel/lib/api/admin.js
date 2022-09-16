@@ -19,12 +19,13 @@
 "use strict";
 
 const Promise = require("bluebird");
+const isValidDomain = require("is-valid-domain");
 
 const instance = require("../../redux/reducers/instances").actions;
 const admin = require("../../redux/reducers/admin").actions;
 
 module.exports = function ({ apiCall, getChanges }) {
-	return {
+	const adminAPI = {
 		updateInstance: function updateInstance() {
 			return function (dispatch, getState) {
 				return Promise.try(() => {
@@ -50,6 +51,95 @@ module.exports = function ({ apiCall, getChanges }) {
 					return dispatch(admin.setBlockedInstances(data));
 				});
 			};
-		}
+		},
+
+		updateDomainBlock: function updateDomainBlock(domain) {
+			return function (dispatch, getState) {
+				return Promise.try(() => {
+					const state = getState().admin.blockedInstances[domain];
+					const update = getChanges(state, {
+						formKeys: ["domain", "obfuscate", "public_comment", "private_comment"],
+					});
+
+					return dispatch(apiCall("POST", "/api/v1/admin/domain_blocks", update, "form"));
+				}).then((block) => {
+					console.log(block);
+				});
+			};
+		},
+
+		bulkDomainBlock: function bulkDomainBlock() {
+			return function (dispatch, getState) {
+				let invalidDomains = [];
+				let success = 0;
+
+				return Promise.try(() => {
+					const state = getState().admin.bulkBlock;
+					let list = state.list;
+					let domains;
+
+					let fields = getChanges(state, {
+						formKeys: ["obfuscate", "public_comment", "private_comment"]
+					});
+
+					let defaultDate = new Date().toUTCString();
+					
+					if (list[0] == "[") {
+						domains = JSON.parse(state.list);
+					} else {
+						domains = list.split("\n").map((line_) => {
+							let line = line_.trim();
+							if (line.length == 0) {
+								return null;
+							}
+
+							if (!isValidDomain(line, {wildcard: true, allowUnicode: true})) {
+								invalidDomains.push(line);
+								return null;
+							}
+
+							return {
+								domain: line,
+								created_at: defaultDate,
+								...fields
+							};
+						}).filter((a) => a != null);
+					}
+
+					if (domains.length == 0) {
+						return;
+					}
+					console.log(domains);
+
+					const update = {
+						domains: new Blob([JSON.stringify(domains)], {type: "application/json"})
+					};
+
+					return dispatch(apiCall("POST", "/api/v1/admin/domain_blocks?import=true", update, "form"));
+				}).then((blocks) => {
+					if (blocks != undefined) {
+						return Promise.each(blocks, (block) => {
+							success += 1;
+							return dispatch(admin.setDomainBlock([block.domain, block]));
+						});
+					}
+				}).then(() => {
+					return {
+						success,
+						invalidDomains
+					};
+				});
+			};
+		},
+
+		removeDomainBlock: function removeDomainBlock(domain) {
+			return function (dispatch, getState) {
+				return Promise.try(() => {
+					const id = getState().admin.blockedInstances[domain].id;
+					return dispatch(apiCall("DELETE", `/api/v1/admin/domain_blocks/${id}`));
+				});
+			};
+		},
 	};
+	return adminAPI;
 };

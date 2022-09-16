@@ -162,6 +162,15 @@ main {
 	text-align: center;
 	font-family: 'Noto Sans', sans-serif;
 
+	&.danger {
+		color: $button-danger-fg;
+		background: $button-danger-bg;
+
+		&:hover {
+			background: $button-danger-hover-bg;
+		}
+	}
+
 	&:hover {
 		background: $button-hover-bg;
 	}
@@ -283,16 +292,15 @@ input, select, textarea {
 	&:focus {
 		border-color: $input-focus-border;
 	}
+
+	&:disabled {
+		background: $input-disabled-bg;
+	}
 }
 
 ::placeholder {
 	opacity: 1;
 	color: $fg-reduced
-}
-
-input, textarea {
-	padding-top: 0.1rem;
-	padding-bottom: 0.1rem;
 }
 
 hr {

@@ -35,7 +35,9 @@ function apiCall(method, route, payload, type = "json") {
 
 		return Promise.try(() => {
 			let url = new URL(base);
-			url.pathname = route;
+			let [path, query] = route.split("?");
+			url.pathname = path;
+			url.search = query;
 			let body;
 
 			let headers = {
