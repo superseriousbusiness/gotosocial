@@ -67,7 +67,7 @@ module.exports = function AdminSettings() {
 			/>
 
 			<TextInput
-				id="contact_username"
+				id="contact_account.username"
 				name="Contact user (local account username)"
 				placeHolder="admin"
 			/>

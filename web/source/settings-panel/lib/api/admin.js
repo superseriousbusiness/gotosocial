@@ -32,7 +32,8 @@ module.exports = function ({ apiCall, getChanges }) {
 					const state = getState().instances.adminSettings;
 
 					const update = getChanges(state, {
-						formKeys: ["title", "short_description", "description", "contact_username", "email", "terms"],
+						formKeys: ["title", "short_description", "description", "contact_account.username", "email", "terms"],
+						renamedKeys: {"contact_account.username": "contact_username"},
 						// fileKeys: ["avatar", "header"]
 					});
 
