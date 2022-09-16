@@ -140,6 +140,14 @@ module.exports = function ({ apiCall, getChanges }) {
 				});
 			};
 		},
+
+		mediaCleanup: function mediaCleanup(days) {
+			return function (dispatch, _getState) {
+				return Promise.try(() => {
+					return dispatch(apiCall("POST", `/api/v1/admin/media_cleanup?remote_cache_days=${days}`));
+				});
+			};
+		}
 	};
 	return adminAPI;
 };
