@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -175,6 +176,201 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUserURI() {
 	})
 	suite.EqualError(err, "GetRemoteAccount: couldn't retrieve account locally and won't try to resolve it")
 	suite.Nil(fetchedAccount)
+}
+
+func (suite *AccountTestSuite) TestDereferenceRemoteAccountWithPartial() {
+	fetchingAccount := suite.testAccounts["local_account_1"]
+
+	remoteAccount := suite.testAccounts["remote_account_1"]
+	remoteAccountPartial := &gtsmodel.Account{
+		ID:                    remoteAccount.ID,
+		ActorType:             remoteAccount.ActorType,
+		Language:              remoteAccount.Language,
+		CreatedAt:             remoteAccount.CreatedAt,
+		UpdatedAt:             remoteAccount.UpdatedAt,
+		Username:              remoteAccount.Username,
+		Domain:                remoteAccount.Domain,
+		DisplayName:           remoteAccount.DisplayName,
+		URI:                   remoteAccount.URI,
+		InboxURI:              remoteAccount.URI,
+		PublicKeyURI:          remoteAccount.PublicKeyURI,
+		URL:                   remoteAccount.URL,
+		FollowingURI:          remoteAccount.FollowingURI,
+		FollowersURI:          remoteAccount.FollowersURI,
+		OutboxURI:             remoteAccount.OutboxURI,
+		FeaturedCollectionURI: remoteAccount.FeaturedCollectionURI,
+		Emojis: []*gtsmodel.Emoji{
+			// dereference an emoji we don't have stored yet
+			{
+				URI:             "http://fossbros-anonymous.io/emoji/01GD5HCC2YECT012TK8PAGX4D1",
+				Shortcode:       "kip_van_den_bos",
+				UpdatedAt:       testrig.TimeMustParse("2022-09-13T12:13:12+02:00"),
+				ImageRemoteURL:  "http://fossbros-anonymous.io/emoji/kip.gif",
+				Disabled:        testrig.FalseBool(),
+				VisibleInPicker: testrig.FalseBool(),
+				Domain:          "fossbros-anonymous.io",
+			},
+		},
+	}
+
+	fetchedAccount, err := suite.dereferencer.GetRemoteAccount(context.Background(), dereferencing.GetRemoteAccountParams{
+		RequestingUsername:    fetchingAccount.Username,
+		RemoteAccountID:       testrig.URLMustParse(remoteAccount.URI),
+		RemoteAccountHost:     remoteAccount.Domain,
+		RemoteAccountUsername: remoteAccount.Username,
+		PartialAccount:        remoteAccountPartial,
+		Blocking:              true,
+	})
+	suite.NoError(err)
+	suite.NotNil(fetchedAccount)
+	suite.NotNil(fetchedAccount.EmojiIDs)
+	suite.NotNil(fetchedAccount.Emojis)
+}
+
+func (suite *AccountTestSuite) TestDereferenceRemoteAccountWithPartial2() {
+	fetchingAccount := suite.testAccounts["local_account_1"]
+
+	knownEmoji := suite.testEmojis["yell"]
+
+	remoteAccount := suite.testAccounts["remote_account_1"]
+	remoteAccountPartial := &gtsmodel.Account{
+		ID:                    remoteAccount.ID,
+		ActorType:             remoteAccount.ActorType,
+		Language:              remoteAccount.Language,
+		CreatedAt:             remoteAccount.CreatedAt,
+		UpdatedAt:             remoteAccount.UpdatedAt,
+		Username:              remoteAccount.Username,
+		Domain:                remoteAccount.Domain,
+		DisplayName:           remoteAccount.DisplayName,
+		URI:                   remoteAccount.URI,
+		InboxURI:              remoteAccount.URI,
+		PublicKeyURI:          remoteAccount.PublicKeyURI,
+		URL:                   remoteAccount.URL,
+		FollowingURI:          remoteAccount.FollowingURI,
+		FollowersURI:          remoteAccount.FollowersURI,
+		OutboxURI:             remoteAccount.OutboxURI,
+		FeaturedCollectionURI: remoteAccount.FeaturedCollectionURI,
+		Emojis: []*gtsmodel.Emoji{
+			// an emoji we already have
+			{
+				URI:             knownEmoji.URI,
+				Shortcode:       knownEmoji.Shortcode,
+				UpdatedAt:       knownEmoji.CreatedAt,
+				ImageRemoteURL:  knownEmoji.ImageRemoteURL,
+				Disabled:        knownEmoji.Disabled,
+				VisibleInPicker: knownEmoji.VisibleInPicker,
+			},
+		},
+	}
+
+	fetchedAccount, err := suite.dereferencer.GetRemoteAccount(context.Background(), dereferencing.GetRemoteAccountParams{
+		RequestingUsername:    fetchingAccount.Username,
+		RemoteAccountID:       testrig.URLMustParse(remoteAccount.URI),
+		RemoteAccountHost:     remoteAccount.Domain,
+		RemoteAccountUsername: remoteAccount.Username,
+		PartialAccount:        remoteAccountPartial,
+		Blocking:              true,
+	})
+	suite.NoError(err)
+	suite.NotNil(fetchedAccount)
+	suite.NotNil(fetchedAccount.EmojiIDs)
+	suite.NotNil(fetchedAccount.Emojis)
+}
+
+func (suite *AccountTestSuite) TestDereferenceRemoteAccountWithPartial3() {
+	fetchingAccount := suite.testAccounts["local_account_1"]
+
+	knownEmoji := suite.testEmojis["yell"]
+
+	remoteAccount := suite.testAccounts["remote_account_1"]
+	remoteAccountPartial := &gtsmodel.Account{
+		ID:                    remoteAccount.ID,
+		ActorType:             remoteAccount.ActorType,
+		Language:              remoteAccount.Language,
+		CreatedAt:             remoteAccount.CreatedAt,
+		UpdatedAt:             remoteAccount.UpdatedAt,
+		Username:              remoteAccount.Username,
+		Domain:                remoteAccount.Domain,
+		DisplayName:           remoteAccount.DisplayName,
+		URI:                   remoteAccount.URI,
+		InboxURI:              remoteAccount.URI,
+		PublicKeyURI:          remoteAccount.PublicKeyURI,
+		URL:                   remoteAccount.URL,
+		FollowingURI:          remoteAccount.FollowingURI,
+		FollowersURI:          remoteAccount.FollowersURI,
+		OutboxURI:             remoteAccount.OutboxURI,
+		FeaturedCollectionURI: remoteAccount.FeaturedCollectionURI,
+		Emojis: []*gtsmodel.Emoji{
+			// an emoji we already have
+			{
+				URI:             knownEmoji.URI,
+				Shortcode:       knownEmoji.Shortcode,
+				UpdatedAt:       knownEmoji.CreatedAt,
+				ImageRemoteURL:  knownEmoji.ImageRemoteURL,
+				Disabled:        knownEmoji.Disabled,
+				VisibleInPicker: knownEmoji.VisibleInPicker,
+			},
+		},
+	}
+
+	fetchedAccount, err := suite.dereferencer.GetRemoteAccount(context.Background(), dereferencing.GetRemoteAccountParams{
+		RequestingUsername:    fetchingAccount.Username,
+		RemoteAccountID:       testrig.URLMustParse(remoteAccount.URI),
+		RemoteAccountHost:     remoteAccount.Domain,
+		RemoteAccountUsername: remoteAccount.Username,
+		PartialAccount:        remoteAccountPartial,
+		Blocking:              true,
+	})
+	suite.NoError(err)
+	suite.NotNil(fetchedAccount)
+	suite.NotNil(fetchedAccount.EmojiIDs)
+	suite.NotNil(fetchedAccount.Emojis)
+	suite.Equal(knownEmoji.URI, fetchedAccount.Emojis[0].URI)
+
+	remoteAccountPartial2 := &gtsmodel.Account{
+		ID:                    remoteAccount.ID,
+		ActorType:             remoteAccount.ActorType,
+		Language:              remoteAccount.Language,
+		CreatedAt:             remoteAccount.CreatedAt,
+		UpdatedAt:             remoteAccount.UpdatedAt,
+		Username:              remoteAccount.Username,
+		Domain:                remoteAccount.Domain,
+		DisplayName:           remoteAccount.DisplayName,
+		URI:                   remoteAccount.URI,
+		InboxURI:              remoteAccount.URI,
+		PublicKeyURI:          remoteAccount.PublicKeyURI,
+		URL:                   remoteAccount.URL,
+		FollowingURI:          remoteAccount.FollowingURI,
+		FollowersURI:          remoteAccount.FollowersURI,
+		OutboxURI:             remoteAccount.OutboxURI,
+		FeaturedCollectionURI: remoteAccount.FeaturedCollectionURI,
+		Emojis: []*gtsmodel.Emoji{
+			// dereference an emoji we don't have stored yet
+			{
+				URI:             "http://fossbros-anonymous.io/emoji/01GD5HCC2YECT012TK8PAGX4D1",
+				Shortcode:       "kip_van_den_bos",
+				UpdatedAt:       testrig.TimeMustParse("2022-09-13T12:13:12+02:00"),
+				ImageRemoteURL:  "http://fossbros-anonymous.io/emoji/kip.gif",
+				Disabled:        testrig.FalseBool(),
+				VisibleInPicker: testrig.FalseBool(),
+				Domain:          "fossbros-anonymous.io",
+			},
+		},
+	}
+
+	fetchedAccount2, err := suite.dereferencer.GetRemoteAccount(context.Background(), dereferencing.GetRemoteAccountParams{
+		RequestingUsername:    fetchingAccount.Username,
+		RemoteAccountID:       testrig.URLMustParse(remoteAccount.URI),
+		RemoteAccountHost:     remoteAccount.Domain,
+		RemoteAccountUsername: remoteAccount.Username,
+		PartialAccount:        remoteAccountPartial2,
+		Blocking:              true,
+	})
+	suite.NoError(err)
+	suite.NotNil(fetchedAccount2)
+	suite.NotNil(fetchedAccount2.EmojiIDs)
+	suite.NotNil(fetchedAccount2.Emojis)
+	suite.Equal("http://fossbros-anonymous.io/emoji/01GD5HCC2YECT012TK8PAGX4D1", fetchedAccount2.Emojis[0].URI)
 }
 
 func TestAccountTestSuite(t *testing.T) {

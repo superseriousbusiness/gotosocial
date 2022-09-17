@@ -41,6 +41,7 @@ type DereferencerStandardTestSuite struct {
 	testRemoteServices    map[string]vocab.ActivityStreamsService
 	testRemoteAttachments map[string]testrig.RemoteAttachmentFile
 	testAccounts          map[string]*gtsmodel.Account
+	testEmojis            map[string]*gtsmodel.Emoji
 
 	dereferencer dereferencing.Dereferencer
 }
@@ -55,6 +56,7 @@ func (suite *DereferencerStandardTestSuite) SetupTest() {
 	suite.testRemoteGroups = testrig.NewTestFediGroups()
 	suite.testRemoteServices = testrig.NewTestFediServices()
 	suite.testRemoteAttachments = testrig.NewTestFediAttachments("../../../testrig/media")
+	suite.testEmojis = testrig.NewTestEmojis()
 
 	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewInMemoryStorage()

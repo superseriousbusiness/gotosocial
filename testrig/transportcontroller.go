@@ -64,6 +64,7 @@ type MockHTTPClient struct {
 	testRemoteGroups      map[string]vocab.ActivityStreamsGroup
 	testRemoteServices    map[string]vocab.ActivityStreamsService
 	testRemoteAttachments map[string]RemoteAttachmentFile
+	testRemoteEmojis      map[string]vocab.TootEmoji
 
 	SentMessages sync.Map
 }
@@ -90,6 +91,7 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 	mockHTTPClient.testRemoteGroups = NewTestFediGroups()
 	mockHTTPClient.testRemoteServices = NewTestFediServices()
 	mockHTTPClient.testRemoteAttachments = NewTestFediAttachments(relativeMediaPath)
+	mockHTTPClient.testRemoteEmojis = NewTestFediEmojis()
 
 	mockHTTPClient.do = func(req *http.Request) (*http.Response, error) {
 		responseCode := http.StatusNotFound
@@ -173,6 +175,19 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 			responseBytes = serviceJSON
 			responseContentType = applicationActivityJSON
 			responseContentLength = len(serviceJSON)
+		} else if emoji, ok := mockHTTPClient.testRemoteEmojis[req.URL.String()]; ok {
+			emojiI, err := streams.Serialize(emoji)
+			if err != nil {
+				panic(err)
+			}
+			emojiJSON, err := json.Marshal(emojiI)
+			if err != nil {
+				panic(err)
+			}
+			responseCode = http.StatusOK
+			responseBytes = emojiJSON
+			responseContentType = applicationActivityJSON
+			responseContentLength = len(emojiJSON)
 		} else if attachment, ok := mockHTTPClient.testRemoteAttachments[req.URL.String()]; ok {
 			responseCode = http.StatusOK
 			responseBytes = attachment.Data

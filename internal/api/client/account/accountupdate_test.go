@@ -200,7 +200,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerGet
 func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerTwoFields() {
 	// set up the request
 	// we're updating the note of zork, and setting locked to true
-	newBio := "this is my new bio read it and weep"
+	newBio := "this is my new bio read it and weep :rainbow:"
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"", "",
 		map[string]string{
@@ -235,9 +235,19 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerTwo
 
 	// check the returned api model account
 	// fields should be updated
-	suite.Equal("<p>this is my new bio read it and weep</p>", apimodelAccount.Note)
+	suite.Equal("<p>this is my new bio read it and weep :rainbow:</p>", apimodelAccount.Note)
 	suite.Equal(newBio, apimodelAccount.Source.Note)
 	suite.True(apimodelAccount.Locked)
+	suite.NotEmpty(apimodelAccount.Emojis)
+	suite.Equal(apimodelAccount.Emojis[0].Shortcode, "rainbow")
+
+	// check the account in the database
+	dbZork, err := suite.db.GetAccountByID(context.Background(), apimodelAccount.ID)
+	suite.NoError(err)
+	suite.Equal(newBio, dbZork.NoteRaw)
+	suite.Equal("<p>this is my new bio read it and weep :rainbow:</p>", dbZork.Note)
+	suite.True(*dbZork.Locked)
+	suite.NotEmpty(dbZork.EmojiIDs)
 }
 
 func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerWithMedia() {
