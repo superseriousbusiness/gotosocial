@@ -406,7 +406,7 @@ func tweakConnectionValues(sqldb *sql.DB) {
 	CONVERSION FUNCTIONS
 */
 
-func (ps *DBService) TagStringsToTags(ctx context.Context, tags []string, originAccountID string) ([]*gtsmodel.Tag, error) {
+func (dbService *DBService) TagStringsToTags(ctx context.Context, tags []string, originAccountID string) ([]*gtsmodel.Tag, error) {
 	protocol := config.GetProtocol()
 	host := config.GetHost()
 
@@ -415,7 +415,7 @@ func (ps *DBService) TagStringsToTags(ctx context.Context, tags []string, origin
 		tag := &gtsmodel.Tag{}
 		// we can use selectorinsert here to create the new tag if it doesn't exist already
 		// inserted will be true if this is a new tag we just created
-		if err := ps.conn.NewSelect().Model(tag).Where("LOWER(?) = LOWER(?)", bun.Ident("name"), t).Scan(ctx); err != nil {
+		if err := dbService.conn.NewSelect().Model(tag).Where("LOWER(?) = LOWER(?)", bun.Ident("name"), t).Scan(ctx); err != nil {
 			if err == sql.ErrNoRows {
 				// tag doesn't exist yet so populate it
 				newID, err := id.NewRandomULID()
