@@ -577,7 +577,20 @@ func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gts
 	maybeEmojis := targetAccount.Emojis
 	maybeEmojiIDs := targetAccount.EmojiIDs
 
-	gotEmojis, err := d.populateEmojis(ctx, targetAccount.Emojis, requestingUsername)
+	// if we only have IDs, fetch the emojis from the db so we can compare properly
+	if len(maybeEmojiIDs) > len(maybeEmojis) {
+		maybeEmojis = []*gtsmodel.Emoji{}
+		for _, emojiID := range maybeEmojiIDs {
+			maybeEmoji, err := d.db.GetEmojiByID(ctx, emojiID)
+			if err != nil {
+				return false, err
+			}
+			maybeEmojis = append(maybeEmojis, maybeEmoji)
+		}
+		targetAccount.Emojis = maybeEmojis
+	}
+
+	gotEmojis, err := d.populateEmojis(ctx, maybeEmojis, requestingUsername)
 	if err != nil {
 		return false, err
 	}
