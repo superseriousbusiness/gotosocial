@@ -159,8 +159,29 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		fields = append(fields, mField)
 	}
 
+	// account emojis
 	emojis := []model.Emoji{}
-	// TODO: account emojis
+	gtsEmojis := a.Emojis
+	if len(a.EmojiIDs) > len(gtsEmojis) {
+		gtsEmojis = []*gtsmodel.Emoji{}
+		for _, emojiID := range a.EmojiIDs {
+			emoji, err := c.db.GetEmojiByID(ctx, emojiID)
+			if err != nil {
+				return nil, fmt.Errorf("AccountToAPIAccountPublic: error getting emoji %s from database: %s", emojiID, err)
+			}
+			gtsEmojis = append(gtsEmojis, emoji)
+		}
+	}
+	for _, emoji := range gtsEmojis {
+		if *emoji.Disabled {
+			continue
+		}
+		apiEmoji, err := c.EmojiToAPIEmoji(ctx, emoji)
+		if err != nil {
+			return nil, fmt.Errorf("AccountToAPIAccountPublic: error converting emoji to api emoji: %s", err)
+		}
+		emojis = append(emojis, apiEmoji)
+	}
 
 	var acct string
 	if a.Domain != "" {
@@ -194,7 +215,7 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		FollowingCount: followingCount,
 		StatusesCount:  statusesCount,
 		LastStatusAt:   lastStatusAt,
-		Emojis:         emojis, // TODO: implement this
+		Emojis:         emojis,
 		Fields:         fields,
 		Suspended:      suspended,
 		CustomCSS:      a.CustomCSS,
