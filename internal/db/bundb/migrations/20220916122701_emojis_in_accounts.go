@@ -34,7 +34,7 @@ func init() {
 
 			switch tx.Dialect().Name() {
 			case dialect.PG:
-				q = q.ColumnExpr("? ARRAY", bun.Ident("emojis"))
+				q = q.ColumnExpr("? VARCHAR[]", bun.Ident("emojis"))
 			case dialect.SQLite:
 				q = q.ColumnExpr("? VARCHAR", bun.Ident("emojis"))
 			default:
