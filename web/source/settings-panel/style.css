@@ -372,6 +372,7 @@ section.with-sidebar > div {
 
 	.entry {
 		display: flex;
+		flex-wrap: wrap;
 		background: $settings-entry-bg;
 
 		&:hover {
@@ -475,5 +476,18 @@ section.with-sidebar > div {
 
 	section {
 		grid-column: 1;
+	}
+
+	.user-profile .overview {
+		grid-template-columns: 1fr;
+		grid-template-rows: auto auto;
+	}
+
+	main section {
+		padding: 0.75rem;
+	}
+
+	.instance-list .filter {
+		flex-direction: column;
 	}
 }
