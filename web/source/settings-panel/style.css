@@ -30,9 +30,10 @@ section {
 
 #root {
 	display: grid;
-	grid-template-columns: 1fr min(92%, 90ch) 1fr;
+	grid-template-columns: 1fr 90ch 1fr;
 	width: 100vw;
 	max-width: 100vw;
+	box-sizing: border-box;
 
 	section.with-sidebar {
 		border-left: none;
@@ -446,5 +447,33 @@ section.with-sidebar > div {
 	padding-top: 0.5rem;
 	.contentgrid {
 		padding: 0 0.5rem;
+	}
+}
+
+@media screen and (max-width: 100ch) {
+	#root {
+		padding: 1rem;
+		grid-template-columns: 1fr;
+		grid-template-rows: auto auto;
+
+		.sidebar {
+			justify-self: auto;
+			margin-bottom: 2rem;
+		}
+
+		.sidebar, section.with-sidebar {
+			border-top-left-radius: $br;
+			border-top-right-radius: $br;
+			border-bottom-left-radius: $br;
+			border-bottom-right-radius: $br;
+		}
+
+		.sidebar a:first-child h2 {
+			border-top-right-radius: $br;
+		}
+	}
+
+	section {
+		grid-column: 1;
 	}
 }
