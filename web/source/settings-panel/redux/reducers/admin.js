@@ -51,6 +51,7 @@ module.exports = createSlice({
 			exportType: "plain",
 			...emptyBlock()
 		},
+		newInstanceBlocks: {},
 		emoji: {},
 		newEmoji: emptyEmojiForm()
 	},
@@ -63,20 +64,27 @@ module.exports = createSlice({
 			state.loadedBlockedInstances = true;
 		},
 
-		newDomainBlock: (state, { payload: domain }) => {
-			state.blockedInstances[domain] = {
-				domain,
-				new: true,
-				...emptyBlock()
-			};
+		newDomainBlock: (state, { payload: [domain, data] }) => {
+			if (data == undefined) {
+				data = {
+					new: true,
+					domain,
+					...emptyBlock()
+				};
+			}
+			state.newInstanceBlocks[domain] = data;
 		},
 
 		setDomainBlock: (state, { payload: [domain, data = {}] }) => {
 			state.blockedInstances[domain] = data;
 		},
 
+		removeDomainBlock: (state, {payload: domain}) => {
+			delete state.blockedInstances[domain];
+		},
+
 		updateDomainBlockVal: (state, { payload: [domain, key, val] }) => {
-			state.blockedInstances[domain][key] = val;
+			state.newInstanceBlocks[domain][key] = val;
 		},
 
 		updateBulkBlockVal: (state, { payload: [key, val] }) => {

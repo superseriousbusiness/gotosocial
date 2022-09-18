@@ -308,19 +308,19 @@ function InstancePageWrapped() {
 		return adminActions.updateDomainBlockVal([domain, key, val]);
 	}
 
-	const fields = formFields(alterDomain, (state) => state.admin.blockedInstances[domain]);
+	const fields = formFields(alterDomain, (state) => state.admin.newInstanceBlocks[domain]);
 
 	return <InstancePage domain={domain} Form={fields} />;
 }
 
 function InstancePage({domain, Form}) {
 	const dispatch = Redux.useDispatch();
-	const { blockedInstances } = Redux.useSelector(state => state.admin);
-	const entry = blockedInstances[domain];
+	const entry = Redux.useSelector(state => state.admin.newInstanceBlocks[domain]);
+	const [_location, setLocation] = useLocation();
 
 	React.useEffect(() => {
 		if (entry == undefined) {
-			dispatch(adminActions.newDomainBlock(domain));
+			dispatch(api.admin.getEditableDomainBlock(domain));
 		}
 	}, []);
 
@@ -328,11 +328,7 @@ function InstancePage({domain, Form}) {
 	const [statusMsg, setStatus] = React.useState("");
 
 	if (entry == undefined) {
-		if (statusMsg == "removed") {
-			return <Redirect to={base}/>;
-		} else {
-			return "Loading...";
-		}
+		return "Loading...";
 	}
 
 	const updateBlock = submit(
@@ -342,7 +338,9 @@ function InstancePage({domain, Form}) {
 
 	const removeBlock = submit(
 		() => dispatch(api.admin.removeDomainBlock(domain)),
-		{setStatus, setError, startStatus: "Removing", successStatus: "Removed!"}
+		{setStatus, setError, startStatus: "Removing", successStatus: "Removed!", onSuccess: () => {
+			setLocation(base);
+		}}
 	);
 
 	return (

@@ -57,15 +57,25 @@ module.exports = function ({ apiCall, getChanges }) {
 		updateDomainBlock: function updateDomainBlock(domain) {
 			return function (dispatch, getState) {
 				return Promise.try(() => {
-					const state = getState().admin.blockedInstances[domain];
+					const state = getState().admin.newInstanceBlocks[domain];
 					const update = getChanges(state, {
 						formKeys: ["domain", "obfuscate", "public_comment", "private_comment"],
 					});
 
 					return dispatch(apiCall("POST", "/api/v1/admin/domain_blocks", update, "form"));
 				}).then((block) => {
-					console.log(block);
+					return Promise.all([
+						dispatch(admin.newDomainBlock([domain, block])),
+						dispatch(admin.setDomainBlock([domain, block]))
+					]);
 				});
+			};
+		},
+
+		getEditableDomainBlock: function getEditableDomainBlock(domain) {
+			return function (dispatch, getState) {
+				let data = getState().admin.blockedInstances[domain];
+				return dispatch(admin.newDomainBlock([domain, data]));
 			};
 		},
 
@@ -138,6 +148,8 @@ module.exports = function ({ apiCall, getChanges }) {
 				return Promise.try(() => {
 					const id = getState().admin.blockedInstances[domain].id;
 					return dispatch(apiCall("DELETE", `/api/v1/admin/domain_blocks/${id}`));
+				}).then((removed) => {
+					return dispatch(admin.removeDomainBlock(removed.domain));
 				});
 			};
 		},
