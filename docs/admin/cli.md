@@ -62,7 +62,8 @@ Example:
 gotosocial admin account create \
    --username some_username \
    --email someuser@example.org \
-   --password 'somelongandcomplicatedpassword'
+   --password 'somelongandcomplicatedpassword' \
+   --config-path config.yaml
 ```
 
 ### gotosocial admin account confirm
@@ -85,7 +86,7 @@ Flags:
 Example:
 
 ```bash
-gotosocial admin account confirm --username some_username
+gotosocial admin account confirm --username some_username --config-path config.yaml
 ```
 
 ### gotosocial admin account promote
@@ -108,7 +109,7 @@ Flags:
 Example:
 
 ```bash
-gotosocial admin account promote --username some_username
+gotosocial admin account promote --username some_username --config-path config.yaml
 ```
 
 ### gotosocial admin account demote
@@ -131,7 +132,7 @@ Flags:
 Example:
 
 ```bash
-gotosocial admin account demote --username some_username
+gotosocial admin account demote --username some_username --config-path config.yaml
 ```
 
 ### gotosocial admin account disable
@@ -154,7 +155,7 @@ Flags:
 Example:
 
 ```bash
-gotosocial admin account disable --username some_username
+gotosocial admin account disable --username some_username --config-path config.yaml
 ```
 
 ### gotosocial admin account suspend
@@ -179,7 +180,7 @@ Flags:
 Example:
 
 ```bash
-gotosocial admin account suspend --username some_username
+gotosocial admin account suspend --username some_username --config-path config.yaml
 ```
 
 ### gotosocial admin account password
@@ -203,7 +204,7 @@ Flags:
 Example:
 
 ```bash
-gotosocial admin account password --username some_username --pasword some_really_good_password
+gotosocial admin account password --username some_username --pasword some_really_good_password --config-path config.yaml
 ```
 
 ### gotosocial admin export
@@ -228,7 +229,7 @@ Flags:
 Example:
 
 ```bash
-gotosocial admin export --config-file ./config.yaml --path ./example.json
+gotosocial admin export --path example.json --config-path config.yaml
 ```
 
 `example.json`:
@@ -276,5 +277,5 @@ Flags:
 Example:
 
 ```bash
-gotosocial admin import --config-file ./config.yaml --path ./example.json
+gotosocial admin import --path example.json --config-path config.yaml
 ```
