@@ -85,19 +85,21 @@ func (m *FileServer) ServeFile(c *gin.Context) {
 		return
 	}
 
+	defer func() {
+		// if the content is a ReadCloser (ie., it's streamed from storage), close it when we're done
+		if content.Content != nil {
+			if closer, ok := content.Content.(io.ReadCloser); ok {
+				if err := closer.Close(); err != nil {
+					log.Errorf("ServeFile: error closing readcloser: %s", err)
+				}
+			}
+		}
+	}()
+
 	if content.URL != nil {
 		c.Redirect(http.StatusFound, content.URL.String())
 		return
 	}
-
-	defer func() {
-		// if the content is a ReadCloser, close it when we're done
-		if closer, ok := content.Content.(io.ReadCloser); ok {
-			if err := closer.Close(); err != nil {
-				log.Errorf("ServeFile: error closing readcloser: %s", err)
-			}
-		}
-	}()
 
 	// TODO: if the requester only accepts text/html we should try to serve them *something*.
 	// This is mostly needed because when sharing a link to a gts-hosted file on something like mastodon, the masto servers will

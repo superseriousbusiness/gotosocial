@@ -121,16 +121,16 @@ func (p *ProcessingEmoji) loadStatic(ctx context.Context) error {
 			return p.err
 		}
 
+		defer func() {
+			if err := stored.Close(); err != nil {
+				log.Errorf("loadStatic: error closing stored full size: %s", err)
+			}
+		}()
+
 		// we haven't processed a static version of this emoji yet so do it now
 		static, err := deriveStaticEmoji(stored, p.emoji.ImageContentType)
 		if err != nil {
 			p.err = fmt.Errorf("loadStatic: error deriving static: %s", err)
-			atomic.StoreInt32(&p.staticState, int32(errored))
-			return p.err
-		}
-
-		if err := stored.Close(); err != nil {
-			p.err = fmt.Errorf("loadStatic: error closing stored full size: %s", err)
 			atomic.StoreInt32(&p.staticState, int32(errored))
 			return p.err
 		}
