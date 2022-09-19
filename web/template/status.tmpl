@@ -1,4 +1,4 @@
-<div class="contentgrid">
+<div data-nosnippet class="contentgrid">
 	<a href="{{.Account.URL}}" class="avatar"><img src="{{.Account.Avatar}}" alt=""></a>
 	<a href="{{.Account.URL}}" class="displayname">{{if .Account.DisplayName}}{{.Account.DisplayName}}{{else}}{{.Account.Username}}{{end}}</a>
 	<a href="{{.Account.URL}}" class="username">@{{.Account.Acct}}</a>
@@ -49,4 +49,4 @@
 		<div id="favorites"><i aria-label="Favorites" class="fa fa-star"></i> {{.FavouritesCount}}</div>
 	</div>
 </div>
-<a href="{{.URL}}" class="toot-link">View toot</a>
+<a data-nosnippet href="{{.URL}}" class="toot-link">View toot</a>
