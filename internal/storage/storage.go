@@ -34,6 +34,7 @@ import (
 )
 
 var ErrNotSupported = errors.New("driver does not suppport functionality")
+var ErrAlreadyExists = errors.New("storage key already exists")
 
 // Driver implements the functionality to store and retrieve blobs
 // (images,video,audio)
