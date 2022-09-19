@@ -37,6 +37,7 @@ const (
 	writeTimeout      = 30 * time.Second
 	idleTimeout       = 30 * time.Second
 	readHeaderTimeout = 30 * time.Second
+	shutdownTimeout   = 30 * time.Second
 )
 
 // Router provides the REST interface for gotosocial, using gin.
@@ -128,7 +129,16 @@ func (r *router) Start() {
 
 // Stop shuts down the router nicely
 func (r *router) Stop(ctx context.Context) error {
-	return r.srv.Shutdown(ctx)
+	log.Infof("shutting down http router with %s grace period", shutdownTimeout)
+	timeout, cancel := context.WithTimeout(ctx, shutdownTimeout)
+	defer cancel()
+
+	if err := r.srv.Shutdown(timeout); err != nil {
+		return fmt.Errorf("error shutting down http router: %s", err)
+	}
+
+	log.Info("http router closed connections and shut down gracefully")
+	return nil
 }
 
 // New returns a new Router with the specified configuration.
