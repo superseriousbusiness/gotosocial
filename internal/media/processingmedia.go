@@ -145,9 +145,7 @@ func (p *ProcessingMedia) loadThumb(ctx context.Context) error {
 			return p.err
 		}
 
-		// whatever happens, close the stream when we're done
 		defer func() {
-			log.Tracef("loadThumb: closing stored stream %s", p.attachment.URL)
 			if err := stored.Close(); err != nil {
 				log.Errorf("loadThumb: error closing stored full size: %s", err)
 			}
@@ -164,7 +162,7 @@ func (p *ProcessingMedia) loadThumb(ctx context.Context) error {
 
 		// put the thumbnail in storage
 		log.Tracef("loadThumb: storing new thumbnail %s", p.attachment.URL)
-		if err := p.storage.Put(ctx, p.attachment.Thumbnail.Path, thumb.small); err != nil {
+		if err := p.storage.Put(ctx, p.attachment.Thumbnail.Path, thumb.small); err != nil && err != storage.ErrAlreadyExists {
 			p.err = fmt.Errorf("loadThumb: error storing thumbnail: %s", err)
 			atomic.StoreInt32(&p.thumbState, int32(errored))
 			return p.err
@@ -210,6 +208,12 @@ func (p *ProcessingMedia) loadFullSize(ctx context.Context) error {
 			return p.err
 		}
 
+		defer func() {
+			if err := stored.Close(); err != nil {
+				log.Errorf("loadFullSize: error closing stored full size: %s", err)
+			}
+		}()
+
 		// decode the image
 		ct := p.attachment.File.ContentType
 		switch ct {
@@ -223,12 +227,6 @@ func (p *ProcessingMedia) loadFullSize(ctx context.Context) error {
 
 		if err != nil {
 			p.err = err
-			atomic.StoreInt32(&p.fullSizeState, int32(errored))
-			return p.err
-		}
-
-		if err := stored.Close(); err != nil {
-			p.err = fmt.Errorf("loadFullSize: error closing stored full size: %s", err)
 			atomic.StoreInt32(&p.fullSizeState, int32(errored))
 			return p.err
 		}
@@ -343,7 +341,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	p.attachment.File.FileSize = fileSize
 
 	// store this for now -- other processes can pull it out of storage as they please
-	if err := p.storage.PutStream(ctx, p.attachment.File.Path, clean); err != nil {
+	if err := p.storage.PutStream(ctx, p.attachment.File.Path, clean); err != nil && err != storage.ErrAlreadyExists {
 		return fmt.Errorf("store: error storing stream: %s", err)
 	}
 
