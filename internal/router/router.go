@@ -21,6 +21,7 @@ package router
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"time"
 
@@ -184,17 +185,24 @@ func New(ctx context.Context, db db.DB) (Router, error) {
 		return nil, err
 	}
 
-	// create the http server here, passing the gin engine as handler
+	// use the passed-in command context as the base context for the server,
+	// since we'll never want the server to live past the command anyway
+	baseCtx := func(_ net.Listener) context.Context {
+		return ctx
+	}
+
 	bindAddress := config.GetBindAddress()
 	port := config.GetPort()
-	listen := fmt.Sprintf("%s:%d", bindAddress, port)
+	addr := fmt.Sprintf("%s:%d", bindAddress, port)
+
 	s := &http.Server{
-		Addr:              listen,
-		Handler:           engine,
+		Addr:              addr,
+		Handler:           engine, // use gin engine as handler
 		ReadTimeout:       readTimeout,
+		ReadHeaderTimeout: readHeaderTimeout,
 		WriteTimeout:      writeTimeout,
 		IdleTimeout:       idleTimeout,
-		ReadHeaderTimeout: readHeaderTimeout,
+		BaseContext:       baseCtx,
 	}
 
 	// We need to spawn the underlying server slightly differently depending on whether lets encrypt is enabled or not.
