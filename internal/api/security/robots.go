@@ -7,11 +7,33 @@ import (
 )
 
 const robotsString = `User-agent: *
-Disallow: /
+Crawl-delay: 500
+# api stuff
+Disallow: /api/
+# auth/login stuff
+Disallow: /auth/
+Disallow: /oauth/
+Disallow: /check_your_email
+Disallow: /wait_for_approval
+Disallow: /account_disabled
+# well known stuff
+Disallow: /.well-known/
+# files
+Disallow: /fileserver/
+# s2s AP stuff
+Disallow: /users/
+Disallow: /emoji/
+# panels
+Disallow: /admin
+Disallow: /user
+Disallow: /settings/
 `
 
-// RobotsGETHandler returns the most restrictive possible robots.txt file in response to a call to /robots.txt.
-// The response instructs bots with *any* user agent not to index the instance at all.
+// RobotsGETHandler returns a decent robots.txt that prevents crawling
+// the api, auth pages, settings pages, etc.
+//
+// More granular robots meta tags are then applied for web pages
+// depending on user preferences (see internal/web).
 func (m *Module) RobotsGETHandler(c *gin.Context) {
 	c.String(http.StatusOK, robotsString)
 }
