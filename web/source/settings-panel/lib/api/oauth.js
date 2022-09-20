@@ -82,7 +82,6 @@ module.exports = function oauthAPI({ apiCall, getCurrentUrl }) {
 						code: code
 					}));
 				}).then((json) => {
-					console.log(json);
 					window.history.replaceState({}, document.title, window.location.pathname);
 					return dispatch(oauth.login(json));
 				});
@@ -110,8 +109,6 @@ module.exports = function oauthAPI({ apiCall, getCurrentUrl }) {
 					]);
 				}).catch(AuthenticationError, () => {
 					return dispatch(oauth.setAdmin(false));
-				}).catch((e) => {
-					console.log("caught", e, e instanceof AuthenticationError);
 				});
 			};
 		},

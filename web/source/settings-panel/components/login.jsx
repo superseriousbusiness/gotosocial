@@ -35,7 +35,6 @@ module.exports = function Login({error}) {
 		// check if current domain runs an instance
 		let currentDomain = window.location.origin;
 		Promise.try(() => {
-			console.log("trying", currentDomain);
 			return dispatch(api.instance.fetchWithoutStore(currentDomain));
 		}).then(() => {
 			if (instanceFieldRef.current.length == 0) { // user hasn't started typing yet

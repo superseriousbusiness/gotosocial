@@ -51,12 +51,9 @@ module.exports = function getViews(struct) {
 			delete entries.adminOnly;
 		}
 
-		console.log(name, entries);
-
 		let base = `/settings/${urlSafe(name)}`;
 
 		let links = [];
-		let routes = [];
 
 		let firstRoute;
 
@@ -86,16 +83,6 @@ module.exports = function getViews(struct) {
 				<Redirect to={firstRoute} />
 			</Route>
 		);
-
-		// let childrenPath = `${base}/:section`;
-		// panelRouterEl.push(...routes);
-		console.log(panelRouterEl);
-		// 	<Route key={childrenPath} path={childrenPath}>
-		// 		<Switch id="childrenPath-switch">
-		// 			{routes}
-		// 		</Switch>
-		// 	</Route>
-		// );
 
 		sidebarEl.push(
 			<React.Fragment key={name}>

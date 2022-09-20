@@ -120,7 +120,6 @@ module.exports = function ({ apiCall, getChanges }) {
 					if (domains.length == 0) {
 						return;
 					}
-					console.log(domains);
 
 					const update = {
 						domains: new Blob([JSON.stringify(domains)], {type: "application/json"})
