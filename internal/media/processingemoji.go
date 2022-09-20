@@ -121,6 +121,12 @@ func (p *ProcessingEmoji) loadStatic(ctx context.Context) error {
 			return p.err
 		}
 
+		defer func() {
+			if err := stored.Close(); err != nil {
+				log.Errorf("loadStatic: error closing stored full size: %s", err)
+			}
+		}()
+
 		// we haven't processed a static version of this emoji yet so do it now
 		static, err := deriveStaticEmoji(stored, p.emoji.ImageContentType)
 		if err != nil {
@@ -129,14 +135,8 @@ func (p *ProcessingEmoji) loadStatic(ctx context.Context) error {
 			return p.err
 		}
 
-		if err := stored.Close(); err != nil {
-			p.err = fmt.Errorf("loadStatic: error closing stored full size: %s", err)
-			atomic.StoreInt32(&p.staticState, int32(errored))
-			return p.err
-		}
-
 		// put the static in storage
-		if err := p.storage.Put(ctx, p.emoji.ImageStaticPath, static.small); err != nil {
+		if err := p.storage.Put(ctx, p.emoji.ImageStaticPath, static.small); err != nil && err != storage.ErrAlreadyExists {
 			p.err = fmt.Errorf("loadStatic: error storing static: %s", err)
 			atomic.StoreInt32(&p.staticState, int32(errored))
 			return p.err
@@ -217,7 +217,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	multiReader := io.MultiReader(bytes.NewBuffer(firstBytes), reader)
 
 	// store this for now -- other processes can pull it out of storage as they please
-	if err := p.storage.PutStream(ctx, p.emoji.ImagePath, multiReader); err != nil {
+	if err := p.storage.PutStream(ctx, p.emoji.ImagePath, multiReader); err != nil && err != storage.ErrAlreadyExists {
 		return fmt.Errorf("store: error storing stream: %s", err)
 	}
 

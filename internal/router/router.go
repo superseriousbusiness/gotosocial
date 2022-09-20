@@ -21,6 +21,7 @@ package router
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"time"
 
@@ -37,6 +38,7 @@ const (
 	writeTimeout      = 30 * time.Second
 	idleTimeout       = 30 * time.Second
 	readHeaderTimeout = 30 * time.Second
+	shutdownTimeout   = 30 * time.Second
 )
 
 // Router provides the REST interface for gotosocial, using gin.
@@ -128,7 +130,16 @@ func (r *router) Start() {
 
 // Stop shuts down the router nicely
 func (r *router) Stop(ctx context.Context) error {
-	return r.srv.Shutdown(ctx)
+	log.Infof("shutting down http router with %s grace period", shutdownTimeout)
+	timeout, cancel := context.WithTimeout(ctx, shutdownTimeout)
+	defer cancel()
+
+	if err := r.srv.Shutdown(timeout); err != nil {
+		return fmt.Errorf("error shutting down http router: %s", err)
+	}
+
+	log.Info("http router closed connections and shut down gracefully")
+	return nil
 }
 
 // New returns a new Router with the specified configuration.
@@ -174,17 +185,24 @@ func New(ctx context.Context, db db.DB) (Router, error) {
 		return nil, err
 	}
 
-	// create the http server here, passing the gin engine as handler
+	// use the passed-in command context as the base context for the server,
+	// since we'll never want the server to live past the command anyway
+	baseCtx := func(_ net.Listener) context.Context {
+		return ctx
+	}
+
 	bindAddress := config.GetBindAddress()
 	port := config.GetPort()
-	listen := fmt.Sprintf("%s:%d", bindAddress, port)
+	addr := fmt.Sprintf("%s:%d", bindAddress, port)
+
 	s := &http.Server{
-		Addr:              listen,
-		Handler:           engine,
+		Addr:              addr,
+		Handler:           engine, // use gin engine as handler
 		ReadTimeout:       readTimeout,
+		ReadHeaderTimeout: readHeaderTimeout,
 		WriteTimeout:      writeTimeout,
 		IdleTimeout:       idleTimeout,
-		ReadHeaderTimeout: readHeaderTimeout,
+		BaseContext:       baseCtx,
 	}
 
 	// We need to spawn the underlying server slightly differently depending on whether lets encrypt is enabled or not.
