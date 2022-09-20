@@ -43,9 +43,9 @@ require (
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB
 	github.com/tdewolff/minify/v2 v2.12.1
 	github.com/ulule/limiter/v3 v3.10.0
-	github.com/uptrace/bun v1.1.7
-	github.com/uptrace/bun/dialect/pgdialect v1.1.7
-	github.com/uptrace/bun/dialect/sqlitedialect v1.1.7
+	github.com/uptrace/bun v1.1.8
+	github.com/uptrace/bun/dialect/pgdialect v1.1.8
+	github.com/uptrace/bun/dialect/sqlitedialect v1.1.8
 	github.com/wagslane/go-password-validator v0.3.0
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
