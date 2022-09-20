@@ -454,7 +454,7 @@ section.with-sidebar > div {
 @media screen and (max-width: 100ch) {
 	#root {
 		padding: 1rem;
-		grid-template-columns: 1fr;
+		grid-template-columns: 100%;
 		grid-template-rows: auto auto;
 
 		.sidebar {
@@ -479,8 +479,13 @@ section.with-sidebar > div {
 	}
 
 	.user-profile .overview {
-		grid-template-columns: 1fr;
+		grid-template-columns: 100%;
 		grid-template-rows: auto auto;
+
+		.files {
+			margin: 0;
+			margin-top: 1rem;
+		}
 	}
 
 	main section {
