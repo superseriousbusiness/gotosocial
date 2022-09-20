@@ -38,6 +38,8 @@ const (
 	customCSSPath    = profilePath + "/custom.css"
 	statusPath       = profilePath + "/statuses/:" + statusIDKey
 	assetsPathPrefix = "/assets"
+	userPanelPath    = "/settings/user"
+	adminPanelPath   = "/settings/admin"
 
 	tokenParam  = "token"
 	usernameKey = "username"
@@ -71,9 +73,21 @@ func (m *Module) Route(s router.Router) error {
 	s.AttachHandler(http.MethodGet, "/settings", m.SettingsPanelHandler)
 	s.AttachHandler(http.MethodGet, "/settings/*panel", m.SettingsPanelHandler)
 
-	// redirect /auth/edit to /settings/user
+	// User panel redirects
+	// used by clients
 	s.AttachHandler(http.MethodGet, "/auth/edit", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, "/settings/user")
+		c.Redirect(http.StatusMovedPermanently, userPanelPath)
+	})
+
+	// old version of settings panel
+	s.AttachHandler(http.MethodGet, "/user", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, userPanelPath)
+	})
+
+	// Admin panel redirects
+	// old version of settings panel
+	s.AttachHandler(http.MethodGet, "/admin", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, adminPanelPath)
 	})
 
 	// serve front-page
