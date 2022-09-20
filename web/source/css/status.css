@@ -77,7 +77,6 @@ main {
 	}
 	
 	.displayname {
-		/* grid-column: span 2; */
 		font-weight: bold;
 		font-size: 1.2rem;
 		line-height: 2rem;
@@ -127,7 +126,6 @@ main {
 
 	.text {
 		margin: 0;
-		/* margin-top: 0.5rem; */
 		grid-column: 2 / span 2;
 		grid-row: span 1;
 		overflow: hidden;
@@ -141,7 +139,6 @@ main {
 		}
 
 		.content {
-			/* padding-top: 0.5rem; */
 			padding-bottom: 0.5rem;
 
 			word-break: break-word;

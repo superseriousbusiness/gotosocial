@@ -68,8 +68,8 @@ section {
 	}
 
 	.sidebar {
-		align-self: start; // vertical
-		justify-self: end; // horizontal
+		align-self: start;
+		justify-self: end;
 		background: $settings-nav-bg;
 		border: $boxshadow-border;
 		box-shadow: $boxshadow;
@@ -162,7 +162,7 @@ input, select, textarea {
 	border-radius: $br;
 	font-weight: bold;
 	padding: 0.5rem;
-	white-space: pre-wrap; // to show \n in json errors
+	white-space: pre-wrap;
 
 	a {
 		color: $error-link;
@@ -262,7 +262,6 @@ section.with-sidebar > div {
 		font-weight: normal;
 		padding: 0.3rem 0.3rem;
 		align-self: flex-start;
-		/* background: $border_accent; */
 		margin-right: 0.2rem;
 	}
 	
@@ -324,6 +323,7 @@ section.with-sidebar > div {
 		}
 
 		.files {
+			width: 100%;
 			margin: 1rem;
 			margin-right: 0;
 			display: flex;

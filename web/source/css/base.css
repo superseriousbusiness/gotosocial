@@ -90,7 +90,6 @@ header {
 
 header a {
 	margin: 2rem;
-	/* background: $header-bg; */
 	display: flex;
 	flex-direction: column;
 	flex-wrap: wrap;
