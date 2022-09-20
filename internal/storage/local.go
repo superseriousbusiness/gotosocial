@@ -24,6 +24,7 @@ import (
 	"net/url"
 
 	"codeberg.org/gruf/go-store/kv"
+	"codeberg.org/gruf/go-store/storage"
 )
 
 type Local struct {
@@ -39,11 +40,19 @@ func (l *Local) GetStream(ctx context.Context, key string) (io.ReadCloser, error
 }
 
 func (l *Local) PutStream(ctx context.Context, key string, r io.Reader) error {
-	return l.KVStore.PutStream(key, r)
+	err := l.KVStore.PutStream(key, r)
+	if err == storage.ErrAlreadyExists {
+		return ErrAlreadyExists
+	}
+	return err
 }
 
 func (l *Local) Put(ctx context.Context, key string, value []byte) error {
-	return l.KVStore.Put(key, value)
+	err := l.KVStore.Put(key, value)
+	if err == storage.ErrAlreadyExists {
+		return ErrAlreadyExists
+	}
+	return err
 }
 
 func (l *Local) Delete(ctx context.Context, key string) error {
