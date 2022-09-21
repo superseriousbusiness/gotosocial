@@ -57,7 +57,6 @@ import (
 // 18. Delete account itself
 func (p *processor) Delete(ctx context.Context, account *gtsmodel.Account, origin string) gtserror.WithCode {
 	fields := kv.Fields{
-
 		{"username", account.Username},
 	}
 	if account.Domain != "" {
@@ -163,7 +162,7 @@ selectStatusesLoop:
 			// pass the status delete through the client api channel for processing
 			s.Account = account
 
-			l.Debug("putting status in the client api channel")
+			l.Debug("putting status delete in the client api channel")
 			p.clientWorker.Queue(messages.FromClientAPI{
 				APObjectType:   ap.ObjectNote,
 				APActivityType: ap.ActivityDelete,

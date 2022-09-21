@@ -48,11 +48,7 @@ func (p *processor) Delete(ctx context.Context, requestingAccount *gtsmodel.Acco
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err))
 	}
 
-	if err := p.db.DeleteByID(ctx, targetStatus.ID, &gtsmodel.Status{}); err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error deleting status from the database: %s", err))
-	}
-
-	// send it back to the processor for async processing
+	// send the status back to the processor for async processing
 	p.clientWorker.Queue(messages.FromClientAPI{
 		APObjectType:   ap.ObjectNote,
 		APActivityType: ap.ActivityDelete,
