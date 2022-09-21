@@ -227,6 +227,42 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status) (*
 	return status, err
 }
 
+func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) db.Error {
+	err := s.conn.RunInTx(ctx, func(tx bun.Tx) error {
+		// delete links between this status and any emojis it uses
+		if _, err := tx.
+			NewDelete().
+			Model(&gtsmodel.StatusToEmoji{}).
+			Where("status_id = ?", bun.Ident(id)).
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		// delete links between this status and any tags it uses
+		if _, err := tx.
+			NewDelete().
+			Model(&gtsmodel.StatusToTag{}).
+			Where("status_id = ?", bun.Ident(id)).
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		// delete the status itself
+		if _, err := tx.
+			NewDelete().
+			Model(&gtsmodel.Status{ID: id}).
+			WherePK().
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		s.cache.Invalidate(id)
+		return nil
+	})
+
+	return s.conn.ProcessError(err)
+}
+
 func (s *statusDB) GetStatusParents(ctx context.Context, status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, db.Error) {
 	parents := []*gtsmodel.Status{}
 	s.statusParent(ctx, status, &parents, onlyDirect)

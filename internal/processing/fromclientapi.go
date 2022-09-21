@@ -288,6 +288,10 @@ func (p *processor) processUndoAnnounceFromClientAPI(ctx context.Context, client
 		return errors.New("undo was not parseable as *gtsmodel.Status")
 	}
 
+	if err := p.db.DeleteStatusByID(ctx, boost.ID); err != nil {
+		return err
+	}
+
 	if err := p.deleteStatusFromTimelines(ctx, boost); err != nil {
 		return err
 	}

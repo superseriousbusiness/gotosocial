@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
 type StatusTestSuite struct {
@@ -130,6 +131,15 @@ func (suite *StatusTestSuite) TestGetStatusChildren() {
 		suite.Equal(targetStatus.AccountID, c.InReplyToAccountID)
 		suite.Equal(targetStatus.ID, c.InReplyToID)
 	}
+}
+
+func (suite *StatusTestSuite) TestDeleteStatus() {
+	targetStatus := suite.testStatuses["admin_account_status_1"]
+	err := suite.db.DeleteStatusByID(context.Background(), targetStatus.ID)
+	suite.NoError(err)
+
+	_, err = suite.db.GetStatusByID(context.Background(), targetStatus.ID)
+	suite.ErrorIs(err, db.ErrNoEntries)
 }
 
 func TestStatusTestSuite(t *testing.T) {
