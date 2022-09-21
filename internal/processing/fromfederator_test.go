@@ -368,9 +368,12 @@ func (suite *FromFederatorTestSuite) TestProcessAccountDelete() {
 	suite.False(zorkFollowsSatan)
 
 	// no statuses from foss satan should be left in the database
-	dbStatuses, err := suite.db.GetAccountStatuses(ctx, deletedAccount.ID, 0, false, false, "", "", false, false, false)
-	suite.ErrorIs(err, db.ErrNoEntries)
-	suite.Empty(dbStatuses)
+	if !testrig.WaitFor(func() bool {
+		s, err := suite.db.GetAccountStatuses(ctx, deletedAccount.ID, 0, false, false, "", "", false, false, false)
+		return  s == nil && err == db.ErrNoEntries
+	}) {
+		suite.FailNow("timeout waiting for statuses to be deleted")
+	}
 
 	dbAccount, err := suite.db.GetAccountByID(ctx, deletedAccount.ID)
 	suite.NoError(err)
