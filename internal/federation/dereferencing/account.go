@@ -279,6 +279,30 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 		}
 	}
 
+	// check if we need to look for a sharedInbox for the account
+	var sharedInboxChanged bool
+	if foundAccount.SharedInboxURI == nil {
+		// we need the accountable for this, so get it if we don't have it yet
+		if accountable == nil {
+			accountable, err = d.dereferenceAccountable(ctx, params.RequestingUsername, params.RemoteAccountID)
+			if err != nil {
+				err = fmt.Errorf("GetRemoteAccount: error dereferencing accountable: %s", err)
+				return
+			}
+		}
+
+		// only set a shared inbox for this account if it's on the same host or domain as the account
+		var sharedInbox string
+		if sharedInboxURI := ap.ExtractSharedInbox(accountable); sharedInboxURI != nil {
+			if sharedInboxURI.Host == params.RemoteAccountID.Host || sharedInboxURI.Host == foundAccount.Domain {
+				sharedInbox = sharedInboxURI.String()
+			}
+		}
+
+		sharedInboxChanged = true
+		foundAccount.SharedInboxURI = &sharedInbox
+	}
+
 	// make sure the account fields are populated before returning:
 	// the caller might want to block until everything is loaded
 	var fieldsChanged bool
@@ -293,7 +317,7 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 		foundAccount.LastWebfingeredAt = fingered
 	}
 
-	if fieldsChanged || fingeredChanged {
+	if fieldsChanged || fingeredChanged || sharedInboxChanged {
 		foundAccount.UpdatedAt = time.Now()
 		foundAccount, err = d.db.UpdateAccount(ctx, foundAccount)
 		if err != nil {
