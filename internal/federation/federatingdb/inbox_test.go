@@ -63,6 +63,27 @@ func (suite *InboxTestSuite) TestInboxesForAccountIRI() {
 	suite.Contains(asStrings, suite.testAccounts["local_account_1"].InboxURI)
 }
 
+func (suite *InboxTestSuite) TestInboxesForAccountIRIWithSharedInbox() {
+	ctx := context.Background()
+	testAccount := suite.testAccounts["local_account_1"]
+	sharedInbox := "http://some-inbox-iri/weeeeeeeeeeeee"
+	testAccount.SharedInboxURI = &sharedInbox
+	if _, err := suite.db.UpdateAccount(ctx, testAccount); err != nil {
+		suite.FailNow("error updating account")
+	}
+
+	inboxIRIs, err := suite.federatingDB.InboxesForIRI(ctx, testrig.URLMustParse(testAccount.URI))
+	suite.NoError(err)
+
+	asStrings := []string{}
+	for _, i := range inboxIRIs {
+		asStrings = append(asStrings, i.String())
+	}
+
+	suite.Len(asStrings, 1)
+	suite.Contains(asStrings, "http://some-inbox-iri/weeeeeeeeeeeee")
+}
+
 func TestInboxTestSuite(t *testing.T) {
 	suite.Run(t, &InboxTestSuite{})
 }
