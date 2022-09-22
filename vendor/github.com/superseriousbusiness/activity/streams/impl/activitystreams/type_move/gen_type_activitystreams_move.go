@@ -451,7 +451,7 @@ func IsOrExtendsMove(other vocab.Type) bool {
 // MoveIsDisjointWith returns true if the other provided type is disjoint with the
 // Move type.
 func MoveIsDisjointWith(other vocab.Type) bool {
-	disjointWith := []string{"EndpointCollection", "Link", "Mention"}
+	disjointWith := []string{"Link", "Mention"}
 	for _, disjoint := range disjointWith {
 		if disjoint == other.GetTypeName() {
 			return true

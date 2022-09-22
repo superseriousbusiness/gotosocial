@@ -460,7 +460,7 @@ func IsOrExtendsLeave(other vocab.Type) bool {
 // LeaveIsDisjointWith returns true if the other provided type is disjoint with
 // the Leave type.
 func LeaveIsDisjointWith(other vocab.Type) bool {
-	disjointWith := []string{"EndpointCollection", "Link", "Mention"}
+	disjointWith := []string{"Link", "Mention"}
 	for _, disjoint := range disjointWith {
 		if disjoint == other.GetTypeName() {
 			return true

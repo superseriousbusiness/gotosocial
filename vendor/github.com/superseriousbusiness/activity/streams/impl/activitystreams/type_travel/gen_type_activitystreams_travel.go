@@ -454,7 +454,7 @@ func NewActivityStreamsTravel() *ActivityStreamsTravel {
 // TravelIsDisjointWith returns true if the other provided type is disjoint with
 // the Travel type.
 func TravelIsDisjointWith(other vocab.Type) bool {
-	disjointWith := []string{"EndpointCollection", "Link", "Mention"}
+	disjointWith := []string{"Link", "Mention"}
 	for _, disjoint := range disjointWith {
 		if disjoint == other.GetTypeName() {
 			return true

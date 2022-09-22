@@ -435,7 +435,7 @@ func DeserializeFlag(m map[string]interface{}, aliasMap map[string]string) (*Act
 // FlagIsDisjointWith returns true if the other provided type is disjoint with the
 // Flag type.
 func FlagIsDisjointWith(other vocab.Type) bool {
-	disjointWith := []string{"EndpointCollection", "Link", "Mention"}
+	disjointWith := []string{"Link", "Mention"}
 	for _, disjoint := range disjointWith {
 		if disjoint == other.GetTypeName() {
 			return true

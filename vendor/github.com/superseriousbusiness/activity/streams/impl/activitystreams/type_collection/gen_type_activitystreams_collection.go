@@ -90,7 +90,7 @@ func ActivityStreamsCollectionExtends(other vocab.Type) bool {
 // CollectionIsDisjointWith returns true if the other provided type is disjoint
 // with the Collection type.
 func CollectionIsDisjointWith(other vocab.Type) bool {
-	disjointWith := []string{"EndpointCollection", "Link", "Mention"}
+	disjointWith := []string{"Link", "Mention"}
 	for _, disjoint := range disjointWith {
 		if disjoint == other.GetTypeName() {
 			return true

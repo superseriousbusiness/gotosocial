@@ -461,7 +461,7 @@ func NewActivityStreamsReject() *ActivityStreamsReject {
 // RejectIsDisjointWith returns true if the other provided type is disjoint with
 // the Reject type.
 func RejectIsDisjointWith(other vocab.Type) bool {
-	disjointWith := []string{"EndpointCollection", "Link", "Mention"}
+	disjointWith := []string{"Link", "Mention"}
 	for _, disjoint := range disjointWith {
 		if disjoint == other.GetTypeName() {
 			return true

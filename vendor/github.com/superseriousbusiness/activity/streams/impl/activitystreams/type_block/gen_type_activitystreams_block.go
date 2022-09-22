@@ -82,7 +82,7 @@ func ActivityStreamsBlockExtends(other vocab.Type) bool {
 // BlockIsDisjointWith returns true if the other provided type is disjoint with
 // the Block type.
 func BlockIsDisjointWith(other vocab.Type) bool {
-	disjointWith := []string{"EndpointCollection", "Link", "Mention"}
+	disjointWith := []string{"Link", "Mention"}
 	for _, disjoint := range disjointWith {
 		if disjoint == other.GetTypeName() {
 			return true

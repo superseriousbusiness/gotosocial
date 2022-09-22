@@ -18,7 +18,7 @@ import (
 	typedelete "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_delete"
 	typedislike "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_dislike"
 	typedocument "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_document"
-	typeendpointcollection "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_endpointcollection"
+	typeendpoints "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_endpoints"
 	typeevent "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_event"
 	typeflag "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_flag"
 	typefollow "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_follow"
@@ -151,10 +151,10 @@ func ActivityStreamsActivityStreamsDocumentExtends(other vocab.Type) bool {
 	return typedocument.ActivityStreamsDocumentExtends(other)
 }
 
-// ActivityStreamsActivityStreamsEndpointCollectionExtends returns true if
-// EndpointCollection extends from the other's type.
-func ActivityStreamsActivityStreamsEndpointCollectionExtends(other vocab.Type) bool {
-	return typeendpointcollection.ActivityStreamsEndpointCollectionExtends(other)
+// ActivityStreamsActivityStreamsEndpointsExtends returns true if Endpoints
+// extends from the other's type.
+func ActivityStreamsActivityStreamsEndpointsExtends(other vocab.Type) bool {
+	return typeendpoints.ActivityStreamsEndpointsExtends(other)
 }
 
 // ActivityStreamsActivityStreamsEventExtends returns true if Event extends from

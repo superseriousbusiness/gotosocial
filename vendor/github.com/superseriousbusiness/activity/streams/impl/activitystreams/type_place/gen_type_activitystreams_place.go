@@ -459,7 +459,7 @@ func NewActivityStreamsPlace() *ActivityStreamsPlace {
 // PlaceIsDisjointWith returns true if the other provided type is disjoint with
 // the Place type.
 func PlaceIsDisjointWith(other vocab.Type) bool {
-	disjointWith := []string{"EndpointCollection", "Link", "Mention"}
+	disjointWith := []string{"Link", "Mention"}
 	for _, disjoint := range disjointWith {
 		if disjoint == other.GetTypeName() {
 			return true

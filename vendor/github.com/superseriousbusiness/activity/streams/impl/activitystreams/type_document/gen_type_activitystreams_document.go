@@ -397,7 +397,7 @@ func DeserializeDocument(m map[string]interface{}, aliasMap map[string]string) (
 // DocumentIsDisjointWith returns true if the other provided type is disjoint with
 // the Document type.
 func DocumentIsDisjointWith(other vocab.Type) bool {
-	disjointWith := []string{"EndpointCollection", "Link", "Mention"}
+	disjointWith := []string{"Link", "Mention"}
 	for _, disjoint := range disjointWith {
 		if disjoint == other.GetTypeName() {
 			return true

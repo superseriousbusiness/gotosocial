@@ -91,7 +91,7 @@ func ActivityStreamsAnnounceExtends(other vocab.Type) bool {
 // AnnounceIsDisjointWith returns true if the other provided type is disjoint with
 // the Announce type.
 func AnnounceIsDisjointWith(other vocab.Type) bool {
-	disjointWith := []string{"EndpointCollection", "Link", "Mention"}
+	disjointWith := []string{"Link", "Mention"}
 	for _, disjoint := range disjointWith {
 		if disjoint == other.GetTypeName() {
 			return true

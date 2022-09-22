@@ -100,7 +100,7 @@ func ToType(c context.Context, m map[string]interface{}) (t vocab.Type, err erro
 	}, func(ctx context.Context, i vocab.TootEmoji) error {
 		t = i
 		return nil
-	}, func(ctx context.Context, i vocab.ActivityStreamsEndpointCollection) error {
+	}, func(ctx context.Context, i vocab.ActivityStreamsEndpoints) error {
 		t = i
 		return nil
 	}, func(ctx context.Context, i vocab.ActivityStreamsEvent) error {

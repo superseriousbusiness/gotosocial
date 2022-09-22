@@ -56,8 +56,8 @@ var ActivityStreamsDocumentName string = "Document"
 // TootEmojiName is the string literal of the name for the Emoji type in the Toot vocabulary.
 var TootEmojiName string = "Emoji"
 
-// ActivityStreamsEndpointCollectionName is the string literal of the name for the EndpointCollection type in the ActivityStreams vocabulary.
-var ActivityStreamsEndpointCollectionName string = "EndpointCollection"
+// ActivityStreamsEndpointsName is the string literal of the name for the Endpoints type in the ActivityStreams vocabulary.
+var ActivityStreamsEndpointsName string = "Endpoints"
 
 // ActivityStreamsEventName is the string literal of the name for the Event type in the ActivityStreams vocabulary.
 var ActivityStreamsEventName string = "Event"

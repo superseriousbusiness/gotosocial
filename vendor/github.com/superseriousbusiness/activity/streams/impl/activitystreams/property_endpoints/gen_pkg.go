@@ -9,10 +9,10 @@ var mgr privateManager
 // privateManager abstracts the code-generated manager that provides access to
 // concrete implementations.
 type privateManager interface {
-	// DeserializeEndpointCollectionActivityStreams returns the
-	// deserialization method for the "ActivityStreamsEndpointCollection"
-	// non-functional property in the vocabulary "ActivityStreams"
-	DeserializeEndpointCollectionActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsEndpointCollection, error)
+	// DeserializeEndpointsActivityStreams returns the deserialization method
+	// for the "ActivityStreamsEndpoints" non-functional property in the
+	// vocabulary "ActivityStreams"
+	DeserializeEndpointsActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsEndpoints, error)
 }
 
 // SetManager sets the manager package-global variable. For internal use only, do
