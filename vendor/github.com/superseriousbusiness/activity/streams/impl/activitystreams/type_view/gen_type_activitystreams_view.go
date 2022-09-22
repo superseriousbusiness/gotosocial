@@ -456,7 +456,7 @@ func NewActivityStreamsView() *ActivityStreamsView {
 // ViewIsDisjointWith returns true if the other provided type is disjoint with the
 // View type.
 func ViewIsDisjointWith(other vocab.Type) bool {
-	disjointWith := []string{"Link", "Mention"}
+	disjointWith := []string{"EndpointCollection", "Link", "Mention"}
 	for _, disjoint := range disjointWith {
 		if disjoint == other.GetTypeName() {
 			return true

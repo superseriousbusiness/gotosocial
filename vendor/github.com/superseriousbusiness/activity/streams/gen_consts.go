@@ -56,6 +56,9 @@ var ActivityStreamsDocumentName string = "Document"
 // TootEmojiName is the string literal of the name for the Emoji type in the Toot vocabulary.
 var TootEmojiName string = "Emoji"
 
+// ActivityStreamsEndpointCollectionName is the string literal of the name for the EndpointCollection type in the ActivityStreams vocabulary.
+var ActivityStreamsEndpointCollectionName string = "EndpointCollection"
+
 // ActivityStreamsEventName is the string literal of the name for the Event type in the ActivityStreams vocabulary.
 var ActivityStreamsEventName string = "Event"
 
@@ -281,6 +284,9 @@ var ForgeFedEarlyItemsPropertyName string = "earlyItems"
 // ActivityStreamsEndTimePropertyName is the string literal of the name for the endTime property in the ActivityStreams vocabulary.
 var ActivityStreamsEndTimePropertyName string = "endTime"
 
+// ActivityStreamsEndpointsPropertyName is the string literal of the name for the endpoints property in the ActivityStreams vocabulary.
+var ActivityStreamsEndpointsPropertyName string = "endpoints"
+
 // TootFeaturedPropertyName is the string literal of the name for the featured property in the Toot vocabulary.
 var TootFeaturedPropertyName string = "featured"
 
@@ -439,6 +445,9 @@ var ActivityStreamsResultPropertyName string = "result"
 
 // ActivityStreamsSensitivePropertyName is the string literal of the name for the sensitive property in the ActivityStreams vocabulary.
 var ActivityStreamsSensitivePropertyName string = "sensitive"
+
+// ActivityStreamsSharedInboxPropertyName is the string literal of the name for the sharedInbox property in the ActivityStreams vocabulary.
+var ActivityStreamsSharedInboxPropertyName string = "sharedInbox"
 
 // ActivityStreamsSharesPropertyName is the string literal of the name for the shares property in the ActivityStreams vocabulary.
 var ActivityStreamsSharesPropertyName string = "shares"

@@ -18,6 +18,7 @@ import (
 	typedelete "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_delete"
 	typedislike "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_dislike"
 	typedocument "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_document"
+	typeendpointcollection "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_endpointcollection"
 	typeevent "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_event"
 	typeflag "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_flag"
 	typefollow "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_follow"
@@ -133,6 +134,12 @@ func NewActivityStreamsDislike() vocab.ActivityStreamsDislike {
 // NewActivityStreamsDocument creates a new ActivityStreamsDocument
 func NewActivityStreamsDocument() vocab.ActivityStreamsDocument {
 	return typedocument.NewActivityStreamsDocument()
+}
+
+// NewActivityStreamsEndpointCollection creates a new
+// ActivityStreamsEndpointCollection
+func NewActivityStreamsEndpointCollection() vocab.ActivityStreamsEndpointCollection {
+	return typeendpointcollection.NewActivityStreamsEndpointCollection()
 }
 
 // NewActivityStreamsEvent creates a new ActivityStreamsEvent

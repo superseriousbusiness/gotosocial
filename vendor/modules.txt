@@ -354,7 +354,7 @@ github.com/stretchr/testify/suite
 # github.com/subosito/gotenv v1.2.0
 ## explicit
 github.com/subosito/gotenv
-# github.com/superseriousbusiness/activity v1.1.0-gts
+# github.com/superseriousbusiness/activity v1.2.0-gts
 ## explicit; go 1.18
 github.com/superseriousbusiness/activity/pub
 github.com/superseriousbusiness/activity/streams
@@ -375,6 +375,7 @@ github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_c
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_deleted
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_describes
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_duration
+github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_endpoints
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_endtime
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_first
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_followers
@@ -416,6 +417,7 @@ github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_r
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_replies
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_result
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_sensitive
+github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_sharedinbox
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_shares
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_source
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_startindex
@@ -446,6 +448,7 @@ github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_creat
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_delete
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_dislike
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_document
+github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_endpointcollection
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_event
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_flag
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_follow

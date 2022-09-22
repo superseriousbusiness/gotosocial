@@ -417,7 +417,7 @@ func NewActivityStreamsPage() *ActivityStreamsPage {
 // PageIsDisjointWith returns true if the other provided type is disjoint with the
 // Page type.
 func PageIsDisjointWith(other vocab.Type) bool {
-	disjointWith := []string{"Link", "Mention"}
+	disjointWith := []string{"EndpointCollection", "Link", "Mention"}
 	for _, disjoint := range disjointWith {
 		if disjoint == other.GetTypeName() {
 			return true

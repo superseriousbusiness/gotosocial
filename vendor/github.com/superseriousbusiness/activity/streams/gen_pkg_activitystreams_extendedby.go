@@ -18,6 +18,7 @@ import (
 	typedelete "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_delete"
 	typedislike "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_dislike"
 	typedocument "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_document"
+	typeendpointcollection "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_endpointcollection"
 	typeevent "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_event"
 	typeflag "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_flag"
 	typefollow "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_follow"
@@ -163,6 +164,13 @@ func ActivityStreamsDislikeIsExtendedBy(other vocab.Type) bool {
 // the "IsOrExtends" variant instead.
 func ActivityStreamsDocumentIsExtendedBy(other vocab.Type) bool {
 	return typedocument.DocumentIsExtendedBy(other)
+}
+
+// ActivityStreamsEndpointCollectionIsExtendedBy returns true if the other's type
+// extends from EndpointCollection. Note that it returns false if the types
+// are the same; see the "IsOrExtends" variant instead.
+func ActivityStreamsEndpointCollectionIsExtendedBy(other vocab.Type) bool {
+	return typeendpointcollection.EndpointCollectionIsExtendedBy(other)
 }
 
 // ActivityStreamsEventIsExtendedBy returns true if the other's type extends from

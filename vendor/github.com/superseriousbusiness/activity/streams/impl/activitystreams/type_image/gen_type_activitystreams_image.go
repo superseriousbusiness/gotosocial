@@ -424,7 +424,7 @@ func DeserializeImage(m map[string]interface{}, aliasMap map[string]string) (*Ac
 // ImageIsDisjointWith returns true if the other provided type is disjoint with
 // the Image type.
 func ImageIsDisjointWith(other vocab.Type) bool {
-	disjointWith := []string{"Link", "Mention"}
+	disjointWith := []string{"EndpointCollection", "Link", "Mention"}
 	for _, disjoint := range disjointWith {
 		if disjoint == other.GetTypeName() {
 			return true

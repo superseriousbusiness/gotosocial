@@ -78,7 +78,7 @@ func ActivityStreamsAudioExtends(other vocab.Type) bool {
 // AudioIsDisjointWith returns true if the other provided type is disjoint with
 // the Audio type.
 func AudioIsDisjointWith(other vocab.Type) bool {
-	disjointWith := []string{"Link", "Mention"}
+	disjointWith := []string{"EndpointCollection", "Link", "Mention"}
 	for _, disjoint := range disjointWith {
 		if disjoint == other.GetTypeName() {
 			return true

@@ -456,7 +456,7 @@ func NewActivityStreamsUpdate() *ActivityStreamsUpdate {
 // UpdateIsDisjointWith returns true if the other provided type is disjoint with
 // the Update type.
 func UpdateIsDisjointWith(other vocab.Type) bool {
-	disjointWith := []string{"Link", "Mention"}
+	disjointWith := []string{"EndpointCollection", "Link", "Mention"}
 	for _, disjoint := range disjointWith {
 		if disjoint == other.GetTypeName() {
 			return true

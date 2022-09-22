@@ -87,7 +87,7 @@ func ActivityStreamsDeleteExtends(other vocab.Type) bool {
 // DeleteIsDisjointWith returns true if the other provided type is disjoint with
 // the Delete type.
 func DeleteIsDisjointWith(other vocab.Type) bool {
-	disjointWith := []string{"Link", "Mention"}
+	disjointWith := []string{"EndpointCollection", "Link", "Mention"}
 	for _, disjoint := range disjointWith {
 		if disjoint == other.GetTypeName() {
 			return true

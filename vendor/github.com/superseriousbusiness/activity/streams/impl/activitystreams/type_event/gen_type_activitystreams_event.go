@@ -390,7 +390,7 @@ func DeserializeEvent(m map[string]interface{}, aliasMap map[string]string) (*Ac
 // EventIsDisjointWith returns true if the other provided type is disjoint with
 // the Event type.
 func EventIsDisjointWith(other vocab.Type) bool {
-	disjointWith := []string{"Link", "Mention"}
+	disjointWith := []string{"EndpointCollection", "Link", "Mention"}
 	for _, disjoint := range disjointWith {
 		if disjoint == other.GetTypeName() {
 			return true

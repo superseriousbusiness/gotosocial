@@ -28,6 +28,7 @@ type ActivityStreamsPerson struct {
 	TootDiscoverable                         vocab.TootDiscoverableProperty
 	ActivityStreamsDuration                  vocab.ActivityStreamsDurationProperty
 	ActivityStreamsEndTime                   vocab.ActivityStreamsEndTimeProperty
+	ActivityStreamsEndpoints                 vocab.ActivityStreamsEndpointsProperty
 	TootFeatured                             vocab.TootFeaturedProperty
 	ActivityStreamsFollowers                 vocab.ActivityStreamsFollowersProperty
 	ActivityStreamsFollowing                 vocab.ActivityStreamsFollowingProperty
@@ -176,6 +177,11 @@ func DeserializePerson(m map[string]interface{}, aliasMap map[string]string) (*A
 		return nil, err
 	} else if p != nil {
 		this.ActivityStreamsEndTime = p
+	}
+	if p, err := mgr.DeserializeEndpointsPropertyActivityStreams()(m, aliasMap); err != nil {
+		return nil, err
+	} else if p != nil {
+		this.ActivityStreamsEndpoints = p
 	}
 	if p, err := mgr.DeserializeFeaturedPropertyToot()(m, aliasMap); err != nil {
 		return nil, err
@@ -388,6 +394,8 @@ func DeserializePerson(m map[string]interface{}, aliasMap map[string]string) (*A
 			continue
 		} else if k == "endTime" {
 			continue
+		} else if k == "endpoints" {
+			continue
 		} else if k == "featured" {
 			continue
 		} else if k == "followers" {
@@ -498,7 +506,7 @@ func NewActivityStreamsPerson() *ActivityStreamsPerson {
 // PersonIsDisjointWith returns true if the other provided type is disjoint with
 // the Person type.
 func PersonIsDisjointWith(other vocab.Type) bool {
-	disjointWith := []string{"Link", "Mention"}
+	disjointWith := []string{"EndpointCollection", "Link", "Mention"}
 	for _, disjoint := range disjointWith {
 		if disjoint == other.GetTypeName() {
 			return true
@@ -578,6 +586,12 @@ func (this ActivityStreamsPerson) GetActivityStreamsDuration() vocab.ActivityStr
 // otherwise.
 func (this ActivityStreamsPerson) GetActivityStreamsEndTime() vocab.ActivityStreamsEndTimeProperty {
 	return this.ActivityStreamsEndTime
+}
+
+// GetActivityStreamsEndpoints returns the "endpoints" property if it exists, and
+// nil otherwise.
+func (this ActivityStreamsPerson) GetActivityStreamsEndpoints() vocab.ActivityStreamsEndpointsProperty {
+	return this.ActivityStreamsEndpoints
 }
 
 // GetActivityStreamsFollowers returns the "followers" property if it exists, and
@@ -834,6 +848,7 @@ func (this ActivityStreamsPerson) JSONLDContext() map[string]string {
 	m = this.helperJSONLDContext(this.TootDiscoverable, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsDuration, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsEndTime, m)
+	m = this.helperJSONLDContext(this.ActivityStreamsEndpoints, m)
 	m = this.helperJSONLDContext(this.TootFeatured, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsFollowers, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsFollowing, m)
@@ -1034,6 +1049,20 @@ func (this ActivityStreamsPerson) LessThan(o vocab.ActivityStreamsPerson) bool {
 	} // Else: Both are nil
 	// Compare property "endTime"
 	if lhs, rhs := this.ActivityStreamsEndTime, o.GetActivityStreamsEndTime(); lhs != nil && rhs != nil {
+		if lhs.LessThan(rhs) {
+			return true
+		} else if rhs.LessThan(lhs) {
+			return false
+		}
+	} else if lhs == nil && rhs != nil {
+		// Nil is less than anything else
+		return true
+	} else if rhs != nil && rhs == nil {
+		// Anything else is greater than nil
+		return false
+	} // Else: Both are nil
+	// Compare property "endpoints"
+	if lhs, rhs := this.ActivityStreamsEndpoints, o.GetActivityStreamsEndpoints(); lhs != nil && rhs != nil {
 		if lhs.LessThan(rhs) {
 			return true
 		} else if rhs.LessThan(lhs) {
@@ -1669,6 +1698,14 @@ func (this ActivityStreamsPerson) Serialize() (map[string]interface{}, error) {
 			m[this.ActivityStreamsEndTime.Name()] = i
 		}
 	}
+	// Maybe serialize property "endpoints"
+	if this.ActivityStreamsEndpoints != nil {
+		if i, err := this.ActivityStreamsEndpoints.Serialize(); err != nil {
+			return nil, err
+		} else if i != nil {
+			m[this.ActivityStreamsEndpoints.Name()] = i
+		}
+	}
 	// Maybe serialize property "featured"
 	if this.TootFeatured != nil {
 		if i, err := this.TootFeatured.Serialize(); err != nil {
@@ -2024,6 +2061,11 @@ func (this *ActivityStreamsPerson) SetActivityStreamsDuration(i vocab.ActivitySt
 // SetActivityStreamsEndTime sets the "endTime" property.
 func (this *ActivityStreamsPerson) SetActivityStreamsEndTime(i vocab.ActivityStreamsEndTimeProperty) {
 	this.ActivityStreamsEndTime = i
+}
+
+// SetActivityStreamsEndpoints sets the "endpoints" property.
+func (this *ActivityStreamsPerson) SetActivityStreamsEndpoints(i vocab.ActivityStreamsEndpointsProperty) {
+	this.ActivityStreamsEndpoints = i
 }
 
 // SetActivityStreamsFollowers sets the "followers" property.
