@@ -721,11 +721,11 @@ func ExtractSharedInbox(withEndpoints WithEndpoints) *url.URL {
 			if sharedInboxProp == nil {
 				return nil
 			}
-		
+
 			if !sharedInboxProp.IsIRI() {
 				return nil
 			}
-		
+
 			return sharedInboxProp.GetIRI()
 		}
 	}
