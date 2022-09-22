@@ -1832,6 +1832,7 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/following"),
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/followers"),
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/inbox"),
+			nil,
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/outbox"),
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/collections/featured"),
 			"brand_new_person",
@@ -1852,6 +1853,7 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 			URLMustParse("https://turnip.farm/users/turniplover6969/following"),
 			URLMustParse("https://turnip.farm/users/turniplover6969/followers"),
 			URLMustParse("https://turnip.farm/users/turniplover6969/inbox"),
+			URLMustParse("https://turnip.farm/sharedInbox"),
 			URLMustParse("https://turnip.farm/users/turniplover6969/outbox"),
 			URLMustParse("https://turnip.farm/users/turniplover6969/collections/featured"),
 			"turniplover6969",
@@ -2245,6 +2247,7 @@ func newAPPerson(
 	followingURI *url.URL,
 	followersURI *url.URL,
 	inboxURI *url.URL,
+	sharedInboxIRI *url.URL,
 	outboxURI *url.URL,
 	featuredURI *url.URL,
 	username string,
@@ -2285,6 +2288,17 @@ func newAPPerson(
 	inboxProp := streams.NewActivityStreamsInboxProperty()
 	inboxProp.SetIRI(inboxURI)
 	person.SetActivityStreamsInbox(inboxProp)
+
+	// shared inbox
+	if sharedInboxIRI != nil {
+		endpointsProp := streams.NewActivityStreamsEndpointsProperty()
+		endpoints := streams.NewActivityStreamsEndpoints()
+		sharedInboxProp := streams.NewActivityStreamsSharedInboxProperty()
+		sharedInboxProp.SetIRI(sharedInboxIRI)
+		endpoints.SetActivityStreamsSharedInbox(sharedInboxProp)
+		endpointsProp.AppendActivityStreamsEndpoints(endpoints)
+		person.SetActivityStreamsEndpoints(endpointsProp)
+	}
 
 	// outbox
 	// the activitypub outbox of this user for serving messages

@@ -156,6 +156,12 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 		acct.InboxURI = accountable.GetActivityStreamsInbox().GetIRI().String()
 	}
 
+	// SharedInboxURI
+	if sharedInboxURI := ap.ExtractSharedInbox(accountable); sharedInboxURI != nil {
+		s := sharedInboxURI.String()
+		acct.SharedInboxURI = &s
+	}
+
 	// OutboxURI
 	if accountable.GetActivityStreamsOutbox() != nil && accountable.GetActivityStreamsOutbox().GetIRI() != nil {
 		acct.OutboxURI = accountable.GetActivityStreamsOutbox().GetIRI().String()

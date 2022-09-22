@@ -702,3 +702,33 @@ func ExtractSensitive(withSensitive WithSensitive) bool {
 
 	return false
 }
+
+// ExtractSharedInbox extracts the sharedInbox URI properly from an Actor.
+// Returns nil if this property is not set.
+func ExtractSharedInbox(withEndpoints WithEndpoints) *url.URL {
+	endpointsProp := withEndpoints.GetActivityStreamsEndpoints()
+	if endpointsProp == nil {
+		return nil
+	}
+
+	for iter := endpointsProp.Begin(); iter != endpointsProp.End(); iter = iter.Next() {
+		if iter.IsActivityStreamsEndpoints() {
+			endpoints := iter.Get()
+			if endpoints == nil {
+				return nil
+			}
+			sharedInboxProp := endpoints.GetActivityStreamsSharedInbox()
+			if sharedInboxProp == nil {
+				return nil
+			}
+		
+			if !sharedInboxProp.IsIRI() {
+				return nil
+			}
+		
+			return sharedInboxProp.GetIRI()
+		}
+	}
+
+	return nil
+}
