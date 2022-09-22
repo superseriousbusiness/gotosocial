@@ -55,6 +55,11 @@ func FalseBool() *bool {
 	return new(bool)
 }
 
+// StringPtr returns a pointer to the given string.
+func StringPtr(in string) *string {
+	return &in
+}
+
 // NewTestTokens returns a map of tokens keyed according to which account the token belongs to.
 func NewTestTokens() map[string]*gtsmodel.Token {
 	tokens := map[string]*gtsmodel.Token{
@@ -474,6 +479,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			URL:                   "http://fossbros-anonymous.io/@foss_satan",
 			LastWebfingeredAt:     time.Time{},
 			InboxURI:              "http://fossbros-anonymous.io/users/foss_satan/inbox",
+			SharedInboxURI:        StringPtr("http://fossbros-anonymous.io/inbox"),
 			OutboxURI:             "http://fossbros-anonymous.io/users/foss_satan/outbox",
 			FollowersURI:          "http://fossbros-anonymous.io/users/foss_satan/followers",
 			FollowingURI:          "http://fossbros-anonymous.io/users/foss_satan/following",
@@ -509,6 +515,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			URL:                   "http://example.org/@some_user",
 			LastWebfingeredAt:     time.Time{},
 			InboxURI:              "http://example.org/users/some_user/inbox",
+			SharedInboxURI:        StringPtr(""),
 			OutboxURI:             "http://example.org/users/some_user/outbox",
 			FollowersURI:          "http://example.org/users/some_user/followers",
 			FollowingURI:          "http://example.org/users/some_user/following",

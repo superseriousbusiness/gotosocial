@@ -71,7 +71,7 @@ func (suite *AccountTestSuite) TestAccountDeleteLocal() {
 	})
 
 	if !testrig.WaitFor(func() bool {
-		sentI, ok := suite.httpClient.SentMessages.Load(followingAccount.InboxURI)
+		sentI, ok := suite.httpClient.SentMessages.Load(*followingAccount.SharedInboxURI)
 		if ok {
 			sent, ok = sentI.([][]byte)
 			if !ok {

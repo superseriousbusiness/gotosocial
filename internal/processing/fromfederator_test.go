@@ -488,7 +488,7 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestUnlocked() {
 	// an accept message should be sent to satan's inbox
 	var sent [][]byte
 	if !testrig.WaitFor(func() bool {
-		sentI, ok := suite.httpClient.SentMessages.Load(originAccount.InboxURI)
+		sentI, ok := suite.httpClient.SentMessages.Load(*originAccount.SharedInboxURI)
 		if ok {
 			sent, ok = sentI.([][]byte)
 			if !ok {
