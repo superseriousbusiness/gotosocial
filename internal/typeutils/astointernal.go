@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/miekg/dns"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -158,8 +159,14 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 
 	// SharedInboxURI
 	if sharedInboxURI := ap.ExtractSharedInbox(accountable); sharedInboxURI != nil {
-		s := sharedInboxURI.String()
-		acct.SharedInboxURI = &s
+		sharedInboxHost := sharedInboxURI.Host
+
+		var sharedInbox string
+		if dns.IsSubDomain(acct.Domain, sharedInboxHost) || dns.IsSubDomain(sharedInboxHost, acct.Domain) {
+			sharedInbox = sharedInboxURI.String()
+		}
+
+		acct.SharedInboxURI = &sharedInbox
 	}
 
 	// OutboxURI
