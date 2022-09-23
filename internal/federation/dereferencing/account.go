@@ -197,10 +197,12 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 		accountDomain = params.RemoteAccountHost
 	}
 
-	// to save on remote calls: only webfinger if we don't have a remoteAccount yet, or if we haven't
-	// fingered the remote account for at least 2 days; don't finger instance accounts
+	// to save on remote calls, only webfinger if:
+	// - we don't know the remote account ActivityPub ID yet OR
+	// - we haven't found the account yet in some other way OR
+	// - we haven't webfingered the account for two days AND the account isn't an instance account
 	var fingered time.Time
-	if foundAccount == nil || (foundAccount.LastWebfingeredAt.Before(time.Now().Add(webfingerInterval)) && !instanceAccount(foundAccount)) {
+	if params.RemoteAccountID == nil || foundAccount == nil || (foundAccount.LastWebfingeredAt.Before(time.Now().Add(webfingerInterval)) && !instanceAccount(foundAccount)) {
 		accountDomain, params.RemoteAccountID, err = d.fingerRemoteAccount(ctx, params.RequestingUsername, params.RemoteAccountUsername, params.RemoteAccountHost)
 		if err != nil {
 			err = fmt.Errorf("GetRemoteAccount: error while fingering: %s", err)
