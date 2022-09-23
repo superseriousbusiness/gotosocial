@@ -85,7 +85,7 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 	inboxProp.SetIRI(inboxURI)
 	person.SetActivityStreamsInbox(inboxProp)
 
-	// shared inbox
+	// shared inbox -- only add this if we know for sure it has one
 	if a.SharedInboxURI != nil && *a.SharedInboxURI != "" {
 		sharedInboxURI, err := url.Parse(*a.SharedInboxURI)
 		if err != nil {

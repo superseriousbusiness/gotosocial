@@ -281,7 +281,8 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 		}
 	}
 
-	// check if we need to look for a sharedInbox for the account
+	// if SharedInboxURI is nil, that means we don't know yet if this account has
+	// a shared inbox available for it, so we need to check this here
 	var sharedInboxChanged bool
 	if foundAccount.SharedInboxURI == nil {
 		// we need the accountable for this, so get it if we don't have it yet
@@ -293,8 +294,12 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 			}
 		}
 
-		// only set a shared inbox for this account if it's on the same host or domain as the account
+		// This can be:
+		// - an empty string (we know it doesn't have a shared inbox) OR
+		// - a string URL (we know it does a shared inbox).
+		// Set it either way!
 		var sharedInbox string
+
 		if sharedInboxURI := ap.ExtractSharedInbox(accountable); sharedInboxURI != nil {
 			if sharedInboxURI.Host == params.RemoteAccountID.Host || sharedInboxURI.Host == foundAccount.Domain {
 				sharedInbox = sharedInboxURI.String()
