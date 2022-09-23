@@ -171,11 +171,6 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 		return fmt.Errorf("store: error executing data function: %s", err)
 	}
 
-	maxSize := config.GetMediaEmojiRemoteMaxSize()
-	if fileSize > maxSize {
-		return fmt.Errorf("store: emoji size (%db) is larger than allowed emojiRemoteMaxSize (%db)", fileSize, maxSize)
-	}
-
 	// defer closing the reader when we're done with it
 	defer func() {
 		if rc, ok := reader.(io.ReadCloser); ok {
@@ -206,20 +201,40 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	split := strings.Split(contentType, "/")
 	extension := split[1] // something like 'gif'
 
+	// if we know the fileSize already, make sure it's not bigger than our limit
+	maxEmojiSize := config.GetMediaEmojiRemoteMaxSize()
+	var checkedSize bool
+	if fileSize > 0 {
+		checkedSize = true
+		if fileSize > maxEmojiSize {
+			return fmt.Errorf("store: given emoji fileSize (%db) is larger than allowed emojiRemoteMaxSize (%db)", fileSize, maxEmojiSize)
+		}
+	}
+
+	// concatenate the first bytes with the existing bytes still in the reader (thanks Mara)
+	readerToStore := io.MultiReader(bytes.NewBuffer(firstBytes), reader)
+
+	// store this for now -- other processes can pull it out of storage as they please
+	if fileSize, err = putStream(ctx, p.storage, p.emoji.ImagePath, readerToStore, fileSize); err != nil && err != storage.ErrAlreadyExists {
+		return fmt.Errorf("store: error storing stream: %s", err)
+	}
+
+	// if we didn't know the fileSize yet, we do now, so check if we need to
+	if !checkedSize && fileSize > maxEmojiSize {
+		defer func() {
+			if err := p.storage.Delete(ctx, p.emoji.ImagePath); err != nil {
+				log.Errorf("store: error removing too-large emoji from the store: %s", err)
+			}
+		}()
+		return fmt.Errorf("store: discovered emoji fileSize (%db) is larger than allowed emojiRemoteMaxSize (%db)", fileSize, maxEmojiSize)
+	}
+
 	// set some additional fields on the emoji now that
 	// we know more about what the underlying image actually is
 	p.emoji.ImageURL = uris.GenerateURIForAttachment(p.instanceAccountID, string(TypeEmoji), string(SizeOriginal), p.emoji.ID, extension)
 	p.emoji.ImagePath = fmt.Sprintf("%s/%s/%s/%s.%s", p.instanceAccountID, TypeEmoji, SizeOriginal, p.emoji.ID, extension)
 	p.emoji.ImageContentType = contentType
 	p.emoji.ImageFileSize = fileSize
-
-	// concatenate the first bytes with the existing bytes still in the reader (thanks Mara)
-	multiReader := io.MultiReader(bytes.NewBuffer(firstBytes), reader)
-
-	// store this for now -- other processes can pull it out of storage as they please
-	if err := p.storage.PutStream(ctx, p.emoji.ImagePath, multiReader); err != nil && err != storage.ErrAlreadyExists {
-		return fmt.Errorf("store: error storing stream: %s", err)
-	}
 
 	p.read = true
 
