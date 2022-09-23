@@ -55,6 +55,11 @@ func FalseBool() *bool {
 	return new(bool)
 }
 
+// StringPtr returns a pointer to the given string.
+func StringPtr(in string) *string {
+	return &in
+}
+
 // NewTestTokens returns a map of tokens keyed according to which account the token belongs to.
 func NewTestTokens() map[string]*gtsmodel.Token {
 	tokens := map[string]*gtsmodel.Token{
@@ -474,6 +479,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			URL:                   "http://fossbros-anonymous.io/@foss_satan",
 			LastWebfingeredAt:     time.Time{},
 			InboxURI:              "http://fossbros-anonymous.io/users/foss_satan/inbox",
+			SharedInboxURI:        StringPtr("http://fossbros-anonymous.io/inbox"),
 			OutboxURI:             "http://fossbros-anonymous.io/users/foss_satan/outbox",
 			FollowersURI:          "http://fossbros-anonymous.io/users/foss_satan/followers",
 			FollowingURI:          "http://fossbros-anonymous.io/users/foss_satan/following",
@@ -509,6 +515,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			URL:                   "http://example.org/@some_user",
 			LastWebfingeredAt:     time.Time{},
 			InboxURI:              "http://example.org/users/some_user/inbox",
+			SharedInboxURI:        StringPtr(""),
 			OutboxURI:             "http://example.org/users/some_user/outbox",
 			FollowersURI:          "http://example.org/users/some_user/followers",
 			FollowingURI:          "http://example.org/users/some_user/following",
@@ -1832,6 +1839,7 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/following"),
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/followers"),
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/inbox"),
+			nil,
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/outbox"),
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/collections/featured"),
 			"brand_new_person",
@@ -1852,6 +1860,7 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 			URLMustParse("https://turnip.farm/users/turniplover6969/following"),
 			URLMustParse("https://turnip.farm/users/turniplover6969/followers"),
 			URLMustParse("https://turnip.farm/users/turniplover6969/inbox"),
+			URLMustParse("https://turnip.farm/sharedInbox"),
 			URLMustParse("https://turnip.farm/users/turniplover6969/outbox"),
 			URLMustParse("https://turnip.farm/users/turniplover6969/collections/featured"),
 			"turniplover6969",
@@ -2245,6 +2254,7 @@ func newAPPerson(
 	followingURI *url.URL,
 	followersURI *url.URL,
 	inboxURI *url.URL,
+	sharedInboxIRI *url.URL,
 	outboxURI *url.URL,
 	featuredURI *url.URL,
 	username string,
@@ -2285,6 +2295,17 @@ func newAPPerson(
 	inboxProp := streams.NewActivityStreamsInboxProperty()
 	inboxProp.SetIRI(inboxURI)
 	person.SetActivityStreamsInbox(inboxProp)
+
+	// shared inbox
+	if sharedInboxIRI != nil {
+		endpointsProp := streams.NewActivityStreamsEndpointsProperty()
+		endpoints := streams.NewActivityStreamsEndpoints()
+		sharedInboxProp := streams.NewActivityStreamsSharedInboxProperty()
+		sharedInboxProp.SetIRI(sharedInboxIRI)
+		endpoints.SetActivityStreamsSharedInbox(sharedInboxProp)
+		endpointsProp.AppendActivityStreamsEndpoints(endpoints)
+		person.SetActivityStreamsEndpoints(endpointsProp)
+	}
 
 	// outbox
 	// the activitypub outbox of this user for serving messages

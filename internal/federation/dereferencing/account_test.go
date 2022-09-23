@@ -101,6 +101,24 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountAsRemoteURL() {
 	suite.Empty(fetchedAccount.Domain)
 }
 
+func (suite *AccountTestSuite) TestDereferenceLocalAccountAsRemoteURLNoSharedInboxYet() {
+	fetchingAccount := suite.testAccounts["local_account_1"]
+	targetAccount := suite.testAccounts["local_account_2"]
+
+	targetAccount.SharedInboxURI = nil
+	if _, err := suite.db.UpdateAccount(context.Background(), targetAccount); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	fetchedAccount, err := suite.dereferencer.GetRemoteAccount(context.Background(), dereferencing.GetRemoteAccountParams{
+		RequestingUsername: fetchingAccount.Username,
+		RemoteAccountID:    testrig.URLMustParse(targetAccount.URI),
+	})
+	suite.NoError(err)
+	suite.NotNil(fetchedAccount)
+	suite.Empty(fetchedAccount.Domain)
+}
+
 func (suite *AccountTestSuite) TestDereferenceLocalAccountAsUsername() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 	targetAccount := suite.testAccounts["local_account_2"]
