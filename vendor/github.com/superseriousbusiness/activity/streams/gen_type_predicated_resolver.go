@@ -65,6 +65,8 @@ func NewTypePredicatedResolver(delegate Resolver, predicate interface{}) (*TypeP
 		// Do nothing, this predicate has a correct signature.
 	case func(context.Context, vocab.TootEmoji) (bool, error):
 		// Do nothing, this predicate has a correct signature.
+	case func(context.Context, vocab.ActivityStreamsEndpoints) (bool, error):
+		// Do nothing, this predicate has a correct signature.
 	case func(context.Context, vocab.ActivityStreamsEvent) (bool, error):
 		// Do nothing, this predicate has a correct signature.
 	case func(context.Context, vocab.ActivityStreamsFlag) (bool, error):
@@ -364,6 +366,17 @@ func (this TypePredicatedResolver) Apply(ctx context.Context, o ActivityStreamsI
 	} else if o.VocabularyURI() == "http://joinmastodon.org/ns" && o.GetTypeName() == "Emoji" {
 		if fn, ok := this.predicate.(func(context.Context, vocab.TootEmoji) (bool, error)); ok {
 			if v, ok := o.(vocab.TootEmoji); ok {
+				predicatePasses, err = fn(ctx, v)
+			} else {
+				// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+				return false, errCannotTypeAssertType
+			}
+		} else {
+			return false, ErrPredicateUnmatched
+		}
+	} else if o.VocabularyURI() == "https://www.w3.org/ns/activitystreams" && o.GetTypeName() == "Endpoints" {
+		if fn, ok := this.predicate.(func(context.Context, vocab.ActivityStreamsEndpoints) (bool, error)); ok {
+			if v, ok := o.(vocab.ActivityStreamsEndpoints); ok {
 				predicatePasses, err = fn(ctx, v)
 			} else {
 				// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
