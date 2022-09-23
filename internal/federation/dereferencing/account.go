@@ -29,6 +29,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/miekg/dns"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -301,7 +302,9 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 		var sharedInbox string
 
 		if sharedInboxURI := ap.ExtractSharedInbox(accountable); sharedInboxURI != nil {
-			if sharedInboxURI.Host == params.RemoteAccountID.Host || sharedInboxURI.Host == foundAccount.Domain {
+			// only trust shared inbox if it has at least two domains,
+			// from the right, in common with the domain of the account
+			if dns.CompareDomainName(foundAccount.Domain, sharedInboxURI.Host) >= 2 {
 				sharedInbox = sharedInboxURI.String()
 			}
 		}

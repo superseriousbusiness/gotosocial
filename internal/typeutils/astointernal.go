@@ -159,10 +159,11 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 
 	// SharedInboxURI
 	if sharedInboxURI := ap.ExtractSharedInbox(accountable); sharedInboxURI != nil {
-		sharedInboxHost := sharedInboxURI.Host
-
 		var sharedInbox string
-		if dns.IsSubDomain(acct.Domain, sharedInboxHost) || dns.IsSubDomain(sharedInboxHost, acct.Domain) {
+
+		// only trust shared inbox if it has at least two domains,
+		// from the right, in common with the domain of the account
+		if dns.CompareDomainName(acct.Domain, sharedInboxURI.Host) >= 2 {
 			sharedInbox = sharedInboxURI.String()
 		}
 
