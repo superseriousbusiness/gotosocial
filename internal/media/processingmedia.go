@@ -268,7 +268,6 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("store: error executing data function: %s", err)
 	}
-	log.Tracef("store: reading %d bytes from data function for media %s", fileSize, p.attachment.URL)
 
 	// defer closing the reader when we're done with it
 	defer func() {
@@ -320,34 +319,32 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 			if err != nil {
 				return fmt.Errorf("store: exif error: %s", err)
 			}
+			defer func() {
+				if rc, ok := readerToStore.(io.ReadCloser); ok {
+					if err := rc.Close(); err != nil {
+						log.Errorf("store: error closing terminator reader: %s", err)
+					}
+				}
+			}()
 		}
 	default:
 		return fmt.Errorf("store: couldn't process %s", extension)
 	}
 
-	// defer closing the reader when we're done with it
-	defer func() {
-		if rc, ok := readerToStore.(io.ReadCloser); ok {
-			if err := rc.Close(); err != nil {
-				log.Errorf("store: error closing readerToStore: %s", err)
-			}
-		}
-	}()
+	// now set some additional fields on the attachment since
+	// we know more about what the underlying media actually is
+	p.attachment.URL = uris.GenerateURIForAttachment(p.attachment.AccountID, string(TypeAttachment), string(SizeOriginal), p.attachment.ID, extension)
+	p.attachment.File.ContentType = contentType
+	p.attachment.File.Path = fmt.Sprintf("%s/%s/%s/%s.%s", p.attachment.AccountID, TypeAttachment, SizeOriginal, p.attachment.ID, extension)
 
 	// store this for now -- other processes can pull it out of storage as they please
 	if fileSize, err = putStream(ctx, p.storage, p.attachment.File.Path, readerToStore, fileSize); err != nil && err != storage.ErrAlreadyExists {
 		return fmt.Errorf("store: error storing stream: %s", err)
 	}
 
-	// now set some additional fields on the attachment since
-	// we know more about what the underlying media actually is
-	p.attachment.URL = uris.GenerateURIForAttachment(p.attachment.AccountID, string(TypeAttachment), string(SizeOriginal), p.attachment.ID, extension)
-	p.attachment.File.Path = fmt.Sprintf("%s/%s/%s/%s.%s", p.attachment.AccountID, TypeAttachment, SizeOriginal, p.attachment.ID, extension)
-	p.attachment.File.ContentType = contentType
-	p.attachment.File.FileSize = fileSize
-
 	cached := true
 	p.attachment.Cached = &cached
+	p.attachment.File.FileSize = fileSize
 	p.read = true
 
 	if p.postData != nil {
