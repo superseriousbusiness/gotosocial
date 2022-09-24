@@ -595,6 +595,31 @@ func GetInstanceExposeSuspended() bool { return global.GetInstanceExposeSuspende
 // SetInstanceExposeSuspended safely sets the value for global configuration 'InstanceExposeSuspended' field
 func SetInstanceExposeSuspended(v bool) { global.SetInstanceExposeSuspended(v) }
 
+// GetInstanceDeliverToSharedInboxes safely fetches the Configuration value for state's 'InstanceDeliverToSharedInboxes' field
+func (st *ConfigState) GetInstanceDeliverToSharedInboxes() (v bool) {
+	st.mutex.Lock()
+	v = st.config.InstanceDeliverToSharedInboxes
+	st.mutex.Unlock()
+	return
+}
+
+// SetInstanceDeliverToSharedInboxes safely sets the Configuration value for state's 'InstanceDeliverToSharedInboxes' field
+func (st *ConfigState) SetInstanceDeliverToSharedInboxes(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceDeliverToSharedInboxes = v
+	st.reloadToViper()
+}
+
+// InstanceDeliverToSharedInboxesFlag returns the flag name for the 'InstanceDeliverToSharedInboxes' field
+func InstanceDeliverToSharedInboxesFlag() string { return "instance-deliver-to-shared-inboxes" }
+
+// GetInstanceDeliverToSharedInboxes safely fetches the value for global configuration 'InstanceDeliverToSharedInboxes' field
+func GetInstanceDeliverToSharedInboxes() bool { return global.GetInstanceDeliverToSharedInboxes() }
+
+// SetInstanceDeliverToSharedInboxes safely sets the value for global configuration 'InstanceDeliverToSharedInboxes' field
+func SetInstanceDeliverToSharedInboxes(v bool) { global.SetInstanceDeliverToSharedInboxes(v) }
+
 // GetAccountsRegistrationOpen safely fetches the Configuration value for state's 'AccountsRegistrationOpen' field
 func (st *ConfigState) GetAccountsRegistrationOpen() (v bool) {
 	st.mutex.Lock()

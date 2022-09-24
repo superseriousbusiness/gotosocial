@@ -43,6 +43,9 @@ type ActivityStreamsGroup interface {
 	// GetActivityStreamsEndTime returns the "endTime" property if it exists,
 	// and nil otherwise.
 	GetActivityStreamsEndTime() ActivityStreamsEndTimeProperty
+	// GetActivityStreamsEndpoints returns the "endpoints" property if it
+	// exists, and nil otherwise.
+	GetActivityStreamsEndpoints() ActivityStreamsEndpointsProperty
 	// GetActivityStreamsFollowers returns the "followers" property if it
 	// exists, and nil otherwise.
 	GetActivityStreamsFollowers() ActivityStreamsFollowersProperty
@@ -198,6 +201,8 @@ type ActivityStreamsGroup interface {
 	SetActivityStreamsDuration(i ActivityStreamsDurationProperty)
 	// SetActivityStreamsEndTime sets the "endTime" property.
 	SetActivityStreamsEndTime(i ActivityStreamsEndTimeProperty)
+	// SetActivityStreamsEndpoints sets the "endpoints" property.
+	SetActivityStreamsEndpoints(i ActivityStreamsEndpointsProperty)
 	// SetActivityStreamsFollowers sets the "followers" property.
 	SetActivityStreamsFollowers(i ActivityStreamsFollowersProperty)
 	// SetActivityStreamsFollowing sets the "following" property.

@@ -85,6 +85,11 @@ func (c *StatusCache) Put(status *gtsmodel.Status) {
 	c.cache.Set(status.ID, copyStatus(status))
 }
 
+// Invalidate invalidates one status from the cache using the ID of the status as key.
+func (c *StatusCache) Invalidate(statusID string) {
+	c.cache.Invalidate(statusID)
+}
+
 // copyStatus performs a surface-level copy of status, only keeping attached IDs intact, not the objects.
 // due to all the data being copied being 99% primitive types or strings (which are immutable and passed by ptr)
 // this should be a relatively cheap process

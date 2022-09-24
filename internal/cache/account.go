@@ -136,6 +136,7 @@ func copyAccount(account *gtsmodel.Account) *gtsmodel.Account {
 		URL:                     account.URL,
 		LastWebfingeredAt:       account.LastWebfingeredAt,
 		InboxURI:                account.InboxURI,
+		SharedInboxURI:          account.SharedInboxURI,
 		OutboxURI:               account.OutboxURI,
 		FollowingURI:            account.FollowingURI,
 		FollowersURI:            account.FollowersURI,

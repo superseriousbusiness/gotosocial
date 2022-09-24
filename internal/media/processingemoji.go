@@ -121,6 +121,12 @@ func (p *ProcessingEmoji) loadStatic(ctx context.Context) error {
 			return p.err
 		}
 
+		defer func() {
+			if err := stored.Close(); err != nil {
+				log.Errorf("loadStatic: error closing stored full size: %s", err)
+			}
+		}()
+
 		// we haven't processed a static version of this emoji yet so do it now
 		static, err := deriveStaticEmoji(stored, p.emoji.ImageContentType)
 		if err != nil {
@@ -129,14 +135,8 @@ func (p *ProcessingEmoji) loadStatic(ctx context.Context) error {
 			return p.err
 		}
 
-		if err := stored.Close(); err != nil {
-			p.err = fmt.Errorf("loadStatic: error closing stored full size: %s", err)
-			atomic.StoreInt32(&p.staticState, int32(errored))
-			return p.err
-		}
-
 		// put the static in storage
-		if err := p.storage.Put(ctx, p.emoji.ImageStaticPath, static.small); err != nil {
+		if err := p.storage.Put(ctx, p.emoji.ImageStaticPath, static.small); err != nil && err != storage.ErrAlreadyExists {
 			p.err = fmt.Errorf("loadStatic: error storing static: %s", err)
 			atomic.StoreInt32(&p.staticState, int32(errored))
 			return p.err
@@ -169,11 +169,6 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	reader, fileSize, err := p.data(ctx)
 	if err != nil {
 		return fmt.Errorf("store: error executing data function: %s", err)
-	}
-
-	maxSize := config.GetMediaEmojiRemoteMaxSize()
-	if fileSize > int64(maxSize) {
-		return fmt.Errorf("store: emoji size (%db) is larger than allowed emojiRemoteMaxSize (%db)", fileSize, maxSize)
 	}
 
 	// defer closing the reader when we're done with it
@@ -211,16 +206,42 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	p.emoji.ImageURL = uris.GenerateURIForAttachment(p.instanceAccountID, string(TypeEmoji), string(SizeOriginal), p.emoji.ID, extension)
 	p.emoji.ImagePath = fmt.Sprintf("%s/%s/%s/%s.%s", p.instanceAccountID, TypeEmoji, SizeOriginal, p.emoji.ID, extension)
 	p.emoji.ImageContentType = contentType
-	p.emoji.ImageFileSize = int(fileSize)
 
 	// concatenate the first bytes with the existing bytes still in the reader (thanks Mara)
-	multiReader := io.MultiReader(bytes.NewBuffer(firstBytes), reader)
+	readerToStore := io.MultiReader(bytes.NewBuffer(firstBytes), reader)
+
+	var maxEmojiSize int64
+	if p.emoji.Domain == "" {
+		maxEmojiSize = int64(config.GetMediaEmojiLocalMaxSize())
+	} else {
+		maxEmojiSize = int64(config.GetMediaEmojiRemoteMaxSize())
+	}
+
+	// if we know the fileSize already, make sure it's not bigger than our limit
+	var checkedSize bool
+	if fileSize > 0 {
+		checkedSize = true
+		if fileSize > maxEmojiSize {
+			return fmt.Errorf("store: given emoji fileSize (%db) is larger than allowed size (%db)", fileSize, maxEmojiSize)
+		}
+	}
 
 	// store this for now -- other processes can pull it out of storage as they please
-	if err := p.storage.PutStream(ctx, p.emoji.ImagePath, multiReader); err != nil {
+	if fileSize, err = putStream(ctx, p.storage, p.emoji.ImagePath, readerToStore, fileSize); err != nil && err != storage.ErrAlreadyExists {
 		return fmt.Errorf("store: error storing stream: %s", err)
 	}
 
+	// if we didn't know the fileSize yet, we do now, so check if we need to
+	if !checkedSize && fileSize > maxEmojiSize {
+		defer func() {
+			if err := p.storage.Delete(ctx, p.emoji.ImagePath); err != nil {
+				log.Errorf("store: error removing too-large emoji from the store: %s", err)
+			}
+		}()
+		return fmt.Errorf("store: discovered emoji fileSize (%db) is larger than allowed emojiRemoteMaxSize (%db)", fileSize, maxEmojiSize)
+	}
+
+	p.emoji.ImageFileSize = int(fileSize)
 	p.read = true
 
 	if p.postData != nil {

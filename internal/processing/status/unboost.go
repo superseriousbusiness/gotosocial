@@ -78,14 +78,8 @@ func (p *processor) Unboost(ctx context.Context, requestingAccount *gtsmodel.Acc
 	}
 
 	if toUnboost {
-		// we had a boost, so take some action to get rid of it
-		if err := p.db.DeleteWhere(ctx, where, &gtsmodel.Status{}); err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error unboosting status: %s", err))
-		}
-
 		// pin some stuff onto the boost while we have it out of the db
 		gtsBoost.Account = requestingAccount
-
 		gtsBoost.BoostOf = targetStatus
 		gtsBoost.BoostOfAccount = targetStatus.Account
 		gtsBoost.BoostOf.Account = targetStatus.Account

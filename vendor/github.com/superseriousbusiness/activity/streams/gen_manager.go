@@ -20,6 +20,7 @@ import (
 	propertydeleted "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_deleted"
 	propertydescribes "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_describes"
 	propertyduration "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_duration"
+	propertyendpoints "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_endpoints"
 	propertyendtime "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_endtime"
 	propertyfirst "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_first"
 	propertyfollowers "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_followers"
@@ -61,6 +62,7 @@ import (
 	propertyreplies "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_replies"
 	propertyresult "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_result"
 	propertysensitive "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_sensitive"
+	propertysharedinbox "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_sharedinbox"
 	propertyshares "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_shares"
 	propertysource "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_source"
 	propertystartindex "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_startindex"
@@ -91,6 +93,7 @@ import (
 	typedelete "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_delete"
 	typedislike "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_dislike"
 	typedocument "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_document"
+	typeendpoints "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_endpoints"
 	typeevent "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_event"
 	typeflag "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_flag"
 	typefollow "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_follow"
@@ -777,6 +780,32 @@ func (this Manager) DeserializeEmojiToot() func(map[string]interface{}, map[stri
 func (this Manager) DeserializeEndTimePropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsEndTimeProperty, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsEndTimeProperty, error) {
 		i, err := propertyendtime.DeserializeEndTimeProperty(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeEndpointsActivityStreams returns the deserialization method for the
+// "ActivityStreamsEndpoints" non-functional property in the vocabulary
+// "ActivityStreams"
+func (this Manager) DeserializeEndpointsActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsEndpoints, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsEndpoints, error) {
+		i, err := typeendpoints.DeserializeEndpoints(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeEndpointsPropertyActivityStreams returns the deserialization method
+// for the "ActivityStreamsEndpointsProperty" non-functional property in the
+// vocabulary "ActivityStreams"
+func (this Manager) DeserializeEndpointsPropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsEndpointsProperty, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsEndpointsProperty, error) {
+		i, err := propertyendpoints.DeserializeEndpointsProperty(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}
@@ -1901,6 +1930,19 @@ func (this Manager) DeserializeSensitivePropertyActivityStreams() func(map[strin
 func (this Manager) DeserializeServiceActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsService, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsService, error) {
 		i, err := typeservice.DeserializeService(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeSharedInboxPropertyActivityStreams returns the deserialization
+// method for the "ActivityStreamsSharedInboxProperty" non-functional property
+// in the vocabulary "ActivityStreams"
+func (this Manager) DeserializeSharedInboxPropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsSharedInboxProperty, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsSharedInboxProperty, error) {
+		i, err := propertysharedinbox.DeserializeSharedInboxProperty(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}

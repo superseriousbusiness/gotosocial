@@ -19,12 +19,15 @@
 package media
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/h2non/filetype"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
 // AllSupportedMIMETypes just returns all media
@@ -143,4 +146,32 @@ func parseOlderThan(olderThanDays int) (time.Time, error) {
 	olderThan := time.Now().Add(-olderThanHours)
 
 	return olderThan, nil
+}
+
+// lengthReader wraps a reader and reads the length of total bytes written as it goes.
+type lengthReader struct {
+	source io.Reader
+	length int64
+}
+
+func (r *lengthReader) Read(b []byte) (int, error) {
+	n, err := r.source.Read(b)
+	r.length += int64(n)
+	return n, err
+}
+
+// putStream either puts a file with a known fileSize into storage directly, and returns the
+// fileSize unchanged, or it wraps the reader with a lengthReader and returns the discovered
+// fileSize.
+func putStream(ctx context.Context, storage storage.Driver, key string, r io.Reader, fileSize int64) (int64, error) {
+	if fileSize > 0 {
+		return fileSize, storage.PutStream(ctx, key, r)
+	}
+
+	lr := &lengthReader{
+		source: r,
+	}
+
+	err := storage.PutStream(ctx, key, lr)
+	return lr.length, err
 }

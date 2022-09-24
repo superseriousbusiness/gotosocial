@@ -85,6 +85,21 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 	inboxProp.SetIRI(inboxURI)
 	person.SetActivityStreamsInbox(inboxProp)
 
+	// shared inbox -- only add this if we know for sure it has one
+	if a.SharedInboxURI != nil && *a.SharedInboxURI != "" {
+		sharedInboxURI, err := url.Parse(*a.SharedInboxURI)
+		if err != nil {
+			return nil, err
+		}
+		endpointsProp := streams.NewActivityStreamsEndpointsProperty()
+		endpoints := streams.NewActivityStreamsEndpoints()
+		sharedInboxProp := streams.NewActivityStreamsSharedInboxProperty()
+		sharedInboxProp.SetIRI(sharedInboxURI)
+		endpoints.SetActivityStreamsSharedInbox(sharedInboxProp)
+		endpointsProp.AppendActivityStreamsEndpoints(endpoints)
+		person.SetActivityStreamsEndpoints(endpointsProp)
+	}
+
 	// outbox
 	// the activitypub outbox of this user for serving messages
 	outboxURI, err := url.Parse(a.OutboxURI)
@@ -430,7 +445,18 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 	tagProp := streams.NewActivityStreamsTagProperty()
 
 	// tag -- mentions
-	for _, m := range s.Mentions {
+	mentions := s.Mentions
+	if len(s.MentionIDs) > len(mentions) {
+		mentions = []*gtsmodel.Mention{}
+		for _, mentionID := range s.MentionIDs {
+			mention, err := c.db.GetMention(ctx, mentionID)
+			if err != nil {
+				return nil, fmt.Errorf("StatusToAS: error getting mention %s from database: %s", mentionID, err)
+			}
+			mentions = append(mentions, mention)
+		}
+	}
+	for _, m := range mentions {
 		asMention, err := c.MentionToAS(ctx, m)
 		if err != nil {
 			return nil, fmt.Errorf("StatusToAS: error converting mention to AS mention: %s", err)
@@ -439,7 +465,18 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 	}
 
 	// tag -- emojis
-	for _, emoji := range s.Emojis {
+	emojis := s.Emojis
+	if len(s.EmojiIDs) > len(emojis) {
+		emojis = []*gtsmodel.Emoji{}
+		for _, emojiID := range s.EmojiIDs {
+			emoji, err := c.db.GetEmojiByID(ctx, emojiID)
+			if err != nil {
+				return nil, fmt.Errorf("StatusToAS: error getting emoji %s from database: %s", emojiID, err)
+			}
+			emojis = append(emojis, emoji)
+		}
+	}
+	for _, emoji := range emojis {
 		asMention, err := c.EmojiToAS(ctx, emoji)
 		if err != nil {
 			return nil, fmt.Errorf("StatusToAS: error converting emoji to AS emoji: %s", err)
@@ -522,9 +559,20 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 	contentProp.AppendXMLSchemaString(s.Content)
 	status.SetActivityStreamsContent(contentProp)
 
-	// attachment
+	// attachments
 	attachmentProp := streams.NewActivityStreamsAttachmentProperty()
-	for _, a := range s.Attachments {
+	attachments := s.Attachments
+	if len(s.AttachmentIDs) > len(attachments) {
+		attachments = []*gtsmodel.MediaAttachment{}
+		for _, attachmentID := range s.AttachmentIDs {
+			attachment, err := c.db.GetAttachmentByID(ctx, attachmentID)
+			if err != nil {
+				return nil, fmt.Errorf("StatusToAS: error getting attachment %s from database: %s", attachmentID, err)
+			}
+			attachments = append(attachments, attachment)
+		}
+	}
+	for _, a := range attachments {
 		doc, err := c.AttachmentToAS(ctx, a)
 		if err != nil {
 			return nil, fmt.Errorf("StatusToAS: error converting attachment: %s", err)

@@ -20,12 +20,10 @@ package federatingdb
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 
 	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
@@ -38,12 +36,11 @@ import (
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 	l := log.WithFields(kv.Fields{
-
 		{"id", id},
 	}...)
 	l.Debug("entering Delete")
 
-	receivingAccount, _ := extractFromCtx(ctx)
+	receivingAccount, requestingAccount := extractFromCtx(ctx)
 	if receivingAccount == nil {
 		// If the receiving account wasn't set on the context, that means this request didn't pass
 		// through the API, but came from inside GtS as the result of another activity on this instance. That being so,
@@ -53,13 +50,8 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 
 	// in a delete we only get the URI, we can't know if we have a status or a profile or something else,
 	// so we have to try a few different things...
-	s, err := f.db.GetStatusByURI(ctx, id.String())
-	if err == nil {
-		// it's a status
-		l.Debugf("uri is for status with id: %s", s.ID)
-		if err := f.db.DeleteByID(ctx, s.ID, &gtsmodel.Status{}); err != nil {
-			return fmt.Errorf("DELETE: err deleting status: %s", err)
-		}
+	if s, err := f.db.GetStatusByURI(ctx, id.String()); err == nil && requestingAccount.ID == s.AccountID {
+		l.Debugf("uri is for STATUS with id: %s", s.ID)
 		f.fedWorker.Queue(messages.FromFederator{
 			APObjectType:     ap.ObjectNote,
 			APActivityType:   ap.ActivityDelete,
@@ -68,10 +60,8 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 		})
 	}
 
-	a, err := f.db.GetAccountByURI(ctx, id.String())
-	if err == nil {
-		// it's an account
-		l.Debugf("uri is for an account with id %s, passing delete message to the processor", a.ID)
+	if a, err := f.db.GetAccountByURI(ctx, id.String()); err == nil && requestingAccount.ID == a.ID {
+		l.Debugf("uri is for ACCOUNT with id %s", a.ID)
 		f.fedWorker.Queue(messages.FromFederator{
 			APObjectType:     ap.ObjectProfile,
 			APActivityType:   ap.ActivityDelete,

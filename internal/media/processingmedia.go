@@ -145,9 +145,7 @@ func (p *ProcessingMedia) loadThumb(ctx context.Context) error {
 			return p.err
 		}
 
-		// whatever happens, close the stream when we're done
 		defer func() {
-			log.Tracef("loadThumb: closing stored stream %s", p.attachment.URL)
 			if err := stored.Close(); err != nil {
 				log.Errorf("loadThumb: error closing stored full size: %s", err)
 			}
@@ -164,7 +162,7 @@ func (p *ProcessingMedia) loadThumb(ctx context.Context) error {
 
 		// put the thumbnail in storage
 		log.Tracef("loadThumb: storing new thumbnail %s", p.attachment.URL)
-		if err := p.storage.Put(ctx, p.attachment.Thumbnail.Path, thumb.small); err != nil {
+		if err := p.storage.Put(ctx, p.attachment.Thumbnail.Path, thumb.small); err != nil && err != storage.ErrAlreadyExists {
 			p.err = fmt.Errorf("loadThumb: error storing thumbnail: %s", err)
 			atomic.StoreInt32(&p.thumbState, int32(errored))
 			return p.err
@@ -210,6 +208,12 @@ func (p *ProcessingMedia) loadFullSize(ctx context.Context) error {
 			return p.err
 		}
 
+		defer func() {
+			if err := stored.Close(); err != nil {
+				log.Errorf("loadFullSize: error closing stored full size: %s", err)
+			}
+		}()
+
 		// decode the image
 		ct := p.attachment.File.ContentType
 		switch ct {
@@ -223,12 +227,6 @@ func (p *ProcessingMedia) loadFullSize(ctx context.Context) error {
 
 		if err != nil {
 			p.err = err
-			atomic.StoreInt32(&p.fullSizeState, int32(errored))
-			return p.err
-		}
-
-		if err := stored.Close(); err != nil {
-			p.err = fmt.Errorf("loadFullSize: error closing stored full size: %s", err)
 			atomic.StoreInt32(&p.fullSizeState, int32(errored))
 			return p.err
 		}
@@ -270,7 +268,6 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("store: error executing data function: %s", err)
 	}
-	log.Tracef("store: reading %d bytes from data function for media %s", fileSize, p.attachment.URL)
 
 	// defer closing the reader when we're done with it
 	defer func() {
@@ -306,49 +303,48 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	extension := split[1] // something like 'jpeg'
 
 	// concatenate the cleaned up first bytes with the existing bytes still in the reader (thanks Mara)
-	multiReader := io.MultiReader(bytes.NewBuffer(firstBytes), reader)
+	readerToStore := io.MultiReader(bytes.NewBuffer(firstBytes), reader)
 
-	// we'll need to clean exif data from the first bytes; while we're
-	// here, we can also use the extension to derive the attachment type
-	var clean io.Reader
+	// use the extension to derive the attachment type
+	// and, while we're in here, clean up exif data from
+	// the image if we already know the fileSize
 	switch extension {
 	case mimeGif:
 		p.attachment.Type = gtsmodel.FileTypeImage
-		clean = multiReader // nothing to clean from a gif
 	case mimeJpeg, mimePng:
 		p.attachment.Type = gtsmodel.FileTypeImage
-		purged, err := terminator.Terminate(multiReader, int(fileSize), extension)
-		if err != nil {
-			return fmt.Errorf("store: exif error: %s", err)
+		if fileSize > 0 {
+			var err error
+			readerToStore, err = terminator.Terminate(readerToStore, int(fileSize), extension)
+			if err != nil {
+				return fmt.Errorf("store: exif error: %s", err)
+			}
+			defer func() {
+				if rc, ok := readerToStore.(io.ReadCloser); ok {
+					if err := rc.Close(); err != nil {
+						log.Errorf("store: error closing terminator reader: %s", err)
+					}
+				}
+			}()
 		}
-		clean = purged
 	default:
 		return fmt.Errorf("store: couldn't process %s", extension)
 	}
 
-	// defer closing the clean reader when we're done with it
-	defer func() {
-		if rc, ok := clean.(io.ReadCloser); ok {
-			if err := rc.Close(); err != nil {
-				log.Errorf("store: error closing clean readcloser: %s", err)
-			}
-		}
-	}()
-
 	// now set some additional fields on the attachment since
 	// we know more about what the underlying media actually is
 	p.attachment.URL = uris.GenerateURIForAttachment(p.attachment.AccountID, string(TypeAttachment), string(SizeOriginal), p.attachment.ID, extension)
-	p.attachment.File.Path = fmt.Sprintf("%s/%s/%s/%s.%s", p.attachment.AccountID, TypeAttachment, SizeOriginal, p.attachment.ID, extension)
 	p.attachment.File.ContentType = contentType
-	p.attachment.File.FileSize = int(fileSize)
+	p.attachment.File.Path = fmt.Sprintf("%s/%s/%s/%s.%s", p.attachment.AccountID, TypeAttachment, SizeOriginal, p.attachment.ID, extension)
 
 	// store this for now -- other processes can pull it out of storage as they please
-	if err := p.storage.PutStream(ctx, p.attachment.File.Path, clean); err != nil {
+	if fileSize, err = putStream(ctx, p.storage, p.attachment.File.Path, readerToStore, fileSize); err != nil && err != storage.ErrAlreadyExists {
 		return fmt.Errorf("store: error storing stream: %s", err)
 	}
 
 	cached := true
 	p.attachment.Cached = &cached
+	p.attachment.File.FileSize = int(fileSize)
 	p.read = true
 
 	if p.postData != nil {

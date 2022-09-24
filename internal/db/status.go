@@ -41,6 +41,9 @@ type Status interface {
 	// UpdateStatus updates one status in the database and returns it to the caller.
 	UpdateStatus(ctx context.Context, status *gtsmodel.Status) (*gtsmodel.Status, Error)
 
+	// DeleteStatusByID deletes one status from the database.
+	DeleteStatusByID(ctx context.Context, id string) Error
+
 	// CountStatusReplies returns the amount of replies recorded for a status, or an error if something goes wrong
 	CountStatusReplies(ctx context.Context, status *gtsmodel.Status) (int, Error)
 

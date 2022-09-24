@@ -40,6 +40,177 @@ type ManagerTestSuite struct {
 	MediaStandardTestSuite
 }
 
+func (suite *ManagerTestSuite) TestEmojiProcessBlocking() {
+	ctx := context.Background()
+
+	data := func(_ context.Context) (io.Reader, int64, error) {
+		// load bytes from a test image
+		b, err := os.ReadFile("./test/rainbow-original.png")
+		if err != nil {
+			panic(err)
+		}
+		return bytes.NewBuffer(b), int64(len(b)), nil
+	}
+
+	emojiID := "01GDQ9G782X42BAMFASKP64343"
+	emojiURI := "http://localhost:8080/emoji/01GDQ9G782X42BAMFASKP64343"
+
+	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "rainbow_test", emojiID, emojiURI, nil)
+	suite.NoError(err)
+
+	// do a blocking call to fetch the emoji
+	emoji, err := processingEmoji.LoadEmoji(ctx)
+	suite.NoError(err)
+	suite.NotNil(emoji)
+
+	// make sure it's got the stuff set on it that we expect
+	suite.Equal(emojiID, emoji.ID)
+
+	// file meta should be correctly derived from the image
+	suite.Equal("image/png", emoji.ImageContentType)
+	suite.Equal("image/png", emoji.ImageStaticContentType)
+	suite.Equal(36702, emoji.ImageFileSize)
+
+	// now make sure the emoji is in the database
+	dbEmoji, err := suite.db.GetEmojiByID(ctx, emojiID)
+	suite.NoError(err)
+	suite.NotNil(dbEmoji)
+
+	// make sure the processed emoji file is in storage
+	processedFullBytes, err := suite.storage.Get(ctx, emoji.ImagePath)
+	suite.NoError(err)
+	suite.NotEmpty(processedFullBytes)
+
+	// load the processed bytes from our test folder, to compare
+	processedFullBytesExpected, err := os.ReadFile("./test/rainbow-original.png")
+	suite.NoError(err)
+	suite.NotEmpty(processedFullBytesExpected)
+
+	// the bytes in storage should be what we expected
+	suite.Equal(processedFullBytesExpected, processedFullBytes)
+
+	// now do the same for the thumbnail and make sure it's what we expected
+	processedStaticBytes, err := suite.storage.Get(ctx, emoji.ImageStaticPath)
+	suite.NoError(err)
+	suite.NotEmpty(processedStaticBytes)
+
+	processedStaticBytesExpected, err := os.ReadFile("./test/rainbow-static.png")
+	suite.NoError(err)
+	suite.NotEmpty(processedStaticBytesExpected)
+
+	suite.Equal(processedStaticBytesExpected, processedStaticBytes)
+}
+
+func (suite *ManagerTestSuite) TestEmojiProcessBlockingTooLarge() {
+	ctx := context.Background()
+
+	data := func(_ context.Context) (io.Reader, int64, error) {
+		// load bytes from a test image
+		b, err := os.ReadFile("./test/big-panda.gif")
+		if err != nil {
+			panic(err)
+		}
+		return bytes.NewBuffer(b), int64(len(b)), nil
+	}
+
+	emojiID := "01GDQ9G782X42BAMFASKP64343"
+	emojiURI := "http://localhost:8080/emoji/01GDQ9G782X42BAMFASKP64343"
+
+	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "big_panda", emojiID, emojiURI, nil)
+	suite.NoError(err)
+
+	// do a blocking call to fetch the emoji
+	emoji, err := processingEmoji.LoadEmoji(ctx)
+	suite.EqualError(err, "store: given emoji fileSize (645688b) is larger than allowed size (51200b)")
+	suite.Nil(emoji)
+}
+
+func (suite *ManagerTestSuite) TestEmojiProcessBlockingTooLargeNoSizeGiven() {
+	ctx := context.Background()
+
+	data := func(_ context.Context) (io.Reader, int64, error) {
+		// load bytes from a test image
+		b, err := os.ReadFile("./test/big-panda.gif")
+		if err != nil {
+			panic(err)
+		}
+		return bytes.NewBuffer(b), int64(len(b)), nil
+	}
+
+	emojiID := "01GDQ9G782X42BAMFASKP64343"
+	emojiURI := "http://localhost:8080/emoji/01GDQ9G782X42BAMFASKP64343"
+
+	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "big_panda", emojiID, emojiURI, nil)
+	suite.NoError(err)
+
+	// do a blocking call to fetch the emoji
+	emoji, err := processingEmoji.LoadEmoji(ctx)
+	suite.EqualError(err, "store: given emoji fileSize (645688b) is larger than allowed size (51200b)")
+	suite.Nil(emoji)
+}
+
+func (suite *ManagerTestSuite) TestEmojiProcessBlockingNoFileSizeGiven() {
+	ctx := context.Background()
+
+	data := func(_ context.Context) (io.Reader, int64, error) {
+		// load bytes from a test image
+		b, err := os.ReadFile("./test/rainbow-original.png")
+		if err != nil {
+			panic(err)
+		}
+		return bytes.NewBuffer(b), -1, nil
+	}
+
+	emojiID := "01GDQ9G782X42BAMFASKP64343"
+	emojiURI := "http://localhost:8080/emoji/01GDQ9G782X42BAMFASKP64343"
+
+	// process the media with no additional info provided
+	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "rainbow_test", emojiID, emojiURI, nil)
+	suite.NoError(err)
+
+	// do a blocking call to fetch the emoji
+	emoji, err := processingEmoji.LoadEmoji(ctx)
+	suite.NoError(err)
+	suite.NotNil(emoji)
+
+	// make sure it's got the stuff set on it that we expect
+	suite.Equal(emojiID, emoji.ID)
+
+	// file meta should be correctly derived from the image
+	suite.Equal("image/png", emoji.ImageContentType)
+	suite.Equal("image/png", emoji.ImageStaticContentType)
+	suite.Equal(36702, emoji.ImageFileSize)
+
+	// now make sure the emoji is in the database
+	dbEmoji, err := suite.db.GetEmojiByID(ctx, emojiID)
+	suite.NoError(err)
+	suite.NotNil(dbEmoji)
+
+	// make sure the processed emoji file is in storage
+	processedFullBytes, err := suite.storage.Get(ctx, emoji.ImagePath)
+	suite.NoError(err)
+	suite.NotEmpty(processedFullBytes)
+
+	// load the processed bytes from our test folder, to compare
+	processedFullBytesExpected, err := os.ReadFile("./test/rainbow-original.png")
+	suite.NoError(err)
+	suite.NotEmpty(processedFullBytesExpected)
+
+	// the bytes in storage should be what we expected
+	suite.Equal(processedFullBytesExpected, processedFullBytes)
+
+	// now do the same for the thumbnail and make sure it's what we expected
+	processedStaticBytes, err := suite.storage.Get(ctx, emoji.ImageStaticPath)
+	suite.NoError(err)
+	suite.NotEmpty(processedStaticBytes)
+
+	processedStaticBytesExpected, err := os.ReadFile("./test/rainbow-static.png")
+	suite.NoError(err)
+	suite.NotEmpty(processedStaticBytesExpected)
+
+	suite.Equal(processedStaticBytesExpected, processedStaticBytes)
+}
+
 func (suite *ManagerTestSuite) TestSimpleJpegProcessBlocking() {
 	ctx := context.Background()
 
@@ -50,6 +221,152 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlocking() {
 			panic(err)
 		}
 		return bytes.NewBuffer(b), int64(len(b)), nil
+	}
+
+	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
+
+	// process the media with no additional info provided
+	processingMedia, err := suite.manager.ProcessMedia(ctx, data, nil, accountID, nil)
+	suite.NoError(err)
+	// fetch the attachment id from the processing media
+	attachmentID := processingMedia.AttachmentID()
+
+	// do a blocking call to fetch the attachment
+	attachment, err := processingMedia.LoadAttachment(ctx)
+	suite.NoError(err)
+	suite.NotNil(attachment)
+
+	// make sure it's got the stuff set on it that we expect
+	// the attachment ID and accountID we expect
+	suite.Equal(attachmentID, attachment.ID)
+	suite.Equal(accountID, attachment.AccountID)
+
+	// file meta should be correctly derived from the image
+	suite.EqualValues(gtsmodel.Original{
+		Width: 1920, Height: 1080, Size: 2073600, Aspect: 1.7777777777777777,
+	}, attachment.FileMeta.Original)
+	suite.EqualValues(gtsmodel.Small{
+		Width: 512, Height: 288, Size: 147456, Aspect: 1.7777777777777777,
+	}, attachment.FileMeta.Small)
+	suite.Equal("image/jpeg", attachment.File.ContentType)
+	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
+	suite.Equal(269739, attachment.File.FileSize)
+	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", attachment.Blurhash)
+
+	// now make sure the attachment is in the database
+	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
+	suite.NoError(err)
+	suite.NotNil(dbAttachment)
+
+	// make sure the processed file is in storage
+	processedFullBytes, err := suite.storage.Get(ctx, attachment.File.Path)
+	suite.NoError(err)
+	suite.NotEmpty(processedFullBytes)
+
+	// load the processed bytes from our test folder, to compare
+	processedFullBytesExpected, err := os.ReadFile("./test/test-jpeg-processed.jpg")
+	suite.NoError(err)
+	suite.NotEmpty(processedFullBytesExpected)
+
+	// the bytes in storage should be what we expected
+	suite.Equal(processedFullBytesExpected, processedFullBytes)
+
+	// now do the same for the thumbnail and make sure it's what we expected
+	processedThumbnailBytes, err := suite.storage.Get(ctx, attachment.Thumbnail.Path)
+	suite.NoError(err)
+	suite.NotEmpty(processedThumbnailBytes)
+
+	processedThumbnailBytesExpected, err := os.ReadFile("./test/test-jpeg-thumbnail.jpg")
+	suite.NoError(err)
+	suite.NotEmpty(processedThumbnailBytesExpected)
+
+	suite.Equal(processedThumbnailBytesExpected, processedThumbnailBytes)
+}
+
+func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingNoContentLengthGiven() {
+	ctx := context.Background()
+
+	data := func(_ context.Context) (io.Reader, int64, error) {
+		// load bytes from a test image
+		b, err := os.ReadFile("./test/test-jpeg.jpg")
+		if err != nil {
+			panic(err)
+		}
+		// give length as -1 to indicate unknown
+		return bytes.NewBuffer(b), -1, nil
+	}
+
+	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
+
+	// process the media with no additional info provided
+	processingMedia, err := suite.manager.ProcessMedia(ctx, data, nil, accountID, nil)
+	suite.NoError(err)
+	// fetch the attachment id from the processing media
+	attachmentID := processingMedia.AttachmentID()
+
+	// do a blocking call to fetch the attachment
+	attachment, err := processingMedia.LoadAttachment(ctx)
+	suite.NoError(err)
+	suite.NotNil(attachment)
+
+	// make sure it's got the stuff set on it that we expect
+	// the attachment ID and accountID we expect
+	suite.Equal(attachmentID, attachment.ID)
+	suite.Equal(accountID, attachment.AccountID)
+
+	// file meta should be correctly derived from the image
+	suite.EqualValues(gtsmodel.Original{
+		Width: 1920, Height: 1080, Size: 2073600, Aspect: 1.7777777777777777,
+	}, attachment.FileMeta.Original)
+	suite.EqualValues(gtsmodel.Small{
+		Width: 512, Height: 288, Size: 147456, Aspect: 1.7777777777777777,
+	}, attachment.FileMeta.Small)
+	suite.Equal("image/jpeg", attachment.File.ContentType)
+	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
+	suite.Equal(269739, attachment.File.FileSize)
+	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", attachment.Blurhash)
+
+	// now make sure the attachment is in the database
+	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
+	suite.NoError(err)
+	suite.NotNil(dbAttachment)
+
+	// make sure the processed file is in storage
+	processedFullBytes, err := suite.storage.Get(ctx, attachment.File.Path)
+	suite.NoError(err)
+	suite.NotEmpty(processedFullBytes)
+
+	// load the processed bytes from our test folder, to compare
+	processedFullBytesExpected, err := os.ReadFile("./test/test-jpeg-processed.jpg")
+	suite.NoError(err)
+	suite.NotEmpty(processedFullBytesExpected)
+
+	// the bytes in storage should be what we expected
+	suite.Equal(processedFullBytesExpected, processedFullBytes)
+
+	// now do the same for the thumbnail and make sure it's what we expected
+	processedThumbnailBytes, err := suite.storage.Get(ctx, attachment.Thumbnail.Path)
+	suite.NoError(err)
+	suite.NotEmpty(processedThumbnailBytes)
+
+	processedThumbnailBytesExpected, err := os.ReadFile("./test/test-jpeg-thumbnail.jpg")
+	suite.NoError(err)
+	suite.NotEmpty(processedThumbnailBytesExpected)
+
+	suite.Equal(processedThumbnailBytesExpected, processedThumbnailBytes)
+}
+
+func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingReadCloser() {
+	ctx := context.Background()
+
+	data := func(_ context.Context) (io.Reader, int64, error) {
+		// open test image as a file
+		f, err := os.Open("./test/test-jpeg.jpg")
+		if err != nil {
+			panic(err)
+		}
+		// give length as -1 to indicate unknown
+		return f, -1, nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
