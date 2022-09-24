@@ -23,4 +23,17 @@ instance-expose-peers: false
 # Options: [true, false]
 # Default: false
 instance-expose-suspended: false
+
+# Bool. This flag tweaks whether GoToSocial will deliver ActivityPub messages
+# to the shared inbox of a recipient, if one is available, instead of delivering
+# each message to each actor who should receive a message individually.
+#
+# Shared inbox delivery can significantly reduce network load when delivering
+# to multiple recipients share an inbox (eg., on large Mastodon instances).
+#
+# See: https://www.w3.org/TR/activitypub/#shared-inbox-delivery
+#
+# Options: [true, false]
+# Default: true
+instance-deliver-to-shared-inboxes: true
 ```

@@ -29,6 +29,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/miekg/dns"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -197,10 +198,12 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 		accountDomain = params.RemoteAccountHost
 	}
 
-	// to save on remote calls: only webfinger if we don't have a remoteAccount yet, or if we haven't
-	// fingered the remote account for at least 2 days; don't finger instance accounts
+	// to save on remote calls, only webfinger if:
+	// - we don't know the remote account ActivityPub ID yet OR
+	// - we haven't found the account yet in some other way OR
+	// - we haven't webfingered the account for two days AND the account isn't an instance account
 	var fingered time.Time
-	if foundAccount == nil || (foundAccount.LastWebfingeredAt.Before(time.Now().Add(webfingerInterval)) && !instanceAccount(foundAccount)) {
+	if params.RemoteAccountID == nil || foundAccount == nil || (foundAccount.LastWebfingeredAt.Before(time.Now().Add(webfingerInterval)) && !instanceAccount(foundAccount)) {
 		accountDomain, params.RemoteAccountID, err = d.fingerRemoteAccount(ctx, params.RequestingUsername, params.RemoteAccountUsername, params.RemoteAccountHost)
 		if err != nil {
 			err = fmt.Errorf("GetRemoteAccount: error while fingering: %s", err)
@@ -279,6 +282,37 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 		}
 	}
 
+	// if SharedInboxURI is nil, that means we don't know yet if this account has
+	// a shared inbox available for it, so we need to check this here
+	var sharedInboxChanged bool
+	if foundAccount.SharedInboxURI == nil {
+		// we need the accountable for this, so get it if we don't have it yet
+		if accountable == nil {
+			accountable, err = d.dereferenceAccountable(ctx, params.RequestingUsername, params.RemoteAccountID)
+			if err != nil {
+				err = fmt.Errorf("GetRemoteAccount: error dereferencing accountable: %s", err)
+				return
+			}
+		}
+
+		// This can be:
+		// - an empty string (we know it doesn't have a shared inbox) OR
+		// - a string URL (we know it does a shared inbox).
+		// Set it either way!
+		var sharedInbox string
+
+		if sharedInboxURI := ap.ExtractSharedInbox(accountable); sharedInboxURI != nil {
+			// only trust shared inbox if it has at least two domains,
+			// from the right, in common with the domain of the account
+			if dns.CompareDomainName(foundAccount.Domain, sharedInboxURI.Host) >= 2 {
+				sharedInbox = sharedInboxURI.String()
+			}
+		}
+
+		sharedInboxChanged = true
+		foundAccount.SharedInboxURI = &sharedInbox
+	}
+
 	// make sure the account fields are populated before returning:
 	// the caller might want to block until everything is loaded
 	var fieldsChanged bool
@@ -293,7 +327,7 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 		foundAccount.LastWebfingeredAt = fingered
 	}
 
-	if fieldsChanged || fingeredChanged {
+	if fieldsChanged || fingeredChanged || sharedInboxChanged {
 		foundAccount.UpdatedAt = time.Now()
 		foundAccount, err = d.db.UpdateAccount(ctx, foundAccount)
 		if err != nil {

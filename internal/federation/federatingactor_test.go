@@ -117,7 +117,7 @@ func (suite *FederatingActorTestSuite) TestSendRemoteFollower() {
 	// because we added 1 remote follower for zork, there should be a url in sentMessage
 	var sent [][]byte
 	if !testrig.WaitFor(func() bool {
-		sentI, ok := httpClient.SentMessages.Load(testRemoteAccount.InboxURI)
+		sentI, ok := httpClient.SentMessages.Load(*testRemoteAccount.SharedInboxURI)
 		if ok {
 			sent, ok = sentI.([][]byte)
 			if !ok {

@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/miekg/dns"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -154,6 +155,19 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 	// InboxURI
 	if accountable.GetActivityStreamsInbox() != nil && accountable.GetActivityStreamsInbox().GetIRI() != nil {
 		acct.InboxURI = accountable.GetActivityStreamsInbox().GetIRI().String()
+	}
+
+	// SharedInboxURI
+	if sharedInboxURI := ap.ExtractSharedInbox(accountable); sharedInboxURI != nil {
+		var sharedInbox string
+
+		// only trust shared inbox if it has at least two domains,
+		// from the right, in common with the domain of the account
+		if dns.CompareDomainName(acct.Domain, sharedInboxURI.Host) >= 2 {
+			sharedInbox = sharedInboxURI.String()
+		}
+
+		acct.SharedInboxURI = &sharedInbox
 	}
 
 	// OutboxURI

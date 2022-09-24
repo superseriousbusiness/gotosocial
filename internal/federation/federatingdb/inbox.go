@@ -108,7 +108,15 @@ func (f *federatingDB) InboxesForIRI(c context.Context, iri *url.URL) (inboxIRIs
 				follow.Account = followingAccount
 			}
 
-			inboxIRI, err := url.Parse(follow.Account.InboxURI)
+			// deliver to a shared inbox if we have that option
+			var inbox string
+			if config.GetInstanceDeliverToSharedInboxes() && follow.Account.SharedInboxURI != nil && *follow.Account.SharedInboxURI != "" {
+				inbox = *follow.Account.SharedInboxURI
+			} else {
+				inbox = follow.Account.InboxURI
+			}
+
+			inboxIRI, err := url.Parse(inbox)
 			if err != nil {
 				return nil, fmt.Errorf("error parsing inbox uri of following account %s: %s", follow.Account.InboxURI, err)
 			}
@@ -119,7 +127,15 @@ func (f *federatingDB) InboxesForIRI(c context.Context, iri *url.URL) (inboxIRIs
 
 	// check if this is just an account IRI...
 	if account, err := f.db.GetAccountByURI(c, iri.String()); err == nil {
-		inboxIRI, err := url.Parse(account.InboxURI)
+		// deliver to a shared inbox if we have that option
+		var inbox string
+		if config.GetInstanceDeliverToSharedInboxes() && account.SharedInboxURI != nil && *account.SharedInboxURI != "" {
+			inbox = *account.SharedInboxURI
+		} else {
+			inbox = account.InboxURI
+		}
+
+		inboxIRI, err := url.Parse(inbox)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing account inbox uri %s: %s", account.InboxURI, account.InboxURI)
 		}

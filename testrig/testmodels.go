@@ -55,6 +55,11 @@ func FalseBool() *bool {
 	return new(bool)
 }
 
+// StringPtr returns a pointer to the given string.
+func StringPtr(in string) *string {
+	return &in
+}
+
 // NewTestTokens returns a map of tokens keyed according to which account the token belongs to.
 func NewTestTokens() map[string]*gtsmodel.Token {
 	tokens := map[string]*gtsmodel.Token{
@@ -474,6 +479,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			URL:                   "http://fossbros-anonymous.io/@foss_satan",
 			LastWebfingeredAt:     time.Time{},
 			InboxURI:              "http://fossbros-anonymous.io/users/foss_satan/inbox",
+			SharedInboxURI:        StringPtr("http://fossbros-anonymous.io/inbox"),
 			OutboxURI:             "http://fossbros-anonymous.io/users/foss_satan/outbox",
 			FollowersURI:          "http://fossbros-anonymous.io/users/foss_satan/followers",
 			FollowingURI:          "http://fossbros-anonymous.io/users/foss_satan/following",
@@ -509,6 +515,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			URL:                   "http://example.org/@some_user",
 			LastWebfingeredAt:     time.Time{},
 			InboxURI:              "http://example.org/users/some_user/inbox",
+			SharedInboxURI:        StringPtr(""),
 			OutboxURI:             "http://example.org/users/some_user/outbox",
 			FollowersURI:          "http://example.org/users/some_user/followers",
 			FollowingURI:          "http://example.org/users/some_user/following",
@@ -822,7 +829,7 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 		"remote_account_1_status_1_attachment_1": {
 			ID:        "01FVW7RXPQ8YJHTEXYPE7Q8ZY0",
 			StatusID:  "01FVW7JHQFSFK166WWKR8CBA6M",
-			URL:       "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
+			URL:       "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
 			RemoteURL: "http://fossbros-anonymous.io/attachments/original/13bbc3f8-2b5e-46ea-9531-40b4974d9912.jpeg",
 			CreatedAt: TimeMustParse("2021-09-20T12:40:37+02:00"),
 			UpdatedAt: TimeMustParse("2021-09-20T12:40:37+02:00"),
@@ -845,23 +852,23 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 					Y: 0,
 				},
 			},
-			AccountID:         "01F8MH1H7YV1Z7D2C8K2730QBF",
+			AccountID:         "01F8MH5ZK5VRH73AKHQM6Y9VNX",
 			Description:       "tweet from thoughts of dog: i drank. all the water. in my bowl. earlier. but just now. i returned. to the same bowl. and it was. full again.. the bowl. is haunted",
 			ScheduledStatusID: "",
 			Blurhash:          "LARysgM_IU_3~pD%M_Rj_39FIAt6",
 			Processing:        2,
 			File: gtsmodel.File{
-				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
+				Path:        "01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
 				ContentType: "image/jpeg",
 				FileSize:    19310,
 				UpdatedAt:   TimeMustParse("2021-09-20T12:40:37+02:00"),
 			},
 			Thumbnail: gtsmodel.Thumbnail{
-				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
+				Path:        "01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
 				ContentType: "image/jpeg",
 				FileSize:    20395,
 				UpdatedAt:   TimeMustParse("2021-09-20T12:40:37+02:00"),
-				URL:         "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
+				URL:         "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
 				RemoteURL:   "http://fossbros-anonymous.io/attachments/small/a499f55b-2d1e-4acd-98d2-1ac2ba6d79b9.jpeg",
 			},
 			Avatar: FalseBool(),
@@ -871,7 +878,7 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 		"remote_account_1_status_1_attachment_2": {
 			ID:        "01FVW7RXPQ8YJHTEXYPE7Q8ZY1",
 			StatusID:  "01FVW7JHQFSFK166WWKR8CBA6M",
-			URL:       "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
+			URL:       "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
 			RemoteURL: "http://fossbros-anonymous.io/attachments/original/13bbc3f8-2b5e-46ea-9531-40b4974d9912.jpeg",
 			CreatedAt: TimeMustParse("2021-09-20T12:40:37+02:00"),
 			UpdatedAt: TimeMustParse("2021-09-20T12:40:37+02:00"),
@@ -894,23 +901,23 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 					Y: 0,
 				},
 			},
-			AccountID:         "01F8MH1H7YV1Z7D2C8K2730QBF",
+			AccountID:         "01F8MH5ZK5VRH73AKHQM6Y9VNX",
 			Description:       "tweet from thoughts of dog: i drank. all the water. in my bowl. earlier. but just now. i returned. to the same bowl. and it was. full again.. the bowl. is haunted",
 			ScheduledStatusID: "",
 			Blurhash:          "LARysgM_IU_3~pD%M_Rj_39FIAt6",
 			Processing:        2,
 			File: gtsmodel.File{
-				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
+				Path:        "01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
 				ContentType: "image/jpeg",
 				FileSize:    19310,
 				UpdatedAt:   TimeMustParse("2021-09-20T12:40:37+02:00"),
 			},
 			Thumbnail: gtsmodel.Thumbnail{
-				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
+				Path:        "01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
 				ContentType: "image/jpeg",
 				FileSize:    20395,
 				UpdatedAt:   TimeMustParse("2021-09-20T12:40:37+02:00"),
-				URL:         "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
+				URL:         "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
 				RemoteURL:   "http://fossbros-anonymous.io/attachments/small/a499f55b-2d1e-4acd-98d2-1ac2ba6d79b9.jpeg",
 			},
 			Avatar: FalseBool(),
@@ -1832,6 +1839,7 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/following"),
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/followers"),
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/inbox"),
+			nil,
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/outbox"),
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/collections/featured"),
 			"brand_new_person",
@@ -1852,6 +1860,7 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 			URLMustParse("https://turnip.farm/users/turniplover6969/following"),
 			URLMustParse("https://turnip.farm/users/turniplover6969/followers"),
 			URLMustParse("https://turnip.farm/users/turniplover6969/inbox"),
+			URLMustParse("https://turnip.farm/sharedInbox"),
 			URLMustParse("https://turnip.farm/users/turniplover6969/outbox"),
 			URLMustParse("https://turnip.farm/users/turniplover6969/collections/featured"),
 			"turniplover6969",
@@ -2245,6 +2254,7 @@ func newAPPerson(
 	followingURI *url.URL,
 	followersURI *url.URL,
 	inboxURI *url.URL,
+	sharedInboxIRI *url.URL,
 	outboxURI *url.URL,
 	featuredURI *url.URL,
 	username string,
@@ -2285,6 +2295,17 @@ func newAPPerson(
 	inboxProp := streams.NewActivityStreamsInboxProperty()
 	inboxProp.SetIRI(inboxURI)
 	person.SetActivityStreamsInbox(inboxProp)
+
+	// shared inbox
+	if sharedInboxIRI != nil {
+		endpointsProp := streams.NewActivityStreamsEndpointsProperty()
+		endpoints := streams.NewActivityStreamsEndpoints()
+		sharedInboxProp := streams.NewActivityStreamsSharedInboxProperty()
+		sharedInboxProp.SetIRI(sharedInboxIRI)
+		endpoints.SetActivityStreamsSharedInbox(sharedInboxProp)
+		endpointsProp.AppendActivityStreamsEndpoints(endpoints)
+		person.SetActivityStreamsEndpoints(endpointsProp)
+	}
 
 	// outbox
 	// the activitypub outbox of this user for serving messages

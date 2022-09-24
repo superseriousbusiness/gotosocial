@@ -18,6 +18,7 @@ import (
 	typedelete "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_delete"
 	typedislike "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_dislike"
 	typedocument "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_document"
+	typeendpoints "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_endpoints"
 	typeevent "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_event"
 	typeflag "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_flag"
 	typefollow "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_follow"
@@ -148,6 +149,12 @@ func ActivityStreamsDislikeIsDisjointWith(other vocab.Type) bool {
 // the other's type.
 func ActivityStreamsDocumentIsDisjointWith(other vocab.Type) bool {
 	return typedocument.DocumentIsDisjointWith(other)
+}
+
+// ActivityStreamsEndpointsIsDisjointWith returns true if Endpoints is disjoint
+// with the other's type.
+func ActivityStreamsEndpointsIsDisjointWith(other vocab.Type) bool {
+	return typeendpoints.EndpointsIsDisjointWith(other)
 }
 
 // ActivityStreamsEventIsDisjointWith returns true if Event is disjoint with the
