@@ -154,7 +154,6 @@ func (d *deref) dereferenceStatusDescendants(ctx context.Context, username strin
 		statusIRI  *url.URL
 		statusable ap.Statusable
 		page       ap.CollectionPageable
-		pageNext   vocab.ActivityStreamsNextProperty
 		itemIter   vocab.ActivityStreamsItemsPropertyIterator
 		iterLen    int
 		iterIdx    int
@@ -185,32 +184,22 @@ func (d *deref) dereferenceStatusDescendants(ctx context.Context, username strin
 
 			return frame
 		}
-
-		// pushStack ...
-		pushStack = func(f *frame) {
-			if f == nil {
-				return
-			}
-			stack = append(stack, f)
-		}
 	)
 
 stackLoop:
 	for i := 0; i < maxIter; i++ {
-		if current == nil {
-			// Pop next frame, nil means we are at end
-			if current = popStack(); current == nil {
-				return nil
-			}
+		// Pop next frame, nil means we are at end
+		if current = popStack(); current == nil {
+			return nil
 		}
-
-		l.Tracef("following status descendants: %s", current.statusIRI)
 
 		if current.page == nil {
 			// This is a local status, no looping to do
 			if current.statusIRI.Host == config.GetHost() {
 				continue stackLoop
 			}
+
+			l.Tracef("following remote status descendants: %s", current.statusIRI)
 
 			// Look for an attached status replies (as collection)
 			replies := current.statusable.GetActivityStreamsReplies()
@@ -232,22 +221,20 @@ stackLoop:
 		}
 
 		for /* page loop */ {
-			if current.pageNext == nil {
+			if current.itemIter == nil {
 				// Get the collection page "next" property
-				current.pageNext = current.page.GetActivityStreamsNext()
-				if current.pageNext == nil || !current.pageNext.IsIRI() {
+				pageNext := current.page.GetActivityStreamsNext()
+				if pageNext == nil || !pageNext.IsIRI() {
 					continue stackLoop
 				}
-			}
 
-			if current.itemIter == nil {
 				// Get the "next" page property IRI
-				pageIRI := current.pageNext.GetIRI()
+				pageNextIRI := pageNext.GetIRI()
 
 				// Dereference this collection page by its IRI
-				collectionPage, err := d.DereferenceCollectionPage(ctx, username, pageIRI)
+				collectionPage, err := d.DereferenceCollectionPage(ctx, username, pageNextIRI)
 				if err != nil {
-					l.Errorf("error dereferencing remote collection page \"%s\": %s", pageIRI, err)
+					l.Errorf("error dereferencing remote collection page \"%s\": %s", pageNextIRI, err)
 					continue stackLoop
 				}
 
@@ -259,7 +246,6 @@ stackLoop:
 
 				// Set the updated collection page
 				current.page = collectionPage
-				current.pageNext = nil
 
 				// Start off the item iterator
 				current.itemIter = items.Begin()
@@ -303,15 +289,15 @@ stackLoop:
 					continue itemLoop
 				}
 
-				// Push frame to stack
-				pushStack(current)
-
-				// Set next frame
-				current = &frame{
+				// Put current and next frame at top of stack
+				stack = append(stack, current, &frame{
 					statusIRI:  itemIRI,
 					statusable: statusable,
-				}
+				})
 			}
+
+			// Item iterator is done
+			current.itemIter = nil
 		}
 	}
 
