@@ -45,6 +45,7 @@ func (suite *ASToInternalTestSuite) TestParsePerson() {
 	suite.Equal("https://unknown-instance.com/users/brand_new_person/following", acct.FollowingURI)
 	suite.Equal("https://unknown-instance.com/users/brand_new_person/followers", acct.FollowersURI)
 	suite.Equal("https://unknown-instance.com/users/brand_new_person/inbox", acct.InboxURI)
+	suite.Nil(acct.SharedInboxURI)
 	suite.Equal("https://unknown-instance.com/users/brand_new_person/outbox", acct.OutboxURI)
 	suite.Equal("https://unknown-instance.com/users/brand_new_person/collections/featured", acct.FeaturedCollectionURI)
 	suite.Equal("brand_new_person", acct.Username)
@@ -53,6 +54,28 @@ func (suite *ASToInternalTestSuite) TestParsePerson() {
 	suite.Equal("https://unknown-instance.com/@brand_new_person", acct.URL)
 	suite.True(*acct.Discoverable)
 	suite.Equal("https://unknown-instance.com/users/brand_new_person#main-key", acct.PublicKeyURI)
+	suite.False(*acct.Locked)
+}
+
+func (suite *ASToInternalTestSuite) TestParsePersonWithSharedInbox() {
+	testPerson := suite.testPeople["https://turnip.farm/users/turniplover6969"]
+
+	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), testPerson, "", false)
+	suite.NoError(err)
+
+	suite.Equal("https://turnip.farm/users/turniplover6969", acct.URI)
+	suite.Equal("https://turnip.farm/users/turniplover6969/following", acct.FollowingURI)
+	suite.Equal("https://turnip.farm/users/turniplover6969/followers", acct.FollowersURI)
+	suite.Equal("https://turnip.farm/users/turniplover6969/inbox", acct.InboxURI)
+	suite.Equal("https://turnip.farm/sharedInbox", *acct.SharedInboxURI)
+	suite.Equal("https://turnip.farm/users/turniplover6969/outbox", acct.OutboxURI)
+	suite.Equal("https://turnip.farm/users/turniplover6969/collections/featured", acct.FeaturedCollectionURI)
+	suite.Equal("turniplover6969", acct.Username)
+	suite.Equal("Turnip Lover 6969", acct.DisplayName)
+	suite.Equal("I just think they're neat", acct.Note)
+	suite.Equal("https://turnip.farm/@turniplover6969", acct.URL)
+	suite.True(*acct.Discoverable)
+	suite.Equal("https://turnip.farm/users/turniplover6969#main-key", acct.PublicKeyURI)
 	suite.False(*acct.Locked)
 }
 
@@ -108,6 +131,8 @@ func (suite *ASToInternalTestSuite) TestParseGargron() {
 
 	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), rep, "", false)
 	suite.NoError(err)
+
+	suite.Equal("https://mastodon.social/inbox", *acct.SharedInboxURI)
 
 	fmt.Printf("%+v", acct)
 	// TODO: write assertions here, rn we're just eyeballing the output

@@ -85,6 +85,21 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 	inboxProp.SetIRI(inboxURI)
 	person.SetActivityStreamsInbox(inboxProp)
 
+	// shared inbox -- only add this if we know for sure it has one
+	if a.SharedInboxURI != nil && *a.SharedInboxURI != "" {
+		sharedInboxURI, err := url.Parse(*a.SharedInboxURI)
+		if err != nil {
+			return nil, err
+		}
+		endpointsProp := streams.NewActivityStreamsEndpointsProperty()
+		endpoints := streams.NewActivityStreamsEndpoints()
+		sharedInboxProp := streams.NewActivityStreamsSharedInboxProperty()
+		sharedInboxProp.SetIRI(sharedInboxURI)
+		endpoints.SetActivityStreamsSharedInbox(sharedInboxProp)
+		endpointsProp.AppendActivityStreamsEndpoints(endpoints)
+		person.SetActivityStreamsEndpoints(endpointsProp)
+	}
+
 	// outbox
 	// the activitypub outbox of this user for serving messages
 	outboxURI, err := url.Parse(a.OutboxURI)
