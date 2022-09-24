@@ -216,7 +216,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	} else {
 		maxEmojiSize = config.GetMediaEmojiRemoteMaxSize()
 	}
-	
+
 	// if we know the fileSize already, make sure it's not bigger than our limit
 	var checkedSize bool
 	if fileSize > 0 {
