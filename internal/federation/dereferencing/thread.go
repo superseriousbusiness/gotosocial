@@ -120,7 +120,7 @@ func (d *deref) dereferenceStatusAncestors(ctx context.Context, username string,
 			l.Tracef("following remote status ancestors: %s", status.InReplyToURI)
 
 			// Fetch the remote status found at this IRI
-			remoteStatus, _, err := d.GetRemoteStatus(ctx, username, replyIRI, true, false)
+			remoteStatus, _, err := d.GetRemoteStatus(ctx, username, replyIRI, false, false)
 			if err != nil {
 				return fmt.Errorf("error fetching remote status %q: %w", status.InReplyToURI, err)
 			}
@@ -147,9 +147,12 @@ func (d *deref) dereferenceStatusDescendants(ctx context.Context, username strin
 	l.Trace("beginning")
 
 	// frame represents a single stack frame when iteratively
-	// dereferencing status descendants. where iri is the IRI
-	// of the status in question, status is the raw AP object,
-	// and page is the current child iterator.
+	// dereferencing status descendants. where statusIRI and
+	// statusable are of the status whose children we are to
+	// descend, page is the current activity streams collection
+	// page of entities we are on (as we often push a frame to
+	// stack mid-paging), and item___ are entity iterators for
+	// this activity streams collection page.
 	type frame struct {
 		statusIRI  *url.URL
 		statusable ap.Statusable
@@ -160,16 +163,24 @@ func (d *deref) dereferenceStatusDescendants(ctx context.Context, username strin
 	}
 
 	var (
-		// stack ...
-		stack []*frame
-
 		// current is the current stack frame
-		current = &frame{
-			statusIRI:  statusIRI,
-			statusable: parent,
+		current *frame
+
+		// stack is a list of "shelved" descendand iterator
+		// frames. this is pushed to when a child status frame
+		// is found that we need to further iterate down, and
+		// popped from into 'current' when that child's tree
+		// of further descendants is exhausted.
+		stack = []*frame{
+			{
+				// Starting input is first frame
+				statusIRI:  statusIRI,
+				statusable: parent,
+			},
 		}
 
-		// popStack ...
+		// popStack will remove and return the top frame
+		// from the stack, or nil if currently empty.
 		popStack = func() *frame {
 			if len(stack) == 0 {
 				return nil
