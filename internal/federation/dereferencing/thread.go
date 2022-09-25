@@ -233,30 +233,11 @@ stackLoop:
 
 		for /* page loop */ {
 			if current.itemIter == nil {
-				// Get the collection page "next" property
-				pageNext := current.page.GetActivityStreamsNext()
-				if pageNext == nil || !pageNext.IsIRI() {
-					continue stackLoop
-				}
-
-				// Get the "next" page property IRI
-				pageNextIRI := pageNext.GetIRI()
-
-				// Dereference this collection page by its IRI
-				collectionPage, err := d.DereferenceCollectionPage(ctx, username, pageNextIRI)
-				if err != nil {
-					l.Errorf("error dereferencing remote collection page \"%s\": %s", pageNextIRI, err)
-					continue stackLoop
-				}
-
 				// Check this page contains any items...
-				items := collectionPage.GetActivityStreamsItems()
+				items := current.page.GetActivityStreamsItems()
 				if current.iterLen = items.Len(); current.iterLen == 0 {
 					continue stackLoop
 				}
-
-				// Set the updated collection page
-				current.page = collectionPage
 
 				// Start off the item iterator
 				current.itemIter = items.Begin()
@@ -309,6 +290,25 @@ stackLoop:
 
 			// Item iterator is done
 			current.itemIter = nil
+
+			// Get the collection page "next" property
+			pageNext := current.page.GetActivityStreamsNext()
+			if pageNext == nil || !pageNext.IsIRI() {
+				continue stackLoop
+			}
+
+			// Get the "next" page property IRI
+			pageNextIRI := pageNext.GetIRI()
+
+			// Dereference this next collection page by its IRI
+			collectionPage, err := d.DereferenceCollectionPage(ctx, username, pageNextIRI)
+			if err != nil {
+				l.Errorf("error dereferencing remote collection page \"%s\": %s", pageNextIRI, err)
+				continue stackLoop
+			}
+
+			// Set the updated collection page
+			current.page = collectionPage
 		}
 	}
 
