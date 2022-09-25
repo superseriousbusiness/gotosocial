@@ -44,7 +44,7 @@ type Dereferencer interface {
 	GetRemoteEmoji(ctx context.Context, requestingUsername string, remoteURL string, shortcode string, id string, emojiURI string, ai *media.AdditionalEmojiInfo) (*media.ProcessingEmoji, error)
 
 	DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) error
-	DereferenceThread(ctx context.Context, username string, statusIRI *url.URL) error
+	DereferenceThread(ctx context.Context, username string, statusIRI *url.URL, status *gtsmodel.Status, statusable ap.Statusable)
 
 	Handshaking(ctx context.Context, username string, remoteAccountID *url.URL) bool
 }

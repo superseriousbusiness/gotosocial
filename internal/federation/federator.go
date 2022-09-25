@@ -53,7 +53,7 @@ type Federator interface {
 	// If something goes wrong during authentication, nil, false, and an error will be returned.
 	AuthenticateFederatedRequest(ctx context.Context, username string) (*url.URL, gtserror.WithCode)
 
-	DereferenceRemoteThread(ctx context.Context, username string, statusURI *url.URL) error
+	DereferenceRemoteThread(ctx context.Context, username string, statusURI *url.URL, status *gtsmodel.Status, statusable ap.Statusable)
 	DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) error
 
 	GetRemoteAccount(ctx context.Context, params dereferencing.GetRemoteAccountParams) (*gtsmodel.Account, error)

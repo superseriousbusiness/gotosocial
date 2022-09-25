@@ -42,20 +42,16 @@ const maxIter = 1000
 // This process involves working up and down the chain of replies, and parsing through the collections of IDs
 // presented by remote instances as part of their replies collections, and will likely involve making several calls to
 // multiple different hosts.
-func (d *deref) DereferenceThread(ctx context.Context, username string, statusIRI *url.URL) error {
+//
+// This does not return error, as for robustness we do not want to error-out on a status because another further up / down has issues.
+func (d *deref) DereferenceThread(ctx context.Context, username string, statusIRI *url.URL, status *gtsmodel.Status, statusable ap.Statusable) {
 	l := log.WithFields(kv.Fields{
 		{"username", username},
-		{"statusIRI", statusIRI},
+		{"statusIRI", status.URI},
 	}...)
 
 	// Log function start
 	l.Trace("beginning")
-
-	// First make sure we have this status in our database
-	status, statusable, err := d.GetRemoteStatus(ctx, username, statusIRI, true, false)
-	if err != nil {
-		return fmt.Errorf("DereferenceThread: error getting initial status with id %s: %s", statusIRI.String(), err)
-	}
 
 	// Ensure that ancestors have been fully dereferenced
 	if err := d.dereferenceStatusAncestors(ctx, username, status); err != nil {
@@ -68,8 +64,6 @@ func (d *deref) DereferenceThread(ctx context.Context, username string, statusIR
 		l.Errorf("error dereferencing status descendants: %v", err)
 		// we don't return error, we have deref'd as much as we can
 	}
-
-	return nil
 }
 
 // dereferenceAncestors has the goal of reaching the oldest ancestor of a given status, and stashing all statuses along the way.
