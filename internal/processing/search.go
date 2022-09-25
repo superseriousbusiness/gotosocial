@@ -140,28 +140,36 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 }
 
 func (p *processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Status, error) {
-	l := log.WithFields(kv.Fields{
-		{"uri", uri.String()},
-		{"resolve", resolve},
-	}...)
+	// Calculate URI string once
+	uriStr := uri.String()
 
-	if maybeStatus, err := p.db.GetStatusByURI(ctx, uri.String()); err == nil {
-		return maybeStatus, nil
-	} else if maybeStatus, err := p.db.GetStatusByURL(ctx, uri.String()); err == nil {
-		return maybeStatus, nil
+	// Look for status locally (by URI), we only accept "not found" errors.
+	status, err := p.db.GetStatusByURI(ctx, uriStr)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, fmt.Errorf("searchStatusByURI: error fetching status %q: %v", uriStr, err)
+	} else if err == nil {
+		return status, nil
 	}
 
-	// we don't have it locally so dereference it if we're allowed to
+	// Again, look for status locally (by URL), we only accept "not found" errors.
+	status, err = p.db.GetStatusByURL(ctx, uriStr)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, fmt.Errorf("searchStatusByURI: error fetching status %q: %v", uriStr, err)
+	} else if err == nil {
+		return status, nil
+	}
+
 	if resolve {
-		status, _, err := p.federator.GetRemoteStatus(ctx, authed.Account.Username, uri, false, true)
-		if err == nil {
-			if err := p.federator.DereferenceRemoteThread(ctx, authed.Account.Username, uri); err != nil {
-				// try to deref the thread while we're here
-				l.Debugf("searchStatusByURI: error dereferencing remote thread: %s", err)
-			}
-			return status, nil
+		// This is a non-local status and we're allowed to resolve, so dereference it
+		status, statusable, err := p.federator.GetRemoteStatus(ctx, authed.Account.Username, uri, true, true)
+		if err != nil {
+			return nil, fmt.Errorf("searchStatusByURI: error fetching remote status %q: %v", uriStr, err)
 		}
+
+		// Attempt to dereference the status thread while we are here
+		p.federator.DereferenceRemoteThread(ctx, authed.Account.Username, uri, status, statusable)
 	}
+
 	return nil, nil
 }
 

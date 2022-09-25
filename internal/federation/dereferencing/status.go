@@ -105,7 +105,7 @@ func (d *deref) GetRemoteStatus(ctx context.Context, username string, remoteStat
 		return nil, nil, fmt.Errorf("GetRemoteStatus: error populating status fields: %s", err)
 	}
 
-	if err := d.db.PutStatus(ctx, gtsStatus); err != nil {
+	if err := d.db.PutStatus(ctx, gtsStatus); err != nil && !errors.Is(err, db.ErrAlreadyExists) {
 		return nil, nil, fmt.Errorf("GetRemoteStatus: error putting new status: %s", err)
 	}
 
@@ -441,7 +441,6 @@ func (d *deref) populateStatusEmojis(ctx context.Context, status *gtsmodel.Statu
 				Disabled:             e.Disabled,
 				VisibleInPicker:      e.VisibleInPicker,
 			})
-
 			if err != nil {
 				log.Errorf("populateStatusEmojis: couldn't get remote emoji %s: %s", e.URI, err)
 				continue
