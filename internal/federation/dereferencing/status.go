@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -104,7 +105,7 @@ func (d *deref) GetRemoteStatus(ctx context.Context, username string, remoteStat
 		return nil, nil, fmt.Errorf("GetRemoteStatus: error populating status fields: %s", err)
 	}
 
-	if err := d.db.PutStatus(ctx, gtsStatus); err != nil {
+	if err := d.db.PutStatus(ctx, gtsStatus); err != nil && !errors.Is(err, db.ErrAlreadyExists) {
 		return nil, nil, fmt.Errorf("GetRemoteStatus: error putting new status: %s", err)
 	}
 
