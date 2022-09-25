@@ -25,8 +25,6 @@ import (
 	"fmt"
 	"io"
 	"net/url"
-	"reflect"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -611,7 +609,11 @@ func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gts
 	maybeEmojis := targetAccount.Emojis
 	maybeEmojiIDs := targetAccount.EmojiIDs
 
-	// if we only have IDs, fetch the emojis from the db so we can compare properly
+	// It's possible that the account has emoji IDs set on it, but not Emojis
+	// themselves, depending on how it was fetched before being passed to us.
+	//
+	// If we only have IDs, fetch the emojis from the db. We know they're in
+	// there or else they wouldn't have IDs.
 	if len(maybeEmojiIDs) > len(maybeEmojis) {
 		maybeEmojis = []*gtsmodel.Emoji{}
 		for _, emojiID := range maybeEmojiIDs {
@@ -621,57 +623,104 @@ func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gts
 			}
 			maybeEmojis = append(maybeEmojis, maybeEmoji)
 		}
-		targetAccount.Emojis = maybeEmojis
 	}
 
+	// For all the maybe emojis we have, we either fetch them from the database
+	// (if we haven't already), or dereference them from the remote instance.
 	gotEmojis, err := d.populateEmojis(ctx, maybeEmojis, requestingUsername)
 	if err != nil {
 		return false, err
 	}
 
+	// Extract the ID of each fetched or dereferenced emoji, so we can attach
+	// this to the account if necessary.
 	gotEmojiIDs := make([]string, 0, len(gotEmojis))
 	for _, e := range gotEmojis {
 		gotEmojiIDs = append(gotEmojiIDs, e.ID)
 	}
 
-	var changed bool
+	var (
+		changed  = false // have the emojis for this account changed?
+		maybeLen = len(maybeEmojis)
+		gotLen   = len(gotEmojis)
+	)
 
-	// if the amount of emojis on the account has changed, then the got emojis
+	// if the length of everything is zero, this is simple:
+	// nothing has changed and there's nothing to do
+	if maybeLen == 0 && gotLen == 0 {
+		return changed, nil
+	}
+
+	// if the *amount* of emojis on the account has changed, then the got emojis
 	// are definitely different from the previous ones (if there were any) --
 	// the account has either more or fewer emojis set on it now, so take the
 	// discovered emojis as the new correct ones.
-	if len(maybeEmojis) != len(gotEmojis) && len(maybeEmojiIDs) != len(gotEmojiIDs) {
+	if maybeLen != gotLen {
 		changed = true
 		targetAccount.Emojis = gotEmojis
 		targetAccount.EmojiIDs = gotEmojiIDs
 		return changed, nil
 	}
 
-	// if the lengths of everything are zero, this is simple - nothing has changed
-	// and there's nothing to do
-	if len(maybeEmojis) == 0 && len(gotEmojis) == 0 && len(maybeEmojiIDs) == 0 && len(gotEmojiIDs) == 0 {
-		changed = false
-		return changed, nil
+	// if the lengths are the same but not all of the slices are
+	// zero, something *might* have changed, so we have to check
+
+	// 1. did we have emojis before that we don't have now?
+	maybeEmojisStillPresent := true
+maybeEmojisStillPresentLoop:
+	for _, maybeEmoji := range maybeEmojis {
+		var stillPresent bool
+	stillPresentLoop:
+		for _, gotEmoji := range gotEmojis {
+			if maybeEmoji.URI == gotEmoji.URI {
+				// the emoji we maybe had is still present now
+				stillPresent = true
+				break stillPresentLoop
+			}
+		}
+		if !stillPresent {
+			// not all maybeEmojis are still present in gotEmojis
+			maybeEmojisStillPresent = false
+			break maybeEmojisStillPresentLoop
+		}
 	}
 
-	// if the lengths are the same but none of the slices are zero, something *might*
-	// have changed, so we have to check
-	sort.SliceStable(maybeEmojis, func(i, j int) bool {
-		return maybeEmojis[i].URI < maybeEmojis[j].URI
-	})
-	sort.SliceStable(gotEmojis, func(i, j int) bool {
-		return gotEmojis[i].URI < gotEmojis[j].URI
-	})
-	sort.SliceStable(maybeEmojiIDs, func(i, j int) bool {
-		return maybeEmojiIDs[i] < maybeEmojiIDs[j]
-	})
-	sort.SliceStable(gotEmojiIDs, func(i, j int) bool {
-		return gotEmojiIDs[i] < gotEmojiIDs[j]
-	})
-	if !reflect.DeepEqual(maybeEmojis, gotEmojis) || !reflect.DeepEqual(maybeEmojiIDs, gotEmojiIDs) {
+	if !maybeEmojisStillPresent {
+		// we had emojis before that we don't have now
 		changed = true
 		targetAccount.Emojis = gotEmojis
 		targetAccount.EmojiIDs = gotEmojiIDs
+		return changed, nil
+	}
+
+	// 2. do we still all emojis now that we had before?
+	gotEmojisAlreadyPresent := true
+gotEmojisAlreadyPresentLoop:
+	for _, gotEmoji := range gotEmojis {
+		var wasPresent bool
+	wasPresentLoop:
+		for _, maybeEmoji := range maybeEmojis {
+			// check emoji IDs here too because if maybe emojis have been fleshed
+			// out and inserted into the database, they will have IDs now
+			if gotEmoji.URI == maybeEmoji.URI && gotEmoji.ID == maybeEmoji.ID {
+				// this got emoji was present already in the maybeEmoji
+				wasPresent = true
+				break wasPresentLoop
+			}
+		}
+		if !wasPresent {
+			// not all gotEmojis were present in the maybeEmojis
+			gotEmojisAlreadyPresent = false
+			break gotEmojisAlreadyPresentLoop
+		}
+	}
+
+	if !gotEmojisAlreadyPresent {
+		// we've got emojis now that we didn't have before
+		changed = true
+		targetAccount.Emojis = gotEmojis
+		targetAccount.EmojiIDs = gotEmojiIDs
+		return changed, nil
 	}
 
 	return changed, nil
