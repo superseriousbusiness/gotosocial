@@ -291,7 +291,7 @@ stackLoop:
 			// Item iterator is done
 			current.itemIter = nil
 
-			// Get the collection page "next" property
+			// Get the current page's "next" property
 			pageNext := current.page.GetActivityStreamsNext()
 			if pageNext == nil || !pageNext.IsIRI() {
 				continue stackLoop
