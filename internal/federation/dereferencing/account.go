@@ -609,7 +609,7 @@ func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gts
 	maybeEmojis := targetAccount.Emojis
 	maybeEmojiIDs := targetAccount.EmojiIDs
 
-	// It's possible that the account has emoji IDs set on it, but not Emojis
+	// It's possible that the account had emoji IDs set on it, but not Emojis
 	// themselves, depending on how it was fetched before being passed to us.
 	//
 	// If we only have IDs, fetch the emojis from the db. We know they're in
@@ -670,16 +670,20 @@ func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gts
 maybeEmojisStillPresentLoop:
 	for _, maybeEmoji := range maybeEmojis {
 		var stillPresent bool
+
 	stillPresentLoop:
 		for _, gotEmoji := range gotEmojis {
 			if maybeEmoji.URI == gotEmoji.URI {
-				// the emoji we maybe had is still present now
+				// the emoji we maybe had is still present now,
+				// so we can stop checking gotEmojis
 				stillPresent = true
 				break stillPresentLoop
 			}
 		}
+
 		if !stillPresent {
-			// not all maybeEmojis are still present in gotEmojis
+			// at least one maybeEmoji is no longer present in
+			// the got emojis, so we can stop checking now
 			maybeEmojisStillPresent = false
 			break maybeEmojisStillPresentLoop
 		}
@@ -698,18 +702,23 @@ maybeEmojisStillPresentLoop:
 gotEmojisAlreadyPresentLoop:
 	for _, gotEmoji := range gotEmojis {
 		var wasPresent bool
+
 	wasPresentLoop:
 		for _, maybeEmoji := range maybeEmojis {
-			// check emoji IDs here too because if maybe emojis have been fleshed
-			// out and inserted into the database, they will have IDs now
+			// check emoji IDs here as well, because unreferenced
+			// maybe emojis we didn't already have would not have
+			// had IDs set on them yet
 			if gotEmoji.URI == maybeEmoji.URI && gotEmoji.ID == maybeEmoji.ID {
-				// this got emoji was present already in the maybeEmoji
+				// this got emoji was present already in the maybeEmoji,
+				// so we can stop checking through maybeEmojis
 				wasPresent = true
 				break wasPresentLoop
 			}
 		}
+
 		if !wasPresent {
-			// not all gotEmojis were present in the maybeEmojis
+			// at least one gotEmojis was not present in
+			// the maybeEmojis, so we can stop checking now
 			gotEmojisAlreadyPresent = false
 			break gotEmojisAlreadyPresentLoop
 		}
