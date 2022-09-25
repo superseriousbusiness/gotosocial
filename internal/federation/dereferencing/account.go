@@ -693,7 +693,7 @@ maybeEmojisStillPresentLoop:
 		return changed, nil
 	}
 
-	// 2. do we still all emojis now that we had before?
+	// 2. do we have emojis now that we didn't have before?
 	gotEmojisAlreadyPresent := true
 gotEmojisAlreadyPresentLoop:
 	for _, gotEmoji := range gotEmojis {
