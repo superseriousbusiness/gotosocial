@@ -277,7 +277,7 @@ stackLoop:
 				// Dereference the remote status and store in the database
 				_, statusable, err := d.GetRemoteStatus(ctx, username, itemIRI, true, false)
 				if err != nil {
-					l.Errorf("error dereferencing remote status \"%s\": %s", itemIRI, err)
+					l.Errorf("error dereferencing remote status %q: %s", itemIRI.String(), err)
 					continue itemLoop
 				}
 
@@ -303,7 +303,7 @@ stackLoop:
 			// Dereference this next collection page by its IRI
 			collectionPage, err := d.DereferenceCollectionPage(ctx, username, pageNextIRI)
 			if err != nil {
-				l.Errorf("error dereferencing remote collection page \"%s\": %s", pageNextIRI, err)
+				l.Errorf("error dereferencing remote collection page %q: %s", pageNextIRI.String(), err)
 				continue stackLoop
 			}
 
