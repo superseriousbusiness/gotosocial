@@ -198,6 +198,12 @@ stackLoop:
 			return nil
 		}
 
+		// Note:
+		// the code here with the existing go-fed codebase
+		// looks truly horrible having to nil-check on every
+		// single action. one day we will have nicer generated
+		// go-fed code. one day...
+
 		if current.page == nil {
 			// This is a local status, no looping to do
 			if current.statusIRI.Host == config.GetHost() {
@@ -208,27 +214,39 @@ stackLoop:
 
 			// Look for an attached status replies (as collection)
 			replies := current.statusable.GetActivityStreamsReplies()
-			if replies == nil || !replies.IsActivityStreamsCollection() {
+			if replies == nil {
 				continue stackLoop
 			}
 
 			// Get the status replies collection
 			collection := replies.GetActivityStreamsCollection()
+			if collection == nil {
+				continue stackLoop
+			}
 
 			// Get the "first" property of the replies collection
 			first := collection.GetActivityStreamsFirst()
-			if first == nil || !first.IsActivityStreamsCollectionPage() {
+			if first == nil {
 				continue stackLoop
 			}
 
 			// Set the first activity stream collection page
 			current.page = first.GetActivityStreamsCollectionPage()
+			if current.page == nil {
+				continue stackLoop
+			}
 		}
 
-		for /* page loop */ {
+	pageLoop:
+		for {
 			if current.itemIter == nil {
-				// Check this page contains any items...
+				// Get the items associated with this page
 				items := current.page.GetActivityStreamsItems()
+				if items == nil {
+					continue stackLoop
+				}
+
+				// Check this page contains any items...
 				if current.iterLen = items.Len(); current.iterLen == 0 {
 					continue stackLoop
 				}
@@ -245,15 +263,12 @@ stackLoop:
 				// Get next item iterator object
 				current.itemIter = current.itemIter.Next()
 
-				switch {
-				// Item is already an IRI
-				case current.itemIter.IsIRI():
-					itemIRI = current.itemIter.GetIRI()
-
-				// Item is a note, get the note ID IRI
-				case current.itemIter.IsActivityStreamsNote():
-					note := current.itemIter.GetActivityStreamsNote()
-					if id := note.GetJSONLDId(); id != nil && id.IsIRI() {
+				if iri := current.itemIter.GetIRI(); iri != nil {
+					// Item is already an IRI type
+					itemIRI = iri
+				} else if note := current.itemIter.GetActivityStreamsNote(); note != nil {
+					// Item is a note, fetch the note ID IRI
+					if id := note.GetJSONLDId(); id != nil {
 						itemIRI = id.GetIRI()
 					}
 				}
@@ -287,12 +302,15 @@ stackLoop:
 
 			// Get the current page's "next" property
 			pageNext := current.page.GetActivityStreamsNext()
-			if pageNext == nil || !pageNext.IsIRI() {
+			if pageNext == nil {
 				continue stackLoop
 			}
 
 			// Get the "next" page property IRI
 			pageNextIRI := pageNext.GetIRI()
+			if pageNextIRI == nil {
+				continue stackLoop
+			}
 
 			// Dereference this next collection page by its IRI
 			collectionPage, err := d.DereferenceCollectionPage(ctx, username, pageNextIRI)
@@ -303,6 +321,7 @@ stackLoop:
 
 			// Set the updated collection page
 			current.page = collectionPage
+			continue pageLoop
 		}
 	}
 
