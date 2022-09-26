@@ -247,11 +247,11 @@ stackLoop:
 
 				// Start off the item iterator
 				current.itemIter = items.Begin()
-				current.iterIdx = -1
+				current.iterIdx = 0
 			}
 
 		itemLoop:
-			for current.iterIdx++; current.iterIdx < current.iterLen; current.iterIdx++ {
+			for ; current.iterIdx < current.iterLen; current.iterIdx++ {
 				var itemIRI *url.URL
 
 				// Get next item iterator object
@@ -284,11 +284,21 @@ stackLoop:
 					continue itemLoop
 				}
 
+				// Iter past this item. Normally this would be
+				// handled by the third clause of the itemLoop's
+				// embedded range checking, but at the bottom of this
+				// loop since we found a new status we circle back to
+				// the beginning of the stackLoop and skip iteration.
+				current.iterIdx++
+
 				// Put current and next frame at top of stack
 				stack = append(stack, current, &frame{
 					statusIRI:  itemIRI,
 					statusable: statusable,
 				})
+
+				// Now start at top of loop
+				continue stackLoop
 			}
 
 			// Item iterator is done
