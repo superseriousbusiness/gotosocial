@@ -952,6 +952,28 @@ func NewTestEmojis() map[string]*gtsmodel.Emoji {
 			VisibleInPicker:        TrueBool(),
 			CategoryID:             "",
 		},
+		"yell": {
+			ID:                     "01GD5KP5CQEE1R3X43Y1EHS2CW",
+			Shortcode:              "yell",
+			Domain:                 "fossbros-anonymous.io",
+			CreatedAt:              TimeMustParse("2020-03-18T13:12:00+01:00"),
+			UpdatedAt:              TimeMustParse("2020-03-18T13:12:00+01:00"),
+			ImageRemoteURL:         "http://fossbros-anonymous.io/emoji/yell.gif",
+			ImageStaticRemoteURL:   "",
+			ImageURL:               "http://localhost:8080/fileserver/01GD5KR15NHTY8FZ01CD4D08XP/emoji/original/01GD5KP5CQEE1R3X43Y1EHS2CW.png",
+			ImagePath:              "/tmp/gotosocial/01GD5KR15NHTY8FZ01CD4D08XP/emoji/original/01GD5KP5CQEE1R3X43Y1EHS2CW.png",
+			ImageStaticURL:         "http://localhost:8080/fileserver/01GD5KR15NHTY8FZ01CD4D08XP/emoji/static/01GD5KP5CQEE1R3X43Y1EHS2CW.png",
+			ImageStaticPath:        "/tmp/gotosocial/01GD5KR15NHTY8FZ01CD4D08XP/emoji/static/01GD5KP5CQEE1R3X43Y1EHS2CW.png",
+			ImageContentType:       "image/png",
+			ImageStaticContentType: "image/png",
+			ImageFileSize:          10889,
+			ImageStaticFileSize:    10808,
+			ImageUpdatedAt:         TimeMustParse("2020-03-18T13:12:00+01:00"),
+			Disabled:               FalseBool(),
+			URI:                    "http://fossbros-anonymous.io/emoji/01GD5KP5CQEE1R3X43Y1EHS2CW",
+			VisibleInPicker:        FalseBool(),
+			CategoryID:             "",
+		},
 	}
 }
 
@@ -1044,6 +1066,10 @@ func newTestStoredEmoji() map[string]filenames {
 		"rainbow": {
 			Original: "rainbow-original.png",
 			Static:   "rainbow-static.png",
+		},
+		"yell": {
+			Original: "yell-original.png",
+			Static:   "yell-static.png",
 		},
 	}
 }
@@ -1941,6 +1967,22 @@ func NewTestFediServices() map[string]vocab.ActivityStreamsService {
 	}
 }
 
+func NewTestFediEmojis() map[string]vocab.TootEmoji {
+	return map[string]vocab.TootEmoji{
+		"http://fossbros-anonymous.io/emoji/01GD5HCC2YECT012TK8PAGX4D1": newAPEmoji(
+			URLMustParse("http://fossbros-anonymous.io/emoji/01GD5HCC2YECT012TK8PAGX4D1"),
+			"kip_van_den_bos",
+			TimeMustParse("2022-09-13T12:13:12+02:00"),
+			newAPImage(
+				URLMustParse("http://fossbros-anonymous.io/emoji/kip.gif"),
+				"image/gif",
+				"",
+				"",
+			),
+		),
+	}
+}
+
 // RemoteAttachmentFile mimics a remote (federated) attachment
 type RemoteAttachmentFile struct {
 	Data        []byte
@@ -1968,6 +2010,16 @@ func NewTestFediAttachments(relativePath string) map[string]RemoteAttachmentFile
 		panic(err)
 	}
 
+	kipBytes, err := os.ReadFile(fmt.Sprintf("%s/kip-original.gif", relativePath))
+	if err != nil {
+		panic(err)
+	}
+
+	yellBytes, err := os.ReadFile(fmt.Sprintf("%s/yell-original.png", relativePath))
+	if err != nil {
+		panic(err)
+	}
+
 	return map[string]RemoteAttachmentFile{
 		"https://s3-us-west-2.amazonaws.com/plushcity/media_attachments/files/106/867/380/219/163/828/original/88e8758c5f011439.jpg": {
 			Data:        beeBytes,
@@ -1984,6 +2036,14 @@ func NewTestFediAttachments(relativePath string) map[string]RemoteAttachmentFile
 		"http://example.org/media/emojis/1781772.gif": {
 			Data:        peglinBytes,
 			ContentType: "image/gif",
+		},
+		"http://fossbros-anonymous.io/emoji/kip.gif": {
+			Data:        kipBytes,
+			ContentType: "image/gif",
+		},
+		"http://fossbros-anonymous.io/emoji/yell.gif": {
+			Data:        yellBytes,
+			ContentType: "image/png",
 		},
 	}
 }
@@ -2855,6 +2915,28 @@ func newAPImage(url *url.URL, mediaType string, imageDescription string, blurhas
 	}
 
 	return image
+}
+
+func newAPEmoji(id *url.URL, name string, updated time.Time, image vocab.ActivityStreamsImage) vocab.TootEmoji {
+	emoji := streams.NewTootEmoji()
+
+	idProp := streams.NewJSONLDIdProperty()
+	idProp.SetIRI(id)
+	emoji.SetJSONLDId(idProp)
+
+	nameProp := streams.NewActivityStreamsNameProperty()
+	nameProp.AppendXMLSchemaString(`:` + strings.Trim(name, ":") + `:`)
+	emoji.SetActivityStreamsName(nameProp)
+
+	updatedProp := streams.NewActivityStreamsUpdatedProperty()
+	updatedProp.Set(updated)
+	emoji.SetActivityStreamsUpdated(updatedProp)
+
+	iconProp := streams.NewActivityStreamsIconProperty()
+	iconProp.AppendActivityStreamsImage(image)
+	emoji.SetActivityStreamsIcon(iconProp)
+
+	return emoji
 }
 
 // NewAPNote returns a new activity streams note for the given parameters

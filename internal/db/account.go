@@ -42,6 +42,9 @@ type Account interface {
 	// GetAccountByPubkeyID returns one account with the given public key URI (ID), or an error if something goes wrong.
 	GetAccountByPubkeyID(ctx context.Context, id string) (*gtsmodel.Account, Error)
 
+	// PutAccount puts one account in the database.
+	PutAccount(ctx context.Context, account *gtsmodel.Account) (*gtsmodel.Account, Error)
+
 	// UpdateAccount updates one account by ID.
 	UpdateAccount(ctx context.Context, account *gtsmodel.Account) (*gtsmodel.Account, Error)
 

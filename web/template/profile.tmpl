@@ -12,12 +12,12 @@
         <div class="basic">
             <div id="profile-basic-filler2"></div>
             <a href="{{.account.Avatar}}" class="avatar"><img src="{{.account.Avatar}}" alt="{{if .account.DisplayName}}{{.account.DisplayName}}{{else}}{{.account.Username}}{{end}}'s avatar"></a>
-            <div class="displayname">{{if .account.DisplayName}}{{.account.DisplayName}}{{else}}{{.account.Username}}{{end}}</div>
+            <div class="displayname">{{if .account.DisplayName}}{{emojify .account.Emojis (escape .account.DisplayName)}}{{else}}{{.account.Username}}{{end}}</div>
             <div class="username"><span>@{{.account.Username}}</span><span>@{{.instance.AccountDomain}}</span></div>
         </div>
         <div class="detailed">
             <div class="bio">
-                {{ if .account.Note }}{{ .account.Note | noescape }}{{else}}This GoToSocial user hasn't written a bio yet!{{end}}
+                {{ if .account.Note }}{{emojify .account.Emojis (noescape .account.Note)}}{{else}}This GoToSocial user hasn't written a bio yet!{{end}}
             </div>
         </div>
         <div class="accountstats">

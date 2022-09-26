@@ -32,6 +32,7 @@ import (
 
 var testModels = []interface{}{
 	&gtsmodel.Account{},
+	&gtsmodel.AccountToEmoji{},
 	&gtsmodel.Application{},
 	&gtsmodel.Block{},
 	&gtsmodel.DomainBlock{},
