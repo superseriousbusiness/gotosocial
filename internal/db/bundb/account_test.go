@@ -139,6 +139,12 @@ func (suite *AccountTestSuite) TestUpdateAccount() {
 	suite.WithinDuration(time.Now(), noCache.UpdatedAt, 5*time.Second)
 }
 
+func (suite *AccountTestSuite) TestGetAccountLastPosted() {
+	lastPosted, err := suite.db.GetAccountLastPosted(context.Background(), suite.testAccounts["local_account_1"].ID)
+	suite.NoError(err)
+	suite.EqualValues(1653046675, lastPosted.Unix())
+}
+
 func (suite *AccountTestSuite) TestInsertAccountWithDefaults() {
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	suite.NoError(err)
