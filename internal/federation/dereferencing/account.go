@@ -666,44 +666,32 @@ func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gts
 	// zero, something *might* have changed, so we have to check
 
 	// 1. did we have emojis before that we don't have now?
-	maybeEmojisStillPresent := true
-maybeEmojisStillPresentLoop:
 	for _, maybeEmoji := range maybeEmojis {
 		var stillPresent bool
 
-	stillPresentLoop:
 		for _, gotEmoji := range gotEmojis {
 			if maybeEmoji.URI == gotEmoji.URI {
 				// the emoji we maybe had is still present now,
 				// so we can stop checking gotEmojis
 				stillPresent = true
-				break stillPresentLoop
+				break
 			}
 		}
 
 		if !stillPresent {
 			// at least one maybeEmoji is no longer present in
 			// the got emojis, so we can stop checking now
-			maybeEmojisStillPresent = false
-			break maybeEmojisStillPresentLoop
+			changed = true
+			targetAccount.Emojis = gotEmojis
+			targetAccount.EmojiIDs = gotEmojiIDs
+			return changed, nil
 		}
 	}
 
-	if !maybeEmojisStillPresent {
-		// we had emojis before that we don't have now
-		changed = true
-		targetAccount.Emojis = gotEmojis
-		targetAccount.EmojiIDs = gotEmojiIDs
-		return changed, nil
-	}
-
 	// 2. do we have emojis now that we didn't have before?
-	gotEmojisAlreadyPresent := true
-gotEmojisAlreadyPresentLoop:
 	for _, gotEmoji := range gotEmojis {
 		var wasPresent bool
 
-	wasPresentLoop:
 		for _, maybeEmoji := range maybeEmojis {
 			// check emoji IDs here as well, because unreferenced
 			// maybe emojis we didn't already have would not have
@@ -712,24 +700,18 @@ gotEmojisAlreadyPresentLoop:
 				// this got emoji was present already in the maybeEmoji,
 				// so we can stop checking through maybeEmojis
 				wasPresent = true
-				break wasPresentLoop
+				break
 			}
 		}
 
 		if !wasPresent {
 			// at least one gotEmojis was not present in
 			// the maybeEmojis, so we can stop checking now
-			gotEmojisAlreadyPresent = false
-			break gotEmojisAlreadyPresentLoop
+			changed = true
+			targetAccount.Emojis = gotEmojis
+			targetAccount.EmojiIDs = gotEmojiIDs
+			return changed, nil
 		}
-	}
-
-	if !gotEmojisAlreadyPresent {
-		// we've got emojis now that we didn't have before
-		changed = true
-		targetAccount.Emojis = gotEmojis
-		targetAccount.EmojiIDs = gotEmojiIDs
-		return changed, nil
 	}
 
 	return changed, nil
