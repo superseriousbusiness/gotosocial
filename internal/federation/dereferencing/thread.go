@@ -240,14 +240,20 @@ stackLoop:
 
 				// Start off the item iterator
 				current.itemIter = items.Begin()
+				if current.itemIter == nil {
+					continue stackLoop
+				}
 			}
 
 		itemLoop:
-			for current.itemIter != nil {
+			for {
 				var itemIRI *url.URL
 
 				// Get next item iterator object
 				current.itemIter = current.itemIter.Next()
+				if current.itemIter == nil {
+					break itemLoop
+				}
 
 				if iri := current.itemIter.GetIRI(); iri != nil {
 					// Item is already an IRI type
