@@ -198,12 +198,6 @@ stackLoop:
 			return nil
 		}
 
-		// Note:
-		// the code here with the existing go-fed codebase
-		// looks truly horrible having to nil-check on every
-		// single action. one day we will have nicer generated
-		// go-fed code. one day...
-
 		if current.page == nil {
 			// This is a local status, no looping to do
 			if current.statusIRI.Host == config.GetHost() {
