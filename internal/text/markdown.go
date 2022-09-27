@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"strings"
 
 	"github.com/russross/blackfriday/v2"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -63,7 +64,7 @@ func (r *renderer) RenderNode(w io.Writer, node *blackfriday.Node, entering bool
 	return r.HTMLRenderer.RenderNode(w, node, entering)
 }
 
-func (f *formatter) FromMarkdown(ctx context.Context, md string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string {
+func (f *formatter) FromMarkdown(ctx context.Context, markdownText string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag, emojis []*gtsmodel.Emoji) string {
 
 	renderer := &renderer{
 		f:        f,
@@ -75,11 +76,28 @@ func (f *formatter) FromMarkdown(ctx context.Context, md string, mentions []*gts
 		}),
 	}
 
-	// parse markdown, use custom renderer to add hashtag/mention links
-	contentBytes := blackfriday.Run([]byte(md), blackfriday.WithExtensions(bfExtensions), blackfriday.WithRenderer(renderer))
+	// Temporarily replace all found emoji shortcodes in the markdown text with
+	// their ID so that they're not parsed as anything by the markdown parser -
+	// this fixes cases where emojis with some underscores in them are parsed as
+	// words with emphasis, eg `:_some_emoji:` becomes `:<em>some</em>emoji:`
+	//
+	// Since the IDs of the emojis are just uppercase letters + numbers they should
+	// be safe to pass through the markdown parser without unexpected effects.
+	for _, e := range emojis {
+		markdownText = strings.ReplaceAll(markdownText, ":"+e.Shortcode+":", ":"+e.ID+":")
+	}
 
-	// clean anything dangerous out of it
-	content := SanitizeHTML(string(contentBytes))
+	// parse markdown text into html, using custom renderer to add hashtag/mention links
+	htmlContentBytes := blackfriday.Run([]byte(markdownText), blackfriday.WithExtensions(bfExtensions), blackfriday.WithRenderer(renderer))
+	htmlContent := string(htmlContentBytes)
+
+	// Replace emoji IDs in the parsed html content with their shortcodes again
+	for _, e := range emojis {
+		htmlContent = strings.ReplaceAll(htmlContent, ":"+e.ID+":", ":"+e.Shortcode+":")
+	}
+
+	// clean anything dangerous out of the html
+	htmlContent = SanitizeHTML(htmlContent)
 
 	if m == nil {
 		m = minify.New()
@@ -89,7 +107,7 @@ func (f *formatter) FromMarkdown(ctx context.Context, md string, mentions []*gts
 		})
 	}
 
-	minified, err := m.String("text/html", content)
+	minified, err := m.String("text/html", htmlContent)
 	if err != nil {
 		log.Errorf("error minifying markdown text: %s", err)
 	}

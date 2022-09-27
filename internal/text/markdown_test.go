@@ -76,22 +76,22 @@ type MarkdownTestSuite struct {
 }
 
 func (suite *MarkdownTestSuite) TestParseSimple() {
-	s := suite.formatter.FromMarkdown(context.Background(), simpleMarkdown, nil, nil)
+	s := suite.formatter.FromMarkdown(context.Background(), simpleMarkdown, nil, nil, nil)
 	suite.Equal(simpleMarkdownExpected, s)
 }
 
 func (suite *MarkdownTestSuite) TestParseWithCodeBlock() {
-	s := suite.formatter.FromMarkdown(context.Background(), withCodeBlock, nil, nil)
+	s := suite.formatter.FromMarkdown(context.Background(), withCodeBlock, nil, nil, nil)
 	suite.Equal(withCodeBlockExpected, s)
 }
 
 func (suite *MarkdownTestSuite) TestParseWithInlineCode() {
-	s := suite.formatter.FromMarkdown(context.Background(), withInlineCode, nil, nil)
+	s := suite.formatter.FromMarkdown(context.Background(), withInlineCode, nil, nil, nil)
 	suite.Equal(withInlineCodeExpected, s)
 }
 
 func (suite *MarkdownTestSuite) TestParseWithInlineCode2() {
-	s := suite.formatter.FromMarkdown(context.Background(), withInlineCode2, nil, nil)
+	s := suite.formatter.FromMarkdown(context.Background(), withInlineCode2, nil, nil, nil)
 	suite.Equal(withInlineCode2Expected, s)
 }
 
@@ -100,17 +100,17 @@ func (suite *MarkdownTestSuite) TestParseWithHashtag() {
 		suite.testTags["Hashtag"],
 	}
 
-	s := suite.formatter.FromMarkdown(context.Background(), withHashtag, nil, foundTags)
+	s := suite.formatter.FromMarkdown(context.Background(), withHashtag, nil, foundTags, nil)
 	suite.Equal(withHashtagExpected, s)
 }
 
 func (suite *MarkdownTestSuite) TestParseWithHTML() {
-	s := suite.formatter.FromMarkdown(context.Background(), mdWithHTML, nil, nil)
+	s := suite.formatter.FromMarkdown(context.Background(), mdWithHTML, nil, nil, nil)
 	suite.Equal(mdWithHTMLExpected, s)
 }
 
 func (suite *MarkdownTestSuite) TestParseWithCheekyHTML() {
-	s := suite.formatter.FromMarkdown(context.Background(), mdWithCheekyHTML, nil, nil)
+	s := suite.formatter.FromMarkdown(context.Background(), mdWithCheekyHTML, nil, nil, nil)
 	suite.Equal(mdWithCheekyHTMLExpected, s)
 }
 
@@ -118,36 +118,36 @@ func (suite *MarkdownTestSuite) TestParseWithHashtagInitial() {
 	s := suite.formatter.FromMarkdown(context.Background(), mdWithHashtagInitial, nil, []*gtsmodel.Tag{
 		suite.testTags["Hashtag"],
 		suite.testTags["welcome"],
-	})
+	}, nil)
 	suite.Equal(mdWithHashtagInitialExpected, s)
 }
 
 func (suite *MarkdownTestSuite) TestParseCodeBlockWithNewlines() {
-	s := suite.formatter.FromMarkdown(context.Background(), mdCodeBlockWithNewlines, nil, nil)
+	s := suite.formatter.FromMarkdown(context.Background(), mdCodeBlockWithNewlines, nil, nil, nil)
 	suite.Equal(mdCodeBlockWithNewlinesExpected, s)
 }
 
 func (suite *MarkdownTestSuite) TestParseWithFootnote() {
-	s := suite.formatter.FromMarkdown(context.Background(), mdWithFootnote, nil, nil)
+	s := suite.formatter.FromMarkdown(context.Background(), mdWithFootnote, nil, nil, nil)
 	suite.Equal(mdWithFootnoteExpected, s)
 }
 
 func (suite *MarkdownTestSuite) TestParseWithBlockquote() {
-	s := suite.formatter.FromMarkdown(context.Background(), mdWithBlockQuote, nil, nil)
+	s := suite.formatter.FromMarkdown(context.Background(), mdWithBlockQuote, nil, nil, nil)
 	suite.Equal(mdWithBlockQuoteExpected, s)
 }
 
 func (suite *MarkdownTestSuite) TestParseHashtagWithCodeBlock() {
 	s := suite.formatter.FromMarkdown(context.Background(), mdHashtagAndCodeBlock, nil, []*gtsmodel.Tag{
 		suite.testTags["Hashtag"],
-	})
+	}, nil)
 	suite.Equal(mdHashtagAndCodeBlockExpected, s)
 }
 
 func (suite *MarkdownTestSuite) TestParseMentionWithCodeBlock() {
 	s := suite.formatter.FromMarkdown(context.Background(), mdMentionAndCodeBlock, []*gtsmodel.Mention{
 		suite.testMentions["local_user_2_mention_zork"],
-	}, nil)
+	}, nil, nil)
 	suite.Equal(mdMentionAndCodeBlockExpected, s)
 }
 
