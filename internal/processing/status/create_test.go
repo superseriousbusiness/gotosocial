@@ -24,6 +24,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 type StatusCreateTestSuite struct {
@@ -96,6 +98,45 @@ func (suite *StatusCreateTestSuite) TestProcessContentWarningWithHTMLEscapedQuot
 	suite.NotNil(apiStatus)
 
 	suite.Equal("\"test\"", apiStatus.SpoilerText)
+}
+
+func (suite *StatusCreateTestSuite) TestProcessStatusMarkdownWithUnderscoreEmoji() {
+	ctx := context.Background()
+
+	// update the shortcode of the rainbow emoji to surround it in underscores
+	if err := suite.db.UpdateWhere(ctx, []db.Where{{Key: "shortcode", Value: "rainbow"}}, "shortcode", "_rainbow_", &gtsmodel.Emoji{}); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	creatingAccount := suite.testAccounts["local_account_1"]
+	creatingApplication := suite.testApplications["application_1"]
+
+	statusCreateForm := &model.AdvancedStatusCreateForm{
+		StatusCreateRequest: model.StatusCreateRequest{
+			Status:      "poopoo peepee :_rainbow_:",
+			MediaIDs:    []string{},
+			Poll:        nil,
+			InReplyToID: "",
+			Sensitive:   false,
+			Visibility:  model.VisibilityPublic,
+			ScheduledAt: "",
+			Language:    "en",
+			Format:      model.StatusFormatMarkdown,
+		},
+		AdvancedVisibilityFlagsForm: model.AdvancedVisibilityFlagsForm{
+			Federated: nil,
+			Boostable: nil,
+			Replyable: nil,
+			Likeable:  nil,
+		},
+	}
+
+	apiStatus, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
+	suite.NoError(err)
+	suite.NotNil(apiStatus)
+
+	suite.Equal("<p>poopoo peepee :_rainbow_:</p>", apiStatus.Content)
+	suite.NotEmpty(apiStatus.Emojis)
 }
 
 func TestStatusCreateTestSuite(t *testing.T) {

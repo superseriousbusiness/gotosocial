@@ -30,7 +30,7 @@ type Formatter interface {
 	// FromPlain parses an HTML text from a plaintext.
 	FromPlain(ctx context.Context, plain string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string
 	// FromMarkdown parses an HTML text from a markdown-formatted text.
-	FromMarkdown(ctx context.Context, md string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string
+	FromMarkdown(ctx context.Context, md string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag, emojis []*gtsmodel.Emoji) string
 
 	// ReplaceTags takes a piece of text and a slice of tags, and returns the same text with the tags nicely formatted as hrefs.
 	ReplaceTags(ctx context.Context, in string, tags []*gtsmodel.Tag) string
