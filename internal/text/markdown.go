@@ -32,7 +32,7 @@ import (
 )
 
 var (
-	bfExtensions = blackfriday.CommonExtensions | blackfriday.HardLineBreak | blackfriday.Footnotes
+	bfExtensions = blackfriday.NoIntraEmphasis | blackfriday.FencedCode | blackfriday.Autolink | blackfriday.Strikethrough | blackfriday.SpaceHeadings | blackfriday.HardLineBreak
 	m            *minify.M
 )
 
@@ -55,8 +55,7 @@ func (r *renderer) RenderNode(w io.Writer, node *blackfriday.Node, entering bool
 		html = r.f.ReplaceMentions(r.ctx, html, r.mentions)
 
 		// we don't have much recourse if this fails
-		_, err := io.WriteString(w, html)
-		if err != nil {
+		if _, err := io.WriteString(w, html); err != nil {
 			log.Errorf("error outputting markdown text: %s", err)
 		}
 		return status
