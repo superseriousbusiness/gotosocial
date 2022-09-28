@@ -32,7 +32,7 @@ type MediaAttachment struct {
 	URL               string           `validate:"required_without=RemoteURL,omitempty,url" bun:",nullzero"`                           // Where can the attachment be retrieved on *this* server
 	RemoteURL         string           `validate:"required_without=URL,omitempty,url" bun:",nullzero"`                                 // Where can the attachment be retrieved on a remote server (empty for local media)
 	Type              FileType         `validate:"oneof=Image Gif Audio Video Unknown" bun:",nullzero,notnull"`                        // Type of file (image/gif/audio/video)
-	FileMeta          FileMeta         `validate:"required" bun:",embed:filemeta_,nullzero,notnull"`                                   // Metadata about the file
+	FileMeta          FileMeta         `validate:"required" bun:",embed:,nullzero,notnull"`                                            // Metadata about the file
 	AccountID         string           `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                                 // To which account does this attachment belong
 	Account           *Account         `validate:"-" bun:"rel:has-one"`                                                                // Account corresponding to accountID
 	Description       string           `validate:"-" bun:""`                                                                           // Description of the attachment (for screenreaders)

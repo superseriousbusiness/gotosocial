@@ -168,15 +168,10 @@ type StatusCreateRequest struct {
 	// in: formData
 	SpoilerText string `form:"spoiler_text" json:"spoiler_text" xml:"spoiler_text"`
 	// Visibility of the posted status.
-	// enum:
-	// - public
-	// - unlisted
-	// - private
-	// - direct
 	// in: formData
 	Visibility Visibility `form:"visibility" json:"visibility" xml:"visibility"`
 	// ISO 8601 Datetime at which to schedule a status.
-	// Providing this paramter will cause ScheduledStatus to be returned instead of Status.
+	// Providing this parameter will cause ScheduledStatus to be returned instead of Status.
 	// Must be at least 5 minutes in the future.
 	// in: formData
 	ScheduledAt string `form:"scheduled_at" json:"scheduled_at" xml:"scheduled_at"`
@@ -184,22 +179,14 @@ type StatusCreateRequest struct {
 	// in: formData
 	Language string `form:"language" json:"language" xml:"language"`
 	// Format to use when parsing this status.
-	// enum:
-	// - plain
-	// - markdown
 	// in: formData
 	Format StatusFormat `form:"format" json:"format" xml:"format"`
 }
 
 // Visibility models the visibility of a status.
 //
-// swagger:model statusVisibility
-// enum:
-// - public
-// - unlisted
-// - private
-// - mutuals_only
-// - direct
+// swagger:enum statusVisibility
+// swagger:type string
 type Visibility string
 
 const (
@@ -242,11 +229,8 @@ type AdvancedVisibilityFlagsForm struct {
 // StatusFormat is the format in which to parse the submitted status.
 // Can be either plain or markdown. Empty will default to plain.
 //
-// swagger:model statusFormat
-// enum:
-// - plain
-// - markdown
-// example: plain
+// swagger:enum statusFormat
+// swagger:type string
 type StatusFormat string
 
 // Format to use when parsing submitted status into an html-formatted status

@@ -32,39 +32,40 @@ import (
 //
 // Get a media attachment that you own.
 //
-// ---
-// tags:
-// - media
+//	---
+//	tags:
+//	- media
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// parameters:
-// - name: id
-//   description: id of the attachment
-//   type: string
-//   in: path
-//   required: true
+//	parameters:
+//	-
+//		name: id
+//		description: id of the attachment
+//		type: string
+//		in: path
+//		required: true
 //
-// security:
-// - OAuth2 Bearer:
-//   - read:media
+//	security:
+//	- OAuth2 Bearer:
+//		- read:media
 //
-// responses:
-//   '200':
-//     description: The requested media attachment.
-//     schema:
-//       "$ref": "#/definitions/attachment"
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '404':
-//      description: not found
-//   '406':
-//      description: not acceptable
-//   '500':
-//      description: internal server error
+//	responses:
+//		'200':
+//			description: The requested media attachment.
+//			schema:
+//				"$ref": "#/definitions/attachment"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//		   description: internal server error
 func (m *Module) MediaGETHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

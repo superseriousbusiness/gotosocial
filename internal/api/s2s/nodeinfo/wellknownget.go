@@ -33,17 +33,17 @@ import (
 // eg. `{"links":[{"rel":"http://nodeinfo.diaspora.software/ns/schema/2.0","href":"http://example.org/nodeinfo/2.0"}]}`
 // See: https://nodeinfo.diaspora.software/protocol.html
 //
-// ---
-// tags:
-// - nodeinfo
+//	---
+//	tags:
+//	- nodeinfo
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// responses:
-//   '200':
-//     schema:
-//       "$ref": "#/definitions/wellKnownResponse"
+//	responses:
+//		'200':
+//			schema:
+//				"$ref": "#/definitions/wellKnownResponse"
 func (m *Module) NodeInfoWellKnownGETHandler(c *gin.Context) {
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
 		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)

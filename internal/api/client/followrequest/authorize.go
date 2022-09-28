@@ -34,40 +34,41 @@ import (
 //
 // Accept a follow request and put the requesting account in your 'followers' list.
 //
-// ---
-// tags:
-// - follow_requests
+//	---
+//	tags:
+//	- follow_requests
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// parameters:
-// - name: account_id
-//   type: string
-//   description: ID of the account requesting to follow you.
-//   in: path
-//   required: true
+//	parameters:
+//	-
+//		name: account_id
+//		type: string
+//		description: ID of the account requesting to follow you.
+//		in: path
+//		required: true
 //
-// security:
-// - OAuth2 Bearer:
-//   - write:follows
+//	security:
+//	- OAuth2 Bearer:
+//		- write:follows
 //
-// responses:
-//   '200':
-//     name: account relationship
-//     description: Your relationship to this account.
-//     schema:
-//       "$ref": "#/definitions/accountRelationship"
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '404':
-//      description: not found
-//   '406':
-//      description: not acceptable
-//   '500':
-//      description: internal server error
+//	responses:
+//		'200':
+//			name: account relationship
+//			description: Your relationship to this account.
+//			schema:
+//				"$ref": "#/definitions/accountRelationship"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) FollowRequestAuthorizePOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

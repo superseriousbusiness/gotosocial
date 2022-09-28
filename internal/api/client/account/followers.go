@@ -32,42 +32,43 @@ import (
 //
 // See followers of account with given id.
 //
-// ---
-// tags:
-// - accounts
+//	---
+//	tags:
+//	- accounts
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// parameters:
-// - name: id
-//   type: string
-//   description: Account ID.
-//   in: path
-//   required: true
+//	parameters:
+//	-
+//		name: id
+//		type: string
+//		description: Account ID.
+//		in: path
+//		required: true
 //
-// security:
-// - OAuth2 Bearer:
-//   - read:accounts
+//	security:
+//	- OAuth2 Bearer:
+//		- read:accounts
 //
-// responses:
-//   '200':
-//     name: accounts
-//     description: Array of accounts that follow this account.
-//     schema:
-//       type: array
-//       items:
-//         "$ref": "#/definitions/account"
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '404':
-//      description: not found
-//   '406':
-//      description: not acceptable
-//   '500':
-//      description: internal server error
+//	responses:
+//		'200':
+//			name: accounts
+//			description: Array of accounts that follow this account.
+//			schema:
+//				type: array
+//				items:
+//					"$ref": "#/definitions/account"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) AccountFollowersGETHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

@@ -50,7 +50,7 @@ In lieu of a fuller code of conduct, here are a few ground rules.
 
 ## Setting up your development environment
 
-To get started, you first need to have Go installed. GtS is currently using Go 1.18, so you should take that too. See [here](https://golang.org/doc/install).
+To get started, you first need to have Go installed. GtS is currently using Go 1.19, so you should take that too. See [here](https://golang.org/doc/install).
 
 Once you've got go installed, clone this repository into your Go path. Normally, this should be `~/go/src/github.com/superseriousbusiness/gotosocial`.
 
@@ -244,7 +244,7 @@ You can install go-swagger following the instructions [here](https://goswagger.i
 If you change Swagger annotations on any of the API paths, you can generate a new Swagger file at `./docs/api/swagger.yaml` by running:
 
 ```bash
-swagger generate spec -o docs/api/swagger.yaml --scan-models
+swagger generate spec --scan-models --exclude-deps -o docs/api/swagger.yaml
 ```
 
 ## CI/CD configuration

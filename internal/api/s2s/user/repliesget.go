@@ -41,52 +41,57 @@ import (
 //
 // HTTP signature is required on the request.
 //
-// ---
-// tags:
-// - s2s/federation
+//	---
+//	tags:
+//	- s2s/federation
 //
-// produces:
-// - application/activity+json
+//	produces:
+//	- application/activity+json
 //
-// parameters:
-// - name: username
-//   type: string
-//   description: Username of the account.
-//   in: path
-//   required: true
-// - name: status
-//   type: string
-//   description: ID of the status.
-//   in: path
-//   required: true
-// - name: page
-//   type: boolean
-//   description: Return response as a CollectionPage.
-//   in: query
-//   default: false
-// - name: only_other_accounts
-//   type: boolean
-//   description: Return replies only from accounts other than the status owner.
-//   in: query
-//   default: false
-// - name: min_id
-//   type: string
-//   description: Minimum ID of the next status, used for paging.
-//   in: query
+//	parameters:
+//	-
+//		name: username
+//		type: string
+//		description: Username of the account.
+//		in: path
+//		required: true
+//	-
+//		name: status
+//		type: string
+//		description: ID of the status.
+//		in: path
+//		required: true
+//	-
+//		name: page
+//		type: boolean
+//		description: Return response as a CollectionPage.
+//		in: query
+//		default: false
+//	-
+//		name: only_other_accounts
+//		type: boolean
+//		description: Return replies only from accounts other than the status owner.
+//		in: query
+//		default: false
+//	-
+//		name: min_id
+//		type: string
+//		description: Minimum ID of the next status, used for paging.
+//		in: query
 //
-// responses:
-//   '200':
-//      in: body
-//      schema:
-//        "$ref": "#/definitions/swaggerCollection"
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '403':
-//      description: forbidden
-//   '404':
-//      description: not found
+//	responses:
+//		'200':
+//			in: body
+//			schema:
+//				"$ref": "#/definitions/swaggerCollection"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'403':
+//			description: forbidden
+//		'404':
+//			description: not found
 func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
 	// usernames on our instance are always lowercase
 	requestedUsername := strings.ToLower(c.Param(UsernameKey))

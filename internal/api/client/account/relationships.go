@@ -15,44 +15,45 @@ import (
 //
 // See your account's relationships with the given account IDs.
 //
-// ---
-// tags:
-// - accounts
+//	---
+//	tags:
+//	- accounts
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// parameters:
-// - name: id
-//   type: array
-//   items:
-//     type: string
-//   description: Account IDs.
-//   in: query
-//   required: true
+//	parameters:
+//	-
+//		name: id
+//		type: array
+//		items:
+//			type: string
+//		description: Account IDs.
+//		in: query
+//		required: true
 //
-// security:
-// - OAuth2 Bearer:
-//   - read:accounts
+//	security:
+//	- OAuth2 Bearer:
+//		- read:accounts
 //
-// responses:
-//   '200':
-//     name: account relationships
-//     description: Array of account relationships.
-//     schema:
-//       type: array
-//       items:
-//         "$ref": "#/definitions/accountRelationship"
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '404':
-//      description: not found
-//   '406':
-//      description: not acceptable
-//   '500':
-//      description: internal server error
+//	responses:
+//		'200':
+//			name: account relationships
+//			description: Array of account relationships.
+//			schema:
+//				type: array
+//				items:
+//					"$ref": "#/definitions/accountRelationship"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) AccountRelationshipsGETHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

@@ -19,8 +19,8 @@
 package typeutils
 
 import (
-	"io/ioutil"
 	"math/rand"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -45,7 +45,7 @@ func populateDefaultAvatars() (defaultAvatars []string) {
 	}
 
 	defaultAvatarsAbsFilePath := filepath.Join(webAssetsAbsFilePath, "default_avatars")
-	defaultAvatarFiles, err := ioutil.ReadDir(defaultAvatarsAbsFilePath)
+	defaultAvatarFiles, err := os.ReadDir(defaultAvatarsAbsFilePath)
 	if err != nil {
 		log.Warnf("populateDefaultAvatars: error reading default avatars at %s: %s", defaultAvatarsAbsFilePath, err)
 		return
@@ -58,7 +58,7 @@ func populateDefaultAvatars() (defaultAvatars []string) {
 		}
 
 		// ignore files bigger than 50kb
-		if f.Size() > 50000 {
+		if i, err := f.Info(); err != nil || i.Size() > 50000 {
 			continue
 		}
 

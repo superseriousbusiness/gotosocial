@@ -39,39 +39,39 @@ import (
 // The parameters can also be given in the body of the request, as JSON, if the content-type is set to 'application/json'.
 // The parameters can also be given in the body of the request, as XML, if the content-type is set to 'application/xml'.
 //
-// ---
-// tags:
-// - statuses
+//	---
+//	tags:
+//	- statuses
 //
-// consumes:
-// - application/json
-// - application/xml
-// - application/x-www-form-urlencoded
+//	consumes:
+//	- application/json
+//	- application/xml
+//	- application/x-www-form-urlencoded
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// security:
-// - OAuth2 Bearer:
-//   - write:statuses
+//	security:
+//	- OAuth2 Bearer:
+//		- write:statuses
 //
-// responses:
-//   '200':
-//     description: "The newly created status."
-//     schema:
-//       "$ref": "#/definitions/status"
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '403':
-//      description: forbidden
-//   '404':
-//      description: not found
-//   '406':
-//      description: not acceptable
-//   '500':
-//      description: internal server error
+//	responses:
+//		'200':
+//			description: "The newly created status."
+//			schema:
+//				"$ref": "#/definitions/status"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'403':
+//			description: forbidden
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

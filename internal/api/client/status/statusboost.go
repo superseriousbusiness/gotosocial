@@ -33,44 +33,45 @@ import (
 // Reblog/boost status with the given ID.
 //
 // If the target status is rebloggable/boostable, it will be shared with your followers.
-// This is equivalent to an activitypub 'announce' activity.
+// This is equivalent to an ActivityPub 'Announce' activity.
 //
-// ---
-// tags:
-// - statuses
+//	---
+//	tags:
+//	- statuses
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// parameters:
-// - name: id
-//   type: string
-//   description: Target status ID.
-//   in: path
-//   required: true
+//	parameters:
+//	-
+//		name: id
+//		type: string
+//		description: Target status ID.
+//		in: path
+//		required: true
 //
-// security:
-// - OAuth2 Bearer:
-//   - write:statuses
+//	security:
+//	- OAuth2 Bearer:
+//		- write:statuses
 //
-// responses:
-//   '200':
-//     name: status
-//     description: The boost of the status.
-//     schema:
-//       "$ref": "#/definitions/status"
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '403':
-//      description: forbidden
-//   '404':
-//      description: not found
-//   '406':
-//      description: not acceptable
-//   '500':
-//      description: internal server error
+//	responses:
+//		'200':
+//			name: status
+//			description: The boost of the status.
+//			schema:
+//				"$ref": "#/definitions/status"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'403':
+//			description: forbidden
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) StatusBoostPOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

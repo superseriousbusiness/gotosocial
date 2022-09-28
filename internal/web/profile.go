@@ -135,14 +135,14 @@ func (m *Module) returnAPProfile(ctx context.Context, c *gin.Context, username s
 
 	user, errWithCode := m.processor.GetFediUser(ctx, username, c.Request.URL)
 	if errWithCode != nil {
-		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet) //nolint:contextcheck
 		return
 	}
 
 	b, mErr := json.Marshal(user)
 	if mErr != nil {
 		err := fmt.Errorf("could not marshal json: %s", mErr)
-		api.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+		api.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet) //nolint:contextcheck
 		return
 	}
 

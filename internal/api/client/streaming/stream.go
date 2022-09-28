@@ -35,89 +35,92 @@ var wsUpgrader = websocket.Upgrader{
 //
 // If the ping fails, or something else goes wrong during transmission, then the connection will be dropped, and the client will be expected to start it again.
 //
-// ---
-// tags:
-// - streaming
+//	---
+//	tags:
+//	- streaming
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// schemes:
-// - wss
+//	schemes:
+//	- wss
 //
-// parameters:
-// - name: access_token
-//   type: string
-//   description: Access token for the requesting account.
-//   in: query
-//   required: true
-// - name: stream
-//   type: string
-//   description: |-
-//     Type of stream to request.
+//	parameters:
+//	-
+//		name: access_token
+//		type: string
+//		description: Access token for the requesting account.
+//		in: query
+//		required: true
+//	-
+//		name: stream
+//		type: string
+//		description: |-
+//			Type of stream to request.
 //
-//     Options are:
+//			Options are:
 //
-//     `user`: receive updates for the account's home timeline.
-//     `public`: receive updates for the public timeline.
-//     `public:local`: receive updates for the local timeline.
-//     `hashtag`: receive updates for a given hashtag.
-//     `hashtag:local`: receive local updates for a given hashtag.
-//     `list`: receive updates for a certain list of accounts.
-//     `direct`: receive updates for direct messages.
-//   in: query
-//   required: true
-// security:
-// - OAuth2 Bearer:
-//   - read:streaming
+//			`user`: receive updates for the account's home timeline.
+//			`public`: receive updates for the public timeline.
+//			`public:local`: receive updates for the local timeline.
+//			`hashtag`: receive updates for a given hashtag.
+//			`hashtag:local`: receive local updates for a given hashtag.
+//			`list`: receive updates for a certain list of accounts.
+//			`direct`: receive updates for direct messages.
+//		in: query
+//		required: true
 //
-// responses:
-//   '101':
-//     schema:
-//       type: object
-//       properties:
-//         stream:
-//           type: array
-//           items:
-//             type: string
-//             enum:
-//             - user
-//             - public
-//             - public:local
-//             - hashtag
-//             - hashtag:local
-//             - list
-//             - direct
-//         event:
-//           description: |-
-//             The type of event being received.
+//	security:
+//	- OAuth2 Bearer:
+//		- read:streaming
 //
-//             `update`: a new status has been received.
-//             `notification`: a new notification has been received.
-//             `delete`: a status has been deleted.
-//             `filters_changed`: not implemented.
-//           type: string
-//           enum:
-//           - update
-//           - notification
-//           - delete
-//           - filters_changed
-//         payload:
-//           description: |-
-//             The payload of the streamed message.
-//             Different depending on the `event` type.
+//	responses:
+//		'101':
+//			schema:
+//				type: object
+//				properties:
+//					stream:
+//						type: array
+//						items:
+//							type: string
+//							enum:
+//							- user
+//							- public
+//							- public:local
+//							- hashtag
+//							- hashtag:local
+//							- list
+//							- direct
+//					event:
+//						description: |-
+//							The type of event being received.
 //
-//             If present, it should be parsed as a string.
+//							`update`: a new status has been received.
+//							`notification`: a new notification has been received.
+//							`delete`: a status has been deleted.
+//							`filters_changed`: not implemented.
+//						type: string
+//						enum:
+//						- update
+//						- notification
+//						- delete
+//						- filters_changed
+//					payload:
+//						description: |-
+//							The payload of the streamed message.
+//							Different depending on the `event` type.
 //
-//             If `event` = `update`, then the payload will be a JSON string of a status.
-//             If `event` = `notification`, then the payload will be a JSON string of a notification.
-//             If `event` = `delete`, then the payload will be a status ID.
-//           type: string
-//           example: "{\"id\":\"01FC3TZ5CFG6H65GCKCJRKA669\",\"created_at\":\"2021-08-02T16:25:52Z\",\"sensitive\":false,\"spoiler_text\":\"\",\"visibility\":\"public\",\"language\":\"en\",\"uri\":\"https://gts.superseriousbusiness.org/users/dumpsterqueer/statuses/01FC3TZ5CFG6H65GCKCJRKA669\",\"url\":\"https://gts.superseriousbusiness.org/@dumpsterqueer/statuses/01FC3TZ5CFG6H65GCKCJRKA669\",\"replies_count\":0,\"reblogs_count\":0,\"favourites_count\":0,\"favourited\":false,\"reblogged\":false,\"muted\":false,\"bookmarked\":fals…//gts.superseriousbusiness.org/fileserver/01JNN207W98SGG3CBJ76R5MVDN/header/original/019036W043D8FXPJKSKCX7G965.png\",\"header_static\":\"https://gts.superseriousbusiness.org/fileserver/01JNN207W98SGG3CBJ76R5MVDN/header/small/019036W043D8FXPJKSKCX7G965.png\",\"followers_count\":33,\"following_count\":28,\"statuses_count\":126,\"last_status_at\":\"2021-08-02T16:25:52Z\",\"emojis\":[],\"fields\":[]},\"media_attachments\":[],\"mentions\":[],\"tags\":[],\"emojis\":[],\"card\":null,\"poll\":null,\"text\":\"a\"}"
-//   '401':
-//      description: unauthorized
-//   '400':
-//      description: bad request
+//							If present, it should be parsed as a string.
+//
+//							If `event` = `update`, then the payload will be a JSON string of a status.
+//							If `event` = `notification`, then the payload will be a JSON string of a notification.
+//							If `event` = `delete`, then the payload will be a status ID.
+//						type: string
+//						example: "{\"id\":\"01FC3TZ5CFG6H65GCKCJRKA669\",\"created_at\":\"2021-08-02T16:25:52Z\",\"sensitive\":false,\"spoiler_text\":\"\",\"visibility\":\"public\",\"language\":\"en\",\"uri\":\"https://gts.superseriousbusiness.org/users/dumpsterqueer/statuses/01FC3TZ5CFG6H65GCKCJRKA669\",\"url\":\"https://gts.superseriousbusiness.org/@dumpsterqueer/statuses/01FC3TZ5CFG6H65GCKCJRKA669\",\"replies_count\":0,\"reblogs_count\":0,\"favourites_count\":0,\"favourited\":false,\"reblogged\":false,\"muted\":false,\"bookmarked\":fals…//gts.superseriousbusiness.org/fileserver/01JNN207W98SGG3CBJ76R5MVDN/header/original/019036W043D8FXPJKSKCX7G965.png\",\"header_static\":\"https://gts.superseriousbusiness.org/fileserver/01JNN207W98SGG3CBJ76R5MVDN/header/small/019036W043D8FXPJKSKCX7G965.png\",\"followers_count\":33,\"following_count\":28,\"statuses_count\":126,\"last_status_at\":\"2021-08-02T16:25:52Z\",\"emojis\":[],\"fields\":[]},\"media_attachments\":[],\"mentions\":[],\"tags\":[],\"emojis\":[],\"card\":null,\"poll\":null,\"text\":\"a\"}"
+//		'401':
+//			description: unauthorized
+//		'400':
+//			description: bad request
 func (m *Module) StreamGETHandler(c *gin.Context) {
 	streamType := c.Query(StreamQueryKey)
 	if streamType == "" {

@@ -168,11 +168,12 @@ func ExtractPublished(i WithPublished) (time.Time, error) {
 }
 
 // ExtractIconURL extracts a URL to a supported image file from something like:
-//   "icon": {
-//     "mediaType": "image/jpeg",
-//     "type": "Image",
-//     "url": "http://example.org/path/to/some/file.jpeg"
-//   },
+//
+//	"icon": {
+//	  "mediaType": "image/jpeg",
+//	  "type": "Image",
+//	  "url": "http://example.org/path/to/some/file.jpeg"
+//	},
 func ExtractIconURL(i WithIcon) (*url.URL, error) {
 	iconProp := i.GetActivityStreamsIcon()
 	if iconProp == nil {
@@ -204,11 +205,12 @@ func ExtractIconURL(i WithIcon) (*url.URL, error) {
 }
 
 // ExtractImageURL extracts a URL to a supported image file from something like:
-//   "image": {
-//     "mediaType": "image/jpeg",
-//     "type": "Image",
-//     "url": "http://example.org/path/to/some/file.jpeg"
-//   },
+//
+//	"image": {
+//	  "mediaType": "image/jpeg",
+//	  "type": "Image",
+//	  "url": "http://example.org/path/to/some/file.jpeg"
+//	},
 func ExtractImageURL(i WithImage) (*url.URL, error) {
 	imageProp := i.GetActivityStreamsImage()
 	if imageProp == nil {
