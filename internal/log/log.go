@@ -74,86 +74,86 @@ func WithFields(fields ...kv.Field) Entry {
 }
 
 func Trace(a ...interface{}) {
-	logf(level.TRACE, nil, args(len(a)), a...)
+	logf(3, level.TRACE, nil, args(len(a)), a...)
 }
 
 func Tracef(s string, a ...interface{}) {
-	logf(level.TRACE, nil, s, a...)
+	logf(3, level.TRACE, nil, s, a...)
 }
 
 func Debug(a ...interface{}) {
-	logf(level.DEBUG, nil, args(len(a)), a...)
+	logf(3, level.DEBUG, nil, args(len(a)), a...)
 }
 
 func Debugf(s string, a ...interface{}) {
-	logf(level.DEBUG, nil, s, a...)
+	logf(3, level.DEBUG, nil, s, a...)
 }
 
 func Info(a ...interface{}) {
-	logf(level.INFO, nil, args(len(a)), a...)
+	logf(3, level.INFO, nil, args(len(a)), a...)
 }
 
 func Infof(s string, a ...interface{}) {
-	logf(level.INFO, nil, s, a...)
+	logf(3, level.INFO, nil, s, a...)
 }
 
 func Warn(a ...interface{}) {
-	logf(level.WARN, nil, args(len(a)), a...)
+	logf(3, level.WARN, nil, args(len(a)), a...)
 }
 
 func Warnf(s string, a ...interface{}) {
-	logf(level.WARN, nil, s, a...)
+	logf(3, level.WARN, nil, s, a...)
 }
 
 func Error(a ...interface{}) {
-	logf(level.ERROR, nil, args(len(a)), a...)
+	logf(3, level.ERROR, nil, args(len(a)), a...)
 }
 
 func Errorf(s string, a ...interface{}) {
-	logf(level.ERROR, nil, s, a...)
+	logf(3, level.ERROR, nil, s, a...)
 }
 
 func Fatal(a ...interface{}) {
 	defer syscall.Exit(1)
-	logf(level.FATAL, nil, args(len(a)), a...)
+	logf(3, level.FATAL, nil, args(len(a)), a...)
 }
 
 func Fatalf(s string, a ...interface{}) {
 	defer syscall.Exit(1)
-	logf(level.FATAL, nil, s, a...)
+	logf(3, level.FATAL, nil, s, a...)
 }
 
 func Panic(a ...interface{}) {
 	defer panic(fmt.Sprint(a...))
-	logf(level.PANIC, nil, args(len(a)), a...)
+	logf(3, level.PANIC, nil, args(len(a)), a...)
 }
 
 func Panicf(s string, a ...interface{}) {
 	defer panic(fmt.Sprintf(s, a...))
-	logf(level.PANIC, nil, s, a...)
+	logf(3, level.PANIC, nil, s, a...)
 }
 
 // Log will log formatted args as 'msg' field to the log at given level.
 func Log(lvl level.LEVEL, a ...interface{}) {
-	logf(lvl, nil, args(len(a)), a...)
+	logf(3, lvl, nil, args(len(a)), a...)
 }
 
 // Logf will log format string as 'msg' field to the log at given level.
 func Logf(lvl level.LEVEL, s string, a ...interface{}) {
-	logf(lvl, nil, s, a...)
+	logf(3, lvl, nil, s, a...)
 }
 
 // Print will log formatted args to the stdout log output.
 func Print(a ...interface{}) {
-	printf(nil, args(len(a)), a...)
+	printf(3, nil, args(len(a)), a...)
 }
 
 // Print will log format string to the stdout log output.
 func Printf(s string, a ...interface{}) {
-	printf(nil, s, a...)
+	printf(3, nil, s, a...)
 }
 
-func printf(fields []kv.Field, s string, a ...interface{}) {
+func printf(depth int, fields []kv.Field, s string, a ...interface{}) {
 	// Acquire buffer
 	buf := getBuf()
 
@@ -164,7 +164,7 @@ func printf(fields []kv.Field, s string, a ...interface{}) {
 
 	// Append formatted caller func
 	buf.B = append(buf.B, `func=`...)
-	buf.B = append(buf.B, Caller(4)...)
+	buf.B = append(buf.B, Caller(depth+1)...)
 	buf.B = append(buf.B, ' ')
 
 	if len(fields) > 0 {
@@ -191,7 +191,7 @@ func printf(fields []kv.Field, s string, a ...interface{}) {
 	putBuf(buf)
 }
 
-func logf(lvl level.LEVEL, fields []kv.Field, s string, a ...interface{}) {
+func logf(depth int, lvl level.LEVEL, fields []kv.Field, s string, a ...interface{}) {
 	var out io.Writer
 
 	// Check if enabled.
@@ -217,7 +217,7 @@ func logf(lvl level.LEVEL, fields []kv.Field, s string, a ...interface{}) {
 
 	// Append formatted caller func
 	buf.B = append(buf.B, `func=`...)
-	buf.B = append(buf.B, Caller(4)...)
+	buf.B = append(buf.B, Caller(depth+1)...)
 	buf.B = append(buf.B, ' ')
 
 	// Append formatted level string
