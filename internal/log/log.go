@@ -24,17 +24,17 @@ import (
 	"log/syslog"
 	"os"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"time"
 
-	"codeberg.org/gruf/go-atomics"
 	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-logger/v2/level"
 )
 
 var (
 	// loglvl is the currently set logging level.
-	loglvl atomics.Uint32
+	loglvl atomic.Uint32
 
 	// lvlstrs is the lookup table of log levels to strings.
 	lvlstrs = level.Default()
@@ -45,6 +45,9 @@ var (
 
 	// Syslog output, only set if enabled.
 	sysout *syslog.Writer
+
+	// timefmt is the logging time format used.
+	timefmt = "02/01/2006 15:04:05.000"
 )
 
 // Level returns the currently set log level.
@@ -55,6 +58,11 @@ func Level() level.LEVEL {
 // SetLevel sets the max logging level.
 func SetLevel(lvl level.LEVEL) {
 	loglvl.Store(uint32(lvl))
+}
+
+// New starts a new log entry.
+func New() Entry {
+	return Entry{}
 }
 
 func WithField(key string, value interface{}) Entry {
@@ -150,9 +158,8 @@ func printf(fields []kv.Field, s string, a ...interface{}) {
 	buf := getBuf()
 
 	// Append formatted timestamp
-	now := time.Now().Format("02/01/2006 15:04:05.000")
 	buf.B = append(buf.B, `timestamp="`...)
-	buf.B = append(buf.B, now...)
+	buf.B = time.Now().AppendFormat(buf.B, timefmt)
 	buf.B = append(buf.B, `" `...)
 
 	// Append formatted caller func
@@ -169,8 +176,15 @@ func printf(fields []kv.Field, s string, a ...interface{}) {
 	// Append formatted args
 	fmt.Fprintf(buf, s, a...)
 
-	// Append a final newline
-	buf.B = append(buf.B, '\n')
+	if buf.B[len(buf.B)-1] != '\n' {
+		// Append a final newline
+		buf.B = append(buf.B, '\n')
+	}
+
+	if sysout != nil {
+		// Write log entry to syslog
+		logsys(level.INFO, buf.String())
+	}
 
 	// Write to log and release
 	_, _ = stdout.Write(buf.B)
@@ -197,9 +211,8 @@ func logf(lvl level.LEVEL, fields []kv.Field, s string, a ...interface{}) {
 	buf := getBuf()
 
 	// Append formatted timestamp
-	now := time.Now().Format("02/01/2006 15:04:05.000")
 	buf.B = append(buf.B, `timestamp="`...)
-	buf.B = append(buf.B, now...)
+	buf.B = time.Now().AppendFormat(buf.B, timefmt)
 	buf.B = append(buf.B, `" `...)
 
 	// Append formatted caller func
@@ -214,11 +227,13 @@ func logf(lvl level.LEVEL, fields []kv.Field, s string, a ...interface{}) {
 
 	// Append formatted fields with msg
 	kv.Fields(append(fields, kv.Field{
-		"msg", fmt.Sprintf(s, a...),
+		K: "msg", V: fmt.Sprintf(s, a...),
 	})).AppendFormat(buf, false)
 
-	// Append a final newline
-	buf.B = append(buf.B, '\n')
+	if buf.B[len(buf.B)-1] != '\n' {
+		// Append a final newline
+		buf.B = append(buf.B, '\n')
+	}
 
 	if sysout != nil {
 		// Write log entry to syslog
@@ -231,23 +246,22 @@ func logf(lvl level.LEVEL, fields []kv.Field, s string, a ...interface{}) {
 }
 
 // logsys will log given msg at given severity to the syslog.
+// Max length: https://www.rfc-editor.org/rfc/rfc5424.html#section-6.1
 func logsys(lvl level.LEVEL, msg string) {
-	// Truncate message if > 1700 chars
-	if len(msg) > 1700 {
-		msg = msg[:1697] + "..."
+	if max := 2048; len(msg) > max {
+		// Truncate up to max
+		msg = msg[:max]
 	}
-
-	// Log at appropriate syslog severity
 	switch lvl {
-	case level.TRACE:
-	case level.DEBUG:
+	case level.TRACE, level.DEBUG:
+		_ = sysout.Debug(msg)
 	case level.INFO:
 		_ = sysout.Info(msg)
 	case level.WARN:
 		_ = sysout.Warning(msg)
 	case level.ERROR:
 		_ = sysout.Err(msg)
-	case level.FATAL:
+	case level.FATAL, level.PANIC:
 		_ = sysout.Crit(msg)
 	}
 }
