@@ -24,6 +24,10 @@ import (
 	"io"
 	"net/url"
 
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 )
 
@@ -48,4 +52,58 @@ func (d *deref) GetRemoteEmoji(ctx context.Context, requestingUsername string, r
 	}
 
 	return processingMedia, nil
+}
+
+func (d *deref) populateEmojis(ctx context.Context, rawEmojis []*gtsmodel.Emoji, requestingUsername string) ([]*gtsmodel.Emoji, error) {
+	// At this point we should know:
+	// * the AP uri of the emoji
+	// * the domain of the emoji
+	// * the shortcode of the emoji
+	// * the remote URL of the image
+	// This should be enough to dereference the emoji
+
+	gotEmojis := make([]*gtsmodel.Emoji, 0, len(rawEmojis))
+
+	for _, e := range rawEmojis {
+		var gotEmoji *gtsmodel.Emoji
+		var err error
+
+		// check if we've already got this emoji in the db
+		if gotEmoji, err = d.db.GetEmojiByURI(ctx, e.URI); err != nil && err != db.ErrNoEntries {
+			log.Errorf("populateEmojis: error checking database for emoji %s: %s", e.URI, err)
+			continue
+		}
+
+		if gotEmoji == nil {
+			// it's new! go get it!
+			newEmojiID, err := id.NewRandomULID()
+			if err != nil {
+				log.Errorf("populateEmojis: error generating id for remote emoji %s: %s", e.URI, err)
+				continue
+			}
+
+			processingEmoji, err := d.GetRemoteEmoji(ctx, requestingUsername, e.ImageRemoteURL, e.Shortcode, newEmojiID, e.URI, &media.AdditionalEmojiInfo{
+				Domain:               &e.Domain,
+				ImageRemoteURL:       &e.ImageRemoteURL,
+				ImageStaticRemoteURL: &e.ImageRemoteURL,
+				Disabled:             e.Disabled,
+				VisibleInPicker:      e.VisibleInPicker,
+			})
+
+			if err != nil {
+				log.Errorf("populateEmojis: couldn't get remote emoji %s: %s", e.URI, err)
+				continue
+			}
+
+			if gotEmoji, err = processingEmoji.LoadEmoji(ctx); err != nil {
+				log.Errorf("populateEmojis: couldn't load remote emoji %s: %s", e.URI, err)
+				continue
+			}
+		}
+
+		// if we get here, we either had the emoji already or we successfully fetched it
+		gotEmojis = append(gotEmojis, gotEmoji)
+	}
+
+	return gotEmojis, nil
 }

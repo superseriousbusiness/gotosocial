@@ -19,6 +19,8 @@
 package status_test
 
 import (
+	"context"
+
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -85,6 +87,8 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
 	suite.federator = testrig.NewTestFederator(suite.db, suite.tc, suite.storage, suite.mediaManager, fedWorker)
 	suite.status = status.New(suite.db, suite.typeConverter, suite.clientWorker, processing.GetParseMentionFunc(suite.db, suite.federator))
+	suite.clientWorker.SetProcessor(func(ctx context.Context, msg messages.FromClientAPI) error { return nil })
+	suite.NoError(suite.clientWorker.Start())
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")

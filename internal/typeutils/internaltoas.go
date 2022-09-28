@@ -216,8 +216,33 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 	// set the public key property on the Person
 	person.SetW3IDSecurityV1PublicKey(publicKeyProp)
 
-	// tag
-	// TODO: Any tags used in the summary of this profile
+	// tags
+	tagProp := streams.NewActivityStreamsTagProperty()
+
+	// tag -- emojis
+	emojis := a.Emojis
+	if len(a.EmojiIDs) > len(emojis) {
+		emojis = []*gtsmodel.Emoji{}
+		for _, emojiID := range a.EmojiIDs {
+			emoji, err := c.db.GetEmojiByID(ctx, emojiID)
+			if err != nil {
+				return nil, fmt.Errorf("AccountToAS: error getting emoji %s from database: %s", emojiID, err)
+			}
+			emojis = append(emojis, emoji)
+		}
+	}
+	for _, emoji := range emojis {
+		asEmoji, err := c.EmojiToAS(ctx, emoji)
+		if err != nil {
+			return nil, fmt.Errorf("AccountToAS: error converting emoji to AS emoji: %s", err)
+		}
+		tagProp.AppendTootEmoji(asEmoji)
+	}
+
+	// tag -- hashtags
+	// TODO
+
+	person.SetActivityStreamsTag(tagProp)
 
 	// attachment
 	// Used for profile fields.
@@ -477,11 +502,11 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 		}
 	}
 	for _, emoji := range emojis {
-		asMention, err := c.EmojiToAS(ctx, emoji)
+		asEmoji, err := c.EmojiToAS(ctx, emoji)
 		if err != nil {
 			return nil, fmt.Errorf("StatusToAS: error converting emoji to AS emoji: %s", err)
 		}
-		tagProp.AppendTootEmoji(asMention)
+		tagProp.AppendTootEmoji(asEmoji)
 	}
 
 	// tag -- hashtags

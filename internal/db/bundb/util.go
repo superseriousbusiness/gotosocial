@@ -28,7 +28,7 @@ import (
 //
 // Use it as follows:
 //
-//   q = q.WhereGroup(" AND ", whereEmptyOrNull("whatever_column"))
+//	q = q.WhereGroup(" AND ", whereEmptyOrNull("whatever_column"))
 func whereEmptyOrNull(column string) func(*bun.SelectQuery) *bun.SelectQuery {
 	return func(q *bun.SelectQuery) *bun.SelectQuery {
 		return q.
@@ -42,7 +42,7 @@ func whereEmptyOrNull(column string) func(*bun.SelectQuery) *bun.SelectQuery {
 //
 // Use it as follows:
 //
-//   q = q.WhereGroup(" AND ", whereNotEmptyAndNotNull("whatever_column"))
+//	q = q.WhereGroup(" AND ", whereNotEmptyAndNotNull("whatever_column"))
 func whereNotEmptyAndNotNull(column string) func(*bun.SelectQuery) *bun.SelectQuery {
 	return func(q *bun.SelectQuery) *bun.SelectQuery {
 		return q.

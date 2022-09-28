@@ -36,91 +36,100 @@ import (
 //
 // The statuses will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
 //
-// ---
-// tags:
-// - accounts
+//	---
+//	tags:
+//	- accounts
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// parameters:
-// - name: id
-//   type: string
-//   description: Account ID.
-//   in: path
-//   required: true
-// - name: limit
-//   type: integer
-//   description: Number of statuses to return.
-//   default: 30
-//   in: query
-//   required: false
-// - name: exclude_replies
-//   type: boolean
-//   description: Exclude statuses that are a reply to another status.
-//   default: false
-//   in: query
-//   required: false
-// - name: exclude_reblogs
-//   type: boolean
-//   description: Exclude statuses that are a reblog/boost of another status.
-//   default: false
-//   in: query
-//   required: false
-// - name: max_id
-//   type: string
-//   description: |-
-//     Return only statuses *OLDER* than the given max status ID.
-//     The status with the specified ID will not be included in the response.
-//   in: query
-// - name: min_id
-//   type: string
-//   description: |-
-//     Return only statuses *NEWER* than the given min status ID.
-//     The status with the specified ID will not be included in the response.
-//   in: query
-//   required: false
-// - name: pinned_only
-//   type: boolean
-//   description: Show only pinned statuses. In other words, exclude statuses that are not pinned to the given account ID.
-//   default: false
-//   in: query
-//   required: false
-// - name: only_media
-//   type: boolean
-//   description: Show only statuses with media attachments.
-//   default: false
-//   in: query
-//   required: false
-// - name: only_public
-//   type: boolean
-//   description: Show only statuses with a privacy setting of 'public'.
-//   default: false
-//   in: query
-//   required: false
+//	parameters:
+//	-
+//		name: id
+//		type: string
+//		description: Account ID.
+//		in: path
+//		required: true
+//	-
+//		name: limit
+//		type: integer
+//		description: Number of statuses to return.
+//		default: 30
+//		in: query
+//		required: false
+//	-
+//		name: exclude_replies
+//		type: boolean
+//		description: Exclude statuses that are a reply to another status.
+//		default: false
+//		in: query
+//		required: false
+//	-
+//		name: exclude_reblogs
+//		type: boolean
+//		description: Exclude statuses that are a reblog/boost of another status.
+//		default: false
+//		in: query
+//		required: false
+//	-
+//		name: max_id
+//		type: string
+//		description: >-
+//			Return only statuses *OLDER* than the given max status ID.
+//			The status with the specified ID will not be included in the response.
+//		in: query
+//	-
+//		name: min_id
+//		type: string
+//		description: >-
+//			Return only statuses *NEWER* than the given min status ID.
+//			The status with the specified ID will not be included in the response.
+//		in: query
+//		required: false
+//	-
+//		name: pinned_only
+//		type: boolean
+//		description: Show only pinned statuses. In other words, exclude statuses that are not pinned to the given account ID.
+//		default: false
+//		in: query
+//		required: false
+//	-
+//		name: only_media
+//		type: boolean
+//		description: Show only statuses with media attachments.
+//		default: false
+//		in: query
+//		required: false
+//	-
+//		name: only_public
+//		type: boolean
+//		description: Show only statuses with a privacy setting of 'public'.
+//		default: false
+//		in: query
+//		required: false
 //
-// security:
-// - OAuth2 Bearer:
-//   - read:accounts
+//	security:
+//	- OAuth2 Bearer:
+//		- read:accounts
 //
-// responses:
-//   '200':
-//     name: statuses
-//     description: Array of statuses.
-//     schema:
-//       type: array
-//       items:
-//         "$ref": "#/definitions/status"
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '404':
-//      description: not found
-//   '406':
-//      description: not acceptable
-//   '500':
-//      description: internal server error
+//	responses:
+//		'200':
+//			name: statuses
+//			description: Array of statuses.
+//			schema:
+//				type: array
+//				items:
+//					"$ref": "#/definitions/status"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, false, false, false, false)
 	if err != nil {

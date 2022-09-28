@@ -24,31 +24,50 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 func (d *deref) DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) error {
-	if announce.BoostOf == nil || announce.BoostOf.URI == "" {
+	if announce.BoostOf == nil {
 		// we can't do anything unfortunately
 		return errors.New("DereferenceAnnounce: no URI to dereference")
 	}
 
-	boostedStatusURI, err := url.Parse(announce.BoostOf.URI)
+	// Parse the boosted status' URI
+	boostedURI, err := url.Parse(announce.BoostOf.URI)
 	if err != nil {
 		return fmt.Errorf("DereferenceAnnounce: couldn't parse boosted status URI %s: %s", announce.BoostOf.URI, err)
 	}
-	if blocked, err := d.db.IsDomainBlocked(ctx, boostedStatusURI.Host); blocked || err != nil {
-		return fmt.Errorf("DereferenceAnnounce: domain %s is blocked", boostedStatusURI.Host)
+
+	// Check whether the originating status is from a blocked host
+	if blocked, err := d.db.IsDomainBlocked(ctx, boostedURI.Host); blocked || err != nil {
+		return fmt.Errorf("DereferenceAnnounce: domain %s is blocked", boostedURI.Host)
 	}
 
-	// dereference statuses in the thread of the boosted status
-	if err := d.DereferenceThread(ctx, requestingUsername, boostedStatusURI); err != nil {
-		return fmt.Errorf("DereferenceAnnounce: error dereferencing thread of boosted status: %s", err)
-	}
+	var boostedStatus *gtsmodel.Status
 
-	boostedStatus, _, err := d.GetRemoteStatus(ctx, requestingUsername, boostedStatusURI, false, true)
-	if err != nil {
-		return fmt.Errorf("DereferenceAnnounce: error dereferencing remote status with id %s: %s", announce.BoostOf.URI, err)
+	if boostedURI.Host == config.GetHost() {
+		// This is a local status, fetch from the database
+		status, err := d.db.GetStatusByURI(ctx, boostedURI.String())
+		if err != nil {
+			return fmt.Errorf("DereferenceAnnounce: error fetching local status %q: %v", announce.BoostOf.URI, err)
+		}
+
+		// Set boosted status
+		boostedStatus = status
+	} else {
+		// This is a boost of a remote status, we need to dereference it.
+		status, statusable, err := d.GetRemoteStatus(ctx, requestingUsername, boostedURI, true, true)
+		if err != nil {
+			return fmt.Errorf("DereferenceAnnounce: error dereferencing remote status with id %s: %s", announce.BoostOf.URI, err)
+		}
+
+		// Dereference all statuses in the thread of the boosted status
+		d.DereferenceThread(ctx, requestingUsername, boostedURI, status, statusable)
+
+		// Set boosted status
+		boostedStatus = status
 	}
 
 	announce.Content = boostedStatus.Content
@@ -65,5 +84,6 @@ func (d *deref) DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Stat
 	announce.Replyable = boostedStatus.Replyable
 	announce.Likeable = boostedStatus.Likeable
 	announce.BoostOf = boostedStatus
+
 	return nil
 }

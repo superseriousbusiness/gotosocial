@@ -45,7 +45,8 @@ func (a *accountDB) newAccountQ(account *gtsmodel.Account) *bun.SelectQuery {
 		NewSelect().
 		Model(account).
 		Relation("AvatarMediaAttachment").
-		Relation("HeaderMediaAttachment")
+		Relation("HeaderMediaAttachment").
+		Relation("Emojis")
 }
 
 func (a *accountDB) GetAccountByID(ctx context.Context, id string) (*gtsmodel.Account, db.Error) {
@@ -138,24 +139,61 @@ func (a *accountDB) getAccount(ctx context.Context, cacheGet func() (*gtsmodel.A
 	return account, nil
 }
 
+func (a *accountDB) PutAccount(ctx context.Context, account *gtsmodel.Account) (*gtsmodel.Account, db.Error) {
+	if err := a.conn.RunInTx(ctx, func(tx bun.Tx) error {
+		// create links between this account and any emojis it uses
+		for _, i := range account.EmojiIDs {
+			if _, err := tx.NewInsert().Model(&gtsmodel.AccountToEmoji{
+				AccountID: account.ID,
+				EmojiID:   i,
+			}).Exec(ctx); err != nil {
+				return err
+			}
+		}
+
+		// insert the account
+		_, err := tx.NewInsert().Model(account).Exec(ctx)
+		return err
+	}); err != nil {
+		return nil, a.conn.ProcessError(err)
+	}
+
+	a.cache.Put(account)
+	return account, nil
+}
+
 func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account) (*gtsmodel.Account, db.Error) {
 	// Update the account's last-updated
 	account.UpdatedAt = time.Now()
 
-	// Update the account model in the DB
-	_, err := a.conn.
-		NewUpdate().
-		Model(account).
-		WherePK().
-		Exec(ctx)
-	if err != nil {
+	if err := a.conn.RunInTx(ctx, func(tx bun.Tx) error {
+		// create links between this account and any emojis it uses
+		// first clear out any old emoji links
+		if _, err := tx.NewDelete().
+			Model(&[]*gtsmodel.AccountToEmoji{}).
+			Where("account_id = ?", account.ID).
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		// now populate new emoji links
+		for _, i := range account.EmojiIDs {
+			if _, err := tx.NewInsert().Model(&gtsmodel.AccountToEmoji{
+				AccountID: account.ID,
+				EmojiID:   i,
+			}).Exec(ctx); err != nil {
+				return err
+			}
+		}
+
+		// update the account
+		_, err := tx.NewUpdate().Model(account).WherePK().Exec(ctx)
+		return err
+	}); err != nil {
 		return nil, a.conn.ProcessError(err)
 	}
 
-	// Place updated account in cache
-	// (this will replace existing, i.e. invalidating)
 	a.cache.Put(account)
-
 	return account, nil
 }
 

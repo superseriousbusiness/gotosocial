@@ -35,83 +35,91 @@ import (
 //
 // This requires admin permissions on the instance.
 //
-// ---
-// tags:
-// - instance
+//	---
+//	tags:
+//	- instance
 //
-// consumes:
-// - multipart/form-data
+//	consumes:
+//	- multipart/form-data
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// parameters:
-// - name: title
-//   in: formData
-//   description: Title to use for the instance.
-//   type: string
-//   maximum: 40
-//   allowEmptyValue: true
-// - name: contact_username
-//   in: formData
-//   description: |-
-//     Username of the contact account.
-//     This must be the username of an instance admin.
-//   type: string
-//   allowEmptyValue: true
-// - name: contact_email
-//   in: formData
-//   description: Email address to use as the instance contact.
-//   type: string
-//   allowEmptyValue: true
-// - name: short_description
-//   in: formData
-//   description: Short description of the instance.
-//   type: string
-//   maximum: 500
-//   allowEmptyValue: true
-// - name: description
-//   in: formData
-//   description: Longer description of the instance.
-//   type: string
-//   maximum: 5000
-//   allowEmptyValue: true
-// - name: terms
-//   in: formData
-//   description: Terms and conditions of the instance.
-//   type: string
-//   maximum: 5000
-//   allowEmptyValue: true
-// - name: avatar
-//   in: formData
-//   description: Avatar of the instance.
-//   type: file
-// - name: header
-//   in: formData
-//   description: Header of the instance.
-//   type: file
+//	parameters:
+//	-
+//		name: title
+//		in: formData
+//		description: Title to use for the instance.
+//		type: string
+//		maximum: 40
+//		allowEmptyValue: true
+//	-
+//		name: contact_username
+//		in: formData
+//		description: >-
+//			Username of the contact account.
+//			This must be the username of an instance admin.
+//		type: string
+//		allowEmptyValue: true
+//	-
+//		name: contact_email
+//		in: formData
+//		description: Email address to use as the instance contact.
+//		type: string
+//		allowEmptyValue: true
+//	-
+//		name: short_description
+//		in: formData
+//		description: Short description of the instance.
+//		type: string
+//		maximum: 500
+//		allowEmptyValue: true
+//	-
+//		name: description
+//		in: formData
+//		description: Longer description of the instance.
+//		type: string
+//		maximum: 5000
+//		allowEmptyValue: true
+//	-
+//		name: terms
+//		in: formData
+//		description: Terms and conditions of the instance.
+//		type: string
+//		maximum: 5000
+//		allowEmptyValue: true
+//	-
+//		name: avatar
+//		in: formData
+//		description: Avatar of the instance.
+//		type: file
+//	-
+//		name: header
+//		in: formData
+//		description: Header of the instance.
+//		type: file
 //
-// security:
-// - OAuth2 Bearer:
-//   - admin
+//	security:
+//	- OAuth2 Bearer:
+//		- admin
 //
-// responses:
-//   '200':
-//     description: "The newly updated instance."
-//     schema:
-//       "$ref": "#/definitions/instance"
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '403':
-//      description: forbidden
-//   '404':
-//      description: not found
-//   '406':
-//      description: not acceptable
-//   '500':
-//      description: internal server error
+//	responses:
+//		'200':
+//			description: "The newly updated instance."
+//			schema:
+//				"$ref": "#/definitions/instance"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'403':
+//			description: forbidden
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) InstanceUpdatePATCHHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

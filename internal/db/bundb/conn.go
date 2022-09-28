@@ -55,7 +55,7 @@ func (conn *DBConn) RunInTx(ctx context.Context, fn func(bun.Tx) error) db.Error
 		}
 
 		// Finally, commit
-		err = tx.Commit()
+		err = tx.Commit() //nolint:contextcheck
 		done = true
 		return err
 	}())

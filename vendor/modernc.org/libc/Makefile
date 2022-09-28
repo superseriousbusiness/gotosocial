@@ -34,6 +34,7 @@ all:
 	GOOS=linux GOARCH=s390x go build
 	GOOS=netbsd GOARCH=amd64 go build
 	GOOS=openbsd GOARCH=amd64 go build
+	GOOS=openbsd GOARCH=arm64 go build
 	GOOS=windows GOARCH=386 go build
 	GOOS=windows GOARCH=amd64 go build
 	GOOS=windows GOARCH=arm64 go build
@@ -65,6 +66,12 @@ freebsd_amd64:
 # only on freebsd/386
 freebsd_386:
 	@echo "Should be executed only on freebsd/386."
+	go generate 2>&1 | tee log-generate
+	go build -v ./...
+
+# only on freebsd/arm
+freebsd_arm:
+	@echo "Should be executed only on freebsd/arm."
 	go generate 2>&1 | tee log-generate
 	go build -v ./...
 
@@ -104,6 +111,12 @@ openbsd_amd64:
 	@echo "Should be executed only on openbsd/amd64."
 	go generate 2>&1 | tee log-generate
 	go build -v ./...
+	#
+# only on openbsd/arm64
+openbsd_arm64:
+	@echo "Should be executed only on openbsd/arm64."
+	go generate 2>&1 | tee log-generate
+	go build -v ./...
 
 windows_amd64:
 	@echo "Should be executed only on windows/amd64."
@@ -124,38 +137,7 @@ all_targets: linux_amd64 linux_386 linux_arm linux_arm64 linux_s390x # windows_a
 	echo done
 
 build_all_targets:
-	GOOS=darwin GOARCH=amd64 go build -v ./...
-	GOOS=darwin GOARCH=amd64 go test -c -o /dev/null
-	GOOS=darwin GOARCH=arm64 go build -v ./...
-	GOOS=darwin GOARCH=arm64 go test -c -o /dev/null
-	GOOS=freebsd GOARCH=386 go build -v ./...
-	GOOS=freebsd GOARCH=386 go test -c -o /dev/null
-	GOOS=freebsd GOARCH=amd64 go build -v ./...
-	GOOS=freebsd GOARCH=amd64 go test -c -o /dev/null
-	GOOS=linux GOARCH=386 go build -v ./...
-	GOOS=linux GOARCH=386 go test -c -o /dev/null
-	GOOS=linux GOARCH=amd64 go build -v ./...
-	GOOS=linux GOARCH=amd64 go test -c -o /dev/null
-	GOOS=linux GOARCH=arm go build -v ./...
-	GOOS=linux GOARCH=arm go test -c -o /dev/null
-	GOOS=linux GOARCH=arm64 go build -v ./...
-	GOOS=linux GOARCH=arm64 go test -c -o /dev/null
-	GOOS=linux GOARCH=ppc64le go test -c -o /dev/null
-	GOOS=linux GOARCH=ppc64le go test -c -o /dev/null
-	GOOS=linux GOARCH=riscv64 go build -v ./...
-	GOOS=linux GOARCH=riscv64 go build -v ./...
-	GOOS=linux GOARCH=s390x go build -v ./...
-	GOOS=linux GOARCH=s390x go test -c -o /dev/null
-	GOOS=netbsd GOARCH=amd64 go build -v ./...
-	GOOS=netbsd GOARCH=amd64 go test -c -o /dev/null
-	GOOS=openbsd GOARCH=amd64 go build -v ./...
-	GOOS=openbsd GOARCH=amd64 go test -c -o /dev/null
-	GOOS=windows GOARCH=386 go build -v ./...
-	GOOS=windows GOARCH=386 go test -c -o /dev/null
-	GOOS=windows GOARCH=amd64 go build -v ./...
-	GOOS=windows GOARCH=amd64 go test -c -o /dev/null
-	GOOS=windows GOARCH=arm64 go build -v ./...
-	GOOS=windows GOARCH=arm64 go test -c -o /dev/null
+	./build_all_targets.sh
 	echo done
 
 devbench:

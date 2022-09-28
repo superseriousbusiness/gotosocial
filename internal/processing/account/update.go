@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -46,11 +47,14 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		account.Bot = form.Bot
 	}
 
+	var updateEmojis bool
+
 	if form.DisplayName != nil {
 		if err := validate.DisplayName(*form.DisplayName); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err)
 		}
 		account.DisplayName = text.SanitizePlaintext(*form.DisplayName)
+		updateEmojis = true
 	}
 
 	if form.Note != nil {
@@ -69,6 +73,30 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 
 		// Set updated HTML-ified note
 		account.Note = note
+		updateEmojis = true
+	}
+
+	if updateEmojis {
+		// account emojis -- treat the sanitized display name and raw
+		// note like one long text for the purposes of deriving emojis
+		accountEmojiShortcodes := util.DeriveEmojisFromText(account.DisplayName + "\n\n" + account.NoteRaw)
+		account.Emojis = make([]*gtsmodel.Emoji, 0, len(accountEmojiShortcodes))
+		account.EmojiIDs = make([]string, 0, len(accountEmojiShortcodes))
+
+		for _, shortcode := range accountEmojiShortcodes {
+			emoji, err := p.db.GetEmojiByShortcodeDomain(ctx, shortcode, "")
+			if err != nil {
+				if err != db.ErrNoEntries {
+					log.Errorf("error getting local emoji with shortcode %s: %s", shortcode, err)
+				}
+				continue
+			}
+
+			if *emoji.VisibleInPicker && !*emoji.Disabled {
+				account.Emojis = append(account.Emojis, emoji)
+				account.EmojiIDs = append(account.EmojiIDs, emoji.ID)
+			}
+		}
 	}
 
 	if form.Avatar != nil && form.Avatar.Size != 0 {

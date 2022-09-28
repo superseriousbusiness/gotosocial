@@ -36,56 +36,58 @@ import (
 //
 // Upload and create a new instance emoji.
 //
-// ---
-// tags:
-// - admin
+//	---
+//	tags:
+//	- admin
 //
-// consumes:
-// - multipart/form-data
+//	consumes:
+//	- multipart/form-data
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// parameters:
-// - name: shortcode
-//   in: formData
-//   description: |-
-//     The code to use for the emoji, which will be used by instance denizens to select it.
-//     This must be unique on the instance.
-//   type: string
-//   pattern: \w{2,30}
-//   required: true
-// - name: image
-//   in: formData
-//   description: |-
-//     A png or gif image of the emoji. Animated pngs work too!
-//     To ensure compatibility with other fedi implementations, emoji size limit is 50kb by default.
-//   type: file
-//   required: true
+//	parameters:
+//	-
+//		name: shortcode
+//		in: formData
+//		description: >-
+//			The code to use for the emoji, which will be used by instance denizens to select it.
+//			This must be unique on the instance.
+//		type: string
+//		pattern: \w{2,30}
+//		required: true
+//	-
+//		name: image
+//		in: formData
+//		description: >-
+//			A png or gif image of the emoji. Animated pngs work too!
+//			To ensure compatibility with other fedi implementations, emoji size limit is 50kb by default.
+//		type: file
+//		required: true
 //
-// security:
-// - OAuth2 Bearer:
-//   - admin
+//	security:
+//	- OAuth2 Bearer:
+//		- admin
 //
-// responses:
-//   '200':
-//     description: The newly-created emoji.
-//     schema:
-//       "$ref": "#/definitions/emoji"
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '403':
-//      description: forbidden
-//   '404':
-//      description: not found
-//   '406':
-//      description: not acceptable
-//   '409':
-//      description: conflict -- domain/shortcode combo for emoji already exists
-//   '500':
-//      description: internal server error
+//	responses:
+//		'200':
+//			description: The newly-created emoji.
+//			schema:
+//				"$ref": "#/definitions/emoji"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'403':
+//			description: forbidden
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'409':
+//			description: conflict -- shortcode for this emoji is already in use
+//		'500':
+//			description: internal server error
 func (m *Module) EmojiCreatePOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

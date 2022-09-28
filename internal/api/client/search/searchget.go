@@ -37,32 +37,32 @@ import (
 //
 // If statuses are in the result, they will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
 //
-// ---
-// tags:
-// - search
+//	---
+//	tags:
+//	- search
 //
-// security:
-// - OAuth2 Bearer:
-//   - read:search
+//	security:
+//	- OAuth2 Bearer:
+//		- read:search
 //
-// responses:
-//   '200':
-//     name: search results
-//     description: Results of the search.
-//     schema:
-//       type: array
-//       items:
-//         "$ref": "#/definitions/searchResult"
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '404':
-//      description: not found
-//   '406':
-//      description: not acceptable
-//   '500':
-//      description: internal server error
+//	responses:
+//		'200':
+//			name: search results
+//			description: Results of the search.
+//			schema:
+//				type: array
+//				items:
+//					"$ref": "#/definitions/searchResult"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) SearchGETHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

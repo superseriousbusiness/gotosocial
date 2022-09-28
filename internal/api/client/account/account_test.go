@@ -74,6 +74,8 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 	suite.accountModule = account.New(suite.processor).(*account.Module)
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
+
+	suite.NoError(suite.processor.Start())
 }
 
 func (suite *AccountStandardTestSuite) TearDownTest() {

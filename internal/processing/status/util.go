@@ -302,7 +302,7 @@ func (p *processor) ProcessContent(ctx context.Context, form *apimodel.AdvancedS
 	case apimodel.StatusFormatPlain:
 		formatted = p.formatter.FromPlain(ctx, form.Status, status.Mentions, status.Tags)
 	case apimodel.StatusFormatMarkdown:
-		formatted = p.formatter.FromMarkdown(ctx, form.Status, status.Mentions, status.Tags)
+		formatted = p.formatter.FromMarkdown(ctx, form.Status, status.Mentions, status.Tags, status.Emojis)
 	default:
 		return fmt.Errorf("format %s not recognised as a valid status format", form.Format)
 	}

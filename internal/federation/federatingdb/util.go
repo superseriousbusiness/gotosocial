@@ -300,6 +300,7 @@ func (f *federatingDB) collectIRIs(ctx context.Context, iris []*url.URL) (vocab.
 //   - The target account that owns the inbox or URI being interacted with.
 //   - The requesting account that posted to the inbox.
 //   - A channel that messages for the processor can be placed into.
+//
 // If a value is not present, nil will be returned for it. It's up to the caller to check this and respond appropriately.
 func extractFromCtx(ctx context.Context) (receivingAccount, requestingAccount *gtsmodel.Account) {
 	receivingAccountI := ctx.Value(ap.ContextReceivingAccount)

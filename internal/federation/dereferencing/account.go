@@ -76,6 +76,11 @@ type GetRemoteAccountParams struct {
 	// quickly fetch a remote account from the database or fail, and don't want to cause
 	// http requests to go flying around.
 	SkipResolve bool
+	// PartialAccount can be used if the GetRemoteAccount call results from a federated/ap
+	// account update. In this case, we will already have a partial representation of the account,
+	// derived from converting the AP representation to a gtsmodel representation. If this field
+	// is provided, then GetRemoteAccount will use this as a basis for building the full account.
+	PartialAccount *gtsmodel.Account
 }
 
 // GetRemoteAccount completely dereferences a remote account, converts it to a GtS model account,
@@ -107,8 +112,16 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 	skipResolve := params.SkipResolve
 
 	// this first step checks if we have the
-	// account in the database somewhere already
+	// account in the database somewhere already,
+	// or if we've been provided it as a partial
 	switch {
+	case params.PartialAccount != nil:
+		foundAccount = params.PartialAccount
+		if foundAccount.Domain == "" || foundAccount.Domain == config.GetHost() || foundAccount.Domain == config.GetAccountDomain() {
+			// this is actually a local account,
+			// make sure we don't try to resolve
+			skipResolve = true
+		}
 	case params.RemoteAccountID != nil:
 		uri := params.RemoteAccountID
 		host := uri.Host
@@ -163,7 +176,7 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 		params.RemoteAccountHost = params.RemoteAccountID.Host
 		// ... but we still need the username so we can do a finger for the accountDomain
 
-		// check if we had the account stored already and got it earlier
+		// check if we got the account earlier
 		if foundAccount != nil {
 			params.RemoteAccountUsername = foundAccount.Username
 		} else {
@@ -201,9 +214,10 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 	// to save on remote calls, only webfinger if:
 	// - we don't know the remote account ActivityPub ID yet OR
 	// - we haven't found the account yet in some other way OR
+	// - we were passed a partial account in params OR
 	// - we haven't webfingered the account for two days AND the account isn't an instance account
 	var fingered time.Time
-	if params.RemoteAccountID == nil || foundAccount == nil || (foundAccount.LastWebfingeredAt.Before(time.Now().Add(webfingerInterval)) && !instanceAccount(foundAccount)) {
+	if params.RemoteAccountID == nil || foundAccount == nil || params.PartialAccount != nil || (foundAccount.LastWebfingeredAt.Before(time.Now().Add(webfingerInterval)) && !instanceAccount(foundAccount)) {
 		accountDomain, params.RemoteAccountID, err = d.fingerRemoteAccount(ctx, params.RequestingUsername, params.RemoteAccountUsername, params.RemoteAccountHost)
 		if err != nil {
 			err = fmt.Errorf("GetRemoteAccount: error while fingering: %s", err)
@@ -263,7 +277,7 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 		foundAccount.LastWebfingeredAt = fingered
 		foundAccount.UpdatedAt = time.Now()
 
-		err = d.db.Put(ctx, foundAccount)
+		foundAccount, err = d.db.PutAccount(ctx, foundAccount)
 		if err != nil {
 			err = fmt.Errorf("GetRemoteAccount: error putting new account: %s", err)
 			return
@@ -273,13 +287,10 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 	}
 
 	// we had the account already, but now we know the account domain, so update it if it's different
+	var accountDomainChanged bool
 	if !strings.EqualFold(foundAccount.Domain, accountDomain) {
+		accountDomainChanged = true
 		foundAccount.Domain = accountDomain
-		foundAccount, err = d.db.UpdateAccount(ctx, foundAccount)
-		if err != nil {
-			err = fmt.Errorf("GetRemoteAccount: error updating account: %s", err)
-			return
-		}
 	}
 
 	// if SharedInboxURI is nil, that means we don't know yet if this account has
@@ -327,8 +338,7 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 		foundAccount.LastWebfingeredAt = fingered
 	}
 
-	if fieldsChanged || fingeredChanged || sharedInboxChanged {
-		foundAccount.UpdatedAt = time.Now()
+	if accountDomainChanged || sharedInboxChanged || fieldsChanged || fingeredChanged {
 		foundAccount, err = d.db.UpdateAccount(ctx, foundAccount)
 		if err != nil {
 			return nil, fmt.Errorf("GetRemoteAccount: error updating remoteAccount: %s", err)
@@ -423,15 +433,20 @@ func (d *deref) populateAccountFields(ctx context.Context, account *gtsmodel.Acc
 		return false, fmt.Errorf("populateAccountFields: domain %s is blocked", accountURI.Host)
 	}
 
-	t, err := d.transportController.NewTransportForUsername(ctx, requestingUsername)
-	if err != nil {
-		return false, fmt.Errorf("populateAccountFields: error getting transport for user: %s", err)
-	}
+	var changed bool
 
 	// fetch the header and avatar
-	changed, err := d.fetchRemoteAccountMedia(ctx, account, t, blocking)
-	if err != nil {
+	if mediaChanged, err := d.fetchRemoteAccountMedia(ctx, account, requestingUsername, blocking); err != nil {
 		return false, fmt.Errorf("populateAccountFields: error fetching header/avi for account: %s", err)
+	} else if mediaChanged {
+		changed = mediaChanged
+	}
+
+	// fetch any emojis used in note, fields, display name, etc
+	if emojisChanged, err := d.fetchRemoteAccountEmojis(ctx, account, requestingUsername); err != nil {
+		return false, fmt.Errorf("populateAccountFields: error fetching emojis for account: %s", err)
+	} else if emojisChanged {
+		changed = emojisChanged
 	}
 
 	return changed, nil
@@ -449,17 +464,11 @@ func (d *deref) populateAccountFields(ctx context.Context, account *gtsmodel.Acc
 //
 // If blocking is true, then the calls to the media manager made by this function will be blocking:
 // in other words, the function won't return until the header and the avatar have been fully processed.
-func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsmodel.Account, t transport.Transport, blocking bool) (bool, error) {
-	changed := false
-
-	accountURI, err := url.Parse(targetAccount.URI)
-	if err != nil {
-		return changed, fmt.Errorf("fetchRemoteAccountMedia: couldn't parse account URI %s: %s", targetAccount.URI, err)
-	}
-
-	if blocked, err := d.db.IsDomainBlocked(ctx, accountURI.Host); blocked || err != nil {
-		return changed, fmt.Errorf("fetchRemoteAccountMedia: domain %s is blocked", accountURI.Host)
-	}
+func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsmodel.Account, requestingUsername string, blocking bool) (bool, error) {
+	var (
+		changed bool
+		t       transport.Transport
+	)
 
 	if targetAccount.AvatarRemoteURL != "" && (targetAccount.AvatarMediaAttachmentID == "") {
 		var processingMedia *media.ProcessingMedia
@@ -477,6 +486,14 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 			if err != nil {
 				d.dereferencingAvatarsLock.Unlock()
 				return changed, err
+			}
+
+			if t == nil {
+				var err error
+				t, err = d.transportController.NewTransportForUsername(ctx, requestingUsername)
+				if err != nil {
+					return false, fmt.Errorf("fetchRemoteAccountMedia: error getting transport for user: %s", err)
+				}
 			}
 
 			data := func(innerCtx context.Context) (io.Reader, int64, error) {
@@ -537,6 +554,14 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 				return changed, err
 			}
 
+			if t == nil {
+				var err error
+				t, err = d.transportController.NewTransportForUsername(ctx, requestingUsername)
+				if err != nil {
+					return false, fmt.Errorf("fetchRemoteAccountMedia: error getting transport for user: %s", err)
+				}
+			}
+
 			data := func(innerCtx context.Context) (io.Reader, int64, error) {
 				return t.DereferenceMedia(innerCtx, headerIRI)
 			}
@@ -575,6 +600,118 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 
 		targetAccount.HeaderMediaAttachmentID = processingMedia.AttachmentID()
 		changed = true
+	}
+
+	return changed, nil
+}
+
+func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gtsmodel.Account, requestingUsername string) (bool, error) {
+	maybeEmojis := targetAccount.Emojis
+	maybeEmojiIDs := targetAccount.EmojiIDs
+
+	// It's possible that the account had emoji IDs set on it, but not Emojis
+	// themselves, depending on how it was fetched before being passed to us.
+	//
+	// If we only have IDs, fetch the emojis from the db. We know they're in
+	// there or else they wouldn't have IDs.
+	if len(maybeEmojiIDs) > len(maybeEmojis) {
+		maybeEmojis = []*gtsmodel.Emoji{}
+		for _, emojiID := range maybeEmojiIDs {
+			maybeEmoji, err := d.db.GetEmojiByID(ctx, emojiID)
+			if err != nil {
+				return false, err
+			}
+			maybeEmojis = append(maybeEmojis, maybeEmoji)
+		}
+	}
+
+	// For all the maybe emojis we have, we either fetch them from the database
+	// (if we haven't already), or dereference them from the remote instance.
+	gotEmojis, err := d.populateEmojis(ctx, maybeEmojis, requestingUsername)
+	if err != nil {
+		return false, err
+	}
+
+	// Extract the ID of each fetched or dereferenced emoji, so we can attach
+	// this to the account if necessary.
+	gotEmojiIDs := make([]string, 0, len(gotEmojis))
+	for _, e := range gotEmojis {
+		gotEmojiIDs = append(gotEmojiIDs, e.ID)
+	}
+
+	var (
+		changed  = false // have the emojis for this account changed?
+		maybeLen = len(maybeEmojis)
+		gotLen   = len(gotEmojis)
+	)
+
+	// if the length of everything is zero, this is simple:
+	// nothing has changed and there's nothing to do
+	if maybeLen == 0 && gotLen == 0 {
+		return changed, nil
+	}
+
+	// if the *amount* of emojis on the account has changed, then the got emojis
+	// are definitely different from the previous ones (if there were any) --
+	// the account has either more or fewer emojis set on it now, so take the
+	// discovered emojis as the new correct ones.
+	if maybeLen != gotLen {
+		changed = true
+		targetAccount.Emojis = gotEmojis
+		targetAccount.EmojiIDs = gotEmojiIDs
+		return changed, nil
+	}
+
+	// if the lengths are the same but not all of the slices are
+	// zero, something *might* have changed, so we have to check
+
+	// 1. did we have emojis before that we don't have now?
+	for _, maybeEmoji := range maybeEmojis {
+		var stillPresent bool
+
+		for _, gotEmoji := range gotEmojis {
+			if maybeEmoji.URI == gotEmoji.URI {
+				// the emoji we maybe had is still present now,
+				// so we can stop checking gotEmojis
+				stillPresent = true
+				break
+			}
+		}
+
+		if !stillPresent {
+			// at least one maybeEmoji is no longer present in
+			// the got emojis, so we can stop checking now
+			changed = true
+			targetAccount.Emojis = gotEmojis
+			targetAccount.EmojiIDs = gotEmojiIDs
+			return changed, nil
+		}
+	}
+
+	// 2. do we have emojis now that we didn't have before?
+	for _, gotEmoji := range gotEmojis {
+		var wasPresent bool
+
+		for _, maybeEmoji := range maybeEmojis {
+			// check emoji IDs here as well, because unreferenced
+			// maybe emojis we didn't already have would not have
+			// had IDs set on them yet
+			if gotEmoji.URI == maybeEmoji.URI && gotEmoji.ID == maybeEmoji.ID {
+				// this got emoji was present already in the maybeEmoji,
+				// so we can stop checking through maybeEmojis
+				wasPresent = true
+				break
+			}
+		}
+
+		if !wasPresent {
+			// at least one gotEmojis was not present in
+			// the maybeEmojis, so we can stop checking now
+			changed = true
+			targetAccount.Emojis = gotEmojis
+			targetAccount.EmojiIDs = gotEmojiIDs
+			return changed, nil
+		}
 	}
 
 	return changed, nil
