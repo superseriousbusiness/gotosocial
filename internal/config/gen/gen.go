@@ -100,7 +100,7 @@ func main() {
 			fmt.Fprintf(output, "func Set%[1]s(v %[2]s) { global.Set%[1]s(v) }\n\n", field.Name, field.Type.String())
 		}
 		_ = output.Close()
-		_ = exec.Command("gofmt", "-w", out).Run()
+		_ = exec.Command("gofumports", "-w", out).Run()
 
 	// The plain here is that eventually we might be able
 	// to generate an example configuration from struct tags

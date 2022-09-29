@@ -18,6 +18,8 @@
 */
 package config
 
+import "codeberg.org/gruf/go-bytesize"
+
 // GetLogLevel safely fetches the Configuration value for state's 'LogLevel' field
 func (st *ConfigState) GetLogLevel() (v string) {
 	st.mutex.Lock()
@@ -719,7 +721,7 @@ func GetAccountsAllowCustomCSS() bool { return global.GetAccountsAllowCustomCSS(
 func SetAccountsAllowCustomCSS(v bool) { global.SetAccountsAllowCustomCSS(v) }
 
 // GetMediaImageMaxSize safely fetches the Configuration value for state's 'MediaImageMaxSize' field
-func (st *ConfigState) GetMediaImageMaxSize() (v int) {
+func (st *ConfigState) GetMediaImageMaxSize() (v bytesize.Size) {
 	st.mutex.Lock()
 	v = st.config.MediaImageMaxSize
 	st.mutex.Unlock()
@@ -727,7 +729,7 @@ func (st *ConfigState) GetMediaImageMaxSize() (v int) {
 }
 
 // SetMediaImageMaxSize safely sets the Configuration value for state's 'MediaImageMaxSize' field
-func (st *ConfigState) SetMediaImageMaxSize(v int) {
+func (st *ConfigState) SetMediaImageMaxSize(v bytesize.Size) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
 	st.config.MediaImageMaxSize = v
@@ -738,13 +740,13 @@ func (st *ConfigState) SetMediaImageMaxSize(v int) {
 func MediaImageMaxSizeFlag() string { return "media-image-max-size" }
 
 // GetMediaImageMaxSize safely fetches the value for global configuration 'MediaImageMaxSize' field
-func GetMediaImageMaxSize() int { return global.GetMediaImageMaxSize() }
+func GetMediaImageMaxSize() bytesize.Size { return global.GetMediaImageMaxSize() }
 
 // SetMediaImageMaxSize safely sets the value for global configuration 'MediaImageMaxSize' field
-func SetMediaImageMaxSize(v int) { global.SetMediaImageMaxSize(v) }
+func SetMediaImageMaxSize(v bytesize.Size) { global.SetMediaImageMaxSize(v) }
 
 // GetMediaVideoMaxSize safely fetches the Configuration value for state's 'MediaVideoMaxSize' field
-func (st *ConfigState) GetMediaVideoMaxSize() (v int) {
+func (st *ConfigState) GetMediaVideoMaxSize() (v bytesize.Size) {
 	st.mutex.Lock()
 	v = st.config.MediaVideoMaxSize
 	st.mutex.Unlock()
@@ -752,7 +754,7 @@ func (st *ConfigState) GetMediaVideoMaxSize() (v int) {
 }
 
 // SetMediaVideoMaxSize safely sets the Configuration value for state's 'MediaVideoMaxSize' field
-func (st *ConfigState) SetMediaVideoMaxSize(v int) {
+func (st *ConfigState) SetMediaVideoMaxSize(v bytesize.Size) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
 	st.config.MediaVideoMaxSize = v
@@ -763,10 +765,10 @@ func (st *ConfigState) SetMediaVideoMaxSize(v int) {
 func MediaVideoMaxSizeFlag() string { return "media-video-max-size" }
 
 // GetMediaVideoMaxSize safely fetches the value for global configuration 'MediaVideoMaxSize' field
-func GetMediaVideoMaxSize() int { return global.GetMediaVideoMaxSize() }
+func GetMediaVideoMaxSize() bytesize.Size { return global.GetMediaVideoMaxSize() }
 
 // SetMediaVideoMaxSize safely sets the value for global configuration 'MediaVideoMaxSize' field
-func SetMediaVideoMaxSize(v int) { global.SetMediaVideoMaxSize(v) }
+func SetMediaVideoMaxSize(v bytesize.Size) { global.SetMediaVideoMaxSize(v) }
 
 // GetMediaDescriptionMinChars safely fetches the Configuration value for state's 'MediaDescriptionMinChars' field
 func (st *ConfigState) GetMediaDescriptionMinChars() (v int) {
@@ -844,7 +846,7 @@ func GetMediaRemoteCacheDays() int { return global.GetMediaRemoteCacheDays() }
 func SetMediaRemoteCacheDays(v int) { global.SetMediaRemoteCacheDays(v) }
 
 // GetMediaEmojiLocalMaxSize safely fetches the Configuration value for state's 'MediaEmojiLocalMaxSize' field
-func (st *ConfigState) GetMediaEmojiLocalMaxSize() (v int) {
+func (st *ConfigState) GetMediaEmojiLocalMaxSize() (v bytesize.Size) {
 	st.mutex.Lock()
 	v = st.config.MediaEmojiLocalMaxSize
 	st.mutex.Unlock()
@@ -852,7 +854,7 @@ func (st *ConfigState) GetMediaEmojiLocalMaxSize() (v int) {
 }
 
 // SetMediaEmojiLocalMaxSize safely sets the Configuration value for state's 'MediaEmojiLocalMaxSize' field
-func (st *ConfigState) SetMediaEmojiLocalMaxSize(v int) {
+func (st *ConfigState) SetMediaEmojiLocalMaxSize(v bytesize.Size) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
 	st.config.MediaEmojiLocalMaxSize = v
@@ -863,13 +865,13 @@ func (st *ConfigState) SetMediaEmojiLocalMaxSize(v int) {
 func MediaEmojiLocalMaxSizeFlag() string { return "media-emoji-local-max-size" }
 
 // GetMediaEmojiLocalMaxSize safely fetches the value for global configuration 'MediaEmojiLocalMaxSize' field
-func GetMediaEmojiLocalMaxSize() int { return global.GetMediaEmojiLocalMaxSize() }
+func GetMediaEmojiLocalMaxSize() bytesize.Size { return global.GetMediaEmojiLocalMaxSize() }
 
 // SetMediaEmojiLocalMaxSize safely sets the value for global configuration 'MediaEmojiLocalMaxSize' field
-func SetMediaEmojiLocalMaxSize(v int) { global.SetMediaEmojiLocalMaxSize(v) }
+func SetMediaEmojiLocalMaxSize(v bytesize.Size) { global.SetMediaEmojiLocalMaxSize(v) }
 
 // GetMediaEmojiRemoteMaxSize safely fetches the Configuration value for state's 'MediaEmojiRemoteMaxSize' field
-func (st *ConfigState) GetMediaEmojiRemoteMaxSize() (v int) {
+func (st *ConfigState) GetMediaEmojiRemoteMaxSize() (v bytesize.Size) {
 	st.mutex.Lock()
 	v = st.config.MediaEmojiRemoteMaxSize
 	st.mutex.Unlock()
@@ -877,7 +879,7 @@ func (st *ConfigState) GetMediaEmojiRemoteMaxSize() (v int) {
 }
 
 // SetMediaEmojiRemoteMaxSize safely sets the Configuration value for state's 'MediaEmojiRemoteMaxSize' field
-func (st *ConfigState) SetMediaEmojiRemoteMaxSize(v int) {
+func (st *ConfigState) SetMediaEmojiRemoteMaxSize(v bytesize.Size) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
 	st.config.MediaEmojiRemoteMaxSize = v
@@ -888,10 +890,10 @@ func (st *ConfigState) SetMediaEmojiRemoteMaxSize(v int) {
 func MediaEmojiRemoteMaxSizeFlag() string { return "media-emoji-remote-max-size" }
 
 // GetMediaEmojiRemoteMaxSize safely fetches the value for global configuration 'MediaEmojiRemoteMaxSize' field
-func GetMediaEmojiRemoteMaxSize() int { return global.GetMediaEmojiRemoteMaxSize() }
+func GetMediaEmojiRemoteMaxSize() bytesize.Size { return global.GetMediaEmojiRemoteMaxSize() }
 
 // SetMediaEmojiRemoteMaxSize safely sets the value for global configuration 'MediaEmojiRemoteMaxSize' field
-func SetMediaEmojiRemoteMaxSize(v int) { global.SetMediaEmojiRemoteMaxSize(v) }
+func SetMediaEmojiRemoteMaxSize(v bytesize.Size) { global.SetMediaEmojiRemoteMaxSize(v) }
 
 // GetStorageBackend safely fetches the Configuration value for state's 'StorageBackend' field
 func (st *ConfigState) GetStorageBackend() (v string) {

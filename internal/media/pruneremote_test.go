@@ -74,13 +74,13 @@ func (suite *PruneRemoteTestSuite) TestPruneAndRecache() {
 	suite.ErrorIs(err, storage.ErrNotFound)
 
 	// now recache the image....
-	data := func(_ context.Context) (io.Reader, int, error) {
+	data := func(_ context.Context) (io.Reader, int64, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("../../testrig/media/thoughtsofdog-original.jpeg")
 		if err != nil {
 			panic(err)
 		}
-		return bytes.NewBuffer(b), len(b), nil
+		return bytes.NewBuffer(b), int64(len(b)), nil
 	}
 	processingRecache, err := suite.manager.RecacheMedia(ctx, data, nil, testAttachment.ID)
 	suite.NoError(err)

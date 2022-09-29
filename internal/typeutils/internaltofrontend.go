@@ -688,9 +688,9 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 			},
 			MediaAttachments: &model.InstanceConfigurationMediaAttachments{
 				SupportedMimeTypes:  media.AllSupportedMIMETypes(),
-				ImageSizeLimit:      config.GetMediaImageMaxSize(),
+				ImageSizeLimit:      int(config.GetMediaImageMaxSize()),
 				ImageMatrixLimit:    instanceMediaAttachmentsImageMatrixLimit, // height*width
-				VideoSizeLimit:      config.GetMediaVideoMaxSize(),
+				VideoSizeLimit:      int(config.GetMediaVideoMaxSize()),
 				VideoFrameRateLimit: instanceMediaAttachmentsVideoFrameRateLimit,
 				VideoMatrixLimit:    instanceMediaAttachmentsVideoMatrixLimit, // height*width
 			},
