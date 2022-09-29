@@ -1,6 +1,6 @@
 {{ template "header.tmpl" .}}
 <main>
-	<div class="thread">
+	<div data-nosnippet class="thread">
 		{{range .context.Ancestors}}
 		<div class="toot">
 			{{ template "status.tmpl" .}}

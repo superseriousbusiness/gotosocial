@@ -82,6 +82,12 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		return
 	}
 
+	// only allow search engines / robots to view this page if account is discoverable
+	var robotsMeta string
+	if account.Discoverable {
+		robotsMeta = robotsAllowSome
+	}
+
 	// we should only show the 'back to top' button if the
 	// profile visitor is paging through statuses
 	showBackToTop := false
@@ -112,6 +118,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		"instance":         instance,
 		"account":          account,
 		"ogMeta":           ogBase(instance).withAccount(account),
+		"robotsMeta":       robotsMeta,
 		"statuses":         statusResp.Items,
 		"statuses_next":    statusResp.NextLink,
 		"show_back_to_top": showBackToTop,

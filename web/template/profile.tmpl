@@ -29,7 +29,7 @@
     </div>
     <h2 id="recent">Latest public toots</h2>
 	    {{ if not .statuses }}
-        <div class="nothinghere">Nothing here!</div>
+        <div data-nosnippet class="nothinghere">Nothing here!</div>
         {{ else }}
         <div class="thread">
             {{ range .statuses }}
