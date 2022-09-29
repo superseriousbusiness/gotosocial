@@ -6,6 +6,24 @@ import (
 	"unsafe"
 )
 
+const (
+	// SI units
+	KB Size = 1e3
+	MB Size = 1e6
+	GB Size = 1e9
+	TB Size = 1e12
+	PB Size = 1e15
+	EB Size = 1e18
+
+	// IEC units
+	KiB Size = 1024
+	MiB Size = KiB * 1024
+	GiB Size = MiB * 1024
+	TiB Size = GiB * 1024
+	PiB Size = TiB * 1024
+	EiB Size = PiB * 1024
+)
+
 var (
 	// ErrInvalidUnit is returned when an invalid IEC/SI is provided.
 	ErrInvalidUnit = errors.New("bytesize: invalid unit")
@@ -13,42 +31,39 @@ var (
 	// ErrInvalidFormat is returned when an invalid size value is provided.
 	ErrInvalidFormat = errors.New("bytesize: invalid format")
 
-	// bunits are the binary unit chars.
-	units = `kMGTPE`
-
 	// iecpows is a precomputed table of 1024^n.
 	iecpows = [...]float64{
-		float64(1024),                                    // KiB
-		float64(1024 * 1024),                             // MiB
-		float64(1024 * 1024 * 1024),                      // GiB
-		float64(1024 * 1024 * 1024 * 1024),               // TiB
-		float64(1024 * 1024 * 1024 * 1024 * 1024),        // PiB
-		float64(1024 * 1024 * 1024 * 1024 * 1024 * 1024), // EiB
+		float64(KiB),
+		float64(MiB),
+		float64(GiB),
+		float64(TiB),
+		float64(PiB),
+		float64(EiB),
 	}
 
 	// sipows is a precomputed table of 1000^n.
 	sipows = [...]float64{
-		float64(1e3),  // KB
-		float64(1e6),  // MB
-		float64(1e9),  // GB
-		float64(1e12), // TB
-		float64(1e15), // PB
-		float64(1e18), // EB
+		float64(KB),
+		float64(MB),
+		float64(GB),
+		float64(TB),
+		float64(PB),
+		float64(EB),
 	}
 
 	// bvals is a precomputed table of IEC unit values.
-	iecvals = [...]uint64{
-		'k': 1024,
-		'K': 1024,
-		'M': 1024 * 1024,
-		'G': 1024 * 1024 * 1024,
-		'T': 1024 * 1024 * 1024 * 1024,
-		'P': 1024 * 1024 * 1024 * 1024 * 1024,
-		'E': 1024 * 1024 * 1024 * 1024 * 1024 * 1024,
+	iecvals = [...]Size{
+		'k': KiB,
+		'K': KiB,
+		'M': MiB,
+		'G': GiB,
+		'T': TiB,
+		'P': PiB,
+		'E': EiB,
 	}
 
 	// sivals is a precomputed table of SI unit values.
-	sivals = [...]uint64{
+	sivals = [...]Size{
 		// ASCII numbers _aren't_ valid SI unit values,
 		// BUT if the space containing a possible unit
 		// char is checked with this table -- it is valid
@@ -64,12 +79,13 @@ var (
 		'8': 1,
 		'9': 1,
 
-		'k': 1e3,
-		'M': 1e6,
-		'G': 1e9,
-		'T': 1e12,
-		'P': 1e15,
-		'E': 1e18,
+		'k': KB,
+		'K': KB,
+		'M': MB,
+		'G': GB,
+		'T': TB,
+		'P': PB,
+		'E': EB,
 	}
 )
 
@@ -91,7 +107,28 @@ func ParseSize(s string) (Size, error) {
 		return 0, ErrInvalidFormat
 	}
 
-	return Size(uint64(f) * unit), nil
+	return Size(f) * unit, nil
+}
+
+// Set implements flag.Value{}.
+func (sz *Size) Set(in string) error {
+	s, err := ParseSize(in)
+	if err != nil {
+		return err
+	}
+	*sz = s
+	return nil
+}
+
+// MarshalText implements encoding.TextMarshaler{}.
+func (sz *Size) MarshalText() ([]byte, error) {
+	const maxLen = 7 // max IEC string length
+	return sz.AppendFormatIEC(make([]byte, 0, maxLen)), nil
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler{}.
+func (sz *Size) UnmarshalText(text []byte) error {
+	return sz.Set(*(*string)(unsafe.Pointer(&text)))
 }
 
 // AppendFormat defaults to using Size.AppendFormatIEC().
@@ -121,7 +158,13 @@ func (sz Size) AppendFormatIEC(dst []byte) []byte {
 
 // appendFormat will append formatted Size to 'dst', depending on base, powers table and single unit suffix.
 func (sz Size) appendFormat(dst []byte, base uint64, pows *[6]float64, sunit string) []byte {
-	const min = 0.75
+	const (
+		// min "small" unit threshold
+		min = 0.75
+
+		// binary unit chars.
+		units = `kMGTPE`
+	)
 
 	// Larger number: get value of
 	// i / unit size. We have a 'min'
@@ -143,13 +186,15 @@ func (sz Size) appendFormat(dst []byte, base uint64, pows *[6]float64, sunit str
 
 // StringSI returns an SI unit string format of Size.
 func (sz Size) StringSI() string {
-	b := sz.AppendFormatSI(make([]byte, 0, 6))
+	const maxLen = 6 // max SI string length
+	b := sz.AppendFormatSI(make([]byte, 0, maxLen))
 	return *(*string)(unsafe.Pointer(&b))
 }
 
 // StringIEC returns an IEC unit string format of Size.
 func (sz Size) StringIEC() string {
-	b := sz.AppendFormatIEC(make([]byte, 0, 7))
+	const maxLen = 7 // max IEC string length
+	b := sz.AppendFormatIEC(make([]byte, 0, maxLen))
 	return *(*string)(unsafe.Pointer(&b))
 }
 
@@ -159,9 +204,7 @@ func (sz Size) String() string {
 }
 
 // parseUnit will parse the byte size unit from string 's'.
-func parseUnit(s string) (uint64, int, error) {
-	var isIEC bool
-
+func parseUnit(s string) (Size, int, error) {
 	// Check for string
 	if len(s) < 1 {
 		return 0, 0, ErrInvalidFormat
@@ -171,8 +214,8 @@ func parseUnit(s string) (uint64, int, error) {
 	if l := len(s) - 1; s[l] == 'B' {
 		s = s[:l]
 
-		// Check str remains
 		if len(s) < 1 {
+			// No remaining str before unit suffix
 			return 0, 0, ErrInvalidFormat
 		}
 	}
@@ -180,38 +223,41 @@ func parseUnit(s string) (uint64, int, error) {
 	// Strip IEC binary unit suffix
 	if l := len(s) - 1; s[l] == 'i' {
 		s = s[:l]
-		isIEC = true
 
-		// Check str remains
 		if len(s) < 1 {
+			// No remaining str before unit suffix
 			return 0, 0, ErrInvalidFormat
 		}
+
+		// Location of unit char.
+		l := len(s) - 1
+		c := int(s[l])
+
+		// Check valid unit char was provided
+		if len(iecvals) < c || iecvals[c] == 0 {
+			return 0, 0, ErrInvalidUnit
+		}
+
+		// Return parsed IEC unit size
+		return iecvals[c], l, nil
 	}
 
 	// Location of unit char.
 	l := len(s) - 1
+	c := int(s[l])
 
-	var unit uint64
-	switch c := int(s[l]); {
-	// Determine IEC unit in use
-	case isIEC && c < len(iecvals):
-		unit = iecvals[c]
-		if unit == 0 {
-			return 0, 0, ErrInvalidUnit
-		}
+	switch {
+	// Check valid unit char provided
+	case len(sivals) < c || sivals[c] == 0:
+		return 0, 0, ErrInvalidUnit
 
-	// Determine SI unit in use
-	case c < len(sivals):
-		unit = sivals[c]
-		switch unit {
-		case 0:
-			return 0, 0, ErrInvalidUnit
-		case 1:
-			l++
-		}
+	// No unit char (only ascii number)
+	case sivals[c] == 1:
+		l++
 	}
 
-	return unit, l, nil
+	// Return parsed SI unit size
+	return sivals[c], l, nil
 }
 
 // ftoa appends string formatted 'f' to 'dst', assumed < ~800.
@@ -286,7 +332,7 @@ func ftoa(dst []byte, f float64) []byte {
 
 // itoa appends string formatted 'i' to 'dst'.
 func itoa(dst []byte, i uint64) []byte {
-	// Assemble int in reverse order.
+	// Assemble uint in reverse order.
 	var b [4]byte
 	bp := len(b) - 1
 
@@ -302,5 +348,10 @@ func itoa(dst []byte, i uint64) []byte {
 	return append(dst, b[bp:]...)
 }
 
+// We use the following internal strconv function usually
+// used internally to parse float values, as we know that
+// are value passed will always be of 64bit type, and knowing
+// the returned float string length is very helpful!
+//
 //go:linkname atof64 strconv.atof64
 func atof64(string) (float64, int, error)

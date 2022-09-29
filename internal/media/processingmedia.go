@@ -315,7 +315,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		p.attachment.Type = gtsmodel.FileTypeImage
 		if fileSize > 0 {
 			var err error
-			readerToStore, err = terminator.Terminate(readerToStore, fileSize, extension)
+			readerToStore, err = terminator.Terminate(readerToStore, int(fileSize), extension)
 			if err != nil {
 				return fmt.Errorf("store: exif error: %s", err)
 			}
@@ -344,7 +344,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 
 	cached := true
 	p.attachment.Cached = &cached
-	p.attachment.File.FileSize = fileSize
+	p.attachment.File.FileSize = int(fileSize)
 	p.read = true
 
 	if p.postData != nil {

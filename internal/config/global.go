@@ -18,7 +18,9 @@
 
 package config
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
+)
 
 var global *ConfigState
 

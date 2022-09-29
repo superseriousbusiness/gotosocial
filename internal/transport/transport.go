@@ -47,7 +47,7 @@ import (
 type Transport interface {
 	pub.Transport
 	// DereferenceMedia fetches the given media attachment IRI, returning the reader and filesize.
-	DereferenceMedia(ctx context.Context, iri *url.URL) (io.ReadCloser, int, error)
+	DereferenceMedia(ctx context.Context, iri *url.URL) (io.ReadCloser, int64, error)
 	// DereferenceInstance dereferences remote instance information, first by checking /api/v1/instance, and then by checking /.well-known/nodeinfo.
 	DereferenceInstance(ctx context.Context, iri *url.URL) (*gtsmodel.Instance, error)
 	// Finger performs a webfinger request with the given username and domain, and returns the bytes from the response body.
