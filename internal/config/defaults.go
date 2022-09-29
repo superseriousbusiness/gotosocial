@@ -32,7 +32,7 @@ var Defaults = Configuration{
 	Protocol:        "https",
 	BindAddress:     "0.0.0.0",
 	Port:            8080,
-	TrustedProxies:  []string{"127.0.0.1/32"}, // localhost
+	TrustedProxies:  []string{"127.0.0.1/32", "::1"}, // localhost
 
 	DbType:      "postgres",
 	DbAddress:   "",
