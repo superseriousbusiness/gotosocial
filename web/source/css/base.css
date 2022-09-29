@@ -34,7 +34,7 @@
 $br: 0.4rem;
 // border radius for items that are framed/bordered
 // inside something with $br, eg avatar, header img
-$br_inner: 0.2rem; 
+$br-inner: 0.2rem; 
 
 html, body {
 	padding: 0;
@@ -42,7 +42,7 @@ html, body {
 	background: $bg;
 	color: $fg;
 	font-family: "Noto Sans", sans-serif;
-	scrollbar-color: $sloth_orange1 $sloth_gray2_darker3;
+	scrollbar-color: $orange1 $gray3;
 }
 
 body {
@@ -71,7 +71,7 @@ h1 {
 }
 
 a {
-	color: $link_fg;
+	color: $link-fg;
 }
 
 header, footer {
@@ -83,9 +83,13 @@ header, footer {
 	align-self: start;
 }
 
+header {
+	display: flex;
+	justify-content: center;
+}
+
 header a {
 	margin: 2rem;
-	/* background: $header_bg; */
 	display: flex;
 	flex-direction: column;
 	flex-wrap: wrap;
@@ -109,7 +113,7 @@ header a {
 	}
 }
 
-.excerpt_top {
+.excerpt-top {
 	margin-top: -1rem;
 	margin-bottom: 2rem;
 	font-style: italic;
@@ -119,15 +123,15 @@ header a {
 
 	.count {
 		font-weight: bold;
-		color: $fg_accent;
+		color: $fg-accent;
 	}
 }
 
 main {
 	section {
-		background: $bg_accent;
+		background: $bg-accent;
 		box-shadow: $boxshadow;
-		border: $boxshadow_border;
+		border: $boxshadow-border;
 		border-radius: $br;
 		padding: 2rem;
 		margin-bottom: 2rem;
@@ -144,10 +148,10 @@ main {
 
 .button, button {
 	border-radius: 0.2rem;
-	color: $button_fg;
-	background: $button_bg;
+	color: $button-fg;
+	background: $button-bg;
 	box-shadow: $boxshadow;
-	border: $button_border;
+	border: $button-border;
 	text-decoration: none;
 	font-size: 1.2rem;
 	font-weight: bold;
@@ -157,8 +161,17 @@ main {
 	text-align: center;
 	font-family: 'Noto Sans', sans-serif;
 
+	&.danger {
+		color: $button-danger-fg;
+		background: $button-danger-bg;
+
+		&:hover {
+			background: $button-danger-hover-bg;
+		}
+	}
+
 	&:hover {
-		background: $button_hover_bg;
+		background: $button-hover-bg;
 	}
 }
 
@@ -191,7 +204,7 @@ section.apps {
 			grid-template-columns: 25% 1fr;
 			gap: 1.5rem;
 			padding: 0.5rem;
-			background: $bg_accent;
+			background: $bg-accent;
 			border-radius: 0.5rem;
 
 			.logo {
@@ -211,7 +224,7 @@ section.apps {
 			}
 
 			div {
-				padding: 1rem 0;
+				padding: 0;
 				h3 {
 					margin-top: 0;
 				}
@@ -264,26 +277,42 @@ section.error {
 	}
 }
 
+.error-text {
+	color: $error1;
+	background: $error2;
+	border-radius: 0.1rem;
+	font-weight: bold;
+}
+
 input, select, textarea {
 	box-sizing: border-box;
-	border: 0.15rem solid $border_accent;
+	border: 0.15rem solid $input-border;
 	border-radius: 0.1rem;
 	color: $fg;
-	/* background: $input_bg; */
-	background: $bg_accent;
+	background: $input-bg;
 	width: 100%;
 	font-family: 'Noto Sans', sans-serif;
 	font-size: 1rem;
 	padding: 0.3rem;
 
 	&:focus {
-		border-color: $fg_accent;
+		border-color: $input-focus-border;
+	}
+
+	&:disabled {
+		background: $input-disabled-bg;
 	}
 }
 
-input, textarea {
-	padding-top: 0.1rem;
-	padding-bottom: 0.1rem;
+::placeholder {
+	opacity: 1;
+	color: $fg-reduced
+}
+
+hr {
+	color: transparent;
+	width: 100%;
+	border-bottom: 0.02rem solid $border-accent;
 }
 
 footer {
@@ -330,4 +359,8 @@ footer {
 	margin: -0.5ex 0 0;
 	object-fit: contain;
 	vertical-align: middle;
+}
+
+.monospace {
+	font-family: monospace;
 }

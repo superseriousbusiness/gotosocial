@@ -27,7 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-func (m *Module) UserPanelHandler(c *gin.Context) {
+func (m *Module) SettingsPanelHandler(c *gin.Context) {
 	host := config.GetHost()
 	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
 	if err != nil {
@@ -41,37 +41,13 @@ func (m *Module) UserPanelHandler(c *gin.Context) {
 			assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
 			assetsPathPrefix + "/dist/_colors.css",
 			assetsPathPrefix + "/dist/base.css",
-			assetsPathPrefix + "/dist/panels-base.css",
-			assetsPathPrefix + "/dist/panels-user-style.css",
+			assetsPathPrefix + "/dist/profile.css",
+			assetsPathPrefix + "/dist/status.css",
+			assetsPathPrefix + "/dist/settings-panel-style.css",
 		},
 		"javascript": []string{
 			assetsPathPrefix + "/dist/bundle.js",
-			assetsPathPrefix + "/dist/user-panel.js",
-		},
-	})
-}
-
-// TODO: abstract the {admin, user}panel handlers in some way
-func (m *Module) AdminPanelHandler(c *gin.Context) {
-	host := config.GetHost()
-	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
-	if err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
-		return
-	}
-
-	c.HTML(http.StatusOK, "frontend.tmpl", gin.H{
-		"instance": instance,
-		"stylesheets": []string{
-			assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
-			assetsPathPrefix + "/dist/_colors.css",
-			assetsPathPrefix + "/dist/base.css",
-			assetsPathPrefix + "/dist/panels-base.css",
-			assetsPathPrefix + "/dist/panels-admin-style.css",
-		},
-		"javascript": []string{
-			assetsPathPrefix + "/dist/bundle.js",
-			assetsPathPrefix + "/dist/admin-panel.js",
+			assetsPathPrefix + "/dist/settings.js",
 		},
 	})
 }

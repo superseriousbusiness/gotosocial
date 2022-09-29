@@ -1,0 +1,498 @@
+/*
+   GoToSocial
+   Copyright (C) 2021-2022 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+body {
+	grid-template-rows: auto 1fr;
+}
+
+.content {
+	grid-column: 1 / span 3; /* stretch entire width, to fit panel + sidebar nav */
+}
+
+section {
+	grid-column: 2;
+}
+
+#root {
+	display: grid;
+	grid-template-columns: 1fr 90ch 1fr;
+	width: 100vw;
+	max-width: 100vw;
+	box-sizing: border-box;
+
+	section.with-sidebar {
+		border-left: none;
+		border-top-left-radius: 0;
+		border-bottom-left-radius: 0;
+
+		& > div {
+			border-left: 0.2rem solid $border-accent;
+			padding-left: 0.4rem;
+			display: flex;
+			flex-direction: column;
+			gap: 0.5rem;
+			margin: 2rem 0;
+
+			h2 {
+				margin: 0;
+				margin-bottom: 0.5rem;
+			}
+
+			&:only-child {
+				border-left: none;
+			}
+
+			&:first-child {
+				margin-top: 0;
+			}
+
+			&:last-child {
+				margin-bottom: 0;
+			}
+		}
+	}
+
+	.sidebar {
+		align-self: start;
+		justify-self: end;
+		background: $settings-nav-bg;
+		border: $boxshadow-border;
+		box-shadow: $boxshadow;
+		border-radius: $br;
+		border-top-right-radius: 0;
+		border-bottom-right-radius: 0;
+		display: flex;
+		flex-direction: column;
+		min-width: 12rem;
+
+		a {
+			text-decoration: none;
+		}
+
+		a:first-child h2 {
+			border-top-left-radius: $br;
+		}
+
+		h2 {
+			margin: 0;
+			padding: 0.5rem;
+			font-size: 0.9rem;
+			font-weight: bold;
+			text-transform: uppercase;
+			color: $settings-nav-header-fg;
+			background: $settings-nav-header-bg;
+		}
+		
+		nav {
+			display: flex;
+			flex-direction: column;
+
+			a {
+				padding: 1rem;
+				text-decoration: none;
+				transition: 0.1s;
+				color: $fg;
+	
+				&:hover {
+					color: $settings-nav-fg-hover;
+					background: $settings-nav-bg-hover;
+				}
+				
+				&.active {
+					color: $settings-nav-fg-active;
+					background: $settings-nav-bg-active;
+					font-weight: bold;
+					text-decoration: underline;
+				}
+	
+				/* reserve space for bold version of the element, so .active doesn't
+					 change container size */
+				&::after { 
+					font-weight: bold;
+					text-decoration: underline;
+					display: block;
+					content: attr(data-content);
+					height: 1px;
+					color: transparent;
+					overflow: hidden;
+					visibility: hidden;
+				}
+			}
+		}
+
+
+		nav:last-child a:last-child {
+			border-bottom-left-radius: $br;
+			border-bottom: none;
+		}
+	}
+}
+
+.capitalize {
+	text-transform: capitalize;
+}
+
+section {
+	margin-bottom: 1rem;
+}
+
+input, select, textarea {
+	box-sizing: border-box;
+}
+
+.error {
+	color: $error-fg;
+	background: $error-bg;
+	border: 0.02rem solid $error-fg;
+	border-radius: $br;
+	font-weight: bold;
+	padding: 0.5rem;
+	white-space: pre-wrap;
+
+	a {
+		color: $error-link;
+	}
+
+	pre {
+		background: $bg;
+		color: $fg;
+		padding: 1rem;
+		overflow: auto;
+		margin: 0;
+	}
+}
+
+.hidden {
+	display: none;
+}
+
+.messagebutton, .messagebutton > div {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+
+	div.padded {
+		margin-left: 1rem;
+	}
+
+	button, .button {
+		white-space: nowrap;
+		margin-right: 1rem;
+	}
+}
+
+.messagebutton > div {
+	button, .button {
+		margin-top: 1rem;
+	}
+}
+
+.notImplemented {
+	border: 2px solid rgb(70, 79, 88);
+	background: repeating-linear-gradient(
+		-45deg,
+		#525c66,
+		#525c66 10px,
+		rgb(70, 79, 88) 10px,
+		rgb(70, 79, 88) 20px
+	) !important;
+}
+
+section.with-sidebar > div {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+
+	input, textarea {
+		width: 100%;
+		line-height: 1.5rem;
+	}
+
+	input[type=checkbox] {
+		justify-self: start;
+		width: initial;
+	}
+
+	input:read-only {
+		border: none;
+	}
+
+	input:invalid {
+		border-color: red;
+	}
+
+	textarea {
+		width: 100%;
+	}
+	
+	h1 {
+		margin-bottom: 0.5rem;
+	}
+	
+	.moreinfolink {
+		font-size: 0.9em;
+	}
+	
+	.labelinput .border {
+		border-radius: 0.2rem;
+		border: 0.15rem solid $border_accent;
+		padding: 0.3rem;
+		display: flex;
+		flex-direction: column;
+	}
+	
+	.file-input.button {
+		display: inline-block;
+		font-size: 1rem;
+		font-weight: normal;
+		padding: 0.3rem 0.3rem;
+		align-self: flex-start;
+		margin-right: 0.2rem;
+	}
+	
+	.labelinput, .labelselect {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+	}
+	
+	.labelcheckbox {
+		display: flex;
+		gap: 0.4rem;
+	}
+	
+	.titlesave {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+	}
+}
+
+.file-upload > div {
+	display: flex;
+	gap: 1rem;
+
+	img {
+		height: 8rem;
+		border: 0.2rem solid $border-accent;
+	}
+
+	img.avatar {
+		width: 8rem;
+	}
+
+	img.header {
+		width: 24rem;
+	}
+}
+
+.user-profile {
+	.overview {
+		display: grid;
+		grid-template-columns: 70% 30%;
+
+		.basic {
+			margin-top: -4.5rem;
+
+			.avatar {
+				height: 5rem;
+				width: 5rem;
+			}
+	
+			.displayname {
+				font-size: 1.3rem;
+				padding-top: 0;
+				padding-bottom: 0;
+				margin-top: 0.7rem;
+			}
+		}
+
+		.files {
+			width: 100%;
+			margin: 1rem;
+			margin-right: 0;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+
+			div.form-field {
+				width: 100%;
+				display: flex;
+
+				span {
+					flex: 1 1 auto;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
+					padding: 0.3rem 0;
+				}
+			}
+
+			h3 {
+				margin-top: 0;
+				margin-bottom: 0.5rem;
+			}
+
+			div:first-child {
+				margin-bottom: 1rem;
+			}
+
+			span {
+				font-style: italic;
+			}
+		}
+	}
+}
+
+.form-field label {
+	font-weight: bold;
+}
+
+.list {
+	display: flex;
+	flex-direction: column;
+	margin-top: 0.5rem;
+	max-height: 40rem;
+	overflow: auto;
+
+	.entry {
+		display: flex;
+		flex-wrap: wrap;
+		background: $settings-entry-bg;
+
+		&:hover {
+			background: $settings-entry-hover-bg;
+		}
+	}
+}
+
+.instance-list {
+	.filter {
+		display: flex;
+		gap: 0.5rem;
+
+		input {
+			width: auto;
+			flex: 1 1 auto;
+		}
+	}
+
+	.entry {
+		padding: 0.3rem;
+		margin: 0.2rem 0;
+
+		#domain {
+			flex: 1 1 auto;
+			overflow: hidden;
+			white-space: nowrap;
+			text-overflow: ellipsis;
+		}
+	}
+}
+
+.bulk h2 {
+	display: flex;
+	justify-content: space-between;
+}
+
+.emoji-list {
+	background: $settings-entry-bg;
+
+	.entry {
+		padding: 0.5rem;
+		flex-direction: column;
+
+		.emoji-group {
+			display: flex;
+	
+			a {
+				border-radius: $br;
+				padding: 0.4rem;
+				line-height: 0;
+	
+				img {
+					height: 2rem;
+					width: 2rem;
+					object-fit: contain;
+					vertical-align: middle;
+				}
+
+				&:hover {
+					background: $settings-entry-hover-bg;
+				}
+			}
+		}
+
+		&:hover {
+			background: inherit;
+		}
+	}
+}
+
+.toot {
+	padding-top: 0.5rem;
+	.contentgrid {
+		padding: 0 0.5rem;
+	}
+}
+
+@media screen and (max-width: 100ch) {
+	#root {
+		padding: 1rem;
+		grid-template-columns: 100%;
+		grid-template-rows: auto auto;
+
+		.sidebar {
+			justify-self: auto;
+			margin-bottom: 2rem;
+		}
+
+		.sidebar, section.with-sidebar {
+			border-top-left-radius: $br;
+			border-top-right-radius: $br;
+			border-bottom-left-radius: $br;
+			border-bottom-right-radius: $br;
+		}
+
+		.sidebar a:first-child h2 {
+			border-top-right-radius: $br;
+		}
+	}
+
+	section {
+		grid-column: 1;
+	}
+
+	.user-profile .overview {
+		grid-template-columns: 100%;
+		grid-template-rows: auto auto;
+
+		.files {
+			margin: 0;
+			margin-top: 1rem;
+		}
+	}
+
+	main section {
+		padding: 0.75rem;
+	}
+
+	.instance-list .filter {
+		flex-direction: column;
+	}
+}
