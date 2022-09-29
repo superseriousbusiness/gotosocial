@@ -233,7 +233,7 @@ func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) db.Error {
 		if _, err := tx.
 			NewDelete().
 			Model(&gtsmodel.StatusToEmoji{}).
-			Where("status_id = ?", bun.Ident(id)).
+			Where("status_id = ?", id).
 			Exec(ctx); err != nil {
 			return err
 		}
@@ -242,7 +242,7 @@ func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) db.Error {
 		if _, err := tx.
 			NewDelete().
 			Model(&gtsmodel.StatusToTag{}).
-			Where("status_id = ?", bun.Ident(id)).
+			Where("status_id = ?", id).
 			Exec(ctx); err != nil {
 			return err
 		}
