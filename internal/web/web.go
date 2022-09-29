@@ -37,9 +37,9 @@ const (
 	profilePath      = "/@:" + usernameKey
 	customCSSPath    = profilePath + "/custom.css"
 	statusPath       = profilePath + "/statuses/:" + statusIDKey
-	adminPanelPath   = "/admin"
-	userPanelpath    = "/user"
 	assetsPathPrefix = "/assets"
+	userPanelPath    = "/settings/user"
+	adminPanelPath   = "/settings/admin"
 
 	tokenParam  = "token"
 	usernameKey = "username"
@@ -70,20 +70,24 @@ func (m *Module) Route(s router.Router) error {
 	assetsGroup := s.AttachGroup(assetsPathPrefix)
 	m.mountAssetsFilesystem(assetsGroup)
 
-	s.AttachHandler(http.MethodGet, adminPanelPath, m.AdminPanelHandler)
-	// redirect /admin/ to /admin
-	s.AttachHandler(http.MethodGet, adminPanelPath+"/", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, adminPanelPath)
+	s.AttachHandler(http.MethodGet, "/settings", m.SettingsPanelHandler)
+	s.AttachHandler(http.MethodGet, "/settings/*panel", m.SettingsPanelHandler)
+
+	// User panel redirects
+	// used by clients
+	s.AttachHandler(http.MethodGet, "/auth/edit", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, userPanelPath)
 	})
 
-	s.AttachHandler(http.MethodGet, userPanelpath, m.UserPanelHandler)
-	// redirect /user/ to /user
-	s.AttachHandler(http.MethodGet, userPanelpath+"/", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, userPanelpath)
+	// old version of settings panel
+	s.AttachHandler(http.MethodGet, "/user", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, userPanelPath)
 	})
-	// redirect /auth/edit to /user
-	s.AttachHandler(http.MethodGet, "/auth/edit", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, userPanelpath)
+
+	// Admin panel redirects
+	// old version of settings panel
+	s.AttachHandler(http.MethodGet, "/admin", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, adminPanelPath)
 	})
 
 	// serve front-page

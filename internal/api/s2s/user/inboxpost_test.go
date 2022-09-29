@@ -292,15 +292,6 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager, fedWorker)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager, clientWorker, fedWorker)
-	if err := processor.Start(); err != nil {
-		panic(err)
-	}
-	defer func() {
-		if err := processor.Stop(); err != nil {
-			panic(err)
-		}
-	}()
-
 	userModule := user.New(processor).(*user.Module)
 	suite.NoError(processor.Start())
 

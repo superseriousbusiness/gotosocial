@@ -40,7 +40,7 @@ var testDefaults = config.Configuration{
 	Protocol:        "http",
 	BindAddress:     "127.0.0.1",
 	Port:            8080,
-	TrustedProxies:  []string{"127.0.0.1/32"},
+	TrustedProxies:  []string{"127.0.0.1/32", "::1"},
 
 	DbType:     "sqlite",
 	DbAddress:  ":memory:",
