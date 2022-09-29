@@ -151,19 +151,19 @@ func parseOlderThan(olderThanDays int) (time.Time, error) {
 // lengthReader wraps a reader and reads the length of total bytes written as it goes.
 type lengthReader struct {
 	source io.Reader
-	length int
+	length int64
 }
 
 func (r *lengthReader) Read(b []byte) (int, error) {
 	n, err := r.source.Read(b)
-	r.length += n
+	r.length += int64(n)
 	return n, err
 }
 
 // putStream either puts a file with a known fileSize into storage directly, and returns the
 // fileSize unchanged, or it wraps the reader with a lengthReader and returns the discovered
 // fileSize.
-func putStream(ctx context.Context, storage storage.Driver, key string, r io.Reader, fileSize int) (int, error) {
+func putStream(ctx context.Context, storage storage.Driver, key string, r io.Reader, fileSize int64) (int64, error) {
 	if fileSize > 0 {
 		return fileSize, storage.PutStream(ctx, key, r)
 	}

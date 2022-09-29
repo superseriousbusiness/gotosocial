@@ -52,9 +52,9 @@ func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, 
 
 	emojiURI := uris.GenerateURIForEmoji(emojiID)
 
-	data := func(innerCtx context.Context) (io.Reader, int, error) {
+	data := func(innerCtx context.Context) (io.Reader, int64, error) {
 		f, err := form.Image.Open()
-		return f, int(form.Image.Size), err
+		return f, form.Image.Size, err
 	}
 
 	processingEmoji, err := p.mediaManager.ProcessEmoji(ctx, data, nil, form.Shortcode, emojiID, emojiURI, nil)

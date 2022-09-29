@@ -141,16 +141,6 @@ func (suite *ConfigValidateTestSuite) TestValidateConfigBadProtocolNoHost() {
 	suite.EqualError(err, "host must be set; protocol must be set to either http or https, provided value was foo")
 }
 
-func (suite *ConfigValidateTestSuite) TestValidateConfigBadEmojiSizes() {
-	testrig.InitTestConfig()
-
-	config.SetMediaEmojiLocalMaxSize(-10)
-	config.SetMediaEmojiRemoteMaxSize(-50)
-
-	err := config.Validate()
-	suite.EqualError(err, "media-emoji-local-max-size must not be less than 0; media-emoji-remote-max-size must not be less than 0")
-}
-
 func TestConfigValidateTestSuite(t *testing.T) {
 	suite.Run(t, &ConfigValidateTestSuite{})
 }

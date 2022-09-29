@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	codeberg.org/gruf/go-atomics v1.1.0
-	codeberg.org/gruf/go-bytesize v0.2.1
+	codeberg.org/gruf/go-bytesize v1.0.0
 	codeberg.org/gruf/go-byteutil v1.0.2
 	codeberg.org/gruf/go-cache/v2 v2.1.4
 	codeberg.org/gruf/go-debug v1.2.0

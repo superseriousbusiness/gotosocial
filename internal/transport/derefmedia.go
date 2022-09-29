@@ -26,7 +26,7 @@ import (
 	"net/url"
 )
 
-func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL) (io.ReadCloser, int, error) {
+func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL) (io.ReadCloser, int64, error) {
 	// Build IRI just once
 	iriStr := iri.String()
 
@@ -50,5 +50,5 @@ func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL) (io.Read
 		return nil, 0, fmt.Errorf("GET request to %s failed (%d): %s", iriStr, rsp.StatusCode, rsp.Status)
 	}
 
-	return rsp.Body, int(rsp.ContentLength), nil
+	return rsp.Body, rsp.ContentLength, nil
 }

@@ -210,11 +210,11 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	// concatenate the first bytes with the existing bytes still in the reader (thanks Mara)
 	readerToStore := io.MultiReader(bytes.NewBuffer(firstBytes), reader)
 
-	var maxEmojiSize int
+	var maxEmojiSize int64
 	if p.emoji.Domain == "" {
-		maxEmojiSize = config.GetMediaEmojiLocalMaxSize()
+		maxEmojiSize = int64(config.GetMediaEmojiLocalMaxSize())
 	} else {
-		maxEmojiSize = config.GetMediaEmojiRemoteMaxSize()
+		maxEmojiSize = int64(config.GetMediaEmojiRemoteMaxSize())
 	}
 
 	// if we know the fileSize already, make sure it's not bigger than our limit
@@ -241,7 +241,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 		return fmt.Errorf("store: discovered emoji fileSize (%db) is larger than allowed emojiRemoteMaxSize (%db)", fileSize, maxEmojiSize)
 	}
 
-	p.emoji.ImageFileSize = fileSize
+	p.emoji.ImageFileSize = int(fileSize)
 	p.read = true
 
 	if p.postData != nil {
