@@ -16,52 +16,9 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-body {
-	grid-template-rows: auto 1fr;
-}
+package web
 
-.capitalize {
-	text-transform: capitalize;
-}
-
-section {
-	margin-bottom: 1rem;
-}
-
-input, select, textarea {
-	box-sizing: border-box;
-}
-
-.error {
-	font-weight: bold;
-}
-
-.hidden {
-	display: none;
-}
-
-.messagebutton {
-	margin-top: 1rem;
-	display: flex;
-	gap: 1rem;
-	align-items: center;
-
-	button {
-		white-space: nowrap;
-	}
-}
-
-.notImplemented {
-	border: 2px solid rgb(70, 79, 88);
-	background: repeating-linear-gradient(
-		-45deg,
-		#525c66,
-		#525c66 10px,
-		rgb(70, 79, 88) 10px,
-		rgb(70, 79, 88) 20px
-	) !important;
-}
-
-.mono {
-	font-family: monospace;
-}
+// https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag#robotsmeta
+const (
+	robotsAllowSome = "nofollow, noarchive, nositelinkssearchbox, max-image-preview:standard"
+)
