@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.3
 # stage 1: generate up-to-date swagger.yaml to put in the final container
-FROM --platform=${BUILDPLATFORM} quay.io/goswagger/swagger:v0.29.0 AS swagger
+FROM --platform=${BUILDPLATFORM} quay.io/goswagger/swagger:v0.30.0 AS swagger
 
 COPY go.mod /go/src/github.com/superseriousbusiness/gotosocial/go.mod
 COPY go.sum /go/src/github.com/superseriousbusiness/gotosocial/go.sum
