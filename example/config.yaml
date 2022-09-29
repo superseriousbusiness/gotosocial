@@ -84,9 +84,10 @@ port: 8080
 # If you're running inside a Docker container behind Traefik or Nginx, for example, add the subnet of your docker network,
 # or the gateway of the docker network, and/or the address of the reverse proxy (if it's not running on the host network).
 # Example: ["127.0.0.1/32", "172.20.0.1"]
-# Default: ["127.0.0.1/32"] (localhost)
+# Default: ["127.0.0.1/32", "::1"] (localhost ipv4 + ipv6)
 trusted-proxies:
   - "127.0.0.1/32"
+  - "::1"
 
 ############################
 ##### DATABASE CONFIG ######
