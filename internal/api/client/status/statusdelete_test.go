@@ -43,15 +43,6 @@ func (suite *StatusDeleteTestSuite) TestPostDelete() {
 	oauthToken := oauth.DBTokenToToken(t)
 	targetStatus := suite.testStatuses["local_account_1_status_1"]
 
-	if err := suite.processor.Start(); err != nil {
-		suite.FailNow(err.Error())
-	}
-	defer func() {
-		if err := suite.processor.Stop(); err != nil {
-			panic(err)
-		}
-	}()
-
 	// setup
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
