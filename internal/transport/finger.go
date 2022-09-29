@@ -21,7 +21,7 @@ package transport
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/superseriousbusiness/gotosocial/internal/api"
@@ -56,5 +56,5 @@ func (t *transport) Finger(ctx context.Context, targetUsername string, targetDom
 		return nil, fmt.Errorf("GET request to %s failed (%d): %s", urlStr, rsp.StatusCode, rsp.Status)
 	}
 
-	return ioutil.ReadAll(rsp.Body)
+	return io.ReadAll(rsp.Body)
 }

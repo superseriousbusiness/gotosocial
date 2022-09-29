@@ -28,11 +28,11 @@ import (
 // It should be provided to NewTimeline when the caller is creating a timeline
 // (of statuses, notifications, etc).
 //
-//  timelineAccountID: the owner of the timeline
-//  maxID: the maximum item ID desired.
-//  sinceID: the minimum item ID desired.
-//  minID: see sinceID
-//  limit: the maximum amount of items to be returned
+//	timelineAccountID: the owner of the timeline
+//	maxID: the maximum item ID desired.
+//	sinceID: the minimum item ID desired.
+//	minID: see sinceID
+//	limit: the maximum amount of items to be returned
 //
 // If an error is returned, the timeline will stop processing whatever request called GrabFunction,
 // and return the error. If no error is returned, but stop = true, this indicates to the caller of GrabFunction

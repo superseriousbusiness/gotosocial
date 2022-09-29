@@ -7,10 +7,10 @@ import (
 	"codeberg.org/gruf/go-kv/format"
 )
 
-// appendQuoteKey will append and escape/quote a formatted key string.
-func appendQuoteKey(buf *byteutil.Buffer, str string) {
+// AppendQuoteKey will append and escape/quote a formatted key string.
+func AppendQuoteKey(buf *byteutil.Buffer, str string) {
 	switch {
-	case !strconv.CanBackquote(str):
+	case len(str) > format.SingleTermLine || !strconv.CanBackquote(str):
 		// Append quoted and escaped string
 		buf.B = strconv.AppendQuote(buf.B, str)
 	case format.ContainsDoubleQuote(str):
@@ -27,10 +27,10 @@ func appendQuoteKey(buf *byteutil.Buffer, str string) {
 	}
 }
 
-// appendQuoteValue will append and escape/quote a formatted value string.
-func appendQuoteValue(buf *byteutil.Buffer, str string) {
+// AppendQuoteValue will append and escape/quote a formatted value string.
+func AppendQuoteValue(buf *byteutil.Buffer, str string) {
 	switch {
-	case !strconv.CanBackquote(str):
+	case len(str) > format.SingleTermLine || !strconv.CanBackquote(str):
 		// Append quoted and escaped string
 		buf.B = strconv.AppendQuote(buf.B, str)
 		return

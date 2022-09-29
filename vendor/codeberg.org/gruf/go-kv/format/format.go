@@ -311,7 +311,7 @@ func (f format) AppendString(s string) {
 }
 
 func (f format) AppendStringKey(s string) {
-	if !strconv.CanBackquote(s) {
+	if len(s) > SingleTermLine || !strconv.CanBackquote(s) {
 		// Requires quoting AND escaping
 		f.Buffer.B = strconv.AppendQuote(f.Buffer.B, s)
 	} else if ContainsDoubleQuote(s) {
@@ -329,7 +329,7 @@ func (f format) AppendStringKey(s string) {
 }
 
 func (f format) AppendStringQuoted(s string) {
-	if !strconv.CanBackquote(s) {
+	if len(s) > SingleTermLine || !strconv.CanBackquote(s) {
 		// Requires quoting AND escaping
 		f.Buffer.B = strconv.AppendQuote(f.Buffer.B, s)
 	} else if ContainsDoubleQuote(s) {

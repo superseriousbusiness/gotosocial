@@ -84,6 +84,8 @@ func (suite *EmojiGetTestSuite) SetupTest() {
 	suite.securityModule = security.New(suite.db, suite.oauthServer).(*security.Module)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
+
+	suite.NoError(suite.processor.Start())
 }
 
 func (suite *EmojiGetTestSuite) TearDownTest() {

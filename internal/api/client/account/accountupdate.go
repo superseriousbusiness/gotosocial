@@ -35,89 +35,101 @@ import (
 //
 // Update your account.
 //
-// ---
-// tags:
-// - accounts
+//	---
+//	tags:
+//	- accounts
 //
-// consumes:
-// - multipart/form-data
+//	consumes:
+//	- multipart/form-data
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// parameters:
-// - name: discoverable
-//   in: formData
-//   description: Account should be made discoverable and shown in the profile directory (if enabled).
-//   type: boolean
-// - name: bot
-//   in: formData
-//   description: Account is flagged as a bot.
-//   type: boolean
-// - name: display_name
-//   in: formData
-//   description: The display name to use for the account.
-//   type: string
-//   allowEmptyValue: true
-// - name: note
-//   in: formData
-//   description: Bio/description of this account.
-//   type: string
-//   allowEmptyValue: true
-// - name: avatar
-//   in: formData
-//   description: Avatar of the user.
-//   type: file
-// - name: header
-//   in: formData
-//   description: Header of the user.
-//   type: file
-// - name: locked
-//   in: formData
-//   description: Require manual approval of follow requests.
-//   type: boolean
-// - name: source[privacy]
-//   in: formData
-//   description: Default post privacy for authored statuses.
-//   type: string
-// - name: source[sensitive]
-//   in: formData
-//   description: Mark authored statuses as sensitive by default.
-//   type: boolean
-// - name: source[language]
-//   in: formData
-//   description: Default language to use for authored statuses (ISO 6391).
-//   type: string
-// - name: source[status_format]
-//   in: formData
-//   description: Default format to use for authored statuses (plain or markdown).
-//   type: string
-// - name: custom_css
-//   in: formData
-//   description: |-
-//     Custom CSS to use when rendering this account's profile or statuses.
-//     String must be no more than 5,000 characters (~5kb).
-//   type: string
+//	parameters:
+//	-
+//		name: discoverable
+//		in: formData
+//		description: Account should be made discoverable and shown in the profile directory (if enabled).
+//		type: boolean
+//	-
+//		name: bot
+//		in: formData
+//		description: Account is flagged as a bot.
+//		type: boolean
+//	-
+//		name: display_name
+//		in: formData
+//		description: The display name to use for the account.
+//		type: string
+//		allowEmptyValue: true
+//	-
+//		name: note
+//		in: formData
+//		description: Bio/description of this account.
+//		type: string
+//		allowEmptyValue: true
+//	-
+//		name: avatar
+//		in: formData
+//		description: Avatar of the user.
+//		type: file
+//	-
+//		name: header
+//		in: formData
+//		description: Header of the user.
+//		type: file
+//	-
+//		name: locked
+//		in: formData
+//		description: Require manual approval of follow requests.
+//		type: boolean
+//	-
+//		name: source[privacy]
+//		in: formData
+//		description: Default post privacy for authored statuses.
+//		type: string
+//	-
+//		name: source[sensitive]
+//		in: formData
+//		description: Mark authored statuses as sensitive by default.
+//		type: boolean
+//	-
+//		name: source[language]
+//		in: formData
+//		description: Default language to use for authored statuses (ISO 6391).
+//		type: string
+//	-
+//		name: source[status_format]
+//		in: formData
+//		description: Default format to use for authored statuses (plain or markdown).
+//		type: string
+//	-
+//		name: custom_css
+//		in: formData
+//		description: >-
+//			Custom CSS to use when rendering this account's profile or statuses.
+//			String must be no more than 5,000 characters (~5kb).
+//		type: string
 //
-// security:
-// - OAuth2 Bearer:
-//   - write:accounts
+//	security:
+//	- OAuth2 Bearer:
+//		- write:accounts
 //
-// responses:
-//   '200':
-//     description: "The newly updated account."
-//     schema:
-//       "$ref": "#/definitions/account"
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '404':
-//      description: not found
-//   '406':
-//      description: not acceptable
-//   '500':
-//      description: internal server error
+//	responses:
+//		'200':
+//			description: "The newly updated account."
+//			schema:
+//				"$ref": "#/definitions/account"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) AccountUpdateCredentialsPATCHHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

@@ -6,6 +6,7 @@
 	<meta charset="UTF-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="robots" content="{{ if .robotsMeta }}{{ .robotsMeta }}{{ else }}noindex, nofollow{{ end }}">
 	{{ if .ogMeta }}{{ if .ogMeta.Locale }}<meta name="og:locale" content="{{ .ogMeta.Locale }}">
 	{{ end }}<meta name="og:type" content="{{ .ogMeta.ResourceType }}">
 	<meta name="og:title" content="{{ .ogMeta.Title }}">

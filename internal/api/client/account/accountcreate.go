@@ -39,37 +39,37 @@ import (
 // The parameters can also be given in the body of the request, as JSON, if the content-type is set to 'application/json'.
 // The parameters can also be given in the body of the request, as XML, if the content-type is set to 'application/xml'.
 //
-// ---
-// tags:
-// - accounts
+//	---
+//	tags:
+//	- accounts
 //
-// consumes:
-// - application/json
-// - application/xml
-// - application/x-www-form-urlencoded
+//	consumes:
+//	- application/json
+//	- application/xml
+//	- application/x-www-form-urlencoded
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// security:
-// - OAuth2 Application:
-//   - write:accounts
+//	security:
+//	- OAuth2 Application:
+//		- write:accounts
 //
-// responses:
-//   '200':
-//     description: "An OAuth2 access token for the newly-created account."
-//     schema:
-//       "$ref": "#/definitions/oauthToken"
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '404':
-//      description: not found
-//   '406':
-//      description: not acceptable
-//   '500':
-//      description: internal server error
+//	responses:
+//		'200':
+//			description: "An OAuth2 access token for the newly-created account."
+//			schema:
+//				"$ref": "#/definitions/oauthToken"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) AccountCreatePOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, false, false)
 	if err != nil {

@@ -33,17 +33,17 @@ import (
 //
 // See: https://nodeinfo.diaspora.software/schema.html
 //
-// ---
-// tags:
-// - nodeinfo
+//	---
+//	tags:
+//	- nodeinfo
 //
-// produces:
-// - application/json; profile="http://nodeinfo.diaspora.software/ns/schema/2.0#"
+//	produces:
+//	- application/json; profile="http://nodeinfo.diaspora.software/ns/schema/2.0#"
 //
-// responses:
-//   '200':
-//     schema:
-//       "$ref": "#/definitions/nodeinfo"
+//	responses:
+//		'200':
+//			schema:
+//				"$ref": "#/definitions/nodeinfo"
 func (m *Module) NodeInfoGETHandler(c *gin.Context) {
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
 		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)

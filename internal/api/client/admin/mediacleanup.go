@@ -35,38 +35,39 @@ import (
 // Clean up remote media older than the specified number of days.
 // Also cleans up unused headers + avatars from the media cache.
 //
-// ---
-// tags:
-// - admin
+//	---
+//	tags:
+//	- admin
 //
-// consumes:
-// - application/json
-// - application/xml
-// - application/x-www-form-urlencoded
+//	consumes:
+//	- application/json
+//	- application/xml
+//	- application/x-www-form-urlencoded
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// security:
-// - OAuth2 Bearer:
-//   - admin
+//	security:
+//	- OAuth2 Bearer:
+//		- admin
 //
-// responses:
-//   '200':
-//     description: |-
-//      Echos the number of days requested. The cleanup is performed asynchronously after the request completes.
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '403':
-//      description: forbidden
-//   '404':
-//      description: not found
-//   '406':
-//      description: not acceptable
-//   '500':
-//      description: internal server error
+//	responses:
+//		'200':
+//			description: >-
+//				Echos the number of days requested.
+//				The cleanup is performed asynchronously after the request completes.
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'403':
+//			description: forbidden
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) MediaCleanupPOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

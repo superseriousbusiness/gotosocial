@@ -99,9 +99,21 @@ type PgConn struct {
 }
 
 // Connect establishes a connection to a PostgreSQL server using the environment and connString (in URL or DSN format)
-// to provide configuration. See documention for ParseConfig for details. ctx can be used to cancel a connect attempt.
+// to provide configuration. See documentation for ParseConfig for details. ctx can be used to cancel a connect attempt.
 func Connect(ctx context.Context, connString string) (*PgConn, error) {
 	config, err := ParseConfig(connString)
+	if err != nil {
+		return nil, err
+	}
+
+	return ConnectConfig(ctx, config)
+}
+
+// Connect establishes a connection to a PostgreSQL server using the environment and connString (in URL or DSN format)
+// and ParseConfigOptions to provide additional configuration. See documentation for ParseConfig for details. ctx can be
+// used to cancel a connect attempt.
+func ConnectWithOptions(ctx context.Context, connString string, parseConfigOptions ParseConfigOptions) (*PgConn, error) {
+	config, err := ParseConfigWithOptions(connString, parseConfigOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -148,17 +160,36 @@ func ConnectConfig(ctx context.Context, config *Config) (pgConn *PgConn, err err
 		return nil, &connectError{config: config, msg: "hostname resolving error", err: errors.New("ip addr wasn't found")}
 	}
 
+	foundBestServer := false
+	var fallbackConfig *FallbackConfig
 	for _, fc := range fallbackConfigs {
-		pgConn, err = connect(ctx, config, fc)
+		pgConn, err = connect(ctx, config, fc, false)
 		if err == nil {
+			foundBestServer = true
 			break
 		} else if pgerr, ok := err.(*PgError); ok {
 			err = &connectError{config: config, msg: "server error", err: pgerr}
-			ERRCODE_INVALID_PASSWORD := "28P01"                    // worng password
-			ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION := "28000" // db does not exist
-			if pgerr.Code == ERRCODE_INVALID_PASSWORD || pgerr.Code == ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION {
+			const ERRCODE_INVALID_PASSWORD = "28P01"                    // wrong password
+			const ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION = "28000" // wrong password or bad pg_hba.conf settings
+			const ERRCODE_INVALID_CATALOG_NAME = "3D000"                // db does not exist
+			const ERRCODE_INSUFFICIENT_PRIVILEGE = "42501"              // missing connect privilege
+			if pgerr.Code == ERRCODE_INVALID_PASSWORD ||
+				pgerr.Code == ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION ||
+				pgerr.Code == ERRCODE_INVALID_CATALOG_NAME ||
+				pgerr.Code == ERRCODE_INSUFFICIENT_PRIVILEGE {
 				break
 			}
+		} else if cerr, ok := err.(*connectError); ok {
+			if _, ok := cerr.err.(*NotPreferredError); ok {
+				fallbackConfig = fc
+			}
+		}
+	}
+
+	if !foundBestServer && fallbackConfig != nil {
+		pgConn, err = connect(ctx, config, fallbackConfig, true)
+		if pgerr, ok := err.(*PgError); ok {
+			err = &connectError{config: config, msg: "server error", err: pgerr}
 		}
 	}
 
@@ -182,7 +213,7 @@ func expandWithIPs(ctx context.Context, lookupFn LookupFunc, fallbacks []*Fallba
 
 	for _, fb := range fallbacks {
 		// skip resolve for unix sockets
-		if strings.HasPrefix(fb.Host, "/") {
+		if isAbsolutePath(fb.Host) {
 			configs = append(configs, &FallbackConfig{
 				Host:      fb.Host,
 				Port:      fb.Port,
@@ -222,7 +253,8 @@ func expandWithIPs(ctx context.Context, lookupFn LookupFunc, fallbacks []*Fallba
 	return configs, nil
 }
 
-func connect(ctx context.Context, config *Config, fallbackConfig *FallbackConfig) (*PgConn, error) {
+func connect(ctx context.Context, config *Config, fallbackConfig *FallbackConfig,
+	ignoreNotPreferredErr bool) (*PgConn, error) {
 	pgConn := new(PgConn)
 	pgConn.config = config
 	pgConn.wbuf = make([]byte, 0, wbufLen)
@@ -317,7 +349,12 @@ func connect(ctx context.Context, config *Config, fallbackConfig *FallbackConfig
 				pgConn.conn.Close()
 				return nil, &connectError{config: config, msg: "failed SASL auth", err: err}
 			}
-
+		case *pgproto3.AuthenticationGSS:
+			err = pgConn.gssAuth()
+			if err != nil {
+				pgConn.conn.Close()
+				return nil, &connectError{config: config, msg: "failed GSS auth", err: err}
+			}
 		case *pgproto3.ReadyForQuery:
 			pgConn.status = connStatusIdle
 			if config.ValidateConnect != nil {
@@ -330,6 +367,9 @@ func connect(ctx context.Context, config *Config, fallbackConfig *FallbackConfig
 
 				err := config.ValidateConnect(ctx, pgConn)
 				if err != nil {
+					if _, ok := err.(*NotPreferredError); ignoreNotPreferredErr && ok {
+						return pgConn, nil
+					}
 					pgConn.conn.Close()
 					return nil, &connectError{config: config, msg: "ValidateConnect failed", err: err}
 				}

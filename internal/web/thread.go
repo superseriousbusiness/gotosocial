@@ -119,6 +119,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 		"ogMeta":      ogBase(instance).withStatus(status),
 		"stylesheets": stylesheets,
 		"javascript": []string{
+			"/assets/dist/bundle.js",
 			"/assets/dist/frontend.js",
 		},
 	})
@@ -137,14 +138,14 @@ func (m *Module) returnAPStatus(ctx context.Context, c *gin.Context, username st
 
 	status, errWithCode := m.processor.GetFediStatus(ctx, username, statusID, c.Request.URL)
 	if errWithCode != nil {
-		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet) //nolint:contextcheck
 		return
 	}
 
 	b, mErr := json.Marshal(status)
 	if mErr != nil {
 		err := fmt.Errorf("could not marshal json: %s", mErr)
-		api.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+		api.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet) //nolint:contextcheck
 		return
 	}
 

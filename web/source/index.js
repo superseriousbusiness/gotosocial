@@ -1,19 +1,19 @@
 /*
-   GoToSocial
-   Copyright (C) 2021-2022 GoToSocial Authors admin@gotosocial.org
+	GoToSocial
+	Copyright (C) 2021-2022 GoToSocial Authors admin@gotosocial.org
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU Affero General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU Affero General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU Affero General Public License for more details.
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU Affero General Public License for more details.
 
-   You should have received a copy of the GNU Affero General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU Affero General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 "use strict";
@@ -23,7 +23,8 @@
 */
 
 const path = require('path');
-const budoExpress = require('budo-express');
+// Forked budo-express supports EventEmitter, to write bundle.js to disk in development
+const budoExpress = require('@f0x52/budo-express');
 const babelify = require('babelify');
 const fs = require("fs");
 const EventEmitter = require('events');
@@ -38,8 +39,9 @@ const splitCSS = require("./lib/split-css.js");
 
 const bundles = {
 	"./frontend/index.js": "frontend.js",
-	"./panels/admin/index.js": "admin-panel.js",
-	"./panels/user/index.js": "user-panel.js",
+	"./settings-panel/index.js": "settings.js",
+	// "./panels/admin/index.js": "admin-panel.js",
+	// "./panels/user/index.js": "user-panel.js",
 };
 
 const postcssPlugins = [
@@ -49,6 +51,18 @@ const postcssPlugins = [
 	"postcss-custom-prop-vars",
 	"postcss-color-mod-function"
 ].map((plugin) => require(plugin)());
+
+let uglifyifyInProduction;
+
+if (process.env.NODE_ENV != "development") {
+	console.log("uglifyify'ing production bundles");
+	uglifyifyInProduction = [
+		require("uglifyify"), {
+			global: true,
+			exts: ".js"
+		}
+	];
+}
 
 const browserifyConfig = {
 	transform: [
@@ -69,10 +83,7 @@ const browserifyConfig = {
 				exclude: /node_modules\/(?!photoswipe-dynamic-caption-plugin)/,
 			}
 		],
-		[require("uglifyify"), {
-			global: true,
-			exts: ".js"
-		}]
+		uglifyifyInProduction
 	],
 	plugin: [
 		[require("icssify"), {
@@ -86,7 +97,8 @@ const browserifyConfig = {
 				return out(file);
 			})
 		}]
-	]
+	],
+	extensions: [".js", ".jsx", ".css"]
 };
 
 const entryFiles = Object.keys(bundles);

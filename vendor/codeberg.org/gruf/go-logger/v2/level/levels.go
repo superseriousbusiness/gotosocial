@@ -1,5 +1,10 @@
 package level
 
+import (
+	"fmt"
+	"strings"
+)
+
 // LEVEL defines a level of logging.
 type LEVEL uint8
 
@@ -34,16 +39,25 @@ func Default() Levels {
 		ERROR: "ERROR",
 		FATAL: "FATAL",
 		PANIC: "PANIC",
-
-		// we set these just so that
-		// it can be debugged when someone
-		// attempts to log with ALL/UNSET
-		ALL:   "{all}",
-		UNSET: "{unset}",
 	}
 }
 
 // Get fetches the level string for the provided value.
 func (l Levels) Get(lvl LEVEL) string {
 	return l[int(lvl)]
+}
+
+// Parse will attempt to decode a LEVEL from given string, checking (case insensitive) against strings in Levels.
+func (l Levels) Parse(s string) (LEVEL, error) {
+	// Ensure consistent casing
+	s = strings.ToUpper(s)
+
+	for lvl := LEVEL(0); int(lvl) < len(l); lvl++ {
+		// Compare to eqach known level
+		if strings.ToUpper(l[lvl]) == s {
+			return lvl, nil
+		}
+	}
+
+	return 0, fmt.Errorf("unrecognized log level: %s", s)
 }

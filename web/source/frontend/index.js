@@ -18,11 +18,6 @@
 
 "use strict";
 
-
-// WARNING: currently dependencies get deduplicated with factor-bundle, but 
-// our frontend templates don't load the common bundle.js since it contains React etc
-// so we can't use any dependencies that would deduplicate with the other files
-
 const Photoswipe = require("photoswipe/dist/umd/photoswipe.umd.min.js");
 const PhotoswipeLightbox = require("photoswipe/dist/umd/photoswipe-lightbox.umd.min.js");
 const PhotoswipeCaptionPlugin = require("photoswipe-dynamic-caption-plugin").default;

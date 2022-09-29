@@ -30,9 +30,12 @@ import (
 // CreateMultipartFormData is a handy function for taking a fieldname and a filename, and creating a multipart form bytes buffer
 // with the file contents set in the given fieldname. The extraFields param can be used to add extra FormFields to the request, as necessary.
 // The returned bytes.Buffer b can be used like so:
-// 	httptest.NewRequest(http.MethodPost, "https://example.org/whateverpath", bytes.NewReader(b.Bytes()))
+//
+//	httptest.NewRequest(http.MethodPost, "https://example.org/whateverpath", bytes.NewReader(b.Bytes()))
+//
 // The returned *multipart.Writer w can be used to set the content type of the request, like so:
-// 	req.Header.Set("Content-Type", w.FormDataContentType())
+//
+//	req.Header.Set("Content-Type", w.FormDataContentType())
 func CreateMultipartFormData(fieldName string, fileName string, extraFields map[string]string) (bytes.Buffer, *multipart.Writer, error) {
 	var b bytes.Buffer
 

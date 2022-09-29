@@ -88,6 +88,8 @@ func (suite *FollowRequestStandardTestSuite) SetupTest() {
 	suite.followRequestModule = followrequest.New(suite.processor).(*followrequest.Module)
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
+
+	suite.NoError(suite.processor.Start())
 }
 
 func (suite *FollowRequestStandardTestSuite) TearDownTest() {

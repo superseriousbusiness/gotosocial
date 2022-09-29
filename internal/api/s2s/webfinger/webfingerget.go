@@ -39,22 +39,24 @@ import (
 // For example, a GET to `https://goblin.technology/.well-known/webfinger?resource=acct:tobi@goblin.technology` would return:
 //
 // ```
-//  {"subject":"acct:tobi@goblin.technology","aliases":["https://goblin.technology/users/tobi","https://goblin.technology/@tobi"],"links":[{"rel":"http://webfinger.net/rel/profile-page","type":"text/html","href":"https://goblin.technology/@tobi"},{"rel":"self","type":"application/activity+json","href":"https://goblin.technology/users/tobi"}]}
+//
+//	{"subject":"acct:tobi@goblin.technology","aliases":["https://goblin.technology/users/tobi","https://goblin.technology/@tobi"],"links":[{"rel":"http://webfinger.net/rel/profile-page","type":"text/html","href":"https://goblin.technology/@tobi"},{"rel":"self","type":"application/activity+json","href":"https://goblin.technology/users/tobi"}]}
+//
 // ```
 //
 // See: https://webfinger.net/
 //
-// ---
-// tags:
-// - webfinger
+//	---
+//	tags:
+//	- webfinger
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// responses:
-//   '200':
-//     schema:
-//       "$ref": "#/definitions/wellKnownResponse"
+//	responses:
+//		'200':
+//			schema:
+//				"$ref": "#/definitions/wellKnownResponse"
 func (m *Module) WebfingerGETRequest(c *gin.Context) {
 	l := log.WithFields(kv.Fields{
 		{K: "user-agent", V: c.Request.UserAgent()},

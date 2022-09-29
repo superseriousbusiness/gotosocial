@@ -27,7 +27,37 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// NotificationsClearPOSTHandler clears all the notifications
+// NotificationsClearPOSTHandler swagger:operation POST /api/v1/notifications clearNotifications
+//
+// Clear/delete all notifications for currently authorized user.
+//
+// Will return an empty object `{}` to indicate success.
+//
+//	---
+//	tags:
+//	- notifications
+//
+//	produces:
+//	- application/json
+//
+//	security:
+//	- OAuth2 Bearer:
+//		- read:notifications
+//
+//	responses:
+//		'200':
+//			schema:
+//				type: object
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) NotificationsClearPOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

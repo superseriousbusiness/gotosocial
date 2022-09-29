@@ -26,7 +26,6 @@ import (
 )
 
 // ActivityPubAcceptHeaders represents the Accept headers mentioned here:
-//
 var ActivityPubAcceptHeaders = []MIME{
 	AppActivityJSON,
 	AppActivityLDJSON,

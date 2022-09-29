@@ -40,56 +40,59 @@ import (
 // <https://example.org/api/v1/blocks?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/blocks?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
 // ````
 //
-// ---
-// tags:
-// - blocks
+//	---
+//	tags:
+//	- blocks
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// parameters:
-// - name: limit
-//   type: integer
-//   description: Number of blocks to return.
-//   default: 20
-//   in: query
-// - name: max_id
-//   type: string
-//   description: |-
-//     Return only blocks *OLDER* than the given max block ID.
-//     The block with the specified ID will not be included in the response.
-//   in: query
-// - name: since_id
-//   type: string
-//   description: |-
-//     Return only blocks *NEWER* than the given since block ID.
-//     The block with the specified ID will not be included in the response.
-//   in: query
+//	parameters:
+//	-
+//		name: limit
+//		type: integer
+//		description: Number of blocks to return.
+//		default: 20
+//		in: query
+//	-
+//		name: max_id
+//		type: string
+//		description: >-
+//			Return only blocks *OLDER* than the given block ID.
+//			The block with the specified ID will not be included in the response.
+//		in: query
+//	-
+//		name: since_id
+//		type: string
+//		description: >-
+//		  Return only blocks *NEWER* than the given block ID.
+//		  The block with the specified ID will not be included in the response.
+//		in: query
 //
-// security:
-// - OAuth2 Bearer:
-//   - read:blocks
+//	security:
+//	- OAuth2 Bearer:
+//		- read:blocks
 //
-// responses:
-//   '200':
-//     headers:
-//       Link:
-//         type: string
-//         description: Links to the next and previous queries.
-//     schema:
-//       type: array
-//       items:
-//         "$ref": "#/definitions/account"
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '404':
-//      description: not found
-//   '406':
-//      description: not acceptable
-//   '500':
-//      description: internal server error
+//	responses:
+//		'200':
+//			headers:
+//				Link:
+//					type: string
+//					description: Links to the next and previous queries.
+//			schema:
+//				type: array
+//				items:
+//					"$ref": "#/definitions/account"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) BlocksGETHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

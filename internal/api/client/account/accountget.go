@@ -32,38 +32,40 @@ import (
 //
 // Get information about an account with the given ID.
 //
-// ---
-// tags:
-// - accounts
+//	---
+//	tags:
+//	- accounts
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// parameters:
-// - name: id
-//   type: string
-//   description: The id of the requested account.
-//   in: path
-//   required: true
+//	parameters:
+//	-
+//		name: id
+//		type: string
+//		description: The id of the requested account.
+//		in: path
+//		required: true
 //
-// security:
-// - OAuth2 Bearer:
-//   - read:accounts
+//	security:
+//	- OAuth2 Bearer:
+//		- read:accounts
 //
-// responses:
-//   '200':
-//     schema:
-//       "$ref": "#/definitions/account"
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '404':
-//      description: not found
-//   '406':
-//      description: not acceptable
-//   '500':
-//      description: internal server error
+//	responses:
+//		'200':
+//			description: The requested account.
+//			schema:
+//				"$ref": "#/definitions/account"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) AccountGETHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

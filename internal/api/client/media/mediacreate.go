@@ -35,59 +35,64 @@ import (
 //
 // Upload a new media attachment.
 //
-// ---
-// tags:
-// - media
+//	---
+//	tags:
+//	- media
 //
-// consumes:
-// - multipart/form-data
+//	consumes:
+//	- multipart/form-data
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// parameters:
-// - name: api version
-//   type: string
-//   in: path
-//   description: Version of the API to use. Must be one of v1 or v2.
-//   required: true
-// - name: description
-//   in: formData
-//   description: |-
-//     Image or media description to use as alt-text on the attachment.
-//     This is very useful for users of screenreaders.
-//     May or may not be required, depending on your instance settings.
-//   type: string
-// - name: focus
-//   in: formData
-//   description: |-
-//     Focus of the media file.
-//     If present, it should be in the form of two comma-separated floats between -1 and 1.
-//     For example: `-0.5,0.25`.
-//   type: string
-// - name: file
-//   in: formData
-//   description: The media attachment to upload.
-//   type: file
-//   required: true
+//	parameters:
+//	-
+//		name: api_version
+//		type: string
+//		in: path
+//		description: Version of the API to use. Must be either `v1` or `v2`.
+//		required: true
+//	-
+//		name: description
+//		in: formData
+//		description: >-
+//			Image or media description to use as alt-text on the attachment.
+//			This is very useful for users of screenreaders!
+//			May or may not be required, depending on your instance settings.
+//		type: string
+//	-
+//		name: focus
+//		in: formData
+//		description: >-
+//			Focus of the media file.
+//			If present, it should be in the form of two comma-separated floats between -1 and 1.
+//			For example: `-0.5,0.25`.
+//		type: string
+//		default: "0,0"
+//	-
+//		name: file
+//		in: formData
+//		description: The media attachment to upload.
+//		type: file
+//		required: true
 //
-// security:
-// - OAuth2 Bearer:
-//   - write:media
+//	security:
+//	- OAuth2 Bearer:
+//		- write:media
 //
-// responses:
-//   '200':
-//     description: The newly-created media attachment.
-//     schema:
-//       "$ref": "#/definitions/attachment"
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '422':
-//      description: unprocessable
-//   '500':
-//      description: internal server error
+//	responses:
+//		'200':
+//			description: The newly-created media attachment.
+//			schema:
+//				"$ref": "#/definitions/attachment"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'422':
+//			description: unprocessable
+//		'500':
+//			description: internal server error
 func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

@@ -45,35 +45,35 @@ const (
 // The parameters can also be given in the body of the request, as JSON, if the content-type is set to 'application/json'.
 // The parameters can also be given in the body of the request, as XML, if the content-type is set to 'application/xml'.
 //
-// ---
-// tags:
-// - apps
+//	---
+//	tags:
+//	- apps
 //
-// consumes:
-// - application/json
-// - application/xml
-// - application/x-www-form-urlencoded
+//	consumes:
+//	- application/json
+//	- application/xml
+//	- application/x-www-form-urlencoded
 //
-// produces:
-// - application/json
+//	produces:
+//	- application/json
 //
-// responses:
-//   '200':
-//     description: "The newly-created application."
-//     schema:
-//       "$ref": "#/definitions/application"
-//   '400':
-//      description: bad request
-//   '401':
-//      description: unauthorized
-//   '403':
-//      description: forbidden
-//   '404':
-//      description: not found
-//   '406':
-//      description: not acceptable
-//   '500':
-//      description: internal server error
+//	responses:
+//		'200':
+//			description: "The newly-created application."
+//			schema:
+//				"$ref": "#/definitions/application"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'403':
+//			description: forbidden
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) AppsPOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, false, false, false, false)
 	if err != nil {
