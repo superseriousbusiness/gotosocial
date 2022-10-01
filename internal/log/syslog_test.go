@@ -79,7 +79,7 @@ func (suite *SyslogTestSuite) TestSyslogLongMessage() {
 	prefix := fmt.Sprintf(`timestamp="02/01/2006 15:04:05.000" func=%s level=WARN msg="`, funcName)
 
 	entry := <-suite.syslogChannel
-	regex := fmt.Sprintf(`timestamp=.* func=.* level=WARN msg="%s\.\.\.`, longMessage[:1700-len(prefix)-3])
+	regex := fmt.Sprintf(`timestamp=.* func=.* level=WARN msg="%s`, longMessage[:2048-len(prefix)])
 	suite.Regexp(regexp.MustCompile(regex), entry["content"])
 }
 
@@ -110,7 +110,7 @@ func (suite *SyslogTestSuite) TestSyslogLongMessageUnixgram() {
 	prefix := fmt.Sprintf(`timestamp="02/01/2006 15:04:05.000" func=%s level=WARN msg="`, funcName)
 
 	entry := <-syslogChannel
-	regex := fmt.Sprintf(`timestamp=.* func=.* level=WARN msg="%s\.\.\.`, longMessage[:1700-len(prefix)-3])
+	regex := fmt.Sprintf(`timestamp=.* func=.* level=WARN msg="%s`, longMessage[:2048-len(prefix)])
 
 	suite.Regexp(regexp.MustCompile(regex), entry["content"])
 
