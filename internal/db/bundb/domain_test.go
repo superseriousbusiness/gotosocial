@@ -59,6 +59,78 @@ func (suite *DomainTestSuite) TestIsDomainBlocked() {
 	suite.True(blocked)
 }
 
+func (suite *DomainTestSuite) TestIsDomainBlockedNonASCII() {
+	ctx := context.Background()
+
+	now := time.Now()
+
+	domainBlock := &gtsmodel.DomainBlock{
+		ID:                 "01G204214Y9TNJEBX39C7G88SW",
+		Domain:             "xn--80aaa1bbb1h.com",
+		CreatedAt:          now,
+		UpdatedAt:          now,
+		CreatedByAccountID: suite.testAccounts["admin_account"].ID,
+		CreatedByAccount:   suite.testAccounts["admin_account"],
+	}
+
+	// no domain block exists for the given domain yet
+	blocked, err := suite.db.IsDomainBlocked(ctx, "какашка.com")
+	suite.NoError(err)
+	suite.False(blocked)
+
+	blocked, err = suite.db.IsDomainBlocked(ctx, "xn--80aaa1bbb1h.com")
+	suite.NoError(err)
+	suite.False(blocked)
+
+	err = suite.db.CreateDomainBlock(ctx, *domainBlock)
+	suite.NoError(err)
+
+	// domain block now exists
+	blocked, err = suite.db.IsDomainBlocked(ctx, "какашка.com")
+	suite.NoError(err)
+	suite.True(blocked)
+
+	blocked, err = suite.db.IsDomainBlocked(ctx, "xn--80aaa1bbb1h.com")
+	suite.NoError(err)
+	suite.True(blocked)
+}
+
+func (suite *DomainTestSuite) TestIsDomainBlockedNonASCII2() {
+	ctx := context.Background()
+
+	now := time.Now()
+
+	domainBlock := &gtsmodel.DomainBlock{
+		ID:                 "01G204214Y9TNJEBX39C7G88SW",
+		Domain:             "какашка.com",
+		CreatedAt:          now,
+		UpdatedAt:          now,
+		CreatedByAccountID: suite.testAccounts["admin_account"].ID,
+		CreatedByAccount:   suite.testAccounts["admin_account"],
+	}
+
+	// no domain block exists for the given domain yet
+	blocked, err := suite.db.IsDomainBlocked(ctx, "какашка.com")
+	suite.NoError(err)
+	suite.False(blocked)
+
+	blocked, err = suite.db.IsDomainBlocked(ctx, "xn--80aaa1bbb1h.com")
+	suite.NoError(err)
+	suite.False(blocked)
+
+	err = suite.db.CreateDomainBlock(ctx, *domainBlock)
+	suite.NoError(err)
+
+	// domain block now exists
+	blocked, err = suite.db.IsDomainBlocked(ctx, "какашка.com")
+	suite.NoError(err)
+	suite.True(blocked)
+
+	blocked, err = suite.db.IsDomainBlocked(ctx, "xn--80aaa1bbb1h.com")
+	suite.NoError(err)
+	suite.True(blocked)
+}
+
 func TestDomainTestSuite(t *testing.T) {
 	suite.Run(t, new(DomainTestSuite))
 }

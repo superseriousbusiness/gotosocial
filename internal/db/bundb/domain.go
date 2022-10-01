@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"golang.org/x/net/idna"
 )
 
 type domainDB struct {
@@ -35,15 +36,28 @@ type domainDB struct {
 	cache *cache.DomainBlockCache
 }
 
+// normalizeDomain converts the given domain to lowercase
+// then to punycode (for international domain names).
+//
+// Returns the resulting domain or an error if the
+// punycode conversion fails.
+func normalizeDomain(domain string) (out string, err error) {
+	out = strings.ToLower(domain)
+	out, err = idna.ToASCII(out)
+	return out, err
+}
+
 func (d *domainDB) CreateDomainBlock(ctx context.Context, block gtsmodel.DomainBlock) db.Error {
-	// Normalize to lowercase
-	block.Domain = strings.ToLower(block.Domain)
+	domain, err := normalizeDomain(block.Domain)
+	if err != nil {
+		return err
+	}
+	block.Domain = domain
 
 	// Attempt to insert new domain block
-	_, err := d.conn.NewInsert().
+	if _, err := d.conn.NewInsert().
 		Model(&block).
-		Exec(ctx, &block)
-	if err != nil {
+		Exec(ctx, &block); err != nil {
 		return d.conn.ProcessError(err)
 	}
 
@@ -54,8 +68,11 @@ func (d *domainDB) CreateDomainBlock(ctx context.Context, block gtsmodel.DomainB
 }
 
 func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel.DomainBlock, db.Error) {
-	// Normalize to lowercase
-	domain = strings.ToLower(domain)
+	var err error
+	domain, err = normalizeDomain(domain)
+	if err != nil {
+		return nil, err
+	}
 
 	// Check for easy case, domain referencing *us*
 	if domain == "" || domain == config.GetAccountDomain() {
@@ -100,15 +117,17 @@ func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel
 }
 
 func (d *domainDB) DeleteDomainBlock(ctx context.Context, domain string) db.Error {
-	// Normalize to lowercase
-	domain = strings.ToLower(domain)
+	var err error
+	domain, err = normalizeDomain(domain)
+	if err != nil {
+		return err
+	}
 
 	// Attempt to delete domain block
-	_, err := d.conn.NewDelete().
+	if _, err := d.conn.NewDelete().
 		Model((*gtsmodel.DomainBlock)(nil)).
 		Where("domain = ?", domain).
-		Exec(ctx)
-	if err != nil {
+		Exec(ctx); err != nil {
 		return d.conn.ProcessError(err)
 	}
 
