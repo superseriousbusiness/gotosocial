@@ -36,18 +36,19 @@ type domainDB struct {
 	cache *cache.DomainBlockCache
 }
 
-// normalize converts the given domain to lowercase
+// normalizeDomain converts the given domain to lowercase
 // then to punycode (for international domain names).
+//
 // Returns the resulting domain or an error if the
 // punycode conversion fails.
-func (d *domainDB) normalize(domain string) (out string, err error) {
+func normalizeDomain(domain string) (out string, err error) {
 	out = strings.ToLower(domain)
 	out, err = idna.ToASCII(out)
 	return out, err
 }
 
 func (d *domainDB) CreateDomainBlock(ctx context.Context, block gtsmodel.DomainBlock) db.Error {
-	domain, err := d.normalize(block.Domain)
+	domain, err := normalizeDomain(block.Domain)
 	if err != nil {
 		return err
 	}
@@ -68,7 +69,7 @@ func (d *domainDB) CreateDomainBlock(ctx context.Context, block gtsmodel.DomainB
 
 func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel.DomainBlock, db.Error) {
 	var err error
-	domain, err = d.normalize(domain)
+	domain, err = normalizeDomain(domain)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +118,7 @@ func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel
 
 func (d *domainDB) DeleteDomainBlock(ctx context.Context, domain string) db.Error {
 	var err error
-	domain, err = d.normalize(domain)
+	domain, err = normalizeDomain(domain)
 	if err != nil {
 		return err
 	}
