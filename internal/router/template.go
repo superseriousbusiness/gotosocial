@@ -31,6 +31,13 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
+)
+
+const (
+	justTime     = "15:04"
+	dateAndTime  = "Jan 02, 15:04"
+	yearDateTime = "Jan 02, 2006, 15:04"
 )
 
 // LoadTemplates loads html templates for use by the given engine
@@ -77,6 +84,20 @@ func noescapeAttr(str string) template.HTMLAttr {
 
 func timestamp(stamp string) string {
 	t, _ := util.ParseISO8601(stamp)
+	t = t.Local()
+
+	tYear, tMonth, tDay := t.Date()
+	now := time.Now()
+	currentYear, currentMonth, currentDay := now.Date()
+
+	switch {
+	case tYear == currentYear && tMonth == currentMonth && tDay == currentDay:
+		return "Today, " + t.Format("15:04")
+	case tYear == currentYear:
+		return t.Format("Jan 02, 15:04")
+	default:
+		return t.Format("Jan 02, 2006, 15:04")
+	}
 }
 
 func timestampVague(stamp string) string {
