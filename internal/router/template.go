@@ -76,8 +76,7 @@ func noescapeAttr(str string) template.HTMLAttr {
 }
 
 func timestamp(stamp string) string {
-	t, _ := time.Parse(time.RFC3339, stamp)
-	return t.Format("January 2, 2006, 15:04:05")
+	t, _ := util.ParseISO8601(stamp)
 }
 
 func timestampVague(stamp string) string {
