@@ -177,6 +177,17 @@ main {
 				}
 			}
 		}
+
+		.emoji {
+			-webkit-transition: width 0.5s, height 0.5s, box-shadow 0.5s;
+			transition: width 0.5s, height 0.5s, box-shadow 0.5s;
+		}
+
+		.emoji:hover, .emoji:active {
+			width: 5ex;
+			height: 5ex;
+			box-shadow: $boxshadow;
+		}
 	}
 
 	.media {
