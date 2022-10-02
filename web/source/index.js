@@ -22,11 +22,6 @@
 	Bundle the PostCSS stylesheets and javascript bundles for general frontend and settings panel
 */
 
-/*
- TODO: refactor dev-server to act as developer-facing webserver,
- proxying other requests to testrig instance. That way actual livereload works
-*/
-
 const path = require('path');
 const fsSync = require("fs");
 const chalk = require("chalk");

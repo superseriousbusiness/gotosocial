@@ -23,8 +23,15 @@ const browserify = require("browserify");
 const babelify = require('babelify');
 const chalk = require("chalk");
 const fs = require("fs").promises;
+const { EventEmitter } = require("events");
+const path = require("path");
+const debugLib = require("debug");
+debugLib.enable("GoToSocial");
+const debug = debugLib("GoToSocial");
 
-const splitCSS = require("./split-css");
+const outputEmitter = new EventEmitter();
+
+const splitCSS = require("./split-css")(outputEmitter);
 const out = require("./output-path");
 
 const postcssPlugins = [
@@ -35,52 +42,57 @@ const postcssPlugins = [
 	"postcss-color-mod-function"
 ].map((plugin) => require(plugin)());
 
-module.exports = function gtsBundler(devMode, bundles) {
-	function browserifyConfig({ transforms = [], plugins = [], babelOptions = {} }) {
-		if (devMode) {
-			plugins.push(require("watchify"));
-		} else {
-			transforms.push([
-				require("uglifyify"), {
-					global: true,
-					exts: ".js"
-				}
-			]);
-		}
+function browserifyConfig(devMode, { transforms = [], plugins = [], babelOptions = {} }) {
+	if (devMode) {
+		plugins.push(require("watchify"));
+	} else {
+		transforms.push([
+			require("uglifyify"), {
+				global: true,
+				exts: ".js"
+			}
+		]);
+	}
 
-		return {
-			cache: {},
-			packageCache: {},
-			transform: [
-				[
-					babelify.configure({
-						presets: [
-							[
-								require.resolve("@babel/preset-env"),
-								{
-									modules: "cjs"
-								}
-							],
-							require.resolve("@babel/preset-react")
-						]
-					}),
-					babelOptions
-				],
-				...transforms
+	return {
+		cache: {},
+		packageCache: {},
+		transform: [
+			[
+				babelify.configure({
+					presets: [
+						[
+							require.resolve("@babel/preset-env"),
+							{
+								modules: "cjs"
+							}
+						],
+						require.resolve("@babel/preset-react")
+					]
+				}),
+				babelOptions
 			],
-			plugin: [
-				[require("icssify"), {
-					parser: require("postcss-scss"),
-					before: postcssPlugins,
-					mode: 'global'
-				}],
-				[require("css-extract"), { out: splitCSS }],
-				...plugins
-			],
-			extensions: [".js", ".jsx", ".css"],
-			fullPaths: devMode,
-			debug: devMode
-		};
+			...transforms
+		],
+		plugin: [
+			[require("icssify"), {
+				parser: require("postcss-scss"),
+				before: postcssPlugins,
+				mode: 'global'
+			}],
+			[require("css-extract"), { out: splitCSS }],
+			...plugins
+		],
+		extensions: [".js", ".jsx", ".css"],
+		basedir: path.join(__dirname, "../"),
+		fullPaths: devMode,
+		debug: devMode
+	};
+}
+
+module.exports = function gtsBundler(devMode, bundles) {
+	if (devMode) {
+		require("./dev-server")(outputEmitter);
 	}
 
 	Promise.each(bundles, (bundleCfg) => {
@@ -91,7 +103,15 @@ module.exports = function gtsBundler(devMode, bundles) {
 			let factorBundle = [require("factor-bundle"), {
 				outputs: Object.values(bundleCfg.factors).map((file) => {
 					return out(file);
-				})
+				}),
+				threshold: function(row, groups) {
+					// always put livereload.js in common bundle
+					if (row.id.endsWith("web/source/lib/livereload.js")) {
+						return true;
+					} else {
+						return this._defaultThreshold(row, groups);
+					}
+				}
 			}];
 
 			plugins = [factorBundle];
@@ -101,7 +121,11 @@ module.exports = function gtsBundler(devMode, bundles) {
 			entryFiles = bundleCfg.entryFiles;
 		}
 
-		let config = browserifyConfig({ transforms, plugins, babelOptions, entryFiles, outputFile });
+		if (devMode) {
+			entryFiles.push(path.join(__dirname, "./livereload.js"));
+		}
+
+		let config = browserifyConfig(devMode, { transforms, plugins, babelOptions, entryFiles, outputFile });
 
 		return Promise.try(() => {
 			return browserify(entryFiles, config);
@@ -110,22 +134,24 @@ module.exports = function gtsBundler(devMode, bundles) {
 
 			function makeBundle(cause) {
 				if (cause != undefined) {
-					console.log(chalk.yellow(`Watcher: update on ${cause}, re-bundling`));
+					debug(chalk.yellow(`Watcher: update on ${cause}, re-bundling`));
 				}
 				return Promise.try(() => {
 					return bundler.bundleAsync();
 				}).then((bundle) => {
 					if (outputFile != "_delete") {
-						console.log(chalk.magenta(`JS: writing to assets/dist/${outputFile}`));
+						let updates = new Set([outputFile]);
 						if (bundleCfg.factors != undefined) {
 							Object.values(bundleCfg.factors).forEach((factor) => {
-								console.log(chalk.magenta(`JS: writing to assets/dist/${factor}`));
+								updates.add(factor);
+								debug(chalk.magenta(`JS: writing to assets/dist/${factor}`));
 							});
 						}
+						outputEmitter.emit("update", {type: "JS", updates: Array.from(updates)});
 						return fs.writeFile(out(outputFile), bundle);
 					}
 				}).catch((e) => {
-					console.log(chalk.red("Fatal error in bundler:"), bundleCfg.outputFile);
+					debug(chalk.red("Fatal error in bundler:"), bundleCfg.outputFile);
 					if (e.name == "CssSyntaxError") {
 						// contains useful info about error + location, but followed by useless
 						// actual stacktrace, so cut that off
@@ -134,14 +160,14 @@ module.exports = function gtsBundler(devMode, bundles) {
 							if (line.startsWith("    at Input.error")) {
 								return true;
 							} else {
-								console.log(line);
+								debug(line);
 								return false;
 							}
 						});
 					} else {
-						console.log(e.message);
+						debug(e.message);
 					}
-					console.log();
+					debug();
 				});
 			}
 
@@ -152,9 +178,21 @@ module.exports = function gtsBundler(devMode, bundles) {
 		});
 	}).then(() => {
 		if (devMode) {
-			console.log(chalk.yellow("Initial build finished, waiting for file changes"));
+			debug(chalk.yellow("Initial build finished, waiting for file changes"));
 		} else {
-			console.log(chalk.yellow("Finished building"));
+			debug(chalk.yellow("Finished building"));
 		}
 	});
 };
+
+outputEmitter.on("update", (u) => {
+	u.updates.forEach((outputFile) => {
+		let color = (str) => str;
+		if (u.type == "JS") {
+			color = chalk.magenta;
+		} else {
+			color = chalk.blue;
+		}
+		debug(color(`${u.type}: writing to assets/dist/${outputFile}`));
+	});
+});

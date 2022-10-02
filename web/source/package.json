@@ -21,13 +21,12 @@
     "css-extract": "^2.0.0",
     "default-value": "^1.0.0",
     "dotty": "^0.1.2",
-    "eslint-plugin-react": "^7.24.0",
-    "express": "^4.18.1",
     "factor-bundle": "^2.5.0",
     "icssify": "^2.0.0",
     "is-plain-object": "^5.0.0",
     "is-valid-domain": "^0.1.6",
     "js-file-download": "^0.4.12",
+    "livereload-js": "^3.4.1",
     "modern-normalize": "^1.1.0",
     "photoswipe": "^5.3.0",
     "photoswipe-dynamic-caption-plugin": "^1.2.4",
@@ -46,12 +45,14 @@
     "redux-devtools-extension": "^2.13.9",
     "redux-persist": "^6.0.0",
     "redux-thunk": "^2.4.1",
+    "tiny-lr": "^2.0.0",
     "uglifyify": "^5.0.2",
     "wouter": "^2.8.0-alpha.2"
   },
   "devDependencies": {
     "@f0x52/eslint-config-react": "^1.1.0",
     "eslint": "^7.30.0",
+    "eslint-plugin-react": "^7.24.0",
     "eslint-plugin-react-hooks": "^4.2.0"
   }
 }

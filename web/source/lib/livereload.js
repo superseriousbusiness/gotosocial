@@ -18,15 +18,12 @@
 
 "use strict";
 
-const fsSync = require("fs");
-const path = require("path");
+window.LiveReloadOptions = {
+	host: 'localhost',
+	pluginOrder: "css,img,external",
+	verbose: true
+};
 
-function out(name = "") {
-	return path.join(__dirname, "../../assets/dist/", name);
-}
+console.log("Development bundle with Livereloading code");
 
-if (!fsSync.existsSync(out())){
-	fsSync.mkdirSync(out(), { recursive: true });
-}
-
-module.exports = out;
+require("livereload-js/dist/livereload.min.js");

@@ -20,60 +20,63 @@
 
 const fs = require("fs");
 const path = require("path");
-const chalk = require("chalk");
 
 const {Writable} = require("stream");
 const out = require("./output-path");
 
 const fromRegex = /\/\* from (.+?) \*\//;
-module.exports = function splitCSS() {
-	let chunks = [];
-	return new Writable({
-		write: function(chunk, encoding, next) {
-			chunks.push(chunk);
-			next();
-		},
-		final: function() {
-			let stream = chunks.join("");
-			let input;
-			let content = [];
+module.exports = function splitCSS(outputEmitter) {
+	return function() {
+		let chunks = [];
+		return new Writable({
+			write: function(chunk, encoding, next) {
+				chunks.push(chunk);
+				next();
+			},
 
-			function write() {
-				if (content.length != 0) {
-					if (input == undefined) {
-						if (content[0].length != 0) {
-							throw new Error("Got CSS content without filename, can't output: ", content);
+			final: function() {
+				let stream = chunks.join("");
+				let input;
+				let content = [];
+	
+				function write() {
+					if (content.length != 0) {
+						if (input == undefined) {
+							if (content[0].length != 0) {
+								throw new Error("Got CSS content without filename, can't output: ", content);
+							}
+						} else {
+							outputEmitter.emit("update", {type: "CSS", updates: [input]});
+							fs.writeFileSync(out(input), content.join("\n"));
+						}
+						content = [];
+					}
+				}
+	
+				const cssDir = path.join(__dirname, "../css");
+	
+				stream.split("\n").forEach((line) => {
+					if (line.startsWith("/* from")) {
+						let found = fromRegex.exec(line);
+						if (found != null) {
+							write();
+	
+							let parts = path.parse(found[1]);
+							if (path.relative(cssDir, path.join(process.cwd(), parts.dir)) == "") {
+								input = parts.base;
+							} else {
+								// prefix filename with path
+								let relative = path.relative(path.join(__dirname, "../"), path.join(process.cwd(), found[1]));
+								input = relative.replace(/\//g, "-");
+							}
 						}
 					} else {
-						console.log(chalk.blue(`CSS: writing to assets/dist/${input}`));
-						fs.writeFileSync(out(input), content.join("\n"));
+						content.push(line);
 					}
-					content = [];
-				}
+				});
+
+				write();
 			}
-
-			const cssDir = path.join(__dirname, "../css");
-
-			stream.split("\n").forEach((line) => {
-				if (line.startsWith("/* from")) {
-					let found = fromRegex.exec(line);
-					if (found != null) {
-						write();
-
-						let parts = path.parse(found[1]);
-						if (path.relative(cssDir, path.join(process.cwd(), parts.dir)) == "") {
-							input = parts.base;
-						} else {
-							// prefix filename with path
-							let relative = path.relative(path.join(__dirname, "../"), path.join(process.cwd(), found[1]));
-							input = relative.replace(/\//g, "-");
-						}
-					}
-				} else {
-					content.push(line);
-				}
-			});
-			write();
-		}
-	});
+		});
+	};
 };

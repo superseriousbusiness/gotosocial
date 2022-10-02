@@ -18,15 +18,23 @@
 
 "use strict";
 
-const fsSync = require("fs");
-const path = require("path");
+const tinylr = require("tiny-lr");
+const chalk = require("chalk");
 
-function out(name = "") {
-	return path.join(__dirname, "../../assets/dist/", name);
-}
+const PORT = 35729;
 
-if (!fsSync.existsSync(out())){
-	fsSync.mkdirSync(out(), { recursive: true });
-}
+module.exports = function devServer(outputEmitter) {
+	let server = tinylr();
+	
+	server.listen(PORT, () => {
+		console.log(chalk.cyan(`Livereload server listening on :${PORT}`));
+	});
 
-module.exports = out;
+	outputEmitter.on("update", ({updates}) => {
+		let fullPaths = updates.map((path) => `/assets/dist/${path}`);
+		tinylr.changed(fullPaths.join(","));
+	});
+
+	process.on("SIGUSR2", server.close);
+	process.on("SIGTERM", server.close);
+};
