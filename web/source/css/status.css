@@ -127,7 +127,6 @@ main {
 		margin: 0;
 		grid-column: 2 / span 2;
 		grid-row: span 1;
-		overflow: hidden;
 
 		position: relative;
 		z-index: 2;
@@ -175,6 +174,18 @@ main {
 					-webkit-overflow-scrolling: touch;
 				}
 			}
+		}
+
+		.emoji {
+			transition: 0.1s;
+		}
+
+		.emoji:hover, .emoji:active {
+			transform: scale(1.75);
+			background-color: $bg;
+			box-shadow: $boxshadow;
+			border: $boxshadow-border;
+			border-radius: $br-inner;
 		}
 	}
 
