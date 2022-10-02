@@ -23,7 +23,7 @@ const path = require("path");
 const chalk = require("chalk");
 
 const {Writable} = require("stream");
-const {out} = require("../index.js");
+const out = require("./output-path");
 
 const fromRegex = /\/\* from (.+?) \*\//;
 module.exports = function splitCSS() {
