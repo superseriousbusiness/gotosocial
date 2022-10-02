@@ -30,7 +30,18 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
+)
+
+const (
+	justTime     = "15:04"
+	dateYear     = "Jan 02, 2006"
+	dateTime     = "Jan 02, 15:04"
+	dateYearTime = "Jan 02, 2006, 15:04"
+	monthYear    = "Jan, 2006"
+	badTimestamp = "bad timestamp"
 )
 
 // LoadTemplates loads html templates for use by the given engine
@@ -76,13 +87,44 @@ func noescapeAttr(str string) template.HTMLAttr {
 }
 
 func timestamp(stamp string) string {
-	t, _ := time.Parse(time.RFC3339, stamp)
-	return t.Format("January 2, 2006, 15:04:05")
+	t, err := util.ParseISO8601(stamp)
+	if err != nil {
+		log.Errorf("error parsing timestamp %s: %s", stamp, err)
+		return badTimestamp
+	}
+
+	t = t.Local()
+
+	tYear, tMonth, tDay := t.Date()
+	now := time.Now()
+	currentYear, currentMonth, currentDay := now.Date()
+
+	switch {
+	case tYear == currentYear && tMonth == currentMonth && tDay == currentDay:
+		return "Today, " + t.Format(justTime)
+	case tYear == currentYear:
+		return t.Format(dateTime)
+	default:
+		return t.Format(dateYear)
+	}
 }
 
-func timestampShort(stamp string) string {
-	t, _ := time.Parse(time.RFC3339, stamp)
-	return t.Format("January, 2006")
+func timestampPrecise(stamp string) string {
+	t, err := util.ParseISO8601(stamp)
+	if err != nil {
+		log.Errorf("error parsing timestamp %s: %s", stamp, err)
+		return badTimestamp
+	}
+	return t.Local().Format(dateYearTime)
+}
+
+func timestampVague(stamp string) string {
+	t, err := util.ParseISO8601(stamp)
+	if err != nil {
+		log.Errorf("error parsing timestamp %s: %s", stamp, err)
+		return badTimestamp
+	}
+	return t.Format(monthYear)
 }
 
 type iconWithLabel struct {
@@ -154,13 +196,14 @@ func emojify(emojis []model.Emoji, text template.HTML) template.HTML {
 
 func LoadTemplateFunctions(engine *gin.Engine) {
 	engine.SetFuncMap(template.FuncMap{
-		"escape":         escape,
-		"noescape":       noescape,
-		"noescapeAttr":   noescapeAttr,
-		"oddOrEven":      oddOrEven,
-		"visibilityIcon": visibilityIcon,
-		"timestamp":      timestamp,
-		"timestampShort": timestampShort,
-		"emojify":        emojify,
+		"escape":           escape,
+		"noescape":         noescape,
+		"noescapeAttr":     noescapeAttr,
+		"oddOrEven":        oddOrEven,
+		"visibilityIcon":   visibilityIcon,
+		"timestamp":        timestamp,
+		"timestampVague":   timestampVague,
+		"timestampPrecise": timestampPrecise,
+		"emojify":          emojify,
 	})
 }

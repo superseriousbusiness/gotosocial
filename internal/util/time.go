@@ -28,3 +28,8 @@ const ISO8601 = "2006-01-02T15:04:05.000Z"
 func FormatISO8601(t time.Time) string {
 	return t.UTC().Format(ISO8601)
 }
+
+// ParseISO8601 parses the given time string according to the ISO8601 const.
+func ParseISO8601(in string) (time.Time, error) {
+	return time.Parse(ISO8601, in)
+}
