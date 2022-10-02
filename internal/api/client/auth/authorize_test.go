@@ -76,8 +76,11 @@ func (suite *AuthAuthorizeTestSuite) TestAccountAuthorizeHandler() {
 	doTest := func(testCase authorizeHandlerTestCase) {
 		ctx, recorder := suite.newContext(http.MethodGet, auth.OauthAuthorizePath, nil, "")
 
-		user := suite.testUsers["unconfirmed_account"]
-		account := suite.testAccounts["unconfirmed_account"]
+		user := &gtsmodel.User{}
+		account := &gtsmodel.Account{}
+
+		*user = *suite.testUsers["unconfirmed_account"]
+		*account = *suite.testAccounts["unconfirmed_account"]
 
 		testSession := sessions.Default(ctx)
 		testSession.Set(sessionUserID, user.ID)
@@ -91,8 +94,7 @@ func (suite *AuthAuthorizeTestSuite) TestAccountAuthorizeHandler() {
 		testCase.description = fmt.Sprintf("%s, %t, %s", user.Email, *user.Disabled, account.SuspendedAt)
 
 		updatingColumns = append(updatingColumns, "updated_at")
-		user.UpdatedAt = time.Now()
-		err := suite.db.UpdateByPrimaryKey(context.Background(), user, updatingColumns...)
+		_, err := suite.db.UpdateUser(context.Background(), user, updatingColumns...)
 		suite.NoError(err)
 		_, err = suite.db.UpdateAccount(context.Background(), account)
 		suite.NoError(err)
