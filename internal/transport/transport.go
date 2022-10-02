@@ -88,7 +88,23 @@ func (t *transport) POST(r *http.Request, body []byte, retryOn ...int) (*http.Re
 
 func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryOn ...int) (*http.Response, error) {
 	const maxRetries = 5
-	backoff := time.Second * 2
+
+	var (
+		// Initial backoff duration
+		backoff = 2 * time.Second
+
+		// Get request hostname
+		host = r.URL.Hostname()
+	)
+
+	// Check if recently reached max retries for this host
+	// so we don't need to bother reattempting it. The only
+	// errors that are retried upon are server failure and
+	// domain resolution type errors, so this cached result
+	// indicates this server is likely having issues.
+	if t.controller.badHosts.Has(host) {
+		return nil, errors.New("too many failed attempts")
+	}
 
 	// Start a log entry for this request
 	l := log.WithFields(kv.Fields{
@@ -154,6 +170,9 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 			backoff *= 2
 		}
 	}
+
+	// Add "bad" entry for this host
+	t.controller.badHosts.Set(host, struct{}{})
 
 	return nil, errors.New("transport reached max retries")
 }
