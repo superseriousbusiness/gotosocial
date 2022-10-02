@@ -30,6 +30,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -40,6 +41,7 @@ const (
 	dateTime     = "Jan 02, 15:04"
 	dateYearTime = "Jan 02, 2006, 15:04"
 	monthYear    = "Jan, 2006"
+	badTimestamp = "bad timestamp"
 )
 
 // LoadTemplates loads html templates for use by the given engine
@@ -85,7 +87,12 @@ func noescapeAttr(str string) template.HTMLAttr {
 }
 
 func timestamp(stamp string) string {
-	t, _ := util.ParseISO8601(stamp)
+	t, err := util.ParseISO8601(stamp)
+	if err != nil {
+		log.Errorf("error parsing timestamp %s: %s", stamp, err)
+		return badTimestamp
+	}
+
 	t = t.Local()
 
 	tYear, tMonth, tDay := t.Date()
@@ -103,12 +110,20 @@ func timestamp(stamp string) string {
 }
 
 func timestampPrecise(stamp string) string {
-	t, _ := util.ParseISO8601(stamp)
+	t, err := util.ParseISO8601(stamp)
+	if err != nil {
+		log.Errorf("error parsing timestamp %s: %s", stamp, err)
+		return badTimestamp
+	}
 	return t.Local().Format(dateYearTime)
 }
 
 func timestampVague(stamp string) string {
-	t, _ := util.ParseISO8601(stamp)
+	t, err := util.ParseISO8601(stamp)
+	if err != nil {
+		log.Errorf("error parsing timestamp %s: %s", stamp, err)
+		return badTimestamp
+	}
 	return t.Format(monthYear)
 }
 
