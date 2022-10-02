@@ -70,13 +70,14 @@ func (p *processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 
 	// 1. Delete account's application(s), clients, and oauth tokens
 	// we only need to do this step for local account since remote ones won't have any tokens or applications on our server
+	var user *gtsmodel.User
 	if account.Domain == "" {
 		// see if we can get a user for this account
-		u := &gtsmodel.User{}
-		if err := p.db.GetWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, u); err == nil {
+		var err error
+		if user, err = p.db.GetUserByAccountID(ctx, account.ID); err == nil {
 			// we got one! select all tokens with the user's ID
 			tokens := []*gtsmodel.Token{}
-			if err := p.db.GetWhere(ctx, []db.Where{{Key: "user_id", Value: u.ID}}, &tokens); err == nil {
+			if err := p.db.GetWhere(ctx, []db.Where{{Key: "user_id", Value: user.ID}}, &tokens); err == nil {
 				// we have some tokens to delete
 				for _, t := range tokens {
 					// delete client(s) associated with this token
@@ -240,9 +241,11 @@ selectStatusesLoop:
 	// TODO
 
 	// 16. Delete account's user
-	l.Debug("deleting account user")
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, &gtsmodel.User{}); err != nil {
-		return gtserror.NewErrorInternalError(err)
+	if user != nil {
+		l.Debug("deleting account user")
+		if err := p.db.DeleteUserByID(ctx, user.ID); err != nil {
+			return gtserror.NewErrorInternalError(err)
+		}
 	}
 
 	// 17. Delete account's timeline
@@ -288,8 +291,8 @@ func (p *processor) DeleteLocal(ctx context.Context, account *gtsmodel.Account, 
 
 	if form.DeleteOriginID == account.ID {
 		// the account owner themself has requested deletion via the API, get their user from the db
-		user := &gtsmodel.User{}
-		if err := p.db.GetWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, user); err != nil {
+		user, err := p.db.GetUserByAccountID(ctx, account.ID)
+		if err != nil {
 			return gtserror.NewErrorInternalError(err)
 		}
 

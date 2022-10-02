@@ -68,8 +68,8 @@ func (f *filter) StatusVisible(ctx context.Context, targetStatus *gtsmodel.Statu
 	// if the target user doesn't exist (anymore) then the status also shouldn't be visible
 	// note: we only do this for local users
 	if targetAccount.Domain == "" {
-		targetUser := &gtsmodel.User{}
-		if err := f.db.GetWhere(ctx, []db.Where{{Key: "account_id", Value: targetAccount.ID}}, targetUser); err != nil {
+		targetUser, err := f.db.GetUserByAccountID(ctx, targetAccount.ID)
+		if err != nil {
 			l.Debug("target user could not be selected")
 			if err == db.ErrNoEntries {
 				return false, nil
@@ -98,8 +98,8 @@ func (f *filter) StatusVisible(ctx context.Context, targetStatus *gtsmodel.Statu
 	// if the requesting user doesn't exist (anymore) then the status also shouldn't be visible
 	// note: we only do this for local users
 	if requestingAccount.Domain == "" {
-		requestingUser := &gtsmodel.User{}
-		if err := f.db.GetWhere(ctx, []db.Where{{Key: "account_id", Value: requestingAccount.ID}}, requestingUser); err != nil {
+		requestingUser, err := f.db.GetUserByAccountID(ctx, requestingAccount.ID)
+		if err != nil {
 			// if the requesting account is local but doesn't have a corresponding user in the db this is a problem
 			l.Debug("requesting user could not be selected")
 			if err == db.ErrNoEntries {

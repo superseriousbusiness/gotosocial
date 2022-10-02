@@ -40,8 +40,8 @@ func (p *processor) AuthorizeStreamingRequest(ctx context.Context, accessToken s
 		return nil, gtserror.NewErrorUnauthorized(err)
 	}
 
-	user := &gtsmodel.User{}
-	if err := p.db.GetByID(ctx, uid, user); err != nil {
+	user, err := p.db.GetUserByID(ctx, uid)
+	if err != nil {
 		if err == db.ErrNoEntries {
 			err := fmt.Errorf("no user found for validated uid %s", uid)
 			return nil, gtserror.NewErrorUnauthorized(err)

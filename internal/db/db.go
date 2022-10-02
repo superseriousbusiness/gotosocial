@@ -44,6 +44,7 @@ type DB interface {
 	Session
 	Status
 	Timeline
+	User
 
 	/*
 		USEFUL CONVERSION FUNCTIONS

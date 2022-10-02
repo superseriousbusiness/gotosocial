@@ -52,8 +52,8 @@ func (m *Module) TokenCheck(c *gin.Context) {
 		log.Tracef("authenticated user %s with bearer token, scope is %s", userID, ti.GetScope())
 
 		// fetch user for this token
-		user := &gtsmodel.User{}
-		if err := m.db.GetByID(ctx, userID, user); err != nil {
+		user, err := m.db.GetUserByID(ctx, userID)
+		if err != nil {
 			if err != db.ErrNoEntries {
 				log.Errorf("database error looking for user with id %s: %s", userID, err)
 				return
@@ -80,22 +80,25 @@ func (m *Module) TokenCheck(c *gin.Context) {
 		c.Set(oauth.SessionAuthorizedUser, user)
 
 		// fetch account for this token
-		acct, err := m.db.GetAccountByID(ctx, user.AccountID)
-		if err != nil {
-			if err != db.ErrNoEntries {
-				log.Errorf("database error looking for account with id %s: %s", user.AccountID, err)
+		if user.Account == nil {
+			acct, err := m.db.GetAccountByID(ctx, user.AccountID)
+			if err != nil {
+				if err != db.ErrNoEntries {
+					log.Errorf("database error looking for account with id %s: %s", user.AccountID, err)
+					return
+				}
+				log.Warnf("no account found for userID %s", userID)
 				return
 			}
-			log.Warnf("no account found for userID %s", userID)
-			return
+			user.Account = acct
 		}
 
-		if !acct.SuspendedAt.IsZero() {
+		if !user.Account.SuspendedAt.IsZero() {
 			log.Warnf("authenticated user %s's account (accountId=%s) has been suspended", userID, user.AccountID)
 			return
 		}
 
-		c.Set(oauth.SessionAuthorizedAccount, acct)
+		c.Set(oauth.SessionAuthorizedAccount, user.Account)
 	}
 
 	// check for application token

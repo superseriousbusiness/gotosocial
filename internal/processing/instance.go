@@ -142,8 +142,8 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 			return nil, gtserror.NewErrorBadRequest(err, fmt.Sprintf("account with username %s not retrievable", *form.ContactUsername))
 		}
 		// make sure it has a user associated with it
-		contactUser := &gtsmodel.User{}
-		if err := p.db.GetWhere(ctx, []db.Where{{Key: "account_id", Value: contactAccount.ID}}, contactUser); err != nil {
+		contactUser, err := p.db.GetUserByAccountID(ctx, contactAccount.ID)
+		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, fmt.Sprintf("user for account with username %s not retrievable", *form.ContactUsername))
 		}
 		// suspended accounts cannot be contact accounts

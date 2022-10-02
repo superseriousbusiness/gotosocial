@@ -87,6 +87,7 @@ type DBService struct {
 	db.Session
 	db.Status
 	db.Timeline
+	db.User
 	conn *DBConn
 }
 
@@ -181,13 +182,15 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 	notifCache.SetTTL(time.Minute*5, false)
 	notifCache.Start(time.Second * 10)
 
-	// Prepare domain block cache
+	// Prepare other caches
 	blockCache := cache.NewDomainBlockCache()
+	userCache := cache.NewUserCache()
 
 	ps := &DBService{
 		Account: accounts,
 		Admin: &adminDB{
-			conn: conn,
+			conn:      conn,
+			userCache: userCache,
 		},
 		Basic: &basicDB{
 			conn: conn,
@@ -219,7 +222,11 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 		},
 		Status:   status,
 		Timeline: timeline,
-		conn:     conn,
+		User: &userDB{
+			conn:  conn,
+			cache: userCache,
+		},
+		conn: conn,
 	}
 
 	// we can confidently return this useable service now
