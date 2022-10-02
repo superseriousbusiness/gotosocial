@@ -18,8 +18,6 @@
 
 "use strict";
 
-console.log("test", "aaaa");
-
 const Promise = require("bluebird");
 const React = require("react");
 const ReactDom = require("react-dom/client");
