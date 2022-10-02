@@ -37,8 +37,7 @@ func (u *userDB) newUserQ(user *gtsmodel.User) *bun.SelectQuery {
 	return u.conn.
 		NewSelect().
 		Model(user).
-		Relation("Account").
-		Relation("Application")
+		Relation("Account")
 }
 
 func (u *userDB) getUser(ctx context.Context, cacheGet func() (*gtsmodel.User, bool), dbQuery func(*gtsmodel.User) error) (*gtsmodel.User, db.Error) {
@@ -97,18 +96,6 @@ func (u *userDB) GetUserByEmailAddress(ctx context.Context, emailAddress string)
 	)
 }
 
-func (u *userDB) GetUserByUnconfirmedEmailAddress(ctx context.Context, unconfirmedEmailAddress string) (*gtsmodel.User, db.Error) {
-	return u.getUser(
-		ctx,
-		func() (*gtsmodel.User, bool) {
-			return u.cache.GetByEmail(unconfirmedEmailAddress)
-		},
-		func(user *gtsmodel.User) error {
-			return u.newUserQ(user).Where("user.unconfirmed_email = ?", unconfirmedEmailAddress).Scan(ctx)
-		},
-	)
-}
-
 func (u *userDB) GetUserByConfirmationToken(ctx context.Context, confirmationToken string) (*gtsmodel.User, db.Error) {
 	return u.getUser(
 		ctx,
@@ -140,12 +127,13 @@ func (u *userDB) UpdateUser(ctx context.Context, user *gtsmodel.User, columns ..
 	if _, err := u.conn.
 		NewUpdate().
 		Model(user).
+		WherePK().
 		Column(columns...).
 		Exec(ctx); err != nil {
 		return nil, u.conn.ProcessError(err)
 	}
 
-	u.cache.Put(user)
+	u.cache.Invalidate(user.ID)
 	return user, nil
 }
 
