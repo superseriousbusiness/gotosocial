@@ -176,9 +176,22 @@ Promise.each(bundles, (bundleCfg) => {
 					return fs.writeFile(out(outputFile), bundle);
 				}
 			}).catch((e) => {
-				console.log(chalk.red("Fatal error in bundler:"), bundleCfg.bundle);
-				console.log(e.message);
-				console.log(e.stack);
+				console.log(chalk.red("Fatal error in bundler:"), bundleCfg.outputFile);
+				if (e.name == "CssSyntaxError") {
+					// contains useful info about error + location, but followed by useless
+					// actual stacktrace, so cut that off
+					let stack = e.stack;
+					stack.split("\n").some((line) => {
+						if (line.startsWith("    at Input.error")) {
+							return true;
+						} else {
+							console.log(line);
+							return false;
+						}
+					});
+				} else {
+					console.log(e.message);
+				}
 				console.log();
 			});
 		}
