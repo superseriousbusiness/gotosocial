@@ -33,6 +33,7 @@ if (devMode) {
 	console.log(chalk.yellow("GoToSocial web asset bundler, running in development mode"));
 } else {
 	console.log(chalk.yellow("GoToSocial web asset bundler, creating production build"));
+	process.env.NODE_ENV = "production";
 }
 
 let cssFiles = fsSync.readdirSync(path.join(__dirname, "./css")).map((file) => {
