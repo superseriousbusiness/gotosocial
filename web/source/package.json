@@ -16,6 +16,7 @@
     "bluebird": "^3.7.2",
     "browserify": "^17.0.0",
     "browserlist": "^1.0.1",
+    "chalk": "4",
     "create-error": "^0.3.1",
     "css-extract": "^2.0.0",
     "default-value": "^1.0.0",

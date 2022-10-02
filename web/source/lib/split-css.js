@@ -20,6 +20,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const chalk = require("chalk");
 
 const {Writable} = require("stream");
 const {out} = require("../index.js");
@@ -40,9 +41,11 @@ module.exports = function splitCSS() {
 			function write() {
 				if (content.length != 0) {
 					if (input == undefined) {
-						throw new Error("Got CSS content without filename, can't output: ", content);
+						if (content[0].length != 0) {
+							throw new Error("Got CSS content without filename, can't output: ", content);
+						}
 					} else {
-						console.log("writing to", out(input));
+						console.log(chalk.blue(`CSS: writing to assets/dist/${input}`));
 						fs.writeFileSync(out(input), content.join("\n"));
 					}
 					content = [];
