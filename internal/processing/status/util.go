@@ -250,7 +250,7 @@ func (p *processor) ProcessTags(ctx context.Context, form *apimodel.AdvancedStat
 func (p *processor) ProcessEmojis(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
 	// for each emoji shortcode in the text, check if it's an enabled
 	// emoji on this instance, and if so, add it to the status
-	emojiShortcodes := util.DeriveEmojisFromText(form.Status)
+	emojiShortcodes := util.DeriveEmojisFromText(form.SpoilerText + "\n\n" + form.Status)
 	status.Emojis = make([]*gtsmodel.Emoji, 0, len(emojiShortcodes))
 	status.EmojiIDs = make([]string, 0, len(emojiShortcodes))
 

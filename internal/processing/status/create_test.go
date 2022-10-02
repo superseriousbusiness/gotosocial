@@ -139,6 +139,41 @@ func (suite *StatusCreateTestSuite) TestProcessStatusMarkdownWithUnderscoreEmoji
 	suite.NotEmpty(apiStatus.Emojis)
 }
 
+func (suite *StatusCreateTestSuite) TestProcessStatusMarkdownWithSpoilerTextEmoji() {
+	ctx := context.Background()
+	creatingAccount := suite.testAccounts["local_account_1"]
+	creatingApplication := suite.testApplications["application_1"]
+
+	statusCreateForm := &model.AdvancedStatusCreateForm{
+		StatusCreateRequest: model.StatusCreateRequest{
+			Status:      "poopoo peepee",
+			SpoilerText: "testing something :rainbow:",
+			MediaIDs:    []string{},
+			Poll:        nil,
+			InReplyToID: "",
+			Sensitive:   false,
+			Visibility:  model.VisibilityPublic,
+			ScheduledAt: "",
+			Language:    "en",
+			Format:      model.StatusFormatMarkdown,
+		},
+		AdvancedVisibilityFlagsForm: model.AdvancedVisibilityFlagsForm{
+			Federated: nil,
+			Boostable: nil,
+			Replyable: nil,
+			Likeable:  nil,
+		},
+	}
+
+	apiStatus, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
+	suite.NoError(err)
+	suite.NotNil(apiStatus)
+
+	suite.Equal("<p>poopoo peepee</p>", apiStatus.Content)
+	suite.Equal("testing something :rainbow:", apiStatus.SpoilerText)
+	suite.NotEmpty(apiStatus.Emojis)
+}
+
 func TestStatusCreateTestSuite(t *testing.T) {
 	suite.Run(t, new(StatusCreateTestSuite))
 }
