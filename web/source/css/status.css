@@ -75,28 +75,27 @@ main {
 			background: $bg;
 		}
 	}
+
+	.displayname, .username {
+		justify-self: start;
+		align-self: start;
+		
+		max-width: 100%;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+
+		/* margin-top: -0.5rem; */
+		line-height: 2rem;
+	}
 	
 	.displayname {
 		font-weight: bold;
 		font-size: 1.2rem;
-		line-height: 2rem;
-		margin-top: -0.5rem;
-		align-self: start;
-
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
 	}
-	
+
 	.username {
 		color: $link-fg;
-		line-height: 2rem;
-		margin-top: -0.5rem;
-		align-self: start;
-		
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
 	}
 
 	input.spoiler:checked ~ .content {
@@ -180,7 +179,7 @@ main {
 	}
 
 	.media {
-		margin-top: 0.6rem;
+		margin-top: 0.5rem;
 		border-radius: $br;
 		grid-column: span 3;
 		display: grid;
@@ -362,6 +361,7 @@ main {
 
 			.text {
 				grid-column: 1 / span 3;
+				padding-top: 0.5rem;
 			}
 
 			.not-expanded {
@@ -371,6 +371,10 @@ main {
 
 		.info {
 			display: flex;
+		}
+
+		.media {
+			margin-bottom: 0.5rem;
 		}
 	}
 }
