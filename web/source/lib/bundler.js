@@ -106,7 +106,7 @@ module.exports = function gtsBundler(devMode, bundles) {
 				}),
 				threshold: function(row, groups) {
 					// always put livereload.js in common bundle
-					if (row.id.endsWith("web/source/lib/livereload.js")) {
+					if (row.file.endsWith("web/source/lib/livereload.js")) {
 						return true;
 					} else {
 						return this._defaultThreshold(row, groups);
@@ -130,6 +130,9 @@ module.exports = function gtsBundler(devMode, bundles) {
 		return Promise.try(() => {
 			return browserify(entryFiles, config);
 		}).then((bundler) => {
+			bundler.on("error", (err) => {
+				console.error(err.message);
+			});
 			Promise.promisifyAll(bundler);
 
 			function makeBundle(cause) {
@@ -167,7 +170,6 @@ module.exports = function gtsBundler(devMode, bundles) {
 					} else {
 						debug(e.message);
 					}
-					debug();
 				});
 			}
 
