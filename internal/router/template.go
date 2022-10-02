@@ -36,8 +36,10 @@ import (
 
 const (
 	justTime     = "15:04"
-	dateAndTime  = "Jan 02, 15:04"
-	yearDateTime = "Jan 02, 2006, 15:04"
+	dateYear     = "Jan 02, 2006"
+	dateTime     = "Jan 02, 15:04"
+	dateYearTime = "Jan 02, 2006, 15:04"
+	monthYear    = "Jan, 2006"
 )
 
 // LoadTemplates loads html templates for use by the given engine
@@ -92,17 +94,22 @@ func timestamp(stamp string) string {
 
 	switch {
 	case tYear == currentYear && tMonth == currentMonth && tDay == currentDay:
-		return "Today, " + t.Format("15:04")
+		return "Today, " + t.Format(justTime)
 	case tYear == currentYear:
-		return t.Format("Jan 02, 15:04")
+		return t.Format(dateTime)
 	default:
-		return t.Format("Jan 02, 2006, 15:04")
+		return t.Format(dateYear)
 	}
+}
+
+func timestampPrecise(stamp string) string {
+	t, _ := util.ParseISO8601(stamp)
+	return t.Local().Format(dateYearTime)
 }
 
 func timestampVague(stamp string) string {
 	t, _ := util.ParseISO8601(stamp)
-	return t.Format("January, 2006")
+	return t.Format(monthYear)
 }
 
 type iconWithLabel struct {
@@ -174,13 +181,14 @@ func emojify(emojis []model.Emoji, text template.HTML) template.HTML {
 
 func LoadTemplateFunctions(engine *gin.Engine) {
 	engine.SetFuncMap(template.FuncMap{
-		"escape":         escape,
-		"noescape":       noescape,
-		"noescapeAttr":   noescapeAttr,
-		"oddOrEven":      oddOrEven,
-		"visibilityIcon": visibilityIcon,
-		"timestamp":      timestamp,
-		"timestampVague": timestampVague,
-		"emojify":        emojify,
+		"escape":           escape,
+		"noescape":         noescape,
+		"noescapeAttr":     noescapeAttr,
+		"oddOrEven":        oddOrEven,
+		"visibilityIcon":   visibilityIcon,
+		"timestamp":        timestamp,
+		"timestampVague":   timestampVague,
+		"timestampPrecise": timestampPrecise,
+		"emojify":          emojify,
 	})
 }
