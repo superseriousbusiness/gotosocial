@@ -75,28 +75,27 @@ main {
 			background: $bg;
 		}
 	}
+
+	.displayname, .username {
+		justify-self: start;
+		align-self: start;
+		
+		max-width: 100%;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+
+		/* margin-top: -0.5rem; */
+		line-height: 2rem;
+	}
 	
 	.displayname {
 		font-weight: bold;
 		font-size: 1.2rem;
-		line-height: 2rem;
-		margin-top: -0.5rem;
-		align-self: start;
-
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
 	}
-	
+
 	.username {
 		color: $link-fg;
-		line-height: 2rem;
-		margin-top: -0.5rem;
-		align-self: start;
-		
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
 	}
 
 	input.spoiler:checked ~ .content {
