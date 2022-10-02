@@ -180,7 +180,7 @@ main {
 	}
 
 	.media {
-		margin-top: 0.6rem;
+		margin-top: 0.5rem;
 		border-radius: $br;
 		grid-column: span 3;
 		display: grid;
@@ -362,6 +362,7 @@ main {
 
 			.text {
 				grid-column: 1 / span 3;
+				padding-top: 0.5rem;
 			}
 
 			.not-expanded {
@@ -371,6 +372,10 @@ main {
 
 		.info {
 			display: flex;
+		}
+
+		.media {
+			margin-bottom: 0.5rem;
 		}
 	}
 }
