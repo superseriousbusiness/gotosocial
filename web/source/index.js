@@ -37,7 +37,9 @@ const chalk = require("chalk");
 
 const devMode = process.env.NODE_ENV == "development";
 if (devMode) {
-	console.log("Running in development mode");
+	console.log(chalk.yellow("GoToSocial web asset bundler, running in development mode"));
+} else {
+	console.log(chalk.yellow("GoToSocial web asset bundler, creating production build"));
 }
 
 function out(name = "") {
@@ -132,7 +134,7 @@ function browserifyConfig({transforms = [], plugins = [], babelOptions = {}}) {
 	};
 }
 
-bundles.forEach((bundleCfg) => {
+Promise.each(bundles, (bundleCfg) => {
 	let transforms, plugins, entryFiles;
 	let { outputFile, babelOptions} = bundleCfg;
 
@@ -152,7 +154,7 @@ bundles.forEach((bundleCfg) => {
 
 	let config = browserifyConfig({transforms, plugins, babelOptions, entryFiles, outputFile});
 
-	Promise.try(() => {
+	return Promise.try(() => {
 		return browserify(entryFiles, config);
 	}).then((bundler) => {
 		Promise.promisifyAll(bundler);
@@ -181,7 +183,16 @@ bundles.forEach((bundleCfg) => {
 			});
 		}
 
-		bundler.on("update", makeBundle);
+		if (devMode) {
+			bundler.on("update", makeBundle);
+		}
 		return makeBundle();
 	});
+}).then(() => {
+	if (devMode) {
+		console.log(chalk.yellow("Initial build finished, waiting for file changes"));
+	} else {
+		console.log(chalk.yellow("Finished building"));
+	}
 });
+
