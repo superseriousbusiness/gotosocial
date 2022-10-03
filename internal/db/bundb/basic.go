@@ -110,7 +110,7 @@ func (b *basicDB) UpdateWhere(ctx context.Context, where []db.Where, key string,
 
 	updateWhere(q, where)
 
-	q = q.Set("? = ?", bun.Safe(key), value)
+	q = q.Set("? = ?", bun.Ident(key), value)
 
 	_, err := q.Exec(ctx)
 	return b.conn.ProcessError(err)

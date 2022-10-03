@@ -55,7 +55,7 @@ func (p *processor) DomainBlockDelete(ctx context.Context, account *gtsmodel.Acc
 	// remove the domain block reference from the instance, if we have an entry for it
 	i := &gtsmodel.Instance{}
 	if err := p.db.GetWhere(ctx, []db.Where{
-		{Key: "domain", Value: domainBlock.Domain, CaseInsensitive: true},
+		{Key: "domain", Value: domainBlock.Domain},
 		{Key: "domain_block_id", Value: id},
 	}, i); err == nil {
 		updatingColumns := []string{"suspended_at", "domain_block_id", "updated_at"}
