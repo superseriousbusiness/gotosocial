@@ -19,112 +19,46 @@
 "use strict";
 
 /*
-	Bundle the frontend panels for admin and user settings
+	Bundle the PostCSS stylesheets and javascript bundles for general frontend and settings panel
 */
 
 const path = require('path');
-// Forked budo-express supports EventEmitter, to write bundle.js to disk in development
-const budoExpress = require('@f0x52/budo-express');
-const babelify = require('babelify');
-const fs = require("fs");
-const EventEmitter = require('events');
+const fsSync = require("fs");
+const chalk = require("chalk");
 
-function out(name = "") {
-	return path.join(__dirname, "../assets/dist/", name);
+const gtsBundler = require("./lib/bundler");
+
+const devMode = process.env.NODE_ENV == "development";
+if (devMode) {
+	console.log(chalk.yellow("GoToSocial web asset bundler, running in development mode"));
+} else {
+	console.log(chalk.yellow("GoToSocial web asset bundler, creating production build"));
+	process.env.NODE_ENV = "production";
 }
 
-module.exports = {out};
+let cssFiles = fsSync.readdirSync(path.join(__dirname, "./css")).map((file) => {
+	return path.join(__dirname, "./css", file);
+});
 
-const splitCSS = require("./lib/split-css.js");
-
-const bundles = {
-	"./frontend/index.js": "frontend.js",
-	"./settings-panel/index.js": "settings.js",
-	// "./panels/admin/index.js": "admin-panel.js",
-	// "./panels/user/index.js": "user-panel.js",
-};
-
-const postcssPlugins = [
-	"postcss-import",
-	"postcss-nested",
-	"autoprefixer",
-	"postcss-custom-prop-vars",
-	"postcss-color-mod-function"
-].map((plugin) => require(plugin)());
-
-let uglifyifyInProduction;
-
-if (process.env.NODE_ENV != "development") {
-	console.log("uglifyify'ing production bundles");
-	uglifyifyInProduction = [
-		require("uglifyify"), {
+const bundles = [
+	{
+		outputFile: "frontend.js",
+		entryFiles: ["./frontend/index.js"],
+		babelOptions: {
 			global: true,
-			exts: ".js"
+			exclude: /node_modules\/(?!photoswipe-dynamic-caption-plugin)/,
 		}
-	];
-}
+	},
+	{
+		outputFile: "react-bundle.js",
+		factors: {
+			"./settings/index.js": "settings.js",
+		}
+	},
+	{
+		outputFile: "_delete", // not needed, we only care for the css that's already split-out by css-extract
+		entryFiles: cssFiles,
+	}
+];
 
-const browserifyConfig = {
-	transform: [
-		[
-			babelify.configure({
-				presets: [
-					[
-						require.resolve("@babel/preset-env"),
-						{
-							modules: "cjs"
-						}
-					],
-					require.resolve("@babel/preset-react")
-				]
-			}),
-			{
-				global: true,
-				exclude: /node_modules\/(?!photoswipe-dynamic-caption-plugin)/,
-			}
-		],
-		uglifyifyInProduction
-	],
-	plugin: [
-		[require("icssify"), {
-			parser: require("postcss-scss"),
-			before: postcssPlugins,
-			mode: 'global'
-		}],
-		[require("css-extract"), { out: splitCSS }],
-		[require("factor-bundle"), {
-			outputs: Object.values(bundles).map((file) => {
-				return out(file);
-			})
-		}]
-	],
-	extensions: [".js", ".jsx", ".css"]
-};
-
-const entryFiles = Object.keys(bundles);
-
-fs.readdirSync(path.join(__dirname, "./css")).forEach((file) => {
-	entryFiles.push(path.join(__dirname, "./css", file));
-});
-
-if (!fs.existsSync(out())){
-	fs.mkdirSync(out(), { recursive: true });
-}
-
-const server = budoExpress({
-	port: 8081,
-	host: "localhost",
-	entryFiles: entryFiles,
-	basePath: __dirname,
-	bundlePath: "bundle.js",
-	staticPath: out(),
-	expressApp: require("./dev-server.js"),
-	browserify: browserifyConfig,
-	livereloadPattern: "**/*.{html,js,svg}"
-});
-
-if (server instanceof EventEmitter) {
-	server.on("update", (contents) => {
-		fs.writeFileSync(out("bundle.js"), contents);
-	});
-}
+return gtsBundler(devMode, bundles);
