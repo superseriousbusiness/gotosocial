@@ -42,7 +42,7 @@ func (m *mediaDB) GetAttachmentByID(ctx context.Context, id string) (*gtsmodel.M
 	attachment := &gtsmodel.MediaAttachment{}
 
 	q := m.newMediaQ(attachment).
-		Where("?.? = ?", bun.Ident("media_attachment.id"), id)
+		Where("? = ?", bun.Ident("media_attachment.id"), id)
 
 	if err := q.Scan(ctx); err != nil {
 		return nil, m.conn.ProcessError(err)
