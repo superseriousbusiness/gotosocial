@@ -54,12 +54,12 @@ func (e *emojiDB) GetCustomEmojis(ctx context.Context) ([]*gtsmodel.Emoji, db.Er
 
 	q := e.conn.
 		NewSelect().
-		Table("emojis").
-		Column("id").
-		Where("visible_in_picker = true").
-		Where("disabled = false").
-		Where("domain IS NULL").
-		Order("shortcode ASC")
+		Model(&gtsmodel.Emoji{}).
+		Column("emoji.id").
+		Where("? = ?", bun.Ident("emoji.visible_in_picker"), true).
+		Where("? = ?", bun.Ident("emoji.disabled"), false).
+		Where("? IS NULL", bun.Ident("emoji.domain")).
+		Order("emoji.shortcode ASC")
 
 	if err := q.Scan(ctx, &emojiIDs); err != nil {
 		return nil, e.conn.ProcessError(err)
@@ -75,7 +75,7 @@ func (e *emojiDB) GetEmojiByID(ctx context.Context, id string) (*gtsmodel.Emoji,
 			return e.cache.GetByID(id)
 		},
 		func(emoji *gtsmodel.Emoji) error {
-			return e.newEmojiQ(emoji).Where("emoji.id = ?", id).Scan(ctx)
+			return e.newEmojiQ(emoji).Where("? = ?", bun.Ident("emoji.id"), id).Scan(ctx)
 		},
 	)
 }
@@ -87,7 +87,7 @@ func (e *emojiDB) GetEmojiByURI(ctx context.Context, uri string) (*gtsmodel.Emoj
 			return e.cache.GetByURI(uri)
 		},
 		func(emoji *gtsmodel.Emoji) error {
-			return e.newEmojiQ(emoji).Where("emoji.uri = ?", uri).Scan(ctx)
+			return e.newEmojiQ(emoji).Where("? = ?", bun.Ident("emoji.uri"), uri).Scan(ctx)
 		},
 	)
 }
@@ -102,11 +102,11 @@ func (e *emojiDB) GetEmojiByShortcodeDomain(ctx context.Context, shortcode strin
 			q := e.newEmojiQ(emoji)
 
 			if domain != "" {
-				q = q.Where("emoji.shortcode = ?", shortcode)
-				q = q.Where("emoji.domain = ?", domain)
+				q = q.Where("? = ?", bun.Ident("emoji.shortcode"), shortcode)
+				q = q.Where("? = ?", bun.Ident("emoji.domain"), domain)
 			} else {
-				q = q.Where("emoji.shortcode = ?", strings.ToLower(shortcode))
-				q = q.Where("emoji.domain IS NULL")
+				q = q.Where("? = ?", bun.Ident("emoji.shortcode"), strings.ToLower(shortcode))
+				q = q.Where("? IS NULL", bun.Ident("emoji.domain"))
 			}
 
 			return q.Scan(ctx)
