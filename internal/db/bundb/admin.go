@@ -30,6 +30,7 @@ import (
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -40,7 +41,8 @@ import (
 )
 
 type adminDB struct {
-	conn *DBConn
+	conn      *DBConn
+	userCache *cache.UserCache
 }
 
 func (a *adminDB) IsUsernameAvailable(ctx context.Context, username string) (bool, db.Error) {
@@ -175,6 +177,7 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 		Exec(ctx); err != nil {
 		return nil, a.conn.ProcessError(err)
 	}
+	a.userCache.Put(u)
 
 	return u, nil
 }

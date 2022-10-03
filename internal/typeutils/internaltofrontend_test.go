@@ -46,9 +46,9 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontend() {
 func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiStruct() {
 	testAccount := suite.testAccounts["local_account_1"] // take zork for this test
 	testEmoji := suite.testEmojis["rainbow"]
-	
+
 	testAccount.Emojis = []*gtsmodel.Emoji{testEmoji}
-	
+
 	apiAccount, err := suite.typeconverter.AccountToAPIAccountPublic(context.Background(), testAccount)
 	suite.NoError(err)
 	suite.NotNil(apiAccount)
@@ -61,9 +61,9 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiStruct()
 func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiIDs() {
 	testAccount := suite.testAccounts["local_account_1"] // take zork for this test
 	testEmoji := suite.testEmojis["rainbow"]
-	
+
 	testAccount.EmojiIDs = []string{testEmoji.ID}
-	
+
 	apiAccount, err := suite.typeconverter.AccountToAPIAccountPublic(context.Background(), testAccount)
 	suite.NoError(err)
 	suite.NotNil(apiAccount)

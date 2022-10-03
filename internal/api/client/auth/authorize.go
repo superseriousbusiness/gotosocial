@@ -94,8 +94,8 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 		return
 	}
 
-	user := &gtsmodel.User{}
-	if err := m.db.GetByID(c.Request.Context(), userID, user); err != nil {
+	user, err := m.db.GetUserByID(c.Request.Context(), userID)
+	if err != nil {
 		m.clearSession(s)
 		safe := fmt.Sprintf("user with id %s could not be retrieved", userID)
 		var errWithCode gtserror.WithCode
@@ -213,8 +213,8 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	user := &gtsmodel.User{}
-	if err := m.db.GetByID(c.Request.Context(), userID, user); err != nil {
+	user, err := m.db.GetUserByID(c.Request.Context(), userID)
+	if err != nil {
 		m.clearSession(s)
 		safe := fmt.Sprintf("user with id %s could not be retrieved", userID)
 		var errWithCode gtserror.WithCode

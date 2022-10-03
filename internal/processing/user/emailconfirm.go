@@ -89,8 +89,8 @@ func (p *processor) ConfirmEmail(ctx context.Context, token string) (*gtsmodel.U
 		return nil, gtserror.NewErrorNotFound(errors.New("no token provided"))
 	}
 
-	user := &gtsmodel.User{}
-	if err := p.db.GetWhere(ctx, []db.Where{{Key: "confirmation_token", Value: token}}, user); err != nil {
+	user, err := p.db.GetUserByConfirmationToken(ctx, token)
+	if err != nil {
 		if err == db.ErrNoEntries {
 			return nil, gtserror.NewErrorNotFound(err)
 		}

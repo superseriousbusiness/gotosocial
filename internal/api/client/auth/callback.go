@@ -134,8 +134,7 @@ func (m *Module) parseUserFromClaims(ctx context.Context, claims *oidc.Claims, i
 
 	// see if we already have a user for this email address
 	// if so, we don't need to continue + create one
-	user := &gtsmodel.User{}
-	err := m.db.GetWhere(ctx, []db.Where{{Key: "email", Value: claims.Email}}, user)
+	user, err := m.db.GetUserByEmailAddress(ctx, claims.Email)
 	if err == nil {
 		return user, nil
 	}

@@ -26,9 +26,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -92,8 +90,8 @@ var Confirm action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	u := &gtsmodel.User{}
-	if err := dbConn.GetWhere(ctx, []db.Where{{Key: "account_id", Value: a.ID}}, u); err != nil {
+	u, err := dbConn.GetUserByAccountID(ctx, a.ID)
+	if err != nil {
 		return err
 	}
 
@@ -130,8 +128,8 @@ var Promote action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	u := &gtsmodel.User{}
-	if err := dbConn.GetWhere(ctx, []db.Where{{Key: "account_id", Value: a.ID}}, u); err != nil {
+	u, err := dbConn.GetUserByAccountID(ctx, a.ID)
+	if err != nil {
 		return err
 	}
 
@@ -139,7 +137,7 @@ var Promote action.GTSAction = func(ctx context.Context) error {
 	admin := true
 	u.Admin = &admin
 	u.UpdatedAt = time.Now()
-	if err := dbConn.UpdateByPrimaryKey(ctx, u, updatingColumns...); err != nil {
+	if _, err := dbConn.UpdateUser(ctx, u, updatingColumns...); err != nil {
 		return err
 	}
 
@@ -166,8 +164,8 @@ var Demote action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	u := &gtsmodel.User{}
-	if err := dbConn.GetWhere(ctx, []db.Where{{Key: "account_id", Value: a.ID}}, u); err != nil {
+	u, err := dbConn.GetUserByAccountID(ctx, a.ID)
+	if err != nil {
 		return err
 	}
 
@@ -175,7 +173,7 @@ var Demote action.GTSAction = func(ctx context.Context) error {
 	admin := false
 	u.Admin = &admin
 	u.UpdatedAt = time.Now()
-	if err := dbConn.UpdateByPrimaryKey(ctx, u, updatingColumns...); err != nil {
+	if _, err := dbConn.UpdateUser(ctx, u, updatingColumns...); err != nil {
 		return err
 	}
 
@@ -202,8 +200,8 @@ var Disable action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	u := &gtsmodel.User{}
-	if err := dbConn.GetWhere(ctx, []db.Where{{Key: "account_id", Value: a.ID}}, u); err != nil {
+	u, err := dbConn.GetUserByAccountID(ctx, a.ID)
+	if err != nil {
 		return err
 	}
 
@@ -211,7 +209,7 @@ var Disable action.GTSAction = func(ctx context.Context) error {
 	disabled := true
 	u.Disabled = &disabled
 	u.UpdatedAt = time.Now()
-	if err := dbConn.UpdateByPrimaryKey(ctx, u, updatingColumns...); err != nil {
+	if _, err := dbConn.UpdateUser(ctx, u, updatingColumns...); err != nil {
 		return err
 	}
 
@@ -252,8 +250,8 @@ var Password action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	u := &gtsmodel.User{}
-	if err := dbConn.GetWhere(ctx, []db.Where{{Key: "account_id", Value: a.ID}}, u); err != nil {
+	u, err := dbConn.GetUserByAccountID(ctx, a.ID)
+	if err != nil {
 		return err
 	}
 
@@ -265,7 +263,7 @@ var Password action.GTSAction = func(ctx context.Context) error {
 	updatingColumns := []string{"encrypted_password", "updated_at"}
 	u.EncryptedPassword = string(pw)
 	u.UpdatedAt = time.Now()
-	if err := dbConn.UpdateByPrimaryKey(ctx, u, updatingColumns...); err != nil {
+	if _, err := dbConn.UpdateUser(ctx, u, updatingColumns...); err != nil {
 		return err
 	}
 
