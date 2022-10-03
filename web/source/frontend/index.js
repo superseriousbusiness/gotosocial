@@ -22,6 +22,14 @@ const Photoswipe = require("photoswipe/dist/umd/photoswipe.umd.min.js");
 const PhotoswipeLightbox = require("photoswipe/dist/umd/photoswipe-lightbox.umd.min.js");
 const PhotoswipeCaptionPlugin = require("photoswipe-dynamic-caption-plugin").default;
 
+let [_, _user, type, id] = window.location.pathname.split("/");
+if (type == "statuses") {
+	let firstStatus = document.getElementsByClassName("thread")[0].children[0];
+	if (firstStatus.id != id) {
+		document.getElementById(id).scrollIntoView();
+	}
+}
+
 const lightbox = new PhotoswipeLightbox({
 	gallery: '.photoswipe-gallery',
 	children: 'a',
