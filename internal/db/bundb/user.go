@@ -67,7 +67,7 @@ func (u *userDB) GetUserByID(ctx context.Context, id string) (*gtsmodel.User, db
 			return u.cache.GetByID(id)
 		},
 		func(user *gtsmodel.User) error {
-			return u.newUserQ(user).Where("user.id = ?", id).Scan(ctx)
+			return u.newUserQ(user).Where("? = ?", bun.Ident("user.id"), id).Scan(ctx)
 		},
 	)
 }
@@ -79,7 +79,7 @@ func (u *userDB) GetUserByAccountID(ctx context.Context, accountID string) (*gts
 			return u.cache.GetByAccountID(accountID)
 		},
 		func(user *gtsmodel.User) error {
-			return u.newUserQ(user).Where("user.account_id = ?", accountID).Scan(ctx)
+			return u.newUserQ(user).Where("? = ?", bun.Ident("user.account_id"), accountID).Scan(ctx)
 		},
 	)
 }
@@ -91,7 +91,7 @@ func (u *userDB) GetUserByEmailAddress(ctx context.Context, emailAddress string)
 			return u.cache.GetByEmail(emailAddress)
 		},
 		func(user *gtsmodel.User) error {
-			return u.newUserQ(user).Where("user.email = ?", emailAddress).Scan(ctx)
+			return u.newUserQ(user).Where("? = ?", bun.Ident("user.email"), emailAddress).Scan(ctx)
 		},
 	)
 }
@@ -103,7 +103,7 @@ func (u *userDB) GetUserByConfirmationToken(ctx context.Context, confirmationTok
 			return u.cache.GetByConfirmationToken(confirmationToken)
 		},
 		func(user *gtsmodel.User) error {
-			return u.newUserQ(user).Where("user.confirmation_token = ?", confirmationToken).Scan(ctx)
+			return u.newUserQ(user).Where("? = ?", bun.Ident("user.confirmation_token"), confirmationToken).Scan(ctx)
 		},
 	)
 }
