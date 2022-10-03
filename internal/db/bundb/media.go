@@ -42,7 +42,7 @@ func (m *mediaDB) GetAttachmentByID(ctx context.Context, id string) (*gtsmodel.M
 	attachment := &gtsmodel.MediaAttachment{}
 
 	q := m.newMediaQ(attachment).
-		Where("media_attachment.id = ?", id)
+		Where("?.? = ?", bun.Ident("media_attachment.id"), id)
 
 	if err := q.Scan(ctx); err != nil {
 		return nil, m.conn.ProcessError(err)
@@ -56,10 +56,10 @@ func (m *mediaDB) GetRemoteOlderThan(ctx context.Context, olderThan time.Time, l
 	q := m.conn.
 		NewSelect().
 		Model(&attachments).
-		Where("media_attachment.cached = true").
-		Where("media_attachment.avatar = false").
-		Where("media_attachment.header = false").
-		Where("media_attachment.created_at < ?", olderThan).
+		Where("? = ?", bun.Ident("media_attachment.cached"), true).
+		Where("? = ?", bun.Ident("media_attachment.avatar"), false).
+		Where("? = ?", bun.Ident("media_attachment.header"), false).
+		Where("? < ?", bun.Ident("media_attachment.created_at"), olderThan).
 		WhereGroup(" AND ", whereNotEmptyAndNotNull("media_attachment.remote_url")).
 		Order("media_attachment.created_at DESC")
 
@@ -79,13 +79,13 @@ func (m *mediaDB) GetAvatarsAndHeaders(ctx context.Context, maxID string, limit 
 	q := m.newMediaQ(&attachments).
 		WhereGroup(" AND ", func(innerQ *bun.SelectQuery) *bun.SelectQuery {
 			return innerQ.
-				WhereOr("media_attachment.avatar = true").
-				WhereOr("media_attachment.header = true")
+				WhereOr("? = ?", bun.Ident("media_attachment.avatar"), true).
+				WhereOr("? = ?", bun.Ident("media_attachment.header"), true)
 		}).
 		Order("media_attachment.id DESC")
 
 	if maxID != "" {
-		q = q.Where("media_attachment.id < ?", maxID)
+		q = q.Where("? < ?", bun.Ident("media_attachment.id"), maxID)
 	}
 
 	if limit != 0 {
@@ -103,15 +103,15 @@ func (m *mediaDB) GetLocalUnattachedOlderThan(ctx context.Context, olderThan tim
 	attachments := []*gtsmodel.MediaAttachment{}
 
 	q := m.newMediaQ(&attachments).
-		Where("media_attachment.cached = true").
-		Where("media_attachment.avatar = false").
-		Where("media_attachment.header = false").
-		Where("media_attachment.created_at < ?", olderThan).
-		Where("media_attachment.remote_url IS NULL").
-		Where("media_attachment.status_id IS NULL")
+		Where("? = ?", bun.Ident("media_attachment.cached"), true).
+		Where("? = ?", bun.Ident("media_attachment.avatar"), false).
+		Where("? = ?", bun.Ident("media_attachment.header"), false).
+		Where("? < ?", bun.Ident("media_attachment.created_at"), olderThan).
+		Where("? IS NULL", bun.Ident("media_attachment.remote_url")).
+		Where("? IS NULL", bun.Ident("media_attachment.status_id"))
 
 	if maxID != "" {
-		q = q.Where("media_attachment.id < ?", maxID)
+		q = q.Where("? < ?", bun.Ident("media_attachment.id"), maxID)
 	}
 
 	if limit != 0 {
