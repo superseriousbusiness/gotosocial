@@ -43,6 +43,7 @@ main {
 	.headerimage {
 		width: 100%;
 		aspect-ratio: 3 / 1;
+		max-height: 30ch;
 		overflow: hidden;
 		box-shadow: $boxshadow;
 
