@@ -34,7 +34,7 @@ type instanceDB struct {
 func (i *instanceDB) CountInstanceUsers(ctx context.Context, domain string) (int, db.Error) {
 	q := i.conn.
 		NewSelect().
-		Model(&gtsmodel.Account{}).
+		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
 		Column("account.id").
 		Where("? != ?", bun.Ident("account.username"), domain).
 		Where("? IS NULL", bun.Ident("account.suspended_at"))
@@ -56,7 +56,7 @@ func (i *instanceDB) CountInstanceUsers(ctx context.Context, domain string) (int
 func (i *instanceDB) CountInstanceStatuses(ctx context.Context, domain string) (int, db.Error) {
 	q := i.conn.
 		NewSelect().
-		Model(&gtsmodel.Status{})
+		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status"))
 
 	if domain == config.GetHost() || domain == config.GetAccountDomain() {
 		// if the domain is *this* domain, just count where local is true
@@ -78,7 +78,7 @@ func (i *instanceDB) CountInstanceStatuses(ctx context.Context, domain string) (
 func (i *instanceDB) CountInstanceDomains(ctx context.Context, domain string) (int, db.Error) {
 	q := i.conn.
 		NewSelect().
-		Model(&gtsmodel.Instance{})
+		TableExpr("? AS ?", bun.Ident("instances"), bun.Ident("instance"))
 
 	if domain == config.GetHost() {
 		// if the domain is *this* domain, just count other instances it knows about

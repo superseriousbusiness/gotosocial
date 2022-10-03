@@ -169,7 +169,7 @@ func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account
 		// create links between this account and any emojis it uses
 		// first clear out any old emoji links
 		if _, err := tx.NewDelete().
-			Model(&[]*gtsmodel.AccountToEmoji{}).
+			TableExpr("? AS ?", bun.Ident("account_to_emojis"), bun.Ident("account_to_emoji")).
 			Where("? = ?", bun.Ident("account_to_emoji.account_id"), account.ID).
 			Exec(ctx); err != nil {
 			return err
@@ -201,7 +201,7 @@ func (a *accountDB) DeleteAccount(ctx context.Context, id string) db.Error {
 		// clear out any emoji links
 		if _, err := tx.
 			NewDelete().
-			Model(&[]*gtsmodel.AccountToEmoji{}).
+			TableExpr("? AS ?", bun.Ident("account_to_emojis"), bun.Ident("account_to_emoji")).
 			Where("? = ?", bun.Ident("account_to_emoji.account_id"), id).
 			Exec(ctx); err != nil {
 			return err
@@ -285,7 +285,7 @@ func (a *accountDB) SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachmen
 
 	if _, err := a.conn.
 		NewUpdate().
-		Model(&gtsmodel.Account{}).
+		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
 		Set("? = ?", column, mediaAttachment.ID).
 		Where("? = ?", bun.Ident("account.id"), accountID).
 		Exec(ctx); err != nil {
@@ -321,7 +321,7 @@ func (a *accountDB) GetAccountFaves(ctx context.Context, accountID string) ([]*g
 func (a *accountDB) CountAccountStatuses(ctx context.Context, accountID string) (int, db.Error) {
 	return a.conn.
 		NewSelect().
-		Model(&gtsmodel.Status{}).
+		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
 		Where("? = ?", bun.Ident("status.account_id"), accountID).
 		Count(ctx)
 }

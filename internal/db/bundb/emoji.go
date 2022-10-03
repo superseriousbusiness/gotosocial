@@ -54,7 +54,7 @@ func (e *emojiDB) GetCustomEmojis(ctx context.Context) ([]*gtsmodel.Emoji, db.Er
 
 	q := e.conn.
 		NewSelect().
-		Model(&gtsmodel.Emoji{}).
+		TableExpr("? AS ?", bun.Ident("emojis"), bun.Ident("emoji")).
 		Column("emoji.id").
 		Where("? = ?", bun.Ident("emoji.visible_in_picker"), true).
 		Where("? = ?", bun.Ident("emoji.disabled"), false).

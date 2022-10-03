@@ -52,7 +52,7 @@ type adminDB struct {
 func (a *adminDB) IsUsernameAvailable(ctx context.Context, username string) (bool, db.Error) {
 	q := a.conn.
 		NewSelect().
-		Model(&gtsmodel.Account{}).
+		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
 		Column("account.id").
 		Where("? = ?", bun.Ident("account.username"), username).
 		Where("? IS NULL", bun.Ident("account.domain"))
@@ -70,7 +70,7 @@ func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) (bool, db.
 	// check if the email domain is blocked
 	emailDomainBlockedQ := a.conn.
 		NewSelect().
-		Model(&gtsmodel.EmailDomainBlock{}).
+		TableExpr("? AS ?", bun.Ident("email_domain_blocks"), bun.Ident("email_domain_block")).
 		Column("email_domain_block.id").
 		Where("? = ?", bun.Ident("email_domain_block.domain"), domain)
 	emailDomainBlocked, err := a.conn.Exists(ctx, emailDomainBlockedQ)
@@ -84,7 +84,7 @@ func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) (bool, db.
 	// check if this email is associated with a user already
 	q := a.conn.
 		NewSelect().
-		Model(&gtsmodel.User{}).
+		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
 		Column("user.id").
 		Where("? = ?", bun.Ident("user.email"), email).
 		WhereOr("? = ?", bun.Ident("user.unconfirmed_email"), email)
@@ -206,7 +206,7 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 
 	q := a.conn.
 		NewSelect().
-		Model(&gtsmodel.Account{}).
+		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
 		Column("account.id").
 		Where("? = ?", bun.Ident("account.username"), username).
 		WhereGroup(" AND ", whereEmptyOrNull("account.domain"))
@@ -270,7 +270,7 @@ func (a *adminDB) CreateInstanceInstance(ctx context.Context) db.Error {
 	q := a.conn.
 		NewSelect().
 		Column("instance.id").
-		Model(&gtsmodel.Instance{}).
+		TableExpr("? AS ?", bun.Ident("instances"), bun.Ident("instance")).
 		Where("? = ?", bun.Ident("instance.domain"), host)
 
 	exists, err := a.conn.Exists(ctx, q)
