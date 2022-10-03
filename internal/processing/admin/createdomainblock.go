@@ -133,8 +133,10 @@ func (p *processor) initiateDomainBlockSideEffects(ctx context.Context, account 
 	}
 
 	// if we have an instance account for this instance, delete it
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "username", Value: block.Domain, CaseInsensitive: true}}, &gtsmodel.Account{}); err != nil {
-		l.Errorf("domainBlockProcessSideEffects: db error removing instance account: %s", err)
+	if instanceAccount, err := p.db.GetAccountByUsernameDomain(ctx, block.Domain, block.Domain); err == nil {
+		if err := p.db.DeleteAccount(ctx, instanceAccount.ID); err != nil {
+			l.Errorf("domainBlockProcessSideEffects: db error deleting instance account: %s", err)
+		}
 	}
 
 	// delete accounts through the normal account deletion system (which should also delete media + posts + remove posts from timelines)

@@ -196,6 +196,32 @@ func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account
 	return account, nil
 }
 
+func (a *accountDB) DeleteAccount(ctx context.Context, id string) db.Error {
+	if err := a.conn.RunInTx(ctx, func(tx bun.Tx) error {
+		// clear out any emoji links
+		if _, err := tx.
+			NewDelete().
+			Model(&[]*gtsmodel.AccountToEmoji{}).
+			Where("? = ?", bun.Ident("account_to_emoji.account_id"), id).
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		// delete the account
+		_, err := tx.
+			NewUpdate().
+			Model(&gtsmodel.Account{ID: id}).
+			WherePK().
+			Exec(ctx)
+		return err
+	}); err != nil {
+		return a.conn.ProcessError(err)
+	}
+
+	a.cache.Invalidate(id)
+	return nil
+}
+
 func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gtsmodel.Account, db.Error) {
 	account := new(gtsmodel.Account)
 
