@@ -46,7 +46,7 @@ func (m *mentionDB) getMentionDB(ctx context.Context, id string) (*gtsmodel.Ment
 	mention := gtsmodel.Mention{}
 
 	q := m.newMentionQ(&mention).
-		Where("mention.id = ?", id)
+		Where("? = ?", bun.Ident("mention.id"), id)
 
 	if err := q.Scan(ctx); err != nil {
 		return nil, m.conn.ProcessError(err)
