@@ -33,7 +33,7 @@ func (p *processor) MediaPrune(ctx context.Context, mediaRemoteCacheDays int) gt
 	}
 
 	go func() {
-		pruned, err := p.mediaManager.PruneAllRemote(ctx, mediaRemoteCacheDays)
+		pruned, err := p.mediaManager.PruneAllRemote(context.Background(), mediaRemoteCacheDays)
 		if err != nil {
 			log.Errorf("MediaPrune: error pruning remote cache: %s", err)
 		} else {
@@ -42,7 +42,7 @@ func (p *processor) MediaPrune(ctx context.Context, mediaRemoteCacheDays int) gt
 	}()
 
 	go func() {
-		pruned, err := p.mediaManager.PruneUnusedLocalAttachments(ctx)
+		pruned, err := p.mediaManager.PruneUnusedLocalAttachments(context.Background())
 		if err != nil {
 			log.Errorf("MediaPrune: error pruning unused local cache: %s", err)
 		} else {
@@ -51,7 +51,7 @@ func (p *processor) MediaPrune(ctx context.Context, mediaRemoteCacheDays int) gt
 	}()
 
 	go func() {
-		pruned, err := p.mediaManager.PruneAllMeta(ctx)
+		pruned, err := p.mediaManager.PruneAllMeta(context.Background())
 		if err != nil {
 			log.Errorf("MediaPrune: error pruning meta: %s", err)
 		} else {
