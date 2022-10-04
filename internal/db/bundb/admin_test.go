@@ -57,8 +57,8 @@ func (suite *AdminTestSuite) TestIsEmailAvailableYes() {
 
 func (suite *AdminTestSuite) TestIsEmailAvailableDomainBlocked() {
 	if err := suite.db.Put(context.Background(), &gtsmodel.EmailDomainBlock{
-		ID: "01GEEV2R2YC5GRSN96761YJE47",
-		Domain: "somewhere.com",
+		ID:                 "01GEEV2R2YC5GRSN96761YJE47",
+		Domain:             "somewhere.com",
 		CreatedByAccountID: suite.testAccounts["admin_account"].ID,
 	}); err != nil {
 		suite.FailNow(err.Error())
