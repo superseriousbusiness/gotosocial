@@ -187,7 +187,7 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 	}
 
 	for _, v := range NewTestStatuses() {
-		if err := db.PutStatus(ctx, v); err != nil {
+		if err := db.Put(ctx, v); err != nil {
 			log.Panic(err)
 		}
 	}
