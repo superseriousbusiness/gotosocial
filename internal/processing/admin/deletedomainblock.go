@@ -62,7 +62,7 @@ func (p *processor) DomainBlockDelete(ctx context.Context, account *gtsmodel.Acc
 		i.SuspendedAt = time.Time{}
 		i.DomainBlockID = ""
 		i.UpdatedAt = time.Now()
-		if err := p.db.UpdateByPrimaryKey(ctx, i, updatingColumns...); err != nil {
+		if err := p.db.UpdateByID(ctx, i, i.ID, updatingColumns...); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("couldn't update database entry for instance %s: %s", domainBlock.Domain, err))
 		}
 	}

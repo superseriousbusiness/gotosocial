@@ -61,7 +61,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, media
 		updatingColumns = append(updatingColumns, "focus_x", "focus_y")
 	}
 
-	if err := p.db.UpdateByPrimaryKey(ctx, attachment, updatingColumns...); err != nil {
+	if err := p.db.UpdateByID(ctx, attachment, attachment.ID, updatingColumns...); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("database error updating media: %s", err))
 	}
 

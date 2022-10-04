@@ -77,7 +77,7 @@ func (p *processor) SendConfirmEmail(ctx context.Context, user *gtsmodel.User, u
 	user.LastEmailedAt = time.Now()
 	user.UpdatedAt = time.Now()
 
-	if err := p.db.UpdateByPrimaryKey(ctx, user, updatingColumns...); err != nil {
+	if err := p.db.UpdateByID(ctx, user, user.ID, updatingColumns...); err != nil {
 		return fmt.Errorf("SendConfirmEmail: error updating user entry after email sent: %s", err)
 	}
 
@@ -126,7 +126,7 @@ func (p *processor) ConfirmEmail(ctx context.Context, token string) (*gtsmodel.U
 	user.ConfirmationToken = ""
 	user.UpdatedAt = time.Now()
 
-	if err := p.db.UpdateByPrimaryKey(ctx, user, updatingColumns...); err != nil {
+	if err := p.db.UpdateByID(ctx, user, user.ID, updatingColumns...); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
