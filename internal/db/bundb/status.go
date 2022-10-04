@@ -195,7 +195,7 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Er
 		return nil
 	})
 	if err != nil {
-		s.conn.ProcessError(err)
+		return s.conn.ProcessError(err)
 	}
 
 	s.cache.Put(status)
