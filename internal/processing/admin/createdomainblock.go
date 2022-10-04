@@ -75,7 +75,9 @@ func (p *processor) DomainBlockCreate(ctx context.Context, account *gtsmodel.Acc
 		block = &newBlock
 
 		// Process the side effects of the domain block asynchronously since it might take a while
-		go p.initiateDomainBlockSideEffects(ctx, account, block)
+		go func() {
+			p.initiateDomainBlockSideEffects(context.Background(), account, block)
+		}()
 	}
 
 	// Convert our gts model domain block into an API model

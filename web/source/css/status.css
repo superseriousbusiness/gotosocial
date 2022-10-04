@@ -84,18 +84,19 @@ main {
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
-
-		/* margin-top: -0.5rem; */
-		line-height: 2rem;
 	}
 	
 	.displayname {
 		font-weight: bold;
-		font-size: 1.2rem;
+		font-size: 1.5rem;
+		line-height: 2rem;
+		margin-top: -0.5rem;
 	}
 
 	.username {
 		color: $link-fg;
+		font-size: 1rem;
+		line-height: 1.3rem;
 	}
 
 	input.spoiler:checked ~ .content {
@@ -125,8 +126,9 @@ main {
 
 	.text {
 		margin: 0;
-		grid-column: 2 / span 2;
+		padding-top: 0.5rem;
 		grid-row: span 1;
+		grid-column: 1 / span 3;
 
 		position: relative;
 		z-index: 2;
@@ -370,11 +372,6 @@ main {
 				grid-column: span 2;
 			}
 
-			.text {
-				grid-column: 1 / span 3;
-				padding-top: 0.5rem;
-			}
-
 			.not-expanded {
 				display: none;
 			}
@@ -392,4 +389,17 @@ main {
 
 footer + div { /* something weird from the devstack.. */
 	display: none;
+}
+
+@media screen and (max-width: 89ch) {
+	.toot {
+		.contentgrid {
+			grid-template-rows: 1.5rem 1.3rem 1.3rem auto;
+		}
+
+		.username, .not-expanded {
+			grid-column: 2;
+			grid-row: auto;
+		}
+	}
 }

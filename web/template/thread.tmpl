@@ -2,15 +2,15 @@
 <main>
 	<div data-nosnippet class="thread">
 		{{range .context.Ancestors}}
-		<div class="toot">
+		<div class="toot" id="{{.ID}}">
 			{{ template "status.tmpl" .}}
 		</div>
 		{{end}}
-		<div class="toot expanded">
+		<div class="toot expanded" id="{{.status.ID}}">
 			{{ template "status.tmpl" .status}}
 		</div>
 		{{range .context.Descendants}}
-		<div class="toot">
+		<div class="toot" id="{{.ID}}">
 			{{ template "status.tmpl" .}}
 		</div>
 		{{end}}

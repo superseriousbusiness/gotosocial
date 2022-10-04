@@ -34,6 +34,15 @@ body:
     validations:
       required: false
 
+  - type: input
+    id: Browser-Version
+    attributes:
+      label: Browser version
+      description: If this is a frontend bug, what browser(s) and versions are you using that show this bug?
+      placeholder: Firefox 103.0b9 (64-bit)
+    validations:
+      required: false
+
   - type: textarea
     id: what-happened
     attributes:
