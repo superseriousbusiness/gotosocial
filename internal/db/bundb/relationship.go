@@ -257,8 +257,8 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, originAccountI
 		// now remove the follow request
 		if _, err := tx.
 			NewDelete().
-			Model(followRequest).
-			WherePK().
+			TableExpr("? AS ?", bun.Ident("follow_requests"), bun.Ident("follow_request")).
+			Where("? = ?", bun.Ident("follow_request.id"), followRequest.ID).
 			Exec(ctx); err != nil {
 			return err
 		}
@@ -289,8 +289,8 @@ func (r *relationshipDB) RejectFollowRequest(ctx context.Context, originAccountI
 		// now delete it from the database by ID
 		if _, err := tx.
 			NewDelete().
-			Model(followRequest).
-			WherePK().
+			TableExpr("? AS ?", bun.Ident("follow_requests"), bun.Ident("follow_request")).
+			Where("? = ?", bun.Ident("follow_request.id"), followRequest.ID).
 			Exec(ctx); err != nil {
 			return err
 		}

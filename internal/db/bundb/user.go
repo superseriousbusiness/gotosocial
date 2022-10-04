@@ -127,7 +127,7 @@ func (u *userDB) UpdateUser(ctx context.Context, user *gtsmodel.User, columns ..
 	if _, err := u.conn.
 		NewUpdate().
 		Model(user).
-		WherePK().
+		Where("? = ?", bun.Ident("user.id"), user.ID).
 		Column(columns...).
 		Exec(ctx); err != nil {
 		return nil, u.conn.ProcessError(err)
@@ -140,8 +140,8 @@ func (u *userDB) UpdateUser(ctx context.Context, user *gtsmodel.User, columns ..
 func (u *userDB) DeleteUserByID(ctx context.Context, userID string) db.Error {
 	if _, err := u.conn.
 		NewDelete().
-		Model(&gtsmodel.User{ID: userID}).
-		WherePK().
+		TableExpr("? AS ?", bun.Ident("users"), bun.Ident("user")).
+		Where("? = ?", bun.Ident("user.id"), userID).
 		Exec(ctx); err != nil {
 		return u.conn.ProcessError(err)
 	}

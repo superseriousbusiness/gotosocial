@@ -180,10 +180,12 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status) (*
 	err := s.conn.RunInTx(ctx, func(tx bun.Tx) error {
 		// create links between this status and any emojis it uses
 		for _, i := range status.EmojiIDs {
-			if _, err := tx.NewInsert().Model(&gtsmodel.StatusToEmoji{
-				StatusID: status.ID,
-				EmojiID:  i,
-			}).Exec(ctx); err != nil {
+			if _, err := tx.
+				NewInsert().
+				Model(&gtsmodel.StatusToEmoji{
+					StatusID: status.ID,
+					EmojiID:  i,
+				}).Exec(ctx); err != nil {
 				err = s.conn.errProc(err)
 				if !errors.Is(err, db.ErrAlreadyExists) {
 					return err
@@ -193,10 +195,12 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status) (*
 
 		// create links between this status and any tags it uses
 		for _, i := range status.TagIDs {
-			if _, err := tx.NewInsert().Model(&gtsmodel.StatusToTag{
-				StatusID: status.ID,
-				TagID:    i,
-			}).Exec(ctx); err != nil {
+			if _, err := tx.
+				NewInsert().
+				Model(&gtsmodel.StatusToTag{
+					StatusID: status.ID,
+					TagID:    i,
+				}).Exec(ctx); err != nil {
 				err = s.conn.errProc(err)
 				if !errors.Is(err, db.ErrAlreadyExists) {
 					return err
@@ -216,7 +220,11 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status) (*
 		}
 
 		// Finally, update the status itself
-		if _, err := tx.NewUpdate().Model(status).WherePK().Exec(ctx); err != nil {
+		if _, err := tx.
+			NewUpdate().
+			Model(status).
+			Where("? = ?", bun.Ident("status.id"), status.ID).
+			Exec(ctx); err != nil {
 			return err
 		}
 
@@ -250,8 +258,8 @@ func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) db.Error {
 		// delete the status itself
 		if _, err := tx.
 			NewDelete().
-			Model(&gtsmodel.Status{ID: id}).
-			WherePK().
+			TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
+			Where("? = ?", bun.Ident("status.id"), id).
 			Exec(ctx); err != nil {
 			return err
 		}

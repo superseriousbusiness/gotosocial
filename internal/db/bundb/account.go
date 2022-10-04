@@ -168,7 +168,8 @@ func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account
 	if err := a.conn.RunInTx(ctx, func(tx bun.Tx) error {
 		// create links between this account and any emojis it uses
 		// first clear out any old emoji links
-		if _, err := tx.NewDelete().
+		if _, err := tx.
+			NewDelete().
 			TableExpr("? AS ?", bun.Ident("account_to_emojis"), bun.Ident("account_to_emoji")).
 			Where("? = ?", bun.Ident("account_to_emoji.account_id"), account.ID).
 			Exec(ctx); err != nil {
@@ -177,17 +178,26 @@ func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account
 
 		// now populate new emoji links
 		for _, i := range account.EmojiIDs {
-			if _, err := tx.NewInsert().Model(&gtsmodel.AccountToEmoji{
-				AccountID: account.ID,
-				EmojiID:   i,
-			}).Exec(ctx); err != nil {
+			if _, err := tx.
+				NewInsert().
+				Model(&gtsmodel.AccountToEmoji{
+					AccountID: account.ID,
+					EmojiID:   i,
+				}).Exec(ctx); err != nil {
 				return err
 			}
 		}
 
 		// update the account
-		_, err := tx.NewUpdate().Model(account).WherePK().Exec(ctx)
-		return err
+		if _, err := tx.
+			NewUpdate().
+			Model(account).
+			Where("? = ?", bun.Ident("account.id"), account.ID).
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		return nil
 	}); err != nil {
 		return nil, a.conn.ProcessError(err)
 	}
@@ -210,8 +220,8 @@ func (a *accountDB) DeleteAccount(ctx context.Context, id string) db.Error {
 		// delete the account
 		_, err := tx.
 			NewUpdate().
-			Model(&gtsmodel.Account{ID: id}).
-			WherePK().
+			TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
+			Where("? = ?", bun.Ident("account.id"), id).
 			Exec(ctx)
 		return err
 	}); err != nil {

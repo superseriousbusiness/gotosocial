@@ -99,7 +99,7 @@ func (suite *AccountTestSuite) TestUpdateAccount() {
 	err = dbService.GetConn().
 		NewSelect().
 		Model(noCache).
-		Where("account.id = ?", bun.Ident(testAccount.ID)).
+		Where("? = ?", bun.Ident("account.id"), testAccount.ID).
 		Relation("AvatarMediaAttachment").
 		Relation("HeaderMediaAttachment").
 		Relation("Emojis").
@@ -127,7 +127,7 @@ func (suite *AccountTestSuite) TestUpdateAccount() {
 	err = dbService.GetConn().
 		NewSelect().
 		Model(noCache).
-		Where("account.id = ?", bun.Ident(testAccount.ID)).
+		Where("? = ?", bun.Ident("account.id"), testAccount.ID).
 		Relation("AvatarMediaAttachment").
 		Relation("HeaderMediaAttachment").
 		Relation("Emojis").
