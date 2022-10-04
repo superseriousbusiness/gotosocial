@@ -84,7 +84,7 @@ func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) (bool, db.
 	// check if this email is associated with a user already
 	q := a.conn.
 		NewSelect().
-		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
+		TableExpr("? AS ?", bun.Ident("users"), bun.Ident("user")).
 		Column("user.id").
 		Where("? = ?", bun.Ident("user.email"), email).
 		WhereOr("? = ?", bun.Ident("user.unconfirmed_email"), email)
