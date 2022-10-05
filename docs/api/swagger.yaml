@@ -404,11 +404,21 @@ definitions:
                 example: image/png
                 type: string
                 x-go-name: ContentType
+            disabled:
+                description: True if this emoji has been disabled by an admin action.
+                example: false
+                type: boolean
+                x-go-name: Disabled
             domain:
                 description: The domain from which the emoji originated. Only defined for remote domains, otherwise key will not be set.
                 example: example.org
                 type: string
                 x-go-name: Domain
+            id:
+                description: The ID of the emoji.
+                example: 01GEM7SFDZ7GZNRXFVZ3X4E4N1
+                type: string
+                x-go-name: ID
             shortcode:
                 description: The name of the custom emoji.
                 example: blobcat_uwu

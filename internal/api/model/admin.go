@@ -85,6 +85,12 @@ type AdminReportInfo struct {
 // swagger:model adminEmoji
 type AdminEmoji struct {
 	Emoji
+	// The ID of the emoji.
+	// example: 01GEM7SFDZ7GZNRXFVZ3X4E4N1
+	ID string `json:"id"`
+	// True if this emoji has been disabled by an admin action.
+	// example: false
+	Disabled bool `json:"disabled"`
 	// The domain from which the emoji originated. Only defined for remote domains, otherwise key will not be set.
 	//
 	// example: example.org
