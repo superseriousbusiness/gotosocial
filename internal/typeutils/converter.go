@@ -66,6 +66,8 @@ type TypeConverter interface {
 	MentionToAPIMention(ctx context.Context, m *gtsmodel.Mention) (model.Mention, error)
 	// EmojiToAPIEmoji converts a gts model emoji into its api (frontend) representation for serialization on the API.
 	EmojiToAPIEmoji(ctx context.Context, e *gtsmodel.Emoji) (model.Emoji, error)
+	// EmojiToAdminAPIEmoji converts a gts model emoji into an API representation with extra admin information.
+	EmojiToAdminAPIEmoji(ctx context.Context, e *gtsmodel.Emoji) (*model.AdminEmoji, error)
 	// TagToAPITag converts a gts model tag into its api (frontend) representation for serialization on the API.
 	TagToAPITag(ctx context.Context, t *gtsmodel.Tag) (model.Tag, error)
 	// StatusToAPIStatus converts a gts model status into its api (frontend) representation for serialization on the API.
