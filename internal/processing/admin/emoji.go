@@ -74,3 +74,11 @@ func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, 
 
 	return &apiEmoji, nil
 }
+
+func (p *processor) EmojisGet(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, domain string, includeDisabled bool, includeEnabled bool, shortcode string) ([]*apimodel.AdminEmoji, gtserror.WithCode) {
+	if !*user.Admin {
+		return nil, gtserror.NewErrorUnauthorized(fmt.Errorf("user %s not an admin", user.ID), "user is not an admin")
+	}
+
+	return []*apimodel.AdminEmoji{}, nil
+}
