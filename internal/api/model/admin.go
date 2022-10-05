@@ -80,6 +80,29 @@ type AdminReportInfo struct {
 	Statuses []Status `json:"statuses"`
 }
 
+// AdminEmoji models the admin view of a custom emoji.
+//
+// swagger:model adminEmoji
+type AdminEmoji struct {
+	Emoji
+	// The domain from which the emoji originated. Only defined for remote domains, otherwise key will not be set.
+	//
+	// example: example.org
+	Domain string `json:"domain,omitempty"`
+	// Time when the emoji image was last updated.
+	// example: 2022-10-05T09:21:26.419Z
+	UpdatedAt string `json:"updated_at"`
+	// The total file size taken up by the emoji in bytes, including static and animated versions.
+	// example: 69420
+	TotalFileSize int `json:"total_file_size"`
+	// The MIME content type of the emoji.
+	// example: image/png
+	ContentType string `json:"content_type"`
+	// The ActivityPub URI of the emoji.
+	// example: https://example.org/emojis/016T5Q3SQKBT337DAKVSKNXXW1
+	URI string `json:"uri"`
+}
+
 // AdminAccountActionRequest models the admin view of an account's details.
 //
 // swagger:ignore
