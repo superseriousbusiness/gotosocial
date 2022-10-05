@@ -49,6 +49,9 @@ const (
 	// of a Client who has successfully passed Bearer token authorization.
 	// The interface returned from grabbing this key should be parsed as a *gtsmodel.Application
 	SessionAuthorizedApplication = "authorized_app"
+	// HelpfulAdvice is a handy hint to users;
+	// particularly important during the login flow
+	HelpfulAdvice = "If you arrived at this error during a login/oauth flow, please try clearing your session cookies and logging in again; if problems persist, make sure you're using the correct credentials"
 )
 
 // Server wraps some oauth2 server functions in an interface, exposing only what is needed
@@ -123,13 +126,13 @@ func (s *s) HandleTokenRequest(r *http.Request) (map[string]interface{}, gtserro
 	gt, tgr, err := s.server.ValidationTokenRequest(r)
 	if err != nil {
 		help := fmt.Sprintf("could not validate token request: %s", err)
-		return nil, gtserror.NewErrorBadRequest(err, help)
+		return nil, gtserror.NewErrorBadRequest(err, help, HelpfulAdvice)
 	}
 
 	ti, err := s.server.GetAccessToken(ctx, gt, tgr)
 	if err != nil {
 		help := fmt.Sprintf("could not get access token: %s", err)
-		return nil, gtserror.NewErrorBadRequest(err, help)
+		return nil, gtserror.NewErrorBadRequest(err, help, HelpfulAdvice)
 	}
 
 	data := s.server.GetTokenData(ti)
@@ -145,7 +148,7 @@ func (s *s) HandleTokenRequest(r *http.Request) (map[string]interface{}, gtserro
 			}
 		default:
 			err := errors.New("expires_in was set on token response, but was not an int64")
-			return nil, gtserror.NewErrorInternalError(err)
+			return nil, gtserror.NewErrorInternalError(err, HelpfulAdvice)
 		}
 	}
 
