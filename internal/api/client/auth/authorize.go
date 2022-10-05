@@ -242,8 +242,10 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	// we're done with the session now, so just clear it out
-	m.clearSession(s)
+	if redirectURI != oauth.OOBURI {
+		// we're done with the session now, so just clear it out
+		m.clearSession(s)
+	}
 
 	// we have to set the values on the request form
 	// so that they're picked up by the oauth server
@@ -260,8 +262,8 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 		c.Request.Form.Set("state", clientState)
 	}
 
-	if err := m.processor.OAuthHandleAuthorizeRequest(c.Writer, c.Request); err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error(), helpfulAdvice), m.processor.InstanceGet)
+	if errWithCode := m.processor.OAuthHandleAuthorizeRequest(c.Writer, c.Request); errWithCode != nil {
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 	}
 }
 

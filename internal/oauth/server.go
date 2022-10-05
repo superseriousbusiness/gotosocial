@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -49,6 +50,10 @@ const (
 	// of a Client who has successfully passed Bearer token authorization.
 	// The interface returned from grabbing this key should be parsed as a *gtsmodel.Application
 	SessionAuthorizedApplication = "authorized_app"
+	// OOBURI is the out-of-band oauth token uri
+	OOBURI = "urn:ietf:wg:oauth:2.0:oob"
+	// OOBTokenPath is the path to redirect out-of-band token requests to.
+	OOBTokenPath = "/oob"
 	// HelpfulAdvice is a handy hint to users;
 	// particularly important during the login flow
 	HelpfulAdvice = "If you arrived at this error during a login/oauth flow, please try clearing your session cookies and logging in again; if problems persist, make sure you're using the correct credentials"
@@ -57,7 +62,7 @@ const (
 // Server wraps some oauth2 server functions in an interface, exposing only what is needed
 type Server interface {
 	HandleTokenRequest(r *http.Request) (map[string]interface{}, gtserror.WithCode)
-	HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) error
+	HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) gtserror.WithCode
 	ValidationBearerToken(r *http.Request) (oauth2.TokenInfo, error)
 	GenerateUserAccessToken(ctx context.Context, ti oauth2.TokenInfo, clientSecret string, userID string) (accessToken oauth2.TokenInfo, err error)
 	LoadAccessToken(ctx context.Context, access string) (accessToken oauth2.TokenInfo, err error)
@@ -158,9 +163,88 @@ func (s *s) HandleTokenRequest(r *http.Request) (map[string]interface{}, gtserro
 	return data, nil
 }
 
+func (s *s) errorOrRedirect(err error, w http.ResponseWriter, req *server.AuthorizeRequest) gtserror.WithCode {
+	if req == nil {
+		return gtserror.NewErrorUnauthorized(err, HelpfulAdvice)
+	}
+
+	data, _, _ := s.server.GetErrorData(err)
+	uri, err := s.server.GetRedirectURI(req, data)
+	if err != nil {
+		return gtserror.NewErrorInternalError(err, HelpfulAdvice)
+	}
+
+	w.Header().Set("Location", uri)
+	w.WriteHeader(http.StatusFound)
+	return nil
+}
+
 // HandleAuthorizeRequest wraps the oauth2 library's HandleAuthorizeRequest function
-func (s *s) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) error {
-	return s.server.HandleAuthorizeRequest(w, r)
+func (s *s) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) gtserror.WithCode {
+	ctx := r.Context()
+
+	req, err := s.server.ValidationAuthorizeRequest(r)
+	if err != nil {
+		return s.errorOrRedirect(err, w, req)
+	}
+
+	// user authorization
+	userID, err := s.server.UserAuthorizationHandler(w, r)
+	if err != nil {
+		return s.errorOrRedirect(err, w, req)
+	}
+	if userID == "" {
+		help := "userID was empty"
+		return gtserror.NewErrorUnauthorized(err, help, HelpfulAdvice)
+	}
+	req.UserID = userID
+
+	// specify the scope of authorization
+	if fn := s.server.AuthorizeScopeHandler; fn != nil {
+		scope, err := fn(w, r)
+		if err != nil {
+			return s.errorOrRedirect(err, w, req)
+		} else if scope != "" {
+			req.Scope = scope
+		}
+	}
+
+	// specify the expiration time of access token
+	if fn := s.server.AccessTokenExpHandler; fn != nil {
+		exp, err := fn(w, r)
+		if err != nil {
+			return s.errorOrRedirect(err, w, req)
+		}
+		req.AccessTokenExp = exp
+	}
+
+	ti, err := s.server.GetAuthorizeToken(ctx, req)
+	if err != nil {
+		return s.errorOrRedirect(err, w, req)
+	}
+
+	// If the redirect URI is empty, the default domain provided by the client is used.
+	if req.RedirectURI == "" {
+		client, err := s.server.Manager.GetClient(ctx, req.ClientID)
+		if err != nil {
+			return gtserror.NewErrorUnauthorized(err, HelpfulAdvice)
+		}
+		req.RedirectURI = client.GetDomain()
+	}
+
+	uri, err := s.server.GetRedirectURI(req, s.server.GetAuthorizeData(req.ResponseType, ti))
+	if err != nil {
+		return gtserror.NewErrorUnauthorized(err, HelpfulAdvice)
+	}
+
+	if strings.Contains(uri, OOBURI) {
+		w.Header().Set("Location", strings.ReplaceAll(uri, OOBURI, OOBTokenPath))
+	} else {
+		w.Header().Set("Location", uri)
+	}
+
+	w.WriteHeader(http.StatusFound)
+	return nil
 }
 
 // ValidationBearerToken wraps the oauth2 library's ValidationBearerToken function

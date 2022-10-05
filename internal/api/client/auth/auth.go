@@ -23,6 +23,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
@@ -92,5 +93,7 @@ func (m *Module) Route(s router.Router) error {
 	s.AttachHandler(http.MethodPost, OauthAuthorizePath, m.AuthorizePOSTHandler)
 
 	s.AttachHandler(http.MethodGet, CallbackPath, m.CallbackGETHandler)
+
+	s.AttachHandler(http.MethodGet, oauth.OOBTokenPath, m.OobHandler)
 	return nil
 }
