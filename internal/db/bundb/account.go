@@ -341,7 +341,7 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 
 	q := a.conn.
 		NewSelect().
-		Model(&gtsmodel.Status{}).
+		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
 		Column("status.id").
 		Order("status.id DESC")
 
@@ -420,7 +420,7 @@ func (a *accountDB) GetAccountWebStatuses(ctx context.Context, accountID string,
 
 	q := a.conn.
 		NewSelect().
-		Model(&gtsmodel.Status{}).
+		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
 		Column("status.id").
 		Where("? = ?", bun.Ident("status.account_id"), accountID).
 		WhereGroup(" AND ", whereEmptyOrNull("status.in_reply_to_uri")).
