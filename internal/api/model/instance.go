@@ -99,6 +99,8 @@ type InstanceConfiguration struct {
 	Polls *InstanceConfigurationPolls `json:"polls"`
 	// Instance configuration pertaining to accounts.
 	Accounts *InstanceConfigurationAccounts `json:"accounts"`
+	// Instance configuration pertaining to emojis.
+	Emojis *InstanceConfigurationEmojis `json:"emojis"`
 }
 
 // InstanceConfigurationStatuses models instance status config parameters.
@@ -183,6 +185,14 @@ type InstanceConfigurationAccounts struct {
 	//
 	// example: false
 	AllowCustomCSS bool `json:"allow_custom_css"`
+}
+
+// InstanceConfigurationEmojis models instance emoji config parameters.
+type InstanceConfigurationEmojis struct {
+	// Max allowed emoji image size in bytes.
+	//
+	// example: 51200
+	EmojiSizeLimit int `json:"emoji_size_limit"`
 }
 
 // InstanceURLs models instance-relevant URLs for client application consumption.

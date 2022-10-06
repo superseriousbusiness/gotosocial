@@ -56,7 +56,7 @@ func (p *processor) DomainBlockCreate(ctx context.Context, account *gtsmodel.Acc
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error creating id for new domain block %s: %s", domain, err))
 		}
 
-		newBlock := gtsmodel.DomainBlock{
+		newBlock := &gtsmodel.DomainBlock{
 			ID:                 blockID,
 			Domain:             domain,
 			CreatedByAccountID: account.ID,
@@ -72,7 +72,7 @@ func (p *processor) DomainBlockCreate(ctx context.Context, account *gtsmodel.Acc
 		}
 
 		// Set the newly created block
-		block = &newBlock
+		block = newBlock
 
 		// Process the side effects of the domain block asynchronously since it might take a while
 		go func() {

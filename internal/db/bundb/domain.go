@@ -48,7 +48,7 @@ func normalizeDomain(domain string) (out string, err error) {
 	return out, err
 }
 
-func (d *domainDB) CreateDomainBlock(ctx context.Context, block gtsmodel.DomainBlock) db.Error {
+func (d *domainDB) CreateDomainBlock(ctx context.Context, block *gtsmodel.DomainBlock) db.Error {
 	domain, err := normalizeDomain(block.Domain)
 	if err != nil {
 		return err
@@ -57,13 +57,13 @@ func (d *domainDB) CreateDomainBlock(ctx context.Context, block gtsmodel.DomainB
 
 	// Attempt to insert new domain block
 	if _, err := d.conn.NewInsert().
-		Model(&block).
-		Exec(ctx, &block); err != nil {
+		Model(block).
+		Exec(ctx); err != nil {
 		return d.conn.ProcessError(err)
 	}
 
 	// Cache this domain block
-	d.cache.Put(block.Domain, &block)
+	d.cache.Put(block.Domain, block)
 
 	return nil
 }

@@ -688,9 +688,9 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 			},
 			MediaAttachments: &model.InstanceConfigurationMediaAttachments{
 				SupportedMimeTypes:  media.AllSupportedMIMETypes(),
-				ImageSizeLimit:      int(config.GetMediaImageMaxSize()),
+				ImageSizeLimit:      int(config.GetMediaImageMaxSize()),       // bytes
 				ImageMatrixLimit:    instanceMediaAttachmentsImageMatrixLimit, // height*width
-				VideoSizeLimit:      int(config.GetMediaVideoMaxSize()),
+				VideoSizeLimit:      int(config.GetMediaVideoMaxSize()),       // bytes
 				VideoFrameRateLimit: instanceMediaAttachmentsVideoFrameRateLimit,
 				VideoMatrixLimit:    instanceMediaAttachmentsVideoMatrixLimit, // height*width
 			},
@@ -702,6 +702,9 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 			},
 			Accounts: &model.InstanceConfigurationAccounts{
 				AllowCustomCSS: config.GetAccountsAllowCustomCSS(),
+			},
+			Emojis: &model.InstanceConfigurationEmojis{
+				EmojiSizeLimit: int(config.GetMediaEmojiLocalMaxSize()), // bytes
 			},
 		}
 	}
