@@ -10,6 +10,17 @@ definitions:
         title: InstanceConfigurationAccounts models instance account config parameters.
         type: object
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    InstanceConfigurationEmojis:
+        properties:
+            emoji_size_limit:
+                description: Max allowed emoji image size in bytes.
+                example: 51200
+                format: int64
+                type: integer
+                x-go-name: EmojiSizeLimit
+        title: InstanceConfigurationEmojis models instance emoji config parameters.
+        type: object
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     Link:
         description: See https://webfinger.net/
         properties:
@@ -1078,6 +1089,8 @@ definitions:
         properties:
             accounts:
                 $ref: '#/definitions/InstanceConfigurationAccounts'
+            emojis:
+                $ref: '#/definitions/InstanceConfigurationEmojis'
             media_attachments:
                 $ref: '#/definitions/instanceConfigurationMediaAttachments'
             polls:
