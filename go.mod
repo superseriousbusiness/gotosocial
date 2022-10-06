@@ -3,7 +3,6 @@ module github.com/superseriousbusiness/gotosocial
 go 1.19
 
 require (
-	codeberg.org/gruf/go-atomics v1.1.0
 	codeberg.org/gruf/go-bytesize v1.0.0
 	codeberg.org/gruf/go-byteutil v1.0.2
 	codeberg.org/gruf/go-cache/v2 v2.1.4
@@ -24,6 +23,7 @@ require (
 	github.com/go-fed/httpsig v1.1.0
 	github.com/go-playground/validator/v10 v10.11.0
 	github.com/google/uuid v1.3.0
+	github.com/gorilla/feeds v1.1.1
 	github.com/gorilla/websocket v1.5.0
 	github.com/h2non/filetype v1.1.3
 	github.com/jackc/pgconn v1.13.0
@@ -58,6 +58,7 @@ require (
 )
 
 require (
+	codeberg.org/gruf/go-atomics v1.1.0 // indirect
 	codeberg.org/gruf/go-bitutil v1.0.1 // indirect
 	codeberg.org/gruf/go-bytes v1.0.2 // indirect
 	codeberg.org/gruf/go-fastcopy v1.1.1 // indirect
