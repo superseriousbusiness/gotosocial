@@ -53,6 +53,8 @@ type Processor interface {
 	GetLocalByUsername(ctx context.Context, requestingAccount *gtsmodel.Account, username string) (*apimodel.Account, gtserror.WithCode)
 	// GetCustomCSSForUsername returns custom css for the given local username.
 	GetCustomCSSForUsername(ctx context.Context, username string) (string, gtserror.WithCode)
+	// GetRSSFeedForUsername returns RSS feed for the given local username.
+	GetRSSFeedForUsername(ctx context.Context, requestingAccount *gtsmodel.Account, username string) (string, gtserror.WithCode)
 	// Update processes the update of an account with the given form
 	Update(ctx context.Context, account *gtsmodel.Account, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, gtserror.WithCode)
 	// StatusesGet fetches a number of statuses (in time descending order) from the given account, filtered by visibility for

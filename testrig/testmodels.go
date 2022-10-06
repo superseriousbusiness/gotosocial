@@ -380,6 +380,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			SuspendedAt:             time.Time{},
 			HideCollections:         FalseBool(),
 			SuspensionOrigin:        "",
+			EnableRSS:               TrueBool(),
 		},
 		"local_account_1": {
 			ID:                      "01F8MH1H7YV1Z7D2C8K2730QBF",
@@ -419,6 +420,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			SuspendedAt:             time.Time{},
 			HideCollections:         FalseBool(),
 			SuspensionOrigin:        "",
+			EnableRSS:               TrueBool(),
 		},
 		"local_account_2": {
 			ID:                      "01F8MH5NBDF2MV7CTC4Q5128HF",

@@ -25,7 +25,7 @@ type MIME string
 const (
 	AppJSON           MIME = `application/json`
 	AppXML            MIME = `application/xml`
-   AppRSSXML         MIME = `application/rss+xml`
+	AppRSSXML         MIME = `application/rss+xml`
 	AppActivityJSON   MIME = `application/activity+json`
 	AppActivityLDJSON MIME = `application/ld+json; profile="https://www.w3.org/ns/activitystreams"`
 	AppForm           MIME = `application/x-www-form-urlencoded`

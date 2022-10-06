@@ -65,11 +65,11 @@ func (m *Module) rssFeedGETHandler(c *gin.Context) {
 		return
 	}
 
-	account, errWithCode := m.processor.AccountStat(ctx, authed, username)
-	if errWithCode != nil {
+	rssFeed, errWithCode := m.processor.AccountGetRSSFeedForUsername(ctx, authed, username)
+	if err != nil {
 		api.ErrorHandler(c, errWithCode, instanceGet)
 		return
 	}
 
-	c.Data(http.StatusOK, api.AppRSSXML+"; charset=utf-8", []byte(customCSS))
+	c.Data(http.StatusOK, string(api.AppRSSXML+"; charset=utf-8"), []byte(rssFeed))
 }
