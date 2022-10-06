@@ -34,13 +34,9 @@ type DomainTestSuite struct {
 func (suite *DomainTestSuite) TestIsDomainBlocked() {
 	ctx := context.Background()
 
-	now := time.Now()
-
 	domainBlock := &gtsmodel.DomainBlock{
 		ID:                 "01G204214Y9TNJEBX39C7G88SW",
 		Domain:             "some.bad.apples",
-		CreatedAt:          now,
-		UpdatedAt:          now,
 		CreatedByAccountID: suite.testAccounts["admin_account"].ID,
 		CreatedByAccount:   suite.testAccounts["admin_account"],
 	}
@@ -50,13 +46,14 @@ func (suite *DomainTestSuite) TestIsDomainBlocked() {
 	suite.NoError(err)
 	suite.False(blocked)
 
-	err = suite.db.CreateDomainBlock(ctx, *domainBlock)
+	err = suite.db.CreateDomainBlock(ctx, domainBlock)
 	suite.NoError(err)
 
 	// domain block now exists
 	blocked, err = suite.db.IsDomainBlocked(ctx, domainBlock.Domain)
 	suite.NoError(err)
 	suite.True(blocked)
+	suite.WithinDuration(time.Now(), domainBlock.CreatedAt, 10*time.Second)
 }
 
 func (suite *DomainTestSuite) TestIsDomainBlockedNonASCII() {
@@ -82,7 +79,7 @@ func (suite *DomainTestSuite) TestIsDomainBlockedNonASCII() {
 	suite.NoError(err)
 	suite.False(blocked)
 
-	err = suite.db.CreateDomainBlock(ctx, *domainBlock)
+	err = suite.db.CreateDomainBlock(ctx, domainBlock)
 	suite.NoError(err)
 
 	// domain block now exists
@@ -118,7 +115,7 @@ func (suite *DomainTestSuite) TestIsDomainBlockedNonASCII2() {
 	suite.NoError(err)
 	suite.False(blocked)
 
-	err = suite.db.CreateDomainBlock(ctx, *domainBlock)
+	err = suite.db.CreateDomainBlock(ctx, domainBlock)
 	suite.NoError(err)
 
 	// domain block now exists
