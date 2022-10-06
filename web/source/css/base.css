@@ -355,8 +355,8 @@ footer {
 }
 
 .emoji {
-	width: 2.5ex;
-	height: 2.5ex;
+	width: 2.75ex;
+	height: 2.75ex;
 	margin: -0.5ex 0 0;
 	object-fit: contain;
 	vertical-align: middle;
