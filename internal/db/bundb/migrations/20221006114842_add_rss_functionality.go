@@ -16,21 +16,31 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package api
+package migrations
 
-// MIME represents a mime-type.
-type MIME string
+import (
+	"context"
+	"strings"
 
-// MIME type
-const (
-	AppJSON           MIME = `application/json`
-	AppXML            MIME = `application/xml`
-   AppRSSXML         MIME = `application/rss+xml`
-	AppActivityJSON   MIME = `application/activity+json`
-	AppActivityLDJSON MIME = `application/ld+json; profile="https://www.w3.org/ns/activitystreams"`
-	AppForm           MIME = `application/x-www-form-urlencoded`
-	MultipartForm     MIME = `multipart/form-data`
-	TextXML           MIME = `text/xml`
-	TextHTML          MIME = `text/html`
-	TextCSS           MIME = `text/css`
+	"github.com/uptrace/bun"
 )
+
+func init() {
+	up := func(ctx context.Context, db *bun.DB) error {
+		_, err := db.ExecContext(ctx, "ALTER TABLE ? ADD COLUMN ? BOOLEAN NOT NULL DEFAULT false", bun.Ident("accounts"), bun.Ident("enable_rss"))
+		if err != nil && !(strings.Contains(err.Error(), "already exists") || strings.Contains(err.Error(), "duplicate column name") || strings.Contains(err.Error(), "SQLSTATE 42701")) {
+			return err
+		}
+		return nil
+	}
+
+	down := func(ctx context.Context, db *bun.DB) error {
+		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			return nil
+		})
+	}
+
+	if err := Migrations.Register(up, down); err != nil {
+		panic(err)
+	}
+}
