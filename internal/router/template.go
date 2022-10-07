@@ -19,9 +19,7 @@
 package router
 
 import (
-	"bytes"
 	"fmt"
-	"html"
 	"html/template"
 	"os"
 	"path/filepath"
@@ -31,7 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/regexes"
+	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -152,42 +150,9 @@ func visibilityIcon(visibility model.Visibility) template.HTML {
 	return template.HTML(fmt.Sprintf(`<i aria-label="Visibility: %v" class="fa fa-%v"></i>`, icon.label, icon.faIcon))
 }
 
-// replaces shortcodes in `text` with the emoji in `emojis`
 // text is a template.HTML to affirm that the input of this function is already escaped
-func emojify(emojis []model.Emoji, text template.HTML) template.HTML {
-	emojisMap := make(map[string]model.Emoji, len(emojis))
-
-	for _, emoji := range emojis {
-		shortcode := ":" + emoji.Shortcode + ":"
-		emojisMap[shortcode] = emoji
-	}
-
-	out := regexes.ReplaceAllStringFunc(
-		regexes.EmojiFinder,
-		string(text),
-		func(shortcode string, buf *bytes.Buffer) string {
-			// Look for emoji according to this shortcode
-			emoji, ok := emojisMap[shortcode]
-			if !ok {
-				return shortcode
-			}
-
-			// Escape raw emoji content
-			safeURL := html.EscapeString(emoji.URL)
-			safeCode := html.EscapeString(emoji.Shortcode)
-
-			// Write HTML emoji repr to buffer
-			buf.WriteString(`<img src="`)
-			buf.WriteString(safeURL)
-			buf.WriteString(`" title=":`)
-			buf.WriteString(safeCode)
-			buf.WriteString(`:" alt=":`)
-			buf.WriteString(safeCode)
-			buf.WriteString(`:" class="emoji"/>`)
-
-			return buf.String()
-		},
-	)
+func emojify(emojis []model.Emoji, inputText template.HTML) template.HTML {
+	out := text.Emojify(emojis, string(inputText))
 
 	/* #nosec G203 */
 	// (this is escaped above)
