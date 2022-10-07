@@ -29,6 +29,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
+const textCSSUTF8 = string(api.TextCSS + "; charset=utf-8")
+
 func (m *Module) customCSSGETHandler(c *gin.Context) {
 	if !config.GetAccountsAllowCustomCSS() {
 		err := errors.New("accounts-allow-custom-css is not enabled on this instance")
@@ -55,6 +57,6 @@ func (m *Module) customCSSGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.Header("Cache-Control", "no-cache")
-	c.Data(http.StatusOK, "text/css; charset=utf-8", []byte(customCSS))
+	c.Header(cacheControlHeader, cacheControlNoCache)
+	c.Data(http.StatusOK, textCSSUTF8, []byte(customCSS))
 }
