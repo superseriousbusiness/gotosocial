@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
 const rssFeedLength = 20
@@ -76,7 +77,7 @@ func (p *processor) GetRSSFeedForUsername(ctx context.Context, username string) 
 				account.AvatarMediaAttachment = avatar
 			}
 			image = &feeds.Image{
-				Url:   account.AvatarMediaAttachment.URL,
+				Url:   account.AvatarMediaAttachment.Thumbnail.URL,
 				Title: "Avatar for " + author,
 				Link:  account.URL,
 			}
@@ -96,38 +97,40 @@ func (p *processor) GetRSSFeedForUsername(ctx context.Context, username string) 
 				feed.Updated = s.UpdatedAt
 			}
 
+			apiStatus, err := p.tc.StatusToAPIStatus(ctx, s, nil)
+			if err != nil {
+				return "", gtserror.NewErrorInternalError(fmt.Errorf("GetRSSFeedForUsername: error converting status to api model: %s", err))
+			}
+
 			// build description field
 			descriptionBuilder := strings.Builder{}
-			attachments := len(s.Attachments)
+			attachments := len(apiStatus.MediaAttachments)
 			switch {
 			case attachments > 1:
 				descriptionBuilder.WriteString(fmt.Sprintf("Posted [%d] attachments", attachments))
 			case attachments == 1:
 				descriptionBuilder.WriteString("Posted 1 attachment")
-				if s.Content != "" {
-					descriptionBuilder.WriteString("; " + s.Content)
-				}
 			default:
-				descriptionBuilder.WriteString(s.Content)
+				descriptionBuilder.WriteString("Made a new post")
 			}
 			description := trimTo(descriptionBuilder.String(), 256)
 
 			// build title field
 			var title string
-			if s.ContentWarning != "" {
-				title = trimTo(s.ContentWarning, 64)
+			if apiStatus.SpoilerText != "" {
+				title = trimTo(apiStatus.SpoilerText, 64)
 			} else {
-				title = trimTo(description, 64)
+				title = trimTo(s.Text, 64)
 			}
 
 			feed.Add(&feeds.Item{
-				Id:          s.URL,
+				Id:          apiStatus.URL,
 				Title:       title,
-				Link:        &feeds.Link{Href: s.URL},
+				Link:        &feeds.Link{Href: apiStatus.URL},
 				Description: description,
 				Author:      feed.Author,
 				Created:     s.CreatedAt,
-				Content:     s.Content,
+				Content:     text.Emojify(apiStatus.Emojis, apiStatus.Content),
 			})
 		}
 
