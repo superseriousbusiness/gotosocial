@@ -35,7 +35,7 @@ const (
 	confirmEmailPath = "/" + uris.ConfirmEmailPath
 	profilePath      = "/@:" + usernameKey
 	customCSSPath    = profilePath + "/custom.css"
-	rssFeedPath      = profilePath + "/feed"
+	rssFeedPath      = profilePath + "/feed.rss"
 	statusPath       = profilePath + "/statuses/:" + statusIDKey
 	assetsPathPrefix = "/assets"
 	userPanelPath    = "/settings/user"
