@@ -105,7 +105,7 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 
 	// check when the last status was
 	var lastStatusAt string
-	lastPosted, err := c.db.GetAccountLastPosted(ctx, a.ID)
+	lastPosted, err := c.db.GetAccountLastPosted(ctx, a.ID, false)
 	if err == nil && !lastPosted.IsZero() {
 		lastStatusAt = util.FormatISO8601(lastPosted)
 	}

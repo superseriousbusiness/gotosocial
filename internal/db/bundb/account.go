@@ -218,7 +218,7 @@ func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gts
 	return account, nil
 }
 
-func (a *accountDB) GetAccountLastPosted(ctx context.Context, accountID string) (time.Time, db.Error) {
+func (a *accountDB) GetAccountLastPosted(ctx context.Context, accountID string, webOnly bool) (time.Time, db.Error) {
 	status := new(gtsmodel.Status)
 
 	q := a.conn.
@@ -228,6 +228,14 @@ func (a *accountDB) GetAccountLastPosted(ctx context.Context, accountID string) 
 		Limit(1).
 		Where("account_id = ?", accountID).
 		Column("created_at")
+
+	if webOnly {
+		q = q.
+			WhereGroup(" AND ", whereEmptyOrNull("in_reply_to_uri")).
+			WhereGroup(" AND ", whereEmptyOrNull("boost_of_id")).
+			Where("visibility = ?", gtsmodel.VisibilityPublic).
+			Where("federated = ?", true)
+	}
 
 	if err := q.Scan(ctx); err != nil {
 		return time.Time{}, a.conn.ProcessError(err)

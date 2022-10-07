@@ -140,7 +140,7 @@ func (suite *AccountTestSuite) TestUpdateAccount() {
 }
 
 func (suite *AccountTestSuite) TestGetAccountLastPosted() {
-	lastPosted, err := suite.db.GetAccountLastPosted(context.Background(), suite.testAccounts["local_account_1"].ID)
+	lastPosted, err := suite.db.GetAccountLastPosted(context.Background(), suite.testAccounts["local_account_1"].ID, false)
 	suite.NoError(err)
 	suite.EqualValues(1653046675, lastPosted.Unix())
 }
