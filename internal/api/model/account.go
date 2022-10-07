@@ -93,7 +93,7 @@ type Account struct {
 	// CustomCSS to include when rendering this account's profile or statuses.
 	CustomCSS string `json:"custom_css,omitempty"`
 	// Account has enabled RSS feed.
-	RSSEnabled bool `json:"rss_enabled,omitempty"`
+	EnableRSS bool `json:"enable_rss,omitempty"`
 }
 
 // AccountCreateRequest models account creation parameters.
@@ -158,7 +158,7 @@ type UpdateCredentialsRequest struct {
 	// Custom CSS to be included when rendering this account's profile or statuses.
 	CustomCSS *string `form:"custom_css" json:"custom_css" xml:"custom_css"`
 	// Enable RSS feed of public toots for this account at /@[username]/feed.rss
-	RSSEnabled *bool `form:"rss_enabled" json:"rss_enabled" xml:"rss_enabled"`
+	EnableRSS *bool `form:"enable_rss" json:"enable_rss" xml:"enable_rss"`
 }
 
 // UpdateSource is to be used specifically in an UpdateCredentialsRequest.

@@ -83,7 +83,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 	}
 
 	var rssFeed string
-	if account.RSSEnabled {
+	if account.EnableRSS {
 		rssFeed = "/@" + account.Username + "/feed.rss"
 	}
 

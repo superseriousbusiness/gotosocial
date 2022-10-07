@@ -160,6 +160,10 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		account.CustomCSS = text.SanitizePlaintext(customCSS)
 	}
 
+	if form.EnableRSS != nil {
+		account.EnableRSS = form.EnableRSS
+	}
+
 	updatedAccount, err := p.db.UpdateAccount(ctx, account)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("could not update account %s: %s", account.ID, err))
