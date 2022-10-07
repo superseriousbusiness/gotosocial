@@ -102,6 +102,8 @@ func (m *Module) Route(s router.Router) error {
 	// serve custom css at /@username/custom.css
 	s.AttachHandler(http.MethodGet, customCSSPath, m.customCSSGETHandler)
 
+	s.AttachHandler(http.MethodGet, rssFeedPath, m.rssFeedGETHandler)
+
 	// serve statuses
 	s.AttachHandler(http.MethodGet, statusPath, m.threadGETHandler)
 

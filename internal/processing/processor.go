@@ -22,6 +22,7 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"time"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
@@ -80,10 +81,10 @@ type Processor interface {
 	// AccountGet processes the given request for account information.
 	AccountGetLocalByUsername(ctx context.Context, authed *oauth.Auth, username string) (*apimodel.Account, gtserror.WithCode)
 	AccountGetCustomCSSForUsername(ctx context.Context, username string) (string, gtserror.WithCode)
-	// AccountGetRSSFeedForUsername returns the RSS feed of latest posts for given local account username.
-	// Will return 404 if an rss feed for that user is not available, or a different error if something
-	// else goes wrong.
-	AccountGetRSSFeedForUsername(ctx context.Context, authed *oauth.Auth, username string) (string, gtserror.WithCode)
+	// AccountGetRSSFeedForUsername returns a function to get the RSS feed of latest posts for given local account username.
+	// This function should only be called if necessary: the given lastModified time can be used to check this.
+	// Will return 404 if an rss feed for that user is not available, or a different error if something else goes wrong.
+	AccountGetRSSFeedForUsername(ctx context.Context, username string) (func() (string, gtserror.WithCode), time.Time, gtserror.WithCode)
 	// AccountUpdate processes the update of an account with the given form
 	AccountUpdate(ctx context.Context, authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, gtserror.WithCode)
 	// AccountStatusesGet fetches a number of statuses (in time descending order) from the given account, filtered by visibility for

@@ -30,17 +30,23 @@ type GetRSSTestSuite struct {
 }
 
 func (suite *GetRSSTestSuite) TestGetAccountRSSAdmin() {
-	testAccount := suite.testAccounts["local_account_1"]
-	rssFeed, err := suite.accountProcessor.GetRSSFeedForUsername(context.Background(), testAccount, "admin")
+	getFeed, lastModified, err := suite.accountProcessor.GetRSSFeedForUsername(context.Background(), "admin")
 	suite.NoError(err)
-	suite.Equal(``, rssFeed)
+	suite.Equal(0, lastModified.Unix())
+
+	feed, err := getFeed()
+	suite.NoError(err)
+	suite.Equal(``, feed)
 }
 
 func (suite *GetRSSTestSuite) TestGetAccountRSSZork() {
-	testAccount := suite.testAccounts["admin_account"]
-	rssFeed, err := suite.accountProcessor.GetRSSFeedForUsername(context.Background(), testAccount, "the_mighty_zork")
+	getFeed, lastModified, err := suite.accountProcessor.GetRSSFeedForUsername(context.Background(), "the_mighty_zork")
 	suite.NoError(err)
-	suite.Equal(``, rssFeed)
+	suite.Equal(0, lastModified.Unix())
+
+	feed, err := getFeed()
+	suite.NoError(err)
+	suite.Equal(``, feed)
 }
 
 func TestGetRSSTestSuite(t *testing.T) {
