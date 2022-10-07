@@ -219,6 +219,7 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		Fields:         fields,
 		Suspended:      suspended,
 		CustomCSS:      a.CustomCSS,
+		RSSEnabled:     *a.EnableRSS,
 	}
 
 	c.ensureAvatar(accountFrontend)
