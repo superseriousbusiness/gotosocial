@@ -226,8 +226,8 @@ main {
 	justify-content: space-between;
 	margin: 1rem;
 	.rsslogo {
-		width: 1em;
-		height: 1em;
+		width: 1.45em;
+		height: 1.45em;
 		object-fit: contain;
 		vertical-align: middle;
 	}
