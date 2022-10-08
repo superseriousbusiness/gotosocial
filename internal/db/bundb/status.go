@@ -72,7 +72,7 @@ func (s *statusDB) GetStatusByID(ctx context.Context, id string) (*gtsmodel.Stat
 			return s.cache.GetByID(id)
 		},
 		func(status *gtsmodel.Status) error {
-			return s.newStatusQ(status).Where("status.id = ?", id).Scan(ctx)
+			return s.newStatusQ(status).Where("? = ?", bun.Ident("status.id"), id).Scan(ctx)
 		},
 	)
 }
@@ -84,7 +84,7 @@ func (s *statusDB) GetStatusByURI(ctx context.Context, uri string) (*gtsmodel.St
 			return s.cache.GetByURI(uri)
 		},
 		func(status *gtsmodel.Status) error {
-			return s.newStatusQ(status).Where("status.uri = ?", uri).Scan(ctx)
+			return s.newStatusQ(status).Where("? = ?", bun.Ident("status.uri"), uri).Scan(ctx)
 		},
 	)
 }
@@ -96,7 +96,7 @@ func (s *statusDB) GetStatusByURL(ctx context.Context, url string) (*gtsmodel.St
 			return s.cache.GetByURL(url)
 		},
 		func(status *gtsmodel.Status) error {
-			return s.newStatusQ(status).Where("status.url = ?", url).Scan(ctx)
+			return s.newStatusQ(status).Where("? = ?", bun.Ident("status.url"), url).Scan(ctx)
 		},
 	)
 }
@@ -109,8 +109,7 @@ func (s *statusDB) getStatus(ctx context.Context, cacheGet func() (*gtsmodel.Sta
 		status = &gtsmodel.Status{}
 
 		// Not cached! Perform database query
-		err := dbQuery(status)
-		if err != nil {
+		if err := dbQuery(status); err != nil {
 			return nil, s.conn.ProcessError(err)
 		}
 
@@ -138,52 +137,15 @@ func (s *statusDB) getStatus(ctx context.Context, cacheGet func() (*gtsmodel.Sta
 }
 
 func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Error {
-	return s.conn.RunInTx(ctx, func(tx bun.Tx) error {
-		// create links between this status and any emojis it uses
-		for _, i := range status.EmojiIDs {
-			if _, err := tx.NewInsert().Model(&gtsmodel.StatusToEmoji{
-				StatusID: status.ID,
-				EmojiID:  i,
-			}).Exec(ctx); err != nil {
-				return err
-			}
-		}
-
-		// create links between this status and any tags it uses
-		for _, i := range status.TagIDs {
-			if _, err := tx.NewInsert().Model(&gtsmodel.StatusToTag{
-				StatusID: status.ID,
-				TagID:    i,
-			}).Exec(ctx); err != nil {
-				return err
-			}
-		}
-
-		// change the status ID of the media attachments to the new status
-		for _, a := range status.Attachments {
-			a.StatusID = status.ID
-			a.UpdatedAt = time.Now()
-			if _, err := tx.NewUpdate().Model(a).
-				Where("id = ?", a.ID).
-				Exec(ctx); err != nil {
-				return err
-			}
-		}
-
-		// Finally, insert the status
-		_, err := tx.NewInsert().Model(status).Exec(ctx)
-		return err
-	})
-}
-
-func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status) (*gtsmodel.Status, db.Error) {
 	err := s.conn.RunInTx(ctx, func(tx bun.Tx) error {
 		// create links between this status and any emojis it uses
 		for _, i := range status.EmojiIDs {
-			if _, err := tx.NewInsert().Model(&gtsmodel.StatusToEmoji{
-				StatusID: status.ID,
-				EmojiID:  i,
-			}).Exec(ctx); err != nil {
+			if _, err := tx.
+				NewInsert().
+				Model(&gtsmodel.StatusToEmoji{
+					StatusID: status.ID,
+					EmojiID:  i,
+				}).Exec(ctx); err != nil {
 				err = s.conn.errProc(err)
 				if !errors.Is(err, db.ErrAlreadyExists) {
 					return err
@@ -193,10 +155,78 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status) (*
 
 		// create links between this status and any tags it uses
 		for _, i := range status.TagIDs {
-			if _, err := tx.NewInsert().Model(&gtsmodel.StatusToTag{
-				StatusID: status.ID,
-				TagID:    i,
-			}).Exec(ctx); err != nil {
+			if _, err := tx.
+				NewInsert().
+				Model(&gtsmodel.StatusToTag{
+					StatusID: status.ID,
+					TagID:    i,
+				}).Exec(ctx); err != nil {
+				err = s.conn.errProc(err)
+				if !errors.Is(err, db.ErrAlreadyExists) {
+					return err
+				}
+			}
+		}
+
+		// change the status ID of the media attachments to the new status
+		for _, a := range status.Attachments {
+			a.StatusID = status.ID
+			a.UpdatedAt = time.Now()
+			if _, err := tx.
+				NewUpdate().
+				Model(a).
+				Where("? = ?", bun.Ident("media_attachment.id"), a.ID).
+				Exec(ctx); err != nil {
+				err = s.conn.errProc(err)
+				if !errors.Is(err, db.ErrAlreadyExists) {
+					return err
+				}
+			}
+		}
+
+		// Finally, insert the status
+		if _, err := tx.
+			NewInsert().
+			Model(status).
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return s.conn.ProcessError(err)
+	}
+
+	s.cache.Put(status)
+	return nil
+}
+
+func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status) (*gtsmodel.Status, db.Error) {
+	err := s.conn.RunInTx(ctx, func(tx bun.Tx) error {
+		// create links between this status and any emojis it uses
+		for _, i := range status.EmojiIDs {
+			if _, err := tx.
+				NewInsert().
+				Model(&gtsmodel.StatusToEmoji{
+					StatusID: status.ID,
+					EmojiID:  i,
+				}).Exec(ctx); err != nil {
+				err = s.conn.errProc(err)
+				if !errors.Is(err, db.ErrAlreadyExists) {
+					return err
+				}
+			}
+		}
+
+		// create links between this status and any tags it uses
+		for _, i := range status.TagIDs {
+			if _, err := tx.
+				NewInsert().
+				Model(&gtsmodel.StatusToTag{
+					StatusID: status.ID,
+					TagID:    i,
+				}).Exec(ctx); err != nil {
 				err = s.conn.errProc(err)
 				if !errors.Is(err, db.ErrAlreadyExists) {
 					return err
@@ -208,23 +238,32 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status) (*
 		for _, a := range status.Attachments {
 			a.StatusID = status.ID
 			a.UpdatedAt = time.Now()
-			if _, err := tx.NewUpdate().Model(a).
-				Where("id = ?", a.ID).
+			if _, err := tx.
+				NewUpdate().
+				Model(a).
+				Where("? = ?", bun.Ident("media_attachment.id"), a.ID).
 				Exec(ctx); err != nil {
 				return err
 			}
 		}
 
 		// Finally, update the status itself
-		if _, err := tx.NewUpdate().Model(status).WherePK().Exec(ctx); err != nil {
+		if _, err := tx.
+			NewUpdate().
+			Model(status).
+			Where("? = ?", bun.Ident("status.id"), status.ID).
+			Exec(ctx); err != nil {
 			return err
 		}
 
-		s.cache.Put(status)
 		return nil
 	})
+	if err != nil {
+		return nil, s.conn.ProcessError(err)
+	}
 
-	return status, err
+	s.cache.Put(status)
+	return status, nil
 }
 
 func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) db.Error {
@@ -232,8 +271,8 @@ func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) db.Error {
 		// delete links between this status and any emojis it uses
 		if _, err := tx.
 			NewDelete().
-			Model(&gtsmodel.StatusToEmoji{}).
-			Where("status_id = ?", id).
+			TableExpr("? AS ?", bun.Ident("status_to_emojis"), bun.Ident("status_to_emoji")).
+			Where("? = ?", bun.Ident("status_to_emoji.status_id"), id).
 			Exec(ctx); err != nil {
 			return err
 		}
@@ -241,8 +280,8 @@ func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) db.Error {
 		// delete links between this status and any tags it uses
 		if _, err := tx.
 			NewDelete().
-			Model(&gtsmodel.StatusToTag{}).
-			Where("status_id = ?", id).
+			TableExpr("? AS ?", bun.Ident("status_to_tags"), bun.Ident("status_to_tag")).
+			Where("? = ?", bun.Ident("status_to_tag.status_id"), id).
 			Exec(ctx); err != nil {
 			return err
 		}
@@ -250,17 +289,20 @@ func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) db.Error {
 		// delete the status itself
 		if _, err := tx.
 			NewDelete().
-			Model(&gtsmodel.Status{ID: id}).
-			WherePK().
+			TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
+			Where("? = ?", bun.Ident("status.id"), id).
 			Exec(ctx); err != nil {
 			return err
 		}
 
-		s.cache.Invalidate(id)
 		return nil
 	})
+	if err != nil {
+		return s.conn.ProcessError(err)
+	}
 
-	return s.conn.ProcessError(err)
+	s.cache.Invalidate(id)
+	return nil
 }
 
 func (s *statusDB) GetStatusParents(ctx context.Context, status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, db.Error) {
@@ -312,11 +354,11 @@ func (s *statusDB) statusChildren(ctx context.Context, status *gtsmodel.Status, 
 
 	q := s.conn.
 		NewSelect().
-		Table("statuses").
-		Column("id").
-		Where("in_reply_to_id = ?", status.ID)
+		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
+		Column("status.id").
+		Where("? = ?", bun.Ident("status.in_reply_to_id"), status.ID)
 	if minID != "" {
-		q = q.Where("id > ?", minID)
+		q = q.Where("? > ?", bun.Ident("status.id"), minID)
 	}
 
 	if err := q.Scan(ctx, &childIDs); err != nil {
@@ -356,23 +398,35 @@ func (s *statusDB) statusChildren(ctx context.Context, status *gtsmodel.Status, 
 }
 
 func (s *statusDB) CountStatusReplies(ctx context.Context, status *gtsmodel.Status) (int, db.Error) {
-	return s.conn.NewSelect().Model(&gtsmodel.Status{}).Where("in_reply_to_id = ?", status.ID).Count(ctx)
+	return s.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
+		Where("? = ?", bun.Ident("status.in_reply_to_id"), status.ID).
+		Count(ctx)
 }
 
 func (s *statusDB) CountStatusReblogs(ctx context.Context, status *gtsmodel.Status) (int, db.Error) {
-	return s.conn.NewSelect().Model(&gtsmodel.Status{}).Where("boost_of_id = ?", status.ID).Count(ctx)
+	return s.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
+		Where("? = ?", bun.Ident("status.boost_of_id"), status.ID).
+		Count(ctx)
 }
 
 func (s *statusDB) CountStatusFaves(ctx context.Context, status *gtsmodel.Status) (int, db.Error) {
-	return s.conn.NewSelect().Model(&gtsmodel.StatusFave{}).Where("status_id = ?", status.ID).Count(ctx)
+	return s.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("status_faves"), bun.Ident("status_fave")).
+		Where("? = ?", bun.Ident("status_fave.status_id"), status.ID).
+		Count(ctx)
 }
 
 func (s *statusDB) IsStatusFavedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, db.Error) {
 	q := s.conn.
 		NewSelect().
-		Model(&gtsmodel.StatusFave{}).
-		Where("status_id = ?", status.ID).
-		Where("account_id = ?", accountID)
+		TableExpr("? AS ?", bun.Ident("status_faves"), bun.Ident("status_fave")).
+		Where("? = ?", bun.Ident("status_fave.status_id"), status.ID).
+		Where("? = ?", bun.Ident("status_fave.account_id"), accountID)
 
 	return s.conn.Exists(ctx, q)
 }
@@ -380,9 +434,9 @@ func (s *statusDB) IsStatusFavedBy(ctx context.Context, status *gtsmodel.Status,
 func (s *statusDB) IsStatusRebloggedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, db.Error) {
 	q := s.conn.
 		NewSelect().
-		Model(&gtsmodel.Status{}).
-		Where("boost_of_id = ?", status.ID).
-		Where("account_id = ?", accountID)
+		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
+		Where("? = ?", bun.Ident("status.boost_of_id"), status.ID).
+		Where("? = ?", bun.Ident("status.account_id"), accountID)
 
 	return s.conn.Exists(ctx, q)
 }
@@ -390,9 +444,9 @@ func (s *statusDB) IsStatusRebloggedBy(ctx context.Context, status *gtsmodel.Sta
 func (s *statusDB) IsStatusMutedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, db.Error) {
 	q := s.conn.
 		NewSelect().
-		Model(&gtsmodel.StatusMute{}).
-		Where("status_id = ?", status.ID).
-		Where("account_id = ?", accountID)
+		TableExpr("? AS ?", bun.Ident("status_mutes"), bun.Ident("status_mute")).
+		Where("? = ?", bun.Ident("status_mute.status_id"), status.ID).
+		Where("? = ?", bun.Ident("status_mute.account_id"), accountID)
 
 	return s.conn.Exists(ctx, q)
 }
@@ -400,9 +454,9 @@ func (s *statusDB) IsStatusMutedBy(ctx context.Context, status *gtsmodel.Status,
 func (s *statusDB) IsStatusBookmarkedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, db.Error) {
 	q := s.conn.
 		NewSelect().
-		Model(&gtsmodel.StatusBookmark{}).
-		Where("status_id = ?", status.ID).
-		Where("account_id = ?", accountID)
+		TableExpr("? AS ?", bun.Ident("status_bookmarks"), bun.Ident("status_bookmark")).
+		Where("? = ?", bun.Ident("status_bookmark.status_id"), status.ID).
+		Where("? = ?", bun.Ident("status_bookmark.account_id"), accountID)
 
 	return s.conn.Exists(ctx, q)
 }
@@ -410,8 +464,9 @@ func (s *statusDB) IsStatusBookmarkedBy(ctx context.Context, status *gtsmodel.St
 func (s *statusDB) GetStatusFaves(ctx context.Context, status *gtsmodel.Status) ([]*gtsmodel.StatusFave, db.Error) {
 	faves := []*gtsmodel.StatusFave{}
 
-	q := s.newFaveQ(&faves).
-		Where("status_id = ?", status.ID)
+	q := s.
+		newFaveQ(&faves).
+		Where("? = ?", bun.Ident("status_fave.status_id"), status.ID)
 
 	if err := q.Scan(ctx); err != nil {
 		return nil, s.conn.ProcessError(err)
@@ -422,8 +477,9 @@ func (s *statusDB) GetStatusFaves(ctx context.Context, status *gtsmodel.Status) 
 func (s *statusDB) GetStatusReblogs(ctx context.Context, status *gtsmodel.Status) ([]*gtsmodel.Status, db.Error) {
 	reblogs := []*gtsmodel.Status{}
 
-	q := s.newStatusQ(&reblogs).
-		Where("boost_of_id = ?", status.ID)
+	q := s.
+		newStatusQ(&reblogs).
+		Where("? = ?", bun.Ident("status.boost_of_id"), status.ID)
 
 	if err := q.Scan(ctx); err != nil {
 		return nil, s.conn.ProcessError(err)

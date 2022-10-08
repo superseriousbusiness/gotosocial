@@ -42,6 +42,18 @@ func (suite *AccountTestSuite) TestGetAccountStatuses() {
 	suite.Len(statuses, 5)
 }
 
+func (suite *AccountTestSuite) TestGetAccountStatusesExcludeRepliesAndReblogs() {
+	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, true, true, "", "", false, false, false)
+	suite.NoError(err)
+	suite.Len(statuses, 5)
+}
+
+func (suite *AccountTestSuite) TestGetAccountStatusesExcludeRepliesAndReblogsPublicOnly() {
+	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, true, true, "", "", false, false, true)
+	suite.NoError(err)
+	suite.Len(statuses, 1)
+}
+
 func (suite *AccountTestSuite) TestGetAccountStatusesMediaOnly() {
 	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, false, false, "", "", false, true, false)
 	suite.NoError(err)
@@ -99,7 +111,7 @@ func (suite *AccountTestSuite) TestUpdateAccount() {
 	err = dbService.GetConn().
 		NewSelect().
 		Model(noCache).
-		Where("account.id = ?", bun.Ident(testAccount.ID)).
+		Where("? = ?", bun.Ident("account.id"), testAccount.ID).
 		Relation("AvatarMediaAttachment").
 		Relation("HeaderMediaAttachment").
 		Relation("Emojis").
@@ -127,7 +139,7 @@ func (suite *AccountTestSuite) TestUpdateAccount() {
 	err = dbService.GetConn().
 		NewSelect().
 		Model(noCache).
-		Where("account.id = ?", bun.Ident(testAccount.ID)).
+		Where("? = ?", bun.Ident("account.id"), testAccount.ID).
 		Relation("AvatarMediaAttachment").
 		Relation("HeaderMediaAttachment").
 		Relation("Emojis").

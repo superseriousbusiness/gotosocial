@@ -47,7 +47,7 @@ func (p *processor) Unattach(ctx context.Context, account *gtsmodel.Account, med
 	attachment.UpdatedAt = time.Now()
 	attachment.StatusID = ""
 
-	if err := p.db.UpdateByPrimaryKey(ctx, attachment, updatingColumns...); err != nil {
+	if err := p.db.UpdateByID(ctx, attachment, attachment.ID, updatingColumns...); err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("db error updating attachment: %s", err))
 	}
 

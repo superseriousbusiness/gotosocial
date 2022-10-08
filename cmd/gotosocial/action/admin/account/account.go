@@ -101,7 +101,7 @@ var Confirm action.GTSAction = func(ctx context.Context) error {
 	u.Email = u.UnconfirmedEmail
 	u.ConfirmedAt = time.Now()
 	u.UpdatedAt = time.Now()
-	if err := dbConn.UpdateByPrimaryKey(ctx, u, updatingColumns...); err != nil {
+	if err := dbConn.UpdateByID(ctx, u, u.ID, updatingColumns...); err != nil {
 		return err
 	}
 

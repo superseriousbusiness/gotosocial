@@ -74,7 +74,7 @@ func (suite *EmailConfirmTestSuite) TestConfirmEmail() {
 	user.ConfirmationSentAt = time.Now().Add(-5 * time.Minute)
 	user.ConfirmationToken = "1d1aa44b-afa4-49c8-ac4b-eceb61715cc6"
 
-	err := suite.db.UpdateByPrimaryKey(ctx, user, updatingColumns...)
+	err := suite.db.UpdateByID(ctx, user, user.ID, updatingColumns...)
 	suite.NoError(err)
 
 	// confirm with the token set above
@@ -102,7 +102,7 @@ func (suite *EmailConfirmTestSuite) TestConfirmEmailOldToken() {
 	user.ConfirmationSentAt = time.Now().Add(-192 * time.Hour)
 	user.ConfirmationToken = "1d1aa44b-afa4-49c8-ac4b-eceb61715cc6"
 
-	err := suite.db.UpdateByPrimaryKey(ctx, user, updatingColumns...)
+	err := suite.db.UpdateByID(ctx, user, user.ID, updatingColumns...)
 	suite.NoError(err)
 
 	// confirm with the token set above
