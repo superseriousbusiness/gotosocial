@@ -129,12 +129,14 @@ func (m *Module) rssFeedGETHandler(c *gin.Context) {
 	c.Header(eTagHeader, cacheEntry.eTag)
 	c.Header(lastModifiedHeader, accountLastPostedPublic.Format(http.TimeFormat))
 
-	if ifNoneMatch != "" && ifNoneMatch == cacheEntry.eTag {
+	if ifNoneMatch == cacheEntry.eTag {
 		c.AbortWithStatus(http.StatusNotModified)
 		return
 	}
 
-	if !ifModifiedSince.IsZero() && cacheEntry.lastModified.After(ifModifiedSince) {
+	lmUnix := cacheEntry.lastModified.Unix()
+	imsUnix := ifModifiedSince.Unix()
+	if lmUnix <= imsUnix {
 		c.AbortWithStatus(http.StatusNotModified)
 		return
 	}
