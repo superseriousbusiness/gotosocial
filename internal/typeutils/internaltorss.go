@@ -33,7 +33,7 @@ import (
 )
 
 const (
-	rssMaxTitleChars       = 64
+	rssMaxTitleChars       = 128
 	rssDescriptionMaxChars = 256
 )
 
@@ -173,5 +173,5 @@ func trimTo(in string, to int) string {
 		return in
 	}
 
-	return in[:to]
+	return in[:to-3] + "..."
 }
