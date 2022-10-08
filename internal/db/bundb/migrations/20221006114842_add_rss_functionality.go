@@ -27,7 +27,7 @@ import (
 
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
-		_, err := db.ExecContext(ctx, "ALTER TABLE ? ADD COLUMN ? BOOLEAN NOT NULL DEFAULT false", bun.Ident("accounts"), bun.Ident("enable_rss"))
+		_, err := db.ExecContext(ctx, "ALTER TABLE ? ADD COLUMN ? BOOLEAN DEFAULT false", bun.Ident("accounts"), bun.Ident("enable_rss"))
 		if err != nil && !(strings.Contains(err.Error(), "already exists") || strings.Contains(err.Error(), "duplicate column name") || strings.Contains(err.Error(), "SQLSTATE 42701")) {
 			return err
 		}
