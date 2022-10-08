@@ -82,6 +82,11 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		return
 	}
 
+	var rssFeed string
+	if account.EnableRSS {
+		rssFeed = "/@" + account.Username + "/feed.rss"
+	}
+
 	// only allow search engines / robots to view this page if account is discoverable
 	var robotsMeta string
 	if account.Discoverable {
@@ -118,6 +123,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		"instance":         instance,
 		"account":          account,
 		"ogMeta":           ogBase(instance).withAccount(account),
+		"rssFeed":          rssFeed,
 		"robotsMeta":       robotsMeta,
 		"statuses":         statusResp.Items,
 		"statuses_next":    statusResp.NextLink,

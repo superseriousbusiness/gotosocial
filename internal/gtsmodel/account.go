@@ -76,6 +76,7 @@ type Account struct {
 	SuspendedAt             time.Time        `validate:"-" bun:"type:timestamptz,nullzero"`                                                                          // When was this account suspended (eg., don't allow it to log in/post, don't accept media/posts from this account)
 	HideCollections         *bool            `validate:"-" bun:",default:false"`                                                                                     // Hide this account's collections
 	SuspensionOrigin        string           `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                                                // id of the database entry that caused this account to become suspended -- can be an account ID or a domain block ID
+	EnableRSS               *bool            `validate:"-" bun:",default:false"`                                                                                     // enable RSS feed subscription for this account's public posts at [URL]/feed
 }
 
 // AccountToEmoji is an intermediate struct to facilitate the many2many relationship between an account and one or more emojis.

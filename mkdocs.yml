@@ -18,6 +18,7 @@ nav:
     - "user_guide/user_panel.md"
     - "user_guide/custom_css.md"
     - "user_guide/password_management.md"
+    - "user_guide/rss.md"
   - "Installation Guide":
     - "installation_guide/index.md"
     - "installation_guide/binary.md"

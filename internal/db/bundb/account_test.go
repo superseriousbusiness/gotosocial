@@ -152,9 +152,15 @@ func (suite *AccountTestSuite) TestUpdateAccount() {
 }
 
 func (suite *AccountTestSuite) TestGetAccountLastPosted() {
-	lastPosted, err := suite.db.GetAccountLastPosted(context.Background(), suite.testAccounts["local_account_1"].ID)
+	lastPosted, err := suite.db.GetAccountLastPosted(context.Background(), suite.testAccounts["local_account_1"].ID, false)
 	suite.NoError(err)
 	suite.EqualValues(1653046675, lastPosted.Unix())
+}
+
+func (suite *AccountTestSuite) TestGetAccountLastPostedWebOnly() {
+	lastPosted, err := suite.db.GetAccountLastPosted(context.Background(), suite.testAccounts["local_account_1"].ID, true)
+	suite.NoError(err)
+	suite.EqualValues(1634726437, lastPosted.Unix())
 }
 
 func (suite *AccountTestSuite) TestInsertAccountWithDefaults() {

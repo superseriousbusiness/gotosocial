@@ -158,6 +158,7 @@ func copyAccount(account *gtsmodel.Account) *gtsmodel.Account {
 		SuspendedAt:             account.SuspendedAt,
 		HideCollections:         copyBoolPtr(account.HideCollections),
 		SuspensionOrigin:        account.SuspensionOrigin,
+		EnableRSS:               copyBoolPtr(account.EnableRSS),
 	}
 }
 

@@ -253,21 +253,29 @@ func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gts
 	return account, nil
 }
 
-func (a *accountDB) GetAccountLastPosted(ctx context.Context, accountID string) (time.Time, db.Error) {
-	status := new(gtsmodel.Status)
+func (a *accountDB) GetAccountLastPosted(ctx context.Context, accountID string, webOnly bool) (time.Time, db.Error) {
+	createdAt := time.Time{}
 
 	q := a.conn.
 		NewSelect().
-		Model(status).
+		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
 		Column("status.created_at").
 		Where("? = ?", bun.Ident("status.account_id"), accountID).
 		Order("status.id DESC").
 		Limit(1)
 
-	if err := q.Scan(ctx); err != nil {
+	if webOnly {
+		q = q.
+			WhereGroup(" AND ", whereEmptyOrNull("status.in_reply_to_uri")).
+			WhereGroup(" AND ", whereEmptyOrNull("status.boost_of_id")).
+			Where("? = ?", bun.Ident("status.visibility"), gtsmodel.VisibilityPublic).
+			Where("? = ?", bun.Ident("status.federated"), true)
+	}
+
+	if err := q.Scan(ctx, &createdAt); err != nil {
 		return time.Time{}, a.conn.ProcessError(err)
 	}
-	return status.CreatedAt, nil
+	return createdAt, nil
 }
 
 func (a *accountDB) SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachment *gtsmodel.MediaAttachment, accountID string) db.Error {

@@ -27,7 +27,12 @@
             <div class="entry">Posted <b>{{.account.StatusesCount}}</b></div>
         </div>
     </div>
-    <h2 id="recent">Latest public toots</h2>
+    <h2 id="recent">
+        <span>Latest public toots</span>
+        {{ if .rssFeed }}
+            <a href="{{ .rssFeed }}"><img class="rsslogo" src="/assets/rss.svg" alt="The orange RSS logo."/></a>
+        {{ end }}
+    </h2>
 	    {{ if not .statuses }}
         <div data-nosnippet class="nothinghere">Nothing here!</div>
         {{ else }}

@@ -77,8 +77,10 @@ type Account interface {
 
 	// GetAccountLastPosted simply gets the timestamp of the most recent post by the account.
 	//
+	// If webOnly is true, then the time of the last non-reply, non-boost, public status of the account will be returned.
+	//
 	// The returned time will be zero if account has never posted anything.
-	GetAccountLastPosted(ctx context.Context, accountID string) (time.Time, Error)
+	GetAccountLastPosted(ctx context.Context, accountID string, webOnly bool) (time.Time, Error)
 
 	// SetAccountHeaderOrAvatar sets the header or avatar for the given accountID to the given media attachment.
 	SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachment *gtsmodel.MediaAttachment, accountID string) Error

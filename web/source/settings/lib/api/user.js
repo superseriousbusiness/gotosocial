@@ -49,7 +49,7 @@ module.exports = function ({ apiCall, getChanges }) {
 		},
 
 		updateProfile: function updateProfile() {
-			const formKeys = ["display_name", "locked", "source", "custom_css", "source.note"];
+			const formKeys = ["display_name", "locked", "source", "custom_css", "source.note", "enable_rss"];
 			const renamedKeys = {
 				"source.note": "note"
 			};

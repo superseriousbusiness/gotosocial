@@ -20,6 +20,7 @@ package processing
 
 import (
 	"context"
+	"time"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -44,6 +45,10 @@ func (p *processor) AccountGetLocalByUsername(ctx context.Context, authed *oauth
 
 func (p *processor) AccountGetCustomCSSForUsername(ctx context.Context, username string) (string, gtserror.WithCode) {
 	return p.accountProcessor.GetCustomCSSForUsername(ctx, username)
+}
+
+func (p *processor) AccountGetRSSFeedForUsername(ctx context.Context, username string) (func() (string, gtserror.WithCode), time.Time, gtserror.WithCode) {
+	return p.accountProcessor.GetRSSFeedForUsername(ctx, username)
 }
 
 func (p *processor) AccountUpdate(ctx context.Context, authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, gtserror.WithCode) {

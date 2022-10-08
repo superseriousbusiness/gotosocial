@@ -268,6 +268,10 @@ definitions:
                     $ref: '#/definitions/emoji'
                 type: array
                 x-go-name: Emojis
+            enable_rss:
+                description: Account has enabled RSS feed.
+                type: boolean
+                x-go-name: EnableRSS
             fields:
                 description: Additional metadata attached to this account's profile.
                 items:
@@ -2576,6 +2580,10 @@ paths:
                   in: formData
                   name: custom_css
                   type: string
+                - description: Enable RSS feed for this account's Public posts at `/[username]/feed.rss`
+                  in: formData
+                  name: enable_rss
+                  type: boolean
             produces:
                 - application/json
             responses:
