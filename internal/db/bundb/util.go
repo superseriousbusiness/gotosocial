@@ -85,14 +85,8 @@ func parseWhere(w db.Where) (query string, args []interface{}) {
 			return
 		}
 
-		if w.CaseInsensitive {
-			query = "LOWER(?) != LOWER(?)"
-			args = []interface{}{bun.Safe(w.Key), w.Value}
-			return
-		}
-
 		query = "? != ?"
-		args = []interface{}{bun.Safe(w.Key), w.Value}
+		args = []interface{}{bun.Ident(w.Key), w.Value}
 		return
 	}
 
@@ -102,13 +96,7 @@ func parseWhere(w db.Where) (query string, args []interface{}) {
 		return
 	}
 
-	if w.CaseInsensitive {
-		query = "LOWER(?) = LOWER(?)"
-		args = []interface{}{bun.Safe(w.Key), w.Value}
-		return
-	}
-
 	query = "? = ?"
-	args = []interface{}{bun.Safe(w.Key), w.Value}
+	args = []interface{}{bun.Ident(w.Key), w.Value}
 	return
 }

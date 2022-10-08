@@ -90,7 +90,7 @@ func (m *manager) pruneOneRemote(ctx context.Context, attachment *gtsmodel.Media
 
 	// update the attachment to reflect that we no longer have it cached
 	if changed {
-		return m.db.UpdateByPrimaryKey(ctx, attachment, "updated_at", "cached")
+		return m.db.UpdateByID(ctx, attachment, attachment.ID, "updated_at", "cached")
 	}
 
 	return nil

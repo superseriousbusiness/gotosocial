@@ -979,6 +979,15 @@ func NewTestEmojis() map[string]*gtsmodel.Emoji {
 	}
 }
 
+func NewTestStatusToEmojis() map[string]*gtsmodel.StatusToEmoji {
+	return map[string]*gtsmodel.StatusToEmoji{
+		"admin_account_status_1_rainbow": {
+			StatusID: "01F8MH75CBF9JFX4ZAD54N0W0R",
+			EmojiID:  "01F8MH9H8E4VG3KDYJR9EGPXCQ",
+		},
+	}
+}
+
 func NewTestInstances() map[string]*gtsmodel.Instance {
 	return map[string]*gtsmodel.Instance{
 		"localhost:8080": {
@@ -1554,6 +1563,15 @@ func NewTestTags() map[string]*gtsmodel.Tag {
 			Useable:                TrueBool(),
 			Listable:               TrueBool(),
 			LastStatusAt:           TimeMustParse("2022-05-14T13:21:09+02:00"),
+		},
+	}
+}
+
+func NewTestStatusToTags() map[string]*gtsmodel.StatusToTag {
+	return map[string]*gtsmodel.StatusToTag{
+		"admin_account_status_1_welcome": {
+			StatusID: "01F8MH75CBF9JFX4ZAD54N0W0R",
+			TagID:    "01F8MHA1A2NF9MJ3WCCQ3K8BSZ",
 		},
 	}
 }

@@ -24,7 +24,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-func (p *processor) OAuthHandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) error {
+func (p *processor) OAuthHandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) gtserror.WithCode {
 	// todo: some kind of metrics stuff here
 	return p.oauthServer.HandleAuthorizeRequest(w, r)
 }

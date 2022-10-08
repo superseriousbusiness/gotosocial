@@ -38,6 +38,15 @@ func (suite *TimelineTestSuite) TestGetPublicTimeline() {
 	suite.Len(s, 6)
 }
 
+func (suite *TimelineTestSuite) TestGetHomeTimeline() {
+	viewingAccount := suite.testAccounts["local_account_1"]
+
+	s, err := suite.db.GetHomeTimeline(context.Background(), viewingAccount.ID, "", "", "", 20, false)
+	suite.NoError(err)
+
+	suite.Len(s, 16)
+}
+
 func TestTimelineTestSuite(t *testing.T) {
 	suite.Run(t, new(TimelineTestSuite))
 }
