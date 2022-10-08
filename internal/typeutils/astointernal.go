@@ -149,6 +149,10 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 		acct.Discoverable = &d
 	}
 
+	// assume not rss feed
+	enableRSS := false
+	acct.EnableRSS = &enableRSS
+
 	// url property
 	url, err := ap.ExtractURL(accountable)
 	if err == nil {
