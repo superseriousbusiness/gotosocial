@@ -51,7 +51,8 @@ type controller struct {
 	fedDB     federatingdb.DB
 	clock     pub.Clock
 	client    pub.HttpClient
-	cache     cache.Cache[string, *transport]
+	trspCache cache.Cache[string, *transport]
+	badHosts  cache.Cache[string, struct{}]
 	userAgent string
 }
 
@@ -66,13 +67,20 @@ func NewController(db db.DB, federatingDB federatingdb.DB, clock pub.Clock, clie
 		fedDB:     federatingDB,
 		clock:     clock,
 		client:    client,
-		cache:     cache.New[string, *transport](),
+		trspCache: cache.New[string, *transport](),
+		badHosts:  cache.New[string, struct{}](),
 		userAgent: fmt.Sprintf("%s; %s (gofed/activity gotosocial-%s)", applicationName, host, version),
 	}
 
-	// Transport cache has TTL=1hr freq=1m
-	c.cache.SetTTL(time.Hour, false)
-	if !c.cache.Start(time.Minute) {
+	// Transport cache has TTL=1hr freq=1min
+	c.trspCache.SetTTL(time.Hour, false)
+	if !c.trspCache.Start(time.Minute) {
+		log.Panic("failed to start transport controller cache")
+	}
+
+	// Bad hosts cache has TTL=15min freq=1min
+	c.badHosts.SetTTL(15*time.Minute, false)
+	if !c.badHosts.Start(time.Minute) {
 		log.Panic("failed to start transport controller cache")
 	}
 
@@ -89,7 +97,7 @@ func (c *controller) NewTransport(pubKeyID string, privkey *rsa.PrivateKey) (Tra
 	pubStr := privkeyToPublicStr(privkey)
 
 	// First check for cached transport
-	transp, ok := c.cache.Get(pubStr)
+	transp, ok := c.trspCache.Get(pubStr)
 	if ok {
 		return transp, nil
 	}
@@ -102,13 +110,13 @@ func (c *controller) NewTransport(pubKeyID string, privkey *rsa.PrivateKey) (Tra
 	}
 
 	// Cache this transport under pubkey
-	if !c.cache.Put(pubStr, transp) {
+	if !c.trspCache.Put(pubStr, transp) {
 		var cached *transport
 
-		cached, ok = c.cache.Get(pubStr)
+		cached, ok = c.trspCache.Get(pubStr)
 		if !ok {
 			// Some ridiculous race cond.
-			c.cache.Set(pubStr, transp)
+			c.trspCache.Set(pubStr, transp)
 		} else {
 			// Use already cached
 			transp = cached
