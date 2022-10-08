@@ -34,6 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
@@ -91,7 +92,7 @@ func (m *Module) CallbackGETHandler(c *gin.Context) {
 	if !ok || clientID == "" {
 		m.clearSession(s)
 		err := fmt.Errorf("key %s was not found in session", sessionClientID)
-		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, helpfulAdvice), m.processor.InstanceGet)
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGet)
 		return
 	}
 
@@ -101,9 +102,9 @@ func (m *Module) CallbackGETHandler(c *gin.Context) {
 		safe := fmt.Sprintf("application for %s %s could not be retrieved", sessionClientID, clientID)
 		var errWithCode gtserror.WithCode
 		if err == db.ErrNoEntries {
-			errWithCode = gtserror.NewErrorBadRequest(err, safe, helpfulAdvice)
+			errWithCode = gtserror.NewErrorBadRequest(err, safe, oauth.HelpfulAdvice)
 		} else {
-			errWithCode = gtserror.NewErrorInternalError(err, safe, helpfulAdvice)
+			errWithCode = gtserror.NewErrorInternalError(err, safe, oauth.HelpfulAdvice)
 		}
 		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return

@@ -160,7 +160,7 @@ type Processor interface {
 	NotificationsClear(ctx context.Context, authed *oauth.Auth) gtserror.WithCode
 
 	OAuthHandleTokenRequest(r *http.Request) (map[string]interface{}, gtserror.WithCode)
-	OAuthHandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) error
+	OAuthHandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) gtserror.WithCode
 
 	// SearchGet performs a search with the given params, resolving/dereferencing remotely as desired
 	SearchGet(ctx context.Context, authed *oauth.Auth, searchQuery *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode)
