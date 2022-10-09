@@ -110,6 +110,11 @@ import (
 //			Custom CSS to use when rendering this account's profile or statuses.
 //			String must be no more than 5,000 characters (~5kb).
 //		type: string
+//	-
+//		name: enable_rss
+//		in: formData
+//		description: Enable RSS feed for this account's Public posts at `/[username]/feed.rss`
+//		type: boolean
 //
 //	security:
 //	- OAuth2 Bearer:
@@ -202,7 +207,8 @@ func parseUpdateAccountForm(c *gin.Context) (*model.UpdateCredentialsRequest, er
 			form.Source.Language == nil &&
 			form.Source.StatusFormat == nil &&
 			form.FieldsAttributes == nil &&
-			form.CustomCSS == nil) {
+			form.CustomCSS == nil &&
+			form.EnableRSS == nil) {
 		return nil, errors.New("empty form submitted")
 	}
 

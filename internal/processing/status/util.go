@@ -162,27 +162,28 @@ func (p *processor) ProcessMediaIDs(ctx context.Context, form *apimodel.Advanced
 		return nil
 	}
 
-	gtsMediaAttachments := []*gtsmodel.MediaAttachment{}
-	attachments := []string{}
+	attachments := []*gtsmodel.MediaAttachment{}
+	attachmentIDs := []string{}
 	for _, mediaID := range form.MediaIDs {
-		// check these attachments exist
-		a := &gtsmodel.MediaAttachment{}
-		if err := p.db.GetByID(ctx, mediaID, a); err != nil {
-			return fmt.Errorf("invalid media type or media not found for media id %s", mediaID)
+		attachment, err := p.db.GetAttachmentByID(ctx, mediaID)
+		if err != nil {
+			return fmt.Errorf("ProcessMediaIDs: invalid media type or media not found for media id %s", mediaID)
 		}
-		// check they belong to the requesting account id
-		if a.AccountID != thisAccountID {
-			return fmt.Errorf("media with id %s does not belong to account %s", mediaID, thisAccountID)
+
+		if attachment.AccountID != thisAccountID {
+			return fmt.Errorf("ProcessMediaIDs: media with id %s does not belong to account %s", mediaID, thisAccountID)
 		}
-		// check they're not already used in a status
-		if a.StatusID != "" || a.ScheduledStatusID != "" {
-			return fmt.Errorf("media with id %s is already attached to a status", mediaID)
+
+		if attachment.StatusID != "" || attachment.ScheduledStatusID != "" {
+			return fmt.Errorf("ProcessMediaIDs: media with id %s is already attached to a status", mediaID)
 		}
-		gtsMediaAttachments = append(gtsMediaAttachments, a)
-		attachments = append(attachments, a.ID)
+
+		attachments = append(attachments, attachment)
+		attachmentIDs = append(attachmentIDs, attachment.ID)
 	}
-	status.Attachments = gtsMediaAttachments
-	status.AttachmentIDs = attachments
+
+	status.Attachments = attachments
+	status.AttachmentIDs = attachmentIDs
 	return nil
 }
 

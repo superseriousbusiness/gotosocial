@@ -159,17 +159,11 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 		return nil, fmt.Errorf("db migration error: %s", err)
 	}
 
-	// Create DB structs that require ptrs to each other
-	accounts := &accountDB{conn: conn, cache: cache.NewAccountCache()}
-	status := &statusDB{conn: conn, cache: cache.NewStatusCache()}
-	emoji := &emojiDB{conn: conn, cache: cache.NewEmojiCache()}
-	timeline := &timelineDB{conn: conn}
+	// Prepare caches required by more than one struct
+	userCache := cache.NewUserCache()
+	accountCache := cache.NewAccountCache()
 
-	// Setup DB cross-referencing
-	accounts.status = status
-	status.accounts = accounts
-	timeline.status = status
-
+	// Prepare other caches
 	// Prepare mentions cache
 	// TODO: move into internal/cache
 	mentionCache := grufcache.New[string, *gtsmodel.Mention]()
@@ -182,22 +176,30 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 	notifCache.SetTTL(time.Minute*5, false)
 	notifCache.Start(time.Second * 10)
 
-	// Prepare other caches
-	blockCache := cache.NewDomainBlockCache()
-	userCache := cache.NewUserCache()
+	// Create DB structs that require ptrs to each other
+	accounts := &accountDB{conn: conn, cache: accountCache}
+	status := &statusDB{conn: conn, cache: cache.NewStatusCache()}
+	emoji := &emojiDB{conn: conn, cache: cache.NewEmojiCache()}
+	timeline := &timelineDB{conn: conn}
+
+	// Setup DB cross-referencing
+	accounts.status = status
+	status.accounts = accounts
+	timeline.status = status
 
 	ps := &DBService{
 		Account: accounts,
 		Admin: &adminDB{
-			conn:      conn,
-			userCache: userCache,
+			conn:         conn,
+			userCache:    userCache,
+			accountCache: accountCache,
 		},
 		Basic: &basicDB{
 			conn: conn,
 		},
 		Domain: &domainDB{
 			conn:  conn,
-			cache: blockCache,
+			cache: cache.NewDomainBlockCache(),
 		},
 		Emoji: emoji,
 		Instance: &instanceDB{

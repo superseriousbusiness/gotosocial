@@ -19,7 +19,9 @@
 package web
 
 import (
+	"fmt"
 	"net/http"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -60,9 +62,91 @@ func (m *Module) mountAssetsFilesystem(group *gin.RouterGroup) {
 	fs := fileSystem{http.Dir(webAssetsAbsFilePath)}
 
 	// use the cache middleware on all handlers in this group
-	group.Use(m.cacheControlMiddleware(fs))
+	group.Use(m.assetsCacheControlMiddleware(fs))
 
 	// serve static file system in the root of this group,
 	// will end up being something like "/assets/"
 	group.StaticFS("/", fs)
+}
+
+// getAssetFileInfo tries to fetch the ETag for the given filePath from the module's
+// assetsETagCache. If it can't be found there, it uses the provided http.FileSystem
+// to generate a new ETag to go in the cache, which it then returns.
+func (m *Module) getAssetETag(filePath string, fs http.FileSystem) (string, error) {
+	file, err := fs.Open(filePath)
+	if err != nil {
+		return "", fmt.Errorf("error opening %s: %s", filePath, err)
+	}
+	defer file.Close()
+
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return "", fmt.Errorf("error statting %s: %s", filePath, err)
+	}
+
+	fileLastModified := fileInfo.ModTime()
+
+	if cachedETag, ok := m.eTagCache.Get(filePath); ok && !fileLastModified.After(cachedETag.lastModified) {
+		// only return our cached etag if the file wasn't
+		// modified since last time, otherwise generate a
+		// new one; eat fresh!
+		return cachedETag.eTag, nil
+	}
+
+	eTag, err := generateEtag(file)
+	if err != nil {
+		return "", fmt.Errorf("error generating etag: %s", err)
+	}
+
+	// put new entry in cache before we return
+	m.eTagCache.Set(filePath, eTagCacheEntry{
+		eTag:         eTag,
+		lastModified: fileLastModified,
+	})
+
+	return eTag, nil
+}
+
+// assetsCacheControlMiddleware implements Cache-Control header setting, and checks
+// for files inside the given http.FileSystem.
+//
+// The middleware checks if the file has been modified using If-None-Match etag,
+// if present. If the file hasn't been modified, the middleware returns 304.
+//
+// See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-None-Match
+// and: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
+func (m *Module) assetsCacheControlMiddleware(fs http.FileSystem) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// set this Cache-Control header to instruct clients to validate the response with us
+		// before each reuse (https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control)
+		c.Header(cacheControlHeader, cacheControlNoCache)
+
+		ifNoneMatch := c.Request.Header.Get(ifNoneMatchHeader)
+
+		// derive the path of the requested asset inside the provided filesystem
+		upath := c.Request.URL.Path
+		if !strings.HasPrefix(upath, "/") {
+			upath = "/" + upath
+		}
+		assetFilePath := strings.TrimPrefix(path.Clean(upath), assetsPathPrefix)
+
+		// either fetch etag from ttlcache or generate it
+		eTag, err := m.getAssetETag(assetFilePath, fs)
+		if err != nil {
+			log.Errorf("error getting ETag for %s: %s", assetFilePath, err)
+			return
+		}
+
+		// Regardless of what happens further down, set the etag header
+		// so that the client has the up-to-date version.
+		c.Header(eTagHeader, eTag)
+
+		// If client already has latest version of the asset, 304 + bail.
+		if ifNoneMatch == eTag {
+			c.AbortWithStatus(http.StatusNotModified)
+			return
+		}
+
+		// else let the rest of the request be processed normally
+	}
 }

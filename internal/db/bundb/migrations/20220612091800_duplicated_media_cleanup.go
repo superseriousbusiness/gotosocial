@@ -47,8 +47,8 @@ func init() {
 		}
 
 		if _, err := tx.NewDelete().
-			Model(a).
-			WherePK().
+			TableExpr("? AS ?", bun.Ident("media_attachments"), bun.Ident("media_attachment")).
+			Where("? = ?", bun.Ident("media_attachment.id"), a.ID).
 			Exec(ctx); err != nil {
 			l.Errorf("error deleting attachment with id %s: %s", a.ID, err)
 		} else {

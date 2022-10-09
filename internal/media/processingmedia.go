@@ -101,7 +101,7 @@ func (p *ProcessingMedia) LoadAttachment(ctx context.Context) (*gtsmodel.MediaAt
 	if !p.insertedInDB {
 		if p.recache {
 			// if it's a recache we should only need to update
-			if err := p.database.UpdateByPrimaryKey(ctx, p.attachment); err != nil {
+			if err := p.database.UpdateByID(ctx, p.attachment, p.attachment.ID); err != nil {
 				return nil, err
 			}
 		} else {

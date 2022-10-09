@@ -23,6 +23,7 @@ import (
 	"net/url"
 	"sync"
 
+	"github.com/gorilla/feeds"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -84,6 +85,12 @@ type TypeConverter interface {
 	NotificationToAPINotification(ctx context.Context, n *gtsmodel.Notification) (*model.Notification, error)
 	// DomainBlockToAPIDomainBlock converts a gts model domin block into a api domain block, for serving at /api/v1/admin/domain_blocks
 	DomainBlockToAPIDomainBlock(ctx context.Context, b *gtsmodel.DomainBlock, export bool) (*model.DomainBlock, error)
+
+	/*
+		INTERNAL (gts) MODEL TO FRONTEND (rss) MODEL
+	*/
+
+	StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*feeds.Item, error)
 
 	/*
 		FRONTEND (api) MODEL TO INTERNAL (gts) MODEL

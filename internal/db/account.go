@@ -48,6 +48,11 @@ type Account interface {
 	// UpdateAccount updates one account by ID.
 	UpdateAccount(ctx context.Context, account *gtsmodel.Account) (*gtsmodel.Account, Error)
 
+	// DeleteAccount deletes one account from the database by its ID.
+	// DO NOT USE THIS WHEN SUSPENDING ACCOUNTS! In that case you should mark the
+	// account as suspended instead, rather than deleting from the db entirely.
+	DeleteAccount(ctx context.Context, id string) Error
+
 	// GetAccountCustomCSSByUsername returns the custom css of an account on this instance with the given username.
 	GetAccountCustomCSSByUsername(ctx context.Context, username string) (string, Error)
 
@@ -72,8 +77,10 @@ type Account interface {
 
 	// GetAccountLastPosted simply gets the timestamp of the most recent post by the account.
 	//
+	// If webOnly is true, then the time of the last non-reply, non-boost, public status of the account will be returned.
+	//
 	// The returned time will be zero if account has never posted anything.
-	GetAccountLastPosted(ctx context.Context, accountID string) (time.Time, Error)
+	GetAccountLastPosted(ctx context.Context, accountID string, webOnly bool) (time.Time, Error)
 
 	// SetAccountHeaderOrAvatar sets the header or avatar for the given accountID to the given media attachment.
 	SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachment *gtsmodel.MediaAttachment, accountID string) Error

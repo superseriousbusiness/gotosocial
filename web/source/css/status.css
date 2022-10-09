@@ -183,7 +183,7 @@ main {
 		}
 
 		.emoji:hover, .emoji:active {
-			transform: scale(1.75);
+			transform: scale(2);
 			background-color: $bg;
 			box-shadow: $boxshadow;
 			border: $boxshadow-border;

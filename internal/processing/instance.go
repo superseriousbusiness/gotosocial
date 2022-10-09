@@ -224,7 +224,7 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 		}
 	}
 
-	if err := p.db.UpdateByPrimaryKey(ctx, i, updatingColumns...); err != nil {
+	if err := p.db.UpdateByID(ctx, i, i.ID, updatingColumns...); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error updating instance %s: %s", host, err))
 	}
 

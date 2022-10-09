@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/uptrace/bun"
 	"golang.org/x/net/idna"
 )
 
@@ -47,7 +48,7 @@ func normalizeDomain(domain string) (out string, err error) {
 	return out, err
 }
 
-func (d *domainDB) CreateDomainBlock(ctx context.Context, block gtsmodel.DomainBlock) db.Error {
+func (d *domainDB) CreateDomainBlock(ctx context.Context, block *gtsmodel.DomainBlock) db.Error {
 	domain, err := normalizeDomain(block.Domain)
 	if err != nil {
 		return err
@@ -56,13 +57,13 @@ func (d *domainDB) CreateDomainBlock(ctx context.Context, block gtsmodel.DomainB
 
 	// Attempt to insert new domain block
 	if _, err := d.conn.NewInsert().
-		Model(&block).
-		Exec(ctx, &block); err != nil {
+		Model(block).
+		Exec(ctx); err != nil {
 		return d.conn.ProcessError(err)
 	}
 
 	// Cache this domain block
-	d.cache.Put(block.Domain, &block)
+	d.cache.Put(block.Domain, block)
 
 	return nil
 }
@@ -95,7 +96,7 @@ func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel
 	q := d.conn.
 		NewSelect().
 		Model(block).
-		Where("domain = ?", domain).
+		Where("? = ?", bun.Ident("domain_block.domain"), domain).
 		Limit(1)
 
 	// Query database for domain block
@@ -126,7 +127,7 @@ func (d *domainDB) DeleteDomainBlock(ctx context.Context, domain string) db.Erro
 	// Attempt to delete domain block
 	if _, err := d.conn.NewDelete().
 		Model((*gtsmodel.DomainBlock)(nil)).
-		Where("domain = ?", domain).
+		Where("? = ?", bun.Ident("domain_block.domain"), domain).
 		Exec(ctx); err != nil {
 		return d.conn.ProcessError(err)
 	}

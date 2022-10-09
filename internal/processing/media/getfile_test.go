@@ -69,7 +69,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncached() {
 	// uncache the file from local
 	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
 	testAttachment.Cached = testrig.FalseBool()
-	err := suite.db.UpdateByPrimaryKey(ctx, testAttachment, "cached")
+	err := suite.db.UpdateByID(ctx, testAttachment, testAttachment.ID, "cached")
 	suite.NoError(err)
 	err = suite.storage.Delete(ctx, testAttachment.File.Path)
 	suite.NoError(err)
@@ -124,7 +124,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncachedInterrupted() {
 	// uncache the file from local
 	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
 	testAttachment.Cached = testrig.FalseBool()
-	err := suite.db.UpdateByPrimaryKey(ctx, testAttachment, "cached")
+	err := suite.db.UpdateByID(ctx, testAttachment, testAttachment.ID, "cached")
 	suite.NoError(err)
 	err = suite.storage.Delete(ctx, testAttachment.File.Path)
 	suite.NoError(err)
@@ -179,7 +179,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileThumbnailUncached() {
 
 	// uncache the file from local
 	testAttachment.Cached = testrig.FalseBool()
-	err = suite.db.UpdateByPrimaryKey(ctx, testAttachment, "cached")
+	err = suite.db.UpdateByID(ctx, testAttachment, testAttachment.ID, "cached")
 	suite.NoError(err)
 	err = suite.storage.Delete(ctx, testAttachment.File.Path)
 	suite.NoError(err)

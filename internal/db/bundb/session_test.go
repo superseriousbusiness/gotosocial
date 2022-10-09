@@ -37,14 +37,13 @@ func (suite *SessionTestSuite) TestGetSession() {
 	suite.NotEmpty(session.Crypt)
 	suite.NotEmpty(session.ID)
 
-	// TODO -- the same session should be returned with consecutive selects
-	// right now there's an issue with bytea in bun, so uncomment this when that issue is fixed: https://github.com/uptrace/bun/issues/122
-	// session2, err := suite.db.GetSession(context.Background())
-	// suite.NoError(err)
-	// suite.NotNil(session2)
-	// suite.Equal(session.Auth, session2.Auth)
-	// suite.Equal(session.Crypt, session2.Crypt)
-	// suite.Equal(session.ID, session2.ID)
+	// the same session should be returned with consecutive selects
+	session2, err := suite.db.GetSession(context.Background())
+	suite.NoError(err)
+	suite.NotNil(session2)
+	suite.Equal(session.Auth, session2.Auth)
+	suite.Equal(session.Crypt, session2.Crypt)
+	suite.Equal(session.ID, session2.ID)
 }
 
 func TestSessionTestSuite(t *testing.T) {

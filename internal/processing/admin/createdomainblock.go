@@ -56,7 +56,7 @@ func (p *processor) DomainBlockCreate(ctx context.Context, account *gtsmodel.Acc
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error creating id for new domain block %s: %s", domain, err))
 		}
 
-		newBlock := gtsmodel.DomainBlock{
+		newBlock := &gtsmodel.DomainBlock{
 			ID:                 blockID,
 			Domain:             domain,
 			CreatedByAccountID: account.ID,
@@ -72,7 +72,7 @@ func (p *processor) DomainBlockCreate(ctx context.Context, account *gtsmodel.Acc
 		}
 
 		// Set the newly created block
-		block = &newBlock
+		block = newBlock
 
 		// Process the side effects of the domain block asynchronously since it might take a while
 		go func() {
@@ -128,15 +128,17 @@ func (p *processor) initiateDomainBlockSideEffects(ctx context.Context, account 
 		instance.ContactAccountUsername = ""
 		instance.ContactAccountID = ""
 		instance.Version = ""
-		if err := p.db.UpdateByPrimaryKey(ctx, instance, updatingColumns...); err != nil {
+		if err := p.db.UpdateByID(ctx, instance, instance.ID, updatingColumns...); err != nil {
 			l.Errorf("domainBlockProcessSideEffects: db error updating instance: %s", err)
 		}
 		l.Debug("domainBlockProcessSideEffects: instance entry updated")
 	}
 
 	// if we have an instance account for this instance, delete it
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "username", Value: block.Domain, CaseInsensitive: true}}, &gtsmodel.Account{}); err != nil {
-		l.Errorf("domainBlockProcessSideEffects: db error removing instance account: %s", err)
+	if instanceAccount, err := p.db.GetAccountByUsernameDomain(ctx, block.Domain, block.Domain); err == nil {
+		if err := p.db.DeleteAccount(ctx, instanceAccount.ID); err != nil {
+			l.Errorf("domainBlockProcessSideEffects: db error deleting instance account: %s", err)
+		}
 	}
 
 	// delete accounts through the normal account deletion system (which should also delete media + posts + remove posts from timelines)

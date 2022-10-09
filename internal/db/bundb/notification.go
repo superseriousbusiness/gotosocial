@@ -25,6 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/uptrace/bun"
 )
 
 type notificationDB struct {
@@ -44,7 +45,7 @@ func (n *notificationDB) GetNotification(ctx context.Context, id string) (*gtsmo
 		Relation("OriginAccount").
 		Relation("TargetAccount").
 		Relation("Status").
-		WherePK()
+		Where("? = ?", bun.Ident("notification.id"), id)
 
 	if err := q.Scan(ctx); err != nil {
 		return nil, n.conn.ProcessError(err)
@@ -67,24 +68,24 @@ func (n *notificationDB) GetNotifications(ctx context.Context, accountID string,
 
 	q := n.conn.
 		NewSelect().
-		Table("notifications").
-		Column("id")
+		TableExpr("? AS ?", bun.Ident("notifications"), bun.Ident("notification")).
+		Column("notification.id")
 
 	if maxID != "" {
-		q = q.Where("id < ?", maxID)
+		q = q.Where("? < ?", bun.Ident("notification.id"), maxID)
 	}
 
 	if sinceID != "" {
-		q = q.Where("id > ?", sinceID)
+		q = q.Where("? > ?", bun.Ident("notification.id"), sinceID)
 	}
 
 	for _, excludeType := range excludeTypes {
-		q = q.Where("notification_type != ?", excludeType)
+		q = q.Where("? != ?", bun.Ident("notification.notification_type"), excludeType)
 	}
 
 	q = q.
-		Where("target_account_id = ?", accountID).
-		Order("id DESC")
+		Where("? = ?", bun.Ident("notification.target_account_id"), accountID).
+		Order("notification.id DESC")
 
 	if limit != 0 {
 		q = q.Limit(limit)
@@ -116,13 +117,12 @@ func (n *notificationDB) GetNotifications(ctx context.Context, accountID string,
 func (n *notificationDB) ClearNotifications(ctx context.Context, accountID string) db.Error {
 	if _, err := n.conn.
 		NewDelete().
-		Table("notifications").
-		Where("target_account_id = ?", accountID).
+		TableExpr("? AS ?", bun.Ident("notifications"), bun.Ident("notification")).
+		Where("? = ?", bun.Ident("notification.target_account_id"), accountID).
 		Exec(ctx); err != nil {
 		return n.conn.ProcessError(err)
 	}
 
 	n.cache.Clear()
-
 	return nil
 }

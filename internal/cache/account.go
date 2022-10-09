@@ -101,6 +101,11 @@ func (c *AccountCache) Put(account *gtsmodel.Account) {
 	c.cache.Set(account.ID, copyAccount(account))
 }
 
+// Invalidate removes (invalidates) one account from the cache by its ID.
+func (c *AccountCache) Invalidate(id string) {
+	c.cache.Invalidate(id)
+}
+
 // copyAccount performs a surface-level copy of account, only keeping attached IDs intact, not the objects.
 // due to all the data being copied being 99% primitive types or strings (which are immutable and passed by ptr)
 // this should be a relatively cheap process
@@ -153,6 +158,7 @@ func copyAccount(account *gtsmodel.Account) *gtsmodel.Account {
 		SuspendedAt:             account.SuspendedAt,
 		HideCollections:         copyBoolPtr(account.HideCollections),
 		SuspensionOrigin:        account.SuspensionOrigin,
+		EnableRSS:               copyBoolPtr(account.EnableRSS),
 	}
 }
 

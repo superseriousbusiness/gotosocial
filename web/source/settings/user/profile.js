@@ -96,7 +96,11 @@ module.exports = function UserProfile() {
 			/>
 			<Checkbox
 				id="locked"
-				name="Manually approve follow requests? "
+				name="Manually approve follow requests"
+			/>
+			<Checkbox
+				id="enable_rss"
+				name="Enable RSS feed of Public posts"
 			/>
 			{ !allowCustomCSS ? null :  
 				<TextArea
