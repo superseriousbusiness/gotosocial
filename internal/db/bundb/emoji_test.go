@@ -30,7 +30,7 @@ type EmojiTestSuite struct {
 }
 
 func (suite *EmojiTestSuite) TestGetCustomEmojis() {
-	emojis, err := suite.db.GetCustomEmojis(context.Background())
+	emojis, err := suite.db.GetUseableCustomEmojis(context.Background())
 
 	suite.NoError(err)
 	suite.Equal(1, len(emojis))

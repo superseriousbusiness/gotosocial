@@ -28,8 +28,8 @@ import (
 type Emoji interface {
 	// PutEmoji puts one emoji in the database.
 	PutEmoji(ctx context.Context, emoji *gtsmodel.Emoji) Error
-	// GetCustomEmojis gets all custom emoji for the instance
-	GetCustomEmojis(ctx context.Context) ([]*gtsmodel.Emoji, Error)
+	// GetUseableCustomEmojis gets all custom emoji which are useable by accounts on this instance.
+	GetUseableCustomEmojis(ctx context.Context) ([]*gtsmodel.Emoji, Error)
 	// GetEmojiByID gets a specific emoji by its database ID.
 	GetEmojiByID(ctx context.Context, id string) (*gtsmodel.Emoji, Error)
 	// GetEmojiByShortcodeDomain gets an emoji based on its shortcode and domain.
