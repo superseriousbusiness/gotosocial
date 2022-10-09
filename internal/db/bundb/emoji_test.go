@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
 type EmojiTestSuite struct {
@@ -35,6 +36,62 @@ func (suite *EmojiTestSuite) TestGetCustomEmojis() {
 	suite.NoError(err)
 	suite.Equal(1, len(emojis))
 	suite.Equal("rainbow", emojis[0].Shortcode)
+}
+
+func (suite *EmojiTestSuite) TestGetAllEmojis() {
+	emojis, err := suite.db.GetEmojis(context.Background(), db.EmojiAllDomains, true, true, "")
+
+	suite.NoError(err)
+	suite.Equal(2, len(emojis))
+}
+
+func (suite *EmojiTestSuite) TestGetAllDisabledEmojis() {
+	emojis, err := suite.db.GetEmojis(context.Background(), db.EmojiAllDomains, true, false, "")
+
+	suite.ErrorIs(err, db.ErrNoEntries)
+	suite.Equal(0, len(emojis))
+}
+
+func (suite *EmojiTestSuite) TestGetAllEnabledEmojis() {
+	emojis, err := suite.db.GetEmojis(context.Background(), db.EmojiAllDomains, false, true, "")
+
+	suite.NoError(err)
+	suite.Equal(2, len(emojis))
+}
+
+func (suite *EmojiTestSuite) TestGetLocalEnabledEmojis() {
+	emojis, err := suite.db.GetEmojis(context.Background(), "", false, true, "")
+
+	suite.NoError(err)
+	suite.Equal(1, len(emojis))
+}
+
+func (suite *EmojiTestSuite) TestGetLocalDisabledEmojis() {
+	emojis, err := suite.db.GetEmojis(context.Background(), "", true, false, "")
+
+	suite.ErrorIs(err, db.ErrNoEntries)
+	suite.Equal(0, len(emojis))
+}
+
+func (suite *EmojiTestSuite) TestGetAllEmojisFromDomain() {
+	emojis, err := suite.db.GetEmojis(context.Background(), "peepee.poopoo", true, true, "")
+
+	suite.ErrorIs(err, db.ErrNoEntries)
+	suite.Equal(0, len(emojis))
+}
+
+func (suite *EmojiTestSuite) TestGetAllEmojisFromDomain2() {
+	emojis, err := suite.db.GetEmojis(context.Background(), "fossbros-anonymous.io", true, true, "")
+
+	suite.NoError(err)
+	suite.Equal(1, len(emojis))
+}
+
+func (suite *EmojiTestSuite) TestGetSpecificEmojisFromDomain2() {
+	emojis, err := suite.db.GetEmojis(context.Background(), "fossbros-anonymous.io", true, true, "yell")
+
+	suite.NoError(err)
+	suite.Equal(1, len(emojis))
 }
 
 func TestEmojiTestSuite(t *testing.T) {

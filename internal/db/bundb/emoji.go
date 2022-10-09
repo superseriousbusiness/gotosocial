@@ -49,6 +49,43 @@ func (e *emojiDB) PutEmoji(ctx context.Context, emoji *gtsmodel.Emoji) db.Error 
 	return nil
 }
 
+func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled bool, includeEnabled bool, shortcode string) ([]*gtsmodel.Emoji, db.Error) {
+	emojiIDs := []string{}
+
+	q := e.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("emojis"), bun.Ident("emoji")).
+		Column("emoji.id").
+		Order("emoji.shortcode ASC")
+
+	if domain == "" {
+		q = q.Where("? IS NULL", bun.Ident("emoji.domain"))
+	} else if domain != db.EmojiAllDomains {
+		q = q.Where("? = ?", bun.Ident("emoji.domain"), domain)
+	}
+
+	switch {
+	case includeDisabled && !includeEnabled:
+		// show only disabled emojis
+		q = q.Where("? = ?", bun.Ident("emoji.disabled"), true)
+	case includeEnabled && !includeDisabled:
+		// show only enabled emojis
+		q = q.Where("? = ?", bun.Ident("emoji.disabled"), false)
+	default:
+		// show emojis regardless of emoji.disabled value
+	}
+
+	if shortcode != "" {
+		q = q.Where("? = ?", bun.Ident("emoji.shortcode"), shortcode)
+	}
+
+	if err := q.Scan(ctx, &emojiIDs); err != nil {
+		return nil, e.conn.ProcessError(err)
+	}
+
+	return e.emojisFromIDs(ctx, emojiIDs)
+}
+
 func (e *emojiDB) GetUseableCustomEmojis(ctx context.Context) ([]*gtsmodel.Emoji, db.Error) {
 	emojiIDs := []string{}
 

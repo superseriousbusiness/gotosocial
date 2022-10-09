@@ -25,6 +25,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -116,7 +118,7 @@ func (m *Module) EmojisGETHandler(c *gin.Context) {
 				// if the part after `domain:` is an empty
 				// string, assume the caller wants all
 				if domain == "" {
-					domain = "all"
+					domain = db.EmojiAllDomains
 				}
 			case trimmedLower == "disabled":
 				includeDisabled = true
@@ -132,7 +134,7 @@ func (m *Module) EmojisGETHandler(c *gin.Context) {
 		}
 	} else {
 		// default is to show all domains
-		domain = "all"
+		domain = db.EmojiAllDomains
 	}
 
 	// normalize filters
@@ -141,7 +143,7 @@ func (m *Module) EmojisGETHandler(c *gin.Context) {
 		includeDisabled = true
 		includeEnabled = true
 	}
-	if domain == "local" {
+	if domain == "local" || domain == config.GetHost() || domain == config.GetAccountDomain() {
 		// pass empty string for local domain
 		domain = ""
 	}
