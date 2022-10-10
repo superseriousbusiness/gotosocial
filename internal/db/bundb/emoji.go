@@ -67,7 +67,7 @@ func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled 
 		panic("db conn was neither pg not sqlite")
 	}
 
-	q = q.Order("shortcodedomain")
+	q = q.Order("shortcodedomain ASC")
 
 	if domain == "" {
 		q = q.Where("? IS NULL", bun.Ident("emoji.domain"))
