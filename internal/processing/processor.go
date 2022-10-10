@@ -89,10 +89,10 @@ type Processor interface {
 	AccountUpdate(ctx context.Context, authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, gtserror.WithCode)
 	// AccountStatusesGet fetches a number of statuses (in time descending order) from the given account, filtered by visibility for
 	// the account given in authed.
-	AccountStatusesGet(ctx context.Context, authed *oauth.Auth, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinned bool, mediaOnly bool, publicOnly bool) (*apimodel.TimelineResponse, gtserror.WithCode)
+	AccountStatusesGet(ctx context.Context, authed *oauth.Auth, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinned bool, mediaOnly bool, publicOnly bool) (*apimodel.PageableResponse, gtserror.WithCode)
 	// AccountWebStatusesGet fetches a number of statuses (in descending order) from the given account. It selects only
 	// statuses which are suitable for showing on the public web profile of an account.
-	AccountWebStatusesGet(ctx context.Context, targetAccountID string, maxID string) (*apimodel.TimelineResponse, gtserror.WithCode)
+	AccountWebStatusesGet(ctx context.Context, targetAccountID string, maxID string) (*apimodel.PageableResponse, gtserror.WithCode)
 	// AccountFollowersGet fetches a list of the target account's followers.
 	AccountFollowersGet(ctx context.Context, authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, gtserror.WithCode)
 	// AccountFollowingGet fetches a list of the accounts that target account is following.
@@ -160,7 +160,7 @@ type Processor interface {
 	MediaUpdate(ctx context.Context, authed *oauth.Auth, attachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, gtserror.WithCode)
 
 	// NotificationsGet
-	NotificationsGet(ctx context.Context, authed *oauth.Auth, excludeTypes []string, limit int, maxID string, sinceID string) (*apimodel.TimelineResponse, gtserror.WithCode)
+	NotificationsGet(ctx context.Context, authed *oauth.Auth, excludeTypes []string, limit int, maxID string, sinceID string) (*apimodel.PageableResponse, gtserror.WithCode)
 	// NotificationsClear
 	NotificationsClear(ctx context.Context, authed *oauth.Auth) gtserror.WithCode
 
@@ -192,11 +192,11 @@ type Processor interface {
 	StatusGetContext(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Context, gtserror.WithCode)
 
 	// HomeTimelineGet returns statuses from the home timeline, with the given filters/parameters.
-	HomeTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.TimelineResponse, gtserror.WithCode)
+	HomeTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode)
 	// PublicTimelineGet returns statuses from the public/local timeline, with the given filters/parameters.
-	PublicTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.TimelineResponse, gtserror.WithCode)
+	PublicTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode)
 	// FavedTimelineGet returns faved statuses, with the given filters/parameters.
-	FavedTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.TimelineResponse, gtserror.WithCode)
+	FavedTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode)
 
 	// AuthorizeStreamingRequest returns a gotosocial account in exchange for an access token, or an error if the given token is not valid.
 	AuthorizeStreamingRequest(ctx context.Context, accessToken string) (*gtsmodel.Account, gtserror.WithCode)
