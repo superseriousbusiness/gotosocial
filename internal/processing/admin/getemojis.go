@@ -22,14 +22,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *processor) EmojisGet(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) ([]*apimodel.AdminEmoji, gtserror.WithCode) {
+func (p *processor) EmojisGet(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
 	if !*user.Admin {
 		return nil, gtserror.NewErrorUnauthorized(fmt.Errorf("user %s not an admin", user.ID), "user is not an admin")
 	}
@@ -40,15 +42,71 @@ func (p *processor) EmojisGet(ctx context.Context, account *gtsmodel.Account, us
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	adminEmojis := []*apimodel.AdminEmoji{}
-	for _, emoji := range emojis {
+	count := len(emojis)
+	if count == 0 {
+		return util.EmptyPageableResponse(), nil
+	}
+
+	items := []interface{}{}
+	nextMaxIDValue := ""
+	prevMinIDValue := ""
+	for i, emoji := range emojis {
 		adminEmoji, err := p.tc.EmojiToAdminAPIEmoji(ctx, emoji)
 		if err != nil {
 			err := fmt.Errorf("EmojisGet: error converting emoji to admin model emoji: %s", err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
-		adminEmojis = append(adminEmojis, adminEmoji)
+
+		if i == count-1 {
+			nextMaxIDValue = shortcodeDomain(adminEmoji)
+		}
+
+		if i == 0 {
+			prevMinIDValue = shortcodeDomain(adminEmoji)
+		}
+
+		items = append(items, adminEmoji)
 	}
 
-	return []*apimodel.AdminEmoji{}, nil
+	filterBuilder := strings.Builder{}
+	filterBuilder.WriteString("filter=")
+
+	switch domain {
+	case "", "local":
+		filterBuilder.WriteString("domain:local")
+	case db.EmojiAllDomains:
+		filterBuilder.WriteString("domain:all")
+	default:
+		filterBuilder.WriteString("domain:")
+		filterBuilder.WriteString(domain)
+	}
+
+	if includeDisabled != includeEnabled {
+		if includeDisabled {
+			filterBuilder.WriteString(",disabled")
+		}
+		if includeEnabled {
+			filterBuilder.WriteString(",enabled")
+		}
+	}
+
+	if shortcode != "" {
+		filterBuilder.WriteString(",shortcode:")
+		filterBuilder.WriteString(shortcode)
+	}
+
+	return util.PackagePageableResponse(util.PageableResponseParams{
+		Items:            items,
+		Path:             "api/v1/admin/custom_emojis",
+		NextMaxIDKey:     "max_shortcode_domain",
+		NextMaxIDValue:   nextMaxIDValue,
+		PrevMinIDKey:     "min_shortcode_domain",
+		PrevMinIDValue:   prevMinIDValue,
+		Limit:            limit,
+		ExtraQueryParams: []string{filterBuilder.String()},
+	})
+}
+
+func shortcodeDomain(emoji *apimodel.AdminEmoji) string {
+	return emoji.Shortcode + "@" + emoji.Domain
 }

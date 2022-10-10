@@ -36,6 +36,11 @@ import (
 //
 // View local and remote emojis available to / known by this instance.
 //
+// The next and previous queries can be parsed from the returned Link header.
+// Example:
+//
+// `<http://localhost:8080/api/v1/admin/custom_emojis?limit=30&max_shortcode_domain=yell@fossbros-anonymous.io&filter=domain:all>; rel="next", <http://localhost:8080/api/v1/admin/custom_emojis?limit=30&min_shortcode_domain=rainbow@&filter=domain:all>; rel="prev"`
+//
 //	---
 //	tags:
 //	- admin
@@ -95,7 +100,11 @@ import (
 //
 //	responses:
 //		'200':
-//			description:
+//			headers:
+//				Link:
+//					type: string
+//					description: Links to the next and previous queries.
+//			description: An array of emojis, arranged alphabetically by shortcode and domain.
 //			schema:
 //				type: array
 //				items:
@@ -211,5 +220,8 @@ func (m *Module) EmojisGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	if resp.LinkHeader != "" {
+		c.Header("Link", resp.LinkHeader)
+	}
+	c.JSON(http.StatusOK, resp.Items)
 }
