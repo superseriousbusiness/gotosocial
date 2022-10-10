@@ -105,7 +105,7 @@ func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled 
 	}
 
 	if shortcode != "" {
-		q = q.Where("? = ?", bun.Ident("emoji.shortcode"), shortcode)
+		q = q.Where("LOWER(?) = LOWER(?)", bun.Ident("emoji.shortcode"), shortcode)
 	}
 
 	// assume we want to sort ASC (a-z) unless informed otherwise

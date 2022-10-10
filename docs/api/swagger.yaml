@@ -2759,6 +2759,7 @@ paths:
                     `domain:[domain]` -- show emojis from the given domain, eg `?filter=domain:example.org` will show emojis from `example.org` only.
                     Instead of giving a specific domain, you can also give either one of the key words `local` or `all` to show either local emojis only (`domain:local`) or show all emojis from all domains (`domain:all`).
                     Note: `domain:*` is equivalent to `domain:all` (including local).
+                    If no domain filter is provided, `domain:all` will be assumed.
 
                     `disabled` -- include emojis that have been disabled.
 

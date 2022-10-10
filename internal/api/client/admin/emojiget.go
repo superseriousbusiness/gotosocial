@@ -58,6 +58,7 @@ import (
 //			`domain:[domain]` -- show emojis from the given domain, eg `?filter=domain:example.org` will show emojis from `example.org` only.
 //			Instead of giving a specific domain, you can also give either one of the key words `local` or `all` to show either local emojis only (`domain:local`) or show all emojis from all domains (`domain:all`).
 //			Note: `domain:*` is equivalent to `domain:all` (including local).
+//			If no domain filter is provided, `domain:all` will be assumed.
 //
 //			`disabled` -- include emojis that have been disabled.
 //
@@ -181,11 +182,6 @@ func (m *Module) EmojisGETHandler(c *gin.Context) {
 			switch {
 			case strings.HasPrefix(trimmedLower, "domain:"):
 				domain = strings.TrimPrefix(trimmedLower, "domain:")
-				// if the part after `domain:` is an empty
-				// string, assume the caller wants all
-				if domain == "" {
-					domain = db.EmojiAllDomains
-				}
 			case trimmedLower == "disabled":
 				includeDisabled = true
 			case trimmedLower == "enabled":
@@ -198,9 +194,14 @@ func (m *Module) EmojisGETHandler(c *gin.Context) {
 				return
 			}
 		}
-	} else {
+	}
+
+	if domain == "" {
 		// default is to show all domains
 		domain = db.EmojiAllDomains
+	} else if domain == "local" || domain == config.GetHost() || domain == config.GetAccountDomain() {
+		// pass empty string for local domain
+		domain = ""
 	}
 
 	// normalize filters
@@ -208,10 +209,6 @@ func (m *Module) EmojisGETHandler(c *gin.Context) {
 		// include both if neither specified
 		includeDisabled = true
 		includeEnabled = true
-	}
-	if domain == "local" || domain == config.GetHost() || domain == config.GetAccountDomain() {
-		// pass empty string for local domain
-		domain = ""
 	}
 
 	resp, errWithCode := m.processor.AdminEmojisGet(c.Request.Context(), authed, domain, includeDisabled, includeEnabled, shortcode, maxShortcodeDomain, minShortcodeDomain, limit)
