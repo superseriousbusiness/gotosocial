@@ -61,7 +61,7 @@ func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled 
 	//
 	//	SELECT
 	//		"emoji"."id",
-	//		"emoji"."shortcode" || '@' || COALESCE("emoji"."domain", '') AS "shortcode_domain"
+	//		lower("emoji"."shortcode" || '@' || COALESCE("emoji"."domain", '')) AS "shortcode_domain"
 	//	FROM
 	//		"emojis" AS "emoji"
 	//	ORDER BY
@@ -71,16 +71,16 @@ func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled 
 	//
 	//	SELECT
 	//		"emoji"."id",
-	//		CONCAT("emoji"."shortcode", '@', COALESCE("emoji"."domain", '')) AS "shortcode_domain"
+	//		LOWER(CONCAT("emoji"."shortcode", '@', COALESCE("emoji"."domain", ''))) AS "shortcode_domain"
 	//	FROM
 	//		"emojis" AS "emoji"
 	//	ORDER BY
 	//		"shortcode_domain" ASC
 	switch e.conn.Dialect().Name() {
 	case dialect.SQLite:
-		q = q.ColumnExpr("? || ? || COALESCE(?, ?) AS ?", bun.Ident("emoji.shortcode"), "@", bun.Ident("emoji.domain"), "", bun.Ident("shortcode_domain"))
+		q = q.ColumnExpr("LOWER(? || ? || COALESCE(?, ?)) AS ?", bun.Ident("emoji.shortcode"), "@", bun.Ident("emoji.domain"), "", bun.Ident("shortcode_domain"))
 	case dialect.PG:
-		q = q.ColumnExpr("CONCAT(?, ?, COALESCE(?, ?)) AS ?", bun.Ident("emoji.shortcode"), "@", bun.Ident("emoji.domain"), "", bun.Ident("shortcode_domain"))
+		q = q.ColumnExpr("LOWER(CONCAT(?, ?, COALESCE(?, ?))) AS ?", bun.Ident("emoji.shortcode"), "@", bun.Ident("emoji.domain"), "", bun.Ident("shortcode_domain"))
 	default:
 		panic("db conn was neither pg not sqlite")
 	}
@@ -112,11 +112,11 @@ func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled 
 	order := "ASC"
 
 	if maxShortcodeDomain != "" {
-		q = q.Where("? > ?", bun.Ident("shortcode_domain"), maxShortcodeDomain)
+		q = q.Where("? > LOWER(?)", bun.Ident("shortcode_domain"), maxShortcodeDomain)
 	}
 
 	if minShortcodeDomain != "" {
-		q = q.Where("? < ?", bun.Ident("shortcode_domain"), minShortcodeDomain)
+		q = q.Where("? < LOWER(?)", bun.Ident("shortcode_domain"), minShortcodeDomain)
 		// if we have a minShortcodeDomain we're paging upwards/backwards
 		order = "DESC"
 	}
