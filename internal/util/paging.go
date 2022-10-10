@@ -63,9 +63,7 @@ func PackagePageableResponse(params PageableResponseParams) (*apimodel.PageableR
 	}
 
 	// items
-	for _, item := range params.Items {
-		pageableResponse.Items = append(pageableResponse.Items, item)
-	}
+	pageableResponse.Items = params.Items
 
 	protocol := config.GetProtocol()
 	host := config.GetHost()
