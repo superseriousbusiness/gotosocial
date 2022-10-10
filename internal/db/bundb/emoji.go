@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect"
 )
 
 type emojiDB struct {
@@ -55,8 +56,18 @@ func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled 
 	q := e.conn.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("emojis"), bun.Ident("emoji")).
-		Column("emoji.id").
-		Order("emoji.shortcode ASC")
+		Column("emoji.id")
+
+	switch e.conn.Dialect().Name() {
+	case dialect.SQLite:
+		q = q.ColumnExpr("? || ? || COALESCE(?, ?) AS ?", bun.Ident("emoji.shortcode"), "@", bun.Ident("emoji.domain"), "", bun.Ident("shortcodedomain"))
+	case dialect.PG:
+		q = q.ColumnExpr("CONCAT(?, ?, COALESCE(?, ?)) AS ?", bun.Ident("emoji.shortcode"), "@", bun.Ident("emoji.domain"), "", bun.Ident("shortcodedomain"))
+	default:
+		panic("db conn was neither pg not sqlite")
+	}
+
+	q = q.Order("shortcodedomain")
 
 	if domain == "" {
 		q = q.Where("? IS NULL", bun.Ident("emoji.domain"))
@@ -79,7 +90,7 @@ func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled 
 		q = q.Where("? = ?", bun.Ident("emoji.shortcode"), shortcode)
 	}
 
-	if err := q.Scan(ctx, &emojiIDs); err != nil {
+	if err := q.Scan(ctx, &emojiIDs, new([]string)); err != nil {
 		return nil, e.conn.ProcessError(err)
 	}
 
