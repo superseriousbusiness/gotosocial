@@ -25,36 +25,48 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, excludeTypes []string, limit int, maxID string, sinceID string) (*apimodel.TimelineResponse, gtserror.WithCode) {
+func (p *processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, excludeTypes []string, limit int, maxID string, sinceID string) (*apimodel.PageableResponse, gtserror.WithCode) {
 	notifs, err := p.db.GetNotifications(ctx, authed.Account.ID, excludeTypes, limit, maxID, sinceID)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if len(notifs) == 0 {
-		return util.EmptyTimelineResponse(), nil
+	count := len(notifs)
+
+	if count == 0 {
+		return util.EmptyPageableResponse(), nil
 	}
 
-	timelineables := []timeline.Timelineable{}
-	for _, n := range notifs {
-		apiNotif, err := p.tc.NotificationToAPINotification(ctx, n)
+	items := []interface{}{}
+	nextMaxIDValue := ""
+	prevMinIDValue := ""
+	for i, n := range notifs {
+		item, err := p.tc.NotificationToAPINotification(ctx, n)
 		if err != nil {
 			log.Debugf("got an error converting a notification to api, will skip it: %s", err)
 			continue
 		}
-		timelineables = append(timelineables, apiNotif)
+
+		if i == count-1 {
+			nextMaxIDValue = item.GetID()
+		}
+
+		if i == 0 {
+			prevMinIDValue = item.GetID()
+		}
+
+		items = append(items, item)
 	}
 
-	return util.PackageTimelineableResponse(util.TimelineableResponseParams{
-		Items:          timelineables,
+	return util.PackagePageableResponse(util.PageableResponseParams{
+		Items:          items,
 		Path:           "api/v1/notifications",
-		NextMaxIDValue: timelineables[len(timelineables)-1].GetID(),
+		NextMaxIDValue: nextMaxIDValue,
 		PrevMinIDKey:   "since_id",
-		PrevMinIDValue: timelineables[0].GetID(),
+		PrevMinIDValue: prevMinIDValue,
 		Limit:          limit,
 	})
 }

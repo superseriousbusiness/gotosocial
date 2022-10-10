@@ -18,12 +18,10 @@
 
 package model
 
-import "github.com/superseriousbusiness/gotosocial/internal/timeline"
-
-// TimelineResponse wraps a slice of timelineables, ready to be serialized, along with the Link
-// header for the previous and next queries, to be returned to the client.
-type TimelineResponse struct {
-	Items      []timeline.Timelineable
+// PageableResponse wraps a slice of items, ready to be serialized, along with the Link
+// header for the previous and next queries / pages, to be returned to the client.
+type PageableResponse struct {
+	Items      []interface{}
 	LinkHeader string
 	NextLink   string
 	PrevLink   string
