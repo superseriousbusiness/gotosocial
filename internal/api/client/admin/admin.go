@@ -53,6 +53,14 @@ const (
 	IDKey = "id"
 	// FilterKey is for applying filters to admin views of accounts, emojis, etc.
 	FilterQueryKey = "filter"
+	// MaxShortcodeDomainKey is the url query for returning emoji results lower (alphabetically)
+	// than the given `[shortcode]@[domain]` parameter.
+	MaxShortcodeDomainKey = "max_shortcode_domain"
+	// MaxShortcodeDomainKey is the url query for returning emoji results higher (alphabetically)
+	// than the given `[shortcode]@[domain]` parameter.
+	MinShortcodeDomainKey = "min_shortcode_domain"
+	// LimitKey is for specifying maximum number of results to return.
+	LimitKey = "limit"
 )
 
 // Module implements the ClientAPIModule interface for admin-related actions (reports, emojis, etc)

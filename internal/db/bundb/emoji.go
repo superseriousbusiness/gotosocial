@@ -50,7 +50,7 @@ func (e *emojiDB) PutEmoji(ctx context.Context, emoji *gtsmodel.Emoji) db.Error 
 	return nil
 }
 
-func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled bool, includeEnabled bool, shortcode string) ([]*gtsmodel.Emoji, db.Error) {
+func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) ([]*gtsmodel.Emoji, db.Error) {
 	emojiIDs := []string{}
 	q := e.conn.NewSelect().Column("emoji.id")
 
@@ -61,26 +61,26 @@ func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled 
 	//
 	//	SELECT
 	//		"emoji"."id",
-	//		"emoji"."shortcode" || '@' || COALESCE("emoji"."domain", '') AS "shortcodedomain"
+	//		"emoji"."shortcode" || '@' || COALESCE("emoji"."domain", '') AS "shortcode_domain"
 	//	FROM
 	//		"emojis" AS "emoji"
 	//	ORDER BY
-	//		"shortcodedomain" ASC
+	//		"shortcode_domain" ASC
 	//
 	// Or like this (postgres):
 	//
 	//	SELECT
 	//		"emoji"."id",
-	//		CONCAT("emoji"."shortcode", '@', COALESCE("emoji"."domain", '')) AS "shortcodedomain"
+	//		CONCAT("emoji"."shortcode", '@', COALESCE("emoji"."domain", '')) AS "shortcode_domain"
 	//	FROM
 	//		"emojis" AS "emoji"
 	//	ORDER BY
-	//		"shortcodedomain" ASC
+	//		"shortcode_domain" ASC
 	switch e.conn.Dialect().Name() {
 	case dialect.SQLite:
-		q = q.ColumnExpr("? || ? || COALESCE(?, ?) AS ?", bun.Ident("emoji.shortcode"), "@", bun.Ident("emoji.domain"), "", bun.Ident("shortcodedomain"))
+		q = q.ColumnExpr("? || ? || COALESCE(?, ?) AS ?", bun.Ident("emoji.shortcode"), "@", bun.Ident("emoji.domain"), "", bun.Ident("shortcode_domain"))
 	case dialect.PG:
-		q = q.ColumnExpr("CONCAT(?, ?, COALESCE(?, ?)) AS ?", bun.Ident("emoji.shortcode"), "@", bun.Ident("emoji.domain"), "", bun.Ident("shortcodedomain"))
+		q = q.ColumnExpr("CONCAT(?, ?, COALESCE(?, ?)) AS ?", bun.Ident("emoji.shortcode"), "@", bun.Ident("emoji.domain"), "", bun.Ident("shortcode_domain"))
 	default:
 		panic("db conn was neither pg not sqlite")
 	}
@@ -108,10 +108,36 @@ func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled 
 		q = q.Where("? = ?", bun.Ident("emoji.shortcode"), shortcode)
 	}
 
-	q = q.Order("shortcodedomain ASC")
+	// assume we want to sort ASC (a-z) unless informed otherwise
+	order := "ASC"
+
+	if maxShortcodeDomain != "" {
+		q = q.Where("? > ?", bun.Ident("shortcode_domain"), maxShortcodeDomain)
+	}
+
+	if minShortcodeDomain != "" {
+		q = q.Where("? < ?", bun.Ident("shortcode_domain"), minShortcodeDomain)
+		// if we have a minShortcodeDomain we're paging upwards/backwards
+		order = "DESC"
+	}
+
+	q = q.
+		Order("shortcode_domain " + order).
+		Limit(limit)
 
 	if err := q.Scan(ctx, &emojiIDs, new([]string)); err != nil {
 		return nil, e.conn.ProcessError(err)
+	}
+
+	if order == "DESC" {
+		// Reverse the slice order so the caller still
+		// gets emojis in expected a-z alphabetical order.
+		//
+		// See https://github.com/golang/go/wiki/SliceTricks#reversing
+		for i := len(emojiIDs)/2 - 1; i >= 0; i-- {
+			opp := len(emojiIDs) - 1 - i
+			emojiIDs[i], emojiIDs[opp] = emojiIDs[opp], emojiIDs[i]
+		}
 	}
 
 	return e.emojisFromIDs(ctx, emojiIDs)

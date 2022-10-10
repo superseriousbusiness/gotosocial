@@ -21,6 +21,7 @@ package admin
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -65,6 +66,32 @@ import (
 //		in: query
 //		required: false
 //		default: "domain:all"
+//	-
+//		name: limit
+//		type: integer
+//		description: Number of emojis to return. If below 1, will be set to 1, if greater than 50, will be set to 50.
+//		default: 30
+//		in: query
+//	-
+//		name: max_shortcode_domain
+//		type: string
+//		description: >-
+//			Return only emojis with `[shortcode]@[domain]` *LOWER* (alphabetically) than given `[shortcode]@[domain]`.
+//			For example, if `max_shortcode_domain=beep@example.org`, then returned values might include emojis with
+//			`[shortcode]@[domain]`s like `car@example.org`, `debian@aaa.com`, `test@` (local emoji), etc.
+//
+//			Emoji with the given `[shortcode]@[domain]` will not be included in the result set.
+//		in: query
+//	-
+//		name: min_shortcode_domain
+//		type: string
+//		description: >-
+//			Return only emojis with `[shortcode]@[domain]` *HIGHER* (alphabetically) than given `[shortcode]@[domain]`.
+//			For example, if `max_shortcode_domain=beep@example.org`, then returned values might include emojis with
+//			`[shortcode]@[domain]`s like `arse@test.com`, `0101_binary@hackers.net`, `bee@` (local emoji), etc.
+//
+//			Emoji with the given `[shortcode]@[domain]` will not be included in the result set.
+//		in: query
 //
 //	responses:
 //		'200':
@@ -101,6 +128,36 @@ func (m *Module) EmojisGETHandler(c *gin.Context) {
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
 		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
+	}
+
+	maxShortcodeDomain := ""
+	maxShortcodeDomainString := c.Query(MaxShortcodeDomainKey)
+	if maxShortcodeDomainString != "" {
+		maxShortcodeDomain = maxShortcodeDomainString
+	}
+
+	minShortcodeDomain := ""
+	minShortcodeDomainString := c.Query(MinShortcodeDomainKey)
+	if minShortcodeDomainString != "" {
+		minShortcodeDomain = minShortcodeDomainString
+	}
+
+	limit := 30
+	limitString := c.Query(LimitKey)
+	if limitString != "" {
+		i, err := strconv.ParseInt(limitString, 10, 64)
+		if err != nil {
+			err := fmt.Errorf("error parsing %s: %s", LimitKey, err)
+			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+			return
+		}
+		limit = int(i)
+	}
+	if limit < 1 {
+		limit = 1
+	}
+	if limit > 50 {
+		limit = 50
 	}
 
 	var domain string
@@ -148,11 +205,11 @@ func (m *Module) EmojisGETHandler(c *gin.Context) {
 		domain = ""
 	}
 
-	apiEmojis, errWithCode := m.processor.AdminEmojisGet(c.Request.Context(), authed, domain, includeDisabled, includeEnabled, shortcode)
+	resp, errWithCode := m.processor.AdminEmojisGet(c.Request.Context(), authed, domain, includeDisabled, includeEnabled, shortcode, maxShortcodeDomain, minShortcodeDomain, limit)
 	if errWithCode != nil {
 		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 
-	c.JSON(http.StatusOK, apiEmojis)
+	c.JSON(http.StatusOK, resp)
 }

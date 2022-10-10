@@ -29,12 +29,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) EmojisGet(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, domain string, includeDisabled bool, includeEnabled bool, shortcode string) ([]*apimodel.AdminEmoji, gtserror.WithCode) {
+func (p *processor) EmojisGet(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) ([]*apimodel.AdminEmoji, gtserror.WithCode) {
 	if !*user.Admin {
 		return nil, gtserror.NewErrorUnauthorized(fmt.Errorf("user %s not an admin", user.ID), "user is not an admin")
 	}
 
-	emojis, err := p.db.GetEmojis(ctx, domain, includeDisabled, includeEnabled, shortcode)
+	emojis, err := p.db.GetEmojis(ctx, domain, includeDisabled, includeEnabled, shortcode, maxShortcodeDomain, minShortcodeDomain, limit)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err := fmt.Errorf("EmojisGet: db error: %s", err)
 		return nil, gtserror.NewErrorInternalError(err)
