@@ -52,12 +52,30 @@ func (e *emojiDB) PutEmoji(ctx context.Context, emoji *gtsmodel.Emoji) db.Error 
 
 func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled bool, includeEnabled bool, shortcode string) ([]*gtsmodel.Emoji, db.Error) {
 	emojiIDs := []string{}
+	q := e.conn.NewSelect().Column("emoji.id")
 
-	q := e.conn.
-		NewSelect().
-		TableExpr("? AS ?", bun.Ident("emojis"), bun.Ident("emoji")).
-		Column("emoji.id")
-
+	// To ensure consistent ordering and make paging possible, we sort not by shortcode
+	// but by [shortcode]@[domain]. Because sqlite and postgres have different syntax
+	// for concatenation, that means we need to switch here. Depending on which driver
+	// is in use, query will look something like this (sqlite):
+	//
+	//	SELECT
+	//		"emoji"."id",
+	//		"emoji"."shortcode" || '@' || COALESCE("emoji"."domain", '') AS "shortcodedomain"
+	//	FROM
+	//		"emojis" AS "emoji"
+	//	ORDER BY
+	//		"shortcodedomain" ASC
+	//
+	// Or like this (postgres):
+	//
+	//	SELECT
+	//		"emoji"."id",
+	//		CONCAT("emoji"."shortcode", '@', COALESCE("emoji"."domain", '')) AS "shortcodedomain"
+	//	FROM
+	//		"emojis" AS "emoji"
+	//	ORDER BY
+	//		"shortcodedomain" ASC
 	switch e.conn.Dialect().Name() {
 	case dialect.SQLite:
 		q = q.ColumnExpr("? || ? || COALESCE(?, ?) AS ?", bun.Ident("emoji.shortcode"), "@", bun.Ident("emoji.domain"), "", bun.Ident("shortcodedomain"))
@@ -67,7 +85,7 @@ func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled 
 		panic("db conn was neither pg not sqlite")
 	}
 
-	q = q.Order("shortcodedomain ASC")
+	q = q.TableExpr("? AS ?", bun.Ident("emojis"), bun.Ident("emoji"))
 
 	if domain == "" {
 		q = q.Where("? IS NULL", bun.Ident("emoji.domain"))
@@ -89,6 +107,8 @@ func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled 
 	if shortcode != "" {
 		q = q.Where("? = ?", bun.Ident("emoji.shortcode"), shortcode)
 	}
+
+	q = q.Order("shortcodedomain ASC")
 
 	if err := q.Scan(ctx, &emojiIDs, new([]string)); err != nil {
 		return nil, e.conn.ProcessError(err)
