@@ -114,6 +114,21 @@ func (e *emojiDB) GetEmojiByShortcodeDomain(ctx context.Context, shortcode strin
 	)
 }
 
+func (e *emojiDB) GetEmojiByImageStaticURL(ctx context.Context, imageStaticURL string) (*gtsmodel.Emoji, db.Error) {
+	return e.getEmoji(
+		ctx,
+		func() (*gtsmodel.Emoji, bool) {
+			return e.cache.GetByImageStaticURL(imageStaticURL)
+		},
+		func(emoji *gtsmodel.Emoji) error {
+			return e.
+				newEmojiQ(emoji).
+				Where("? = ?", bun.Ident("emoji.image_static_url"), imageStaticURL).
+				Scan(ctx)
+		},
+	)
+}
+
 func (e *emojiDB) getEmoji(ctx context.Context, cacheGet func() (*gtsmodel.Emoji, bool), dbQuery func(*gtsmodel.Emoji) error) (*gtsmodel.Emoji, db.Error) {
 	// Attempt to fetch cached emoji
 	emoji, cached := cacheGet()

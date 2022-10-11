@@ -16,34 +16,33 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package bundb_test
+package migrations
 
 import (
 	"context"
-	"testing"
 
-	"github.com/stretchr/testify/suite"
+	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/uptrace/bun"
 )
 
-type EmojiTestSuite struct {
-	BunDBStandardTestSuite
-}
+func init() {
+	up := func(ctx context.Context, db *bun.DB) error {
+		_, err := db.
+			NewCreateIndex().
+			Model(&gtsmodel.Emoji{}).
+			Index("emojis_image_static_url_idx").
+			Column("image_static_url").
+			Exec(ctx)
+		return err
+	}
 
-func (suite *EmojiTestSuite) TestGetCustomEmojis() {
-	emojis, err := suite.db.GetCustomEmojis(context.Background())
+	down := func(ctx context.Context, db *bun.DB) error {
+		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			return nil
+		})
+	}
 
-	suite.NoError(err)
-	suite.Equal(1, len(emojis))
-	suite.Equal("rainbow", emojis[0].Shortcode)
-}
-
-func (suite *EmojiTestSuite) TestGetEmojiByImageStaticURL() {
-	emoji, err := suite.db.GetEmojiByImageStaticURL(context.Background(), "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png")
-	suite.NoError(err)
-	suite.NotNil(emoji)
-	suite.Equal("rainbow", emoji.Shortcode)
-}
-
-func TestEmojiTestSuite(t *testing.T) {
-	suite.Run(t, new(EmojiTestSuite))
+	if err := Migrations.Register(up, down); err != nil {
+		panic(err)
+	}
 }

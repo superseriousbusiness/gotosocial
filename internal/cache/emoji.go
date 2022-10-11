@@ -37,19 +37,26 @@ func NewEmojiCache() *EmojiCache {
 		RegisterLookups: func(lm *cache.LookupMap[string, string]) {
 			lm.RegisterLookup("uri")
 			lm.RegisterLookup("shortcodedomain")
+			lm.RegisterLookup("imagestaticurl")
 		},
 
 		AddLookups: func(lm *cache.LookupMap[string, string], emoji *gtsmodel.Emoji) {
+			lm.Set("shortcodedomain", shortcodeDomainKey(emoji.Shortcode, emoji.Domain), emoji.ID)
 			if uri := emoji.URI; uri != "" {
-				lm.Set("uri", uri, emoji.URI)
-				lm.Set("shortcodedomain", shortcodeDomainKey(emoji.Shortcode, emoji.Domain), emoji.ID)
+				lm.Set("uri", uri, emoji.ID)
+			}
+			if imageStaticURL := emoji.ImageStaticURL; imageStaticURL != "" {
+				lm.Set("imagestaticurl", imageStaticURL, emoji.ID)
 			}
 		},
 
 		DeleteLookups: func(lm *cache.LookupMap[string, string], emoji *gtsmodel.Emoji) {
+			lm.Delete("shortcodedomain", shortcodeDomainKey(emoji.Shortcode, emoji.Domain))
 			if uri := emoji.URI; uri != "" {
 				lm.Delete("uri", uri)
-				lm.Delete("shortcodedomain", shortcodeDomainKey(emoji.Shortcode, emoji.Domain))
+			}
+			if imageStaticURL := emoji.ImageStaticURL; imageStaticURL != "" {
+				lm.Delete("imagestaticurl", imageStaticURL)
 			}
 		},
 	})
@@ -70,6 +77,10 @@ func (c *EmojiCache) GetByURI(uri string) (*gtsmodel.Emoji, bool) {
 
 func (c *EmojiCache) GetByShortcodeDomain(shortcode string, domain string) (*gtsmodel.Emoji, bool) {
 	return c.cache.GetBy("shortcodedomain", shortcodeDomainKey(shortcode, domain))
+}
+
+func (c *EmojiCache) GetByImageStaticURL(imageStaticURL string) (*gtsmodel.Emoji, bool) {
+	return c.cache.GetBy("imagestaticurl", imageStaticURL)
 }
 
 // Put places an emoji in the cache, ensuring that the object place is a copy for thread-safety
