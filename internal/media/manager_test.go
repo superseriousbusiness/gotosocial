@@ -55,7 +55,7 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlocking() {
 	emojiID := "01GDQ9G782X42BAMFASKP64343"
 	emojiURI := "http://localhost:8080/emoji/01GDQ9G782X42BAMFASKP64343"
 
-	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "rainbow_test", emojiID, emojiURI, nil)
+	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "rainbow_test", emojiID, emojiURI, nil, false)
 	suite.NoError(err)
 
 	// do a blocking call to fetch the emoji
@@ -101,6 +101,90 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlocking() {
 	suite.Equal(processedStaticBytesExpected, processedStaticBytes)
 }
 
+func (suite *ManagerTestSuite) TestEmojiProcessBlockingRefresh() {
+	ctx := context.Background()
+
+	// we're going to 'refresh' the remote 'yell' emoji by changing the image url to the rainbow emoji url
+	originalEmoji := suite.testEmojis["yell"]
+
+	emojiToUpdate := &gtsmodel.Emoji{}
+	*emojiToUpdate = *originalEmoji
+	newImageRemoteURL := "http://fossbros-anonymous.io/some/image/path.png"
+
+	data := func(_ context.Context) (io.Reader, int64, error) {
+		b, err := os.ReadFile("./test/kirby-original.png")
+		if err != nil {
+			panic(err)
+		}
+		return bytes.NewBuffer(b), int64(len(b)), nil
+	}
+
+	emojiID := emojiToUpdate.ID
+	emojiURI := emojiToUpdate.URI
+
+	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "yell", emojiID, emojiURI, &media.AdditionalEmojiInfo{
+		CreatedAt:      &emojiToUpdate.CreatedAt,
+		Domain:         &emojiToUpdate.Domain,
+		ImageRemoteURL: &newImageRemoteURL,
+	}, true)
+	suite.NoError(err)
+
+	// do a blocking call to fetch the emoji
+	emoji, err := processingEmoji.LoadEmoji(ctx)
+	suite.NoError(err)
+	suite.NotNil(emoji)
+
+	// make sure it's got the stuff set on it that we expect
+	suite.Equal(emojiID, emoji.ID)
+
+	// file meta should be correctly derived from the image
+	suite.Equal("image/png", emoji.ImageContentType)
+	suite.Equal("image/png", emoji.ImageStaticContentType)
+	suite.Equal(15298, emoji.ImageFileSize)
+
+	// now make sure the emoji is in the database
+	dbEmoji, err := suite.db.GetEmojiByID(ctx, emojiID)
+	suite.NoError(err)
+	suite.NotNil(dbEmoji)
+
+	// make sure the processed emoji file is in storage
+	processedFullBytes, err := suite.storage.Get(ctx, emoji.ImagePath)
+	suite.NoError(err)
+	suite.NotEmpty(processedFullBytes)
+
+	// load the processed bytes from our test folder, to compare
+	processedFullBytesExpected, err := os.ReadFile("./test/kirby-original.png")
+	suite.NoError(err)
+	suite.NotEmpty(processedFullBytesExpected)
+
+	// the bytes in storage should be what we expected
+	suite.Equal(processedFullBytesExpected, processedFullBytes)
+
+	// now do the same for the thumbnail and make sure it's what we expected
+	processedStaticBytes, err := suite.storage.Get(ctx, emoji.ImageStaticPath)
+	suite.NoError(err)
+	suite.NotEmpty(processedStaticBytes)
+
+	processedStaticBytesExpected, err := os.ReadFile("./test/kirby-static.png")
+	suite.NoError(err)
+	suite.NotEmpty(processedStaticBytesExpected)
+
+	suite.Equal(processedStaticBytesExpected, processedStaticBytes)
+
+	// most fields should be different on the emoji now from what they were before
+	suite.Equal(originalEmoji.ID, dbEmoji.ID)
+	suite.NotEqual(originalEmoji.ImageRemoteURL, dbEmoji.ImageRemoteURL)
+	suite.NotEqual(originalEmoji.ImageURL, dbEmoji.ImageURL)
+	suite.NotEqual(originalEmoji.ImageStaticURL, dbEmoji.ImageStaticURL)
+	suite.NotEqual(originalEmoji.ImageFileSize, dbEmoji.ImageFileSize)
+	suite.NotEqual(originalEmoji.ImageStaticFileSize, dbEmoji.ImageStaticFileSize)
+	suite.NotEqual(originalEmoji.ImagePath, dbEmoji.ImagePath)
+	suite.NotEqual(originalEmoji.ImageStaticPath, dbEmoji.ImageStaticPath)
+	suite.NotEqual(originalEmoji.ImageStaticPath, dbEmoji.ImageStaticPath)
+	suite.NotEqual(originalEmoji.UpdatedAt, dbEmoji.UpdatedAt)
+	suite.NotEqual(originalEmoji.ImageUpdatedAt, dbEmoji.ImageUpdatedAt)
+}
+
 func (suite *ManagerTestSuite) TestEmojiProcessBlockingTooLarge() {
 	ctx := context.Background()
 
@@ -116,7 +200,7 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingTooLarge() {
 	emojiID := "01GDQ9G782X42BAMFASKP64343"
 	emojiURI := "http://localhost:8080/emoji/01GDQ9G782X42BAMFASKP64343"
 
-	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "big_panda", emojiID, emojiURI, nil)
+	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "big_panda", emojiID, emojiURI, nil, false)
 	suite.NoError(err)
 
 	// do a blocking call to fetch the emoji
@@ -140,7 +224,7 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingTooLargeNoSizeGiven() {
 	emojiID := "01GDQ9G782X42BAMFASKP64343"
 	emojiURI := "http://localhost:8080/emoji/01GDQ9G782X42BAMFASKP64343"
 
-	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "big_panda", emojiID, emojiURI, nil)
+	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "big_panda", emojiID, emojiURI, nil, false)
 	suite.NoError(err)
 
 	// do a blocking call to fetch the emoji
@@ -165,7 +249,7 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingNoFileSizeGiven() {
 	emojiURI := "http://localhost:8080/emoji/01GDQ9G782X42BAMFASKP64343"
 
 	// process the media with no additional info provided
-	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "rainbow_test", emojiID, emojiURI, nil)
+	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "rainbow_test", emojiID, emojiURI, nil, false)
 	suite.NoError(err)
 
 	// do a blocking call to fetch the emoji

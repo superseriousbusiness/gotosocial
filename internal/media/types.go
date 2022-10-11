@@ -98,8 +98,8 @@ type AdditionalMediaInfo struct {
 	FocusY *float32
 }
 
-// AdditionalMediaInfo represents additional information
-// that should be added to an emoji when processing it.
+// AdditionalEmojiInfo represents additional information
+// that should be taken into account when processing an emoji.
 type AdditionalEmojiInfo struct {
 	// Time that this emoji was created; defaults to time.Now().
 	CreatedAt *time.Time

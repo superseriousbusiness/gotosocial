@@ -35,6 +35,7 @@ type MediaStandardTestSuite struct {
 	manager         media.Manager
 	testAttachments map[string]*gtsmodel.MediaAttachment
 	testAccounts    map[string]*gtsmodel.Account
+	testEmojis      map[string]*gtsmodel.Emoji
 }
 
 func (suite *MediaStandardTestSuite) SetupSuite() {
@@ -50,6 +51,7 @@ func (suite *MediaStandardTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db, nil)
 	suite.testAttachments = testrig.NewTestAttachments()
 	suite.testAccounts = testrig.NewTestAccounts()
+	suite.testEmojis = testrig.NewTestEmojis()
 	suite.manager = testrig.NewTestMediaManager(suite.db, suite.storage)
 }
 

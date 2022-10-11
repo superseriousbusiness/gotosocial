@@ -239,7 +239,7 @@ func (suite *InboxPostTestSuite) TestPostUnblock() {
 func (suite *InboxPostTestSuite) TestPostUpdate() {
 	updatedAccount := *suite.testAccounts["remote_account_1"]
 	updatedAccount.DisplayName = "updated display name!"
-	testEmoji := testrig.NewTestEmojis()["rainbow"]
+	testEmoji := testrig.NewTestEmojis()["yell"]
 	updatedAccount.Emojis = []*gtsmodel.Emoji{testEmoji}
 
 	asAccount, err := suite.tc.AccountToAS(context.Background(), &updatedAccount)

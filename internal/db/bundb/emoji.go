@@ -21,6 +21,7 @@ package bundb
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -47,6 +48,23 @@ func (e *emojiDB) PutEmoji(ctx context.Context, emoji *gtsmodel.Emoji) db.Error 
 
 	e.cache.Put(emoji)
 	return nil
+}
+
+func (e *emojiDB) UpdateEmoji(ctx context.Context, emoji *gtsmodel.Emoji, columns ...string) (*gtsmodel.Emoji, db.Error) {
+	// Update the emoji's last-updated
+	emoji.UpdatedAt = time.Now()
+
+	if _, err := e.conn.
+		NewUpdate().
+		Model(emoji).
+		Where("? = ?", bun.Ident("emoji.id"), emoji.ID).
+		Column(columns...).
+		Exec(ctx); err != nil {
+		return nil, e.conn.ProcessError(err)
+	}
+
+	e.cache.Invalidate(emoji.ID)
+	return emoji, nil
 }
 
 func (e *emojiDB) GetCustomEmojis(ctx context.Context) ([]*gtsmodel.Emoji, db.Error) {

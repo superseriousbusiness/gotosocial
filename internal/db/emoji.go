@@ -28,6 +28,9 @@ import (
 type Emoji interface {
 	// PutEmoji puts one emoji in the database.
 	PutEmoji(ctx context.Context, emoji *gtsmodel.Emoji) Error
+	// UpdateEmoji updates the given columns of one emoji.
+	// If no columns are specified, every column is updated.
+	UpdateEmoji(ctx context.Context, emoji *gtsmodel.Emoji, columns ...string) (*gtsmodel.Emoji, Error)
 	// GetCustomEmojis gets all custom emoji for the instance
 	GetCustomEmojis(ctx context.Context) ([]*gtsmodel.Emoji, Error)
 	// GetEmojiByID gets a specific emoji by its database ID.

@@ -91,6 +91,10 @@ func (c *EmojiCache) Put(emoji *gtsmodel.Emoji) {
 	c.cache.Set(emoji.ID, copyEmoji(emoji))
 }
 
+func (c *EmojiCache) Invalidate(emojiID string) {
+	c.cache.Invalidate(emojiID)
+}
+
 // copyEmoji performs a surface-level copy of emoji, only keeping attached IDs intact, not the objects.
 // due to all the data being copied being 99% primitive types or strings (which are immutable and passed by ptr)
 // this should be a relatively cheap process
