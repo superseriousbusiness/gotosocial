@@ -46,12 +46,28 @@ var Create action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
+	usernameAvailable, err := dbConn.IsUsernameAvailable(ctx, username)
+	if err != nil {
+		return err
+	}
+	if !usernameAvailable {
+		return fmt.Errorf("username %s is already in use", username)
+	}
+
 	email := config.GetAdminAccountEmail()
 	if email == "" {
 		return errors.New("no email set")
 	}
 	if err := validate.Email(email); err != nil {
 		return err
+	}
+
+	emailAvailable, err := dbConn.IsEmailAvailable(ctx, email)
+	if err != nil {
+		return err
+	}
+	if !emailAvailable {
+		return fmt.Errorf("email address %s is already in use", email)
 	}
 
 	password := config.GetAdminAccountPassword()
