@@ -121,9 +121,11 @@ func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled 
 		order = "DESC"
 	}
 
-	q = q.
-		Order("shortcode_domain " + order).
-		Limit(limit)
+	q = q.Order("shortcode_domain " + order)
+
+	if limit > 0 {
+		q = q.Limit(limit)
+	}
 
 	if err := q.Scan(ctx, &emojiIDs, new([]string)); err != nil {
 		return nil, e.conn.ProcessError(err)

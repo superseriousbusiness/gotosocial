@@ -39,7 +39,7 @@ func (suite *EmojiTestSuite) TestGetCustomEmojis() {
 }
 
 func (suite *EmojiTestSuite) TestGetAllEmojis() {
-	emojis, err := suite.db.GetEmojis(context.Background(), db.EmojiAllDomains, true, true, "", "", "", 10)
+	emojis, err := suite.db.GetEmojis(context.Background(), db.EmojiAllDomains, true, true, "", "", "", 0)
 
 	suite.NoError(err)
 	suite.Equal(2, len(emojis))
@@ -47,8 +47,16 @@ func (suite *EmojiTestSuite) TestGetAllEmojis() {
 	suite.Equal("yell", emojis[1].Shortcode)
 }
 
+func (suite *EmojiTestSuite) TestGetAllEmojisLimit1() {
+	emojis, err := suite.db.GetEmojis(context.Background(), db.EmojiAllDomains, true, true, "", "", "", 1)
+
+	suite.NoError(err)
+	suite.Equal(1, len(emojis))
+	suite.Equal("rainbow", emojis[0].Shortcode)
+}
+
 func (suite *EmojiTestSuite) TestGetAllEmojisMaxID() {
-	emojis, err := suite.db.GetEmojis(context.Background(), db.EmojiAllDomains, true, true, "", "rainbow@", "", 10)
+	emojis, err := suite.db.GetEmojis(context.Background(), db.EmojiAllDomains, true, true, "", "rainbow@", "", 0)
 
 	suite.NoError(err)
 	suite.Equal(1, len(emojis))
@@ -56,7 +64,7 @@ func (suite *EmojiTestSuite) TestGetAllEmojisMaxID() {
 }
 
 func (suite *EmojiTestSuite) TestGetAllEmojisMinID() {
-	emojis, err := suite.db.GetEmojis(context.Background(), db.EmojiAllDomains, true, true, "", "", "yell@fossbros-anonymous.io", 10)
+	emojis, err := suite.db.GetEmojis(context.Background(), db.EmojiAllDomains, true, true, "", "", "yell@fossbros-anonymous.io", 0)
 
 	suite.NoError(err)
 	suite.Equal(1, len(emojis))
@@ -64,14 +72,14 @@ func (suite *EmojiTestSuite) TestGetAllEmojisMinID() {
 }
 
 func (suite *EmojiTestSuite) TestGetAllDisabledEmojis() {
-	emojis, err := suite.db.GetEmojis(context.Background(), db.EmojiAllDomains, true, false, "", "", "", 10)
+	emojis, err := suite.db.GetEmojis(context.Background(), db.EmojiAllDomains, true, false, "", "", "", 0)
 
 	suite.ErrorIs(err, db.ErrNoEntries)
 	suite.Equal(0, len(emojis))
 }
 
 func (suite *EmojiTestSuite) TestGetAllEnabledEmojis() {
-	emojis, err := suite.db.GetEmojis(context.Background(), db.EmojiAllDomains, false, true, "", "", "", 10)
+	emojis, err := suite.db.GetEmojis(context.Background(), db.EmojiAllDomains, false, true, "", "", "", 0)
 
 	suite.NoError(err)
 	suite.Equal(2, len(emojis))
@@ -80,7 +88,7 @@ func (suite *EmojiTestSuite) TestGetAllEnabledEmojis() {
 }
 
 func (suite *EmojiTestSuite) TestGetLocalEnabledEmojis() {
-	emojis, err := suite.db.GetEmojis(context.Background(), "", false, true, "", "", "", 10)
+	emojis, err := suite.db.GetEmojis(context.Background(), "", false, true, "", "", "", 0)
 
 	suite.NoError(err)
 	suite.Equal(1, len(emojis))
@@ -88,21 +96,21 @@ func (suite *EmojiTestSuite) TestGetLocalEnabledEmojis() {
 }
 
 func (suite *EmojiTestSuite) TestGetLocalDisabledEmojis() {
-	emojis, err := suite.db.GetEmojis(context.Background(), "", true, false, "", "", "", 10)
+	emojis, err := suite.db.GetEmojis(context.Background(), "", true, false, "", "", "", 0)
 
 	suite.ErrorIs(err, db.ErrNoEntries)
 	suite.Equal(0, len(emojis))
 }
 
 func (suite *EmojiTestSuite) TestGetAllEmojisFromDomain() {
-	emojis, err := suite.db.GetEmojis(context.Background(), "peepee.poopoo", true, true, "", "", "", 10)
+	emojis, err := suite.db.GetEmojis(context.Background(), "peepee.poopoo", true, true, "", "", "", 0)
 
 	suite.ErrorIs(err, db.ErrNoEntries)
 	suite.Equal(0, len(emojis))
 }
 
 func (suite *EmojiTestSuite) TestGetAllEmojisFromDomain2() {
-	emojis, err := suite.db.GetEmojis(context.Background(), "fossbros-anonymous.io", true, true, "", "", "", 10)
+	emojis, err := suite.db.GetEmojis(context.Background(), "fossbros-anonymous.io", true, true, "", "", "", 0)
 
 	suite.NoError(err)
 	suite.Equal(1, len(emojis))
@@ -110,7 +118,7 @@ func (suite *EmojiTestSuite) TestGetAllEmojisFromDomain2() {
 }
 
 func (suite *EmojiTestSuite) TestGetSpecificEmojisFromDomain2() {
-	emojis, err := suite.db.GetEmojis(context.Background(), "fossbros-anonymous.io", true, true, "yell", "", "", 10)
+	emojis, err := suite.db.GetEmojis(context.Background(), "fossbros-anonymous.io", true, true, "yell", "", "", 0)
 
 	suite.NoError(err)
 	suite.Equal(1, len(emojis))

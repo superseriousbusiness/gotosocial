@@ -75,8 +75,8 @@ import (
 //	-
 //		name: limit
 //		type: integer
-//		description: Number of emojis to return. If below 1, will be set to 1, if greater than 50, will be set to 50.
-//		default: 30
+//		description: Number of emojis to return. Less than 1, or not set, means unlimited (all emojis).
+//		default: 50
 //		in: query
 //	-
 //		name: max_shortcode_domain
@@ -152,7 +152,7 @@ func (m *Module) EmojisGETHandler(c *gin.Context) {
 		minShortcodeDomain = minShortcodeDomainString
 	}
 
-	limit := 30
+	limit := 50
 	limitString := c.Query(LimitKey)
 	if limitString != "" {
 		i, err := strconv.ParseInt(limitString, 10, 64)
@@ -163,11 +163,8 @@ func (m *Module) EmojisGETHandler(c *gin.Context) {
 		}
 		limit = int(i)
 	}
-	if limit < 1 {
-		limit = 1
-	}
-	if limit > 50 {
-		limit = 50
+	if limit < 0 {
+		limit = 0
 	}
 
 	var domain string
