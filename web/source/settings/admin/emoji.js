@@ -179,10 +179,10 @@ function EmojiCategory({category, entries}) {
 			<div className="emoji-group">
 				{entries.map((e) => {
 					return (
-						<Link key={e.static_url} to={`${base}/${e.id}`}>
+						<Link key={e.id} to={`${base}/${e.id}`}>
 							{/* <Link key={e.static_url} to={`${base}`}> */}
 							<a>
-								<img src={e.static_url} alt={e.shortcode} title={`:${e.shortcode}:`}/>
+								<img src={e.url} alt={e.shortcode} title={`:${e.shortcode}:`}/>
 							</a>
 						</Link>
 					);
@@ -219,8 +219,11 @@ function EmojiDetail({emoji, Form}) {
 	return (
 		<div>
 			<h1><BackButton to={base}/> Custom Emoji: {emoji.shortcode}</h1>
-			<p>Editing custom emoji isn&apos;t implemented yet</p>
-			<img src={emoji.static_url} alt={emoji.shortcode} title={`:${emoji.shortcode}:`}/>
+			<p>
+				Editing custom emoji isn&apos;t implemented yet.<br/>
+				<a target="_blank" rel="noreferrer" href="https://github.com/superseriousbusiness/gotosocial/issues/797">View implementation progress.</a>
+			</p>
+			<img src={emoji.url} alt={emoji.shortcode} title={`:${emoji.shortcode}:`}/>
 		</div>
 	);
 }
