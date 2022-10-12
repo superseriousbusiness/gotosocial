@@ -111,6 +111,9 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingRefresh() {
 	*emojiToUpdate = *originalEmoji
 	newImageRemoteURL := "http://fossbros-anonymous.io/some/image/path.png"
 
+	oldEmojiImagePath := emojiToUpdate.ImagePath
+	oldEmojiImageStaticPath := emojiToUpdate.ImageStaticPath
+
 	data := func(_ context.Context) (io.Reader, int64, error) {
 		b, err := os.ReadFile("./test/kirby-original.png")
 		if err != nil {
@@ -183,6 +186,12 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingRefresh() {
 	suite.NotEqual(originalEmoji.ImageStaticPath, dbEmoji.ImageStaticPath)
 	suite.NotEqual(originalEmoji.UpdatedAt, dbEmoji.UpdatedAt)
 	suite.NotEqual(originalEmoji.ImageUpdatedAt, dbEmoji.ImageUpdatedAt)
+
+	// the old image files should no longer be in storage
+	_, err = suite.storage.Get(ctx, oldEmojiImagePath)
+	suite.ErrorIs(err, storage.ErrNotFound)
+	_, err = suite.storage.Get(ctx, oldEmojiImageStaticPath)
+	suite.ErrorIs(err, storage.ErrNotFound)
 }
 
 func (suite *ManagerTestSuite) TestEmojiProcessBlockingTooLarge() {

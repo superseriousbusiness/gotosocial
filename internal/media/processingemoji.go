@@ -21,6 +21,7 @@ package media
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -28,6 +29,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	gostore "codeberg.org/gruf/go-store/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -295,6 +297,30 @@ func (m *manager) preProcessEmoji(ctx context.Context, data DataFunc, postData P
 		emoji, err = m.db.GetEmojiByID(ctx, emojiID)
 		if err != nil {
 			return nil, fmt.Errorf("preProcessEmoji: error fetching emoji to refresh from the db: %s", err)
+		}
+
+		// if this is a refresh, we will end up with new images
+		// stored for this emoji, so we can use the postData function
+		// to perform clean up of the old images from storage
+		originalPostData := postData
+		originalImagePath := emoji.ImagePath
+		originalImageStaticPath := emoji.ImageStaticPath
+		postData = func(ctx context.Context) error {
+			// trigger the original postData function if it was provided
+			if originalPostData != nil {
+				originalPostData(ctx)
+			}
+
+			l := log.WithField("shortcode@domain", emoji.Shortcode+"@"+emoji.Domain)
+			l.Debug("postData: cleaning up old emoji files for refreshed emoji")
+			if err := m.storage.Delete(ctx, originalImagePath); err != nil && !errors.Is(err, gostore.ErrNotFound) {
+				l.Errorf("postData: error cleaning up old emoji image at %s for refreshed emoji: %s", originalImagePath, err)
+			}
+			if err := m.storage.Delete(ctx, originalImageStaticPath); err != nil && !errors.Is(err, gostore.ErrNotFound) {
+				l.Errorf("postData: error cleaning up old emoji static image at %s for refreshed emoji: %s", originalImageStaticPath, err)
+			}
+
+			return nil
 		}
 
 		newPathID, err = id.NewRandomULID()
