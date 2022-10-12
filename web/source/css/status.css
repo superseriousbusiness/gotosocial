@@ -133,6 +133,8 @@ main {
 		position: relative;
 		z-index: 2;
 
+		width: 100%;
+
 		a {
 			color: $link-fg;
 			text-decoration: underline;

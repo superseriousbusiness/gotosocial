@@ -47,6 +47,7 @@
     "redux-thunk": "^2.4.1",
     "tiny-lr": "^2.0.0",
     "uglifyify": "^5.0.2",
+    "watchify": "^4.0.0",
     "wouter": "^2.8.0-alpha.2"
   },
   "devDependencies": {

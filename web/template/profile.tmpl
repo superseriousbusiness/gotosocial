@@ -30,7 +30,9 @@
     <h2 id="recent">
         <span>Latest public toots</span>
         {{ if .rssFeed }}
-            <a href="{{ .rssFeed }}"><img class="rsslogo" src="/assets/rss.svg" alt="The orange RSS logo."/></a>
+            <a href="{{ .rssFeed }}" aria-label="RSS feed">
+                <i class="rss-icon fa fa-rss-square" aria-hidden="true"></i>
+            </a>
         {{ end }}
     </h2>
 	    {{ if not .statuses }}
