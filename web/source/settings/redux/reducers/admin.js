@@ -37,6 +37,7 @@ function emptyBlock() {
 
 function emptyEmojiForm() {
 	return {
+		id: Date.now(),
 		shortcode: ""
 	};
 }
@@ -53,6 +54,7 @@ module.exports = createSlice({
 		},
 		newInstanceBlocks: {},
 		emoji: {},
+		emojiById: {},
 		newEmoji: emptyEmojiForm()
 	},
 	reducers: {
@@ -113,6 +115,7 @@ module.exports = createSlice({
 				}
 				state.emoji[emoji.category] = defaultValue(state.emoji[emoji.category], []);
 				state.emoji[emoji.category].push(emoji);
+				state.emojiById[emoji.id] = emoji;
 			});
 		},
 
@@ -124,8 +127,12 @@ module.exports = createSlice({
 			if (emoji.category == undefined) {
 				emoji.category = "Unsorted";
 			}
+			if (emoji.id == undefined) {
+				emoji.id = Date.now();
+			}
 			state.emoji[emoji.category] = defaultValue(state.emoji[emoji.category], []);
 			state.emoji[emoji.category].push(emoji);
+			state.emojiById[emoji.id] = emoji;
 		},
 	}
 });
