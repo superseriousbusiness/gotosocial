@@ -145,7 +145,7 @@ func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled 
 	return e.emojisFromIDs(ctx, emojiIDs)
 }
 
-func (e *emojiDB) GetUseableCustomEmojis(ctx context.Context) ([]*gtsmodel.Emoji, db.Error) {
+func (e *emojiDB) GetUseableEmojis(ctx context.Context) ([]*gtsmodel.Emoji, db.Error) {
 	emojiIDs := []string{}
 
 	q := e.conn.

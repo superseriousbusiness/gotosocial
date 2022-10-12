@@ -30,8 +30,8 @@ type EmojiTestSuite struct {
 	BunDBStandardTestSuite
 }
 
-func (suite *EmojiTestSuite) TestGetCustomEmojis() {
-	emojis, err := suite.db.GetUseableCustomEmojis(context.Background())
+func (suite *EmojiTestSuite) TestGetUseableEmojis() {
+	emojis, err := suite.db.GetUseableEmojis(context.Background())
 
 	suite.NoError(err)
 	suite.Equal(1, len(emojis))
