@@ -231,7 +231,7 @@ main {
 		vertical-align: middle;
 		color: $orange2;
 		/* can't size a single-color background, so we use a linear-gradient that's effectively white */
-		background: linear-gradient(to right, white 100%, transparent 0) no-repeat center center;
+		background: linear-gradient(to right, $white1 100%, transparent 0) no-repeat center center;
 		background-size: 1.2rem 1.4rem;
 	}
 }
