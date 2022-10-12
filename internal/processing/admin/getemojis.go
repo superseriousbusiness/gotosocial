@@ -47,24 +47,13 @@ func (p *processor) EmojisGet(ctx context.Context, account *gtsmodel.Account, us
 		return util.EmptyPageableResponse(), nil
 	}
 
-	items := []interface{}{}
-	nextMaxIDValue := ""
-	prevMinIDValue := ""
-	for i, emoji := range emojis {
+	items := make([]interface{}, 0, count)
+	for _, emoji := range emojis {
 		adminEmoji, err := p.tc.EmojiToAdminAPIEmoji(ctx, emoji)
 		if err != nil {
 			err := fmt.Errorf("EmojisGet: error converting emoji to admin model emoji: %s", err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
-
-		if i == count-1 {
-			nextMaxIDValue = shortcodeDomain(adminEmoji)
-		}
-
-		if i == 0 {
-			prevMinIDValue = shortcodeDomain(adminEmoji)
-		}
-
 		items = append(items, adminEmoji)
 	}
 
@@ -99,14 +88,14 @@ func (p *processor) EmojisGet(ctx context.Context, account *gtsmodel.Account, us
 		Items:            items,
 		Path:             "api/v1/admin/custom_emojis",
 		NextMaxIDKey:     "max_shortcode_domain",
-		NextMaxIDValue:   nextMaxIDValue,
+		NextMaxIDValue:   shortcodeDomain(emojis[count-1]),
 		PrevMinIDKey:     "min_shortcode_domain",
-		PrevMinIDValue:   prevMinIDValue,
+		PrevMinIDValue:   shortcodeDomain(emojis[0]),
 		Limit:            limit,
 		ExtraQueryParams: []string{filterBuilder.String()},
 	})
 }
 
-func shortcodeDomain(emoji *apimodel.AdminEmoji) string {
+func shortcodeDomain(emoji *gtsmodel.Emoji) string {
 	return emoji.Shortcode + "@" + emoji.Domain
 }
