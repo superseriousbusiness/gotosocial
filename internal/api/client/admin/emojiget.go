@@ -164,20 +164,19 @@ func (m *Module) EmojisGETHandler(c *gin.Context) {
 	var shortcode string
 	if filterParam := c.Query(FilterQueryKey); filterParam != "" {
 		filters := strings.Split(filterParam, ",")
-		for _, f := range filters {
-			trimmed := strings.TrimSpace(f)
-			trimmedLower := strings.ToLower(trimmed)
+		for _, filter := range filters {
+			lower := strings.ToLower(filter)
 			switch {
-			case strings.HasPrefix(trimmedLower, "domain:"):
-				domain = strings.TrimPrefix(trimmedLower, "domain:")
-			case trimmedLower == "disabled":
+			case strings.HasPrefix(lower, "domain:"):
+				domain = strings.TrimPrefix(lower, "domain:")
+			case lower == "disabled":
 				includeDisabled = true
-			case trimmedLower == "enabled":
+			case lower == "enabled":
 				includeEnabled = true
-			case strings.HasPrefix(trimmedLower, "shortcode:"):
-				shortcode = strings.Trim(trimmed[10:], ":") // remove any errant ":"
+			case strings.HasPrefix(lower, "shortcode:"):
+				shortcode = strings.Trim(filter[10:], ":") // remove any errant ":"
 			default:
-				err := fmt.Errorf("filter %s not recognized; accepted values are 'domain:[domain]', 'disabled', 'enabled', 'shortcode:[shortcode]'", trimmed)
+				err := fmt.Errorf("filter %s not recognized; accepted values are 'domain:[domain]', 'disabled', 'enabled', 'shortcode:[shortcode]'", filter)
 				api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 				return
 			}
