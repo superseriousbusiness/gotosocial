@@ -308,7 +308,9 @@ func (m *manager) preProcessEmoji(ctx context.Context, data DataFunc, postData P
 		postData = func(ctx context.Context) error {
 			// trigger the original postData function if it was provided
 			if originalPostData != nil {
-				originalPostData(ctx)
+				if err := originalPostData(ctx); err != nil {
+					return err
+				}
 			}
 
 			l := log.WithField("shortcode@domain", emoji.Shortcode+"@"+emoji.Domain)
