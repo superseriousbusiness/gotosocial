@@ -55,7 +55,7 @@ func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled 
 
 	subQuery := e.conn.
 		NewSelect().
-		ColumnExpr("? AS ?", bun.Ident("emoji.id"), "emoji_ids")
+		ColumnExpr("? AS ?", bun.Ident("emoji.id"), bun.Ident("emoji_ids"))
 
 	// To ensure consistent ordering and make paging possible, we sort not by shortcode
 	// but by [shortcode]@[domain]. Because sqlite and postgres have different syntax
@@ -135,19 +135,20 @@ func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled 
 	// The final query will come out looking something like...
 	//
 	//	SELECT
-	//		"emoji_ids"
-	//	FROM
-	//		(SELECT
+	//		"subquery"."emoji_ids"
+	//	FROM (
+	//		SELECT
 	//			"emoji"."id" AS "emoji_ids",
 	//			LOWER("emoji"."shortcode" || '@' || COALESCE("emoji"."domain", '')) AS "shortcode_domain"
 	//		FROM
 	//			"emojis" AS "emoji"
 	//		ORDER BY
-	//			"shortcode_domain" ASC)
+	//			"shortcode_domain" ASC
+	//	) AS "subquery"
 	if err := e.conn.
 		NewSelect().
-		Column("emoji_ids").
-		TableExpr("(?)", subQuery).
+		Column("subquery.emoji_ids").
+		TableExpr("(?) AS ?", subQuery, bun.Ident("subquery")).
 		Scan(ctx, &emojiIDs); err != nil {
 		return nil, e.conn.ProcessError(err)
 	}
