@@ -52,7 +52,10 @@ func (e *emojiDB) PutEmoji(ctx context.Context, emoji *gtsmodel.Emoji) db.Error 
 
 func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) ([]*gtsmodel.Emoji, db.Error) {
 	emojiIDs := []string{}
-	q := e.conn.NewSelect().Column("emoji.id")
+
+	subQuery := e.conn.
+		NewSelect().
+		ColumnExpr("? AS ?", bun.Ident("emoji.id"), "emoji_ids")
 
 	// To ensure consistent ordering and make paging possible, we sort not by shortcode
 	// but by [shortcode]@[domain]. Because sqlite and postgres have different syntax
@@ -60,7 +63,7 @@ func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled 
 	// is in use, query will look something like this (sqlite):
 	//
 	//	SELECT
-	//		"emoji"."id",
+	//		"emoji"."id" AS "emoji_ids",
 	//		lower("emoji"."shortcode" || '@' || COALESCE("emoji"."domain", '')) AS "shortcode_domain"
 	//	FROM
 	//		"emojis" AS "emoji"
@@ -70,7 +73,7 @@ func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled 
 	// Or like this (postgres):
 	//
 	//	SELECT
-	//		"emoji"."id",
+	//		"emoji"."id" AS "emoji_ids",
 	//		LOWER(CONCAT("emoji"."shortcode", '@', COALESCE("emoji"."domain", ''))) AS "shortcode_domain"
 	//	FROM
 	//		"emojis" AS "emoji"
@@ -78,56 +81,74 @@ func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled 
 	//		"shortcode_domain" ASC
 	switch e.conn.Dialect().Name() {
 	case dialect.SQLite:
-		q = q.ColumnExpr("LOWER(? || ? || COALESCE(?, ?)) AS ?", bun.Ident("emoji.shortcode"), "@", bun.Ident("emoji.domain"), "", bun.Ident("shortcode_domain"))
+		subQuery = subQuery.ColumnExpr("LOWER(? || ? || COALESCE(?, ?)) AS ?", bun.Ident("emoji.shortcode"), "@", bun.Ident("emoji.domain"), "", bun.Ident("shortcode_domain"))
 	case dialect.PG:
-		q = q.ColumnExpr("LOWER(CONCAT(?, ?, COALESCE(?, ?))) AS ?", bun.Ident("emoji.shortcode"), "@", bun.Ident("emoji.domain"), "", bun.Ident("shortcode_domain"))
+		subQuery = subQuery.ColumnExpr("LOWER(CONCAT(?, ?, COALESCE(?, ?))) AS ?", bun.Ident("emoji.shortcode"), "@", bun.Ident("emoji.domain"), "", bun.Ident("shortcode_domain"))
 	default:
 		panic("db conn was neither pg not sqlite")
 	}
 
-	q = q.TableExpr("? AS ?", bun.Ident("emojis"), bun.Ident("emoji"))
+	subQuery = subQuery.TableExpr("? AS ?", bun.Ident("emojis"), bun.Ident("emoji"))
 
 	if domain == "" {
-		q = q.Where("? IS NULL", bun.Ident("emoji.domain"))
+		subQuery = subQuery.Where("? IS NULL", bun.Ident("emoji.domain"))
 	} else if domain != db.EmojiAllDomains {
-		q = q.Where("? = ?", bun.Ident("emoji.domain"), domain)
+		subQuery = subQuery.Where("? = ?", bun.Ident("emoji.domain"), domain)
 	}
 
 	switch {
 	case includeDisabled && !includeEnabled:
 		// show only disabled emojis
-		q = q.Where("? = ?", bun.Ident("emoji.disabled"), true)
+		subQuery = subQuery.Where("? = ?", bun.Ident("emoji.disabled"), true)
 	case includeEnabled && !includeDisabled:
 		// show only enabled emojis
-		q = q.Where("? = ?", bun.Ident("emoji.disabled"), false)
+		subQuery = subQuery.Where("? = ?", bun.Ident("emoji.disabled"), false)
 	default:
 		// show emojis regardless of emoji.disabled value
 	}
 
 	if shortcode != "" {
-		q = q.Where("LOWER(?) = LOWER(?)", bun.Ident("emoji.shortcode"), shortcode)
+		subQuery = subQuery.Where("LOWER(?) = LOWER(?)", bun.Ident("emoji.shortcode"), shortcode)
 	}
 
 	// assume we want to sort ASC (a-z) unless informed otherwise
 	order := "ASC"
 
 	if maxShortcodeDomain != "" {
-		q = q.Where("? > LOWER(?)", bun.Ident("shortcode_domain"), maxShortcodeDomain)
+		subQuery = subQuery.Where("? > LOWER(?)", bun.Ident("shortcode_domain"), maxShortcodeDomain)
 	}
 
 	if minShortcodeDomain != "" {
-		q = q.Where("? < LOWER(?)", bun.Ident("shortcode_domain"), minShortcodeDomain)
+		subQuery = subQuery.Where("? < LOWER(?)", bun.Ident("shortcode_domain"), minShortcodeDomain)
 		// if we have a minShortcodeDomain we're paging upwards/backwards
 		order = "DESC"
 	}
 
-	q = q.Order("shortcode_domain " + order)
+	subQuery = subQuery.Order("shortcode_domain " + order)
 
 	if limit > 0 {
-		q = q.Limit(limit)
+		subQuery = subQuery.Limit(limit)
 	}
 
-	if err := q.Scan(ctx, &emojiIDs, new([]string)); err != nil {
+	// Wrap the subQuery in a query, since we don't need to select the shortcode_domain column.
+	//
+	// The final query will come out looking something like...
+	//
+	//	SELECT
+	//		"emoji_ids"
+	//	FROM
+	//		(SELECT
+	//			"emoji"."id" AS "emoji_ids",
+	//			LOWER("emoji"."shortcode" || '@' || COALESCE("emoji"."domain", '')) AS "shortcode_domain"
+	//		FROM
+	//			"emojis" AS "emoji"
+	//		ORDER BY
+	//			"shortcode_domain" ASC)
+	if err := e.conn.
+		NewSelect().
+		Column("emoji_ids").
+		TableExpr("(?)", subQuery).
+		Scan(ctx, &emojiIDs); err != nil {
 		return nil, e.conn.ProcessError(err)
 	}
 
