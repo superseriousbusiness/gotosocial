@@ -34,6 +34,10 @@ func (p *processor) AdminEmojiCreate(ctx context.Context, authed *oauth.Auth, fo
 	return p.adminProcessor.EmojiCreate(ctx, authed.Account, authed.User, form)
 }
 
+func (p *processor) AdminEmojisGet(ctx context.Context, authed *oauth.Auth, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
+	return p.adminProcessor.EmojisGet(ctx, authed.Account, authed.User, domain, includeDisabled, includeEnabled, shortcode, maxShortcodeDomain, minShortcodeDomain, limit)
+}
+
 func (p *processor) AdminDomainBlockCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.DomainBlockCreateRequest) (*apimodel.DomainBlock, gtserror.WithCode) {
 	return p.adminProcessor.DomainBlockCreate(ctx, authed.Account, form.Domain, form.Obfuscate, form.PublicComment, form.PrivateComment, "")
 }

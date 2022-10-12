@@ -31,6 +31,8 @@ const (
 	BasePath = "/api/v1/admin"
 	// EmojiPath is used for posting/deleting custom emojis.
 	EmojiPath = BasePath + "/custom_emojis"
+	// EmojiPathWithID is used for interacting with a single emoji.
+	EmojiPathWithID = EmojiPath + "/:" + IDKey
 	// DomainBlocksPath is used for posting domain blocks.
 	DomainBlocksPath = BasePath + "/domain_blocks"
 	// DomainBlocksPathWithID is used for interacting with a single domain block.
@@ -49,6 +51,16 @@ const (
 	ImportQueryKey = "import"
 	// IDKey specifies the ID of a single item being interacted with.
 	IDKey = "id"
+	// FilterKey is for applying filters to admin views of accounts, emojis, etc.
+	FilterQueryKey = "filter"
+	// MaxShortcodeDomainKey is the url query for returning emoji results lower (alphabetically)
+	// than the given `[shortcode]@[domain]` parameter.
+	MaxShortcodeDomainKey = "max_shortcode_domain"
+	// MaxShortcodeDomainKey is the url query for returning emoji results higher (alphabetically)
+	// than the given `[shortcode]@[domain]` parameter.
+	MinShortcodeDomainKey = "min_shortcode_domain"
+	// LimitKey is for specifying maximum number of results to return.
+	LimitKey = "limit"
 )
 
 // Module implements the ClientAPIModule interface for admin-related actions (reports, emojis, etc)
@@ -66,6 +78,7 @@ func New(processor processing.Processor) api.ClientModule {
 // Route attaches all routes from this module to the given router
 func (m *Module) Route(r router.Router) error {
 	r.AttachHandler(http.MethodPost, EmojiPath, m.EmojiCreatePOSTHandler)
+	r.AttachHandler(http.MethodGet, EmojiPath, m.EmojisGETHandler)
 	r.AttachHandler(http.MethodPost, DomainBlocksPath, m.DomainBlocksPOSTHandler)
 	r.AttachHandler(http.MethodGet, DomainBlocksPath, m.DomainBlocksGETHandler)
 	r.AttachHandler(http.MethodGet, DomainBlocksPathWithID, m.DomainBlockGETHandler)

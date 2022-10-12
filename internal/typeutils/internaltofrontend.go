@@ -363,6 +363,24 @@ func (c *converter) EmojiToAPIEmoji(ctx context.Context, e *gtsmodel.Emoji) (mod
 	}, nil
 }
 
+func (c *converter) EmojiToAdminAPIEmoji(ctx context.Context, e *gtsmodel.Emoji) (*model.AdminEmoji, error) {
+	emoji, err := c.EmojiToAPIEmoji(ctx, e)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.AdminEmoji{
+		Emoji:         emoji,
+		ID:            e.ID,
+		Disabled:      *e.Disabled,
+		Domain:        e.Domain,
+		UpdatedAt:     util.FormatISO8601(e.UpdatedAt),
+		TotalFileSize: e.ImageFileSize + e.ImageStaticFileSize,
+		ContentType:   e.ImageContentType,
+		URI:           e.URI,
+	}, nil
+}
+
 func (c *converter) TagToAPITag(ctx context.Context, t *gtsmodel.Tag) (model.Tag, error) {
 	return model.Tag{
 		Name: t.Name,

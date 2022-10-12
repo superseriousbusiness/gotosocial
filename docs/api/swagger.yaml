@@ -407,6 +407,73 @@ definitions:
         type: object
         x-go-name: Relationship
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    adminEmoji:
+        properties:
+            category:
+                description: Used for sorting custom emoji in the picker.
+                example: blobcats
+                type: string
+                x-go-name: Category
+            content_type:
+                description: The MIME content type of the emoji.
+                example: image/png
+                type: string
+                x-go-name: ContentType
+            disabled:
+                description: True if this emoji has been disabled by an admin action.
+                example: false
+                type: boolean
+                x-go-name: Disabled
+            domain:
+                description: The domain from which the emoji originated. Only defined for remote domains, otherwise key will not be set.
+                example: example.org
+                type: string
+                x-go-name: Domain
+            id:
+                description: The ID of the emoji.
+                example: 01GEM7SFDZ7GZNRXFVZ3X4E4N1
+                type: string
+                x-go-name: ID
+            shortcode:
+                description: The name of the custom emoji.
+                example: blobcat_uwu
+                type: string
+                x-go-name: Shortcode
+            static_url:
+                description: A link to a static copy of the custom emoji.
+                example: https://example.org/fileserver/emojis/blogcat_uwu.png
+                type: string
+                x-go-name: StaticURL
+            total_file_size:
+                description: The total file size taken up by the emoji in bytes, including static and animated versions.
+                example: 69420
+                format: int64
+                type: integer
+                x-go-name: TotalFileSize
+            updated_at:
+                description: Time when the emoji image was last updated.
+                example: "2022-10-05T09:21:26.419Z"
+                type: string
+                x-go-name: UpdatedAt
+            uri:
+                description: The ActivityPub URI of the emoji.
+                example: https://example.org/emojis/016T5Q3SQKBT337DAKVSKNXXW1
+                type: string
+                x-go-name: URI
+            url:
+                description: Web URL of the custom emoji.
+                example: https://example.org/fileserver/emojis/blogcat_uwu.gif
+                type: string
+                x-go-name: URL
+            visible_in_picker:
+                description: Emoji is visible in the emoji picker of the instance.
+                example: true
+                type: boolean
+                x-go-name: VisibleInPicker
+        title: AdminEmoji models the admin view of a custom emoji.
+        type: object
+        x-go-name: AdminEmoji
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     advancedStatusCreateForm:
         description: |-
             AdvancedStatusCreateForm wraps the mastodon-compatible status create form along with the GTS advanced
@@ -2677,6 +2744,80 @@ paths:
             tags:
                 - admin
     /api/v1/admin/custom_emojis:
+        get:
+            description: |-
+                The next and previous queries can be parsed from the returned Link header.
+                Example:
+
+                `<http://localhost:8080/api/v1/admin/custom_emojis?limit=30&max_shortcode_domain=yell@fossbros-anonymous.io&filter=domain:all>; rel="next", <http://localhost:8080/api/v1/admin/custom_emojis?limit=30&min_shortcode_domain=rainbow@&filter=domain:all>; rel="prev"`
+            operationId: emojisGet
+            parameters:
+                - default: domain:all
+                  description: |-
+                    Comma-separated list of filters to apply to results. Recognized filters are:
+
+                    `domain:[domain]` -- show emojis from the given domain, eg `?filter=domain:example.org` will show emojis from `example.org` only.
+                    Instead of giving a specific domain, you can also give either one of the key words `local` or `all` to show either local emojis only (`domain:local`) or show all emojis from all domains (`domain:all`).
+                    Note: `domain:*` is equivalent to `domain:all` (including local).
+                    If no domain filter is provided, `domain:all` will be assumed.
+
+                    `disabled` -- include emojis that have been disabled.
+
+                    `enabled` -- include emojis that are enabled.
+
+                    `shortcode:[shortcode]` -- show only emojis with the given shortcode, eg `?filter=shortcode:blob_cat_uwu` will show only emojis with the shortcode `blob_cat_uwu` (case sensitive).
+
+                    If neither `disabled` or `enabled` are provided, both disabled and enabled emojis will be shown.
+
+                    If no filter query string is provided, the default `domain:all` will be used, which will show all emojis from all domains.
+                  in: query
+                  name: filter
+                  type: string
+                - default: 30
+                  description: Number of emojis to return. If below 1, will be set to 1, if greater than 50, will be set to 50.
+                  in: query
+                  name: limit
+                  type: integer
+                - description: |-
+                    Return only emojis with `[shortcode]@[domain]` *LOWER* (alphabetically) than given `[shortcode]@[domain]`. For example, if `max_shortcode_domain=beep@example.org`, then returned values might include emojis with `[shortcode]@[domain]`s like `car@example.org`, `debian@aaa.com`, `test@` (local emoji), etc.
+                    Emoji with the given `[shortcode]@[domain]` will not be included in the result set.
+                  in: query
+                  name: max_shortcode_domain
+                  type: string
+                - description: |-
+                    Return only emojis with `[shortcode]@[domain]` *HIGHER* (alphabetically) than given `[shortcode]@[domain]`. For example, if `max_shortcode_domain=beep@example.org`, then returned values might include emojis with `[shortcode]@[domain]`s like `arse@test.com`, `0101_binary@hackers.net`, `bee@` (local emoji), etc.
+                    Emoji with the given `[shortcode]@[domain]` will not be included in the result set.
+                  in: query
+                  name: min_shortcode_domain
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: An array of emojis, arranged alphabetically by shortcode and domain.
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/adminEmoji'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            summary: View local and remote emojis available to / known by this instance.
+            tags:
+                - admin
         post:
             consumes:
                 - multipart/form-data
