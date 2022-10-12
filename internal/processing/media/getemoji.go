@@ -29,7 +29,7 @@ import (
 )
 
 func (p *processor) GetCustomEmojis(ctx context.Context) ([]*apimodel.Emoji, gtserror.WithCode) {
-	emojis, err := p.db.GetCustomEmojis(ctx)
+	emojis, err := p.db.GetUseableEmojis(ctx)
 	if err != nil {
 		if err != db.ErrNoEntries {
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("db error retrieving custom emojis: %s", err))
