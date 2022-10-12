@@ -140,17 +140,8 @@ func (m *Module) EmojisGETHandler(c *gin.Context) {
 		return
 	}
 
-	maxShortcodeDomain := ""
-	maxShortcodeDomainString := c.Query(MaxShortcodeDomainKey)
-	if maxShortcodeDomainString != "" {
-		maxShortcodeDomain = maxShortcodeDomainString
-	}
-
-	minShortcodeDomain := ""
-	minShortcodeDomainString := c.Query(MinShortcodeDomainKey)
-	if minShortcodeDomainString != "" {
-		minShortcodeDomain = minShortcodeDomainString
-	}
+	maxShortcodeDomain := c.Query(MaxShortcodeDomainKey)
+	minShortcodeDomain := c.Query(MinShortcodeDomainKey)
 
 	limit := 50
 	limitString := c.Query(LimitKey)
