@@ -2773,8 +2773,8 @@ paths:
                   in: query
                   name: filter
                   type: string
-                - default: 30
-                  description: Number of emojis to return. If below 1, will be set to 1, if greater than 50, will be set to 50.
+                - default: 50
+                  description: Number of emojis to return. Less than 1, or not set, means unlimited (all emojis).
                   in: query
                   name: limit
                   type: integer
