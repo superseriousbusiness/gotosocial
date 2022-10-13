@@ -104,7 +104,7 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlocking() {
 func (suite *ManagerTestSuite) TestEmojiProcessBlockingRefresh() {
 	ctx := context.Background()
 
-	// we're going to 'refresh' the remote 'yell' emoji by changing the image url to the rainbow emoji url
+	// we're going to 'refresh' the remote 'yell' emoji by changing the image url to the pixellated gts logo
 	originalEmoji := suite.testEmojis["yell"]
 
 	emojiToUpdate := &gtsmodel.Emoji{}
@@ -115,7 +115,7 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingRefresh() {
 	oldEmojiImageStaticPath := emojiToUpdate.ImageStaticPath
 
 	data := func(_ context.Context) (io.Reader, int64, error) {
-		b, err := os.ReadFile("./test/kirby-original.png")
+		b, err := os.ReadFile("./test/gts_pixellated-original.png")
 		if err != nil {
 			panic(err)
 		}
@@ -143,7 +143,7 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingRefresh() {
 	// file meta should be correctly derived from the image
 	suite.Equal("image/png", emoji.ImageContentType)
 	suite.Equal("image/png", emoji.ImageStaticContentType)
-	suite.Equal(15298, emoji.ImageFileSize)
+	suite.Equal(10296, emoji.ImageFileSize)
 
 	// now make sure the emoji is in the database
 	dbEmoji, err := suite.db.GetEmojiByID(ctx, emojiID)
@@ -156,7 +156,7 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingRefresh() {
 	suite.NotEmpty(processedFullBytes)
 
 	// load the processed bytes from our test folder, to compare
-	processedFullBytesExpected, err := os.ReadFile("./test/kirby-original.png")
+	processedFullBytesExpected, err := os.ReadFile("./test/gts_pixellated-original.png")
 	suite.NoError(err)
 	suite.NotEmpty(processedFullBytesExpected)
 
@@ -168,7 +168,7 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingRefresh() {
 	suite.NoError(err)
 	suite.NotEmpty(processedStaticBytes)
 
-	processedStaticBytesExpected, err := os.ReadFile("./test/kirby-static.png")
+	processedStaticBytesExpected, err := os.ReadFile("./test/gts_pixellated-static.png")
 	suite.NoError(err)
 	suite.NotEmpty(processedStaticBytesExpected)
 
