@@ -224,6 +224,7 @@ func (suite *AccountTestSuite) TestDereferenceRemoteAccountWithPartial() {
 				URI:             "http://fossbros-anonymous.io/emoji/01GD5HCC2YECT012TK8PAGX4D1",
 				Shortcode:       "kip_van_den_bos",
 				UpdatedAt:       testrig.TimeMustParse("2022-09-13T12:13:12+02:00"),
+				ImageUpdatedAt:  testrig.TimeMustParse("2022-09-13T12:13:12+02:00"),
 				ImageRemoteURL:  "http://fossbros-anonymous.io/emoji/kip.gif",
 				Disabled:        testrig.FalseBool(),
 				VisibleInPicker: testrig.FalseBool(),
@@ -275,10 +276,12 @@ func (suite *AccountTestSuite) TestDereferenceRemoteAccountWithPartial2() {
 			{
 				URI:             knownEmoji.URI,
 				Shortcode:       knownEmoji.Shortcode,
-				UpdatedAt:       knownEmoji.CreatedAt,
+				UpdatedAt:       knownEmoji.UpdatedAt,
+				ImageUpdatedAt:  knownEmoji.ImageUpdatedAt,
 				ImageRemoteURL:  knownEmoji.ImageRemoteURL,
 				Disabled:        knownEmoji.Disabled,
 				VisibleInPicker: knownEmoji.VisibleInPicker,
+				Domain:          knownEmoji.Domain,
 			},
 		},
 	}
@@ -326,10 +329,12 @@ func (suite *AccountTestSuite) TestDereferenceRemoteAccountWithPartial3() {
 			{
 				URI:             knownEmoji.URI,
 				Shortcode:       knownEmoji.Shortcode,
-				UpdatedAt:       knownEmoji.CreatedAt,
+				UpdatedAt:       knownEmoji.UpdatedAt,
+				ImageUpdatedAt:  knownEmoji.ImageUpdatedAt,
 				ImageRemoteURL:  knownEmoji.ImageRemoteURL,
 				Disabled:        knownEmoji.Disabled,
 				VisibleInPicker: knownEmoji.VisibleInPicker,
+				Domain:          knownEmoji.Domain,
 			},
 		},
 	}
@@ -372,6 +377,7 @@ func (suite *AccountTestSuite) TestDereferenceRemoteAccountWithPartial3() {
 				URI:             "http://fossbros-anonymous.io/emoji/01GD5HCC2YECT012TK8PAGX4D1",
 				Shortcode:       "kip_van_den_bos",
 				UpdatedAt:       testrig.TimeMustParse("2022-09-13T12:13:12+02:00"),
+				ImageUpdatedAt:  testrig.TimeMustParse("2022-09-13T12:13:12+02:00"),
 				ImageRemoteURL:  "http://fossbros-anonymous.io/emoji/kip.gif",
 				Disabled:        testrig.FalseBool(),
 				VisibleInPicker: testrig.FalseBool(),

@@ -32,6 +32,9 @@ const EmojiAllDomains string = "all"
 type Emoji interface {
 	// PutEmoji puts one emoji in the database.
 	PutEmoji(ctx context.Context, emoji *gtsmodel.Emoji) Error
+	// UpdateEmoji updates the given columns of one emoji.
+	// If no columns are specified, every column is updated.
+	UpdateEmoji(ctx context.Context, emoji *gtsmodel.Emoji, columns ...string) (*gtsmodel.Emoji, Error)
 	// GetUseableEmojis gets all emojis which are useable by accounts on this instance.
 	GetUseableEmojis(ctx context.Context) ([]*gtsmodel.Emoji, Error)
 	// GetEmojis gets emojis based on given parameters. Useful for admin actions.
@@ -43,4 +46,6 @@ type Emoji interface {
 	GetEmojiByShortcodeDomain(ctx context.Context, shortcode string, domain string) (*gtsmodel.Emoji, Error)
 	// GetEmojiByURI returns one emoji based on its ActivityPub URI.
 	GetEmojiByURI(ctx context.Context, uri string) (*gtsmodel.Emoji, Error)
+	// GetEmojiByStaticURL gets an emoji using the URL of the static version of the emoji image.
+	GetEmojiByStaticURL(ctx context.Context, imageStaticURL string) (*gtsmodel.Emoji, Error)
 }

@@ -21,6 +21,7 @@ package bundb
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -48,6 +49,23 @@ func (e *emojiDB) PutEmoji(ctx context.Context, emoji *gtsmodel.Emoji) db.Error 
 
 	e.cache.Put(emoji)
 	return nil
+}
+
+func (e *emojiDB) UpdateEmoji(ctx context.Context, emoji *gtsmodel.Emoji, columns ...string) (*gtsmodel.Emoji, db.Error) {
+	// Update the emoji's last-updated
+	emoji.UpdatedAt = time.Now()
+
+	if _, err := e.conn.
+		NewUpdate().
+		Model(emoji).
+		Where("? = ?", bun.Ident("emoji.id"), emoji.ID).
+		Column(columns...).
+		Exec(ctx); err != nil {
+		return nil, e.conn.ProcessError(err)
+	}
+
+	e.cache.Invalidate(emoji.ID)
+	return emoji, nil
 }
 
 func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) ([]*gtsmodel.Emoji, db.Error) {
@@ -228,6 +246,21 @@ func (e *emojiDB) GetEmojiByShortcodeDomain(ctx context.Context, shortcode strin
 			}
 
 			return q.Scan(ctx)
+		},
+	)
+}
+
+func (e *emojiDB) GetEmojiByStaticURL(ctx context.Context, imageStaticURL string) (*gtsmodel.Emoji, db.Error) {
+	return e.getEmoji(
+		ctx,
+		func() (*gtsmodel.Emoji, bool) {
+			return e.cache.GetByImageStaticURL(imageStaticURL)
+		},
+		func(emoji *gtsmodel.Emoji) error {
+			return e.
+				newEmojiQ(emoji).
+				Where("? = ?", bun.Ident("emoji.image_static_url"), imageStaticURL).
+				Scan(ctx)
 		},
 	)
 }

@@ -535,6 +535,11 @@ func ExtractEmoji(i Emojiable) (*gtsmodel.Emoji, error) {
 	emoji.Disabled = new(bool)
 	emoji.VisibleInPicker = new(bool)
 
+	updatedProp := i.GetActivityStreamsUpdated()
+	if updatedProp != nil && updatedProp.IsXMLSchemaDateTime() {
+		emoji.UpdatedAt = updatedProp.Get()
+	}
+
 	return emoji, nil
 }
 

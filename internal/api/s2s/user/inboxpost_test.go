@@ -239,7 +239,13 @@ func (suite *InboxPostTestSuite) TestPostUnblock() {
 func (suite *InboxPostTestSuite) TestPostUpdate() {
 	updatedAccount := *suite.testAccounts["remote_account_1"]
 	updatedAccount.DisplayName = "updated display name!"
-	testEmoji := testrig.NewTestEmojis()["rainbow"]
+
+	// ad an emoji to the account; because we're serializing this remote
+	// account from our own instance, we need to cheat a bit to get the emoji
+	// to work properly, just for this test
+	testEmoji := &gtsmodel.Emoji{}
+	*testEmoji = *testrig.NewTestEmojis()["yell"]
+	testEmoji.ImageURL = testEmoji.ImageRemoteURL // <- here's the cheat
 	updatedAccount.Emojis = []*gtsmodel.Emoji{testEmoji}
 
 	asAccount, err := suite.tc.AccountToAS(context.Background(), &updatedAccount)
