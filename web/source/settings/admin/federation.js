@@ -29,6 +29,7 @@ const { formFields } = require("../components/form-fields");
 const api = require("../lib/api");
 const adminActions = require("../redux/reducers/admin").actions;
 const submit = require("../lib/submit");
+const BackButton = require("../components/back-button");
 
 const base = "/settings/admin/federation";
 
@@ -280,14 +281,6 @@ function BulkBlocking() {
 	);
 }
 
-function BackButton() {
-	return (
-		<Link to={base}>
-			<a className="button">&lt; back</a>
-		</Link>
-	);
-}
-
 function InstancePageWrapped() {
 	/* We wrap the component to generate formFields with a setter depending on the domain
 		 if formFields() is used inside the same component that is re-rendered with their state,
@@ -345,7 +338,7 @@ function InstancePage({domain, Form}) {
 
 	return (
 		<div>
-			<h1><BackButton/> Federation settings for: {domain}</h1>
+			<h1><BackButton to={base}/> Federation settings for: {domain}</h1>
 			{entry.new && "No stored block yet, you can add one below:"}
 
 			<Form.TextArea

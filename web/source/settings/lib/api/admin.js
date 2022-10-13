@@ -164,7 +164,7 @@ module.exports = function ({ apiCall, getChanges }) {
 		fetchCustomEmoji: function fetchCustomEmoji() {
 			return function (dispatch, _getState) {
 				return Promise.try(() => {
-					return dispatch(apiCall("GET", "/api/v1/custom_emojis"));
+					return dispatch(apiCall("GET", "/api/v1/admin/custom_emojis?filter=domain:local&limit=0"));
 				}).then((emoji) => {
 					return dispatch(admin.setEmoji(emoji));
 				});

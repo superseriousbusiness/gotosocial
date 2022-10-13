@@ -30,21 +30,11 @@ const { formFields } = require("../components/form-fields");
 const api = require("../lib/api");
 const adminActions = require("../redux/reducers/admin").actions;
 const submit = require("../lib/submit");
+const BackButton = require("../components/back-button");
 
 const base = "/settings/admin/custom-emoji";
 
 module.exports = function CustomEmoji() {
-	return (
-		<Switch>
-			<Route path={`${base}/:emojiId`}>
-				<EmojiDetailWrapped />
-			</Route>
-			<EmojiOverview />
-		</Switch>
-	);
-};
-
-function EmojiOverview() {
 	const dispatch = Redux.useDispatch();
 	const [loaded, setLoaded] = React.useState(false);
 
@@ -74,12 +64,25 @@ function EmojiOverview() {
 
 	return (
 		<>
-			<h1>Custom Emoji</h1>
-			<EmojiList/>
-			<NewEmoji/>
 			{errorMsg.length > 0 && 
 				<div className="error accent">{errorMsg}</div>
 			}
+			<Switch>
+				<Route path={`${base}/:emojiId`}>
+					<EmojiDetailWrapped />
+				</Route>
+				<EmojiOverview />
+			</Switch>
+		</>
+	);
+};
+
+function EmojiOverview() {
+	return (
+		<>
+			<h1>Custom Emoji</h1>
+			<EmojiList/>
+			<NewEmoji/>
 		</>
 	);
 }
@@ -176,10 +179,10 @@ function EmojiCategory({category, entries}) {
 			<div className="emoji-group">
 				{entries.map((e) => {
 					return (
-						// <Link key={e.static_url} to={`${base}/${e.shortcode}`}>
-						<Link key={e.static_url} to={`${base}`}>
+						<Link key={e.id} to={`${base}/${e.id}`}>
+							{/* <Link key={e.static_url} to={`${base}`}> */}
 							<a>
-								<img src={e.static_url} alt={e.shortcode} title={`:${e.shortcode}:`}/>
+								<img src={e.url} alt={e.shortcode} title={`:${e.shortcode}:`}/>
 							</a>
 						</Link>
 					);
@@ -195,6 +198,13 @@ function EmojiDetailWrapped() {
 		 inputs get re-created on every change, causing them to lose focus, and bad performance
 	*/
 	let [_match, {emojiId}] = useRoute(`${base}/:emojiId`);
+	const emojiById = Redux.useSelector((state) => state.admin.emojiById);
+	const emoji = emojiById[emojiId];
+	if (emoji == undefined) {
+		return (
+			<h1><BackButton to={base}/> Custom Emoji: </h1>
+		);
+	}
 
 	function alterEmoji([key, val]) {
 		return adminActions.updateDomainBlockVal([emojiId, key, val]);
@@ -202,11 +212,18 @@ function EmojiDetailWrapped() {
 
 	const fields = formFields(alterEmoji, (state) => state.admin.blockedInstances[emojiId]);
 
-	return <EmojiDetail id={emojiId} Form={fields} />;
+	return <EmojiDetail emoji={emoji} Form={fields} />;
 }
 
-function EmojiDetail({id, Form}) {
+function EmojiDetail({emoji, Form}) {
 	return (
-		"Not implemented yet"
+		<div>
+			<h1><BackButton to={base}/> Custom Emoji: {emoji.shortcode}</h1>
+			<p>
+				Editing custom emoji isn&apos;t implemented yet.<br/>
+				<a target="_blank" rel="noreferrer" href="https://github.com/superseriousbusiness/gotosocial/issues/797">View implementation progress.</a>
+			</p>
+			<img src={emoji.url} alt={emoji.shortcode} title={`:${emoji.shortcode}:`}/>
+		</div>
 	);
 }
