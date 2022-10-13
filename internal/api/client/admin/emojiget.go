@@ -19,27 +19,19 @@
 package admin
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// EmojisGETHandler swagger:operation GET /api/v1/admin/custom_emojis emojisGet
+// EmojiGETHandler swagger:operation GET /api/v1/admin/custom_emojis/{id} emojiGet
 //
-// View local and remote emojis available to / known by this instance.
-//
-// The next and previous queries can be parsed from the returned Link header.
-// Example:
-//
-// `<http://localhost:8080/api/v1/admin/custom_emojis?limit=30&max_shortcode_domain=yell@fossbros-anonymous.io&filter=domain:all>; rel="next", <http://localhost:8080/api/v1/admin/custom_emojis?limit=30&min_shortcode_domain=rainbow@&filter=domain:all>; rel="prev"`
+// Get the admin view of a single emoji.
 //
 //	---
 //	tags:
@@ -50,66 +42,17 @@ import (
 //
 //	parameters:
 //	-
-//		name: filter
+//		name: id
 //		type: string
-//		description: |-
-//			Comma-separated list of filters to apply to results. Recognized filters are:
-//
-//			`domain:[domain]` -- show emojis from the given domain, eg `?filter=domain:example.org` will show emojis from `example.org` only.
-//			Instead of giving a specific domain, you can also give either one of the key words `local` or `all` to show either local emojis only (`domain:local`) or show all emojis from all domains (`domain:all`).
-//			Note: `domain:*` is equivalent to `domain:all` (including local).
-//			If no domain filter is provided, `domain:all` will be assumed.
-//
-//			`disabled` -- include emojis that have been disabled.
-//
-//			`enabled` -- include emojis that are enabled.
-//
-//			`shortcode:[shortcode]` -- show only emojis with the given shortcode, eg `?filter=shortcode:blob_cat_uwu` will show only emojis with the shortcode `blob_cat_uwu` (case sensitive).
-//
-//			If neither `disabled` or `enabled` are provided, both disabled and enabled emojis will be shown.
-//
-//			If no filter query string is provided, the default `domain:all` will be used, which will show all emojis from all domains.
-//		in: query
-//		required: false
-//		default: "domain:all"
-//	-
-//		name: limit
-//		type: integer
-//		description: Number of emojis to return. Less than 1, or not set, means unlimited (all emojis).
-//		default: 50
-//		in: query
-//	-
-//		name: max_shortcode_domain
-//		type: string
-//		description: >-
-//			Return only emojis with `[shortcode]@[domain]` *LOWER* (alphabetically) than given `[shortcode]@[domain]`.
-//			For example, if `max_shortcode_domain=beep@example.org`, then returned values might include emojis with
-//			`[shortcode]@[domain]`s like `car@example.org`, `debian@aaa.com`, `test@` (local emoji), etc.
-//
-//			Emoji with the given `[shortcode]@[domain]` will not be included in the result set.
-//		in: query
-//	-
-//		name: min_shortcode_domain
-//		type: string
-//		description: >-
-//			Return only emojis with `[shortcode]@[domain]` *HIGHER* (alphabetically) than given `[shortcode]@[domain]`.
-//			For example, if `max_shortcode_domain=beep@example.org`, then returned values might include emojis with
-//			`[shortcode]@[domain]`s like `arse@test.com`, `0101_binary@hackers.net`, `bee@` (local emoji), etc.
-//
-//			Emoji with the given `[shortcode]@[domain]` will not be included in the result set.
-//		in: query
+//		description: The id of the emoji.
+//		in: path
+//		required: true
 //
 //	responses:
 //		'200':
-//			headers:
-//				Link:
-//					type: string
-//					description: Links to the next and previous queries.
-//			description: An array of emojis, arranged alphabetically by shortcode and domain.
+//			description: A single emoji.
 //			schema:
-//				type: array
-//				items:
-//					"$ref": "#/definitions/adminEmoji"
+//				"$ref": "#/definitions/adminEmoji"
 //		'400':
 //			description: bad request
 //		'401':
@@ -122,7 +65,7 @@ import (
 //			description: not acceptable
 //		'500':
 //			description: internal server error
-func (m *Module) EmojisGETHandler(c *gin.Context) {
+func (m *Module) EmojiGETHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
@@ -140,72 +83,18 @@ func (m *Module) EmojisGETHandler(c *gin.Context) {
 		return
 	}
 
-	maxShortcodeDomain := c.Query(MaxShortcodeDomainKey)
-	minShortcodeDomain := c.Query(MinShortcodeDomainKey)
-
-	limit := 50
-	limitString := c.Query(LimitKey)
-	if limitString != "" {
-		i, err := strconv.ParseInt(limitString, 10, 64)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", LimitKey, err)
-			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
-			return
-		}
-		limit = int(i)
-	}
-	if limit < 0 {
-		limit = 0
+	emojiID := c.Param(IDKey)
+	if emojiID == "" {
+		err := errors.New("no emoji id specified")
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		return
 	}
 
-	var domain string
-	var includeDisabled bool
-	var includeEnabled bool
-	var shortcode string
-	if filterParam := c.Query(FilterQueryKey); filterParam != "" {
-		filters := strings.Split(filterParam, ",")
-		for _, filter := range filters {
-			lower := strings.ToLower(filter)
-			switch {
-			case strings.HasPrefix(lower, "domain:"):
-				domain = strings.TrimPrefix(lower, "domain:")
-			case lower == "disabled":
-				includeDisabled = true
-			case lower == "enabled":
-				includeEnabled = true
-			case strings.HasPrefix(lower, "shortcode:"):
-				shortcode = strings.Trim(filter[10:], ":") // remove any errant ":"
-			default:
-				err := fmt.Errorf("filter %s not recognized; accepted values are 'domain:[domain]', 'disabled', 'enabled', 'shortcode:[shortcode]'", filter)
-				api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
-				return
-			}
-		}
-	}
-
-	if domain == "" {
-		// default is to show all domains
-		domain = db.EmojiAllDomains
-	} else if domain == "local" || domain == config.GetHost() || domain == config.GetAccountDomain() {
-		// pass empty string for local domain
-		domain = ""
-	}
-
-	// normalize filters
-	if !includeDisabled && !includeEnabled {
-		// include both if neither specified
-		includeDisabled = true
-		includeEnabled = true
-	}
-
-	resp, errWithCode := m.processor.AdminEmojisGet(c.Request.Context(), authed, domain, includeDisabled, includeEnabled, shortcode, maxShortcodeDomain, minShortcodeDomain, limit)
+	emoji, errWithCode := m.processor.AdminEmojiGet(c.Request.Context(), authed, emojiID)
 	if errWithCode != nil {
 		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 
-	if resp.LinkHeader != "" {
-		c.Header("Link", resp.LinkHeader)
-	}
-	c.JSON(http.StatusOK, resp.Items)
+	c.JSON(http.StatusOK, emoji)
 }
