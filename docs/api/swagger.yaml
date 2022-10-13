@@ -2861,6 +2861,37 @@ paths:
             summary: Upload and create a new instance emoji.
             tags:
                 - admin
+    /api/v1/admin/custom_emojis/{id}:
+        get:
+            operationId: emojiGet
+            parameters:
+                - description: The id of the emoji.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: A single emoji.
+                    schema:
+                        $ref: '#/definitions/adminEmoji'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            summary: Get the admin view of a single emoji.
+            tags:
+                - admin
     /api/v1/admin/domain_blocks:
         get:
             operationId: domainBlocksGet

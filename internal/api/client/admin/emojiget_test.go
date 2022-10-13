@@ -19,7 +19,6 @@
 package admin_test
 
 import (
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -27,86 +26,62 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 )
 
 type EmojiGetTestSuite struct {
 	AdminStandardTestSuite
 }
 
-func (suite *EmojiGetTestSuite) TestEmojiGet() {
+func (suite *EmojiGetTestSuite) TestEmojiGet1() {
 	recorder := httptest.NewRecorder()
+	testEmoji := suite.testEmojis["rainbow"]
 
-	path := admin.EmojiPath + "?filter=domain:all&limit=1"
+	path := admin.EmojiPathWithID
 	ctx := suite.newContext(recorder, http.MethodGet, nil, path, "application/json")
+	ctx.AddParam(admin.IDKey, testEmoji.ID)
 
-	suite.adminModule.EmojisGETHandler(ctx)
+	suite.adminModule.EmojiGETHandler(ctx)
 	suite.Equal(http.StatusOK, recorder.Code)
 
 	b, err := io.ReadAll(recorder.Body)
 	suite.NoError(err)
 	suite.NotNil(b)
 
-	apiEmojis := []*apimodel.AdminEmoji{}
-	if err := json.Unmarshal(b, &apiEmojis); err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	suite.Len(apiEmojis, 1)
-	suite.Equal("rainbow", apiEmojis[0].Shortcode)
-	suite.Equal("", apiEmojis[0].Domain)
-
-	suite.Equal(`<http://localhost:8080/api/v1/admin/custom_emojis?limit=1&max_shortcode_domain=rainbow@&filter=domain:all>; rel="next", <http://localhost:8080/api/v1/admin/custom_emojis?limit=1&min_shortcode_domain=rainbow@&filter=domain:all>; rel="prev"`, recorder.Header().Get("link"))
+	suite.Equal(`{"shortcode":"rainbow","url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","static_url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","visible_in_picker":true,"id":"01F8MH9H8E4VG3KDYJR9EGPXCQ","disabled":false,"updated_at":"2021-09-20T10:40:37.000Z","total_file_size":47115,"content_type":"image/png","uri":"http://localhost:8080/emoji/01F8MH9H8E4VG3KDYJR9EGPXCQ"}`, string(b))
 }
 
 func (suite *EmojiGetTestSuite) TestEmojiGet2() {
 	recorder := httptest.NewRecorder()
+	testEmoji := suite.testEmojis["yell"]
 
-	path := admin.EmojiPath + "?filter=domain:all&limit=1&max_shortcode_domain=rainbow@"
+	path := admin.EmojiPathWithID
 	ctx := suite.newContext(recorder, http.MethodGet, nil, path, "application/json")
+	ctx.AddParam(admin.IDKey, testEmoji.ID)
 
-	suite.adminModule.EmojisGETHandler(ctx)
+	suite.adminModule.EmojiGETHandler(ctx)
 	suite.Equal(http.StatusOK, recorder.Code)
 
 	b, err := io.ReadAll(recorder.Body)
 	suite.NoError(err)
 	suite.NotNil(b)
 
-	apiEmojis := []*apimodel.AdminEmoji{}
-	if err := json.Unmarshal(b, &apiEmojis); err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	suite.Len(apiEmojis, 1)
-	suite.Equal("yell", apiEmojis[0].Shortcode)
-	suite.Equal("fossbros-anonymous.io", apiEmojis[0].Domain)
-
-	suite.Equal(`<http://localhost:8080/api/v1/admin/custom_emojis?limit=1&max_shortcode_domain=yell@fossbros-anonymous.io&filter=domain:all>; rel="next", <http://localhost:8080/api/v1/admin/custom_emojis?limit=1&min_shortcode_domain=yell@fossbros-anonymous.io&filter=domain:all>; rel="prev"`, recorder.Header().Get("link"))
+	suite.Equal(`{"shortcode":"yell","url":"http://localhost:8080/fileserver/01GD5KR15NHTY8FZ01CD4D08XP/emoji/original/01GD5KP5CQEE1R3X43Y1EHS2CW.png","static_url":"http://localhost:8080/fileserver/01GD5KR15NHTY8FZ01CD4D08XP/emoji/static/01GD5KP5CQEE1R3X43Y1EHS2CW.png","visible_in_picker":false,"id":"01GD5KP5CQEE1R3X43Y1EHS2CW","disabled":false,"domain":"fossbros-anonymous.io","updated_at":"2020-03-18T12:12:00.000Z","total_file_size":21697,"content_type":"image/png","uri":"http://fossbros-anonymous.io/emoji/01GD5KP5CQEE1R3X43Y1EHS2CW"}`, string(b))
 }
 
-func (suite *EmojiGetTestSuite) TestEmojiGet3() {
+func (suite *EmojiGetTestSuite) TestEmojiGetNotFound() {
 	recorder := httptest.NewRecorder()
 
-	path := admin.EmojiPath + "?filter=domain:all&limit=1&min_shortcode_domain=yell@fossbros-anonymous.io"
+	path := admin.EmojiPathWithID
 	ctx := suite.newContext(recorder, http.MethodGet, nil, path, "application/json")
+	ctx.AddParam(admin.IDKey, "01GF8VRXX1R00X7XH8973Z29R1")
 
-	suite.adminModule.EmojisGETHandler(ctx)
-	suite.Equal(http.StatusOK, recorder.Code)
+	suite.adminModule.EmojiGETHandler(ctx)
+	suite.Equal(http.StatusNotFound, recorder.Code)
 
 	b, err := io.ReadAll(recorder.Body)
 	suite.NoError(err)
 	suite.NotNil(b)
-
-	apiEmojis := []*apimodel.AdminEmoji{}
-	if err := json.Unmarshal(b, &apiEmojis); err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	suite.Len(apiEmojis, 1)
-	suite.Equal("rainbow", apiEmojis[0].Shortcode)
-	suite.Equal("", apiEmojis[0].Domain)
-
-	suite.Equal(`<http://localhost:8080/api/v1/admin/custom_emojis?limit=1&max_shortcode_domain=rainbow@&filter=domain:all>; rel="next", <http://localhost:8080/api/v1/admin/custom_emojis?limit=1&min_shortcode_domain=rainbow@&filter=domain:all>; rel="prev"`, recorder.Header().Get("link"))
+	suite.Equal(`{"error":"Not Found"}`, string(b))
 }
 
 func TestEmojiGetTestSuite(t *testing.T) {
