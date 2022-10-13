@@ -250,7 +250,7 @@ func (e *emojiDB) GetEmojiByShortcodeDomain(ctx context.Context, shortcode strin
 	)
 }
 
-func (e *emojiDB) GetEmojiByImageStaticURL(ctx context.Context, imageStaticURL string) (*gtsmodel.Emoji, db.Error) {
+func (e *emojiDB) GetEmojiByStaticURL(ctx context.Context, imageStaticURL string) (*gtsmodel.Emoji, db.Error) {
 	return e.getEmoji(
 		ctx,
 		func() (*gtsmodel.Emoji, bool) {

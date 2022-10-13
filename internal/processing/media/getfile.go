@@ -238,7 +238,7 @@ func (p *processor) getEmojiContent(ctx context.Context, fileName string, owning
 	// so this is more reliable than using full size url
 	imageStaticURL := uris.GenerateURIForAttachment(owningAccountID, string(media.TypeEmoji), string(media.SizeStatic), fileName, "png")
 
-	e, err := p.db.GetEmojiByImageStaticURL(ctx, imageStaticURL)
+	e, err := p.db.GetEmojiByStaticURL(ctx, imageStaticURL)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("emoji %s could not be taken from the db: %s", fileName, err))
 	}
