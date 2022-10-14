@@ -68,6 +68,45 @@ func (e *emojiDB) UpdateEmoji(ctx context.Context, emoji *gtsmodel.Emoji, column
 	return emoji, nil
 }
 
+func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
+	err := e.conn.RunInTx(ctx, func(tx bun.Tx) error {
+		// delete links between this emoji and any statuses that use it
+		if _, err := tx.
+			NewDelete().
+			TableExpr("? AS ?", bun.Ident("status_to_emojis"), bun.Ident("status_to_emoji")).
+			Where("? = ?", bun.Ident("status_to_emoji.emoji_id"), id).
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		// delete links between this emoji and any accounts that use it
+		if _, err := tx.
+			NewDelete().
+			TableExpr("? AS ?", bun.Ident("account_to_emojis"), bun.Ident("account_to_emoji")).
+			Where("? = ?", bun.Ident("account_to_emoji.emoji_id"), id).
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		if _, err := tx.
+			NewDelete().
+			TableExpr("? AS ?", bun.Ident("emojis"), bun.Ident("emoji")).
+			Where("? = ?", bun.Ident("emoji.id"), id).
+			Exec(ctx); err != nil {
+			return e.conn.ProcessError(err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return e.conn.ProcessError(err)
+	}
+
+	e.cache.Invalidate(id)
+	return nil
+}
+
 func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) ([]*gtsmodel.Emoji, db.Error) {
 	emojiIDs := []string{}
 

@@ -2862,6 +2862,42 @@ paths:
             tags:
                 - admin
     /api/v1/admin/custom_emojis/{id}:
+        delete:
+            description: |-
+                Emoji with the given ID will no longer be available to use on the instance.
+
+                If you just want to update the emoji image instead, use the `/api/v1/admin/custom_emojis/{id}` PATCH route.
+
+                To disable emojis from **remote** instances, use the `/api/v1/admin/custom_emojis/{id}` PATCH route.
+            operationId: emojiDelete
+            parameters:
+                - description: The id of the emoji.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The deleted emoji will be returned to the caller in case further processing is necessary.
+                    schema:
+                        $ref: '#/definitions/adminEmoji'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            summary: Delete a **local** emoji with the given ID from the instance.
+            tags:
+                - admin
         get:
             operationId: emojiGet
             parameters:

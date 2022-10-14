@@ -38,6 +38,17 @@ func (suite *EmojiTestSuite) TestGetUseableEmojis() {
 	suite.Equal("rainbow", emojis[0].Shortcode)
 }
 
+func (suite *EmojiTestSuite) TestDeleteEmojiByID() {
+	testEmoji := suite.testEmojis["rainbow"]
+
+	err := suite.db.DeleteEmojiByID(context.Background(), testEmoji.ID)
+	suite.NoError(err)
+
+	dbEmoji, err := suite.db.GetEmojiByID(context.Background(), testEmoji.ID)
+	suite.Nil(dbEmoji)
+	suite.ErrorIs(err, db.ErrNoEntries)
+}
+
 func (suite *EmojiTestSuite) TestGetEmojiByStaticURL() {
 	emoji, err := suite.db.GetEmojiByStaticURL(context.Background(), "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png")
 	suite.NoError(err)
