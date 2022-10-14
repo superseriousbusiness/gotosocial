@@ -54,6 +54,10 @@ import (
 //		in: path
 //		required: true
 //
+//	security:
+//	- OAuth2 Bearer:
+//		- admin
+//
 //	responses:
 //		'200':
 //			description: The deleted emoji will be returned to the caller in case further processing is necessary.

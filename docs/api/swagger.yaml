@@ -2895,6 +2895,9 @@ paths:
                     description: not acceptable
                 "500":
                     description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
             summary: Delete a **local** emoji with the given ID from the instance.
             tags:
                 - admin
