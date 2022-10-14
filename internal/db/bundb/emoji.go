@@ -69,7 +69,7 @@ func (e *emojiDB) UpdateEmoji(ctx context.Context, emoji *gtsmodel.Emoji, column
 }
 
 func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
-	err := e.conn.RunInTx(ctx, func(tx bun.Tx) error {
+	if err := e.conn.RunInTx(ctx, func(tx bun.Tx) error {
 		// delete links between this emoji and any statuses that use it
 		if _, err := tx.
 			NewDelete().
@@ -97,10 +97,8 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 		}
 
 		return nil
-	})
-
-	if err != nil {
-		return e.conn.ProcessError(err)
+	}); err != nil {
+		return err
 	}
 
 	e.cache.Invalidate(id)
