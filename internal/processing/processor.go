@@ -117,6 +117,7 @@ type Processor interface {
 	// AdminEmojiGet returns the admin view of an emoji with the given ID
 	AdminEmojiGet(ctx context.Context, authed *oauth.Auth, id string) (*apimodel.AdminEmoji, gtserror.WithCode)
 	// AdminEmojiDelete deletes one *local* emoji with the given key. Remote emojis will not be deleted this way.
+	// Only admin users in good standing should be allowed to access this function -- check this before calling it.
 	AdminEmojiDelete(ctx context.Context, authed *oauth.Auth, id string) (*apimodel.AdminEmoji, gtserror.WithCode)
 	// AdminDomainBlockCreate handles the creation of a new domain block by an admin, using the given form.
 	AdminDomainBlockCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.DomainBlockCreateRequest) (*apimodel.DomainBlock, gtserror.WithCode)
