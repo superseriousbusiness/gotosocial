@@ -35,6 +35,8 @@ type Emoji interface {
 	// UpdateEmoji updates the given columns of one emoji.
 	// If no columns are specified, every column is updated.
 	UpdateEmoji(ctx context.Context, emoji *gtsmodel.Emoji, columns ...string) (*gtsmodel.Emoji, Error)
+	// DeleteEmojiByID deletes one emoji by its database ID.
+	DeleteEmojiByID(ctx context.Context, id string) Error
 	// GetUseableEmojis gets all emojis which are useable by accounts on this instance.
 	GetUseableEmojis(ctx context.Context) ([]*gtsmodel.Emoji, Error)
 	// GetEmojis gets emojis based on given parameters. Useful for admin actions.
