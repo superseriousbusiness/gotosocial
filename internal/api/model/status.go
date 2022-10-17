@@ -139,7 +139,7 @@ type StatusReblogged struct {
 
 // StatusCreateRequest models status creation parameters.
 //
-// swagger:parameters statusCreate
+// swagger:model statusCreateRequest
 type StatusCreateRequest struct {
 	// Text content of the status.
 	// If media_ids is provided, this becomes optional.
@@ -205,7 +205,7 @@ const (
 // AdvancedStatusCreateForm wraps the mastodon-compatible status create form along with the GTS advanced
 // visibility settings.
 //
-// swagger:model advancedStatusCreateForm
+// swagger:parameters statusCreate
 type AdvancedStatusCreateForm struct {
 	StatusCreateRequest
 	AdvancedVisibilityFlagsForm
