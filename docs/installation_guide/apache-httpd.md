@@ -118,7 +118,7 @@ MDomain example auto
 ```
 
 This allows mod_md to take care of the SSL setup, and it will also redirect from http to https.
-After we put ths into place, we'll need  to restart Apache httpd
+After we put this into place, we'll need  to restart Apache httpd
 
 ```bash
 sudo systemctl restart apache2
