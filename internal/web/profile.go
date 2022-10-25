@@ -52,7 +52,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 	// usernames on our instance will always be lowercase
 	var username = ""
 	config.Config(func(cfg *config.Configuration) {
-		username = strings.ToLower(cfg.DefaultUser)
+		username = strings.ToLower(cfg.LandingPageUser)
 	})
 
 	if username == "" {

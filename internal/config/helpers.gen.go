@@ -1795,28 +1795,28 @@ func GetAdvancedCookiesSamesite() string { return global.GetAdvancedCookiesSames
 // SetAdvancedCookiesSamesite safely sets the value for global configuration 'AdvancedCookiesSamesite' field
 func SetAdvancedCookiesSamesite(v string) { global.SetAdvancedCookiesSamesite(v) }
 
-// GetDefaultUser safely fetches the Configuration value for state's 'DefaultUser' field
-func (st *ConfigState) GetDefaultUser() (v string) {
+// GetLandingPageUser safely fetches the Configuration value for state's 'LandingPageUser' field
+func (st *ConfigState) GetLandingPageUser() (v string) {
 	st.mutex.Lock()
-	v = st.config.DefaultUser
+	v = st.config.LandingPageUser
 	st.mutex.Unlock()
 	return
 }
 
-// SetDefaultUser safely sets the Configuration value for state's 'DefaultUser' field
-func (st *ConfigState) SetDefaultUser(v string) {
+// SetLandingPageUser safely sets the Configuration value for state's 'LandingPageUser' field
+func (st *ConfigState) SetLandingPageUser(v string) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
-	st.config.DefaultUser = v
+	st.config.LandingPageUser = v
 	st.reloadToViper()
 }
 
-// DefaultUserFlag returns the flag name for the 'DefaultUser' field
-func DefaultUserFlag() string { return "default-user" }
+// LandingPageUserFlag returns the flag name for the 'LandingPageUser' field
+func LandingPageUserFlag() string { return "landing-page-user" }
 
-// GetDefaultUser safely fetches the value for global configuration 'DefaultUser' field
-func GetDefaultUser() string { return global.GetDefaultUser() }
+// GetLandingPageUser safely fetches the value for global configuration 'LandingPageUser' field
+func GetLandingPageUser() string { return global.GetLandingPageUser() }
 
-// SetDefaultUser safely sets the value for global configuration 'DefaultUser' field
-func SetDefaultUser(v string) { global.SetDefaultUser(v) }
+// SetLandingPageUser safely sets the value for global configuration 'LandingPageUser' field
+func SetLandingPageUser(v string) { global.SetLandingPageUser(v) }
 

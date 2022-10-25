@@ -98,7 +98,7 @@ func (m *Module) Route(s router.Router) error {
 	// serve front-page
 	var username = ""
 	config.Config(func(cfg *config.Configuration) {
-		username = strings.ToLower(cfg.DefaultUser)
+		username = strings.ToLower(cfg.LandingPageUser)
 	})
 	if username == "" {
 		s.AttachHandler(http.MethodGet, "/", m.baseHandler)

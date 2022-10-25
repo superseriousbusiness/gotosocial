@@ -26,6 +26,7 @@ var Defaults = Configuration{
 	LogLevel:        "info",
 	LogDbQueries:    false,
 	ApplicationName: "gotosocial",
+	LandingPageUser: "",
 	ConfigPath:      "",
 	Host:            "",
 	AccountDomain:   "",
@@ -97,6 +98,4 @@ var Defaults = Configuration{
 	SyslogAddress:  "localhost:514",
 
 	AdvancedCookiesSamesite: "lax",
-
-	DefaultUser: "",
 }
