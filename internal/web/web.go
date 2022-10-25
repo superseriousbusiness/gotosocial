@@ -21,7 +21,6 @@ package web
 import (
 	"errors"
 	"net/http"
-	"strings"
 
 	"codeberg.org/gruf/go-cache/v2"
 	"github.com/gin-gonic/gin"
@@ -96,11 +95,7 @@ func (m *Module) Route(s router.Router) error {
 	})
 
 	// serve front-page
-	var username = ""
-	config.Config(func(cfg *config.Configuration) {
-		username = strings.ToLower(cfg.LandingPageUser)
-	})
-	if username == "" {
+	if landingPageUser := config.GetLandingPageUser(); landingPageUser == "" {
 		s.AttachHandler(http.MethodGet, "/", m.baseHandler)
 	} else {
 		s.AttachHandler(http.MethodGet, "/", m.profileGETHandler)
