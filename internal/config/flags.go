@@ -29,6 +29,7 @@ func AddGlobalFlags(cmd *cobra.Command) {
 	Config(func(cfg *Configuration) {
 		// General
 		cmd.PersistentFlags().String(ApplicationNameFlag(), cfg.ApplicationName, fieldtag("ApplicationName", "usage"))
+		cmd.PersistentFlags().String(DefaultUserFlag(), cfg.DefaultUser, fieldtag("DefaultUser", "usage"))
 		cmd.PersistentFlags().String(HostFlag(), cfg.Host, fieldtag("Host", "usage"))
 		cmd.PersistentFlags().String(AccountDomainFlag(), cfg.AccountDomain, fieldtag("AccountDomain", "usage"))
 		cmd.PersistentFlags().String(ProtocolFlag(), cfg.Protocol, fieldtag("Protocol", "usage"))

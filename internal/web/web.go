@@ -21,10 +21,12 @@ package web
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	"codeberg.org/gruf/go-cache/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
@@ -94,7 +96,15 @@ func (m *Module) Route(s router.Router) error {
 	})
 
 	// serve front-page
-	s.AttachHandler(http.MethodGet, "/", m.baseHandler)
+	var username = ""
+	config.Config(func(cfg *config.Configuration) {
+		username = strings.ToLower(cfg.DefaultUser)
+	})
+	if username == "" {
+		s.AttachHandler(http.MethodGet, "/", m.baseHandler)
+	} else {
+		s.AttachHandler(http.MethodGet, "/", m.profileGETHandler)
+	}
 
 	// serve profile pages at /@username
 	s.AttachHandler(http.MethodGet, profilePath, m.profileGETHandler)

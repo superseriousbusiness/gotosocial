@@ -97,4 +97,6 @@ var Defaults = Configuration{
 	SyslogAddress:  "localhost:514",
 
 	AdvancedCookiesSamesite: "lax",
+
+	DefaultUser: "",
 }

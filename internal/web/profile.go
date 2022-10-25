@@ -50,7 +50,15 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 	}
 
 	// usernames on our instance will always be lowercase
-	username := strings.ToLower(c.Param(usernameKey))
+	var username = ""
+	config.Config(func(cfg *config.Configuration) {
+		username = strings.ToLower(cfg.DefaultUser)
+	})
+
+	if username == "" {
+		username = strings.ToLower(c.Param(usernameKey))
+	}
+
 	if username == "" {
 		err := errors.New("no account username specified")
 		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)

@@ -106,5 +106,7 @@ var testDefaults = config.Configuration{
 
 	AdvancedCookiesSamesite: "lax",
 
+	DefaultUser: "",
+
 	SoftwareVersion: "0.0.0-testrig",
 }

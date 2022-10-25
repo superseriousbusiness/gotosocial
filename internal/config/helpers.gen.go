@@ -1794,3 +1794,29 @@ func GetAdvancedCookiesSamesite() string { return global.GetAdvancedCookiesSames
 
 // SetAdvancedCookiesSamesite safely sets the value for global configuration 'AdvancedCookiesSamesite' field
 func SetAdvancedCookiesSamesite(v string) { global.SetAdvancedCookiesSamesite(v) }
+
+// GetDefaultUser safely fetches the Configuration value for state's 'DefaultUser' field
+func (st *ConfigState) GetDefaultUser() (v string) {
+	st.mutex.Lock()
+	v = st.config.DefaultUser
+	st.mutex.Unlock()
+	return
+}
+
+// SetDefaultUser safely sets the Configuration value for state's 'DefaultUser' field
+func (st *ConfigState) SetDefaultUser(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.DefaultUser = v
+	st.reloadToViper()
+}
+
+// DefaultUserFlag returns the flag name for the 'DefaultUser' field
+func DefaultUserFlag() string { return "default-user" }
+
+// GetDefaultUser safely fetches the value for global configuration 'DefaultUser' field
+func GetDefaultUser() string { return global.GetDefaultUser() }
+
+// SetDefaultUser safely sets the value for global configuration 'DefaultUser' field
+func SetDefaultUser(v string) { global.SetDefaultUser(v) }
+

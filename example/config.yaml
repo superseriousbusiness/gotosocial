@@ -552,3 +552,6 @@ syslog-address: "localhost:514"
 # Options: ["lax", "strict"]
 # Default: "lax"
 advanced-cookies-samesite: "lax"
+
+# The user that will be shown instead of the landing page. if no user is set, the landing page will be shown.
+default-user: ""
