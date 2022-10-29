@@ -70,6 +70,7 @@ func main() {
 		fmt.Fprint(output, "// THIS IS A GENERATED FILE, DO NOT EDIT BY HAND\n")
 		fmt.Fprint(output, license)
 		fmt.Fprint(output, "package config\n\n")
+		fmt.Fprint(output, "import \"codeberg.org/gruf/go-bytesize\"\n\n")
 		t := reflect.TypeOf(config.Configuration{})
 		for i := 0; i < t.NumField(); i++ {
 			field := t.Field(i)
