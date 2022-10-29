@@ -40,6 +40,11 @@ const (
 	MaxStatusIDKey = "max_id"
 )
 
+func (m *Module) profileGETRedirect(c *gin.Context) {
+	landingPageUser := config.GetLandingPageUser()
+	c.Redirect(http.StatusMovedPermanently, "/@"+c.Param(strings.ToLower(landingPageUser)))
+}
+
 func (m *Module) profileGETHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 

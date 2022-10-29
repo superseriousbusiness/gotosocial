@@ -98,7 +98,7 @@ func (m *Module) Route(s router.Router) error {
 	if landingPageUser := config.GetLandingPageUser(); landingPageUser == "" {
 		s.AttachHandler(http.MethodGet, "/", m.baseHandler)
 	} else {
-		s.AttachHandler(http.MethodGet, "/", m.profileGETHandler)
+		s.AttachHandler(http.MethodGet, "/", m.profileGETRedirect)
 	}
 
 	// serve profile pages at /@username
