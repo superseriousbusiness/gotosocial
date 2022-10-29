@@ -20,9 +20,11 @@ package bundb
 
 import (
 	"context"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 	"golang.org/x/exp/slices"
@@ -58,10 +60,17 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 		// Sort by highest ID (newest) to lowest ID (oldest)
 		Order("status.id DESC")
 
-	if maxID != "" {
-		// return only statuses LOWER (ie., older) than maxID
-		q = q.Where("? < ?", bun.Ident("status.id"), maxID)
+	if maxID == "" {
+		var err error
+		// don't return statuses more than five minutes in the future
+		maxID, err = id.NewULIDFromTime(time.Now().Add(5 * time.Minute))
+		if err != nil {
+			return nil, err
+		}
 	}
+
+	// return only statuses LOWER (ie., older) than maxID
+	q = q.Where("? < ?", bun.Ident("status.id"), maxID)
 
 	if sinceID != "" {
 		// return only statuses HIGHER (ie., newer) than sinceID
@@ -134,9 +143,17 @@ func (t *timelineDB) GetPublicTimeline(ctx context.Context, accountID string, ma
 		WhereGroup(" AND ", whereEmptyOrNull("status.boost_of_id")).
 		Order("status.id DESC")
 
-	if maxID != "" {
-		q = q.Where("? < ?", bun.Ident("status.id"), maxID)
+	if maxID == "" {
+		var err error
+		// don't return statuses more than five minutes in the future
+		maxID, err = id.NewULIDFromTime(time.Now().Add(5 * time.Minute))
+		if err != nil {
+			return nil, err
+		}
 	}
+
+	// return only statuses LOWER (ie., older) than maxID
+	q = q.Where("? < ?", bun.Ident("status.id"), maxID)
 
 	if sinceID != "" {
 		q = q.Where("? > ?", bun.Ident("status.id"), sinceID)
