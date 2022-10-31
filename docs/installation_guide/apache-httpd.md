@@ -52,7 +52,7 @@ sudo systemctl restart gotosocial.service
 
 Or if you don't have a systemd service just restart it manually.
 
-## Set up Apache HTTP Server with SSL certificate using MD module
+## Set up Apache HTTP Server with SSL managed using MD module
 
 Now we'll configure Apache HTTP Server to serve GoToSocial requests.
 
@@ -132,9 +132,9 @@ If this happens, you'll need to do one (or all) of the below:
 1. Update `/etc/apache2/sites-enabled/000-default.conf` and change the `ServerAdmin` value to a valid email address (then reload Apache HTTP Server).
 2. Add the line `MDContactEmail your.email.address@whatever.com` below the `MDomain` line in `/etc/apache2/sites-available/example.com.conf`, replacing `your.email.address@whatever.com` with a valid email address, and `example.com` with your GtS host name.
 
-## Set up Apache HTTP Server with SSL certificate managed manually or by an external software (e.g. Certbot or acme.sh)
+## Set up Apache HTTP Server with SSL managed manually or by an external software (e.g. Certbot or acme.sh)
 
-If you prefer to use a different service to manage SSL certificates (Certbot etc), then you can use a simpler setup for your Apache HTTP Server.
+If you prefer to have a manual setup or setting SSL using a different service to manage it (Certbot, etc), then you can use a simpler setup for your Apache HTTP Server.
 
 First we'll write a configuration for Apache HTTP Server and put it in `/etc/apache2/sites-available`:
 
