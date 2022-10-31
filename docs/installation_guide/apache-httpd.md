@@ -157,7 +157,7 @@ The file you're about to create should look initially for both 80 (required) and
 </VirtualHost>
 ```
 
-In the case of providing an initial setup for the 443 port looking for additional managing by an external tool you could use default certificates provided by the server which you can find referenced in the `default-ssl.conf` file at `/etc/apache2/sites-available/`.
+In the case of providing an initial setup for the 443 port looking for additional managing by an external tool, you could use default certificates provided by the server which you can find referenced in the `default-ssl.conf` file at `/etc/apache2/sites-available/`.
 
 Again, replace occurrences of `example.com` in the above config file with the hostname of your GtS server. If your domain name is `gotosocial.example.com`, then `gotosocial.example.com` would be the correct value.
 
