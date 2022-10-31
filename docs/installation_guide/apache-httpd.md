@@ -52,7 +52,7 @@ sudo systemctl restart gotosocial.service
 
 Or if you don't have a systemd service just restart it manually.
 
-## Set up Apache HTTP Server with LetsEncrypt SSL
+## Set up Apache HTTP Server with SSL certificate using MD module
 
 Now we'll configure Apache HTTP Server to serve GoToSocial requests.
 
@@ -132,7 +132,7 @@ If this happens, you'll need to do one (or all) of the below:
 1. Update `/etc/apache2/sites-enabled/000-default.conf` and change the `ServerAdmin` value to a valid email address (then reload Apache HTTP Server).
 2. Add the line `MDContactEmail your.email.address@whatever.com` below the `MDomain` line in `/etc/apache2/sites-available/example.com.conf`, replacing `your.email.address@whatever.com` with a valid email address, and `example.com` with your GtS host name.
 
-## Set up Apache HTTP Server **without** LetsEncrypt SSL
+## Set up Apache HTTP Server with SSL certificate managed manually or by an external software (e.g. Certbot or acme.sh)
 
 If you prefer to use a different service to manage SSL certificates (Certbot etc), then you can use a simpler setup for your Apache HTTP Server.
 
@@ -145,7 +145,7 @@ sudoedit /etc/apache2/sites-available/example.com.conf
 
 In the above `sudoedit` command, replace `example.com` with the hostname of your GoToSocial server.
 
-The file you're about to create should look a bit like this:
+The file you're about to create should look initially for both 80 (required) and 443 ports (optional) a bit like this:
 
 ```apache
 <VirtualHost *:80>
@@ -156,6 +156,8 @@ The file you're about to create should look a bit like this:
   ProxyPassReverse / http://localhost:8080/
 </VirtualHost>
 ```
+
+In the case of providing an initial setup for the 443 port looking for additional managing by an external tool you could use default certificates provided by the server which you can find referenced in the `default-ssl.conf` file at `/etc/apache2/sites-available/`.
 
 Again, replace occurrences of `example.com` in the above config file with the hostname of your GtS server. If your domain name is `gotosocial.example.com`, then `gotosocial.example.com` would be the correct value.
 
