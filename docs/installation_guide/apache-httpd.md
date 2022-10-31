@@ -131,3 +131,65 @@ If this happens, you'll need to do one (or all) of the below:
 
 1. Update `/etc/apache2/sites-enabled/000-default.conf` and change the `ServerAdmin` value to a valid email address (then reload Apache HTTP Server).
 2. Add the line `MDContactEmail your.email.address@whatever.com` below the `MDomain` line in `/etc/apache2/sites-available/example.com.conf`, replacing `your.email.address@whatever.com` with a valid email address, and `example.com` with your GtS host name.
+
+## Set up Apache HTTP Server **without** LetsEncrypt SSL
+
+If you prefer to use a different service to manage SSL certificates (Certbot etc), then you can use a simpler setup for your Apache HTTP Server.
+
+First we'll write a configuration for Apache HTTP Server and put it in `/etc/apache2/sites-available`:
+
+```bash
+sudo mkdir -p /etc/apache2/sites-available/
+sudoedit /etc/apache2/sites-available/example.com.conf
+```
+
+In the above `sudoedit` command, replace `example.com` with the hostname of your GoToSocial server.
+
+The file you're about to create should look a bit like this:
+
+```apache
+<VirtualHost *:80>
+  ServerName example.com
+  ProxyPreserveHost On
+  ProxyPassMatch ^/(api/v1/streaming.*)$ ws://localhost:8080/$1
+  ProxyPass / http://localhost:8080/
+  ProxyPassReverse / http://localhost:8080/
+</VirtualHost>
+```
+
+Again, replace occurrences of `example.com` in the above config file with the hostname of your GtS server. If your domain name is `gotosocial.example.com`, then `gotosocial.example.com` would be the correct value.
+
+You should also change `http://localhost:8080` to the correct address and port of your GtS server. For example, if you're running GoToSocial on another machine with the local ip of `192.168.178.69` and on port `8080` then `http://192.168.178.69:8080/` would be the correct value.
+
+`ProxyPreserveHost On` is essential: It guarantees that the proxy and the GoToSocial speak of the same Server name. If not, GoToSocial will build the wrong authentication headers, and all attempts at federation will be rejected with 401 Unauthorized.
+
+The line `ProxyPassMatch ^/(api/v1/streaming.*)$ ws://localhost:8080/$1` ensures that Websocket streaming connections also work. See the [websocket](./websocket.md) document for more information on this.
+
+Save and close the config file.
+
+Now we'll need to link the file we just created to the folder that Apache HTTP Server reads configurations for active sites from.
+
+```bash
+sudo mkdir /etc/apache2/sites-enabled
+sudo ln -s /etc/apache2/sites-available/example.com.conf /etc/apache2/sites-enabled/
+```
+
+In the above `ln` command, replace `example.com` with the hostname of your GoToSocial server.
+
+Now check for configuration errors.
+
+```bash
+sudo apachectl -t
+```
+
+If everything is fine you should get this as output:
+
+```text
+Syntax OK
+```
+
+Everything working? Great! Then restart Apache HTTP Server to load your new config file.
+
+```bash
+sudo systemctl restart apache2
+```
