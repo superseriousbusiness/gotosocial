@@ -179,7 +179,7 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 	// Create DB structs that require ptrs to each other
 	accounts := &accountDB{conn: conn, cache: accountCache}
 	status := &statusDB{conn: conn, cache: cache.NewStatusCache()}
-	emoji := &emojiDB{conn: conn, cache: cache.NewEmojiCache()}
+	emoji := &emojiDB{conn: conn, emojiCache: cache.NewEmojiCache(), categoryCache: cache.NewEmojiCategoryCache()}
 	timeline := &timelineDB{conn: conn}
 
 	// Setup DB cross-referencing

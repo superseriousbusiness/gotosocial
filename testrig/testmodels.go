@@ -952,7 +952,7 @@ func NewTestEmojis() map[string]*gtsmodel.Emoji {
 			Disabled:               FalseBool(),
 			URI:                    "http://localhost:8080/emoji/01F8MH9H8E4VG3KDYJR9EGPXCQ",
 			VisibleInPicker:        TrueBool(),
-			CategoryID:             "",
+			CategoryID:             "01GGQ8V4993XK67B2JB396YFB7",
 		},
 		"yell": {
 			ID:                     "01GD5KP5CQEE1R3X43Y1EHS2CW",
@@ -975,6 +975,23 @@ func NewTestEmojis() map[string]*gtsmodel.Emoji {
 			URI:                    "http://fossbros-anonymous.io/emoji/01GD5KP5CQEE1R3X43Y1EHS2CW",
 			VisibleInPicker:        FalseBool(),
 			CategoryID:             "",
+		},
+	}
+}
+
+func NewTestEmojiCategories() map[string]*gtsmodel.EmojiCategory {
+	return map[string]*gtsmodel.EmojiCategory{
+		"reactions": {
+			ID:        "01GGQ8V4993XK67B2JB396YFB7",
+			Name:      "reactions",
+			CreatedAt: TimeMustParse("2020-03-18T11:40:55+02:00"),
+			UpdatedAt: TimeMustParse("2020-03-19T12:35:12+02:00"),
+		},
+		"cute stuff": {
+			ID:        "01GGQ989PTT9PMRN4FZ1WWK2B9",
+			Name:      "cute stuff",
+			CreatedAt: TimeMustParse("2020-03-20T11:40:55+02:00"),
+			UpdatedAt: TimeMustParse("2020-03-21T12:35:12+02:00"),
 		},
 	}
 }
