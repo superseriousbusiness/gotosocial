@@ -2764,6 +2764,10 @@ paths:
                   name: image
                   required: true
                   type: file
+                - description: Category in which to place the new emoji. 64 characters or less. If left blank, emoji will be uncategorized, but this can be updated later.
+                  in: formData
+                  name: category
+                  type: string
             produces:
                 - application/json
             responses:

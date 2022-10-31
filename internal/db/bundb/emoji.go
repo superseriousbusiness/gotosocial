@@ -310,6 +310,15 @@ func (e *emojiDB) GetEmojiByStaticURL(ctx context.Context, imageStaticURL string
 	)
 }
 
+func (e *emojiDB) PutEmojiCategory(ctx context.Context, emojiCategory *gtsmodel.EmojiCategory) db.Error {
+	if _, err := e.conn.NewInsert().Model(emojiCategory).Exec(ctx); err != nil {
+		return e.conn.ProcessError(err)
+	}
+
+	e.categoryCache.Put(emojiCategory)
+	return nil
+}
+
 func (e *emojiDB) GetEmojiCategories(ctx context.Context) ([]*gtsmodel.EmojiCategory, db.Error) {
 	emojiCategoryIDs := []string{}
 
@@ -334,6 +343,18 @@ func (e *emojiDB) GetEmojiCategory(ctx context.Context, id string) (*gtsmodel.Em
 		},
 		func(emojiCategory *gtsmodel.EmojiCategory) error {
 			return e.newEmojiCategoryQ(emojiCategory).Where("? = ?", bun.Ident("emoji_category.id"), id).Scan(ctx)
+		},
+	)
+}
+
+func (e *emojiDB) GetEmojiCategoryByName(ctx context.Context, name string) (*gtsmodel.EmojiCategory, db.Error) {
+	return e.getEmojiCategory(
+		ctx,
+		func() (*gtsmodel.EmojiCategory, bool) {
+			return e.categoryCache.GetByName(name)
+		},
+		func(emojiCategory *gtsmodel.EmojiCategory) error {
+			return e.newEmojiCategoryQ(emojiCategory).Where("LOWER(?) = ?", bun.Ident("emoji_category.name"), strings.ToLower(name)).Scan(ctx)
 		},
 	)
 }

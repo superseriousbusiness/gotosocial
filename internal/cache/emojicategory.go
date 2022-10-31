@@ -19,6 +19,7 @@
 package cache
 
 import (
+	"strings"
 	"time"
 
 	"codeberg.org/gruf/go-cache/v2"
@@ -27,13 +28,25 @@ import (
 
 // EmojiCategoryCache is a cache wrapper to provide ID lookups for gtsmodel.EmojiCategory
 type EmojiCategoryCache struct {
-	cache cache.Cache[string, *gtsmodel.EmojiCategory]
+	cache cache.LookupCache[string, string, *gtsmodel.EmojiCategory]
 }
 
 // NewEmojiCategoryCache returns a new instantiated EmojiCategoryCache object
 func NewEmojiCategoryCache() *EmojiCategoryCache {
 	c := &EmojiCategoryCache{}
-	c.cache = cache.New[string, *gtsmodel.EmojiCategory]()
+	c.cache = cache.NewLookup(cache.LookupCfg[string, string, *gtsmodel.EmojiCategory]{
+		RegisterLookups: func(lm *cache.LookupMap[string, string]) {
+			lm.RegisterLookup("name")
+		},
+
+		AddLookups: func(lm *cache.LookupMap[string, string], emojiCategory *gtsmodel.EmojiCategory) {
+			lm.Set(("name"), strings.ToLower(emojiCategory.Name), emojiCategory.ID)
+		},
+
+		DeleteLookups: func(lm *cache.LookupMap[string, string], emojiCategory *gtsmodel.EmojiCategory) {
+			lm.Delete("name", strings.ToLower(emojiCategory.Name))
+		},
+	})
 	c.cache.SetTTL(time.Minute*5, false)
 	c.cache.Start(time.Second * 10)
 	return c
@@ -42,6 +55,11 @@ func NewEmojiCategoryCache() *EmojiCategoryCache {
 // GetByID attempts to fetch an emojiCategory from the cache by its ID, you will receive a copy for thread-safety
 func (c *EmojiCategoryCache) GetByID(id string) (*gtsmodel.EmojiCategory, bool) {
 	return c.cache.Get(id)
+}
+
+// GetByName attempts to fetch an emojiCategory from the cache by its name, you will receive a copy for thread-safety
+func (c *EmojiCategoryCache) GetByName(name string) (*gtsmodel.EmojiCategory, bool) {
+	return c.cache.GetBy("name", strings.ToLower(name))
 }
 
 // Put places an emojiCategory in the cache, ensuring that the object place is a copy for thread-safety
