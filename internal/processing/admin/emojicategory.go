@@ -43,6 +43,7 @@ func (p *processor) GetOrCreateEmojiCategory(ctx context.Context, name string) (
 	categoryID, err := id.NewRandomULID()
 	if err != nil {
 		err = fmt.Errorf("GetOrCreateEmojiCategory: error generating id for new emoji category: %s", err)
+		return nil, err
 	}
 
 	category = &gtsmodel.EmojiCategory{
@@ -52,6 +53,7 @@ func (p *processor) GetOrCreateEmojiCategory(ctx context.Context, name string) (
 
 	if err := p.db.PutEmojiCategory(ctx, category); err != nil {
 		err = fmt.Errorf("GetOrCreateEmojiCategory: error putting new emoji category in the database: %s", err)
+		return nil, err
 	}
 
 	return category, nil
