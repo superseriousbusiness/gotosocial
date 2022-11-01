@@ -29,6 +29,7 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
@@ -139,7 +140,7 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		// if it's the thumbnail that's requested then the user will have to wait a bit while we process the
 		// large version and derive a thumbnail from it, so use the normal recaching procedure: fetch the media,
 		// process it, then return the thumbnail data
-		data = func(innerCtx context.Context) (io.Reader, int64, error) {
+		data = func(innerCtx context.Context) (io.ReadCloser, int64, error) {
 			transport, err := p.transportController.NewTransportForUsername(innerCtx, requestingUsername)
 			if err != nil {
 				return nil, 0, err
@@ -170,7 +171,7 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		// the caller will read from the buffered reader, so it doesn't matter if they drop out without reading everything
 		attachmentContent.Content = io.NopCloser(bufferedReader)
 
-		data = func(innerCtx context.Context) (io.Reader, int64, error) {
+		data = func(innerCtx context.Context) (io.ReadCloser, int64, error) {
 			transport, err := p.transportController.NewTransportForUsername(innerCtx, requestingUsername)
 			if err != nil {
 				return nil, 0, err

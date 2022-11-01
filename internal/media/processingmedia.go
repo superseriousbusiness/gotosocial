@@ -263,14 +263,18 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		return nil
 	}
 
-	// execute the data function to get the reader out of it
-	reader, fileSize, err := p.data(ctx)
+	// execute the data function to get the readcloser out of it
+	rc, fileSize, err := p.data(ctx)
 	if err != nil {
 		return fmt.Errorf("store: error executing data function: %s", err)
 	}
 
 	// defer closing the reader when we're done with it
 	defer func() {
+		if err := rc.Close(); err != nil {
+			log.Errorf("store: error closing readcloser: %s", err)
+		}
+	}()
 
 	// execute the postData function no matter what happens
 	defer func() {
@@ -283,7 +287,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 
 	// extract no more than 261 bytes from the beginning of the file -- this is the header
 	firstBytes := make([]byte, maxFileHeaderBytes)
-	if _, err := reader.Read(firstBytes); err != nil {
+	if _, err := rc.Read(firstBytes); err != nil {
 		return fmt.Errorf("store: error reading initial %d bytes: %s", maxFileHeaderBytes, err)
 	}
 
@@ -306,7 +310,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	extension := split[1] // something like 'jpeg'
 
 	// concatenate the cleaned up first bytes with the existing bytes still in the reader (thanks Mara)
-	readerToStore := io.MultiReader(bytes.NewBuffer(firstBytes), reader)
+	readerToStore := io.MultiReader(bytes.NewBuffer(firstBytes), rc)
 
 	// use the extension to derive the attachment type
 	// and, while we're in here, clean up exif data from
