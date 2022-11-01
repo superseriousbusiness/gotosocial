@@ -271,9 +271,12 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 
 	// defer closing the reader when we're done with it
 	defer func() {
-		if rc, ok := reader.(io.ReadCloser); ok {
-			if err := rc.Close(); err != nil {
-				log.Errorf("store: error closing readcloser: %s", err)
+
+	// execute the postData function no matter what happens
+	defer func() {
+		if p.postData != nil {
+			if err := p.postData(ctx); err != nil {
+				log.Errorf("store: error executing postData: %s", err)
 			}
 		}
 	}()
@@ -346,10 +349,6 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	p.attachment.Cached = &cached
 	p.attachment.File.FileSize = int(fileSize)
 	p.read = true
-
-	if p.postData != nil {
-		return p.postData(ctx)
-	}
 
 	log.Tracef("store: finished storing initial data for attachment %s", p.attachment.URL)
 	return nil
