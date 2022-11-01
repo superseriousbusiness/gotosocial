@@ -22,7 +22,7 @@
     "redux": "^4.2.0",
     "redux-devtools-extension": "^2.13.9",
     "redux-persist": "^6.0.0",
-    "skulk": "^0.0.4",
+    "skulk": "^0.0.5",
     "wouter": "^2.8.0-alpha.2"
   },
   "devDependencies": {
