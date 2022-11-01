@@ -20,7 +20,6 @@ package fileserver
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"strconv"
 
@@ -86,12 +85,10 @@ func (m *FileServer) ServeFile(c *gin.Context) {
 	}
 
 	defer func() {
-		// if the content is a ReadCloser (ie., it's streamed from storage), close it when we're done
+		// close content when we're done
 		if content.Content != nil {
-			if closer, ok := content.Content.(io.ReadCloser); ok {
-				if err := closer.Close(); err != nil {
-					log.Errorf("ServeFile: error closing readcloser: %s", err)
-				}
+			if err := content.Content.Close(); err != nil {
+				log.Errorf("ServeFile: error closing readcloser: %s", err)
 			}
 		}
 	}()
