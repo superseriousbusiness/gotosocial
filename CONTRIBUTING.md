@@ -146,7 +146,7 @@ yarn run dev
 
 The Pinafore instance will start running on `localhost:4002`.
 
-To connect to the testrig, navigate to `https://localhost:4002` and enter your instance name as `localhost:8080`.
+To connect to the testrig, navigate to `http://localhost:4002` and enter your instance name as `localhost:8080`.
 
 At the login screen, enter the email address `zork@example.org` and password `password`. You will get a confirmation prompt. Accept, and you are logged in as Zork.
 
