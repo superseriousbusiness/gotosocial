@@ -12,7 +12,7 @@ steps:
   # We use golangci-lint for linting.
   # See: https://golangci-lint.run/
   - name: lint
-    image: golangci/golangci-lint:v1.49.0
+    image: golangci/golangci-lint:v1.50.1
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -28,7 +28,7 @@ steps:
           - pull_request
 
   - name: test
-    image: golang:1.19.1-alpine
+    image: golang:1.19.3-alpine
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -45,7 +45,7 @@ steps:
           - pull_request
 
   - name: snapshot
-    image: superseriousbusiness/gotosocial-drone-build:0.0.6 # https://github.com/superseriousbusiness/gotosocial-drone-build
+    image: superseriousbusiness/gotosocial-drone-build:0.0.7 # https://github.com/superseriousbusiness/gotosocial-drone-build
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -74,7 +74,7 @@ steps:
           - main
 
   - name: release
-    image: superseriousbusiness/gotosocial-drone-build:0.0.6 # https://github.com/superseriousbusiness/gotosocial-drone-build
+    image: superseriousbusiness/gotosocial-drone-build:0.0.7 # https://github.com/superseriousbusiness/gotosocial-drone-build
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -133,7 +133,7 @@ clone:
 
 steps:
   - name: mirror
-    image: superseriousbusiness/gotosocial-drone-build:0.0.6
+    image: superseriousbusiness/gotosocial-drone-build:0.0.7
     environment:
       ORIGIN_REPO: https://github.com/superseriousbusiness/gotosocial
       TARGET_REPO: https://codeberg.org/superseriousbusiness/gotosocial
@@ -146,6 +146,6 @@ steps:
 
 ---
 kind: signature
-hmac: 59bf8f7a44f7c87e795b8a03a528c4cef0249815370c8bacaa3186f78c82e87c
+hmac: 86caf3c98d6135ac53e05b728e999d03f8b35606f1b5bab63c2c521bf5084173
 
 ...
