@@ -46,7 +46,7 @@ const nav = {
 		"Instance Settings": require("./admin/settings.js"),
 		"Actions": require("./admin/actions"),
 		"Federation": require("./admin/federation.js"),
-		"Custom Emoji": require("./admin/emoji.js"),
+		"Custom Emoji": require("./admin/emoji"),
 	}
 };
 

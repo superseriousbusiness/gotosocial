@@ -51,21 +51,7 @@ function apiCall(method, route, payload, type = "json") {
 					headers["Content-Type"] = "application/json";
 					body = JSON.stringify(payload);
 				} else if (type == "form") {
-					const formData = new FormData();
-					Object.entries(payload).forEach(([key, val]) => {
-						if (isPlainObject(val)) {
-							Object.entries(val).forEach(([key2, val2]) => {
-								if (val2 != undefined) {
-									formData.set(`${key}[${key2}]`, val2);
-								}
-							});
-						} else {
-							if (val != undefined) {
-								formData.set(key, val);
-							}
-						}
-					});
-					body = formData;
+					body = convertToForm(payload);
 				}
 			}
 
@@ -98,6 +84,24 @@ function apiCall(method, route, payload, type = "json") {
 			}
 		});
 	};
+}
+
+function convertToForm(payload) {
+	const formData = new FormData();
+	Object.entries(payload).forEach(([key, val]) => {
+		if (isPlainObject(val)) {
+			Object.entries(val).forEach(([key2, val2]) => {
+				if (val2 != undefined) {
+					formData.set(`${key}[${key2}]`, val2);
+				}
+			});
+		} else {
+			if (val != undefined) {
+				formData.set(key, val);
+			}
+		}
+	});
+	return formData;
 }
 
 function getChanges(state, keys) {
@@ -182,5 +186,6 @@ module.exports = {
 	user: require("./user")(submoduleArgs),
 	admin: require("./admin")(submoduleArgs),
 	apiCall,
+	convertToForm,
 	getChanges
 };
