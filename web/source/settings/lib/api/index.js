@@ -129,7 +129,8 @@ function getChanges(state, keys) {
 }
 
 function getCurrentUrl() {
-	return `${window.location.origin}${window.location.pathname}`;
+	let [pre, _past] = window.location.pathname.split("/settings");
+	return `${window.location.origin}${pre}/settings`;
 }
 
 function fetchInstanceWithoutStore(domain) {
