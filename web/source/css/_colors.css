@@ -51,7 +51,7 @@ $error-link: #185F8C; /* Error link text, can be used with $error2 (5.54) */
 $fg: $white1;
 $bg: $gray1;
 
-$bg-trans: color-mod($gray5 alpha(62%));
+$bg-trans: rgba(77, 78, 86, 0.62);
 
 $bg-accent: $gray5;
 $fg-accent: $blue3;

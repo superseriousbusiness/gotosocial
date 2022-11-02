@@ -42,6 +42,7 @@ const combinedReducers = combineReducers({
 const persistedReducer = persistReducer(persistConfig, combinedReducers);
 const composedEnhancer = composeWithDevTools(applyMiddleware(thunk));
 
+// TODO: change to configureStore
 const store = createStore(persistedReducer, composedEnhancer);
 const persistor = persistStore(store);
 
