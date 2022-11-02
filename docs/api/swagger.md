@@ -2,7 +2,7 @@
 
 ## Rate limit
 
-To prevent abuse of the API an IP-based HTTP rate limit is in place, a maximum of 300 requests in a 5 minutes time window are allowed, every response will include the current status of the rate limit with the following headers:
+To prevent abuse of the API an IP-based HTTP rate limit is in place, a maximum of 1000 requests in a 5 minutes time window are allowed, every response will include the current status of the rate limit with the following headers:
 
 - `x-ratelimit-limit` maximum number of requests allowed per time period (fixed)
 - `x-ratelimit-remaining` number of remaining requests that can still be performed
