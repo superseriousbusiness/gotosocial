@@ -32,7 +32,6 @@ func (m *Module) baseHandler(c *gin.Context) {
 
 	// if a landingPageUser is set in the config, redirect to that user's profile
 	if landingPageUser := config.GetLandingPageUser(); landingPageUser != "" {
-		landingPageUser := config.GetLandingPageUser()
 		c.Redirect(http.StatusFound, "/@"+c.Param(strings.ToLower(landingPageUser)))
 		return
 	}
