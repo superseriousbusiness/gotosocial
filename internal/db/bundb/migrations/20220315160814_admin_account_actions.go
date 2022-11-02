@@ -29,7 +29,7 @@ func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 			// create table for the new admin action struct
-			if _, err := db.NewCreateTable().Model(&gtsmodel.AdminAccountAction{}).IfNotExists().Exec(ctx); err != nil {
+			if _, err := tx.NewCreateTable().Model(&gtsmodel.AdminAccountAction{}).IfNotExists().Exec(ctx); err != nil {
 				return err
 			}
 
