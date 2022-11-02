@@ -25,7 +25,6 @@ import (
 	"codeberg.org/gruf/go-cache/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
@@ -95,11 +94,7 @@ func (m *Module) Route(s router.Router) error {
 	})
 
 	// serve front-page
-	if landingPageUser := config.GetLandingPageUser(); landingPageUser == "" {
-		s.AttachHandler(http.MethodGet, "/", m.baseHandler)
-	} else {
-		s.AttachHandler(http.MethodGet, "/", m.profileGETRedirect)
-	}
+	s.AttachHandler(http.MethodGet, "/", m.baseHandler)
 
 	// serve profile pages at /@username
 	s.AttachHandler(http.MethodGet, profilePath, m.profileGETHandler)

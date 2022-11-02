@@ -20,6 +20,7 @@ package web
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
@@ -28,6 +29,14 @@ import (
 )
 
 func (m *Module) baseHandler(c *gin.Context) {
+
+	// if a landingPageUser is set in the config, redirect to that user's profile
+	if landingPageUser := config.GetLandingPageUser(); landingPageUser != "" {
+		landingPageUser := config.GetLandingPageUser()
+		c.Redirect(http.StatusFound, "/@"+c.Param(strings.ToLower(landingPageUser)))
+		return
+	}
+
 	host := config.GetHost()
 	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
 	if err != nil {
