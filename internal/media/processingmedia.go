@@ -263,24 +263,31 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		return nil
 	}
 
-	// execute the data function to get the reader out of it
-	reader, fileSize, err := p.data(ctx)
+	// execute the data function to get the readcloser out of it
+	rc, fileSize, err := p.data(ctx)
 	if err != nil {
 		return fmt.Errorf("store: error executing data function: %s", err)
 	}
 
 	// defer closing the reader when we're done with it
 	defer func() {
-		if rc, ok := reader.(io.ReadCloser); ok {
-			if err := rc.Close(); err != nil {
-				log.Errorf("store: error closing readcloser: %s", err)
+		if err := rc.Close(); err != nil {
+			log.Errorf("store: error closing readcloser: %s", err)
+		}
+	}()
+
+	// execute the postData function no matter what happens
+	defer func() {
+		if p.postData != nil {
+			if err := p.postData(ctx); err != nil {
+				log.Errorf("store: error executing postData: %s", err)
 			}
 		}
 	}()
 
 	// extract no more than 261 bytes from the beginning of the file -- this is the header
 	firstBytes := make([]byte, maxFileHeaderBytes)
-	if _, err := reader.Read(firstBytes); err != nil {
+	if _, err := rc.Read(firstBytes); err != nil {
 		return fmt.Errorf("store: error reading initial %d bytes: %s", maxFileHeaderBytes, err)
 	}
 
@@ -303,29 +310,36 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	extension := split[1] // something like 'jpeg'
 
 	// concatenate the cleaned up first bytes with the existing bytes still in the reader (thanks Mara)
-	readerToStore := io.MultiReader(bytes.NewBuffer(firstBytes), reader)
+	multiReader := io.MultiReader(bytes.NewBuffer(firstBytes), rc)
 
 	// use the extension to derive the attachment type
 	// and, while we're in here, clean up exif data from
 	// the image if we already know the fileSize
+	var readerToStore io.Reader
 	switch extension {
 	case mimeGif:
 		p.attachment.Type = gtsmodel.FileTypeImage
+		// nothing to terminate, we can just store the multireader
+		readerToStore = multiReader
 	case mimeJpeg, mimePng:
 		p.attachment.Type = gtsmodel.FileTypeImage
 		if fileSize > 0 {
-			var err error
-			readerToStore, err = terminator.Terminate(readerToStore, int(fileSize), extension)
+			terminated, err := terminator.Terminate(multiReader, int(fileSize), extension)
 			if err != nil {
 				return fmt.Errorf("store: exif error: %s", err)
 			}
 			defer func() {
-				if rc, ok := readerToStore.(io.ReadCloser); ok {
-					if err := rc.Close(); err != nil {
+				if closer, ok := terminated.(io.Closer); ok {
+					if err := closer.Close(); err != nil {
 						log.Errorf("store: error closing terminator reader: %s", err)
 					}
 				}
 			}()
+			// store the exif-terminated version of what was in the multireader
+			readerToStore = terminated
+		} else {
+			// can't terminate if we don't know the file size, so just store the multiReader
+			readerToStore = multiReader
 		}
 	default:
 		return fmt.Errorf("store: couldn't process %s", extension)
@@ -346,10 +360,6 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	p.attachment.Cached = &cached
 	p.attachment.File.FileSize = int(fileSize)
 	p.read = true
-
-	if p.postData != nil {
-		return p.postData(ctx)
-	}
 
 	log.Tracef("store: finished storing initial data for attachment %s", p.attachment.URL)
 	return nil

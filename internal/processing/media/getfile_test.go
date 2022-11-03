@@ -91,10 +91,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncached() {
 	suite.NotNil(content)
 	b, err := io.ReadAll(content.Content)
 	suite.NoError(err)
-
-	if closer, ok := content.Content.(io.Closer); ok {
-		suite.NoError(closer.Close())
-	}
+	suite.NoError(content.Content.Close())
 
 	suite.Equal(suite.testRemoteAttachments[testAttachment.RemoteURL].Data, b)
 	suite.Equal(suite.testRemoteAttachments[testAttachment.RemoteURL].ContentType, content.ContentType)
@@ -151,9 +148,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncachedInterrupted() {
 	suite.NoError(err)
 
 	// close the reader
-	if closer, ok := content.Content.(io.Closer); ok {
-		suite.NoError(closer.Close())
-	}
+	suite.NoError(content.Content.Close())
 
 	// the attachment should still be updated in the database even though the caller hung up
 	if !testrig.WaitFor(func() bool {
@@ -201,10 +196,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileThumbnailUncached() {
 	suite.NotNil(content)
 	b, err := io.ReadAll(content.Content)
 	suite.NoError(err)
-
-	if closer, ok := content.Content.(io.Closer); ok {
-		suite.NoError(closer.Close())
-	}
+	suite.NoError(content.Content.Close())
 
 	suite.Equal(thumbnailBytes, b)
 	suite.Equal("image/jpeg", content.ContentType)

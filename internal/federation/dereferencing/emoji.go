@@ -42,7 +42,7 @@ func (d *deref) GetRemoteEmoji(ctx context.Context, requestingUsername string, r
 		return nil, fmt.Errorf("GetRemoteEmoji: error parsing url: %s", err)
 	}
 
-	dataFunc := func(innerCtx context.Context) (io.Reader, int64, error) {
+	dataFunc := func(innerCtx context.Context) (io.ReadCloser, int64, error) {
 		return t.DereferenceMedia(innerCtx, derefURI)
 	}
 
