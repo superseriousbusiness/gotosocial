@@ -283,6 +283,12 @@ section.with-sidebar > div {
 	}
 }
 
+.form-flex {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
 .file-upload > div {
 	display: flex;
 	gap: 1rem;

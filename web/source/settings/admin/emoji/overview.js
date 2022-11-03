@@ -23,14 +23,10 @@ const React = require("react");
 const Redux = require("react-redux");
 const {Link} = require("wouter");
 const defaultValue = require('default-value');
+const prettierBytes = require("prettier-bytes");
 
-const Submit = require("../../components/submit");
 const FakeToot = require("../../components/fake-toot");
-const { formFields } = require("../../components/form-fields");
-
-const api = require("../../lib/api");
-const adminActions = require("../../redux/reducers/admin").actions;
-const submit = require("../../lib/submit");
+const MutateButton = require("../../components/mutation-button");
 
 const query = require("../../lib/query");
 
@@ -53,7 +49,7 @@ module.exports = function EmojiOverview() {
 				? "Loading..."
 				: <>
 					<EmojiList emoji={emoji}/>
-					<NewEmoji/>
+					<NewEmoji emoji={emoji}/>
 				</>
 			}
 		</>
@@ -106,46 +102,117 @@ function EmojiCategory({category, entries}) {
 	);
 }
 
-const NewEmojiForm = formFields(adminActions.updateNewEmojiVal, (state) => state.admin.newEmoji);
-function NewEmoji() {
-	const dispatch = Redux.useDispatch();
-	const newEmojiForm = Redux.useSelector((state) => state.admin.newEmoji);
+function useFileInput({withPreview, maxSize}) {
+	const [file, setFile] = React.useState();
+	const [imageURL, setImageURL] = React.useState();
+	const [info, setInfo] = React.useState("no file selected");
 
-	const [errorMsg, setError] = React.useState("");
-	const [statusMsg, setStatus] = React.useState("");
+	function onChange(e) {
+		let file = e.target.files[0];
+		setFile(file);
 
-	const uploadEmoji = submit(
-		() => dispatch(api.admin.newEmoji()),
+		URL.revokeObjectURL(imageURL);
+
+		if (file != undefined) {
+			if (withPreview) {
+				setImageURL(URL.createObjectURL(file));
+			}
+	
+			let size = prettierBytes(file.size);
+			if (maxSize && file.size > maxSize) {
+				size = <span className="error-text">{size}</span>;
+			}
+
+			setInfo(<>
+				{file.name} ({size})
+			</>);
+		} else {
+			setInfo("no file selected");
+		}
+	}
+
+	function reset() {
+		setFile();
+		URL.revokeObjectURL(imageURL);
+		setInfo("no file selected");
+	}
+
+	return [
+		onChange,
+		reset,
 		{
-			setStatus, setError,
-			onSuccess: function() {
-				URL.revokeObjectURL(newEmojiForm.image);
-				return Promise.all([
-					dispatch(adminActions.updateNewEmojiVal(["image", undefined])),
-					dispatch(adminActions.updateNewEmojiVal(["imageFile", undefined])),
-					dispatch(adminActions.updateNewEmojiVal(["shortcode", ""])),
-				]);
-			}
+			file,
+			imageURL,
+			info: <span>{info}</span>,
 		}
-	);
+	];
+}
 
-	React.useEffect(() => {
-		if (newEmojiForm.shortcode.length == 0) {
-			if (newEmojiForm.imageFile != undefined) {
-				let [name, ext] = newEmojiForm.imageFile.name.split(".");
-				dispatch(adminActions.updateNewEmojiVal(["shortcode", name]));
-			}
-		}
+// TODO: change form field code, maybe look into redux-final-form or similar
+// or evaluate if we even need to put most of this in the store
+function NewEmoji({emoji}) {
+	const emojiCodes = React.useMemo(() => {
+		return new Set(emoji.map((e) => e.shortcode));
+	}, [emoji]);
+	const [addEmoji, result] = query.useAddEmojiMutation();
+	const [onFileChange, resetFile, {file, imageURL, info}] = useFileInput({
+		withPreview: true,
+		maxSize: 50 * 1000
 	});
 
-	let emojiOrShortcode = `:${newEmojiForm.shortcode}:`;
+	const [shortcode, setShortcode] = React.useState("");
+	const shortcodeRef = React.useRef(null);
 
-	if (newEmojiForm.image != undefined) {
+	function onShortChange(e) {
+		let input = e.target.value;
+		setShortcode(input);
+		validateShortcode(input);
+	}
+
+	function validateShortcode(code) {
+		console.log("code: (%s)", code);
+		if (emojiCodes.has(code)) {
+			shortcodeRef.current.setCustomValidity("Shortcode already in use");
+		} else {
+			shortcodeRef.current.setCustomValidity("");
+		}
+		shortcodeRef.current.reportValidity();
+	}
+
+	React.useEffect(() => {
+		if (shortcode.length == 0) {
+			if (file != undefined) {
+				let [name, _ext] = file.name.split(".");
+				setShortcode(name);
+				validateShortcode(name);
+			}
+		}
+	}, [file, shortcode]);
+
+	function uploadEmoji(e) {
+		if (e) {
+			e.preventDefault();
+		}
+
+		Promise.try(() => {
+			return addEmoji({
+				image: file,
+				shortcode
+			});
+		}).then(() => {
+			resetFile();
+			setShortcode("");
+		});
+	}
+
+	let emojiOrShortcode = `:${shortcode}:`;
+
+	if (imageURL != undefined) {
 		emojiOrShortcode = <img
 			className="emoji"
-			src={newEmojiForm.image}
-			title={`:${newEmojiForm.shortcode}:`}
-			alt={newEmojiForm.shortcode}
+			src={imageURL}
+			title={`:${shortcode}:`}
+			alt={shortcode}
 		/>;
 	}
 
@@ -157,21 +224,38 @@ function NewEmoji() {
 				Look at this new custom emoji {emojiOrShortcode} isn&apos;t it cool?
 			</FakeToot>
 
-			<NewEmojiForm.File
-				id="image"
-				name="Image"
-				fileType="image/png,image/gif"
-				showSize={true}
-				maxSize={50 * 1000}
-			/>
+			<form onSubmit={uploadEmoji} className="form-flex">
+				<div className="form-field file">
+					<label className="file-input button" htmlFor="image">
+						Browse
+					</label>
+					{info}
+					<input
+						className="hidden"
+						type="file"
+						id="image"
+						name="Image"
+						accept="image/png,image/gif"
+						onChange={onFileChange}
+					/>
+				</div>
 
-			<NewEmojiForm.TextInput
-				id="shortcode"
-				name="Shortcode (without : :), must be unique on the instance"
-				placeHolder="blobcat"
-			/>
-
-			<Submit onClick={uploadEmoji} label="Upload" errorMsg={errorMsg} statusMsg={statusMsg} />
+				<div className="form-field text">
+					<label htmlFor="shortcode">
+						Shortcode, must be unique among the instance's local emoji
+					</label>
+					<input
+						type="text"
+						id="shortcode"
+						name="Shortcode"
+						ref={shortcodeRef}
+						onChange={onShortChange}
+						value={shortcode}
+					/>
+				</div>
+				
+				<MutateButton text="Upload emoji" result={result}/>
+			</form>
 		</div>
 	);
 }

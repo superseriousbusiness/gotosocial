@@ -21,7 +21,6 @@
 const Promise = require("bluebird");
 
 const base = require("./base");
-const { getChanges } = require("../api");
 
 const endpoints = (build) => ({
 	getAllEmoji: build.query({
@@ -30,12 +29,12 @@ const endpoints = (build) => ({
 			params: {
 				limit: 0,
 				...params
-			},
-			providesTags: (res) => 
-				res
-					? [...res.map((id) => ({type: "Emojis", id})), {type: "Emojis", id: "LIST"}]
-					: [{type: "Emojis", id: "LIST"}]
-		})
+			}
+		}),
+		providesTags: (res) => 
+			res
+				? [...res.map((emoji) => ({type: "Emojis", id: emoji.id})), {type: "Emojis", id: "LIST"}]
+				: [{type: "Emojis", id: "LIST"}]
 	}),
 	getEmoji: build.query({
 		query: (id) => ({
@@ -43,20 +42,19 @@ const endpoints = (build) => ({
 		}),
 		providesTags: (res, error, id) => [{type: "Emojis", id}]
 	}),
-	addEmoji: build.query({
+	addEmoji: build.mutation({
 		query: (form) => {
-			const body = getChanges(form, {
-				formKeys: ["shortcode"],
-				fileKeys: ["image"]
-			});
 			return {
 				method: "POST",
 				url: `/api/v1/admin/custom_emojis`,
 				asForm: true,
-				body
+				body: form
 			};
 		},
-		providesTags: (res, error, id) => [{type: "Emojis", id}]
+		invalidatesTags: (res) => 
+			res
+				? [{type: "Emojis", id: "LIST"}, {type: "Emojis", id: res.id}]
+				: [{type: "Emojis", id: "LIST"}]
 	}),
 	deleteEmoji: build.mutation({
 		query: (id) => ({
