@@ -233,6 +233,7 @@ func (suite *ValidationTestSuite) TestValidateReason() {
 	badReason := "because"
 	goodReason := "to smash the state and destroy capitalism ultimately and completely"
 	tooLong := "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris auctor mollis viverra. Maecenas maximus mollis sem, nec fermentum velit consectetur non. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Quisque a enim nibh. Vestibulum bibendum leo ac porttitor auctor. Curabitur velit tellus, facilisis vitae lorem a, ullamcorper efficitur leo. Sed a auctor tortor. Sed ut finibus ante, sit amet laoreet sapien. Donec ullamcorper tellus a nibh sodales vulputate. Donec id dolor eu odio mollis bibendum. Pellentesque habitant morbi tristique senectus et netus at."
+	unicode := "⎾⎿⏀⏁⏂⏃⏄⏅⏆⏇"
 	var err error
 
 	// check with no reason required
@@ -252,6 +253,11 @@ func (suite *ValidationTestSuite) TestValidateReason() {
 	}
 
 	err = validate.SignUpReason(goodReason, false)
+	if assert.NoError(suite.T(), err) {
+		assert.Equal(suite.T(), nil, err)
+	}
+
+	err = validate.SignUpReason(unicode, false)
 	if assert.NoError(suite.T(), err) {
 		assert.Equal(suite.T(), nil, err)
 	}

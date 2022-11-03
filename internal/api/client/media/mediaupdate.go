@@ -142,8 +142,8 @@ func validateUpdateMedia(form *model.AttachmentUpdateRequest) error {
 	maxDescriptionChars := config.GetMediaDescriptionMaxChars()
 
 	if form.Description != nil {
-		if len(*form.Description) < minDescriptionChars || len(*form.Description) > maxDescriptionChars {
-			return fmt.Errorf("image description length must be between %d and %d characters (inclusive), but provided image description was %d chars", minDescriptionChars, maxDescriptionChars, len(*form.Description))
+		if length := len([]rune(*form.Description)); length < minDescriptionChars || length > maxDescriptionChars {
+			return fmt.Errorf("image description length must be between %d and %d characters (inclusive), but provided image description was %d chars", minDescriptionChars, maxDescriptionChars, length)
 		}
 	}
 

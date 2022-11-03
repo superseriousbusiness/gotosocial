@@ -92,26 +92,26 @@ func (m *Module) AppsPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	if len(form.ClientName) > formFieldLen {
-		err := fmt.Errorf("client_name must be less than %d bytes", formFieldLen)
+	if len([]rune(form.ClientName)) > formFieldLen {
+		err := fmt.Errorf("client_name must be less than %d characters", formFieldLen)
 		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	if len(form.RedirectURIs) > formRedirectLen {
-		err := fmt.Errorf("redirect_uris must be less than %d bytes", formRedirectLen)
+	if len([]rune(form.RedirectURIs)) > formRedirectLen {
+		err := fmt.Errorf("redirect_uris must be less than %d characters", formRedirectLen)
 		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	if len(form.Scopes) > formFieldLen {
-		err := fmt.Errorf("scopes must be less than %d bytes", formFieldLen)
+	if len([]rune(form.Scopes)) > formFieldLen {
+		err := fmt.Errorf("scopes must be less than %d characters", formFieldLen)
 		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	if len(form.Website) > formFieldLen {
-		err := fmt.Errorf("website must be less than %d bytes", formFieldLen)
+	if len([]rune(form.Website)) > formFieldLen {
+		err := fmt.Errorf("website must be less than %d characters", formFieldLen)
 		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
