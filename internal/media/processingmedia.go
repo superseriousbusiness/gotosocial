@@ -337,6 +337,9 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 			}()
 			// store the exif-terminated version of what was in the multireader
 			readerToStore = terminated
+		} else {
+			// can't terminate if we don't know the file size, so just store the multiReader
+			readerToStore = multiReader
 		}
 	default:
 		return fmt.Errorf("store: couldn't process %s", extension)
