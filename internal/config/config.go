@@ -47,6 +47,7 @@ type Configuration struct {
 	LogLevel        string   `name:"log-level" usage:"Log level to run at: [trace, debug, info, warn, fatal]"`
 	LogDbQueries    bool     `name:"log-db-queries" usage:"Log database queries verbosely when log-level is trace or debug"`
 	ApplicationName string   `name:"application-name" usage:"Name of the application, used in various places internally"`
+	LandingPageUser string   `name:"landing-page-user" usage:"the user that should be shown on the instance's landing page"`
 	ConfigPath      string   `name:"config-path" usage:"Path to a file containing gotosocial configuration. Values set in this file will be overwritten by values set as env vars or arguments"`
 	Host            string   `name:"host" usage:"Hostname to use for the server (eg., example.org, gotosocial.whatever.com). DO NOT change this on a server that's already run!"`
 	AccountDomain   string   `name:"account-domain" usage:"Domain to use in account names (eg., example.org, whatever.com). If not set, will default to the setting for host. DO NOT change this on a server that's already run!"`

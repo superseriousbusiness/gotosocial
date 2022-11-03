@@ -34,6 +34,7 @@ var testDefaults = config.Configuration{
 	LogLevel:        "trace",
 	LogDbQueries:    true,
 	ApplicationName: "gotosocial",
+	LandingPageUser: "",
 	ConfigPath:      "",
 	Host:            "localhost:8080",
 	AccountDomain:   "localhost:8080",

@@ -35,6 +35,11 @@ log-db-queries: false
 # Default: "gotosocial"
 application-name: "gotosocial"
 
+# String. The user that will be shown instead of the landing page. if no user is set, the landing page will be shown.
+# Examples: "admin"
+# Default: ""
+landing-page-user: ""
+
 # String. Hostname that this server will be reachable at. Defaults to localhost for local testing,
 # but you should *definitely* change this when running for real, or your server won't work at all.
 # DO NOT change this after your server has already run once, or you will break things!
