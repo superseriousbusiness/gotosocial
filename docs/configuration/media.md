@@ -9,12 +9,12 @@
 
 # Config pertaining to user media uploads (videos, image, image descriptions).
 
-# Int. Maximum allowed image upload size in bytes.
+# Int. Maximum allowed image size in bytes to upload to this instance or download from other instances.
 # Examples: [2097152, 10485760]
 # Default: 10485760 -- aka 10MB
 media-image-max-size: 10485760
 
-# Int. Maximum allowed video upload size in bytes.
+# Int. Maximum allowed video size in bytes to upload to this instance or download from other instances.
 # Examples: [2097152, 10485760]
 # Default: 41943040 -- aka 40MB
 media-video-max-size: 41943040
