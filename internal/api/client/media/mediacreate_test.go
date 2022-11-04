@@ -138,7 +138,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessful() {
 
 	// see what's in storage *before* the request
 	storageKeysBeforeRequest := []string{}
-	iter, err := suite.storage.KVStore.Iterator(nil)
+	iter, err := suite.storage.KVStore.Iterator(context.Background(), nil)
 	if err != nil {
 		panic(err)
 	}
@@ -170,7 +170,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessful() {
 
 	// check what's in storage *after* the request
 	storageKeysAfterRequest := []string{}
-	iter, err = suite.storage.KVStore.Iterator(nil)
+	iter, err = suite.storage.KVStore.Iterator(context.Background(), nil)
 	if err != nil {
 		panic(err)
 	}
@@ -232,7 +232,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessfulV2() {
 
 	// see what's in storage *before* the request
 	storageKeysBeforeRequest := []string{}
-	iter, err := suite.storage.KVStore.Iterator(nil)
+	iter, err := suite.storage.KVStore.Iterator(context.Background(), nil)
 	if err != nil {
 		panic(err)
 	}
@@ -264,7 +264,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessfulV2() {
 
 	// check what's in storage *after* the request
 	storageKeysAfterRequest := []string{}
-	iter, err = suite.storage.KVStore.Iterator(nil)
+	iter, err = suite.storage.KVStore.Iterator(context.Background(), nil)
 	if err != nil {
 		panic(err)
 	}
