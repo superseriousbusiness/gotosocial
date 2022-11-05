@@ -38,7 +38,7 @@ codeberg.org/gruf/go-kv/format
 # codeberg.org/gruf/go-logger/v2 v2.2.1
 ## explicit; go 1.19
 codeberg.org/gruf/go-logger/v2/level
-# codeberg.org/gruf/go-mutexes v1.1.2
+# codeberg.org/gruf/go-mutexes v1.1.3
 ## explicit; go 1.14
 codeberg.org/gruf/go-mutexes
 # codeberg.org/gruf/go-pools v1.1.0
@@ -50,7 +50,7 @@ codeberg.org/gruf/go-runners
 # codeberg.org/gruf/go-sched v1.1.1
 ## explicit; go 1.19
 codeberg.org/gruf/go-sched
-# codeberg.org/gruf/go-store/v2 v2.0.3
+# codeberg.org/gruf/go-store/v2 v2.0.4
 ## explicit; go 1.19
 codeberg.org/gruf/go-store/v2/kv
 codeberg.org/gruf/go-store/v2/storage
