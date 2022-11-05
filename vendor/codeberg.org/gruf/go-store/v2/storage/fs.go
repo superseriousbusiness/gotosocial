@@ -134,7 +134,7 @@ func cleanDir(pb *fastpath.Builder, path string) error {
 
 	// If no entries, delete
 	if len(entries) < 1 {
-		return unlink(path)
+		return rmdir(path)
 	}
 
 	for _, entry := range entries {

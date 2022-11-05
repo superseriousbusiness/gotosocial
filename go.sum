@@ -97,6 +97,8 @@ codeberg.org/gruf/go-sched v1.1.1 h1:YtLSQhpypzuD3HTup5oF7LLWB79gTL4nqW06kH4Vwks
 codeberg.org/gruf/go-sched v1.1.1/go.mod h1:SRcdP/5qim+EBT3n3r4aUra1C30yPqV4OJOXuqvgdQM=
 codeberg.org/gruf/go-store/v2 v2.0.2 h1:SZiEchrX9BCLr++dlz21XnoCEZi9u4j/svNQ/FDqC7s=
 codeberg.org/gruf/go-store/v2 v2.0.2/go.mod h1:bgHRkBHkYpnhbCX0c8wBOVK9X7zOvLBepi9MSgRDlDs=
+codeberg.org/gruf/go-store/v2 v2.0.3 h1:htjXCThi53bmqPYmtrc5aiWOjW4yN5tlHSPRLtsOGgY=
+codeberg.org/gruf/go-store/v2 v2.0.3/go.mod h1:bgHRkBHkYpnhbCX0c8wBOVK9X7zOvLBepi9MSgRDlDs=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
