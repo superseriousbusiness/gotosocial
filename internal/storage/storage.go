@@ -26,8 +26,8 @@ import (
 	"net/url"
 	"path"
 
-	"codeberg.org/gruf/go-store/kv"
-	"codeberg.org/gruf/go-store/storage"
+	"codeberg.org/gruf/go-store/v2/kv"
+	"codeberg.org/gruf/go-store/v2/storage"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -60,7 +60,7 @@ func AutoConfig() (Driver, error) {
 		return NewS3(mc, config.GetStorageS3BucketName()), nil
 	case "local":
 		storageBasePath := config.GetStorageLocalBasePath()
-		storage, err := kv.OpenFile(storageBasePath, &storage.DiskConfig{
+		storage, err := kv.OpenDisk(storageBasePath, &storage.DiskConfig{
 			// Put the store lockfile in the storage dir itself.
 			// Normally this would not be safe, since we could end up
 			// overwriting the lockfile if we store a file called 'store.lock'.

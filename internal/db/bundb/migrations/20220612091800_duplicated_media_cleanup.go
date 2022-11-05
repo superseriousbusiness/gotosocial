@@ -24,8 +24,8 @@ import (
 	"fmt"
 	"path"
 
-	"codeberg.org/gruf/go-store/kv"
-	"codeberg.org/gruf/go-store/storage"
+	"codeberg.org/gruf/go-store/v2/kv"
+	"codeberg.org/gruf/go-store/v2/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -34,13 +34,13 @@ import (
 
 func init() {
 	deleteAttachment := func(ctx context.Context, l log.Entry, a *gtsmodel.MediaAttachment, s *kv.KVStore, tx bun.Tx) {
-		if err := s.Delete(a.File.Path); err != nil && err != storage.ErrNotFound {
+		if err := s.Delete(ctx, a.File.Path); err != nil && err != storage.ErrNotFound {
 			l.Errorf("error removing file %s: %s", a.File.Path, err)
 		} else {
 			l.Debugf("deleted %s", a.File.Path)
 		}
 
-		if err := s.Delete(a.Thumbnail.Path); err != nil && err != storage.ErrNotFound {
+		if err := s.Delete(ctx, a.Thumbnail.Path); err != nil && err != storage.ErrNotFound {
 			l.Errorf("error removing file %s: %s", a.Thumbnail.Path, err)
 		} else {
 			l.Debugf("deleted %s", a.Thumbnail.Path)
@@ -70,7 +70,7 @@ func init() {
 		}
 
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			s, err := kv.OpenFile(storageBasePath, &storage.DiskConfig{
+			s, err := kv.OpenDisk(storageBasePath, &storage.DiskConfig{
 				LockFile: path.Join(storageBasePath, "store.lock"),
 			})
 			if err != nil {

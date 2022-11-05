@@ -1,0 +1,68 @@
+run:
+  deadline: 5m
+
+linters:
+  enable:
+    - asasalint # check for pass []any as any in variadic func(...any)
+    - asciicheck # Simple linter to check that your code does not contain non-ASCII identifiers
+    - bidichk # Checks for dangerous unicode character sequences
+    - containedctx # detects struct contained context.Context field
+    - contextcheck # check the function whether use a non-inherited context
+    - cyclop # checks function and package cyclomatic complexity
+    - decorder # check declaration order and count of types, constants, variables and functions
+    - depguard # Go linter that checks if package imports are in a list of acceptable packages
+    - dogsled # Checks assignments with too many blank identifiers (e.g. x, _, _, _, := f())
+    - durationcheck # check for two durations multiplied together
+    - errcheck # checking for unchecked errors
+    - errname # Checks that errors are prefixed with the `Err` and error types are suffixed with the `Error`
+    - errorlint # finds code that will cause problems with the error wrapping scheme introduced in Go 1.13
+    - exportloopref # checks for pointers to enclosing loop variables
+    - funlen # Tool for detection of long functions
+    - gci # controls golang package import order and makes it always deterministic
+    - gocognit # Computes and checks the cognitive complexity of functions
+    - gocritic # Provides diagnostics that check for bugs, performance and style issues
+    - gocyclo # Computes and checks the cyclomatic complexity of functions
+    - godot # Check if comments end in a period
+    - goerr113 # Golang linter to check the errors handling expressions
+    - gosimple # Linter for Go source code that specializes in simplifying a code
+    - govet # reports suspicious constructs, such as Printf calls with wrong arguments
+    - ineffassign # Detects when assignments to existing variables are not used
+    - maintidx # measures the maintainability index of each function
+    - makezero # Finds slice declarations with non-zero initial length
+    - misspell # Finds commonly misspelled English words in comments
+    - nakedret # Finds naked returns in functions
+    - nestif # Reports deeply nested if statements
+    - nilerr # Finds the code that returns nil even if it checks that the error is not nil
+    - nilnil # Checks that there is no simultaneous return of `nil` error and an invalid value
+    - prealloc # Finds slice declarations that could potentially be preallocated
+    - predeclared # find code that shadows one of Go's predeclared identifiers
+    - revive # drop-in replacement of golint
+    - staticcheck # drop-in replacement of go vet
+    - stylecheck # Stylecheck is a replacement for golint
+    - tenv # detects using os.Setenv instead of t.Setenv
+    - thelper # checks the consistency of test helpers
+    - tparallel # detects inappropriate usage of t.Parallel()
+    - typecheck # parses and type-checks Go code
+    - unconvert # Remove unnecessary type conversions
+    - unparam # Reports unused function parameters
+    - unused # Checks Go code for unused constants, variables, functions and types
+    - usestdlibvars # detect the possibility to use variables/constants from the Go standard library
+    - wastedassign # finds wasted assignment statements
+    - whitespace # detects leading and trailing whitespace
+
+linters-settings:
+  cyclop:
+    max-complexity: 15
+  gocritic:
+    disabled-checks:
+      - newDeref
+  govet:
+    disable:
+      - unsafeptr
+
+issues:
+  exclude-use-default: false
+  exclude-rules:
+    - linters:
+        - goerr113
+      text: "do not define dynamic errors"

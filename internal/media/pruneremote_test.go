@@ -25,7 +25,7 @@ import (
 	"os"
 	"testing"
 
-	"codeberg.org/gruf/go-store/storage"
+	"codeberg.org/gruf/go-store/v2/storage"
 	"github.com/stretchr/testify/suite"
 )
 

@@ -27,8 +27,8 @@ import (
 	"path"
 	"testing"
 
-	"codeberg.org/gruf/go-store/kv"
-	"codeberg.org/gruf/go-store/storage"
+	"codeberg.org/gruf/go-store/v2/kv"
+	"codeberg.org/gruf/go-store/v2/storage"
 	"github.com/stretchr/testify/suite"
 	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -927,7 +927,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
 	temp := fmt.Sprintf("%s/gotosocial-test", os.TempDir())
 	defer os.RemoveAll(temp)
 
-	diskStorage, err := kv.OpenFile(temp, &storage.DiskConfig{
+	diskStorage, err := kv.OpenDisk(temp, &storage.DiskConfig{
 		LockFile: path.Join(temp, "store.lock"),
 	})
 	if err != nil {
@@ -974,7 +974,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
 	suite.NotNil(dbAttachment)
 
 	// make sure the processed file is in storage
-	processedFullBytes, err := diskStorage.Get(attachment.File.Path)
+	processedFullBytes, err := diskStorage.Get(ctx, attachment.File.Path)
 	suite.NoError(err)
 	suite.NotEmpty(processedFullBytes)
 
@@ -987,7 +987,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
 	suite.Equal(processedFullBytesExpected, processedFullBytes)
 
 	// now do the same for the thumbnail and make sure it's what we expected
-	processedThumbnailBytes, err := diskStorage.Get(attachment.Thumbnail.Path)
+	processedThumbnailBytes, err := diskStorage.Get(ctx, attachment.Thumbnail.Path)
 	suite.NoError(err)
 	suite.NotEmpty(processedThumbnailBytes)
 

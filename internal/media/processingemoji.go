@@ -29,7 +29,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	gostore "codeberg.org/gruf/go-store/storage"
+	gostore "codeberg.org/gruf/go-store/v2/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
