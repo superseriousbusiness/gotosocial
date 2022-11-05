@@ -134,7 +134,7 @@ func NewMap(max, wake int32) MutexMap {
 	}
 }
 
-// MAX sets the MutexMap max open locks and wake modulus, returns current values.
+// SET sets the MutexMap max open locks and wake modulus, returns current values.
 // For values less than zero defaults are set, and zero is non-op.
 func (mm *MutexMap) SET(max, wake int32) (int32, int32) {
 	mm.mapmu.Lock()
@@ -257,7 +257,7 @@ func (mm *MutexMap) lock(key string, lt uint8) func() {
 	return func() {
 		mm.mapmu.Lock()
 		mu.Unlock()
-		go mm.cleanup()
+		mm.cleanup()
 	}
 }
 
@@ -289,34 +289,46 @@ func (mm *MutexMap) cleanup() {
 	// Decr count
 	mm.count--
 
-	if mm.count%mm.wake == 0 {
-		// Notify queued routines
-		for _, mu := range mm.queue {
-			mu.Unlock()
-		}
+	// Calculate current wake modulus
+	wakemod := mm.count % mm.wake
 
-		// Reset queue
-		mm.queue = mm.queue[:0]
+	if mm.count != 0 && wakemod != 0 {
+		// Fast path => no cleanup.
+		// Unlock, return early
+		mm.mapmu.Unlock()
+		return
 	}
 
-	if mm.count < 1 {
-		// Perform evictions
-		for _, mu := range mm.evict {
-			key := mu.key
-			mu.key = ""
-			delete(mm.mumap, key)
-			mm.mpool.Release(mu)
+	go func() {
+		if wakemod == 0 {
+			// Notify queued routines
+			for _, mu := range mm.queue {
+				mu.Unlock()
+			}
+
+			// Reset queue
+			mm.queue = mm.queue[:0]
 		}
 
-		// Reset map state
-		mm.evict = mm.evict[:0]
-		mm.state = stateUnlockd
-		mm.mpool.GC()
-		mm.qpool.GC()
-	}
+		if mm.count == 0 {
+			// Perform evictions
+			for _, mu := range mm.evict {
+				key := mu.key
+				mu.key = ""
+				delete(mm.mumap, key)
+				mm.mpool.Release(mu)
+			}
 
-	// Unlock map
-	mm.mapmu.Unlock()
+			// Reset map state
+			mm.evict = mm.evict[:0]
+			mm.state = stateUnlockd
+			mm.mpool.GC()
+			mm.qpool.GC()
+		}
+
+		// Unlock map
+		mm.mapmu.Unlock()
+	}()
 }
 
 // RLockMap acquires a read lock over the entire map, returning a lock state for acquiring key read locks.
@@ -421,7 +433,7 @@ func (st *LockState) lock(key string, lt uint8) func() {
 	return func() {
 		st.mmap.mapmu.Lock()
 		mu.Unlock()
-		go st.mmap.cleanup()
+		st.mmap.cleanup()
 		st.wait.Add(-1)
 	}
 }
@@ -433,7 +445,7 @@ func (st *LockState) UnlockMap() {
 	}
 	st.wait.Wait()
 	st.mmap.mapmu.Lock()
-	go st.mmap.cleanup()
+	st.mmap.cleanup()
 }
 
 // rwmutex is a very simple *representation* of a read-write
@@ -441,9 +453,9 @@ func (st *LockState) UnlockMap() {
 // tracking the lock state for a given map key, which is
 // protected by the map's mutex.
 type rwmutex struct {
-	rcnt uint32
-	lock uint8
-	key  string
+	rcnt int32  // read lock count
+	lock uint8  // lock type
+	key  string // map key
 }
 
 func (mu *rwmutex) CanLock(lt uint8) bool {
@@ -452,15 +464,21 @@ func (mu *rwmutex) CanLock(lt uint8) bool {
 }
 
 func (mu *rwmutex) Lock(lt uint8) {
+	// Set lock type
 	mu.lock = lt
+
 	if lt&lockTypeRead != 0 {
+		// RLock, increment
 		mu.rcnt++
 	}
 }
 
 func (mu *rwmutex) Unlock() {
-	mu.rcnt--
-	if mu.rcnt == 0 {
+	if mu.rcnt > 0 {
+		// RUnlock
+		mu.rcnt--
+	} else {
+		// Total unlock
 		mu.lock = 0
 	}
 }
