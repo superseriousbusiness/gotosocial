@@ -1,0 +1,31 @@
+{{ template "header.tmpl" .}}
+    <main>
+        <form action="/oauth/finalize" method="POST">
+            <h1>Hi {{.name}}!</h1>
+            <p>
+              You are about to sign-up to {{ .instance.Title }} (<code>{{ .instance.URI }}</code>)
+              <br>
+              To ensure the best experience for you, we need you to provide some additional details.
+            </p>
+            {{if .error}}
+              <section class="error">
+                <span>❌</span> <pre>{{.error}}</pre>
+              </section>
+            {{end}}
+            <div class="callout">
+              <p class="callout-title">Important</p>
+              <p>Due to the way the ActivityPub standard works, you <strong>cannot</strong> change your username after it has been set.</p>
+            </div>
+            <div class="labelinput">
+                <label for="username">Username <small>(must contain only lowercase letters, numbers, and underscores)</small></label>
+                <input type="text"
+                       class="form-control"
+                       name="username"
+                       required
+                       placeholder="Please enter your desired username" value="{{ .preferredUsername }}">
+            </div>
+            <input type="hidden" name="name" value="{{ .name }}">
+            <button type="submit" style="width: 100%; margin-top: 1rem;" class="btn btn-success">Submit</button>
+        </form>
+    </main>
+{{ template "footer.tmpl" .}}

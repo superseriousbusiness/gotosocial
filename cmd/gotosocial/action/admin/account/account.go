@@ -78,7 +78,7 @@ var Create action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	_, err = dbConn.NewSignup(ctx, username, "", false, email, password, nil, "", "", true, false)
+	_, err = dbConn.NewSignup(ctx, username, "", false, email, password, nil, "", "", true, "", false)
 	if err != nil {
 		return err
 	}

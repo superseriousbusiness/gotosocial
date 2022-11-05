@@ -60,7 +60,7 @@ func (p *processor) Create(ctx context.Context, applicationToken oauth2.TokenInf
 	}
 
 	log.Trace("creating new username and account")
-	user, err := p.db.NewSignup(ctx, form.Username, text.SanitizePlaintext(reason), approvalRequired, form.Email, form.Password, form.IP, form.Locale, application.ID, false, false)
+	user, err := p.db.NewSignup(ctx, form.Username, text.SanitizePlaintext(reason), approvalRequired, form.Email, form.Password, form.IP, form.Locale, application.ID, false, "", false)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error creating new signup in the database: %s", err))
 	}

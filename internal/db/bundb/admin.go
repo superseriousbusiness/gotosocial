@@ -90,7 +90,7 @@ func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) (bool, db.
 	return a.conn.NotExists(ctx, q)
 }
 
-func (a *adminDB) NewSignup(ctx context.Context, username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string, emailVerified bool, admin bool) (*gtsmodel.User, db.Error) {
+func (a *adminDB) NewSignup(ctx context.Context, username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string, emailVerified bool, externalID string, admin bool) (*gtsmodel.User, db.Error) {
 	key, err := rsa.GenerateKey(rand.Reader, rsaKeyBits)
 	if err != nil {
 		log.Errorf("error creating new rsa key: %s", err)
@@ -169,6 +169,7 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 		UnconfirmedEmail:       email,
 		CreatedByApplicationID: appID,
 		Approved:               &approved,
+		ExternalID:             externalID,
 	}
 
 	if emailVerified {

@@ -50,6 +50,9 @@ const (
 	// OauthAuthorizePath is the API path for authorization requests (eg., authorize this app to act on my behalf as a user)
 	OauthAuthorizePath = "/oauth/authorize"
 
+	// OauthFinalizePath is the API path for completing user registration with additional user details
+	OauthFinalizePath = "/oauth/finalize"
+
 	// CallbackPath is the API path for receiving callback tokens from external OIDC providers
 	CallbackPath = oidc.CallbackPath
 
@@ -64,6 +67,8 @@ const (
 	sessionScope         = "scope"
 	sessionInternalState = "internal_state"
 	sessionClientState   = "client_state"
+	sessionClaims        = "claims"
+	sessionAppID         = "app_id"
 )
 
 // Module implements the ClientAPIModule interface for
@@ -93,6 +98,7 @@ func (m *Module) Route(s router.Router) error {
 	s.AttachHandler(http.MethodPost, OauthAuthorizePath, m.AuthorizePOSTHandler)
 
 	s.AttachHandler(http.MethodGet, CallbackPath, m.CallbackGETHandler)
+	s.AttachHandler(http.MethodPost, OauthFinalizePath, m.FinalizePOSTHandler)
 
 	s.AttachHandler(http.MethodGet, oauth.OOBTokenPath, m.OobHandler)
 	return nil

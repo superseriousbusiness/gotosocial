@@ -16,20 +16,31 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package oidc
+package migrations
 
-import "encoding/gob"
+import (
+	"context"
+	"strings"
 
-// Claims represents claims as found in an id_token returned from an OIDC flow.
-type Claims struct {
-	Sub               string   `json:"sub"`
-	Email             string   `json:"email"`
-	EmailVerified     bool     `json:"email_verified"`
-	Groups            []string `json:"groups"`
-	Name              string   `json:"name"`
-	PreferredUsername string   `json:"preferred_username"`
-}
+	"github.com/uptrace/bun"
+)
 
 func init() {
-	gob.Register(&Claims{})
+	up := func(ctx context.Context, db *bun.DB) error {
+		_, err := db.ExecContext(ctx, "ALTER TABLE ? ADD COLUMN ? TEXT", bun.Ident("users"), bun.Ident("external_id"))
+		if err != nil && !(strings.Contains(err.Error(), "already exists") || strings.Contains(err.Error(), "duplicate column name") || strings.Contains(err.Error(), "SQLSTATE 42701")) {
+			return err
+		}
+		return nil
+	}
+
+	down := func(ctx context.Context, db *bun.DB) error {
+		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			return nil
+		})
+	}
+
+	if err := Migrations.Register(up, down); err != nil {
+		panic(err)
+	}
 }
