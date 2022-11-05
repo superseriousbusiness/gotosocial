@@ -25,6 +25,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -157,7 +158,7 @@ func (p *processor) ProcessReplyToID(ctx context.Context, form *apimodel.Advance
 	return nil
 }
 
-func (p *processor) ProcessMediaIDs(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) error {
+func (p *processor) ProcessMediaIDs(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) gtserror.WithCode {
 	if form.MediaIDs == nil {
 		return nil
 	}
@@ -167,15 +168,28 @@ func (p *processor) ProcessMediaIDs(ctx context.Context, form *apimodel.Advanced
 	for _, mediaID := range form.MediaIDs {
 		attachment, err := p.db.GetAttachmentByID(ctx, mediaID)
 		if err != nil {
-			return fmt.Errorf("ProcessMediaIDs: invalid media type or media not found for media id %s", mediaID)
+			if errors.Is(err, db.ErrNoEntries) {
+				err = fmt.Errorf("ProcessMediaIDs: media not found for media id %s", mediaID)
+				return gtserror.NewErrorBadRequest(err, err.Error())
+			}
+			err = fmt.Errorf("ProcessMediaIDs: db error for media id %s", mediaID)
+			return gtserror.NewErrorInternalError(err)
 		}
 
 		if attachment.AccountID != thisAccountID {
-			return fmt.Errorf("ProcessMediaIDs: media with id %s does not belong to account %s", mediaID, thisAccountID)
+			err = fmt.Errorf("ProcessMediaIDs: media with id %s does not belong to account %s", mediaID, thisAccountID)
+			return gtserror.NewErrorBadRequest(err, err.Error())
 		}
 
 		if attachment.StatusID != "" || attachment.ScheduledStatusID != "" {
-			return fmt.Errorf("ProcessMediaIDs: media with id %s is already attached to a status", mediaID)
+			err = fmt.Errorf("ProcessMediaIDs: media with id %s is already attached to a status", mediaID)
+			return gtserror.NewErrorBadRequest(err, err.Error())
+		}
+
+		minDescriptionChars := config.GetMediaDescriptionMinChars()
+		if descriptionLength := len([]rune(attachment.Description)); descriptionLength < minDescriptionChars {
+			err = fmt.Errorf("ProcessMediaIDs: description too short! media description of at least %d chararacters is required but %d was provided for media with id %s", minDescriptionChars, descriptionLength, mediaID)
+			return gtserror.NewErrorBadRequest(err, err.Error())
 		}
 
 		attachments = append(attachments, attachment)
