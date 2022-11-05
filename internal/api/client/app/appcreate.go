@@ -31,8 +31,8 @@ import (
 
 // these consts are used to ensure users can't spam huge entries into our database
 const (
-	formFieldLen    = 64
-	formRedirectLen = 512
+	formFieldLen    = 1024
+	formRedirectLen = 2056
 )
 
 // AppsPOSTHandler swagger:operation POST /api/v1/apps appCreate
