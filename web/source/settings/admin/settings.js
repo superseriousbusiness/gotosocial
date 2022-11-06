@@ -37,6 +37,7 @@ const {
 
 module.exports = function AdminSettings() {
 	const dispatch = Redux.useDispatch();
+	const instance = Redux.useSelector(state => state.instances.adminSettings);
 
 	const [errorMsg, setError] = React.useState("");
 	const [statusMsg, setStatus] = React.useState("");
@@ -53,6 +54,23 @@ module.exports = function AdminSettings() {
 				id="title"
 				name="Title"
 				placeHolder="My GoToSocial instance"
+			/>
+
+			<div className="file-upload">
+				<h3>Instance thumbnail</h3>
+				<div>
+					<img className="preview avatar" src={instance.thumbnail} alt={instance.thumbnail ? `Thumbnail image for the instance` : "No instance thumbnail image set"} />
+					<File 
+						id="thumbnail"
+						fileType="image/*"
+					/>
+				</div>
+			</div>
+
+			<TextInput
+				id="thumbnail_description"
+				name="Instance thumbnail description"
+				placeHolder="A cute little picture of a smiling sloth."
 			/>
 
 			<TextArea
@@ -83,27 +101,6 @@ module.exports = function AdminSettings() {
 				placeHolder=""
 			/>
 
-			{/* <div className="file-upload">
-				<h3>Instance avatar</h3>
-				<div>
-					<img className="preview avatar" src={instance.avatar} alt={instance.avatar ? `Avatar image for the instance` : "No instance avatar image set"} />
-					<File 
-						id="avatar"
-						fileType="image/*"
-					/>
-				</div>
-			</div>
-
-			<div className="file-upload">
-				<h3>Instance header</h3>
-				<div>
-					<img className="preview header" src={instance.header} alt={instance.header ? `Header image for the instance` : "No instance header image set"} />
-					<File 
-						id="header"
-						fileType="image/*"
-					/>
-				</div>
-			</div> */}
 			<Submit onClick={updateSettings} label="Save" errorMsg={errorMsg} statusMsg={statusMsg} />
 		</div>
 	);

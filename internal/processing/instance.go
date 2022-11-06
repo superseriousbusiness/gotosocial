@@ -208,19 +208,35 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 		i.Terms = text.SanitizeHTML(*form.Terms) // html is OK in site terms, but we should sanitize it
 	}
 
-	// process avatar if provided
+	var updateInstanceAccount bool
+
+	// process instance avatar if provided
 	if form.Avatar != nil && form.Avatar.Size != 0 {
-		_, err := p.accountProcessor.UpdateAvatar(ctx, form.Avatar, ia.ID)
+		avatarInfo, err := p.accountProcessor.UpdateAvatar(ctx, form.Avatar, form.AvatarDescription, ia.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, "error processing avatar")
 		}
+		ia.AvatarMediaAttachmentID = avatarInfo.ID
+		ia.AvatarMediaAttachment = avatarInfo
+		updateInstanceAccount = true
 	}
 
-	// process header if provided
+	// process instance header if provided
 	if form.Header != nil && form.Header.Size != 0 {
-		_, err := p.accountProcessor.UpdateHeader(ctx, form.Header, ia.ID)
+		headerInfo, err := p.accountProcessor.UpdateHeader(ctx, form.Header, nil, ia.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, "error processing header")
+		}
+		ia.HeaderMediaAttachmentID = headerInfo.ID
+		ia.HeaderMediaAttachment = headerInfo
+		updateInstanceAccount = true
+	}
+
+	if updateInstanceAccount {
+		// if either avatar or header is updated, we need
+		// to update the instance account that stores them
+		if _, err := p.db.UpdateAccount(ctx, ia); err != nil {
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error updating instance account: %s", err))
 		}
 	}
 
