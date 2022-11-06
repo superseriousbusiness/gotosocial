@@ -26,6 +26,9 @@ import (
 	"net/netip"
 	"runtime"
 	"time"
+
+	"codeberg.org/gruf/go-bytesize"
+	"codeberg.org/gruf/go-cache/v2"
 )
 
 // ErrInvalidRequest is returned if a given HTTP request is invalid and cannot be performed.
@@ -42,8 +45,8 @@ var ErrBodyTooLarge = errors.New("body size too large")
 // configuration values passed to initialized http.Transport{}
 // and http.Client{}, along with httpclient.Client{} specific.
 type Config struct {
-	// MaxOpenConns limits the max number of concurrent open connections.
-	MaxOpenConns int
+	// MaxOpenConnsPerHost limits the max number of open connections to a host.
+	MaxOpenConnsPerHost int
 
 	// MaxIdleConns: see http.Transport{}.MaxIdleConns.
 	MaxIdleConns int
@@ -80,8 +83,9 @@ type Config struct {
 //     is available (context channels still respected)
 type Client struct {
 	client http.Client
-	rc     *requestQueue
-	bmax   int64
+	queue  cache.Cache[string, chan struct{}]
+	bmax   int64 // max response body size
+	cmax   int   // max open conns per host
 }
 
 // New returns a new instance of Client initialized using configuration.
@@ -94,20 +98,20 @@ func New(cfg Config) *Client {
 		Resolver:  &net.Resolver{},
 	}
 
-	if cfg.MaxOpenConns <= 0 {
+	if cfg.MaxOpenConnsPerHost <= 0 {
 		// By default base this value on GOMAXPROCS.
 		maxprocs := runtime.GOMAXPROCS(0)
-		cfg.MaxOpenConns = maxprocs * 10
+		cfg.MaxOpenConnsPerHost = maxprocs * 20
 	}
 
 	if cfg.MaxIdleConns <= 0 {
 		// By default base this value on MaxOpenConns
-		cfg.MaxIdleConns = cfg.MaxOpenConns * 10
+		cfg.MaxIdleConns = cfg.MaxOpenConnsPerHost * 10
 	}
 
 	if cfg.MaxBodySize <= 0 {
 		// By default set this to a reasonable 40MB
-		cfg.MaxBodySize = 40 * 1024 * 1024
+		cfg.MaxBodySize = 40 * bytesize.MiB
 	}
 
 	// Protect dialer with IP range sanitizer
@@ -118,10 +122,12 @@ func New(cfg Config) *Client {
 
 	// Prepare client fields
 	c.bmax = cfg.MaxBodySize
-	c.rc = &requestQueue{
-		maxOpenConns: cfg.MaxOpenConns,
-	}
+	c.queue = cache.New[string, chan struct{}]()
 	c.client.Timeout = cfg.Timeout
+
+	// Start cache sweep routines
+	c.queue.SetTTL(time.Minute*10, true)
+	_ = c.queue.Start(time.Second * 30)
 
 	// Set underlying HTTP client roundtripper
 	c.client.Transport = &http.Transport{
@@ -145,8 +151,8 @@ func New(cfg Config) *Client {
 // as the standard http.Client{}.Do() implementation except that response body will
 // be wrapped by an io.LimitReader() to limit response body sizes.
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
-	// request a spot in the wait queue...
-	wait, release := c.rc.getWaitSpot(req.Host, req.Method)
+	// Get host's wait queue
+	wait := c.wait(req.Host)
 
 	// ... and wait our turn
 	select {
@@ -167,7 +173,7 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 		// that connections may not be closed until response body is closed.
 		// The current implementation will reduce the viability of denial of
 		// service attacks, but if there are future issues heed this advice :]
-		defer release()
+		defer func() { <-wait }()
 	}
 
 	// Firstly, ensure this is a valid request
@@ -207,4 +213,24 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	}{rbody, cbody}
 
 	return rsp, nil
+}
+
+// wait acquires the 'wait' queue for the given host string, or allocates new.
+func (c *Client) wait(host string) chan struct{} {
+	// Look for an existing queue for host
+	queue, ok := c.queue.Get(host)
+	if ok {
+		return queue
+	}
+
+	// Allocate a new host queue
+	queue = make(chan struct{}, c.cmax)
+
+	// Attempt to cache this queue by host
+	if !c.queue.Put(host, queue) {
+		// Someone beat us to the punch...
+		queue, _ = c.queue.Get(host)
+	}
+
+	return queue
 }
