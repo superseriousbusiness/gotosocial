@@ -1820,3 +1820,27 @@ func GetAdvancedCookiesSamesite() string { return global.GetAdvancedCookiesSames
 // SetAdvancedCookiesSamesite safely sets the value for global configuration 'AdvancedCookiesSamesite' field
 func SetAdvancedCookiesSamesite(v string) { global.SetAdvancedCookiesSamesite(v) }
 
+// GetAdvancedRateLimitRequests safely fetches the Configuration value for state's 'AdvancedRateLimitRequests' field
+func (st *ConfigState) GetAdvancedRateLimitRequests() (v int) {
+	st.mutex.Lock()
+	v = st.config.AdvancedRateLimitRequests
+	st.mutex.Unlock()
+	return
+}
+
+// SetAdvancedRateLimitRequests safely sets the Configuration value for state's 'AdvancedRateLimitRequests' field
+func (st *ConfigState) SetAdvancedRateLimitRequests(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.AdvancedRateLimitRequests = v
+	st.reloadToViper()
+}
+
+// AdvancedRateLimitRequestsFlag returns the flag name for the 'AdvancedRateLimitRequests' field
+func AdvancedRateLimitRequestsFlag() string { return "advanced-rate-limit-requests" }
+
+// GetAdvancedRateLimitRequests safely fetches the value for global configuration 'AdvancedRateLimitRequests' field
+func GetAdvancedRateLimitRequests() int { return global.GetAdvancedRateLimitRequests() }
+
+// SetAdvancedRateLimitRequests safely sets the value for global configuration 'AdvancedRateLimitRequests' field
+func SetAdvancedRateLimitRequests(v int) { global.SetAdvancedRateLimitRequests(v) }
