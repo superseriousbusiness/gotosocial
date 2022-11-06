@@ -78,7 +78,7 @@ image: superseriousbusiness/gotosocial:0.3.1
 
 #### Host
 
-Change the `GTS_HOST` environment variable to the domain you are running GoToSocial on.
+Change the `GTS_HOST` environment variable to the domain you are running GoToSocial on. If you want your ActivityPub identity to be different than the host name, set the `GTS_ACCOUNT_DOMAIN` environment variable. For example, your `GTS_HOST` is `gts.example.org`, but you want your user to be `myuser@example.org`, instead of `myuser@gts.example.org`, you would get `GTS_ACCOUNT_DOMAIN` as `example.org`.
 
 #### User (optional / probably not necessary)
 
@@ -167,3 +167,8 @@ GoToSocial should now be running on your machine! To verify this, open your brow
 ## (Optional) Reverse Proxy
 
 If you want to run other webservers on port 443, or want to add an additional layer of security you might want to add [NGINX](https://nginx.org), [Traefik](https://doc.traefik.io/traefik/), or [Apache httpd](https://httpd.apache.org/) into your docker-compose to use as a reverse proxy.
+
+
+## (Optional) Quick Initialize User
+
+If you are deploying a single user install where shell access and/or executing commands on the container is complicated or undesirable, it is possible to initialize an admin user with a different `ENTRYPOINT`. Use `wget` to download the latest quickstart [docker-compose.yml](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/example/docker-compose-quickstart/docker-compose.yml) example and customize as needed.
