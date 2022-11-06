@@ -121,6 +121,7 @@ func AddServerFlags(cmd *cobra.Command) {
 
 		// Advanced flags
 		cmd.Flags().String(AdvancedCookiesSamesiteFlag(), cfg.AdvancedCookiesSamesite, fieldtag("AdvancedCookiesSamesite", "usage"))
+		cmd.Flags().Int(AdvancedRateLimitRequestsFlag(), cfg.AdvancedRateLimitRequests, fieldtag("AdvancedRateLimitRequests", "usage"))
 	})
 }
 
