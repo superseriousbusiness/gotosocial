@@ -28,7 +28,7 @@ import (
 	"time"
 
 	"codeberg.org/gruf/go-bytesize"
-	"codeberg.org/gruf/go-cache/v2"
+	"github.com/cornelk/hashmap"
 )
 
 // ErrInvalidRequest is returned if a given HTTP request is invalid and cannot be performed.
@@ -83,7 +83,7 @@ type Config struct {
 //     is available (context channels still respected)
 type Client struct {
 	client http.Client
-	queue  cache.TTLCache[string, chan struct{}]
+	queue  *hashmap.Map[string, chan struct{}]
 	bmax   int64 // max response body size
 	cmax   int   // max open conns per host
 }
@@ -111,7 +111,7 @@ func New(cfg Config) *Client {
 
 	if cfg.MaxBodySize <= 0 {
 		// By default set this to a reasonable 40MB
-		cfg.MaxBodySize = 40 * bytesize.MiB
+		cfg.MaxBodySize = int64(40 * bytesize.MiB)
 	}
 
 	// Protect dialer with IP range sanitizer
@@ -121,13 +121,10 @@ func New(cfg Config) *Client {
 	}).Sanitize
 
 	// Prepare client fields
-	c.bmax = cfg.MaxBodySize
 	c.client.Timeout = cfg.Timeout
-	c.queue.Init()
-
-	// Start cache sweep routines
-	c.queue.SetTTL(time.Minute*10, true)
-	_ = c.queue.Start(time.Second * 30)
+	c.cmax = cfg.MaxOpenConnsPerHost
+	c.bmax = cfg.MaxBodySize
+	c.queue = hashmap.New[string, chan struct{}]()
 
 	// Set underlying HTTP client roundtripper
 	c.client.Transport = &http.Transport{
@@ -217,19 +214,14 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 
 // wait acquires the 'wait' queue for the given host string, or allocates new.
 func (c *Client) wait(host string) chan struct{} {
-	// Acquire cache lock
-	c.queue.Lock()
-	defer c.queue.Unlock()
-
-	// Look for an existing queue for host
-	queue, ok := c.queue.GetUnsafe(host)
+	// Look for an existing queue
+	queue, ok := c.queue.Get(host)
 	if ok {
 		return queue
 	}
 
-	// Allocate a new host queue
-	queue = make(chan struct{}, c.cmax)
-	c.queue.Set(host, queue)
+	// Allocate a new host queue (or return a sneaky existing one).
+	queue, _ = c.queue.GetOrInsert(host, make(chan struct{}, c.cmax))
 
 	return queue
 }
