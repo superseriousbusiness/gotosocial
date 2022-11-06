@@ -33,8 +33,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
-var ErrNotSupported = errors.New("driver does not suppport functionality")
-var ErrAlreadyExists = errors.New("storage key already exists")
+var (
+	ErrNotSupported  = errors.New("driver does not suppport functionality")
+	ErrAlreadyExists = storage.ErrAlreadyExists
+)
 
 // Driver implements the functionality to store and retrieve blobs
 // (images,video,audio)
@@ -59,19 +61,19 @@ func AutoConfig() (Driver, error) {
 		}
 		return NewS3(mc, config.GetStorageS3BucketName()), nil
 	case "local":
-		storageBasePath := config.GetStorageLocalBasePath()
-		storage, err := kv.OpenDisk(storageBasePath, &storage.DiskConfig{
+		basePath := config.GetStorageLocalBasePath()
+		disk, err := storage.OpenDisk(basePath, &storage.DiskConfig{
 			// Put the store lockfile in the storage dir itself.
 			// Normally this would not be safe, since we could end up
 			// overwriting the lockfile if we store a file called 'store.lock'.
 			// However, in this case it's OK because the keys are set by
 			// GtS and not the user, so we know we're never going to overwrite it.
-			LockFile: path.Join(storageBasePath, "store.lock"),
+			LockFile: path.Join(basePath, "store.lock"),
 		})
 		if err != nil {
-			return nil, fmt.Errorf("error creating storage backend: %s", err)
+			return nil, fmt.Errorf("error openingdisk storage: %v", err)
 		}
-		return &Local{KVStore: storage}, nil
+		return &Local{kv.New(disk)}, nil
 	}
 	return nil, fmt.Errorf("invalid storage backend %s", config.GetStorageBackend())
 }

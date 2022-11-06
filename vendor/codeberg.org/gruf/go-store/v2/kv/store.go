@@ -38,10 +38,7 @@ func OpenBlock(path string, cfg *storage.BlockConfig) (*KVStore, error) {
 }
 
 func OpenMemory(overwrites bool) *KVStore {
-	return &KVStore{
-		mu: mutexes.NewMap(-1, -1),
-		st: storage.OpenMemory(100, overwrites),
-	}
+	return New(storage.OpenMemory(100, overwrites))
 }
 
 func OpenS3(endpoint string, bucket string, cfg *storage.S3Config) (*KVStore, error) {
@@ -55,6 +52,7 @@ func OpenS3(endpoint string, bucket string, cfg *storage.S3Config) (*KVStore, er
 	return OpenStorage(storage)
 }
 
+// OpenStorage will return a new KVStore instance based on Storage, performing an initial storage.Clean().
 func OpenStorage(storage storage.Storage) (*KVStore, error) {
 	// Perform initial storage clean
 	err := storage.Clean(context.Background())
@@ -63,10 +61,18 @@ func OpenStorage(storage storage.Storage) (*KVStore, error) {
 	}
 
 	// Return new KVStore
+	return New(storage), nil
+}
+
+// New will simply return a new KVStore instance based on Storage.
+func New(storage storage.Storage) *KVStore {
+	if storage == nil {
+		panic("nil storage")
+	}
 	return &KVStore{
 		mu: mutexes.NewMap(-1, -1),
 		st: storage,
-	}, nil
+	}
 }
 
 // RLock acquires a read-lock on supplied key, returning unlock function.

@@ -95,6 +95,31 @@ func GetApplicationName() string { return global.GetApplicationName() }
 // SetApplicationName safely sets the value for global configuration 'ApplicationName' field
 func SetApplicationName(v string) { global.SetApplicationName(v) }
 
+// GetLandingPageUser safely fetches the Configuration value for state's 'LandingPageUser' field
+func (st *ConfigState) GetLandingPageUser() (v string) {
+	st.mutex.Lock()
+	v = st.config.LandingPageUser
+	st.mutex.Unlock()
+	return
+}
+
+// SetLandingPageUser safely sets the Configuration value for state's 'LandingPageUser' field
+func (st *ConfigState) SetLandingPageUser(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.LandingPageUser = v
+	st.reloadToViper()
+}
+
+// LandingPageUserFlag returns the flag name for the 'LandingPageUser' field
+func LandingPageUserFlag() string { return "landing-page-user" }
+
+// GetLandingPageUser safely fetches the value for global configuration 'LandingPageUser' field
+func GetLandingPageUser() string { return global.GetLandingPageUser() }
+
+// SetLandingPageUser safely sets the value for global configuration 'LandingPageUser' field
+func SetLandingPageUser(v string) { global.SetLandingPageUser(v) }
+
 // GetConfigPath safely fetches the Configuration value for state's 'ConfigPath' field
 func (st *ConfigState) GetConfigPath() (v string) {
 	st.mutex.Lock()
@@ -1795,28 +1820,27 @@ func GetAdvancedCookiesSamesite() string { return global.GetAdvancedCookiesSames
 // SetAdvancedCookiesSamesite safely sets the value for global configuration 'AdvancedCookiesSamesite' field
 func SetAdvancedCookiesSamesite(v string) { global.SetAdvancedCookiesSamesite(v) }
 
-// GetLandingPageUser safely fetches the Configuration value for state's 'LandingPageUser' field
-func (st *ConfigState) GetLandingPageUser() (v string) {
+// GetAdvancedRateLimitRequests safely fetches the Configuration value for state's 'AdvancedRateLimitRequests' field
+func (st *ConfigState) GetAdvancedRateLimitRequests() (v int) {
 	st.mutex.Lock()
-	v = st.config.LandingPageUser
+	v = st.config.AdvancedRateLimitRequests
 	st.mutex.Unlock()
 	return
 }
 
-// SetLandingPageUser safely sets the Configuration value for state's 'LandingPageUser' field
-func (st *ConfigState) SetLandingPageUser(v string) {
+// SetAdvancedRateLimitRequests safely sets the Configuration value for state's 'AdvancedRateLimitRequests' field
+func (st *ConfigState) SetAdvancedRateLimitRequests(v int) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
-	st.config.LandingPageUser = v
+	st.config.AdvancedRateLimitRequests = v
 	st.reloadToViper()
 }
 
-// LandingPageUserFlag returns the flag name for the 'LandingPageUser' field
-func LandingPageUserFlag() string { return "landing-page-user" }
+// AdvancedRateLimitRequestsFlag returns the flag name for the 'AdvancedRateLimitRequests' field
+func AdvancedRateLimitRequestsFlag() string { return "advanced-rate-limit-requests" }
 
-// GetLandingPageUser safely fetches the value for global configuration 'LandingPageUser' field
-func GetLandingPageUser() string { return global.GetLandingPageUser() }
+// GetAdvancedRateLimitRequests safely fetches the value for global configuration 'AdvancedRateLimitRequests' field
+func GetAdvancedRateLimitRequests() int { return global.GetAdvancedRateLimitRequests() }
 
-// SetLandingPageUser safely sets the value for global configuration 'LandingPageUser' field
-func SetLandingPageUser(v string) { global.SetLandingPageUser(v) }
-
+// SetAdvancedRateLimitRequests safely sets the value for global configuration 'AdvancedRateLimitRequests' field
+func SetAdvancedRateLimitRequests(v int) { global.SetAdvancedRateLimitRequests(v) }

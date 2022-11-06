@@ -97,5 +97,6 @@ var Defaults = Configuration{
 	SyslogProtocol: "udp",
 	SyslogAddress:  "localhost:514",
 
-	AdvancedCookiesSamesite: "lax",
+	AdvancedCookiesSamesite:   "lax",
+	AdvancedRateLimitRequests: 1000, // per 5 minutes
 }

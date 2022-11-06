@@ -129,7 +129,8 @@ type Configuration struct {
 	AdminAccountPassword string `name:"password" usage:"the password to set for this account"`
 	AdminTransPath       string `name:"path" usage:"the path of the file to import from/export to"`
 
-	AdvancedCookiesSamesite string `name:"advanced-cookies-samesite" usage:"'strict' or 'lax', see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite"`
+	AdvancedCookiesSamesite   string `name:"advanced-cookies-samesite" usage:"'strict' or 'lax', see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite"`
+	AdvancedRateLimitRequests int    `name:"advanced-rate-limit-requests" usage:"Amount of HTTP requests to permit within a 5 minute window. 0 or less turns rate limiting off."`
 }
 
 // MarshalMap will marshal current Configuration into a map structure (useful for JSON).
