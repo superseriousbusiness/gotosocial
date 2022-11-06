@@ -104,7 +104,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	typeConverter := typeutils.NewConverter(dbService)
 
 	// Open the storage backend
-
 	storage, err := gtsstorage.AutoConfig()
 	if err != nil {
 		return fmt.Errorf("error creating storage backend: %w", err)
