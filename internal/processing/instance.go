@@ -240,8 +240,10 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 		}
 	}
 
-	if err := p.db.UpdateByID(ctx, i, i.ID, updatingColumns...); err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error updating instance %s: %s", host, err))
+	if len(updatingColumns) != 0 {
+		if err := p.db.UpdateByID(ctx, i, i.ID, updatingColumns...); err != nil {
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error updating instance %s: %s", host, err))
+		}
 	}
 
 	ai, err := p.tc.InstanceToAPIInstance(ctx, i)
