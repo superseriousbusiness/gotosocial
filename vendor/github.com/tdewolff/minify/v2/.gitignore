@@ -1,5 +1,5 @@
 release.sh
-dist/
+dist
 benchmarks/*
 !benchmarks/*.go
 !benchmarks/sample_*
@@ -27,3 +27,4 @@ bindings/py/minify.h
 bindings/py/minify.so
 bindings/py/tdewolff_minify.egg-info
 bindings/py/example/example.min.html
+bindings/py/dist
