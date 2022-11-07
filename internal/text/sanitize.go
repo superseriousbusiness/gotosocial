@@ -33,7 +33,8 @@ import (
 // Source: https://github.com/microcosm-cc/bluemonday#usage
 var regular *bluemonday.Policy = bluemonday.UGCPolicy().
 	RequireNoReferrerOnLinks(true).
-	RequireNoFollowOnLinks(true).
+	RequireNoFollowOnLinks(false).              // remove the global default which adds rel="nofollow" to all links including local relative
+	RequireNoFollowOnFullyQualifiedLinks(true). // add rel="nofollow" on all external links
 	RequireCrossOriginAnonymous(true).
 	AddTargetBlankToFullyQualifiedLinks(true).
 	AllowAttrs("class", "href", "rel").OnElements("a").
