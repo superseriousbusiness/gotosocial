@@ -20,7 +20,6 @@
 
 const Promise = require("bluebird");
 const React = require("react");
-const Redux = require("react-redux");
 const {Link} = require("wouter");
 const defaultValue = require('default-value');
 const prettierBytes = require("prettier-bytes");
@@ -166,28 +165,26 @@ function NewEmoji({emoji}) {
 	function onShortChange(e) {
 		let input = e.target.value;
 		setShortcode(input);
-		validateShortcode(input);
 	}
 
-	function validateShortcode(code) {
-		console.log("code: (%s)", code);
-		if (emojiCodes.has(code)) {
+	React.useEffect(() => {
+		if (emojiCodes.has(shortcode)) {
 			shortcodeRef.current.setCustomValidity("Shortcode already in use");
 		} else {
 			shortcodeRef.current.setCustomValidity("");
 		}
 		shortcodeRef.current.reportValidity();
-	}
+	}, [shortcode, shortcodeRef, emojiCodes]);
 
 	React.useEffect(() => {
 		if (shortcode.length == 0) {
 			if (file != undefined) {
 				let [name, _ext] = file.name.split(".");
 				setShortcode(name);
-				validateShortcode(name);
 			}
 		}
-	}, [file, shortcode]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [file]);
 
 	function uploadEmoji(e) {
 		if (e) {
