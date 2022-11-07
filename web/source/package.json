@@ -23,7 +23,7 @@
     "redux-devtools-extension": "^2.13.9",
     "redux-persist": "^6.0.0",
     "skulk": "^0.0.5",
-    "wouter": "^2.8.0-alpha.2"
+    "wouter": "^2.8.1"
   },
   "devDependencies": {
     "@babel/core": "^7.19.6",
