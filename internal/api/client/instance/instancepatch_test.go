@@ -246,6 +246,35 @@ func (suite *InstancePatchTestSuite) TestInstancePatch7() {
 	suite.Equal(`{"error":"Bad Request: mail: missing '@' or angle-addr"}`, string(b))
 }
 
+func (suite *InstancePatchTestSuite) TestInstancePatch8() {
+	requestBody, w, err := testrig.CreateMultipartFormData(
+		"thumbnail", "../../../../testrig/media/peglin.gif",
+		map[string]string{
+			"thumbnail_description": "A bouncing little green peglin.",
+		})
+	if err != nil {
+		panic(err)
+	}
+	bodyBytes := requestBody.Bytes()
+
+	// set up the request
+	recorder := httptest.NewRecorder()
+	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPath, bodyBytes, w.FormDataContentType(), true)
+
+	// call the handler
+	suite.instanceModule.InstanceUpdatePATCHHandler(ctx)
+
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	_, err = io.ReadAll(result.Body)
+	suite.NoError(err)
+
+	// suite.Equal(``, string(b))
+}
+
 func TestInstancePatchTestSuite(t *testing.T) {
 	suite.Run(t, &InstancePatchTestSuite{})
 }
