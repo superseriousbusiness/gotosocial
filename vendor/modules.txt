@@ -50,7 +50,7 @@ codeberg.org/gruf/go-runners
 # codeberg.org/gruf/go-sched v1.1.1
 ## explicit; go 1.19
 codeberg.org/gruf/go-sched
-# codeberg.org/gruf/go-store/v2 v2.0.5
+# codeberg.org/gruf/go-store/v2 v2.0.6
 ## explicit; go 1.19
 codeberg.org/gruf/go-store/v2/kv
 codeberg.org/gruf/go-store/v2/storage
