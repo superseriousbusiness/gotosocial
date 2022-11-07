@@ -19,6 +19,8 @@
 package instance_test
 
 import (
+	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -263,16 +265,22 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
 
 	// call the handler
 	suite.instanceModule.InstanceUpdatePATCHHandler(ctx)
-
 	suite.Equal(http.StatusOK, recorder.Code)
 
 	result := recorder.Result()
 	defer result.Body.Close()
 
-	_, err = io.ReadAll(result.Body)
+	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 
-	// suite.Equal(``, string(b))
+	instanceAccount, err := suite.db.GetInstanceAccount(context.Background(), "")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.NotEmpty(instanceAccount.AvatarMediaAttachmentID)
+
+	expectedInstanceResponse := fmt.Sprintf(`{"uri":"http://localhost:8080","account_domain":"localhost:8080","title":"GoToSocial Testrig Instance","description":"\u003cp\u003eThis is the GoToSocial testrig. It doesn't federate or anything.\u003c/p\u003e\u003cp\u003eWhen the testrig is shut down, all data on it will be deleted.\u003c/p\u003e\u003cp\u003eDon't use this in production!\u003c/p\u003e","short_description":"\u003cp\u003eThis is the GoToSocial testrig. It doesn't federate or anything.\u003c/p\u003e\u003cp\u003eWhen the testrig is shut down, all data on it will be deleted.\u003c/p\u003e\u003cp\u003eDon't use this in production!\u003c/p\u003e","email":"admin@example.org","version":"0.0.0-testrig","registrations":true,"approval_required":true,"invites_enabled":false,"configuration":{"statuses":{"max_characters":5000,"max_media_attachments":6,"characters_reserved_per_url":25},"media_attachments":{"supported_mime_types":["image/jpeg","image/gif","image/png"],"image_size_limit":10485760,"image_matrix_limit":16777216,"video_size_limit":41943040,"video_frame_rate_limit":60,"video_matrix_limit":16777216},"polls":{"max_options":6,"max_characters_per_option":50,"min_expiration":300,"max_expiration":2629746},"accounts":{"allow_custom_css":true},"emojis":{"emoji_size_limit":51200}},"urls":{"streaming_api":"wss://localhost:8080"},"stats":{"domain_count":2,"status_count":16,"user_count":4},"thumbnail":"http://localhost:8080/fileserver/%s/attachment/original/%s.gif","thumbnail_type":"image/gif","thumbnail_description":"A bouncing little green peglin.","contact_account":{"id":"01F8MH17FWEB39HZJ76B6VXSKF","username":"admin","acct":"admin","display_name":"","locked":false,"bot":false,"created_at":"2022-05-17T13:10:59.000Z","note":"","url":"http://localhost:8080/@admin","avatar":"","avatar_static":"","header":"http://localhost:8080/assets/default_header.png","header_static":"http://localhost:8080/assets/default_header.png","followers_count":1,"following_count":1,"statuses_count":4,"last_status_at":"2021-10-20T10:41:37.000Z","emojis":[],"fields":[],"enable_rss":true},"max_toot_chars":5000}`, instanceAccount.ID, instanceAccount.AvatarMediaAttachmentID)
+	suite.Equal(expectedInstanceResponse, string(b))
 }
 
 func TestInstancePatchTestSuite(t *testing.T) {
