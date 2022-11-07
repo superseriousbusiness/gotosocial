@@ -20,23 +20,37 @@
 
 const React = require("react");
 
-module.exports = function MutateButton({text, result}) {
-	let buttonText = text;
+module.exports = function useTextInput({name, Name}, {validator} = {}) {
+	const [text, setText] = React.useState("");
+	const textRef = React.useRef(null);
 
-	if (result.isLoading) {
-		buttonText = "Processing...";
+	function onChange(e) {
+		let input = e.target.value;
+		setText(input);
+
+		if (validator) {
+			validator(input);
+		}
 	}
 
-	return (<div>
-		{result.error && 
-			<section className="error">{result.error.status}: {result.error.data.error}</section>
+	function reset() {
+		setText("");
+	}
+
+	React.useEffect(() => {
+		if (validator) {
+			textRef.current.setCustomValidity(validator(text));
+			textRef.current.reportValidity();
 		}
-		<input
-			className="button"
-			type="submit"
-			disabled={result.isLoading}
-			value={buttonText}
-		/>
-	</div>
-	);
+	}, [text, textRef, validator]);
+
+	return [
+		onChange,
+		reset,
+		{
+			[name]: text,
+			[`${name}Ref`]: textRef,
+			[`set${Name}`]: setText
+		}
+	];
 };

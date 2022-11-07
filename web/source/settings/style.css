@@ -336,19 +336,6 @@ section.with-sidebar > div {
 			flex-direction: column;
 			justify-content: center;
 
-			div.form-field {
-				width: 100%;
-				display: flex;
-
-				span {
-					flex: 1 1 auto;
-					overflow: hidden;
-					text-overflow: ellipsis;
-					white-space: nowrap;
-					padding: 0.3rem 0;
-				}
-			}
-
 			h3 {
 				margin-top: 0;
 				margin-bottom: 0.5rem;
@@ -367,6 +354,20 @@ section.with-sidebar > div {
 
 .form-field label {
 	font-weight: bold;
+}
+
+.form-field.file {
+	width: 100%;
+	display: flex;
+}
+
+
+span.form-info {
+	flex: 1 1 auto;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	padding: 0.3rem 0;
 }
 
 .list {
