@@ -119,10 +119,13 @@ func (w *WorkerPool[MsgType]) Queue(msg MsgType) {
 	// Create new process function for msg
 	process := func(ctx context.Context) {
 		if err := w.process(ctx, msg); err != nil {
+			log.Errorf("%s %v", w.wtype, err)
+
 			log.WithFields(kv.Fields{
 				kv.Field{K: "type", V: w.wtype},
+				kv.Field{K: "error", V: err},
 				kv.Field{K: "msg", V: msg},
-			}...).Errorf("message processing error: %v", err)
+			}...).Error("message processing error")
 		}
 	}
 
