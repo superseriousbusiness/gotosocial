@@ -122,7 +122,6 @@ func (w *WorkerPool[MsgType]) Queue(msg MsgType) {
 			log.WithFields(kv.Fields{
 				kv.Field{K: "type", V: w.wtype},
 				kv.Field{K: "error", V: err},
-				kv.Field{K: "msg", V: msg},
 			}...).Error("message processing error")
 		}
 	}
@@ -133,7 +132,6 @@ func (w *WorkerPool[MsgType]) Queue(msg MsgType) {
 		log.WithFields(kv.Fields{
 			kv.Field{K: "type", V: w.wtype},
 			kv.Field{K: "queue", V: w.workers.Queue()},
-			kv.Field{K: "msg", V: msg},
 		}...).Warn("full worker queue")
 
 		// Block on enqueuing process func
