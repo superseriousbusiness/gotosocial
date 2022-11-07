@@ -20,6 +20,7 @@ package typeutils
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -674,6 +675,8 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 					avi, err := c.db.GetAttachmentByID(ctx, ia.AvatarMediaAttachmentID)
 					if err == nil {
 						ia.AvatarMediaAttachment = avi
+					} else if !errors.Is(err, db.ErrNoEntries) {
+						log.Errorf("InstanceToAPIInstance: error getting instance avatar attachment with id %s: %s", ia.AvatarMediaAttachmentID, err)
 					}
 				}
 
