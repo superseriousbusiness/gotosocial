@@ -31,7 +31,7 @@ const adminActions = require("../redux/reducers/instances").actions;
 const {
 	TextInput,
 	TextArea,
-	File
+	_File
 } = require("../components/form-fields").formFields(adminActions.setAdminSettingsVal, (state) => state.instances.adminSettings);
 
 module.exports = function AdminSettings() {

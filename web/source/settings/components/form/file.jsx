@@ -21,7 +21,7 @@
 const React = require("react");
 const prettierBytes = require("prettier-bytes");
 
-module.exports = function useFileInput({name, Name}, {
+module.exports = function useFileInput({name, _Name}, {
 	withPreview,
 	maxSize,
 	initialInfo = "no file selected"
