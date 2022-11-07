@@ -19,7 +19,6 @@
 "use strict";
 
 const { createSlice } = require("@reduxjs/toolkit");
-const defaultValue = require("default-value");
 
 function sortBlocks(blocks) {
 	return blocks.sort((a, b) => { // alphabetical sort

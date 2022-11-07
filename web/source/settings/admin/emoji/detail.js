@@ -45,7 +45,7 @@ module.exports = function EmojiDetailWrapped() {
 	</>);
 };
 
-function EmojiDetail({emoji, Form}) {
+function EmojiDetail({emoji}) {
 	if (emoji == undefined) {
 		return (<>
 			<Link to={base}>

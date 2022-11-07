@@ -18,7 +18,6 @@
 
 "use strict";
 
-const Promise = require("bluebird");
 const React = require("react");
 const Redux = require("react-redux");
 

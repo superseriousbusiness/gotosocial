@@ -94,7 +94,7 @@ function App() {
 				console.error(e);
 			});
 		}
-	}, []);
+	}, [loginState, dispatch]);
 
 	let ErrorElement = null;
 	if (errorMsg != undefined) {

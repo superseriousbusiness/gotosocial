@@ -18,8 +18,6 @@
 
 "use strict";
 
-const Promise = require("bluebird");
-
 const base = require("./base");
 
 const endpoints = (build) => ({

@@ -24,14 +24,12 @@ const d = require("dotty");
 
 const { APIError, AuthenticationError } = require("../errors");
 const { setInstanceInfo, setNamedInstanceInfo } = require("../../redux/reducers/instances").actions;
-const oauth = require("../../redux/reducers/oauth").actions;
 
 function apiCall(method, route, payload, type = "json") {
 	return function (dispatch, getState) {
 		const state = getState();
 		let base = state.oauth.instance;
 		let auth = state.oauth.token;
-		console.log(method, base, route, "auth:", auth != undefined);
 
 		return Promise.try(() => {
 			let url = new URL(base);
