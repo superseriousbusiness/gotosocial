@@ -28,7 +28,9 @@ import (
 	"time"
 
 	"codeberg.org/gruf/go-bytesize"
+	"codeberg.org/gruf/go-kv"
 	"github.com/cornelk/hashmap"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // ErrInvalidRequest is returned if a given HTTP request is invalid and cannot be performed.
@@ -151,14 +153,13 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	// Get host's wait queue
 	wait := c.wait(req.Host)
 
-	// ... and wait our turn
+	var ok bool
+
 	select {
-	case <-req.Context().Done():
-		// the request was canceled before we
-		// got to our turn: no need to release
-		return nil, req.Context().Err()
+	// Quickly try grab a spot
 	case wait <- struct{}{}:
 		// it's our turn!
+		ok = true
 
 		// NOTE:
 		// Ideally here we would set the slot release to happen either
@@ -171,6 +172,26 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 		// The current implementation will reduce the viability of denial of
 		// service attacks, but if there are future issues heed this advice :]
 		defer func() { <-wait }()
+	default:
+	}
+
+	if !ok {
+		// No spot acquired, log warning
+		log.WithFields(kv.Fields{
+			{K: "queue", V: len(wait)},
+			{K: "method", V: req.Method},
+			{K: "host", V: req.Host},
+			{K: "uri", V: req.URL.RequestURI()},
+		}...).Warn("full request queue")
+
+		select {
+		case <-req.Context().Done():
+			// the request was canceled before we
+			// got to our turn: no need to release
+			return nil, req.Context().Err()
+		case wait <- struct{}{}:
+			defer func() { <-wait }()
+		}
 	}
 
 	// Firstly, ensure this is a valid request

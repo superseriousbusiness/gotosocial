@@ -26,6 +26,7 @@ import (
 	"reflect"
 	"runtime"
 
+	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-runners"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
@@ -113,12 +114,25 @@ func (w *WorkerPool[MsgType]) SetProcessor(fn func(context.Context, MsgType) err
 
 // Queue will queue provided message to be processed with there's a free worker.
 func (w *WorkerPool[MsgType]) Queue(msg MsgType) {
-	log.Tracef("%s queueing message (queue=%d): %+v",
-		w.prefix, w.workers.Queue(), msg,
-	)
-	w.workers.Enqueue(func(ctx context.Context) {
+	log.Tracef("%s queueing message: %+v", w.prefix, msg)
+
+	// Create new process function for msg
+	process := func(ctx context.Context) {
 		if err := w.process(ctx, msg); err != nil {
 			log.Errorf("%s %v", w.prefix, err)
 		}
-	})
+	}
+
+	// Attempt a fast-enqueue of process
+	if !w.workers.EnqueueNow(process) {
+		// No spot acquired, log warning
+		log.WithFields(kv.Fields{
+			kv.Field{K: "type", V: w.prefix},
+			kv.Field{K: "queue", V: w.workers.Queue()},
+			kv.Field{K: "msg", V: msg},
+		}...).Warn("full worker queue")
+
+		// Block on enqueuing process func
+		w.workers.Enqueue(process)
+	}
 }
