@@ -19,13 +19,10 @@
 "use strict";
 
 const React = require("react");
-const Redux = require("react-redux");
 
 const { useRoute, Link, Redirect } = require("wouter");
 
-const adminActions = require("../../redux/reducers/admin").actions;
 const BackButton = require("../../components/back-button");
-const { formFields } = require("../../components/form-fields");
 
 const query = require("../../lib/query");
 
