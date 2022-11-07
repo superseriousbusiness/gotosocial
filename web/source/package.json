@@ -6,7 +6,7 @@
   "author": "f0x",
   "license": "AGPL-3.0",
   "dependencies": {
-    "@reduxjs/toolkit": "^1.8.6",
+    "@reduxjs/toolkit": "^1.9.0",
     "bluebird": "^3.7.2",
     "dotty": "^0.1.2",
     "is-valid-domain": "^0.1.6",
