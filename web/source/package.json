@@ -5,6 +5,11 @@
   "main": "index.js",
   "author": "f0x",
   "license": "AGPL-3.0",
+  "scripts": {
+    "lint": "eslint .",
+    "build": "node index.js",
+    "dev": "NODE_ENV=development node index.js"
+  },
   "dependencies": {
     "@reduxjs/toolkit": "^1.8.6",
     "bluebird": "^3.7.2",
