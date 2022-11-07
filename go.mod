@@ -30,7 +30,7 @@ require (
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/microcosm-cc/bluemonday v1.0.20
 	github.com/miekg/dns v1.1.50
-	github.com/minio/minio-go/v7 v7.0.37
+	github.com/minio/minio-go/v7 v7.0.43
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/oklog/ulid v1.3.1
 	github.com/robfig/cron/v3 v3.0.1
