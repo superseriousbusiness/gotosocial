@@ -35,13 +35,6 @@ function emptyBlock() {
 	};
 }
 
-function emptyEmojiForm() {
-	return {
-		id: Date.now(),
-		shortcode: ""
-	};
-}
-
 module.exports = createSlice({
 	name: "admin",
 	initialState: {
@@ -52,10 +45,7 @@ module.exports = createSlice({
 			exportType: "plain",
 			...emptyBlock()
 		},
-		newInstanceBlocks: {},
-		emoji: {},
-		emojiById: {},
-		newEmoji: emptyEmojiForm()
+		newInstanceBlocks: {}
 	},
 	reducers: {
 		setBlockedInstances: (state, { payload }) => {
@@ -105,34 +95,6 @@ module.exports = createSlice({
 			state.bulkBlock.list = Object.values(state.blockedInstances).map((entry) => {
 				return entry.domain;
 			}).join("\n");
-		},
-
-		setEmoji: (state, {payload}) => {
-			state.emoji = {};
-			payload.forEach((emoji) => {
-				if (emoji.category == undefined) {
-					emoji.category = "Unsorted";
-				}
-				state.emoji[emoji.category] = defaultValue(state.emoji[emoji.category], []);
-				state.emoji[emoji.category].push(emoji);
-				state.emojiById[emoji.id] = emoji;
-			});
-		},
-
-		updateNewEmojiVal: (state, { payload: [key, val] }) => {
-			state.newEmoji[key] = val;
-		},
-
-		addEmoji: (state, {payload: emoji}) => {
-			if (emoji.category == undefined) {
-				emoji.category = "Unsorted";
-			}
-			if (emoji.id == undefined) {
-				emoji.id = Date.now();
-			}
-			state.emoji[emoji.category] = defaultValue(state.emoji[emoji.category], []);
-			state.emoji[emoji.category].push(emoji);
-			state.emojiById[emoji.id] = emoji;
-		},
+		}
 	}
 });
