@@ -18,6 +18,8 @@
 
 "use strict";
 
+let a = require("does_not_exist");
+
 const Promise = require("bluebird");
 const React = require("react");
 const ReactDom = require("react-dom/client");
