@@ -54,7 +54,8 @@ steps:
       - name: yarn_cache
         path: /tmp/cache
     commands:
-      - yarn --frozen-lockfile --cache-folder /tmp/cache web/source
+      - cd web/source
+      - yarn --frozen-lockfile --cache-folder /tmp/cache
 
   - name: web-lint
     image: node:14-alpine
@@ -65,7 +66,8 @@ steps:
     depends_on:
       - web-setup
     commands:
-      - cd web/source && yarn run lint
+      - cd web/source
+      - yarn run lint
 
   - name: web-build
     image: node:14-alpine
@@ -76,7 +78,8 @@ steps:
     depends_on:
       - web-setup
     commands:
-      - cd web/source && yarn run build
+      - cd web/source
+      - yarn run build
 
   - name: snapshot
     image: superseriousbusiness/gotosocial-drone-build:0.0.7 # https://github.com/superseriousbusiness/gotosocial-drone-build
