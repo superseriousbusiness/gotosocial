@@ -135,7 +135,7 @@ github.com/go-playground/locales/currency
 # github.com/go-playground/universal-translator v0.18.0
 ## explicit; go 1.13
 github.com/go-playground/universal-translator
-# github.com/go-playground/validator/v10 v10.11.0
+# github.com/go-playground/validator/v10 v10.11.1
 ## explicit; go 1.13
 github.com/go-playground/validator/v10
 # github.com/go-xmlfmt/xmlfmt v0.0.0-20211206191508-7fd73a941850

@@ -21,7 +21,7 @@ require (
 	github.com/gin-contrib/sessions v0.0.5
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-fed/httpsig v1.1.0
-	github.com/go-playground/validator/v10 v10.11.0
+	github.com/go-playground/validator/v10 v10.11.1
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/feeds v1.1.1
 	github.com/gorilla/websocket v1.5.0
