@@ -11,6 +11,6 @@ updates:
       interval: "weekly"
 
   - package-ecosystem: "npm" # See documentation for possible values
-    directory: "/" # Location of package manifests
+    directory: "/web/source" # Location of package manifests
     schedule:
       interval: "weekly"
