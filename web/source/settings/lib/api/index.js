@@ -84,6 +84,10 @@ function apiCall(method, route, payload, type = "json") {
 	};
 }
 
+/*
+	Takes an object with (nested) keys, and transforms it into
+	a FormData object to be sent over the API
+*/
 function convertToForm(payload) {
 	const formData = new FormData();
 	Object.entries(payload).forEach(([key, val]) => {
