@@ -19,26 +19,22 @@
 "use strict";
 
 const React = require("react");
+const {Switch, Route} = require("wouter");
 
-module.exports = function ErrorFallback({error, resetErrorBoundary}) {
+const EmojiOverview = require("./overview");
+const EmojiDetail = require("./detail");
+
+const base = "/settings/admin/custom-emoji";
+
+module.exports = function CustomEmoji() {
 	return (
-		<div className="error">
-			<p>
-				{"An error occured, please report this on the "}
-				<a href="https://github.com/superseriousbusiness/gotosocial/issues">GoToSocial issue tracker</a>
-				{" or "}
-				<a href="https://matrix.to/#/#gotosocial-help:superseriousbusiness.org">Matrix support room</a>.
-				<br/>Include the details below:
-			</p>
-			<pre>
-				{error.name}: {error.message}
-			</pre>
-			<pre>
-				{error.stack}
-			</pre>
-			<p>
-				<button onClick={resetErrorBoundary}>Try again</button> or <a href="">refresh the page</a>
-			</p>
-		</div>
+		<>
+			<Switch>
+				<Route path={`${base}/:emojiId`}>
+					<EmojiDetail />
+				</Route>
+				<EmojiOverview />
+			</Switch>
+		</>
 	);
 };

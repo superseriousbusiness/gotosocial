@@ -261,12 +261,16 @@ section.login {
 }
 
 section.error {
+	word-break: break-word;
 	display: flex;
 	flex-direction: row;
 	align-items: center;
+	margin-bottom: 0.5rem;
+
 	span {
 		font-size: 2em;
 	}
+
 	pre {
 		border: 1px solid #ff000080;
 		margin-left: 1em;

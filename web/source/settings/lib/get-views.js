@@ -19,8 +19,7 @@
 "use strict";
 
 const React = require("react");
-const Redux = require("react-redux");
-const { Link, Route, Switch, Redirect } = require("wouter");
+const { Link, Route, Redirect } = require("wouter");
 const { ErrorBoundary } = require("react-error-boundary");
 
 const ErrorFallback = require("../components/error");

@@ -18,7 +18,6 @@
 
 "use strict";
 
-const Promise = require("bluebird");
 const React = require("react");
 const Redux = require("react-redux");
 
@@ -32,7 +31,7 @@ const adminActions = require("../redux/reducers/instances").actions;
 const {
 	TextInput,
 	TextArea,
-	File
+	_File
 } = require("../components/form-fields").formFields(adminActions.setAdminSettingsVal, (state) => state.instances.adminSettings);
 
 module.exports = function AdminSettings() {
