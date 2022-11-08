@@ -182,11 +182,15 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 	status := &statusDB{conn: conn, cache: cache.NewStatusCache()}
 	emoji := &emojiDB{conn: conn, cache: cache.NewEmojiCache()}
 	timeline := &timelineDB{conn: conn}
+	tombstone := &tombstoneDB{conn: conn}
 
 	// Setup DB cross-referencing
 	accounts.status = status
 	status.accounts = accounts
 	timeline.status = status
+
+	// Initialize db structs
+	tombstone.init()
 
 	ps := &DBService{
 		Account: accounts,
@@ -229,11 +233,8 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 			conn:  conn,
 			cache: userCache,
 		},
-		Tombstone: &tombstoneDB{
-			conn:  conn,
-			cache: cache.NewTombstoneCache(),
-		},
-		conn: conn,
+		Tombstone: tombstone,
+		conn:      conn,
 	}
 
 	// we can confidently return this useable service now

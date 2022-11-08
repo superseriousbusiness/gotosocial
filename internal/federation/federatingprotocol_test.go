@@ -265,7 +265,7 @@ func (suite *FederatingProtocolTestSuite) TestAuthenticatePostGoneNoTombstoneYet
 	suite.Equal(http.StatusAccepted, recorder.Code)
 
 	// there should be a tombstone in the db now for this account
-	exists, err := suite.db.TombstoneExists(ctx, "https://somewhere.mysterious/users/rest_in_piss#main-key")
+	exists, err := suite.db.TombstoneExistsWithURI(ctx, "https://somewhere.mysterious/users/rest_in_piss#main-key")
 	suite.NoError(err)
 	suite.True(exists)
 }

@@ -26,10 +26,15 @@ import (
 
 // Tombstone contains functionality for storing + retrieving tombstones for remote AP Activities + Objects.
 type Tombstone interface {
-	// TombstoneExists returns true if a tombstone with the given URI exists.
-	TombstoneExists(ctx context.Context, uri string) (bool, Error)
+	// GetTombstoneByURI attempts to fetch a tombstone by the given URI.
+	GetTombstoneByURI(ctx context.Context, uri string) (*gtsmodel.Tombstone, Error)
+
+	// TombstoneExistsWithURI returns true if a tombstone with the given URI exists.
+	TombstoneExistsWithURI(ctx context.Context, uri string) (bool, Error)
+
 	// PutTombstone creates a new tombstone in the database.
-	PutTombstone(ctx context.Context, tombstone *gtsmodel.Tombstone) (*gtsmodel.Tombstone, Error)
+	PutTombstone(ctx context.Context, tombstone *gtsmodel.Tombstone) Error
+
 	// DeleteTombstone deletes a tombstone with the given ID.
 	DeleteTombstone(ctx context.Context, id string) Error
 }

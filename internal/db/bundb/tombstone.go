@@ -20,55 +20,69 @@ package bundb
 
 import (
 	"context"
-	"errors"
+	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/uptrace/bun"
+
+	"codeberg.org/gruf/go-cache/v3/result"
 )
 
 type tombstoneDB struct {
 	conn  *DBConn
-	cache *cache.TombstoneCache
+	cache *result.Cache[*gtsmodel.Tombstone]
 }
 
-func (t *tombstoneDB) TombstoneExists(ctx context.Context, uri string) (bool, db.Error) {
-	if _, err := t.getTombstone(
-		ctx,
-		func() (*gtsmodel.Tombstone, bool) {
-			return t.cache.GetByURI(uri)
-		},
-		func(status *gtsmodel.Tombstone) error {
-			tombstone := &gtsmodel.Tombstone{}
-			return t.conn.
-				NewSelect().
-				Model(tombstone).
-				Where("? = ?", bun.Ident("tombstone.uri"), uri).
-				Scan(ctx)
-		},
-	); err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			// doesn't exist
-			return false, nil
+func (t *tombstoneDB) init() {
+	// Initialize tombstone result cache
+	t.cache = result.NewSized([]string{
+		"ID",
+		"URI",
+	}, func(t1 *gtsmodel.Tombstone) *gtsmodel.Tombstone {
+		t2 := new(gtsmodel.Tombstone)
+		*t2 = *t1
+		return t2
+	}, 1000)
+
+	// Set cache TTL and start sweep routine
+	t.cache.SetTTL(time.Minute*5, false)
+	t.cache.Start(time.Second * 10)
+}
+
+func (t *tombstoneDB) GetTombstoneByURI(ctx context.Context, uri string) (*gtsmodel.Tombstone, db.Error) {
+	return t.cache.Load("URI", func() (*gtsmodel.Tombstone, error) {
+		var tomb gtsmodel.Tombstone
+
+		q := t.conn.
+			NewSelect().
+			Model(&tomb).
+			Where("? = ?", bun.Ident("tombstone.uri"), uri)
+
+		if err := q.Scan(ctx); err != nil {
+			return nil, t.conn.ProcessError(err)
 		}
-		// there's a real error
-		return false, err
-	}
 
-	return true, nil
+		return &tomb, nil
+	}, uri)
 }
 
-func (t *tombstoneDB) PutTombstone(ctx context.Context, tombstone *gtsmodel.Tombstone) (*gtsmodel.Tombstone, db.Error) {
-	if _, err := t.conn.
-		NewInsert().
-		Model(tombstone).
-		Exec(ctx); err != nil {
-		return nil, t.conn.ProcessError(err)
+func (t *tombstoneDB) TombstoneExistsWithURI(ctx context.Context, uri string) (bool, db.Error) {
+	tomb, err := t.GetTombstoneByURI(ctx, uri)
+	if err == db.ErrNoEntries {
+		err = nil
 	}
+	return (tomb != nil), err
+}
 
-	t.cache.Put(tombstone)
-	return tombstone, nil
+func (t *tombstoneDB) PutTombstone(ctx context.Context, tombstone *gtsmodel.Tombstone) db.Error {
+	return t.cache.Store(tombstone, func() error {
+		_, err := t.conn.
+			NewInsert().
+			Model(tombstone).
+			Exec(ctx)
+		return t.conn.ProcessError(err)
+	})
 }
 
 func (t *tombstoneDB) DeleteTombstone(ctx context.Context, id string) db.Error {
@@ -80,25 +94,8 @@ func (t *tombstoneDB) DeleteTombstone(ctx context.Context, id string) db.Error {
 		return t.conn.ProcessError(err)
 	}
 
-	t.cache.Invalidate(id)
+	// Invalidate from cache by ID
+	t.cache.Invalidate("ID", id)
+
 	return nil
-}
-
-func (t *tombstoneDB) getTombstone(ctx context.Context, cacheGet func() (*gtsmodel.Tombstone, bool), dbQuery func(*gtsmodel.Tombstone) error) (*gtsmodel.Tombstone, db.Error) {
-	// Attempt to fetch cached tombstone
-	tombstone, cached := cacheGet()
-
-	if !cached {
-		tombstone = &gtsmodel.Tombstone{}
-
-		// Not cached! Perform database query
-		if err := dbQuery(tombstone); err != nil {
-			return nil, t.conn.ProcessError(err)
-		}
-
-		// Place in the cache
-		t.cache.Put(tombstone)
-	}
-
-	return tombstone, nil
 }
