@@ -89,8 +89,8 @@ func acquireState(state uint8, lt uint8) (uint8, bool) {
 // awaiting a permissible state (.e.g no key write locks allowed when the
 // map is read locked).
 type MutexMap struct {
-	qpool pool
-	queue []*sync.Mutex
+	queue *sync.WaitGroup
+	qucnt int32
 
 	mumap map[string]*rwmutex
 	mpool pool
@@ -118,17 +118,8 @@ func NewMap(max, wake int32) MutexMap {
 	}
 
 	return MutexMap{
-		qpool: pool{
-			alloc: func() interface{} {
-				return &sync.Mutex{}
-			},
-		},
+		queue: &sync.WaitGroup{},
 		mumap: make(map[string]*rwmutex, max),
-		mpool: pool{
-			alloc: func() interface{} {
-				return &rwmutex{}
-			},
-		},
 		maxmu: max,
 		wake:  wake,
 	}
@@ -170,36 +161,26 @@ func (mm *MutexMap) SET(max, wake int32) (int32, int32) {
 
 // spinLock will wait (using a mutex to sleep thread) until conditional returns true.
 func (mm *MutexMap) spinLock(cond func() bool) {
-	var mu *sync.Mutex
-
 	for {
 		// Acquire map lock
 		mm.mapmu.Lock()
 
 		if cond() {
-			// Release mu if needed
-			if mu != nil {
-				mm.qpool.Release(mu)
-			}
 			return
 		}
 
-		// Alloc mu if needed
-		if mu == nil {
-			v := mm.qpool.Acquire()
-			mu = v.(*sync.Mutex)
-		}
+		// Current queue ptr
+		queue := mm.queue
 
 		// Queue ourselves
-		mm.queue = append(mm.queue, mu)
-		mu.Lock()
+		queue.Add(1)
+		mm.qucnt++
 
 		// Unlock map
 		mm.mapmu.Unlock()
 
 		// Wait on notify
-		mu.Lock()
-		mu.Unlock()
+		mm.queue.Wait()
 	}
 }
 
@@ -236,9 +217,8 @@ func (mm *MutexMap) lock(key string, lt uint8) func() {
 	if !ok {
 		// No mutex found for key
 
-		// Alloc from pool
-		v := mm.mpool.Acquire()
-		mu = v.(*rwmutex)
+		// Alloc mu from pool
+		mu = mm.mpool.Acquire()
 		mm.mumap[key] = mu
 
 		// Set our key
@@ -301,13 +281,12 @@ func (mm *MutexMap) cleanup() {
 
 	go func() {
 		if wakemod == 0 {
-			// Notify queued routines
-			for _, mu := range mm.queue {
-				mu.Unlock()
-			}
+			// Release queued goroutines
+			mm.queue.Add(-int(mm.qucnt))
 
-			// Reset queue
-			mm.queue = mm.queue[:0]
+			// Allocate new queue and reset
+			mm.queue = &sync.WaitGroup{}
+			mm.qucnt = 0
 		}
 
 		if mm.count == 0 {
@@ -323,7 +302,6 @@ func (mm *MutexMap) cleanup() {
 			mm.evict = mm.evict[:0]
 			mm.state = stateUnlockd
 			mm.mpool.GC()
-			mm.qpool.GC()
 		}
 
 		// Unlock map
@@ -412,9 +390,8 @@ func (st *LockState) lock(key string, lt uint8) func() {
 	if !ok {
 		// No mutex found for key
 
-		// Alloc from pool
-		v := st.mmap.mpool.Acquire()
-		mu = v.(*rwmutex)
+		// Alloc mu from pool
+		mu = st.mmap.mpool.Acquire()
 		st.mmap.mumap[key] = mu
 
 		// Set our key

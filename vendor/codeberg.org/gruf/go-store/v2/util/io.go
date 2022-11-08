@@ -48,6 +48,7 @@ func NopWriteCloser(w io.Writer) io.WriteCloser {
 }
 
 // ReadCloserWithCallback adds a customizable callback to be called upon Close() of a supplied io.ReadCloser.
+// Note that the callback will never be called more than once, after execution this will remove the func reference.
 func ReadCloserWithCallback(rc io.ReadCloser, cb func()) io.ReadCloser {
 	return &callbackReadCloser{
 		ReadCloser: rc,
@@ -56,6 +57,7 @@ func ReadCloserWithCallback(rc io.ReadCloser, cb func()) io.ReadCloser {
 }
 
 // WriteCloserWithCallback adds a customizable callback to be called upon Close() of a supplied io.WriteCloser.
+// Note that the callback will never be called more than once, after execution this will remove the func reference.
 func WriteCloserWithCallback(wc io.WriteCloser, cb func()) io.WriteCloser {
 	return &callbackWriteCloser{
 		WriteCloser: wc,
@@ -80,7 +82,11 @@ type callbackReadCloser struct {
 }
 
 func (c *callbackReadCloser) Close() error {
-	defer c.callback()
+	if c.callback != nil {
+		cb := c.callback
+		c.callback = nil
+		defer cb()
+	}
 	return c.ReadCloser.Close()
 }
 
@@ -91,6 +97,10 @@ type callbackWriteCloser struct {
 }
 
 func (c *callbackWriteCloser) Close() error {
-	defer c.callback()
+	if c.callback != nil {
+		cb := c.callback
+		c.callback = nil
+		defer cb()
+	}
 	return c.WriteCloser.Close()
 }
