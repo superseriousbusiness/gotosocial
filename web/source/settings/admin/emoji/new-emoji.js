@@ -40,7 +40,7 @@ module.exports = function NewEmojiForm({emoji}) {
 
 	const [onFileChange, resetFile, {image, imageURL, imageInfo}] = useFileInput("image", {
 		withPreview: true,
-		maxSize: 50 * 1000
+		maxSize: 50 * 1024
 	});
 
 	const [onShortcodeChange, resetShortcode, {shortcode, setShortcode, shortcodeRef}] = useTextInput("shortcode", {
