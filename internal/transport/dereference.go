@@ -20,6 +20,7 @@ package transport
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -29,6 +30,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
+
+var ErrGone = errors.New("gone")
 
 func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, error) {
 	// if the request is to us, we can shortcut for certain URIs rather than going through
@@ -68,6 +71,9 @@ func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, erro
 
 	// Check for an expected status code
 	if rsp.StatusCode != http.StatusOK {
+		if rsp.StatusCode == http.StatusGone {
+			return nil, ErrGone
+		}
 		return nil, fmt.Errorf("GET request to %s failed (%d): %s", iriStr, rsp.StatusCode, rsp.Status)
 	}
 

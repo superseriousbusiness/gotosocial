@@ -88,6 +88,7 @@ type DBService struct {
 	db.Status
 	db.Timeline
 	db.User
+	db.Tombstone
 	conn *DBConn
 }
 
@@ -227,6 +228,10 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 		User: &userDB{
 			conn:  conn,
 			cache: userCache,
+		},
+		Tombstone: &tombstoneDB{
+			conn:  conn,
+			cache: cache.NewTombstoneCache(),
 		},
 		conn: conn,
 	}

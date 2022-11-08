@@ -161,3 +161,16 @@ func NewErrorUnprocessableEntity(original error, helpText ...string) WithCode {
 		code:     http.StatusUnprocessableEntity,
 	}
 }
+
+// NewErrorGone returns an ErrorWithCode 410 with the given original error and optional help text.
+func NewErrorGone(original error, helpText ...string) WithCode {
+	safe := http.StatusText(http.StatusGone)
+	if helpText != nil {
+		safe = safe + ": " + strings.Join(helpText, ": ")
+	}
+	return withCode{
+		original: original,
+		safe:     errors.New(safe),
+		code:     http.StatusGone,
+	}
+}
