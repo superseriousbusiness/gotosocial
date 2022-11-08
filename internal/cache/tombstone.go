@@ -56,7 +56,7 @@ func (c *TombstoneCache) GetByURI(uri string) (*gtsmodel.Tombstone, bool) {
 }
 
 func (c *TombstoneCache) Put(tombstone *gtsmodel.Tombstone) {
-	c.cache.Put(tombstone.ID, tombstone)
+	c.cache.Put(tombstone.ID, copyTombstone(tombstone))
 }
 
 func (c *TombstoneCache) Invalidate(id string) {
