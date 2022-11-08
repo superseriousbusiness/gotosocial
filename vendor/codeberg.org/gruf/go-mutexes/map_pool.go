@@ -2,34 +2,33 @@ package mutexes
 
 // pool is a very simply memory pool.
 type pool struct {
-	current []interface{}
-	victim  []interface{}
-	alloc   func() interface{}
+	current []*rwmutex
+	victim  []*rwmutex
 }
 
-// Acquire will returns a sync.RWMutex from pool (or alloc new).
-func (p *pool) Acquire() interface{} {
+// Acquire will returns a rwmutex from pool (or alloc new).
+func (p *pool) Acquire() *rwmutex {
 	// First try the current queue
 	if l := len(p.current) - 1; l >= 0 {
-		v := p.current[l]
+		mu := p.current[l]
 		p.current = p.current[:l]
-		return v
+		return mu
 	}
 
 	// Next try the victim queue.
 	if l := len(p.victim) - 1; l >= 0 {
-		v := p.victim[l]
+		mu := p.victim[l]
 		p.victim = p.victim[:l]
-		return v
+		return mu
 	}
 
 	// Lastly, alloc new.
-	return p.alloc()
+	return &rwmutex{}
 }
 
 // Release places a sync.RWMutex back in the pool.
-func (p *pool) Release(v interface{}) {
-	p.current = append(p.current, v)
+func (p *pool) Release(mu *rwmutex) {
+	p.current = append(p.current, mu)
 }
 
 // GC will clear out unused entries from the pool.

@@ -10,11 +10,12 @@ require (
 	codeberg.org/gruf/go-errors/v2 v2.0.2
 	codeberg.org/gruf/go-kv v1.5.2
 	codeberg.org/gruf/go-logger/v2 v2.2.1
-	codeberg.org/gruf/go-mutexes v1.1.3
+	codeberg.org/gruf/go-mutexes v1.1.4
 	codeberg.org/gruf/go-runners v1.3.1
-	codeberg.org/gruf/go-store/v2 v2.0.5
+	codeberg.org/gruf/go-store/v2 v2.0.7
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/coreos/go-oidc/v3 v3.4.0
+	github.com/cornelk/hashmap v1.0.8
 	github.com/disintegration/imaging v1.6.2
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-contrib/gzip v0.0.6
@@ -28,7 +29,7 @@ require (
 	github.com/h2non/filetype v1.1.3
 	github.com/jackc/pgconn v1.13.0
 	github.com/jackc/pgx/v4 v4.17.2
-	github.com/microcosm-cc/bluemonday v1.0.20
+	github.com/microcosm-cc/bluemonday v1.0.21
 	github.com/miekg/dns v1.1.50
 	github.com/minio/minio-go/v7 v7.0.43
 	github.com/mitchellh/mapstructure v1.5.0
@@ -36,8 +37,8 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/spf13/cobra v1.6.1
-	github.com/spf13/viper v1.13.0
-	github.com/stretchr/testify v1.8.0
+	github.com/spf13/viper v1.14.0
+	github.com/stretchr/testify v1.8.1
 	github.com/superseriousbusiness/activity v1.2.1-gts
 	github.com/superseriousbusiness/exif-terminator v0.4.0
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB
@@ -49,8 +50,8 @@ require (
 	github.com/wagslane/go-password-validator v0.3.0
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
-	golang.org/x/net v0.0.0-20220909164309-bea034e7d591
-	golang.org/x/oauth2 v0.0.0-20220822191816-0ebed06d0094
+	golang.org/x/net v0.0.0-20221014081412-f15817d10f9b
+	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783
 	golang.org/x/text v0.4.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
 	modernc.org/sqlite v1.18.2
@@ -67,7 +68,6 @@ require (
 	codeberg.org/gruf/go-pools v1.1.0 // indirect
 	codeberg.org/gruf/go-sched v1.1.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/cornelk/hashmap v1.0.8 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dsoprea/go-exif/v3 v3.0.0-20210625224831-a6301f85c82b // indirect
 	github.com/dsoprea/go-iptc v0.0.0-20200610044640-bc9ca208b413 // indirect
@@ -76,7 +76,7 @@ require (
 	github.com/dsoprea/go-png-image-structure/v2 v2.0.0-20210512210324-29b889a6093d // indirect
 	github.com/dsoprea/go-utility/v2 v2.0.0-20200717064901-2fccff4aa15e // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
-	github.com/fsnotify/fsnotify v1.5.4 // indirect
+	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-errors/errors v1.4.1 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
