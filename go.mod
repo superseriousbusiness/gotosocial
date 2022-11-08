@@ -15,6 +15,7 @@ require (
 	codeberg.org/gruf/go-store/v2 v2.0.7
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/coreos/go-oidc/v3 v3.4.0
+	github.com/cornelk/hashmap v1.0.8
 	github.com/disintegration/imaging v1.6.2
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-contrib/gzip v0.0.6
@@ -67,7 +68,6 @@ require (
 	codeberg.org/gruf/go-pools v1.1.0 // indirect
 	codeberg.org/gruf/go-sched v1.1.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/cornelk/hashmap v1.0.8 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dsoprea/go-exif/v3 v3.0.0-20210625224831-a6301f85c82b // indirect
 	github.com/dsoprea/go-iptc v0.0.0-20200610044640-bc9ca208b413 // indirect

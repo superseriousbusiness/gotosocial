@@ -26,6 +26,11 @@ import (
 	"net/netip"
 	"runtime"
 	"time"
+
+	"codeberg.org/gruf/go-bytesize"
+	"codeberg.org/gruf/go-kv"
+	"github.com/cornelk/hashmap"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // ErrInvalidRequest is returned if a given HTTP request is invalid and cannot be performed.
@@ -42,8 +47,8 @@ var ErrBodyTooLarge = errors.New("body size too large")
 // configuration values passed to initialized http.Transport{}
 // and http.Client{}, along with httpclient.Client{} specific.
 type Config struct {
-	// MaxOpenConns limits the max number of concurrent open connections.
-	MaxOpenConns int
+	// MaxOpenConnsPerHost limits the max number of open connections to a host.
+	MaxOpenConnsPerHost int
 
 	// MaxIdleConns: see http.Transport{}.MaxIdleConns.
 	MaxIdleConns int
@@ -80,8 +85,9 @@ type Config struct {
 //     is available (context channels still respected)
 type Client struct {
 	client http.Client
-	rc     *requestQueue
-	bmax   int64
+	queue  *hashmap.Map[string, chan struct{}]
+	bmax   int64 // max response body size
+	cmax   int   // max open conns per host
 }
 
 // New returns a new instance of Client initialized using configuration.
@@ -94,20 +100,20 @@ func New(cfg Config) *Client {
 		Resolver:  &net.Resolver{},
 	}
 
-	if cfg.MaxOpenConns <= 0 {
+	if cfg.MaxOpenConnsPerHost <= 0 {
 		// By default base this value on GOMAXPROCS.
 		maxprocs := runtime.GOMAXPROCS(0)
-		cfg.MaxOpenConns = maxprocs * 10
+		cfg.MaxOpenConnsPerHost = maxprocs * 20
 	}
 
 	if cfg.MaxIdleConns <= 0 {
 		// By default base this value on MaxOpenConns
-		cfg.MaxIdleConns = cfg.MaxOpenConns * 10
+		cfg.MaxIdleConns = cfg.MaxOpenConnsPerHost * 10
 	}
 
 	if cfg.MaxBodySize <= 0 {
 		// By default set this to a reasonable 40MB
-		cfg.MaxBodySize = 40 * 1024 * 1024
+		cfg.MaxBodySize = int64(40 * bytesize.MiB)
 	}
 
 	// Protect dialer with IP range sanitizer
@@ -117,11 +123,10 @@ func New(cfg Config) *Client {
 	}).Sanitize
 
 	// Prepare client fields
-	c.bmax = cfg.MaxBodySize
-	c.rc = &requestQueue{
-		maxOpenConns: cfg.MaxOpenConns,
-	}
 	c.client.Timeout = cfg.Timeout
+	c.cmax = cfg.MaxOpenConnsPerHost
+	c.bmax = cfg.MaxBodySize
+	c.queue = hashmap.New[string, chan struct{}]()
 
 	// Set underlying HTTP client roundtripper
 	c.client.Transport = &http.Transport{
@@ -145,17 +150,16 @@ func New(cfg Config) *Client {
 // as the standard http.Client{}.Do() implementation except that response body will
 // be wrapped by an io.LimitReader() to limit response body sizes.
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
-	// request a spot in the wait queue...
-	wait, release := c.rc.getWaitSpot(req.Host, req.Method)
+	// Get host's wait queue
+	wait := c.wait(req.Host)
 
-	// ... and wait our turn
+	var ok bool
+
 	select {
-	case <-req.Context().Done():
-		// the request was canceled before we
-		// got to our turn: no need to release
-		return nil, req.Context().Err()
+	// Quickly try grab a spot
 	case wait <- struct{}{}:
 		// it's our turn!
+		ok = true
 
 		// NOTE:
 		// Ideally here we would set the slot release to happen either
@@ -167,7 +171,27 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 		// that connections may not be closed until response body is closed.
 		// The current implementation will reduce the viability of denial of
 		// service attacks, but if there are future issues heed this advice :]
-		defer release()
+		defer func() { <-wait }()
+	default:
+	}
+
+	if !ok {
+		// No spot acquired, log warning
+		log.WithFields(kv.Fields{
+			{K: "queue", V: len(wait)},
+			{K: "method", V: req.Method},
+			{K: "host", V: req.Host},
+			{K: "uri", V: req.URL.RequestURI()},
+		}...).Warn("full request queue")
+
+		select {
+		case <-req.Context().Done():
+			// the request was canceled before we
+			// got to our turn: no need to release
+			return nil, req.Context().Err()
+		case wait <- struct{}{}:
+			defer func() { <-wait }()
+		}
 	}
 
 	// Firstly, ensure this is a valid request
@@ -207,4 +231,18 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	}{rbody, cbody}
 
 	return rsp, nil
+}
+
+// wait acquires the 'wait' queue for the given host string, or allocates new.
+func (c *Client) wait(host string) chan struct{} {
+	// Look for an existing queue
+	queue, ok := c.queue.Get(host)
+	if ok {
+		return queue
+	}
+
+	// Allocate a new host queue (or return a sneaky existing one).
+	queue, _ = c.queue.GetOrInsert(host, make(chan struct{}, c.cmax))
+
+	return queue
 }
