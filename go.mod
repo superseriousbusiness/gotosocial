@@ -29,7 +29,7 @@ require (
 	github.com/h2non/filetype v1.1.3
 	github.com/jackc/pgconn v1.13.0
 	github.com/jackc/pgx/v4 v4.17.2
-	github.com/microcosm-cc/bluemonday v1.0.20
+	github.com/microcosm-cc/bluemonday v1.0.21
 	github.com/miekg/dns v1.1.50
 	github.com/minio/minio-go/v7 v7.0.43
 	github.com/mitchellh/mapstructure v1.5.0
@@ -50,7 +50,7 @@ require (
 	github.com/wagslane/go-password-validator v0.3.0
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
-	golang.org/x/net v0.0.0-20220909164309-bea034e7d591
+	golang.org/x/net v0.0.0-20221002022538-bcab6841153b
 	golang.org/x/oauth2 v0.0.0-20220822191816-0ebed06d0094
 	golang.org/x/text v0.4.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
