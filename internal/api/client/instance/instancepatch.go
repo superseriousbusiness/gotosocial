@@ -20,11 +20,13 @@ package instance
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -89,14 +91,19 @@ import (
 //		maximum: 5000
 //		allowEmptyValue: true
 //	-
-//		name: avatar
+//		name: thumbnail
 //		in: formData
-//		description: Avatar of the instance.
+//		description: Thumbnail image to use for the instance.
 //		type: file
+//	-
+//		name: thumbnail_description
+//		in: formData
+//		description: Image description of the submitted instance thumbnail.
+//		type: string
 //	-
 //		name: header
 //		in: formData
-//		description: Header of the instance.
+//		description: Header image to use for the instance.
 //		type: file
 //
 //	security:
@@ -144,8 +151,7 @@ func (m *Module) InstanceUpdatePATCHHandler(c *gin.Context) {
 		return
 	}
 
-	if form.Title == nil && form.ContactUsername == nil && form.ContactEmail == nil && form.ShortDescription == nil && form.Description == nil && form.Terms == nil && form.Avatar == nil && form.Header == nil {
-		err := errors.New("empty form submitted")
+	if err := validateInstanceUpdate(form); err != nil {
 		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
@@ -157,4 +163,36 @@ func (m *Module) InstanceUpdatePATCHHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, i)
+}
+
+func validateInstanceUpdate(form *model.InstanceSettingsUpdateRequest) error {
+	if form.Title == nil &&
+		form.ContactUsername == nil &&
+		form.ContactEmail == nil &&
+		form.ShortDescription == nil &&
+		form.Description == nil &&
+		form.Terms == nil &&
+		form.Avatar == nil &&
+		form.AvatarDescription == nil &&
+		form.Header == nil {
+		return errors.New("empty form submitted")
+	}
+
+	maxImageSize := config.GetMediaImageMaxSize()
+	maxDescriptionChars := config.GetMediaDescriptionMaxChars()
+
+	// validate avatar if present
+	if form.Avatar != nil {
+		if size := form.Avatar.Size; size > int64(maxImageSize) {
+			return fmt.Errorf("file size limit exceeded: limit is %d bytes but desired instance avatar was %d bytes", maxImageSize, size)
+		}
+
+		if form.AvatarDescription != nil {
+			if length := len([]rune(*form.AvatarDescription)); length > maxDescriptionChars {
+				return fmt.Errorf("avatar description length must be less than %d characters (inclusive), but provided avatar description was %d chars", maxDescriptionChars, length)
+			}
+		}
+	}
+
+	return nil
 }
