@@ -77,6 +77,12 @@ type Instance struct {
 	// URL of the instance avatar/banner image.
 	// example: https://example.org/files/instance/thumbnail.jpeg
 	Thumbnail string `json:"thumbnail"`
+	// MIME type of the instance thumbnail.
+	// example: image/png
+	ThumbnailType string `json:"thumbnail_type,omitempty"`
+	// Description of the instance thumbnail.
+	// example: picture of a cute lil' friendly sloth
+	ThumbnailDescription string `json:"thumbnail_description,omitempty"`
 	// Contact account for the instance.
 	ContactAccount *Account `json:"contact_account,omitempty"`
 	// Maximum allowed length of a post on this instance, in characters.
@@ -221,7 +227,9 @@ type InstanceSettingsUpdateRequest struct {
 	// Terms and conditions of the instance, max 5,000 chars. HTML formatting accepted.
 	Terms *string `form:"terms" json:"terms" xml:"terms"`
 	// Image to use as the instance thumbnail.
-	Avatar *multipart.FileHeader `form:"avatar" json:"avatar" xml:"avatar"`
+	Avatar *multipart.FileHeader `form:"thumbnail" json:"thumbnail" xml:"thumbnail"`
+	// Image description for the instance avatar.
+	AvatarDescription *string `form:"thumbnail_description" json:"thumbnail_description" xml:"thumbnail_description"`
 	// Image to use as the instance header.
 	Header *multipart.FileHeader `form:"header" json:"header" xml:"header"`
 }

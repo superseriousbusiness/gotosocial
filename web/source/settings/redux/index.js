@@ -18,18 +18,20 @@
 
 "use strict";
 
-const { createStore, combineReducers, applyMiddleware } = require("redux");
-const { persistStore, persistReducer } = require("redux-persist");
-const thunk = require("redux-thunk").default;
-const { composeWithDevTools } = require("redux-devtools-extension");
+const { combineReducers } = require("redux");
+const { configureStore } = require("@reduxjs/toolkit");
+const {
+	persistStore,
+	persistReducer,
+	FLUSH,
+	REHYDRATE,
+	PAUSE,
+	PERSIST,
+	PURGE,
+	REGISTER,
+} = require("redux-persist");
 
-const persistConfig = {
-	key: "gotosocial-settings",
-	storage: require("redux-persist/lib/storage").default,
-	stateReconciler: require("redux-persist/lib/stateReconciler/autoMergeLevel2").default,
-	whitelist: ["oauth"],
-	blacklist: ["temporary"]
-};
+const query = require("../lib/query/base");
 
 const combinedReducers = combineReducers({
 	oauth: require("./reducers/oauth").reducer,
@@ -37,13 +39,27 @@ const combinedReducers = combineReducers({
 	temporary: require("./reducers/temporary").reducer,
 	user: require("./reducers/user").reducer,
 	admin: require("./reducers/admin").reducer,
+	[query.reducerPath]: query.reducer
 });
 
-const persistedReducer = persistReducer(persistConfig, combinedReducers);
-const composedEnhancer = composeWithDevTools(applyMiddleware(thunk));
+const persistedReducer = persistReducer({
+	key: "gotosocial-settings",
+	storage: require("redux-persist/lib/storage").default,
+	stateReconciler: require("redux-persist/lib/stateReconciler/autoMergeLevel2").default,
+	whitelist: ["oauth"],
+}, combinedReducers);
 
-// TODO: change to configureStore
-const store = createStore(persistedReducer, composedEnhancer);
+const store = configureStore({
+	reducer: persistedReducer,
+	middleware: (getDefaultMiddleware) => {
+		return getDefaultMiddleware({
+			serializableCheck: {
+				ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER, "temporary/setScrollElement"]
+			}
+		}).concat(query.middleware);
+	}
+});
+
 const persistor = persistStore(store);
 
 module.exports = { store, persistor };

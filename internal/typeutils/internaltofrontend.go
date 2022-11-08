@@ -20,6 +20,7 @@ package typeutils
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -665,12 +666,25 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 		mi.AccountDomain = config.GetAccountDomain()
 
 		if ia, err := c.db.GetInstanceAccount(ctx, ""); err == nil {
-			if ia.HeaderMediaAttachment != nil {
-				// take instance account header as instance thumbnail
-				mi.Thumbnail = ia.HeaderMediaAttachment.URL
-			} else {
-				// or just use a default
-				mi.Thumbnail = config.GetProtocol() + "://" + host + "/assets/logo.png"
+			// assume default logo
+			mi.Thumbnail = config.GetProtocol() + "://" + host + "/assets/logo.png"
+
+			// take instance account avatar as instance thumbnail if we can
+			if ia.AvatarMediaAttachmentID != "" {
+				if ia.AvatarMediaAttachment == nil {
+					avi, err := c.db.GetAttachmentByID(ctx, ia.AvatarMediaAttachmentID)
+					if err == nil {
+						ia.AvatarMediaAttachment = avi
+					} else if !errors.Is(err, db.ErrNoEntries) {
+						log.Errorf("InstanceToAPIInstance: error getting instance avatar attachment with id %s: %s", ia.AvatarMediaAttachmentID, err)
+					}
+				}
+
+				if ia.AvatarMediaAttachment != nil {
+					mi.Thumbnail = ia.AvatarMediaAttachment.URL
+					mi.ThumbnailType = ia.AvatarMediaAttachment.File.ContentType
+					mi.ThumbnailDescription = ia.AvatarMediaAttachment.Description
+				}
 			}
 		}
 

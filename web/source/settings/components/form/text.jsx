@@ -20,25 +20,37 @@
 
 const React = require("react");
 
-module.exports = function ErrorFallback({error, resetErrorBoundary}) {
-	return (
-		<div className="error">
-			<p>
-				{"An error occured, please report this on the "}
-				<a href="https://github.com/superseriousbusiness/gotosocial/issues">GoToSocial issue tracker</a>
-				{" or "}
-				<a href="https://matrix.to/#/#gotosocial-help:superseriousbusiness.org">Matrix support room</a>.
-				<br/>Include the details below:
-			</p>
-			<pre>
-				{error.name}: {error.message}
-			</pre>
-			<pre>
-				{error.stack}
-			</pre>
-			<p>
-				<button onClick={resetErrorBoundary}>Try again</button> or <a href="">refresh the page</a>
-			</p>
-		</div>
-	);
+module.exports = function useTextInput({name, Name}, {validator} = {}) {
+	const [text, setText] = React.useState("");
+	const textRef = React.useRef(null);
+
+	function onChange(e) {
+		let input = e.target.value;
+		setText(input);
+
+		if (validator) {
+			validator(input);
+		}
+	}
+
+	function reset() {
+		setText("");
+	}
+
+	React.useEffect(() => {
+		if (validator) {
+			textRef.current.setCustomValidity(validator(text));
+			textRef.current.reportValidity();
+		}
+	}, [text, textRef, validator]);
+
+	return [
+		onChange,
+		reset,
+		{
+			[name]: text,
+			[`${name}Ref`]: textRef,
+			[`set${Name}`]: setText
+		}
+	];
 };

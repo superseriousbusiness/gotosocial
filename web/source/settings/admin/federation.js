@@ -50,7 +50,7 @@ module.exports = function AdminSettings() {
 				return dispatch(api.admin.fetchDomainBlocks());
 			});
 		}
-	}, []);
+	}, [dispatch, loadedBlockedInstances]);
 
 	if (!loadedBlockedInstances) {
 		return (
@@ -315,7 +315,7 @@ function InstancePage({domain, Form}) {
 		if (entry == undefined) {
 			dispatch(api.admin.getEditableDomainBlock(domain));
 		}
-	}, []);
+	}, [dispatch, domain, entry]);
 
 	const [errorMsg, setError] = React.useState("");
 	const [statusMsg, setStatus] = React.useState("");

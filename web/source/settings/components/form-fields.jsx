@@ -119,7 +119,7 @@ module.exports = {
 				field = (
 					<>
 						<label htmlFor={id} className="file-input button">Browse</label>
-						<span>
+						<span className="form-info">
 							{file ? file.name : "no file selected"} {size}
 						</span>
 						{/* <a onClick={removeFile("header")}>remove</a> */}

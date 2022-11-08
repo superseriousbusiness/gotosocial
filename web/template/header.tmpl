@@ -20,7 +20,7 @@
 	{{ end }}<meta name="og:image" content="{{ .ogMeta.Image }}">
 	{{ if .ogMeta.ImageWidth }}<meta name="og:image:width" content="{{ .ogMeta.ImageWidth }}">
 	<meta name="og:image:height" content="{{ .ogMeta.ImageHeight }}">
-	{{ end }}{{ end }}<link rel="shortcut icon" href="/assets/logo.png" type="image/png">
+	{{ end }}{{ end }}<link rel="shortcut icon" href="{{ .instance.Thumbnail }}" type="{{ if .instance.ThumbnailType }}{{ .instance.ThumbnailType }}{{ else }}image/png{{ end }}">
 	<link rel="stylesheet" href="/assets/dist/_colors.css">
 	<link rel="stylesheet" href="/assets/dist/base.css">
 	{{range .stylesheets}}<link rel="stylesheet" href="{{.}}">
@@ -30,7 +30,7 @@
 	<div class="page">
 		<header>
 			<a aria-label="instance homepage" href="/" class="nounderline header">
-				<img src="/assets/logo.png" alt="Instance Logo"/>
+				<img src="{{ .instance.Thumbnail }}" alt="{{ if .instance.ThumbnailDescription }}{{ .instance.ThumbnailDescription }}{{ else }}Instance Logo{{ end }}"/>
 				<div>
 					<h1>
 						{{.instance.Title}}

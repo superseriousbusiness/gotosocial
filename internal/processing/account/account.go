@@ -78,15 +78,14 @@ type Processor interface {
 	BlockCreate(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
 	// BlockRemove handles the removal of a block from requestingAccount to targetAccountID, either remote or local.
 	BlockRemove(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
-
-	// UpdateHeader does the dirty work of checking the header part of an account update form,
-	// parsing and checking the image, and doing the necessary updates in the database for this to become
-	// the account's new header image.
-	UpdateAvatar(ctx context.Context, avatar *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error)
 	// UpdateAvatar does the dirty work of checking the avatar part of an account update form,
 	// parsing and checking the image, and doing the necessary updates in the database for this to become
 	// the account's new avatar image.
-	UpdateHeader(ctx context.Context, header *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error)
+	UpdateAvatar(ctx context.Context, avatar *multipart.FileHeader, description *string, accountID string) (*gtsmodel.MediaAttachment, error)
+	// UpdateHeader does the dirty work of checking the header part of an account update form,
+	// parsing and checking the image, and doing the necessary updates in the database for this to become
+	// the account's new header image.
+	UpdateHeader(ctx context.Context, header *multipart.FileHeader, description *string, accountID string) (*gtsmodel.MediaAttachment, error)
 }
 
 type processor struct {
