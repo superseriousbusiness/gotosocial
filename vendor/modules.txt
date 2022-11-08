@@ -263,7 +263,7 @@ github.com/magiconair/properties
 # github.com/mattn/go-isatty v0.0.16
 ## explicit; go 1.15
 github.com/mattn/go-isatty
-# github.com/microcosm-cc/bluemonday v1.0.20
+# github.com/microcosm-cc/bluemonday v1.0.21
 ## explicit; go 1.19
 github.com/microcosm-cc/bluemonday
 github.com/microcosm-cc/bluemonday/css
@@ -655,7 +655,7 @@ golang.org/x/image/tiff/lzw
 # golang.org/x/mod v0.6.0-dev.0.20220907135952-02c991387e35
 ## explicit; go 1.17
 golang.org/x/mod/semver
-# golang.org/x/net v0.0.0-20220909164309-bea034e7d591
+# golang.org/x/net v0.0.0-20221002022538-bcab6841153b
 ## explicit; go 1.17
 golang.org/x/net/bpf
 golang.org/x/net/context
