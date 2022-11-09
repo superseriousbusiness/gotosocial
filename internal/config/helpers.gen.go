@@ -1095,6 +1095,31 @@ func GetStorageS3BucketName() string { return global.GetStorageS3BucketName() }
 // SetStorageS3BucketName safely sets the value for global configuration 'StorageS3BucketName' field
 func SetStorageS3BucketName(v string) { global.SetStorageS3BucketName(v) }
 
+// GetStorageS3Proxy safely fetches the Configuration value for state's 'StorageS3Proxy' field
+func (st *ConfigState) GetStorageS3Proxy() (v bool) {
+	st.mutex.Lock()
+	v = st.config.StorageS3Proxy
+	st.mutex.Unlock()
+	return
+}
+
+// SetStorageS3Proxy safely sets the Configuration value for state's 'StorageS3Proxy' field
+func (st *ConfigState) SetStorageS3Proxy(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.StorageS3Proxy = v
+	st.reloadToViper()
+}
+
+// StorageS3ProxyFlag returns the flag name for the 'StorageS3Proxy' field
+func StorageS3ProxyFlag() string { return "storage-s3-proxy" }
+
+// GetStorageS3Proxy safely fetches the value for global configuration 'StorageS3Proxy' field
+func GetStorageS3Proxy() bool { return global.GetStorageS3Proxy() }
+
+// SetStorageS3Proxy safely sets the value for global configuration 'StorageS3Proxy' field
+func SetStorageS3Proxy(v bool) { global.SetStorageS3Proxy(v) }
+
 // GetStatusesMaxChars safely fetches the Configuration value for state's 'StatusesMaxChars' field
 func (st *ConfigState) GetStatusesMaxChars() (v int) {
 	st.mutex.Lock()
@@ -1844,3 +1869,4 @@ func GetAdvancedRateLimitRequests() int { return global.GetAdvancedRateLimitRequ
 
 // SetAdvancedRateLimitRequests safely sets the value for global configuration 'AdvancedRateLimitRequests' field
 func SetAdvancedRateLimitRequests(v int) { global.SetAdvancedRateLimitRequests(v) }
+

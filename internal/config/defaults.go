@@ -67,6 +67,7 @@ var Defaults = Configuration{
 	StorageBackend:       "local",
 	StorageLocalBasePath: "/gotosocial/storage",
 	StorageS3UseSSL:      true,
+	StorageS3Proxy:       false,
 
 	StatusesMaxChars:           5000,
 	StatusesCWMaxChars:         100,

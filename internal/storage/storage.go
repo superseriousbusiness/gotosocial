@@ -59,7 +59,11 @@ func AutoConfig() (Driver, error) {
 		if err != nil {
 			return nil, fmt.Errorf("creating minio client: %w", err)
 		}
-		return NewS3(mc, config.GetStorageS3BucketName()), nil
+		return NewS3(
+			mc,
+			config.GetStorageS3BucketName(),
+			config.GetStorageS3Proxy(),
+		), nil
 	case "local":
 		basePath := config.GetStorageLocalBasePath()
 		disk, err := storage.OpenDisk(basePath, &storage.DiskConfig{

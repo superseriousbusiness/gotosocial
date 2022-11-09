@@ -34,12 +34,14 @@ import (
 type S3 struct {
 	mc     *minio.Client
 	bucket string
+	proxy  bool
 }
 
-func NewS3(mc *minio.Client, bucket string) *S3 {
+func NewS3(mc *minio.Client, bucket string, proxy bool) *S3 {
 	return &S3{
 		mc:     mc,
 		bucket: bucket,
+		proxy:  proxy,
 	}
 }
 
@@ -83,6 +85,10 @@ func (s *S3) Delete(ctx context.Context, key string) error {
 }
 
 func (s *S3) URL(ctx context.Context, key string) *url.URL {
+	if s.proxy {
+		return nil
+	}
+
 	// it's safe to ignore the error here, as we just fall back to fetching the
 	// file if the url request fails
 	url, _ := s.mc.PresignedGetObject(ctx, s.bucket, key, time.Hour, url.Values{
