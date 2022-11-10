@@ -9,18 +9,19 @@ import (
 
 // Cache ...
 type Cache[Value any] struct {
-	cache ttl.Cache[string, result[Value]] // underlying result cache
-	keys  structKeys                       // pre-determined generic type struct keys
-	copy  func(Value) Value                // copies a Value type
+	cache   ttl.Cache[int64, result[Value]] // underlying result cache
+	lookups structKeys                      // pre-determined struct lookups
+	copy    func(Value) Value               // copies a Value type
+	next    int64                           // update key counter
 }
 
-// New ...
+// New returns a new initialized Cache, with given lookups and underlying value copy function.
 func New[Value any](lookups []string, copy func(Value) Value) *Cache[Value] {
 	return NewSized(lookups, copy, 64)
 }
 
-// NewSized ...
-func NewSized[Value any](lookups []string, copy func(Value) Value, sz int) *Cache[Value] {
+// NewSized returns a new initialized Cache, with given lookups, underlying value copy function and provided capacity.
+func NewSized[Value any](lookups []string, copy func(Value) Value, cap int) *Cache[Value] {
 	var z Value
 
 	// Determine generic type
@@ -36,18 +37,19 @@ func NewSized[Value any](lookups []string, copy func(Value) Value, sz int) *Cach
 		panic("generic parameter type must be struct (or ptr to)")
 	}
 
-	// Preallocate a slice of keyed fields info
-	keys := make([]keyFields, len(lookups))
+	// Allocate new cache object
+	c := &Cache[Value]{copy: copy}
+	c.lookups = make([]keyFields, len(lookups))
 
 	for i, lookup := range lookups {
 		// Generate keyed field info for lookup
-		keys[i] = keyFields{prefix: lookup}
-		keys[i].populate(t)
+		c.lookups[i].pkeys = make(map[string]int64, cap)
+		c.lookups[i].lookup = lookup
+		c.lookups[i].populate(t)
 	}
 
-	// Create and initialize
-	c := &Cache[Value]{keys: keys, copy: copy}
-	c.cache.Init(0, 100, 0)
+	// Create and initialize underlying cache
+	c.cache.Init(0, cap, 0)
 	c.SetEvictionCallback(nil)
 	c.SetInvalidateCallback(nil)
 	return c
@@ -77,15 +79,11 @@ func (c *Cache[Value]) SetEvictionCallback(hook func(Value)) {
 		// Ensure non-nil hook.
 		hook = func(Value) {}
 	}
-	c.cache.SetEvictionCallback(func(item *ttl.Entry[string, result[Value]]) {
-		for i := range item.Value.Keys {
-			// This is "us", already deleted.
-			if item.Value.Keys[i].value == item.Key {
-				continue
-			}
-
-			// Manually delete this extra cache key.
-			c.cache.Cache.Delete(item.Value.Keys[i].value)
+	c.cache.SetEvictionCallback(func(item *ttl.Entry[int64, result[Value]]) {
+		for _, key := range item.Value.Keys {
+			// Delete key->pkey lookup
+			pkeys := key.fields.pkeys
+			delete(pkeys, key.value)
 		}
 
 		if item.Value.Error != nil {
@@ -104,15 +102,13 @@ func (c *Cache[Value]) SetInvalidateCallback(hook func(Value)) {
 		// Ensure non-nil hook.
 		hook = func(Value) {}
 	}
-	c.cache.SetInvalidateCallback(func(item *ttl.Entry[string, result[Value]]) {
-		for i := range item.Value.Keys {
-			// This is "us", already deleted.
-			if item.Value.Keys[i].value == item.Key {
-				continue
+	c.cache.SetInvalidateCallback(func(item *ttl.Entry[int64, result[Value]]) {
+		for _, key := range item.Value.Keys {
+			if key.fields != nil {
+				// Delete key->pkey lookup
+				pkeys := key.fields.pkeys
+				delete(pkeys, key.value)
 			}
-
-			// Manually delete this extra cache key.
-			c.cache.Cache.Delete(item.Value.Keys[i].value)
 		}
 
 		if item.Value.Error != nil {
@@ -127,45 +123,62 @@ func (c *Cache[Value]) SetInvalidateCallback(hook func(Value)) {
 
 // Load ...
 func (c *Cache[Value]) Load(lookup string, load func() (Value, error), keyParts ...any) (Value, error) {
-	var zero Value
+	var (
+		zero Value
+		res  result[Value]
+	)
+
+	// Get lookup map by name.
+	lmap := c.getLookup(lookup)
 
 	// Generate cache key string.
-	ckey := genkey(lookup, keyParts...)
+	ckey := genkey(keyParts...)
 
-	// Look for existing result in cache.
-	result, ok := c.cache.Get(ckey)
+	// Acquire cache lock
+	c.cache.Lock()
+
+	// Look for primary key
+	pkey, ok := lmap[ckey]
+
+	if ok {
+		// Fetch the result for primary key
+		entry, _ := c.cache.Cache.Get(pkey)
+		res = entry.Value
+	}
+
+	// Done with lock
+	c.cache.Unlock()
 
 	if !ok {
 		// Generate new result from fresh load.
-		result.Value, result.Error = load()
+		res.Value, res.Error = load()
 
-		if result.Error != nil {
+		if res.Error != nil {
 			// This load returned an error, only
 			// store this item under provided key.
-			result.Keys = []cacheKey{{value: ckey}}
+			res.Keys = []cacheKey{{value: ckey}}
 		} else {
 			// This was a successful load, generate keys.
-			result.Keys = c.keys.generate(result.Value)
+			res.Keys = c.lookups.generate(res.Value)
 		}
 
 		// Acquire cache lock.
 		c.cache.Lock()
 		defer c.cache.Unlock()
 
-		// Attempt to cache result, only return conflict
-		// error if the appropriate flag has been set.
-		if key, ok := c.store(result); !ok {
+		// Attempt to cache this result.
+		if key, ok := c.storeResult(res); !ok {
 			return zero, ConflictError{key}
 		}
 	}
 
 	// Catch and return error
-	if result.Error != nil {
-		return zero, result.Error
+	if res.Error != nil {
+		return zero, res.Error
 	}
 
 	// Return a copy of value from cache
-	return c.copy(result.Value), nil
+	return c.copy(res.Value), nil
 }
 
 // Store ...
@@ -177,7 +190,7 @@ func (c *Cache[Value]) Store(value Value, store func() error) error {
 
 	// Prepare cached result.
 	result := result[Value]{
-		Keys:  c.keys.generate(value),
+		Keys:  c.lookups.generate(value),
 		Value: c.copy(value),
 		Error: nil,
 	}
@@ -188,65 +201,126 @@ func (c *Cache[Value]) Store(value Value, store func() error) error {
 
 	// Attempt to cache result, only return conflict
 	// error if the appropriate flag has been set.
-	if key, ok := c.store(result); !ok {
+	if key, ok := c.storeResult(result); !ok {
 		return ConflictError{key}
 	}
 
 	return nil
 }
 
-// store will store a given result in the cache, returning the key string
-// and 'false' on any conflict. Note this function MUST be called within
-// the underlying cache's mutex lock as it makes calls to TTLCache{}.__Unsafe().
-func (c *Cache[Value]) store(r result[Value]) (string, bool) {
-	// Check for overlapy with any NON-ERROR keys, as an
-	// overlap will cause say one but not all of
-	// an item's keys to produce unexpected results.
-	for _, key := range r.Keys {
-		if entry, ok := c.cache.Cache.Get(key.value); ok {
+// Has ...
+func (c *Cache[Value]) Has(lookup string, keyParts ...any) bool {
+	var res result[Value]
+
+	// Get lookup map by name.
+	lmap := c.getLookup(lookup)
+
+	// Generate cache key string.
+	ckey := genkey(keyParts...)
+
+	// Acquire cache lock
+	c.cache.Lock()
+
+	// Look for primary key
+	pkey, ok := lmap[ckey]
+
+	if ok {
+		// Fetch the result for primary key
+		entry, _ := c.cache.Cache.Get(pkey)
+		res = entry.Value
+	}
+
+	// Done with lock
+	c.cache.Unlock()
+
+	// Check for non-error result.
+	return ok && (res.Error == nil)
+}
+
+// Invalidate ...
+func (c *Cache[Value]) Invalidate(lookup string, keyParts ...any) {
+	// Get lookup map by name.
+	lmap := c.getLookup(lookup)
+
+	// Generate cache key string.
+	ckey := genkey(keyParts...)
+
+	// Look for primary key
+	c.cache.Lock()
+	pkey, ok := lmap[ckey]
+	c.cache.Unlock()
+
+	if !ok {
+		return
+	}
+
+	// Invalid by primary key
+	c.cache.Invalidate(pkey)
+}
+
+// Clear empties the cache, calling the invalidate callback.
+func (c *Cache[Value]) Clear() {
+	c.cache.Clear()
+}
+
+// Len ...
+func (c *Cache[Value]) Len() int {
+	return c.cache.Cache.Len()
+}
+
+// Cap ...
+func (c *Cache[Value]) Cap() int {
+	return c.cache.Cache.Cap()
+}
+
+func (c *Cache[Value]) getLookup(name string) map[string]int64 {
+	for _, l := range c.lookups {
+		// Find lookup map with name
+		if l.lookup == name {
+			return l.pkeys
+		}
+	}
+	panic("invalid lookup: " + name)
+}
+
+func (c *Cache[Value]) storeResult(res result[Value]) (string, bool) {
+	for _, key := range res.Keys {
+		pkeys := key.fields.pkeys
+
+		// Look for cache primary key
+		pkey, ok := pkeys[key.value]
+
+		if ok {
+			// Look for overlap with non error keys,
+			// as an overlap for some but not all keys
+			// could produce inconsistent results.
+			entry, _ := c.cache.Cache.Get(pkey)
 			if entry.Value.Error == nil {
 				return key.value, false
 			}
 		}
 	}
 
-	// Determine cached result expiry time
-	expiry := time.Now().Add(c.cache.TTL)
+	// Get primary key
+	pkey := c.next
+	c.next++
 
-	// Store this result under all keys.
-	for _, key := range r.Keys {
-		c.cache.Cache.Set(key.value, &ttl.Entry[string, result[Value]]{
-			Key:    key.value,
-			Value:  r,
-			Expiry: expiry,
-		})
+	// Store all primary key lookups
+	for _, key := range res.Keys {
+		pkeys := key.fields.pkeys
+		pkeys[key.value] = pkey
 	}
 
+	// Store main entry under primary key, using evict hook if needed
+	c.cache.Cache.SetWithHook(pkey, &ttl.Entry[int64, result[Value]]{
+		Expiry: time.Now().Add(c.cache.TTL),
+		Key:    pkey,
+		Value:  res,
+	}, func(_ int64, item *ttl.Entry[int64, result[Value]]) {
+		c.cache.Evict(item)
+	})
+
 	return "", true
-}
-
-// Has ...
-func (c *Cache[Value]) Has(lookup string, keyParts ...any) bool {
-	// Generate cache key string.
-	ckey := genkey(lookup, keyParts...)
-
-	// Check for non-error result.
-	result, ok := c.cache.Get(ckey)
-	return ok && (result.Error == nil)
-}
-
-// Invalidate ...
-func (c *Cache[Value]) Invalidate(lookup string, keyParts ...any) {
-	// Generate cache key string.
-	ckey := genkey(lookup, keyParts...)
-
-	// Invalidate this key from cache.
-	c.cache.Invalidate(ckey)
-}
-
-// Clear empties the cache, calling the invalidate callback.
-func (cache *Cache[Value]) Clear() {
-	cache.cache.Clear()
 }
 
 type result[Value any] struct {

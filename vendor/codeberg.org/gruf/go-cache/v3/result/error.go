@@ -1,5 +1,10 @@
 package result
 
+import "errors"
+
+// ErrUnkownLookup ...
+var ErrUnknownLookup = errors.New("unknown lookup identifier")
+
 // IsConflictErr returns whether error is due to key conflict.
 func IsConflictErr(err error) bool {
 	_, ok := err.(ConflictError)

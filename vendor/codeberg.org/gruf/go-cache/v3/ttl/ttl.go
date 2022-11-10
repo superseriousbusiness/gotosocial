@@ -112,7 +112,7 @@ func (c *Cache[K, V]) Sweep(now time.Time) {
 		if now.After(item.Expiry) {
 			after = i
 
-			// All older than this can be dropped
+			// All older than this (including) can be dropped
 			return false
 		}
 
@@ -120,13 +120,8 @@ func (c *Cache[K, V]) Sweep(now time.Time) {
 		return true
 	})
 
-	// None yet expired
-	if after == -1 {
-		return
-	}
-
 	// Truncate items, calling eviction hook
-	c.truncate(c.Cache.Len()-after-1, c.Evict)
+	c.truncate(c.Cache.Len()-after, c.Evict)
 }
 
 // SetEvictionCallback: implements cache.Cache's SetEvictionCallback().
@@ -369,7 +364,7 @@ func (c *Cache[K, V]) Cap() int {
 func (c *Cache[K, V]) truncate(sz int, hook func(*Entry[K, V])) {
 	if hook == nil {
 		// No hook was provided, we can simply truncate and free items immediately.
-		c.Cache.Truncate(c.Cache.Len(), func(_ K, item *Entry[K, V]) { c.free(item) })
+		c.Cache.Truncate(sz, func(_ K, item *Entry[K, V]) { c.free(item) })
 		return
 	}
 

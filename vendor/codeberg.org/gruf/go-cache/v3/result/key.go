@@ -15,14 +15,14 @@ import (
 // of struct field combinations used for cache keys.
 type structKeys []keyFields
 
-// get fetches the key-fields for given prefix (else, panics).
-func (sk structKeys) get(prefix string) *keyFields {
+// get fetches the key-fields for given lookup (else, panics).
+func (sk structKeys) get(lookup string) *keyFields {
 	for i := range sk {
-		if sk[i].prefix == prefix {
+		if sk[i].lookup == lookup {
 			return &sk[i]
 		}
 	}
-	panic("unknown lookup (key prefix): \"" + prefix + "\"")
+	panic("unknown lookup: \"" + lookup + "\"")
 }
 
 // generate will calculate the value string for each required
@@ -76,10 +76,6 @@ type cacheKey struct {
 // populate will calculate the cache key's value string for given
 // value's reflected information. Passed encoder is for string building.
 func (k *cacheKey) populate(buf *byteutil.Buffer, v reflect.Value) {
-	// Append precalculated prefix
-	buf.B = append(buf.B, k.fields.prefix...)
-	buf.B = append(buf.B, '.')
-
 	// Append each field value to buffer.
 	for _, idx := range k.fields.fields {
 		fv := v.Field(idx)
@@ -96,27 +92,31 @@ func (k *cacheKey) populate(buf *byteutil.Buffer, v reflect.Value) {
 }
 
 // keyFields represents a list of struct fields
-// encompassed in a single cache key, including
-// the string used as they key's prefix.
+// encompassed in a single cache key, the string name
+// of the lookup, and the lookup map to primary keys.
 type keyFields struct {
-	// prefix is the calculated (well, provided)
-	// cache key prefix, consisting of dot sep'd
+	// lookup is the calculated (well, provided)
+	// cache key lookup, consisting of dot sep'd
 	// struct field names.
-	prefix string
+	lookup string
 
 	// fields is a slice of runtime struct field
 	// indices, of the fields encompassed by this key.
 	fields []int
+
+	// pkeys is a lookup of stored struct key values
+	// to the primary cache lookup key (int64).
+	pkeys map[string]int64
 }
 
 // populate will populate this keyFields{} object's .fields member by determining
-// the field names from current prefix, and querying given reflected type to get
+// the field names from the given lookup, and querying given reflected type to get
 // the runtime field indices for each of the fields. this speeds-up future value lookups.
 func (kf *keyFields) populate(t reflect.Type) {
-	// Split dot-separated prefix to get
+	// Split dot-separated lookup to get
 	// the individual struct field names
-	names := strings.Split(kf.prefix, ".")
-	if len(names) < 1 {
+	names := strings.Split(kf.lookup, ".")
+	if len(names) == 0 {
 		panic("no key fields specified")
 	}
 
@@ -140,8 +140,8 @@ func (kf *keyFields) populate(t reflect.Type) {
 	}
 }
 
-// genkey generates a cache key for given lookup and key value.
-func genkey(lookup string, parts ...any) string {
+// genkey generates a cache key for given key values.
+func genkey(parts ...any) string {
 	if len(parts) < 1 {
 		// Panic to prevent annoying usecase
 		// where user forgets to pass lookup
@@ -155,10 +155,6 @@ func genkey(lookup string, parts ...any) string {
 	buf := bufpool.Get().(*byteutil.Buffer)
 	defer bufpool.Put(buf)
 	buf.Reset()
-
-	// Append the lookup prefix
-	buf.B = append(buf.B, lookup...)
-	buf.B = append(buf.B, '.')
 
 	// Encode each key part
 	for _, part := range parts {
