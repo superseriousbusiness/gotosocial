@@ -4805,10 +4805,10 @@ simple-concat@^1.0.0:
   resolved "https://registry.yarnpkg.com/simple-concat/-/simple-concat-1.0.1.tgz#f46976082ba35c2263f1c8ab5edfe26c41c9552f"
   integrity sha512-cSFtAPtRhljv69IK0hTVZQ+OfE9nePi/rtJmw5UjHeVyVroEqJXP1sFztKUy1qU+xvz3u/sfYJLa947b7nAN2Q==
 
-skulk@^0.0.5:
-  version "0.0.5"
-  resolved "https://registry.yarnpkg.com/skulk/-/skulk-0.0.5.tgz#98183af13f97df8da8f9a48a3dd2590e5543b955"
-  integrity sha512-EusaDqSIWx6uMzeBareaIZcwaA7zyY8CO8SiYxWfEj4KwzhDqBJvRad2QIXIFhds1CPLRZ/fo1j0GhANFVdyOg==
+skulk@^0.0.6:
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/skulk/-/skulk-0.0.6.tgz#8c7d898c888b1fd6b79ece727e70b35a0f3612c6"
+  integrity sha512-K828rvj7qtfMk86JykuJ5Y3Ol/6G5lnRF6G7jGjNwuHMbvQzWH9WkH8k+ht7Omg7P03Zmbvj2WhWgq83HPw2+w==
   dependencies:
     "@babel/core" "^7.19.3"
     "@f0x52/spyfs" "^1.1.0"
