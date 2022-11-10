@@ -120,6 +120,11 @@ func (c *Cache[K, V]) Sweep(now time.Time) {
 		return true
 	})
 
+	if after == -1 {
+		// No Truncation needed
+		return
+	}
+
 	// Truncate items, calling eviction hook
 	c.truncate(c.Cache.Len()-after, c.Evict)
 }

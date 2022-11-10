@@ -129,7 +129,8 @@ func (c *Cache[Value]) Load(lookup string, load func() (Value, error), keyParts 
 	)
 
 	// Get lookup map by name.
-	lmap := c.getLookup(lookup)
+	kfields := c.getFields(lookup)
+	lmap := kfields.pkeys
 
 	// Generate cache key string.
 	ckey := genkey(keyParts...)
@@ -156,7 +157,10 @@ func (c *Cache[Value]) Load(lookup string, load func() (Value, error), keyParts 
 		if res.Error != nil {
 			// This load returned an error, only
 			// store this item under provided key.
-			res.Keys = []cacheKey{{value: ckey}}
+			res.Keys = []cacheKey{{
+				value:  ckey,
+				fields: kfields,
+			}}
 		} else {
 			// This was a successful load, generate keys.
 			res.Keys = c.lookups.generate(res.Value)
@@ -213,7 +217,8 @@ func (c *Cache[Value]) Has(lookup string, keyParts ...any) bool {
 	var res result[Value]
 
 	// Get lookup map by name.
-	lmap := c.getLookup(lookup)
+	kfields := c.getFields(lookup)
+	lmap := kfields.pkeys
 
 	// Generate cache key string.
 	ckey := genkey(keyParts...)
@@ -240,7 +245,8 @@ func (c *Cache[Value]) Has(lookup string, keyParts ...any) bool {
 // Invalidate ...
 func (c *Cache[Value]) Invalidate(lookup string, keyParts ...any) {
 	// Get lookup map by name.
-	lmap := c.getLookup(lookup)
+	kfields := c.getFields(lookup)
+	lmap := kfields.pkeys
 
 	// Generate cache key string.
 	ckey := genkey(keyParts...)
@@ -273,11 +279,11 @@ func (c *Cache[Value]) Cap() int {
 	return c.cache.Cache.Cap()
 }
 
-func (c *Cache[Value]) getLookup(name string) map[string]int64 {
-	for _, l := range c.lookups {
-		// Find lookup map with name
-		if l.lookup == name {
-			return l.pkeys
+func (c *Cache[Value]) getFields(name string) *keyFields {
+	for _, k := range c.lookups {
+		// Find key fields with name
+		if k.lookup == name {
+			return &k
 		}
 	}
 	panic("invalid lookup: " + name)
