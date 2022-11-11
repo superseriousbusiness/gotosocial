@@ -69,13 +69,12 @@ func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, erro
 	}
 	defer rsp.Body.Close()
 
-	// Check for an expected status code
-	if rsp.StatusCode != http.StatusOK {
-		if rsp.StatusCode == http.StatusGone {
-			return nil, ErrGone
-		}
+	switch rsp.StatusCode {
+	case http.StatusOK:
+		return io.ReadAll(rsp.Body)
+	case http.StatusGone:
+		return nil, ErrGone
+	default:
 		return nil, fmt.Errorf("GET request to %s failed (%d): %s", iriStr, rsp.StatusCode, rsp.Status)
 	}
-
-	return io.ReadAll(rsp.Body)
 }
