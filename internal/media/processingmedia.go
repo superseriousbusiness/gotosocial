@@ -137,22 +137,15 @@ func (p *ProcessingMedia) loadThumb(ctx context.Context) error {
 		}
 
 		// stream the original file out of storage
-		log.Tracef("loadThumb: fetching attachment from storage %s", p.attachment.URL)
 		stored, err := p.storage.GetStream(ctx, p.attachment.File.Path)
 		if err != nil {
 			p.err = fmt.Errorf("loadThumb: error fetching file from storage: %s", err)
 			atomic.StoreInt32(&p.thumbState, int32(errored))
 			return p.err
 		}
-
-		defer func() {
-			if err := stored.Close(); err != nil {
-				log.Errorf("loadThumb: error closing stored full size: %s", err)
-			}
-		}()
+		defer stored.Close()
 
 		// stream the file from storage straight into the derive thumbnail function
-		log.Tracef("loadThumb: calling deriveThumbnail %s", p.attachment.URL)
 		thumb, err := deriveThumbnail(stored, p.attachment.File.ContentType, createBlurhash)
 		if err != nil {
 			p.err = fmt.Errorf("loadThumb: error deriving thumbnail: %s", err)
@@ -160,8 +153,12 @@ func (p *ProcessingMedia) loadThumb(ctx context.Context) error {
 			return p.err
 		}
 
+		// Close stored media now we're done
+		if err := stored.Close(); err != nil {
+			log.Errorf("loadThumb: error closing stored full size: %s", err)
+		}
+
 		// put the thumbnail in storage
-		log.Tracef("loadThumb: storing new thumbnail %s", p.attachment.URL)
 		if err := p.storage.Put(ctx, p.attachment.Thumbnail.Path, thumb.small); err != nil && err != storage.ErrAlreadyExists {
 			p.err = fmt.Errorf("loadThumb: error storing thumbnail: %s", err)
 			atomic.StoreInt32(&p.thumbState, int32(errored))
