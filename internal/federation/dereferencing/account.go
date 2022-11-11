@@ -615,7 +615,7 @@ func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gts
 	// If we only have IDs, fetch the emojis from the db. We know they're in
 	// there or else they wouldn't have IDs.
 	if len(maybeEmojiIDs) > len(maybeEmojis) {
-		maybeEmojis = []*gtsmodel.Emoji{}
+		maybeEmojis = make([]*gtsmodel.Emoji, len(maybeEmojiIDs))
 		for _, emojiID := range maybeEmojiIDs {
 			maybeEmoji, err := d.db.GetEmojiByID(ctx, emojiID)
 			if err != nil {
