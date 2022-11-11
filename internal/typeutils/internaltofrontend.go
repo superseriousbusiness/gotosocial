@@ -22,6 +22,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -667,7 +668,7 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 
 		if ia, err := c.db.GetInstanceAccount(ctx, ""); err == nil {
 			// assume default logo
-			mi.Thumbnail = config.GetProtocol() + "://" + host + "/assets/logo.png"
+			mi.Thumbnail = config.GetProtocol() + "://" + host + ":" + strconv.Itoa(config.GetPort()) + "/assets/logo.png"
 
 			// take instance account avatar as instance thumbnail if we can
 			if ia.AvatarMediaAttachmentID != "" {
