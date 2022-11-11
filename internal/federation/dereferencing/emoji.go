@@ -81,7 +81,7 @@ func (d *deref) populateEmojis(ctx context.Context, rawEmojis []*gtsmodel.Emoji,
 				processingEmoji, err := d.GetRemoteEmoji(ctx, requestingUsername, e.ImageRemoteURL, e.Shortcode, emojiID, e.URI, &media.AdditionalEmojiInfo{
 					Domain:               &e.Domain,
 					ImageRemoteURL:       &e.ImageRemoteURL,
-					ImageStaticRemoteURL: &e.ImageRemoteURL,
+					ImageStaticRemoteURL: &e.ImageStaticRemoteURL,
 					Disabled:             gotEmoji.Disabled,
 					VisibleInPicker:      gotEmoji.VisibleInPicker,
 				}, true)
@@ -107,7 +107,7 @@ func (d *deref) populateEmojis(ctx context.Context, rawEmojis []*gtsmodel.Emoji,
 			processingEmoji, err := d.GetRemoteEmoji(ctx, requestingUsername, e.ImageRemoteURL, e.Shortcode, newEmojiID, e.URI, &media.AdditionalEmojiInfo{
 				Domain:               &e.Domain,
 				ImageRemoteURL:       &e.ImageRemoteURL,
-				ImageStaticRemoteURL: &e.ImageRemoteURL,
+				ImageStaticRemoteURL: &e.ImageStaticRemoteURL,
 				Disabled:             e.Disabled,
 				VisibleInPicker:      e.VisibleInPicker,
 			}, false)
