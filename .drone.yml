@@ -44,6 +44,43 @@ steps:
         include:
           - pull_request
 
+  - name: web-setup
+    image: node:14-alpine
+    when:
+      event:
+        include:
+          - pull_request
+    volumes:
+      - name: yarn_cache
+        path: /tmp/cache
+    commands:
+      - cd web/source
+      - yarn --frozen-lockfile --cache-folder /tmp/cache
+
+  - name: web-lint
+    image: node:14-alpine
+    when:
+      event:
+        include:
+          - pull_request
+    depends_on:
+      - web-setup
+    commands:
+      - cd web/source
+      - yarn run lint
+
+  - name: web-build
+    image: node:14-alpine
+    when:
+      event:
+        include:
+          - pull_request
+    depends_on:
+      - web-setup
+    commands:
+      - cd web/source
+      - yarn run build
+
   - name: snapshot
     image: superseriousbusiness/gotosocial-drone-build:0.0.7 # https://github.com/superseriousbusiness/gotosocial-drone-build
     volumes:
@@ -146,6 +183,6 @@ steps:
 
 ---
 kind: signature
-hmac: 86caf3c98d6135ac53e05b728e999d03f8b35606f1b5bab63c2c521bf5084173
+hmac: db02a09af7262a2bab5a0cb4bfd82fa7e1dc566c29e55e6e0808e8f1dc92803b
 
 ...
