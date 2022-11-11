@@ -311,20 +311,20 @@ func (m *manager) preProcessEmoji(ctx context.Context, data DataFunc, postData P
 		originalPostData := postData
 		originalImagePath := emoji.ImagePath
 		originalImageStaticPath := emoji.ImageStaticPath
-		postData = func(ctx context.Context) error {
+		postData = func(innerCtx context.Context) error {
 			// trigger the original postData function if it was provided
 			if originalPostData != nil {
-				if err := originalPostData(ctx); err != nil {
+				if err := originalPostData(innerCtx); err != nil {
 					return err
 				}
 			}
 
 			l := log.WithField("shortcode@domain", emoji.Shortcode+"@"+emoji.Domain)
 			l.Debug("postData: cleaning up old emoji files for refreshed emoji")
-			if err := m.storage.Delete(ctx, originalImagePath); err != nil && !errors.Is(err, gostore.ErrNotFound) {
+			if err := m.storage.Delete(innerCtx, originalImagePath); err != nil && !errors.Is(err, gostore.ErrNotFound) {
 				l.Errorf("postData: error cleaning up old emoji image at %s for refreshed emoji: %s", originalImagePath, err)
 			}
-			if err := m.storage.Delete(ctx, originalImageStaticPath); err != nil && !errors.Is(err, gostore.ErrNotFound) {
+			if err := m.storage.Delete(innerCtx, originalImageStaticPath); err != nil && !errors.Is(err, gostore.ErrNotFound) {
 				l.Errorf("postData: error cleaning up old emoji static image at %s for refreshed emoji: %s", originalImageStaticPath, err)
 			}
 
