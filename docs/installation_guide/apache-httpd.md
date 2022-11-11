@@ -100,8 +100,6 @@ You should also change `http://localhost:8080` to the correct address and port o
 
 `ProxyPreserveHost On` is essential: It guarantees that the proxy and the GoToSocial speak of the same Server name. If not, GoToSocial will build the wrong authentication headers, and all attempts at federation will be rejected with 401 Unauthorized.
 
-The line `ProxyPassMatch ^/(api/v1/streaming.*)$ ws://localhost:8080/$1` ensures that Websocket streaming connections also work. See the [websocket](./websocket.md) document for more information on this.
-
 Save and close the config file.
 
 Now we'll need to link the file we just created to the folder that Apache HTTP Server reads configurations for active sites from.
@@ -177,9 +175,9 @@ Again, replace occurrences of `example.com` in the above config file with the ho
 
 You should also change `http://localhost:8080` to the correct address and port of your GtS server. For example, if you're running GoToSocial on another machine with the local ip of `192.168.178.69` and on port `8080` then `http://192.168.178.69:8080/` would be the correct value.
 
-`ProxyPreserveHost On` is essential: It guarantees that the proxy and the GoToSocial speak of the same Server name. If not, GoToSocial will build the wrong authentication headers, and all attempts at federation will be rejected with 401 Unauthorized.
+`Rewrite*` directives are needed to ensure that Websocket streaming connections also work. See the [websocket](./websocket.md) document for more information on this.
 
-The line `ProxyPassMatch ^/(api/v1/streaming.*)$ ws://localhost:8080/$1` ensures that Websocket streaming connections also work. See the [websocket](./websocket.md) document for more information on this.
+`ProxyPreserveHost On` is essential: It guarantees that the proxy and the GoToSocial speak of the same Server name. If not, GoToSocial will build the wrong authentication headers, and all attempts at federation will be rejected with 401 Unauthorized.
 
 In the case of providing an initial setup for the 443 port looking for additional managing by an external tool, you could use default certificates provided by the server which you can find referenced in the `default-ssl.conf` file at `/etc/apache2/sites-available/`.
 

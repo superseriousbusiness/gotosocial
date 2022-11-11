@@ -37,10 +37,12 @@ Then you should have already created database `gotosocial` in Postgres, and give
 The psql commands to do this will look something like:
 
 ```psql
-create database gotosocial;
+create database gotosocial with locale C.UTF-8 template template0;
 create user gotosocial with password 'some_really_good_password';
 grant all privileges on database gotosocial to gotosocial;
 ```
+
+GoToSocial makes use of ULIDs (Universally Unique Lexicographically Sortable Identifiers) which will not work in non-English collate environments. For this reason it is important to create the database with `C.UTF-8` locale. To do that on systems which were already initialized with non-C locale, `template0` pristine database template must be used.
 
 ## Settings
 

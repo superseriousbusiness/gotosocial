@@ -48,7 +48,7 @@ func NewS3Storage() gtsstorage.Driver {
 	if err != nil {
 		panic(err)
 	}
-	return gtsstorage.NewS3(mc, os.Getenv("GTS_STORAGE_S3_BUCKET"))
+	return gtsstorage.NewS3(mc, os.Getenv("GTS_STORAGE_S3_BUCKET"), false)
 }
 
 // StandardStorageSetup populates the storage with standard test entries from the given directory.

@@ -93,6 +93,7 @@ type Configuration struct {
 	StorageS3SecretKey   string `name:"storage-s3-secret-key" usage:"S3 Secret Key"`
 	StorageS3UseSSL      bool   `name:"storage-s3-use-ssl" usage:"Use SSL for S3 connections. Only set this to 'false' when testing locally"`
 	StorageS3BucketName  string `name:"storage-s3-bucket" usage:"Place blobs in this bucket"`
+	StorageS3Proxy       bool   `name:"storage-s3-proxy" usage:"Proxy S3 contents through GoToSocial instead of redirecting to a presigned URL"`
 
 	StatusesMaxChars           int `name:"statuses-max-chars" usage:"Max permitted characters for posted statuses"`
 	StatusesCWMaxChars         int `name:"statuses-cw-max-chars" usage:"Max permitted characters for content/spoiler warnings on statuses"`
