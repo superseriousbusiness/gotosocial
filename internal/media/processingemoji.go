@@ -206,6 +206,15 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 		}
 	}()
 
+	// execute the postData function no matter what happens
+	defer func() {
+		if p.postData != nil {
+			if err := p.postData(ctx); err != nil {
+				log.Errorf("store: error executing postData: %s", err)
+			}
+		}
+	}()
+
 	// extract no more than 261 bytes from the beginning of the file -- this is the header
 	firstBytes := make([]byte, maxFileHeaderBytes)
 	if _, err := rc.Read(firstBytes); err != nil {
@@ -278,10 +287,6 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 
 	p.emoji.ImageFileSize = int(fileSize)
 	p.read = true
-
-	if p.postData != nil {
-		return p.postData(ctx)
-	}
 
 	return nil
 }
