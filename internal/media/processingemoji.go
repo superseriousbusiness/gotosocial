@@ -277,12 +277,12 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 
 	// if we didn't know the fileSize yet, we do now, so check if we need to
 	if !checkedSize && fileSize > maxEmojiSize {
-		defer func() {
-			if err := p.storage.Delete(ctx, p.emoji.ImagePath); err != nil {
-				log.Errorf("store: error removing too-large emoji from the store: %s", err)
-			}
-		}()
-		return fmt.Errorf("store: discovered emoji fileSize (%db) is larger than allowed emojiRemoteMaxSize (%db)", fileSize, maxEmojiSize)
+		err = fmt.Errorf("store: discovered emoji fileSize (%db) is larger than allowed emojiRemoteMaxSize (%db), will delete from the store now", fileSize, maxEmojiSize)
+		log.Warn(err)
+		if deleteErr := p.storage.Delete(ctx, p.emoji.ImagePath); deleteErr != nil {
+			log.Errorf("store: error removing too-large emoji from the store: %s", deleteErr)
+		}
+		return err
 	}
 
 	p.emoji.ImageFileSize = int(fileSize)
