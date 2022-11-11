@@ -128,7 +128,13 @@ Copy it to `/etc/systemd/system/gotosocial.service`.
 sudo cp /gotosocial/example/gotosocial.service /etc/systemd/system/
 ```
 
-Then use `sudoedit /etc/systemd/system/gotosocial.service` to change the `ExecStart=` and `WorkingDirectory=` lines according to your installation.
+Then use `sudoedit /etc/systemd/system/gotosocial.service` to change the `ExecStart=` and `WorkingDirectory=` lines according to your installation. You may also need to change `StandardOutput=` to point to where you want logs to be saved, or create the directory already specified in the file.
+
+```bash
+sudo mkdir /var/logs/gotosocial
+sudo chown gotosocial:gotosocial /var/logs/gotosocial
+```
+
 If you have been following this guide word for word the defaults should be fine.
 After you're done enable the service.
 
