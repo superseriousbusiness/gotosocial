@@ -31,7 +31,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-var ErrGone = errors.New("gone")
+// ErrGone is returned from Dereference when the remote resource returns 410 GONE.
+// This is useful in cases where we're processing a delete of a resource that's already
+// been removed from the remote server, so we know we don't need to keep trying to
+// dereference it.
+var ErrGone = errors.New("remote resource returned HTTP code 410 GONE")
 
 func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, error) {
 	// if the request is to us, we can shortcut for certain URIs rather than going through
