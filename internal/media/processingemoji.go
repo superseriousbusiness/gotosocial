@@ -259,8 +259,11 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	}
 
 	// store this for now -- other processes can pull it out of storage as they please
-	if fileSize, err = putStream(ctx, p.storage, p.emoji.ImagePath, readerToStore, fileSize); err != nil && err != storage.ErrAlreadyExists {
-		return fmt.Errorf("store: error storing stream: %s", err)
+	if fileSize, err = putStream(ctx, p.storage, p.emoji.ImagePath, readerToStore, fileSize); err != nil {
+		if !errors.Is(err, storage.ErrAlreadyExists) {
+			return fmt.Errorf("store: error storing stream: %s", err)
+		}
+		log.Warnf("emoji %s already exists at storage path: %s", p.emoji.ID, p.emoji.ImagePath)
 	}
 
 	// if we didn't know the fileSize yet, we do now, so check if we need to
