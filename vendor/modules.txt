@@ -16,6 +16,10 @@ codeberg.org/gruf/go-byteutil
 # codeberg.org/gruf/go-cache/v2 v2.1.4
 ## explicit; go 1.19
 codeberg.org/gruf/go-cache/v2
+# codeberg.org/gruf/go-cache/v3 v3.1.6
+## explicit; go 1.19
+codeberg.org/gruf/go-cache/v3/result
+codeberg.org/gruf/go-cache/v3/ttl
 # codeberg.org/gruf/go-debug v1.2.0
 ## explicit; go 1.16
 codeberg.org/gruf/go-debug
@@ -38,6 +42,12 @@ codeberg.org/gruf/go-kv/format
 # codeberg.org/gruf/go-logger/v2 v2.2.1
 ## explicit; go 1.19
 codeberg.org/gruf/go-logger/v2/level
+# codeberg.org/gruf/go-mangler v1.1.1
+## explicit; go 1.19
+codeberg.org/gruf/go-mangler
+# codeberg.org/gruf/go-maps v1.0.3
+## explicit; go 1.19
+codeberg.org/gruf/go-maps
 # codeberg.org/gruf/go-mutexes v1.1.4
 ## explicit; go 1.14
 codeberg.org/gruf/go-mutexes
@@ -63,6 +73,9 @@ github.com/aymerick/douceur/parser
 ## explicit; go 1.14
 github.com/buckket/go-blurhash
 github.com/buckket/go-blurhash/base83
+# github.com/cespare/xxhash v1.1.0
+## explicit
+github.com/cespare/xxhash
 # github.com/coreos/go-oidc/v3 v3.4.0
 ## explicit; go 1.14
 github.com/coreos/go-oidc/v3/oidc

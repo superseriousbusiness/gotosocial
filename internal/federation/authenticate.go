@@ -37,6 +37,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
 /*
@@ -201,8 +202,21 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		// REMOTE ACCOUNT REQUEST WITHOUT KEY CACHED LOCALLY
 		// the request is remote and we don't have the public key yet,
 		// so we need to authenticate the request properly by dereferencing the remote key
+		gone, err := f.CheckGone(ctx, requestingPublicKeyID)
+		if err != nil {
+			errWithCode := gtserror.NewErrorInternalError(fmt.Errorf("error checking for tombstone for %s: %s", requestingPublicKeyID, err))
+			log.Debug(errWithCode)
+			return nil, errWithCode
+		}
+
+		if gone {
+			errWithCode := gtserror.NewErrorGone(fmt.Errorf("account with public key %s is gone", requestingPublicKeyID))
+			log.Debug(errWithCode)
+			return nil, errWithCode
+		}
+
 		log.Tracef("proceeding with dereference for uncached public key %s", requestingPublicKeyID)
-		transport, err := f.transportController.NewTransportForUsername(ctx, requestedUsername)
+		trans, err := f.transportController.NewTransportForUsername(ctx, requestedUsername)
 		if err != nil {
 			errWithCode := gtserror.NewErrorInternalError(fmt.Errorf("error creating transport for %s: %s", requestedUsername, err))
 			log.Debug(errWithCode)
@@ -210,8 +224,21 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		}
 
 		// The actual http call to the remote server is made right here in the Dereference function.
-		b, err := transport.Dereference(ctx, requestingPublicKeyID)
+		b, err := trans.Dereference(ctx, requestingPublicKeyID)
 		if err != nil {
+			if errors.Is(err, transport.ErrGone) {
+				// if we get a 410 error it means the account that owns this public key has been deleted;
+				// we should add a tombstone to our database so that we can avoid trying to deref it in future
+				if err := f.HandleGone(ctx, requestingPublicKeyID); err != nil {
+					errWithCode := gtserror.NewErrorInternalError(fmt.Errorf("error marking account with public key %s as gone: %s", requestingPublicKeyID, err))
+					log.Debug(errWithCode)
+					return nil, errWithCode
+				}
+				errWithCode := gtserror.NewErrorGone(fmt.Errorf("account with public key %s is gone", requestingPublicKeyID))
+				log.Debug(errWithCode)
+				return nil, errWithCode
+			}
+
 			errWithCode := gtserror.NewErrorUnauthorized(fmt.Errorf("error dereferencing public key %s: %s", requestingPublicKeyID, err))
 			log.Debug(errWithCode)
 			return nil, errWithCode
