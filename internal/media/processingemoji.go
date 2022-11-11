@@ -206,6 +206,15 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 		}
 	}()
 
+	// execute the postData function no matter what happens
+	defer func() {
+		if p.postData != nil {
+			if err := p.postData(ctx); err != nil {
+				log.Errorf("store: error executing postData: %s", err)
+			}
+		}
+	}()
+
 	// extract no more than 261 bytes from the beginning of the file -- this is the header
 	firstBytes := make([]byte, maxFileHeaderBytes)
 	if _, err := rc.Read(firstBytes); err != nil {
@@ -259,26 +268,25 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	}
 
 	// store this for now -- other processes can pull it out of storage as they please
-	if fileSize, err = putStream(ctx, p.storage, p.emoji.ImagePath, readerToStore, fileSize); err != nil && err != storage.ErrAlreadyExists {
-		return fmt.Errorf("store: error storing stream: %s", err)
+	if fileSize, err = putStream(ctx, p.storage, p.emoji.ImagePath, readerToStore, fileSize); err != nil {
+		if !errors.Is(err, storage.ErrAlreadyExists) {
+			return fmt.Errorf("store: error storing stream: %s", err)
+		}
+		log.Warnf("emoji %s already exists at storage path: %s", p.emoji.ID, p.emoji.ImagePath)
 	}
 
 	// if we didn't know the fileSize yet, we do now, so check if we need to
 	if !checkedSize && fileSize > maxEmojiSize {
-		defer func() {
-			if err := p.storage.Delete(ctx, p.emoji.ImagePath); err != nil {
-				log.Errorf("store: error removing too-large emoji from the store: %s", err)
-			}
-		}()
-		return fmt.Errorf("store: discovered emoji fileSize (%db) is larger than allowed emojiRemoteMaxSize (%db)", fileSize, maxEmojiSize)
+		err = fmt.Errorf("store: discovered emoji fileSize (%db) is larger than allowed emojiRemoteMaxSize (%db), will delete from the store now", fileSize, maxEmojiSize)
+		log.Warn(err)
+		if deleteErr := p.storage.Delete(ctx, p.emoji.ImagePath); deleteErr != nil {
+			log.Errorf("store: error removing too-large emoji from the store: %s", deleteErr)
+		}
+		return err
 	}
 
 	p.emoji.ImageFileSize = int(fileSize)
 	p.read = true
-
-	if p.postData != nil {
-		return p.postData(ctx)
-	}
 
 	return nil
 }
@@ -303,20 +311,20 @@ func (m *manager) preProcessEmoji(ctx context.Context, data DataFunc, postData P
 		originalPostData := postData
 		originalImagePath := emoji.ImagePath
 		originalImageStaticPath := emoji.ImageStaticPath
-		postData = func(ctx context.Context) error {
+		postData = func(innerCtx context.Context) error {
 			// trigger the original postData function if it was provided
 			if originalPostData != nil {
-				if err := originalPostData(ctx); err != nil {
+				if err := originalPostData(innerCtx); err != nil {
 					return err
 				}
 			}
 
 			l := log.WithField("shortcode@domain", emoji.Shortcode+"@"+emoji.Domain)
 			l.Debug("postData: cleaning up old emoji files for refreshed emoji")
-			if err := m.storage.Delete(ctx, originalImagePath); err != nil && !errors.Is(err, gostore.ErrNotFound) {
+			if err := m.storage.Delete(innerCtx, originalImagePath); err != nil && !errors.Is(err, gostore.ErrNotFound) {
 				l.Errorf("postData: error cleaning up old emoji image at %s for refreshed emoji: %s", originalImagePath, err)
 			}
-			if err := m.storage.Delete(ctx, originalImageStaticPath); err != nil && !errors.Is(err, gostore.ErrNotFound) {
+			if err := m.storage.Delete(innerCtx, originalImageStaticPath); err != nil && !errors.Is(err, gostore.ErrNotFound) {
 				l.Errorf("postData: error cleaning up old emoji static image at %s for refreshed emoji: %s", originalImageStaticPath, err)
 			}
 

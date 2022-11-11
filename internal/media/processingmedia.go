@@ -21,6 +21,7 @@ package media
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -349,8 +350,11 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	p.attachment.File.Path = fmt.Sprintf("%s/%s/%s/%s.%s", p.attachment.AccountID, TypeAttachment, SizeOriginal, p.attachment.ID, extension)
 
 	// store this for now -- other processes can pull it out of storage as they please
-	if fileSize, err = putStream(ctx, p.storage, p.attachment.File.Path, readerToStore, fileSize); err != nil && err != storage.ErrAlreadyExists {
-		return fmt.Errorf("store: error storing stream: %s", err)
+	if fileSize, err = putStream(ctx, p.storage, p.attachment.File.Path, readerToStore, fileSize); err != nil {
+		if !errors.Is(err, storage.ErrAlreadyExists) {
+			return fmt.Errorf("store: error storing stream: %s", err)
+		}
+		log.Warnf("attachment %s already exists at storage path: %s", p.attachment.ID, p.attachment.File.Path)
 	}
 
 	cached := true
