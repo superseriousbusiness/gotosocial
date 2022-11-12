@@ -227,10 +227,29 @@ func (m *Module) fetchUserForClaims(ctx context.Context, claims *oidc.Claims, ip
 		return user, nil
 	}
 	if err != db.ErrNoEntries {
+		err := fmt.Errorf("error checking database for externalID %s: %s", claims.Sub, err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+	if !config.GetOIDCLinkExisting() {
+		return nil, nil
+	}
+	// fallback to email if we want to link existing users
+	user, err = m.db.GetUserByEmailAddress(ctx, claims.Email)
+	if err == db.ErrNoEntries {
+		return nil, nil
+	} else if err != nil {
 		err := fmt.Errorf("error checking database for email %s: %s", claims.Email, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
-	return nil, nil
+	// at this point we have found a matching user but still need to link the newly received external ID
+
+	user.ExternalID = claims.Sub
+	err = m.db.UpdateUser(ctx, user, "external_id")
+	if err != nil {
+		err := fmt.Errorf("error linking existing user %s: %s", claims.Email, err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+	return user, nil
 }
 
 func (m *Module) createUserFromOIDC(ctx context.Context, claims *oidc.Claims, extraInfo *extraInfo, ip net.IP, appID string) (*gtsmodel.User, gtserror.WithCode) {

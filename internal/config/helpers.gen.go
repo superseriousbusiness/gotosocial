@@ -1545,6 +1545,31 @@ func GetOIDCScopes() []string { return global.GetOIDCScopes() }
 // SetOIDCScopes safely sets the value for global configuration 'OIDCScopes' field
 func SetOIDCScopes(v []string) { global.SetOIDCScopes(v) }
 
+// GetOIDCLinkExisting safely fetches the Configuration value for state's 'OIDCLinkExisting' field
+func (st *ConfigState) GetOIDCLinkExisting() (v bool) {
+	st.mutex.Lock()
+	v = st.config.OIDCLinkExisting
+	st.mutex.Unlock()
+	return
+}
+
+// SetOIDCLinkExisting safely sets the Configuration value for state's 'OIDCLinkExisting' field
+func (st *ConfigState) SetOIDCLinkExisting(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.OIDCLinkExisting = v
+	st.reloadToViper()
+}
+
+// OIDCLinkExistingFlag returns the flag name for the 'OIDCLinkExisting' field
+func OIDCLinkExistingFlag() string { return "oidc-link-existing" }
+
+// GetOIDCLinkExisting safely fetches the value for global configuration 'OIDCLinkExisting' field
+func GetOIDCLinkExisting() bool { return global.GetOIDCLinkExisting() }
+
+// SetOIDCLinkExisting safely sets the value for global configuration 'OIDCLinkExisting' field
+func SetOIDCLinkExisting(v bool) { global.SetOIDCLinkExisting(v) }
+
 // GetSMTPHost safely fetches the Configuration value for state's 'SMTPHost' field
 func (st *ConfigState) GetSMTPHost() (v string) {
 	st.mutex.Lock()
@@ -1919,3 +1944,4 @@ func GetAdminMediaPruneDryRun() bool { return global.GetAdminMediaPruneDryRun() 
 
 // SetAdminMediaPruneDryRun safely sets the value for global configuration 'AdminMediaPruneDryRun' field
 func SetAdminMediaPruneDryRun(v bool) { global.SetAdminMediaPruneDryRun(v) }
+
