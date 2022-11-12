@@ -17,7 +17,7 @@ Restart=on-failure
 ExecStart=/gotosocial/gotosocial --config-path config.yaml server start
 WorkingDirectory=/gotosocial
 
-StandardOutput=append:/var/log/gotosocial/gotosocial.log
+StandardOutput=append:/var/log/gotosocial.log
 StandardError=inherit
 
 
