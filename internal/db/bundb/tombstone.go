@@ -36,9 +36,9 @@ type tombstoneDB struct {
 
 func (t *tombstoneDB) init() {
 	// Initialize tombstone result cache
-	t.cache = result.NewSized([]string{
-		"ID",
-		"URI",
+	t.cache = result.NewSized([]result.Lookup{
+		{Name: "ID"},
+		{Name: "URI"},
 	}, func(t1 *gtsmodel.Tombstone) *gtsmodel.Tombstone {
 		t2 := new(gtsmodel.Tombstone)
 		*t2 = *t1
