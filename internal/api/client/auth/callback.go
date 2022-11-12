@@ -220,7 +220,8 @@ func (m *Module) FinalizePOSTHandler(c *gin.Context) {
 
 func (m *Module) fetchUserForClaims(ctx context.Context, claims *oidc.Claims, ip net.IP, appID string) (*gtsmodel.User, gtserror.WithCode) {
 	if claims.Sub == "" {
-		return nil, gtserror.NewErrorBadRequest(errors.New("no sub claim found - is your provider OIDC compliant?"))
+		err := errors.New("no sub claim found - is your provider OIDC compliant?")
+		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
 	user, err := m.db.GetUserByExternalID(ctx, claims.Sub)
 	if err == nil {
@@ -259,7 +260,8 @@ func (m *Module) createUserFromOIDC(ctx context.Context, claims *oidc.Claims, ex
 		return nil, gtserror.NewErrorBadRequest(err)
 	}
 	if !emailAvailable {
-		return nil, gtserror.NewErrorConflict(fmt.Errorf("email address %s is not available", claims.Email))
+		help := "The email address given to us by your authentication provider already exists in our records and the server administrator has not enabled account migration"
+		return nil, gtserror.NewErrorConflict(fmt.Errorf("email address %s is not available", claims.Email), help)
 	}
 
 	// check if the user is in any recognised admin groups
