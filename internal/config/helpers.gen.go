@@ -1894,4 +1894,3 @@ func GetAdvancedRateLimitRequests() int { return global.GetAdvancedRateLimitRequ
 
 // SetAdvancedRateLimitRequests safely sets the value for global configuration 'AdvancedRateLimitRequests' field
 func SetAdvancedRateLimitRequests(v int) { global.SetAdvancedRateLimitRequests(v) }
-
