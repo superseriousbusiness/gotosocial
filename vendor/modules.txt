@@ -16,7 +16,7 @@ codeberg.org/gruf/go-byteutil
 # codeberg.org/gruf/go-cache/v2 v2.1.4
 ## explicit; go 1.19
 codeberg.org/gruf/go-cache/v2
-# codeberg.org/gruf/go-cache/v3 v3.1.6
+# codeberg.org/gruf/go-cache/v3 v3.1.7
 ## explicit; go 1.19
 codeberg.org/gruf/go-cache/v3/result
 codeberg.org/gruf/go-cache/v3/ttl

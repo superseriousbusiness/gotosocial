@@ -12,22 +12,24 @@ import (
 )
 
 // structKeys provides convience methods for a list
-// of struct field combinations used for cache keys.
-type structKeys []keyFields
+// of structKey field combinations used for cache keys.
+type structKeys []structKey
 
-// get fetches the key-fields for given lookup (else, panics).
-func (sk structKeys) get(lookup string) *keyFields {
+// get fetches the structKey info for given lookup name (else, panics).
+func (sk structKeys) get(name string) *structKey {
 	for i := range sk {
-		if sk[i].lookup == lookup {
+		if sk[i].name == name {
 			return &sk[i]
 		}
 	}
-	panic("unknown lookup: \"" + lookup + "\"")
+	panic("unknown lookup: \"" + name + "\"")
 }
 
-// generate will calculate the value string for each required
-// cache key as laid-out by the receiving structKeys{}.
-func (sk structKeys) generate(a any) []cacheKey {
+// generate will calculate and produce a slice of cache keys the given value
+// can be stored under in the, as determined by receiving struct keys.
+func (sk structKeys) generate(a any) []cachedKey {
+	var keys []cachedKey
+
 	// Get reflected value in order
 	// to access the struct fields
 	v := reflect.ValueOf(a)
@@ -40,9 +42,6 @@ func (sk structKeys) generate(a any) []cacheKey {
 		v = v.Elem()
 	}
 
-	// Preallocate expected slice of keys
-	keys := make([]cacheKey, len(sk))
-
 	// Acquire byte buffer
 	buf := bufpool.Get().(*byteutil.Buffer)
 	defer bufpool.Put(buf)
@@ -51,54 +50,63 @@ func (sk structKeys) generate(a any) []cacheKey {
 		// Reset buffer
 		buf.B = buf.B[:0]
 
-		// Set the key-fields reference
-		keys[i].fields = &sk[i]
+		// Append each field value to buffer.
+		for _, idx := range sk[i].fields {
+			fv := v.Field(idx)
+			fi := fv.Interface()
+			buf.B = mangler.Append(buf.B, fi)
+			buf.B = append(buf.B, '.')
+		}
 
-		// Calculate cache-key value
-		keys[i].populate(buf, v)
+		// Drop last '.'
+		buf.Truncate(1)
+
+		// Don't generate keys for zero values
+		if allowZero := sk[i].zero == ""; // nocollapse
+		!allowZero && buf.String() == sk[i].zero {
+			continue
+		}
+
+		// Append new cached key to slice
+		keys = append(keys, cachedKey{
+			key:   &sk[i],
+			value: string(buf.B), // copy
+		})
 	}
 
 	return keys
 }
 
-// cacheKey represents an actual cache key.
-type cacheKey struct {
+// cachedKey represents an actual cached key.
+type cachedKey struct {
+	// key is a reference to the structKey this
+	// cacheKey is representing. This is a shared
+	// reference and as such only the structKey.pkeys
+	// lookup map is expecting to be modified.
+	key *structKey
+
 	// value is the actual string representing
 	// this cache key for hashmap lookups.
 	value string
-
-	// fieldsRO is a read-only slice (i.e. we should
-	// NOT be modifying them, only using for reference)
-	// of struct fields encapsulated by this cache key.
-	fields *keyFields
 }
 
-// populate will calculate the cache key's value string for given
-// value's reflected information. Passed encoder is for string building.
-func (k *cacheKey) populate(buf *byteutil.Buffer, v reflect.Value) {
-	// Append each field value to buffer.
-	for _, idx := range k.fields.fields {
-		fv := v.Field(idx)
-		fi := fv.Interface()
-		buf.B = mangler.Append(buf.B, fi)
-		buf.B = append(buf.B, '.')
-	}
+// structKey represents a list of struct fields
+// encompassing a single cache key, the string name
+// of the lookup, the lookup map to primary cache
+// keys, and the key's possible zero value string.
+type structKey struct {
+	// name is the provided cache lookup name for
+	// this particular struct key, consisting of
+	// period ('.') separated struct field names.
+	name string
 
-	// Drop last '.'
-	buf.Truncate(1)
-
-	// Create string copy from buf
-	k.value = string(buf.B)
-}
-
-// keyFields represents a list of struct fields
-// encompassed in a single cache key, the string name
-// of the lookup, and the lookup map to primary keys.
-type keyFields struct {
-	// lookup is the calculated (well, provided)
-	// cache key lookup, consisting of dot sep'd
-	// struct field names.
-	lookup string
+	// zero is the possible zero value for this key.
+	// if set, this will _always_ be non-empty, as
+	// the mangled cache key will never be empty.
+	//
+	// i.e. zero = ""  --> allow zero value keys
+	//      zero != "" --> don't allow zero value keys
+	zero string
 
 	// fields is a slice of runtime struct field
 	// indices, of the fields encompassed by this key.
@@ -109,19 +117,20 @@ type keyFields struct {
 	pkeys map[string]int64
 }
 
-// populate will populate this keyFields{} object's .fields member by determining
-// the field names from the given lookup, and querying given reflected type to get
-// the runtime field indices for each of the fields. this speeds-up future value lookups.
-func (kf *keyFields) populate(t reflect.Type) {
+// genStructKey will generate a structKey{} information object for user-given lookup
+// key information, and the receiving generic paramter's type information. Panics on error.
+func genStructKey(lk Lookup, t reflect.Type) structKey {
+	var zeros []any
+
 	// Split dot-separated lookup to get
 	// the individual struct field names
-	names := strings.Split(kf.lookup, ".")
+	names := strings.Split(lk.Name, ".")
 	if len(names) == 0 {
 		panic("no key fields specified")
 	}
 
 	// Pre-allocate slice of expected length
-	kf.fields = make([]int, len(names))
+	fields := make([]int, len(names))
 
 	for i, name := range names {
 		// Get field info for given name
@@ -136,13 +145,36 @@ func (kf *keyFields) populate(t reflect.Type) {
 		}
 
 		// Set the runtime field index
-		kf.fields[i] = ft.Index[0]
+		fields[i] = ft.Index[0]
+
+		// Allocate new instance of field
+		v := reflect.New(ft.Type)
+		v = v.Elem()
+
+		if !lk.AllowZero {
+			// Append the zero value interface
+			zeros = append(zeros, v.Interface())
+		}
+	}
+
+	var zvalue string
+
+	if len(zeros) > 0 {
+		// Generate zero value string
+		zvalue = genKey(zeros...)
+	}
+
+	return structKey{
+		name:   lk.Name,
+		zero:   zvalue,
+		fields: fields,
+		pkeys:  make(map[string]int64),
 	}
 }
 
-// genkey generates a cache key for given key values.
-func genkey(parts ...any) string {
-	if len(parts) < 1 {
+// genKey generates a cache key for given key values.
+func genKey(parts ...any) string {
+	if len(parts) == 0 {
 		// Panic to prevent annoying usecase
 		// where user forgets to pass lookup
 		// and instead only passes a key part,
