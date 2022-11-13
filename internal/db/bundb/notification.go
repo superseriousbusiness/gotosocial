@@ -35,7 +35,7 @@ type notificationDB struct {
 }
 
 func (n *notificationDB) init() {
-	// Initialize status result cache
+	// Initialize notification result cache
 	n.cache = result.NewSized([]result.Lookup{
 		{Name: "ID"},
 	}, func(n1 *gtsmodel.Notification) *gtsmodel.Notification {
@@ -54,7 +54,7 @@ func (n *notificationDB) GetNotification(ctx context.Context, id string) (*gtsmo
 		var notif gtsmodel.Notification
 
 		q := n.conn.NewSelect().
-			Model(notif).
+			Model(&notif).
 			Relation("OriginAccount").
 			Relation("TargetAccount").
 			Relation("Status").
