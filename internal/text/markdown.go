@@ -71,7 +71,7 @@ func (f *formatter) FromMarkdown(ctx context.Context, markdownText string, menti
 		mentions: mentions,
 		tags:     tags,
 		HTMLRenderer: *blackfriday.NewHTMLRenderer(blackfriday.HTMLRendererParameters{
-			Flags: blackfriday.CommonHTMLFlags,
+			Flags: blackfriday.CommonHTMLFlags &^ blackfriday.SmartypantsFractions,
 		}),
 	}
 

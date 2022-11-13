@@ -55,6 +55,8 @@ const (
 	withHashtagExpected             = "<h1>Title</h1><p>here’s a simple status that uses hashtag <a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a>!</p>"
 	mdWithHTML                      = "# Title\n\nHere's a simple text in markdown.\n\nHere's a <a href=\"https://example.org\">link</a>.\n\nHere's an image: <img src=\"https://gts.superseriousbusiness.org/assets/logo.png\" alt=\"The GoToSocial sloth logo.\" width=\"500\" height=\"600\">"
 	mdWithHTMLExpected              = "<h1>Title</h1><p>Here’s a simple text in markdown.</p><p>Here’s a <a href=\"https://example.org\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">link</a>.</p><p>Here’s an image: <img src=\"https://gts.superseriousbusiness.org/assets/logo.png\" alt=\"The GoToSocial sloth logo.\" width=\"500\" height=\"600\" crossorigin=\"anonymous\"></p>"
+	mdNoSmartyFractions             = "Some fractions are 1/2 1/3 2/3 1/4 3/4 1/5 2/5 3/5 4/5"
+	mdNoSmartyFractionsExpected     = "<p>Some fractions are 1/2 1/3 2/3 1/4 3/4 1/5 2/5 3/5 4/5</p>"
 	mdWithCheekyHTML                = "# Title\n\nHere's a simple text in markdown.\n\nHere's a cheeky little script: <script>alert(ahhhh)</script>"
 	mdWithCheekyHTMLExpected        = "<h1>Title</h1><p>Here’s a simple text in markdown.</p><p>Here’s a cheeky little script:</p>"
 	mdWithHashtagInitial            = "#welcome #Hashtag"
@@ -107,6 +109,11 @@ func (suite *MarkdownTestSuite) TestParseWithHashtag() {
 func (suite *MarkdownTestSuite) TestParseWithHTML() {
 	s := suite.formatter.FromMarkdown(context.Background(), mdWithHTML, nil, nil, nil)
 	suite.Equal(mdWithHTMLExpected, s)
+}
+
+func (suite *MarkdownTestSuite) TestParseWithoutSmartyPantsFractions() {
+	s := suite.formatter.FromMarkdown(context.Background(), mdNoSmartyFractions, nil, nil, nil)
+	suite.Equal(mdNoSmartyFractionsExpected, s)
 }
 
 func (suite *MarkdownTestSuite) TestParseWithCheekyHTML() {
