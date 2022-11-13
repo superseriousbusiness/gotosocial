@@ -1,3 +1,4 @@
+
 /*
    GoToSocial
    Copyright (C) 2021-2022 GoToSocial Authors admin@gotosocial.org
@@ -113,8 +114,10 @@ import (
 func (m *Module) PublicTimelineGETHandler(c *gin.Context) {
 	var authed *oauth.Auth
 	var err error
-	
+
 	if config.GetInstanceExposePublicTimeline() {
+		// If the public timeline is allowed to be exposed, still check if we
+		// can extract various authentication properties, but don't require them.
 		authed, err = oauth.Authed(c, false, false, false, false)
 	} else {
 		authed, err = oauth.Authed(c, true, true, true, true)
