@@ -70,7 +70,7 @@ func (suite *GetTestSuite) TestGet() {
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
 
-	suite.Equal(`[{"id":"01FHMQX3GAABWSM0S2VZEC2SWC","username":"some_user","acct":"some_user@example.org","display_name":"some user","locked":true,"bot":false,"created_at":"2020-08-10T12:13:28.000Z","note":"i'm a real son of a gun","url":"http://example.org/@some_user","avatar":"","avatar_static":"","header":"http://localhost:8080/assets/default_header.png","header_static":"http://localhost:8080/assets/default_header.png","followers_count":0,"following_count":0,"statuses_count":0,"last_status_at":"","emojis":[],"fields":[]}]`, string(b))
+	suite.Equal(`[{"id":"01FHMQX3GAABWSM0S2VZEC2SWC","username":"some_user","acct":"some_user@example.org","display_name":"some user","locked":true,"bot":false,"created_at":"2020-08-10T12:13:28.000Z","note":"i'm a real son of a gun","url":"http://example.org/@some_user","avatar":"","avatar_static":"","header":"http://localhost:8080/assets/default_header.png","header_static":"http://localhost:8080/assets/default_header.png","followers_count":0,"following_count":0,"statuses_count":0,"last_status_at":null,"emojis":[],"fields":[]}]`, string(b))
 }
 
 func TestGetTestSuite(t *testing.T) {
