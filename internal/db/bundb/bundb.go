@@ -45,7 +45,6 @@ import (
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/migrate"
 
-	grufcache "codeberg.org/gruf/go-cache/v2"
 	"modernc.org/sqlite"
 )
 
@@ -159,23 +158,12 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 		return nil, fmt.Errorf("db migration error: %s", err)
 	}
 
-	// Prepare other caches
-	// Prepare mentions cache
-	// TODO: move into internal/cache
-	mentionCache := grufcache.New[string, *gtsmodel.Mention]()
-	mentionCache.SetTTL(time.Minute*5, false)
-	mentionCache.Start(time.Second * 10)
-
-	// Prepare notifications cache
-	// TODO: move into internal/cache
-	notifCache := grufcache.New[string, *gtsmodel.Notification]()
-	notifCache.SetTTL(time.Minute*5, false)
-	notifCache.Start(time.Second * 10)
-
 	// Create DB structs that require ptrs to each other
 	account := &accountDB{conn: conn}
 	admin := &adminDB{conn: conn}
 	domain := &domainDB{conn: conn}
+	mention := &mentionDB{conn: conn}
+	notif := &notificationDB{conn: conn}
 	status := &statusDB{conn: conn}
 	emoji := &emojiDB{conn: conn}
 	timeline := &timelineDB{conn: conn}
@@ -192,6 +180,8 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 	account.init()
 	domain.init()
 	emoji.init()
+	mention.init()
+	notif.init()
 	status.init()
 	tombstone.init()
 	user.init()
@@ -214,14 +204,8 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 		Media: &mediaDB{
 			conn: conn,
 		},
-		Mention: &mentionDB{
-			conn:  conn,
-			cache: mentionCache,
-		},
-		Notification: &notificationDB{
-			conn:  conn,
-			cache: notifCache,
-		},
+		Mention:      mention,
+		Notification: notif,
 		Relationship: &relationshipDB{
 			conn: conn,
 		},

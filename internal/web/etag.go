@@ -27,11 +27,11 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 
-	"codeberg.org/gruf/go-cache/v2"
+	"codeberg.org/gruf/go-cache/v3"
 )
 
 func newETagCache() cache.Cache[string, eTagCacheEntry] {
-	eTagCache := cache.New[string, eTagCacheEntry]()
+	eTagCache := cache.New[string, eTagCacheEntry](0, 1000, 0)
 	eTagCache.SetTTL(time.Hour, false)
 	if !eTagCache.Start(time.Minute) {
 		log.Panic("could not start eTagCache")
