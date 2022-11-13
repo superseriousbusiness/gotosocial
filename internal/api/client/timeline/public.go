@@ -111,14 +111,18 @@ import (
 //		'400':
 //			description: bad request
 func (m *Module) PublicTimelineGETHandler(c *gin.Context) {
-	authed := &oauth.Auth{}
-	if !config.GetInstanceExposePublicTimeline() {
-		var err error
+	var authed *oauth.Auth
+	var err error
+	
+	if config.GetInstanceExposePublicTimeline() {
+		authed, err = oauth.Authed(c, false, false, false, false)
+	} else {
 		authed, err = oauth.Authed(c, true, true, true, true)
-		if err != nil {
-			api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
-			return
-		}
+	}
+
+	if err != nil {
+		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
+		return
 	}
 
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
