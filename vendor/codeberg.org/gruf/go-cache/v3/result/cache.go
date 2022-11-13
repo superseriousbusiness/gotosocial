@@ -7,7 +7,20 @@ import (
 	"codeberg.org/gruf/go-cache/v3/ttl"
 )
 
-// Cache ...
+// Lookup represents a struct object lookup method in the cache.
+type Lookup struct {
+	// Name is a period ('.') separated string
+	// of struct fields this Key encompasses.
+	Name string
+
+	// AllowZero indicates whether to accept and cache
+	// under zero value keys, otherwise ignore them.
+	AllowZero bool
+}
+
+// Cache provides a means of caching value structures, along with
+// the results of attempting to load them. An example usecase of this
+// cache would be in wrapping a database, allowing caching of sql.ErrNoRows.
 type Cache[Value any] struct {
 	cache   ttl.Cache[int64, result[Value]] // underlying result cache
 	lookups structKeys                      // pre-determined struct lookups
@@ -16,12 +29,12 @@ type Cache[Value any] struct {
 }
 
 // New returns a new initialized Cache, with given lookups and underlying value copy function.
-func New[Value any](lookups []string, copy func(Value) Value) *Cache[Value] {
+func New[Value any](lookups []Lookup, copy func(Value) Value) *Cache[Value] {
 	return NewSized(lookups, copy, 64)
 }
 
 // NewSized returns a new initialized Cache, with given lookups, underlying value copy function and provided capacity.
-func NewSized[Value any](lookups []string, copy func(Value) Value, cap int) *Cache[Value] {
+func NewSized[Value any](lookups []Lookup, copy func(Value) Value, cap int) *Cache[Value] {
 	var z Value
 
 	// Determine generic type
@@ -39,13 +52,11 @@ func NewSized[Value any](lookups []string, copy func(Value) Value, cap int) *Cac
 
 	// Allocate new cache object
 	c := &Cache[Value]{copy: copy}
-	c.lookups = make([]keyFields, len(lookups))
+	c.lookups = make([]structKey, len(lookups))
 
 	for i, lookup := range lookups {
 		// Generate keyed field info for lookup
-		c.lookups[i].pkeys = make(map[string]int64, cap)
-		c.lookups[i].lookup = lookup
-		c.lookups[i].populate(t)
+		c.lookups[i] = genStructKey(lookup, t)
 	}
 
 	// Create and initialize underlying cache
@@ -82,7 +93,7 @@ func (c *Cache[Value]) SetEvictionCallback(hook func(Value)) {
 	c.cache.SetEvictionCallback(func(item *ttl.Entry[int64, result[Value]]) {
 		for _, key := range item.Value.Keys {
 			// Delete key->pkey lookup
-			pkeys := key.fields.pkeys
+			pkeys := key.key.pkeys
 			delete(pkeys, key.value)
 		}
 
@@ -104,11 +115,9 @@ func (c *Cache[Value]) SetInvalidateCallback(hook func(Value)) {
 	}
 	c.cache.SetInvalidateCallback(func(item *ttl.Entry[int64, result[Value]]) {
 		for _, key := range item.Value.Keys {
-			if key.fields != nil {
-				// Delete key->pkey lookup
-				pkeys := key.fields.pkeys
-				delete(pkeys, key.value)
-			}
+			// Delete key->pkey lookup
+			pkeys := key.key.pkeys
+			delete(pkeys, key.value)
 		}
 
 		if item.Value.Error != nil {
@@ -121,25 +130,24 @@ func (c *Cache[Value]) SetInvalidateCallback(hook func(Value)) {
 	})
 }
 
-// Load ...
+// Load will attempt to load an existing result from the cacche for the given lookup and key parts, else calling the load function and caching that result.
 func (c *Cache[Value]) Load(lookup string, load func() (Value, error), keyParts ...any) (Value, error) {
 	var (
 		zero Value
 		res  result[Value]
 	)
 
-	// Get lookup map by name.
-	kfields := c.getFields(lookup)
-	lmap := kfields.pkeys
+	// Get lookup key info by name.
+	keyInfo := c.lookups.get(lookup)
 
 	// Generate cache key string.
-	ckey := genkey(keyParts...)
+	ckey := genKey(keyParts...)
 
 	// Acquire cache lock
 	c.cache.Lock()
 
-	// Look for primary key
-	pkey, ok := lmap[ckey]
+	// Look for primary key for cache key
+	pkey, ok := keyInfo.pkeys[ckey]
 
 	if ok {
 		// Fetch the result for primary key
@@ -157,9 +165,9 @@ func (c *Cache[Value]) Load(lookup string, load func() (Value, error), keyParts 
 		if res.Error != nil {
 			// This load returned an error, only
 			// store this item under provided key.
-			res.Keys = []cacheKey{{
-				value:  ckey,
-				fields: kfields,
+			res.Keys = []cachedKey{{
+				key:   keyInfo,
+				value: ckey,
 			}}
 		} else {
 			// This was a successful load, generate keys.
@@ -185,7 +193,7 @@ func (c *Cache[Value]) Load(lookup string, load func() (Value, error), keyParts 
 	return c.copy(res.Value), nil
 }
 
-// Store ...
+// Store will call the given store function, and on success store the value in the cache as a positive result.
 func (c *Cache[Value]) Store(value Value, store func() error) error {
 	// Attempt to store this value.
 	if err := store(); err != nil {
@@ -212,22 +220,21 @@ func (c *Cache[Value]) Store(value Value, store func() error) error {
 	return nil
 }
 
-// Has ...
+// Has checks the cache for a positive result under the given lookup and key parts.
 func (c *Cache[Value]) Has(lookup string, keyParts ...any) bool {
 	var res result[Value]
 
-	// Get lookup map by name.
-	kfields := c.getFields(lookup)
-	lmap := kfields.pkeys
+	// Get lookup key type by name.
+	keyType := c.lookups.get(lookup)
 
 	// Generate cache key string.
-	ckey := genkey(keyParts...)
+	ckey := genKey(keyParts...)
 
 	// Acquire cache lock
 	c.cache.Lock()
 
-	// Look for primary key
-	pkey, ok := lmap[ckey]
+	// Look for primary key for cache key
+	pkey, ok := keyType.pkeys[ckey]
 
 	if ok {
 		// Fetch the result for primary key
@@ -242,18 +249,17 @@ func (c *Cache[Value]) Has(lookup string, keyParts ...any) bool {
 	return ok && (res.Error == nil)
 }
 
-// Invalidate ...
+// Invalidate will invalidate any result from the cache found under given lookup and key parts.
 func (c *Cache[Value]) Invalidate(lookup string, keyParts ...any) {
-	// Get lookup map by name.
-	kfields := c.getFields(lookup)
-	lmap := kfields.pkeys
+	// Get lookup key type by name.
+	keyType := c.lookups.get(lookup)
 
 	// Generate cache key string.
-	ckey := genkey(keyParts...)
+	ckey := genKey(keyParts...)
 
-	// Look for primary key
+	// Look for primary key for cache key
 	c.cache.Lock()
-	pkey, ok := lmap[ckey]
+	pkey, ok := keyType.pkeys[ckey]
 	c.cache.Unlock()
 
 	if !ok {
@@ -269,29 +275,19 @@ func (c *Cache[Value]) Clear() {
 	c.cache.Clear()
 }
 
-// Len ...
+// Len returns the current length of the cache.
 func (c *Cache[Value]) Len() int {
 	return c.cache.Cache.Len()
 }
 
-// Cap ...
+// Cap returns the maximum capacity of this result cache.
 func (c *Cache[Value]) Cap() int {
 	return c.cache.Cache.Cap()
 }
 
-func (c *Cache[Value]) getFields(name string) *keyFields {
-	for _, k := range c.lookups {
-		// Find key fields with name
-		if k.lookup == name {
-			return &k
-		}
-	}
-	panic("invalid lookup: " + name)
-}
-
 func (c *Cache[Value]) storeResult(res result[Value]) (string, bool) {
 	for _, key := range res.Keys {
-		pkeys := key.fields.pkeys
+		pkeys := key.key.pkeys
 
 		// Look for cache primary key
 		pkey, ok := pkeys[key.value]
@@ -304,6 +300,9 @@ func (c *Cache[Value]) storeResult(res result[Value]) (string, bool) {
 			if entry.Value.Error == nil {
 				return key.value, false
 			}
+
+			// Delete existing error result
+			c.cache.Cache.Delete(pkey)
 		}
 	}
 
@@ -313,7 +312,7 @@ func (c *Cache[Value]) storeResult(res result[Value]) (string, bool) {
 
 	// Store all primary key lookups
 	for _, key := range res.Keys {
-		pkeys := key.fields.pkeys
+		pkeys := key.key.pkeys
 		pkeys[key.value] = pkey
 	}
 
@@ -331,7 +330,7 @@ func (c *Cache[Value]) storeResult(res result[Value]) (string, bool) {
 
 type result[Value any] struct {
 	// keys accessible under
-	Keys []cacheKey
+	Keys []cachedKey
 
 	// cached value
 	Value Value
