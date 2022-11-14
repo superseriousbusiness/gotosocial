@@ -191,6 +191,7 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 	// Initialize db structs
 	account.init()
 	domain.init()
+	emoji.init()
 	status.init()
 	tombstone.init()
 	user.init()
