@@ -92,7 +92,7 @@ func (suite *AccountTestSuite) TestUpdateAccount() {
 	testAccount.DisplayName = "new display name!"
 	testAccount.EmojiIDs = []string{"01GD36ZKWTKY3T1JJ24JR7KY1Q", "01GD36ZV904SHBHNAYV6DX5QEF"}
 
-	_, err := suite.db.UpdateAccount(ctx, testAccount)
+	err := suite.db.UpdateAccount(ctx, testAccount)
 	suite.NoError(err)
 
 	updated, err := suite.db.GetAccountByID(ctx, testAccount.ID)
@@ -127,7 +127,7 @@ func (suite *AccountTestSuite) TestUpdateAccount() {
 	// update again to remove emoji associations
 	testAccount.EmojiIDs = []string{}
 
-	_, err = suite.db.UpdateAccount(ctx, testAccount)
+	err = suite.db.UpdateAccount(ctx, testAccount)
 	suite.NoError(err)
 
 	updated, err = suite.db.GetAccountByID(ctx, testAccount.ID)

@@ -107,7 +107,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountAsRemoteURLNoSharedInb
 	targetAccount := suite.testAccounts["local_account_2"]
 
 	targetAccount.SharedInboxURI = nil
-	if _, err := suite.db.UpdateAccount(context.Background(), targetAccount); err != nil {
+	if err := suite.db.UpdateAccount(context.Background(), targetAccount); err != nil {
 		suite.FailNow(err.Error())
 	}
 

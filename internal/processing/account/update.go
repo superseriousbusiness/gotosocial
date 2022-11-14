@@ -164,7 +164,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		account.EnableRSS = form.EnableRSS
 	}
 
-	updatedAccount, err := p.db.UpdateAccount(ctx, account)
+	err := p.db.UpdateAccount(ctx, account)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("could not update account %s: %s", account.ID, err))
 	}
@@ -172,11 +172,11 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 	p.clientWorker.Queue(messages.FromClientAPI{
 		APObjectType:   ap.ObjectProfile,
 		APActivityType: ap.ActivityUpdate,
-		GTSModel:       updatedAccount,
-		OriginAccount:  updatedAccount,
+		GTSModel:       account,
+		OriginAccount:  account,
 	})
 
-	acctSensitive, err := p.tc.AccountToAPIAccountSensitive(ctx, updatedAccount)
+	acctSensitive, err := p.tc.AccountToAPIAccountSensitive(ctx, account)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("could not convert account into apisensitive account: %s", err))
 	}

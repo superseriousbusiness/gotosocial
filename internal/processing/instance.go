@@ -235,7 +235,7 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 	if updateInstanceAccount {
 		// if either avatar or header is updated, we need
 		// to update the instance account that stores them
-		if _, err := p.db.UpdateAccount(ctx, ia); err != nil {
+		if err := p.db.UpdateAccount(ctx, ia); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error updating instance account: %s", err))
 		}
 	}

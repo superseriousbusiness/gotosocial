@@ -90,6 +90,13 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
+	// user := authed.Account.DisplayName
+	// if user == "" {
+	// 	user = authed.Account.Username
+	// }
+
+	// form.Status += "\n\nsent from " + user + "'s iphone\n"
+
 	if err := validateCreateStatus(form); err != nil {
 		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return

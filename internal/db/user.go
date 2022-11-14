@@ -34,9 +34,11 @@ type User interface {
 	GetUserByEmailAddress(ctx context.Context, emailAddress string) (*gtsmodel.User, Error)
 	// GetUserByConfirmationToken returns one user by its confirmation token, or an error if something goes wrong.
 	GetUserByConfirmationToken(ctx context.Context, confirmationToken string) (*gtsmodel.User, Error)
+	// PutUser will attempt to place user in the database
+	PutUser(ctx context.Context, user *gtsmodel.User) Error
 	// UpdateUser updates one user by its primary key. If columns is set, only given columns
-	// will be updated. If not set, all columns will be updated.
-	UpdateUser(ctx context.Context, user *gtsmodel.User, columns ...string) (*gtsmodel.User, Error)
+	// will be updated. If not set, all columns will be updated. Also pdates the user model's "UpdatedAt" field.
+	UpdateUser(ctx context.Context, user *gtsmodel.User, columns ...string) Error
 	// DeleteUserByID deletes one user by its ID.
 	DeleteUserByID(ctx context.Context, userID string) Error
 }

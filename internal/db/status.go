@@ -39,7 +39,7 @@ type Status interface {
 	PutStatus(ctx context.Context, status *gtsmodel.Status) Error
 
 	// UpdateStatus updates one status in the database and returns it to the caller.
-	UpdateStatus(ctx context.Context, status *gtsmodel.Status) (*gtsmodel.Status, Error)
+	UpdateStatus(ctx context.Context, status *gtsmodel.Status) Error
 
 	// DeleteStatusByID deletes one status from the database.
 	DeleteStatusByID(ctx context.Context, id string) Error

@@ -50,15 +50,13 @@ func (suite *UserTestSuite) TestGetUserByAccountID() {
 
 func (suite *UserTestSuite) TestUpdateUserSelectedColumns() {
 	testUser := suite.testUsers["local_account_1"]
-	user := &gtsmodel.User{
+
+	err := suite.db.UpdateUser(context.Background(), &gtsmodel.User{
 		ID:     testUser.ID,
 		Email:  "whatever",
 		Locale: "es",
-	}
-
-	user, err := suite.db.UpdateUser(context.Background(), user, "email", "locale")
+	}, "email", "locale")
 	suite.NoError(err)
-	suite.NotNil(user)
 
 	dbUser, err := suite.db.GetUserByID(context.Background(), testUser.ID)
 	suite.NoError(err)

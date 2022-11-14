@@ -153,7 +153,7 @@ var Promote action.GTSAction = func(ctx context.Context) error {
 	admin := true
 	u.Admin = &admin
 	u.UpdatedAt = time.Now()
-	if _, err := dbConn.UpdateUser(ctx, u, updatingColumns...); err != nil {
+	if err := dbConn.UpdateUser(ctx, u, updatingColumns...); err != nil {
 		return err
 	}
 
@@ -189,7 +189,7 @@ var Demote action.GTSAction = func(ctx context.Context) error {
 	admin := false
 	u.Admin = &admin
 	u.UpdatedAt = time.Now()
-	if _, err := dbConn.UpdateUser(ctx, u, updatingColumns...); err != nil {
+	if err := dbConn.UpdateUser(ctx, u, updatingColumns...); err != nil {
 		return err
 	}
 
@@ -225,7 +225,7 @@ var Disable action.GTSAction = func(ctx context.Context) error {
 	disabled := true
 	u.Disabled = &disabled
 	u.UpdatedAt = time.Now()
-	if _, err := dbConn.UpdateUser(ctx, u, updatingColumns...); err != nil {
+	if err := dbConn.UpdateUser(ctx, u, updatingColumns...); err != nil {
 		return err
 	}
 
@@ -273,7 +273,7 @@ var Password action.GTSAction = func(ctx context.Context) error {
 	updatingColumns := []string{"encrypted_password", "updated_at"}
 	u.EncryptedPassword = string(pw)
 	u.UpdatedAt = time.Now()
-	if _, err := dbConn.UpdateUser(ctx, u, updatingColumns...); err != nil {
+	if err := dbConn.UpdateUser(ctx, u, updatingColumns...); err != nil {
 		return err
 	}
 

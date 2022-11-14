@@ -94,9 +94,9 @@ func (suite *AuthAuthorizeTestSuite) TestAccountAuthorizeHandler() {
 		testCase.description = fmt.Sprintf("%s, %t, %s", user.Email, *user.Disabled, account.SuspendedAt)
 
 		updatingColumns = append(updatingColumns, "updated_at")
-		_, err := suite.db.UpdateUser(context.Background(), user, updatingColumns...)
+		err := suite.db.UpdateUser(context.Background(), user, updatingColumns...)
 		suite.NoError(err)
-		_, err = suite.db.UpdateAccount(context.Background(), account)
+		err = suite.db.UpdateAccount(context.Background(), account)
 		suite.NoError(err)
 
 		// call the handler
