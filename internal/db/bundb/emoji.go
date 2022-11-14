@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"codeberg.org/gruf/go-cache/v3/result"
-	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -35,7 +34,7 @@ import (
 type emojiDB struct {
 	conn          *DBConn
 	emojiCache    *result.Cache[*gtsmodel.Emoji]
-	categoryCache *cache.EmojiCategoryCache
+	categoryCache *result.Cache[*gtsmodel.EmojiCategory]
 }
 
 func (e *emojiDB) init() {
@@ -54,6 +53,20 @@ func (e *emojiDB) init() {
 	// Set cache TTL and start sweep routine
 	e.emojiCache.SetTTL(time.Minute*5, false)
 	e.emojiCache.Start(time.Second * 10)
+
+	// Initialize category result cache
+	e.categoryCache = result.NewSized([]result.Lookup{
+		{Name: "ID"},
+		{Name: "Name"},
+	}, func(c1 *gtsmodel.EmojiCategory) *gtsmodel.EmojiCategory {
+		c2 := new(gtsmodel.EmojiCategory)
+		*c2 = *c1
+		return c2
+	}, 1000)
+
+	// Set cache TTL and start sweep routine
+	e.categoryCache.SetTTL(time.Minute*5, false)
+	e.categoryCache.Start(time.Second * 10)
 }
 
 func (e *emojiDB) newEmojiQ(emoji *gtsmodel.Emoji) *bun.SelectQuery {
@@ -325,12 +338,10 @@ func (e *emojiDB) GetEmojiByStaticURL(ctx context.Context, imageStaticURL string
 }
 
 func (e *emojiDB) PutEmojiCategory(ctx context.Context, emojiCategory *gtsmodel.EmojiCategory) db.Error {
-	if _, err := e.conn.NewInsert().Model(emojiCategory).Exec(ctx); err != nil {
+	return e.categoryCache.Store(emojiCategory, func() error {
+		_, err := e.conn.NewInsert().Model(emojiCategory).Exec(ctx)
 		return e.conn.ProcessError(err)
-	}
-
-	e.categoryCache.Put(emojiCategory)
-	return nil
+	})
 }
 
 func (e *emojiDB) GetEmojiCategories(ctx context.Context) ([]*gtsmodel.EmojiCategory, db.Error) {
@@ -352,24 +363,22 @@ func (e *emojiDB) GetEmojiCategories(ctx context.Context) ([]*gtsmodel.EmojiCate
 func (e *emojiDB) GetEmojiCategory(ctx context.Context, id string) (*gtsmodel.EmojiCategory, db.Error) {
 	return e.getEmojiCategory(
 		ctx,
-		func() (*gtsmodel.EmojiCategory, bool) {
-			return e.categoryCache.GetByID(id)
-		},
+		"ID",
 		func(emojiCategory *gtsmodel.EmojiCategory) error {
 			return e.newEmojiCategoryQ(emojiCategory).Where("? = ?", bun.Ident("emoji_category.id"), id).Scan(ctx)
 		},
+		id,
 	)
 }
 
 func (e *emojiDB) GetEmojiCategoryByName(ctx context.Context, name string) (*gtsmodel.EmojiCategory, db.Error) {
 	return e.getEmojiCategory(
 		ctx,
-		func() (*gtsmodel.EmojiCategory, bool) {
-			return e.categoryCache.GetByName(name)
-		},
+		"Name",
 		func(emojiCategory *gtsmodel.EmojiCategory) error {
 			return e.newEmojiCategoryQ(emojiCategory).Where("LOWER(?) = ?", bun.Ident("emoji_category.name"), strings.ToLower(name)).Scan(ctx)
 		},
+		name,
 	)
 }
 
@@ -406,24 +415,17 @@ func (e *emojiDB) emojisFromIDs(ctx context.Context, emojiIDs []string) ([]*gtsm
 	return emojis, nil
 }
 
-func (e *emojiDB) getEmojiCategory(ctx context.Context, cacheGet func() (*gtsmodel.EmojiCategory, bool), dbQuery func(*gtsmodel.EmojiCategory) error) (*gtsmodel.EmojiCategory, db.Error) {
-	// Attempt to fetch cached emoji categories
-	emojiCategory, cached := cacheGet()
-
-	if !cached {
-		emojiCategory = &gtsmodel.EmojiCategory{}
+func (e *emojiDB) getEmojiCategory(ctx context.Context, lookup string, dbQuery func(*gtsmodel.EmojiCategory) error, keyParts ...any) (*gtsmodel.EmojiCategory, db.Error) {
+	return e.categoryCache.Load(lookup, func() (*gtsmodel.EmojiCategory, error) {
+		var category gtsmodel.EmojiCategory
 
 		// Not cached! Perform database query
-		err := dbQuery(emojiCategory)
-		if err != nil {
+		if err := dbQuery(&category); err != nil {
 			return nil, e.conn.ProcessError(err)
 		}
 
-		// Place in the cache
-		e.categoryCache.Put(emojiCategory)
-	}
-
-	return emojiCategory, nil
+		return &category, nil
+	}, keyParts...)
 }
 
 func (e *emojiDB) emojiCategoriesFromIDs(ctx context.Context, emojiCategoryIDs []string) ([]*gtsmodel.EmojiCategory, db.Error) {
