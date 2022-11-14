@@ -25,6 +25,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 )
 
+const (
+	maximumHashtagLength = 30
+)
+
 // DeriveMentionNamesFromText takes a plaintext (ie., not html-formatted) text,
 // and applies a regex to it to return a deduplicated list of account names
 // mentioned in that text, in the format "@user@example.org" or "@username" for
@@ -96,9 +100,11 @@ func FindHashtagSpansInText(text string) []Span {
 	return tags
 }
 
-func appendTag(tags *[]Span, text string, start int, endEx int) {
-	if 1 < endEx-start {
-		*tags = append(*tags, Span{First: start, Second: endEx})
+func appendTag(tags *[]Span, text string, start int, end int) {
+	l := end - start - 1
+	// This check could be moved out into the parsing loop if necessary!
+	if 0 < l && l <= maximumHashtagLength {
+		*tags = append(*tags, Span{First: start, Second: end})
 	}
 }
 
@@ -117,9 +123,12 @@ func isPermittedInHashtag(r rune) bool {
 	return unicode.IsLetter(r) || unicode.IsNumber(r)
 }
 
+// Decides where to break before or after a hashtag.
 func isHashtagBoundary(r rune) bool {
-	return r == '#' ||
-		unicode.IsSpace(r) ||
-		unicode.IsControl(r) ||
-		('&' != r && '/' != r && unicode.Is(unicode.Categories["Po"], r))
+	return r == '#' || // `###lol` should work
+		unicode.IsSpace(r) || // All kinds of Unicode whitespace.
+		unicode.IsControl(r) || // All kinds of control characters, like tab.
+		// Most kinds of punctuation except "Pc" ("Punctuation, connecting", like `_`).
+		// But `someurl/#fragment` should not match, neither should HTML entities like `&#35;`.
+		('/' != r && '&' != r && !unicode.Is(unicode.Categories["Pc"], r) && unicode.IsPunct(r))
 }

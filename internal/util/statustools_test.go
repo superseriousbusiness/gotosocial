@@ -82,14 +82,17 @@ func (suite *StatusTestSuite) TestDeriveHashtagsOK() {
 	here's a link with a fragment: https://example.org/whatever#ahhh
 	here's another link with a fragment: https://example.org/whatever/#ahhh
 
-#ThisShouldAlsoWork #not_this_though
+(#ThisShouldAlsoWork) #not_this_though
 
 #111111 thisalsoshouldn'twork#### ##
 
-#alimentación, #saúde, #lävistää, #ö, #네`
+#alimentación, #saúde, #lävistää, #ö, #네
+#ThisOneIsThirtyOneCharactersLon...  ...ng
+#ThisOneIsThirteyCharactersLong
+`
 
 	tags := util.DeriveHashtagsFromText(statusText)
-	assert.Len(suite.T(), tags, 11)
+	assert.Len(suite.T(), tags, 12)
 	assert.Equal(suite.T(), "testing123", tags[0])
 	assert.Equal(suite.T(), "also", tags[1])
 	assert.Equal(suite.T(), "thisshouldwork", tags[2])
@@ -101,6 +104,7 @@ func (suite *StatusTestSuite) TestDeriveHashtagsOK() {
 	assert.Equal(suite.T(), "lävistää", tags[8])
 	assert.Equal(suite.T(), "ö", tags[9])
 	assert.Equal(suite.T(), "네", tags[10])
+	assert.Equal(suite.T(), "ThisOneIsThirteyCharactersLong", tags[11])
 
 	statusText = `#올빼미 hej`
 	tags = util.DeriveHashtagsFromText(statusText)

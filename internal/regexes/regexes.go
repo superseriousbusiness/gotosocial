@@ -47,7 +47,6 @@ const (
 const (
 	maximumUsernameLength       = 64
 	maximumEmojiShortcodeLength = 30
-	maximumHashtagLength        = 30
 )
 
 var (
