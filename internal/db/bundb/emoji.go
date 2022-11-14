@@ -89,7 +89,7 @@ func (e *emojiDB) UpdateEmoji(ctx context.Context, emoji *gtsmodel.Emoji, column
 		return nil, e.conn.ProcessError(err)
 	}
 
-	e.emojiCache.Invalidate(emoji.ID)
+	e.emojiCache.Invalidate("ID", emoji.ID)
 	return emoji, nil
 }
 
@@ -126,7 +126,7 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 		return err
 	}
 
-	e.emojiCache.Invalidate(id)
+	e.emojiCache.Invalidate("ID", id)
 	return nil
 }
 

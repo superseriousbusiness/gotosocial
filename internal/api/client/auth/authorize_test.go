@@ -20,7 +20,7 @@ type AuthAuthorizeTestSuite struct {
 
 type authorizeHandlerTestCase struct {
 	description            string
-	mutateUserAccount      func(*gtsmodel.User, *gtsmodel.Account) []string
+	mutateUserAccount      func(*gtsmodel.User, *gtsmodel.Account)
 	expectedStatusCode     int
 	expectedLocationHeader string
 }
@@ -29,44 +29,40 @@ func (suite *AuthAuthorizeTestSuite) TestAccountAuthorizeHandler() {
 	tests := []authorizeHandlerTestCase{
 		{
 			description: "user has their email unconfirmed",
-			mutateUserAccount: func(user *gtsmodel.User, account *gtsmodel.Account) []string {
+			mutateUserAccount: func(user *gtsmodel.User, account *gtsmodel.Account) {
 				// nothing to do, weed_lord420 already has their email unconfirmed
-				return nil
 			},
 			expectedStatusCode:     http.StatusSeeOther,
 			expectedLocationHeader: auth.CheckYourEmailPath,
 		},
 		{
 			description: "user has their email confirmed but is not approved",
-			mutateUserAccount: func(user *gtsmodel.User, account *gtsmodel.Account) []string {
+			mutateUserAccount: func(user *gtsmodel.User, account *gtsmodel.Account) {
 				user.ConfirmedAt = time.Now()
 				user.Email = user.UnconfirmedEmail
-				return []string{"confirmed_at", "email"}
 			},
 			expectedStatusCode:     http.StatusSeeOther,
 			expectedLocationHeader: auth.WaitForApprovalPath,
 		},
 		{
 			description: "user has their email confirmed and is approved, but User entity has been disabled",
-			mutateUserAccount: func(user *gtsmodel.User, account *gtsmodel.Account) []string {
+			mutateUserAccount: func(user *gtsmodel.User, account *gtsmodel.Account) {
 				user.ConfirmedAt = time.Now()
 				user.Email = user.UnconfirmedEmail
 				user.Approved = testrig.TrueBool()
 				user.Disabled = testrig.TrueBool()
-				return []string{"confirmed_at", "email", "approved", "disabled"}
 			},
 			expectedStatusCode:     http.StatusSeeOther,
 			expectedLocationHeader: auth.AccountDisabledPath,
 		},
 		{
 			description: "user has their email confirmed and is approved, but Account entity has been suspended",
-			mutateUserAccount: func(user *gtsmodel.User, account *gtsmodel.Account) []string {
+			mutateUserAccount: func(user *gtsmodel.User, account *gtsmodel.Account) {
 				user.ConfirmedAt = time.Now()
 				user.Email = user.UnconfirmedEmail
 				user.Approved = testrig.TrueBool()
 				user.Disabled = testrig.FalseBool()
 				account.SuspendedAt = time.Now()
-				return []string{"confirmed_at", "email", "approved", "disabled"}
 			},
 			expectedStatusCode:     http.StatusSeeOther,
 			expectedLocationHeader: auth.AccountDisabledPath,
@@ -81,6 +77,7 @@ func (suite *AuthAuthorizeTestSuite) TestAccountAuthorizeHandler() {
 
 		*user = *suite.testUsers["unconfirmed_account"]
 		*account = *suite.testAccounts["unconfirmed_account"]
+		user.SignInCount++ // cannot be 0 or fails NULL constraint
 
 		testSession := sessions.Default(ctx)
 		testSession.Set(sessionUserID, user.ID)
@@ -89,12 +86,11 @@ func (suite *AuthAuthorizeTestSuite) TestAccountAuthorizeHandler() {
 			panic(fmt.Errorf("failed on case %s: %w", testCase.description, err))
 		}
 
-		updatingColumns := testCase.mutateUserAccount(user, account)
+		testCase.mutateUserAccount(user, account)
 
 		testCase.description = fmt.Sprintf("%s, %t, %s", user.Email, *user.Disabled, account.SuspendedAt)
 
-		updatingColumns = append(updatingColumns, "updated_at")
-		err := suite.db.UpdateUser(context.Background(), user, updatingColumns...)
+		err := suite.db.UpdateUser(context.Background(), user)
 		suite.NoError(err)
 		err = suite.db.UpdateAccount(context.Background(), account)
 		suite.NoError(err)

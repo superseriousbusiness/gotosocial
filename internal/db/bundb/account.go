@@ -238,7 +238,7 @@ func (a *accountDB) DeleteAccount(ctx context.Context, id string) db.Error {
 
 		// delete the account
 		_, err := tx.
-			NewUpdate().
+			NewDelete().
 			TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
 			Where("? = ?", bun.Ident("account.id"), id).
 			Exec(ctx)

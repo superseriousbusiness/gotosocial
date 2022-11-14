@@ -51,18 +51,19 @@ func (suite *UserTestSuite) TestGetUserByAccountID() {
 func (suite *UserTestSuite) TestUpdateUserSelectedColumns() {
 	testUser := suite.testUsers["local_account_1"]
 
-	err := suite.db.UpdateUser(context.Background(), &gtsmodel.User{
-		ID:     testUser.ID,
-		Email:  "whatever",
-		Locale: "es",
-	}, "email", "locale")
+	updateUser := new(gtsmodel.User)
+	*updateUser = *testUser
+	updateUser.Email = "whatever"
+	updateUser.Locale = "es"
+
+	err := suite.db.UpdateUser(context.Background(), updateUser)
 	suite.NoError(err)
 
 	dbUser, err := suite.db.GetUserByID(context.Background(), testUser.ID)
 	suite.NoError(err)
 	suite.NotNil(dbUser)
-	suite.Equal("whatever", dbUser.Email)
-	suite.Equal("es", dbUser.Locale)
+	suite.Equal(updateUser.Email, dbUser.Email)
+	suite.Equal(updateUser.Locale, dbUser.Locale)
 	suite.Equal(testUser.AccountID, dbUser.AccountID)
 }
 

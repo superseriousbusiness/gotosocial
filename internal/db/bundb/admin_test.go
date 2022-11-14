@@ -70,6 +70,8 @@ func (suite *AdminTestSuite) TestIsEmailAvailableDomainBlocked() {
 }
 
 func (suite *AdminTestSuite) TestCreateInstanceAccount() {
+	// reinitialize test DB to clear caches
+	suite.db = testrig.NewTestDB()
 	// we need to take an empty db for this...
 	testrig.StandardDBTeardown(suite.db)
 	// ...with tables created but no data

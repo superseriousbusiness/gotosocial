@@ -133,7 +133,7 @@ func (u *userDB) PutUser(ctx context.Context, user *gtsmodel.User) db.Error {
 	})
 }
 
-func (u *userDB) UpdateUser(ctx context.Context, user *gtsmodel.User, columns ...string) db.Error {
+func (u *userDB) UpdateUser(ctx context.Context, user *gtsmodel.User) db.Error {
 	// Update the user's last-updated
 	user.UpdatedAt = time.Now()
 
@@ -142,7 +142,6 @@ func (u *userDB) UpdateUser(ctx context.Context, user *gtsmodel.User, columns ..
 			NewUpdate().
 			Model(user).
 			Where("? = ?", bun.Ident("user.id"), user.ID).
-			Column(columns...).
 			Exec(ctx)
 		return u.conn.ProcessError(err)
 	})
