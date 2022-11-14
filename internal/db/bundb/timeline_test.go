@@ -35,23 +35,19 @@ type TimelineTestSuite struct {
 }
 
 func (suite *TimelineTestSuite) TestGetPublicTimeline() {
-	viewingAccount := suite.testAccounts["local_account_1"]
-
-	s, err := suite.db.GetPublicTimeline(context.Background(), viewingAccount.ID, "", "", "", 20, false)
+	s, err := suite.db.GetPublicTimeline(context.Background(), "", "", "", 20, false)
 	suite.NoError(err)
 
 	suite.Len(s, 6)
 }
 
 func (suite *TimelineTestSuite) TestGetPublicTimelineWithFutureStatus() {
-	viewingAccount := suite.testAccounts["local_account_1"]
-
 	futureStatus := getFutureStatus()
 	if err := suite.db.Put(context.Background(), futureStatus); err != nil {
 		suite.FailNow(err.Error())
 	}
 
-	s, err := suite.db.GetPublicTimeline(context.Background(), viewingAccount.ID, "", "", "", 20, false)
+	s, err := suite.db.GetPublicTimeline(context.Background(), "", "", "", 20, false)
 	suite.NoError(err)
 
 	suite.Len(s, 6)

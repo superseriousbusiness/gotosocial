@@ -24,6 +24,13 @@ instance-expose-peers: false
 # Default: false
 instance-expose-suspended: false
 
+# Bool. Allow unauthenticated users to make queries to /api/v1/timelines/public in order
+# to see a list of public posts on this server. Even if set to 'false', then authenticated
+# users (members of the instance) will still be able to query the endpoint.
+# Options: [true, false]
+# Default: false
+instance-expose-public-timeline: false
+
 # Bool. This flag tweaks whether GoToSocial will deliver ActivityPub messages
 # to the shared inbox of a recipient, if one is available, instead of delivering
 # each message to each actor who should receive a message individually.

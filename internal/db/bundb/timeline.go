@@ -124,7 +124,7 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 	return statuses, nil
 }
 
-func (t *timelineDB) GetPublicTimeline(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.Error) {
+func (t *timelineDB) GetPublicTimeline(ctx context.Context, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.Error) {
 	// Ensure reasonable
 	if limit < 0 {
 		limit = 0
