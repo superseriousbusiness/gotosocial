@@ -24,6 +24,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -172,6 +173,40 @@ func (suite *StatusCreateTestSuite) TestProcessStatusMarkdownWithSpoilerTextEmoj
 	suite.Equal("<p>poopoo peepee</p>", apiStatus.Content)
 	suite.Equal("testing something :rainbow:", apiStatus.SpoilerText)
 	suite.NotEmpty(apiStatus.Emojis)
+}
+
+func (suite *StatusCreateTestSuite) TestProcessMediaDescriptionTooShort() {
+	ctx := context.Background()
+
+	config.SetMediaDescriptionMinChars(100)
+
+	creatingAccount := suite.testAccounts["local_account_1"]
+	creatingApplication := suite.testApplications["application_1"]
+
+	statusCreateForm := &model.AdvancedStatusCreateForm{
+		StatusCreateRequest: model.StatusCreateRequest{
+			Status:      "poopoo peepee",
+			MediaIDs:    []string{suite.testAttachments["local_account_1_unattached_1"].ID},
+			Poll:        nil,
+			InReplyToID: "",
+			Sensitive:   false,
+			SpoilerText: "",
+			Visibility:  model.VisibilityPublic,
+			ScheduledAt: "",
+			Language:    "en",
+			Format:      model.StatusFormatPlain,
+		},
+		AdvancedVisibilityFlagsForm: model.AdvancedVisibilityFlagsForm{
+			Federated: nil,
+			Boostable: nil,
+			Replyable: nil,
+			Likeable:  nil,
+		},
+	}
+
+	apiStatus, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
+	suite.EqualError(err, "ProcessMediaIDs: description too short! media description of at least 100 chararacters is required but 15 was provided for media with id 01F8MH8RMYQ6MSNY3JM2XT1CQ5")
+	suite.Nil(apiStatus)
 }
 
 func TestStatusCreateTestSuite(t *testing.T) {

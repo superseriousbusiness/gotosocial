@@ -51,7 +51,7 @@ func NewPassword(password string) error {
 		return errors.New("no password provided")
 	}
 
-	if len(password) > maximumPasswordLength {
+	if len([]rune(password)) > maximumPasswordLength {
 		return fmt.Errorf("password should be no more than %d chars", maximumPasswordLength)
 	}
 
@@ -114,12 +114,14 @@ func SignUpReason(reason string, reasonRequired bool) error {
 		return errors.New("no reason provided")
 	}
 
-	if len(reason) < minimumReasonLength {
-		return fmt.Errorf("reason should be at least %d chars but '%s' was %d", minimumReasonLength, reason, len(reason))
+	length := len([]rune(reason))
+
+	if length < minimumReasonLength {
+		return fmt.Errorf("reason should be at least %d chars but '%s' was %d", minimumReasonLength, reason, length)
 	}
 
-	if len(reason) > maximumReasonLength {
-		return fmt.Errorf("reason should be no more than %d chars but given reason was %d", maximumReasonLength, len(reason))
+	if length > maximumReasonLength {
+		return fmt.Errorf("reason should be no more than %d chars but given reason was %d", maximumReasonLength, length)
 	}
 	return nil
 }
@@ -165,7 +167,7 @@ func CustomCSS(customCSS string) error {
 		return errors.New("accounts-allow-custom-css is not enabled for this instance")
 	}
 
-	if length := len(customCSS); length > maximumCustomCSSLength {
+	if length := len([]rune(customCSS)); length > maximumCustomCSSLength {
 		return fmt.Errorf("custom_css must be less than %d characters, but submitted custom_css was %d characters", maximumCustomCSSLength, length)
 	}
 	return nil
@@ -191,8 +193,8 @@ func EmojiCategory(category string) error {
 
 // SiteTitle ensures that the given site title is within spec.
 func SiteTitle(siteTitle string) error {
-	if len(siteTitle) > maximumSiteTitleLength {
-		return fmt.Errorf("site title should be no more than %d chars but given title was %d", maximumSiteTitleLength, len(siteTitle))
+	if length := len([]rune(siteTitle)); length > maximumSiteTitleLength {
+		return fmt.Errorf("site title should be no more than %d chars but given title was %d", maximumSiteTitleLength, length)
 	}
 
 	return nil
@@ -200,8 +202,8 @@ func SiteTitle(siteTitle string) error {
 
 // SiteShortDescription ensures that the given site short description is within spec.
 func SiteShortDescription(d string) error {
-	if len(d) > maximumShortDescriptionLength {
-		return fmt.Errorf("short description should be no more than %d chars but given description was %d", maximumShortDescriptionLength, len(d))
+	if length := len([]rune(d)); length > maximumShortDescriptionLength {
+		return fmt.Errorf("short description should be no more than %d chars but given description was %d", maximumShortDescriptionLength, length)
 	}
 
 	return nil
@@ -209,8 +211,8 @@ func SiteShortDescription(d string) error {
 
 // SiteDescription ensures that the given site description is within spec.
 func SiteDescription(d string) error {
-	if len(d) > maximumDescriptionLength {
-		return fmt.Errorf("description should be no more than %d chars but given description was %d", maximumDescriptionLength, len(d))
+	if length := len([]rune(d)); length > maximumDescriptionLength {
+		return fmt.Errorf("description should be no more than %d chars but given description was %d", maximumDescriptionLength, length)
 	}
 
 	return nil
@@ -218,8 +220,8 @@ func SiteDescription(d string) error {
 
 // SiteTerms ensures that the given site terms string is within spec.
 func SiteTerms(t string) error {
-	if len(t) > maximumSiteTermsLength {
-		return fmt.Errorf("terms should be no more than %d chars but given terms was %d", maximumSiteTermsLength, len(t))
+	if length := len([]rune(t)); length > maximumSiteTermsLength {
+		return fmt.Errorf("terms should be no more than %d chars but given terms was %d", maximumSiteTermsLength, length)
 	}
 
 	return nil

@@ -34,6 +34,7 @@ var testDefaults = config.Configuration{
 	LogLevel:        "trace",
 	LogDbQueries:    true,
 	ApplicationName: "gotosocial",
+	LandingPageUser: "",
 	ConfigPath:      "",
 	Host:            "localhost:8080",
 	AccountDomain:   "localhost:8080",
@@ -104,7 +105,8 @@ var testDefaults = config.Configuration{
 	SyslogProtocol: "udp",
 	SyslogAddress:  "localhost:514",
 
-	AdvancedCookiesSamesite: "lax",
+	AdvancedCookiesSamesite:   "lax",
+	AdvancedRateLimitRequests: 0, // disabled
 
 	SoftwareVersion: "0.0.0-testrig",
 }

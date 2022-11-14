@@ -29,7 +29,7 @@ sudo zypper install apache2
 You'll also need to install additional modules for Apache HTTP Server. You can do that with the following command:
 
 ```bash
-sudo a2enmod proxy_http md ssl headers proxy_wstunnel
+sudo a2enmod proxy_http md ssl headers rewrite
 ```
 
 ## Configure GoToSocial
@@ -52,7 +52,7 @@ sudo systemctl restart gotosocial.service
 
 Or if you don't have a systemd service just restart it manually.
 
-## Set up Apache HTTP Server with LetsEncrypt SSL
+## Set up Apache HTTP Server with SSL managed using MD module
 
 Now we'll configure Apache HTTP Server to serve GoToSocial requests.
 
@@ -70,16 +70,24 @@ The file you're about to create should look a bit like this:
 ```apache
 MDomain example.com auto
 MDCertificateAgreement accepted
+
 <VirtualHost *:80 >
   ServerName example.com
 </VirtualHost>
+
 <VirtualHost *:443>
   ServerName example.com
+
+  RewriteEngine On
+  RewriteCond %{HTTP:Upgrade} websocket [NC]
+  RewriteCond %{HTTP:Connection} upgrade [NC]
+  RewriteRule ^/?(.*) "ws://localhost:8080/$1" [P,L]
+
   SSLEngine On
   ProxyPreserveHost On
-  ProxyPassMatch ^/(api/v1/streaming.*)$ ws://localhost:8080/$1
   ProxyPass / http://localhost:8080/
   ProxyPassReverse / http://localhost:8080/
+
   RequestHeader set "X-Forwarded-Proto" expr=https
 </VirtualHost>
 ```
@@ -88,9 +96,9 @@ Again, replace occurrences of `example.com` in the above config file with the ho
 
 You should also change `http://localhost:8080` to the correct address and port of your GtS server. For example, if you're running GoToSocial on another machine with the local ip of `192.168.178.69` and on port `8080` then `http://192.168.178.69:8080/` would be the correct value.
 
-`ProxyPreserveHost On` is essential: It guarantees that the proxy and the GoToSocial speak of the same Server name. If not, GoToSocial will build the wrong authentication headers, and all attempts at federation will be rejected with 401 Unauthorized.
+`Rewrite*` directives are needed to ensure that Websocket streaming connections also work. See the [websocket](./websocket.md) document for more information on this.
 
-The line `ProxyPassMatch ^/(api/v1/streaming.*)$ ws://localhost:8080/$1` ensures that Websocket streaming connections also work. See the [websocket](./websocket.md) document for more information on this.
+`ProxyPreserveHost On` is essential: It guarantees that the proxy and the GoToSocial speak of the same Server name. If not, GoToSocial will build the wrong authentication headers, and all attempts at federation will be rejected with 401 Unauthorized.
 
 Save and close the config file.
 
@@ -132,9 +140,9 @@ If this happens, you'll need to do one (or all) of the below:
 1. Update `/etc/apache2/sites-enabled/000-default.conf` and change the `ServerAdmin` value to a valid email address (then reload Apache HTTP Server).
 2. Add the line `MDContactEmail your.email.address@whatever.com` below the `MDomain` line in `/etc/apache2/sites-available/example.com.conf`, replacing `your.email.address@whatever.com` with a valid email address, and `example.com` with your GtS host name.
 
-## Set up Apache HTTP Server **without** LetsEncrypt SSL
+## Set up Apache HTTP Server with SSL managed manually or by an external software (e.g. Certbot or acme.sh)
 
-If you prefer to use a different service to manage SSL certificates (Certbot etc), then you can use a simpler setup for your Apache HTTP Server.
+If you prefer to have a manual setup or setting SSL using a different service to manage it (Certbot, etc), then you can use a simpler setup for your Apache HTTP Server.
 
 First we'll write a configuration for Apache HTTP Server and put it in `/etc/apache2/sites-available`:
 
@@ -145,15 +153,21 @@ sudoedit /etc/apache2/sites-available/example.com.conf
 
 In the above `sudoedit` command, replace `example.com` with the hostname of your GoToSocial server.
 
-The file you're about to create should look a bit like this:
+The file you're about to create should look initially for both 80 (required) and 443 ports (optional) a bit like this:
 
 ```apache
 <VirtualHost *:80>
   ServerName example.com
+
+  RewriteEngine On
+  RewriteCond %{HTTP:Upgrade} websocket [NC]
+  RewriteCond %{HTTP:Connection} upgrade [NC]
+  RewriteRule ^/?(.*) "ws://localhost:8080/$1" [P,L]
+
   ProxyPreserveHost On
-  ProxyPassMatch ^/(api/v1/streaming.*)$ ws://localhost:8080/$1
   ProxyPass / http://localhost:8080/
   ProxyPassReverse / http://localhost:8080/
+
 </VirtualHost>
 ```
 
@@ -161,9 +175,11 @@ Again, replace occurrences of `example.com` in the above config file with the ho
 
 You should also change `http://localhost:8080` to the correct address and port of your GtS server. For example, if you're running GoToSocial on another machine with the local ip of `192.168.178.69` and on port `8080` then `http://192.168.178.69:8080/` would be the correct value.
 
+`Rewrite*` directives are needed to ensure that Websocket streaming connections also work. See the [websocket](./websocket.md) document for more information on this.
+
 `ProxyPreserveHost On` is essential: It guarantees that the proxy and the GoToSocial speak of the same Server name. If not, GoToSocial will build the wrong authentication headers, and all attempts at federation will be rejected with 401 Unauthorized.
 
-The line `ProxyPassMatch ^/(api/v1/streaming.*)$ ws://localhost:8080/$1` ensures that Websocket streaming connections also work. See the [websocket](./websocket.md) document for more information on this.
+In the case of providing an initial setup for the 443 port looking for additional managing by an external tool, you could use default certificates provided by the server which you can find referenced in the `default-ssl.conf` file at `/etc/apache2/sites-available/`.
 
 Save and close the config file.
 

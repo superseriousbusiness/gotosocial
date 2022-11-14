@@ -182,6 +182,94 @@ func (suite *FederatingProtocolTestSuite) TestAuthenticatePostInbox() {
 	suite.Equal(sendingAccount.Username, requestingAccount.Username)
 }
 
+func (suite *FederatingProtocolTestSuite) TestAuthenticatePostGone() {
+	// the activity we're gonna use
+	activity := suite.testActivities["delete_https://somewhere.mysterious/users/rest_in_piss#main-key"]
+	inboxAccount := suite.testAccounts["local_account_1"]
+
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+
+	httpClient := testrig.NewMockHTTPClient(nil, "../../testrig/media")
+	tc := testrig.NewTestTransportController(httpClient, suite.db, fedWorker)
+
+	// now setup module being tested, with the mock transport controller
+	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
+
+	request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/users/the_mighty_zork/inbox", nil)
+	// we need these headers for the request to be validated
+	request.Header.Set("Signature", activity.SignatureHeader)
+	request.Header.Set("Date", activity.DateHeader)
+	request.Header.Set("Digest", activity.DigestHeader)
+
+	verifier, err := httpsig.NewVerifier(request)
+	suite.NoError(err)
+
+	ctx := context.Background()
+	// by the time AuthenticatePostInbox is called, PostInboxRequestBodyHook should have already been called,
+	// which should have set the account and username onto the request. We can replicate that behavior here:
+	ctxWithAccount := context.WithValue(ctx, ap.ContextReceivingAccount, inboxAccount)
+	ctxWithVerifier := context.WithValue(ctxWithAccount, ap.ContextRequestingPublicKeyVerifier, verifier)
+	ctxWithSignature := context.WithValue(ctxWithVerifier, ap.ContextRequestingPublicKeySignature, activity.SignatureHeader)
+
+	// we can pass this recorder as a writer and read it back after
+	recorder := httptest.NewRecorder()
+
+	// trigger the function being tested, and return the new context it creates
+	_, authed, err := federator.AuthenticatePostInbox(ctxWithSignature, recorder, request)
+	suite.NoError(err)
+	suite.False(authed)
+	suite.Equal(http.StatusAccepted, recorder.Code)
+}
+
+func (suite *FederatingProtocolTestSuite) TestAuthenticatePostGoneNoTombstoneYet() {
+	// delete the relevant tombstone
+	if err := suite.db.DeleteTombstone(context.Background(), suite.testTombstones["https://somewhere.mysterious/users/rest_in_piss#main-key"].ID); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// the activity we're gonna use
+	activity := suite.testActivities["delete_https://somewhere.mysterious/users/rest_in_piss#main-key"]
+	inboxAccount := suite.testAccounts["local_account_1"]
+
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+
+	httpClient := testrig.NewMockHTTPClient(nil, "../../testrig/media")
+	tc := testrig.NewTestTransportController(httpClient, suite.db, fedWorker)
+
+	// now setup module being tested, with the mock transport controller
+	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
+
+	request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/users/the_mighty_zork/inbox", nil)
+	// we need these headers for the request to be validated
+	request.Header.Set("Signature", activity.SignatureHeader)
+	request.Header.Set("Date", activity.DateHeader)
+	request.Header.Set("Digest", activity.DigestHeader)
+
+	verifier, err := httpsig.NewVerifier(request)
+	suite.NoError(err)
+
+	ctx := context.Background()
+	// by the time AuthenticatePostInbox is called, PostInboxRequestBodyHook should have already been called,
+	// which should have set the account and username onto the request. We can replicate that behavior here:
+	ctxWithAccount := context.WithValue(ctx, ap.ContextReceivingAccount, inboxAccount)
+	ctxWithVerifier := context.WithValue(ctxWithAccount, ap.ContextRequestingPublicKeyVerifier, verifier)
+	ctxWithSignature := context.WithValue(ctxWithVerifier, ap.ContextRequestingPublicKeySignature, activity.SignatureHeader)
+
+	// we can pass this recorder as a writer and read it back after
+	recorder := httptest.NewRecorder()
+
+	// trigger the function being tested, and return the new context it creates
+	_, authed, err := federator.AuthenticatePostInbox(ctxWithSignature, recorder, request)
+	suite.NoError(err)
+	suite.False(authed)
+	suite.Equal(http.StatusAccepted, recorder.Code)
+
+	// there should be a tombstone in the db now for this account
+	exists, err := suite.db.TombstoneExistsWithURI(ctx, "https://somewhere.mysterious/users/rest_in_piss#main-key")
+	suite.NoError(err)
+	suite.True(exists)
+}
+
 func (suite *FederatingProtocolTestSuite) TestBlocked1() {
 	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
 	httpClient := testrig.NewMockHTTPClient(nil, "../../testrig/media")

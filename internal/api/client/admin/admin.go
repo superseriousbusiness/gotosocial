@@ -81,6 +81,8 @@ func New(processor processing.Processor) api.ClientModule {
 func (m *Module) Route(r router.Router) error {
 	r.AttachHandler(http.MethodPost, EmojiPath, m.EmojiCreatePOSTHandler)
 	r.AttachHandler(http.MethodGet, EmojiPath, m.EmojisGETHandler)
+	r.AttachHandler(http.MethodDelete, EmojiPathWithID, m.EmojiDELETEHandler)
+	r.AttachHandler(http.MethodGet, EmojiPathWithID, m.EmojiGETHandler)
 	r.AttachHandler(http.MethodPost, DomainBlocksPath, m.DomainBlocksPOSTHandler)
 	r.AttachHandler(http.MethodGet, DomainBlocksPath, m.DomainBlocksGETHandler)
 	r.AttachHandler(http.MethodGet, DomainBlocksPathWithID, m.DomainBlockGETHandler)

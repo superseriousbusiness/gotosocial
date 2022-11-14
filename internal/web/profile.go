@@ -49,7 +49,6 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		return
 	}
 
-	// usernames on our instance will always be lowercase
 	username := strings.ToLower(c.Param(usernameKey))
 	if username == "" {
 		err := errors.New("no account username specified")

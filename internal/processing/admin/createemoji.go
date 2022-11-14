@@ -53,7 +53,7 @@ func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, 
 
 	emojiURI := uris.GenerateURIForEmoji(emojiID)
 
-	data := func(innerCtx context.Context) (io.Reader, int64, error) {
+	data := func(innerCtx context.Context) (io.ReadCloser, int64, error) {
 		f, err := form.Image.Open()
 		return f, form.Image.Size, err
 	}

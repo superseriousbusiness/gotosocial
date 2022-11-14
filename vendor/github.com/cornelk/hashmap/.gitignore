@@ -1,0 +1,14 @@
+*.exe
+.idea
+.vscode
+*.iml
+*.local
+/*.log
+*.out
+*.prof
+*.test
+.DS_Store
+*.dmp
+*.db
+
+.testCoverage

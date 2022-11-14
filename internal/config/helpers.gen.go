@@ -95,6 +95,31 @@ func GetApplicationName() string { return global.GetApplicationName() }
 // SetApplicationName safely sets the value for global configuration 'ApplicationName' field
 func SetApplicationName(v string) { global.SetApplicationName(v) }
 
+// GetLandingPageUser safely fetches the Configuration value for state's 'LandingPageUser' field
+func (st *ConfigState) GetLandingPageUser() (v string) {
+	st.mutex.Lock()
+	v = st.config.LandingPageUser
+	st.mutex.Unlock()
+	return
+}
+
+// SetLandingPageUser safely sets the Configuration value for state's 'LandingPageUser' field
+func (st *ConfigState) SetLandingPageUser(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.LandingPageUser = v
+	st.reloadToViper()
+}
+
+// LandingPageUserFlag returns the flag name for the 'LandingPageUser' field
+func LandingPageUserFlag() string { return "landing-page-user" }
+
+// GetLandingPageUser safely fetches the value for global configuration 'LandingPageUser' field
+func GetLandingPageUser() string { return global.GetLandingPageUser() }
+
+// SetLandingPageUser safely sets the value for global configuration 'LandingPageUser' field
+func SetLandingPageUser(v string) { global.SetLandingPageUser(v) }
+
 // GetConfigPath safely fetches the Configuration value for state's 'ConfigPath' field
 func (st *ConfigState) GetConfigPath() (v string) {
 	st.mutex.Lock()
@@ -595,6 +620,31 @@ func GetInstanceExposeSuspended() bool { return global.GetInstanceExposeSuspende
 // SetInstanceExposeSuspended safely sets the value for global configuration 'InstanceExposeSuspended' field
 func SetInstanceExposeSuspended(v bool) { global.SetInstanceExposeSuspended(v) }
 
+// GetInstanceExposePublicTimeline safely fetches the Configuration value for state's 'InstanceExposePublicTimeline' field
+func (st *ConfigState) GetInstanceExposePublicTimeline() (v bool) {
+	st.mutex.Lock()
+	v = st.config.InstanceExposePublicTimeline
+	st.mutex.Unlock()
+	return
+}
+
+// SetInstanceExposePublicTimeline safely sets the Configuration value for state's 'InstanceExposePublicTimeline' field
+func (st *ConfigState) SetInstanceExposePublicTimeline(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceExposePublicTimeline = v
+	st.reloadToViper()
+}
+
+// InstanceExposePublicTimelineFlag returns the flag name for the 'InstanceExposePublicTimeline' field
+func InstanceExposePublicTimelineFlag() string { return "instance-expose-public-timeline" }
+
+// GetInstanceExposePublicTimeline safely fetches the value for global configuration 'InstanceExposePublicTimeline' field
+func GetInstanceExposePublicTimeline() bool { return global.GetInstanceExposePublicTimeline() }
+
+// SetInstanceExposePublicTimeline safely sets the value for global configuration 'InstanceExposePublicTimeline' field
+func SetInstanceExposePublicTimeline(v bool) { global.SetInstanceExposePublicTimeline(v) }
+
 // GetInstanceDeliverToSharedInboxes safely fetches the Configuration value for state's 'InstanceDeliverToSharedInboxes' field
 func (st *ConfigState) GetInstanceDeliverToSharedInboxes() (v bool) {
 	st.mutex.Lock()
@@ -1069,6 +1119,31 @@ func GetStorageS3BucketName() string { return global.GetStorageS3BucketName() }
 
 // SetStorageS3BucketName safely sets the value for global configuration 'StorageS3BucketName' field
 func SetStorageS3BucketName(v string) { global.SetStorageS3BucketName(v) }
+
+// GetStorageS3Proxy safely fetches the Configuration value for state's 'StorageS3Proxy' field
+func (st *ConfigState) GetStorageS3Proxy() (v bool) {
+	st.mutex.Lock()
+	v = st.config.StorageS3Proxy
+	st.mutex.Unlock()
+	return
+}
+
+// SetStorageS3Proxy safely sets the Configuration value for state's 'StorageS3Proxy' field
+func (st *ConfigState) SetStorageS3Proxy(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.StorageS3Proxy = v
+	st.reloadToViper()
+}
+
+// StorageS3ProxyFlag returns the flag name for the 'StorageS3Proxy' field
+func StorageS3ProxyFlag() string { return "storage-s3-proxy" }
+
+// GetStorageS3Proxy safely fetches the value for global configuration 'StorageS3Proxy' field
+func GetStorageS3Proxy() bool { return global.GetStorageS3Proxy() }
+
+// SetStorageS3Proxy safely sets the value for global configuration 'StorageS3Proxy' field
+func SetStorageS3Proxy(v bool) { global.SetStorageS3Proxy(v) }
 
 // GetStatusesMaxChars safely fetches the Configuration value for state's 'StatusesMaxChars' field
 func (st *ConfigState) GetStatusesMaxChars() (v int) {
@@ -1794,3 +1869,28 @@ func GetAdvancedCookiesSamesite() string { return global.GetAdvancedCookiesSames
 
 // SetAdvancedCookiesSamesite safely sets the value for global configuration 'AdvancedCookiesSamesite' field
 func SetAdvancedCookiesSamesite(v string) { global.SetAdvancedCookiesSamesite(v) }
+
+// GetAdvancedRateLimitRequests safely fetches the Configuration value for state's 'AdvancedRateLimitRequests' field
+func (st *ConfigState) GetAdvancedRateLimitRequests() (v int) {
+	st.mutex.Lock()
+	v = st.config.AdvancedRateLimitRequests
+	st.mutex.Unlock()
+	return
+}
+
+// SetAdvancedRateLimitRequests safely sets the Configuration value for state's 'AdvancedRateLimitRequests' field
+func (st *ConfigState) SetAdvancedRateLimitRequests(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.AdvancedRateLimitRequests = v
+	st.reloadToViper()
+}
+
+// AdvancedRateLimitRequestsFlag returns the flag name for the 'AdvancedRateLimitRequests' field
+func AdvancedRateLimitRequestsFlag() string { return "advanced-rate-limit-requests" }
+
+// GetAdvancedRateLimitRequests safely fetches the value for global configuration 'AdvancedRateLimitRequests' field
+func GetAdvancedRateLimitRequests() int { return global.GetAdvancedRateLimitRequests() }
+
+// SetAdvancedRateLimitRequests safely sets the value for global configuration 'AdvancedRateLimitRequests' field
+func SetAdvancedRateLimitRequests(v int) { global.SetAdvancedRateLimitRequests(v) }

@@ -178,6 +178,14 @@ main {
 					-webkit-overflow-scrolling: touch;
 				}
 			}
+
+			img {
+				max-width: 100%;
+				margin: 5px auto;
+			}
+			img[alt~="!center"] {
+				display: block;
+			}
 		}
 
 		.emoji {

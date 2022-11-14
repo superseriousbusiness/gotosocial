@@ -51,7 +51,7 @@ func (suite *EmojiTestSuite) TestDereferenceEmojiBlocking() {
 		VisibleInPicker:      &emojiVisibleInPicker,
 	}
 
-	processingEmoji, err := suite.dereferencer.GetRemoteEmoji(ctx, fetchingAccount.Username, emojiImageRemoteURL, emojiShortcode, emojiID, emojiURI, ai, false)
+	processingEmoji, err := suite.dereferencer.GetRemoteEmoji(ctx, fetchingAccount.Username, emojiImageRemoteURL, emojiShortcode, emojiDomain, emojiID, emojiURI, ai, false)
 	suite.NoError(err)
 
 	// make a blocking call to load the emoji from the in-process media

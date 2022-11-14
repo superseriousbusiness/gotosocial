@@ -169,6 +169,13 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 			// if 400, 401, or 403, obey the interface by writing the header and bailing
 			w.WriteHeader(errWithCode.Code())
 			return ctx, false, nil
+		case http.StatusGone:
+			// if the requesting account has gone (http 410) then likely
+			// inbox post was a delete, we can just write 202 and leave,
+			// since we didn't know about the account anyway, so we can't
+			// do any further processing
+			w.WriteHeader(http.StatusAccepted)
+			return ctx, false, nil
 		default:
 			// if not, there's been a proper error
 			return ctx, false, err

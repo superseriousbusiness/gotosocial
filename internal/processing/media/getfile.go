@@ -29,6 +29,7 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
@@ -139,7 +140,7 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		// if it's the thumbnail that's requested then the user will have to wait a bit while we process the
 		// large version and derive a thumbnail from it, so use the normal recaching procedure: fetch the media,
 		// process it, then return the thumbnail data
-		data = func(innerCtx context.Context) (io.Reader, int64, error) {
+		data = func(innerCtx context.Context) (io.ReadCloser, int64, error) {
 			transport, err := p.transportController.NewTransportForUsername(innerCtx, requestingUsername)
 			if err != nil {
 				return nil, 0, err
@@ -168,9 +169,9 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		bufferedReader := bufio.NewReaderSize(pipeReader, int(attachmentContent.ContentLength))
 
 		// the caller will read from the buffered reader, so it doesn't matter if they drop out without reading everything
-		attachmentContent.Content = bufferedReader
+		attachmentContent.Content = io.NopCloser(bufferedReader)
 
-		data = func(innerCtx context.Context) (io.Reader, int64, error) {
+		data = func(innerCtx context.Context) (io.ReadCloser, int64, error) {
 			transport, err := p.transportController.NewTransportForUsername(innerCtx, requestingUsername)
 			if err != nil {
 				return nil, 0, err
@@ -195,17 +196,15 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		// close the pipewriter after data has been piped into it, so the reader on the other side doesn't block;
 		// we don't need to close the reader here because that's the caller's responsibility
 		postDataCallback = func(innerCtx context.Context) error {
-			// flush the buffered writer into the buffer of the reader...
-			if err := bufferedWriter.Flush(); err != nil {
-				return err
-			}
+			// close the underlying pipe writer when we're done with it
+			defer func() {
+				if err := pipeWriter.Close(); err != nil {
+					log.Errorf("getAttachmentContent: error closing pipeWriter: %s", err)
+				}
+			}()
 
-			// and close the underlying pipe writer
-			if err := pipeWriter.Close(); err != nil {
-				return err
-			}
-
-			return nil
+			// and flush the buffered writer into the buffer of the reader
+			return bufferedWriter.Flush()
 		}
 	}
 

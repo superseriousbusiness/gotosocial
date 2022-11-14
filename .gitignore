@@ -23,9 +23,16 @@ web/assets/swagger.yaml
 example/docker-compose/docker-volume
 
 # excludes debug build
-cmd/gotosocial/__debug_bin
+/cmd/gotosocial/__debug_bin
 
 # ignore f0x' nix-shell, direnv
 shell.nix
 .direnv
 .envrc
+
+# ignore custom GOBIN path
+/bin
+
+# ignore config dirs from IDEs
+/.idea/
+/.fleet/

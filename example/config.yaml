@@ -35,6 +35,11 @@ log-db-queries: false
 # Default: "gotosocial"
 application-name: "gotosocial"
 
+# String. The user that will be shown instead of the landing page. if no user is set, the landing page will be shown.
+# Examples: "admin"
+# Default: ""
+landing-page-user: ""
+
 # String. Hostname that this server will be reachable at. Defaults to localhost for local testing,
 # but you should *definitely* change this when running for real, or your server won't work at all.
 # DO NOT change this after your server has already run once, or you will break things!
@@ -187,6 +192,13 @@ instance-expose-peers: false
 # Default: false
 instance-expose-suspended: false
 
+# Bool. Allow unauthenticated users to make queries to /api/v1/timelines/public in order
+# to see a list of public posts on this server. Even if set to 'false', then authenticated
+# users (members of the instance) will still be able to query the endpoint.
+# Options: [true, false]
+# Default: false
+instance-expose-public-timeline: false
+
 # Bool. This flag tweaks whether GoToSocial will deliver ActivityPub messages
 # to the shared inbox of a recipient, if one is available, instead of delivering
 # each message to each actor who should receive a message individually.
@@ -314,6 +326,11 @@ storage-local-base-path: "/gotosocial/storage"
 # Examples: ["minio:9000", "s3.nl-ams.scw.cloud", "s3.us-west-002.backblazeb2.com"]
 # Default: ""
 storage-s3-endpoint: ""
+
+# Bool. If data stored in S3 should be proxied through GoToSocial instead of redirecting to a presigned URL.
+#
+# Default: false
+storage-s3-proxy: false
 
 # String. Access key part of the S3 credentials.
 # Consider setting this value using environment variables to avoid leaking it via the config file
@@ -552,3 +569,20 @@ syslog-address: "localhost:514"
 # Options: ["lax", "strict"]
 # Default: "lax"
 advanced-cookies-samesite: "lax"
+
+# Int. Amount of requests to permit from a single IP address within a span of 5 minutes.
+# If this amount is exceeded, a 429 HTTP error code will be returned.
+# See https://docs.gotosocial.org/en/latest/api/swagger/#rate-limit.
+#
+# If you find yourself adjusting this limit because it's regularly being exceeded,
+# you should first verify that your settings for `trusted-proxies` (above) are correct.
+# In many cases, when the rate limit is exceeded it is because your instance sees all
+# incoming requests as coming from the *same IP address* (you can verify this by looking
+# at the client IPs in your instance logs). If this is the case, try adding that IP
+# address to your `trusted-proxies` *BEFORE* you go adjusting this rate limit setting!
+#
+# If you set this to 0 or less, rate limiting will be disabled entirely.
+#
+# Examples: [1000, 500, 0]
+# Default: 1000
+advanced-rate-limit-requests: 1000

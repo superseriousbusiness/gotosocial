@@ -55,3 +55,4 @@ nav:
     - "federation/behaviors/conversation_threads.md"
   - "API Documentation":
     - "api/swagger.md"
+    - "api/ratelimiting.md"

@@ -24,8 +24,8 @@ import (
 	"os"
 	"path"
 
-	"codeberg.org/gruf/go-store/kv"
-	"codeberg.org/gruf/go-store/storage"
+	"codeberg.org/gruf/go-store/v2/kv"
+	"codeberg.org/gruf/go-store/v2/storage"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
@@ -48,7 +48,7 @@ func NewS3Storage() gtsstorage.Driver {
 	if err != nil {
 		panic(err)
 	}
-	return gtsstorage.NewS3(mc, os.Getenv("GTS_STORAGE_S3_BUCKET"))
+	return gtsstorage.NewS3(mc, os.Getenv("GTS_STORAGE_S3_BUCKET"), false)
 }
 
 // StandardStorageSetup populates the storage with standard test entries from the given directory.
@@ -116,7 +116,7 @@ func StandardStorageTeardown(s gtsstorage.Driver) {
 
 	switch st := s.(type) {
 	case *gtsstorage.Local:
-		iter, err := st.KVStore.Iterator(nil)
+		iter, err := st.KVStore.Iterator(context.Background(), nil)
 		if err != nil {
 			panic(err)
 		}

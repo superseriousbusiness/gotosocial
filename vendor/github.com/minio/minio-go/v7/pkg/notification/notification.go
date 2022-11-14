@@ -29,7 +29,8 @@ import (
 type EventType string
 
 // The role of all event types are described in :
-// 	http://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html#notification-how-to-event-types-and-destinations
+//
+//	http://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html#notification-how-to-event-types-and-destinations
 const (
 	ObjectCreatedAll                     EventType = "s3:ObjectCreated:*"
 	ObjectCreatedPut                               = "s3:ObjectCreated:Put"

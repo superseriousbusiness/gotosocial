@@ -988,6 +988,16 @@ definitions:
                 example: https://example.org/files/instance/thumbnail.jpeg
                 type: string
                 x-go-name: Thumbnail
+            thumbnail_description:
+                description: Description of the instance thumbnail.
+                example: picture of a cute lil' friendly sloth
+                type: string
+                x-go-name: ThumbnailDescription
+            thumbnail_type:
+                description: MIME type of the instance thumbnail.
+                example: image/png
+                type: string
+                x-go-name: ThumbnailType
             title:
                 description: The title of the instance.
                 example: GoToSocial Example Instance
@@ -3456,11 +3466,15 @@ paths:
                   maximum: 5000
                   name: terms
                   type: string
-                - description: Avatar of the instance.
+                - description: Thumbnail image to use for the instance.
                   in: formData
-                  name: avatar
+                  name: thumbnail
                   type: file
-                - description: Header of the instance.
+                - description: Image description of the submitted instance thumbnail.
+                  in: formData
+                  name: thumbnail_description
+                  type: string
+                - description: Header image to use for the instance.
                   in: formData
                   name: header
                   type: file

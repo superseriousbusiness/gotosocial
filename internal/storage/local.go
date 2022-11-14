@@ -20,43 +20,13 @@ package storage
 
 import (
 	"context"
-	"io"
 	"net/url"
 
-	"codeberg.org/gruf/go-store/kv"
-	"codeberg.org/gruf/go-store/storage"
+	"codeberg.org/gruf/go-store/v2/kv"
 )
 
 type Local struct {
-	KVStore *kv.KVStore
-}
-
-func (l *Local) Get(ctx context.Context, key string) ([]byte, error) {
-	return l.KVStore.Get(key)
-}
-
-func (l *Local) GetStream(ctx context.Context, key string) (io.ReadCloser, error) {
-	return l.KVStore.GetStream(key)
-}
-
-func (l *Local) PutStream(ctx context.Context, key string, r io.Reader) error {
-	err := l.KVStore.PutStream(key, r)
-	if err == storage.ErrAlreadyExists {
-		return ErrAlreadyExists
-	}
-	return err
-}
-
-func (l *Local) Put(ctx context.Context, key string, value []byte) error {
-	err := l.KVStore.Put(key, value)
-	if err == storage.ErrAlreadyExists {
-		return ErrAlreadyExists
-	}
-	return err
-}
-
-func (l *Local) Delete(ctx context.Context, key string) error {
-	return l.KVStore.Delete(key)
+	*kv.KVStore
 }
 
 func (l *Local) URL(ctx context.Context, key string) *url.URL {

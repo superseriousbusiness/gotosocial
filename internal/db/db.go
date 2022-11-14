@@ -45,6 +45,7 @@ type DB interface {
 	Status
 	Timeline
 	User
+	Tombstone
 
 	/*
 		USEFUL CONVERSION FUNCTIONS

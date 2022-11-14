@@ -124,8 +124,8 @@ func validateCreateStatus(form *model.AdvancedStatusCreateForm) error {
 	maxCwChars := config.GetStatusesCWMaxChars()
 
 	if form.Status != "" {
-		if len(form.Status) > maxChars {
-			return fmt.Errorf("status too long, %d characters provided but limit is %d", len(form.Status), maxChars)
+		if length := len([]rune(form.Status)); length > maxChars {
+			return fmt.Errorf("status too long, %d characters provided but limit is %d", length, maxChars)
 		}
 	}
 
@@ -141,15 +141,15 @@ func validateCreateStatus(form *model.AdvancedStatusCreateForm) error {
 			return fmt.Errorf("too many poll options provided, %d provided but limit is %d", len(form.Poll.Options), maxPollOptions)
 		}
 		for _, p := range form.Poll.Options {
-			if len(p) > maxPollChars {
-				return fmt.Errorf("poll option too long, %d characters provided but limit is %d", len(p), maxPollChars)
+			if length := len([]rune(p)); length > maxPollChars {
+				return fmt.Errorf("poll option too long, %d characters provided but limit is %d", length, maxPollChars)
 			}
 		}
 	}
 
 	if form.SpoilerText != "" {
-		if len(form.SpoilerText) > maxCwChars {
-			return fmt.Errorf("content-warning/spoilertext too long, %d characters provided but limit is %d", len(form.SpoilerText), maxCwChars)
+		if length := len([]rune(form.SpoilerText)); length > maxCwChars {
+			return fmt.Errorf("content-warning/spoilertext too long, %d characters provided but limit is %d", length, maxCwChars)
 		}
 	}
 

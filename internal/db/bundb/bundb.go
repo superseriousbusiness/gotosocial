@@ -88,6 +88,7 @@ type DBService struct {
 	db.Status
 	db.Timeline
 	db.User
+	db.Tombstone
 	conn *DBConn
 }
 
@@ -181,11 +182,15 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 	status := &statusDB{conn: conn, cache: cache.NewStatusCache()}
 	emoji := &emojiDB{conn: conn, emojiCache: cache.NewEmojiCache(), categoryCache: cache.NewEmojiCategoryCache()}
 	timeline := &timelineDB{conn: conn}
+	tombstone := &tombstoneDB{conn: conn}
 
 	// Setup DB cross-referencing
 	accounts.status = status
 	status.accounts = accounts
 	timeline.status = status
+
+	// Initialize db structs
+	tombstone.init()
 
 	ps := &DBService{
 		Account: accounts,
@@ -228,7 +233,8 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 			conn:  conn,
 			cache: userCache,
 		},
-		conn: conn,
+		Tombstone: tombstone,
+		conn:      conn,
 	}
 
 	// we can confidently return this useable service now

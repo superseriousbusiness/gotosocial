@@ -32,9 +32,9 @@ module.exports = function ({ apiCall, getChanges }) {
 					const state = getState().instances.adminSettings;
 
 					const update = getChanges(state, {
-						formKeys: ["title", "short_description", "description", "contact_account.username", "email", "terms"],
+						formKeys: ["title", "short_description", "description", "contact_account.username", "email", "terms", "thumbnail_description"],
 						renamedKeys: {"contact_account.username": "contact_username"},
-						// fileKeys: ["avatar", "header"]
+						fileKeys: ["thumbnail"]
 					});
 
 					return dispatch(apiCall("PATCH", "/api/v1/instance", update, "form"));
@@ -160,33 +160,6 @@ module.exports = function ({ apiCall, getChanges }) {
 				});
 			};
 		},
-
-		fetchCustomEmoji: function fetchCustomEmoji() {
-			return function (dispatch, _getState) {
-				return Promise.try(() => {
-					return dispatch(apiCall("GET", "/api/v1/admin/custom_emojis?filter=domain:local&limit=0"));
-				}).then((emoji) => {
-					return dispatch(admin.setEmoji(emoji));
-				});
-			};
-		},
-
-		newEmoji: function newEmoji() {
-			return function (dispatch, getState) {
-				return Promise.try(() => {
-					const state = getState().admin.newEmoji;
-
-					const update = getChanges(state, {
-						formKeys: ["shortcode"],
-						fileKeys: ["image"]
-					});
-
-					return dispatch(apiCall("POST", "/api/v1/admin/custom_emojis", update, "form"));
-				}).then((emoji) => {
-					return dispatch(admin.addEmoji(emoji));
-				});
-			};
-		}
 	};
 	return adminAPI;
 };

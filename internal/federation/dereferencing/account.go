@@ -26,7 +26,6 @@ import (
 	"io"
 	"net/url"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/miekg/dns"
@@ -478,9 +477,7 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 		if alreadyProcessing, ok := d.dereferencingAvatars[targetAccount.ID]; ok {
 			// we're already on it, no worries
 			processingMedia = alreadyProcessing
-		}
-
-		if processingMedia == nil {
+		} else {
 			// we're not already processing it so start now
 			avatarIRI, err := url.Parse(targetAccount.AvatarRemoteURL)
 			if err != nil {
@@ -492,11 +489,12 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 				var err error
 				t, err = d.transportController.NewTransportForUsername(ctx, requestingUsername)
 				if err != nil {
+					d.dereferencingAvatarsLock.Unlock()
 					return false, fmt.Errorf("fetchRemoteAccountMedia: error getting transport for user: %s", err)
 				}
 			}
 
-			data := func(innerCtx context.Context) (io.Reader, int64, error) {
+			data := func(innerCtx context.Context) (io.ReadCloser, int64, error) {
 				return t.DereferenceMedia(innerCtx, avatarIRI)
 			}
 
@@ -516,16 +514,27 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 		}
 		d.dereferencingAvatarsLock.Unlock() // UNLOCK HERE
 
+		load := func(innerCtx context.Context) error {
+			_, err := processingMedia.LoadAttachment(innerCtx)
+			return err
+		}
+
+		cleanup := func() {
+			d.dereferencingAvatarsLock.Lock()
+			delete(d.dereferencingAvatars, targetAccount.ID)
+			d.dereferencingAvatarsLock.Unlock()
+		}
+
 		// block until loaded if required...
 		if blocking {
-			if err := lockAndLoad(ctx, d.dereferencingAvatarsLock, processingMedia, d.dereferencingAvatars, targetAccount.ID); err != nil {
+			if err := loadAndCleanup(ctx, load, cleanup); err != nil {
 				return changed, err
 			}
 		} else {
 			// ...otherwise do it async
 			go func() {
 				dlCtx, done := context.WithDeadline(context.Background(), time.Now().Add(1*time.Minute))
-				if err := lockAndLoad(dlCtx, d.dereferencingAvatarsLock, processingMedia, d.dereferencingAvatars, targetAccount.ID); err != nil {
+				if err := loadAndCleanup(dlCtx, load, cleanup); err != nil {
 					log.Errorf("fetchRemoteAccountMedia: error during async lock and load of avatar: %s", err)
 				}
 				done()
@@ -544,9 +553,7 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 		if alreadyProcessing, ok := d.dereferencingHeaders[targetAccount.ID]; ok {
 			// we're already on it, no worries
 			processingMedia = alreadyProcessing
-		}
-
-		if processingMedia == nil {
+		} else {
 			// we're not already processing it so start now
 			headerIRI, err := url.Parse(targetAccount.HeaderRemoteURL)
 			if err != nil {
@@ -558,11 +565,12 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 				var err error
 				t, err = d.transportController.NewTransportForUsername(ctx, requestingUsername)
 				if err != nil {
+					d.dereferencingAvatarsLock.Unlock()
 					return false, fmt.Errorf("fetchRemoteAccountMedia: error getting transport for user: %s", err)
 				}
 			}
 
-			data := func(innerCtx context.Context) (io.Reader, int64, error) {
+			data := func(innerCtx context.Context) (io.ReadCloser, int64, error) {
 				return t.DereferenceMedia(innerCtx, headerIRI)
 			}
 
@@ -582,16 +590,27 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 		}
 		d.dereferencingHeadersLock.Unlock() // UNLOCK HERE
 
+		load := func(innerCtx context.Context) error {
+			_, err := processingMedia.LoadAttachment(innerCtx)
+			return err
+		}
+
+		cleanup := func() {
+			d.dereferencingHeadersLock.Lock()
+			delete(d.dereferencingHeaders, targetAccount.ID)
+			d.dereferencingHeadersLock.Unlock()
+		}
+
 		// block until loaded if required...
 		if blocking {
-			if err := lockAndLoad(ctx, d.dereferencingHeadersLock, processingMedia, d.dereferencingHeaders, targetAccount.ID); err != nil {
+			if err := loadAndCleanup(ctx, load, cleanup); err != nil {
 				return changed, err
 			}
 		} else {
 			// ...otherwise do it async
 			go func() {
 				dlCtx, done := context.WithDeadline(context.Background(), time.Now().Add(1*time.Minute))
-				if err := lockAndLoad(dlCtx, d.dereferencingHeadersLock, processingMedia, d.dereferencingHeaders, targetAccount.ID); err != nil {
+				if err := loadAndCleanup(dlCtx, load, cleanup); err != nil {
 					log.Errorf("fetchRemoteAccountMedia: error during async lock and load of header: %s", err)
 				}
 				done()
@@ -615,7 +634,7 @@ func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gts
 	// If we only have IDs, fetch the emojis from the db. We know they're in
 	// there or else they wouldn't have IDs.
 	if len(maybeEmojiIDs) > len(maybeEmojis) {
-		maybeEmojis = []*gtsmodel.Emoji{}
+		maybeEmojis = make([]*gtsmodel.Emoji, 0, len(maybeEmojiIDs))
 		for _, emojiID := range maybeEmojiIDs {
 			maybeEmoji, err := d.db.GetEmojiByID(ctx, emojiID)
 			if err != nil {
@@ -715,17 +734,4 @@ func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gts
 	}
 
 	return changed, nil
-}
-
-func lockAndLoad(ctx context.Context, lock *sync.Mutex, processing *media.ProcessingMedia, processingMap map[string]*media.ProcessingMedia, accountID string) error {
-	// whatever happens, remove the in-process media from the map
-	defer func() {
-		lock.Lock()
-		delete(processingMap, accountID)
-		lock.Unlock()
-	}()
-
-	// try and load it
-	_, err := processing.LoadAttachment(ctx)
-	return err
 }

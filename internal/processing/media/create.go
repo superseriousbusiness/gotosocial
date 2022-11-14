@@ -30,7 +30,7 @@ import (
 )
 
 func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.AttachmentRequest) (*apimodel.Attachment, gtserror.WithCode) {
-	data := func(innerCtx context.Context) (io.Reader, int64, error) {
+	data := func(innerCtx context.Context) (io.ReadCloser, int64, error) {
 		f, err := form.File.Open()
 		return f, form.File.Size, err
 	}
