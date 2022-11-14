@@ -178,10 +178,8 @@ func (c *Cache[Value]) Load(lookup string, load func() (Value, error), keyParts 
 		c.cache.Lock()
 		defer c.cache.Unlock()
 
-		// Attempt to cache this result.
-		if key, ok := c.storeResult(res); !ok {
-			return zero, ConflictError{key}
-		}
+		// Cache this result
+		c.storeResult(res)
 	}
 
 	// Catch and return error
@@ -211,11 +209,8 @@ func (c *Cache[Value]) Store(value Value, store func() error) error {
 	c.cache.Lock()
 	defer c.cache.Unlock()
 
-	// Attempt to cache result, only return conflict
-	// error if the appropriate flag has been set.
-	if key, ok := c.storeResult(result); !ok {
-		return ConflictError{key}
-	}
+	// Cache this result
+	c.storeResult(result)
 
 	return nil
 }
@@ -285,7 +280,7 @@ func (c *Cache[Value]) Cap() int {
 	return c.cache.Cache.Cap()
 }
 
-func (c *Cache[Value]) storeResult(res result[Value]) (string, bool) {
+func (c *Cache[Value]) storeResult(res result[Value]) {
 	for _, key := range res.Keys {
 		pkeys := key.key.pkeys
 
@@ -293,16 +288,18 @@ func (c *Cache[Value]) storeResult(res result[Value]) (string, bool) {
 		pkey, ok := pkeys[key.value]
 
 		if ok {
-			// Look for overlap with non error keys,
-			// as an overlap for some but not all keys
-			// could produce inconsistent results.
+			// Get the overlapping result with this key.
 			entry, _ := c.cache.Cache.Get(pkey)
-			if entry.Value.Error == nil {
-				return key.value, false
-			}
 
-			// Delete existing error result
-			c.cache.Cache.Delete(pkey)
+			// From conflicting entry, drop this key, this
+			// will prevent eviction cleanup key confusion.
+			entry.Value.Keys.drop(key.key.name)
+
+			if len(entry.Value.Keys) == 0 {
+				// We just over-wrote the only lookup key for
+				// this value, so we drop its primary key too
+				c.cache.Cache.Delete(pkey)
+			}
 		}
 	}
 
@@ -324,13 +321,11 @@ func (c *Cache[Value]) storeResult(res result[Value]) (string, bool) {
 	}, func(_ int64, item *ttl.Entry[int64, result[Value]]) {
 		c.cache.Evict(item)
 	})
-
-	return "", true
 }
 
 type result[Value any] struct {
 	// keys accessible under
-	Keys []cachedKey
+	Keys cacheKeys
 
 	// cached value
 	Value Value

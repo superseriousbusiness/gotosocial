@@ -77,6 +77,19 @@ func (sk structKeys) generate(a any) []cachedKey {
 	return keys
 }
 
+type cacheKeys []cachedKey
+
+// drop will drop the cachedKey with lookup name from receiving cacheKeys slice.
+func (ck *cacheKeys) drop(name string) {
+	_ = *ck // move out of loop
+	for i := range *ck {
+		if (*ck)[i].key.name == name {
+			(*ck) = append((*ck)[:i], (*ck)[i+1:]...)
+			break
+		}
+	}
+}
+
 // cachedKey represents an actual cached key.
 type cachedKey struct {
 	// key is a reference to the structKey this
