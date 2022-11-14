@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
@@ -57,7 +58,19 @@ func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, 
 		return f, form.Image.Size, err
 	}
 
-	processingEmoji, err := p.mediaManager.ProcessEmoji(ctx, data, nil, form.Shortcode, emojiID, emojiURI, nil, false)
+	var ai *media.AdditionalEmojiInfo
+	if form.CategoryName != "" {
+		category, err := p.GetOrCreateEmojiCategory(ctx, form.CategoryName)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error putting id in category: %s", err), "error putting id in category")
+		}
+
+		ai = &media.AdditionalEmojiInfo{
+			CategoryID: &category.ID,
+		}
+	}
+
+	processingEmoji, err := p.mediaManager.ProcessEmoji(ctx, data, nil, form.Shortcode, emojiID, emojiURI, ai, false)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error processing emoji: %s", err), "error processing emoji")
 	}

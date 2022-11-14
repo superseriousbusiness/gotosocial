@@ -356,12 +356,24 @@ func (c *converter) MentionToAPIMention(ctx context.Context, m *gtsmodel.Mention
 }
 
 func (c *converter) EmojiToAPIEmoji(ctx context.Context, e *gtsmodel.Emoji) (model.Emoji, error) {
+	var category string
+	if e.CategoryID != "" {
+		if e.Category == nil {
+			var err error
+			e.Category, err = c.db.GetEmojiCategory(ctx, e.CategoryID)
+			if err != nil {
+				return model.Emoji{}, err
+			}
+		}
+		category = e.Category.Name
+	}
+
 	return model.Emoji{
 		Shortcode:       e.Shortcode,
 		URL:             e.ImageURL,
 		StaticURL:       e.ImageStaticURL,
 		VisibleInPicker: *e.VisibleInPicker,
-		Category:        e.CategoryID,
+		Category:        category,
 	}, nil
 }
 
@@ -380,6 +392,13 @@ func (c *converter) EmojiToAdminAPIEmoji(ctx context.Context, e *gtsmodel.Emoji)
 		TotalFileSize: e.ImageFileSize + e.ImageStaticFileSize,
 		ContentType:   e.ImageContentType,
 		URI:           e.URI,
+	}, nil
+}
+
+func (c *converter) EmojiCategoryToAPIEmojiCategory(ctx context.Context, category *gtsmodel.EmojiCategory) (*model.EmojiCategory, error) {
+	return &model.EmojiCategory{
+		ID:   category.ID,
+		Name: category.Name,
 	}, nil
 }
 

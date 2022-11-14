@@ -55,6 +55,7 @@ var testModels = []interface{}{
 	&gtsmodel.RouterSession{},
 	&gtsmodel.Token{},
 	&gtsmodel.Client{},
+	&gtsmodel.EmojiCategory{},
 	&gtsmodel.Tombstone{},
 }
 
@@ -194,6 +195,12 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 	}
 
 	for _, v := range NewTestEmojis() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(err)
+		}
+	}
+
+	for _, v := range NewTestEmojiCategories() {
 		if err := db.Put(ctx, v); err != nil {
 			log.Panic(err)
 		}

@@ -859,8 +859,27 @@ definitions:
         type: object
         x-go-name: Emoji
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    emojiCategory:
+        properties:
+            id:
+                description: The ID of the custom emoji category.
+                type: string
+                x-go-name: ID
+            name:
+                description: The name of the custom emoji category.
+                type: string
+                x-go-name: Name
+        title: EmojiCategory represents a custom emoji category.
+        type: object
+        x-go-name: EmojiCategory
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     emojiCreateRequest:
         properties:
+            CategoryName:
+                description: |-
+                    Category in which to place the new emoji. Will be uncategorized by default.
+                    CategoryName length should not exceed 64 characters.
+                type: string
             Image:
                 description: Image file to use for the emoji. Must be png or gif and no larger than 50kb.
             Shortcode:
@@ -2755,6 +2774,10 @@ paths:
                   name: image
                   required: true
                   type: file
+                - description: Category in which to place the new emoji. 64 characters or less. If left blank, emoji will be uncategorized. If a category with the given name doesn't exist yet, it will be created.
+                  in: formData
+                  name: category
+                  type: string
             produces:
                 - application/json
             responses:
@@ -2850,6 +2873,39 @@ paths:
                 "500":
                     description: internal server error
             summary: Get the admin view of a single emoji.
+            tags:
+                - admin
+    /api/v1/admin/custom_emojis/categories:
+        get:
+            operationId: emojiCategoriesGet
+            parameters:
+                - description: The id of the emoji.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Array of existing emoji categories.
+                    schema:
+                        items:
+                            $ref: '#/definitions/adminEmojiCategory'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            summary: Get a list of existing emoji categories.
             tags:
                 - admin
     /api/v1/admin/domain_blocks:

@@ -42,6 +42,7 @@ const (
 	maximumSiteTermsLength        = 5000
 	maximumUsernameLength         = 64
 	maximumCustomCSSLength        = 5000
+	maximumEmojiCategoryLength    = 64
 )
 
 // NewPassword returns an error if the given password is not sufficiently strong, or nil if it's ok.
@@ -178,6 +179,14 @@ func CustomCSS(customCSS string) error {
 func EmojiShortcode(shortcode string) error {
 	if !regexes.EmojiShortcode.MatchString(shortcode) {
 		return fmt.Errorf("shortcode %s did not pass validation, must be between 2 and 30 characters, lowercase letters, numbers, and underscores only", shortcode)
+	}
+	return nil
+}
+
+// EmojiCategory validates the length of the given category string.
+func EmojiCategory(category string) error {
+	if length := len(category); length > maximumEmojiCategoryLength {
+		return fmt.Errorf("emoji category %s did not pass validation, must be less than %d characters, but provided value was %d characters", category, maximumEmojiCategoryLength, length)
 	}
 	return nil
 }

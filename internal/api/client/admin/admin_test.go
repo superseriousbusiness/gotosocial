@@ -53,14 +53,15 @@ type AdminStandardTestSuite struct {
 	sentEmails   map[string]string
 
 	// standard suite models
-	testTokens       map[string]*gtsmodel.Token
-	testClients      map[string]*gtsmodel.Client
-	testApplications map[string]*gtsmodel.Application
-	testUsers        map[string]*gtsmodel.User
-	testAccounts     map[string]*gtsmodel.Account
-	testAttachments  map[string]*gtsmodel.MediaAttachment
-	testStatuses     map[string]*gtsmodel.Status
-	testEmojis       map[string]*gtsmodel.Emoji
+	testTokens          map[string]*gtsmodel.Token
+	testClients         map[string]*gtsmodel.Client
+	testApplications    map[string]*gtsmodel.Application
+	testUsers           map[string]*gtsmodel.User
+	testAccounts        map[string]*gtsmodel.Account
+	testAttachments     map[string]*gtsmodel.MediaAttachment
+	testStatuses        map[string]*gtsmodel.Status
+	testEmojis          map[string]*gtsmodel.Emoji
+	testEmojiCategories map[string]*gtsmodel.EmojiCategory
 
 	// module being tested
 	adminModule *admin.Module
@@ -75,6 +76,7 @@ func (suite *AdminStandardTestSuite) SetupSuite() {
 	suite.testAttachments = testrig.NewTestAttachments()
 	suite.testStatuses = testrig.NewTestStatuses()
 	suite.testEmojis = testrig.NewTestEmojis()
+	suite.testEmojiCategories = testrig.NewTestEmojiCategories()
 }
 
 func (suite *AdminStandardTestSuite) SetupTest() {
