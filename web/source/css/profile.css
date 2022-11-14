@@ -113,20 +113,49 @@ main {
 			max-height: 6rem;
 		}
 
-		.username {
+		.usernamecontainer {
 			display: flex;
 			flex-wrap: wrap;
-
 			grid-area: username;
+			justify-content: space-between;
 			padding-top: 0;
-			margin-top: 0.25rem;
 			padding-bottom: 0.25rem;
+			padding-left: 0;
+			
 			color: $fg-accent;
 			font-weight: bold;
-			word-break: break-all;
-			text-overflow: ellipsis;
-			overflow: hidden;
-			user-select: all;
+
+			.username {
+				padding-top: inherit;
+				margin-top: inherit;
+				padding-bottom: inherit;
+
+				word-break: break-all;
+				text-overflow: ellipsis;
+				overflow: hidden;
+				user-select: all;
+
+			}
+
+			.role {
+				padding-top: inherit;
+				margin-top: inherit;
+				padding-bottom: inherit;
+				font-variant: small-caps;
+				padding-left: 1rem;
+			}
+
+			.role.admin {
+				color: $role-admin;
+			}
+
+			.role.moderator {
+				color: $role-moderator;
+			}
+
+			.role.user {
+				color: $role-user;
+			}
 		}
 	}
 
