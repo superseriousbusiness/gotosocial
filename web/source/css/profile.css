@@ -235,12 +235,19 @@ main {
 .accountstats {
 	display: flex;
 	flex-wrap: wrap;
-	justify-content: space-around;
 	border-radius: 0 0 $br $br;
 	border-top: 0.1rem solid $bg;
 
+	.entry-group {
+		flex: 1 1 auto;
+		min-width: 50%;
+		display: flex;
+	}
+
 	.entry {
-		padding: 1rem 1.2rem;
+		white-space: nowrap;
+		width: 50%;
+		margin: 1.2rem 0.5rem;
 		text-align: center;
 	}
 }

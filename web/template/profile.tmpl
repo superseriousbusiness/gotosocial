@@ -24,10 +24,14 @@
             </div>
         </div>
         <div class="accountstats">
-            <div class="entry">Joined <b>{{.account.CreatedAt | timestampVague}}</b></div>
-            <div class="entry">Followed by <b>{{.account.FollowersCount}}</b></div>
-            <div class="entry">Following <b>{{.account.FollowingCount}}</b></div>
-            <div class="entry">Posted <b>{{.account.StatusesCount}}</b></div>
+            <div class="entry-group">
+                <div class="entry">Joined <b>{{.account.CreatedAt | timestampVague}}</b></div>
+                <div class="entry">Followed by <b>{{.account.FollowersCount}}</b></div>
+            </div>
+            <div class="entry-group">
+                <div class="entry">Following <b>{{.account.FollowingCount}}</b></div>
+                <div class="entry">Posted <b>{{.account.StatusesCount}}</b></div>
+            </div>
         </div>
     </div>
     <h2 id="recent">
