@@ -252,6 +252,14 @@ definitions:
                 description: Bio/description of this account.
                 type: string
                 x-go-name: Note
+            role:
+                description: |-
+                    Role of the account on this instance.
+                    Omitted for remote accounts.
+                    type: accountRole
+                example: user
+                type: string
+                x-go-name: Role
             source:
                 $ref: '#/definitions/Source'
             statuses_count:
