@@ -106,19 +106,6 @@ func adminCommands() *cobra.Command {
 	config.AddAdminAccount(adminAccountDisableCmd)
 	adminAccountCmd.AddCommand(adminAccountDisableCmd)
 
-	adminAccountSuspendCmd := &cobra.Command{
-		Use:   "suspend",
-		Short: "completely remove an account and all of its posts, media, etc",
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return preRun(preRunArgs{cmd: cmd})
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return run(cmd.Context(), account.Suspend)
-		},
-	}
-	config.AddAdminAccount(adminAccountSuspendCmd)
-	adminAccountCmd.AddCommand(adminAccountSuspendCmd)
-
 	adminAccountPasswordCmd := &cobra.Command{
 		Use:   "password",
 		Short: "set a new password for the given local account",

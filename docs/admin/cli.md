@@ -158,31 +158,6 @@ Example:
 gotosocial admin account disable --username some_username --config-path config.yaml
 ```
 
-### gotosocial admin account suspend
-
-This command can be used to completely remove an account's media/posts/etc and prevent it from logging in.
-
-In other words, this 'deletes' the account (without actually removing the account entry, meaning the username cannot be used again).
-
-`gotosocial admin account suspend --help`:
-
-```text
-completely remove an account and all of its posts, media, etc
-
-Usage:
-  gotosocial admin account suspend [flags]
-
-Flags:
-  -h, --help              help for suspend
-      --username string   the username to create/delete/etc
-```
-
-Example:
-
-```bash
-gotosocial admin account suspend --username some_username --config-path config.yaml
-```
-
 ### gotosocial admin account password
 
 This command can be used to set a new password on the given local account.
