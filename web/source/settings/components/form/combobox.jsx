@@ -18,14 +18,13 @@
 
 "use strict";
 
-const React = require("react");
-
 const { useComboboxState } = require("ariakit/combobox");
 
 module.exports = function useComboBoxInput({name, Name}, {validator} = {}) {
-	const state = useComboboxState({ gutter: 4, sameWidth: true });
+	const state = useComboboxState({ gutter: 0, sameWidth: true });
 
 	function reset() {
+		state.value = "";
 	}
 
 	return [

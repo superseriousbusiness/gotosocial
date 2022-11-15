@@ -38,6 +38,16 @@ module.exports = function NewEmojiForm({emoji, emojiByCategory}) {
 		return new Set(emoji.map((e) => e.shortcode));
 	}, [emoji]);
 
+	const categoryItems = React.useMemo(() => {
+		return Object.entries((emojiByCategory)).map(([category, entries]) => [
+			category,
+			<>
+				<img src={entries[0].static_url} aria-hidden="true"></img>
+				{category}
+			</>
+		]);
+	}, [emojiByCategory]);
+
 	const [addEmoji, result] = query.useAddEmojiMutation();
 
 	const [onFileChange, resetFile, {image, imageURL, imageInfo}] = useFileInput("image", {
@@ -73,11 +83,13 @@ module.exports = function NewEmojiForm({emoji, emojiByCategory}) {
 		Promise.try(() => {
 			return addEmoji({
 				image,
-				shortcode
+				shortcode,
+				category
 			});
 		}).then(() => {
 			resetFile();
 			resetShortcode();
+			resetCategory();
 		});
 	}
 
@@ -130,7 +142,7 @@ module.exports = function NewEmojiForm({emoji, emojiByCategory}) {
 					/>
 				</div>
 
-				<ComboBox state={categoryState} items={categories} />
+				<ComboBox state={categoryState} items={categoryItems} />
 				
 				<MutateButton text="Upload emoji" result={result}/>
 			</form>

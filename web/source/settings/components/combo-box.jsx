@@ -28,13 +28,13 @@ const {
 
 module.exports = function ComboBox({state, items}) {
 	return (
-		<div className="combobox-wrapper">
+		<div className="form-field combobox-wrapper">
 			<label>
 				Category
 				<Combobox
 					state={state}
 					placeholder="e.g., reactions"
-					className="combobox"
+					className="combobox input"
 				/>
 			</label>
 			<ComboboxPopover state={state} className="popover">

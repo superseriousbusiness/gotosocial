@@ -38,11 +38,13 @@ module.exports = function EmojiOverview() {
 	const emojiByCategory = React.useMemo(() => {
 		const categories = {};
 
-		emoji.forEach((emoji) => {
-			let cat = defaultValue(emoji.category, "Unsorted");
-			categories[cat] = defaultValue(categories[cat], []);
-			categories[cat].push(emoji);
-		});
+		if (emoji != undefined) {
+			emoji.forEach((emoji) => {
+				let cat = defaultValue(emoji.category, "Unsorted");
+				categories[cat] = defaultValue(categories[cat], []);
+				categories[cat].push(emoji);
+			});
+		}
 
 		return categories;
 	}, [emoji]);
