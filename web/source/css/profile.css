@@ -171,6 +171,7 @@ main {
 		}
 
 		.basic {
+			margin-top: calc(-22vw + 1rem);
 			height: initial;
 			display: flex;
 			flex-direction: column;
