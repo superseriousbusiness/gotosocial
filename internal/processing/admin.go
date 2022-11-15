@@ -42,6 +42,10 @@ func (p *processor) AdminEmojiGet(ctx context.Context, authed *oauth.Auth, id st
 	return p.adminProcessor.EmojiGet(ctx, authed.Account, authed.User, id)
 }
 
+func (p *processor) AdminEmojiUpdate(ctx context.Context, id string, form *apimodel.EmojiUpdateRequest) (*apimodel.AdminEmoji, gtserror.WithCode) {
+	return p.adminProcessor.EmojiUpdate(ctx, id, form)
+}
+
 func (p *processor) AdminEmojiDelete(ctx context.Context, authed *oauth.Auth, id string) (*apimodel.AdminEmoji, gtserror.WithCode) {
 	return p.adminProcessor.EmojiDelete(ctx, id)
 }

@@ -119,6 +119,9 @@ type Processor interface {
 	// AdminEmojiDelete deletes one *local* emoji with the given key. Remote emojis will not be deleted this way.
 	// Only admin users in good standing should be allowed to access this function -- check this before calling it.
 	AdminEmojiDelete(ctx context.Context, authed *oauth.Auth, id string) (*apimodel.AdminEmoji, gtserror.WithCode)
+	// AdminEmojiUpdate updates one local or remote emoji with the given key.
+	// Only admin users in good standing should be allowed to access this function -- check this before calling it.
+	AdminEmojiUpdate(ctx context.Context, id string, form *apimodel.EmojiUpdateRequest) (*apimodel.AdminEmoji, gtserror.WithCode)
 	// AdminEmojiCategoriesGet gets a list of all existing emoji categories.
 	AdminEmojiCategoriesGet(ctx context.Context) ([]*apimodel.EmojiCategory, gtserror.WithCode)
 	// AdminDomainBlockCreate handles the creation of a new domain block by an admin, using the given form.

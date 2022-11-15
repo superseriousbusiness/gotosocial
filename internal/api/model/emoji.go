@@ -54,3 +54,28 @@ type EmojiCreateRequest struct {
 	// CategoryName length should not exceed 64 characters.
 	CategoryName string `form:"category"`
 }
+
+// EmojiUpdateRequest represents a request to update a custom emoji, made through the admin API.
+//
+// swagger:model emojiUpdateRequest
+type EmojiUpdateRequest struct {
+	// Type of action. One of disable, modify, copy.
+	Type EmojiUpdateType `form:"type" json:"type" xml:"type"`
+	// Desired shortcode for the emoji, without surrounding colons. This must be unique for the domain.
+	// example: blobcat_uwu
+	Shortcode *string `form:"shortcode"`
+	// Image file to use for the emoji.
+	// Must be png or gif and no larger than 50kb.
+	Image *multipart.FileHeader `form:"image"`
+	// Category in which to place the emoji.
+	CategoryName *string `form:"category"`
+}
+
+// EmojiUpdateType models an admin update action to take on a custom emoji.
+type EmojiUpdateType string
+
+const (
+	EmojiUpdateModify  EmojiUpdateType = "modify"  // modify local emoji
+	EmojiUpdateDisable EmojiUpdateType = "disable" // disable remote emoji
+	EmojiUpdateCopy    EmojiUpdateType = "copy"    // copy remote emoji -> local
+)
