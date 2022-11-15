@@ -20,7 +20,7 @@
 
 const React = require("react");
 const {Link} = require("wouter");
-const defaultValue = require('default-value');
+const splitFilterN = require("split-filter-n");
 
 const NewEmojiForm = require("./new-emoji");
 
@@ -30,24 +30,16 @@ const base = "/settings/admin/custom-emoji";
 
 module.exports = function EmojiOverview() {
 	const {
-		data: emoji,
+		data: emoji = [],
 		isLoading,
 		error
 	} = query.useGetAllEmojiQuery({filter: "domain:local"});
 
-	const emojiByCategory = React.useMemo(() => {
-		const categories = {};
-
-		if (emoji != undefined) {
-			emoji.forEach((emoji) => {
-				let cat = defaultValue(emoji.category, "Unsorted");
-				categories[cat] = defaultValue(categories[cat], []);
-				categories[cat].push(emoji);
-			});
-		}
-
-		return categories;
-	}, [emoji]);
+	const emojiByCategory = React.useMemo(() => splitFilterN(
+		emoji,
+		[],
+		(entry) => entry.category ?? "Unsorted"
+	), [emoji]);
 
 	return (
 		<>
