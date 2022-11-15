@@ -162,10 +162,6 @@ main {
 				color: $blue2;
 				border-color: $blue1;
 			}
-
-			.role.user {
-				color: $role-user;
-			}
 		}
 	}
 
