@@ -35,25 +35,7 @@ module.exports = function EmojiOverview() {
 		error
 	} = query.useGetAllEmojiQuery({filter: "domain:local"});
 
-	return (
-		<>
-			<h1>Custom Emoji</h1>
-			{error && 
-				<div className="error accent">{error}</div>
-			}
-			{isLoading
-				? "Loading..."
-				: <>
-					<EmojiList emoji={emoji}/>
-					<NewEmojiForm emoji={emoji}/>
-				</>
-			}
-		</>
-	);
-};
-
-function EmojiList({emoji}) {
-	const byCategory = React.useMemo(() => {
+	const emojiByCategory = React.useMemo(() => {
 		const categories = {};
 
 		emoji.forEach((emoji) => {
@@ -64,13 +46,31 @@ function EmojiList({emoji}) {
 
 		return categories;
 	}, [emoji]);
-	
+
+	return (
+		<>
+			<h1>Custom Emoji</h1>
+			{error && 
+				<div className="error accent">{error}</div>
+			}
+			{isLoading
+				? "Loading..."
+				: <>
+					<EmojiList emoji={emoji} emojiByCategory={emojiByCategory}/>
+					<NewEmojiForm emoji={emoji} emojiByCategory={emojiByCategory}/>
+				</>
+			}
+		</>
+	);
+};
+
+function EmojiList({emoji, emojiByCategory}) {
 	return (
 		<div>
 			<h2>Overview</h2>
 			<div className="list emoji-list">
-				{emoji.length == 0 && "No local emoji yet"}
-				{Object.entries(byCategory).map(([category, entries]) => {
+				{emoji.length == 0 && "No local emoji yet, add one below"}
+				{Object.entries(emojiByCategory).map(([category, entries]) => {
 					return <EmojiCategory key={category} category={category} entries={entries}/>;
 				})}
 			</div>

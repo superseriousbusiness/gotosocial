@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@reach/combobox": "^0.18.0"
+  }
+}

@@ -23,15 +23,17 @@ const React = require("react");
 
 const FakeToot = require("../../components/fake-toot");
 const MutateButton = require("../../components/mutation-button");
+const ComboBox = require("../../components/combo-box");
 
 const { 
 	useTextInput,
-	useFileInput
+	useFileInput,
+	useComboBoxInput
 } = require("../../components/form");
 
 const query = require("../../lib/query");
 
-module.exports = function NewEmojiForm({emoji}) {
+module.exports = function NewEmojiForm({emoji, emojiByCategory}) {
 	const emojiCodes = React.useMemo(() => {
 		return new Set(emoji.map((e) => e.shortcode));
 	}, [emoji]);
@@ -50,6 +52,8 @@ module.exports = function NewEmojiForm({emoji}) {
 				: "";
 		}
 	});
+
+	const [categoryState, resetCategory, {category}] = useComboBoxInput("category");
 
 	React.useEffect(() => {
 		if (shortcode.length == 0) {
@@ -125,6 +129,8 @@ module.exports = function NewEmojiForm({emoji}) {
 						value={shortcode}
 					/>
 				</div>
+
+				<ComboBox state={categoryState} items={categories} />
 				
 				<MutateButton text="Upload emoji" result={result}/>
 			</form>
