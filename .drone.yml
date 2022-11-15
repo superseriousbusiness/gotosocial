@@ -37,7 +37,6 @@ steps:
     commands:
       - apk update --no-cache && apk add git
       - CGO_ENABLED=0 GTS_DB_TYPE="sqlite" GTS_DB_ADDRESS=":memory:" go test ./...
-      - CGO_ENABLED=0 ./test/cliparsing.sh
       - CGO_ENABLED=0 ./test/envparsing.sh
     when:
       event:
