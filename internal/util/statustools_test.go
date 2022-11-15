@@ -77,26 +77,50 @@ func (suite *StatusTestSuite) TestDeriveHashtagsOK() {
 
 # testing this one shouldn't work
 
-			#thisshouldwork
+			#thisshouldwork #dupe #dupe!! #dupe
 
 	here's a link with a fragment: https://example.org/whatever#ahhh
+	here's another link with a fragment: https://example.org/whatever/#ahhh
 
-#ThisShouldAlsoWork #not_this_though
+(#ThisShouldAlsoWork) #not_this_though
 
 #111111 thisalsoshouldn'twork#### ##
 
-#alimentación, #saúde
+#alimentación, #saúde, #lävistää, #ö, #네
+#ThisOneIsThirtyOneCharactersLon...  ...ng
+#ThisOneIsThirteyCharactersLong
 `
 
 	tags := util.DeriveHashtagsFromText(statusText)
-	assert.Len(suite.T(), tags, 7)
+	assert.Len(suite.T(), tags, 12)
 	assert.Equal(suite.T(), "testing123", tags[0])
 	assert.Equal(suite.T(), "also", tags[1])
 	assert.Equal(suite.T(), "thisshouldwork", tags[2])
-	assert.Equal(suite.T(), "ThisShouldAlsoWork", tags[3])
-	assert.Equal(suite.T(), "111111", tags[4])
-	assert.Equal(suite.T(), "alimentación", tags[5])
-	assert.Equal(suite.T(), "saúde", tags[6])
+	assert.Equal(suite.T(), "dupe", tags[3])
+	assert.Equal(suite.T(), "ThisShouldAlsoWork", tags[4])
+	assert.Equal(suite.T(), "111111", tags[5])
+	assert.Equal(suite.T(), "alimentación", tags[6])
+	assert.Equal(suite.T(), "saúde", tags[7])
+	assert.Equal(suite.T(), "lävistää", tags[8])
+	assert.Equal(suite.T(), "ö", tags[9])
+	assert.Equal(suite.T(), "네", tags[10])
+	assert.Equal(suite.T(), "ThisOneIsThirteyCharactersLong", tags[11])
+
+	statusText = `#올빼미 hej`
+	tags = util.DeriveHashtagsFromText(statusText)
+	assert.Equal(suite.T(), "올빼미", tags[0])
+}
+
+func (suite *StatusTestSuite) TestHashtagSpansOK() {
+	statusText := `#0 #3   #8aa`
+
+	spans := util.FindHashtagSpansInText(statusText)
+	assert.Equal(suite.T(), 0, spans[0].First)
+	assert.Equal(suite.T(), 2, spans[0].Second)
+	assert.Equal(suite.T(), 3, spans[1].First)
+	assert.Equal(suite.T(), 5, spans[1].Second)
+	assert.Equal(suite.T(), 8, spans[2].First)
+	assert.Equal(suite.T(), 12, spans[2].Second)
 }
 
 func (suite *StatusTestSuite) TestDeriveEmojiOK() {
@@ -127,7 +151,7 @@ Here's some normal text with an :emoji: at the end
 func (suite *StatusTestSuite) TestDeriveMultiple() {
 	statusText := `Another test @foss_satan@fossbros-anonymous.io
 
-	#Hashtag
+	#HashTag
 
 	Text`
 
@@ -139,7 +163,7 @@ func (suite *StatusTestSuite) TestDeriveMultiple() {
 	assert.Equal(suite.T(), "@foss_satan@fossbros-anonymous.io", ms[0])
 
 	assert.Len(suite.T(), hs, 1)
-	assert.Equal(suite.T(), "Hashtag", hs[0])
+	assert.Contains(suite.T(), hs, "HashTag")
 
 	assert.Len(suite.T(), es, 0)
 }

@@ -19,9 +19,14 @@
 package util
 
 import (
-	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
+)
+
+const (
+	maximumHashtagLength = 30
 )
 
 // DeriveMentionNamesFromText takes a plaintext (ie., not html-formatted) text,
@@ -36,16 +41,71 @@ func DeriveMentionNamesFromText(text string) []string {
 	return UniqueStrings(mentionedAccounts)
 }
 
-// DeriveHashtagsFromText takes a plaintext (ie., not html-formatted) text,
-// and applies a regex to it to return a deduplicated list of hashtags
-// used in that text, without the leading #. The case of the returned
-// tags will be lowered, for consistency.
+type Pair[A, B any] struct {
+	First  A
+	Second B
+}
+
+// Byte index in original string
+// `First` includes `#`.
+type Span = Pair[int, int]
+
+// Takes a plaintext (ie., not HTML-formatted) text,
+// and returns a slice of unique hashtags.
 func DeriveHashtagsFromText(text string) []string {
+	tagsMap := make(map[string]bool)
 	tags := []string{}
-	for _, m := range regexes.HashtagFinder.FindAllStringSubmatch(text, -1) {
-		tags = append(tags, strings.TrimPrefix(m[1], "#"))
+
+	for _, v := range FindHashtagSpansInText(text) {
+		t := text[v.First+1 : v.Second]
+		if _, value := tagsMap[t]; !value {
+			tagsMap[t] = true
+			tags = append(tags, t)
+		}
 	}
-	return UniqueStrings(tags)
+
+	return tags
+}
+
+// Takes a plaintext (ie., not HTML-formatted) text,
+// and returns a list of pairs of indices into the original string, where
+// hashtags are located.
+func FindHashtagSpansInText(text string) []Span {
+	tags := []Span{}
+	start := 0
+	// Keep one rune of lookbehind.
+	prev := ' '
+	inTag := false
+
+	for i, r := range text {
+		if r == '#' && isHashtagBoundary(prev) {
+			// Start of hashtag.
+			inTag = true
+			start = i
+		} else if inTag && !isPermittedInHashtag(r) && !isHashtagBoundary(r) {
+			// Inside the hashtag, but it was a phoney, gottem.
+			inTag = false
+		} else if inTag && isHashtagBoundary(r) {
+			// End of hashtag.
+			inTag = false
+			appendTag(&tags, text, start, i)
+		} else if irl := i + utf8.RuneLen(r); inTag && irl == len(text) {
+			// End of text.
+			appendTag(&tags, text, start, irl)
+		}
+
+		prev = r
+	}
+
+	return tags
+}
+
+func appendTag(tags *[]Span, text string, start int, end int) {
+	l := end - start - 1
+	// This check could be moved out into the parsing loop if necessary!
+	if 0 < l && l <= maximumHashtagLength {
+		*tags = append(*tags, Span{First: start, Second: end})
+	}
 }
 
 // DeriveEmojisFromText takes a plaintext (ie., not html-formatted) text,
@@ -57,4 +117,18 @@ func DeriveEmojisFromText(text string) []string {
 		emojis = append(emojis, m[1])
 	}
 	return UniqueStrings(emojis)
+}
+
+func isPermittedInHashtag(r rune) bool {
+	return unicode.IsLetter(r) || unicode.IsNumber(r)
+}
+
+// Decides where to break before or after a hashtag.
+func isHashtagBoundary(r rune) bool {
+	return r == '#' || // `###lol` should work
+		unicode.IsSpace(r) || // All kinds of Unicode whitespace.
+		unicode.IsControl(r) || // All kinds of control characters, like tab.
+		// Most kinds of punctuation except "Pc" ("Punctuation, connecting", like `_`).
+		// But `someurl/#fragment` should not match, neither should HTML entities like `&#35;`.
+		('/' != r && '&' != r && !unicode.Is(unicode.Categories["Pc"], r) && unicode.IsPunct(r))
 }

@@ -27,36 +27,46 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func (f *formatter) ReplaceTags(ctx context.Context, in string, tags []*gtsmodel.Tag) string {
-	return regexes.ReplaceAllStringFunc(regexes.HashtagFinder, in, func(match string, buf *bytes.Buffer) string {
-		// we have a match
-		matchTrimmed := strings.TrimSpace(match)
-		tagAsEntered := matchTrimmed[1:]
+	spans := util.FindHashtagSpansInText(in)
 
-		// check through the tags to find what we're matching
+	if len(spans) == 0 {
+		return in
+	}
+
+	var b strings.Builder
+	i := 0
+
+spans:
+	for _, t := range spans {
+		b.WriteString(in[i:t.First])
+		i = t.Second
+		tagAsEntered := in[t.First+1 : t.Second]
+
 		for _, tag := range tags {
 			if strings.EqualFold(tagAsEntered, tag.Name) {
-				// Add any dropped space from match
-				if unicode.IsSpace(rune(match[0])) {
-					buf.WriteByte(match[0])
-				}
-
 				// replace the #tag with the formatted tag content
 				// `<a href="tag.URL" class="mention hashtag" rel="tag">#<span>tagAsEntered</span></a>
-				buf.WriteString(`<a href="`)
-				buf.WriteString(tag.URL)
-				buf.WriteString(`" class="mention hashtag" rel="tag">#<span>`)
-				buf.WriteString(tagAsEntered)
-				buf.WriteString(`</span></a>`)
-				return buf.String()
+				b.WriteString(`<a href="`)
+				b.WriteString(tag.URL)
+				b.WriteString(`" class="mention hashtag" rel="tag">#<span>`)
+				b.WriteString(tagAsEntered)
+				b.WriteString(`</span></a>`)
+				continue spans
 			}
 		}
 
-		// the match wasn't in the list of tags for whatever reason, so just return the match as we found it so nothing changes
-		return match
-	})
+		b.WriteString(in[t.First:t.Second])
+	}
+
+	// Get the last bits.
+	i = spans[len(spans)-1].Second
+	b.WriteString(in[i:])
+
+	return b.String()
 }
 
 func (f *formatter) ReplaceMentions(ctx context.Context, in string, mentions []*gtsmodel.Mention) string {

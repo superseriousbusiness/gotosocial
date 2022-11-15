@@ -47,7 +47,6 @@ const (
 const (
 	maximumUsernameLength       = 64
 	maximumEmojiShortcodeLength = 30
-	maximumHashtagLength        = 30
 )
 
 var (
@@ -66,16 +65,10 @@ var (
 	// such as @whatever_user@example.org, returning whatever_user and example.org (without the @ symbols)
 	MentionName = regexp.MustCompile(mentionName)
 
-	// mention regex can be played around with here: https://regex101.com/r/G1oGR0/1
+	// mention regex can be played around with here: https://regex101.com/r/P0vpYG/1
 	mentionFinder = `(?:^|\s)(@\w+(?:@[a-zA-Z0-9_\-\.]+)?)`
 	// MentionFinder extracts mentions from a piece of text.
 	MentionFinder = regexp.MustCompile(mentionFinder)
-
-	// hashtag regex can be played with here: https://regex101.com/r/bpyGlj/1
-	hashtagFinder = fmt.Sprintf(`(?:^|\s)(?:#*)(#[\p{L}\p{N}]{1,%d})(?:#|\b)`, maximumHashtagLength)
-	// HashtagFinder finds possible hashtags in a string.
-	// It returns just the string part of the hashtag, not the # symbol.
-	HashtagFinder = regexp.MustCompile(hashtagFinder)
 
 	emojiShortcode = fmt.Sprintf(`\w{2,%d}`, maximumEmojiShortcodeLength)
 	// EmojiShortcode validates an emoji name.
