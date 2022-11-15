@@ -539,6 +539,11 @@ span.form-info {
   gap: 0.5rem;
   padding: 0.5rem;
 	line-height: 1.5rem;
+	border-bottom: 0.15rem solid $gray3;
+
+	&:last-child {
+		border: none;
+	}
 
 	img {
 		height: 1.5rem;
