@@ -313,26 +313,31 @@ func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) db.Error {
 }
 
 func (s *statusDB) GetStatusParents(ctx context.Context, status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, db.Error) {
-	var parents []*gtsmodel.Status
-	s.statusParent(ctx, status, &parents, onlyDirect)
-	return parents, nil
-}
-
-func (s *statusDB) statusParent(ctx context.Context, status *gtsmodel.Status, foundStatuses *[]*gtsmodel.Status, onlyDirect bool) {
-	if status.InReplyToID == "" {
-		return
-	}
-
-	parentStatus, err := s.GetStatusByID(ctx, status.InReplyToID)
-	if err == nil {
-		*foundStatuses = append(*foundStatuses, parentStatus)
-	}
-
 	if onlyDirect {
-		return
+		// Only want the direct parent, no further than first level
+		parent, err := s.GetStatusByID(ctx, status.InReplyToID)
+		if err != nil {
+			return nil, err
+		}
+		return []*gtsmodel.Status{parent}, nil
 	}
 
-	s.statusParent(ctx, parentStatus, foundStatuses, false)
+	var parents []*gtsmodel.Status
+
+	for id := status.InReplyToID; id != ""; {
+		parent, err := s.GetStatusByID(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+
+		// Append parent to slice
+		parents = append(parents, parent)
+
+		// Set the next parent ID
+		id = parent.InReplyToID
+	}
+
+	return parents, nil
 }
 
 func (s *statusDB) GetStatusChildren(ctx context.Context, status *gtsmodel.Status, onlyDirect bool, minID string) ([]*gtsmodel.Status, db.Error) {
