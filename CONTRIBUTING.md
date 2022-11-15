@@ -188,9 +188,9 @@ Finally, to run tests against both database types one after the other, use:
 
 ### CLI Tests
 
-In [./test/cliparsing.sh](./test/cliparsing.sh) and [./test/envparsing.sh](./test/envparsing.sh) there are a bunch of tests for making sure that CLI flags, config, and environment variables get parsed as expected.
+In [./test/envparsing.sh](./test/envparsing.sh) there's a test for making sure that CLI flags, config, and environment variables get parsed as expected.
 
-Although these tests *are* part of the CI/CD testing process, you probably won't need to worry too much about running them yourself. That is, unless you're messing about with code inside the `main` package in `cmd/gotosocial`, or inside the `config` package in `internal/config`.
+Although this test *is* part of the CI/CD testing process, you probably won't need to worry too much about running it yourself. That is, unless you're messing about with code inside the `main` package in `cmd/gotosocial`, or inside the `config` package in `internal/config`.
 
 ## Project Structure
 

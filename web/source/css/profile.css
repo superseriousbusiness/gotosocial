@@ -31,10 +31,11 @@ main {
 	background: $bg-accent;
 	display: grid;
 	grid-template-rows: auto auto auto;
-	grid-template-columns: auto;
+	grid-template-columns: 100%;
 	gap: 0.5rem;
 	margin-bottom: 0.2rem;
 	overflow-x: hidden;
+	position: relative;
 
 	border-radius: $br;
 	box-shadow: $boxshadow;
@@ -56,12 +57,12 @@ main {
 	}
 
 	.basic {
-		max-height: 10rem;
-		margin-top: -7rem;
+		height: 8.5rem;
+		margin-top: -6.5rem;
 
 		display: grid;
-		grid-template-columns: 1rem auto 1fr;
-		grid-template-rows: auto auto auto;
+		grid-template-columns: 1rem 8.5rem 1fr;
+		grid-template-rows: 3rem 3rem 2.5rem;
 
 		grid-template-areas:
 			".       avatar ."
@@ -97,44 +98,81 @@ main {
 		a, div {
 			color: inherit;
 			text-decoration: none;
-			padding: 0.5rem;
 		}
 
 		.displayname {
 			grid-area: displayname;
-			padding-right: 1rem;
 			font-weight: bold;
 			font-size: 2rem;
-			line-height: 2.2rem;
+			line-height: 3rem;
 			background: $bg-trans;
 			word-break: break-all;
+			white-space: nowrap;
 			text-overflow: ellipsis;
 			overflow: hidden;
 			max-height: 6rem;
+			padding: 0 0.5rem;
 		}
 
-		.username {
-			display: flex;
-			flex-wrap: wrap;
-
+		.usernamecontainer {
+			height: 2.5rem;
+			display: grid;
+			grid-template-columns: auto 1fr;
 			grid-area: username;
-			padding-top: 0;
-			margin-top: 0.25rem;
-			padding-bottom: 0.25rem;
+			/* justify-content: space-between; */
+			padding: 0;
+			gap: 0.5rem;
+			position: relative;
+			
 			color: $fg-accent;
 			font-weight: bold;
-			word-break: break-all;
-			text-overflow: ellipsis;
-			overflow: hidden;
-			user-select: all;
+
+			.username {
+				white-space: nowrap;
+				text-overflow: ellipsis;
+				overflow: hidden;
+				user-select: all;
+
+				line-height: 2.5rem;
+				padding-left: 0;
+				margin-left: 0.5rem;
+			}
+
+			.role {
+				justify-self: start;
+				align-self: center;
+				line-height: 1.1rem;
+				font-size: 0.9rem;
+				margin-right: 0.2rem;
+				padding: 0.2rem;
+				padding-top: 0.1rem;
+				border: 0.1rem solid $gray1;
+				border-radius: $br;
+				font-variant: small-caps;
+			}
+
+			.role.admin {
+				background: $gray1;
+				color: $orange2;
+				border-color: $orange2;
+			}
+
+			.role.moderator {
+				background: $gray1;
+				color: $blue2;
+				border-color: $blue1;
+			}
 		}
 	}
 
 	@media screen and (max-width: 600px) {
-		.basic {
-			max-height: initial;
-			margin-top: -7.5vh;
+		& {
+			gap: 0.1rem;
+		}
 
+		.basic {
+			margin-top: calc(-22vw + 1rem);
+			height: initial;
 			display: flex;
 			flex-direction: column;
 
@@ -151,12 +189,18 @@ main {
 
 			.displayname {
 				padding-left: 1rem;
-				font-size: 5vw;
+				font-size: 1.5rem;
+				line-height: 2rem;
+				margin-top: 0.5rem;
 				align-self: stretch;
 			}
 
-			.username {
+			.usernamecontainer {
 				padding-left: 1rem;
+
+				.username {
+					margin-left: 0;
+				}
 			}
 		}
 	}
@@ -171,7 +215,7 @@ main {
 		}
 
 		.bio {
-			margin-top: 0.5rem;
+			margin-top: 0;
 			margin-bottom: 0.5rem;
 			margin-left: 1rem;
 			margin-right: 1rem;
@@ -188,12 +232,19 @@ main {
 .accountstats {
 	display: flex;
 	flex-wrap: wrap;
-	justify-content: space-around;
 	border-radius: 0 0 $br $br;
 	border-top: 0.1rem solid $bg;
 
+	.entry-group {
+		flex: 1 1 auto;
+		min-width: 50%;
+		display: flex;
+	}
+
 	.entry {
-		padding: 1rem 1.2rem;
+		white-space: nowrap;
+		width: 50%;
+		margin: 1.2rem 0.5rem;
 		text-align: center;
 	}
 }

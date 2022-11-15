@@ -94,6 +94,10 @@ type Account struct {
 	CustomCSS string `json:"custom_css,omitempty"`
 	// Account has enabled RSS feed.
 	EnableRSS bool `json:"enable_rss,omitempty"`
+	// Role of the account on this instance.
+	// Omitted for remote accounts.
+	// example: user
+	Role AccountRole `json:"role,omitempty"`
 }
 
 // AccountCreateRequest models account creation parameters.
@@ -208,3 +212,16 @@ type AccountDeleteRequest struct {
 	// Can be the ID of the account owner, or the ID of an admin account.
 	DeleteOriginID string `form:"-" json:"-" xml:"-"`
 }
+
+// AccountRole models the role of an account.
+//
+// swagger:enum accountRole
+// swagger:type string
+type AccountRole string
+
+const (
+	AccountRoleUser      AccountRole = "user"      // Standard user
+	AccountRoleModerator AccountRole = "moderator" // Moderator privileges
+	AccountRoleAdmin     AccountRole = "admin"     // Instance admin
+	AccountRoleUnknown   AccountRole = ""          // We don't know / remote account
+)
