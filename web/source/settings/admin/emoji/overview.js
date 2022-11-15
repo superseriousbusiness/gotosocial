@@ -35,6 +35,7 @@ module.exports = function EmojiOverview() {
 		error
 	} = query.useGetAllEmojiQuery({filter: "domain:local"});
 
+	// split all emoji over an object keyed by the category names (or Unsorted)
 	const emojiByCategory = React.useMemo(() => splitFilterN(
 		emoji,
 		[],

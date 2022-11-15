@@ -57,6 +57,7 @@ module.exports = function NewEmojiForm({ emoji, emojiByCategory }) {
 
 	const [categoryState, resetCategory, { category }] = useComboBoxInput("category");
 
+	// data used by the ComboBox element to select an emoji category
 	const categoryItems = React.useMemo(() => {
 		return syncpipe(emojiByCategory, [
 			(_) => Object.keys(_),            // just emoji category names
@@ -78,6 +79,9 @@ module.exports = function NewEmojiForm({ emoji, emojiByCategory }) {
 				setShortcode(name);
 			}
 		}
+		// we explicitly don't want to add 'shortcode' as a dependency here
+		// because we only want this to update to the filename if the field is empty
+		// at the moment the file is selected, not some time after when the field is emptied
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [image]);
 
