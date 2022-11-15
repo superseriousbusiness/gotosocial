@@ -62,6 +62,9 @@ $border-accent: $orange2;
 
 $link-fg: $fg-accent;
 
+$role-moderator: $orange1;
+$role-admin: $blue2;
+
 $button-bg: $blue2;
 $button-fg: $gray1;
 $button-hover-bg: $blue3;

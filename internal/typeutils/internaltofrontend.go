@@ -185,13 +185,30 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		emojis = append(emojis, apiEmoji)
 	}
 
-	var acct string
+	var (
+		acct string
+		role = model.AccountRoleUnknown
+	)
+
 	if a.Domain != "" {
 		// this is a remote user
-		acct = fmt.Sprintf("%s@%s", a.Username, a.Domain)
+		acct = a.Username + "@" + a.Domain
 	} else {
 		// this is a local user
 		acct = a.Username
+		user, err := c.db.GetUserByAccountID(ctx, a.ID)
+		if err != nil {
+			return nil, fmt.Errorf("AccountToAPIAccountPublic: error getting user from database for account id %s: %s", a.ID, err)
+		}
+
+		switch {
+		case *user.Admin:
+			role = model.AccountRoleAdmin
+		case *user.Moderator:
+			role = model.AccountRoleModerator
+		default:
+			role = model.AccountRoleUser
+		}
 	}
 
 	var suspended bool
@@ -222,6 +239,7 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		Suspended:      suspended,
 		CustomCSS:      a.CustomCSS,
 		EnableRSS:      *a.EnableRSS,
+		Role:           role,
 	}
 
 	c.ensureAvatar(accountFrontend)

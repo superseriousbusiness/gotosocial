@@ -13,7 +13,11 @@
             <div id="profile-basic-filler2"></div>
             <a href="{{.account.Avatar}}" class="avatar"><img src="{{.account.Avatar}}" alt="{{if .account.DisplayName}}{{.account.DisplayName}}{{else}}{{.account.Username}}{{end}}'s avatar"></a>
             <div class="displayname">{{if .account.DisplayName}}{{emojify .account.Emojis (escape .account.DisplayName)}}{{else}}{{.account.Username}}{{end}}</div>
-            <div class="username">@{{.account.Username}}@{{.instance.AccountDomain}}</div>
+            <div class="usernamecontainer">
+                <div class="username">@{{ .account.Username }}@{{ .instance.AccountDomain }}</div>
+                {{- /* Only render account role if 1. it's present and 2. it's not equal to the standard 'user' role */ -}}
+                {{ if and (.account.Role) (ne .account.Role "user") }}<div class="role {{ .account.Role }}">{{ .account.Role }}</div>{{ end }}
+            </div>
         </div>
         <div class="detailed">
             <div class="bio">
@@ -21,10 +25,14 @@
             </div>
         </div>
         <div class="accountstats">
-            <div class="entry">Joined <b>{{.account.CreatedAt | timestampVague}}</b></div>
-            <div class="entry">Followed by <b>{{.account.FollowersCount}}</b></div>
-            <div class="entry">Following <b>{{.account.FollowingCount}}</b></div>
-            <div class="entry">Posted <b>{{.account.StatusesCount}}</b></div>
+            <div class="entry-group">
+                <div class="entry">Joined <b>{{.account.CreatedAt | timestampVague}}</b></div>
+                <div class="entry">Followed by <b>{{.account.FollowersCount}}</b></div>
+            </div>
+            <div class="entry-group">
+                <div class="entry">Following <b>{{.account.FollowingCount}}</b></div>
+                <div class="entry">Posted <b>{{.account.StatusesCount}}</b></div>
+            </div>
         </div>
     </div>
     <h2 id="recent">
