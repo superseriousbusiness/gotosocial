@@ -64,6 +64,15 @@ import (
 //			To ensure compatibility with other fedi implementations, emoji size limit is 50kb by default.
 //		type: file
 //		required: true
+//	-
+//		name: category
+//		in: formData
+//		description: >-
+//			Category in which to place the new emoji. 64 characters or less.
+//			If left blank, emoji will be uncategorized. If a category with the
+//			given name doesn't exist yet, it will be created.
+//		type: string
+//		required: false
 //
 //	security:
 //	- OAuth2 Bearer:
@@ -136,5 +145,9 @@ func validateCreateEmoji(form *model.EmojiCreateRequest) error {
 		return fmt.Errorf("emoji image too large: image is %dKB but size limit for custom emojis is %dKB", form.Image.Size/1024, maxSize/1024)
 	}
 
-	return validate.EmojiShortcode(form.Shortcode)
+	if err := validate.EmojiShortcode(form.Shortcode); err != nil {
+		return err
+	}
+
+	return validate.EmojiCategory(form.CategoryName)
 }

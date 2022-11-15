@@ -50,4 +50,7 @@ type EmojiCreateRequest struct {
 	Shortcode string `form:"shortcode" validation:"required"`
 	// Image file to use for the emoji. Must be png or gif and no larger than 50kb.
 	Image *multipart.FileHeader `form:"image" validation:"required"`
+	// Category in which to place the new emoji. Will be uncategorized by default.
+	// CategoryName length should not exceed 64 characters.
+	CategoryName string `form:"category"`
 }

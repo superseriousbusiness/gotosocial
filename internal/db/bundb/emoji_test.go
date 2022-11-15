@@ -24,6 +24,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type EmojiTestSuite struct {
@@ -54,6 +55,8 @@ func (suite *EmojiTestSuite) TestGetEmojiByStaticURL() {
 	suite.NoError(err)
 	suite.NotNil(emoji)
 	suite.Equal("rainbow", emoji.Shortcode)
+	suite.NotNil(emoji.Category)
+	suite.Equal("reactions", emoji.Category.Name)
 }
 
 func (suite *EmojiTestSuite) TestGetAllEmojis() {
@@ -141,6 +144,21 @@ func (suite *EmojiTestSuite) TestGetSpecificEmojisFromDomain2() {
 	suite.NoError(err)
 	suite.Equal(1, len(emojis))
 	suite.Equal("yell", emojis[0].Shortcode)
+}
+
+func (suite *EmojiTestSuite) TestGetEmojiCategories() {
+	categories, err := suite.db.GetEmojiCategories(context.Background())
+	suite.NoError(err)
+	suite.Len(categories, 2)
+	// check alphabetical order
+	suite.Equal(categories[0].Name, "cute stuff")
+	suite.Equal(categories[1].Name, "reactions")
+}
+
+func (suite *EmojiTestSuite) TestGetEmojiCategory() {
+	category, err := suite.db.GetEmojiCategory(context.Background(), testrig.NewTestEmojiCategories()["reactions"].ID)
+	suite.NoError(err)
+	suite.NotNil(category)
 }
 
 func TestEmojiTestSuite(t *testing.T) {

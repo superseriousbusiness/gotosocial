@@ -46,6 +46,10 @@ func (p *processor) AdminEmojiDelete(ctx context.Context, authed *oauth.Auth, id
 	return p.adminProcessor.EmojiDelete(ctx, id)
 }
 
+func (p *processor) AdminEmojiCategoriesGet(ctx context.Context) ([]*apimodel.EmojiCategory, gtserror.WithCode) {
+	return p.adminProcessor.EmojiCategoriesGet(ctx)
+}
+
 func (p *processor) AdminDomainBlockCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.DomainBlockCreateRequest) (*apimodel.DomainBlock, gtserror.WithCode) {
 	return p.adminProcessor.DomainBlockCreate(ctx, authed.Account, form.Domain, form.Obfuscate, form.PublicComment, form.PrivateComment, "")
 }

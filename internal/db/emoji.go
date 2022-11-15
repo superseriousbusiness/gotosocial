@@ -50,4 +50,12 @@ type Emoji interface {
 	GetEmojiByURI(ctx context.Context, uri string) (*gtsmodel.Emoji, Error)
 	// GetEmojiByStaticURL gets an emoji using the URL of the static version of the emoji image.
 	GetEmojiByStaticURL(ctx context.Context, imageStaticURL string) (*gtsmodel.Emoji, Error)
+	// PutEmojiCategory puts one new emoji category in the database.
+	PutEmojiCategory(ctx context.Context, emojiCategory *gtsmodel.EmojiCategory) Error
+	// GetEmojiCategories gets a slice of the names of all existing emoji categories.
+	GetEmojiCategories(ctx context.Context) ([]*gtsmodel.EmojiCategory, Error)
+	// GetEmojiCategory gets one emoji category by its id.
+	GetEmojiCategory(ctx context.Context, id string) (*gtsmodel.EmojiCategory, Error)
+	// GetEmojiCategoryByName gets one emoji category by its name.
+	GetEmojiCategoryByName(ctx context.Context, name string) (*gtsmodel.EmojiCategory, Error)
 }

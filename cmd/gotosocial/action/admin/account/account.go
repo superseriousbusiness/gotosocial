@@ -232,12 +232,6 @@ var Disable action.GTSAction = func(ctx context.Context) error {
 	return dbConn.Stop(ctx)
 }
 
-// Suspend suspends the target account, cleanly removing all of its media, followers, following, likes, statuses, etc.
-var Suspend action.GTSAction = func(ctx context.Context) error {
-	// TODO
-	return nil
-}
-
 // Password sets the password of target account.
 var Password action.GTSAction = func(ctx context.Context) error {
 	dbConn, err := bundb.NewBunDBService(ctx)
