@@ -68,7 +68,7 @@ func (suite *InboxTestSuite) TestInboxesForAccountIRIWithSharedInbox() {
 	testAccount := suite.testAccounts["local_account_1"]
 	sharedInbox := "http://some-inbox-iri/weeeeeeeeeeeee"
 	testAccount.SharedInboxURI = &sharedInbox
-	if _, err := suite.db.UpdateAccount(ctx, testAccount); err != nil {
+	if err := suite.db.UpdateAccount(ctx, testAccount); err != nil {
 		suite.FailNow("error updating account")
 	}
 

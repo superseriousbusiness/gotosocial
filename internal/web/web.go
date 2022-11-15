@@ -22,7 +22,7 @@ import (
 	"errors"
 	"net/http"
 
-	"codeberg.org/gruf/go-cache/v2"
+	"codeberg.org/gruf/go-cache/v3"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
