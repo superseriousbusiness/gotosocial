@@ -29,7 +29,6 @@ import (
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -44,9 +43,9 @@ import (
 const rsaKeyBits = 2048
 
 type adminDB struct {
-	conn         *DBConn
-	userCache    *cache.UserCache
-	accountCache *cache.AccountCache
+	conn     *DBConn
+	accounts *accountDB
+	users    *userDB
 }
 
 func (a *adminDB) IsUsernameAvailable(ctx context.Context, username string) (bool, db.Error) {
@@ -140,13 +139,9 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 		}
 
 		// insert the new account!
-		if _, err = a.conn.
-			NewInsert().
-			Model(acct).
-			Exec(ctx); err != nil {
-			return nil, a.conn.ProcessError(err)
+		if err := a.accounts.PutAccount(ctx, acct); err != nil {
+			return nil, err
 		}
-		a.accountCache.Put(acct)
 	}
 
 	// we either created or already had an account by now,
@@ -190,13 +185,9 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 	}
 
 	// insert the user!
-	if _, err = a.conn.
-		NewInsert().
-		Model(u).
-		Exec(ctx); err != nil {
-		return nil, a.conn.ProcessError(err)
+	if err := a.users.PutUser(ctx, u); err != nil {
+		return nil, err
 	}
-	a.userCache.Put(u)
 
 	return u, nil
 }
@@ -249,15 +240,11 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 		FeaturedCollectionURI: newAccountURIs.CollectionURI,
 	}
 
-	insertQ := a.conn.
-		NewInsert().
-		Model(acct)
-
-	if _, err := insertQ.Exec(ctx); err != nil {
-		return a.conn.ProcessError(err)
+	// insert the new account!
+	if err := a.accounts.PutAccount(ctx, acct); err != nil {
+		return err
 	}
 
-	a.accountCache.Put(acct)
 	log.Infof("instance account %s CREATED with id %s", username, acct.ID)
 	return nil
 }

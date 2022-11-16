@@ -22,7 +22,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/cache"
+	"codeberg.org/gruf/go-cache/v3/result"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/uptrace/bun"
@@ -30,111 +30,132 @@ import (
 
 type userDB struct {
 	conn  *DBConn
-	cache *cache.UserCache
+	cache *result.Cache[*gtsmodel.User]
 }
 
-func (u *userDB) newUserQ(user *gtsmodel.User) *bun.SelectQuery {
-	return u.conn.
-		NewSelect().
-		Model(user).
-		Relation("Account")
-}
+func (u *userDB) init() {
+	// Initialize user result cache
+	u.cache = result.NewSized([]result.Lookup{
+		{Name: "ID"},
+		{Name: "AccountID"},
+		{Name: "Email"},
+		{Name: "ConfirmationToken"},
+	}, func(u1 *gtsmodel.User) *gtsmodel.User {
+		u2 := new(gtsmodel.User)
+		*u2 = *u1
+		return u2
+	}, 1000)
 
-func (u *userDB) getUser(ctx context.Context, cacheGet func() (*gtsmodel.User, bool), dbQuery func(*gtsmodel.User) error) (*gtsmodel.User, db.Error) {
-	// Attempt to fetch cached user
-	user, cached := cacheGet()
-
-	if !cached {
-		user = &gtsmodel.User{}
-
-		// Not cached! Perform database query
-		err := dbQuery(user)
-		if err != nil {
-			return nil, u.conn.ProcessError(err)
-		}
-
-		// Place in the cache
-		u.cache.Put(user)
-	}
-
-	return user, nil
+	// Set cache TTL and start sweep routine
+	u.cache.SetTTL(time.Minute*5, false)
+	u.cache.Start(time.Second * 10)
 }
 
 func (u *userDB) GetUserByID(ctx context.Context, id string) (*gtsmodel.User, db.Error) {
-	return u.getUser(
-		ctx,
-		func() (*gtsmodel.User, bool) {
-			return u.cache.GetByID(id)
-		},
-		func(user *gtsmodel.User) error {
-			return u.newUserQ(user).Where("? = ?", bun.Ident("user.id"), id).Scan(ctx)
-		},
-	)
+	return u.cache.Load("ID", func() (*gtsmodel.User, error) {
+		var user gtsmodel.User
+
+		q := u.conn.
+			NewSelect().
+			Model(&user).
+			Relation("Account").
+			Where("? = ?", bun.Ident("user.id"), id)
+
+		if err := q.Scan(ctx); err != nil {
+			return nil, u.conn.ProcessError(err)
+		}
+
+		return &user, nil
+	}, id)
 }
 
 func (u *userDB) GetUserByAccountID(ctx context.Context, accountID string) (*gtsmodel.User, db.Error) {
-	return u.getUser(
-		ctx,
-		func() (*gtsmodel.User, bool) {
-			return u.cache.GetByAccountID(accountID)
-		},
-		func(user *gtsmodel.User) error {
-			return u.newUserQ(user).Where("? = ?", bun.Ident("user.account_id"), accountID).Scan(ctx)
-		},
-	)
+	return u.cache.Load("AccountID", func() (*gtsmodel.User, error) {
+		var user gtsmodel.User
+
+		q := u.conn.
+			NewSelect().
+			Model(&user).
+			Relation("Account").
+			Where("? = ?", bun.Ident("user.account_id"), accountID)
+
+		if err := q.Scan(ctx); err != nil {
+			return nil, u.conn.ProcessError(err)
+		}
+
+		return &user, nil
+	}, accountID)
 }
 
 func (u *userDB) GetUserByEmailAddress(ctx context.Context, emailAddress string) (*gtsmodel.User, db.Error) {
-	return u.getUser(
-		ctx,
-		func() (*gtsmodel.User, bool) {
-			return u.cache.GetByEmail(emailAddress)
-		},
-		func(user *gtsmodel.User) error {
-			return u.newUserQ(user).Where("? = ?", bun.Ident("user.email"), emailAddress).Scan(ctx)
-		},
-	)
+	return u.cache.Load("Email", func() (*gtsmodel.User, error) {
+		var user gtsmodel.User
+
+		q := u.conn.
+			NewSelect().
+			Model(&user).
+			Relation("Account").
+			Where("? = ?", bun.Ident("user.email"), emailAddress)
+
+		if err := q.Scan(ctx); err != nil {
+			return nil, u.conn.ProcessError(err)
+		}
+
+		return &user, nil
+	}, emailAddress)
 }
 
 func (u *userDB) GetUserByConfirmationToken(ctx context.Context, confirmationToken string) (*gtsmodel.User, db.Error) {
-	return u.getUser(
-		ctx,
-		func() (*gtsmodel.User, bool) {
-			return u.cache.GetByConfirmationToken(confirmationToken)
-		},
-		func(user *gtsmodel.User) error {
-			return u.newUserQ(user).Where("? = ?", bun.Ident("user.confirmation_token"), confirmationToken).Scan(ctx)
-		},
-	)
+	return u.cache.Load("ConfirmationToken", func() (*gtsmodel.User, error) {
+		var user gtsmodel.User
+
+		q := u.conn.
+			NewSelect().
+			Model(&user).
+			Relation("Account").
+			Where("? = ?", bun.Ident("user.confirmation_token"), confirmationToken)
+
+		if err := q.Scan(ctx); err != nil {
+			return nil, u.conn.ProcessError(err)
+		}
+
+		return &user, nil
+	}, confirmationToken)
 }
 
-func (u *userDB) PutUser(ctx context.Context, user *gtsmodel.User) (*gtsmodel.User, db.Error) {
-	if _, err := u.conn.
-		NewInsert().
-		Model(user).
-		Exec(ctx); err != nil {
-		return nil, u.conn.ProcessError(err)
-	}
-
-	u.cache.Put(user)
-	return user, nil
+func (u *userDB) PutUser(ctx context.Context, user *gtsmodel.User) db.Error {
+	return u.cache.Store(user, func() error {
+		_, err := u.conn.
+			NewInsert().
+			Model(user).
+			Exec(ctx)
+		return u.conn.ProcessError(err)
+	})
 }
 
-func (u *userDB) UpdateUser(ctx context.Context, user *gtsmodel.User, columns ...string) (*gtsmodel.User, db.Error) {
+func (u *userDB) UpdateUser(ctx context.Context, user *gtsmodel.User, columns ...string) db.Error {
 	// Update the user's last-updated
 	user.UpdatedAt = time.Now()
 
-	if _, err := u.conn.
+	if len(columns) > 0 {
+		// If we're updating by column, ensure "updated_at" is included
+		columns = append(columns, "updated_at")
+	}
+
+	// Update the user in DB
+	_, err := u.conn.
 		NewUpdate().
 		Model(user).
 		Where("? = ?", bun.Ident("user.id"), user.ID).
 		Column(columns...).
-		Exec(ctx); err != nil {
-		return nil, u.conn.ProcessError(err)
+		Exec(ctx)
+	if err != nil {
+		return u.conn.ProcessError(err)
 	}
 
-	u.cache.Invalidate(user.ID)
-	return user, nil
+	// Invalidate in cache
+	u.cache.Invalidate("ID", user.ID)
+	return nil
 }
 
 func (u *userDB) DeleteUserByID(ctx context.Context, userID string) db.Error {
@@ -146,6 +167,7 @@ func (u *userDB) DeleteUserByID(ctx context.Context, userID string) db.Error {
 		return u.conn.ProcessError(err)
 	}
 
-	u.cache.Invalidate(userID)
+	// Invalidate user from cache
+	u.cache.Invalidate("ID", userID)
 	return nil
 }

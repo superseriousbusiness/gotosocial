@@ -276,7 +276,7 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 		foundAccount.LastWebfingeredAt = fingered
 		foundAccount.UpdatedAt = time.Now()
 
-		foundAccount, err = d.db.PutAccount(ctx, foundAccount)
+		err = d.db.PutAccount(ctx, foundAccount)
 		if err != nil {
 			err = fmt.Errorf("GetRemoteAccount: error putting new account: %s", err)
 			return
@@ -338,7 +338,7 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 	}
 
 	if accountDomainChanged || sharedInboxChanged || fieldsChanged || fingeredChanged {
-		foundAccount, err = d.db.UpdateAccount(ctx, foundAccount)
+		err = d.db.UpdateAccount(ctx, foundAccount)
 		if err != nil {
 			return nil, fmt.Errorf("GetRemoteAccount: error updating remoteAccount: %s", err)
 		}

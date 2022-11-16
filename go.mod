@@ -5,7 +5,6 @@ go 1.19
 require (
 	codeberg.org/gruf/go-bytesize v1.0.0
 	codeberg.org/gruf/go-byteutil v1.0.2
-	codeberg.org/gruf/go-cache/v2 v2.1.4
 	codeberg.org/gruf/go-cache/v3 v3.1.8
 	codeberg.org/gruf/go-debug v1.2.0
 	codeberg.org/gruf/go-errors/v2 v2.0.2
@@ -55,6 +54,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783
 	golang.org/x/text v0.4.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
+	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.18.2
 	mvdan.cc/xurls/v2 v2.4.0
 )
@@ -142,7 +142,6 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 	lukechampine.com/uint128 v1.2.0 // indirect
 	modernc.org/cc/v3 v3.38.1 // indirect
 	modernc.org/ccgo/v3 v3.16.9 // indirect

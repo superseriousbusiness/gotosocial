@@ -35,44 +35,52 @@ type TimelineTestSuite struct {
 }
 
 func (suite *TimelineTestSuite) TestGetPublicTimeline() {
-	s, err := suite.db.GetPublicTimeline(context.Background(), "", "", "", 20, false)
+	ctx := context.Background()
+
+	s, err := suite.db.GetPublicTimeline(ctx, "", "", "", 20, false)
 	suite.NoError(err)
 
 	suite.Len(s, 6)
 }
 
 func (suite *TimelineTestSuite) TestGetPublicTimelineWithFutureStatus() {
-	futureStatus := getFutureStatus()
-	if err := suite.db.Put(context.Background(), futureStatus); err != nil {
-		suite.FailNow(err.Error())
-	}
+	ctx := context.Background()
 
-	s, err := suite.db.GetPublicTimeline(context.Background(), "", "", "", 20, false)
+	futureStatus := getFutureStatus()
+	err := suite.db.PutStatus(ctx, futureStatus)
 	suite.NoError(err)
 
+	s, err := suite.db.GetPublicTimeline(ctx, "", "", "", 20, false)
+	suite.NoError(err)
+
+	suite.NotContains(s, futureStatus)
 	suite.Len(s, 6)
 }
 
 func (suite *TimelineTestSuite) TestGetHomeTimeline() {
+	ctx := context.Background()
+
 	viewingAccount := suite.testAccounts["local_account_1"]
 
-	s, err := suite.db.GetHomeTimeline(context.Background(), viewingAccount.ID, "", "", "", 20, false)
+	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, "", "", "", 20, false)
 	suite.NoError(err)
 
 	suite.Len(s, 16)
 }
 
 func (suite *TimelineTestSuite) TestGetHomeTimelineWithFutureStatus() {
+	ctx := context.Background()
+
 	viewingAccount := suite.testAccounts["local_account_1"]
 
 	futureStatus := getFutureStatus()
-	if err := suite.db.Put(context.Background(), futureStatus); err != nil {
-		suite.FailNow(err.Error())
-	}
+	err := suite.db.PutStatus(ctx, futureStatus)
+	suite.NoError(err)
 
 	s, err := suite.db.GetHomeTimeline(context.Background(), viewingAccount.ID, "", "", "", 20, false)
 	suite.NoError(err)
 
+	suite.NotContains(s, futureStatus)
 	suite.Len(s, 16)
 }
 

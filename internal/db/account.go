@@ -43,10 +43,10 @@ type Account interface {
 	GetAccountByPubkeyID(ctx context.Context, id string) (*gtsmodel.Account, Error)
 
 	// PutAccount puts one account in the database.
-	PutAccount(ctx context.Context, account *gtsmodel.Account) (*gtsmodel.Account, Error)
+	PutAccount(ctx context.Context, account *gtsmodel.Account) Error
 
 	// UpdateAccount updates one account by ID.
-	UpdateAccount(ctx context.Context, account *gtsmodel.Account) (*gtsmodel.Account, Error)
+	UpdateAccount(ctx context.Context, account *gtsmodel.Account) Error
 
 	// DeleteAccount deletes one account from the database by its ID.
 	// DO NOT USE THIS WHEN SUSPENDING ACCOUNTS! In that case you should mark the

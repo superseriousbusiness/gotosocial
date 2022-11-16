@@ -28,7 +28,7 @@ import (
 	"time"
 
 	"codeberg.org/gruf/go-byteutil"
-	"codeberg.org/gruf/go-cache/v2"
+	"codeberg.org/gruf/go-cache/v3"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -67,8 +67,8 @@ func NewController(db db.DB, federatingDB federatingdb.DB, clock pub.Clock, clie
 		fedDB:     federatingDB,
 		clock:     clock,
 		client:    client,
-		trspCache: cache.New[string, *transport](),
-		badHosts:  cache.New[string, struct{}](),
+		trspCache: cache.New[string, *transport](0, 100, 0),
+		badHosts:  cache.New[string, struct{}](0, 1000, 0),
 		userAgent: fmt.Sprintf("%s; %s (gofed/activity gotosocial-%s)", applicationName, host, version),
 	}
 
@@ -110,7 +110,7 @@ func (c *controller) NewTransport(pubKeyID string, privkey *rsa.PrivateKey) (Tra
 	}
 
 	// Cache this transport under pubkey
-	if !c.trspCache.Put(pubStr, transp) {
+	if !c.trspCache.Add(pubStr, transp) {
 		var cached *transport
 
 		cached, ok = c.trspCache.Get(pubStr)
