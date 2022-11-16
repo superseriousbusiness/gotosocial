@@ -115,6 +115,7 @@ func (p *ProcessingEmoji) LoadEmoji(ctx context.Context) (*gtsmodel.Emoji, error
 				"image_file_size",
 				"image_static_file_size",
 				"image_updated_at",
+				"shortcode",
 				"uri",
 			}
 			if _, err := p.database.UpdateEmoji(ctx, p.emoji, columns...); err != nil {
@@ -340,7 +341,7 @@ func (m *manager) preProcessEmoji(ctx context.Context, data DataFunc, postData P
 		emoji.ImageStaticURL = uris.GenerateURIForAttachment(instanceAccount.ID, string(TypeEmoji), string(SizeStatic), newPathID, mimePng)
 		emoji.ImageStaticPath = fmt.Sprintf("%s/%s/%s/%s.%s", instanceAccount.ID, TypeEmoji, SizeStatic, newPathID, mimePng)
 
-		// update these fields as we go
+		emoji.Shortcode = shortcode
 		emoji.URI = uri
 	} else {
 		disabled := false

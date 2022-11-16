@@ -177,19 +177,24 @@ func validateUpdateEmoji(form *model.EmojiUpdateRequest) error {
 		}
 	}
 
-	switch strings.ToLower(string(form.Type)) {
+	// check + normalize update type so we don't need
+	// to do this trimming + lowercasing again later
+	switch strings.TrimSpace(strings.ToLower(string(form.Type))) {
 	case string(model.EmojiUpdateDisable):
 		// no params required for this one
+		form.Type = model.EmojiUpdateDisable
 	case string(model.EmojiUpdateCopy):
 		// need at least a shortcode when doing a copy
 		if form.Shortcode == nil {
 			return errors.New("emoji action type was 'copy' but no shortcode was provided")
 		}
+		form.Type = model.EmojiUpdateCopy
 	case string(model.EmojiUpdateModify):
 		// need something to modify
 		if form.Shortcode == nil && form.Image == nil && form.CategoryName == nil {
 			return errors.New("emoji action type was 'modify' but no shortcode, image, or category name was provided")
 		}
+		form.Type = model.EmojiUpdateModify
 	default:
 		return errors.New("emoji action type must be one of 'disable', 'copy', 'modify'")
 	}
