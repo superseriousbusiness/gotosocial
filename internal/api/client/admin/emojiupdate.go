@@ -37,6 +37,16 @@ import (
 //
 // Perform admin action on a local or remote emoji known to this instance.
 //
+// Action performed depends upon the action `type` provided.
+//
+// `disable`: disable a REMOTE emoji from being used/displayed on this instance. Does not work for local emojis.
+//
+// `copy`: copy a REMOTE emoji to this instance. When doing this action, a shortcode MUST be provided, and it must
+// be unique among emojis already present on this instance. A category MAY be provided, and the copied emoji will then
+// be put into the provided category.
+//
+// `modify`: modify a LOCAL emoji. You can provide a new image for the emoji, set a new shortcode, and/or update the category.
+//
 // Local emojis cannot be deleted using this endpoint. To delete a local emoji, check DELETE /api/v1/admin/custom_emojis/{id} instead.
 //
 //	---
@@ -70,7 +80,8 @@ import (
 //		in: formData
 //		description: >-
 //			The code to use for the emoji, which will be used by instance denizens to select it.
-//			This must be unique on the instance. Works for LOCAL emojis only.
+//			This must be unique on the instance. When copying a remote emoji to local, the shortcode
+//			must be unique among this instance's shortcodes.
 //		type: string
 //		pattern: \w{2,30}
 //	-
@@ -87,7 +98,6 @@ import (
 //		description: >-
 //			Category in which to place the emoji. 64 characters or less.
 //			If a category with the given name doesn't exist yet, it will be created.
-//			Works for LOCAL emojis only.
 //		type: string
 //
 //	security:
