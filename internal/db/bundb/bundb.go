@@ -34,7 +34,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
-	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations"
@@ -46,7 +45,6 @@ import (
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/migrate"
 
-	grufcache "codeberg.org/gruf/go-cache/v2"
 	"modernc.org/sqlite"
 )
 
@@ -160,79 +158,63 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 		return nil, fmt.Errorf("db migration error: %s", err)
 	}
 
-	// Prepare caches required by more than one struct
-	userCache := cache.NewUserCache()
-	accountCache := cache.NewAccountCache()
-
-	// Prepare other caches
-	// Prepare mentions cache
-	// TODO: move into internal/cache
-	mentionCache := grufcache.New[string, *gtsmodel.Mention]()
-	mentionCache.SetTTL(time.Minute*5, false)
-	mentionCache.Start(time.Second * 10)
-
-	// Prepare notifications cache
-	// TODO: move into internal/cache
-	notifCache := grufcache.New[string, *gtsmodel.Notification]()
-	notifCache.SetTTL(time.Minute*5, false)
-	notifCache.Start(time.Second * 10)
-
 	// Create DB structs that require ptrs to each other
-	accounts := &accountDB{conn: conn, cache: accountCache}
-	status := &statusDB{conn: conn, cache: cache.NewStatusCache()}
-	emoji := &emojiDB{conn: conn, emojiCache: cache.NewEmojiCache(), categoryCache: cache.NewEmojiCategoryCache()}
+	account := &accountDB{conn: conn}
+	admin := &adminDB{conn: conn}
+	domain := &domainDB{conn: conn}
+	mention := &mentionDB{conn: conn}
+	notif := &notificationDB{conn: conn}
+	status := &statusDB{conn: conn}
+	emoji := &emojiDB{conn: conn}
 	timeline := &timelineDB{conn: conn}
 	tombstone := &tombstoneDB{conn: conn}
+	user := &userDB{conn: conn}
 
 	// Setup DB cross-referencing
-	accounts.status = status
-	status.accounts = accounts
+	account.status = status
+	admin.users = user
+	status.accounts = account
 	timeline.status = status
 
 	// Initialize db structs
+	account.init()
+	domain.init()
+	emoji.init()
+	mention.init()
+	notif.init()
+	status.init()
 	tombstone.init()
+	user.init()
 
 	ps := &DBService{
-		Account: accounts,
+		Account: account,
 		Admin: &adminDB{
-			conn:         conn,
-			userCache:    userCache,
-			accountCache: accountCache,
+			conn:     conn,
+			accounts: account,
+			users:    user,
 		},
 		Basic: &basicDB{
 			conn: conn,
 		},
-		Domain: &domainDB{
-			conn:  conn,
-			cache: cache.NewDomainBlockCache(),
-		},
-		Emoji: emoji,
+		Domain: domain,
+		Emoji:  emoji,
 		Instance: &instanceDB{
 			conn: conn,
 		},
 		Media: &mediaDB{
 			conn: conn,
 		},
-		Mention: &mentionDB{
-			conn:  conn,
-			cache: mentionCache,
-		},
-		Notification: &notificationDB{
-			conn:  conn,
-			cache: notifCache,
-		},
+		Mention:      mention,
+		Notification: notif,
 		Relationship: &relationshipDB{
 			conn: conn,
 		},
 		Session: &sessionDB{
 			conn: conn,
 		},
-		Status:   status,
-		Timeline: timeline,
-		User: &userDB{
-			conn:  conn,
-			cache: userCache,
-		},
+		Status:    status,
+		Timeline:  timeline,
+		User:      user,
 		Tombstone: tombstone,
 		conn:      conn,
 	}

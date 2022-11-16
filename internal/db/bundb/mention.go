@@ -20,8 +20,9 @@ package bundb
 
 import (
 	"context"
+	"time"
 
-	"codeberg.org/gruf/go-cache/v2"
+	"codeberg.org/gruf/go-cache/v3/result"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -30,7 +31,22 @@ import (
 
 type mentionDB struct {
 	conn  *DBConn
-	cache cache.Cache[string, *gtsmodel.Mention]
+	cache *result.Cache[*gtsmodel.Mention]
+}
+
+func (m *mentionDB) init() {
+	// Initialize notification result cache
+	m.cache = result.NewSized([]result.Lookup{
+		{Name: "ID"},
+	}, func(m1 *gtsmodel.Mention) *gtsmodel.Mention {
+		m2 := new(gtsmodel.Mention)
+		*m2 = *m1
+		return m2
+	}, 1000)
+
+	// Set cache TTL and start sweep routine
+	m.cache.SetTTL(time.Minute*5, false)
+	m.cache.Start(time.Second * 10)
 }
 
 func (m *mentionDB) newMentionQ(i interface{}) *bun.SelectQuery {
@@ -42,27 +58,19 @@ func (m *mentionDB) newMentionQ(i interface{}) *bun.SelectQuery {
 		Relation("TargetAccount")
 }
 
-func (m *mentionDB) getMentionDB(ctx context.Context, id string) (*gtsmodel.Mention, db.Error) {
-	mention := gtsmodel.Mention{}
-
-	q := m.newMentionQ(&mention).
-		Where("? = ?", bun.Ident("mention.id"), id)
-
-	if err := q.Scan(ctx); err != nil {
-		return nil, m.conn.ProcessError(err)
-	}
-
-	copy := mention
-	m.cache.Set(mention.ID, &copy)
-
-	return &mention, nil
-}
-
 func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mention, db.Error) {
-	if mention, ok := m.cache.Get(id); ok {
-		return mention, nil
-	}
-	return m.getMentionDB(ctx, id)
+	return m.cache.Load("ID", func() (*gtsmodel.Mention, error) {
+		var mention gtsmodel.Mention
+
+		q := m.newMentionQ(&mention).
+			Where("? = ?", bun.Ident("mention.id"), id)
+
+		if err := q.Scan(ctx); err != nil {
+			return nil, m.conn.ProcessError(err)
+		}
+
+		return &mention, nil
+	}, id)
 }
 
 func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.Mention, db.Error) {

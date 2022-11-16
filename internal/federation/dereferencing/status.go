@@ -45,8 +45,10 @@ func (d *deref) EnrichRemoteStatus(ctx context.Context, username string, status 
 	if err := d.populateStatusFields(ctx, status, username, includeParent); err != nil {
 		return nil, err
 	}
-
-	return d.db.UpdateStatus(ctx, status)
+	if err := d.db.UpdateStatus(ctx, status); err != nil {
+		return nil, err
+	}
+	return status, nil
 }
 
 // GetRemoteStatus completely dereferences a remote status, converts it to a GtS model status,

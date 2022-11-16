@@ -43,7 +43,7 @@ func (t *tombstoneDB) init() {
 		t2 := new(gtsmodel.Tombstone)
 		*t2 = *t1
 		return t2
-	}, 1000)
+	}, 100)
 
 	// Set cache TTL and start sweep routine
 	t.cache.SetTTL(time.Minute*5, false)

@@ -273,7 +273,7 @@ selectStatusesLoop:
 	account.SuspendedAt = time.Now()
 	account.SuspensionOrigin = origin
 
-	account, err := p.db.UpdateAccount(ctx, account)
+	err := p.db.UpdateAccount(ctx, account)
 	if err != nil {
 		return gtserror.NewErrorInternalError(err)
 	}

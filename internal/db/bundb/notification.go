@@ -20,8 +20,9 @@ package bundb
 
 import (
 	"context"
+	"time"
 
-	"codeberg.org/gruf/go-cache/v2"
+	"codeberg.org/gruf/go-cache/v3/result"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -30,31 +31,40 @@ import (
 
 type notificationDB struct {
 	conn  *DBConn
-	cache cache.Cache[string, *gtsmodel.Notification]
+	cache *result.Cache[*gtsmodel.Notification]
+}
+
+func (n *notificationDB) init() {
+	// Initialize notification result cache
+	n.cache = result.NewSized([]result.Lookup{
+		{Name: "ID"},
+	}, func(n1 *gtsmodel.Notification) *gtsmodel.Notification {
+		n2 := new(gtsmodel.Notification)
+		*n2 = *n1
+		return n2
+	}, 1000)
+
+	// Set cache TTL and start sweep routine
+	n.cache.SetTTL(time.Minute*5, false)
+	n.cache.Start(time.Second * 10)
 }
 
 func (n *notificationDB) GetNotification(ctx context.Context, id string) (*gtsmodel.Notification, db.Error) {
-	if notification, ok := n.cache.Get(id); ok {
-		return notification, nil
-	}
+	return n.cache.Load("ID", func() (*gtsmodel.Notification, error) {
+		var notif gtsmodel.Notification
 
-	dst := gtsmodel.Notification{ID: id}
+		q := n.conn.NewSelect().
+			Model(&notif).
+			Relation("OriginAccount").
+			Relation("TargetAccount").
+			Relation("Status").
+			Where("? = ?", bun.Ident("notification.id"), id)
+		if err := q.Scan(ctx); err != nil {
+			return nil, n.conn.ProcessError(err)
+		}
 
-	q := n.conn.NewSelect().
-		Model(&dst).
-		Relation("OriginAccount").
-		Relation("TargetAccount").
-		Relation("Status").
-		Where("? = ?", bun.Ident("notification.id"), id)
-
-	if err := q.Scan(ctx); err != nil {
-		return nil, n.conn.ProcessError(err)
-	}
-
-	copy := dst
-	n.cache.Set(id, &copy)
-
-	return &dst, nil
+		return &notif, nil
+	}, id)
 }
 
 func (n *notificationDB) GetNotifications(ctx context.Context, accountID string, excludeTypes []string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, db.Error) {

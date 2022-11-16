@@ -123,7 +123,7 @@ func (m *Module) rssFeedGETHandler(c *gin.Context) {
 
 		cacheEntry.lastModified = accountLastPostedPublic
 		cacheEntry.eTag = eTag
-		m.eTagCache.Put(cacheKey, cacheEntry)
+		m.eTagCache.Set(cacheKey, cacheEntry)
 	}
 
 	c.Header(eTagHeader, cacheEntry.eTag)
