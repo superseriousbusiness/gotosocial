@@ -152,7 +152,12 @@ module.exports = function NewEmojiForm({ emoji, emojiByCategory }) {
 					/>
 				</div>
 
-				<ComboBox state={categoryState} items={categoryItems} />
+				<ComboBox
+					state={categoryState}
+					items={categoryItems}
+					label="Category"
+					placeHolder="e.g., reactions"
+				/>
 
 				<MutateButton text="Upload emoji" result={result} />
 			</form>
