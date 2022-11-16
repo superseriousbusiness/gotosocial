@@ -133,18 +133,29 @@ func (u *userDB) PutUser(ctx context.Context, user *gtsmodel.User) db.Error {
 	})
 }
 
-func (u *userDB) UpdateUser(ctx context.Context, user *gtsmodel.User) db.Error {
+func (u *userDB) UpdateUser(ctx context.Context, user *gtsmodel.User, columns ...string) db.Error {
 	// Update the user's last-updated
 	user.UpdatedAt = time.Now()
 
-	return u.cache.Store(user, func() error {
-		_, err := u.conn.
-			NewUpdate().
-			Model(user).
-			Where("? = ?", bun.Ident("user.id"), user.ID).
-			Exec(ctx)
+	if len(columns) > 0 {
+		// If we're updating by column, ensure "updated_at" is included
+		columns = append(columns, "updated_at")
+	}
+
+	// Update the user in DB
+	_, err := u.conn.
+		NewUpdate().
+		Model(user).
+		Where("? = ?", bun.Ident("user.id"), user.ID).
+		Column(columns...).
+		Exec(ctx)
+	if err != nil {
 		return u.conn.ProcessError(err)
-	})
+	}
+
+	// Invalidate in cache
+	u.cache.Invalidate("ID", user.ID)
+	return nil
 }
 
 func (u *userDB) DeleteUserByID(ctx context.Context, userID string) db.Error {
