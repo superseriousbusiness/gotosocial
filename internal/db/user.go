@@ -36,8 +36,8 @@ type User interface {
 	GetUserByConfirmationToken(ctx context.Context, confirmationToken string) (*gtsmodel.User, Error)
 	// PutUser will attempt to place user in the database
 	PutUser(ctx context.Context, user *gtsmodel.User) Error
-	// UpdateUser updates one user by its primary key.
-	UpdateUser(ctx context.Context, user *gtsmodel.User) Error
+	// UpdateUser updates one user by its primary key, updating either only the specified columns, or all of them.
+	UpdateUser(ctx context.Context, user *gtsmodel.User, columns ...string) Error
 	// DeleteUserByID deletes one user by its ID.
 	DeleteUserByID(ctx context.Context, userID string) Error
 }
