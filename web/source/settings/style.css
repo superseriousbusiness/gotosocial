@@ -503,3 +503,61 @@ span.form-info {
 		flex-direction: column;
 	}
 }
+
+.combobox-wrapper {
+  display: flex;
+  flex-direction: column;
+
+	input[aria-expanded="true"] {
+		border-bottom: none;
+	}
+}
+
+.combobox {
+  height: 2.5rem;
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+.popover {
+  position: relative;
+  z-index: 50;
+  display: flex;
+  max-height: min(var(--popover-available-height,300px),300px);
+  flex-direction: column;
+  overflow: auto;
+  overscroll-behavior: contain;
+	border: 0.15rem solid $orange2;
+	background: $bg-accent;
+}
+
+.combobox-item {
+  display: flex;
+  cursor: pointer;
+  scroll-margin: 0.5rem;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+	line-height: 1.5rem;
+	border-bottom: 0.15rem solid $gray3;
+
+	&:last-child {
+		border: none;
+	}
+
+	img {
+		height: 1.5rem;
+		width: 1.5rem;
+		object-fit: contain;
+	}
+}
+
+.combobox-item:hover {
+	background: $button-hover-bg;
+	color: $button-fg;
+}
+
+.combobox-item[data-active-item] {
+  background: $button-hover-bg;
+  color: hsl(204 20% 100%);
+}

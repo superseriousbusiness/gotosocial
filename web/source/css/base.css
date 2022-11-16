@@ -290,7 +290,7 @@ section.error {
 	font-weight: bold;
 }
 
-input, select, textarea {
+input, select, textarea, .input {
 	box-sizing: border-box;
 	border: 0.15rem solid $input-border;
 	border-radius: 0.1rem;
