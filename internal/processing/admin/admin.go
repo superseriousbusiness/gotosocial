@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
@@ -52,15 +53,17 @@ type Processor interface {
 type processor struct {
 	tc           typeutils.TypeConverter
 	mediaManager media.Manager
+	storage      storage.Driver
 	clientWorker *concurrency.WorkerPool[messages.FromClientAPI]
 	db           db.DB
 }
 
 // New returns a new admin processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, clientWorker *concurrency.WorkerPool[messages.FromClientAPI]) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, storageDriver storage.Driver, clientWorker *concurrency.WorkerPool[messages.FromClientAPI]) Processor {
 	return &processor{
 		tc:           tc,
 		mediaManager: mediaManager,
+		storage:      storageDriver,
 		clientWorker: clientWorker,
 		db:           db,
 	}

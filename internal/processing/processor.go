@@ -311,7 +311,7 @@ func NewProcessor(
 	statusProcessor := status.New(db, tc, clientWorker, parseMentionFunc)
 	streamingProcessor := streaming.New(db, oauthServer)
 	accountProcessor := account.New(db, tc, mediaManager, oauthServer, clientWorker, federator, parseMentionFunc)
-	adminProcessor := admin.New(db, tc, mediaManager, clientWorker)
+	adminProcessor := admin.New(db, tc, mediaManager, storage, clientWorker)
 	mediaProcessor := mediaProcessor.New(db, tc, mediaManager, federator.TransportController(), storage)
 	userProcessor := user.New(db, emailSender)
 	federationProcessor := federationProcessor.New(db, tc, federator)

@@ -29,7 +29,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 func (p *processor) EmojiUpdate(ctx context.Context, id string, form *apimodel.EmojiUpdateRequest) (*apimodel.AdminEmoji, gtserror.WithCode) {
@@ -45,7 +47,7 @@ func (p *processor) EmojiUpdate(ctx context.Context, id string, form *apimodel.E
 
 	switch form.Type {
 	case apimodel.EmojiUpdateCopy:
-		return p.emojiUpdateCopy(ctx, emoji, form.Shortcode)
+		return p.emojiUpdateCopy(ctx, emoji, form.Shortcode, form.CategoryName)
 	case apimodel.EmojiUpdateDisable:
 		return p.emojiUpdateDisable(ctx, emoji)
 	case apimodel.EmojiUpdateModify:
@@ -56,15 +58,78 @@ func (p *processor) EmojiUpdate(ctx context.Context, id string, form *apimodel.E
 	}
 }
 
-func (p *processor) emojiUpdateCopy(ctx context.Context, emoji *gtsmodel.Emoji, shortcode *string) (*apimodel.AdminEmoji, gtserror.WithCode) {
+// copy an emoji from remote to local
+func (p *processor) emojiUpdateCopy(ctx context.Context, emoji *gtsmodel.Emoji, shortcode *string, categoryName *string) (*apimodel.AdminEmoji, gtserror.WithCode) {
 	if emoji.Domain == "" {
 		err := fmt.Errorf("emojiUpdateCopy: emoji %s is not a remote emoji, cannot copy it to local", emoji.ID)
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
-	return nil, nil
+	if shortcode == nil {
+		err := fmt.Errorf("emojiUpdateCopy: emoji %s could not be copied, no shortcode provided", emoji.ID)
+		return nil, gtserror.NewErrorBadRequest(err, err.Error())
+	}
+
+	maybeExisting, err := p.db.GetEmojiByShortcodeDomain(ctx, *shortcode, "")
+	if maybeExisting != nil {
+		err := fmt.Errorf("emojiUpdateCopy: emoji %s could not be copied, emoji with shortcode %s already exists on this instance", emoji.ID, *shortcode)
+		return nil, gtserror.NewErrorConflict(err, err.Error())
+	}
+
+	if err != nil && err != db.ErrNoEntries {
+		err := fmt.Errorf("emojiUpdateCopy: emoji %s could not be copied, error checking existence of emoji with shortcode %s: %s", emoji.ID, *shortcode, err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	newEmojiID, err := id.NewRandomULID()
+	if err != nil {
+		err := fmt.Errorf("emojiUpdateCopy: emoji %s could not be copied, error creating id for new emoji: %s", emoji.ID, err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	newEmojiURI := uris.GenerateURIForEmoji(newEmojiID)
+
+	data := func(ctx context.Context) (reader io.ReadCloser, fileSize int64, err error) {
+		// 'copy' the emoji by pulling the existing one out of storage
+		i, err := p.storage.GetStream(ctx, emoji.ImagePath)
+		return i, int64(emoji.ImageFileSize), err
+	}
+
+	var ai *media.AdditionalEmojiInfo
+	if categoryName != nil {
+		category, err := p.GetOrCreateEmojiCategory(ctx, *categoryName)
+		if err != nil {
+			err = fmt.Errorf("emojiUpdateCopy: error getting or creating category: %s", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
+		ai = &media.AdditionalEmojiInfo{
+			CategoryID: &category.ID,
+		}
+	}
+
+	processingEmoji, err := p.mediaManager.ProcessEmoji(ctx, data, nil, *shortcode, newEmojiID, newEmojiURI, ai, false)
+	if err != nil {
+		err = fmt.Errorf("emojiUpdateCopy: error processing emoji %s: %s", emoji.ID, err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	newEmoji, err := processingEmoji.LoadEmoji(ctx)
+	if err != nil {
+		err = fmt.Errorf("emojiUpdateCopy: error loading processed emoji %s: %s", emoji.ID, err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	adminEmoji, err := p.tc.EmojiToAdminAPIEmoji(ctx, newEmoji)
+	if err != nil {
+		err = fmt.Errorf("emojiUpdateCopy: error converting updated emoji %s to admin emoji: %s", emoji.ID, err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return adminEmoji, nil
 }
 
+// disable a remote emoji
 func (p *processor) emojiUpdateDisable(ctx context.Context, emoji *gtsmodel.Emoji) (*apimodel.AdminEmoji, gtserror.WithCode) {
 	if emoji.Domain == "" {
 		err := fmt.Errorf("emojiUpdateDisable: emoji %s is not a remote emoji, cannot disable it via this endpoint", emoji.ID)
@@ -88,6 +153,7 @@ func (p *processor) emojiUpdateDisable(ctx context.Context, emoji *gtsmodel.Emoj
 	return adminEmoji, nil
 }
 
+// modify a local emoji
 func (p *processor) emojiUpdateModify(ctx context.Context, emoji *gtsmodel.Emoji, shortcode *string, image *multipart.FileHeader, categoryName *string) (*apimodel.AdminEmoji, gtserror.WithCode) {
 	if emoji.Domain != "" {
 		err := fmt.Errorf("emojiUpdateModify: emoji %s is not a local emoji, cannot do a modify action on it", emoji.ID)
@@ -114,7 +180,8 @@ func (p *processor) emojiUpdateModify(ctx context.Context, emoji *gtsmodel.Emoji
 	if categoryName != nil {
 		category, err := p.GetOrCreateEmojiCategory(ctx, *categoryName)
 		if err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error putting id in category: %s", err), "error putting id in category")
+			err = fmt.Errorf("emojiUpdateModify: error getting or creating category: %s", err)
+			return nil, gtserror.NewErrorInternalError(err)
 		}
 
 		updatedCategoryID = category.ID
