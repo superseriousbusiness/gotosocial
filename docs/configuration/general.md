@@ -38,11 +38,18 @@ host: "localhost"
 # String. Domain to use when federating profiles. This is useful when you want your server to be at
 # eg., "gts.example.org", but you want the domain on accounts to be "example.org" because it looks better
 # or is just shorter/easier to remember.
+#
 # To make this setting work properly, you need to redirect requests at "example.org/.well-known/webfinger"
 # to "gts.example.org/.well-known/webfinger" so that GtS can handle them properly.
+#
 # You should also redirect requests at "example.org/.well-known/nodeinfo" in the same way.
 # An empty string (ie., not set) means that the same value as 'host' will be used.
+#
 # DO NOT change this after your server has already run once, or you will break things!
+#
+# Please read the appropriate section of the installation guide before you go messing around with this setting:
+# https://docs.gotosocial.org/installation_guide/advanced/#can-i-host-my-instance-at-fediexampleorg-but-have-just-exampleorg-in-my-username
+#
 # Examples: ["example.org","server.com"]
 # Default: ""
 account-domain: ""
