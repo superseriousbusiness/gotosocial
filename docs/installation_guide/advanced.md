@@ -48,6 +48,8 @@ The first value, `host`, is simple. In our scenario of wanting to run the GtS in
 
 The second value, `account-domain` should be set to `example.org`, to indicate that that's the domain we want accounts to be displayed with.
 
+IMPORTANT: `account-domain` must be a *parent domain* of `host`, and `host` must be a *subdomain* of `account-domain`. So if your `host` is `fedi.example.org`, your `account-domain` cannot be `somewhere.else.com` or `example.com`, it **has to be** `example.org`.
+
 ### Step 2: Redirect from `example.org` to `fedi.example.org`
 
 The next step is more difficult: we need to ensure that when remote instances search for the user `@user@example.org` via webfinger, they end up being pointed towards `fedi.example.org`, where our instance is actually hosted.
