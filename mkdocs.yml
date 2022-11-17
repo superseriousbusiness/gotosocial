@@ -28,6 +28,7 @@ nav:
     - "installation_guide/caddy.md"
     - "installation_guide/third_party.md"
     - "installation_guide/websocket.md"
+    - "installation_guide/advanced.md"
   - "Configuration":
     - "configuration/index.md"
     - "configuration/general.md"
