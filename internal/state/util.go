@@ -14,5 +14,5 @@ func (*nocopy) Unlock() {}
 func tryUntil(msg string, count int, do func() bool) {
 	for i := 0; i < count && !do(); i++ {
 	}
-	log.Panic("failed %s after %d tries", msg, count)
+	log.Panicf("failed %s after %d tries", msg, count)
 }
