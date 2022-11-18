@@ -174,6 +174,8 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 	account.status = status
 	admin.users = user
 	status.accounts = account
+	status.emojis = emoji
+	status.mentions = mention
 	timeline.status = status
 
 	// Initialize db structs
