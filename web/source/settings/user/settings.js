@@ -62,7 +62,7 @@ module.exports = function UserSettings() {
 				}>
 					<a href="https://docs.gotosocial.org/en/latest/user_guide/posts/#privacy-settings" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about post privacy settings (opens in a new tab)</a>
 				</Select>
-				<Select id="source.status_format" name="Default post format" options={
+				<Select id="source.status_format" name="Default post (and bio) format" options={
 					<>
 						<option value="plain">Plain (default)</option>
 						<option value="markdown">Markdown</option>
@@ -99,7 +99,7 @@ function PasswordChange() {
 			setError("New password and confirm new password did not match!");
 			return;
 		}
-		
+
 		setStatus("PATCHing");
 		setError("");
 		return Promise.try(() => {

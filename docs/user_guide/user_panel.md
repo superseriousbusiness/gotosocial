@@ -32,6 +32,8 @@ Your bio is a longer text that introduces your account and your self. Your bio i
 - Describe your boundaries and preferences when it comes to other people interacting with you
 - Link hashtags that you often use when you post
 
+The bio accepts either `plain` or `markdown` formatting. This is set by the default post format setting described in [Post Settings](#post-settings).
+
 After updating your display name and bio, click on the `Save profile info` button at the bottom of the Profile Info section to save your changes.
 
 ### Manually Approve Followers / Lock Your Account
