@@ -55,9 +55,6 @@ func (n *notificationDB) GetNotification(ctx context.Context, id string) (*gtsmo
 
 		q := n.conn.NewSelect().
 			Model(&notif).
-			Relation("OriginAccount").
-			Relation("TargetAccount").
-			Relation("Status").
 			Where("? = ?", bun.Ident("notification.id"), id)
 		if err := q.Scan(ctx); err != nil {
 			return nil, n.conn.ProcessError(err)
