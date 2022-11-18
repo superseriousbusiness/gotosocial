@@ -171,6 +171,7 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 	user := &userDB{conn: conn}
 
 	// Setup DB cross-referencing
+	account.emojis = emoji
 	account.status = status
 	admin.users = user
 	status.accounts = account
