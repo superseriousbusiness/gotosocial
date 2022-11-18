@@ -113,9 +113,6 @@ func (suite *NotificationTestSuite) TestGetNotificationsWithoutSpam() {
 	suite.NotNil(notifications)
 	for _, n := range notifications {
 		suite.Equal(testAccount.ID, n.TargetAccountID)
-		suite.NotNil(n.OriginAccount)
-		suite.NotNil(n.TargetAccount)
-		suite.NotNil(n.Status)
 	}
 }
 
