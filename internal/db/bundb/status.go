@@ -36,6 +36,8 @@ type statusDB struct {
 	conn     *DBConn
 	cache    *result.Cache[*gtsmodel.Status]
 	accounts *accountDB
+	emojis   *emojiDB
+	mentions *mentionDB
 }
 
 func (s *statusDB) init() {
@@ -61,11 +63,6 @@ func (s *statusDB) newStatusQ(status interface{}) *bun.SelectQuery {
 		Model(status).
 		Relation("Attachments").
 		Relation("Tags").
-		Relation("Mentions").
-		Relation("Emojis").
-		Relation("Account").
-		Relation("InReplyToAccount").
-		Relation("BoostOfAccount").
 		Relation("CreatedWithApplication")
 }
 
@@ -121,10 +118,21 @@ func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*g
 			return nil, s.conn.ProcessError(err)
 		}
 
-		// If there is boosted, fetch from DB also
+		if status.InReplyToID != "" {
+			// Also load in-reply-to status
+			status.InReplyTo = &gtsmodel.Status{}
+			err := s.conn.NewSelect().Model(status.InReplyTo).
+				Where("? = ?", bun.Ident("status.id"), status.InReplyToID).
+				Scan(ctx)
+			if err != nil {
+				return nil, s.conn.ProcessError(err)
+			}
+		}
+
 		if status.BoostOfID != "" {
+			// Also load original boosted status
 			status.BoostOf = &gtsmodel.Status{}
-			err := s.newStatusQ(status.BoostOf).
+			err := s.conn.NewSelect().Model(status.BoostOf).
 				Where("? = ?", bun.Ident("status.id"), status.BoostOfID).
 				Scan(ctx)
 			if err != nil {
@@ -140,13 +148,43 @@ func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*g
 	}
 
 	// Set the status author account
-	author, err := s.accounts.GetAccountByID(ctx, status.AccountID)
+	status.Account, err = s.accounts.GetAccountByID(ctx, status.AccountID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Return the prepared status
-	status.Account = author
+	if id := status.BoostOfAccountID; id != "" {
+		// Set boost of status' author account
+		status.BoostOfAccount, err = s.accounts.GetAccountByID(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if id := status.InReplyToAccountID; id != "" {
+		// Set in-reply-to status' author account
+		status.InReplyToAccount, err = s.accounts.GetAccountByID(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(status.EmojiIDs) > 0 {
+		// Fetch status emojis
+		status.Emojis, err = s.emojis.emojisFromIDs(ctx, status.EmojiIDs)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(status.MentionIDs) > 0 {
+		// Fetch status mentions
+		status.Mentions, err = s.mentions.GetMentions(ctx, status.MentionIDs)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return status, nil
 }
 
