@@ -36,6 +36,7 @@ import (
 type accountDB struct {
 	conn   *DBConn
 	cache  *result.Cache[*gtsmodel.Account]
+	emojis *emojiDB
 	status *statusDB
 }
 
@@ -63,8 +64,7 @@ func (a *accountDB) newAccountQ(account *gtsmodel.Account) *bun.SelectQuery {
 		NewSelect().
 		Model(account).
 		Relation("AvatarMediaAttachment").
-		Relation("HeaderMediaAttachment").
-		Relation("Emojis")
+		Relation("HeaderMediaAttachment")
 }
 
 func (a *accountDB) GetAccountByID(ctx context.Context, id string) (*gtsmodel.Account, db.Error) {
@@ -149,7 +149,8 @@ func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gts
 }
 
 func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Account) error, keyParts ...any) (*gtsmodel.Account, db.Error) {
-	return a.cache.Load(lookup, func() (*gtsmodel.Account, error) {
+	// Fetch account from database cache with loader callback
+	account, err := a.cache.Load(lookup, func() (*gtsmodel.Account, error) {
 		var account gtsmodel.Account
 
 		// Not cached! Perform database query
@@ -159,6 +160,19 @@ func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(
 
 		return &account, nil
 	}, keyParts...)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(account.EmojiIDs) > 0 {
+		// Set the account's related emojis
+		account.Emojis, err = a.emojis.emojisFromIDs(ctx, account.EmojiIDs)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return account, nil
 }
 
 func (a *accountDB) PutAccount(ctx context.Context, account *gtsmodel.Account) db.Error {
