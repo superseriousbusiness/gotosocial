@@ -101,15 +101,15 @@ See [this blog post](https://blog.sgmansfield.com/2016/06/working-with-forks-in-
 In case this post disappears, here are the steps (slightly modified):
 
 >
-> Pull the original package from the canonical place with the standard go get command:
->
-> `go get github.com/superseriousbusiness/gotosocial`
->
 > Fork the repository on GitHub or set up whatever other remote git repo you will be using. In this case, I would go to GitHub and fork the repository.
 >
-> Navigate to the top level of the repository on your computer. Note that this might not be the specific package you’re using:
+> Now clone the upstream repo (not the fork):
 >
-> `cd $GOPATH/src/github.com/superseriousbusiness/gotosocial`
+> `mkdir -p ~/go/src/github.com/superseriousbusiness && git clone git@github.com:superseriousbusiness/gotosocial ~/go/src/github.com/superseriousbusiness/gotosocial`
+>
+> Navigate to the top level of the upstream repository on your computer:
+>
+> `cd ~/go/src/github.com/superseriousbusiness/gotosocial`
 >
 > Rename the current origin remote to upstream:
 >
