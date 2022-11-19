@@ -77,12 +77,13 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 
 	if username, domain, err := util.ExtractNamestringParts(maybeNamestring); err == nil {
 		l.Debugf("search term %s is a mention, looking it up...", maybeNamestring)
-		if foundAccount, err := p.searchAccountByMention(ctx, authed, username, domain, search.Resolve); err == nil && foundAccount != nil {
+		foundAccount, err := p.searchAccountByMention(ctx, authed, username, domain, search.Resolve)
+		if err != nil {
+			l.Debugf("error looking up account %s: %s", maybeNamestring, err)
+		} else {
 			foundAccounts = append(foundAccounts, foundAccount)
 			foundOne = true
-			l.Debug("got an account by searching by mention")
-		} else if err != nil {
-			l.Debugf("error looking up account %s: %s", maybeNamestring, err)
+			l.Debugf("got an account for %s by searching by mention", maybeNamestring)
 		}
 	}
 
@@ -91,7 +92,12 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 		check if the query is a URI with a recognizable scheme and dereference it
 	*/
 	if !foundOne {
-		if uri, err := url.Parse(query); err == nil && (uri.Scheme == "https" || uri.Scheme == "http") {
+		uri, err := url.Parse(query)
+		if err != nil {
+			log.Debugf("error parsing query %s as url: %s", query, err)
+		}
+
+		if uri.Scheme == "https" || uri.Scheme == "http" {
 			// don't attempt to resolve (ie., dereference) local accounts/statuses
 			resolve := search.Resolve
 			if uri.Host == config.GetHost() || uri.Host == config.GetAccountDomain() {
@@ -99,14 +105,32 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 			}
 
 			// check if it's a status or an account
-			if foundStatus, err := p.searchStatusByURI(ctx, authed, uri, resolve); err == nil && foundStatus != nil {
+			foundStatus, err := p.searchStatusByURI(ctx, authed, uri, resolve)
+			if err != nil {
+				log.Debugf("error searching status by uri %s: %s", uri, err)
+			} else {
 				foundStatuses = append(foundStatuses, foundStatus)
+				foundOne = true
 				l.Debug("got a status by searching by URI")
-			} else if foundAccount, err := p.searchAccountByURI(ctx, authed, uri, resolve); err == nil && foundAccount != nil {
-				foundAccounts = append(foundAccounts, foundAccount)
-				l.Debug("got an account by searching by URI")
+			}
+
+			if !foundOne {
+				foundAccount, err := p.searchAccountByURI(ctx, authed, uri, resolve)
+				if err != nil {
+					log.Debugf("error searching account by uri %s: %s", uri, err)
+				} else {
+					foundAccounts = append(foundAccounts, foundAccount)
+					foundOne = true
+					l.Debug("got an account by searching by URI")
+				}
 			}
 		}
+	}
+
+	if !foundOne {
+		// we got nothing, we can return early
+		log.Debugf("found nothing for query %s, returning", query)
+		return searchResult, nil
 	}
 
 	/*
@@ -143,24 +167,32 @@ func (p *processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, u
 	// Calculate URI string once
 	uriStr := uri.String()
 
-	// Look for status locally (by URI), we only accept "not found" errors.
+	// Look for status locally (by URI); we only accept "not found" errors.
 	status, err := p.db.GetStatusByURI(ctx, uriStr)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, fmt.Errorf("searchStatusByURI: error fetching status %q: %v", uriStr, err)
-	} else if err == nil {
+	switch {
+	case err == nil:
 		return status, nil
+	case errors.Is(err, db.ErrNoEntries):
+		// that's fine, we'll look further
+	default:
+		return nil, fmt.Errorf("searchStatusByURI: error fetching status by URI %q: %v", uriStr, err)
 	}
 
-	// Again, look for status locally (by URL), we only accept "not found" errors.
+	// Again, look for status locally (by URL this time); we only accept "not found" errors.
 	status, err = p.db.GetStatusByURL(ctx, uriStr)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, fmt.Errorf("searchStatusByURI: error fetching status %q: %v", uriStr, err)
-	} else if err == nil {
+	switch {
+	case err == nil:
 		return status, nil
+	case errors.Is(err, db.ErrNoEntries):
+		// that's fine, we'll look further
+	default:
+		return nil, fmt.Errorf("searchStatusByURI: error fetching status by URL %q: %v", uriStr, err)
 	}
 
-	if resolve {
-		// This is a non-local status and we're allowed to resolve, so dereference it
+	// only resolve (if we're allowed to) after exhausting faster local search options
+	switch {
+	case resolve:
+		// we're allowed to resolve, so try to dereference status from remote instance
 		status, statusable, err := p.federator.GetRemoteStatus(ctx, authed.Account.Username, uri, true, true)
 		if err != nil {
 			return nil, fmt.Errorf("searchStatusByURI: error fetching remote status %q: %v", uriStr, err)
@@ -168,34 +200,26 @@ func (p *processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, u
 
 		// Attempt to dereference the status thread while we are here
 		p.federator.DereferenceRemoteThread(ctx, authed.Account.Username, uri, status, statusable)
-	}
 
-	return nil, nil
+		// gottem chief
+		return status, nil
+	default:
+		return nil, fmt.Errorf("searchStatusByURI: no local results for status %q, and resolve is false", uriStr)
+	}
 }
 
 func (p *processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Account, error) {
-	// it might be a web url like http://example.org/@user instead
-	// of an AP uri like http://example.org/users/user, check first
-	if maybeAccount, err := p.db.GetAccountByURL(ctx, uri.String()); err == nil {
-		return maybeAccount, nil
-	}
-
-	if uri.Host == config.GetHost() || uri.Host == config.GetAccountDomain() {
-		// this is a local account; if we don't have it now then
-		// we should just bail instead of trying to get it remote
-		if maybeAccount, err := p.db.GetAccountByURI(ctx, uri.String()); err == nil {
-			return maybeAccount, nil
-		}
-		return nil, nil
-	}
-
-	// we don't have it yet, try to find it remotely
-	return p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+	// unlike in the 
+	account, err := p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
 		RequestingUsername: authed.Account.Username,
 		RemoteAccountID:    uri,
 		Blocking:           true,
 		SkipResolve:        !resolve,
 	})
+
+	switch {
+		case 
+	}
 }
 
 func (p *processor) searchAccountByMention(ctx context.Context, authed *oauth.Auth, username string, domain string, resolve bool) (*gtsmodel.Account, error) {

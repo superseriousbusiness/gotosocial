@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -62,20 +63,56 @@ func (d *deref) EnrichRemoteStatus(ctx context.Context, username string, status 
 //
 // SIDE EFFECTS: remote status will be stored in the database, and the remote status owner will also be stored.
 func (d *deref) GetRemoteStatus(ctx context.Context, username string, remoteStatusID *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, error) {
-	maybeStatus, err := d.db.GetStatusByURI(ctx, remoteStatusID.String())
-	if err == nil && !refetch {
+	uriString := remoteStatusID.String()
+
+	// try to get by URI first
+	status, err := d.db.GetStatusByURI(ctx, uriString)
+	switch {
+	case err == nil && !refetch:
 		// we already had the status and we aren't being asked to refetch the AP representation
-		return maybeStatus, nil, nil
+		return status, nil, nil
+	case errors.Is(err, db.ErrNoEntries):
+		// no problem, just press on
+	default:
+		// real error
+		return nil, nil, fmt.Errorf("GetRemoteStatus: error during GetStatusByURI for %s: %s", uriString, err)
 	}
 
+	// try to get by URL if we couldn't get by URI now
+	if status == nil {
+		status, err = d.db.GetStatusByURL(ctx, uriString)
+		switch {
+		case err == nil && !refetch:
+			// we already had the status and we aren't being asked to refetch the AP representation
+			return status, nil, nil
+		case errors.Is(err, db.ErrNoEntries):
+			// no problem, just press on
+		default:
+			// real error
+			return nil, nil, fmt.Errorf("GetRemoteStatus: error during GetStatusByURL for %s: %s", uriString, err)
+		}
+	}
+
+	// guard against having our own statuses passed in
+	if host := remoteStatusID.Host; host == config.GetHost() || host == config.GetAccountDomain() {
+		// this is our status, definitely don't search for it
+		if status != nil {
+			return status, nil, nil
+		}
+		return nil, nil, fmt.Errorf("GetRemoteStatus: uri %s is apparently ours, but we have nothing in the db for it, will not proceed to dereference our own status", uriString)
+	}
+
+	// if we got here, either we didn't have the status
+	// in the db, or we had it but need to refetch it
 	statusable, err := d.dereferenceStatusable(ctx, username, remoteStatusID)
 	if err != nil {
 		return nil, nil, fmt.Errorf("GetRemoteStatus: error dereferencing statusable: %s", err)
 	}
 
-	if maybeStatus != nil && refetch {
-		// we already had the status and we've successfully fetched the AP representation as requested
-		return maybeStatus, statusable, nil
+	if status != nil && refetch {
+		// we already had the status in the db, and we've also
+		// now fetched the AP representation as requested
+		return status, statusable, nil
 	}
 
 	// from here on out we can consider this to be a 'new' status because we didn't have the status in the db already
@@ -84,34 +121,35 @@ func (d *deref) GetRemoteStatus(ctx context.Context, username string, remoteStat
 		return nil, nil, fmt.Errorf("GetRemoteStatus: error extracting attributedTo: %s", err)
 	}
 
-	_, err = d.GetRemoteAccount(ctx, GetRemoteAccountParams{
+	// we need to get the author of the status else we can't serialize it properly
+	if _, err = d.GetRemoteAccount(ctx, GetRemoteAccountParams{
 		RequestingUsername: username,
 		RemoteAccountID:    accountURI,
-	})
-	if err != nil {
+		Blocking:           true,
+	}); err != nil {
 		return nil, nil, fmt.Errorf("GetRemoteStatus: couldn't get status author: %s", err)
 	}
 
-	gtsStatus, err := d.typeConverter.ASStatusToStatus(ctx, statusable)
+	status, err = d.typeConverter.ASStatusToStatus(ctx, statusable)
 	if err != nil {
 		return nil, statusable, fmt.Errorf("GetRemoteStatus: error converting statusable to status: %s", err)
 	}
 
-	ulid, err := id.NewULIDFromTime(gtsStatus.CreatedAt)
+	ulid, err := id.NewULIDFromTime(status.CreatedAt)
 	if err != nil {
 		return nil, nil, fmt.Errorf("GetRemoteStatus: error generating new id for status: %s", err)
 	}
-	gtsStatus.ID = ulid
+	status.ID = ulid
 
-	if err := d.populateStatusFields(ctx, gtsStatus, username, includeParent); err != nil {
+	if err := d.populateStatusFields(ctx, status, username, includeParent); err != nil {
 		return nil, nil, fmt.Errorf("GetRemoteStatus: error populating status fields: %s", err)
 	}
 
-	if err := d.db.PutStatus(ctx, gtsStatus); err != nil && !errors.Is(err, db.ErrAlreadyExists) {
+	if err := d.db.PutStatus(ctx, status); err != nil && !errors.Is(err, db.ErrAlreadyExists) {
 		return nil, nil, fmt.Errorf("GetRemoteStatus: error putting new status: %s", err)
 	}
 
-	return gtsStatus, statusable, nil
+	return status, statusable, nil
 }
 
 func (d *deref) dereferenceStatusable(ctx context.Context, username string, remoteStatusID *url.URL) (ap.Statusable, error) {

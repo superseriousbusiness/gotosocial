@@ -130,10 +130,32 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 			skipResolve = true
 		}
 
-		if a, dbErr := d.db.GetAccountByURI(ctx, uri.String()); dbErr == nil {
+		// see if we have this in the db already with this uri/url
+		uriString := uri.String()
+
+		a, dbErr := d.db.GetAccountByURI(ctx, uriString)
+		switch {
+		case dbErr == nil:
 			foundAccount = a
-		} else if dbErr != db.ErrNoEntries {
+		case errors.Is(dbErr, db.ErrNoEntries):
+			// no problem
+		default:
+			// a real error
 			err = fmt.Errorf("GetRemoteAccount: database error looking for account with uri %s: %s", uri, err)
+		}
+
+		// not by uri, maybe by url?
+		if foundAccount == nil {
+			a, dbErr = d.db.GetAccountByURL(ctx, uriString)
+			switch {
+			case dbErr == nil:
+				foundAccount = a
+			case errors.Is(dbErr, db.ErrNoEntries):
+				// no problem
+			default:
+				// a real error
+				err = fmt.Errorf("GetRemoteAccount: database error looking for account with url %s: %s", uri, err)
+			}
 		}
 	case params.RemoteAccountUsername != "" && (params.RemoteAccountHost == "" || params.RemoteAccountHost == config.GetHost() || params.RemoteAccountHost == config.GetAccountDomain()):
 		// either no domain is provided or this seems
