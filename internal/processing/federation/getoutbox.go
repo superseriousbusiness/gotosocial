@@ -42,7 +42,7 @@ func (p *processor) GetOutbox(ctx context.Context, requestedUsername string, pag
 		return nil, errWithCode
 	}
 
-	requestingAccount, err := p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+	requestingAccount, err := p.federator.GetAccount(ctx, dereferencing.GetAccountParams{
 		RequestingUsername: requestedUsername,
 		RemoteAccountID:    requestingAccountURI,
 	})

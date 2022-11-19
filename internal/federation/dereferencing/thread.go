@@ -114,7 +114,7 @@ func (d *deref) dereferenceStatusAncestors(ctx context.Context, username string,
 			l.Tracef("following remote status ancestors: %s", status.InReplyToURI)
 
 			// Fetch the remote status found at this IRI
-			remoteStatus, _, err := d.GetRemoteStatus(ctx, username, replyIRI, false, false)
+			remoteStatus, _, err := d.GetStatus(ctx, username, replyIRI, false, false)
 			if err != nil {
 				return fmt.Errorf("error fetching remote status %q: %w", status.InReplyToURI, err)
 			}
@@ -276,7 +276,7 @@ stackLoop:
 				}
 
 				// Dereference the remote status and store in the database
-				_, statusable, err := d.GetRemoteStatus(ctx, username, itemIRI, true, false)
+				_, statusable, err := d.GetStatus(ctx, username, itemIRI, true, false)
 				if err != nil {
 					l.Errorf("error dereferencing remote status %q: %s", itemIRI.String(), err)
 					continue itemLoop

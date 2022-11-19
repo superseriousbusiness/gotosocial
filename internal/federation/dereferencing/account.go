@@ -50,20 +50,20 @@ func instanceAccount(account *gtsmodel.Account) bool {
 		(account.Username == "internal.fetch" && strings.Contains(account.Note, "internal service actor"))
 }
 
-// GetRemoteAccountParams wraps parameters for a remote account lookup.
-type GetRemoteAccountParams struct {
+// GetAccountParams wraps parameters for an account lookup.
+type GetAccountParams struct {
 	// The username of the user doing the lookup request (optional).
 	// If not set, then the GtS instance account will be used to do the lookup.
 	RequestingUsername string
-	// The ActivityPub URI of the remote account (optional).
-	// If not set (nil), the ActivityPub URI of the remote account will be discovered
+	// The ActivityPub URI of the account (optional).
+	// If not set (nil), the ActivityPub URI of the account will be discovered
 	// via webfinger, so you must set RemoteAccountUsername and RemoteAccountHost
 	// if this parameter is not set.
 	RemoteAccountID *url.URL
-	// The username of the remote account (optional).
+	// The username of the account (optional).
 	// If RemoteAccountID is not set, then this value must be set.
 	RemoteAccountUsername string
-	// The host of the remote account (optional).
+	// The host of the account (optional).
 	// If RemoteAccountID is not set, then this value must be set.
 	RemoteAccountHost string
 	// Whether to do a blocking call to the remote instance. If true,
@@ -82,12 +82,12 @@ type GetRemoteAccountParams struct {
 	PartialAccount *gtsmodel.Account
 }
 
-// GetRemoteAccount completely dereferences a remote account, converts it to a GtS model account,
+// GetAccount completely dereferences an account, converts it to a GtS model account,
 // puts or updates it in the database (if necessary), and returns it to a caller.
 //
-// If a local account is passed into this function for whatever reason (hey, it happens!), then it
-// will be returned from the database without making any remote calls.
-func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountParams) (foundAccount *gtsmodel.Account, err error) {
+// GetAccount will guard against trying to do http calls to fetch an account that belongs to this instance.
+// Instead of making calls, it will just return the account early if it finds it, or return an error.
+func (d *deref) GetAccount(ctx context.Context, params GetAccountParams) (foundAccount *gtsmodel.Account, err error) {
 	/*
 		In this function we want to retrieve a gtsmodel representation of a remote account, with its proper
 		accountDomain set, while making as few calls to remote instances as possible to save time and bandwidth.

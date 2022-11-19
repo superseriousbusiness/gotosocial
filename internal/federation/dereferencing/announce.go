@@ -58,7 +58,7 @@ func (d *deref) DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Stat
 		boostedStatus = status
 	} else {
 		// This is a boost of a remote status, we need to dereference it.
-		status, statusable, err := d.GetRemoteStatus(ctx, requestingUsername, boostedURI, true, true)
+		status, statusable, err := d.GetStatus(ctx, requestingUsername, boostedURI, true, true)
 		if err != nil {
 			return fmt.Errorf("DereferenceAnnounce: error dereferencing remote status with id %s: %s", announce.BoostOf.URI, err)
 		}

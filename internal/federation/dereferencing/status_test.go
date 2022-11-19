@@ -37,7 +37,7 @@ func (suite *StatusTestSuite) TestDereferenceSimpleStatus() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 
 	statusURL := testrig.URLMustParse("https://unknown-instance.com/users/brand_new_person/statuses/01FE4NTHKWW7THT67EF10EB839")
-	status, _, err := suite.dereferencer.GetRemoteStatus(context.Background(), fetchingAccount.Username, statusURL, false, false)
+	status, _, err := suite.dereferencer.GetStatus(context.Background(), fetchingAccount.Username, statusURL, false, false)
 	suite.NoError(err)
 	suite.NotNil(status)
 
@@ -77,7 +77,7 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithMention() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 
 	statusURL := testrig.URLMustParse("https://unknown-instance.com/users/brand_new_person/statuses/01FE5Y30E3W4P7TRE0R98KAYQV")
-	status, _, err := suite.dereferencer.GetRemoteStatus(context.Background(), fetchingAccount.Username, statusURL, false, false)
+	status, _, err := suite.dereferencer.GetStatus(context.Background(), fetchingAccount.Username, statusURL, false, false)
 	suite.NoError(err)
 	suite.NotNil(status)
 
@@ -128,7 +128,7 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithImageAndNoContent() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 
 	statusURL := testrig.URLMustParse("https://turnip.farm/users/turniplover6969/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042")
-	status, _, err := suite.dereferencer.GetRemoteStatus(context.Background(), fetchingAccount.Username, statusURL, false, false)
+	status, _, err := suite.dereferencer.GetStatus(context.Background(), fetchingAccount.Username, statusURL, false, false)
 	suite.NoError(err)
 	suite.NotNil(status)
 

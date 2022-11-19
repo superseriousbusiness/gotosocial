@@ -93,7 +93,7 @@ func (p *processor) getAccountFor(ctx context.Context, requestingAccount *gtsmod
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error parsing url %s: %s", targetAccount.URI, err))
 		}
 
-		a, err := p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+		a, err := p.federator.GetAccount(ctx, dereferencing.GetAccountParams{
 			RequestingUsername:    requestingAccount.Username,
 			RemoteAccountID:       targetAccountURI,
 			RemoteAccountHost:     targetAccount.Domain,

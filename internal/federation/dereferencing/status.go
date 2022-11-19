@@ -37,7 +37,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 )
 
-// EnrichRemoteStatus takes a status that's already been inserted into the database in a minimal form,
+// EnrichRemoteStatus takes a remote status that's already been inserted into the database in a minimal form,
 // and populates it with additional fields, media, etc.
 //
 // EnrichRemoteStatus is mostly useful for calling after a status has been initially created by
@@ -52,7 +52,7 @@ func (d *deref) EnrichRemoteStatus(ctx context.Context, username string, status 
 	return status, nil
 }
 
-// GetRemoteStatus completely dereferences a remote status, converts it to a GtS model status,
+// GetStatus completely dereferences a status, converts it to a GtS model status,
 // puts it in the database, and returns it to a caller.
 //
 // If refetch is true, then regardless of whether we have the original status in the database or not,
@@ -61,9 +61,10 @@ func (d *deref) EnrichRemoteStatus(ctx context.Context, username string, status 
 // If refetch is false, the ap.Statusable will only be returned if this is a new status, so callers
 // should check whether or not this is nil.
 //
-// SIDE EFFECTS: remote status will be stored in the database, and the remote status owner will also be stored.
-func (d *deref) GetRemoteStatus(ctx context.Context, username string, remoteStatusID *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, error) {
-	uriString := remoteStatusID.String()
+// GetAccount will guard against trying to do http calls to fetch a status that belongs to this instance.
+// Instead of making calls, it will just return the status early if it finds it, or return an error.
+func (d *deref) GetStatus(ctx context.Context, username string, statusURI *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, error) {
+	uriString := statusURI.String()
 
 	// try to get by URI first
 	status, err := d.db.GetStatusByURI(ctx, uriString)
@@ -94,7 +95,7 @@ func (d *deref) GetRemoteStatus(ctx context.Context, username string, remoteStat
 	}
 
 	// guard against having our own statuses passed in
-	if host := remoteStatusID.Host; host == config.GetHost() || host == config.GetAccountDomain() {
+	if host := statusURI.Host; host == config.GetHost() || host == config.GetAccountDomain() {
 		// this is our status, definitely don't search for it
 		if status != nil {
 			return status, nil, nil
@@ -104,7 +105,7 @@ func (d *deref) GetRemoteStatus(ctx context.Context, username string, remoteStat
 
 	// if we got here, either we didn't have the status
 	// in the db, or we had it but need to refetch it
-	statusable, err := d.dereferenceStatusable(ctx, username, remoteStatusID)
+	statusable, err := d.dereferenceStatusable(ctx, username, statusURI)
 	if err != nil {
 		return nil, nil, fmt.Errorf("GetRemoteStatus: error dereferencing statusable: %s", err)
 	}
@@ -122,7 +123,7 @@ func (d *deref) GetRemoteStatus(ctx context.Context, username string, remoteStat
 	}
 
 	// we need to get the author of the status else we can't serialize it properly
-	if _, err = d.GetRemoteAccount(ctx, GetRemoteAccountParams{
+	if _, err = d.GetAccount(ctx, GetAccountParams{
 		RequestingUsername: username,
 		RemoteAccountID:    accountURI,
 		Blocking:           true,
@@ -132,7 +133,7 @@ func (d *deref) GetRemoteStatus(ctx context.Context, username string, remoteStat
 
 	status, err = d.typeConverter.ASStatusToStatus(ctx, statusable)
 	if err != nil {
-		return nil, statusable, fmt.Errorf("GetRemoteStatus: error converting statusable to status: %s", err)
+		return nil, nil, fmt.Errorf("GetRemoteStatus: error converting statusable to status: %s", err)
 	}
 
 	ulid, err := id.NewULIDFromTime(status.CreatedAt)
@@ -352,7 +353,7 @@ func (d *deref) populateStatusMentions(ctx context.Context, status *gtsmodel.Sta
 		if targetAccount == nil {
 			// we didn't find the account in our database already
 			// check if we can get the account remotely (dereference it)
-			if a, err := d.GetRemoteAccount(ctx, GetRemoteAccountParams{
+			if a, err := d.GetAccount(ctx, GetAccountParams{
 				RequestingUsername: requestingUsername,
 				RemoteAccountID:    targetAccountURI,
 			}); err != nil {
@@ -468,7 +469,7 @@ func (d *deref) populateStatusRepliedTo(ctx context.Context, status *gtsmodel.St
 			return err
 		}
 
-		replyToStatus, _, err := d.GetRemoteStatus(ctx, requestingUsername, statusURI, false, false)
+		replyToStatus, _, err := d.GetStatus(ctx, requestingUsername, statusURI, false, false)
 		if err != nil {
 			return fmt.Errorf("populateStatusRepliedTo: couldn't get reply to status with uri %s: %s", status.InReplyToURI, err)
 		}
