@@ -21,6 +21,7 @@ package bundb
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -168,7 +169,7 @@ func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(
 		// Set the account's related emojis
 		account.Emojis, err = a.emojis.emojisFromIDs(ctx, account.EmojiIDs)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error getting account emojis: %w", err)
 		}
 	}
 
