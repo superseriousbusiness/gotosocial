@@ -114,7 +114,7 @@ func (r *relationshipDB) getBlock(ctx context.Context, account1 string, account2
 		}
 
 		return &block, nil
-	})
+	}, account1, account2)
 }
 
 func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount string, targetAccount string) (*gtsmodel.Relationship, db.Error) {
