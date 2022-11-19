@@ -21,23 +21,35 @@ package bundb
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"time"
 
+	"codeberg.org/gruf/go-cache/v3/result"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/uptrace/bun"
 )
 
 type relationshipDB struct {
-	conn *DBConn
+	conn       *DBConn
+	accounts   *accountDB
+	blockCache *result.Cache[*gtsmodel.Block]
 }
 
-func (r *relationshipDB) newBlockQ(block *gtsmodel.Block) *bun.SelectQuery {
-	return r.conn.
-		NewSelect().
-		Model(block).
-		Relation("Account").
-		Relation("TargetAccount")
+func (r *relationshipDB) init() {
+	// Initialize block result cache
+	r.blockCache = result.NewSized([]result.Lookup{
+		{Name: "AccountID.TargetAccountID"},
+	}, func(b1 *gtsmodel.Block) *gtsmodel.Block {
+		b2 := new(gtsmodel.Block)
+		*b2 = *b1
+		return b2
+	}, 1000)
+
+	// Set cache TTL and start sweep routine
+	r.blockCache.SetTTL(time.Minute*5, false)
+	r.blockCache.Start(time.Second * 10)
 }
 
 func (r *relationshipDB) newFollowQ(follow interface{}) *bun.SelectQuery {
@@ -49,43 +61,60 @@ func (r *relationshipDB) newFollowQ(follow interface{}) *bun.SelectQuery {
 }
 
 func (r *relationshipDB) IsBlocked(ctx context.Context, account1 string, account2 string, eitherDirection bool) (bool, db.Error) {
-	q := r.conn.
-		NewSelect().
-		TableExpr("? AS ?", bun.Ident("blocks"), bun.Ident("block")).
-		Column("block.id")
-
-	if eitherDirection {
-		q = q.
-			WhereGroup(" OR ", func(inner *bun.SelectQuery) *bun.SelectQuery {
-				return inner.
-					Where("? = ?", bun.Ident("block.account_id"), account1).
-					Where("? = ?", bun.Ident("block.target_account_id"), account2)
-			}).
-			WhereGroup(" OR ", func(inner *bun.SelectQuery) *bun.SelectQuery {
-				return inner.
-					Where("? = ?", bun.Ident("block.account_id"), account2).
-					Where("? = ?", bun.Ident("block.target_account_id"), account1)
-			})
-	} else {
-		q = q.
-			Where("? = ?", bun.Ident("block.account_id"), account1).
-			Where("? = ?", bun.Ident("block.target_account_id"), account2)
+	// Look for a block in direction of account1->account2
+	block1, err := r.getBlock(ctx, account1, account2)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return false, err
 	}
 
-	return r.conn.Exists(ctx, q)
+	if block1 == nil && !eitherDirection {
+		return false, nil
+	}
+
+	// Look for a block in direction of account2->account1
+	block2, err := r.getBlock(ctx, account2, account1)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return false, err
+	}
+
+	return (block2 != nil), nil
 }
 
 func (r *relationshipDB) GetBlock(ctx context.Context, account1 string, account2 string) (*gtsmodel.Block, db.Error) {
-	block := &gtsmodel.Block{}
-
-	q := r.newBlockQ(block).
-		Where("? = ?", bun.Ident("block.account_id"), account1).
-		Where("? = ?", bun.Ident("block.target_account_id"), account2)
-
-	if err := q.Scan(ctx); err != nil {
-		return nil, r.conn.ProcessError(err)
+	// Fetch block from database
+	block, err := r.getBlock(ctx, account1, account2)
+	if err != nil {
+		return nil, err
 	}
+
+	// Set the block originating account
+	block.Account, err = r.accounts.GetAccountByID(ctx, block.AccountID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set the block target account
+	block.TargetAccount, err = r.accounts.GetAccountByID(ctx, block.TargetAccountID)
+	if err != nil {
+		return nil, err
+	}
+
 	return block, nil
+}
+
+func (r *relationshipDB) getBlock(ctx context.Context, account1 string, account2 string) (*gtsmodel.Block, db.Error) {
+	return r.blockCache.Load("AccountID.TargetAccountID", func() (*gtsmodel.Block, error) {
+		var block gtsmodel.Block
+
+		q := r.conn.NewSelect().Model(&block).
+			Where("? = ?", bun.Ident("block.account_id"), account1).
+			Where("? = ?", bun.Ident("block.target_account_id"), account2)
+		if err := q.Scan(ctx); err != nil {
+			return nil, r.conn.ProcessError(err)
+		}
+
+		return &block, nil
+	})
 }
 
 func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount string, targetAccount string) (*gtsmodel.Relationship, db.Error) {
@@ -144,30 +173,18 @@ func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount 
 	rel.Requested = requested
 
 	// check if the requesting account is blocking the target account
-	blockingQ := r.conn.
-		NewSelect().
-		TableExpr("? AS ?", bun.Ident("blocks"), bun.Ident("block")).
-		Column("block.id").
-		Where("? = ?", bun.Ident("block.account_id"), requestingAccount).
-		Where("? = ?", bun.Ident("block.target_account_id"), targetAccount)
-	blocking, err := r.conn.Exists(ctx, blockingQ)
-	if err != nil {
+	blockA2T, err := r.getBlock(ctx, requestingAccount, targetAccount)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, fmt.Errorf("GetRelationship: error checking blocking: %s", err)
 	}
-	rel.Blocking = blocking
+	rel.Blocking = (blockA2T != nil)
 
 	// check if the requesting account is blocked by the target account
-	blockedByQ := r.conn.
-		NewSelect().
-		TableExpr("? AS ?", bun.Ident("blocks"), bun.Ident("block")).
-		Column("block.id").
-		Where("? = ?", bun.Ident("block.account_id"), targetAccount).
-		Where("? = ?", bun.Ident("block.target_account_id"), requestingAccount)
-	blockedBy, err := r.conn.Exists(ctx, blockedByQ)
-	if err != nil {
+	blockT2A, err := r.getBlock(ctx, targetAccount, requestingAccount)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, fmt.Errorf("GetRelationship: error checking blockedBy: %s", err)
 	}
-	rel.BlockedBy = blockedBy
+	rel.BlockedBy = (blockT2A != nil)
 
 	return rel, nil
 }
