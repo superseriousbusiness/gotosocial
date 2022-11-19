@@ -66,7 +66,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		account.NoteRaw = *form.Note
 
 		// Process note to generate a valid HTML representation
-		note, err := p.processNote(ctx, *form.Note, account.ID)
+		note, err := p.processNote(ctx, *form.Note, account)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err)
 		}
@@ -241,13 +241,13 @@ func (p *processor) UpdateHeader(ctx context.Context, header *multipart.FileHead
 	return processingMedia.LoadAttachment(ctx)
 }
 
-func (p *processor) processNote(ctx context.Context, note string, accountID string) (string, error) {
+func (p *processor) processNote(ctx context.Context, note string, account *gtsmodel.Account) (string, error) {
 	if note == "" {
 		return "", nil
 	}
 
 	tagStrings := util.DeriveHashtagsFromText(note)
-	tags, err := p.db.TagStringsToTags(ctx, tagStrings, accountID)
+	tags, err := p.db.TagStringsToTags(ctx, tagStrings, account.ID)
 	if err != nil {
 		return "", err
 	}
@@ -255,7 +255,7 @@ func (p *processor) processNote(ctx context.Context, note string, accountID stri
 	mentionStrings := util.DeriveMentionNamesFromText(note)
 	mentions := []*gtsmodel.Mention{}
 	for _, mentionString := range mentionStrings {
-		mention, err := p.parseMention(ctx, mentionString, accountID, "")
+		mention, err := p.parseMention(ctx, mentionString, account.ID, "")
 		if err != nil {
 			continue
 		}
@@ -265,6 +265,10 @@ func (p *processor) processNote(ctx context.Context, note string, accountID stri
 	// TODO: support emojis in account notes
 	// emojiStrings := util.DeriveEmojisFromText(note)
 	// emojis, err := p.db.EmojiStringsToEmojis(ctx, emojiStrings)
+
+	if account.StatusFormat == "markdown" {
+		return p.formatter.FromMarkdown(ctx, note, mentions, tags, nil), nil
+	}
 
 	return p.formatter.FromPlain(ctx, note, mentions, tags), nil
 }
