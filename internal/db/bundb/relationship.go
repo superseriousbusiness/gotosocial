@@ -67,7 +67,11 @@ func (r *relationshipDB) IsBlocked(ctx context.Context, account1 string, account
 		return false, err
 	}
 
-	if block1 == nil && !eitherDirection {
+	if block1 != nil {
+		// account1 blocks account2
+		return true, nil
+	} else if !eitherDirection {
+		// Don't check for mutli-directional
 		return false, nil
 	}
 
@@ -115,6 +119,13 @@ func (r *relationshipDB) getBlock(ctx context.Context, account1 string, account2
 
 		return &block, nil
 	}, account1, account2)
+}
+
+func (r *relationshipDB) PutBlock(ctx context.Context, block *gtsmodel.Block) db.Error {
+	return r.blockCache.Store(block, func() error {
+		_, err := r.conn.NewInsert().Model(block).Exec(ctx)
+		return r.conn.ProcessError(err)
+	})
 }
 
 func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount string, targetAccount string) (*gtsmodel.Relationship, db.Error) {

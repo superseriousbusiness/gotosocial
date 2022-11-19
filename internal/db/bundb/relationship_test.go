@@ -47,7 +47,7 @@ func (suite *RelationshipTestSuite) TestIsBlocked() {
 	suite.False(blocked)
 
 	// have account1 block account2
-	if err := suite.db.Put(ctx, &gtsmodel.Block{
+	if err := suite.db.PutBlock(ctx, &gtsmodel.Block{
 		ID:              "01G202BCSXXJZ70BHB5KCAHH8C",
 		URI:             "http://localhost:8080/some_block_uri_1",
 		AccountID:       account1,
@@ -81,7 +81,7 @@ func (suite *RelationshipTestSuite) TestGetBlock() {
 	account1 := suite.testAccounts["local_account_1"].ID
 	account2 := suite.testAccounts["local_account_2"].ID
 
-	if err := suite.db.Put(ctx, &gtsmodel.Block{
+	if err := suite.db.PutBlock(ctx, &gtsmodel.Block{
 		ID:              "01G202BCSXXJZ70BHB5KCAHH8C",
 		URI:             "http://localhost:8080/some_block_uri_1",
 		AccountID:       account1,

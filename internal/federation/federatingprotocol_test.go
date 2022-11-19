@@ -312,7 +312,7 @@ func (suite *FederatingProtocolTestSuite) TestBlocked2() {
 	ctxWithOtherInvolvedIRIs := context.WithValue(ctxWithRequestingAccount, ap.ContextOtherInvolvedIRIs, otherInvolvedIRIs)
 
 	// insert a block from inboxAccount targeting sendingAccount
-	if err := suite.db.Put(context.Background(), &gtsmodel.Block{
+	if err := suite.db.PutBlock(context.Background(), &gtsmodel.Block{
 		ID:              "01G3KBEMJD4VQ2D615MPV7KTRD",
 		URI:             "whatever",
 		AccountID:       inboxAccount.ID,
@@ -350,7 +350,7 @@ func (suite *FederatingProtocolTestSuite) TestBlocked3() {
 	ctxWithOtherInvolvedIRIs := context.WithValue(ctxWithRequestingAccount, ap.ContextOtherInvolvedIRIs, otherInvolvedIRIs)
 
 	// insert a block from inboxAccount targeting CCed account
-	if err := suite.db.Put(context.Background(), &gtsmodel.Block{
+	if err := suite.db.PutBlock(context.Background(), &gtsmodel.Block{
 		ID:              "01G3KBEMJD4VQ2D615MPV7KTRD",
 		URI:             "whatever",
 		AccountID:       inboxAccount.ID,

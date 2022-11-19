@@ -36,6 +36,9 @@ type Relationship interface {
 	// not if you're just checking for the existence of a block.
 	GetBlock(ctx context.Context, account1 string, account2 string) (*gtsmodel.Block, Error)
 
+	// PutBlock attempts to place the given account block in the database.
+	PutBlock(ctx context.Context, block *gtsmodel.Block) Error
+
 	// GetRelationship retrieves the relationship of the targetAccount to the requestingAccount.
 	GetRelationship(ctx context.Context, requestingAccount string, targetAccount string) (*gtsmodel.Relationship, Error)
 
