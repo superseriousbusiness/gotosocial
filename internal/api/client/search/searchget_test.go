@@ -307,12 +307,7 @@ func (suite *SearchGetTestSuite) TestSearchNonexistingLocalAccountByURL() {
 	err = json.Unmarshal(b, searchResult)
 	suite.NoError(err)
 	
-	if !suite.Len(searchResult.Accounts, 1) {
-		suite.FailNow("expected 1 account in search results but got 0")
-	}
-
-	gotAccount := searchResult.Accounts[0]
-	suite.NotNil(gotAccount)
+	suite.Len(searchResult.Accounts, 0)
 }
 
 func (suite *SearchGetTestSuite) TestSearchStatusByURL() {
