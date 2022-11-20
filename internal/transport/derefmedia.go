@@ -31,7 +31,7 @@ func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL) (io.Read
 	iriStr := iri.String()
 
 	// Prepare HTTP request to this media's IRI
-	req, err := http.NewRequestWithContext(ctx, "GET", iriStr, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", iriStr, http.NoBody)
 	if err != nil {
 		return nil, 0, err
 	}

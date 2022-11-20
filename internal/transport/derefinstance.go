@@ -87,7 +87,7 @@ func dereferenceByAPIV1Instance(ctx context.Context, t *transport, iri *url.URL)
 	// Build IRI just once
 	iriStr := cleanIRI.String()
 
-	req, err := http.NewRequestWithContext(ctx, "GET", iriStr, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", iriStr, http.NoBody)
 	if err != nil {
 		return nil, err
 	}
@@ -239,7 +239,7 @@ func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*ur
 	// Build IRI just once
 	iriStr := cleanIRI.String()
 
-	req, err := http.NewRequestWithContext(ctx, "GET", iriStr, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", iriStr, http.NoBody)
 	if err != nil {
 		return nil, err
 	}
@@ -291,7 +291,7 @@ func callNodeInfo(ctx context.Context, t *transport, iri *url.URL) (*apimodel.No
 	// Build IRI just once
 	iriStr := iri.String()
 
-	req, err := http.NewRequestWithContext(ctx, "GET", iriStr, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", iriStr, http.NoBody)
 	if err != nil {
 		return nil, err
 	}

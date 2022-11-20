@@ -56,7 +56,7 @@ func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, erro
 	iriStr := iri.String()
 
 	// Prepare new HTTP request to endpoint
-	req, err := http.NewRequestWithContext(ctx, "GET", iriStr, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", iriStr, http.NoBody)
 	if err != nil {
 		return nil, err
 	}

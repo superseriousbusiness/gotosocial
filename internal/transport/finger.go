@@ -35,7 +35,7 @@ func (t *transport) Finger(ctx context.Context, targetUsername, targetDomain str
 		targetUsername + "@" + targetDomain
 
 	// Generate new GET request from URL string
-	req, err := http.NewRequestWithContext(ctx, "GET", urlStr, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", urlStr, http.NoBody)
 	if err != nil {
 		return nil, err
 	}

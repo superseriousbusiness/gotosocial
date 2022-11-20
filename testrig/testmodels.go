@@ -2369,7 +2369,7 @@ func GetSignatureForDereference(pubKeyID string, privkey *rsa.PrivateKey, destin
 	}
 
 	// Prepare a mock request ready for signing
-	r, err := http.NewRequest("GET", destination.String(), nil)
+	r, err := http.NewRequest("GET", destination.String(), http.NoBody)
 	if err != nil {
 		panic(err)
 	}
