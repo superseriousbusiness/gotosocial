@@ -262,7 +262,7 @@ Sloth logo by [Anna Abramek](https://abramek.art/), Copyright (C) 2021-2022 the 
 In alphabetical order (... and order of smell):
 
 - f0x \[[donate with liberapay](https://liberapay.com/f0x)\]
-- kim \[check out my code @ [codeberg](https://codeberg.org/gruf), or on the fediverse @ [@kim](https://k.iim.gay/@kim)\]
+- kim \[check out my code @ [codeberg](https://codeberg.org/gruf), or find me @ [@kim](https://k.iim.gay/@kim)\]
 - tobi \[[donate with liberapay](https://liberapay.com/GoToSocial/)\]
 
 ### Special Thanks
