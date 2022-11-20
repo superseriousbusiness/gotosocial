@@ -47,16 +47,17 @@ spans:
 		tagAsEntered := in[t.First+1 : t.Second]
 
 		for _, tag := range tags {
-			if strings.EqualFold(tagAsEntered, tag.Name) {
-				// replace the #tag with the formatted tag content
-				// `<a href="tag.URL" class="mention hashtag" rel="tag">#<span>tagAsEntered</span></a>
-				b.WriteString(`<a href="`)
-				b.WriteString(tag.URL)
-				b.WriteString(`" class="mention hashtag" rel="tag">#<span>`)
-				b.WriteString(tagAsEntered)
-				b.WriteString(`</span></a>`)
-				continue spans
+			if !strings.EqualFold(tagAsEntered, tag.Name) {
+				continue
 			}
+			// replace the #tag with the formatted tag content
+			// `<a href="tag.URL" class="mention hashtag" rel="tag">#<span>tagAsEntered</span></a>
+			b.WriteString(`<a href="`)
+			b.WriteString(tag.URL)
+			b.WriteString(`" class="mention hashtag" rel="tag">#<span>`)
+			b.WriteString(tagAsEntered)
+			b.WriteString(`</span></a>`)
+			continue spans
 		}
 
 		b.WriteString(in[t.First:t.Second])
@@ -76,34 +77,36 @@ func (f *formatter) ReplaceMentions(ctx context.Context, in string, mentions []*
 
 		// check through mentions to find what we're matching
 		for _, menchie := range mentions {
-			if strings.EqualFold(matchTrimmed, menchie.NameString) {
-				// make sure we have an account attached to this mention
-				if menchie.TargetAccount == nil {
-					a, err := f.db.GetAccountByID(ctx, menchie.TargetAccountID)
-					if err != nil {
-						log.Errorf("error getting account with id %s from the db: %s", menchie.TargetAccountID, err)
-						return match
-					}
-					menchie.TargetAccount = a
-				}
-
-				// The mention's target is our target
-				targetAccount := menchie.TargetAccount
-
-				// Add any dropped space from match
-				if unicode.IsSpace(rune(match[0])) {
-					buf.WriteByte(match[0])
-				}
-
-				// replace the mention with the formatted mention content
-				// <span class="h-card"><a href="targetAccount.URL" class="u-url mention">@<span>targetAccount.Username</span></a></span>
-				buf.WriteString(`<span class="h-card"><a href="`)
-				buf.WriteString(targetAccount.URL)
-				buf.WriteString(`" class="u-url mention">@<span>`)
-				buf.WriteString(targetAccount.Username)
-				buf.WriteString(`</span></a></span>`)
-				return buf.String()
+			if !strings.EqualFold(matchTrimmed, menchie.NameString) {
+				continue
 			}
+
+			// make sure we have an account attached to this mention
+			if menchie.TargetAccount == nil {
+				a, err := f.db.GetAccountByID(ctx, menchie.TargetAccountID)
+				if err != nil {
+					log.Errorf("error getting account with id %s from the db: %s", menchie.TargetAccountID, err)
+					return match
+				}
+				menchie.TargetAccount = a
+			}
+
+			// The mention's target is our target
+			targetAccount := menchie.TargetAccount
+
+			// Add any dropped space from match
+			if unicode.IsSpace(rune(match[0])) {
+				buf.WriteByte(match[0])
+			}
+
+			// replace the mention with the formatted mention content
+			// <span class="h-card"><a href="targetAccount.URL" class="u-url mention">@<span>targetAccount.Username</span></a></span>
+			buf.WriteString(`<span class="h-card"><a href="`)
+			buf.WriteString(targetAccount.URL)
+			buf.WriteString(`" class="u-url mention">@<span>`)
+			buf.WriteString(targetAccount.Username)
+			buf.WriteString(`</span></a></span>`)
+			return buf.String()
 		}
 
 		// the match wasn't in the list of mentions for whatever reason, so just return the match as we found it so nothing changes

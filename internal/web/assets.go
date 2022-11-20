@@ -86,7 +86,7 @@ func (m *Module) getAssetETag(filePath string, fs http.FileSystem) (string, erro
 
 	fileLastModified := fileInfo.ModTime()
 
-	if cachedETag, ok := m.eTagCache.Get(filePath); ok && !fileLastModified.After(cachedETag.lastModified) {
+	if cachedETag, ok := m.eTagCache.Get(filePath); ok && fileLastModified.Before(cachedETag.lastModified) {
 		// only return our cached etag if the file wasn't
 		// modified since last time, otherwise generate a
 		// new one; eat fresh!

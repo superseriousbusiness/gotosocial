@@ -130,5 +130,5 @@ func isHashtagBoundary(r rune) bool {
 		unicode.IsControl(r) || // All kinds of control characters, like tab.
 		// Most kinds of punctuation except "Pc" ("Punctuation, connecting", like `_`).
 		// But `someurl/#fragment` should not match, neither should HTML entities like `&#35;`.
-		('/' != r && '&' != r && !unicode.Is(unicode.Categories["Pc"], r) && unicode.IsPunct(r))
+		(r != '/' && r != '&' && !unicode.Is(unicode.Categories["Pc"], r) && unicode.IsPunct(r))
 }

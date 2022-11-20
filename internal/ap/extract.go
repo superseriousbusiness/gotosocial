@@ -719,22 +719,24 @@ func ExtractSharedInbox(withEndpoints WithEndpoints) *url.URL {
 	}
 
 	for iter := endpointsProp.Begin(); iter != endpointsProp.End(); iter = iter.Next() {
-		if iter.IsActivityStreamsEndpoints() {
-			endpoints := iter.Get()
-			if endpoints == nil {
-				return nil
-			}
-			sharedInboxProp := endpoints.GetActivityStreamsSharedInbox()
-			if sharedInboxProp == nil {
-				return nil
-			}
-
-			if !sharedInboxProp.IsIRI() {
-				return nil
-			}
-
-			return sharedInboxProp.GetIRI()
+		if !iter.IsActivityStreamsEndpoints() {
+			continue
 		}
+
+		endpoints := iter.Get()
+		if endpoints == nil {
+			return nil
+		}
+		sharedInboxProp := endpoints.GetActivityStreamsSharedInbox()
+		if sharedInboxProp == nil {
+			return nil
+		}
+
+		if !sharedInboxProp.IsIRI() {
+			return nil
+		}
+
+		return sharedInboxProp.GetIRI()
 	}
 
 	return nil

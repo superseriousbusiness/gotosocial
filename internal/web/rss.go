@@ -35,7 +35,7 @@ import (
 const appRSSUTF8 = string(api.AppRSSXML + "; charset=utf-8")
 
 func (m *Module) GetRSSETag(urlPath string, lastModified time.Time, getRSSFeed func() (string, gtserror.WithCode)) (string, error) {
-	if cachedETag, ok := m.eTagCache.Get(urlPath); ok && !lastModified.After(cachedETag.lastModified) {
+	if cachedETag, ok := m.eTagCache.Get(urlPath); ok && lastModified.Before(cachedETag.lastModified) {
 		// only return our cached etag if the file wasn't
 		// modified since last time, otherwise generate a
 		// new one; eat fresh!

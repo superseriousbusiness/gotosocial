@@ -122,7 +122,7 @@ func (og *ogMeta) withStatus(status *apimodel.Status) *ogMeta {
 func parseTitle(account *apimodel.Account, accountDomain string) string {
 	user := "@" + account.Acct + "@" + accountDomain
 
-	if len(account.DisplayName) == 0 {
+	if account.DisplayName == "" {
 		return user
 	}
 
