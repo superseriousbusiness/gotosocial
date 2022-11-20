@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -303,11 +302,11 @@ func (p *processor) ProcessContent(ctx context.Context, form *apimodel.AdvancedS
 
 		switch acct.StatusFormat {
 		case "plain":
-			form.Format = model.StatusFormatPlain
+			form.Format = apimodel.StatusFormatPlain
 		case "markdown":
-			form.Format = model.StatusFormatMarkdown
+			form.Format = apimodel.StatusFormatMarkdown
 		default:
-			form.Format = model.StatusFormatDefault
+			form.Format = apimodel.StatusFormatDefault
 		}
 	}
 
