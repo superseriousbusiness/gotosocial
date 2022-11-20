@@ -81,7 +81,7 @@ This project sprang up in February/March 2021 out of a dissatisfaction with the 
 
 It began as a solo project, and then picked up steam as more developers became interested and jumped on.
 
-For a detailed view on what's implemented and what's not, and progress made towards [beta release](https://en.wikipedia.org/wiki/Software_release_life_cycle#Beta), please see [the roadmap document](./ROADMAP.md).
+For a detailed view on what's implemented and what's not, and progress made towards [beta release](https://en.wikipedia.org/wiki/Software_release_life_cycle#Beta), please see [the roadmap document](./ROADMAP.md). The [FAQ](docs/faq.md) contains a higher-level overview.
 
 ## Features
 
@@ -179,7 +179,7 @@ These packages are not maintained by GoToSocial, so please direct questions and 
 
 ## Known Issues
 
-Since GoToSocial is still in alpha, there are plenty of bugs. We use GitHub issues to track these. [Check them out here](https://github.com/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug).
+Since GoToSocial is still in alpha, there are plenty of bugs. We use [GitHub issues](https://github.com/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug) to track these. The [FAQ](docs/faq.md) also describes some of the features that haven't been implemented yet.
 
 ### Client App Issues
 
