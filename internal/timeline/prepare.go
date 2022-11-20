@@ -78,7 +78,6 @@ func (t *timeline) PrepareBehind(ctx context.Context, itemID string, amount int)
 	var preparing bool
 	t.Lock()
 	defer t.Unlock()
-prepareloop:
 	for e := t.itemIndex.data.Front(); e != nil; e = e.Next() {
 		entry, ok := e.Value.(*itemIndexEntry)
 		if !ok {
@@ -104,7 +103,7 @@ prepareloop:
 			}
 			if prepared == amount {
 				// we're done
-				break prepareloop
+				break
 			}
 			prepared++
 		}
@@ -130,7 +129,6 @@ func (t *timeline) PrepareBefore(ctx context.Context, statusID string, include b
 
 	var prepared int
 	var preparing bool
-prepareloop:
 	for e := t.itemIndex.data.Back(); e != nil; e = e.Prev() {
 		entry, ok := e.Value.(*itemIndexEntry)
 		if !ok {
@@ -159,7 +157,7 @@ prepareloop:
 			}
 			if prepared == amount {
 				// we're done
-				break prepareloop
+				break
 			}
 			prepared++
 		}
@@ -191,7 +189,6 @@ func (t *timeline) PrepareFromTop(ctx context.Context, amount int) error {
 	t.Lock()
 	defer t.Unlock()
 	var prepared int
-prepareloop:
 	for e := t.itemIndex.data.Front(); e != nil; e = e.Next() {
 		if e == nil {
 			continue
@@ -216,7 +213,7 @@ prepareloop:
 		if prepared == amount {
 			// we're done
 			l.Trace("leaving prepareloop")
-			break prepareloop
+			break
 		}
 	}
 

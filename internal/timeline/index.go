@@ -43,7 +43,6 @@ func (t *timeline) IndexBefore(ctx context.Context, itemID string, amount int) e
 	offsetID := itemID
 
 	l.Trace("entering grabloop")
-grabloop:
 	for i := 0; len(toIndex) < amount && i < 5; i++ { // try the grabloop 5 times only
 		// first grab items using the caller-provided grab function
 		l.Trace("grabbing...")
@@ -52,7 +51,7 @@ grabloop:
 			return err
 		}
 		if stop {
-			break grabloop
+			break
 		}
 
 		l.Trace("filtering...")
@@ -94,7 +93,6 @@ func (t *timeline) IndexBehind(ctx context.Context, itemID string, amount int) e
 	// If we're already indexedBehind given itemID by the required amount, we can return nil.
 	// First find position of itemID (or as near as possible).
 	var position int
-positionLoop:
 	for e := t.itemIndex.data.Front(); e != nil; e = e.Next() {
 		entry, ok := e.Value.(*itemIndexEntry)
 		if !ok {
@@ -103,7 +101,7 @@ positionLoop:
 
 		if entry.itemID <= itemID {
 			// we've found it
-			break positionLoop
+			break
 		}
 		position++
 	}
@@ -119,7 +117,6 @@ positionLoop:
 	offsetID := itemID
 
 	l.Trace("entering grabloop")
-grabloop:
 	for i := 0; len(toIndex) < amount && i < 5; i++ { // try the grabloop 5 times only
 		// first grab items using the caller-provided grab function
 		l.Trace("grabbing...")
@@ -128,7 +125,7 @@ grabloop:
 			return err
 		}
 		if stop {
-			break grabloop
+			break
 		}
 
 		l.Trace("filtering...")

@@ -110,11 +110,10 @@ func init() {
 				l.Debugf("found %d duplicates of attachment with remote url %s", len(dupedAttachments), dupedRemoteURL.RemoteURL)
 
 				var statusID string
-			statusIDLoop:
 				for _, dupe := range dupedAttachments {
 					if dupe.StatusID != "" {
 						statusID = dupe.StatusID
-						break statusIDLoop
+						break
 					}
 				}
 
@@ -139,11 +138,10 @@ func init() {
 				// step 4: for each attachment, check if it's actually one that the status is currently set to use, and delete if not
 				for _, dupe := range dupedAttachments {
 					var currentlyUsed bool
-				currentlyUsedLoop:
 					for _, attachmentID := range status.AttachmentIDs {
 						if attachmentID == dupe.ID {
 							currentlyUsed = true
-							break currentlyUsedLoop
+							break
 						}
 					}
 

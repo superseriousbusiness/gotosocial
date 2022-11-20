@@ -47,7 +47,6 @@ func init() {
 
 			offset := time.Now()
 			// migrate existing media attachments into new table
-		migrateLoop:
 			for {
 				oldAttachments := []*previousgtsmodel.MediaAttachment{}
 				err := tx.
@@ -65,7 +64,7 @@ func init() {
 
 				if err == sql.ErrNoRows || len(oldAttachments) == 0 {
 					// we're finished migrating
-					break migrateLoop
+					break
 				}
 
 				// update the offset to the createdAt time of the oldest media attachment in the slice

@@ -145,19 +145,17 @@ func (p *processor) initiateDomainBlockSideEffects(ctx context.Context, account 
 
 	limit := 20      // just select 20 accounts at a time so we don't nuke our DB/mem with one huge query
 	var maxID string // this is initially an empty string so we'll start at the top of accounts list (sorted by ID)
-
-selectAccountsLoop:
 	for {
 		accounts, err := p.db.GetInstanceAccounts(ctx, block.Domain, maxID, limit)
 		if err != nil {
 			if err == db.ErrNoEntries {
 				// no accounts left for this instance so we're done
 				l.Infof("domainBlockProcessSideEffects: done iterating through accounts for domain %s", block.Domain)
-				break selectAccountsLoop
+				break
 			}
 			// an actual error has occurred
 			l.Errorf("domainBlockProcessSideEffects: db error selecting accounts for domain %s: %s", block.Domain, err)
-			break selectAccountsLoop
+			break
 		}
 
 		for i, a := range accounts {

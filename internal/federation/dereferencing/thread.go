@@ -229,30 +229,28 @@ stackLoop:
 			}
 		}
 
-	pageLoop:
 		for {
 			if current.itemIter == nil {
 				// Get the items associated with this page
 				items := current.page.GetActivityStreamsItems()
 				if items == nil {
-					continue stackLoop
+					break
 				}
 
 				// Start off the item iterator
 				current.itemIter = items.Begin()
 				if current.itemIter == nil {
-					continue stackLoop
+					break
 				}
 			}
 
-		itemLoop:
 			for {
 				var itemIRI *url.URL
 
 				// Get next item iterator object
 				current.itemIter = current.itemIter.Next()
 				if current.itemIter == nil {
-					break itemLoop
+					break
 				}
 
 				if iri := current.itemIter.GetIRI(); iri != nil {
@@ -267,19 +265,19 @@ stackLoop:
 
 				if itemIRI == nil {
 					// Unusable iter object
-					continue itemLoop
+					continue
 				}
 
 				if itemIRI.Host == config.GetHost() {
 					// This child is one of ours,
-					continue itemLoop
+					continue
 				}
 
 				// Dereference the remote status and store in the database
 				_, statusable, err := d.GetRemoteStatus(ctx, username, itemIRI, true, false)
 				if err != nil {
 					l.Errorf("error dereferencing remote status %q: %s", itemIRI.String(), err)
-					continue itemLoop
+					continue
 				}
 
 				// Put current and next frame at top of stack
@@ -289,31 +287,30 @@ stackLoop:
 				})
 
 				// Now start at top of loop
-				continue stackLoop
+				continue stackLoop //nolint:gocritic
 			}
 
 			// Get the current page's "next" property
 			pageNext := current.page.GetActivityStreamsNext()
 			if pageNext == nil {
-				continue stackLoop
+				continue
 			}
 
 			// Get the "next" page property IRI
 			pageNextIRI := pageNext.GetIRI()
 			if pageNextIRI == nil {
-				continue stackLoop
+				continue
 			}
 
 			// Dereference this next collection page by its IRI
 			collectionPage, err := d.DereferenceCollectionPage(ctx, username, pageNextIRI)
 			if err != nil {
 				l.Errorf("error dereferencing remote collection page %q: %s", pageNextIRI.String(), err)
-				continue stackLoop
+				continue
 			}
 
 			// Set the updated collection page
 			current.page = collectionPage
-			continue pageLoop
 		}
 	}
 

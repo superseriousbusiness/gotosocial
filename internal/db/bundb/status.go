@@ -427,7 +427,6 @@ func (s *statusDB) statusChildren(ctx context.Context, status *gtsmodel.Status, 
 			continue
 		}
 
-	insertLoop:
 		for e := foundStatuses.Front(); e != nil; e = e.Next() {
 			entry, ok := e.Value.(*gtsmodel.Status)
 			if !ok {
@@ -436,7 +435,7 @@ func (s *statusDB) statusChildren(ctx context.Context, status *gtsmodel.Status, 
 
 			if child.InReplyToAccountID != "" && entry.ID == child.InReplyToID {
 				foundStatuses.InsertAfter(child, e)
-				break insertLoop
+				break
 			}
 		}
 

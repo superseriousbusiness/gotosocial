@@ -157,7 +157,6 @@ func (t *timeline) GetXBehindID(ctx context.Context, amount int, behindID string
 	var position int
 	var behindIDMark *list.Element
 
-findMarkLoop:
 	for e := t.preparedItems.data.Front(); e != nil; e = e.Next() {
 		position++
 		entry, ok := e.Value.(*preparedItemsEntry)
@@ -168,7 +167,7 @@ findMarkLoop:
 		if entry.itemID <= behindID {
 			l.Trace("found behindID mark")
 			behindIDMark = e
-			break findMarkLoop
+			break
 		}
 	}
 
@@ -207,7 +206,6 @@ findMarkLoop:
 
 	// start serving from the entry right after the mark
 	var served int
-serveloop:
 	for e := behindIDMark.Next(); e != nil; e = e.Next() {
 		entry, ok := e.Value.(*preparedItemsEntry)
 		if !ok {
@@ -218,7 +216,7 @@ serveloop:
 		items = append(items, entry.prepared)
 		served++
 		if served >= amount {
-			break serveloop
+			break
 		}
 	}
 
@@ -235,7 +233,6 @@ func (t *timeline) GetXBeforeID(ctx context.Context, amount int, beforeID string
 
 	// iterate through the modified list until we hit the mark we're looking for, or as close as possible to it
 	var beforeIDMark *list.Element
-findMarkLoop:
 	for e := t.preparedItems.data.Front(); e != nil; e = e.Next() {
 		entry, ok := e.Value.(*preparedItemsEntry)
 		if !ok {
@@ -245,7 +242,7 @@ findMarkLoop:
 		if entry.itemID >= beforeID {
 			beforeIDMark = e
 		} else {
-			break findMarkLoop
+			break
 		}
 	}
 
@@ -257,7 +254,6 @@ findMarkLoop:
 
 	if startFromTop {
 		// start serving from the front/top and keep going until we hit mark or get x amount items
-	serveloopFromTop:
 		for e := t.preparedItems.data.Front(); e != nil; e = e.Next() {
 			entry, ok := e.Value.(*preparedItemsEntry)
 			if !ok {
@@ -265,19 +261,18 @@ findMarkLoop:
 			}
 
 			if entry.itemID == beforeID {
-				break serveloopFromTop
+				break
 			}
 
 			// serve up to the amount requested
 			items = append(items, entry.prepared)
 			served++
 			if served >= amount {
-				break serveloopFromTop
+				break
 			}
 		}
 	} else if !startFromTop {
 		// start serving from the entry right before the mark
-	serveloopFromBottom:
 		for e := beforeIDMark.Prev(); e != nil; e = e.Prev() {
 			entry, ok := e.Value.(*preparedItemsEntry)
 			if !ok {
@@ -288,7 +283,7 @@ findMarkLoop:
 			items = append(items, entry.prepared)
 			served++
 			if served >= amount {
-				break serveloopFromBottom
+				break
 			}
 		}
 	}
@@ -307,7 +302,6 @@ func (t *timeline) GetXBetweenID(ctx context.Context, amount int, behindID, befo
 	// iterate through the modified list until we hit the mark we're looking for
 	var position int
 	var behindIDMark *list.Element
-findMarkLoop:
 	for e := t.preparedItems.data.Front(); e != nil; e = e.Next() {
 		position++
 		entry, ok := e.Value.(*preparedItemsEntry)
@@ -317,7 +311,7 @@ findMarkLoop:
 
 		if entry.itemID == behindID {
 			behindIDMark = e
-			break findMarkLoop
+			break
 		}
 	}
 
@@ -335,7 +329,6 @@ findMarkLoop:
 
 	// start serving from the entry right after the mark
 	var served int
-serveloop:
 	for e := behindIDMark.Next(); e != nil; e = e.Next() {
 		entry, ok := e.Value.(*preparedItemsEntry)
 		if !ok {
@@ -343,14 +336,14 @@ serveloop:
 		}
 
 		if entry.itemID == beforeID {
-			break serveloop
+			break
 		}
 
 		// serve up to the amount requested
 		items = append(items, entry.prepared)
 		served++
 		if served >= amount {
-			break serveloop
+			break
 		}
 	}
 
