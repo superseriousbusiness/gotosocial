@@ -38,7 +38,7 @@ type StreamsForAccount struct {
 	// The currently held streams for this account
 	Streams []*Stream
 	// Mutex to lock/unlock when modifying the slice of streams.
-	sync.Mutex
+	Mutex sync.Mutex
 }
 
 // Stream represents one open stream for a client.
@@ -54,7 +54,7 @@ type Stream struct {
 	// Only put messages in the stream when Connected
 	Connected bool
 	// Mutex to lock/unlock when inserting messages, hanging up, changing the connected state etc.
-	sync.Mutex
+	Mutex sync.Mutex
 }
 
 // Message represents one streamed message.

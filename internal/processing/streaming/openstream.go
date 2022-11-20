@@ -71,9 +71,9 @@ func (p *processor) OpenStreamForAccount(ctx context.Context, account *gtsmodel.
 		}
 
 		// append this stream to it
-		streamsForAccount.Lock()
+		streamsForAccount.Mutex.Lock()
 		streamsForAccount.Streams = append(streamsForAccount.Streams, thisStream)
-		streamsForAccount.Unlock()
+		streamsForAccount.Mutex.Unlock()
 	}
 
 	return thisStream, nil
@@ -86,8 +86,8 @@ func (p *processor) waitToCloseStream(account *gtsmodel.Account, thisStream *str
 	<-thisStream.Hangup // wait for a hangup message
 
 	// lock the stream to prevent more messages being put in it while we work
-	thisStream.Lock()
-	defer thisStream.Unlock()
+	thisStream.Mutex.Lock()
+	defer thisStream.Mutex.Unlock()
 
 	// indicate the stream is no longer connected
 	thisStream.Connected = false
@@ -103,8 +103,8 @@ func (p *processor) waitToCloseStream(account *gtsmodel.Account, thisStream *str
 	}
 
 	// lock the streams for account while we remove this stream from its slice
-	streamsForAccount.Lock()
-	defer streamsForAccount.Unlock()
+	streamsForAccount.Mutex.Lock()
+	defer streamsForAccount.Mutex.Unlock()
 
 	// put everything into modified streams *except* the stream we're removing
 	modifiedStreams := []*stream.Stream{}

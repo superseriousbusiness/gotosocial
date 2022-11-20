@@ -37,12 +37,12 @@ func (p *processor) streamToAccount(payload, event string, timelines []string, a
 		return errors.New("stream map error")
 	}
 
-	streamsForAccount.Lock()
-	defer streamsForAccount.Unlock()
+	streamsForAccount.Mutex.Lock()
+	defer streamsForAccount.Mutex.Unlock()
 	for _, s := range streamsForAccount.Streams {
-		s.Lock()
-		defer s.Unlock()
+		s.Mutex.Lock()
 		if !s.Connected {
+			s.Mutex.Unlock()
 			continue
 		}
 
@@ -55,6 +55,7 @@ func (p *processor) streamToAccount(payload, event string, timelines []string, a
 				}
 			}
 		}
+		s.Mutex.Unlock()
 	}
 
 	return nil
