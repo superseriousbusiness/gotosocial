@@ -366,30 +366,30 @@ func (p *processor) federateAccountDelete(ctx context.Context, account *gtsmodel
 		return fmt.Errorf("federateAccountDelete: error parsing url %s: %s", pub.PublicActivityPubIRI, err)
 	}
 
-	// create a delete and set the appropriate actor on it
-	delete := streams.NewActivityStreamsDelete()
+	// create a deleteActivity and set the appropriate actor on it
+	deleteActivity := streams.NewActivityStreamsDelete()
 
 	// set the actor for the delete; no matter who deleted it we should use the account owner for this
 	deleteActor := streams.NewActivityStreamsActorProperty()
 	deleteActor.AppendIRI(actorIRI)
-	delete.SetActivityStreamsActor(deleteActor)
+	deleteActivity.SetActivityStreamsActor(deleteActor)
 
 	// Set the account IRI as the 'object' property.
 	deleteObject := streams.NewActivityStreamsObjectProperty()
 	deleteObject.AppendIRI(actorIRI)
-	delete.SetActivityStreamsObject(deleteObject)
+	deleteActivity.SetActivityStreamsObject(deleteObject)
 
 	// send to followers...
 	deleteTo := streams.NewActivityStreamsToProperty()
 	deleteTo.AppendIRI(followersIRI)
-	delete.SetActivityStreamsTo(deleteTo)
+	deleteActivity.SetActivityStreamsTo(deleteTo)
 
 	// ... and CC to public
 	deleteCC := streams.NewActivityStreamsCcProperty()
 	deleteCC.AppendIRI(publicIRI)
-	delete.SetActivityStreamsCc(deleteCC)
+	deleteActivity.SetActivityStreamsCc(deleteCC)
 
-	_, err = p.federator.FederatingActor().Send(ctx, outboxIRI, delete)
+	_, err = p.federator.FederatingActor().Send(ctx, outboxIRI, deleteActivity)
 	return err
 }
 
@@ -460,24 +460,24 @@ func (p *processor) federateStatusDelete(ctx context.Context, status *gtsmodel.S
 		return fmt.Errorf("federateStatusDelete: error parsing actorIRI %s: %s", status.Account.URI, err)
 	}
 
-	// create a delete and set the appropriate actor on it
-	delete := streams.NewActivityStreamsDelete()
+	// create a deleteActivity and set the appropriate actor on it
+	deleteActivity := streams.NewActivityStreamsDelete()
 
 	// set the actor for the delete
 	deleteActor := streams.NewActivityStreamsActorProperty()
 	deleteActor.AppendIRI(actorIRI)
-	delete.SetActivityStreamsActor(deleteActor)
+	deleteActivity.SetActivityStreamsActor(deleteActor)
 
 	// Set the status as the 'object' property.
 	deleteObject := streams.NewActivityStreamsObjectProperty()
 	deleteObject.AppendActivityStreamsNote(asStatus)
-	delete.SetActivityStreamsObject(deleteObject)
+	deleteActivity.SetActivityStreamsObject(deleteObject)
 
 	// set the to and cc as the original to/cc of the original status
-	delete.SetActivityStreamsTo(asStatus.GetActivityStreamsTo())
-	delete.SetActivityStreamsCc(asStatus.GetActivityStreamsCc())
+	deleteActivity.SetActivityStreamsTo(asStatus.GetActivityStreamsTo())
+	deleteActivity.SetActivityStreamsCc(asStatus.GetActivityStreamsCc())
 
-	_, err = p.federator.FederatingActor().Send(ctx, outboxIRI, delete)
+	_, err = p.federator.FederatingActor().Send(ctx, outboxIRI, deleteActivity)
 	return err
 }
 

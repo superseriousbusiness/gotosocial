@@ -3198,23 +3198,23 @@ func newAPAnnounce(announceID, announceActor *url.URL, announcePublished time.Ti
 }
 
 func newAPDelete(deleteTarget, deleteActor *url.URL, deletePublished time.Time, deleteTo *url.URL) vocab.ActivityStreamsDelete {
-	delete := streams.NewActivityStreamsDelete()
+	deleteActivity := streams.NewActivityStreamsDelete()
 
 	objectProp := streams.NewActivityStreamsObjectProperty()
 	objectProp.AppendIRI(deleteTarget)
-	delete.SetActivityStreamsObject(objectProp)
+	deleteActivity.SetActivityStreamsObject(objectProp)
 
 	to := streams.NewActivityStreamsToProperty()
 	to.AppendIRI(deleteTo)
-	delete.SetActivityStreamsTo(to)
+	deleteActivity.SetActivityStreamsTo(to)
 
 	actor := streams.NewActivityStreamsActorProperty()
 	actor.AppendIRI(deleteActor)
-	delete.SetActivityStreamsActor(actor)
+	deleteActivity.SetActivityStreamsActor(actor)
 
 	published := streams.NewActivityStreamsPublishedProperty()
 	published.Set(deletePublished)
-	delete.SetActivityStreamsPublished(published)
+	deleteActivity.SetActivityStreamsPublished(published)
 
-	return delete
+	return deleteActivity
 }

@@ -390,33 +390,33 @@ func (suite *InboxPostTestSuite) TestPostDelete() {
 	deletedAccount := *suite.testAccounts["remote_account_1"]
 	receivingAccount := suite.testAccounts["local_account_1"]
 
-	// create a delete
-	delete := streams.NewActivityStreamsDelete()
+	// create a deleteActivity
+	deleteActivity := streams.NewActivityStreamsDelete()
 
 	// set the appropriate actor on it
 	deleteActor := streams.NewActivityStreamsActorProperty()
 	deleteActor.AppendIRI(testrig.URLMustParse(deletedAccount.URI))
-	delete.SetActivityStreamsActor(deleteActor)
+	deleteActivity.SetActivityStreamsActor(deleteActor)
 
 	// Set the account iri as the 'object' property.
 	deleteObject := streams.NewActivityStreamsObjectProperty()
 	deleteObject.AppendIRI(testrig.URLMustParse(deletedAccount.URI))
-	delete.SetActivityStreamsObject(deleteObject)
+	deleteActivity.SetActivityStreamsObject(deleteObject)
 
 	// Set the To of the delete as public
 	deleteTo := streams.NewActivityStreamsToProperty()
 	deleteTo.AppendIRI(testrig.URLMustParse(pub.PublicActivityPubIRI))
-	delete.SetActivityStreamsTo(deleteTo)
+	deleteActivity.SetActivityStreamsTo(deleteTo)
 
 	// set some random-ass ID for the activity
 	deleteID := streams.NewJSONLDIdProperty()
 	deleteID.SetIRI(testrig.URLMustParse("http://fossbros-anonymous.io/d360613a-dc8d-4563-8f0b-b6161caf0f2b"))
-	delete.SetJSONLDId(deleteID)
+	deleteActivity.SetJSONLDId(deleteID)
 
 	targetURI := testrig.URLMustParse(receivingAccount.InboxURI)
 
-	signature, digestHeader, dateHeader := testrig.GetSignatureForActivity(delete, deletedAccount.PublicKeyURI, deletedAccount.PrivateKey, targetURI)
-	bodyI, err := streams.Serialize(delete)
+	signature, digestHeader, dateHeader := testrig.GetSignatureForActivity(deleteActivity, deletedAccount.PublicKeyURI, deletedAccount.PrivateKey, targetURI)
+	bodyI, err := streams.Serialize(deleteActivity)
 	suite.NoError(err)
 
 	bodyJson, err := json.Marshal(bodyI)
