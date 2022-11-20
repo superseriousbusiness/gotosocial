@@ -166,6 +166,7 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 	notif := &notificationDB{conn: conn}
 	status := &statusDB{conn: conn}
 	emoji := &emojiDB{conn: conn}
+	relationship := &relationshipDB{conn: conn}
 	timeline := &timelineDB{conn: conn}
 	tombstone := &tombstoneDB{conn: conn}
 	user := &userDB{conn: conn}
@@ -174,6 +175,7 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 	account.emojis = emoji
 	account.status = status
 	admin.users = user
+	relationship.accounts = account
 	status.accounts = account
 	status.emojis = emoji
 	status.mentions = mention
@@ -185,6 +187,7 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 	emoji.init()
 	mention.init()
 	notif.init()
+	relationship.init()
 	status.init()
 	tombstone.init()
 	user.init()
@@ -209,9 +212,7 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 		},
 		Mention:      mention,
 		Notification: notif,
-		Relationship: &relationshipDB{
-			conn: conn,
-		},
+		Relationship: relationship,
 		Session: &sessionDB{
 			conn: conn,
 		},

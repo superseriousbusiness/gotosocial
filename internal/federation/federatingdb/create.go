@@ -103,7 +103,7 @@ func (f *federatingDB) activityBlock(ctx context.Context, asType vocab.Type, rec
 	}
 	block.ID = newID
 
-	if err := f.db.Put(ctx, block); err != nil {
+	if err := f.db.PutBlock(ctx, block); err != nil {
 		return fmt.Errorf("activityBlock: database error inserting block: %s", err)
 	}
 

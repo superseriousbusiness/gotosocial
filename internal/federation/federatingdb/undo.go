@@ -114,7 +114,7 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 				return errors.New("UNDO: block object account and inbox account were not the same")
 			}
 			// delete any existing BLOCK
-			if err := f.db.DeleteWhere(ctx, []db.Where{{Key: "uri", Value: gtsBlock.URI}}, &gtsmodel.Block{}); err != nil {
+			if err := f.db.DeleteBlockByURI(ctx, gtsBlock.URI); err != nil {
 				return fmt.Errorf("UNDO: db error removing block: %s", err)
 			}
 			l.Debug("block undone")

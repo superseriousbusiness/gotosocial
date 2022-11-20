@@ -153,7 +153,7 @@ func (suite *InboxPostTestSuite) TestPostUnblock() {
 		TargetAccountID: blockedAccount.ID,
 	}
 
-	err = suite.db.Put(context.Background(), dbBlock)
+	err = suite.db.PutBlock(context.Background(), dbBlock)
 	suite.NoError(err)
 
 	asBlock, err := suite.tc.BlockToAS(context.Background(), dbBlock)
