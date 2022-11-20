@@ -100,12 +100,12 @@ func (p *processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 	// 2. Delete account's blocks
 	l.Debug("deleting account blocks")
 	// first delete any blocks that this account created
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.Block{}); err != nil {
+	if err := p.db.DeleteBlocksByOriginAccountID(ctx, account.ID); err != nil {
 		l.Errorf("error deleting blocks created by account: %s", err)
 	}
 
 	// now delete any blocks that target this account
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "target_account_id", Value: account.ID}}, &[]*gtsmodel.Block{}); err != nil {
+	if err := p.db.DeleteBlocksByTargetAccountID(ctx, account.ID); err != nil {
 		l.Errorf("error deleting blocks targeting account: %s", err)
 	}
 

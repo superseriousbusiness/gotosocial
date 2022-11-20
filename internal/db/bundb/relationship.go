@@ -40,7 +40,9 @@ type relationshipDB struct {
 func (r *relationshipDB) init() {
 	// Initialize block result cache
 	r.blockCache = result.NewSized([]result.Lookup{
+		{Name: "ID"},
 		{Name: "AccountID.TargetAccountID"},
+		{Name: "URI"},
 	}, func(b1 *gtsmodel.Block) *gtsmodel.Block {
 		b2 := new(gtsmodel.Block)
 		*b2 = *b1
@@ -126,6 +128,78 @@ func (r *relationshipDB) PutBlock(ctx context.Context, block *gtsmodel.Block) db
 		_, err := r.conn.NewInsert().Model(block).Exec(ctx)
 		return r.conn.ProcessError(err)
 	})
+}
+
+func (r *relationshipDB) DeleteBlockByID(ctx context.Context, id string) db.Error {
+	if _, err := r.conn.
+		NewDelete().
+		TableExpr("? AS ?", bun.Ident("blocks"), bun.Ident("block")).
+		Where("? = ?", bun.Ident("block.id"), id).
+		Exec(ctx); err != nil {
+		return r.conn.ProcessError(err)
+	}
+
+	// Drop any old value from cache by this ID
+	r.blockCache.Invalidate("ID", id)
+	return nil
+}
+
+func (r *relationshipDB) DeleteBlockByURI(ctx context.Context, uri string) db.Error {
+	if _, err := r.conn.
+		NewDelete().
+		TableExpr("? AS ?", bun.Ident("blocks"), bun.Ident("block")).
+		Where("? = ?", bun.Ident("block.uri"), uri).
+		Exec(ctx); err != nil {
+		return r.conn.ProcessError(err)
+	}
+
+	// Drop any old value from cache by this URI
+	r.blockCache.Invalidate("URI", uri)
+	return nil
+}
+
+func (r *relationshipDB) DeleteBlocksByOriginAccountID(ctx context.Context, originAccountID string) db.Error {
+	blockIDs := []string{}
+
+	q := r.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("blocks"), bun.Ident("block")).
+		Column("block.id").
+		Where("? = ?", bun.Ident("block.account_id"), originAccountID)
+
+	if err := q.Scan(ctx, &blockIDs); err != nil {
+		return r.conn.ProcessError(err)
+	}
+
+	for _, blockID := range blockIDs {
+		if err := r.DeleteBlockByID(ctx, blockID); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *relationshipDB) DeleteBlocksByTargetAccountID(ctx context.Context, targetAccountID string) db.Error {
+	blockIDs := []string{}
+
+	q := r.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("blocks"), bun.Ident("block")).
+		Column("block.id").
+		Where("? = ?", bun.Ident("block.target_account_id"), targetAccountID)
+
+	if err := q.Scan(ctx, &blockIDs); err != nil {
+		return r.conn.ProcessError(err)
+	}
+
+	for _, blockID := range blockIDs {
+		if err := r.DeleteBlockByID(ctx, blockID); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount string, targetAccount string) (*gtsmodel.Relationship, db.Error) {
