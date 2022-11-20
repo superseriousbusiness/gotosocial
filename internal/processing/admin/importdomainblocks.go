@@ -47,7 +47,7 @@ func (p *processor) DomainBlocksImport(ctx context.Context, account *gtsmodel.Ac
 		return nil, gtserror.NewErrorBadRequest(errors.New("DomainBlocksImport: could not read provided attachment: size 0 bytes"))
 	}
 
-	d := []apimodel.DomainBlock{}
+	d := []*apimodel.DomainBlock{}
 	if err := json.Unmarshal(buf.Bytes(), &d); err != nil {
 		return nil, gtserror.NewErrorBadRequest(fmt.Errorf("DomainBlocksImport: could not read provided attachment: %s", err))
 	}

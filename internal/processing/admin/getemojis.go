@@ -84,7 +84,7 @@ func (p *processor) EmojisGet(ctx context.Context, account *gtsmodel.Account, us
 		filterBuilder.WriteString(shortcode)
 	}
 
-	return util.PackagePageableResponse(util.PageableResponseParams{
+	return util.PackagePageableResponse(&util.PageableResponseParams{
 		Items:            items,
 		Path:             "api/v1/admin/custom_emojis",
 		NextMaxIDKey:     "max_shortcode_domain",

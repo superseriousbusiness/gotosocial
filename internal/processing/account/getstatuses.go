@@ -80,7 +80,7 @@ func (p *processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 		items = append(items, item)
 	}
 
-	return util.PackagePageableResponse(util.PageableResponseParams{
+	return util.PackagePageableResponse(&util.PageableResponseParams{
 		Items:          items,
 		Path:           fmt.Sprintf("/api/v1/accounts/%s/statuses", targetAccountID),
 		NextMaxIDValue: nextMaxIDValue,
@@ -145,7 +145,7 @@ func (p *processor) WebStatusesGet(ctx context.Context, targetAccountID, maxID s
 		items = append(items, item)
 	}
 
-	return util.PackagePageableResponse(util.PageableResponseParams{
+	return util.PackagePageableResponse(&util.PageableResponseParams{
 		Items:            items,
 		Path:             "/@" + acct.Username,
 		NextMaxIDValue:   nextMaxIDValue,

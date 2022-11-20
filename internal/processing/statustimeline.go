@@ -163,7 +163,7 @@ func (p *processor) HomeTimelineGet(ctx context.Context, authed *oauth.Auth, max
 		items = append(items, item)
 	}
 
-	return util.PackagePageableResponse(util.PageableResponseParams{
+	return util.PackagePageableResponse(&util.PageableResponseParams{
 		Items:          items,
 		Path:           "api/v1/timelines/home",
 		NextMaxIDValue: nextMaxIDValue,
@@ -208,7 +208,7 @@ func (p *processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, m
 		items = append(items, item)
 	}
 
-	return util.PackagePageableResponse(util.PageableResponseParams{
+	return util.PackagePageableResponse(&util.PageableResponseParams{
 		Items:          items,
 		Path:           "api/v1/timelines/public",
 		NextMaxIDValue: nextMaxIDValue,
@@ -242,7 +242,7 @@ func (p *processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, ma
 		items = append(items, item)
 	}
 
-	return util.PackagePageableResponse(util.PageableResponseParams{
+	return util.PackagePageableResponse(&util.PageableResponseParams{
 		Items:          items,
 		Path:           "api/v1/favourites",
 		NextMaxIDValue: nextMaxID,

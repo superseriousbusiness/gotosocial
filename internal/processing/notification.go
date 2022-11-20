@@ -61,7 +61,7 @@ func (p *processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, ex
 		items = append(items, item)
 	}
 
-	return util.PackagePageableResponse(util.PageableResponseParams{
+	return util.PackagePageableResponse(&util.PageableResponseParams{
 		Items:          items,
 		Path:           "api/v1/notifications",
 		NextMaxIDValue: nextMaxIDValue,

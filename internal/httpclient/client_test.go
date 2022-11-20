@@ -93,7 +93,7 @@ func _TestHTTPClientWithBody(t *testing.T, body []byte, max int) {
 	}
 
 	// Create new HTTP client with maximum body size
-	client := httpclient.New(httpclient.Config{
+	client := httpclient.New(&httpclient.Config{
 		MaxBodySize:        int64(max),
 		DisableCompression: true,
 		AllowRanges: []netip.Prefix{
@@ -139,7 +139,7 @@ func _TestHTTPClientWithBody(t *testing.T, body []byte, max int) {
 }
 
 func TestHTTPClientPrivateIP(t *testing.T) {
-	client := httpclient.New(httpclient.Config{})
+	client := httpclient.New(&httpclient.Config{})
 
 	for _, addr := range privateIPs {
 		// Prepare request to private IP

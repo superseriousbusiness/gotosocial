@@ -110,7 +110,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	// Build HTTP client (TODO: add configurables here)
-	client := httpclient.New(httpclient.Config{})
+	client := httpclient.New(&httpclient.Config{})
 
 	// build backend handlers
 	mediaManager, err := media.NewManager(dbService, storage)
