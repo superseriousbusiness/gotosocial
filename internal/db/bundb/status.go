@@ -23,6 +23,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"codeberg.org/gruf/go-cache/v3/result"
@@ -120,7 +121,7 @@ func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*g
 
 		if status.InReplyToID != "" {
 			// Also load in-reply-to status
-			status.InReplyTo = &gtsmodel.Status{}
+			status.InReplyTo = new(gtsmodel.Status)
 			err := s.conn.NewSelect().Model(status.InReplyTo).
 				Where("? = ?", bun.Ident("status.id"), status.InReplyToID).
 				Scan(ctx)
@@ -131,7 +132,7 @@ func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*g
 
 		if status.BoostOfID != "" {
 			// Also load original boosted status
-			status.BoostOf = &gtsmodel.Status{}
+			status.BoostOf = new(gtsmodel.Status)
 			err := s.conn.NewSelect().Model(status.BoostOf).
 				Where("? = ?", bun.Ident("status.id"), status.BoostOfID).
 				Scan(ctx)
@@ -150,14 +151,14 @@ func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*g
 	// Set the status author account
 	status.Account, err = s.accounts.GetAccountByID(ctx, status.AccountID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting status account: %w", err)
 	}
 
 	if id := status.BoostOfAccountID; id != "" {
 		// Set boost of status' author account
 		status.BoostOfAccount, err = s.accounts.GetAccountByID(ctx, id)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error getting boosted status account: %w", err)
 		}
 	}
 
@@ -165,7 +166,7 @@ func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*g
 		// Set in-reply-to status' author account
 		status.InReplyToAccount, err = s.accounts.GetAccountByID(ctx, id)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error getting in reply to status account: %w", err)
 		}
 	}
 
@@ -173,7 +174,7 @@ func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*g
 		// Fetch status emojis
 		status.Emojis, err = s.emojis.emojisFromIDs(ctx, status.EmojiIDs)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error getting status emojis: %w", err)
 		}
 	}
 
@@ -181,7 +182,7 @@ func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*g
 		// Fetch status mentions
 		status.Mentions, err = s.mentions.GetMentions(ctx, status.MentionIDs)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error getting status mentions: %w", err)
 		}
 	}
 
