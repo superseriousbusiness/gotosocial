@@ -184,7 +184,7 @@ func (p *processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 					// Fetch the relevant account for this status boost
 					boostAcc, err := p.db.GetAccountByID(ctx, boost.AccountID)
 					if err != nil {
-						l.Errorf("error fetching boosted status account for %q", boost.AccountID, err)
+						l.Errorf("error fetching boosted status account for %q: %v", boost.AccountID, err)
 						continue
 					}
 
