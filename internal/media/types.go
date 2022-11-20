@@ -34,6 +34,7 @@ const maxFileHeaderBytes = 261
 // mime consts
 const (
 	mimeImage = "image"
+	mimeVideo = "video"
 
 	mimeJpeg      = "jpeg"
 	mimeImageJpeg = mimeImage + "/" + mimeJpeg
@@ -43,6 +44,9 @@ const (
 
 	mimePng      = "png"
 	mimeImagePng = mimeImage + "/" + mimePng
+
+	mimeMp4      = "mp4"
+	mimeVideoMp4 = mimeVideo + "/" + mimeMp4
 )
 
 type processState int32

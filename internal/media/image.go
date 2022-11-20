@@ -24,11 +24,9 @@ import (
 	"fmt"
 	"image"
 	"image/gif"
-	"image/jpeg"
 	"image/png"
 	"io"
 
-	"github.com/buckket/go-blurhash"
 	"github.com/disintegration/imaging"
 )
 
@@ -37,16 +35,7 @@ const (
 	thumbnailMaxHeight = 512
 )
 
-type imageMeta struct {
-	width    int
-	height   int
-	size     int
-	aspect   float64
-	blurhash string // defined only for calls to deriveThumbnail if createBlurhash is true
-	small    []byte // defined only for calls to deriveStaticEmoji or deriveThumbnail
-}
-
-func decodeGif(r io.Reader) (*imageMeta, error) {
+func decodeGif(r io.Reader) (*mediaMeta, error) {
 	gif, err := gif.DecodeAll(r)
 	if err != nil {
 		return nil, err
@@ -58,7 +47,7 @@ func decodeGif(r io.Reader) (*imageMeta, error) {
 	size := width * height
 	aspect := float64(width) / float64(height)
 
-	return &imageMeta{
+	return &mediaMeta{
 		width:  width,
 		height: height,
 		size:   size,
@@ -66,7 +55,7 @@ func decodeGif(r io.Reader) (*imageMeta, error) {
 	}, nil
 }
 
-func decodeImage(r io.Reader, contentType string) (*imageMeta, error) {
+func decodeImage(r io.Reader, contentType string) (*mediaMeta, error) {
 	var i image.Image
 	var err error
 
@@ -95,7 +84,7 @@ func decodeImage(r io.Reader, contentType string) (*imageMeta, error) {
 	size := width * height
 	aspect := float64(width) / float64(height)
 
-	return &imageMeta{
+	return &mediaMeta{
 		width:  width,
 		height: height,
 		size:   size,
@@ -103,83 +92,8 @@ func decodeImage(r io.Reader, contentType string) (*imageMeta, error) {
 	}, nil
 }
 
-// deriveThumbnail returns a byte slice and metadata for a thumbnail
-// of a given jpeg, png, or gif, or an error if something goes wrong.
-//
-// If createBlurhash is true, then a blurhash will also be generated from a tiny
-// version of the image. This costs precious CPU cycles, so only use it if you
-// really need a blurhash and don't have one already.
-//
-// If createBlurhash is false, then the blurhash field on the returned ImageAndMeta
-// will be an empty string.
-func deriveThumbnail(r io.Reader, contentType string, createBlurhash bool) (*imageMeta, error) {
-	var i image.Image
-	var err error
-
-	switch contentType {
-	case mimeImageJpeg, mimeImageGif:
-		i, err = imaging.Decode(r, imaging.AutoOrientation(true))
-	case mimeImagePng:
-		strippedPngReader := io.Reader(&PNGAncillaryChunkStripper{
-			Reader: r,
-		})
-		i, err = imaging.Decode(strippedPngReader, imaging.AutoOrientation(true))
-	default:
-		err = fmt.Errorf("content type %s can't be thumbnailed", contentType)
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("error decoding %s: %s", contentType, err)
-	}
-
-	originalX := i.Bounds().Size().X
-	originalY := i.Bounds().Size().Y
-
-	var thumb image.Image
-	if originalX <= thumbnailMaxWidth && originalY <= thumbnailMaxHeight {
-		// it's already small, no need to resize
-		thumb = i
-	} else {
-		thumb = imaging.Fit(i, thumbnailMaxWidth, thumbnailMaxHeight, imaging.Linear)
-	}
-
-	thumbX := thumb.Bounds().Size().X
-	thumbY := thumb.Bounds().Size().Y
-	size := thumbX * thumbY
-	aspect := float64(thumbX) / float64(thumbY)
-
-	im := &imageMeta{
-		width:  thumbX,
-		height: thumbY,
-		size:   size,
-		aspect: aspect,
-	}
-
-	if createBlurhash {
-		// for generating blurhashes, it's more cost effective to lose detail rather than
-		// pass a big image into the blurhash algorithm, so make a teeny tiny version
-		tiny := imaging.Resize(thumb, 32, 0, imaging.NearestNeighbor)
-		bh, err := blurhash.Encode(4, 3, tiny)
-		if err != nil {
-			return nil, fmt.Errorf("error creating blurhash: %s", err)
-		}
-		im.blurhash = bh
-	}
-
-	out := &bytes.Buffer{}
-	if err := jpeg.Encode(out, thumb, &jpeg.Options{
-		// Quality isn't extremely important for thumbnails, so 75 is "good enough"
-		Quality: 75,
-	}); err != nil {
-		return nil, fmt.Errorf("error encoding thumbnail: %s", err)
-	}
-	im.small = out.Bytes()
-
-	return im, nil
-}
-
 // deriveStaticEmojji takes a given gif or png of an emoji, decodes it, and re-encodes it as a static png.
-func deriveStaticEmoji(r io.Reader, contentType string) (*imageMeta, error) {
+func deriveStaticEmoji(r io.Reader, contentType string) (*mediaMeta, error) {
 	var i image.Image
 	var err error
 
@@ -202,7 +116,7 @@ func deriveStaticEmoji(r io.Reader, contentType string) (*imageMeta, error) {
 	if err := png.Encode(out, i); err != nil {
 		return nil, err
 	}
-	return &imageMeta{
+	return &mediaMeta{
 		small: out.Bytes(),
 	}, nil
 }

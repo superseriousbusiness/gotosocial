@@ -4201,6 +4201,11 @@ photoswipe-dynamic-caption-plugin@^1.2.7:
   resolved "https://registry.yarnpkg.com/photoswipe-dynamic-caption-plugin/-/photoswipe-dynamic-caption-plugin-1.2.7.tgz#53aa5059f1c4dccc8aa36196ff3e09baa5e537c2"
   integrity sha512-5XXdXLf2381nwe7KqQvcyStiUBi9TitYXppUQTrzPwYAi4lZsmWNnNKMclM7I4QGlX6fXo42v3bgb6rlK9pY1Q==
 
+photoswipe-video-plugin@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/photoswipe-video-plugin/-/photoswipe-video-plugin-1.0.2.tgz#156b6a72ffa86e6c6e2b486e8ec5b48f6696941a"
+  integrity sha512-skNHaalLU7rptZ3zq4XfS5hPqSDD65ctvpf2X8buvC8BpOt6XKSIgRkLzTwgQOUm9yQ8kQ4mMget7CIqGcqtDg==
+
 photoswipe@^5.3.3:
   version "5.3.3"
   resolved "https://registry.yarnpkg.com/photoswipe/-/photoswipe-5.3.3.tgz#86351a33502a3ab7d1e483127fe596b20054218a"

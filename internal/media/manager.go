@@ -21,6 +21,7 @@ package media
 import (
 	"context"
 	"fmt"
+	"os/exec"
 	"time"
 
 	"github.com/robfig/cron/v3"
@@ -122,6 +123,11 @@ func NewManager(database db.DB, storage *storage.Driver) (Manager, error) {
 	m := &manager{
 		db:      database,
 		storage: storage,
+	}
+
+	// Check for ffmpeg presence
+	if config.GetMediaVideoFFMPEGAuto() && ffmpegPresent() {
+		config.SetMediaVideoFFMPEGEnabled(true)
 	}
 
 	// Prepare the media worker pool
@@ -274,4 +280,19 @@ func scheduleCleanupJobs(m *manager) error {
 
 	c.Start()
 	return nil
+}
+
+func ffmpegPresent() bool {
+	tool, err := exec.LookPath("ffmpeg")
+	if err != nil {
+		log.Warnf("ffmpeg binary not present in path, video support will be limited")
+		return false
+	}
+	probe, err := exec.LookPath("ffprobe")
+	if err != nil {
+		log.Warnf("ffprobe binary not present in path, video support will be limited")
+		return false
+	}
+	log.Infof("using ffmpeg for video support. ffmpeg=%s ffprobe=%s", tool, probe)
+	return true
 }
