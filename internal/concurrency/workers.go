@@ -42,7 +42,7 @@ type WorkerPool[MsgType any] struct {
 // New returns a new WorkerPool[MsgType] with given number of workers and queue ratio,
 // where the queue ratio is multiplied by no. workers to get queue size. If args < 1
 // then suitable defaults are determined from the runtime's GOMAXPROCS variable.
-func NewWorkerPool[MsgType any](workers int, queueRatio int) *WorkerPool[MsgType] {
+func NewWorkerPool[MsgType any](workers, queueRatio int) *WorkerPool[MsgType] {
 	var zero MsgType
 
 	if workers < 1 {

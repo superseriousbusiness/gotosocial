@@ -83,7 +83,6 @@ func (suite *StatusDeleteTestSuite) TestPostDelete() {
 	}) {
 		suite.FailNow("time out waiting for status to be deleted")
 	}
-
 }
 
 func TestStatusDeleteTestSuite(t *testing.T) {

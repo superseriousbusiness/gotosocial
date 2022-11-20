@@ -67,7 +67,6 @@ import (
 //			description: not found
 func (m *Module) StatusBoostedByGETHandler(c *gin.Context) {
 	l := log.WithFields(kv.Fields{
-
 		{"request_uri", c.Request.RequestURI},
 		{"user_agent", c.Request.UserAgent()},
 		{"origin_ip", c.ClientIP()},

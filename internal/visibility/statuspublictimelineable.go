@@ -29,7 +29,6 @@ import (
 
 func (f *filter) StatusPublictimelineable(ctx context.Context, targetStatus *gtsmodel.Status, timelineOwnerAccount *gtsmodel.Account) (bool, error) {
 	l := log.WithFields(kv.Fields{
-
 		{"statusID", targetStatus.ID},
 	}...)
 

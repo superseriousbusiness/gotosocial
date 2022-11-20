@@ -32,7 +32,7 @@ import (
 )
 
 func GetParseMentionFunc(dbConn db.DB, federator federation.Federator) gtsmodel.ParseMentionFunc {
-	return func(ctx context.Context, targetAccount string, originAccountID string, statusID string) (*gtsmodel.Mention, error) {
+	return func(ctx context.Context, targetAccount, originAccountID, statusID string) (*gtsmodel.Mention, error) {
 		// get the origin account first since we'll need it to create the mention
 		originAccount, err := dbConn.GetAccountByID(ctx, originAccountID)
 		if err != nil {

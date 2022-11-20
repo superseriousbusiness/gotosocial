@@ -33,7 +33,6 @@ import (
 
 func (p *processor) OpenStreamForAccount(ctx context.Context, account *gtsmodel.Account, streamTimeline string) (*stream.Stream, gtserror.WithCode) {
 	l := log.WithFields(kv.Fields{
-
 		{"account", account.ID},
 		{"streamType", streamTimeline},
 	}...)

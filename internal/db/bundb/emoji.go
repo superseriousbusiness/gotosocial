@@ -143,7 +143,7 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 	return nil
 }
 
-func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) ([]*gtsmodel.Emoji, db.Error) {
+func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled, includeEnabled bool, shortcode, maxShortcodeDomain, minShortcodeDomain string, limit int) ([]*gtsmodel.Emoji, db.Error) {
 	emojiIDs := []string{}
 
 	subQuery := e.conn.
@@ -301,7 +301,7 @@ func (e *emojiDB) GetEmojiByURI(ctx context.Context, uri string) (*gtsmodel.Emoj
 	)
 }
 
-func (e *emojiDB) GetEmojiByShortcodeDomain(ctx context.Context, shortcode string, domain string) (*gtsmodel.Emoji, db.Error) {
+func (e *emojiDB) GetEmojiByShortcodeDomain(ctx context.Context, shortcode, domain string) (*gtsmodel.Emoji, db.Error) {
 	return e.getEmoji(
 		ctx,
 		"Shortcode.Domain",

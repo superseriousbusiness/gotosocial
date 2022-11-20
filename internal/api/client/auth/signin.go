@@ -112,7 +112,7 @@ func (m *Module) SignInPOSTHandler(c *gin.Context) {
 // The goal is to authenticate the password against the one for that email
 // address stored in the database. If OK, we return the userid (a ulid) for that user,
 // so that it can be used in further Oauth flows to generate a token/retreieve an oauth client from the db.
-func (m *Module) ValidatePassword(ctx context.Context, email string, password string) (string, gtserror.WithCode) {
+func (m *Module) ValidatePassword(ctx context.Context, email, password string) (string, gtserror.WithCode) {
 	if email == "" || password == "" {
 		err := errors.New("email or password was not provided")
 		return incorrectPassword(err)

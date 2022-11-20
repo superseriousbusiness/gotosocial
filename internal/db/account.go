@@ -37,7 +37,7 @@ type Account interface {
 	GetAccountByURL(ctx context.Context, uri string) (*gtsmodel.Account, Error)
 
 	// GetAccountByUsernameDomain returns one account with the given username and domain, or an error if something goes wrong.
-	GetAccountByUsernameDomain(ctx context.Context, username string, domain string) (*gtsmodel.Account, Error)
+	GetAccountByUsernameDomain(ctx context.Context, username, domain string) (*gtsmodel.Account, Error)
 
 	// GetAccountByPubkeyID returns one account with the given public key URI (ID), or an error if something goes wrong.
 	GetAccountByPubkeyID(ctx context.Context, id string) (*gtsmodel.Account, Error)
@@ -66,14 +66,14 @@ type Account interface {
 	// then all statuses will be returned. If limit is set to 0, the size of the returned slice will not be limited. This can
 	// be very memory intensive so you probably shouldn't do this!
 	// In case of no entries, a 'no entries' error will be returned
-	GetAccountStatuses(ctx context.Context, accountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinnedOnly bool, mediaOnly bool, publicOnly bool) ([]*gtsmodel.Status, Error)
+	GetAccountStatuses(ctx context.Context, accountID string, limit int, excludeReplies, excludeReblogs bool, maxID, minID string, pinnedOnly, mediaOnly, publicOnly bool) ([]*gtsmodel.Status, Error)
 
 	// GetAccountWebStatuses is similar to GetAccountStatuses, but it's specifically for returning statuses that
 	// should be visible via the web view of an account. So, only public, federated statuses that aren't boosts
 	// or replies.
 	GetAccountWebStatuses(ctx context.Context, accountID string, limit int, maxID string) ([]*gtsmodel.Status, Error)
 
-	GetAccountBlocks(ctx context.Context, accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, Error)
+	GetAccountBlocks(ctx context.Context, accountID, maxID, sinceID string, limit int) ([]*gtsmodel.Account, string, string, Error)
 
 	// GetAccountLastPosted simply gets the timestamp of the most recent post by the account.
 	//

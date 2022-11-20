@@ -71,7 +71,7 @@ type Manager interface {
 	// ai is optional and can be nil. Any additional information about the emoji provided will be put in the database.
 	//
 	// If refresh is true, this indicates that the emoji image has changed and should be updated.
-	ProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error)
+	ProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode, id, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error)
 	// RecacheMedia refetches, reprocesses, and recaches an existing attachment that has been uncached via pruneRemote.
 	RecacheMedia(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, attachmentID string) (*ProcessingMedia, error)
 
@@ -166,7 +166,7 @@ func (m *manager) ProcessMedia(ctx context.Context, data DataFunc, postData Post
 	return processingMedia, nil
 }
 
-func (m *manager) ProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error) {
+func (m *manager) ProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode, id, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error) {
 	processingEmoji, err := m.preProcessEmoji(ctx, data, postData, shortcode, id, uri, ai, refresh)
 	if err != nil {
 		return nil, err

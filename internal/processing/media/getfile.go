@@ -85,7 +85,7 @@ func (p *processor) GetFile(ctx context.Context, requestingAccount *gtsmodel.Acc
 	}
 }
 
-func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount *gtsmodel.Account, wantedMediaID string, owningAccountID string, mediaSize media.Size) (*apimodel.Content, gtserror.WithCode) {
+func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount *gtsmodel.Account, wantedMediaID, owningAccountID string, mediaSize media.Size) (*apimodel.Content, gtserror.WithCode) {
 	attachmentContent := &apimodel.Content{}
 	var storagePath string
 
@@ -227,7 +227,7 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 	return attachmentContent, nil
 }
 
-func (p *processor) getEmojiContent(ctx context.Context, fileName string, owningAccountID string, emojiSize media.Size) (*apimodel.Content, gtserror.WithCode) {
+func (p *processor) getEmojiContent(ctx context.Context, fileName, owningAccountID string, emojiSize media.Size) (*apimodel.Content, gtserror.WithCode) {
 	emojiContent := &apimodel.Content{}
 	var storagePath string
 

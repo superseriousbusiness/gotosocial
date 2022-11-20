@@ -481,7 +481,7 @@ func (p *processor) federateStatusDelete(ctx context.Context, status *gtsmodel.S
 	return err
 }
 
-func (p *processor) federateFollow(ctx context.Context, followRequest *gtsmodel.FollowRequest, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+func (p *processor) federateFollow(ctx context.Context, followRequest *gtsmodel.FollowRequest, originAccount, targetAccount *gtsmodel.Account) error {
 	// if both accounts are local there's nothing to do here
 	if originAccount.Domain == "" && targetAccount.Domain == "" {
 		return nil
@@ -503,7 +503,7 @@ func (p *processor) federateFollow(ctx context.Context, followRequest *gtsmodel.
 	return err
 }
 
-func (p *processor) federateUnfollow(ctx context.Context, follow *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+func (p *processor) federateUnfollow(ctx context.Context, follow *gtsmodel.Follow, originAccount, targetAccount *gtsmodel.Account) error {
 	// if both accounts are local there's nothing to do here
 	if originAccount.Domain == "" && targetAccount.Domain == "" {
 		return nil
@@ -544,7 +544,7 @@ func (p *processor) federateUnfollow(ctx context.Context, follow *gtsmodel.Follo
 	return err
 }
 
-func (p *processor) federateUnfave(ctx context.Context, fave *gtsmodel.StatusFave, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+func (p *processor) federateUnfave(ctx context.Context, fave *gtsmodel.StatusFave, originAccount, targetAccount *gtsmodel.Account) error {
 	// if both accounts are local there's nothing to do here
 	if originAccount.Domain == "" && targetAccount.Domain == "" {
 		return nil
@@ -583,7 +583,7 @@ func (p *processor) federateUnfave(ctx context.Context, fave *gtsmodel.StatusFav
 	return err
 }
 
-func (p *processor) federateUnannounce(ctx context.Context, boost *gtsmodel.Status, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+func (p *processor) federateUnannounce(ctx context.Context, boost *gtsmodel.Status, originAccount, targetAccount *gtsmodel.Account) error {
 	if originAccount.Domain != "" {
 		// nothing to do here
 		return nil
@@ -765,7 +765,7 @@ func (p *processor) federateRejectFollowRequest(ctx context.Context, followReque
 	return err
 }
 
-func (p *processor) federateFave(ctx context.Context, fave *gtsmodel.StatusFave, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+func (p *processor) federateFave(ctx context.Context, fave *gtsmodel.StatusFave, originAccount, targetAccount *gtsmodel.Account) error {
 	// if both accounts are local there's nothing to do here
 	if originAccount.Domain == "" && targetAccount.Domain == "" {
 		return nil
@@ -785,7 +785,7 @@ func (p *processor) federateFave(ctx context.Context, fave *gtsmodel.StatusFave,
 	return err
 }
 
-func (p *processor) federateAnnounce(ctx context.Context, boostWrapperStatus *gtsmodel.Status, boostingAccount *gtsmodel.Account, boostedAccount *gtsmodel.Account) error {
+func (p *processor) federateAnnounce(ctx context.Context, boostWrapperStatus *gtsmodel.Status, boostingAccount, boostedAccount *gtsmodel.Account) error {
 	announce, err := p.tc.BoostToAS(ctx, boostWrapperStatus, boostingAccount, boostedAccount)
 	if err != nil {
 		return fmt.Errorf("federateAnnounce: error converting status to announce: %s", err)
@@ -800,7 +800,7 @@ func (p *processor) federateAnnounce(ctx context.Context, boostWrapperStatus *gt
 	return err
 }
 
-func (p *processor) federateAccountUpdate(ctx context.Context, updatedAccount *gtsmodel.Account, originAccount *gtsmodel.Account) error {
+func (p *processor) federateAccountUpdate(ctx context.Context, updatedAccount, originAccount *gtsmodel.Account) error {
 	person, err := p.tc.AccountToAS(ctx, updatedAccount)
 	if err != nil {
 		return fmt.Errorf("federateAccountUpdate: error converting account to person: %s", err)

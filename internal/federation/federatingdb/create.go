@@ -86,7 +86,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 	BLOCK HANDLERS
 */
 
-func (f *federatingDB) activityBlock(ctx context.Context, asType vocab.Type, receiving *gtsmodel.Account, requestingAccount *gtsmodel.Account) error {
+func (f *federatingDB) activityBlock(ctx context.Context, asType vocab.Type, receiving, requestingAccount *gtsmodel.Account) error {
 	blockable, ok := asType.(vocab.ActivityStreamsBlock)
 	if !ok {
 		return errors.New("activityBlock: could not convert type to block")
@@ -120,7 +120,7 @@ func (f *federatingDB) activityBlock(ctx context.Context, asType vocab.Type, rec
 	CREATE HANDLERS
 */
 
-func (f *federatingDB) activityCreate(ctx context.Context, asType vocab.Type, receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) error {
+func (f *federatingDB) activityCreate(ctx context.Context, asType vocab.Type, receivingAccount, requestingAccount *gtsmodel.Account) error {
 	create, ok := asType.(vocab.ActivityStreamsCreate)
 	if !ok {
 		return errors.New("activityCreate: could not convert type to create")
@@ -164,7 +164,7 @@ func (f *federatingDB) activityCreate(ctx context.Context, asType vocab.Type, re
 }
 
 // createNote handles a Create activity with a Note type.
-func (f *federatingDB) createNote(ctx context.Context, note vocab.ActivityStreamsNote, receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) error {
+func (f *federatingDB) createNote(ctx context.Context, note vocab.ActivityStreamsNote, receivingAccount, requestingAccount *gtsmodel.Account) error {
 	l := log.WithFields(kv.Fields{
 		{"receivingAccount", receivingAccount.URI},
 		{"requestingAccount", requestingAccount.URI},
@@ -249,7 +249,7 @@ func (f *federatingDB) createNote(ctx context.Context, note vocab.ActivityStream
 	FOLLOW HANDLERS
 */
 
-func (f *federatingDB) activityFollow(ctx context.Context, asType vocab.Type, receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) error {
+func (f *federatingDB) activityFollow(ctx context.Context, asType vocab.Type, receivingAccount, requestingAccount *gtsmodel.Account) error {
 	follow, ok := asType.(vocab.ActivityStreamsFollow)
 	if !ok {
 		return errors.New("activityFollow: could not convert type to follow")
@@ -284,7 +284,7 @@ func (f *federatingDB) activityFollow(ctx context.Context, asType vocab.Type, re
 	LIKE HANDLERS
 */
 
-func (f *federatingDB) activityLike(ctx context.Context, asType vocab.Type, receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) error {
+func (f *federatingDB) activityLike(ctx context.Context, asType vocab.Type, receivingAccount, requestingAccount *gtsmodel.Account) error {
 	like, ok := asType.(vocab.ActivityStreamsLike)
 	if !ok {
 		return errors.New("activityLike: could not convert type to like")

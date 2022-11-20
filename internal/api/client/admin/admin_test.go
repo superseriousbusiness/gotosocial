@@ -103,7 +103,7 @@ func (suite *AdminStandardTestSuite) TearDownTest() {
 	testrig.StandardStorageTeardown(suite.storage)
 }
 
-func (suite *AdminStandardTestSuite) newContext(recorder *httptest.ResponseRecorder, requestMethod string, requestBody []byte, requestPath string, bodyContentType string) *gin.Context {
+func (suite *AdminStandardTestSuite) newContext(recorder *httptest.ResponseRecorder, requestMethod string, requestBody []byte, requestPath, bodyContentType string) *gin.Context {
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["admin_account"])

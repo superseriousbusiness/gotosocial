@@ -89,10 +89,10 @@ type Processor interface {
 	AccountUpdate(ctx context.Context, authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, gtserror.WithCode)
 	// AccountStatusesGet fetches a number of statuses (in time descending order) from the given account, filtered by visibility for
 	// the account given in authed.
-	AccountStatusesGet(ctx context.Context, authed *oauth.Auth, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinned bool, mediaOnly bool, publicOnly bool) (*apimodel.PageableResponse, gtserror.WithCode)
+	AccountStatusesGet(ctx context.Context, authed *oauth.Auth, targetAccountID string, limit int, excludeReplies, excludeReblogs bool, maxID, minID string, pinned, mediaOnly, publicOnly bool) (*apimodel.PageableResponse, gtserror.WithCode)
 	// AccountWebStatusesGet fetches a number of statuses (in descending order) from the given account. It selects only
 	// statuses which are suitable for showing on the public web profile of an account.
-	AccountWebStatusesGet(ctx context.Context, targetAccountID string, maxID string) (*apimodel.PageableResponse, gtserror.WithCode)
+	AccountWebStatusesGet(ctx context.Context, targetAccountID, maxID string) (*apimodel.PageableResponse, gtserror.WithCode)
 	// AccountFollowersGet fetches a list of the target account's followers.
 	AccountFollowersGet(ctx context.Context, authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, gtserror.WithCode)
 	// AccountFollowingGet fetches a list of the accounts that target account is following.
@@ -113,7 +113,7 @@ type Processor interface {
 	// AdminEmojiCreate handles the creation of a new instance emoji by an admin, using the given form.
 	AdminEmojiCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, gtserror.WithCode)
 	// AdminEmojisGet allows admins to view emojis based on various filters.
-	AdminEmojisGet(ctx context.Context, authed *oauth.Auth, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) (*apimodel.PageableResponse, gtserror.WithCode)
+	AdminEmojisGet(ctx context.Context, authed *oauth.Auth, domain string, includeDisabled, includeEnabled bool, shortcode, maxShortcodeDomain, minShortcodeDomain string, limit int) (*apimodel.PageableResponse, gtserror.WithCode)
 	// AdminEmojiGet returns the admin view of an emoji with the given ID
 	AdminEmojiGet(ctx context.Context, authed *oauth.Auth, id string) (*apimodel.AdminEmoji, gtserror.WithCode)
 	// AdminEmojiDelete deletes one *local* emoji with the given key. Remote emojis will not be deleted this way.
@@ -138,7 +138,7 @@ type Processor interface {
 	AppCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, gtserror.WithCode)
 
 	// BlocksGet returns a list of accounts blocked by the requesting account.
-	BlocksGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, limit int) (*apimodel.BlocksResponse, gtserror.WithCode)
+	BlocksGet(ctx context.Context, authed *oauth.Auth, maxID, sinceID string, limit int) (*apimodel.BlocksResponse, gtserror.WithCode)
 
 	// CustomEmojisGet returns an array of info about the custom emojis on this server
 	CustomEmojisGet(ctx context.Context) ([]*apimodel.Emoji, gtserror.WithCode)
@@ -155,7 +155,7 @@ type Processor interface {
 
 	// InstanceGet retrieves instance information for serving at api/v1/instance
 	InstanceGet(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode)
-	InstancePeersGet(ctx context.Context, authed *oauth.Auth, includeSuspended bool, includeOpen bool, flat bool) (interface{}, gtserror.WithCode)
+	InstancePeersGet(ctx context.Context, authed *oauth.Auth, includeSuspended, includeOpen, flat bool) (interface{}, gtserror.WithCode)
 	// InstancePatch updates this instance according to the given form.
 	//
 	// It should already be ascertained that the requesting account is authenticated and an admin.
@@ -169,7 +169,7 @@ type Processor interface {
 	MediaUpdate(ctx context.Context, authed *oauth.Auth, attachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, gtserror.WithCode)
 
 	// NotificationsGet
-	NotificationsGet(ctx context.Context, authed *oauth.Auth, excludeTypes []string, limit int, maxID string, sinceID string) (*apimodel.PageableResponse, gtserror.WithCode)
+	NotificationsGet(ctx context.Context, authed *oauth.Auth, excludeTypes []string, limit int, maxID, sinceID string) (*apimodel.PageableResponse, gtserror.WithCode)
 	// NotificationsClear
 	NotificationsClear(ctx context.Context, authed *oauth.Auth) gtserror.WithCode
 
@@ -201,11 +201,11 @@ type Processor interface {
 	StatusGetContext(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Context, gtserror.WithCode)
 
 	// HomeTimelineGet returns statuses from the home timeline, with the given filters/parameters.
-	HomeTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode)
+	HomeTimelineGet(ctx context.Context, authed *oauth.Auth, maxID, sinceID, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode)
 	// PublicTimelineGet returns statuses from the public/local timeline, with the given filters/parameters.
-	PublicTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode)
+	PublicTimelineGet(ctx context.Context, authed *oauth.Auth, maxID, sinceID, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode)
 	// FavedTimelineGet returns faved statuses, with the given filters/parameters.
-	FavedTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode)
+	FavedTimelineGet(ctx context.Context, authed *oauth.Auth, maxID, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode)
 
 	// AuthorizeStreamingRequest returns a gotosocial account in exchange for an access token, or an error if the given token is not valid.
 	AuthorizeStreamingRequest(ctx context.Context, accessToken string) (*gtsmodel.Account, gtserror.WithCode)
@@ -237,12 +237,12 @@ type Processor interface {
 	GetFediFollowing(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode)
 	// GetFediStatus handles the getting of a fedi/activitypub representation of a particular status, performing appropriate
 	// authentication before returning a JSON serializable interface to the caller.
-	GetFediStatus(ctx context.Context, requestedUsername string, requestedStatusID string, requestURL *url.URL) (interface{}, gtserror.WithCode)
+	GetFediStatus(ctx context.Context, requestedUsername, requestedStatusID string, requestURL *url.URL) (interface{}, gtserror.WithCode)
 	// GetFediStatus handles the getting of a fedi/activitypub representation of replies to a status, performing appropriate
 	// authentication before returning a JSON serializable interface to the caller.
-	GetFediStatusReplies(ctx context.Context, requestedUsername string, requestedStatusID string, page bool, onlyOtherAccounts bool, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode)
+	GetFediStatusReplies(ctx context.Context, requestedUsername, requestedStatusID string, page, onlyOtherAccounts bool, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode)
 	// GetFediOutbox returns the public outbox of the requested user, with the given parameters.
-	GetFediOutbox(ctx context.Context, requestedUsername string, page bool, maxID string, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode)
+	GetFediOutbox(ctx context.Context, requestedUsername string, page bool, maxID, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode)
 	// GetFediEmoji returns the AP representation of an emoji on this instance.
 	GetFediEmoji(ctx context.Context, requestedEmojiID string, requestURL *url.URL) (interface{}, gtserror.WithCode)
 	// GetWebfingerAccount handles the GET for a webfinger resource. Most commonly, it will be used for returning account lookups.

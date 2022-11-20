@@ -37,7 +37,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
-func (p *processor) DomainBlockCreate(ctx context.Context, account *gtsmodel.Account, domain string, obfuscate bool, publicComment string, privateComment string, subscriptionID string) (*apimodel.DomainBlock, gtserror.WithCode) {
+func (p *processor) DomainBlockCreate(ctx context.Context, account *gtsmodel.Account, domain string, obfuscate bool, publicComment, privateComment, subscriptionID string) (*apimodel.DomainBlock, gtserror.WithCode) {
 	// domain blocks will always be lowercase
 	domain = strings.ToLower(domain)
 

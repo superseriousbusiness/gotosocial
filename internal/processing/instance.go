@@ -48,7 +48,7 @@ func (p *processor) InstanceGet(ctx context.Context, domain string) (*apimodel.I
 	return ai, nil
 }
 
-func (p *processor) InstancePeersGet(ctx context.Context, authed *oauth.Auth, includeSuspended bool, includeOpen bool, flat bool) (interface{}, gtserror.WithCode) {
+func (p *processor) InstancePeersGet(ctx context.Context, authed *oauth.Auth, includeSuspended, includeOpen, flat bool) (interface{}, gtserror.WithCode) {
 	domains := []*apimodel.Domain{}
 
 	if includeOpen {

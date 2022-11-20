@@ -100,7 +100,7 @@ func FindHashtagSpansInText(text string) []Span {
 	return tags
 }
 
-func appendTag(tags *[]Span, text string, start int, end int) {
+func appendTag(tags *[]Span, text string, start, end int) {
 	l := end - start - 1
 	// This check could be moved out into the parsing loop if necessary!
 	if 0 < l && l <= maximumHashtagLength {

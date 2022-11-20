@@ -91,7 +91,7 @@ type Client struct {
 }
 
 // New returns a new instance of Client initialized using configuration.
-func New(cfg Config) *Client {
+func New(cfg *Config) *Client {
 	var c Client
 
 	d := &net.Dialer{
@@ -211,8 +211,8 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	}
 
 	// Seperate the body implementers
-	rbody := (io.Reader)(rsp.Body)
-	cbody := (io.Closer)(rsp.Body)
+	rbody := io.Reader(rsp.Body)
+	cbody := io.Closer(rsp.Body)
 
 	var limit int64
 

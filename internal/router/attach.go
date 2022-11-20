@@ -22,7 +22,7 @@ import "github.com/gin-gonic/gin"
 
 // AttachHandler attaches the given gin.HandlerFunc to the router with the specified method and path.
 // If the path is set to ANY, then the handlerfunc will be used for ALL methods at its given path.
-func (r *router) AttachHandler(method string, path string, handler gin.HandlerFunc) {
+func (r *router) AttachHandler(method, path string, handler gin.HandlerFunc) {
 	if method == "ANY" {
 		r.engine.Any(path, handler)
 	} else {

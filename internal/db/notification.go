@@ -29,7 +29,7 @@ type Notification interface {
 	// GetNotifications returns a slice of notifications that pertain to the given accountID.
 	//
 	// Returned notifications will be ordered ID descending (ie., highest/newest to lowest/oldest).
-	GetNotifications(ctx context.Context, accountID string, excludeTypes []string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, Error)
+	GetNotifications(ctx context.Context, accountID string, excludeTypes []string, limit int, maxID, sinceID string) ([]*gtsmodel.Notification, Error)
 	// GetNotification returns one notification according to its id.
 	GetNotification(ctx context.Context, id string) (*gtsmodel.Notification, Error)
 	// ClearNotifications deletes every notification that pertain to the given accountID.

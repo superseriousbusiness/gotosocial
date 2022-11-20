@@ -64,7 +64,7 @@ type Server interface {
 	HandleTokenRequest(r *http.Request) (map[string]interface{}, gtserror.WithCode)
 	HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) gtserror.WithCode
 	ValidationBearerToken(r *http.Request) (oauth2.TokenInfo, error)
-	GenerateUserAccessToken(ctx context.Context, ti oauth2.TokenInfo, clientSecret string, userID string) (accessToken oauth2.TokenInfo, err error)
+	GenerateUserAccessToken(ctx context.Context, ti oauth2.TokenInfo, clientSecret, userID string) (accessToken oauth2.TokenInfo, err error)
 	LoadAccessToken(ctx context.Context, access string) (accessToken oauth2.TokenInfo, err error)
 }
 
@@ -258,7 +258,7 @@ func (s *s) ValidationBearerToken(r *http.Request) (oauth2.TokenInfo, error) {
 //
 // The ti parameter refers to an existing Application token that was used to make the upstream
 // request. This token needs to be validated and exist in database in order to create a new token.
-func (s *s) GenerateUserAccessToken(ctx context.Context, ti oauth2.TokenInfo, clientSecret string, userID string) (oauth2.TokenInfo, error) {
+func (s *s) GenerateUserAccessToken(ctx context.Context, ti oauth2.TokenInfo, clientSecret, userID string) (oauth2.TokenInfo, error) {
 	authToken, err := s.server.Manager.GenerateAuthToken(ctx, oauth2.Code, &oauth2.TokenGenerateRequest{
 		ClientID:     ti.GetClientID(),
 		ClientSecret: clientSecret,

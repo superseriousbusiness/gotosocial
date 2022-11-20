@@ -28,7 +28,7 @@ type Auth struct {
 //
 // If something goes wrong during parsing, then nil and an error will be returned (consider this not authed).
 // Authed is like GetAuthed, but will fail if one of the requirements is not met.
-func Authed(c *gin.Context, requireToken bool, requireApp bool, requireUser bool, requireAccount bool) (*Auth, error) {
+func Authed(c *gin.Context, requireToken, requireApp, requireUser, requireAccount bool) (*Auth, error) {
 	ctx := c.Copy()
 	a := &Auth{}
 	var i interface{}

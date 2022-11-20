@@ -30,7 +30,6 @@ import (
 
 func (t *timeline) IndexBefore(ctx context.Context, itemID string, amount int) error {
 	l := log.WithFields(kv.Fields{
-
 		{"amount", amount},
 	}...)
 
@@ -83,7 +82,6 @@ grabloop:
 
 func (t *timeline) IndexBehind(ctx context.Context, itemID string, amount int) error {
 	l := log.WithFields(kv.Fields{
-
 		{"amount", amount},
 	}...)
 
@@ -158,7 +156,7 @@ grabloop:
 	return nil
 }
 
-func (t *timeline) IndexOne(ctx context.Context, itemID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error) {
+func (t *timeline) IndexOne(ctx context.Context, itemID, boostOfID, accountID, boostOfAccountID string) (bool, error) {
 	t.Lock()
 	defer t.Unlock()
 
@@ -172,7 +170,7 @@ func (t *timeline) IndexOne(ctx context.Context, itemID string, boostOfID string
 	return t.itemIndex.insertIndexed(ctx, postIndexEntry)
 }
 
-func (t *timeline) IndexAndPrepareOne(ctx context.Context, statusID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error) {
+func (t *timeline) IndexAndPrepareOne(ctx context.Context, statusID, boostOfID, accountID, boostOfAccountID string) (bool, error) {
 	t.Lock()
 	defer t.Unlock()
 

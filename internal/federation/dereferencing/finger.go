@@ -30,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (d *deref) fingerRemoteAccount(ctx context.Context, username string, targetUsername string, targetHost string) (accountDomain string, accountURI *url.URL, err error) {
+func (d *deref) fingerRemoteAccount(ctx context.Context, username, targetUsername, targetHost string) (accountDomain string, accountURI *url.URL, err error) {
 	t, err := d.transportController.NewTransportForUsername(ctx, username)
 	if err != nil {
 		err = fmt.Errorf("fingerRemoteAccount: error getting transport for %s: %s", username, err)

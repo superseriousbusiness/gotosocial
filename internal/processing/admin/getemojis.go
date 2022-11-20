@@ -31,7 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *processor) EmojisGet(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
+func (p *processor) EmojisGet(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, domain string, includeDisabled, includeEnabled bool, shortcode, maxShortcodeDomain, minShortcodeDomain string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
 	if !*user.Admin {
 		return nil, gtserror.NewErrorUnauthorized(fmt.Errorf("user %s not an admin", user.ID), "user is not an admin")
 	}

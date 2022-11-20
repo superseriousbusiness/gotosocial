@@ -25,7 +25,7 @@ import (
 )
 
 // streamToAccount streams the given payload with the given event type to any streams currently open for the given account ID.
-func (p *processor) streamToAccount(payload string, event string, timelines []string, accountID string) error {
+func (p *processor) streamToAccount(payload, event string, timelines []string, accountID string) error {
 	v, ok := p.streamMap.Load(accountID)
 	if !ok {
 		// no open connections so nothing to stream

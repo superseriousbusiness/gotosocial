@@ -27,7 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 )
 
-func (d *deref) GetRemoteMedia(ctx context.Context, requestingUsername string, accountID string, remoteURL string, ai *media.AdditionalMediaInfo) (*media.ProcessingMedia, error) {
+func (d *deref) GetRemoteMedia(ctx context.Context, requestingUsername, accountID, remoteURL string, ai *media.AdditionalMediaInfo) (*media.ProcessingMedia, error) {
 	if accountID == "" {
 		return nil, fmt.Errorf("GetRemoteMedia: account ID was empty")
 	}

@@ -101,7 +101,7 @@ func (a *accountDB) GetAccountByURL(ctx context.Context, url string) (*gtsmodel.
 	)
 }
 
-func (a *accountDB) GetAccountByUsernameDomain(ctx context.Context, username string, domain string) (*gtsmodel.Account, db.Error) {
+func (a *accountDB) GetAccountByUsernameDomain(ctx context.Context, username, domain string) (*gtsmodel.Account, db.Error) {
 	username = strings.ToLower(username)
 	return a.getAccount(
 		ctx,
@@ -357,7 +357,7 @@ func (a *accountDB) CountAccountStatuses(ctx context.Context, accountID string) 
 		Count(ctx)
 }
 
-func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinnedOnly bool, mediaOnly bool, publicOnly bool) ([]*gtsmodel.Status, db.Error) {
+func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, limit int, excludeReplies, excludeReblogs bool, maxID, minID string, pinnedOnly, mediaOnly, publicOnly bool) ([]*gtsmodel.Status, db.Error) {
 	statusIDs := []string{}
 
 	q := a.conn.
@@ -462,7 +462,7 @@ func (a *accountDB) GetAccountWebStatuses(ctx context.Context, accountID string,
 	return a.statusesFromIDs(ctx, statusIDs)
 }
 
-func (a *accountDB) GetAccountBlocks(ctx context.Context, accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, db.Error) {
+func (a *accountDB) GetAccountBlocks(ctx context.Context, accountID, maxID, sinceID string, limit int) (accounts []*gtsmodel.Account, nextMaxID, prevMinID string, dbErr db.Error) {
 	blocks := []*gtsmodel.Block{}
 
 	fq := a.conn.
@@ -492,13 +492,13 @@ func (a *accountDB) GetAccountBlocks(ctx context.Context, accountID string, maxI
 		return nil, "", "", db.ErrNoEntries
 	}
 
-	accounts := []*gtsmodel.Account{}
+	accounts = []*gtsmodel.Account{}
 	for _, b := range blocks {
 		accounts = append(accounts, b.TargetAccount)
 	}
 
-	nextMaxID := blocks[len(blocks)-1].ID
-	prevMinID := blocks[0].ID
+	nextMaxID = blocks[len(blocks)-1].ID
+	prevMinID = blocks[0].ID
 	return accounts, nextMaxID, prevMinID, nil
 }
 

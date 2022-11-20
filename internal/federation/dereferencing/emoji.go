@@ -31,7 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 )
 
-func (d *deref) GetRemoteEmoji(ctx context.Context, requestingUsername string, remoteURL string, shortcode string, domain string, id string, emojiURI string, ai *media.AdditionalEmojiInfo, refresh bool) (*media.ProcessingEmoji, error) {
+func (d *deref) GetRemoteEmoji(ctx context.Context, requestingUsername, remoteURL, shortcode, domain, id, emojiURI string, ai *media.AdditionalEmojiInfo, refresh bool) (*media.ProcessingEmoji, error) {
 	var (
 		shortcodeDomain = shortcode + "@" + domain
 		processingEmoji *media.ProcessingEmoji
@@ -149,7 +149,6 @@ func (d *deref) populateEmojis(ctx context.Context, rawEmojis []*gtsmodel.Emoji,
 					Disabled:             gotEmoji.Disabled,
 					VisibleInPicker:      gotEmoji.VisibleInPicker,
 				}, refresh)
-
 				if err != nil {
 					log.Errorf("populateEmojis: couldn't refresh remote emoji %s: %s", shortcodeDomain, err)
 					continue
@@ -175,7 +174,6 @@ func (d *deref) populateEmojis(ctx context.Context, rawEmojis []*gtsmodel.Emoji,
 				Disabled:             e.Disabled,
 				VisibleInPicker:      e.VisibleInPicker,
 			}, refresh)
-
 			if err != nil {
 				log.Errorf("populateEmojis: couldn't get remote emoji %s: %s", shortcodeDomain, err)
 				continue

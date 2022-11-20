@@ -30,9 +30,8 @@ import (
 
 const retries = 5
 
-func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID string, minID string, prepareNext bool) ([]Preparable, error) {
+func (t *timeline) Get(ctx context.Context, amount int, maxID, sinceID, minID string, prepareNext bool) ([]Preparable, error) {
 	l := log.WithFields(kv.Fields{
-
 		{"accountID", t.accountID},
 		{"amount", amount},
 		{"maxID", maxID},
@@ -138,7 +137,6 @@ func (t *timeline) GetXFromTop(ctx context.Context, amount int) ([]Preparable, e
 
 func (t *timeline) GetXBehindID(ctx context.Context, amount int, behindID string, attempts *int) ([]Preparable, error) {
 	l := log.WithFields(kv.Fields{
-
 		{"amount", amount},
 		{"behindID", behindID},
 		{"attempts", attempts},
@@ -298,7 +296,7 @@ findMarkLoop:
 	return items, nil
 }
 
-func (t *timeline) GetXBetweenID(ctx context.Context, amount int, behindID string, beforeID string) ([]Preparable, error) {
+func (t *timeline) GetXBetweenID(ctx context.Context, amount int, behindID, beforeID string) ([]Preparable, error) {
 	// make a slice of items with the length we need to return
 	items := make([]Preparable, 0, amount)
 

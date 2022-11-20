@@ -44,7 +44,7 @@ const (
 // Router provides the REST interface for gotosocial, using gin.
 type Router interface {
 	// Attach a gin handler to the router with the given method and path
-	AttachHandler(method string, path string, f gin.HandlerFunc)
+	AttachHandler(method, path string, f gin.HandlerFunc)
 	// Attach a gin middleware to the router that will be used globally
 	AttachMiddleware(handler gin.HandlerFunc)
 	// Attach 404 NoRoute handler

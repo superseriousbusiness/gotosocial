@@ -117,7 +117,7 @@ func (i *instanceDB) GetInstancePeers(ctx context.Context, includeSuspended bool
 	return instances, nil
 }
 
-func (i *instanceDB) GetInstanceAccounts(ctx context.Context, domain string, maxID string, limit int) ([]*gtsmodel.Account, db.Error) {
+func (i *instanceDB) GetInstanceAccounts(ctx context.Context, domain, maxID string, limit int) ([]*gtsmodel.Account, db.Error) {
 	accounts := []*gtsmodel.Account{}
 
 	q := i.conn.NewSelect().

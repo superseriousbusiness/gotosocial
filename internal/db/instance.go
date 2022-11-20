@@ -36,7 +36,7 @@ type Instance interface {
 	CountInstanceDomains(ctx context.Context, domain string) (int, Error)
 
 	// GetInstanceAccounts returns a slice of accounts from the given instance, arranged by ID.
-	GetInstanceAccounts(ctx context.Context, domain string, maxID string, limit int) ([]*gtsmodel.Account, Error)
+	GetInstanceAccounts(ctx context.Context, domain, maxID string, limit int) ([]*gtsmodel.Account, Error)
 
 	// GetInstancePeers returns a slice of instances that the host instance knows about.
 	GetInstancePeers(ctx context.Context, includeSuspended bool) ([]*gtsmodel.Instance, Error)

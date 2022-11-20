@@ -32,7 +32,6 @@ func (f *filter) StatusVisible(ctx context.Context, targetStatus *gtsmodel.Statu
 	const getBoosted = true
 
 	l := log.WithFields(kv.Fields{
-
 		{"statusID", targetStatus.ID},
 	}...)
 

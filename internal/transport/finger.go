@@ -27,7 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 )
 
-func (t *transport) Finger(ctx context.Context, targetUsername string, targetDomain string) ([]byte, error) {
+func (t *transport) Finger(ctx context.Context, targetUsername, targetDomain string) ([]byte, error) {
 	// Prepare URL string
 	urlStr := "https://" +
 		targetDomain +

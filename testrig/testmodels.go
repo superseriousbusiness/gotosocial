@@ -2321,7 +2321,7 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 }
 
 // GetSignatureForActivity prepares a mock HTTP request as if it were going to deliver activity to destination signed for privkey and pubKeyID, signs the request and returns the header values.
-func GetSignatureForActivity(activity pub.Activity, pubKeyID string, privkey *rsa.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
+func GetSignatureForActivity(activity pub.Activity, pubKeyID string, privkey *rsa.PrivateKey, destination *url.URL) (signatureHeader, digestHeader, dateHeader string) {
 	// convert the activity into json bytes
 	m, err := activity.Serialize()
 	if err != nil {
@@ -2361,7 +2361,7 @@ func GetSignatureForActivity(activity pub.Activity, pubKeyID string, privkey *rs
 }
 
 // GetSignatureForDereference prepares a mock HTTP request as if it were going to dereference destination signed for privkey and pubKeyID, signs the request and returns the header values.
-func GetSignatureForDereference(pubKeyID string, privkey *rsa.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
+func GetSignatureForDereference(pubKeyID string, privkey *rsa.PrivateKey, destination *url.URL) (signatureHeader, digestHeader, dateHeader string) {
 	// Prepare HTTP request signer
 	sig, err := transport.NewGETSigner(120)
 	if err != nil {
@@ -2968,7 +2968,7 @@ func newAPMention(uri *url.URL, namestring string) vocab.ActivityStreamsMention 
 	return mention
 }
 
-func newAPImage(url *url.URL, mediaType string, imageDescription string, blurhash string) vocab.ActivityStreamsImage {
+func newAPImage(url *url.URL, mediaType, imageDescription, blurhash string) vocab.ActivityStreamsImage {
 	image := streams.NewActivityStreamsImage()
 
 	if url != nil {
@@ -3114,7 +3114,7 @@ func NewAPNote(
 }
 
 // WrapAPNoteInCreate wraps the given activity streams note in a Create activity streams action
-func WrapAPNoteInCreate(createID *url.URL, createActor *url.URL, createPublished time.Time, createNote vocab.ActivityStreamsNote) vocab.ActivityStreamsCreate {
+func WrapAPNoteInCreate(createID, createActor *url.URL, createPublished time.Time, createNote vocab.ActivityStreamsNote) vocab.ActivityStreamsCreate {
 	// create the.... create
 	create := streams.NewActivityStreamsCreate()
 
@@ -3159,7 +3159,7 @@ func WrapAPNoteInCreate(createID *url.URL, createActor *url.URL, createPublished
 	return create
 }
 
-func newAPAnnounce(announceID *url.URL, announceActor *url.URL, announcePublished time.Time, announceTo *url.URL, announceNote vocab.ActivityStreamsNote) vocab.ActivityStreamsAnnounce {
+func newAPAnnounce(announceID, announceActor *url.URL, announcePublished time.Time, announceTo *url.URL, announceNote vocab.ActivityStreamsNote) vocab.ActivityStreamsAnnounce {
 	announce := streams.NewActivityStreamsAnnounce()
 
 	if announceID != nil {
@@ -3197,7 +3197,7 @@ func newAPAnnounce(announceID *url.URL, announceActor *url.URL, announcePublishe
 	return announce
 }
 
-func newAPDelete(deleteTarget *url.URL, deleteActor *url.URL, deletePublished time.Time, deleteTo *url.URL) vocab.ActivityStreamsDelete {
+func newAPDelete(deleteTarget, deleteActor *url.URL, deletePublished time.Time, deleteTo *url.URL) vocab.ActivityStreamsDelete {
 	delete := streams.NewActivityStreamsDelete()
 
 	objectProp := streams.NewActivityStreamsObjectProperty()

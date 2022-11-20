@@ -47,11 +47,11 @@ type Processor interface {
 
 	// GetStatus handles the getting of a fedi/activitypub representation of a particular status, performing appropriate
 	// authentication before returning a JSON serializable interface to the caller.
-	GetStatus(ctx context.Context, requestedUsername string, requestedStatusID string, requestURL *url.URL) (interface{}, gtserror.WithCode)
+	GetStatus(ctx context.Context, requestedUsername, requestedStatusID string, requestURL *url.URL) (interface{}, gtserror.WithCode)
 
 	// GetStatus handles the getting of a fedi/activitypub representation of replies to a status, performing appropriate
 	// authentication before returning a JSON serializable interface to the caller.
-	GetStatusReplies(ctx context.Context, requestedUsername string, requestedStatusID string, page bool, onlyOtherAccounts bool, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode)
+	GetStatusReplies(ctx context.Context, requestedUsername, requestedStatusID string, page, onlyOtherAccounts bool, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode)
 
 	// GetWebfingerAccount handles the GET for a webfinger resource. Most commonly, it will be used for returning account lookups.
 	GetWebfingerAccount(ctx context.Context, requestedUsername string) (*apimodel.WellKnownResponse, gtserror.WithCode)
@@ -67,7 +67,7 @@ type Processor interface {
 
 	// GetOutbox returns the activitypub representation of a local user's outbox.
 	// This contains links to PUBLIC posts made by this user.
-	GetOutbox(ctx context.Context, requestedUsername string, page bool, maxID string, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode)
+	GetOutbox(ctx context.Context, requestedUsername string, page bool, maxID, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode)
 
 	// PostInbox handles POST requests to a user's inbox for new activitypub messages.
 	//

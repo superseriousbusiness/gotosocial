@@ -30,7 +30,7 @@ func (p *processor) StreamDelete(statusID string) error {
 
 	// get all account IDs with open streams
 	accountIDs := []string{}
-	p.streamMap.Range(func(k interface{}, _ interface{}) bool {
+	p.streamMap.Range(func(k, _ interface{}) bool {
 		key, ok := k.(string)
 		if !ok {
 			panic("streamMap key was not a string (account id)")

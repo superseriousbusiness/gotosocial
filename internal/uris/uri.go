@@ -77,7 +77,7 @@ type UserURIs struct {
 
 // GenerateURIForFollow returns the AP URI for a new follow -- something like:
 // https://example.org/users/whatever_user/follow/01F7XTH1QGBAPMGF49WJZ91XGC
-func GenerateURIForFollow(username string, thisFollowID string) string {
+func GenerateURIForFollow(username, thisFollowID string) string {
 	protocol := config.GetProtocol()
 	host := config.GetHost()
 	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, FollowPath, thisFollowID)
@@ -85,7 +85,7 @@ func GenerateURIForFollow(username string, thisFollowID string) string {
 
 // GenerateURIForLike returns the AP URI for a new like/fave -- something like:
 // https://example.org/users/whatever_user/liked/01F7XTH1QGBAPMGF49WJZ91XGC
-func GenerateURIForLike(username string, thisFavedID string) string {
+func GenerateURIForLike(username, thisFavedID string) string {
 	protocol := config.GetProtocol()
 	host := config.GetHost()
 	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, LikedPath, thisFavedID)
@@ -93,7 +93,7 @@ func GenerateURIForLike(username string, thisFavedID string) string {
 
 // GenerateURIForUpdate returns the AP URI for a new update activity -- something like:
 // https://example.org/users/whatever_user#updates/01F7XTH1QGBAPMGF49WJZ91XGC
-func GenerateURIForUpdate(username string, thisUpdateID string) string {
+func GenerateURIForUpdate(username, thisUpdateID string) string {
 	protocol := config.GetProtocol()
 	host := config.GetHost()
 	return fmt.Sprintf("%s://%s/%s/%s#%s/%s", protocol, host, UsersPath, username, UpdatePath, thisUpdateID)
@@ -101,7 +101,7 @@ func GenerateURIForUpdate(username string, thisUpdateID string) string {
 
 // GenerateURIForBlock returns the AP URI for a new block activity -- something like:
 // https://example.org/users/whatever_user/blocks/01F7XTH1QGBAPMGF49WJZ91XGC
-func GenerateURIForBlock(username string, thisBlockID string) string {
+func GenerateURIForBlock(username, thisBlockID string) string {
 	protocol := config.GetProtocol()
 	host := config.GetHost()
 	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, BlocksPath, thisBlockID)
@@ -155,7 +155,7 @@ func GenerateURIsForAccount(username string) *UserURIs {
 
 // GenerateURIForAttachment generates a URI for an attachment/emoji/header etc.
 // Will produced something like https://example.org/fileserver/01FPST95B8FC3HG3AGCDKPQNQ2/attachment/original/01FPST9QK4V5XWS3F9Z4F2G1X7.gif
-func GenerateURIForAttachment(accountID string, mediaType string, mediaSize string, mediaID string, extension string) string {
+func GenerateURIForAttachment(accountID, mediaType, mediaSize, mediaID, extension string) string {
 	protocol := config.GetProtocol()
 	host := config.GetHost()
 	return fmt.Sprintf("%s://%s/%s/%s/%s/%s/%s.%s", protocol, host, FileserverPath, accountID, mediaType, mediaSize, mediaID, extension)
@@ -229,7 +229,7 @@ func IsBlockPath(id *url.URL) bool {
 }
 
 // ParseStatusesPath returns the username and ulid from a path such as /users/example_username/statuses/SOME_ULID_OF_A_STATUS
-func ParseStatusesPath(id *url.URL) (username string, ulid string, err error) {
+func ParseStatusesPath(id *url.URL) (username, ulid string, err error) {
 	matches := regexes.StatusesPath.FindStringSubmatch(id.Path)
 	if len(matches) != 3 {
 		err = fmt.Errorf("expected 3 matches but matches length was %d", len(matches))
@@ -296,7 +296,7 @@ func ParseFollowingPath(id *url.URL) (username string, err error) {
 }
 
 // ParseLikedPath returns the username and ulid from a path such as /users/example_username/liked/SOME_ULID_OF_A_STATUS
-func ParseLikedPath(id *url.URL) (username string, ulid string, err error) {
+func ParseLikedPath(id *url.URL) (username, ulid string, err error) {
 	matches := regexes.LikePath.FindStringSubmatch(id.Path)
 	if len(matches) != 3 {
 		err = fmt.Errorf("expected 3 matches but matches length was %d", len(matches))
@@ -308,7 +308,7 @@ func ParseLikedPath(id *url.URL) (username string, ulid string, err error) {
 }
 
 // ParseBlockPath returns the username and ulid from a path such as /users/example_username/blocks/SOME_ULID_OF_A_BLOCK
-func ParseBlockPath(id *url.URL) (username string, ulid string, err error) {
+func ParseBlockPath(id *url.URL) (username, ulid string, err error) {
 	matches := regexes.BlockPath.FindStringSubmatch(id.Path)
 	if len(matches) != 3 {
 		err = fmt.Errorf("expected 3 matches but matches length was %d", len(matches))

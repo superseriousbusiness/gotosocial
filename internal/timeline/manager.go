@@ -62,7 +62,7 @@ type Manager interface {
 	IngestAndPrepare(ctx context.Context, item Timelineable, timelineAccountID string) (bool, error)
 	// GetTimeline returns limit n amount of prepared entries from the timeline of the given account ID, in descending chronological order.
 	// If maxID is provided, it will return prepared entries from that maxID onwards, inclusive.
-	GetTimeline(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]Preparable, error)
+	GetTimeline(ctx context.Context, accountID, maxID, sinceID, minID string, limit int, local bool) ([]Preparable, error)
 	// GetIndexedLength returns the amount of items that have been *indexed* for the given account ID.
 	GetIndexedLength(ctx context.Context, timelineAccountID string) int
 	// GetDesiredIndexLength returns the amount of items that we, ideally, index for each user.
@@ -72,11 +72,11 @@ type Manager interface {
 	// PrepareXFromTop prepares limit n amount of items, based on their indexed representations, from the top of the index.
 	PrepareXFromTop(ctx context.Context, timelineAccountID string, limit int) error
 	// Remove removes one item from the timeline of the given timelineAccountID
-	Remove(ctx context.Context, timelineAccountID string, itemID string) (int, error)
+	Remove(ctx context.Context, timelineAccountID, itemID string) (int, error)
 	// WipeItemFromAllTimelines removes one item from the index and prepared items of all timelines
 	WipeItemFromAllTimelines(ctx context.Context, itemID string) error
 	// WipeStatusesFromAccountID removes all items by the given accountID from the timelineAccountID's timelines.
-	WipeItemsFromAccountID(ctx context.Context, timelineAccountID string, accountID string) error
+	WipeItemsFromAccountID(ctx context.Context, timelineAccountID, accountID string) error
 }
 
 // NewManager returns a new timeline manager.
@@ -100,7 +100,6 @@ type manager struct {
 
 func (m *manager) Ingest(ctx context.Context, item Timelineable, timelineAccountID string) (bool, error) {
 	l := log.WithFields(kv.Fields{
-
 		{"timelineAccountID", timelineAccountID},
 		{"itemID", item.GetID()},
 	}...)
@@ -116,7 +115,6 @@ func (m *manager) Ingest(ctx context.Context, item Timelineable, timelineAccount
 
 func (m *manager) IngestAndPrepare(ctx context.Context, item Timelineable, timelineAccountID string) (bool, error) {
 	l := log.WithFields(kv.Fields{
-
 		{"timelineAccountID", timelineAccountID},
 		{"itemID", item.GetID()},
 	}...)
@@ -130,9 +128,8 @@ func (m *manager) IngestAndPrepare(ctx context.Context, item Timelineable, timel
 	return t.IndexAndPrepareOne(ctx, item.GetID(), item.GetBoostOfID(), item.GetAccountID(), item.GetBoostOfAccountID())
 }
 
-func (m *manager) Remove(ctx context.Context, timelineAccountID string, itemID string) (int, error) {
+func (m *manager) Remove(ctx context.Context, timelineAccountID, itemID string) (int, error) {
 	l := log.WithFields(kv.Fields{
-
 		{"timelineAccountID", timelineAccountID},
 		{"itemID", itemID},
 	}...)
@@ -146,9 +143,8 @@ func (m *manager) Remove(ctx context.Context, timelineAccountID string, itemID s
 	return t.Remove(ctx, itemID)
 }
 
-func (m *manager) GetTimeline(ctx context.Context, timelineAccountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]Preparable, error) {
+func (m *manager) GetTimeline(ctx context.Context, timelineAccountID, maxID, sinceID, minID string, limit int, local bool) ([]Preparable, error) {
 	l := log.WithFields(kv.Fields{
-
 		{"timelineAccountID", timelineAccountID},
 	}...)
 
@@ -197,7 +193,7 @@ func (m *manager) PrepareXFromTop(ctx context.Context, timelineAccountID string,
 
 func (m *manager) WipeItemFromAllTimelines(ctx context.Context, statusID string) error {
 	errors := []string{}
-	m.accountTimelines.Range(func(k interface{}, i interface{}) bool {
+	m.accountTimelines.Range(func(k, i interface{}) bool {
 		t, ok := i.(Timeline)
 		if !ok {
 			panic("couldn't parse entry as Timeline, this should never happen so panic")
@@ -218,7 +214,7 @@ func (m *manager) WipeItemFromAllTimelines(ctx context.Context, statusID string)
 	return err
 }
 
-func (m *manager) WipeItemsFromAccountID(ctx context.Context, timelineAccountID string, accountID string) error {
+func (m *manager) WipeItemsFromAccountID(ctx context.Context, timelineAccountID, accountID string) error {
 	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
 	if err != nil {
 		return err

@@ -147,7 +147,6 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithMarkdownNote() {
 	dbAccount, err := suite.db.GetAccountByID(context.Background(), testAccount.ID)
 	suite.NoError(err)
 	suite.Equal(expectedNote, dbAccount.Note)
-
 }
 
 func TestAccountUpdateTestSuite(t *testing.T) {

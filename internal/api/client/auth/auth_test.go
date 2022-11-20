@@ -108,7 +108,7 @@ func (suite *AuthStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 }
 
-func (suite *AuthStandardTestSuite) newContext(requestMethod string, requestPath string, requestBody []byte, bodyContentType string) (*gin.Context, *httptest.ResponseRecorder) {
+func (suite *AuthStandardTestSuite) newContext(requestMethod, requestPath string, requestBody []byte, bodyContentType string) (*gin.Context, *httptest.ResponseRecorder) {
 	// create the recorder and gin test context
 	recorder := httptest.NewRecorder()
 	ctx, engine := testrig.CreateGinTestContext(recorder, nil)

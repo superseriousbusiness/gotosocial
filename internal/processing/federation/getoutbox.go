@@ -29,7 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-func (p *processor) GetOutbox(ctx context.Context, requestedUsername string, page bool, maxID string, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
+func (p *processor) GetOutbox(ctx context.Context, requestedUsername string, page bool, maxID, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
 	// get the account the request is referring to
 	requestedAccount, err := p.db.GetAccountByUsernameDomain(ctx, requestedUsername, "")
 	if err != nil {

@@ -36,7 +36,7 @@ import (
 // The returned *multipart.Writer w can be used to set the content type of the request, like so:
 //
 //	req.Header.Set("Content-Type", w.FormDataContentType())
-func CreateMultipartFormData(fieldName string, fileName string, extraFields map[string]string) (bytes.Buffer, *multipart.Writer, error) {
+func CreateMultipartFormData(fieldName, fileName string, extraFields map[string]string) (bytes.Buffer, *multipart.Writer, error) {
 	var b bytes.Buffer
 
 	w := multipart.NewWriter(&b)

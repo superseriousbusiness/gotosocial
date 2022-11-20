@@ -64,7 +64,6 @@ func (r *renderer) RenderNode(w io.Writer, node *blackfriday.Node, entering bool
 }
 
 func (f *formatter) FromMarkdown(ctx context.Context, markdownText string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag, emojis []*gtsmodel.Emoji) string {
-
 	renderer := &renderer{
 		f:        f,
 		ctx:      ctx,

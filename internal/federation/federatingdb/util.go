@@ -37,7 +37,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-func sameActor(activityActor vocab.ActivityStreamsActorProperty, followActor vocab.ActivityStreamsActorProperty) bool {
+func sameActor(activityActor, followActor vocab.ActivityStreamsActorProperty) bool {
 	if activityActor == nil || followActor == nil {
 		return false
 	}

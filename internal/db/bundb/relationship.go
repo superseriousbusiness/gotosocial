@@ -62,7 +62,7 @@ func (r *relationshipDB) newFollowQ(follow interface{}) *bun.SelectQuery {
 		Relation("TargetAccount")
 }
 
-func (r *relationshipDB) IsBlocked(ctx context.Context, account1 string, account2 string, eitherDirection bool) (bool, db.Error) {
+func (r *relationshipDB) IsBlocked(ctx context.Context, account1, account2 string, eitherDirection bool) (bool, db.Error) {
 	// Look for a block in direction of account1->account2
 	block1, err := r.getBlock(ctx, account1, account2)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
@@ -86,7 +86,7 @@ func (r *relationshipDB) IsBlocked(ctx context.Context, account1 string, account
 	return (block2 != nil), nil
 }
 
-func (r *relationshipDB) GetBlock(ctx context.Context, account1 string, account2 string) (*gtsmodel.Block, db.Error) {
+func (r *relationshipDB) GetBlock(ctx context.Context, account1, account2 string) (*gtsmodel.Block, db.Error) {
 	// Fetch block from database
 	block, err := r.getBlock(ctx, account1, account2)
 	if err != nil {
@@ -108,7 +108,7 @@ func (r *relationshipDB) GetBlock(ctx context.Context, account1 string, account2
 	return block, nil
 }
 
-func (r *relationshipDB) getBlock(ctx context.Context, account1 string, account2 string) (*gtsmodel.Block, db.Error) {
+func (r *relationshipDB) getBlock(ctx context.Context, account1, account2 string) (*gtsmodel.Block, db.Error) {
 	return r.blockCache.Load("AccountID.TargetAccountID", func() (*gtsmodel.Block, error) {
 		var block gtsmodel.Block
 
@@ -202,7 +202,7 @@ func (r *relationshipDB) DeleteBlocksByTargetAccountID(ctx context.Context, targ
 	return nil
 }
 
-func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount string, targetAccount string) (*gtsmodel.Relationship, db.Error) {
+func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount, targetAccount string) (*gtsmodel.Relationship, db.Error) {
 	rel := &gtsmodel.Relationship{
 		ID: targetAccount,
 	}
@@ -274,7 +274,7 @@ func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount 
 	return rel, nil
 }
 
-func (r *relationshipDB) IsFollowing(ctx context.Context, sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, db.Error) {
+func (r *relationshipDB) IsFollowing(ctx context.Context, sourceAccount, targetAccount *gtsmodel.Account) (bool, db.Error) {
 	if sourceAccount == nil || targetAccount == nil {
 		return false, nil
 	}
@@ -289,7 +289,7 @@ func (r *relationshipDB) IsFollowing(ctx context.Context, sourceAccount *gtsmode
 	return r.conn.Exists(ctx, q)
 }
 
-func (r *relationshipDB) IsFollowRequested(ctx context.Context, sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, db.Error) {
+func (r *relationshipDB) IsFollowRequested(ctx context.Context, sourceAccount, targetAccount *gtsmodel.Account) (bool, db.Error) {
 	if sourceAccount == nil || targetAccount == nil {
 		return false, nil
 	}
@@ -304,7 +304,7 @@ func (r *relationshipDB) IsFollowRequested(ctx context.Context, sourceAccount *g
 	return r.conn.Exists(ctx, q)
 }
 
-func (r *relationshipDB) IsMutualFollowing(ctx context.Context, account1 *gtsmodel.Account, account2 *gtsmodel.Account) (bool, db.Error) {
+func (r *relationshipDB) IsMutualFollowing(ctx context.Context, account1, account2 *gtsmodel.Account) (bool, db.Error) {
 	if account1 == nil || account2 == nil {
 		return false, nil
 	}
@@ -324,7 +324,7 @@ func (r *relationshipDB) IsMutualFollowing(ctx context.Context, account1 *gtsmod
 	return f1 && f2, nil
 }
 
-func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, originAccountID string, targetAccountID string) (*gtsmodel.Follow, db.Error) {
+func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, originAccountID, targetAccountID string) (*gtsmodel.Follow, db.Error) {
 	var follow *gtsmodel.Follow
 
 	if err := r.conn.RunInTx(ctx, func(tx bun.Tx) error {
@@ -374,7 +374,7 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, originAccountI
 	return follow, nil
 }
 
-func (r *relationshipDB) RejectFollowRequest(ctx context.Context, originAccountID string, targetAccountID string) (*gtsmodel.FollowRequest, db.Error) {
+func (r *relationshipDB) RejectFollowRequest(ctx context.Context, originAccountID, targetAccountID string) (*gtsmodel.FollowRequest, db.Error) {
 	followRequest := &gtsmodel.FollowRequest{}
 
 	if err := r.conn.RunInTx(ctx, func(tx bun.Tx) error {

@@ -29,9 +29,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-func (t *timeline) prepareNextQuery(ctx context.Context, amount int, maxID string, sinceID string, minID string) error {
+func (t *timeline) prepareNextQuery(ctx context.Context, amount int, maxID, sinceID, minID string) error {
 	l := log.WithFields(kv.Fields{
-
 		{"amount", amount},
 		{"maxID", maxID},
 		{"sinceID", sinceID},
@@ -171,7 +170,6 @@ prepareloop:
 
 func (t *timeline) PrepareFromTop(ctx context.Context, amount int) error {
 	l := log.WithFields(kv.Fields{
-
 		{"amount", amount},
 	}...)
 

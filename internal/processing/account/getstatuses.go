@@ -29,7 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinnedOnly bool, mediaOnly bool, publicOnly bool) (*apimodel.PageableResponse, gtserror.WithCode) {
+func (p *processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies, excludeReblogs bool, maxID, minID string, pinnedOnly, mediaOnly, publicOnly bool) (*apimodel.PageableResponse, gtserror.WithCode) {
 	if requestingAccount != nil {
 		if blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true); err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
@@ -96,7 +96,7 @@ func (p *processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 	})
 }
 
-func (p *processor) WebStatusesGet(ctx context.Context, targetAccountID string, maxID string) (*apimodel.PageableResponse, gtserror.WithCode) {
+func (p *processor) WebStatusesGet(ctx context.Context, targetAccountID, maxID string) (*apimodel.PageableResponse, gtserror.WithCode) {
 	acct, err := p.db.GetAccountByID(ctx, targetAccountID)
 	if err != nil {
 		if err == db.ErrNoEntries {

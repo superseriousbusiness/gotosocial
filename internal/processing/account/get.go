@@ -67,7 +67,7 @@ func (p *processor) GetCustomCSSForUsername(ctx context.Context, username string
 	return customCSS, nil
 }
 
-func (p *processor) getAccountFor(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (*apimodel.Account, gtserror.WithCode) {
+func (p *processor) getAccountFor(ctx context.Context, requestingAccount, targetAccount *gtsmodel.Account) (*apimodel.Account, gtserror.WithCode) {
 	var blocked bool
 	var err error
 	if requestingAccount != nil {

@@ -153,7 +153,7 @@ type TypeConverter interface {
 	// StatusToAS converts a gts model status into an activity streams note, suitable for federation
 	StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.ActivityStreamsNote, error)
 	// FollowToASFollow converts a gts model Follow into an activity streams Follow, suitable for federation
-	FollowToAS(ctx context.Context, f *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (vocab.ActivityStreamsFollow, error)
+	FollowToAS(ctx context.Context, f *gtsmodel.Follow, originAccount, targetAccount *gtsmodel.Account) (vocab.ActivityStreamsFollow, error)
 	// MentionToAS converts a gts model mention into an activity streams Mention, suitable for federation
 	MentionToAS(ctx context.Context, m *gtsmodel.Mention) (vocab.ActivityStreamsMention, error)
 	// EmojiToAS converts a gts emoji into a mastodon ns Emoji, suitable for federation
@@ -163,7 +163,7 @@ type TypeConverter interface {
 	// FaveToAS converts a gts model status fave into an activityStreams LIKE, suitable for federation.
 	FaveToAS(ctx context.Context, f *gtsmodel.StatusFave) (vocab.ActivityStreamsLike, error)
 	// BoostToAS converts a gts model boost into an activityStreams ANNOUNCE, suitable for federation
-	BoostToAS(ctx context.Context, boostWrapperStatus *gtsmodel.Status, boostingAccount *gtsmodel.Account, boostedAccount *gtsmodel.Account) (vocab.ActivityStreamsAnnounce, error)
+	BoostToAS(ctx context.Context, boostWrapperStatus *gtsmodel.Status, boostingAccount, boostedAccount *gtsmodel.Account) (vocab.ActivityStreamsAnnounce, error)
 	// BlockToAS converts a gts model block into an activityStreams BLOCK, suitable for federation.
 	BlockToAS(ctx context.Context, block *gtsmodel.Block) (vocab.ActivityStreamsBlock, error)
 	// StatusToASRepliesCollection converts a gts model status into an activityStreams REPLIES collection.
@@ -181,7 +181,7 @@ type TypeConverter interface {
 	// OutboxID is used to create the 'partOf' field in the collection.
 	//
 	// Appropriate 'next' and 'prev' fields will be created based on the highest and lowest IDs present in the statuses slice.
-	StatusesToASOutboxPage(ctx context.Context, outboxID string, maxID string, minID string, statuses []*gtsmodel.Status) (vocab.ActivityStreamsOrderedCollectionPage, error)
+	StatusesToASOutboxPage(ctx context.Context, outboxID, maxID, minID string, statuses []*gtsmodel.Status) (vocab.ActivityStreamsOrderedCollectionPage, error)
 
 	/*
 		INTERNAL (gts) MODEL TO INTERNAL MODEL

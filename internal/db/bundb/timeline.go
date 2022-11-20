@@ -35,7 +35,7 @@ type timelineDB struct {
 	status *statusDB
 }
 
-func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.Error) {
+func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID, maxID, sinceID, minID string, limit int, local bool) ([]*gtsmodel.Status, db.Error) {
 	// Ensure reasonable
 	if limit < 0 {
 		limit = 0
@@ -124,7 +124,7 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 	return statuses, nil
 }
 
-func (t *timelineDB) GetPublicTimeline(ctx context.Context, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.Error) {
+func (t *timelineDB) GetPublicTimeline(ctx context.Context, maxID, sinceID, minID string, limit int, local bool) ([]*gtsmodel.Status, db.Error) {
 	// Ensure reasonable
 	if limit < 0 {
 		limit = 0
@@ -194,7 +194,7 @@ func (t *timelineDB) GetPublicTimeline(ctx context.Context, maxID string, sinceI
 
 // TODO optimize this query and the logic here, because it's slow as balls -- it takes like a literal second to return with a limit of 20!
 // It might be worth serving it through a timeline instead of raw DB queries, like we do for Home feeds.
-func (t *timelineDB) GetFavedTimeline(ctx context.Context, accountID string, maxID string, minID string, limit int) ([]*gtsmodel.Status, string, string, db.Error) {
+func (t *timelineDB) GetFavedTimeline(ctx context.Context, accountID, maxID, minID string, limit int) (statuses []*gtsmodel.Status, nextMaxID, prevMinID string, dbErr db.Error) {
 	// Ensure reasonable
 	if limit < 0 {
 		limit = 0
@@ -235,7 +235,7 @@ func (t *timelineDB) GetFavedTimeline(ctx context.Context, accountID string, max
 		return a.ID < b.ID
 	})
 
-	statuses := make([]*gtsmodel.Status, 0, len(faves))
+	statuses = make([]*gtsmodel.Status, 0, len(faves))
 
 	for _, fave := range faves {
 		// Fetch status from db for corresponding favourite
@@ -249,7 +249,7 @@ func (t *timelineDB) GetFavedTimeline(ctx context.Context, accountID string, max
 		statuses = append(statuses, status)
 	}
 
-	nextMaxID := faves[len(faves)-1].ID
-	prevMinID := faves[0].ID
+	nextMaxID = faves[len(faves)-1].ID
+	prevMinID = faves[0].ID
 	return statuses, nextMaxID, prevMinID, nil
 }

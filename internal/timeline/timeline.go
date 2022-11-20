@@ -37,7 +37,7 @@ import (
 // If an error is returned, the timeline will stop processing whatever request called GrabFunction,
 // and return the error. If no error is returned, but stop = true, this indicates to the caller of GrabFunction
 // that there are no more items to return, and processing should continue with the items already grabbed.
-type GrabFunction func(ctx context.Context, timelineAccountID string, maxID string, sinceID string, minID string, limit int) (items []Timelineable, stop bool, err error)
+type GrabFunction func(ctx context.Context, timelineAccountID, maxID, sinceID, minID string, limit int) (items []Timelineable, stop bool, err error)
 
 // FilterFunction is used by a Timeline to filter whether or not a grabbed item should be indexed.
 type FilterFunction func(ctx context.Context, timelineAccountID string, item Timelineable) (shouldIndex bool, err error)
@@ -45,7 +45,7 @@ type FilterFunction func(ctx context.Context, timelineAccountID string, item Tim
 // PrepareFunction converts a Timelineable into a Preparable.
 //
 // For example, this might result in the converstion of a *gtsmodel.Status with the given itemID into a serializable *apimodel.Status.
-type PrepareFunction func(ctx context.Context, timelineAccountID string, itemID string) (Preparable, error)
+type PrepareFunction func(ctx context.Context, timelineAccountID, itemID string) (Preparable, error)
 
 // SkipInsertFunction indicates whether a new item about to be inserted in the prepared list should be skipped,
 // based on the item itself, the next item in the timeline, and the depth at which nextItem has been found in the list.
@@ -72,7 +72,7 @@ type Timeline interface {
 	// Get returns an amount of prepared items with the given parameters.
 	// If prepareNext is true, then the next predicted query will be prepared already in a goroutine,
 	// to make the next call to Get faster.
-	Get(ctx context.Context, amount int, maxID string, sinceID string, minID string, prepareNext bool) ([]Preparable, error)
+	Get(ctx context.Context, amount int, maxID, sinceID, minID string, prepareNext bool) ([]Preparable, error)
 	// GetXFromTop returns x amount of items from the top of the timeline, from newest to oldest.
 	GetXFromTop(ctx context.Context, amount int) ([]Preparable, error)
 	// GetXBehindID returns x amount of items from the given id onwards, from newest to oldest.
@@ -89,7 +89,7 @@ type Timeline interface {
 	// This will NOT include the item with the given IDs.
 	//
 	// This corresponds to an api call to /timelines/home?since_id=WHATEVER&max_id=WHATEVER_ELSE
-	GetXBetweenID(ctx context.Context, amount int, maxID string, sinceID string) ([]Preparable, error)
+	GetXBetweenID(ctx context.Context, amount int, maxID, sinceID string) ([]Preparable, error)
 
 	/*
 		INDEXING FUNCTIONS
@@ -99,7 +99,7 @@ type Timeline interface {
 	//
 	// The returned bool indicates whether or not the item was actually inserted into the timeline. This will be false
 	// if the item is a boost and the original item or another boost of it already exists < boostReinsertionDepth back in the timeline.
-	IndexOne(ctx context.Context, itemID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error)
+	IndexOne(ctx context.Context, itemID, boostOfID, accountID, boostOfAccountID string) (bool, error)
 
 	// OldestIndexedItemID returns the id of the rearmost (ie., the oldest) indexed item, or an error if something goes wrong.
 	// If nothing goes wrong but there's no oldest item, an empty string will be returned so make sure to check for this.
@@ -125,7 +125,7 @@ type Timeline interface {
 	//
 	// The returned bool indicates whether or not the item was actually inserted into the timeline. This will be false
 	// if the item is a boost and the original item or another boost of it already exists < boostReinsertionDepth back in the timeline.
-	IndexAndPrepareOne(ctx context.Context, itemID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error)
+	IndexAndPrepareOne(ctx context.Context, itemID, boostOfID, accountID, boostOfAccountID string) (bool, error)
 	// OldestPreparedItemID returns the id of the rearmost (ie., the oldest) prepared item, or an error if something goes wrong.
 	// If nothing goes wrong but there's no oldest item, an empty string will be returned so make sure to check for this.
 	OldestPreparedItemID(ctx context.Context) (string, error)
@@ -173,7 +173,8 @@ func NewTimeline(
 	grabFunction GrabFunction,
 	filterFunction FilterFunction,
 	prepareFunction PrepareFunction,
-	skipInsertFunction SkipInsertFunction) (Timeline, error) {
+	skipInsertFunction SkipInsertFunction,
+) (Timeline, error) {
 	return &timeline{
 		itemIndex: &itemIndex{
 			skipInsert: skipInsertFunction,

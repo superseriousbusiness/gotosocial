@@ -47,7 +47,7 @@ type PageableResponseParams struct {
 // PackagePageableResponse is a convenience function for returning
 // a bunch of pageable items (notifications, statuses, etc), as well
 // as a Link header to inform callers of where to find next/prev items.
-func PackagePageableResponse(params PageableResponseParams) (*apimodel.PageableResponse, gtserror.WithCode) {
+func PackagePageableResponse(params *PageableResponseParams) (*apimodel.PageableResponse, gtserror.WithCode) {
 	if params.NextMaxIDKey == "" {
 		params.NextMaxIDKey = "max_id"
 	}

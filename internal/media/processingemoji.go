@@ -291,7 +291,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	return nil
 }
 
-func (m *manager) preProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, emojiID string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error) {
+func (m *manager) preProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode, emojiID, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error) {
 	instanceAccount, err := m.db.GetInstanceAccount(ctx, "")
 	if err != nil {
 		return nil, fmt.Errorf("preProcessEmoji: error fetching this instance account from the db: %s", err)

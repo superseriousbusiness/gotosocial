@@ -39,7 +39,7 @@ const boostReinsertionDepth = 50
 
 // StatusGrabFunction returns a function that satisfies the GrabFunction interface in internal/timeline.
 func StatusGrabFunction(database db.DB) timeline.GrabFunction {
-	return func(ctx context.Context, timelineAccountID string, maxID string, sinceID string, minID string, limit int) ([]timeline.Timelineable, bool, error) {
+	return func(ctx context.Context, timelineAccountID, maxID, sinceID, minID string, limit int) ([]timeline.Timelineable, bool, error) {
 		statuses, err := database.GetHomeTimeline(ctx, timelineAccountID, maxID, sinceID, minID, limit, false)
 		if err != nil {
 			if err == db.ErrNoEntries {
@@ -81,7 +81,7 @@ func StatusFilterFunction(database db.DB, filter visibility.Filter) timeline.Fil
 
 // StatusPrepareFunction returns a function that satisfies the PrepareFunction interface in internal/timeline.
 func StatusPrepareFunction(database db.DB, tc typeutils.TypeConverter) timeline.PrepareFunction {
-	return func(ctx context.Context, timelineAccountID string, itemID string) (timeline.Preparable, error) {
+	return func(ctx context.Context, timelineAccountID, itemID string) (timeline.Preparable, error) {
 		status, err := database.GetStatusByID(ctx, itemID)
 		if err != nil {
 			return nil, fmt.Errorf("statusPrepareFunction: error getting status with id %s", itemID)
@@ -137,7 +137,7 @@ func StatusSkipInsertFunction() timeline.SkipInsertFunction {
 	}
 }
 
-func (p *processor) HomeTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode) {
+func (p *processor) HomeTimelineGet(ctx context.Context, authed *oauth.Auth, maxID, sinceID, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode) {
 	preparedItems, err := p.statusTimelines.GetTimeline(ctx, authed.Account.ID, maxID, sinceID, minID, limit, local)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
@@ -172,7 +172,7 @@ func (p *processor) HomeTimelineGet(ctx context.Context, authed *oauth.Auth, max
 	})
 }
 
-func (p *processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode) {
+func (p *processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, maxID, sinceID, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode) {
 	statuses, err := p.db.GetPublicTimeline(ctx, maxID, sinceID, minID, limit, local)
 	if err != nil {
 		if err == db.ErrNoEntries {
@@ -217,7 +217,7 @@ func (p *processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, m
 	})
 }
 
-func (p *processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
+func (p *processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, maxID, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
 	statuses, nextMaxID, prevMinID, err := p.db.GetFavedTimeline(ctx, authed.Account.ID, maxID, minID, limit)
 	if err != nil {
 		if err == db.ErrNoEntries {

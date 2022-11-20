@@ -125,7 +125,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	})
 }
 
-func (m *Module) returnAPStatus(ctx context.Context, c *gin.Context, username string, statusID string, accept string) {
+func (m *Module) returnAPStatus(ctx context.Context, c *gin.Context, username, statusID, accept string) {
 	verifier, signed := c.Get(string(ap.ContextRequestingPublicKeyVerifier))
 	if signed {
 		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeyVerifier, verifier)

@@ -624,7 +624,7 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 	return status, nil
 }
 
-func (c *converter) FollowToAS(ctx context.Context, f *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (vocab.ActivityStreamsFollow, error) {
+func (c *converter) FollowToAS(ctx context.Context, f *gtsmodel.Follow, originAccount, targetAccount *gtsmodel.Account) (vocab.ActivityStreamsFollow, error) {
 	// parse out the various URIs we need for this
 	// origin account (who's doing the follow)
 	originAccountURI, err := url.Parse(originAccount.URI)
@@ -882,7 +882,7 @@ func (c *converter) FaveToAS(ctx context.Context, f *gtsmodel.StatusFave) (vocab
 	return like, nil
 }
 
-func (c *converter) BoostToAS(ctx context.Context, boostWrapperStatus *gtsmodel.Status, boostingAccount *gtsmodel.Account, boostedAccount *gtsmodel.Account) (vocab.ActivityStreamsAnnounce, error) {
+func (c *converter) BoostToAS(ctx context.Context, boostWrapperStatus *gtsmodel.Status, boostingAccount, boostedAccount *gtsmodel.Account) (vocab.ActivityStreamsAnnounce, error) {
 	// the boosted status is probably pinned to the boostWrapperStatus but double check to make sure
 	if boostWrapperStatus.BoostOf == nil {
 		b, err := c.db.GetStatusByID(ctx, boostWrapperStatus.BoostOfID)
@@ -1189,7 +1189,7 @@ the goal is to end up with something like this:
 		]
 	}
 */
-func (c *converter) StatusesToASOutboxPage(ctx context.Context, outboxID string, maxID string, minID string, statuses []*gtsmodel.Status) (vocab.ActivityStreamsOrderedCollectionPage, error) {
+func (c *converter) StatusesToASOutboxPage(ctx context.Context, outboxID, maxID, minID string, statuses []*gtsmodel.Status) (vocab.ActivityStreamsOrderedCollectionPage, error) {
 	page := streams.NewActivityStreamsOrderedCollectionPage()
 
 	// .id

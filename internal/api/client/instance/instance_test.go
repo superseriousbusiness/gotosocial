@@ -98,7 +98,7 @@ func (suite *InstanceStandardTestSuite) TearDownTest() {
 	testrig.StandardStorageTeardown(suite.storage)
 }
 
-func (suite *InstanceStandardTestSuite) newContext(recorder *httptest.ResponseRecorder, method string, path string, body []byte, contentType string, auth bool) *gin.Context {
+func (suite *InstanceStandardTestSuite) newContext(recorder *httptest.ResponseRecorder, method, path string, body []byte, contentType string, auth bool) *gin.Context {
 	protocol := config.GetProtocol()
 	host := config.GetHost()
 

@@ -135,7 +135,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 	})
 }
 
-func (m *Module) returnAPProfile(ctx context.Context, c *gin.Context, username string, accept string) {
+func (m *Module) returnAPProfile(ctx context.Context, c *gin.Context, username, accept string) {
 	verifier, signed := c.Get(string(ap.ContextRequestingPublicKeyVerifier))
 	if signed {
 		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeyVerifier, verifier)

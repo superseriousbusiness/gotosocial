@@ -51,7 +51,7 @@ type Transport interface {
 	// DereferenceInstance dereferences remote instance information, first by checking /api/v1/instance, and then by checking /.well-known/nodeinfo.
 	DereferenceInstance(ctx context.Context, iri *url.URL) (*gtsmodel.Instance, error)
 	// Finger performs a webfinger request with the given username and domain, and returns the bytes from the response body.
-	Finger(ctx context.Context, targetUsername string, targetDomains string) ([]byte, error)
+	Finger(ctx context.Context, targetUsername, targetDomains string) ([]byte, error)
 }
 
 // transport implements the Transport interface

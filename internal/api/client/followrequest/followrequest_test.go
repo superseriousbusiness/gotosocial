@@ -97,7 +97,7 @@ func (suite *FollowRequestStandardTestSuite) TearDownTest() {
 	testrig.StandardStorageTeardown(suite.storage)
 }
 
-func (suite *FollowRequestStandardTestSuite) newContext(recorder *httptest.ResponseRecorder, requestMethod string, requestBody []byte, requestPath string, bodyContentType string) *gin.Context {
+func (suite *FollowRequestStandardTestSuite) newContext(recorder *httptest.ResponseRecorder, requestMethod string, requestBody []byte, requestPath, bodyContentType string) *gin.Context {
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])

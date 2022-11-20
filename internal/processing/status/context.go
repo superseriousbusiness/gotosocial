@@ -65,7 +65,7 @@ func (p *processor) Context(ctx context.Context, requestingAccount *gtsmodel.Acc
 		}
 	}
 
-	sort.Slice(context.Ancestors, func(i int, j int) bool {
+	sort.Slice(context.Ancestors, func(i, j int) bool {
 		return context.Ancestors[i].ID < context.Ancestors[j].ID
 	})
 

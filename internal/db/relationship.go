@@ -28,13 +28,13 @@ import (
 type Relationship interface {
 	// IsBlocked checks whether account 1 has a block in place against account2.
 	// If eitherDirection is true, then the function returns true if account1 blocks account2, OR if account2 blocks account1.
-	IsBlocked(ctx context.Context, account1 string, account2 string, eitherDirection bool) (bool, Error)
+	IsBlocked(ctx context.Context, account1, account2 string, eitherDirection bool) (bool, Error)
 
 	// GetBlock returns the block from account1 targeting account2, if it exists, or an error if it doesn't.
 	//
 	// Because this is slower than Blocked, only use it if you need the actual Block struct for some reason,
 	// not if you're just checking for the existence of a block.
-	GetBlock(ctx context.Context, account1 string, account2 string) (*gtsmodel.Block, Error)
+	GetBlock(ctx context.Context, account1, account2 string) (*gtsmodel.Block, Error)
 
 	// PutBlock attempts to place the given account block in the database.
 	PutBlock(ctx context.Context, block *gtsmodel.Block) Error
@@ -52,27 +52,27 @@ type Relationship interface {
 	DeleteBlocksByTargetAccountID(ctx context.Context, targetAccountID string) Error
 
 	// GetRelationship retrieves the relationship of the targetAccount to the requestingAccount.
-	GetRelationship(ctx context.Context, requestingAccount string, targetAccount string) (*gtsmodel.Relationship, Error)
+	GetRelationship(ctx context.Context, requestingAccount, targetAccount string) (*gtsmodel.Relationship, Error)
 
 	// IsFollowing returns true if sourceAccount follows target account, or an error if something goes wrong while finding out.
-	IsFollowing(ctx context.Context, sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, Error)
+	IsFollowing(ctx context.Context, sourceAccount, targetAccount *gtsmodel.Account) (bool, Error)
 
 	// IsFollowRequested returns true if sourceAccount has requested to follow target account, or an error if something goes wrong while finding out.
-	IsFollowRequested(ctx context.Context, sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, Error)
+	IsFollowRequested(ctx context.Context, sourceAccount, targetAccount *gtsmodel.Account) (bool, Error)
 
 	// IsMutualFollowing returns true if account1 and account2 both follow each other, or an error if something goes wrong while finding out.
-	IsMutualFollowing(ctx context.Context, account1 *gtsmodel.Account, account2 *gtsmodel.Account) (bool, Error)
+	IsMutualFollowing(ctx context.Context, account1, account2 *gtsmodel.Account) (bool, Error)
 
 	// AcceptFollowRequest moves a follow request in the database from the follow_requests table to the follows table.
 	// In other words, it should create the follow, and delete the existing follow request.
 	//
 	// It will return the newly created follow for further processing.
-	AcceptFollowRequest(ctx context.Context, originAccountID string, targetAccountID string) (*gtsmodel.Follow, Error)
+	AcceptFollowRequest(ctx context.Context, originAccountID, targetAccountID string) (*gtsmodel.Follow, Error)
 
 	// RejectFollowRequest fetches a follow request from the database, and then deletes it.
 	//
 	// The deleted follow request will be returned so that further processing can be done on it.
-	RejectFollowRequest(ctx context.Context, originAccountID string, targetAccountID string) (*gtsmodel.FollowRequest, Error)
+	RejectFollowRequest(ctx context.Context, originAccountID, targetAccountID string) (*gtsmodel.FollowRequest, Error)
 
 	// GetAccountFollowRequests returns all follow requests targeting the given account.
 	GetAccountFollowRequests(ctx context.Context, accountID string) ([]*gtsmodel.FollowRequest, Error)

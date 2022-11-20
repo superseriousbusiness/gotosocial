@@ -33,10 +33,10 @@ func NewEmailSender(templateBaseDir string, sentEmails map[string]string) email.
 		cfg.WebTemplateBaseDir = templateBaseDir
 	})
 
-	var sendCallback func(toAddress string, message string)
+	var sendCallback func(toAddress, message string)
 
 	if sentEmails != nil {
-		sendCallback = func(toAddress string, message string) {
+		sendCallback = func(toAddress, message string) {
 			sentEmails[toAddress] = message
 		}
 	}

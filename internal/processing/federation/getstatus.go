@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-func (p *processor) GetStatus(ctx context.Context, requestedUsername string, requestedStatusID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
+func (p *processor) GetStatus(ctx context.Context, requestedUsername, requestedStatusID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
 	// get the account the request is referring to
 	requestedAccount, err := p.db.GetAccountByUsernameDomain(ctx, requestedUsername, "")
 	if err != nil {

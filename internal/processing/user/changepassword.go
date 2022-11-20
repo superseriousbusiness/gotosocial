@@ -28,7 +28,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (p *processor) ChangePassword(ctx context.Context, user *gtsmodel.User, oldPassword string, newPassword string) gtserror.WithCode {
+func (p *processor) ChangePassword(ctx context.Context, user *gtsmodel.User, oldPassword, newPassword string) gtserror.WithCode {
 	if err := bcrypt.CompareHashAndPassword([]byte(user.EncryptedPassword), []byte(oldPassword)); err != nil {
 		return gtserror.NewErrorUnauthorized(err, "old password was incorrect")
 	}

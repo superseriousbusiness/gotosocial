@@ -105,7 +105,7 @@ func (b *basicDB) UpdateByID(ctx context.Context, i interface{}, id string, colu
 	return b.conn.ProcessError(err)
 }
 
-func (b *basicDB) UpdateWhere(ctx context.Context, where []db.Where, key string, value interface{}, i interface{}) db.Error {
+func (b *basicDB) UpdateWhere(ctx context.Context, where []db.Where, key string, value, i interface{}) db.Error {
 	q := b.conn.NewUpdate().Model(i)
 
 	updateWhere(q, where)

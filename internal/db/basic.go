@@ -69,7 +69,7 @@ type Basic interface {
 	UpdateByID(ctx context.Context, i interface{}, id string, columns ...string) Error
 
 	// UpdateWhere updates column key of interface i with the given value, where the given parameters apply.
-	UpdateWhere(ctx context.Context, where []Where, key string, value interface{}, i interface{}) Error
+	UpdateWhere(ctx context.Context, where []Where, key string, value, i interface{}) Error
 
 	// DeleteByID removes i with id id.
 	// If i didn't exist anyway, then no error should be returned.

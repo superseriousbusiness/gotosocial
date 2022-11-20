@@ -84,7 +84,7 @@ func (suite *FederatingDBTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 }
 
-func createTestContext(receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) context.Context {
+func createTestContext(receivingAccount, requestingAccount *gtsmodel.Account) context.Context {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, ap.ContextReceivingAccount, receivingAccount)
 	ctx = context.WithValue(ctx, ap.ContextRequestingAccount, requestingAccount)

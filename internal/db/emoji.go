@@ -40,12 +40,12 @@ type Emoji interface {
 	// GetUseableEmojis gets all emojis which are useable by accounts on this instance.
 	GetUseableEmojis(ctx context.Context) ([]*gtsmodel.Emoji, Error)
 	// GetEmojis gets emojis based on given parameters. Useful for admin actions.
-	GetEmojis(ctx context.Context, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) ([]*gtsmodel.Emoji, Error)
+	GetEmojis(ctx context.Context, domain string, includeDisabled, includeEnabled bool, shortcode, maxShortcodeDomain, minShortcodeDomain string, limit int) ([]*gtsmodel.Emoji, Error)
 	// GetEmojiByID gets a specific emoji by its database ID.
 	GetEmojiByID(ctx context.Context, id string) (*gtsmodel.Emoji, Error)
 	// GetEmojiByShortcodeDomain gets an emoji based on its shortcode and domain.
 	// For local emoji, domain should be an empty string.
-	GetEmojiByShortcodeDomain(ctx context.Context, shortcode string, domain string) (*gtsmodel.Emoji, Error)
+	GetEmojiByShortcodeDomain(ctx context.Context, shortcode, domain string) (*gtsmodel.Emoji, Error)
 	// GetEmojiByURI returns one emoji based on its ActivityPub URI.
 	GetEmojiByURI(ctx context.Context, uri string) (*gtsmodel.Emoji, Error)
 	// GetEmojiByStaticURL gets an emoji using the URL of the static version of the emoji image.

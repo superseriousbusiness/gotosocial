@@ -30,7 +30,7 @@ import (
 // every time it would otherwise send an email to the given toAddress with the given message value.
 //
 // Passing a nil function is also acceptable, in which case the send functions will just return nil.
-func NewNoopSender(sendCallback func(toAddress string, message string)) (Sender, error) {
+func NewNoopSender(sendCallback func(toAddress, message string)) (Sender, error) {
 	templateBaseDir := config.GetWebTemplateBaseDir()
 
 	t, err := loadTemplates(templateBaseDir)
@@ -45,7 +45,7 @@ func NewNoopSender(sendCallback func(toAddress string, message string)) (Sender,
 }
 
 type noopSender struct {
-	sendCallback func(toAddress string, message string)
+	sendCallback func(toAddress, message string)
 	template     *template.Template
 }
 
