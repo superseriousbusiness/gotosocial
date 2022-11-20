@@ -24,8 +24,22 @@ linters:
     - nilerr
     - revive
     - wastedassign
+    - gofumpt
 
 linters-settings:
   govet:
     disable:
       - composites
+
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - importShadow
+      - docStub
+      - whyNoLint
+      - todoCommentWithoutDetail
