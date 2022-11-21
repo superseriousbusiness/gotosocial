@@ -21,6 +21,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/minio/minio-go/v7/pkg/set"
 )
@@ -86,6 +87,27 @@ func NewArn(partition, service, region, accountID, resource string) Arn {
 		AccountID: accountID,
 		Resource:  resource,
 	}
+}
+
+var (
+	// ErrInvalidArnPrefix is returned when ARN string format does not start with 'arn'
+	ErrInvalidArnPrefix = errors.New("invalid ARN format, must start with 'arn:'")
+	// ErrInvalidArnFormat is returned when ARN string format is not valid
+	ErrInvalidArnFormat = errors.New("invalid ARN format, must be 'arn:<partition>:<service>:<region>:<accountID>:<resource>'")
+)
+
+// NewArnFromString parses string representation of ARN into Arn object.
+// Returns an error if the string format is incorrect.
+func NewArnFromString(arn string) (Arn, error) {
+	parts := strings.Split(arn, ":")
+	if len(parts) != 6 {
+		return Arn{}, ErrInvalidArnFormat
+	}
+	if parts[0] != "arn" {
+		return Arn{}, ErrInvalidArnPrefix
+	}
+
+	return NewArn(parts[1], parts[2], parts[3], parts[4], parts[5]), nil
 }
 
 // String returns the string format of the ARN
