@@ -97,10 +97,8 @@ func (p *PostPolicy) SetKey(key string) error {
 
 // SetKeyStartsWith - Sets an object name that an policy based upload
 // can start with.
+// Can use an empty value ("") to allow any key.
 func (p *PostPolicy) SetKeyStartsWith(keyStartsWith string) error {
-	if strings.TrimSpace(keyStartsWith) == "" || keyStartsWith == "" {
-		return errInvalidArgument("Object prefix is empty.")
-	}
 	policyCond := policyCondition{
 		matchType: "starts-with",
 		condition: "$key",
@@ -171,7 +169,7 @@ func (p *PostPolicy) SetContentType(contentType string) error {
 
 // SetContentTypeStartsWith - Sets what content-type of the object for this policy
 // based upload can start with.
-// If "" is provided it allows all content-types.
+// Can use an empty value ("") to allow any content-type.
 func (p *PostPolicy) SetContentTypeStartsWith(contentTypeStartsWith string) error {
 	policyCond := policyCondition{
 		matchType: "starts-with",
@@ -283,9 +281,13 @@ func (p *PostPolicy) SetUserData(key string, value string) error {
 }
 
 // addNewPolicy - internal helper to validate adding new policies.
+// Can use starts-with with an empty value ("") to allow any content within a form field.
 func (p *PostPolicy) addNewPolicy(policyCond policyCondition) error {
-	if policyCond.matchType == "" || policyCond.condition == "" || policyCond.value == "" {
+	if policyCond.matchType == "" || policyCond.condition == "" {
 		return errInvalidArgument("Policy fields are empty.")
+	}
+	if policyCond.matchType != "starts-with" && policyCond.value == "" {
+		return errInvalidArgument("Policy value is empty.")
 	}
 	p.conditions = append(p.conditions, policyCond)
 	return nil

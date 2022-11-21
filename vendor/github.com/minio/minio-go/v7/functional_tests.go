@@ -4204,10 +4204,6 @@ func testPresignedPostPolicy() {
 		logError(testName, function, args, startTime, "", "SetKey did not fail for invalid conditions", err)
 		return
 	}
-	if err := policy.SetKeyStartsWith(""); err == nil {
-		logError(testName, function, args, startTime, "", "SetKeyStartsWith did not fail for invalid conditions", err)
-		return
-	}
 	if err := policy.SetExpires(time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)); err == nil {
 		logError(testName, function, args, startTime, "", "SetExpires did not fail for invalid conditions", err)
 		return
