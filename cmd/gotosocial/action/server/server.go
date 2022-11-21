@@ -65,6 +65,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -73,10 +74,19 @@ import (
 
 // Start creates and starts a gotosocial server
 var Start action.GTSAction = func(ctx context.Context) error {
-	dbService, err := bundb.NewBunDBService(ctx)
+	var state state.State
+
+	// Initialize caches
+	state.Caches.Init()
+
+	// Open connection to the database
+	dbService, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
+
+	// Set the state DB connection
+	state.DB = dbService
 
 	if err := dbService.CreateInstanceAccount(ctx); err != nil {
 		return fmt.Errorf("error creating instance account: %s", err)

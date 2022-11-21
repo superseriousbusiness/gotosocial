@@ -22,34 +22,18 @@ import (
 	"context"
 	"net/url"
 	"strings"
-	"time"
 
-	"codeberg.org/gruf/go-cache/v3/result"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
 	"golang.org/x/net/idna"
 )
 
 type domainDB struct {
 	conn  *DBConn
-	cache *result.Cache[*gtsmodel.DomainBlock]
-}
-
-func (d *domainDB) init() {
-	// Initialize domain block result cache
-	d.cache = result.NewSized([]result.Lookup{
-		{Name: "Domain"},
-	}, func(d1 *gtsmodel.DomainBlock) *gtsmodel.DomainBlock {
-		d2 := new(gtsmodel.DomainBlock)
-		*d2 = *d1
-		return d2
-	}, 1000)
-
-	// Set cache TTL and start sweep routine
-	d.cache.SetTTL(time.Minute*5, false)
-	d.cache.Start(time.Second * 10)
+	state *state.State
 }
 
 // normalizeDomain converts the given domain to lowercase
@@ -71,7 +55,7 @@ func (d *domainDB) CreateDomainBlock(ctx context.Context, block *gtsmodel.Domain
 		return err
 	}
 
-	return d.cache.Store(block, func() error {
+	return d.state.Caches.GTS.DomainBlock.Store(block, func() error {
 		_, err := d.conn.NewInsert().
 			Model(block).
 			Exec(ctx)
@@ -87,7 +71,7 @@ func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel
 		return nil, err
 	}
 
-	return d.cache.Load("Domain", func() (*gtsmodel.DomainBlock, error) {
+	return d.state.Caches.GTS.DomainBlock.Load("Domain", func() (*gtsmodel.DomainBlock, error) {
 		// Check for easy case, domain referencing *us*
 		if domain == "" || domain == config.GetAccountDomain() {
 			return nil, db.ErrNoEntries
@@ -125,7 +109,7 @@ func (d *domainDB) DeleteDomainBlock(ctx context.Context, domain string) db.Erro
 	}
 
 	// Clear domain from cache
-	d.cache.Invalidate("Domain", domain)
+	d.state.Caches.GTS.DomainBlock.Invalidate(domain)
 
 	return nil
 }

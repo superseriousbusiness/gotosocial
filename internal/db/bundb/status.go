@@ -26,36 +26,16 @@ import (
 	"fmt"
 	"time"
 
-	"codeberg.org/gruf/go-cache/v3/result"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
 )
 
 type statusDB struct {
-	conn     *DBConn
-	cache    *result.Cache[*gtsmodel.Status]
-	accounts *accountDB
-	emojis   *emojiDB
-	mentions *mentionDB
-}
-
-func (s *statusDB) init() {
-	// Initialize status result cache
-	s.cache = result.NewSized([]result.Lookup{
-		{Name: "ID"},
-		{Name: "URI"},
-		{Name: "URL"},
-	}, func(s1 *gtsmodel.Status) *gtsmodel.Status {
-		s2 := new(gtsmodel.Status)
-		*s2 = *s1
-		return s2
-	}, 1000)
-
-	// Set cache TTL and start sweep routine
-	s.cache.SetTTL(time.Minute*5, false)
-	s.cache.Start(time.Second * 10)
+	conn  *DBConn
+	state *state.State
 }
 
 func (s *statusDB) newStatusQ(status interface{}) *bun.SelectQuery {
@@ -111,7 +91,7 @@ func (s *statusDB) GetStatusByURL(ctx context.Context, url string) (*gtsmodel.St
 
 func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Status) error, keyParts ...any) (*gtsmodel.Status, db.Error) {
 	// Fetch status from database cache with loader callback
-	status, err := s.cache.Load(lookup, func() (*gtsmodel.Status, error) {
+	status, err := s.state.Caches.GTS.Status.Load(lookup, func() (*gtsmodel.Status, error) {
 		var status gtsmodel.Status
 
 		// Not cached! Perform database query
@@ -149,14 +129,14 @@ func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*g
 	}
 
 	// Set the status author account
-	status.Account, err = s.accounts.GetAccountByID(ctx, status.AccountID)
+	status.Account, err = s.state.DB.GetAccountByID(ctx, status.AccountID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting status account: %w", err)
 	}
 
 	if id := status.BoostOfAccountID; id != "" {
 		// Set boost of status' author account
-		status.BoostOfAccount, err = s.accounts.GetAccountByID(ctx, id)
+		status.BoostOfAccount, err = s.state.DB.GetAccountByID(ctx, id)
 		if err != nil {
 			return nil, fmt.Errorf("error getting boosted status account: %w", err)
 		}
@@ -164,7 +144,7 @@ func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*g
 
 	if id := status.InReplyToAccountID; id != "" {
 		// Set in-reply-to status' author account
-		status.InReplyToAccount, err = s.accounts.GetAccountByID(ctx, id)
+		status.InReplyToAccount, err = s.state.DB.GetAccountByID(ctx, id)
 		if err != nil {
 			return nil, fmt.Errorf("error getting in reply to status account: %w", err)
 		}
@@ -172,7 +152,7 @@ func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*g
 
 	if len(status.EmojiIDs) > 0 {
 		// Fetch status emojis
-		status.Emojis, err = s.emojis.emojisFromIDs(ctx, status.EmojiIDs)
+		status.Emojis, err = s.state.DB.GetEmojisByIDs(ctx, status.EmojiIDs)
 		if err != nil {
 			return nil, fmt.Errorf("error getting status emojis: %w", err)
 		}
@@ -180,7 +160,7 @@ func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*g
 
 	if len(status.MentionIDs) > 0 {
 		// Fetch status mentions
-		status.Mentions, err = s.mentions.GetMentions(ctx, status.MentionIDs)
+		status.Mentions, err = s.state.DB.GetMentions(ctx, status.MentionIDs)
 		if err != nil {
 			return nil, fmt.Errorf("error getting status mentions: %w", err)
 		}
@@ -190,7 +170,7 @@ func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*g
 }
 
 func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Error {
-	return s.cache.Store(status, func() error {
+	return s.state.Caches.GTS.Status.Store(status, func() error {
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
 		//
@@ -308,7 +288,7 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status) db
 	}
 
 	// Drop any old value from cache by this ID
-	s.cache.Invalidate("ID", status.ID)
+	s.state.Caches.GTS.Status.Invalidate("ID", status.ID)
 	return nil
 }
 
@@ -347,7 +327,7 @@ func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) db.Error {
 	}
 
 	// Drop any old value from cache by this ID
-	s.cache.Invalidate("ID", id)
+	s.state.Caches.GTS.Status.Invalidate("ID", id)
 	return nil
 }
 

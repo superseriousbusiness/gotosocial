@@ -148,7 +148,8 @@ func NewTimeline(
 	grabFunction GrabFunction,
 	filterFunction FilterFunction,
 	prepareFunction PrepareFunction,
-	skipInsertFunction SkipInsertFunction) (Timeline, error) {
+	skipInsertFunction SkipInsertFunction,
+) (Timeline, error) {
 	return &timeline{
 		indexedItems: &indexedItems{
 			skipInsert: skipInsertFunction,
