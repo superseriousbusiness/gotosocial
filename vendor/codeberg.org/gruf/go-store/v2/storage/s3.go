@@ -67,11 +67,13 @@ func getS3Config(cfg *S3Config) S3Config {
 
 	// Return owned config copy
 	return S3Config{
-		CoreOpts:   cfg.CoreOpts,
-		GetOpts:    cfg.GetOpts,
-		PutOpts:    cfg.PutOpts,
-		StatOpts:   cfg.StatOpts,
-		RemoveOpts: cfg.RemoveOpts,
+		CoreOpts:     cfg.CoreOpts,
+		GetOpts:      cfg.GetOpts,
+		PutOpts:      cfg.PutOpts,
+		PutChunkSize: cfg.PutChunkSize,
+		ListSize:     cfg.ListSize,
+		StatOpts:     cfg.StatOpts,
+		RemoveOpts:   cfg.RemoveOpts,
 	}
 }
 
@@ -198,7 +200,7 @@ func (st *S3Storage) WriteStream(ctx context.Context, key string, r io.Reader) e
 	}
 
 	var (
-		count int
+		count = 1
 		parts []minio.CompletePart
 		chunk = make([]byte, st.config.PutChunkSize)
 		rdr   = bytes.NewReader(nil)
