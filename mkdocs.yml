@@ -13,6 +13,7 @@ extra_css:
 
 nav:
   - "Home": "index.md"
+  - "FAQ": "faq.md"
   - "User Guide":
     - "user_guide/posts.md"
     - "user_guide/user_panel.md"
