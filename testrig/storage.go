@@ -28,6 +28,7 @@ import (
 	"codeberg.org/gruf/go-store/v2/storage"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
@@ -41,14 +42,35 @@ func NewInMemoryStorage() *gtsstorage.Local {
 }
 
 func NewS3Storage() gtsstorage.Driver {
-	mc, err := minio.New(os.Getenv("GTS_STORAGE_S3_ENDPOINT"), &minio.Options{
-		Creds:  credentials.NewStaticV4(os.Getenv("GTS_STORAGE_S3_ACCESS_KEY"), os.Getenv("GTS_STORAGE_S3_SECRET_KEY"), ""),
-		Secure: false,
+	endpoint := config.GetStorageS3Endpoint()
+	access := config.GetStorageS3AccessKey()
+	secret := config.GetStorageS3SecretKey()
+	secure := config.GetStorageS3UseSSL()
+	bucket := config.GetStorageS3BucketName()
+	proxy := config.GetStorageS3Proxy()
+
+	s3, err := storage.OpenS3(endpoint, bucket, &storage.S3Config{
+		CoreOpts: minio.Options{
+			Creds:  credentials.NewStaticV4(access, secret, ""),
+			Secure: secure,
+		},
+		GetOpts:      minio.GetObjectOptions{},
+		PutOpts:      minio.PutObjectOptions{},
+		PutChunkSize: 2 * 1024 * 1024, // 2MiB
+		StatOpts:     minio.StatObjectOptions{},
+		RemoveOpts:   minio.RemoveObjectOptions{},
+		ListSize:     200,
 	})
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("error opening s3 storage: %w", err))
 	}
-	return gtsstorage.NewS3(mc, os.Getenv("GTS_STORAGE_S3_BUCKET"), false)
+
+	return &gtsstorage.S3{
+		Proxy:   proxy,
+		Bucket:  bucket,
+		Storage: s3,
+		KVStore: kv.New(s3),
+	}
 }
 
 // StandardStorageSetup populates the storage with standard test entries from the given directory.
