@@ -43,7 +43,7 @@ func (m *mentionDB) newMentionQ(i interface{}) *bun.SelectQuery {
 }
 
 func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mention, db.Error) {
-	return m.state.Caches.GTS.Mention.Load("ID", func() (*gtsmodel.Mention, error) {
+	return m.state.Caches.GTS.Mention().Load("ID", func() (*gtsmodel.Mention, error) {
 		var mention gtsmodel.Mention
 
 		q := m.newMentionQ(&mention).

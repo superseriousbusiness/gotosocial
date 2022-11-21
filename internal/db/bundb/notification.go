@@ -34,7 +34,7 @@ type notificationDB struct {
 }
 
 func (n *notificationDB) GetNotification(ctx context.Context, id string) (*gtsmodel.Notification, db.Error) {
-	return n.state.Caches.GTS.Notification.Load("ID", func() (*gtsmodel.Notification, error) {
+	return n.state.Caches.GTS.Notification().Load("ID", func() (*gtsmodel.Notification, error) {
 		var notif gtsmodel.Notification
 
 		q := n.conn.NewSelect().
@@ -114,6 +114,6 @@ func (n *notificationDB) ClearNotifications(ctx context.Context, accountID strin
 		return n.conn.ProcessError(err)
 	}
 
-	n.state.Caches.GTS.Notification.Clear()
+	n.state.Caches.GTS.Notification().Clear()
 	return nil
 }

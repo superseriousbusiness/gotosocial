@@ -101,6 +101,8 @@ func NewTestDB() db.DB {
 		log.Panic(err)
 	}
 
+	state.DB = testDB
+
 	return testDB
 }
 

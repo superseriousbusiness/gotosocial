@@ -90,7 +90,7 @@ func (r *relationshipDB) GetBlock(ctx context.Context, account1 string, account2
 }
 
 func (r *relationshipDB) getBlock(ctx context.Context, account1 string, account2 string) (*gtsmodel.Block, db.Error) {
-	return r.state.Caches.GTS.Block.Load("AccountID.TargetAccountID", func() (*gtsmodel.Block, error) {
+	return r.state.Caches.GTS.Block().Load("AccountID.TargetAccountID", func() (*gtsmodel.Block, error) {
 		var block gtsmodel.Block
 
 		q := r.conn.NewSelect().Model(&block).
@@ -105,7 +105,7 @@ func (r *relationshipDB) getBlock(ctx context.Context, account1 string, account2
 }
 
 func (r *relationshipDB) PutBlock(ctx context.Context, block *gtsmodel.Block) db.Error {
-	return r.state.Caches.GTS.Block.Store(block, func() error {
+	return r.state.Caches.GTS.Block().Store(block, func() error {
 		_, err := r.conn.NewInsert().Model(block).Exec(ctx)
 		return r.conn.ProcessError(err)
 	})
@@ -121,7 +121,7 @@ func (r *relationshipDB) DeleteBlockByID(ctx context.Context, id string) db.Erro
 	}
 
 	// Drop any old value from cache by this ID
-	r.state.Caches.GTS.Block.Invalidate("ID", id)
+	r.state.Caches.GTS.Block().Invalidate("ID", id)
 	return nil
 }
 
@@ -135,7 +135,7 @@ func (r *relationshipDB) DeleteBlockByURI(ctx context.Context, uri string) db.Er
 	}
 
 	// Drop any old value from cache by this URI
-	r.state.Caches.GTS.Block.Invalidate("URI", uri)
+	r.state.Caches.GTS.Block().Invalidate("URI", uri)
 	return nil
 }
 

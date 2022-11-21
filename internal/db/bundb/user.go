@@ -34,7 +34,7 @@ type userDB struct {
 }
 
 func (u *userDB) GetUserByID(ctx context.Context, id string) (*gtsmodel.User, db.Error) {
-	return u.state.Caches.GTS.User.Load("ID", func() (*gtsmodel.User, error) {
+	return u.state.Caches.GTS.User().Load("ID", func() (*gtsmodel.User, error) {
 		var user gtsmodel.User
 
 		q := u.conn.
@@ -52,7 +52,7 @@ func (u *userDB) GetUserByID(ctx context.Context, id string) (*gtsmodel.User, db
 }
 
 func (u *userDB) GetUserByAccountID(ctx context.Context, accountID string) (*gtsmodel.User, db.Error) {
-	return u.state.Caches.GTS.User.Load("AccountID", func() (*gtsmodel.User, error) {
+	return u.state.Caches.GTS.User().Load("AccountID", func() (*gtsmodel.User, error) {
 		var user gtsmodel.User
 
 		q := u.conn.
@@ -70,7 +70,7 @@ func (u *userDB) GetUserByAccountID(ctx context.Context, accountID string) (*gts
 }
 
 func (u *userDB) GetUserByEmailAddress(ctx context.Context, emailAddress string) (*gtsmodel.User, db.Error) {
-	return u.state.Caches.GTS.User.Load("Email", func() (*gtsmodel.User, error) {
+	return u.state.Caches.GTS.User().Load("Email", func() (*gtsmodel.User, error) {
 		var user gtsmodel.User
 
 		q := u.conn.
@@ -106,7 +106,7 @@ func (u *userDB) GetUserByExternalID(ctx context.Context, id string) (*gtsmodel.
 }
 
 func (u *userDB) GetUserByConfirmationToken(ctx context.Context, confirmationToken string) (*gtsmodel.User, db.Error) {
-	return u.state.Caches.GTS.User.Load("ConfirmationToken", func() (*gtsmodel.User, error) {
+	return u.state.Caches.GTS.User().Load("ConfirmationToken", func() (*gtsmodel.User, error) {
 		var user gtsmodel.User
 
 		q := u.conn.
@@ -124,7 +124,7 @@ func (u *userDB) GetUserByConfirmationToken(ctx context.Context, confirmationTok
 }
 
 func (u *userDB) PutUser(ctx context.Context, user *gtsmodel.User) db.Error {
-	return u.state.Caches.GTS.User.Store(user, func() error {
+	return u.state.Caches.GTS.User().Store(user, func() error {
 		_, err := u.conn.
 			NewInsert().
 			Model(user).
@@ -154,7 +154,7 @@ func (u *userDB) UpdateUser(ctx context.Context, user *gtsmodel.User, columns ..
 	}
 
 	// Invalidate user from cache
-	u.state.Caches.GTS.User.Invalidate("ID", user.ID)
+	u.state.Caches.GTS.User().Invalidate("ID", user.ID)
 	return nil
 }
 
@@ -168,6 +168,6 @@ func (u *userDB) DeleteUserByID(ctx context.Context, userID string) db.Error {
 	}
 
 	// Invalidate user from cache
-	u.state.Caches.GTS.User.Invalidate("ID", userID)
+	u.state.Caches.GTS.User().Invalidate("ID", userID)
 	return nil
 }

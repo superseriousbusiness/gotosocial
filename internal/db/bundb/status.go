@@ -91,7 +91,7 @@ func (s *statusDB) GetStatusByURL(ctx context.Context, url string) (*gtsmodel.St
 
 func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Status) error, keyParts ...any) (*gtsmodel.Status, db.Error) {
 	// Fetch status from database cache with loader callback
-	status, err := s.state.Caches.GTS.Status.Load(lookup, func() (*gtsmodel.Status, error) {
+	status, err := s.state.Caches.GTS.Status().Load(lookup, func() (*gtsmodel.Status, error) {
 		var status gtsmodel.Status
 
 		// Not cached! Perform database query
@@ -170,7 +170,7 @@ func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*g
 }
 
 func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Error {
-	return s.state.Caches.GTS.Status.Store(status, func() error {
+	return s.state.Caches.GTS.Status().Store(status, func() error {
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
 		//
@@ -288,7 +288,7 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status) db
 	}
 
 	// Drop any old value from cache by this ID
-	s.state.Caches.GTS.Status.Invalidate("ID", status.ID)
+	s.state.Caches.GTS.Status().Invalidate("ID", status.ID)
 	return nil
 }
 
@@ -327,7 +327,7 @@ func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) db.Error {
 	}
 
 	// Drop any old value from cache by this ID
-	s.state.Caches.GTS.Status.Invalidate("ID", id)
+	s.state.Caches.GTS.Status().Invalidate("ID", id)
 	return nil
 }
 

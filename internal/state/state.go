@@ -1,6 +1,7 @@
 package state
 
 import (
+	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
@@ -12,7 +13,7 @@ import (
 // then be set and stored within the State{} itself.
 type State struct {
 	// Caches provides access to this state's collection of caches.
-	Caches Caches
+	Caches cache.Caches
 
 	// DB provides access to the database.
 	DB db.DB
@@ -20,3 +21,11 @@ type State struct {
 	// prevent pass-by-value.
 	_ nocopy
 }
+
+// nocopy when embedded will signal linter to
+// error on pass-by-value of parent struct.
+type nocopy struct{}
+
+func (*nocopy) Lock() {}
+
+func (*nocopy) Unlock() {}

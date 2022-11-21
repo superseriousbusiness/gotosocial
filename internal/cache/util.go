@@ -1,4 +1,4 @@
-package state
+package cache
 
 import "github.com/superseriousbusiness/gotosocial/internal/log"
 

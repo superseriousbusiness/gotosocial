@@ -131,7 +131,7 @@ func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gts
 
 func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Account) error, keyParts ...any) (*gtsmodel.Account, db.Error) {
 	// Fetch account from database cache with loader callback
-	account, err := a.state.Caches.GTS.Account.Load(lookup, func() (*gtsmodel.Account, error) {
+	account, err := a.state.Caches.GTS.Account().Load(lookup, func() (*gtsmodel.Account, error) {
 		var account gtsmodel.Account
 
 		// Not cached! Perform database query
@@ -157,7 +157,7 @@ func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(
 }
 
 func (a *accountDB) PutAccount(ctx context.Context, account *gtsmodel.Account) db.Error {
-	return a.state.Caches.GTS.Account.Store(account, func() error {
+	return a.state.Caches.GTS.Account().Store(account, func() error {
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
 		//
@@ -183,7 +183,7 @@ func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account
 	// Update the account's last-updated
 	account.UpdatedAt = time.Now()
 
-	return a.state.Caches.GTS.Account.Store(account, func() error {
+	return a.state.Caches.GTS.Account().Store(account, func() error {
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
 		//
@@ -242,7 +242,7 @@ func (a *accountDB) DeleteAccount(ctx context.Context, id string) db.Error {
 		return err
 	}
 
-	a.state.Caches.GTS.Account.Invalidate("ID", id)
+	a.state.Caches.GTS.Account().Invalidate("ID", id)
 	return nil
 }
 

@@ -55,7 +55,7 @@ func (d *domainDB) CreateDomainBlock(ctx context.Context, block *gtsmodel.Domain
 		return err
 	}
 
-	return d.state.Caches.GTS.DomainBlock.Store(block, func() error {
+	return d.state.Caches.GTS.DomainBlock().Store(block, func() error {
 		_, err := d.conn.NewInsert().
 			Model(block).
 			Exec(ctx)
@@ -71,7 +71,7 @@ func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel
 		return nil, err
 	}
 
-	return d.state.Caches.GTS.DomainBlock.Load("Domain", func() (*gtsmodel.DomainBlock, error) {
+	return d.state.Caches.GTS.DomainBlock().Load("Domain", func() (*gtsmodel.DomainBlock, error) {
 		// Check for easy case, domain referencing *us*
 		if domain == "" || domain == config.GetAccountDomain() {
 			return nil, db.ErrNoEntries
@@ -109,7 +109,7 @@ func (d *domainDB) DeleteDomainBlock(ctx context.Context, domain string) db.Erro
 	}
 
 	// Clear domain from cache
-	d.state.Caches.GTS.DomainBlock.Invalidate(domain)
+	d.state.Caches.GTS.DomainBlock().Invalidate(domain)
 
 	return nil
 }
