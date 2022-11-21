@@ -45,18 +45,18 @@ that was some JSON :)
 
 const (
 	simpleMarkdown                  = "# Title\n\nHere's a simple text in markdown.\n\nHere's a [link](https://example.org)."
-	simpleMarkdownExpected          = "<h1>Title</h1><p>Here’s a simple text in markdown.</p><p>Here’s a <a href=\"https://example.org\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">link</a>.</p>"
+	simpleMarkdownExpected          = "<h1>Title</h1><p>Here's a simple text in markdown.</p><p>Here's a <a href=\"https://example.org\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">link</a>.</p>"
 	withCodeBlockExpected           = "<h1>Title</h1><p>Below is some JSON.</p><pre><code class=\"language-json\">{\n  &#34;key&#34;: &#34;value&#34;,\n  &#34;another_key&#34;: [\n    &#34;value1&#34;,\n    &#34;value2&#34;\n  ]\n}\n</code></pre><p>that was some JSON :)</p>"
 	withInlineCode                  = "`Nobody tells you about the <code><del>SECRET CODE</del></code>, do they?`"
 	withInlineCodeExpected          = "<p><code>Nobody tells you about the &lt;code>&lt;del>SECRET CODE&lt;/del>&lt;/code>, do they?</code></p>"
 	withInlineCode2                 = "`Nobody tells you about the </code><del>SECRET CODE</del><code>, do they?`"
 	withInlineCode2Expected         = "<p><code>Nobody tells you about the &lt;/code>&lt;del>SECRET CODE&lt;/del>&lt;code>, do they?</code></p>"
 	withHashtag                     = "# Title\n\nhere's a simple status that uses hashtag #Hashtag!"
-	withHashtagExpected             = "<h1>Title</h1><p>here’s a simple status that uses hashtag <a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a>!</p>"
+	withHashtagExpected             = "<h1>Title</h1><p>here's a simple status that uses hashtag <a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a>!</p>"
 	mdWithHTML                      = "# Title\n\nHere's a simple text in markdown.\n\nHere's a <a href=\"https://example.org\">link</a>.\n\nHere's an image: <img src=\"https://gts.superseriousbusiness.org/assets/logo.png\" alt=\"The GoToSocial sloth logo.\" width=\"500\" height=\"600\">"
-	mdWithHTMLExpected              = "<h1>Title</h1><p>Here’s a simple text in markdown.</p><p>Here’s a <a href=\"https://example.org\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">link</a>.</p><p>Here’s an image: <img src=\"https://gts.superseriousbusiness.org/assets/logo.png\" alt=\"The GoToSocial sloth logo.\" width=\"500\" height=\"600\" crossorigin=\"anonymous\"></p>"
+	mdWithHTMLExpected              = "<h1>Title</h1><p>Here's a simple text in markdown.</p><p>Here's a <a href=\"https://example.org\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">link</a>.</p><p>Here's an image: <img src=\"https://gts.superseriousbusiness.org/assets/logo.png\" alt=\"The GoToSocial sloth logo.\" width=\"500\" height=\"600\" crossorigin=\"anonymous\"></p>"
 	mdWithCheekyHTML                = "# Title\n\nHere's a simple text in markdown.\n\nHere's a cheeky little script: <script>alert(ahhhh)</script>"
-	mdWithCheekyHTMLExpected        = "<h1>Title</h1><p>Here’s a simple text in markdown.</p><p>Here’s a cheeky little script:</p>"
+	mdWithCheekyHTMLExpected        = "<h1>Title</h1><p>Here's a simple text in markdown.</p><p>Here's a cheeky little script:</p>"
 	mdWithHashtagInitial            = "#welcome #Hashtag"
 	mdWithHashtagInitialExpected    = "<p><a href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>welcome</span></a> <a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a></p>"
 	mdCodeBlockWithNewlines         = "some code coming up\n\n```\n\n\n\n```\nthat was some code"
@@ -64,13 +64,13 @@ const (
 	mdWithFootnote                  = "fox mulder,fbi.[^1]\n\n[^1]: federated bureau of investigation"
 	mdWithFootnoteExpected          = "<p>fox mulder,fbi.[^1]</p><p>[^1]: federated bureau of investigation</p>"
 	mdWithBlockQuote                = "get ready, there's a block quote coming:\n\n>line1\n>line2\n>\n>line3\n\n"
-	mdWithBlockQuoteExpected        = "<p>get ready, there’s a block quote coming:</p><blockquote><p>line1<br>line2</p><p>line3</p></blockquote>"
+	mdWithBlockQuoteExpected        = "<p>get ready, there's a block quote coming:</p><blockquote><p>line1<br>line2</p><p>line3</p></blockquote>"
 	mdHashtagAndCodeBlock           = "#Hashtag\n\n```\n#Hashtag\n```"
 	mdHashtagAndCodeBlockExpected   = "<p><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a></p><pre><code>#Hashtag\n</code></pre>"
 	mdMentionAndCodeBlock           = "@the_mighty_zork\n\n```\n@the_mighty_zork\n```"
 	mdMentionAndCodeBlockExpected   = "<p><span class=\"h-card\"><a href=\"http://localhost:8080/@the_mighty_zork\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>the_mighty_zork</span></a></span></p><pre><code>@the_mighty_zork\n</code></pre>"
 	mdWithSmartypants               = "\"you have to quargle the bleepflorp\" they said with 1/2 of nominal speed and 1/3 of the usual glumping"
-	mdWithSmartypantsExpected       = "<p>“you have to quargle the bleepflorp” they said with 1/2 of nominal speed and 1/3 of the usual glumping</p>"
+	mdWithSmartypantsExpected       = "<p>\"you have to quargle the bleepflorp\" they said with 1/2 of nominal speed and 1/3 of the usual glumping</p>"
 )
 
 type MarkdownTestSuite struct {
