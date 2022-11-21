@@ -69,6 +69,8 @@ const (
 	mdHashtagAndCodeBlockExpected   = "<p><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a></p><pre><code>#Hashtag\n</code></pre>"
 	mdMentionAndCodeBlock           = "@the_mighty_zork\n\n```\n@the_mighty_zork\n```"
 	mdMentionAndCodeBlockExpected   = "<p><span class=\"h-card\"><a href=\"http://localhost:8080/@the_mighty_zork\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>the_mighty_zork</span></a></span></p><pre><code>@the_mighty_zork\n</code></pre>"
+	mdWithSmartypants               = "\"you have to quargle the bleepflorp\" they said with 1/3 of nominal speed"
+	mdWithSmartypantsExpected       = "<p>“you have to quargle the bleepflorp” they said with 1/3 of nominal speed</p>"
 )
 
 type MarkdownTestSuite struct {
@@ -149,6 +151,13 @@ func (suite *MarkdownTestSuite) TestParseMentionWithCodeBlock() {
 		suite.testMentions["local_user_2_mention_zork"],
 	}, nil, nil)
 	suite.Equal(mdMentionAndCodeBlockExpected, s)
+}
+
+func (suite *MarkdownTestSuite) TestParseSmartypants() {
+	s := suite.formatter.FromMarkdown(context.Background(), mdWithSmartypants, []*gtsmodel.Mention{
+		suite.testMentions["local_user_2_mention_zork"],
+	}, nil, nil)
+	suite.Equal(mdWithSmartypantsExpected, s)
 }
 
 func TestMarkdownTestSuite(t *testing.T) {
