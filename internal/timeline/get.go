@@ -23,6 +23,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -30,16 +31,27 @@ import (
 
 const retries = 5
 
+func (t *timeline) LastGot() time.Time {
+	t.Lock()
+	defer t.Unlock()
+	return t.lastGot
+}
+
 func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID string, minID string, prepareNext bool) ([]Preparable, error) {
 	l := log.WithFields(kv.Fields{
-
 		{"accountID", t.accountID},
 		{"amount", amount},
 		{"maxID", maxID},
 		{"sinceID", sinceID},
 		{"minID", minID},
 	}...)
-	l.Debug("entering get")
+	l.Debug("entering get and updating t.lastGot")
+
+	// regardless of what happens below, update the
+	// last time Get was called for this timeline
+	t.Lock()
+	t.lastGot = time.Now()
+	t.Unlock()
 
 	var items []Preparable
 	var err error

@@ -21,6 +21,7 @@ package timeline
 import (
 	"context"
 	"sync"
+	"time"
 )
 
 // GrabFunction is used by a Timeline to grab more items to index.
@@ -109,8 +110,8 @@ type Timeline interface {
 		UTILITY FUNCTIONS
 	*/
 
-	// Reset instructs the timeline to reset to its base state -- cache only the minimum amount of items.
-	Reset() error
+	// LastGot returns the time that Get was last called.
+	LastGot() time.Time
 	// Remove removes a item from both the index and prepared items.
 	//
 	// If a item has multiple entries in a timeline, they will all be removed.
@@ -131,6 +132,7 @@ type timeline struct {
 	filterFunction  FilterFunction
 	prepareFunction PrepareFunction
 	accountID       string
+	lastGot         time.Time
 	sync.Mutex
 }
 
@@ -153,5 +155,6 @@ func NewTimeline(
 		filterFunction:  filterFunction,
 		prepareFunction: prepareFunction,
 		accountID:       timelineAccountID,
+		lastGot:         time.Now(),
 	}, nil
 }
