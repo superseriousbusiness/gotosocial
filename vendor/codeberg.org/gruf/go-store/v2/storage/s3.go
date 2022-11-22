@@ -50,14 +50,17 @@ type S3Config struct {
 
 // getS3Config returns a valid S3Config for supplied ptr.
 func getS3Config(cfg *S3Config) S3Config {
+	const minChunkSz = 5 * 1024 * 1024
+
 	// If nil, use default
 	if cfg == nil {
 		cfg = DefaultS3Config
 	}
 
-	// Assume 0 chunk size == use default
-	if cfg.PutChunkSize <= 0 {
-		cfg.PutChunkSize = 4 * 1024 * 1024
+	// Ensure a minimum compatible chunk size
+	if cfg.PutChunkSize <= minChunkSz {
+		// See: https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
+		cfg.PutChunkSize = minChunkSz
 	}
 
 	// Assume 0 list size == use default
@@ -67,11 +70,13 @@ func getS3Config(cfg *S3Config) S3Config {
 
 	// Return owned config copy
 	return S3Config{
-		CoreOpts:   cfg.CoreOpts,
-		GetOpts:    cfg.GetOpts,
-		PutOpts:    cfg.PutOpts,
-		StatOpts:   cfg.StatOpts,
-		RemoveOpts: cfg.RemoveOpts,
+		CoreOpts:     cfg.CoreOpts,
+		GetOpts:      cfg.GetOpts,
+		PutOpts:      cfg.PutOpts,
+		PutChunkSize: cfg.PutChunkSize,
+		ListSize:     cfg.ListSize,
+		StatOpts:     cfg.StatOpts,
+		RemoveOpts:   cfg.RemoveOpts,
 	}
 }
 
@@ -198,7 +203,7 @@ func (st *S3Storage) WriteStream(ctx context.Context, key string, r io.Reader) e
 	}
 
 	var (
-		count int
+		count = 1
 		parts []minio.CompletePart
 		chunk = make([]byte, st.config.PutChunkSize)
 		rdr   = bytes.NewReader(nil)
@@ -243,7 +248,7 @@ loop:
 			uploadID,
 			count,
 			rdr,
-			st.config.PutChunkSize,
+			int64(n),
 			"",
 			"",
 			nil,
