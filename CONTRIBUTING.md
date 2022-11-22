@@ -338,16 +338,25 @@ If you prefer a simple approach to building a Docker container, with fewer depen
 
 The above command first builds the `gotosocial` binary, then invokes Docker buildx to build the container image.
 
+If you want to build a docker image for a different CPU architecture without setting up buildx (for example for ARMv7 aka 32-bit ARM), first modify the Dockerfile by adding the following lines to the top (but don't commit this!):
 
-If you want to build a docker image for a different CPU architechture without setting up buildx (for example for ARMv7 aka 32-bit ARM), you can use:
+```dockerfile
+# When using buildx, these variables will be set by the tool:
+# https://docs.docker.com/engine/reference/builder/#automatic-platform-args-in-the-global-scope
+# However, declaring them as global build arguments like this allows them to be set manually with `--build-arg` instead. 
+ARG BUILDPLATFORM
+ARG TARGETPLATFORM
+```
+
+Then, you can use the following command:
 
 ```bash
 GOOS=linux GOARCH=arm ./scripts/build.sh && docker build --build-arg BUILDPLATFORM=linux/amd64 --build-arg TARGETPLATFORM=linux/arm/v7 -t superseriousbusiness/gotosocial:latest .
 ```
 
 See also: [exhaustive list of GOOS and GOARCH values](https://gist.github.com/lizkes/975ab2d1b5f9d5fdee5d3fa665bcfde6)
-And: [exhaustive list of possible values for docker's `--platform`](https://github.com/tonistiigi/binfmt/#build-test-image)
 
+And: [exhaustive list of possible values for docker's `--platform`](https://github.com/tonistiigi/binfmt/#build-test-image)
 
 ## Financial Compensation
 
