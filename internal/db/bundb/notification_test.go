@@ -91,7 +91,7 @@ func (suite *NotificationTestSuite) TestGetNotificationsWithSpam() {
 	suite.spamNotifs()
 	testAccount := suite.testAccounts["local_account_1"]
 	before := time.Now()
-	notifications, err := suite.db.GetNotifications(context.Background(), testAccount.ID, []string{}, 20, "ZZZZZZZZZZZZZZZZZZZZZZZZZZ", "00000000000000000000000000")
+	notifications, err := suite.db.GetNotifications(context.Background(), testAccount.ID, []string{}, 20, id.Highest, id.Lowest)
 	suite.NoError(err)
 	timeTaken := time.Since(before)
 	fmt.Printf("\n\n\n withSpam: got %d notifications in %s\n\n\n", len(notifications), timeTaken)
@@ -105,7 +105,7 @@ func (suite *NotificationTestSuite) TestGetNotificationsWithSpam() {
 func (suite *NotificationTestSuite) TestGetNotificationsWithoutSpam() {
 	testAccount := suite.testAccounts["local_account_1"]
 	before := time.Now()
-	notifications, err := suite.db.GetNotifications(context.Background(), testAccount.ID, []string{}, 20, "ZZZZZZZZZZZZZZZZZZZZZZZZZZ", "00000000000000000000000000")
+	notifications, err := suite.db.GetNotifications(context.Background(), testAccount.ID, []string{}, 20, id.Highest, id.Lowest)
 	suite.NoError(err)
 	timeTaken := time.Since(before)
 	fmt.Printf("\n\n\n withoutSpam: got %d notifications in %s\n\n\n", len(notifications), timeTaken)
@@ -122,7 +122,7 @@ func (suite *NotificationTestSuite) TestClearNotificationsWithSpam() {
 	err := suite.db.ClearNotifications(context.Background(), testAccount.ID)
 	suite.NoError(err)
 
-	notifications, err := suite.db.GetNotifications(context.Background(), testAccount.ID, []string{}, 20, "ZZZZZZZZZZZZZZZZZZZZZZZZZZ", "00000000000000000000000000")
+	notifications, err := suite.db.GetNotifications(context.Background(), testAccount.ID, []string{}, 20, id.Highest, id.Lowest)
 	suite.NoError(err)
 	suite.NotNil(notifications)
 	suite.Empty(notifications)
@@ -134,7 +134,7 @@ func (suite *NotificationTestSuite) TestClearNotificationsWithTwoAccounts() {
 	err := suite.db.ClearNotifications(context.Background(), testAccount.ID)
 	suite.NoError(err)
 
-	notifications, err := suite.db.GetNotifications(context.Background(), testAccount.ID, []string{}, 20, "ZZZZZZZZZZZZZZZZZZZZZZZZZZ", "00000000000000000000000000")
+	notifications, err := suite.db.GetNotifications(context.Background(), testAccount.ID, []string{}, 20, id.Highest, id.Lowest)
 	suite.NoError(err)
 	suite.NotNil(notifications)
 	suite.Empty(notifications)
