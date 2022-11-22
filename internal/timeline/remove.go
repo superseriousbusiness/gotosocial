@@ -29,7 +29,6 @@ import (
 
 func (t *timeline) Remove(ctx context.Context, statusID string) (int, error) {
 	l := log.WithFields(kv.Fields{
-
 		{"accountTimeline", t.accountID},
 		{"statusID", statusID},
 	}...)
@@ -40,9 +39,9 @@ func (t *timeline) Remove(ctx context.Context, statusID string) (int, error) {
 
 	// remove entr(ies) from the post index
 	removeIndexes := []*list.Element{}
-	if t.itemIndex != nil && t.itemIndex.data != nil {
-		for e := t.itemIndex.data.Front(); e != nil; e = e.Next() {
-			entry, ok := e.Value.(*itemIndexEntry)
+	if t.indexedItems != nil && t.indexedItems.data != nil {
+		for e := t.indexedItems.data.Front(); e != nil; e = e.Next() {
+			entry, ok := e.Value.(*indexedItemsEntry)
 			if !ok {
 				return removed, errors.New("Remove: could not parse e as a postIndexEntry")
 			}
@@ -53,7 +52,7 @@ func (t *timeline) Remove(ctx context.Context, statusID string) (int, error) {
 		}
 	}
 	for _, e := range removeIndexes {
-		t.itemIndex.data.Remove(e)
+		t.indexedItems.data.Remove(e)
 		removed++
 	}
 
@@ -82,19 +81,19 @@ func (t *timeline) Remove(ctx context.Context, statusID string) (int, error) {
 
 func (t *timeline) RemoveAllBy(ctx context.Context, accountID string) (int, error) {
 	l := log.WithFields(kv.Fields{
-
 		{"accountTimeline", t.accountID},
 		{"accountID", accountID},
 	}...)
+
 	t.Lock()
 	defer t.Unlock()
 	var removed int
 
 	// remove entr(ies) from the post index
 	removeIndexes := []*list.Element{}
-	if t.itemIndex != nil && t.itemIndex.data != nil {
-		for e := t.itemIndex.data.Front(); e != nil; e = e.Next() {
-			entry, ok := e.Value.(*itemIndexEntry)
+	if t.indexedItems != nil && t.indexedItems.data != nil {
+		for e := t.indexedItems.data.Front(); e != nil; e = e.Next() {
+			entry, ok := e.Value.(*indexedItemsEntry)
 			if !ok {
 				return removed, errors.New("Remove: could not parse e as a postIndexEntry")
 			}
@@ -105,7 +104,7 @@ func (t *timeline) RemoveAllBy(ctx context.Context, accountID string) (int, erro
 		}
 	}
 	for _, e := range removeIndexes {
-		t.itemIndex.data.Remove(e)
+		t.indexedItems.data.Remove(e)
 		removed++
 	}
 
