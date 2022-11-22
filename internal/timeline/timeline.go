@@ -112,6 +112,11 @@ type Timeline interface {
 
 	// LastGot returns the time that Get was last called.
 	LastGot() time.Time
+	// Prune prunes preparedItems and indexedItems in this timeline to the desired lengths.
+	// This will be a no-op if the lengths are already < the desired values.
+	// Prune acquires a lock on the timeline before pruning.
+	// The return value is the combined total of items pruned from preparedItems and indexedItems.
+	Prune(desiredPreparedItemsLength int, desiredIndexedItemsLength int) int
 	// Remove removes a item from both the index and prepared items.
 	//
 	// If a item has multiple entries in a timeline, they will all be removed.

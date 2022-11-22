@@ -114,7 +114,7 @@ func (m *manager) Start() error {
 
 				anHourAgo := now.Add(-1 * time.Hour)
 				if lastGot := t.LastGot(); lastGot.Before(anHourAgo) {
-					amountPruned := t.Prune()
+					amountPruned := t.Prune(defaultDesiredPreparedItemsLength, defaultDesiredIndexedItemsLength)
 					log.WithFields(kv.Fields{
 						{"timelineAccountID", timelineAccountID},
 						{"amountPruned", amountPruned},
