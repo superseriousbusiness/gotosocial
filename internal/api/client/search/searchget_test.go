@@ -84,7 +84,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestring() {
 	searchResult := &apimodel.SearchResult{}
 	err = json.Unmarshal(b, searchResult)
 	suite.NoError(err)
-	
+
 	if !suite.Len(searchResult.Accounts, 1) {
 		suite.FailNow("expected 1 account in search results but got 0")
 	}
@@ -113,7 +113,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringNoLeadingAt(
 	searchResult := &apimodel.SearchResult{}
 	err = json.Unmarshal(b, searchResult)
 	suite.NoError(err)
-	
+
 	if !suite.Len(searchResult.Accounts, 1) {
 		suite.FailNow("expected 1 account in search results but got 0")
 	}
@@ -142,7 +142,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringNoResolve() 
 	searchResult := &apimodel.SearchResult{}
 	err = json.Unmarshal(b, searchResult)
 	suite.NoError(err)
-	
+
 	suite.Len(searchResult.Accounts, 0)
 }
 
@@ -166,7 +166,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalAccountByNamestring() {
 	searchResult := &apimodel.SearchResult{}
 	err = json.Unmarshal(b, searchResult)
 	suite.NoError(err)
-	
+
 	if !suite.Len(searchResult.Accounts, 1) {
 		suite.FailNow("expected 1 account in search results but got 0")
 	}
@@ -195,7 +195,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalAccountByNamestringWithDomain() 
 	searchResult := &apimodel.SearchResult{}
 	err = json.Unmarshal(b, searchResult)
 	suite.NoError(err)
-	
+
 	if !suite.Len(searchResult.Accounts, 1) {
 		suite.FailNow("expected 1 account in search results but got 0")
 	}
@@ -224,7 +224,7 @@ func (suite *SearchGetTestSuite) TestSearchNonexistingLocalAccountByNamestringRe
 	searchResult := &apimodel.SearchResult{}
 	err = json.Unmarshal(b, searchResult)
 	suite.NoError(err)
-	
+
 	suite.Len(searchResult.Accounts, 0)
 }
 
@@ -248,7 +248,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalAccountByURI() {
 	searchResult := &apimodel.SearchResult{}
 	err = json.Unmarshal(b, searchResult)
 	suite.NoError(err)
-	
+
 	if !suite.Len(searchResult.Accounts, 1) {
 		suite.FailNow("expected 1 account in search results but got 0")
 	}
@@ -277,7 +277,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalAccountByURL() {
 	searchResult := &apimodel.SearchResult{}
 	err = json.Unmarshal(b, searchResult)
 	suite.NoError(err)
-	
+
 	if !suite.Len(searchResult.Accounts, 1) {
 		suite.FailNow("expected 1 account in search results but got 0")
 	}
@@ -306,7 +306,7 @@ func (suite *SearchGetTestSuite) TestSearchNonexistingLocalAccountByURL() {
 	searchResult := &apimodel.SearchResult{}
 	err = json.Unmarshal(b, searchResult)
 	suite.NoError(err)
-	
+
 	suite.Len(searchResult.Accounts, 0)
 }
 
@@ -330,7 +330,7 @@ func (suite *SearchGetTestSuite) TestSearchStatusByURL() {
 	searchResult := &apimodel.SearchResult{}
 	err = json.Unmarshal(b, searchResult)
 	suite.NoError(err)
-	
+
 	if !suite.Len(searchResult.Statuses, 1) {
 		suite.FailNow("expected 1 status in search results but got 0")
 	}

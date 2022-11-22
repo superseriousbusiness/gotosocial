@@ -68,29 +68,29 @@ func (d *deref) GetStatus(ctx context.Context, username string, statusURI *url.U
 
 	// try to get by URI first
 	status, err := d.db.GetStatusByURI(ctx, uriString)
-	switch {
-	case err == nil && !refetch:
+	if err != nil {
+		if !errors.Is(err, db.ErrNoEntries) {
+			// real error
+			return nil, nil, fmt.Errorf("GetRemoteStatus: error during GetStatusByURI for %s: %s", uriString, err)
+		}
+		// no problem, just press on
+	} else if !refetch {
 		// we already had the status and we aren't being asked to refetch the AP representation
 		return status, nil, nil
-	case errors.Is(err, db.ErrNoEntries):
-		// no problem, just press on
-	default:
-		// real error
-		return nil, nil, fmt.Errorf("GetRemoteStatus: error during GetStatusByURI for %s: %s", uriString, err)
 	}
 
 	// try to get by URL if we couldn't get by URI now
 	if status == nil {
 		status, err = d.db.GetStatusByURL(ctx, uriString)
-		switch {
-		case err == nil && !refetch:
+		if err != nil {
+			if !errors.Is(err, db.ErrNoEntries) {
+				// real error
+				return nil, nil, fmt.Errorf("GetRemoteStatus: error during GetStatusByURL for %s: %s", uriString, err)
+			}
+			// no problem, just press on
+		} else if !refetch {
 			// we already had the status and we aren't being asked to refetch the AP representation
 			return status, nil, nil
-		case errors.Is(err, db.ErrNoEntries):
-			// no problem, just press on
-		default:
-			// real error
-			return nil, nil, fmt.Errorf("GetRemoteStatus: error during GetStatusByURL for %s: %s", uriString, err)
 		}
 	}
 
