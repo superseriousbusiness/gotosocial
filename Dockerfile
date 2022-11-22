@@ -1,6 +1,9 @@
 # syntax=docker/dockerfile:1.3
 # Dockerfile reference: https://docs.docker.com/engine/reference/builder/
 
+# When using buildx, these variables will be set by the tool:
+# https://docs.docker.com/engine/reference/builder/#automatic-platform-args-in-the-global-scope
+# However, declaring them as build arguments like this allows them to be set manually with `--build-arg` as well. 
 ARG BUILDPLATFORM
 ARG TARGETPLATFORM
 
