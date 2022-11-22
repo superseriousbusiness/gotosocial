@@ -330,7 +330,7 @@ If all goes according to plan, you should now have a number of multiple-architec
 
 ### Manually
 
-If you prefer a simple approach to building a Docker container, with fewer dependencies, you can also just build in the following way:
+If you prefer a simple approach to building a Docker container, with fewer dependencies (go-swagger, Node, Yarn), you can also just build in the following way:
 
 ```bash
 ./scripts/build.sh && docker buildx build -t superseriousbusiness/gotosocial:latest .
@@ -338,7 +338,16 @@ If you prefer a simple approach to building a Docker container, with fewer depen
 
 The above command first builds the `gotosocial` binary, then invokes Docker buildx to build the container image.
 
-You don't need to install go-swagger, Node, or Yarn to build Docker images this way.
+
+If you want to build a docker image for a different CPU architechture without setting up buildx (for example for ARMv7 aka 32-bit ARM), you can use:
+
+```bash
+GOOS=linux GOARCH=arm ./scripts/build.sh && docker build --build-arg BUILDPLATFORM=linux/amd64 --build-arg TARGETPLATFORM=linux/arm/v7 -t superseriousbusiness/gotosocial:latest .
+```
+
+See also: [exhaustive list of GOOS and GOARCH values](https://gist.github.com/lizkes/975ab2d1b5f9d5fdee5d3fa665bcfde6)
+And: [exhaustive list of possible values for docker's `--platform`](https://github.com/tonistiigi/binfmt/#build-test-image)
+
 
 ## Financial Compensation
 
