@@ -156,3 +156,11 @@ Then we get the following response:
 ```
 
 In the above response, note that the `subject` of the response contains the desired account-domain of `superseriousbusiness.org`, whereas the links contain the actual host value of `gts.superseriousbusiness.org`.
+
+## Can I make my GoToSocial instance use a proxy (http, https, socks5) for outgoing requests?
+
+Yes! GoToSocial supports canonical environment variables for doing this: `HTTP_PROXY`, `HTTPS_PROXY` and `NO_PROXY` (or the lowercase versions thereof). `HTTPS_PROXY` takes precedence over `HTTP_PROXY` for https requests.
+
+The http client that GoToSocial uses will be initialized with the appropriate proxy.
+
+The environment values may be either a complete URL or a `host[:port]`, in which case the "http" scheme is assumed. The schemes "http", "https", and "socks5" are supported.
