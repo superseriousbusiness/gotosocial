@@ -89,6 +89,9 @@ func (suite *GetTestSuite) TearDownTest() {
 }
 
 func (suite *GetTestSuite) TestGetDefault() {
+	// lastGot should be zero
+	suite.Zero(suite.timeline.LastGot())
+
 	// get 10 20 the top and don't prepare the next query
 	statuses, err := suite.timeline.Get(context.Background(), 20, "", "", "", false)
 	if err != nil {
@@ -108,6 +111,9 @@ func (suite *GetTestSuite) TestGetDefault() {
 			highest = s.GetID()
 		}
 	}
+
+	// lastGot should be up to date
+	suite.WithinDuration(time.Now(), suite.timeline.LastGot(), 1*time.Second)
 }
 
 func (suite *GetTestSuite) TestGetDefaultPrepareNext() {

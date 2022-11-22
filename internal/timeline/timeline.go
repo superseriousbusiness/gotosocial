@@ -160,6 +160,6 @@ func NewTimeline(
 		filterFunction:  filterFunction,
 		prepareFunction: prepareFunction,
 		accountID:       timelineAccountID,
-		lastGot:         time.Now(),
+		lastGot:         time.Time{},
 	}, nil
 }
