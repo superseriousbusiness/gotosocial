@@ -66,7 +66,7 @@ func AutoConfig() (Driver, error) {
 			},
 			GetOpts:      minio.GetObjectOptions{},
 			PutOpts:      minio.PutObjectOptions{},
-			PutChunkSize: 2 * 1024 * 1024, // 2MiB
+			PutChunkSize: 5 * 1024 * 1024, // 5MiB
 			StatOpts:     minio.StatObjectOptions{},
 			RemoveOpts:   minio.RemoveObjectOptions{},
 			ListSize:     200,
