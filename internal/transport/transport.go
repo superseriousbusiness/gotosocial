@@ -125,7 +125,7 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 
 	// Check whether request should fast fail, we check this
 	// before loop as each context.Value() requires mutex lock.
-	fastFail := isFastfail(r.Context())
+	fastFail := IsFastfail(r.Context())
 
 	// Start a log entry for this request
 	l := log.WithFields(kv.Fields{

@@ -36,8 +36,8 @@ func WithFastfail(parent context.Context) context.Context {
 	return context.WithValue(parent, fastfailkey, struct{}{})
 }
 
-// isFastfail returns true if the given context was created by WithFastfail.
-func isFastfail(ctx context.Context) bool {
+// IsFastfail returns true if the given context was created by WithFastfail.
+func IsFastfail(ctx context.Context) bool {
 	_, ok := ctx.Value(fastfailkey).(struct{})
 	return ok
 }
