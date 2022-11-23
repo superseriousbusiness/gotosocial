@@ -105,8 +105,8 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	}
 
 	stylesheets := []string{
-		"/assets/Fork-Awesome/css/fork-awesome.min.css",
-		"/assets/dist/status.css",
+		assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
+		distPathPrefix + "/status.css",
 	}
 	if config.GetAccountsAllowCustomCSS() {
 		stylesheets = append(stylesheets, "/@"+username+"/custom.css")
@@ -118,10 +118,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 		"context":     context,
 		"ogMeta":      ogBase(instance).withStatus(status),
 		"stylesheets": stylesheets,
-		"javascript": []string{
-			"/assets/dist/bundle.js",
-			"/assets/dist/frontend.js",
-		},
+		"javascript":  []string{distPathPrefix + "/frontend.js"},
 	})
 }
 
