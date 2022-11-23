@@ -34,6 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -161,13 +162,13 @@ func (p *processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, u
 
 	if resolve {
 		// This is a non-local status and we're allowed to resolve, so dereference it
-		status, statusable, err := p.federator.GetRemoteStatus(ctx, authed.Account.Username, uri, true, true)
+		status, statusable, err := p.federator.GetRemoteStatus(transport.WithFastfail(ctx), authed.Account.Username, uri, true, true)
 		if err != nil {
 			return nil, fmt.Errorf("searchStatusByURI: error fetching remote status %q: %v", uriStr, err)
 		}
 
 		// Attempt to dereference the status thread while we are here
-		p.federator.DereferenceRemoteThread(ctx, authed.Account.Username, uri, status, statusable)
+		p.federator.DereferenceRemoteThread(transport.WithFastfail(ctx), authed.Account.Username, uri, status, statusable)
 	}
 
 	return nil, nil
@@ -190,7 +191,7 @@ func (p *processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, 
 	}
 
 	// we don't have it yet, try to find it remotely
-	return p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+	return p.federator.GetRemoteAccount(transport.WithFastfail(ctx), dereferencing.GetRemoteAccountParams{
 		RequestingUsername: authed.Account.Username,
 		RemoteAccountID:    uri,
 		Blocking:           true,
@@ -209,7 +210,7 @@ func (p *processor) searchAccountByMention(ctx context.Context, authed *oauth.Au
 	}
 
 	// we don't have it yet, try to find it remotely
-	return p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+	return p.federator.GetRemoteAccount(transport.WithFastfail(ctx), dereferencing.GetRemoteAccountParams{
 		RequestingUsername:    authed.Account.Username,
 		RemoteAccountUsername: username,
 		RemoteAccountHost:     domain,
