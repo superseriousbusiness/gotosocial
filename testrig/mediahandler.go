@@ -25,7 +25,7 @@ import (
 )
 
 // NewTestMediaManager returns a media handler with the default test config, and the given db and storage.
-func NewTestMediaManager(db db.DB, storage storage.Driver) media.Manager {
+func NewTestMediaManager(db db.DB, storage *storage.Driver) media.Manager {
 	m, err := media.NewManager(db, storage)
 	if err != nil {
 		panic(err)

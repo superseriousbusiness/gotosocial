@@ -50,7 +50,7 @@ type WebfingerStandardTestSuite struct {
 	federator      federation.Federator
 	emailSender    email.Sender
 	processor      processing.Processor
-	storage        storage.Driver
+	storage        *storage.Driver
 	oauthServer    oauth.Server
 	securityModule *security.Module
 

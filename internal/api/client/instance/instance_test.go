@@ -44,7 +44,7 @@ type InstanceStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
 	db           db.DB
-	storage      storage.Driver
+	storage      *storage.Driver
 	mediaManager media.Manager
 	federator    federation.Federator
 	processor    processing.Processor

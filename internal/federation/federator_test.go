@@ -31,7 +31,7 @@ import (
 type FederatorStandardTestSuite struct {
 	suite.Suite
 	db             db.DB
-	storage        storage.Driver
+	storage        *storage.Driver
 	tc             typeutils.TypeConverter
 	testAccounts   map[string]*gtsmodel.Account
 	testStatuses   map[string]*gtsmodel.Status
