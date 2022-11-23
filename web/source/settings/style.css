@@ -312,22 +312,6 @@ section.with-sidebar > div {
 		display: grid;
 		grid-template-columns: 70% 30%;
 
-		.basic {
-			margin-top: -4.5rem;
-
-			.avatar {
-				height: 5rem;
-				width: 5rem;
-			}
-	
-			.displayname {
-				font-size: 1.3rem;
-				padding-top: 0;
-				padding-bottom: 0;
-				margin-top: 0.7rem;
-			}
-		}
-
 		.files {
 			width: 100%;
 			margin: 1rem;
