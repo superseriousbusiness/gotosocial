@@ -20,9 +20,11 @@ package transport
 
 import "context"
 
-type fastfailCtx struct {
-	context.Context
-}
+// ctxkey is our own unique context key type to prevent setting outside package.
+type ctxkey string
+
+// fastfailkey is our unique context key to indicate fast-fail is enabled.
+var fastfailkey = ctxkey("ff")
 
 // WithFastfail returns a Context which indicates that any http requests made
 // with it should return after the first failed attempt, instead of retrying.
@@ -31,11 +33,11 @@ type fastfailCtx struct {
 // inside the context of an incoming http request, and you want to be able to
 // provide a snappy response to the user, instead of retrying + backing off.
 func WithFastfail(parent context.Context) context.Context {
-	return &fastfailCtx{parent}
+	return context.WithValue(parent, fastfailkey, struct{}{})
 }
 
 // isFastfail returns true if the given context was created by WithFastfail.
 func isFastfail(ctx context.Context) bool {
-	_, ok := ctx.(*fastfailCtx)
+	_, ok := ctx.Value(fastfailkey).(struct{})
 	return ok
 }

@@ -23,6 +23,7 @@ import (
 	"crypto"
 	"crypto/x509"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -122,6 +123,10 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 		return nil, errors.New("too many failed attempts")
 	}
 
+	// Check whether request should fast fail, we check this
+	// before loop as each context.Value() requires mutex lock.
+	fastFail := isFastfail(r.Context())
+
 	// Start a log entry for this request
 	l := log.WithFields(kv.Fields{
 		{"pubKeyID", t.pubKeyID},
@@ -172,12 +177,9 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 		} else if errors.As(err, &x509.UnknownAuthorityError{}) {
 			// Unknown authority errors we do NOT recover from
 			return nil, err
-		}
-
-		// don't back off + retry on fastfail contexts
-		if isFastfail(r.Context()) {
-			l.Errorf("failing fast as instructed after http request error: %v", err)
-			return nil, err
+		} else if fastFail {
+			// on fast-fail, don't bother backoff/retry
+			return nil, fmt.Errorf("%w (fast fail)", err)
 		}
 
 		l.Errorf("backing off for %s after http request error: %v", backoff.String(), err)
