@@ -39,7 +39,6 @@ const {
 
 module.exports = function UserProfile() {
 	const dispatch = Redux.useDispatch();
-	const account = Redux.useSelector(state => state.user.profile);
 	const instance = Redux.useSelector(state => state.instances.current);
 
 	const allowCustomCSS = instance.configuration.accounts.allow_custom_css;
