@@ -104,10 +104,26 @@ The default port bindings are for exposing GoToSocial directly and publicly. Rem
 
 To ensure [rate limiting](../api/ratelimiting.md) by IP works, remove the `#` in front of `GTS_TRUSTED_PROXIES` and set it to the IP the requests from the reverse proxy are coming from. That's usually the value of the `Gateway` field of the docker network.
 
-```shell
-$ docker network inspect gotosocial_gotosocial | jq -r '.[0].IPAM.Config[0].Gateway'
-172.19.0.1
+```text
+$ docker network inspect gotosocial_gotosocial
+[
+    {
+        "Name": "gotosocial_gotosocial",
+        [...]
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.19.0.0/16",
+                    "Gateway": "172.19.0.1"
+                }
+            ]
+        },
+        [...]
 ```
+
+In the example above, it would be `172.19.0.1`.
 
 If unsure, skip the trusted proxies step, continue with the next sections, and once it's running get the `clientIP` from the docker logs.
 
