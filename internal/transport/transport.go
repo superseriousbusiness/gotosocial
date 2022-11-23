@@ -23,6 +23,7 @@ import (
 	"crypto"
 	"crypto/x509"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -33,25 +34,41 @@ import (
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-kv"
 	"github.com/go-fed/httpsig"
-	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-// Transport wraps the pub.Transport interface with some additional functionality for fetching remote media.
+// Transport implements the pub.Transport interface with some additional functionality for fetching remote media.
 //
 // Since the transport has the concept of 'shortcuts' for fetching data locally rather than remotely, it is
 // not *always* the case that calling a Transport function does an http call, but it usually will for remote
 // hosts or resources for which a shortcut isn't provided by the transport controller (also in this package).
+//
+// For any of the transport functions, if a Fastfail context is passed in as the first parameter, the function
+// will return after the first transport failure, instead of retrying + backing off.
 type Transport interface {
-	pub.Transport
+	/*
+		POST functions
+	*/
+
+	// Deliver sends an ActivityStreams object.
+	Deliver(ctx context.Context, b []byte, to *url.URL) error
+	// BatchDeliver sends an ActivityStreams object to multiple recipients.
+	BatchDeliver(ctx context.Context, b []byte, recipients []*url.URL) error
+
+	/*
+		GET functions
+	*/
+
+	// Dereference fetches the ActivityStreams object located at this IRI with a GET request.
+	Dereference(ctx context.Context, iri *url.URL) ([]byte, error)
 	// DereferenceMedia fetches the given media attachment IRI, returning the reader and filesize.
 	DereferenceMedia(ctx context.Context, iri *url.URL) (io.ReadCloser, int64, error)
 	// DereferenceInstance dereferences remote instance information, first by checking /api/v1/instance, and then by checking /.well-known/nodeinfo.
 	DereferenceInstance(ctx context.Context, iri *url.URL) (*gtsmodel.Instance, error)
 	// Finger performs a webfinger request with the given username and domain, and returns the bytes from the response body.
-	Finger(ctx context.Context, targetUsername string, targetDomains string) ([]byte, error)
+	Finger(ctx context.Context, targetUsername string, targetDomain string) ([]byte, error)
 }
 
 // transport implements the Transport interface
@@ -106,6 +123,10 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 		return nil, errors.New("too many failed attempts")
 	}
 
+	// Check whether request should fast fail, we check this
+	// before loop as each context.Value() requires mutex lock.
+	fastFail := IsFastfail(r.Context())
+
 	// Start a log entry for this request
 	l := log.WithFields(kv.Fields{
 		{"pubKeyID", t.pubKeyID},
@@ -156,6 +177,9 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 		} else if errors.As(err, &x509.UnknownAuthorityError{}) {
 			// Unknown authority errors we do NOT recover from
 			return nil, err
+		} else if fastFail {
+			// on fast-fail, don't bother backoff/retry
+			return nil, fmt.Errorf("%w (fast fail)", err)
 		}
 
 		l.Errorf("backing off for %s after http request error: %v", backoff.String(), err)

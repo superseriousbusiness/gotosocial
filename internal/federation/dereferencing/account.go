@@ -87,6 +87,11 @@ type GetRemoteAccountParams struct {
 //
 // If a local account is passed into this function for whatever reason (hey, it happens!), then it
 // will be returned from the database without making any remote calls.
+//
+// Even if a fastfail context is used, and something goes wrong, an account might still be returned instead
+// of an error, if we already had the account in our database (in other words, if we just needed to try
+// fingering/refreshing the account again). The rationale for this is that it's more useful to be able
+// to provide *something* to the caller, even if that something is not necessarily 100% up to date.
 func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountParams) (foundAccount *gtsmodel.Account, err error) {
 	/*
 		In this function we want to retrieve a gtsmodel representation of a remote account, with its proper

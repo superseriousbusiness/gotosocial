@@ -31,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
@@ -141,11 +142,11 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		// large version and derive a thumbnail from it, so use the normal recaching procedure: fetch the media,
 		// process it, then return the thumbnail data
 		data = func(innerCtx context.Context) (io.ReadCloser, int64, error) {
-			transport, err := p.transportController.NewTransportForUsername(innerCtx, requestingUsername)
+			t, err := p.transportController.NewTransportForUsername(innerCtx, requestingUsername)
 			if err != nil {
 				return nil, 0, err
 			}
-			return transport.DereferenceMedia(innerCtx, remoteMediaIRI)
+			return t.DereferenceMedia(transport.WithFastfail(innerCtx), remoteMediaIRI)
 		}
 	} else {
 		// if it's the full-sized version being requested, we can cheat a bit by streaming data to the user as
@@ -172,12 +173,12 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		attachmentContent.Content = io.NopCloser(bufferedReader)
 
 		data = func(innerCtx context.Context) (io.ReadCloser, int64, error) {
-			transport, err := p.transportController.NewTransportForUsername(innerCtx, requestingUsername)
+			t, err := p.transportController.NewTransportForUsername(innerCtx, requestingUsername)
 			if err != nil {
 				return nil, 0, err
 			}
 
-			readCloser, fileSize, err := transport.DereferenceMedia(innerCtx, remoteMediaIRI)
+			readCloser, fileSize, err := t.DereferenceMedia(transport.WithFastfail(innerCtx), remoteMediaIRI)
 			if err != nil {
 				return nil, 0, err
 			}
