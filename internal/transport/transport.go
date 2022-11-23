@@ -176,6 +176,7 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 
 		// don't back off + retry on fastfail contexts
 		if isFastfail(r.Context()) {
+			l.Errorf("failing fast as instructed after http request error: %v", err)
 			return nil, err
 		}
 
