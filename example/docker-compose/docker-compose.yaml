@@ -13,9 +13,14 @@ services:
       GTS_DB_ADDRESS: /gotosocial/storage/sqlite.db
       GTS_LETSENCRYPT_ENABLED: "false"
       GTS_LETSENCRYPT_EMAIL_ADDRESS: ""
+      ## For reverse proxy setups:
+      # GTS_TRUSTED_PROXIES: "172.x.x.x"
     ports:
       - "443:8080"
+      ## For letsencrypt:
       #- "80:80"
+      ## For reverse proxy setups:
+      #- "127.0.0.1:8080:8080"
     volumes:
       - ~/gotosocial/data:/gotosocial/storage
     restart: "always"

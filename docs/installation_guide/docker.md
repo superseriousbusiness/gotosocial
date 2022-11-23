@@ -98,6 +98,19 @@ If you want to use [LetsEncrypt](../configuration/letsencrypt.md) for ssl certif
 2. Remove the `#` before `- "80:80"` in the `ports` section.
 3. (Optional) Set `GTS_LETSENCRYPT_EMAIL_ADDRESS` to a valid email address to receive certificate expiry warnings etc.
 
+#### Reverse proxies
+
+The default port bindings are for exposing GoToSocial directly and publicly. Remove the `#` in front the line that forwards `127.0.0.1:8080:8080` which makes port `8080` available only to the local host. Change that `127.0.0.1` if the reverse proxy is somewhere else.
+
+To ensure [rate limiting](../api/ratelimiting.md) by IP works, remove the `#` in front of `GTS_TRUSTED_PROXIES` and set it to the IP the requests from the reverse proxy are coming from. That's usually the value of the `Gateway` field of the docker network.
+
+```shell
+$ docker network inspect gotosocial_gotosocial | jq -r '.[0].IPAM.Config[0].Gateway'
+172.19.0.1
+```
+
+If unsure, skip the trusted proxies step, continue with the next sections, and once it's running get the `clientIP` from the docker logs.
+
 ### Start GoToSocial
 
 With those small changes out of the way, you can now start GoToSocial with the following command:
