@@ -100,7 +100,7 @@ type Manager interface {
 
 type manager struct {
 	db           db.DB
-	storage      storage.Driver
+	storage      *storage.Driver
 	emojiWorker  *concurrency.WorkerPool[*ProcessingEmoji]
 	mediaWorker  *concurrency.WorkerPool[*ProcessingMedia]
 	stopCronJobs func() error
@@ -112,7 +112,7 @@ type manager struct {
 // a limited number of media will be processed in parallel. The numbers of workers
 // is determined from the $GOMAXPROCS environment variable (usually no. CPU cores).
 // See internal/concurrency.NewWorkerPool() documentation for further information.
-func NewManager(database db.DB, storage storage.Driver) (Manager, error) {
+func NewManager(database db.DB, storage *storage.Driver) (Manager, error) {
 	m := &manager{
 		db:      database,
 		storage: storage,

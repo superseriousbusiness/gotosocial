@@ -41,7 +41,7 @@ type StatusStandardTestSuite struct {
 	db            db.DB
 	typeConverter typeutils.TypeConverter
 	tc            transport.Controller
-	storage       storage.Driver
+	storage       *storage.Driver
 	mediaManager  media.Manager
 	federator     federation.Federator
 	clientWorker  *concurrency.WorkerPool[messages.FromClientAPI]

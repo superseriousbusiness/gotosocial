@@ -43,7 +43,7 @@ type AccountStandardTestSuite struct {
 	suite.Suite
 	db                  db.DB
 	tc                  typeutils.TypeConverter
-	storage             storage.Driver
+	storage             *storage.Driver
 	mediaManager        media.Manager
 	oauthServer         oauth.Server
 	fromClientAPIChan   chan messages.FromClientAPI
