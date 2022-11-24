@@ -20,6 +20,7 @@ package account
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -37,23 +38,17 @@ func (p *processor) BlockRemove(ctx context.Context, requestingAccount *gtsmodel
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("BlockCreate: error getting account %s from the db: %s", targetAccountID, err))
 	}
 
-	// check if a block exists, and remove it if it does (storing the URI for later)
-	var blockChanged bool
-	block := &gtsmodel.Block{}
-	if err := p.db.GetWhere(ctx, []db.Where{
-		{Key: "account_id", Value: requestingAccount.ID},
-		{Key: "target_account_id", Value: targetAccountID},
-	}, block); err == nil {
+	// check if a block exists, and remove it if it does
+	block, err := p.db.GetBlock(ctx, requestingAccount.ID, targetAccountID)
+	if err == nil {
+		// we got a block, remove it
 		block.Account = requestingAccount
 		block.TargetAccount = targetAccount
-		if err := p.db.DeleteByID(ctx, block.ID, &gtsmodel.Block{}); err != nil {
+		if err := p.db.DeleteBlockByID(ctx, block.ID); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("BlockRemove: error removing block from db: %s", err))
 		}
-		blockChanged = true
-	}
 
-	// block status changed so send the UNDO activity to the channel for async processing
-	if blockChanged {
+		// send the UNDO activity to the client worker for async processing
 		p.clientWorker.Queue(messages.FromClientAPI{
 			APObjectType:   ap.ActivityBlock,
 			APActivityType: ap.ActivityUndo,
@@ -61,6 +56,8 @@ func (p *processor) BlockRemove(ctx context.Context, requestingAccount *gtsmodel
 			OriginAccount:  requestingAccount,
 			TargetAccount:  targetAccount,
 		})
+	} else if !errors.Is(err, db.ErrNoEntries) {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("BlockRemove: error getting possible block from db: %s", err))
 	}
 
 	// return whatever relationship results from all this

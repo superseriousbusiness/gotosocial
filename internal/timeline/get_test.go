@@ -89,6 +89,9 @@ func (suite *GetTestSuite) TearDownTest() {
 }
 
 func (suite *GetTestSuite) TestGetDefault() {
+	// lastGot should be zero
+	suite.Zero(suite.timeline.LastGot())
+
 	// get 10 20 the top and don't prepare the next query
 	statuses, err := suite.timeline.Get(context.Background(), 20, "", "", "", false)
 	if err != nil {
@@ -108,6 +111,9 @@ func (suite *GetTestSuite) TestGetDefault() {
 			highest = s.GetID()
 		}
 	}
+
+	// lastGot should be up to date
+	suite.WithinDuration(time.Now(), suite.timeline.LastGot(), 1*time.Second)
 }
 
 func (suite *GetTestSuite) TestGetDefaultPrepareNext() {
@@ -295,165 +301,6 @@ func (suite *GetTestSuite) TestGetBetweenIDPrepareNext() {
 
 	// sleep a second so the next query can run
 	time.Sleep(1 * time.Second)
-}
-
-func (suite *GetTestSuite) TestGetXFromTop() {
-	// get 5 from the top
-	statuses, err := suite.timeline.GetXFromTop(context.Background(), 5)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	suite.Len(statuses, 5)
-
-	// statuses should be sorted highest to lowest ID
-	var highest string
-	for i, s := range statuses {
-		if i == 0 {
-			highest = s.GetID()
-		} else {
-			suite.Less(s.GetID(), highest)
-			highest = s.GetID()
-		}
-	}
-}
-
-func (suite *GetTestSuite) TestGetXBehindID() {
-	// get 3 behind the 'middle' id
-	var attempts *int
-	a := 0
-	attempts = &a
-	statuses, err := suite.timeline.GetXBehindID(context.Background(), 3, "01F8MHBQCBTDKN6X5VHGMMN4MA", attempts)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	suite.Len(statuses, 3)
-
-	// statuses should be sorted highest to lowest ID
-	// all status IDs should be less than the behindID
-	var highest string
-	for i, s := range statuses {
-		if i == 0 {
-			highest = s.GetID()
-		} else {
-			suite.Less(s.GetID(), highest)
-			highest = s.GetID()
-		}
-		suite.Less(s.GetID(), "01F8MHBQCBTDKN6X5VHGMMN4MA")
-	}
-}
-
-func (suite *GetTestSuite) TestGetXBehindID0() {
-	// try to get behind 0, the lowest possible ID
-	var attempts *int
-	a := 0
-	attempts = &a
-	statuses, err := suite.timeline.GetXBehindID(context.Background(), 3, "0", attempts)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	// there's nothing beyond it so len should be 0
-	suite.Len(statuses, 0)
-}
-
-func (suite *GetTestSuite) TestGetXBehindNonexistentReasonableID() {
-	// try to get behind an id that doesn't exist, but is close to one that does so we should still get statuses back
-	var attempts *int
-	a := 0
-	attempts = &a
-	statuses, err := suite.timeline.GetXBehindID(context.Background(), 3, "01F8MHBQCBTDKN6X5VHGMMN4MB", attempts) // change the last A to a B
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-	suite.Len(statuses, 3)
-
-	// statuses should be sorted highest to lowest ID
-	// all status IDs should be less than the behindID
-	var highest string
-	for i, s := range statuses {
-		if i == 0 {
-			highest = s.GetID()
-		} else {
-			suite.Less(s.GetID(), highest)
-			highest = s.GetID()
-		}
-		suite.Less(s.GetID(), "01F8MHBCN8120SYH7D5S050MGK")
-	}
-}
-
-func (suite *GetTestSuite) TestGetXBehindVeryHighID() {
-	// try to get behind an id that doesn't exist, and is higher than any other ID we could possibly have
-	var attempts *int
-	a := 0
-	attempts = &a
-	statuses, err := suite.timeline.GetXBehindID(context.Background(), 7, "9998MHBQCBTDKN6X5VHGMMN4MA", attempts)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	// we should get all 7 statuses we asked for because they all have lower IDs than the very high ID given in the query
-	suite.Len(statuses, 7)
-
-	// statuses should be sorted highest to lowest ID
-	// all status IDs should be less than the behindID
-	var highest string
-	for i, s := range statuses {
-		if i == 0 {
-			highest = s.GetID()
-		} else {
-			suite.Less(s.GetID(), highest)
-			highest = s.GetID()
-		}
-		suite.Less(s.GetID(), "9998MHBQCBTDKN6X5VHGMMN4MA")
-	}
-}
-
-func (suite *GetTestSuite) TestGetXBeforeID() {
-	// get 3 before the 'middle' id
-	statuses, err := suite.timeline.GetXBeforeID(context.Background(), 3, "01F8MHBQCBTDKN6X5VHGMMN4MA", true)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	suite.Len(statuses, 3)
-
-	// statuses should be sorted highest to lowest ID
-	// all status IDs should be greater than the beforeID
-	var highest string
-	for i, s := range statuses {
-		if i == 0 {
-			highest = s.GetID()
-		} else {
-			suite.Less(s.GetID(), highest)
-			highest = s.GetID()
-		}
-		suite.Greater(s.GetID(), "01F8MHBQCBTDKN6X5VHGMMN4MA")
-	}
-}
-
-func (suite *GetTestSuite) TestGetXBeforeIDNoStartFromTop() {
-	// get 3 before the 'middle' id
-	statuses, err := suite.timeline.GetXBeforeID(context.Background(), 3, "01F8MHBQCBTDKN6X5VHGMMN4MA", false)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	suite.Len(statuses, 3)
-
-	// statuses should be sorted lowest to highest ID
-	// all status IDs should be greater than the beforeID
-	var lowest string
-	for i, s := range statuses {
-		if i == 0 {
-			lowest = s.GetID()
-		} else {
-			suite.Greater(s.GetID(), lowest)
-			lowest = s.GetID()
-		}
-		suite.Greater(s.GetID(), "01F8MHBQCBTDKN6X5VHGMMN4MA")
-	}
 }
 
 func TestGetTestSuite(t *testing.T) {

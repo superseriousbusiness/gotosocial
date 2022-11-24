@@ -110,9 +110,9 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 	}
 
 	stylesheets := []string{
-		"/assets/Fork-Awesome/css/fork-awesome.min.css",
-		"/assets/dist/status.css",
-		"/assets/dist/profile.css",
+		assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
+		distPathPrefix + "/status.css",
+		distPathPrefix + "/profile.css",
 	}
 	if config.GetAccountsAllowCustomCSS() {
 		stylesheets = append(stylesheets, "/@"+account.Username+"/custom.css")
@@ -128,10 +128,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		"statuses_next":    statusResp.NextLink,
 		"show_back_to_top": showBackToTop,
 		"stylesheets":      stylesheets,
-		"javascript": []string{
-			"/assets/dist/bundle.js",
-			"/assets/dist/frontend.js",
-		},
+		"javascript":       []string{distPathPrefix + "/frontend.js"},
 	})
 }
 

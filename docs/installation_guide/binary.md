@@ -4,10 +4,10 @@ This is the binary installation guide for GoToSocial. It is assumed that you alr
 
 ## 1: Prepare VPS
 
-In a terminal on the VPS or your homeserver, make the directory that GoToSocial will run from, the directory it will use as storage, and the directory it will store LetsEncrypt certificates in:
+In a terminal on the VPS or your homeserver, make the directory that GoToSocial will run from, the directory it will use as storage, the directory it will store LetsEncrypt certificates in, and the directory it will store logs in:
 
 ```bash
-mkdir /gotosocial && mkdir /gotosocial/storage && mkdir /gotosocial/storage/certs
+mkdir /gotosocial && mkdir /gotosocial/storage && mkdir /gotosocial/storage/certs && mkdir /var/log/gotosocial
 ```
 
 If you don't have root permissions on the machine, use something like `~/gotosocial` instead.
@@ -118,7 +118,7 @@ sudo usermod -a -G gotosocial gotosocial
 Then make them the owner of your GoToSocial installation since they will need to read and write in it.
 
 ```bash
-sudo chown -R gotosocial:gotosocial /gotosocial
+sudo chown -R gotosocial:gotosocial /gotosocial /var/log/gotosocial
 ```
 
 You can find a `gotosocial.service` file in the `example` folder on [github](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/example/gotosocial.service) or your installation.

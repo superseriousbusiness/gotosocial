@@ -13,6 +13,7 @@ extra_css:
 
 nav:
   - "Home": "index.md"
+  - "FAQ": "faq.md"
   - "User Guide":
     - "user_guide/posts.md"
     - "user_guide/user_panel.md"
@@ -28,6 +29,7 @@ nav:
     - "installation_guide/caddy.md"
     - "installation_guide/third_party.md"
     - "installation_guide/websocket.md"
+    - "installation_guide/advanced.md"
   - "Configuration":
     - "configuration/index.md"
     - "configuration/general.md"

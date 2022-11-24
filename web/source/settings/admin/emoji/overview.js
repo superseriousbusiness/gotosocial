@@ -20,7 +20,7 @@
 
 const React = require("react");
 const {Link} = require("wouter");
-const defaultValue = require('default-value');
+const splitFilterN = require("split-filter-n");
 
 const NewEmojiForm = require("./new-emoji");
 
@@ -30,10 +30,17 @@ const base = "/settings/admin/custom-emoji";
 
 module.exports = function EmojiOverview() {
 	const {
-		data: emoji,
+		data: emoji = [],
 		isLoading,
 		error
 	} = query.useGetAllEmojiQuery({filter: "domain:local"});
+
+	// split all emoji over an object keyed by the category names (or Unsorted)
+	const emojiByCategory = React.useMemo(() => splitFilterN(
+		emoji,
+		[],
+		(entry) => entry.category ?? "Unsorted"
+	), [emoji]);
 
 	return (
 		<>
@@ -44,33 +51,21 @@ module.exports = function EmojiOverview() {
 			{isLoading
 				? "Loading..."
 				: <>
-					<EmojiList emoji={emoji}/>
-					<NewEmojiForm emoji={emoji}/>
+					<EmojiList emoji={emoji} emojiByCategory={emojiByCategory}/>
+					<NewEmojiForm emoji={emoji} emojiByCategory={emojiByCategory}/>
 				</>
 			}
 		</>
 	);
 };
 
-function EmojiList({emoji}) {
-	const byCategory = React.useMemo(() => {
-		const categories = {};
-
-		emoji.forEach((emoji) => {
-			let cat = defaultValue(emoji.category, "Unsorted");
-			categories[cat] = defaultValue(categories[cat], []);
-			categories[cat].push(emoji);
-		});
-
-		return categories;
-	}, [emoji]);
-	
+function EmojiList({emoji, emojiByCategory}) {
 	return (
 		<div>
 			<h2>Overview</h2>
 			<div className="list emoji-list">
-				{emoji.length == 0 && "No local emoji yet"}
-				{Object.entries(byCategory).map(([category, entries]) => {
+				{emoji.length == 0 && "No local emoji yet, add one below"}
+				{Object.entries(emojiByCategory).map(([category, entries]) => {
 					return <EmojiCategory key={category} category={category} entries={entries}/>;
 				})}
 			</div>

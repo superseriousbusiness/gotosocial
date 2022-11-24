@@ -47,7 +47,7 @@ func (suite *RelationshipTestSuite) TestIsBlocked() {
 	suite.False(blocked)
 
 	// have account1 block account2
-	if err := suite.db.Put(ctx, &gtsmodel.Block{
+	if err := suite.db.PutBlock(ctx, &gtsmodel.Block{
 		ID:              "01G202BCSXXJZ70BHB5KCAHH8C",
 		URI:             "http://localhost:8080/some_block_uri_1",
 		AccountID:       account1,
@@ -81,7 +81,7 @@ func (suite *RelationshipTestSuite) TestGetBlock() {
 	account1 := suite.testAccounts["local_account_1"].ID
 	account2 := suite.testAccounts["local_account_2"].ID
 
-	if err := suite.db.Put(ctx, &gtsmodel.Block{
+	if err := suite.db.PutBlock(ctx, &gtsmodel.Block{
 		ID:              "01G202BCSXXJZ70BHB5KCAHH8C",
 		URI:             "http://localhost:8080/some_block_uri_1",
 		AccountID:       account1,
@@ -94,6 +94,130 @@ func (suite *RelationshipTestSuite) TestGetBlock() {
 	suite.NoError(err)
 	suite.NotNil(block)
 	suite.Equal("01G202BCSXXJZ70BHB5KCAHH8C", block.ID)
+}
+
+func (suite *RelationshipTestSuite) TestDeleteBlockByID() {
+	ctx := context.Background()
+
+	// put a block in first
+	account1 := suite.testAccounts["local_account_1"].ID
+	account2 := suite.testAccounts["local_account_2"].ID
+	if err := suite.db.PutBlock(ctx, &gtsmodel.Block{
+		ID:              "01G202BCSXXJZ70BHB5KCAHH8C",
+		URI:             "http://localhost:8080/some_block_uri_1",
+		AccountID:       account1,
+		TargetAccountID: account2,
+	}); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// make sure the block is in the db
+	block, err := suite.db.GetBlock(ctx, account1, account2)
+	suite.NoError(err)
+	suite.NotNil(block)
+	suite.Equal("01G202BCSXXJZ70BHB5KCAHH8C", block.ID)
+
+	// delete the block by ID
+	err = suite.db.DeleteBlockByID(ctx, "01G202BCSXXJZ70BHB5KCAHH8C")
+	suite.NoError(err)
+
+	// block should be gone
+	block, err = suite.db.GetBlock(ctx, account1, account2)
+	suite.ErrorIs(err, db.ErrNoEntries)
+	suite.Nil(block)
+}
+
+func (suite *RelationshipTestSuite) TestDeleteBlockByURI() {
+	ctx := context.Background()
+
+	// put a block in first
+	account1 := suite.testAccounts["local_account_1"].ID
+	account2 := suite.testAccounts["local_account_2"].ID
+	if err := suite.db.PutBlock(ctx, &gtsmodel.Block{
+		ID:              "01G202BCSXXJZ70BHB5KCAHH8C",
+		URI:             "http://localhost:8080/some_block_uri_1",
+		AccountID:       account1,
+		TargetAccountID: account2,
+	}); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// make sure the block is in the db
+	block, err := suite.db.GetBlock(ctx, account1, account2)
+	suite.NoError(err)
+	suite.NotNil(block)
+	suite.Equal("01G202BCSXXJZ70BHB5KCAHH8C", block.ID)
+
+	// delete the block by uri
+	err = suite.db.DeleteBlockByURI(ctx, "http://localhost:8080/some_block_uri_1")
+	suite.NoError(err)
+
+	// block should be gone
+	block, err = suite.db.GetBlock(ctx, account1, account2)
+	suite.ErrorIs(err, db.ErrNoEntries)
+	suite.Nil(block)
+}
+
+func (suite *RelationshipTestSuite) TestDeleteBlocksByOriginAccountID() {
+	ctx := context.Background()
+
+	// put a block in first
+	account1 := suite.testAccounts["local_account_1"].ID
+	account2 := suite.testAccounts["local_account_2"].ID
+	if err := suite.db.PutBlock(ctx, &gtsmodel.Block{
+		ID:              "01G202BCSXXJZ70BHB5KCAHH8C",
+		URI:             "http://localhost:8080/some_block_uri_1",
+		AccountID:       account1,
+		TargetAccountID: account2,
+	}); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// make sure the block is in the db
+	block, err := suite.db.GetBlock(ctx, account1, account2)
+	suite.NoError(err)
+	suite.NotNil(block)
+	suite.Equal("01G202BCSXXJZ70BHB5KCAHH8C", block.ID)
+
+	// delete the block by originAccountID
+	err = suite.db.DeleteBlocksByOriginAccountID(ctx, account1)
+	suite.NoError(err)
+
+	// block should be gone
+	block, err = suite.db.GetBlock(ctx, account1, account2)
+	suite.ErrorIs(err, db.ErrNoEntries)
+	suite.Nil(block)
+}
+
+func (suite *RelationshipTestSuite) TestDeleteBlocksByTargetAccountID() {
+	ctx := context.Background()
+
+	// put a block in first
+	account1 := suite.testAccounts["local_account_1"].ID
+	account2 := suite.testAccounts["local_account_2"].ID
+	if err := suite.db.PutBlock(ctx, &gtsmodel.Block{
+		ID:              "01G202BCSXXJZ70BHB5KCAHH8C",
+		URI:             "http://localhost:8080/some_block_uri_1",
+		AccountID:       account1,
+		TargetAccountID: account2,
+	}); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// make sure the block is in the db
+	block, err := suite.db.GetBlock(ctx, account1, account2)
+	suite.NoError(err)
+	suite.NotNil(block)
+	suite.Equal("01G202BCSXXJZ70BHB5KCAHH8C", block.ID)
+
+	// delete the block by targetAccountID
+	err = suite.db.DeleteBlocksByTargetAccountID(ctx, account2)
+	suite.NoError(err)
+
+	// block should be gone
+	block, err = suite.db.GetBlock(ctx, account1, account2)
+	suite.ErrorIs(err, db.ErrNoEntries)
+	suite.Nil(block)
 }
 
 func (suite *RelationshipTestSuite) TestGetRelationship() {

@@ -101,15 +101,15 @@ See [this blog post](https://blog.sgmansfield.com/2016/06/working-with-forks-in-
 In case this post disappears, here are the steps (slightly modified):
 
 >
-> Pull the original package from the canonical place with the standard go get command:
->
-> `go get github.com/superseriousbusiness/gotosocial`
->
 > Fork the repository on GitHub or set up whatever other remote git repo you will be using. In this case, I would go to GitHub and fork the repository.
 >
-> Navigate to the top level of the repository on your computer. Note that this might not be the specific package you’re using:
+> Now clone the upstream repo (not the fork):
 >
-> `cd $GOPATH/src/github.com/superseriousbusiness/gotosocial`
+> `mkdir -p ~/go/src/github.com/superseriousbusiness && git clone git@github.com:superseriousbusiness/gotosocial ~/go/src/github.com/superseriousbusiness/gotosocial`
+>
+> Navigate to the top level of the upstream repository on your computer:
+>
+> `cd ~/go/src/github.com/superseriousbusiness/gotosocial`
 >
 > Rename the current origin remote to upstream:
 >
@@ -330,7 +330,7 @@ If all goes according to plan, you should now have a number of multiple-architec
 
 ### Manually
 
-If you prefer a simple approach to building a Docker container, with fewer dependencies, you can also just build in the following way:
+If you prefer a simple approach to building a Docker container, with fewer dependencies (go-swagger, Node, Yarn), you can also just build in the following way:
 
 ```bash
 ./scripts/build.sh && docker buildx build -t superseriousbusiness/gotosocial:latest .
@@ -338,7 +338,25 @@ If you prefer a simple approach to building a Docker container, with fewer depen
 
 The above command first builds the `gotosocial` binary, then invokes Docker buildx to build the container image.
 
-You don't need to install go-swagger, Node, or Yarn to build Docker images this way.
+If you want to build a docker image for a different CPU architecture without setting up buildx (for example for ARMv7 aka 32-bit ARM), first modify the Dockerfile by adding the following lines to the top (but don't commit this!):
+
+```dockerfile
+# When using buildx, these variables will be set by the tool:
+# https://docs.docker.com/engine/reference/builder/#automatic-platform-args-in-the-global-scope
+# However, declaring them as global build arguments like this allows them to be set manually with `--build-arg` instead. 
+ARG BUILDPLATFORM
+ARG TARGETPLATFORM
+```
+
+Then, you can use the following command:
+
+```bash
+GOOS=linux GOARCH=arm ./scripts/build.sh && docker build --build-arg BUILDPLATFORM=linux/amd64 --build-arg TARGETPLATFORM=linux/arm/v7 -t superseriousbusiness/gotosocial:latest .
+```
+
+See also: [exhaustive list of GOOS and GOARCH values](https://gist.github.com/lizkes/975ab2d1b5f9d5fdee5d3fa665bcfde6)
+
+And: [exhaustive list of possible values for docker's `--platform`](https://github.com/tonistiigi/binfmt/#build-test-image)
 
 ## Financial Compensation
 

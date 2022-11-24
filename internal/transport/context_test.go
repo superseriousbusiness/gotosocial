@@ -16,22 +16,19 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package log
+package transport_test
 
 import (
-	"io"
-	"sync"
+	"context"
+	"testing"
+
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
-// safewriter wraps a writer to provide mutex safety on write.
-type safewriter struct {
-	w io.Writer
-	m sync.Mutex
-}
-
-func (w *safewriter) Write(b []byte) (int, error) {
-	w.m.Lock()
-	n, err := w.w.Write(b)
-	w.m.Unlock()
-	return n, err
+func TestFastFailContext(t *testing.T) {
+	ctx := context.Background()
+	ctx = transport.WithFastfail(ctx)
+	if !transport.IsFastfail(ctx) {
+		t.Fatal("failed to set fast-fail context key")
+	}
 }

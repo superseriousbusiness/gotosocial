@@ -95,7 +95,7 @@ func New(cfg Config) *Client {
 	var c Client
 
 	d := &net.Dialer{
-		Timeout:   30 * time.Second,
+		Timeout:   15 * time.Second,
 		KeepAlive: 30 * time.Second,
 		Resolver:  &net.Resolver{},
 	}

@@ -58,7 +58,7 @@ codeberg.org/gruf/go-runners
 # codeberg.org/gruf/go-sched v1.1.1
 ## explicit; go 1.19
 codeberg.org/gruf/go-sched
-# codeberg.org/gruf/go-store/v2 v2.0.7
+# codeberg.org/gruf/go-store/v2 v2.0.9
 ## explicit; go 1.19
 codeberg.org/gruf/go-store/v2/kv
 codeberg.org/gruf/go-store/v2/storage
@@ -284,7 +284,7 @@ github.com/miekg/dns
 # github.com/minio/md5-simd v1.1.2
 ## explicit; go 1.14
 github.com/minio/md5-simd
-# github.com/minio/minio-go/v7 v7.0.43
+# github.com/minio/minio-go/v7 v7.0.44
 ## explicit; go 1.17
 github.com/minio/minio-go/v7
 github.com/minio/minio-go/v7/pkg/credentials

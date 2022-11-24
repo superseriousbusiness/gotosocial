@@ -55,6 +55,7 @@ dockers:
     image_templates:
     - "superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-amd64"
     - "superseriousbusiness/{{ .ProjectName }}:latest-amd64"
+    - "superseriousbusiness/{{ .ProjectName }}:snapshot-amd64"
     build_flag_templates:
     - "--platform=linux/amd64"
     - "--label=org.opencontainers.image.created={{.Date}}"
@@ -74,6 +75,7 @@ dockers:
     image_templates:
     - "superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-arm64v8"
     - "superseriousbusiness/{{ .ProjectName }}:latest-arm64v8"
+    - "superseriousbusiness/{{ .ProjectName }}:snapshot-arm64v8"
     build_flag_templates:
     - "--platform=linux/arm64/v8"
     - "--label=org.opencontainers.image.created={{.Date}}"
@@ -94,6 +96,7 @@ dockers:
     image_templates:
     - "superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-armv6"
     - "superseriousbusiness/{{ .ProjectName }}:latest-armv6"
+    - "superseriousbusiness/{{ .ProjectName }}:snapshot-armv6"
     build_flag_templates:
     - "--platform=linux/arm/v6"
     - "--label=org.opencontainers.image.created={{.Date}}"
@@ -114,6 +117,7 @@ dockers:
     image_templates:
     - "superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-armv7"
     - "superseriousbusiness/{{ .ProjectName }}:latest-armv7"
+    - "superseriousbusiness/{{ .ProjectName }}:snapshot-armv7"
     build_flag_templates:
     - "--platform=linux/arm/v7"
     - "--label=org.opencontainers.image.created={{.Date}}"
@@ -139,6 +143,12 @@ docker_manifests:
     - superseriousbusiness/{{ .ProjectName }}:latest-arm64v8
     - superseriousbusiness/{{ .ProjectName }}:latest-armv6
     - superseriousbusiness/{{ .ProjectName }}:latest-armv7
+  - name_template: superseriousbusiness/{{ .ProjectName }}:snapshot
+    image_templates:
+    - superseriousbusiness/{{ .ProjectName }}:snapshot-amd64
+    - superseriousbusiness/{{ .ProjectName }}:snapshot-arm64v8
+    - superseriousbusiness/{{ .ProjectName }}:snapshot-armv6
+    - superseriousbusiness/{{ .ProjectName }}:snapshot-armv7
 archives:
   # https://goreleaser.com/customization/archive/
   -

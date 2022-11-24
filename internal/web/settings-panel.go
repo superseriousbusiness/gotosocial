@@ -39,14 +39,12 @@ func (m *Module) SettingsPanelHandler(c *gin.Context) {
 		"instance": instance,
 		"stylesheets": []string{
 			assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
-			assetsPathPrefix + "/dist/_colors.css",
-			assetsPathPrefix + "/dist/base.css",
-			assetsPathPrefix + "/dist/profile.css",
-			assetsPathPrefix + "/dist/status.css",
-			assetsPathPrefix + "/dist/settings-style.css",
+			distPathPrefix + "/_colors.css",
+			distPathPrefix + "/base.css",
+			distPathPrefix + "/profile.css",
+			distPathPrefix + "/status.css",
+			distPathPrefix + "/settings-style.css",
 		},
-		"javascript": []string{
-			assetsPathPrefix + "/dist/settings.js",
-		},
+		"javascript": []string{distPathPrefix + "/settings.js"},
 	})
 }

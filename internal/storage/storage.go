@@ -52,20 +52,38 @@ type Driver interface {
 func AutoConfig() (Driver, error) {
 	switch config.GetStorageBackend() {
 	case "s3":
-		mc, err := minio.New(config.GetStorageS3Endpoint(), &minio.Options{
-			Creds:  credentials.NewStaticV4(config.GetStorageS3AccessKey(), config.GetStorageS3SecretKey(), ""),
-			Secure: config.GetStorageS3UseSSL(),
+		endpoint := config.GetStorageS3Endpoint()
+		access := config.GetStorageS3AccessKey()
+		secret := config.GetStorageS3SecretKey()
+		secure := config.GetStorageS3UseSSL()
+		bucket := config.GetStorageS3BucketName()
+		proxy := config.GetStorageS3Proxy()
+
+		s3, err := storage.OpenS3(endpoint, bucket, &storage.S3Config{
+			CoreOpts: minio.Options{
+				Creds:  credentials.NewStaticV4(access, secret, ""),
+				Secure: secure,
+			},
+			GetOpts:      minio.GetObjectOptions{},
+			PutOpts:      minio.PutObjectOptions{},
+			PutChunkSize: 5 * 1024 * 1024, // 5MiB
+			StatOpts:     minio.StatObjectOptions{},
+			RemoveOpts:   minio.RemoveObjectOptions{},
+			ListSize:     200,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("creating minio client: %w", err)
+			return nil, fmt.Errorf("error opening s3 storage: %w", err)
 		}
-		return NewS3(
-			mc,
-			config.GetStorageS3BucketName(),
-			config.GetStorageS3Proxy(),
-		), nil
+
+		return &S3{
+			Proxy:   proxy,
+			Bucket:  bucket,
+			Storage: s3,
+			KVStore: kv.New(s3),
+		}, nil
 	case "local":
 		basePath := config.GetStorageLocalBasePath()
+
 		disk, err := storage.OpenDisk(basePath, &storage.DiskConfig{
 			// Put the store lockfile in the storage dir itself.
 			// Normally this would not be safe, since we could end up
@@ -75,8 +93,9 @@ func AutoConfig() (Driver, error) {
 			LockFile: path.Join(basePath, "store.lock"),
 		})
 		if err != nil {
-			return nil, fmt.Errorf("error openingdisk storage: %v", err)
+			return nil, fmt.Errorf("error opening disk storage: %w", err)
 		}
+
 		return &Local{kv.New(disk)}, nil
 	}
 	return nil, fmt.Errorf("invalid storage backend %s", config.GetStorageBackend())

@@ -23,13 +23,10 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-)
-
-const (
-	desiredPostIndexLength = 400
 )
 
 // Manager abstracts functions for creating timelines for multiple accounts, and adding, removing, and fetching entries from those timelines.
@@ -65,8 +62,6 @@ type Manager interface {
 	GetTimeline(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]Preparable, error)
 	// GetIndexedLength returns the amount of items that have been *indexed* for the given account ID.
 	GetIndexedLength(ctx context.Context, timelineAccountID string) int
-	// GetDesiredIndexLength returns the amount of items that we, ideally, index for each user.
-	GetDesiredIndexLength(ctx context.Context) int
 	// GetOldestIndexedID returns the id ID for the oldest item that we have indexed for the given account.
 	GetOldestIndexedID(ctx context.Context, timelineAccountID string) (string, error)
 	// PrepareXFromTop prepares limit n amount of items, based on their indexed representations, from the top of the index.
@@ -77,6 +72,10 @@ type Manager interface {
 	WipeItemFromAllTimelines(ctx context.Context, itemID string) error
 	// WipeStatusesFromAccountID removes all items by the given accountID from the timelineAccountID's timelines.
 	WipeItemsFromAccountID(ctx context.Context, timelineAccountID string, accountID string) error
+	// Start starts hourly cleanup jobs for this timeline manager.
+	Start() error
+	// Stop stops the timeline manager (currently a stub, doesn't do anything).
+	Stop() error
 }
 
 // NewManager returns a new timeline manager.
@@ -98,9 +97,44 @@ type manager struct {
 	skipInsertFunction SkipInsertFunction
 }
 
+func (m *manager) Start() error {
+	// range through all timelines in the sync map once per hour + prune as necessary
+	go func() {
+		for now := range time.NewTicker(1 * time.Hour).C {
+			m.accountTimelines.Range(func(key any, value any) bool {
+				timelineAccountID, ok := key.(string)
+				if !ok {
+					panic("couldn't parse timeline manager sync map key as string, this should never happen so panic")
+				}
+
+				t, ok := value.(Timeline)
+				if !ok {
+					panic("couldn't parse timeline manager sync map value as Timeline, this should never happen so panic")
+				}
+
+				anHourAgo := now.Add(-1 * time.Hour)
+				if lastGot := t.LastGot(); lastGot.Before(anHourAgo) {
+					amountPruned := t.Prune(defaultDesiredPreparedItemsLength, defaultDesiredIndexedItemsLength)
+					log.WithFields(kv.Fields{
+						{"timelineAccountID", timelineAccountID},
+						{"amountPruned", amountPruned},
+					}...).Info("pruned indexed and prepared items from timeline")
+				}
+
+				return true
+			})
+		}
+	}()
+
+	return nil
+}
+
+func (m *manager) Stop() error {
+	return nil
+}
+
 func (m *manager) Ingest(ctx context.Context, item Timelineable, timelineAccountID string) (bool, error) {
 	l := log.WithFields(kv.Fields{
-
 		{"timelineAccountID", timelineAccountID},
 		{"itemID", item.GetID()},
 	}...)
@@ -116,7 +150,6 @@ func (m *manager) Ingest(ctx context.Context, item Timelineable, timelineAccount
 
 func (m *manager) IngestAndPrepare(ctx context.Context, item Timelineable, timelineAccountID string) (bool, error) {
 	l := log.WithFields(kv.Fields{
-
 		{"timelineAccountID", timelineAccountID},
 		{"itemID", item.GetID()},
 	}...)
@@ -132,7 +165,6 @@ func (m *manager) IngestAndPrepare(ctx context.Context, item Timelineable, timel
 
 func (m *manager) Remove(ctx context.Context, timelineAccountID string, itemID string) (int, error) {
 	l := log.WithFields(kv.Fields{
-
 		{"timelineAccountID", timelineAccountID},
 		{"itemID", itemID},
 	}...)
@@ -147,10 +179,7 @@ func (m *manager) Remove(ctx context.Context, timelineAccountID string, itemID s
 }
 
 func (m *manager) GetTimeline(ctx context.Context, timelineAccountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]Preparable, error) {
-	l := log.WithFields(kv.Fields{
-
-		{"timelineAccountID", timelineAccountID},
-	}...)
+	l := log.WithFields(kv.Fields{{"timelineAccountID", timelineAccountID}}...)
 
 	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
 	if err != nil {
@@ -171,10 +200,6 @@ func (m *manager) GetIndexedLength(ctx context.Context, timelineAccountID string
 	}
 
 	return t.ItemIndexLength(ctx)
-}
-
-func (m *manager) GetDesiredIndexLength(ctx context.Context) int {
-	return desiredPostIndexLength
 }
 
 func (m *manager) GetOldestIndexedID(ctx context.Context, timelineAccountID string) (string, error) {

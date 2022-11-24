@@ -17,8 +17,8 @@ Restart=on-failure
 ExecStart=/gotosocial/gotosocial --config-path config.yaml server start
 WorkingDirectory=/gotosocial
 
-StandardOutput=append:/var/log/gotosocial.log
-StandardError=inherit
+StandardOutput=append:/var/log/gotosocial/access.log
+StandardError=append:/var/log/gotosocial/error.log
 
 
 # Sandboxing options to harden security

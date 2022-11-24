@@ -312,22 +312,6 @@ section.with-sidebar > div {
 		display: grid;
 		grid-template-columns: 70% 30%;
 
-		.basic {
-			margin-top: -4.5rem;
-
-			.avatar {
-				height: 5rem;
-				width: 5rem;
-			}
-	
-			.displayname {
-				font-size: 1.3rem;
-				padding-top: 0;
-				padding-bottom: 0;
-				margin-top: 0.7rem;
-			}
-		}
-
 		.files {
 			width: 100%;
 			margin: 1rem;
@@ -502,4 +486,62 @@ span.form-info {
 	.instance-list .filter {
 		flex-direction: column;
 	}
+}
+
+.combobox-wrapper {
+  display: flex;
+  flex-direction: column;
+
+	input[aria-expanded="true"] {
+		border-bottom: none;
+	}
+}
+
+.combobox {
+  height: 2.5rem;
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+.popover {
+  position: relative;
+  z-index: 50;
+  display: flex;
+  max-height: min(var(--popover-available-height,300px),300px);
+  flex-direction: column;
+  overflow: auto;
+  overscroll-behavior: contain;
+	border: 0.15rem solid $orange2;
+	background: $bg-accent;
+}
+
+.combobox-item {
+  display: flex;
+  cursor: pointer;
+  scroll-margin: 0.5rem;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+	line-height: 1.5rem;
+	border-bottom: 0.15rem solid $gray3;
+
+	&:last-child {
+		border: none;
+	}
+
+	img {
+		height: 1.5rem;
+		width: 1.5rem;
+		object-fit: contain;
+	}
+}
+
+.combobox-item:hover {
+	background: $button-hover-bg;
+	color: $button-fg;
+}
+
+.combobox-item[data-active-item] {
+  background: $button-hover-bg;
+  color: hsl(204 20% 100%);
 }

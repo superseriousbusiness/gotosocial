@@ -20,7 +20,6 @@
 
 const { createSlice } = require("@reduxjs/toolkit");
 const d = require("dotty");
-const defaultValue = require("default-value");
 
 module.exports = createSlice({
 	name: "user",
@@ -30,10 +29,10 @@ module.exports = createSlice({
 	},
 	reducers: {
 		setAccount: (state, { payload }) => {
-			payload.source = defaultValue(payload.source, {});
-			payload.source.language = defaultValue(payload.source.language.toUpperCase(), "EN");
-			payload.source.status_format = defaultValue(payload.source.status_format, "plain");
-			payload.source.sensitive = defaultValue(payload.source.sensitive, false);
+			payload.source = payload.source ?? {};
+			payload.source.language = payload.source.language.toUpperCase() ?? "EN";
+			payload.source.status_format = payload.source.status_format ?? "plain";
+			payload.source.sensitive = payload.source.sensitive ?? false;
 
 			state.profile = payload;
 			// /user/settings only needs a copy of the 'source' obj
