@@ -134,18 +134,12 @@ time=2022-04-19T09:48:36Z level=info msg=listening on 0.0.0.0:8080
 
 ### Create your first User
 
-Now that GoToSocial is running, you can execute commands inside the running container to create, confirm, and promote your admin user.
+Now that GoToSocial is running, you can execute commands inside the running container to create and promote your admin user.
 
 First create a user (replace the username, email, and password with appropriate values):
 
 ```bash
 docker exec -it gotosocial /gotosocial/gotosocial admin account create --username some_username --email someone@example.org --password 'some_very_good_password'
-```
-
-Now confirm the user, replacing username with the value you used in the command above.
-
-```bash
-docker exec -it gotosocial /gotosocial/gotosocial admin account confirm --username some_username
 ```
 
 Now promote the user you just created to admin privileges:

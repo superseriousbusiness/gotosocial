@@ -68,7 +68,7 @@ gotosocial admin account create \
 
 ### gotosocial admin account confirm
 
-This command can be used to confirm a user+account on your instance, allowing them to log in and use the account.
+This command can be used to confirm a user+account on your instance, allowing them to log in and use the account. Note that if the account was created using `admin account create` this is not necessary.
 
 `gotosocial admin account confirm --help`:
 
