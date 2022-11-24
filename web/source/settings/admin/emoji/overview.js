@@ -20,11 +20,11 @@
 
 const React = require("react");
 const {Link} = require("wouter");
-const splitFilterN = require("split-filter-n");
 
 const NewEmojiForm = require("./new-emoji");
 
 const query = require("../../lib/query");
+const { useEmojiByCategory } = require("./category-select");
 
 const base = "/settings/admin/custom-emoji";
 
@@ -35,13 +35,6 @@ module.exports = function EmojiOverview() {
 		error
 	} = query.useGetAllEmojiQuery({filter: "domain:local"});
 
-	// split all emoji over an object keyed by the category names (or Unsorted)
-	const emojiByCategory = React.useMemo(() => splitFilterN(
-		emoji,
-		[],
-		(entry) => entry.category ?? "Unsorted"
-	), [emoji]);
-
 	return (
 		<>
 			<h1>Custom Emoji</h1>
@@ -51,15 +44,17 @@ module.exports = function EmojiOverview() {
 			{isLoading
 				? "Loading..."
 				: <>
-					<EmojiList emoji={emoji} emojiByCategory={emojiByCategory}/>
-					<NewEmojiForm emoji={emoji} emojiByCategory={emojiByCategory}/>
+					<EmojiList emoji={emoji}/>
+					<NewEmojiForm emoji={emoji}/>
 				</>
 			}
 		</>
 	);
 };
 
-function EmojiList({emoji, emojiByCategory}) {
+function EmojiList({emoji}) {
+	const emojiByCategory = useEmojiByCategory(emoji);
+
 	return (
 		<div>
 			<h2>Overview</h2>
