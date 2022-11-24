@@ -60,8 +60,8 @@ func (suite *FilterStandardTestSuite) SetupSuite() {
 }
 
 func (suite *FilterStandardTestSuite) SetupTest() {
-	testrig.InitTestLog()
 	testrig.InitTestConfig()
+	testrig.InitTestLog()
 
 	suite.db = testrig.NewTestDB()
 	suite.filter = visibility.NewFilter(suite.db)

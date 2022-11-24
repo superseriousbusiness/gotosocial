@@ -21,10 +21,12 @@ package visibility_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -63,6 +65,44 @@ func (suite *StatusStatusHometimelineableTestSuite) TestNotFollowingStatusHometi
 	suite.NoError(err)
 
 	suite.False(timelineable)
+}
+
+func (suite *StatusStatusHometimelineableTestSuite) TestStatusTooNewNotTimelineable() {
+	testStatus := &gtsmodel.Status{}
+	*testStatus = *suite.testStatuses["local_account_1_status_1"]
+
+	var err error
+	testStatus.ID, err = id.NewULIDFromTime(time.Now().Add(10 * time.Minute))
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	testAccount := suite.testAccounts["local_account_1"]
+	ctx := context.Background()
+
+	timelineable, err := suite.filter.StatusHometimelineable(ctx, testStatus, testAccount)
+	suite.NoError(err)
+
+	suite.False(timelineable)
+}
+
+func (suite *StatusStatusHometimelineableTestSuite) TestStatusNotTooNewTimelineable() {
+	testStatus := &gtsmodel.Status{}
+	*testStatus = *suite.testStatuses["local_account_1_status_1"]
+
+	var err error
+	testStatus.ID, err = id.NewULIDFromTime(time.Now().Add(4 * time.Minute))
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	testAccount := suite.testAccounts["local_account_1"]
+	ctx := context.Background()
+
+	timelineable, err := suite.filter.StatusHometimelineable(ctx, testStatus, testAccount)
+	suite.NoError(err)
+
+	suite.True(timelineable)
 }
 
 func (suite *StatusStatusHometimelineableTestSuite) TestChainReplyFollowersOnly() {
