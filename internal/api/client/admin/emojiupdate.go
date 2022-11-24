@@ -45,7 +45,7 @@ import (
 // be unique among emojis already present on this instance. A category MAY be provided, and the copied emoji will then
 // be put into the provided category.
 //
-// `modify`: modify a LOCAL emoji. You can provide a new image for the emoji, set a new shortcode, and/or update the category.
+// `modify`: modify a LOCAL emoji. You can provide a new image for the emoji and/or update the category.
 //
 // Local emojis cannot be deleted using this endpoint. To delete a local emoji, check DELETE /api/v1/admin/custom_emojis/{id} instead.
 //
@@ -80,8 +80,7 @@ import (
 //		in: formData
 //		description: >-
 //			The code to use for the emoji, which will be used by instance denizens to select it.
-//			This must be unique on the instance. When copying a remote emoji to local, the shortcode
-//			must be unique among this instance's shortcodes.
+//			This must be unique on the instance. Works for the `copy` action type only.
 //		type: string
 //		pattern: \w{2,30}
 //	-
@@ -168,42 +167,51 @@ func (m *Module) EmojiPATCHHandler(c *gin.Context) {
 
 // do a first pass on the form here
 func validateUpdateEmoji(form *model.EmojiUpdateRequest) error {
-	if form.Image != nil && form.Image.Size != 0 {
-		maxSize := config.GetMediaEmojiLocalMaxSize()
-		if form.Image.Size > int64(maxSize) {
-			return fmt.Errorf("emoji image too large: image is %dKB but size limit for custom emojis is %dKB", form.Image.Size/1024, maxSize/1024)
-		}
-	}
-
-	if form.Shortcode != nil {
-		if err := validate.EmojiShortcode(*form.Shortcode); err != nil {
-			return err
-		}
-	}
-
-	if form.CategoryName != nil {
-		if err := validate.EmojiCategory(*form.CategoryName); err != nil {
-			return err
-		}
-	}
-
 	// check + normalize update type so we don't need
 	// to do this trimming + lowercasing again later
 	switch strings.TrimSpace(strings.ToLower(string(form.Type))) {
 	case string(model.EmojiUpdateDisable):
-		// no params required for this one
+		// no params required for this one, so don't bother checking
 		form.Type = model.EmojiUpdateDisable
 	case string(model.EmojiUpdateCopy):
-		// need at least a shortcode when doing a copy
+		// need at least a valid shortcode when doing a copy
 		if form.Shortcode == nil {
 			return errors.New("emoji action type was 'copy' but no shortcode was provided")
 		}
+
+		if err := validate.EmojiShortcode(*form.Shortcode); err != nil {
+			return err
+		}
+
+		// category optional during copy
+		if form.CategoryName != nil {
+			if err := validate.EmojiCategory(*form.CategoryName); err != nil {
+				return err
+			}
+		}
+
 		form.Type = model.EmojiUpdateCopy
 	case string(model.EmojiUpdateModify):
-		// need something to modify
-		if form.Shortcode == nil && form.Image == nil && form.CategoryName == nil {
-			return errors.New("emoji action type was 'modify' but no shortcode, image, or category name was provided")
+		// need either image or category name for modify
+		hasImage := form.Image != nil && form.Image.Size != 0
+		hasCategoryName := form.CategoryName != nil
+		if !hasImage && !hasCategoryName {
+			return errors.New("emoji action type was 'modify' but no image or category name was provided")
 		}
+
+		if hasImage {
+			maxSize := config.GetMediaEmojiLocalMaxSize()
+			if form.Image.Size > int64(maxSize) {
+				return fmt.Errorf("emoji image too large: image is %dKB but size limit for custom emojis is %dKB", form.Image.Size/1024, maxSize/1024)
+			}
+		}
+
+		if hasCategoryName {
+			if err := validate.EmojiCategory(*form.CategoryName); err != nil {
+				return err
+			}
+		}
+
 		form.Type = model.EmojiUpdateModify
 	default:
 		return errors.New("emoji action type must be one of 'disable', 'copy', 'modify'")

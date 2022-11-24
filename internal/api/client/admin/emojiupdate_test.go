@@ -37,7 +37,7 @@ type EmojiUpdateTestSuite struct {
 	AdminStandardTestSuite
 }
 
-func (suite *EmojiUpdateTestSuite) TestEmojiUpdateNewShortcodeAndNewCategory() {
+func (suite *EmojiUpdateTestSuite) TestEmojiUpdateNewCategory() {
 	testEmoji := &gtsmodel.Emoji{}
 	*testEmoji = *suite.testEmojis["rainbow"]
 
@@ -45,7 +45,6 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateNewShortcodeAndNewCategory() {
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"", "",
 		map[string]string{
-			"shortcode": "new_shortcode",
 			"category":  "New Category", // this category doesn't exist yet
 			"type":      "modify",
 		})
@@ -78,7 +77,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateNewShortcodeAndNewCategory() {
 	suite.NoError(err)
 
 	// appropriate fields should be set
-	suite.Equal("new_shortcode", adminEmoji.Shortcode)
+	suite.Equal("rainbow", adminEmoji.Shortcode)
 	suite.NotEmpty(adminEmoji.URL)
 	suite.NotEmpty(adminEmoji.StaticURL)
 	suite.True(adminEmoji.VisibleInPicker)
@@ -89,7 +88,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateNewShortcodeAndNewCategory() {
 
 	// check fields on the emoji
 	suite.NotEmpty(dbEmoji.ID)
-	suite.Equal("new_shortcode", dbEmoji.Shortcode)
+	suite.Equal("rainbow", dbEmoji.Shortcode)
 	suite.Empty(dbEmoji.Domain)
 	suite.Empty(dbEmoji.ImageRemoteURL)
 	suite.Empty(dbEmoji.ImageStaticRemoteURL)
@@ -101,83 +100,6 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateNewShortcodeAndNewCategory() {
 	suite.Equal("image/png", dbEmoji.ImageStaticContentType)
 	suite.Equal(36702, dbEmoji.ImageFileSize)
 	suite.Equal(10413, dbEmoji.ImageStaticFileSize)
-	suite.False(*dbEmoji.Disabled)
-	suite.NotEmpty(dbEmoji.URI)
-	suite.True(*dbEmoji.VisibleInPicker)
-	suite.NotEmpty(dbEmoji.CategoryID)
-
-	// emoji should be in storage
-	emojiBytes, err := suite.storage.Get(ctx, dbEmoji.ImagePath)
-	suite.NoError(err)
-	suite.Len(emojiBytes, dbEmoji.ImageFileSize)
-	emojiStaticBytes, err := suite.storage.Get(ctx, dbEmoji.ImageStaticPath)
-	suite.NoError(err)
-	suite.Len(emojiStaticBytes, dbEmoji.ImageStaticFileSize)
-}
-
-func (suite *EmojiUpdateTestSuite) TestEmojiUpdateNewImageNewShortcode() {
-	testEmoji := &gtsmodel.Emoji{}
-	*testEmoji = *suite.testEmojis["rainbow"]
-
-	// set up the request
-	requestBody, w, err := testrig.CreateMultipartFormData(
-		"image", "../../../../testrig/media/kip-original.gif",
-		map[string]string{
-			"type":      "modify",
-			"shortcode": "stinky",
-		})
-	if err != nil {
-		panic(err)
-	}
-	bodyBytes := requestBody.Bytes()
-	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodPost, bodyBytes, admin.EmojiPathWithID, w.FormDataContentType())
-	ctx.AddParam(admin.IDKey, testEmoji.ID)
-
-	// call the handler
-	suite.adminModule.EmojiPATCHHandler(ctx)
-
-	// 1. we should have OK because our request was valid
-	suite.Equal(http.StatusOK, recorder.Code)
-
-	// 2. we should have no error message in the result body
-	result := recorder.Result()
-	defer result.Body.Close()
-
-	// check the response
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-	suite.NotEmpty(b)
-
-	// response should be an admin model emoji
-	adminEmoji := &apimodel.AdminEmoji{}
-	err = json.Unmarshal(b, adminEmoji)
-	suite.NoError(err)
-
-	// appropriate fields should be set
-	suite.Equal("stinky", adminEmoji.Shortcode)
-	suite.NotEmpty(adminEmoji.URL)
-	suite.NotEmpty(adminEmoji.StaticURL)
-	suite.True(adminEmoji.VisibleInPicker)
-
-	// emoji should be in the db
-	dbEmoji, err := suite.db.GetEmojiByShortcodeDomain(context.Background(), adminEmoji.Shortcode, "")
-	suite.NoError(err)
-
-	// check fields on the emoji
-	suite.NotEmpty(dbEmoji.ID)
-	suite.Equal("stinky", dbEmoji.Shortcode)
-	suite.Empty(dbEmoji.Domain)
-	suite.Empty(dbEmoji.ImageRemoteURL)
-	suite.Empty(dbEmoji.ImageStaticRemoteURL)
-	suite.Equal(adminEmoji.URL, dbEmoji.ImageURL)
-	suite.Equal(adminEmoji.StaticURL, dbEmoji.ImageStaticURL)
-	suite.NotEmpty(dbEmoji.ImagePath)
-	suite.NotEmpty(dbEmoji.ImageStaticPath)
-	suite.Equal("image/gif", dbEmoji.ImageContentType)
-	suite.Equal("image/png", dbEmoji.ImageStaticContentType)
-	suite.Equal(1428, dbEmoji.ImageFileSize)
-	suite.Equal(802, dbEmoji.ImageStaticFileSize)
 	suite.False(*dbEmoji.Disabled)
 	suite.NotEmpty(dbEmoji.URI)
 	suite.True(*dbEmoji.VisibleInPicker)
@@ -484,7 +406,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateModifyNoParams() {
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
 
-	suite.Equal(`{"error":"Bad Request: emoji action type was 'modify' but no shortcode, image, or category name was provided"}`, string(b))
+	suite.Equal(`{"error":"Bad Request: emoji action type was 'modify' but no image or category name was provided"}`, string(b))
 }
 
 func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyLocalToLocal() {

@@ -2917,7 +2917,7 @@ paths:
                 be unique among emojis already present on this instance. A category MAY be provided, and the copied emoji will then
                 be put into the provided category.
 
-                `modify`: modify a LOCAL emoji. You can provide a new image for the emoji, set a new shortcode, and/or update the category.
+                `modify`: modify a LOCAL emoji. You can provide a new image for the emoji and/or update the category.
 
                 Local emojis cannot be deleted using this endpoint. To delete a local emoji, check DELETE /api/v1/admin/custom_emojis/{id} instead.
             operationId: emojiUpdate
@@ -2935,7 +2935,7 @@ paths:
                   name: type
                   required: true
                   type: string
-                - description: The code to use for the emoji, which will be used by instance denizens to select it. This must be unique on the instance. When copying a remote emoji to local, the shortcode must be unique among this instance's shortcodes.
+                - description: The code to use for the emoji, which will be used by instance denizens to select it. This must be unique on the instance. Works for the `copy` action type only.
                   in: formData
                   name: shortcode
                   pattern: \w{2,30}

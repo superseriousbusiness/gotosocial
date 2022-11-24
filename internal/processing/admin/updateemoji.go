@@ -51,7 +51,7 @@ func (p *processor) EmojiUpdate(ctx context.Context, id string, form *apimodel.E
 	case apimodel.EmojiUpdateDisable:
 		return p.emojiUpdateDisable(ctx, emoji)
 	case apimodel.EmojiUpdateModify:
-		return p.emojiUpdateModify(ctx, emoji, form.Shortcode, form.Image, form.CategoryName)
+		return p.emojiUpdateModify(ctx, emoji, form.Image, form.CategoryName)
 	default:
 		err := errors.New("unrecognized emoji action type")
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
@@ -154,23 +154,13 @@ func (p *processor) emojiUpdateDisable(ctx context.Context, emoji *gtsmodel.Emoj
 }
 
 // modify a local emoji
-func (p *processor) emojiUpdateModify(ctx context.Context, emoji *gtsmodel.Emoji, shortcode *string, image *multipart.FileHeader, categoryName *string) (*apimodel.AdminEmoji, gtserror.WithCode) {
+func (p *processor) emojiUpdateModify(ctx context.Context, emoji *gtsmodel.Emoji, image *multipart.FileHeader, categoryName *string) (*apimodel.AdminEmoji, gtserror.WithCode) {
 	if emoji.Domain != "" {
 		err := fmt.Errorf("emojiUpdateModify: emoji %s is not a local emoji, cannot do a modify action on it", emoji.ID)
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
 	var updatedEmoji *gtsmodel.Emoji
-
-	// keep existing shortcode unless a new one is defined
-	var (
-		updatedShortcode = emoji.Shortcode
-		updateShortcode  bool
-	)
-	if shortcode != nil {
-		updatedShortcode = *shortcode
-		updateShortcode = true
-	}
 
 	// keep existing categoryID unless a new one is defined
 	var (
@@ -199,11 +189,6 @@ func (p *processor) emojiUpdateModify(ctx context.Context, emoji *gtsmodel.Emoji
 		// to do a database update for this
 		columns := []string{"updated_at"}
 
-		if updateShortcode {
-			emoji.Shortcode = updatedShortcode
-			columns = append(columns, "shortcode")
-		}
-
 		if updateCategoryID {
 			emoji.CategoryID = updatedCategoryID
 			columns = append(columns, "category_id")
@@ -216,9 +201,7 @@ func (p *processor) emojiUpdateModify(ctx context.Context, emoji *gtsmodel.Emoji
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 	} else {
-		// new image, so we need to reprocess the emoji again, and
-		// provide the other fields too as though they've changed;
-		// they'll be updated inside the ProcessEmoji function
+		// new image, so we need to reprocess the emoji
 		data := func(ctx context.Context) (reader io.ReadCloser, fileSize int64, err error) {
 			i, err := image.Open()
 			return i, image.Size, err
@@ -231,7 +214,7 @@ func (p *processor) emojiUpdateModify(ctx context.Context, emoji *gtsmodel.Emoji
 			}
 		}
 
-		processingEmoji, err := p.mediaManager.ProcessEmoji(ctx, data, nil, updatedShortcode, emoji.ID, emoji.URI, ai, true)
+		processingEmoji, err := p.mediaManager.ProcessEmoji(ctx, data, nil, emoji.Shortcode, emoji.ID, emoji.URI, ai, true)
 		if err != nil {
 			err = fmt.Errorf("emojiUpdateModify: error processing emoji %s: %s", emoji.ID, err)
 			return nil, gtserror.NewErrorInternalError(err)
