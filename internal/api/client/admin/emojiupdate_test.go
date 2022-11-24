@@ -45,8 +45,8 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateNewCategory() {
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"", "",
 		map[string]string{
-			"category":  "New Category", // this category doesn't exist yet
-			"type":      "modify",
+			"category": "New Category", // this category doesn't exist yet
+			"type":     "modify",
 		})
 	if err != nil {
 		panic(err)
