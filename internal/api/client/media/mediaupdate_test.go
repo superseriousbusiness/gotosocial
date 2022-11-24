@@ -52,7 +52,7 @@ type MediaUpdateTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
 	db           db.DB
-	storage      storage.Driver
+	storage      *storage.Driver
 	federator    federation.Federator
 	tc           typeutils.TypeConverter
 	mediaManager media.Manager

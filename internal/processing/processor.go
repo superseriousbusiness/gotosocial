@@ -276,7 +276,7 @@ type processor struct {
 	tc              typeutils.TypeConverter
 	oauthServer     oauth.Server
 	mediaManager    media.Manager
-	storage         storage.Driver
+	storage         *storage.Driver
 	statusTimelines timeline.Manager
 	db              db.DB
 	filter          visibility.Filter
@@ -300,7 +300,7 @@ func NewProcessor(
 	federator federation.Federator,
 	oauthServer oauth.Server,
 	mediaManager media.Manager,
-	storage storage.Driver,
+	storage *storage.Driver,
 	db db.DB,
 	emailSender email.Sender,
 	clientWorker *concurrency.WorkerPool[messages.FromClientAPI],

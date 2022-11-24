@@ -33,7 +33,7 @@ import (
 type DereferencerStandardTestSuite struct {
 	suite.Suite
 	db      db.DB
-	storage storage.Driver
+	storage *storage.Driver
 
 	testRemoteStatuses    map[string]vocab.ActivityStreamsNote
 	testRemotePeople      map[string]vocab.ActivityStreamsPerson

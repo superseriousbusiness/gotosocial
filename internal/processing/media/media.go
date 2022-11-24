@@ -51,12 +51,12 @@ type processor struct {
 	tc                  typeutils.TypeConverter
 	mediaManager        media.Manager
 	transportController transport.Controller
-	storage             storage.Driver
+	storage             *storage.Driver
 	db                  db.DB
 }
 
 // New returns a new media processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, transportController transport.Controller, storage storage.Driver) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, transportController transport.Controller, storage *storage.Driver) Processor {
 	return &processor{
 		tc:                  tc,
 		mediaManager:        mediaManager,

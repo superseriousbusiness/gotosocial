@@ -927,14 +927,19 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
 	temp := fmt.Sprintf("%s/gotosocial-test", os.TempDir())
 	defer os.RemoveAll(temp)
 
-	diskStorage, err := kv.OpenDisk(temp, &storage.DiskConfig{
+	disk, err := storage.OpenDisk(temp, &storage.DiskConfig{
 		LockFile: path.Join(temp, "store.lock"),
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	diskManager, err := media.NewManager(suite.db, &gtsstorage.Local{KVStore: diskStorage})
+	storage := &gtsstorage.Driver{
+		KVStore: kv.New(disk),
+		Storage: disk,
+	}
+
+	diskManager, err := media.NewManager(suite.db, storage)
 	if err != nil {
 		panic(err)
 	}
@@ -974,7 +979,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
 	suite.NotNil(dbAttachment)
 
 	// make sure the processed file is in storage
-	processedFullBytes, err := diskStorage.Get(ctx, attachment.File.Path)
+	processedFullBytes, err := storage.Get(ctx, attachment.File.Path)
 	suite.NoError(err)
 	suite.NotEmpty(processedFullBytes)
 
@@ -987,7 +992,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
 	suite.Equal(processedFullBytesExpected, processedFullBytes)
 
 	// now do the same for the thumbnail and make sure it's what we expected
-	processedThumbnailBytes, err := diskStorage.Get(ctx, attachment.Thumbnail.Path)
+	processedThumbnailBytes, err := storage.Get(ctx, attachment.Thumbnail.Path)
 	suite.NoError(err)
 	suite.NotEmpty(processedThumbnailBytes)
 
