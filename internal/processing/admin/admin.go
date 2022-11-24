@@ -53,17 +53,17 @@ type Processor interface {
 type processor struct {
 	tc           typeutils.TypeConverter
 	mediaManager media.Manager
-	storage      storage.Driver
+	storage      *storage.Driver
 	clientWorker *concurrency.WorkerPool[messages.FromClientAPI]
 	db           db.DB
 }
 
 // New returns a new admin processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, storageDriver storage.Driver, clientWorker *concurrency.WorkerPool[messages.FromClientAPI]) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, storage *storage.Driver, clientWorker *concurrency.WorkerPool[messages.FromClientAPI]) Processor {
 	return &processor{
 		tc:           tc,
 		mediaManager: mediaManager,
-		storage:      storageDriver,
+		storage:      storage,
 		clientWorker: clientWorker,
 		db:           db,
 	}
