@@ -69,77 +69,9 @@ func (suite *IndexTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 }
 
-func (suite *IndexTestSuite) TestIndexBeforeLowID() {
-	// index 10 before the lowest status ID possible
-	err := suite.timeline.IndexBefore(context.Background(), "00000000000000000000000000", 10)
-	suite.NoError(err)
-
-	postID, err := suite.timeline.OldestIndexedItemID(context.Background())
-	suite.NoError(err)
-	suite.Equal("01F8MHBQCBTDKN6X5VHGMMN4MA", postID)
-
-	indexLength := suite.timeline.ItemIndexLength(context.Background())
-	suite.Equal(10, indexLength)
-}
-
-func (suite *IndexTestSuite) TestIndexBeforeHighID() {
-	// index 10 before the highest status ID possible
-	err := suite.timeline.IndexBefore(context.Background(), "ZZZZZZZZZZZZZZZZZZZZZZZZZZ", 10)
-	suite.NoError(err)
-
-	// the oldest indexed post should be empty
-	postID, err := suite.timeline.OldestIndexedItemID(context.Background())
-	suite.NoError(err)
-	suite.Empty(postID)
-
-	// indexLength should be 0
-	indexLength := suite.timeline.ItemIndexLength(context.Background())
-	suite.Equal(0, indexLength)
-}
-
-func (suite *IndexTestSuite) TestIndexBehindHighID() {
-	// index 10 behind the highest status ID possible
-	err := suite.timeline.IndexBehind(context.Background(), "ZZZZZZZZZZZZZZZZZZZZZZZZZZ", 10)
-	suite.NoError(err)
-
-	// the newest indexed post should be the highest one we have in our testrig
-	postID, err := suite.timeline.NewestIndexedItemID(context.Background())
-	suite.NoError(err)
-	suite.Equal("01G36SF3V6Y6V5BF9P4R7PQG7G", postID)
-
-	indexLength := suite.timeline.ItemIndexLength(context.Background())
-	suite.Equal(10, indexLength)
-}
-
-func (suite *IndexTestSuite) TestIndexBehindLowID() {
-	// index 10 behind the lowest status ID possible
-	err := suite.timeline.IndexBehind(context.Background(), "00000000000000000000000000", 10)
-	suite.NoError(err)
-
-	// the newest indexed post should be empty
-	postID, err := suite.timeline.NewestIndexedItemID(context.Background())
-	suite.NoError(err)
-	suite.Empty(postID)
-
-	// indexLength should be 0
-	indexLength := suite.timeline.ItemIndexLength(context.Background())
-	suite.Equal(0, indexLength)
-}
-
 func (suite *IndexTestSuite) TestOldestIndexedItemIDEmpty() {
 	// the oldest indexed post should be an empty string since there's nothing indexed yet
 	postID, err := suite.timeline.OldestIndexedItemID(context.Background())
-	suite.NoError(err)
-	suite.Empty(postID)
-
-	// indexLength should be 0
-	indexLength := suite.timeline.ItemIndexLength(context.Background())
-	suite.Equal(0, indexLength)
-}
-
-func (suite *IndexTestSuite) TestNewestIndexedItemIDEmpty() {
-	// the newest indexed post should be an empty string since there's nothing indexed yet
-	postID, err := suite.timeline.NewestIndexedItemID(context.Background())
 	suite.NoError(err)
 	suite.Empty(postID)
 

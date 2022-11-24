@@ -27,6 +27,7 @@ const api = require("../lib/api");
 const user = require("../redux/reducers/user").actions;
 const submit = require("../lib/submit");
 
+const FakeProfile = require("../components/fake-profile");
 const { formFields } = require("../components/form-fields");
 
 const {
@@ -38,7 +39,6 @@ const {
 
 module.exports = function UserProfile() {
 	const dispatch = Redux.useDispatch();
-	const account = Redux.useSelector(state => state.user.profile);
 	const instance = Redux.useSelector(state => state.instances.current);
 
 	const allowCustomCSS = instance.configuration.accounts.allow_custom_css;
@@ -55,17 +55,7 @@ module.exports = function UserProfile() {
 		<div className="user-profile">
 			<h1>Profile</h1>
 			<div className="overview">
-				<div className="profile">
-					<div className="headerimage">
-						<img className="headerpreview" src={account.header} alt={account.header ? `header image for ${account.username}` : "None set"} />
-					</div>
-					<div className="basic">
-						<div id="profile-basic-filler2"></div>
-						<span className="avatar"><img className="avatarpreview" src={account.avatar} alt={account.avatar ? `avatar image for ${account.username}` : "None set"} /></span>
-						<div className="displayname">{account.display_name.trim().length > 0 ? account.display_name : account.username}</div>
-						<div className="username"><span>@{account.username}</span></div>
-					</div>
-				</div>
+				<FakeProfile/>
 				<div className="files">
 					<div>
 						<h3>Header</h3>

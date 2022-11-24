@@ -34,6 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -191,7 +192,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		}
 
 		// we don't have an entry for this instance yet so dereference it
-		i, err = f.GetRemoteInstance(ctx, username, &url.URL{
+		i, err = f.GetRemoteInstance(transport.WithFastfail(ctx), username, &url.URL{
 			Scheme: publicKeyOwnerURI.Scheme,
 			Host:   publicKeyOwnerURI.Host,
 		})
@@ -205,7 +206,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		}
 	}
 
-	requestingAccount, err := f.GetAccount(ctx, dereferencing.GetAccountParams{
+	requestingAccount, err := f.GetAccount(transport.WithFastfail(ctx), dereferencing.GetAccountParams{
 		RequestingUsername: username,
 		RemoteAccountID:    publicKeyOwnerURI,
 	})

@@ -216,7 +216,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		}
 
 		log.Tracef("proceeding with dereference for uncached public key %s", requestingPublicKeyID)
-		trans, err := f.transportController.NewTransportForUsername(ctx, requestedUsername)
+		trans, err := f.transportController.NewTransportForUsername(transport.WithFastfail(ctx), requestedUsername)
 		if err != nil {
 			errWithCode := gtserror.NewErrorInternalError(fmt.Errorf("error creating transport for %s: %s", requestedUsername, err))
 			log.Debug(errWithCode)

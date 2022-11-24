@@ -37,7 +37,7 @@ type MediaStandardTestSuite struct {
 	suite.Suite
 	db                  db.DB
 	tc                  typeutils.TypeConverter
-	storage             storage.Driver
+	storage             *storage.Driver
 	mediaManager        media.Manager
 	transportController transport.Controller
 

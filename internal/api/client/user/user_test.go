@@ -42,7 +42,7 @@ type UserStandardTestSuite struct {
 	federator    federation.Federator
 	emailSender  email.Sender
 	processor    processing.Processor
-	storage      storage.Driver
+	storage      *storage.Driver
 
 	testTokens       map[string]*gtsmodel.Token
 	testClients      map[string]*gtsmodel.Client

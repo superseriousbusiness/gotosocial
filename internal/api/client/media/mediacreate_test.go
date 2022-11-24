@@ -54,7 +54,7 @@ type MediaCreateTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
 	db           db.DB
-	storage      *storage.Local
+	storage      *storage.Driver
 	mediaManager media.Manager
 	federator    federation.Federator
 	tc           typeutils.TypeConverter

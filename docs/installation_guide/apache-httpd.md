@@ -100,6 +100,8 @@ You should also change `http://localhost:8080` to the correct address and port o
 
 `ProxyPreserveHost On` is essential: It guarantees that the proxy and the GoToSocial speak of the same Server name. If not, GoToSocial will build the wrong authentication headers, and all attempts at federation will be rejected with 401 Unauthorized.
 
+By default, apache sets `X-Forwarded-For` in forwarded requests. To make this and rate limiting work, set the `trusted-proxies` configuration variable. See the [rate limiting](../api/ratelimiting.md) and [general configuration](../configuration/general.md) docs
+
 Save and close the config file.
 
 Now we'll need to link the file we just created to the folder that Apache HTTP Server reads configurations for active sites from.

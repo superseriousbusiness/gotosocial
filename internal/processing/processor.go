@@ -273,7 +273,7 @@ type processor struct {
 	tc              typeutils.TypeConverter
 	oauthServer     oauth.Server
 	mediaManager    media.Manager
-	storage         storage.Driver
+	storage         *storage.Driver
 	statusTimelines timeline.Manager
 	db              db.DB
 	filter          visibility.Filter
@@ -297,7 +297,7 @@ func NewProcessor(
 	federator federation.Federator,
 	oauthServer oauth.Server,
 	mediaManager media.Manager,
-	storage storage.Driver,
+	storage *storage.Driver,
 	db db.DB,
 	emailSender email.Sender,
 	clientWorker *concurrency.WorkerPool[messages.FromClientAPI],
@@ -351,6 +351,11 @@ func (p *processor) Start() error {
 		return err
 	}
 
+	// Start status timelines
+	if err := p.statusTimelines.Start(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -359,8 +364,14 @@ func (p *processor) Stop() error {
 	if err := p.clientWorker.Stop(); err != nil {
 		return err
 	}
+
 	if err := p.fedWorker.Stop(); err != nil {
 		return err
 	}
+
+	if err := p.statusTimelines.Stop(); err != nil {
+		return err
+	}
+
 	return nil
 }

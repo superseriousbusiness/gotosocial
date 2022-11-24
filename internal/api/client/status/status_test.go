@@ -43,7 +43,7 @@ type StatusStandardTestSuite struct {
 	federator    federation.Federator
 	emailSender  email.Sender
 	processor    processing.Processor
-	storage      storage.Driver
+	storage      *storage.Driver
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token

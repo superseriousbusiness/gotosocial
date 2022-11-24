@@ -38,6 +38,7 @@ const (
 	rssFeedPath      = profilePath + "/feed.rss"
 	statusPath       = profilePath + "/statuses/:" + statusIDKey
 	assetsPathPrefix = "/assets"
+	distPathPrefix   = assetsPathPrefix + "/dist"
 	userPanelPath    = "/settings/user"
 	adminPanelPath   = "/settings/admin"
 

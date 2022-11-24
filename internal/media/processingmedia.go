@@ -62,7 +62,7 @@ type ProcessingMedia struct {
 	*/
 
 	database db.DB
-	storage  storage.Driver
+	storage  *storage.Driver
 
 	err error // error created during processing, if any
 

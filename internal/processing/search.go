@@ -33,6 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -169,14 +170,14 @@ func (p *processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, u
 
 	if !*status.Local && statusable != nil {
 		// Attempt to dereference the status thread while we are here
-		p.federator.DereferenceRemoteThread(ctx, authed.Account.Username, uri, status, statusable)
+		p.federator.DereferenceRemoteThread(transport.WithFastfail(ctx), authed.Account.Username, uri, status, statusable)
 	}
 
 	return status, nil
 }
 
 func (p *processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Account, error) {
-	account, err := p.federator.GetAccount(ctx, dereferencing.GetAccountParams{
+	account, err := p.federator.GetAccount(transport.WithFastfail(ctx), dereferencing.GetAccountParams{
 		RequestingUsername: authed.Account.Username,
 		RemoteAccountID:    uri,
 		Blocking:           true,
@@ -201,7 +202,7 @@ func (p *processor) searchAccountByMention(ctx context.Context, authed *oauth.Au
 	}
 
 	// we don't have it yet, try to find it remotely
-	return p.federator.GetAccount(ctx, dereferencing.GetAccountParams{
+	return p.federator.GetAccount(transport.WithFastfail(ctx), dereferencing.GetAccountParams{
 		RequestingUsername:    authed.Account.Username,
 		RemoteAccountUsername: username,
 		RemoteAccountHost:     domain,

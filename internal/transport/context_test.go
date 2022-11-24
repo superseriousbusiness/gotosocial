@@ -16,19 +16,19 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package storage
+package transport_test
 
 import (
 	"context"
-	"net/url"
+	"testing"
 
-	"codeberg.org/gruf/go-store/v2/kv"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
-type Local struct {
-	*kv.KVStore
-}
-
-func (l *Local) URL(ctx context.Context, key string) *url.URL {
-	return nil
+func TestFastFailContext(t *testing.T) {
+	ctx := context.Background()
+	ctx = transport.WithFastfail(ctx)
+	if !transport.IsFastfail(ctx) {
+		t.Fatal("failed to set fast-fail context key")
+	}
 }

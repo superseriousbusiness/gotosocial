@@ -145,6 +145,7 @@ main {
 				font-size: 0.9rem;
 				margin-right: 0.2rem;
 				padding: 0.2rem;
+				margin-top: 0.1rem;
 				padding-top: 0.1rem;
 				border: 0.1rem solid $gray1;
 				border-radius: $br;

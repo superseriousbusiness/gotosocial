@@ -86,6 +86,8 @@ If you're running GoToSocial on another machine with the local ip of 192.168.178
 
 **Note**: `client_max_body_size` is set to 40M in this example, which is the default max video upload size for GoToSocial. You can make this value larger or smaller if necessary. The nginx default is only 1M, which is rather too small.
 
+**Note**: To make `X-Forwarded-For` and rate limiting work, set the `trusted-proxies` configuration variable. See the [rate limiting](../api/ratelimiting.md) and [general configuration](../configuration/general.md) docs
+
 Next we'll need to link the file we just created to the folder that nginx reads configurations for active sites from.
 
 ```bash

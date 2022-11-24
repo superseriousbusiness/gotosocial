@@ -97,7 +97,10 @@ module.exports = function oauthAPI({ apiCall, getCurrentUrl }) {
 				}
 
 				// newer GoToSocial version will include a `role` in the Account data, check that first
-				// TODO: check account data for admin status				
+				if (state.user.profile.role == "admin") {
+					dispatch(oauth.setAdmin(true));
+					return true;
+				}
 
 				// no role info, try fetching an admin-only route and see if we get an error
 				return Promise.try(() => {

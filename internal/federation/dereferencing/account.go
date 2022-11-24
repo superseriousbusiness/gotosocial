@@ -87,6 +87,11 @@ type GetAccountParams struct {
 //
 // GetAccount will guard against trying to do http calls to fetch an account that belongs to this instance.
 // Instead of making calls, it will just return the account early if it finds it, or return an error.
+//
+// Even if a fastfail context is used, and something goes wrong, an account might still be returned instead
+// of an error, if we already had the account in our database (in other words, if we just needed to try
+// fingering/refreshing the account again). The rationale for this is that it's more useful to be able
+// to provide *something* to the caller, even if that something is not necessarily 100% up to date.
 func (d *deref) GetAccount(ctx context.Context, params GetAccountParams) (foundAccount *gtsmodel.Account, err error) {
 	/*
 		In this function we want to retrieve a gtsmodel representation of a remote account, with its proper
