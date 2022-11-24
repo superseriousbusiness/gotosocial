@@ -1,5 +1,9 @@
 basePath: /
 definitions:
+    EmojiUpdateType:
+        title: EmojiUpdateType models an admin update action to take on a custom emoji.
+        type: string
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     InstanceConfigurationAccounts:
         properties:
             allow_custom_css:
@@ -256,7 +260,6 @@ definitions:
                 description: |-
                     Role of the account on this instance.
                     Omitted for remote accounts.
-                    type: accountRole
                 example: user
                 type: string
                 x-go-name: Role
@@ -897,6 +900,25 @@ definitions:
         title: EmojiCreateRequest represents a request to create a custom emoji made through the admin API.
         type: object
         x-go-name: EmojiCreateRequest
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    emojiUpdateRequest:
+        properties:
+            CategoryName:
+                description: Category in which to place the emoji.
+                type: string
+            Image:
+                description: |-
+                    Image file to use for the emoji.
+                    Must be png or gif and no larger than 50kb.
+            Shortcode:
+                description: Desired shortcode for the emoji, without surrounding colons. This must be unique for the domain.
+                example: blobcat_uwu
+                type: string
+            type:
+                $ref: '#/definitions/EmojiUpdateType'
+        title: EmojiUpdateRequest represents a request to update a custom emoji, made through the admin API.
+        type: object
+        x-go-name: EmojiUpdateRequest
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     field:
         properties:
@@ -2881,6 +2903,74 @@ paths:
                 "500":
                     description: internal server error
             summary: Get the admin view of a single emoji.
+            tags:
+                - admin
+        patch:
+            consumes:
+                - multipart/form-data
+            description: |-
+                Action performed depends upon the action `type` provided.
+
+                `disable`: disable a REMOTE emoji from being used/displayed on this instance. Does not work for local emojis.
+
+                `copy`: copy a REMOTE emoji to this instance. When doing this action, a shortcode MUST be provided, and it must
+                be unique among emojis already present on this instance. A category MAY be provided, and the copied emoji will then
+                be put into the provided category.
+
+                `modify`: modify a LOCAL emoji. You can provide a new image for the emoji and/or update the category.
+
+                Local emojis cannot be deleted using this endpoint. To delete a local emoji, check DELETE /api/v1/admin/custom_emojis/{id} instead.
+            operationId: emojiUpdate
+            parameters:
+                - description: The id of the emoji.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - description: |-
+                    Type of action to be taken. One of: (`disable`, `copy`, `modify`).
+                    For REMOTE emojis, `copy` or `disable` are supported.
+                    For LOCAL emojis, only `modify` is supported.
+                  in: formData
+                  name: type
+                  required: true
+                  type: string
+                - description: The code to use for the emoji, which will be used by instance denizens to select it. This must be unique on the instance. Works for the `copy` action type only.
+                  in: formData
+                  name: shortcode
+                  pattern: \w{2,30}
+                  type: string
+                - description: A new png or gif image to use for the emoji. Animated pngs work too! To ensure compatibility with other fedi implementations, emoji size limit is 50kb by default. Works for LOCAL emojis only.
+                  in: formData
+                  name: image
+                  type: file
+                - description: Category in which to place the emoji. 64 characters or less. If a category with the given name doesn't exist yet, it will be created.
+                  in: formData
+                  name: category
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The updated emoji.
+                    schema:
+                        $ref: '#/definitions/adminEmoji'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Perform admin action on a local or remote emoji known to this instance.
             tags:
                 - admin
     /api/v1/admin/custom_emojis/categories:
