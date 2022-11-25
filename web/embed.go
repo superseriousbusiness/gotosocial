@@ -19,18 +19,10 @@
 package web
 
 import (
-	"embed"
 	"errors"
 	"io/fs"
 	"os"
 	"path/filepath"
-)
-
-var (
-	// embed subdirectories we want to always ship with the binary.
-	// the all: prefix is required to also include files prefixed with . and _
-	//go:embed all:template all:assets
-	embeddedFiles embed.FS
 )
 
 // HybridFS is a fs.FS that tries to read files from a specified location on disk,

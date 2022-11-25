@@ -24,6 +24,7 @@ builds:
       - netgo
       - osusergo
       - static_build
+      # - no_embedded_assets
     env:
       - CGO_ENABLED=0
     goos:
