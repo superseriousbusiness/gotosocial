@@ -72,9 +72,9 @@ The server should now start up and you should be able to access the splash page 
 
 Note that for this example we're assuming that we're allowed to run on port 443 (standard https port), and that nothing else is running on this port.
 
-## 5: Create and confirm your user
+## 5: Create your user
 
-You can use the GoToSocial binary to also create, confirm, and promote your user account.
+You can use the GoToSocial binary to also create and promote your user account.
 
 Run the following command to create a new account:
 
@@ -83,14 +83,6 @@ Run the following command to create a new account:
 ```
 
 In the above command, replace `some_username` with your desired username, `some_email@whatever.org` with the email address you want to associate with your account, and `SOME_PASSWORD` with a secure password.
-
-Run the following command to confirm the account you just created:
-
-```bash
-./gotosocial --config-path ./config.yaml admin account confirm --username some_username
-```
-
-Replace `some_username` with the username of the account you just created.
 
 If you want your user to have admin rights, you can promote them using a similar command:
 
