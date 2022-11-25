@@ -33,7 +33,7 @@ var (
 		netip.MustParsePrefix("fec0::/10"),     // Site-local, deprecated
 	}
 
-	// IPvReserved contains IPv4 reserved IP prefixes.
+	// IPv4Reserved contains IPv4 reserved IP prefixes.
 	IPv4Reserved = [...]netip.Prefix{
 		netip.MustParsePrefix("0.0.0.0/8"),       // Current network
 		netip.MustParsePrefix("10.0.0.0/8"),      // Private
