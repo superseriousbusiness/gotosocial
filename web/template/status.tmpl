@@ -35,6 +35,11 @@
 					<label for="sensitiveMedia-{{.ID}}" class="button" role="button" tabindex="0">Show sensitive media</label>
 				</div>
 			</div>
+			{{ if eq .Type "video" }}
+			<div class="video-play">
+					<i class="fa fa-play-circle" title="Play Video"></i>
+			</div>
+			{{ end }}
 			<a href="{{.URL}}"
 				 target="_blank"
 				 {{if .Description}}title="{{.Description}}"{{end}}
