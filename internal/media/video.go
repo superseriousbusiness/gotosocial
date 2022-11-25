@@ -162,7 +162,7 @@ func extractFromVideoFFMPEG(r io.Reader) (image.Image, error) {
 	prog := "ffmpeg"
 	args := []string{
 		"-i", "pipe:",
-		"-vf", "thumbnail",
+		"-vf", "thumbnail=n=10",
 		"-frames:v", "1",
 		"-f", "image2pipe",
 		"-c:v", "png",
