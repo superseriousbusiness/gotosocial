@@ -84,6 +84,15 @@ Run the following command to create a new account:
 
 In the above command, replace `some_username` with your desired username, `some_email@whatever.org` with the email address you want to associate with your account, and `SOME_PASSWORD` with a secure password.
 
+If you are running a version older than 0.6.0, you will need to manually confirm as well:
+
+```bash
+./gotosocial --config-path ./config.yaml admin account confirm --username some_username
+```
+
+Replace `some_username` with the username of the account you just created.
+
+
 If you want your user to have admin rights, you can promote them using a similar command:
 
 ```bash
