@@ -54,6 +54,23 @@ const endpoints = (build) => ({
 				? [{type: "Emojis", id: "LIST"}, {type: "Emojis", id: res.id}]
 				: [{type: "Emojis", id: "LIST"}]
 	}),
+	editEmoji: build.mutation({
+		query: ({id, ...patch}) => {
+			return {
+				method: "PATCH",
+				url: `/api/v1/admin/custom_emojis/${id}`,
+				asForm: true,
+				body: {
+					type: "modify",
+					...patch
+				}
+			};
+		},
+		invalidatesTags: (res) => 
+			res
+				? [{type: "Emojis", id: "LIST"}, {type: "Emojis", id: res.id}]
+				: [{type: "Emojis", id: "LIST"}]
+	}),
 	deleteEmoji: build.mutation({
 		query: (id) => ({
 			method: "DELETE",

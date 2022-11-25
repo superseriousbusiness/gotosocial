@@ -172,6 +172,16 @@ main {
 		}
 	}
 
+	&:disabled {
+		color: $white2;
+		background: $gray2;
+		cursor: auto;
+
+		&:hover {
+			background: $gray3;
+		}
+	}
+
 	&:hover {
 		background: $button-hover-bg;
 	}

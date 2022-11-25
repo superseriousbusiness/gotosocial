@@ -24,6 +24,7 @@ import (
 	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -31,45 +32,73 @@ import (
 func (p *processor) BoostedBy(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) ([]*apimodel.Account, gtserror.WithCode) {
 	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
+		wrapped := fmt.Errorf("BoostedBy: error fetching status %s: %s", targetStatusID, err)
+		if !errors.Is(err, db.ErrNoEntries) {
+			return nil, gtserror.NewErrorInternalError(wrapped)
+		}
+		return nil, gtserror.NewErrorNotFound(wrapped)
 	}
-	if targetStatus.Account == nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("no status owner for status %s", targetStatusID))
+
+	if boostOfID := targetStatus.BoostOfID; boostOfID != "" {
+		// the target status is a boost wrapper, redirect this request to the status it boosts
+		boostedStatus, err := p.db.GetStatusByID(ctx, boostOfID)
+		if err != nil {
+			wrapped := fmt.Errorf("BoostedBy: error fetching status %s: %s", boostOfID, err)
+			if !errors.Is(err, db.ErrNoEntries) {
+				return nil, gtserror.NewErrorInternalError(wrapped)
+			}
+			return nil, gtserror.NewErrorNotFound(wrapped)
+		}
+		targetStatus = boostedStatus
 	}
 
 	visible, err := p.filter.StatusVisible(ctx, targetStatus, requestingAccount)
 	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is visible: %s", targetStatus.ID, err))
+		err = fmt.Errorf("BoostedBy: error seeing if status %s is visible: %s", targetStatus.ID, err)
+		return nil, gtserror.NewErrorNotFound(err)
 	}
 	if !visible {
-		return nil, gtserror.NewErrorNotFound(errors.New("status is not visible"))
+		err = errors.New("BoostedBy: status is not visible")
+		return nil, gtserror.NewErrorNotFound(err)
 	}
 
 	statusReblogs, err := p.db.GetStatusReblogs(ctx, targetStatus)
 	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("StatusBoostedBy: error seeing who boosted status: %s", err))
+		err = fmt.Errorf("BoostedBy: error seeing who boosted status: %s", err)
+		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	// filter the list so the user doesn't see accounts they blocked or which blocked them
-	filteredAccounts := []*gtsmodel.Account{}
+	// filter account IDs so the user doesn't see accounts they blocked or which blocked them
+	accountIDs := make([]string, 0, len(statusReblogs))
 	for _, s := range statusReblogs {
 		blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, s.AccountID, true)
 		if err != nil {
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("StatusBoostedBy: error checking blocks: %s", err))
+			err = fmt.Errorf("BoostedBy: error checking blocks: %s", err)
+			return nil, gtserror.NewErrorNotFound(err)
 		}
 		if !blocked {
-			filteredAccounts = append(filteredAccounts, s.Account)
+			accountIDs = append(accountIDs, s.AccountID)
 		}
 	}
 
 	// TODO: filter other things here? suspended? muted? silenced?
 
-	// now we can return the api representation of those accounts
-	apiAccounts := []*apimodel.Account{}
-	for _, acc := range filteredAccounts {
-		apiAccount, err := p.tc.AccountToAPIAccountPublic(ctx, acc)
+	// fetch accounts + create their API representations
+	apiAccounts := make([]*apimodel.Account, 0, len(accountIDs))
+	for _, accountID := range accountIDs {
+		account, err := p.db.GetAccountByID(ctx, accountID)
 		if err != nil {
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("StatusFavedBy: error converting account to api model: %s", err))
+			wrapped := fmt.Errorf("BoostedBy: error fetching account %s: %s", accountID, err)
+			if !errors.Is(err, db.ErrNoEntries) {
+				return nil, gtserror.NewErrorInternalError(wrapped)
+			}
+			return nil, gtserror.NewErrorNotFound(wrapped)
+		}
+
+		apiAccount, err := p.tc.AccountToAPIAccountPublic(ctx, account)
+		if err != nil {
+			err = fmt.Errorf("BoostedBy: error converting account to api model: %s", err)
+			return nil, gtserror.NewErrorInternalError(err)
 		}
 		apiAccounts = append(apiAccounts, apiAccount)
 	}

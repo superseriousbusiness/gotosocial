@@ -22,48 +22,130 @@ const React = require("react");
 
 const { useRoute, Link, Redirect } = require("wouter");
 
-const BackButton = require("../../components/back-button");
+const { CategorySelect } = require("./category-select");
+const { useComboBoxInput, useFileInput } = require("../../components/form");
 
 const query = require("../../lib/query");
+const FakeToot = require("../../components/fake-toot");
 
 const base = "/settings/admin/custom-emoji";
 
-/* We wrap the component to generate formFields with a setter depending on the domain
-	 if formFields() is used inside the same component that is re-rendered with their state,
-	 inputs get re-created on every change, causing them to lose focus, and bad performance
-*/
-module.exports = function EmojiDetailWrapped() {
-	let [_match, {emojiId}] = useRoute(`${base}/:emojiId`);
-	const {currentData: emoji, isLoading, error} = query.useGetEmojiQuery(emojiId);
-
-	return (<>
-		{error && <div className="error accent">{error.status}: {error.data.error}</div>}
-		{isLoading
-			? "Loading..."
-			: <EmojiDetail emoji={emoji}/>
-		}
-	</>);
+module.exports = function EmojiDetailRoute() {
+	let [_match, params] = useRoute(`${base}/:emojiId`);
+	if (params?.emojiId == undefined) {
+		return <Redirect to={base}/>;
+	} else {
+		return (
+			<div className="emoji-detail">
+				<Link to={base}><a>&lt; go back</a></Link>
+				<EmojiDetailData emojiId={params.emojiId}/>
+			</div>
+		);
+	}
 };
 
+function EmojiDetailData({emojiId}) {
+	const {currentData: emoji, isLoading, error} = query.useGetEmojiQuery(emojiId);
+
+	if (error) {
+		return (
+			<div className="error accent">
+				{error.status}: {error.data.error}
+			</div>
+		);
+	} else if (isLoading) {
+		return "Loading...";
+	} else {
+		return <EmojiDetail emoji={emoji}/>;
+	}
+}
+
 function EmojiDetail({emoji}) {
-	if (emoji == undefined) {
-		return (<>
-			<Link to={base}>
-				<a className="button">go back</a>
-			</Link>
-		</>);
+	const [modifyEmoji, modifyResult] = query.useEditEmojiMutation();
+
+	const [isNewCategory, setIsNewCategory] = React.useState(false);
+
+	const [categoryState, _resetCategory, { category }] = useComboBoxInput("category", {defaultValue: emoji.category});
+
+	const [onFileChange, _resetFile, { image, imageURL, imageInfo }] = useFileInput("image", {
+		withPreview: true,
+		maxSize: 50 * 1024
+	});
+
+	function modifyCategory() {
+		modifyEmoji({id: emoji.id, category: category.trim()});
 	}
 
+	function modifyImage() {
+		modifyEmoji({id: emoji.id, image: image});
+	}
+
+	React.useEffect(() => {
+		if (category != emoji.category && !categoryState.open && !isNewCategory && emoji.category != undefined) {
+			console.log("updating to", category);
+			modifyEmoji({id: emoji.id, category: category.trim()});
+		}
+	}, [isNewCategory, category, categoryState.open, emoji.category, emoji.id, modifyEmoji]);
+
 	return (
-		<div>
-			<h1><BackButton to={base}/> Custom Emoji: {emoji.shortcode}</h1>
-			<DeleteButton id={emoji.id}/>
-			<p>
-				Editing custom emoji isn&apos;t implemented yet.<br/>
-				<a target="_blank" rel="noreferrer" href="https://github.com/superseriousbusiness/gotosocial/issues/797">View implementation progress.</a>
-			</p>
-			<img src={emoji.url} alt={emoji.shortcode} title={`:${emoji.shortcode}:`}/>
-		</div>
+		<>
+			<div className="emoji-header">
+				<img src={emoji.url} alt={emoji.shortcode} title={emoji.shortcode}/>
+				<div>
+					<h2>{emoji.shortcode}</h2>
+					<DeleteButton id={emoji.id}/>
+				</div>
+			</div>
+
+			<div className="left-border">
+				<h2>Modify this emoji {modifyResult.isLoading && "(processing..)"}</h2>
+
+				{modifyResult.error && <div className="error">
+					{modifyResult.error.status}: {modifyResult.error.data.error}
+				</div>}
+
+				<div className="update-category">
+					<CategorySelect
+						value={category}
+						categoryState={categoryState}
+						setIsNew={setIsNewCategory}
+					>
+						<button style={{visibility: (isNewCategory ? "initial" : "hidden")}} onClick={modifyCategory}>
+							Create
+						</button>
+					</CategorySelect>
+				</div>
+
+				<div className="update-image">
+					<b>Image</b>
+					<div className="form-field file">
+						<label className="file-input button" htmlFor="image">
+							Browse
+						</label>
+						{imageInfo}
+						<input
+							className="hidden"
+							type="file"
+							id="image"
+							name="Image"
+							accept="image/png,image/gif"
+							onChange={onFileChange}
+						/>
+					</div>
+
+					<button onClick={modifyImage} disabled={image == undefined}>Replace image</button>
+
+					<FakeToot>
+						Look at this new custom emoji <img
+							className="emoji"
+							src={imageURL ?? emoji.url}
+							title={`:${emoji.shortcode}:`}
+							alt={emoji.shortcode}
+						/> isn&apos;t it cool?
+					</FakeToot>
+				</div>
+			</div>
+		</>
 	);
 }
 
@@ -71,9 +153,9 @@ function DeleteButton({id}) {
 	// TODO: confirmation dialog?
 	const [deleteEmoji, deleteResult] = query.useDeleteEmojiMutation();
 
-	let text = "Delete this emoji";
+	let text = "Delete";
 	if (deleteResult.isLoading) {
-		text = "processing...";
+		text = "Deleting...";
 	}
 
 	if (deleteResult.isSuccess) {
@@ -81,6 +163,6 @@ function DeleteButton({id}) {
 	}
 
 	return (
-		<button onClick={() => deleteEmoji(id)} disabled={deleteResult.isLoading}>{text}</button>
+		<button className="danger" onClick={() => deleteEmoji(id)} disabled={deleteResult.isLoading}>{text}</button>
 	);
 }
