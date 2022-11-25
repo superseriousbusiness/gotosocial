@@ -140,6 +140,13 @@ var (
 	// BlockPath parses a path that validates and captures the username part and the ulid part
 	// from eg /users/example_username/blocks/01F7XT5JZW1WMVSW1KADS8PVDH
 	BlockPath = regexp.MustCompile(blockPath)
+
+	filePath = fmt.Sprintf(`^(%s)/([a-z]+)/([a-z]+)/(%s)\.([a-z]+)$`, ulid, ulid)
+	// FilePath parses a file storage path of the form [ACCOUNT_ID]/[MEDIA_TYPE]/[MEDIA_SIZE]/[FILE_NAME]
+	// eg 01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01F8MH8RMYQ6MSNY3JM2XT1CQ5.jpeg
+	// It captures the account id, media type, media size, file name, and file extension, eg
+	// `01F8MH1H7YV1Z7D2C8K2730QBF`, `attachment`, `small`, `01F8MH8RMYQ6MSNY3JM2XT1CQ5`, `jpeg`.
+	FilePath = regexp.MustCompile(filePath)
 )
 
 // bufpool is a memory pool of byte buffers for use in our regex utility functions.
