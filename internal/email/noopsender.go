@@ -20,10 +20,10 @@ package email
 
 import (
 	"bytes"
-	"text/template"
+	"html/template"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/templates"
 )
 
 // NewNoopSender returns a no-op email sender that will just execute the given sendCallback
@@ -31,9 +31,7 @@ import (
 //
 // Passing a nil function is also acceptable, in which case the send functions will just return nil.
 func NewNoopSender(sendCallback func(toAddress string, message string)) (Sender, error) {
-	templateBaseDir := config.GetWebTemplateBaseDir()
-
-	t, err := loadTemplates(templateBaseDir)
+	t, err := templates.ParseTemplates("email_*.tmpl", "")
 	if err != nil {
 		return nil, err
 	}

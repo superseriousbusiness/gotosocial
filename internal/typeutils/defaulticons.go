@@ -19,14 +19,15 @@
 package typeutils
 
 import (
+	"io/fs"
 	"math/rand"
-	"os"
 	"path/filepath"
 	"strings"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/web"
 )
 
 const defaultHeaderPath = "/assets/default_header.png"
@@ -44,10 +45,10 @@ func populateDefaultAvatars() (defaultAvatars []string) {
 		log.Panicf("populateDefaultAvatars: error getting abs path for web assets: %s", err)
 	}
 
-	defaultAvatarsAbsFilePath := filepath.Join(webAssetsAbsFilePath, "default_avatars")
-	defaultAvatarFiles, err := os.ReadDir(defaultAvatarsAbsFilePath)
+	filesys := web.NewHybridFS(web.EmbeddedAssets, webAssetsAbsFilePath)
+	defaultAvatarFiles, err := fs.ReadDir(filesys, "default_avatars")
 	if err != nil {
-		log.Warnf("populateDefaultAvatars: error reading default avatars at %s: %s", defaultAvatarsAbsFilePath, err)
+		log.Warnf("populateDefaultAvatars: error reading default avatars: %s", err)
 		return
 	}
 

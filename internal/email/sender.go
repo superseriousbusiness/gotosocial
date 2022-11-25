@@ -20,10 +20,11 @@ package email
 
 import (
 	"fmt"
+	"html/template"
 	"net/smtp"
-	"text/template"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/templates"
 )
 
 // Sender contains functions for sending emails to instance users/new signups.
@@ -37,8 +38,7 @@ type Sender interface {
 
 // NewSender returns a new email Sender interface with the given configuration, or an error if something goes wrong.
 func NewSender() (Sender, error) {
-	templateBaseDir := config.GetWebTemplateBaseDir()
-	t, err := loadTemplates(templateBaseDir)
+	t, err := templates.ParseTemplates("email_*.tmpl", "")
 	if err != nil {
 		return nil, err
 	}

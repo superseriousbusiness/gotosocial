@@ -20,8 +20,8 @@ package testrig
 
 import (
 	"context"
+	"html/template"
 	"os"
-	"path/filepath"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -60,6 +60,5 @@ func NewTestRouter(db db.DB) router.Router {
 
 // ConfigureTemplatesWithGin will panic on any errors related to template loading during tests
 func ConfigureTemplatesWithGin(engine *gin.Engine, templatePath string) {
-	router.LoadTemplateFunctions(engine)
-	engine.LoadHTMLGlob(filepath.Join(templatePath, "*"))
+	template.Must(router.LoadTemplates(engine, templatePath))
 }

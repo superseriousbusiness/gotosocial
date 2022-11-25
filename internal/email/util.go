@@ -20,25 +20,8 @@ package email
 
 import (
 	"errors"
-	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
-	"text/template"
 )
-
-func loadTemplates(templateBaseDir string) (*template.Template, error) {
-	if !filepath.IsAbs(templateBaseDir) {
-		cwd, err := os.Getwd()
-		if err != nil {
-			return nil, fmt.Errorf("error getting current working directory: %s", err)
-		}
-		templateBaseDir = filepath.Join(cwd, templateBaseDir)
-	}
-
-	// look for all templates that start with 'email_'
-	return template.ParseGlob(filepath.Join(templateBaseDir, "email_*"))
-}
 
 // https://datatracker.ietf.org/doc/html/rfc2822
 // I did not read the RFC, I just copy and pasted from

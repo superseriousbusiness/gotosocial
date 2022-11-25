@@ -28,30 +28,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/web"
 )
-
-type fileSystem struct {
-	fs http.FileSystem
-}
-
-// FileSystem server that only accepts directory listings when an index.html is available
-// from https://gist.github.com/hauxe/f2ea1901216177ccf9550a1b8bd59178
-func (fs fileSystem) Open(path string) (http.File, error) {
-	f, err := fs.fs.Open(path)
-	if err != nil {
-		return nil, err
-	}
-
-	s, _ := f.Stat()
-	if s.IsDir() {
-		index := strings.TrimSuffix(path, "/") + "/index.html"
-		if _, err := fs.fs.Open(index); err != nil {
-			return nil, err
-		}
-	}
-
-	return f, nil
-}
 
 func (m *Module) mountAssetsFilesystem(group *gin.RouterGroup) {
 	webAssetsAbsFilePath, err := filepath.Abs(config.GetWebAssetBaseDir())
@@ -59,7 +37,8 @@ func (m *Module) mountAssetsFilesystem(group *gin.RouterGroup) {
 		log.Panicf("mountAssetsFilesystem: error getting absolute path of assets dir: %s", err)
 	}
 
-	fs := fileSystem{http.Dir(webAssetsAbsFilePath)}
+	// load assets from disk and fall back to embedded assets
+	fs := http.FS(web.NewHybridFS(web.EmbeddedAssets, webAssetsAbsFilePath))
 
 	// use the cache middleware on all handlers in this group
 	group.Use(m.assetsCacheControlMiddleware(fs))
