@@ -19,6 +19,7 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-contrib/gzip v0.0.6
+	github.com/gin-contrib/requestid v0.0.6
 	github.com/gin-contrib/sessions v0.0.5
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-fed/httpsig v1.1.0

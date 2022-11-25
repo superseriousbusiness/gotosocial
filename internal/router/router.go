@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"codeberg.org/gruf/go-debug"
+	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -151,6 +152,7 @@ func New(ctx context.Context, db db.DB) (Router, error) {
 
 	// create the actual engine here -- this is the core request routing handler for gts
 	engine := gin.New()
+	engine.Use(requestid.New())
 	engine.Use(loggingMiddleware)
 
 	// 8 MiB

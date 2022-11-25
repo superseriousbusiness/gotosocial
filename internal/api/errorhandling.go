@@ -23,6 +23,7 @@ import (
 	"net/http"
 
 	"codeberg.org/gruf/go-kv"
+	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -51,10 +52,14 @@ func NotFoundHandler(c *gin.Context, instanceGet func(ctx context.Context, domai
 		}
 
 		c.HTML(http.StatusNotFound, "404.tmpl", gin.H{
-			"instance": instance,
+			"instance":  instance,
+			"requestid": requestid.Get(c),
 		})
 	default:
-		c.JSON(http.StatusNotFound, gin.H{"error": http.StatusText(http.StatusNotFound)})
+		c.JSON(http.StatusNotFound, gin.H{
+			"error":     http.StatusText(http.StatusNotFound),
+			"requestid": requestid.Get(c),
+		})
 	}
 }
 
@@ -71,12 +76,16 @@ func genericErrorHandler(c *gin.Context, instanceGet func(ctx context.Context, d
 		}
 
 		c.HTML(errWithCode.Code(), "error.tmpl", gin.H{
-			"instance": instance,
-			"code":     errWithCode.Code(),
-			"error":    errWithCode.Safe(),
+			"instance":  instance,
+			"requestid": requestid.Get(c),
+			"code":      errWithCode.Code(),
+			"error":     errWithCode.Safe(),
 		})
 	default:
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		c.JSON(errWithCode.Code(), gin.H{
+			"error":     errWithCode.Safe(),
+			"requestid": requestid.Get(c),
+		})
 	}
 }
 

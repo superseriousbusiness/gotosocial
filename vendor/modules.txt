@@ -119,6 +119,9 @@ github.com/gin-contrib/cors
 # github.com/gin-contrib/gzip v0.0.6
 ## explicit; go 1.13
 github.com/gin-contrib/gzip
+# github.com/gin-contrib/requestid v0.0.6
+## explicit; go 1.15
+github.com/gin-contrib/requestid
 # github.com/gin-contrib/sessions v0.0.5
 ## explicit; go 1.18
 github.com/gin-contrib/sessions
