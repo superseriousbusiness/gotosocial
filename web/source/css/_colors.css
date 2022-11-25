@@ -46,6 +46,7 @@ $blue3: #89caff; /* hover/selected accent to $blue2, can be used with $gray1 (7.
 
 $error1: #860000; /* Error border/foreground text, can be used with $error2 (5.0), $white1 (10), $white2 (5.1) */
 $error2: #ff9796; /* Error background text, can be used with $error1 (5.0), $gray1 (6.6), $gray2 (5.3), $gray3 (4.8) */
+$error3: #dd2c2c; /* Error button background text, can be used with $white1 (4.51) */
 $error-link: #185F8C; /* Error link text, can be used with $error2 (5.54) */
 
 $fg: $white1;
@@ -69,9 +70,9 @@ $button-bg: $blue2;
 $button-fg: $gray1;
 $button-hover-bg: $blue3;
 
-$button-danger-bg: $orange1;
-$button-danger-fg: $gray1;
-$button-danger-hover-bg: $orange2;
+$button-danger-bg: $error3;
+$button-danger-fg: $white1;
+$button-danger-hover-bg: $error2;
 
 $toot-focus-bg: $gray5;
 $toot-unfocus-bg: $gray2;

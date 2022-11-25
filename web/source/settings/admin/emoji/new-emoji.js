@@ -20,11 +20,9 @@
 
 const Promise = require('bluebird');
 const React = require("react");
-const { matchSorter } = require("match-sorter");
 
 const FakeToot = require("../../components/fake-toot");
 const MutateButton = require("../../components/mutation-button");
-const ComboBox = require("../../components/combo-box");
 
 const {
 	useTextInput,
@@ -33,9 +31,9 @@ const {
 } = require("../../components/form");
 
 const query = require("../../lib/query");
-const syncpipe = require('syncpipe');
+const { CategorySelect } = require('./category-select');
 
-module.exports = function NewEmojiForm({ emoji, emojiByCategory }) {
+module.exports = function NewEmojiForm({ emoji }) {
 	const emojiCodes = React.useMemo(() => {
 		return new Set(emoji.map((e) => e.shortcode));
 	}, [emoji]);
@@ -56,21 +54,6 @@ module.exports = function NewEmojiForm({ emoji, emojiByCategory }) {
 	});
 
 	const [categoryState, resetCategory, { category }] = useComboBoxInput("category");
-
-	// data used by the ComboBox element to select an emoji category
-	const categoryItems = React.useMemo(() => {
-		return syncpipe(emojiByCategory, [
-			(_) => Object.keys(_),            // just emoji category names
-			(_) => matchSorter(_, category),  // sorted by complex algorithm
-			(_) => _.map((categoryName) => [  // map to input value, and selectable element with icon
-				categoryName,
-				<>
-					<img src={emojiByCategory[categoryName][0].static_url} aria-hidden="true"></img>
-					{categoryName}
-				</>
-			])
-		]);
-	}, [emojiByCategory, category]);
 
 	React.useEffect(() => {
 		if (shortcode.length == 0) {
@@ -152,11 +135,9 @@ module.exports = function NewEmojiForm({ emoji, emojiByCategory }) {
 					/>
 				</div>
 
-				<ComboBox
-					state={categoryState}
-					items={categoryItems}
-					label="Category"
-					placeHolder="e.g., reactions"
+				<CategorySelect
+					value={category}
+					categoryState={categoryState}
 				/>
 
 				<MutateButton text="Upload emoji" result={result} />
