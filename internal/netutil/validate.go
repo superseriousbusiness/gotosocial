@@ -23,10 +23,17 @@ import (
 )
 
 var (
-	// IPv6GlobalUnicast is the global IPv6 unicast IP prefix.
-	IPv6GlobalUnicast = netip.MustParsePrefix("ff00::/8")
+	// IPv6Reserved contains IPv6 reserved IP prefixes.
+	IPv6Reserved = [...]netip.Prefix{
+		netip.MustParsePrefix("::1/128"),       // Loopback
+		netip.MustParsePrefix("fe80::/10"),     // Link-local
+		netip.MustParsePrefix("fc00::/7"),      // Unique Local
+		netip.MustParsePrefix("2001:db8::/32"), // Test, doc, examples
+		netip.MustParsePrefix("ff00::/8"),      // Multicast
+		netip.MustParsePrefix("fec0::/10"),     // Site-local, deprecated
+	}
 
-	// IPvReserved contains IPv4 reserved IP prefixes.
+	// IPv4Reserved contains IPv4 reserved IP prefixes.
 	IPv4Reserved = [...]netip.Prefix{
 		netip.MustParsePrefix("0.0.0.0/8"),       // Current network
 		netip.MustParsePrefix("10.0.0.0/8"),      // Private
@@ -67,9 +74,14 @@ func ValidateIP(ip netip.Addr) bool {
 		}
 		return true
 
-	// IPv6: check if in global unicast (public internet)
+	// IPv6: check if IP in IPv6 reserved nets
 	case ip.Is6():
-		return IPv6GlobalUnicast.Contains(ip)
+		for _, reserved := range IPv6Reserved {
+			if reserved.Contains(ip) {
+				return false
+			}
+		}
+		return true
 
 	// Assume malicious by default
 	default:
