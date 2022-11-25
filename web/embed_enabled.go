@@ -27,4 +27,4 @@ import "embed"
 // the all: prefix is required to also include files prefixed with . and _
 //
 //go:embed all:assets all:template
-var embeddedFiles embed.FS
+var EmbeddedFiles embed.FS

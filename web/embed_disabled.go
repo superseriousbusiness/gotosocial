@@ -24,4 +24,4 @@ package web
 import "embed"
 
 // placeholder for an empty embed.FS used in embed.go
-var embeddedFiles embed.FS = embed.FS{}
+var EmbeddedFiles embed.FS = embed.FS{}

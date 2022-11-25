@@ -63,6 +63,7 @@ func main() {
 	rootCmd.AddCommand(testrigCommands())
 	rootCmd.AddCommand(debugCommands())
 	rootCmd.AddCommand(adminCommands())
+	rootCmd.AddCommand(embeddedCommands())
 
 	// run
 	if err := rootCmd.Execute(); err != nil {

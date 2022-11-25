@@ -67,7 +67,7 @@ func (h HybridFS) Open(name string) (f fs.File, err error) {
 	// fall back to buildtime embedded files
 	if err != nil && errors.Is(err, fs.ErrNotExist) {
 		path := filepath.Join(string(h.embeddedBaseDir), name)
-		f, err = embeddedFiles.Open(path)
+		f, err = EmbeddedFiles.Open(path)
 	}
 
 	return f, err
