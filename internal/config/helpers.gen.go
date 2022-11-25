@@ -1745,6 +1745,56 @@ func GetSyslogAddress() string { return global.GetSyslogAddress() }
 // SetSyslogAddress safely sets the value for global configuration 'SyslogAddress' field
 func SetSyslogAddress(v string) { global.SetSyslogAddress(v) }
 
+// GetAdvancedCookiesSamesite safely fetches the Configuration value for state's 'AdvancedCookiesSamesite' field
+func (st *ConfigState) GetAdvancedCookiesSamesite() (v string) {
+	st.mutex.Lock()
+	v = st.config.AdvancedCookiesSamesite
+	st.mutex.Unlock()
+	return
+}
+
+// SetAdvancedCookiesSamesite safely sets the Configuration value for state's 'AdvancedCookiesSamesite' field
+func (st *ConfigState) SetAdvancedCookiesSamesite(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.AdvancedCookiesSamesite = v
+	st.reloadToViper()
+}
+
+// AdvancedCookiesSamesiteFlag returns the flag name for the 'AdvancedCookiesSamesite' field
+func AdvancedCookiesSamesiteFlag() string { return "advanced-cookies-samesite" }
+
+// GetAdvancedCookiesSamesite safely fetches the value for global configuration 'AdvancedCookiesSamesite' field
+func GetAdvancedCookiesSamesite() string { return global.GetAdvancedCookiesSamesite() }
+
+// SetAdvancedCookiesSamesite safely sets the value for global configuration 'AdvancedCookiesSamesite' field
+func SetAdvancedCookiesSamesite(v string) { global.SetAdvancedCookiesSamesite(v) }
+
+// GetAdvancedRateLimitRequests safely fetches the Configuration value for state's 'AdvancedRateLimitRequests' field
+func (st *ConfigState) GetAdvancedRateLimitRequests() (v int) {
+	st.mutex.Lock()
+	v = st.config.AdvancedRateLimitRequests
+	st.mutex.Unlock()
+	return
+}
+
+// SetAdvancedRateLimitRequests safely sets the Configuration value for state's 'AdvancedRateLimitRequests' field
+func (st *ConfigState) SetAdvancedRateLimitRequests(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.AdvancedRateLimitRequests = v
+	st.reloadToViper()
+}
+
+// AdvancedRateLimitRequestsFlag returns the flag name for the 'AdvancedRateLimitRequests' field
+func AdvancedRateLimitRequestsFlag() string { return "advanced-rate-limit-requests" }
+
+// GetAdvancedRateLimitRequests safely fetches the value for global configuration 'AdvancedRateLimitRequests' field
+func GetAdvancedRateLimitRequests() int { return global.GetAdvancedRateLimitRequests() }
+
+// SetAdvancedRateLimitRequests safely sets the value for global configuration 'AdvancedRateLimitRequests' field
+func SetAdvancedRateLimitRequests(v int) { global.SetAdvancedRateLimitRequests(v) }
+
 // GetAdminAccountUsername safely fetches the Configuration value for state's 'AdminAccountUsername' field
 func (st *ConfigState) GetAdminAccountUsername() (v string) {
 	st.mutex.Lock()
@@ -1845,52 +1895,27 @@ func GetAdminTransPath() string { return global.GetAdminTransPath() }
 // SetAdminTransPath safely sets the value for global configuration 'AdminTransPath' field
 func SetAdminTransPath(v string) { global.SetAdminTransPath(v) }
 
-// GetAdvancedCookiesSamesite safely fetches the Configuration value for state's 'AdvancedCookiesSamesite' field
-func (st *ConfigState) GetAdvancedCookiesSamesite() (v string) {
+// GetAdminMediaPruneDryRun safely fetches the Configuration value for state's 'AdminMediaPruneDryRun' field
+func (st *ConfigState) GetAdminMediaPruneDryRun() (v bool) {
 	st.mutex.Lock()
-	v = st.config.AdvancedCookiesSamesite
+	v = st.config.AdminMediaPruneDryRun
 	st.mutex.Unlock()
 	return
 }
 
-// SetAdvancedCookiesSamesite safely sets the Configuration value for state's 'AdvancedCookiesSamesite' field
-func (st *ConfigState) SetAdvancedCookiesSamesite(v string) {
+// SetAdminMediaPruneDryRun safely sets the Configuration value for state's 'AdminMediaPruneDryRun' field
+func (st *ConfigState) SetAdminMediaPruneDryRun(v bool) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
-	st.config.AdvancedCookiesSamesite = v
+	st.config.AdminMediaPruneDryRun = v
 	st.reloadToViper()
 }
 
-// AdvancedCookiesSamesiteFlag returns the flag name for the 'AdvancedCookiesSamesite' field
-func AdvancedCookiesSamesiteFlag() string { return "advanced-cookies-samesite" }
+// AdminMediaPruneDryRunFlag returns the flag name for the 'AdminMediaPruneDryRun' field
+func AdminMediaPruneDryRunFlag() string { return "dry-run" }
 
-// GetAdvancedCookiesSamesite safely fetches the value for global configuration 'AdvancedCookiesSamesite' field
-func GetAdvancedCookiesSamesite() string { return global.GetAdvancedCookiesSamesite() }
+// GetAdminMediaPruneDryRun safely fetches the value for global configuration 'AdminMediaPruneDryRun' field
+func GetAdminMediaPruneDryRun() bool { return global.GetAdminMediaPruneDryRun() }
 
-// SetAdvancedCookiesSamesite safely sets the value for global configuration 'AdvancedCookiesSamesite' field
-func SetAdvancedCookiesSamesite(v string) { global.SetAdvancedCookiesSamesite(v) }
-
-// GetAdvancedRateLimitRequests safely fetches the Configuration value for state's 'AdvancedRateLimitRequests' field
-func (st *ConfigState) GetAdvancedRateLimitRequests() (v int) {
-	st.mutex.Lock()
-	v = st.config.AdvancedRateLimitRequests
-	st.mutex.Unlock()
-	return
-}
-
-// SetAdvancedRateLimitRequests safely sets the Configuration value for state's 'AdvancedRateLimitRequests' field
-func (st *ConfigState) SetAdvancedRateLimitRequests(v int) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.AdvancedRateLimitRequests = v
-	st.reloadToViper()
-}
-
-// AdvancedRateLimitRequestsFlag returns the flag name for the 'AdvancedRateLimitRequests' field
-func AdvancedRateLimitRequestsFlag() string { return "advanced-rate-limit-requests" }
-
-// GetAdvancedRateLimitRequests safely fetches the value for global configuration 'AdvancedRateLimitRequests' field
-func GetAdvancedRateLimitRequests() int { return global.GetAdvancedRateLimitRequests() }
-
-// SetAdvancedRateLimitRequests safely sets the value for global configuration 'AdvancedRateLimitRequests' field
-func SetAdvancedRateLimitRequests(v int) { global.SetAdvancedRateLimitRequests(v) }
+// SetAdminMediaPruneDryRun safely sets the value for global configuration 'AdminMediaPruneDryRun' field
+func SetAdminMediaPruneDryRun(v bool) { global.SetAdminMediaPruneDryRun(v) }

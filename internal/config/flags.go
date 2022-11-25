@@ -178,3 +178,13 @@ func AddAdminTrans(cmd *cobra.Command) {
 		panic(err)
 	}
 }
+
+// AddAdminMediaPrune attaches flags pertaining to media storage prune commands.
+func AddAdminMediaPrune(cmd *cobra.Command) {
+	name := AdminMediaPruneDryRunFlag()
+	usage := fieldtag("AdminMediaPruneDryRun", "usage")
+	cmd.Flags().Bool(name, true, usage)
+	if err := cmd.MarkFlagRequired(name); err != nil {
+		panic(err)
+	}
+}

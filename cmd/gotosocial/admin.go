@@ -21,6 +21,7 @@ package main
 import (
 	"github.com/spf13/cobra"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/account"
+	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/media/prune"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/trans"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
@@ -151,6 +152,41 @@ func adminCommands() *cobra.Command {
 	}
 	config.AddAdminTrans(adminImportCmd)
 	adminCmd.AddCommand(adminImportCmd)
+
+	/*
+		ADMIN MEDIA COMMANDS
+	*/
+
+	adminMediaCmd := &cobra.Command{
+		Use:   "media",
+		Short: "admin commands related stored media attachments/emojis",
+	}
+
+	/*
+		ADMIN MEDIA PRUNE COMMANDS
+	*/
+	adminMediaPruneCmd := &cobra.Command{
+		Use:   "prune",
+		Short: "admin commands for pruning unused/orphaned media from storage",
+	}
+	config.AddAdminMediaPrune(adminMediaPruneCmd)
+
+	adminMediaPruneOrphanedCmd := &cobra.Command{
+		Use:   "orphaned",
+		Short: "prune orphaned media from storage",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return preRun(preRunArgs{cmd: cmd})
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd.Context(), prune.Orphaned)
+		},
+	}
+	config.AddAdminMediaPrune(adminMediaPruneOrphanedCmd)
+	adminMediaPruneCmd.AddCommand(adminMediaPruneOrphanedCmd)
+
+	adminMediaCmd.AddCommand(adminMediaPruneCmd)
+
+	adminCmd.AddCommand(adminMediaCmd)
 
 	return adminCmd
 }
