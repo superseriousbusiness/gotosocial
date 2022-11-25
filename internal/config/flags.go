@@ -184,7 +184,4 @@ func AddAdminMediaPrune(cmd *cobra.Command) {
 	name := AdminMediaPruneDryRunFlag()
 	usage := fieldtag("AdminMediaPruneDryRun", "usage")
 	cmd.Flags().Bool(name, true, usage)
-	if err := cmd.MarkFlagRequired(name); err != nil {
-		panic(err)
-	}
 }
