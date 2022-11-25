@@ -67,7 +67,7 @@ function EmojiDetail({emoji}) {
 
 	const [categoryState, _resetCategory, { category }] = useComboBoxInput("category", {defaultValue: emoji.category});
 
-	const [onFileChange, resetFile, { image, imageURL, imageInfo }] = useFileInput("image", {
+	const [onFileChange, _resetFile, { image, imageURL, imageInfo }] = useFileInput("image", {
 		withPreview: true,
 		maxSize: 50 * 1024
 	});
