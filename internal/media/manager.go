@@ -91,6 +91,12 @@ type Manager interface {
 	//
 	// The returned int is the amount of media that was pruned by this function.
 	PruneUnusedLocalAttachments(ctx context.Context) (int, error)
+	// PruneOrphaned prunes files that exist in storage but which do not have a corresponding
+	// entry in the database.
+	//
+	// If dry is true, then nothing will be changed, only the amount that *would* be removed
+	// is returned to the caller.
+	PruneOrphaned(ctx context.Context, dry bool) (int, error)
 
 	// Stop stops the underlying worker pool of the manager. It should be called
 	// when closing GoToSocial in order to cleanly finish any in-progress jobs.
