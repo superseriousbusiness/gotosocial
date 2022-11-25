@@ -50,6 +50,7 @@ builds:
 dockers:
   # https://goreleaser.com/customization/docker/
   -
+    dockerfile: prebuilt.Dockerfile
     use: buildx
     goos: linux
     goarch: amd64
@@ -63,13 +64,8 @@ dockers:
     - "--label=org.opencontainers.image.title={{.ProjectName}}"
     - "--label=org.opencontainers.image.revision={{.FullCommit}}"
     - "--label=org.opencontainers.image.version={{.Version}}"
-    extra_files:
-    - web
-    - go.mod
-    - go.sum
-    - cmd
-    - internal
   -
+    dockerfile: prebuilt.Dockerfile
     use: buildx
     goos: linux
     goarch: arm64
@@ -83,13 +79,8 @@ dockers:
     - "--label=org.opencontainers.image.title={{.ProjectName}}"
     - "--label=org.opencontainers.image.revision={{.FullCommit}}"
     - "--label=org.opencontainers.image.version={{.Version}}"
-    extra_files:
-    - web
-    - go.mod
-    - go.sum
-    - cmd
-    - internal
   -
+    dockerfile: prebuilt.Dockerfile
     use: buildx
     goos: linux
     goarch: arm
@@ -104,13 +95,8 @@ dockers:
     - "--label=org.opencontainers.image.title={{.ProjectName}}"
     - "--label=org.opencontainers.image.revision={{.FullCommit}}"
     - "--label=org.opencontainers.image.version={{.Version}}"
-    extra_files:
-    - web
-    - go.mod
-    - go.sum
-    - cmd
-    - internal
   -
+    dockerfile: prebuilt.Dockerfile
     use: buildx
     goos: linux
     goarch: arm
@@ -125,12 +111,6 @@ dockers:
     - "--label=org.opencontainers.image.title={{.ProjectName}}"
     - "--label=org.opencontainers.image.revision={{.FullCommit}}"
     - "--label=org.opencontainers.image.version={{.Version}}"
-    extra_files:
-    - web
-    - go.mod
-    - go.sum
-    - cmd
-    - internal
 docker_manifests:
   - name_template: superseriousbusiness/{{ .ProjectName }}:{{ .Version }}
     image_templates:
@@ -159,9 +139,6 @@ archives:
     - LICENSE
     - README.md
     - CHANGELOG*
-    # web stuff minus source
-    - web/assets
-    - web/template
     # example config files
     - example/config.yaml
     - example/gotosocial.service

@@ -23,6 +23,7 @@ services:
       #- "127.0.0.1:8080:8080"
     volumes:
       - ~/gotosocial/data:/gotosocial/storage
+      - ~/gotosocial/web:/gotosocial/web
     restart: "always"
 
 networks:
