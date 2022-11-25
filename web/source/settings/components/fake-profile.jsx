@@ -33,10 +33,10 @@ module.exports = function FakeProfile({}) {
 				<div id="profile-basic-filler2"></div>
 				<span className="avatar"><img className="avatarpreview" src={account.avatar} alt={account.avatar ? `avatar image for ${account.username}` : "None set"} /></span>
 				<div className="displayname">{account.display_name.trim().length > 0 ? account.display_name : account.username}</div>
-				<div class="usernamecontainer">
+				<div className="usernamecontainer">
 					<div className="username"><span>@{account.username}</span></div>
 					{(account.role && account.role != "user") && 
-						<div class={`role ${account.role}`}>{account.role}</div>
+						<div className={`role ${account.role}`}>{account.role}</div>
 					}
 				</div>
 			</div>
