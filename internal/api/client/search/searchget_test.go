@@ -35,26 +35,42 @@ type SearchGetTestSuite struct {
 	SearchStandardTestSuite
 }
 
-func (suite *SearchGetTestSuite) TestSearchRemoteAccountByURI() {
-	query := "https://unknown-instance.com/users/brand_new_person"
-	resolve := true
+func (suite *SearchGetTestSuite) testSearch(query string, resolve bool, expectedHTTPStatus int) (*apimodel.SearchResult, error) {
 	requestPath := fmt.Sprintf("%s?q=%s&resolve=%t", search.BasePathV1, query, resolve)
-
 	recorder := httptest.NewRecorder()
+
 	ctx := suite.newContext(recorder, requestPath)
 
 	suite.searchModule.SearchGETHandler(ctx)
-	suite.Equal(http.StatusOK, recorder.Code)
 
 	result := recorder.Result()
 	defer result.Body.Close()
 
+	if resultCode := recorder.Code; expectedHTTPStatus != resultCode {
+		return nil, fmt.Errorf("expected %d got %d", expectedHTTPStatus, resultCode)
+	}
+
 	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
+	if err != nil {
+		return nil, err
+	}
 
 	searchResult := &apimodel.SearchResult{}
-	err = json.Unmarshal(b, searchResult)
-	suite.NoError(err)
+	if err := json.Unmarshal(b, searchResult); err != nil {
+		return nil, err
+	}
+
+	return searchResult, nil
+}
+
+func (suite *SearchGetTestSuite) TestSearchRemoteAccountByURI() {
+	query := "https://unknown-instance.com/users/brand_new_person"
+	resolve := true
+
+	searchResult, err := suite.testSearch(query, resolve, http.StatusOK)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
 
 	if !suite.Len(searchResult.Accounts, 1) {
 		suite.FailNow("expected 1 account in search results but got 0")
@@ -67,23 +83,11 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByURI() {
 func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestring() {
 	query := "@brand_new_person@unknown-instance.com"
 	resolve := true
-	requestPath := fmt.Sprintf("%s?q=%s&resolve=%t", search.BasePathV1, query, resolve)
 
-	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, requestPath)
-
-	suite.searchModule.SearchGETHandler(ctx)
-	suite.Equal(http.StatusOK, recorder.Code)
-
-	result := recorder.Result()
-	defer result.Body.Close()
-
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-
-	searchResult := &apimodel.SearchResult{}
-	err = json.Unmarshal(b, searchResult)
-	suite.NoError(err)
+	searchResult, err := suite.testSearch(query, resolve, http.StatusOK)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
 
 	if !suite.Len(searchResult.Accounts, 1) {
 		suite.FailNow("expected 1 account in search results but got 0")
@@ -96,23 +100,11 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestring() {
 func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringNoLeadingAt() {
 	query := "brand_new_person@unknown-instance.com"
 	resolve := true
-	requestPath := fmt.Sprintf("%s?q=%s&resolve=%t", search.BasePathV1, query, resolve)
 
-	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, requestPath)
-
-	suite.searchModule.SearchGETHandler(ctx)
-	suite.Equal(http.StatusOK, recorder.Code)
-
-	result := recorder.Result()
-	defer result.Body.Close()
-
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-
-	searchResult := &apimodel.SearchResult{}
-	err = json.Unmarshal(b, searchResult)
-	suite.NoError(err)
+	searchResult, err := suite.testSearch(query, resolve, http.StatusOK)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
 
 	if !suite.Len(searchResult.Accounts, 1) {
 		suite.FailNow("expected 1 account in search results but got 0")
@@ -125,23 +117,11 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringNoLeadingAt(
 func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringNoResolve() {
 	query := "@brand_new_person@unknown-instance.com"
 	resolve := false
-	requestPath := fmt.Sprintf("%s?q=%s&resolve=%t", search.BasePathV1, query, resolve)
 
-	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, requestPath)
-
-	suite.searchModule.SearchGETHandler(ctx)
-	suite.Equal(http.StatusOK, recorder.Code)
-
-	result := recorder.Result()
-	defer result.Body.Close()
-
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-
-	searchResult := &apimodel.SearchResult{}
-	err = json.Unmarshal(b, searchResult)
-	suite.NoError(err)
+	searchResult, err := suite.testSearch(query, resolve, http.StatusOK)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
 
 	suite.Len(searchResult.Accounts, 0)
 }
@@ -149,23 +129,11 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringNoResolve() 
 func (suite *SearchGetTestSuite) TestSearchLocalAccountByNamestring() {
 	query := "@the_mighty_zork"
 	resolve := false
-	requestPath := fmt.Sprintf("%s?q=%s&resolve=%t", search.BasePathV1, query, resolve)
 
-	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, requestPath)
-
-	suite.searchModule.SearchGETHandler(ctx)
-	suite.Equal(http.StatusOK, recorder.Code)
-
-	result := recorder.Result()
-	defer result.Body.Close()
-
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-
-	searchResult := &apimodel.SearchResult{}
-	err = json.Unmarshal(b, searchResult)
-	suite.NoError(err)
+	searchResult, err := suite.testSearch(query, resolve, http.StatusOK)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
 
 	if !suite.Len(searchResult.Accounts, 1) {
 		suite.FailNow("expected 1 account in search results but got 0")
@@ -178,23 +146,11 @@ func (suite *SearchGetTestSuite) TestSearchLocalAccountByNamestring() {
 func (suite *SearchGetTestSuite) TestSearchLocalAccountByNamestringWithDomain() {
 	query := "@the_mighty_zork@localhost:8080"
 	resolve := false
-	requestPath := fmt.Sprintf("%s?q=%s&resolve=%t", search.BasePathV1, query, resolve)
 
-	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, requestPath)
-
-	suite.searchModule.SearchGETHandler(ctx)
-	suite.Equal(http.StatusOK, recorder.Code)
-
-	result := recorder.Result()
-	defer result.Body.Close()
-
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-
-	searchResult := &apimodel.SearchResult{}
-	err = json.Unmarshal(b, searchResult)
-	suite.NoError(err)
+	searchResult, err := suite.testSearch(query, resolve, http.StatusOK)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
 
 	if !suite.Len(searchResult.Accounts, 1) {
 		suite.FailNow("expected 1 account in search results but got 0")
@@ -207,23 +163,11 @@ func (suite *SearchGetTestSuite) TestSearchLocalAccountByNamestringWithDomain() 
 func (suite *SearchGetTestSuite) TestSearchNonexistingLocalAccountByNamestringResolveTrue() {
 	query := "@somone_made_up@localhost:8080"
 	resolve := true
-	requestPath := fmt.Sprintf("%s?q=%s&resolve=%t", search.BasePathV1, query, resolve)
 
-	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, requestPath)
-
-	suite.searchModule.SearchGETHandler(ctx)
-	suite.Equal(http.StatusOK, recorder.Code)
-
-	result := recorder.Result()
-	defer result.Body.Close()
-
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-
-	searchResult := &apimodel.SearchResult{}
-	err = json.Unmarshal(b, searchResult)
-	suite.NoError(err)
+	searchResult, err := suite.testSearch(query, resolve, http.StatusOK)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
 
 	suite.Len(searchResult.Accounts, 0)
 }
@@ -231,23 +175,11 @@ func (suite *SearchGetTestSuite) TestSearchNonexistingLocalAccountByNamestringRe
 func (suite *SearchGetTestSuite) TestSearchLocalAccountByURI() {
 	query := "http://localhost:8080/users/the_mighty_zork"
 	resolve := false
-	requestPath := fmt.Sprintf("%s?q=%s&resolve=%t", search.BasePathV1, query, resolve)
 
-	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, requestPath)
-
-	suite.searchModule.SearchGETHandler(ctx)
-	suite.Equal(http.StatusOK, recorder.Code)
-
-	result := recorder.Result()
-	defer result.Body.Close()
-
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-
-	searchResult := &apimodel.SearchResult{}
-	err = json.Unmarshal(b, searchResult)
-	suite.NoError(err)
+	searchResult, err := suite.testSearch(query, resolve, http.StatusOK)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
 
 	if !suite.Len(searchResult.Accounts, 1) {
 		suite.FailNow("expected 1 account in search results but got 0")
@@ -260,23 +192,11 @@ func (suite *SearchGetTestSuite) TestSearchLocalAccountByURI() {
 func (suite *SearchGetTestSuite) TestSearchLocalAccountByURL() {
 	query := "http://localhost:8080/@the_mighty_zork"
 	resolve := false
-	requestPath := fmt.Sprintf("%s?q=%s&resolve=%t", search.BasePathV1, query, resolve)
 
-	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, requestPath)
-
-	suite.searchModule.SearchGETHandler(ctx)
-	suite.Equal(http.StatusOK, recorder.Code)
-
-	result := recorder.Result()
-	defer result.Body.Close()
-
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-
-	searchResult := &apimodel.SearchResult{}
-	err = json.Unmarshal(b, searchResult)
-	suite.NoError(err)
+	searchResult, err := suite.testSearch(query, resolve, http.StatusOK)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
 
 	if !suite.Len(searchResult.Accounts, 1) {
 		suite.FailNow("expected 1 account in search results but got 0")
@@ -289,23 +209,11 @@ func (suite *SearchGetTestSuite) TestSearchLocalAccountByURL() {
 func (suite *SearchGetTestSuite) TestSearchNonexistingLocalAccountByURL() {
 	query := "http://localhost:8080/@the_shmighty_shmork"
 	resolve := true
-	requestPath := fmt.Sprintf("%s?q=%s&resolve=%t", search.BasePathV1, query, resolve)
 
-	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, requestPath)
-
-	suite.searchModule.SearchGETHandler(ctx)
-	suite.Equal(http.StatusOK, recorder.Code)
-
-	result := recorder.Result()
-	defer result.Body.Close()
-
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-
-	searchResult := &apimodel.SearchResult{}
-	err = json.Unmarshal(b, searchResult)
-	suite.NoError(err)
+	searchResult, err := suite.testSearch(query, resolve, http.StatusOK)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
 
 	suite.Len(searchResult.Accounts, 0)
 }
@@ -313,23 +221,11 @@ func (suite *SearchGetTestSuite) TestSearchNonexistingLocalAccountByURL() {
 func (suite *SearchGetTestSuite) TestSearchStatusByURL() {
 	query := "https://turnip.farm/users/turniplover6969/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042"
 	resolve := true
-	requestPath := fmt.Sprintf("%s?q=%s&resolve=%t", search.BasePathV1, query, resolve)
 
-	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, requestPath)
-
-	suite.searchModule.SearchGETHandler(ctx)
-	suite.Equal(http.StatusOK, recorder.Code)
-
-	result := recorder.Result()
-	defer result.Body.Close()
-
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-
-	searchResult := &apimodel.SearchResult{}
-	err = json.Unmarshal(b, searchResult)
-	suite.NoError(err)
+	searchResult, err := suite.testSearch(query, resolve, http.StatusOK)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
 
 	if !suite.Len(searchResult.Statuses, 1) {
 		suite.FailNow("expected 1 status in search results but got 0")
