@@ -51,6 +51,7 @@ var (
 	}
 
 	// IPv4Reserved contains IPv4 reserved IP prefixes.
+	// https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml
 	IPv4Reserved = [...]netip.Prefix{
 		netip.MustParsePrefix("0.0.0.0/8"),       // Current network
 		netip.MustParsePrefix("10.0.0.0/8"),      // Private
@@ -59,9 +60,13 @@ var (
 		netip.MustParsePrefix("169.254.0.0/16"),  // Link-local
 		netip.MustParsePrefix("172.16.0.0/12"),   // Private
 		netip.MustParsePrefix("192.0.0.0/24"),    // RFC6890
+		netip.MustParsePrefix("192.0.0.0/29"),    // IPv4 Service Continuity Prefix, RFC 7335
 		netip.MustParsePrefix("192.0.2.0/24"),    // Test, doc, examples
+		netip.MustParsePrefix("192.31.196.0/24"), // AS112-v4, RFC 7535
+		netip.MustParsePrefix("192.52.193.0/24"), // AMT, RFC 7450
 		netip.MustParsePrefix("192.88.99.0/24"),  // IPv6 to IPv4 relay
 		netip.MustParsePrefix("192.168.0.0/16"),  // Private
+		netip.MustParsePrefix("192.175.48.0/24"), // Direct Delegation AS112 Service, RFC 7534
 		netip.MustParsePrefix("198.18.0.0/15"),   // Benchmarking tests
 		netip.MustParsePrefix("198.51.100.0/24"), // Test, doc, examples
 		netip.MustParsePrefix("203.0.113.0/24"),  // Test, doc, examples
