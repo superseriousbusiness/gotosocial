@@ -24,13 +24,30 @@ import (
 
 var (
 	// IPv6Reserved contains IPv6 reserved IP prefixes.
+	// https://www.iana.org/assignments/iana-ipv6-special-registry/iana-ipv6-special-registry.xhtml
 	IPv6Reserved = [...]netip.Prefix{
-		netip.MustParsePrefix("::1/128"),       // Loopback
-		netip.MustParsePrefix("fe80::/10"),     // Link-local
-		netip.MustParsePrefix("fc00::/7"),      // Unique Local
-		netip.MustParsePrefix("2001:db8::/32"), // Test, doc, examples
-		netip.MustParsePrefix("ff00::/8"),      // Multicast
-		netip.MustParsePrefix("fec0::/10"),     // Site-local, deprecated
+		netip.MustParsePrefix("::1/128"),           // Loopback
+		netip.MustParsePrefix("::/128"),            // Unspecified address
+		netip.MustParsePrefix("::ffff:0:0/96"),     // IPv4-mapped address
+		netip.MustParsePrefix("64:ff9b::/96"),      // IPv4/IPv6 translation, RFC 6052
+		netip.MustParsePrefix("64:ff9b:1::/48"),    // IPv4/IPv6 translation, RFC 8215
+		netip.MustParsePrefix("100::/64"),          // Discard prefix, RFC 6666
+		netip.MustParsePrefix("2001::/23"),         // IETF Protocol Assignments, RFC 2928
+		netip.MustParsePrefix("2001::/32"),         // Teredo
+		netip.MustParsePrefix("2001:1::1/128"),     // Port Control Protocol Anycast, RFC 7723
+		netip.MustParsePrefix("2001:1::2/128"),     // Traversal Using Relays around NAT Anycast, RFC 8155
+		netip.MustParsePrefix("2001:2::/48"),       // Benchmarking, RFC 5180
+		netip.MustParsePrefix("2001:3::/32"),       // AMT, RFC 7450
+		netip.MustParsePrefix("2001:4:112::/48"),   // AS112-v6, RFC 7535
+		netip.MustParsePrefix("2001:10::/28"),      // ORCHID, deprecated
+		netip.MustParsePrefix("2001:20::/28"),      // ORCHIDv2
+		netip.MustParsePrefix("2001:db8::/32"),     // Test, doc, examples
+		netip.MustParsePrefix("2002::/16"),         // 6to4
+		netip.MustParsePrefix("2620:4f:8000::/48"), // Direct Delegation AS112 Service, RFC 7534
+		netip.MustParsePrefix("fc00::/7"),          // Unique Local
+		netip.MustParsePrefix("fe80::/10"),         // Link-local
+		netip.MustParsePrefix("fec0::/10"),         // Site-local, deprecated
+		netip.MustParsePrefix("ff00::/8"),          // Multicast
 	}
 
 	// IPv4Reserved contains IPv4 reserved IP prefixes.
