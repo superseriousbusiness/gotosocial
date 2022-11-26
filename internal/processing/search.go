@@ -28,6 +28,7 @@ import (
 	"codeberg.org/gruf/go-kv"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -38,16 +39,14 @@ import (
 )
 
 func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode) {
-	l := log.WithFields(kv.Fields{
-		{"query", search.Query},
-	}...)
-
 	// tidy up the query and make sure it wasn't just spaces
 	query := strings.TrimSpace(search.Query)
 	if query == "" {
 		err := errors.New("search query was empty string after trimming space")
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
+
+	l := log.WithFields(kv.Fields{{"query", query}}...)
 
 	searchResult := &apimodel.SearchResult{
 		Accounts: []apimodel.Account{},
@@ -76,14 +75,16 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 	}
 
 	if username, domain, err := util.ExtractNamestringParts(maybeNamestring); err == nil {
-		l.Debugf("search term %s is a mention, looking it up...", maybeNamestring)
+		l.Trace("search term is a mention, looking it up...")
 		foundAccount, err := p.searchAccountByMention(ctx, authed, username, domain, search.Resolve)
 		if err != nil {
-			l.Debugf("error looking up account %s: %s", maybeNamestring, err)
+			if !errors.Is(err, db.ErrNoEntries) {
+				l.Debugf("error looking up account: %s", err)
+			}
 		} else {
 			foundAccounts = append(foundAccounts, foundAccount)
 			foundOne = true
-			l.Debugf("got an account for %s by searching by mention", maybeNamestring)
+			l.Trace("got an account by searching by mention")
 		}
 	}
 
@@ -94,7 +95,7 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 	if !foundOne {
 		if uri, err := url.Parse(query); err == nil {
 			if uri.Scheme == "https" || uri.Scheme == "http" {
-				l.Debugf("search term %s is a uri, looking it up...", uri)
+				l.Trace("search term is a uri, looking it up...")
 
 				// don't attempt to resolve (ie., dereference) local accounts/statuses
 				resolve := search.Resolve
@@ -102,24 +103,29 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 					resolve = false
 				}
 
-				// check if it's a status or an account
+				// check if it's a status...
 				foundStatus, err := p.searchStatusByURI(ctx, authed, uri, resolve)
 				if err != nil {
-					log.Debugf("error searching status by uri %s: %s", uri, err)
+					if !errors.Is(err, db.ErrNoEntries) {
+						l.Debugf("error searching status by uri: %s", err)
+					}
 				} else {
 					foundStatuses = append(foundStatuses, foundStatus)
 					foundOne = true
-					l.Debug("got a status by searching by URI")
+					l.Trace("got a status by searching by URI")
 				}
 
+				// ... or an account
 				if !foundOne {
 					foundAccount, err := p.searchAccountByURI(ctx, authed, uri, resolve)
 					if err != nil {
-						log.Debugf("error searching account by uri %s: %s", uri, err)
+						if !errors.Is(err, db.ErrNoEntries) {
+							l.Debugf("error searching account by uri %s: %s", uri, err)
+						}
 					} else {
 						foundAccounts = append(foundAccounts, foundAccount)
 						foundOne = true
-						l.Debug("got an account by searching by URI")
+						l.Trace("got an account by searching by URI")
 					}
 				}
 			}
@@ -128,7 +134,7 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 
 	if !foundOne {
 		// we got nothing, we can return early
-		log.Debugf("found nothing for query %s, returning", query)
+		l.Trace("found nothing, returning")
 		return searchResult, nil
 	}
 
@@ -138,21 +144,42 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 	*/
 	for _, foundAccount := range foundAccounts {
 		// make sure there's no block in either direction between the account and the requester
-		if blocked, err := p.db.IsBlocked(ctx, authed.Account.ID, foundAccount.ID, true); err == nil && !blocked {
-			// all good, convert it and add it to the results
-			if apiAcct, err := p.tc.AccountToAPIAccountPublic(ctx, foundAccount); err == nil && apiAcct != nil {
-				searchResult.Accounts = append(searchResult.Accounts, *apiAcct)
-			}
+		blocked, err := p.db.IsBlocked(ctx, authed.Account.ID, foundAccount.ID, true)
+		if err != nil {
+			l.Debugf("error checking block between %s and %s: %s", authed.Account.ID, foundAccount.ID, err)
+			continue
 		}
+
+		if blocked {
+			l.Tracef("block exists between %s and %s, skipping this result", authed.Account.ID, foundAccount.ID)
+			continue
+		}
+
+		apiAcct, err := p.tc.AccountToAPIAccountPublic(ctx, foundAccount)
+		if err != nil {
+			l.Debugf("error converting account %s to api account: %s", foundAccount.ID, err)
+			continue
+		}
+
+		searchResult.Accounts = append(searchResult.Accounts, *apiAcct)
 	}
 
 	for _, foundStatus := range foundStatuses {
-		if visible, err := p.filter.StatusVisible(ctx, foundStatus, authed.Account); !visible || err != nil {
+		// make sure each found status is visible to the requester
+		visible, err := p.filter.StatusVisible(ctx, foundStatus, authed.Account)
+		if err != nil {
+			l.Debugf("error checking visibility of status %s for account %s: %s", foundStatus.ID, authed.Account.ID, err)
+			continue
+		}
+
+		if !visible {
+			l.Tracef("status %s is not visible to account %s, skipping this result", foundStatus.ID, authed.Account.ID)
 			continue
 		}
 
 		apiStatus, err := p.tc.StatusToAPIStatus(ctx, foundStatus, authed.Account)
 		if err != nil {
+			l.Debugf("error converting status %s to api status: %s", foundStatus.ID, err)
 			continue
 		}
 
