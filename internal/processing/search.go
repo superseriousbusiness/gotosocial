@@ -38,6 +38,17 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
+// Implementation note: in this function, we tend to log errors
+// at debug level rather than return them. This is because the
+// search has a sort of fallthrough logic: if we can't get a result
+// with x search, we should try with y search rather than returning.
+//
+// If we get to the end and still haven't found anything, even then
+// we shouldn't return an error, just return an empty search result.
+//
+// The only exception to this is when we get a malformed query, in
+// which case we return a bad request error so the user knows they
+// did something funky.
 func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode) {
 	// tidy up the query and make sure it wasn't just spaces
 	query := strings.TrimSpace(search.Query)
