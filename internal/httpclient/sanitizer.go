@@ -38,6 +38,10 @@ func (s *sanitizer) Sanitize(ntwrk, addr string, _ syscall.RawConn) error {
 		return err
 	}
 
+	if !(ntwrk == "tcp4" || ntwrk == "tcp6") {
+		return ErrInvalidNetwork
+	}
+
 	// Seperate the IP
 	ip := ipport.Addr()
 
