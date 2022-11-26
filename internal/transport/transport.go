@@ -134,6 +134,8 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 		{"url", r.URL.String()},
 	}...)
 
+	r.Header.Set("User-Agent", t.controller.userAgent)
+
 	for i := 0; i < maxRetries; i++ {
 		// Reset signing header fields
 		now := t.controller.clock.Now().UTC()

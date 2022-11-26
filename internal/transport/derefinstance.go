@@ -93,7 +93,6 @@ func dereferenceByAPIV1Instance(ctx context.Context, t *transport, iri *url.URL)
 	}
 
 	req.Header.Add("Accept", string(api.AppJSON))
-	req.Header.Add("User-Agent", t.controller.userAgent)
 	req.Header.Set("Host", cleanIRI.Host)
 
 	resp, err := t.GET(req)
@@ -244,7 +243,6 @@ func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*ur
 		return nil, err
 	}
 	req.Header.Add("Accept", string(api.AppJSON))
-	req.Header.Add("User-Agent", t.controller.userAgent)
 	req.Header.Set("Host", cleanIRI.Host)
 
 	resp, err := t.GET(req)
@@ -296,7 +294,6 @@ func callNodeInfo(ctx context.Context, t *transport, iri *url.URL) (*apimodel.No
 		return nil, err
 	}
 	req.Header.Add("Accept", string(api.AppJSON))
-	req.Header.Add("User-Agent", t.controller.userAgent)
 	req.Header.Set("Host", iri.Host)
 
 	resp, err := t.GET(req)
