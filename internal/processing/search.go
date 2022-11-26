@@ -163,7 +163,7 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 }
 
 func (p *processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Status, error) {
-	status, statusable, err := p.federator.GetStatus(ctx, authed.Account.Username, uri, true, true)
+	status, statusable, err := p.federator.GetStatus(transport.WithFastfail(ctx), authed.Account.Username, uri, true, true)
 	if err != nil {
 		return nil, fmt.Errorf("searchStatusByURI: error fetching status %s: %v", uri, err)
 	}
