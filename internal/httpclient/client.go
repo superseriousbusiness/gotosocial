@@ -36,6 +36,9 @@ import (
 // ErrInvalidRequest is returned if a given HTTP request is invalid and cannot be performed.
 var ErrInvalidRequest = errors.New("invalid http request")
 
+// ErrInvalidNetwork is returned if the request would not be performed over TCP
+var ErrInvalidNetwork = errors.New("invalid network type")
+
 // ErrReservedAddr is returned if a dialed address resolves to an IP within a blocked or reserved net.
 var ErrReservedAddr = errors.New("dial within blocked / reserved IP range")
 
