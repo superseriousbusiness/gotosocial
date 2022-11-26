@@ -89,14 +89,16 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 		l.Trace("search term is a mention, looking it up...")
 		foundAccount, err := p.searchAccountByMention(ctx, authed, username, domain, search.Resolve)
 		if err != nil {
-			if !errors.Is(err, db.ErrNoEntries) {
-				l.Debugf("error looking up account: %s", err)
-			}
-		} else {
-			foundAccounts = append(foundAccounts, foundAccount)
-			foundOne = true
-			l.Trace("got an account by searching by mention")
+			// if we got a namestring, and we can't get an account for it, we should
+			// return already, because there's no point going any further + trying to
+			// parse this as a URL or whatever
+			l.Debugf("error looking up account: %s", err)
+			return searchResult, nil
 		}
+
+		foundAccounts = append(foundAccounts, foundAccount)
+		foundOne = true
+		l.Trace("got an account by searching by mention")
 	}
 
 	/*
