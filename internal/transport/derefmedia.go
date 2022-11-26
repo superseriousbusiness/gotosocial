@@ -36,7 +36,6 @@ func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL) (io.Read
 		return nil, 0, err
 	}
 	req.Header.Add("Accept", "*/*") // we don't know what kind of media we're going to get here
-	req.Header.Add("User-Agent", t.controller.userAgent)
 	req.Header.Set("Host", iri.Host)
 
 	// Perform the HTTP request
