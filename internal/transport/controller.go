@@ -60,6 +60,7 @@ type controller struct {
 func NewController(db db.DB, federatingDB federatingdb.DB, clock pub.Clock, client pub.HttpClient) Controller {
 	applicationName := config.GetApplicationName()
 	host := config.GetHost()
+	proto := config.GetProtocol()
 	version := config.GetSoftwareVersion()
 
 	c := &controller{
@@ -69,7 +70,7 @@ func NewController(db db.DB, federatingDB federatingdb.DB, clock pub.Clock, clie
 		client:    client,
 		trspCache: cache.New[string, *transport](0, 100, 0),
 		badHosts:  cache.New[string, struct{}](0, 1000, 0),
-		userAgent: fmt.Sprintf("%s; %s (gofed/activity gotosocial-%s)", applicationName, host, version),
+		userAgent: fmt.Sprintf("%s (+%s://%s) gotosocial/%s", applicationName, proto, host, version),
 	}
 
 	// Transport cache has TTL=1hr freq=1min

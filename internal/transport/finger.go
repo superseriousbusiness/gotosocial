@@ -41,7 +41,6 @@ func (t *transport) Finger(ctx context.Context, targetUsername string, targetDom
 	}
 	req.Header.Add("Accept", string(api.AppJSON))
 	req.Header.Add("Accept", "application/jrd+json")
-	req.Header.Add("User-Agent", t.controller.userAgent)
 	req.Header.Set("Host", req.URL.Host)
 
 	// Perform the HTTP request

@@ -171,6 +171,14 @@ First create a user (replace the username, email, and password with appropriate 
 docker exec -it gotosocial /gotosocial/gotosocial admin account create --username some_username --email someone@example.org --password 'some_very_good_password'
 ```
 
+If you are running a version older than 0.6.0, you will need to manually confirm as well:
+
+```bash
+./gotosocial --config-path ./config.yaml admin account confirm --username some_username
+```
+
+Replace `some_username` with the username of the account you just created.
+
 Now promote the user you just created to admin privileges:
 
 ```bash
