@@ -125,7 +125,7 @@ func (d *domainDB) DeleteDomainBlock(ctx context.Context, domain string) db.Erro
 	}
 
 	// Clear domain from cache
-	d.cache.Invalidate(domain)
+	d.cache.Invalidate("Domain", domain)
 
 	return nil
 }
