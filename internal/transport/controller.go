@@ -59,7 +59,7 @@ type controller struct {
 // NewController returns an implementation of the Controller interface for creating new transports
 func NewController(db db.DB, federatingDB federatingdb.DB, clock pub.Clock, client pub.HttpClient) Controller {
 	applicationName := config.GetApplicationName()
-	host := config.GetAccountDomain()
+	host := config.GetHost()
 	proto := config.GetProtocol()
 	version := config.GetSoftwareVersion()
 
