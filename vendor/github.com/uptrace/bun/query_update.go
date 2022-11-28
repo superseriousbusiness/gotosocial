@@ -43,7 +43,7 @@ func (q *UpdateQuery) Conn(db IConn) *UpdateQuery {
 }
 
 func (q *UpdateQuery) Model(model interface{}) *UpdateQuery {
-	q.setTableModel(model)
+	q.setModel(model)
 	return q
 }
 
@@ -53,7 +53,12 @@ func (q *UpdateQuery) Apply(fn func(*UpdateQuery) *UpdateQuery) *UpdateQuery {
 }
 
 func (q *UpdateQuery) With(name string, query schema.QueryAppender) *UpdateQuery {
-	q.addWith(name, query)
+	q.addWith(name, query, false)
+	return q
+}
+
+func (q *UpdateQuery) WithRecursive(name string, query schema.QueryAppender) *UpdateQuery {
+	q.addWith(name, query, true)
 	return q
 }
 
@@ -380,9 +385,14 @@ func (q *UpdateQuery) updateSliceSet(
 	}
 
 	var b []byte
-	for i, field := range fields {
-		if i > 0 {
+	pos := len(b)
+	for _, field := range fields {
+		if field.SkipUpdate() {
+			continue
+		}
+		if len(b) != pos {
 			b = append(b, ", "...)
+			pos = len(b)
 		}
 		if fmter.HasFeature(feature.UpdateMultiTable) {
 			b = append(b, model.table.SQLAlias...)
