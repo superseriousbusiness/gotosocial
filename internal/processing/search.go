@@ -27,7 +27,6 @@ import (
 
 	"codeberg.org/gruf/go-kv"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -109,19 +108,14 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 		if uri, err := url.Parse(query); err == nil {
 			if uri.Scheme == "https" || uri.Scheme == "http" {
 				l.Trace("search term is a uri, looking it up...")
-
-				// don't attempt to resolve (ie., dereference) local accounts/statuses
-				resolve := search.Resolve
-				if uri.Host == config.GetHost() || uri.Host == config.GetAccountDomain() {
-					resolve = false
-				}
-
 				// check if it's a status...
-				foundStatus, err := p.searchStatusByURI(ctx, authed, uri, resolve)
+				foundStatus, err := p.searchStatusByURI(ctx, authed, uri)
 				if err != nil {
-					var errNotRetrievable *dereferencing.ErrNotRetrievable
-					if !errors.As(err, &errNotRetrievable) {
-						// return a proper error only if it wasn't just not retrievable
+					var (
+						errNotRetrievable *dereferencing.ErrNotRetrievable
+						errWrongType      *dereferencing.ErrWrongType
+					)
+					if !errors.As(err, &errNotRetrievable) && !errors.As(err, &errWrongType) {
 						return nil, gtserror.NewErrorInternalError(fmt.Errorf("error looking up status: %w", err))
 					}
 				} else {
@@ -132,11 +126,13 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 
 				// ... or an account
 				if !foundOne {
-					foundAccount, err := p.searchAccountByURI(ctx, authed, uri, resolve)
+					foundAccount, err := p.searchAccountByURI(ctx, authed, uri, search.Resolve)
 					if err != nil {
-						var errNotRetrievable *dereferencing.ErrNotRetrievable
-						if !errors.As(err, &errNotRetrievable) {
-							// return a proper error only if it wasn't just not retrievable
+						var (
+							errNotRetrievable *dereferencing.ErrNotRetrievable
+							errWrongType      *dereferencing.ErrWrongType
+						)
+						if !errors.As(err, &errNotRetrievable) && !errors.As(err, &errWrongType) {
 							return nil, gtserror.NewErrorInternalError(fmt.Errorf("error looking up account: %w", err))
 						}
 					} else {
@@ -206,10 +202,10 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 	return searchResult, nil
 }
 
-func (p *processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Status, dereferencing.Error) {
+func (p *processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL) (*gtsmodel.Status, dereferencing.Error) {
 	status, statusable, err := p.federator.GetStatus(transport.WithFastfail(ctx), authed.Account.Username, uri, true, true)
 	if err != nil {
-		return nil, fmt.Errorf("searchStatusByURI: error fetching status %s: %v", uri, err)
+		return nil, err
 	}
 
 	if !*status.Local && statusable != nil {

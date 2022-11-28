@@ -19,7 +19,10 @@
 package dereferencing
 
 import (
+	"errors"
 	"fmt"
+
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
 // Error aliases common error types that occur when doing dereferencing.
@@ -119,4 +122,26 @@ func newErrOther(err error) Error {
 	return &ErrOther{
 		wrapped: fmt.Errorf("other error: %w", err),
 	}
+}
+
+func wrapDerefError(derefErr error, fluff string) Error {
+	var (
+		err          error
+		errWrongType *ErrWrongType
+	)
+
+	if fluff != "" {
+		err = fmt.Errorf("%s: %w", fluff, derefErr)
+	}
+
+	switch {
+	case errors.Is(derefErr, transport.ErrGone):
+		err = newErrNotRetrievable(err)
+	case errors.As(derefErr, &errWrongType):
+		err = newErrWrongType(err)
+	default:
+		err = newErrTransportError(err)
+	}
+
+	return err
 }

@@ -35,7 +35,7 @@ func (f *federator) GetStatus(ctx context.Context, username string, remoteStatus
 	return f.dereferencer.GetStatus(ctx, username, remoteStatusID, refetch, includeParent)
 }
 
-func (f *federator) EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status, includeParent bool) (*gtsmodel.Status, dereferencing.Error) {
+func (f *federator) EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status, includeParent bool) (*gtsmodel.Status, error) {
 	return f.dereferencer.EnrichRemoteStatus(ctx, username, status, includeParent)
 }
 
@@ -43,10 +43,10 @@ func (f *federator) DereferenceRemoteThread(ctx context.Context, username string
 	f.dereferencer.DereferenceThread(ctx, username, statusIRI, status, statusable)
 }
 
-func (f *federator) GetRemoteInstance(ctx context.Context, username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, dereferencing.Error) {
+func (f *federator) GetRemoteInstance(ctx context.Context, username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error) {
 	return f.dereferencer.GetRemoteInstance(ctx, username, remoteInstanceURI)
 }
 
-func (f *federator) DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) dereferencing.Error {
+func (f *federator) DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) error {
 	return f.dereferencer.DereferenceAnnounce(ctx, announce, requestingUsername)
 }

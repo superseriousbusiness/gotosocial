@@ -226,20 +226,14 @@ func (d *deref) GetAccount(ctx context.Context, params GetAccountParams) (foundA
 			var derefErr error
 			accountable, derefErr = d.dereferenceAccountable(ctx, params.RequestingUsername, params.RemoteAccountID)
 			if derefErr != nil {
-				err = fmt.Errorf("GetRemoteAccount: couldn't dereference accountable: %w", derefErr)
-				var errWrongType *ErrWrongType
-				if errors.Is(derefErr, transport.ErrGone) || errors.As(derefErr, &errWrongType) {
-					err = newErrNotRetrievable(err)
-				} else {
-					err = newErrTransportError(err)
-				}
+				err = wrapDerefError(derefErr, "GetRemoteAccount: error dereferencing Accountable")
 				return
 			}
 
 			var apError error
 			params.RemoteAccountUsername, apError = ap.ExtractPreferredUsername(accountable)
 			if apError != nil {
-				err = newErrOther(fmt.Errorf("GetRemoteAccount: error extracting accountable username: %w", apError))
+				err = newErrOther(fmt.Errorf("GetRemoteAccount: error extracting Accountable username: %w", apError))
 				return
 			}
 		}
@@ -315,13 +309,7 @@ func (d *deref) GetAccount(ctx context.Context, params GetAccountParams) (foundA
 			var derefErr error
 			accountable, derefErr = d.dereferenceAccountable(ctx, params.RequestingUsername, params.RemoteAccountID)
 			if derefErr != nil {
-				err = fmt.Errorf("GetRemoteAccount: couldn't dereference accountable: %w", derefErr)
-				var errWrongType *ErrWrongType
-				if errors.Is(derefErr, transport.ErrGone) || errors.As(derefErr, &errWrongType) {
-					err = newErrNotRetrievable(err)
-				} else {
-					err = newErrTransportError(err)
-				}
+				err = wrapDerefError(derefErr, "GetRemoteAccount: error dereferencing Accountable")
 				return
 			}
 		}
@@ -329,7 +317,7 @@ func (d *deref) GetAccount(ctx context.Context, params GetAccountParams) (foundA
 		// then convert
 		foundAccount, err = d.typeConverter.ASRepresentationToAccount(ctx, accountable, accountDomain, false)
 		if err != nil {
-			err = newErrOther(fmt.Errorf("GetRemoteAccount: error converting accountable to account: %w", err))
+			err = newErrOther(fmt.Errorf("GetRemoteAccount: error converting Accountable to account: %w", err))
 			return
 		}
 
@@ -374,13 +362,7 @@ func (d *deref) GetAccount(ctx context.Context, params GetAccountParams) (foundA
 			var derefErr error
 			accountable, derefErr = d.dereferenceAccountable(ctx, params.RequestingUsername, params.RemoteAccountID)
 			if derefErr != nil {
-				err = fmt.Errorf("GetRemoteAccount: couldn't dereference accountable: %w", derefErr)
-				var errWrongType *ErrWrongType
-				if errors.Is(derefErr, transport.ErrGone) || errors.As(derefErr, &errWrongType) {
-					err = newErrNotRetrievable(err)
-				} else {
-					err = newErrTransportError(err)
-				}
+				err = wrapDerefError(derefErr, "GetRemoteAccount: error dereferencing Accountable")
 				return
 			}
 		}
