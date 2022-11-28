@@ -394,16 +394,16 @@ func (st *DiskStorage) filepath(key string) (string, error) {
 	pb := util.GetPathBuilder()
 	defer util.PutPathBuilder(pb)
 
-	// Generated joined root path
-	pb.AppendString(st.path)
-	pb.AppendString(key)
+	// Generate key path
+	pb.Append(st.path)
+	pb.Append(key)
 
 	// Check for dir traversal outside of root
-	if isDirTraversal(st.path, pb.StringPtr()) {
+	if isDirTraversal(st.path, pb.String()) {
 		return "", ErrInvalidKey
 	}
 
-	return pb.String(), nil
+	return string(pb.B), nil
 }
 
 // isDirTraversal will check if rootPlusPath is a dir traversal outside of root,

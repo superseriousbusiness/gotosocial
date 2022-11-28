@@ -676,10 +676,6 @@ func (st *BlockStorage) nodePathForKey(key string) (string, error) {
 	pb := util.GetPathBuilder()
 	defer util.PutPathBuilder(pb)
 
-	// Append the nodepath to key
-	pb.AppendString(st.nodePath)
-	pb.AppendString(key)
-
 	// Return joined + cleaned node-path
 	return pb.Join(st.nodePath, key), nil
 }
