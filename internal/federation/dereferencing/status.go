@@ -42,7 +42,7 @@ import (
 //
 // EnrichRemoteStatus is mostly useful for calling after a status has been initially created by
 // the federatingDB's Create function, but additional dereferencing is needed on it.
-func (d *deref) EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status, includeParent bool) (*gtsmodel.Status, error) {
+func (d *deref) EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status, includeParent bool) (*gtsmodel.Status, Error) {
 	if err := d.populateStatusFields(ctx, status, username, includeParent); err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (d *deref) EnrichRemoteStatus(ctx context.Context, username string, status 
 //
 // GetAccount will guard against trying to do http calls to fetch a status that belongs to this instance.
 // Instead of making calls, it will just return the status early if it finds it, or return an error.
-func (d *deref) GetStatus(ctx context.Context, username string, statusURI *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, error) {
+func (d *deref) GetStatus(ctx context.Context, username string, statusURI *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, Error) {
 	uriString := statusURI.String()
 
 	// try to get by URI first
@@ -236,7 +236,7 @@ func (d *deref) dereferenceStatusable(ctx context.Context, username string, remo
 		return p, nil
 	}
 
-	return nil, fmt.Errorf("DereferenceStatusable: type name %s not supported", t.GetTypeName())
+	return nil, newErrWrongType(fmt.Errorf("DereferenceStatusable: type name %s not supported as Statusable", t.GetTypeName()))
 }
 
 // populateStatusFields fetches all the information we temporarily pinned to an incoming

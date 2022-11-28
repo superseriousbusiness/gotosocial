@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (d *deref) DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) error {
+func (d *deref) DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) Error {
 	if announce.BoostOf == nil {
 		// we can't do anything unfortunately
 		return errors.New("DereferenceAnnounce: no URI to dereference")

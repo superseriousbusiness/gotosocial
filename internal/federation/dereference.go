@@ -27,15 +27,15 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (f *federator) GetAccount(ctx context.Context, params dereferencing.GetAccountParams) (*gtsmodel.Account, error) {
+func (f *federator) GetAccount(ctx context.Context, params dereferencing.GetAccountParams) (*gtsmodel.Account, dereferencing.Error) {
 	return f.dereferencer.GetAccount(ctx, params)
 }
 
-func (f *federator) GetStatus(ctx context.Context, username string, remoteStatusID *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, error) {
+func (f *federator) GetStatus(ctx context.Context, username string, remoteStatusID *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, dereferencing.Error) {
 	return f.dereferencer.GetStatus(ctx, username, remoteStatusID, refetch, includeParent)
 }
 
-func (f *federator) EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status, includeParent bool) (*gtsmodel.Status, error) {
+func (f *federator) EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status, includeParent bool) (*gtsmodel.Status, dereferencing.Error) {
 	return f.dereferencer.EnrichRemoteStatus(ctx, username, status, includeParent)
 }
 
@@ -43,10 +43,10 @@ func (f *federator) DereferenceRemoteThread(ctx context.Context, username string
 	f.dereferencer.DereferenceThread(ctx, username, statusIRI, status, statusable)
 }
 
-func (f *federator) GetRemoteInstance(ctx context.Context, username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error) {
+func (f *federator) GetRemoteInstance(ctx context.Context, username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, dereferencing.Error) {
 	return f.dereferencer.GetRemoteInstance(ctx, username, remoteInstanceURI)
 }
 
-func (f *federator) DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) error {
+func (f *federator) DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) dereferencing.Error {
 	return f.dereferencer.DereferenceAnnounce(ctx, announce, requestingUsername)
 }

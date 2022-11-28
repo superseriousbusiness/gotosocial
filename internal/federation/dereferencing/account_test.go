@@ -169,7 +169,9 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUsername() 
 		RequestingUsername:    fetchingAccount.Username,
 		RemoteAccountUsername: "thisaccountdoesnotexist",
 	})
-	suite.EqualError(err, "GetRemoteAccount: couldn't retrieve account locally and won't try to resolve it")
+	var errNotRetrievable *dereferencing.ErrNotRetrievable
+	suite.ErrorAs(err, &errNotRetrievable)
+	suite.EqualError(err, "item could not be retrieved: GetRemoteAccount: couldn't retrieve account locally and not allowed to resolve it")
 	suite.Nil(fetchedAccount)
 }
 
@@ -181,7 +183,9 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUsernameDom
 		RemoteAccountUsername: "thisaccountdoesnotexist",
 		RemoteAccountHost:     "localhost:8080",
 	})
-	suite.EqualError(err, "GetRemoteAccount: couldn't retrieve account locally and won't try to resolve it")
+	var errNotRetrievable *dereferencing.ErrNotRetrievable
+	suite.ErrorAs(err, &errNotRetrievable)
+	suite.EqualError(err, "item could not be retrieved: GetRemoteAccount: couldn't retrieve account locally and not allowed to resolve it")
 	suite.Nil(fetchedAccount)
 }
 
@@ -192,7 +196,9 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUserURI() {
 		RequestingUsername: fetchingAccount.Username,
 		RemoteAccountID:    testrig.URLMustParse("http://localhost:8080/users/thisaccountdoesnotexist"),
 	})
-	suite.EqualError(err, "GetRemoteAccount: couldn't retrieve account locally and won't try to resolve it")
+	var errNotRetrievable *dereferencing.ErrNotRetrievable
+	suite.ErrorAs(err, &errNotRetrievable)
+	suite.EqualError(err, "item could not be retrieved: GetRemoteAccount: couldn't retrieve account locally and not allowed to resolve it")
 	suite.Nil(fetchedAccount)
 }
 

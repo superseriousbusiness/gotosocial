@@ -28,7 +28,6 @@ import (
 	"codeberg.org/gruf/go-kv"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -89,10 +88,11 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 		l.Trace("search term is a mention, looking it up...")
 		foundAccount, err := p.searchAccountByMention(ctx, authed, username, domain, search.Resolve)
 		if err != nil {
-			// if we got a namestring, and we can't get an account for it, we should
-			// return already, because there's no point going any further + trying to
-			// parse this as a URL or whatever
-			l.Debugf("error looking up account: %s", err)
+			var errNotRetrievable *dereferencing.ErrNotRetrievable
+			if !errors.As(err, &errNotRetrievable) {
+				// return a proper error only if it wasn't just not retrievable
+				return nil, gtserror.NewErrorInternalError(fmt.Errorf("error looking up account: %w", err))
+			}
 			return searchResult, nil
 		}
 
@@ -119,8 +119,10 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 				// check if it's a status...
 				foundStatus, err := p.searchStatusByURI(ctx, authed, uri, resolve)
 				if err != nil {
-					if !errors.Is(err, db.ErrNoEntries) {
-						l.Debugf("error searching status by uri: %s", err)
+					var errNotRetrievable *dereferencing.ErrNotRetrievable
+					if !errors.As(err, &errNotRetrievable) {
+						// return a proper error only if it wasn't just not retrievable
+						return nil, gtserror.NewErrorInternalError(fmt.Errorf("error looking up status: %w", err))
 					}
 				} else {
 					foundStatuses = append(foundStatuses, foundStatus)
@@ -132,8 +134,10 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 				if !foundOne {
 					foundAccount, err := p.searchAccountByURI(ctx, authed, uri, resolve)
 					if err != nil {
-						if !errors.Is(err, db.ErrNoEntries) {
-							l.Debugf("error searching account by uri %s: %s", uri, err)
+						var errNotRetrievable *dereferencing.ErrNotRetrievable
+						if !errors.As(err, &errNotRetrievable) {
+							// return a proper error only if it wasn't just not retrievable
+							return nil, gtserror.NewErrorInternalError(fmt.Errorf("error looking up account: %w", err))
 						}
 					} else {
 						foundAccounts = append(foundAccounts, foundAccount)
@@ -159,8 +163,8 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 		// make sure there's no block in either direction between the account and the requester
 		blocked, err := p.db.IsBlocked(ctx, authed.Account.ID, foundAccount.ID, true)
 		if err != nil {
-			l.Debugf("error checking block between %s and %s: %s", authed.Account.ID, foundAccount.ID, err)
-			continue
+			err = fmt.Errorf("SearchGet: error checking block between %s and %s: %s", authed.Account.ID, foundAccount.ID, err)
+			return nil, gtserror.NewErrorInternalError(err)
 		}
 
 		if blocked {
@@ -170,8 +174,8 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 
 		apiAcct, err := p.tc.AccountToAPIAccountPublic(ctx, foundAccount)
 		if err != nil {
-			l.Debugf("error converting account %s to api account: %s", foundAccount.ID, err)
-			continue
+			err = fmt.Errorf("SearchGet: error converting account %s to api account: %s", foundAccount.ID, err)
+			return nil, gtserror.NewErrorInternalError(err)
 		}
 
 		searchResult.Accounts = append(searchResult.Accounts, *apiAcct)
@@ -181,8 +185,8 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 		// make sure each found status is visible to the requester
 		visible, err := p.filter.StatusVisible(ctx, foundStatus, authed.Account)
 		if err != nil {
-			l.Debugf("error checking visibility of status %s for account %s: %s", foundStatus.ID, authed.Account.ID, err)
-			continue
+			err = fmt.Errorf("SearchGet: error checking visibility of status %s for account %s: %s", foundStatus.ID, authed.Account.ID, err)
+			return nil, gtserror.NewErrorInternalError(err)
 		}
 
 		if !visible {
@@ -192,8 +196,8 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 
 		apiStatus, err := p.tc.StatusToAPIStatus(ctx, foundStatus, authed.Account)
 		if err != nil {
-			l.Debugf("error converting status %s to api status: %s", foundStatus.ID, err)
-			continue
+			err = fmt.Errorf("SearchGet: error converting status %s to api status: %s", foundStatus.ID, err)
+			return nil, gtserror.NewErrorInternalError(err)
 		}
 
 		searchResult.Statuses = append(searchResult.Statuses, *apiStatus)
@@ -202,7 +206,7 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 	return searchResult, nil
 }
 
-func (p *processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Status, error) {
+func (p *processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Status, dereferencing.Error) {
 	status, statusable, err := p.federator.GetStatus(transport.WithFastfail(ctx), authed.Account.Username, uri, true, true)
 	if err != nil {
 		return nil, fmt.Errorf("searchStatusByURI: error fetching status %s: %v", uri, err)
@@ -216,32 +220,16 @@ func (p *processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, u
 	return status, nil
 }
 
-func (p *processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Account, error) {
-	account, err := p.federator.GetAccount(transport.WithFastfail(ctx), dereferencing.GetAccountParams{
+func (p *processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Account, dereferencing.Error) {
+	return p.federator.GetAccount(transport.WithFastfail(ctx), dereferencing.GetAccountParams{
 		RequestingUsername: authed.Account.Username,
 		RemoteAccountID:    uri,
 		Blocking:           true,
 		SkipResolve:        !resolve,
 	})
-
-	if err != nil {
-		return nil, fmt.Errorf("searchAccountByURI: error calling %s, and resolve is false", uri)
-	}
-
-	return account, nil
 }
 
-func (p *processor) searchAccountByMention(ctx context.Context, authed *oauth.Auth, username string, domain string, resolve bool) (*gtsmodel.Account, error) {
-	// if it's a local account we can skip a whole bunch of stuff
-	if domain == config.GetHost() || domain == config.GetAccountDomain() || domain == "" {
-		maybeAcct, err := p.db.GetAccountByUsernameDomain(ctx, username, "")
-		if err != nil {
-			return nil, fmt.Errorf("searchAccountByMention: error getting local account by username: %s", err)
-		}
-		return maybeAcct, nil
-	}
-
-	// we don't have it yet, try to find it remotely
+func (p *processor) searchAccountByMention(ctx context.Context, authed *oauth.Auth, username string, domain string, resolve bool) (*gtsmodel.Account, dereferencing.Error) {
 	return p.federator.GetAccount(transport.WithFastfail(ctx), dereferencing.GetAccountParams{
 		RequestingUsername:    authed.Account.Username,
 		RemoteAccountUsername: username,
