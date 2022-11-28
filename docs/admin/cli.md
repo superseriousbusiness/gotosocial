@@ -35,7 +35,7 @@ You can set these options using environment variables, passing them as CLI flags
 
 ## gotosocial admin
 
-Contains `account` subcommands.
+Contains `account`, `export`, `import`, and `media` subcommands.
 
 ### gotosocial admin account create
 
@@ -68,7 +68,7 @@ gotosocial admin account create \
 
 ### gotosocial admin account confirm
 
-This command can be used to confirm a user+account on your instance, allowing them to log in and use the account.
+This command can be used to confirm a user+account on your instance, allowing them to log in and use the account. Note that if the account was created using `admin account create` this is not necessary.
 
 `gotosocial admin account confirm --help`:
 
@@ -253,4 +253,37 @@ Example:
 
 ```bash
 gotosocial admin import --path example.json --config-path config.yaml
+```
+
+### gotosocial admin media prune orphaned
+
+This command can be used to prune orphaned media from your GoToSocial.
+
+Orphaned media is defined as media that is in storage under a key that matches the format used by GoToSocial, but which does not have a corresponding database entry. This is useful for excising files that may be remaining from a previous installation, or files that were placed in storage mistakenly.
+
+**This command only works when GoToSocial is not running, since it acquires an exclusive lock on storage. Stop GoToSocial first before running this command!**
+
+```text
+prune orphaned media from storage
+
+Usage:
+  gotosocial admin media prune orphaned [flags]
+
+Flags:
+      --dry-run   perform a dry run and only log number of items eligible for pruning (default true)
+  -h, --help      help for orphaned
+```
+
+By default, this command performs a dry run, which will log how many items can be pruned. To do it for real, add `--dry-run=false` to the command.
+
+Example (dry run):
+
+```bash
+gotosocial admin media prune orphaned
+```
+
+Example (for real):
+
+```bash
+gotosocial admin media prune orphaned --dry-run=false
 ```

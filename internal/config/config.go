@@ -125,14 +125,15 @@ type Configuration struct {
 	SyslogProtocol string `name:"syslog-protocol" usage:"Protocol to use when directing logs to syslog. Leave empty to connect to local syslog."`
 	SyslogAddress  string `name:"syslog-address" usage:"Address:port to send syslog logs to. Leave empty to connect to local syslog."`
 
-	// TODO: move these elsewhere, these are more ephemeral vs long-running flags like above
-	AdminAccountUsername string `name:"username" usage:"the username to create/delete/etc"`
-	AdminAccountEmail    string `name:"email" usage:"the email address of this account"`
-	AdminAccountPassword string `name:"password" usage:"the password to set for this account"`
-	AdminTransPath       string `name:"path" usage:"the path of the file to import from/export to"`
-
 	AdvancedCookiesSamesite   string `name:"advanced-cookies-samesite" usage:"'strict' or 'lax', see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite"`
 	AdvancedRateLimitRequests int    `name:"advanced-rate-limit-requests" usage:"Amount of HTTP requests to permit within a 5 minute window. 0 or less turns rate limiting off."`
+
+	// TODO: move these elsewhere, these are more ephemeral vs long-running flags like above
+	AdminAccountUsername  string `name:"username" usage:"the username to create/delete/etc"`
+	AdminAccountEmail     string `name:"email" usage:"the email address of this account"`
+	AdminAccountPassword  string `name:"password" usage:"the password to set for this account"`
+	AdminTransPath        string `name:"path" usage:"the path of the file to import from/export to"`
+	AdminMediaPruneDryRun bool   `name:"dry-run" usage:"perform a dry run and only log number of items eligible for pruning"`
 }
 
 // MarshalMap will marshal current Configuration into a map structure (useful for JSON).

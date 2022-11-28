@@ -410,6 +410,7 @@ span.form-info {
 
 		.emoji-group {
 			display: flex;
+			flex-wrap: wrap;
 	
 			a {
 				border-radius: $br;
