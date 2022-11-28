@@ -575,7 +575,16 @@ func Xabs(t *TLS, j int32) int32 {
 	return -j
 }
 
+func Xllabs(tls *TLS, a int64) int64 {
+	if a >= int64(0) {
+		return a
+	}
+
+	return -a
+}
+
 func X__builtin_isnan(t *TLS, x float64) int32    { return Bool32(math.IsNaN(x)) }
+func X__builtin_llabs(tls *TLS, a int64) int64    { return Xllabs(tls, a) }
 func Xacos(t *TLS, x float64) float64             { return math.Acos(x) }
 func Xacosh(t *TLS, x float64) float64            { return math.Acosh(x) }
 func Xasin(t *TLS, x float64) float64             { return math.Asin(x) }
