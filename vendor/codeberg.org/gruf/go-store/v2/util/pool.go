@@ -1,16 +1,22 @@
 package util
 
 import (
-	"codeberg.org/gruf/go-fastpath"
-	"codeberg.org/gruf/go-pools"
+	"sync"
+
+	"codeberg.org/gruf/go-fastpath/v2"
 )
 
 // pathBuilderPool is the global fastpath.Builder pool.
-var pathBuilderPool = pools.NewPathBuilderPool(512)
+var pathBuilderPool = sync.Pool{
+	New: func() any {
+		return &fastpath.Builder{B: make([]byte, 0, 512)}
+	},
+}
 
 // GetPathBuilder fetches a fastpath.Builder object from the pool.
 func GetPathBuilder() *fastpath.Builder {
-	return pathBuilderPool.Get()
+	pb, _ := pathBuilderPool.Get().(*fastpath.Builder)
+	return pb
 }
 
 // PutPathBuilder places supplied fastpath.Builder back in the pool.

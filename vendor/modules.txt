@@ -30,6 +30,9 @@ codeberg.org/gruf/go-fastcopy
 # codeberg.org/gruf/go-fastpath v1.0.3
 ## explicit; go 1.14
 codeberg.org/gruf/go-fastpath
+# codeberg.org/gruf/go-fastpath/v2 v2.0.0
+## explicit; go 1.14
+codeberg.org/gruf/go-fastpath/v2
 # codeberg.org/gruf/go-hashenc v1.0.2
 ## explicit; go 1.16
 codeberg.org/gruf/go-hashenc
@@ -58,7 +61,7 @@ codeberg.org/gruf/go-runners
 # codeberg.org/gruf/go-sched v1.1.1
 ## explicit; go 1.19
 codeberg.org/gruf/go-sched
-# codeberg.org/gruf/go-store/v2 v2.0.9
+# codeberg.org/gruf/go-store/v2 v2.0.10
 ## explicit; go 1.19
 codeberg.org/gruf/go-store/v2/kv
 codeberg.org/gruf/go-store/v2/storage

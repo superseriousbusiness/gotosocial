@@ -5,7 +5,7 @@ import (
 	"os"
 	"syscall"
 
-	"codeberg.org/gruf/go-fastpath"
+	"codeberg.org/gruf/go-fastpath/v2"
 	"codeberg.org/gruf/go-store/v2/util"
 )
 
