@@ -44,7 +44,7 @@ func (q *InsertQuery) Conn(db IConn) *InsertQuery {
 }
 
 func (q *InsertQuery) Model(model interface{}) *InsertQuery {
-	q.setTableModel(model)
+	q.setModel(model)
 	return q
 }
 
@@ -54,7 +54,12 @@ func (q *InsertQuery) Apply(fn func(*InsertQuery) *InsertQuery) *InsertQuery {
 }
 
 func (q *InsertQuery) With(name string, query schema.QueryAppender) *InsertQuery {
-	q.addWith(name, query)
+	q.addWith(name, query, false)
+	return q
+}
+
+func (q *InsertQuery) WithRecursive(name string, query schema.QueryAppender) *InsertQuery {
+	q.addWith(name, query, true)
 	return q
 }
 
