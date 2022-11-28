@@ -44,6 +44,8 @@ sudoedit /gotosocial/config.yaml
 
 Then set `letsencrypt-enabled: false`.
 
+If the reverse proxy will be running on the same machine, set the `bind-address` to `"localhost"` so that the GoToSocial server is only accessible via loopback. Otherwise it may be possible to bypass your proxy by connecting to GoToSocial directly, which might be undesirable.
+
 If GoToSocial is already running, restart it.
 
 ```bash
