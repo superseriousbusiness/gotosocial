@@ -35,7 +35,7 @@ func (q *DeleteQuery) Conn(db IConn) *DeleteQuery {
 }
 
 func (q *DeleteQuery) Model(model interface{}) *DeleteQuery {
-	q.setTableModel(model)
+	q.setModel(model)
 	return q
 }
 
@@ -45,7 +45,12 @@ func (q *DeleteQuery) Apply(fn func(*DeleteQuery) *DeleteQuery) *DeleteQuery {
 }
 
 func (q *DeleteQuery) With(name string, query schema.QueryAppender) *DeleteQuery {
-	q.addWith(name, query)
+	q.addWith(name, query, false)
+	return q
+}
+
+func (q *DeleteQuery) WithRecursive(name string, query schema.QueryAppender) *DeleteQuery {
+	q.addWith(name, query, true)
 	return q
 }
 
@@ -158,7 +163,6 @@ func (q *DeleteQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte, e
 		return upd.AppendQuery(fmter, b)
 	}
 
-	q = q.WhereDeleted()
 	withAlias := q.db.features.Has(feature.DeleteTableAlias)
 
 	b, err = q.appendWith(fmter, b)

@@ -603,7 +603,7 @@ github.com/ulule/limiter/v3/drivers/middleware/gin
 github.com/ulule/limiter/v3/drivers/store/common
 github.com/ulule/limiter/v3/drivers/store/memory
 github.com/ulule/limiter/v3/internal/bytebuffer
-# github.com/uptrace/bun v1.1.8
+# github.com/uptrace/bun v1.1.9
 ## explicit; go 1.18
 github.com/uptrace/bun
 github.com/uptrace/bun/dialect
@@ -618,7 +618,7 @@ github.com/uptrace/bun/schema
 # github.com/uptrace/bun/dialect/pgdialect v1.1.8
 ## explicit; go 1.18
 github.com/uptrace/bun/dialect/pgdialect
-# github.com/uptrace/bun/dialect/sqlitedialect v1.1.8
+# github.com/uptrace/bun/dialect/sqlitedialect v1.1.9
 ## explicit; go 1.18
 github.com/uptrace/bun/dialect/sqlitedialect
 # github.com/vmihailenco/msgpack/v5 v5.3.5
@@ -687,7 +687,7 @@ golang.org/x/net/publicsuffix
 ## explicit; go 1.17
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20220913120320-3275c407cedc
+# golang.org/x/sys v0.2.0
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
