@@ -36,7 +36,7 @@ Then extract it:
 tar -xzf gotosocial_0.5.2_linux_amd64.tar.gz
 ```
 
-This will put the `gotosocial` binary in your current directory, in addition to the `web` folder, which contains assets for the web frontend, and an `example` folder, which contains a sample configuration file.
+This will put the `gotosocial` binary in your current directory, in addition to the `example` folder, which contains a sample configuration file.
 
 ## 3. Edit Configuration File
 

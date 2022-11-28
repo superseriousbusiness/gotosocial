@@ -49,6 +49,7 @@ nav:
     - "admin/admin_panel.md"
     - "admin/cli.md"
     - "admin/backup_and_restore.md"
+    - "admin/frontend_customization.md"
   - "Federation":
     - "federation/index.md"
     - "federation/glossary.md"
