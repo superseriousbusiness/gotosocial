@@ -82,10 +82,6 @@ func (c *converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 }
 
 func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.Account) (*model.Account, error) {
-	if a == nil {
-		return nil, fmt.Errorf("given account was nil")
-	}
-
 	// count followers
 	followersCount, err := c.db.CountAccountFollowedBy(ctx, a.ID, false)
 	if err != nil {
@@ -118,11 +114,10 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	if a.AvatarMediaAttachmentID != "" {
 		if a.AvatarMediaAttachment == nil {
 			avi, err := c.db.GetAttachmentByID(ctx, a.AvatarMediaAttachmentID)
-			if err == nil {
-				a.AvatarMediaAttachment = avi
-			} else {
+			if err != nil {
 				log.Errorf("AccountToAPIAccountPublic: error getting Avatar with id %s: %s", a.AvatarMediaAttachmentID, err)
 			}
+			a.AvatarMediaAttachment = avi
 		}
 		if a.AvatarMediaAttachment != nil {
 			aviURL = a.AvatarMediaAttachment.URL
@@ -136,11 +131,10 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	if a.HeaderMediaAttachmentID != "" {
 		if a.HeaderMediaAttachment == nil {
 			avi, err := c.db.GetAttachmentByID(ctx, a.HeaderMediaAttachmentID)
-			if err == nil {
-				a.HeaderMediaAttachment = avi
-			} else {
+			if err != nil {
 				log.Errorf("AccountToAPIAccountPublic: error getting Header with id %s: %s", a.HeaderMediaAttachmentID, err)
 			}
+			a.HeaderMediaAttachment = avi
 		}
 		if a.HeaderMediaAttachment != nil {
 			headerURL = a.HeaderMediaAttachment.URL
@@ -148,41 +142,25 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		}
 	}
 
-	// get the fields set on this account
-	fields := []model.Field{}
-	for _, f := range a.Fields {
+	// preallocate frontend fields slice
+	fields := make([]model.Field, len(a.Fields))
+
+	// Convert account GTS model fields to frontend
+	for i, field := range a.Fields {
 		mField := model.Field{
-			Name:  f.Name,
-			Value: f.Value,
+			Name:  field.Name,
+			Value: field.Value,
 		}
-		if !f.VerifiedAt.IsZero() {
-			mField.VerifiedAt = util.FormatISO8601(f.VerifiedAt)
+		if !field.VerifiedAt.IsZero() {
+			mField.VerifiedAt = util.FormatISO8601(field.VerifiedAt)
 		}
-		fields = append(fields, mField)
+		fields[i] = mField
 	}
 
-	// account emojis
-	emojis := []model.Emoji{}
-	gtsEmojis := a.Emojis
-	if len(a.EmojiIDs) > len(gtsEmojis) {
-		gtsEmojis = []*gtsmodel.Emoji{}
-		for _, emojiID := range a.EmojiIDs {
-			emoji, err := c.db.GetEmojiByID(ctx, emojiID)
-			if err != nil {
-				return nil, fmt.Errorf("AccountToAPIAccountPublic: error getting emoji %s from database: %s", emojiID, err)
-			}
-			gtsEmojis = append(gtsEmojis, emoji)
-		}
-	}
-	for _, emoji := range gtsEmojis {
-		if *emoji.Disabled {
-			continue
-		}
-		apiEmoji, err := c.EmojiToAPIEmoji(ctx, emoji)
-		if err != nil {
-			return nil, fmt.Errorf("AccountToAPIAccountPublic: error converting emoji to api emoji: %s", err)
-		}
-		emojis = append(emojis, apiEmoji)
+	// convert account gts model emojis to frontend api model emojis
+	apiEmojis, err := c.convertEmojisToAPIEmojis(ctx, a.Emojis, a.EmojiIDs)
+	if err != nil {
+		log.Errorf("error converting account emojis: %v", err)
 	}
 
 	var (
@@ -234,7 +212,7 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		FollowingCount: followingCount,
 		StatusesCount:  statusesCount,
 		LastStatusAt:   lastStatusAt,
-		Emojis:         emojis,
+		Emojis:         apiEmojis,
 		Fields:         fields,
 		Suspended:      suspended,
 		CustomCSS:      a.CustomCSS,
@@ -497,130 +475,37 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		return nil, fmt.Errorf("error parsing account of status author: %s", err)
 	}
 
-	apiAttachments := []model.Attachment{}
-	// the status might already have some gts attachments on it if it's not been pulled directly from the database
-	// if so, we can directly convert the gts attachments into api ones
-	if s.Attachments != nil {
-		for _, gtsAttachment := range s.Attachments {
-			apiAttachment, err := c.AttachmentToAPIAttachment(ctx, gtsAttachment)
-			if err != nil {
-				log.Errorf("error converting attachment with id %s: %s", gtsAttachment.ID, err)
-				continue
-			}
-			apiAttachments = append(apiAttachments, apiAttachment)
-		}
-		// the status doesn't have gts attachments on it, but it does have attachment IDs
-		// in this case, we need to pull the gts attachments from the db to convert them into api ones
-	} else {
-		for _, aID := range s.AttachmentIDs {
-			gtsAttachment, err := c.db.GetAttachmentByID(ctx, aID)
-			if err != nil {
-				log.Errorf("error getting attachment with id %s: %s", aID, err)
-				continue
-			}
-			apiAttachment, err := c.AttachmentToAPIAttachment(ctx, gtsAttachment)
-			if err != nil {
-				log.Errorf("error converting attachment with id %s: %s", aID, err)
-				continue
-			}
-			apiAttachments = append(apiAttachments, apiAttachment)
-		}
+	// convert status gts model attachments to frontend api model attachments
+	apiAttachments, err := c.convertAttachmentsToAPIAttachments(ctx, s.Attachments, s.AttachmentIDs)
+	if err != nil {
+		log.Errorf("error converting status attachments: %v", err)
 	}
 
-	apiMentions := []model.Mention{}
-	// the status might already have some gts mentions on it if it's not been pulled directly from the database
-	// if so, we can directly convert the gts mentions into api ones
-	if s.Mentions != nil {
-		for _, gtsMention := range s.Mentions {
-			apiMention, err := c.MentionToAPIMention(ctx, gtsMention)
-			if err != nil {
-				log.Errorf("error converting mention with id %s: %s", gtsMention.ID, err)
-				continue
-			}
-			apiMentions = append(apiMentions, apiMention)
-		}
-		// the status doesn't have gts mentions on it, but it does have mention IDs
-		// in this case, we need to pull the gts mentions from the db to convert them into api ones
-	} else {
-		for _, mID := range s.MentionIDs {
-			gtsMention, err := c.db.GetMention(ctx, mID)
-			if err != nil {
-				log.Errorf("error getting mention with id %s: %s", mID, err)
-				continue
-			}
-			apiMention, err := c.MentionToAPIMention(ctx, gtsMention)
-			if err != nil {
-				log.Errorf("error converting mention with id %s: %s", gtsMention.ID, err)
-				continue
-			}
-			apiMentions = append(apiMentions, apiMention)
-		}
+	// convert status gts model mentions to frontend api model mentions
+	apiMentions, err := c.convertMentionsToAPIMentions(ctx, s.Mentions, s.MentionIDs)
+	if err != nil {
+		log.Errorf("error converting status mentions: %v", err)
 	}
 
-	apiTags := []model.Tag{}
-	// the status might already have some gts tags on it if it's not been pulled directly from the database
-	// if so, we can directly convert the gts tags into api ones
-	if s.Tags != nil {
-		for _, gtsTag := range s.Tags {
-			apiTag, err := c.TagToAPITag(ctx, gtsTag)
-			if err != nil {
-				log.Errorf("error converting tag with id %s: %s", gtsTag.ID, err)
-				continue
-			}
-			apiTags = append(apiTags, apiTag)
-		}
-		// the status doesn't have gts tags on it, but it does have tag IDs
-		// in this case, we need to pull the gts tags from the db to convert them into api ones
-	} else {
-		for _, t := range s.TagIDs {
-			gtsTag := &gtsmodel.Tag{}
-			if err := c.db.GetByID(ctx, t, gtsTag); err != nil {
-				log.Errorf("error getting tag with id %s: %s", t, err)
-				continue
-			}
-			apiTag, err := c.TagToAPITag(ctx, gtsTag)
-			if err != nil {
-				log.Errorf("error converting tag with id %s: %s", gtsTag.ID, err)
-				continue
-			}
-			apiTags = append(apiTags, apiTag)
-		}
+	// convert status gts model tags to frontend api model tags
+	apiTags, err := c.convertTagsToAPITags(ctx, s.Tags, s.TagIDs)
+	if err != nil {
+		log.Errorf("error converting status tags: %v", err)
 	}
 
-	apiEmojis := []model.Emoji{}
-	// the status might already have some gts emojis on it if it's not been pulled directly from the database
-	// if so, we can directly convert the gts emojis into api ones
-	if s.Emojis != nil {
-		for _, gtsEmoji := range s.Emojis {
-			apiEmoji, err := c.EmojiToAPIEmoji(ctx, gtsEmoji)
-			if err != nil {
-				log.Errorf("error converting emoji with id %s: %s", gtsEmoji.ID, err)
-				continue
-			}
-			apiEmojis = append(apiEmojis, apiEmoji)
-		}
-		// the status doesn't have gts emojis on it, but it does have emoji IDs
-		// in this case, we need to pull the gts emojis from the db to convert them into api ones
-	} else {
-		for _, e := range s.EmojiIDs {
-			gtsEmoji := &gtsmodel.Emoji{}
-			if err := c.db.GetByID(ctx, e, gtsEmoji); err != nil {
-				log.Errorf("error getting emoji with id %s: %s", e, err)
-				continue
-			}
-			apiEmoji, err := c.EmojiToAPIEmoji(ctx, gtsEmoji)
-			if err != nil {
-				log.Errorf("error converting emoji with id %s: %s", gtsEmoji.ID, err)
-				continue
-			}
-			apiEmojis = append(apiEmojis, apiEmoji)
-		}
+	// convert status gts model emojis to frontend api model emojis
+	apiEmojis, err := c.convertEmojisToAPIEmojis(ctx, s.Emojis, s.EmojiIDs)
+	if err != nil {
+		log.Errorf("error converting status emojis: %v", err)
 	}
 
-	statusInteractions := &statusInteractions{}
-	si, err := c.interactionsWithStatusForAccount(ctx, s, requestingAccount)
-	if err == nil {
-		statusInteractions = si
+	// Fetch status interaction flags for acccount
+	interacts, err := c.interactionsWithStatusForAccount(ctx, s, requestingAccount)
+	if err != nil {
+		log.Errorf("error getting interactions for status %s for account %s: %v", s.ID, requestingAccount.ID, err)
+
+		// Ensure a non nil object
+		interacts = &statusInteractions{}
 	}
 
 	apiStatus := &model.Status{
@@ -637,10 +522,10 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		RepliesCount:       repliesCount,
 		ReblogsCount:       reblogsCount,
 		FavouritesCount:    favesCount,
-		Favourited:         statusInteractions.Faved,
-		Bookmarked:         statusInteractions.Bookmarked,
-		Muted:              statusInteractions.Muted,
-		Reblogged:          statusInteractions.Reblogged,
+		Favourited:         interacts.Faved,
+		Bookmarked:         interacts.Bookmarked,
+		Muted:              interacts.Muted,
+		Reblogged:          interacts.Reblogged,
 		Pinned:             *s.Pinned,
 		Content:            s.Content,
 		Reblog:             nil,
@@ -895,4 +780,168 @@ func (c *converter) DomainBlockToAPIDomainBlock(ctx context.Context, b *gtsmodel
 	}
 
 	return domainBlock, nil
+}
+
+// convertAttachmentsToAPIAttachments will convert a slice of GTS model attachments to frontend API model attachments, falling back to IDs if no GTS models supplied.
+func (c *converter) convertAttachmentsToAPIAttachments(ctx context.Context, attachments []*gtsmodel.MediaAttachment, attachmentIDs []string) ([]model.Attachment, error) {
+	var errs multiError
+
+	if len(attachments) == 0 {
+		// GTS model attachments were not populated
+
+		// Preallocate expected GTS slice
+		attachments = make([]*gtsmodel.MediaAttachment, 0, len(attachmentIDs))
+
+		// Fetch GTS models for attachment IDs
+		for _, id := range attachmentIDs {
+			attachment, err := c.db.GetAttachmentByID(ctx, id)
+			if err != nil {
+				errs.Appendf("error fetching attachment %s from database: %v", id, err)
+				continue
+			}
+			attachments = append(attachments, attachment)
+		}
+	}
+
+	// Preallocate expected frontend slice
+	apiAttachments := make([]model.Attachment, 0, len(attachments))
+
+	// Convert GTS models to frontend models
+	for _, attachment := range attachments {
+		apiAttachment, err := c.AttachmentToAPIAttachment(ctx, attachment)
+		if err != nil {
+			errs.Appendf("error converting attchment %s to api attachment: %v", attachment.ID, err)
+			continue
+		}
+		apiAttachments = append(apiAttachments, apiAttachment)
+	}
+
+	return apiAttachments, errs.Combine()
+}
+
+// convertEmojisToAPIEmojis will convert a slice of GTS model emojis to frontend API model emojis, falling back to IDs if no GTS models supplied.
+func (c *converter) convertEmojisToAPIEmojis(ctx context.Context, emojis []*gtsmodel.Emoji, emojiIDs []string) ([]model.Emoji, error) {
+	var errs multiError
+
+	if len(emojis) == 0 {
+		// GTS model attachments were not populated
+
+		// Preallocate expected GTS slice
+		emojis = make([]*gtsmodel.Emoji, 0, len(emojiIDs))
+
+		// Fetch GTS models for emoji IDs
+		for _, id := range emojiIDs {
+			emoji, err := c.db.GetEmojiByID(ctx, id)
+			if err != nil {
+				errs.Appendf("error fetching emoji %s from database: %v", id, err)
+				continue
+			}
+			emojis = append(emojis, emoji)
+		}
+	}
+
+	// Preallocate expected frontend slice
+	apiEmojis := make([]model.Emoji, 0, len(emojis))
+
+	// Convert GTS models to frontend models
+	for _, emoji := range emojis {
+		apiEmoji, err := c.EmojiToAPIEmoji(ctx, emoji)
+		if err != nil {
+			errs.Appendf("error converting emoji %s to api emoji: %v", emoji.ID, err)
+			continue
+		}
+		apiEmojis = append(apiEmojis, apiEmoji)
+	}
+
+	return apiEmojis, errs.Combine()
+}
+
+// convertMentionsToAPIMentions will convert a slice of GTS model mentions to frontend API model mentions, falling back to IDs if no GTS models supplied.
+func (c *converter) convertMentionsToAPIMentions(ctx context.Context, mentions []*gtsmodel.Mention, mentionIDs []string) ([]model.Mention, error) {
+	var errs multiError
+
+	if len(mentions) == 0 {
+		var err error
+
+		// GTS model mentions were not populated
+		//
+		// Fetch GTS models for mention IDs
+		mentions, err = c.db.GetMentions(ctx, mentionIDs)
+		if err != nil {
+			errs.Appendf("error fetching mentions from database: %v", err)
+		}
+	}
+
+	// Preallocate expected frontend slice
+	apiMentions := make([]model.Mention, 0, len(mentions))
+
+	// Convert GTS models to frontend models
+	for _, mention := range mentions {
+		apiMention, err := c.MentionToAPIMention(ctx, mention)
+		if err != nil {
+			errs.Appendf("error converting mention %s to api mention: %v", mention.ID, err)
+			continue
+		}
+		apiMentions = append(apiMentions, apiMention)
+	}
+
+	return apiMentions, errs.Combine()
+}
+
+// convertTagsToAPITags will convert a slice of GTS model tags to frontend API model tags, falling back to IDs if no GTS models supplied.
+func (c *converter) convertTagsToAPITags(ctx context.Context, tags []*gtsmodel.Tag, tagIDs []string) ([]model.Tag, error) {
+	var errs multiError
+
+	if len(tags) == 0 {
+		// GTS model tags were not populated
+
+		// Preallocate expected GTS slice
+		tags = make([]*gtsmodel.Tag, 0, len(tagIDs))
+
+		// Fetch GTS models for tag IDs
+		for _, id := range tagIDs {
+			tag := new(gtsmodel.Tag)
+			if err := c.db.GetByID(ctx, id, tag); err != nil {
+				errs.Appendf("error fetching tag %s from database: %v", id, err)
+				continue
+			}
+			tags = append(tags, tag)
+		}
+	}
+
+	// Preallocate expected frontend slice
+	apiTags := make([]model.Tag, 0, len(tags))
+
+	// Convert GTS models to frontend models
+	for _, tag := range tags {
+		apiTag, err := c.TagToAPITag(ctx, tag)
+		if err != nil {
+			errs.Appendf("error converting tag %s to api tag: %v", tag.ID, err)
+			continue
+		}
+		apiTags = append(apiTags, apiTag)
+	}
+
+	return apiTags, errs.Combine()
+}
+
+// multiError allows encapsulating multiple errors under a singular instance,
+// which is useful when you only want to log on errors, not return early / bubble up.
+// TODO: if this is useful elsewhere, move into a separate gts subpackage.
+type multiError []string
+
+func (e *multiError) Append(err error) {
+	*e = append(*e, err.Error())
+}
+
+func (e *multiError) Appendf(format string, args ...any) {
+	*e = append(*e, fmt.Sprintf(format, args...))
+}
+
+// Combine converts this multiError to a singular error instance, returning nil if empty.
+func (e multiError) Combine() error {
+	if len(e) == 0 {
+		return nil
+	}
+	return errors.New(`"` + strings.Join(e, `","`) + `"`)
 }
