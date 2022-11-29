@@ -5,6 +5,9 @@ copyright: GoToSocial is licensed under the GNU AGPL v3 LICENSE. Copyright (C) 2
 plugins:
   - render_swagger
 
+markdown_extensions:
+  - markdown.extensions.admonition
+
 extra_javascript:
   - assets/js/swagger-ui-bundle.js
 
