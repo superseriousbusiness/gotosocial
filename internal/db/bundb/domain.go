@@ -98,8 +98,6 @@ func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel
 
 	// Create first domain lookup attempt (this is root level + TLD)
 	lookup := parts[len(parts)-2] + "." + parts[len(parts)-1]
-
-	// Drop the last 2 appended elements
 	parts = parts[:len(parts)-2]
 
 	for i := 0; i < maxDomainParts; i++ {
@@ -129,8 +127,6 @@ func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel
 
 		// Prepend the next subdomain part to lookup
 		lookup = parts[len(parts)-1] + "." + lookup
-
-		// Drop the used domain element
 		parts = parts[:len(parts)-1]
 	}
 
