@@ -20,9 +20,12 @@ package bundb
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/url"
 	"strings"
 
+	"github.com/miekg/dns"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -50,6 +53,7 @@ func normalizeDomain(domain string) (out string, err error) {
 func (d *domainDB) CreateDomainBlock(ctx context.Context, block *gtsmodel.DomainBlock) db.Error {
 	var err error
 
+	// Normalize the domain as punycode
 	block.Domain, err = normalizeDomain(block.Domain)
 	if err != nil {
 		return err
@@ -66,17 +70,64 @@ func (d *domainDB) CreateDomainBlock(ctx context.Context, block *gtsmodel.Domain
 func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel.DomainBlock, db.Error) {
 	var err error
 
+	// Normalize the domain as punycode
 	domain, err = normalizeDomain(domain)
 	if err != nil {
 		return nil, err
 	}
 
-	return d.state.Caches.GTS.DomainBlock().Load("Domain", func() (*gtsmodel.DomainBlock, error) {
-		// Check for easy case, domain referencing *us*
-		if domain == "" || domain == config.GetAccountDomain() {
+	// Check for easy case, domain referencing *us*
+	if domain == "" || domain == config.GetAccountDomain() {
+		return nil, db.ErrNoEntries
+	}
+
+	// Split domain into constituent parts
+	parts := dns.SplitDomainName(domain)
+	if len(parts) < 2 {
+		return nil, fmt.Errorf("invalid domain: %s", domain)
+	}
+
+	// Create first domain lookup attempt (this is root level + TLD)
+	lookup := parts[len(parts)-2] + "." + parts[len(parts)-1]
+
+	// Drop the last 2 appended elements
+	parts = parts[:len(parts)-2]
+
+	for {
+		// Check if this lookup result already cached
+		cached := d.state.Caches.GTS.DomainBlock().Has("Domain", lookup)
+
+		// Attempt to fetch domain block for lookup
+		block, err := d.getDomainBlock(ctx, lookup)
+		if err != nil {
+			// We return early if this is one of:
+			// - NOT db.ErrNoEntries, i.e. unrecoverable error
+			// - cached db.ErrNoEntries, i.e. have tried this before
+			if !errors.Is(err, db.ErrNoEntries) || cached {
+				return nil, err
+			}
+		}
+
+		if block != nil {
+			// A block was found!
+			return block, nil
+		}
+
+		if len(parts) == 0 {
+			// No further domain parts to append
 			return nil, db.ErrNoEntries
 		}
 
+		// Prepend the next subdomain part to lookup
+		lookup = parts[len(parts)-1] + "." + lookup
+
+		// Drop the used domain element
+		parts = parts[:len(parts)-1]
+	}
+}
+
+func (d *domainDB) getDomainBlock(ctx context.Context, domain string) (*gtsmodel.DomainBlock, error) {
+	return d.state.Caches.GTS.DomainBlock().Load("Domain", func() (*gtsmodel.DomainBlock, error) {
 		var block gtsmodel.DomainBlock
 
 		q := d.conn.
