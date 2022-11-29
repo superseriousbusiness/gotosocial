@@ -20,6 +20,7 @@ package processing
 
 import (
 	"context"
+	"strings"
 
 	"github.com/google/uuid"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -50,12 +51,21 @@ func (p *processor) AppCreate(ctx context.Context, authed *oauth.Auth, form *api
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	// Find the first real URI if there is one
+	var redirectURI string
+	for _, uri := range strings.Split(form.RedirectURIs, "\n") {
+		redirectURI = uri
+		if redirectURI != "urn:ietf:wg:oauth:2.0:oob" {
+			break
+		}
+	}
+
 	// generate the application to put in the database
 	app := &gtsmodel.Application{
 		ID:           appID,
 		Name:         form.ClientName,
 		Website:      form.Website,
-		RedirectURI:  form.RedirectURIs,
+		RedirectURI:  redirectURI,
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
 		Scopes:       scopes,
@@ -70,7 +80,7 @@ func (p *processor) AppCreate(ctx context.Context, authed *oauth.Auth, form *api
 	oc := &gtsmodel.Client{
 		ID:     clientID,
 		Secret: clientSecret,
-		Domain: form.RedirectURIs,
+		Domain: redirectURI,
 		// This client isn't yet associated with a specific user,  it's just an app client right now
 		UserID: "",
 	}
