@@ -401,7 +401,7 @@ func (d *deref) GetAccount(ctx context.Context, params GetAccountParams) (foundA
 
 	if accountDomainChanged || sharedInboxChanged || fieldsChanged || fingeredChanged {
 		if dbErr := d.db.UpdateAccount(ctx, foundAccount); dbErr != nil {
-			err = newErrDB(fmt.Errorf("GetRemoteAccount: error updating remoteAccount: %w", err))
+			err = newErrDB(fmt.Errorf("GetRemoteAccount: error updating remoteAccount: %w", dbErr))
 			return
 		}
 	}
