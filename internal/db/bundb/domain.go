@@ -34,6 +34,11 @@ import (
 	"golang.org/x/net/idna"
 )
 
+// maxDomainParts is the maximum number of subdomain parts in
+// domain that we accept both going into the database, and during
+// fetch attempts to reduce risk of denial of service.
+const maxDomainParts = 5
+
 type domainDB struct {
 	conn  *DBConn
 	state *state.State
@@ -57,6 +62,10 @@ func (d *domainDB) CreateDomainBlock(ctx context.Context, block *gtsmodel.Domain
 	block.Domain, err = normalizeDomain(block.Domain)
 	if err != nil {
 		return err
+	}
+
+	if dns.CountLabel(block.Domain) > maxDomainParts {
+		return errors.New("invalid domain: contains too many subdomain parts")
 	}
 
 	return d.state.Caches.GTS.DomainBlock().Store(block, func() error {
@@ -93,7 +102,7 @@ func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel
 	// Drop the last 2 appended elements
 	parts = parts[:len(parts)-2]
 
-	for {
+	for i := 0; i < maxDomainParts; i++ {
 		// Check if this lookup result already cached
 		cached := d.state.Caches.GTS.DomainBlock().Has("Domain", lookup)
 
@@ -124,6 +133,8 @@ func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel
 		// Drop the used domain element
 		parts = parts[:len(parts)-1]
 	}
+
+	return nil, db.ErrNoEntries
 }
 
 func (d *domainDB) getDomainBlock(ctx context.Context, domain string) (*gtsmodel.DomainBlock, error) {
