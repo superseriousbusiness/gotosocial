@@ -126,7 +126,7 @@ func getLookupType(params GetAccountParams) lookupType {
 // of an error, if we already had the account in our database (in other words, if we just needed to try
 // fingering/refreshing the account again). The rationale for this is that it's more useful to be able
 // to provide *something* to the caller, even if that something is not necessarily 100% up to date.
-func (d *deref) GetAccount(ctx context.Context, params GetAccountParams) (foundAccount *gtsmodel.Account, err Error) {
+func (d *deref) GetAccount(ctx context.Context, params GetAccountParams) (foundAccount *gtsmodel.Account, err error) {
 	/*
 		In this function we want to retrieve a gtsmodel representation of a remote account, with its proper
 		accountDomain set, while making as few calls to remote instances as possible to save time and bandwidth.

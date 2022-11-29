@@ -63,7 +63,7 @@ func (d *deref) EnrichRemoteStatus(ctx context.Context, username string, status 
 //
 // GetAccount will guard against trying to do http calls to fetch a status that belongs to this instance.
 // Instead of making calls, it will just return the status early if it finds it, or return an error.
-func (d *deref) GetStatus(ctx context.Context, username string, statusURI *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, Error) {
+func (d *deref) GetStatus(ctx context.Context, username string, statusURI *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, error) {
 	uriString := statusURI.String()
 
 	// try to get by URI first

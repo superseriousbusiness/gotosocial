@@ -27,11 +27,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (f *federator) GetAccount(ctx context.Context, params dereferencing.GetAccountParams) (*gtsmodel.Account, dereferencing.Error) {
+func (f *federator) GetAccount(ctx context.Context, params dereferencing.GetAccountParams) (*gtsmodel.Account, error) {
 	return f.dereferencer.GetAccount(ctx, params)
 }
 
-func (f *federator) GetStatus(ctx context.Context, username string, remoteStatusID *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, dereferencing.Error) {
+func (f *federator) GetStatus(ctx context.Context, username string, remoteStatusID *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, error) {
 	return f.dereferencer.GetStatus(ctx, username, remoteStatusID, refetch, includeParent)
 }
 

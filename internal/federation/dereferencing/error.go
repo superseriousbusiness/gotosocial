@@ -25,9 +25,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
-// Error aliases common error types that occur when doing dereferencing.
-type Error error
-
 // ErrDB denotes that a proper error has occurred when doing
 // a database call, as opposed to a simple db.ErrNoEntries.
 type ErrDB struct {
@@ -35,13 +32,11 @@ type ErrDB struct {
 }
 
 func (err *ErrDB) Error() string {
-	return err.wrapped.Error()
+	return fmt.Sprintf("database error during dereferencing: %v", err)
 }
 
-func newErrDB(err error) Error {
-	return &ErrDB{
-		wrapped: fmt.Errorf("database error during dereferencing: %w", err),
-	}
+func newErrDB(err error) error {
+	return &ErrDB{wrapped: err}
 }
 
 // ErrNotRetrievable denotes that an item could not be dereferenced
@@ -51,13 +46,11 @@ type ErrNotRetrievable struct {
 }
 
 func (err *ErrNotRetrievable) Error() string {
-	return err.wrapped.Error()
+	return fmt.Sprintf("item could not be retrieved: %v", err)
 }
 
-func newErrNotRetrievable(err error) Error {
-	return &ErrNotRetrievable{
-		wrapped: fmt.Errorf("item could not be retrieved: %w", err),
-	}
+func newErrNotRetrievable(err error) error {
+	return &ErrNotRetrievable{wrapped: err}
 }
 
 // ErrBadRequest denotes that insufficient or improperly formed parameters
@@ -67,13 +60,11 @@ type ErrBadRequest struct {
 }
 
 func (err *ErrBadRequest) Error() string {
-	return err.wrapped.Error()
+	return fmt.Sprintf("bad request: %v", err)
 }
 
-func newErrBadRequest(err error) Error {
-	return &ErrBadRequest{
-		wrapped: fmt.Errorf("bad request: %w", err),
-	}
+func newErrBadRequest(err error) error {
+	return &ErrBadRequest{wrapped: err}
 }
 
 // ErrTransportError indicates that something unforeseen went wrong creating
@@ -83,13 +74,11 @@ type ErrTransportError struct {
 }
 
 func (err *ErrTransportError) Error() string {
-	return err.wrapped.Error()
+	return fmt.Sprintf("transport error: %v", err)
 }
 
-func newErrTransportError(err error) Error {
-	return &ErrTransportError{
-		wrapped: fmt.Errorf("transport error: %w", err),
-	}
+func newErrTransportError(err error) error {
+	return &ErrTransportError{wrapped: err}
 }
 
 // ErrWrongType indicates that an unexpected type was returned from a remote call;
@@ -99,13 +88,11 @@ type ErrWrongType struct {
 }
 
 func (err *ErrWrongType) Error() string {
-	return err.wrapped.Error()
+	return fmt.Sprintf("wrong received type: %v", err)
 }
 
-func newErrWrongType(err error) Error {
-	return &ErrWrongType{
-		wrapped: fmt.Errorf("wrong type: %w", err),
-	}
+func newErrWrongType(err error) error {
+	return &ErrWrongType{wrapped: err}
 }
 
 // ErrOther denotes some other kind of weird error, perhaps from a malformed json
@@ -115,16 +102,14 @@ type ErrOther struct {
 }
 
 func (err *ErrOther) Error() string {
-	return err.wrapped.Error()
+	return fmt.Sprintf("unexpected error: %v", err)
 }
 
-func newErrOther(err error) Error {
-	return &ErrOther{
-		wrapped: fmt.Errorf("other error: %w", err),
-	}
+func newErrOther(err error) error {
+	return &ErrOther{wrapped: err}
 }
 
-func wrapDerefError(derefErr error, fluff string) Error {
+func wrapDerefError(derefErr error, fluff string) error {
 	var (
 		err          error
 		errWrongType *ErrWrongType

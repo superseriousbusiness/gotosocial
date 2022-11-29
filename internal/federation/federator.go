@@ -58,8 +58,8 @@ type Federator interface {
 	*/
 	DereferenceRemoteThread(ctx context.Context, username string, statusURI *url.URL, status *gtsmodel.Status, statusable ap.Statusable)
 	DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) error
-	GetAccount(ctx context.Context, params dereferencing.GetAccountParams) (*gtsmodel.Account, dereferencing.Error)
-	GetStatus(ctx context.Context, username string, remoteStatusID *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, dereferencing.Error)
+	GetAccount(ctx context.Context, params dereferencing.GetAccountParams) (*gtsmodel.Account, error)
+	GetStatus(ctx context.Context, username string, remoteStatusID *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, error)
 	EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status, includeParent bool) (*gtsmodel.Status, error)
 	GetRemoteInstance(ctx context.Context, username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
 
