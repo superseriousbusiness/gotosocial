@@ -32,7 +32,7 @@ type ErrDB struct {
 }
 
 func (err *ErrDB) Error() string {
-	return fmt.Sprintf("database error during dereferencing: %v", err)
+	return fmt.Sprintf("database error during dereferencing: %v", err.wrapped)
 }
 
 func newErrDB(err error) error {
@@ -46,7 +46,7 @@ type ErrNotRetrievable struct {
 }
 
 func (err *ErrNotRetrievable) Error() string {
-	return fmt.Sprintf("item could not be retrieved: %v", err)
+	return fmt.Sprintf("item could not be retrieved: %v", err.wrapped)
 }
 
 func newErrNotRetrievable(err error) error {
@@ -60,7 +60,7 @@ type ErrBadRequest struct {
 }
 
 func (err *ErrBadRequest) Error() string {
-	return fmt.Sprintf("bad request: %v", err)
+	return fmt.Sprintf("bad request: %v", err.wrapped)
 }
 
 func newErrBadRequest(err error) error {
@@ -74,7 +74,7 @@ type ErrTransportError struct {
 }
 
 func (err *ErrTransportError) Error() string {
-	return fmt.Sprintf("transport error: %v", err)
+	return fmt.Sprintf("transport error: %v", err.wrapped)
 }
 
 func newErrTransportError(err error) error {
@@ -88,7 +88,7 @@ type ErrWrongType struct {
 }
 
 func (err *ErrWrongType) Error() string {
-	return fmt.Sprintf("wrong received type: %v", err)
+	return fmt.Sprintf("wrong received type: %v", err.wrapped)
 }
 
 func newErrWrongType(err error) error {
@@ -102,7 +102,7 @@ type ErrOther struct {
 }
 
 func (err *ErrOther) Error() string {
-	return fmt.Sprintf("unexpected error: %v", err)
+	return fmt.Sprintf("unexpected error: %v", err.wrapped)
 }
 
 func newErrOther(err error) error {
