@@ -33,18 +33,16 @@ import (
 
 // Dereferencer wraps logic and functionality for doing dereferencing of remote accounts, statuses, etc, from federated instances.
 type Dereferencer interface {
-	GetRemoteAccount(ctx context.Context, params GetRemoteAccountParams) (*gtsmodel.Account, error)
+	GetAccount(ctx context.Context, params GetAccountParams) (*gtsmodel.Account, error)
+	GetStatus(ctx context.Context, username string, remoteStatusID *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, error)
 
-	GetRemoteStatus(ctx context.Context, username string, remoteStatusID *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, error)
 	EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status, includeParent bool) (*gtsmodel.Status, error)
-
 	GetRemoteInstance(ctx context.Context, username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
+	DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) error
+	DereferenceThread(ctx context.Context, username string, statusIRI *url.URL, status *gtsmodel.Status, statusable ap.Statusable)
 
 	GetRemoteMedia(ctx context.Context, requestingUsername string, accountID string, remoteURL string, ai *media.AdditionalMediaInfo) (*media.ProcessingMedia, error)
 	GetRemoteEmoji(ctx context.Context, requestingUsername string, remoteURL string, shortcode string, domain string, id string, emojiURI string, ai *media.AdditionalEmojiInfo, refresh bool) (*media.ProcessingEmoji, error)
-
-	DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) error
-	DereferenceThread(ctx context.Context, username string, statusIRI *url.URL, status *gtsmodel.Status, statusable ap.Statusable)
 
 	Handshaking(ctx context.Context, username string, remoteAccountID *url.URL) bool
 }

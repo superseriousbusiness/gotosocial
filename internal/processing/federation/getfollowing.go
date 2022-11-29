@@ -42,7 +42,7 @@ func (p *processor) GetFollowing(ctx context.Context, requestedUsername string, 
 		return nil, errWithCode
 	}
 
-	requestingAccount, err := p.federator.GetRemoteAccount(transport.WithFastfail(ctx), dereferencing.GetRemoteAccountParams{
+	requestingAccount, err := p.federator.GetAccount(transport.WithFastfail(ctx), dereferencing.GetAccountParams{
 		RequestingUsername: requestedUsername,
 		RemoteAccountID:    requestingAccountURI,
 	})

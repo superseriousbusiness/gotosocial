@@ -50,20 +50,20 @@ func instanceAccount(account *gtsmodel.Account) bool {
 		(account.Username == "internal.fetch" && strings.Contains(account.Note, "internal service actor"))
 }
 
-// GetRemoteAccountParams wraps parameters for a remote account lookup.
-type GetRemoteAccountParams struct {
+// GetAccountParams wraps parameters for an account lookup.
+type GetAccountParams struct {
 	// The username of the user doing the lookup request (optional).
 	// If not set, then the GtS instance account will be used to do the lookup.
 	RequestingUsername string
-	// The ActivityPub URI of the remote account (optional).
-	// If not set (nil), the ActivityPub URI of the remote account will be discovered
+	// The ActivityPub URI of the account (optional).
+	// If not set (nil), the ActivityPub URI of the account will be discovered
 	// via webfinger, so you must set RemoteAccountUsername and RemoteAccountHost
 	// if this parameter is not set.
 	RemoteAccountID *url.URL
-	// The username of the remote account (optional).
+	// The username of the account (optional).
 	// If RemoteAccountID is not set, then this value must be set.
 	RemoteAccountUsername string
-	// The host of the remote account (optional).
+	// The host of the account (optional).
 	// If RemoteAccountID is not set, then this value must be set.
 	RemoteAccountHost string
 	// Whether to do a blocking call to the remote instance. If true,
@@ -82,17 +82,51 @@ type GetRemoteAccountParams struct {
 	PartialAccount *gtsmodel.Account
 }
 
-// GetRemoteAccount completely dereferences a remote account, converts it to a GtS model account,
+type lookupType int
+
+const (
+	lookupPartialLocal lookupType = iota
+	lookupPartial
+	lookupURILocal
+	lookupURI
+	lookupMentionLocal
+	lookupMention
+	lookupBad
+)
+
+func getLookupType(params GetAccountParams) lookupType {
+	switch {
+	case params.PartialAccount != nil:
+		if params.PartialAccount.Domain == "" || params.PartialAccount.Domain == config.GetHost() || params.PartialAccount.Domain == config.GetAccountDomain() {
+			return lookupPartialLocal
+		}
+		return lookupPartial
+	case params.RemoteAccountID != nil:
+		if host := params.RemoteAccountID.Host; host == config.GetHost() || host == config.GetAccountDomain() {
+			return lookupURILocal
+		}
+		return lookupURI
+	case params.RemoteAccountUsername != "":
+		if params.RemoteAccountHost == "" || params.RemoteAccountHost == config.GetHost() || params.RemoteAccountHost == config.GetAccountDomain() {
+			return lookupMentionLocal
+		}
+		return lookupMention
+	default:
+		return lookupBad
+	}
+}
+
+// GetAccount completely dereferences an account, converts it to a GtS model account,
 // puts or updates it in the database (if necessary), and returns it to a caller.
 //
-// If a local account is passed into this function for whatever reason (hey, it happens!), then it
-// will be returned from the database without making any remote calls.
+// GetAccount will guard against trying to do http calls to fetch an account that belongs to this instance.
+// Instead of making calls, it will just return the account early if it finds it, or return an error.
 //
 // Even if a fastfail context is used, and something goes wrong, an account might still be returned instead
 // of an error, if we already had the account in our database (in other words, if we just needed to try
 // fingering/refreshing the account again). The rationale for this is that it's more useful to be able
 // to provide *something* to the caller, even if that something is not necessarily 100% up to date.
-func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountParams) (foundAccount *gtsmodel.Account, err error) {
+func (d *deref) GetAccount(ctx context.Context, params GetAccountParams) (foundAccount *gtsmodel.Account, err error) {
 	/*
 		In this function we want to retrieve a gtsmodel representation of a remote account, with its proper
 		accountDomain set, while making as few calls to remote instances as possible to save time and bandwidth.
@@ -113,88 +147,93 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 					from that.
 	*/
 
-	skipResolve := params.SkipResolve
-
 	// this first step checks if we have the
 	// account in the database somewhere already,
 	// or if we've been provided it as a partial
-	switch {
-	case params.PartialAccount != nil:
+	switch getLookupType(params) {
+	case lookupPartialLocal:
+		params.SkipResolve = true
+		fallthrough
+	case lookupPartial:
 		foundAccount = params.PartialAccount
-		if foundAccount.Domain == "" || foundAccount.Domain == config.GetHost() || foundAccount.Domain == config.GetAccountDomain() {
-			// this is actually a local account,
-			// make sure we don't try to resolve
-			skipResolve = true
-		}
-	case params.RemoteAccountID != nil:
-		uri := params.RemoteAccountID
-		host := uri.Host
-		if host == config.GetHost() || host == config.GetAccountDomain() {
-			// this is actually a local account,
-			// make sure we don't try to resolve
-			skipResolve = true
+	case lookupURILocal:
+		params.SkipResolve = true
+		fallthrough
+	case lookupURI:
+		// see if we have this in the db already with this uri/url
+		uri := params.RemoteAccountID.String()
+
+		if a, dbErr := d.db.GetAccountByURI(ctx, uri); dbErr == nil {
+			// got it, break here to leave early
+			foundAccount = a
+			break
+		} else if !errors.Is(dbErr, db.ErrNoEntries) {
+			// a real error
+			err = newErrDB(fmt.Errorf("GetRemoteAccount: unexpected error while looking for account with uri %s: %w", uri, dbErr))
+			break
 		}
 
-		if a, dbErr := d.db.GetAccountByURI(ctx, uri.String()); dbErr == nil {
+		// dbErr was just db.ErrNoEntries so search by url instead
+		if a, dbErr := d.db.GetAccountByURL(ctx, uri); dbErr == nil {
+			// got it
 			foundAccount = a
-		} else if dbErr != db.ErrNoEntries {
-			err = fmt.Errorf("GetRemoteAccount: database error looking for account with uri %s: %s", uri, err)
+			break
+		} else if !errors.Is(dbErr, db.ErrNoEntries) {
+			// a real error
+			err = newErrDB(fmt.Errorf("GetRemoteAccount: unexpected error while looking for account with url %s: %w", uri, dbErr))
+			break
 		}
-	case params.RemoteAccountUsername != "" && (params.RemoteAccountHost == "" || params.RemoteAccountHost == config.GetHost() || params.RemoteAccountHost == config.GetAccountDomain()):
-		// either no domain is provided or this seems
-		// to be a local account, so don't resolve
-		skipResolve = true
-
-		if a, dbErr := d.db.GetAccountByUsernameDomain(ctx, params.RemoteAccountUsername, ""); dbErr == nil {
-			foundAccount = a
-		} else if dbErr != db.ErrNoEntries {
-			err = fmt.Errorf("GetRemoteAccount: database error looking for local account with username %s: %s", params.RemoteAccountUsername, err)
-		}
-	case params.RemoteAccountUsername != "" && params.RemoteAccountHost != "":
+	case lookupMentionLocal:
+		params.SkipResolve = true
+		params.RemoteAccountHost = ""
+		fallthrough
+	case lookupMention:
+		// see if we have this in the db already with this username/host
 		if a, dbErr := d.db.GetAccountByUsernameDomain(ctx, params.RemoteAccountUsername, params.RemoteAccountHost); dbErr == nil {
 			foundAccount = a
-		} else if dbErr != db.ErrNoEntries {
-			err = fmt.Errorf("GetRemoteAccount: database error looking for account with username %s and domain %s: %s", params.RemoteAccountUsername, params.RemoteAccountHost, err)
+		} else if !errors.Is(dbErr, db.ErrNoEntries) {
+			// a real error
+			err = newErrDB(fmt.Errorf("GetRemoteAccount: unexpected error while looking for account %s: %w", params.RemoteAccountUsername, dbErr))
 		}
 	default:
-		err = errors.New("GetRemoteAccount: no identifying parameters were set so we cannot get account")
+		err = newErrBadRequest(errors.New("GetRemoteAccount: no identifying parameters were set so we cannot get account"))
 	}
 
+	// bail if we've set a real error, and not just no entries in the db
 	if err != nil {
 		return
 	}
 
-	if skipResolve {
-		// if we can't resolve, return already
-		// since there's nothing more we can do
+	if params.SkipResolve {
+		// if we can't resolve, return already since there's nothing more we can do
 		if foundAccount == nil {
-			err = errors.New("GetRemoteAccount: couldn't retrieve account locally and won't try to resolve it")
+			err = newErrNotRetrievable(errors.New("GetRemoteAccount: couldn't retrieve account locally and not allowed to resolve it"))
 		}
 		return
 	}
 
-	var accountable ap.Accountable
-	if params.RemoteAccountUsername == "" || params.RemoteAccountHost == "" {
-		// try to populate the missing params
-		// the first one is easy ...
-		params.RemoteAccountHost = params.RemoteAccountID.Host
-		// ... but we still need the username so we can do a finger for the accountDomain
+	// if we reach this point, we have some remote calls to make
 
-		// check if we got the account earlier
+	var accountable ap.Accountable
+	if params.RemoteAccountUsername == "" && params.RemoteAccountHost == "" {
+		// if we're still missing some params, try to populate them now
+		params.RemoteAccountHost = params.RemoteAccountID.Host
 		if foundAccount != nil {
+			// username is easy if we found something already
 			params.RemoteAccountUsername = foundAccount.Username
 		} else {
-			// if we didn't already have it, we have dereference it from remote and just...
-			accountable, err = d.dereferenceAccountable(ctx, params.RequestingUsername, params.RemoteAccountID)
-			if err != nil {
-				err = fmt.Errorf("GetRemoteAccount: error dereferencing accountable: %s", err)
+			// if we didn't already have it, we have to dereference it from remote
+			var derefErr error
+			accountable, derefErr = d.dereferenceAccountable(ctx, params.RequestingUsername, params.RemoteAccountID)
+			if derefErr != nil {
+				err = wrapDerefError(derefErr, "GetRemoteAccount: error dereferencing Accountable")
 				return
 			}
 
-			// ... take the username (for now)
-			params.RemoteAccountUsername, err = ap.ExtractPreferredUsername(accountable)
-			if err != nil {
-				err = fmt.Errorf("GetRemoteAccount: error extracting accountable username: %s", err)
+			var apError error
+			params.RemoteAccountUsername, apError = ap.ExtractPreferredUsername(accountable)
+			if apError != nil {
+				err = newErrOther(fmt.Errorf("GetRemoteAccount: error extracting Accountable username: %w", apError))
 				return
 			}
 		}
@@ -221,11 +260,24 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 	// - we were passed a partial account in params OR
 	// - we haven't webfingered the account for two days AND the account isn't an instance account
 	var fingered time.Time
-	if params.RemoteAccountID == nil || foundAccount == nil || params.PartialAccount != nil || (foundAccount.LastWebfingeredAt.Before(time.Now().Add(webfingerInterval)) && !instanceAccount(foundAccount)) {
-		accountDomain, params.RemoteAccountID, err = d.fingerRemoteAccount(ctx, params.RequestingUsername, params.RemoteAccountUsername, params.RemoteAccountHost)
-		if err != nil {
-			err = fmt.Errorf("GetRemoteAccount: error while fingering: %s", err)
-			return
+	var refreshFinger bool
+	if foundAccount != nil {
+		refreshFinger = foundAccount.LastWebfingeredAt.Before(time.Now().Add(webfingerInterval)) && !instanceAccount(foundAccount)
+	}
+
+	if params.RemoteAccountID == nil || foundAccount == nil || params.PartialAccount != nil || refreshFinger {
+		if ad, accountURI, fingerError := d.fingerRemoteAccount(ctx, params.RequestingUsername, params.RemoteAccountUsername, params.RemoteAccountHost); fingerError != nil {
+			if !refreshFinger {
+				// only return with an error if this wasn't just a refresh finger;
+				// that is, if we actually *needed* to finger in order to get the account,
+				// otherwise we can just continue and we'll try again in 2 days
+				err = newErrNotRetrievable(fmt.Errorf("GetRemoteAccount: error while fingering: %w", fingerError))
+				return
+			}
+			log.Infof("error doing non-vital webfinger refresh call to %s: %s", params.RemoteAccountHost, err)
+		} else {
+			accountDomain = ad
+			params.RemoteAccountID = accountURI
 		}
 		fingered = time.Now()
 	}
@@ -234,24 +286,30 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 		// if we just fingered and now have a discovered account domain but still no account,
 		// we should do a final lookup in the database with the discovered username + accountDomain
 		// to make absolutely sure we don't already have this account
-		a := &gtsmodel.Account{}
-		where := []db.Where{{Key: "username", Value: params.RemoteAccountUsername}, {Key: "domain", Value: accountDomain}}
-		if dbErr := d.db.GetWhere(ctx, where, a); dbErr == nil {
+		if a, dbErr := d.db.GetAccountByUsernameDomain(ctx, params.RemoteAccountUsername, accountDomain); dbErr == nil {
 			foundAccount = a
-		} else if dbErr != db.ErrNoEntries {
-			err = fmt.Errorf("GetRemoteAccount: database error looking for account with username %s and host %s: %s", params.RemoteAccountUsername, params.RemoteAccountHost, err)
+		} else if !errors.Is(dbErr, db.ErrNoEntries) {
+			// a real error
+			err = newErrDB(fmt.Errorf("GetRemoteAccount: unexpected error while looking for account %s: %w", params.RemoteAccountUsername, dbErr))
 			return
 		}
 	}
 
-	// we may also have some extra information already, like the account we had in the db, or the
+	// we may have some extra information already, like the account we had in the db, or the
 	// accountable representation that we dereferenced from remote
 	if foundAccount == nil {
-		// we still don't have the account, so deference it if we didn't earlier
+		// if we still don't have a remoteAccountID here we're boned
+		if params.RemoteAccountID == nil {
+			err = newErrNotRetrievable(errors.New("GetRemoteAccount: could not populate find an account nor populate params.RemoteAccountID"))
+			return
+		}
+
+		// deference accountable if we didn't earlier
 		if accountable == nil {
-			accountable, err = d.dereferenceAccountable(ctx, params.RequestingUsername, params.RemoteAccountID)
-			if err != nil {
-				err = fmt.Errorf("GetRemoteAccount: error dereferencing accountable: %s", err)
+			var derefErr error
+			accountable, derefErr = d.dereferenceAccountable(ctx, params.RequestingUsername, params.RemoteAccountID)
+			if derefErr != nil {
+				err = wrapDerefError(derefErr, "GetRemoteAccount: error dereferencing Accountable")
 				return
 			}
 		}
@@ -259,7 +317,7 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 		// then convert
 		foundAccount, err = d.typeConverter.ASRepresentationToAccount(ctx, accountable, accountDomain, false)
 		if err != nil {
-			err = fmt.Errorf("GetRemoteAccount: error converting accountable to account: %s", err)
+			err = newErrOther(fmt.Errorf("GetRemoteAccount: error converting Accountable to account: %w", err))
 			return
 		}
 
@@ -267,23 +325,21 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 		var ulid string
 		ulid, err = id.NewRandomULID()
 		if err != nil {
-			err = fmt.Errorf("GetRemoteAccount: error generating new id for account: %s", err)
+			err = newErrOther(fmt.Errorf("GetRemoteAccount: error generating new id for account: %w", err))
 			return
 		}
 		foundAccount.ID = ulid
 
-		_, err = d.populateAccountFields(ctx, foundAccount, params.RequestingUsername, params.Blocking)
-		if err != nil {
-			err = fmt.Errorf("GetRemoteAccount: error populating further account fields: %s", err)
-			return
+		if _, populateErr := d.populateAccountFields(ctx, foundAccount, params.RequestingUsername, params.Blocking); populateErr != nil {
+			// it's not the end of the world if we can't populate account fields, but we do want to log it
+			log.Errorf("GetRemoteAccount: error populating further account fields: %s", populateErr)
 		}
 
 		foundAccount.LastWebfingeredAt = fingered
 		foundAccount.UpdatedAt = time.Now()
 
-		err = d.db.PutAccount(ctx, foundAccount)
-		if err != nil {
-			err = fmt.Errorf("GetRemoteAccount: error putting new account: %s", err)
+		if dbErr := d.db.PutAccount(ctx, foundAccount); dbErr != nil {
+			err = newErrDB(fmt.Errorf("GetRemoteAccount: error putting new account: %w", dbErr))
 			return
 		}
 
@@ -303,9 +359,10 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 	if foundAccount.SharedInboxURI == nil {
 		// we need the accountable for this, so get it if we don't have it yet
 		if accountable == nil {
-			accountable, err = d.dereferenceAccountable(ctx, params.RequestingUsername, params.RemoteAccountID)
-			if err != nil {
-				err = fmt.Errorf("GetRemoteAccount: error dereferencing accountable: %s", err)
+			var derefErr error
+			accountable, derefErr = d.dereferenceAccountable(ctx, params.RequestingUsername, params.RemoteAccountID)
+			if derefErr != nil {
+				err = wrapDerefError(derefErr, "GetRemoteAccount: error dereferencing Accountable")
 				return
 			}
 		}
@@ -330,10 +387,10 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 
 	// make sure the account fields are populated before returning:
 	// the caller might want to block until everything is loaded
-	var fieldsChanged bool
-	fieldsChanged, err = d.populateAccountFields(ctx, foundAccount, params.RequestingUsername, params.Blocking)
-	if err != nil {
-		return nil, fmt.Errorf("GetRemoteAccount: error populating remoteAccount fields: %s", err)
+	fieldsChanged, populateErr := d.populateAccountFields(ctx, foundAccount, params.RequestingUsername, params.Blocking)
+	if populateErr != nil {
+		// it's not the end of the world if we can't populate account fields, but we do want to log it
+		log.Errorf("GetRemoteAccount: error populating further account fields: %s", populateErr)
 	}
 
 	var fingeredChanged bool
@@ -343,9 +400,9 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 	}
 
 	if accountDomainChanged || sharedInboxChanged || fieldsChanged || fingeredChanged {
-		err = d.db.UpdateAccount(ctx, foundAccount)
-		if err != nil {
-			return nil, fmt.Errorf("GetRemoteAccount: error updating remoteAccount: %s", err)
+		if dbErr := d.db.UpdateAccount(ctx, foundAccount); dbErr != nil {
+			err = newErrDB(fmt.Errorf("GetRemoteAccount: error updating remoteAccount: %w", err))
+			return
 		}
 	}
 
@@ -366,22 +423,22 @@ func (d *deref) dereferenceAccountable(ctx context.Context, username string, rem
 
 	transport, err := d.transportController.NewTransportForUsername(ctx, username)
 	if err != nil {
-		return nil, fmt.Errorf("DereferenceAccountable: transport err: %s", err)
+		return nil, fmt.Errorf("DereferenceAccountable: transport err: %w", err)
 	}
 
 	b, err := transport.Dereference(ctx, remoteAccountID)
 	if err != nil {
-		return nil, fmt.Errorf("DereferenceAccountable: error deferencing %s: %s", remoteAccountID.String(), err)
+		return nil, fmt.Errorf("DereferenceAccountable: error deferencing %s: %w", remoteAccountID.String(), err)
 	}
 
 	m := make(map[string]interface{})
 	if err := json.Unmarshal(b, &m); err != nil {
-		return nil, fmt.Errorf("DereferenceAccountable: error unmarshalling bytes into json: %s", err)
+		return nil, fmt.Errorf("DereferenceAccountable: error unmarshalling bytes into json: %w", err)
 	}
 
 	t, err := streams.ToType(ctx, m)
 	if err != nil {
-		return nil, fmt.Errorf("DereferenceAccountable: error resolving json into ap vocab type: %s", err)
+		return nil, fmt.Errorf("DereferenceAccountable: error resolving json into ap vocab type: %w", err)
 	}
 
 	switch t.GetTypeName() {
@@ -417,11 +474,11 @@ func (d *deref) dereferenceAccountable(ctx context.Context, username string, rem
 		return p, nil
 	}
 
-	return nil, fmt.Errorf("DereferenceAccountable: type name %s not supported", t.GetTypeName())
+	return nil, newErrWrongType(fmt.Errorf("DereferenceAccountable: type name %s not supported as Accountable", t.GetTypeName()))
 }
 
-// populateAccountFields populates any fields on the given account that weren't populated by the initial
-// dereferencing. This includes things like header and avatar etc.
+// populateAccountFields makes a best effort to populate fields on an account such as emojis, avatar, header.
+// Will return true if one of these things changed on the passed-in account.
 func (d *deref) populateAccountFields(ctx context.Context, account *gtsmodel.Account, requestingUsername string, blocking bool) (bool, error) {
 	// if we're dealing with an instance account, just bail, we don't need to do anything
 	if instanceAccount(account) {
@@ -430,10 +487,15 @@ func (d *deref) populateAccountFields(ctx context.Context, account *gtsmodel.Acc
 
 	accountURI, err := url.Parse(account.URI)
 	if err != nil {
-		return false, fmt.Errorf("populateAccountFields: couldn't parse account URI %s: %s", account.URI, err)
+		return false, fmt.Errorf("populateAccountFields: couldn't parse account URI %s: %w", account.URI, err)
 	}
 
-	if blocked, err := d.db.IsDomainBlocked(ctx, accountURI.Host); blocked || err != nil {
+	blocked, dbErr := d.db.IsDomainBlocked(ctx, accountURI.Host)
+	if dbErr != nil {
+		return false, fmt.Errorf("populateAccountFields: eror checking for block of domain %s: %w", accountURI.Host, err)
+	}
+
+	if blocked {
 		return false, fmt.Errorf("populateAccountFields: domain %s is blocked", accountURI.Host)
 	}
 
@@ -441,14 +503,14 @@ func (d *deref) populateAccountFields(ctx context.Context, account *gtsmodel.Acc
 
 	// fetch the header and avatar
 	if mediaChanged, err := d.fetchRemoteAccountMedia(ctx, account, requestingUsername, blocking); err != nil {
-		return false, fmt.Errorf("populateAccountFields: error fetching header/avi for account: %s", err)
+		return false, fmt.Errorf("populateAccountFields: error fetching header/avi for account: %w", err)
 	} else if mediaChanged {
 		changed = mediaChanged
 	}
 
 	// fetch any emojis used in note, fields, display name, etc
 	if emojisChanged, err := d.fetchRemoteAccountEmojis(ctx, account, requestingUsername); err != nil {
-		return false, fmt.Errorf("populateAccountFields: error fetching emojis for account: %s", err)
+		return false, fmt.Errorf("populateAccountFields: error fetching emojis for account: %w", err)
 	} else if emojisChanged {
 		changed = emojisChanged
 	}

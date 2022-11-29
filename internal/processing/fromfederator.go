@@ -129,7 +129,7 @@ func (p *processor) processCreateStatusFromFederator(ctx context.Context, federa
 			return errors.New("ProcessFromFederator: status was not pinned to federatorMsg, and neither was an IRI for us to dereference")
 		}
 		var err error
-		status, _, err = p.federator.GetRemoteStatus(ctx, federatorMsg.ReceivingAccount.Username, federatorMsg.APIri, false, false)
+		status, _, err = p.federator.GetStatus(ctx, federatorMsg.ReceivingAccount.Username, federatorMsg.APIri, false, false)
 		if err != nil {
 			return err
 		}
@@ -151,7 +151,7 @@ func (p *processor) processCreateStatusFromFederator(ctx context.Context, federa
 			return err
 		}
 
-		a, err := p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+		a, err := p.federator.GetAccount(ctx, dereferencing.GetAccountParams{
 			RequestingUsername: federatorMsg.ReceivingAccount.Username,
 			RemoteAccountID:    remoteAccountID,
 			Blocking:           true,
@@ -197,7 +197,7 @@ func (p *processor) processCreateFaveFromFederator(ctx context.Context, federato
 			return err
 		}
 
-		a, err := p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+		a, err := p.federator.GetAccount(ctx, dereferencing.GetAccountParams{
 			RequestingUsername: federatorMsg.ReceivingAccount.Username,
 			RemoteAccountID:    remoteAccountID,
 			Blocking:           true,
@@ -239,7 +239,7 @@ func (p *processor) processCreateFollowRequestFromFederator(ctx context.Context,
 			return err
 		}
 
-		a, err := p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+		a, err := p.federator.GetAccount(ctx, dereferencing.GetAccountParams{
 			RequestingUsername: federatorMsg.ReceivingAccount.Username,
 			RemoteAccountID:    remoteAccountID,
 			Blocking:           true,
@@ -300,7 +300,7 @@ func (p *processor) processCreateAnnounceFromFederator(ctx context.Context, fede
 			return err
 		}
 
-		a, err := p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+		a, err := p.federator.GetAccount(ctx, dereferencing.GetAccountParams{
 			RequestingUsername: federatorMsg.ReceivingAccount.Username,
 			RemoteAccountID:    remoteAccountID,
 			Blocking:           true,
@@ -370,7 +370,7 @@ func (p *processor) processUpdateAccountFromFederator(ctx context.Context, feder
 	}
 
 	// further database updates occur inside getremoteaccount
-	if _, err := p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+	if _, err := p.federator.GetAccount(ctx, dereferencing.GetAccountParams{
 		RequestingUsername:    federatorMsg.ReceivingAccount.Username,
 		RemoteAccountID:       incomingAccountURL,
 		RemoteAccountHost:     incomingAccount.Domain,

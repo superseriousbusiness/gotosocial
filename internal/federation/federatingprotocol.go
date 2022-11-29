@@ -206,7 +206,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		}
 	}
 
-	requestingAccount, err := f.GetRemoteAccount(transport.WithFastfail(ctx), dereferencing.GetRemoteAccountParams{
+	requestingAccount, err := f.GetAccount(transport.WithFastfail(ctx), dereferencing.GetAccountParams{
 		RequestingUsername: username,
 		RemoteAccountID:    publicKeyOwnerURI,
 	})

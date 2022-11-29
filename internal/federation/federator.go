@@ -53,14 +53,14 @@ type Federator interface {
 	// If something goes wrong during authentication, nil, false, and an error will be returned.
 	AuthenticateFederatedRequest(ctx context.Context, username string) (*url.URL, gtserror.WithCode)
 
+	/*
+		dereferencing functions
+	*/
 	DereferenceRemoteThread(ctx context.Context, username string, statusURI *url.URL, status *gtsmodel.Status, statusable ap.Statusable)
 	DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) error
-
-	GetRemoteAccount(ctx context.Context, params dereferencing.GetRemoteAccountParams) (*gtsmodel.Account, error)
-
-	GetRemoteStatus(ctx context.Context, username string, remoteStatusID *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, error)
+	GetAccount(ctx context.Context, params dereferencing.GetAccountParams) (*gtsmodel.Account, error)
+	GetStatus(ctx context.Context, username string, remoteStatusID *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, error)
 	EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status, includeParent bool) (*gtsmodel.Status, error)
-
 	GetRemoteInstance(ctx context.Context, username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
 
 	// Handshaking returns true if the given username is currently in the process of dereferencing the remoteAccountID.
