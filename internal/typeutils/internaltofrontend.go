@@ -178,10 +178,12 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		if *emoji.Disabled {
 			continue
 		}
+
 		apiEmoji, err := c.EmojiToAPIEmoji(ctx, emoji)
-		if err != nil {
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return nil, fmt.Errorf("AccountToAPIAccountPublic: error converting emoji to api emoji: %s", err)
 		}
+
 		emojis = append(emojis, apiEmoji)
 	}
 
