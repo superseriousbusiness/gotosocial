@@ -22,6 +22,7 @@
 package ap
 
 import (
+	"crypto"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
@@ -317,19 +318,26 @@ func ExtractPublicKeyForOwner(i WithPublicKey, forOwner *url.URL) (*rsa.PublicKe
 			continue
 		}
 
+		var p crypto.PublicKey
 		block, _ := pem.Decode([]byte(pkeyPem))
-		if block == nil || block.Type != "PUBLIC KEY" {
-			return nil, nil, errors.New("could not decode publicKeyPem to PUBLIC KEY pem block type")
+		var blockType string
+		if block != nil {
+			blockType = block.Type
 		}
-
-		p, err := x509.ParsePKIXPublicKey(block.Bytes)
+		switch blockType {
+		case "PUBLIC KEY":
+			p, err = x509.ParsePKIXPublicKey(block.Bytes)
+		case "RSA PUBLIC KEY":
+			p, err = x509.ParsePKCS1PublicKey(block.Bytes)
+		default:
+			return nil, nil, errors.New("could not decode publicKeyPem to (RSA) PUBLIC KEY pem block type")
+		}
 		if err != nil {
 			return nil, nil, fmt.Errorf("could not parse public key from block bytes: %s", err)
 		}
 		if p == nil {
 			return nil, nil, errors.New("returned public key was empty")
 		}
-
 		if publicKey, ok := p.(*rsa.PublicKey); ok {
 			return publicKey, pkeyID, nil
 		}
