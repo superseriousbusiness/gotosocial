@@ -60,7 +60,7 @@ body {
 	display: grid;
 	min-height: 100%;
 	min-width: 100%;
-	width: 100vw;
+	width: 100%;
 
 	grid-template-columns: auto minmax(auto, 90ch) auto;
 	grid-template-columns: auto min(92%, 90ch) auto;
