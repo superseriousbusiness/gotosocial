@@ -463,6 +463,38 @@ func (a *accountDB) GetAccountWebStatuses(ctx context.Context, accountID string,
 	return a.statusesFromIDs(ctx, statusIDs)
 }
 
+func (a *accountDB) GetBookmarks(ctx context.Context, accountID string, limit int, maxID string, minID string) ([]*gtsmodel.Status, db.Error) {
+	statusIDs := []string{}
+
+	q := a.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("status_bookmarks"), bun.Ident("bookmark")).
+		Column("bookmark.status_id").
+		Order("bookmark.id DESC")
+
+	if accountID != "" {
+		q = q.Where("? = ?", bun.Ident("bookmark.account_id"), accountID)
+	}
+
+	if limit != 0 {
+		q = q.Limit(limit)
+	}
+
+	if maxID != "" {
+		q = q.Where("? < ?", bun.Ident("bookmark.id"), maxID)
+	}
+
+	if minID != "" {
+		q = q.Where("? > ?", bun.Ident("bookmark.id"), minID)
+	}
+
+	if err := q.Scan(ctx, &statusIDs); err != nil {
+		return nil, a.conn.ProcessError(err)
+	}
+
+	return a.statusesFromIDs(ctx, statusIDs)
+}
+
 func (a *accountDB) GetAccountBlocks(ctx context.Context, accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, db.Error) {
 	blocks := []*gtsmodel.Block{}
 

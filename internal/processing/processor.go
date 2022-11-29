@@ -146,6 +146,9 @@ type Processor interface {
 	// CustomEmojisGet returns an array of info about the custom emojis on this server
 	CustomEmojisGet(ctx context.Context) ([]*apimodel.Emoji, gtserror.WithCode)
 
+	// BookmarksGet returns a pageable response of statuses that have been bookmarked
+	BookmarksGet(ctx context.Context, authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode)
+
 	// FileGet handles the fetching of a media attachment file via the fileserver.
 	FileGet(ctx context.Context, authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, gtserror.WithCode)
 
@@ -202,6 +205,10 @@ type Processor interface {
 	StatusUnfave(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
 	// StatusGetContext returns the context (previous and following posts) from the given status ID
 	StatusGetContext(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Context, gtserror.WithCode)
+	// StatusBookmark process a bookmark for a status
+	StatusBookmark(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
+	// StatusUnBookmark removes a bookmark for a status
+	StatusUnBookmark(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
 
 	// HomeTimelineGet returns statuses from the home timeline, with the given filters/parameters.
 	HomeTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode)
