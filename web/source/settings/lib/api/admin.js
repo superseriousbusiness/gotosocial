@@ -33,7 +33,10 @@ module.exports = function ({ apiCall, getChanges }) {
 
 					const update = getChanges(state, {
 						formKeys: ["title", "short_description", "description", "contact_account.username", "email", "terms", "thumbnail_description"],
-						renamedKeys: {"contact_account.username": "contact_username"},
+						renamedKeys: {
+							"email": "contact_email",
+							"contact_account.username": "contact_username"
+						},
 						fileKeys: ["thumbnail"]
 					});
 
