@@ -206,6 +206,7 @@ func (m *Module) FinalizePOSTHandler(c *gin.Context) {
 	if errWithCode != nil {
 		m.clearSession(s)
 		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		return
 	}
 	s.Delete(sessionClaims)
 	s.Delete(sessionAppID)
