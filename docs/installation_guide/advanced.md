@@ -164,3 +164,95 @@ Yes! GoToSocial supports canonical environment variables for doing this: `HTTP_P
 The http client that GoToSocial uses will be initialized with the appropriate proxy.
 
 The environment values may be either a complete URL or a `host[:port]`, in which case the "http" scheme is assumed. The schemes "http", "https", and "socks5" are supported.
+
+## Application sandboxing
+
+Although GoToSocial does not currently have any known vulnerabilities, it's
+always a good idea to be proactive about security. One way you can help protect
+your instance is to run it in a *sandbox* -- an environment that constrains the
+actions a program can perform in order to limit the impact of a future exploit.
+
+[Using Docker](../../installation_guide/docker) to run GoToSocial can work as a
+(limited) sandboxing mechanism. For Linux installations, [Linux Security
+Modules](https://en.wikipedia.org/wiki/Linux_Security_Modules) such as
+[AppArmor](https://www.apparmor.net/) and
+[SELinux](https://en.wikipedia.org/wiki/Security-Enhanced_Linux) work as a
+complementary mechanism that typically provide stronger protections. You should
+use
+
+- **AppArmor** if you're running GoToSocial on Debian, Ubuntu, or OpenSUSE, and
+- **SELinux** if you're using CentOS, RHEL, or Rocky Linux.
+
+For other Linux distributions, you will need to look up what Linux Security
+Modules are supported by your kernel.
+
+!!! note
+    GoToSocial is currently alpha software, and as more features are implemented
+    these security policies may quickly become outdated. You may find that using
+    AppArmor or SELinux causes GoToSocial to fail in unexpected ways until GTS
+    becomes stable.
+
+!!! caution
+    Sandboxing is an _additional_ security mechanism to help defend against
+    certain kinds of attacks; it _is not_ a replacement for good security
+    practices.
+
+### AppArmor
+
+For Linux distributions supporting AppArmor, there is an AppArmor profile
+available in `example/apparmor/gotosocial` that you can use to confine your
+GoToSocial instance. If you're using a server (such as a VPS) to deploy
+GoToSocial, you can install the AppArmor profile by downloading it and copying
+it into the `/etc/apparmor.d/` directory:
+
+```bash
+wget https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/example/apparmor/gotosocial
+sudo install -o root -g root gotosocial /etc/apparmor.d/gotosocial
+sudo apparmor_parser -Kr /etc/apparmor.d/gotosocial
+```
+
+If you're using Docker Compose, you should add the following `security_opt`
+section to your Compose configuration file:
+
+```yaml
+services:
+  gotosocial:
+    ...
+    security_opt:
+      - apparmor=gotosocial
+```
+
+If you're running GoToSocial as a Systemd service, you should instead add this
+line under `[Service]`:
+
+```ini
+[Service]
+...
+AppArmorProfile=gotosocial
+```
+
+For other deployment methods (e.g. a managed Kubernetes cluster), you should
+review your platform's documentation for how to deploy an application with an
+AppArmor profile.
+
+#### Disabling the AppArmor profile
+
+If enabling the AppArmor profile causes your instance to experience issues, you
+can uninstall it from the system as follows:
+
+```
+sudo apparmor_parser -R /etc/apparmor.d/gotosocial
+sudo rm -vi /etc/apparmor.d/gotosocial
+```
+
+You will also want to remove any changes you made to your Compose configuration
+or Systemd service file to enable the profile.
+
+### SELinux
+
+!!! note
+    Currently, this SELinux policy only works for the [binary installation
+    method](../../installation_guide/binary).
+
+If SELinux is available on your system, you can optionally install [SELinux
+policy](https://github.com/lzap/gotosocial-selinux) to further improve security.
