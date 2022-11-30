@@ -1,0 +1,50 @@
+#include <tunables/global>
+
+profile gotosocial flags=(attach_disconnected, mediate_deleted) {
+  #include <abstractions/base>
+  #include <abstractions/nameservice>
+
+  /gotosocial/gotosocial mrix,
+  /usr/bin/gotosocial mrix,
+  /usr/local/bin/gotosocial mrix,
+
+  owner /gotosocial/{,**} r,
+  owner /gotosocial/storage/** wk,
+
+  # Allow GoToSocial to write logs
+  #
+  # NOTE: you only need to allow write permissions to /var/log/syslog if you've
+  # enabled logging to syslog. Otherwise, you can comment out that line.
+  /var/log/gotosocial/* w,
+  owner /var/log/syslog w,
+
+  # These directories are not currently used by any of the recommended
+  # GoToSocial installation methods, but they may be used in the future and/or
+  # for custom installations.
+  owner /etc/gotosocial/{,**} r,
+  owner /usr/lib/gotosocial/{,**} r,
+  owner /usr/share/gotosocial/{,**} r,
+  owner /usr/local/etc/gotosocial/{,**} r,
+  owner /usr/local/lib/gotosocial/{,**} r,
+  owner /usr/local/share/gotosocial/{,**} r,
+  owner /var/lib/gotosocial/{,**} r,
+  owner /opt/gotosocial/{,**} r,
+  owner /run/gotosocial/{,**} r,
+
+  /proc/sys/net/core/somaxconn r,
+  /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  owner @{PROC}/@{pid}/cpuset r,
+
+  # TCP / UDP network access
+  network inet stream,
+  network inet6 stream,
+  network inet dgram,
+  network inet6 dgram,
+
+  # Allow GoToSocial to send signals to/receive signals from worker processes
+  # Allow GoToSocial to receive signals from unconfined processes
+  signal (receive) peer=unconfined,
+  signal (send,receive) peer=gotosocial,
+}
+
+# vim:syntax=apparmor

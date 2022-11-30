@@ -141,7 +141,3 @@ sudo systemctl enable --now gotosocial.service
 
 If you want to run other webservers on port 443 or want to add an additional layer of security you might want to use [nginx](./nginx.md), [Caddy](./caddy.md) or [Apache httpd](./apache-httpd.md) as reverse proxy
 
-## 8. SELinux (optional)
-
-If SELinux is available on your system, you can optionally install [SELinux policy](https://github.com/lzap/gotosocial-selinux) to further improve security.
-
