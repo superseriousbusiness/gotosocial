@@ -556,12 +556,12 @@ func (suite *FromFederatorTestSuite) TestCreateStatusFromIRI() {
 		APActivityType:   ap.ActivityCreate,
 		GTSModel:         nil, // gtsmodel is nil because this is a forwarded status -- we want to dereference it using the iri
 		ReceivingAccount: receivingAccount,
-		APIri:            testrig.URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1"),
+		APIri:            testrig.URLMustParse("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1"),
 	})
 	suite.NoError(err)
 
 	// status should now be in the database, attributed to remote_account_2
-	s, err := suite.db.GetStatusByURI(context.Background(), "http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1")
+	s, err := suite.db.GetStatusByURI(context.Background(), "http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1")
 	suite.NoError(err)
 	suite.Equal(statusCreator.URI, s.AccountURI)
 }
