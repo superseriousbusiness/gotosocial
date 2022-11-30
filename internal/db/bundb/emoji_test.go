@@ -51,7 +51,7 @@ func (suite *EmojiTestSuite) TestDeleteEmojiByID() {
 }
 
 func (suite *EmojiTestSuite) TestGetEmojiByStaticURL() {
-	emoji, err := suite.db.GetEmojiByStaticURL(context.Background(), "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png")
+	emoji, err := suite.db.GetEmojiByStaticURL(context.Background(), "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png")
 	suite.NoError(err)
 	suite.NotNil(emoji)
 	suite.Equal("rainbow", emoji.Shortcode)

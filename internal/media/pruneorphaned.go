@@ -26,13 +26,14 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 func (m *manager) PruneOrphaned(ctx context.Context, dry bool) (int, error) {
 	var totalPruned int
 
 	// keys in storage will look like the following:
-	// `[ACCOUNT_ID]/[MEDIA_TYPE]/[MEDIA_SIZE]/[FILE_NAME]`
+	// `[ACCOUNT_ID]/[MEDIA_TYPE]/[MEDIA_SIZE]/[MEDIA_ID].[EXTENSION]`
 	// we can filter out keys we're not interested in by
 	// matching through a regex
 	var matchCount int
@@ -47,7 +48,7 @@ func (m *manager) PruneOrphaned(ctx context.Context, dry bool) (int, error) {
 	log.Info("checking storage keys for orphaned pruning candidates...")
 	iterator, err := m.storage.Iterator(ctx, match)
 	if err != nil {
-		return 0, fmt.Errorf("PruneOrphaned: error getting storage iterator: %s", err)
+		return 0, fmt.Errorf("PruneOrphaned: error getting storage iterator: %w", err)
 	}
 
 	// make sure we have some keys, and also advance
@@ -56,12 +57,18 @@ func (m *manager) PruneOrphaned(ctx context.Context, dry bool) (int, error) {
 		return 0, nil
 	}
 
+	instanceAccount, err := m.db.GetInstanceAccount(ctx, "")
+	if err != nil {
+		return 0, fmt.Errorf("PruneOrphaned: error getting instance account: %w", err)
+	}
+	instanceAccountID := instanceAccount.ID
+
 	// for each key in the iterator, check if entry is orphaned
 	log.Info("got %d orphaned pruning candidates, checking for orphaned status, please wait...")
 	var checkedKeys int
 	orphanedKeys := make([]string, 0, matchCount)
 	for key := iterator.Key(); iterator.Next(); key = iterator.Key() {
-		if m.orphaned(ctx, key) {
+		if m.orphaned(ctx, key, instanceAccountID) {
 			orphanedKeys = append(orphanedKeys, key)
 		}
 		checkedKeys++
@@ -92,7 +99,7 @@ func (m *manager) PruneOrphaned(ctx context.Context, dry bool) (int, error) {
 	return totalPruned, nil
 }
 
-func (m *manager) orphaned(ctx context.Context, key string) bool {
+func (m *manager) orphaned(ctx context.Context, key string, instanceAccountID string) bool {
 	pathParts := regexes.FilePath.FindStringSubmatch(key)
 	if len(pathParts) != 6 {
 		return false
@@ -112,7 +119,11 @@ func (m *manager) orphaned(ctx context.Context, key string) bool {
 			}
 		}
 	case TypeEmoji:
-		if _, err := m.db.GetEmojiByID(ctx, mediaID); err != nil {
+		// look using the static URL for the emoji, since the MEDIA_ID part of
+		// the key for emojis will not necessarily correspond to the file that's
+		// currently being used as the emoji image
+		staticURI := uris.GenerateURIForAttachment(instanceAccountID, string(TypeEmoji), string(SizeStatic), mediaID, mimePng)
+		if _, err := m.db.GetEmojiByStaticURL(ctx, staticURI); err != nil {
 			if errors.Is(err, db.ErrNoEntries) {
 				orphaned = true
 			} else {
