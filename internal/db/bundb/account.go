@@ -22,7 +22,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"codeberg.org/gruf/go-cache/v3/result"
@@ -102,7 +101,6 @@ func (a *accountDB) GetAccountByURL(ctx context.Context, url string) (*gtsmodel.
 }
 
 func (a *accountDB) GetAccountByUsernameDomain(ctx context.Context, username string, domain string) (*gtsmodel.Account, db.Error) {
-	username = strings.ToLower(username)
 	return a.getAccount(
 		ctx,
 		"Username.Domain",
