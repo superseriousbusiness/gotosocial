@@ -282,14 +282,14 @@ func WebfingerResponse(req *http.Request) (responseCode int, responseBytes []byt
 				},
 			},
 		}
-	case "https://example.org/.well-known/webfinger?resource=acct:some_user@example.org":
+	case "https://example.org/.well-known/webfinger?resource=acct:Some_User@example.org":
 		wfr = &apimodel.WellKnownResponse{
-			Subject: "acct:some_user@example.org",
+			Subject: "acct:Some_User@example.org",
 			Links: []apimodel.Link{
 				{
 					Rel:  "self",
 					Type: applicationActivityJSON,
-					Href: "https://example.org/users/some_user",
+					Href: "https://example.org/users/Some_User",
 				},
 			},
 		}

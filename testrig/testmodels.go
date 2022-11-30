@@ -539,7 +539,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 		},
 		"remote_account_2": {
 			ID:                    "01FHMQX3GAABWSM0S2VZEC2SWC",
-			Username:              "some_user",
+			Username:              "Some_User",
 			Domain:                "example.org",
 			DisplayName:           "some user",
 			Fields:                []gtsmodel.Field{},
@@ -553,20 +553,20 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			Discoverable:          TrueBool(),
 			Sensitive:             FalseBool(),
 			Language:              "en",
-			URI:                   "http://example.org/users/some_user",
-			URL:                   "http://example.org/@some_user",
+			URI:                   "http://example.org/users/Some_User",
+			URL:                   "http://example.org/@Some_User",
 			LastWebfingeredAt:     time.Time{},
-			InboxURI:              "http://example.org/users/some_user/inbox",
+			InboxURI:              "http://example.org/users/Some_User/inbox",
 			SharedInboxURI:        StringPtr(""),
-			OutboxURI:             "http://example.org/users/some_user/outbox",
-			FollowersURI:          "http://example.org/users/some_user/followers",
-			FollowingURI:          "http://example.org/users/some_user/following",
-			FeaturedCollectionURI: "http://example.org/users/some_user/collections/featured",
+			OutboxURI:             "http://example.org/users/Some_User/outbox",
+			FollowersURI:          "http://example.org/users/Some_User/followers",
+			FollowingURI:          "http://example.org/users/Some_User/following",
+			FeaturedCollectionURI: "http://example.org/users/Some_User/collections/featured",
 			ActorType:             ap.ActorPerson,
 			AlsoKnownAs:           "",
 			PrivateKey:            &rsa.PrivateKey{},
 			PublicKey:             &rsa.PublicKey{},
-			PublicKeyURI:          "http://example.org/users/some_user#main-key",
+			PublicKeyURI:          "http://example.org/users/Some_User#main-key",
 			SensitizedAt:          time.Time{},
 			SilencedAt:            time.Time{},
 			SuspendedAt:           time.Time{},
@@ -1853,27 +1853,27 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 	createReplyToTurtleForTurtleSig, createReplyToTurtleForTurtleDigest, createReplyToTurtleForTurtleDate := GetSignatureForActivity(createReplyToTurtle, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_2"].InboxURI))
 
 	forwardedMessage := NewAPNote(
-		URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1"),
-		URLMustParse("http://example.org/@some_user/afaba698-5740-4e32-a702-af61aa543bc1"),
+		URLMustParse("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1"),
+		URLMustParse("http://example.org/@Some_User/afaba698-5740-4e32-a702-af61aa543bc1"),
 		TimeMustParse("2022-07-13T12:13:12+02:00"),
 		"this is a public status, please forward it!",
 		"",
-		URLMustParse("http://example.org/users/some_user"),
+		URLMustParse("http://example.org/users/Some_User"),
 		[]*url.URL{URLMustParse(pub.PublicActivityPubIRI)},
 		nil,
 		false,
 		[]vocab.ActivityStreamsMention{},
 		[]vocab.ActivityStreamsImage{
 			newAPImage(
-				URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1/attachment1.jpeg"),
+				URLMustParse("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1/attachment1.jpeg"),
 				"image/jpeg",
 				"trent reznor looking handsome as balls",
 				"LEDara58O=t5EMSOENEN9]}?aK%0"),
 		},
 	)
 	createForwardedMessage := WrapAPNoteInCreate(
-		URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1/activity"),
-		URLMustParse("http://example.org/users/some_user"),
+		URLMustParse("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1/activity"),
+		URLMustParse("http://example.org/users/Some_User"),
 		TimeMustParse("2022-07-13T12:13:12+02:00"),
 		forwardedMessage)
 	createForwardedMessageSig, createForwardedMessageDigest, createForwardedMessageDate := GetSignatureForActivity(createForwardedMessage, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
@@ -2172,20 +2172,20 @@ func NewTestFediAttachments(relativePath string) map[string]RemoteAttachmentFile
 
 func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 	return map[string]vocab.ActivityStreamsNote{
-		"http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1": NewAPNote(
-			URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1"),
-			URLMustParse("http://example.org/@some_user/afaba698-5740-4e32-a702-af61aa543bc1"),
+		"http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1": NewAPNote(
+			URLMustParse("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1"),
+			URLMustParse("http://example.org/@Some_User/afaba698-5740-4e32-a702-af61aa543bc1"),
 			TimeMustParse("2022-07-13T12:13:12+02:00"),
 			"this is a public status, please forward it!",
 			"",
-			URLMustParse("http://example.org/users/some_user"),
+			URLMustParse("http://example.org/users/Some_User"),
 			[]*url.URL{URLMustParse(pub.PublicActivityPubIRI)},
 			nil,
 			false,
 			[]vocab.ActivityStreamsMention{},
 			[]vocab.ActivityStreamsImage{
 				newAPImage(
-					URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1/attachment1.jpeg"),
+					URLMustParse("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1/attachment1.jpeg"),
 					"image/jpeg",
 					"trent reznor looking handsome as balls",
 					"LEDara58O=t5EMSOENEN9]}?aK%0"),
