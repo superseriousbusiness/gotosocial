@@ -318,19 +318,18 @@ func ExtractPublicKeyForOwner(i WithPublicKey, forOwner *url.URL) (*rsa.PublicKe
 			continue
 		}
 
-		var p crypto.PublicKey
 		block, _ := pem.Decode([]byte(pkeyPem))
-		var blockType string
-		if block != nil {
-			blockType = block.Type
+		if block == nil {
+			return nil, nil, errors.New("could not decode publicKeyPem: no PEM data")
 		}
-		switch blockType {
+		var p crypto.PublicKey
+		switch block.Type {
 		case "PUBLIC KEY":
 			p, err = x509.ParsePKIXPublicKey(block.Bytes)
 		case "RSA PUBLIC KEY":
 			p, err = x509.ParsePKCS1PublicKey(block.Bytes)
 		default:
-			return nil, nil, errors.New("could not decode publicKeyPem to (RSA) PUBLIC KEY pem block type")
+			return nil, nil, fmt.Errorf("could not parse public key: unknown block type: %q", block.Type)
 		}
 		if err != nil {
 			return nil, nil, fmt.Errorf("could not parse public key from block bytes: %s", err)
