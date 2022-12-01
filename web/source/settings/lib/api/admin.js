@@ -59,8 +59,10 @@ module.exports = function ({ apiCall, getChanges }) {
 
 		updateDomainBlock: function updateDomainBlock(domain) {
 			return function (dispatch, getState) {
+				const state = getState().admin.newInstanceBlocks[domain];
 				return Promise.try(() => {
-					const state = getState().admin.newInstanceBlocks[domain];
+					return dispatch(apiCall("DELETE", `/api/v1/admin/domain_blocks/${state.id}`));
+				}).then(() => {
 					const update = getChanges(state, {
 						formKeys: ["domain", "obfuscate", "public_comment", "private_comment"],
 					});
