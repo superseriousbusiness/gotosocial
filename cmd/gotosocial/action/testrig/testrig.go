@@ -73,7 +73,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	router := testrig.NewTestRouter(dbService)
 	var storageBackend *storage.Driver
 	if os.Getenv("GTS_STORAGE_BACKEND") == "s3" {
-		storageBackend = testrig.NewS3Storage()
+		storageBackend, _ = storage.NewS3Storage()
 	} else {
 		storageBackend = testrig.NewInMemoryStorage()
 	}
