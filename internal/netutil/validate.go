@@ -33,14 +33,6 @@ var (
 		netip.MustParsePrefix("64:ff9b:1::/48"),    // IPv4/IPv6 translation, RFC 8215
 		netip.MustParsePrefix("100::/64"),          // Discard prefix, RFC 6666
 		netip.MustParsePrefix("2001::/23"),         // IETF Protocol Assignments, RFC 2928
-		netip.MustParsePrefix("2001::/32"),         // Teredo
-		netip.MustParsePrefix("2001:1::1/128"),     // Port Control Protocol Anycast, RFC 7723
-		netip.MustParsePrefix("2001:1::2/128"),     // Traversal Using Relays around NAT Anycast, RFC 8155
-		netip.MustParsePrefix("2001:2::/48"),       // Benchmarking, RFC 5180
-		netip.MustParsePrefix("2001:3::/32"),       // AMT, RFC 7450
-		netip.MustParsePrefix("2001:4:112::/48"),   // AS112-v6, RFC 7535
-		netip.MustParsePrefix("2001:10::/28"),      // ORCHID, deprecated
-		netip.MustParsePrefix("2001:20::/28"),      // ORCHIDv2
 		netip.MustParsePrefix("2001:db8::/32"),     // Test, doc, examples
 		netip.MustParsePrefix("2002::/16"),         // 6to4
 		netip.MustParsePrefix("2620:4f:8000::/48"), // Direct Delegation AS112 Service, RFC 7534
@@ -60,7 +52,6 @@ var (
 		netip.MustParsePrefix("169.254.0.0/16"),  // Link-local
 		netip.MustParsePrefix("172.16.0.0/12"),   // Private
 		netip.MustParsePrefix("192.0.0.0/24"),    // RFC6890
-		netip.MustParsePrefix("192.0.0.0/29"),    // IPv4 Service Continuity Prefix, RFC 7335
 		netip.MustParsePrefix("192.0.2.0/24"),    // Test, doc, examples
 		netip.MustParsePrefix("192.31.196.0/24"), // AS112-v4, RFC 7535
 		netip.MustParsePrefix("192.52.193.0/24"), // AMT, RFC 7450
