@@ -22,6 +22,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
+	"strings"
 	"testing"
 	"time"
 
@@ -82,6 +83,22 @@ func (suite *AccountTestSuite) TestGetAccountByUsernameDomain() {
 	account2, err := suite.db.GetAccountByUsernameDomain(context.Background(), testAccount2.Username, testAccount2.Domain)
 	suite.NoError(err)
 	suite.NotNil(account2)
+}
+
+func (suite *AccountTestSuite) TestGetAccountByUsernameDomainMixedCase() {
+	testAccount := suite.testAccounts["remote_account_2"]
+
+	account1, err := suite.db.GetAccountByUsernameDomain(context.Background(), testAccount.Username, testAccount.Domain)
+	suite.NoError(err)
+	suite.NotNil(account1)
+
+	account2, err := suite.db.GetAccountByUsernameDomain(context.Background(), strings.ToUpper(testAccount.Username), testAccount.Domain)
+	suite.NoError(err)
+	suite.NotNil(account2)
+
+	account3, err := suite.db.GetAccountByUsernameDomain(context.Background(), strings.ToLower(testAccount.Username), testAccount.Domain)
+	suite.NoError(err)
+	suite.NotNil(account3)
 }
 
 func (suite *AccountTestSuite) TestUpdateAccount() {
