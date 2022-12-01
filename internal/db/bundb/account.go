@@ -102,7 +102,6 @@ func (a *accountDB) GetAccountByURL(ctx context.Context, url string) (*gtsmodel.
 }
 
 func (a *accountDB) GetAccountByUsernameDomain(ctx context.Context, username string, domain string) (*gtsmodel.Account, db.Error) {
-	username = strings.ToLower(username)
 	return a.getAccount(
 		ctx,
 		"Username.Domain",
@@ -111,11 +110,11 @@ func (a *accountDB) GetAccountByUsernameDomain(ctx context.Context, username str
 
 			if domain != "" {
 				q = q.
-					Where("LOWER(?) = ?", bun.Ident("account.username"), username).
+					Where("LOWER(?) = ?", bun.Ident("account.username"), strings.ToLower(username)).
 					Where("? = ?", bun.Ident("account.domain"), domain)
 			} else {
 				q = q.
-					Where("? = ?", bun.Ident("account.username"), username). // usernames on our instance are always lowercase
+					Where("? = ?", bun.Ident("account.username"), strings.ToLower(username)). // usernames on our instance are always lowercase
 					Where("? IS NULL", bun.Ident("account.domain"))
 			}
 
