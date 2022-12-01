@@ -311,6 +311,7 @@ section.with-sidebar > div {
 	.overview {
 		display: grid;
 		grid-template-columns: 70% 30%;
+		grid-template-rows: 100%;
 
 		.files {
 			width: 100%;
