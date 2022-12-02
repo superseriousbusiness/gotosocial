@@ -123,11 +123,14 @@ func (m *Module) CallbackGETHandler(c *gin.Context) {
 		return
 	}
 	if user == nil {
+		// no user exists yet - let's ask them for their preferred username
 		instance, errWithCode := m.processor.InstanceGet(c.Request.Context(), config.GetHost())
 		if errWithCode != nil {
 			api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 			return
 		}
+
+		// store the claims in the session - that way we know the user is authenticated when processing the form later
 		s.Set(sessionClaims, claims)
 		s.Set(sessionAppID, app.ID)
 		if err := s.Save(); err != nil {
@@ -162,6 +165,7 @@ func (m *Module) FinalizePOSTHandler(c *gin.Context) {
 		return
 	}
 
+	// since we have multiple possible validation error, `validationError` is a shorthand for rendering them
 	validationError := func(err error) {
 		instance, errWithCode := m.processor.InstanceGet(c.Request.Context(), config.GetHost())
 		if errWithCode != nil {
@@ -176,10 +180,13 @@ func (m *Module) FinalizePOSTHandler(c *gin.Context) {
 		})
 	}
 
+	// check if the username conforms to the spec
 	if err := validate.Username(form.Username); err != nil {
 		validationError(err)
 		return
 	}
+
+	// see if the username is still available
 	usernameAvailable, err := m.db.IsUsernameAvailable(c.Request.Context(), form.Username)
 	if err != nil {
 		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGet)
@@ -190,18 +197,23 @@ func (m *Module) FinalizePOSTHandler(c *gin.Context) {
 		return
 	}
 
+	// retrieve the information previously set by the oidc logic
 	appID, ok := s.Get(sessionAppID).(string)
 	if !ok {
 		err := fmt.Errorf("key %s was not found in session", sessionAppID)
 		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGet)
 		return
 	}
+
+	// retrieve the claims returned by the IDP. Having this present means that we previously already verified these claims
 	claims, ok := s.Get(sessionClaims).(*oidc.Claims)
 	if !ok {
 		err := fmt.Errorf("key %s was not found in session", sessionClaims)
 		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGet)
 		return
 	}
+
+	// we're now ready to actually create the user
 	user, errWithCode := m.createUserFromOIDC(c.Request.Context(), claims, form, net.IP(c.ClientIP()), appID)
 	if errWithCode != nil {
 		m.clearSession(s)
