@@ -407,6 +407,7 @@ func (e *emojiDB) emojisFromIDs(ctx context.Context, emojiIDs []string) ([]*gtsm
 		emoji, err := e.GetEmojiByID(ctx, id)
 		if err != nil {
 			log.Errorf("emojisFromIDs: error getting emoji %q: %v", id, err)
+			continue
 		}
 
 		emojis = append(emojis, emoji)
@@ -440,6 +441,7 @@ func (e *emojiDB) emojiCategoriesFromIDs(ctx context.Context, emojiCategoryIDs [
 		emojiCategory, err := e.GetEmojiCategory(ctx, id)
 		if err != nil {
 			log.Errorf("emojiCategoriesFromIDs: error getting emoji category %q: %v", id, err)
+			continue
 		}
 
 		emojiCategories = append(emojiCategories, emojiCategory)
