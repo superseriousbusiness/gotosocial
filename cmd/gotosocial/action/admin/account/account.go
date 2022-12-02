@@ -111,13 +111,12 @@ var Confirm action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	updatingColumns := []string{"approved", "email", "confirmed_at", "updated_at"}
+	updatingColumns := []string{"approved", "email", "confirmed_at"}
 	approved := true
 	u.Approved = &approved
 	u.Email = u.UnconfirmedEmail
 	u.ConfirmedAt = time.Now()
-	u.UpdatedAt = time.Now()
-	if err := dbConn.UpdateByID(ctx, u, u.ID, updatingColumns...); err != nil {
+	if err := dbConn.UpdateUser(ctx, u, updatingColumns...); err != nil {
 		return err
 	}
 
