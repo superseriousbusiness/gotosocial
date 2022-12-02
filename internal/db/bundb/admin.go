@@ -174,7 +174,6 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 	if emailVerified {
 		u.ConfirmedAt = time.Now()
 		u.Email = email
-		u.UnconfirmedEmail = ""
 	}
 
 	if admin {
