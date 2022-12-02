@@ -26,9 +26,6 @@ import (
 
 	"codeberg.org/gruf/go-store/v2/kv"
 	"codeberg.org/gruf/go-store/v2/storage"
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
@@ -38,38 +35,6 @@ func NewInMemoryStorage() *gtsstorage.Driver {
 	return &gtsstorage.Driver{
 		KVStore: kv.New(storage),
 		Storage: storage,
-	}
-}
-
-func NewS3Storage() *gtsstorage.Driver {
-	endpoint := config.GetStorageS3Endpoint()
-	access := config.GetStorageS3AccessKey()
-	secret := config.GetStorageS3SecretKey()
-	secure := config.GetStorageS3UseSSL()
-	bucket := config.GetStorageS3BucketName()
-	proxy := config.GetStorageS3Proxy()
-
-	s3, err := storage.OpenS3(endpoint, bucket, &storage.S3Config{
-		CoreOpts: minio.Options{
-			Creds:  credentials.NewStaticV4(access, secret, ""),
-			Secure: secure,
-		},
-		GetOpts:      minio.GetObjectOptions{},
-		PutOpts:      minio.PutObjectOptions{},
-		PutChunkSize: 5 * 1024 * 1024, // 2MiB
-		StatOpts:     minio.StatObjectOptions{},
-		RemoveOpts:   minio.RemoveObjectOptions{},
-		ListSize:     200,
-	})
-	if err != nil {
-		panic(fmt.Errorf("error opening s3 storage: %w", err))
-	}
-
-	return &gtsstorage.Driver{
-		KVStore: kv.New(s3),
-		Storage: s3,
-		Proxy:   proxy,
-		Bucket:  bucket,
 	}
 }
 
