@@ -339,28 +339,39 @@ function InstancePage({domain, Form}) {
 	return (
 		<div>
 			<h1><BackButton to={base}/> Federation settings for: {domain}</h1>
-			{entry.new && "No stored block yet, you can add one below:"}
+			{entry.new 
+				? "No stored block yet, you can add one below:"
+				: <b className="error">Editing domain blocks is not implemented yet, <a href="https://github.com/superseriousbusiness/gotosocial/issues/1198" target="_blank" rel="noopener noreferrer">check here for progress</a>.</b>
+			}
 
 			<Form.TextArea
 				id="public_comment"
 				name="Public comment"
+				inputProps={{
+					disabled: !entry.new
+				}}
 			/>
 
 			<Form.TextArea
 				id="private_comment"
 				name="Private comment"
+				inputProps={{
+					disabled: !entry.new
+				}}
 			/>
 
 			<Form.Checkbox
 				id="obfuscate"
 				name="Obfuscate domain? "
+				inputProps={{
+					disabled: !entry.new
+				}}
 			/>
 
 			<div className="messagebutton">
-				<button type="submit" onClick={updateBlock}>{entry.new ? "Add block" : "Save block"}</button>
-
-				{!entry.new &&
-					<button className="danger" onClick={removeBlock}>Remove block</button>
+				{entry.new
+					? <button type="submit" onClick={updateBlock}>{entry.new ? "Add block" : "Save block"}</button>
+					: <button className="danger" onClick={removeBlock}>Remove block</button>
 				}
 
 				{errorMsg.length > 0 && 
