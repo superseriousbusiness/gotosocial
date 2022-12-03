@@ -83,7 +83,7 @@ func NewTestDB() db.DB {
 	}
 
 	if alternateDBPort := os.Getenv("GTS_DB_PORT"); alternateDBPort != "" {
-		port, err := strconv.ParseInt(alternateDBPort, 10, 64)
+		port, err := strconv.ParseUint(alternateDBPort, 10, 16)
 		if err != nil {
 			panic(err)
 		}
