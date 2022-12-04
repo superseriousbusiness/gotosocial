@@ -26,7 +26,7 @@ import (
 	"path"
 	"time"
 
-	"codeberg.org/gruf/go-cache/v3"
+	"codeberg.org/gruf/go-cache/v3/ttl"
 	"codeberg.org/gruf/go-store/v2/kv"
 	"codeberg.org/gruf/go-store/v2/storage"
 	"github.com/minio/minio-go/v7"
@@ -52,7 +52,7 @@ type Driver struct {
 	// S3-only parameters
 	Proxy          bool
 	Bucket         string
-	PresignedCache cache.Cache[string, *url.URL]
+	PresignedCache *ttl.Cache[string, *url.URL]
 }
 
 // URL will return a presigned GET object URL, but only if running on S3 storage with proxying disabled.
@@ -63,8 +63,9 @@ func (d *Driver) URL(ctx context.Context, key string) *url.URL {
 		return nil
 	}
 
-	if u, ok := d.PresignedCache.Get(key); ok {
-		return u
+	// access the cache member directly to avoid extending the TTL
+	if u, ok := d.PresignedCache.Cache.Get(key); ok {
+		return u.Value
 	}
 
 	u, err := s3.Client().PresignedGetObject(ctx, d.Bucket, key, urlCacheTTL, url.Values{
@@ -139,7 +140,7 @@ func NewS3Storage() (*Driver, error) {
 	}
 
 	// ttl should be lower than the expiry used by S3 to avoid serving invalid URLs
-	presignedCache := cache.New[string, *url.URL](0, 1000, urlCacheTTL-urlCacheExpiryFrequency)
+	presignedCache := ttl.New[string, *url.URL](0, 1000, urlCacheTTL-urlCacheExpiryFrequency)
 	presignedCache.Start(urlCacheExpiryFrequency)
 
 	return &Driver{
