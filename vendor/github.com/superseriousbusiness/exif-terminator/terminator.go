@@ -43,6 +43,8 @@ func Terminate(in io.Reader, fileSize int, mediaType string) (io.Reader, error) 
 	switch mediaType {
 	case "image/jpeg", "jpeg", "jpg":
 		err = terminateJpeg(scanner, pipeWriter, fileSize)
+	case "image/webp", "webp":
+		err = terminateWebp(scanner, pipeWriter)
 	case "image/png", "png":
 		// for pngs we need to skip the header bytes, so read them in
 		// and check we're really dealing with a png here
@@ -81,6 +83,18 @@ func terminateJpeg(scanner *bufio.Scanner, writer io.WriteCloser, expectedFileSi
 
 	// use the jpeg splitters 'split' function, which satisfies the bufio.SplitFunc interface
 	scanner.Split(js.Split)
+
+	scanAndClose(scanner, writer)
+	return nil
+}
+
+func terminateWebp(scanner *bufio.Scanner, writer io.WriteCloser) error {
+	v := &webpVisitor{
+		writer: writer,
+	}
+
+	// use the webp visitor's 'split' function, which satisfies the bufio.SplitFunc interface
+	scanner.Split(v.split)
 
 	scanAndClose(scanner, writer)
 	return nil
