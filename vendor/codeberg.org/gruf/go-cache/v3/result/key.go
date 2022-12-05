@@ -69,8 +69,8 @@ func (sk structKeys) generate(a any) []cachedKey {
 
 		// Append new cached key to slice
 		keys = append(keys, cachedKey{
-			key:   &sk[i],
-			value: string(buf.B), // copy
+			info: &sk[i],
+			key:  string(buf.B), // copy
 		})
 	}
 
@@ -83,7 +83,7 @@ type cacheKeys []cachedKey
 func (ck *cacheKeys) drop(name string) {
 	_ = *ck // move out of loop
 	for i := range *ck {
-		if (*ck)[i].key.name == name {
+		if (*ck)[i].info.name == name {
 			(*ck) = append((*ck)[:i], (*ck)[i+1:]...)
 			break
 		}
@@ -92,15 +92,15 @@ func (ck *cacheKeys) drop(name string) {
 
 // cachedKey represents an actual cached key.
 type cachedKey struct {
-	// key is a reference to the structKey this
+	// info is a reference to the structKey this
 	// cacheKey is representing. This is a shared
 	// reference and as such only the structKey.pkeys
 	// lookup map is expecting to be modified.
-	key *structKey
+	info *structKey
 
 	// value is the actual string representing
 	// this cache key for hashmap lookups.
-	value string
+	key string
 }
 
 // structKey represents a list of struct fields

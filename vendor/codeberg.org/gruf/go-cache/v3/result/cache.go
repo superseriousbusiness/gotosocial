@@ -28,13 +28,8 @@ type Cache[Value any] struct {
 	next    int64                           // update key counter
 }
 
-// New returns a new initialized Cache, with given lookups and underlying value copy function.
-func New[Value any](lookups []Lookup, copy func(Value) Value) *Cache[Value] {
-	return NewSized(lookups, copy, 64)
-}
-
-// NewSized returns a new initialized Cache, with given lookups, underlying value copy function and provided capacity.
-func NewSized[Value any](lookups []Lookup, copy func(Value) Value, cap int) *Cache[Value] {
+// New returns a new initialized Cache, with given lookups, underlying value copy function and provided capacity.
+func New[Value any](lookups []Lookup, copy func(Value) Value, cap int) *Cache[Value] {
 	var z Value
 
 	// Determine generic type
@@ -93,8 +88,8 @@ func (c *Cache[Value]) SetEvictionCallback(hook func(Value)) {
 	c.cache.SetEvictionCallback(func(item *ttl.Entry[int64, result[Value]]) {
 		for _, key := range item.Value.Keys {
 			// Delete key->pkey lookup
-			pkeys := key.key.pkeys
-			delete(pkeys, key.value)
+			pkeys := key.info.pkeys
+			delete(pkeys, key.key)
 		}
 
 		if item.Value.Error != nil {
@@ -116,8 +111,8 @@ func (c *Cache[Value]) SetInvalidateCallback(hook func(Value)) {
 	c.cache.SetInvalidateCallback(func(item *ttl.Entry[int64, result[Value]]) {
 		for _, key := range item.Value.Keys {
 			// Delete key->pkey lookup
-			pkeys := key.key.pkeys
-			delete(pkeys, key.value)
+			pkeys := key.info.pkeys
+			delete(pkeys, key.key)
 		}
 
 		if item.Value.Error != nil {
@@ -146,7 +141,7 @@ func (c *Cache[Value]) Load(lookup string, load func() (Value, error), keyParts 
 	// Acquire cache lock
 	c.cache.Lock()
 
-	// Look for primary key for cache key
+	// Look for primary cache key
 	pkey, ok := keyInfo.pkeys[ckey]
 
 	if ok {
@@ -166,8 +161,8 @@ func (c *Cache[Value]) Load(lookup string, load func() (Value, error), keyParts 
 			// This load returned an error, only
 			// store this item under provided key.
 			res.Keys = []cachedKey{{
-				key:   keyInfo,
-				value: ckey,
+				info: keyInfo,
+				key:  ckey,
 			}}
 		} else {
 			// This was a successful load, generate keys.
@@ -178,8 +173,8 @@ func (c *Cache[Value]) Load(lookup string, load func() (Value, error), keyParts 
 		c.cache.Lock()
 		defer c.cache.Unlock()
 
-		// Cache this result
-		c.storeResult(res)
+		// Cache result
+		c.store(res)
 	}
 
 	// Catch and return error
@@ -209,8 +204,8 @@ func (c *Cache[Value]) Store(value Value, store func() error) error {
 	c.cache.Lock()
 	defer c.cache.Unlock()
 
-	// Cache this result
-	c.storeResult(result)
+	// Cache result
+	c.store(result)
 
 	return nil
 }
@@ -280,12 +275,13 @@ func (c *Cache[Value]) Cap() int {
 	return c.cache.Cache.Cap()
 }
 
-func (c *Cache[Value]) storeResult(res result[Value]) {
+// store will cache this result under all of its required cache keys.
+func (c *Cache[Value]) store(res result[Value]) {
 	for _, key := range res.Keys {
-		pkeys := key.key.pkeys
+		pkeys := key.info.pkeys
 
 		// Look for cache primary key
-		pkey, ok := pkeys[key.value]
+		pkey, ok := pkeys[key.key]
 
 		if ok {
 			// Get the overlapping result with this key.
@@ -293,11 +289,11 @@ func (c *Cache[Value]) storeResult(res result[Value]) {
 
 			// From conflicting entry, drop this key, this
 			// will prevent eviction cleanup key confusion.
-			entry.Value.Keys.drop(key.key.name)
+			entry.Value.Keys.drop(key.info.name)
 
 			if len(entry.Value.Keys) == 0 {
 				// We just over-wrote the only lookup key for
-				// this value, so we drop its primary key too
+				// this value, so we drop its primary key too.
 				c.cache.Cache.Delete(pkey)
 			}
 		}
@@ -306,11 +302,14 @@ func (c *Cache[Value]) storeResult(res result[Value]) {
 	// Get primary key
 	pkey := c.next
 	c.next++
+	if pkey > c.next {
+		panic("cache primary key overflow")
+	}
 
 	// Store all primary key lookups
 	for _, key := range res.Keys {
-		pkeys := key.key.pkeys
-		pkeys[key.value] = pkey
+		pkeys := key.info.pkeys
+		pkeys[key.key] = pkey
 	}
 
 	// Store main entry under primary key, using evict hook if needed

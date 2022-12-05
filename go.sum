@@ -69,8 +69,8 @@ codeberg.org/gruf/go-bytesize v1.0.0/go.mod h1:n/GU8HzL9f3UNp/mUKyr1qVmTlj7+xacp
 codeberg.org/gruf/go-byteutil v1.0.0/go.mod h1:cWM3tgMCroSzqoBXUXMhvxTxYJp+TbCr6ioISRY5vSU=
 codeberg.org/gruf/go-byteutil v1.0.2 h1:OesVyK5VKWeWdeDR00zRJ+Oy8hjXx1pBhn7WVvcZWVE=
 codeberg.org/gruf/go-byteutil v1.0.2/go.mod h1:cWM3tgMCroSzqoBXUXMhvxTxYJp+TbCr6ioISRY5vSU=
-codeberg.org/gruf/go-cache/v3 v3.1.8 h1:wbUef/QtRstEb7sSpQYHT5CtSFtKkeZr4ZhOTXqOpac=
-codeberg.org/gruf/go-cache/v3 v3.1.8/go.mod h1:h6im2UVGdrGtNt4IVKARVeoW4kAdok5ts7CbH15UWXs=
+codeberg.org/gruf/go-cache/v3 v3.1.9 h1:i7rz7pLE6hU3JO6qTTEMcd/MOzrCahSD1ownqByzeu4=
+codeberg.org/gruf/go-cache/v3 v3.1.9/go.mod h1:h6im2UVGdrGtNt4IVKARVeoW4kAdok5ts7CbH15UWXs=
 codeberg.org/gruf/go-debug v1.2.0 h1:WBbTMnK1ArFKUmgv04aO2JiC/daTOB8zQGi521qb7OU=
 codeberg.org/gruf/go-debug v1.2.0/go.mod h1:N+vSy9uJBQgpQcJUqjctvqFz7tBHJf+S/PIjLILzpLg=
 codeberg.org/gruf/go-errors/v2 v2.0.0/go.mod h1:ZRhbdhvgoUA3Yw6e56kd9Ox984RrvbEFC2pOXyHDJP4=

@@ -13,7 +13,7 @@ codeberg.org/gruf/go-bytesize
 # codeberg.org/gruf/go-byteutil v1.0.2
 ## explicit; go 1.16
 codeberg.org/gruf/go-byteutil
-# codeberg.org/gruf/go-cache/v3 v3.1.8
+# codeberg.org/gruf/go-cache/v3 v3.1.9
 ## explicit; go 1.19
 codeberg.org/gruf/go-cache/v3
 codeberg.org/gruf/go-cache/v3/result
