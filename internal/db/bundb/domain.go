@@ -110,7 +110,7 @@ func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel
 			// We return early if this is one of:
 			// - NOT db.ErrNoEntries, i.e. unrecoverable error
 			// - cached db.ErrNoEntries, i.e. have tried this before
-			if !errors.Is(err, db.ErrNoEntries) || cached {
+			if cached || !errors.Is(err, db.ErrNoEntries) {
 				return nil, err
 			}
 		}
