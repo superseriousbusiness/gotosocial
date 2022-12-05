@@ -4,10 +4,10 @@ This is the binary installation guide for GoToSocial. It is assumed that you alr
 
 ## 1: Prepare VPS
 
-In a terminal on the VPS or your homeserver, make the directory that GoToSocial will run from, the directory it will use as storage, the directory it will store LetsEncrypt certificates in, and the directory it will store logs in:
+In a terminal on the VPS or your homeserver, make the directory that GoToSocial will run from, the directory it will use as storage, and the directory it will store LetsEncrypt certificates in:
 
 ```bash
-mkdir /gotosocial && mkdir /gotosocial/storage && mkdir /gotosocial/storage/certs && mkdir /var/log/gotosocial
+mkdir /gotosocial && mkdir /gotosocial/storage && mkdir /gotosocial/storage/certs
 ```
 
 If you don't have root permissions on the machine, use something like `~/gotosocial` instead.
@@ -105,10 +105,13 @@ Replace `some_username` with the username of the account you just created.
 
 You should now be able to log in to your instance using the email address and password of the account you just created. We recommend using [Pinafore](https://pinafore.social) or [Tusky](https://tusky.app) for this.
 
-## 7. Enable the systemd service
+## 7. \[Optional\] Enable the systemd service
 
 If you don't like manually starting GoToSocial on every boot you might want to create a systemd service that does that for you.
-First create a new user and group for your gotosocial installation.
+
+First stop your GoToSocial instance.
+
+Then create a new user and group for your GoToSocial installation:
 
 ```bash
 sudo useradd -r gotosocial
@@ -116,28 +119,30 @@ sudo groupadd gotosocial
 sudo usermod -a -G gotosocial gotosocial
 ```
 
-Then make them the owner of your GoToSocial installation since they will need to read and write in it.
+Then make them the owner of your GoToSocial installation since they will need to read and write in it:
 
 ```bash
-sudo chown -R gotosocial:gotosocial /gotosocial /var/log/gotosocial
+sudo chown -R gotosocial:gotosocial /gotosocial
 ```
 
 You can find a `gotosocial.service` file in the `example` folder on [github](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/example/gotosocial.service) or your installation.
-Copy it to `/etc/systemd/system/gotosocial.service`.
+
+Copy it to `/etc/systemd/system/gotosocial.service`:
 
 ```bash
 sudo cp /gotosocial/example/gotosocial.service /etc/systemd/system/
 ```
 
 Then use `sudoedit /etc/systemd/system/gotosocial.service` to change the `ExecStart=` and `WorkingDirectory=` lines according to your installation.
+
 If you have been following this guide word for word the defaults should be fine.
-After you're done enable the service.
+
+After you're done enable the service:
 
 ```bash
 sudo systemctl enable --now gotosocial.service
 ```
 
-## 8. Reverse proxy (optional)
+## 8. \[Optional\] Reverse proxy
 
 If you want to run other webservers on port 443 or want to add an additional layer of security you might want to use [nginx](./nginx.md), [Caddy](./caddy.md) or [Apache httpd](./apache-httpd.md) as reverse proxy
-
