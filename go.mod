@@ -40,7 +40,7 @@ require (
 	github.com/spf13/viper v1.14.0
 	github.com/stretchr/testify v1.8.1
 	github.com/superseriousbusiness/activity v1.2.1-gts
-	github.com/superseriousbusiness/exif-terminator v0.4.0
+	github.com/superseriousbusiness/exif-terminator v0.5.0
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB
 	github.com/tdewolff/minify/v2 v2.12.4
 	github.com/ulule/limiter/v3 v3.10.0
@@ -134,7 +134,7 @@ require (
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
-	golang.org/x/image v0.0.0-20220902085622-e7cb96979f69 // indirect
+	golang.org/x/image v0.1.0 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220907135952-02c991387e35 // indirect
 	golang.org/x/sys v0.2.0 // indirect
 	golang.org/x/tools v0.1.12 // indirect
