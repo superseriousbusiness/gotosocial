@@ -316,8 +316,6 @@ type completeMultipartUploadResult struct {
 // CompletePart sub container lists individual part numbers and their
 // md5sum, part of completeMultipartUpload.
 type CompletePart struct {
-	XMLName xml.Name `xml:"http://s3.amazonaws.com/doc/2006-03-01/ Part" json:"-"`
-
 	// Part number identifies the part.
 	PartNumber int
 	ETag       string
