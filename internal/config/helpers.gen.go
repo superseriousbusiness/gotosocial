@@ -820,6 +820,56 @@ func GetMediaVideoMaxSize() bytesize.Size { return global.GetMediaVideoMaxSize()
 // SetMediaVideoMaxSize safely sets the value for global configuration 'MediaVideoMaxSize' field
 func SetMediaVideoMaxSize(v bytesize.Size) { global.SetMediaVideoMaxSize(v) }
 
+// GetMediaVideoFFMPEGAuto safely fetches the Configuration value for state's 'MediaVideoFFMPEGAuto' field
+func (st *ConfigState) GetMediaVideoFFMPEGAuto() (v bool) {
+	st.mutex.Lock()
+	v = st.config.MediaVideoFFMPEGAuto
+	st.mutex.Unlock()
+	return
+}
+
+// SetMediaVideoFFMPEGAuto safely sets the Configuration value for state's 'MediaVideoFFMPEGAuto' field
+func (st *ConfigState) SetMediaVideoFFMPEGAuto(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.MediaVideoFFMPEGAuto = v
+	st.reloadToViper()
+}
+
+// MediaVideoFFMPEGAutoFlag returns the flag name for the 'MediaVideoFFMPEGAuto' field
+func MediaVideoFFMPEGAutoFlag() string { return "media-video-ffmpeg-auto" }
+
+// GetMediaVideoFFMPEGAuto safely fetches the value for global configuration 'MediaVideoFFMPEGAuto' field
+func GetMediaVideoFFMPEGAuto() bool { return global.GetMediaVideoFFMPEGAuto() }
+
+// SetMediaVideoFFMPEGAuto safely sets the value for global configuration 'MediaVideoFFMPEGAuto' field
+func SetMediaVideoFFMPEGAuto(v bool) { global.SetMediaVideoFFMPEGAuto(v) }
+
+// GetMediaVideoFFMPEGEnabled safely fetches the Configuration value for state's 'MediaVideoFFMPEGEnabled' field
+func (st *ConfigState) GetMediaVideoFFMPEGEnabled() (v bool) {
+	st.mutex.Lock()
+	v = st.config.MediaVideoFFMPEGEnabled
+	st.mutex.Unlock()
+	return
+}
+
+// SetMediaVideoFFMPEGEnabled safely sets the Configuration value for state's 'MediaVideoFFMPEGEnabled' field
+func (st *ConfigState) SetMediaVideoFFMPEGEnabled(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.MediaVideoFFMPEGEnabled = v
+	st.reloadToViper()
+}
+
+// MediaVideoFFMPEGEnabledFlag returns the flag name for the 'MediaVideoFFMPEGEnabled' field
+func MediaVideoFFMPEGEnabledFlag() string { return "media-video-ffmpeg-enabled" }
+
+// GetMediaVideoFFMPEGEnabled safely fetches the value for global configuration 'MediaVideoFFMPEGEnabled' field
+func GetMediaVideoFFMPEGEnabled() bool { return global.GetMediaVideoFFMPEGEnabled() }
+
+// SetMediaVideoFFMPEGEnabled safely sets the value for global configuration 'MediaVideoFFMPEGEnabled' field
+func SetMediaVideoFFMPEGEnabled(v bool) { global.SetMediaVideoFFMPEGEnabled(v) }
+
 // GetMediaDescriptionMinChars safely fetches the Configuration value for state's 'MediaDescriptionMinChars' field
 func (st *ConfigState) GetMediaDescriptionMinChars() (v int) {
 	st.mutex.Lock()

@@ -196,7 +196,7 @@ func (p *ProcessingMedia) loadFullSize(ctx context.Context) error {
 	switch processState(fullSizeState) {
 	case received:
 		var err error
-		var decoded *imageMeta
+		var decoded *mediaMeta
 
 		// stream the original file out of storage...
 		stored, err := p.storage.GetStream(ctx, p.attachment.File.Path)
@@ -219,6 +219,8 @@ func (p *ProcessingMedia) loadFullSize(ctx context.Context) error {
 			decoded, err = decodeImage(stored, ct)
 		case mimeImageGif:
 			decoded, err = decodeGif(stored)
+		case mimeVideoMp4:
+			decoded, err = decodeVideo(stored, ct)
 		default:
 			err = fmt.Errorf("loadFullSize: content type %s not a processible image type", ct)
 		}
@@ -296,7 +298,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	}
 
 	// bail if this is a type we can't process
-	if !supportedImage(contentType) {
+	if !supportedAttachment(contentType) {
 		return fmt.Errorf("store: media type %s not (yet) supported", contentType)
 	}
 
@@ -339,6 +341,10 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 			// can't terminate if we don't know the file size, so just store the multiReader
 			readerToStore = multiReader
 		}
+	case mimeMp4:
+		p.attachment.Type = gtsmodel.FileTypeVideo
+		// nothing to terminate, we can just store the multireader
+		readerToStore = multiReader
 	default:
 		return fmt.Errorf("store: couldn't process %s", extension)
 	}

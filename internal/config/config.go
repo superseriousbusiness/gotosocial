@@ -81,6 +81,8 @@ type Configuration struct {
 
 	MediaImageMaxSize        bytesize.Size `name:"media-image-max-size" usage:"Max size of accepted images in bytes"`
 	MediaVideoMaxSize        bytesize.Size `name:"media-video-max-size" usage:"Max size of accepted videos in bytes"`
+	MediaVideoFFMPEGAuto     bool          `name:"media-video-ffmpeg-auto" usage:"Enable ffmpeg based on its presence in the path"`
+	MediaVideoFFMPEGEnabled  bool          `name:"media-video-ffmpeg-enabled" usage:"Enable usage of ffpmeg"`
 	MediaDescriptionMinChars int           `name:"media-description-min-chars" usage:"Min required chars for an image description"`
 	MediaDescriptionMaxChars int           `name:"media-description-max-chars" usage:"Max permitted chars for an image description"`
 	MediaRemoteCacheDays     int           `name:"media-remote-cache-days" usage:"Number of days to locally cache media from remote instances. If set to 0, remote media will be kept indefinitely."`

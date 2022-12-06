@@ -64,6 +64,7 @@ var testDefaults = config.Configuration{
 
 	MediaImageMaxSize:        10485760, // 10mb
 	MediaVideoMaxSize:        41943040, // 40mb
+	MediaVideoFFMPEGAuto:     true,
 	MediaDescriptionMinChars: 0,
 	MediaDescriptionMaxChars: 500,
 	MediaRemoteCacheDays:     30,
