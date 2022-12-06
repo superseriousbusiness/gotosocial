@@ -39,7 +39,7 @@ type mediaMeta struct {
 }
 
 // deriveThumbnail returns a byte slice and metadata for a thumbnail
-// of a given jpeg, png, or gif, or an error if something goes wrong.
+// of a given piece of media, or an error if something goes wrong.
 //
 // If createBlurhash is true, then a blurhash will also be generated from a tiny
 // version of the image. This costs precious CPU cycles, so only use it if you
@@ -52,7 +52,7 @@ func deriveThumbnail(r io.Reader, contentType string, createBlurhash bool) (*med
 	var err error
 
 	switch contentType {
-	case mimeImageJpeg, mimeImageGif:
+	case mimeImageJpeg, mimeImageGif, mimeImageWebp:
 		i, err = imaging.Decode(r, imaging.AutoOrientation(true))
 	case mimeImagePng:
 		strippedPngReader := io.Reader(&PNGAncillaryChunkStripper{

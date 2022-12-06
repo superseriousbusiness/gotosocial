@@ -12,7 +12,7 @@ require (
 	codeberg.org/gruf/go-logger/v2 v2.2.1
 	codeberg.org/gruf/go-mutexes v1.1.4
 	codeberg.org/gruf/go-runners v1.3.1
-	codeberg.org/gruf/go-store/v2 v2.0.9
+	codeberg.org/gruf/go-store/v2 v2.0.10
 	github.com/abema/go-mp4 v0.8.0
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/coreos/go-oidc/v3 v3.4.0
