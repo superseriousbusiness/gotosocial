@@ -43,6 +43,9 @@ const (
 
 	mimePng      = "png"
 	mimeImagePng = mimeImage + "/" + mimePng
+
+	mimeWebp      = "webp"
+	mimeImageWebp = mimeImage + "/" + mimeWebp
 )
 
 type processState int32

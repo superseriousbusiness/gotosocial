@@ -215,7 +215,7 @@ func (p *ProcessingMedia) loadFullSize(ctx context.Context) error {
 		// decode the image
 		ct := p.attachment.File.ContentType
 		switch ct {
-		case mimeImageJpeg, mimeImagePng:
+		case mimeImageJpeg, mimeImagePng, mimeImageWebp:
 			decoded, err = decodeImage(stored, ct)
 		case mimeImageGif:
 			decoded, err = decodeGif(stored)
@@ -319,7 +319,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		p.attachment.Type = gtsmodel.FileTypeImage
 		// nothing to terminate, we can just store the multireader
 		readerToStore = multiReader
-	case mimeJpeg, mimePng:
+	case mimeJpeg, mimePng, mimeWebp:
 		p.attachment.Type = gtsmodel.FileTypeImage
 		if fileSize > 0 {
 			terminated, err := terminator.Terminate(multiReader, int(fileSize), extension)

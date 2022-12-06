@@ -91,7 +91,7 @@ func (v *jpegVisitor) HandleSegment(segmentMarker byte, _ string, _ int, _ bool)
 	if segmentMarker == jpegstructure.MARKER_EOI {
 		// take account of the last 2 bytes taken up by the EOI
 		eoiLength := 2
-		
+
 		// this is the total file size we will
 		// have written including the EOI
 		willHaveWritten := v.writtenTotalBytes + eoiLength

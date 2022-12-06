@@ -37,6 +37,7 @@ func AllSupportedMIMETypes() []string {
 		mimeImageJpeg,
 		mimeImageGif,
 		mimeImagePng,
+		mimeImageWebp,
 	}
 }
 
@@ -68,6 +69,7 @@ func supportedImage(mimeType string) bool {
 		mimeImageJpeg,
 		mimeImageGif,
 		mimeImagePng,
+		mimeImageWebp,
 	}
 	for _, accepted := range acceptedImageTypes {
 		if mimeType == accepted {
