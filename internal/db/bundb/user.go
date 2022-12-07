@@ -88,7 +88,7 @@ func (u *userDB) GetUserByEmailAddress(ctx context.Context, emailAddress string)
 }
 
 func (u *userDB) GetUserByExternalID(ctx context.Context, id string) (*gtsmodel.User, db.Error) {
-	return u.state.Caches.GTS.User.Load("ExternalID", func() (*gtsmodel.User, error) {
+	return u.state.Caches.GTS.User().Load("ExternalID", func() (*gtsmodel.User, error) {
 		var user gtsmodel.User
 
 		q := u.conn.
