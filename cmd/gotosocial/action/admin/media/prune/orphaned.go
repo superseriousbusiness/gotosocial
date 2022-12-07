@@ -27,12 +27,16 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
 // Orphaned prunes orphaned media from storage.
 var Orphaned action.GTSAction = func(ctx context.Context) error {
-	dbService, err := bundb.NewBunDBService(ctx)
+	var state state.State
+	state.Caches.Init()
+
+	dbService, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
