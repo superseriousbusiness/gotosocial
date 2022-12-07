@@ -15,12 +15,12 @@ type Caches struct {
 // NOTE: the cache MUST NOT be in use anywhere, this is not thread-safe.
 func (c *Caches) Init() {
 	if c.GTS == nil {
-		// allocate default impl
+		// use default impl
 		c.GTS = NewGTS()
 	}
 
 	if c.AP == nil {
-		// allocate default impl
+		// use default impl
 		c.AP = NewAP()
 	}
 
