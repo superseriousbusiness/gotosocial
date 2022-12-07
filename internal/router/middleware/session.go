@@ -16,11 +16,9 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package router
+package middleware
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -30,7 +28,6 @@ import (
 	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"golang.org/x/net/idna"
 )
@@ -88,24 +85,11 @@ func SessionName() (string, error) {
 	return fmt.Sprintf("gotosocial-%s", punyHostname), nil
 }
 
-func useSession(ctx context.Context, sessionDB db.Session, engine *gin.Engine) error {
-	// check if we have a saved router session already
-	rs, err := sessionDB.GetSession(ctx)
-	if err != nil {
-		return fmt.Errorf("error using session: %s", err)
-	}
-	if rs == nil || rs.Auth == nil || rs.Crypt == nil {
-		return errors.New("router session was nil")
-	}
-
-	store := memstore.NewStore(rs.Auth, rs.Crypt)
+// Session returns a new gin middleware that implements session cookies using the given
+// sessionName, authentication key, and encryption key. Session name can be derived from the
+// SessionName utility function in this package.
+func (p *Provider) Session(sessionName string, auth []byte, crypt []byte) func(c *gin.Context) {
+	store := memstore.NewStore(auth, crypt)
 	store.Options(SessionOptions())
-
-	sessionName, err := SessionName()
-	if err != nil {
-		return err
-	}
-
-	engine.Use(sessions.Sessions(sessionName, store))
-	return nil
+	return sessions.Sessions(sessionName, store)
 }

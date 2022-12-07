@@ -89,7 +89,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 	// only allow search engines / robots to view this page if account is discoverable
 	var robotsMeta string
 	if account.Discoverable {
-		robotsMeta = robotsAllowSome
+		robotsMeta = robotsMetaAllowSome
 	}
 
 	// we should only show the 'back to top' button if the

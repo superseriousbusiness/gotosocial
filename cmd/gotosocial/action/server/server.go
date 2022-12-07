@@ -49,7 +49,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/nodeinfo"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/user"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/webfinger"
-	"github.com/superseriousbusiness/gotosocial/internal/api/security"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
@@ -65,6 +64,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
+	"github.com/superseriousbusiness/gotosocial/internal/router/middleware"
 	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -170,7 +170,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	fileServerModule := fileserver.New(processor)
 	adminModule := admin.New(processor)
 	statusModule := status.New(processor)
-	securityModule := security.New(dbService, oauthServer)
+	middlewareModule := middleware.New(dbService, oauthServer)
 	streamingModule := streaming.New(processor)
 	favouritesModule := favourites.New(processor)
 	blocksModule := blocks.New(processor)
@@ -178,7 +178,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	apis := []api.ClientModule{
 		// modules with middleware go first
-		securityModule,
+		middlewareModule,
 		authModule,
 
 		// now the web module

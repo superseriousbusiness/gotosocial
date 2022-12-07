@@ -16,20 +16,4 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package security
-
-import (
-	"errors"
-	"net/http"
-
-	"github.com/gin-gonic/gin"
-)
-
-// UserAgentBlock aborts requests with empty user agent strings.
-func (m *Module) UserAgentBlock(c *gin.Context) {
-	if ua := c.Request.UserAgent(); ua == "" {
-		code := http.StatusTeapot
-		err := errors.New(http.StatusText(code) + ": no user-agent sent with request")
-		c.AbortWithStatusJSON(code, gin.H{"error": err.Error()})
-	}
-}
+package middleware

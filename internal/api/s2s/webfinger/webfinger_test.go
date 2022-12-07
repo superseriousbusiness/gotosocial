@@ -26,7 +26,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/webfinger"
-	"github.com/superseriousbusiness/gotosocial/internal/api/security"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -36,6 +35,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/router/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -44,15 +44,15 @@ import (
 type WebfingerStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
-	db             db.DB
-	tc             typeutils.TypeConverter
-	mediaManager   media.Manager
-	federator      federation.Federator
-	emailSender    email.Sender
-	processor      processing.Processor
-	storage        *storage.Driver
-	oauthServer    oauth.Server
-	securityModule *security.Module
+	db               db.DB
+	tc               typeutils.TypeConverter
+	mediaManager     media.Manager
+	federator        federation.Federator
+	emailSender      email.Sender
+	processor        processing.Processor
+	storage          *storage.Driver
+	oauthServer      oauth.Server
+	middlewareModule *middleware.Module
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
@@ -93,7 +93,7 @@ func (suite *WebfingerStandardTestSuite) SetupTest() {
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, suite.mediaManager, clientWorker, fedWorker)
 	suite.webfingerModule = webfinger.New(suite.processor).(*webfinger.Module)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
-	suite.securityModule = security.New(suite.db, suite.oauthServer).(*security.Module)
+	suite.middlewareModule = middleware.New(suite.db, suite.oauthServer).(*middleware.Module)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 

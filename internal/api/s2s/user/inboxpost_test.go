@@ -105,7 +105,7 @@ func (suite *InboxPostTestSuite) TestPostBlock() {
 	ctx.Request.Header.Set("Content-Type", "application/activity+json")
 
 	// we need to pass the context through signature check first to set appropriate values on it
-	suite.securityModule.SignatureCheck(ctx)
+	suite.middlewareModule.SignatureCheck(ctx)
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
@@ -209,7 +209,7 @@ func (suite *InboxPostTestSuite) TestPostUnblock() {
 	ctx.Request.Header.Set("Content-Type", "application/activity+json")
 
 	// we need to pass the context through signature check first to set appropriate values on it
-	suite.securityModule.SignatureCheck(ctx)
+	suite.middlewareModule.SignatureCheck(ctx)
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
@@ -311,7 +311,7 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 	ctx.Request.Header.Set("Content-Type", "application/activity+json")
 
 	// we need to pass the context through signature check first to set appropriate values on it
-	suite.securityModule.SignatureCheck(ctx)
+	suite.middlewareModule.SignatureCheck(ctx)
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
@@ -443,7 +443,7 @@ func (suite *InboxPostTestSuite) TestPostDelete() {
 	ctx.Request.Header.Set("Content-Type", "application/activity+json")
 
 	// we need to pass the context through signature check first to set appropriate values on it
-	suite.securityModule.SignatureCheck(ctx)
+	suite.middlewareModule.SignatureCheck(ctx)
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.

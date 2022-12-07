@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package router
+package middleware
 
 import (
 	"fmt"
@@ -31,14 +31,15 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-// loggingMiddleware provides a request logging and panic recovery gin handler.
-func loggingMiddleware(c *gin.Context) {
+// Logger is a gin middleware which provides request logging and panic recovery.
+func (p *Provider) Logger(c *gin.Context) {
 	// Initialize the logging fields
 	fields := make(kv.Fields, 6, 7)
 
 	// Determine pre-handler time
 	before := time.Now()
 
+	// defer so that we log *after the request has completed*
 	defer func() {
 		code := c.Writer.Status()
 		path := c.Request.URL.Path

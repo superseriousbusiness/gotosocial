@@ -16,16 +16,20 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package security
+package middleware
 
 import "github.com/gin-gonic/gin"
 
-// FlocBlock is a middleware that prevents google chrome cohort tracking by
-// writing the Permissions-Policy header after all other parts of the request
-// have been completed. Floc was replaced by Topics in 2022 and the spec says
-// that interest-cohort will also block Topics (as of 2022-Nov).
-// See: https://smartframe.io/blog/google-topics-api-everything-you-need-to-know
-// See: https://github.com/patcg-individual-drafts/topics
-func (m *Module) FlocBlock(c *gin.Context) {
+// ExtraHeaders is a gin middleware which adds various extra headers to the response.
+func (p *Provider) ExtraHeaders(c *gin.Context) {
+	// Inform all callers which server implementation this is.
+	c.Header("Server", "gotosocial")
+	// Prevent google chrome cohort tracking. Originally this was referred
+	// to as FlocBlock. Floc was replaced by Topics in 2022 and the spec says
+	// that interest-cohort will also block Topics (as of 2022-Nov).
+	//
+	// See: https://smartframe.io/blog/google-topics-api-everything-you-need-to-know
+	//
+	// See: https://github.com/patcg-individual-drafts/topics
 	c.Header("Permissions-Policy", "browsing-topics=()")
 }

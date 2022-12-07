@@ -16,14 +16,14 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package router_test
+package middleware_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
+	"github.com/superseriousbusiness/gotosocial/internal/router/middleware"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -39,7 +39,7 @@ func (suite *SessionTestSuite) TestDeriveSessionNameLocalhostWithPort() {
 	config.SetProtocol("http")
 	config.SetHost("localhost:8080")
 
-	sessionName, err := router.SessionName()
+	sessionName, err := middleware.SessionName()
 	suite.NoError(err)
 	suite.Equal("gotosocial-localhost", sessionName)
 }
@@ -48,7 +48,7 @@ func (suite *SessionTestSuite) TestDeriveSessionNameLocalhost() {
 	config.SetProtocol("http")
 	config.SetHost("localhost")
 
-	sessionName, err := router.SessionName()
+	sessionName, err := middleware.SessionName()
 	suite.NoError(err)
 	suite.Equal("gotosocial-localhost", sessionName)
 }
@@ -57,7 +57,7 @@ func (suite *SessionTestSuite) TestDeriveSessionNoProtocol() {
 	config.SetProtocol("")
 	config.SetHost("localhost")
 
-	sessionName, err := router.SessionName()
+	sessionName, err := middleware.SessionName()
 	suite.EqualError(err, "parse \"://localhost\": missing protocol scheme")
 	suite.Equal("", sessionName)
 }
@@ -67,7 +67,7 @@ func (suite *SessionTestSuite) TestDeriveSessionNoHost() {
 	config.SetHost("")
 	config.SetPort(0)
 
-	sessionName, err := router.SessionName()
+	sessionName, err := middleware.SessionName()
 	suite.EqualError(err, "could not derive hostname without port from https://")
 	suite.Equal("", sessionName)
 }
@@ -76,7 +76,7 @@ func (suite *SessionTestSuite) TestDeriveSessionOK() {
 	config.SetProtocol("https")
 	config.SetHost("example.org")
 
-	sessionName, err := router.SessionName()
+	sessionName, err := middleware.SessionName()
 	suite.NoError(err)
 	suite.Equal("gotosocial-example.org", sessionName)
 }
@@ -85,7 +85,7 @@ func (suite *SessionTestSuite) TestDeriveSessionIDNOK() {
 	config.SetProtocol("https")
 	config.SetHost("fóid.org")
 
-	sessionName, err := router.SessionName()
+	sessionName, err := middleware.SessionName()
 	suite.NoError(err)
 	suite.Equal("gotosocial-xn--fid-gna.org", sessionName)
 }

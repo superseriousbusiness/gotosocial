@@ -16,15 +16,21 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package router
+package middleware
 
 import (
-	ginGzip "github.com/gin-contrib/gzip"
+	"errors"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 )
 
-func useGzip(engine *gin.Engine) error {
-	gzipMiddleware := ginGzip.Gzip(ginGzip.DefaultCompression)
-	engine.Use(gzipMiddleware)
-	return nil
+// UserAgentBlock is a gin middleware which aborts requests with
+// empty user agent strings, returning code 418 - I'm a teapot.
+func (p *Provider) UserAgentBlock(c *gin.Context) {
+	if ua := c.Request.UserAgent(); ua == "" {
+		code := http.StatusTeapot
+		err := errors.New(http.StatusText(code) + ": no user-agent sent with request")
+		c.AbortWithStatusJSON(code, gin.H{"error": err.Error()})
+	}
 }

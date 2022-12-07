@@ -111,6 +111,9 @@ func (m *Module) Route(s router.Router) error {
 	// serve email confirmation page at /confirm_email?token=whatever
 	s.AttachHandler(http.MethodGet, confirmEmailPath, m.confirmEmailGETHandler)
 
+	// robots.txt handler
+	s.AttachHandler(http.MethodGet, robotsPath, m.robotsGETHandler)
+
 	// 404 handler
 	s.AttachNoRouteHandler(func(c *gin.Context) {
 		api.ErrorHandler(c, gtserror.NewErrorNotFound(errors.New(http.StatusText(http.StatusNotFound))), m.processor.InstanceGet)

@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/router/middleware"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -151,7 +152,6 @@ func New(ctx context.Context, db db.DB) (Router, error) {
 
 	// create the actual engine here -- this is the core request routing handler for gts
 	engine := gin.New()
-	engine.Use(loggingMiddleware)
 
 	// 8 MiB
 	engine.MaxMultipartMemory = 8 << 20
@@ -162,20 +162,8 @@ func New(ctx context.Context, db db.DB) (Router, error) {
 		return nil, err
 	}
 
-	// enable cors on the engine
-	if err := useCors(engine); err != nil {
-		return nil, err
-	}
-
-	// enable gzip compression on the engine
-	if err := useGzip(engine); err != nil {
-		return nil, err
-	}
-
-	// enable session store middleware on the engine
-	if err := useSession(ctx, db, engine); err != nil {
-		return nil, err
-	}
+	// enable global middlewares
+	middlewareProvider := middleware.New(db, )
 
 	// set template functions
 	LoadTemplateFunctions(engine)

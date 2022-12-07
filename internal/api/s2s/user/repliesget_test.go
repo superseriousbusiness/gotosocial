@@ -58,7 +58,7 @@ func (suite *RepliesGetTestSuite) TestGetReplies() {
 	ctx.Request.Header.Set("Date", signedRequest.DateHeader)
 
 	// we need to pass the context through signature check first to set appropriate values on it
-	suite.securityModule.SignatureCheck(ctx)
+	suite.middlewareModule.SignatureCheck(ctx)
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
@@ -123,7 +123,7 @@ func (suite *RepliesGetTestSuite) TestGetRepliesNext() {
 	ctx.Request.Header.Set("Date", signedRequest.DateHeader)
 
 	// we need to pass the context through signature check first to set appropriate values on it
-	suite.securityModule.SignatureCheck(ctx)
+	suite.middlewareModule.SignatureCheck(ctx)
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
@@ -191,7 +191,7 @@ func (suite *RepliesGetTestSuite) TestGetRepliesLast() {
 	ctx.Request.Header.Set("Date", signedRequest.DateHeader)
 
 	// we need to pass the context through signature check first to set appropriate values on it
-	suite.securityModule.SignatureCheck(ctx)
+	suite.middlewareModule.SignatureCheck(ctx)
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.

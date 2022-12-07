@@ -27,7 +27,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/emoji"
-	"github.com/superseriousbusiness/gotosocial/internal/api/security"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -37,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/router/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -44,15 +44,15 @@ import (
 
 type EmojiGetTestSuite struct {
 	suite.Suite
-	db             db.DB
-	tc             typeutils.TypeConverter
-	mediaManager   media.Manager
-	federator      federation.Federator
-	emailSender    email.Sender
-	processor      processing.Processor
-	storage        *storage.Driver
-	oauthServer    oauth.Server
-	securityModule *security.Module
+	db               db.DB
+	tc               typeutils.TypeConverter
+	mediaManager     media.Manager
+	federator        federation.Federator
+	emailSender      email.Sender
+	processor        processing.Processor
+	storage          *storage.Driver
+	oauthServer      oauth.Server
+	middlewareModule *middleware.Module
 
 	testEmojis   map[string]*gtsmodel.Emoji
 	testAccounts map[string]*gtsmodel.Account
@@ -81,7 +81,7 @@ func (suite *EmojiGetTestSuite) SetupTest() {
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, suite.mediaManager, clientWorker, fedWorker)
 	suite.emojiModule = emoji.New(suite.processor).(*emoji.Module)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
-	suite.securityModule = security.New(suite.db, suite.oauthServer).(*security.Module)
+	suite.middlewareModule = middleware.New(suite.db, suite.oauthServer).(*middleware.Module)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 
@@ -108,7 +108,7 @@ func (suite *EmojiGetTestSuite) TestGetEmoji() {
 	ctx.Request.Header.Set("Date", signedRequest.DateHeader)
 
 	// we need to pass the context through signature check first to set appropriate values on it
-	suite.securityModule.SignatureCheck(ctx)
+	suite.middlewareModule.SignatureCheck(ctx)
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.

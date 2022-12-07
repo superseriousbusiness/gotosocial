@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package security
+package middleware
 
 import (
 	"github.com/gin-gonic/gin"
@@ -26,12 +26,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// TokenCheck checks if the client has presented a valid oauth Bearer token.
+// TokenCheck is a gin middleware which checks if the client presented a valid oauth Bearer token.
 // If so, it will check the User that the token belongs to, and set that in the context of
 // the request. Then, it will look up the account for that user, and set that in the request too.
 // If user or account can't be found, then the handler won't *fail*, in case the server wants to allow
 // public requests that don't have a Bearer token set (eg., for public instance information and so on).
-func (m *Module) TokenCheck(c *gin.Context) {
+func (p *Provider) TokenCheck(c *gin.Context) {
 	ctx := c.Request.Context()
 	defer c.Next()
 
@@ -40,7 +40,7 @@ func (m *Module) TokenCheck(c *gin.Context) {
 		return
 	}
 
-	ti, err := m.server.ValidationBearerToken(c.Copy().Request)
+	ti, err := p.oauthServer.ValidationBearerToken(c.Copy().Request)
 	if err != nil {
 		log.Infof("token was passed in Authorization header but we could not validate it: %s", err)
 		return
@@ -52,7 +52,7 @@ func (m *Module) TokenCheck(c *gin.Context) {
 		log.Tracef("authenticated user %s with bearer token, scope is %s", userID, ti.GetScope())
 
 		// fetch user for this token
-		user, err := m.db.GetUserByID(ctx, userID)
+		user, err := p.db.GetUserByID(ctx, userID)
 		if err != nil {
 			if err != db.ErrNoEntries {
 				log.Errorf("database error looking for user with id %s: %s", userID, err)
@@ -81,7 +81,7 @@ func (m *Module) TokenCheck(c *gin.Context) {
 
 		// fetch account for this token
 		if user.Account == nil {
-			acct, err := m.db.GetAccountByID(ctx, user.AccountID)
+			acct, err := p.db.GetAccountByID(ctx, user.AccountID)
 			if err != nil {
 				if err != db.ErrNoEntries {
 					log.Errorf("database error looking for account with id %s: %s", user.AccountID, err)
@@ -107,7 +107,7 @@ func (m *Module) TokenCheck(c *gin.Context) {
 
 		// fetch app for this token
 		app := &gtsmodel.Application{}
-		if err := m.db.GetWhere(ctx, []db.Where{{Key: "client_id", Value: clientID}}, app); err != nil {
+		if err := p.db.GetWhere(ctx, []db.Where{{Key: "client_id", Value: clientID}}, app); err != nil {
 			if err != db.ErrNoEntries {
 				log.Errorf("database error looking for application with clientID %s: %s", clientID, err)
 				return
