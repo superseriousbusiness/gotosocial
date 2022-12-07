@@ -34,10 +34,9 @@ func (suite *StatusBookmarkTestSuite) TestBookmark() {
 
 	// bookmark a status
 	bookmarkingAccount1 := suite.testAccounts["local_account_1"]
-	application1 := suite.testApplications["application_1"]
 	targetStatus1 := suite.testStatuses["admin_account_status_1"]
 
-	bookmark1, err := suite.status.Bookmark(ctx, bookmarkingAccount1, application1, targetStatus1.ID)
+	bookmark1, err := suite.status.Bookmark(ctx, bookmarkingAccount1, targetStatus1.ID)
 	suite.NoError(err)
 	suite.NotNil(bookmark1)
 	suite.True(bookmark1.Bookmarked)
