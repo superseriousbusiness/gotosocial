@@ -87,6 +87,7 @@ var Defaults = Configuration{
 	OIDCClientID:         "",
 	OIDCClientSecret:     "",
 	OIDCScopes:           []string{oidc.ScopeOpenID, "profile", "email", "groups"},
+	OIDCLinkExisting:     false,
 
 	SMTPHost:     "",
 	SMTPPort:     0,

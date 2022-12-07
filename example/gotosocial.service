@@ -17,10 +17,6 @@ Restart=on-failure
 ExecStart=/gotosocial/gotosocial --config-path config.yaml server start
 WorkingDirectory=/gotosocial
 
-StandardOutput=append:/var/log/gotosocial/access.log
-StandardError=append:/var/log/gotosocial/error.log
-
-
 # Sandboxing options to harden security
 # Details for these options: https://www.freedesktop.org/software/systemd/man/systemd.exec.html
 NoNewPrivileges=yes

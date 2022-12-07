@@ -30,6 +30,7 @@ import (
 
 	"github.com/buckket/go-blurhash"
 	"github.com/disintegration/imaging"
+	_ "golang.org/x/image/webp" // blank import to support WebP decoding
 )
 
 const (
@@ -71,7 +72,7 @@ func decodeImage(r io.Reader, contentType string) (*imageMeta, error) {
 	var err error
 
 	switch contentType {
-	case mimeImageJpeg:
+	case mimeImageJpeg, mimeImageWebp:
 		i, err = imaging.Decode(r, imaging.AutoOrientation(true))
 	case mimeImagePng:
 		strippedPngReader := io.Reader(&PNGAncillaryChunkStripper{
@@ -104,7 +105,7 @@ func decodeImage(r io.Reader, contentType string) (*imageMeta, error) {
 }
 
 // deriveThumbnail returns a byte slice and metadata for a thumbnail
-// of a given jpeg, png, or gif, or an error if something goes wrong.
+// of a given jpeg, png, gif or webp, or an error if something goes wrong.
 //
 // If createBlurhash is true, then a blurhash will also be generated from a tiny
 // version of the image. This costs precious CPU cycles, so only use it if you
@@ -117,7 +118,7 @@ func deriveThumbnail(r io.Reader, contentType string, createBlurhash bool) (*ima
 	var err error
 
 	switch contentType {
-	case mimeImageJpeg, mimeImageGif:
+	case mimeImageJpeg, mimeImageGif, mimeImageWebp:
 		i, err = imaging.Decode(r, imaging.AutoOrientation(true))
 	case mimeImagePng:
 		strippedPngReader := io.Reader(&PNGAncillaryChunkStripper{

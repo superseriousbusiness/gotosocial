@@ -114,6 +114,7 @@ type Configuration struct {
 	OIDCClientID         string   `name:"oidc-client-id" usage:"ClientID of GoToSocial, as registered with the OIDC provider."`
 	OIDCClientSecret     string   `name:"oidc-client-secret" usage:"ClientSecret of GoToSocial, as registered with the OIDC provider."`
 	OIDCScopes           []string `name:"oidc-scopes" usage:"OIDC scopes."`
+	OIDCLinkExisting     bool     `name:"oidc-link-existing" usage:"link existing user accounts to OIDC logins based on the stored email value"`
 
 	SMTPHost     string `name:"smtp-host" usage:"Host of the smtp server. Eg., 'smtp.eu.mailgun.org'"`
 	SMTPPort     int    `name:"smtp-port" usage:"Port of the smtp server. Eg., 587"`

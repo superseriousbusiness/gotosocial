@@ -490,6 +490,13 @@ oidc-scopes:
   - "profile"
   - "groups"
 
+# Bool. Link OIDC authenticated users to existing ones based on their email address.
+# This is mostly intended for migration purposes if you were running previous versions of GTS
+# which only correlated users with their email address. Should be set to false for most usecases.
+# Options: [true, false]
+# Default: false
+oidc-link-existing: false
+
 #######################
 ##### SMTP CONFIG #####
 #######################

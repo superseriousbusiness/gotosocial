@@ -40,6 +40,7 @@ func (u *userDB) init() {
 		{Name: "AccountID"},
 		{Name: "Email"},
 		{Name: "ConfirmationToken"},
+		{Name: "ExternalID"},
 	}, func(u1 *gtsmodel.User) *gtsmodel.User {
 		u2 := new(gtsmodel.User)
 		*u2 = *u1
@@ -103,6 +104,24 @@ func (u *userDB) GetUserByEmailAddress(ctx context.Context, emailAddress string)
 
 		return &user, nil
 	}, emailAddress)
+}
+func (u *userDB) GetUserByExternalID(ctx context.Context, id string) (*gtsmodel.User, db.Error) {
+
+	return u.cache.Load("ExternalID", func() (*gtsmodel.User, error) {
+		var user gtsmodel.User
+
+		q := u.conn.
+			NewSelect().
+			Model(&user).
+			Relation("Account").
+			Where("? = ?", bun.Ident("user.external_id"), id)
+
+		if err := q.Scan(ctx); err != nil {
+			return nil, u.conn.ProcessError(err)
+		}
+
+		return &user, nil
+	}, id)
 }
 
 func (u *userDB) GetUserByConfirmationToken(ctx context.Context, confirmationToken string) (*gtsmodel.User, db.Error) {

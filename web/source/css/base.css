@@ -380,3 +380,17 @@ footer {
 .monospace {
 	font-family: monospace;
 }
+
+.callout {
+	margin: 1.5rem 0;
+	border: .05rem solid $border-accent;
+	border-radius: .2rem;
+	padding: 0 .6rem .6rem;
+	.callout-title {
+		margin: 0 -.6rem;
+		padding: .6rem;
+		font-weight: bold;
+		background-color: $border-accent;
+		color: $gray1;
+	}
+}
