@@ -27,7 +27,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/bookmarks"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
@@ -104,41 +103,6 @@ func (suite *BookmarkTestSuite) SetupTest() {
 	suite.bookmarkModule = bookmarks.New(suite.processor).(*bookmarks.Module)
 
 	suite.NoError(suite.processor.Start())
-	suite.setupTestBookmark()
-}
-
-func (suite *BookmarkTestSuite) setupTestBookmark() {
-	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.DBTokenToToken(t)
-
-	targetStatus := suite.testStatuses["admin_account_status_1"]
-
-	// setup
-	recorder := httptest.NewRecorder()
-	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
-	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(status.ReblogPath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
-	ctx.Request.Header.Set("accept", "application/json")
-
-	// normally the router would populate these params from the path values,
-	// but because we're calling the function directly, we need to set them manually.
-	ctx.Params = gin.Params{
-		gin.Param{
-			Key:   status.IDKey,
-			Value: targetStatus.ID,
-		},
-	}
-
-	suite.statusModule.StatusBookmarkPOSTHandler(ctx)
-
-	// check response
-	suite.EqualValues(http.StatusOK, recorder.Code)
-
-	result := recorder.Result()
-	defer result.Body.Close()
 }
 
 func (suite *BookmarkTestSuite) TearDownTest() {
@@ -146,7 +110,7 @@ func (suite *BookmarkTestSuite) TearDownTest() {
 	testrig.StandardStorageTeardown(suite.storage)
 }
 
-func (suite *BookmarkTestSuite) TestPostBookmark() {
+func (suite *BookmarkTestSuite) TestGetBookmark() {
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.DBTokenToToken(t)
 
@@ -159,7 +123,7 @@ func (suite *BookmarkTestSuite) TestPostBookmark() {
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(status.ReblogPath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(status.BookmarkPath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/json")
 
 	suite.bookmarkModule.BookmarksGETHandler(ctx)

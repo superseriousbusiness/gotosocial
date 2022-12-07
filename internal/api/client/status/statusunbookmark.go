@@ -28,9 +28,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// StatusBookmarkPOSTHandler swagger:operation POST /api/v1/statuses/{id}/bookmark statusBookmark
+// StatusUnbookmarkPOSTHandler swagger:operation POST /api/v1/statuses/{id}/unbookmark statusUnbookmark
 //
-// Bookmark status with the given ID.
+// Unbookmark status with the given ID.
 //
 //	---
 //	tags:
@@ -69,7 +69,7 @@ import (
 //			description: not acceptable
 //		'500':
 //			description: internal server error
-func (m *Module) StatusUnBookmarkPOSTHandler(c *gin.Context) {
+func (m *Module) StatusUnbookmarkPOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
@@ -88,7 +88,7 @@ func (m *Module) StatusUnBookmarkPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	apiStatus, errWithCode := m.processor.StatusUnBookmark(c.Request.Context(), authed, targetStatusID)
+	apiStatus, errWithCode := m.processor.StatusUnbookmark(c.Request.Context(), authed, targetStatusID)
 	if errWithCode != nil {
 		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return

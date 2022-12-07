@@ -38,7 +38,7 @@ func (p *processor) BookmarksGet(ctx context.Context, requestingAccount *gtsmode
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	var filtered []*gtsmodel.Status
+	filtered := make([]*gtsmodel.Status, 0, len(statuses))
 	for _, s := range statuses {
 		visible, err := p.filter.StatusVisible(ctx, s, requestingAccount)
 		if err == nil && visible {

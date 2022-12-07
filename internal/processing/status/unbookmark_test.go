@@ -25,31 +25,30 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type StatusUnBookmarkTestSuite struct {
+type StatusUnbookmarkTestSuite struct {
 	StatusStandardTestSuite
 }
 
-func (suite *StatusUnBookmarkTestSuite) TestUnBookmark() {
+func (suite *StatusUnbookmarkTestSuite) TestUnbookmark() {
 	ctx := context.Background()
 
 	// bookmark a status
 	bookmarkingAccount1 := suite.testAccounts["local_account_1"]
-	application1 := suite.testApplications["application_1"]
 	targetStatus1 := suite.testStatuses["admin_account_status_1"]
 
-	bookmark1, err := suite.status.Bookmark(ctx, bookmarkingAccount1, application1, targetStatus1.ID)
+	bookmark1, err := suite.status.Bookmark(ctx, bookmarkingAccount1, targetStatus1.ID)
 	suite.NoError(err)
 	suite.NotNil(bookmark1)
 	suite.True(bookmark1.Bookmarked)
 	suite.Equal(targetStatus1.ID, bookmark1.ID)
 
-	bookmark2, err := suite.status.UnBookmark(ctx, bookmarkingAccount1, application1, targetStatus1.ID)
+	bookmark2, err := suite.status.Unbookmark(ctx, bookmarkingAccount1, targetStatus1.ID)
 	suite.NoError(err)
 	suite.NotNil(bookmark2)
 	suite.False(bookmark2.Bookmarked)
 	suite.Equal(targetStatus1.ID, bookmark1.ID)
 }
 
-func TestStatusUnBookmarkTestSuite(t *testing.T) {
-	suite.Run(t, new(StatusUnBookmarkTestSuite))
+func TestStatusUnbookmarkTestSuite(t *testing.T) {
+	suite.Run(t, new(StatusUnbookmarkTestSuite))
 }

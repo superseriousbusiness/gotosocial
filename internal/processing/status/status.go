@@ -55,9 +55,9 @@ type Processor interface {
 	// Context returns the context (previous and following posts) from the given status ID
 	Context(ctx context.Context, account *gtsmodel.Account, targetStatusID string) (*apimodel.Context, gtserror.WithCode)
 	// Bookmarks a status
-	Bookmark(ctx context.Context, account *gtsmodel.Account, application *gtsmodel.Application, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
+	Bookmark(ctx context.Context, account *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
 	// Removes a bookmark for a status
-	UnBookmark(ctx context.Context, account *gtsmodel.Account, application *gtsmodel.Application, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
+	Unbookmark(ctx context.Context, account *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
 
 	/*
 		PROCESSING UTILS

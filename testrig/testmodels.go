@@ -2251,6 +2251,26 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 	}
 }
 
+// NewTestBookmarks returns a map of gts model bookmarks, keyed in the format [bookmarking_account]_[target_status]
+func NewTestBookmarks() map[string]*gtsmodel.StatusBookmark {
+	return map[string]*gtsmodel.StatusBookmark{
+		"local_account_1_admin_account_status_1": {
+			ID:              "01F8MHD2QCZSZ6WQS2ATVPEYJ9",
+			CreatedAt:       TimeMustParse("2022-05-14T13:21:09+02:00"),
+			AccountID:       "01F8MH1H7YV1Z7D2C8K2730QBF", // local account 1
+			TargetAccountID: "01F8MH17FWEB39HZJ76B6VXSKF", // admin account
+			StatusID:        "01F8MH75CBF9JFX4ZAD54N0W0R", // admin account status 1
+		},
+		"admin_account_local_account_1_status_1": {
+			ID:              "01F8Q0486ANTDWKG02A7DS1Q24",
+			CreatedAt:       TimeMustParse("2022-05-14T13:21:09+02:00"),
+			AccountID:       "01F8MH17FWEB39HZJ76B6VXSKF", // admin account
+			TargetAccountID: "01F8MH1H7YV1Z7D2C8K2730QBF", // local account 1
+			StatusID:        "01F8MHAMCHF6Y650WCRSCP4WMY", // local account status 1
+		},
+	}
+}
+
 // NewTestDereferenceRequests returns a map of incoming dereference requests, with their signatures.
 func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[string]ActivityWithSignature {
 	var sig, digest, date string

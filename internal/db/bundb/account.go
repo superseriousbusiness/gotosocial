@@ -468,12 +468,12 @@ func (a *accountDB) GetBookmarks(ctx context.Context, accountID string, limit in
 
 	q := a.conn.
 		NewSelect().
-		TableExpr("? AS ?", bun.Ident("status_bookmarks"), bun.Ident("bookmark")).
-		Column("bookmark.status_id").
-		Order("bookmark.id DESC")
+		TableExpr("? AS ?", bun.Ident("status_bookmarks"), bun.Ident("status_bookmark")).
+		Column("status_bookmark.status_id").
+		Order("status_bookmark.id DESC")
 
 	if accountID != "" {
-		q = q.Where("? = ?", bun.Ident("bookmark.account_id"), accountID)
+		q = q.Where("? = ?", bun.Ident("status_bookmark.account_id"), accountID)
 	}
 
 	if limit != 0 {
@@ -481,11 +481,11 @@ func (a *accountDB) GetBookmarks(ctx context.Context, accountID string, limit in
 	}
 
 	if maxID != "" {
-		q = q.Where("? < ?", bun.Ident("bookmark.id"), maxID)
+		q = q.Where("? < ?", bun.Ident("status_bookmark.id"), maxID)
 	}
 
 	if minID != "" {
-		q = q.Where("? > ?", bun.Ident("bookmark.id"), minID)
+		q = q.Where("? > ?", bun.Ident("status_bookmark.id"), minID)
 	}
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {

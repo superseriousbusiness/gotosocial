@@ -12,14 +12,12 @@ import (
 )
 
 const (
-	// IDKey is the key to use for retrieving account ID in requests
-	IDKey = "id"
 	// LimitKey is for setting the return amount limit for eg., requesting an account's statuses
 	LimitKey = "limit"
 
-	// MaxIDKey is for specifying the maximum ID of the status to retrieve.
+	// MaxIDKey is for specifying the maximum ID of the bookmark to retrieve.
 	MaxIDKey = "max_id"
-	// MinIDKey is for specifying the minimum ID of the status to retrieve.
+	// MinIDKey is for specifying the minimum ID of the bookmark to retrieve.
 	MinIDKey = "min_id"
 )
 
@@ -45,6 +43,10 @@ const (
 //				type: array
 //				items:
 //					"$ref": "#/definitions/bookmark"
+//			headers:
+//				Link:
+//					type: string
+//					description: Links to the next and previous queries.
 //		'401':
 //			description: unauthorized
 //		'406':

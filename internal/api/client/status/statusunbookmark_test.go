@@ -32,11 +32,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-type StatusUnBookmarkTestSuite struct {
+type StatusUnbookmarkTestSuite struct {
 	StatusStandardTestSuite
 }
 
-func (suite *StatusUnBookmarkTestSuite) TestPostUnBookmark() {
+func (suite *StatusUnbookmarkTestSuite) TestPostUnbookmark() {
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.DBTokenToToken(t)
 
@@ -49,7 +49,7 @@ func (suite *StatusUnBookmarkTestSuite) TestPostUnBookmark() {
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(status.ReblogPath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(status.UnbookmarkPath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/json")
 
 	ctx.Params = gin.Params{
@@ -59,29 +59,7 @@ func (suite *StatusUnBookmarkTestSuite) TestPostUnBookmark() {
 		},
 	}
 
-	suite.statusModule.StatusBookmarkPOSTHandler(ctx)
-
-	// check response
-	suite.EqualValues(http.StatusOK, recorder.Code)
-
-	// setup again
-	recorder = httptest.NewRecorder()
-	ctx, _ = testrig.CreateGinTestContext(recorder, nil)
-	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
-	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(status.ReblogPath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
-	ctx.Request.Header.Set("accept", "application/json")
-
-	ctx.Params = gin.Params{
-		gin.Param{
-			Key:   status.IDKey,
-			Value: targetStatus.ID,
-		},
-	}
-
-	suite.statusModule.StatusUnBookmarkPOSTHandler(ctx)
+	suite.statusModule.StatusUnbookmarkPOSTHandler(ctx)
 
 	result := recorder.Result()
 	defer result.Body.Close()
@@ -95,6 +73,6 @@ func (suite *StatusUnBookmarkTestSuite) TestPostUnBookmark() {
 	suite.False(statusReply.Bookmarked)
 }
 
-func TestStatusUnBookmarkTestSuite(t *testing.T) {
-	suite.Run(t, new(StatusUnBookmarkTestSuite))
+func TestStatusUnbookmarkTestSuite(t *testing.T) {
+	suite.Run(t, new(StatusUnbookmarkTestSuite))
 }

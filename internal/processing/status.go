@@ -67,9 +67,9 @@ func (p *processor) StatusGetContext(ctx context.Context, authed *oauth.Auth, ta
 }
 
 func (p *processor) StatusBookmark(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	return p.statusProcessor.Bookmark(ctx, authed.Account, authed.Application, targetStatusID)
+	return p.statusProcessor.Bookmark(ctx, authed.Account, targetStatusID)
 }
 
-func (p *processor) StatusUnBookmark(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	return p.statusProcessor.UnBookmark(ctx, authed.Account, authed.Application, targetStatusID)
+func (p *processor) StatusUnbookmark(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+	return p.statusProcessor.Unbookmark(ctx, authed.Account, targetStatusID)
 }
