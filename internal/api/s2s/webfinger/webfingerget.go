@@ -98,5 +98,9 @@ func (m *Module) WebfingerGETRequest(c *gin.Context) {
 		return
 	}
 
+	// allow upstream HTTP proxies to cache this result for a short period.
+	// mastodon and others can cause a massive spike in webfinger requests
+	// for an author when their toot goes viral.
+	c.Header("Cache-Control", "public, max-age=300")
 	c.JSON(http.StatusOK, resp)
 }
