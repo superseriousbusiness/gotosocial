@@ -58,7 +58,7 @@ var Orphaned action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error pruning: %s", err)
 	}
 
-	if dry {
+	if dry /* dick heyyoooooo */ {
 		log.Infof("DRY RUN: %d stored items are orphaned and eligible to be pruned", pruned)
 	} else {
 		log.Infof("%d stored items were orphaned and pruned", pruned)
