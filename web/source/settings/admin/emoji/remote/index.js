@@ -20,10 +20,6 @@
 
 const React = require("react");
 
-const {
-	useTextInput
-} = require("../../../components/form");
-
 const ParseFromToot = require("./parse-from-toot");
 
 const query = require("../../../lib/query");
