@@ -20,6 +20,7 @@
 
 const Promise = require("bluebird");
 const React = require("react");
+const Redux = require("react-redux");
 const syncpipe = require("syncpipe");
 
 const {
@@ -31,27 +32,38 @@ const { CategorySelect } = require('../category-select');
 
 const query = require("../../../lib/query");
 
-module.exports = function ParseFromToot({emojiCodes}) {
-	const [searchStatus, { data, isLoading, error }] = query.useSearchStatusForEmojiMutation();
+module.exports = function ParseFromToot({ emojiCodes }) {
+	const [searchStatus, { data, isLoading, isSuccess, error }] = query.useSearchStatusForEmojiMutation();
+	const instanceDomain = Redux.useSelector((state) => (new URL(state.oauth.instance).host));
 
 	const [onURLChange, _resetURL, { url }] = useTextInput("url");
 
-	const status = data?.statuses?.[0];
-	const emojiList = React.useMemo(() => {
-		const emoji = {};
-		(status?.account.emojis ?? []).forEach((e) => {
-			emoji[e.shortcode] = e;
-		});
-		(status?.emojis ?? []).forEach((e) => {
-			emoji[e.shortcode] = e;
-		});
+	const searchResult = React.useMemo(() => {
+		if (!isSuccess) {
+			return null;
+		}
 
-		return Object.values(emoji);
-	}, [status]);
+		if (data.type == "none") {
+			return "No results found";
+		}
 
-	const domain = React.useMemo(() => (
-		status && (new URL(status.uri)).host
-	), [status]);
+		if (data.domain == instanceDomain) {
+			return <b>This is a local user/toot, all referenced emoji are already on your instance</b>;
+		}
+
+		if (data.list.length == 0) {
+			return <b>This {data.type == "statuses" ? "toot" : "account"} doesn't use any custom emoji</b>;
+		}
+
+		return (
+			<CopyEmojiForm
+				localEmojiCodes={emojiCodes}
+				type={data.type}
+				domain={data.domain}
+				emojiList={data.list}
+			/>
+		);
+	}, [isSuccess, data, instanceDomain, emojiCodes]);
 
 	function submitSearch(e) {
 		e.preventDefault();
@@ -77,22 +89,17 @@ module.exports = function ParseFromToot({emojiCodes}) {
 						<button><i className="fa fa-search" aria-hidden="true"></i></button>
 					</div>
 					{isLoading && "Loading..."}
-					{error && <div className="error">{error}</div>}
+					{error && <div className="error">{error.data.error}</div>}
 				</div>
 			</form>
-			{status && 
-				(status.account.acct.includes("@")
-					? <CopyEmojiForm localEmojiCodes={emojiCodes} emojiList={emojiList} domain={domain}/>
-					: <b>This is a local toot, all emoji are already on your instance</b>
-				)
-			}
+			{searchResult}
 		</div>
 	);
 };
 
 function makeEmojiState(emojiList, checked) {
 	/* Return a new object, with a key for every emoji's shortcode,
-	   And a value for it's checkbox `checked` state.
+		 And a value for it's checkbox `checked` state.
 	 */
 	return syncpipe(emojiList, [
 		(_) => _.map((emoji) => [emoji.shortcode, {
@@ -115,7 +122,7 @@ function updateEmojiState(emojiState, checked) {
 	]);
 }
 
-function CopyEmojiForm({localEmojiCodes, emojiList, domain}) {
+function CopyEmojiForm({ localEmojiCodes, type, domain, emojiList }) {
 	const [patchRemoteEmojis, patchResult] = query.usePatchRemoteEmojisMutation();
 	const [err, setError] = React.useState();
 
@@ -134,7 +141,7 @@ function CopyEmojiForm({localEmojiCodes, emojiList, domain}) {
 
 	React.useEffect(() => {
 		/* Updates (un)check all checkbox, based on shortcode checkboxes
-		   Can be 0 (not checked), 1 (checked) or 2 (indeterminate)
+			 Can be 0 (not checked), 1 (checked) or 2 (indeterminate)
 		 */
 		if (toggleAllRef.current == null) {
 			return;
@@ -198,7 +205,7 @@ function CopyEmojiForm({localEmojiCodes, emojiList, domain}) {
 					};
 				})
 			]);
-	
+
 			return patchRemoteEmojis({
 				action,
 				domain,
@@ -212,7 +219,7 @@ function CopyEmojiForm({localEmojiCodes, emojiList, domain}) {
 			if (Array.isArray(e)) {
 				setError(e.map(([shortcode, msg]) => (
 					<div key={shortcode}>
-						{shortcode}: <span style={{fontWeight: "initial"}}>{msg}</span>
+						{shortcode}: <span style={{ fontWeight: "initial" }}>{msg}</span>
 					</div>
 				)));
 			} else {
@@ -223,7 +230,7 @@ function CopyEmojiForm({localEmojiCodes, emojiList, domain}) {
 
 	return (
 		<div className="parsed">
-			<span>This toot includes the following custom emoji, select the ones you want to act on:</span>
+			<span>This {type == "statuses" ? "toot" : "account"} uses the following custom emoji, select the ones you want to copy/disable:</span>
 			<div className="emoji-list">
 				<label className="header">
 					<input
@@ -263,8 +270,8 @@ function CopyEmojiForm({localEmojiCodes, emojiList, domain}) {
 	);
 }
 
-function EmojiEntry({emoji, localEmojiCodes, updateEmoji, checked}) {
-	const [onShortcodeChange, _resetShortcode, { shortcode, shortcodeRef, shortcodeValid}] = useTextInput("shortcode", {
+function EmojiEntry({ emoji, localEmojiCodes, updateEmoji, checked }) {
+	const [onShortcodeChange, _resetShortcode, { shortcode, shortcodeRef, shortcodeValid }] = useTextInput("shortcode", {
 		defaultValue: emoji.shortcode,
 		validator: function validateShortcode(code) {
 			return (checked && localEmojiCodes.has(code))
@@ -274,7 +281,7 @@ function EmojiEntry({emoji, localEmojiCodes, updateEmoji, checked}) {
 	});
 
 	React.useEffect(() => {
-		updateEmoji({valid: shortcodeValid});
+		updateEmoji({ valid: shortcodeValid });
 		/* eslint-disable-next-line react-hooks/exhaustive-deps */
 	}, [shortcodeValid]);
 
@@ -282,7 +289,7 @@ function EmojiEntry({emoji, localEmojiCodes, updateEmoji, checked}) {
 		<label key={emoji.shortcode} className="row">
 			<input
 				type="checkbox"
-				onChange={(e) => updateEmoji({checked: e.target.checked})}
+				onChange={(e) => updateEmoji({ checked: e.target.checked })}
 				checked={checked}
 			/>
 			<img className="emoji" src={emoji.url} title={emoji.shortcode} />
@@ -294,7 +301,7 @@ function EmojiEntry({emoji, localEmojiCodes, updateEmoji, checked}) {
 				ref={shortcodeRef}
 				onChange={(e) => {
 					onShortcodeChange(e);
-					updateEmoji({shortcode: e.target.value, checked: true});
+					updateEmoji({ shortcode: e.target.value, checked: true });
 				}}
 				value={shortcode}
 			/>

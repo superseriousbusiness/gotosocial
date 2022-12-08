@@ -19,6 +19,7 @@
 "use strict";
 
 const Promise = require("bluebird");
+const syncpipe = require("syncpipe");
 
 const base = require("./base");
 
@@ -92,7 +93,31 @@ const endpoints = (build) => ({
 		query: (url) => ({
 			method: "GET",
 			url: `/api/v2/search?q=${encodeURIComponent(url)}&resolve=true&limit=1`
-		})
+		}),
+		transformResponse: (res) => {
+			/* Parses search response, prioritizing a toot result,
+			   and returns referenced custom emoji
+			*/
+			let type;
+
+			if (res.statuses.length > 0) {
+				type = "statuses";
+			} else if (res.accounts.length > 0) {
+				type = "accounts";
+			} else {
+				return {
+					type: "none"
+				};
+			}
+
+			let data = res[type][0];
+
+			return {
+				type,
+				domain: (new URL(data.url)).host, // to get WEB_DOMAIN, see https://github.com/superseriousbusiness/gotosocial/issues/1225
+				list: data.emojis
+			};
+		}
 	}),
 	patchRemoteEmojis: build.mutation({
 		queryFn: ({action, domain, list, category}, api, _extraOpts, baseQuery) => {
@@ -116,10 +141,11 @@ const endpoints = (build) => ({
 						type: action
 					};
 
-					console.log("copying to", category);
 					if (action == "copy") {
 						body.shortcode = emoji.localShortcode ?? emoji.shortcode;
-						body.category = category;
+						if (category.trim().length != 0) {
+							body.category = category;
+						}
 					}
 
 					return baseQuery({
