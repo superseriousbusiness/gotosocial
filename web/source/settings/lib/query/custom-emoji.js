@@ -116,8 +116,8 @@ const endpoints = (build) => ({
 						type: action
 					};
 
-					if (action == "copy" && emoji.localShortcode) {
-						body.shortcode = emoji.localShortcode;
+					if (action == "copy") {
+						body.shortcode = emoji.localShortcode ?? emoji.shortcode;
 					}
 
 					return baseQuery({

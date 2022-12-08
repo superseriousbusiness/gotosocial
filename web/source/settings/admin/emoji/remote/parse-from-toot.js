@@ -32,12 +32,26 @@ const { CategorySelect } = require('../category-select');
 const query = require("../../../lib/query");
 
 module.exports = function ParseFromToot({emojiCodes}) {
-	const [searchStatus, { data }] = query.useSearchStatusForEmojiMutation();
+	const [searchStatus, { data, isLoading, error }] = query.useSearchStatusForEmojiMutation();
 
 	const [onURLChange, _resetURL, { url }] = useTextInput("url");
 
 	const status = data?.statuses?.[0];
-	const emojiList = status?.emojis;
+	const emojiList = React.useMemo(() => {
+		const emoji = {};
+		(status?.account.emojis ?? []).forEach((e) => {
+			emoji[e.shortcode] = e;
+		});
+		(status?.emojis ?? []).forEach((e) => {
+			emoji[e.shortcode] = e;
+		});
+
+		return Object.values(emoji);
+	}, [status]);
+
+	const domain = React.useMemo(() => (
+		(new URL(status.uri)).host
+	), [status]);
 
 	function submitSearch(e) {
 		e.preventDefault();
@@ -62,11 +76,13 @@ module.exports = function ParseFromToot({emojiCodes}) {
 						/>
 						<button><i className="fa fa-search" aria-hidden="true"></i></button>
 					</div>
+					{isLoading && "Loading..."}
+					{error && <div className="error">{error}</div>}
 				</div>
 			</form>
 			{status && 
 				(status.account.acct.includes("@")
-					? <CopyEmojiForm localEmojiCodes={emojiCodes} emojiList={emojiList} domain={status.account.acct.split("@")[1]}/>
+					? <CopyEmojiForm localEmojiCodes={emojiCodes} emojiList={emojiList} domain={domain}/>
 					: <b>This is a local toot, all emoji are already on your instance</b>
 				)
 			}
@@ -100,7 +116,7 @@ function updateEmojiState(emojiState, checked) {
 }
 
 function CopyEmojiForm({localEmojiCodes, emojiList, domain}) {
-	const [patchRemoteEmojis, _patchResult] = query.usePatchRemoteEmojisMutation();
+	const [patchRemoteEmojis, patchResult] = query.usePatchRemoteEmojisMutation();
 	const [err, setError] = React.useState();
 
 	const toggleAllRef = React.useRef(null);
@@ -238,6 +254,9 @@ function CopyEmojiForm({localEmojiCodes, emojiList, domain}) {
 			</div>
 			{err && <div className="error">
 				{err}
+			</div>}
+			{patchResult.isSuccess && <div>
+				Action applied to {patchResult.data.length} emoji
 			</div>}
 		</div>
 	);
