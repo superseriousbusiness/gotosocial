@@ -50,7 +50,7 @@ module.exports = function ParseFromToot({emojiCodes}) {
 	}, [status]);
 
 	const domain = React.useMemo(() => (
-		(new URL(status.uri)).host
+		status && (new URL(status.uri)).host
 	), [status]);
 
 	function submitSearch(e) {
