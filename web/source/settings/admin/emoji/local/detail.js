@@ -27,6 +27,7 @@ const { useComboBoxInput, useFileInput } = require("../../../components/form");
 
 const query = require("../../../lib/query");
 const FakeToot = require("../../../components/fake-toot");
+const Loading = require("../../../components/loading");
 
 const base = "/settings/custom-emoji/local";
 
@@ -54,7 +55,11 @@ function EmojiDetailData({emojiId}) {
 			</div>
 		);
 	} else if (isLoading) {
-		return <Loading/>;
+		return (
+			<div>
+				<Loading/>
+			</div>
+		);
 	} else {
 		return <EmojiDetail emoji={emoji}/>;
 	}
