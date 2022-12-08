@@ -26,7 +26,7 @@ const NewEmojiForm = require("./new-emoji");
 const query = require("../../../lib/query");
 const { useEmojiByCategory } = require("../category-select");
 
-const base = "/settings/admin/custom-emoji";
+const base = "/settings/custom-emoji/local";
 
 module.exports = function EmojiOverview() {
 	const {

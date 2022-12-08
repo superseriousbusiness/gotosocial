@@ -28,7 +28,7 @@ const { useComboBoxInput, useFileInput } = require("../../../components/form");
 const query = require("../../../lib/query");
 const FakeToot = require("../../../components/fake-toot");
 
-const base = "/settings/admin/custom-emoji";
+const base = "/settings/custom-emoji/local";
 
 module.exports = function EmojiDetailRoute() {
 	let [_match, params] = useRoute(`${base}/:emojiId`);
