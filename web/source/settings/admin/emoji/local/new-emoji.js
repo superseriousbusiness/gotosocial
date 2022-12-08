@@ -33,6 +33,8 @@ const {
 const query = require("../../../lib/query");
 const { CategorySelect } = require('../category-select');
 
+const shortcodeRegex = /^[a-z0-9_]+$/;
+
 module.exports = function NewEmojiForm({ emoji }) {
 	const emojiCodes = React.useMemo(() => {
 		return new Set(emoji.map((e) => e.shortcode));
@@ -47,9 +49,26 @@ module.exports = function NewEmojiForm({ emoji }) {
 
 	const [onShortcodeChange, resetShortcode, { shortcode, setShortcode, shortcodeRef }] = useTextInput("shortcode", {
 		validator: function validateShortcode(code) {
-			return emojiCodes.has(code)
-				? "Shortcode already in use"
-				: "";
+			// technically invalid, but hacky fix to prevent validation error on page load
+			if (shortcode == "") {return "";}
+
+			if (emojiCodes.has(code)) {
+				return "Shortcode already in use";
+			}
+
+			if (code.length < 2 || code.length > 30) {
+				return "Shortcode must be between 2 and 30 characters";
+			}
+
+			if (code.toLowerCase() != code) {
+				return "Shortcode must be lowercase";
+			}
+
+			if (!shortcodeRegex.test(code)) {
+				return "Shortcode must only contain lowercase letters, numbers, and underscores";
+			}
+
+			return "";
 		}
 	});
 
@@ -78,11 +97,13 @@ module.exports = function NewEmojiForm({ emoji }) {
 				image,
 				shortcode,
 				category
-			});
+			}).unwrap();
 		}).then(() => {
 			resetFile();
 			resetShortcode();
 			resetCategory();
+		}).catch((e) => {
+			console.error("Emoji upload error:", e);
 		});
 	}
 
