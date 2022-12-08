@@ -57,7 +57,9 @@ module.exports = function AdminSettings() {
 		return (
 			<div>
 				<h1>Federation</h1>
-				<Loading/>
+				<div>
+					<Loading/>
+				</div>
 			</div>
 		);
 	}
