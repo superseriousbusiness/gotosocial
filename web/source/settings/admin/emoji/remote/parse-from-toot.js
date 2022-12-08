@@ -101,7 +101,7 @@ function updateEmojiState(emojiState, checked) {
 }
 
 function CopyEmojiForm({localEmojiCodes, emojiList, domain}) {
-	const [copyRemoteEmojis, _copyResult] = query.useCopyRemoteEmojisMutation();
+	const [patchRemoteEmojis, _patchResult] = query.usePatchRemoteEmojisMutation();
 	const [err, setError] = React.useState();
 
 	const toggleAllRef = React.useRef(null);
@@ -109,7 +109,7 @@ function CopyEmojiForm({localEmojiCodes, emojiList, domain}) {
 	const [emojiState, setEmojiState] = React.useState(makeEmojiState(emojiList, false));
 	const [someSelected, setSomeSelected] = React.useState(false);
 
-	const [categoryState, _resetCategory, { category }] = useComboBoxInput("category");
+	const [categoryState, resetCategory, { category }] = useComboBoxInput("category");
 
 	React.useEffect(() => {
 		if (emojiList != undefined) {
@@ -174,7 +174,7 @@ function CopyEmojiForm({localEmojiCodes, emojiList, domain}) {
 				(_) => Object.entries(_),
 				(_) => _.filter(([_shortcode, entry]) => entry.checked),
 				(_) => _.map(([shortcode, entry]) => {
-					if (!entry.valid) {
+					if (action == "copy" && !entry.valid) {
 						throw `One or more selected emoji have non-unique shortcodes (${shortcode}), unselect them or pick a different local shortcode`;
 					}
 					return {
@@ -184,12 +184,14 @@ function CopyEmojiForm({localEmojiCodes, emojiList, domain}) {
 				})
 			]);
 	
-			if (action == "copy") {
-				return copyRemoteEmojis({
-					domain,
-					list: selectedShortcodes
-				}).unwrap();
-			}
+			return patchRemoteEmojis({
+				action,
+				domain,
+				list: selectedShortcodes
+			}).unwrap();
+		}).then(() => {
+			setEmojiState(makeEmojiState(emojiList, false));
+			resetCategory();
 		}).catch((e) => {
 			if (Array.isArray(e)) {
 				setError(e.map(([shortcode, msg]) => (

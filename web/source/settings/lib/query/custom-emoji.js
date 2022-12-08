@@ -94,8 +94,8 @@ const endpoints = (build) => ({
 			url: `/api/v2/search?q=${encodeURIComponent(url)}&resolve=true&limit=1`
 		})
 	}),
-	copyRemoteEmojis: build.mutation({
-		queryFn: ({domain, list}, api, _extraOpts, baseQuery) => {
+	patchRemoteEmojis: build.mutation({
+		queryFn: ({action, domain, list}, api, _extraOpts, baseQuery) => {
 			const data = [];
 			const errors = [];
 
@@ -112,14 +112,19 @@ const endpoints = (build) => ({
 				}).then(([lookup]) => {
 					if (lookup == undefined) { throw "not found"; }
 
+					let body = {
+						type: action
+					};
+
+					if (action == "copy" && emoji.localShortcode) {
+						body.shortcode = emoji.localShortcode;
+					}
+
 					return baseQuery({
 						method: "PATCH",
 						url: `/api/v1/admin/custom_emojis/${lookup.id}`,
 						asForm: true,
-						body: {
-							type: "copy",
-							shortcode: emoji.localShortcode
-						}
+						body: body
 					}).then(unwrap);
 				}).then((res) => {
 					data.push([emoji.shortcode, res]);
