@@ -21,17 +21,17 @@
 const Promise = require('bluebird');
 const React = require("react");
 
-const FakeToot = require("../../components/fake-toot");
-const MutateButton = require("../../components/mutation-button");
+const FakeToot = require("../../../components/fake-toot");
+const MutateButton = require("../../../components/mutation-button");
 
 const {
 	useTextInput,
 	useFileInput,
 	useComboBoxInput
-} = require("../../components/form");
+} = require("../../../components/form");
 
-const query = require("../../lib/query");
-const { CategorySelect } = require('./category-select');
+const query = require("../../../lib/query");
+const { CategorySelect } = require('../category-select');
 
 module.exports = function NewEmojiForm({ emoji }) {
 	const emojiCodes = React.useMemo(() => {

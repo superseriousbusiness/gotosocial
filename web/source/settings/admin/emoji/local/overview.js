@@ -23,8 +23,8 @@ const {Link} = require("wouter");
 
 const NewEmojiForm = require("./new-emoji");
 
-const query = require("../../lib/query");
-const { useEmojiByCategory } = require("./category-select");
+const query = require("../../../lib/query");
+const { useEmojiByCategory } = require("../category-select");
 
 const base = "/settings/admin/custom-emoji";
 
@@ -37,7 +37,7 @@ module.exports = function EmojiOverview() {
 
 	return (
 		<>
-			<h1>Custom Emoji</h1>
+			<h1>Custom Emoji (local)</h1>
 			{error && 
 				<div className="error accent">{error}</div>
 			}

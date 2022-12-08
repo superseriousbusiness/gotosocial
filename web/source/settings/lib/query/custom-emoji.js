@@ -77,6 +77,12 @@ const endpoints = (build) => ({
 			url: `/api/v1/admin/custom_emojis/${id}`
 		}),
 		invalidatesTags: (res, error, id) => [{type: "Emojis", id}]
+	}),
+	searchStatusForEmoji: build.mutation({
+		query: (url) => ({
+			method: "GET",
+			url: `/api/v2/search?q=${encodeURIComponent(url)}&resolve=true&limit=1`
+		})
 	})
 });
 

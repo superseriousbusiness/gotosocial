@@ -22,11 +22,11 @@ const React = require("react");
 
 const { useRoute, Link, Redirect } = require("wouter");
 
-const { CategorySelect } = require("./category-select");
-const { useComboBoxInput, useFileInput } = require("../../components/form");
+const { CategorySelect } = require("../category-select");
+const { useComboBoxInput, useFileInput } = require("../../../components/form");
 
-const query = require("../../lib/query");
-const FakeToot = require("../../components/fake-toot");
+const query = require("../../../lib/query");
+const FakeToot = require("../../../components/fake-toot");
 
 const base = "/settings/admin/custom-emoji";
 

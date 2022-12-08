@@ -394,3 +394,7 @@ footer {
 		color: $gray1;
 	}
 }
+
+label {
+	cursor: pointer;
+}
