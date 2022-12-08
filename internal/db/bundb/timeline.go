@@ -233,7 +233,7 @@ func (t *timelineDB) GetFavedTimeline(ctx context.Context, accountID string, max
 
 	// Sort by favourite ID rather than status ID
 	slices.SortFunc(faves, func(a, b *gtsmodel.StatusFave) bool {
-		return a.ID < b.ID
+		return b.CreatedAt.Before(a.CreatedAt)
 	})
 
 	statuses := make([]*gtsmodel.Status, 0, len(faves))
