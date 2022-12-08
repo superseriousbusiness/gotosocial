@@ -32,7 +32,7 @@ import (
 func (m *manager) PruneAllRemote(ctx context.Context, olderThanDays int) (int, error) {
 	var totalPruned int
 
-	olderThan := time.Now().Add(time.Hour * 24 * time.Duration(olderThanDays))
+	olderThan := time.Now().Add(-time.Hour * 24 * time.Duration(olderThanDays))
 	log.Infof("PruneAllRemote: pruning media older than %s", olderThan)
 
 	for {

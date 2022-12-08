@@ -34,7 +34,7 @@ func (m *manager) PruneUnusedLocalAttachments(ctx context.Context) (int, error) 
 	var attachments []*gtsmodel.MediaAttachment
 	var err error
 
-	olderThan := time.Now().Add(time.Hour * 24 * time.Duration(UnusedLocalAttachmentCacheDays))
+	olderThan := time.Now().Add(-time.Hour * 24 * time.Duration(UnusedLocalAttachmentCacheDays))
 	log.Infof("PruneUnusedLocalAttachments: pruning unused local attachments older than %s", olderThan)
 
 	// select 20 attachments at a time and prune them
