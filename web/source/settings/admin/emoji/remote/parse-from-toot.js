@@ -18,94 +18,35 @@
 
 "use strict";
 
+const Promise = require("bluebird");
 const React = require("react");
 const syncpipe = require("syncpipe");
 
 const {
-	useTextInput
+	useTextInput,
+	useComboBoxInput
 } = require("../../../components/form");
+
+const { CategorySelect } = require('../category-select');
 
 const query = require("../../../lib/query");
 
-function makeEmojiState(emojiList, checked) {
-	/* Return a new object, with a key for every emoji's shortcode,
-	   And a value for it's checkbox `checked` state.
-	 */
-	return syncpipe(emojiList, [
-		(_) => _.map((emoji) => [emoji.shortcode, checked]),
-		(_) => Object.fromEntries(_)
-	]);
-}
-
-module.exports = function ParseFromToot() {
+module.exports = function ParseFromToot({emojiCodes}) {
 	const [searchStatus, { data }] = query.useSearchStatusForEmojiMutation();
 
-	const toggleAllRef = React.useRef(null);
-	const [toggleAllState, setToggleAllState] = React.useState(0);
-	const [emojiChecked, setEmojiChecked] = React.useState({});
+	const [onURLChange, _resetURL, { url }] = useTextInput("url", {defaultValue: "http://localhost:8080/@admin/statuses/01GKPHE83MV6D2SF3ZFKEJ8Y4F"});
 
-	const [onURLChange, _resetURL, { url }] = useTextInput("url");
-
-	const emojiList = data?.statuses?.[0]?.emojis;
-
-	React.useEffect(() => {
-		if (emojiList != undefined) {
-			setEmojiChecked(makeEmojiState(emojiList, false));
-		}
-	}, [emojiList]);
-
-	React.useEffect(() => {
-		/* Updates (un)check all checkbox, based on shortcode checkboxes
-		   Can be 0 (not checked), 1 (checked) or 2 (indeterminate)
-		 */
-		if (toggleAllRef.current == null) {
-			return;
-		}
-
-		let values = Object.values(emojiChecked);
-		/* one or more boxes are checked */
-		let some = values.some((v) => v);
-
-		let all = false;
-		if (some) {
-			/* there's not at least one unchecked box */
-			all = !values.some((v) => v == false);
-		}
-
-		if (some && !all) {
-			setToggleAllState(2);
-			toggleAllRef.current.indeterminate = true;
-		} else {
-			setToggleAllState(all ? 1 : 0);
-			toggleAllRef.current.indeterminate = false;
-		}
-	}, [emojiChecked, toggleAllRef]);
+	const status = data?.statuses?.[0];
+	const emojiList = status?.emojis;
 
 	function submitSearch(e) {
 		e.preventDefault();
 		searchStatus(url);
 	}
 
-	function toggleSpecific(shortcode, checked) {
-		setEmojiChecked({
-			...emojiChecked,
-			[shortcode]: checked
-		});
-	}
-
-	function toggleAll(e) {
-		let selectAll = e.target.checked;
-
-		if (toggleAllState == 2) { // indeterminate
-			selectAll = false;
-		}
-
-		setEmojiChecked(makeEmojiState(emojiList, selectAll));
-		setToggleAllState(selectAll);
-	}
-
 	return (
 		<div className="parse-emoji">
+			<h2>Steal this look</h2>
 			<form onSubmit={submitSearch}>
 				<div className="form-field text">
 					<label htmlFor="shortcode">
@@ -123,36 +64,219 @@ module.exports = function ParseFromToot() {
 					</div>
 				</div>
 			</form>
-			<div className="parsed">
-				{emojiList && <>
-					<span>This toot includes the following custom emoji:</span>
-					<div className="emoji-list">
-						<label className="header">
-							<input
-								ref={toggleAllRef}
-								type="checkbox"
-								onChange={toggleAll}
-								checked={toggleAllState === 1}
-							/> {toggleAllState == 0 ? "select" : "unselect"} all
-						</label>
-						{emojiList.map((emoji) => (
-							<label key={emoji.shortcode} className="row">
-								<input
-									type="checkbox"
-									onChange={(e) => toggleSpecific(emoji.shortcode, e.target.checked)}
-									checked={emojiChecked[emoji.shortcode] ?? false}
-								/>
-								<img className="emoji" src={emoji.url} title={emoji.shortcode} />
-								<span>{emoji.shortcode}</span>
-							</label>
-						))}
-					</div>
-					<div className="row">
-						<button>Copy to local emoji</button>
-						<button className="danger">Disable</button>
-					</div>
-				</>}
-			</div>
+			{status && 
+				/* FIXME: remove || true, remove ?? "local" */
+				(status.account.acct.includes("@") || true
+					? <CopyEmojiForm localEmojiCodes={emojiCodes} emojiList={emojiList} domain={status.account.acct.split("@")[1] ?? "local"}/>
+					: <b>This is a local toot, all emoji are already on your instance</b>
+				)
+			}
 		</div>
+	);
+};
+
+function makeEmojiState(emojiList, checked) {
+	/* Return a new object, with a key for every emoji's shortcode,
+	   And a value for it's checkbox `checked` state.
+	 */
+	return syncpipe(emojiList, [
+		(_) => _.map((emoji) => [emoji.shortcode, {
+			checked,
+			valid: true
+		}]),
+		(_) => Object.fromEntries(_)
+	]);
+}
+
+function updateEmojiState(emojiState, checked) {
+	/* Create a new object with all emoji entries' checked state updated */
+	return syncpipe(emojiState, [
+		(_) => Object.entries(emojiState),
+		(_) => _.map(([key, val]) => [key, {
+			...val,
+			checked
+		}]),
+		(_) => Object.fromEntries(_)
+	]);
+}
+
+function CopyEmojiForm({localEmojiCodes, emojiList, domain}) {
+	const [copyRemoteEmojis, _copyResult] = query.useCopyRemoteEmojisMutation();
+	const [err, setError] = React.useState();
+
+	const toggleAllRef = React.useRef(null);
+	const [toggleAllState, setToggleAllState] = React.useState(0);
+	const [emojiState, setEmojiState] = React.useState(makeEmojiState(emojiList, false));
+	const [someSelected, setSomeSelected] = React.useState(false);
+
+	const [categoryState, _resetCategory, { category }] = useComboBoxInput("category");
+
+	React.useEffect(() => {
+		if (emojiList != undefined) {
+			setEmojiState(makeEmojiState(emojiList, false));
+		}
+	}, [emojiList]);
+
+	React.useEffect(() => {
+		/* Updates (un)check all checkbox, based on shortcode checkboxes
+		   Can be 0 (not checked), 1 (checked) or 2 (indeterminate)
+		 */
+		if (toggleAllRef.current == null) {
+			return;
+		}
+
+		let values = Object.values(emojiState);
+		/* one or more boxes are checked */
+		let some = values.some((v) => v.checked);
+
+		let all = false;
+		if (some) {
+			/* there's not at least one unchecked box */
+			all = !values.some((v) => v.checked == false);
+		}
+
+		setSomeSelected(some);
+
+		if (some && !all) {
+			setToggleAllState(2);
+			toggleAllRef.current.indeterminate = true;
+		} else {
+			setToggleAllState(all ? 1 : 0);
+			toggleAllRef.current.indeterminate = false;
+		}
+	}, [emojiState, toggleAllRef]);
+
+	function updateEmoji(shortcode, value) {
+		setEmojiState({
+			...emojiState,
+			[shortcode]: {
+				...emojiState[shortcode],
+				...value
+			}
+		});
+	}
+
+	function toggleAll(e) {
+		let selectAll = e.target.checked;
+
+		if (toggleAllState == 2) { // indeterminate
+			selectAll = false;
+		}
+
+		setEmojiState(updateEmojiState(emojiState, selectAll));
+		setToggleAllState(selectAll);
+	}
+
+	function submit(action) {
+		Promise.try(() => {
+			setError(null);
+			const selectedShortcodes = syncpipe(emojiState, [
+				(_) => Object.entries(_),
+				(_) => _.filter(([_shortcode, entry]) => entry.checked),
+				(_) => _.map(([shortcode, entry]) => {
+					if (!entry.valid) {
+						throw `One or more selected emoji have non-unique shortcodes (${shortcode}), unselect them or pick a different local shortcode`;
+					}
+					return {
+						shortcode,
+						localShortcode: entry.shortcode
+					};
+				})
+			]);
+	
+			if (action == "copy") {
+				return copyRemoteEmojis({
+					domain,
+					list: selectedShortcodes
+				}).unwrap();
+			}
+		}).catch((e) => {
+			if (Array.isArray(e)) {
+				setError(e.map(([shortcode, msg]) => (
+					<div key={shortcode}>
+						{shortcode}: <span style={{fontWeight: "initial"}}>{msg}</span>
+					</div>
+				)));
+			} else {
+				setError(e);
+			}
+		});
+	}
+
+	return (
+		<div className="parsed">
+			<span>This toot includes the following custom emoji, select the ones you want to act on:</span>
+			<div className="emoji-list">
+				<label className="header">
+					<input
+						ref={toggleAllRef}
+						type="checkbox"
+						onChange={toggleAll}
+						checked={toggleAllState === 1}
+					/> All
+				</label>
+				{emojiList.map((emoji) => (
+					<EmojiEntry
+						key={emoji.shortcode}
+						emoji={emoji}
+						localEmojiCodes={localEmojiCodes}
+						updateEmoji={(value) => updateEmoji(emoji.shortcode, value)}
+						checked={emojiState[emoji.shortcode].checked}
+					/>
+				))}
+			</div>
+
+			<CategorySelect
+				value={category}
+				categoryState={categoryState}
+			/>
+
+			<div className="action-buttons row">
+				<button disabled={!someSelected} onClick={() => submit("copy")}>Copy to local emoji</button>
+				<button disabled={!someSelected} onClick={() => submit("disable")} className="danger">Disable</button>
+			</div>
+			{err && <div className="error">
+				{err}
+			</div>}
+		</div>
+	);
+}
+
+function EmojiEntry({emoji, localEmojiCodes, updateEmoji, checked}) {
+	const [onShortcodeChange, _resetShortcode, { shortcode, shortcodeRef, shortcodeValid}] = useTextInput("shortcode", {
+		defaultValue: emoji.shortcode,
+		validator: function validateShortcode(code) {
+			return (checked && localEmojiCodes.has(code))
+				? "Shortcode already in use"
+				: "";
+		}
+	});
+
+	React.useEffect(() => {
+		updateEmoji({valid: shortcodeValid});
+		/* eslint-disable-next-line react-hooks/exhaustive-deps */
+	}, [shortcodeValid]);
+
+	return (
+		<label key={emoji.shortcode} className="row">
+			<input
+				type="checkbox"
+				onChange={(e) => updateEmoji({checked: e.target.checked})}
+				checked={checked}
+			/>
+			<img className="emoji" src={emoji.url} title={emoji.shortcode} />
+
+			<input
+				type="text"
+				id="shortcode"
+				name="Shortcode"
+				ref={shortcodeRef}
+				onChange={(e) => {
+					onShortcodeChange(e);
+					updateEmoji({shortcode: e.target.value, checked: true});
+				}}
+				value={shortcode}
+			/>
+		</label>
 	);
 }

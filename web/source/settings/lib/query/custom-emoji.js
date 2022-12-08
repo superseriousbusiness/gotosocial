@@ -18,7 +18,17 @@
 
 "use strict";
 
+const Promise = require("bluebird");
+
 const base = require("./base");
+
+function unwrap(res) {
+	if (res.error != undefined) {
+		throw res.error;
+	} else {
+		return res.data;
+	}
+}
 
 const endpoints = (build) => ({
 	getAllEmoji: build.query({
@@ -83,6 +93,55 @@ const endpoints = (build) => ({
 			method: "GET",
 			url: `/api/v2/search?q=${encodeURIComponent(url)}&resolve=true&limit=1`
 		})
+	}),
+	copyRemoteEmojis: build.mutation({
+		queryFn: ({domain, list}, api, _extraOpts, baseQuery) => {
+			const data = [];
+			const errors = [];
+
+			return Promise.each(list, (emoji) => {
+				return Promise.try(() => {
+					return baseQuery({
+						method: "GET",
+						url: `/api/v1/admin/custom_emojis`,
+						params: {
+							filter: `domain:${domain},shortcode:${emoji.shortcode}`,
+							limit: 1
+						}
+					}).then(unwrap);
+				}).then(([lookup]) => {
+					if (lookup == undefined) { throw "not found"; }
+
+					return baseQuery({
+						method: "PATCH",
+						url: `/api/v1/admin/custom_emojis/${lookup.id}`,
+						asForm: true,
+						body: {
+							type: "copy",
+							shortcode: emoji.localShortcode
+						}
+					}).then(unwrap);
+				}).then((res) => {
+					data.push([emoji.shortcode, res]);
+				}).catch((e) => {
+					console.error("emoji lookup for", emoji.shortcode, "failed:", e);
+					let msg = e.message ?? e;
+					if (e.data.error) {
+						msg = e.data.error;
+					}
+					errors.push([emoji.shortcode, msg]);
+				});
+			}).then(() => {
+				if (errors.length == 0) {
+					return { data };
+				} else {
+					return {
+						error: errors
+					};
+				}
+			});
+		},
+		invalidatesTags: () => [{type: "Emojis", id: "LIST"}]
 	})
 });
 

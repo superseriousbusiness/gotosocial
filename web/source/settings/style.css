@@ -603,15 +603,21 @@ span.form-info {
 .parse-emoji {
 	.parsed {
 		margin-top: 0.5rem;
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+
+		& > span {
+			margin-bottom: -1rem;
+		}
 		
-		& > .row {
+		.action-buttons {
 			gap: 1rem;
 		}
 
 		.emoji-list {
 			display: flex;
 			flex-direction: column;
-			margin: 0.5rem 0;
 
 			& > * {
 				gap: 1rem;

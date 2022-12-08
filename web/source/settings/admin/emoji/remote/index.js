@@ -29,16 +29,28 @@ const ParseFromToot = require("./parse-from-toot");
 const query = require("../../../lib/query");
 
 module.exports = function RemoteEmoji() {
+	const {
+		data: emoji = [],
+		isLoading,
+		error
+	} = query.useGetAllEmojiQuery({filter: "domain:local"});
+
+	const emojiCodes = React.useMemo(() => {
+		return new Set(emoji.map((e) => e.shortcode));
+	}, [emoji]);
+
 	return (
 		<>
 			<h1>Custom Emoji (remote)</h1>
-			<div>
-				{/* <ListRemoteEmoji/> */}
-			</div>
-			<div>
-				<h2>Steal this look</h2>
-				<ParseFromToot />
-			</div>
+			{error && 
+				<div className="error accent">{error}</div>
+			}
+			{isLoading
+				? "Loading..."
+				: <>
+					<ParseFromToot emoji={emoji} emojiCodes={emojiCodes} />
+				</>
+			}
 		</>
 	);
 };
