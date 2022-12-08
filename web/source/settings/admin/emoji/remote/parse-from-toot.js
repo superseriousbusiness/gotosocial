@@ -34,7 +34,7 @@ const query = require("../../../lib/query");
 module.exports = function ParseFromToot({emojiCodes}) {
 	const [searchStatus, { data }] = query.useSearchStatusForEmojiMutation();
 
-	const [onURLChange, _resetURL, { url }] = useTextInput("url", {defaultValue: "http://localhost:8080/@admin/statuses/01GKPHE83MV6D2SF3ZFKEJ8Y4F"});
+	const [onURLChange, _resetURL, { url }] = useTextInput("url");
 
 	const status = data?.statuses?.[0];
 	const emojiList = status?.emojis;
@@ -65,9 +65,8 @@ module.exports = function ParseFromToot({emojiCodes}) {
 				</div>
 			</form>
 			{status && 
-				/* FIXME: remove || true, remove ?? "local" */
-				(status.account.acct.includes("@") || true
-					? <CopyEmojiForm localEmojiCodes={emojiCodes} emojiList={emojiList} domain={status.account.acct.split("@")[1] ?? "local"}/>
+				(status.account.acct.includes("@")
+					? <CopyEmojiForm localEmojiCodes={emojiCodes} emojiList={emojiList} domain={status.account.acct.split("@")[1]}/>
 					: <b>This is a local toot, all emoji are already on your instance</b>
 				)
 			}
