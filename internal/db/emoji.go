@@ -37,6 +37,8 @@ type Emoji interface {
 	UpdateEmoji(ctx context.Context, emoji *gtsmodel.Emoji, columns ...string) (*gtsmodel.Emoji, Error)
 	// DeleteEmojiByID deletes one emoji by its database ID.
 	DeleteEmojiByID(ctx context.Context, id string) Error
+	// GetEmojisByIDs gets emojis for the given IDs.
+	GetEmojisByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Emoji, Error)
 	// GetUseableEmojis gets all emojis which are useable by accounts on this instance.
 	GetUseableEmojis(ctx context.Context) ([]*gtsmodel.Emoji, Error)
 	// GetEmojis gets emojis based on given parameters. Useful for admin actions.
@@ -52,6 +54,8 @@ type Emoji interface {
 	GetEmojiByStaticURL(ctx context.Context, imageStaticURL string) (*gtsmodel.Emoji, Error)
 	// PutEmojiCategory puts one new emoji category in the database.
 	PutEmojiCategory(ctx context.Context, emojiCategory *gtsmodel.EmojiCategory) Error
+	// GetEmojiCategoriesByIDs gets emoji categories for given IDs.
+	GetEmojiCategoriesByIDs(ctx context.Context, ids []string) ([]*gtsmodel.EmojiCategory, Error)
 	// GetEmojiCategories gets a slice of the names of all existing emoji categories.
 	GetEmojiCategories(ctx context.Context) ([]*gtsmodel.EmojiCategory, Error)
 	// GetEmojiCategory gets one emoji category by its id.

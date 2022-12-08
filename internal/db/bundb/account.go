@@ -25,39 +25,18 @@ import (
 	"strings"
 	"time"
 
-	"codeberg.org/gruf/go-cache/v3/result"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
 )
 
 type accountDB struct {
-	conn   *DBConn
-	cache  *result.Cache[*gtsmodel.Account]
-	emojis *emojiDB
-	status *statusDB
-}
-
-func (a *accountDB) init() {
-	// Initialize account result cache
-	a.cache = result.NewSized([]result.Lookup{
-		{Name: "ID"},
-		{Name: "URI"},
-		{Name: "URL"},
-		{Name: "Username.Domain"},
-		{Name: "PublicKeyURI"},
-	}, func(a1 *gtsmodel.Account) *gtsmodel.Account {
-		a2 := new(gtsmodel.Account)
-		*a2 = *a1
-		return a2
-	}, 1000)
-
-	// Set cache TTL and start sweep routine
-	a.cache.SetTTL(time.Minute*5, false)
-	a.cache.Start(time.Second * 10)
+	conn  *DBConn
+	state *state.State
 }
 
 func (a *accountDB) newAccountQ(account *gtsmodel.Account) *bun.SelectQuery {
@@ -152,7 +131,7 @@ func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gts
 
 func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Account) error, keyParts ...any) (*gtsmodel.Account, db.Error) {
 	// Fetch account from database cache with loader callback
-	account, err := a.cache.Load(lookup, func() (*gtsmodel.Account, error) {
+	account, err := a.state.Caches.GTS.Account().Load(lookup, func() (*gtsmodel.Account, error) {
 		var account gtsmodel.Account
 
 		// Not cached! Perform database query
@@ -168,7 +147,7 @@ func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(
 
 	if len(account.EmojiIDs) > 0 {
 		// Set the account's related emojis
-		account.Emojis, err = a.emojis.emojisFromIDs(ctx, account.EmojiIDs)
+		account.Emojis, err = a.state.DB.GetEmojisByIDs(ctx, account.EmojiIDs)
 		if err != nil {
 			return nil, fmt.Errorf("error getting account emojis: %w", err)
 		}
@@ -178,7 +157,7 @@ func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(
 }
 
 func (a *accountDB) PutAccount(ctx context.Context, account *gtsmodel.Account) db.Error {
-	return a.cache.Store(account, func() error {
+	return a.state.Caches.GTS.Account().Store(account, func() error {
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
 		//
@@ -204,7 +183,7 @@ func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account
 	// Update the account's last-updated
 	account.UpdatedAt = time.Now()
 
-	return a.cache.Store(account, func() error {
+	return a.state.Caches.GTS.Account().Store(account, func() error {
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
 		//
@@ -263,7 +242,7 @@ func (a *accountDB) DeleteAccount(ctx context.Context, id string) db.Error {
 		return err
 	}
 
-	a.cache.Invalidate("ID", id)
+	a.state.Caches.GTS.Account().Invalidate("ID", id)
 	return nil
 }
 
@@ -514,7 +493,7 @@ func (a *accountDB) statusesFromIDs(ctx context.Context, statusIDs []string) ([]
 
 	for _, id := range statusIDs {
 		// Fetch from status from database by ID
-		status, err := a.status.GetStatusByID(ctx, id)
+		status, err := a.state.DB.GetStatusByID(ctx, id)
 		if err != nil {
 			log.Errorf("statusesFromIDs: error getting status %q: %v", id, err)
 			continue

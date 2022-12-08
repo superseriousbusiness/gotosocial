@@ -26,15 +26,21 @@ import (
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/trans"
 )
 
 // Export exports info from the database into a file
 var Export action.GTSAction = func(ctx context.Context) error {
-	dbConn, err := bundb.NewBunDBService(ctx)
+	var state state.State
+
+	dbConn, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
+
+	// Set the state DB connection
+	state.DB = dbConn
 
 	exporter := trans.NewExporter(dbConn)
 

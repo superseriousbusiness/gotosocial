@@ -40,6 +40,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
@@ -122,7 +123,7 @@ func doMigration(ctx context.Context, db *bun.DB) error {
 
 // NewBunDBService returns a bunDB derived from the provided config, which implements the go-fed DB interface.
 // Under the hood, it uses https://github.com/uptrace/bun to create and maintain a database connection.
-func NewBunDBService(ctx context.Context) (db.DB, error) {
+func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 	var conn *DBConn
 	var err error
 	dbType := strings.ToLower(config.GetDbType())
@@ -158,69 +159,64 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 		return nil, fmt.Errorf("db migration error: %s", err)
 	}
 
-	// Create DB structs that require ptrs to each other
-	account := &accountDB{conn: conn}
-	admin := &adminDB{conn: conn}
-	domain := &domainDB{conn: conn}
-	mention := &mentionDB{conn: conn}
-	notif := &notificationDB{conn: conn}
-	status := &statusDB{conn: conn}
-	emoji := &emojiDB{conn: conn}
-	relationship := &relationshipDB{conn: conn}
-	timeline := &timelineDB{conn: conn}
-	tombstone := &tombstoneDB{conn: conn}
-	user := &userDB{conn: conn}
-
-	// Setup DB cross-referencing
-	account.emojis = emoji
-	account.status = status
-	admin.users = user
-	relationship.accounts = account
-	status.accounts = account
-	status.emojis = emoji
-	status.mentions = mention
-	timeline.status = status
-
-	// Initialize db structs
-	account.init()
-	domain.init()
-	emoji.init()
-	mention.init()
-	notif.init()
-	relationship.init()
-	status.init()
-	tombstone.init()
-	user.init()
-
 	ps := &DBService{
-		Account: account,
+		Account: &accountDB{
+			conn:  conn,
+			state: state,
+		},
 		Admin: &adminDB{
-			conn:     conn,
-			accounts: account,
-			users:    user,
+			conn:  conn,
+			state: state,
 		},
 		Basic: &basicDB{
 			conn: conn,
 		},
-		Domain: domain,
-		Emoji:  emoji,
+		Domain: &domainDB{
+			conn:  conn,
+			state: state,
+		},
+		Emoji: &emojiDB{
+			conn:  conn,
+			state: state,
+		},
 		Instance: &instanceDB{
 			conn: conn,
 		},
 		Media: &mediaDB{
 			conn: conn,
 		},
-		Mention:      mention,
-		Notification: notif,
-		Relationship: relationship,
+		Mention: &mentionDB{
+			conn:  conn,
+			state: state,
+		},
+		Notification: &notificationDB{
+			conn:  conn,
+			state: state,
+		},
+		Relationship: &relationshipDB{
+			conn:  conn,
+			state: state,
+		},
 		Session: &sessionDB{
 			conn: conn,
 		},
-		Status:    status,
-		Timeline:  timeline,
-		User:      user,
-		Tombstone: tombstone,
-		conn:      conn,
+		Status: &statusDB{
+			conn:  conn,
+			state: state,
+		},
+		Timeline: &timelineDB{
+			conn:  conn,
+			state: state,
+		},
+		User: &userDB{
+			conn:  conn,
+			state: state,
+		},
+		Tombstone: &tombstoneDB{
+			conn:  conn,
+			state: state,
+		},
+		conn: conn,
 	}
 
 	// we can confidently return this useable service now

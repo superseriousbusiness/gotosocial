@@ -2,7 +2,6 @@ package typeutils
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -13,7 +12,6 @@ import (
 func (c *converter) FollowRequestToFollow(ctx context.Context, f *gtsmodel.FollowRequest) *gtsmodel.Follow {
 	showReblogs := *f.ShowReblogs
 	notify := *f.Notify
-
 	return &gtsmodel.Follow{
 		ID:              f.ID,
 		CreatedAt:       f.CreatedAt,
@@ -33,8 +31,9 @@ func (c *converter) StatusToBoost(ctx context.Context, s *gtsmodel.Status, boost
 	if err != nil {
 		return nil, err
 	}
-	boostWrapperStatusURI := fmt.Sprintf("%s/%s", accountURIs.StatusesURI, boostWrapperStatusID)
-	boostWrapperStatusURL := fmt.Sprintf("%s/%s", accountURIs.StatusesURL, boostWrapperStatusID)
+
+	boostWrapperStatusURI := accountURIs.StatusesURI + "/" + boostWrapperStatusID
+	boostWrapperStatusURL := accountURIs.StatusesURL + "/" + boostWrapperStatusID
 
 	local := true
 	if boostingAccount.Domain != "" {

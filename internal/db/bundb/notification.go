@@ -20,37 +20,21 @@ package bundb
 
 import (
 	"context"
-	"time"
 
-	"codeberg.org/gruf/go-cache/v3/result"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
 )
 
 type notificationDB struct {
 	conn  *DBConn
-	cache *result.Cache[*gtsmodel.Notification]
-}
-
-func (n *notificationDB) init() {
-	// Initialize notification result cache
-	n.cache = result.NewSized([]result.Lookup{
-		{Name: "ID"},
-	}, func(n1 *gtsmodel.Notification) *gtsmodel.Notification {
-		n2 := new(gtsmodel.Notification)
-		*n2 = *n1
-		return n2
-	}, 1000)
-
-	// Set cache TTL and start sweep routine
-	n.cache.SetTTL(time.Minute*5, false)
-	n.cache.Start(time.Second * 10)
+	state *state.State
 }
 
 func (n *notificationDB) GetNotification(ctx context.Context, id string) (*gtsmodel.Notification, db.Error) {
-	return n.cache.Load("ID", func() (*gtsmodel.Notification, error) {
+	return n.state.Caches.GTS.Notification().Load("ID", func() (*gtsmodel.Notification, error) {
 		var notif gtsmodel.Notification
 
 		q := n.conn.NewSelect().
@@ -130,6 +114,6 @@ func (n *notificationDB) ClearNotifications(ctx context.Context, accountID strin
 		return n.conn.ProcessError(err)
 	}
 
-	n.cache.Clear()
+	n.state.Caches.GTS.Notification().Clear()
 	return nil
 }
