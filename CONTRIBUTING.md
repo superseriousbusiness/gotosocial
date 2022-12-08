@@ -206,7 +206,9 @@ And: [exhaustive list of possible values for docker's `--platform`](https://gith
 
 ### Stylesheet / Web dev
 
-To work with the stylesheet for templates, you need [Node.js](https://nodejs.org/en/download/) and [Yarn](https://classic.yarnpkg.com/en/docs/install).
+GoToSocial uses Gin templates in the `web/template` folder. Static assets are stored in `web/assets`. Source files for stylesheets and JS bundles (for frontend enhancement, and the settings interface) are stored in `web/source`, and bundled from there to the `web/assets/dist` folder (gitignored).
+
+To bundle changes, you need [Node.js](https://nodejs.org/en/download/) and [Yarn](https://classic.yarnpkg.com/en/docs/install).
 
 To install Yarn dependencies:
 
@@ -217,18 +219,23 @@ yarn install --cwd web/source
 To recompile bundles:
 
 ```bash
-BUDO_BUILD=1 node web/source 
+node web/source
 ```
 
 #### Live Reloading
 
-You can run live reloading of frontend assets in development:
+For a more convenient development environment, you can run a livereloading version of the bundler alongside the [testrig](#testing).
 
+Open two terminals, first start the testrig on port 8081:
+``` bash
+GTS_PORT=8081 go run ./cmd/gotosocial testrig start
+```
+Then start the bundler, which will run on port 8080, and proxy requests to the testrig instance where needed.
 ``` bash
 NODE_ENV=development node web/source
 ```
 
-This will start a webserver (ip/port printed in console, default localhost:8080), while also keeping the bundles up-to-date on disk. You can access the user/admin panels at localhost:8080/user, localhost:8080/admin, or run in tandem with the GoToSocial testrig, which will also serve the updated bundles from disk.
+The livereloading bundler *will not* change the bundled assets in `dist/`, so once you are finished with changes and want to deploy it somewhere, you have to run `node web/source` to generate production-ready bundles.
 
 ### Project Structure
 
