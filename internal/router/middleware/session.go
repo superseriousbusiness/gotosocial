@@ -88,7 +88,7 @@ func SessionName() (string, error) {
 // Session returns a new gin middleware that implements session cookies using the given
 // sessionName, authentication key, and encryption key. Session name can be derived from the
 // SessionName utility function in this package.
-func (p *Provider) Session(sessionName string, auth []byte, crypt []byte) func(c *gin.Context) {
+func Session(sessionName string, auth []byte, crypt []byte) gin.HandlerFunc {
 	store := memstore.NewStore(auth, crypt)
 	store.Options(SessionOptions())
 	return sessions.Sessions(sessionName, store)

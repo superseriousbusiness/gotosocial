@@ -27,7 +27,7 @@ import (
 
 // UserAgentBlock is a gin middleware which aborts requests with
 // empty user agent strings, returning code 418 - I'm a teapot.
-func (p *Provider) UserAgentBlock(c *gin.Context) {
+func UserAgentBlock(c *gin.Context) {
 	if ua := c.Request.UserAgent(); ua == "" {
 		code := http.StatusTeapot
 		err := errors.New(http.StatusText(code) + ": no user-agent sent with request")

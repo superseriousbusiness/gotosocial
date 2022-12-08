@@ -31,67 +31,69 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-// Logger is a gin middleware which provides request logging and panic recovery.
-func (p *Provider) Logger(c *gin.Context) {
-	// Initialize the logging fields
-	fields := make(kv.Fields, 6, 7)
+// Logger returns a gin middleware which provides request logging and panic recovery.
+func Logger() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Initialize the logging fields
+		fields := make(kv.Fields, 6, 7)
 
-	// Determine pre-handler time
-	before := time.Now()
+		// Determine pre-handler time
+		before := time.Now()
 
-	// defer so that we log *after the request has completed*
-	defer func() {
-		code := c.Writer.Status()
-		path := c.Request.URL.Path
+		// defer so that we log *after the request has completed*
+		defer func() {
+			code := c.Writer.Status()
+			path := c.Request.URL.Path
 
-		if r := recover(); r != nil {
-			if c.Writer.Status() == 0 {
-				// No response was written, send a generic Internal Error
-				c.Writer.WriteHeader(http.StatusInternalServerError)
+			if r := recover(); r != nil {
+				if c.Writer.Status() == 0 {
+					// No response was written, send a generic Internal Error
+					c.Writer.WriteHeader(http.StatusInternalServerError)
+				}
+
+				// Append panic information to the request ctx
+				err := fmt.Errorf("recovered panic: %v", r)
+				_ = c.Error(err)
+
+				// Dump a stacktrace to error log
+				callers := errors.GetCallers(3, 10)
+				log.WithField("stacktrace", callers).Error(err)
 			}
 
-			// Append panic information to the request ctx
-			err := fmt.Errorf("recovered panic: %v", r)
-			_ = c.Error(err)
+			// NOTE:
+			// It is very important here that we are ONLY logging
+			// the request path, and none of the query parameters.
+			// Query parameters can contain sensitive information
+			// and could lead to storing plaintext API keys in logs
 
-			// Dump a stacktrace to error log
-			callers := errors.GetCallers(3, 10)
-			log.WithField("stacktrace", callers).Error(err)
-		}
+			// Set request logging fields
+			fields[0] = kv.Field{"latency", time.Since(before)}
+			fields[1] = kv.Field{"clientIP", c.ClientIP()}
+			fields[2] = kv.Field{"userAgent", c.Request.UserAgent()}
+			fields[3] = kv.Field{"method", c.Request.Method}
+			fields[4] = kv.Field{"statusCode", code}
+			fields[5] = kv.Field{"path", path}
 
-		// NOTE:
-		// It is very important here that we are ONLY logging
-		// the request path, and none of the query parameters.
-		// Query parameters can contain sensitive information
-		// and could lead to storing plaintext API keys in logs
+			// Create log entry with fields
+			l := log.WithFields(fields...)
 
-		// Set request logging fields
-		fields[0] = kv.Field{"latency", time.Since(before)}
-		fields[1] = kv.Field{"clientIP", c.ClientIP()}
-		fields[2] = kv.Field{"userAgent", c.Request.UserAgent()}
-		fields[3] = kv.Field{"method", c.Request.Method}
-		fields[4] = kv.Field{"statusCode", code}
-		fields[5] = kv.Field{"path", path}
+			// Default is info
+			lvl := level.INFO
 
-		// Create log entry with fields
-		l := log.WithFields(fields...)
+			if code >= 500 {
+				// This is a server error
+				lvl = level.ERROR
+				l = l.WithField("error", c.Errors)
+			}
 
-		// Default is info
-		lvl := level.INFO
+			// Generate a nicer looking bytecount
+			size := bytesize.Size(c.Writer.Size())
 
-		if code >= 500 {
-			// This is a server error
-			lvl = level.ERROR
-			l = l.WithField("error", c.Errors)
-		}
+			// Finally, write log entry with status text body size
+			l.Logf(lvl, "%s: wrote %s", http.StatusText(code), size)
+		}()
 
-		// Generate a nicer looking bytecount
-		size := bytesize.Size(c.Writer.Size())
-
-		// Finally, write log entry with status text body size
-		l.Logf(lvl, "%s: wrote %s", http.StatusText(code), size)
-	}()
-
-	// Process request
-	c.Next()
+		// Process request
+		c.Next()
+	}
 }

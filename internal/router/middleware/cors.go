@@ -25,11 +25,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// CorsDefault is the default CORS configuration for GoToSocial.
-func CorsConfig() cors.Config {
-	return cors.Config{
-		// TODO: make this customizable so instance admins can specify an origin for CORS requests
-		AllowAllOrigins: true,
+// CORS returns a new gin middleware which allows CORS using the provided config.
+func CORS() gin.HandlerFunc {
+	cfg := cors.Config{
+		AllowAllOrigins: true, // todo: use config to customize this
 
 		// adds the following:
 		// 	"chrome-extension://"
@@ -80,9 +79,6 @@ func CorsConfig() cors.Config {
 		},
 		MaxAge: 2 * time.Minute,
 	}
-}
 
-// Cors returns a new gin middleware which allows CORS using the provided config.
-func (p *Provider) Cors(cfg cors.Config) func(c *gin.Context) {
 	return cors.New(cfg)
 }

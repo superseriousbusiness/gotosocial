@@ -24,21 +24,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
-
-type Provider struct {
-	db db.DB
-}
-
-// New returns a new middleware Provider.
-//
-// To attach global middlewares to an engine using this provider, call the UseGlobals function.
-func New(db db.DB, oauthServer oauth.Server) *Provider {
-	return &Provider{
-		db: db,
-	}
-}
 
 // UseGlobals attaches all global gin middlewares to the given engine.
 //
@@ -48,8 +34,8 @@ func New(db db.DB, oauthServer oauth.Server) *Provider {
 //
 // The provided context is only used to select a session from the database,
 // which happens once when this function is called, not per request.
-func (p *Provider) UseGlobals(ctx context.Context, e *gin.Engine) error {
-	session, err := p.db.GetSession(ctx)
+func UseGlobals(ctx context.Context, db db.DB, e *gin.Engine) error {
+	session, err := db.GetSession(ctx)
 	if err != nil {
 		return fmt.Errorf("UseGlobals: error getting session from db: %w", err)
 	}
@@ -60,21 +46,18 @@ func (p *Provider) UseGlobals(ctx context.Context, e *gin.Engine) error {
 	}
 
 	// instantiate middlewares that require configuration
-	sessionMiddleware := p.Session(sessionName, session.Auth, session.Crypt)
-	corsMiddleware := p.Cors(CorsConfig())
-	gzipMiddleware := p.Gzip()
-	rateLimitMiddleware := p.RateLimit()
+	sessionMiddleware := Session(sessionName, session.Auth, session.Crypt)
+	corsMiddleware := CORS()
+	gzipMiddleware := Gzip()
+	rateLimitMiddleware := RateLimit() //nolint:contextcheck
 
 	e.Use(
-		p.Logger,
+		Logger,
 		corsMiddleware,
 		gzipMiddleware,
 		sessionMiddleware,
 		rateLimitMiddleware,
-		p.UserAgentBlock,
-		p.SignatureCheck,
-		p.TokenCheck,
-		p.ExtraHeaders,
+		UserAgentBlock,
 	)
 
 	return nil

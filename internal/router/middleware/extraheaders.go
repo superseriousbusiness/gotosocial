@@ -20,16 +20,18 @@ package middleware
 
 import "github.com/gin-gonic/gin"
 
-// ExtraHeaders is a gin middleware which adds various extra headers to the response.
-func (p *Provider) ExtraHeaders(c *gin.Context) {
-	// Inform all callers which server implementation this is.
-	c.Header("Server", "gotosocial")
-	// Prevent google chrome cohort tracking. Originally this was referred
-	// to as FlocBlock. Floc was replaced by Topics in 2022 and the spec says
-	// that interest-cohort will also block Topics (as of 2022-Nov).
-	//
-	// See: https://smartframe.io/blog/google-topics-api-everything-you-need-to-know
-	//
-	// See: https://github.com/patcg-individual-drafts/topics
-	c.Header("Permissions-Policy", "browsing-topics=()")
+// ExtraHeaders returns a new gin middleware which adds various extra headers to the response.
+func ExtraHeaders() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Inform all callers which server implementation this is.
+		c.Header("Server", "gotosocial")
+		// Prevent google chrome cohort tracking. Originally this was referred
+		// to as FlocBlock. Floc was replaced by Topics in 2022 and the spec says
+		// that interest-cohort will also block Topics (as of 2022-Nov).
+		//
+		// See: https://smartframe.io/blog/google-topics-api-everything-you-need-to-know
+		//
+		// See: https://github.com/patcg-individual-drafts/topics
+		c.Header("Permissions-Policy", "browsing-topics=()")
+	}
 }

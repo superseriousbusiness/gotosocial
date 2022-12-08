@@ -24,6 +24,7 @@ import (
 )
 
 // Gzip returns a gzip gin middleware using default compression.
-func (p *Provider) Gzip() func(c *gin.Context) {
+func Gzip() gin.HandlerFunc {
+	// todo: make this configurable
 	return ginGzip.Gzip(ginGzip.DefaultCompression)
 }

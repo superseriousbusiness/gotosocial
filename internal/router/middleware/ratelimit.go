@@ -44,7 +44,7 @@ const rateLimitPeriod = 5 * time.Minute
 //
 // If the config AdvancedRateLimitRequests value is <= 0, then a noop handler will be returned,
 // which performs no rate limiting.
-func (p *Provider) RateLimit() func(c *gin.Context) {
+func RateLimit() gin.HandlerFunc {
 	// only enable rate limit middleware if configured
 	// advanced-rate-limit-requests is greater than 0
 	rateLimitRequests := config.GetAdvancedRateLimitRequests()
