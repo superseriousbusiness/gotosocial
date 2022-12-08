@@ -34,18 +34,16 @@ import (
 type DereferenceMedia func(ctx context.Context, iri *url.URL) (io.ReadCloser, int64, error)
 
 func (m *manager) RefetchEmojis(ctx context.Context, domain string, dereferenceMedia DereferenceMedia) (int, error) {
-	var (
-		totalChecked       int
-		totalRefetched     int
-		maxShortcodeDomain string
-		refetchIDs         []string
-	)
-
+	// normalize domain
 	if domain == "" {
 		domain = db.EmojiAllDomains
 	}
 
-	log.Info("checking emojis for refetch candidates...")
+	var (
+		maxShortcodeDomain string
+		refetchIDs         []string
+	)
+
 	// page through emojis 20 at a time, looking for those with missing images
 	for {
 		// Fetch next block of emojis from database
@@ -59,49 +57,50 @@ func (m *manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 		}
 
 		for _, emoji := range emojis {
-			totalChecked++
-			if totalChecked%50 == 0 {
-				log.Infof("checked %d emojis so far...", totalChecked)
+			if emoji.Domain == "" {
+				// never try to refetch local emojis
+				continue
 			}
 
-			refetch, err := m.emojiRequiresRefetch(ctx, emoji)
-			if err != nil {
+			if refetch, err := m.emojiRequiresRefetch(ctx, emoji); err != nil {
+				// an error here indicates something is wrong with storage, so we should stop
 				return 0, fmt.Errorf("error checking refetch requirement for emoji %s: %w", util.ShortcodeDomain(emoji), err)
+			} else if !refetch {
+				continue
 			}
 
-			if refetch {
-				refetchIDs = append(refetchIDs, emoji.ID)
-			}
+			refetchIDs = append(refetchIDs, emoji.ID)
 		}
 
 		// Update next maxShortcodeDomain from last emoji
 		maxShortcodeDomain = util.ShortcodeDomain(emojis[len(emojis)-1])
 	}
-	log.Infof("checked %d total emoji(s)", totalChecked)
 
+	// bail early if we've got nothing to do
 	toRefetchCount := len(refetchIDs)
 	if toRefetchCount == 0 {
-		log.Infof("no emojis require a refetch")
+		log.Debug("no remote emojis require a refetch")
 		return 0, nil
 	}
+	log.Debugf("%d remote emoji(s) require a refetch, doing that now...", toRefetchCount)
 
-	log.Infof("%d emoji(s) require a refetch, doing that now...", toRefetchCount)
+	var totalRefetched int
 	for _, emojiID := range refetchIDs {
 		emoji, err := m.db.GetEmojiByID(ctx, emojiID)
 		if err != nil {
-			// this shouldn't happen so return if it does
+			// this shouldn't happen--since we know we have the emoji--so return if it does
 			return 0, fmt.Errorf("error getting emoji %s: %w", emojiID, err)
 		}
 		shortcodeDomain := util.ShortcodeDomain(emoji)
 
 		if emoji.ImageRemoteURL == "" {
-			log.Warn("emoji %s could not be refreshed because it has no ImageRemoteURL set", shortcodeDomain)
+			log.Errorf("remote emoji %s could not be refreshed because it has no ImageRemoteURL set", shortcodeDomain)
 			continue
 		}
 
 		emojiImageIRI, err := url.Parse(emoji.ImageRemoteURL)
 		if err != nil {
-			log.Warn("emoji %s could not be refreshed because its ImageRemoteURL (%s) is not a valid uri", shortcodeDomain, emoji.ImageRemoteURL)
+			log.Errorf("remote emoji %s could not be refreshed because its ImageRemoteURL (%s) is not a valid uri: %s", shortcodeDomain, emoji.ImageRemoteURL, err)
 			continue
 		}
 
@@ -117,16 +116,16 @@ func (m *manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 			VisibleInPicker:      emoji.VisibleInPicker,
 		}, true)
 		if err != nil {
-			log.Warn("emoji %s could not be refreshed because of an error during processing: %w", shortcodeDomain, err)
+			log.Errorf("emoji %s could not be refreshed because of an error during processing: %s", shortcodeDomain, err)
 			continue
 		}
 
 		if _, err := processingEmoji.LoadEmoji(ctx); err != nil {
-			log.Warn("emoji %s could not be refreshed because of an error during loading: %w", shortcodeDomain, err)
+			log.Errorf("emoji %s could not be refreshed because of an error during loading: %s", shortcodeDomain, err)
 			continue
 		}
 
-		log.Infof("refetched emoji %s successfully from remote", shortcodeDomain)
+		log.Tracef("refetched emoji %s successfully from remote", shortcodeDomain)
 		totalRefetched++
 	}
 

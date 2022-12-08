@@ -61,6 +61,25 @@ func (suite *RefetchTestSuite) TestRefetchEmojis() {
 	suite.Equal(1, refetched)
 }
 
+func (suite *RefetchTestSuite) TestRefetchEmojisLocal() {
+	ctx := context.Background()
+
+	// delete the image for a LOCAL emoji
+	if err := suite.storage.Delete(ctx, suite.testEmojis["rainbow"].ImagePath); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	adminAccount := suite.testAccounts["admin_account"]
+	transport, err := suite.transportController.NewTransportForUsername(ctx, adminAccount.Username)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	refetched, err := suite.manager.RefetchEmojis(ctx, "", transport.DereferenceMedia)
+	suite.NoError(err)
+	suite.Equal(0, refetched) // shouldn't refetch anything because local
+}
+
 func TestRefetchTestSuite(t *testing.T) {
 	suite.Run(t, &RefetchTestSuite{})
 }
