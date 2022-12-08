@@ -65,8 +65,12 @@ module.exports = function ParseFromToot() {
 		let values = Object.values(emojiChecked);
 		/* one or more boxes are checked */
 		let some = values.some((v) => v);
-		/* there's not at least one unchecked box */
-		let all = !values.some((v) => v == false);
+
+		let all = false;
+		if (some) {
+			/* there's not at least one unchecked box */
+			all = !values.some((v) => v == false);
+		}
 
 		if (some && !all) {
 			setToggleAllState(2);
