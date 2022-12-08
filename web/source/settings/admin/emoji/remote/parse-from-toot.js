@@ -249,8 +249,8 @@ function CopyEmojiForm({localEmojiCodes, emojiList, domain}) {
 			/>
 
 			<div className="action-buttons row">
-				<button disabled={!someSelected} onClick={() => submit("copy")}>Copy to local emoji</button>
-				<button disabled={!someSelected} onClick={() => submit("disable")} className="danger">Disable</button>
+				<button disabled={!someSelected} onClick={() => submit("copy")}>{patchResult.isLoading ? "Processing..." : "Copy to local emoji"}</button>
+				<button disabled={!someSelected} onClick={() => submit("disable")} className="danger">{patchResult.isLoading ? "Processing..." : "Disable"}</button>
 			</div>
 			{err && <div className="error">
 				{err}
