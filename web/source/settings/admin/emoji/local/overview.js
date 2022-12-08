@@ -25,6 +25,7 @@ const NewEmojiForm = require("./new-emoji");
 
 const query = require("../../../lib/query");
 const { useEmojiByCategory } = require("../category-select");
+const Loading = require("../../../components/loading");
 
 const base = "/settings/custom-emoji/local";
 
@@ -42,7 +43,7 @@ module.exports = function EmojiOverview() {
 				<div className="error accent">{error}</div>
 			}
 			{isLoading
-				? "Loading..."
+				? <Loading/>
 				: <>
 					<EmojiList emoji={emoji}/>
 					<NewEmojiForm emoji={emoji}/>

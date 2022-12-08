@@ -31,6 +31,7 @@ const {
 const { CategorySelect } = require('../category-select');
 
 const query = require("../../../lib/query");
+const Loading = require("../../../components/loading");
 
 module.exports = function ParseFromToot({ emojiCodes }) {
 	const [searchStatus, { data, isLoading, isSuccess, error }] = query.useSearchStatusForEmojiMutation();
@@ -86,9 +87,16 @@ module.exports = function ParseFromToot({ emojiCodes }) {
 							onChange={onURLChange}
 							value={url}
 						/>
-						<button><i className="fa fa-search" aria-hidden="true"></i></button>
+						<button disabled={isLoading}>
+							<i className={[
+								"fa",
+								(isLoading
+									? "fa-refresh fa-spin"
+									: "fa-search")
+							].join(" ")} aria-hidden="true"/>
+						</button>
 					</div>
-					{isLoading && "Loading..."}
+					{isLoading && <Loading/>}
 					{error && <div className="error">{error.data.error}</div>}
 				</div>
 			</form>

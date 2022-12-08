@@ -32,6 +32,7 @@ const oauth = require("./redux/reducers/oauth").actions;
 const { AuthenticationError } = require("./lib/errors");
 
 const Login = require("./components/login");
+const Loading = require("./components/loading");
 
 require("./style.css");
 
@@ -171,7 +172,7 @@ function App() {
 function Main() {
 	return (
 		<Provider store={store}>
-			<PersistGate loading={"loading..."} persistor={persistor}>
+			<PersistGate loading={<section><Loading/></section>} persistor={persistor}>
 				<App />
 			</PersistGate>
 		</Provider>

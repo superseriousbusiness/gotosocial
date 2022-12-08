@@ -54,7 +54,7 @@ function EmojiDetailData({emojiId}) {
 			</div>
 		);
 	} else if (isLoading) {
-		return "Loading...";
+		return <Loading/>;
 	} else {
 		return <EmojiDetail emoji={emoji}/>;
 	}
