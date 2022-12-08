@@ -19,7 +19,6 @@
 "use strict";
 
 const Promise = require("bluebird");
-const syncpipe = require("syncpipe");
 
 const base = require("./base");
 
