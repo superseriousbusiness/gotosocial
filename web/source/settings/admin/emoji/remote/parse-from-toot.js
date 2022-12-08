@@ -202,7 +202,8 @@ function CopyEmojiForm({localEmojiCodes, emojiList, domain}) {
 			return patchRemoteEmojis({
 				action,
 				domain,
-				list: selectedShortcodes
+				list: selectedShortcodes,
+				category
 			}).unwrap();
 		}).then(() => {
 			setEmojiState(makeEmojiState(emojiList, false));

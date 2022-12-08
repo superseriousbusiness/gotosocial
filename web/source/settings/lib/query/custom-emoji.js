@@ -95,7 +95,7 @@ const endpoints = (build) => ({
 		})
 	}),
 	patchRemoteEmojis: build.mutation({
-		queryFn: ({action, domain, list}, api, _extraOpts, baseQuery) => {
+		queryFn: ({action, domain, list, category}, api, _extraOpts, baseQuery) => {
 			const data = [];
 			const errors = [];
 
@@ -116,8 +116,10 @@ const endpoints = (build) => ({
 						type: action
 					};
 
+					console.log("copying to", category);
 					if (action == "copy") {
 						body.shortcode = emoji.localShortcode ?? emoji.shortcode;
+						body.category = category;
 					}
 
 					return baseQuery({
