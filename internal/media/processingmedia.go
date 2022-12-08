@@ -81,10 +81,8 @@ func (p *ProcessingMedia) AttachmentID() string {
 // LoadAttachment blocks until the thumbnail and fullsize content
 // has been processed, and then returns the completed attachment.
 func (p *ProcessingMedia) LoadAttachment(ctx context.Context) (*gtsmodel.MediaAttachment, error) {
-	log.Tracef("LoadAttachment: getting lock for attachment %s", p.attachment.URL)
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	log.Tracef("LoadAttachment: got lock for attachment %s", p.attachment.URL)
 
 	if err := p.store(ctx); err != nil {
 		return nil, err
@@ -98,23 +96,24 @@ func (p *ProcessingMedia) LoadAttachment(ctx context.Context) (*gtsmodel.MediaAt
 		return nil, err
 	}
 
-	// store the result in the database before returning it
 	if !p.insertedInDB {
 		if p.recache {
-			// if it's a recache we should only need to update
+			// This is an existing media attachment we're recaching, so only need to update it
 			if err := p.database.UpdateByID(ctx, p.attachment, p.attachment.ID); err != nil {
 				return nil, err
 			}
 		} else {
-			// otherwise we need to really PUT it
+			// This is a new media attachment we're caching for first time
 			if err := p.database.Put(ctx, p.attachment); err != nil {
 				return nil, err
 			}
 		}
+
+		// Mark this as stored in DB
 		p.insertedInDB = true
 	}
 
-	log.Tracef("LoadAttachment: finished, returning attachment %s", p.attachment.URL)
+	log.Tracef("finished loading attachment %s", p.attachment.URL)
 	return p.attachment, nil
 }
 
@@ -180,7 +179,7 @@ func (p *ProcessingMedia) loadThumb(ctx context.Context) error {
 
 		// we're done processing the thumbnail!
 		atomic.StoreInt32(&p.thumbState, int32(complete))
-		log.Tracef("loadThumb: finished processing thumbnail for attachment %s", p.attachment.URL)
+		log.Tracef("finished processing thumbnail for attachment %s", p.attachment.URL)
 		fallthrough
 	case complete:
 		return nil
@@ -241,7 +240,7 @@ func (p *ProcessingMedia) loadFullSize(ctx context.Context) error {
 
 		// we're done processing the full-size image
 		atomic.StoreInt32(&p.fullSizeState, int32(complete))
-		log.Tracef("loadFullSize: finished processing full size image for attachment %s", p.attachment.URL)
+		log.Tracef("finished processing full size image for attachment %s", p.attachment.URL)
 		fallthrough
 	case complete:
 		return nil
@@ -362,7 +361,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	p.attachment.File.FileSize = int(fileSize)
 	p.read = true
 
-	log.Tracef("store: finished storing initial data for attachment %s", p.attachment.URL)
+	log.Tracef("finished storing initial data for attachment %s", p.attachment.URL)
 	return nil
 }
 

@@ -57,8 +57,6 @@ func (m *mediaDB) GetRemoteOlderThan(ctx context.Context, olderThan time.Time, l
 		NewSelect().
 		Model(&attachments).
 		Where("? = ?", bun.Ident("media_attachment.cached"), true).
-		Where("? = ?", bun.Ident("media_attachment.avatar"), false).
-		Where("? = ?", bun.Ident("media_attachment.header"), false).
 		Where("? < ?", bun.Ident("media_attachment.created_at"), olderThan).
 		WhereGroup(" AND ", whereNotEmptyAndNotNull("media_attachment.remote_url")).
 		Order("media_attachment.created_at DESC")
@@ -70,6 +68,7 @@ func (m *mediaDB) GetRemoteOlderThan(ctx context.Context, olderThan time.Time, l
 	if err := q.Scan(ctx); err != nil {
 		return nil, m.conn.ProcessError(err)
 	}
+
 	return attachments, nil
 }
 
