@@ -3328,20 +3328,20 @@ paths:
                 - blocks
     /api/v1/bookmarks:
         get:
-            description: Get an array of bookmarks saved in the instance
+            description: Get an array of statuses bookmarked in the instance
             operationId: bookmarksGet
             produces:
                 - application/json
             responses:
                 "200":
-                    description: Array of bookmarks
+                    description: Array of bookmarked statuses
                     headers:
                         Link:
                             description: Links to the next and previous queries.
                             type: string
                     schema:
                         items:
-                            $ref: '#/definitions/bookmark'
+                            $ref: '#/definitions/status'
                         type: array
                 "401":
                     description: unauthorized

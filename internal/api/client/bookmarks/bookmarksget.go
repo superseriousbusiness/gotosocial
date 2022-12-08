@@ -23,7 +23,7 @@ const (
 
 // BookmarksGETHandler swagger:operation GET /api/v1/bookmarks bookmarksGet
 //
-// Get an array of bookmarks saved in the instance
+// Get an array of statuses bookmarked in the instance
 //
 //	---
 //	tags:
@@ -38,11 +38,11 @@ const (
 //
 //	responses:
 //		'200':
-//			description: Array of bookmarks
+//			description: Array of bookmarked statuses
 //			schema:
 //				type: array
 //				items:
-//					"$ref": "#/definitions/bookmark"
+//					"$ref": "#/definitions/status"
 //			headers:
 //				Link:
 //					type: string

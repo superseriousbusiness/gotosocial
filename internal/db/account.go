@@ -73,7 +73,7 @@ type Account interface {
 	// or replies.
 	GetAccountWebStatuses(ctx context.Context, accountID string, limit int, maxID string) ([]*gtsmodel.Status, Error)
 
-	GetBookmarks(ctx context.Context, accountID string, limit int, maxID string, minID string) ([]*gtsmodel.Status, Error)
+	GetBookmarks(ctx context.Context, accountID string, limit int, maxID string, minID string) ([]*gtsmodel.StatusBookmark, Error)
 
 	GetAccountBlocks(ctx context.Context, accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, Error)
 

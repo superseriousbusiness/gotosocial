@@ -463,17 +463,17 @@ func (a *accountDB) GetAccountWebStatuses(ctx context.Context, accountID string,
 	return a.statusesFromIDs(ctx, statusIDs)
 }
 
-func (a *accountDB) GetBookmarks(ctx context.Context, accountID string, limit int, maxID string, minID string) ([]*gtsmodel.Status, db.Error) {
-	statusIDs := []string{}
+func (a *accountDB) GetBookmarks(ctx context.Context, accountID string, limit int, maxID string, minID string) ([]*gtsmodel.StatusBookmark, db.Error) {
+	bookmarks := []*gtsmodel.StatusBookmark{}
 
 	q := a.conn.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("status_bookmarks"), bun.Ident("status_bookmark")).
-		Column("status_bookmark.status_id").
-		Order("status_bookmark.id DESC")
+		Order("status_bookmark.id DESC").
+		Where("? = ?", bun.Ident("status_bookmark.account_id"), accountID)
 
-	if accountID != "" {
-		q = q.Where("? = ?", bun.Ident("status_bookmark.account_id"), accountID)
+	if accountID == "" {
+		return nil, errors.New("must provide an account")
 	}
 
 	if limit != 0 {
@@ -488,11 +488,11 @@ func (a *accountDB) GetBookmarks(ctx context.Context, accountID string, limit in
 		q = q.Where("? > ?", bun.Ident("status_bookmark.id"), minID)
 	}
 
-	if err := q.Scan(ctx, &statusIDs); err != nil {
+	if err := q.Scan(ctx, &bookmarks); err != nil {
 		return nil, a.conn.ProcessError(err)
 	}
 
-	return a.statusesFromIDs(ctx, statusIDs)
+	return bookmarks, nil
 }
 
 func (a *accountDB) GetAccountBlocks(ctx context.Context, accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, db.Error) {

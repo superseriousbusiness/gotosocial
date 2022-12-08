@@ -137,7 +137,6 @@ func (suite *BookmarkTestSuite) TestGetBookmark() {
 	suite.NoError(err)
 
 	var statuses []model.Status
-	//statusReply := &model.Status{}
 	err = json.Unmarshal(b, &statuses)
 	suite.NoError(err)
 

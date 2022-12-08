@@ -20,6 +20,7 @@ package status
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -36,6 +37,13 @@ func (p *processor) Bookmark(ctx context.Context, requestingAccount *gtsmodel.Ac
 	}
 	if targetStatus.Account == nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("no status owner for status %s", targetStatusID))
+	}
+	visible, err := p.filter.StatusVisible(ctx, targetStatus, requestingAccount)
+	if err != nil {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is visible: %s", targetStatus.ID, err))
+	}
+	if !visible {
+		return nil, gtserror.NewErrorNotFound(errors.New("status is not visible"))
 	}
 
 	// first check if the status is already bookmarked, if so we don't need to do anything

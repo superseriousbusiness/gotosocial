@@ -33,42 +33,47 @@ func (p *processor) BookmarksGet(ctx context.Context, requestingAccount *gtsmode
 		return nil, gtserror.NewErrorForbidden(fmt.Errorf("cannot retrieve bookmarks without a requesting account"))
 	}
 
-	statuses, err := p.db.GetBookmarks(ctx, requestingAccount.ID, limit, maxID, minID)
+	bookmarks, err := p.db.GetBookmarks(ctx, requestingAccount.ID, limit, maxID, minID)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	filtered := make([]*gtsmodel.Status, 0, len(statuses))
-	for _, s := range statuses {
+	count := len(bookmarks)
+	filtered := make([]*gtsmodel.Status, 0, len(bookmarks))
+	nextMaxIDValue := ""
+	prevMinIDValue := ""
+	for i, b := range bookmarks {
+		s, err := p.db.GetStatusByID(ctx, b.StatusID)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
 		visible, err := p.filter.StatusVisible(ctx, s, requestingAccount)
 		if err == nil && visible {
+			if i == count-1 {
+				nextMaxIDValue = b.ID
+			}
+
+			if i == 0 {
+				prevMinIDValue = b.ID
+			}
+
 			filtered = append(filtered, s)
 		}
 	}
 
-	count := len(filtered)
+	count = len(filtered)
 
 	if count == 0 {
 		return util.EmptyPageableResponse(), nil
 	}
 
 	items := []interface{}{}
-	nextMaxIDValue := ""
-	prevMinIDValue := ""
-	for i, s := range filtered {
+	for _, s := range filtered {
 		item, err := p.tc.StatusToAPIStatus(ctx, s, requestingAccount)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status to api: %s", err))
 		}
-
-		if i == count-1 {
-			nextMaxIDValue = item.GetID()
-		}
-
-		if i == 0 {
-			prevMinIDValue = item.GetID()
-		}
-
 		items = append(items, item)
 	}
 
