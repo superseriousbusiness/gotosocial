@@ -71,7 +71,9 @@ func (f *formatter) FromMarkdown(ctx context.Context, markdownText string, menti
 		mentions: mentions,
 		tags:     tags,
 		HTMLRenderer: *blackfriday.NewHTMLRenderer(blackfriday.HTMLRendererParameters{
-			Flags: blackfriday.CommonHTMLFlags,
+			// same as blackfriday.CommonHTMLFlags, but with Smartypants disabled
+			// ref: https://github.com/superseriousbusiness/gotosocial/issues/1028
+			Flags: blackfriday.UseXHTML,
 		}),
 	}
 

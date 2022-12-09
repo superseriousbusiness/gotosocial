@@ -21,7 +21,6 @@ package bundb
 import (
 	"context"
 	"crypto/rand"
-	"errors"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -35,29 +34,22 @@ type sessionDB struct {
 func (s *sessionDB) GetSession(ctx context.Context) (*gtsmodel.RouterSession, db.Error) {
 	rss := make([]*gtsmodel.RouterSession, 0, 1)
 
-	_, err := s.conn.
+	// get the first router session in the db or...
+	if err := s.conn.
 		NewSelect().
 		Model(&rss).
 		Limit(1).
-		Order("id DESC").
-		Exec(ctx)
-	if err != nil {
+		Order("router_session.id DESC").
+		Scan(ctx); err != nil {
 		return nil, s.conn.ProcessError(err)
 	}
 
+	// ... create a new one
 	if len(rss) == 0 {
-		// no session created yet, so make one
 		return s.createSession(ctx)
 	}
 
-	if len(rss) != 1 {
-		// we asked for 1 so we should get 1
-		return nil, errors.New("more than 1 router session was returned")
-	}
-
-	// return the one session found
-	rs := rss[0]
-	return rs, nil
+	return rss[0], nil
 }
 
 func (s *sessionDB) createSession(ctx context.Context) (*gtsmodel.RouterSession, db.Error) {
@@ -71,24 +63,23 @@ func (s *sessionDB) createSession(ctx context.Context) (*gtsmodel.RouterSession,
 		return nil, err
 	}
 
-	rid, err := id.NewULID()
+	id, err := id.NewULID()
 	if err != nil {
 		return nil, err
 	}
 
 	rs := &gtsmodel.RouterSession{
-		ID:    rid,
+		ID:    id,
 		Auth:  auth,
 		Crypt: crypt,
 	}
 
-	q := s.conn.
+	if _, err := s.conn.
 		NewInsert().
-		Model(rs)
-
-	_, err = q.Exec(ctx)
-	if err != nil {
+		Model(rs).
+		Exec(ctx); err != nil {
 		return nil, s.conn.ProcessError(err)
 	}
+
 	return rs, nil
 }

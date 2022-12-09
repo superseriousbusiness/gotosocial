@@ -78,7 +78,7 @@ type Account struct {
 	StatusesCount int `json:"statuses_count"`
 	// When the account's most recent status was posted (ISO 8601 Datetime).
 	// example: 2021-07-30T09:20:25+00:00
-	LastStatusAt string `json:"last_status_at"`
+	LastStatusAt *string `json:"last_status_at"`
 	// Array of custom emojis used in this account's note or display name.
 	Emojis []Emoji `json:"emojis"`
 	// Additional metadata attached to this account's profile.
@@ -92,6 +92,12 @@ type Account struct {
 	Source *Source `json:"source,omitempty"`
 	// CustomCSS to include when rendering this account's profile or statuses.
 	CustomCSS string `json:"custom_css,omitempty"`
+	// Account has enabled RSS feed.
+	EnableRSS bool `json:"enable_rss,omitempty"`
+	// Role of the account on this instance.
+	// Omitted for remote accounts.
+	// example: user
+	Role AccountRole `json:"role,omitempty"`
 }
 
 // AccountCreateRequest models account creation parameters.
@@ -155,6 +161,8 @@ type UpdateCredentialsRequest struct {
 	FieldsAttributes *[]UpdateField `form:"fields_attributes" json:"fields_attributes" xml:"fields_attributes"`
 	// Custom CSS to be included when rendering this account's profile or statuses.
 	CustomCSS *string `form:"custom_css" json:"custom_css" xml:"custom_css"`
+	// Enable RSS feed of public toots for this account at /@[username]/feed.rss
+	EnableRSS *bool `form:"enable_rss" json:"enable_rss" xml:"enable_rss"`
 }
 
 // UpdateSource is to be used specifically in an UpdateCredentialsRequest.
@@ -204,3 +212,16 @@ type AccountDeleteRequest struct {
 	// Can be the ID of the account owner, or the ID of an admin account.
 	DeleteOriginID string `form:"-" json:"-" xml:"-"`
 }
+
+// AccountRole models the role of an account.
+//
+// swagger:enum accountRole
+// swagger:type string
+type AccountRole string
+
+const (
+	AccountRoleUser      AccountRole = "user"      // Standard user
+	AccountRoleModerator AccountRole = "moderator" // Moderator privileges
+	AccountRoleAdmin     AccountRole = "admin"     // Instance admin
+	AccountRoleUnknown   AccountRole = ""          // We don't know / remote account
+)

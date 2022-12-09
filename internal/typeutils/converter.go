@@ -23,6 +23,7 @@ import (
 	"net/url"
 	"sync"
 
+	"github.com/gorilla/feeds"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -66,6 +67,10 @@ type TypeConverter interface {
 	MentionToAPIMention(ctx context.Context, m *gtsmodel.Mention) (model.Mention, error)
 	// EmojiToAPIEmoji converts a gts model emoji into its api (frontend) representation for serialization on the API.
 	EmojiToAPIEmoji(ctx context.Context, e *gtsmodel.Emoji) (model.Emoji, error)
+	// EmojiToAdminAPIEmoji converts a gts model emoji into an API representation with extra admin information.
+	EmojiToAdminAPIEmoji(ctx context.Context, e *gtsmodel.Emoji) (*model.AdminEmoji, error)
+	// EmojiCategoryToAPIEmojiCategory converts a gts model emoji category into its api (frontend) representation.
+	EmojiCategoryToAPIEmojiCategory(ctx context.Context, category *gtsmodel.EmojiCategory) (*model.EmojiCategory, error)
 	// TagToAPITag converts a gts model tag into its api (frontend) representation for serialization on the API.
 	TagToAPITag(ctx context.Context, t *gtsmodel.Tag) (model.Tag, error)
 	// StatusToAPIStatus converts a gts model status into its api (frontend) representation for serialization on the API.
@@ -82,6 +87,12 @@ type TypeConverter interface {
 	NotificationToAPINotification(ctx context.Context, n *gtsmodel.Notification) (*model.Notification, error)
 	// DomainBlockToAPIDomainBlock converts a gts model domin block into a api domain block, for serving at /api/v1/admin/domain_blocks
 	DomainBlockToAPIDomainBlock(ctx context.Context, b *gtsmodel.DomainBlock, export bool) (*model.DomainBlock, error)
+
+	/*
+		INTERNAL (gts) MODEL TO FRONTEND (rss) MODEL
+	*/
+
+	StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*feeds.Item, error)
 
 	/*
 		FRONTEND (api) MODEL TO INTERNAL (gts) MODEL

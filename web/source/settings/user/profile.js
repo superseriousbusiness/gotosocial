@@ -18,7 +18,6 @@
 
 "use strict";
 
-const Promise = require("bluebird");
 const React = require("react");
 const Redux = require("react-redux");
 
@@ -28,6 +27,7 @@ const api = require("../lib/api");
 const user = require("../redux/reducers/user").actions;
 const submit = require("../lib/submit");
 
+const FakeProfile = require("../components/fake-profile");
 const { formFields } = require("../components/form-fields");
 
 const {
@@ -39,7 +39,6 @@ const {
 
 module.exports = function UserProfile() {
 	const dispatch = Redux.useDispatch();
-	const account = Redux.useSelector(state => state.user.profile);
 	const instance = Redux.useSelector(state => state.instances.current);
 
 	const allowCustomCSS = instance.configuration.accounts.allow_custom_css;
@@ -56,28 +55,18 @@ module.exports = function UserProfile() {
 		<div className="user-profile">
 			<h1>Profile</h1>
 			<div className="overview">
-				<div className="profile">
-					<div className="headerimage">
-						<img className="headerpreview" src={account.header} alt={account.header ? `header image for ${account.username}` : "None set"} />
-					</div>
-					<div className="basic">
-						<div id="profile-basic-filler2"></div>
-						<span className="avatar"><img className="avatarpreview" src={account.avatar} alt={account.avatar ? `avatar image for ${account.username}` : "None set"} /></span>
-						<div className="displayname">{account.display_name.trim().length > 0 ? account.display_name : account.username}</div>
-						<div className="username"><span>@{account.username}</span></div>
-					</div>
-				</div>
+				<FakeProfile/>
 				<div className="files">
 					<div>
 						<h3>Header</h3>
-						<File 
+						<File
 							id="header"
 							fileType="image/*"
 						/>
 					</div>
 					<div>
 						<h3>Avatar</h3>
-						<File 
+						<File
 							id="avatar"
 							fileType="image/*"
 						/>
@@ -96,9 +85,13 @@ module.exports = function UserProfile() {
 			/>
 			<Checkbox
 				id="locked"
-				name="Manually approve follow requests? "
+				name="Manually approve follow requests"
 			/>
-			{ !allowCustomCSS ? null :  
+			<Checkbox
+				id="enable_rss"
+				name="Enable RSS feed of Public posts"
+			/>
+			{ !allowCustomCSS ? null :
 				<TextArea
 					id="custom_css"
 					name="Custom CSS"

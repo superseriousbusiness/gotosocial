@@ -32,6 +32,11 @@ storage-local-base-path: "/gotosocial/storage"
 # Default: ""
 storage-s3-endpoint: ""
 
+# Bool. If data stored in S3 should be proxied through GoToSocial instead of redirecting to a presigned URL.
+#
+# Default: false
+storage-s3-proxy: false
+
 # String. Access key part of the S3 credentials.
 # Consider setting this value using environment variables to avoid leaking it via the config file
 # Only required when running with the s3 storage backend.

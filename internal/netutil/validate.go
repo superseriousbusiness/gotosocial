@@ -23,10 +23,27 @@ import (
 )
 
 var (
-	// IPv6GlobalUnicast is the global IPv6 unicast IP prefix.
-	IPv6GlobalUnicast = netip.MustParsePrefix("ff00::/8")
+	// IPv6Reserved contains IPv6 reserved IP prefixes.
+	// https://www.iana.org/assignments/iana-ipv6-special-registry/iana-ipv6-special-registry.xhtml
+	IPv6Reserved = [...]netip.Prefix{
+		netip.MustParsePrefix("::1/128"),           // Loopback
+		netip.MustParsePrefix("::/128"),            // Unspecified address
+		netip.MustParsePrefix("::ffff:0:0/96"),     // IPv4-mapped address
+		netip.MustParsePrefix("64:ff9b::/96"),      // IPv4/IPv6 translation, RFC 6052
+		netip.MustParsePrefix("64:ff9b:1::/48"),    // IPv4/IPv6 translation, RFC 8215
+		netip.MustParsePrefix("100::/64"),          // Discard prefix, RFC 6666
+		netip.MustParsePrefix("2001::/23"),         // IETF Protocol Assignments, RFC 2928
+		netip.MustParsePrefix("2001:db8::/32"),     // Test, doc, examples
+		netip.MustParsePrefix("2002::/16"),         // 6to4
+		netip.MustParsePrefix("2620:4f:8000::/48"), // Direct Delegation AS112 Service, RFC 7534
+		netip.MustParsePrefix("fc00::/7"),          // Unique Local
+		netip.MustParsePrefix("fe80::/10"),         // Link-local
+		netip.MustParsePrefix("fec0::/10"),         // Site-local, deprecated
+		netip.MustParsePrefix("ff00::/8"),          // Multicast
+	}
 
-	// IPvReserved contains IPv4 reserved IP prefixes.
+	// IPv4Reserved contains IPv4 reserved IP prefixes.
+	// https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml
 	IPv4Reserved = [...]netip.Prefix{
 		netip.MustParsePrefix("0.0.0.0/8"),       // Current network
 		netip.MustParsePrefix("10.0.0.0/8"),      // Private
@@ -36,8 +53,11 @@ var (
 		netip.MustParsePrefix("172.16.0.0/12"),   // Private
 		netip.MustParsePrefix("192.0.0.0/24"),    // RFC6890
 		netip.MustParsePrefix("192.0.2.0/24"),    // Test, doc, examples
+		netip.MustParsePrefix("192.31.196.0/24"), // AS112-v4, RFC 7535
+		netip.MustParsePrefix("192.52.193.0/24"), // AMT, RFC 7450
 		netip.MustParsePrefix("192.88.99.0/24"),  // IPv6 to IPv4 relay
 		netip.MustParsePrefix("192.168.0.0/16"),  // Private
+		netip.MustParsePrefix("192.175.48.0/24"), // Direct Delegation AS112 Service, RFC 7534
 		netip.MustParsePrefix("198.18.0.0/15"),   // Benchmarking tests
 		netip.MustParsePrefix("198.51.100.0/24"), // Test, doc, examples
 		netip.MustParsePrefix("203.0.113.0/24"),  // Test, doc, examples
@@ -67,9 +87,14 @@ func ValidateIP(ip netip.Addr) bool {
 		}
 		return true
 
-	// IPv6: check if in global unicast (public internet)
+	// IPv6: check if IP in IPv6 reserved nets
 	case ip.Is6():
-		return IPv6GlobalUnicast.Contains(ip)
+		for _, reserved := range IPv6Reserved {
+			if reserved.Contains(ip) {
+				return false
+			}
+		}
+		return true
 
 	// Assume malicious by default
 	default:

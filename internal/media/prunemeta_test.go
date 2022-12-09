@@ -22,7 +22,7 @@ import (
 	"context"
 	"testing"
 
-	"codeberg.org/gruf/go-store/storage"
+	"codeberg.org/gruf/go-store/v2/storage"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
@@ -40,7 +40,7 @@ func (suite *PruneMetaTestSuite) TestPruneMeta() {
 	zork := suite.testAccounts["local_account_1"]
 	zork.AvatarMediaAttachmentID = ""
 	zork.HeaderMediaAttachmentID = ""
-	if err := suite.db.UpdateByPrimaryKey(ctx, zork, "avatar_media_attachment_id", "header_media_attachment_id"); err != nil {
+	if err := suite.db.UpdateByID(ctx, zork, zork.ID, "avatar_media_attachment_id", "header_media_attachment_id"); err != nil {
 		panic(err)
 	}
 
@@ -72,7 +72,7 @@ func (suite *PruneMetaTestSuite) TestPruneMetaTwice() {
 	zork := suite.testAccounts["local_account_1"]
 	zork.AvatarMediaAttachmentID = ""
 	zork.HeaderMediaAttachmentID = ""
-	if err := suite.db.UpdateByPrimaryKey(ctx, zork, "avatar_media_attachment_id", "header_media_attachment_id"); err != nil {
+	if err := suite.db.UpdateByID(ctx, zork, zork.ID, "avatar_media_attachment_id", "header_media_attachment_id"); err != nil {
 		panic(err)
 	}
 
@@ -95,14 +95,14 @@ func (suite *PruneMetaTestSuite) TestPruneMetaMultipleAccounts() {
 	zork := suite.testAccounts["local_account_1"]
 	zork.AvatarMediaAttachmentID = ""
 	zork.HeaderMediaAttachmentID = ""
-	if err := suite.db.UpdateByPrimaryKey(ctx, zork, "avatar_media_attachment_id", "header_media_attachment_id"); err != nil {
+	if err := suite.db.UpdateByID(ctx, zork, zork.ID, "avatar_media_attachment_id", "header_media_attachment_id"); err != nil {
 		panic(err)
 	}
 
 	// set zork's unused header as belonging to turtle
 	turtle := suite.testAccounts["local_account_1"]
 	zorkOldHeader.AccountID = turtle.ID
-	if err := suite.db.UpdateByPrimaryKey(ctx, zorkOldHeader, "account_id"); err != nil {
+	if err := suite.db.UpdateByID(ctx, zorkOldHeader, zorkOldHeader.ID, "account_id"); err != nil {
 		panic(err)
 	}
 

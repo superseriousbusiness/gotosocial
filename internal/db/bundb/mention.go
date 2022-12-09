@@ -21,16 +21,16 @@ package bundb
 import (
 	"context"
 
-	"codeberg.org/gruf/go-cache/v2"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
 )
 
 type mentionDB struct {
 	conn  *DBConn
-	cache cache.Cache[string, *gtsmodel.Mention]
+	state *state.State
 }
 
 func (m *mentionDB) newMentionQ(i interface{}) *bun.SelectQuery {
@@ -42,27 +42,19 @@ func (m *mentionDB) newMentionQ(i interface{}) *bun.SelectQuery {
 		Relation("TargetAccount")
 }
 
-func (m *mentionDB) getMentionDB(ctx context.Context, id string) (*gtsmodel.Mention, db.Error) {
-	mention := gtsmodel.Mention{}
-
-	q := m.newMentionQ(&mention).
-		Where("mention.id = ?", id)
-
-	if err := q.Scan(ctx); err != nil {
-		return nil, m.conn.ProcessError(err)
-	}
-
-	copy := mention
-	m.cache.Set(mention.ID, &copy)
-
-	return &mention, nil
-}
-
 func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mention, db.Error) {
-	if mention, ok := m.cache.Get(id); ok {
-		return mention, nil
-	}
-	return m.getMentionDB(ctx, id)
+	return m.state.Caches.GTS.Mention().Load("ID", func() (*gtsmodel.Mention, error) {
+		var mention gtsmodel.Mention
+
+		q := m.newMentionQ(&mention).
+			Where("? = ?", bun.Ident("mention.id"), id)
+
+		if err := q.Scan(ctx); err != nil {
+			return nil, m.conn.ProcessError(err)
+		}
+
+		return &mention, nil
+	}, id)
 }
 
 func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.Mention, db.Error) {

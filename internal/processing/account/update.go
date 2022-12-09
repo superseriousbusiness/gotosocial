@@ -66,7 +66,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		account.NoteRaw = *form.Note
 
 		// Process note to generate a valid HTML representation
-		note, err := p.processNote(ctx, *form.Note, account.ID)
+		note, err := p.processNote(ctx, *form.Note, account)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err)
 		}
@@ -100,7 +100,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	if form.Avatar != nil && form.Avatar.Size != 0 {
-		avatarInfo, err := p.UpdateAvatar(ctx, form.Avatar, account.ID)
+		avatarInfo, err := p.UpdateAvatar(ctx, form.Avatar, nil, account.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err)
 		}
@@ -110,7 +110,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	if form.Header != nil && form.Header.Size != 0 {
-		headerInfo, err := p.UpdateHeader(ctx, form.Header, account.ID)
+		headerInfo, err := p.UpdateHeader(ctx, form.Header, nil, account.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err)
 		}
@@ -160,7 +160,11 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		account.CustomCSS = text.SanitizePlaintext(customCSS)
 	}
 
-	updatedAccount, err := p.db.UpdateAccount(ctx, account)
+	if form.EnableRSS != nil {
+		account.EnableRSS = form.EnableRSS
+	}
+
+	err := p.db.UpdateAccount(ctx, account)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("could not update account %s: %s", account.ID, err))
 	}
@@ -168,11 +172,11 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 	p.clientWorker.Queue(messages.FromClientAPI{
 		APObjectType:   ap.ObjectProfile,
 		APActivityType: ap.ActivityUpdate,
-		GTSModel:       updatedAccount,
-		OriginAccount:  updatedAccount,
+		GTSModel:       account,
+		OriginAccount:  account,
 	})
 
-	acctSensitive, err := p.tc.AccountToAPIAccountSensitive(ctx, updatedAccount)
+	acctSensitive, err := p.tc.AccountToAPIAccountSensitive(ctx, account)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("could not convert account into apisensitive account: %s", err))
 	}
@@ -182,20 +186,21 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 // UpdateAvatar does the dirty work of checking the avatar part of an account update form,
 // parsing and checking the image, and doing the necessary updates in the database for this to become
 // the account's new avatar image.
-func (p *processor) UpdateAvatar(ctx context.Context, avatar *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error) {
+func (p *processor) UpdateAvatar(ctx context.Context, avatar *multipart.FileHeader, description *string, accountID string) (*gtsmodel.MediaAttachment, error) {
 	maxImageSize := config.GetMediaImageMaxSize()
 	if avatar.Size > int64(maxImageSize) {
 		return nil, fmt.Errorf("UpdateAvatar: avatar with size %d exceeded max image size of %d bytes", avatar.Size, maxImageSize)
 	}
 
-	dataFunc := func(innerCtx context.Context) (io.Reader, int64, error) {
+	dataFunc := func(innerCtx context.Context) (io.ReadCloser, int64, error) {
 		f, err := avatar.Open()
 		return f, avatar.Size, err
 	}
 
 	isAvatar := true
 	ai := &media.AdditionalMediaInfo{
-		Avatar: &isAvatar,
+		Avatar:      &isAvatar,
+		Description: description,
 	}
 
 	processingMedia, err := p.mediaManager.ProcessMedia(ctx, dataFunc, nil, accountID, ai)
@@ -209,13 +214,13 @@ func (p *processor) UpdateAvatar(ctx context.Context, avatar *multipart.FileHead
 // UpdateHeader does the dirty work of checking the header part of an account update form,
 // parsing and checking the image, and doing the necessary updates in the database for this to become
 // the account's new header image.
-func (p *processor) UpdateHeader(ctx context.Context, header *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error) {
+func (p *processor) UpdateHeader(ctx context.Context, header *multipart.FileHeader, description *string, accountID string) (*gtsmodel.MediaAttachment, error) {
 	maxImageSize := config.GetMediaImageMaxSize()
 	if header.Size > int64(maxImageSize) {
 		return nil, fmt.Errorf("UpdateHeader: header with size %d exceeded max image size of %d bytes", header.Size, maxImageSize)
 	}
 
-	dataFunc := func(innerCtx context.Context) (io.Reader, int64, error) {
+	dataFunc := func(innerCtx context.Context) (io.ReadCloser, int64, error) {
 		f, err := header.Open()
 		return f, header.Size, err
 	}
@@ -236,13 +241,13 @@ func (p *processor) UpdateHeader(ctx context.Context, header *multipart.FileHead
 	return processingMedia.LoadAttachment(ctx)
 }
 
-func (p *processor) processNote(ctx context.Context, note string, accountID string) (string, error) {
+func (p *processor) processNote(ctx context.Context, note string, account *gtsmodel.Account) (string, error) {
 	if note == "" {
 		return "", nil
 	}
 
 	tagStrings := util.DeriveHashtagsFromText(note)
-	tags, err := p.db.TagStringsToTags(ctx, tagStrings, accountID)
+	tags, err := p.db.TagStringsToTags(ctx, tagStrings, account.ID)
 	if err != nil {
 		return "", err
 	}
@@ -250,7 +255,7 @@ func (p *processor) processNote(ctx context.Context, note string, accountID stri
 	mentionStrings := util.DeriveMentionNamesFromText(note)
 	mentions := []*gtsmodel.Mention{}
 	for _, mentionString := range mentionStrings {
-		mention, err := p.parseMention(ctx, mentionString, accountID, "")
+		mention, err := p.parseMention(ctx, mentionString, account.ID, "")
 		if err != nil {
 			continue
 		}
@@ -260,6 +265,10 @@ func (p *processor) processNote(ctx context.Context, note string, accountID stri
 	// TODO: support emojis in account notes
 	// emojiStrings := util.DeriveEmojisFromText(note)
 	// emojis, err := p.db.EmojiStringsToEmojis(ctx, emojiStrings)
+
+	if account.StatusFormat == "markdown" {
+		return p.formatter.FromMarkdown(ctx, note, mentions, tags, nil), nil
+	}
 
 	return p.formatter.FromPlain(ctx, note, mentions, tags), nil
 }

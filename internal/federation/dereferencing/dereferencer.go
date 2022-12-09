@@ -33,18 +33,16 @@ import (
 
 // Dereferencer wraps logic and functionality for doing dereferencing of remote accounts, statuses, etc, from federated instances.
 type Dereferencer interface {
-	GetRemoteAccount(ctx context.Context, params GetRemoteAccountParams) (*gtsmodel.Account, error)
+	GetAccount(ctx context.Context, params GetAccountParams) (*gtsmodel.Account, error)
+	GetStatus(ctx context.Context, username string, remoteStatusID *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, error)
 
-	GetRemoteStatus(ctx context.Context, username string, remoteStatusID *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, error)
 	EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status, includeParent bool) (*gtsmodel.Status, error)
-
 	GetRemoteInstance(ctx context.Context, username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
-
-	GetRemoteMedia(ctx context.Context, requestingUsername string, accountID string, remoteURL string, ai *media.AdditionalMediaInfo) (*media.ProcessingMedia, error)
-	GetRemoteEmoji(ctx context.Context, requestingUsername string, remoteURL string, shortcode string, id string, emojiURI string, ai *media.AdditionalEmojiInfo) (*media.ProcessingEmoji, error)
-
 	DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) error
 	DereferenceThread(ctx context.Context, username string, statusIRI *url.URL, status *gtsmodel.Status, statusable ap.Statusable)
+
+	GetRemoteMedia(ctx context.Context, requestingUsername string, accountID string, remoteURL string, ai *media.AdditionalMediaInfo) (*media.ProcessingMedia, error)
+	GetRemoteEmoji(ctx context.Context, requestingUsername string, remoteURL string, shortcode string, domain string, id string, emojiURI string, ai *media.AdditionalEmojiInfo, refresh bool) (*media.ProcessingEmoji, error)
 
 	Handshaking(ctx context.Context, username string, remoteAccountID *url.URL) bool
 }
@@ -58,6 +56,8 @@ type deref struct {
 	dereferencingAvatarsLock *sync.Mutex
 	dereferencingHeaders     map[string]*media.ProcessingMedia
 	dereferencingHeadersLock *sync.Mutex
+	dereferencingEmojis      map[string]*media.ProcessingEmoji
+	dereferencingEmojisLock  *sync.Mutex
 	handshakes               map[string][]*url.URL
 	handshakeSync            *sync.Mutex // mutex to lock/unlock when checking or updating the handshakes map
 }
@@ -73,6 +73,8 @@ func NewDereferencer(db db.DB, typeConverter typeutils.TypeConverter, transportC
 		dereferencingAvatarsLock: &sync.Mutex{},
 		dereferencingHeaders:     make(map[string]*media.ProcessingMedia),
 		dereferencingHeadersLock: &sync.Mutex{},
+		dereferencingEmojis:      make(map[string]*media.ProcessingEmoji),
+		dereferencingEmojisLock:  &sync.Mutex{},
 		handshakeSync:            &sync.Mutex{},
 	}
 }

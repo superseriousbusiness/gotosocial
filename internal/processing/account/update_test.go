@@ -112,6 +112,44 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithMention() {
 	suite.Equal(noteExpected, dbAccount.Note)
 }
 
+func (suite *AccountUpdateTestSuite) TestAccountUpdateWithMarkdownNote() {
+	testAccount := suite.testAccounts["local_account_1"]
+
+	note := "*hello* ~~here~~ i am!"
+	expectedNote := `<p><em>hello</em> <del>here</del> i am!</p>`
+
+	form := &apimodel.UpdateCredentialsRequest{
+		Note: &note,
+	}
+
+	// set default post language of account 1 to markdown
+	testAccount.StatusFormat = "markdown"
+
+	// should get no error from the update function, and an api model account returned
+	apiAccount, errWithCode := suite.accountProcessor.Update(context.Background(), testAccount, form)
+	// reset test account to avoid breaking other tests
+	testAccount.StatusFormat = "plain"
+	suite.NoError(errWithCode)
+	suite.NotNil(apiAccount)
+
+	// fields on the profile should be updated
+	suite.Equal(expectedNote, apiAccount.Note)
+
+	// we should have an update in the client api channel
+	msg := <-suite.fromClientAPIChan
+	suite.Equal(ap.ActivityUpdate, msg.APActivityType)
+	suite.Equal(ap.ObjectProfile, msg.APObjectType)
+	suite.NotNil(msg.OriginAccount)
+	suite.Equal(testAccount.ID, msg.OriginAccount.ID)
+	suite.Nil(msg.TargetAccount)
+
+	// fields should be updated in the database as well
+	dbAccount, err := suite.db.GetAccountByID(context.Background(), testAccount.ID)
+	suite.NoError(err)
+	suite.Equal(expectedNote, dbAccount.Note)
+
+}
+
 func TestAccountUpdateTestSuite(t *testing.T) {
 	suite.Run(t, new(AccountUpdateTestSuite))
 }

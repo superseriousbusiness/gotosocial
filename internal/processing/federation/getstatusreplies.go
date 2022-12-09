@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
 func (p *processor) GetStatusReplies(ctx context.Context, requestedUsername string, requestedStatusID string, page bool, onlyOtherAccounts bool, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
@@ -43,7 +44,7 @@ func (p *processor) GetStatusReplies(ctx context.Context, requestedUsername stri
 		return nil, errWithCode
 	}
 
-	requestingAccount, err := p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+	requestingAccount, err := p.federator.GetAccount(transport.WithFastfail(ctx), dereferencing.GetAccountParams{
 		RequestingUsername: requestedUsername,
 		RemoteAccountID:    requestingAccountURI,
 	})

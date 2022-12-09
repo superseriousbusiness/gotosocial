@@ -56,7 +56,7 @@ func (suite *FollowRequestTestSuite) TestFollowRequestAccept() {
 	suite.NoError(errWithCode)
 	suite.EqualValues(&apimodel.Relationship{ID: "01FHMQX3GAABWSM0S2VZEC2SWC", Following: false, ShowingReblogs: false, Notifying: false, FollowedBy: true, Blocking: false, BlockedBy: false, Muting: false, MutingNotifications: false, Requested: false, DomainBlocking: false, Endorsed: false, Note: ""}, relationship)
 
-	// accept should be sent to some_user
+	// accept should be sent to Some_User
 	var sent [][]byte
 	if !testrig.WaitFor(func() bool {
 		sentI, ok := suite.httpClient.SentMessages.Load(requestingAccount.InboxURI)
@@ -119,7 +119,7 @@ func (suite *FollowRequestTestSuite) TestFollowRequestReject() {
 	suite.NoError(errWithCode)
 	suite.EqualValues(&apimodel.Relationship{ID: "01FHMQX3GAABWSM0S2VZEC2SWC", Following: false, ShowingReblogs: false, Notifying: false, FollowedBy: false, Blocking: false, BlockedBy: false, Muting: false, MutingNotifications: false, Requested: false, DomainBlocking: false, Endorsed: false, Note: ""}, relationship)
 
-	// reject should be sent to some_user
+	// reject should be sent to Some_User
 	var sent [][]byte
 	if !testrig.WaitFor(func() bool {
 		sentI, ok := suite.httpClient.SentMessages.Load(requestingAccount.InboxURI)

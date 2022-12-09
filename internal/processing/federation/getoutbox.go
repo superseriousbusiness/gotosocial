@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
 func (p *processor) GetOutbox(ctx context.Context, requestedUsername string, page bool, maxID string, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
@@ -42,7 +43,7 @@ func (p *processor) GetOutbox(ctx context.Context, requestedUsername string, pag
 		return nil, errWithCode
 	}
 
-	requestingAccount, err := p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+	requestingAccount, err := p.federator.GetAccount(transport.WithFastfail(ctx), dereferencing.GetAccountParams{
 		RequestingUsername: requestedUsername,
 		RemoteAccountID:    requestingAccountURI,
 	})

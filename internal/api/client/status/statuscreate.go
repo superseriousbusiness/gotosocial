@@ -90,6 +90,15 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
+	// DO NOT COMMIT THIS UNCOMMENTED, IT WILL CAUSE MASS CHAOS.
+	// this is being left in as an ode to kim's shitposting.
+	//
+	// user := authed.Account.DisplayName
+	// if user == "" {
+	// 	user = authed.Account.Username
+	// }
+	// form.Status += "\n\nsent from " + user + "'s iphone\n"
+
 	if err := validateCreateStatus(form); err != nil {
 		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
@@ -124,8 +133,8 @@ func validateCreateStatus(form *model.AdvancedStatusCreateForm) error {
 	maxCwChars := config.GetStatusesCWMaxChars()
 
 	if form.Status != "" {
-		if len(form.Status) > maxChars {
-			return fmt.Errorf("status too long, %d characters provided but limit is %d", len(form.Status), maxChars)
+		if length := len([]rune(form.Status)); length > maxChars {
+			return fmt.Errorf("status too long, %d characters provided but limit is %d", length, maxChars)
 		}
 	}
 
@@ -141,15 +150,15 @@ func validateCreateStatus(form *model.AdvancedStatusCreateForm) error {
 			return fmt.Errorf("too many poll options provided, %d provided but limit is %d", len(form.Poll.Options), maxPollOptions)
 		}
 		for _, p := range form.Poll.Options {
-			if len(p) > maxPollChars {
-				return fmt.Errorf("poll option too long, %d characters provided but limit is %d", len(p), maxPollChars)
+			if length := len([]rune(p)); length > maxPollChars {
+				return fmt.Errorf("poll option too long, %d characters provided but limit is %d", length, maxPollChars)
 			}
 		}
 	}
 
 	if form.SpoilerText != "" {
-		if len(form.SpoilerText) > maxCwChars {
-			return fmt.Errorf("content-warning/spoilertext too long, %d characters provided but limit is %d", len(form.SpoilerText), maxCwChars)
+		if length := len([]rune(form.SpoilerText)); length > maxCwChars {
+			return fmt.Errorf("content-warning/spoilertext too long, %d characters provided but limit is %d", length, maxCwChars)
 		}
 	}
 

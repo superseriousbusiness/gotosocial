@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE file.
 
-.PHONY:	all bench clean cover cpu editor internalError later mem nuke todo edit devbench \
+.PHONY:	all bench build_all_targets clean cover cpu editor internalError later mem nuke todo edit devbench \
 	darwin_amd64 \
 	darwin_arm64 \
 	linux_386 \
@@ -23,21 +23,6 @@ all:
 	go install -v ./...
 	go test
 	go test 2>&1 -timeout 1h | tee -a $(log)
-	GOOS=darwin GOARCH=amd64 go build
-	GOOS=darwin GOARCH=arm64 go build
-	GOOS=freebsd GOARCH=386 go build
-	GOOS=freebsd GOARCH=amd64 go build
-	GOOS=linux GOARCH=386 go build
-	GOOS=linux GOARCH=amd64 go build
-	GOOS=linux GOARCH=arm go build
-	GOOS=linux GOARCH=arm64 go build
-	GOOS=linux GOARCH=s390x go build
-	GOOS=netbsd GOARCH=amd64 go build
-	GOOS=openbsd GOARCH=amd64 go build
-	GOOS=openbsd GOARCH=arm64 go build
-	GOOS=windows GOARCH=386 go build
-	GOOS=windows GOARCH=amd64 go build
-	GOOS=windows GOARCH=arm64 go build
 	# go vet -unsafeptr=false 2>&1 | grep -v $(ngrep) || true
 	# golint 2>&1 | grep -v $(ngrep) || true
 	# make todo
@@ -46,6 +31,10 @@ all:
 	grep -n 'FAIL\|PASS' $(log)
 	go version
 	date 2>&1 | tee -a $(log)
+
+build_all_targets:
+	./build_all_targets.sh
+	echo done
 
 darwin_amd64:
 	@echo "Should be executed only on darwin/amd64."
@@ -75,9 +64,19 @@ freebsd_arm:
 	go generate 2>&1 | tee log-generate
 	go build -v ./...
 
+freebsd_arm64:
+	go run addport.go freebsd_amd64 freebsd_arm64
+	go build -v ./...
+
 # only on netbsd/amd64
 netbsd_amd64:
 	@echo "Should be executed only on netbsd/amd64."
+	go generate 2>&1 | tee log-generate
+	go build -v ./...
+
+# only on netbsd/arm
+netbsd_arm:
+	@echo "Should be executed only on netbsd/arm."
 	go generate 2>&1 | tee log-generate
 	go build -v ./...
 
@@ -112,6 +111,12 @@ openbsd_amd64:
 	go generate 2>&1 | tee log-generate
 	go build -v ./...
 	#
+# only on openbsd/386
+openbsd_386:
+	@echo "Should be executed only on openbsd/386."
+	go generate 2>&1 | tee log-generate
+	go build -v ./...
+	
 # only on openbsd/arm64
 openbsd_arm64:
 	@echo "Should be executed only on openbsd/arm64."
@@ -134,10 +139,6 @@ windows_386:
 	GOOS=windows GOARCH=386 go build -v ./...
 
 all_targets: linux_amd64 linux_386 linux_arm linux_arm64 linux_s390x # windows_amd64 windows_386
-	echo done
-
-build_all_targets:
-	./build_all_targets.sh
 	echo done
 
 devbench:

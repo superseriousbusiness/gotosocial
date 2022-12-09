@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -86,7 +87,7 @@ func (m *Module) SignInPOSTHandler(c *gin.Context) {
 	form := &login{}
 	if err := c.ShouldBind(form); err != nil {
 		m.clearSession(s)
-		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, helpfulAdvice), m.processor.InstanceGet)
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGet)
 		return
 	}
 
@@ -101,7 +102,7 @@ func (m *Module) SignInPOSTHandler(c *gin.Context) {
 	s.Set(sessionUserID, userid)
 	if err := s.Save(); err != nil {
 		err := fmt.Errorf("error saving user id onto session: %s", err)
-		api.ErrorHandler(c, gtserror.NewErrorInternalError(err, helpfulAdvice), m.processor.InstanceGet)
+		api.ErrorHandler(c, gtserror.NewErrorInternalError(err, oauth.HelpfulAdvice), m.processor.InstanceGet)
 	}
 
 	c.Redirect(http.StatusFound, OauthAuthorizePath)
@@ -140,5 +141,5 @@ func (m *Module) ValidatePassword(ctx context.Context, email string, password st
 // only a generic 'safe' error message to the user, to not give any info away.
 func incorrectPassword(err error) (string, gtserror.WithCode) {
 	safeErr := fmt.Errorf("password/email combination was incorrect")
-	return "", gtserror.NewErrorUnauthorized(err, safeErr.Error(), helpfulAdvice)
+	return "", gtserror.NewErrorUnauthorized(err, safeErr.Error(), oauth.HelpfulAdvice)
 }

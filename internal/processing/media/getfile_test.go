@@ -69,7 +69,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncached() {
 	// uncache the file from local
 	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
 	testAttachment.Cached = testrig.FalseBool()
-	err := suite.db.UpdateByPrimaryKey(ctx, testAttachment, "cached")
+	err := suite.db.UpdateByID(ctx, testAttachment, testAttachment.ID, "cached")
 	suite.NoError(err)
 	err = suite.storage.Delete(ctx, testAttachment.File.Path)
 	suite.NoError(err)
@@ -91,10 +91,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncached() {
 	suite.NotNil(content)
 	b, err := io.ReadAll(content.Content)
 	suite.NoError(err)
-
-	if closer, ok := content.Content.(io.Closer); ok {
-		suite.NoError(closer.Close())
-	}
+	suite.NoError(content.Content.Close())
 
 	suite.Equal(suite.testRemoteAttachments[testAttachment.RemoteURL].Data, b)
 	suite.Equal(suite.testRemoteAttachments[testAttachment.RemoteURL].ContentType, content.ContentType)
@@ -124,7 +121,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncachedInterrupted() {
 	// uncache the file from local
 	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
 	testAttachment.Cached = testrig.FalseBool()
-	err := suite.db.UpdateByPrimaryKey(ctx, testAttachment, "cached")
+	err := suite.db.UpdateByID(ctx, testAttachment, testAttachment.ID, "cached")
 	suite.NoError(err)
 	err = suite.storage.Delete(ctx, testAttachment.File.Path)
 	suite.NoError(err)
@@ -151,9 +148,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncachedInterrupted() {
 	suite.NoError(err)
 
 	// close the reader
-	if closer, ok := content.Content.(io.Closer); ok {
-		suite.NoError(closer.Close())
-	}
+	suite.NoError(content.Content.Close())
 
 	// the attachment should still be updated in the database even though the caller hung up
 	if !testrig.WaitFor(func() bool {
@@ -179,7 +174,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileThumbnailUncached() {
 
 	// uncache the file from local
 	testAttachment.Cached = testrig.FalseBool()
-	err = suite.db.UpdateByPrimaryKey(ctx, testAttachment, "cached")
+	err = suite.db.UpdateByID(ctx, testAttachment, testAttachment.ID, "cached")
 	suite.NoError(err)
 	err = suite.storage.Delete(ctx, testAttachment.File.Path)
 	suite.NoError(err)
@@ -201,10 +196,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileThumbnailUncached() {
 	suite.NotNil(content)
 	b, err := io.ReadAll(content.Content)
 	suite.NoError(err)
-
-	if closer, ok := content.Content.(io.Closer); ok {
-		suite.NoError(closer.Close())
-	}
+	suite.NoError(content.Content.Close())
 
 	suite.Equal(thumbnailBytes, b)
 	suite.Equal("image/jpeg", content.ContentType)

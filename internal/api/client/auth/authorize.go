@@ -33,11 +33,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
-
-// helpfulAdvice is a handy hint to users;
-// particularly important during the login flow
-var helpfulAdvice = "If you arrived at this error during a login/oauth flow, please try clearing your session cookies and logging in again; if problems persist, make sure you're using the correct credentials"
 
 // AuthorizeGETHandler should be served as GET at https://example.org/oauth/authorize
 // The idea here is to present an oauth authorize page to the user, with a button
@@ -57,7 +54,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 		form := &model.OAuthAuthorize{}
 		if err := c.ShouldBind(form); err != nil {
 			m.clearSession(s)
-			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, helpfulAdvice), m.processor.InstanceGet)
+			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGet)
 			return
 		}
 
@@ -76,7 +73,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	if !ok || clientID == "" {
 		m.clearSession(s)
 		err := fmt.Errorf("key %s was not found in session", sessionClientID)
-		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, helpfulAdvice), m.processor.InstanceGet)
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGet)
 		return
 	}
 
@@ -86,9 +83,9 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 		safe := fmt.Sprintf("application for %s %s could not be retrieved", sessionClientID, clientID)
 		var errWithCode gtserror.WithCode
 		if err == db.ErrNoEntries {
-			errWithCode = gtserror.NewErrorBadRequest(err, safe, helpfulAdvice)
+			errWithCode = gtserror.NewErrorBadRequest(err, safe, oauth.HelpfulAdvice)
 		} else {
-			errWithCode = gtserror.NewErrorInternalError(err, safe, helpfulAdvice)
+			errWithCode = gtserror.NewErrorInternalError(err, safe, oauth.HelpfulAdvice)
 		}
 		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
@@ -100,9 +97,9 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 		safe := fmt.Sprintf("user with id %s could not be retrieved", userID)
 		var errWithCode gtserror.WithCode
 		if err == db.ErrNoEntries {
-			errWithCode = gtserror.NewErrorBadRequest(err, safe, helpfulAdvice)
+			errWithCode = gtserror.NewErrorBadRequest(err, safe, oauth.HelpfulAdvice)
 		} else {
-			errWithCode = gtserror.NewErrorInternalError(err, safe, helpfulAdvice)
+			errWithCode = gtserror.NewErrorInternalError(err, safe, oauth.HelpfulAdvice)
 		}
 		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
@@ -114,9 +111,9 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 		safe := fmt.Sprintf("account with id %s could not be retrieved", user.AccountID)
 		var errWithCode gtserror.WithCode
 		if err == db.ErrNoEntries {
-			errWithCode = gtserror.NewErrorBadRequest(err, safe, helpfulAdvice)
+			errWithCode = gtserror.NewErrorBadRequest(err, safe, oauth.HelpfulAdvice)
 		} else {
-			errWithCode = gtserror.NewErrorInternalError(err, safe, helpfulAdvice)
+			errWithCode = gtserror.NewErrorInternalError(err, safe, oauth.HelpfulAdvice)
 		}
 		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
@@ -131,7 +128,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	if !ok || redirect == "" {
 		m.clearSession(s)
 		err := fmt.Errorf("key %s was not found in session", sessionRedirectURI)
-		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, helpfulAdvice), m.processor.InstanceGet)
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGet)
 		return
 	}
 
@@ -139,7 +136,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	if !ok || scope == "" {
 		m.clearSession(s)
 		err := fmt.Errorf("key %s was not found in session", sessionScope)
-		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, helpfulAdvice), m.processor.InstanceGet)
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGet)
 		return
 	}
 
@@ -208,7 +205,7 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 	}
 
 	if len(errs) != 0 {
-		errs = append(errs, helpfulAdvice)
+		errs = append(errs, oauth.HelpfulAdvice)
 		api.ErrorHandler(c, gtserror.NewErrorBadRequest(errors.New("one or more missing keys on session during AuthorizePOSTHandler"), errs...), m.processor.InstanceGet)
 		return
 	}
@@ -219,9 +216,9 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 		safe := fmt.Sprintf("user with id %s could not be retrieved", userID)
 		var errWithCode gtserror.WithCode
 		if err == db.ErrNoEntries {
-			errWithCode = gtserror.NewErrorBadRequest(err, safe, helpfulAdvice)
+			errWithCode = gtserror.NewErrorBadRequest(err, safe, oauth.HelpfulAdvice)
 		} else {
-			errWithCode = gtserror.NewErrorInternalError(err, safe, helpfulAdvice)
+			errWithCode = gtserror.NewErrorInternalError(err, safe, oauth.HelpfulAdvice)
 		}
 		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
@@ -233,9 +230,9 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 		safe := fmt.Sprintf("account with id %s could not be retrieved", user.AccountID)
 		var errWithCode gtserror.WithCode
 		if err == db.ErrNoEntries {
-			errWithCode = gtserror.NewErrorBadRequest(err, safe, helpfulAdvice)
+			errWithCode = gtserror.NewErrorBadRequest(err, safe, oauth.HelpfulAdvice)
 		} else {
-			errWithCode = gtserror.NewErrorInternalError(err, safe, helpfulAdvice)
+			errWithCode = gtserror.NewErrorInternalError(err, safe, oauth.HelpfulAdvice)
 		}
 		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
@@ -245,8 +242,10 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	// we're done with the session now, so just clear it out
-	m.clearSession(s)
+	if redirectURI != oauth.OOBURI {
+		// we're done with the session now, so just clear it out
+		m.clearSession(s)
+	}
 
 	// we have to set the values on the request form
 	// so that they're picked up by the oauth server
@@ -263,8 +262,8 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 		c.Request.Form.Set("state", clientState)
 	}
 
-	if err := m.processor.OAuthHandleAuthorizeRequest(c.Writer, c.Request); err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error(), helpfulAdvice), m.processor.InstanceGet)
+	if errWithCode := m.processor.OAuthHandleAuthorizeRequest(c.Writer, c.Request); errWithCode != nil {
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 	}
 }
 
@@ -273,22 +272,22 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 func saveAuthFormToSession(s sessions.Session, form *model.OAuthAuthorize) gtserror.WithCode {
 	if form == nil {
 		err := errors.New("OAuthAuthorize form was nil")
-		return gtserror.NewErrorBadRequest(err, err.Error(), helpfulAdvice)
+		return gtserror.NewErrorBadRequest(err, err.Error(), oauth.HelpfulAdvice)
 	}
 
 	if form.ResponseType == "" {
 		err := errors.New("field response_type was not set on OAuthAuthorize form")
-		return gtserror.NewErrorBadRequest(err, err.Error(), helpfulAdvice)
+		return gtserror.NewErrorBadRequest(err, err.Error(), oauth.HelpfulAdvice)
 	}
 
 	if form.ClientID == "" {
 		err := errors.New("field client_id was not set on OAuthAuthorize form")
-		return gtserror.NewErrorBadRequest(err, err.Error(), helpfulAdvice)
+		return gtserror.NewErrorBadRequest(err, err.Error(), oauth.HelpfulAdvice)
 	}
 
 	if form.RedirectURI == "" {
 		err := errors.New("field redirect_uri was not set on OAuthAuthorize form")
-		return gtserror.NewErrorBadRequest(err, err.Error(), helpfulAdvice)
+		return gtserror.NewErrorBadRequest(err, err.Error(), oauth.HelpfulAdvice)
 	}
 
 	// set default scope to read
@@ -307,7 +306,7 @@ func saveAuthFormToSession(s sessions.Session, form *model.OAuthAuthorize) gtser
 
 	if err := s.Save(); err != nil {
 		err := fmt.Errorf("error saving form values onto session: %s", err)
-		return gtserror.NewErrorInternalError(err, helpfulAdvice)
+		return gtserror.NewErrorInternalError(err, oauth.HelpfulAdvice)
 	}
 
 	return nil

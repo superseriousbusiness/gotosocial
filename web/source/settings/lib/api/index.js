@@ -24,14 +24,12 @@ const d = require("dotty");
 
 const { APIError, AuthenticationError } = require("../errors");
 const { setInstanceInfo, setNamedInstanceInfo } = require("../../redux/reducers/instances").actions;
-const oauth = require("../../redux/reducers/oauth").actions;
 
 function apiCall(method, route, payload, type = "json") {
 	return function (dispatch, getState) {
 		const state = getState();
 		let base = state.oauth.instance;
 		let auth = state.oauth.token;
-		console.log(method, base, route, "auth:", auth != undefined);
 
 		return Promise.try(() => {
 			let url = new URL(base);
@@ -51,21 +49,7 @@ function apiCall(method, route, payload, type = "json") {
 					headers["Content-Type"] = "application/json";
 					body = JSON.stringify(payload);
 				} else if (type == "form") {
-					const formData = new FormData();
-					Object.entries(payload).forEach(([key, val]) => {
-						if (isPlainObject(val)) {
-							Object.entries(val).forEach(([key2, val2]) => {
-								if (val2 != undefined) {
-									formData.set(`${key}[${key2}]`, val2);
-								}
-							});
-						} else {
-							if (val != undefined) {
-								formData.set(key, val);
-							}
-						}
-					});
-					body = formData;
+					body = convertToForm(payload);
 				}
 			}
 
@@ -100,6 +84,28 @@ function apiCall(method, route, payload, type = "json") {
 	};
 }
 
+/*
+	Takes an object with (nested) keys, and transforms it into
+	a FormData object to be sent over the API
+*/
+function convertToForm(payload) {
+	const formData = new FormData();
+	Object.entries(payload).forEach(([key, val]) => {
+		if (isPlainObject(val)) {
+			Object.entries(val).forEach(([key2, val2]) => {
+				if (val2 != undefined) {
+					formData.set(`${key}[${key2}]`, val2);
+				}
+			});
+		} else {
+			if (val != undefined) {
+				formData.set(key, val);
+			}
+		}
+	});
+	return formData;
+}
+
 function getChanges(state, keys) {
 	const { formKeys = [], fileKeys = [], renamedKeys = {} } = keys;
 	const update = {};
@@ -129,7 +135,8 @@ function getChanges(state, keys) {
 }
 
 function getCurrentUrl() {
-	return `${window.location.origin}${window.location.pathname}`;
+	let [pre, _past] = window.location.pathname.split("/settings");
+	return `${window.location.origin}${pre}/settings`;
 }
 
 function fetchInstanceWithoutStore(domain) {
@@ -181,5 +188,6 @@ module.exports = {
 	user: require("./user")(submoduleArgs),
 	admin: require("./admin")(submoduleArgs),
 	apiCall,
+	convertToForm,
 	getChanges
 };

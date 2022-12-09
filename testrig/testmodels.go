@@ -304,6 +304,46 @@ func NewTestUsers() map[string]*gtsmodel.User {
 // NewTestAccounts returns a map of accounts keyed by what type of account they are.
 func NewTestAccounts() map[string]*gtsmodel.Account {
 	accounts := map[string]*gtsmodel.Account{
+		"instance_account": {
+			ID:                      "01AY6P665V14JJR0AFVRT7311Y",
+			Username:                "localhost:8080",
+			AvatarMediaAttachmentID: "",
+			HeaderMediaAttachmentID: "",
+			DisplayName:             "",
+			Fields:                  []gtsmodel.Field{},
+			Note:                    "",
+			NoteRaw:                 "",
+			Memorial:                FalseBool(),
+			MovedToAccountID:        "",
+			CreatedAt:               TimeMustParse("2020-05-17T13:10:59Z"),
+			UpdatedAt:               TimeMustParse("2020-05-17T13:10:59Z"),
+			Bot:                     FalseBool(),
+			Reason:                  "",
+			Locked:                  FalseBool(),
+			Discoverable:            TrueBool(),
+			Privacy:                 gtsmodel.VisibilityPublic,
+			Sensitive:               FalseBool(),
+			Language:                "en",
+			URI:                     "http://localhost:8080/users/localhost:8080",
+			URL:                     "http://localhost:8080/@localhost:8080",
+			PublicKeyURI:            "http://localhost:8080/users/localhost:8080#main-key",
+			LastWebfingeredAt:       time.Time{},
+			InboxURI:                "http://localhost:8080/users/localhost:8080/inbox",
+			OutboxURI:               "http://localhost:8080/users/localhost:8080/outbox",
+			FollowersURI:            "http://localhost:8080/users/localhost:8080/followers",
+			FollowingURI:            "http://localhost:8080/users/localhost:8080/following",
+			FeaturedCollectionURI:   "http://localhost:8080/users/localhost:8080/collections/featured",
+			ActorType:               ap.ActorPerson,
+			AlsoKnownAs:             "",
+			PrivateKey:              &rsa.PrivateKey{},
+			PublicKey:               &rsa.PublicKey{},
+			SensitizedAt:            time.Time{},
+			SilencedAt:              time.Time{},
+			SuspendedAt:             time.Time{},
+			HideCollections:         FalseBool(),
+			SuspensionOrigin:        "",
+			EnableRSS:               FalseBool(),
+		},
 		"unconfirmed_account": {
 			ID:                      "01F8MH0BBE4FHXPH513MBVFHB0",
 			Username:                "weed_lord420",
@@ -380,6 +420,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			SuspendedAt:             time.Time{},
 			HideCollections:         FalseBool(),
 			SuspensionOrigin:        "",
+			EnableRSS:               TrueBool(),
 		},
 		"local_account_1": {
 			ID:                      "01F8MH1H7YV1Z7D2C8K2730QBF",
@@ -419,6 +460,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			SuspendedAt:             time.Time{},
 			HideCollections:         FalseBool(),
 			SuspensionOrigin:        "",
+			EnableRSS:               TrueBool(),
 		},
 		"local_account_2": {
 			ID:                      "01F8MH5NBDF2MV7CTC4Q5128HF",
@@ -497,7 +539,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 		},
 		"remote_account_2": {
 			ID:                    "01FHMQX3GAABWSM0S2VZEC2SWC",
-			Username:              "some_user",
+			Username:              "Some_User",
 			Domain:                "example.org",
 			DisplayName:           "some user",
 			Fields:                []gtsmodel.Field{},
@@ -511,20 +553,20 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			Discoverable:          TrueBool(),
 			Sensitive:             FalseBool(),
 			Language:              "en",
-			URI:                   "http://example.org/users/some_user",
-			URL:                   "http://example.org/@some_user",
+			URI:                   "http://example.org/users/Some_User",
+			URL:                   "http://example.org/@Some_User",
 			LastWebfingeredAt:     time.Time{},
-			InboxURI:              "http://example.org/users/some_user/inbox",
+			InboxURI:              "http://example.org/users/Some_User/inbox",
 			SharedInboxURI:        StringPtr(""),
-			OutboxURI:             "http://example.org/users/some_user/outbox",
-			FollowersURI:          "http://example.org/users/some_user/followers",
-			FollowingURI:          "http://example.org/users/some_user/following",
-			FeaturedCollectionURI: "http://example.org/users/some_user/collections/featured",
+			OutboxURI:             "http://example.org/users/Some_User/outbox",
+			FollowersURI:          "http://example.org/users/Some_User/followers",
+			FollowingURI:          "http://example.org/users/Some_User/following",
+			FeaturedCollectionURI: "http://example.org/users/Some_User/collections/featured",
 			ActorType:             ap.ActorPerson,
 			AlsoKnownAs:           "",
 			PrivateKey:            &rsa.PrivateKey{},
 			PublicKey:             &rsa.PublicKey{},
-			PublicKeyURI:          "http://example.org/users/some_user#main-key",
+			PublicKeyURI:          "http://example.org/users/Some_User#main-key",
 			SensitizedAt:          time.Time{},
 			SilencedAt:            time.Time{},
 			SuspendedAt:           time.Time{},
@@ -549,6 +591,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 		"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",
+		"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",
 	}
 
 	if diff := len(accountsSorted) - len(preserializedKeys); diff > 0 {
@@ -579,6 +622,18 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 	}
 
 	return accounts
+}
+
+func NewTestTombstones() map[string]*gtsmodel.Tombstone {
+	return map[string]*gtsmodel.Tombstone{
+		"https://somewhere.mysterious/users/rest_in_piss#main-key": {
+			ID:        "01GHBTVE9HQPPBDH2W5VH2DGN4",
+			CreatedAt: TimeMustParse("2021-11-09T19:33:45Z"),
+			UpdatedAt: TimeMustParse("2021-11-09T19:33:45Z"),
+			Domain:    "somewhere.mysterious",
+			URI:       "https://somewhere.mysterious/users/rest_in_piss#main-key",
+		},
+	}
 }
 
 // NewTestAttachments returns a map of attachments keyed according to which account
@@ -938,10 +993,10 @@ func NewTestEmojis() map[string]*gtsmodel.Emoji {
 			UpdatedAt:              TimeMustParse("2021-09-20T12:40:37+02:00"),
 			ImageRemoteURL:         "",
 			ImageStaticRemoteURL:   "",
-			ImageURL:               "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
-			ImagePath:              "/tmp/gotosocial/01F8MH17FWEB39HZJ76B6VXSKF/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
-			ImageStaticURL:         "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
-			ImageStaticPath:        "/tmp/gotosocial/01F8MH17FWEB39HZJ76B6VXSKF/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+			ImageURL:               "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+			ImagePath:              "/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+			ImageStaticURL:         "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+			ImageStaticPath:        "01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
 			ImageContentType:       "image/png",
 			ImageStaticContentType: "image/png",
 			ImageFileSize:          36702,
@@ -950,7 +1005,7 @@ func NewTestEmojis() map[string]*gtsmodel.Emoji {
 			Disabled:               FalseBool(),
 			URI:                    "http://localhost:8080/emoji/01F8MH9H8E4VG3KDYJR9EGPXCQ",
 			VisibleInPicker:        TrueBool(),
-			CategoryID:             "",
+			CategoryID:             "01GGQ8V4993XK67B2JB396YFB7",
 		},
 		"yell": {
 			ID:                     "01GD5KP5CQEE1R3X43Y1EHS2CW",
@@ -960,10 +1015,10 @@ func NewTestEmojis() map[string]*gtsmodel.Emoji {
 			UpdatedAt:              TimeMustParse("2020-03-18T13:12:00+01:00"),
 			ImageRemoteURL:         "http://fossbros-anonymous.io/emoji/yell.gif",
 			ImageStaticRemoteURL:   "",
-			ImageURL:               "http://localhost:8080/fileserver/01GD5KR15NHTY8FZ01CD4D08XP/emoji/original/01GD5KP5CQEE1R3X43Y1EHS2CW.png",
-			ImagePath:              "/tmp/gotosocial/01GD5KR15NHTY8FZ01CD4D08XP/emoji/original/01GD5KP5CQEE1R3X43Y1EHS2CW.png",
-			ImageStaticURL:         "http://localhost:8080/fileserver/01GD5KR15NHTY8FZ01CD4D08XP/emoji/static/01GD5KP5CQEE1R3X43Y1EHS2CW.png",
-			ImageStaticPath:        "/tmp/gotosocial/01GD5KR15NHTY8FZ01CD4D08XP/emoji/static/01GD5KP5CQEE1R3X43Y1EHS2CW.png",
+			ImageURL:               "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01GD5KP5CQEE1R3X43Y1EHS2CW.png",
+			ImagePath:              "01AY6P665V14JJR0AFVRT7311Y/emoji/original/01GD5KP5CQEE1R3X43Y1EHS2CW.png",
+			ImageStaticURL:         "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01GD5KP5CQEE1R3X43Y1EHS2CW.png",
+			ImageStaticPath:        "01AY6P665V14JJR0AFVRT7311Y/emoji/static/01GD5KP5CQEE1R3X43Y1EHS2CW.png",
 			ImageContentType:       "image/png",
 			ImageStaticContentType: "image/png",
 			ImageFileSize:          10889,
@@ -973,6 +1028,32 @@ func NewTestEmojis() map[string]*gtsmodel.Emoji {
 			URI:                    "http://fossbros-anonymous.io/emoji/01GD5KP5CQEE1R3X43Y1EHS2CW",
 			VisibleInPicker:        FalseBool(),
 			CategoryID:             "",
+		},
+	}
+}
+
+func NewTestEmojiCategories() map[string]*gtsmodel.EmojiCategory {
+	return map[string]*gtsmodel.EmojiCategory{
+		"reactions": {
+			ID:        "01GGQ8V4993XK67B2JB396YFB7",
+			Name:      "reactions",
+			CreatedAt: TimeMustParse("2020-03-18T11:40:55+02:00"),
+			UpdatedAt: TimeMustParse("2020-03-19T12:35:12+02:00"),
+		},
+		"cute stuff": {
+			ID:        "01GGQ989PTT9PMRN4FZ1WWK2B9",
+			Name:      "cute stuff",
+			CreatedAt: TimeMustParse("2020-03-20T11:40:55+02:00"),
+			UpdatedAt: TimeMustParse("2020-03-21T12:35:12+02:00"),
+		},
+	}
+}
+
+func NewTestStatusToEmojis() map[string]*gtsmodel.StatusToEmoji {
+	return map[string]*gtsmodel.StatusToEmoji{
+		"admin_account_status_1_rainbow": {
+			StatusID: "01F8MH75CBF9JFX4ZAD54N0W0R",
+			EmojiID:  "01F8MH9H8E4VG3KDYJR9EGPXCQ",
 		},
 	}
 }
@@ -1083,6 +1164,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			URI:                      "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
 			URL:                      "http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
 			Content:                  "hello world! #welcome ! first post on the instance :rainbow: !",
+			Text:                     "hello world! #welcome ! first post on the instance :rainbow: !",
 			AttachmentIDs:            []string{"01F8MH6NEM8D7527KZAECTCR76"},
 			TagIDs:                   []string{"01F8MHA1A2NF9MJ3WCCQ3K8BSZ"},
 			MentionIDs:               []string{},
@@ -1111,6 +1193,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			URI:                      "http://localhost:8080/users/admin/statuses/01F8MHAAY43M6RJ473VQFCVH37",
 			URL:                      "http://localhost:8080/@admin/statuses/01F8MHAAY43M6RJ473VQFCVH37",
 			Content:                  "🐕🐕🐕🐕🐕",
+			Text:                     "🐕🐕🐕🐕🐕",
 			CreatedAt:                TimeMustParse("2021-10-20T12:36:45Z"),
 			UpdatedAt:                TimeMustParse("2021-10-20T12:36:45Z"),
 			Local:                    TrueBool(),
@@ -1135,6 +1218,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			URI:                      "http://localhost:8080/users/admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0",
 			URL:                      "http://localhost:8080/@admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0",
 			Content:                  "hi @the_mighty_zork welcome to the instance!",
+			Text:                     "hi @the_mighty_zork welcome to the instance!",
 			CreatedAt:                TimeMustParse("2021-11-20T13:32:16Z"),
 			UpdatedAt:                TimeMustParse("2021-11-20T13:32:16Z"),
 			Local:                    TrueBool(),
@@ -1161,6 +1245,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			URI:                      "http://localhost:8080/users/admin/statuses/01G36SF3V6Y6V5BF9P4R7PQG7G",
 			URL:                      "http://localhost:8080/@admin/statuses/01G36SF3V6Y6V5BF9P4R7PQG7G",
 			Content:                  "hello everyone!",
+			Text:                     "hello everyone!",
 			CreatedAt:                TimeMustParse("2021-10-20T12:41:37+02:00"),
 			UpdatedAt:                TimeMustParse("2021-10-20T12:41:37+02:00"),
 			Local:                    TrueBool(),
@@ -1188,6 +1273,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			URI:                      "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
 			URL:                      "http://localhost:8080/@the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
 			Content:                  "hello everyone!",
+			Text:                     "hello everyone!",
 			CreatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
 			UpdatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
 			Local:                    TrueBool(),
@@ -1212,6 +1298,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			URI:                      "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAYFKS4KMXF8K5Y1C0KRN",
 			URL:                      "http://localhost:8080/@the_mighty_zork/statuses/01F8MHAYFKS4KMXF8K5Y1C0KRN",
 			Content:                  "this is an unlocked local-only post that shouldn't federate, but it's still boostable, replyable, and likeable",
+			Text:                     "this is an unlocked local-only post that shouldn't federate, but it's still boostable, replyable, and likeable",
 			CreatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
 			UpdatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
 			Local:                    TrueBool(),
@@ -1236,6 +1323,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			URI:                      "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHBBN8120SYH7D5S050MGK",
 			URL:                      "http://localhost:8080/@the_mighty_zork/statuses/01F8MHBBN8120SYH7D5S050MGK",
 			Content:                  "this is a very personal post that I don't want anyone to interact with at all, and i only want mutuals to see it",
+			Text:                     "this is a very personal post that I don't want anyone to interact with at all, and i only want mutuals to see it",
 			CreatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
 			UpdatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
 			Local:                    TrueBool(),
@@ -1260,6 +1348,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			URI:                      "http://localhost:8080/users/the_mighty_zork/statuses/01F8MH82FYRXD2RC6108DAJ5HB",
 			URL:                      "http://localhost:8080/@the_mighty_zork/statuses/01F8MH82FYRXD2RC6108DAJ5HB",
 			Content:                  "here's a little gif of trent",
+			Text:                     "here's a little gif of trent",
 			AttachmentIDs:            []string{"01F8MH7TDVANYKWVE8VVKFPJTJ"},
 			CreatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
 			UpdatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
@@ -1285,6 +1374,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			URI:                      "http://localhost:8080/users/the_mighty_zork/statuses/01FCTA44PW9H1TB328S9AQXKDS",
 			URL:                      "http://localhost:8080/@the_mighty_zork/statuses/01FCTA44PW9H1TB328S9AQXKDS",
 			Content:                  "hi!",
+			Text:                     "hi!",
 			AttachmentIDs:            []string{},
 			CreatedAt:                TimeMustParse("2022-05-20T11:37:55Z"),
 			UpdatedAt:                TimeMustParse("2022-05-20T11:37:55Z"),
@@ -1310,6 +1400,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			URI:                      "http://localhost:8080/users/1happyturtle/statuses/01F8MHBQCBTDKN6X5VHGMMN4MA",
 			URL:                      "http://localhost:8080/@1happyturtle/statuses/01F8MHBQCBTDKN6X5VHGMMN4MA",
 			Content:                  "🐢 hi everyone i post about turtles 🐢",
+			Text:                     "🐢 hi everyone i post about turtles 🐢",
 			CreatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
 			UpdatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
 			Local:                    TrueBool(),
@@ -1334,6 +1425,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			URI:                      "http://localhost:8080/users/1happyturtle/statuses/01F8MHC0H0A7XHTVH5F596ZKBM",
 			URL:                      "http://localhost:8080/@1happyturtle/statuses/01F8MHC0H0A7XHTVH5F596ZKBM",
 			Content:                  "🐢 this one is federated, likeable, and boostable but not replyable 🐢",
+			Text:                     "🐢 this one is federated, likeable, and boostable but not replyable 🐢",
 			CreatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
 			UpdatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
 			Local:                    TrueBool(),
@@ -1358,6 +1450,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			URI:                      "http://localhost:8080/users/1happyturtle/statuses/01F8MHC8VWDRBQR0N1BATDDEM5",
 			URL:                      "http://localhost:8080/@1happyturtle/statuses/01F8MHC8VWDRBQR0N1BATDDEM5",
 			Content:                  "🐢 i don't mind people sharing this one but I don't want likes or replies to it because cba🐢",
+			Text:                     "🐢 i don't mind people sharing this one but I don't want likes or replies to it because cba🐢",
 			CreatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
 			UpdatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
 			Local:                    TrueBool(),
@@ -1382,6 +1475,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			URI:                      "http://localhost:8080/users/1happyturtle/statuses/01F8MHCP5P2NWYQ416SBA0XSEV",
 			URL:                      "http://localhost:8080/@1happyturtle/statuses/01F8MHCP5P2NWYQ416SBA0XSEV",
 			Content:                  "🐢 this is a public status but I want it local only and not boostable 🐢",
+			Text:                     "🐢 this is a public status but I want it local only and not boostable 🐢",
 			CreatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
 			UpdatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
 			Local:                    TrueBool(),
@@ -1407,6 +1501,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			URI:                      "http://localhost:8080/users/1happyturtle/statuses/01FCQSQ667XHJ9AV9T27SJJSX5",
 			URL:                      "http://localhost:8080/@1happyturtle/statuses/01FCQSQ667XHJ9AV9T27SJJSX5",
 			Content:                  "🐢 @the_mighty_zork hi zork! 🐢",
+			Text:                     "🐢 @the_mighty_zork hi zork! 🐢",
 			CreatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
 			UpdatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
 			Local:                    TrueBool(),
@@ -1434,6 +1529,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			URI:                      "http://localhost:8080/users/1happyturtle/statuses/01FN3VJGFH10KR7S2PB0GFJZYG",
 			URL:                      "http://localhost:8080/@1happyturtle/statuses/01FN3VJGFH10KR7S2PB0GFJZYG",
 			Content:                  "🐢 @the_mighty_zork hi zork, this is a direct message, shhhhhh! 🐢",
+			Text:                     "🐢 @the_mighty_zork hi zork, this is a direct message, shhhhhh! 🐢",
 			CreatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
 			UpdatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
 			Local:                    TrueBool(),
@@ -1461,6 +1557,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			URI:                      "http://localhost:8080/users/1happyturtle/statuses/01G20ZM733MGN8J344T4ZDDFY1",
 			URL:                      "http://localhost:8080/@1happyturtle/statuses/01G20ZM733MGN8J344T4ZDDFY1",
 			Content:                  "🐢 hi followers! did u know i'm a turtle? 🐢",
+			Text:                     "🐢 hi followers! did u know i'm a turtle? 🐢",
 			AttachmentIDs:            []string{},
 			CreatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
 			UpdatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
@@ -1536,6 +1633,15 @@ func NewTestTags() map[string]*gtsmodel.Tag {
 			Useable:                TrueBool(),
 			Listable:               TrueBool(),
 			LastStatusAt:           TimeMustParse("2022-05-14T13:21:09+02:00"),
+		},
+	}
+}
+
+func NewTestStatusToTags() map[string]*gtsmodel.StatusToTag {
+	return map[string]*gtsmodel.StatusToTag{
+		"admin_account_status_1_welcome": {
+			StatusID: "01F8MH75CBF9JFX4ZAD54N0W0R",
+			TagID:    "01F8MHA1A2NF9MJ3WCCQ3K8BSZ",
 		},
 	}
 }
@@ -1747,27 +1853,27 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 	createReplyToTurtleForTurtleSig, createReplyToTurtleForTurtleDigest, createReplyToTurtleForTurtleDate := GetSignatureForActivity(createReplyToTurtle, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_2"].InboxURI))
 
 	forwardedMessage := NewAPNote(
-		URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1"),
-		URLMustParse("http://example.org/@some_user/afaba698-5740-4e32-a702-af61aa543bc1"),
+		URLMustParse("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1"),
+		URLMustParse("http://example.org/@Some_User/afaba698-5740-4e32-a702-af61aa543bc1"),
 		TimeMustParse("2022-07-13T12:13:12+02:00"),
 		"this is a public status, please forward it!",
 		"",
-		URLMustParse("http://example.org/users/some_user"),
+		URLMustParse("http://example.org/users/Some_User"),
 		[]*url.URL{URLMustParse(pub.PublicActivityPubIRI)},
 		nil,
 		false,
 		[]vocab.ActivityStreamsMention{},
 		[]vocab.ActivityStreamsImage{
 			newAPImage(
-				URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1/attachment1.jpeg"),
+				URLMustParse("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1/attachment1.jpeg"),
 				"image/jpeg",
 				"trent reznor looking handsome as balls",
 				"LEDara58O=t5EMSOENEN9]}?aK%0"),
 		},
 	)
 	createForwardedMessage := WrapAPNoteInCreate(
-		URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1/activity"),
-		URLMustParse("http://example.org/users/some_user"),
+		URLMustParse("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1/activity"),
+		URLMustParse("http://example.org/users/Some_User"),
 		TimeMustParse("2022-07-13T12:13:12+02:00"),
 		forwardedMessage)
 	createForwardedMessageSig, createForwardedMessageDigest, createForwardedMessageDate := GetSignatureForActivity(createForwardedMessage, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
@@ -1798,6 +1904,16 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 		forwardedMessage,
 	)
 	announceForwarded2ZorkSig, announceForwarded2ZorkDigest, announceForwarded2ZorkDate := GetSignatureForActivity(announceForwarded2Zork, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
+
+	deleteForRemoteAccount3 := newAPDelete(
+		URLMustParse("https://somewhere.mysterious/users/rest_in_piss"),
+		URLMustParse("https://somewhere.mysterious/users/rest_in_piss"),
+		TimeMustParse("2022-07-13T12:13:12+02:00"),
+		URLMustParse(accounts["local_account_1"].URI),
+	)
+	// it doesn't really matter what key we use to sign this, since we're not going to be able to verify if anyway
+	keyToSignDelete := accounts["remote_account_1"].PrivateKey
+	deleteForRemoteAccount3Sig, deleteForRemoteAccount3Digest, deleteForRemoteAccount3Date := GetSignatureForActivity(deleteForRemoteAccount3, "https://somewhere.mysterious/users/rest_in_piss#main-key", keyToSignDelete, URLMustParse(accounts["local_account_1"].InboxURI))
 
 	return map[string]ActivityWithSignature{
 		"dm_for_zork": {
@@ -1841,6 +1957,12 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 			SignatureHeader: announceForwarded2ZorkSig,
 			DigestHeader:    announceForwarded2ZorkDigest,
 			DateHeader:      announceForwarded2ZorkDate,
+		},
+		"delete_https://somewhere.mysterious/users/rest_in_piss#main-key": {
+			Activity:        deleteForRemoteAccount3,
+			SignatureHeader: deleteForRemoteAccount3Sig,
+			DigestHeader:    deleteForRemoteAccount3Digest,
+			DateHeader:      deleteForRemoteAccount3Date,
 		},
 	}
 }
@@ -2050,20 +2172,20 @@ func NewTestFediAttachments(relativePath string) map[string]RemoteAttachmentFile
 
 func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 	return map[string]vocab.ActivityStreamsNote{
-		"http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1": NewAPNote(
-			URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1"),
-			URLMustParse("http://example.org/@some_user/afaba698-5740-4e32-a702-af61aa543bc1"),
+		"http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1": NewAPNote(
+			URLMustParse("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1"),
+			URLMustParse("http://example.org/@Some_User/afaba698-5740-4e32-a702-af61aa543bc1"),
 			TimeMustParse("2022-07-13T12:13:12+02:00"),
 			"this is a public status, please forward it!",
 			"",
-			URLMustParse("http://example.org/users/some_user"),
+			URLMustParse("http://example.org/users/Some_User"),
 			[]*url.URL{URLMustParse(pub.PublicActivityPubIRI)},
 			nil,
 			false,
 			[]vocab.ActivityStreamsMention{},
 			[]vocab.ActivityStreamsImage{
 				newAPImage(
-					URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1/attachment1.jpeg"),
+					URLMustParse("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1/attachment1.jpeg"),
 					"image/jpeg",
 					"trent reznor looking handsome as balls",
 					"LEDara58O=t5EMSOENEN9]}?aK%0"),
@@ -2126,6 +2248,26 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 				),
 			},
 		),
+	}
+}
+
+// NewTestBookmarks returns a map of gts model bookmarks, keyed in the format [bookmarking_account]_[target_status]
+func NewTestBookmarks() map[string]*gtsmodel.StatusBookmark {
+	return map[string]*gtsmodel.StatusBookmark{
+		"local_account_1_admin_account_status_1": {
+			ID:              "01F8MHD2QCZSZ6WQS2ATVPEYJ9",
+			CreatedAt:       TimeMustParse("2022-05-14T13:21:09+02:00"),
+			AccountID:       "01F8MH1H7YV1Z7D2C8K2730QBF", // local account 1
+			TargetAccountID: "01F8MH17FWEB39HZJ76B6VXSKF", // admin account
+			StatusID:        "01F8MH75CBF9JFX4ZAD54N0W0R", // admin account status 1
+		},
+		"admin_account_local_account_1_status_1": {
+			ID:              "01F8Q0486ANTDWKG02A7DS1Q24",
+			CreatedAt:       TimeMustParse("2022-05-14T13:21:09+02:00"),
+			AccountID:       "01F8MH17FWEB39HZJ76B6VXSKF", // admin account
+			TargetAccountID: "01F8MH1H7YV1Z7D2C8K2730QBF", // local account 1
+			StatusID:        "01F8MHAMCHF6Y650WCRSCP4WMY", // local account status 1
+		},
 	}
 }
 
@@ -3114,4 +3256,26 @@ func newAPAnnounce(announceID *url.URL, announceActor *url.URL, announcePublishe
 	}
 
 	return announce
+}
+
+func newAPDelete(deleteTarget *url.URL, deleteActor *url.URL, deletePublished time.Time, deleteTo *url.URL) vocab.ActivityStreamsDelete {
+	delete := streams.NewActivityStreamsDelete()
+
+	objectProp := streams.NewActivityStreamsObjectProperty()
+	objectProp.AppendIRI(deleteTarget)
+	delete.SetActivityStreamsObject(objectProp)
+
+	to := streams.NewActivityStreamsToProperty()
+	to.AppendIRI(deleteTo)
+	delete.SetActivityStreamsTo(to)
+
+	actor := streams.NewActivityStreamsActorProperty()
+	actor.AppendIRI(deleteActor)
+	delete.SetActivityStreamsActor(actor)
+
+	published := streams.NewActivityStreamsPublishedProperty()
+	published.Set(deletePublished)
+	delete.SetActivityStreamsPublished(published)
+
+	return delete
 }

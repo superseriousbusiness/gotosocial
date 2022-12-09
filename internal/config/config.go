@@ -47,6 +47,7 @@ type Configuration struct {
 	LogLevel        string   `name:"log-level" usage:"Log level to run at: [trace, debug, info, warn, fatal]"`
 	LogDbQueries    bool     `name:"log-db-queries" usage:"Log database queries verbosely when log-level is trace or debug"`
 	ApplicationName string   `name:"application-name" usage:"Name of the application, used in various places internally"`
+	LandingPageUser string   `name:"landing-page-user" usage:"the user that should be shown on the instance's landing page"`
 	ConfigPath      string   `name:"config-path" usage:"Path to a file containing gotosocial configuration. Values set in this file will be overwritten by values set as env vars or arguments"`
 	Host            string   `name:"host" usage:"Hostname to use for the server (eg., example.org, gotosocial.whatever.com). DO NOT change this on a server that's already run!"`
 	AccountDomain   string   `name:"account-domain" usage:"Domain to use in account names (eg., example.org, whatever.com). If not set, will default to the setting for host. DO NOT change this on a server that's already run!"`
@@ -70,6 +71,7 @@ type Configuration struct {
 
 	InstanceExposePeers            bool `name:"instance-expose-peers" usage:"Allow unauthenticated users to query /api/v1/instance/peers?filter=open"`
 	InstanceExposeSuspended        bool `name:"instance-expose-suspended" usage:"Expose suspended instances via web UI, and allow unauthenticated users to query /api/v1/instance/peers?filter=suspended"`
+	InstanceExposePublicTimeline   bool `name:"instance-expose-public-timeline" usage:"Allow unauthenticated users to query /api/v1/timelines/public"`
 	InstanceDeliverToSharedInboxes bool `name:"instance-deliver-to-shared-inboxes" usage:"Deliver federated messages to shared inboxes, if they're available."`
 
 	AccountsRegistrationOpen bool `name:"accounts-registration-open" usage:"Allow anyone to submit an account signup request. If false, server will be invite-only."`
@@ -92,6 +94,7 @@ type Configuration struct {
 	StorageS3SecretKey   string `name:"storage-s3-secret-key" usage:"S3 Secret Key"`
 	StorageS3UseSSL      bool   `name:"storage-s3-use-ssl" usage:"Use SSL for S3 connections. Only set this to 'false' when testing locally"`
 	StorageS3BucketName  string `name:"storage-s3-bucket" usage:"Place blobs in this bucket"`
+	StorageS3Proxy       bool   `name:"storage-s3-proxy" usage:"Proxy S3 contents through GoToSocial instead of redirecting to a presigned URL"`
 
 	StatusesMaxChars           int `name:"statuses-max-chars" usage:"Max permitted characters for posted statuses"`
 	StatusesCWMaxChars         int `name:"statuses-cw-max-chars" usage:"Max permitted characters for content/spoiler warnings on statuses"`
@@ -111,6 +114,7 @@ type Configuration struct {
 	OIDCClientID         string   `name:"oidc-client-id" usage:"ClientID of GoToSocial, as registered with the OIDC provider."`
 	OIDCClientSecret     string   `name:"oidc-client-secret" usage:"ClientSecret of GoToSocial, as registered with the OIDC provider."`
 	OIDCScopes           []string `name:"oidc-scopes" usage:"OIDC scopes."`
+	OIDCLinkExisting     bool     `name:"oidc-link-existing" usage:"link existing user accounts to OIDC logins based on the stored email value"`
 
 	SMTPHost     string `name:"smtp-host" usage:"Host of the smtp server. Eg., 'smtp.eu.mailgun.org'"`
 	SMTPPort     int    `name:"smtp-port" usage:"Port of the smtp server. Eg., 587"`
@@ -122,13 +126,15 @@ type Configuration struct {
 	SyslogProtocol string `name:"syslog-protocol" usage:"Protocol to use when directing logs to syslog. Leave empty to connect to local syslog."`
 	SyslogAddress  string `name:"syslog-address" usage:"Address:port to send syslog logs to. Leave empty to connect to local syslog."`
 
-	// TODO: move these elsewhere, these are more ephemeral vs long-running flags like above
-	AdminAccountUsername string `name:"username" usage:"the username to create/delete/etc"`
-	AdminAccountEmail    string `name:"email" usage:"the email address of this account"`
-	AdminAccountPassword string `name:"password" usage:"the password to set for this account"`
-	AdminTransPath       string `name:"path" usage:"the path of the file to import from/export to"`
+	AdvancedCookiesSamesite   string `name:"advanced-cookies-samesite" usage:"'strict' or 'lax', see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite"`
+	AdvancedRateLimitRequests int    `name:"advanced-rate-limit-requests" usage:"Amount of HTTP requests to permit within a 5 minute window. 0 or less turns rate limiting off."`
 
-	AdvancedCookiesSamesite string `name:"advanced-cookies-samesite" usage:"'strict' or 'lax', see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite"`
+	// TODO: move these elsewhere, these are more ephemeral vs long-running flags like above
+	AdminAccountUsername  string `name:"username" usage:"the username to create/delete/etc"`
+	AdminAccountEmail     string `name:"email" usage:"the email address of this account"`
+	AdminAccountPassword  string `name:"password" usage:"the password to set for this account"`
+	AdminTransPath        string `name:"path" usage:"the path of the file to import from/export to"`
+	AdminMediaPruneDryRun bool   `name:"dry-run" usage:"perform a dry run and only log number of items eligible for pruning"`
 }
 
 // MarshalMap will marshal current Configuration into a map structure (useful for JSON).

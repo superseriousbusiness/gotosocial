@@ -109,7 +109,7 @@ func (m *Module) SearchGETHandler(c *gin.Context) {
 	limit := 2
 	limitString := c.Query(LimitKey)
 	if limitString != "" {
-		i, err := strconv.ParseInt(limitString, 10, 64)
+		i, err := strconv.ParseInt(limitString, 10, 32)
 		if err != nil {
 			err := fmt.Errorf("error parsing %s: %s", LimitKey, err)
 			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
@@ -127,7 +127,7 @@ func (m *Module) SearchGETHandler(c *gin.Context) {
 	offset := 0
 	offsetString := c.Query(OffsetKey)
 	if offsetString != "" {
-		i, err := strconv.ParseInt(offsetString, 10, 64)
+		i, err := strconv.ParseInt(offsetString, 10, 32)
 		if err != nil {
 			err := fmt.Errorf("error parsing %s: %s", OffsetKey, err)
 			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)

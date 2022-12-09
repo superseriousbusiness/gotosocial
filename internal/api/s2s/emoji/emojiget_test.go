@@ -50,7 +50,7 @@ type EmojiGetTestSuite struct {
 	federator      federation.Federator
 	emailSender    email.Sender
 	processor      processing.Processor
-	storage        storage.Driver
+	storage        *storage.Driver
 	oauthServer    oauth.Server
 	securityModule *security.Module
 
@@ -130,7 +130,7 @@ func (suite *EmojiGetTestSuite) TestGetEmoji() {
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
 
-	suite.Contains(string(b), `"icon":{"mediaType":"image/png","type":"Image","url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png"},"id":"http://localhost:8080/emoji/01F8MH9H8E4VG3KDYJR9EGPXCQ","name":":rainbow:","type":"Emoji"`)
+	suite.Contains(string(b), `"icon":{"mediaType":"image/png","type":"Image","url":"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png"},"id":"http://localhost:8080/emoji/01F8MH9H8E4VG3KDYJR9EGPXCQ","name":":rainbow:","type":"Emoji"`)
 }
 
 func TestEmojiGetTestSuite(t *testing.T) {

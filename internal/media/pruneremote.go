@@ -22,7 +22,7 @@ import (
 	"context"
 	"fmt"
 
-	"codeberg.org/gruf/go-store/storage"
+	"codeberg.org/gruf/go-store/v2/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -90,7 +90,7 @@ func (m *manager) pruneOneRemote(ctx context.Context, attachment *gtsmodel.Media
 
 	// update the attachment to reflect that we no longer have it cached
 	if changed {
-		return m.db.UpdateByPrimaryKey(ctx, attachment, "updated_at", "cached")
+		return m.db.UpdateByID(ctx, attachment, attachment.ID, "updated_at", "cached")
 	}
 
 	return nil

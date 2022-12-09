@@ -20,6 +20,7 @@ package transport
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -29,6 +30,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
+
+// ErrGone is returned from Dereference when the remote resource returns 410 GONE.
+// This is useful in cases where we're processing a delete of a resource that's already
+// been removed from the remote server, so we know we don't need to keep trying to
+// dereference it.
+var ErrGone = errors.New("remote resource returned HTTP code 410 GONE")
 
 func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, error) {
 	// if the request is to us, we can shortcut for certain URIs rather than going through
@@ -56,7 +63,6 @@ func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, erro
 
 	req.Header.Add("Accept", string(api.AppActivityLDJSON)+","+string(api.AppActivityJSON))
 	req.Header.Add("Accept-Charset", "utf-8")
-	req.Header.Add("User-Agent", t.controller.userAgent)
 	req.Header.Set("Host", iri.Host)
 
 	// Perform the HTTP request
@@ -66,10 +72,12 @@ func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, erro
 	}
 	defer rsp.Body.Close()
 
-	// Check for an expected status code
-	if rsp.StatusCode != http.StatusOK {
+	switch rsp.StatusCode {
+	case http.StatusOK:
+		return io.ReadAll(rsp.Body)
+	case http.StatusGone:
+		return nil, ErrGone
+	default:
 		return nil, fmt.Errorf("GET request to %s failed (%d): %s", iriStr, rsp.StatusCode, rsp.Status)
 	}
-
-	return io.ReadAll(rsp.Body)
 }

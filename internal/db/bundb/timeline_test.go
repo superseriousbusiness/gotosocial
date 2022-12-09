@@ -21,8 +21,13 @@ package bundb_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type TimelineTestSuite struct {
@@ -30,12 +35,91 @@ type TimelineTestSuite struct {
 }
 
 func (suite *TimelineTestSuite) TestGetPublicTimeline() {
-	viewingAccount := suite.testAccounts["local_account_1"]
+	ctx := context.Background()
 
-	s, err := suite.db.GetPublicTimeline(context.Background(), viewingAccount.ID, "", "", "", 20, false)
+	s, err := suite.db.GetPublicTimeline(ctx, "", "", "", 20, false)
 	suite.NoError(err)
 
 	suite.Len(s, 6)
+}
+
+func (suite *TimelineTestSuite) TestGetPublicTimelineWithFutureStatus() {
+	ctx := context.Background()
+
+	futureStatus := getFutureStatus()
+	err := suite.db.PutStatus(ctx, futureStatus)
+	suite.NoError(err)
+
+	s, err := suite.db.GetPublicTimeline(ctx, "", "", "", 20, false)
+	suite.NoError(err)
+
+	suite.NotContains(s, futureStatus)
+	suite.Len(s, 6)
+}
+
+func (suite *TimelineTestSuite) TestGetHomeTimeline() {
+	ctx := context.Background()
+
+	viewingAccount := suite.testAccounts["local_account_1"]
+
+	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, "", "", "", 20, false)
+	suite.NoError(err)
+
+	suite.Len(s, 16)
+}
+
+func (suite *TimelineTestSuite) TestGetHomeTimelineWithFutureStatus() {
+	ctx := context.Background()
+
+	viewingAccount := suite.testAccounts["local_account_1"]
+
+	futureStatus := getFutureStatus()
+	err := suite.db.PutStatus(ctx, futureStatus)
+	suite.NoError(err)
+
+	s, err := suite.db.GetHomeTimeline(context.Background(), viewingAccount.ID, "", "", "", 20, false)
+	suite.NoError(err)
+
+	suite.NotContains(s, futureStatus)
+	suite.Len(s, 16)
+}
+
+func getFutureStatus() *gtsmodel.Status {
+	theDistantFuture := time.Now().Add(876600 * time.Hour)
+	id, err := id.NewULIDFromTime(theDistantFuture)
+	if err != nil {
+		panic(err)
+	}
+
+	return &gtsmodel.Status{
+		ID:                       id,
+		URI:                      "http://localhost:8080/users/admin/statuses/" + id,
+		URL:                      "http://localhost:8080/@admin/statuses/" + id,
+		Content:                  "it's the future, wooooooooooooooooooooooooooooooooo",
+		Text:                     "it's the future, wooooooooooooooooooooooooooooooooo",
+		AttachmentIDs:            []string{},
+		TagIDs:                   []string{},
+		MentionIDs:               []string{},
+		EmojiIDs:                 []string{},
+		CreatedAt:                theDistantFuture,
+		UpdatedAt:                theDistantFuture,
+		Local:                    testrig.TrueBool(),
+		AccountURI:               "http://localhost:8080/users/admin",
+		AccountID:                "01F8MH17FWEB39HZJ76B6VXSKF",
+		InReplyToID:              "",
+		BoostOfID:                "",
+		ContentWarning:           "",
+		Visibility:               gtsmodel.VisibilityPublic,
+		Sensitive:                testrig.FalseBool(),
+		Language:                 "en",
+		CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
+		Pinned:                   testrig.FalseBool(),
+		Federated:                testrig.TrueBool(),
+		Boostable:                testrig.TrueBool(),
+		Replyable:                testrig.TrueBool(),
+		Likeable:                 testrig.TrueBool(),
+		ActivityStreamsType:      ap.ObjectNote,
+	}
 }
 
 func TestTimelineTestSuite(t *testing.T) {

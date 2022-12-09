@@ -129,7 +129,7 @@ func (suite *FromClientAPITestSuite) TestProcessStatusDelete() {
 	suite.NoError(errWithCode)
 
 	// delete the status from the db first, to mimic what would have already happened earlier up the flow
-	err := suite.db.DeleteByID(ctx, deletedStatus.ID, &gtsmodel.Status{})
+	err := suite.db.DeleteStatusByID(ctx, deletedStatus.ID)
 	suite.NoError(err)
 
 	// process the status delete

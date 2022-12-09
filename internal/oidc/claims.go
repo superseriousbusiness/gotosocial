@@ -18,10 +18,18 @@
 
 package oidc
 
+import "encoding/gob"
+
 // Claims represents claims as found in an id_token returned from an OIDC flow.
 type Claims struct {
-	Email         string   `json:"email"`
-	EmailVerified bool     `json:"email_verified"`
-	Groups        []string `json:"groups"`
-	Name          string   `json:"name"`
+	Sub               string   `json:"sub"`
+	Email             string   `json:"email"`
+	EmailVerified     bool     `json:"email_verified"`
+	Groups            []string `json:"groups"`
+	Name              string   `json:"name"`
+	PreferredUsername string   `json:"preferred_username"`
+}
+
+func init() {
+	gob.Register(&Claims{})
 }

@@ -20,6 +20,7 @@ package processing
 
 import (
 	"context"
+	"time"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -46,15 +47,19 @@ func (p *processor) AccountGetCustomCSSForUsername(ctx context.Context, username
 	return p.accountProcessor.GetCustomCSSForUsername(ctx, username)
 }
 
+func (p *processor) AccountGetRSSFeedForUsername(ctx context.Context, username string) (func() (string, gtserror.WithCode), time.Time, gtserror.WithCode) {
+	return p.accountProcessor.GetRSSFeedForUsername(ctx, username)
+}
+
 func (p *processor) AccountUpdate(ctx context.Context, authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, gtserror.WithCode) {
 	return p.accountProcessor.Update(ctx, authed.Account, form)
 }
 
-func (p *processor) AccountStatusesGet(ctx context.Context, authed *oauth.Auth, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinnedOnly bool, mediaOnly bool, publicOnly bool) (*apimodel.TimelineResponse, gtserror.WithCode) {
+func (p *processor) AccountStatusesGet(ctx context.Context, authed *oauth.Auth, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinnedOnly bool, mediaOnly bool, publicOnly bool) (*apimodel.PageableResponse, gtserror.WithCode) {
 	return p.accountProcessor.StatusesGet(ctx, authed.Account, targetAccountID, limit, excludeReplies, excludeReblogs, maxID, minID, pinnedOnly, mediaOnly, publicOnly)
 }
 
-func (p *processor) AccountWebStatusesGet(ctx context.Context, targetAccountID string, maxID string) (*apimodel.TimelineResponse, gtserror.WithCode) {
+func (p *processor) AccountWebStatusesGet(ctx context.Context, targetAccountID string, maxID string) (*apimodel.PageableResponse, gtserror.WithCode) {
 	return p.accountProcessor.WebStatusesGet(ctx, targetAccountID, maxID)
 }
 

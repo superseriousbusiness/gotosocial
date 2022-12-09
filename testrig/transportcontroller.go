@@ -33,6 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
@@ -65,6 +66,7 @@ type MockHTTPClient struct {
 	testRemoteServices    map[string]vocab.ActivityStreamsService
 	testRemoteAttachments map[string]RemoteAttachmentFile
 	testRemoteEmojis      map[string]vocab.TootEmoji
+	testTombstones        map[string]*gtsmodel.Tombstone
 
 	SentMessages sync.Map
 }
@@ -92,6 +94,7 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 	mockHTTPClient.testRemoteServices = NewTestFediServices()
 	mockHTTPClient.testRemoteAttachments = NewTestFediAttachments(relativeMediaPath)
 	mockHTTPClient.testRemoteEmojis = NewTestFediEmojis()
+	mockHTTPClient.testTombstones = NewTestTombstones()
 
 	mockHTTPClient.do = func(req *http.Request) (*http.Response, error) {
 		responseCode := http.StatusNotFound
@@ -193,6 +196,11 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 			responseBytes = attachment.Data
 			responseContentType = attachment.ContentType
 			responseContentLength = len(attachment.Data)
+		} else if _, ok := mockHTTPClient.testTombstones[req.URL.String()]; ok {
+			responseCode = http.StatusGone
+			responseBytes = []byte{}
+			responseContentType = "text/html"
+			responseContentLength = 0
 		}
 
 		log.Debugf("returning response %s", string(responseBytes))
@@ -274,14 +282,14 @@ func WebfingerResponse(req *http.Request) (responseCode int, responseBytes []byt
 				},
 			},
 		}
-	case "https://example.org/.well-known/webfinger?resource=acct:some_user@example.org":
+	case "https://example.org/.well-known/webfinger?resource=acct:Some_User@example.org":
 		wfr = &apimodel.WellKnownResponse{
-			Subject: "acct:some_user@example.org",
+			Subject: "acct:Some_User@example.org",
 			Links: []apimodel.Link{
 				{
 					Rel:  "self",
 					Type: applicationActivityJSON,
-					Href: "https://example.org/users/some_user",
+					Href: "https://example.org/users/Some_User",
 				},
 			},
 		}

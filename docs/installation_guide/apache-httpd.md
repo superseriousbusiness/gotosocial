@@ -1,8 +1,9 @@
-# Reverse proxy with Apache httpd
+# Reverse proxy with Apache HTTP Server
 
 ## Requirements
 
-For this you will need Apache httpd server.
+For this you will need the Apache HTTP Server.
+
 That is a fairly popular package so your distro will probably have it.
 
 ### Ubuntu
@@ -23,16 +24,27 @@ sudo pacman -S apache
 sudo zypper install apache2
 ```
 
+### Install modules
+
+You'll also need to install additional modules for Apache HTTP Server. You can do that with the following command:
+
+```bash
+sudo a2enmod proxy_http md ssl headers rewrite
+```
+
 ## Configure GoToSocial
 
-In your GoToSocial config turn off letsencrypt.
-First open the file in your text editor.
+We're going to have Apache handle LetsEncrypt certificates, so you need to turn off built-in LetsEncrypt support in your GoToSocial config.
+
+First open the file in your text editor:
 
 ```bash
 sudoedit /gotosocial/config.yaml
 ```
 
 Then set `letsencrypt-enabled: false`.
+
+If the reverse proxy will be running on the same machine, set the `bind-address` to `"localhost"` so that the GoToSocial server is only accessible via loopback. Otherwise it may be possible to bypass your proxy by connecting to GoToSocial directly, which might be undesirable.
 
 If GoToSocial is already running, restart it.
 
@@ -42,41 +54,66 @@ sudo systemctl restart gotosocial.service
 
 Or if you don't have a systemd service just restart it manually.
 
-## Set up Apache httpd
+## Set up Apache HTTP Server with SSL managed using MD module
 
-First we will set up Apache httpd to serve GoToSocial as unsecured http and then later use certbot to automatically upgrade to https.
-Please do not try to use it until that's done or you'll be transmitting passwords over clear text.
+Now we'll configure Apache HTTP Server to serve GoToSocial requests.
 
-First we'll write a configuration for Apache httpd and put it in `/etc/apache2/sites-available`.
+First we'll write a configuration for Apache HTTP Server and put it in `/etc/apache2/sites-available`:
 
 ```bash
-sudo mkdir /etc/apache2/sites-available/
-sudoedit /etc/apache2/sites-available/yourgotosocial.url.conf
+sudo mkdir -p /etc/apache2/sites-available/
+sudoedit /etc/apache2/sites-available/example.com.conf
 ```
+
+In the above `sudoedit` command, replace `example.com` with the hostname of your GoToSocial server.
 
 The file you're about to create should look a bit like this:
 
 ```apache
-<VirtualHost *:80>
+MDomain example.com auto
+MDCertificateAgreement accepted
+
+<VirtualHost *:80 >
   ServerName example.com
+</VirtualHost>
+
+<VirtualHost *:443>
+  ServerName example.com
+
+  RewriteEngine On
+  RewriteCond %{HTTP:Upgrade} websocket [NC]
+  RewriteCond %{HTTP:Connection} upgrade [NC]
+  RewriteRule ^/?(.*) "ws://localhost:8080/$1" [P,L]
+
+  SSLEngine On
   ProxyPreserveHost On
   ProxyPass / http://localhost:8080/
   ProxyPassReverse / http://localhost:8080/
+
+  RequestHeader set "X-Forwarded-Proto" expr=https
 </VirtualHost>
 ```
 
-**Note***: `ProxyPreserveHost On` is essential: It guarantees that the proxy and the gotosocial speak of the same Server name. If not, gotosocial will build the wrong authentication headers, and all attempts at federation will be rejected with 401.
+Again, replace occurrences of `example.com` in the above config file with the hostname of your GtS server. If your domain name is `gotosocial.example.com`, then `gotosocial.example.com` would be the correct value.
 
-Change `ProxyPass` to the ip and port that you're actually serving GoToSocial on and change `ServerName` to your own domain name.
-If your domain name is `gotosocial.example.com` then `ServerName gotosocial.example.com;` would be the correct value.
-If you're running GoToSocial on another machine with the local ip of 192.168.178.69 and on port 8080 then `ProxyPass / http://192.168.178.69:8080/` would be the correct value.
+You should also change `http://localhost:8080` to the correct address and port of your GtS server. For example, if you're running GoToSocial on another machine with the local ip of `192.168.178.69` and on port `8080` then `http://192.168.178.69:8080/` would be the correct value.
 
-Next we'll need to link the file we just created to the folder that Apache httpd reads configurations for active sites from.
+`Rewrite*` directives are needed to ensure that Websocket streaming connections also work. See the [websocket](./websocket.md) document for more information on this.
+
+`ProxyPreserveHost On` is essential: It guarantees that the proxy and the GoToSocial speak of the same Server name. If not, GoToSocial will build the wrong authentication headers, and all attempts at federation will be rejected with 401 Unauthorized.
+
+By default, apache sets `X-Forwarded-For` in forwarded requests. To make this and rate limiting work, set the `trusted-proxies` configuration variable. See the [rate limiting](../api/ratelimiting.md) and [general configuration](../configuration/general.md) docs
+
+Save and close the config file.
+
+Now we'll need to link the file we just created to the folder that Apache HTTP Server reads configurations for active sites from.
 
 ```bash
 sudo mkdir /etc/apache2/sites-enabled
-sudo ln -s /etc/apache2/sites-available/yourgotosocial.url.conf /etc/apache2/sites-enabled/
+sudo ln -s /etc/apache2/sites-available/example.com.conf /etc/apache2/sites-enabled/
 ```
+
+In the above `ln` command, replace `example.com` with the hostname of your GoToSocial server.
 
 Now check for configuration errors.
 
@@ -90,40 +127,89 @@ If everything is fine you should get this as output:
 Syntax OK
 ```
 
-Everything working? Great! Then restart Apache httpd to load your new config file.
+Everything working? Great! Then restart Apache HTTP Server to load your new config file.
 
 ```bash
 sudo systemctl restart apache2
 ```
 
-## Setting up SSL with mod_md
+Now, monitor the logs to see when the new LetsEncrypt certificate arrives (`tail -F /var/log/apache2/error.log`), and then reload Apache one last time with the above `systemctl restart` command. After that you should be good to go!
 
-To setup Apache httpd with mod_md, we'll need to load the module and then modify our vhost files:
+Apache HTTP Server needs to be restart (or reloaded), every time `mod_md` gets a new certificate; see the module's docs for [more information](https://github.com/icing/mod_md#how-to-manage-server-reloads).
+
+Depending on your version of Apache HTTP Server, you may see the following error: `error (specific information not available): acme problem urn:ietf:params:acme:error:invalidEmail: Error creating new account :: contact email "webmaster@localhost" has invalid domain : Domain name needs at least one dot`
+
+If this happens, you'll need to do one (or all) of the below:
+
+1. Update `/etc/apache2/sites-enabled/000-default.conf` and change the `ServerAdmin` value to a valid email address (then reload Apache HTTP Server).
+2. Add the line `MDContactEmail your.email.address@whatever.com` below the `MDomain` line in `/etc/apache2/sites-available/example.com.conf`, replacing `your.email.address@whatever.com` with a valid email address, and `example.com` with your GtS host name.
+
+## Set up Apache HTTP Server with SSL managed manually or by an external software (e.g. Certbot or acme.sh)
+
+If you prefer to have a manual setup or setting SSL using a different service to manage it (Certbot, etc), then you can use a simpler setup for your Apache HTTP Server.
+
+First we'll write a configuration for Apache HTTP Server and put it in `/etc/apache2/sites-available`:
+
+```bash
+sudo mkdir -p /etc/apache2/sites-available/
+sudoedit /etc/apache2/sites-available/example.com.conf
+```
+
+In the above `sudoedit` command, replace `example.com` with the hostname of your GoToSocial server.
+
+The file you're about to create should look initially for both 80 (required) and 443 ports (optional) a bit like this:
 
 ```apache
-MDomain example auto
-
 <VirtualHost *:80>
   ServerName example.com
-</VirtualHost>
 
-<VirtualHost *:443>
-  SSLEngine On
-  ServerName example.com
+  RewriteEngine On
+  RewriteCond %{HTTP:Upgrade} websocket [NC]
+  RewriteCond %{HTTP:Connection} upgrade [NC]
+  RewriteRule ^/?(.*) "ws://localhost:8080/$1" [P,L]
+
   ProxyPreserveHost On
   ProxyPass / http://localhost:8080/
   ProxyPassReverse / http://localhost:8080/
-  RequestHeader set "X-Forwarded-Proto" expr=https
+
 </VirtualHost>
 ```
 
-This allows mod_md to take care of the SSL setup, and it will also redirect from http to https.
-After we put ths into place, we'll need  to restart Apache httpd
+Again, replace occurrences of `example.com` in the above config file with the hostname of your GtS server. If your domain name is `gotosocial.example.com`, then `gotosocial.example.com` would be the correct value.
+
+You should also change `http://localhost:8080` to the correct address and port of your GtS server. For example, if you're running GoToSocial on another machine with the local ip of `192.168.178.69` and on port `8080` then `http://192.168.178.69:8080/` would be the correct value.
+
+`Rewrite*` directives are needed to ensure that Websocket streaming connections also work. See the [websocket](./websocket.md) document for more information on this.
+
+`ProxyPreserveHost On` is essential: It guarantees that the proxy and the GoToSocial speak of the same Server name. If not, GoToSocial will build the wrong authentication headers, and all attempts at federation will be rejected with 401 Unauthorized.
+
+In the case of providing an initial setup for the 443 port looking for additional managing by an external tool, you could use default certificates provided by the server which you can find referenced in the `default-ssl.conf` file at `/etc/apache2/sites-available/`.
+
+Save and close the config file.
+
+Now we'll need to link the file we just created to the folder that Apache HTTP Server reads configurations for active sites from.
+
+```bash
+sudo mkdir /etc/apache2/sites-enabled
+sudo ln -s /etc/apache2/sites-available/example.com.conf /etc/apache2/sites-enabled/
+```
+
+In the above `ln` command, replace `example.com` with the hostname of your GoToSocial server.
+
+Now check for configuration errors.
+
+```bash
+sudo apachectl -t
+```
+
+If everything is fine you should get this as output:
+
+```text
+Syntax OK
+```
+
+Everything working? Great! Then restart Apache HTTP Server to load your new config file.
 
 ```bash
 sudo systemctl restart apache2
 ```
-
-and monitor the logs to see when the new certificate arrives, and then reload it one last time and after that you should be good to go!
-
-Apache httpd needs to be restart (or reloaded), every time mod_md gets a new certificate, see the module's docs for [more information](https://github.com/icing/mod_md#how-to-manage-server-reloads) on that.

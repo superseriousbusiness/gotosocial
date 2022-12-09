@@ -24,16 +24,16 @@ Now, download the latest GoToSocial release archive corresponding to the operati
 
 (You can find the list of releases [right here](https://github.com/superseriousbusiness/gotosocial/releases), arranged with the newest release at the top.)
 
-For example, to download version 0.3.7 for running on 64-bit Linux:
+For example, to download version 0.5.2 for running on 64-bit Linux:
 
 ```bash
-wget https://github.com/superseriousbusiness/gotosocial/releases/download/v0.3.7/gotosocial_0.3.7_linux_amd64.tar.gz
+wget https://github.com/superseriousbusiness/gotosocial/releases/download/v0.5.2/gotosocial_0.5.2_linux_amd64.tar.gz
 ```
 
 Then extract it:
 
 ```bash
-tar -xzf gotosocial_0.3.7_linux_amd64.tar.gz
+tar -xzf gotosocial_0.5.2_linux_amd64.tar.gz
 ```
 
 This will put the `gotosocial` binary in your current directory, in addition to the `web` folder, which contains assets for the web frontend, and an `example` folder, which contains a sample configuration file.
@@ -72,9 +72,9 @@ The server should now start up and you should be able to access the splash page 
 
 Note that for this example we're assuming that we're allowed to run on port 443 (standard https port), and that nothing else is running on this port.
 
-## 5: Create and confirm your user
+## 5: Create your user
 
-You can use the GoToSocial binary to also create, confirm, and promote your user account.
+You can use the GoToSocial binary to also create and promote your user account.
 
 Run the following command to create a new account:
 
@@ -84,13 +84,14 @@ Run the following command to create a new account:
 
 In the above command, replace `some_username` with your desired username, `some_email@whatever.org` with the email address you want to associate with your account, and `SOME_PASSWORD` with a secure password.
 
-Run the following command to confirm the account you just created:
+If you are running a version older than 0.6.0, you will need to manually confirm as well:
 
 ```bash
 ./gotosocial --config-path ./config.yaml admin account confirm --username some_username
 ```
 
 Replace `some_username` with the username of the account you just created.
+
 
 If you want your user to have admin rights, you can promote them using a similar command:
 
@@ -104,10 +105,13 @@ Replace `some_username` with the username of the account you just created.
 
 You should now be able to log in to your instance using the email address and password of the account you just created. We recommend using [Pinafore](https://pinafore.social) or [Tusky](https://tusky.app) for this.
 
-## 7. Enable the systemd service
+## 7. \[Optional\] Enable the systemd service
 
 If you don't like manually starting GoToSocial on every boot you might want to create a systemd service that does that for you.
-First create a new user and group for your gotosocial installation.
+
+First stop your GoToSocial instance.
+
+Then create a new user and group for your GoToSocial installation:
 
 ```bash
 sudo useradd -r gotosocial
@@ -115,27 +119,30 @@ sudo groupadd gotosocial
 sudo usermod -a -G gotosocial gotosocial
 ```
 
-Then make them the owner of your GoToSocial installation since they will need to read and write in it.
+Then make them the owner of your GoToSocial installation since they will need to read and write in it:
 
 ```bash
 sudo chown -R gotosocial:gotosocial /gotosocial
 ```
 
 You can find a `gotosocial.service` file in the `example` folder on [github](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/example/gotosocial.service) or your installation.
-Copy it to `/etc/systemd/system/gotosocial.service`.
+
+Copy it to `/etc/systemd/system/gotosocial.service`:
 
 ```bash
 sudo cp /gotosocial/example/gotosocial.service /etc/systemd/system/
 ```
 
 Then use `sudoedit /etc/systemd/system/gotosocial.service` to change the `ExecStart=` and `WorkingDirectory=` lines according to your installation.
+
 If you have been following this guide word for word the defaults should be fine.
-After you're done enable the service.
+
+After you're done enable the service:
 
 ```bash
 sudo systemctl enable --now gotosocial.service
 ```
 
-## 8. Reverse proxy (optional)
+## 8. \[Optional\] Reverse proxy
 
 If you want to run other webservers on port 443 or want to add an additional layer of security you might want to use [nginx](./nginx.md), [Caddy](./caddy.md) or [Apache httpd](./apache-httpd.md) as reverse proxy

@@ -22,6 +22,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -42,6 +43,12 @@ func NewTestRouter(db db.DB) router.Router {
 
 	if alternativeBindAddress := os.Getenv("GTS_BIND_ADDRESS"); alternativeBindAddress != "" {
 		config.SetBindAddress(alternativeBindAddress)
+	}
+
+	if alternativePortStr := os.Getenv("GTS_PORT"); alternativePortStr != "" {
+		if alternativePort, err := strconv.Atoi(alternativePortStr); err == nil {
+			config.SetPort(alternativePort)
+		}
 	}
 
 	r, err := router.New(context.Background(), db)

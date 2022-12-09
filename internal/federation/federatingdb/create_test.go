@@ -80,7 +80,7 @@ func (suite *CreateTestSuite) TestCreateNoteForward() {
 	suite.Nil(msg.GTSModel)
 
 	// but we should have a uri set
-	suite.Equal("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1", msg.APIri.String())
+	suite.Equal("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1", msg.APIri.String())
 }
 
 func TestCreateTestSuite(t *testing.T) {

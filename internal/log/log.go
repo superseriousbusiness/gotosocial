@@ -20,7 +20,6 @@ package log
 
 import (
 	"fmt"
-	"io"
 	"log/syslog"
 	"os"
 	"strings"
@@ -38,10 +37,6 @@ var (
 
 	// lvlstrs is the lookup table of log levels to strings.
 	lvlstrs = level.Default()
-
-	// Preprepared stdout/stderr log writers.
-	stdout = &safewriter{w: os.Stdout}
-	stderr = &safewriter{w: os.Stderr}
 
 	// Syslog output, only set if enabled.
 	sysout *syslog.Writer
@@ -187,12 +182,12 @@ func printf(depth int, fields []kv.Field, s string, a ...interface{}) {
 	}
 
 	// Write to log and release
-	_, _ = stdout.Write(buf.B)
+	_, _ = os.Stdout.Write(buf.B)
 	putBuf(buf)
 }
 
 func logf(depth int, lvl level.LEVEL, fields []kv.Field, s string, a ...interface{}) {
-	var out io.Writer
+	var out *os.File
 
 	// Check if enabled.
 	if lvl > Level() {
@@ -202,9 +197,9 @@ func logf(depth int, lvl level.LEVEL, fields []kv.Field, s string, a ...interfac
 	// Split errors to stderr,
 	// all else goes to stdout.
 	if lvl <= level.ERROR {
-		out = stderr
+		out = os.Stderr
 	} else {
-		out = stdout
+		out = os.Stdout
 	}
 
 	// Acquire buffer

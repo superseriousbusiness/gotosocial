@@ -21,17 +21,27 @@ package visibility
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 func (f *filter) StatusPublictimelineable(ctx context.Context, targetStatus *gtsmodel.Status, timelineOwnerAccount *gtsmodel.Account) (bool, error) {
-	l := log.WithFields(kv.Fields{
+	l := log.WithFields(kv.Fields{{"statusID", targetStatus.ID}}...)
 
-		{"statusID", targetStatus.ID},
-	}...)
+	// don't timeline statuses more than 5 min in the future
+	maxID, err := id.NewULIDFromTime(time.Now().Add(5 * time.Minute))
+	if err != nil {
+		return false, err
+	}
+
+	if targetStatus.ID > maxID {
+		l.Debug("status not hometimelineable because it's from more than 5 minutes in the future")
+		return false, nil
+	}
 
 	// Don't timeline boosted statuses
 	if targetStatus.BoostOfID != "" {

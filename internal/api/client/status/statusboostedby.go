@@ -19,12 +19,12 @@
 package status
 
 import (
+	"errors"
 	"net/http"
 
-	"codeberg.org/gruf/go-kv"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -66,24 +66,16 @@ import (
 //		'404':
 //			description: not found
 func (m *Module) StatusBoostedByGETHandler(c *gin.Context) {
-	l := log.WithFields(kv.Fields{
-
-		{"request_uri", c.Request.RequestURI},
-		{"user_agent", c.Request.UserAgent()},
-		{"origin_ip", c.ClientIP()},
-	}...)
-	l.Debugf("entering function")
-
-	authed, err := oauth.Authed(c, true, true, true, true) // we don't really need an app here but we want everything else
+	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		l.Errorf("error authing status boosted by request: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "not authed"})
+		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	targetStatusID := c.Param(IDKey)
 	if targetStatusID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no status id provided"})
+		err := errors.New("no status id specified")
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 

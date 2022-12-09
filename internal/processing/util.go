@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -56,7 +57,7 @@ func GetParseMentionFunc(dbConn db.DB, federator federation.Federator) gtsmodel.
 			if originAccount.Domain == "" {
 				requestingUsername = originAccount.Username
 			}
-			remoteAccount, err := federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+			remoteAccount, err := federator.GetAccount(transport.WithFastfail(ctx), dereferencing.GetAccountParams{
 				RequestingUsername:    requestingUsername,
 				RemoteAccountUsername: username,
 				RemoteAccountHost:     domain,

@@ -2450,7 +2450,7 @@ type Locale_t = uintptr /* time.h:188:25 */
 
 type Timezone_t = uintptr /* time.h:198:24 */
 
-//	$NetBSD: sched.h,v 1.12 2009/01/11 03:04:12 christos Exp $
+//	$NetBSD: sched.h,v 1.12.52.1 2022/08/03 10:42:02 martin Exp $
 
 // -
 // Copyright (c) 2001 The NetBSD Foundation, Inc.

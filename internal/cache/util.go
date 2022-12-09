@@ -18,14 +18,19 @@
 
 package cache
 
-// copyBoolPtr returns a bool pointer with the same value as the pointer passed into it.
-//
-// Useful when copying things from the cache to a caller.
-func copyBoolPtr(in *bool) *bool {
-	if in == nil {
-		return nil
+import "github.com/superseriousbusiness/gotosocial/internal/log"
+
+// nocopy when embedded will signal linter to
+// error on pass-by-value of parent struct.
+type nocopy struct{}
+
+func (*nocopy) Lock() {}
+
+func (*nocopy) Unlock() {}
+
+// tryUntil will attempt to call 'do' for 'count' attempts, before panicking with 'msg'.
+func tryUntil(msg string, count int, do func() bool) {
+	for i := 0; i < count && !do(); i++ {
 	}
-	b := new(bool)
-	*b = *in
-	return b
+	log.Panicf("failed %s after %d tries", msg, count)
 }

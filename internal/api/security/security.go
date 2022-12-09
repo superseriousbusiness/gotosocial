@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
@@ -46,11 +47,14 @@ func New(db db.DB, server oauth.Server) api.ClientModule {
 
 // Route attaches security middleware to the given router
 func (m *Module) Route(s router.Router) error {
-	s.AttachMiddleware(m.RateLimit(RateLimitOptions{
-		// accept a maximum of 1000 requests in 5 minutes window
-		Period: 5 * time.Minute,
-		Limit:  1000,
-	}))
+	// only enable rate limit middleware if configured
+	// advanced-rate-limit-requests is greater than 0
+	if rateLimitRequests := config.GetAdvancedRateLimitRequests(); rateLimitRequests > 0 {
+		s.AttachMiddleware(m.RateLimit(RateLimitOptions{
+			Period: 5 * time.Minute,
+			Limit:  int64(rateLimitRequests),
+		}))
+	}
 	s.AttachMiddleware(m.SignatureCheck)
 	s.AttachMiddleware(m.FlocBlock)
 	s.AttachMiddleware(m.ExtraHeaders)

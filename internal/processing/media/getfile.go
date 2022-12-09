@@ -29,10 +29,13 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-func (p *processor) GetFile(ctx context.Context, account *gtsmodel.Account, form *apimodel.GetContentRequestForm) (*apimodel.Content, gtserror.WithCode) {
+func (p *processor) GetFile(ctx context.Context, requestingAccount *gtsmodel.Account, form *apimodel.GetContentRequestForm) (*apimodel.Content, gtserror.WithCode) {
 	// parse the form fields
 	mediaSize, err := media.ParseMediaSize(form.MediaSize)
 	if err != nil {
@@ -49,25 +52,25 @@ func (p *processor) GetFile(ctx context.Context, account *gtsmodel.Account, form
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("file name %s not parseable", form.FileName))
 	}
 	wantedMediaID := spl[0]
-	expectedAccountID := form.AccountID
+	owningAccountID := form.AccountID
 
 	// get the account that owns the media and make sure it's not suspended
-	acct, err := p.db.GetAccountByID(ctx, expectedAccountID)
+	owningAccount, err := p.db.GetAccountByID(ctx, owningAccountID)
 	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("account with id %s could not be selected from the db: %s", expectedAccountID, err))
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("account with id %s could not be selected from the db: %s", owningAccountID, err))
 	}
-	if !acct.SuspendedAt.IsZero() {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("account with id %s is suspended", expectedAccountID))
+	if !owningAccount.SuspendedAt.IsZero() {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("account with id %s is suspended", owningAccountID))
 	}
 
 	// make sure the requesting account and the media account don't block each other
-	if account != nil {
-		blocked, err := p.db.IsBlocked(ctx, account.ID, expectedAccountID, true)
+	if requestingAccount != nil {
+		blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, owningAccountID, true)
 		if err != nil {
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("block status could not be established between accounts %s and %s: %s", expectedAccountID, account.ID, err))
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("block status could not be established between accounts %s and %s: %s", owningAccountID, requestingAccount.ID, err))
 		}
 		if blocked {
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts %s and %s", expectedAccountID, account.ID))
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts %s and %s", owningAccountID, requestingAccount.ID))
 		}
 	}
 
@@ -75,15 +78,15 @@ func (p *processor) GetFile(ctx context.Context, account *gtsmodel.Account, form
 	// so we need to take different steps depending on the media type being requested
 	switch mediaType {
 	case media.TypeEmoji:
-		return p.getEmojiContent(ctx, wantedMediaID, mediaSize)
+		return p.getEmojiContent(ctx, wantedMediaID, owningAccountID, mediaSize)
 	case media.TypeAttachment, media.TypeHeader, media.TypeAvatar:
-		return p.getAttachmentContent(ctx, account, wantedMediaID, expectedAccountID, mediaSize)
+		return p.getAttachmentContent(ctx, requestingAccount, wantedMediaID, owningAccountID, mediaSize)
 	default:
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("media type %s not recognized", mediaType))
 	}
 }
 
-func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount *gtsmodel.Account, wantedMediaID string, expectedAccountID string, mediaSize media.Size) (*apimodel.Content, gtserror.WithCode) {
+func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount *gtsmodel.Account, wantedMediaID string, owningAccountID string, mediaSize media.Size) (*apimodel.Content, gtserror.WithCode) {
 	attachmentContent := &apimodel.Content{}
 	var storagePath string
 
@@ -93,8 +96,8 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("attachment %s could not be taken from the db: %s", wantedMediaID, err))
 	}
 
-	if a.AccountID != expectedAccountID {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("attachment %s is not owned by %s", wantedMediaID, expectedAccountID))
+	if a.AccountID != owningAccountID {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("attachment %s is not owned by %s", wantedMediaID, owningAccountID))
 	}
 
 	// get file information from the attachment depending on the requested media size
@@ -138,12 +141,12 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		// if it's the thumbnail that's requested then the user will have to wait a bit while we process the
 		// large version and derive a thumbnail from it, so use the normal recaching procedure: fetch the media,
 		// process it, then return the thumbnail data
-		data = func(innerCtx context.Context) (io.Reader, int64, error) {
-			transport, err := p.transportController.NewTransportForUsername(innerCtx, requestingUsername)
+		data = func(innerCtx context.Context) (io.ReadCloser, int64, error) {
+			t, err := p.transportController.NewTransportForUsername(innerCtx, requestingUsername)
 			if err != nil {
 				return nil, 0, err
 			}
-			return transport.DereferenceMedia(innerCtx, remoteMediaIRI)
+			return t.DereferenceMedia(transport.WithFastfail(innerCtx), remoteMediaIRI)
 		}
 	} else {
 		// if it's the full-sized version being requested, we can cheat a bit by streaming data to the user as
@@ -167,15 +170,15 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		bufferedReader := bufio.NewReaderSize(pipeReader, int(attachmentContent.ContentLength))
 
 		// the caller will read from the buffered reader, so it doesn't matter if they drop out without reading everything
-		attachmentContent.Content = bufferedReader
+		attachmentContent.Content = io.NopCloser(bufferedReader)
 
-		data = func(innerCtx context.Context) (io.Reader, int64, error) {
-			transport, err := p.transportController.NewTransportForUsername(innerCtx, requestingUsername)
+		data = func(innerCtx context.Context) (io.ReadCloser, int64, error) {
+			t, err := p.transportController.NewTransportForUsername(innerCtx, requestingUsername)
 			if err != nil {
 				return nil, 0, err
 			}
 
-			readCloser, fileSize, err := transport.DereferenceMedia(innerCtx, remoteMediaIRI)
+			readCloser, fileSize, err := t.DereferenceMedia(transport.WithFastfail(innerCtx), remoteMediaIRI)
 			if err != nil {
 				return nil, 0, err
 			}
@@ -194,17 +197,15 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		// close the pipewriter after data has been piped into it, so the reader on the other side doesn't block;
 		// we don't need to close the reader here because that's the caller's responsibility
 		postDataCallback = func(innerCtx context.Context) error {
-			// flush the buffered writer into the buffer of the reader...
-			if err := bufferedWriter.Flush(); err != nil {
-				return err
-			}
+			// close the underlying pipe writer when we're done with it
+			defer func() {
+				if err := pipeWriter.Close(); err != nil {
+					log.Errorf("getAttachmentContent: error closing pipeWriter: %s", err)
+				}
+			}()
 
-			// and close the underlying pipe writer
-			if err := pipeWriter.Close(); err != nil {
-				return err
-			}
-
-			return nil
+			// and flush the buffered writer into the buffer of the reader
+			return bufferedWriter.Flush()
 		}
 	}
 
@@ -227,17 +228,23 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 	return attachmentContent, nil
 }
 
-func (p *processor) getEmojiContent(ctx context.Context, wantedEmojiID string, emojiSize media.Size) (*apimodel.Content, gtserror.WithCode) {
+func (p *processor) getEmojiContent(ctx context.Context, fileName string, owningAccountID string, emojiSize media.Size) (*apimodel.Content, gtserror.WithCode) {
 	emojiContent := &apimodel.Content{}
 	var storagePath string
 
-	e, err := p.db.GetEmojiByID(ctx, wantedEmojiID)
+	// reconstruct the static emoji image url -- reason
+	// for using the static URL rather than full size url
+	// is that static emojis are always encoded as png,
+	// so this is more reliable than using full size url
+	imageStaticURL := uris.GenerateURIForAttachment(owningAccountID, string(media.TypeEmoji), string(media.SizeStatic), fileName, "png")
+
+	e, err := p.db.GetEmojiByStaticURL(ctx, imageStaticURL)
 	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("emoji %s could not be taken from the db: %s", wantedEmojiID, err))
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("emoji %s could not be taken from the db: %s", fileName, err))
 	}
 
 	if *e.Disabled {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("emoji %s has been disabled", wantedEmojiID))
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("emoji %s has been disabled", fileName))
 	}
 
 	switch emojiSize {

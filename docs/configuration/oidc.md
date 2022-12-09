@@ -68,6 +68,13 @@ oidc-scopes:
   - "email"
   - "profile"
   - "groups"
+
+# Bool. Link OIDC authenticated users to existing ones based on their email address.
+# This is mostly intended for migration purposes if you were running previous versions of GTS
+# which only correlated users with their email address. Should be set to false for most usecases.
+# Options: [true, false]
+# Default: false
+oidc-link-existing: false
 ```
 
 ## Behavior
@@ -76,47 +83,35 @@ When OIDC is enabled on GoToSocial, the default sign-in page redirects automatic
 
 This means that OIDC essentially *replaces* the normal GtS email/password sign-in flow.
 
-When a user logs in through OIDC, GoToSocial will request that user's preferred email address and username from the OIDC provider. It will then use the returned email address to either:
+Due to the way the ActivityPub standard works, you _cannot_ change your username
+after it has been set. This conflicts with the OIDC spec which does not
+guarantee that the `preferred_username` field is stable.
 
-*If the email address is already associated with a user/account*: sign the requester in as that user/account.
+To work with this, we ask the user to provide a username on their first login
+attempt. The field for this is pre-filled with the value of the `preferred_username` claim.
 
-Or:
+After authenticating, GtS stores the `sub` claim supplied by the OIDC provider.
+On subsequent authentication attempts, the user is looked up using this claim
+exclusively.
 
-*If the email address is not yet associated with a user/account*: create a new user and account with the returned credentials, and sign the requester in as that user/account.
-
-In other words, GoToSocial completely delegates sign-in authority to the OIDC provider, and trusts whatever credentials it returns.
-
-### Username conflicts
-
-In some cases, such as when a server has been switched to use OIDC after already using default settings for a while, there may be an overlap between usernames returned from OIDC, and usernames that already existed in the database.
-
-For example, let's say that someone with username `gordonbrownfan` and email address `gordon_is_best@example.org` has an account on a GtS instance that uses the default sign-in flow.
-
-That GtS instance then switches to using OIDC login. However, in the OIDC's storage there's also a user with username `gordonbrownfan`. If this user has the email address `gordon_is_best@example.org`, then GoToSocial will assume that the two users are the same and just log `gordonbrownfan` in as though nothing had changed. No problem!
-
-However, if the user in the OIDC storage has a different email address, GoToSocial will try to create a new user and account for this person.
-
-Since the username `gordonbrownfan` is already taken, GoToSocial will try `gordonbrownfan1`. If this is also taken, it will try `gordonbrownfan2`, and so on, until it finds a username that's not yet taken. It will then sign the requester in as that user/account, distinct from the original `gordonbrownfan`.
-
-### Malformed usernames
-
-A username returned from an OIDC provider might not always fit the pattern of what GoToSocial accepts as a valid username, ie., lower-case letters, numbers, and underscores. In this case, GoToSocial will do its best to parse the returned username into something that fits the pattern.
-
-For example, say that an OIDC provider returns the username `Marx Is Great` for a sign in, which doesn't fit the pattern because it contains upper-case letters and spaces.
-
-In this case, GtS will convert it into `marx_is_great` by applying the following rules:
-
-1. Trim any leading or trailing whitespace.
-2. Convert all letters to lowercase.
-3. Replace spaces with underscores.
-
-Unfortunately, at this point GoToSocial doesn't know how to handle returned usernames containing special characters such as `@` or `%`, so these will return an error.
+This then allows you to change the username on a provider level without losing
+access to your GtS account.
 
 ### Group membership
 
 Most OIDC providers allow for the concept of groups and group memberships in returned claims. GoToSocial can use group membership to determine whether or not a user returned from an OIDC flow should be created as an admin account or not.
 
 If the returned OIDC groups information for a user contains membership of the groups `admin` or `admins`, then that user will be created/signed in as though they are an admin.
+
+## Migrating from old versions
+
+If you're moving from an old version of GtS which used the unstable `email`
+claim for unique user identification, you can set the `oidc-link-existing`
+configuration to `true`. If no user can be found for the ID returned by the
+provider, a lookup based on the `email` claim is performed instead. If this
+succeeds, the stable id is added to the database for the matching user.
+
+You should only use this for a limited time to avoid malicious account takeover.
 
 ## Provider Examples
 

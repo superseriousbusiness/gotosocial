@@ -40,7 +40,7 @@ type Admin interface {
 
 	// NewSignup creates a new user in the database with the given parameters.
 	// By the time this function is called, it should be assumed that all the parameters have passed validation!
-	NewSignup(ctx context.Context, username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string, emailVerified bool, admin bool) (*gtsmodel.User, Error)
+	NewSignup(ctx context.Context, username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string, emailVerified bool, externalID string, admin bool) (*gtsmodel.User, Error)
 
 	// CreateInstanceAccount creates an account in the database with the same username as the instance host value.
 	// Ie., if the instance is hosted at 'example.org' the instance user will have a username of 'example.org'.

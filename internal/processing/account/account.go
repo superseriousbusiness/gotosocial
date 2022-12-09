@@ -21,6 +21,7 @@ package account
 import (
 	"context"
 	"mime/multipart"
+	"time"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
@@ -53,14 +54,19 @@ type Processor interface {
 	GetLocalByUsername(ctx context.Context, requestingAccount *gtsmodel.Account, username string) (*apimodel.Account, gtserror.WithCode)
 	// GetCustomCSSForUsername returns custom css for the given local username.
 	GetCustomCSSForUsername(ctx context.Context, username string) (string, gtserror.WithCode)
+	// GetRSSFeedForUsername returns RSS feed for the given local username.
+	GetRSSFeedForUsername(ctx context.Context, username string) (func() (string, gtserror.WithCode), time.Time, gtserror.WithCode)
 	// Update processes the update of an account with the given form
 	Update(ctx context.Context, account *gtsmodel.Account, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, gtserror.WithCode)
 	// StatusesGet fetches a number of statuses (in time descending order) from the given account, filtered by visibility for
 	// the account given in authed.
-	StatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinned bool, mediaOnly bool, publicOnly bool) (*apimodel.TimelineResponse, gtserror.WithCode)
+	StatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinned bool, mediaOnly bool, publicOnly bool) (*apimodel.PageableResponse, gtserror.WithCode)
 	// WebStatusesGet fetches a number of statuses (in descending order) from the given account. It selects only
 	// statuses which are suitable for showing on the public web profile of an account.
-	WebStatusesGet(ctx context.Context, targetAccountID string, maxID string) (*apimodel.TimelineResponse, gtserror.WithCode)
+	WebStatusesGet(ctx context.Context, targetAccountID string, maxID string) (*apimodel.PageableResponse, gtserror.WithCode)
+	// StatusesGet fetches a number of statuses (in time descending order) from the given account, filtered by visibility for
+	// the account given in authed.
+	BookmarksGet(ctx context.Context, requestingAccount *gtsmodel.Account, limit int, maxID string, minID string) (*apimodel.PageableResponse, gtserror.WithCode)
 	// FollowersGet fetches a list of the target account's followers.
 	FollowersGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) ([]apimodel.Account, gtserror.WithCode)
 	// FollowingGet fetches a list of the accounts that target account is following.
@@ -75,15 +81,14 @@ type Processor interface {
 	BlockCreate(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
 	// BlockRemove handles the removal of a block from requestingAccount to targetAccountID, either remote or local.
 	BlockRemove(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
-
-	// UpdateHeader does the dirty work of checking the header part of an account update form,
-	// parsing and checking the image, and doing the necessary updates in the database for this to become
-	// the account's new header image.
-	UpdateAvatar(ctx context.Context, avatar *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error)
 	// UpdateAvatar does the dirty work of checking the avatar part of an account update form,
 	// parsing and checking the image, and doing the necessary updates in the database for this to become
 	// the account's new avatar image.
-	UpdateHeader(ctx context.Context, header *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error)
+	UpdateAvatar(ctx context.Context, avatar *multipart.FileHeader, description *string, accountID string) (*gtsmodel.MediaAttachment, error)
+	// UpdateHeader does the dirty work of checking the header part of an account update form,
+	// parsing and checking the image, and doing the necessary updates in the database for this to become
+	// the account's new header image.
+	UpdateHeader(ctx context.Context, header *multipart.FileHeader, description *string, accountID string) (*gtsmodel.MediaAttachment, error)
 }
 
 type processor struct {

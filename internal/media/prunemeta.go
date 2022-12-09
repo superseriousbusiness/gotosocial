@@ -21,7 +21,7 @@ package media
 import (
 	"context"
 
-	"codeberg.org/gruf/go-store/storage"
+	"codeberg.org/gruf/go-store/v2/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"

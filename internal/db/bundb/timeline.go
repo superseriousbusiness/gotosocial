@@ -20,52 +20,72 @@ package bundb
 
 import (
 	"context"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
 	"golang.org/x/exp/slices"
 )
 
 type timelineDB struct {
-	conn   *DBConn
-	status *statusDB
+	conn  *DBConn
+	state *state.State
 }
 
 func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.Error) {
+	// Ensure reasonable
+	if limit < 0 {
+		limit = 0
+	}
+
 	// Make educated guess for slice size
 	statusIDs := make([]string, 0, limit)
 
 	q := t.conn.
 		NewSelect().
-		Table("statuses").
-
+		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
 		// Select only IDs from table
-		Column("statuses.id").
+		Column("status.id").
 		// Find out who accountID follows.
-		Join("LEFT JOIN follows ON follows.target_account_id = statuses.account_id AND follows.account_id = ?", accountID).
+		Join("LEFT JOIN ? AS ? ON ? = ? AND ? = ?",
+			bun.Ident("follows"),
+			bun.Ident("follow"),
+			bun.Ident("follow.target_account_id"),
+			bun.Ident("status.account_id"),
+			bun.Ident("follow.account_id"),
+			accountID).
 		// Sort by highest ID (newest) to lowest ID (oldest)
-		Order("statuses.id DESC")
+		Order("status.id DESC")
 
-	if maxID != "" {
-		// return only statuses LOWER (ie., older) than maxID
-		q = q.Where("statuses.id < ?", maxID)
+	if maxID == "" {
+		var err error
+		// don't return statuses more than five minutes in the future
+		maxID, err = id.NewULIDFromTime(time.Now().Add(5 * time.Minute))
+		if err != nil {
+			return nil, err
+		}
 	}
+
+	// return only statuses LOWER (ie., older) than maxID
+	q = q.Where("? < ?", bun.Ident("status.id"), maxID)
 
 	if sinceID != "" {
 		// return only statuses HIGHER (ie., newer) than sinceID
-		q = q.Where("statuses.id > ?", sinceID)
+		q = q.Where("? > ?", bun.Ident("status.id"), sinceID)
 	}
 
 	if minID != "" {
 		// return only statuses HIGHER (ie., newer) than minID
-		q = q.Where("statuses.id > ?", minID)
+		q = q.Where("? > ?", bun.Ident("status.id"), minID)
 	}
 
 	if local {
 		// return only statuses posted by local account havers
-		q = q.Where("statuses.local = ?", local)
+		q = q.Where("? = ?", bun.Ident("status.local"), local)
 	}
 
 	if limit > 0 {
@@ -78,13 +98,11 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 	//
 	// This is equivalent to something like WHERE ... AND (... OR ...)
 	// See: https://bun.uptrace.dev/guide/queries.html#select
-	whereGroup := func(*bun.SelectQuery) *bun.SelectQuery {
+	q = q.WhereGroup(" AND ", func(*bun.SelectQuery) *bun.SelectQuery {
 		return q.
-			WhereOr("follows.account_id = ?", accountID).
-			WhereOr("statuses.account_id = ?", accountID)
-	}
-
-	q = q.WhereGroup(" AND ", whereGroup)
+			WhereOr("? = ?", bun.Ident("follow.account_id"), accountID).
+			WhereOr("? = ?", bun.Ident("status.account_id"), accountID)
+	})
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {
 		return nil, t.conn.ProcessError(err)
@@ -94,7 +112,7 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 
 	for _, id := range statusIDs {
 		// Fetch status from db for ID
-		status, err := t.status.GetStatusByID(ctx, id)
+		status, err := t.state.DB.GetStatusByID(ctx, id)
 		if err != nil {
 			log.Errorf("GetHomeTimeline: error fetching status %q: %v", id, err)
 			continue
@@ -107,7 +125,7 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 	return statuses, nil
 }
 
-func (t *timelineDB) GetPublicTimeline(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.Error) {
+func (t *timelineDB) GetPublicTimeline(ctx context.Context, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.Error) {
 	// Ensure reasonable
 	if limit < 0 {
 		limit = 0
@@ -118,28 +136,36 @@ func (t *timelineDB) GetPublicTimeline(ctx context.Context, accountID string, ma
 
 	q := t.conn.
 		NewSelect().
-		Table("statuses").
-		Column("statuses.id").
-		Where("statuses.visibility = ?", gtsmodel.VisibilityPublic).
-		WhereGroup(" AND ", whereEmptyOrNull("statuses.in_reply_to_id")).
-		WhereGroup(" AND ", whereEmptyOrNull("statuses.in_reply_to_uri")).
-		WhereGroup(" AND ", whereEmptyOrNull("statuses.boost_of_id")).
-		Order("statuses.id DESC")
+		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
+		Column("status.id").
+		Where("? = ?", bun.Ident("status.visibility"), gtsmodel.VisibilityPublic).
+		WhereGroup(" AND ", whereEmptyOrNull("status.in_reply_to_id")).
+		WhereGroup(" AND ", whereEmptyOrNull("status.in_reply_to_uri")).
+		WhereGroup(" AND ", whereEmptyOrNull("status.boost_of_id")).
+		Order("status.id DESC")
 
-	if maxID != "" {
-		q = q.Where("statuses.id < ?", maxID)
+	if maxID == "" {
+		var err error
+		// don't return statuses more than five minutes in the future
+		maxID, err = id.NewULIDFromTime(time.Now().Add(5 * time.Minute))
+		if err != nil {
+			return nil, err
+		}
 	}
 
+	// return only statuses LOWER (ie., older) than maxID
+	q = q.Where("? < ?", bun.Ident("status.id"), maxID)
+
 	if sinceID != "" {
-		q = q.Where("statuses.id > ?", sinceID)
+		q = q.Where("? > ?", bun.Ident("status.id"), sinceID)
 	}
 
 	if minID != "" {
-		q = q.Where("statuses.id > ?", minID)
+		q = q.Where("? > ?", bun.Ident("status.id"), minID)
 	}
 
 	if local {
-		q = q.Where("statuses.local = ?", local)
+		q = q.Where("? = ?", bun.Ident("status.local"), local)
 	}
 
 	if limit > 0 {
@@ -154,7 +180,7 @@ func (t *timelineDB) GetPublicTimeline(ctx context.Context, accountID string, ma
 
 	for _, id := range statusIDs {
 		// Fetch status from db for ID
-		status, err := t.status.GetStatusByID(ctx, id)
+		status, err := t.state.DB.GetStatusByID(ctx, id)
 		if err != nil {
 			log.Errorf("GetPublicTimeline: error fetching status %q: %v", id, err)
 			continue
@@ -181,15 +207,15 @@ func (t *timelineDB) GetFavedTimeline(ctx context.Context, accountID string, max
 	fq := t.conn.
 		NewSelect().
 		Model(&faves).
-		Where("account_id = ?", accountID).
-		Order("id DESC")
+		Where("? = ?", bun.Ident("status_fave.account_id"), accountID).
+		Order("status_fave.id DESC")
 
 	if maxID != "" {
-		fq = fq.Where("id < ?", maxID)
+		fq = fq.Where("? < ?", bun.Ident("status_fave.id"), maxID)
 	}
 
 	if minID != "" {
-		fq = fq.Where("id > ?", minID)
+		fq = fq.Where("? > ?", bun.Ident("status_fave.id"), minID)
 	}
 
 	if limit > 0 {
@@ -207,14 +233,14 @@ func (t *timelineDB) GetFavedTimeline(ctx context.Context, accountID string, max
 
 	// Sort by favourite ID rather than status ID
 	slices.SortFunc(faves, func(a, b *gtsmodel.StatusFave) bool {
-		return a.ID < b.ID
+		return b.CreatedAt.Before(a.CreatedAt)
 	})
 
 	statuses := make([]*gtsmodel.Status, 0, len(faves))
 
 	for _, fave := range faves {
 		// Fetch status from db for corresponding favourite
-		status, err := t.status.GetStatusByID(ctx, fave.StatusID)
+		status, err := t.state.DB.GetStatusByID(ctx, fave.StatusID)
 		if err != nil {
 			log.Errorf("GetFavedTimeline: error fetching status for fave %q: %v", fave.ID, err)
 			continue

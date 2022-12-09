@@ -54,6 +54,10 @@ type Processor interface {
 	Unfave(ctx context.Context, account *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
 	// Context returns the context (previous and following posts) from the given status ID
 	Context(ctx context.Context, account *gtsmodel.Account, targetStatusID string) (*apimodel.Context, gtserror.WithCode)
+	// Bookmarks a status
+	Bookmark(ctx context.Context, account *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
+	// Removes a bookmark for a status
+	Unbookmark(ctx context.Context, account *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
 
 	/*
 		PROCESSING UTILS
@@ -61,7 +65,7 @@ type Processor interface {
 
 	ProcessVisibility(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountDefaultVis gtsmodel.Visibility, status *gtsmodel.Status) error
 	ProcessReplyToID(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) gtserror.WithCode
-	ProcessMediaIDs(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) error
+	ProcessMediaIDs(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) gtserror.WithCode
 	ProcessLanguage(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountDefaultLanguage string, status *gtsmodel.Status) error
 	ProcessMentions(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error
 	ProcessTags(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error

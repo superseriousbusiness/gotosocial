@@ -1,5 +1,9 @@
 basePath: /
 definitions:
+    EmojiUpdateType:
+        title: EmojiUpdateType models an admin update action to take on a custom emoji.
+        type: string
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     InstanceConfigurationAccounts:
         properties:
             allow_custom_css:
@@ -8,6 +12,17 @@ definitions:
                 type: boolean
                 x-go-name: AllowCustomCSS
         title: InstanceConfigurationAccounts models instance account config parameters.
+        type: object
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    InstanceConfigurationEmojis:
+        properties:
+            emoji_size_limit:
+                description: Max allowed emoji image size in bytes.
+                example: 51200
+                format: int64
+                type: integer
+                x-go-name: EmojiSizeLimit
+        title: InstanceConfigurationEmojis models instance emoji config parameters.
         type: object
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     Link:
@@ -136,77 +151,6 @@ definitions:
         title: Source represents display or publishing preferences of user's own account.
         type: object
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    StatusCreateRequest:
-        properties:
-            format:
-                description: |-
-                    Format to use when parsing this status.
-                    in: formData
-                type: string
-                x-go-name: Format
-            in_reply_to_id:
-                description: |-
-                    ID of the status being replied to, if status is a reply.
-                    in: formData
-                type: string
-                x-go-name: InReplyToID
-            language:
-                description: |-
-                    ISO 639 language code for this status.
-                    in: formData
-                type: string
-                x-go-name: Language
-            media_ids:
-                description: |-
-                    Array of Attachment ids to be attached as media.
-                    If provided, status becomes optional, and poll cannot be used.
-
-                    If the status is being submitted as a form, the key is 'media_ids[]',
-                    but if it's json or xml, the key is 'media_ids'.
-
-                    in: formData
-                items:
-                    type: string
-                type: array
-                x-go-name: MediaIDs
-            scheduled_at:
-                description: |-
-                    ISO 8601 Datetime at which to schedule a status.
-                    Providing this parameter will cause ScheduledStatus to be returned instead of Status.
-                    Must be at least 5 minutes in the future.
-                    in: formData
-                type: string
-                x-go-name: ScheduledAt
-            sensitive:
-                description: |-
-                    Status and attached media should be marked as sensitive.
-                    in: formData
-                type: boolean
-                x-go-name: Sensitive
-            spoiler_text:
-                description: |-
-                    Text to be shown as a warning or subject before the actual content.
-                    Statuses are generally collapsed behind this field.
-                    in: formData
-                type: string
-                x-go-name: SpoilerText
-            status:
-                description: |-
-                    Text content of the status.
-                    If media_ids is provided, this becomes optional.
-                    Attaching a poll is optional while status is provided.
-                    in: formData
-                type: string
-                x-go-name: Status
-            visibility:
-                description: |-
-                    Visibility of the posted status.
-                    in: formData
-                type: string
-                x-go-name: Visibility
-        title: StatusCreateRequest models status creation parameters.
-        type: object
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     account:
         description: The modelled account can be either a remote account, or one on this instance.
         properties:
@@ -257,6 +201,10 @@ definitions:
                     $ref: '#/definitions/emoji'
                 type: array
                 x-go-name: Emojis
+            enable_rss:
+                description: Account has enabled RSS feed.
+                type: boolean
+                x-go-name: EnableRSS
             fields:
                 description: Additional metadata attached to this account's profile.
                 items:
@@ -308,6 +256,13 @@ definitions:
                 description: Bio/description of this account.
                 type: string
                 x-go-name: Note
+            role:
+                description: |-
+                    Role of the account on this instance.
+                    Omitted for remote accounts.
+                example: user
+                type: string
+                x-go-name: Role
             source:
                 $ref: '#/definitions/Source'
             statuses_count:
@@ -392,95 +347,72 @@ definitions:
         type: object
         x-go-name: Relationship
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    advancedStatusCreateForm:
-        description: |-
-            AdvancedStatusCreateForm wraps the mastodon-compatible status create form along with the GTS advanced
-            visibility settings.
+    adminEmoji:
         properties:
-            boostable:
-                description: This status can be boosted/reblogged.
+            category:
+                description: Used for sorting custom emoji in the picker.
+                example: blobcats
+                type: string
+                x-go-name: Category
+            content_type:
+                description: The MIME content type of the emoji.
+                example: image/png
+                type: string
+                x-go-name: ContentType
+            disabled:
+                description: True if this emoji has been disabled by an admin action.
+                example: false
                 type: boolean
-                x-go-name: Boostable
-            federated:
-                description: This status will be federated beyond the local timeline(s).
+                x-go-name: Disabled
+            domain:
+                description: The domain from which the emoji originated. Only defined for remote domains, otherwise key will not be set.
+                example: example.org
+                type: string
+                x-go-name: Domain
+            id:
+                description: The ID of the emoji.
+                example: 01GEM7SFDZ7GZNRXFVZ3X4E4N1
+                type: string
+                x-go-name: ID
+            shortcode:
+                description: The name of the custom emoji.
+                example: blobcat_uwu
+                type: string
+                x-go-name: Shortcode
+            static_url:
+                description: A link to a static copy of the custom emoji.
+                example: https://example.org/fileserver/emojis/blogcat_uwu.png
+                type: string
+                x-go-name: StaticURL
+            total_file_size:
+                description: The total file size taken up by the emoji in bytes, including static and animated versions.
+                example: 69420
+                format: int64
+                type: integer
+                x-go-name: TotalFileSize
+            updated_at:
+                description: Time when the emoji image was last updated.
+                example: "2022-10-05T09:21:26.419Z"
+                type: string
+                x-go-name: UpdatedAt
+            uri:
+                description: The ActivityPub URI of the emoji.
+                example: https://example.org/emojis/016T5Q3SQKBT337DAKVSKNXXW1
+                type: string
+                x-go-name: URI
+            url:
+                description: Web URL of the custom emoji.
+                example: https://example.org/fileserver/emojis/blogcat_uwu.gif
+                type: string
+                x-go-name: URL
+            visible_in_picker:
+                description: Emoji is visible in the emoji picker of the instance.
+                example: true
                 type: boolean
-                x-go-name: Federated
-            format:
-                description: |-
-                    Format to use when parsing this status.
-                    in: formData
-                type: string
-                x-go-name: Format
-            in_reply_to_id:
-                description: |-
-                    ID of the status being replied to, if status is a reply.
-                    in: formData
-                type: string
-                x-go-name: InReplyToID
-            language:
-                description: |-
-                    ISO 639 language code for this status.
-                    in: formData
-                type: string
-                x-go-name: Language
-            likeable:
-                description: This status can be liked/faved.
-                type: boolean
-                x-go-name: Likeable
-            media_ids:
-                description: |-
-                    Array of Attachment ids to be attached as media.
-                    If provided, status becomes optional, and poll cannot be used.
-
-                    If the status is being submitted as a form, the key is 'media_ids[]',
-                    but if it's json or xml, the key is 'media_ids'.
-
-                    in: formData
-                items:
-                    type: string
-                type: array
-                x-go-name: MediaIDs
-            replyable:
-                description: This status can be replied to.
-                type: boolean
-                x-go-name: Replyable
-            scheduled_at:
-                description: |-
-                    ISO 8601 Datetime at which to schedule a status.
-                    Providing this parameter will cause ScheduledStatus to be returned instead of Status.
-                    Must be at least 5 minutes in the future.
-                    in: formData
-                type: string
-                x-go-name: ScheduledAt
-            sensitive:
-                description: |-
-                    Status and attached media should be marked as sensitive.
-                    in: formData
-                type: boolean
-                x-go-name: Sensitive
-            spoiler_text:
-                description: |-
-                    Text to be shown as a warning or subject before the actual content.
-                    Statuses are generally collapsed behind this field.
-                    in: formData
-                type: string
-                x-go-name: SpoilerText
-            status:
-                description: |-
-                    Text content of the status.
-                    If media_ids is provided, this becomes optional.
-                    Attaching a poll is optional while status is provided.
-                    in: formData
-                type: string
-                x-go-name: Status
-            visibility:
-                description: |-
-                    Visibility of the posted status.
-                    in: formData
-                type: string
-                x-go-name: Visibility
+                x-go-name: VisibleInPicker
+        title: AdminEmoji models the admin view of a custom emoji.
         type: object
-        x-go-name: AdvancedStatusCreateForm
+        x-go-name: AdminEmoji
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     advancedVisibilityFlagsForm:
         description: |-
@@ -938,8 +870,27 @@ definitions:
         type: object
         x-go-name: Emoji
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    emojiCategory:
+        properties:
+            id:
+                description: The ID of the custom emoji category.
+                type: string
+                x-go-name: ID
+            name:
+                description: The name of the custom emoji category.
+                type: string
+                x-go-name: Name
+        title: EmojiCategory represents a custom emoji category.
+        type: object
+        x-go-name: EmojiCategory
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     emojiCreateRequest:
         properties:
+            CategoryName:
+                description: |-
+                    Category in which to place the new emoji. Will be uncategorized by default.
+                    CategoryName length should not exceed 64 characters.
+                type: string
             Image:
                 description: Image file to use for the emoji. Must be png or gif and no larger than 50kb.
             Shortcode:
@@ -949,6 +900,25 @@ definitions:
         title: EmojiCreateRequest represents a request to create a custom emoji made through the admin API.
         type: object
         x-go-name: EmojiCreateRequest
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    emojiUpdateRequest:
+        properties:
+            CategoryName:
+                description: Category in which to place the emoji.
+                type: string
+            Image:
+                description: |-
+                    Image file to use for the emoji.
+                    Must be png or gif and no larger than 50kb.
+            Shortcode:
+                description: Desired shortcode for the emoji, without surrounding colons. This must be unique for the domain.
+                example: blobcat_uwu
+                type: string
+            type:
+                $ref: '#/definitions/EmojiUpdateType'
+        title: EmojiUpdateRequest represents a request to update a custom emoji, made through the admin API.
+        type: object
+        x-go-name: EmojiUpdateRequest
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     field:
         properties:
@@ -1048,6 +1018,16 @@ definitions:
                 example: https://example.org/files/instance/thumbnail.jpeg
                 type: string
                 x-go-name: Thumbnail
+            thumbnail_description:
+                description: Description of the instance thumbnail.
+                example: picture of a cute lil' friendly sloth
+                type: string
+                x-go-name: ThumbnailDescription
+            thumbnail_type:
+                description: MIME type of the instance thumbnail.
+                example: image/png
+                type: string
+                x-go-name: ThumbnailType
             title:
                 description: The title of the instance.
                 example: GoToSocial Example Instance
@@ -1078,6 +1058,8 @@ definitions:
         properties:
             accounts:
                 $ref: '#/definitions/InstanceConfigurationAccounts'
+            emojis:
+                $ref: '#/definitions/InstanceConfigurationEmojis'
             media_attachments:
                 $ref: '#/definitions/instanceConfigurationMediaAttachments'
             polls:
@@ -1694,6 +1676,78 @@ definitions:
         title: Context models the tree around a given status.
         type: object
         x-go-name: Context
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    statusCreateRequest:
+        properties:
+            format:
+                description: |-
+                    Format to use when parsing this status.
+                    in: formData
+                type: string
+                x-go-name: Format
+            in_reply_to_id:
+                description: |-
+                    ID of the status being replied to, if status is a reply.
+                    in: formData
+                type: string
+                x-go-name: InReplyToID
+            language:
+                description: |-
+                    ISO 639 language code for this status.
+                    in: formData
+                type: string
+                x-go-name: Language
+            media_ids:
+                description: |-
+                    Array of Attachment ids to be attached as media.
+                    If provided, status becomes optional, and poll cannot be used.
+
+                    If the status is being submitted as a form, the key is 'media_ids[]',
+                    but if it's json or xml, the key is 'media_ids'.
+
+                    in: formData
+                items:
+                    type: string
+                type: array
+                x-go-name: MediaIDs
+            scheduled_at:
+                description: |-
+                    ISO 8601 Datetime at which to schedule a status.
+                    Providing this parameter will cause ScheduledStatus to be returned instead of Status.
+                    Must be at least 5 minutes in the future.
+                    in: formData
+                type: string
+                x-go-name: ScheduledAt
+            sensitive:
+                description: |-
+                    Status and attached media should be marked as sensitive.
+                    in: formData
+                type: boolean
+                x-go-name: Sensitive
+            spoiler_text:
+                description: |-
+                    Text to be shown as a warning or subject before the actual content.
+                    Statuses are generally collapsed behind this field.
+                    in: formData
+                type: string
+                x-go-name: SpoilerText
+            status:
+                description: |-
+                    Text content of the status.
+                    If media_ids is provided, this becomes optional.
+                    Attaching a poll is optional while status is provided.
+                    in: formData
+                type: string
+                x-go-name: Status
+            visibility:
+                description: |-
+                    Visibility of the posted status.
+                    in: formData
+                type: string
+                x-go-name: Visibility
+        title: StatusCreateRequest models status creation parameters.
+        type: object
+        x-go-name: StatusCreateRequest
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     statusReblogged:
         properties:
@@ -2563,6 +2617,10 @@ paths:
                   in: formData
                   name: custom_css
                   type: string
+                - description: Enable RSS feed for this account's Public posts at `/[username]/feed.rss`
+                  in: formData
+                  name: enable_rss
+                  type: boolean
             produces:
                 - application/json
             responses:
@@ -2656,6 +2714,80 @@ paths:
             tags:
                 - admin
     /api/v1/admin/custom_emojis:
+        get:
+            description: |-
+                The next and previous queries can be parsed from the returned Link header.
+                Example:
+
+                `<http://localhost:8080/api/v1/admin/custom_emojis?limit=30&max_shortcode_domain=yell@fossbros-anonymous.io&filter=domain:all>; rel="next", <http://localhost:8080/api/v1/admin/custom_emojis?limit=30&min_shortcode_domain=rainbow@&filter=domain:all>; rel="prev"`
+            operationId: emojisGet
+            parameters:
+                - default: domain:all
+                  description: |-
+                    Comma-separated list of filters to apply to results. Recognized filters are:
+
+                    `domain:[domain]` -- show emojis from the given domain, eg `?filter=domain:example.org` will show emojis from `example.org` only.
+                    Instead of giving a specific domain, you can also give either one of the key words `local` or `all` to show either local emojis only (`domain:local`) or show all emojis from all domains (`domain:all`).
+                    Note: `domain:*` is equivalent to `domain:all` (including local).
+                    If no domain filter is provided, `domain:all` will be assumed.
+
+                    `disabled` -- include emojis that have been disabled.
+
+                    `enabled` -- include emojis that are enabled.
+
+                    `shortcode:[shortcode]` -- show only emojis with the given shortcode, eg `?filter=shortcode:blob_cat_uwu` will show only emojis with the shortcode `blob_cat_uwu` (case sensitive).
+
+                    If neither `disabled` or `enabled` are provided, both disabled and enabled emojis will be shown.
+
+                    If no filter query string is provided, the default `domain:all` will be used, which will show all emojis from all domains.
+                  in: query
+                  name: filter
+                  type: string
+                - default: 50
+                  description: Number of emojis to return. Less than 1, or not set, means unlimited (all emojis).
+                  in: query
+                  name: limit
+                  type: integer
+                - description: |-
+                    Return only emojis with `[shortcode]@[domain]` *LOWER* (alphabetically) than given `[shortcode]@[domain]`. For example, if `max_shortcode_domain=beep@example.org`, then returned values might include emojis with `[shortcode]@[domain]`s like `car@example.org`, `debian@aaa.com`, `test@` (local emoji), etc.
+                    Emoji with the given `[shortcode]@[domain]` will not be included in the result set.
+                  in: query
+                  name: max_shortcode_domain
+                  type: string
+                - description: |-
+                    Return only emojis with `[shortcode]@[domain]` *HIGHER* (alphabetically) than given `[shortcode]@[domain]`. For example, if `max_shortcode_domain=beep@example.org`, then returned values might include emojis with `[shortcode]@[domain]`s like `arse@test.com`, `0101_binary@hackers.net`, `bee@` (local emoji), etc.
+                    Emoji with the given `[shortcode]@[domain]` will not be included in the result set.
+                  in: query
+                  name: min_shortcode_domain
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: An array of emojis, arranged alphabetically by shortcode and domain.
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/adminEmoji'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            summary: View local and remote emojis available to / known by this instance.
+            tags:
+                - admin
         post:
             consumes:
                 - multipart/form-data
@@ -2672,6 +2804,10 @@ paths:
                   name: image
                   required: true
                   type: file
+                - description: Category in which to place the new emoji. 64 characters or less. If left blank, emoji will be uncategorized. If a category with the given name doesn't exist yet, it will be created.
+                  in: formData
+                  name: category
+                  type: string
             produces:
                 - application/json
             responses:
@@ -2697,6 +2833,177 @@ paths:
                 - OAuth2 Bearer:
                     - admin
             summary: Upload and create a new instance emoji.
+            tags:
+                - admin
+    /api/v1/admin/custom_emojis/{id}:
+        delete:
+            description: |-
+                Emoji with the given ID will no longer be available to use on the instance.
+
+                If you just want to update the emoji image instead, use the `/api/v1/admin/custom_emojis/{id}` PATCH route.
+
+                To disable emojis from **remote** instances, use the `/api/v1/admin/custom_emojis/{id}` PATCH route.
+            operationId: emojiDelete
+            parameters:
+                - description: The id of the emoji.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The deleted emoji will be returned to the caller in case further processing is necessary.
+                    schema:
+                        $ref: '#/definitions/adminEmoji'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Delete a **local** emoji with the given ID from the instance.
+            tags:
+                - admin
+        get:
+            operationId: emojiGet
+            parameters:
+                - description: The id of the emoji.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: A single emoji.
+                    schema:
+                        $ref: '#/definitions/adminEmoji'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            summary: Get the admin view of a single emoji.
+            tags:
+                - admin
+        patch:
+            consumes:
+                - multipart/form-data
+            description: |-
+                Action performed depends upon the action `type` provided.
+
+                `disable`: disable a REMOTE emoji from being used/displayed on this instance. Does not work for local emojis.
+
+                `copy`: copy a REMOTE emoji to this instance. When doing this action, a shortcode MUST be provided, and it must
+                be unique among emojis already present on this instance. A category MAY be provided, and the copied emoji will then
+                be put into the provided category.
+
+                `modify`: modify a LOCAL emoji. You can provide a new image for the emoji and/or update the category.
+
+                Local emojis cannot be deleted using this endpoint. To delete a local emoji, check DELETE /api/v1/admin/custom_emojis/{id} instead.
+            operationId: emojiUpdate
+            parameters:
+                - description: The id of the emoji.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - description: |-
+                    Type of action to be taken. One of: (`disable`, `copy`, `modify`).
+                    For REMOTE emojis, `copy` or `disable` are supported.
+                    For LOCAL emojis, only `modify` is supported.
+                  in: formData
+                  name: type
+                  required: true
+                  type: string
+                - description: The code to use for the emoji, which will be used by instance denizens to select it. This must be unique on the instance. Works for the `copy` action type only.
+                  in: formData
+                  name: shortcode
+                  pattern: \w{2,30}
+                  type: string
+                - description: A new png or gif image to use for the emoji. Animated pngs work too! To ensure compatibility with other fedi implementations, emoji size limit is 50kb by default. Works for LOCAL emojis only.
+                  in: formData
+                  name: image
+                  type: file
+                - description: Category in which to place the emoji. 64 characters or less. If a category with the given name doesn't exist yet, it will be created.
+                  in: formData
+                  name: category
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The updated emoji.
+                    schema:
+                        $ref: '#/definitions/adminEmoji'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Perform admin action on a local or remote emoji known to this instance.
+            tags:
+                - admin
+    /api/v1/admin/custom_emojis/categories:
+        get:
+            operationId: emojiCategoriesGet
+            parameters:
+                - description: The id of the emoji.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Array of existing emoji categories.
+                    schema:
+                        items:
+                            $ref: '#/definitions/adminEmojiCategory'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            summary: Get a list of existing emoji categories.
             tags:
                 - admin
     /api/v1/admin/domain_blocks:
@@ -3019,6 +3326,34 @@ paths:
             summary: Get an array of accounts that requesting account has blocked.
             tags:
                 - blocks
+    /api/v1/bookmarks:
+        get:
+            description: Get an array of statuses bookmarked in the instance
+            operationId: bookmarksGet
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Array of bookmarked statuses
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/status'
+                        type: array
+                "401":
+                    description: unauthorized
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:bookmarks
+            tags:
+                - bookmarks
     /api/v1/custom_emojis:
         get:
             operationId: customEmojisGet
@@ -3257,11 +3592,15 @@ paths:
                   maximum: 5000
                   name: terms
                   type: string
-                - description: Avatar of the instance.
+                - description: Thumbnail image to use for the instance.
                   in: formData
-                  name: avatar
+                  name: thumbnail
                   type: file
-                - description: Header of the instance.
+                - description: Image description of the submitted instance thumbnail.
+                  in: formData
+                  name: thumbnail_description
+                  type: string
+                - description: Header image to use for the instance.
                   in: formData
                   name: header
                   type: file
@@ -3685,6 +4024,26 @@ paths:
                   name: format
                   type: string
                   x-go-name: Format
+                - description: This status will be federated beyond the local timeline(s).
+                  in: query
+                  name: federated
+                  type: boolean
+                  x-go-name: Federated
+                - description: This status can be boosted/reblogged.
+                  in: query
+                  name: boostable
+                  type: boolean
+                  x-go-name: Boostable
+                - description: This status can be replied to.
+                  in: query
+                  name: replyable
+                  type: boolean
+                  x-go-name: Replyable
+                - description: This status can be liked/faved.
+                  in: query
+                  name: likeable
+                  type: boolean
+                  x-go-name: Likeable
             produces:
                 - application/json
             responses:
@@ -3778,6 +4137,40 @@ paths:
                 - OAuth2 Bearer:
                     - read:statuses
             summary: View status with the given ID.
+            tags:
+                - statuses
+    /api/v1/statuses/{id}/bookmark:
+        post:
+            operationId: statusBookmark
+            parameters:
+                - description: Target status ID.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The status.
+                    schema:
+                        $ref: '#/definitions/status'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:statuses
+            summary: Bookmark status with the given ID.
             tags:
                 - statuses
     /api/v1/statuses/{id}/context:
@@ -3952,6 +4345,40 @@ paths:
                 - OAuth2 Bearer:
                     - read:accounts
             summary: View accounts that have reblogged/boosted the target status.
+            tags:
+                - statuses
+    /api/v1/statuses/{id}/unbookmark:
+        post:
+            operationId: statusUnbookmark
+            parameters:
+                - description: Target status ID.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The status.
+                    schema:
+                        $ref: '#/definitions/status'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:statuses
+            summary: Unbookmark status with the given ID.
             tags:
                 - statuses
     /api/v1/statuses/{id}/unfavourite:

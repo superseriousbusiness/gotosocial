@@ -34,19 +34,18 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
-	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/migrate"
 
-	grufcache "codeberg.org/gruf/go-cache/v2"
 	"modernc.org/sqlite"
 )
 
@@ -88,6 +87,7 @@ type DBService struct {
 	db.Status
 	db.Timeline
 	db.User
+	db.Tombstone
 	conn *DBConn
 }
 
@@ -123,7 +123,7 @@ func doMigration(ctx context.Context, db *bun.DB) error {
 
 // NewBunDBService returns a bunDB derived from the provided config, which implements the go-fed DB interface.
 // Under the hood, it uses https://github.com/uptrace/bun to create and maintain a database connection.
-func NewBunDBService(ctx context.Context) (db.DB, error) {
+func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 	var conn *DBConn
 	var err error
 	dbType := strings.ToLower(config.GetDbType())
@@ -159,47 +159,26 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 		return nil, fmt.Errorf("db migration error: %s", err)
 	}
 
-	// Create DB structs that require ptrs to each other
-	accounts := &accountDB{conn: conn, cache: cache.NewAccountCache()}
-	status := &statusDB{conn: conn, cache: cache.NewStatusCache()}
-	emoji := &emojiDB{conn: conn, cache: cache.NewEmojiCache()}
-	timeline := &timelineDB{conn: conn}
-
-	// Setup DB cross-referencing
-	accounts.status = status
-	status.accounts = accounts
-	timeline.status = status
-
-	// Prepare mentions cache
-	// TODO: move into internal/cache
-	mentionCache := grufcache.New[string, *gtsmodel.Mention]()
-	mentionCache.SetTTL(time.Minute*5, false)
-	mentionCache.Start(time.Second * 10)
-
-	// Prepare notifications cache
-	// TODO: move into internal/cache
-	notifCache := grufcache.New[string, *gtsmodel.Notification]()
-	notifCache.SetTTL(time.Minute*5, false)
-	notifCache.Start(time.Second * 10)
-
-	// Prepare other caches
-	blockCache := cache.NewDomainBlockCache()
-	userCache := cache.NewUserCache()
-
 	ps := &DBService{
-		Account: accounts,
+		Account: &accountDB{
+			conn:  conn,
+			state: state,
+		},
 		Admin: &adminDB{
-			conn:      conn,
-			userCache: userCache,
+			conn:  conn,
+			state: state,
 		},
 		Basic: &basicDB{
 			conn: conn,
 		},
 		Domain: &domainDB{
 			conn:  conn,
-			cache: blockCache,
+			state: state,
 		},
-		Emoji: emoji,
+		Emoji: &emojiDB{
+			conn:  conn,
+			state: state,
+		},
 		Instance: &instanceDB{
 			conn: conn,
 		},
@@ -208,23 +187,34 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 		},
 		Mention: &mentionDB{
 			conn:  conn,
-			cache: mentionCache,
+			state: state,
 		},
 		Notification: &notificationDB{
 			conn:  conn,
-			cache: notifCache,
+			state: state,
 		},
 		Relationship: &relationshipDB{
-			conn: conn,
+			conn:  conn,
+			state: state,
 		},
 		Session: &sessionDB{
 			conn: conn,
 		},
-		Status:   status,
-		Timeline: timeline,
+		Status: &statusDB{
+			conn:  conn,
+			state: state,
+		},
+		Timeline: &timelineDB{
+			conn:  conn,
+			state: state,
+		},
 		User: &userDB{
 			conn:  conn,
-			cache: userCache,
+			state: state,
+		},
+		Tombstone: &tombstoneDB{
+			conn:  conn,
+			state: state,
 		},
 		conn: conn,
 	}

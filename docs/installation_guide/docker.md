@@ -60,11 +60,15 @@ nano docker-compose.yaml
 
 #### Version
 
-First, you should update the GoToSocial version number to the latest stable release.
+If desired, update the GoToSocial Docker image tag to the version of GtS you want to use.
 
-The list of releases can be found [right here](https://github.com/superseriousbusiness/gotosocial/releases), with the newest release at the top.
+`latest`   - the default. This points to the latest stable release of GoToSocial.
 
-Replace `latest` in the docker-compose.yaml with the number of the release (without the leading `v` or trailing version name). So for example if you want to run [v0.3.1 Sleepy Sloth](https://github.com/superseriousbusiness/gotosocial/releases/tag/v0.3.1) you should replace:
+`snapshot` - points to whatever code is currently on the main branch. Not guaranteed to be stable, will often be broken. Use with caution.
+
+You can also replace `latest` with a specific GoToSocial version number. This is recommended when you want to make sure that you don't update your GoToSocial version by accident, which can cause problems.
+
+The list of releases can be found [right here](https://github.com/superseriousbusiness/gotosocial/releases), with the newest release at the top. Replace `latest` in the docker-compose.yaml with the number of the desired release (without the leading `v` or trailing version name). So for example if you want to run [v0.3.1 Sleepy Sloth](https://github.com/superseriousbusiness/gotosocial/releases/tag/v0.3.1) for whatever reason, you should replace:
 
 ```text
 image: superseriousbusiness/gotosocial:latest
@@ -93,6 +97,35 @@ If you want to use [LetsEncrypt](../configuration/letsencrypt.md) for ssl certif
 1. Change the value of `GTS_LETSENCRYPT_ENABLED` to `"true"`.
 2. Remove the `#` before `- "80:80"` in the `ports` section.
 3. (Optional) Set `GTS_LETSENCRYPT_EMAIL_ADDRESS` to a valid email address to receive certificate expiry warnings etc.
+
+#### Reverse proxies
+
+The default port bindings are for exposing GoToSocial directly and publicly. Remove the `#` in front the line that forwards `127.0.0.1:8080:8080` which makes port `8080` available only to the local host. Change that `127.0.0.1` if the reverse proxy is somewhere else.
+
+To ensure [rate limiting](../api/ratelimiting.md) by IP works, remove the `#` in front of `GTS_TRUSTED_PROXIES` and set it to the IP the requests from the reverse proxy are coming from. That's usually the value of the `Gateway` field of the docker network.
+
+```text
+$ docker network inspect gotosocial_gotosocial
+[
+    {
+        "Name": "gotosocial_gotosocial",
+        [...]
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.19.0.0/16",
+                    "Gateway": "172.19.0.1"
+                }
+            ]
+        },
+        [...]
+```
+
+In the example above, it would be `172.19.0.1`.
+
+If unsure, skip the trusted proxies step, continue with the next sections, and once it's running get the `clientIP` from the docker logs.
 
 ### Start GoToSocial
 
@@ -130,7 +163,7 @@ time=2022-04-19T09:48:36Z level=info msg=listening on 0.0.0.0:8080
 
 ### Create your first User
 
-Now that GoToSocial is running, you can execute commands inside the running container to create, confirm, and promote your admin user.
+Now that GoToSocial is running, you can execute commands inside the running container to create and promote your admin user.
 
 First create a user (replace the username, email, and password with appropriate values):
 
@@ -138,11 +171,13 @@ First create a user (replace the username, email, and password with appropriate 
 docker exec -it gotosocial /gotosocial/gotosocial admin account create --username some_username --email someone@example.org --password 'some_very_good_password'
 ```
 
-Now confirm the user, replacing username with the value you used in the command above.
+If you are running a version older than 0.6.0, you will need to manually confirm as well:
 
 ```bash
-docker exec -it gotosocial /gotosocial/gotosocial admin account confirm --username some_username
+./gotosocial --config-path ./config.yaml admin account confirm --username some_username
 ```
+
+Replace `some_username` with the username of the account you just created.
 
 Now promote the user you just created to admin privileges:
 

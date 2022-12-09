@@ -55,14 +55,14 @@ func (p *processor) DomainBlockDelete(ctx context.Context, account *gtsmodel.Acc
 	// remove the domain block reference from the instance, if we have an entry for it
 	i := &gtsmodel.Instance{}
 	if err := p.db.GetWhere(ctx, []db.Where{
-		{Key: "domain", Value: domainBlock.Domain, CaseInsensitive: true},
+		{Key: "domain", Value: domainBlock.Domain},
 		{Key: "domain_block_id", Value: id},
 	}, i); err == nil {
 		updatingColumns := []string{"suspended_at", "domain_block_id", "updated_at"}
 		i.SuspendedAt = time.Time{}
 		i.DomainBlockID = ""
 		i.UpdatedAt = time.Now()
-		if err := p.db.UpdateByPrimaryKey(ctx, i, updatingColumns...); err != nil {
+		if err := p.db.UpdateByID(ctx, i, i.ID, updatingColumns...); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("couldn't update database entry for instance %s: %s", domainBlock.Domain, err))
 		}
 	}

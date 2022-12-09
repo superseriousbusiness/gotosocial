@@ -29,6 +29,7 @@ const { formFields } = require("../components/form-fields");
 const api = require("../lib/api");
 const adminActions = require("../redux/reducers/admin").actions;
 const submit = require("../lib/submit");
+const BackButton = require("../components/back-button");
 
 const base = "/settings/admin/federation";
 
@@ -49,7 +50,7 @@ module.exports = function AdminSettings() {
 				return dispatch(api.admin.fetchDomainBlocks());
 			});
 		}
-	}, []);
+	}, [dispatch, loadedBlockedInstances]);
 
 	if (!loadedBlockedInstances) {
 		return (
@@ -280,14 +281,6 @@ function BulkBlocking() {
 	);
 }
 
-function BackButton() {
-	return (
-		<Link to={base}>
-			<a className="button">&lt; back</a>
-		</Link>
-	);
-}
-
 function InstancePageWrapped() {
 	/* We wrap the component to generate formFields with a setter depending on the domain
 		 if formFields() is used inside the same component that is re-rendered with their state,
@@ -322,7 +315,7 @@ function InstancePage({domain, Form}) {
 		if (entry == undefined) {
 			dispatch(api.admin.getEditableDomainBlock(domain));
 		}
-	}, []);
+	}, [dispatch, domain, entry]);
 
 	const [errorMsg, setError] = React.useState("");
 	const [statusMsg, setStatus] = React.useState("");
@@ -345,29 +338,40 @@ function InstancePage({domain, Form}) {
 
 	return (
 		<div>
-			<h1><BackButton/> Federation settings for: {domain}</h1>
-			{entry.new && "No stored block yet, you can add one below:"}
+			<h1><BackButton to={base}/> Federation settings for: {domain}</h1>
+			{entry.new 
+				? "No stored block yet, you can add one below:"
+				: <b className="error">Editing domain blocks is not implemented yet, <a href="https://github.com/superseriousbusiness/gotosocial/issues/1198" target="_blank" rel="noopener noreferrer">check here for progress</a>.</b>
+			}
 
 			<Form.TextArea
 				id="public_comment"
 				name="Public comment"
+				inputProps={{
+					disabled: !entry.new
+				}}
 			/>
 
 			<Form.TextArea
 				id="private_comment"
 				name="Private comment"
+				inputProps={{
+					disabled: !entry.new
+				}}
 			/>
 
 			<Form.Checkbox
 				id="obfuscate"
 				name="Obfuscate domain? "
+				inputProps={{
+					disabled: !entry.new
+				}}
 			/>
 
 			<div className="messagebutton">
-				<button type="submit" onClick={updateBlock}>{entry.new ? "Add block" : "Save block"}</button>
-
-				{!entry.new &&
-					<button className="danger" onClick={removeBlock}>Remove block</button>
+				{entry.new
+					? <button type="submit" onClick={updateBlock}>{entry.new ? "Add block" : "Save block"}</button>
+					: <button className="danger" onClick={removeBlock}>Remove block</button>
 				}
 
 				{errorMsg.length > 0 && 

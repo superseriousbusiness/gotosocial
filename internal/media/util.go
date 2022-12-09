@@ -37,6 +37,7 @@ func AllSupportedMIMETypes() []string {
 		mimeImageJpeg,
 		mimeImageGif,
 		mimeImagePng,
+		mimeImageWebp,
 	}
 }
 
@@ -68,6 +69,7 @@ func supportedImage(mimeType string) bool {
 		mimeImageJpeg,
 		mimeImageGif,
 		mimeImagePng,
+		mimeImageWebp,
 	}
 	for _, accepted := range acceptedImageTypes {
 		if mimeType == accepted {
@@ -163,7 +165,7 @@ func (r *lengthReader) Read(b []byte) (int, error) {
 // putStream either puts a file with a known fileSize into storage directly, and returns the
 // fileSize unchanged, or it wraps the reader with a lengthReader and returns the discovered
 // fileSize.
-func putStream(ctx context.Context, storage storage.Driver, key string, r io.Reader, fileSize int64) (int64, error) {
+func putStream(ctx context.Context, storage *storage.Driver, key string, r io.Reader, fileSize int64) (int64, error) {
 	if fileSize > 0 {
 		return fileSize, storage.PutStream(ctx, key, r)
 	}

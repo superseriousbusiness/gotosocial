@@ -22,6 +22,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
+	"strings"
 	"testing"
 	"time"
 
@@ -40,6 +41,18 @@ func (suite *AccountTestSuite) TestGetAccountStatuses() {
 	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, false, false, "", "", false, false, false)
 	suite.NoError(err)
 	suite.Len(statuses, 5)
+}
+
+func (suite *AccountTestSuite) TestGetAccountStatusesExcludeRepliesAndReblogs() {
+	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, true, true, "", "", false, false, false)
+	suite.NoError(err)
+	suite.Len(statuses, 5)
+}
+
+func (suite *AccountTestSuite) TestGetAccountStatusesExcludeRepliesAndReblogsPublicOnly() {
+	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, true, true, "", "", false, false, true)
+	suite.NoError(err)
+	suite.Len(statuses, 1)
 }
 
 func (suite *AccountTestSuite) TestGetAccountStatusesMediaOnly() {
@@ -72,6 +85,22 @@ func (suite *AccountTestSuite) TestGetAccountByUsernameDomain() {
 	suite.NotNil(account2)
 }
 
+func (suite *AccountTestSuite) TestGetAccountByUsernameDomainMixedCase() {
+	testAccount := suite.testAccounts["remote_account_2"]
+
+	account1, err := suite.db.GetAccountByUsernameDomain(context.Background(), testAccount.Username, testAccount.Domain)
+	suite.NoError(err)
+	suite.NotNil(account1)
+
+	account2, err := suite.db.GetAccountByUsernameDomain(context.Background(), strings.ToUpper(testAccount.Username), testAccount.Domain)
+	suite.NoError(err)
+	suite.NotNil(account2)
+
+	account3, err := suite.db.GetAccountByUsernameDomain(context.Background(), strings.ToLower(testAccount.Username), testAccount.Domain)
+	suite.NoError(err)
+	suite.NotNil(account3)
+}
+
 func (suite *AccountTestSuite) TestUpdateAccount() {
 	ctx := context.Background()
 
@@ -80,7 +109,7 @@ func (suite *AccountTestSuite) TestUpdateAccount() {
 	testAccount.DisplayName = "new display name!"
 	testAccount.EmojiIDs = []string{"01GD36ZKWTKY3T1JJ24JR7KY1Q", "01GD36ZV904SHBHNAYV6DX5QEF"}
 
-	_, err := suite.db.UpdateAccount(ctx, testAccount)
+	err := suite.db.UpdateAccount(ctx, testAccount)
 	suite.NoError(err)
 
 	updated, err := suite.db.GetAccountByID(ctx, testAccount.ID)
@@ -99,7 +128,7 @@ func (suite *AccountTestSuite) TestUpdateAccount() {
 	err = dbService.GetConn().
 		NewSelect().
 		Model(noCache).
-		Where("account.id = ?", bun.Ident(testAccount.ID)).
+		Where("? = ?", bun.Ident("account.id"), testAccount.ID).
 		Relation("AvatarMediaAttachment").
 		Relation("HeaderMediaAttachment").
 		Relation("Emojis").
@@ -115,7 +144,7 @@ func (suite *AccountTestSuite) TestUpdateAccount() {
 	// update again to remove emoji associations
 	testAccount.EmojiIDs = []string{}
 
-	_, err = suite.db.UpdateAccount(ctx, testAccount)
+	err = suite.db.UpdateAccount(ctx, testAccount)
 	suite.NoError(err)
 
 	updated, err = suite.db.GetAccountByID(ctx, testAccount.ID)
@@ -127,7 +156,7 @@ func (suite *AccountTestSuite) TestUpdateAccount() {
 	err = dbService.GetConn().
 		NewSelect().
 		Model(noCache).
-		Where("account.id = ?", bun.Ident(testAccount.ID)).
+		Where("? = ?", bun.Ident("account.id"), testAccount.ID).
 		Relation("AvatarMediaAttachment").
 		Relation("HeaderMediaAttachment").
 		Relation("Emojis").
@@ -140,9 +169,15 @@ func (suite *AccountTestSuite) TestUpdateAccount() {
 }
 
 func (suite *AccountTestSuite) TestGetAccountLastPosted() {
-	lastPosted, err := suite.db.GetAccountLastPosted(context.Background(), suite.testAccounts["local_account_1"].ID)
+	lastPosted, err := suite.db.GetAccountLastPosted(context.Background(), suite.testAccounts["local_account_1"].ID, false)
 	suite.NoError(err)
 	suite.EqualValues(1653046675, lastPosted.Unix())
+}
+
+func (suite *AccountTestSuite) TestGetAccountLastPostedWebOnly() {
+	lastPosted, err := suite.db.GetAccountLastPosted(context.Background(), suite.testAccounts["local_account_1"].ID, true)
+	suite.NoError(err)
+	suite.EqualValues(1634726437, lastPosted.Unix())
 }
 
 func (suite *AccountTestSuite) TestInsertAccountWithDefaults() {
@@ -171,6 +206,12 @@ func (suite *AccountTestSuite) TestInsertAccountWithDefaults() {
 	suite.False(*newAccount.Discoverable)
 	suite.False(*newAccount.Sensitive)
 	suite.False(*newAccount.HideCollections)
+}
+
+func (suite *AccountTestSuite) TestGettingBookmarksWithNoAccount() {
+	statuses, err := suite.db.GetBookmarks(context.Background(), "", 10, "", "")
+	suite.Error(err)
+	suite.Nil(statuses)
 }
 
 func TestAccountTestSuite(t *testing.T) {

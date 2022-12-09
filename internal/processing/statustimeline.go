@@ -137,40 +137,47 @@ func StatusSkipInsertFunction() timeline.SkipInsertFunction {
 	}
 }
 
-func (p *processor) HomeTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.TimelineResponse, gtserror.WithCode) {
+func (p *processor) HomeTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode) {
 	preparedItems, err := p.statusTimelines.GetTimeline(ctx, authed.Account.ID, maxID, sinceID, minID, limit, local)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if len(preparedItems) == 0 {
-		return util.EmptyTimelineResponse(), nil
+	count := len(preparedItems)
+
+	if count == 0 {
+		return util.EmptyPageableResponse(), nil
 	}
 
-	timelineables := []timeline.Timelineable{}
-	for _, i := range preparedItems {
-		status, ok := i.(*apimodel.Status)
-		if !ok {
-			return nil, gtserror.NewErrorInternalError(errors.New("error converting prepared timeline entry to api status"))
+	items := []interface{}{}
+	nextMaxIDValue := ""
+	prevMinIDValue := ""
+	for i, item := range preparedItems {
+		if i == count-1 {
+			nextMaxIDValue = item.GetID()
 		}
-		timelineables = append(timelineables, status)
+
+		if i == 0 {
+			prevMinIDValue = item.GetID()
+		}
+		items = append(items, item)
 	}
 
-	return util.PackageTimelineableResponse(util.TimelineableResponseParams{
-		Items:          timelineables,
+	return util.PackagePageableResponse(util.PageableResponseParams{
+		Items:          items,
 		Path:           "api/v1/timelines/home",
-		NextMaxIDValue: timelineables[len(timelineables)-1].GetID(),
-		PrevMinIDValue: timelineables[0].GetID(),
+		NextMaxIDValue: nextMaxIDValue,
+		PrevMinIDValue: prevMinIDValue,
 		Limit:          limit,
 	})
 }
 
-func (p *processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.TimelineResponse, gtserror.WithCode) {
-	statuses, err := p.db.GetPublicTimeline(ctx, authed.Account.ID, maxID, sinceID, minID, limit, local)
+func (p *processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode) {
+	statuses, err := p.db.GetPublicTimeline(ctx, maxID, sinceID, minID, limit, local)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			// there are just no entries left
-			return util.EmptyTimelineResponse(), nil
+			return util.EmptyPageableResponse(), nil
 		}
 		// there's an actual error
 		return nil, gtserror.NewErrorInternalError(err)
@@ -181,30 +188,41 @@ func (p *processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, m
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if len(filtered) == 0 {
-		return util.EmptyTimelineResponse(), nil
+	count := len(filtered)
+
+	if count == 0 {
+		return util.EmptyPageableResponse(), nil
 	}
 
-	timelineables := []timeline.Timelineable{}
-	for _, i := range filtered {
-		timelineables = append(timelineables, i)
+	items := []interface{}{}
+	nextMaxIDValue := ""
+	prevMinIDValue := ""
+	for i, item := range filtered {
+		if i == count-1 {
+			nextMaxIDValue = item.GetID()
+		}
+
+		if i == 0 {
+			prevMinIDValue = item.GetID()
+		}
+		items = append(items, item)
 	}
 
-	return util.PackageTimelineableResponse(util.TimelineableResponseParams{
-		Items:          timelineables,
+	return util.PackagePageableResponse(util.PageableResponseParams{
+		Items:          items,
 		Path:           "api/v1/timelines/public",
-		NextMaxIDValue: timelineables[len(timelineables)-1].GetID(),
-		PrevMinIDValue: timelineables[0].GetID(),
+		NextMaxIDValue: nextMaxIDValue,
+		PrevMinIDValue: prevMinIDValue,
 		Limit:          limit,
 	})
 }
 
-func (p *processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.TimelineResponse, gtserror.WithCode) {
+func (p *processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
 	statuses, nextMaxID, prevMinID, err := p.db.GetFavedTimeline(ctx, authed.Account.ID, maxID, minID, limit)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			// there are just no entries left
-			return util.EmptyTimelineResponse(), nil
+			return util.EmptyPageableResponse(), nil
 		}
 		// there's an actual error
 		return nil, gtserror.NewErrorInternalError(err)
@@ -216,16 +234,16 @@ func (p *processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, ma
 	}
 
 	if len(filtered) == 0 {
-		return util.EmptyTimelineResponse(), nil
+		return util.EmptyPageableResponse(), nil
 	}
 
-	timelineables := []timeline.Timelineable{}
-	for _, i := range filtered {
-		timelineables = append(timelineables, i)
+	items := []interface{}{}
+	for _, item := range filtered {
+		items = append(items, item)
 	}
 
-	return util.PackageTimelineableResponse(util.TimelineableResponseParams{
-		Items:          timelineables,
+	return util.PackagePageableResponse(util.PageableResponseParams{
+		Items:          items,
 		Path:           "api/v1/favourites",
 		NextMaxIDValue: nextMaxID,
 		PrevMinIDValue: prevMinID,

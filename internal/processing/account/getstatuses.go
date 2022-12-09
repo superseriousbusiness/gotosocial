@@ -26,11 +26,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinnedOnly bool, mediaOnly bool, publicOnly bool) (*apimodel.TimelineResponse, gtserror.WithCode) {
+func (p *processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinnedOnly bool, mediaOnly bool, publicOnly bool) (*apimodel.PageableResponse, gtserror.WithCode) {
 	if requestingAccount != nil {
 		if blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true); err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
@@ -42,7 +41,7 @@ func (p *processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 	statuses, err := p.db.GetAccountStatuses(ctx, targetAccountID, limit, excludeReplies, excludeReblogs, maxID, minID, pinnedOnly, mediaOnly, publicOnly)
 	if err != nil {
 		if err == db.ErrNoEntries {
-			return util.EmptyTimelineResponse(), nil
+			return util.EmptyPageableResponse(), nil
 		}
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -55,25 +54,37 @@ func (p *processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 		}
 	}
 
-	if len(filtered) == 0 {
-		return util.EmptyTimelineResponse(), nil
+	count := len(filtered)
+
+	if count == 0 {
+		return util.EmptyPageableResponse(), nil
 	}
 
-	timelineables := []timeline.Timelineable{}
-	for _, i := range filtered {
-		apiStatus, err := p.tc.StatusToAPIStatus(ctx, i, requestingAccount)
+	items := []interface{}{}
+	nextMaxIDValue := ""
+	prevMinIDValue := ""
+	for i, s := range filtered {
+		item, err := p.tc.StatusToAPIStatus(ctx, s, requestingAccount)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status to api: %s", err))
 		}
 
-		timelineables = append(timelineables, apiStatus)
+		if i == count-1 {
+			nextMaxIDValue = item.GetID()
+		}
+
+		if i == 0 {
+			prevMinIDValue = item.GetID()
+		}
+
+		items = append(items, item)
 	}
 
-	return util.PackageTimelineableResponse(util.TimelineableResponseParams{
-		Items:          timelineables,
+	return util.PackagePageableResponse(util.PageableResponseParams{
+		Items:          items,
 		Path:           fmt.Sprintf("/api/v1/accounts/%s/statuses", targetAccountID),
-		NextMaxIDValue: timelineables[len(timelineables)-1].GetID(),
-		PrevMinIDValue: timelineables[0].GetID(),
+		NextMaxIDValue: nextMaxIDValue,
+		PrevMinIDValue: prevMinIDValue,
 		Limit:          limit,
 		ExtraQueryParams: []string{
 			fmt.Sprintf("exclude_replies=%t", excludeReplies),
@@ -85,7 +96,7 @@ func (p *processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 	})
 }
 
-func (p *processor) WebStatusesGet(ctx context.Context, targetAccountID string, maxID string) (*apimodel.TimelineResponse, gtserror.WithCode) {
+func (p *processor) WebStatusesGet(ctx context.Context, targetAccountID string, maxID string) (*apimodel.PageableResponse, gtserror.WithCode) {
 	acct, err := p.db.GetAccountByID(ctx, targetAccountID)
 	if err != nil {
 		if err == db.ErrNoEntries {
@@ -103,26 +114,42 @@ func (p *processor) WebStatusesGet(ctx context.Context, targetAccountID string, 
 	statuses, err := p.db.GetAccountWebStatuses(ctx, targetAccountID, 10, maxID)
 	if err != nil {
 		if err == db.ErrNoEntries {
-			return util.EmptyTimelineResponse(), nil
+			return util.EmptyPageableResponse(), nil
 		}
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	timelineables := []timeline.Timelineable{}
-	for _, i := range statuses {
-		apiStatus, err := p.tc.StatusToAPIStatus(ctx, i, nil)
+	count := len(statuses)
+
+	if count == 0 {
+		return util.EmptyPageableResponse(), nil
+	}
+
+	items := []interface{}{}
+	nextMaxIDValue := ""
+	prevMinIDValue := ""
+	for i, s := range statuses {
+		item, err := p.tc.StatusToAPIStatus(ctx, s, nil)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status to api: %s", err))
 		}
 
-		timelineables = append(timelineables, apiStatus)
+		if i == count-1 {
+			nextMaxIDValue = item.GetID()
+		}
+
+		if i == 0 {
+			prevMinIDValue = item.GetID()
+		}
+
+		items = append(items, item)
 	}
 
-	return util.PackageTimelineableResponse(util.TimelineableResponseParams{
-		Items:            timelineables,
+	return util.PackagePageableResponse(util.PageableResponseParams{
+		Items:            items,
 		Path:             "/@" + acct.Username,
-		NextMaxIDValue:   timelineables[len(timelineables)-1].GetID(),
-		PrevMinIDValue:   timelineables[0].GetID(),
+		NextMaxIDValue:   nextMaxIDValue,
+		PrevMinIDValue:   prevMinIDValue,
 		ExtraQueryParams: []string{},
 	})
 }

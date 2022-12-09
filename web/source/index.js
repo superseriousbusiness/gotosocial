@@ -18,47 +18,70 @@
 
 "use strict";
 
-/*
-	Bundle the PostCSS stylesheets and javascript bundles for general frontend and settings panel
-*/
+const skulk = require("skulk");
+const fs = require("fs");
+const path = require("path");
 
-const path = require('path');
-const fsSync = require("fs");
-const chalk = require("chalk");
-
-const gtsBundler = require("./lib/bundler");
-
-const devMode = process.env.NODE_ENV == "development";
-if (devMode) {
-	console.log(chalk.yellow("GoToSocial web asset bundler, running in development mode"));
-} else {
-	console.log(chalk.yellow("GoToSocial web asset bundler, creating production build"));
-	process.env.NODE_ENV = "production";
-}
-
-let cssFiles = fsSync.readdirSync(path.join(__dirname, "./css")).map((file) => {
+let cssEntryFiles = fs.readdirSync(path.join(__dirname, "./css")).map((file) => {
 	return path.join(__dirname, "./css", file);
 });
 
-const bundles = [
-	{
-		outputFile: "frontend.js",
-		entryFiles: ["./frontend/index.js"],
-		babelOptions: {
+const prodCfg = {
+	transform: [
+		["uglifyify", {
 			global: true,
-			exclude: /node_modules\/(?!photoswipe-dynamic-caption-plugin)/,
-		}
-	},
-	{
-		outputFile: "react-bundle.js",
-		factors: {
-			"./settings/index.js": "settings.js",
-		}
-	},
-	{
-		outputFile: "_delete", // not needed, we only care for the css that's already split-out by css-extract
-		entryFiles: cssFiles,
-	}
-];
+			exts: ".js"
+		}],
+		["@browserify/envify", {global: true}]
+	]
+};
 
-return gtsBundler(devMode, bundles);
+skulk({
+	name: "GoToSocial",
+	basePath: __dirname,
+	assetPath: "../assets/",
+	prodCfg: {
+		servers: {
+			express: false,
+			livereload: false
+		}
+	},
+	servers: {
+		express: {
+			proxy: "http://localhost:8081",
+			assets: "/assets"
+		}
+	},
+	bundles: {
+		frontend: {
+			entryFile: "frontend",
+			outputFile: "frontend.js",
+			preset: ["js"],
+			prodCfg: prodCfg,
+			transform: [
+				["babelify", {
+					global: true,
+					ignore: [/node_modules\/(?!(photoswipe.*))/]
+				}]
+			],
+		},
+		settings: {
+			entryFile: "settings",
+			outputFile: "settings.js",
+			prodCfg: prodCfg,
+			presets: [
+				"react",
+				["postcss", {
+					output: "settings-style.css"
+				}]
+			]
+		},
+		css: {
+			entryFiles: cssEntryFiles,
+			outputFile: "_discard",
+			presets: [["postcss", {
+				output: "_split"
+			}]]
+		}
+	}
+});

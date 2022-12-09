@@ -69,7 +69,9 @@ type Manager interface {
 	// uri is the ActivityPub URI/ID of the emoji.
 	//
 	// ai is optional and can be nil. Any additional information about the emoji provided will be put in the database.
-	ProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo) (*ProcessingEmoji, error)
+	//
+	// If refresh is true, this indicates that the emoji image has changed and should be updated.
+	ProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error)
 	// RecacheMedia refetches, reprocesses, and recaches an existing attachment that has been uncached via pruneRemote.
 	RecacheMedia(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, attachmentID string) (*ProcessingMedia, error)
 
@@ -89,6 +91,12 @@ type Manager interface {
 	//
 	// The returned int is the amount of media that was pruned by this function.
 	PruneUnusedLocalAttachments(ctx context.Context) (int, error)
+	// PruneOrphaned prunes files that exist in storage but which do not have a corresponding
+	// entry in the database.
+	//
+	// If dry is true, then nothing will be changed, only the amount that *would* be removed
+	// is returned to the caller.
+	PruneOrphaned(ctx context.Context, dry bool) (int, error)
 
 	// Stop stops the underlying worker pool of the manager. It should be called
 	// when closing GoToSocial in order to cleanly finish any in-progress jobs.
@@ -98,7 +106,7 @@ type Manager interface {
 
 type manager struct {
 	db           db.DB
-	storage      storage.Driver
+	storage      *storage.Driver
 	emojiWorker  *concurrency.WorkerPool[*ProcessingEmoji]
 	mediaWorker  *concurrency.WorkerPool[*ProcessingMedia]
 	stopCronJobs func() error
@@ -110,7 +118,7 @@ type manager struct {
 // a limited number of media will be processed in parallel. The numbers of workers
 // is determined from the $GOMAXPROCS environment variable (usually no. CPU cores).
 // See internal/concurrency.NewWorkerPool() documentation for further information.
-func NewManager(database db.DB, storage storage.Driver) (Manager, error) {
+func NewManager(database db.DB, storage *storage.Driver) (Manager, error) {
 	m := &manager{
 		db:      database,
 		storage: storage,
@@ -164,8 +172,8 @@ func (m *manager) ProcessMedia(ctx context.Context, data DataFunc, postData Post
 	return processingMedia, nil
 }
 
-func (m *manager) ProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo) (*ProcessingEmoji, error) {
-	processingEmoji, err := m.preProcessEmoji(ctx, data, postData, shortcode, id, uri, ai)
+func (m *manager) ProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error) {
+	processingEmoji, err := m.preProcessEmoji(ctx, data, postData, shortcode, id, uri, ai, refresh)
 	if err != nil {
 		return nil, err
 	}

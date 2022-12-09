@@ -30,10 +30,10 @@
 	src: url(../NotoSans-Bold.ttf) format('truetype');
 }
 
-// standard border radius for nice squircles
+/* standard border radius for nice squircles */
 $br: 0.4rem;
-// border radius for items that are framed/bordered
-// inside something with $br, eg avatar, header img
+/* border radius for items that are framed/bordered
+   inside something with $br, eg avatar, header img */
 $br-inner: 0.2rem; 
 
 html, body {
@@ -60,6 +60,7 @@ body {
 	display: grid;
 	min-height: 100%;
 	min-width: 100%;
+	width: 100%;
 
 	grid-template-columns: auto minmax(auto, 90ch) auto;
 	grid-template-columns: auto min(92%, 90ch) auto;
@@ -171,6 +172,16 @@ main {
 		}
 	}
 
+	&:disabled {
+		color: $white2;
+		background: $gray2;
+		cursor: auto;
+
+		&:hover {
+			background: $gray3;
+		}
+	}
+
 	&:hover {
 		background: $button-hover-bg;
 	}
@@ -261,12 +272,16 @@ section.login {
 }
 
 section.error {
+	word-break: break-word;
 	display: flex;
 	flex-direction: row;
 	align-items: center;
+	margin-bottom: 0.5rem;
+
 	span {
 		font-size: 2em;
 	}
+
 	pre {
 		border: 1px solid #ff000080;
 		margin-left: 1em;
@@ -285,7 +300,7 @@ section.error {
 	font-weight: bold;
 }
 
-input, select, textarea {
+input, select, textarea, .input {
 	box-sizing: border-box;
 	border: 0.15rem solid $input-border;
 	border-radius: 0.1rem;
@@ -355,13 +370,27 @@ footer {
 }
 
 .emoji {
-	width: 2.5ex;
-	height: 2.5ex;
-	margin: -0.5ex 0 0;
+	width: 1.45em;
+	height: 1.45em;
+	margin: -0.2em 0.02em 0;
 	object-fit: contain;
 	vertical-align: middle;
 }
 
 .monospace {
 	font-family: monospace;
+}
+
+.callout {
+	margin: 1.5rem 0;
+	border: .05rem solid $border-accent;
+	border-radius: .2rem;
+	padding: 0 .6rem .6rem;
+	.callout-title {
+		margin: 0 -.6rem;
+		padding: .6rem;
+		font-weight: bold;
+		background-color: $border-accent;
+		color: $gray1;
+	}
 }

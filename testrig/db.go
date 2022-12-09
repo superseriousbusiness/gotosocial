@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
 var testModels = []interface{}{
@@ -55,6 +56,8 @@ var testModels = []interface{}{
 	&gtsmodel.RouterSession{},
 	&gtsmodel.Token{},
 	&gtsmodel.Client{},
+	&gtsmodel.EmojiCategory{},
+	&gtsmodel.Tombstone{},
 }
 
 // NewTestDB returns a new initialized, empty database for testing.
@@ -81,7 +84,7 @@ func NewTestDB() db.DB {
 	}
 
 	if alternateDBPort := os.Getenv("GTS_DB_PORT"); alternateDBPort != "" {
-		port, err := strconv.ParseInt(alternateDBPort, 10, 64)
+		port, err := strconv.ParseUint(alternateDBPort, 10, 16)
 		if err != nil {
 			panic(err)
 		}
@@ -90,10 +93,16 @@ func NewTestDB() db.DB {
 		})
 	}
 
-	testDB, err := bundb.NewBunDBService(context.Background())
+	var state state.State
+	state.Caches.Init()
+
+	testDB, err := bundb.NewBunDBService(context.Background(), &state)
 	if err != nil {
 		log.Panic(err)
 	}
+
+	state.DB = testDB
+
 	return testDB
 }
 
@@ -187,7 +196,7 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 	}
 
 	for _, v := range NewTestStatuses() {
-		if err := db.PutStatus(ctx, v); err != nil {
+		if err := db.Put(ctx, v); err != nil {
 			log.Panic(err)
 		}
 	}
@@ -198,7 +207,25 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 		}
 	}
 
+	for _, v := range NewTestEmojiCategories() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(err)
+		}
+	}
+
+	for _, v := range NewTestStatusToEmojis() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(err)
+		}
+	}
+
 	for _, v := range NewTestTags() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(err)
+		}
+	}
+
+	for _, v := range NewTestStatusToTags() {
 		if err := db.Put(ctx, v); err != nil {
 			log.Panic(err)
 		}
@@ -223,6 +250,18 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 	}
 
 	for _, v := range NewTestNotifications() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(err)
+		}
+	}
+
+	for _, v := range NewTestTombstones() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(err)
+		}
+	}
+
+	for _, v := range NewTestBookmarks() {
 		if err := db.Put(ctx, v); err != nil {
 			log.Panic(err)
 		}

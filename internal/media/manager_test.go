@@ -27,8 +27,8 @@ import (
 	"path"
 	"testing"
 
-	"codeberg.org/gruf/go-store/kv"
-	"codeberg.org/gruf/go-store/storage"
+	"codeberg.org/gruf/go-store/v2/kv"
+	"codeberg.org/gruf/go-store/v2/storage"
 	"github.com/stretchr/testify/suite"
 	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -43,19 +43,19 @@ type ManagerTestSuite struct {
 func (suite *ManagerTestSuite) TestEmojiProcessBlocking() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.Reader, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, int64, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/rainbow-original.png")
 		if err != nil {
 			panic(err)
 		}
-		return bytes.NewBuffer(b), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
 	}
 
 	emojiID := "01GDQ9G782X42BAMFASKP64343"
 	emojiURI := "http://localhost:8080/emoji/01GDQ9G782X42BAMFASKP64343"
 
-	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "rainbow_test", emojiID, emojiURI, nil)
+	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "rainbow_test", emojiID, emojiURI, nil, false)
 	suite.NoError(err)
 
 	// do a blocking call to fetch the emoji
@@ -101,22 +101,115 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlocking() {
 	suite.Equal(processedStaticBytesExpected, processedStaticBytes)
 }
 
+func (suite *ManagerTestSuite) TestEmojiProcessBlockingRefresh() {
+	ctx := context.Background()
+
+	// we're going to 'refresh' the remote 'yell' emoji by changing the image url to the pixellated gts logo
+	originalEmoji := suite.testEmojis["yell"]
+
+	emojiToUpdate := &gtsmodel.Emoji{}
+	*emojiToUpdate = *originalEmoji
+	newImageRemoteURL := "http://fossbros-anonymous.io/some/image/path.png"
+
+	oldEmojiImagePath := emojiToUpdate.ImagePath
+	oldEmojiImageStaticPath := emojiToUpdate.ImageStaticPath
+
+	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+		b, err := os.ReadFile("./test/gts_pixellated-original.png")
+		if err != nil {
+			panic(err)
+		}
+		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+	}
+
+	emojiID := emojiToUpdate.ID
+	emojiURI := emojiToUpdate.URI
+
+	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "yell", emojiID, emojiURI, &media.AdditionalEmojiInfo{
+		CreatedAt:      &emojiToUpdate.CreatedAt,
+		Domain:         &emojiToUpdate.Domain,
+		ImageRemoteURL: &newImageRemoteURL,
+	}, true)
+	suite.NoError(err)
+
+	// do a blocking call to fetch the emoji
+	emoji, err := processingEmoji.LoadEmoji(ctx)
+	suite.NoError(err)
+	suite.NotNil(emoji)
+
+	// make sure it's got the stuff set on it that we expect
+	suite.Equal(emojiID, emoji.ID)
+
+	// file meta should be correctly derived from the image
+	suite.Equal("image/png", emoji.ImageContentType)
+	suite.Equal("image/png", emoji.ImageStaticContentType)
+	suite.Equal(10296, emoji.ImageFileSize)
+
+	// now make sure the emoji is in the database
+	dbEmoji, err := suite.db.GetEmojiByID(ctx, emojiID)
+	suite.NoError(err)
+	suite.NotNil(dbEmoji)
+
+	// make sure the processed emoji file is in storage
+	processedFullBytes, err := suite.storage.Get(ctx, emoji.ImagePath)
+	suite.NoError(err)
+	suite.NotEmpty(processedFullBytes)
+
+	// load the processed bytes from our test folder, to compare
+	processedFullBytesExpected, err := os.ReadFile("./test/gts_pixellated-original.png")
+	suite.NoError(err)
+	suite.NotEmpty(processedFullBytesExpected)
+
+	// the bytes in storage should be what we expected
+	suite.Equal(processedFullBytesExpected, processedFullBytes)
+
+	// now do the same for the thumbnail and make sure it's what we expected
+	processedStaticBytes, err := suite.storage.Get(ctx, emoji.ImageStaticPath)
+	suite.NoError(err)
+	suite.NotEmpty(processedStaticBytes)
+
+	processedStaticBytesExpected, err := os.ReadFile("./test/gts_pixellated-static.png")
+	suite.NoError(err)
+	suite.NotEmpty(processedStaticBytesExpected)
+
+	suite.Equal(processedStaticBytesExpected, processedStaticBytes)
+
+	// most fields should be different on the emoji now from what they were before
+	suite.Equal(originalEmoji.ID, dbEmoji.ID)
+	suite.NotEqual(originalEmoji.ImageRemoteURL, dbEmoji.ImageRemoteURL)
+	suite.NotEqual(originalEmoji.ImageURL, dbEmoji.ImageURL)
+	suite.NotEqual(originalEmoji.ImageStaticURL, dbEmoji.ImageStaticURL)
+	suite.NotEqual(originalEmoji.ImageFileSize, dbEmoji.ImageFileSize)
+	suite.NotEqual(originalEmoji.ImageStaticFileSize, dbEmoji.ImageStaticFileSize)
+	suite.NotEqual(originalEmoji.ImagePath, dbEmoji.ImagePath)
+	suite.NotEqual(originalEmoji.ImageStaticPath, dbEmoji.ImageStaticPath)
+	suite.NotEqual(originalEmoji.ImageStaticPath, dbEmoji.ImageStaticPath)
+	suite.NotEqual(originalEmoji.UpdatedAt, dbEmoji.UpdatedAt)
+	suite.NotEqual(originalEmoji.ImageUpdatedAt, dbEmoji.ImageUpdatedAt)
+
+	// the old image files should no longer be in storage
+	_, err = suite.storage.Get(ctx, oldEmojiImagePath)
+	suite.ErrorIs(err, storage.ErrNotFound)
+	_, err = suite.storage.Get(ctx, oldEmojiImageStaticPath)
+	suite.ErrorIs(err, storage.ErrNotFound)
+}
+
 func (suite *ManagerTestSuite) TestEmojiProcessBlockingTooLarge() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.Reader, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, int64, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/big-panda.gif")
 		if err != nil {
 			panic(err)
 		}
-		return bytes.NewBuffer(b), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
 	}
 
 	emojiID := "01GDQ9G782X42BAMFASKP64343"
 	emojiURI := "http://localhost:8080/emoji/01GDQ9G782X42BAMFASKP64343"
 
-	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "big_panda", emojiID, emojiURI, nil)
+	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "big_panda", emojiID, emojiURI, nil, false)
 	suite.NoError(err)
 
 	// do a blocking call to fetch the emoji
@@ -128,19 +221,19 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingTooLarge() {
 func (suite *ManagerTestSuite) TestEmojiProcessBlockingTooLargeNoSizeGiven() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.Reader, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, int64, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/big-panda.gif")
 		if err != nil {
 			panic(err)
 		}
-		return bytes.NewBuffer(b), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
 	}
 
 	emojiID := "01GDQ9G782X42BAMFASKP64343"
 	emojiURI := "http://localhost:8080/emoji/01GDQ9G782X42BAMFASKP64343"
 
-	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "big_panda", emojiID, emojiURI, nil)
+	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "big_panda", emojiID, emojiURI, nil, false)
 	suite.NoError(err)
 
 	// do a blocking call to fetch the emoji
@@ -152,20 +245,20 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingTooLargeNoSizeGiven() {
 func (suite *ManagerTestSuite) TestEmojiProcessBlockingNoFileSizeGiven() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.Reader, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, int64, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/rainbow-original.png")
 		if err != nil {
 			panic(err)
 		}
-		return bytes.NewBuffer(b), -1, nil
+		return io.NopCloser(bytes.NewBuffer(b)), -1, nil
 	}
 
 	emojiID := "01GDQ9G782X42BAMFASKP64343"
 	emojiURI := "http://localhost:8080/emoji/01GDQ9G782X42BAMFASKP64343"
 
 	// process the media with no additional info provided
-	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "rainbow_test", emojiID, emojiURI, nil)
+	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "rainbow_test", emojiID, emojiURI, nil, false)
 	suite.NoError(err)
 
 	// do a blocking call to fetch the emoji
@@ -214,13 +307,13 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingNoFileSizeGiven() {
 func (suite *ManagerTestSuite) TestSimpleJpegProcessBlocking() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.Reader, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, int64, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-jpeg.jpg")
 		if err != nil {
 			panic(err)
 		}
-		return bytes.NewBuffer(b), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -286,14 +379,14 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlocking() {
 func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingNoContentLengthGiven() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.Reader, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, int64, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-jpeg.jpg")
 		if err != nil {
 			panic(err)
 		}
 		// give length as -1 to indicate unknown
-		return bytes.NewBuffer(b), -1, nil
+		return io.NopCloser(bytes.NewBuffer(b)), -1, nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -359,7 +452,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingNoContentLengthGiven
 func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingReadCloser() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.Reader, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, int64, error) {
 		// open test image as a file
 		f, err := os.Open("./test/test-jpeg.jpg")
 		if err != nil {
@@ -432,13 +525,13 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingReadCloser() {
 func (suite *ManagerTestSuite) TestPngNoAlphaChannelProcessBlocking() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.Reader, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, int64, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-png-noalphachannel.png")
 		if err != nil {
 			panic(err)
 		}
-		return bytes.NewBuffer(b), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -504,13 +597,13 @@ func (suite *ManagerTestSuite) TestPngNoAlphaChannelProcessBlocking() {
 func (suite *ManagerTestSuite) TestPngAlphaChannelProcessBlocking() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.Reader, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, int64, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-png-alphachannel.png")
 		if err != nil {
 			panic(err)
 		}
-		return bytes.NewBuffer(b), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -576,13 +669,13 @@ func (suite *ManagerTestSuite) TestPngAlphaChannelProcessBlocking() {
 func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithCallback() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.Reader, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, int64, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-jpeg.jpg")
 		if err != nil {
 			panic(err)
 		}
-		return bytes.NewBuffer(b), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
 	}
 
 	// test the callback function by setting a simple boolean
@@ -659,13 +752,13 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithCallback() {
 func (suite *ManagerTestSuite) TestSimpleJpegProcessAsync() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.Reader, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, int64, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-jpeg.jpg")
 		if err != nil {
 			panic(err)
 		}
-		return bytes.NewBuffer(b), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -744,9 +837,9 @@ func (suite *ManagerTestSuite) TestSimpleJpegQueueSpamming() {
 		panic(err)
 	}
 
-	data := func(_ context.Context) (io.Reader, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, int64, error) {
 		// load bytes from a test image
-		return bytes.NewReader(b), int64(len(b)), nil
+		return io.NopCloser(bytes.NewReader(b)), int64(len(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -820,13 +913,13 @@ func (suite *ManagerTestSuite) TestSimpleJpegQueueSpamming() {
 func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.Reader, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, int64, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-jpeg.jpg")
 		if err != nil {
 			panic(err)
 		}
-		return bytes.NewBuffer(b), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -834,14 +927,19 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
 	temp := fmt.Sprintf("%s/gotosocial-test", os.TempDir())
 	defer os.RemoveAll(temp)
 
-	diskStorage, err := kv.OpenFile(temp, &storage.DiskConfig{
+	disk, err := storage.OpenDisk(temp, &storage.DiskConfig{
 		LockFile: path.Join(temp, "store.lock"),
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	diskManager, err := media.NewManager(suite.db, &gtsstorage.Local{KVStore: diskStorage})
+	storage := &gtsstorage.Driver{
+		KVStore: kv.New(disk),
+		Storage: disk,
+	}
+
+	diskManager, err := media.NewManager(suite.db, storage)
 	if err != nil {
 		panic(err)
 	}
@@ -881,7 +979,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
 	suite.NotNil(dbAttachment)
 
 	// make sure the processed file is in storage
-	processedFullBytes, err := diskStorage.Get(attachment.File.Path)
+	processedFullBytes, err := storage.Get(ctx, attachment.File.Path)
 	suite.NoError(err)
 	suite.NotEmpty(processedFullBytes)
 
@@ -894,7 +992,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
 	suite.Equal(processedFullBytesExpected, processedFullBytes)
 
 	// now do the same for the thumbnail and make sure it's what we expected
-	processedThumbnailBytes, err := diskStorage.Get(attachment.Thumbnail.Path)
+	processedThumbnailBytes, err := storage.Get(ctx, attachment.Thumbnail.Path)
 	suite.NoError(err)
 	suite.NotEmpty(processedThumbnailBytes)
 

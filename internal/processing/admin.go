@@ -34,6 +34,26 @@ func (p *processor) AdminEmojiCreate(ctx context.Context, authed *oauth.Auth, fo
 	return p.adminProcessor.EmojiCreate(ctx, authed.Account, authed.User, form)
 }
 
+func (p *processor) AdminEmojisGet(ctx context.Context, authed *oauth.Auth, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
+	return p.adminProcessor.EmojisGet(ctx, authed.Account, authed.User, domain, includeDisabled, includeEnabled, shortcode, maxShortcodeDomain, minShortcodeDomain, limit)
+}
+
+func (p *processor) AdminEmojiGet(ctx context.Context, authed *oauth.Auth, id string) (*apimodel.AdminEmoji, gtserror.WithCode) {
+	return p.adminProcessor.EmojiGet(ctx, authed.Account, authed.User, id)
+}
+
+func (p *processor) AdminEmojiUpdate(ctx context.Context, id string, form *apimodel.EmojiUpdateRequest) (*apimodel.AdminEmoji, gtserror.WithCode) {
+	return p.adminProcessor.EmojiUpdate(ctx, id, form)
+}
+
+func (p *processor) AdminEmojiDelete(ctx context.Context, authed *oauth.Auth, id string) (*apimodel.AdminEmoji, gtserror.WithCode) {
+	return p.adminProcessor.EmojiDelete(ctx, id)
+}
+
+func (p *processor) AdminEmojiCategoriesGet(ctx context.Context) ([]*apimodel.EmojiCategory, gtserror.WithCode) {
+	return p.adminProcessor.EmojiCategoriesGet(ctx)
+}
+
 func (p *processor) AdminDomainBlockCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.DomainBlockCreateRequest) (*apimodel.DomainBlock, gtserror.WithCode) {
 	return p.adminProcessor.DomainBlockCreate(ctx, authed.Account, form.Domain, form.Obfuscate, form.PublicComment, form.PrivateComment, "")
 }

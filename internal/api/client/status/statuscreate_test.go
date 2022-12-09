@@ -106,8 +106,9 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusMarkdown() {
 	// set default post language of account 1 to markdown
 	testAccount := suite.testAccounts["local_account_1"]
 	testAccount.StatusFormat = "markdown"
+	a := testAccount
 
-	a, err := suite.db.UpdateAccount(context.Background(), testAccount)
+	err := suite.db.UpdateAccount(context.Background(), a)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -149,9 +150,8 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusMarkdown() {
 func (suite *StatusCreateTestSuite) TestMentionUnknownAccount() {
 	// first remove remote account 1 from the database so it gets looked up again
 	remoteAccount := suite.testAccounts["remote_account_1"]
-	if err := suite.db.DeleteByID(context.Background(), remoteAccount.ID, &gtsmodel.Account{}); err != nil {
-		panic(err)
-	}
+	err := suite.db.DeleteAccount(context.Background(), remoteAccount.ID)
+	suite.NoError(err)
 
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.DBTokenToToken(t)

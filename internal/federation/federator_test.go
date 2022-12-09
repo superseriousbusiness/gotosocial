@@ -31,11 +31,12 @@ import (
 type FederatorStandardTestSuite struct {
 	suite.Suite
 	db             db.DB
-	storage        storage.Driver
+	storage        *storage.Driver
 	tc             typeutils.TypeConverter
 	testAccounts   map[string]*gtsmodel.Account
 	testStatuses   map[string]*gtsmodel.Status
 	testActivities map[string]testrig.ActivityWithSignature
+	testTombstones map[string]*gtsmodel.Tombstone
 }
 
 // SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
@@ -45,6 +46,7 @@ func (suite *FederatorStandardTestSuite) SetupSuite() {
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.testAccounts = testrig.NewTestAccounts()
 	suite.testStatuses = testrig.NewTestStatuses()
+	suite.testTombstones = testrig.NewTestTombstones()
 }
 
 func (suite *FederatorStandardTestSuite) SetupTest() {

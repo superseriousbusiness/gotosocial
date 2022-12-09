@@ -49,6 +49,8 @@ In your GoToSocial config turn off Lets Encrypt by setting `letsencrypt-enabled`
 
 If you we running GoToSocial on port 443, change the `port` value back to the default `8080`.
 
+If the reverse proxy will be running on the same machine, set the `bind-address` to `"localhost"` so that the GoToSocial server is only accessible via loopback. Otherwise it may be possible to bypass your proxy by connecting to GoToSocial directly, which might be undesirable.
+
 ## Set up Caddy
 
 We will configure Caddy 2 to use GoToSocial on our main domain example.org. Since Caddy takes care of obtaining the Lets Encrypt certificate, we only need to configure it properly once.
@@ -76,6 +78,8 @@ example.org {
 	}
 }
 ```
+
+By default, caddy sets `X-Forwarded-For` in forwarded requests. To make this and rate limiting work, set the `trusted-proxies` configuration variable. See the [rate limiting](../api/ratelimiting.md) and [general configuration](../configuration/general.md) docs
 
 For advanced configuration check the [reverse_proxy directive](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy) at the Caddy documentation.
 

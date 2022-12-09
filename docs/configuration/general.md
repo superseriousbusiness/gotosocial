@@ -38,11 +38,18 @@ host: "localhost"
 # String. Domain to use when federating profiles. This is useful when you want your server to be at
 # eg., "gts.example.org", but you want the domain on accounts to be "example.org" because it looks better
 # or is just shorter/easier to remember.
+#
 # To make this setting work properly, you need to redirect requests at "example.org/.well-known/webfinger"
 # to "gts.example.org/.well-known/webfinger" so that GtS can handle them properly.
+#
 # You should also redirect requests at "example.org/.well-known/nodeinfo" in the same way.
 # An empty string (ie., not set) means that the same value as 'host' will be used.
+#
 # DO NOT change this after your server has already run once, or you will break things!
+#
+# Please read the appropriate section of the installation guide before you go messing around with this setting:
+# https://docs.gotosocial.org/installation_guide/advanced/#can-i-host-my-instance-at-fediexampleorg-but-have-just-exampleorg-in-my-username
+#
 # Examples: ["example.org","server.com"]
 # Default: ""
 account-domain: ""
@@ -57,9 +64,11 @@ protocol: "https"
 
 # String. Address to bind the GoToSocial server to.
 # This can be an IPv4 address or an IPv6 address (surrounded in square brackets), or a hostname.
-# Default value will bind to all interfaces.
-# You probably won't need to change this unless you're setting GoToSocial up in some fancy way or
-# you have specific networking requirements.
+# The default value will bind to all interfaces, which makes the server
+# accessible by other machines. For most setups there is no need to change this.
+# If you are using GoToSocial in a reverse proxy setup with the proxy running on
+# the same machine, you will want to set this to "localhost" or an equivalent,
+# so that the proxy can't be bypassed.
 # Examples: ["0.0.0.0", "172.128.0.16", "localhost", "[::]", "[2001:db8::fed1]"]
 # Default: "0.0.0.0"
 bind-address: "0.0.0.0"

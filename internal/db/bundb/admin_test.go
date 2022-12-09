@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20211113114307_init"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -30,7 +31,47 @@ type AdminTestSuite struct {
 	BunDBStandardTestSuite
 }
 
+func (suite *AdminTestSuite) TestIsUsernameAvailableNo() {
+	available, err := suite.db.IsUsernameAvailable(context.Background(), "the_mighty_zork")
+	suite.NoError(err)
+	suite.False(available)
+}
+
+func (suite *AdminTestSuite) TestIsUsernameAvailableYes() {
+	available, err := suite.db.IsUsernameAvailable(context.Background(), "someone_completely_different")
+	suite.NoError(err)
+	suite.True(available)
+}
+
+func (suite *AdminTestSuite) TestIsEmailAvailableNo() {
+	available, err := suite.db.IsEmailAvailable(context.Background(), "zork@example.org")
+	suite.NoError(err)
+	suite.False(available)
+}
+
+func (suite *AdminTestSuite) TestIsEmailAvailableYes() {
+	available, err := suite.db.IsEmailAvailable(context.Background(), "someone@somewhere.com")
+	suite.NoError(err)
+	suite.True(available)
+}
+
+func (suite *AdminTestSuite) TestIsEmailAvailableDomainBlocked() {
+	if err := suite.db.Put(context.Background(), &gtsmodel.EmailDomainBlock{
+		ID:                 "01GEEV2R2YC5GRSN96761YJE47",
+		Domain:             "somewhere.com",
+		CreatedByAccountID: suite.testAccounts["admin_account"].ID,
+	}); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	available, err := suite.db.IsEmailAvailable(context.Background(), "someone@somewhere.com")
+	suite.EqualError(err, "email domain somewhere.com is blocked")
+	suite.False(available)
+}
+
 func (suite *AdminTestSuite) TestCreateInstanceAccount() {
+	// reinitialize test DB to clear caches
+	suite.db = testrig.NewTestDB()
 	// we need to take an empty db for this...
 	testrig.StandardDBTeardown(suite.db)
 	// ...with tables created but no data

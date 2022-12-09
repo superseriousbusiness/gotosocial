@@ -5,6 +5,9 @@ copyright: GoToSocial is licensed under the GNU AGPL v3 LICENSE. Copyright (C) 2
 plugins:
   - render_swagger
 
+markdown_extensions:
+  - markdown.extensions.admonition
+
 extra_javascript:
   - assets/js/swagger-ui-bundle.js
 
@@ -13,11 +16,13 @@ extra_css:
 
 nav:
   - "Home": "index.md"
+  - "FAQ": "faq.md"
   - "User Guide":
     - "user_guide/posts.md"
     - "user_guide/user_panel.md"
     - "user_guide/custom_css.md"
     - "user_guide/password_management.md"
+    - "user_guide/rss.md"
   - "Installation Guide":
     - "installation_guide/index.md"
     - "installation_guide/binary.md"
@@ -27,6 +32,7 @@ nav:
     - "installation_guide/caddy.md"
     - "installation_guide/third_party.md"
     - "installation_guide/websocket.md"
+    - "installation_guide/advanced.md"
   - "Configuration":
     - "configuration/index.md"
     - "configuration/general.md"
@@ -54,3 +60,4 @@ nav:
     - "federation/behaviors/conversation_threads.md"
   - "API Documentation":
     - "api/swagger.md"
+    - "api/ratelimiting.md"

@@ -34,13 +34,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-// const (
-// 	// highestID is the highest possible ULID
-// 	highestID = "ZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-// 	// lowestID is the lowest possible ULID
-// 	lowestID = "00000000000000000000000000"
-// )
-
 // Converts a gts model account into an Activity Streams person type.
 func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error) {
 	person := streams.NewActivityStreamsPerson()
@@ -759,6 +752,10 @@ func (c *converter) EmojiToAS(ctx context.Context, e *gtsmodel.Emoji) (vocab.Too
 
 	iconProperty.AppendActivityStreamsImage(iconImage)
 	emoji.SetActivityStreamsIcon(iconProperty)
+
+	updatedProp := streams.NewActivityStreamsUpdatedProperty()
+	updatedProp.Set(e.ImageUpdatedAt)
+	emoji.SetActivityStreamsUpdated(updatedProp)
 
 	return emoji, nil
 }

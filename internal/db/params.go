@@ -24,9 +24,6 @@ type Where struct {
 	Key string
 	// The value to match.
 	Value interface{}
-	// Whether the value (if a string) should be case sensitive or not.
-	// Defaults to false.
-	CaseInsensitive bool
 	// If set, reverse the where.
 	// `WHERE k = v` becomes `WHERE k != v`.
 	// `WHERE k IS NULL` becomes `WHERE k IS NOT NULL`

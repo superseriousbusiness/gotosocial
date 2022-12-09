@@ -29,3 +29,5 @@ If you can't leave `443` and `80` open on the machine, don't worry! You can conf
 To run a GoToSocial server, you also need a domain name, and it needs to be pointed towards your VPS or homeserver.
 
 [Namecheap](https://www.namecheap.com/) is a good place to do this, but you can use any domain name registrar that lets you manage your own DNS.
+
+IMPORTANT: If you want to host GoToSocial at a different host from your desired account domain (eg., you want to host GtS at `fedi.example.org` but you want your account to show up at `example.org`), please read the [advanced configuration](./advanced.md) carefully, before proceeding with installation!

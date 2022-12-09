@@ -27,16 +27,23 @@ import (
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // Create creates a new account in the database using the provided flags.
 var Create action.GTSAction = func(ctx context.Context) error {
-	dbConn, err := bundb.NewBunDBService(ctx)
+	var state state.State
+	state.Caches.Init()
+
+	dbConn, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
+
+	// Set the state DB connection
+	state.DB = dbConn
 
 	username := config.GetAdminAccountUsername()
 	if username == "" {
@@ -44,6 +51,14 @@ var Create action.GTSAction = func(ctx context.Context) error {
 	}
 	if err := validate.Username(username); err != nil {
 		return err
+	}
+
+	usernameAvailable, err := dbConn.IsUsernameAvailable(ctx, username)
+	if err != nil {
+		return err
+	}
+	if !usernameAvailable {
+		return fmt.Errorf("username %s is already in use", username)
 	}
 
 	email := config.GetAdminAccountEmail()
@@ -54,6 +69,14 @@ var Create action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
+	emailAvailable, err := dbConn.IsEmailAvailable(ctx, email)
+	if err != nil {
+		return err
+	}
+	if !emailAvailable {
+		return fmt.Errorf("email address %s is already in use", email)
+	}
+
 	password := config.GetAdminAccountPassword()
 	if password == "" {
 		return errors.New("no password set")
@@ -62,7 +85,7 @@ var Create action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	_, err = dbConn.NewSignup(ctx, username, "", false, email, password, nil, "", "", false, false)
+	_, err = dbConn.NewSignup(ctx, username, "", false, email, password, nil, "", "", true, "", false)
 	if err != nil {
 		return err
 	}
@@ -72,10 +95,16 @@ var Create action.GTSAction = func(ctx context.Context) error {
 
 // Confirm sets a user to Approved, sets Email to the current UnconfirmedEmail value, and sets ConfirmedAt to now.
 var Confirm action.GTSAction = func(ctx context.Context) error {
-	dbConn, err := bundb.NewBunDBService(ctx)
+	var state state.State
+	state.Caches.Init()
+
+	dbConn, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
+
+	// Set the state DB connection
+	state.DB = dbConn
 
 	username := config.GetAdminAccountUsername()
 	if username == "" {
@@ -95,13 +124,12 @@ var Confirm action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	updatingColumns := []string{"approved", "email", "confirmed_at", "updated_at"}
+	updatingColumns := []string{"approved", "email", "confirmed_at"}
 	approved := true
 	u.Approved = &approved
 	u.Email = u.UnconfirmedEmail
 	u.ConfirmedAt = time.Now()
-	u.UpdatedAt = time.Now()
-	if err := dbConn.UpdateByPrimaryKey(ctx, u, updatingColumns...); err != nil {
+	if err := dbConn.UpdateUser(ctx, u, updatingColumns...); err != nil {
 		return err
 	}
 
@@ -110,10 +138,16 @@ var Confirm action.GTSAction = func(ctx context.Context) error {
 
 // Promote sets a user to admin.
 var Promote action.GTSAction = func(ctx context.Context) error {
-	dbConn, err := bundb.NewBunDBService(ctx)
+	var state state.State
+	state.Caches.Init()
+
+	dbConn, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
+
+	// Set the state DB connection
+	state.DB = dbConn
 
 	username := config.GetAdminAccountUsername()
 	if username == "" {
@@ -133,11 +167,9 @@ var Promote action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	updatingColumns := []string{"admin", "updated_at"}
 	admin := true
 	u.Admin = &admin
-	u.UpdatedAt = time.Now()
-	if _, err := dbConn.UpdateUser(ctx, u, updatingColumns...); err != nil {
+	if err := dbConn.UpdateUser(ctx, u, "admin"); err != nil {
 		return err
 	}
 
@@ -146,10 +178,16 @@ var Promote action.GTSAction = func(ctx context.Context) error {
 
 // Demote sets admin on a user to false.
 var Demote action.GTSAction = func(ctx context.Context) error {
-	dbConn, err := bundb.NewBunDBService(ctx)
+	var state state.State
+	state.Caches.Init()
+
+	dbConn, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
+
+	// Set the state DB connection
+	state.DB = dbConn
 
 	username := config.GetAdminAccountUsername()
 	if username == "" {
@@ -169,11 +207,9 @@ var Demote action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	updatingColumns := []string{"admin", "updated_at"}
 	admin := false
 	u.Admin = &admin
-	u.UpdatedAt = time.Now()
-	if _, err := dbConn.UpdateUser(ctx, u, updatingColumns...); err != nil {
+	if err := dbConn.UpdateUser(ctx, u, "admin"); err != nil {
 		return err
 	}
 
@@ -182,10 +218,16 @@ var Demote action.GTSAction = func(ctx context.Context) error {
 
 // Disable sets Disabled to true on a user.
 var Disable action.GTSAction = func(ctx context.Context) error {
-	dbConn, err := bundb.NewBunDBService(ctx)
+	var state state.State
+	state.Caches.Init()
+
+	dbConn, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
+
+	// Set the state DB connection
+	state.DB = dbConn
 
 	username := config.GetAdminAccountUsername()
 	if username == "" {
@@ -205,29 +247,27 @@ var Disable action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	updatingColumns := []string{"disabled", "updated_at"}
 	disabled := true
 	u.Disabled = &disabled
-	u.UpdatedAt = time.Now()
-	if _, err := dbConn.UpdateUser(ctx, u, updatingColumns...); err != nil {
+	if err := dbConn.UpdateUser(ctx, u, "disabled"); err != nil {
 		return err
 	}
 
 	return dbConn.Stop(ctx)
 }
 
-// Suspend suspends the target account, cleanly removing all of its media, followers, following, likes, statuses, etc.
-var Suspend action.GTSAction = func(ctx context.Context) error {
-	// TODO
-	return nil
-}
-
 // Password sets the password of target account.
 var Password action.GTSAction = func(ctx context.Context) error {
-	dbConn, err := bundb.NewBunDBService(ctx)
+	var state state.State
+	state.Caches.Init()
+
+	dbConn, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
+
+	// Set the state DB connection
+	state.DB = dbConn
 
 	username := config.GetAdminAccountUsername()
 	if username == "" {
@@ -260,10 +300,8 @@ var Password action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error hashing password: %s", err)
 	}
 
-	updatingColumns := []string{"encrypted_password", "updated_at"}
 	u.EncryptedPassword = string(pw)
-	u.UpdatedAt = time.Now()
-	if _, err := dbConn.UpdateUser(ctx, u, updatingColumns...); err != nil {
+	if err := dbConn.UpdateUser(ctx, u, "encrypted_password"); err != nil {
 		return err
 	}
 

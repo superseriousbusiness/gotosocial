@@ -26,9 +26,15 @@ import (
 
 // AddGlobalFlags will attach global configuration flags to given cobra command, loading defaults from global config.
 func AddGlobalFlags(cmd *cobra.Command) {
-	Config(func(cfg *Configuration) {
+	global.AddGlobalFlags(cmd)
+}
+
+// AddGlobalFlags will attach global configuration flags to given cobra command, loading defaults from State.
+func (s *ConfigState) AddGlobalFlags(cmd *cobra.Command) {
+	s.Config(func(cfg *Configuration) {
 		// General
 		cmd.PersistentFlags().String(ApplicationNameFlag(), cfg.ApplicationName, fieldtag("ApplicationName", "usage"))
+		cmd.PersistentFlags().String(LandingPageUserFlag(), cfg.LandingPageUser, fieldtag("LandingPageUser", "usage"))
 		cmd.PersistentFlags().String(HostFlag(), cfg.Host, fieldtag("Host", "usage"))
 		cmd.PersistentFlags().String(AccountDomainFlag(), cfg.AccountDomain, fieldtag("AccountDomain", "usage"))
 		cmd.PersistentFlags().String(ProtocolFlag(), cfg.Protocol, fieldtag("Protocol", "usage"))
@@ -50,7 +56,12 @@ func AddGlobalFlags(cmd *cobra.Command) {
 
 // AddServerFlags will attach server configuration flags to given cobra command, loading defaults from global config.
 func AddServerFlags(cmd *cobra.Command) {
-	Config(func(cfg *Configuration) {
+	global.AddServerFlags(cmd)
+}
+
+// AddServerFlags will attach server configuration flags to given cobra command, loading defaults from State.
+func (s *ConfigState) AddServerFlags(cmd *cobra.Command) {
+	s.Config(func(cfg *Configuration) {
 		// Router
 		cmd.PersistentFlags().String(BindAddressFlag(), cfg.BindAddress, fieldtag("BindAddress", "usage"))
 		cmd.PersistentFlags().Int(PortFlag(), cfg.Port, fieldtag("Port", "usage"))
@@ -120,6 +131,7 @@ func AddServerFlags(cmd *cobra.Command) {
 
 		// Advanced flags
 		cmd.Flags().String(AdvancedCookiesSamesiteFlag(), cfg.AdvancedCookiesSamesite, fieldtag("AdvancedCookiesSamesite", "usage"))
+		cmd.Flags().Int(AdvancedRateLimitRequestsFlag(), cfg.AdvancedRateLimitRequests, fieldtag("AdvancedRateLimitRequests", "usage"))
 	})
 }
 
@@ -165,4 +177,11 @@ func AddAdminTrans(cmd *cobra.Command) {
 	if err := cmd.MarkFlagRequired(name); err != nil {
 		panic(err)
 	}
+}
+
+// AddAdminMediaPrune attaches flags pertaining to media storage prune commands.
+func AddAdminMediaPrune(cmd *cobra.Command) {
+	name := AdminMediaPruneDryRunFlag()
+	usage := fieldtag("AdminMediaPruneDryRun", "usage")
+	cmd.Flags().Bool(name, true, usage)
 }

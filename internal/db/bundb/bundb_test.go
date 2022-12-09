@@ -40,6 +40,8 @@ type BunDBStandardTestSuite struct {
 	testStatuses     map[string]*gtsmodel.Status
 	testTags         map[string]*gtsmodel.Tag
 	testMentions     map[string]*gtsmodel.Mention
+	testFollows      map[string]*gtsmodel.Follow
+	testEmojis       map[string]*gtsmodel.Emoji
 }
 
 func (suite *BunDBStandardTestSuite) SetupSuite() {
@@ -52,6 +54,8 @@ func (suite *BunDBStandardTestSuite) SetupSuite() {
 	suite.testStatuses = testrig.NewTestStatuses()
 	suite.testTags = testrig.NewTestTags()
 	suite.testMentions = testrig.NewTestMentions()
+	suite.testFollows = testrig.NewTestFollows()
+	suite.testEmojis = testrig.NewTestEmojis()
 }
 
 func (suite *BunDBStandardTestSuite) SetupTest() {

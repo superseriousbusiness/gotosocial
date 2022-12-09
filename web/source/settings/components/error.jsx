@@ -18,7 +18,6 @@
 
 "use strict";
 
-const Promise = require("bluebird");
 const React = require("react");
 
 module.exports = function ErrorFallback({error, resetErrorBoundary}) {

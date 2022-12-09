@@ -26,6 +26,7 @@ var Defaults = Configuration{
 	LogLevel:        "info",
 	LogDbQueries:    false,
 	ApplicationName: "gotosocial",
+	LandingPageUser: "",
 	ConfigPath:      "",
 	Host:            "",
 	AccountDomain:   "",
@@ -66,6 +67,7 @@ var Defaults = Configuration{
 	StorageBackend:       "local",
 	StorageLocalBasePath: "/gotosocial/storage",
 	StorageS3UseSSL:      true,
+	StorageS3Proxy:       false,
 
 	StatusesMaxChars:           5000,
 	StatusesCWMaxChars:         100,
@@ -85,6 +87,7 @@ var Defaults = Configuration{
 	OIDCClientID:         "",
 	OIDCClientSecret:     "",
 	OIDCScopes:           []string{oidc.ScopeOpenID, "profile", "email", "groups"},
+	OIDCLinkExisting:     false,
 
 	SMTPHost:     "",
 	SMTPPort:     0,
@@ -96,5 +99,6 @@ var Defaults = Configuration{
 	SyslogProtocol: "udp",
 	SyslogAddress:  "localhost:514",
 
-	AdvancedCookiesSamesite: "lax",
+	AdvancedCookiesSamesite:   "lax",
+	AdvancedRateLimitRequests: 1000, // per 5 minutes
 }

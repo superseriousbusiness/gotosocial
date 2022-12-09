@@ -30,8 +30,8 @@ func (suite *AuthAuthorizeTestSuite) TestAccountAuthorizeHandler() {
 		{
 			description: "user has their email unconfirmed",
 			mutateUserAccount: func(user *gtsmodel.User, account *gtsmodel.Account) []string {
-				// nothing to do, weed_lord420 already has their email unconfirmed
-				return nil
+				user.ConfirmedAt = time.Time{}
+				return []string{"confirmed_at"}
 			},
 			expectedStatusCode:     http.StatusSeeOther,
 			expectedLocationHeader: auth.CheckYourEmailPath,
@@ -89,14 +89,13 @@ func (suite *AuthAuthorizeTestSuite) TestAccountAuthorizeHandler() {
 			panic(fmt.Errorf("failed on case %s: %w", testCase.description, err))
 		}
 
-		updatingColumns := testCase.mutateUserAccount(user, account)
+		columns := testCase.mutateUserAccount(user, account)
 
 		testCase.description = fmt.Sprintf("%s, %t, %s", user.Email, *user.Disabled, account.SuspendedAt)
 
-		updatingColumns = append(updatingColumns, "updated_at")
-		_, err := suite.db.UpdateUser(context.Background(), user, updatingColumns...)
+		err := suite.db.UpdateUser(context.Background(), user, columns...)
 		suite.NoError(err)
-		_, err = suite.db.UpdateAccount(context.Background(), account)
+		err = suite.db.UpdateAccount(context.Background(), account)
 		suite.NoError(err)
 
 		// call the handler

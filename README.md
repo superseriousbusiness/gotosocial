@@ -8,7 +8,9 @@ With GoToSocial, you can keep in touch with your friends, post, read, and share 
   <img src="./docs/assets/sloth.png" width="300"/>
 </p>
 
-Documentation is at [docs.gotosocial.org](https://docs.gotosocial.org). You can skip straight to the API documentation [here](https://docs.gotosocial.org/en/latest/api/swagger/).
+**GoToSocial is still [ALPHA SOFTWARE](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha)**. It is already deployable and useable, and it federates cleanly with many other Fediverse servers (not yet all). However, many things are not yet implemented, and there are plenty of bugs! We foresee entering beta somewhere in 2023.
+
+Documentation is at [docs.gotosocial.org](https://docs.gotosocial.org). You can skip straight to the API documentation [here](https://docs.gotosocial.org/en/latest/api/swagger/). To build from source, check the [CONTRIBUTING.md](./CONTRIBUTING.md) file.
 
 Here's a screenshot of the instance landing page!
 
@@ -35,6 +37,7 @@ Here's a screenshot of the instance landing page!
   - [Client App Issues](#client-app-issues)
   - [Federation Issues](#federation-issues)
 - [Contributing](#contributing)
+- [Building](#building)
 - [Contact](#contact)
 - [Credits](#credits)
   - [Libraries](#libraries)
@@ -49,13 +52,13 @@ Here's a screenshot of the instance landing page!
 
 ## What is GoToSocial?
 
-GoToSocial provides a lightweight, customizable, and safety-focused entryway into the [Fediverse](https://en.wikipedia.org/wiki/Fediverse), and is comparable to (but distinct from) existing projects such as [Mastodon](https://joinmastodon.org/), [Pleroma](https://pleroma.social/), [Friendica](https://friendica.net), and [PixelFed](https://pixelfed.org/).
+GoToSocial provides a lightweight, customizable, and safety-focused entryway into the [Fediverse](https://en.wikipedia.org/wiki/Fediverse), and is comparable to (but distinct from) existing projects such as [Mastodon](https://joinmastodon.org/), [Pleroma](https://pleroma.social/), [Friendica](https://friendi.ca), and [PixelFed](https://pixelfed.org/).
 
 If you've ever used something like Twitter or Tumblr (or even Myspace!) GoToSocial will probably feel familiar to you: You can follow people and have followers, you make posts which people can favourite and reply to and share, and you scroll through posts from people you follow using a timeline. You can write long posts or short posts, or just post images, it's up to you. You can also, of course, block people or otherwise limit interactions that you don't want by posting just to your friends.
 
 ![Screenshot of the web view of a profile in GoToSocial, showing header and avatar, bio, and numbers of followers/following.](./docs/assets/profile1.png)
 
-**GoToSocial does NOT use algorithms or collect data about you to suggest content or 'improve your experience'**. The timeline is chronological: whatever you see at the top of your timeline is there because it's *just been posted*, not because it's been selected as interesting (or controversial) based on your personal profile.
+**GoToSocial does NOT use recommendation algorithms or collect data about you to suggest content or 'improve your experience'**. The timeline is chronological: whatever you see at the top of your timeline is there because it's *just been posted*, not because it's been selected as interesting (or controversial) based on your personal profile.
 
 GoToSocial is not designed for 'must-follow' influencers with tens of thousands of followers, and it's not designed to be addictive. Your timeline and your experience are shaped by who you follow and how you interact with people, not by metrics of engagement!
 
@@ -79,9 +82,7 @@ This project sprang up in February/March 2021 out of a dissatisfaction with the 
 
 It began as a solo project, and then picked up steam as more developers became interested and jumped on.
 
-The project is still [alpha software](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha), but is already deployable and very useable, and it federates cleanly with many other Fediverse servers (not yet all).
-
-For a detailed view on what's implemented and what's not, and progress made towards [beta release](https://en.wikipedia.org/wiki/Software_release_life_cycle#Beta), please see [the roadmap document](./ROADMAP.md).
+For a detailed view on what's implemented and what's not, and progress made towards [beta release](https://en.wikipedia.org/wiki/Software_release_life_cycle#Beta), please see [the roadmap document](./ROADMAP.md). The [FAQ](docs/faq.md) contains a higher-level overview.
 
 ## Features
 
@@ -179,7 +180,7 @@ These packages are not maintained by GoToSocial, so please direct questions and 
 
 ## Known Issues
 
-Since GoToSocial is still in alpha, there are plenty of bugs. We use GitHub issues to track these. [Check them out here](https://github.com/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug).
+Since GoToSocial is still in alpha, there are plenty of bugs. We use [GitHub issues](https://github.com/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug) to track these. The [FAQ](docs/faq.md) also describes some of the features that haven't been implemented yet.
 
 ### Client App Issues
 
@@ -193,9 +194,13 @@ Since every ActivityPub server implementation has a slightly different interpret
 
 You would like to contribute to GtS? Great! ❤️❤️❤️ Check out the issues page to see if there's anything you intend to jump in on, and read the [CONTRIBUTING.md](./CONTRIBUTING.md) file for guidelines and setting up your dev environment.
 
+## Building
+
+Instructions for building GoToSocial from source are in the [CONTRIBUTING.md](./CONTRIBUTING.md) file.
+
 ## Contact
 
-For questions and comments, you can [join our Matrix channel](https://matrix.to/#/#gotosocial:superseriousbusiness.org) at `#gotosocial:superseriousbusiness.org`. This is the quickest way to reach the devs. You can also mail [admin@gotosocial.org](mailto:admin@gotosocial.org).
+For questions and comments, you can [join our Matrix space](https://matrix.to/#/#gotosocial-space:superseriousbusiness.org) at `#gotosocial-space:superseriousbusiness.org`. This is the quickest way to reach the devs. You can also mail [admin@gotosocial.org](mailto:admin@gotosocial.org).
 
 For bugs and feature requests, please check to see if there's [already an issue](https://github.com/superseriousbusiness/gotosocial/issues), and if not, open one or use one of the above channels to make a request (if you don't have a Github account).
 
@@ -217,6 +222,7 @@ The following libraries and frameworks are used by GoToSocial, with gratitude �
 - [google/uuid](https://github.com/google/uuid); UUID generation. [BSD-3-Clause License](https://spdx.org/licenses/BSD-3-Clause.html).
 - [google/wuffs](https://github.com/google/wuffs); png-stripping code. [Apache-2.0 License](https://spdx.org/licenses/Apache-2.0.html).
 - [go-playground/validator](https://github.com/go-playground/validator); struct validation. [MIT License](https://spdx.org/licenses/MIT.html).
+- [gorilla/feeds](https://github.com/gorilla/feeds); RSS + Atom feed generation. [BSD-2-Clause License](https://spdx.org/licenses/BSD-2-Clause.html).
 - [gorilla/websocket](https://github.com/gorilla/websocket); Websocket connectivity. [BSD-2-Clause License](https://spdx.org/licenses/BSD-2-Clause.html).
 - [gruf/go-debug](https://codeberg.org/gruf/go-debug); profiling support in debug builds. [MIT License](https://spdx.org/licenses/MIT.html).
 - [gruf/go-bytesize](https://codeberg.org/gruf/go-bytesize); byte size parsing / formatting. [MIT License](https://spdx.org/licenses/MIT.html).
@@ -256,13 +262,14 @@ The following libraries and frameworks are used by GoToSocial, with gratitude �
 
 Sloth logo by [Anna Abramek](https://abramek.art/), Copyright (C) 2021-2022 the GoToSocial Authors.
 
-### Developers
+### Team
 
-In alphabetical order:
+In alphabetical order (... and order of smell):
 
 - f0x \[[donate with liberapay](https://liberapay.com/f0x)\]
-- kim
+- kim \[check out my code @ [codeberg](https://codeberg.org/gruf), or find me @ [@kim](https://k.iim.gay/@kim)\]
 - tobi \[[donate with liberapay](https://liberapay.com/GoToSocial/)\]
+- maloki \[[@maloki@goblin.technology](https://goblin.technology/@maloki)\]
 
 ### Special Thanks
 

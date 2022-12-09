@@ -49,7 +49,6 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		return
 	}
 
-	// usernames on our instance will always be lowercase
 	username := strings.ToLower(c.Param(usernameKey))
 	if username == "" {
 		err := errors.New("no account username specified")
@@ -82,6 +81,11 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		return
 	}
 
+	var rssFeed string
+	if account.EnableRSS {
+		rssFeed = "/@" + account.Username + "/feed.rss"
+	}
+
 	// only allow search engines / robots to view this page if account is discoverable
 	var robotsMeta string
 	if account.Discoverable {
@@ -106,9 +110,9 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 	}
 
 	stylesheets := []string{
-		"/assets/Fork-Awesome/css/fork-awesome.min.css",
-		"/assets/dist/status.css",
-		"/assets/dist/profile.css",
+		assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
+		distPathPrefix + "/status.css",
+		distPathPrefix + "/profile.css",
 	}
 	if config.GetAccountsAllowCustomCSS() {
 		stylesheets = append(stylesheets, "/@"+account.Username+"/custom.css")
@@ -118,15 +122,13 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		"instance":         instance,
 		"account":          account,
 		"ogMeta":           ogBase(instance).withAccount(account),
+		"rssFeed":          rssFeed,
 		"robotsMeta":       robotsMeta,
 		"statuses":         statusResp.Items,
 		"statuses_next":    statusResp.NextLink,
 		"show_back_to_top": showBackToTop,
 		"stylesheets":      stylesheets,
-		"javascript": []string{
-			"/assets/dist/bundle.js",
-			"/assets/dist/frontend.js",
-		},
+		"javascript":       []string{distPathPrefix + "/frontend.js"},
 	})
 }
 

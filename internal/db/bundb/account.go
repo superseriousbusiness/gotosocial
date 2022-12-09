@@ -25,19 +25,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
 )
 
 type accountDB struct {
-	conn   *DBConn
-	cache  *cache.AccountCache
-	status *statusDB
+	conn  *DBConn
+	state *state.State
 }
 
 func (a *accountDB) newAccountQ(account *gtsmodel.Account) *bun.SelectQuery {
@@ -45,194 +44,231 @@ func (a *accountDB) newAccountQ(account *gtsmodel.Account) *bun.SelectQuery {
 		NewSelect().
 		Model(account).
 		Relation("AvatarMediaAttachment").
-		Relation("HeaderMediaAttachment").
-		Relation("Emojis")
+		Relation("HeaderMediaAttachment")
 }
 
 func (a *accountDB) GetAccountByID(ctx context.Context, id string) (*gtsmodel.Account, db.Error) {
 	return a.getAccount(
 		ctx,
-		func() (*gtsmodel.Account, bool) {
-			return a.cache.GetByID(id)
-		},
+		"ID",
 		func(account *gtsmodel.Account) error {
-			return a.newAccountQ(account).Where("account.id = ?", id).Scan(ctx)
+			return a.newAccountQ(account).Where("? = ?", bun.Ident("account.id"), id).Scan(ctx)
 		},
+		id,
 	)
 }
 
 func (a *accountDB) GetAccountByURI(ctx context.Context, uri string) (*gtsmodel.Account, db.Error) {
 	return a.getAccount(
 		ctx,
-		func() (*gtsmodel.Account, bool) {
-			return a.cache.GetByURI(uri)
-		},
+		"URI",
 		func(account *gtsmodel.Account) error {
-			return a.newAccountQ(account).Where("account.uri = ?", uri).Scan(ctx)
+			return a.newAccountQ(account).Where("? = ?", bun.Ident("account.uri"), uri).Scan(ctx)
 		},
+		uri,
 	)
 }
 
 func (a *accountDB) GetAccountByURL(ctx context.Context, url string) (*gtsmodel.Account, db.Error) {
 	return a.getAccount(
 		ctx,
-		func() (*gtsmodel.Account, bool) {
-			return a.cache.GetByURL(url)
-		},
+		"URL",
 		func(account *gtsmodel.Account) error {
-			return a.newAccountQ(account).Where("account.url = ?", url).Scan(ctx)
+			return a.newAccountQ(account).Where("? = ?", bun.Ident("account.url"), url).Scan(ctx)
 		},
+		url,
 	)
 }
 
 func (a *accountDB) GetAccountByUsernameDomain(ctx context.Context, username string, domain string) (*gtsmodel.Account, db.Error) {
 	return a.getAccount(
 		ctx,
-		func() (*gtsmodel.Account, bool) {
-			return a.cache.GetByUsernameDomain(username, domain)
-		},
+		"Username.Domain",
 		func(account *gtsmodel.Account) error {
 			q := a.newAccountQ(account)
 
 			if domain != "" {
-				q = q.Where("account.username = ?", username)
-				q = q.Where("account.domain = ?", domain)
+				q = q.
+					Where("LOWER(?) = ?", bun.Ident("account.username"), strings.ToLower(username)).
+					Where("? = ?", bun.Ident("account.domain"), domain)
 			} else {
-				q = q.Where("account.username = ?", strings.ToLower(username))
-				q = q.Where("account.domain IS NULL")
+				q = q.
+					Where("? = ?", bun.Ident("account.username"), strings.ToLower(username)). // usernames on our instance are always lowercase
+					Where("? IS NULL", bun.Ident("account.domain"))
 			}
 
 			return q.Scan(ctx)
 		},
+		username,
+		domain,
 	)
 }
 
 func (a *accountDB) GetAccountByPubkeyID(ctx context.Context, id string) (*gtsmodel.Account, db.Error) {
 	return a.getAccount(
 		ctx,
-		func() (*gtsmodel.Account, bool) {
-			return a.cache.GetByPubkeyID(id)
-		},
+		"PublicKeyURI",
 		func(account *gtsmodel.Account) error {
-			return a.newAccountQ(account).Where("account.public_key_uri = ?", id).Scan(ctx)
+			return a.newAccountQ(account).Where("? = ?", bun.Ident("account.public_key_uri"), id).Scan(ctx)
 		},
+		id,
 	)
 }
 
-func (a *accountDB) getAccount(ctx context.Context, cacheGet func() (*gtsmodel.Account, bool), dbQuery func(*gtsmodel.Account) error) (*gtsmodel.Account, db.Error) {
-	// Attempt to fetch cached account
-	account, cached := cacheGet()
+func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gtsmodel.Account, db.Error) {
+	var username string
 
-	if !cached {
-		account = &gtsmodel.Account{}
+	if domain == "" {
+		// I.e. our local instance account
+		username = config.GetHost()
+	} else {
+		// A remote instance account
+		username = domain
+	}
+
+	return a.GetAccountByUsernameDomain(ctx, username, domain)
+}
+
+func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Account) error, keyParts ...any) (*gtsmodel.Account, db.Error) {
+	// Fetch account from database cache with loader callback
+	account, err := a.state.Caches.GTS.Account().Load(lookup, func() (*gtsmodel.Account, error) {
+		var account gtsmodel.Account
 
 		// Not cached! Perform database query
-		err := dbQuery(account)
-		if err != nil {
+		if err := dbQuery(&account); err != nil {
 			return nil, a.conn.ProcessError(err)
 		}
 
-		// Place in the cache
-		a.cache.Put(account)
+		return &account, nil
+	}, keyParts...)
+	if err != nil {
+		return nil, err
 	}
 
-	return account, nil
-}
-
-func (a *accountDB) PutAccount(ctx context.Context, account *gtsmodel.Account) (*gtsmodel.Account, db.Error) {
-	if err := a.conn.RunInTx(ctx, func(tx bun.Tx) error {
-		// create links between this account and any emojis it uses
-		for _, i := range account.EmojiIDs {
-			if _, err := tx.NewInsert().Model(&gtsmodel.AccountToEmoji{
-				AccountID: account.ID,
-				EmojiID:   i,
-			}).Exec(ctx); err != nil {
-				return err
-			}
+	if len(account.EmojiIDs) > 0 {
+		// Set the account's related emojis
+		account.Emojis, err = a.state.DB.GetEmojisByIDs(ctx, account.EmojiIDs)
+		if err != nil {
+			return nil, fmt.Errorf("error getting account emojis: %w", err)
 		}
-
-		// insert the account
-		_, err := tx.NewInsert().Model(account).Exec(ctx)
-		return err
-	}); err != nil {
-		return nil, a.conn.ProcessError(err)
 	}
 
-	a.cache.Put(account)
 	return account, nil
 }
 
-func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account) (*gtsmodel.Account, db.Error) {
+func (a *accountDB) PutAccount(ctx context.Context, account *gtsmodel.Account) db.Error {
+	return a.state.Caches.GTS.Account().Store(account, func() error {
+		// It is safe to run this database transaction within cache.Store
+		// as the cache does not attempt a mutex lock until AFTER hook.
+		//
+		return a.conn.RunInTx(ctx, func(tx bun.Tx) error {
+			// create links between this account and any emojis it uses
+			for _, i := range account.EmojiIDs {
+				if _, err := tx.NewInsert().Model(&gtsmodel.AccountToEmoji{
+					AccountID: account.ID,
+					EmojiID:   i,
+				}).Exec(ctx); err != nil {
+					return err
+				}
+			}
+
+			// insert the account
+			_, err := tx.NewInsert().Model(account).Exec(ctx)
+			return err
+		})
+	})
+}
+
+func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account) db.Error {
 	// Update the account's last-updated
 	account.UpdatedAt = time.Now()
 
+	return a.state.Caches.GTS.Account().Store(account, func() error {
+		// It is safe to run this database transaction within cache.Store
+		// as the cache does not attempt a mutex lock until AFTER hook.
+		//
+		return a.conn.RunInTx(ctx, func(tx bun.Tx) error {
+			// create links between this account and any emojis it uses
+			// first clear out any old emoji links
+			if _, err := tx.
+				NewDelete().
+				TableExpr("? AS ?", bun.Ident("account_to_emojis"), bun.Ident("account_to_emoji")).
+				Where("? = ?", bun.Ident("account_to_emoji.account_id"), account.ID).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			// now populate new emoji links
+			for _, i := range account.EmojiIDs {
+				if _, err := tx.
+					NewInsert().
+					Model(&gtsmodel.AccountToEmoji{
+						AccountID: account.ID,
+						EmojiID:   i,
+					}).Exec(ctx); err != nil {
+					return err
+				}
+			}
+
+			// update the account
+			_, err := tx.NewUpdate().
+				Model(account).
+				Where("? = ?", bun.Ident("account.id"), account.ID).
+				Exec(ctx)
+			return err
+		})
+	})
+}
+
+func (a *accountDB) DeleteAccount(ctx context.Context, id string) db.Error {
 	if err := a.conn.RunInTx(ctx, func(tx bun.Tx) error {
-		// create links between this account and any emojis it uses
-		// first clear out any old emoji links
-		if _, err := tx.NewDelete().
-			Model(&[]*gtsmodel.AccountToEmoji{}).
-			Where("account_id = ?", account.ID).
+		// clear out any emoji links
+		if _, err := tx.
+			NewDelete().
+			TableExpr("? AS ?", bun.Ident("account_to_emojis"), bun.Ident("account_to_emoji")).
+			Where("? = ?", bun.Ident("account_to_emoji.account_id"), id).
 			Exec(ctx); err != nil {
 			return err
 		}
 
-		// now populate new emoji links
-		for _, i := range account.EmojiIDs {
-			if _, err := tx.NewInsert().Model(&gtsmodel.AccountToEmoji{
-				AccountID: account.ID,
-				EmojiID:   i,
-			}).Exec(ctx); err != nil {
-				return err
-			}
-		}
-
-		// update the account
-		_, err := tx.NewUpdate().Model(account).WherePK().Exec(ctx)
+		// delete the account
+		_, err := tx.
+			NewDelete().
+			TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
+			Where("? = ?", bun.Ident("account.id"), id).
+			Exec(ctx)
 		return err
 	}); err != nil {
-		return nil, a.conn.ProcessError(err)
+		return err
 	}
 
-	a.cache.Put(account)
-	return account, nil
+	a.state.Caches.GTS.Account().Invalidate("ID", id)
+	return nil
 }
 
-func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gtsmodel.Account, db.Error) {
-	account := new(gtsmodel.Account)
-
-	q := a.newAccountQ(account)
-
-	if domain != "" {
-		q = q.
-			Where("account.username = ?", domain).
-			Where("account.domain = ?", domain)
-	} else {
-		q = q.
-			Where("account.username = ?", config.GetHost()).
-			WhereGroup(" AND ", whereEmptyOrNull("domain"))
-	}
-
-	if err := q.Scan(ctx); err != nil {
-		return nil, a.conn.ProcessError(err)
-	}
-	return account, nil
-}
-
-func (a *accountDB) GetAccountLastPosted(ctx context.Context, accountID string) (time.Time, db.Error) {
-	status := new(gtsmodel.Status)
+func (a *accountDB) GetAccountLastPosted(ctx context.Context, accountID string, webOnly bool) (time.Time, db.Error) {
+	createdAt := time.Time{}
 
 	q := a.conn.
 		NewSelect().
-		Model(status).
-		Order("id DESC").
-		Limit(1).
-		Where("account_id = ?", accountID).
-		Column("created_at")
+		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
+		Column("status.created_at").
+		Where("? = ?", bun.Ident("status.account_id"), accountID).
+		Order("status.id DESC").
+		Limit(1)
 
-	if err := q.Scan(ctx); err != nil {
+	if webOnly {
+		q = q.
+			WhereGroup(" AND ", whereEmptyOrNull("status.in_reply_to_uri")).
+			WhereGroup(" AND ", whereEmptyOrNull("status.boost_of_id")).
+			Where("? = ?", bun.Ident("status.visibility"), gtsmodel.VisibilityPublic).
+			Where("? = ?", bun.Ident("status.federated"), true)
+	}
+
+	if err := q.Scan(ctx, &createdAt); err != nil {
 		return time.Time{}, a.conn.ProcessError(err)
 	}
-	return status.CreatedAt, nil
+	return createdAt, nil
 }
 
 func (a *accountDB) SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachment *gtsmodel.MediaAttachment, accountID string) db.Error {
@@ -240,12 +276,12 @@ func (a *accountDB) SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachmen
 		return errors.New("one media attachment cannot be both header and avatar")
 	}
 
-	var headerOrAVI string
+	var column bun.Ident
 	switch {
 	case *mediaAttachment.Avatar:
-		headerOrAVI = "avatar"
+		column = bun.Ident("account.avatar_media_attachment_id")
 	case *mediaAttachment.Header:
-		headerOrAVI = "header"
+		column = bun.Ident("account.header_media_attachment_id")
 	default:
 		return errors.New("given media attachment was neither a header nor an avatar")
 	}
@@ -257,11 +293,12 @@ func (a *accountDB) SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachmen
 		Exec(ctx); err != nil {
 		return a.conn.ProcessError(err)
 	}
+
 	if _, err := a.conn.
 		NewUpdate().
-		Model(&gtsmodel.Account{}).
-		Set(fmt.Sprintf("%s_media_attachment_id = ?", headerOrAVI), mediaAttachment.ID).
-		Where("id = ?", accountID).
+		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
+		Set("? = ?", column, mediaAttachment.ID).
+		Where("? = ?", bun.Ident("account.id"), accountID).
 		Exec(ctx); err != nil {
 		return a.conn.ProcessError(err)
 	}
@@ -284,7 +321,7 @@ func (a *accountDB) GetAccountFaves(ctx context.Context, accountID string) ([]*g
 	if err := a.conn.
 		NewSelect().
 		Model(faves).
-		Where("account_id = ?", accountID).
+		Where("? = ?", bun.Ident("status_fave.account_id"), accountID).
 		Scan(ctx); err != nil {
 		return nil, a.conn.ProcessError(err)
 	}
@@ -295,8 +332,8 @@ func (a *accountDB) GetAccountFaves(ctx context.Context, accountID string) ([]*g
 func (a *accountDB) CountAccountStatuses(ctx context.Context, accountID string) (int, db.Error) {
 	return a.conn.
 		NewSelect().
-		Model(&gtsmodel.Status{}).
-		Where("account_id = ?", accountID).
+		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
+		Where("? = ?", bun.Ident("status.account_id"), accountID).
 		Count(ctx)
 }
 
@@ -305,12 +342,12 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 
 	q := a.conn.
 		NewSelect().
-		Table("statuses").
-		Column("id").
-		Order("id DESC")
+		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
+		Column("status.id").
+		Order("status.id DESC")
 
 	if accountID != "" {
-		q = q.Where("account_id = ?", accountID)
+		q = q.Where("? = ?", bun.Ident("status.account_id"), accountID)
 	}
 
 	if limit != 0 {
@@ -321,27 +358,27 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 		// include self-replies (threads)
 		whereGroup := func(*bun.SelectQuery) *bun.SelectQuery {
 			return q.
-				WhereOr("in_reply_to_account_id = ?", accountID).
-				WhereGroup(" OR ", whereEmptyOrNull("in_reply_to_uri"))
+				WhereOr("? = ?", bun.Ident("status.in_reply_to_account_id"), accountID).
+				WhereGroup(" OR ", whereEmptyOrNull("status.in_reply_to_uri"))
 		}
 
 		q = q.WhereGroup(" AND ", whereGroup)
 	}
 
 	if excludeReblogs {
-		q = q.WhereGroup(" AND ", whereEmptyOrNull("boost_of_id"))
+		q = q.WhereGroup(" AND ", whereEmptyOrNull("status.boost_of_id"))
 	}
 
 	if maxID != "" {
-		q = q.Where("id < ?", maxID)
+		q = q.Where("? < ?", bun.Ident("status.id"), maxID)
 	}
 
 	if minID != "" {
-		q = q.Where("id > ?", minID)
+		q = q.Where("? > ?", bun.Ident("status.id"), minID)
 	}
 
 	if pinnedOnly {
-		q = q.Where("pinned = ?", true)
+		q = q.Where("? = ?", bun.Ident("status.pinned"), true)
 	}
 
 	if mediaOnly {
@@ -352,15 +389,15 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 			switch a.conn.Dialect().Name() {
 			case dialect.PG:
 				return q.
-					Where("? IS NOT NULL", bun.Ident("attachments")).
-					Where("? != '{}'", bun.Ident("attachments"))
+					Where("? IS NOT NULL", bun.Ident("status.attachments")).
+					Where("? != '{}'", bun.Ident("status.attachments"))
 			case dialect.SQLite:
 				return q.
-					Where("? IS NOT NULL", bun.Ident("attachments")).
-					Where("? != ''", bun.Ident("attachments")).
-					Where("? != 'null'", bun.Ident("attachments")).
-					Where("? != '{}'", bun.Ident("attachments")).
-					Where("? != '[]'", bun.Ident("attachments"))
+					Where("? IS NOT NULL", bun.Ident("status.attachments")).
+					Where("? != ''", bun.Ident("status.attachments")).
+					Where("? != 'null'", bun.Ident("status.attachments")).
+					Where("? != '{}'", bun.Ident("status.attachments")).
+					Where("? != '[]'", bun.Ident("status.attachments"))
 			default:
 				log.Panic("db dialect was neither pg nor sqlite")
 				return q
@@ -369,7 +406,7 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 	}
 
 	if publicOnly {
-		q = q.Where("visibility = ?", gtsmodel.VisibilityPublic)
+		q = q.Where("? = ?", bun.Ident("status.visibility"), gtsmodel.VisibilityPublic)
 	}
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {
@@ -384,19 +421,19 @@ func (a *accountDB) GetAccountWebStatuses(ctx context.Context, accountID string,
 
 	q := a.conn.
 		NewSelect().
-		Table("statuses").
-		Column("id").
-		Where("account_id = ?", accountID).
-		WhereGroup(" AND ", whereEmptyOrNull("in_reply_to_uri")).
-		WhereGroup(" AND ", whereEmptyOrNull("boost_of_id")).
-		Where("visibility = ?", gtsmodel.VisibilityPublic).
-		Where("federated = ?", true)
+		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
+		Column("status.id").
+		Where("? = ?", bun.Ident("status.account_id"), accountID).
+		WhereGroup(" AND ", whereEmptyOrNull("status.in_reply_to_uri")).
+		WhereGroup(" AND ", whereEmptyOrNull("status.boost_of_id")).
+		Where("? = ?", bun.Ident("status.visibility"), gtsmodel.VisibilityPublic).
+		Where("? = ?", bun.Ident("status.federated"), true)
 
 	if maxID != "" {
-		q = q.Where("id < ?", maxID)
+		q = q.Where("? < ?", bun.Ident("status.id"), maxID)
 	}
 
-	q = q.Limit(limit).Order("id DESC")
+	q = q.Limit(limit).Order("status.id DESC")
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {
 		return nil, a.conn.ProcessError(err)
@@ -405,22 +442,54 @@ func (a *accountDB) GetAccountWebStatuses(ctx context.Context, accountID string,
 	return a.statusesFromIDs(ctx, statusIDs)
 }
 
+func (a *accountDB) GetBookmarks(ctx context.Context, accountID string, limit int, maxID string, minID string) ([]*gtsmodel.StatusBookmark, db.Error) {
+	bookmarks := []*gtsmodel.StatusBookmark{}
+
+	q := a.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("status_bookmarks"), bun.Ident("status_bookmark")).
+		Order("status_bookmark.id DESC").
+		Where("? = ?", bun.Ident("status_bookmark.account_id"), accountID)
+
+	if accountID == "" {
+		return nil, errors.New("must provide an account")
+	}
+
+	if limit != 0 {
+		q = q.Limit(limit)
+	}
+
+	if maxID != "" {
+		q = q.Where("? < ?", bun.Ident("status_bookmark.id"), maxID)
+	}
+
+	if minID != "" {
+		q = q.Where("? > ?", bun.Ident("status_bookmark.id"), minID)
+	}
+
+	if err := q.Scan(ctx, &bookmarks); err != nil {
+		return nil, a.conn.ProcessError(err)
+	}
+
+	return bookmarks, nil
+}
+
 func (a *accountDB) GetAccountBlocks(ctx context.Context, accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, db.Error) {
 	blocks := []*gtsmodel.Block{}
 
 	fq := a.conn.
 		NewSelect().
 		Model(&blocks).
-		Where("block.account_id = ?", accountID).
+		Where("? = ?", bun.Ident("block.account_id"), accountID).
 		Relation("TargetAccount").
 		Order("block.id DESC")
 
 	if maxID != "" {
-		fq = fq.Where("block.id < ?", maxID)
+		fq = fq.Where("? < ?", bun.Ident("block.id"), maxID)
 	}
 
 	if sinceID != "" {
-		fq = fq.Where("block.id > ?", sinceID)
+		fq = fq.Where("? > ?", bun.Ident("block.id"), sinceID)
 	}
 
 	if limit > 0 {
@@ -456,7 +525,7 @@ func (a *accountDB) statusesFromIDs(ctx context.Context, statusIDs []string) ([]
 
 	for _, id := range statusIDs {
 		// Fetch from status from database by ID
-		status, err := a.status.GetStatusByID(ctx, id)
+		status, err := a.state.DB.GetStatusByID(ctx, id)
 		if err != nil {
 			log.Errorf("statusesFromIDs: error getting status %q: %v", id, err)
 			continue

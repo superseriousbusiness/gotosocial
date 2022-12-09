@@ -65,7 +65,7 @@ func (p *processor) BlockCreate(ctx context.Context, requestingAccount *gtsmodel
 	block.URI = uris.GenerateURIForBlock(requestingAccount.Username, newBlockID)
 
 	// whack it in the database
-	if err := p.db.Put(ctx, block); err != nil {
+	if err := p.db.PutBlock(ctx, block); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("BlockCreate: error creating block in db: %s", err))
 	}
 

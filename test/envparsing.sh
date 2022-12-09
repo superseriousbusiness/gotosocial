@@ -2,13 +2,14 @@
 
 set -eu
 
-EXPECT='{"account-domain":"peepee","accounts-allow-custom-css":true,"accounts-approval-required":false,"accounts-reason-required":false,"accounts-registration-open":true,"advanced-cookies-samesite":"strict","application-name":"gts","bind-address":"127.0.0.1","config-path":"./test/test.yaml","db-address":":memory:","db-database":"gotosocial_prod","db-password":"hunter2","db-port":6969,"db-tls-ca-cert":"","db-tls-mode":"disable","db-type":"sqlite","db-user":"sex-haver","email":"","host":"example.com","instance-deliver-to-shared-inboxes":false,"instance-expose-peers":true,"instance-expose-suspended":true,"letsencrypt-cert-dir":"/gotosocial/storage/certs","letsencrypt-email-address":"","letsencrypt-enabled":true,"letsencrypt-port":80,"log-db-queries":true,"log-level":"info","media-description-max-chars":5000,"media-description-min-chars":69,"media-emoji-local-max-size":420,"media-emoji-remote-max-size":420,"media-image-max-size":420,"media-remote-cache-days":30,"media-video-max-size":420,"oidc-client-id":"1234","oidc-client-secret":"shhhh its a secret","oidc-enabled":true,"oidc-idp-name":"sex-haver","oidc-issuer":"whoknows","oidc-scopes":["read","write"],"oidc-skip-verification":true,"password":"","path":"","port":6969,"protocol":"http","smtp-from":"queen.rip.in.piss@terfisland.org","smtp-host":"example.com","smtp-password":"hunter2","smtp-port":4269,"smtp-username":"sex-haver","software-version":"","statuses-cw-max-chars":420,"statuses-max-chars":69,"statuses-media-max-files":1,"statuses-poll-max-options":1,"statuses-poll-option-max-chars":50,"storage-backend":"local","storage-local-base-path":"/root/store","storage-s3-access-key":"minio","storage-s3-bucket":"gts","storage-s3-endpoint":"localhost:9000","storage-s3-secret-key":"miniostorage","storage-s3-use-ssl":false,"syslog-address":"127.0.0.1:6969","syslog-enabled":true,"syslog-protocol":"udp","trusted-proxies":["127.0.0.1/32","docker.host.local"],"username":"","web-asset-base-dir":"/root","web-template-base-dir":"/root"}'
+EXPECT='{"account-domain":"peepee","accounts-allow-custom-css":true,"accounts-approval-required":false,"accounts-reason-required":false,"accounts-registration-open":true,"advanced-cookies-samesite":"strict","advanced-rate-limit-requests":6969,"application-name":"gts","bind-address":"127.0.0.1","config-path":"internal/config/testdata/test.yaml","db-address":":memory:","db-database":"gotosocial_prod","db-password":"hunter2","db-port":6969,"db-tls-ca-cert":"","db-tls-mode":"disable","db-type":"sqlite","db-user":"sex-haver","dry-run":false,"email":"","host":"example.com","instance-deliver-to-shared-inboxes":false,"instance-expose-peers":true,"instance-expose-public-timeline":true,"instance-expose-suspended":true,"landing-page-user":"admin","letsencrypt-cert-dir":"/gotosocial/storage/certs","letsencrypt-email-address":"","letsencrypt-enabled":true,"letsencrypt-port":80,"log-db-queries":true,"log-level":"info","media-description-max-chars":5000,"media-description-min-chars":69,"media-emoji-local-max-size":420,"media-emoji-remote-max-size":420,"media-image-max-size":420,"media-remote-cache-days":30,"media-video-max-size":420,"oidc-client-id":"1234","oidc-client-secret":"shhhh its a secret","oidc-enabled":true,"oidc-idp-name":"sex-haver","oidc-issuer":"whoknows","oidc-link-existing":true,"oidc-scopes":["read","write"],"oidc-skip-verification":true,"password":"","path":"","port":6969,"protocol":"http","smtp-from":"queen.rip.in.piss@terfisland.org","smtp-host":"example.com","smtp-password":"hunter2","smtp-port":4269,"smtp-username":"sex-haver","software-version":"","statuses-cw-max-chars":420,"statuses-max-chars":69,"statuses-media-max-files":1,"statuses-poll-max-options":1,"statuses-poll-option-max-chars":50,"storage-backend":"local","storage-local-base-path":"/root/store","storage-s3-access-key":"minio","storage-s3-bucket":"gts","storage-s3-endpoint":"localhost:9000","storage-s3-proxy":true,"storage-s3-secret-key":"miniostorage","storage-s3-use-ssl":false,"syslog-address":"127.0.0.1:6969","syslog-enabled":true,"syslog-protocol":"udp","trusted-proxies":["127.0.0.1/32","docker.host.local"],"username":"","web-asset-base-dir":"/root","web-template-base-dir":"/root"}'
 
 # Set all the environment variables to 
 # ensure that these are parsed without panic
 OUTPUT=$(GTS_LOG_LEVEL='info' \
 GTS_LOG_DB_QUERIES=true \
 GTS_APPLICATION_NAME=gts \
+GTS_LANDING_PAGE_USER=admin \
 GTS_HOST=example.com \
 GTS_ACCOUNT_DOMAIN='peepee' \
 GTS_PROTOCOL=http \
@@ -27,6 +28,7 @@ GTS_WEB_TEMPLATE_BASE_DIR='/root' \
 GTS_WEB_ASSET_BASE_DIR='/root' \
 GTS_INSTANCE_EXPOSE_PEERS=true \
 GTS_INSTANCE_EXPOSE_SUSPENDED=true \
+GTS_INSTANCE_EXPOSE_PUBLIC_TIMELINE=true \
 GTS_INSTANCE_DELIVER_TO_SHARED_INBOXES=false \
 GTS_ACCOUNTS_ALLOW_CUSTOM_CSS=true \
 GTS_ACCOUNTS_REGISTRATION_OPEN=true \
@@ -45,6 +47,7 @@ GTS_STORAGE_S3_ACCESS_KEY='minio' \
 GTS_STORAGE_S3_SECRET_KEY='miniostorage' \
 GTS_STORAGE_S3_ENDPOINT='localhost:9000' \
 GTS_STORAGE_S3_USE_SSL='false' \
+GTS_STORAGE_S3_PROXY='true' \
 GTS_STORAGE_S3_BUCKET='gts' \
 GTS_STATUSES_MAX_CHARS=69 \
 GTS_STATUSES_CW_MAX_CHARS=420 \
@@ -62,6 +65,7 @@ GTS_OIDC_ISSUER='whoknows' \
 GTS_OIDC_CLIENT_ID='1234' \
 GTS_OIDC_CLIENT_SECRET='shhhh its a secret' \
 GTS_OIDC_SCOPES='read,write' \
+GTS_OIDC_LINK_EXISTING=true \
 GTS_SMTP_HOST='example.com' \
 GTS_SMTP_PORT=4269 \
 GTS_SMTP_USERNAME='sex-haver' \
@@ -71,7 +75,8 @@ GTS_SYSLOG_ENABLED=true \
 GTS_SYSLOG_PROTOCOL='udp' \
 GTS_SYSLOG_ADDRESS='127.0.0.1:6969' \
 GTS_ADVANCED_COOKIES_SAMESITE='strict' \
-go run ./cmd/gotosocial/... --config-path $(dirname ${0})/test.yaml debug config)
+GTS_ADVANCED_RATE_LIMIT_REQUESTS=6969 \
+go run ./cmd/gotosocial/... --config-path internal/config/testdata/test.yaml debug config)
 
 OUTPUT_OUT=$(mktemp)
 echo "$OUTPUT" > "$OUTPUT_OUT"

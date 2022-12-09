@@ -20,20 +20,20 @@ package bundb
 
 import (
 	"context"
-	"database/sql"
 	"net/url"
 	"strings"
 
-	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/uptrace/bun"
 	"golang.org/x/net/idna"
 )
 
 type domainDB struct {
 	conn  *DBConn
-	cache *cache.DomainBlockCache
+	state *state.State
 }
 
 // normalizeDomain converts the given domain to lowercase
@@ -47,77 +47,54 @@ func normalizeDomain(domain string) (out string, err error) {
 	return out, err
 }
 
-func (d *domainDB) CreateDomainBlock(ctx context.Context, block gtsmodel.DomainBlock) db.Error {
-	domain, err := normalizeDomain(block.Domain)
+func (d *domainDB) CreateDomainBlock(ctx context.Context, block *gtsmodel.DomainBlock) db.Error {
+	var err error
+
+	block.Domain, err = normalizeDomain(block.Domain)
 	if err != nil {
 		return err
 	}
-	block.Domain = domain
 
-	// Attempt to insert new domain block
-	if _, err := d.conn.NewInsert().
-		Model(&block).
-		Exec(ctx, &block); err != nil {
+	return d.state.Caches.GTS.DomainBlock().Store(block, func() error {
+		_, err := d.conn.NewInsert().
+			Model(block).
+			Exec(ctx)
 		return d.conn.ProcessError(err)
-	}
-
-	// Cache this domain block
-	d.cache.Put(block.Domain, &block)
-
-	return nil
+	})
 }
 
 func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel.DomainBlock, db.Error) {
 	var err error
+
 	domain, err = normalizeDomain(domain)
 	if err != nil {
 		return nil, err
 	}
 
-	// Check for easy case, domain referencing *us*
-	if domain == "" || domain == config.GetAccountDomain() {
-		return nil, db.ErrNoEntries
-	}
-
-	// Check for already cached rblock
-	if block, ok := d.cache.GetByDomain(domain); ok {
-		// A 'nil' return value is a sentinel value for no block
-		if block == nil {
+	return d.state.Caches.GTS.DomainBlock().Load("Domain", func() (*gtsmodel.DomainBlock, error) {
+		// Check for easy case, domain referencing *us*
+		if domain == "" || domain == config.GetAccountDomain() {
 			return nil, db.ErrNoEntries
 		}
 
-		// Else, this block exists
-		return block, nil
-	}
+		var block gtsmodel.DomainBlock
 
-	block := &gtsmodel.DomainBlock{}
+		q := d.conn.
+			NewSelect().
+			Model(&block).
+			Where("? = ?", bun.Ident("domain_block.domain"), domain).
+			Limit(1)
+		if err := q.Scan(ctx); err != nil {
+			return nil, d.conn.ProcessError(err)
+		}
 
-	q := d.conn.
-		NewSelect().
-		Model(block).
-		Where("domain = ?", domain).
-		Limit(1)
-
-	// Query database for domain block
-	switch err := q.Scan(ctx); err {
-	// No error, block found
-	case nil:
-		d.cache.Put(domain, block)
-		return block, nil
-
-	// No error, simply not found
-	case sql.ErrNoRows:
-		d.cache.Put(domain, nil)
-		return nil, db.ErrNoEntries
-
-	// Any other db error
-	default:
-		return nil, d.conn.ProcessError(err)
-	}
+		return &block, nil
+	}, domain)
 }
 
 func (d *domainDB) DeleteDomainBlock(ctx context.Context, domain string) db.Error {
 	var err error
+
 	domain, err = normalizeDomain(domain)
 	if err != nil {
 		return err
@@ -126,13 +103,13 @@ func (d *domainDB) DeleteDomainBlock(ctx context.Context, domain string) db.Erro
 	// Attempt to delete domain block
 	if _, err := d.conn.NewDelete().
 		Model((*gtsmodel.DomainBlock)(nil)).
-		Where("domain = ?", domain).
+		Where("? = ?", bun.Ident("domain_block.domain"), domain).
 		Exec(ctx); err != nil {
 		return d.conn.ProcessError(err)
 	}
 
 	// Clear domain from cache
-	d.cache.InvalidateByDomain(domain)
+	d.state.Caches.GTS.DomainBlock().Invalidate(domain)
 
 	return nil
 }
