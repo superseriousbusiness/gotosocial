@@ -208,6 +208,12 @@ func (suite *AccountTestSuite) TestInsertAccountWithDefaults() {
 	suite.False(*newAccount.HideCollections)
 }
 
+func (suite *AccountTestSuite) TestGettingBookmarksWithNoAccount() {
+	statuses, err := suite.db.GetBookmarks(context.Background(), "", 10, "", "")
+	suite.Error(err)
+	suite.Nil(statuses)
+}
+
 func TestAccountTestSuite(t *testing.T) {
 	suite.Run(t, new(AccountTestSuite))
 }

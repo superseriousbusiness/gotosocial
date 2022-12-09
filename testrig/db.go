@@ -261,6 +261,12 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 		}
 	}
 
+	for _, v := range NewTestBookmarks() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(err)
+		}
+	}
+
 	if err := db.CreateInstanceAccount(ctx); err != nil {
 		log.Panic(err)
 	}

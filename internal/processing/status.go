@@ -65,3 +65,11 @@ func (p *processor) StatusUnfave(ctx context.Context, authed *oauth.Auth, target
 func (p *processor) StatusGetContext(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Context, gtserror.WithCode) {
 	return p.statusProcessor.Context(ctx, authed.Account, targetStatusID)
 }
+
+func (p *processor) StatusBookmark(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+	return p.statusProcessor.Bookmark(ctx, authed.Account, targetStatusID)
+}
+
+func (p *processor) StatusUnbookmark(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+	return p.statusProcessor.Unbookmark(ctx, authed.Account, targetStatusID)
+}
