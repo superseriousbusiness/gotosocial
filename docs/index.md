@@ -48,6 +48,10 @@ Since every ActivityPub server implementation has a slightly different interpret
 
 You wanna contribute to GtS? Great! ❤️❤️❤️ Check out the issues page to see if there's anything you wanna jump in on, and read the CONTRIBUTING.md file on the repository for guidelines and setting up your dev environment.
 
+## Building
+
+Instructions for building GoToSocial from source are also in the CONTRIBUTING.md file.
+
 ## Contact
 
 For questions and comments, you can [join our Matrix channel](https://matrix.to/#/#gotosocial:superseriousbusiness.org) at `#gotosocial:superseriousbusiness.org`. This is the quickest way to reach the devs. You can also mail [admin@gotosocial.org](mailto:admin@gotosocial.org).
