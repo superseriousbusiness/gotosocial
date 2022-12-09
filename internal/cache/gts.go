@@ -19,9 +19,8 @@
 package cache
 
 import (
-	"time"
-
 	"codeberg.org/gruf/go-cache/v3/result"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
@@ -100,34 +99,34 @@ func (c *gtsCaches) Init() {
 
 func (c *gtsCaches) Start() {
 	tryUntil("starting gtsmodel.Account cache", 5, func() bool {
-		return c.account.Start(time.Second * 10)
+		return c.account.Start(config.GetCacheAccountSweepFreq())
 	})
 	tryUntil("starting gtsmodel.Block cache", 5, func() bool {
-		return c.block.Start(time.Second * 10)
+		return c.block.Start(config.GetCacheBlockSweepFreq())
 	})
 	tryUntil("starting gtsmodel.DomainBlock cache", 5, func() bool {
-		return c.domainBlock.Start(time.Second * 10)
+		return c.domainBlock.Start(config.GetCacheDomainBlockSweepFreq())
 	})
 	tryUntil("starting gtsmodel.Emoji cache", 5, func() bool {
-		return c.emoji.Start(time.Second * 10)
+		return c.emoji.Start(config.GetCacheEmojiSweepFreq())
 	})
 	tryUntil("starting gtsmodel.EmojiCategory cache", 5, func() bool {
-		return c.emojiCategory.Start(time.Second * 10)
+		return c.emojiCategory.Start(config.GetCacheEmojiCategorySweepFreq())
 	})
 	tryUntil("starting gtsmodel.Mention cache", 5, func() bool {
-		return c.mention.Start(time.Second * 10)
+		return c.mention.Start(config.GetCacheMentionSweepFreq())
 	})
 	tryUntil("starting gtsmodel.Notification cache", 5, func() bool {
-		return c.notification.Start(time.Second * 10)
+		return c.notification.Start(config.GetCacheNotificationSweepFreq())
 	})
 	tryUntil("starting gtsmodel.Status cache", 5, func() bool {
-		return c.status.Start(time.Second * 10)
+		return c.status.Start(config.GetCacheStatusSweepFreq())
 	})
 	tryUntil("starting gtsmodel.Tombstone cache", 5, func() bool {
-		return c.tombstone.Start(time.Second * 10)
+		return c.tombstone.Start(config.GetCacheTombstoneSweepFreq())
 	})
 	tryUntil("starting gtsmodel.User cache", 5, func() bool {
-		return c.user.Start(time.Second * 10)
+		return c.user.Start(config.GetCacheUserSweepFreq())
 	})
 }
 
@@ -195,8 +194,8 @@ func (c *gtsCaches) initAccount() {
 		a2 := new(gtsmodel.Account)
 		*a2 = *a1
 		return a2
-	}, 1000)
-	c.account.SetTTL(time.Minute*5, false)
+	}, config.GetCacheAccountMaxSize())
+	c.account.SetTTL(config.GetCacheAccountTTL(), true)
 }
 
 func (c *gtsCaches) initBlock() {
@@ -208,8 +207,8 @@ func (c *gtsCaches) initBlock() {
 		b2 := new(gtsmodel.Block)
 		*b2 = *b1
 		return b2
-	}, 1000)
-	c.block.SetTTL(time.Minute*5, false)
+	}, config.GetCacheBlockMaxSize())
+	c.block.SetTTL(config.GetCacheBlockTTL(), true)
 }
 
 func (c *gtsCaches) initDomainBlock() {
@@ -219,8 +218,8 @@ func (c *gtsCaches) initDomainBlock() {
 		d2 := new(gtsmodel.DomainBlock)
 		*d2 = *d1
 		return d2
-	}, 1000)
-	c.domainBlock.SetTTL(time.Minute*5, false)
+	}, config.GetCacheDomainBlockMaxSize())
+	c.domainBlock.SetTTL(config.GetCacheDomainBlockTTL(), true)
 }
 
 func (c *gtsCaches) initEmoji() {
@@ -233,8 +232,8 @@ func (c *gtsCaches) initEmoji() {
 		e2 := new(gtsmodel.Emoji)
 		*e2 = *e1
 		return e2
-	}, 1000)
-	c.emoji.SetTTL(time.Minute*5, false)
+	}, config.GetCacheEmojiMaxSize())
+	c.emoji.SetTTL(config.GetCacheEmojiTTL(), true)
 }
 
 func (c *gtsCaches) initEmojiCategory() {
@@ -245,8 +244,8 @@ func (c *gtsCaches) initEmojiCategory() {
 		c2 := new(gtsmodel.EmojiCategory)
 		*c2 = *c1
 		return c2
-	}, 1000)
-	c.emojiCategory.SetTTL(time.Minute*5, false)
+	}, config.GetCacheEmojiCategoryMaxSize())
+	c.emojiCategory.SetTTL(config.GetCacheEmojiCategoryTTL(), true)
 }
 
 func (c *gtsCaches) initMention() {
@@ -256,8 +255,8 @@ func (c *gtsCaches) initMention() {
 		m2 := new(gtsmodel.Mention)
 		*m2 = *m1
 		return m2
-	}, 1000)
-	c.mention.SetTTL(time.Minute*5, false)
+	}, config.GetCacheMentionMaxSize())
+	c.mention.SetTTL(config.GetCacheMentionTTL(), true)
 }
 
 func (c *gtsCaches) initNotification() {
@@ -267,8 +266,8 @@ func (c *gtsCaches) initNotification() {
 		n2 := new(gtsmodel.Notification)
 		*n2 = *n1
 		return n2
-	}, 1000)
-	c.notification.SetTTL(time.Minute*5, false)
+	}, config.GetCacheNotificationMaxSize())
+	c.notification.SetTTL(config.GetCacheNotificationTTL(), true)
 }
 
 func (c *gtsCaches) initStatus() {
@@ -280,8 +279,8 @@ func (c *gtsCaches) initStatus() {
 		s2 := new(gtsmodel.Status)
 		*s2 = *s1
 		return s2
-	}, 1000)
-	c.status.SetTTL(time.Minute*5, false)
+	}, config.GetCacheStatusMaxSize())
+	c.status.SetTTL(config.GetCacheStatusTTL(), true)
 }
 
 // initTombstone will initialize the gtsmodel.Tombstone cache.
@@ -293,8 +292,8 @@ func (c *gtsCaches) initTombstone() {
 		t2 := new(gtsmodel.Tombstone)
 		*t2 = *t1
 		return t2
-	}, 100)
-	c.tombstone.SetTTL(time.Minute*5, false)
+	}, config.GetCacheTombstoneMaxSize())
+	c.tombstone.SetTTL(config.GetCacheTombstoneTTL(), true)
 }
 
 func (c *gtsCaches) initUser() {
@@ -308,6 +307,6 @@ func (c *gtsCaches) initUser() {
 		u2 := new(gtsmodel.User)
 		*u2 = *u1
 		return u2
-	}, 1000)
-	c.user.SetTTL(time.Minute*5, false)
+	}, config.GetCacheUserMaxSize())
+	c.user.SetTTL(config.GetCacheUserTTL(), true)
 }

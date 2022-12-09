@@ -21,9 +21,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"reflect"
+	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
@@ -48,14 +50,10 @@ const license = `/*
 `
 
 func main() {
-	var (
-		out string
-		gen string
-	)
+	var out string
 
 	// Load runtime config flags
 	flag.StringVar(&out, "out", "", "Generated file output path")
-	flag.StringVar(&gen, "gen", "helpers", "Type of file to generate (helpers)")
 	flag.Parse()
 
 	// Open output file path
@@ -64,50 +62,61 @@ func main() {
 		panic(err)
 	}
 
-	switch gen {
-	// Generate config field helper methods
-	case "helpers":
-		fmt.Fprint(output, "// THIS IS A GENERATED FILE, DO NOT EDIT BY HAND\n")
-		fmt.Fprint(output, license)
-		fmt.Fprint(output, "package config\n\n")
-		fmt.Fprint(output, "import \"codeberg.org/gruf/go-bytesize\"\n\n")
-		t := reflect.TypeOf(config.Configuration{})
-		for i := 0; i < t.NumField(); i++ {
-			field := t.Field(i)
+	fmt.Fprint(output, "// THIS IS A GENERATED FILE, DO NOT EDIT BY HAND\n")
+	fmt.Fprint(output, license)
+	fmt.Fprint(output, "package config\n\n")
+	fmt.Fprint(output, "import \"codeberg.org/gruf/go-bytesize\"\n\n")
+	generateFields(output, nil, reflect.TypeOf(config.Configuration{}))
+	_ = output.Close()
+	_ = exec.Command("gofumports", "-w", out).Run()
 
-			// ConfigState structure helper methods
-			fmt.Fprintf(output, "// Get%s safely fetches the Configuration value for state's '%s' field\n", field.Name, field.Name)
-			fmt.Fprintf(output, "func (st *ConfigState) Get%s() (v %s) {\n", field.Name, field.Type.String())
-			fmt.Fprintf(output, "\tst.mutex.Lock()\n")
-			fmt.Fprintf(output, "\tv = st.config.%s\n", field.Name)
-			fmt.Fprintf(output, "\tst.mutex.Unlock()\n")
-			fmt.Fprintf(output, "\treturn\n")
-			fmt.Fprintf(output, "}\n\n")
-			fmt.Fprintf(output, "// Set%s safely sets the Configuration value for state's '%s' field\n", field.Name, field.Name)
-			fmt.Fprintf(output, "func (st *ConfigState) Set%s(v %s) {\n", field.Name, field.Type.String())
-			fmt.Fprintf(output, "\tst.mutex.Lock()\n")
-			fmt.Fprintf(output, "\tdefer st.mutex.Unlock()\n")
-			fmt.Fprintf(output, "\tst.config.%s = v\n", field.Name)
-			fmt.Fprintf(output, "\tst.reloadToViper()\n")
-			fmt.Fprintf(output, "}\n\n")
-
-			// Global ConfigState helper methods
-			// TODO: remove when we pass around a ConfigState{}
-			fmt.Fprintf(output, "// %sFlag returns the flag name for the '%s' field\n", field.Name, field.Name)
-			fmt.Fprintf(output, "func %sFlag() string { return \"%s\" }\n\n", field.Name, field.Tag.Get("name"))
-			fmt.Fprintf(output, "// Get%s safely fetches the value for global configuration '%s' field\n", field.Name, field.Name)
-			fmt.Fprintf(output, "func Get%[1]s() %[2]s { return global.Get%[1]s() }\n\n", field.Name, field.Type.String())
-			fmt.Fprintf(output, "// Set%s safely sets the value for global configuration '%s' field\n", field.Name, field.Name)
-			fmt.Fprintf(output, "func Set%[1]s(v %[2]s) { global.Set%[1]s(v) }\n\n", field.Name, field.Type.String())
-		}
-		_ = output.Close()
-		_ = exec.Command("gofumports", "-w", out).Run()
-
-	// The plain here is that eventually we might be able
+	// The plan here is that eventually we might be able
 	// to generate an example configuration from struct tags
+}
 
-	// Unknown type
-	default:
-		panic("unknown generation type: " + gen)
+func generateFields(output io.Writer, prefixes []string, t reflect.Type) {
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+
+		if ft := field.Type; ft.Kind() == reflect.Struct {
+			// This is a struct field containing further nested config vars.
+			generateFields(output, append(prefixes, field.Name), ft)
+			continue
+		}
+
+		// Get prefixed config variable name
+		name := strings.Join(prefixes, "") + field.Name
+
+		// Get period-separated (if nested) config variable "path"
+		fieldPath := strings.Join(append(prefixes, field.Name), ".")
+
+		// Get dash-separated config variable CLI flag "path"
+		flagPath := strings.Join(append(prefixes, field.Tag.Get("name")), "-")
+		flagPath = strings.ToLower(flagPath)
+
+		// ConfigState structure helper methods
+		fmt.Fprintf(output, "// Get%s safely fetches the Configuration value for state's '%s' field\n", name, fieldPath)
+		fmt.Fprintf(output, "func (st *ConfigState) Get%s() (v %s) {\n", name, field.Type.String())
+		fmt.Fprintf(output, "\tst.mutex.Lock()\n")
+		fmt.Fprintf(output, "\tv = st.config.%s\n", fieldPath)
+		fmt.Fprintf(output, "\tst.mutex.Unlock()\n")
+		fmt.Fprintf(output, "\treturn\n")
+		fmt.Fprintf(output, "}\n\n")
+		fmt.Fprintf(output, "// Set%s safely sets the Configuration value for state's '%s' field\n", name, fieldPath)
+		fmt.Fprintf(output, "func (st *ConfigState) Set%s(v %s) {\n", name, field.Type.String())
+		fmt.Fprintf(output, "\tst.mutex.Lock()\n")
+		fmt.Fprintf(output, "\tdefer st.mutex.Unlock()\n")
+		fmt.Fprintf(output, "\tst.config.%s = v\n", fieldPath)
+		fmt.Fprintf(output, "\tst.reloadToViper()\n")
+		fmt.Fprintf(output, "}\n\n")
+
+		// Global ConfigState helper methods
+		// TODO: remove when we pass around a ConfigState{}
+		fmt.Fprintf(output, "// %sFlag returns the flag name for the '%s' field\n", name, fieldPath)
+		fmt.Fprintf(output, "func %sFlag() string { return \"%s\" }\n\n", name, flagPath)
+		fmt.Fprintf(output, "// Get%s safely fetches the value for global configuration '%s' field\n", name, fieldPath)
+		fmt.Fprintf(output, "func Get%[1]s() %[2]s { return global.Get%[1]s() }\n\n", name, field.Type.String())
+		fmt.Fprintf(output, "// Set%s safely sets the value for global configuration '%s' field\n", name, fieldPath)
+		fmt.Fprintf(output, "func Set%[1]s(v %[2]s) { global.Set%[1]s(v) }\n\n", name, field.Type.String())
 	}
 }

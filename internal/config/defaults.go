@@ -18,7 +18,12 @@
 
 package config
 
-import "github.com/coreos/go-oidc/v3/oidc"
+import (
+	"time"
+
+	"codeberg.org/gruf/go-bytesize"
+	"github.com/coreos/go-oidc/v3/oidc"
+)
 
 // Defaults contains a populated Configuration with reasonable defaults. Note that
 // if you use this, you will still need to set Host, and, if desired, ConfigPath.
@@ -56,13 +61,13 @@ var Defaults = Configuration{
 	AccountsReasonRequired:   true,
 	AccountsAllowCustomCSS:   false,
 
-	MediaImageMaxSize:        10485760, // 10mb
-	MediaVideoMaxSize:        41943040, // 40mb
+	MediaImageMaxSize:        10 * bytesize.MiB,
+	MediaVideoMaxSize:        40 * bytesize.MiB,
 	MediaDescriptionMinChars: 0,
 	MediaDescriptionMaxChars: 500,
 	MediaRemoteCacheDays:     30,
-	MediaEmojiLocalMaxSize:   51200,  // 50kb
-	MediaEmojiRemoteMaxSize:  102400, // 100kb
+	MediaEmojiLocalMaxSize:   50 * bytesize.KiB,
+	MediaEmojiRemoteMaxSize:  100 * bytesize.KiB,
 
 	StorageBackend:       "local",
 	StorageLocalBasePath: "/gotosocial/storage",
@@ -101,4 +106,46 @@ var Defaults = Configuration{
 
 	AdvancedCookiesSamesite:   "lax",
 	AdvancedRateLimitRequests: 1000, // per 5 minutes
+
+	Cache: CacheConfig{
+		AccountMaxSize:   100,
+		AccountTTL:       time.Minute * 5,
+		AccountSweepFreq: time.Second * 10,
+
+		BlockMaxSize:   100,
+		BlockTTL:       time.Minute * 5,
+		BlockSweepFreq: time.Second * 10,
+
+		DomainBlockMaxSize:   1000,
+		DomainBlockTTL:       time.Hour * 24,
+		DomainBlockSweepFreq: time.Minute,
+
+		EmojiMaxSize:   500,
+		EmojiTTL:       time.Minute * 5,
+		EmojiSweepFreq: time.Second * 10,
+
+		EmojiCategoryMaxSize:   100,
+		EmojiCategoryTTL:       time.Minute * 5,
+		EmojiCategorySweepFreq: time.Second * 10,
+
+		MentionMaxSize:   500,
+		MentionTTL:       time.Minute * 5,
+		MentionSweepFreq: time.Second * 10,
+
+		NotificationMaxSize:   500,
+		NotificationTTL:       time.Minute * 5,
+		NotificationSweepFreq: time.Second * 10,
+
+		StatusMaxSize:   500,
+		StatusTTL:       time.Minute * 5,
+		StatusSweepFreq: time.Second * 10,
+
+		TombstoneMaxSize:   100,
+		TombstoneTTL:       time.Minute * 5,
+		TombstoneSweepFreq: time.Second * 10,
+
+		UserMaxSize:   100,
+		UserTTL:       time.Minute * 5,
+		UserSweepFreq: time.Second * 10,
+	},
 }

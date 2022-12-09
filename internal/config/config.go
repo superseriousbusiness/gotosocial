@@ -20,6 +20,7 @@ package config
 
 import (
 	"reflect"
+	"time"
 
 	"codeberg.org/gruf/go-bytesize"
 	"github.com/mitchellh/mapstructure"
@@ -129,12 +130,57 @@ type Configuration struct {
 	AdvancedCookiesSamesite   string `name:"advanced-cookies-samesite" usage:"'strict' or 'lax', see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite"`
 	AdvancedRateLimitRequests int    `name:"advanced-rate-limit-requests" usage:"Amount of HTTP requests to permit within a 5 minute window. 0 or less turns rate limiting off."`
 
+	// Cache configuration vars.
+	Cache CacheConfig `name:"cache"`
+
 	// TODO: move these elsewhere, these are more ephemeral vs long-running flags like above
 	AdminAccountUsername  string `name:"username" usage:"the username to create/delete/etc"`
 	AdminAccountEmail     string `name:"email" usage:"the email address of this account"`
 	AdminAccountPassword  string `name:"password" usage:"the password to set for this account"`
 	AdminTransPath        string `name:"path" usage:"the path of the file to import from/export to"`
 	AdminMediaPruneDryRun bool   `name:"dry-run" usage:"perform a dry run and only log number of items eligible for pruning"`
+}
+
+type CacheConfig struct {
+	AccountMaxSize   int           `name:"account-max-size"`
+	AccountTTL       time.Duration `name:"account-ttl"`
+	AccountSweepFreq time.Duration `name:"account-sweep-freq"`
+
+	BlockMaxSize   int           `name:"block-max-size"`
+	BlockTTL       time.Duration `name:"block-ttl"`
+	BlockSweepFreq time.Duration `name:"block-sweep-freq"`
+
+	DomainBlockMaxSize   int           `name:"domain-block-max-size"`
+	DomainBlockTTL       time.Duration `name:"domain-block-ttl"`
+	DomainBlockSweepFreq time.Duration `name:"domain-block-sweep-freq"`
+
+	EmojiMaxSize   int           `name:"emoji-max-size"`
+	EmojiTTL       time.Duration `name:"emoji-ttl"`
+	EmojiSweepFreq time.Duration `name:"emoji-sweep-freq"`
+
+	EmojiCategoryMaxSize   int           `name:"emoji-category-max-size"`
+	EmojiCategoryTTL       time.Duration `name:"emoji-category-ttl"`
+	EmojiCategorySweepFreq time.Duration `name:"emoji-category-sweep-freq"`
+
+	MentionMaxSize   int           `name:"mention-max-size"`
+	MentionTTL       time.Duration `name:"mention-ttl"`
+	MentionSweepFreq time.Duration `name:"mention-sweep-freq"`
+
+	NotificationMaxSize   int           `name:"notification-max-size"`
+	NotificationTTL       time.Duration `name:"notification-ttl"`
+	NotificationSweepFreq time.Duration `name:"notification-sweep-freq"`
+
+	StatusMaxSize   int           `name:"status-max-size"`
+	StatusTTL       time.Duration `name:"status-ttl"`
+	StatusSweepFreq time.Duration `name:"status-sweep-freq"`
+
+	TombstoneMaxSize   int           `name:"tombstone-max-size"`
+	TombstoneTTL       time.Duration `name:"tombstone-ttl"`
+	TombstoneSweepFreq time.Duration `name:"tombstone-sweep-freq"`
+
+	UserMaxSize   int           `name:"user-max-size"`
+	UserTTL       time.Duration `name:"user-ttl"`
+	UserSweepFreq time.Duration `name:"user-sweep-freq"`
 }
 
 // MarshalMap will marshal current Configuration into a map structure (useful for JSON).

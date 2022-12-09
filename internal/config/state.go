@@ -132,9 +132,13 @@ func (st *ConfigState) reloadToViper() {
 func (st *ConfigState) reloadFromViper() {
 	if err := st.viper.Unmarshal(&st.config, func(c *mapstructure.DecoderConfig) {
 		c.TagName = "name"
-		c.ZeroFields = true // empty the config struct before we marshal values into it
+
+		// empty config before marshaling
+		c.ZeroFields = true
 
 		oldhook := c.DecodeHook
+
+		// Use the TextUnmarshaler interface when decoding.
 		c.DecodeHook = mapstructure.ComposeDecodeHookFunc(
 			mapstructure.TextUnmarshallerHookFunc(),
 			oldhook,
