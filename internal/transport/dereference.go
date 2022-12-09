@@ -26,7 +26,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/superseriousbusiness/gotosocial/internal/api"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
@@ -61,7 +61,7 @@ func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, erro
 		return nil, err
 	}
 
-	req.Header.Add("Accept", string(api.AppActivityLDJSON)+","+string(api.AppActivityJSON))
+	req.Header.Add("Accept", string(apiutil.AppActivityLDJSON)+","+string(apiutil.AppActivityJSON))
 	req.Header.Add("Accept-Charset", "utf-8")
 	req.Header.Set("Host", iri.Host)
 

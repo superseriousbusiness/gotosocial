@@ -21,14 +21,13 @@ package blocks
 import (
 	"net/http"
 
-	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
 const (
-	// BasePath is the base URI path for serving favourites
-	BasePath = "/api/v1/blocks"
+	// BasePath is the base URI path for serving blocks, minus the api prefix.
+	BasePath = "/v1/blocks"
 
 	// MaxIDKey is the url query for setting a max ID to return
 	MaxIDKey = "max_id"
@@ -38,20 +37,16 @@ const (
 	LimitKey = "limit"
 )
 
-// Module implements the ClientAPIModule interface for everything relating to viewing blocks
 type Module struct {
 	processor processing.Processor
 }
 
-// New returns a new blocks module
-func New(processor processing.Processor) api.ClientModule {
+func New(processor processing.Processor) *Module {
 	return &Module{
 		processor: processor,
 	}
 }
 
-// Route attaches all routes from this module to the given router
-func (m *Module) Route(r router.Router) error {
-	r.AttachHandler(http.MethodGet, BasePath, m.BlocksGETHandler)
-	return nil
+func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
+	attachHandler(http.MethodGet, BasePath, m.BlocksGETHandler)
 }

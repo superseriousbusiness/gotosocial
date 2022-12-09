@@ -51,7 +51,7 @@ func NewTestRouter(db db.DB) router.Router {
 		}
 	}
 
-	r, err := router.New(context.Background(), db)
+	r, err := router.New(context.Background())
 	if err != nil {
 		panic(err)
 	}

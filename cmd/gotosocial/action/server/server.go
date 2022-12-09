@@ -27,28 +27,11 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/account"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/app"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/auth"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/blocks"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/emoji"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/favourites"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/fileserver"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/filter"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/followrequest"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/instance"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/list"
 	mediaModule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/notification"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/search"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/streaming"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/timeline"
 	userClient "github.com/superseriousbusiness/gotosocial/internal/api/client/user"
-	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/nodeinfo"
-	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/user"
-	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/webfinger"
+
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
@@ -64,7 +47,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
-	"github.com/superseriousbusiness/gotosocial/internal/router/middleware"
 	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -95,7 +77,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	federatingDB := federatingdb.New(dbService, fedWorker)
 
-	router, err := router.New(ctx, dbService)
+	router, err := router.New(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating router: %s", err)
 	}
@@ -148,11 +130,16 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating oidc idp: %s", err)
 	}
 
-	// build web module
+	// build router modules
+	authModule := api.NewAuth()
 	webModule := web.New(processor)
+	clientModule := api.NewClient(dbService, processor)
+	wellKnownModule := api.NewWellKnown(processor)
+	
 
 	// build client api modules
 	authModule := auth.New(dbService, idp, processor)
+
 	accountModule := account.New(processor)
 	instanceModule := instance.New(processor)
 	appsModule := app.New(processor)
@@ -170,7 +157,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	fileServerModule := fileserver.New(processor)
 	adminModule := admin.New(processor)
 	statusModule := status.New(processor)
-	middlewareModule := middleware.New(dbService, oauthServer)
 	streamingModule := streaming.New(processor)
 	favouritesModule := favourites.New(processor)
 	blocksModule := blocks.New(processor)
@@ -178,7 +164,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	apis := []api.ClientModule{
 		// modules with middleware go first
-		middlewareModule,
 		authModule,
 
 		// now the web module

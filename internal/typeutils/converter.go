@@ -26,7 +26,7 @@ import (
 	"github.com/gorilla/feeds"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -44,49 +44,49 @@ type TypeConverter interface {
 	// AccountToAPIAccountSensitive takes a db model account as a param, and returns a populated apitype account, or an error
 	// if something goes wrong. The returned account should be ready to serialize on an API level, and may have sensitive fields,
 	// so serve it only to an authorized user who should have permission to see it.
-	AccountToAPIAccountSensitive(ctx context.Context, account *gtsmodel.Account) (*model.Account, error)
+	AccountToAPIAccountSensitive(ctx context.Context, account *gtsmodel.Account) (*apimodel.Account, error)
 	// AccountToAPIAccountPublic takes a db model account as a param, and returns a populated apitype account, or an error
 	// if something goes wrong. The returned account should be ready to serialize on an API level, and may NOT have sensitive fields.
 	// In other words, this is the public record that the server has of an account.
-	AccountToAPIAccountPublic(ctx context.Context, account *gtsmodel.Account) (*model.Account, error)
+	AccountToAPIAccountPublic(ctx context.Context, account *gtsmodel.Account) (*apimodel.Account, error)
 	// AccountToAPIAccountBlocked takes a db model account as a param, and returns a apitype account, or an error if
 	// something goes wrong. The returned account will be a bare minimum representation of the account. This function should be used
 	// when someone wants to view an account they've blocked.
-	AccountToAPIAccountBlocked(ctx context.Context, account *gtsmodel.Account) (*model.Account, error)
+	AccountToAPIAccountBlocked(ctx context.Context, account *gtsmodel.Account) (*apimodel.Account, error)
 	// AppToAPIAppSensitive takes a db model application as a param, and returns a populated apitype application, or an error
 	// if something goes wrong. The returned application should be ready to serialize on an API level, and may have sensitive fields
 	// (such as client id and client secret), so serve it only to an authorized user who should have permission to see it.
-	AppToAPIAppSensitive(ctx context.Context, application *gtsmodel.Application) (*model.Application, error)
+	AppToAPIAppSensitive(ctx context.Context, application *gtsmodel.Application) (*apimodel.Application, error)
 	// AppToAPIAppPublic takes a db model application as a param, and returns a populated apitype application, or an error
 	// if something goes wrong. The returned application should be ready to serialize on an API level, and has sensitive
 	// fields sanitized so that it can be served to non-authorized accounts without revealing any private information.
-	AppToAPIAppPublic(ctx context.Context, application *gtsmodel.Application) (*model.Application, error)
+	AppToAPIAppPublic(ctx context.Context, application *gtsmodel.Application) (*apimodel.Application, error)
 	// AttachmentToAPIAttachment converts a gts model media attacahment into its api representation for serialization on the API.
-	AttachmentToAPIAttachment(ctx context.Context, attachment *gtsmodel.MediaAttachment) (model.Attachment, error)
+	AttachmentToAPIAttachment(ctx context.Context, attachment *gtsmodel.MediaAttachment) (apimodel.Attachment, error)
 	// MentionToAPIMention converts a gts model mention into its api (frontend) representation for serialization on the API.
-	MentionToAPIMention(ctx context.Context, m *gtsmodel.Mention) (model.Mention, error)
+	MentionToAPIMention(ctx context.Context, m *gtsmodel.Mention) (apimodel.Mention, error)
 	// EmojiToAPIEmoji converts a gts model emoji into its api (frontend) representation for serialization on the API.
-	EmojiToAPIEmoji(ctx context.Context, e *gtsmodel.Emoji) (model.Emoji, error)
+	EmojiToAPIEmoji(ctx context.Context, e *gtsmodel.Emoji) (apimodel.Emoji, error)
 	// EmojiToAdminAPIEmoji converts a gts model emoji into an API representation with extra admin information.
-	EmojiToAdminAPIEmoji(ctx context.Context, e *gtsmodel.Emoji) (*model.AdminEmoji, error)
+	EmojiToAdminAPIEmoji(ctx context.Context, e *gtsmodel.Emoji) (*apimodel.AdminEmoji, error)
 	// EmojiCategoryToAPIEmojiCategory converts a gts model emoji category into its api (frontend) representation.
-	EmojiCategoryToAPIEmojiCategory(ctx context.Context, category *gtsmodel.EmojiCategory) (*model.EmojiCategory, error)
+	EmojiCategoryToAPIEmojiCategory(ctx context.Context, category *gtsmodel.EmojiCategory) (*apimodel.EmojiCategory, error)
 	// TagToAPITag converts a gts model tag into its api (frontend) representation for serialization on the API.
-	TagToAPITag(ctx context.Context, t *gtsmodel.Tag) (model.Tag, error)
+	TagToAPITag(ctx context.Context, t *gtsmodel.Tag) (apimodel.Tag, error)
 	// StatusToAPIStatus converts a gts model status into its api (frontend) representation for serialization on the API.
 	//
 	// Requesting account can be nil.
-	StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*model.Status, error)
+	StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*apimodel.Status, error)
 	// VisToAPIVis converts a gts visibility into its api equivalent
-	VisToAPIVis(ctx context.Context, m gtsmodel.Visibility) model.Visibility
+	VisToAPIVis(ctx context.Context, m gtsmodel.Visibility) apimodel.Visibility
 	// InstanceToAPIInstance converts a gts instance into its api equivalent for serving at /api/v1/instance
-	InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Instance) (*model.Instance, error)
+	InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Instance) (*apimodel.Instance, error)
 	// RelationshipToAPIRelationship converts a gts relationship into its api equivalent for serving in various places
-	RelationshipToAPIRelationship(ctx context.Context, r *gtsmodel.Relationship) (*model.Relationship, error)
+	RelationshipToAPIRelationship(ctx context.Context, r *gtsmodel.Relationship) (*apimodel.Relationship, error)
 	// NotificationToAPINotification converts a gts notification into a api notification
-	NotificationToAPINotification(ctx context.Context, n *gtsmodel.Notification) (*model.Notification, error)
+	NotificationToAPINotification(ctx context.Context, n *gtsmodel.Notification) (*apimodel.Notification, error)
 	// DomainBlockToAPIDomainBlock converts a gts model domin block into a api domain block, for serving at /api/v1/admin/domain_blocks
-	DomainBlockToAPIDomainBlock(ctx context.Context, b *gtsmodel.DomainBlock, export bool) (*model.DomainBlock, error)
+	DomainBlockToAPIDomainBlock(ctx context.Context, b *gtsmodel.DomainBlock, export bool) (*apimodel.DomainBlock, error)
 
 	/*
 		INTERNAL (gts) MODEL TO FRONTEND (rss) MODEL
@@ -99,7 +99,7 @@ type TypeConverter interface {
 	*/
 
 	// APIVisToVis converts an API model visibility into its internal gts equivalent.
-	APIVisToVis(m model.Visibility) gtsmodel.Visibility
+	APIVisToVis(m apimodel.Visibility) gtsmodel.Visibility
 
 	/*
 		ACTIVITYSTREAMS MODEL TO INTERNAL (gts) MODEL

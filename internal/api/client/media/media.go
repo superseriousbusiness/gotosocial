@@ -21,9 +21,8 @@ package media
 import (
 	"net/http"
 
-	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
 const (
@@ -33,22 +32,18 @@ const (
 	BasePathWithIDV1       = "/api/v1/media/:" + IDKey           // BasePathWithID corresponds to a media attachment with the given ID
 )
 
-// Module implements the ClientAPIModule interface for media
 type Module struct {
 	processor processing.Processor
 }
 
-// New returns a new auth module
-func New(processor processing.Processor) api.ClientModule {
+func New(processor processing.Processor) *Module {
 	return &Module{
 		processor: processor,
 	}
 }
 
-// Route satisfies the RESTAPIModule interface
-func (m *Module) Route(s router.Router) error {
-	s.AttachHandler(http.MethodPost, BasePathWithAPIVersion, m.MediaCreatePOSTHandler)
-	s.AttachHandler(http.MethodGet, BasePathWithIDV1, m.MediaGETHandler)
-	s.AttachHandler(http.MethodPut, BasePathWithIDV1, m.MediaPUTHandler)
-	return nil
+func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
+	attachHandler(http.MethodPost, BasePathWithAPIVersion, m.MediaCreatePOSTHandler)
+	attachHandler(http.MethodGet, BasePathWithIDV1, m.MediaGETHandler)
+	attachHandler(http.MethodPut, BasePathWithIDV1, m.MediaPUTHandler)
 }

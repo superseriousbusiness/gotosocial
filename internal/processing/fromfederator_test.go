@@ -27,7 +27,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -171,7 +171,7 @@ func (suite *FromFederatorTestSuite) TestProcessReplyMention() {
 	suite.Equal(stream.EventTypeNotification, msg.Event)
 	suite.NotEmpty(msg.Payload)
 	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)
-	notifStreamed := &model.Notification{}
+	notifStreamed := &apimodel.Notification{}
 	err = json.Unmarshal([]byte(msg.Payload), notifStreamed)
 	suite.NoError(err)
 	suite.Equal("mention", notifStreamed.Type)
@@ -439,7 +439,7 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestLocked() {
 	suite.Equal(stream.EventTypeNotification, msg.Event)
 	suite.NotEmpty(msg.Payload)
 	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)
-	notif := &model.Notification{}
+	notif := &apimodel.Notification{}
 	err = json.Unmarshal([]byte(msg.Payload), notif)
 	suite.NoError(err)
 	suite.Equal("follow_request", notif.Type)
@@ -537,7 +537,7 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestUnlocked() {
 	suite.Equal(stream.EventTypeNotification, msg.Event)
 	suite.NotEmpty(msg.Payload)
 	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)
-	notif := &model.Notification{}
+	notif := &apimodel.Notification{}
 	err = json.Unmarshal([]byte(msg.Payload), notif)
 	suite.NoError(err)
 	suite.Equal("follow", notif.Type)

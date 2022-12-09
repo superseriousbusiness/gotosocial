@@ -25,8 +25,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/api"
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -123,42 +123,42 @@ import (
 func (m *Module) EmojiPATCHHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if !*authed.User.Admin {
 		err := fmt.Errorf("user %s not an admin", authed.User.ID)
-		api.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
+	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	emojiID := c.Param(IDKey)
 	if emojiID == "" {
 		err := errors.New("no emoji id specified")
-		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	form := &model.EmojiUpdateRequest{}
+	form := &apimodel.EmojiUpdateRequest{}
 	if err := c.ShouldBind(form); err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if err := validateUpdateEmoji(form); err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	emoji, errWithCode := m.processor.AdminEmojiUpdate(c.Request.Context(), emojiID, form)
 	if errWithCode != nil {
-		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 
@@ -166,14 +166,14 @@ func (m *Module) EmojiPATCHHandler(c *gin.Context) {
 }
 
 // do a first pass on the form here
-func validateUpdateEmoji(form *model.EmojiUpdateRequest) error {
+func validateUpdateEmoji(form *apimodel.EmojiUpdateRequest) error {
 	// check + normalize update type so we don't need
 	// to do this trimming + lowercasing again later
 	switch strings.TrimSpace(strings.ToLower(string(form.Type))) {
-	case string(model.EmojiUpdateDisable):
+	case string(apimodel.EmojiUpdateDisable):
 		// no params required for this one, so don't bother checking
-		form.Type = model.EmojiUpdateDisable
-	case string(model.EmojiUpdateCopy):
+		form.Type = apimodel.EmojiUpdateDisable
+	case string(apimodel.EmojiUpdateCopy):
 		// need at least a valid shortcode when doing a copy
 		if form.Shortcode == nil {
 			return errors.New("emoji action type was 'copy' but no shortcode was provided")
@@ -190,8 +190,8 @@ func validateUpdateEmoji(form *model.EmojiUpdateRequest) error {
 			}
 		}
 
-		form.Type = model.EmojiUpdateCopy
-	case string(model.EmojiUpdateModify):
+		form.Type = apimodel.EmojiUpdateCopy
+	case string(apimodel.EmojiUpdateModify):
 		// need either image or category name for modify
 		hasImage := form.Image != nil && form.Image.Size != 0
 		hasCategoryName := form.CategoryName != nil
@@ -212,7 +212,7 @@ func validateUpdateEmoji(form *model.EmojiUpdateRequest) error {
 			}
 		}
 
-		form.Type = model.EmojiUpdateModify
+		form.Type = apimodel.EmojiUpdateModify
 	default:
 		return errors.New("emoji action type must be one of 'disable', 'copy', 'modify'")
 	}

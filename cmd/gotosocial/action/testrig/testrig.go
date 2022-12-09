@@ -57,7 +57,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
-	"github.com/superseriousbusiness/gotosocial/internal/router/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/web"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -129,7 +128,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	fileServerModule := fileserver.New(processor)
 	adminModule := admin.New(processor)
 	statusModule := status.New(processor)
-	middlewareModule := middleware.New(dbService, oauthServer)
 	streamingModule := streaming.New(processor)
 	favouritesModule := favourites.New(processor)
 	blocksModule := blocks.New(processor)
@@ -137,7 +135,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	apis := []api.ClientModule{
 		// modules with middleware go first
-		middlewareModule,
 		authModule,
 
 		// now the web module

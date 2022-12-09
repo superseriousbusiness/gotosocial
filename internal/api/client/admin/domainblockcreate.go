@@ -25,8 +25,8 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/api"
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -126,18 +126,18 @@ import (
 func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if !*authed.User.Admin {
 		err := fmt.Errorf("user %s not an admin", authed.User.ID)
-		api.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
+	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
@@ -147,21 +147,21 @@ func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
 		i, err := strconv.ParseBool(importString)
 		if err != nil {
 			err := fmt.Errorf("error parsing %s: %s", ImportQueryKey, err)
-			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
 		imp = i
 	}
 
-	form := &model.DomainBlockCreateRequest{}
+	form := &apimodel.DomainBlockCreateRequest{}
 	if err := c.ShouldBind(form); err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if err := validateCreateDomainBlock(form, imp); err != nil {
 		err := fmt.Errorf("error validating form: %s", err)
-		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
@@ -169,7 +169,7 @@ func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
 		// we're importing multiple blocks
 		domainBlocks, errWithCode := m.processor.AdminDomainBlocksImport(c.Request.Context(), authed, form)
 		if errWithCode != nil {
-			api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 			return
 		}
 		c.JSON(http.StatusOK, domainBlocks)
@@ -179,13 +179,13 @@ func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
 	// we're just creating one block
 	domainBlock, errWithCode := m.processor.AdminDomainBlockCreate(c.Request.Context(), authed, form)
 	if errWithCode != nil {
-		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 	c.JSON(http.StatusOK, domainBlock)
 }
 
-func validateCreateDomainBlock(form *model.DomainBlockCreateRequest, imp bool) error {
+func validateCreateDomainBlock(form *apimodel.DomainBlockCreateRequest, imp bool) error {
 	if imp {
 		if form.Domains.Size == 0 {
 			return errors.New("import was specified but list of domains is empty")

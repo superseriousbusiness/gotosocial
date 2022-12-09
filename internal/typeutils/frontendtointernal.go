@@ -19,21 +19,21 @@
 package typeutils
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (c *converter) APIVisToVis(m model.Visibility) gtsmodel.Visibility {
+func (c *converter) APIVisToVis(m apimodel.Visibility) gtsmodel.Visibility {
 	switch m {
-	case model.VisibilityPublic:
+	case apimodel.VisibilityPublic:
 		return gtsmodel.VisibilityPublic
-	case model.VisibilityUnlisted:
+	case apimodel.VisibilityUnlisted:
 		return gtsmodel.VisibilityUnlocked
-	case model.VisibilityPrivate:
+	case apimodel.VisibilityPrivate:
 		return gtsmodel.VisibilityFollowersOnly
-	case model.VisibilityMutualsOnly:
+	case apimodel.VisibilityMutualsOnly:
 		return gtsmodel.VisibilityMutualsOnly
-	case model.VisibilityDirect:
+	case apimodel.VisibilityDirect:
 		return gtsmodel.VisibilityDirect
 	}
 	return ""

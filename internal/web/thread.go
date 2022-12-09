@@ -28,8 +28,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/api"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -40,7 +40,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 
 	authed, err := oauth.Authed(c, false, false, false, false)
 	if err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
@@ -48,7 +48,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	username := strings.ToLower(c.Param(usernameKey))
 	if username == "" {
 		err := errors.New("no account username specified")
-		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
@@ -56,14 +56,14 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	statusID := strings.ToUpper(c.Param(statusIDKey))
 	if statusID == "" {
 		err := errors.New("no status id specified")
-		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	host := config.GetHost()
 	instance, err := m.processor.InstanceGet(ctx, host)
 	if err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
 		return
 	}
 
@@ -74,33 +74,33 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	// do this check to make sure the status is actually from a local account,
 	// we shouldn't render threads from statuses that don't belong to us!
 	if _, errWithCode := m.processor.AccountGetLocalByUsername(ctx, authed, username); errWithCode != nil {
-		api.ErrorHandler(c, errWithCode, instanceGet)
+		apiutil.ErrorHandler(c, errWithCode, instanceGet)
 		return
 	}
 
 	status, errWithCode := m.processor.StatusGet(ctx, authed, statusID)
 	if errWithCode != nil {
-		api.ErrorHandler(c, errWithCode, instanceGet)
+		apiutil.ErrorHandler(c, errWithCode, instanceGet)
 		return
 	}
 
 	if !strings.EqualFold(username, status.Account.Username) {
 		err := gtserror.NewErrorNotFound(errors.New("path username not equal to status author username"))
-		api.ErrorHandler(c, gtserror.NewErrorNotFound(err), instanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err), instanceGet)
 		return
 	}
 
 	// if we're getting an AP request on this endpoint we
 	// should render the status's AP representation instead
-	accept := c.NegotiateFormat(string(api.TextHTML), string(api.AppActivityJSON), string(api.AppActivityLDJSON))
-	if accept == string(api.AppActivityJSON) || accept == string(api.AppActivityLDJSON) {
+	accept := c.NegotiateFormat(string(apiutil.TextHTML), string(apiutil.AppActivityJSON), string(apiutil.AppActivityLDJSON))
+	if accept == string(apiutil.AppActivityJSON) || accept == string(apiutil.AppActivityLDJSON) {
 		m.returnAPStatus(ctx, c, username, statusID, accept)
 		return
 	}
 
 	context, errWithCode := m.processor.StatusGetContext(ctx, authed, statusID)
 	if errWithCode != nil {
-		api.ErrorHandler(c, errWithCode, instanceGet)
+		apiutil.ErrorHandler(c, errWithCode, instanceGet)
 		return
 	}
 
@@ -135,14 +135,14 @@ func (m *Module) returnAPStatus(ctx context.Context, c *gin.Context, username st
 
 	status, errWithCode := m.processor.GetFediStatus(ctx, username, statusID, c.Request.URL)
 	if errWithCode != nil {
-		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet) //nolint:contextcheck
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet) //nolint:contextcheck
 		return
 	}
 
 	b, mErr := json.Marshal(status)
 	if mErr != nil {
 		err := fmt.Errorf("could not marshal json: %s", mErr)
-		api.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet) //nolint:contextcheck
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet) //nolint:contextcheck
 		return
 	}
 

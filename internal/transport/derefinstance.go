@@ -28,8 +28,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/superseriousbusiness/gotosocial/internal/api"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -92,7 +92,7 @@ func dereferenceByAPIV1Instance(ctx context.Context, t *transport, iri *url.URL)
 		return nil, err
 	}
 
-	req.Header.Add("Accept", string(api.AppJSON))
+	req.Header.Add("Accept", string(apiutil.AppJSON))
 	req.Header.Set("Host", cleanIRI.Host)
 
 	resp, err := t.GET(req)
@@ -242,7 +242,7 @@ func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*ur
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("Accept", string(api.AppJSON))
+	req.Header.Add("Accept", string(apiutil.AppJSON))
 	req.Header.Set("Host", cleanIRI.Host)
 
 	resp, err := t.GET(req)
@@ -293,7 +293,7 @@ func callNodeInfo(ctx context.Context, t *transport, iri *url.URL) (*apimodel.No
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("Accept", string(api.AppJSON))
+	req.Header.Add("Accept", string(apiutil.AppJSON))
 	req.Header.Set("Host", iri.Host)
 
 	resp, err := t.GET(req)

@@ -24,7 +24,7 @@ import (
 
 	"codeberg.org/gruf/go-cache/v3"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/api"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
@@ -61,14 +61,13 @@ type Module struct {
 }
 
 // New returns a new api.ClientModule for web pages.
-func New(processor processing.Processor) api.ClientModule {
+func New(processor processing.Processor) *Module {
 	return &Module{
 		processor: processor,
 		eTagCache: newETagCache(),
 	}
 }
 
-// Route satisfies the RESTAPIModule interface
 func (m *Module) Route(s router.Router) error {
 	// serve static files from assets dir at /assets
 	assetsGroup := s.AttachGroup(assetsPathPrefix)
@@ -116,7 +115,7 @@ func (m *Module) Route(s router.Router) error {
 
 	// 404 handler
 	s.AttachNoRouteHandler(func(c *gin.Context) {
-		api.ErrorHandler(c, gtserror.NewErrorNotFound(errors.New(http.StatusText(http.StatusNotFound))), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(errors.New(http.StatusText(http.StatusNotFound))), m.processor.InstanceGet)
 	})
 
 	return nil

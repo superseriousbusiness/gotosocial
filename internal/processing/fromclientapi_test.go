@@ -25,7 +25,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
@@ -102,7 +102,7 @@ func (suite *FromClientAPITestSuite) TestProcessStreamNewStatus() {
 	suite.Equal(stream.EventTypeUpdate, msg.Event)
 	suite.NotEmpty(msg.Payload)
 	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)
-	statusStreamed := &model.Status{}
+	statusStreamed := &apimodel.Status{}
 	err = json.Unmarshal([]byte(msg.Payload), statusStreamed)
 	suite.NoError(err)
 	suite.Equal("01FN4B2F88TF9676DYNXWE1WSS", statusStreamed.ID)

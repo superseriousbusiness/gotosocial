@@ -46,6 +46,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
+	"github.com/superseriousbusiness/oauth2/v4"
 )
 
 // Processor should be passed to api modules (see internal/apimodule/...). It is used for
@@ -178,6 +179,7 @@ type Processor interface {
 
 	OAuthHandleTokenRequest(r *http.Request) (map[string]interface{}, gtserror.WithCode)
 	OAuthHandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) gtserror.WithCode
+	OAuthValidateBearerToken(r *http.Request) (oauth2.TokenInfo, error)
 
 	// SearchGet performs a search with the given params, resolving/dereferencing remotely as desired
 	SearchGet(ctx context.Context, authed *oauth.Auth, searchQuery *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode)

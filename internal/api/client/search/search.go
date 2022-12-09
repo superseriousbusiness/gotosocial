@@ -21,17 +21,16 @@ package search
 import (
 	"net/http"
 
-	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
 const (
-	// BasePathV1 is the base path for serving v1 of the search API
-	BasePathV1 = "/api/v1/search"
+	// BasePathV1 is the base path for serving v1 of the search API, minus the 'api' prefix
+	BasePathV1 = "/v1/search"
 
-	// BasePathV2 is the base path for serving v2 of the search API
-	BasePathV2 = "/api/v2/search"
+	// BasePathV2 is the base path for serving v2 of the search API, minus the 'api' prefix
+	BasePathV2 = "/v2/search"
 
 	// AccountIDKey -- If provided, statuses returned will be authored only by this account
 	AccountIDKey = "account_id"
@@ -62,21 +61,17 @@ const (
 	TypeStatuses = "statuses"
 )
 
-// Module implements the ClientAPIModule interface for everything related to searching
 type Module struct {
 	processor processing.Processor
 }
 
-// New returns a new search module
-func New(processor processing.Processor) api.ClientModule {
+func New(processor processing.Processor) *Module {
 	return &Module{
 		processor: processor,
 	}
 }
 
-// Route attaches all routes from this module to the given router
-func (m *Module) Route(r router.Router) error {
-	r.AttachHandler(http.MethodGet, BasePathV1, m.SearchGETHandler)
-	r.AttachHandler(http.MethodGet, BasePathV2, m.SearchGETHandler)
-	return nil
+func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
+	attachHandler(http.MethodGet, BasePathV1, m.SearchGETHandler)
+	attachHandler(http.MethodGet, BasePathV2, m.SearchGETHandler)
 }

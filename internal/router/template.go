@@ -26,7 +26,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
@@ -130,19 +130,19 @@ type iconWithLabel struct {
 	label  string
 }
 
-func visibilityIcon(visibility model.Visibility) template.HTML {
+func visibilityIcon(visibility apimodel.Visibility) template.HTML {
 	var icon iconWithLabel
 
 	switch visibility {
-	case model.VisibilityPublic:
+	case apimodel.VisibilityPublic:
 		icon = iconWithLabel{"globe", "public"}
-	case model.VisibilityUnlisted:
+	case apimodel.VisibilityUnlisted:
 		icon = iconWithLabel{"unlock", "unlisted"}
-	case model.VisibilityPrivate:
+	case apimodel.VisibilityPrivate:
 		icon = iconWithLabel{"lock", "private"}
-	case model.VisibilityMutualsOnly:
+	case apimodel.VisibilityMutualsOnly:
 		icon = iconWithLabel{"handshake-o", "mutuals only"}
-	case model.VisibilityDirect:
+	case apimodel.VisibilityDirect:
 		icon = iconWithLabel{"envelope", "direct"}
 	}
 
@@ -151,7 +151,7 @@ func visibilityIcon(visibility model.Visibility) template.HTML {
 }
 
 // text is a template.HTML to affirm that the input of this function is already escaped
-func emojify(emojis []model.Emoji, inputText template.HTML) template.HTML {
+func emojify(emojis []apimodel.Emoji, inputText template.HTML) template.HTML {
 	out := text.Emojify(emojis, string(inputText))
 
 	/* #nosec G203 */

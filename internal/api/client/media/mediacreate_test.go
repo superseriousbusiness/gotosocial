@@ -33,7 +33,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
 	mediamodule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -96,7 +96,7 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, suite.mediaManager, clientWorker, fedWorker)
 
 	// setup module being tested
-	suite.mediaModule = mediamodule.New(suite.processor).(*mediamodule.Module)
+	suite.mediaModule = mediamodule.New(suite.processor)
 }
 
 func (suite *MediaCreateTestSuite) TearDownSuite() {
@@ -188,26 +188,26 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessful() {
 	suite.NoError(err)
 	fmt.Println(string(b))
 
-	attachmentReply := &model.Attachment{}
+	attachmentReply := &apimodel.Attachment{}
 	err = json.Unmarshal(b, attachmentReply)
 	suite.NoError(err)
 
 	suite.Equal("this is a test image -- a cool background from somewhere", *attachmentReply.Description)
 	suite.Equal("image", attachmentReply.Type)
-	suite.EqualValues(model.MediaMeta{
-		Original: model.MediaDimensions{
+	suite.EqualValues(apimodel.MediaMeta{
+		Original: apimodel.MediaDimensions{
 			Width:  1920,
 			Height: 1080,
 			Size:   "1920x1080",
 			Aspect: 1.7777778,
 		},
-		Small: model.MediaDimensions{
+		Small: apimodel.MediaDimensions{
 			Width:  512,
 			Height: 288,
 			Size:   "512x288",
 			Aspect: 1.7777778,
 		},
-		Focus: model.MediaFocus{
+		Focus: apimodel.MediaFocus{
 			X: -0.5,
 			Y: 0.5,
 		},
@@ -282,26 +282,26 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessfulV2() {
 	suite.NoError(err)
 	fmt.Println(string(b))
 
-	attachmentReply := &model.Attachment{}
+	attachmentReply := &apimodel.Attachment{}
 	err = json.Unmarshal(b, attachmentReply)
 	suite.NoError(err)
 
 	suite.Equal("this is a test image -- a cool background from somewhere", *attachmentReply.Description)
 	suite.Equal("image", attachmentReply.Type)
-	suite.EqualValues(model.MediaMeta{
-		Original: model.MediaDimensions{
+	suite.EqualValues(apimodel.MediaMeta{
+		Original: apimodel.MediaDimensions{
 			Width:  1920,
 			Height: 1080,
 			Size:   "1920x1080",
 			Aspect: 1.7777778,
 		},
-		Small: model.MediaDimensions{
+		Small: apimodel.MediaDimensions{
 			Width:  512,
 			Height: 288,
 			Size:   "512x288",
 			Aspect: 1.7777778,
 		},
-		Focus: model.MediaFocus{
+		Focus: apimodel.MediaFocus{
 			X: -0.5,
 			Y: 0.5,
 		},
