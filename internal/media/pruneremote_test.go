@@ -38,7 +38,7 @@ func (suite *PruneRemoteTestSuite) TestPruneRemote() {
 	testStatusAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
 	suite.True(*testStatusAttachment.Cached)
 
-	testHeader := suite.testAttachments["remote_account_1_header"]
+	testHeader := suite.testAttachments["remote_account_3_header"]
 	suite.True(*testHeader.Cached)
 
 	totalPruned, err := suite.manager.PruneAllRemote(context.Background(), 1)
@@ -68,7 +68,7 @@ func (suite *PruneRemoteTestSuite) TestPruneRemoteTwice() {
 func (suite *PruneRemoteTestSuite) TestPruneAndRecache() {
 	ctx := context.Background()
 	testStatusAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
-	testHeader := suite.testAttachments["remote_account_1_header"]
+	testHeader := suite.testAttachments["remote_account_3_header"]
 
 	totalPruned, err := suite.manager.PruneAllRemote(ctx, 1)
 	suite.NoError(err)
