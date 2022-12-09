@@ -183,7 +183,7 @@ type CacheConfig struct {
 	UserSweepFreq time.Duration `name:"user-sweep-freq"`
 }
 
-// MarshalMap will marshal current Configuration into a map structure (useful for JSON).
+// MarshalMap will marshal current Configuration into a map structure (useful for JSON/TOML/YAML).
 func (cfg *Configuration) MarshalMap() (map[string]interface{}, error) {
 	var dst map[string]interface{}
 	dec, _ := mapstructure.NewDecoder(&mapstructure.DecoderConfig{

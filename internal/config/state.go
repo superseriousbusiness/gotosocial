@@ -41,8 +41,8 @@ func NewState() *ConfigState {
 	viper := viper.New()
 
 	// Flag 'some-flag-name' becomes env var 'GTS_SOME_FLAG_NAME'
-	viper.SetEnvPrefix("gts")
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	viper.SetEnvPrefix("gts")
 
 	// Load appropriate named vals from env
 	viper.AutomaticEnv()
