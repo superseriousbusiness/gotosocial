@@ -16,37 +16,33 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package bundb_test
+package status_test
 
 import (
 	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 )
 
-type BundbNewTestSuite struct {
-	BunDBStandardTestSuite
+type StatusBookmarkTestSuite struct {
+	StatusStandardTestSuite
 }
 
-func (suite *BundbNewTestSuite) TestCreateNewDB() {
-	// create a new db with standard test settings
-	db, err := bundb.NewBunDBService(context.Background(), nil)
+func (suite *StatusBookmarkTestSuite) TestBookmark() {
+	ctx := context.Background()
+
+	// bookmark a status
+	bookmarkingAccount1 := suite.testAccounts["local_account_1"]
+	targetStatus1 := suite.testStatuses["admin_account_status_1"]
+
+	bookmark1, err := suite.status.Bookmark(ctx, bookmarkingAccount1, targetStatus1.ID)
 	suite.NoError(err)
-	suite.NotNil(db)
+	suite.NotNil(bookmark1)
+	suite.True(bookmark1.Bookmarked)
+	suite.Equal(targetStatus1.ID, bookmark1.ID)
 }
 
-func (suite *BundbNewTestSuite) TestCreateNewSqliteDBNoAddress() {
-	// create a new db with no address specified
-	config.SetDbAddress("")
-	config.SetDbType("sqlite")
-	db, err := bundb.NewBunDBService(context.Background(), nil)
-	suite.EqualError(err, "'db-address' was not set when attempting to start sqlite")
-	suite.Nil(db)
-}
-
-func TestBundbNewTestSuite(t *testing.T) {
-	suite.Run(t, new(BundbNewTestSuite))
+func TestStatusBookmarkTestSuite(t *testing.T) {
+	suite.Run(t, new(StatusBookmarkTestSuite))
 }

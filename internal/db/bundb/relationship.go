@@ -23,35 +23,16 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"time"
 
-	"codeberg.org/gruf/go-cache/v3/result"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
 )
 
 type relationshipDB struct {
-	conn       *DBConn
-	accounts   *accountDB
-	blockCache *result.Cache[*gtsmodel.Block]
-}
-
-func (r *relationshipDB) init() {
-	// Initialize block result cache
-	r.blockCache = result.NewSized([]result.Lookup{
-		{Name: "ID"},
-		{Name: "AccountID.TargetAccountID"},
-		{Name: "URI"},
-	}, func(b1 *gtsmodel.Block) *gtsmodel.Block {
-		b2 := new(gtsmodel.Block)
-		*b2 = *b1
-		return b2
-	}, 1000)
-
-	// Set cache TTL and start sweep routine
-	r.blockCache.SetTTL(time.Minute*5, false)
-	r.blockCache.Start(time.Second * 10)
+	conn  *DBConn
+	state *state.State
 }
 
 func (r *relationshipDB) newFollowQ(follow interface{}) *bun.SelectQuery {
@@ -94,13 +75,13 @@ func (r *relationshipDB) GetBlock(ctx context.Context, account1 string, account2
 	}
 
 	// Set the block originating account
-	block.Account, err = r.accounts.GetAccountByID(ctx, block.AccountID)
+	block.Account, err = r.state.DB.GetAccountByID(ctx, block.AccountID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Set the block target account
-	block.TargetAccount, err = r.accounts.GetAccountByID(ctx, block.TargetAccountID)
+	block.TargetAccount, err = r.state.DB.GetAccountByID(ctx, block.TargetAccountID)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +90,7 @@ func (r *relationshipDB) GetBlock(ctx context.Context, account1 string, account2
 }
 
 func (r *relationshipDB) getBlock(ctx context.Context, account1 string, account2 string) (*gtsmodel.Block, db.Error) {
-	return r.blockCache.Load("AccountID.TargetAccountID", func() (*gtsmodel.Block, error) {
+	return r.state.Caches.GTS.Block().Load("AccountID.TargetAccountID", func() (*gtsmodel.Block, error) {
 		var block gtsmodel.Block
 
 		q := r.conn.NewSelect().Model(&block).
@@ -124,7 +105,7 @@ func (r *relationshipDB) getBlock(ctx context.Context, account1 string, account2
 }
 
 func (r *relationshipDB) PutBlock(ctx context.Context, block *gtsmodel.Block) db.Error {
-	return r.blockCache.Store(block, func() error {
+	return r.state.Caches.GTS.Block().Store(block, func() error {
 		_, err := r.conn.NewInsert().Model(block).Exec(ctx)
 		return r.conn.ProcessError(err)
 	})
@@ -140,7 +121,7 @@ func (r *relationshipDB) DeleteBlockByID(ctx context.Context, id string) db.Erro
 	}
 
 	// Drop any old value from cache by this ID
-	r.blockCache.Invalidate("ID", id)
+	r.state.Caches.GTS.Block().Invalidate("ID", id)
 	return nil
 }
 
@@ -154,7 +135,7 @@ func (r *relationshipDB) DeleteBlockByURI(ctx context.Context, uri string) db.Er
 	}
 
 	// Drop any old value from cache by this URI
-	r.blockCache.Invalidate("URI", uri)
+	r.state.Caches.GTS.Block().Invalidate("URI", uri)
 	return nil
 }
 

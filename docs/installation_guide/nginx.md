@@ -38,6 +38,8 @@ In your GoToSocial config turn off letsencrypt by setting `letsencrypt-enabled` 
 
 If you we running GoToSocial on port 443, change the `port` value back to the default `8080`.
 
+If the reverse proxy will be running on the same machine, set the `bind-address` to `"localhost"` so that the GoToSocial server is only accessible via loopback. Otherwise it may be possible to bypass your proxy by connecting to GoToSocial directly, which might be undesirable.
+
 ## Set up NGINX
 
 First we will set up NGINX to serve GoToSocial as unsecured http and then use Certbot to automatically upgrade it to serve https.

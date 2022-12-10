@@ -92,6 +92,8 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	attachHandler(http.MethodPost, ReblogPath, m.StatusBoostPOSTHandler)
 	attachHandler(http.MethodPost, UnreblogPath, m.StatusUnboostPOSTHandler)
 	attachHandler(http.MethodGet, RebloggedPath, m.StatusBoostedByGETHandler)
+	attachHandler(http.MethodPost, BookmarkPath, m.StatusBookmarkPOSTHandler)
+	attachHandler(http.MethodPost, UnbookmarkPath, m.StatusUnbookmarkPOSTHandler)
 
 	// context / status thread
 	attachHandler(http.MethodGet, ContextPath, m.StatusContextGETHandler)

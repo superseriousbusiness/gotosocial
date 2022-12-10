@@ -64,9 +64,11 @@ protocol: "https"
 
 # String. Address to bind the GoToSocial server to.
 # This can be an IPv4 address or an IPv6 address (surrounded in square brackets), or a hostname.
-# Default value will bind to all interfaces.
-# You probably won't need to change this unless you're setting GoToSocial up in some fancy way or
-# you have specific networking requirements.
+# The default value will bind to all interfaces, which makes the server
+# accessible by other machines. For most setups there is no need to change this.
+# If you are using GoToSocial in a reverse proxy setup with the proxy running on
+# the same machine, you will want to set this to "localhost" or an equivalent,
+# so that the proxy can't be bypassed.
 # Examples: ["0.0.0.0", "172.128.0.16", "localhost", "[::]", "[2001:db8::fed1]"]
 # Default: "0.0.0.0"
 bind-address: "0.0.0.0"

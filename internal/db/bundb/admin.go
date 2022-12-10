@@ -34,6 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 	"github.com/uptrace/bun"
 	"golang.org/x/crypto/bcrypt"
@@ -43,9 +44,8 @@ import (
 const rsaKeyBits = 2048
 
 type adminDB struct {
-	conn     *DBConn
-	accounts *accountDB
-	users    *userDB
+	conn  *DBConn
+	state *state.State
 }
 
 func (a *adminDB) IsUsernameAvailable(ctx context.Context, username string) (bool, db.Error) {
@@ -139,7 +139,7 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 		}
 
 		// insert the new account!
-		if err := a.accounts.PutAccount(ctx, acct); err != nil {
+		if err := a.state.DB.PutAccount(ctx, acct); err != nil {
 			return nil, err
 		}
 	}
@@ -185,7 +185,7 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 	}
 
 	// insert the user!
-	if err := a.users.PutUser(ctx, u); err != nil {
+	if err := a.state.DB.PutUser(ctx, u); err != nil {
 		return nil, err
 	}
 
@@ -241,7 +241,7 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 	}
 
 	// insert the new account!
-	if err := a.accounts.PutAccount(ctx, acct); err != nil {
+	if err := a.state.DB.PutAccount(ctx, acct); err != nil {
 		return err
 	}
 

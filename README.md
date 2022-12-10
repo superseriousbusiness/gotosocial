@@ -10,7 +10,7 @@ With GoToSocial, you can keep in touch with your friends, post, read, and share 
 
 **GoToSocial is still [ALPHA SOFTWARE](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha)**. It is already deployable and useable, and it federates cleanly with many other Fediverse servers (not yet all). However, many things are not yet implemented, and there are plenty of bugs! We foresee entering beta somewhere in 2023.
 
-Documentation is at [docs.gotosocial.org](https://docs.gotosocial.org). You can skip straight to the API documentation [here](https://docs.gotosocial.org/en/latest/api/swagger/).
+Documentation is at [docs.gotosocial.org](https://docs.gotosocial.org). You can skip straight to the API documentation [here](https://docs.gotosocial.org/en/latest/api/swagger/). To build from source, check the [CONTRIBUTING.md](./CONTRIBUTING.md) file.
 
 Here's a screenshot of the instance landing page!
 
@@ -37,6 +37,7 @@ Here's a screenshot of the instance landing page!
   - [Client App Issues](#client-app-issues)
   - [Federation Issues](#federation-issues)
 - [Contributing](#contributing)
+- [Building](#building)
 - [Contact](#contact)
 - [Credits](#credits)
   - [Libraries](#libraries)
@@ -193,6 +194,10 @@ Since every ActivityPub server implementation has a slightly different interpret
 
 You would like to contribute to GtS? Great! ❤️❤️❤️ Check out the issues page to see if there's anything you intend to jump in on, and read the [CONTRIBUTING.md](./CONTRIBUTING.md) file for guidelines and setting up your dev environment.
 
+## Building
+
+Instructions for building GoToSocial from source are in the [CONTRIBUTING.md](./CONTRIBUTING.md) file.
+
 ## Contact
 
 For questions and comments, you can [join our Matrix space](https://matrix.to/#/#gotosocial-space:superseriousbusiness.org) at `#gotosocial-space:superseriousbusiness.org`. This is the quickest way to reach the devs. You can also mail [admin@gotosocial.org](mailto:admin@gotosocial.org).
@@ -257,13 +262,14 @@ The following libraries and frameworks are used by GoToSocial, with gratitude �
 
 Sloth logo by [Anna Abramek](https://abramek.art/), Copyright (C) 2021-2022 the GoToSocial Authors.
 
-### Developers
+### Team
 
 In alphabetical order (... and order of smell):
 
 - f0x \[[donate with liberapay](https://liberapay.com/f0x)\]
 - kim \[check out my code @ [codeberg](https://codeberg.org/gruf), or find me @ [@kim](https://k.iim.gay/@kim)\]
 - tobi \[[donate with liberapay](https://liberapay.com/GoToSocial/)\]
+- maloki \[[@maloki@goblin.technology](https://goblin.technology/@maloki)\]
 
 ### Special Thanks
 

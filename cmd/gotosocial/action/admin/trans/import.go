@@ -26,15 +26,21 @@ import (
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/trans"
 )
 
 // Import imports info from a file into the database
 var Import action.GTSAction = func(ctx context.Context) error {
-	dbConn, err := bundb.NewBunDBService(ctx)
+	var state state.State
+
+	dbConn, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
+
+	// Set the state DB connection
+	state.DB = dbConn
 
 	importer := trans.NewImporter(dbConn)
 

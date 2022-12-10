@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
 var testModels = []interface{}{
@@ -92,10 +93,16 @@ func NewTestDB() db.DB {
 		})
 	}
 
-	testDB, err := bundb.NewBunDBService(context.Background())
+	var state state.State
+	state.Caches.Init()
+
+	testDB, err := bundb.NewBunDBService(context.Background(), &state)
 	if err != nil {
 		log.Panic(err)
 	}
+
+	state.DB = testDB
+
 	return testDB
 }
 
@@ -249,6 +256,12 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 	}
 
 	for _, v := range NewTestTombstones() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(err)
+		}
+	}
+
+	for _, v := range NewTestBookmarks() {
 		if err := db.Put(ctx, v); err != nil {
 			log.Panic(err)
 		}
