@@ -29,7 +29,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/bookmarks"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/statuses"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -67,7 +67,7 @@ type BookmarkTestSuite struct {
 	testFollows      map[string]*gtsmodel.Follow
 
 	// module being tested
-	statusModule   *status.Module
+	statusModule   *statuses.Module
 	bookmarkModule *bookmarks.Module
 }
 
@@ -99,8 +99,8 @@ func (suite *BookmarkTestSuite) SetupTest() {
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, suite.mediaManager, clientWorker, fedWorker)
-	suite.statusModule = status.New(suite.processor).(*status.Module)
-	suite.bookmarkModule = bookmarks.New(suite.processor).(*bookmarks.Module)
+	suite.statusModule = statuses.New(suite.processor)
+	suite.bookmarkModule = bookmarks.New(suite.processor)
 
 	suite.NoError(suite.processor.Start())
 }
@@ -123,7 +123,7 @@ func (suite *BookmarkTestSuite) TestGetBookmark() {
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(status.BookmarkPath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(statuses.BookmarkPath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/json")
 
 	suite.bookmarkModule.BookmarksGETHandler(ctx)

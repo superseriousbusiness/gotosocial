@@ -21,9 +21,8 @@ package bookmarks
 import (
 	"net/http"
 
-	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
 const (
@@ -31,20 +30,16 @@ const (
 	BasePath = "/api/v1/bookmarks"
 )
 
-// Module implements the ClientAPIModule interface for everything related to bookmarks
 type Module struct {
 	processor processing.Processor
 }
 
-// New returns a new emoji module
-func New(processor processing.Processor) api.ClientModule {
+func New(processor processing.Processor) *Module {
 	return &Module{
 		processor: processor,
 	}
 }
 
-// Route attaches all routes from this module to the given router
-func (m *Module) Route(r router.Router) error {
-	r.AttachHandler(http.MethodGet, BasePath, m.BookmarksGETHandler)
-	return nil
+func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
+	attachHandler(http.MethodGet, BasePath, m.BookmarksGETHandler)
 }
