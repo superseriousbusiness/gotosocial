@@ -58,14 +58,8 @@ type Configuration struct {
 	TrustedProxies  []string `name:"trusted-proxies" usage:"Proxies to trust when parsing x-forwarded headers into real IPs."`
 	SoftwareVersion string   `name:"software-version" usage:""`
 
-	DbType      string `name:"db-type" usage:"Database type: eg., postgres"`
-	DbAddress   string `name:"db-address" usage:"Database ipv4 address, hostname, or filename"`
-	DbPort      int    `name:"db-port" usage:"Database port"`
-	DbUser      string `name:"db-user" usage:"Database username"`
-	DbPassword  string `name:"db-password" usage:"Database password"`
-	DbDatabase  string `name:"db-database" usage:"Database name"`
-	DbTLSMode   string `name:"db-tls-mode" usage:"Database tls mode"`
-	DbTLSCACert string `name:"db-tls-ca-cert" usage:"Path to CA cert for db tls connection"`
+	// Database configuration vars.
+	Database DatabaseConfiguration `name:"database"`
 
 	WebTemplateBaseDir string `name:"web-template-base-dir" usage:"Basedir for html templating files for rendering pages and composing emails."`
 	WebAssetBaseDir    string `name:"web-asset-base-dir" usage:"Directory to serve static assets from, accessible at example.org/assets/"`
@@ -139,6 +133,32 @@ type Configuration struct {
 	AdminAccountPassword  string `name:"password" usage:"the password to set for this account"`
 	AdminTransPath        string `name:"path" usage:"the path of the file to import from/export to"`
 	AdminMediaPruneDryRun bool   `name:"dry-run" usage:"perform a dry run and only log number of items eligible for pruning"`
+}
+
+type DatabaseConfiguration struct {
+	Type    string `name:"type"`
+	Address string `name:"address"`
+
+	// Postgres specific configuration vars.
+	Postgres PostgresConfiguration `name:"postgres"`
+
+	// SQLite specific configuration vars.
+	SQLite SQLiteConfiguration `name:"sqlite"`
+}
+
+type PostgresConfiguration struct {
+	Port      int    `name:"port"`
+	User      string `name:"user"`
+	Password  string `name:"password"`
+	Database  string `name:"database"`
+	TLSMode   string `name:"tls-mode"`
+	TLSCACert string `name:"tls-ca-cert"`
+}
+
+type SQLiteConfiguration struct {
+	JournalMode string        `name:"journal-mode"`
+	Synchronous string        `name:"synchronous"`
+	CacheSize   bytesize.Size `name:"cache-size"`
 }
 
 type CacheConfiguration struct {

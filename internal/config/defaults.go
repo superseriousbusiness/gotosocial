@@ -40,14 +40,25 @@ var Defaults = Configuration{
 	Port:            8080,
 	TrustedProxies:  []string{"127.0.0.1/32", "::1"}, // localhost
 
-	DbType:      "postgres",
-	DbAddress:   "",
-	DbPort:      5432,
-	DbUser:      "",
-	DbPassword:  "",
-	DbDatabase:  "gotosocial",
-	DbTLSMode:   "disable",
-	DbTLSCACert: "",
+	Database: DatabaseConfiguration{
+		Type:    "postgres",
+		Address: "",
+
+		Postgres: PostgresConfiguration{
+			Port:      5432,
+			User:      "",
+			Password:  "",
+			Database:  "gotosocial",
+			TLSMode:   "disable",
+			TLSCACert: "",
+		},
+
+		SQLite: SQLiteConfiguration{
+			JournalMode: "WAL",
+			Synchronous: "FULL",
+			CacheSize:   32 * bytesize.MiB,
+		},
+	},
 
 	WebTemplateBaseDir: "./web/template/",
 	WebAssetBaseDir:    "./web/assets/",

@@ -324,205 +324,280 @@ func GetSoftwareVersion() string { return global.GetSoftwareVersion() }
 // SetSoftwareVersion safely sets the value for global configuration 'SoftwareVersion' field
 func SetSoftwareVersion(v string) { global.SetSoftwareVersion(v) }
 
-// GetDbType safely fetches the Configuration value for state's 'DbType' field
-func (st *ConfigState) GetDbType() (v string) {
+// GetDatabaseType safely fetches the Configuration value for state's 'Database.Type' field
+func (st *ConfigState) GetDatabaseType() (v string) {
 	st.mutex.Lock()
-	v = st.config.DbType
+	v = st.config.Database.Type
 	st.mutex.Unlock()
 	return
 }
 
-// SetDbType safely sets the Configuration value for state's 'DbType' field
-func (st *ConfigState) SetDbType(v string) {
+// SetDatabaseType safely sets the Configuration value for state's 'Database.Type' field
+func (st *ConfigState) SetDatabaseType(v string) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
-	st.config.DbType = v
+	st.config.Database.Type = v
 	st.reloadToViper()
 }
 
-// DbTypeFlag returns the flag name for the 'DbType' field
-func DbTypeFlag() string { return "db-type" }
+// DatabaseTypeFlag returns the flag name for the 'Database.Type' field
+func DatabaseTypeFlag() string { return "database-type" }
 
-// GetDbType safely fetches the value for global configuration 'DbType' field
-func GetDbType() string { return global.GetDbType() }
+// GetDatabaseType safely fetches the value for global configuration 'Database.Type' field
+func GetDatabaseType() string { return global.GetDatabaseType() }
 
-// SetDbType safely sets the value for global configuration 'DbType' field
-func SetDbType(v string) { global.SetDbType(v) }
+// SetDatabaseType safely sets the value for global configuration 'Database.Type' field
+func SetDatabaseType(v string) { global.SetDatabaseType(v) }
 
-// GetDbAddress safely fetches the Configuration value for state's 'DbAddress' field
-func (st *ConfigState) GetDbAddress() (v string) {
+// GetDatabaseAddress safely fetches the Configuration value for state's 'Database.Address' field
+func (st *ConfigState) GetDatabaseAddress() (v string) {
 	st.mutex.Lock()
-	v = st.config.DbAddress
+	v = st.config.Database.Address
 	st.mutex.Unlock()
 	return
 }
 
-// SetDbAddress safely sets the Configuration value for state's 'DbAddress' field
-func (st *ConfigState) SetDbAddress(v string) {
+// SetDatabaseAddress safely sets the Configuration value for state's 'Database.Address' field
+func (st *ConfigState) SetDatabaseAddress(v string) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
-	st.config.DbAddress = v
+	st.config.Database.Address = v
 	st.reloadToViper()
 }
 
-// DbAddressFlag returns the flag name for the 'DbAddress' field
-func DbAddressFlag() string { return "db-address" }
+// DatabaseAddressFlag returns the flag name for the 'Database.Address' field
+func DatabaseAddressFlag() string { return "database-address" }
 
-// GetDbAddress safely fetches the value for global configuration 'DbAddress' field
-func GetDbAddress() string { return global.GetDbAddress() }
+// GetDatabaseAddress safely fetches the value for global configuration 'Database.Address' field
+func GetDatabaseAddress() string { return global.GetDatabaseAddress() }
 
-// SetDbAddress safely sets the value for global configuration 'DbAddress' field
-func SetDbAddress(v string) { global.SetDbAddress(v) }
+// SetDatabaseAddress safely sets the value for global configuration 'Database.Address' field
+func SetDatabaseAddress(v string) { global.SetDatabaseAddress(v) }
 
-// GetDbPort safely fetches the Configuration value for state's 'DbPort' field
-func (st *ConfigState) GetDbPort() (v int) {
+// GetDatabasePostgresPort safely fetches the Configuration value for state's 'Database.Postgres.Port' field
+func (st *ConfigState) GetDatabasePostgresPort() (v int) {
 	st.mutex.Lock()
-	v = st.config.DbPort
+	v = st.config.Database.Postgres.Port
 	st.mutex.Unlock()
 	return
 }
 
-// SetDbPort safely sets the Configuration value for state's 'DbPort' field
-func (st *ConfigState) SetDbPort(v int) {
+// SetDatabasePostgresPort safely sets the Configuration value for state's 'Database.Postgres.Port' field
+func (st *ConfigState) SetDatabasePostgresPort(v int) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
-	st.config.DbPort = v
+	st.config.Database.Postgres.Port = v
 	st.reloadToViper()
 }
 
-// DbPortFlag returns the flag name for the 'DbPort' field
-func DbPortFlag() string { return "db-port" }
+// DatabasePostgresPortFlag returns the flag name for the 'Database.Postgres.Port' field
+func DatabasePostgresPortFlag() string { return "database-postgres-port" }
 
-// GetDbPort safely fetches the value for global configuration 'DbPort' field
-func GetDbPort() int { return global.GetDbPort() }
+// GetDatabasePostgresPort safely fetches the value for global configuration 'Database.Postgres.Port' field
+func GetDatabasePostgresPort() int { return global.GetDatabasePostgresPort() }
 
-// SetDbPort safely sets the value for global configuration 'DbPort' field
-func SetDbPort(v int) { global.SetDbPort(v) }
+// SetDatabasePostgresPort safely sets the value for global configuration 'Database.Postgres.Port' field
+func SetDatabasePostgresPort(v int) { global.SetDatabasePostgresPort(v) }
 
-// GetDbUser safely fetches the Configuration value for state's 'DbUser' field
-func (st *ConfigState) GetDbUser() (v string) {
+// GetDatabasePostgresUser safely fetches the Configuration value for state's 'Database.Postgres.User' field
+func (st *ConfigState) GetDatabasePostgresUser() (v string) {
 	st.mutex.Lock()
-	v = st.config.DbUser
+	v = st.config.Database.Postgres.User
 	st.mutex.Unlock()
 	return
 }
 
-// SetDbUser safely sets the Configuration value for state's 'DbUser' field
-func (st *ConfigState) SetDbUser(v string) {
+// SetDatabasePostgresUser safely sets the Configuration value for state's 'Database.Postgres.User' field
+func (st *ConfigState) SetDatabasePostgresUser(v string) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
-	st.config.DbUser = v
+	st.config.Database.Postgres.User = v
 	st.reloadToViper()
 }
 
-// DbUserFlag returns the flag name for the 'DbUser' field
-func DbUserFlag() string { return "db-user" }
+// DatabasePostgresUserFlag returns the flag name for the 'Database.Postgres.User' field
+func DatabasePostgresUserFlag() string { return "database-postgres-user" }
 
-// GetDbUser safely fetches the value for global configuration 'DbUser' field
-func GetDbUser() string { return global.GetDbUser() }
+// GetDatabasePostgresUser safely fetches the value for global configuration 'Database.Postgres.User' field
+func GetDatabasePostgresUser() string { return global.GetDatabasePostgresUser() }
 
-// SetDbUser safely sets the value for global configuration 'DbUser' field
-func SetDbUser(v string) { global.SetDbUser(v) }
+// SetDatabasePostgresUser safely sets the value for global configuration 'Database.Postgres.User' field
+func SetDatabasePostgresUser(v string) { global.SetDatabasePostgresUser(v) }
 
-// GetDbPassword safely fetches the Configuration value for state's 'DbPassword' field
-func (st *ConfigState) GetDbPassword() (v string) {
+// GetDatabasePostgresPassword safely fetches the Configuration value for state's 'Database.Postgres.Password' field
+func (st *ConfigState) GetDatabasePostgresPassword() (v string) {
 	st.mutex.Lock()
-	v = st.config.DbPassword
+	v = st.config.Database.Postgres.Password
 	st.mutex.Unlock()
 	return
 }
 
-// SetDbPassword safely sets the Configuration value for state's 'DbPassword' field
-func (st *ConfigState) SetDbPassword(v string) {
+// SetDatabasePostgresPassword safely sets the Configuration value for state's 'Database.Postgres.Password' field
+func (st *ConfigState) SetDatabasePostgresPassword(v string) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
-	st.config.DbPassword = v
+	st.config.Database.Postgres.Password = v
 	st.reloadToViper()
 }
 
-// DbPasswordFlag returns the flag name for the 'DbPassword' field
-func DbPasswordFlag() string { return "db-password" }
+// DatabasePostgresPasswordFlag returns the flag name for the 'Database.Postgres.Password' field
+func DatabasePostgresPasswordFlag() string { return "database-postgres-password" }
 
-// GetDbPassword safely fetches the value for global configuration 'DbPassword' field
-func GetDbPassword() string { return global.GetDbPassword() }
+// GetDatabasePostgresPassword safely fetches the value for global configuration 'Database.Postgres.Password' field
+func GetDatabasePostgresPassword() string { return global.GetDatabasePostgresPassword() }
 
-// SetDbPassword safely sets the value for global configuration 'DbPassword' field
-func SetDbPassword(v string) { global.SetDbPassword(v) }
+// SetDatabasePostgresPassword safely sets the value for global configuration 'Database.Postgres.Password' field
+func SetDatabasePostgresPassword(v string) { global.SetDatabasePostgresPassword(v) }
 
-// GetDbDatabase safely fetches the Configuration value for state's 'DbDatabase' field
-func (st *ConfigState) GetDbDatabase() (v string) {
+// GetDatabasePostgresDatabase safely fetches the Configuration value for state's 'Database.Postgres.Database' field
+func (st *ConfigState) GetDatabasePostgresDatabase() (v string) {
 	st.mutex.Lock()
-	v = st.config.DbDatabase
+	v = st.config.Database.Postgres.Database
 	st.mutex.Unlock()
 	return
 }
 
-// SetDbDatabase safely sets the Configuration value for state's 'DbDatabase' field
-func (st *ConfigState) SetDbDatabase(v string) {
+// SetDatabasePostgresDatabase safely sets the Configuration value for state's 'Database.Postgres.Database' field
+func (st *ConfigState) SetDatabasePostgresDatabase(v string) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
-	st.config.DbDatabase = v
+	st.config.Database.Postgres.Database = v
 	st.reloadToViper()
 }
 
-// DbDatabaseFlag returns the flag name for the 'DbDatabase' field
-func DbDatabaseFlag() string { return "db-database" }
+// DatabasePostgresDatabaseFlag returns the flag name for the 'Database.Postgres.Database' field
+func DatabasePostgresDatabaseFlag() string { return "database-postgres-database" }
 
-// GetDbDatabase safely fetches the value for global configuration 'DbDatabase' field
-func GetDbDatabase() string { return global.GetDbDatabase() }
+// GetDatabasePostgresDatabase safely fetches the value for global configuration 'Database.Postgres.Database' field
+func GetDatabasePostgresDatabase() string { return global.GetDatabasePostgresDatabase() }
 
-// SetDbDatabase safely sets the value for global configuration 'DbDatabase' field
-func SetDbDatabase(v string) { global.SetDbDatabase(v) }
+// SetDatabasePostgresDatabase safely sets the value for global configuration 'Database.Postgres.Database' field
+func SetDatabasePostgresDatabase(v string) { global.SetDatabasePostgresDatabase(v) }
 
-// GetDbTLSMode safely fetches the Configuration value for state's 'DbTLSMode' field
-func (st *ConfigState) GetDbTLSMode() (v string) {
+// GetDatabasePostgresTLSMode safely fetches the Configuration value for state's 'Database.Postgres.TLSMode' field
+func (st *ConfigState) GetDatabasePostgresTLSMode() (v string) {
 	st.mutex.Lock()
-	v = st.config.DbTLSMode
+	v = st.config.Database.Postgres.TLSMode
 	st.mutex.Unlock()
 	return
 }
 
-// SetDbTLSMode safely sets the Configuration value for state's 'DbTLSMode' field
-func (st *ConfigState) SetDbTLSMode(v string) {
+// SetDatabasePostgresTLSMode safely sets the Configuration value for state's 'Database.Postgres.TLSMode' field
+func (st *ConfigState) SetDatabasePostgresTLSMode(v string) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
-	st.config.DbTLSMode = v
+	st.config.Database.Postgres.TLSMode = v
 	st.reloadToViper()
 }
 
-// DbTLSModeFlag returns the flag name for the 'DbTLSMode' field
-func DbTLSModeFlag() string { return "db-tls-mode" }
+// DatabasePostgresTLSModeFlag returns the flag name for the 'Database.Postgres.TLSMode' field
+func DatabasePostgresTLSModeFlag() string { return "database-postgres-tls-mode" }
 
-// GetDbTLSMode safely fetches the value for global configuration 'DbTLSMode' field
-func GetDbTLSMode() string { return global.GetDbTLSMode() }
+// GetDatabasePostgresTLSMode safely fetches the value for global configuration 'Database.Postgres.TLSMode' field
+func GetDatabasePostgresTLSMode() string { return global.GetDatabasePostgresTLSMode() }
 
-// SetDbTLSMode safely sets the value for global configuration 'DbTLSMode' field
-func SetDbTLSMode(v string) { global.SetDbTLSMode(v) }
+// SetDatabasePostgresTLSMode safely sets the value for global configuration 'Database.Postgres.TLSMode' field
+func SetDatabasePostgresTLSMode(v string) { global.SetDatabasePostgresTLSMode(v) }
 
-// GetDbTLSCACert safely fetches the Configuration value for state's 'DbTLSCACert' field
-func (st *ConfigState) GetDbTLSCACert() (v string) {
+// GetDatabasePostgresTLSCACert safely fetches the Configuration value for state's 'Database.Postgres.TLSCACert' field
+func (st *ConfigState) GetDatabasePostgresTLSCACert() (v string) {
 	st.mutex.Lock()
-	v = st.config.DbTLSCACert
+	v = st.config.Database.Postgres.TLSCACert
 	st.mutex.Unlock()
 	return
 }
 
-// SetDbTLSCACert safely sets the Configuration value for state's 'DbTLSCACert' field
-func (st *ConfigState) SetDbTLSCACert(v string) {
+// SetDatabasePostgresTLSCACert safely sets the Configuration value for state's 'Database.Postgres.TLSCACert' field
+func (st *ConfigState) SetDatabasePostgresTLSCACert(v string) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
-	st.config.DbTLSCACert = v
+	st.config.Database.Postgres.TLSCACert = v
 	st.reloadToViper()
 }
 
-// DbTLSCACertFlag returns the flag name for the 'DbTLSCACert' field
-func DbTLSCACertFlag() string { return "db-tls-ca-cert" }
+// DatabasePostgresTLSCACertFlag returns the flag name for the 'Database.Postgres.TLSCACert' field
+func DatabasePostgresTLSCACertFlag() string { return "database-postgres-tls-ca-cert" }
 
-// GetDbTLSCACert safely fetches the value for global configuration 'DbTLSCACert' field
-func GetDbTLSCACert() string { return global.GetDbTLSCACert() }
+// GetDatabasePostgresTLSCACert safely fetches the value for global configuration 'Database.Postgres.TLSCACert' field
+func GetDatabasePostgresTLSCACert() string { return global.GetDatabasePostgresTLSCACert() }
 
-// SetDbTLSCACert safely sets the value for global configuration 'DbTLSCACert' field
-func SetDbTLSCACert(v string) { global.SetDbTLSCACert(v) }
+// SetDatabasePostgresTLSCACert safely sets the value for global configuration 'Database.Postgres.TLSCACert' field
+func SetDatabasePostgresTLSCACert(v string) { global.SetDatabasePostgresTLSCACert(v) }
+
+// GetDatabaseSQLiteJournalMode safely fetches the Configuration value for state's 'Database.SQLite.JournalMode' field
+func (st *ConfigState) GetDatabaseSQLiteJournalMode() (v string) {
+	st.mutex.Lock()
+	v = st.config.Database.SQLite.JournalMode
+	st.mutex.Unlock()
+	return
+}
+
+// SetDatabaseSQLiteJournalMode safely sets the Configuration value for state's 'Database.SQLite.JournalMode' field
+func (st *ConfigState) SetDatabaseSQLiteJournalMode(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Database.SQLite.JournalMode = v
+	st.reloadToViper()
+}
+
+// DatabaseSQLiteJournalModeFlag returns the flag name for the 'Database.SQLite.JournalMode' field
+func DatabaseSQLiteJournalModeFlag() string { return "database-sqlite-journal-mode" }
+
+// GetDatabaseSQLiteJournalMode safely fetches the value for global configuration 'Database.SQLite.JournalMode' field
+func GetDatabaseSQLiteJournalMode() string { return global.GetDatabaseSQLiteJournalMode() }
+
+// SetDatabaseSQLiteJournalMode safely sets the value for global configuration 'Database.SQLite.JournalMode' field
+func SetDatabaseSQLiteJournalMode(v string) { global.SetDatabaseSQLiteJournalMode(v) }
+
+// GetDatabaseSQLiteSynchronous safely fetches the Configuration value for state's 'Database.SQLite.Synchronous' field
+func (st *ConfigState) GetDatabaseSQLiteSynchronous() (v string) {
+	st.mutex.Lock()
+	v = st.config.Database.SQLite.Synchronous
+	st.mutex.Unlock()
+	return
+}
+
+// SetDatabaseSQLiteSynchronous safely sets the Configuration value for state's 'Database.SQLite.Synchronous' field
+func (st *ConfigState) SetDatabaseSQLiteSynchronous(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Database.SQLite.Synchronous = v
+	st.reloadToViper()
+}
+
+// DatabaseSQLiteSynchronousFlag returns the flag name for the 'Database.SQLite.Synchronous' field
+func DatabaseSQLiteSynchronousFlag() string { return "database-sqlite-synchronous" }
+
+// GetDatabaseSQLiteSynchronous safely fetches the value for global configuration 'Database.SQLite.Synchronous' field
+func GetDatabaseSQLiteSynchronous() string { return global.GetDatabaseSQLiteSynchronous() }
+
+// SetDatabaseSQLiteSynchronous safely sets the value for global configuration 'Database.SQLite.Synchronous' field
+func SetDatabaseSQLiteSynchronous(v string) { global.SetDatabaseSQLiteSynchronous(v) }
+
+// GetDatabaseSQLiteCacheSize safely fetches the Configuration value for state's 'Database.SQLite.CacheSize' field
+func (st *ConfigState) GetDatabaseSQLiteCacheSize() (v bytesize.Size) {
+	st.mutex.Lock()
+	v = st.config.Database.SQLite.CacheSize
+	st.mutex.Unlock()
+	return
+}
+
+// SetDatabaseSQLiteCacheSize safely sets the Configuration value for state's 'Database.SQLite.CacheSize' field
+func (st *ConfigState) SetDatabaseSQLiteCacheSize(v bytesize.Size) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Database.SQLite.CacheSize = v
+	st.reloadToViper()
+}
+
+// DatabaseSQLiteCacheSizeFlag returns the flag name for the 'Database.SQLite.CacheSize' field
+func DatabaseSQLiteCacheSizeFlag() string { return "database-sqlite-cache-size" }
+
+// GetDatabaseSQLiteCacheSize safely fetches the value for global configuration 'Database.SQLite.CacheSize' field
+func GetDatabaseSQLiteCacheSize() bytesize.Size { return global.GetDatabaseSQLiteCacheSize() }
+
+// SetDatabaseSQLiteCacheSize safely sets the value for global configuration 'Database.SQLite.CacheSize' field
+func SetDatabaseSQLiteCacheSize(v bytesize.Size) { global.SetDatabaseSQLiteCacheSize(v) }
 
 // GetWebTemplateBaseDir safely fetches the Configuration value for state's 'WebTemplateBaseDir' field
 func (st *ConfigState) GetWebTemplateBaseDir() (v string) {

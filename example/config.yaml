@@ -103,66 +103,81 @@ trusted-proxies:
   - "127.0.0.1/32"
   - "::1"
 
-############################
-##### DATABASE CONFIG ######
-############################
+database:
+  ############################
+  ##### DATABASE CONFIG ######
+  ############################
 
-# Config pertaining to the Gotosocial database connection
+  # Config pertaining to the Gotosocial database connection
 
-# String. Database type.
-# Options: ["postgres","sqlite"]
-# Default: "postgres"
-db-type: "postgres"
+  # String. Database type.
+  # Options: ["postgres","sqlite"]
+  # Default: "postgres"
+  type: "postgres"
 
-# String. Database address or parameters.
-#
-# For Postgres, this should be the address or socket at which the database can be reached.
-#
-# For Sqlite, this should be the path to your sqlite database file. Eg., /opt/gotosocial/sqlite.db.
-# If the file doesn't exist at the specified path, it will be created.
-# If just a filename is provided (no directory) then the database will be created in the same directory
-# as the GoToSocial binary.
-# If address is set to :memory: then an in-memory database will be used (no file).
-# WARNING: :memory: should NOT BE USED except for testing purposes.
-#
-# Examples: ["localhost","my.db.host","127.0.0.1","192.111.39.110",":memory:", "sqlite.db"]
-# Default: ""
-db-address: ""
+  # String. Database address or parameters.
+  #
+  # For Postgres, this should be the address or socket at which the database can be reached.
+  #
+  # For Sqlite, this should be the path to your sqlite database file. Eg., /opt/gotosocial/sqlite.db.
+  # If the file doesn't exist at the specified path, it will be created.
+  # If just a filename is provided (no directory) then the database will be created in the same directory
+  # as the GoToSocial binary.
+  # If address is set to :memory: then an in-memory database will be used (no file).
+  # WARNING: :memory: should NOT BE USED except for testing purposes.
+  #
+  # Examples: ["localhost","my.db.host","127.0.0.1","192.111.39.110",":memory:", "sqlite.db"]
+  # Default: ""
+  address: ""
 
-# Int. Port for database connection.
-# Examples: [5432, 1234, 6969]
-# Default: 5432
-db-port: 5432
+  postgres:
+    # Int. Port for database connection.
+    # Examples: [5432, 1234, 6969]
+    # Default: 5432
+    port: 5432
 
-# String. Username for the database connection.
-# Examples: ["mydbuser","postgres","gotosocial"]
-# Default: ""
-db-user: ""
+    # String. Username for the database connection.
+    # Examples: ["mydbuser","postgres","gotosocial"]
+    # Default: ""
+    duser: ""
 
-# String. Password to use for the database connection
-# Examples: ["password123","verysafepassword","postgres"]
-# Default: ""
-db-password: ""
+    # String. Password to use for the database connection
+    # Examples: ["password123","verysafepassword","postgres"]
+    # Default: ""
+    password: ""
 
-# String. Name of the database to use within the provided database type.
-# Examples: ["mydb","postgres","gotosocial"]
-# Default: "gotosocial"
-db-database: "gotosocial"
+    # String. Name of the database to use within the provided database type.
+    # Examples: ["mydb","postgres","gotosocial"]
+    # Default: "gotosocial"
+    database: "gotosocial"
 
-# String. Disable, enable, or require SSL/TLS connection to the database.
-# If "disable" then no TLS connection will be attempted.
-# If "enable" then TLS will be tried, but the database certificate won't be checked (for self-signed certs).
-# If "require" then TLS will be required to make a connection, and a valid certificate must be presented.
-# Options: ["disable", "enable", "require"]
-# Default: "disable"
-db-tls-mode: "disable"
+    # String. Disable, enable, or require SSL/TLS connection to the database.
+    # If "disable" then no TLS connection will be attempted.
+    # If "enable" then TLS will be tried, but the database certificate won't be checked (for self-signed certs).
+    # If "require" then TLS will be required to make a connection, and a valid certificate must be presented.
+    # Options: ["disable", "enable", "require"]
+    # Default: "disable"
+    tls-mode: "disable"
 
-# String. Path to a CA certificate on the host machine for db certificate validation.
-# If this is left empty, just the host certificates will be used.
-# If filled in, the certificate will be loaded and added to host certificates.
-# Examples: ["/path/to/some/cert.crt"]
-# Default: ""
-db-tls-ca-cert: ""
+    # String. Path to a CA certificate on the host machine for db certificate validation.
+    # If this is left empty, just the host certificates will be used.
+    # If filled in, the certificate will be loaded and added to host certificates.
+    # Examples: ["/path/to/some/cert.crt"]
+    # Default: ""
+    tls-ca-cert: ""
+
+  sqlite:
+    # String. SQLite journaling mode.
+    # See: https://www.sqlite.org/pragma.html#pragma_journal_mode
+    journal-mode: "WAL"
+
+    # String. SQLite synchronous mode.
+    # See: https://www.sqlite.org/pragma.html#pragma_synchronous
+    synchronous: "FULL"
+
+    # Byte size. SQlite cache size.
+    # See: https://www.sqlite.org/pragma.html#pragma_cache_size
+    cache-size: "64MiB"
 
 cache:
   gts:

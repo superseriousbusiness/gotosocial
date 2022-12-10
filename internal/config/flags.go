@@ -43,14 +43,14 @@ func (s *ConfigState) AddGlobalFlags(cmd *cobra.Command) {
 		cmd.PersistentFlags().String(ConfigPathFlag(), cfg.ConfigPath, fieldtag("ConfigPath", "usage"))
 
 		// Database
-		cmd.PersistentFlags().String(DbTypeFlag(), cfg.DbType, fieldtag("DbType", "usage"))
-		cmd.PersistentFlags().String(DbAddressFlag(), cfg.DbAddress, fieldtag("DbAddress", "usage"))
-		cmd.PersistentFlags().Int(DbPortFlag(), cfg.DbPort, fieldtag("DbPort", "usage"))
-		cmd.PersistentFlags().String(DbUserFlag(), cfg.DbUser, fieldtag("DbUser", "usage"))
-		cmd.PersistentFlags().String(DbPasswordFlag(), cfg.DbPassword, fieldtag("DbPassword", "usage"))
-		cmd.PersistentFlags().String(DbDatabaseFlag(), cfg.DbDatabase, fieldtag("DbDatabase", "usage"))
-		cmd.PersistentFlags().String(DbTLSModeFlag(), cfg.DbTLSMode, fieldtag("DbTLSMode", "usage"))
-		cmd.PersistentFlags().String(DbTLSCACertFlag(), cfg.DbTLSCACert, fieldtag("DbTLSCACert", "usage"))
+		cmd.PersistentFlags().String(DatabaseTypeFlag(), cfg.Database.Type, "Database type: eg., postgres")
+		cmd.PersistentFlags().String(DatabaseAddressFlag(), cfg.Database.Address, "Database ipv4 address, hostname, or filename")
+		cmd.PersistentFlags().Int(DatabasePostgresPortFlag(), cfg.Database.Postgres.Port, "Database port")
+		cmd.PersistentFlags().String(DatabasePostgresUserFlag(), cfg.Database.Postgres.User, "Database username")
+		cmd.PersistentFlags().String(DatabasePostgresPasswordFlag(), cfg.Database.Postgres.Password, "Database password")
+		cmd.PersistentFlags().String(DatabasePostgresDatabaseFlag(), cfg.Database.Postgres.Database, "Database name")
+		cmd.PersistentFlags().String(DatabasePostgresTLSModeFlag(), cfg.Database.Postgres.TLSMode, "Database tls mode")
+		cmd.PersistentFlags().String(DatabasePostgresTLSCACertFlag(), cfg.Database.Postgres.TLSCACert, "Path to CA cert for db tls connection")
 	})
 }
 

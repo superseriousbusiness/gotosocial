@@ -43,12 +43,17 @@ var testDefaults = config.Configuration{
 	Port:            8080,
 	TrustedProxies:  []string{"127.0.0.1/32", "::1"},
 
-	DbType:     "sqlite",
-	DbAddress:  ":memory:",
-	DbPort:     5432,
-	DbUser:     "postgres",
-	DbPassword: "postgres",
-	DbDatabase: "postgres",
+	Database: config.DatabaseConfiguration{
+		Type:    "sqlite",
+		Address: ":memory:",
+		Postgres: config.PostgresConfiguration{
+			Port:     5432,
+			User:     "postgres",
+			Password: "postgres",
+			Database: "postgres",
+		},
+		SQLite: config.Defaults.Database.SQLite,
+	},
 
 	WebTemplateBaseDir: "./web/template/",
 	WebAssetBaseDir:    "./web/assets/",
