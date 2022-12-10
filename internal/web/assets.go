@@ -22,11 +22,9 @@ import (
 	"fmt"
 	"net/http"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
@@ -51,22 +49,6 @@ func (fs fileSystem) Open(path string) (http.File, error) {
 	}
 
 	return f, nil
-}
-
-func (m *Module) mountAssetsFilesystem(group *gin.RouterGroup) {
-	webAssetsAbsFilePath, err := filepath.Abs(config.GetWebAssetBaseDir())
-	if err != nil {
-		log.Panicf("mountAssetsFilesystem: error getting absolute path of assets dir: %s", err)
-	}
-
-	fs := fileSystem{http.Dir(webAssetsAbsFilePath)}
-
-	// use the cache middleware on all handlers in this group
-	group.Use(m.assetsCacheControlMiddleware(fs))
-
-	// serve static file system in the root of this group,
-	// will end up being something like "/assets/"
-	group.StaticFS("/", fs)
 }
 
 // getAssetFileInfo tries to fetch the ETag for the given filePath from the module's

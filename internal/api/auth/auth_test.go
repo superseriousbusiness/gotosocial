@@ -20,7 +20,6 @@ package auth_test
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"net/http/httptest"
 
@@ -37,10 +36,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -54,7 +52,6 @@ type AuthStandardTestSuite struct {
 	processor    processing.Processor
 	emailSender  email.Sender
 	idp          oidc.IDP
-	oauthServer  oauth.Server
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
@@ -90,17 +87,10 @@ func (suite *AuthStandardTestSuite) SetupTest() {
 	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
-	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
-	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
+	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../testrig/media"), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
+	suite.emailSender = testrig.NewEmailSender("../../../web/template/", nil)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, suite.mediaManager, clientWorker, fedWorker)
-
-	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
-	var err error
-	suite.idp, err = oidc.NewIDP(context.Background())
-	if err != nil {
-		panic(err)
-	}
-	suite.authModule = auth.New(suite.db, suite.idp, suite.processor)
+	suite.authModule = auth.New(suite.db, suite.processor, suite.idp)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 }
 
@@ -114,7 +104,7 @@ func (suite *AuthStandardTestSuite) newContext(requestMethod string, requestPath
 	ctx, engine := testrig.CreateGinTestContext(recorder, nil)
 
 	// load templates into the engine
-	testrig.ConfigureTemplatesWithGin(engine, "../../../../web/template")
+	testrig.ConfigureTemplatesWithGin(engine, "../../../web/template")
 
 	// create the request
 	protocol := config.GetProtocol()
@@ -131,7 +121,7 @@ func (suite *AuthStandardTestSuite) newContext(requestMethod string, requestPath
 
 	// trigger the session middleware on the context
 	store := memstore.NewStore(make([]byte, 32), make([]byte, 32))
-	store.Options(router.SessionOptions())
+	store.Options(middleware.SessionOptions())
 	sessionMiddleware := sessions.Sessions("gotosocial-localhost", store)
 	sessionMiddleware(ctx)
 

@@ -23,6 +23,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/apps"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/blocks"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/bookmarks"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/customemojis"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/favourites"
 	filter "github.com/superseriousbusiness/gotosocial/internal/api/client/filters"
@@ -49,6 +50,7 @@ type Client struct {
 	admin          *admin.Module          // api/v1/admin
 	apps           *apps.Module           // api/v1/apps
 	blocks         *blocks.Module         // api/v1/blocks
+	bookmarks      *bookmarks.Module      // api/v1/bookmarks
 	customEmojis   *customemojis.Module   // api/v1/custom_emojis
 	favourites     *favourites.Module     // api/v1/favourites
 	filters        *filter.Module         // api/v1/filters
@@ -67,6 +69,14 @@ func (c *Client) Route(r router.Router) {
 	// create a new group on the top level client 'api' prefix
 	apiGroup := r.AttachGroup("api")
 
+	// attach non-global middlewares appropriate to the client api
+	var (
+		tokenCheckMiddleware = middleware.TokenCheck(c.db, c.processor.OAuthValidateBearerToken)
+		rateLimitMiddleware  = middleware.RateLimit()
+		gzipMiddleware       = middleware.Gzip()
+	)
+	apiGroup.Use(tokenCheckMiddleware, rateLimitMiddleware, gzipMiddleware)
+
 	// for each client api module, pass it the Handle function
 	// so that the module can attach its routes to this group
 	h := apiGroup.Handle
@@ -74,6 +84,7 @@ func (c *Client) Route(r router.Router) {
 	c.admin.Route(h)
 	c.apps.Route(h)
 	c.blocks.Route(h)
+	c.bookmarks.Route(h)
 	c.customEmojis.Route(h)
 	c.favourites.Route(h)
 	c.filters.Route(h)
@@ -86,14 +97,6 @@ func (c *Client) Route(r router.Router) {
 	c.statuses.Route(h)
 	c.streaming.Route(h)
 	c.user.Route(h)
-
-	// attach non-global middlewares appropriate to the client api
-	var (
-		tokenCheckMiddleware = middleware.TokenCheck(c.db, c.processor.OAuthValidateBearerToken)
-		rateLimitMiddleware  = middleware.RateLimit()
-		gzipMiddleware       = middleware.Gzip()
-	)
-	apiGroup.Use(tokenCheckMiddleware, rateLimitMiddleware, gzipMiddleware)
 }
 
 func NewClient(db db.DB, p processing.Processor) *Client {
@@ -105,6 +108,7 @@ func NewClient(db db.DB, p processing.Processor) *Client {
 		admin:          admin.New(p),
 		apps:           apps.New(p),
 		blocks:         blocks.New(p),
+		bookmarks:      bookmarks.New(p),
 		customEmojis:   customemojis.New(p),
 		favourites:     favourites.New(p),
 		filters:        filter.New(p),

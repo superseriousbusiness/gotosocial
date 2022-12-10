@@ -47,6 +47,12 @@ type extraInfo struct {
 
 // CallbackGETHandler parses a token from an external auth provider.
 func (m *Module) CallbackGETHandler(c *gin.Context) {
+	if !config.GetOIDCEnabled() {
+		err := errors.New("oidc is not enabled for this server")
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err, err.Error()), m.processor.InstanceGet)
+		return
+	}
+
 	s := sessions.Default(c)
 
 	// check the query vs session state parameter to mitigate csrf

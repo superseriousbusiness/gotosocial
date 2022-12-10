@@ -22,43 +22,48 @@ import (
 	"net/http"
 
 	"github.com/gin-contrib/sessions"
+	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
-/* #nosec G101 */
 const (
+	/*
+		paths prefixed with 'auth'
+	*/
+
 	// AuthSignInPath is the API path for users to sign in through
 	AuthSignInPath = "/auth/sign_in"
+	// AuthCheckYourEmailPath users land here after registering a new account, instructs them to confirm their email
+	AuthCheckYourEmailPath = "/auth/check_your_email"
+	// AuthWaitForApprovalPath users land here after confirming their email
+	// but before an admin approves their account (if such is required)
+	AuthWaitForApprovalPath = "/auth/wait_for_approval"
+	// AuthAccountDisabledPath users land here when their account is suspended by an admin
+	AuthAccountDisabledPath = "/auth/account_disabled"
+	// AuthCallbackPath is the API path for receiving callback tokens from external OIDC providers
+	AuthCallbackPath = "/callback"
 
-	// CheckYourEmailPath users land here after registering a new account, instructs them to confirm thier email
-	CheckYourEmailPath = "/check_your_email"
-
-	// WaitForApprovalPath users land here after confirming thier email but before an admin approves thier account
-	// (if such is required)
-	WaitForApprovalPath = "/wait_for_approval"
-
-	// AccountDisabledPath users land here when thier account is suspended by an admin
-	AccountDisabledPath = "/account_disabled"
+	/*
+		paths prefixed with 'oauth'
+	*/
 
 	// OauthTokenPath is the API path to use for granting token requests to users with valid credentials
-	OauthTokenPath = "/oauth/token"
-
+	OauthTokenPath = "/oauth/token" // #nosec G101 else we get a hardcoded credentials warning
 	// OauthAuthorizePath is the API path for authorization requests (eg., authorize this app to act on my behalf as a user)
 	OauthAuthorizePath = "/oauth/authorize"
-
 	// OauthFinalizePath is the API path for completing user registration with additional user details
 	OauthFinalizePath = "/oauth/finalize"
+	// OauthOobTokenPath is the path for serving an html representation of an oob token page.
+	OauthOobTokenPath = "/oauth/oob" // #nosec G101 else we get a hardcoded credentials warning
 
-	// CallbackPath is the API path for receiving callback tokens from external OIDC providers
-	CallbackPath = oidc.CallbackPath
+	/*
+		params / session keys
+	*/
 
-	callbackStateParam = "state"
-	callbackCodeParam  = "code"
-
+	callbackStateParam   = "state"
+	callbackCodeParam    = "code"
 	sessionUserID        = "userid"
 	sessionClientID      = "client_id"
 	sessionRedirectURI   = "redirect_uri"
@@ -73,38 +78,39 @@ const (
 
 type Module struct {
 	db        db.DB
-	idp       oidc.IDP
 	processor processing.Processor
+	idp       oidc.IDP
 }
 
-// New returns a new auth module
-func New(db db.DB, idp oidc.IDP, processor processing.Processor) *Module {
+// New returns an Auth module which provides both 'oauth' and 'auth' endpoints.
+//
+// It is safe to pass a nil idp if oidc is disabled.
+func New(db db.DB, processor processing.Processor, idp oidc.IDP) *Module {
 	return &Module{
 		db:        db,
-		idp:       idp,
 		processor: processor,
+		idp:       idp,
 	}
 }
 
-func (m *Module) Route(s router.Router) error {
-	s.AttachHandler(http.MethodGet, AuthSignInPath, m.SignInGETHandler)
-	s.AttachHandler(http.MethodPost, AuthSignInPath, m.SignInPOSTHandler)
+// RouteAuth routes all paths that should have an 'auth' prefix
+func (m *Module) RouteAuth(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
+	attachHandler(http.MethodGet, AuthSignInPath, m.SignInGETHandler)
+	attachHandler(http.MethodPost, AuthSignInPath, m.SignInPOSTHandler)
+	attachHandler(http.MethodGet, AuthCallbackPath, m.CallbackGETHandler)
+}
 
-	s.AttachHandler(http.MethodPost, OauthTokenPath, m.TokenPOSTHandler)
-
-	s.AttachHandler(http.MethodGet, OauthAuthorizePath, m.AuthorizeGETHandler)
-	s.AttachHandler(http.MethodPost, OauthAuthorizePath, m.AuthorizePOSTHandler)
-
-	s.AttachHandler(http.MethodGet, CallbackPath, m.CallbackGETHandler)
-	s.AttachHandler(http.MethodPost, OauthFinalizePath, m.FinalizePOSTHandler)
-
-	s.AttachHandler(http.MethodGet, oauth.OOBTokenPath, m.OobHandler)
-	return nil
+// RouteOauth routes all paths that should have an 'oauth' prefix
+func (m *Module) RouteOauth(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
+	attachHandler(http.MethodPost, OauthTokenPath, m.TokenPOSTHandler)
+	attachHandler(http.MethodGet, OauthAuthorizePath, m.AuthorizeGETHandler)
+	attachHandler(http.MethodPost, OauthAuthorizePath, m.AuthorizePOSTHandler)
+	attachHandler(http.MethodPost, OauthFinalizePath, m.FinalizePOSTHandler)
+	attachHandler(http.MethodGet, OauthOobTokenPath, m.OobHandler)
 }
 
 func (m *Module) clearSession(s sessions.Session) {
 	s.Clear()
-
 	if err := s.Save(); err != nil {
 		panic(err)
 	}

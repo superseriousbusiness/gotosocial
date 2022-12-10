@@ -314,19 +314,19 @@ func saveAuthFormToSession(s sessions.Session, form *apimodel.OAuthAuthorize) gt
 
 func ensureUserIsAuthorizedOrRedirect(ctx *gin.Context, user *gtsmodel.User, account *gtsmodel.Account) (redirected bool) {
 	if user.ConfirmedAt.IsZero() {
-		ctx.Redirect(http.StatusSeeOther, CheckYourEmailPath)
+		ctx.Redirect(http.StatusSeeOther, AuthCheckYourEmailPath)
 		redirected = true
 		return
 	}
 
 	if !*user.Approved {
-		ctx.Redirect(http.StatusSeeOther, WaitForApprovalPath)
+		ctx.Redirect(http.StatusSeeOther, AuthWaitForApprovalPath)
 		redirected = true
 		return
 	}
 
 	if *user.Disabled || !account.SuspendedAt.IsZero() {
-		ctx.Redirect(http.StatusSeeOther, AccountDisabledPath)
+		ctx.Redirect(http.StatusSeeOther, AuthAccountDisabledPath)
 		redirected = true
 		return
 	}

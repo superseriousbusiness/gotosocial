@@ -52,15 +52,7 @@ type idp struct {
 }
 
 // NewIDP returns a new IDP configured with the given config.
-// If the passed config contains a nil value for the OIDCConfig, or OIDCConfig.Enabled
-// is set to false, then nil, nil will be returned. If OIDCConfig.Enabled is true,
-// then the other OIDC config fields must also be set.
 func NewIDP(ctx context.Context) (IDP, error) {
-	if !config.GetOIDCEnabled() {
-		// oidc isn't enabled so we don't need to do anything
-		return nil, nil
-	}
-
 	// validate config fields
 	idpName := config.GetOIDCIdpName()
 	if idpName == "" {

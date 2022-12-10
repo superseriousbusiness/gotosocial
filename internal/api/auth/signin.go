@@ -49,7 +49,7 @@ func (m *Module) SignInGETHandler(c *gin.Context) {
 		return
 	}
 
-	if m.idp == nil {
+	if !config.GetOIDCEnabled() {
 		instance, errWithCode := m.processor.InstanceGet(c.Request.Context(), config.GetHost())
 		if errWithCode != nil {
 			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
