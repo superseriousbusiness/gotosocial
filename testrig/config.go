@@ -19,8 +19,6 @@
 package testrig
 
 import (
-	"time"
-
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
@@ -113,45 +111,6 @@ var testDefaults = config.Configuration{
 
 	SoftwareVersion: "0.0.0-testrig",
 
-	Cache: config.CacheConfig{
-		AccountMaxSize:   100,
-		AccountTTL:       time.Minute * 5,
-		AccountSweepFreq: time.Second * 10,
-
-		BlockMaxSize:   100,
-		BlockTTL:       time.Minute * 5,
-		BlockSweepFreq: time.Second * 10,
-
-		DomainBlockMaxSize:   1000,
-		DomainBlockTTL:       time.Hour * 24,
-		DomainBlockSweepFreq: time.Minute,
-
-		EmojiMaxSize:   500,
-		EmojiTTL:       time.Minute * 5,
-		EmojiSweepFreq: time.Second * 10,
-
-		EmojiCategoryMaxSize:   100,
-		EmojiCategoryTTL:       time.Minute * 5,
-		EmojiCategorySweepFreq: time.Second * 10,
-
-		MentionMaxSize:   500,
-		MentionTTL:       time.Minute * 5,
-		MentionSweepFreq: time.Second * 10,
-
-		NotificationMaxSize:   500,
-		NotificationTTL:       time.Minute * 5,
-		NotificationSweepFreq: time.Second * 10,
-
-		StatusMaxSize:   500,
-		StatusTTL:       time.Minute * 5,
-		StatusSweepFreq: time.Second * 10,
-
-		TombstoneMaxSize:   100,
-		TombstoneTTL:       time.Minute * 5,
-		TombstoneSweepFreq: time.Second * 10,
-
-		UserMaxSize:   100,
-		UserTTL:       time.Minute * 5,
-		UserSweepFreq: time.Second * 10,
-	},
+	// simply use cache defaults.
+	Cache: config.Defaults.Cache,
 }

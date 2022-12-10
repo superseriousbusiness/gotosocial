@@ -131,7 +131,7 @@ type Configuration struct {
 	AdvancedRateLimitRequests int    `name:"advanced-rate-limit-requests" usage:"Amount of HTTP requests to permit within a 5 minute window. 0 or less turns rate limiting off."`
 
 	// Cache configuration vars.
-	Cache CacheConfig `name:"cache"`
+	Cache CacheConfiguration `name:"cache"`
 
 	// TODO: move these elsewhere, these are more ephemeral vs long-running flags like above
 	AdminAccountUsername  string `name:"username" usage:"the username to create/delete/etc"`
@@ -141,7 +141,11 @@ type Configuration struct {
 	AdminMediaPruneDryRun bool   `name:"dry-run" usage:"perform a dry run and only log number of items eligible for pruning"`
 }
 
-type CacheConfig struct {
+type CacheConfiguration struct {
+	GTS GTSCacheConfiguration `name:"gts"`
+}
+
+type GTSCacheConfiguration struct {
 	AccountMaxSize   int           `name:"account-max-size"`
 	AccountTTL       time.Duration `name:"account-ttl"`
 	AccountSweepFreq time.Duration `name:"account-sweep-freq"`
