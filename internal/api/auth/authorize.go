@@ -64,7 +64,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 			return
 		}
 
-		c.Redirect(http.StatusSeeOther, AuthSignInPath)
+		c.Redirect(http.StatusSeeOther, "/auth"+AuthSignInPath)
 		return
 	}
 
@@ -314,19 +314,19 @@ func saveAuthFormToSession(s sessions.Session, form *apimodel.OAuthAuthorize) gt
 
 func ensureUserIsAuthorizedOrRedirect(ctx *gin.Context, user *gtsmodel.User, account *gtsmodel.Account) (redirected bool) {
 	if user.ConfirmedAt.IsZero() {
-		ctx.Redirect(http.StatusSeeOther, AuthCheckYourEmailPath)
+		ctx.Redirect(http.StatusSeeOther, "/auth"+AuthCheckYourEmailPath)
 		redirected = true
 		return
 	}
 
 	if !*user.Approved {
-		ctx.Redirect(http.StatusSeeOther, AuthWaitForApprovalPath)
+		ctx.Redirect(http.StatusSeeOther, "/auth"+AuthWaitForApprovalPath)
 		redirected = true
 		return
 	}
 
 	if *user.Disabled || !account.SuspendedAt.IsZero() {
-		ctx.Redirect(http.StatusSeeOther, AuthAccountDisabledPath)
+		ctx.Redirect(http.StatusSeeOther, "/auth"+AuthAccountDisabledPath)
 		redirected = true
 		return
 	}

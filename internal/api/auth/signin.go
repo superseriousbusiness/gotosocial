@@ -105,7 +105,7 @@ func (m *Module) SignInPOSTHandler(c *gin.Context) {
 		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err, oauth.HelpfulAdvice), m.processor.InstanceGet)
 	}
 
-	c.Redirect(http.StatusFound, OauthAuthorizePath)
+	c.Redirect(http.StatusFound, "/oauth"+OauthAuthorizePath)
 }
 
 // ValidatePassword takes an email address and a password.

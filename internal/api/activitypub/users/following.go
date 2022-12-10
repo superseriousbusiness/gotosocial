@@ -16,20 +16,21 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package user
+package users
 
 import (
+	"encoding/json"
 	"errors"
+	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror" //nolint:typecheck
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-// InboxPOSTHandler deals with incoming POST requests to an actor's inbox.
-// Eg., POST to https://example.org/users/whatever/inbox.
-func (m *Module) InboxPOSTHandler(c *gin.Context) {
+// FollowingGETHandler returns a collection of URIs for accounts that the target user follows, formatted so that other AP servers can understand it.
+func (m *Module) FollowingGETHandler(c *gin.Context) {
 	// usernames on our instance are always lowercase
 	requestedUsername := strings.ToLower(c.Param(UsernameKey))
 	if requestedUsername == "" {
@@ -38,14 +39,29 @@ func (m *Module) InboxPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	if posted, err := m.processor.InboxPost(transferContext(c), c.Writer, c.Request); err != nil {
-		if withCode, ok := err.(gtserror.WithCode); ok {
-			apiutil.ErrorHandler(c, withCode, m.processor.InstanceGet)
-		} else {
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
-		}
-	} else if !posted {
-		err := errors.New("unable to process request")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+	format, err := apiutil.NegotiateAccept(c, apiutil.HTMLOrActivityPubHeaders...)
+	if err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
+		return
 	}
+
+	if format == string(apiutil.TextHTML) {
+		// redirect to the user's profile
+		c.Redirect(http.StatusSeeOther, "/@"+requestedUsername)
+		return
+	}
+
+	resp, errWithCode := m.processor.GetFediFollowing(apiutil.TransferSignatureContext(c), requestedUsername, c.Request.URL)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		return
+	}
+
+	b, err := json.Marshal(resp)
+	if err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+		return
+	}
+
+	c.Data(http.StatusOK, format, b)
 }

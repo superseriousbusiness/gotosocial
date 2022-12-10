@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package user
+package users
 
 import (
 	"encoding/json"
@@ -29,8 +29,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-// FollowingGETHandler returns a collection of URIs for accounts that the target user follows, formatted so that other AP servers can understand it.
-func (m *Module) FollowingGETHandler(c *gin.Context) {
+// FollowersGETHandler returns a collection of URIs for followers of the target user, formatted so that other AP servers can understand it.
+func (m *Module) FollowersGETHandler(c *gin.Context) {
 	// usernames on our instance are always lowercase
 	requestedUsername := strings.ToLower(c.Param(UsernameKey))
 	if requestedUsername == "" {
@@ -51,7 +51,7 @@ func (m *Module) FollowingGETHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.GetFediFollowing(transferContext(c), requestedUsername, c.Request.URL)
+	resp, errWithCode := m.processor.GetFediFollowers(apiutil.TransferSignatureContext(c), requestedUsername, c.Request.URL)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return

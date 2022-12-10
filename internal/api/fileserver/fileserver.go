@@ -23,7 +23,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 const (
@@ -35,8 +34,8 @@ const (
 	MediaSizeKey = "media_size"
 	// FileNameKey is the actual filename being sought. Will usually be a UUID then something like .jpeg
 	FileNameKey = "file_name"
-	// FileServePath is the full fileserve path.
-	FileServePath = "/" + uris.FileserverPath + "/:" + AccountIDKey + "/:" + MediaTypeKey + "/:" + MediaSizeKey + "/:" + FileNameKey
+	// FileServePath is the fileserve path minus the 'fileserver' prefix.
+	FileServePath = "/:" + AccountIDKey + "/:" + MediaTypeKey + "/:" + MediaSizeKey + "/:" + FileNameKey
 )
 
 type Module struct {

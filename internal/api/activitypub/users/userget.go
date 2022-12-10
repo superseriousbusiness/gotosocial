@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package user
+package users
 
 import (
 	"encoding/json"
@@ -59,7 +59,7 @@ func (m *Module) UsersGETHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.GetFediUser(transferContext(c), requestedUsername, c.Request.URL)
+	resp, errWithCode := m.processor.GetFediUser(apiutil.TransferSignatureContext(c), requestedUsername, c.Request.URL)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return

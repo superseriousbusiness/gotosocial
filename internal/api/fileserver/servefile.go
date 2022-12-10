@@ -107,12 +107,7 @@ func (m *Module) ServeFile(c *gin.Context) {
 		return
 	}
 
-	// since we'll never host different files at the same
-	// URL (bc the ULIDs are generated per piece of media),
-	// it's sensible and safe to use a long cache here, so
-	// that clients don't keep fetching files over + over again
-	c.Header("Cache-Control", "max-age=604800")
-
+	// if this is a head request, just return info + throw the reader away
 	if c.Request.Method == http.MethodHead {
 		c.Header("Content-Type", format)
 		c.Header("Content-Length", strconv.FormatInt(content.ContentLength, 10))

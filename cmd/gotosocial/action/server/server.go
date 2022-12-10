@@ -174,18 +174,23 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	var (
-		authModule      = api.NewAuth(dbService, processor, idp, routerSession, sessionName) // auth/oauth paths
-		clientModule    = api.NewClient(dbService, processor)                                // api client endpoints
-		wellKnownModule = api.NewWellKnown(processor)                                        // .well-known endpoints
-		// activitypub module
-		webModule       = web.New(processor)                                                 // web pages + user profiles + settings panels etc
+		authModule        = api.NewAuth(dbService, processor, idp, routerSession, sessionName) // auth/oauth paths
+		clientModule      = api.NewClient(dbService, processor)                                // api client endpoints
+		fileserverModule  = api.NewFileserver(processor)                                       // fileserver endpoints
+		wellKnownModule   = api.NewWellKnown(processor)                                        // .well-known endpoints
+		nodeInfoModule    = api.NewNodeInfo(processor)                                         // nodeinfo endpoint
+		activityPubModule = api.NewActivityPub(dbService, processor)                           // ActivityPub endpoints
+		webModule         = web.New(processor)                                                 // web pages + user profiles + settings panels etc
 	)
 
 	// these should be routed in order
 	authModule.Route(router)
 	clientModule.Route(router)
-	webModule.Route(router)
+	fileserverModule.Route(router)
 	wellKnownModule.Route(router)
+	nodeInfoModule.Route(router)
+	activityPubModule.Route(router)
+	webModule.Route(router)
 
 	gts, err := gotosocial.NewServer(dbService, router, federator, mediaManager)
 	if err != nil {

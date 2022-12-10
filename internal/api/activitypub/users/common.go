@@ -16,31 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package user
-
-import (
-	"context"
-
-	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/ap"
-)
-
-// transferContext transfers the signature verifier and signature from the gin context to the request context
-func transferContext(c *gin.Context) context.Context {
-	ctx := c.Request.Context()
-
-	verifier, signed := c.Get(string(ap.ContextRequestingPublicKeyVerifier))
-	if signed {
-		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeyVerifier, verifier)
-	}
-
-	signature, signed := c.Get(string(ap.ContextRequestingPublicKeySignature))
-	if signed {
-		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeySignature, signature)
-	}
-
-	return ctx
-}
+package users
 
 // SwaggerCollection represents an activitypub collection.
 // swagger:model swaggerCollection

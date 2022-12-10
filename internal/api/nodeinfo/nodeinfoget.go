@@ -19,6 +19,7 @@
 package nodeinfo
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -26,35 +27,40 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-// NodeInfoWellKnownGETHandler swagger:operation GET /.well-known/nodeinfo nodeInfoWellKnownGet
+// NodeInfo2GETHandler swagger:operation GET /nodeinfo/2.0 nodeInfoGet
 //
-// Directs callers to /nodeinfo/2.0.
+// Returns a compliant nodeinfo response to node info queries.
 //
-// eg. `{"links":[{"rel":"http://nodeinfo.diaspora.software/ns/schema/2.0","href":"http://example.org/nodeinfo/2.0"}]}`
-// See: https://nodeinfo.diaspora.software/protocol.html
+// See: https://nodeinfo.diaspora.software/schema.html
 //
 //	---
 //	tags:
 //	- nodeinfo
 //
 //	produces:
-//	- application/json
+//	- application/json; profile="http://nodeinfo.diaspora.software/ns/schema/2.0#"
 //
 //	responses:
 //		'200':
 //			schema:
-//				"$ref": "#/definitions/wellKnownResponse"
-func (m *Module) NodeInfoWellKnownGETHandler(c *gin.Context) {
+//				"$ref": "#/definitions/nodeinfo"
+func (m *Module) NodeInfo2GETHandler(c *gin.Context) {
 	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	niRel, errWithCode := m.processor.GetNodeInfoRel(c.Request.Context(), c.Request)
+	nodeInfo, errWithCode := m.processor.GetNodeInfo(c.Request.Context())
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 
-	c.JSON(http.StatusOK, niRel)
+	b, err := json.Marshal(nodeInfo)
+	if err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+		return
+	}
+
+	c.Data(http.StatusOK, NodeInfo2ContentType, b)
 }

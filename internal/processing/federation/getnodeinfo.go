@@ -21,7 +21,6 @@ package federation
 import (
 	"context"
 	"fmt"
-	"net/http"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -38,7 +37,7 @@ var (
 	nodeInfoProtocols = []string{"activitypub"}
 )
 
-func (p *processor) GetNodeInfoRel(ctx context.Context, request *http.Request) (*apimodel.WellKnownResponse, gtserror.WithCode) {
+func (p *processor) GetNodeInfoRel(ctx context.Context) (*apimodel.WellKnownResponse, gtserror.WithCode) {
 	protocol := config.GetProtocol()
 	host := config.GetHost()
 
@@ -52,7 +51,7 @@ func (p *processor) GetNodeInfoRel(ctx context.Context, request *http.Request) (
 	}, nil
 }
 
-func (p *processor) GetNodeInfo(ctx context.Context, request *http.Request) (*apimodel.Nodeinfo, gtserror.WithCode) {
+func (p *processor) GetNodeInfo(ctx context.Context) (*apimodel.Nodeinfo, gtserror.WithCode) {
 	openRegistration := config.GetAccountsRegistrationOpen()
 	softwareVersion := config.GetSoftwareVersion()
 

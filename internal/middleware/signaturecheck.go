@@ -7,6 +7,7 @@ import (
 	"net/url"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 
 	"github.com/gin-gonic/gin"
@@ -33,7 +34,7 @@ var (
 // If the domain is blocked, the middleware will abort the request chain instead with http code 403 forbidden.
 //
 // In case of an error, the request will be aborted with http code 500 internal server error.
-func SignatureCheck(isURIBlocked func(context.Context, *url.URL) (bool, error)) func(*gin.Context) {
+func SignatureCheck(isURIBlocked func(context.Context, *url.URL) (bool, db.Error)) func(*gin.Context) {
 	return func(c *gin.Context) {
 		// create the verifier from the request, this will error if the request wasn't signed
 		verifier, err := httpsig.NewVerifier(c.Request)

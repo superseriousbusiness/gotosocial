@@ -41,14 +41,15 @@ func (a *Auth) Route(r router.Router) {
 	authGroup := r.AttachGroup("auth")
 	oauthGroup := r.AttachGroup("oauth")
 
-	// attach shared, non-global middlewares to both of these groups
+	// instantiate + attach shared, non-global middlewares to both of these groups
 	var (
-		rateLimitMiddleware = middleware.RateLimit() // nolint:contextcheck
-		gzipMiddleware      = middleware.Gzip()
-		sessionMiddleware   = middleware.Session(a.sessionName, a.routerSession.Auth, a.routerSession.Crypt)
+		rateLimitMiddleware    = middleware.RateLimit() // nolint:contextcheck
+		gzipMiddleware         = middleware.Gzip()
+		cacheControlMiddleware = middleware.CacheControl("private", "max-age=120")
+		sessionMiddleware      = middleware.Session(a.sessionName, a.routerSession.Auth, a.routerSession.Crypt)
 	)
-	authGroup.Use(rateLimitMiddleware, gzipMiddleware, sessionMiddleware)
-	oauthGroup.Use(rateLimitMiddleware, gzipMiddleware, sessionMiddleware)
+	authGroup.Use(rateLimitMiddleware, gzipMiddleware, cacheControlMiddleware, sessionMiddleware)
+	oauthGroup.Use(rateLimitMiddleware, gzipMiddleware, cacheControlMiddleware, sessionMiddleware)
 
 	a.auth.RouteAuth(authGroup.Handle)
 	a.auth.RouteOauth(oauthGroup.Handle)

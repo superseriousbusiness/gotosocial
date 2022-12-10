@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package webfinger
+package nodeinfo
 
 import (
 	"net/http"
@@ -26,9 +26,9 @@ import (
 )
 
 const (
-	// WebfingerBasePath is the base path for serving webfinger
-	// lookup requests, minus the .well-known prefix
-	WebfingerBasePath = "/webfinger"
+	NodeInfo2Version     = "2.0"
+	NodeInfo2Path        = "/" + NodeInfo2Version
+	NodeInfo2ContentType = "application/json; profile=\"http://nodeinfo.diaspora.software/ns/schema/" + NodeInfo2Version + "#\""
 )
 
 type Module struct {
@@ -42,5 +42,5 @@ func New(processor processing.Processor) *Module {
 }
 
 func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
-	attachHandler(http.MethodGet, WebfingerBasePath, m.WebfingerGETRequest)
+	attachHandler(http.MethodGet, NodeInfo2Path, m.NodeInfo2GETHandler)
 }

@@ -19,21 +19,17 @@
 package emoji
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-// EmojiGetHandler
 func (m *Module) EmojiGetHandler(c *gin.Context) {
-	// usernames on our instance are always lowercase
 	requestedEmojiID := strings.ToUpper(c.Param(EmojiIDKey))
 	if requestedEmojiID == "" {
 		err := errors.New("no emoji id specified in request")
@@ -47,18 +43,7 @@ func (m *Module) EmojiGetHandler(c *gin.Context) {
 		return
 	}
 
-	ctx := c.Request.Context()
-	verifier, signed := c.Get(string(ap.ContextRequestingPublicKeyVerifier))
-	if signed {
-		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeyVerifier, verifier)
-	}
-
-	signature, signed := c.Get(string(ap.ContextRequestingPublicKeySignature))
-	if signed {
-		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeySignature, signature)
-	}
-
-	resp, errWithCode := m.processor.GetFediEmoji(ctx, requestedEmojiID, c.Request.URL)
+	resp, errWithCode := m.processor.GetFediEmoji(apiutil.TransferSignatureContext(c), requestedEmojiID, c.Request.URL)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return

@@ -17,3 +17,36 @@
 */
 
 package api
+
+import (
+	"github.com/superseriousbusiness/gotosocial/internal/api/fileserver"
+	"github.com/superseriousbusiness/gotosocial/internal/middleware"
+	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/router"
+)
+
+type Fileserver struct {
+	fileserver *fileserver.Module
+}
+
+func (f *Fileserver) Route(r router.Router) {
+	fileserverGroup := r.AttachGroup("fileserver")
+
+	// attach middlewares appropriate for this group
+	fileserverGroup.Use(
+		middleware.RateLimit(),
+		// since we'll never host different files at the same
+		// URL (bc the ULIDs are generated per piece of media),
+		// it's sensible and safe to use a long cache here, so
+		// that clients don't keep fetching files over + over again
+		middleware.CacheControl("max-age=604800"),
+	)
+
+	f.fileserver.Route(fileserverGroup.Handle)
+}
+
+func NewFileserver(p processing.Processor) *Fileserver {
+	return &Fileserver{
+		fileserver: fileserver.New(p),
+	}
+}

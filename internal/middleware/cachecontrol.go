@@ -16,31 +16,20 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package webfinger
+package middleware
 
 import (
-	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/processing"
 )
 
-const (
-	// WebfingerBasePath is the base path for serving webfinger
-	// lookup requests, minus the .well-known prefix
-	WebfingerBasePath = "/webfinger"
-)
-
-type Module struct {
-	processor processing.Processor
-}
-
-func New(processor processing.Processor) *Module {
-	return &Module{
-		processor: processor,
+// CacheControl returns a new gin middleware which allows callers to control cache settings on response headers.
+//
+// For directives, see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
+func CacheControl(directives ...string) gin.HandlerFunc {
+	ccHeader := strings.Join(directives, ", ")
+	return func(c *gin.Context) {
+		c.Header("Cache-Control", ccHeader)
 	}
-}
-
-func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
-	attachHandler(http.MethodGet, WebfingerBasePath, m.WebfingerGETRequest)
 }

@@ -16,11 +16,12 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package user_test
+package users_test
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/user"
+	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -28,7 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -38,14 +39,13 @@ import (
 type UserStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
-	db               db.DB
-	tc               typeutils.TypeConverter
-	mediaManager     media.Manager
-	federator        federation.Federator
-	emailSender      email.Sender
-	processor        processing.Processor
-	storage          *storage.Driver
-	oauthServer      oauth.Server
+	db           db.DB
+	tc           typeutils.TypeConverter
+	mediaManager media.Manager
+	federator    federation.Federator
+	emailSender  email.Sender
+	processor    processing.Processor
+	storage      *storage.Driver
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
@@ -58,7 +58,9 @@ type UserStandardTestSuite struct {
 	testBlocks       map[string]*gtsmodel.Block
 
 	// module being tested
-	userModule *user.Module
+	userModule *users.Module
+
+	signatureCheck gin.HandlerFunc
 }
 
 func (suite *UserStandardTestSuite) SetupSuite() {
@@ -86,10 +88,11 @@ func (suite *UserStandardTestSuite) SetupTest() {
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, suite.mediaManager, clientWorker, fedWorker)
-	suite.userModule = user.New(suite.processor).(*user.Module)
-	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
+	suite.userModule = users.New(suite.processor)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
+
+	suite.signatureCheck = middleware.SignatureCheck(suite.db.IsURIBlocked)
 
 	suite.NoError(suite.processor.Start())
 }

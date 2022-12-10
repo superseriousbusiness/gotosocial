@@ -154,7 +154,7 @@ func (r *router) Stop(ctx context.Context) error {
 // The provided context will be used as the base context for all requests passing
 // through the underlying http.Server, so this should be a long-running context.
 func New(ctx context.Context) (Router, error) {
-	gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.TestMode)
 
 	// create the actual engine here -- this is the core request routing handler for gts
 	engine := gin.New()

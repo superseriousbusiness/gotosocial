@@ -21,15 +21,14 @@ package nodeinfo
 import (
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
 const (
-	// NodeInfoWellKnownPath is the base path for serving responses to nodeinfo lookup requests.
-	NodeInfoWellKnownPath = ".well-known/nodeinfo"
-	// NodeInfoBasePath is the path for serving nodeinfo responses.
-	NodeInfoBasePath = "/nodeinfo/2.0"
+	// NodeInfoWellKnownPath is the base path for serving responses
+	// to nodeinfo lookup requests, minus the '.well-known' prefix.
+	NodeInfoWellKnownPath = "/nodeinfo"
 )
 
 type Module struct {
@@ -43,8 +42,6 @@ func New(processor processing.Processor) *Module {
 	}
 }
 
-func (m *Module) Route(s router.Router) error {
-	s.AttachHandler(http.MethodGet, NodeInfoWellKnownPath, m.NodeInfoWellKnownGETHandler)
-	s.AttachHandler(http.MethodGet, NodeInfoBasePath, m.NodeInfoGETHandler)
-	return nil
+func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
+	attachHandler(http.MethodGet, NodeInfoWellKnownPath, m.NodeInfoWellKnownGETHandler)
 }

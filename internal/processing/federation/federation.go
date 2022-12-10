@@ -60,10 +60,10 @@ type Processor interface {
 	GetEmoji(ctx context.Context, requestedEmojiID string, requestURL *url.URL) (interface{}, gtserror.WithCode)
 
 	// GetNodeInfoRel returns a well known response giving the path to node info.
-	GetNodeInfoRel(ctx context.Context, request *http.Request) (*apimodel.WellKnownResponse, gtserror.WithCode)
+	GetNodeInfoRel(ctx context.Context) (*apimodel.WellKnownResponse, gtserror.WithCode)
 
 	// GetNodeInfo returns a node info struct in response to a node info request.
-	GetNodeInfo(ctx context.Context, request *http.Request) (*apimodel.Nodeinfo, gtserror.WithCode)
+	GetNodeInfo(ctx context.Context) (*apimodel.Nodeinfo, gtserror.WithCode)
 
 	// GetOutbox returns the activitypub representation of a local user's outbox.
 	// This contains links to PUBLIC posts made by this user.

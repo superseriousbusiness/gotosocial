@@ -19,15 +19,12 @@
 package web
 
 import (
-	"errors"
 	"net/http"
 	"path/filepath"
 
 	"codeberg.org/gruf/go-cache/v3"
 	"github.com/gin-gonic/gin"
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
@@ -59,13 +56,11 @@ const (
 	lastModifiedHeader    = "Last-Modified"     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Last-Modified
 )
 
-// Module implements the api.ClientModule interface for web pages.
 type Module struct {
 	processor processing.Processor
 	eTagCache cache.Cache[string, eTagCacheEntry]
 }
 
-// New returns a new api.ClientModule for web pages.
 func New(processor processing.Processor) *Module {
 	return &Module{
 		processor: processor,

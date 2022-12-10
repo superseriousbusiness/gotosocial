@@ -34,14 +34,14 @@ const (
 	*/
 
 	// AuthSignInPath is the API path for users to sign in through
-	AuthSignInPath = "/auth/sign_in"
+	AuthSignInPath = "/sign_in"
 	// AuthCheckYourEmailPath users land here after registering a new account, instructs them to confirm their email
-	AuthCheckYourEmailPath = "/auth/check_your_email"
+	AuthCheckYourEmailPath = "/check_your_email"
 	// AuthWaitForApprovalPath users land here after confirming their email
 	// but before an admin approves their account (if such is required)
-	AuthWaitForApprovalPath = "/auth/wait_for_approval"
+	AuthWaitForApprovalPath = "/wait_for_approval"
 	// AuthAccountDisabledPath users land here when their account is suspended by an admin
-	AuthAccountDisabledPath = "/auth/account_disabled"
+	AuthAccountDisabledPath = "/account_disabled"
 	// AuthCallbackPath is the API path for receiving callback tokens from external OIDC providers
 	AuthCallbackPath = "/callback"
 
@@ -50,13 +50,13 @@ const (
 	*/
 
 	// OauthTokenPath is the API path to use for granting token requests to users with valid credentials
-	OauthTokenPath = "/oauth/token" // #nosec G101 else we get a hardcoded credentials warning
+	OauthTokenPath = "/token" // #nosec G101 else we get a hardcoded credentials warning
 	// OauthAuthorizePath is the API path for authorization requests (eg., authorize this app to act on my behalf as a user)
-	OauthAuthorizePath = "/oauth/authorize"
+	OauthAuthorizePath = "/authorize"
 	// OauthFinalizePath is the API path for completing user registration with additional user details
-	OauthFinalizePath = "/oauth/finalize"
+	OauthFinalizePath = "/finalize"
 	// OauthOobTokenPath is the path for serving an html representation of an oob token page.
-	OauthOobTokenPath = "/oauth/oob" // #nosec G101 else we get a hardcoded credentials warning
+	OauthOobTokenPath = "/oob" // #nosec G101 else we get a hardcoded credentials warning
 
 	/*
 		params / session keys

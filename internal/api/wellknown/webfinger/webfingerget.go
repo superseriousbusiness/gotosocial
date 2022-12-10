@@ -19,16 +19,14 @@
 package webfinger
 
 import (
-	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
-	"codeberg.org/gruf/go-kv"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -48,7 +46,7 @@ import (
 //
 //	---
 //	tags:
-//	- webfinger
+//	- .well-known
 //
 //	produces:
 //	- application/json
@@ -58,41 +56,32 @@ import (
 //			schema:
 //				"$ref": "#/definitions/wellKnownResponse"
 func (m *Module) WebfingerGETRequest(c *gin.Context) {
-	l := log.WithFields(kv.Fields{
-		{K: "user-agent", V: c.Request.UserAgent()},
-	}...)
+	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
+		return
+	}
 
 	resourceQuery, set := c.GetQuery("resource")
 	if !set || resourceQuery == "" {
-		l.Debug("aborting request because no resource was set in query")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no 'resource' in request query"})
+		err := errors.New("no 'resource' in request query")
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	requestedUsername, requestedHost, err := util.ExtractWebfingerParts(resourceQuery)
 	if err != nil {
-		l.Debugf("bad webfinger request with resource query %s: %s", resourceQuery, err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("bad webfinger request with resource query %s", resourceQuery)})
+		err := fmt.Errorf("bad webfinger request with resource query %s: %w", resourceQuery, err)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	accountDomain := config.GetAccountDomain()
-	host := config.GetHost()
-
-	if requestedHost != host && requestedHost != accountDomain {
-		l.Debugf("aborting request because requestedHost %s does not belong to this instance", requestedHost)
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("requested host %s does not belong to this instance", requestedHost)})
+	if requestedHost != config.GetHost() && requestedHost != config.GetAccountDomain() {
+		err := fmt.Errorf("requested host %s does not belong to this instance", requestedHost)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	// transfer the signature verifier from the gin context to the request context
-	ctx := c.Request.Context()
-	verifier, signed := c.Get(string(ap.ContextRequestingPublicKeyVerifier))
-	if signed {
-		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeyVerifier, verifier)
-	}
-
-	resp, errWithCode := m.processor.GetWebfingerAccount(ctx, requestedUsername)
+	resp, errWithCode := m.processor.GetWebfingerAccount(c.Request.Context(), requestedUsername)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return

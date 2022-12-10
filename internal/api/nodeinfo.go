@@ -19,36 +19,32 @@
 package api
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/api/wellknown/nodeinfo"
-	"github.com/superseriousbusiness/gotosocial/internal/api/wellknown/webfinger"
+	"github.com/superseriousbusiness/gotosocial/internal/api/nodeinfo"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
-type WellKnown struct {
-	nodeInfo  *nodeinfo.Module
-	webfinger *webfinger.Module
+type NodeInfo struct {
+	nodeInfo *nodeinfo.Module
 }
 
-func (w *WellKnown) Route(r router.Router) {
-	// group .well-known endpoints together
-	wellKnownGroup := r.AttachGroup(".well-known")
+func (w *NodeInfo) Route(r router.Router) {
+	// group nodeinfo endpoints together
+	nodeInfoGroup := r.AttachGroup("nodeinfo")
 
 	// attach middlewares appropriate for this group
-	wellKnownGroup.Use(
+	nodeInfoGroup.Use(
 		middleware.Gzip(),
 		middleware.RateLimit(),
 		middleware.CacheControl("public", "max-age=120"), // allow cache for 2 minutes
 	)
 
-	w.nodeInfo.Route(wellKnownGroup.Handle)
-	w.webfinger.Route(wellKnownGroup.Handle)
+	w.nodeInfo.Route(nodeInfoGroup.Handle)
 }
 
-func NewWellKnown(p processing.Processor) *WellKnown {
-	return &WellKnown{
-		nodeInfo:  nodeinfo.New(p),
-		webfinger: webfinger.New(p),
+func NewNodeInfo(p processing.Processor) *NodeInfo {
+	return &NodeInfo{
+		nodeInfo: nodeinfo.New(p),
 	}
 }

@@ -16,31 +16,26 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package webfinger
+package util
 
 import (
-	"net/http"
+	"context"
 
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 )
 
-const (
-	// WebfingerBasePath is the base path for serving webfinger
-	// lookup requests, minus the .well-known prefix
-	WebfingerBasePath = "/webfinger"
-)
+// TransferSignatureContext transfers a signature verifier and signature from a gin context to a go context.
+func TransferSignatureContext(c *gin.Context) context.Context {
+	ctx := c.Request.Context()
 
-type Module struct {
-	processor processing.Processor
-}
-
-func New(processor processing.Processor) *Module {
-	return &Module{
-		processor: processor,
+	if verifier, signed := c.Get(string(ap.ContextRequestingPublicKeyVerifier)); signed {
+		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeyVerifier, verifier)
 	}
-}
 
-func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
-	attachHandler(http.MethodGet, WebfingerBasePath, m.WebfingerGETRequest)
+	if signature, signed := c.Get(string(ap.ContextRequestingPublicKeySignature)); signed {
+		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeySignature, signature)
+	}
+
+	return ctx
 }

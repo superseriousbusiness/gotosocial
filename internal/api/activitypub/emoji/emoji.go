@@ -21,30 +21,27 @@ package emoji
 import (
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
-	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 const (
 	// EmojiIDKey is for emoji IDs
 	EmojiIDKey = "id"
-	// EmojiBasePath is the base path for serving information about Emojis eg https://example.org/emoji
-	EmojiWithIDPath = "/" + uris.EmojiPath + "/:" + EmojiIDKey
+	// EmojiBasePath is the base path for serving AP Emojis, minus the "emoji" prefix
+	EmojiWithIDPath = "/:" + EmojiIDKey
 )
 
 type Module struct {
 	processor processing.Processor
 }
 
-// New returns a emoji module
 func New(processor processing.Processor) *Module {
 	return &Module{
 		processor: processor,
 	}
 }
 
-func (m *Module) Route(s router.Router) error {
-	s.AttachHandler(http.MethodGet, EmojiWithIDPath, m.EmojiGetHandler)
-	return nil
+func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
+	attachHandler(http.MethodGet, EmojiWithIDPath, m.EmojiGetHandler)
 }

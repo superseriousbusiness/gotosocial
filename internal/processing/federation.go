@@ -59,12 +59,12 @@ func (p *processor) GetWebfingerAccount(ctx context.Context, requestedUsername s
 	return p.federationProcessor.GetWebfingerAccount(ctx, requestedUsername)
 }
 
-func (p *processor) GetNodeInfoRel(ctx context.Context, request *http.Request) (*apimodel.WellKnownResponse, gtserror.WithCode) {
-	return p.federationProcessor.GetNodeInfoRel(ctx, request)
+func (p *processor) GetNodeInfoRel(ctx context.Context) (*apimodel.WellKnownResponse, gtserror.WithCode) {
+	return p.federationProcessor.GetNodeInfoRel(ctx)
 }
 
-func (p *processor) GetNodeInfo(ctx context.Context, request *http.Request) (*apimodel.Nodeinfo, gtserror.WithCode) {
-	return p.federationProcessor.GetNodeInfo(ctx, request)
+func (p *processor) GetNodeInfo(ctx context.Context) (*apimodel.Nodeinfo, gtserror.WithCode) {
+	return p.federationProcessor.GetNodeInfo(ctx)
 }
 
 func (p *processor) InboxPost(ctx context.Context, w http.ResponseWriter, r *http.Request) (bool, error) {

@@ -19,7 +19,6 @@
 package nodeinfo
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -27,40 +26,35 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-// NodeInfoGETHandler swagger:operation GET /nodeinfo/2.0 nodeInfoGet
+// NodeInfoWellKnownGETHandler swagger:operation GET /.well-known/nodeinfo nodeInfoWellKnownGet
 //
-// Returns a compliant nodeinfo response to node info queries.
+// Returns a well-known response which redirects callers to `/nodeinfo/2.0`.
 //
-// See: https://nodeinfo.diaspora.software/schema.html
+// eg. `{"links":[{"rel":"http://nodeinfo.diaspora.software/ns/schema/2.0","href":"http://example.org/nodeinfo/2.0"}]}`
+// See: https://nodeinfo.diaspora.software/protocol.html
 //
 //	---
 //	tags:
-//	- nodeinfo
+//	- .well-known
 //
 //	produces:
-//	- application/json; profile="http://nodeinfo.diaspora.software/ns/schema/2.0#"
+//	- application/json
 //
 //	responses:
 //		'200':
 //			schema:
-//				"$ref": "#/definitions/nodeinfo"
-func (m *Module) NodeInfoGETHandler(c *gin.Context) {
+//				"$ref": "#/definitions/wellKnownResponse"
+func (m *Module) NodeInfoWellKnownGETHandler(c *gin.Context) {
 	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	ni, errWithCode := m.processor.GetNodeInfo(c.Request.Context(), c.Request)
+	resp, errWithCode := m.processor.GetNodeInfoRel(c.Request.Context())
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 
-	b, err := json.Marshal(ni)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
-		return
-	}
-
-	c.Data(http.StatusOK, `application/json; profile="http://nodeinfo.diaspora.software/ns/schema/2.0#"`, b)
+	c.JSON(http.StatusOK, resp)
 }

@@ -70,12 +70,12 @@ func (c *Client) Route(r router.Router) {
 	apiGroup := r.AttachGroup("api")
 
 	// attach non-global middlewares appropriate to the client api
-	var (
-		tokenCheckMiddleware = middleware.TokenCheck(c.db, c.processor.OAuthValidateBearerToken)
-		rateLimitMiddleware  = middleware.RateLimit()
-		gzipMiddleware       = middleware.Gzip()
+	apiGroup.Use(
+		middleware.TokenCheck(c.db, c.processor.OAuthValidateBearerToken),
+		middleware.RateLimit(),
+		middleware.Gzip(),
+		middleware.CacheControl("no-store"), // never cache api responses
 	)
-	apiGroup.Use(tokenCheckMiddleware, rateLimitMiddleware, gzipMiddleware)
 
 	// for each client api module, pass it the Handle function
 	// so that the module can attach its routes to this group

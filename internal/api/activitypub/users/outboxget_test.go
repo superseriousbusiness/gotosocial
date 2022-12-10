@@ -16,65 +16,58 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package user_test
+package users_test
 
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
-	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/user"
+	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-type RepliesGetTestSuite struct {
+type OutboxGetTestSuite struct {
 	UserStandardTestSuite
 }
 
-func (suite *RepliesGetTestSuite) TestGetReplies() {
+func (suite *OutboxGetTestSuite) TestGetOutbox() {
 	// the dereference we're gonna use
 	derefRequests := testrig.NewTestDereferenceRequests(suite.testAccounts)
-	signedRequest := derefRequests["foss_satan_dereference_local_account_1_status_1_replies"]
+	signedRequest := derefRequests["foss_satan_dereference_zork_outbox"]
 	targetAccount := suite.testAccounts["local_account_1"]
-	targetStatus := suite.testStatuses["local_account_1_status_1"]
 
 	// setup request
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Request = httptest.NewRequest(http.MethodGet, targetStatus.URI+"/replies", nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodGet, targetAccount.OutboxURI, nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/activity+json")
 	ctx.Request.Header.Set("Signature", signedRequest.SignatureHeader)
 	ctx.Request.Header.Set("Date", signedRequest.DateHeader)
 
 	// we need to pass the context through signature check first to set appropriate values on it
-	suite.middlewareModule.SignatureCheck(ctx)
+	suite.signatureCheck(ctx)
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
 	ctx.Params = gin.Params{
 		gin.Param{
-			Key:   user.UsernameKey,
+			Key:   users.UsernameKey,
 			Value: targetAccount.Username,
-		},
-		gin.Param{
-			Key:   user.StatusIDKey,
-			Value: targetStatus.ID,
 		},
 	}
 
 	// trigger the function being tested
-	suite.userModule.StatusRepliesGETHandler(ctx)
+	suite.userModule.OutboxGETHandler(ctx)
 
 	// check response
 	suite.EqualValues(http.StatusOK, recorder.Code)
@@ -82,27 +75,25 @@ func (suite *RepliesGetTestSuite) TestGetReplies() {
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), `{"@context":"https://www.w3.org/ns/activitystreams","first":{"id":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?page=true","next":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?only_other_accounts=false\u0026page=true","partOf":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies","type":"CollectionPage"},"id":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies","type":"Collection"}`, string(b))
+	suite.NoError(err)
+	suite.Equal(`{"@context":"https://www.w3.org/ns/activitystreams","first":"http://localhost:8080/users/the_mighty_zork/outbox?page=true","id":"http://localhost:8080/users/the_mighty_zork/outbox","type":"OrderedCollection"}`, string(b))
 
-	// should be a Collection
 	m := make(map[string]interface{})
 	err = json.Unmarshal(b, &m)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	t, err := streams.ToType(context.Background(), m)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
-	_, ok := t.(vocab.ActivityStreamsCollection)
-	assert.True(suite.T(), ok)
+	_, ok := t.(vocab.ActivityStreamsOrderedCollection)
+	suite.True(ok)
 }
 
-func (suite *RepliesGetTestSuite) TestGetRepliesNext() {
+func (suite *OutboxGetTestSuite) TestGetOutboxFirstPage() {
 	// the dereference we're gonna use
 	derefRequests := testrig.NewTestDereferenceRequests(suite.testAccounts)
-	signedRequest := derefRequests["foss_satan_dereference_local_account_1_status_1_replies_next"]
+	signedRequest := derefRequests["foss_satan_dereference_zork_outbox_first"]
 	targetAccount := suite.testAccounts["local_account_1"]
-	targetStatus := suite.testStatuses["local_account_1_status_1"]
 
 	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
 	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
@@ -111,35 +102,31 @@ func (suite *RepliesGetTestSuite) TestGetRepliesNext() {
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager, fedWorker)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager, clientWorker, fedWorker)
-	userModule := user.New(processor)
+	userModule := users.New(processor)
 	suite.NoError(processor.Start())
 
 	// setup request
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Request = httptest.NewRequest(http.MethodGet, targetStatus.URI+"/replies?only_other_accounts=false&page=true", nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodGet, targetAccount.OutboxURI+"?page=true", nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/activity+json")
 	ctx.Request.Header.Set("Signature", signedRequest.SignatureHeader)
 	ctx.Request.Header.Set("Date", signedRequest.DateHeader)
 
 	// we need to pass the context through signature check first to set appropriate values on it
-	suite.middlewareModule.SignatureCheck(ctx)
+	suite.signatureCheck(ctx)
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
 	ctx.Params = gin.Params{
 		gin.Param{
-			Key:   user.UsernameKey,
+			Key:   users.UsernameKey,
 			Value: targetAccount.Username,
-		},
-		gin.Param{
-			Key:   user.StatusIDKey,
-			Value: targetStatus.ID,
 		},
 	}
 
 	// trigger the function being tested
-	userModule.StatusRepliesGETHandler(ctx)
+	userModule.OutboxGETHandler(ctx)
 
 	// check response
 	suite.EqualValues(http.StatusOK, recorder.Code)
@@ -147,30 +134,25 @@ func (suite *RepliesGetTestSuite) TestGetRepliesNext() {
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
+	suite.Equal(`{"@context":"https://www.w3.org/ns/activitystreams","id":"http://localhost:8080/users/the_mighty_zork/outbox?page=true","next":"http://localhost:8080/users/the_mighty_zork/outbox?page=true\u0026max_id=01F8MHAMCHF6Y650WCRSCP4WMY","orderedItems":{"actor":"http://localhost:8080/users/the_mighty_zork","cc":"http://localhost:8080/users/the_mighty_zork/followers","id":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity","object":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY","published":"2021-10-20T10:40:37Z","to":"https://www.w3.org/ns/activitystreams#Public","type":"Create"},"partOf":"http://localhost:8080/users/the_mighty_zork/outbox","prev":"http://localhost:8080/users/the_mighty_zork/outbox?page=true\u0026min_id=01F8MHAMCHF6Y650WCRSCP4WMY","type":"OrderedCollectionPage"}`, string(b))
 
-	assert.Equal(suite.T(), `{"@context":"https://www.w3.org/ns/activitystreams","id":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?page=true\u0026only_other_accounts=false","items":"http://localhost:8080/users/admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0","next":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?only_other_accounts=false\u0026page=true\u0026min_id=01FF25D5Q0DH7CHD57CTRS6WK0","partOf":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies","type":"CollectionPage"}`, string(b))
-
-	// should be a Collection
 	m := make(map[string]interface{})
 	err = json.Unmarshal(b, &m)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	t, err := streams.ToType(context.Background(), m)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
-	page, ok := t.(vocab.ActivityStreamsCollectionPage)
-	assert.True(suite.T(), ok)
-
-	assert.Equal(suite.T(), page.GetActivityStreamsItems().Len(), 1)
+	_, ok := t.(vocab.ActivityStreamsOrderedCollectionPage)
+	suite.True(ok)
 }
 
-func (suite *RepliesGetTestSuite) TestGetRepliesLast() {
+func (suite *OutboxGetTestSuite) TestGetOutboxNextPage() {
 	// the dereference we're gonna use
 	derefRequests := testrig.NewTestDereferenceRequests(suite.testAccounts)
-	signedRequest := derefRequests["foss_satan_dereference_local_account_1_status_1_replies_last"]
+	signedRequest := derefRequests["foss_satan_dereference_zork_outbox_next"]
 	targetAccount := suite.testAccounts["local_account_1"]
-	targetStatus := suite.testStatuses["local_account_1_status_1"]
 
 	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
 	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
@@ -179,35 +161,35 @@ func (suite *RepliesGetTestSuite) TestGetRepliesLast() {
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager, fedWorker)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager, clientWorker, fedWorker)
-	userModule := user.New(processor)
+	userModule := users.New(processor)
 	suite.NoError(processor.Start())
 
 	// setup request
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Request = httptest.NewRequest(http.MethodGet, targetStatus.URI+"/replies?only_other_accounts=false&page=true&min_id=01FF25D5Q0DH7CHD57CTRS6WK0", nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodGet, targetAccount.OutboxURI+"?page=true&max_id=01F8MHAMCHF6Y650WCRSCP4WMY", nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/activity+json")
 	ctx.Request.Header.Set("Signature", signedRequest.SignatureHeader)
 	ctx.Request.Header.Set("Date", signedRequest.DateHeader)
 
 	// we need to pass the context through signature check first to set appropriate values on it
-	suite.middlewareModule.SignatureCheck(ctx)
+	suite.signatureCheck(ctx)
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
 	ctx.Params = gin.Params{
 		gin.Param{
-			Key:   user.UsernameKey,
+			Key:   users.UsernameKey,
 			Value: targetAccount.Username,
 		},
 		gin.Param{
-			Key:   user.StatusIDKey,
-			Value: targetStatus.ID,
+			Key:   users.MaxIDKey,
+			Value: "01F8MHAMCHF6Y650WCRSCP4WMY",
 		},
 	}
 
 	// trigger the function being tested
-	userModule.StatusRepliesGETHandler(ctx)
+	userModule.OutboxGETHandler(ctx)
 
 	// check response
 	suite.EqualValues(http.StatusOK, recorder.Code)
@@ -215,25 +197,20 @@ func (suite *RepliesGetTestSuite) TestGetRepliesLast() {
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
+	suite.Equal(`{"@context":"https://www.w3.org/ns/activitystreams","id":"http://localhost:8080/users/the_mighty_zork/outbox?page=true\u0026maxID=01F8MHAMCHF6Y650WCRSCP4WMY","orderedItems":[],"partOf":"http://localhost:8080/users/the_mighty_zork/outbox","type":"OrderedCollectionPage"}`, string(b))
 
-	fmt.Println(string(b))
-	assert.Equal(suite.T(), `{"@context":"https://www.w3.org/ns/activitystreams","id":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?page=true\u0026only_other_accounts=false\u0026min_id=01FF25D5Q0DH7CHD57CTRS6WK0","items":[],"next":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?only_other_accounts=false\u0026page=true","partOf":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies","type":"CollectionPage"}`, string(b))
-
-	// should be a Collection
 	m := make(map[string]interface{})
 	err = json.Unmarshal(b, &m)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	t, err := streams.ToType(context.Background(), m)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
-	page, ok := t.(vocab.ActivityStreamsCollectionPage)
-	assert.True(suite.T(), ok)
-
-	assert.Equal(suite.T(), page.GetActivityStreamsItems().Len(), 0)
+	_, ok := t.(vocab.ActivityStreamsOrderedCollectionPage)
+	suite.True(ok)
 }
 
-func TestRepliesGetTestSuite(t *testing.T) {
-	suite.Run(t, new(RepliesGetTestSuite))
+func TestOutboxGetTestSuite(t *testing.T) {
+	suite.Run(t, new(OutboxGetTestSuite))
 }

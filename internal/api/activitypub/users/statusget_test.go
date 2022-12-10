@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package user_test
+package users_test
 
 import (
 	"context"
@@ -24,50 +24,54 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/user"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-type UserGetTestSuite struct {
+type StatusGetTestSuite struct {
 	UserStandardTestSuite
 }
 
-func (suite *UserGetTestSuite) TestGetUser() {
+func (suite *StatusGetTestSuite) TestGetStatus() {
 	// the dereference we're gonna use
 	derefRequests := testrig.NewTestDereferenceRequests(suite.testAccounts)
-	signedRequest := derefRequests["foss_satan_dereference_zork"]
+	signedRequest := derefRequests["foss_satan_dereference_local_account_1_status_1"]
 	targetAccount := suite.testAccounts["local_account_1"]
+	targetStatus := suite.testStatuses["local_account_1_status_1"]
 
 	// setup request
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Request = httptest.NewRequest(http.MethodGet, targetAccount.URI, nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodGet, targetStatus.URI, nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/activity+json")
 	ctx.Request.Header.Set("Signature", signedRequest.SignatureHeader)
 	ctx.Request.Header.Set("Date", signedRequest.DateHeader)
 
 	// we need to pass the context through signature check first to set appropriate values on it
-	suite.middlewareModule.SignatureCheck(ctx)
+	suite.signatureCheck(ctx)
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
 	ctx.Params = gin.Params{
 		gin.Param{
-			Key:   user.UsernameKey,
+			Key:   users.UsernameKey,
 			Value: targetAccount.Username,
+		},
+		gin.Param{
+			Key:   users.StatusIDKey,
+			Value: targetStatus.ID,
 		},
 	}
 
 	// trigger the function being tested
-	suite.userModule.UsersGETHandler(ctx)
+	suite.userModule.StatusGETHandler(ctx)
 
 	// check response
 	suite.EqualValues(http.StatusOK, recorder.Code)
@@ -77,7 +81,7 @@ func (suite *UserGetTestSuite) TestGetUser() {
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
 
-	// should be a Person
+	// should be a Note
 	m := make(map[string]interface{})
 	err = json.Unmarshal(b, &m)
 	suite.NoError(err)
@@ -85,67 +89,48 @@ func (suite *UserGetTestSuite) TestGetUser() {
 	t, err := streams.ToType(context.Background(), m)
 	suite.NoError(err)
 
-	person, ok := t.(vocab.ActivityStreamsPerson)
+	note, ok := t.(vocab.ActivityStreamsNote)
 	suite.True(ok)
 
-	// convert person to account
-	// since this account is already known, we should get a pretty full model of it from the conversion
-	a, err := suite.tc.ASRepresentationToAccount(context.Background(), person, "", false)
+	// convert note to status
+	a, err := suite.tc.ASStatusToStatus(context.Background(), note)
 	suite.NoError(err)
-	suite.EqualValues(targetAccount.Username, a.Username)
+	suite.EqualValues(targetStatus.Content, a.Content)
 }
 
-// TestGetUserPublicKeyDeleted checks whether the public key of a deleted account can still be dereferenced.
-// This is needed by remote instances for authenticating delete requests and stuff like that.
-func (suite *UserGetTestSuite) TestGetUserPublicKeyDeleted() {
-	userModule := user.New(suite.processor).(*user.Module)
-	targetAccount := suite.testAccounts["local_account_1"]
-
-	// first delete the account, as though zork had deleted himself
-	authed := &oauth.Auth{
-		Application: suite.testApplications["local_account_1"],
-		User:        suite.testUsers["local_account_1"],
-		Account:     suite.testAccounts["local_account_1"],
-	}
-	suite.processor.AccountDeleteLocal(context.Background(), authed, &apimodel.AccountDeleteRequest{
-		Password:       "password",
-		DeleteOriginID: targetAccount.ID,
-	})
-
-	// wait for the account delete to be processed
-	if !testrig.WaitFor(func() bool {
-		a, _ := suite.db.GetAccountByID(context.Background(), targetAccount.ID)
-		return !a.SuspendedAt.IsZero()
-	}) {
-		suite.FailNow("delete of account timed out")
-	}
-
+func (suite *StatusGetTestSuite) TestGetStatusLowercase() {
 	// the dereference we're gonna use
 	derefRequests := testrig.NewTestDereferenceRequests(suite.testAccounts)
-	signedRequest := derefRequests["foss_satan_dereference_zork_public_key"]
+	signedRequest := derefRequests["foss_satan_dereference_local_account_1_status_1_lowercase"]
+	targetAccount := suite.testAccounts["local_account_1"]
+	targetStatus := suite.testStatuses["local_account_1_status_1"]
 
 	// setup request
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Request = httptest.NewRequest(http.MethodGet, targetAccount.PublicKeyURI, nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodGet, strings.ToLower(targetStatus.URI), nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/activity+json")
 	ctx.Request.Header.Set("Signature", signedRequest.SignatureHeader)
 	ctx.Request.Header.Set("Date", signedRequest.DateHeader)
 
 	// we need to pass the context through signature check first to set appropriate values on it
-	suite.middlewareModule.SignatureCheck(ctx)
+	suite.signatureCheck(ctx)
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
 	ctx.Params = gin.Params{
 		gin.Param{
-			Key:   user.UsernameKey,
-			Value: targetAccount.Username,
+			Key:   users.UsernameKey,
+			Value: strings.ToLower(targetAccount.Username),
+		},
+		gin.Param{
+			Key:   users.StatusIDKey,
+			Value: strings.ToLower(targetStatus.ID),
 		},
 	}
 
 	// trigger the function being tested
-	userModule.UsersGETHandler(ctx)
+	suite.userModule.StatusGETHandler(ctx)
 
 	// check response
 	suite.EqualValues(http.StatusOK, recorder.Code)
@@ -155,7 +140,7 @@ func (suite *UserGetTestSuite) TestGetUserPublicKeyDeleted() {
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
 
-	// should be a Person
+	// should be a Note
 	m := make(map[string]interface{})
 	err = json.Unmarshal(b, &m)
 	suite.NoError(err)
@@ -163,15 +148,15 @@ func (suite *UserGetTestSuite) TestGetUserPublicKeyDeleted() {
 	t, err := streams.ToType(context.Background(), m)
 	suite.NoError(err)
 
-	person, ok := t.(vocab.ActivityStreamsPerson)
+	note, ok := t.(vocab.ActivityStreamsNote)
 	suite.True(ok)
 
-	// convert person to account
-	a, err := suite.tc.ASRepresentationToAccount(context.Background(), person, "", false)
+	// convert note to status
+	a, err := suite.tc.ASStatusToStatus(context.Background(), note)
 	suite.NoError(err)
-	suite.EqualValues(targetAccount.Username, a.Username)
+	suite.EqualValues(targetStatus.Content, a.Content)
 }
 
-func TestUserGetTestSuite(t *testing.T) {
-	suite.Run(t, new(UserGetTestSuite))
+func TestStatusGetTestSuite(t *testing.T) {
+	suite.Run(t, new(StatusGetTestSuite))
 }

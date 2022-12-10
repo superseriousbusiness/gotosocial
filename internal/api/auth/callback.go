@@ -157,7 +157,7 @@ func (m *Module) CallbackGETHandler(c *gin.Context) {
 		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
 		return
 	}
-	c.Redirect(http.StatusFound, OauthAuthorizePath)
+	c.Redirect(http.StatusFound, "/oauth"+OauthAuthorizePath)
 }
 
 // FinalizePOSTHandler registers the user after additional data has been provided
@@ -234,7 +234,7 @@ func (m *Module) FinalizePOSTHandler(c *gin.Context) {
 		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
 		return
 	}
-	c.Redirect(http.StatusFound, OauthAuthorizePath)
+	c.Redirect(http.StatusFound, "/oauth"+OauthAuthorizePath)
 }
 
 func (m *Module) fetchUserForClaims(ctx context.Context, claims *oidc.Claims, ip net.IP, appID string) (*gtsmodel.User, gtserror.WithCode) {

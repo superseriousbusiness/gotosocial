@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package user_test
+package users_test
 
 import (
 	"bytes"
@@ -32,7 +32,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
-	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/user"
+	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -92,7 +92,7 @@ func (suite *InboxPostTestSuite) TestPostBlock() {
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager, fedWorker)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager, clientWorker, fedWorker)
-	userModule := user.New(processor)
+	userModule := users.New(processor)
 	suite.NoError(processor.Start())
 
 	// setup request
@@ -105,13 +105,13 @@ func (suite *InboxPostTestSuite) TestPostBlock() {
 	ctx.Request.Header.Set("Content-Type", "application/activity+json")
 
 	// we need to pass the context through signature check first to set appropriate values on it
-	suite.middlewareModule.SignatureCheck(ctx)
+	suite.signatureCheck(ctx)
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
 	ctx.Params = gin.Params{
 		gin.Param{
-			Key:   user.UsernameKey,
+			Key:   users.UsernameKey,
 			Value: blockedAccount.Username,
 		},
 	}
@@ -196,7 +196,7 @@ func (suite *InboxPostTestSuite) TestPostUnblock() {
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager, fedWorker)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager, clientWorker, fedWorker)
-	userModule := user.New(processor)
+	userModule := users.New(processor)
 	suite.NoError(processor.Start())
 
 	// setup request
@@ -209,13 +209,13 @@ func (suite *InboxPostTestSuite) TestPostUnblock() {
 	ctx.Request.Header.Set("Content-Type", "application/activity+json")
 
 	// we need to pass the context through signature check first to set appropriate values on it
-	suite.middlewareModule.SignatureCheck(ctx)
+	suite.signatureCheck(ctx)
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
 	ctx.Params = gin.Params{
 		gin.Param{
-			Key:   user.UsernameKey,
+			Key:   users.UsernameKey,
 			Value: blockedAccount.Username,
 		},
 	}
@@ -298,7 +298,7 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager, fedWorker)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager, clientWorker, fedWorker)
-	userModule := user.New(processor)
+	userModule := users.New(processor)
 	suite.NoError(processor.Start())
 
 	// setup request
@@ -311,13 +311,13 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 	ctx.Request.Header.Set("Content-Type", "application/activity+json")
 
 	// we need to pass the context through signature check first to set appropriate values on it
-	suite.middlewareModule.SignatureCheck(ctx)
+	suite.signatureCheck(ctx)
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
 	ctx.Params = gin.Params{
 		gin.Param{
-			Key:   user.UsernameKey,
+			Key:   users.UsernameKey,
 			Value: receivingAccount.Username,
 		},
 	}
@@ -431,7 +431,7 @@ func (suite *InboxPostTestSuite) TestPostDelete() {
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager, clientWorker, fedWorker)
 	suite.NoError(processor.Start())
-	userModule := user.New(processor)
+	userModule := users.New(processor)
 
 	// setup request
 	recorder := httptest.NewRecorder()
@@ -443,13 +443,13 @@ func (suite *InboxPostTestSuite) TestPostDelete() {
 	ctx.Request.Header.Set("Content-Type", "application/activity+json")
 
 	// we need to pass the context through signature check first to set appropriate values on it
-	suite.middlewareModule.SignatureCheck(ctx)
+	suite.signatureCheck(ctx)
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
 	ctx.Params = gin.Params{
 		gin.Param{
-			Key:   user.UsernameKey,
+			Key:   users.UsernameKey,
 			Value: receivingAccount.Username,
 		},
 	}

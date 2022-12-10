@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package user
+package users
 
 import (
 	"encoding/json"
@@ -59,7 +59,7 @@ func (m *Module) StatusGETHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.GetFediStatus(transferContext(c), requestedUsername, requestedStatusID, c.Request.URL)
+	resp, errWithCode := m.processor.GetFediStatus(apiutil.TransferSignatureContext(c), requestedUsername, requestedStatusID, c.Request.URL)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return

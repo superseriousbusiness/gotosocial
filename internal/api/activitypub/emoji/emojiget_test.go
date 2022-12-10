@@ -34,7 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -43,19 +43,20 @@ import (
 
 type EmojiGetTestSuite struct {
 	suite.Suite
-	db               db.DB
-	tc               typeutils.TypeConverter
-	mediaManager     media.Manager
-	federator        federation.Federator
-	emailSender      email.Sender
-	processor        processing.Processor
-	storage          *storage.Driver
-	oauthServer      oauth.Server
+	db           db.DB
+	tc           typeutils.TypeConverter
+	mediaManager media.Manager
+	federator    federation.Federator
+	emailSender  email.Sender
+	processor    processing.Processor
+	storage      *storage.Driver
 
 	testEmojis   map[string]*gtsmodel.Emoji
 	testAccounts map[string]*gtsmodel.Account
 
 	emojiModule *emoji.Module
+
+	signatureCheck gin.HandlerFunc
 }
 
 func (suite *EmojiGetTestSuite) SetupSuite() {
@@ -78,9 +79,10 @@ func (suite *EmojiGetTestSuite) SetupTest() {
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, suite.mediaManager, clientWorker, fedWorker)
 	suite.emojiModule = emoji.New(suite.processor)
-	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
+
+	suite.signatureCheck = middleware.SignatureCheck(suite.db.IsURIBlocked)
 
 	suite.NoError(suite.processor.Start())
 }
@@ -105,7 +107,7 @@ func (suite *EmojiGetTestSuite) TestGetEmoji() {
 	ctx.Request.Header.Set("Date", signedRequest.DateHeader)
 
 	// we need to pass the context through signature check first to set appropriate values on it
-	suite.middlewareModule.SignatureCheck(ctx)
+	suite.signatureCheck(ctx)
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
