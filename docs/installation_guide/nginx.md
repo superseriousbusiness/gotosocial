@@ -256,3 +256,52 @@ The `proxy_pass` and `proxy_set_header` are mostly the same, but the `proxy_cach
 
 Tweaking `proxy_cache_use_stale` is how you can ensure webfinger responses are still answered even if GTS itself is down. The provided configuration will serve a stale response in case there's an error proxying to GTS, if our connection to GTS times out, if GTS returns a 5xx status code or if GTS returns 429 (Too Many Requests). The `updating` value says that we're allowed to serve a stale entry if nginx is currently in the process of refreshing its cache. Because we configured `inactive=1w` in the `proxy_cache_path` directive, nginx may serve a response up to one week old if the conditions in `proxy_cache_use_stale` are met.
 
+## Serving static assets
+
+By default, GTS will serve assets like the CSS and fonts for the web UI as well as attachments for statuses. However it's very simple to have nginx do this instead and offload GTS from that responsibility. Nginx can generally do a faster job at this too since it's able to use newer functionality in the OS that the Go runtime hasn't necessarily adopted yet.
+
+There are 2 paths that nginx can handle for us:
+* `/assets` which contains fonts, CSS, images etc. for the web UI
+* `/fileserver` which serves attachments for status posts when using the local storage backend
+
+For `/assets` we'll need the value of `web-asset-base-dir` from the configuration, and for `/fileserver` we'll want `storage-local-base-path`. You can then adjust your nginx configuration like this:
+
+```nginx.conf
+server {
+  server_name example.org;
+  location /assets/ {
+    alias web-asset-base-dir/;
+    autoindex off;
+    expires 5m;
+    add_header Cache-Control "public";
+  }
+
+  location /fileserver/ {
+    alias storage-local-base-path/;
+    autoindex off;
+    expires max;
+    add_header Cache-Control "public, immutable";
+  }
+
+  location / {
+    proxy_pass http://localhost:8080/;
+    proxy_set_header Host $host;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+  client_max_body_size 40M;
+
+  listen [::]:443 ssl ipv6only=on; # managed by Certbot
+  listen 443 ssl; # managed by Certbot
+  ssl_certificate /etc/letsencrypt/live/example.org/fullchain.pem; # managed by Certbot
+  ssl_certificate_key /etc/letsencrypt/live/example.org/privkey.pem; # managed by Certbot
+  include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+  ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+}
+```
+
+The trailing slashes in the new `location` directives and the `alias` are significant, do not remove those. The `expires` directive adds the necessary headers to inform the client how long it may cache the resource. For assets, which may change on each release, 5 minutes is used in this example. For attachments, which should never change once they're created, `max` is used instead setting the cache expiry to the 31st of December 2037. For other options, see the nginx documentation on the [`expires` directive](https://nginx.org/en/docs/http/ngx_http_headers_module.html#expires). Nginx does not add cache headers to 4xx or 5xx response codes so a failure to fetch an asset won't get cached by clients. The `autoindex off` directive tells nginx to not serve a directory listing. This should be the default but it doesn't hurt to be explicit. The added `add_header` lines set additional options for the `Cache-Control` header:
+* `public` is used to indicate that anyone may cache this resource
+* `immutable` is used to indicate this resource will never change while it is fresh (it's before the end of the expires) allowing clients to forego conditional requests to revalidate the resource during that timespan
