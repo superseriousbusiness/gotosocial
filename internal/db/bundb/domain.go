@@ -20,12 +20,9 @@ package bundb
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"net/url"
 	"strings"
 
-	"github.com/miekg/dns"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -64,16 +61,17 @@ func (d *domainDB) CreateDomainBlock(ctx context.Context, block *gtsmodel.Domain
 		return err
 	}
 
-	if dns.CountLabel(block.Domain) > maxDomainParts {
-		return fmt.Errorf("invalid domain %s: contains too many subdomain parts", block.Domain)
+	// Attempt to store domain in DB
+	if _, err := d.conn.NewInsert().
+		Model(block).
+		Exec(ctx); err != nil {
+		return d.conn.ProcessError(err)
 	}
 
-	return d.state.Caches.GTS.DomainBlock().Store(block, func() error {
-		_, err := d.conn.NewInsert().
-			Model(block).
-			Exec(ctx)
-		return d.conn.ProcessError(err)
-	})
+	// Clear the domain block cache (for later reload)
+	d.state.Caches.GTS.DomainBlock().Clear()
+
+	return nil
 }
 
 func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel.DomainBlock, db.Error) {
@@ -90,64 +88,18 @@ func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel
 		return nil, db.ErrNoEntries
 	}
 
-	// Split domain into constituent parts
-	parts := dns.SplitDomainName(domain)
-	if len(parts) > maxDomainParts {
-		return nil, fmt.Errorf("invalid domain %s: contains too many subdomain parts", domain)
+	var block gtsmodel.DomainBlock
+
+	// Look for block matching domain in DB
+	q := d.conn.
+		NewSelect().
+		Model(&block).
+		Where("? = ?", bun.Ident("domain_block.domain"), domain)
+	if err := q.Scan(ctx); err != nil {
+		return nil, d.conn.ProcessError(err)
 	}
 
-	// Create first domain lookup
-	lookup := parts[len(parts)-1]
-	parts = parts[:len(parts)-1]
-
-	for i := 0; i < maxDomainParts; i++ {
-		// Check if this lookup result already cached
-		cached := d.state.Caches.GTS.DomainBlock().Has("Domain", lookup)
-
-		// Attempt to fetch domain block for lookup
-		block, err := d.getDomainBlock(ctx, lookup)
-		if err != nil {
-			// We return early if this is one of:
-			// - NOT db.ErrNoEntries, i.e. unrecoverable error
-			// - cached db.ErrNoEntries, i.e. have tried this before
-			if cached || !errors.Is(err, db.ErrNoEntries) {
-				return nil, err
-			}
-		}
-
-		if block != nil {
-			// A block was found!
-			return block, nil
-		}
-
-		if len(parts) == 0 {
-			// No further domain parts to append
-			return nil, db.ErrNoEntries
-		}
-
-		// Prepend the next subdomain part to lookup
-		lookup = parts[len(parts)-1] + "." + lookup
-		parts = parts[:len(parts)-1]
-	}
-
-	return nil, db.ErrNoEntries
-}
-
-func (d *domainDB) getDomainBlock(ctx context.Context, domain string) (*gtsmodel.DomainBlock, error) {
-	return d.state.Caches.GTS.DomainBlock().Load("Domain", func() (*gtsmodel.DomainBlock, error) {
-		var block gtsmodel.DomainBlock
-
-		q := d.conn.
-			NewSelect().
-			Model(&block).
-			Where("? = ?", bun.Ident("domain_block.domain"), domain).
-			Limit(1)
-		if err := q.Scan(ctx); err != nil {
-			return nil, d.conn.ProcessError(err)
-		}
-
-		return &block, nil
-	}, domain)
+	return &block, nil
 }
 
 func (d *domainDB) DeleteDomainBlock(ctx context.Context, domain string) db.Error {
@@ -166,18 +118,38 @@ func (d *domainDB) DeleteDomainBlock(ctx context.Context, domain string) db.Erro
 		return d.conn.ProcessError(err)
 	}
 
-	// Clear domain from cache
-	d.state.Caches.GTS.DomainBlock().Invalidate(domain)
+	// Clear the domain block cache (for later reload)
+	d.state.Caches.GTS.DomainBlock().Clear()
 
 	return nil
 }
 
 func (d *domainDB) IsDomainBlocked(ctx context.Context, domain string) (bool, db.Error) {
-	block, err := d.GetDomainBlock(ctx, domain)
-	if err == nil || err == db.ErrNoEntries {
-		return (block != nil), nil
+	// Normalize the domain as punycode
+	domain, err := normalizeDomain(domain)
+	if err != nil {
+		return false, err
 	}
-	return false, err
+
+	// Check for easy case, domain referencing *us*
+	if domain == "" || domain == config.GetAccountDomain() {
+		return false, nil
+	}
+
+	// Check the cache for a domain block (hydrating the cache with callback if necessary)
+	return d.state.Caches.GTS.DomainBlock().IsBlocked(domain, func() ([]string, error) {
+		var domains []string
+
+		// Scan list of all blocked domains from DB
+		q := d.conn.NewSelect().
+			Table("domain_blocks").
+			Column("domain")
+		if err := q.Scan(ctx, &domains); err != nil {
+			return nil, d.conn.ProcessError(err)
+		}
+
+		return domains, nil
+	})
 }
 
 func (d *domainDB) AreDomainsBlocked(ctx context.Context, domains []string) (bool, db.Error) {

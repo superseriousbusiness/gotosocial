@@ -20,6 +20,7 @@ package cache
 
 import (
 	"codeberg.org/gruf/go-cache/v3/result"
+	"github.com/superseriousbusiness/gotosocial/internal/cache/domain"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -41,8 +42,8 @@ type GTSCaches interface {
 	// Block provides access to the gtsmodel Block (account) database cache.
 	Block() *result.Cache[*gtsmodel.Block]
 
-	// DomainBlock provides access to the gtsmodel DomainBlock database cache.
-	DomainBlock() *result.Cache[*gtsmodel.DomainBlock]
+	// DomainBlock provides access to the domain block database cache.
+	DomainBlock() *domain.BlockCache
 
 	// Emoji provides access to the gtsmodel Emoji database cache.
 	Emoji() *result.Cache[*gtsmodel.Emoji]
@@ -74,7 +75,7 @@ func NewGTS() GTSCaches {
 type gtsCaches struct {
 	account       *result.Cache[*gtsmodel.Account]
 	block         *result.Cache[*gtsmodel.Block]
-	domainBlock   *result.Cache[*gtsmodel.DomainBlock]
+	domainBlock   *domain.BlockCache
 	emoji         *result.Cache[*gtsmodel.Emoji]
 	emojiCategory *result.Cache[*gtsmodel.EmojiCategory]
 	mention       *result.Cache[*gtsmodel.Mention]
@@ -151,7 +152,7 @@ func (c *gtsCaches) Block() *result.Cache[*gtsmodel.Block] {
 	return c.block
 }
 
-func (c *gtsCaches) DomainBlock() *result.Cache[*gtsmodel.DomainBlock] {
+func (c *gtsCaches) DomainBlock() *domain.BlockCache {
 	return c.domainBlock
 }
 
@@ -212,14 +213,10 @@ func (c *gtsCaches) initBlock() {
 }
 
 func (c *gtsCaches) initDomainBlock() {
-	c.domainBlock = result.NewSized([]result.Lookup{
-		{Name: "Domain"},
-	}, func(d1 *gtsmodel.DomainBlock) *gtsmodel.DomainBlock {
-		d2 := new(gtsmodel.DomainBlock)
-		*d2 = *d1
-		return d2
-	}, config.GetCacheGTSDomainBlockMaxSize())
-	c.domainBlock.SetTTL(config.GetCacheGTSDomainBlockTTL(), true)
+	c.domainBlock = domain.New(
+		config.GetCacheGTSDomainBlockMaxSize(),
+		config.GetCacheGTSDomainBlockTTL(),
+	)
 }
 
 func (c *gtsCaches) initEmoji() {
