@@ -26,6 +26,7 @@ const query = require("../../../lib/query");
 const Loading = require("../../../components/loading");
 
 module.exports = function RemoteEmoji() {
+	// local emoji are queried for shortcode collision detection
 	const {
 		data: emoji = [],
 		isLoading,

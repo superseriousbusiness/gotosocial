@@ -76,7 +76,7 @@ module.exports = function ParseFromToot({ emojiCodes }) {
 			<h2>Steal this look</h2>
 			<form onSubmit={submitSearch}>
 				<div className="form-field text">
-					<label htmlFor="shortcode">
+					<label htmlFor="url">
 						Link to a toot:
 					</label>
 					<div className="row">
@@ -93,7 +93,8 @@ module.exports = function ParseFromToot({ emojiCodes }) {
 								(isLoading
 									? "fa-refresh fa-spin"
 									: "fa-search")
-							].join(" ")} aria-hidden="true"/>
+							].join(" ")} aria-hidden="true" title="Search"/>
+							<span className="sr-only">Search</span>
 						</button>
 					</div>
 					{isLoading && <Loading/>}
