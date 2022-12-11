@@ -24,7 +24,7 @@ const {Switch, Route} = require("wouter");
 const EmojiOverview = require("./overview");
 const EmojiDetail = require("./detail");
 
-const base = "/settings/admin/custom-emoji";
+const base = "/settings/custom-emoji/local";
 
 module.exports = function CustomEmoji() {
 	return (

@@ -394,3 +394,13 @@ footer {
 		color: $gray1;
 	}
 }
+
+label {
+	cursor: pointer;
+}
+
+@media (prefers-reduced-motion) {
+	.fa-spin {
+		animation: none;
+	}
+}

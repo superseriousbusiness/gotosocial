@@ -30,6 +30,7 @@ const api = require("../lib/api");
 const adminActions = require("../redux/reducers/admin").actions;
 const submit = require("../lib/submit");
 const BackButton = require("../components/back-button");
+const Loading = require("../components/loading");
 
 const base = "/settings/admin/federation";
 
@@ -56,7 +57,9 @@ module.exports = function AdminSettings() {
 		return (
 			<div>
 				<h1>Federation</h1>
-				Loading...
+				<div>
+					<Loading/>
+				</div>
 			</div>
 		);
 	}
@@ -321,7 +324,7 @@ function InstancePage({domain, Form}) {
 	const [statusMsg, setStatus] = React.useState("");
 
 	if (entry == undefined) {
-		return "Loading...";
+		return <Loading/>;
 	}
 
 	const updateBlock = submit(

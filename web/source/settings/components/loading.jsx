@@ -20,37 +20,8 @@
 
 const React = require("react");
 
-module.exports = function useTextInput({name, Name}, {validator, defaultValue=""} = {}) {
-	const [text, setText] = React.useState(defaultValue);
-	const [valid, setValid] = React.useState(true);
-	const textRef = React.useRef(null);
-
-	function onChange(e) {
-		let input = e.target.value;
-		setText(input);
-	}
-
-	function reset() {
-		setText("");
-	}
-
-	React.useEffect(() => {
-		if (validator) {
-			let res = validator(text);
-			setValid(res == "");
-			textRef.current.setCustomValidity(res);
-			textRef.current.reportValidity();
-		}
-	}, [text, textRef, validator]);
-
-	return [
-		onChange,
-		reset,
-		{
-			[name]: text,
-			[`${name}Ref`]: textRef,
-			[`set${Name}`]: setText,
-			[`${name}Valid`]: valid
-		}
-	];
+module.exports = function Loading() {
+	return (
+		<i className="fa fa-spin fa-refresh" aria-label="Loading" title="Loading"/>
+	);
 };

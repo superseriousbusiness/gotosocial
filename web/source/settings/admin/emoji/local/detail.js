@@ -22,13 +22,14 @@ const React = require("react");
 
 const { useRoute, Link, Redirect } = require("wouter");
 
-const { CategorySelect } = require("./category-select");
-const { useComboBoxInput, useFileInput } = require("../../components/form");
+const { CategorySelect } = require("../category-select");
+const { useComboBoxInput, useFileInput } = require("../../../components/form");
 
-const query = require("../../lib/query");
-const FakeToot = require("../../components/fake-toot");
+const query = require("../../../lib/query");
+const FakeToot = require("../../../components/fake-toot");
+const Loading = require("../../../components/loading");
 
-const base = "/settings/admin/custom-emoji";
+const base = "/settings/custom-emoji/local";
 
 module.exports = function EmojiDetailRoute() {
 	let [_match, params] = useRoute(`${base}/:emojiId`);
@@ -54,7 +55,11 @@ function EmojiDetailData({emojiId}) {
 			</div>
 		);
 	} else if (isLoading) {
-		return "Loading...";
+		return (
+			<div>
+				<Loading/>
+			</div>
+		);
 	} else {
 		return <EmojiDetail emoji={emoji}/>;
 	}
