@@ -137,6 +137,8 @@ type Processor interface {
 	AdminDomainBlockDelete(ctx context.Context, authed *oauth.Auth, id string) (*apimodel.DomainBlock, gtserror.WithCode)
 	// AdminMediaRemotePrune triggers a prune of remote media according to the given number of mediaRemoteCacheDays
 	AdminMediaPrune(ctx context.Context, mediaRemoteCacheDays int) gtserror.WithCode
+	// AdminMediaRefetch triggers a refetch of remote media for the given domain (or all if domain is empty).
+	AdminMediaRefetch(ctx context.Context, authed *oauth.Auth, domain string) gtserror.WithCode
 
 	// AppCreate processes the creation of a new API application
 	AppCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, gtserror.WithCode)
@@ -320,7 +322,7 @@ func NewProcessor(
 	statusProcessor := status.New(db, tc, clientWorker, parseMentionFunc)
 	streamingProcessor := streaming.New(db, oauthServer)
 	accountProcessor := account.New(db, tc, mediaManager, oauthServer, clientWorker, federator, parseMentionFunc)
-	adminProcessor := admin.New(db, tc, mediaManager, storage, clientWorker)
+	adminProcessor := admin.New(db, tc, mediaManager, federator.TransportController(), storage, clientWorker)
 	mediaProcessor := mediaProcessor.New(db, tc, mediaManager, federator.TransportController(), storage)
 	userProcessor := user.New(db, emailSender)
 	federationProcessor := federationProcessor.New(db, tc, federator)

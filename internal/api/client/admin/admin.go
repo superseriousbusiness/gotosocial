@@ -45,6 +45,7 @@ const (
 	// AccountsActionPath is used for taking action on a single account.
 	AccountsActionPath = AccountsPathWithID + "/action"
 	MediaCleanupPath   = BasePath + "/media_cleanup"
+	MediaRefetchPath   = BasePath + "/media_refetch"
 
 	// ExportQueryKey is for requesting a public export of some data.
 	ExportQueryKey = "export"
@@ -62,6 +63,8 @@ const (
 	MinShortcodeDomainKey = "min_shortcode_domain"
 	// LimitKey is for specifying maximum number of results to return.
 	LimitKey = "limit"
+	// DomainQueryKey is for specifying a domain during admin actions.
+	DomainQueryKey = "domain"
 )
 
 type Module struct {
@@ -86,5 +89,6 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	attachHandler(http.MethodDelete, DomainBlocksPathWithID, m.DomainBlockDELETEHandler)
 	attachHandler(http.MethodPost, AccountsActionPath, m.AccountActionPOSTHandler)
 	attachHandler(http.MethodPost, MediaCleanupPath, m.MediaCleanupPOSTHandler)
+	attachHandler(http.MethodPost, MediaRefetchPath, m.MediaRefetchPOSTHandler)
 	attachHandler(http.MethodGet, EmojiCategoriesPath, m.EmojiCategoriesGETHandler)
 }

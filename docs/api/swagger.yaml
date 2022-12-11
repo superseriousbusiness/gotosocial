@@ -3209,6 +3209,40 @@ paths:
             summary: Clean up remote media older than the specified number of days.
             tags:
                 - admin
+    /api/v1/admin/media_refetch:
+        post:
+            description: |-
+                Currently, this only includes remote emojis.
+                This endpoint is useful when data loss has occurred, and you want to try to recover to a working state.
+            operationId: mediaRefetch
+            parameters:
+                - description: Domain to refetch media from. If empty, all domains will be refetched.
+                  in: query
+                  name: domain
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "202":
+                    description: Request accepted and will be processed. Check the logs for progress / errors.
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Refetch media specified in the database but missing from storage.
+            tags:
+                - admin
     /api/v1/apps:
         post:
             consumes:

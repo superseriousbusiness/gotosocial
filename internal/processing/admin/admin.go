@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
@@ -48,23 +49,26 @@ type Processor interface {
 	EmojiUpdate(ctx context.Context, id string, form *apimodel.EmojiUpdateRequest) (*apimodel.AdminEmoji, gtserror.WithCode)
 	EmojiCategoriesGet(ctx context.Context) ([]*apimodel.EmojiCategory, gtserror.WithCode)
 	MediaPrune(ctx context.Context, mediaRemoteCacheDays int) gtserror.WithCode
+	MediaRefetch(ctx context.Context, requestingAccount *gtsmodel.Account, domain string) gtserror.WithCode
 }
 
 type processor struct {
-	tc           typeutils.TypeConverter
-	mediaManager media.Manager
-	storage      *storage.Driver
-	clientWorker *concurrency.WorkerPool[messages.FromClientAPI]
-	db           db.DB
+	tc                  typeutils.TypeConverter
+	mediaManager        media.Manager
+	transportController transport.Controller
+	storage             *storage.Driver
+	clientWorker        *concurrency.WorkerPool[messages.FromClientAPI]
+	db                  db.DB
 }
 
 // New returns a new admin processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, storage *storage.Driver, clientWorker *concurrency.WorkerPool[messages.FromClientAPI]) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, transportController transport.Controller, storage *storage.Driver, clientWorker *concurrency.WorkerPool[messages.FromClientAPI]) Processor {
 	return &processor{
-		tc:           tc,
-		mediaManager: mediaManager,
-		storage:      storage,
-		clientWorker: clientWorker,
-		db:           db,
+		tc:                  tc,
+		mediaManager:        mediaManager,
+		transportController: transportController,
+		storage:             storage,
+		clientWorker:        clientWorker,
+		db:                  db,
 	}
 }

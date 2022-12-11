@@ -20,22 +20,26 @@ package media_test
 
 import (
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type MediaStandardTestSuite struct {
 	suite.Suite
 
-	db              db.DB
-	storage         *storage.Driver
-	manager         media.Manager
-	testAttachments map[string]*gtsmodel.MediaAttachment
-	testAccounts    map[string]*gtsmodel.Account
-	testEmojis      map[string]*gtsmodel.Emoji
+	db                  db.DB
+	storage             *storage.Driver
+	manager             media.Manager
+	transportController transport.Controller
+	testAttachments     map[string]*gtsmodel.MediaAttachment
+	testAccounts        map[string]*gtsmodel.Account
+	testEmojis          map[string]*gtsmodel.Emoji
 }
 
 func (suite *MediaStandardTestSuite) SetupSuite() {
@@ -53,6 +57,7 @@ func (suite *MediaStandardTestSuite) SetupTest() {
 	suite.testAccounts = testrig.NewTestAccounts()
 	suite.testEmojis = testrig.NewTestEmojis()
 	suite.manager = testrig.NewTestMediaManager(suite.db, suite.storage)
+	suite.transportController = testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../testrig/media"), suite.db, concurrency.NewWorkerPool[messages.FromFederator](0, 0))
 }
 
 func (suite *MediaStandardTestSuite) TearDownTest() {
