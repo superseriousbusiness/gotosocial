@@ -409,3 +409,10 @@ syslog-protocol: "udp"
 # String. Address:port to send syslog logs to. Leave empty to connect to local syslog.
 # Default: "localhost:514"
 syslog-address: "localhost:514"
+
+# Cache configuration
+cache:
+  gts:
+    account-max-size: 99
+    account-ttl: "3h"
+    account-sweep-freq: "1s"
