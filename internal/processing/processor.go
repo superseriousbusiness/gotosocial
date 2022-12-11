@@ -136,6 +136,8 @@ type Processor interface {
 	AdminDomainBlockDelete(ctx context.Context, authed *oauth.Auth, id string) (*apimodel.DomainBlock, gtserror.WithCode)
 	// AdminMediaRemotePrune triggers a prune of remote media according to the given number of mediaRemoteCacheDays
 	AdminMediaPrune(ctx context.Context, mediaRemoteCacheDays int) gtserror.WithCode
+	// AdminMediaRefetch triggers a refetch of remote media for the given domain (or all if domain is empty).
+	AdminMediaRefetch(ctx context.Context, authed *oauth.Auth, domain string) gtserror.WithCode
 
 	// AppCreate processes the creation of a new API application
 	AppCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, gtserror.WithCode)
@@ -145,6 +147,9 @@ type Processor interface {
 
 	// CustomEmojisGet returns an array of info about the custom emojis on this server
 	CustomEmojisGet(ctx context.Context) ([]*apimodel.Emoji, gtserror.WithCode)
+
+	// BookmarksGet returns a pageable response of statuses that have been bookmarked
+	BookmarksGet(ctx context.Context, authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode)
 
 	// FileGet handles the fetching of a media attachment file via the fileserver.
 	FileGet(ctx context.Context, authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, gtserror.WithCode)
@@ -202,6 +207,10 @@ type Processor interface {
 	StatusUnfave(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
 	// StatusGetContext returns the context (previous and following posts) from the given status ID
 	StatusGetContext(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Context, gtserror.WithCode)
+	// StatusBookmark process a bookmark for a status
+	StatusBookmark(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
+	// StatusUnbookmark removes a bookmark for a status
+	StatusUnbookmark(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
 
 	// HomeTimelineGet returns statuses from the home timeline, with the given filters/parameters.
 	HomeTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode)
@@ -311,7 +320,7 @@ func NewProcessor(
 	statusProcessor := status.New(db, tc, clientWorker, parseMentionFunc)
 	streamingProcessor := streaming.New(db, oauthServer)
 	accountProcessor := account.New(db, tc, mediaManager, oauthServer, clientWorker, federator, parseMentionFunc)
-	adminProcessor := admin.New(db, tc, mediaManager, storage, clientWorker)
+	adminProcessor := admin.New(db, tc, mediaManager, federator.TransportController(), storage, clientWorker)
 	mediaProcessor := mediaProcessor.New(db, tc, mediaManager, federator.TransportController(), storage)
 	userProcessor := user.New(db, emailSender)
 	federationProcessor := federationProcessor.New(db, tc, federator)

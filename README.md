@@ -10,7 +10,7 @@ With GoToSocial, you can keep in touch with your friends, post, read, and share 
 
 **GoToSocial is still [ALPHA SOFTWARE](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha)**. It is already deployable and useable, and it federates cleanly with many other Fediverse servers (not yet all). However, many things are not yet implemented, and there are plenty of bugs! We foresee entering beta somewhere in 2023.
 
-Documentation is at [docs.gotosocial.org](https://docs.gotosocial.org). You can skip straight to the API documentation [here](https://docs.gotosocial.org/en/latest/api/swagger/).
+Documentation is at [docs.gotosocial.org](https://docs.gotosocial.org). You can skip straight to the API documentation [here](https://docs.gotosocial.org/en/latest/api/swagger/). To build from source, check the [CONTRIBUTING.md](./CONTRIBUTING.md) file.
 
 Here's a screenshot of the instance landing page!
 
@@ -37,6 +37,7 @@ Here's a screenshot of the instance landing page!
   - [Client App Issues](#client-app-issues)
   - [Federation Issues](#federation-issues)
 - [Contributing](#contributing)
+- [Building](#building)
 - [Contact](#contact)
 - [Credits](#credits)
   - [Libraries](#libraries)
@@ -192,6 +193,10 @@ Since every ActivityPub server implementation has a slightly different interpret
 ## Contributing
 
 You would like to contribute to GtS? Great! ❤️❤️❤️ Check out the issues page to see if there's anything you intend to jump in on, and read the [CONTRIBUTING.md](./CONTRIBUTING.md) file for guidelines and setting up your dev environment.
+
+## Building
+
+Instructions for building GoToSocial from source are in the [CONTRIBUTING.md](./CONTRIBUTING.md) file.
 
 ## Contact
 

@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/app"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/auth"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/blocks"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/bookmarks"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/emoji"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/favourites"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/fileserver"
@@ -180,6 +181,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	fileServerModule := fileserver.New(processor)
 	adminModule := admin.New(processor)
 	statusModule := status.New(processor)
+	bookmarksModule := bookmarks.New(processor)
 	securityModule := security.New(dbService, oauthServer)
 	streamingModule := streaming.New(processor)
 	favouritesModule := favourites.New(processor)
@@ -203,6 +205,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		fileServerModule,
 		adminModule,
 		statusModule,
+		bookmarksModule,
 		webfingerModule,
 		nodeInfoModule,
 		usersModule,

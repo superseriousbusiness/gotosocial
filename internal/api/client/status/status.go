@@ -96,6 +96,9 @@ func (m *Module) Route(r router.Router) error {
 	r.AttachHandler(http.MethodPost, UnreblogPath, m.StatusUnboostPOSTHandler)
 	r.AttachHandler(http.MethodGet, RebloggedPath, m.StatusBoostedByGETHandler)
 
+	r.AttachHandler(http.MethodPost, BookmarkPath, m.StatusBookmarkPOSTHandler)
+	r.AttachHandler(http.MethodPost, UnbookmarkPath, m.StatusUnbookmarkPOSTHandler)
+
 	r.AttachHandler(http.MethodGet, ContextPath, m.StatusContextGETHandler)
 
 	r.AttachHandler(http.MethodGet, BasePathWithID, m.muxHandler)
