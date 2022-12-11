@@ -31,11 +31,6 @@ import (
 	"golang.org/x/net/idna"
 )
 
-// maxDomainParts is the maximum number of subdomain parts in
-// domain that we accept both going into the database, and during
-// fetch attempts to reduce risk of denial of service.
-const maxDomainParts = 5
-
 type domainDB struct {
 	conn  *DBConn
 	state *state.State
