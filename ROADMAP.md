@@ -152,8 +152,8 @@ Crossed out    - will not be implemented / will be stubbed only.
     - [ ] /api/v1/statuses/:id/unmute POST                  (Unmute notifications on a status)
     - [ ] /api/v1/statuses/:id/pin POST                     (Pin a status to profile)
     - [ ] /api/v1/statuses/:id/unpin POST                   (Unpin a status from profile)
-    - ~~/api/v1/statuses/:id/bookmark POST                  (Bookmark a status)~~
-    - ~~/api/v1/statuses/:id/unbookmark POST                (Undo a bookmark)~~
+    - [x] /api/v1/statuses/:id/bookmark POST                  (Bookmark a status)
+    - [x] /api/v1/statuses/:id/unbookmark POST                (Undo a bookmark)
   - [x] Media
     - [x] /api/v1/media POST                                (Upload a media attachment)
     - [x] /api/v1/media/:id GET                             (Get a media attachment)
@@ -242,8 +242,8 @@ Crossed out    - will not be implemented / will be stubbed only.
   - ~~Suggestions~~
     - ~~/api/v1/suggestions GET                             (Get suggested accounts to follow)~~
     - ~~/api/v1/suggestions/:account_id DELETE              (Delete a suggestion)~~
-  - ~~Bookmarks~~
-    - ~~/api/v1/bookmarks GET                               (See bookmarked statuses)~~
+  - [x] Bookmarks
+    - [x] /api/v1/bookmarks GET                               (See bookmarked statuses)
 
 ### Non-API tasks
 

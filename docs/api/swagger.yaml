@@ -3209,6 +3209,40 @@ paths:
             summary: Clean up remote media older than the specified number of days.
             tags:
                 - admin
+    /api/v1/admin/media_refetch:
+        post:
+            description: |-
+                Currently, this only includes remote emojis.
+                This endpoint is useful when data loss has occurred, and you want to try to recover to a working state.
+            operationId: mediaRefetch
+            parameters:
+                - description: Domain to refetch media from. If empty, all domains will be refetched.
+                  in: query
+                  name: domain
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "202":
+                    description: Request accepted and will be processed. Check the logs for progress / errors.
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Refetch media specified in the database but missing from storage.
+            tags:
+                - admin
     /api/v1/apps:
         post:
             consumes:
@@ -3326,6 +3360,34 @@ paths:
             summary: Get an array of accounts that requesting account has blocked.
             tags:
                 - blocks
+    /api/v1/bookmarks:
+        get:
+            description: Get an array of statuses bookmarked in the instance
+            operationId: bookmarksGet
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Array of bookmarked statuses
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/status'
+                        type: array
+                "401":
+                    description: unauthorized
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:bookmarks
+            tags:
+                - bookmarks
     /api/v1/custom_emojis:
         get:
             operationId: customEmojisGet
@@ -4111,6 +4173,40 @@ paths:
             summary: View status with the given ID.
             tags:
                 - statuses
+    /api/v1/statuses/{id}/bookmark:
+        post:
+            operationId: statusBookmark
+            parameters:
+                - description: Target status ID.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The status.
+                    schema:
+                        $ref: '#/definitions/status'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:statuses
+            summary: Bookmark status with the given ID.
+            tags:
+                - statuses
     /api/v1/statuses/{id}/context:
         get:
             description: The returned statuses will be ordered in a thread structure, so they are suitable to be displayed in the order in which they were returned.
@@ -4283,6 +4379,40 @@ paths:
                 - OAuth2 Bearer:
                     - read:accounts
             summary: View accounts that have reblogged/boosted the target status.
+            tags:
+                - statuses
+    /api/v1/statuses/{id}/unbookmark:
+        post:
+            operationId: statusUnbookmark
+            parameters:
+                - description: Target status ID.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The status.
+                    schema:
+                        $ref: '#/definitions/status'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:statuses
+            summary: Unbookmark status with the given ID.
             tags:
                 - statuses
     /api/v1/statuses/{id}/unfavourite:

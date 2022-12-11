@@ -88,14 +88,10 @@ func (p *processor) EmojisGet(ctx context.Context, account *gtsmodel.Account, us
 		Items:            items,
 		Path:             "api/v1/admin/custom_emojis",
 		NextMaxIDKey:     "max_shortcode_domain",
-		NextMaxIDValue:   shortcodeDomain(emojis[count-1]),
+		NextMaxIDValue:   util.ShortcodeDomain(emojis[count-1]),
 		PrevMinIDKey:     "min_shortcode_domain",
-		PrevMinIDValue:   shortcodeDomain(emojis[0]),
+		PrevMinIDValue:   util.ShortcodeDomain(emojis[0]),
 		Limit:            limit,
 		ExtraQueryParams: []string{filterBuilder.String()},
 	})
-}
-
-func shortcodeDomain(emoji *gtsmodel.Emoji) string {
-	return emoji.Shortcode + "@" + emoji.Domain
 }

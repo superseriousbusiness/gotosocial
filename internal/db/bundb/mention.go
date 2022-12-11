@@ -20,33 +20,17 @@ package bundb
 
 import (
 	"context"
-	"time"
 
-	"codeberg.org/gruf/go-cache/v3/result"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
 )
 
 type mentionDB struct {
 	conn  *DBConn
-	cache *result.Cache[*gtsmodel.Mention]
-}
-
-func (m *mentionDB) init() {
-	// Initialize notification result cache
-	m.cache = result.NewSized([]result.Lookup{
-		{Name: "ID"},
-	}, func(m1 *gtsmodel.Mention) *gtsmodel.Mention {
-		m2 := new(gtsmodel.Mention)
-		*m2 = *m1
-		return m2
-	}, 1000)
-
-	// Set cache TTL and start sweep routine
-	m.cache.SetTTL(time.Minute*5, false)
-	m.cache.Start(time.Second * 10)
+	state *state.State
 }
 
 func (m *mentionDB) newMentionQ(i interface{}) *bun.SelectQuery {
@@ -59,7 +43,7 @@ func (m *mentionDB) newMentionQ(i interface{}) *bun.SelectQuery {
 }
 
 func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mention, db.Error) {
-	return m.cache.Load("ID", func() (*gtsmodel.Mention, error) {
+	return m.state.Caches.GTS.Mention().Load("ID", func() (*gtsmodel.Mention, error) {
 		var mention gtsmodel.Mention
 
 		q := m.newMentionQ(&mention).

@@ -40,6 +40,15 @@ const UnusedLocalAttachmentCacheDays = 3
 
 // Manager provides an interface for managing media: parsing, storing, and retrieving media objects like photos, videos, and gifs.
 type Manager interface {
+	// Stop stops the underlying worker pool of the manager. It should be called
+	// when closing GoToSocial in order to cleanly finish any in-progress jobs.
+	// It will block until workers are finished processing.
+	Stop() error
+
+	/*
+		PROCESSING FUNCTIONS
+	*/
+
 	// ProcessMedia begins the process of decoding and storing the given data as an attachment.
 	// It will return a pointer to a ProcessingMedia struct upon which further actions can be performed, such as getting
 	// the finished media, thumbnail, attachment, etc.
@@ -75,6 +84,10 @@ type Manager interface {
 	// RecacheMedia refetches, reprocesses, and recaches an existing attachment that has been uncached via pruneRemote.
 	RecacheMedia(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, attachmentID string) (*ProcessingMedia, error)
 
+	/*
+		PRUNING FUNCTIONS
+	*/
+
 	// PruneAllRemote prunes all remote media attachments cached on this instance which are older than the given amount of days.
 	// 'Pruning' in this context means removing the locally stored data of the attachment (both thumbnail and full size),
 	// and setting 'cached' to false on the associated attachment.
@@ -98,10 +111,18 @@ type Manager interface {
 	// is returned to the caller.
 	PruneOrphaned(ctx context.Context, dry bool) (int, error)
 
-	// Stop stops the underlying worker pool of the manager. It should be called
-	// when closing GoToSocial in order to cleanly finish any in-progress jobs.
-	// It will block until workers are finished processing.
-	Stop() error
+	/*
+		REFETCHING FUNCTIONS
+		Useful when data loss has occurred.
+	*/
+
+	// RefetchEmojis iterates through remote emojis (for the given domain, or all if domain is empty string).
+	//
+	// For each emoji, the manager will check whether both the full size and static images are present in storage.
+	// If not, the manager will refetch and reprocess full size and static images for the emoji.
+	//
+	// The provided DereferenceMedia function will be used when it's necessary to refetch something this way.
+	RefetchEmojis(ctx context.Context, domain string, dereferenceMedia DereferenceMedia) (int, error)
 }
 
 type manager struct {

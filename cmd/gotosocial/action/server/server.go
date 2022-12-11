@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/app"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/auth"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/blocks"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/bookmarks"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/emoji"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/favourites"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/fileserver"
@@ -65,6 +66,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -73,10 +75,19 @@ import (
 
 // Start creates and starts a gotosocial server
 var Start action.GTSAction = func(ctx context.Context) error {
-	dbService, err := bundb.NewBunDBService(ctx)
+	var state state.State
+
+	// Initialize caches
+	state.Caches.Init()
+
+	// Open connection to the database
+	dbService, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
+
+	// Set the state DB connection
+	state.DB = dbService
 
 	if err := dbService.CreateInstanceAccount(ctx); err != nil {
 		return fmt.Errorf("error creating instance account: %s", err)
@@ -170,6 +181,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	fileServerModule := fileserver.New(processor)
 	adminModule := admin.New(processor)
 	statusModule := status.New(processor)
+	bookmarksModule := bookmarks.New(processor)
 	securityModule := security.New(dbService, oauthServer)
 	streamingModule := streaming.New(processor)
 	favouritesModule := favourites.New(processor)
@@ -193,6 +205,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		fileServerModule,
 		adminModule,
 		statusModule,
+		bookmarksModule,
 		webfingerModule,
 		nodeInfoModule,
 		usersModule,

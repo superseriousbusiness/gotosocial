@@ -20,38 +20,20 @@ package bundb
 
 import (
 	"context"
-	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
-
-	"codeberg.org/gruf/go-cache/v3/result"
 )
 
 type tombstoneDB struct {
 	conn  *DBConn
-	cache *result.Cache[*gtsmodel.Tombstone]
-}
-
-func (t *tombstoneDB) init() {
-	// Initialize tombstone result cache
-	t.cache = result.NewSized([]result.Lookup{
-		{Name: "ID"},
-		{Name: "URI"},
-	}, func(t1 *gtsmodel.Tombstone) *gtsmodel.Tombstone {
-		t2 := new(gtsmodel.Tombstone)
-		*t2 = *t1
-		return t2
-	}, 100)
-
-	// Set cache TTL and start sweep routine
-	t.cache.SetTTL(time.Minute*5, false)
-	t.cache.Start(time.Second * 10)
+	state *state.State
 }
 
 func (t *tombstoneDB) GetTombstoneByURI(ctx context.Context, uri string) (*gtsmodel.Tombstone, db.Error) {
-	return t.cache.Load("URI", func() (*gtsmodel.Tombstone, error) {
+	return t.state.Caches.GTS.Tombstone().Load("URI", func() (*gtsmodel.Tombstone, error) {
 		var tomb gtsmodel.Tombstone
 
 		q := t.conn.
@@ -76,7 +58,7 @@ func (t *tombstoneDB) TombstoneExistsWithURI(ctx context.Context, uri string) (b
 }
 
 func (t *tombstoneDB) PutTombstone(ctx context.Context, tombstone *gtsmodel.Tombstone) db.Error {
-	return t.cache.Store(tombstone, func() error {
+	return t.state.Caches.GTS.Tombstone().Store(tombstone, func() error {
 		_, err := t.conn.
 			NewInsert().
 			Model(tombstone).
@@ -95,7 +77,7 @@ func (t *tombstoneDB) DeleteTombstone(ctx context.Context, id string) db.Error {
 	}
 
 	// Invalidate from cache by ID
-	t.cache.Invalidate("ID", id)
+	t.state.Caches.GTS.Tombstone().Invalidate("ID", id)
 
 	return nil
 }
