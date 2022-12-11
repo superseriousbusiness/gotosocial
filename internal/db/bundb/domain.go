@@ -65,7 +65,7 @@ func (d *domainDB) CreateDomainBlock(ctx context.Context, block *gtsmodel.Domain
 	}
 
 	if dns.CountLabel(block.Domain) > maxDomainParts {
-		return errors.New("invalid domain: contains too many subdomain parts")
+		return fmt.Errorf("invalid domain %s: contains too many subdomain parts", block.Domain)
 	}
 
 	return d.state.Caches.GTS.DomainBlock().Store(block, func() error {
@@ -92,13 +92,13 @@ func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel
 
 	// Split domain into constituent parts
 	parts := dns.SplitDomainName(domain)
-	if len(parts) < 2 {
-		return nil, fmt.Errorf("invalid domain: %s", domain)
+	if len(parts) > maxDomainParts {
+		return nil, fmt.Errorf("invalid domain %s: contains too many subdomain parts", domain)
 	}
 
-	// Create first domain lookup attempt (this is root level + TLD)
-	lookup := parts[len(parts)-2] + "." + parts[len(parts)-1]
-	parts = parts[:len(parts)-2]
+	// Create first domain lookup
+	lookup := parts[len(parts)-1]
+	parts = parts[:len(parts)-1]
 
 	for i := 0; i < maxDomainParts; i++ {
 		// Check if this lookup result already cached
