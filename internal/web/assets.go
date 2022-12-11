@@ -97,6 +97,9 @@ func (m *Module) getAssetETag(filePath string, fs http.FileSystem) (string, erro
 //
 // See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-None-Match
 // and: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
+//
+// todo: move this middleware out of the 'web' package and into the 'middleware'
+// package along with the other middlewares
 func (m *Module) assetsCacheControlMiddleware(fs http.FileSystem) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// set this Cache-Control header to instruct clients to validate the response with us

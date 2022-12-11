@@ -251,7 +251,7 @@ Most of the crucial business logic of the application is found inside the variou
 
 `internal/ap` - ActivityPub utility functions and interfaces.
 
-`internal/api` - Models, routers, and utilities for the client and federated (s2s) APIs. This is where routes are attached to the router, and where you want to be if you're adding a route.
+`internal/api` - Models, routers, and utilities for the client and federated (ActivityPub) APIs. This is where routes are attached to the router, and where you want to be if you're adding a route.
 
 `internal/concurrency` - Worker models used by the processor and other queues.
 
@@ -282,6 +282,8 @@ Most of the crucial business logic of the application is found inside the variou
 `internal/media` - Code related to managing + processing media attachments; images, video, emojis, etc.
 
 `internal/messages` - Models for wrapping worker messages.
+
+`internal/middleware` - Gin Gonic router middlewares: http signature checking, cache control, token checks, etc.
 
 `internal/netutil` - HTTP / net request validation code.
 

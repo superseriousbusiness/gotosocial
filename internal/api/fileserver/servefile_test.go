@@ -82,8 +82,8 @@ func (suite *ServeFileTestSuite) SetupSuite() {
 
 	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewInMemoryStorage()
-	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
-	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
+	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../testrig/media"), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
+	suite.emailSender = testrig.NewEmailSender("../../../web/template/", nil)
 
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, testrig.NewTestMediaManager(suite.db, suite.storage), clientWorker, fedWorker)
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
@@ -102,7 +102,7 @@ func (suite *ServeFileTestSuite) TearDownSuite() {
 
 func (suite *ServeFileTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db, nil)
-	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
+	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testClients = testrig.NewTestClients()
 	suite.testApplications = testrig.NewTestApplications()

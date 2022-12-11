@@ -39,7 +39,8 @@ func (w *WellKnown) Route(r router.Router) {
 	wellKnownGroup.Use(
 		middleware.Gzip(),
 		middleware.RateLimit(),
-		middleware.CacheControl("public", "max-age=120"), // allow cache for 2 minutes
+		// allow .well-known responses to be cached for 2 minutes
+		middleware.CacheControl("public", "max-age=120"),
 	)
 
 	w.nodeInfo.Route(wellKnownGroup.Handle)

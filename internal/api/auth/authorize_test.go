@@ -34,7 +34,7 @@ func (suite *AuthAuthorizeTestSuite) TestAccountAuthorizeHandler() {
 				return []string{"confirmed_at"}
 			},
 			expectedStatusCode:     http.StatusSeeOther,
-			expectedLocationHeader: auth.AuthCheckYourEmailPath,
+			expectedLocationHeader: "/auth" + auth.AuthCheckYourEmailPath,
 		},
 		{
 			description: "user has their email confirmed but is not approved",
@@ -44,7 +44,7 @@ func (suite *AuthAuthorizeTestSuite) TestAccountAuthorizeHandler() {
 				return []string{"confirmed_at", "email"}
 			},
 			expectedStatusCode:     http.StatusSeeOther,
-			expectedLocationHeader: auth.AuthWaitForApprovalPath,
+			expectedLocationHeader: "/auth" + auth.AuthWaitForApprovalPath,
 		},
 		{
 			description: "user has their email confirmed and is approved, but User entity has been disabled",
@@ -56,7 +56,7 @@ func (suite *AuthAuthorizeTestSuite) TestAccountAuthorizeHandler() {
 				return []string{"confirmed_at", "email", "approved", "disabled"}
 			},
 			expectedStatusCode:     http.StatusSeeOther,
-			expectedLocationHeader: auth.AuthAccountDisabledPath,
+			expectedLocationHeader: "/auth" + auth.AuthAccountDisabledPath,
 		},
 		{
 			description: "user has their email confirmed and is approved, but Account entity has been suspended",
@@ -69,7 +69,7 @@ func (suite *AuthAuthorizeTestSuite) TestAccountAuthorizeHandler() {
 				return []string{"confirmed_at", "email", "approved", "disabled"}
 			},
 			expectedStatusCode:     http.StatusSeeOther,
-			expectedLocationHeader: auth.AuthAccountDisabledPath,
+			expectedLocationHeader: "/auth" + auth.AuthAccountDisabledPath,
 		},
 	}
 

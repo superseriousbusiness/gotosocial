@@ -35,6 +35,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/search"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/statuses"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/streaming"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/timelines"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/user"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
@@ -62,6 +63,7 @@ type Client struct {
 	search         *search.Module         // api/v1/search, api/v2/search
 	statuses       *statuses.Module       // api/v1/statuses
 	streaming      *streaming.Module      // api/v1/streaming
+	timelines      *timelines.Module      // api/v1/timelines
 	user           *user.Module           // api/v1/user
 }
 
@@ -96,6 +98,7 @@ func (c *Client) Route(r router.Router) {
 	c.search.Route(h)
 	c.statuses.Route(h)
 	c.streaming.Route(h)
+	c.timelines.Route(h)
 	c.user.Route(h)
 }
 
@@ -120,6 +123,7 @@ func NewClient(db db.DB, p processing.Processor) *Client {
 		search:         search.New(p),
 		statuses:       statuses.New(p),
 		streaming:      streaming.New(p),
+		timelines:      timelines.New(p),
 		user:           user.New(p),
 	}
 }

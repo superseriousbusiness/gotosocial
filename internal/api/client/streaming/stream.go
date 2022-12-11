@@ -190,6 +190,7 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 	}()
 
 	streamTicker := time.NewTicker(30 * time.Second)
+	defer streamTicker.Stop()
 
 	// We want to stay in the loop as long as possible while the client is connected.
 	// The only thing that should break the loop is if the client leaves or the connection becomes unhealthy.

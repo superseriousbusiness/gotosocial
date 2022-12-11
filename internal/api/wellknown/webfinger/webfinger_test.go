@@ -43,14 +43,14 @@ import (
 type WebfingerStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
-	db               db.DB
-	tc               typeutils.TypeConverter
-	mediaManager     media.Manager
-	federator        federation.Federator
-	emailSender      email.Sender
-	processor        processing.Processor
-	storage          *storage.Driver
-	oauthServer      oauth.Server
+	db           db.DB
+	tc           typeutils.TypeConverter
+	mediaManager media.Manager
+	federator    federation.Federator
+	emailSender  email.Sender
+	processor    processing.Processor
+	storage      *storage.Driver
+	oauthServer  oauth.Server
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token

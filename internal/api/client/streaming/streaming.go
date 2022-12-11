@@ -26,8 +26,8 @@ import (
 )
 
 const (
-	// BasePath is the path for the streaming api
-	BasePath = "/api/v1/streaming"
+	// BasePath is the path for the streaming api, minus the 'api' prefix
+	BasePath = "/v1/streaming"
 
 	// StreamQueryKey is the query key for the type of stream being requested
 	StreamQueryKey = "stream"

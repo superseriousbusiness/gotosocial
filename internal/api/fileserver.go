@@ -35,11 +35,14 @@ func (f *Fileserver) Route(r router.Router) {
 	// attach middlewares appropriate for this group
 	fileserverGroup.Use(
 		middleware.RateLimit(),
-		// since we'll never host different files at the same
+		// Since we'll never host different files at the same
 		// URL (bc the ULIDs are generated per piece of media),
 		// it's sensible and safe to use a long cache here, so
-		// that clients don't keep fetching files over + over again
-		middleware.CacheControl("max-age=604800"),
+		// that clients don't keep fetching files over + over again.
+		//
+		// Nevertheless, we should use 'private' to indicate
+		// that there might be media in there which are gated by ACLs.
+		middleware.CacheControl("private", "max-age=604800"),
 	)
 
 	f.fileserver.Route(fileserverGroup.Handle)
