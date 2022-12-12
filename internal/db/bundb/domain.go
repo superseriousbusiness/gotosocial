@@ -79,7 +79,8 @@ func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel
 	}
 
 	// Check for easy case, domain referencing *us*
-	if domain == "" || domain == config.GetAccountDomain() {
+	if domain == "" || domain == config.GetAccountDomain() ||
+		domain == config.GetHost() {
 		return nil, db.ErrNoEntries
 	}
 
@@ -127,7 +128,8 @@ func (d *domainDB) IsDomainBlocked(ctx context.Context, domain string) (bool, db
 	}
 
 	// Check for easy case, domain referencing *us*
-	if domain == "" || domain == config.GetAccountDomain() {
+	if domain == "" || domain == config.GetAccountDomain() ||
+		domain == config.GetHost() {
 		return false, nil
 	}
 

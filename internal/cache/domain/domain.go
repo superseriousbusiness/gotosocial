@@ -26,12 +26,27 @@ import (
 	"github.com/miekg/dns"
 )
 
+// BlockCache provides a means of caching domain blocks in memory to reduce load
+// on an underlying storage mechanism, e.g. a database.
+//
+// It consists of a TTL primary cache that stores calculated domain string to block results,
+// that on cache miss is filled by calculating block status by iterating over a list of all of
+// the domain blocks stored in memory. This reduces CPU usage required by not need needing to
+// iterate through a possible 100-1000s long block list, while saving memory by having a primary
+// cache of limited size that evicts stale entries. The raw list of all domain blocks should in
+// most cases be negligible when it comes to memory usage.
+//
+// The in-memory block list is kept up-to-date by means of a passed loader function during every
+// call to .IsBlocked(). In the case of a nil internal block list, the loader function is called to
+// hydrate the cache with the latest list of domain blocks. The .Clear() function can be used to invalidate
+// the cache, e.g. when a domain block is added / deleted from the database. It will drop the current
+// list of domain blocks and clear all entries from the primary cache.
 type BlockCache struct {
-	pcache *ttl.Cache[string, bool]
-	blocks []block
-	loaded bool
+	pcache *ttl.Cache[string, bool] // primary cache of domains -> block results
+	blocks []block                  // raw list of all domain blocks, nil => not loaded.
 }
 
+// New returns a new initialized BlockCache instance with given primary cache capacity and TTL.
 func New(pcap int, pttl time.Duration) *BlockCache {
 	c := new(BlockCache)
 	c.pcache = new(ttl.Cache[string, bool])
@@ -39,14 +54,18 @@ func New(pcap int, pttl time.Duration) *BlockCache {
 	return c
 }
 
+// Start will start the cache background eviction routine with given sweep frequency. If already running or a freq <= 0 provided, this is a no-op. This will block until the eviction routine has started.
 func (b *BlockCache) Start(pfreq time.Duration) bool {
 	return b.pcache.Start(pfreq)
 }
 
+// Stop will stop cache background eviction routine. If not running this is a no-op. This will block until the eviction routine has stopped.
 func (b *BlockCache) Stop() bool {
 	return b.pcache.Stop()
 }
 
+// IsBlocked checks whether domain is blocked. If the cache is not currently loaded, then the provided load function is used to hydrate it.
+// NOTE: be VERY careful using any kind of locking mechanism within the load function, as this itself is ran within the cache mutex lock.
 func (b *BlockCache) IsBlocked(domain string, load func() ([]string, error)) (bool, error) {
 	var blocked bool
 
@@ -54,7 +73,7 @@ func (b *BlockCache) IsBlocked(domain string, load func() ([]string, error)) (bo
 	b.pcache.Lock()
 	defer b.pcache.Unlock()
 
-	if !b.loaded {
+	if b.blocks == nil {
 		// Load domains from callback
 		domains, err := load()
 		if err != nil {
@@ -68,9 +87,6 @@ func (b *BlockCache) IsBlocked(domain string, load func() ([]string, error)) (bo
 			// Store pre-split labels for each domain block
 			b.blocks[i].labels = dns.SplitDomainName(domain)
 		}
-
-		// Mark as loaded
-		b.loaded = true
 	}
 
 	// Check primary cache for result
@@ -100,24 +116,36 @@ func (b *BlockCache) IsBlocked(domain string, load func() ([]string, error)) (bo
 	return blocked, nil
 }
 
+// Clear will drop the currently loaded domain list, and clear the primary cache.
+// This will trigger a reload on next call to .IsBlocked().
 func (b *BlockCache) Clear() {
+	// Drop all blocks
 	b.pcache.Lock()
-	b.loaded = false
+	b.blocks = nil
 	b.pcache.Unlock()
+
+	// Clear needs to be done _outside_ of
+	// lock, as also acquires a mutex lock.
 	b.pcache.Clear()
 }
 
+// block represents a domain block, and stores the
+// deconstructed labels of singular domain block.
+// e.g. []string{"gts", "superseriousbusiness", "org"}.
 type block struct {
 	labels []string
 }
 
 func (b block) Blocks(labels []string) bool {
-	if len(labels) < len(b.labels) {
+	// Calculate length difference
+	d := len(labels) - len(b.labels)
+	if d < 0 {
 		return false
 	}
 
-	for i := range b.labels {
-		if labels[i] != b.labels[i] {
+	// Iterate backwards through domain labels
+	for i := len(b.labels) - 1; i >= 0; i-- {
+		if b.labels[i] != labels[i+d] {
 			return false
 		}
 	}
