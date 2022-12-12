@@ -27,6 +27,7 @@ import (
 
 	"codeberg.org/gruf/go-store/v2/storage"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 type PruneRemoteTestSuite struct {
@@ -34,24 +35,29 @@ type PruneRemoteTestSuite struct {
 }
 
 func (suite *PruneRemoteTestSuite) TestPruneRemote() {
-	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
-	suite.True(*testAttachment.Cached)
+	testStatusAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
+	suite.True(*testStatusAttachment.Cached)
+
+	testHeader := suite.testAttachments["remote_account_3_header"]
+	suite.True(*testHeader.Cached)
 
 	totalPruned, err := suite.manager.PruneAllRemote(context.Background(), 1)
 	suite.NoError(err)
-	suite.Equal(2, totalPruned)
+	suite.Equal(3, totalPruned)
 
-	prunedAttachment, err := suite.db.GetAttachmentByID(context.Background(), testAttachment.ID)
+	prunedAttachment, err := suite.db.GetAttachmentByID(context.Background(), testStatusAttachment.ID)
 	suite.NoError(err)
+	suite.False(*prunedAttachment.Cached)
 
-	// the media should no longer be cached
+	prunedAttachment, err = suite.db.GetAttachmentByID(context.Background(), testHeader.ID)
+	suite.NoError(err)
 	suite.False(*prunedAttachment.Cached)
 }
 
 func (suite *PruneRemoteTestSuite) TestPruneRemoteTwice() {
 	totalPruned, err := suite.manager.PruneAllRemote(context.Background(), 1)
 	suite.NoError(err)
-	suite.Equal(2, totalPruned)
+	suite.Equal(3, totalPruned)
 
 	// final prune should prune nothing, since the first prune already happened
 	totalPrunedAgain, err := suite.manager.PruneAllRemote(context.Background(), 1)
@@ -61,16 +67,21 @@ func (suite *PruneRemoteTestSuite) TestPruneRemoteTwice() {
 
 func (suite *PruneRemoteTestSuite) TestPruneAndRecache() {
 	ctx := context.Background()
-	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
+	testStatusAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
+	testHeader := suite.testAttachments["remote_account_3_header"]
 
 	totalPruned, err := suite.manager.PruneAllRemote(ctx, 1)
 	suite.NoError(err)
-	suite.Equal(2, totalPruned)
+	suite.Equal(3, totalPruned)
 
 	// media should no longer be stored
-	_, err = suite.storage.Get(ctx, testAttachment.File.Path)
+	_, err = suite.storage.Get(ctx, testStatusAttachment.File.Path)
 	suite.ErrorIs(err, storage.ErrNotFound)
-	_, err = suite.storage.Get(ctx, testAttachment.Thumbnail.Path)
+	_, err = suite.storage.Get(ctx, testStatusAttachment.Thumbnail.Path)
+	suite.ErrorIs(err, storage.ErrNotFound)
+	_, err = suite.storage.Get(ctx, testHeader.File.Path)
+	suite.ErrorIs(err, storage.ErrNotFound)
+	_, err = suite.storage.Get(ctx, testHeader.Thumbnail.Path)
 	suite.ErrorIs(err, storage.ErrNotFound)
 
 	// now recache the image....
@@ -82,34 +93,40 @@ func (suite *PruneRemoteTestSuite) TestPruneAndRecache() {
 		}
 		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
 	}
-	processingRecache, err := suite.manager.RecacheMedia(ctx, data, nil, testAttachment.ID)
-	suite.NoError(err)
 
-	// synchronously load the recached attachment
-	recachedAttachment, err := processingRecache.LoadAttachment(ctx)
-	suite.NoError(err)
-	suite.NotNil(recachedAttachment)
+	for _, original := range []*gtsmodel.MediaAttachment{
+		testStatusAttachment,
+		testHeader,
+	} {
+		processingRecache, err := suite.manager.RecacheMedia(ctx, data, nil, original.ID)
+		suite.NoError(err)
 
-	// recachedAttachment should be basically the same as the old attachment
-	suite.True(*recachedAttachment.Cached)
-	suite.Equal(testAttachment.ID, recachedAttachment.ID)
-	suite.Equal(testAttachment.File.Path, recachedAttachment.File.Path)           // file should be stored in the same place
-	suite.Equal(testAttachment.Thumbnail.Path, recachedAttachment.Thumbnail.Path) // as should the thumbnail
-	suite.EqualValues(testAttachment.FileMeta, recachedAttachment.FileMeta)       // and the filemeta should be the same
+		// synchronously load the recached attachment
+		recachedAttachment, err := processingRecache.LoadAttachment(ctx)
+		suite.NoError(err)
+		suite.NotNil(recachedAttachment)
 
-	// recached files should be back in storage
-	_, err = suite.storage.Get(ctx, recachedAttachment.File.Path)
-	suite.NoError(err)
-	_, err = suite.storage.Get(ctx, recachedAttachment.Thumbnail.Path)
-	suite.NoError(err)
+		// recachedAttachment should be basically the same as the old attachment
+		suite.True(*recachedAttachment.Cached)
+		suite.Equal(original.ID, recachedAttachment.ID)
+		suite.Equal(original.File.Path, recachedAttachment.File.Path)           // file should be stored in the same place
+		suite.Equal(original.Thumbnail.Path, recachedAttachment.Thumbnail.Path) // as should the thumbnail
+		suite.EqualValues(original.FileMeta, recachedAttachment.FileMeta)       // and the filemeta should be the same
+
+		// recached files should be back in storage
+		_, err = suite.storage.Get(ctx, recachedAttachment.File.Path)
+		suite.NoError(err)
+		_, err = suite.storage.Get(ctx, recachedAttachment.Thumbnail.Path)
+		suite.NoError(err)
+	}
 }
 
 func (suite *PruneRemoteTestSuite) TestPruneOneNonExistent() {
 	ctx := context.Background()
-	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
+	testStatusAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
 
 	// Delete this attachment cached on disk
-	media, err := suite.db.GetAttachmentByID(ctx, testAttachment.ID)
+	media, err := suite.db.GetAttachmentByID(ctx, testStatusAttachment.ID)
 	suite.NoError(err)
 	suite.True(*media.Cached)
 	err = suite.storage.Delete(ctx, media.File.Path)
@@ -118,7 +135,7 @@ func (suite *PruneRemoteTestSuite) TestPruneOneNonExistent() {
 	// Now attempt to prune remote for item with db entry no file
 	totalPruned, err := suite.manager.PruneAllRemote(ctx, 1)
 	suite.NoError(err)
-	suite.Equal(2, totalPruned)
+	suite.Equal(3, totalPruned)
 }
 
 func TestPruneRemoteTestSuite(t *testing.T) {

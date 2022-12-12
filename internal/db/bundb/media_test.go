@@ -41,7 +41,7 @@ func (suite *MediaTestSuite) TestGetAttachmentByID() {
 func (suite *MediaTestSuite) TestGetOlder() {
 	attachments, err := suite.db.GetRemoteOlderThan(context.Background(), time.Now(), 20)
 	suite.NoError(err)
-	suite.Len(attachments, 2)
+	suite.Len(attachments, 3)
 }
 
 func (suite *MediaTestSuite) TestGetAvisAndHeaders() {
@@ -49,7 +49,7 @@ func (suite *MediaTestSuite) TestGetAvisAndHeaders() {
 
 	attachments, err := suite.db.GetAvatarsAndHeaders(ctx, "", 20)
 	suite.NoError(err)
-	suite.Len(attachments, 2)
+	suite.Len(attachments, 3)
 }
 
 func (suite *MediaTestSuite) TestGetLocalUnattachedOlderThan() {

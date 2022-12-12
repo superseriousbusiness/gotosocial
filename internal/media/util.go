@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"time"
 
 	"github.com/h2non/filetype"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -132,22 +131,6 @@ func (l *logrusWrapper) Info(msg string, keysAndValues ...interface{}) {
 // Error logs an error condition.
 func (l *logrusWrapper) Error(err error, msg string, keysAndValues ...interface{}) {
 	log.Error("media manager cron logger: ", err, msg, keysAndValues)
-}
-
-func parseOlderThan(olderThanDays int) (time.Time, error) {
-	// convert days into a duration string
-	olderThanHoursString := fmt.Sprintf("%dh", olderThanDays*24)
-
-	// parse the duration string into a duration
-	olderThanHours, err := time.ParseDuration(olderThanHoursString)
-	if err != nil {
-		return time.Time{}, err
-	}
-
-	// 'subtract' that from the time now to give our threshold
-	olderThan := time.Now().Add(-olderThanHours)
-
-	return olderThan, nil
 }
 
 // lengthReader wraps a reader and reads the length of total bytes written as it goes.
