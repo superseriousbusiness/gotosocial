@@ -20,37 +20,35 @@
 
 const React = require("react");
 
-module.exports = function useTextInput({name, Name}, {validator, defaultValue=""} = {}) {
-	const [text, setText] = React.useState(defaultValue);
-	const [valid, setValid] = React.useState(true);
-	const textRef = React.useRef(null);
+const ParseFromToot = require("./parse-from-toot");
 
-	function onChange(e) {
-		let input = e.target.value;
-		setText(input);
-	}
+const query = require("../../../lib/query");
+const Loading = require("../../../components/loading");
 
-	function reset() {
-		setText("");
-	}
+module.exports = function RemoteEmoji() {
+	// local emoji are queried for shortcode collision detection
+	const {
+		data: emoji = [],
+		isLoading,
+		error
+	} = query.useGetAllEmojiQuery({filter: "domain:local"});
 
-	React.useEffect(() => {
-		if (validator) {
-			let res = validator(text);
-			setValid(res == "");
-			textRef.current.setCustomValidity(res);
-			textRef.current.reportValidity();
-		}
-	}, [text, textRef, validator]);
+	const emojiCodes = React.useMemo(() => {
+		return new Set(emoji.map((e) => e.shortcode));
+	}, [emoji]);
 
-	return [
-		onChange,
-		reset,
-		{
-			[name]: text,
-			[`${name}Ref`]: textRef,
-			[`set${Name}`]: setText,
-			[`${name}Valid`]: valid
-		}
-	];
+	return (
+		<>
+			<h1>Custom Emoji (remote)</h1>
+			{error && 
+				<div className="error accent">{error}</div>
+			}
+			{isLoading
+				? <Loading/>
+				: <>
+					<ParseFromToot emoji={emoji} emojiCodes={emojiCodes} />
+				</>
+			}
+		</>
+	);
 };

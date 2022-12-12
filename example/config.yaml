@@ -164,6 +164,61 @@ db-tls-mode: "disable"
 # Default: ""
 db-tls-ca-cert: ""
 
+cache:
+  gts:
+    ###########################
+    #### DATABASE CACHES ######
+    ###########################
+    #
+    # Database cache configuration:
+    # 
+    # Allows configuration of caches used
+    # when loading GTS models from the database.
+    #
+    # max-size   = maximum cached objects count
+    # ttl        = cached object lifetime
+    # sweep-freq = frequency to look for stale cache objects
+
+    account-max-size: 100
+    account-ttl: "5m"
+    account-sweep-freq: "10s"
+
+    block-max-size: 100
+    block-ttl: "5m"
+    block-sweep-freq: "10s"
+
+    domain-block-max-size: 1000
+    domain-block-ttl: "24h"
+    domain-block-sweep-freq: "1m"
+
+    emoji-max-size: 500
+    emoji-ttl: "5m"
+    emoji-sweep-freq: "10s"
+
+    emoji-category-max-size: 100
+    emoji-category-ttl: "5m"
+    emoji-category-sweep-freq: "10s"
+
+    mention-max-size: 500
+    mention-ttl: "5m"
+    mention-sweep-freq: "10s"
+
+    notification-max-size: 500
+    notification-ttl: "5m"
+    notification-sweep-freq: "10s"
+
+    status-max-size: 500
+    status-ttl: "5m"
+    status-sweep-freq: "10s"
+
+    tombstone-max-size: 100
+    tombstone-ttl: "5m"
+    tombstone-sweep-freq: "10s"
+
+    user-max-size: 100
+    user-ttl: "5m"
+    user-sweep-freq: "10s"
+
 ######################
 ##### WEB CONFIG #####
 ######################

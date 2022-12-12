@@ -181,6 +181,4 @@ server {
 }
 ```
 
-## Extra Hardening
-
-If you want to harden up your NGINX deployment with advanced configuration options, there are many guides online for doing so ([for example](https://beaglesecurity.com/blog/article/nginx-server-security.html)). Try to find one that's up to date. Mozilla also publishes best-practice ssl configuration [here](https://ssl-config.mozilla.org/).
+A number of additional configurations for nginx, including static asset serving and caching, are documented in the [Advanced](advanced.md) section of our documentation.

@@ -32,6 +32,7 @@ const oauth = require("./redux/reducers/oauth").actions;
 const { AuthenticationError } = require("./lib/errors");
 
 const Login = require("./components/login");
+const Loading = require("./components/loading");
 
 require("./style.css");
 
@@ -46,7 +47,11 @@ const nav = {
 		"Instance Settings": require("./admin/settings.js"),
 		"Actions": require("./admin/actions"),
 		"Federation": require("./admin/federation.js"),
-		"Custom Emoji": require("./admin/emoji"),
+	},
+	"Custom Emoji": {
+		adminOnly: true,
+		"Local": require("./admin/emoji/local"),
+		"Remote": require("./admin/emoji/remote"),
 	}
 };
 
@@ -167,7 +172,7 @@ function App() {
 function Main() {
 	return (
 		<Provider store={store}>
-			<PersistGate loading={"loading..."} persistor={persistor}>
+			<PersistGate loading={<section><Loading/></section>} persistor={persistor}>
 				<App />
 			</PersistGate>
 		</Provider>
