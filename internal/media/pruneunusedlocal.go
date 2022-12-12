@@ -20,7 +20,7 @@ package media
 
 import (
 	"context"
-	"fmt"
+	"time"
 
 	"codeberg.org/gruf/go-store/v2/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -34,10 +34,7 @@ func (m *manager) PruneUnusedLocalAttachments(ctx context.Context) (int, error) 
 	var attachments []*gtsmodel.MediaAttachment
 	var err error
 
-	olderThan, err := parseOlderThan(UnusedLocalAttachmentCacheDays)
-	if err != nil {
-		return totalPruned, fmt.Errorf("PruneUnusedLocalAttachments: error parsing olderThanDays %d: %s", UnusedLocalAttachmentCacheDays, err)
-	}
+	olderThan := time.Now().Add(-time.Hour * 24 * time.Duration(UnusedLocalAttachmentCacheDays))
 	log.Infof("PruneUnusedLocalAttachments: pruning unused local attachments older than %s", olderThan)
 
 	// select 20 attachments at a time and prune them

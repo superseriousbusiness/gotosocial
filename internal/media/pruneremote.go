@@ -20,7 +20,8 @@ package media
 
 import (
 	"context"
-	"fmt"
+	"errors"
+	"time"
 
 	"codeberg.org/gruf/go-store/v2/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -31,32 +32,29 @@ import (
 func (m *manager) PruneAllRemote(ctx context.Context, olderThanDays int) (int, error) {
 	var totalPruned int
 
-	olderThan, err := parseOlderThan(olderThanDays)
-	if err != nil {
-		return totalPruned, fmt.Errorf("PruneAllRemote: error parsing olderThanDays %d: %s", olderThanDays, err)
-	}
+	olderThan := time.Now().Add(-time.Hour * 24 * time.Duration(olderThanDays))
 	log.Infof("PruneAllRemote: pruning media older than %s", olderThan)
 
-	// select 20 attachments at a time and prune them
-	for attachments, err := m.db.GetRemoteOlderThan(ctx, olderThan, selectPruneLimit); err == nil && len(attachments) != 0; attachments, err = m.db.GetRemoteOlderThan(ctx, olderThan, selectPruneLimit) {
+	for {
+		// Select "selectPruneLimit" status attacchments at a time for pruning
+		attachments, err := m.db.GetRemoteOlderThan(ctx, olderThan, selectPruneLimit)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			return totalPruned, err
+		} else if len(attachments) == 0 {
+			break
+		}
 
-		// use the age of the oldest attachment (the last one in the slice) as the next 'older than' value
-		l := len(attachments)
-		log.Tracef("PruneAllRemote: got %d attachments older than %s", l, olderThan)
-		olderThan = attachments[l-1].CreatedAt
+		// use the age of the oldest attachment (last in slice) as the next 'olderThan' value
+		log.Tracef("PruneAllRemote: got %d status attachments older than %s", len(attachments), olderThan)
+		olderThan = attachments[len(attachments)-1].CreatedAt
 
-		// prune each attachment
+		// prune each status attachment
 		for _, attachment := range attachments {
 			if err := m.pruneOneRemote(ctx, attachment); err != nil {
 				return totalPruned, err
 			}
 			totalPruned++
 		}
-	}
-
-	// make sure we don't have a real error when we leave the loop
-	if err != nil && err != db.ErrNoEntries {
-		return totalPruned, err
 	}
 
 	log.Infof("PruneAllRemote: finished pruning remote media: pruned %d entries", totalPruned)
@@ -69,7 +67,7 @@ func (m *manager) pruneOneRemote(ctx context.Context, attachment *gtsmodel.Media
 	if attachment.File.Path != "" {
 		// delete the full size attachment from storage
 		log.Tracef("pruneOneRemote: deleting %s", attachment.File.Path)
-		if err := m.storage.Delete(ctx, attachment.File.Path); err != nil && err != storage.ErrNotFound {
+		if err := m.storage.Delete(ctx, attachment.File.Path); err != nil && !errors.Is(err, storage.ErrNotFound) {
 			return err
 		}
 		cached := false
@@ -80,7 +78,7 @@ func (m *manager) pruneOneRemote(ctx context.Context, attachment *gtsmodel.Media
 	if attachment.Thumbnail.Path != "" {
 		// delete the thumbnail from storage
 		log.Tracef("pruneOneRemote: deleting %s", attachment.Thumbnail.Path)
-		if err := m.storage.Delete(ctx, attachment.Thumbnail.Path); err != nil && err != storage.ErrNotFound {
+		if err := m.storage.Delete(ctx, attachment.Thumbnail.Path); err != nil && !errors.Is(err, storage.ErrNotFound) {
 			return err
 		}
 		cached := false
@@ -88,10 +86,10 @@ func (m *manager) pruneOneRemote(ctx context.Context, attachment *gtsmodel.Media
 		changed = true
 	}
 
-	// update the attachment to reflect that we no longer have it cached
-	if changed {
-		return m.db.UpdateByID(ctx, attachment, attachment.ID, "updated_at", "cached")
+	if !changed {
+		return nil
 	}
 
-	return nil
+	// update the attachment to reflect that we no longer have it cached
+	return m.db.UpdateByID(ctx, attachment, attachment.ID, "updated_at", "cached")
 }
