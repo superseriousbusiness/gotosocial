@@ -73,7 +73,15 @@ func (b *BlockCache) IsBlocked(domain string, load func() ([]string, error)) (bo
 	b.pcache.Lock()
 	defer b.pcache.Unlock()
 
+	// Check primary cache for result
+	entry, ok := b.pcache.Cache.Get(domain)
+	if ok {
+		return entry.Value, nil
+	}
+
 	if b.blocks == nil {
+		// Cache is not hydrated
+		//
 		// Load domains from callback
 		domains, err := load()
 		if err != nil {
@@ -87,12 +95,6 @@ func (b *BlockCache) IsBlocked(domain string, load func() ([]string, error)) (bo
 			// Store pre-split labels for each domain block
 			b.blocks[i].labels = dns.SplitDomainName(domain)
 		}
-	}
-
-	// Check primary cache for result
-	entry, ok := b.pcache.Cache.Get(domain)
-	if ok {
-		return entry.Value, nil
 	}
 
 	// Split domain into it separate labels
