@@ -131,7 +131,10 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 
 	accessToken := c.Query(AccessTokenQueryKey)
 	if accessToken == "" {
-		err := fmt.Errorf("no access token provided under query key %s", AccessTokenQueryKey)
+		accessToken = c.GetHeader(AccessTokenHeader)
+	}
+	if accessToken == "" {
+		err := fmt.Errorf("no access token provided under query key %s or under header %s", AccessTokenQueryKey, AccessTokenHeader)
 		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
@@ -171,7 +174,7 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 		close(stream.Hangup)
 	}()
 
-	streamTicker := time.NewTicker(30 * time.Second)
+	streamTicker := time.NewTicker(m.tickDuration)
 
 	// We want to stay in the loop as long as possible while the client is connected.
 	// The only thing that should break the loop is if the client leaves or the connection becomes unhealthy.
