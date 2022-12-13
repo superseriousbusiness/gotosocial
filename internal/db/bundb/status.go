@@ -294,15 +294,6 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status) db
 
 func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) db.Error {
 	if err := s.conn.RunInTx(ctx, func(tx bun.Tx) error {
-		// delete links between this status and any emojis it uses
-		if _, err := tx.
-			NewDelete().
-			TableExpr("? AS ?", bun.Ident("status_to_emojis"), bun.Ident("status_to_emoji")).
-			Where("? = ?", bun.Ident("status_to_emoji.status_id"), id).
-			Exec(ctx); err != nil {
-			return err
-		}
-
 		// delete links between this status and any tags it uses
 		if _, err := tx.
 			NewDelete().

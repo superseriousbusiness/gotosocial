@@ -188,17 +188,7 @@ func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account
 		// as the cache does not attempt a mutex lock until AFTER hook.
 		//
 		return a.conn.RunInTx(ctx, func(tx bun.Tx) error {
-			// create links between this account and any emojis it uses
-			// first clear out any old emoji links
-			if _, err := tx.
-				NewDelete().
-				TableExpr("? AS ?", bun.Ident("account_to_emojis"), bun.Ident("account_to_emoji")).
-				Where("? = ?", bun.Ident("account_to_emoji.account_id"), account.ID).
-				Exec(ctx); err != nil {
-				return err
-			}
-
-			// now populate new emoji links
+			// populate new emoji links
 			for _, i := range account.EmojiIDs {
 				if _, err := tx.
 					NewInsert().
@@ -222,15 +212,6 @@ func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account
 
 func (a *accountDB) DeleteAccount(ctx context.Context, id string) db.Error {
 	if err := a.conn.RunInTx(ctx, func(tx bun.Tx) error {
-		// clear out any emoji links
-		if _, err := tx.
-			NewDelete().
-			TableExpr("? AS ?", bun.Ident("account_to_emojis"), bun.Ident("account_to_emoji")).
-			Where("? = ?", bun.Ident("account_to_emoji.account_id"), id).
-			Exec(ctx); err != nil {
-			return err
-		}
-
 		// delete the account
 		_, err := tx.
 			NewDelete().

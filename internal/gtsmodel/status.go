@@ -37,7 +37,7 @@ type Status struct {
 	MentionIDs               []string           `validate:"dive,ulid" bun:"mentions,array"`                                                            // Database IDs of any mentions in this status
 	Mentions                 []*Mention         `validate:"-" bun:"attached_mentions,rel:has-many"`                                                    // Mentions corresponding to mentionIDs
 	EmojiIDs                 []string           `validate:"dive,ulid" bun:"emojis,array"`                                                              // Database IDs of any emojis used in this status
-	Emojis                   []*Emoji           `validate:"-" bun:"attached_emojis,m2m:status_to_emojis"`                                              // Emojis corresponding to emojiIDs. https://bun.uptrace.dev/guide/relations.html#many-to-many-relation
+	Emojis                   []*Emoji           `validate:"-" bun:"attached_emojis"`                                                                   // Emojis corresponding to emojiIDs.
 	Local                    *bool              `validate:"-" bun:",nullzero,notnull,default:false"`                                                   // is this status from a local account?
 	AccountID                string             `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                                        // which account posted this status?
 	Account                  *Account           `validate:"-" bun:"rel:belongs-to"`                                                                    // account corresponding to accountID
