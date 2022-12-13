@@ -31,8 +31,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/bookmarks"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/streaming"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -70,8 +68,6 @@ type StreamingTestSuite struct {
 	testFollows      map[string]*gtsmodel.Follow
 
 	// module being tested
-	statusModule    *status.Module
-	bookmarkModule  *bookmarks.Module
 	streamingModule *streaming.Module
 }
 
@@ -103,8 +99,6 @@ func (suite *StreamingTestSuite) SetupTest() {
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, suite.mediaManager, clientWorker, fedWorker)
-	suite.statusModule = status.New(suite.processor).(*status.Module)
-	suite.bookmarkModule = bookmarks.New(suite.processor).(*bookmarks.Module) // todo remove
 	suite.streamingModule = streaming.NewWithTickDuration(suite.processor, 1).(*streaming.Module)
 	suite.NoError(suite.processor.Start())
 }

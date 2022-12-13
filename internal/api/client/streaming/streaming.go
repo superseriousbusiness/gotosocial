@@ -36,8 +36,8 @@ const (
 
 	// AccessTokenQueryKey is the query key for an oauth access token that should be passed in streaming requests.
 	AccessTokenQueryKey = "access_token"
-	// AccessTokenHeader is the header for an oauth access token that can be passed in streaming requests instead of
-	//nolint:all
+	// AccessTokenHeader is the header for an oauth access token that can be passed in streaming requests instead of AccessTokenQueryKey
+	//nolint:gosec
 	AccessTokenHeader = "Sec-Websocket-Protocol"
 )
 
