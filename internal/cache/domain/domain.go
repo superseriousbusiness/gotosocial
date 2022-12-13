@@ -132,12 +132,14 @@ func (b *BlockCache) Clear() {
 }
 
 // block represents a domain block, and stores the
-// deconstructed labels of singular domain block.
+// deconstructed labels of a singular domain block.
 // e.g. []string{"gts", "superseriousbusiness", "org"}.
 type block struct {
 	labels []string
 }
 
+// Blocks checks whether the separated domain labels of an
+// incoming domain matches the stored (receiving struct) block.
 func (b block) Blocks(labels []string) bool {
 	// Calculate length difference
 	d := len(labels) - len(b.labels)
@@ -145,7 +147,19 @@ func (b block) Blocks(labels []string) bool {
 		return false
 	}
 
-	// Iterate backwards through domain labels
+	// Iterate backwards through domain block's
+	// labels, omparing against the incoming domain's.
+	//
+	// So for the following input:
+	// labels   = []string{"mail", "google", "com"}
+	// b.labels = []string{"google", "com"}
+	//
+	// These would be matched in reverse order along
+	// the entirety of the block object's labels:
+	// "com"    => match
+	// "google" => match
+	//
+	// And so would reach the end and return true.
 	for i := len(b.labels) - 1; i >= 0; i-- {
 		if b.labels[i] != labels[i+d] {
 			return false
