@@ -1798,6 +1798,30 @@ func NewTestFaves() map[string]*gtsmodel.StatusFave {
 			StatusID:        "01F8MH75CBF9JFX4ZAD54N0W0R", // admin account status 1
 			URI:             "http://localhost:8080/users/the_mighty_zork/liked/01F8MHD2QCZSZ6WQS2ATVPEYJ9",
 		},
+		"local_account_1_admin_account_status_3": {
+			ID:              "01GM435XERVPXXRK6NBAHK5HCZ",
+			CreatedAt:       TimeMustParse("2022-12-12T20:17:56+02:00"),
+			AccountID:       "01F8MH1H7YV1Z7D2C8K2730QBF", // local account 1
+			TargetAccountID: "01F8MH17FWEB39HZJ76B6VXSKF", // admin account
+			StatusID:        "01F8MHAAY43M6RJ473VQFCVH37", // admin account status 1
+			URI:             "http://localhost:8080/users/the_mighty_zork/liked/01GM435XERVPXXRK6NBAHK5HCZ",
+		},
+		"local_account_1_local_account_2_status_1": {
+			ID:              "01GM43AKBMN4YNXQ1HZHVC1SGB",
+			CreatedAt:       TimeMustParse("2022-12-12T20:19:49+02:00"),
+			AccountID:       "01F8MH1H7YV1Z7D2C8K2730QBF", // local account 1
+			TargetAccountID: "01F8MH5NBDF2MV7CTC4Q5128HF", // admin account
+			StatusID:        "01F8MHBQCBTDKN6X5VHGMMN4MA", // admin account status 1
+			URI:             "http://localhost:8080/users/the_mighty_zork/liked/01GM43AKBMN4YNXQ1HZHVC1SGB",
+		},
+		"local_account_1_local_account_2_status_4": {
+			ID:              "01GM43CC47DRPNZZ7BD04BS1YZ",
+			CreatedAt:       TimeMustParse("2022-12-12T20:20:47+02:00"),
+			AccountID:       "01F8MH1H7YV1Z7D2C8K2730QBF", // local account 1
+			TargetAccountID: "01F8MH5NBDF2MV7CTC4Q5128HF", // admin account
+			StatusID:        "01F8MHCP5P2NWYQ416SBA0XSEV", // admin account status 1
+			URI:             "http://localhost:8080/users/the_mighty_zork/liked/01GM43CC47DRPNZZ7BD04BS1YZ",
+		},
 		"admin_account_local_account_1_status_1": {
 			ID:              "01F8Q0486ANTDWKG02A7DS1Q24",
 			CreatedAt:       TimeMustParse("2022-05-14T13:21:09+02:00"),
