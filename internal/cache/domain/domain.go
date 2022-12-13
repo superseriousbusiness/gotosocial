@@ -121,7 +121,7 @@ func (b *BlockCache) IsBlocked(domain string, load func() ([]string, error)) (bo
 // Clear will drop the currently loaded domain list, and clear the primary cache.
 // This will trigger a reload on next call to .IsBlocked().
 func (b *BlockCache) Clear() {
-	// Drop all blocks
+	// Drop all blocks.
 	b.pcache.Lock()
 	b.blocks = nil
 	b.pcache.Unlock()
