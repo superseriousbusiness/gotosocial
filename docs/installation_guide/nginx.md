@@ -63,7 +63,8 @@ server {
   listen [::]:80;
   server_name example.org;
   location / {
-    proxy_pass http://localhost:8080;
+    # set to 127.0.0.1 instead of localhost to work around https://stackoverflow.com/a/52550758
+    proxy_pass http://127.0.0.1:8080;
     proxy_set_header Host $host;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
@@ -74,7 +75,7 @@ server {
 }
 ```
 
-Change `proxy_pass` to the ip and port that you're actually serving GoToSocial on and change `server_name` to your own domain name.
+Change `proxy_pass` to the ip and port that you're actually serving GoToSocial on (if it's not on `127.0.0.1:8080`), and change `server_name` to your own domain name.
 
 If your domain name is `example.org` then `server_name example.org;` would be the correct value.
 
@@ -152,7 +153,8 @@ If you open the NGINX config again, you'll see that Certbot added some extra lin
 server {
   server_name example.org;
   location / {
-    proxy_pass http://localhost:8080/;
+    # set to 127.0.0.1 instead of localhost to work around https://stackoverflow.com/a/52550758
+    proxy_pass http://127.0.0.1:8080/;
     proxy_set_header Host $host;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
