@@ -87,8 +87,9 @@ MDCertificateAgreement accepted
 
   SSLEngine On
   ProxyPreserveHost On
-  ProxyPass / http://localhost:8080/
-  ProxyPassReverse / http://localhost:8080/
+  # set to 127.0.0.1 instead of localhost to work around https://stackoverflow.com/a/52550758
+  ProxyPass / http://127.0.0.1:8080/
+  ProxyPassReverse / http://127.0.0.1:8080/
 
   RequestHeader set "X-Forwarded-Proto" expr=https
 </VirtualHost>
@@ -166,18 +167,19 @@ The file you're about to create should look initially for both 80 (required) and
   RewriteEngine On
   RewriteCond %{HTTP:Upgrade} websocket [NC]
   RewriteCond %{HTTP:Connection} upgrade [NC]
-  RewriteRule ^/?(.*) "ws://localhost:8080/$1" [P,L]
+  # set to 127.0.0.1 instead of localhost to work around https://stackoverflow.com/a/52550758
+  RewriteRule ^/?(.*) "ws://127.0.0.1:8080/$1" [P,L]
 
   ProxyPreserveHost On
-  ProxyPass / http://localhost:8080/
-  ProxyPassReverse / http://localhost:8080/
+  ProxyPass / http://127.0.0.1:8080/
+  ProxyPassReverse / http://127.0.0.1:8080/
 
 </VirtualHost>
 ```
 
 Again, replace occurrences of `example.com` in the above config file with the hostname of your GtS server. If your domain name is `gotosocial.example.com`, then `gotosocial.example.com` would be the correct value.
 
-You should also change `http://localhost:8080` to the correct address and port of your GtS server. For example, if you're running GoToSocial on another machine with the local ip of `192.168.178.69` and on port `8080` then `http://192.168.178.69:8080/` would be the correct value.
+You should also change `http://127.0.0.1:8080` to the correct address and port (if it's not on `127.0.0.1:8080`) of your GtS server. For example, if you're running GoToSocial on another machine with the local ip of `192.168.178.69` and on port `8080` then `http://192.168.178.69:8080/` would be the correct value.
 
 `Rewrite*` directives are needed to ensure that Websocket streaming connections also work. See the [websocket](./websocket.md) document for more information on this.
 
