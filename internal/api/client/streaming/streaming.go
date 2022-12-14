@@ -52,7 +52,7 @@ func New(processor processing.Processor) *Module {
 	}
 }
 
-func NewWithTickDuration(processor processing.Processor, tickDuration time.Duration) api.ClientModule {
+func NewWithTickDuration(processor processing.Processor, tickDuration time.Duration) *Module {
 	return &Module{
 		processor:    processor,
 		tickDuration: tickDuration,
