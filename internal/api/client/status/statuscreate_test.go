@@ -44,7 +44,7 @@ type StatusCreateTestSuite struct {
 const (
 	statusWithLinksAndTags = "#test alright, should be able to post #links with fragments in them now, let's see........\n\nhttps://docs.gotosocial.org/en/latest/user_guide/posts/#links\n\n#gotosocial\n\n(tobi remember to pull the docker image challenge)"
 	statusMarkdown         = "# Title\n\n## Smaller title\n\nThis is a post written in [markdown](https://www.markdownguide.org/)\n\n<img src=\"https://d33wubrfki0l68.cloudfront.net/f1f475a6fda1c2c4be4cac04033db5c3293032b4/513a4/assets/images/markdown-mark-white.svg\"/>"
-	statusMarkdownExpected = "<h1>Title</h1><h2>Smaller title</h2><p>This is a post written in <a href=\"https://www.markdownguide.org/\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">markdown</a></p><p><img src=\"https://d33wubrfki0l68.cloudfront.net/f1f475a6fda1c2c4be4cac04033db5c3293032b4/513a4/assets/images/markdown-mark-white.svg\" crossorigin=\"anonymous\"></p>"
+	statusMarkdownExpected = "<h1>Title</h1><h2>Smaller title</h2><p>This is a post written in <a href=\"https://www.markdownguide.org/\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">markdown</a></p><img src=\"https://d33wubrfki0l68.cloudfront.net/f1f475a6fda1c2c4be4cac04033db5c3293032b4/513a4/assets/images/markdown-mark-white.svg\" crossorigin=\"anonymous\">"
 )
 
 // Post a new status with some custom visibility settings
