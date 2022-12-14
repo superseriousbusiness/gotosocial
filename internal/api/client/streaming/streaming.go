@@ -20,6 +20,7 @@ package streaming
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
@@ -34,15 +35,27 @@ const (
 
 	// AccessTokenQueryKey is the query key for an oauth access token that should be passed in streaming requests.
 	AccessTokenQueryKey = "access_token"
+	// AccessTokenHeader is the header for an oauth access token that can be passed in streaming requests instead of AccessTokenQueryKey
+	//nolint:gosec
+	AccessTokenHeader = "Sec-Websocket-Protocol"
 )
 
 type Module struct {
-	processor processing.Processor
+	processor    processing.Processor
+	tickDuration time.Duration
 }
 
 func New(processor processing.Processor) *Module {
 	return &Module{
-		processor: processor,
+		processor:    processor,
+		tickDuration: 30 * time.Second,
+	}
+}
+
+func NewWithTickDuration(processor processing.Processor, tickDuration time.Duration) api.ClientModule {
+	return &Module{
+		processor:    processor,
+		tickDuration: tickDuration,
 	}
 }
 

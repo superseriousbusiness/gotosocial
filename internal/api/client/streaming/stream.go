@@ -32,12 +32,15 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var wsUpgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	// we expect cors requests (via eg., pinafore.social) so be lenient
-	CheckOrigin: func(r *http.Request) bool { return true },
-}
+var (
+	wsUpgrader = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		// we expect cors requests (via eg., pinafore.social) so be lenient
+		CheckOrigin: func(r *http.Request) bool { return true },
+	}
+	noTokenError = fmt.Errorf("no access token provided under query key %s or under header %s", AccessTokenQueryKey, AccessTokenHeader)
+)
 
 // StreamGETHandler swagger:operation GET /api/v1/streaming streamGet
 //
@@ -147,9 +150,16 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 		return
 	}
 
-	accessToken := c.Query(AccessTokenQueryKey)
-	if accessToken == "" {
-		err := fmt.Errorf("no access token provided under query key %s", AccessTokenQueryKey)
+	var accessToken string
+	if t := c.Query(AccessTokenQueryKey); t != "" {
+		// try query param first
+		accessToken = t
+	} else if t := c.GetHeader(AccessTokenHeader); t != "" {
+		// fall back to Sec-Websocket-Protocol
+		accessToken = t
+	} else {
+		// no token
+		err := noTokenError
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
@@ -189,7 +199,7 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 		close(stream.Hangup)
 	}()
 
-	streamTicker := time.NewTicker(30 * time.Second)
+	streamTicker := time.NewTicker(m.tickDuration)
 	defer streamTicker.Stop()
 
 	// We want to stay in the loop as long as possible while the client is connected.

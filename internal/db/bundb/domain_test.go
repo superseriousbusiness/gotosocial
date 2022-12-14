@@ -56,6 +56,38 @@ func (suite *DomainTestSuite) TestIsDomainBlocked() {
 	suite.WithinDuration(time.Now(), domainBlock.CreatedAt, 10*time.Second)
 }
 
+func (suite *DomainTestSuite) TestIsDomainBlockedWildcard() {
+	ctx := context.Background()
+
+	domainBlock := &gtsmodel.DomainBlock{
+		ID:                 "01G204214Y9TNJEBX39C7G88SW",
+		Domain:             "bad.apples",
+		CreatedByAccountID: suite.testAccounts["admin_account"].ID,
+		CreatedByAccount:   suite.testAccounts["admin_account"],
+	}
+
+	// no domain block exists for the given domain yet
+	blocked, err := suite.db.IsDomainBlocked(ctx, domainBlock.Domain)
+	suite.NoError(err)
+	suite.False(blocked)
+
+	err = suite.db.CreateDomainBlock(ctx, domainBlock)
+	suite.NoError(err)
+
+	// Start with the base block domain
+	domain := domainBlock.Domain
+
+	for _, part := range []string{"extra", "domain", "parts"} {
+		// Prepend the next domain part
+		domain = part + "." + domain
+
+		// Check that domain block is wildcarded for this subdomain
+		blocked, err = suite.db.IsDomainBlocked(ctx, domainBlock.Domain)
+		suite.NoError(err)
+		suite.True(blocked)
+	}
+}
+
 func (suite *DomainTestSuite) TestIsDomainBlockedNonASCII() {
 	ctx := context.Background()
 
