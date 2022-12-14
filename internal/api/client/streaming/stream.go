@@ -39,7 +39,7 @@ var (
 		// we expect cors requests (via eg., pinafore.social) so be lenient
 		CheckOrigin: func(r *http.Request) bool { return true },
 	}
-	noTokenError = fmt.Errorf("no access token provided under query key %s or under header %s", AccessTokenQueryKey, AccessTokenHeader)
+	errNoToken = fmt.Errorf("no access token provided under query key %s or under header %s", AccessTokenQueryKey, AccessTokenHeader)
 )
 
 // StreamGETHandler swagger:operation GET /api/v1/streaming streamGet
@@ -159,7 +159,7 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 		accessToken = t
 	} else {
 		// no token
-		err := noTokenError
+		err := errNoToken
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
