@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"time"
 
+	"codeberg.org/gruf/go-bytesize"
 	"codeberg.org/gruf/go-debug"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -33,11 +34,12 @@ import (
 )
 
 const (
-	readTimeout       = 60 * time.Second
-	writeTimeout      = 30 * time.Second
-	idleTimeout       = 30 * time.Second
-	readHeaderTimeout = 30 * time.Second
-	shutdownTimeout   = 30 * time.Second
+	readTimeout        = 60 * time.Second
+	writeTimeout       = 30 * time.Second
+	idleTimeout        = 30 * time.Second
+	readHeaderTimeout  = 30 * time.Second
+	shutdownTimeout    = 30 * time.Second
+	maxMultipartMemory = int64(8 * bytesize.MiB)
 )
 
 // Router provides the REST interface for gotosocial, using gin.
@@ -158,9 +160,7 @@ func New(ctx context.Context) (Router, error) {
 
 	// create the actual engine here -- this is the core request routing handler for gts
 	engine := gin.New()
-
-	// 8 MiB
-	engine.MaxMultipartMemory = 8 << 20
+	engine.MaxMultipartMemory = maxMultipartMemory
 
 	// set up IP forwarding via x-forward-* headers.
 	trustedProxies := config.GetTrustedProxies()
