@@ -46,8 +46,9 @@ type Status struct {
 	// example: unlisted
 	Visibility Visibility `json:"visibility"`
 	// Primary language of this status (ISO 639 Part 1 two-letter language code).
+	// Will be null if language is not known.
 	// example: en
-	Language string `json:"language"`
+	Language *string `json:"language"`
 	// ActivityPub URI of the status. Equivalent to the status's activitypub ID.
 	// example: https://example.org/users/some_user/statuses/01FBVD42CQ3ZEEVMW180SBX03B
 	URI string `json:"uri"`

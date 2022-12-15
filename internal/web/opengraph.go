@@ -107,7 +107,9 @@ func (og *ogMeta) withStatus(status *apimodel.Status) *ogMeta {
 		og.Description = parseDescription(status.Text)
 	}
 
-	og.Locale = status.Language
+	if status.Language != nil {
+		og.Locale = *status.Language
+	}
 	og.ResourceType = "article"
 	og.Title = "Post by " + parseTitle(status.Account, og.SiteName)
 	og.URL = status.URL
