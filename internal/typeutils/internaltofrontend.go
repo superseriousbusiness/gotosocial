@@ -508,6 +508,11 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		interacts = &statusInteractions{}
 	}
 
+	var language *string
+	if s.Language != "" {
+		language = &s.Language
+	}
+
 	apiStatus := &apimodel.Status{
 		ID:                 s.ID,
 		CreatedAt:          util.FormatISO8601(s.CreatedAt),
@@ -516,7 +521,7 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		Sensitive:          *s.Sensitive,
 		SpoilerText:        s.ContentWarning,
 		Visibility:         c.VisToAPIVis(ctx, s.Visibility),
-		Language:           s.Language,
+		Language:           language,
 		URI:                s.URI,
 		URL:                s.URL,
 		RepliesCount:       repliesCount,

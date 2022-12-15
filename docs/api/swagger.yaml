@@ -1575,7 +1575,9 @@ definitions:
                 type: string
                 x-go-name: InReplyToID
             language:
-                description: Primary language of this status (ISO 639 Part 1 two-letter language code).
+                description: |-
+                    Primary language of this status (ISO 639 Part 1 two-letter language code).
+                    Will be null if language is not known.
                 example: en
                 type: string
                 x-go-name: Language
@@ -1802,7 +1804,9 @@ definitions:
                 type: string
                 x-go-name: InReplyToID
             language:
-                description: Primary language of this status (ISO 639 Part 1 two-letter language code).
+                description: |-
+                    Primary language of this status (ISO 639 Part 1 two-letter language code).
+                    Will be null if language is not known.
                 example: en
                 type: string
                 x-go-name: Language
