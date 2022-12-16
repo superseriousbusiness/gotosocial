@@ -30,7 +30,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
 	mediamodule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -158,12 +157,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessful() {
 	ctx.Request = httptest.NewRequest(http.MethodPost, "http://localhost:8080/api/v1/media", bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 	ctx.Request.Header.Set("accept", "application/json")
-	ctx.Params = gin.Params{
-		gin.Param{
-			Key:   mediamodule.APIVersionKey,
-			Value: "v1",
-		},
-	}
+	ctx.AddParam(mediamodule.APIVersionKey, mediamodule.APIv1)
 
 	// do the actual request
 	suite.mediaModule.MediaCreatePOSTHandler(ctx)
@@ -252,12 +246,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessfulV2() {
 	ctx.Request = httptest.NewRequest(http.MethodPost, "http://localhost:8080/api/v2/media", bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 	ctx.Request.Header.Set("accept", "application/json")
-	ctx.Params = gin.Params{
-		gin.Param{
-			Key:   mediamodule.APIVersionKey,
-			Value: "v2",
-		},
-	}
+	ctx.AddParam(mediamodule.APIVersionKey, mediamodule.APIv2)
 
 	// do the actual request
 	suite.mediaModule.MediaCreatePOSTHandler(ctx)
@@ -342,12 +331,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateLongDescription() {
 	ctx.Request = httptest.NewRequest(http.MethodPost, "http://localhost:8080/api/v1/media", bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 	ctx.Request.Header.Set("accept", "application/json")
-	ctx.Params = gin.Params{
-		gin.Param{
-			Key:   mediamodule.APIVersionKey,
-			Value: "v1",
-		},
-	}
+	ctx.AddParam(mediamodule.APIVersionKey, mediamodule.APIv1)
 
 	// do the actual request
 	suite.mediaModule.MediaCreatePOSTHandler(ctx)
@@ -388,12 +372,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateTooShortDescription() {
 	ctx.Request = httptest.NewRequest(http.MethodPost, "http://localhost:8080/api/v1/media", bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 	ctx.Request.Header.Set("accept", "application/json")
-	ctx.Params = gin.Params{
-		gin.Param{
-			Key:   mediamodule.APIVersionKey,
-			Value: "v1",
-		},
-	}
+	ctx.AddParam(mediamodule.APIVersionKey, mediamodule.APIv1)
 
 	// do the actual request
 	suite.mediaModule.MediaCreatePOSTHandler(ctx)

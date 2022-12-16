@@ -99,6 +99,12 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) MediaPUTHandler(c *gin.Context) {
+	if apiVersion := c.Param(APIVersionKey); apiVersion != APIv1 {
+		err := errors.New("api version must be one v1 for this path")
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err, err.Error()), m.processor.InstanceGet)
+		return
+	}
+
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)

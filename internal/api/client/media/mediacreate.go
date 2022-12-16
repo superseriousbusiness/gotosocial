@@ -94,6 +94,13 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
+	apiVersion := c.Param(APIVersionKey)
+	if apiVersion != APIv1 && apiVersion != APIv2 {
+		err := errors.New("api version must be one of v1 or v2 for this path")
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err, err.Error()), m.processor.InstanceGet)
+		return
+	}
+
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
@@ -102,13 +109,6 @@ func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
 
 	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
-		return
-	}
-
-	apiVersion := c.Param(APIVersionKey)
-	if apiVersion != "v1" && apiVersion != "v2" {
-		err := errors.New("api version must be one of v1 or v2")
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
@@ -129,7 +129,7 @@ func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	if apiVersion == "v2" {
+	if apiVersion == APIv2 {
 		// the mastodon v2 media API specifies that the URL should be null
 		// and that the client should call /api/v1/media/:id to get the URL
 		//

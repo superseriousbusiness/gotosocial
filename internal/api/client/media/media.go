@@ -26,10 +26,12 @@ import (
 )
 
 const (
-	IDKey                  = "id"                                // IDKey is the key for media attachment IDs
-	APIVersionKey          = "api_version"                       // APIVersionKey is the key for which version of the API to use (v1 or v2)
-	BasePathWithAPIVersion = "/api/:" + APIVersionKey + "/media" // BasePathWithAPIVersion is the base API path for making media requests through v1 or v2 of the api (for mastodon API compatibility)
-	BasePathWithIDV1       = "/api/v1/media/:" + IDKey           // BasePathWithID corresponds to a media attachment with the given ID
+	IDKey            = "id"                            // IDKey is the key for media attachment IDs
+	APIVersionKey    = "api_version"                   // APIVersionKey is the key for which version of the API to use (v1 or v2)
+	APIv1            = "v1"                            // APIV1 corresponds to version 1 of the api
+	APIv2            = "v2"                            // APIV2 corresponds to version 2 of the api
+	BasePath         = "/:" + APIVersionKey + "/media" // BasePath is the base API path for making media requests through v1 or v2 of the api (for mastodon API compatibility)
+	AttachmentWithID = BasePath + "/:" + IDKey         // BasePathWithID corresponds to a media attachment with the given ID
 )
 
 type Module struct {
@@ -43,7 +45,7 @@ func New(processor processing.Processor) *Module {
 }
 
 func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
-	attachHandler(http.MethodPost, BasePathWithAPIVersion, m.MediaCreatePOSTHandler)
-	attachHandler(http.MethodGet, BasePathWithIDV1, m.MediaGETHandler)
-	attachHandler(http.MethodPut, BasePathWithIDV1, m.MediaPUTHandler)
+	attachHandler(http.MethodPost, BasePath, m.MediaCreatePOSTHandler)
+	attachHandler(http.MethodGet, AttachmentWithID, m.MediaGETHandler)
+	attachHandler(http.MethodPut, AttachmentWithID, m.MediaPUTHandler)
 }

@@ -28,7 +28,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
 	mediamodule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -148,12 +147,8 @@ func (suite *MediaUpdateTestSuite) TestUpdateImage() {
 	ctx.Request = httptest.NewRequest(http.MethodPut, fmt.Sprintf("http://localhost:8080/api/v1/media/%s", toUpdate.ID), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 	ctx.Request.Header.Set("accept", "application/json")
-	ctx.Params = gin.Params{
-		gin.Param{
-			Key:   mediamodule.IDKey,
-			Value: toUpdate.ID,
-		},
-	}
+	ctx.AddParam(mediamodule.APIVersionKey, mediamodule.APIv1)
+	ctx.AddParam(mediamodule.IDKey, toUpdate.ID)
 
 	// do the actual request
 	suite.mediaModule.MediaPUTHandler(ctx)
@@ -213,12 +208,8 @@ func (suite *MediaUpdateTestSuite) TestUpdateImageShortDescription() {
 	ctx.Request = httptest.NewRequest(http.MethodPut, fmt.Sprintf("http://localhost:8080/api/v1/media/%s", toUpdate.ID), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 	ctx.Request.Header.Set("accept", "application/json")
-	ctx.Params = gin.Params{
-		gin.Param{
-			Key:   mediamodule.IDKey,
-			Value: toUpdate.ID,
-		},
-	}
+	ctx.AddParam(mediamodule.APIVersionKey, mediamodule.APIv1)
+	ctx.AddParam(mediamodule.IDKey, toUpdate.ID)
 
 	// do the actual request
 	suite.mediaModule.MediaPUTHandler(ctx)
