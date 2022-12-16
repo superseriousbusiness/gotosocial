@@ -21,61 +21,22 @@ package text
 import (
 	"bytes"
 	"context"
-	"io"
 	"strings"
 
-	"github.com/russross/blackfriday/v2"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/tdewolff/minify/v2"
-	"github.com/tdewolff/minify/v2/html"
+	minifyHtml "github.com/tdewolff/minify/v2/html"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/renderer/html"
 )
 
 var (
-	bfExtensions = blackfriday.NoIntraEmphasis | blackfriday.FencedCode | blackfriday.Autolink | blackfriday.Strikethrough | blackfriday.SpaceHeadings | blackfriday.HardLineBreak
-	m            *minify.M
+	m *minify.M
 )
 
-type renderer struct {
-	f        *formatter
-	ctx      context.Context
-	mentions []*gtsmodel.Mention
-	tags     []*gtsmodel.Tag
-	blackfriday.HTMLRenderer
-}
-
-func (r *renderer) RenderNode(w io.Writer, node *blackfriday.Node, entering bool) blackfriday.WalkStatus {
-	if node.Type == blackfriday.Text {
-		// call RenderNode to do the html escaping
-		var buff bytes.Buffer
-		status := r.HTMLRenderer.RenderNode(&buff, node, entering)
-
-		html := buff.String()
-		html = r.f.ReplaceTags(r.ctx, html, r.tags)
-		html = r.f.ReplaceMentions(r.ctx, html, r.mentions)
-
-		// we don't have much recourse if this fails
-		if _, err := io.WriteString(w, html); err != nil {
-			log.Errorf("error outputting markdown text: %s", err)
-		}
-		return status
-	}
-	return r.HTMLRenderer.RenderNode(w, node, entering)
-}
-
 func (f *formatter) FromMarkdown(ctx context.Context, markdownText string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag, emojis []*gtsmodel.Emoji) string {
-
-	renderer := &renderer{
-		f:        f,
-		ctx:      ctx,
-		mentions: mentions,
-		tags:     tags,
-		HTMLRenderer: *blackfriday.NewHTMLRenderer(blackfriday.HTMLRendererParameters{
-			// same as blackfriday.CommonHTMLFlags, but with Smartypants disabled
-			// ref: https://github.com/superseriousbusiness/gotosocial/issues/1028
-			Flags: blackfriday.UseXHTML,
-		}),
-	}
 
 	// Temporarily replace all found emoji shortcodes in the markdown text with
 	// their ID so that they're not parsed as anything by the markdown parser -
@@ -89,8 +50,25 @@ func (f *formatter) FromMarkdown(ctx context.Context, markdownText string, menti
 	}
 
 	// parse markdown text into html, using custom renderer to add hashtag/mention links
-	htmlContentBytes := blackfriday.Run([]byte(markdownText), blackfriday.WithExtensions(bfExtensions), blackfriday.WithRenderer(renderer))
-	htmlContent := string(htmlContentBytes)
+	md := goldmark.New(
+		goldmark.WithRendererOptions(
+			html.WithXHTML(),
+			html.WithHardWraps(),
+			html.WithUnsafe(), // allows raw HTML
+		),
+		goldmark.WithExtensions(
+			&customRenderer{f, ctx, mentions, tags},
+			extension.Linkify, // turns URLs into links
+			extension.Strikethrough,
+		),
+	)
+
+	var htmlContentBytes bytes.Buffer
+	err := md.Convert([]byte(markdownText), &htmlContentBytes)
+	if err != nil {
+		log.Errorf("error rendering markdown to HTML: %s", err)
+	}
+	htmlContent := htmlContentBytes.String()
 
 	// Replace emoji IDs in the parsed html content with their shortcodes again
 	for _, e := range emojis {
@@ -102,7 +80,7 @@ func (f *formatter) FromMarkdown(ctx context.Context, markdownText string, menti
 
 	if m == nil {
 		m = minify.New()
-		m.Add("text/html", &html.Minifier{
+		m.Add("text/html", &minifyHtml.Minifier{
 			KeepEndTags: true,
 			KeepQuotes:  true,
 		})

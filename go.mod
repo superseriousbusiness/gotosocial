@@ -35,7 +35,6 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/oklog/ulid v1.3.1
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.14.0
 	github.com/stretchr/testify v1.8.1
@@ -48,6 +47,7 @@ require (
 	github.com/uptrace/bun/dialect/pgdialect v1.1.9
 	github.com/uptrace/bun/dialect/sqlitedialect v1.1.9
 	github.com/wagslane/go-password-validator v0.3.0
+	github.com/yuin/goldmark v1.5.3
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
 	golang.org/x/image v0.2.0
