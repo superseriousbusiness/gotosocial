@@ -232,6 +232,9 @@ main {
 		}
 
 		input.sensitive-checkbox:checked { /* Media is shown */
+			& ~ .video-play {
+				display: flex;
+			}
 			& ~ .sensitive {
 				.closed {
 					transition: 0.8s;
@@ -254,6 +257,23 @@ main {
 					}
 				}
 			}
+		}
+
+		.video-play {
+			i {
+				align-self: center;
+				display: initial;
+				z-index: 4;
+			}
+			display: none;
+			position: absolute;
+			height: 100%;
+			width: 100%;
+			justify-content: center;
+			align-items: center;
+			font-size: 7em;
+			text-shadow: 0 0 10px black;
+			pointer-events: none;
 		}
 
 		.sensitive {
