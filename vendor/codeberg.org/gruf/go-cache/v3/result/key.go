@@ -27,8 +27,8 @@ func (sk structKeys) get(name string) *structKey {
 
 // generate will calculate and produce a slice of cache keys the given value
 // can be stored under in the, as determined by receiving struct keys.
-func (sk structKeys) generate(a any) []cachedKey {
-	var keys []cachedKey
+func (sk structKeys) generate(a any) []cacheKey {
+	var keys []cacheKey
 
 	// Get reflected value in order
 	// to access the struct fields
@@ -43,8 +43,8 @@ func (sk structKeys) generate(a any) []cachedKey {
 	}
 
 	// Acquire byte buffer
-	buf := bufpool.Get().(*byteutil.Buffer)
-	defer bufpool.Put(buf)
+	buf := getBuf()
+	defer putBuf(buf)
 
 	for i := range sk {
 		// Reset buffer
@@ -68,39 +68,39 @@ func (sk structKeys) generate(a any) []cachedKey {
 		}
 
 		// Append new cached key to slice
-		keys = append(keys, cachedKey{
-			key:   &sk[i],
-			value: string(buf.B), // copy
+		keys = append(keys, cacheKey{
+			info: &sk[i],
+			key:  string(buf.B), // copy
 		})
 	}
 
 	return keys
 }
 
-type cacheKeys []cachedKey
+type cacheKeys []cacheKey
 
 // drop will drop the cachedKey with lookup name from receiving cacheKeys slice.
 func (ck *cacheKeys) drop(name string) {
 	_ = *ck // move out of loop
 	for i := range *ck {
-		if (*ck)[i].key.name == name {
+		if (*ck)[i].info.name == name {
 			(*ck) = append((*ck)[:i], (*ck)[i+1:]...)
 			break
 		}
 	}
 }
 
-// cachedKey represents an actual cached key.
-type cachedKey struct {
-	// key is a reference to the structKey this
+// cacheKey represents an actual cached key.
+type cacheKey struct {
+	// info is a reference to the structKey this
 	// cacheKey is representing. This is a shared
 	// reference and as such only the structKey.pkeys
 	// lookup map is expecting to be modified.
-	key *structKey
+	info *structKey
 
 	// value is the actual string representing
 	// this cache key for hashmap lookups.
-	value string
+	key string
 }
 
 // structKey represents a list of struct fields
@@ -196,9 +196,9 @@ func genKey(parts ...any) string {
 		panic("no key parts provided")
 	}
 
-	// Acquire buffer and reset
-	buf := bufpool.Get().(*byteutil.Buffer)
-	defer bufpool.Put(buf)
+	// Acquire byte buffer
+	buf := getBuf()
+	defer putBuf(buf)
 	buf.Reset()
 
 	// Encode each key part
@@ -222,8 +222,19 @@ func isExported(fnName string) bool {
 
 // bufpool provides a memory pool of byte
 // buffers use when encoding key types.
-var bufpool = sync.Pool{
+var bufPool = sync.Pool{
 	New: func() any {
 		return &byteutil.Buffer{B: make([]byte, 0, 512)}
 	},
+}
+
+func getBuf() *byteutil.Buffer {
+	return bufPool.Get().(*byteutil.Buffer)
+}
+
+func putBuf(buf *byteutil.Buffer) {
+	if buf.Cap() > int(^uint16(0)) {
+		return // drop large bufs
+	}
+	bufPool.Put(buf)
 }

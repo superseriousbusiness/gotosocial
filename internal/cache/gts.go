@@ -185,7 +185,7 @@ func (c *gtsCaches) User() *result.Cache[*gtsmodel.User] {
 }
 
 func (c *gtsCaches) initAccount() {
-	c.account = result.NewSized([]result.Lookup{
+	c.account = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "URI"},
 		{Name: "URL"},
@@ -200,7 +200,7 @@ func (c *gtsCaches) initAccount() {
 }
 
 func (c *gtsCaches) initBlock() {
-	c.block = result.NewSized([]result.Lookup{
+	c.block = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "AccountID.TargetAccountID"},
 		{Name: "URI"},
@@ -220,7 +220,7 @@ func (c *gtsCaches) initDomainBlock() {
 }
 
 func (c *gtsCaches) initEmoji() {
-	c.emoji = result.NewSized([]result.Lookup{
+	c.emoji = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "URI"},
 		{Name: "Shortcode.Domain"},
@@ -234,7 +234,7 @@ func (c *gtsCaches) initEmoji() {
 }
 
 func (c *gtsCaches) initEmojiCategory() {
-	c.emojiCategory = result.NewSized([]result.Lookup{
+	c.emojiCategory = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "Name"},
 	}, func(c1 *gtsmodel.EmojiCategory) *gtsmodel.EmojiCategory {
@@ -246,7 +246,7 @@ func (c *gtsCaches) initEmojiCategory() {
 }
 
 func (c *gtsCaches) initMention() {
-	c.mention = result.NewSized([]result.Lookup{
+	c.mention = result.New([]result.Lookup{
 		{Name: "ID"},
 	}, func(m1 *gtsmodel.Mention) *gtsmodel.Mention {
 		m2 := new(gtsmodel.Mention)
@@ -257,7 +257,7 @@ func (c *gtsCaches) initMention() {
 }
 
 func (c *gtsCaches) initNotification() {
-	c.notification = result.NewSized([]result.Lookup{
+	c.notification = result.New([]result.Lookup{
 		{Name: "ID"},
 	}, func(n1 *gtsmodel.Notification) *gtsmodel.Notification {
 		n2 := new(gtsmodel.Notification)
@@ -268,7 +268,7 @@ func (c *gtsCaches) initNotification() {
 }
 
 func (c *gtsCaches) initStatus() {
-	c.status = result.NewSized([]result.Lookup{
+	c.status = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "URI"},
 		{Name: "URL"},
@@ -282,7 +282,7 @@ func (c *gtsCaches) initStatus() {
 
 // initTombstone will initialize the gtsmodel.Tombstone cache.
 func (c *gtsCaches) initTombstone() {
-	c.tombstone = result.NewSized([]result.Lookup{
+	c.tombstone = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "URI"},
 	}, func(t1 *gtsmodel.Tombstone) *gtsmodel.Tombstone {
@@ -294,7 +294,7 @@ func (c *gtsCaches) initTombstone() {
 }
 
 func (c *gtsCaches) initUser() {
-	c.user = result.NewSized([]result.Lookup{
+	c.user = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "AccountID"},
 		{Name: "Email"},
