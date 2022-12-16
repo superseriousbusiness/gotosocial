@@ -1,10 +1,12 @@
 package result
 
 import (
+	"context"
 	"reflect"
 	"time"
 
 	"codeberg.org/gruf/go-cache/v3/ttl"
+	"codeberg.org/gruf/go-errors/v2"
 )
 
 // Lookup represents a struct object lookup method in the cache.
@@ -16,6 +18,9 @@ type Lookup struct {
 	// AllowZero indicates whether to accept and cache
 	// under zero value keys, otherwise ignore them.
 	AllowZero bool
+
+	// TODO: support toggling case sensitive lookups.
+	// CaseSensitive bool
 }
 
 // Cache provides a means of caching value structures, along with
@@ -24,17 +29,13 @@ type Lookup struct {
 type Cache[Value any] struct {
 	cache   ttl.Cache[int64, result[Value]] // underlying result cache
 	lookups structKeys                      // pre-determined struct lookups
+	ignore  func(error) bool                // determines cacheable errors
 	copy    func(Value) Value               // copies a Value type
 	next    int64                           // update key counter
 }
 
-// New returns a new initialized Cache, with given lookups and underlying value copy function.
-func New[Value any](lookups []Lookup, copy func(Value) Value) *Cache[Value] {
-	return NewSized(lookups, copy, 64)
-}
-
-// NewSized returns a new initialized Cache, with given lookups, underlying value copy function and provided capacity.
-func NewSized[Value any](lookups []Lookup, copy func(Value) Value, cap int) *Cache[Value] {
+// New returns a new initialized Cache, with given lookups, underlying value copy function and provided capacity.
+func New[Value any](lookups []Lookup, copy func(Value) Value, cap int) *Cache[Value] {
 	var z Value
 
 	// Determine generic type
@@ -63,6 +64,7 @@ func NewSized[Value any](lookups []Lookup, copy func(Value) Value, cap int) *Cac
 	c.cache.Init(0, cap, 0)
 	c.SetEvictionCallback(nil)
 	c.SetInvalidateCallback(nil)
+	c.IgnoreErrors(nil)
 	return c
 }
 
@@ -93,8 +95,8 @@ func (c *Cache[Value]) SetEvictionCallback(hook func(Value)) {
 	c.cache.SetEvictionCallback(func(item *ttl.Entry[int64, result[Value]]) {
 		for _, key := range item.Value.Keys {
 			// Delete key->pkey lookup
-			pkeys := key.key.pkeys
-			delete(pkeys, key.value)
+			pkeys := key.info.pkeys
+			delete(pkeys, key.key)
 		}
 
 		if item.Value.Error != nil {
@@ -116,8 +118,8 @@ func (c *Cache[Value]) SetInvalidateCallback(hook func(Value)) {
 	c.cache.SetInvalidateCallback(func(item *ttl.Entry[int64, result[Value]]) {
 		for _, key := range item.Value.Keys {
 			// Delete key->pkey lookup
-			pkeys := key.key.pkeys
-			delete(pkeys, key.value)
+			pkeys := key.info.pkeys
+			delete(pkeys, key.key)
 		}
 
 		if item.Value.Error != nil {
@@ -130,7 +132,23 @@ func (c *Cache[Value]) SetInvalidateCallback(hook func(Value)) {
 	})
 }
 
-// Load will attempt to load an existing result from the cacche for the given lookup and key parts, else calling the load function and caching that result.
+// IgnoreErrors allows setting a function hook to determine which error types should / not be cached.
+func (c *Cache[Value]) IgnoreErrors(ignore func(error) bool) {
+	if ignore == nil {
+		ignore = func(err error) bool {
+			return errors.Is(
+				err,
+				context.Canceled,
+				context.DeadlineExceeded,
+			)
+		}
+	}
+	c.cache.Lock()
+	c.ignore = ignore
+	c.cache.Unlock()
+}
+
+// Load will attempt to load an existing result from the cacche for the given lookup and key parts, else calling the provided load function and caching the result.
 func (c *Cache[Value]) Load(lookup string, load func() (Value, error), keyParts ...any) (Value, error) {
 	var (
 		zero Value
@@ -146,7 +164,7 @@ func (c *Cache[Value]) Load(lookup string, load func() (Value, error), keyParts 
 	// Acquire cache lock
 	c.cache.Lock()
 
-	// Look for primary key for cache key
+	// Look for primary cache key
 	pkey, ok := keyInfo.pkeys[ckey]
 
 	if ok {
@@ -159,17 +177,28 @@ func (c *Cache[Value]) Load(lookup string, load func() (Value, error), keyParts 
 	c.cache.Unlock()
 
 	if !ok {
-		// Generate new result from fresh load.
-		res.Value, res.Error = load()
+		// Generate fresh result.
+		value, err := load()
 
-		if res.Error != nil {
+		if err != nil {
+			if c.ignore(err) {
+				// don't cache this error type
+				return zero, err
+			}
+
+			// Store error result.
+			res.Error = err
+
 			// This load returned an error, only
 			// store this item under provided key.
-			res.Keys = []cachedKey{{
-				key:   keyInfo,
-				value: ckey,
+			res.Keys = []cacheKey{{
+				info: keyInfo,
+				key:  ckey,
 			}}
 		} else {
+			// Store value result.
+			res.Value = value
+
 			// This was a successful load, generate keys.
 			res.Keys = c.lookups.generate(res.Value)
 		}
@@ -178,8 +207,8 @@ func (c *Cache[Value]) Load(lookup string, load func() (Value, error), keyParts 
 		c.cache.Lock()
 		defer c.cache.Unlock()
 
-		// Cache this result
-		c.storeResult(res)
+		// Cache result
+		c.store(res)
 	}
 
 	// Catch and return error
@@ -209,8 +238,8 @@ func (c *Cache[Value]) Store(value Value, store func() error) error {
 	c.cache.Lock()
 	defer c.cache.Unlock()
 
-	// Cache this result
-	c.storeResult(result)
+	// Cache result
+	c.store(result)
 
 	return nil
 }
@@ -270,22 +299,13 @@ func (c *Cache[Value]) Clear() {
 	c.cache.Clear()
 }
 
-// Len returns the current length of the cache.
-func (c *Cache[Value]) Len() int {
-	return c.cache.Cache.Len()
-}
-
-// Cap returns the maximum capacity of this result cache.
-func (c *Cache[Value]) Cap() int {
-	return c.cache.Cache.Cap()
-}
-
-func (c *Cache[Value]) storeResult(res result[Value]) {
+// store will cache this result under all of its required cache keys.
+func (c *Cache[Value]) store(res result[Value]) {
 	for _, key := range res.Keys {
-		pkeys := key.key.pkeys
+		pkeys := key.info.pkeys
 
 		// Look for cache primary key
-		pkey, ok := pkeys[key.value]
+		pkey, ok := pkeys[key.key]
 
 		if ok {
 			// Get the overlapping result with this key.
@@ -293,11 +313,11 @@ func (c *Cache[Value]) storeResult(res result[Value]) {
 
 			// From conflicting entry, drop this key, this
 			// will prevent eviction cleanup key confusion.
-			entry.Value.Keys.drop(key.key.name)
+			entry.Value.Keys.drop(key.info.name)
 
 			if len(entry.Value.Keys) == 0 {
 				// We just over-wrote the only lookup key for
-				// this value, so we drop its primary key too
+				// this value, so we drop its primary key too.
 				c.cache.Cache.Delete(pkey)
 			}
 		}
@@ -306,11 +326,14 @@ func (c *Cache[Value]) storeResult(res result[Value]) {
 	// Get primary key
 	pkey := c.next
 	c.next++
+	if pkey > c.next {
+		panic("cache primary key overflow")
+	}
 
 	// Store all primary key lookups
 	for _, key := range res.Keys {
-		pkeys := key.key.pkeys
-		pkeys[key.value] = pkey
+		pkeys := key.info.pkeys
+		pkeys[key.key] = pkey
 	}
 
 	// Store main entry under primary key, using evict hook if needed
