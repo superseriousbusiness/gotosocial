@@ -71,6 +71,12 @@ const (
 	mdMentionAndCodeBlockExpected   = "<p><span class=\"h-card\"><a href=\"http://localhost:8080/@the_mighty_zork\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>the_mighty_zork</span></a></span></p><pre><code>@the_mighty_zork\n</code></pre>"
 	mdWithSmartypants               = "\"you have to quargle the bleepflorp\" they said with 1/2 of nominal speed and 1/3 of the usual glumping"
 	mdWithSmartypantsExpected       = "<p>\"you have to quargle the bleepflorp\" they said with 1/2 of nominal speed and 1/3 of the usual glumping</p>"
+	mdWithAsciiHeart                = "hello <3 old friend <3 i loved u </3 :(( you stole my heart"
+	mdWithAsciiHeartExpected        = "<p>hello &lt;3 old friend &lt;3 i loved u &lt;/3 :(( you stole my heart</p>"
+	mdWithStrikethrough             = "I have ~~mdae~~ made an error"
+	mdWithStrikethroughExpected     = "<p>I have <del>mdae</del> made an error</p>"
+	mdWithLink                      = "Check out this code, i heard it was written by a sloth https://github.com/superseriousbusiness/gotosocial"
+	mdWithLinkExpected              = "<p>Check out this code, i heard it was written by a sloth <a href=\"https://github.com/superseriousbusiness/gotosocial\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://github.com/superseriousbusiness/gotosocial</a></p>"
 )
 
 type MarkdownTestSuite struct {
@@ -158,6 +164,21 @@ func (suite *MarkdownTestSuite) TestParseSmartypants() {
 		suite.testMentions["local_user_2_mention_zork"],
 	}, nil, nil)
 	suite.Equal(mdWithSmartypantsExpected, s)
+}
+
+func (suite *MarkdownTestSuite) TestParseAsciiHeart() {
+	s := suite.formatter.FromMarkdown(context.Background(), mdWithAsciiHeart, nil, nil, nil)
+	suite.Equal(mdWithAsciiHeartExpected, s)
+}
+
+func (suite *MarkdownTestSuite) TestParseStrikethrough() {
+	s := suite.formatter.FromMarkdown(context.Background(), mdWithStrikethrough, nil, nil, nil)
+	suite.Equal(mdWithStrikethroughExpected, s)
+}
+
+func (suite *MarkdownTestSuite) TestParseLink() {
+	s := suite.formatter.FromMarkdown(context.Background(), mdWithLink, nil, nil, nil)
+	suite.Equal(mdWithLinkExpected, s)
 }
 
 func TestMarkdownTestSuite(t *testing.T) {

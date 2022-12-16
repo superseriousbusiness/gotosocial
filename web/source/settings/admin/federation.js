@@ -31,6 +31,7 @@ const adminActions = require("../redux/reducers/admin").actions;
 const submit = require("../lib/submit");
 const BackButton = require("../components/back-button");
 const Loading = require("../components/loading");
+const { matchSorter } = require("match-sorter");
 
 const base = "/settings/admin/federation";
 
@@ -79,6 +80,10 @@ function InstanceOverview() {
 	const blockedInstances = Redux.useSelector(state => state.admin.blockedInstances);
 	const [_location, setLocation] = useLocation();
 
+	const filteredInstances = React.useMemo(() => {
+		return matchSorter(Object.values(blockedInstances), filter, {keys: ["domain"]});
+	}, [blockedInstances, filter]);
+
 	function filterFormSubmit(e) {
 		e.preventDefault();
 		setLocation(`${base}/${filter}`);
@@ -96,7 +101,7 @@ function InstanceOverview() {
 					<Link to={`${base}/${filter}`}><a className="button">Add block</a></Link>
 				</form>
 				<div className="list">
-					{Object.values(blockedInstances).filter((a) => a.domain.startsWith(filter)).map((entry) => {
+					{filteredInstances.map((entry) => {
 						return (
 							<Link key={entry.domain} to={`${base}/${entry.domain}`}>
 								<a className="entry nounderline">

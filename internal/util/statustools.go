@@ -78,14 +78,14 @@ func FindHashtagSpansInText(text string) []Span {
 	inTag := false
 
 	for i, r := range text {
-		if r == '#' && isHashtagBoundary(prev) {
+		if r == '#' && IsHashtagBoundary(prev) {
 			// Start of hashtag.
 			inTag = true
 			start = i
-		} else if inTag && !isPermittedInHashtag(r) && !isHashtagBoundary(r) {
+		} else if inTag && !IsPermittedInHashtag(r) && !IsHashtagBoundary(r) {
 			// Inside the hashtag, but it was a phoney, gottem.
 			inTag = false
-		} else if inTag && isHashtagBoundary(r) {
+		} else if inTag && IsHashtagBoundary(r) {
 			// End of hashtag.
 			inTag = false
 			appendTag(&tags, text, start, i)
@@ -119,12 +119,12 @@ func DeriveEmojisFromText(text string) []string {
 	return UniqueStrings(emojis)
 }
 
-func isPermittedInHashtag(r rune) bool {
+func IsPermittedInHashtag(r rune) bool {
 	return unicode.IsLetter(r) || unicode.IsNumber(r)
 }
 
 // Decides where to break before or after a hashtag.
-func isHashtagBoundary(r rune) bool {
+func IsHashtagBoundary(r rune) bool {
 	return r == '#' || // `###lol` should work
 		unicode.IsSpace(r) || // All kinds of Unicode whitespace.
 		unicode.IsControl(r) || // All kinds of control characters, like tab.
