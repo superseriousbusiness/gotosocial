@@ -40,7 +40,7 @@ const lightbox = new PhotoswipeLightbox({
 new PhotoswipeCaptionPlugin(lightbox, {
 	type: 'auto',
 });
-new PhotoswipeVideoPlugin(lightbox, {})
+new PhotoswipeVideoPlugin(lightbox, {});
 
 lightbox.init();
 
