@@ -260,11 +260,21 @@ main {
 		}
 
 		.video-play {
-			i {
+			.icon-span {
 				align-self: center;
 				display: initial;
 				z-index: 4;
+
+				.icon {
+					color: $white1;
+				}
+
+				.icon-bg {
+					color: $gray1;
+					font-size: 1.1em;
+				}
 			}
+
 			display: none;
 			position: absolute;
 			height: 100%;
@@ -272,7 +282,6 @@ main {
 			justify-content: center;
 			align-items: center;
 			font-size: 7em;
-			text-shadow: 0 0 10px black;
 			pointer-events: none;
 		}
 

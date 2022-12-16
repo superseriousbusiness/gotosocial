@@ -37,7 +37,10 @@
 			</div>
 			{{ if eq .Type "video" }}
 			<div class="video-play">
-					<i class="fa fa-play-circle" title="Play Video"></i>
+				<span class="icon-span fa-stack" aria-hidden="true">
+					<i class="icon-bg fa fa-fw fa-circle fa-stack-1x"></i>
+					<i class="icon fa fa-fw fa-play-circle fa-stack-1x"></i>
+				</span>
 			</div>
 			{{ end }}
 			<a href="{{.URL}}"
