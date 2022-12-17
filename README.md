@@ -42,7 +42,7 @@ Here's a screenshot of the instance landing page!
 - [Credits](#credits)
   - [Libraries](#libraries)
   - [Image Attribution](#image-attribution)
-  - [Developers](#developers)
+  - [Team](#team)
   - [Special Thanks](#special-thanks)
 - [Sponsorship + Funding](#sponsorship--funding)
   - [OpenCollective](#opencollective)
@@ -210,6 +210,7 @@ For bugs and feature requests, please check to see if there's [already an issue]
 
 The following libraries and frameworks are used by GoToSocial, with gratitude 💕
 
+- [abema/go-mp4](https://github.com/abema/go-mp4); mp4 parsing. [MIT License](https://spdx.org/licenses/MIT.html).
 - [buckket/go-blurhash](https://github.com/buckket/go-blurhash); used for generating image blurhashes. [GPL-3.0 License](https://spdx.org/licenses/GPL-3.0-only.html).
 - [coreos/go-oidc](https://github.com/coreos/go-oidc); OIDC client library. [Apache-2.0 License](https://spdx.org/licenses/Apache-2.0.html).
 - [disintegration/imaging](https://github.com/disintegration/imaging); image resizing. [MIT License](https://spdx.org/licenses/MIT.html).

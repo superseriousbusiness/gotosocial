@@ -37,6 +37,7 @@ func AllSupportedMIMETypes() []string {
 		mimeImageGif,
 		mimeImagePng,
 		mimeImageWebp,
+		mimeVideoMp4,
 	}
 }
 
@@ -61,16 +62,10 @@ func parseContentType(fileHeader []byte) (string, error) {
 	return kind.MIME.Value, nil
 }
 
-// supportedImage checks mime type of an image against a slice of accepted types,
-// and returns True if the mime type is accepted.
-func supportedImage(mimeType string) bool {
-	acceptedImageTypes := []string{
-		mimeImageJpeg,
-		mimeImageGif,
-		mimeImagePng,
-		mimeImageWebp,
-	}
-	for _, accepted := range acceptedImageTypes {
+// supportedAttachment checks mime type of an attachment against a
+// slice of accepted types, and returns True if the mime type is accepted.
+func supportedAttachment(mimeType string) bool {
+	for _, accepted := range AllSupportedMIMETypes() {
 		if mimeType == accepted {
 			return true
 		}

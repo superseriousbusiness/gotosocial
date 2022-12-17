@@ -34,6 +34,7 @@ const maxFileHeaderBytes = 261
 // mime consts
 const (
 	mimeImage = "image"
+	mimeVideo = "video"
 
 	mimeJpeg      = "jpeg"
 	mimeImageJpeg = mimeImage + "/" + mimeJpeg
@@ -46,6 +47,9 @@ const (
 
 	mimeWebp      = "webp"
 	mimeImageWebp = mimeImage + "/" + mimeWebp
+
+	mimeMp4      = "mp4"
+	mimeVideoMp4 = mimeVideo + "/" + mimeMp4
 )
 
 type processState int32
@@ -128,3 +132,12 @@ type DataFunc func(ctx context.Context) (reader io.ReadCloser, fileSize int64, e
 //
 // This can be set to nil, and will then not be executed.
 type PostDataCallbackFunc func(ctx context.Context) error
+
+type mediaMeta struct {
+	width    int
+	height   int
+	size     int
+	aspect   float64
+	blurhash string
+	small    []byte
+}
