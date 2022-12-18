@@ -175,11 +175,17 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		data = func(innerCtx context.Context) (io.ReadCloser, int64, error) {
 			t, err := p.transportController.NewTransportForUsername(innerCtx, requestingUsername)
 			if err != nil {
+				if pipeErr := pipeReader.Close(); pipeErr != nil {
+					log.Errorf("error closing pipeReader: %s", pipeErr)
+				}
 				return nil, 0, err
 			}
 
 			readCloser, fileSize, err := t.DereferenceMedia(transport.WithFastfail(innerCtx), remoteMediaIRI)
 			if err != nil {
+				if pipeErr := pipeReader.Close(); pipeErr != nil {
+					log.Errorf("error closing pipeReader: %s", pipeErr)
+				}
 				return nil, 0, err
 			}
 
