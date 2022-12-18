@@ -163,15 +163,27 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		//                                   ▼
 		//                            instance storage
 
-		// Buffer each end of the pipe, so that if the caller drops the connection during the flow, the tee
-		// reader can continue without having to worry about tee-ing into a closed or blocked pipe.
+		// This pipe will connect the caller to the in-process media retrieval...
 		pipeReader, pipeWriter := io.Pipe()
-		bufferedWriter := bufio.NewWriterSize(pipeWriter, int(attachmentContent.ContentLength))
-		bufferedReader := bufio.NewReaderSize(pipeReader, int(attachmentContent.ContentLength))
 
-		// the caller will read from the buffered reader, so it doesn't matter if they drop out without reading everything
-		attachmentContent.Content = io.NopCloser(bufferedReader)
+		// Buffer the writer side of the pipe, so that if the caller drops
+		// the connection during the flow, the media download can continue
+		// without worrying about trying to push into a blocked pipe.
+		bufferedPipeWriter := bufio.NewWriterSize(pipeWriter, int(attachmentContent.ContentLength))
 
+		// Buffer the reader side of the pipe too, so that if the caller can't
+		// read bytes as fast as the media processor can, they won't get
+		// an EOF before they're finished reading everything.
+		bufferedPipeReader := bufio.NewReaderSize(pipeReader, int(attachmentContent.ContentLength))
+
+		// Pass the buffered reader side of the pipe to the caller to slurp from.
+		attachmentContent.Content = io.NopCloser(bufferedPipeReader)
+
+		// Create a data function which injects the writer end of the pipe
+		// into the data retrieval process. If something goes wrong while
+		// doing the data retrieval, we hang up the underlying pipeReader
+		// to indicate to the caller that no data is available. It's up to
+		// the caller of this processor function to handle that gracefully.
 		data = func(innerCtx context.Context) (io.ReadCloser, int64, error) {
 			t, err := p.transportController.NewTransportForUsername(innerCtx, requestingUsername)
 			if err != nil {
@@ -189,29 +201,31 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 				return nil, 0, err
 			}
 
-			// Make a TeeReader so that everything read from the readCloser by the media manager will be written into the bufferedWriter.
-			// We wrap this in a teeReadCloser which implements io.ReadCloser, so that whoever uses the teeReader can close the readCloser
-			// when they're done with it.
-			trc := teeReadCloser{
-				teeReader: io.TeeReader(readCloser, bufferedWriter),
-				close:     readCloser.Close,
-			}
+			// Make a TeeReader so that everything read from the readCloser,
+			// aka the remote instance, will also be written into the bufferedPipeWriter,
+			// which the caller is listening on via the pipe we created.
+			teeReader := io.TeeReader(readCloser, bufferedPipeWriter)
 
-			return trc, fileSize, nil
+			// We wrap this in a teeReadCloser (which implements io.ReadCloser),
+			// so that whoever uses the teeReader can close the readCloser
+			// when they're done with it.
+			return teeReadCloser{
+				teeReader: teeReader,
+				close:     readCloser.Close,
+			}, fileSize, nil
 		}
 
-		// close the pipewriter after data has been piped into it, so the reader on the other side doesn't block;
-		// we don't need to close the reader here because that's the caller's responsibility
+		// Flush + close the pipewriter after data has been piped into
+		// it, so the reader on the other side doesn't keep waiting.
+		//
+		// It's the caller's responsibility to close the reader.
 		postDataCallback = func(innerCtx context.Context) error {
-			// close the underlying pipe writer when we're done with it
 			defer func() {
 				if err := pipeWriter.Close(); err != nil {
-					log.Errorf("getAttachmentContent: error closing pipeWriter: %s", err)
+					log.Errorf("error flushing bufferedPipeWriter: %s", err)
 				}
 			}()
-
-			// and flush the buffered writer into the buffer of the reader
-			return bufferedWriter.Flush()
+			return bufferedPipeWriter.Flush()
 		}
 	}
 
