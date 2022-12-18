@@ -19,7 +19,9 @@
 package fileserver
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -120,5 +122,14 @@ func (m *FileServer) ServeFile(c *gin.Context) {
 		return
 	}
 
-	c.DataFromReader(http.StatusOK, content.ContentLength, format, content.Content, nil)
+	// try to slurp the first few bytes to make sure we have something
+	b := bytes.NewBuffer(make([]byte, 0, 64))
+	if _, err := io.CopyN(b, content.Content, 64); err != nil {
+		err = fmt.Errorf("ServeFile: error reading from content: %w", err)
+		api.ErrorHandler(c, gtserror.NewErrorNotFound(err, err.Error()), m.processor.InstanceGet)
+		return
+	}
+
+	// we're good, return the slurped bytes + the rest of the content
+	c.DataFromReader(http.StatusOK, content.ContentLength, format, io.MultiReader(b, content.Content), nil)
 }
