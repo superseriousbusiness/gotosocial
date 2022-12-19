@@ -20,196 +20,251 @@ package fileserver_test
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/fileserver"
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/email"
-	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/storage"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type ServeFileTestSuite struct {
-	// standard suite interfaces
-	suite.Suite
-	db           db.DB
-	storage      *storage.Driver
-	federator    federation.Federator
-	tc           typeutils.TypeConverter
-	processor    processing.Processor
-	mediaManager media.Manager
-	oauthServer  oauth.Server
-	emailSender  email.Sender
-
-	// standard suite models
-	testTokens       map[string]*gtsmodel.Token
-	testClients      map[string]*gtsmodel.Client
-	testApplications map[string]*gtsmodel.Application
-	testUsers        map[string]*gtsmodel.User
-	testAccounts     map[string]*gtsmodel.Account
-	testAttachments  map[string]*gtsmodel.MediaAttachment
-
-	// item being tested
-	fileServer *fileserver.FileServer
+	FileserverTestSuite
 }
 
-/*
-	TEST INFRASTRUCTURE
-*/
-
-func (suite *ServeFileTestSuite) SetupSuite() {
-	// setup standard items
-	testrig.InitTestConfig()
-	testrig.InitTestLog()
-
-	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
-	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
-
-	suite.db = testrig.NewTestDB()
-	suite.storage = testrig.NewInMemoryStorage()
-	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
-	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
-
-	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, testrig.NewTestMediaManager(suite.db, suite.storage), clientWorker, fedWorker)
-	suite.tc = testrig.NewTestTypeConverter(suite.db)
-	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
-	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
-
-	// setup module being tested
-	suite.fileServer = fileserver.New(suite.processor).(*fileserver.FileServer)
-}
-
-func (suite *ServeFileTestSuite) TearDownSuite() {
-	if err := suite.db.Stop(context.Background()); err != nil {
-		log.Panicf("error closing db connection: %s", err)
-	}
-}
-
-func (suite *ServeFileTestSuite) SetupTest() {
-	testrig.StandardDBSetup(suite.db, nil)
-	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
-	suite.testTokens = testrig.NewTestTokens()
-	suite.testClients = testrig.NewTestClients()
-	suite.testApplications = testrig.NewTestApplications()
-	suite.testUsers = testrig.NewTestUsers()
-	suite.testAccounts = testrig.NewTestAccounts()
-	suite.testAttachments = testrig.NewTestAttachments()
-}
-
-func (suite *ServeFileTestSuite) TearDownTest() {
-	testrig.StandardDBTeardown(suite.db)
-	testrig.StandardStorageTeardown(suite.storage)
-}
-
-/*
-	ACTUAL TESTS
-*/
-
-func (suite *ServeFileTestSuite) TestServeOriginalFileSuccessful() {
-	targetAttachment, ok := suite.testAttachments["admin_account_status_1_attachment_1"]
-	suite.True(ok)
-	suite.NotNil(targetAttachment)
-
+// GetFile is just a convenience function to save repetition in this test suite.
+// It takes the required params to serve a file, calls the handler, and returns
+// the http status code, the response headers, and the parsed body bytes.
+func (suite *ServeFileTestSuite) GetFile(
+	accountID string,
+	mediaType media.Type,
+	mediaSize media.Size,
+	filename string,
+) (code int, headers http.Header, body []byte) {
 	recorder := httptest.NewRecorder()
-	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Request = httptest.NewRequest(http.MethodGet, targetAttachment.URL, nil)
-	ctx.Request.Header.Set("accept", "*/*")
 
-	// normally the router would populate these params from the path values,
-	// but because we're calling the ServeFile function directly, we need to set them manually.
-	ctx.Params = gin.Params{
-		gin.Param{
-			Key:   fileserver.AccountIDKey,
-			Value: targetAttachment.AccountID,
-		},
-		gin.Param{
-			Key:   fileserver.MediaTypeKey,
-			Value: string(media.TypeAttachment),
-		},
-		gin.Param{
-			Key:   fileserver.MediaSizeKey,
-			Value: string(media.SizeOriginal),
-		},
-		gin.Param{
-			Key:   fileserver.FileNameKey,
-			Value: fmt.Sprintf("%s.jpeg", targetAttachment.ID),
-		},
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "http://localhost:8080/whatever", nil)
+	ctx.Request.Header.Set("accept", "*/*")
+	ctx.AddParam(fileserver.AccountIDKey, accountID)
+	ctx.AddParam(fileserver.MediaTypeKey, string(mediaType))
+	ctx.AddParam(fileserver.MediaSizeKey, string(mediaSize))
+	ctx.AddParam(fileserver.FileNameKey, filename)
+
+	suite.fileServer.ServeFile(ctx)
+	code = recorder.Code
+	headers = recorder.Result().Header
+
+	var err error
+	body, err = ioutil.ReadAll(recorder.Body)
+	if err != nil {
+		suite.FailNow(err.Error())
 	}
 
-	// call the function we're testing and check status code
-	suite.fileServer.ServeFile(ctx)
-	suite.EqualValues(http.StatusOK, recorder.Code)
-	suite.EqualValues("image/jpeg", recorder.Header().Get("content-type"))
-
-	b, err := ioutil.ReadAll(recorder.Body)
-	suite.NoError(err)
-	suite.NotNil(b)
-
-	fileInStorage, err := suite.storage.Get(ctx, targetAttachment.File.Path)
-	suite.NoError(err)
-	suite.NotNil(fileInStorage)
-	suite.Equal(b, fileInStorage)
+	return
 }
 
-func (suite *ServeFileTestSuite) TestServeSmallFileSuccessful() {
-	targetAttachment, ok := suite.testAttachments["admin_account_status_1_attachment_1"]
-	suite.True(ok)
-	suite.NotNil(targetAttachment)
+// UncacheAttachment is a convenience function that uncaches the targetAttachment by
+// removing its associated files from storage, and updating the database.
+func (suite *ServeFileTestSuite) UncacheAttachment(targetAttachment *gtsmodel.MediaAttachment) {
+	ctx := context.Background()
 
-	recorder := httptest.NewRecorder()
-	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Request = httptest.NewRequest(http.MethodGet, targetAttachment.Thumbnail.URL, nil)
-	ctx.Request.Header.Set("accept", "*/*")
+	cached := false
+	targetAttachment.Cached = &cached
 
-	// normally the router would populate these params from the path values,
-	// but because we're calling the ServeFile function directly, we need to set them manually.
-	ctx.Params = gin.Params{
-		gin.Param{
-			Key:   fileserver.AccountIDKey,
-			Value: targetAttachment.AccountID,
-		},
-		gin.Param{
-			Key:   fileserver.MediaTypeKey,
-			Value: string(media.TypeAttachment),
-		},
-		gin.Param{
-			Key:   fileserver.MediaSizeKey,
-			Value: string(media.SizeSmall),
-		},
-		gin.Param{
-			Key:   fileserver.FileNameKey,
-			Value: fmt.Sprintf("%s.jpeg", targetAttachment.ID),
-		},
+	if err := suite.db.UpdateByID(ctx, targetAttachment, targetAttachment.ID, "cached"); err != nil {
+		suite.FailNow(err.Error())
+	}
+	if err := suite.storage.Delete(ctx, targetAttachment.File.Path); err != nil {
+		suite.FailNow(err.Error())
+	}
+	if err := suite.storage.Delete(ctx, targetAttachment.Thumbnail.Path); err != nil {
+		suite.FailNow(err.Error())
+	}
+}
+
+func (suite *ServeFileTestSuite) TestServeOriginalLocalFileOK() {
+	targetAttachment := &gtsmodel.MediaAttachment{}
+	*targetAttachment = *suite.testAttachments["admin_account_status_1_attachment_1"]
+	fileInStorage, err := suite.storage.Get(context.Background(), targetAttachment.File.Path)
+	if err != nil {
+		suite.FailNow(err.Error())
 	}
 
-	// call the function we're testing and check status code
-	suite.fileServer.ServeFile(ctx)
-	suite.EqualValues(http.StatusOK, recorder.Code)
-	suite.EqualValues("image/jpeg", recorder.Header().Get("content-type"))
+	code, headers, body := suite.GetFile(
+		targetAttachment.AccountID,
+		media.TypeAttachment,
+		media.SizeOriginal,
+		targetAttachment.ID+".jpeg",
+	)
 
-	b, err := ioutil.ReadAll(recorder.Body)
-	suite.NoError(err)
-	suite.NotNil(b)
+	suite.Equal(http.StatusOK, code)
+	suite.Equal("image/jpeg", headers.Get("content-type"))
+	suite.Equal(fileInStorage, body)
+}
 
-	fileInStorage, err := suite.storage.Get(ctx, targetAttachment.Thumbnail.Path)
-	suite.NoError(err)
-	suite.NotNil(fileInStorage)
-	suite.Equal(b, fileInStorage)
+func (suite *ServeFileTestSuite) TestServeSmallLocalFileOK() {
+	targetAttachment := &gtsmodel.MediaAttachment{}
+	*targetAttachment = *suite.testAttachments["admin_account_status_1_attachment_1"]
+	fileInStorage, err := suite.storage.Get(context.Background(), targetAttachment.Thumbnail.Path)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	code, headers, body := suite.GetFile(
+		targetAttachment.AccountID,
+		media.TypeAttachment,
+		media.SizeSmall,
+		targetAttachment.ID+".jpeg",
+	)
+
+	suite.Equal(http.StatusOK, code)
+	suite.Equal("image/jpeg", headers.Get("content-type"))
+	suite.Equal(fileInStorage, body)
+}
+
+func (suite *ServeFileTestSuite) TestServeOriginalRemoteFileOK() {
+	targetAttachment := &gtsmodel.MediaAttachment{}
+	*targetAttachment = *suite.testAttachments["remote_account_1_status_1_attachment_1"]
+	fileInStorage, err := suite.storage.Get(context.Background(), targetAttachment.File.Path)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	code, headers, body := suite.GetFile(
+		targetAttachment.AccountID,
+		media.TypeAttachment,
+		media.SizeOriginal,
+		targetAttachment.ID+".jpeg",
+	)
+
+	suite.Equal(http.StatusOK, code)
+	suite.Equal("image/jpeg", headers.Get("content-type"))
+	suite.Equal(fileInStorage, body)
+}
+
+func (suite *ServeFileTestSuite) TestServeSmallRemoteFileOK() {
+	targetAttachment := &gtsmodel.MediaAttachment{}
+	*targetAttachment = *suite.testAttachments["remote_account_1_status_1_attachment_1"]
+	fileInStorage, err := suite.storage.Get(context.Background(), targetAttachment.Thumbnail.Path)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	code, headers, body := suite.GetFile(
+		targetAttachment.AccountID,
+		media.TypeAttachment,
+		media.SizeSmall,
+		targetAttachment.ID+".jpeg",
+	)
+
+	suite.Equal(http.StatusOK, code)
+	suite.Equal("image/jpeg", headers.Get("content-type"))
+	suite.Equal(fileInStorage, body)
+}
+
+func (suite *ServeFileTestSuite) TestServeOriginalRemoteFileRecache() {
+	targetAttachment := &gtsmodel.MediaAttachment{}
+	*targetAttachment = *suite.testAttachments["remote_account_1_status_1_attachment_1"]
+	fileInStorage, err := suite.storage.Get(context.Background(), targetAttachment.File.Path)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// uncache the attachment so we'll have to refetch it from the 'remote' instance
+	suite.UncacheAttachment(targetAttachment)
+
+	code, headers, body := suite.GetFile(
+		targetAttachment.AccountID,
+		media.TypeAttachment,
+		media.SizeOriginal,
+		targetAttachment.ID+".jpeg",
+	)
+
+	suite.Equal(http.StatusOK, code)
+	suite.Equal("image/jpeg", headers.Get("content-type"))
+	suite.Equal(fileInStorage, body)
+}
+
+func (suite *ServeFileTestSuite) TestServeSmallRemoteFileRecache() {
+	targetAttachment := &gtsmodel.MediaAttachment{}
+	*targetAttachment = *suite.testAttachments["remote_account_1_status_1_attachment_1"]
+	fileInStorage, err := suite.storage.Get(context.Background(), targetAttachment.Thumbnail.Path)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// uncache the attachment so we'll have to refetch it from the 'remote' instance
+	suite.UncacheAttachment(targetAttachment)
+
+	code, headers, body := suite.GetFile(
+		targetAttachment.AccountID,
+		media.TypeAttachment,
+		media.SizeSmall,
+		targetAttachment.ID+".jpeg",
+	)
+
+	suite.Equal(http.StatusOK, code)
+	suite.Equal("image/jpeg", headers.Get("content-type"))
+	suite.Equal(fileInStorage, body)
+}
+
+func (suite *ServeFileTestSuite) TestServeOriginalRemoteFileRecacheNotFound() {
+	targetAttachment := &gtsmodel.MediaAttachment{}
+	*targetAttachment = *suite.testAttachments["remote_account_1_status_1_attachment_1"]
+
+	// uncache the attachment *and* set the remote URL to something that will return a 404
+	suite.UncacheAttachment(targetAttachment)
+	targetAttachment.RemoteURL = "http://nothing.at.this.url/weeeeeeeee"
+	if err := suite.db.UpdateByID(context.Background(), targetAttachment, targetAttachment.ID, "remote_url"); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	code, _, _ := suite.GetFile(
+		targetAttachment.AccountID,
+		media.TypeAttachment,
+		media.SizeOriginal,
+		targetAttachment.ID+".jpeg",
+	)
+
+	suite.Equal(http.StatusNotFound, code)
+}
+
+func (suite *ServeFileTestSuite) TestServeSmallRemoteFileRecacheNotFound() {
+	targetAttachment := &gtsmodel.MediaAttachment{}
+	*targetAttachment = *suite.testAttachments["remote_account_1_status_1_attachment_1"]
+
+	// uncache the attachment *and* set the remote URL to something that will return a 404
+	suite.UncacheAttachment(targetAttachment)
+	targetAttachment.RemoteURL = "http://nothing.at.this.url/weeeeeeeee"
+	if err := suite.db.UpdateByID(context.Background(), targetAttachment, targetAttachment.ID, "remote_url"); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	code, _, _ := suite.GetFile(
+		targetAttachment.AccountID,
+		media.TypeAttachment,
+		media.SizeSmall,
+		targetAttachment.ID+".jpeg",
+	)
+
+	suite.Equal(http.StatusNotFound, code)
+}
+
+// Callers trying to get some random-ass file that doesn't exist should just get a 404
+func (suite *ServeFileTestSuite) TestServeFileNotFound() {
+	code, _, _ := suite.GetFile(
+		"01GMMY4G9B0QEG0PQK5Q5JGJWZ",
+		media.TypeAttachment,
+		media.SizeOriginal,
+		"01GMMY68Y7E5DJ3CA3Y9SS8524.jpeg",
+	)
+
+	suite.Equal(http.StatusNotFound, code)
 }
 
 func TestServeFileTestSuite(t *testing.T) {
