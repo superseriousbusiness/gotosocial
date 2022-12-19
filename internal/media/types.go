@@ -132,17 +132,3 @@ type DataFunc func(ctx context.Context) (reader io.ReadCloser, fileSize int64, e
 //
 // This can be set to nil, and will then not be executed.
 type PostDataCallbackFunc func(ctx context.Context) error
-
-type mediaMeta struct {
-	width    int
-	height   int
-	size     int
-	aspect   float32
-	blurhash string
-	small    []byte
-
-	// video-specific properties
-	duration  float32
-	framerate float32
-	bitrate   uint64
-}

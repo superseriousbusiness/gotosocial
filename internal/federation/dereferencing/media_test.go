@@ -21,11 +21,11 @@ package dereferencing_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type AttachmentTestSuite struct {
@@ -127,11 +127,7 @@ func (suite *AttachmentTestSuite) TestDereferenceAttachmentAsync() {
 	suite.NoError(err)
 	attachmentID := processingMedia.AttachmentID()
 
-	if !testrig.WaitFor(func() bool {
-		return processingMedia.Finished()
-	}) {
-		suite.FailNow("timed out waiting for media to be processed")
-	}
+	time.Sleep(time.Second * 3)
 
 	// now get the attachment from the database
 	attachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
