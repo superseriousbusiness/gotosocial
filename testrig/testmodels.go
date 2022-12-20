@@ -60,6 +60,14 @@ func StringPtr(in string) *string {
 	return &in
 }
 
+func Float32Ptr(in float32) *float32 {
+	return &in
+}
+
+func Uint64Ptr(in uint64) *uint64 {
+	return &in
+}
+
 // NewTestTokens returns a map of tokens keyed according to which account the token belongs to.
 func NewTestTokens() map[string]*gtsmodel.Token {
 	tokens := map[string]*gtsmodel.Token{
@@ -772,6 +780,58 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Header: FalseBool(),
 			Cached: TrueBool(),
 		},
+		"local_account_1_status_4_attachment_2": {
+			ID:        "01CDR64G398ADCHXK08WWTHEZ5",
+			StatusID:  "01F8MH82FYRXD2RC6108DAJ5HB",
+			URL:       "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01CDR64G398ADCHXK08WWTHEZ5.mp4",
+			RemoteURL: "",
+			CreatedAt: TimeMustParse("2022-06-09T13:12:00Z"),
+			UpdatedAt: TimeMustParse("2022-06-09T13:12:00Z"),
+			Type:      gtsmodel.FileTypeVideo,
+			FileMeta: gtsmodel.FileMeta{
+				Original: gtsmodel.Original{
+					Width:     720,
+					Height:    404,
+					Size:      290880,
+					Aspect:    1.78217821782178,
+					Duration:  Float32Ptr(15.033334),
+					Framerate: Float32Ptr(30.0),
+					Bitrate:   Uint64Ptr(1206522),
+				},
+				Small: gtsmodel.Small{
+					Width:  720,
+					Height: 404,
+					Size:   290880,
+					Aspect: 1.78217821782178,
+				},
+				Focus: gtsmodel.Focus{
+					X: 0,
+					Y: 0,
+				},
+			},
+			AccountID:         "01F8MH1H7YV1Z7D2C8K2730QBF",
+			Description:       "A cow adorably licking another cow!",
+			ScheduledStatusID: "",
+			Blurhash:          "",
+			Processing:        2,
+			File: gtsmodel.File{
+				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01CDR64G398ADCHXK08WWTHEZ5.gif",
+				ContentType: "video/mp4",
+				FileSize:    2273532,
+				UpdatedAt:   TimeMustParse("2022-06-09T13:12:00Z"),
+			},
+			Thumbnail: gtsmodel.Thumbnail{
+				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01CDR64G398ADCHXK08WWTHEZ5.jpeg",
+				ContentType: "image/jpeg",
+				FileSize:    5272,
+				UpdatedAt:   TimeMustParse("2022-06-09T13:12:00Z"),
+				URL:         "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01CDR64G398ADCHXK08WWTHEZ5.jpeg",
+				RemoteURL:   "",
+			},
+			Avatar: FalseBool(),
+			Header: FalseBool(),
+			Cached: TrueBool(),
+		},
 		"local_account_1_unattached_1": {
 			ID:        "01F8MH8RMYQ6MSNY3JM2XT1CQ5",
 			StatusID:  "", // this attachment isn't connected to a status YET
@@ -1209,6 +1269,10 @@ func newTestStoredAttachments() map[string]filenames {
 			Original: "trent-original.gif",
 			Small:    "trent-small.jpeg",
 		},
+		"local_account_1_status_4_attachment_2": {
+			Original: "cowlick-original.mp4",
+			Small:    "cowlick-small.jpeg",
+		},
 		"local_account_1_unattached_1": {
 			Original: "ohyou-original.jpeg",
 			Small:    "ohyou-small.jpeg",
@@ -1434,9 +1498,9 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			ID:                       "01F8MH82FYRXD2RC6108DAJ5HB",
 			URI:                      "http://localhost:8080/users/the_mighty_zork/statuses/01F8MH82FYRXD2RC6108DAJ5HB",
 			URL:                      "http://localhost:8080/@the_mighty_zork/statuses/01F8MH82FYRXD2RC6108DAJ5HB",
-			Content:                  "here's a little gif of trent",
-			Text:                     "here's a little gif of trent",
-			AttachmentIDs:            []string{"01F8MH7TDVANYKWVE8VVKFPJTJ"},
+			Content:                  "here's a little gif of trent.... and also a cow",
+			Text:                     "here's a little gif of trent.... and also a cow",
+			AttachmentIDs:            []string{"01F8MH7TDVANYKWVE8VVKFPJTJ", "01CDR64G398ADCHXK08WWTHEZ5"},
 			CreatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
 			UpdatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
 			Local:                    TrueBool(),
@@ -1444,7 +1508,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			AccountID:                "01F8MH1H7YV1Z7D2C8K2730QBF",
 			InReplyToID:              "",
 			BoostOfID:                "",
-			ContentWarning:           "eye contact, trent reznor gif",
+			ContentWarning:           "eye contact, trent reznor gif, cow",
 			Visibility:               gtsmodel.VisibilityMutualsOnly,
 			Sensitive:                FalseBool(),
 			Language:                 "en",

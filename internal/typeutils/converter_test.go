@@ -469,11 +469,12 @@ const (
 
 type TypeUtilsTestSuite struct {
 	suite.Suite
-	db           db.DB
-	testAccounts map[string]*gtsmodel.Account
-	testStatuses map[string]*gtsmodel.Status
-	testPeople   map[string]vocab.ActivityStreamsPerson
-	testEmojis   map[string]*gtsmodel.Emoji
+	db              db.DB
+	testAccounts    map[string]*gtsmodel.Account
+	testStatuses    map[string]*gtsmodel.Status
+	testAttachments map[string]*gtsmodel.MediaAttachment
+	testPeople      map[string]vocab.ActivityStreamsPerson
+	testEmojis      map[string]*gtsmodel.Emoji
 
 	typeconverter typeutils.TypeConverter
 }
@@ -485,6 +486,7 @@ func (suite *TypeUtilsTestSuite) SetupSuite() {
 	suite.db = testrig.NewTestDB()
 	suite.testAccounts = testrig.NewTestAccounts()
 	suite.testStatuses = testrig.NewTestStatuses()
+	suite.testAttachments = testrig.NewTestAttachments()
 	suite.testPeople = testrig.NewTestFediPeople()
 	suite.testEmojis = testrig.NewTestEmojis()
 	suite.typeconverter = typeutils.NewConverter(suite.db)
