@@ -134,10 +134,13 @@ type DataFunc func(ctx context.Context) (reader io.ReadCloser, fileSize int64, e
 type PostDataCallbackFunc func(ctx context.Context) error
 
 type mediaMeta struct {
-	width    int
-	height   int
-	size     int
-	aspect   float64
-	blurhash string
-	small    []byte
+	width     int
+	height    int
+	size      int
+	aspect    float64
+	duration  float64
+	framerate int
+	bitrate   int
+	blurhash  string
+	small     []byte
 }

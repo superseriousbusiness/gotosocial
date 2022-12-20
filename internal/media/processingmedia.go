@@ -238,6 +238,7 @@ func (p *ProcessingMedia) loadFullSize(ctx context.Context) error {
 			decoded, err = decodeGif(stored)
 		case mimeVideoMp4:
 			decoded, err = decodeVideo(stored, ct)
+			fmt.Printf("\n\n\n%+v\n\n\n", decoded)
 		default:
 			err = fmt.Errorf("loadFullSize: content type %s not a processible image type", ct)
 		}

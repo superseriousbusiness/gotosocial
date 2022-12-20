@@ -20,7 +20,6 @@ package media
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"image"
 	"image/color"
@@ -61,60 +60,49 @@ func decodeVideo(r io.Reader, contentType string) (*mediaMeta, error) {
 		return nil, fmt.Errorf("could not copy video reader into temporary file %s: %w", tempFileName, err)
 	}
 
-	// define some vars we need to pull the width/height out of the video
 	var (
-		height      int
-		width       int
-		readHandler = getReadHandler(&height, &width)
+		width int
+		height int
+		duration float64
+		framerate int
+		bitrate int
 	)
 
-	// do the actual decoding here, providing the temporary file we created as readseeker
-	if _, err := mp4.ReadBoxStructure(tempFile, readHandler); err != nil {
-		return nil, fmt.Errorf("parsing video data: %w", err)
+	probe, err := mp4.Probe(tempFile)
+	if err != nil {
+		return nil, fmt.Errorf("could not probe temporary video file %s: %w", tempFileName, err)
 	}
 
-	// width + height should now be updated by the readHandler
+	duration = float64(float64(probe.Duration) / float64(probe.Timescale))
+
+	for _, t := range probe.Tracks {
+		if t.AVC == nil {
+			continue
+		}
+
+		if w := int(t.AVC.Width); w > width {
+			width = w
+		}
+
+		if h := int(t.AVC.Height); h > height {
+			height = h
+		}
+
+		if br := int(t.Samples.GetBitrate(t.Timescale)); br > bitrate {
+			bitrate = br
+		}
+	}
+
+	// metadata should now be updated by the readHandler
 	return &mediaMeta{
-		width:  width,
-		height: height,
-		size:   height * width,
-		aspect: float64(width) / float64(height),
+		width:     width,
+		height:    height,
+		duration:  duration,
+		framerate: framerate,
+		bitrate:   bitrate,
+		size:      height * width,
+		aspect:    float64(width) / float64(height),
 	}, nil
-}
-
-// getReadHandler returns a handler function that updates the underling
-// values of the given height and width int pointers to the hightest and
-// widest points of the video.
-func getReadHandler(height *int, width *int) func(h *mp4.ReadHandle) (interface{}, error) {
-	return func(rh *mp4.ReadHandle) (interface{}, error) {
-		if rh.BoxInfo.Type == mp4.BoxTypeTkhd() {
-			box, _, err := rh.ReadPayload()
-			if err != nil {
-				return nil, fmt.Errorf("could not read mp4 payload: %w", err)
-			}
-
-			tkhd, ok := box.(*mp4.Tkhd)
-			if !ok {
-				return nil, errors.New("box was not of type *mp4.Tkhd")
-			}
-
-			// if height + width of this box are greater than what
-			// we have stored, then update our stored values
-			if h := int(tkhd.GetHeight()); h > *height {
-				*height = h
-			}
-
-			if w := int(tkhd.GetWidth()); w > *width {
-				*width = w
-			}
-		}
-
-		if rh.BoxInfo.IsSupportedType() {
-			return rh.Expand()
-		}
-
-		return nil, nil
-	}
 }
 
 func deriveThumbnailFromVideo(height int, width int) (*mediaMeta, error) {
