@@ -61,39 +61,45 @@ func decodeVideo(r io.Reader, contentType string) (*mediaMeta, error) {
 	}
 
 	var (
-		width int
-		height int
-		duration float64
-		framerate int
-		bitrate int
+		width     int
+		height    int
+		duration  float32
+		framerate float32
+		bitrate   uint64
 	)
 
-	probe, err := mp4.Probe(tempFile)
+	// probe the video file to extract useful metadata from it; for methodology, see:
+	// https://github.com/abema/go-mp4/blob/7d8e5a7c5e644e0394261b0cf72fef79ce246d31/mp4tool/probe/probe.go#L85-L154
+	info, err := mp4.Probe(tempFile)
 	if err != nil {
 		return nil, fmt.Errorf("could not probe temporary video file %s: %w", tempFileName, err)
 	}
 
-	duration = float64(float64(probe.Duration) / float64(probe.Timescale))
-
-	for _, t := range probe.Tracks {
-		if t.AVC == nil {
+	for _, tr := range info.Tracks {
+		if tr.AVC == nil {
 			continue
 		}
 
-		if w := int(t.AVC.Width); w > width {
+		if w := int(tr.AVC.Width); w > width {
 			width = w
 		}
 
-		if h := int(t.AVC.Height); h > height {
+		if h := int(tr.AVC.Height); h > height {
 			height = h
 		}
 
-		if br := int(t.Samples.GetBitrate(t.Timescale)); br > bitrate {
+		if br := tr.Samples.GetBitrate(tr.Timescale); br > bitrate {
 			bitrate = br
+		} else if br := info.Segments.GetBitrate(tr.TrackID, tr.Timescale); br > bitrate {
+			bitrate = br
+		}
+
+		if d := float32(tr.Duration) / float32(tr.Timescale); d > duration {
+			duration = d
+			framerate = float32(len(tr.Samples)) / duration
 		}
 	}
 
-	// metadata should now be updated by the readHandler
 	return &mediaMeta{
 		width:     width,
 		height:    height,

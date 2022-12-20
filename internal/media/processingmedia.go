@@ -238,7 +238,6 @@ func (p *ProcessingMedia) loadFullSize(ctx context.Context) error {
 			decoded, err = decodeGif(stored)
 		case mimeVideoMp4:
 			decoded, err = decodeVideo(stored, ct)
-			fmt.Printf("\n\n\n%+v\n\n\n", decoded)
 		default:
 			err = fmt.Errorf("loadFullSize: content type %s not a processible image type", ct)
 		}
@@ -250,16 +249,32 @@ func (p *ProcessingMedia) loadFullSize(ctx context.Context) error {
 		}
 
 		// set appropriate fields on the attachment based on the image we derived
+
+		// generic fields
+		p.attachment.File.UpdatedAt = time.Now()
 		p.attachment.FileMeta.Original = gtsmodel.Original{
 			Width:  decoded.width,
 			Height: decoded.height,
 			Size:   decoded.size,
 			Aspect: decoded.aspect,
 		}
-		p.attachment.File.UpdatedAt = time.Now()
-		p.attachment.Processing = gtsmodel.ProcessingStatusProcessed
+
+		// nullable fields
+		if decoded.duration != 0 {
+			i := decoded.duration
+			p.attachment.FileMeta.Original.Duration = &i
+		}
+		if decoded.framerate != 0 {
+			i := decoded.framerate
+			p.attachment.FileMeta.Original.Framerate = &i
+		}
+		if decoded.bitrate != 0 {
+			i := decoded.bitrate
+			p.attachment.FileMeta.Original.Bitrate = &i
+		}
 
 		// we're done processing the full-size image
+		p.attachment.Processing = gtsmodel.ProcessingStatusProcessed
 		atomic.StoreInt32(&p.fullSizeState, int32(complete))
 		log.Tracef("finished processing full size image for attachment %s", p.attachment.URL)
 		fallthrough

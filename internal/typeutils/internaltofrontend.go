@@ -22,6 +22,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -299,24 +300,34 @@ func (c *converter) AttachmentToAPIAttachment(ctx context.Context, a *gtsmodel.M
 	}
 
 	// nullable fields
-	if a.URL != "" {
-		i := a.URL
+	if i := a.URL; i != "" {
 		apiAttachment.URL = &i
 	}
 
-	if a.RemoteURL != "" {
+	if i := a.RemoteURL; i != "" {
 		i := a.RemoteURL
 		apiAttachment.RemoteURL = &i
 	}
 
-	if a.Thumbnail.RemoteURL != "" {
-		i := a.Thumbnail.RemoteURL
+	if i := a.Thumbnail.RemoteURL; i != "" {
 		apiAttachment.PreviewRemoteURL = &i
 	}
 
-	if a.Description != "" {
-		i := a.Description
+	if i := a.Description; i != "" {
 		apiAttachment.Description = &i
+	}
+
+	if i := a.FileMeta.Original.Duration; i != nil {
+		apiAttachment.Meta.Original.Duration = *i
+	}
+
+	if i := a.FileMeta.Original.Framerate; i != nil {
+		round := math.Round(float64(*i))
+		apiAttachment.Meta.Original.FrameRate = fmt.Sprintf("%.f/1", round)
+	}
+
+	if i := a.FileMeta.Original.Bitrate; i != nil {
+		apiAttachment.Meta.Original.Bitrate = int(*i)
 	}
 
 	return apiAttachment, nil
