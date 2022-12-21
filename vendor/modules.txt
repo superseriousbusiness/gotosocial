@@ -13,7 +13,7 @@ codeberg.org/gruf/go-bytesize
 # codeberg.org/gruf/go-byteutil v1.0.2
 ## explicit; go 1.16
 codeberg.org/gruf/go-byteutil
-# codeberg.org/gruf/go-cache/v3 v3.1.8
+# codeberg.org/gruf/go-cache/v3 v3.2.0
 ## explicit; go 1.19
 codeberg.org/gruf/go-cache/v3
 codeberg.org/gruf/go-cache/v3/result
@@ -66,6 +66,11 @@ codeberg.org/gruf/go-sched
 codeberg.org/gruf/go-store/v2/kv
 codeberg.org/gruf/go-store/v2/storage
 codeberg.org/gruf/go-store/v2/util
+# github.com/abema/go-mp4 v0.8.0
+## explicit; go 1.14
+github.com/abema/go-mp4
+github.com/abema/go-mp4/bitio
+github.com/abema/go-mp4/util
 # github.com/aymerick/douceur v0.2.0
 ## explicit
 github.com/aymerick/douceur/css

@@ -19,6 +19,7 @@
 package media_test
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"path"
@@ -143,9 +144,13 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncachedInterrupted() {
 	suite.NotNil(content)
 
 	// only read the first kilobyte and then stop
-	b := make([]byte, 1024)
-	_, err = content.Content.Read(b)
-	suite.NoError(err)
+	b := make([]byte, 0, 1024)
+	if !testrig.WaitFor(func() bool {
+		read, err := io.CopyN(bytes.NewBuffer(b), content.Content, 1024)
+		return err == nil && read == 1024
+	}) {
+		suite.FailNow("timed out trying to read first 1024 bytes")
+	}
 
 	// close the reader
 	suite.NoError(content.Content.Close())

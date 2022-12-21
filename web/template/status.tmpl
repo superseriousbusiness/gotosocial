@@ -22,7 +22,7 @@
 		{{range .}}
 		<div class="media-wrapper">
 			{{if not .Description}}
-			<div class="no-image-desc" aria-hidden="true" ><i class="fa fa-info-circle"></i><span>Missing image description</span></div>
+			<div class="no-image-desc" aria-hidden="true" ><i class="fa fa-info-circle"></i><span>Missing media description</span></div>
 			{{end}}	
 			<input type="checkbox" id="sensitiveMedia-{{.ID}}" class="sensitive-checkbox hidden" {{if not $.Sensitive}}checked{{end}}/>
 			<div class="sensitive">
@@ -35,7 +35,21 @@
 					<label for="sensitiveMedia-{{.ID}}" class="button" role="button" tabindex="0">Show sensitive media</label>
 				</div>
 			</div>
-			<a href="{{.URL}}" target="_blank" {{if .Description}}title="{{.Description}}"{{end}} data-pswp-width="{{.Meta.Original.Width}}px" data-pswp-height="{{.Meta.Original.Height}}px" data-cropped="true">
+			{{ if eq .Type "video" }}
+			<div class="video-play">
+				<span class="icon-span fa-stack" aria-hidden="true">
+					<i class="icon-bg fa fa-fw fa-circle fa-stack-1x"></i>
+					<i class="icon fa fa-fw fa-play-circle fa-stack-1x"></i>
+				</span>
+			</div>
+			{{ end }}
+			<a href="{{.URL}}"
+				 target="_blank"
+				 {{if .Description}}title="{{.Description}}"{{end}}
+				 data-pswp-width="{{.Meta.Original.Width}}px"
+				 data-pswp-height="{{.Meta.Original.Height}}px"
+				 {{if eq .Type "video"}}data-pswp-type="video"{{end}}
+				 data-cropped="true">
 				<img src="{{.PreviewURL}}" {{if .Description}}alt="{{.Description}}"{{end}} data-blurhash="{{.Blurhash}}"/>
 			</a>
 		</div>

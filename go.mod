@@ -5,7 +5,7 @@ go 1.19
 require (
 	codeberg.org/gruf/go-bytesize v1.0.0
 	codeberg.org/gruf/go-byteutil v1.0.2
-	codeberg.org/gruf/go-cache/v3 v3.1.8
+	codeberg.org/gruf/go-cache/v3 v3.2.0
 	codeberg.org/gruf/go-debug v1.2.0
 	codeberg.org/gruf/go-errors/v2 v2.0.2
 	codeberg.org/gruf/go-kv v1.5.2
@@ -13,6 +13,7 @@ require (
 	codeberg.org/gruf/go-mutexes v1.1.4
 	codeberg.org/gruf/go-runners v1.3.1
 	codeberg.org/gruf/go-store/v2 v2.0.10
+	github.com/abema/go-mp4 v0.8.0
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/coreos/go-oidc/v3 v3.4.0
 	github.com/cornelk/hashmap v1.0.8

@@ -21,6 +21,7 @@
 const Photoswipe = require("photoswipe/dist/umd/photoswipe.umd.min.js");
 const PhotoswipeLightbox = require("photoswipe/dist/umd/photoswipe-lightbox.umd.min.js");
 const PhotoswipeCaptionPlugin = require("photoswipe-dynamic-caption-plugin").default;
+const PhotoswipeVideoPlugin = require("photoswipe-video-plugin").default;
 
 let [_, _user, type, id] = window.location.pathname.split("/");
 if (type == "statuses") {
@@ -39,6 +40,7 @@ const lightbox = new PhotoswipeLightbox({
 new PhotoswipeCaptionPlugin(lightbox, {
 	type: 'auto',
 });
+new PhotoswipeVideoPlugin(lightbox, {});
 
 lightbox.init();
 
@@ -46,14 +48,14 @@ Array.from(document.getElementsByClassName("spoiler-label")).forEach((label) => 
 	let checkbox = document.getElementById(label.htmlFor);
 	if (checkbox != undefined) {
 		function update() {
-			if(checkbox.checked) {
+			if (checkbox.checked) {
 				label.innerHTML = "Show more";
 			} else {
 				label.innerHTML = "Show less";
 			}
 		}
 		update();
-	
-		label.addEventListener("click", () => {setTimeout(update, 1);});
+
+		label.addEventListener("click", () => { setTimeout(update, 1); });
 	}
 });
