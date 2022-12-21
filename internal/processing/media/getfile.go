@@ -19,7 +19,6 @@
 package media
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -29,7 +28,7 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/iotools"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
@@ -135,7 +134,6 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 	}
 
 	var data media.DataFunc
-	var postDataCallback media.PostDataCallbackFunc
 
 	if mediaSize == media.SizeSmall {
 		// if it's the thumbnail that's requested then the user will have to wait a bit while we process the
@@ -155,7 +153,7 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		//
 		// this looks a bit like this:
 		//
-		//                http fetch                   buffered pipe
+		//                http fetch                       pipe
 		// remote server ------------> data function ----------------> api caller
 		//                                   |
 		//                                   | tee
@@ -166,18 +164,13 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		// This pipe will connect the caller to the in-process media retrieval...
 		pipeReader, pipeWriter := io.Pipe()
 
-		// Buffer the writer side of the pipe, so that if the caller drops
-		// the connection during the flow, the media download can continue
-		// without worrying about trying to push into a blocked pipe.
-		bufferedPipeWriter := bufio.NewWriterSize(pipeWriter, int(attachmentContent.ContentLength))
+		// Wrap the output pipe to silence any errors during the actual media
+		// streaming process. We catch the error later but they must be silenced
+		// during stream to prevent interruptions to storage of the actual media.
+		silencedWriter := iotools.SilenceWriter(pipeWriter)
 
-		// Buffer the reader side of the pipe too, so that if the caller can't
-		// read bytes as fast as the media processor can, they won't get
-		// an EOF before they're finished reading everything.
-		bufferedPipeReader := bufio.NewReaderSize(pipeReader, int(attachmentContent.ContentLength))
-
-		// Pass the buffered reader side of the pipe to the caller to slurp from.
-		attachmentContent.Content = io.NopCloser(bufferedPipeReader)
+		// Pass the reader side of the pipe to the caller to slurp from.
+		attachmentContent.Content = pipeReader
 
 		// Create a data function which injects the writer end of the pipe
 		// into the data retrieval process. If something goes wrong while
@@ -187,50 +180,39 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		data = func(innerCtx context.Context) (io.ReadCloser, int64, error) {
 			t, err := p.transportController.NewTransportForUsername(innerCtx, requestingUsername)
 			if err != nil {
-				if pipeErr := pipeReader.Close(); pipeErr != nil {
-					log.Errorf("error closing pipeReader: %s", pipeErr)
-				}
+				// propagate the transport error to read end of pipe.
+				_ = pipeWriter.CloseWithError(fmt.Errorf("error getting transport for user: %w", err))
 				return nil, 0, err
 			}
 
 			readCloser, fileSize, err := t.DereferenceMedia(transport.WithFastfail(innerCtx), remoteMediaIRI)
 			if err != nil {
-				if pipeErr := pipeReader.Close(); pipeErr != nil {
-					log.Errorf("error closing pipeReader: %s", pipeErr)
-				}
+				// propagate the dereference error to read end of pipe.
+				_ = pipeWriter.CloseWithError(fmt.Errorf("error dereferencing media: %w", err))
 				return nil, 0, err
 			}
 
 			// Make a TeeReader so that everything read from the readCloser,
-			// aka the remote instance, will also be written into the bufferedPipeWriter,
-			// which the caller is listening on via the pipe we created.
-			teeReader := io.TeeReader(readCloser, bufferedPipeWriter)
+			// aka the remote instance, will also be written into the pipe.
+			teeReader := io.TeeReader(readCloser, silencedWriter)
 
-			// We wrap this in a teeReadCloser (which implements io.ReadCloser),
-			// so that whoever uses the teeReader can close the readCloser
-			// when they're done with it.
-			return teeReadCloser{
-				teeReader: teeReader,
-				close:     readCloser.Close,
-			}, fileSize, nil
-		}
+			// Wrap teereader to implement original readcloser's close,
+			// and also ensuring that we close the pipe from write end.
+			return iotools.ReadFnCloser(teeReader, func() error {
+				defer func() {
+					// We use the error (if any) encountered by the
+					// silenced writer to close connection to make sure it
+					// gets propagated to the attachment.Content reader.
+					_ = pipeWriter.CloseWithError(silencedWriter.Error())
+				}()
 
-		// Flush + close the pipewriter after data has been piped into
-		// it, so the reader on the other side doesn't keep waiting.
-		//
-		// It's the caller's responsibility to close the reader.
-		postDataCallback = func(innerCtx context.Context) error {
-			defer func() {
-				if err := pipeWriter.Close(); err != nil {
-					log.Errorf("error flushing bufferedPipeWriter: %s", err)
-				}
-			}()
-			return bufferedPipeWriter.Flush()
+				return readCloser.Close()
+			}), fileSize, nil
 		}
 	}
 
 	// put the media recached in the queue
-	processingMedia, err := p.mediaManager.RecacheMedia(ctx, data, postDataCallback, wantedMediaID)
+	processingMedia, err := p.mediaManager.RecacheMedia(ctx, data, nil, wantedMediaID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error recaching media: %s", err))
 	}
