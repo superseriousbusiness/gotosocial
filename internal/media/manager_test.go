@@ -528,6 +528,32 @@ func (suite *ManagerTestSuite) TestLongerMp4ProcessBlocking() {
 	suite.Equal(processedThumbnailBytesExpected, processedThumbnailBytes)
 }
 
+func (suite *ManagerTestSuite) TestNotAnMp4ProcessBlocking() {
+	// try to load an 'mp4' that's actually an mkv in disguise
+
+	ctx := context.Background()
+
+	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+		// load bytes from a test video
+		b, err := os.ReadFile("./test/not-an.mp4")
+		if err != nil {
+			panic(err)
+		}
+		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+	}
+
+	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
+
+	// pre processing should go fine but...
+	processingMedia, err := suite.manager.ProcessMedia(ctx, data, nil, accountID, nil)
+	suite.NoError(err)
+
+	// we should get an error while loading
+	attachment, err := processingMedia.LoadAttachment(ctx)
+	suite.EqualError(err, "\"video width could not be discovered\",\"video height could not be discovered\",\"video duration could not be discovered\",\"video framerate could not be discovered\",\"video bitrate could not be discovered\",\"this may not be a valid mp4\"")
+	suite.Nil(attachment)
+}
+
 func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingNoContentLengthGiven() {
 	ctx := context.Background()
 
