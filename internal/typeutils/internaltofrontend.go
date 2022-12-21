@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -800,7 +801,7 @@ func (c *converter) DomainBlockToAPIDomainBlock(ctx context.Context, b *gtsmodel
 
 // convertAttachmentsToAPIAttachments will convert a slice of GTS model attachments to frontend API model attachments, falling back to IDs if no GTS models supplied.
 func (c *converter) convertAttachmentsToAPIAttachments(ctx context.Context, attachments []*gtsmodel.MediaAttachment, attachmentIDs []string) ([]model.Attachment, error) {
-	var errs multiError
+	var errs gtserror.MultiError
 
 	if len(attachments) == 0 {
 		// GTS model attachments were not populated
@@ -837,7 +838,7 @@ func (c *converter) convertAttachmentsToAPIAttachments(ctx context.Context, atta
 
 // convertEmojisToAPIEmojis will convert a slice of GTS model emojis to frontend API model emojis, falling back to IDs if no GTS models supplied.
 func (c *converter) convertEmojisToAPIEmojis(ctx context.Context, emojis []*gtsmodel.Emoji, emojiIDs []string) ([]model.Emoji, error) {
-	var errs multiError
+	var errs gtserror.MultiError
 
 	if len(emojis) == 0 {
 		// GTS model attachments were not populated
@@ -874,7 +875,7 @@ func (c *converter) convertEmojisToAPIEmojis(ctx context.Context, emojis []*gtsm
 
 // convertMentionsToAPIMentions will convert a slice of GTS model mentions to frontend API model mentions, falling back to IDs if no GTS models supplied.
 func (c *converter) convertMentionsToAPIMentions(ctx context.Context, mentions []*gtsmodel.Mention, mentionIDs []string) ([]model.Mention, error) {
-	var errs multiError
+	var errs gtserror.MultiError
 
 	if len(mentions) == 0 {
 		var err error
@@ -906,7 +907,7 @@ func (c *converter) convertMentionsToAPIMentions(ctx context.Context, mentions [
 
 // convertTagsToAPITags will convert a slice of GTS model tags to frontend API model tags, falling back to IDs if no GTS models supplied.
 func (c *converter) convertTagsToAPITags(ctx context.Context, tags []*gtsmodel.Tag, tagIDs []string) ([]model.Tag, error) {
-	var errs multiError
+	var errs gtserror.MultiError
 
 	if len(tags) == 0 {
 		// GTS model tags were not populated
@@ -939,25 +940,4 @@ func (c *converter) convertTagsToAPITags(ctx context.Context, tags []*gtsmodel.T
 	}
 
 	return apiTags, errs.Combine()
-}
-
-// multiError allows encapsulating multiple errors under a singular instance,
-// which is useful when you only want to log on errors, not return early / bubble up.
-// TODO: if this is useful elsewhere, move into a separate gts subpackage.
-type multiError []string
-
-func (e *multiError) Append(err error) {
-	*e = append(*e, err.Error())
-}
-
-func (e *multiError) Appendf(format string, args ...any) {
-	*e = append(*e, fmt.Sprintf(format, args...))
-}
-
-// Combine converts this multiError to a singular error instance, returning nil if empty.
-func (e multiError) Combine() error {
-	if len(e) == 0 {
-		return nil
-	}
-	return errors.New(`"` + strings.Join(e, `","`) + `"`)
 }
