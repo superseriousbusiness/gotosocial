@@ -440,7 +440,7 @@ func (suite *ManagerTestSuite) TestSlothVineProcessBlocking() {
 	processedThumbnailBytes, err := suite.storage.Get(ctx, attachment.Thumbnail.Path)
 	suite.NoError(err)
 	suite.NotEmpty(processedThumbnailBytes)
-	
+
 	processedThumbnailBytesExpected, err := os.ReadFile("./test/test-mp4-thumbnail.jpg")
 	suite.NoError(err)
 	suite.NotEmpty(processedThumbnailBytesExpected)
