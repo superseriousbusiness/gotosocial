@@ -137,7 +137,12 @@ type mediaMeta struct {
 	width    int
 	height   int
 	size     int
-	aspect   float64
+	aspect   float32
 	blurhash string
 	small    []byte
+
+	// video-specific properties
+	duration  float32
+	framerate float32
+	bitrate   uint64
 }

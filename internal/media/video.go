@@ -20,7 +20,6 @@ package media
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"image"
 	"image/color"
@@ -30,6 +29,7 @@ import (
 	"os"
 
 	"github.com/abema/go-mp4"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
@@ -61,60 +61,80 @@ func decodeVideo(r io.Reader, contentType string) (*mediaMeta, error) {
 		return nil, fmt.Errorf("could not copy video reader into temporary file %s: %w", tempFileName, err)
 	}
 
-	// define some vars we need to pull the width/height out of the video
 	var (
-		height      int
-		width       int
-		readHandler = getReadHandler(&height, &width)
+		width     int
+		height    int
+		duration  float32
+		framerate float32
+		bitrate   uint64
 	)
 
-	// do the actual decoding here, providing the temporary file we created as readseeker
-	if _, err := mp4.ReadBoxStructure(tempFile, readHandler); err != nil {
-		return nil, fmt.Errorf("parsing video data: %w", err)
+	// probe the video file to extract useful metadata from it; for methodology, see:
+	// https://github.com/abema/go-mp4/blob/7d8e5a7c5e644e0394261b0cf72fef79ce246d31/mp4tool/probe/probe.go#L85-L154
+	info, err := mp4.Probe(tempFile)
+	if err != nil {
+		return nil, fmt.Errorf("could not probe temporary video file %s: %w", tempFileName, err)
 	}
 
-	// width + height should now be updated by the readHandler
+	for _, tr := range info.Tracks {
+		if tr.AVC == nil {
+			continue
+		}
+
+		if w := int(tr.AVC.Width); w > width {
+			width = w
+		}
+
+		if h := int(tr.AVC.Height); h > height {
+			height = h
+		}
+
+		if br := tr.Samples.GetBitrate(tr.Timescale); br > bitrate {
+			bitrate = br
+		} else if br := info.Segments.GetBitrate(tr.TrackID, tr.Timescale); br > bitrate {
+			bitrate = br
+		}
+
+		if d := float32(tr.Duration) / float32(tr.Timescale); d > duration {
+			duration = d
+			framerate = float32(len(tr.Samples)) / duration
+		}
+	}
+
+	var errs gtserror.MultiError
+	if width == 0 {
+		errs = append(errs, "video width could not be discovered")
+	}
+
+	if height == 0 {
+		errs = append(errs, "video height could not be discovered")
+	}
+
+	if duration == 0 {
+		errs = append(errs, "video duration could not be discovered")
+	}
+
+	if framerate == 0 {
+		errs = append(errs, "video framerate could not be discovered")
+	}
+
+	if bitrate == 0 {
+		errs = append(errs, "video bitrate could not be discovered")
+	}
+
+	if errs != nil {
+		return nil, errs.Combine()
+	}
+
 	return &mediaMeta{
-		width:  width,
-		height: height,
-		size:   height * width,
-		aspect: float64(width) / float64(height),
+		width:     width,
+		height:    height,
+		duration:  duration,
+		framerate: framerate,
+		bitrate:   bitrate,
+		size:      height * width,
+		aspect:    float32(width) / float32(height),
 	}, nil
-}
-
-// getReadHandler returns a handler function that updates the underling
-// values of the given height and width int pointers to the hightest and
-// widest points of the video.
-func getReadHandler(height *int, width *int) func(h *mp4.ReadHandle) (interface{}, error) {
-	return func(rh *mp4.ReadHandle) (interface{}, error) {
-		if rh.BoxInfo.Type == mp4.BoxTypeTkhd() {
-			box, _, err := rh.ReadPayload()
-			if err != nil {
-				return nil, fmt.Errorf("could not read mp4 payload: %w", err)
-			}
-
-			tkhd, ok := box.(*mp4.Tkhd)
-			if !ok {
-				return nil, errors.New("box was not of type *mp4.Tkhd")
-			}
-
-			// if height + width of this box are greater than what
-			// we have stored, then update our stored values
-			if h := int(tkhd.GetHeight()); h > *height {
-				*height = h
-			}
-
-			if w := int(tkhd.GetWidth()); w > *width {
-				*width = w
-			}
-		}
-
-		if rh.BoxInfo.IsSupportedType() {
-			return rh.Expand()
-		}
-
-		return nil, nil
-	}
 }
 
 func deriveThumbnailFromVideo(height int, width int) (*mediaMeta, error) {
@@ -134,7 +154,7 @@ func deriveThumbnailFromVideo(height int, width int) (*mediaMeta, error) {
 		width:  width,
 		height: height,
 		size:   width * height,
-		aspect: float64(width) / float64(height),
+		aspect: float32(width) / float32(height),
 		small:  out.Bytes(),
 	}, nil
 }
