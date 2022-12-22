@@ -20,7 +20,6 @@ package media
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"image"
 	"image/color"
@@ -104,27 +103,26 @@ func decodeVideo(r io.Reader, contentType string) (*mediaMeta, error) {
 
 	var errs gtserror.MultiError
 	if width == 0 {
-		errs.Append(errors.New("video width could not be discovered"))
+		errs = append(errs, "video width could not be discovered")
 	}
 
 	if height == 0 {
-		errs.Append(errors.New("video height could not be discovered"))
+		errs = append(errs, "video height could not be discovered")
 	}
 
 	if duration == 0 {
-		errs.Append(errors.New("video duration could not be discovered"))
+		errs = append(errs, "video duration could not be discovered")
 	}
 
 	if framerate == 0 {
-		errs.Append(errors.New("video framerate could not be discovered"))
+		errs = append(errs, "video framerate could not be discovered")
 	}
 
 	if bitrate == 0 {
-		errs.Append(errors.New("video bitrate could not be discovered"))
+		errs = append(errs, "video bitrate could not be discovered")
 	}
 
 	if errs != nil {
-		errs.Append(errors.New("this may not be a valid mp4"))
 		return nil, errs.Combine()
 	}
 
