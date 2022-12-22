@@ -133,7 +133,7 @@ func decodeVideo(r io.Reader, contentType string) (*mediaMeta, error) {
 		framerate: framerate,
 		bitrate:   bitrate,
 		size:      height * width,
-		aspect:    float64(width) / float64(height),
+		aspect:    float32(width) / float32(height),
 	}, nil
 }
 
@@ -154,7 +154,7 @@ func deriveThumbnailFromVideo(height int, width int) (*mediaMeta, error) {
 		width:  width,
 		height: height,
 		size:   width * height,
-		aspect: float64(width) / float64(height),
+		aspect: float32(width) / float32(height),
 		small:  out.Bytes(),
 	}, nil
 }

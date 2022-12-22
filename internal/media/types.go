@@ -137,7 +137,7 @@ type mediaMeta struct {
 	width    int
 	height   int
 	size     int
-	aspect   float64
+	aspect   float32
 	blurhash string
 	small    []byte
 
