@@ -48,7 +48,7 @@ func decodeGif(r io.Reader) (*mediaMeta, error) {
 	width := gif.Config.Width
 	height := gif.Config.Height
 	size := width * height
-	aspect := float64(width) / float64(height)
+	aspect := float32(width) / float32(height)
 
 	return &mediaMeta{
 		width:  width,
@@ -85,7 +85,7 @@ func decodeImage(r io.Reader, contentType string) (*mediaMeta, error) {
 	width := i.Bounds().Size().X
 	height := i.Bounds().Size().Y
 	size := width * height
-	aspect := float64(width) / float64(height)
+	aspect := float32(width) / float32(height)
 
 	return &mediaMeta{
 		width:  width,
@@ -167,7 +167,7 @@ func deriveThumbnailFromImage(r io.Reader, contentType string, createBlurhash bo
 	thumbX := thumb.Bounds().Size().X
 	thumbY := thumb.Bounds().Size().Y
 	size := thumbX * thumbY
-	aspect := float64(thumbX) / float64(thumbY)
+	aspect := float32(thumbX) / float32(thumbY)
 
 	im := &mediaMeta{
 		width:  thumbX,
