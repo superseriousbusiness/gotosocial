@@ -306,7 +306,6 @@ func (c *converter) AttachmentToAPIAttachment(ctx context.Context, a *gtsmodel.M
 	}
 
 	if i := a.RemoteURL; i != "" {
-		i := a.RemoteURL
 		apiAttachment.RemoteURL = &i
 	}
 
