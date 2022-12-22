@@ -410,7 +410,7 @@ func (suite *ManagerTestSuite) TestSlothVineProcessBlocking() {
 	suite.Equal(338, attachment.FileMeta.Original.Width)
 	suite.Equal(240, attachment.FileMeta.Original.Height)
 	suite.Equal(81120, attachment.FileMeta.Original.Size)
-	suite.Equal(1.4083333333333334, attachment.FileMeta.Original.Aspect)
+	suite.EqualValues(1.4083333, attachment.FileMeta.Original.Aspect)
 	suite.EqualValues(6.5862, *attachment.FileMeta.Original.Duration)
 	suite.EqualValues(29.000029, *attachment.FileMeta.Original.Framerate)
 	suite.EqualValues(0x3b3e1, *attachment.FileMeta.Original.Bitrate)
@@ -486,12 +486,12 @@ func (suite *ManagerTestSuite) TestLongerMp4ProcessBlocking() {
 	suite.Equal(600, attachment.FileMeta.Original.Width)
 	suite.Equal(330, attachment.FileMeta.Original.Height)
 	suite.Equal(198000, attachment.FileMeta.Original.Size)
-	suite.Equal(1.8181818181818181, attachment.FileMeta.Original.Aspect)
+	suite.EqualValues(1.8181819, attachment.FileMeta.Original.Aspect)
 	suite.EqualValues(16.6, *attachment.FileMeta.Original.Duration)
 	suite.EqualValues(10, *attachment.FileMeta.Original.Framerate)
 	suite.EqualValues(0xc8fb, *attachment.FileMeta.Original.Bitrate)
 	suite.EqualValues(gtsmodel.Small{
-		Width: 600, Height: 330, Size: 198000, Aspect: 1.8181818181818181,
+		Width: 600, Height: 330, Size: 198000, Aspect: 1.8181819,
 	}, attachment.FileMeta.Small)
 	suite.Equal("video/mp4", attachment.File.ContentType)
 	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
@@ -550,7 +550,7 @@ func (suite *ManagerTestSuite) TestNotAnMp4ProcessBlocking() {
 
 	// we should get an error while loading
 	attachment, err := processingMedia.LoadAttachment(ctx)
-	suite.EqualError(err, "\"video width could not be discovered\",\"video height could not be discovered\",\"video duration could not be discovered\",\"video framerate could not be discovered\",\"video bitrate could not be discovered\",\"this may not be a valid mp4\"")
+	suite.EqualError(err, "\"video width could not be discovered\",\"video height could not be discovered\",\"video duration could not be discovered\",\"video framerate could not be discovered\",\"video bitrate could not be discovered\"")
 	suite.Nil(attachment)
 }
 
