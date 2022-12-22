@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -322,8 +323,11 @@ func (c *converter) AttachmentToAPIAttachment(ctx context.Context, a *gtsmodel.M
 	}
 
 	if i := a.FileMeta.Original.Framerate; i != nil {
+		// the masto api expects this as a string in
+		// the format `integer/1`, so 30fps is `30/1`
 		round := math.Round(float64(*i))
-		apiAttachment.Meta.Original.FrameRate = fmt.Sprintf("%.f/1", round)
+		fr := strconv.FormatInt(int64(round), 10)
+		apiAttachment.Meta.Original.FrameRate = fr + "/1"
 	}
 
 	if i := a.FileMeta.Original.Bitrate; i != nil {
