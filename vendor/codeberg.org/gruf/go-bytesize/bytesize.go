@@ -3,6 +3,7 @@ package bytesize
 import (
 	"errors"
 	"math/bits"
+	_ "strconv"
 	"unsafe"
 )
 
@@ -52,18 +53,18 @@ var (
 	}
 
 	// bvals is a precomputed table of IEC unit values.
-	iecvals = [...]Size{
-		'k': KiB,
-		'K': KiB,
-		'M': MiB,
-		'G': GiB,
-		'T': TiB,
-		'P': PiB,
-		'E': EiB,
+	iecvals = [...]float64{
+		'k': float64(KiB),
+		'K': float64(KiB),
+		'M': float64(MiB),
+		'G': float64(GiB),
+		'T': float64(TiB),
+		'P': float64(PiB),
+		'E': float64(EiB),
 	}
 
 	// sivals is a precomputed table of SI unit values.
-	sivals = [...]Size{
+	sivals = [...]float64{
 		// ASCII numbers _aren't_ valid SI unit values,
 		// BUT if the space containing a possible unit
 		// char is checked with this table -- it is valid
@@ -79,13 +80,13 @@ var (
 		'8': 1,
 		'9': 1,
 
-		'k': KB,
-		'K': KB,
-		'M': MB,
-		'G': GB,
-		'T': TB,
-		'P': PB,
-		'E': EB,
+		'k': float64(KB),
+		'K': float64(KB),
+		'M': float64(MB),
+		'G': float64(GB),
+		'T': float64(TB),
+		'P': float64(PB),
+		'E': float64(EB),
 	}
 )
 
@@ -107,7 +108,7 @@ func ParseSize(s string) (Size, error) {
 		return 0, ErrInvalidFormat
 	}
 
-	return Size(f) * unit, nil
+	return Size(f * unit), nil
 }
 
 // Set implements flag.Value{}.
@@ -204,7 +205,7 @@ func (sz Size) String() string {
 }
 
 // parseUnit will parse the byte size unit from string 's'.
-func parseUnit(s string) (Size, int, error) {
+func parseUnit(s string) (float64, int, error) {
 	// Check for string
 	if len(s) < 1 {
 		return 0, 0, ErrInvalidFormat
