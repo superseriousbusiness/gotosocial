@@ -219,43 +219,41 @@ func (st *DiskStorage) ReadStream(ctx context.Context, key string) (io.ReadClose
 	// Wrap the file in a compressor
 	cFile, err := st.config.Compression.Reader(file)
 	if err != nil {
-		file.Close() // close this here, ignore error
+		_ = file.Close()
 		return nil, err
 	}
 
-	// Wrap compressor to ensure file close
-	return util.ReadCloserWithCallback(cFile, func() {
-		file.Close()
-	}), nil
+	return cFile, nil
 }
 
 // WriteBytes implements Storage.WriteBytes().
-func (st *DiskStorage) WriteBytes(ctx context.Context, key string, value []byte) error {
-	return st.WriteStream(ctx, key, bytes.NewReader(value))
+func (st *DiskStorage) WriteBytes(ctx context.Context, key string, value []byte) (int, error) {
+	n, err := st.WriteStream(ctx, key, bytes.NewReader(value))
+	return int(n), err
 }
 
 // WriteStream implements Storage.WriteStream().
-func (st *DiskStorage) WriteStream(ctx context.Context, key string, r io.Reader) error {
+func (st *DiskStorage) WriteStream(ctx context.Context, key string, r io.Reader) (int64, error) {
 	// Get file path for key
 	kpath, err := st.filepath(key)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// Check if open
 	if st.lock.Closed() {
-		return ErrClosed
+		return 0, ErrClosed
 	}
 
 	// Check context still valid
 	if err := ctx.Err(); err != nil {
-		return err
+		return 0, err
 	}
 
 	// Ensure dirs leading up to file exist
 	err = os.MkdirAll(path.Dir(kpath), defaultDirPerms)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// Prepare to swap error if need-be
@@ -273,20 +271,21 @@ func (st *DiskStorage) WriteStream(ctx context.Context, key string, r io.Reader)
 	// Attempt to open file
 	file, err := open(kpath, flags)
 	if err != nil {
-		return errSwap(err)
+		return 0, errSwap(err)
 	}
-	defer file.Close()
 
 	// Wrap the file in a compressor
 	cFile, err := st.config.Compression.Writer(file)
 	if err != nil {
-		return err
+		_ = file.Close()
+		return 0, err
 	}
+
+	// Wraps file.Close().
 	defer cFile.Close()
 
 	// Copy provided reader to file
-	_, err = st.cppool.Copy(cFile, r)
-	return err
+	return st.cppool.Copy(cFile, r)
 }
 
 // Stat implements Storage.Stat().

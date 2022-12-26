@@ -85,6 +85,8 @@ codeberg.org/gruf/go-fastpath/v2 v2.0.0 h1:iAS9GZahFhyWEH0KLhFEJR+txx1ZhMXxYzu2q
 codeberg.org/gruf/go-fastpath/v2 v2.0.0/go.mod h1:3pPqu5nZjpbRrOqvLyAK7puS1OfEtQvjd6342Cwz56Q=
 codeberg.org/gruf/go-hashenc v1.0.2 h1:U3jH6zMXZiL96czD/qaJd8OR2h7LlBzGv/2WxnMHI/g=
 codeberg.org/gruf/go-hashenc v1.0.2/go.mod h1:eK+A8clLcEN/m1nftNsRId0kfYDQnETnuIfBGZ8Gvsg=
+codeberg.org/gruf/go-iotools v0.0.0-20221224124424-3386841cb225 h1:tP9YvEBfADGG3mXkfrALLadlcbrZsFsWKZvFtUZtrt8=
+codeberg.org/gruf/go-iotools v0.0.0-20221224124424-3386841cb225/go.mod h1:B8uq4yHtIcKXhBZT9C/SYisz25lldLHMVpwZPz4ADLQ=
 codeberg.org/gruf/go-kv v1.5.2 h1:B0RkAXLUXYn3Za1NzTXOcUvAc+JUC2ZadTMkCUDa0mc=
 codeberg.org/gruf/go-kv v1.5.2/go.mod h1:al6ASW/2CbGqz2YcM8B00tvWnVi1bU1CH3HYs5tZxo4=
 codeberg.org/gruf/go-logger/v2 v2.2.1 h1:RP2u059EQKTBFV3cN8X6xDxNk2RkzqdgXGKflKqB7Oc=
@@ -101,8 +103,8 @@ codeberg.org/gruf/go-runners v1.3.1 h1:d/OQMMMiA6yPaDSbSr0/Jc+lucWmm7AiAZjWffpNK
 codeberg.org/gruf/go-runners v1.3.1/go.mod h1:rl0EdZNozkRMb21DAtOL5L4oTfmslYQdZgq2RMMc/H4=
 codeberg.org/gruf/go-sched v1.1.1 h1:YtLSQhpypzuD3HTup5oF7LLWB79gTL4nqW06kH4Vwks=
 codeberg.org/gruf/go-sched v1.1.1/go.mod h1:SRcdP/5qim+EBT3n3r4aUra1C30yPqV4OJOXuqvgdQM=
-codeberg.org/gruf/go-store/v2 v2.0.10 h1:/2iZ4j29A//EhM3XziJP6SxtdIcaAyPmJEv31+6XD8g=
-codeberg.org/gruf/go-store/v2 v2.0.10/go.mod h1:KMRE173S6W2sGhuIa4jY/OPIO65F9++7rmWTfZ4xTeY=
+codeberg.org/gruf/go-store/v2 v2.1.0 h1:rjdhgAdYlGT/RL6gCn3v2EKvfnxauNPLBecTLfmynEg=
+codeberg.org/gruf/go-store/v2 v2.1.0/go.mod h1:vjP4R8jlcc+PkfECCPITKu9dl6QK8Qn70mISi2f8sY4=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
