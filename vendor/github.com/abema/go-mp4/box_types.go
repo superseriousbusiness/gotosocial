@@ -591,6 +591,24 @@ type DecoderConfigDescriptor struct {
 	AvgBitrate           uint32 `mp4:"6,size=32"`
 }
 
+/*************************** fiel ****************************/
+
+func BoxTypeFiel() BoxType { return StrToBoxType("fiel") }
+
+func init() {
+	AddBoxDef(&Fiel{})
+}
+
+type Fiel struct {
+	Box
+	FieldCount    uint8 `mp4:"0,size=8"`
+	FieldOrdering uint8 `mp4:"1,size=8"`
+}
+
+func (Fiel) GetType() BoxType {
+	return BoxTypeFiel()
+}
+
 /************************ free, skip *************************/
 
 func BoxTypeFree() BoxType { return StrToBoxType("free") }
@@ -766,6 +784,85 @@ func (hdlr *Hdlr) OnReadName(r bitio.ReadSeeker, leftBits uint64, ctx Context) (
 		hdlr.Name = string(buf[:clen])
 	}
 	return leftBits, true, nil
+}
+
+/*************************** hvcC ****************************/
+
+func BoxTypeHvcC() BoxType { return StrToBoxType("hvcC") }
+
+func init() {
+	AddBoxDef(&HvcC{})
+}
+
+type HEVCNalu struct {
+	BaseCustomFieldObject
+	Length  uint16 `mp4:"0,size=16"`
+	NALUnit []byte `mp4:"1,size=8,len=dynamic"`
+}
+
+func (s HEVCNalu) GetFieldLength(name string, ctx Context) uint {
+	switch name {
+	case "NALUnit":
+		return uint(s.Length)
+	}
+	return 0
+}
+
+type HEVCNaluArray struct {
+	BaseCustomFieldObject
+	Completeness bool       `mp4:"0,size=1"`
+	Reserved     bool       `mp4:"1,size=1"`
+	NaluType     uint8      `mp4:"2,size=6"`
+	NumNalus     uint16     `mp4:"3,size=16"`
+	Nalus        []HEVCNalu `mp4:"4,len=dynamic"`
+}
+
+func (a HEVCNaluArray) GetFieldLength(name string, ctx Context) uint {
+	switch name {
+	case "Nalus":
+		return uint(a.NumNalus)
+	}
+	return 0
+}
+
+type HvcC struct {
+	Box
+	ConfigurationVersion        uint8           `mp4:"0,size=8"`
+	GeneralProfileSpace         uint8           `mp4:"1,size=2"`
+	GeneralTierFlag             bool            `mp4:"2,size=1"`
+	GeneralProfileIdc           uint8           `mp4:"3,size=5"`
+	GeneralProfileCompatibility [32]bool        `mp4:"4,size=1"`
+	GeneralConstraintIndicator  [6]uint8        `mp4:"5,size=8"`
+	GeneralLevelIdc             uint8           `mp4:"6,size=8"`
+	Reserved1                   uint8           `mp4:"7,size=4,const=15"`
+	MinSpatialSegmentationIdc   uint16          `mp4:"8,size=12"`
+	Reserved2                   uint8           `mp4:"9,size=6,const=63"`
+	ParallelismType             uint8           `mp4:"10,size=2"`
+	Reserved3                   uint8           `mp4:"11,size=6,const=63"`
+	ChromaFormatIdc             uint8           `mp4:"12,size=2"`
+	Reserved4                   uint8           `mp4:"13,size=5,const=31"`
+	BitDepthLumaMinus8          uint8           `mp4:"14,size=3"`
+	Reserved5                   uint8           `mp4:"15,size=5,const=31"`
+	BitDepthChromaMinus8        uint8           `mp4:"16,size=3"`
+	AvgFrameRate                uint16          `mp4:"17,size=16"`
+	ConstantFrameRate           uint8           `mp4:"18,size=2"`
+	NumTemporalLayers           uint8           `mp4:"19,size=2"`
+	TemporalIdNested            uint8           `mp4:"20,size=2"`
+	LengthSizeMinusOne          uint8           `mp4:"21,size=2"`
+	NumOfNaluArrays             uint8           `mp4:"22,size=8"`
+	NaluArrays                  []HEVCNaluArray `mp4:"23,len=dynamic"`
+}
+
+func (HvcC) GetType() BoxType {
+	return BoxTypeHvcC()
+}
+
+func (hvcc HvcC) GetFieldLength(name string, ctx Context) uint {
+	switch name {
+	case "NaluArrays":
+		return uint(hvcc.NumOfNaluArrays)
+	}
+	return 0
 }
 
 /*************************** ilst ****************************/
@@ -1450,6 +1547,7 @@ func (*Saiz) GetType() BoxType {
 
 func BoxTypeAvc1() BoxType { return StrToBoxType("avc1") }
 func BoxTypeEncv() BoxType { return StrToBoxType("encv") }
+func BoxTypeHev1() BoxType { return StrToBoxType("hev1") }
 func BoxTypeMp4a() BoxType { return StrToBoxType("mp4a") }
 func BoxTypeEnca() BoxType { return StrToBoxType("enca") }
 func BoxTypeAvcC() BoxType { return StrToBoxType("avcC") }
@@ -1458,6 +1556,7 @@ func BoxTypePasp() BoxType { return StrToBoxType("pasp") }
 func init() {
 	AddAnyTypeBoxDef(&VisualSampleEntry{}, BoxTypeAvc1())
 	AddAnyTypeBoxDef(&VisualSampleEntry{}, BoxTypeEncv())
+	AddAnyTypeBoxDef(&VisualSampleEntry{}, BoxTypeHev1())
 	AddAnyTypeBoxDef(&AudioSampleEntry{}, BoxTypeMp4a())
 	AddAnyTypeBoxDef(&AudioSampleEntry{}, BoxTypeEnca())
 	AddAnyTypeBoxDef(&AVCDecoderConfiguration{}, BoxTypeAvcC())
