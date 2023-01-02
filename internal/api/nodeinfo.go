@@ -19,6 +19,7 @@
 package api
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/nodeinfo"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
@@ -29,15 +30,15 @@ type NodeInfo struct {
 	nodeInfo *nodeinfo.Module
 }
 
-func (w *NodeInfo) Route(r router.Router) {
+func (w *NodeInfo) Route(r router.Router, m ...gin.HandlerFunc) {
 	// group nodeinfo endpoints together
 	nodeInfoGroup := r.AttachGroup("nodeinfo")
 
 	// attach middlewares appropriate for this group
+	nodeInfoGroup.Use(m...)
 	nodeInfoGroup.Use(
-		middleware.Gzip(),
-		middleware.RateLimit(),
-		middleware.CacheControl("public", "max-age=120"), // allow cache for 2 minutes
+		// allow cache for 2 minutes
+		middleware.CacheControl("public", "max-age=120"),
 	)
 
 	w.nodeInfo.Route(nodeInfoGroup.Handle)

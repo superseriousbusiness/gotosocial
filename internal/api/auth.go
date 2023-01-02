@@ -19,6 +19,7 @@
 package api
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/auth"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -36,20 +37,20 @@ type Auth struct {
 }
 
 // Route attaches 'auth' and 'oauth' groups to the given router.
-func (a *Auth) Route(r router.Router) {
+func (a *Auth) Route(r router.Router, m ...gin.HandlerFunc) {
 	// create groupings for the 'auth' and 'oauth' prefixes
 	authGroup := r.AttachGroup("auth")
 	oauthGroup := r.AttachGroup("oauth")
 
 	// instantiate + attach shared, non-global middlewares to both of these groups
 	var (
-		rateLimitMiddleware    = middleware.RateLimit() // nolint:contextcheck
-		gzipMiddleware         = middleware.Gzip()
 		cacheControlMiddleware = middleware.CacheControl("private", "max-age=120")
 		sessionMiddleware      = middleware.Session(a.sessionName, a.routerSession.Auth, a.routerSession.Crypt)
 	)
-	authGroup.Use(rateLimitMiddleware, gzipMiddleware, cacheControlMiddleware, sessionMiddleware)
-	oauthGroup.Use(rateLimitMiddleware, gzipMiddleware, cacheControlMiddleware, sessionMiddleware)
+	authGroup.Use(m...)
+	oauthGroup.Use(m...)
+	authGroup.Use(cacheControlMiddleware, sessionMiddleware)
+	oauthGroup.Use(cacheControlMiddleware, sessionMiddleware)
 
 	a.auth.RouteAuth(authGroup.Handle)
 	a.auth.RouteOauth(oauthGroup.Handle)

@@ -19,6 +19,7 @@
 package api
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/accounts"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/apps"
@@ -67,15 +68,14 @@ type Client struct {
 	user           *user.Module           // api/v1/user
 }
 
-func (c *Client) Route(r router.Router) {
+func (c *Client) Route(r router.Router, m ...gin.HandlerFunc) {
 	// create a new group on the top level client 'api' prefix
 	apiGroup := r.AttachGroup("api")
 
 	// attach non-global middlewares appropriate to the client api
+	apiGroup.Use(m...)
 	apiGroup.Use(
 		middleware.TokenCheck(c.db, c.processor.OAuthValidateBearerToken),
-		middleware.RateLimit(),
-		middleware.Gzip(),
 		middleware.CacheControl("no-store"), // never cache api responses
 	)
 

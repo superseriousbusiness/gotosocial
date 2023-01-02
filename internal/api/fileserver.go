@@ -19,6 +19,7 @@
 package api
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/fileserver"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
@@ -29,12 +30,12 @@ type Fileserver struct {
 	fileserver *fileserver.Module
 }
 
-func (f *Fileserver) Route(r router.Router) {
+func (f *Fileserver) Route(r router.Router, m ...gin.HandlerFunc) {
 	fileserverGroup := r.AttachGroup("fileserver")
 
 	// attach middlewares appropriate for this group
+	fileserverGroup.Use(m...)
 	fileserverGroup.Use(
-		middleware.RateLimit(),
 		// Since we'll never host different files at the same
 		// URL (bc the ULIDs are generated per piece of media),
 		// it's sensible and safe to use a long cache here, so

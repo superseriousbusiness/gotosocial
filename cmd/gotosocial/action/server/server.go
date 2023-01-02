@@ -183,14 +183,21 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		webModule         = web.New(processor)                                                 // web pages + user profiles + settings panels etc
 	)
 
+	// create required middleware
+	limit := config.GetAdvancedRateLimitRequests()
+	gzip := middleware.Gzip()               // all except fileserver
+	clLimit := middleware.RateLimit(limit)  // client api
+	s2sLimit := middleware.RateLimit(limit) // server-to-server (AP)
+	fsLimit := middleware.RateLimit(limit)  // fileserver / web templates
+
 	// these should be routed in order
-	authModule.Route(router)
-	clientModule.Route(router)
-	fileserverModule.Route(router)
-	wellKnownModule.Route(router)
-	nodeInfoModule.Route(router)
-	activityPubModule.Route(router)
-	webModule.Route(router)
+	authModule.Route(router, clLimit, gzip)
+	clientModule.Route(router, clLimit, gzip)
+	fileserverModule.Route(router, fsLimit)
+	wellKnownModule.Route(router, gzip, s2sLimit)
+	nodeInfoModule.Route(router, s2sLimit, gzip)
+	activityPubModule.Route(router, s2sLimit, gzip)
+	webModule.Route(router, fsLimit, gzip)
 
 	gts, err := gotosocial.NewServer(dbService, router, federator, mediaManager)
 	if err != nil {
@@ -208,8 +215,8 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// catch shutdown signals from the operating system
 	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
-	sig := <-sigs
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	sig := <-sigs // block until signal received
 	log.Infof("received signal %s, shutting down", sig)
 
 	// close down all running services in order
