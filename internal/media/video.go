@@ -28,7 +28,7 @@ import (
 
 type gtsVideo struct {
 	frame     *gtsImage
-	duration  int64
+	duration  float32 // in seconds
 	bitrate   uint64
 	framerate float32
 }
@@ -87,9 +87,9 @@ func decodeVideoFrame(r io.Reader) (*gtsVideo, error) {
 			video.bitrate = br
 		}
 
-		if d := int64(tr.Duration) / int64(tr.Timescale); d > video.duration {
-			video.framerate = float32(int64(len(tr.Samples)) / d)
-			video.duration = d
+		if d := float64(tr.Duration) / float64(tr.Timescale); d > float64(video.duration) {
+			video.framerate = float32(len(tr.Samples)) / float32(d)
+			video.duration = float32(d)
 		}
 	}
 

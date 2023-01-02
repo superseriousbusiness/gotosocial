@@ -494,12 +494,12 @@ func (suite *ManagerTestSuite) TestLongerMp4ProcessBlocking() {
 	suite.EqualValues(10, *attachment.FileMeta.Original.Framerate)
 	suite.EqualValues(0xc8fb, *attachment.FileMeta.Original.Bitrate)
 	suite.EqualValues(gtsmodel.Small{
-		Width: 600, Height: 330, Size: 198000, Aspect: 1.8181819,
+		Width: 512, Height: 281, Size: 143872, Aspect: 1.822064,
 	}, attachment.FileMeta.Small)
 	suite.Equal("video/mp4", attachment.File.ContentType)
 	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
 	suite.Equal(109549, attachment.File.FileSize)
-	suite.Equal("", attachment.Blurhash)
+	suite.Equal("L00000fQfQfQfQfQfQfQfQfQfQfQ", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)

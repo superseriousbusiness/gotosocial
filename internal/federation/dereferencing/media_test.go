@@ -42,7 +42,7 @@ func (suite *AttachmentTestSuite) TestDereferenceAttachmentBlocking() {
 	attachmentContentType := "image/jpeg"
 	attachmentURL := "https://s3-us-west-2.amazonaws.com/plushcity/media_attachments/files/106/867/380/219/163/828/original/88e8758c5f011439.jpg"
 	attachmentDescription := "It's a cute plushie."
-	attachmentBlurhash := "LwP?p=aK_4%N%MRjWXt7%hozM_a}"
+	attachmentBlurhash := "LtQ9yKi__4%g%MRjWCt7%hozM_az"
 
 	media, err := suite.dereferencer.GetRemoteMedia(ctx, fetchingAccount.Username, attachmentOwner, attachmentURL, &media.AdditionalMediaInfo{
 		StatusID:    &attachmentStatus,
@@ -116,7 +116,7 @@ func (suite *AttachmentTestSuite) TestDereferenceAttachmentAsync() {
 	attachmentContentType := "image/jpeg"
 	attachmentURL := "https://s3-us-west-2.amazonaws.com/plushcity/media_attachments/files/106/867/380/219/163/828/original/88e8758c5f011439.jpg"
 	attachmentDescription := "It's a cute plushie."
-	attachmentBlurhash := "LwP?p=aK_4%N%MRjWXt7%hozM_a}"
+	attachmentBlurhash := "LtQ9yKi__4%g%MRjWCt7%hozM_az"
 
 	processingMedia, err := suite.dereferencer.GetRemoteMedia(ctx, fetchingAccount.Username, attachmentOwner, attachmentURL, &media.AdditionalMediaInfo{
 		StatusID:    &attachmentStatus,
