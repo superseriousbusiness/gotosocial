@@ -28,10 +28,11 @@ package middleware
 
 import (
 	"net/http"
-	"strconv"
+	"runtime"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 const (
@@ -43,16 +44,24 @@ const (
 // token represents a request that is being processed.
 type token struct{}
 
-// ThrottleOpts passes options to the Throttle middleware.
-type ThrottleOpts struct {
-	Limit                 int // how many requests can be in-process at once
-	BacklogLimit          int // how many requests can be queued + waiting
-	BacklogTimeoutSeconds int // how long to queue requests before timing them out
-	RetryAfterSeconds     int //
-}
-
 // Throttle returns a gin middleware that performs throttling of incoming requests,
-// ensuring that only t.limit
+// ensuring that only a certain number of requests are handled concurrently, to reduce
+// congestion of the server.
+//
+// Limits are configured using available CPUs and the setting `advanced-throttling-multiplier`.
+// Open request limit is available CPUs * multiplier; backlog limit is limit * multiplier.
+//
+// Example values for multiplier 8:
+//
+//	1 cpu = 08 open, 064 backlog
+//	2 cpu = 16 open, 128 backlog
+//	4 cpu = 32 open, 256 backlog
+//
+// Example values for multiplier 4:
+//
+//	1 cpu = 04 open, 016 backlog
+//	2 cpu = 08 open, 032 backlog
+//	4 cpu = 16 open, 064 backlog
 //
 // Callers will first attempt to get a backlog token. Once they have that, they will
 // wait in the backlog queue until they can get a token to allow their request to be
@@ -63,29 +72,33 @@ type ThrottleOpts struct {
 // write a JSON error into the response, set an appropriate Retry-After value, and set
 // the HTTP response code to 429: Too Many Requests.
 //
-// If BacklogLimit is < 0, or any of the other opt values are < 1, then this function
-// will instead return a noop handler.
+// If the multiplier is <= 0, a noop middleware will be returned instead.
 //
 // Useful links:
 //
 //   - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After
 //   - https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429
-func Throttle(t ThrottleOpts) gin.HandlerFunc {
-	if t.BacklogLimit < 0 || t.Limit < 1 || t.BacklogTimeoutSeconds < 1 || t.RetryAfterSeconds < 1 {
+func Throttle() gin.HandlerFunc {
+	cpuMultiplier := config.GetAdvancedThrottlingMultiplier()
+	if cpuMultiplier <= 0 {
 		// throttling is disabled, return a noop middleware
 		return func(c *gin.Context) {}
 	}
 
+	cpus := runtime.GOMAXPROCS(0)
+
 	var (
-		tokens          = make(chan token, t.Limit)
-		backlogTokens   = make(chan token, t.Limit+t.BacklogLimit)
-		retryAfter      = strconv.Itoa(t.RetryAfterSeconds)
-		backlogDuration = time.Duration(t.BacklogTimeoutSeconds) * time.Second
+		limit           = cpuMultiplier * cpus
+		backlogLimit    = cpuMultiplier * limit
+		tokens          = make(chan token, limit)
+		backlogTokens   = make(chan token, limit+backlogLimit)
+		retryAfter      = "30" // seconds
+		backlogDuration = 30 * time.Second
 	)
 
 	// prefill token buckets
-	for i := 0; i < t.Limit+t.BacklogLimit; i++ {
-		if i < t.Limit {
+	for i := 0; i < limit+backlogLimit; i++ {
+		if i < limit {
 			tokens <- token{}
 		}
 		backlogTokens <- token{}

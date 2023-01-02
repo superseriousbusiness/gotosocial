@@ -21,7 +21,6 @@ package api
 import (
 	"context"
 	"net/url"
-	"runtime"
 
 	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/emoji"
 	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users"
@@ -43,28 +42,9 @@ func (a *ActivityPub) Route(r router.Router) {
 	emojiGroup := r.AttachGroup("emoji")
 	usersGroup := r.AttachGroup("users")
 
-	// configure throttle limits according to CPU numbers;
-	//
-	// example values:
-	// 1 cpu = 08 open, 064 backlog
-	// 2 cpu = 16 open, 128 backlog
-	// 4 cpu = 32 open, 256 backlog
-	maxProcs := runtime.GOMAXPROCS(0)
-	limit := 8 * maxProcs     // allow eight concurrent open connections per cpu
-	backlogLimit := 8 * limit // allow eight times that in backlog
-	backlogTimeoutSeconds := 30
-	retryAfterSeconds := backlogTimeoutSeconds
-
-	throttleOpts := middleware.ThrottleOpts{
-		Limit:                 limit,
-		BacklogLimit:          backlogLimit,
-		BacklogTimeoutSeconds: backlogTimeoutSeconds,
-		RetryAfterSeconds:     retryAfterSeconds,
-	}
-
 	// instantiate + attach shared, non-global middlewares to both of these groups
 	var (
-		throttlingMiddleware     = middleware.Throttle(throttleOpts)
+		throttlingMiddleware     = middleware.Throttle()
 		rateLimitMiddleware      = middleware.RateLimit() // nolint:contextcheck
 		signatureCheckMiddleware = middleware.SignatureCheck(a.isURIBlocked)
 		gzipMiddleware           = middleware.Gzip()

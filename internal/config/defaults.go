@@ -104,8 +104,9 @@ var Defaults = Configuration{
 	SyslogProtocol: "udp",
 	SyslogAddress:  "localhost:514",
 
-	AdvancedCookiesSamesite:   "lax",
-	AdvancedRateLimitRequests: 300, // 1 per second per 5 minutes
+	AdvancedCookiesSamesite:      "lax",
+	AdvancedRateLimitRequests:    300, // 1 per second per 5 minutes
+	AdvancedThrottlingMultiplier: 8,   // 8 open requests per CPU
 
 	Cache: CacheConfiguration{
 		GTS: GTSCacheConfiguration{

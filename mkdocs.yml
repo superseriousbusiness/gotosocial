@@ -61,3 +61,4 @@ nav:
   - "API Documentation":
     - "api/swagger.md"
     - "api/ratelimiting.md"
+    - "api/throttling.md"
