@@ -262,7 +262,8 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 		fullImg = video.frame
 
 		// Set video metadata in attachment info.
-		p.media.FileMeta.Original.Duration = nil
+		duration := float32(video.duration) // why are we storing duration as float32?
+		p.media.FileMeta.Original.Duration = &duration
 		p.media.FileMeta.Original.Framerate = &video.framerate
 		p.media.FileMeta.Original.Bitrate = &video.bitrate
 	}

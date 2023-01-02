@@ -553,7 +553,7 @@ func (suite *ManagerTestSuite) TestNotAnMp4ProcessBlocking() {
 
 	// we should get an error while loading
 	attachment, err := processingMedia.LoadAttachment(ctx)
-	suite.EqualError(err, "\"video width could not be discovered\",\"video height could not be discovered\",\"video duration could not be discovered\",\"video framerate could not be discovered\",\"video bitrate could not be discovered\"")
+	suite.EqualError(err, "error decoding video: error determining video metadata: [width height duration framerate bitrate]")
 	suite.Nil(attachment)
 }
 
