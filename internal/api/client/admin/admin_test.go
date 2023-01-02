@@ -93,7 +93,7 @@ func (suite *AdminStandardTestSuite) SetupTest() {
 	suite.sentEmails = make(map[string]string)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", suite.sentEmails)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, suite.mediaManager, clientWorker, fedWorker)
-	suite.adminModule = admin.New(suite.processor).(*admin.Module)
+	suite.adminModule = admin.New(suite.processor)
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 }

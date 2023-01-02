@@ -22,14 +22,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
 const (
-	// BasePath is the path for the streaming api
-	BasePath = "/api/v1/streaming"
+	// BasePath is the path for the streaming api, minus the 'api' prefix
+	BasePath = "/v1/streaming"
 
 	// StreamQueryKey is the query key for the type of stream being requested
 	StreamQueryKey = "stream"
@@ -41,29 +40,25 @@ const (
 	AccessTokenHeader = "Sec-Websocket-Protocol"
 )
 
-// Module implements the api.ClientModule interface for everything related to streaming
 type Module struct {
 	processor    processing.Processor
 	tickDuration time.Duration
 }
 
-// New returns a new streaming module
-func New(processor processing.Processor) api.ClientModule {
+func New(processor processing.Processor) *Module {
 	return &Module{
 		processor:    processor,
 		tickDuration: 30 * time.Second,
 	}
 }
 
-func NewWithTickDuration(processor processing.Processor, tickDuration time.Duration) api.ClientModule {
+func NewWithTickDuration(processor processing.Processor, tickDuration time.Duration) *Module {
 	return &Module{
 		processor:    processor,
 		tickDuration: tickDuration,
 	}
 }
 
-// Route attaches all routes from this module to the given router
-func (m *Module) Route(r router.Router) error {
-	r.AttachHandler(http.MethodGet, BasePath, m.StreamGETHandler)
-	return nil
+func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
+	attachHandler(http.MethodGet, BasePath, m.StreamGETHandler)
 }

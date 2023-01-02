@@ -22,6 +22,7 @@ import (
 	"net/http"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/oauth2/v4"
 )
 
 func (p *processor) OAuthHandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) gtserror.WithCode {
@@ -32,4 +33,9 @@ func (p *processor) OAuthHandleAuthorizeRequest(w http.ResponseWriter, r *http.R
 func (p *processor) OAuthHandleTokenRequest(r *http.Request) (map[string]interface{}, gtserror.WithCode) {
 	// todo: some kind of metrics stuff here
 	return p.oauthServer.HandleTokenRequest(r)
+}
+
+func (p *processor) OAuthValidateBearerToken(r *http.Request) (oauth2.TokenInfo, error) {
+	// todo: some kind of metrics stuff here
+	return p.oauthServer.ValidationBearerToken(r)
 }

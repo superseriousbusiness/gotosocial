@@ -53,7 +53,7 @@ type DB interface {
 
 	// TagStringsToTags takes a slice of deduplicated, lowercase tags in the form "somehashtag", which have been
 	// used in a status. It takes the id of the account that wrote the status, and the id of the status itself, and then
-	// returns a slice of *model.Tag corresponding to the given tags. If the tag already exists in database, that tag
+	// returns a slice of *apimodel.Tag corresponding to the given tags. If the tag already exists in database, that tag
 	// will be returned. Otherwise a pointer to a new tag struct will be created and returned.
 	//
 	// Note: this func doesn't/shouldn't do any manipulation of the tags in the DB, it's just for checking

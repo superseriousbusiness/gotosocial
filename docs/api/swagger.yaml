@@ -1914,7 +1914,7 @@ definitions:
         title: SwaggerCollection represents an activitypub collection.
         type: object
         x-go-name: SwaggerCollection
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/s2s/user
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users
     swaggerCollectionPage:
         properties:
             id:
@@ -1949,7 +1949,7 @@ definitions:
         title: SwaggerCollectionPage represents one page of a collection.
         type: object
         x-go-name: SwaggerCollectionPage
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/s2s/user
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users
     tag:
         properties:
             name:
@@ -2049,9 +2049,9 @@ paths:
                     description: ""
                     schema:
                         $ref: '#/definitions/wellKnownResponse'
-            summary: Directs callers to /nodeinfo/2.0.
+            summary: Returns a well-known response which redirects callers to `/nodeinfo/2.0`.
             tags:
-                - nodeinfo
+                - .well-known
     /.well-known/webfinger:
         get:
             description: |-
@@ -2074,7 +2074,7 @@ paths:
                         $ref: '#/definitions/wellKnownResponse'
             summary: Handles webfinger account lookup requests.
             tags:
-                - webfinger
+                - .well-known
     /api/{api_version}/media:
         post:
             consumes:

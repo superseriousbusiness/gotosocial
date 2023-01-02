@@ -22,7 +22,7 @@ import (
 	"bytes"
 	"html"
 
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 )
 
@@ -30,8 +30,8 @@ import (
 //
 // Callers should ensure that inputText and resulting text are escaped
 // appropriately depending on what they're used for.
-func Emojify(emojis []model.Emoji, inputText string) string {
-	emojisMap := make(map[string]model.Emoji, len(emojis))
+func Emojify(emojis []apimodel.Emoji, inputText string) string {
+	emojisMap := make(map[string]apimodel.Emoji, len(emojis))
 
 	for _, emoji := range emojis {
 		shortcode := ":" + emoji.Shortcode + ":"

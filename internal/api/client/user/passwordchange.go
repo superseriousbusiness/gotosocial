@@ -23,8 +23,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/api"
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -68,35 +68,35 @@ import (
 func (m *Module) PasswordChangePOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
+	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	form := &model.PasswordChangeRequest{}
+	form := &apimodel.PasswordChangeRequest{}
 	if err := c.ShouldBind(form); err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if form.OldPassword == "" {
 		err := errors.New("password change request missing field old_password")
-		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if form.NewPassword == "" {
 		err := errors.New("password change request missing field new_password")
-		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if errWithCode := m.processor.UserChangePassword(c.Request.Context(), authed, form); errWithCode != nil {
-		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

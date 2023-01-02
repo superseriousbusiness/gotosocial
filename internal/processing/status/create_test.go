@@ -23,7 +23,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -39,20 +39,20 @@ func (suite *StatusCreateTestSuite) TestProcessContentWarningWithQuotationMarks(
 	creatingAccount := suite.testAccounts["local_account_1"]
 	creatingApplication := suite.testApplications["application_1"]
 
-	statusCreateForm := &model.AdvancedStatusCreateForm{
-		StatusCreateRequest: model.StatusCreateRequest{
+	statusCreateForm := &apimodel.AdvancedStatusCreateForm{
+		StatusCreateRequest: apimodel.StatusCreateRequest{
 			Status:      "poopoo peepee",
 			MediaIDs:    []string{},
 			Poll:        nil,
 			InReplyToID: "",
 			Sensitive:   false,
 			SpoilerText: "\"test\"", // these should not be html-escaped when the final text is rendered
-			Visibility:  model.VisibilityPublic,
+			Visibility:  apimodel.VisibilityPublic,
 			ScheduledAt: "",
 			Language:    "en",
-			Format:      model.StatusFormatPlain,
+			Format:      apimodel.StatusFormatPlain,
 		},
-		AdvancedVisibilityFlagsForm: model.AdvancedVisibilityFlagsForm{
+		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
 			Boostable: nil,
 			Replyable: nil,
@@ -73,20 +73,20 @@ func (suite *StatusCreateTestSuite) TestProcessContentWarningWithHTMLEscapedQuot
 	creatingAccount := suite.testAccounts["local_account_1"]
 	creatingApplication := suite.testApplications["application_1"]
 
-	statusCreateForm := &model.AdvancedStatusCreateForm{
-		StatusCreateRequest: model.StatusCreateRequest{
+	statusCreateForm := &apimodel.AdvancedStatusCreateForm{
+		StatusCreateRequest: apimodel.StatusCreateRequest{
 			Status:      "poopoo peepee",
 			MediaIDs:    []string{},
 			Poll:        nil,
 			InReplyToID: "",
 			Sensitive:   false,
 			SpoilerText: "&#34test&#34", // the html-escaped quotation marks should appear as normal quotation marks in the finished text
-			Visibility:  model.VisibilityPublic,
+			Visibility:  apimodel.VisibilityPublic,
 			ScheduledAt: "",
 			Language:    "en",
-			Format:      model.StatusFormatPlain,
+			Format:      apimodel.StatusFormatPlain,
 		},
-		AdvancedVisibilityFlagsForm: model.AdvancedVisibilityFlagsForm{
+		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
 			Boostable: nil,
 			Replyable: nil,
@@ -112,19 +112,19 @@ func (suite *StatusCreateTestSuite) TestProcessStatusMarkdownWithUnderscoreEmoji
 	creatingAccount := suite.testAccounts["local_account_1"]
 	creatingApplication := suite.testApplications["application_1"]
 
-	statusCreateForm := &model.AdvancedStatusCreateForm{
-		StatusCreateRequest: model.StatusCreateRequest{
+	statusCreateForm := &apimodel.AdvancedStatusCreateForm{
+		StatusCreateRequest: apimodel.StatusCreateRequest{
 			Status:      "poopoo peepee :_rainbow_:",
 			MediaIDs:    []string{},
 			Poll:        nil,
 			InReplyToID: "",
 			Sensitive:   false,
-			Visibility:  model.VisibilityPublic,
+			Visibility:  apimodel.VisibilityPublic,
 			ScheduledAt: "",
 			Language:    "en",
-			Format:      model.StatusFormatMarkdown,
+			Format:      apimodel.StatusFormatMarkdown,
 		},
-		AdvancedVisibilityFlagsForm: model.AdvancedVisibilityFlagsForm{
+		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
 			Boostable: nil,
 			Replyable: nil,
@@ -145,20 +145,20 @@ func (suite *StatusCreateTestSuite) TestProcessStatusMarkdownWithSpoilerTextEmoj
 	creatingAccount := suite.testAccounts["local_account_1"]
 	creatingApplication := suite.testApplications["application_1"]
 
-	statusCreateForm := &model.AdvancedStatusCreateForm{
-		StatusCreateRequest: model.StatusCreateRequest{
+	statusCreateForm := &apimodel.AdvancedStatusCreateForm{
+		StatusCreateRequest: apimodel.StatusCreateRequest{
 			Status:      "poopoo peepee",
 			SpoilerText: "testing something :rainbow:",
 			MediaIDs:    []string{},
 			Poll:        nil,
 			InReplyToID: "",
 			Sensitive:   false,
-			Visibility:  model.VisibilityPublic,
+			Visibility:  apimodel.VisibilityPublic,
 			ScheduledAt: "",
 			Language:    "en",
-			Format:      model.StatusFormatMarkdown,
+			Format:      apimodel.StatusFormatMarkdown,
 		},
-		AdvancedVisibilityFlagsForm: model.AdvancedVisibilityFlagsForm{
+		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
 			Boostable: nil,
 			Replyable: nil,
@@ -183,20 +183,20 @@ func (suite *StatusCreateTestSuite) TestProcessMediaDescriptionTooShort() {
 	creatingAccount := suite.testAccounts["local_account_1"]
 	creatingApplication := suite.testApplications["application_1"]
 
-	statusCreateForm := &model.AdvancedStatusCreateForm{
-		StatusCreateRequest: model.StatusCreateRequest{
+	statusCreateForm := &apimodel.AdvancedStatusCreateForm{
+		StatusCreateRequest: apimodel.StatusCreateRequest{
 			Status:      "poopoo peepee",
 			MediaIDs:    []string{suite.testAttachments["local_account_1_unattached_1"].ID},
 			Poll:        nil,
 			InReplyToID: "",
 			Sensitive:   false,
 			SpoilerText: "",
-			Visibility:  model.VisibilityPublic,
+			Visibility:  apimodel.VisibilityPublic,
 			ScheduledAt: "",
 			Language:    "en",
-			Format:      model.StatusFormatPlain,
+			Format:      apimodel.StatusFormatPlain,
 		},
-		AdvancedVisibilityFlagsForm: model.AdvancedVisibilityFlagsForm{
+		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
 			Boostable: nil,
 			Replyable: nil,

@@ -21,36 +21,31 @@ package instance
 import (
 	"net/http"
 
-	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
 const (
-	// InstanceInformationPath is for serving instance info requests
-	InstanceInformationPath = "api/v1/instance"
+	// InstanceInformationPath is for serving instance info requests, minus the 'api' prefix.
+	InstanceInformationPath = "/v1/instance"
 	// InstancePeersPath is for serving instance peers requests.
 	InstancePeersPath = InstanceInformationPath + "/peers"
 	// PeersFilterKey is used to provide filters to /api/v1/instance/peers
 	PeersFilterKey = "filter"
 )
 
-// Module implements the ClientModule interface
 type Module struct {
 	processor processing.Processor
 }
 
-// New returns a new instance information module
-func New(processor processing.Processor) api.ClientModule {
+func New(processor processing.Processor) *Module {
 	return &Module{
 		processor: processor,
 	}
 }
 
-// Route satisfies the ClientModule interface
-func (m *Module) Route(s router.Router) error {
-	s.AttachHandler(http.MethodGet, InstanceInformationPath, m.InstanceInformationGETHandler)
-	s.AttachHandler(http.MethodPatch, InstanceInformationPath, m.InstanceUpdatePATCHHandler)
-	s.AttachHandler(http.MethodGet, InstancePeersPath, m.InstancePeersGETHandler)
-	return nil
+func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
+	attachHandler(http.MethodGet, InstanceInformationPath, m.InstanceInformationGETHandler)
+	attachHandler(http.MethodPatch, InstanceInformationPath, m.InstanceUpdatePATCHHandler)
+	attachHandler(http.MethodGet, InstancePeersPath, m.InstancePeersGETHandler)
 }

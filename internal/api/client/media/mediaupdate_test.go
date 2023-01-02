@@ -28,10 +28,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
 	mediamodule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -94,7 +93,7 @@ func (suite *MediaUpdateTestSuite) SetupSuite() {
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, suite.mediaManager, clientWorker, fedWorker)
 
 	// setup module being tested
-	suite.mediaModule = mediamodule.New(suite.processor).(*mediamodule.Module)
+	suite.mediaModule = mediamodule.New(suite.processor)
 }
 
 func (suite *MediaUpdateTestSuite) TearDownSuite() {
@@ -148,12 +147,8 @@ func (suite *MediaUpdateTestSuite) TestUpdateImage() {
 	ctx.Request = httptest.NewRequest(http.MethodPut, fmt.Sprintf("http://localhost:8080/api/v1/media/%s", toUpdate.ID), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 	ctx.Request.Header.Set("accept", "application/json")
-	ctx.Params = gin.Params{
-		gin.Param{
-			Key:   mediamodule.IDKey,
-			Value: toUpdate.ID,
-		},
-	}
+	ctx.AddParam(mediamodule.APIVersionKey, mediamodule.APIv1)
+	ctx.AddParam(mediamodule.IDKey, toUpdate.ID)
 
 	// do the actual request
 	suite.mediaModule.MediaPUTHandler(ctx)
@@ -167,17 +162,17 @@ func (suite *MediaUpdateTestSuite) TestUpdateImage() {
 	suite.NoError(err)
 
 	// reply should be an attachment
-	attachmentReply := &model.Attachment{}
+	attachmentReply := &apimodel.Attachment{}
 	err = json.Unmarshal(b, attachmentReply)
 	suite.NoError(err)
 
 	// the reply should contain the updated fields
 	suite.Equal("new description!", *attachmentReply.Description)
 	suite.EqualValues("image", attachmentReply.Type)
-	suite.EqualValues(model.MediaMeta{
-		Original: model.MediaDimensions{Width: 800, Height: 450, FrameRate: "", Duration: 0, Bitrate: 0, Size: "800x450", Aspect: 1.7777778},
-		Small:    model.MediaDimensions{Width: 256, Height: 144, FrameRate: "", Duration: 0, Bitrate: 0, Size: "256x144", Aspect: 1.7777778},
-		Focus:    model.MediaFocus{X: -0.1, Y: 0.3},
+	suite.EqualValues(apimodel.MediaMeta{
+		Original: apimodel.MediaDimensions{Width: 800, Height: 450, FrameRate: "", Duration: 0, Bitrate: 0, Size: "800x450", Aspect: 1.7777778},
+		Small:    apimodel.MediaDimensions{Width: 256, Height: 144, FrameRate: "", Duration: 0, Bitrate: 0, Size: "256x144", Aspect: 1.7777778},
+		Focus:    apimodel.MediaFocus{X: -0.1, Y: 0.3},
 	}, attachmentReply.Meta)
 	suite.Equal(toUpdate.Blurhash, attachmentReply.Blurhash)
 	suite.Equal(toUpdate.ID, attachmentReply.ID)
@@ -213,12 +208,8 @@ func (suite *MediaUpdateTestSuite) TestUpdateImageShortDescription() {
 	ctx.Request = httptest.NewRequest(http.MethodPut, fmt.Sprintf("http://localhost:8080/api/v1/media/%s", toUpdate.ID), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 	ctx.Request.Header.Set("accept", "application/json")
-	ctx.Params = gin.Params{
-		gin.Param{
-			Key:   mediamodule.IDKey,
-			Value: toUpdate.ID,
-		},
-	}
+	ctx.AddParam(mediamodule.APIVersionKey, mediamodule.APIv1)
+	ctx.AddParam(mediamodule.IDKey, toUpdate.ID)
 
 	// do the actual request
 	suite.mediaModule.MediaPUTHandler(ctx)

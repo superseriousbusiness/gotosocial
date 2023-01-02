@@ -46,6 +46,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
+	"github.com/superseriousbusiness/oauth2/v4"
 )
 
 // Processor should be passed to api modules (see internal/apimodule/...). It is used for
@@ -183,6 +184,7 @@ type Processor interface {
 
 	OAuthHandleTokenRequest(r *http.Request) (map[string]interface{}, gtserror.WithCode)
 	OAuthHandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) gtserror.WithCode
+	OAuthValidateBearerToken(r *http.Request) (oauth2.TokenInfo, error)
 
 	// SearchGet performs a search with the given params, resolving/dereferencing remotely as desired
 	SearchGet(ctx context.Context, authed *oauth.Auth, searchQuery *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode)
@@ -260,9 +262,9 @@ type Processor interface {
 	// GetWebfingerAccount handles the GET for a webfinger resource. Most commonly, it will be used for returning account lookups.
 	GetWebfingerAccount(ctx context.Context, requestedUsername string) (*apimodel.WellKnownResponse, gtserror.WithCode)
 	// GetNodeInfoRel returns a well known response giving the path to node info.
-	GetNodeInfoRel(ctx context.Context, request *http.Request) (*apimodel.WellKnownResponse, gtserror.WithCode)
+	GetNodeInfoRel(ctx context.Context) (*apimodel.WellKnownResponse, gtserror.WithCode)
 	// GetNodeInfo returns a node info struct in response to a node info request.
-	GetNodeInfo(ctx context.Context, request *http.Request) (*apimodel.Nodeinfo, gtserror.WithCode)
+	GetNodeInfo(ctx context.Context) (*apimodel.Nodeinfo, gtserror.WithCode)
 	// InboxPost handles POST requests to a user's inbox for new activitypub messages.
 	//
 	// InboxPost returns true if the request was handled as an ActivityPub POST to an actor's inbox.

@@ -18,7 +18,45 @@
 
 package web
 
-// https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag#robotsmeta
-const (
-	robotsAllowSome = "nofollow, noarchive, nositelinkssearchbox, max-image-preview:standard"
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
+
+const (
+	robotsPath          = "/robots.txt"
+	robotsMetaAllowSome = "nofollow, noarchive, nositelinkssearchbox, max-image-preview:standard" // https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag#robotsmeta
+	robotsTxt           = `# GoToSocial robots.txt -- to edit, see internal/web/robots.go
+# more info @ https://developers.google.com/search/docs/crawling-indexing/robots/intro
+User-agent: *
+Crawl-delay: 500
+# api stuff
+Disallow: /api/
+# auth/login stuff
+Disallow: /auth/
+Disallow: /oauth/
+Disallow: /check_your_email
+Disallow: /wait_for_approval
+Disallow: /account_disabled
+# well known stuff
+Disallow: /.well-known/
+# files
+Disallow: /fileserver/
+# s2s AP stuff
+Disallow: /users/
+Disallow: /emoji/
+# panels
+Disallow: /admin
+Disallow: /user
+Disallow: /settings/`
+)
+
+// robotsGETHandler returns a decent robots.txt that prevents crawling
+// the api, auth pages, settings pages, etc.
+//
+// More granular robots meta tags are then applied for web pages
+// depending on user preferences (see internal/web).
+func (m *Module) robotsGETHandler(c *gin.Context) {
+	c.String(http.StatusOK, robotsTxt)
+}

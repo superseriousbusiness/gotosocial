@@ -25,7 +25,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/feeds"
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -123,7 +123,7 @@ func (c *converter) StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*f
 	}
 
 	// Content
-	apiEmojis := []model.Emoji{}
+	apiEmojis := []apimodel.Emoji{}
 	// the status might already have some gts emojis on it if it's not been pulled directly from the database
 	// if so, we can directly convert the gts emojis into api ones
 	if s.Emojis != nil {

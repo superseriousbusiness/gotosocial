@@ -21,34 +21,31 @@ package media
 import (
 	"net/http"
 
-	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
 const (
-	IDKey                  = "id"                                // IDKey is the key for media attachment IDs
-	APIVersionKey          = "api_version"                       // APIVersionKey is the key for which version of the API to use (v1 or v2)
-	BasePathWithAPIVersion = "/api/:" + APIVersionKey + "/media" // BasePathWithAPIVersion is the base API path for making media requests through v1 or v2 of the api (for mastodon API compatibility)
-	BasePathWithIDV1       = "/api/v1/media/:" + IDKey           // BasePathWithID corresponds to a media attachment with the given ID
+	IDKey            = "id"                            // IDKey is the key for media attachment IDs
+	APIVersionKey    = "api_version"                   // APIVersionKey is the key for which version of the API to use (v1 or v2)
+	APIv1            = "v1"                            // APIV1 corresponds to version 1 of the api
+	APIv2            = "v2"                            // APIV2 corresponds to version 2 of the api
+	BasePath         = "/:" + APIVersionKey + "/media" // BasePath is the base API path for making media requests through v1 or v2 of the api (for mastodon API compatibility)
+	AttachmentWithID = BasePath + "/:" + IDKey         // BasePathWithID corresponds to a media attachment with the given ID
 )
 
-// Module implements the ClientAPIModule interface for media
 type Module struct {
 	processor processing.Processor
 }
 
-// New returns a new auth module
-func New(processor processing.Processor) api.ClientModule {
+func New(processor processing.Processor) *Module {
 	return &Module{
 		processor: processor,
 	}
 }
 
-// Route satisfies the RESTAPIModule interface
-func (m *Module) Route(s router.Router) error {
-	s.AttachHandler(http.MethodPost, BasePathWithAPIVersion, m.MediaCreatePOSTHandler)
-	s.AttachHandler(http.MethodGet, BasePathWithIDV1, m.MediaGETHandler)
-	s.AttachHandler(http.MethodPut, BasePathWithIDV1, m.MediaPUTHandler)
-	return nil
+func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
+	attachHandler(http.MethodPost, BasePath, m.MediaCreatePOSTHandler)
+	attachHandler(http.MethodGet, AttachmentWithID, m.MediaGETHandler)
+	attachHandler(http.MethodPut, AttachmentWithID, m.MediaPUTHandler)
 }

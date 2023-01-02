@@ -25,8 +25,8 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/api"
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -66,12 +66,12 @@ import (
 func (m *Module) SearchGETHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
+	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
@@ -82,7 +82,7 @@ func (m *Module) SearchGETHandler(c *gin.Context) {
 		excludeUnreviewed, err = strconv.ParseBool(excludeUnreviewedString)
 		if err != nil {
 			err := fmt.Errorf("error parsing %s: %s", ExcludeUnreviewedKey, err)
-			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
 	}
@@ -90,7 +90,7 @@ func (m *Module) SearchGETHandler(c *gin.Context) {
 	query := c.Query(QueryKey)
 	if query == "" {
 		err := errors.New("query parameter q was empty")
-		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
@@ -101,7 +101,7 @@ func (m *Module) SearchGETHandler(c *gin.Context) {
 		resolve, err = strconv.ParseBool(resolveString)
 		if err != nil {
 			err := fmt.Errorf("error parsing %s: %s", ResolveKey, err)
-			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
 	}
@@ -112,7 +112,7 @@ func (m *Module) SearchGETHandler(c *gin.Context) {
 		i, err := strconv.ParseInt(limitString, 10, 32)
 		if err != nil {
 			err := fmt.Errorf("error parsing %s: %s", LimitKey, err)
-			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
 		limit = int(i)
@@ -130,7 +130,7 @@ func (m *Module) SearchGETHandler(c *gin.Context) {
 		i, err := strconv.ParseInt(offsetString, 10, 32)
 		if err != nil {
 			err := fmt.Errorf("error parsing %s: %s", OffsetKey, err)
-			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
 		offset = int(i)
@@ -143,12 +143,12 @@ func (m *Module) SearchGETHandler(c *gin.Context) {
 		following, err = strconv.ParseBool(followingString)
 		if err != nil {
 			err := fmt.Errorf("error parsing %s: %s", FollowingKey, err)
-			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
 	}
 
-	searchQuery := &model.SearchQuery{
+	searchQuery := &apimodel.SearchQuery{
 		AccountID:         c.Query(AccountIDKey),
 		MaxID:             c.Query(MaxIDKey),
 		MinID:             c.Query(MinIDKey),
@@ -163,7 +163,7 @@ func (m *Module) SearchGETHandler(c *gin.Context) {
 
 	results, errWithCode := m.processor.SearchGet(c.Request.Context(), authed, searchQuery)
 	if errWithCode != nil {
-		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

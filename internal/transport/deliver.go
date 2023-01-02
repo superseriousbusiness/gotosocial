@@ -27,7 +27,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/superseriousbusiness/gotosocial/internal/api"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
@@ -80,7 +80,7 @@ func (t *transport) Deliver(ctx context.Context, b []byte, to *url.URL) error {
 		return err
 	}
 
-	req.Header.Add("Content-Type", string(api.AppActivityLDJSON))
+	req.Header.Add("Content-Type", string(apiutil.AppActivityLDJSON))
 	req.Header.Add("Accept-Charset", "utf-8")
 	req.Header.Set("Host", to.Host)
 

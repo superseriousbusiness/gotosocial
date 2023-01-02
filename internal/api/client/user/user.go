@@ -21,32 +21,27 @@ package user
 import (
 	"net/http"
 
-	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
 const (
-	// BasePath is the base URI path for this module
-	BasePath = "/api/v1/user"
+	// BasePath is the base URI path for this module, minus the 'api' prefix
+	BasePath = "/v1/user"
 	// PasswordChangePath is the path for POSTing a password change request.
 	PasswordChangePath = BasePath + "/password_change"
 )
 
-// Module implements the ClientAPIModule interface
 type Module struct {
 	processor processing.Processor
 }
 
-// New returns a new user module
-func New(processor processing.Processor) api.ClientModule {
+func New(processor processing.Processor) *Module {
 	return &Module{
 		processor: processor,
 	}
 }
 
-// Route attaches all routes from this module to the given router
-func (m *Module) Route(r router.Router) error {
-	r.AttachHandler(http.MethodPost, PasswordChangePath, m.PasswordChangePOSTHandler)
-	return nil
+func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
+	attachHandler(http.MethodPost, PasswordChangePath, m.PasswordChangePOSTHandler)
 }

@@ -1,10 +1,16 @@
 # Rate Limit
 
-To mitigate abuse + scraping of your instance, an IP-based HTTP rate limit is in place.
+To mitigate abuse + scraping of your instance, IP-based HTTP rate limiting is in place.
 
-This rate limit applies not just to the API, but to all requests (web, federation, etc).
+There are separate rate limiters configured for different groupings of endpoints. In other words, being rate limited for one part of the API doesn't necessarily mean you will be rate limited for other parts. Each entry in the following list has a separate rate limiter:
 
-By default, a maximum of 1000 requests in a 5 minute time window are allowed.
+- `/users/*` and `/emoji/*` - ActivityPub (s2s) endpoints.
+- `/auth/*` and `/oauth/*` - Sign in + OAUTH token requests.
+- `/fileserver/*` - Media attachments, emojis, etc.
+- `/nodeinfo/*` - NodeInfo endpoint(s).
+- `/.well-known/*` - webfinger + nodeinfo requests.
+
+By default, each rate limiter allows a maximum of 300 requests in a 5 minute time window: 1 request per second per client IP address.
 
 Every response will include the current status of the rate limit with the following headers:
 

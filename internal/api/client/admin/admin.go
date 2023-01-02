@@ -21,14 +21,13 @@ package admin
 import (
 	"net/http"
 
-	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
 const (
-	// BasePath is the base API path for this module.
-	BasePath = "/api/v1/admin"
+	// BasePath is the base API path for this module, excluding the api prefix
+	BasePath = "/v1/admin"
 	// EmojiPath is used for posting/deleting custom emojis.
 	EmojiPath = BasePath + "/custom_emojis"
 	// EmojiPathWithID is used for interacting with a single emoji.
@@ -68,32 +67,28 @@ const (
 	DomainQueryKey = "domain"
 )
 
-// Module implements the ClientAPIModule interface for admin-related actions (reports, emojis, etc)
 type Module struct {
 	processor processing.Processor
 }
 
-// New returns a new admin module
-func New(processor processing.Processor) api.ClientModule {
+func New(processor processing.Processor) *Module {
 	return &Module{
 		processor: processor,
 	}
 }
 
-// Route attaches all routes from this module to the given router
-func (m *Module) Route(r router.Router) error {
-	r.AttachHandler(http.MethodPost, EmojiPath, m.EmojiCreatePOSTHandler)
-	r.AttachHandler(http.MethodGet, EmojiPath, m.EmojisGETHandler)
-	r.AttachHandler(http.MethodDelete, EmojiPathWithID, m.EmojiDELETEHandler)
-	r.AttachHandler(http.MethodGet, EmojiPathWithID, m.EmojiGETHandler)
-	r.AttachHandler(http.MethodPatch, EmojiPathWithID, m.EmojiPATCHHandler)
-	r.AttachHandler(http.MethodPost, DomainBlocksPath, m.DomainBlocksPOSTHandler)
-	r.AttachHandler(http.MethodGet, DomainBlocksPath, m.DomainBlocksGETHandler)
-	r.AttachHandler(http.MethodGet, DomainBlocksPathWithID, m.DomainBlockGETHandler)
-	r.AttachHandler(http.MethodDelete, DomainBlocksPathWithID, m.DomainBlockDELETEHandler)
-	r.AttachHandler(http.MethodPost, AccountsActionPath, m.AccountActionPOSTHandler)
-	r.AttachHandler(http.MethodPost, MediaCleanupPath, m.MediaCleanupPOSTHandler)
-	r.AttachHandler(http.MethodPost, MediaRefetchPath, m.MediaRefetchPOSTHandler)
-	r.AttachHandler(http.MethodGet, EmojiCategoriesPath, m.EmojiCategoriesGETHandler)
-	return nil
+func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
+	attachHandler(http.MethodPost, EmojiPath, m.EmojiCreatePOSTHandler)
+	attachHandler(http.MethodGet, EmojiPath, m.EmojisGETHandler)
+	attachHandler(http.MethodDelete, EmojiPathWithID, m.EmojiDELETEHandler)
+	attachHandler(http.MethodGet, EmojiPathWithID, m.EmojiGETHandler)
+	attachHandler(http.MethodPatch, EmojiPathWithID, m.EmojiPATCHHandler)
+	attachHandler(http.MethodPost, DomainBlocksPath, m.DomainBlocksPOSTHandler)
+	attachHandler(http.MethodGet, DomainBlocksPath, m.DomainBlocksGETHandler)
+	attachHandler(http.MethodGet, DomainBlocksPathWithID, m.DomainBlockGETHandler)
+	attachHandler(http.MethodDelete, DomainBlocksPathWithID, m.DomainBlockDELETEHandler)
+	attachHandler(http.MethodPost, AccountsActionPath, m.AccountActionPOSTHandler)
+	attachHandler(http.MethodPost, MediaCleanupPath, m.MediaCleanupPOSTHandler)
+	attachHandler(http.MethodPost, MediaRefetchPath, m.MediaRefetchPOSTHandler)
+	attachHandler(http.MethodGet, EmojiCategoriesPath, m.EmojiCategoriesGETHandler)
 }

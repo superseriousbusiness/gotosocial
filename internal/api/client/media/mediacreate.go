@@ -24,8 +24,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/api"
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -94,42 +94,42 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
+	apiVersion := c.Param(APIVersionKey)
+	if apiVersion != APIv1 && apiVersion != APIv2 {
+		err := errors.New("api version must be one of v1 or v2 for this path")
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err, err.Error()), m.processor.InstanceGet)
+		return
+	}
+
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
+	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	apiVersion := c.Param(APIVersionKey)
-	if apiVersion != "v1" && apiVersion != "v2" {
-		err := errors.New("api version must be one of v1 or v2")
-		api.ErrorHandler(c, gtserror.NewErrorNotFound(err, err.Error()), m.processor.InstanceGet)
-		return
-	}
-
-	form := &model.AttachmentRequest{}
+	form := &apimodel.AttachmentRequest{}
 	if err := c.ShouldBind(&form); err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if err := validateCreateMedia(form); err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	apiAttachment, errWithCode := m.processor.MediaCreate(c.Request.Context(), authed, form)
 	if errWithCode != nil {
-		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 
-	if apiVersion == "v2" {
+	if apiVersion == APIv2 {
 		// the mastodon v2 media API specifies that the URL should be null
 		// and that the client should call /api/v1/media/:id to get the URL
 		//
@@ -141,7 +141,7 @@ func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, apiAttachment)
 }
 
-func validateCreateMedia(form *model.AttachmentRequest) error {
+func validateCreateMedia(form *apimodel.AttachmentRequest) error {
 	// check there actually is a file attached and it's not size 0
 	if form.File == nil {
 		return errors.New("no attachment given")

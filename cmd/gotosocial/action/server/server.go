@@ -20,37 +20,20 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/account"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/app"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/auth"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/blocks"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/bookmarks"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/emoji"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/favourites"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/fileserver"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/filter"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/followrequest"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/instance"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/list"
-	mediaModule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/notification"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/search"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/streaming"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/timeline"
-	userClient "github.com/superseriousbusiness/gotosocial/internal/api/client/user"
-	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/nodeinfo"
-	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/user"
-	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/webfinger"
-	"github.com/superseriousbusiness/gotosocial/internal/api/security"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/middleware"
+
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
@@ -106,11 +89,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	federatingDB := federatingdb.New(dbService, fedWorker)
 
-	router, err := router.New(ctx, dbService)
-	if err != nil {
-		return fmt.Errorf("error creating router: %s", err)
-	}
-
 	// build converters and util
 	typeConverter := typeutils.NewConverter(dbService)
 
@@ -148,84 +126,71 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		}
 	}
 
-	// create and start the message processor using the other services we've created so far
+	// create the message processor using the other services we've created so far
 	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaManager, storage, dbService, emailSender, clientWorker, fedWorker)
 	if err := processor.Start(); err != nil {
-		return fmt.Errorf("error starting processor: %s", err)
+		return fmt.Errorf("error creating processor: %s", err)
 	}
 
-	idp, err := oidc.NewIDP(ctx)
+	/*
+		HTTP router initialization
+	*/
+
+	router, err := router.New(ctx)
 	if err != nil {
-		return fmt.Errorf("error creating oidc idp: %s", err)
+		return fmt.Errorf("error creating router: %s", err)
 	}
 
-	// build web module
-	webModule := web.New(processor)
+	// attach global middlewares which are used for every request
+	router.AttachGlobalMiddleware(
+		middleware.Logger(),
+		middleware.UserAgent(),
+		middleware.CORS(),
+		middleware.ExtraHeaders(),
+	)
 
-	// build client api modules
-	authModule := auth.New(dbService, idp, processor)
-	accountModule := account.New(processor)
-	instanceModule := instance.New(processor)
-	appsModule := app.New(processor)
-	followRequestsModule := followrequest.New(processor)
-	webfingerModule := webfinger.New(processor)
-	nodeInfoModule := nodeinfo.New(processor)
-	usersModule := user.New(processor)
-	timelineModule := timeline.New(processor)
-	notificationModule := notification.New(processor)
-	searchModule := search.New(processor)
-	filtersModule := filter.New(processor)
-	emojiModule := emoji.New(processor)
-	listsModule := list.New(processor)
-	mm := mediaModule.New(processor)
-	fileServerModule := fileserver.New(processor)
-	adminModule := admin.New(processor)
-	statusModule := status.New(processor)
-	bookmarksModule := bookmarks.New(processor)
-	securityModule := security.New(dbService, oauthServer)
-	streamingModule := streaming.New(processor)
-	favouritesModule := favourites.New(processor)
-	blocksModule := blocks.New(processor)
-	userClientModule := userClient.New(processor)
+	// attach global no route / 404 handler to the router
+	router.AttachNoRouteHandler(func(c *gin.Context) {
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(errors.New(http.StatusText(http.StatusNotFound))), processor.InstanceGet)
+	})
 
-	apis := []api.ClientModule{
-		// modules with middleware go first
-		securityModule,
-		authModule,
-
-		// now the web module
-		webModule,
-
-		// now everything else
-		accountModule,
-		instanceModule,
-		appsModule,
-		followRequestsModule,
-		mm,
-		fileServerModule,
-		adminModule,
-		statusModule,
-		bookmarksModule,
-		webfingerModule,
-		nodeInfoModule,
-		usersModule,
-		timelineModule,
-		notificationModule,
-		searchModule,
-		filtersModule,
-		emojiModule,
-		listsModule,
-		streamingModule,
-		favouritesModule,
-		blocksModule,
-		userClientModule,
-	}
-
-	for _, m := range apis {
-		if err := m.Route(router); err != nil {
-			return fmt.Errorf("routing error: %s", err)
+	// build router modules
+	var idp oidc.IDP
+	if config.GetOIDCEnabled() {
+		idp, err = oidc.NewIDP(ctx)
+		if err != nil {
+			return fmt.Errorf("error creating oidc idp: %w", err)
 		}
 	}
+
+	routerSession, err := dbService.GetSession(ctx)
+	if err != nil {
+		return fmt.Errorf("error retrieving router session for session middleware: %w", err)
+	}
+
+	sessionName, err := middleware.SessionName()
+	if err != nil {
+		return fmt.Errorf("error generating session name for session middleware: %w", err)
+	}
+
+	var (
+		authModule        = api.NewAuth(dbService, processor, idp, routerSession, sessionName) // auth/oauth paths
+		clientModule      = api.NewClient(dbService, processor)                                // api client endpoints
+		fileserverModule  = api.NewFileserver(processor)                                       // fileserver endpoints
+		wellKnownModule   = api.NewWellKnown(processor)                                        // .well-known endpoints
+		nodeInfoModule    = api.NewNodeInfo(processor)                                         // nodeinfo endpoint
+		activityPubModule = api.NewActivityPub(dbService, processor)                           // ActivityPub endpoints
+		webModule         = web.New(processor)                                                 // web pages + user profiles + settings panels etc
+	)
+
+	// these should be routed in order
+	authModule.Route(router)
+	clientModule.Route(router)
+	fileserverModule.Route(router)
+	wellKnownModule.Route(router)
+	nodeInfoModule.Route(router)
+	activityPubModule.Route(router)
+	webModule.Route(router)
 
 	gts, err := gotosocial.NewServer(dbService, router, federator, mediaManager)
 	if err != nil {

@@ -105,7 +105,7 @@ var Defaults = Configuration{
 	SyslogAddress:  "localhost:514",
 
 	AdvancedCookiesSamesite:   "lax",
-	AdvancedRateLimitRequests: 1000, // per 5 minutes
+	AdvancedRateLimitRequests: 300, // 1 per second per 5 minutes
 
 	Cache: CacheConfiguration{
 		GTS: GTSCacheConfiguration{

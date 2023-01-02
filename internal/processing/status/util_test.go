@@ -24,7 +24,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
@@ -45,20 +45,20 @@ func (suite *UtilTestSuite) TestProcessMentions1() {
 	creatingAccount := suite.testAccounts["local_account_1"]
 	mentionedAccount := suite.testAccounts["remote_account_1"]
 
-	form := &model.AdvancedStatusCreateForm{
-		StatusCreateRequest: model.StatusCreateRequest{
+	form := &apimodel.AdvancedStatusCreateForm{
+		StatusCreateRequest: apimodel.StatusCreateRequest{
 			Status:      statusText1,
 			MediaIDs:    []string{},
 			Poll:        nil,
 			InReplyToID: "",
 			Sensitive:   false,
 			SpoilerText: "",
-			Visibility:  model.VisibilityPublic,
+			Visibility:  apimodel.VisibilityPublic,
 			ScheduledAt: "",
 			Language:    "en",
-			Format:      model.StatusFormatPlain,
+			Format:      apimodel.StatusFormatPlain,
 		},
-		AdvancedVisibilityFlagsForm: model.AdvancedVisibilityFlagsForm{
+		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
 			Boostable: nil,
 			Replyable: nil,
@@ -94,20 +94,20 @@ func (suite *UtilTestSuite) TestProcessContentFull1() {
 	*/
 	// we need to partially process the status first since processContent expects a status with some stuff already set on it
 	creatingAccount := suite.testAccounts["local_account_1"]
-	form := &model.AdvancedStatusCreateForm{
-		StatusCreateRequest: model.StatusCreateRequest{
+	form := &apimodel.AdvancedStatusCreateForm{
+		StatusCreateRequest: apimodel.StatusCreateRequest{
 			Status:      statusText1,
 			MediaIDs:    []string{},
 			Poll:        nil,
 			InReplyToID: "",
 			Sensitive:   false,
 			SpoilerText: "",
-			Visibility:  model.VisibilityPublic,
+			Visibility:  apimodel.VisibilityPublic,
 			ScheduledAt: "",
 			Language:    "en",
-			Format:      model.StatusFormatPlain,
+			Format:      apimodel.StatusFormatPlain,
 		},
-		AdvancedVisibilityFlagsForm: model.AdvancedVisibilityFlagsForm{
+		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
 			Boostable: nil,
 			Replyable: nil,
@@ -142,20 +142,20 @@ func (suite *UtilTestSuite) TestProcessContentPartial1() {
 	*/
 	// we need to partially process the status first since processContent expects a status with some stuff already set on it
 	creatingAccount := suite.testAccounts["local_account_1"]
-	form := &model.AdvancedStatusCreateForm{
-		StatusCreateRequest: model.StatusCreateRequest{
+	form := &apimodel.AdvancedStatusCreateForm{
+		StatusCreateRequest: apimodel.StatusCreateRequest{
 			Status:      statusText1,
 			MediaIDs:    []string{},
 			Poll:        nil,
 			InReplyToID: "",
 			Sensitive:   false,
 			SpoilerText: "",
-			Visibility:  model.VisibilityPublic,
+			Visibility:  apimodel.VisibilityPublic,
 			ScheduledAt: "",
 			Language:    "en",
-			Format:      model.StatusFormatPlain,
+			Format:      apimodel.StatusFormatPlain,
 		},
-		AdvancedVisibilityFlagsForm: model.AdvancedVisibilityFlagsForm{
+		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
 			Boostable: nil,
 			Replyable: nil,
@@ -184,20 +184,20 @@ func (suite *UtilTestSuite) TestProcessMentions2() {
 	creatingAccount := suite.testAccounts["local_account_1"]
 	mentionedAccount := suite.testAccounts["remote_account_1"]
 
-	form := &model.AdvancedStatusCreateForm{
-		StatusCreateRequest: model.StatusCreateRequest{
+	form := &apimodel.AdvancedStatusCreateForm{
+		StatusCreateRequest: apimodel.StatusCreateRequest{
 			Status:      statusText2,
 			MediaIDs:    []string{},
 			Poll:        nil,
 			InReplyToID: "",
 			Sensitive:   false,
 			SpoilerText: "",
-			Visibility:  model.VisibilityPublic,
+			Visibility:  apimodel.VisibilityPublic,
 			ScheduledAt: "",
 			Language:    "en",
-			Format:      model.StatusFormatPlain,
+			Format:      apimodel.StatusFormatPlain,
 		},
-		AdvancedVisibilityFlagsForm: model.AdvancedVisibilityFlagsForm{
+		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
 			Boostable: nil,
 			Replyable: nil,
@@ -233,20 +233,20 @@ func (suite *UtilTestSuite) TestProcessContentFull2() {
 	*/
 	// we need to partially process the status first since processContent expects a status with some stuff already set on it
 	creatingAccount := suite.testAccounts["local_account_1"]
-	form := &model.AdvancedStatusCreateForm{
-		StatusCreateRequest: model.StatusCreateRequest{
+	form := &apimodel.AdvancedStatusCreateForm{
+		StatusCreateRequest: apimodel.StatusCreateRequest{
 			Status:      statusText2,
 			MediaIDs:    []string{},
 			Poll:        nil,
 			InReplyToID: "",
 			Sensitive:   false,
 			SpoilerText: "",
-			Visibility:  model.VisibilityPublic,
+			Visibility:  apimodel.VisibilityPublic,
 			ScheduledAt: "",
 			Language:    "en",
-			Format:      model.StatusFormatPlain,
+			Format:      apimodel.StatusFormatPlain,
 		},
-		AdvancedVisibilityFlagsForm: model.AdvancedVisibilityFlagsForm{
+		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
 			Boostable: nil,
 			Replyable: nil,
@@ -282,20 +282,20 @@ func (suite *UtilTestSuite) TestProcessContentPartial2() {
 	*/
 	// we need to partially process the status first since processContent expects a status with some stuff already set on it
 	creatingAccount := suite.testAccounts["local_account_1"]
-	form := &model.AdvancedStatusCreateForm{
-		StatusCreateRequest: model.StatusCreateRequest{
+	form := &apimodel.AdvancedStatusCreateForm{
+		StatusCreateRequest: apimodel.StatusCreateRequest{
 			Status:      statusText2,
 			MediaIDs:    []string{},
 			Poll:        nil,
 			InReplyToID: "",
 			Sensitive:   false,
 			SpoilerText: "",
-			Visibility:  model.VisibilityPublic,
+			Visibility:  apimodel.VisibilityPublic,
 			ScheduledAt: "",
 			Language:    "en",
-			Format:      model.StatusFormatPlain,
+			Format:      apimodel.StatusFormatPlain,
 		},
-		AdvancedVisibilityFlagsForm: model.AdvancedVisibilityFlagsForm{
+		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
 			Boostable: nil,
 			Replyable: nil,

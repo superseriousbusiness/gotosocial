@@ -19,28 +19,30 @@
 package web
 
 import (
-	"errors"
 	"net/http"
+	"path/filepath"
 
 	"codeberg.org/gruf/go-cache/v3"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/api"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 const (
-	confirmEmailPath = "/" + uris.ConfirmEmailPath
-	profilePath      = "/@:" + usernameKey
-	customCSSPath    = profilePath + "/custom.css"
-	rssFeedPath      = profilePath + "/feed.rss"
-	statusPath       = profilePath + "/statuses/:" + statusIDKey
-	assetsPathPrefix = "/assets"
-	distPathPrefix   = assetsPathPrefix + "/dist"
-	userPanelPath    = "/settings/user"
-	adminPanelPath   = "/settings/admin"
+	confirmEmailPath   = "/" + uris.ConfirmEmailPath
+	profilePath        = "/@:" + usernameKey
+	customCSSPath      = profilePath + "/custom.css"
+	rssFeedPath        = profilePath + "/feed.rss"
+	statusPath         = profilePath + "/statuses/:" + statusIDKey
+	assetsPathPrefix   = "/assets"
+	distPathPrefix     = assetsPathPrefix + "/dist"
+	settingsPathPrefix = "/settings"
+	settingsPanelGlob  = settingsPathPrefix + "/*panel"
+	userPanelPath      = settingsPathPrefix + "/user"
+	adminPanelPath     = settingsPathPrefix + "/admin"
 
 	tokenParam  = "token"
 	usernameKey = "username"
@@ -54,67 +56,54 @@ const (
 	lastModifiedHeader    = "Last-Modified"     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Last-Modified
 )
 
-// Module implements the api.ClientModule interface for web pages.
 type Module struct {
 	processor processing.Processor
 	eTagCache cache.Cache[string, eTagCacheEntry]
 }
 
-// New returns a new api.ClientModule for web pages.
-func New(processor processing.Processor) api.ClientModule {
+func New(processor processing.Processor) *Module {
 	return &Module{
 		processor: processor,
 		eTagCache: newETagCache(),
 	}
 }
 
-// Route satisfies the RESTAPIModule interface
-func (m *Module) Route(s router.Router) error {
+func (m *Module) Route(r router.Router) {
 	// serve static files from assets dir at /assets
-	assetsGroup := s.AttachGroup(assetsPathPrefix)
-	m.mountAssetsFilesystem(assetsGroup)
+	assetsGroup := r.AttachGroup(assetsPathPrefix)
+	webAssetsAbsFilePath, err := filepath.Abs(config.GetWebAssetBaseDir())
+	if err != nil {
+		log.Panicf("error getting absolute path of assets dir: %s", err)
+	}
 
-	s.AttachHandler(http.MethodGet, "/settings", m.SettingsPanelHandler)
-	s.AttachHandler(http.MethodGet, "/settings/*panel", m.SettingsPanelHandler)
+	fs := fileSystem{http.Dir(webAssetsAbsFilePath)}
 
-	// User panel redirects
-	// used by clients
-	s.AttachHandler(http.MethodGet, "/auth/edit", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, userPanelPath)
-	})
+	// use the cache middleware on all handlers in this group
+	assetsGroup.Use(m.assetsCacheControlMiddleware(fs))
 
-	// old version of settings panel
-	s.AttachHandler(http.MethodGet, "/user", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, userPanelPath)
-	})
+	// serve static file system in the root of this group,
+	// will end up being something like "/assets/"
+	assetsGroup.StaticFS("/", fs)
 
-	// Admin panel redirects
-	// old version of settings panel
-	s.AttachHandler(http.MethodGet, "/admin", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, adminPanelPath)
-	})
+	/*
+		Attach individual web handlers which require no specific middlewares
+	*/
 
-	// serve front-page
-	s.AttachHandler(http.MethodGet, "/", m.baseHandler)
+	r.AttachHandler(http.MethodGet, "/", m.baseHandler) // front-page
+	r.AttachHandler(http.MethodGet, settingsPathPrefix, m.SettingsPanelHandler)
+	r.AttachHandler(http.MethodGet, settingsPanelGlob, m.SettingsPanelHandler)
+	r.AttachHandler(http.MethodGet, profilePath, m.profileGETHandler)
+	r.AttachHandler(http.MethodGet, customCSSPath, m.customCSSGETHandler)
+	r.AttachHandler(http.MethodGet, rssFeedPath, m.rssFeedGETHandler)
+	r.AttachHandler(http.MethodGet, statusPath, m.threadGETHandler)
+	r.AttachHandler(http.MethodGet, confirmEmailPath, m.confirmEmailGETHandler)
+	r.AttachHandler(http.MethodGet, robotsPath, m.robotsGETHandler)
 
-	// serve profile pages at /@username
-	s.AttachHandler(http.MethodGet, profilePath, m.profileGETHandler)
+	/*
+		Attach redirects from old endpoints to current ones for backwards compatibility
+	*/
 
-	// serve custom css at /@username/custom.css
-	s.AttachHandler(http.MethodGet, customCSSPath, m.customCSSGETHandler)
-
-	s.AttachHandler(http.MethodGet, rssFeedPath, m.rssFeedGETHandler)
-
-	// serve statuses
-	s.AttachHandler(http.MethodGet, statusPath, m.threadGETHandler)
-
-	// serve email confirmation page at /confirm_email?token=whatever
-	s.AttachHandler(http.MethodGet, confirmEmailPath, m.confirmEmailGETHandler)
-
-	// 404 handler
-	s.AttachNoRouteHandler(func(c *gin.Context) {
-		api.ErrorHandler(c, gtserror.NewErrorNotFound(errors.New(http.StatusText(http.StatusNotFound))), m.processor.InstanceGet)
-	})
-
-	return nil
+	r.AttachHandler(http.MethodGet, "/auth/edit", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, userPanelPath) })
+	r.AttachHandler(http.MethodGet, "/user", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, userPanelPath) })
+	r.AttachHandler(http.MethodGet, "/admin", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, adminPanelPath) })
 }

@@ -25,34 +25,39 @@ import (
 	"net/http"
 	"time"
 
+	"codeberg.org/gruf/go-bytesize"
 	"codeberg.org/gruf/go-debug"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"golang.org/x/crypto/acme/autocert"
 )
 
 const (
-	readTimeout       = 60 * time.Second
-	writeTimeout      = 30 * time.Second
-	idleTimeout       = 30 * time.Second
-	readHeaderTimeout = 30 * time.Second
-	shutdownTimeout   = 30 * time.Second
+	readTimeout        = 60 * time.Second
+	writeTimeout       = 30 * time.Second
+	idleTimeout        = 30 * time.Second
+	readHeaderTimeout  = 30 * time.Second
+	shutdownTimeout    = 30 * time.Second
+	maxMultipartMemory = int64(8 * bytesize.MiB)
 )
 
 // Router provides the REST interface for gotosocial, using gin.
 type Router interface {
-	// Attach a gin handler to the router with the given method and path
-	AttachHandler(method string, path string, f gin.HandlerFunc)
-	// Attach a gin middleware to the router that will be used globally
-	AttachMiddleware(handler gin.HandlerFunc)
+	// Attach global gin middlewares to this router.
+	AttachGlobalMiddleware(handlers ...gin.HandlerFunc) gin.IRoutes
+	// AttachGroup attaches the given handlers into a group with the given relativePath as
+	// base path for that group. It then returns the *gin.RouterGroup so that the caller
+	// can add any extra middlewares etc specific to that group, as desired.
+	AttachGroup(relativePath string, handlers ...gin.HandlerFunc) *gin.RouterGroup
+	// Attach a single gin handler to the router with the given method and path.
+	// To make middleware management easier, AttachGroup should be preferred where possible.
+	// However, this function can be used for attaching single handlers that only require
+	// global middlewares.
+	AttachHandler(method string, path string, handler gin.HandlerFunc)
+
 	// Attach 404 NoRoute handler
 	AttachNoRouteHandler(handler gin.HandlerFunc)
-	// Attach a router group, and receive that group back.
-	// More middlewares and handlers can then be attached on
-	// the group by the caller.
-	AttachGroup(path string, handlers ...gin.HandlerFunc) *gin.RouterGroup
 	// Start the router
 	Start()
 	// Stop the router
@@ -142,38 +147,24 @@ func (r *router) Stop(ctx context.Context) error {
 	return nil
 }
 
-// New returns a new Router with the specified configuration.
+// New returns a new Router.
 //
-// The given DB is only used in the New function for parsing config values, and is not otherwise
-// pinned to the router.
-func New(ctx context.Context, db db.DB) (Router, error) {
-	gin.SetMode(gin.ReleaseMode)
+// The router's Attach functions should be used *before* the router is Started.
+//
+// When the router's work is finished, Stop should be called on it to close connections gracefully.
+//
+// The provided context will be used as the base context for all requests passing
+// through the underlying http.Server, so this should be a long-running context.
+func New(ctx context.Context) (Router, error) {
+	gin.SetMode(gin.TestMode)
 
 	// create the actual engine here -- this is the core request routing handler for gts
 	engine := gin.New()
-	engine.Use(loggingMiddleware)
-
-	// 8 MiB
-	engine.MaxMultipartMemory = 8 << 20
+	engine.MaxMultipartMemory = maxMultipartMemory
 
 	// set up IP forwarding via x-forward-* headers.
 	trustedProxies := config.GetTrustedProxies()
 	if err := engine.SetTrustedProxies(trustedProxies); err != nil {
-		return nil, err
-	}
-
-	// enable cors on the engine
-	if err := useCors(engine); err != nil {
-		return nil, err
-	}
-
-	// enable gzip compression on the engine
-	if err := useGzip(engine); err != nil {
-		return nil, err
-	}
-
-	// enable session store middleware on the engine
-	if err := useSession(ctx, db, engine); err != nil {
 		return nil, err
 	}
 

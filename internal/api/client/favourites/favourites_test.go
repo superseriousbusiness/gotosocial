@@ -87,7 +87,7 @@ func (suite *FavouritesStandardTestSuite) SetupTest() {
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, suite.mediaManager, clientWorker, fedWorker)
-	suite.favModule = favourites.New(suite.processor).(*favourites.Module)
+	suite.favModule = favourites.New(suite.processor)
 
 	suite.NoError(suite.processor.Start())
 }

@@ -28,8 +28,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/api"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -45,21 +45,21 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 
 	authed, err := oauth.Authed(c, false, false, false, false)
 	if err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	username := strings.ToLower(c.Param(usernameKey))
 	if username == "" {
 		err := errors.New("no account username specified")
-		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	host := config.GetHost()
 	instance, err := m.processor.InstanceGet(ctx, host)
 	if err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
 		return
 	}
 
@@ -69,14 +69,14 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 
 	account, errWithCode := m.processor.AccountGetLocalByUsername(ctx, authed, username)
 	if errWithCode != nil {
-		api.ErrorHandler(c, errWithCode, instanceGet)
+		apiutil.ErrorHandler(c, errWithCode, instanceGet)
 		return
 	}
 
 	// if we're getting an AP request on this endpoint we
 	// should render the account's AP representation instead
-	accept := c.NegotiateFormat(string(api.TextHTML), string(api.AppActivityJSON), string(api.AppActivityLDJSON))
-	if accept == string(api.AppActivityJSON) || accept == string(api.AppActivityLDJSON) {
+	accept := c.NegotiateFormat(string(apiutil.TextHTML), string(apiutil.AppActivityJSON), string(apiutil.AppActivityLDJSON))
+	if accept == string(apiutil.AppActivityJSON) || accept == string(apiutil.AppActivityLDJSON) {
 		m.returnAPProfile(ctx, c, username, accept)
 		return
 	}
@@ -89,7 +89,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 	// only allow search engines / robots to view this page if account is discoverable
 	var robotsMeta string
 	if account.Discoverable {
-		robotsMeta = robotsAllowSome
+		robotsMeta = robotsMetaAllowSome
 	}
 
 	// we should only show the 'back to top' button if the
@@ -105,7 +105,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 
 	statusResp, errWithCode := m.processor.AccountWebStatusesGet(ctx, account.ID, maxStatusID)
 	if errWithCode != nil {
-		api.ErrorHandler(c, errWithCode, instanceGet)
+		apiutil.ErrorHandler(c, errWithCode, instanceGet)
 		return
 	}
 
@@ -145,14 +145,14 @@ func (m *Module) returnAPProfile(ctx context.Context, c *gin.Context, username s
 
 	user, errWithCode := m.processor.GetFediUser(ctx, username, c.Request.URL)
 	if errWithCode != nil {
-		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet) //nolint:contextcheck
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet) //nolint:contextcheck
 		return
 	}
 
 	b, mErr := json.Marshal(user)
 	if mErr != nil {
 		err := fmt.Errorf("could not marshal json: %s", mErr)
-		api.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet) //nolint:contextcheck
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet) //nolint:contextcheck
 		return
 	}
 
