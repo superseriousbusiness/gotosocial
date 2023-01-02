@@ -77,8 +77,10 @@ func Throttle(t ThrottleOpts) gin.HandlerFunc {
 	}
 
 	var (
-		tokens        = make(chan token, t.Limit)
-		backlogTokens = make(chan token, t.Limit+t.BacklogLimit)
+		tokens          = make(chan token, t.Limit)
+		backlogTokens   = make(chan token, t.Limit+t.BacklogLimit)
+		retryAfter      = strconv.Itoa(t.RetryAfterSeconds)
+		backlogDuration = time.Duration(t.BacklogTimeoutSeconds) * time.Second
 	)
 
 	// prefill token buckets
@@ -89,24 +91,23 @@ func Throttle(t ThrottleOpts) gin.HandlerFunc {
 		backlogTokens <- token{}
 	}
 
+	// bail instructs the requester to return after retryAfter seconds, returns a 429,
+	// and writes the given message into the "error" field of a returned json object
+	bail := func(c *gin.Context, msg string) {
+		c.Header("Retry-After", retryAfter)
+		c.JSON(http.StatusTooManyRequests, gin.H{"error": msg})
+		c.Abort()
+	}
+
 	return func(c *gin.Context) {
-
-		// bail returns a 429, instructs the requester to return after retryAfterSeconds,
-		// and writes the given message into the "error" field of a returned json object
-		bail := func(msg string) {
-			c.Header("Retry-After", strconv.Itoa(t.RetryAfterSeconds))
-			c.JSON(http.StatusTooManyRequests, gin.H{"error": msg})
-			c.Abort()
-		}
-
 		// inside this select, the caller tries to get a backlog token
 		select {
 		case <-c.Request.Context().Done():
 			// request context has been canceled already
-			bail(errContextCanceled)
+			bail(c, errContextCanceled)
 		case btok := <-backlogTokens:
 			// take a backlog token and wait
-			timer := time.NewTimer(time.Duration(t.BacklogTimeoutSeconds) * time.Second)
+			timer := time.NewTimer(backlogDuration)
 			defer func() {
 				// when we're finished, return the backlog token to the bucket
 				backlogTokens <- btok
@@ -117,11 +118,11 @@ func Throttle(t ThrottleOpts) gin.HandlerFunc {
 			select {
 			case <-timer.C:
 				// waiting too long in the backlog
-				bail(errTimedOut)
+				bail(c, errTimedOut)
 			case <-c.Request.Context().Done():
 				// the request context has been canceled already
 				timer.Stop()
-				bail(errContextCanceled)
+				bail(c, errContextCanceled)
 			case tok := <-tokens:
 				// the caller gets a token, so their request can now be processed
 				timer.Stop()
@@ -135,7 +136,7 @@ func Throttle(t ThrottleOpts) gin.HandlerFunc {
 
 		default:
 			// we don't have space in the backlog queue
-			bail(errCapacityExceeded)
+			bail(c, errCapacityExceeded)
 		}
 	}
 }
