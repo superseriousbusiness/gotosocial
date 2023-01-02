@@ -19,18 +19,37 @@
 package media
 
 import (
+	"bufio"
 	"image"
 	"image/color"
 	"image/draw"
 	"image/jpeg"
 	"image/png"
 	"io"
+	"sync"
 
 	"github.com/buckket/go-blurhash"
 	"github.com/disintegration/imaging"
+	"github.com/superseriousbusiness/gotosocial/internal/iotools"
 
 	// import to init webp encode/decoding.
 	_ "golang.org/x/image/webp"
+)
+
+var (
+	// pngEncoder provides our global PNG encoding with
+	// specified compression level, and memory pooled buffers.
+	pngEncoder = png.Encoder{
+		CompressionLevel: png.DefaultCompression,
+		BufferPool:       &pngEncoderBufferPool{},
+	}
+
+	// jpegBufferPool is a memory pool of byte buffers for JPEG encoding.
+	jpegBufferPool = sync.Pool{
+		New: func() any {
+			return bufio.NewWriter(nil)
+		},
+	}
 )
 
 // gtsImage is a thin wrapper around the standard library image
@@ -94,7 +113,7 @@ func (m *gtsImage) Thumbnail() *gtsImage {
 
 	// Check the receiving image is within max thumnail bounds.
 	if m.Width() <= maxWidth && m.Height() <= maxHeight {
-		return m
+		return &gtsImage{image: imaging.Clone(m.image)}
 	}
 
 	// Image is too large, needs to be resized to thumbnail max.
@@ -114,56 +133,50 @@ func (m *gtsImage) Blurhash() (string, error) {
 
 // ToJPEG creates a new streaming JPEG encoder from receiving image, and a size ptr
 // which stores the number of bytes written during the image encoding process.
-func (m *gtsImage) ToJPEG(opts *jpeg.Options) (enc io.Reader, szPtr *int64) {
-	return newStreamingEncoder(func(w io.Writer) error {
-		return jpeg.Encode(w, m.image, opts)
+func (m *gtsImage) ToJPEG(opts *jpeg.Options) io.Reader {
+	return iotools.StreamWriteFunc(func(w io.Writer) error {
+		// Get encoding buffer
+		bw := getJPEGBuffer(w)
+
+		// Encode JPEG to buffered writer.
+		err := jpeg.Encode(bw, m.image, opts)
+
+		// Replace buffer.
+		putJPEGBuffer(bw)
+
+		return err
 	})
 }
 
 // ToPNG creates a new streaming PNG encoder from receiving image, and a size ptr
 // which stores the number of bytes written during the image encoding process.
-func (m *gtsImage) ToPNG() (enc io.Reader, szPtr *int64) {
-	return newStreamingEncoder(func(w io.Writer) error {
-		return png.Encode(w, m.image)
+func (m *gtsImage) ToPNG() io.Reader {
+	return iotools.StreamWriteFunc(func(w io.Writer) error {
+		return pngEncoder.Encode(w, m.image)
 	})
 }
 
-func newStreamingEncoder(encode func(io.Writer) error) (io.Reader, *int64) {
-	// In-memory encoder stream.
-	pr, pw := io.Pipe()
-
-	// Wrap writer to count the total
-	// bytes written during encode.
-	cw := &countWriter{w: pw}
-
-	go func() {
-		// NOTE:
-		// Normally we wouldn't want to just create new goroutines
-		// so easily without relying on a worker pool to allow controlled
-		// multi-tasking, but this streamed encoding will itself be executed
-		// within a worker-pool thread (specifically the media worker).
-
-		var err error
-
-		defer func() {
-			// Always pass along error.
-			pw.CloseWithError(err)
-		}()
-
-		// Start encoding.
-		err = encode(cw)
-	}()
-
-	return pr, &cw.n
+// getJPEGBuffer fetches a reset JPEG encoding buffer from global JPEG buffer pool.
+func getJPEGBuffer(w io.Writer) *bufio.Writer {
+	buf, _ := jpegBufferPool.Get().(*bufio.Writer)
+	buf.Reset(w)
+	return buf
 }
 
-type countWriter struct {
-	w io.Writer
-	n int64
+// putJPEGBuffer resets the given bufio writer and places in global JPEG buffer pool.
+func putJPEGBuffer(buf *bufio.Writer) {
+	buf.Reset(nil)
+	jpegBufferPool.Put(buf)
 }
 
-func (w *countWriter) Write(b []byte) (int, error) {
-	n, err := w.w.Write(b)
-	w.n += int64(n)
-	return n, err
+// pngEncoderBufferPool implements png.EncoderBufferPool.
+type pngEncoderBufferPool sync.Pool
+
+func (p *pngEncoderBufferPool) Get() *png.EncoderBuffer {
+	buf, _ := (*sync.Pool)(p).Get().(*png.EncoderBuffer)
+	return buf
+}
+
+func (p *pngEncoderBufferPool) Put(buf *png.EncoderBuffer) {
+	(*sync.Pool)(p).Put(buf)
 }

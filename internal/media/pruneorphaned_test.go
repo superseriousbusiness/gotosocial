@@ -39,7 +39,7 @@ func (suite *PruneOrphanedTestSuite) TestPruneOrphanedDry() {
 	}
 
 	pandaPath := "01GJQJ1YD9QCHCE12GG0EYHVNW/attachments/original/01GJQJ2AYM1VKSRW96YVAJ3NK3.gif"
-	if err := suite.storage.PutStream(context.Background(), pandaPath, bytes.NewBuffer(b)); err != nil {
+	if _, err := suite.storage.PutStream(context.Background(), pandaPath, bytes.NewBuffer(b)); err != nil {
 		panic(err)
 	}
 
@@ -62,7 +62,7 @@ func (suite *PruneOrphanedTestSuite) TestPruneOrphanedMoist() {
 	}
 
 	pandaPath := "01GJQJ1YD9QCHCE12GG0EYHVNW/attachments/original/01GJQJ2AYM1VKSRW96YVAJ3NK3.gif"
-	if err := suite.storage.PutStream(context.Background(), pandaPath, bytes.NewBuffer(b)); err != nil {
+	if _, err := suite.storage.PutStream(context.Background(), pandaPath, bytes.NewBuffer(b)); err != nil {
 		panic(err)
 	}
 

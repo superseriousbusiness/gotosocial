@@ -34,7 +34,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
@@ -224,39 +223,24 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 		string(TypeEmoji) + "/" +
 		string(pathID) + "." + info.Extension
 
-	// take ptr to in case we need to
-	// change source of size variable.
-	size := &sz
-
-	if sz <= 0 {
-		// No size provided, wrap reader
-		// to count bytes written to storage.
-		lr := &lengthReader{source: r}
-		size = &lr.length
-		r = lr
-	}
-
-	// Write the final image reader stream to our storage.
-	if err := p.manager.storage.PutStream(ctx, p.emoji.ImagePath, r); err != nil {
-		if !errors.Is(err, storage.ErrAlreadyExists) {
-			return fmt.Errorf("error writing emoji to storage: %w", err)
-		}
-
+	// This shouldn't already exist, but we do a check as it's worth logging.
+	if have, _ := p.manager.storage.Has(ctx, p.emoji.ImagePath); have {
 		log.Warnf("emoji already exists at storage path: %s", p.emoji.ImagePath)
 
 		// Attempt to remove existing emoji at storage path (might be broken / out-of-date)
-		if err := p.manager.storage.Storage.Remove(ctx, p.emoji.ImagePath); err != nil {
+		if err := p.manager.storage.Delete(ctx, p.emoji.ImagePath); err != nil {
 			return fmt.Errorf("error removing emoji from storage: %v", err)
-		}
-
-		// Attempt to re-stream this image into place in storage under key.
-		if err := p.manager.storage.PutStream(ctx, p.emoji.ImagePath, r); err != nil {
-			return fmt.Errorf("error writing emoji to storage: %w", err)
 		}
 	}
 
+	// Write the final image reader stream to our storage.
+	sz, err = p.manager.storage.PutStream(ctx, p.emoji.ImagePath, r)
+	if err != nil {
+		return fmt.Errorf("error writing emoji to storage: %w", err)
+	}
+
 	// Once again check size in case none was provided previously.
-	if size := bytesize.Size(*size); size > maxSize {
+	if size := bytesize.Size(sz); size > maxSize {
 		if err := p.manager.storage.Delete(ctx, p.emoji.ImagePath); err != nil {
 			log.Errorf("error removing too-large-emoji from storage: %v", err)
 		}
@@ -272,7 +256,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 		info.Extension,
 	)
 	p.emoji.ImageContentType = info.MIME.Value
-	p.emoji.ImageFileSize = int(*size)
+	p.emoji.ImageFileSize = int(sz)
 
 	return nil
 }
@@ -286,7 +270,7 @@ func (p *ProcessingEmoji) finish(ctx context.Context) error {
 	defer rc.Close()
 
 	// Decode the image from storage.
-	fullImg, err := decodeImage(rc)
+	staticImg, err := decodeImage(rc)
 	if err != nil {
 		return fmt.Errorf("error decoding image: %w", err)
 	}
@@ -296,18 +280,27 @@ func (p *ProcessingEmoji) finish(ctx context.Context) error {
 		return fmt.Errorf("error closing file: %w", err)
 	}
 
-	// Create a static image PNG encoder stream.
-	enc, szPtr := fullImg.ToPNG()
+	// This shouldn't already exist, but we do a check as it's worth logging.
+	if have, _ := p.manager.storage.Has(ctx, p.emoji.ImageStaticPath); have {
+		log.Warnf("static emoji already exists at storage path: %s", p.emoji.ImagePath)
 
-	// Stream-encode the PNG static image into storage.
-	err = p.manager.storage.PutStream(ctx, p.emoji.ImageStaticPath, enc)
-	if err != nil {
-		return fmt.Errorf("error stream-encoding thumbnail into storage: %w", err)
+		// Attempt to remove static existing emoji at storage path (might be broken / out-of-date)
+		if err := p.manager.storage.Delete(ctx, p.emoji.ImageStaticPath); err != nil {
+			return fmt.Errorf("error removing static emoji from storage: %v", err)
+		}
 	}
 
-	// Deref size ptr to get total static image bytes encoded.
-	// (full image file-size is set during .store() ).
-	p.emoji.ImageStaticFileSize = int(*szPtr)
+	// Create an emoji PNG encoder stream.
+	enc := staticImg.ToPNG()
+
+	// Stream-encode the PNG static image into storage.
+	sz, err := p.manager.storage.PutStream(ctx, p.emoji.ImageStaticPath, enc)
+	if err != nil {
+		return fmt.Errorf("error stream-encoding static emoji to storage: %w", err)
+	}
+
+	// Set written image size.
+	p.emoji.ImageStaticFileSize = int(sz)
 
 	return nil
 }

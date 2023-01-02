@@ -20,7 +20,6 @@ package media
 
 import (
 	"fmt"
-	"io"
 
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
@@ -33,18 +32,9 @@ var SupportedMIMETypes = []string{
 	mimeVideoMp4,
 }
 
-// supportedEmoji checks that the content type is image/png or image/gif -- the only types supported for emoji.
-func supportedEmoji(mimeType string) bool {
-	acceptedEmojiTypes := []string{
-		mimeImageGif,
-		mimeImagePng,
-	}
-	for _, accepted := range acceptedEmojiTypes {
-		if mimeType == accepted {
-			return true
-		}
-	}
-	return false
+var SupportedEmojiMIMETypes = []string{
+	mimeImageGif,
+	mimeImagePng,
 }
 
 // ParseMediaType converts s to a recognized MediaType, or returns an error if unrecognized
@@ -86,16 +76,4 @@ func (l *logrusWrapper) Info(msg string, keysAndValues ...interface{}) {
 // Error logs an error condition.
 func (l *logrusWrapper) Error(err error, msg string, keysAndValues ...interface{}) {
 	log.Error("media manager cron logger: ", err, msg, keysAndValues)
-}
-
-// lengthReader wraps a reader and reads the length of total bytes written as it goes.
-type lengthReader struct {
-	source io.Reader
-	length int64
-}
-
-func (r *lengthReader) Read(b []byte) (int, error) {
-	n, err := r.source.Read(b)
-	r.length += int64(n)
-	return n, err
 }

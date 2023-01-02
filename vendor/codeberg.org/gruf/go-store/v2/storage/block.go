@@ -10,12 +10,14 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 
 	"codeberg.org/gruf/go-byteutil"
 	"codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-fastcopy"
 	"codeberg.org/gruf/go-hashenc"
+	"codeberg.org/gruf/go-iotools"
 	"codeberg.org/gruf/go-pools"
 	"codeberg.org/gruf/go-store/v2/util"
 )
@@ -354,7 +356,7 @@ func (st *BlockStorage) ReadStream(ctx context.Context, key string) (io.ReadClos
 	}
 
 	// Prepare block reader and return
-	return util.NopReadCloser(&blockReader{
+	return iotools.NopReadCloser(&blockReader{
 		storage: st,
 		node:    &node,
 	}), nil
@@ -384,52 +386,54 @@ func (st *BlockStorage) readBlock(key string) ([]byte, error) {
 }
 
 // WriteBytes implements Storage.WriteBytes().
-func (st *BlockStorage) WriteBytes(ctx context.Context, key string, value []byte) error {
-	return st.WriteStream(ctx, key, bytes.NewReader(value))
+func (st *BlockStorage) WriteBytes(ctx context.Context, key string, value []byte) (int, error) {
+	n, err := st.WriteStream(ctx, key, bytes.NewReader(value))
+	return int(n), err
 }
 
 // WriteStream implements Storage.WriteStream().
-func (st *BlockStorage) WriteStream(ctx context.Context, key string, r io.Reader) error {
+func (st *BlockStorage) WriteStream(ctx context.Context, key string, r io.Reader) (int64, error) {
 	// Get node file path for key
 	npath, err := st.nodePathForKey(key)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// Check if open
 	if st.lock.Closed() {
-		return ErrClosed
+		return 0, ErrClosed
 	}
 
 	// Check context still valid
 	if err := ctx.Err(); err != nil {
-		return err
+		return 0, err
 	}
 
 	// Check if this exists
 	ok, err := stat(key)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// Check if we allow overwrites
 	if ok && !st.config.Overwrite {
-		return ErrAlreadyExists
+		return 0, ErrAlreadyExists
 	}
 
 	// Ensure nodes dir (and any leading up to) exists
 	err = os.MkdirAll(st.nodePath, defaultDirPerms)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// Ensure blocks dir (and any leading up to) exists
 	err = os.MkdirAll(st.blockPath, defaultDirPerms)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	var node node
+	var total atomic.Int64
 
 	// Acquire HashEncoder
 	hc := st.hashPool.Get().(*hashEncoder)
@@ -456,7 +460,7 @@ loop:
 			break loop
 		default:
 			st.bufpool.Put(buf)
-			return err
+			return 0, err
 		}
 
 		// Hash the encoded data
@@ -469,7 +473,7 @@ loop:
 		has, err := st.statBlock(sum)
 		if err != nil {
 			st.bufpool.Put(buf)
-			return err
+			return 0, err
 		} else if has {
 			st.bufpool.Put(buf)
 			continue loop
@@ -490,11 +494,14 @@ loop:
 			}()
 
 			// Write block to store at hash
-			err = st.writeBlock(sum, buf.B[:n])
+			n, err := st.writeBlock(sum, buf.B[:n])
 			if err != nil {
 				onceErr.Store(err)
 				return
 			}
+
+			// Increment total.
+			total.Add(int64(n))
 		}()
 
 		// Break at end
@@ -506,12 +513,12 @@ loop:
 	// Wait, check errors
 	wg.Wait()
 	if onceErr.IsSet() {
-		return onceErr.Load()
+		return 0, onceErr.Load()
 	}
 
 	// If no hashes created, return
 	if len(node.hashes) < 1 {
-		return new_error("no hashes written")
+		return 0, new_error("no hashes written")
 	}
 
 	// Prepare to swap error if need-be
@@ -535,7 +542,7 @@ loop:
 	// Attempt to open RW file
 	file, err := open(npath, flags)
 	if err != nil {
-		return errSwap(err)
+		return 0, errSwap(err)
 	}
 	defer file.Close()
 
@@ -546,11 +553,11 @@ loop:
 
 	// Finally, write data to file
 	_, err = io.CopyBuffer(file, &nodeReader{node: node}, buf.B)
-	return err
+	return total.Load(), err
 }
 
 // writeBlock writes the block with hash and supplied value to the filesystem.
-func (st *BlockStorage) writeBlock(hash string, value []byte) error {
+func (st *BlockStorage) writeBlock(hash string, value []byte) (int, error) {
 	// Get block file path for key
 	bpath := st.blockPathForKey(hash)
 
@@ -560,20 +567,19 @@ func (st *BlockStorage) writeBlock(hash string, value []byte) error {
 		if err == syscall.EEXIST {
 			err = nil /* race issue describe in struct NOTE */
 		}
-		return err
+		return 0, err
 	}
 	defer file.Close()
 
 	// Wrap the file in a compressor
 	cFile, err := st.config.Compression.Writer(file)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer cFile.Close()
 
 	// Write value to file
-	_, err = cFile.Write(value)
-	return err
+	return cFile.Write(value)
 }
 
 // statBlock checks for existence of supplied block hash.

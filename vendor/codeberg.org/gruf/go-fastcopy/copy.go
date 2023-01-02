@@ -78,16 +78,16 @@ func (cp *CopyPool) Copy(dst io.Writer, src io.Reader) (int64, error) {
 
 	var buf []byte
 
-	if b, ok := cp.pool.Get().([]byte); ok {
+	if b, ok := cp.pool.Get().(*[]byte); ok {
 		// Acquired buf from pool
-		buf = b
+		buf = *b
 	} else {
 		// Allocate new buffer of size
 		buf = make([]byte, cp.Buffer(0))
 	}
 
 	// Defer release to pool
-	defer cp.pool.Put(buf)
+	defer cp.pool.Put(&buf)
 
 	var n int64
 	for {

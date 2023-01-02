@@ -21,7 +21,6 @@ package media
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"image/jpeg"
 	"io"
@@ -34,7 +33,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
@@ -192,39 +190,24 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		string(SizeOriginal) + "/" +
 		p.media.ID + "." + info.Extension
 
-	// take ptr to in case we need to
-	// change source of size variable.
-	size := &sz
-
-	if sz <= 0 {
-		// No size provided, wrap reader
-		// to count bytes written to storage.
-		lr := &lengthReader{source: r}
-		size = &lr.length
-		r = lr
-	}
-
-	// Write the final image reader stream to our storage.
-	if err := p.manager.storage.PutStream(ctx, p.media.File.Path, r); err != nil {
-		if !errors.Is(err, storage.ErrAlreadyExists) {
-			return fmt.Errorf("error writing media to storage: %w", err)
-		}
-
+	// This shouldn't already exist, but we do a check as it's worth logging.
+	if have, _ := p.manager.storage.Has(ctx, p.media.File.Path); have {
 		log.Warnf("media already exists at storage path: %s", p.media.File.Path)
 
 		// Attempt to remove existing media at storage path (might be broken / out-of-date)
-		if err := p.manager.storage.Storage.Remove(ctx, p.media.File.Path); err != nil {
-			return fmt.Errorf("error removing emoji from storage: %v", err)
-		}
-
-		// Attempt to re-stream this image into place in storage under key.
-		if err := p.manager.storage.PutStream(ctx, p.media.File.Path, r); err != nil {
-			return fmt.Errorf("error writing emoji to storage: %w", err)
+		if err := p.manager.storage.Delete(ctx, p.media.File.Path); err != nil {
+			return fmt.Errorf("error removing media from storage: %v", err)
 		}
 	}
 
-	// Now we can deref filesize ptr.
-	p.media.File.FileSize = int(*size)
+	// Write the final image reader stream to our storage.
+	sz, err = p.manager.storage.PutStream(ctx, p.media.File.Path, r)
+	if err != nil {
+		return fmt.Errorf("error writing media to storage: %w", err)
+	}
+
+	// Set written image size.
+	p.media.File.FileSize = int(sz)
 
 	// Fill in remaining attachment data now it's stored.
 	p.media.URL = uris.GenerateURIForAttachment(
@@ -302,26 +285,34 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 	// now take our large son.
 	fullImg = nil
 
-	if p.media.Blurhash == "" {
-		// Blurhash needs generating from thumb.
-		hash, err := thumbImg.Blurhash()
-		if err != nil {
-			return fmt.Errorf("error generating blurhash: %w", err)
-		}
+	// Blurhash needs generating from thumb.
+	hash, err := thumbImg.Blurhash()
+	if err != nil {
+		return fmt.Errorf("error generating blurhash: %w", err)
+	}
 
-		// Set the attachment blurhash.
-		p.media.Blurhash = hash
+	// Set the attachment blurhash.
+	p.media.Blurhash = hash
+
+	// This shouldn't already exist, but we do a check as it's worth logging.
+	if have, _ := p.manager.storage.Has(ctx, p.media.Thumbnail.Path); have {
+		log.Warnf("thumbnail already exists at storage path: %s", p.media.Thumbnail.Path)
+
+		// Attempt to remove existing thumbnail at storage path (might be broken / out-of-date)
+		if err := p.manager.storage.Delete(ctx, p.media.Thumbnail.Path); err != nil {
+			return fmt.Errorf("error removing thumbnail from storage: %v", err)
+		}
 	}
 
 	// Create a thumbnail JPEG encoder stream.
-	enc, szPtr := thumbImg.ToJPEG(&jpeg.Options{
-		Quality: 75, // enough for a thumbnail.
+	enc := thumbImg.ToJPEG(&jpeg.Options{
+		Quality: 70, // enough for a thumbnail.
 	})
 
-	// Stream-encode the JPEG thumbnail into storage.
-	err = p.manager.storage.PutStream(ctx, p.media.Thumbnail.Path, enc)
+	// Stream-encode the JPEG thumbnail image into storage.
+	sz, err := p.manager.storage.PutStream(ctx, p.media.Thumbnail.Path, enc)
 	if err != nil {
-		return fmt.Errorf("error stream-encoding thumbnail into storage: %w", err)
+		return fmt.Errorf("error stream-encoding thumbnail to storage: %w", err)
 	}
 
 	// Set thumbnail dimensions in attachment info.
@@ -332,9 +323,8 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 		Aspect: thumbImg.AspectRatio(),
 	}
 
-	// Deref size ptr to get total thumbnail bytes encoded.
-	// (full image file-size is set during .store() ).
-	p.media.Thumbnail.FileSize = int(*szPtr)
+	// Set written image size.
+	p.media.Thumbnail.FileSize = int(sz)
 
 	// Finally set the attachment as processed and update time.
 	p.media.Processing = gtsmodel.ProcessingStatusProcessed

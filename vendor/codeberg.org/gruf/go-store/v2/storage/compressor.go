@@ -5,7 +5,7 @@ import (
 	"io"
 	"sync"
 
-	"codeberg.org/gruf/go-store/v2/util"
+	"codeberg.org/gruf/go-iotools"
 
 	"github.com/klauspost/compress/gzip"
 	"github.com/klauspost/compress/snappy"
@@ -15,10 +15,10 @@ import (
 // Compressor defines a means of compressing/decompressing values going into a key-value store
 type Compressor interface {
 	// Reader returns a new decompressing io.ReadCloser based on supplied (compressed) io.Reader
-	Reader(io.Reader) (io.ReadCloser, error)
+	Reader(io.ReadCloser) (io.ReadCloser, error)
 
 	// Writer returns a new compressing io.WriteCloser based on supplied (uncompressed) io.Writer
-	Writer(io.Writer) (io.WriteCloser, error)
+	Writer(io.WriteCloser) (io.WriteCloser, error)
 }
 
 type gzipCompressor struct {
@@ -47,8 +47,8 @@ func GZipCompressorLevel(level int) Compressor {
 
 	// Write empty data to ensure gzip
 	// header data is in byte buffer.
-	gw.Write([]byte{})
-	gw.Close()
+	_, _ = gw.Write([]byte{})
+	_ = gw.Close()
 
 	return &gzipCompressor{
 		rpool: sync.Pool{
@@ -67,23 +67,61 @@ func GZipCompressorLevel(level int) Compressor {
 	}
 }
 
-func (c *gzipCompressor) Reader(r io.Reader) (io.ReadCloser, error) {
+func (c *gzipCompressor) Reader(rc io.ReadCloser) (io.ReadCloser, error) {
+	var released bool
+
+	// Acquire from pool.
 	gr := c.rpool.Get().(*gzip.Reader)
-	if err := gr.Reset(r); err != nil {
+	if err := gr.Reset(rc); err != nil {
 		c.rpool.Put(gr)
 		return nil, err
 	}
-	return util.ReadCloserWithCallback(gr, func() {
-		c.rpool.Put(gr)
-	}), nil
+
+	return iotools.ReadCloser(gr, iotools.CloserFunc(func() error {
+		if !released {
+			released = true
+			defer c.rpool.Put(gr)
+		}
+
+		// Close compressor
+		err1 := gr.Close()
+
+		// Close original stream.
+		err2 := rc.Close()
+
+		// Return err1 or 2
+		if err1 != nil {
+			return err1
+		}
+		return err2
+	})), nil
 }
 
-func (c *gzipCompressor) Writer(w io.Writer) (io.WriteCloser, error) {
+func (c *gzipCompressor) Writer(wc io.WriteCloser) (io.WriteCloser, error) {
+	var released bool
+
+	// Acquire from pool.
 	gw := c.wpool.Get().(*gzip.Writer)
-	gw.Reset(w)
-	return util.WriteCloserWithCallback(gw, func() {
-		c.wpool.Put(gw)
-	}), nil
+	gw.Reset(wc)
+
+	return iotools.WriteCloser(gw, iotools.CloserFunc(func() error {
+		if !released {
+			released = true
+			c.wpool.Put(gw)
+		}
+
+		// Close compressor
+		err1 := gw.Close()
+
+		// Close original stream.
+		err2 := wc.Close()
+
+		// Return err1 or 2
+		if err1 != nil {
+			return err1
+		}
+		return err2
+	})), nil
 }
 
 type zlibCompressor struct {
@@ -139,26 +177,61 @@ func ZLibCompressorLevelDict(level int, dict []byte) Compressor {
 	}
 }
 
-func (c *zlibCompressor) Reader(r io.Reader) (io.ReadCloser, error) {
+func (c *zlibCompressor) Reader(rc io.ReadCloser) (io.ReadCloser, error) {
+	var released bool
 	zr := c.rpool.Get().(interface {
 		io.ReadCloser
 		zlib.Resetter
 	})
-	if err := zr.Reset(r, c.dict); err != nil {
+	if err := zr.Reset(rc, c.dict); err != nil {
 		c.rpool.Put(zr)
 		return nil, err
 	}
-	return util.ReadCloserWithCallback(zr, func() {
-		c.rpool.Put(zr)
-	}), nil
+	return iotools.ReadCloser(zr, iotools.CloserFunc(func() error {
+		if !released {
+			released = true
+			defer c.rpool.Put(zr)
+		}
+
+		// Close compressor
+		err1 := zr.Close()
+
+		// Close original stream.
+		err2 := rc.Close()
+
+		// Return err1 or 2
+		if err1 != nil {
+			return err1
+		}
+		return err2
+	})), nil
 }
 
-func (c *zlibCompressor) Writer(w io.Writer) (io.WriteCloser, error) {
+func (c *zlibCompressor) Writer(wc io.WriteCloser) (io.WriteCloser, error) {
+	var released bool
+
+	// Acquire from pool.
 	zw := c.wpool.Get().(*zlib.Writer)
-	zw.Reset(w)
-	return util.WriteCloserWithCallback(zw, func() {
-		c.wpool.Put(zw)
-	}), nil
+	zw.Reset(wc)
+
+	return iotools.WriteCloser(zw, iotools.CloserFunc(func() error {
+		if !released {
+			released = true
+			c.wpool.Put(zw)
+		}
+
+		// Close compressor
+		err1 := zw.Close()
+
+		// Close original stream.
+		err2 := wc.Close()
+
+		// Return err1 or 2
+		if err1 != nil {
+			return err1
+		}
+		return err2
+	})), nil
 }
 
 type snappyCompressor struct {
@@ -178,22 +251,40 @@ func SnappyCompressor() Compressor {
 	}
 }
 
-func (c *snappyCompressor) Reader(r io.Reader) (io.ReadCloser, error) {
+func (c *snappyCompressor) Reader(rc io.ReadCloser) (io.ReadCloser, error) {
+	var released bool
+
+	// Acquire from pool.
 	sr := c.rpool.Get().(*snappy.Reader)
-	sr.Reset(r)
-	return util.ReadCloserWithCallback(
-		util.NopReadCloser(sr),
-		func() { c.rpool.Put(sr) },
-	), nil
+	sr.Reset(rc)
+
+	return iotools.ReadCloser(sr, iotools.CloserFunc(func() error {
+		if !released {
+			released = true
+			defer c.rpool.Put(sr)
+		}
+
+		// Close original stream.
+		return rc.Close()
+	})), nil
 }
 
-func (c *snappyCompressor) Writer(w io.Writer) (io.WriteCloser, error) {
+func (c *snappyCompressor) Writer(wc io.WriteCloser) (io.WriteCloser, error) {
+	var released bool
+
+	// Acquire from pool.
 	sw := c.wpool.Get().(*snappy.Writer)
-	sw.Reset(w)
-	return util.WriteCloserWithCallback(
-		util.NopWriteCloser(sw),
-		func() { c.wpool.Put(sw) },
-	), nil
+	sw.Reset(wc)
+
+	return iotools.WriteCloser(sw, iotools.CloserFunc(func() error {
+		if !released {
+			released = true
+			c.wpool.Put(sw)
+		}
+
+		// Close original stream.
+		return wc.Close()
+	})), nil
 }
 
 type nopCompressor struct{}
@@ -203,10 +294,10 @@ func NoCompression() Compressor {
 	return &nopCompressor{}
 }
 
-func (c *nopCompressor) Reader(r io.Reader) (io.ReadCloser, error) {
-	return util.NopReadCloser(r), nil
+func (c *nopCompressor) Reader(rc io.ReadCloser) (io.ReadCloser, error) {
+	return rc, nil
 }
 
-func (c *nopCompressor) Writer(w io.Writer) (io.WriteCloser, error) {
-	return util.NopWriteCloser(w), nil
+func (c *nopCompressor) Writer(wc io.WriteCloser) (io.WriteCloser, error) {
+	return wc, nil
 }
