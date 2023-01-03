@@ -1,4 +1,4 @@
-# Rate Limit
+# Request Rate Limiting
 
 To mitigate abuse + scraping of your instance, IP-based HTTP rate limiting is in place.
 
