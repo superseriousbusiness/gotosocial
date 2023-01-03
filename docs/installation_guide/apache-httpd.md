@@ -217,3 +217,11 @@ Everything working? Great! Then restart Apache HTTP Server to load your new conf
 ```bash
 sudo systemctl restart apache2
 ```
+
+## Troubleshooting
+
+If you cannot connect to the site in your browser, the reverse proxy setup doesn't work. Compare the Apache log file (`tail -F /var/log/apache2/access.log`) with the GoToSocial log file. Requests made must show up in both places. Double check the `ProxyPass` setting.
+
+If you can connect but your posts don't federate and your account cannot be found from elsewhere, check your logs. Federation is broken if you see messages attempting to read your profile (something like `level=INFO … method=GET statusCode=401 path=/users/your_username msg="Unauthorized: …"`) or post to your inbox (something like `level=INFO … method=POST statusCode=404 path=/your_username/inbox msg="Not Found: …"`). Double check the `ProxyPreserveHost` setting.
+
+If you can connect but you cannot authorize your account in a Mastodon client app, check your headers. Use `curl -I https://example.com` and look for the `Content-Security-Policy` header. If your webserver sets it, you might have to unset it. One way to do that is to use `Header unset Content-Security-Policy` in the Apache site config file (something like `example.com.conf`).
