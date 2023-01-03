@@ -644,9 +644,6 @@ advanced-cookies-samesite: "lax"
 # Int. Amount of requests to permit per router grouping from a single IP address within
 # a span of 5 minutes. If this amount is exceeded, a 429 HTTP error code will be returned.
 #
-# Router groupings and rate limit headers are described here:
-# https://docs.gotosocial.org/en/latest/api/swagger/#rate-limit.
-#
 # If you find yourself adjusting this limit because it's regularly being exceeded,
 # you should first verify that your settings for `trusted-proxies` (above) are correct.
 # In many cases, when the rate limit is exceeded it is because your instance sees all
