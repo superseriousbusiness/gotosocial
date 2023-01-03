@@ -22,6 +22,7 @@ import (
 	"context"
 	"net/url"
 
+	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/emoji"
 	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -37,7 +38,7 @@ type ActivityPub struct {
 	isURIBlocked func(context.Context, *url.URL) (bool, db.Error)
 }
 
-func (a *ActivityPub) Route(r router.Router) {
+func (a *ActivityPub) Route(r router.Router, m ...gin.HandlerFunc) {
 	// create groupings for the 'emoji' and 'users' prefixes
 	emojiGroup := r.AttachGroup("emoji")
 	usersGroup := r.AttachGroup("users")
@@ -45,13 +46,13 @@ func (a *ActivityPub) Route(r router.Router) {
 	// instantiate + attach shared, non-global middlewares to both of these groups
 	var (
 		throttlingMiddleware     = middleware.Throttle()
-		rateLimitMiddleware      = middleware.RateLimit() // nolint:contextcheck
 		signatureCheckMiddleware = middleware.SignatureCheck(a.isURIBlocked)
-		gzipMiddleware           = middleware.Gzip()
 		cacheControlMiddleware   = middleware.CacheControl("no-store")
 	)
-	emojiGroup.Use(throttlingMiddleware, rateLimitMiddleware, signatureCheckMiddleware, gzipMiddleware, cacheControlMiddleware)
-	usersGroup.Use(throttlingMiddleware, rateLimitMiddleware, signatureCheckMiddleware, gzipMiddleware, cacheControlMiddleware)
+	emojiGroup.Use(m...)
+	usersGroup.Use(m...)
+	emojiGroup.Use(throttlingMiddleware, signatureCheckMiddleware, cacheControlMiddleware)
+	usersGroup.Use(throttlingMiddleware, signatureCheckMiddleware, cacheControlMiddleware)
 
 	a.emoji.Route(emojiGroup.Handle)
 	a.users.Route(usersGroup.Handle)

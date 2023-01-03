@@ -19,12 +19,18 @@
 package middleware
 
 import (
-	ginGzip "github.com/gin-contrib/gzip"
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 )
 
 // Gzip returns a gzip gin middleware using default compression.
 func Gzip() gin.HandlerFunc {
-	// todo: make this configurable
-	return ginGzip.Gzip(ginGzip.DefaultCompression)
+	const enabled = true
+
+	if !enabled {
+		// use noop middleware if gzip is disabled
+		return func(ctx *gin.Context) {}
+	}
+
+	return gzip.Gzip(gzip.DefaultCompression)
 }
