@@ -68,7 +68,7 @@ func New(processor processing.Processor) *Module {
 	}
 }
 
-func (m *Module) Route(r router.Router) {
+func (m *Module) Route(r router.Router, mi ...gin.HandlerFunc) {
 	// serve static files from assets dir at /assets
 	assetsGroup := r.AttachGroup(assetsPathPrefix)
 	webAssetsAbsFilePath, err := filepath.Abs(config.GetWebAssetBaseDir())
@@ -80,6 +80,7 @@ func (m *Module) Route(r router.Router) {
 
 	// use the cache middleware on all handlers in this group
 	assetsGroup.Use(m.assetsCacheControlMiddleware(fs))
+	assetsGroup.Use(mi...)
 
 	// serve static file system in the root of this group,
 	// will end up being something like "/assets/"

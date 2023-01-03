@@ -19,6 +19,7 @@
 package api
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/wellknown/nodeinfo"
 	"github.com/superseriousbusiness/gotosocial/internal/api/wellknown/webfinger"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
@@ -31,14 +32,13 @@ type WellKnown struct {
 	webfinger *webfinger.Module
 }
 
-func (w *WellKnown) Route(r router.Router) {
+func (w *WellKnown) Route(r router.Router, m ...gin.HandlerFunc) {
 	// group .well-known endpoints together
 	wellKnownGroup := r.AttachGroup(".well-known")
 
 	// attach middlewares appropriate for this group
+	wellKnownGroup.Use(m...)
 	wellKnownGroup.Use(
-		middleware.Gzip(),
-		middleware.RateLimit(),
 		// allow .well-known responses to be cached for 2 minutes
 		middleware.CacheControl("public", "max-age=120"),
 	)

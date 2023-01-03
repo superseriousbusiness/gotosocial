@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/ulule/limiter/v3"
 	limitergin "github.com/ulule/limiter/v3/drivers/middleware/gin"
 	"github.com/ulule/limiter/v3/drivers/store/memory"
@@ -44,34 +43,25 @@ const rateLimitPeriod = 5 * time.Minute
 //
 // If the config AdvancedRateLimitRequests value is <= 0, then a noop handler will be returned,
 // which performs no rate limiting.
-func RateLimit() gin.HandlerFunc {
-	// only enable rate limit middleware if configured
-	// advanced-rate-limit-requests is greater than 0
-	rateLimitRequests := config.GetAdvancedRateLimitRequests()
-	if rateLimitRequests <= 0 {
+func RateLimit(limit int) gin.HandlerFunc {
+	if limit <= 0 {
 		// use noop middleware if ratelimiting is disabled
-		return func(c *gin.Context) {}
+		return func(ctx *gin.Context) {}
 	}
 
-	rate := limiter.Rate{
-		Period: rateLimitPeriod,
-		Limit:  int64(rateLimitRequests),
-	}
-
-	limiterInstance := limiter.New(
+	limiter := limiter.New(
 		memory.NewStore(),
-		rate,
+		limiter.Rate{Period: rateLimitPeriod, Limit: int64(limit)},
 		limiter.WithIPv6Mask(net.CIDRMask(64, 128)), // apply /64 mask to IPv6 addresses
 	)
 
-	limitReachedHandler := func(c *gin.Context) {
+	// use custom rate limit reached error
+	handler := func(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "rate limit reached"})
 	}
 
-	middleware := limitergin.NewMiddleware(
-		limiterInstance,
-		limitergin.WithLimitReachedHandler(limitReachedHandler), // use custom rate limit reached error
+	return limitergin.NewMiddleware(
+		limiter,
+		limitergin.WithLimitReachedHandler(handler),
 	)
-
-	return middleware
 }
