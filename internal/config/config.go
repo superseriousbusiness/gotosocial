@@ -127,8 +127,9 @@ type Configuration struct {
 	SyslogProtocol string `name:"syslog-protocol" usage:"Protocol to use when directing logs to syslog. Leave empty to connect to local syslog."`
 	SyslogAddress  string `name:"syslog-address" usage:"Address:port to send syslog logs to. Leave empty to connect to local syslog."`
 
-	AdvancedCookiesSamesite   string `name:"advanced-cookies-samesite" usage:"'strict' or 'lax', see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite"`
-	AdvancedRateLimitRequests int    `name:"advanced-rate-limit-requests" usage:"Amount of HTTP requests to permit within a 5 minute window. 0 or less turns rate limiting off."`
+	AdvancedCookiesSamesite      string `name:"advanced-cookies-samesite" usage:"'strict' or 'lax', see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite"`
+	AdvancedRateLimitRequests    int    `name:"advanced-rate-limit-requests" usage:"Amount of HTTP requests to permit within a 5 minute window. 0 or less turns rate limiting off."`
+	AdvancedThrottlingMultiplier int    `name:"advanced-throttling-multiplier" usage:"Multiplier to use per cpu for http request throttling. 0 or less turns throttling off."`
 
 	// Cache configuration vars.
 	Cache CacheConfiguration `name:"cache"`

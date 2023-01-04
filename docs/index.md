@@ -34,7 +34,7 @@ It began as a solo project, and then picked up steam as more developers became i
 
 ## Known Issues
 
-Since GoToSocial is still in alpha, there are plenty of bugs. We use [GitHub issues](https://github.com/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug) to track these. The [FAQ](docs/faq.md) also describes some of the features that haven't been implemented yet.
+Since GoToSocial is still in alpha, there are plenty of bugs. We use [GitHub issues](https://github.com/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug) to track these. The [FAQ](./faq.md) also describes some of the features that haven't been implemented yet.
 
 ### Client App Issues
 

@@ -1824,6 +1824,31 @@ func GetAdvancedRateLimitRequests() int { return global.GetAdvancedRateLimitRequ
 // SetAdvancedRateLimitRequests safely sets the value for global configuration 'AdvancedRateLimitRequests' field
 func SetAdvancedRateLimitRequests(v int) { global.SetAdvancedRateLimitRequests(v) }
 
+// GetAdvancedThrottlingMultiplier safely fetches the Configuration value for state's 'AdvancedThrottlingMultiplier' field
+func (st *ConfigState) GetAdvancedThrottlingMultiplier() (v int) {
+	st.mutex.Lock()
+	v = st.config.AdvancedThrottlingMultiplier
+	st.mutex.Unlock()
+	return
+}
+
+// SetAdvancedThrottlingMultiplier safely sets the Configuration value for state's 'AdvancedThrottlingMultiplier' field
+func (st *ConfigState) SetAdvancedThrottlingMultiplier(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.AdvancedThrottlingMultiplier = v
+	st.reloadToViper()
+}
+
+// AdvancedThrottlingMultiplierFlag returns the flag name for the 'AdvancedThrottlingMultiplier' field
+func AdvancedThrottlingMultiplierFlag() string { return "advanced-throttling-multiplier" }
+
+// GetAdvancedThrottlingMultiplier safely fetches the value for global configuration 'AdvancedThrottlingMultiplier' field
+func GetAdvancedThrottlingMultiplier() int { return global.GetAdvancedThrottlingMultiplier() }
+
+// SetAdvancedThrottlingMultiplier safely sets the value for global configuration 'AdvancedThrottlingMultiplier' field
+func SetAdvancedThrottlingMultiplier(v int) { global.SetAdvancedThrottlingMultiplier(v) }
+
 // GetCacheGTSAccountMaxSize safely fetches the Configuration value for state's 'Cache.GTS.AccountMaxSize' field
 func (st *ConfigState) GetCacheGTSAccountMaxSize() (v int) {
 	st.mutex.Lock()

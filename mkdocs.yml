@@ -59,6 +59,8 @@ nav:
     - "federation/security.md"
     - "federation/behaviors/outbox.md"
     - "federation/behaviors/conversation_threads.md"
+    - "federation/behaviors/request_throttling.md"
   - "API Documentation":
     - "api/swagger.md"
     - "api/ratelimiting.md"
+    - "api/throttling.md"

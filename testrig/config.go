@@ -106,8 +106,9 @@ var testDefaults = config.Configuration{
 	SyslogProtocol: "udp",
 	SyslogAddress:  "localhost:514",
 
-	AdvancedCookiesSamesite:   "lax",
-	AdvancedRateLimitRequests: 0, // disabled
+	AdvancedCookiesSamesite:      "lax",
+	AdvancedRateLimitRequests:    0, // disabled
+	AdvancedThrottlingMultiplier: 0, // disabled
 
 	SoftwareVersion: "0.0.0-testrig",
 

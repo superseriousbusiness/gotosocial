@@ -8,7 +8,9 @@
 
 - **Why aren't my posts showing up on other servers?** First check the visibility as noted above. TODO: explain how to debug common federation issues
 
-- **Why am I getting frequent error responses?** GoToSocial is configured to use per-IP [rate limiting](https://docs.gotosocial.org/en/latest/api/ratelimiting/) by default, but in certain situations it can't accurately identify the remote IP and will treat all connections as coming from the same place. In those cases, the rate limiting needs to be disabled or reconfigured.
+- **Why am I getting frequent http 429 error responses?** GoToSocial is configured to use per-IP [rate limiting](./api/ratelimiting.md) by default, but in certain situations it can't accurately identify the remote IP and will treat all connections as coming from the same place. In those cases, the rate limiting needs to be disabled or reconfigured.
+
+- **Why am I getting frequent http 503 error responses?** Code 503 is returned to callers when your instance is under heavy load and requests are being throttled. This behavior can be tuned as desired, or turned off entirely, see [here](./api/throttling.md).
 
 - **My instance is deployed and I'm logged in to a client but my timelines are empty, what's up there?** To see posts, you have to start following people! Once you've followed a few people and they've posted or boosted things, you'll start seeing them in your timelines. Right now GoToSocial doesn't have a way of 'backfilling' posts -- that is, fetching previous posts from other instances -- so you'll only see new posts of people you follow. If you want to interact with an older post of theirs, you can copy the link to the post from their web profile, and paste it in to your client's search bar.
 
