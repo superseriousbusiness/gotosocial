@@ -84,19 +84,21 @@ func Throttle(cpuMultiplier int) gin.HandlerFunc {
 	}
 
 	var (
-		limit           = runtime.GOMAXPROCS(0) * cpuMultiplier
-		backlogLimit    = limit * cpuMultiplier
-		tokens          = make(chan token, limit)
-		backlogTokens   = make(chan token, limit+backlogLimit)
-		retryAfter      = "30" // seconds
-		backlogDuration = 30 * time.Second
+		limit              = runtime.GOMAXPROCS(0) * cpuMultiplier
+		backlogLimit       = limit * cpuMultiplier
+		backlogChannelSize = limit + backlogLimit
+		tokens             = make(chan token, limit)
+		backlogTokens      = make(chan token, backlogChannelSize)
+		retryAfter         = "30" // seconds
+		backlogDuration    = 30 * time.Second
 	)
 
-	// prefill token buckets
-	for i := 0; i < limit+backlogLimit; i++ {
-		if i < limit {
-			tokens <- token{}
-		}
+	// prefill token channels
+	for i := 0; i < limit; i++ {
+		tokens <- token{}
+	}
+
+	for i := 0; i < backlogChannelSize; i++ {
 		backlogTokens <- token{}
 	}
 
