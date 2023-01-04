@@ -65,9 +65,14 @@ func (d *Driver) URL(ctx context.Context, key string) *url.URL {
 		return nil
 	}
 
-	// access the cache member directly to avoid extending the TTL
-	if u, ok := d.PresignedCache.Get(key); ok {
-		return u
+	// Check cache underlying cache map directly to
+	// avoid extending the TTL (which cache.Get() does).
+	d.PresignedCache.Lock()
+	e, ok := d.PresignedCache.Cache.Get(key)
+	d.PresignedCache.Unlock()
+
+	if ok {
+		return e.Value
 	}
 
 	u, err := s3.Client().PresignedGetObject(ctx, d.Bucket, key, urlCacheTTL, url.Values{
