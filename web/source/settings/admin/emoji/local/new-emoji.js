@@ -22,13 +22,13 @@ const Promise = require('bluebird');
 const React = require("react");
 
 const FakeToot = require("../../../components/fake-toot");
-const MutateButton = require("../../../components/mutation-button");
+const MutationButton = require("../../../components/form/mutation-button");
 
 const {
 	useTextInput,
 	useFileInput,
 	useComboBoxInput
-} = require("../../../components/form");
+} = require("../../../lib/form");
 
 const query = require("../../../lib/query");
 const { CategorySelect } = require('../category-select');
@@ -161,7 +161,7 @@ module.exports = function NewEmojiForm({ emoji }) {
 					categoryState={categoryState}
 				/>
 
-				<MutateButton text="Upload emoji" result={result} />
+				<MutationButton text="Upload emoji" result={result} />
 			</form>
 		</div>
 	);

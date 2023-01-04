@@ -33,5 +33,6 @@ function makeHook(func) {
 module.exports = {
 	useTextInput: makeHook(require("./text")),
 	useFileInput: makeHook(require("./file")),
+	useBoolInput: makeHook(require("./bool")),
 	useComboBoxInput: makeHook(require("./combobox"))
 };

@@ -43,7 +43,8 @@ module.exports = function useTextInput({name, Name}, {validator, defaultValue=""
 		}
 	}, [text, textRef, validator]);
 
-	return [
+	// Array / Object hybrid, for easier access in different contexts
+	return Object.assign([
 		onChange,
 		reset,
 		{
@@ -51,13 +52,14 @@ module.exports = function useTextInput({name, Name}, {validator, defaultValue=""
 			[`${name}Ref`]: textRef,
 			[`set${Name}`]: setText,
 			[`${name}Valid`]: valid,
-
-			name,
-			value: text,
-			ref: textRef,
-			setter: setText,
-			valid,
-			hasChanged: () => text != defaultValue
 		}
-	];
+	], {
+		onChange,
+		reset,
+		value: text,
+		ref: textRef,
+		setter: setText,
+		valid,
+		hasChanged: () => text != defaultValue
+	});
 };

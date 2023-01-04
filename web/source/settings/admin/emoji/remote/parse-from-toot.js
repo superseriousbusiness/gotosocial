@@ -26,7 +26,7 @@ const syncpipe = require("syncpipe");
 const {
 	useTextInput,
 	useComboBoxInput
-} = require("../../../components/form");
+} = require("../../../lib/form");
 
 const { CategorySelect } = require('../category-select');
 

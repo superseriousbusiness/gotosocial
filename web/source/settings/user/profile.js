@@ -24,12 +24,22 @@ const Redux = require("react-redux");
 const query = require("../lib/query");
 
 const {
-	useTextInput
-} = require("../components/form");
+	useTextInput,
+	useFileInput,
+	useBoolInput
+} = require("../lib/form");
+
+const useFormSubmit = require("../lib/form/submit");
+
+const {
+	TextInput,
+	TextArea,
+	FileInput,
+	Checkbox
+} = require("../components/form/inputs");
 
 const FakeProfile = require("../components/fake-profile");
-const syncpipe = require("syncpipe");
-const MutationButton = require("../components/mutation-button");
+const MutationButton = require("../components/form/mutation-button");
 
 module.exports = function UserProfile() {
 	const allowCustomCSS = Redux.useSelector(state => state.instances.current.configuration.accounts.allow_custom_css);
@@ -52,7 +62,15 @@ module.exports = function UserProfile() {
 	*/
 
 	const form = {
-		display_name: useTextInput("displayName", {defaultValue: profile.display_name})
+		avatar: useFileInput("avatar", {withPreview: true, }),
+		header: useFileInput("header", {withPreview: true, }),
+		display_name: useTextInput("displayName", {defaultValue: profile.display_name}),
+		note: useTextInput("note", {defaultValue: profile.source?.note}),
+		custom_css: useTextInput("customCSS", {defaultValue: profile.custom_css}),
+		bot: useBoolInput("isBot", {defaultValue: profile.bot}),
+		locked: useBoolInput("isLocked", {defaultValue: profile.locked}),
+		enable_rss: useBoolInput("enableRSS", {defaultValue: profile.enable_rss}),
+		"source[sensitive]": useBoolInput("isSensitive", {defaultValue: profile.source?.sensitive}),
 	};
 
 	const [result, submitForm] = useFormSubmit(form, query.useUpdateCredentialsMutation());
@@ -61,124 +79,60 @@ module.exports = function UserProfile() {
 		<form className="user-profile" onSubmit={submitForm}>
 			<h1>Profile</h1>
 			<div className="overview">
-				{/* <FakeProfile/> */}
+				<FakeProfile
+					avatar={form.avatar.previewValue ?? profile.avatar}
+					header={form.header.previewValue ?? profile.header}
+					display_name={form.display_name.value ?? profile.username}
+					username={profile.username}
+					role={profile.role}
+				/>
 				<div className="files">
 					<div>
 						<h3>Header</h3>
-						{/* <File
-							id="header"
-							fileType="image/*"
-						/> */}
+						<FileInput
+							field={form.header}
+							accept="image/*"
+						/>
 					</div>
 					<div>
 						<h3>Avatar</h3>
-						{/* <File
-							id="avatar"
-							fileType="image/*"
-						/> */}
+						<FileInput
+							field={form.avatar}
+							accept="image/*"
+						/>
 					</div>
 				</div>
 			</div>
-			<FormTextInput
-				label="Name"
-				placeHolder="A GoToSocial user"
+			<TextInput
 				field={form.display_name}
-			/>
-			{/* <TextInput
-				id="display_name"
-				name="Name"
-				placeHolder="A GoToSocial user"
+				label="Name"
+				placeholder="A GoToSocial user"
 			/>
 			<TextArea
-				id="source.note"
-				name="Bio"
-				placeHolder="Just trying out GoToSocial, my pronouns are they/them and I like sloths."
+				field={form.note}
+				label="Bio"
+				placeholder="Just trying out GoToSocial, my pronouns are they/them and I like sloths."
+				rows={8}
 			/>
 			<Checkbox
-				id="locked"
-				name="Manually approve follow requests"
+				field={form.locked}
+				label="Manually approve follow requests"
 			/>
 			<Checkbox
-				id="enable_rss"
-				name="Enable RSS feed of Public posts"
+				field={form.enable_rss}
+				label="Enable RSS feed of Public posts"
 			/>
 			{ !allowCustomCSS ? null :
 				<TextArea
-					id="custom_css"
-					name="Custom CSS"
+					field={form.custom_css}
+					label="Custom CSS"
 					className="monospace"
+					rows={8}
 				>
 					<a href="https://docs.gotosocial.org/en/latest/user_guide/custom_css" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about custom profile CSS (opens in a new tab)</a>
 				</TextArea>
 			}
-			<Submit onClick={saveProfile} label="Save profile info" errorMsg={errorMsg} statusMsg={statusMsg} /> */}
 			<MutationButton text="Save profile info" result={result}/>
 		</form>
 	);
 };
-
-function FormTextInput({label, placeHolder, field}) {
-	let [onChange, _reset, {value, ref}] = field;
-
-	return (
-		<div className="form-field text">
-			<label>
-				{label}
-				<input
-					type="text"
-					placeholder={placeHolder}
-					{...{onChange, value, ref}}
-				/>
-			</label>
-		</div>
-	);
-}
-
-function useFormSubmit(form, [mutationQuery, result]) {
-	return [
-		result,
-		function submitForm(e) {
-			e.preventDefault();
-
-			// transform the field definitions into an object with just their values 
-			let updatedFields = 0;
-			const mutationData = syncpipe(form, [
-				(_) => Object.entries(_),
-				(_) => _.map(([key, field]) => {
-					let data = field[2]; // [onChange, reset, {}]
-					if (data.hasChanged()) {
-						return [key, data.value];
-					} else {
-						return null;
-					}
-				}),
-				(_) => _.filter((value) => value != null),
-				(_) => {
-					updatedFields = _.length;
-					return _;
-				},
-				(_) => Object.fromEntries(_)
-			]);
-
-			if (updatedFields > 0) {
-				return mutationQuery(mutationData);
-			}
-		},
-	];
-}
-
-// function useForm(formSpec) {
-// 	const form = {};
-
-// 	Object.entries(formSpec).forEach(([name, cfg]) => {
-// 		const [useTypedInput, defaultValue] = cfg;
-
-// 		form[name] = useTypedInput(name, );
-// 	});
-
-// 	form.submit = function submitForm() {
-
-// 	};
-
-// 	return form;
-// }

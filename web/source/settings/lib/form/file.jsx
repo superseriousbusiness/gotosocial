@@ -61,18 +61,30 @@ module.exports = function useFileInput({name, _Name}, {
 		setInfo();
 	}
 
-	return [
+	const infoComponent = (
+		<span className="form-info">
+			{info
+				? info
+				: initialInfo
+			}
+		</span>
+	);
+
+	// Array / Object hybrid, for easier access in different contexts
+	return Object.assign([
 		onChange,
 		reset,
 		{
 			[name]: file,
 			[`${name}URL`]: imageURL,
-			[`${name}Info`]: <span className="form-info">
-				{info
-					? info
-					: initialInfo
-				}
-			</span>
+			[`${name}Info`]: infoComponent,
 		}
-	];
+	], {
+		onChange,
+		reset,
+		value: file,
+		previewValue: imageURL,
+		hasChanged: () => file != undefined,
+		infoComponent
+	});
 };
