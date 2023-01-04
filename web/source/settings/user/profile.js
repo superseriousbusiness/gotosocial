@@ -43,10 +43,16 @@ const MutationButton = require("../components/form/mutation-button");
 const Loading = require("../components/loading");
 
 module.exports = function UserProfile() {
-	const allowCustomCSS = Redux.useSelector(state => state.instances.current.configuration.accounts.allow_custom_css);
-	// const profile = Redux.useSelector(state => state.user.profile);
 	const {data: profile = {}, isLoading} = query.useVerifyCredentialsQuery();
 
+	if (isLoading) {
+		return <Loading/>;
+	} else {
+		return <UserProfileForm profile={profile} />;
+	}
+};
+
+function UserProfileForm({profile}) {
 	/*
 		User profile update form keys
 		- bool bot
@@ -55,10 +61,6 @@ module.exports = function UserProfile() {
 		- string note
 		- file avatar
 		- file header
-		- string source[privacy]
-		- bool source[sensitive]
-		- string source[language]
-		- string source[status_format]
 		- bool enable_rss
 		- string custom_css (if enabled)
 	*/
@@ -66,20 +68,16 @@ module.exports = function UserProfile() {
 	const form = {
 		avatar: useFileInput("avatar", {withPreview: true, }),
 		header: useFileInput("header", {withPreview: true, }),
-		display_name: useTextInput("displayName", {defaultValue: profile.display_name}),
+		displayName: useTextInput("display_name", {defaultValue: profile.display_name}),
 		note: useTextInput("note", {defaultValue: profile.source?.note}),
-		custom_css: useTextInput("customCSS", {defaultValue: profile.custom_css}),
-		bot: useBoolInput("isBot", {defaultValue: profile.bot}),
-		locked: useBoolInput("isLocked", {defaultValue: profile.locked}),
-		enable_rss: useBoolInput("enableRSS", {defaultValue: profile.enable_rss}),
-		"source[sensitive]": useBoolInput("isSensitive", {defaultValue: profile.source?.sensitive}),
+		customCSS: useTextInput("custom_css", {defaultValue: profile.custom_css}),
+		bot: useBoolInput("bot", {defaultValue: profile.bot}),
+		locked: useBoolInput("locked", {defaultValue: profile.locked}),
+		enableRSS: useBoolInput("enable_rss", {defaultValue: profile.enable_rss}),
 	};
 
+	const allowCustomCSS = Redux.useSelector(state => state.instances.current.configuration.accounts.allow_custom_css);
 	const [result, submitForm] = useFormSubmit(form, query.useUpdateCredentialsMutation());
-
-	if (isLoading) {
-		return <Loading/>;
-	}
 
 	return (
 		<form className="user-profile" onSubmit={submitForm}>
@@ -88,7 +86,7 @@ module.exports = function UserProfile() {
 				<FakeProfile
 					avatar={form.avatar.previewValue ?? profile.avatar}
 					header={form.header.previewValue ?? profile.header}
-					display_name={form.display_name.value ?? profile.username}
+					display_name={form.displayName.value ?? profile.username}
 					username={profile.username}
 					role={profile.role}
 				/>
@@ -110,7 +108,7 @@ module.exports = function UserProfile() {
 				</div>
 			</div>
 			<TextInput
-				field={form.display_name}
+				field={form.displayName}
 				label="Name"
 				placeholder="A GoToSocial user"
 			/>
@@ -125,12 +123,12 @@ module.exports = function UserProfile() {
 				label="Manually approve follow requests"
 			/>
 			<Checkbox
-				field={form.enable_rss}
+				field={form.enableRSS}
 				label="Enable RSS feed of Public posts"
 			/>
 			{ !allowCustomCSS ? null :
 				<TextArea
-					field={form.custom_css}
+					field={form.customCSS}
 					label="Custom CSS"
 					className="monospace"
 					rows={8}
@@ -141,4 +139,4 @@ module.exports = function UserProfile() {
 			<MutationButton text="Save profile info" result={result}/>
 		</form>
 	);
-};
+}

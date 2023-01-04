@@ -90,12 +90,30 @@ function Checkbox({label, field, ...inputProps}) {
 			</label>
 		</div>
 	);
+}
 
+function Select({label, field, options, ...inputProps}) {
+	const {onChange, value} = field;
+
+	return (
+		<div className="form-field select">
+			<label>
+				{label}
+				<select
+					{...{onChange, value}}
+					{...inputProps}
+				>
+					{options}
+				</select>
+			</label>
+		</div>
+	);
 }
 
 module.exports = {
 	TextInput,
 	TextArea,
 	FileInput,
-	Checkbox
+	Checkbox,
+	Select
 };

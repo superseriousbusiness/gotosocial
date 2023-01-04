@@ -29,11 +29,11 @@ module.exports = function useFormSubmit(form, [mutationQuery, result]) {
 			// transform the field definitions into an object with just their values 
 			let updatedFields = [];
 			const mutationData = syncpipe(form, [
-				(_) => Object.entries(_),
-				(_) => _.map(([key, field]) => {
+				(_) => Object.values(_),
+				(_) => _.map((field) => {
 					if (field.hasChanged()) {
 						updatedFields.push(field);
-						return [key, field.value];
+						return [field.name, field.value];
 					} else {
 						return null;
 					}

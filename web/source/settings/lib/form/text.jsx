@@ -56,6 +56,7 @@ module.exports = function useTextInput({name, Name}, {validator, defaultValue=""
 	], {
 		onChange,
 		reset,
+		name,
 		value: text,
 		ref: textRef,
 		setter: setText,

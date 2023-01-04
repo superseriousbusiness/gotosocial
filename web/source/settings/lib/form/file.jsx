@@ -82,6 +82,7 @@ module.exports = function useFileInput({name, _Name}, {
 	], {
 		onChange,
 		reset,
+		name,
 		value: file,
 		previewValue: imageURL,
 		hasChanged: () => file != undefined,

@@ -23,37 +23,64 @@ const React = require("react");
 const Redux = require("react-redux");
 
 const api = require("../lib/api");
-const user = require("../redux/reducers/user").actions;
-const submit = require("../lib/submit");
 
 const Languages = require("../components/languages");
 const Submit = require("../components/submit");
 
+const query = require("../lib/query");
+
 const {
-	Checkbox,
+	useTextInput,
+	useBoolInput
+} = require("../lib/form");
+
+const useFormSubmit = require("../lib/form/submit");
+
+const {
 	Select,
-} = require("../components/form-fields").formFields(user.setSettingsVal, (state) => state.user.settings);
+	TextInput,
+	Checkbox
+} = require("../components/form/inputs");
+
+const MutationButton = require("../components/form/mutation-button");
+const Loading = require("../components/loading");
 
 module.exports = function UserSettings() {
-	const dispatch = Redux.useDispatch();
+	const {data: profile, isLoading} = query.useVerifyCredentialsQuery();
 
-	const [errorMsg, setError] = React.useState("");
-	const [statusMsg, setStatus] = React.useState("");
+	if (isLoading) {
+		return <Loading/>;
+	} else {
+		return <UserSettingsForm source={profile.source} />;
+	}
+};
 
-	const updateSettings = submit(
-		() => dispatch(api.user.updateSettings()),
-		{setStatus, setError}
-	);
+function UserSettingsForm({source}) {
+	/* form keys
+		- string source[privacy]
+		- bool source[sensitive]
+		- string source[language]
+		- string source[status_format]
+	 */
+
+	const form = {
+		defaultPrivacy: useTextInput("source[privacy]", {defaultValue: source.privacy ?? "unlisted"}),
+		isSensitive: useBoolInput("source[sensitive]", {defaultValue: source.sensitive}),
+		language: useTextInput("source[language]", {defaultValue: source.language ?? "EN"}),
+		format: useTextInput("source[status_format]", {defaultValue: source.status_format ?? "plain"}),
+	};
+
+	const [result, submitForm] = useFormSubmit(form, query.useUpdateCredentialsMutation());
 
 	return (
 		<>
-			<div className="user-settings">
+			<form className="user-settings" onSubmit={submitForm}>
 				<h1>Post settings</h1>
-				<Select id="source.language" name="Default post language" options={
+				<Select field={form.language} label="Default post language" options={
 					<Languages/>
 				}>
 				</Select>
-				<Select id="source.privacy" name="Default post privacy" options={
+				<Select field={form.defaultPrivacy} label="Default post privacy" options={
 					<>
 						<option value="private">Private / followers-only</option>
 						<option value="unlisted">Unlisted</option>
@@ -62,7 +89,7 @@ module.exports = function UserSettings() {
 				}>
 					<a href="https://docs.gotosocial.org/en/latest/user_guide/posts/#privacy-settings" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about post privacy settings (opens in a new tab)</a>
 				</Select>
-				<Select id="source.status_format" name="Default post (and bio) format" options={
+				<Select field={form.format} label="Default post (and bio) format" options={
 					<>
 						<option value="plain">Plain (default)</option>
 						<option value="markdown">Markdown</option>
@@ -71,18 +98,18 @@ module.exports = function UserSettings() {
 					<a href="https://docs.gotosocial.org/en/latest/user_guide/posts/#input-types" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about post format settings (opens in a new tab)</a>
 				</Select>
 				<Checkbox
-					id="source.sensitive"
-					name="Mark my posts as sensitive by default"
+					field={form.isSensitive}
+					label="Mark my posts as sensitive by default"
 				/>
 
-				<Submit onClick={updateSettings} label="Save post settings" errorMsg={errorMsg} statusMsg={statusMsg}/>
-			</div>
+				<MutationButton text="Save settings" result={result}/>
+			</form>
 			<div>
 				<PasswordChange/>
 			</div>
 		</>
 	);
-};
+}
 
 function PasswordChange() {
 	const dispatch = Redux.useDispatch();
