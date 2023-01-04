@@ -62,7 +62,7 @@ storage-s3-secret-key: ""
 storage-s3-bucket: ""
 ```
 
-### S3 Bucket Configuration
+### AWS S3 Bucket Configuration
 
 #### Bucket Created
 GoToSocial by default creates signed URL's which means we dont need to change anything major on the policies of the bucket.
@@ -73,7 +73,7 @@ Here are the steps to follow for bucket creation
 3. Provide a unique name and avoid adding "." in the name
 4. Do not change the public access settings (Let them be on "block public access" mode)
 
-#### ACCESS KEY Configuration
+#### AWS ACCESS KEY Configuration
 
 1. In AWS Console -> IAM (under Security, Identity, & Compliance)
 2. Add a user with programatic api's access
@@ -109,7 +109,8 @@ P.S. We gave ListAll for s3cmd to work nicely.
 
 
 
-#### Push the existing data to s3 bucket (s3cmd command included other commands can be of simmilar nature)
+#### For Data migration from local storage to AWS s3 bucket in case of running instance. (not required if you are starting fresh)
+(s3cmd command included other commands can be of simmilar nature)
 ```
 s3cmd sync --add-header="Cache-Control:public, max-age=315576000, immutable" ./ s3://<bucket name>
 ```
