@@ -75,8 +75,6 @@ package media
 
 import (
 	"encoding/binary"
-	"image"
-	"image/png"
 	"io"
 )
 
@@ -191,14 +189,4 @@ func (r *PNGAncillaryChunkStripper) Read(p []byte) (int, error) {
 			r.notPNG = true
 		}
 	}
-}
-
-// StrippedPngDecode strips ancillary data from png to allow more lenient decoding of pngs
-// see: https://github.com/golang/go/issues/43382
-// and: https://github.com/google/wuffs/blob/414a011491ff513b86d8694c5d71800f3cb5a715/script/strip-png-ancillary-chunks.go
-func StrippedPngDecode(r io.Reader) (image.Image, error) {
-	strippedPngReader := io.Reader(&PNGAncillaryChunkStripper{
-		Reader: r,
-	})
-	return png.Decode(strippedPngReader)
 }
