@@ -39,7 +39,6 @@ module.exports = function useTextInput({name, Name}, {validator, defaultValue=""
 			let res = validator(text);
 			setValid(res == "");
 			textRef.current.setCustomValidity(res);
-			textRef.current.reportValidity();
 		}
 	}, [text, textRef, validator]);
 

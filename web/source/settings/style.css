@@ -337,6 +337,12 @@ section.with-sidebar > div, section.with-sidebar > form {
 	}
 }
 
+form {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
 .form-field label {
 	font-weight: bold;
 }
@@ -345,7 +351,6 @@ section.with-sidebar > div, section.with-sidebar > form {
 	width: 100%;
 	display: flex;
 }
-
 
 span.form-info {
 	flex: 1 1 auto;

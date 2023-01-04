@@ -18,6 +18,8 @@
 
 "use strict";
 
+const base = require("./base");
+
 module.exports = {
 	unwrapRes(res) {
 		if (res.error != undefined) {
@@ -25,5 +27,17 @@ module.exports = {
 		} else {
 			return res.data;
 		}
+	},
+	updateCacheOnMutation(queryName, arg = undefined) {
+		// https://redux-toolkit.js.org/rtk-query/usage/manual-cache-updates#pessimistic-updates
+		return {
+			onQueryStarted: (_, { dispatch, queryFulfilled}) => {
+				queryFulfilled.then(({data: newData}) => {
+					dispatch(base.util.updateQueryData(queryName, arg, (draft) => {
+						Object.assign(draft, newData);
+					}));
+				});
+			}
+		};
 	}
 };

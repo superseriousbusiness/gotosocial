@@ -93,14 +93,14 @@ function Checkbox({label, field, ...inputProps}) {
 }
 
 function Select({label, field, options, ...inputProps}) {
-	const {onChange, value} = field;
+	const {onChange, value, ref} = field;
 
 	return (
 		<div className="form-field select">
 			<label>
 				{label}
 				<select
-					{...{onChange, value}}
+					{...{onChange, value, ref}}
 					{...inputProps}
 				>
 					{options}

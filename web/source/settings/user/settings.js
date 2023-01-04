@@ -112,56 +112,34 @@ function UserSettingsForm({source}) {
 }
 
 function PasswordChange() {
-	const dispatch = Redux.useDispatch();
+	const form = {
+		oldPassword: useTextInput("old_password"),
+		newPassword: useTextInput("old_password", {validator(val) {
+			if (val != "" && val == form.oldPassword.value) {
+				return "New password same as old password";
+			}
+			return "";
+		}})
+	};
 
-	const [errorMsg, setError] = React.useState("");
-	const [statusMsg, setStatus] = React.useState("");
-
-	const [oldPassword, setOldPassword] = React.useState("");
-	const [newPassword, setNewPassword] = React.useState("");
-	const [newPasswordConfirm, setNewPasswordConfirm] = React.useState("");
-
-	function changePassword() {
-		if (newPassword !== newPasswordConfirm) {
-			setError("New password and confirm new password did not match!");
-			return;
+	const verifyNewPassword = useTextInput("verifyNewPassword", {
+		validator(val) {
+			if (val != "" && val != form.newPassword.value) {
+				return "Passwords do not match";
+			}
+			return "";
 		}
+	});
 
-		setStatus("PATCHing");
-		setError("");
-		return Promise.try(() => {
-			let data = {
-				old_password: oldPassword,
-				new_password: newPassword
-			};
-			return dispatch(api.apiCall("POST", "/api/v1/user/password_change", data, "form"));
-		}).then(() => {
-			setStatus("Saved!");
-			setOldPassword("");
-			setNewPassword("");
-			setNewPasswordConfirm("");
-		}).catch((e) => {
-			setError(e.message);
-			setStatus("");
-		});
-	}
+	const [result, submitForm] = useFormSubmit(form, query.usePasswordChangeMutation());
 
 	return (
-		<>
+		<form className="change-password" onSubmit={submitForm}>
 			<h1>Change password</h1>
-			<div className="labelinput">
-				<label htmlFor="password">Current password</label>
-				<input name="password" id="password" type="password" autoComplete="current-password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
-			</div>
-			<div className="labelinput">
-				<label htmlFor="new-password">New password</label>
-				<input name="new-password" id="new-password" type="password" autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-			</div>
-			<div className="labelinput">
-				<label htmlFor="confirm-new-password">Confirm new password</label>
-				<input name="confirm-new-password" id="confirm-new-password" type="password" autoComplete="new-password" value={newPasswordConfirm} onChange={(e) => setNewPasswordConfirm(e.target.value)} />
-			</div>
-			<Submit onClick={changePassword} label="Save new password" errorMsg={errorMsg} statusMsg={statusMsg}/>
-		</>
+			<TextInput type="password" field={form.oldPassword} label="Current password"/>
+			<TextInput type="password" field={form.newPassword} label="New password"/>
+			<TextInput type="password" field={verifyNewPassword} label="Confirm new password"/>
+			<MutationButton text="Change password" result={result}/>
+		</form>
 	);
 }

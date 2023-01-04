@@ -18,17 +18,14 @@
 
 "use strict";
 
-// const Promise = require("bluebird");
-
-// const { unwrapRes } = require("./lib");
+const { updateCacheOnMutation } = require("./lib");
 const base = require("./base");
 
 const endpoints = (build) => ({
 	verifyCredentials: build.query({
 		query: () => ({
 			url: `/api/v1/accounts/verify_credentials`
-		}),
-		providesTags: [{type: "User", id: "SELF"}]
+		})
 	}),
 	updateCredentials: build.mutation({
 		query: (formData) => ({
@@ -37,7 +34,14 @@ const endpoints = (build) => ({
 			asForm: true,
 			body: formData
 		}),
-		invalidatesTags: [{type: "User", id: "SELF"}]
+		...updateCacheOnMutation("verifyCredentials")
+	}),
+	passwordChange: build.mutation({
+		query: (data) => ({
+			method: "POST",
+			url: `/api/v1/user/password_change`,
+			body: data
+		})
 	})
 });
 

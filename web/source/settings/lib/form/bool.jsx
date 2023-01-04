@@ -23,8 +23,6 @@ const React = require("react");
 module.exports = function useBoolInput({name, Name}, {defaultValue=false} = {}) {
 	const [value, setValue] = React.useState(defaultValue);
 
-	console.log("bool", name, value, defaultValue);
-
 	function onChange(e) {
 		setValue(e.target.checked);
 	}
