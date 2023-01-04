@@ -62,8 +62,8 @@ body {
 	min-width: 100%;
 	width: 100%;
 
-	grid-template-columns: auto minmax(auto, 90ch) auto;
-	grid-template-columns: auto min(92%, 90ch) auto;
+	grid-template-columns: auto minmax(auto, 50rem) auto;
+	grid-template-columns: auto min(92%, 50rem) auto;
 	grid-template-rows: auto 1fr auto;
 }
 
