@@ -62,6 +62,59 @@ storage-s3-secret-key: ""
 storage-s3-bucket: ""
 ```
 
+### S3 Bucket Configuration
+
+#### Bucket Created
+GoToSocial by default creates signed URL's which means we dont need to change anything major on the policies of the bucket.
+Here are the steps to follow for bucket creation
+
+1. Login to AWS -> select S3 as service.
+2. click Create Bucket
+3. Provide a unique name and avoid adding "." in the name
+4. Do not change the public access settings (Let them be on "block public access" mode)
+
+#### ACCESS KEY Configuration
+
+1. In AWS Console -> IAM (under Security, Identity, & Compliance)
+2. Add a user with programatic api's access
+3. You can enable s3full access in case you dont want to care about security but recommendation would be to setup a tight permissions
+replace <bucketname> in this sample policy
+```
+{
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "Resource": "arn:aws:s3:::*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "s3:*",
+            "Resource": [
+                "arn:aws:s3:::<bucket_name>",
+                "arn:aws:s3:::<bucket_name>/*"
+            ]
+        }
+    ]
+}
+
+```
+P.S. We gave ListAll for s3cmd to work nicely.
+4. Provide the values in config above
+  
+  * storage-s3-endpoint -> should be your bucket location say `s3.ap-southeast-1.amazonaws.com`
+  * storage-s3-access-key -> Access key you obtained for the user created above
+  * storage-s3-secret-key -> Secret key you obtained for the user created above
+  * storage-s3-bucket -> Keep this as the <bucketname> that you created just now.
+
+
+
+#### Push the existing data to s3 bucket (s3cmd command included other commands can be of simmilar nature)
+```
+s3cmd sync --add-header="Cache-Control:public, max-age=315576000, immutable" ./ s3://<bucket name>
+```
+
+
 ### Migrating between backends
 
 Currently, migration between backends is freely possible. To do so, you only
