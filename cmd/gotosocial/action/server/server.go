@@ -184,20 +184,29 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	)
 
 	// create required middleware
+	// rate limiting
 	limit := config.GetAdvancedRateLimitRequests()
-	gzip := middleware.Gzip()               // all except fileserver
 	clLimit := middleware.RateLimit(limit)  // client api
 	s2sLimit := middleware.RateLimit(limit) // server-to-server (AP)
 	fsLimit := middleware.RateLimit(limit)  // fileserver / web templates
 
-	// these should be routed in order
-	authModule.Route(router, clLimit, gzip)
-	clientModule.Route(router, clLimit, gzip)
-	fileserverModule.Route(router, fsLimit)
-	wellKnownModule.Route(router, gzip, s2sLimit)
-	nodeInfoModule.Route(router, s2sLimit, gzip)
-	activityPubModule.Route(router, s2sLimit, gzip)
-	webModule.Route(router, fsLimit, gzip)
+	// throttling
+	cpuMultiplier := config.GetAdvancedThrottlingMultiplier()
+	clThrottle := middleware.Throttle(cpuMultiplier)  // client api
+	s2sThrottle := middleware.Throttle(cpuMultiplier) // server-to-server (AP)
+	fsThrottle := middleware.Throttle(cpuMultiplier)  // fileserver / web templates
+
+	gzip := middleware.Gzip() // applied to all except fileserver
+
+	// these should be routed in order;
+	// apply throttling *after* rate limiting
+	authModule.Route(router, clLimit, clThrottle, gzip)
+	clientModule.Route(router, clLimit, clThrottle, gzip)
+	fileserverModule.Route(router, fsLimit, fsThrottle)
+	wellKnownModule.Route(router, gzip, s2sLimit, s2sThrottle)
+	nodeInfoModule.Route(router, s2sLimit, s2sThrottle, gzip)
+	activityPubModule.Route(router, s2sLimit, s2sThrottle, gzip)
+	webModule.Route(router, fsLimit, fsThrottle, gzip)
 
 	gts, err := gotosocial.NewServer(dbService, router, federator, mediaManager)
 	if err != nil {

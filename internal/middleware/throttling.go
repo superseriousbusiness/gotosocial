@@ -32,7 +32,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 const (
@@ -48,7 +47,7 @@ type token struct{}
 // ensuring that only a certain number of requests are handled concurrently, to reduce
 // congestion of the server.
 //
-// Limits are configured using available CPUs and the setting `advanced-throttling-multiplier`.
+// Limits are configured using available CPUs and the given cpuMultiplier value.
 // Open request limit is available CPUs * multiplier; backlog limit is limit * multiplier.
 //
 // Example values for multiplier 8:
@@ -78,18 +77,15 @@ type token struct{}
 //
 //   - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After
 //   - https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503
-func Throttle() gin.HandlerFunc {
-	cpuMultiplier := config.GetAdvancedThrottlingMultiplier()
+func Throttle(cpuMultiplier int) gin.HandlerFunc {
 	if cpuMultiplier <= 0 {
 		// throttling is disabled, return a noop middleware
 		return func(c *gin.Context) {}
 	}
 
-	cpus := runtime.GOMAXPROCS(0)
-
 	var (
-		limit           = cpuMultiplier * cpus
-		backlogLimit    = cpuMultiplier * limit
+		limit           = runtime.GOMAXPROCS(0) * cpuMultiplier
+		backlogLimit    = limit * cpuMultiplier
 		tokens          = make(chan token, limit)
 		backlogTokens   = make(chan token, limit+backlogLimit)
 		retryAfter      = "30" // seconds

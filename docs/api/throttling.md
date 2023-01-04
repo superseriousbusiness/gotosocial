@@ -1,8 +1,10 @@
 # Request Throttling
 
-GoToSocial uses request throttling to limit the number of open connections to the ActivityPub API of your instance. This is designed to prevent your instance from accidentally being DDOS'd (aka [the hug of death](https://en.wikipedia.org/wiki/Slashdot_effect)) if a post gets boosted or replied to by an account with many thousands of followers.
+GoToSocial uses request throttling to limit the number of open connections to the API of your instance. This is designed to prevent your instance from accidentally being DDOS'd (aka [the hug of death](https://en.wikipedia.org/wiki/Slashdot_effect)) if a post gets boosted or replied to by an account with many thousands of followers.
 
-Throttling means that only a limited number of HTTP requests to the ActivityPub API will be handled concurrently, in order to provide a snappy response to each request and move on quickly. The rationale is that it's better to handle fewer requests quickly, than to try to handle all incoming requests at once and take multiple seconds per request.
+Throttling means that only a limited number of HTTP requests to the API will be handled concurrently, in order to provide a snappy response to each request and move on quickly. The rationale is that it's better to handle fewer requests quickly, than to try to handle all incoming requests at once and take multiple seconds per request.
+
+Throttling limits are applied across router groups, similar to the way that [rate limiting](./ratelimiting.md) is organized, so if one part of the API is currently being throttled, that doesn't mean they all are.
 
 Throttling limits are calculated based on the number of CPUs available to GoToSocial, and the configuration value `advanced-throttling-multiplier`. The calculation is performed as follows:
 
@@ -18,7 +20,7 @@ This leads to the following values for the default multiplier (8):
 8 cpu = 64 in-process, 512 backlog
 ```
 
-New requests that overflow the in-process limit are held in the backlog queue, and processed as soon as a spot is freed up (ie., when a currently in-process request is finished). Requests that cannot be processed, and cannot fit in the backlog queue will be responded to with http code [503 - Service Unavailable](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503), and the `retry-after` header will be set to `30` (seconds), to indicate that the caller should try again later.
+New requests that overflow the in-process limit are held in the backlog queue, and processed as soon as a spot is freed up (ie., when a currently in-process request is finished). Requests that cannot be processed, and cannot fit in the backlog queue will be responded to with http code [503 - Service Unavailable](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503), and the `Retry-After` header will be set to `30` (seconds), to indicate that the caller should try again later.
 
 Requests are not held in the backlog queue indefinitely: if requests in the backlog cannot be processed within 30 seconds of being received, they will also receive a code 503 and a 30s retry-after.
 

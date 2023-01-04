@@ -45,14 +45,13 @@ func (a *ActivityPub) Route(r router.Router, m ...gin.HandlerFunc) {
 
 	// instantiate + attach shared, non-global middlewares to both of these groups
 	var (
-		throttlingMiddleware     = middleware.Throttle()
 		signatureCheckMiddleware = middleware.SignatureCheck(a.isURIBlocked)
 		cacheControlMiddleware   = middleware.CacheControl("no-store")
 	)
 	emojiGroup.Use(m...)
 	usersGroup.Use(m...)
-	emojiGroup.Use(throttlingMiddleware, signatureCheckMiddleware, cacheControlMiddleware)
-	usersGroup.Use(throttlingMiddleware, signatureCheckMiddleware, cacheControlMiddleware)
+	emojiGroup.Use(signatureCheckMiddleware, cacheControlMiddleware)
+	usersGroup.Use(signatureCheckMiddleware, cacheControlMiddleware)
 
 	a.emoji.Route(emojiGroup.Handle)
 	a.users.Route(usersGroup.Handle)

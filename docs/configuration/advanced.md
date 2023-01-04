@@ -52,10 +52,10 @@ advanced-cookies-samesite: "lax"
 # Default: 300
 advanced-rate-limit-requests: 300
 
-# Int. Amount of open requests to permit per CPU, before applying http request queuing.
-# Any requests beyond the limit are held in a backlog queue for up to 30 seconds before
-# either being processed or timing out. Requests that don't fit in the backlog queue will
-# have status 503 returned to them, and the header 'Retry-After' will be set to 30 seconds.
+# Int. Amount of open requests to permit per CPU, per router grouping, before applying http
+# request throttling. Any requests beyond the calculated limit are held in a backlog queue for 
+# up to 30 seconds before either being processed or timing out. Requests that don't fit in the backlog
+# queue will have status 503 returned to them, and the header 'Retry-After' will be set to 30 seconds.
 #
 # Open request limit is available CPUs * multiplier; backlog queue limit is limit * multiplier.
 #
