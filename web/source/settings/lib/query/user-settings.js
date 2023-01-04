@@ -24,13 +24,20 @@
 const base = require("./base");
 
 const endpoints = (build) => ({
+	verifyCredentials: build.query({
+		query: () => ({
+			url: `/api/v1/accounts/verify_credentials`
+		}),
+		providesTags: [{type: "User", id: "SELF"}]
+	}),
 	updateCredentials: build.mutation({
 		query: (formData) => ({
 			method: "PATCH",
 			url: `/api/v1/accounts/update_credentials`,
 			asForm: true,
 			body: formData
-		})
+		}),
+		invalidatesTags: [{type: "User", id: "SELF"}]
 	})
 });
 

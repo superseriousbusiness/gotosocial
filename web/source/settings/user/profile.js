@@ -40,10 +40,12 @@ const {
 
 const FakeProfile = require("../components/fake-profile");
 const MutationButton = require("../components/form/mutation-button");
+const Loading = require("../components/loading");
 
 module.exports = function UserProfile() {
 	const allowCustomCSS = Redux.useSelector(state => state.instances.current.configuration.accounts.allow_custom_css);
-	const profile = Redux.useSelector(state => state.user.profile);
+	// const profile = Redux.useSelector(state => state.user.profile);
+	const {data: profile = {}, isLoading} = query.useVerifyCredentialsQuery();
 
 	/*
 		User profile update form keys
@@ -74,6 +76,10 @@ module.exports = function UserProfile() {
 	};
 
 	const [result, submitForm] = useFormSubmit(form, query.useUpdateCredentialsMutation());
+
+	if (isLoading) {
+		return <Loading/>;
+	}
 
 	return (
 		<form className="user-profile" onSubmit={submitForm}>

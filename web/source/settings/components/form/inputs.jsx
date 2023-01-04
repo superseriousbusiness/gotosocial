@@ -81,13 +81,12 @@ function Checkbox({label, field, ...inputProps}) {
 	return (
 		<div className="form-field checkbox">
 			<label>
-				{label}
 				<input
 					type="checkbox"
 					checked={value}
 					onChange={onChange}
 					{...inputProps}
-				/>
+				/> {label}
 			</label>
 		</div>
 	);

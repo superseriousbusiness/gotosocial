@@ -341,7 +341,7 @@ section.with-sidebar > div, section.with-sidebar > form {
 	font-weight: bold;
 }
 
-.form-field.file {
+.form-field.file label {
 	width: 100%;
 	display: flex;
 }

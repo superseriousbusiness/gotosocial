@@ -20,8 +20,6 @@
 
 const syncpipe = require("syncpipe");
 
-const { unwrapRes } = require("../query/lib");
-
 module.exports = function useFormSubmit(form, [mutationQuery, result]) {
 	return [
 		result,
@@ -45,11 +43,7 @@ module.exports = function useFormSubmit(form, [mutationQuery, result]) {
 			]);
 
 			if (updatedFields.length > 0) {
-				return mutationQuery(mutationData)
-					.then(unwrapRes)
-					.then((_data) => {
-						updatedFields.forEach((field) => field.reset());
-					});
+				return mutationQuery(mutationData);
 			}
 		},
 	];
