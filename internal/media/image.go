@@ -142,6 +142,9 @@ func (m *gtsImage) ToJPEG(opts *jpeg.Options) io.Reader {
 		err := jpeg.Encode(bw, m.image, opts)
 
 		// Replace buffer.
+		//
+		// NOTE: jpeg.Encode() already
+		// performs a bufio.Writer.Flush().
 		putJPEGBuffer(bw)
 
 		return err

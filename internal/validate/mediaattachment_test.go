@@ -62,7 +62,7 @@ func happyMediaAttachment() *gtsmodel.MediaAttachment {
 		CreatedAt: time.Now().Add(-71 * time.Hour),
 		UpdatedAt: time.Now().Add(-71 * time.Hour),
 		StatusID:  "01F8MH75CBF9JFX4ZAD54N0W0R",
-		URL:       "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpeg",
+		URL:       "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
 		RemoteURL: "",
 		Type:      gtsmodel.FileTypeImage,
 		FileMeta: gtsmodel.FileMeta{
@@ -95,7 +95,7 @@ func happyMediaAttachment() *gtsmodel.MediaAttachment {
 			ContentType: "image/jpeg",
 			FileSize:    6872,
 			UpdatedAt:   time.Now().Add(-71 * time.Hour),
-			URL:         "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.jpeg",
+			URL:         "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.jpg",
 			RemoteURL:   "",
 		},
 		Avatar: testrig.FalseBool(),

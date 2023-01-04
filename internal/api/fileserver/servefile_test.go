@@ -99,7 +99,7 @@ func (suite *ServeFileTestSuite) TestServeOriginalLocalFileOK() {
 		targetAttachment.AccountID,
 		media.TypeAttachment,
 		media.SizeOriginal,
-		targetAttachment.ID+".jpeg",
+		targetAttachment.ID+".jpg",
 	)
 
 	suite.Equal(http.StatusOK, code)
@@ -119,7 +119,7 @@ func (suite *ServeFileTestSuite) TestServeSmallLocalFileOK() {
 		targetAttachment.AccountID,
 		media.TypeAttachment,
 		media.SizeSmall,
-		targetAttachment.ID+".jpeg",
+		targetAttachment.ID+".jpg",
 	)
 
 	suite.Equal(http.StatusOK, code)
@@ -139,7 +139,7 @@ func (suite *ServeFileTestSuite) TestServeOriginalRemoteFileOK() {
 		targetAttachment.AccountID,
 		media.TypeAttachment,
 		media.SizeOriginal,
-		targetAttachment.ID+".jpeg",
+		targetAttachment.ID+".jpg",
 	)
 
 	suite.Equal(http.StatusOK, code)
@@ -159,7 +159,7 @@ func (suite *ServeFileTestSuite) TestServeSmallRemoteFileOK() {
 		targetAttachment.AccountID,
 		media.TypeAttachment,
 		media.SizeSmall,
-		targetAttachment.ID+".jpeg",
+		targetAttachment.ID+".jpg",
 	)
 
 	suite.Equal(http.StatusOK, code)
@@ -182,7 +182,7 @@ func (suite *ServeFileTestSuite) TestServeOriginalRemoteFileRecache() {
 		targetAttachment.AccountID,
 		media.TypeAttachment,
 		media.SizeOriginal,
-		targetAttachment.ID+".jpeg",
+		targetAttachment.ID+".jpg",
 	)
 
 	suite.Equal(http.StatusOK, code)
@@ -205,7 +205,7 @@ func (suite *ServeFileTestSuite) TestServeSmallRemoteFileRecache() {
 		targetAttachment.AccountID,
 		media.TypeAttachment,
 		media.SizeSmall,
-		targetAttachment.ID+".jpeg",
+		targetAttachment.ID+".jpg",
 	)
 
 	suite.Equal(http.StatusOK, code)
@@ -228,7 +228,7 @@ func (suite *ServeFileTestSuite) TestServeOriginalRemoteFileRecacheNotFound() {
 		targetAttachment.AccountID,
 		media.TypeAttachment,
 		media.SizeOriginal,
-		targetAttachment.ID+".jpeg",
+		targetAttachment.ID+".jpg",
 	)
 
 	suite.Equal(http.StatusNotFound, code)
@@ -249,7 +249,7 @@ func (suite *ServeFileTestSuite) TestServeSmallRemoteFileRecacheNotFound() {
 		targetAttachment.AccountID,
 		media.TypeAttachment,
 		media.SizeSmall,
-		targetAttachment.ID+".jpeg",
+		targetAttachment.ID+".jpg",
 	)
 
 	suite.Equal(http.StatusNotFound, code)
@@ -261,7 +261,7 @@ func (suite *ServeFileTestSuite) TestServeFileNotFound() {
 		"01GMMY4G9B0QEG0PQK5Q5JGJWZ",
 		media.TypeAttachment,
 		media.SizeOriginal,
-		"01GMMY68Y7E5DJ3CA3Y9SS8524.jpeg",
+		"01GMMY68Y7E5DJ3CA3Y9SS8524.jpg",
 	)
 
 	suite.Equal(http.StatusNotFound, code)

@@ -98,20 +98,6 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("attachment %s is not owned by %s", wantedMediaID, owningAccountID))
 	}
 
-	// get file information from the attachment depending on the requested media size
-	switch mediaSize {
-	case media.SizeOriginal:
-		attachmentContent.ContentType = a.File.ContentType
-		attachmentContent.ContentLength = int64(a.File.FileSize)
-		storagePath = a.File.Path
-	case media.SizeSmall:
-		attachmentContent.ContentType = a.Thumbnail.ContentType
-		attachmentContent.ContentLength = int64(a.Thumbnail.FileSize)
-		storagePath = a.Thumbnail.Path
-	default:
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("media size %s not recognized for attachment", mediaSize))
-	}
-
 	if !*a.Cached {
 		// if we don't have it cached, then we can assume two things:
 		// 1. this is remote media, since local media should never be uncached
@@ -142,10 +128,25 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("error recaching media: %s", err))
 		}
 
-		// Initiate load attachment to block until processing complete
-		if _, err := processingMedia.LoadAttachment(ctx); err != nil {
+		// Load attachment and block until complete
+		a, err = processingMedia.LoadAttachment(ctx)
+		if err != nil {
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("error loading recached attachment: %s", err))
 		}
+	}
+
+	// get file information from the attachment depending on the requested media size
+	switch mediaSize {
+	case media.SizeOriginal:
+		attachmentContent.ContentType = a.File.ContentType
+		attachmentContent.ContentLength = int64(a.File.FileSize)
+		storagePath = a.File.Path
+	case media.SizeSmall:
+		attachmentContent.ContentType = a.Thumbnail.ContentType
+		attachmentContent.ContentLength = int64(a.Thumbnail.FileSize)
+		storagePath = a.Thumbnail.Path
+	default:
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("media size %s not recognized for attachment", mediaSize))
 	}
 
 	// ... so now we can safely return it

@@ -77,7 +77,7 @@ func (suite *InternalToRSSTestSuite) TestStatusToRSSItem2() {
 	suite.EqualValues(1634729805, item.Created.Unix())
 	suite.Equal("62529", item.Enclosure.Length)
 	suite.Equal("image/jpeg", item.Enclosure.Type)
-	suite.Equal("http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpeg", item.Enclosure.Url)
+	suite.Equal("http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg", item.Enclosure.Url)
 	suite.Equal("hello world! #welcome ! first post on the instance <img src=\"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png\" title=\":rainbow:\" alt=\":rainbow:\" class=\"emoji\"/> !", item.Content)
 }
 

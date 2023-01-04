@@ -184,11 +184,14 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	}
 
 	// Calculate attachment file path.
-	p.media.File.Path = "" +
-		p.media.AccountID + "/" +
-		string(TypeAttachment) + "/" +
-		string(SizeOriginal) + "/" +
-		p.media.ID + "." + info.Extension
+	p.media.File.Path = fmt.Sprintf(
+		"%s/%s/%s/%s.%s",
+		p.media.AccountID,
+		TypeAttachment,
+		SizeOriginal,
+		p.media.ID,
+		info.Extension,
+	)
 
 	// This shouldn't already exist, but we do a check as it's worth logging.
 	if have, _ := p.manager.storage.Has(ctx, p.media.File.Path); have {
@@ -278,6 +281,15 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 	p.media.FileMeta.Original.Size = int(fullImg.Size())
 	p.media.FileMeta.Original.Aspect = fullImg.AspectRatio()
 
+	// Calculate attachment thumbnail file path
+	p.media.Thumbnail.Path = fmt.Sprintf(
+		"%s/%s/%s/%s.jpg",
+		p.media.AccountID,
+		TypeAttachment,
+		SizeSmall,
+		p.media.ID,
+	)
+
 	// Get smaller thumbnail image
 	thumbImg := fullImg.Thumbnail()
 
@@ -315,6 +327,16 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 		return fmt.Errorf("error stream-encoding thumbnail to storage: %w", err)
 	}
 
+	// Fill in remaining thumbnail now it's stored
+	p.media.Thumbnail.ContentType = mimeImageJpeg
+	p.media.Thumbnail.URL = uris.GenerateURIForAttachment(
+		p.media.AccountID,
+		string(TypeAttachment),
+		string(SizeSmall),
+		p.media.ID,
+		"jpg", // always jpeg
+	)
+
 	// Set thumbnail dimensions in attachment info.
 	p.media.FileMeta.Small = gtsmodel.Small{
 		Width:  int(thumbImg.Width()),
@@ -339,19 +361,6 @@ func (m *manager) preProcessMedia(ctx context.Context, data DataFunc, postData P
 		return nil, err
 	}
 
-	file := gtsmodel.File{
-		Path:        "", // we don't know yet because it depends on the uncalled DataFunc
-		ContentType: "", // we don't know yet because it depends on the uncalled DataFunc
-		UpdatedAt:   time.Now(),
-	}
-
-	thumbnail := gtsmodel.Thumbnail{
-		URL:         uris.GenerateURIForAttachment(accountID, string(TypeAttachment), string(SizeSmall), id, mimeJpeg), // all thumbnails are encoded as jpeg,
-		Path:        fmt.Sprintf("%s/%s/%s/%s.%s", accountID, TypeAttachment, SizeSmall, id, mimeJpeg),                 // all thumbnails are encoded as jpeg,
-		ContentType: mimeImageJpeg,
-		UpdatedAt:   time.Now(),
-	}
-
 	avatar := false
 	header := false
 	cached := false
@@ -371,8 +380,8 @@ func (m *manager) preProcessMedia(ctx context.Context, data DataFunc, postData P
 		ScheduledStatusID: "",
 		Blurhash:          "",
 		Processing:        gtsmodel.ProcessingStatusReceived,
-		File:              file,
-		Thumbnail:         thumbnail,
+		File:              gtsmodel.File{UpdatedAt: time.Now()},
+		Thumbnail:         gtsmodel.Thumbnail{UpdatedAt: time.Now()},
 		Avatar:            &avatar,
 		Header:            &header,
 		Cached:            &cached,

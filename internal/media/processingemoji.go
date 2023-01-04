@@ -218,10 +218,14 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	}
 
 	// Calculate emoji file path.
-	p.emoji.ImagePath = "" +
-		p.instAccID + "/" +
-		string(TypeEmoji) + "/" +
-		string(pathID) + "." + info.Extension
+	p.emoji.ImagePath = fmt.Sprintf(
+		"%s/%s/%s/%s.%s",
+		p.instAccID,
+		TypeEmoji,
+		SizeOriginal,
+		pathID,
+		info.Extension,
+	)
 
 	// This shouldn't already exist, but we do a check as it's worth logging.
 	if have, _ := p.manager.storage.Has(ctx, p.emoji.ImagePath); have {
