@@ -11,16 +11,16 @@ Throttling limits are calculated based on the number of CPUs available to GoToSo
 
 This leads to the following values for the default multiplier (8):
 
-```
+```text
 1 cpu = 08 in-process, 064 backlog
 2 cpu = 16 in-process, 128 backlog
 4 cpu = 32 in-process, 256 backlog
 8 cpu = 64 in-process, 512 backlog
 ```
 
-New requests that overflow the in-process limit are held in the backlog queue, and processed as soon as a spot is freed up (ie., when a currently in-process request is finished). Requests that cannot be processed, and cannot fit in the backlog queue will be responded to with http code [429 - Too Many Requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429), and the `retry-after` header will be set to `30` (seconds), to indicate that the caller should try again later.
+New requests that overflow the in-process limit are held in the backlog queue, and processed as soon as a spot is freed up (ie., when a currently in-process request is finished). Requests that cannot be processed, and cannot fit in the backlog queue will be responded to with http code [503 - Service Unavailable](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503), and the `retry-after` header will be set to `30` (seconds), to indicate that the caller should try again later.
 
-Requests are not held in the backlog queue indefinitely: if requests in the backlog cannot be processed within 30 seconds of being received, they will also receive a code 429 and a 30s retry-after.
+Requests are not held in the backlog queue indefinitely: if requests in the backlog cannot be processed within 30 seconds of being received, they will also receive a code 503 and a 30s retry-after.
 
 ## Throttling FAQs
 

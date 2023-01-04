@@ -70,14 +70,14 @@ type token struct{}
 // If the backlog queue is full, the request context is closed, or the caller has been
 // waiting in the backlog for too long, this function will abort the request chain,
 // write a JSON error into the response, set an appropriate Retry-After value, and set
-// the HTTP response code to 429: Too Many Requests.
+// the HTTP response code to 503: Service Unavailable.
 //
 // If the multiplier is <= 0, a noop middleware will be returned instead.
 //
 // Useful links:
 //
 //   - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After
-//   - https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429
+//   - https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503
 func Throttle() gin.HandlerFunc {
 	cpuMultiplier := config.GetAdvancedThrottlingMultiplier()
 	if cpuMultiplier <= 0 {
@@ -104,11 +104,11 @@ func Throttle() gin.HandlerFunc {
 		backlogTokens <- token{}
 	}
 
-	// bail instructs the requester to return after retryAfter seconds, returns a 429,
+	// bail instructs the requester to return after retryAfter seconds, returns a 503,
 	// and writes the given message into the "error" field of a returned json object
 	bail := func(c *gin.Context, msg string) {
 		c.Header("Retry-After", retryAfter)
-		c.JSON(http.StatusTooManyRequests, gin.H{"error": msg})
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": msg})
 		c.Abort()
 	}
 
