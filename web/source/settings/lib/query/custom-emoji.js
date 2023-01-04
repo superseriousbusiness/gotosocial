@@ -20,15 +20,8 @@
 
 const Promise = require("bluebird");
 
+const { unwrapRes } = require("./lib");
 const base = require("./base");
-
-function unwrap(res) {
-	if (res.error != undefined) {
-		throw res.error;
-	} else {
-		return res.data;
-	}
-}
 
 const endpoints = (build) => ({
 	getAllEmoji: build.query({
@@ -132,7 +125,7 @@ const endpoints = (build) => ({
 							filter: `domain:${domain},shortcode:${emoji.shortcode}`,
 							limit: 1
 						}
-					}).then(unwrap);
+					}).then(unwrapRes);
 				}).then(([lookup]) => {
 					if (lookup == undefined) { throw "not found"; }
 
@@ -152,7 +145,7 @@ const endpoints = (build) => ({
 						url: `/api/v1/admin/custom_emojis/${lookup.id}`,
 						asForm: true,
 						body: body
-					}).then(unwrap);
+					}).then(unwrapRes);
 				}).then((res) => {
 					data.push([emoji.shortcode, res]);
 				}).catch((e) => {

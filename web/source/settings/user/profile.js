@@ -21,59 +21,70 @@
 const React = require("react");
 const Redux = require("react-redux");
 
-const Submit = require("../components/submit");
-
-const api = require("../lib/api");
-const user = require("../redux/reducers/user").actions;
-const submit = require("../lib/submit");
-
-const FakeProfile = require("../components/fake-profile");
-const { formFields } = require("../components/form-fields");
+const query = require("../lib/query");
 
 const {
-	TextInput,
-	TextArea,
-	Checkbox,
-	File
-} = formFields(user.setProfileVal, (state) => state.user.profile);
+	useTextInput
+} = require("../components/form");
+
+const FakeProfile = require("../components/fake-profile");
+const syncpipe = require("syncpipe");
+const MutationButton = require("../components/mutation-button");
 
 module.exports = function UserProfile() {
-	const dispatch = Redux.useDispatch();
-	const instance = Redux.useSelector(state => state.instances.current);
+	const allowCustomCSS = Redux.useSelector(state => state.instances.current.configuration.accounts.allow_custom_css);
+	const profile = Redux.useSelector(state => state.user.profile);
 
-	const allowCustomCSS = instance.configuration.accounts.allow_custom_css;
+	/*
+		User profile update form keys
+		- bool bot
+		- bool locked
+		- string display_name
+		- string note
+		- file avatar
+		- file header
+		- string source[privacy]
+		- bool source[sensitive]
+		- string source[language]
+		- string source[status_format]
+		- bool enable_rss
+		- string custom_css (if enabled)
+	*/
 
-	const [errorMsg, setError] = React.useState("");
-	const [statusMsg, setStatus] = React.useState("");
+	const form = {
+		display_name: useTextInput("displayName", {defaultValue: profile.display_name})
+	};
 
-	const saveProfile = submit(
-		() => dispatch(api.user.updateProfile()),
-		{setStatus, setError}
-	);
+	const [result, submitForm] = useFormSubmit(form, query.useUpdateCredentialsMutation());
 
 	return (
-		<div className="user-profile">
+		<form className="user-profile" onSubmit={submitForm}>
 			<h1>Profile</h1>
 			<div className="overview">
-				<FakeProfile/>
+				{/* <FakeProfile/> */}
 				<div className="files">
 					<div>
 						<h3>Header</h3>
-						<File
+						{/* <File
 							id="header"
 							fileType="image/*"
-						/>
+						/> */}
 					</div>
 					<div>
 						<h3>Avatar</h3>
-						<File
+						{/* <File
 							id="avatar"
 							fileType="image/*"
-						/>
+						/> */}
 					</div>
 				</div>
 			</div>
-			<TextInput
+			<FormTextInput
+				label="Name"
+				placeHolder="A GoToSocial user"
+				field={form.display_name}
+			/>
+			{/* <TextInput
 				id="display_name"
 				name="Name"
 				placeHolder="A GoToSocial user"
@@ -100,7 +111,74 @@ module.exports = function UserProfile() {
 					<a href="https://docs.gotosocial.org/en/latest/user_guide/custom_css" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about custom profile CSS (opens in a new tab)</a>
 				</TextArea>
 			}
-			<Submit onClick={saveProfile} label="Save profile info" errorMsg={errorMsg} statusMsg={statusMsg} />
-		</div>
+			<Submit onClick={saveProfile} label="Save profile info" errorMsg={errorMsg} statusMsg={statusMsg} /> */}
+			<MutationButton text="Save profile info" result={result}/>
+		</form>
 	);
 };
+
+function FormTextInput({label, placeHolder, field}) {
+	let [onChange, _reset, {value, ref}] = field;
+
+	return (
+		<div className="form-field text">
+			<label>
+				{label}
+				<input
+					type="text"
+					placeholder={placeHolder}
+					{...{onChange, value, ref}}
+				/>
+			</label>
+		</div>
+	);
+}
+
+function useFormSubmit(form, [mutationQuery, result]) {
+	return [
+		result,
+		function submitForm(e) {
+			e.preventDefault();
+
+			// transform the field definitions into an object with just their values 
+			let updatedFields = 0;
+			const mutationData = syncpipe(form, [
+				(_) => Object.entries(_),
+				(_) => _.map(([key, field]) => {
+					let data = field[2]; // [onChange, reset, {}]
+					if (data.hasChanged()) {
+						return [key, data.value];
+					} else {
+						return null;
+					}
+				}),
+				(_) => _.filter((value) => value != null),
+				(_) => {
+					updatedFields = _.length;
+					return _;
+				},
+				(_) => Object.fromEntries(_)
+			]);
+
+			if (updatedFields > 0) {
+				return mutationQuery(mutationData);
+			}
+		},
+	];
+}
+
+// function useForm(formSpec) {
+// 	const form = {};
+
+// 	Object.entries(formSpec).forEach(([name, cfg]) => {
+// 		const [useTypedInput, defaultValue] = cfg;
+
+// 		form[name] = useTypedInput(name, );
+// 	});
+
+// 	form.submit = function submitForm() {
+
+// 	};
+
+// 	return form;
+// }
