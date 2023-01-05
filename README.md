@@ -261,7 +261,7 @@ The following libraries and frameworks are used by GoToSocial, with gratitude ðŸ
 
 ### Image Attribution
 
-Sloth logo by [Anna Abramek](https://abramek.art/), Copyright (C) 2021-2022 the GoToSocial Authors.
+Sloth logo by [Anna Abramek](https://abramek.art/), Copyright (C) 2021-2023 the GoToSocial Authors.
 
 ### Team
 
@@ -310,4 +310,4 @@ If you modify the GoToSocial source code, and run that modified code in a way th
 
 > \[I\]f you modify the Program, your modified version must prominently offer all users interacting with it remotely through a computer network (if your version supports such interaction) an opportunity to receive the Corresponding Source of your version by providing access to the Corresponding Source from a network server at no charge, through some standard or customary means of facilitating copying of software.
 
-Copyright (C) 2021-2022 the GoToSocial Authors.
+Copyright (C) 2021-2023 GoToSocial Authors
