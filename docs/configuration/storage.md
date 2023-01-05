@@ -77,9 +77,9 @@ Here are the steps to follow for bucket creation
 
 1. In AWS Console -> IAM (under Security, Identity, & Compliance)
 2. Add a user with programatic api's access
-3. You can enable s3full access in case you dont want to care about security but recommendation would be to setup a tight permissions
-replace <bucketname> in this sample policy
-```
+3. We recommend setting up below listed policy, replace <bucketname> with your buckets name
+
+```json
 {
     "Statement": [
         {
@@ -97,9 +97,8 @@ replace <bucketname> in this sample policy
         }
     ]
 }
-
 ```
-P.S. We gave ListAll for s3cmd to work nicely.
+
 4. Provide the values in config above
   
   * storage-s3-endpoint -> should be your bucket location say `s3.ap-southeast-1.amazonaws.com`
@@ -109,9 +108,12 @@ P.S. We gave ListAll for s3cmd to work nicely.
 
 
 
-#### For Data migration from local storage to AWS s3 bucket in case of running instance. (not required if you are starting fresh)
-(s3cmd command included other commands can be of simmilar nature)
-```
+#### Migrating data from local storage to AWS s3 bucket
+
+This step is only needed if you have a running instance. Ignore this if you are setting up a fresh instance. 
+We have provided [s3cmd](https://github.com/s3tools/s3cmd) command for the copy operation.
+
+```bash
 s3cmd sync --add-header="Cache-Control:public, max-age=315576000, immutable" ./ s3://<bucket name>
 ```
 
