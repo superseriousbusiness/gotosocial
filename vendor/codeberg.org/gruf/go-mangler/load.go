@@ -118,20 +118,16 @@ func loadReflect(t reflect.Type) (Mangler, rMangler) {
 		reflect.Uintptr:
 		return mangle_platform_int, nil
 
-	case reflect.Int8,
-		reflect.Uint8:
+	case reflect.Int8, reflect.Uint8:
 		return mangle_8bit, nil
 
-	case reflect.Int16,
-		reflect.Uint16:
+	case reflect.Int16, reflect.Uint16:
 		return mangle_16bit, nil
 
-	case reflect.Int32,
-		reflect.Uint32:
+	case reflect.Int32, reflect.Uint32:
 		return mangle_32bit, nil
 
-	case reflect.Int64,
-		reflect.Uint64:
+	case reflect.Int64, reflect.Uint64:
 		return mangle_64bit, nil
 
 	case reflect.Float32:
@@ -214,20 +210,16 @@ func loadReflectKnownPtr(et reflect.Type) Mangler {
 		reflect.Uintptr:
 		return mangle_platform_int_ptr
 
-	case reflect.Int8,
-		reflect.Uint8:
+	case reflect.Int8, reflect.Uint8:
 		return mangle_8bit_ptr
 
-	case reflect.Int16,
-		reflect.Uint16:
+	case reflect.Int16, reflect.Uint16:
 		return mangle_16bit_ptr
 
-	case reflect.Int32,
-		reflect.Uint32:
+	case reflect.Int32, reflect.Uint32:
 		return mangle_32bit_ptr
 
-	case reflect.Int64,
-		reflect.Uint64:
+	case reflect.Int64, reflect.Uint64:
 		return mangle_64bit_ptr
 
 	case reflect.Float32:
@@ -261,20 +253,16 @@ func loadReflectKnownSlice(et reflect.Type) Mangler {
 		reflect.Uintptr:
 		return mangle_platform_int_slice
 
-	case reflect.Int8,
-		reflect.Uint8:
+	case reflect.Int8, reflect.Uint8:
 		return mangle_8bit_slice
 
-	case reflect.Int16,
-		reflect.Uint16:
+	case reflect.Int16, reflect.Uint16:
 		return mangle_16bit_slice
 
-	case reflect.Int32,
-		reflect.Uint32:
+	case reflect.Int32, reflect.Uint32:
 		return mangle_32bit_slice
 
-	case reflect.Int64,
-		reflect.Uint64:
+	case reflect.Int64, reflect.Uint64:
 		return mangle_64bit_slice
 
 	case reflect.Float32:
@@ -305,7 +293,7 @@ func loadReflectArray(et reflect.Type) rMangler {
 	return nil
 }
 
-// loadReflectMap ...
+// loadReflectMap loads an rMangler function for a map of given key and value types.
 func loadReflectMap(kt, vt reflect.Type) rMangler {
 	var kmng, vmng rMangler
 

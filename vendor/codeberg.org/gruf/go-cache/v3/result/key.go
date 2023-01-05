@@ -1,6 +1,7 @@
 package result
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 	"sync"
@@ -51,10 +52,10 @@ func (sk structKeys) generate(a any) []cacheKey {
 		buf.B = buf.B[:0]
 
 		// Append each field value to buffer.
-		for _, idx := range sk[i].fields {
-			fv := v.Field(idx)
+		for _, field := range sk[i].fields {
+			fv := v.Field(field.index)
 			fi := fv.Interface()
-			buf.B = mangler.Append(buf.B, fi)
+			buf.B = field.mangle(buf.B, fi)
 			buf.B = append(buf.B, '.')
 		}
 
@@ -123,17 +124,58 @@ type structKey struct {
 
 	// fields is a slice of runtime struct field
 	// indices, of the fields encompassed by this key.
-	fields []int
+
+	fields []structField
 
 	// pkeys is a lookup of stored struct key values
 	// to the primary cache lookup key (int64).
 	pkeys map[string]int64
 }
 
-// genStructKey will generate a structKey{} information object for user-given lookup
+type structField struct {
+	// index is the reflect index of this struct field.
+	index int
+
+	// mangle is the mangler function for
+	// serializing values of this struct field.
+	mangle mangler.Mangler
+}
+
+// genKey generates a cache key string for given key parts (i.e. serializes them using "go-mangler").
+func (sk structKey) genKey(parts []any) string {
+	// Check this expected no. key parts.
+	if len(parts) != len(sk.fields) {
+		panic(fmt.Sprintf("incorrect no. key parts provided: want=%d received=%d", len(parts), len(sk.fields)))
+	}
+
+	// Acquire byte buffer
+	buf := getBuf()
+	defer putBuf(buf)
+	buf.Reset()
+
+	// Encode each key part
+	for i, part := range parts {
+		buf.B = sk.fields[i].mangle(buf.B, part)
+		buf.B = append(buf.B, '.')
+	}
+
+	// Drop last '.'
+	buf.Truncate(1)
+
+	// Return string copy
+	return string(buf.B)
+}
+
+// newStructKey will generate a structKey{} information object for user-given lookup
 // key information, and the receiving generic paramter's type information. Panics on error.
-func genStructKey(lk Lookup, t reflect.Type) structKey {
-	var zeros []any
+func newStructKey(lk Lookup, t reflect.Type) structKey {
+	var (
+		sk    structKey
+		zeros []any
+	)
+
+	// Set the lookup name
+	sk.name = lk.Name
 
 	// Split dot-separated lookup to get
 	// the individual struct field names
@@ -142,8 +184,8 @@ func genStructKey(lk Lookup, t reflect.Type) structKey {
 		panic("no key fields specified")
 	}
 
-	// Pre-allocate slice of expected length
-	fields := make([]int, len(names))
+	// Allocate the mangler and field indices slice.
+	sk.fields = make([]structField, len(names))
 
 	for i, name := range names {
 		// Get field info for given name
@@ -158,11 +200,14 @@ func genStructKey(lk Lookup, t reflect.Type) structKey {
 		}
 
 		// Set the runtime field index
-		fields[i] = ft.Index[0]
+		sk.fields[i].index = ft.Index[0]
 
 		// Allocate new instance of field
 		v := reflect.New(ft.Type)
 		v = v.Elem()
+
+		// Fetch mangler for field type.
+		sk.fields[i].mangle = mangler.Get(ft.Type)
 
 		if !lk.AllowZero {
 			// Append the zero value interface
@@ -170,48 +215,15 @@ func genStructKey(lk Lookup, t reflect.Type) structKey {
 		}
 	}
 
-	var zvalue string
-
 	if len(zeros) > 0 {
 		// Generate zero value string
-		zvalue = genKey(zeros...)
+		sk.zero = sk.genKey(zeros)
 	}
 
-	return structKey{
-		name:   lk.Name,
-		zero:   zvalue,
-		fields: fields,
-		pkeys:  make(map[string]int64),
-	}
-}
+	// Allocate primary lookup map
+	sk.pkeys = make(map[string]int64)
 
-// genKey generates a cache key for given key values.
-func genKey(parts ...any) string {
-	if len(parts) == 0 {
-		// Panic to prevent annoying usecase
-		// where user forgets to pass lookup
-		// and instead only passes a key part,
-		// e.g. cache.Get("key")
-		// which then always returns false.
-		panic("no key parts provided")
-	}
-
-	// Acquire byte buffer
-	buf := getBuf()
-	defer putBuf(buf)
-	buf.Reset()
-
-	// Encode each key part
-	for _, part := range parts {
-		buf.B = mangler.Append(buf.B, part)
-		buf.B = append(buf.B, '.')
-	}
-
-	// Drop last '.'
-	buf.Truncate(1)
-
-	// Return string copy
-	return string(buf.B)
+	return sk
 }
 
 // isExported checks whether function name is exported.
