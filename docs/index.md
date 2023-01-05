@@ -62,7 +62,7 @@ For bugs and feature requests, please check to see if there's [already an issue]
 
 ### Image Attribution
 
-Sloth logo by [Anna Abramek](https://abramek.art/), Copyright (C) 2021-2022 the GoToSocial Authors.
+Sloth logo by [Anna Abramek](https://abramek.art/), Copyright (C) 2021-2023 the GoToSocial Authors.
 
 ### Developers
 
