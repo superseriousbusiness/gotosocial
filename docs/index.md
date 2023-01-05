@@ -98,7 +98,7 @@ Crowdfunded donations to our OpenCollective and Liberapay accounts go towards pa
 
 ### NLnet
 
-<img src="https://nlnet.nl/logo/logo-640x732.png" width="150" alt="NLnet logo" style="padding-right:20px"/> <img src="https://nlnet.nl/logo/NGI/NGIZero-green.hex.svg" width="150" alt="NGIZero logo"/>
+<img src="https://nlnet.nl/logo/NGI/NGIZero-green.hex.svg" width="75" alt="NGIZero logo"/>
 
 Combined with the above crowdfunding sources, 2023 Alpha development of GoToSocial is also funded by a 50,000 EUR grant from the [NGI0 Entrust Fund](https://nlnet.nl/entrust/), via [NLnet](https://nlnet.nl/). See [here](https://nlnet.nl/project/GoToSocial/#ack) for more details. The successful grant application is archived [here](https://github.com/superseriousbusiness/gotosocial/blob/main/archive/nlnet/2022-next-generation-internet-zero.md).
 
