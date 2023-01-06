@@ -19,6 +19,7 @@
 package streaming
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -187,16 +188,17 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 		// throttle / rate-limit request tokens which could become
 		// problematic on instances with multiple users.
 		l.Info("opened websocket connection")
+		defer l.Info("closed websocket connection")
 
-		// Allocate done channel to indicate close
-		done := make(chan struct{})
+		// Create new context for lifetime of the connection
+		ctx, cncl := context.WithCancel(context.Background())
 
 		// Create ticker to send alive pings
 		pinger := time.NewTicker(m.dTicker)
 
 		defer func() {
 			// Signal done
-			close(done)
+			cncl()
 
 			// Close websocket conn
 			_ = wsConn.Close()
@@ -209,6 +211,9 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 		}()
 
 		go func() {
+			// Signal done
+			defer cncl()
+
 			for {
 				// We have to listen for received websocket messages in
 				// order to trigger the underlying wsConn.PingHandler().
@@ -216,17 +221,12 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 				// So we wait on received messages but only act on errors.
 				_, _, err := wsConn.ReadMessage()
 				if err != nil {
-					select {
-					case <-done:
-						// connection closed.
-						return
-
-					default:
+					if ctx.Err() == nil {
 						// Only log error if the connection was not closed
-						// by us. This channel remaining open indicates this.
+						// by us. Uncanceled context indicates this is the case.
 						l.Errorf("error reading from websocket: %v", err)
-						return
 					}
+					return
 				}
 			}
 		}()
@@ -234,7 +234,7 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 		for {
 			select {
 			// Connection closed
-			case <-done:
+			case <-ctx.Done():
 				return
 
 			// Received next stream message
