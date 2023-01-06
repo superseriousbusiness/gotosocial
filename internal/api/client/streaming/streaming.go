@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 )
 
@@ -41,21 +42,22 @@ const (
 )
 
 type Module struct {
-	processor    processing.Processor
-	tickDuration time.Duration
+	processor processing.Processor
+	dTicker   time.Duration
+	wsUpgrade websocket.Upgrader
 }
 
-func New(processor processing.Processor) *Module {
+func New(processor processing.Processor, dTicker time.Duration, wsBuf int) *Module {
 	return &Module{
-		processor:    processor,
-		tickDuration: 30 * time.Second,
-	}
-}
+		processor: processor,
+		dTicker:   dTicker,
+		wsUpgrade: websocket.Upgrader{
+			ReadBufferSize:  wsBuf, // we don't expect reads
+			WriteBufferSize: wsBuf,
 
-func NewWithTickDuration(processor processing.Processor, tickDuration time.Duration) *Module {
-	return &Module{
-		processor:    processor,
-		tickDuration: tickDuration,
+			// we expect cors requests (via eg., pinafore.social) so be lenient
+			CheckOrigin: func(r *http.Request) bool { return true },
+		},
 	}
 }
 
