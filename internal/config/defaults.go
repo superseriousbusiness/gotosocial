@@ -138,6 +138,10 @@ var Defaults = Configuration{
 			NotificationTTL:       time.Minute * 5,
 			NotificationSweepFreq: time.Second * 10,
 
+			ReportMaxSize:   100,
+			ReportTTL:       time.Minute * 5,
+			ReportSweepFreq: time.Second * 10,
+
 			StatusMaxSize:   500,
 			StatusTTL:       time.Minute * 5,
 			StatusSweepFreq: time.Second * 10,

@@ -175,6 +175,10 @@ type GTSCacheConfiguration struct {
 	NotificationTTL       time.Duration `name:"notification-ttl"`
 	NotificationSweepFreq time.Duration `name:"notification-sweep-freq"`
 
+	ReportMaxSize   int           `name:"report-max-size"`
+	ReportTTL       time.Duration `name:"report-ttl"`
+	ReportSweepFreq time.Duration `name:"report-sweep-freq"`
+
 	StatusMaxSize   int           `name:"status-max-size"`
 	StatusTTL       time.Duration `name:"status-ttl"`
 	StatusSweepFreq time.Duration `name:"status-sweep-freq"`

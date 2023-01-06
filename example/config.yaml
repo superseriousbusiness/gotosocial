@@ -207,6 +207,10 @@ cache:
     notification-ttl: "5m"
     notification-sweep-freq: "10s"
 
+    report-max-size: 100
+    report-ttl: "5m"
+    report-sweep-freq: "10s"
+
     status-max-size: 500
     status-ttl: "5m"
     status-sweep-freq: "10s"
