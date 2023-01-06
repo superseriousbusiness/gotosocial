@@ -1971,6 +1971,36 @@ func NewTestBlocks() map[string]*gtsmodel.Block {
 	}
 }
 
+func NewTestReports() map[string]*gtsmodel.Report {
+	return map[string]*gtsmodel.Report{
+		"local_account_2_report_remote_account_1": {
+			ID:              "01GP3AWY4CRDVRNZKW0TEAMB5R",
+			CreatedAt:       TimeMustParse("2022-05-14T12:20:03+02:00"),
+			UpdatedAt:       TimeMustParse("2022-05-14T12:20:03+02:00"),
+			URI:             "http://localhost:8080/01GP3AWY4CRDVRNZKW0TEAMB5R",
+			AccountID:       "01F8MH5NBDF2MV7CTC4Q5128HF",
+			TargetAccountID: "01F8MH5ZK5VRH73AKHQM6Y9VNX",
+			Comment:         "dark souls sucks, please yeet this nerd",
+			StatusIDs:       []string{"01FVW7JHQFSFK166WWKR8CBA6M"},
+			Forwarded:       TrueBool(),
+		},
+		"remote_account_1_report_local_account_2": {
+			ID:                     "01GP3DFY9XQ1TJMZT5BGAZPXX7",
+			CreatedAt:              TimeMustParse("2022-05-15T16:20:12+02:00"),
+			UpdatedAt:              TimeMustParse("2022-05-15T16:20:12+02:00"),
+			URI:                    "http://fossbros-anonymous.io/87fb1478-ac46-406a-8463-96ce05645219",
+			AccountID:              "01F8MH5ZK5VRH73AKHQM6Y9VNX",
+			TargetAccountID:        "01F8MH5NBDF2MV7CTC4Q5128HF",
+			Comment:                "this is a turtle, not a person, therefore should not be a poster",
+			StatusIDs:              []string{},
+			Forwarded:              TrueBool(),
+			ActionTaken:            "user was warned not to be a turtle anymore",
+			ActionTakenAt:          TimeMustParse("2022-05-15T17:01:56+02:00"),
+			ActionTakenByAccountID: "01AY6P665V14JJR0AFVRT7311Y",
+		},
+	}
+}
+
 // ActivityWithSignature wraps a pub.Activity along with its signature headers, for testing.
 type ActivityWithSignature struct {
 	Activity        pub.Activity
