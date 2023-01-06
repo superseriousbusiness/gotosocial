@@ -216,12 +216,17 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 				// So we wait on received messages but only act on errors.
 				_, _, err := wsConn.ReadMessage()
 				if err != nil {
-					if _, ok := <-done; ok {
+					select {
+					case <-done:
+						// connection closed.
+						return
+
+					default:
 						// Only log error if the connection was not closed
 						// by us. This channel remaining open indicates this.
 						l.Errorf("error reading from websocket: %v", err)
+						return
 					}
-					return
 				}
 			}
 		}()
@@ -246,7 +251,10 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 			// Send keep-alive "ping"
 			case <-pinger.C:
 				l.Trace("pinging websocket ...")
-				if err := wsConn.WriteMessage(websocket.PingMessage, []byte(": ping")); err != nil {
+				if err := wsConn.WriteMessage(
+					websocket.PingMessage,
+					[]byte{},
+				); err != nil {
 					l.Errorf("error writing ping to websocket: %v", err)
 					return
 				}
