@@ -67,6 +67,24 @@ func (s *statusDB) GetStatusByID(ctx context.Context, id string) (*gtsmodel.Stat
 	)
 }
 
+func (s *statusDB) GetStatuses(ctx context.Context, ids []string) ([]*gtsmodel.Status, db.Error) {
+	statuses := make([]*gtsmodel.Status, 0, len(ids))
+
+	for _, id := range ids {
+		// Attempt fetch from DB
+		status, err := s.GetStatusByID(ctx, id)
+		if err != nil {
+			log.Errorf("GetStatuses: error getting status %q: %v", id, err)
+			continue
+		}
+
+		// Append status
+		statuses = append(statuses, status)
+	}
+
+	return statuses, nil
+}
+
 func (s *statusDB) GetStatusByURI(ctx context.Context, uri string) (*gtsmodel.Status, db.Error) {
 	return s.getStatus(
 		ctx,
