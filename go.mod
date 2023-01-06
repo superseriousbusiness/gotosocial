@@ -5,13 +5,13 @@ go 1.19
 require (
 	codeberg.org/gruf/go-bytesize v1.0.2
 	codeberg.org/gruf/go-byteutil v1.0.2
-	codeberg.org/gruf/go-cache/v3 v3.2.0
+	codeberg.org/gruf/go-cache/v3 v3.2.2
 	codeberg.org/gruf/go-debug v1.2.0
 	codeberg.org/gruf/go-errors/v2 v2.0.2
 	codeberg.org/gruf/go-kv v1.5.2
 	codeberg.org/gruf/go-logger/v2 v2.2.1
 	codeberg.org/gruf/go-mutexes v1.1.4
-	codeberg.org/gruf/go-runners v1.3.1
+	codeberg.org/gruf/go-runners v1.4.0
 	codeberg.org/gruf/go-store/v2 v2.0.10
 	github.com/abema/go-mp4 v0.9.0
 	github.com/buckket/go-blurhash v1.1.0
@@ -69,12 +69,11 @@ require (
 	codeberg.org/gruf/go-fastpath v1.0.3 // indirect
 	codeberg.org/gruf/go-fastpath/v2 v2.0.0 // indirect
 	codeberg.org/gruf/go-hashenc v1.0.2 // indirect
-	codeberg.org/gruf/go-mangler v1.1.1 // indirect
+	codeberg.org/gruf/go-mangler v1.2.2 // indirect
 	codeberg.org/gruf/go-maps v1.0.3 // indirect
 	codeberg.org/gruf/go-pools v1.1.0 // indirect
-	codeberg.org/gruf/go-sched v1.1.1 // indirect
+	codeberg.org/gruf/go-sched v1.2.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
-	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dsoprea/go-exif/v3 v3.0.0-20210625224831-a6301f85c82b // indirect
 	github.com/dsoprea/go-iptc v0.0.0-20200610044640-bc9ca208b413 // indirect

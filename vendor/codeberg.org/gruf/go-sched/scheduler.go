@@ -33,10 +33,11 @@ type Scheduler struct {
 	jch  chan interface{} // jch accepts either Jobs or job IDs to notify new/removed jobs
 	svc  runners.Service  // svc manages the main scheduler routine
 	jid  atomic.Uint64    // jid is used to iteratively generate unique IDs for jobs
+	rgo  func(func())     // goroutine runner, allows using goroutine pool to launch jobs
 }
 
 // Start will attempt to start the Scheduler. Immediately returns false if the Service is already running, and true after completed run.
-func (sch *Scheduler) Start() bool {
+func (sch *Scheduler) Start(gorun func(func())) bool {
 	var block sync.Mutex
 
 	// Use mutex to synchronize between started
@@ -49,13 +50,18 @@ func (sch *Scheduler) Start() bool {
 		// Create Scheduler job channel
 		sch.jch = make(chan interface{})
 
-		// Unlock start routine
-		block.Unlock()
+		// Set goroutine runner function
+		if sch.rgo = gorun; sch.rgo == nil {
+			sch.rgo = func(f func()) { go f() }
+		}
 
 		// Set GC finalizer to ensure scheduler stopped
 		runtime.SetFinalizer(sch, func(sch *Scheduler) {
 			_ = sch.Stop()
 		})
+
+		// Unlock start routine
+		block.Unlock()
 
 		// Enter main loop
 		sch.run(ctx)
@@ -87,7 +93,7 @@ func (sch *Scheduler) Schedule(job *Job) (cancel func()) {
 		panic("nil job")
 
 	// Check we are running
-	case sch.jch == nil:
+	case !sch.Running():
 		panic("scheduler not running")
 	}
 
@@ -141,21 +147,6 @@ func (sch *Scheduler) run(ctx context.Context) {
 			}
 		}
 	)
-
-	for {
-		select {
-		// Handle received job/id
-		case v := <-sch.jch:
-			sch.handle(v)
-			continue
-
-		// No more
-		default:
-		}
-
-		// Done
-		break
-	}
 
 	// Create a stopped timer
 	timer = time.NewTimer(1)
@@ -256,8 +247,10 @@ func (sch *Scheduler) schedule(now time.Time) {
 			return
 		}
 
-		// Pass job to runner
-		go job.Run(now)
+		// Pass to runner
+		sch.rgo(func() {
+			job.Run(now)
+		})
 
 		// Update the next call time
 		next := job.timing.Next(now)

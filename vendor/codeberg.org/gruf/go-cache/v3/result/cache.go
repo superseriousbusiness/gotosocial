@@ -56,8 +56,8 @@ func New[Value any](lookups []Lookup, copy func(Value) Value, cap int) *Cache[Va
 	c.lookups = make([]structKey, len(lookups))
 
 	for i, lookup := range lookups {
-		// Generate keyed field info for lookup
-		c.lookups[i] = genStructKey(lookup, t)
+		// Create keyed field info for lookup
+		c.lookups[i] = newStructKey(lookup, t)
 	}
 
 	// Create and initialize underlying cache
@@ -159,7 +159,7 @@ func (c *Cache[Value]) Load(lookup string, load func() (Value, error), keyParts 
 	keyInfo := c.lookups.get(lookup)
 
 	// Generate cache key string.
-	ckey := genKey(keyParts...)
+	ckey := keyInfo.genKey(keyParts)
 
 	// Acquire cache lock
 	c.cache.Lock()
@@ -248,17 +248,17 @@ func (c *Cache[Value]) Store(value Value, store func() error) error {
 func (c *Cache[Value]) Has(lookup string, keyParts ...any) bool {
 	var res result[Value]
 
-	// Get lookup key type by name.
-	keyType := c.lookups.get(lookup)
+	// Get lookup key info by name.
+	keyInfo := c.lookups.get(lookup)
 
 	// Generate cache key string.
-	ckey := genKey(keyParts...)
+	ckey := keyInfo.genKey(keyParts)
 
 	// Acquire cache lock
 	c.cache.Lock()
 
 	// Look for primary key for cache key
-	pkey, ok := keyType.pkeys[ckey]
+	pkey, ok := keyInfo.pkeys[ckey]
 
 	if ok {
 		// Fetch the result for primary key
@@ -275,15 +275,15 @@ func (c *Cache[Value]) Has(lookup string, keyParts ...any) bool {
 
 // Invalidate will invalidate any result from the cache found under given lookup and key parts.
 func (c *Cache[Value]) Invalidate(lookup string, keyParts ...any) {
-	// Get lookup key type by name.
-	keyType := c.lookups.get(lookup)
+	// Get lookup key info by name.
+	keyInfo := c.lookups.get(lookup)
 
 	// Generate cache key string.
-	ckey := genKey(keyParts...)
+	ckey := keyInfo.genKey(keyParts)
 
 	// Look for primary key for cache key
 	c.cache.Lock()
-	pkey, ok := keyType.pkeys[ckey]
+	pkey, ok := keyInfo.pkeys[ckey]
 	c.cache.Unlock()
 
 	if !ok {

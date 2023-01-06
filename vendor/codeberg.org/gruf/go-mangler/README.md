@@ -19,8 +19,6 @@ pkg: codeberg.org/gruf/go-mangler
 cpu: 11th Gen Intel(R) Core(TM) i7-1185G7 @ 3.00GHz
 BenchmarkMangle
 BenchmarkMangle-8                         723278              1593 ns/op            1168 B/op        120 allocs/op
-BenchmarkMangleHash
-BenchmarkMangleHash-8                     405380              2788 ns/op            4496 B/op        214 allocs/op
 BenchmarkJSON
 BenchmarkJSON-8                           199360              6116 ns/op            4243 B/op        142 allocs/op
 BenchmarkBinary

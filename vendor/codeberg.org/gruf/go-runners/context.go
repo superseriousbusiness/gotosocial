@@ -12,6 +12,11 @@ var closedctx = func() context.Context {
 	return ctx
 }()
 
+// Closed returns an always closed context.
+func Closed() context.Context {
+	return closedctx
+}
+
 // ContextWithCancel returns a new context.Context impl with cancel.
 func ContextWithCancel() (context.Context, context.CancelFunc) {
 	ctx := make(cancelctx)
@@ -40,4 +45,19 @@ func (ctx cancelctx) Err() error {
 
 func (cancelctx) Value(key interface{}) interface{} {
 	return nil
+}
+
+func (ctx cancelctx) String() string {
+	var state string
+	select {
+	case <-ctx:
+		state = "closed"
+	default:
+		state = "open"
+	}
+	return "cancelctx{state:" + state + "}"
+}
+
+func (ctx cancelctx) GoString() string {
+	return "runners." + ctx.String()
 }

@@ -3,15 +3,13 @@ package mangler
 import (
 	"encoding/binary"
 	"reflect"
+	"sync"
 	"unsafe"
-
-	"github.com/cespare/xxhash"
-	"github.com/cornelk/hashmap"
 )
 
 var (
 	// manglers is a map of runtime type ptrs => Mangler functions.
-	manglers = hashmap.New[uintptr, Mangler]()
+	manglers = sync.Map{}
 
 	// bin is a short-hand for our chosen byteorder encoding.
 	bin = binary.LittleEndian
@@ -36,12 +34,38 @@ type Mangler func(buf []byte, value any) []byte
 type rMangler func(buf []byte, value reflect.Value) []byte
 
 // Get will fetch the Mangler function for given runtime type.
-func Get(t reflect.Type) (Mangler, bool) {
-	if t == nil {
-		return nil, false
-	}
+// Note that the returned mangler will be a no-op in the case
+// that an incorrect type is passed as the value argument.
+func Get(t reflect.Type) Mangler {
+	var mng Mangler
+
+	// Get raw runtime type ptr
 	uptr := uintptr(iface_value(t))
-	return manglers.Get(uptr)
+
+	// Look for a cached mangler
+	v, ok := manglers.Load(uptr)
+
+	if !ok {
+		// Load mangler function
+		mng = loadMangler(nil, t)
+	} else {
+		// cast cached value
+		mng = v.(Mangler)
+	}
+
+	return func(buf []byte, value any) []byte {
+		// Type check passed value against original arg type.
+		if vt := reflect.TypeOf(value); vt != t {
+			return buf
+		}
+
+		// First write the type ptr (this adds
+		// a unique prefix for each runtime type).
+		buf = mangle_platform_int(buf, uptr)
+
+		// Finally, mangle value
+		return mng(buf, value)
+	}
 }
 
 // Register will register the given Mangler function for use with vars of given runtime type. This allows
@@ -57,17 +81,19 @@ func Register(t reflect.Type, m Mangler) {
 	uptr := uintptr(iface_value(t))
 
 	// Ensure this is a unique encoder
-	if _, ok := manglers.Get(uptr); ok {
+	if _, ok := manglers.Load(uptr); ok {
 		panic("already registered mangler for type: " + t.String())
 	}
 
 	// Cache this encoder func
-	manglers.Set(uptr, m)
+	manglers.Store(uptr, m)
 }
 
 // Append will append the mangled form of input value 'a' to buffer 'b'.
 // See mangler.String() for more information on mangled output.
 func Append(b []byte, a any) []byte {
+	var mng Mangler
+
 	// Get reflect type of 'a'
 	t := reflect.TypeOf(a)
 
@@ -75,12 +101,15 @@ func Append(b []byte, a any) []byte {
 	uptr := uintptr(iface_value(t))
 
 	// Look for a cached mangler
-	mng, ok := manglers.Get(uptr)
+	v, ok := manglers.Load(uptr)
 
 	if !ok {
 		// Load mangler into cache
-		mng = loadMangler(a, t)
-		manglers.Set(uptr, mng)
+		mng = loadMangler(nil, t)
+		manglers.Store(uptr, mng)
+	} else {
+		// cast cached value
+		mng = v.(Mangler)
 	}
 
 	// First write the type ptr (this adds
@@ -122,11 +151,4 @@ func Append(b []byte, a any) []byte {
 func String(a any) string {
 	b := Append(make([]byte, 0, 32), a)
 	return *(*string)(unsafe.Pointer(&b))
-}
-
-// Hash returns the xxHash digest of the result of mangler.Append(nil, 'a').
-func Hash(a any) uint64 {
-	b := make([]byte, 0, 32)
-	b = Append(b, a)
-	return xxhash.Sum64(b)
 }
