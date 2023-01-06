@@ -62,6 +62,62 @@ storage-s3-secret-key: ""
 storage-s3-bucket: ""
 ```
 
+### AWS S3 Bucket Configuration
+
+#### Bucket Created
+GoToSocial by default creates signed URL's which means we dont need to change anything major on the policies of the bucket.
+Here are the steps to follow for bucket creation
+
+1. Login to AWS -> select S3 as service.
+2. click Create Bucket
+3. Provide a unique name and avoid adding "." in the name
+4. Do not change the public access settings (Let them be on "block public access" mode)
+
+#### AWS ACCESS KEY Configuration
+
+1. In AWS Console -> IAM (under Security, Identity, & Compliance)
+2. Add a user with programatic api's access
+3. We recommend setting up below listed policy, replace <bucketname> with your buckets name
+
+```json
+{
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "s3:ListAllMyBuckets",
+            "Resource": "arn:aws:s3:::*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "s3:*",
+            "Resource": [
+                "arn:aws:s3:::<bucket_name>",
+                "arn:aws:s3:::<bucket_name>/*"
+            ]
+        }
+    ]
+}
+```
+
+4. Provide the values in config above
+  
+  * storage-s3-endpoint -> should be your bucket location say `s3.ap-southeast-1.amazonaws.com`
+  * storage-s3-access-key -> Access key you obtained for the user created above
+  * storage-s3-secret-key -> Secret key you obtained for the user created above
+  * storage-s3-bucket -> Keep this as the <bucketname> that you created just now.
+
+
+
+#### Migrating data from local storage to AWS s3 bucket
+
+This step is only needed if you have a running instance. Ignore this if you are setting up a fresh instance. 
+We have provided [s3cmd](https://github.com/s3tools/s3cmd) command for the copy operation.
+
+```bash
+s3cmd sync --add-header="Cache-Control:public, max-age=315576000, immutable" ./ s3://<bucket name>
+```
+
+
 ### Migrating between backends
 
 Currently, migration between backends is freely possible. To do so, you only
