@@ -25,6 +25,8 @@ const (
 	EventTypeNotification string = "notification"
 	// EventTypeUpdate -- a user should be shown an update in their timeline
 	EventTypeUpdate string = "update"
+	// EventTypeStatusUpdate -- a status should be edited in a timeline
+	EventTypeStatusUpdate string = "status.update"
 	// EventTypeDelete -- something should be deleted from a user
 	EventTypeDelete string = "delete"
 )

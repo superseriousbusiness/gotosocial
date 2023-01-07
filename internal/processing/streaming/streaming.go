@@ -38,6 +38,8 @@ type Processor interface {
 	OpenStreamForAccount(ctx context.Context, account *gtsmodel.Account, timeline string) (*stream.Stream, gtserror.WithCode)
 	// StreamUpdateToAccount streams the given update to any open, appropriate streams belonging to the given account.
 	StreamUpdateToAccount(s *apimodel.Status, account *gtsmodel.Account, timeline string) error
+	// StreamStatusUpdateToAccount streams the given edited status to any open, appropriate streams belonging to the given account.
+	StreamStatusUpdateToAccount(s *apimodel.Status, account *gtsmodel.Account, timeline string) error
 	// StreamNotificationToAccount streams the given notification to any open, appropriate streams belonging to the given account.
 	StreamNotificationToAccount(n *apimodel.Notification, account *gtsmodel.Account) error
 	// StreamDelete streams the delete of the given statusID to *ALL* open streams.

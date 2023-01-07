@@ -528,9 +528,16 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		language = &s.Language
 	}
 
+	var editedAt *string
+	if !s.EditedAt.IsZero() {
+		editedAtTemp := util.FormatISO8601(s.EditedAt)
+		editedAt = &editedAtTemp
+	}
+
 	apiStatus := &apimodel.Status{
 		ID:                 s.ID,
 		CreatedAt:          util.FormatISO8601(s.CreatedAt),
+		EditedAt:           editedAt,
 		InReplyToID:        nil,
 		InReplyToAccountID: nil,
 		Sensitive:          *s.Sensitive,

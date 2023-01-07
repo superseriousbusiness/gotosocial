@@ -168,6 +168,26 @@ func ExtractPublished(i WithPublished) (time.Time, error) {
 	return t, nil
 }
 
+// ExtractUpdated extracts the updated/edited time of an activity.
+func ExtractUpdated(i WithUpdated) (time.Time, error) {
+	updatedProp := i.GetActivityStreamsUpdated()
+	if updatedProp == nil {
+		// No updated time found
+		return time.Time{}, nil
+	}
+
+	if !updatedProp.IsXMLSchemaDateTime() {
+		return time.Time{}, errors.New("updated prop was not date time")
+	}
+
+	t := updatedProp.Get()
+	if t.IsZero() {
+		// Updated time was zero
+		return time.Time{}, nil
+	}
+	return t, nil
+}
+
 // ExtractIconURL extracts a URL to a supported image file from something like:
 //
 //	"icon": {

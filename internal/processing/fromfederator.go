@@ -85,9 +85,13 @@ func (p *processor) ProcessFromFederator(ctx context.Context, federatorMsg messa
 		}
 	case ap.ActivityUpdate:
 		// UPDATE SOMETHING
-		if federatorMsg.APObjectType == ap.ObjectProfile {
+		switch federatorMsg.APObjectType {
+		case ap.ObjectProfile:
 			// UPDATE AN ACCOUNT
 			return p.processUpdateAccountFromFederator(ctx, federatorMsg)
+		case ap.ObjectNote:
+			// UPDATE A STATUS
+			return p.processUpdateStatusFromFederator(ctx, federatorMsg)
 		}
 	case ap.ActivityDelete:
 		// DELETE SOMETHING
@@ -353,6 +357,75 @@ func (p *processor) processCreateBlockFromFederator(ctx context.Context, federat
 	}
 	// TODO: same with notifications
 	// TODO: same with bookmarks
+
+	return nil
+}
+
+// processUpdateStatusFromFederator handles Activity Update and Object Note
+func (p *processor) processUpdateStatusFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
+	// check for either an IRI that we still need to dereference, OR an already dereferenced
+	// and converted status pinned to the message.
+	var status *gtsmodel.Status
+
+	if federatorMsg.GTSModel != nil {
+		// there's a gts model already pinned to the message, it should be a status
+		var ok bool
+		if status, ok = federatorMsg.GTSModel.(*gtsmodel.Status); !ok {
+			return errors.New("ProcessFromFederator: note was not parseable as *gtsmodel.Status")
+		}
+
+		var err error
+		status, err = p.federator.EnrichRemoteStatus(ctx, federatorMsg.ReceivingAccount.Username, status, true)
+		if err != nil {
+			return err
+		}
+	} else {
+		// no model pinned, we need to dereference based on the IRI
+		if federatorMsg.APIri == nil {
+			return errors.New("ProcessFromFederator: status was not pinned to federatorMsg, and neither was an IRI for us to dereference")
+		}
+		var err error
+		status, _, err = p.federator.GetStatus(ctx, federatorMsg.ReceivingAccount.Username, federatorMsg.APIri, false, false)
+		if err != nil {
+			return err
+		}
+	}
+
+	// make sure the account is pinned
+	if status.Account == nil {
+		a, err := p.db.GetAccountByID(ctx, status.AccountID)
+		if err != nil {
+			return err
+		}
+		status.Account = a
+	}
+
+	// do a BLOCKING get of the remote account to make sure the avi and header are cached
+	if status.Account.Domain != "" {
+		remoteAccountID, err := url.Parse(status.Account.URI)
+		if err != nil {
+			return err
+		}
+
+		a, err := p.federator.GetAccount(ctx, dereferencing.GetAccountParams{
+			RequestingUsername: federatorMsg.ReceivingAccount.Username,
+			RemoteAccountID:    remoteAccountID,
+			Blocking:           true,
+		})
+		if err != nil {
+			return err
+		}
+
+		status.Account = a
+	}
+
+	if err := p.timelineUpdateStatus(ctx, status); err != nil {
+		return err
+	}
+
+	if err := p.notifyStatus(ctx, status); err != nil {
+		return err
+	}
 
 	return nil
 }

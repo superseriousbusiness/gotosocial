@@ -53,6 +53,7 @@ type Statusable interface {
 	WithSummary
 	WithInReplyTo
 	WithPublished
+	WithUpdated
 	WithURL
 	WithAttributedTo
 	WithTo
@@ -132,6 +133,7 @@ type Announceable interface {
 	WithActor
 	WithObject
 	WithPublished
+	WithUpdated
 	WithTo
 	WithCC
 }

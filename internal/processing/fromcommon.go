@@ -390,6 +390,62 @@ func (p *processor) timelineStatus(ctx context.Context, status *gtsmodel.Status)
 	return nil
 }
 
+// timelineUpdateStatus processes the given edited status and updates it in
+// the HOME timelines of accounts that follow the status author.
+func (p *processor) timelineUpdateStatus(ctx context.Context, status *gtsmodel.Status) error {
+	// make sure the author account is pinned onto the status
+	if status.Account == nil {
+		a, err := p.db.GetAccountByID(ctx, status.AccountID)
+		if err != nil {
+			return fmt.Errorf("timelineUpdateStatus: error getting author account with id %s: %s", status.AccountID, err)
+		}
+		status.Account = a
+	}
+
+	// get local followers of the account that posted the status
+	follows, err := p.db.GetAccountFollowedBy(ctx, status.AccountID, true)
+	if err != nil {
+		return fmt.Errorf("timelineUpdateStatus: error getting followers for account id %s: %s", status.AccountID, err)
+	}
+
+	// if the poster is local, add a fake entry for them to the followers list so they can see their own status in their timeline
+	if status.Account.Domain == "" {
+		follows = append(follows, &gtsmodel.Follow{
+			AccountID: status.AccountID,
+			Account:   status.Account,
+		})
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(len(follows))
+	errors := make(chan error, len(follows))
+
+	for _, f := range follows {
+		go p.timelineUpdateStatusForAccount(ctx, status, f.AccountID, errors, &wg)
+	}
+
+	// read any errors that come in from the async functions
+	errs := []string{}
+	go func(errs []string) {
+		for range errors {
+			if e := <-errors; e != nil {
+				errs = append(errs, e.Error())
+			}
+		}
+	}(errs)
+
+	// wait til all functions have returned and then close the error channel
+	wg.Wait()
+	close(errors)
+
+	if len(errs) != 0 {
+		// we have at least one error
+		return fmt.Errorf("timelineUpdateStatus: one or more errors timelining statuses: %s", strings.Join(errs, ";"))
+	}
+
+	return nil
+}
+
 // timelineStatusForAccount puts the given status in the HOME timeline
 // of the account with given accountID, if it's hometimelineable.
 //
@@ -433,6 +489,59 @@ func (p *processor) timelineStatusForAccount(ctx context.Context, status *gtsmod
 
 		if err := p.streamingProcessor.StreamUpdateToAccount(apiStatus, timelineAccount, stream.TimelineHome); err != nil {
 			errors <- fmt.Errorf("timelineStatusForAccount: error streaming status %s: %s", status.ID, err)
+		}
+	}
+}
+
+// timelineStatusForAccount edits the given status in the HOME timeline
+// of the account with given accountID, if it's hometimelineable.
+//
+// If the status was updated in the home timeline of the given account,
+// it will also be streamed via websockets to the user.
+func (p *processor) timelineUpdateStatusForAccount(ctx context.Context, status *gtsmodel.Status, accountID string, errors chan error, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	// get the timeline owner account
+	timelineAccount, err := p.db.GetAccountByID(ctx, accountID)
+	if err != nil {
+		errors <- fmt.Errorf("timelineUpdateStatusForAccount: error getting account for timeline with id %s: %s", accountID, err)
+		return
+	}
+
+	// make sure the status is timelineable
+	timelineable, err := p.filter.StatusHometimelineable(ctx, status, timelineAccount)
+	if err != nil {
+		errors <- fmt.Errorf("timelineUpdateStatusForAccount: error getting timelineability for status for timeline with id %s: %s", accountID, err)
+		return
+	}
+
+	if !timelineable {
+		return
+	}
+
+	// First remove the status from timelines so it can be replaced
+	if err := p.statusTimelines.WipeItemFromAllTimelines(ctx, status.ID); err != nil {
+		errors <- fmt.Errorf("timelineUpdateStatusForAccount: error removing status %s: %s", status.ID, err)
+		return
+	}
+
+	// stick the updated status in the timeline for the account and then immediately prepare it so they can see it right away
+	inserted, err := p.statusTimelines.IngestAndPrepare(ctx, status, timelineAccount.ID)
+	if err != nil {
+		errors <- fmt.Errorf("timelineUpdateStatusForAccount: error ingesting status %s: %s", status.ID, err)
+		return
+	}
+
+	// the status was inserted so stream it to the user
+	if inserted {
+		apiStatus, err := p.tc.StatusToAPIStatus(ctx, status, timelineAccount)
+		if err != nil {
+			errors <- fmt.Errorf("timelineUpdateStatusForAccount: error converting status %s to frontend representation: %s", status.ID, err)
+			return
+		}
+
+		if err := p.streamingProcessor.StreamStatusUpdateToAccount(apiStatus, timelineAccount, stream.TimelineHome); err != nil {
+			errors <- fmt.Errorf("timelineUpdateStatusForAccount: error streaming status %s: %s", status.ID, err)
 		}
 	}
 }

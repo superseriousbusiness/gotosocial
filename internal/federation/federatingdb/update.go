@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 
+	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -144,7 +145,104 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 			GTSModel:         updatedAcct,
 			ReceivingAccount: receivingAccount,
 		})
+	} else if typeName == ap.ObjectNote {
+		// A note is being updated
+		l.Debug("got update for NOTE")
+		note, ok := asType.(vocab.ActivityStreamsNote)
+		if !ok {
+			return errors.New("UPDATE: could not convert type to note")
+		}
+		if err := f.updateNote(ctx, note, receivingAccount, requestingAcct); err != nil {
+			return fmt.Errorf("UPDATE: error updating note: %s", err)
+		}
 	}
+
+	return nil
+}
+
+/*
+	UPDATE HANDLERS
+*/
+
+// updateNote handles a Update activity with a Note type.
+func (f *federatingDB) updateNote(ctx context.Context, note vocab.ActivityStreamsNote, receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) error {
+	l := log.WithFields(kv.Fields{
+		{"receivingAccount", receivingAccount.URI},
+		{"requestingAccount", requestingAccount.URI},
+	}...)
+
+	// Check if we have a forward.
+	// In other words, was the note posted to our inbox by at least one actor who actually created the note, or are they just forwarding it?
+	forward := true
+
+	// note should have an attributedTo
+	noteAttributedTo := note.GetActivityStreamsAttributedTo()
+	if noteAttributedTo == nil {
+		return errors.New("updateNote: note had no attributedTo")
+	}
+
+	// compare the attributedTo(s) with the actor who posted this to our inbox
+	for attributedToIter := noteAttributedTo.Begin(); attributedToIter != noteAttributedTo.End(); attributedToIter = attributedToIter.Next() {
+		if !attributedToIter.IsIRI() {
+			continue
+		}
+		iri := attributedToIter.GetIRI()
+		if requestingAccount.URI == iri.String() {
+			// at least one creator of the note, and the actor who posted the note to our inbox, are the same, so it's not a forward
+			forward = false
+		}
+	}
+
+	// If we do have a forward, we should ignore the content for now and just dereference based on the URL/ID of the note instead, to get the note straight from the horse's mouth
+	if forward {
+		l.Trace("note is a forward")
+		id := note.GetJSONLDId()
+		if !id.IsIRI() {
+			// if the note id isn't an IRI, there's nothing we can do here
+			return nil
+		}
+		// pass the note iri into the processor and have it do the dereferencing instead of doing it here
+		f.fedWorker.Queue(messages.FromFederator{
+			APObjectType:     ap.ObjectNote,
+			APActivityType:   ap.ActivityUpdate,
+			APIri:            id.GetIRI(),
+			GTSModel:         nil,
+			ReceivingAccount: receivingAccount,
+		})
+		return nil
+	}
+
+	// if we reach this point, we know it's not a forwarded status, so proceed with processing it as normal
+
+	status, err := f.typeConverter.ASStatusToStatus(ctx, note)
+	if err != nil {
+		return fmt.Errorf("updateNote: error converting note to status: %s", err)
+	}
+
+	// get the URI of the note
+	noteURI := note.GetJSONLDId().GetIRI()
+
+	// get the existing status
+	existingStatus, err := f.db.GetStatusByURI(ctx, noteURI.String())
+	if err != nil {
+		return err
+	}
+
+	// Set values not passed by the updated status
+	status.ID = existingStatus.ID
+	status.Emojis = existingStatus.Emojis
+	status.Local = existingStatus.Local
+
+	if err := f.db.UpdateStatus(ctx, status); err != nil {
+		return fmt.Errorf("updateNote: database error updating status: %s", err)
+	}
+
+	f.fedWorker.Queue(messages.FromFederator{
+		APObjectType:     ap.ObjectNote,
+		APActivityType:   ap.ActivityUpdate,
+		GTSModel:         status,
+		ReceivingAccount: receivingAccount,
+	})
 
 	return nil
 }

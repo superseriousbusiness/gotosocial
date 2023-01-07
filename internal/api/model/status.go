@@ -28,6 +28,9 @@ type Status struct {
 	// The date when this status was created (ISO 8601 Datetime).
 	// example: 2021-07-30T09:20:25+00:00
 	CreatedAt string `json:"created_at"`
+	// The date when this status was edited (ISO 8601 Datetime).
+	// example: 2021-07-30T09:20:25+00:00
+	EditedAt *string `json:"edited_at"`
 	// ID of the status being replied to.
 	// example: 01FBVD42CQ3ZEEVMW180SBX03B
 	// nullable: true

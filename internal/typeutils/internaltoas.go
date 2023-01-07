@@ -438,6 +438,11 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 	publishedProp.Set(s.CreatedAt)
 	status.SetActivityStreamsPublished(publishedProp)
 
+	// updated
+	updatedProp := streams.NewActivityStreamsUpdatedProperty()
+	updatedProp.Set(s.EditedAt)
+	status.SetActivityStreamsUpdated(updatedProp)
+
 	// url
 	if s.URL != "" {
 		sURL, err := url.Parse(s.URL)

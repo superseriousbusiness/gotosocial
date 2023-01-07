@@ -283,6 +283,16 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 		status.UpdatedAt = published
 	}
 
+	// when was this status edited?
+	updated, err := ap.ExtractUpdated(statusable)
+	if err != nil {
+		l.Infof("ASStatusToStatus: error extracting status updated: %s", err)
+	} else if !updated.IsZero() {
+		// Only update if updated time is not zero
+		status.EditedAt = updated
+		status.UpdatedAt = updated
+	}
+
 	// which account posted this status?
 	// if we don't know the account yet we can dereference it later
 	attributedTo, err := ap.ExtractAttributedTo(statusable)
@@ -542,6 +552,16 @@ func (c *converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Anno
 	}
 	status.CreatedAt = published
 	status.UpdatedAt = published
+
+	// when was this announcement edited?
+	updated, err := ap.ExtractUpdated(announceable)
+	if err != nil {
+		return nil, isNew, fmt.Errorf("ASAnnounceToStatus: error extracting updated time: %s", err)
+	} else if !updated.IsZero() {
+		// Only update if updated time is not zero
+		status.EditedAt = updated
+		status.UpdatedAt = updated
+	}
 
 	// get the actor's IRI (ie., the person who boosted the status)
 	actor, err := ap.ExtractActor(announceable)

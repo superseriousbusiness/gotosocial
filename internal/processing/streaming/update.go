@@ -35,3 +35,12 @@ func (p *processor) StreamUpdateToAccount(s *apimodel.Status, account *gtsmodel.
 
 	return p.streamToAccount(string(bytes), stream.EventTypeUpdate, []string{timeline}, account.ID)
 }
+
+func (p *processor) StreamStatusUpdateToAccount(s *apimodel.Status, account *gtsmodel.Account, timeline string) error {
+	bytes, err := json.Marshal(s)
+	if err != nil {
+		return fmt.Errorf("error marshalling status to json: %s", err)
+	}
+
+	return p.streamToAccount(string(bytes), stream.EventTypeStatusUpdate, []string{timeline}, account.ID)
+}

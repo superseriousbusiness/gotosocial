@@ -107,6 +107,16 @@ func (c *converter) WrapNoteInCreate(note vocab.ActivityStreamsNote, objectIRIOn
 	publishedProp.Set(published)
 	create.SetActivityStreamsPublished(publishedProp)
 
+	// Updated Property
+	updatedProp := streams.NewActivityStreamsUpdatedProperty()
+	updated, err := ap.ExtractUpdated(note)
+	if err != nil {
+		return nil, fmt.Errorf("WrapNoteInCreate: couldn't extract Updated: %s", err)
+	} else if !updated.IsZero() {
+		updatedProp.Set(updated)
+		create.SetActivityStreamsUpdated(updatedProp)
+	}
+
 	// To Property
 	toProp := streams.NewActivityStreamsToProperty()
 	tos, err := ap.ExtractTos(note)
