@@ -92,6 +92,7 @@ function AdminSettingsForm({data: instance}) {
 				label="Short description"
 				placeholder="A small testing instance for the GoToSocial alpha software."
 			/>
+
 			<TextArea
 				field={form.description}
 				label="Full description"
@@ -103,6 +104,7 @@ function AdminSettingsForm({data: instance}) {
 				label="Contact user (local account username)"
 				placeholder="admin"
 			/>
+
 			<TextInput
 				field={form.contactEmail}
 				label="Contact email"
