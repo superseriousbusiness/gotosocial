@@ -97,13 +97,13 @@ module.exports = function NewEmojiForm({ emoji }) {
 				image,
 				shortcode,
 				category
-			}).unwrap();
-		}).then(() => {
-			resetFile();
-			resetShortcode();
-			resetCategory();
-		}).catch((e) => {
-			console.error("Emoji upload error:", e);
+			});
+		}).then((res) => {
+			if (res.error == undefined) {
+				resetFile();
+				resetShortcode();
+				resetCategory();
+			}
 		});
 	}
 

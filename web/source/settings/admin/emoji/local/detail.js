@@ -87,7 +87,6 @@ function EmojiDetail({emoji}) {
 
 	React.useEffect(() => {
 		if (category != emoji.category && !categoryState.open && !isNewCategory && category.trim().length > 0) {
-			console.log("updating to", category);
 			modifyEmoji({id: emoji.id, category: category.trim()});
 		}
 	}, [isNewCategory, category, categoryState.open, emoji.category, emoji.id, modifyEmoji]);

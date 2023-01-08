@@ -164,7 +164,6 @@ function BulkBlocking() {
 				setStatus(stat);
 			});
 		}).catch((e) => {
-			console.error(e);
 			setError(e.message);
 			setStatus("");
 		});
