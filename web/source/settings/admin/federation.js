@@ -35,15 +35,8 @@ const { matchSorter } = require("match-sorter");
 
 const base = "/settings/admin/federation";
 
-// const {
-// 	TextInput,
-// 	TextArea,
-// 	File
-// } = require("../components/form-fields").formFields(adminActions.setAdminSettingsVal, (state) => state.instances.adminSettings);
-
 module.exports = function AdminSettings() {
 	const dispatch = Redux.useDispatch();
-	// const instance = Redux.useSelector(state => state.instances.adminSettings);
 	const loadedBlockedInstances = Redux.useSelector(state => state.admin.loadedBlockedInstances);
 
 	React.useEffect(() => {

@@ -22,21 +22,7 @@ const Promise = require("bluebird");
 
 const user = require("../../redux/reducers/user").actions;
 
-module.exports = function ({ apiCall, getChanges }) {
-	function updateCredentials(selector, keys) {
-		return function (dispatch, getState) {
-			return Promise.try(() => {
-				const state = selector(getState());
-
-				const update = getChanges(state, keys);
-
-				return dispatch(apiCall("PATCH", "/api/v1/accounts/update_credentials", update, "form"));
-			}).then((account) => {
-				return dispatch(user.setAccount(account));
-			});
-		};
-	}
-
+module.exports = function ({ apiCall }) {
 	return {
 		fetchAccount: function fetchAccount() {
 			return function (dispatch, _getState) {
@@ -46,22 +32,6 @@ module.exports = function ({ apiCall, getChanges }) {
 					return dispatch(user.setAccount(account));
 				});
 			};
-		},
-
-		updateProfile: function updateProfile() {
-			const formKeys = ["display_name", "locked", "source", "custom_css", "source.note", "enable_rss"];
-			const renamedKeys = {
-				"source.note": "note"
-			};
-			const fileKeys = ["header", "avatar"];
-
-			return updateCredentials((state) => state.user.profile, {formKeys, renamedKeys, fileKeys});
-		},
-
-		updateSettings: function updateProfile() {
-			const formKeys = ["source"];
-
-			return updateCredentials((state) => state.user.settings, {formKeys});
 		}
 	};
 };

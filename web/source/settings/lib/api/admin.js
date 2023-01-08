@@ -21,32 +21,10 @@
 const Promise = require("bluebird");
 const isValidDomain = require("is-valid-domain");
 
-const instance = require("../../redux/reducers/instances").actions;
 const admin = require("../../redux/reducers/admin").actions;
 
 module.exports = function ({ apiCall, getChanges }) {
 	const adminAPI = {
-		updateInstance: function updateInstance() {
-			return function (dispatch, getState) {
-				return Promise.try(() => {
-					const state = getState().instances.adminSettings;
-
-					const update = getChanges(state, {
-						formKeys: ["title", "short_description", "description", "contact_account.username", "email", "terms", "thumbnail_description"],
-						renamedKeys: {
-							"email": "contact_email",
-							"contact_account.username": "contact_username"
-						},
-						fileKeys: ["thumbnail"]
-					});
-
-					return dispatch(apiCall("PATCH", "/api/v1/instance", update, "form"));
-				}).then((data) => {
-					return dispatch(instance.setInstanceInfo(data));
-				});
-			};
-		},
-
 		fetchDomainBlocks: function fetchDomainBlocks() {
 			return function (dispatch, _getState) {
 				return Promise.try(() => {
@@ -152,14 +130,6 @@ module.exports = function ({ apiCall, getChanges }) {
 					return dispatch(apiCall("DELETE", `/api/v1/admin/domain_blocks/${id}`));
 				}).then((removed) => {
 					return dispatch(admin.removeDomainBlock(removed.domain));
-				});
-			};
-		},
-
-		mediaCleanup: function mediaCleanup(days) {
-			return function (dispatch, _getState) {
-				return Promise.try(() => {
-					return dispatch(apiCall("POST", `/api/v1/admin/media_cleanup?remote_cache_days=${days}`));
 				});
 			};
 		},

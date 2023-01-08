@@ -19,7 +19,6 @@
 "use strict";
 
 const { createSlice } = require("@reduxjs/toolkit");
-const d = require("dotty");
 
 module.exports = createSlice({
 	name: "user",
@@ -39,12 +38,6 @@ module.exports = createSlice({
 			state.settings = {
 				source: payload.source
 			};
-		},
-		setProfileVal: (state, { payload: [key, val] }) => {
-			d.put(state.profile, key, val);
-		},
-		setSettingsVal: (state, { payload: [key, val] }) => {
-			d.put(state.settings, key, val);
 		}
 	}
 });
