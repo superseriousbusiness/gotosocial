@@ -157,6 +157,10 @@ func (p *processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 			break
 		}
 
+		if len(statuses) == 0 {
+			break // reached end
+		}
+
 		for _, status := range statuses {
 			// Ensure account is set
 			status.Account = account
