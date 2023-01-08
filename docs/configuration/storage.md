@@ -36,6 +36,12 @@ storage-s3-endpoint: ""
 #
 # Default: false
 storage-s3-proxy: false
+# Bool. Use SSL for S3 connections.
+#
+# Only set this to 'false' when testing locally.
+#
+# Default: true
+storage-s3-use-ssl: true
 
 # String. Access key part of the S3 credentials.
 # Consider setting this value using environment variables to avoid leaking it via the config file
