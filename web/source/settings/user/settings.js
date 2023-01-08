@@ -48,7 +48,7 @@ module.exports = function UserSettings() {
 	);
 };
 
-function UserSettingsForm({source}) {
+function UserSettingsForm({data: {source}}) {
 	/* form keys
 		- string source[privacy]
 		- bool source[sensitive]
