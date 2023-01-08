@@ -30,6 +30,15 @@ const endpoints = (build) => ({
 			body: formData
 		}),
 		...updateCacheOnMutation("instance")
+	}),
+	mediaCleanup: build.mutation({
+		query: (days) => ({
+			method: "POST",
+			url: `/api/v1/admin/media_cleanup`,
+			params: {
+				remote_cache_days: days 
+			}
+		})
 	})
 });
 
