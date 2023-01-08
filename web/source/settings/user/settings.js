@@ -18,14 +18,7 @@
 
 "use strict";
 
-const Promise = require("bluebird");
 const React = require("react");
-const Redux = require("react-redux");
-
-const api = require("../lib/api");
-
-const Languages = require("../components/languages");
-const Submit = require("../components/submit");
 
 const query = require("../lib/query");
 
@@ -42,17 +35,17 @@ const {
 	Checkbox
 } = require("../components/form/inputs");
 
+const FormWithData = require("../lib/form/form-with-data");
+const Languages = require("../components/languages");
 const MutationButton = require("../components/form/mutation-button");
-const Loading = require("../components/loading");
 
 module.exports = function UserSettings() {
-	const {data: profile, isLoading} = query.useVerifyCredentialsQuery();
-
-	if (isLoading) {
-		return <Loading/>;
-	} else {
-		return <UserSettingsForm source={profile.source} />;
-	}
+	return (
+		<FormWithData
+			dataQuery={query.useVerifyCredentialsQuery}
+			DataForm={UserSettingsForm}
+		/>
+	);
 };
 
 function UserSettingsForm({source}) {

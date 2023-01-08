@@ -38,21 +38,20 @@ const {
 	Checkbox
 } = require("../components/form/inputs");
 
+const FormWithData = require("../lib/form/form-with-data");
 const FakeProfile = require("../components/fake-profile");
 const MutationButton = require("../components/form/mutation-button");
-const Loading = require("../components/loading");
 
 module.exports = function UserProfile() {
-	const {data: profile = {}, isLoading} = query.useVerifyCredentialsQuery();
-
-	if (isLoading) {
-		return <Loading/>;
-	} else {
-		return <UserProfileForm profile={profile} />;
-	}
+	return (
+		<FormWithData
+			dataQuery={query.useVerifyCredentialsQuery}
+			DataForm={UserProfileForm}
+		/>
+	);
 };
 
-function UserProfileForm({profile}) {
+function UserProfileForm({data: profile}) {
 	/*
 		User profile update form keys
 		- bool bot
