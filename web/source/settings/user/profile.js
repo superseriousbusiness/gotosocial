@@ -66,8 +66,8 @@ function UserProfileForm({profile}) {
 	*/
 
 	const form = {
-		avatar: useFileInput("avatar", {withPreview: true, }),
-		header: useFileInput("header", {withPreview: true, }),
+		avatar: useFileInput("avatar", {withPreview: true}),
+		header: useFileInput("header", {withPreview: true}),
 		displayName: useTextInput("display_name", {defaultValue: profile.display_name}),
 		note: useTextInput("note", {defaultValue: profile.source?.note}),
 		customCSS: useTextInput("custom_css", {defaultValue: profile.custom_css}),

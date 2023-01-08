@@ -1,6 +1,6 @@
 /*
 	 GoToSocial
-	 Copyright (C) 2021-2023 GoToSocial Authors admin@gotosocial.org
+	 Copyright (C) 2021-2022 GoToSocial Authors admin@gotosocial.org
 
 	 This program is free software: you can redistribute it and/or modify
 	 it under the terms of the GNU Affero General Public License as published by
@@ -18,9 +18,19 @@
 
 "use strict";
 
-module.exports = {
-	...require("./base"),
-	...require("./custom-emoji.js"),
-	...require("./user"),
-	...require("./admin")
-};
+const { updateCacheOnMutation } = require("./lib");
+const base = require("./base");
+
+const endpoints = (build) => ({
+	updateInstance: build.mutation({
+		query: (formData) => ({
+			method: "PATCH",
+			url: `/api/v1/instance`,
+			asForm: true,
+			body: formData
+		}),
+		...updateCacheOnMutation("instance")
+	})
+});
+
+module.exports = base.injectEndpoints({endpoints});

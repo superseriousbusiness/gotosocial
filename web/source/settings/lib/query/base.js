@@ -51,5 +51,11 @@ module.exports = createApi({
 	reducerPath: "api",
 	baseQuery: instanceBasedQuery,
 	tagTypes: ["Emojis", "User"],
-	endpoints: () => ({})
+	endpoints: (build) => ({
+		instance: build.query({
+			query: () => ({
+				url: `/api/v1/instance`
+			})
+		})
+	})
 });
