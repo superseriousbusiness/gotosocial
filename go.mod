@@ -51,7 +51,7 @@ require (
 	github.com/yuin/goldmark v1.5.3
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
-	golang.org/x/image v0.2.0
+	golang.org/x/image v0.3.0
 	golang.org/x/net v0.5.0
 	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783
 	golang.org/x/text v0.6.0
