@@ -93,9 +93,13 @@ Same as Misskey. Example:
 
 todo
 
+### Friendica
+
+Unsure: Friendica and GoToSocial still don't federate properly with one another (https://github.com/superseriousbusiness/gotosocial/issues/169) so it's hard to test this.
+
 ## What should GoToSocial do?
 
-Since the above implementations of Flag seem fairly consistent, GoToSocial should do more or less the same thing when federating reports outwards. So:
+Since the above implementations of Flag seem fairly consistent, GoToSocial should do more or less the same thing when federating reports outwards. So GtS ought to adopt the Mastodon behavior:
 
 - Wrap Flag Activity in a Create and deliver it to the offending account.
 - Use the GtS instance Actor as the Actor of the Flag.
