@@ -79,7 +79,7 @@ github.com/aymerick/douceur/parser
 ## explicit; go 1.14
 github.com/buckket/go-blurhash
 github.com/buckket/go-blurhash/base83
-# github.com/coreos/go-oidc/v3 v3.4.0
+# github.com/coreos/go-oidc/v3 v3.5.0
 ## explicit; go 1.14
 github.com/coreos/go-oidc/v3/oidc
 # github.com/cornelk/hashmap v1.0.8
@@ -144,6 +144,11 @@ github.com/go-errors/errors
 # github.com/go-fed/httpsig v1.1.0
 ## explicit; go 1.13
 github.com/go-fed/httpsig
+# github.com/go-jose/go-jose/v3 v3.0.0
+## explicit; go 1.12
+github.com/go-jose/go-jose/v3
+github.com/go-jose/go-jose/v3/cipher
+github.com/go-jose/go-jose/v3/json
 # github.com/go-playground/locales v0.14.0
 ## explicit; go 1.13
 github.com/go-playground/locales
@@ -701,7 +706,7 @@ golang.org/x/net/internal/socket
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
 golang.org/x/net/publicsuffix
-# golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783
+# golang.org/x/oauth2 v0.3.0
 ## explicit; go 1.17
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
@@ -790,11 +795,6 @@ gopkg.in/mcuadros/go-syslog.v2/format
 gopkg.in/mcuadros/go-syslog.v2/internal/syslogparser
 gopkg.in/mcuadros/go-syslog.v2/internal/syslogparser/rfc3164
 gopkg.in/mcuadros/go-syslog.v2/internal/syslogparser/rfc5424
-# gopkg.in/square/go-jose.v2 v2.6.0
-## explicit
-gopkg.in/square/go-jose.v2
-gopkg.in/square/go-jose.v2/cipher
-gopkg.in/square/go-jose.v2/json
 # gopkg.in/yaml.v2 v2.4.0
 ## explicit; go 1.15
 gopkg.in/yaml.v2
