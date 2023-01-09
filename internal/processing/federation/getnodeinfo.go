@@ -55,6 +55,17 @@ func (p *processor) GetNodeInfo(ctx context.Context) (*apimodel.Nodeinfo, gtserr
 	openRegistration := config.GetAccountsRegistrationOpen()
 	softwareVersion := config.GetSoftwareVersion()
 
+	host := config.GetHost()
+	userCount, err := p.db.CountInstanceUsers(ctx, host)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err, "Unable to query instance user count")
+	}
+
+	postCount, err := p.db.CountInstanceStatuses(ctx, host)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err, "Unable to query instance status count")
+	}
+
 	return &apimodel.Nodeinfo{
 		Version: nodeInfoVersion,
 		Software: apimodel.NodeInfoSoftware{
@@ -68,7 +79,10 @@ func (p *processor) GetNodeInfo(ctx context.Context) (*apimodel.Nodeinfo, gtserr
 		},
 		OpenRegistrations: openRegistration,
 		Usage: apimodel.NodeInfoUsage{
-			Users: apimodel.NodeInfoUsers{},
+			Users: apimodel.NodeInfoUsers{
+				Total: userCount,
+			},
+			LocalPosts: postCount,
 		},
 		Metadata: make(map[string]interface{}),
 	}, nil
