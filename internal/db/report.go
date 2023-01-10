@@ -28,8 +28,6 @@ import (
 type Report interface {
 	// GetReportByID gets one report by its db id
 	GetReportByID(ctx context.Context, id string) (*gtsmodel.Report, Error)
-	// GetReportByURI gets one report by its ActivityPub URI
-	GetReportByURI(ctx context.Context, uri string) (*gtsmodel.Report, Error)
 	// PutReport puts the given report in the database.
 	PutReport(ctx context.Context, report *gtsmodel.Report) Error
 	// UpdateReport updates one report by its db id.

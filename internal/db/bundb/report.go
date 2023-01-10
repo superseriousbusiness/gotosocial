@@ -49,17 +49,6 @@ func (r *reportDB) GetReportByID(ctx context.Context, id string) (*gtsmodel.Repo
 	)
 }
 
-func (r *reportDB) GetReportByURI(ctx context.Context, uri string) (*gtsmodel.Report, db.Error) {
-	return r.getReport(
-		ctx,
-		"URI",
-		func(report *gtsmodel.Report) error {
-			return r.newReportQ(report).Where("? = ?", bun.Ident("report.uri"), uri).Scan(ctx)
-		},
-		uri,
-	)
-}
-
 func (r *reportDB) getReport(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Report) error, keyParts ...any) (*gtsmodel.Report, db.Error) {
 	// Fetch report from database cache with loader callback
 	report, err := r.state.Caches.GTS.Report().Load(lookup, func() (*gtsmodel.Report, error) {

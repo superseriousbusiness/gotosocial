@@ -283,7 +283,6 @@ func (c *gtsCaches) initNotification() {
 func (c *gtsCaches) initReport() {
 	c.report = result.New([]result.Lookup{
 		{Name: "ID"},
-		{Name: "URI"},
 	}, func(r1 *gtsmodel.Report) *gtsmodel.Report {
 		r2 := new(gtsmodel.Report)
 		*r2 = *r1
