@@ -19,6 +19,8 @@
 package api
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/accounts"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
@@ -122,7 +124,7 @@ func NewClient(db db.DB, p processing.Processor) *Client {
 		notifications:  notifications.New(p),
 		search:         search.New(p),
 		statuses:       statuses.New(p),
-		streaming:      streaming.New(p),
+		streaming:      streaming.New(p, time.Second*30, 4096),
 		timelines:      timelines.New(p),
 		user:           user.New(p),
 	}

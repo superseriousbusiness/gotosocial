@@ -99,7 +99,7 @@ func (suite *StreamingTestSuite) SetupTest() {
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, suite.mediaManager, clientWorker, fedWorker)
-	suite.streamingModule = streaming.NewWithTickDuration(suite.processor, 1)
+	suite.streamingModule = streaming.New(suite.processor, 1, 4096)
 	suite.NoError(suite.processor.Start())
 }
 
