@@ -35,6 +35,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/lists"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/media"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/notifications"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/reports"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/search"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/statuses"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/streaming"
@@ -63,6 +64,7 @@ type Client struct {
 	lists          *lists.Module          // api/v1/lists
 	media          *media.Module          // api/v1/media, api/v2/media
 	notifications  *notifications.Module  // api/v1/notifications
+	reports        *reports.Module        // api/v1/reports
 	search         *search.Module         // api/v1/search, api/v2/search
 	statuses       *statuses.Module       // api/v1/statuses
 	streaming      *streaming.Module      // api/v1/streaming
@@ -97,6 +99,7 @@ func (c *Client) Route(r router.Router, m ...gin.HandlerFunc) {
 	c.lists.Route(h)
 	c.media.Route(h)
 	c.notifications.Route(h)
+	c.reports.Route(h)
 	c.search.Route(h)
 	c.statuses.Route(h)
 	c.streaming.Route(h)
@@ -122,6 +125,7 @@ func NewClient(db db.DB, p processing.Processor) *Client {
 		lists:          lists.New(p),
 		media:          media.New(p),
 		notifications:  notifications.New(p),
+		reports:        reports.New(p),
 		search:         search.New(p),
 		statuses:       statuses.New(p),
 		streaming:      streaming.New(p, time.Second*30, 4096),
