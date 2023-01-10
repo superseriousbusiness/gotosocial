@@ -35,15 +35,6 @@ func init() {
 			if _, err := tx.
 				NewCreateIndex().
 				Model(&gtsmodel.Report{}).
-				Index("report_uri_idx").
-				Column("uri").
-				Exec(ctx); err != nil {
-				return err
-			}
-
-			if _, err := tx.
-				NewCreateIndex().
-				Model(&gtsmodel.Report{}).
 				Index("report_account_id_idx").
 				Column("account_id").
 				Exec(ctx); err != nil {
