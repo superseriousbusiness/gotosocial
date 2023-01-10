@@ -36,12 +36,10 @@ const (
 	followers = "followers"
 	following = "following"
 	liked     = "liked"
-	// collections = "collections"
-	// featured    = "featured"
 	publicKey = "main-key"
 	follow    = "follow"
-	// update      = "updates"
-	blocks = "blocks"
+	blocks    = "blocks"
+	reports   = "reports"
 )
 
 const (
@@ -140,6 +138,11 @@ var (
 	// BlockPath parses a path that validates and captures the username part and the ulid part
 	// from eg /users/example_username/blocks/01F7XT5JZW1WMVSW1KADS8PVDH
 	BlockPath = regexp.MustCompile(blockPath)
+
+	reportPath = fmt.Sprintf(`^/?%s/(%s)$`, reports, ulid)
+	// ReportPath parses a path that validates and captures the ulid part
+	// from eg /reports/01GP3AWY4CRDVRNZKW0TEAMB5R
+	ReportPath = regexp.MustCompile(reportPath)
 
 	filePath = fmt.Sprintf(`^(%s)/([a-z]+)/([a-z]+)/(%s)\.([a-z]+)$`, ulid, ulid)
 	// FilePath parses a file storage path of the form [ACCOUNT_ID]/[MEDIA_TYPE]/[MEDIA_SIZE]/[FILE_NAME]

@@ -41,6 +41,7 @@ type DB interface {
 	Mention
 	Notification
 	Relationship
+	Report
 	Session
 	Status
 	Timeline

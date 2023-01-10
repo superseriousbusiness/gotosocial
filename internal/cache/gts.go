@@ -57,6 +57,9 @@ type GTSCaches interface {
 	// Notification provides access to the gtsmodel Notification database cache.
 	Notification() *result.Cache[*gtsmodel.Notification]
 
+	// Report provides access to the gtsmodel Report database cache.
+	Report() *result.Cache[*gtsmodel.Report]
+
 	// Status provides access to the gtsmodel Status database cache.
 	Status() *result.Cache[*gtsmodel.Status]
 
@@ -80,6 +83,7 @@ type gtsCaches struct {
 	emojiCategory *result.Cache[*gtsmodel.EmojiCategory]
 	mention       *result.Cache[*gtsmodel.Mention]
 	notification  *result.Cache[*gtsmodel.Notification]
+	report        *result.Cache[*gtsmodel.Report]
 	status        *result.Cache[*gtsmodel.Status]
 	tombstone     *result.Cache[*gtsmodel.Tombstone]
 	user          *result.Cache[*gtsmodel.User]
@@ -93,6 +97,7 @@ func (c *gtsCaches) Init() {
 	c.initEmojiCategory()
 	c.initMention()
 	c.initNotification()
+	c.initReport()
 	c.initStatus()
 	c.initTombstone()
 	c.initUser()
@@ -120,6 +125,9 @@ func (c *gtsCaches) Start() {
 	tryUntil("starting gtsmodel.Notification cache", 5, func() bool {
 		return c.notification.Start(config.GetCacheGTSNotificationSweepFreq())
 	})
+	tryUntil("starting gtsmodel.Report cache", 5, func() bool {
+		return c.report.Start(config.GetCacheGTSReportSweepFreq())
+	})
 	tryUntil("starting gtsmodel.Status cache", 5, func() bool {
 		return c.status.Start(config.GetCacheGTSStatusSweepFreq())
 	})
@@ -139,6 +147,7 @@ func (c *gtsCaches) Stop() {
 	tryUntil("stopping gtsmodel.EmojiCategory cache", 5, c.emojiCategory.Stop)
 	tryUntil("stopping gtsmodel.Mention cache", 5, c.mention.Stop)
 	tryUntil("stopping gtsmodel.Notification cache", 5, c.notification.Stop)
+	tryUntil("stopping gtsmodel.Report cache", 5, c.report.Stop)
 	tryUntil("stopping gtsmodel.Status cache", 5, c.status.Stop)
 	tryUntil("stopping gtsmodel.Tombstone cache", 5, c.tombstone.Stop)
 	tryUntil("stopping gtsmodel.User cache", 5, c.user.Stop)
@@ -170,6 +179,10 @@ func (c *gtsCaches) Mention() *result.Cache[*gtsmodel.Mention] {
 
 func (c *gtsCaches) Notification() *result.Cache[*gtsmodel.Notification] {
 	return c.notification
+}
+
+func (c *gtsCaches) Report() *result.Cache[*gtsmodel.Report] {
+	return c.report
 }
 
 func (c *gtsCaches) Status() *result.Cache[*gtsmodel.Status] {
@@ -265,6 +278,17 @@ func (c *gtsCaches) initNotification() {
 		return n2
 	}, config.GetCacheGTSNotificationMaxSize())
 	c.notification.SetTTL(config.GetCacheGTSNotificationTTL(), true)
+}
+
+func (c *gtsCaches) initReport() {
+	c.report = result.New([]result.Lookup{
+		{Name: "ID"},
+	}, func(r1 *gtsmodel.Report) *gtsmodel.Report {
+		r2 := new(gtsmodel.Report)
+		*r2 = *r1
+		return r2
+	}, config.GetCacheGTSReportMaxSize())
+	c.report.SetTTL(config.GetCacheGTSReportTTL(), true)
 }
 
 func (c *gtsCaches) initStatus() {

@@ -50,6 +50,48 @@ func (suite *StatusTestSuite) TestGetStatusByID() {
 	suite.True(*status.Likeable)
 }
 
+func (suite *StatusTestSuite) TestGetStatusesByID() {
+	ids := []string{
+		suite.testStatuses["local_account_1_status_1"].ID,
+		suite.testStatuses["local_account_2_status_3"].ID,
+	}
+
+	statuses, err := suite.db.GetStatuses(context.Background(), ids)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	if len(statuses) != 2 {
+		suite.FailNow("expected 2 statuses in slice")
+	}
+
+	status1 := statuses[0]
+	suite.NotNil(status1)
+	suite.NotNil(status1.Account)
+	suite.NotNil(status1.CreatedWithApplication)
+	suite.Nil(status1.BoostOf)
+	suite.Nil(status1.BoostOfAccount)
+	suite.Nil(status1.InReplyTo)
+	suite.Nil(status1.InReplyToAccount)
+	suite.True(*status1.Federated)
+	suite.True(*status1.Boostable)
+	suite.True(*status1.Replyable)
+	suite.True(*status1.Likeable)
+
+	status2 := statuses[1]
+	suite.NotNil(status2)
+	suite.NotNil(status2.Account)
+	suite.NotNil(status2.CreatedWithApplication)
+	suite.Nil(status2.BoostOf)
+	suite.Nil(status2.BoostOfAccount)
+	suite.Nil(status2.InReplyTo)
+	suite.Nil(status2.InReplyToAccount)
+	suite.True(*status2.Federated)
+	suite.True(*status2.Boostable)
+	suite.False(*status2.Replyable)
+	suite.False(*status2.Likeable)
+}
+
 func (suite *StatusTestSuite) TestGetStatusByURI() {
 	status, err := suite.db.GetStatusByURI(context.Background(), suite.testStatuses["local_account_2_status_3"].URI)
 	if err != nil {

@@ -28,7 +28,6 @@ import (
 
 const (
 	UsersPath        = "users"         // UsersPath is for serving users info
-	ActorsPath       = "actors"        // ActorsPath is for serving actors info
 	StatusesPath     = "statuses"      // StatusesPath is for serving statuses
 	InboxPath        = "inbox"         // InboxPath represents the activitypub inbox location
 	OutboxPath       = "outbox"        // OutboxPath represents the activitypub outbox location
@@ -41,6 +40,7 @@ const (
 	FollowPath       = "follow"        // FollowPath used to generate the URI for an individual follow or follow request
 	UpdatePath       = "updates"       // UpdatePath is used to generate the URI for an account update
 	BlocksPath       = "blocks"        // BlocksPath is used to generate the URI for a block
+	ReportsPath      = "reports"       // ReportsPath is used to generate the URI for a report/flag
 	ConfirmEmailPath = "confirm_email" // ConfirmEmailPath is used to generate the URI for an email confirmation link
 	FileserverPath   = "fileserver"    // FileserverPath is a path component for serving attachments + media
 	EmojiPath        = "emoji"         // EmojiPath represents the activitypub emoji location
@@ -105,6 +105,17 @@ func GenerateURIForBlock(username string, thisBlockID string) string {
 	protocol := config.GetProtocol()
 	host := config.GetHost()
 	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, BlocksPath, thisBlockID)
+}
+
+// GenerateURIForReport returns the API URI for a new Flag activity -- something like:
+// https://example.org/reports/01GP3AWY4CRDVRNZKW0TEAMB5R
+//
+// This path specifically doesn't contain any info about the user who did the reporting,
+// to protect their privacy.
+func GenerateURIForReport(thisReportID string) string {
+	protocol := config.GetProtocol()
+	host := config.GetHost()
+	return fmt.Sprintf("%s://%s/%s/%s", protocol, host, ReportsPath, thisReportID)
 }
 
 // GenerateURIForEmailConfirm returns a link for email confirmation -- something like:
@@ -228,6 +239,11 @@ func IsBlockPath(id *url.URL) bool {
 	return regexes.BlockPath.MatchString(id.Path)
 }
 
+// IsReportPath returns true if the given URL path corresponds to eg /reports/SOME_ULID_OF_A_REPORT
+func IsReportPath(id *url.URL) bool {
+	return regexes.ReportPath.MatchString(id.Path)
+}
+
 // ParseStatusesPath returns the username and ulid from a path such as /users/example_username/statuses/SOME_ULID_OF_A_STATUS
 func ParseStatusesPath(id *url.URL) (username string, ulid string, err error) {
 	matches := regexes.StatusesPath.FindStringSubmatch(id.Path)
@@ -316,5 +332,16 @@ func ParseBlockPath(id *url.URL) (username string, ulid string, err error) {
 	}
 	username = matches[1]
 	ulid = matches[2]
+	return
+}
+
+// ParseReportPath returns the ulid from a path such as /reports/SOME_ULID_OF_A_REPORT
+func ParseReportPath(id *url.URL) (ulid string, err error) {
+	matches := regexes.ReportPath.FindStringSubmatch(id.Path)
+	if len(matches) != 2 {
+		err = fmt.Errorf("expected 2 matches but matches length was %d", len(matches))
+		return
+	}
+	ulid = matches[1]
 	return
 }
