@@ -10,9 +10,9 @@ require (
 	codeberg.org/gruf/go-errors/v2 v2.0.2
 	codeberg.org/gruf/go-kv v1.5.2
 	codeberg.org/gruf/go-logger/v2 v2.2.1
-	codeberg.org/gruf/go-mutexes v1.1.4
+	codeberg.org/gruf/go-mutexes v1.1.5
 	codeberg.org/gruf/go-runners v1.4.0
-	codeberg.org/gruf/go-store/v2 v2.1.0
+	codeberg.org/gruf/go-store/v2 v2.2.1
 	github.com/abema/go-mp4 v0.9.0
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/coreos/go-oidc/v3 v3.5.0
