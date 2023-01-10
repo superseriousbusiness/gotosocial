@@ -91,7 +91,7 @@ func (p *processor) emojiUpdateCopy(ctx context.Context, emoji *gtsmodel.Emoji, 
 
 	data := func(ctx context.Context) (reader io.ReadCloser, fileSize int64, err error) {
 		rc, err := p.storage.GetStream(ctx, emoji.ImagePath)
-		return rc, int64(emoji.ImageFileSize), nil
+		return rc, int64(emoji.ImageFileSize), err
 	}
 
 	var ai *media.AdditionalEmojiInfo
