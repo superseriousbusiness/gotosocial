@@ -97,7 +97,7 @@ func (p *ProcessingMedia) LoadAttachment(ctx context.Context) (*gtsmodel.MediaAt
 
 		// New attachment, first time caching.
 		err = p.manager.db.Put(ctx, p.media)
-		return
+		return //nolint shutup linter i like this here
 	})
 
 	if p.err != nil {

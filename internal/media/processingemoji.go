@@ -116,7 +116,7 @@ func (p *ProcessingEmoji) LoadEmoji(ctx context.Context) (*gtsmodel.Emoji, error
 
 		// New emoji media, first time caching.
 		err = p.manager.db.PutEmoji(ctx, p.emoji)
-		return
+		return //nolint shutup linter i like this here
 	})
 
 	if p.err != nil {
