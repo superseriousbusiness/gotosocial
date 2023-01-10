@@ -38,6 +38,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing/admin"
 	federationProcessor "github.com/superseriousbusiness/gotosocial/internal/processing/federation"
 	mediaProcessor "github.com/superseriousbusiness/gotosocial/internal/processing/media"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/report"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/streaming"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/user"
@@ -232,6 +233,9 @@ type Processor interface {
 	// The user belonging to the confirmed email is also returned.
 	UserConfirmEmail(ctx context.Context, token string) (*gtsmodel.User, gtserror.WithCode)
 
+	// ReportsGet returns reports created by the given user.
+	ReportsGet(ctx context.Context, authed *oauth.Auth, limit int, maxID string, minID string) (*apimodel.PageableResponse, gtserror.WithCode)
+
 	/*
 		FEDERATION API-FACING PROCESSING FUNCTIONS
 		These functions are intended to be called when the federating client needs an immediate (ie., synchronous) reply
@@ -303,6 +307,7 @@ type processor struct {
 	mediaProcessor      mediaProcessor.Processor
 	userProcessor       user.Processor
 	federationProcessor federationProcessor.Processor
+	reportProcessor     report.Processor
 }
 
 // NewProcessor returns a new Processor.
@@ -326,6 +331,7 @@ func NewProcessor(
 	mediaProcessor := mediaProcessor.New(db, tc, mediaManager, federator.TransportController(), storage)
 	userProcessor := user.New(db, emailSender)
 	federationProcessor := federationProcessor.New(db, tc, federator)
+	reportProcessor := report.New(db, tc, clientWorker)
 	filter := visibility.NewFilter(db)
 
 	return &processor{
@@ -348,6 +354,7 @@ func NewProcessor(
 		mediaProcessor:      mediaProcessor,
 		userProcessor:       userProcessor,
 		federationProcessor: federationProcessor,
+		reportProcessor:     reportProcessor,
 	}
 }
 

@@ -196,6 +196,16 @@ func (suite *InternalToFrontendTestSuite) TestEmojiToFrontendAdmin2() {
 	suite.Equal(`{"shortcode":"yell","url":"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01GD5KP5CQEE1R3X43Y1EHS2CW.png","static_url":"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01GD5KP5CQEE1R3X43Y1EHS2CW.png","visible_in_picker":false,"id":"01GD5KP5CQEE1R3X43Y1EHS2CW","disabled":false,"domain":"fossbros-anonymous.io","updated_at":"2020-03-18T12:12:00.000Z","total_file_size":21697,"content_type":"image/png","uri":"http://fossbros-anonymous.io/emoji/01GD5KP5CQEE1R3X43Y1EHS2CW"}`, string(b))
 }
 
+func (suite *InternalToFrontendTestSuite) TestReportToFrontend1() {
+	report, err := suite.typeconverter.ReportToAPIReport(context.Background(), suite.testReports["local_account_2_report_remote_account_1"])
+	suite.NoError(err)
+
+	b, err := json.Marshal(report)
+	suite.NoError(err)
+
+	suite.Equal(`{"id":"01GP3AWY4CRDVRNZKW0TEAMB5R","created_at":"2022-05-14T10:20:03.000Z","action_taken":false,"action_taken_at":null,"action_taken_comment":null,"category":"other","comment":"dark souls sucks, please yeet this nerd","forwarded":true,"status_ids":["01FVW7JHQFSFK166WWKR8CBA6M"],"rule_ids":[],"target_account":{"id":"01F8MH5ZK5VRH73AKHQM6Y9VNX","username":"foss_satan","acct":"foss_satan@fossbros-anonymous.io","display_name":"big gerald","locked":false,"bot":false,"created_at":"2021-09-26T10:52:36.000Z","note":"i post about like, i dunno, stuff, or whatever!!!!","url":"http://fossbros-anonymous.io/@foss_satan","avatar":"","avatar_static":"","header":"http://localhost:8080/assets/default_header.png","header_static":"http://localhost:8080/assets/default_header.png","followers_count":0,"following_count":0,"statuses_count":1,"last_status_at":"2021-09-20T10:40:37.000Z","emojis":[],"fields":[]}}`, string(b))
+}
+
 func TestInternalToFrontendTestSuite(t *testing.T) {
 	suite.Run(t, new(InternalToFrontendTestSuite))
 }

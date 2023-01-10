@@ -1501,6 +1501,83 @@ definitions:
         type: object
         x-go-name: PollOptions
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    report:
+        properties:
+            action_taken:
+                description: Whether an action has been taken by an admin in response to this report.
+                example: false
+                type: boolean
+                x-go-name: ActionTaken
+            action_taken_at:
+                description: |-
+                    If an action was taken, at what time was this done? (ISO 8601 Datetime)
+                    Will be null if not set / no action yet taken.
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: ActionTakenAt
+            action_taken_comment:
+                description: |-
+                    If an action was taken, what comment was made by the admin on the taken action?
+                    Will be null if not set / no action yet taken.
+                example: Account was suspended.
+                type: string
+                x-go-name: ActionComment
+            category:
+                description: Under what category was this report created?
+                example: spam
+                type: string
+                x-go-name: Category
+            comment:
+                description: |-
+                    Comment submitted when the report was created.
+                    Will be null if no comment was submitted.
+                example: This person has been harassing me.
+                type: string
+                x-go-name: Comment
+            created_at:
+                description: The date when this report was created (ISO 8601 Datetime).
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: CreatedAt
+            forwarded:
+                description: Bool to indicate that report should be federated to remote instance.
+                example: true
+                type: boolean
+                x-go-name: Forwarded
+            id:
+                description: ID of the report.
+                example: 01FBVD42CQ3ZEEVMW180SBX03B
+                type: string
+                x-go-name: ID
+            rule_ids:
+                description: |-
+                    Array of rule IDs that were submitted along with this report.
+                    Will be null if no rule IDs were submitted.
+                example:
+                    - 1
+                    - 2
+                items:
+                    format: int64
+                    type: integer
+                type: array
+                x-go-name: RuleIDs
+            status_ids:
+                description: |-
+                    Array of IDs of statuses that were submitted along with this report.
+                    Will be null if no status IDs were submitted.
+                example:
+                    - 01GPBN5YDY6JKBWE44H7YQBDCQ
+                    - 01GPBN65PDWSBPWVDD0SQCFFY3
+                items:
+                    type: string
+                type: array
+                x-go-name: StatusIDs
+            target_account:
+                $ref: '#/definitions/account'
+        title: Report models a moderation report submitted to the instance, either via the client API or via the federated API.
+        type: object
+        x-go-name: Report
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     searchResult:
         properties:
             accounts:
@@ -3888,6 +3965,58 @@ paths:
             summary: Clear/delete all notifications for currently authorized user.
             tags:
                 - notifications
+    /api/v1/reports:
+        get:
+            description: |-
+                The reports will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
+
+                The next and previous queries can be parsed from the returned Link header.
+
+                Example:
+
+                ```
+                <https://example.org/api/v1/reports?limit=20&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/reports?limit=20&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
+            operationId: reports
+            parameters:
+                - default: 30
+                  description: Number of reports to return.
+                  in: query
+                  name: limit
+                  type: integer
+                - description: Return only reports *OLDER* than the given max ID. The report with the specified ID will not be included in the response.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: Return only reports *NEWER* than the given min ID. The report with the specified ID will not be included in the response.
+                  in: query
+                  name: min_id
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Array of reports.
+                    schema:
+                        items:
+                            $ref: '#/definitions/report'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:reports
+            summary: See reports created by the requesting account.
+            tags:
+                - reports
     /api/v1/search:
         get:
             description: If statuses are in the result, they will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).

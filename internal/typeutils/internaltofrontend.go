@@ -802,6 +802,44 @@ func (c *converter) DomainBlockToAPIDomainBlock(ctx context.Context, b *gtsmodel
 	return domainBlock, nil
 }
 
+func (c *converter) ReportToAPIReport(ctx context.Context, r *gtsmodel.Report) (*apimodel.Report, error) {
+	report := &apimodel.Report{
+		ID:          r.ID,
+		CreatedAt:   util.FormatISO8601(r.CreatedAt),
+		ActionTaken: !r.ActionTakenAt.IsZero(),
+		Category:    "other", // todo: only support default 'other' category right now
+		Comment:     r.Comment,
+		Forwarded:   *r.Forwarded,
+		StatusIDs:   r.StatusIDs,
+		RuleIDs:     []int{}, // todo: not supported yet
+	}
+
+	if !r.ActionTakenAt.IsZero() {
+		actionTakenAt := util.FormatISO8601(r.ActionTakenAt)
+		report.ActionTakenAt = &actionTakenAt
+	}
+
+	if actionComment := r.ActionTaken; actionComment != "" {
+		report.ActionComment = &actionComment
+	}
+
+	if r.TargetAccount == nil {
+		tAccount, err := c.db.GetAccountByID(ctx, r.TargetAccountID)
+		if err != nil {
+			return nil, fmt.Errorf("ReportToAPIReport: error getting target account with id %s from the db: %s", r.TargetAccountID, err)
+		}
+		r.TargetAccount = tAccount
+	}
+
+	apiAccount, err := c.AccountToAPIAccountPublic(ctx, r.TargetAccount)
+	if err != nil {
+		return nil, fmt.Errorf("ReportToAPIReport: error converting target account to api: %s", err)
+	}
+	report.TargetAccount = apiAccount
+
+	return report, nil
+}
+
 // convertAttachmentsToAPIAttachments will convert a slice of GTS model attachments to frontend API model attachments, falling back to IDs if no GTS models supplied.
 func (c *converter) convertAttachmentsToAPIAttachments(ctx context.Context, attachments []*gtsmodel.MediaAttachment, attachmentIDs []string) ([]apimodel.Attachment, error) {
 	var errs gtserror.MultiError
