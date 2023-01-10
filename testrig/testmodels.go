@@ -821,11 +821,11 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 				UpdatedAt:   TimeMustParse("2022-06-09T13:12:00Z"),
 			},
 			Thumbnail: gtsmodel.Thumbnail{
-				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01CDR64G398ADCHXK08WWTHEZ5.jpeg",
+				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01CDR64G398ADCHXK08WWTHEZ5.jpg",
 				ContentType: "image/jpeg",
 				FileSize:    5272,
 				UpdatedAt:   TimeMustParse("2022-06-09T13:12:00Z"),
-				URL:         "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01CDR64G398ADCHXK08WWTHEZ5.jpeg",
+				URL:         "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01CDR64G398ADCHXK08WWTHEZ5.jpg",
 				RemoteURL:   "",
 			},
 			Avatar: FalseBool(),
@@ -1019,7 +1019,7 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Thumbnail: gtsmodel.Thumbnail{
 				Path:        "01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg",
 				ContentType: "image/jpeg",
-				FileSize:    20395,
+				FileSize:    19312,
 				UpdatedAt:   TimeMustParse("2021-09-20T12:40:37+02:00"),
 				URL:         "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg",
 				RemoteURL:   "http://fossbros-anonymous.io/attachments/small/a499f55b-2d1e-4acd-98d2-1ac2ba6d79b9.jpg",
