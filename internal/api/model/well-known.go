@@ -83,7 +83,7 @@ type NodeInfoUsage struct {
 	LocalPosts int           `json:"localPosts"`
 }
 
-// NodeInfoUsers is a stub for usage information, currently empty.
+// NodeInfoUsers represents aggregate information about the users on the server.
 type NodeInfoUsers struct {
 	Total int `json:"total"`
 }

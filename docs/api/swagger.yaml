@@ -100,13 +100,22 @@ definitions:
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     NodeInfoUsage:
         properties:
+            localPosts:
+                format: int64
+                type: integer
+                x-go-name: LocalPosts
             users:
                 $ref: '#/definitions/NodeInfoUsers'
         title: NodeInfoUsage represents usage information about this server, such as number of users.
         type: object
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     NodeInfoUsers:
-        title: NodeInfoUsers is a stub for usage information, currently empty.
+        properties:
+            total:
+                format: int64
+                type: integer
+                x-go-name: Total
+        title: NodeInfoUsers represents aggregate information about the users on the server.
         type: object
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     Source:
