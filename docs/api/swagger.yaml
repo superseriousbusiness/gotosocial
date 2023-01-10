@@ -1530,7 +1530,7 @@ definitions:
             comment:
                 description: |-
                     Comment submitted when the report was created.
-                    Will be null if no comment was submitted.
+                    Will be empty if no comment was submitted.
                 example: This person has been harassing me.
                 type: string
                 x-go-name: Comment
@@ -1552,7 +1552,7 @@ definitions:
             rule_ids:
                 description: |-
                     Array of rule IDs that were submitted along with this report.
-                    Will be null if no rule IDs were submitted.
+                    Will be empty if no rule IDs were submitted.
                 example:
                     - 1
                     - 2
@@ -1564,7 +1564,7 @@ definitions:
             status_ids:
                 description: |-
                     Array of IDs of statuses that were submitted along with this report.
-                    Will be null if no status IDs were submitted.
+                    Will be empty if no status IDs were submitted.
                 example:
                     - 01GPBN5YDY6JKBWE44H7YQBDCQ
                     - 01GPBN65PDWSBPWVDD0SQCFFY3
@@ -3979,7 +3979,7 @@ paths:
                 ````
             operationId: reports
             parameters:
-                - default: 30
+                - default: 20
                   description: Number of reports to return.
                   in: query
                   name: limit
@@ -4015,6 +4015,89 @@ paths:
                 - OAuth2 Bearer:
                     - read:reports
             summary: See reports created by the requesting account.
+            tags:
+                - reports
+        post:
+            consumes:
+                - application/json
+                - application/xml
+                - application/x-www-form-urlencoded
+            operationId: reportCreate
+            parameters:
+                - description: ID of the account to report.
+                  example: 01GPE75FXSH2EGFBF85NXPH3KP
+                  in: formData
+                  name: account_id
+                  required: true
+                  type: string
+                  x-go-name: AccountID
+                - description: IDs of statuses to attach to the report to provide additional context.
+                  example:
+                    - 01GPE76N4SBVRZ8K24TW51ZZQ4
+                    - 01GPE76WN9JZE62EPT3Q9FRRD4
+                  in: formData
+                  items:
+                    type: string
+                  name: status_ids
+                  type: array
+                  x-go-name: StatusIDs
+                - description: The reason for the report. Default maximum of 1000 characters.
+                  example: Anti-Blackness, transphobia.
+                  in: formData
+                  name: comment
+                  type: string
+                  x-go-name: Comment
+                - default: false
+                  description: If the account is remote, should the report be forwarded to the remote admin?
+                  example: true
+                  in: formData
+                  name: forward
+                  type: boolean
+                  x-go-name: Forward
+                - default: other
+                  description: |-
+                    Specify if the report is due to spam, violation of enumerated instance rules, or some other reason.
+                    Currently only 'other' is supported.
+                  example: other
+                  in: formData
+                  name: category
+                  type: string
+                  x-go-name: Category
+                - description: |-
+                    IDs of rules on this instance which have been broken according to the reporter.
+                    This is currently not supported, provided only for API compatibility.
+                  example:
+                    - 1
+                    - 2
+                    - 3
+                  in: formData
+                  items:
+                    format: int64
+                    type: integer
+                  name: rule_ids
+                  type: array
+                  x-go-name: RuleIDs
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The created report.
+                    schema:
+                        $ref: '#/definitions/report'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:reports
+            summary: Create a new user report with the given parameters.
             tags:
                 - reports
     /api/v1/search:

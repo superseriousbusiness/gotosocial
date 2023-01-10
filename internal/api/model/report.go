@@ -60,3 +60,38 @@ type Report struct {
 	// Account that was reported.
 	TargetAccount *Account `json:"target_account"`
 }
+
+// ReportCreateRequest models user report creation parameters.
+//
+// swagger:parameters reportCreate
+type ReportCreateRequest struct {
+	// ID of the account to report.
+	// example: 01GPE75FXSH2EGFBF85NXPH3KP
+	// in: formData
+	// required: true
+	AccountID string `form:"account_id" json:"account_id" xml:"account_id"`
+	// IDs of statuses to attach to the report to provide additional context.
+	// example: ["01GPE76N4SBVRZ8K24TW51ZZQ4","01GPE76WN9JZE62EPT3Q9FRRD4"]
+	// in: formData
+	StatusIDs []string `form:"status_ids[]" json:"status_ids" xml:"status_ids"`
+	// The reason for the report. Default maximum of 1000 characters.
+	// example: Anti-Blackness, transphobia.
+	// in: formData
+	Comment string `form:"comment" json:"comment" xml:"comment"`
+	// If the account is remote, should the report be forwarded to the remote admin?
+	// example: true
+	// default: false
+	// in: formData
+	Forward bool `form:"forward" json:"forward" xml:"forward"`
+	// Specify if the report is due to spam, violation of enumerated instance rules, or some other reason.
+	// Currently only 'other' is supported.
+	// example: other
+	// default: other
+	// in: formData
+	Category string `form:"category" json:"category" xml:"category"`
+	// IDs of rules on this instance which have been broken according to the reporter.
+	// This is currently not supported, provided only for API compatibility.
+	// example: [1, 2, 3]
+	// in: formData
+	RuleIDs []int `form:"rule_ids[]" json:"rule_ids" xml:"rule_ids"`
+}
