@@ -28,16 +28,37 @@ module.exports = {
 			return res.data;
 		}
 	},
-	updateCacheOnMutation(queryName, arg = undefined) {
-		// https://redux-toolkit.js.org/rtk-query/usage/manual-cache-updates#pessimistic-updates
+	replaceCacheOnMutation: makeCacheMutation((draft, newData) => {
+		Object.assign(draft, newData);
+	}),
+	appendCacheOnMutation: makeCacheMutation((draft, newData) => {
+		draft.push(newData);
+	}),
+	spliceCacheOnMutation: makeCacheMutation((draft, newData, key) => {
+		draft.splice(key, 1);
+	}),
+	updateCacheOnMutation: makeCacheMutation((draft, newData, key) => {
+		draft[key] = newData;
+	}),
+	removeFromCacheOnMutation: makeCacheMutation((draft, newData, key) => {
+		delete draft[key];
+	})
+};
+
+// https://redux-toolkit.js.org/rtk-query/usage/manual-cache-updates#pessimistic-updates
+function makeCacheMutation(action) {
+	return function cacheMutation(queryName, { key, findKey, arg } = {}) {
 		return {
-			onQueryStarted: (_, { dispatch, queryFulfilled}) => {
-				queryFulfilled.then(({data: newData}) => {
+			onQueryStarted: (_, { dispatch, queryFulfilled }) => {
+				queryFulfilled.then(({ data: newData }) => {
 					dispatch(base.util.updateQueryData(queryName, arg, (draft) => {
-						Object.assign(draft, newData);
+						if (findKey != undefined) {
+							key = findKey(draft, newData);
+						}
+						action(draft, newData, key);
 					}));
 				});
 			}
 		};
-	}
-};
+	};
+}

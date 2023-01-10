@@ -48,7 +48,7 @@ module.exports = function UserSettings() {
 	);
 };
 
-function UserSettingsForm({data: {source}}) {
+function UserSettingsForm({ data: { source } }) {
 	/* form keys
 		- string source[privacy]
 		- bool source[sensitive]
@@ -57,20 +57,20 @@ function UserSettingsForm({data: {source}}) {
 	 */
 
 	const form = {
-		defaultPrivacy: useTextInput("source[privacy]", {defaultValue: source.privacy ?? "unlisted"}),
-		isSensitive: useBoolInput("source[sensitive]", {defaultValue: source.sensitive}),
-		language: useTextInput("source[language]", {defaultValue: source.language ?? "EN"}),
-		format: useTextInput("source[status_format]", {defaultValue: source.status_format ?? "plain"}),
+		defaultPrivacy: useTextInput("source[privacy]", { defaultValue: source.privacy ?? "unlisted" }),
+		isSensitive: useBoolInput("source[sensitive]", { defaultValue: source.sensitive }),
+		language: useTextInput("source[language]", { defaultValue: source.language ?? "EN" }),
+		format: useTextInput("source[status_format]", { defaultValue: source.status_format ?? "plain" }),
 	};
 
-	const [result, submitForm] = useFormSubmit(form, query.useUpdateCredentialsMutation());
+	const [submitForm, result] = useFormSubmit(form, query.useUpdateCredentialsMutation());
 
 	return (
 		<>
 			<form className="user-settings" onSubmit={submitForm}>
 				<h1>Post settings</h1>
 				<Select field={form.language} label="Default post language" options={
-					<Languages/>
+					<Languages />
 				}>
 				</Select>
 				<Select field={form.defaultPrivacy} label="Default post privacy" options={
@@ -95,10 +95,10 @@ function UserSettingsForm({data: {source}}) {
 					label="Mark my posts as sensitive by default"
 				/>
 
-				<MutationButton text="Save settings" result={result}/>
+				<MutationButton label="Save settings" result={result} />
 			</form>
 			<div>
-				<PasswordChange/>
+				<PasswordChange />
 			</div>
 		</>
 	);
@@ -107,12 +107,14 @@ function UserSettingsForm({data: {source}}) {
 function PasswordChange() {
 	const form = {
 		oldPassword: useTextInput("old_password"),
-		newPassword: useTextInput("old_password", {validator(val) {
-			if (val != "" && val == form.oldPassword.value) {
-				return "New password same as old password";
+		newPassword: useTextInput("old_password", {
+			validator(val) {
+				if (val != "" && val == form.oldPassword.value) {
+					return "New password same as old password";
+				}
+				return "";
 			}
-			return "";
-		}})
+		})
 	};
 
 	const verifyNewPassword = useTextInput("verifyNewPassword", {
@@ -124,15 +126,15 @@ function PasswordChange() {
 		}
 	});
 
-	const [result, submitForm] = useFormSubmit(form, query.usePasswordChangeMutation());
+	const [submitForm, result] = useFormSubmit(form, query.usePasswordChangeMutation());
 
 	return (
 		<form className="change-password" onSubmit={submitForm}>
 			<h1>Change password</h1>
-			<TextInput type="password" field={form.oldPassword} label="Current password"/>
-			<TextInput type="password" field={form.newPassword} label="New password"/>
-			<TextInput type="password" field={verifyNewPassword} label="Confirm new password"/>
-			<MutationButton text="Change password" result={result}/>
+			<TextInput type="password" field={form.oldPassword} label="Current password" />
+			<TextInput type="password" field={form.newPassword} label="New password" />
+			<TextInput type="password" field={verifyNewPassword} label="Confirm new password" />
+			<MutationButton label="Change password" result={result} />
 		</form>
 	);
 }

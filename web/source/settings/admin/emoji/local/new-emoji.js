@@ -50,7 +50,7 @@ module.exports = function NewEmojiForm({ emoji }) {
 	const [onShortcodeChange, resetShortcode, { shortcode, setShortcode, shortcodeRef }] = useTextInput("shortcode", {
 		validator: function validateShortcode(code) {
 			// technically invalid, but hacky fix to prevent validation error on page load
-			if (shortcode == "") {return "";}
+			if (shortcode == "") { return ""; }
 
 			if (emojiCodes.has(code)) {
 				return "Shortcode already in use";
@@ -161,7 +161,7 @@ module.exports = function NewEmojiForm({ emoji }) {
 					categoryState={categoryState}
 				/>
 
-				<MutationButton text="Upload emoji" result={result} />
+				<MutationButton label="Upload emoji" result={result} />
 			</form>
 		</div>
 	);

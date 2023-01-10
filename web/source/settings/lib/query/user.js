@@ -18,7 +18,7 @@
 
 "use strict";
 
-const { updateCacheOnMutation } = require("./lib");
+const { replaceCacheOnMutation } = require("./lib");
 const base = require("./base");
 
 const endpoints = (build) => ({
@@ -32,9 +32,10 @@ const endpoints = (build) => ({
 			method: "PATCH",
 			url: `/api/v1/accounts/update_credentials`,
 			asForm: true,
-			body: formData
+			body: formData,
+			discardEmpty: true
 		}),
-		...updateCacheOnMutation("verifyCredentials")
+		...replaceCacheOnMutation("verifyCredentials")
 	}),
 	passwordChange: build.mutation({
 		query: (data) => ({
@@ -45,4 +46,4 @@ const endpoints = (build) => ({
 	})
 });
 
-module.exports = base.injectEndpoints({endpoints});
+module.exports = base.injectEndpoints({ endpoints });

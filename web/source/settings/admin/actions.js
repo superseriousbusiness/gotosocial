@@ -28,7 +28,7 @@ const { TextInput } = require("../components/form/inputs");
 const MutationButton = require("../components/form/mutation-button");
 
 module.exports = function AdminActionPanel() {
-	const daysField = useTextInput("days", {defaultValue: 30});
+	const daysField = useTextInput("days", { defaultValue: 30 });
 
 	const [mediaCleanup, mediaCleanupResult] = query.useMediaCleanupMutation();
 
@@ -54,7 +54,7 @@ module.exports = function AdminActionPanel() {
 					min="0"
 					placeholder="30"
 				/>
-				<MutationButton text="Remove old media" result={mediaCleanupResult} />
+				<MutationButton label="Remove old media" result={mediaCleanupResult} />
 			</form>
 		</>
 	);

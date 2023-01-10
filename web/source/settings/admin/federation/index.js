@@ -18,31 +18,26 @@
 
 "use strict";
 
-const Promise = require("bluebird");
+const React = require("react");
+const { Switch, Route } = require("wouter");
 
-module.exports = function submit(func, {
-	setStatus, setError,
-	startStatus="PATCHing", successStatus="Saved!",
-	onSuccess,
-	onError
-}) {
-	return function() {
-		setStatus(startStatus);
-		setError("");
-		return Promise.try(() => {
-			return func();
-		}).then(() => {
-			setStatus(successStatus);
-			if (onSuccess != undefined) {
-				return onSuccess();
-			}
-		}).catch((e) => {
-			setError(e.message);
-			setStatus("");
-			console.error(e);
-			if (onError != undefined) {
-				onError(e);
-			}
-		});
-	};
+const baseUrl = `/settings/admin/federation`;
+
+const InstanceOverview = require("./overview");
+const InstanceDetail = require("./detail");
+
+module.exports = function Federation({ }) {
+	return (
+		<Switch>
+			{/* <Route path={`${baseUrl}/import-export`}>
+				<InstanceImportExport />
+			</Route> */}
+
+			<Route path={`${baseUrl}/:domain`}>
+				<InstanceDetail baseUrl={baseUrl} />
+			</Route>
+
+			<InstanceOverview baseUrl={baseUrl} />
+		</Switch>
+	);
 };

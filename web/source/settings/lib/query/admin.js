@@ -18,7 +18,11 @@
 
 "use strict";
 
-const { updateCacheOnMutation } = require("./lib");
+const {
+	replaceCacheOnMutation,
+	appendCacheOnMutation,
+	spliceCacheOnMutation
+} = require("./lib");
 const base = require("./base");
 
 const endpoints = (build) => ({
@@ -27,19 +31,46 @@ const endpoints = (build) => ({
 			method: "PATCH",
 			url: `/api/v1/instance`,
 			asForm: true,
-			body: formData
+			body: formData,
+			discardEmpty: true
 		}),
-		...updateCacheOnMutation("instance")
+		...replaceCacheOnMutation("instance")
 	}),
 	mediaCleanup: build.mutation({
 		query: (days) => ({
 			method: "POST",
 			url: `/api/v1/admin/media_cleanup`,
 			params: {
-				remote_cache_days: days 
+				remote_cache_days: days
+			}
+		})
+	}),
+	instanceBlocks: build.query({
+		query: () => ({
+			url: `/api/v1/admin/domain_blocks`
+		})
+	}),
+	addInstanceBlock: build.mutation({
+		query: (formData) => ({
+			method: "POST",
+			url: `/api/v1/admin/domain_blocks`,
+			asForm: true,
+			body: formData,
+			discardEmpty: true
+		}),
+		...appendCacheOnMutation("instanceBlocks")
+	}),
+	removeInstanceBlock: build.mutation({
+		query: (id) => ({
+			method: "DELETE",
+			url: `/api/v1/admin/domain_blocks/${id}`,
+		}),
+		...spliceCacheOnMutation("instanceBlocks", {
+			findKey: (draft, newData) => {
+				return draft.findIndex((block) => block.id == newData.id);
 			}
 		})
 	})
 });
 
-module.exports = base.injectEndpoints({endpoints});
+module.exports = base.injectEndpoints({ endpoints });

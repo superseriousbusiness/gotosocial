@@ -34,19 +34,19 @@ const base = "/settings/custom-emoji/local";
 module.exports = function EmojiDetailRoute() {
 	let [_match, params] = useRoute(`${base}/:emojiId`);
 	if (params?.emojiId == undefined) {
-		return <Redirect to={base}/>;
+		return <Redirect to={base} />;
 	} else {
 		return (
 			<div className="emoji-detail">
 				<Link to={base}><a>&lt; go back</a></Link>
-				<EmojiDetailData emojiId={params.emojiId}/>
+				<EmojiDetailData emojiId={params.emojiId} />
 			</div>
 		);
 	}
 };
 
-function EmojiDetailData({emojiId}) {
-	const {currentData: emoji, isLoading, error} = query.useGetEmojiQuery(emojiId);
+function EmojiDetailData({ emojiId }) {
+	const { currentData: emoji, isLoading, error } = query.useGetEmojiQuery(emojiId);
 
 	if (error) {
 		return (
@@ -57,20 +57,20 @@ function EmojiDetailData({emojiId}) {
 	} else if (isLoading) {
 		return (
 			<div>
-				<Loading/>
+				<Loading />
 			</div>
 		);
 	} else {
-		return <EmojiDetail emoji={emoji}/>;
+		return <EmojiDetail emoji={emoji} />;
 	}
 }
 
-function EmojiDetail({emoji}) {
+function EmojiDetail({ emoji }) {
 	const [modifyEmoji, modifyResult] = query.useEditEmojiMutation();
 
 	const [isNewCategory, setIsNewCategory] = React.useState(false);
 
-	const [categoryState, _resetCategory, { category }] = useComboBoxInput("category", {defaultValue: emoji.category});
+	const [categoryState, _resetCategory, { category }] = useComboBoxInput("category", { defaultValue: emoji.category });
 
 	const [onFileChange, _resetFile, { image, imageURL, imageInfo }] = useFileInput("image", {
 		withPreview: true,
@@ -78,26 +78,26 @@ function EmojiDetail({emoji}) {
 	});
 
 	function modifyCategory() {
-		modifyEmoji({id: emoji.id, category: category.trim()});
+		modifyEmoji({ id: emoji.id, category: category.trim() });
 	}
 
 	function modifyImage() {
-		modifyEmoji({id: emoji.id, image: image});
+		modifyEmoji({ id: emoji.id, image: image });
 	}
 
 	React.useEffect(() => {
-		if (category != emoji.category && !categoryState.open && !isNewCategory && category.trim().length > 0) {
-			modifyEmoji({id: emoji.id, category: category.trim()});
+		if (category != emoji.category && !categoryState.open && !isNewCategory && category?.trim().length > 0) {
+			modifyEmoji({ id: emoji.id, category: category.trim() });
 		}
 	}, [isNewCategory, category, categoryState.open, emoji.category, emoji.id, modifyEmoji]);
 
 	return (
 		<>
 			<div className="emoji-header">
-				<img src={emoji.url} alt={emoji.shortcode} title={emoji.shortcode}/>
+				<img src={emoji.url} alt={emoji.shortcode} title={emoji.shortcode} />
 				<div>
 					<h2>{emoji.shortcode}</h2>
-					<DeleteButton id={emoji.id}/>
+					<DeleteButton id={emoji.id} />
 				</div>
 			</div>
 
@@ -114,7 +114,7 @@ function EmojiDetail({emoji}) {
 						categoryState={categoryState}
 						setIsNew={setIsNewCategory}
 					>
-						<button style={{visibility: (isNewCategory ? "initial" : "hidden")}} onClick={modifyCategory}>
+						<button style={{ visibility: (isNewCategory ? "initial" : "hidden") }} onClick={modifyCategory}>
 							Create
 						</button>
 					</CategorySelect>
@@ -153,7 +153,7 @@ function EmojiDetail({emoji}) {
 	);
 }
 
-function DeleteButton({id}) {
+function DeleteButton({ id }) {
 	// TODO: confirmation dialog?
 	const [deleteEmoji, deleteResult] = query.useDeleteEmojiMutation();
 
@@ -163,7 +163,7 @@ function DeleteButton({id}) {
 	}
 
 	if (deleteResult.isSuccess) {
-		return <Redirect to={base}/>;
+		return <Redirect to={base} />;
 	}
 
 	return (

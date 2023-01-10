@@ -24,10 +24,17 @@ const { convertToForm } = require("../api");
 
 function instanceBasedQuery(args, api, extraOptions) {
 	const state = api.getState();
-	const {instance, token} = state.oauth;
+	const { instance, token } = state.oauth;
 
 	if (args.baseUrl == undefined) {
 		args.baseUrl = instance;
+	}
+
+	if (args.discardEmpty) {
+		if (args.body == undefined || Object.keys(args.body).length == 0) {
+			return { data: null };
+		}
+		delete args.discardEmpty;
 	}
 
 	if (args.asForm) {

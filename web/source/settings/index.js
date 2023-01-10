@@ -46,7 +46,7 @@ const nav = {
 		adminOnly: true,
 		"Instance Settings": require("./admin/settings.js"),
 		"Actions": require("./admin/actions"),
-		"Federation": require("./admin/federation.js"),
+		"Federation": require("./admin/federation"),
 	},
 	"Custom Emoji": {
 		adminOnly: true,
@@ -172,7 +172,7 @@ function App() {
 function Main() {
 	return (
 		<Provider store={store}>
-			<PersistGate loading={<section><Loading/></section>} persistor={persistor}>
+			<PersistGate loading={<section><Loading /></section>} persistor={persistor}>
 				<App />
 			</PersistGate>
 		</Provider>

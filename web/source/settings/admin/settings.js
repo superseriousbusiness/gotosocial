@@ -47,19 +47,19 @@ module.exports = function AdminSettings() {
 	);
 };
 
-function AdminSettingsForm({data: instance}) {
+function AdminSettingsForm({ data: instance }) {
 	const form = {
-		title: useTextInput("title", {defaultValue: instance.title}),
-		thumbnail: useFileInput("thumbnail", {withPreview: true}),
-		thumbnailDesc: useTextInput("thumbnail_description", {defaultValue: instance.thumbnail_description}),
-		shortDesc: useTextInput("short_description", {defaultValue: instance.short_description}),
-		description: useTextInput("description", {defaultValue: instance.description}),
-		contactUser: useTextInput("contact_username", {defaultValue: instance.contact_account?.username}),
-		contactEmail: useTextInput("contact_email", {defaultValue: instance.email}),
-		terms: useTextInput("terms", {defaultValue: instance.terms})
+		title: useTextInput("title", { defaultValue: instance.title }),
+		thumbnail: useFileInput("thumbnail", { withPreview: true }),
+		thumbnailDesc: useTextInput("thumbnail_description", { defaultValue: instance.thumbnail_description }),
+		shortDesc: useTextInput("short_description", { defaultValue: instance.short_description }),
+		description: useTextInput("description", { defaultValue: instance.description }),
+		contactUser: useTextInput("contact_username", { defaultValue: instance.contact_account?.username }),
+		contactEmail: useTextInput("contact_email", { defaultValue: instance.email }),
+		terms: useTextInput("terms", { defaultValue: instance.terms })
 	};
 
-	const [result, submitForm] = useFormSubmit(form, query.useUpdateInstanceMutation());
+	const [submitForm, result] = useFormSubmit(form, query.useUpdateInstanceMutation());
 
 	return (
 		<form onSubmit={submitForm}>
@@ -117,7 +117,7 @@ function AdminSettingsForm({data: instance}) {
 				placeholder=""
 			/>
 
-			<MutationButton text="Save" result={result}/>
+			<MutationButton label="Save" result={result} />
 		</form>
 	);
 }

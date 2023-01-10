@@ -21,11 +21,11 @@
 const React = require("react");
 const prettierBytes = require("prettier-bytes");
 
-module.exports = function useFileInput({name, _Name}, {
+module.exports = function useFileInput({ name, _Name }, {
 	withPreview,
 	maxSize,
 	initialInfo = "no file selected"
-}) {
+} = {}) {
 	const [file, setFile] = React.useState();
 	const [imageURL, setImageURL] = React.useState();
 	const [info, setInfo] = React.useState();
@@ -40,7 +40,7 @@ module.exports = function useFileInput({name, _Name}, {
 			if (withPreview) {
 				setImageURL(URL.createObjectURL(file));
 			}
-	
+
 			let size = prettierBytes(file.size);
 			if (maxSize && file.size > maxSize) {
 				size = <span className="error-text">{size}</span>;

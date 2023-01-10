@@ -20,9 +20,8 @@
 
 const syncpipe = require("syncpipe");
 
-module.exports = function useFormSubmit(form, [mutationQuery, result]) {
+module.exports = function useFormSubmit(form, [mutationQuery, result], { changedOnly = true } = {}) {
 	return [
-		result,
 		function submitForm(e) {
 			e.preventDefault();
 
@@ -31,7 +30,7 @@ module.exports = function useFormSubmit(form, [mutationQuery, result]) {
 			const mutationData = syncpipe(form, [
 				(_) => Object.values(_),
 				(_) => _.map((field) => {
-					if (field.hasChanged()) {
+					if (!changedOnly || field.hasChanged()) {
 						updatedFields.push(field);
 						return [field.name, field.value];
 					} else {
@@ -42,9 +41,8 @@ module.exports = function useFormSubmit(form, [mutationQuery, result]) {
 				(_) => Object.fromEntries(_)
 			]);
 
-			if (updatedFields.length > 0) {
-				return mutationQuery(mutationData);
-			}
+			return mutationQuery(mutationData);
 		},
+		result
 	];
 };

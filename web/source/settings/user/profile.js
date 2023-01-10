@@ -51,7 +51,7 @@ module.exports = function UserProfile() {
 	);
 };
 
-function UserProfileForm({data: profile}) {
+function UserProfileForm({ data: profile }) {
 	/*
 		User profile update form keys
 		- bool bot
@@ -65,18 +65,18 @@ function UserProfileForm({data: profile}) {
 	*/
 
 	const form = {
-		avatar: useFileInput("avatar", {withPreview: true}),
-		header: useFileInput("header", {withPreview: true}),
-		displayName: useTextInput("display_name", {defaultValue: profile.display_name}),
-		note: useTextInput("note", {defaultValue: profile.source?.note}),
-		customCSS: useTextInput("custom_css", {defaultValue: profile.custom_css}),
-		bot: useBoolInput("bot", {defaultValue: profile.bot}),
-		locked: useBoolInput("locked", {defaultValue: profile.locked}),
-		enableRSS: useBoolInput("enable_rss", {defaultValue: profile.enable_rss}),
+		avatar: useFileInput("avatar", { withPreview: true }),
+		header: useFileInput("header", { withPreview: true }),
+		displayName: useTextInput("display_name", { defaultValue: profile.display_name }),
+		note: useTextInput("note", { defaultValue: profile.source?.note }),
+		customCSS: useTextInput("custom_css", { defaultValue: profile.custom_css }),
+		bot: useBoolInput("bot", { defaultValue: profile.bot }),
+		locked: useBoolInput("locked", { defaultValue: profile.locked }),
+		enableRSS: useBoolInput("enable_rss", { defaultValue: profile.enable_rss }),
 	};
 
 	const allowCustomCSS = Redux.useSelector(state => state.instances.current.configuration.accounts.allow_custom_css);
-	const [result, submitForm] = useFormSubmit(form, query.useUpdateCredentialsMutation());
+	const [submitForm, result] = useFormSubmit(form, query.useUpdateCredentialsMutation());
 
 	return (
 		<form className="user-profile" onSubmit={submitForm}>
@@ -125,7 +125,7 @@ function UserProfileForm({data: profile}) {
 				field={form.enableRSS}
 				label="Enable RSS feed of Public posts"
 			/>
-			{ !allowCustomCSS ? null :
+			{!allowCustomCSS ? null :
 				<TextArea
 					field={form.customCSS}
 					label="Custom CSS"
@@ -135,7 +135,7 @@ function UserProfileForm({data: profile}) {
 					<a href="https://docs.gotosocial.org/en/latest/user_guide/custom_css" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about custom profile CSS (opens in a new tab)</a>
 				</TextArea>
 			}
-			<MutationButton text="Save profile info" result={result}/>
+			<MutationButton label="Save profile info" result={result} />
 		</form>
 	);
 }
