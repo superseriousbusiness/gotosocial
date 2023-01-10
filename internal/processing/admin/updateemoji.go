@@ -19,6 +19,7 @@
 package admin
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -30,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/iotools"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
@@ -90,9 +92,17 @@ func (p *processor) emojiUpdateCopy(ctx context.Context, emoji *gtsmodel.Emoji, 
 	newEmojiURI := uris.GenerateURIForEmoji(newEmojiID)
 
 	data := func(ctx context.Context) (reader io.ReadCloser, fileSize int64, err error) {
-		// 'copy' the emoji by pulling the existing one out of storage
-		i, err := p.storage.GetStream(ctx, emoji.ImagePath)
-		return i, int64(emoji.ImageFileSize), err
+		// 'copy' the emoji by pulling the existing one out of storage.
+		// (being just an emoji, this is safe to copy into memory).
+		b, err := p.storage.Get(ctx, emoji.ImagePath)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		// Wrap the bytes in memory in a read (nop) closer.
+		return iotools.ReadFnCloser(bytes.NewReader(b), func() error {
+			return nil
+		}), int64(len(b)), nil
 	}
 
 	var ai *media.AdditionalEmojiInfo
