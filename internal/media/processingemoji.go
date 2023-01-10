@@ -48,7 +48,7 @@ type ProcessingEmoji struct {
 	postFn    PostDataCallbackFunc // post data callback function
 	err       error                // error encountered during processing
 	manager   *manager             // manager instance (access to db / storage)
-	mutex     sync.Mutex           // protects concurrent processing
+	once      sync.Once            // once ensures processing only occurs once
 }
 
 // EmojiID returns the ID of the underlying emoji without blocking processing.
@@ -59,78 +59,68 @@ func (p *ProcessingEmoji) EmojiID() string {
 // LoadEmoji blocks until the static and fullsize image
 // has been processed, and then returns the completed emoji.
 func (p *ProcessingEmoji) LoadEmoji(ctx context.Context) (*gtsmodel.Emoji, error) {
-	var err error
+	// only process once.
+	p.once.Do(func() {
+		var err error
 
-	// Acquire media lock
-	p.mutex.Lock()
+		defer func() {
+			if r := recover(); r != nil {
+				if err != nil {
+					rOld := r // wrap the panic so we don't lose existing returned error
+					r = fmt.Errorf("panic occured after error %q: %v", err.Error(), rOld)
+				}
 
-	defer func() {
-		// Unset funcs.
-		p.dataFn = nil
-		p.postFn = nil
+				// Catch any panics and wrap as error.
+				err = fmt.Errorf("caught panic: %v", r)
+			}
 
-		if r := recover(); r != nil {
-			// Catch any panics and wrap as error.
-			err = fmt.Errorf("caught panic: %v", r)
+			if err != nil {
+				// Store error.
+				p.err = err
+			}
+		}()
+
+		// Attempt to store media and calculate
+		// full-size media attachment details.
+		if err = p.store(ctx); err != nil {
+			return
 		}
 
-		if err != nil {
-			// Store error.
-			p.err = err
+		// Finish processing by reloading media into
+		// memory to get dimension and generate a thumb.
+		if err = p.finish(ctx); err != nil {
+			return
 		}
 
-		// Unlock media.
-		p.mutex.Unlock()
-	}()
+		if p.refresh {
+			columns := []string{
+				"updated_at",
+				"image_remote_url",
+				"image_static_remote_url",
+				"image_url",
+				"image_static_url",
+				"image_path",
+				"image_static_path",
+				"image_content_type",
+				"image_file_size",
+				"image_static_file_size",
+				"image_updated_at",
+				"shortcode",
+				"uri",
+			}
 
-	if p.dataFn == nil {
-		// Already processed
-		if p.err != nil {
-			return nil, p.err
-		}
-		return p.emoji, nil
-	}
-
-	// Attempt to store media and calculate
-	// full-size media attachment details.
-	if err = p.store(ctx); err != nil {
-		return nil, err
-	}
-
-	// Finish processing by reloading emoji
-	// into memory and creating static image.
-	if err = p.finish(ctx); err != nil {
-		return nil, err
-	}
-
-	if p.refresh {
-		columns := []string{
-			"updated_at",
-			"image_remote_url",
-			"image_static_remote_url",
-			"image_url",
-			"image_static_url",
-			"image_path",
-			"image_static_path",
-			"image_content_type",
-			"image_file_size",
-			"image_static_file_size",
-			"image_updated_at",
-			"shortcode",
-			"uri",
+			// Existing emoji we're refreshing, so only need to update.
+			_, err = p.manager.db.UpdateEmoji(ctx, p.emoji, columns...)
+			return
 		}
 
-		// Existing emoji media we're refresh, so only need to update it.
-		if _, err := p.manager.db.UpdateEmoji(ctx, p.emoji, columns...); err != nil {
-			return nil, err
-		}
+		// New emoji media, first time caching.
+		err = p.manager.db.PutEmoji(ctx, p.emoji)
+		return
+	})
 
-		return p.emoji, nil
-	}
-
-	// New emoji media we're caching for first time.
-	if err := p.manager.db.PutEmoji(ctx, p.emoji); err != nil {
-		return nil, err
+	if p.err != nil {
+		return nil, p.err
 	}
 
 	return p.emoji, nil

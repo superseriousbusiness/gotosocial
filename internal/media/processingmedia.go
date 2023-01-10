@@ -45,7 +45,7 @@ type ProcessingMedia struct {
 	postFn  PostDataCallbackFunc      // post data callback function
 	err     error                     // error encountered during processing
 	manager *manager                  // manager instance (access to db / storage)
-	mutex   sync.Mutex                // protects concurrent processing
+	once    sync.Once                 // once ensures processing only occurs once
 }
 
 // AttachmentID returns the ID of the underlying media attachment without blocking processing.
@@ -56,62 +56,52 @@ func (p *ProcessingMedia) AttachmentID() string {
 // LoadAttachment blocks until the thumbnail and fullsize content
 // has been processed, and then returns the completed attachment.
 func (p *ProcessingMedia) LoadAttachment(ctx context.Context) (*gtsmodel.MediaAttachment, error) {
-	var err error
+	// only process once.
+	p.once.Do(func() {
+		var err error
 
-	// Acquire media lock
-	p.mutex.Lock()
+		defer func() {
+			if r := recover(); r != nil {
+				if err != nil {
+					rOld := r // wrap the panic so we don't lose existing returned error
+					r = fmt.Errorf("panic occured after error %q: %v", err.Error(), rOld)
+				}
 
-	defer func() {
-		// Unset funcs.
-		p.dataFn = nil
-		p.postFn = nil
+				// Catch any panics and wrap as error.
+				err = fmt.Errorf("caught panic: %v", r)
+			}
 
-		if r := recover(); r != nil {
-			// Catch any panics and wrap as error.
-			err = fmt.Errorf("caught panic: %v", r)
+			if err != nil {
+				// Store error.
+				p.err = err
+			}
+		}()
+
+		// Attempt to store media and calculate
+		// full-size media attachment details.
+		if err = p.store(ctx); err != nil {
+			return
 		}
 
-		if err != nil {
-			// Store error.
-			p.err = err
+		// Finish processing by reloading media into
+		// memory to get dimension and generate a thumb.
+		if err = p.finish(ctx); err != nil {
+			return
 		}
 
-		// Unlock media.
-		p.mutex.Unlock()
-	}()
-
-	if p.dataFn == nil {
-		// Already processed
-		if p.err != nil {
-			return nil, p.err
-		}
-		return p.media, nil
-	}
-
-	// Attempt to store media and calculate
-	// full-size media attachment details.
-	if err = p.store(ctx); err != nil {
-		return nil, err
-	}
-
-	// Finish processing by reloading media into
-	// memory to get dimension and generate a thumb.
-	if err = p.finish(ctx); err != nil {
-		return nil, err
-	}
-
-	if p.recache {
-		// Existing media attachment we're recaching, so only need to update it.
-		if err := p.manager.db.UpdateByID(ctx, p.media, p.media.ID); err != nil {
-			return nil, err
+		if p.recache {
+			// Existing attachment we're recaching, so only need to update.
+			err = p.manager.db.UpdateByID(ctx, p.media, p.media.ID)
+			return
 		}
 
-		return p.media, nil
-	}
+		// New attachment, first time caching.
+		err = p.manager.db.Put(ctx, p.media)
+		return
+	})
 
-	// New media attachment we're caching for first time.
-	if err := p.manager.db.Put(ctx, p.media); err != nil {
-		return nil, err
+	if p.err != nil {
+		return nil, p.err
 	}
 
 	return p.media, nil
