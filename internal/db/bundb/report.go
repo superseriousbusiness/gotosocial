@@ -100,7 +100,7 @@ func (r *reportDB) getReport(ctx context.Context, lookup string, dbQuery func(*g
 func (r *reportDB) PutReport(ctx context.Context, report *gtsmodel.Report) db.Error {
 	return r.state.Caches.GTS.Report().Store(report, func() error {
 		_, err := r.conn.NewInsert().Model(report).Exec(ctx)
-		return err
+		return r.conn.ProcessError(err)
 	})
 }
 
