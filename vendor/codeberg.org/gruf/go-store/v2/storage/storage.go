@@ -14,10 +14,10 @@ type Storage interface {
 	ReadStream(ctx context.Context, key string) (io.ReadCloser, error)
 
 	// WriteBytes writes the supplied value bytes at key in the storage
-	WriteBytes(ctx context.Context, key string, value []byte) error
+	WriteBytes(ctx context.Context, key string, value []byte) (int, error)
 
 	// WriteStream writes the bytes from supplied reader at key in the storage
-	WriteStream(ctx context.Context, key string, r io.Reader) error
+	WriteStream(ctx context.Context, key string, r io.Reader) (int64, error)
 
 	// Stat checks if the supplied key is in the storage
 	Stat(ctx context.Context, key string) (bool, error)

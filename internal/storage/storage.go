@@ -26,12 +26,14 @@ import (
 	"path"
 	"time"
 
+	"codeberg.org/gruf/go-bytesize"
 	"codeberg.org/gruf/go-cache/v3/ttl"
 	"codeberg.org/gruf/go-store/v2/kv"
 	"codeberg.org/gruf/go-store/v2/storage"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 const (
@@ -63,9 +65,14 @@ func (d *Driver) URL(ctx context.Context, key string) *url.URL {
 		return nil
 	}
 
-	// access the cache member directly to avoid extending the TTL
-	if u, ok := d.PresignedCache.Cache.Get(key); ok {
-		return u.Value
+	// Check cache underlying cache map directly to
+	// avoid extending the TTL (which cache.Get() does).
+	d.PresignedCache.Lock()
+	e, ok := d.PresignedCache.Cache.Get(key)
+	d.PresignedCache.Unlock()
+
+	if ok {
+		return e.Value
 	}
 
 	u, err := s3.Client().PresignedGetObject(ctx, d.Bucket, key, urlCacheTTL, url.Values{
@@ -88,7 +95,6 @@ func AutoConfig() (*Driver, error) {
 	default:
 		return nil, fmt.Errorf("invalid storage backend: %s", backend)
 	}
-
 }
 
 func NewFileStorage() (*Driver, error) {
@@ -102,10 +108,15 @@ func NewFileStorage() (*Driver, error) {
 		// overwriting the lockfile if we store a file called 'store.lock'.
 		// However, in this case it's OK because the keys are set by
 		// GtS and not the user, so we know we're never going to overwrite it.
-		LockFile: path.Join(basePath, "store.lock"),
+		LockFile:     path.Join(basePath, "store.lock"),
+		WriteBufSize: int(16 * bytesize.KiB),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error opening disk storage: %w", err)
+	}
+
+	if err := disk.Clean(context.Background()); err != nil {
+		log.Errorf("error performing storage cleanup: %v", err)
 	}
 
 	return &Driver{

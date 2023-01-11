@@ -55,14 +55,14 @@ func StandardStorageSetup(storage *gtsstorage.Driver, relativePath string) {
 		if err != nil {
 			panic(err)
 		}
-		if err := storage.Put(context.TODO(), pathOriginal, bOriginal); err != nil {
+		if _, err := storage.Put(context.TODO(), pathOriginal, bOriginal); err != nil {
 			panic(err)
 		}
 		bSmall, err := os.ReadFile(fmt.Sprintf("%s/%s", relativePath, filenameSmall))
 		if err != nil {
 			panic(err)
 		}
-		if err := storage.Put(context.TODO(), pathSmall, bSmall); err != nil {
+		if _, err := storage.Put(context.TODO(), pathSmall, bSmall); err != nil {
 			panic(err)
 		}
 	}
@@ -82,14 +82,14 @@ func StandardStorageSetup(storage *gtsstorage.Driver, relativePath string) {
 		if err != nil {
 			panic(err)
 		}
-		if err := storage.Put(context.TODO(), pathOriginal, bOriginal); err != nil {
+		if _, err := storage.Put(context.TODO(), pathOriginal, bOriginal); err != nil {
 			panic(err)
 		}
 		bStatic, err := os.ReadFile(fmt.Sprintf("%s/%s", relativePath, filenameStatic))
 		if err != nil {
 			panic(err)
 		}
-		if err := storage.Put(context.TODO(), pathStatic, bStatic); err != nil {
+		if _, err := storage.Put(context.TODO(), pathStatic, bStatic); err != nil {
 			panic(err)
 		}
 	}

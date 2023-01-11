@@ -300,8 +300,8 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerWit
 	suite.NotEmpty(apimodelAccount.HeaderStatic)
 
 	// should be different from the values set before
-	suite.NotEqual("http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpeg", apimodelAccount.Header)
-	suite.NotEqual("http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpeg", apimodelAccount.HeaderStatic)
+	suite.NotEqual("http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg", apimodelAccount.Header)
+	suite.NotEqual("http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg", apimodelAccount.HeaderStatic)
 }
 
 func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerEmptyForm() {

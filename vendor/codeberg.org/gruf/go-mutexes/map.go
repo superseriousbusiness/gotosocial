@@ -454,7 +454,9 @@ func (mu *rwmutex) Unlock() {
 	if mu.rcnt > 0 {
 		// RUnlock
 		mu.rcnt--
-	} else {
+	}
+
+	if mu.rcnt == 0 {
 		// Total unlock
 		mu.lock = 0
 	}

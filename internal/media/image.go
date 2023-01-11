@@ -19,182 +19,167 @@
 package media
 
 import (
-	"bytes"
-	"errors"
-	"fmt"
+	"bufio"
 	"image"
-	"image/gif"
+	"image/color"
+	"image/draw"
 	"image/jpeg"
 	"image/png"
 	"io"
+	"sync"
 
 	"github.com/buckket/go-blurhash"
 	"github.com/disintegration/imaging"
-	_ "golang.org/x/image/webp" // blank import to support WebP decoding
+	"github.com/superseriousbusiness/gotosocial/internal/iotools"
+
+	// import to init webp encode/decoding.
+	_ "golang.org/x/image/webp"
 )
 
-const (
-	thumbnailMaxWidth  = 512
-	thumbnailMaxHeight = 512
+var (
+	// pngEncoder provides our global PNG encoding with
+	// specified compression level, and memory pooled buffers.
+	pngEncoder = png.Encoder{
+		CompressionLevel: png.DefaultCompression,
+		BufferPool:       &pngEncoderBufferPool{},
+	}
+
+	// jpegBufferPool is a memory pool of byte buffers for JPEG encoding.
+	jpegBufferPool = sync.Pool{
+		New: func() any {
+			return bufio.NewWriter(nil)
+		},
+	}
 )
 
-func decodeGif(r io.Reader) (*mediaMeta, error) {
-	gif, err := gif.DecodeAll(r)
+// gtsImage is a thin wrapper around the standard library image
+// interface to provide our own useful helper functions for image
+// size and aspect ratio calculations, streamed encoding to various
+// types, and creating reduced size thumbnail images.
+type gtsImage struct{ image image.Image }
+
+// blankImage generates a blank image of given dimensions.
+func blankImage(width int, height int) *gtsImage {
+	// create a rectangle with the same dimensions as the video
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
+
+	// fill the rectangle with our desired fill color.
+	draw.Draw(img, img.Bounds(), &image.Uniform{
+		color.RGBA{42, 43, 47, 0},
+	}, image.Point{}, draw.Src)
+
+	return &gtsImage{image: img}
+}
+
+// decodeImage will decode image from reader stream and return image wrapped in our own gtsImage{} type.
+func decodeImage(r io.Reader, opts ...imaging.DecodeOption) (*gtsImage, error) {
+	img, err := imaging.Decode(r, opts...)
 	if err != nil {
 		return nil, err
 	}
-
-	// use the first frame to get the static characteristics
-	width := gif.Config.Width
-	height := gif.Config.Height
-	size := width * height
-	aspect := float32(width) / float32(height)
-
-	return &mediaMeta{
-		width:  width,
-		height: height,
-		size:   size,
-		aspect: aspect,
-	}, nil
+	return &gtsImage{image: img}, nil
 }
 
-func decodeImage(r io.Reader, contentType string) (*mediaMeta, error) {
-	var i image.Image
-	var err error
-
-	switch contentType {
-	case mimeImageJpeg, mimeImageWebp:
-		i, err = imaging.Decode(r, imaging.AutoOrientation(true))
-	case mimeImagePng:
-		strippedPngReader := io.Reader(&PNGAncillaryChunkStripper{
-			Reader: r,
-		})
-		i, err = imaging.Decode(strippedPngReader, imaging.AutoOrientation(true))
-	default:
-		err = fmt.Errorf("content type %s not recognised", contentType)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	if i == nil {
-		return nil, errors.New("processed image was nil")
-	}
-
-	width := i.Bounds().Size().X
-	height := i.Bounds().Size().Y
-	size := width * height
-	aspect := float32(width) / float32(height)
-
-	return &mediaMeta{
-		width:  width,
-		height: height,
-		size:   size,
-		aspect: aspect,
-	}, nil
+// Width returns the image width in pixels.
+func (m *gtsImage) Width() uint32 {
+	return uint32(m.image.Bounds().Size().X)
 }
 
-// deriveStaticEmojji takes a given gif or png of an emoji, decodes it, and re-encodes it as a static png.
-func deriveStaticEmoji(r io.Reader, contentType string) (*mediaMeta, error) {
-	var i image.Image
-	var err error
-
-	switch contentType {
-	case mimeImagePng:
-		i, err = StrippedPngDecode(r)
-		if err != nil {
-			return nil, err
-		}
-	case mimeImageGif:
-		i, err = gif.Decode(r)
-		if err != nil {
-			return nil, err
-		}
-	default:
-		return nil, fmt.Errorf("content type %s not allowed for emoji", contentType)
-	}
-
-	out := &bytes.Buffer{}
-	if err := png.Encode(out, i); err != nil {
-		return nil, err
-	}
-	return &mediaMeta{
-		small: out.Bytes(),
-	}, nil
+// Height returns the image height in pixels.
+func (m *gtsImage) Height() uint32 {
+	return uint32(m.image.Bounds().Size().Y)
 }
 
-// deriveThumbnailFromImage returns a byte slice and metadata for a thumbnail
-// of a given piece of media, or an error if something goes wrong.
-//
-// If createBlurhash is true, then a blurhash will also be generated from a tiny
-// version of the image. This costs precious CPU cycles, so only use it if you
-// really need a blurhash and don't have one already.
-//
-// If createBlurhash is false, then the blurhash field on the returned ImageAndMeta
-// will be an empty string.
-func deriveThumbnailFromImage(r io.Reader, contentType string, createBlurhash bool) (*mediaMeta, error) {
-	var i image.Image
-	var err error
+// Size returns the total number of image pixels.
+func (m *gtsImage) Size() uint64 {
+	return uint64(m.image.Bounds().Size().X) *
+		uint64(m.image.Bounds().Size().Y)
+}
 
-	switch contentType {
-	case mimeImageJpeg, mimeImageGif, mimeImageWebp:
-		i, err = imaging.Decode(r, imaging.AutoOrientation(true))
-	case mimeImagePng:
-		strippedPngReader := io.Reader(&PNGAncillaryChunkStripper{
-			Reader: r,
-		})
-		i, err = imaging.Decode(strippedPngReader, imaging.AutoOrientation(true))
-	default:
-		err = fmt.Errorf("content type %s can't be thumbnailed as an image", contentType)
+// AspectRatio returns the image ratio of width:height.
+func (m *gtsImage) AspectRatio() float32 {
+	return float32(m.image.Bounds().Size().X) /
+		float32(m.image.Bounds().Size().Y)
+}
+
+// Thumbnail returns a small sized copy of gtsImage{}, limited to 512x512 if not small enough.
+func (m *gtsImage) Thumbnail() *gtsImage {
+	const (
+		// max thumb
+		// dimensions.
+		maxWidth  = 512
+		maxHeight = 512
+	)
+
+	// Check the receiving image is within max thumnail bounds.
+	if m.Width() <= maxWidth && m.Height() <= maxHeight {
+		return &gtsImage{image: imaging.Clone(m.image)}
 	}
 
-	if err != nil {
-		return nil, fmt.Errorf("error decoding %s: %s", contentType, err)
-	}
+	// Image is too large, needs to be resized to thumbnail max.
+	img := imaging.Fit(m.image, maxWidth, maxHeight, imaging.Linear)
+	return &gtsImage{image: img}
+}
 
-	originalX := i.Bounds().Size().X
-	originalY := i.Bounds().Size().Y
+// Blurhash calculates the blurhash for the receiving image data.
+func (m *gtsImage) Blurhash() (string, error) {
+	// for generating blurhashes, it's more cost effective to
+	// lose detail since it's blurry, so make a tiny version.
+	tiny := imaging.Resize(m.image, 32, 0, imaging.NearestNeighbor)
 
-	var thumb image.Image
-	if originalX <= thumbnailMaxWidth && originalY <= thumbnailMaxHeight {
-		// it's already small, no need to resize
-		thumb = i
-	} else {
-		thumb = imaging.Fit(i, thumbnailMaxWidth, thumbnailMaxHeight, imaging.Linear)
-	}
+	// Encode blurhash from resized version
+	return blurhash.Encode(4, 3, tiny)
+}
 
-	thumbX := thumb.Bounds().Size().X
-	thumbY := thumb.Bounds().Size().Y
-	size := thumbX * thumbY
-	aspect := float32(thumbX) / float32(thumbY)
+// ToJPEG creates a new streaming JPEG encoder from receiving image, and a size ptr
+// which stores the number of bytes written during the image encoding process.
+func (m *gtsImage) ToJPEG(opts *jpeg.Options) io.Reader {
+	return iotools.StreamWriteFunc(func(w io.Writer) error {
+		// Get encoding buffer
+		bw := getJPEGBuffer(w)
 
-	im := &mediaMeta{
-		width:  thumbX,
-		height: thumbY,
-		size:   size,
-		aspect: aspect,
-	}
+		// Encode JPEG to buffered writer.
+		err := jpeg.Encode(bw, m.image, opts)
 
-	if createBlurhash {
-		// for generating blurhashes, it's more cost effective to lose detail rather than
-		// pass a big image into the blurhash algorithm, so make a teeny tiny version
-		tiny := imaging.Resize(thumb, 32, 0, imaging.NearestNeighbor)
-		bh, err := blurhash.Encode(4, 3, tiny)
-		if err != nil {
-			return nil, fmt.Errorf("error creating blurhash: %s", err)
-		}
-		im.blurhash = bh
-	}
+		// Replace buffer.
+		//
+		// NOTE: jpeg.Encode() already
+		// performs a bufio.Writer.Flush().
+		putJPEGBuffer(bw)
 
-	out := &bytes.Buffer{}
-	if err := jpeg.Encode(out, thumb, &jpeg.Options{
-		// Quality isn't extremely important for thumbnails, so 75 is "good enough"
-		Quality: 75,
-	}); err != nil {
-		return nil, fmt.Errorf("error encoding thumbnail: %s", err)
-	}
-	im.small = out.Bytes()
+		return err
+	})
+}
 
-	return im, nil
+// ToPNG creates a new streaming PNG encoder from receiving image, and a size ptr
+// which stores the number of bytes written during the image encoding process.
+func (m *gtsImage) ToPNG() io.Reader {
+	return iotools.StreamWriteFunc(func(w io.Writer) error {
+		return pngEncoder.Encode(w, m.image)
+	})
+}
+
+// getJPEGBuffer fetches a reset JPEG encoding buffer from global JPEG buffer pool.
+func getJPEGBuffer(w io.Writer) *bufio.Writer {
+	buf, _ := jpegBufferPool.Get().(*bufio.Writer)
+	buf.Reset(w)
+	return buf
+}
+
+// putJPEGBuffer resets the given bufio writer and places in global JPEG buffer pool.
+func putJPEGBuffer(buf *bufio.Writer) {
+	buf.Reset(nil)
+	jpegBufferPool.Put(buf)
+}
+
+// pngEncoderBufferPool implements png.EncoderBufferPool.
+type pngEncoderBufferPool sync.Pool
+
+func (p *pngEncoderBufferPool) Get() *png.EncoderBuffer {
+	buf, _ := (*sync.Pool)(p).Get().(*png.EncoderBuffer)
+	return buf
+}
+
+func (p *pngEncoderBufferPool) Put(buf *png.EncoderBuffer) {
+	(*sync.Pool)(p).Put(buf)
 }

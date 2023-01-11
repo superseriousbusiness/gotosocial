@@ -119,3 +119,41 @@ func (w *SilentWriter) Write(b []byte) (int, error) {
 func (w *SilentWriter) Error() error {
 	return w.err
 }
+
+func StreamReadFunc(read func(io.Reader) error) io.Writer {
+	// In-memory stream.
+	pr, pw := io.Pipe()
+
+	go func() {
+		var err error
+
+		defer func() {
+			// Always pass along error.
+			pr.CloseWithError(err)
+		}()
+
+		// Start reading.
+		err = read(pr)
+	}()
+
+	return pw
+}
+
+func StreamWriteFunc(write func(io.Writer) error) io.Reader {
+	// In-memory stream.
+	pr, pw := io.Pipe()
+
+	go func() {
+		var err error
+
+		defer func() {
+			// Always pass along error.
+			pw.CloseWithError(err)
+		}()
+
+		// Start writing.
+		err = write(pw)
+	}()
+
+	return pr
+}

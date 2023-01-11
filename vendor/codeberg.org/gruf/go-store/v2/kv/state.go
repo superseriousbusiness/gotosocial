@@ -77,17 +77,17 @@ func (st *StateRW) GetStream(ctx context.Context, key string) (io.ReadCloser, er
 }
 
 // Put: see KVStore.Put(). Returns error if state already closed.
-func (st *StateRW) Put(ctx context.Context, key string, value []byte) error {
+func (st *StateRW) Put(ctx context.Context, key string, value []byte) (int, error) {
 	if st.store == nil {
-		return ErrStateClosed
+		return 0, ErrStateClosed
 	}
 	return st.store.put(st.state.Lock, ctx, key, value)
 }
 
 // PutStream: see KVStore.PutStream(). Returns error if state already closed.
-func (st *StateRW) PutStream(ctx context.Context, key string, r io.Reader) error {
+func (st *StateRW) PutStream(ctx context.Context, key string, r io.Reader) (int64, error) {
 	if st.store == nil {
-		return ErrStateClosed
+		return 0, ErrStateClosed
 	}
 	return st.store.putStream(st.state.Lock, ctx, key, r)
 }

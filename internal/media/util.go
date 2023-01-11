@@ -19,72 +19,22 @@
 package media
 
 import (
-	"context"
-	"errors"
 	"fmt"
-	"io"
 
-	"github.com/h2non/filetype"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
-// AllSupportedMIMETypes just returns all media
-// MIME types supported by this instance.
-func AllSupportedMIMETypes() []string {
-	return []string{
-		mimeImageJpeg,
-		mimeImageGif,
-		mimeImagePng,
-		mimeImageWebp,
-		mimeVideoMp4,
-	}
+var SupportedMIMETypes = []string{
+	mimeImageJpeg,
+	mimeImageGif,
+	mimeImagePng,
+	mimeImageWebp,
+	mimeVideoMp4,
 }
 
-// parseContentType parses the MIME content type from a file, returning it as a string in the form (eg., "image/jpeg").
-// Returns an error if the content type is not something we can process.
-//
-// Fileheader should be no longer than 262 bytes; anything more than this is inefficient.
-func parseContentType(fileHeader []byte) (string, error) {
-	if fhLength := len(fileHeader); fhLength > maxFileHeaderBytes {
-		return "", fmt.Errorf("parseContentType requires %d bytes max, we got %d", maxFileHeaderBytes, fhLength)
-	}
-
-	kind, err := filetype.Match(fileHeader)
-	if err != nil {
-		return "", err
-	}
-
-	if kind == filetype.Unknown {
-		return "", errors.New("filetype unknown")
-	}
-
-	return kind.MIME.Value, nil
-}
-
-// supportedAttachment checks mime type of an attachment against a
-// slice of accepted types, and returns True if the mime type is accepted.
-func supportedAttachment(mimeType string) bool {
-	for _, accepted := range AllSupportedMIMETypes() {
-		if mimeType == accepted {
-			return true
-		}
-	}
-	return false
-}
-
-// supportedEmoji checks that the content type is image/png or image/gif -- the only types supported for emoji.
-func supportedEmoji(mimeType string) bool {
-	acceptedEmojiTypes := []string{
-		mimeImageGif,
-		mimeImagePng,
-	}
-	for _, accepted := range acceptedEmojiTypes {
-		if mimeType == accepted {
-			return true
-		}
-	}
-	return false
+var SupportedEmojiMIMETypes = []string{
+	mimeImageGif,
+	mimeImagePng,
 }
 
 // ParseMediaType converts s to a recognized MediaType, or returns an error if unrecognized
@@ -126,32 +76,4 @@ func (l *logrusWrapper) Info(msg string, keysAndValues ...interface{}) {
 // Error logs an error condition.
 func (l *logrusWrapper) Error(err error, msg string, keysAndValues ...interface{}) {
 	log.Error("media manager cron logger: ", err, msg, keysAndValues)
-}
-
-// lengthReader wraps a reader and reads the length of total bytes written as it goes.
-type lengthReader struct {
-	source io.Reader
-	length int64
-}
-
-func (r *lengthReader) Read(b []byte) (int, error) {
-	n, err := r.source.Read(b)
-	r.length += int64(n)
-	return n, err
-}
-
-// putStream either puts a file with a known fileSize into storage directly, and returns the
-// fileSize unchanged, or it wraps the reader with a lengthReader and returns the discovered
-// fileSize.
-func putStream(ctx context.Context, storage *storage.Driver, key string, r io.Reader, fileSize int64) (int64, error) {
-	if fileSize > 0 {
-		return fileSize, storage.PutStream(ctx, key, r)
-	}
-
-	lr := &lengthReader{
-		source: r,
-	}
-
-	err := storage.PutStream(ctx, key, lr)
-	return lr.length, err
 }

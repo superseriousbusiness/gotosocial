@@ -24,13 +24,6 @@ import (
 	"time"
 )
 
-// maxFileHeaderBytes represents the maximum amount of bytes we want
-// to examine from the beginning of a file to determine its type.
-//
-// See: https://en.wikipedia.org/wiki/File_format#File_header
-// and https://github.com/h2non/filetype
-const maxFileHeaderBytes = 261
-
 // mime consts
 const (
 	mimeImage = "image"
@@ -50,14 +43,6 @@ const (
 
 	mimeMp4      = "mp4"
 	mimeVideoMp4 = mimeVideo + "/" + mimeMp4
-)
-
-type processState int32
-
-const (
-	received processState = iota // processing order has been received but not done yet
-	complete                     // processing order has been completed successfully
-	errored                      // processing order has been completed with an error
 )
 
 // EmojiMaxBytes is the maximum permitted bytes of an emoji upload (50kb)
@@ -132,17 +117,3 @@ type DataFunc func(ctx context.Context) (reader io.ReadCloser, fileSize int64, e
 //
 // This can be set to nil, and will then not be executed.
 type PostDataCallbackFunc func(ctx context.Context) error
-
-type mediaMeta struct {
-	width    int
-	height   int
-	size     int
-	aspect   float32
-	blurhash string
-	small    []byte
-
-	// video-specific properties
-	duration  float32
-	framerate float32
-	bitrate   uint64
-}

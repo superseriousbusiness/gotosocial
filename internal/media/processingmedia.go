@@ -21,387 +21,329 @@ package media
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
+	"image/jpeg"
 	"io"
-	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
+	"github.com/disintegration/imaging"
+	"github.com/h2non/filetype"
 	terminator "github.com/superseriousbusiness/exif-terminator"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 // ProcessingMedia represents a piece of media that is currently being processed. It exposes
 // various functions for retrieving data from the process.
 type ProcessingMedia struct {
-	mu sync.Mutex
-
-	/*
-		below fields should be set on newly created media;
-		attachment will be updated incrementally as media goes through processing
-	*/
-
-	attachment *gtsmodel.MediaAttachment
-	data       DataFunc
-	postData   PostDataCallbackFunc
-	read       bool // bool indicating that data function has been triggered already
-
-	thumbState    int32 // the processing state of the media thumbnail
-	fullSizeState int32 // the processing state of the full-sized media
-
-	/*
-		below pointers to database and storage are maintained so that
-		the media can store and update itself during processing steps
-	*/
-
-	database db.DB
-	storage  *storage.Driver
-
-	err error // error created during processing, if any
-
-	// track whether this media has already been put in the databse
-	insertedInDB bool
-
-	// true if this is a recache, false if it's brand new media
-	recache bool
+	media   *gtsmodel.MediaAttachment // processing media attachment details
+	recache bool                      // recaching existing (uncached) media
+	dataFn  DataFunc                  // load-data function, returns media stream
+	postFn  PostDataCallbackFunc      // post data callback function
+	err     error                     // error encountered during processing
+	manager *manager                  // manager instance (access to db / storage)
+	once    sync.Once                 // once ensures processing only occurs once
 }
 
 // AttachmentID returns the ID of the underlying media attachment without blocking processing.
 func (p *ProcessingMedia) AttachmentID() string {
-	return p.attachment.ID
+	return p.media.ID // immutable, safe outside mutex.
 }
 
 // LoadAttachment blocks until the thumbnail and fullsize content
 // has been processed, and then returns the completed attachment.
 func (p *ProcessingMedia) LoadAttachment(ctx context.Context) (*gtsmodel.MediaAttachment, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	if err := p.store(ctx); err != nil {
-		return nil, err
-	}
-
-	if err := p.loadFullSize(ctx); err != nil {
-		return nil, err
-	}
-
-	if err := p.loadThumb(ctx); err != nil {
-		return nil, err
-	}
-
-	if !p.insertedInDB {
-		if p.recache {
-			// This is an existing media attachment we're recaching, so only need to update it
-			if err := p.database.UpdateByID(ctx, p.attachment, p.attachment.ID); err != nil {
-				return nil, err
-			}
-		} else {
-			// This is a new media attachment we're caching for first time
-			if err := p.database.Put(ctx, p.attachment); err != nil {
-				return nil, err
-			}
-		}
-
-		// Mark this as stored in DB
-		p.insertedInDB = true
-	}
-
-	log.Tracef("finished loading attachment %s", p.attachment.URL)
-	return p.attachment, nil
-}
-
-// Finished returns true if processing has finished for both the thumbnail
-// and full fized version of this piece of media.
-func (p *ProcessingMedia) Finished() bool {
-	return atomic.LoadInt32(&p.thumbState) == int32(complete) && atomic.LoadInt32(&p.fullSizeState) == int32(complete)
-}
-
-func (p *ProcessingMedia) loadThumb(ctx context.Context) error {
-	thumbState := atomic.LoadInt32(&p.thumbState)
-	switch processState(thumbState) {
-	case received:
-		// we haven't processed a thumbnail for this media yet so do it now
-		// check if we need to create a blurhash or if there's already one set
-		var createBlurhash bool
-		if p.attachment.Blurhash == "" {
-			// no blurhash created yet
-			createBlurhash = true
-		}
-
-		var (
-			thumb *mediaMeta
-			err   error
-		)
-		switch ct := p.attachment.File.ContentType; ct {
-		case mimeImageJpeg, mimeImagePng, mimeImageWebp, mimeImageGif:
-			// thumbnail the image from the original stored full size version
-			stored, err := p.storage.GetStream(ctx, p.attachment.File.Path)
-			if err != nil {
-				p.err = fmt.Errorf("loadThumb: error fetching file from storage: %s", err)
-				atomic.StoreInt32(&p.thumbState, int32(errored))
-				return p.err
-			}
-
-			thumb, err = deriveThumbnailFromImage(stored, ct, createBlurhash)
-
-			// try to close the stored stream we had open, no matter what
-			if closeErr := stored.Close(); closeErr != nil {
-				log.Errorf("error closing stream: %s", closeErr)
-			}
-
-			// now check if we managed to get a thumbnail
-			if err != nil {
-				p.err = fmt.Errorf("loadThumb: error deriving thumbnail: %s", err)
-				atomic.StoreInt32(&p.thumbState, int32(errored))
-				return p.err
-			}
-		case mimeVideoMp4:
-			// create a generic thumbnail based on video height + width
-			thumb, err = deriveThumbnailFromVideo(p.attachment.FileMeta.Original.Height, p.attachment.FileMeta.Original.Width)
-			if err != nil {
-				p.err = fmt.Errorf("loadThumb: error deriving thumbnail: %s", err)
-				atomic.StoreInt32(&p.thumbState, int32(errored))
-				return p.err
-			}
-		default:
-			p.err = fmt.Errorf("loadThumb: content type %s not a processible image type", ct)
-			atomic.StoreInt32(&p.thumbState, int32(errored))
-			return p.err
-		}
-
-		// put the thumbnail in storage
-		if err := p.storage.Put(ctx, p.attachment.Thumbnail.Path, thumb.small); err != nil && err != storage.ErrAlreadyExists {
-			p.err = fmt.Errorf("loadThumb: error storing thumbnail: %s", err)
-			atomic.StoreInt32(&p.thumbState, int32(errored))
-			return p.err
-		}
-
-		// set appropriate fields on the attachment based on the thumbnail we derived
-		if createBlurhash {
-			p.attachment.Blurhash = thumb.blurhash
-		}
-		p.attachment.FileMeta.Small = gtsmodel.Small{
-			Width:  thumb.width,
-			Height: thumb.height,
-			Size:   thumb.size,
-			Aspect: thumb.aspect,
-		}
-		p.attachment.Thumbnail.FileSize = len(thumb.small)
-
-		// we're done processing the thumbnail!
-		atomic.StoreInt32(&p.thumbState, int32(complete))
-		log.Tracef("finished processing thumbnail for attachment %s", p.attachment.URL)
-		fallthrough
-	case complete:
-		return nil
-	case errored:
-		return p.err
-	}
-
-	return fmt.Errorf("loadThumb: thumbnail processing status %d unknown", p.thumbState)
-}
-
-func (p *ProcessingMedia) loadFullSize(ctx context.Context) error {
-	fullSizeState := atomic.LoadInt32(&p.fullSizeState)
-	switch processState(fullSizeState) {
-	case received:
+	// only process once.
+	p.once.Do(func() {
 		var err error
-		var decoded *mediaMeta
-
-		// stream the original file out of storage...
-		stored, err := p.storage.GetStream(ctx, p.attachment.File.Path)
-		if err != nil {
-			p.err = fmt.Errorf("loadFullSize: error fetching file from storage: %s", err)
-			atomic.StoreInt32(&p.fullSizeState, int32(errored))
-			return p.err
-		}
 
 		defer func() {
-			if err := stored.Close(); err != nil {
-				log.Errorf("loadFullSize: error closing stored full size: %s", err)
+			if r := recover(); r != nil {
+				if err != nil {
+					rOld := r // wrap the panic so we don't lose existing returned error
+					r = fmt.Errorf("panic occured after error %q: %v", err.Error(), rOld)
+				}
+
+				// Catch any panics and wrap as error.
+				err = fmt.Errorf("caught panic: %v", r)
+			}
+
+			if err != nil {
+				// Store error.
+				p.err = err
 			}
 		}()
 
-		// decode the image
-		ct := p.attachment.File.ContentType
-		switch ct {
-		case mimeImageJpeg, mimeImagePng, mimeImageWebp:
-			decoded, err = decodeImage(stored, ct)
-		case mimeImageGif:
-			decoded, err = decodeGif(stored)
-		case mimeVideoMp4:
-			decoded, err = decodeVideo(stored, ct)
-		default:
-			err = fmt.Errorf("loadFullSize: content type %s not a processible image type", ct)
+		// Attempt to store media and calculate
+		// full-size media attachment details.
+		if err = p.store(ctx); err != nil {
+			return
 		}
 
-		if err != nil {
-			p.err = err
-			atomic.StoreInt32(&p.fullSizeState, int32(errored))
-			return p.err
+		// Finish processing by reloading media into
+		// memory to get dimension and generate a thumb.
+		if err = p.finish(ctx); err != nil {
+			return
 		}
 
-		// set appropriate fields on the attachment based on the image we derived
-
-		// generic fields
-		p.attachment.File.UpdatedAt = time.Now()
-		p.attachment.FileMeta.Original = gtsmodel.Original{
-			Width:  decoded.width,
-			Height: decoded.height,
-			Size:   decoded.size,
-			Aspect: decoded.aspect,
+		if p.recache {
+			// Existing attachment we're recaching, so only need to update.
+			err = p.manager.db.UpdateByID(ctx, p.media, p.media.ID)
+			return
 		}
 
-		// nullable fields
-		if decoded.duration != 0 {
-			i := decoded.duration
-			p.attachment.FileMeta.Original.Duration = &i
-		}
-		if decoded.framerate != 0 {
-			i := decoded.framerate
-			p.attachment.FileMeta.Original.Framerate = &i
-		}
-		if decoded.bitrate != 0 {
-			i := decoded.bitrate
-			p.attachment.FileMeta.Original.Bitrate = &i
-		}
+		// New attachment, first time caching.
+		err = p.manager.db.Put(ctx, p.media)
+		return //nolint shutup linter i like this here
+	})
 
-		// we're done processing the full-size image
-		p.attachment.Processing = gtsmodel.ProcessingStatusProcessed
-		atomic.StoreInt32(&p.fullSizeState, int32(complete))
-		log.Tracef("finished processing full size image for attachment %s", p.attachment.URL)
-		fallthrough
-	case complete:
-		return nil
-	case errored:
-		return p.err
+	if p.err != nil {
+		return nil, p.err
 	}
 
-	return fmt.Errorf("loadFullSize: full size processing status %d unknown", p.fullSizeState)
+	return p.media, nil
 }
 
 // store calls the data function attached to p if it hasn't been called yet,
 // and updates the underlying attachment fields as necessary. It will then stream
 // bytes from p's reader directly into storage so that it can be retrieved later.
 func (p *ProcessingMedia) store(ctx context.Context) error {
-	// check if we've already done this and bail early if we have
-	if p.read {
-		return nil
-	}
-
-	// execute the data function to get the readcloser out of it
-	rc, fileSize, err := p.data(ctx)
-	if err != nil {
-		return fmt.Errorf("store: error executing data function: %s", err)
-	}
-
-	// defer closing the reader when we're done with it
 	defer func() {
+		if p.postFn == nil {
+			return
+		}
+
+		// ensure post callback gets called.
+		if err := p.postFn(ctx); err != nil {
+			log.Errorf("error executing postdata function: %v", err)
+		}
+	}()
+
+	// Load media from provided data fun
+	rc, sz, err := p.dataFn(ctx)
+	if err != nil {
+		return fmt.Errorf("error executing data function: %w", err)
+	}
+
+	defer func() {
+		// Ensure data reader gets closed on return.
 		if err := rc.Close(); err != nil {
-			log.Errorf("store: error closing readcloser: %s", err)
+			log.Errorf("error closing data reader: %v", err)
 		}
 	}()
 
-	// execute the postData function no matter what happens
-	defer func() {
-		if p.postData != nil {
-			if err := p.postData(ctx); err != nil {
-				log.Errorf("store: error executing postData: %s", err)
-			}
-		}
-	}()
+	// Byte buffer to read file header into.
+	// See: https://en.wikipedia.org/wiki/File_format#File_header
+	// and https://github.com/h2non/filetype
+	hdrBuf := make([]byte, 261)
 
-	// extract no more than 261 bytes from the beginning of the file -- this is the header
-	firstBytes := make([]byte, maxFileHeaderBytes)
-	if _, err := rc.Read(firstBytes); err != nil {
-		return fmt.Errorf("store: error reading initial %d bytes: %s", maxFileHeaderBytes, err)
+	// Read the first 261 header bytes into buffer.
+	if _, err := io.ReadFull(rc, hdrBuf); err != nil {
+		return fmt.Errorf("error reading incoming media: %w", err)
 	}
 
-	// now we have the file header we can work out the content type from it
-	contentType, err := parseContentType(firstBytes)
+	// Parse file type info from header buffer.
+	info, err := filetype.Match(hdrBuf)
 	if err != nil {
-		return fmt.Errorf("store: error parsing content type: %s", err)
+		return fmt.Errorf("error parsing file type: %w", err)
 	}
 
-	// bail if this is a type we can't process
-	if !supportedAttachment(contentType) {
-		return fmt.Errorf("store: media type %s not (yet) supported", contentType)
-	}
+	// Recombine header bytes with remaining stream
+	r := io.MultiReader(bytes.NewReader(hdrBuf), rc)
 
-	// extract the file extension
-	split := strings.Split(contentType, "/")
-	if len(split) != 2 {
-		return fmt.Errorf("store: content type %s was not valid", contentType)
-	}
-	extension := split[1] // something like 'jpeg'
+	switch info.Extension {
+	case "mp4":
+		p.media.Type = gtsmodel.FileTypeVideo
 
-	// concatenate the cleaned up first bytes with the existing bytes still in the reader (thanks Mara)
-	multiReader := io.MultiReader(bytes.NewBuffer(firstBytes), rc)
+	case "gif":
+		p.media.Type = gtsmodel.FileTypeImage
 
-	// use the extension to derive the attachment type
-	// and, while we're in here, clean up exif data from
-	// the image if we already know the fileSize
-	var readerToStore io.Reader
-	switch extension {
-	case mimeGif:
-		p.attachment.Type = gtsmodel.FileTypeImage
-		// nothing to terminate, we can just store the multireader
-		readerToStore = multiReader
-	case mimeJpeg, mimePng, mimeWebp:
-		p.attachment.Type = gtsmodel.FileTypeImage
-		if fileSize > 0 {
-			terminated, err := terminator.Terminate(multiReader, int(fileSize), extension)
+	case "jpg", "jpeg", "png", "webp":
+		p.media.Type = gtsmodel.FileTypeImage
+		if sz > 0 {
+			// A file size was provided so we can clean exif data from image.
+			r, err = terminator.Terminate(r, int(sz), info.Extension)
 			if err != nil {
-				return fmt.Errorf("store: exif error: %s", err)
+				return fmt.Errorf("error cleaning exif data: %w", err)
 			}
-			defer func() {
-				if closer, ok := terminated.(io.Closer); ok {
-					if err := closer.Close(); err != nil {
-						log.Errorf("store: error closing terminator reader: %s", err)
-					}
-				}
-			}()
-			// store the exif-terminated version of what was in the multireader
-			readerToStore = terminated
-		} else {
-			// can't terminate if we don't know the file size, so just store the multiReader
-			readerToStore = multiReader
 		}
-	case mimeMp4:
-		p.attachment.Type = gtsmodel.FileTypeVideo
-		// nothing to terminate, we can just store the multireader
-		readerToStore = multiReader
+
 	default:
-		return fmt.Errorf("store: couldn't process %s", extension)
+		return fmt.Errorf("unsupported file type: %s", info.Extension)
 	}
 
-	// now set some additional fields on the attachment since
-	// we know more about what the underlying media actually is
-	p.attachment.URL = uris.GenerateURIForAttachment(p.attachment.AccountID, string(TypeAttachment), string(SizeOriginal), p.attachment.ID, extension)
-	p.attachment.File.ContentType = contentType
-	p.attachment.File.Path = fmt.Sprintf("%s/%s/%s/%s.%s", p.attachment.AccountID, TypeAttachment, SizeOriginal, p.attachment.ID, extension)
+	// Calculate attachment file path.
+	p.media.File.Path = fmt.Sprintf(
+		"%s/%s/%s/%s.%s",
+		p.media.AccountID,
+		TypeAttachment,
+		SizeOriginal,
+		p.media.ID,
+		info.Extension,
+	)
 
-	// store this for now -- other processes can pull it out of storage as they please
-	if fileSize, err = putStream(ctx, p.storage, p.attachment.File.Path, readerToStore, fileSize); err != nil {
-		if !errors.Is(err, storage.ErrAlreadyExists) {
-			return fmt.Errorf("store: error storing stream: %s", err)
+	// This shouldn't already exist, but we do a check as it's worth logging.
+	if have, _ := p.manager.storage.Has(ctx, p.media.File.Path); have {
+		log.Warnf("media already exists at storage path: %s", p.media.File.Path)
+
+		// Attempt to remove existing media at storage path (might be broken / out-of-date)
+		if err := p.manager.storage.Delete(ctx, p.media.File.Path); err != nil {
+			return fmt.Errorf("error removing media from storage: %v", err)
 		}
-		log.Warnf("attachment %s already exists at storage path: %s", p.attachment.ID, p.attachment.File.Path)
 	}
 
-	cached := true
-	p.attachment.Cached = &cached
-	p.attachment.File.FileSize = int(fileSize)
-	p.read = true
+	// Write the final image reader stream to our storage.
+	sz, err = p.manager.storage.PutStream(ctx, p.media.File.Path, r)
+	if err != nil {
+		return fmt.Errorf("error writing media to storage: %w", err)
+	}
 
-	log.Tracef("finished storing initial data for attachment %s", p.attachment.URL)
+	// Set written image size.
+	p.media.File.FileSize = int(sz)
+
+	// Fill in remaining attachment data now it's stored.
+	p.media.URL = uris.GenerateURIForAttachment(
+		p.media.AccountID,
+		string(TypeAttachment),
+		string(SizeOriginal),
+		p.media.ID,
+		info.Extension,
+	)
+	p.media.File.ContentType = info.MIME.Value
+	cached := true
+	p.media.Cached = &cached
+
+	return nil
+}
+
+func (p *ProcessingMedia) finish(ctx context.Context) error {
+	// Fetch a stream to the original file in storage.
+	rc, err := p.manager.storage.GetStream(ctx, p.media.File.Path)
+	if err != nil {
+		return fmt.Errorf("error loading file from storage: %w", err)
+	}
+	defer rc.Close()
+
+	var fullImg *gtsImage
+
+	switch p.media.File.ContentType {
+	// .jpeg, .gif, .webp image type
+	case mimeImageJpeg, mimeImageGif, mimeImageWebp:
+		fullImg, err = decodeImage(rc, imaging.AutoOrientation(true))
+		if err != nil {
+			return fmt.Errorf("error decoding image: %w", err)
+		}
+
+	// .png image (requires ancillary chunk stripping)
+	case mimeImagePng:
+		fullImg, err = decodeImage(&PNGAncillaryChunkStripper{
+			Reader: rc,
+		}, imaging.AutoOrientation(true))
+		if err != nil {
+			return fmt.Errorf("error decoding image: %w", err)
+		}
+
+	// .mp4 video type
+	case mimeVideoMp4:
+		video, err := decodeVideoFrame(rc)
+		if err != nil {
+			return fmt.Errorf("error decoding video: %w", err)
+		}
+
+		// Set video frame as image.
+		fullImg = video.frame
+
+		// Set video metadata in attachment info.
+		p.media.FileMeta.Original.Duration = &video.duration
+		p.media.FileMeta.Original.Framerate = &video.framerate
+		p.media.FileMeta.Original.Bitrate = &video.bitrate
+	}
+
+	// The image should be in-memory by now.
+	if err := rc.Close(); err != nil {
+		return fmt.Errorf("error closing file: %w", err)
+	}
+
+	// Set full-size dimensions in attachment info.
+	p.media.FileMeta.Original.Width = int(fullImg.Width())
+	p.media.FileMeta.Original.Height = int(fullImg.Height())
+	p.media.FileMeta.Original.Size = int(fullImg.Size())
+	p.media.FileMeta.Original.Aspect = fullImg.AspectRatio()
+
+	// Calculate attachment thumbnail file path
+	p.media.Thumbnail.Path = fmt.Sprintf(
+		"%s/%s/%s/%s.jpg",
+		p.media.AccountID,
+		TypeAttachment,
+		SizeSmall,
+		p.media.ID,
+	)
+
+	// Get smaller thumbnail image
+	thumbImg := fullImg.Thumbnail()
+
+	// Garbage collector, you may
+	// now take our large son.
+	fullImg = nil
+
+	// Blurhash needs generating from thumb.
+	hash, err := thumbImg.Blurhash()
+	if err != nil {
+		return fmt.Errorf("error generating blurhash: %w", err)
+	}
+
+	// Set the attachment blurhash.
+	p.media.Blurhash = hash
+
+	// This shouldn't already exist, but we do a check as it's worth logging.
+	if have, _ := p.manager.storage.Has(ctx, p.media.Thumbnail.Path); have {
+		log.Warnf("thumbnail already exists at storage path: %s", p.media.Thumbnail.Path)
+
+		// Attempt to remove existing thumbnail at storage path (might be broken / out-of-date)
+		if err := p.manager.storage.Delete(ctx, p.media.Thumbnail.Path); err != nil {
+			return fmt.Errorf("error removing thumbnail from storage: %v", err)
+		}
+	}
+
+	// Create a thumbnail JPEG encoder stream.
+	enc := thumbImg.ToJPEG(&jpeg.Options{
+		Quality: 70, // enough for a thumbnail.
+	})
+
+	// Stream-encode the JPEG thumbnail image into storage.
+	sz, err := p.manager.storage.PutStream(ctx, p.media.Thumbnail.Path, enc)
+	if err != nil {
+		return fmt.Errorf("error stream-encoding thumbnail to storage: %w", err)
+	}
+
+	// Fill in remaining thumbnail now it's stored
+	p.media.Thumbnail.ContentType = mimeImageJpeg
+	p.media.Thumbnail.URL = uris.GenerateURIForAttachment(
+		p.media.AccountID,
+		string(TypeAttachment),
+		string(SizeSmall),
+		p.media.ID,
+		"jpg", // always jpeg
+	)
+
+	// Set thumbnail dimensions in attachment info.
+	p.media.FileMeta.Small = gtsmodel.Small{
+		Width:  int(thumbImg.Width()),
+		Height: int(thumbImg.Height()),
+		Size:   int(thumbImg.Size()),
+		Aspect: thumbImg.AspectRatio(),
+	}
+
+	// Set written image size.
+	p.media.Thumbnail.FileSize = int(sz)
+
+	// Finally set the attachment as processed and update time.
+	p.media.Processing = gtsmodel.ProcessingStatusProcessed
+	p.media.File.UpdatedAt = time.Now()
+
 	return nil
 }
 
@@ -409,19 +351,6 @@ func (m *manager) preProcessMedia(ctx context.Context, data DataFunc, postData P
 	id, err := id.NewRandomULID()
 	if err != nil {
 		return nil, err
-	}
-
-	file := gtsmodel.File{
-		Path:        "", // we don't know yet because it depends on the uncalled DataFunc
-		ContentType: "", // we don't know yet because it depends on the uncalled DataFunc
-		UpdatedAt:   time.Now(),
-	}
-
-	thumbnail := gtsmodel.Thumbnail{
-		URL:         uris.GenerateURIForAttachment(accountID, string(TypeAttachment), string(SizeSmall), id, mimeJpeg), // all thumbnails are encoded as jpeg,
-		Path:        fmt.Sprintf("%s/%s/%s/%s.%s", accountID, TypeAttachment, SizeSmall, id, mimeJpeg),                 // all thumbnails are encoded as jpeg,
-		ContentType: mimeImageJpeg,
-		UpdatedAt:   time.Now(),
 	}
 
 	avatar := false
@@ -443,8 +372,8 @@ func (m *manager) preProcessMedia(ctx context.Context, data DataFunc, postData P
 		ScheduledStatusID: "",
 		Blurhash:          "",
 		Processing:        gtsmodel.ProcessingStatusReceived,
-		File:              file,
-		Thumbnail:         thumbnail,
+		File:              gtsmodel.File{UpdatedAt: time.Now()},
+		Thumbnail:         gtsmodel.Thumbnail{UpdatedAt: time.Now()},
 		Avatar:            &avatar,
 		Header:            &header,
 		Cached:            &cached,
@@ -495,34 +424,28 @@ func (m *manager) preProcessMedia(ctx context.Context, data DataFunc, postData P
 	}
 
 	processingMedia := &ProcessingMedia{
-		attachment:    attachment,
-		data:          data,
-		postData:      postData,
-		thumbState:    int32(received),
-		fullSizeState: int32(received),
-		database:      m.db,
-		storage:       m.storage,
+		media:   attachment,
+		dataFn:  data,
+		postFn:  postData,
+		manager: m,
 	}
 
 	return processingMedia, nil
 }
 
-func (m *manager) preProcessRecache(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, attachmentID string) (*ProcessingMedia, error) {
-	// get the existing attachment
-	attachment, err := m.db.GetAttachmentByID(ctx, attachmentID)
+func (m *manager) preProcessRecache(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, id string) (*ProcessingMedia, error) {
+	// get the existing attachment from database.
+	attachment, err := m.db.GetAttachmentByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
 	processingMedia := &ProcessingMedia{
-		attachment:    attachment,
-		data:          data,
-		postData:      postData,
-		thumbState:    int32(received),
-		fullSizeState: int32(received),
-		database:      m.db,
-		storage:       m.storage,
-		recache:       true, // indicate it's a recache
+		media:   attachment,
+		dataFn:  data,
+		postFn:  postData,
+		manager: m,
+		recache: true, // indicate it's a recache
 	}
 
 	return processingMedia, nil

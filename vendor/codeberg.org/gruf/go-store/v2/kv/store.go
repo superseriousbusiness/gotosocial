@@ -4,9 +4,9 @@ import (
 	"context"
 	"io"
 
+	"codeberg.org/gruf/go-iotools"
 	"codeberg.org/gruf/go-mutexes"
 	"codeberg.org/gruf/go-store/v2/storage"
-	"codeberg.org/gruf/go-store/v2/util"
 )
 
 // KVStore is a very simple, yet performant key-value store
@@ -117,17 +117,25 @@ func (st *KVStore) getStream(rlock func(string) func(), ctx context.Context, key
 		return nil, err
 	}
 
-	// Wrap readcloser in our own callback closer
-	return util.ReadCloserWithCallback(rd, runlock), nil
+	var unlocked bool
+
+	// Wrap readcloser to call our own callback
+	return iotools.ReadCloser(rd, iotools.CloserFunc(func() error {
+		if !unlocked {
+			unlocked = true
+			defer runlock()
+		}
+		return rd.Close()
+	})), nil
 }
 
 // Put places the bytes at the supplied key in the store.
-func (st *KVStore) Put(ctx context.Context, key string, value []byte) error {
+func (st *KVStore) Put(ctx context.Context, key string, value []byte) (int, error) {
 	return st.put(st.Lock, ctx, key, value)
 }
 
 // put performs the underlying logic for KVStore.Put(), using supplied lock func to allow use with states.
-func (st *KVStore) put(lock func(string) func(), ctx context.Context, key string, value []byte) error {
+func (st *KVStore) put(lock func(string) func(), ctx context.Context, key string, value []byte) (int, error) {
 	// Acquire write lock for key
 	unlock := lock(key)
 	defer unlock()
@@ -137,12 +145,12 @@ func (st *KVStore) put(lock func(string) func(), ctx context.Context, key string
 }
 
 // PutStream writes the bytes from the supplied Reader at the supplied key in the store.
-func (st *KVStore) PutStream(ctx context.Context, key string, r io.Reader) error {
+func (st *KVStore) PutStream(ctx context.Context, key string, r io.Reader) (int64, error) {
 	return st.putStream(st.Lock, ctx, key, r)
 }
 
 // putStream performs the underlying logic for KVStore.PutStream(), using supplied lock func to allow use with states.
-func (st *KVStore) putStream(lock func(string) func(), ctx context.Context, key string, r io.Reader) error {
+func (st *KVStore) putStream(lock func(string) func(), ctx context.Context, key string, r io.Reader) (int64, error) {
 	// Acquire write lock for key
 	unlock := lock(key)
 	defer unlock()
