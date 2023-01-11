@@ -79,8 +79,11 @@ type NodeInfoServices struct {
 
 // NodeInfoUsage represents usage information about this server, such as number of users.
 type NodeInfoUsage struct {
-	Users NodeInfoUsers `json:"users"`
+	Users      NodeInfoUsers `json:"users"`
+	LocalPosts int           `json:"localPosts"`
 }
 
-// NodeInfoUsers is a stub for usage information, currently empty.
-type NodeInfoUsers struct{}
+// NodeInfoUsers represents aggregate information about the users on the server.
+type NodeInfoUsers struct {
+	Total int `json:"total"`
+}
