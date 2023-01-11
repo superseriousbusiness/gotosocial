@@ -23,8 +23,6 @@ const React = require("react");
 module.exports = function MutationButton({ label, result, disabled, ...inputProps }) {
 	let iconClass = "";
 
-	console.log(label, result);
-
 	if (result.isLoading) {
 		iconClass = "fa-spin fa-refresh";
 	} else if (result.isSuccess) {
@@ -36,7 +34,7 @@ module.exports = function MutationButton({ label, result, disabled, ...inputProp
 			<section className="error">{result.error.status}: {result.error.data.error}</section>
 		}
 		<button type="submit" disabled={result.isLoading || disabled}	{...inputProps}>
-			<i className={`fa fa-fw ${iconClass}`} aria-hidden="true"></i>
+			<i className={`fa fa-fw with-text ${iconClass}`} aria-hidden="true"></i>
 			{result.isLoading
 				? "Processing..."
 				: label

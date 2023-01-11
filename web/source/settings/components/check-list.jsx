@@ -22,7 +22,7 @@ const React = require("react");
 
 module.exports = function CheckList({ field, Component, ...componentProps }) {
 	return (
-		<div className="checkbox-list">
+		<div className="checkbox-list list">
 			<label className="header">
 				<input
 					ref={field.toggleAll.ref}
@@ -46,10 +46,10 @@ module.exports = function CheckList({ field, Component, ...componentProps }) {
 
 function CheckListEntry({ entry, onChange, Component, componentProps }) {
 	return (
-		<label className="row">
+		<label className="entry">
 			<input
 				type="checkbox"
-				onChange={(e) => onChange({ checked: e.target.value })}
+				onChange={(e) => onChange({ checked: e.target.checked })}
 				checked={entry.checked}
 			/>
 			<Component entry={entry} onChange={onChange} {...componentProps} />

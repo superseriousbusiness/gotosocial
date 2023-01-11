@@ -120,6 +120,13 @@ module.exports = function useCheckListInput({ name, Name }, { entries, uniqueKey
 		setState(updateAllState(state, defaultValue));
 	}
 
+	function selectedValues() {
+		return syncpipe(state, [
+			(_) => Object.values(_),
+			(_) => _.filter((entry) => entry.checked)
+		]);
+	}
+
 	return Object.assign([
 		state,
 		reset,
@@ -128,6 +135,7 @@ module.exports = function useCheckListInput({ name, Name }, { entries, uniqueKey
 		name,
 		value: state,
 		onChange: (key, newValue) => setState(updateState(state, key, newValue)),
+		selectedValues,
 		reset,
 		someSelected,
 		toggleAll: {

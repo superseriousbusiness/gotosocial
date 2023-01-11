@@ -32,16 +32,16 @@ const endpoints = (build) => ({
 				...params
 			}
 		}),
-		providesTags: (res) => 
+		providesTags: (res) =>
 			res
-				? [...res.map((emoji) => ({type: "Emojis", id: emoji.id})), {type: "Emojis", id: "LIST"}]
-				: [{type: "Emojis", id: "LIST"}]
+				? [...res.map((emoji) => ({ type: "Emojis", id: emoji.id })), { type: "Emojis", id: "LIST" }]
+				: [{ type: "Emojis", id: "LIST" }]
 	}),
 	getEmoji: build.query({
 		query: (id) => ({
 			url: `/api/v1/admin/custom_emojis/${id}`
 		}),
-		providesTags: (res, error, id) => [{type: "Emojis", id}]
+		providesTags: (res, error, id) => [{ type: "Emojis", id }]
 	}),
 	addEmoji: build.mutation({
 		query: (form) => {
@@ -49,16 +49,17 @@ const endpoints = (build) => ({
 				method: "POST",
 				url: `/api/v1/admin/custom_emojis`,
 				asForm: true,
-				body: form
+				body: form,
+				discardEmpty: true
 			};
 		},
-		invalidatesTags: (res) => 
+		invalidatesTags: (res) =>
 			res
-				? [{type: "Emojis", id: "LIST"}, {type: "Emojis", id: res.id}]
-				: [{type: "Emojis", id: "LIST"}]
+				? [{ type: "Emojis", id: "LIST" }, { type: "Emojis", id: res.id }]
+				: [{ type: "Emojis", id: "LIST" }]
 	}),
 	editEmoji: build.mutation({
-		query: ({id, ...patch}) => {
+		query: ({ id, ...patch }) => {
 			return {
 				method: "PATCH",
 				url: `/api/v1/admin/custom_emojis/${id}`,
@@ -69,17 +70,17 @@ const endpoints = (build) => ({
 				}
 			};
 		},
-		invalidatesTags: (res) => 
+		invalidatesTags: (res) =>
 			res
-				? [{type: "Emojis", id: "LIST"}, {type: "Emojis", id: res.id}]
-				: [{type: "Emojis", id: "LIST"}]
+				? [{ type: "Emojis", id: "LIST" }, { type: "Emojis", id: res.id }]
+				: [{ type: "Emojis", id: "LIST" }]
 	}),
 	deleteEmoji: build.mutation({
 		query: (id) => ({
 			method: "DELETE",
 			url: `/api/v1/admin/custom_emojis/${id}`
 		}),
-		invalidatesTags: (res, error, id) => [{type: "Emojis", id}]
+		invalidatesTags: (res, error, id) => [{ type: "Emojis", id }]
 	}),
 	searchStatusForEmoji: build.mutation({
 		query: (url) => ({
@@ -88,7 +89,7 @@ const endpoints = (build) => ({
 		}),
 		transformResponse: (res) => {
 			/* Parses search response, prioritizing a toot result,
-			   and returns referenced custom emoji
+				 and returns referenced custom emoji
 			*/
 			let type;
 
@@ -112,7 +113,7 @@ const endpoints = (build) => ({
 		}
 	}),
 	patchRemoteEmojis: build.mutation({
-		queryFn: ({action, domain, list, category}, api, _extraOpts, baseQuery) => {
+		queryFn: ({ action, domain, list, category }, api, _extraOpts, baseQuery) => {
 			const data = [];
 			const errors = [];
 
@@ -166,8 +167,8 @@ const endpoints = (build) => ({
 				}
 			});
 		},
-		invalidatesTags: () => [{type: "Emojis", id: "LIST"}]
+		invalidatesTags: () => [{ type: "Emojis", id: "LIST" }]
 	})
 });
 
-module.exports = base.injectEndpoints({endpoints});
+module.exports = base.injectEndpoints({ endpoints });

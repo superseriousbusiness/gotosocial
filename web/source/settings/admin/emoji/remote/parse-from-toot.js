@@ -29,11 +29,15 @@ const {
 	useCheckListInput
 } = require("../../../lib/form");
 
+const useFormSubmit = require("../../../lib/form/submit");
+
 const CheckList = require("../../../components/check-list");
 const { CategorySelect } = require('../category-select');
 
 const query = require("../../../lib/query");
 const Loading = require("../../../components/loading");
+const { TextInput } = require("../../../components/form/inputs");
+const MutationButton = require("../../../components/form/mutation-button");
 
 module.exports = function ParseFromToot({ emojiCodes }) {
 	const [searchStatus, { data, isLoading, isSuccess, error }] = query.useSearchStatusForEmojiMutation();
@@ -70,7 +74,9 @@ module.exports = function ParseFromToot({ emojiCodes }) {
 
 	function submitSearch(e) {
 		e.preventDefault();
-		searchStatus(url);
+		if (url.trim().length != 0) {
+			searchStatus(url);
+		}
 	}
 
 	return (
@@ -91,7 +97,7 @@ module.exports = function ParseFromToot({ emojiCodes }) {
 						/>
 						<button className="button-inline" disabled={isLoading}>
 							<i className={[
-								"fa",
+								"fa fa-fw",
 								(isLoading
 									? "fa-refresh fa-spin"
 									: "fa-search")
@@ -99,7 +105,6 @@ module.exports = function ParseFromToot({ emojiCodes }) {
 							<span className="sr-only">Search</span>
 						</button>
 					</div>
-					{isLoading && <Loading />}
 					{error && <div className="error">{error.data.error}</div>}
 				</div>
 			</form>
@@ -119,22 +124,25 @@ function CopyEmojiForm({ localEmojiCodes, type, domain, emojiList }) {
 
 	const [categoryState, resetCategory, { category }] = useComboBoxInput("category");
 
+	const buttonsInactive = emojiCheckList.someSelected
+		? {}
+		: {
+			disabled: true,
+			title: "No emoji selected, cannot perform any actions"
+		};
+
 	function submit(action) {
 		Promise.try(() => {
 			setError(null);
-			const selectedShortcodes = syncpipe(emojiCheckList.value, [
-				(_) => Object.entries(_),
-				(_) => _.filter(([_shortcode, entry]) => entry.checked),
-				(_) => _.map(([shortcode, entry]) => {
-					if (action == "copy" && !entry.valid) {
-						throw `One or more selected emoji have non-unique shortcodes (${shortcode}), unselect them or pick a different local shortcode`;
-					}
-					return {
-						shortcode,
-						localShortcode: entry.shortcode
-					};
-				})
-			]);
+			const selectedShortcodes = emojiCheckList.selectedValues.map(([shortcode, entry]) => {
+				if (action == "copy" && !entry.valid) {
+					throw `One or more selected emoji have non-unique shortcodes (${shortcode}), unselect them or pick a different local shortcode`;
+				}
+				return {
+					shortcode,
+					localShortcode: entry.shortcode
+				};
+			});
 
 			return patchRemoteEmojis({
 				action,
@@ -166,15 +174,6 @@ function CopyEmojiForm({ localEmojiCodes, type, domain, emojiList }) {
 				Component={EmojiEntry}
 				localEmojiCodes={localEmojiCodes}
 			/>
-			{/* {emojiList.map((emoji) => (
-				<EmojiEntry
-					key={emoji.shortcode}
-					emoji={emoji}
-					localEmojiCodes={localEmojiCodes}
-					updateEmoji={(value) => updateEmoji(emoji.shortcode, value)}
-					checked={emojiState[emoji.shortcode].checked}
-				/>
-			))} */}
 
 			<CategorySelect
 				value={category}
@@ -182,8 +181,8 @@ function CopyEmojiForm({ localEmojiCodes, type, domain, emojiList }) {
 			/>
 
 			<div className="action-buttons row">
-				<button disabled={!emojiCheckList.someSelected} onClick={() => submit("copy")}>{patchResult.isLoading ? "Processing..." : "Copy to local emoji"}</button>
-				<button disabled={!emojiCheckList.someSelected} onClick={() => submit("disable")} className="danger">{patchResult.isLoading ? "Processing..." : "Disable"}</button>
+				<MutationButton label="Copy to local emoji" type="button" result={patchResult} {...buttonsInactive} />
+				<MutationButton label="Disable" type="button" result={patchResult} className="button danger" {...buttonsInactive} />
 			</div>
 			{err && <div className="error">
 				{err}
@@ -196,7 +195,7 @@ function CopyEmojiForm({ localEmojiCodes, type, domain, emojiList }) {
 }
 
 function EmojiEntry({ entry: emoji, localEmojiCodes, onChange }) {
-	const [onShortcodeChange, _resetShortcode, { shortcode, shortcodeRef, shortcodeValid }] = useTextInput("shortcode", {
+	const shortcodeField = useTextInput("shortcode", {
 		defaultValue: emoji.shortcode,
 		validator: function validateShortcode(code) {
 			return (emoji.checked && localEmojiCodes.has(code))
@@ -206,24 +205,20 @@ function EmojiEntry({ entry: emoji, localEmojiCodes, onChange }) {
 	});
 
 	React.useEffect(() => {
-		onChange({ valid: shortcodeValid });
+		onChange({ valid: shortcodeField.valid });
 		/* eslint-disable-next-line react-hooks/exhaustive-deps */
-	}, [shortcodeValid]);
+	}, [shortcodeField.valid]);
 
 	return (
 		<>
 			<img className="emoji" src={emoji.url} title={emoji.shortcode} />
 
-			<input
-				type="text"
-				id="shortcode"
-				name="Shortcode"
-				ref={shortcodeRef}
+			<TextInput
+				field={shortcodeField}
 				onChange={(e) => {
-					onShortcodeChange(e);
+					shortcodeField.onChange(e);
 					onChange({ shortcode: e.target.value, checked: true });
 				}}
-				value={shortcode}
 			/>
 		</>
 	);

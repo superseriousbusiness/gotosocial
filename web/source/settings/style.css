@@ -50,7 +50,7 @@ section {
 
 			h2 {
 				margin: 0;
-				margin-bottom: 0.5rem;
+				margin-top: 0.1rem;
 			}
 
 			&:only-child {
@@ -360,8 +360,25 @@ span.form-info {
 .list {
 	display: flex;
 	flex-direction: column;
-	max-height: 40rem;
-	overflow: auto;
+
+	&.scrolling {
+		max-height: 40rem;
+		overflow: auto;
+	}
+
+	.header, .entry {
+		padding: 0.5rem;
+	}
+
+	.header {
+		border: 0.1rem solid transparent; /* for alignment with .entry border padding */
+		background: $gray2;
+		display: flex;
+	}
+
+	input[type=checkbox] {
+		margin-left: 0.5rem;
+	}
 
 	.entry {
 		display: flex;
@@ -372,14 +389,20 @@ span.form-info {
 		&:nth-child(even) {
 			background: $settings-entry-alternate-bg;
 		}
-
+	
 		&:hover {
 			background: $settings-entry-hover-bg;
 		}
-
+	
 		&:active, &:focus, &:hover {
 			border-color: $fg-accent;
 		}
+	}
+}
+
+.checkbox-list {
+	.header, .entry {
+		gap: 1rem;
 	}
 }
 
@@ -407,12 +430,15 @@ span.form-info {
 	justify-content: space-between;
 }
 
-.checkbox-list {
+.emoji-list {
 	background: $settings-entry-bg;
 
 	.entry {
-		padding: 0.5rem;
 		flex-direction: column;
+
+		b {
+			padding-left: 0.4rem;
+		}
 
 		.emoji-group {
 			display: flex;
@@ -555,6 +581,7 @@ span.form-info {
 
 .row {
 	display: flex;
+	gap: 0.5rem;
 }
 
 .emoji-detail {
@@ -612,8 +639,8 @@ span.form-info {
 		flex-direction: column;
 		gap: 1rem;
 
-		& > span {
-			margin-bottom: -1rem;
+		span {
+			margin-bottom: -0.5rem;
 		}
 		
 		.action-buttons {
@@ -621,27 +648,9 @@ span.form-info {
 		}
 
 		.checkbox-list {
-			display: flex;
-			flex-direction: column;
-
-			& > * {
-				gap: 1rem;
-				align-items: center;
-				padding: 0.5rem 1rem;
-			}
-
-			.header {
-				background: $gray2;
-				display: flex;
-			}
-
-			.row {
+			.entry {
 				display: grid;
 				grid-template-columns: auto auto 1fr;
-
-				&:hover {
-					background: $settings-entry-hover-bg;
-				}
 			}
 
 			.emoji {
@@ -672,7 +681,7 @@ span.form-info {
 	}
 }
 
-button .fa-fw {
+button .fa.with-text {
 	margin-left: -1.28571429em;
 }
 
