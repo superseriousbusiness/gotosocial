@@ -66,7 +66,7 @@ func (suite *ReportsGetTestSuite) getReports(
 		requestPath = requestPath + "&" + reports.MinIDKey + "=" + minID
 	}
 	baseURI := config.GetProtocol() + "://" + config.GetHost()
-	requestURI := baseURI + "/" + requestPath
+	requestURI := baseURI + "/api/" + requestPath
 
 	// create the request
 	ctx.Request = httptest.NewRequest(http.MethodGet, requestURI, nil)

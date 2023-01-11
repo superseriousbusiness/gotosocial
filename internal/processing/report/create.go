@@ -18,8 +18,86 @@
 
 package report
 
-import "context"
+import (
+	"context"
+	"errors"
+	"fmt"
 
-func (p *processor) Create(ctx context.Context) {
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
+)
 
+func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.ReportCreateRequest) (*apimodel.Report, gtserror.WithCode) {
+	if account.ID == form.AccountID {
+		err := errors.New("cannot report your own account")
+		return nil, gtserror.NewErrorBadRequest(err, err.Error())
+	}
+
+	// validate + fetch target account
+	targetAccount, err := p.db.GetAccountByID(ctx, form.AccountID)
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			err = fmt.Errorf("account with ID %s does not exist", form.AccountID)
+			return nil, gtserror.NewErrorBadRequest(err, err.Error())
+		}
+		err = fmt.Errorf("db error fetching report target account: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// fetch statuses by IDs given in the report form (noop if no statuses given)
+	statuses, err := p.db.GetStatuses(ctx, form.StatusIDs)
+	if err != nil {
+		err = fmt.Errorf("db error fetching report target statuses: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	for _, s := range statuses {
+		if s.AccountID != form.AccountID {
+			err = fmt.Errorf("status with ID %s does not belong to account %s", s.ID, form.AccountID)
+			return nil, gtserror.NewErrorBadRequest(err, err.Error())
+		}
+	}
+
+	reportID, err := id.NewULID()
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	report := &gtsmodel.Report{
+		ID:              reportID,
+		URI:             uris.GenerateURIForReport(reportID),
+		AccountID:       account.ID,
+		Account:         account,
+		TargetAccountID: form.AccountID,
+		TargetAccount:   targetAccount,
+		Comment:         form.Comment,
+		StatusIDs:       form.StatusIDs,
+		Statuses:        statuses,
+		Forwarded:       &form.Forward,
+	}
+
+	if err := p.db.PutReport(ctx, report); err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	p.clientWorker.Queue(messages.FromClientAPI{
+		APObjectType:   ap.ObjectProfile,
+		APActivityType: ap.ActivityFlag,
+		GTSModel:       report,
+		OriginAccount:  account,
+	})
+
+	apiReport, err := p.tc.ReportToAPIReport(ctx, report)
+	if err != nil {
+		err = fmt.Errorf("error converting report to frontend representation: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return apiReport, nil
 }

@@ -29,3 +29,7 @@ import (
 func (p *processor) ReportsGet(ctx context.Context, authed *oauth.Auth, limit int, maxID string, minID string) (*apimodel.PageableResponse, gtserror.WithCode) {
 	return p.reportProcessor.ReportsGet(ctx, authed.Account, limit, maxID, minID)
 }
+
+func (p *processor) ReportCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.ReportCreateRequest) (*apimodel.Report, gtserror.WithCode) {
+	return p.reportProcessor.Create(ctx, authed.Account, form)
+}
