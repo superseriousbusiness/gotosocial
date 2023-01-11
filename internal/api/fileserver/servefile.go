@@ -121,7 +121,8 @@ func (m *Module) ServeFile(c *gin.Context) {
 	b := make([]byte, 64)
 
 	// Try read the first 64 bytes into memory, to try return a more useful "not found" error.
-	if _, err := io.ReadFull(content.Content, b); err != nil && err != io.ErrUnexpectedEOF {
+	if _, err := io.ReadFull(content.Content, b); err != nil &&
+		(err != io.ErrUnexpectedEOF && err != io.EOF) {
 		err = fmt.Errorf("ServeFile: error reading from content: %w", err)
 		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err, err.Error()), m.processor.InstanceGet)
 		return
