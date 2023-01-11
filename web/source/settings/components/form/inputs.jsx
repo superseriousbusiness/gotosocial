@@ -20,8 +20,8 @@
 
 const React = require("react");
 
-function TextInput({label, field, ...inputProps}) {
-	const {onChange, value, ref} = field;
+function TextInput({ label, field, ...inputProps }) {
+	const { onChange, value, ref } = field;
 
 	return (
 		<div className="form-field text">
@@ -29,7 +29,7 @@ function TextInput({label, field, ...inputProps}) {
 				{label}
 				<input
 					type="text"
-					{...{onChange, value, ref}}
+					{...{ onChange, value, ref }}
 					{...inputProps}
 				/>
 			</label>
@@ -37,8 +37,8 @@ function TextInput({label, field, ...inputProps}) {
 	);
 }
 
-function TextArea({label, field, ...inputProps}) {
-	const {onChange, value, ref} = field;
+function TextArea({ label, field, ...inputProps }) {
+	const { onChange, value, ref } = field;
 
 	return (
 		<div className="form-field textarea">
@@ -46,7 +46,7 @@ function TextArea({label, field, ...inputProps}) {
 				{label}
 				<textarea
 					type="text"
-					{...{onChange, value, ref}}
+					{...{ onChange, value, ref }}
 					{...inputProps}
 				/>
 			</label>
@@ -54,8 +54,8 @@ function TextArea({label, field, ...inputProps}) {
 	);
 }
 
-function FileInput({label, field, ...inputProps}) {
-	const {onChange, ref, infoComponent} = field;
+function FileInput({ label, field, ...inputProps }) {
+	const { onChange, ref, infoComponent } = field;
 
 	return (
 		<div className="form-field file">
@@ -67,7 +67,7 @@ function FileInput({label, field, ...inputProps}) {
 				<input
 					type="file"
 					className="hidden"
-					{...{onChange, ref}}
+					{...{ onChange, ref }}
 					{...inputProps}
 				/>
 			</label>
@@ -75,8 +75,8 @@ function FileInput({label, field, ...inputProps}) {
 	);
 }
 
-function Checkbox({label, field, ...inputProps}) {
-	const {onChange, value} = field;
+function Checkbox({ label, field, ...inputProps }) {
+	const { onChange, value } = field;
 
 	return (
 		<div className="form-field checkbox">
@@ -92,15 +92,15 @@ function Checkbox({label, field, ...inputProps}) {
 	);
 }
 
-function Select({label, field, options, ...inputProps}) {
-	const {onChange, value, ref} = field;
+function Select({ label, field, options, ...inputProps }) {
+	const { onChange, value, ref } = field;
 
 	return (
 		<div className="form-field select">
 			<label>
 				{label}
 				<select
-					{...{onChange, value, ref}}
+					{...{ onChange, value, ref }}
 					{...inputProps}
 				>
 					{options}

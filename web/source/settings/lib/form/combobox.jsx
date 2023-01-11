@@ -20,7 +20,7 @@
 
 const { useComboboxState } = require("ariakit/combobox");
 
-module.exports = function useComboBoxInput({name, Name}, {defaultValue} = {}) {
+module.exports = function useComboBoxInput({ name, Name }, { defaultValue } = {}) {
 	const state = useComboboxState({
 		defaultValue,
 		gutter: 0,
@@ -34,9 +34,9 @@ module.exports = function useComboBoxInput({name, Name}, {defaultValue} = {}) {
 	return Object.assign([
 		state,
 		reset,
-		name,
 		{
 			[name]: state.value,
+			name
 		}
 	], {
 		name,

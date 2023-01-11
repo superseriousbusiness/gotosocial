@@ -19,20 +19,20 @@
 "use strict";
 
 function capitalizeFirst(str) {
-	return str.slice(0,1).toUpperCase()+str.slice(1);
+	return str.slice(0, 1).toUpperCase() + str.slice(1);
 }
 
 function makeHook(func) {
 	return (name, ...args) => func({
 		name,
 		Name: capitalizeFirst(name)
-	},
-	...args);
+	}, ...args);
 }
 
 module.exports = {
 	useTextInput: makeHook(require("./text")),
 	useFileInput: makeHook(require("./file")),
 	useBoolInput: makeHook(require("./bool")),
-	useComboBoxInput: makeHook(require("./combobox"))
+	useComboBoxInput: makeHook(require("./combobox")),
+	useCheckListInput: makeHook(require("./check-list"))
 };

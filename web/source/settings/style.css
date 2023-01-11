@@ -223,6 +223,10 @@ section.with-sidebar > div, section.with-sidebar > form {
 		line-height: 1.5rem;
 	}
 
+	.button-inline {
+		width: auto;
+	}
+
 	input[type=checkbox] {
 		justify-self: start;
 		width: initial;
@@ -403,7 +407,7 @@ span.form-info {
 	justify-content: space-between;
 }
 
-.emoji-list {
+.checkbox-list {
 	background: $settings-entry-bg;
 
 	.entry {
@@ -616,7 +620,7 @@ span.form-info {
 			gap: 1rem;
 		}
 
-		.emoji-list {
+		.checkbox-list {
 			display: flex;
 			flex-direction: column;
 
