@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	"io/fs"
 	"os"
 	"syscall"
@@ -102,46 +103,32 @@ outer:
 
 // cleanDirs traverses the dir tree of the supplied path, removing any folders with zero children
 func cleanDirs(path string) error {
-	// Acquire path builder
 	pb := util.GetPathBuilder()
 	defer util.PutPathBuilder(pb)
-
-	// Get top-level dir entries
-	entries, err := readDir(path)
-	if err != nil {
-		return err
-	}
-
-	for _, entry := range entries {
-		if entry.IsDir() {
-			// Recursively clean sub-directory entries
-			if err := cleanDir(pb, pb.Join(path, entry.Name())); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
+	return cleanDir(pb, path, true)
 }
 
 // cleanDir performs the actual dir cleaning logic for the above top-level version.
-func cleanDir(pb *fastpath.Builder, path string) error {
-	// Get dir entries
+func cleanDir(pb *fastpath.Builder, path string, top bool) error {
+	// Get dir entries at path.
 	entries, err := readDir(path)
 	if err != nil {
 		return err
 	}
 
-	// If no entries, delete
-	if len(entries) < 1 {
+	// If no entries, delete dir.
+	if !top && len(entries) == 0 {
 		return rmdir(path)
 	}
 
 	for _, entry := range entries {
 		if entry.IsDir() {
-			// Recursively clean sub-directory entries
-			if err := cleanDir(pb, pb.Join(path, entry.Name())); err != nil {
-				return err
+			// Calculate directory path.
+			dirPath := pb.Join(path, entry.Name())
+
+			// Recursively clean sub-directory entries.
+			if err := cleanDir(pb, dirPath, false); err != nil {
+				fmt.Fprintf(os.Stderr, "[go-store/storage] error cleaning %s: %v", dirPath, err)
 			}
 		}
 	}

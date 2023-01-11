@@ -87,7 +87,7 @@ func (suite *PruneRemoteTestSuite) TestPruneAndRecache() {
 	// now recache the image....
 	data := func(_ context.Context) (io.ReadCloser, int64, error) {
 		// load bytes from a test image
-		b, err := os.ReadFile("../../testrig/media/thoughtsofdog-original.jpeg")
+		b, err := os.ReadFile("../../testrig/media/thoughtsofdog-original.jpg")
 		if err != nil {
 			panic(err)
 		}

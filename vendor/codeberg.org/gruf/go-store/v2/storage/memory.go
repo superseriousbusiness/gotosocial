@@ -6,7 +6,7 @@ import (
 	"sync/atomic"
 
 	"codeberg.org/gruf/go-bytes"
-	"codeberg.org/gruf/go-store/v2/util"
+	"codeberg.org/gruf/go-iotools"
 	"github.com/cornelk/hashmap"
 )
 
@@ -86,57 +86,57 @@ func (st *MemoryStorage) ReadStream(ctx context.Context, key string) (io.ReadClo
 
 	// Create io.ReadCloser from 'b' copy
 	r := bytes.NewReader(copyb(b))
-	return util.NopReadCloser(r), nil
+	return iotools.NopReadCloser(r), nil
 }
 
 // WriteBytes implements Storage.WriteBytes().
-func (st *MemoryStorage) WriteBytes(ctx context.Context, key string, b []byte) error {
+func (st *MemoryStorage) WriteBytes(ctx context.Context, key string, b []byte) (int, error) {
 	// Check store open
 	if st.closed() {
-		return ErrClosed
+		return 0, ErrClosed
 	}
 
 	// Check context still valid
 	if err := ctx.Err(); err != nil {
-		return err
+		return 0, err
 	}
 
 	// Check for key that already exists
 	if _, ok := st.fs.Get(key); ok && !st.ow {
-		return ErrAlreadyExists
+		return 0, ErrAlreadyExists
 	}
 
 	// Write key copy to store
 	st.fs.Set(key, copyb(b))
-	return nil
+	return len(b), nil
 }
 
 // WriteStream implements Storage.WriteStream().
-func (st *MemoryStorage) WriteStream(ctx context.Context, key string, r io.Reader) error {
+func (st *MemoryStorage) WriteStream(ctx context.Context, key string, r io.Reader) (int64, error) {
 	// Check store open
 	if st.closed() {
-		return ErrClosed
+		return 0, ErrClosed
 	}
 
 	// Check context still valid
 	if err := ctx.Err(); err != nil {
-		return err
+		return 0, err
 	}
 
 	// Check for key that already exists
 	if _, ok := st.fs.Get(key); ok && !st.ow {
-		return ErrAlreadyExists
+		return 0, ErrAlreadyExists
 	}
 
 	// Read all from reader
 	b, err := io.ReadAll(r)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// Write key to store
 	st.fs.Set(key, b)
-	return nil
+	return int64(len(b)), nil
 }
 
 // Stat implements Storage.Stat().

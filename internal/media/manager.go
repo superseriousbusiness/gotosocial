@@ -148,9 +148,6 @@ func NewManager(database db.DB, storage *storage.Driver) (Manager, error) {
 	// Prepare the media worker pool
 	m.mediaWorker = concurrency.NewWorkerPool[*ProcessingMedia](-1, 10)
 	m.mediaWorker.SetProcessor(func(ctx context.Context, media *ProcessingMedia) error {
-		if err := ctx.Err(); err != nil {
-			return err
-		}
 		if _, err := media.LoadAttachment(ctx); err != nil {
 			return fmt.Errorf("error loading media %s: %v", media.AttachmentID(), err)
 		}
@@ -160,9 +157,6 @@ func NewManager(database db.DB, storage *storage.Driver) (Manager, error) {
 	// Prepare the emoji worker pool
 	m.emojiWorker = concurrency.NewWorkerPool[*ProcessingEmoji](-1, 10)
 	m.emojiWorker.SetProcessor(func(ctx context.Context, emoji *ProcessingEmoji) error {
-		if err := ctx.Err(); err != nil {
-			return err
-		}
 		if _, err := emoji.LoadEmoji(ctx); err != nil {
 			return fmt.Errorf("error loading emoji %s: %v", emoji.EmojiID(), err)
 		}

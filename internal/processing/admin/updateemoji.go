@@ -90,9 +90,8 @@ func (p *processor) emojiUpdateCopy(ctx context.Context, emoji *gtsmodel.Emoji, 
 	newEmojiURI := uris.GenerateURIForEmoji(newEmojiID)
 
 	data := func(ctx context.Context) (reader io.ReadCloser, fileSize int64, err error) {
-		// 'copy' the emoji by pulling the existing one out of storage
-		i, err := p.storage.GetStream(ctx, emoji.ImagePath)
-		return i, int64(emoji.ImageFileSize), err
+		rc, err := p.storage.GetStream(ctx, emoji.ImagePath)
+		return rc, int64(emoji.ImageFileSize), err
 	}
 
 	var ai *media.AdditionalEmojiInfo
