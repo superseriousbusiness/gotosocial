@@ -136,6 +136,8 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	}()
 
 	// Byte buffer to read file header into.
+	// See: https://en.wikipedia.org/wiki/File_format#File_header
+	// and https://github.com/h2non/filetype
 	hdrBuf := make([]byte, 261)
 
 	// Read the first 261 header bytes into buffer.
