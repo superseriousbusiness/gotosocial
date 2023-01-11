@@ -114,6 +114,17 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 			requestingUsername = requestingAccount.Username
 		}
 
+		// Pour one out for tobi's original streamed recache
+		// (streaming data both to the client and storage).
+		// Gone and forever missed <3
+		//
+		// [
+		//   the reason it was removed was because a slow
+		//   client connection could hold open a storage
+		//   recache operation, and so holding open a media
+		//   worker worker.
+		// ]
+
 		dataFn := func(innerCtx context.Context) (io.ReadCloser, int64, error) {
 			t, err := p.transportController.NewTransportForUsername(innerCtx, requestingUsername)
 			if err != nil {
