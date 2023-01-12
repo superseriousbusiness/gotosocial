@@ -60,7 +60,7 @@ function FileInput({ label, field, ...inputProps }) {
 	return (
 		<div className="form-field file">
 			<label>
-				{label}
+				<div className="label">{label}</div>
 				<div className="file-input button">Browse</div>
 				{infoComponent}
 				{/* <a onClick={removeFile("header")}>remove</a> */}

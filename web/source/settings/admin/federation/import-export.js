@@ -21,6 +21,7 @@
 const React = require("react");
 
 const query = require("../../lib/query");
+const processDomainList = require("../../lib/import-export");
 
 const {
 	useTextInput,
@@ -34,37 +35,71 @@ const {
 	TextInput,
 	TextArea,
 	Checkbox,
-	FileInput
+	FileInput,
+	useCheckListInput
 } = require("../../components/form/inputs");
+
 const FormWithData = require("../../lib/form/form-with-data");
+const CheckList = require("../../components/check-list");
+const MutationButton = require("../../components/form/mutation-button");
 
 module.exports = function ImportExport() {
+	const [parsedList, setParsedList] = React.useState();
+
+	const form = {
+		domains: useTextInput("domains"),
+		obfuscate: useBoolInput("obfuscate"),
+		commentPrivate: useTextInput("private_comment"),
+		commentPublic: useTextInput("public_comment"),
+		// json: useFileInput("json")
+	};
+
+	function submitImport(e) {
+		e.preventDefault();
+
+		Promise.try(() => {
+			return processDomainList(form.domains.value);
+		}).then((processed) => {
+			setParsedList(processed);
+		}).catch((e) => {
+			console.error(e);
+		});
+	}
+
 	return (
 		<div className="import-export">
 			<h2>Import / Export</h2>
-			<FormWithData
-				dataQuery={query.useInstanceBlocksQuery}
-				DataForm={ImportExportForm}
-			/>
+			<div>
+				{
+					parsedList
+						? <ImportExportList list={parsedList} />
+						: <ImportExportForm form={form} submitImport={submitImport} />
+				}
+			</div>
 		</div>
 	);
 };
 
-function ImportExportForm({ data: blockedInstances }) {
-	const form = {
-		list: useTextInput("list"),
-		obfuscate: useBoolInput("obfuscate"),
-		commentPrivate: useTextInput("private_comment"),
-		commentPublic: useTextInput("public_comment"),
-		json: useFileInput("json")
-	};
+function ImportExportList({ list }) {
+	const entryCheckList = useCheckListInput("selectedDomains", {
+		entries: list,
+		uniqueKey: "domain"
+	});
 
 	return (
-		<form>
+		<CheckList
+		/>
+	);
+}
+
+function ImportExportForm({ form, submitImport }) {
+	return (
+		<form onSubmit={submitImport}>
 			<TextArea
-				field={form.list}
-				label="Domains, one per line"
+				field={form.domains}
+				label="Domains, one per line (plaintext) or JSON"
 				placeholder={`google.com\nfacebook.com`}
+				rows={8}
 			/>
 
 			<TextArea
@@ -83,6 +118,10 @@ function ImportExportForm({ data: blockedInstances }) {
 				field={form.obfuscate}
 				label="Obfuscate domain in public lists"
 			/>
+
+			<div>
+				<MutationButton label="Import" result={importResult} /> {/* default form action */}
+			</div>
 		</form>
 	);
 }

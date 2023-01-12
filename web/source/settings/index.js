@@ -33,6 +33,7 @@ const { AuthenticationError } = require("./lib/errors");
 
 const Login = require("./components/login");
 const Loading = require("./components/loading");
+const { Error } = require("./components/error");
 
 require("./style.css");
 
@@ -103,12 +104,7 @@ function App() {
 
 	let ErrorElement = null;
 	if (errorMsg != undefined) {
-		ErrorElement = (
-			<div className="error">
-				<b>{errorMsg.type}</b>
-				<span>{errorMsg.message}</span>
-			</div>
-		);
+		ErrorElement = <Error error={errorMsg} />;
 	}
 
 	const LogoutElement = (

@@ -36,13 +36,15 @@ function useEmojiByCategory(emoji) {
 	), [emoji]);
 }
 
-function CategorySelect({value, categoryState, setIsNew=() => {}, children}) {
+function CategorySelect({ field, children }) {
+	const { value, setIsNew } = field;
+
 	const {
 		data: emoji = [],
 		isLoading,
 		isSuccess,
 		error
-	} = query.useGetAllEmojiQuery({filter: "domain:local"});
+	} = query.useGetAllEmojiQuery({ filter: "domain:local" });
 
 	const emojiByCategory = useEmojiByCategory(emoji);
 
@@ -52,7 +54,7 @@ function CategorySelect({value, categoryState, setIsNew=() => {}, children}) {
 	const categoryItems = React.useMemo(() => {
 		return syncpipe(emojiByCategory, [
 			(_) => Object.keys(_),            // just emoji category names
-			(_) => matchSorter(_, value, {threshold: matchSorter.rankings.NO_MATCH}),  // sorted by complex algorithm
+			(_) => matchSorter(_, value, { threshold: matchSorter.rankings.NO_MATCH }),  // sorted by complex algorithm
 			(_) => _.map((categoryName) => [  // map to input value, and selectable element with icon
 				categoryName,
 				<>
@@ -67,24 +69,24 @@ function CategorySelect({value, categoryState, setIsNew=() => {}, children}) {
 		if (value != undefined && isSuccess && value.trim().length > 0) {
 			setIsNew(!categories.has(value.trim()));
 		}
-	}, [categories, value, setIsNew, isSuccess]);
+	}, [categories, value, isSuccess, setIsNew]);
 
 	if (error) { // fall back to plain text input, but this would almost certainly have caused a bigger error message elsewhere
 		return (
 			<>
-				<input type="text" placeholder="e.g., reactions" onChange={(e) => {categoryState.value = e.target.value;}}/>;
+				<input type="text" placeholder="e.g., reactions" onChange={(e) => { field.value = e.target.value; }} />;
 			</>
 		);
 	} else if (isLoading) {
-		return <input type="text" value="Loading categories..." disabled={true}/>;
+		return <input type="text" value="Loading categories..." disabled={true} />;
 	}
 
 	return (
 		<ComboBox
-			state={categoryState}
+			field={field}
 			items={categoryItems}
 			label="Category"
-			placeHolder="e.g., reactions"
+			placeholder="e.g., reactions"
 			children={children}
 		/>
 	);

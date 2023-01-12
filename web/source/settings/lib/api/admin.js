@@ -75,7 +75,7 @@ module.exports = function ({ apiCall, getChanges }) {
 					});
 
 					let defaultDate = new Date().toUTCString();
-					
+
 					if (list[0] == "[") {
 						domains = JSON.parse(state.list);
 					} else {
@@ -85,7 +85,7 @@ module.exports = function ({ apiCall, getChanges }) {
 								return null;
 							}
 
-							if (!isValidDomain(line, {wildcard: true, allowUnicode: true})) {
+							if (!isValidDomain(line, { wildcard: true, allowUnicode: true })) {
 								invalidDomains.push(line);
 								return null;
 							}
@@ -103,7 +103,7 @@ module.exports = function ({ apiCall, getChanges }) {
 					}
 
 					const update = {
-						domains: new Blob([JSON.stringify(domains)], {type: "application/json"})
+						domains: new Blob([JSON.stringify(domains)], { type: "application/json" })
 					};
 
 					return dispatch(apiCall("POST", "/api/v1/admin/domain_blocks?import=true", update, "form"));

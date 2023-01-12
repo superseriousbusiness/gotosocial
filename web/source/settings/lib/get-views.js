@@ -22,7 +22,7 @@ const React = require("react");
 const { Link, Route, Redirect } = require("wouter");
 const { ErrorBoundary } = require("react-error-boundary");
 
-const ErrorFallback = require("../components/error");
+const { ErrorFallback } = require("../components/error");
 const NavButton = require("../components/nav-button");
 
 function urlSafe(str) {

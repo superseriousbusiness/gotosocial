@@ -18,10 +18,9 @@
 
 "use strict";
 
-const Promise = require("bluebird");
 const React = require("react");
-const Redux = require("react-redux");
-const syncpipe = require("syncpipe");
+
+const query = require("../../../lib/query");
 
 const {
 	useTextInput,
@@ -34,43 +33,14 @@ const useFormSubmit = require("../../../lib/form/submit");
 const CheckList = require("../../../components/check-list");
 const { CategorySelect } = require('../category-select');
 
-const query = require("../../../lib/query");
-const Loading = require("../../../components/loading");
 const { TextInput } = require("../../../components/form/inputs");
 const MutationButton = require("../../../components/form/mutation-button");
+const { Error } = require("../../../components/error");
 
 module.exports = function ParseFromToot({ emojiCodes }) {
-	const [searchStatus, { data, isLoading, isSuccess, error }] = query.useSearchStatusForEmojiMutation();
-	const instanceDomain = Redux.useSelector((state) => (new URL(state.oauth.instance).host));
+	const [searchStatus, result] = query.useSearchStatusForEmojiMutation();
 
 	const [onURLChange, _resetURL, { url }] = useTextInput("url");
-
-	const searchResult = React.useMemo(() => {
-		if (!isSuccess) {
-			return null;
-		}
-
-		if (data.type == "none") {
-			return "No results found";
-		}
-
-		if (data.domain == instanceDomain) {
-			return <b>This is a local user/toot, all referenced emoji are already on your instance</b>;
-		}
-
-		if (data.list.length == 0) {
-			return <b>This {data.type == "statuses" ? "toot" : "account"} doesn't use any custom emoji</b>;
-		}
-
-		return (
-			<CopyEmojiForm
-				localEmojiCodes={emojiCodes}
-				type={data.type}
-				domain={data.domain}
-				emojiList={data.list}
-			/>
-		);
-	}, [isSuccess, data, instanceDomain, emojiCodes]);
 
 	function submitSearch(e) {
 		e.preventDefault();
@@ -95,101 +65,143 @@ module.exports = function ParseFromToot({ emojiCodes }) {
 							onChange={onURLChange}
 							value={url}
 						/>
-						<button className="button-inline" disabled={isLoading}>
+						<button className="button-inline" disabled={result.isLoading}>
 							<i className={[
 								"fa fa-fw",
-								(isLoading
+								(result.isLoading
 									? "fa-refresh fa-spin"
 									: "fa-search")
 							].join(" ")} aria-hidden="true" title="Search" />
 							<span className="sr-only">Search</span>
 						</button>
 					</div>
-					{error && <div className="error">{error.data.error}</div>}
 				</div>
 			</form>
-			{searchResult}
+			<SearchResult result={result} localEmojiCodes={emojiCodes} />
 		</div>
 	);
 };
 
-function CopyEmojiForm({ localEmojiCodes, type, domain, emojiList }) {
-	const [patchRemoteEmojis, patchResult] = query.usePatchRemoteEmojisMutation();
-	const [err, setError] = React.useState();
+function SearchResult({ result, localEmojiCodes }) {
+	const { error, data, isSuccess, isError } = result;
 
-	const emojiCheckList = useCheckListInput("selectedEmoji", {
-		entries: emojiList,
-		uniqueKey: "shortcode"
-	});
+	if (!(isSuccess || isError)) {
+		return null;
+	}
 
-	const [categoryState, resetCategory, { category }] = useComboBoxInput("category");
+	if (error == "NONE_FOUND") {
+		return "No results found";
+	} else if (error == "LOCAL_INSTANCE") {
+		return <b>This is a local user/toot, all referenced emoji are already on your instance</b>;
+	} else if (error != undefined) {
+		return <Error error={result.error} />;
+	}
 
-	const buttonsInactive = emojiCheckList.someSelected
+	if (data.list.length == 0) {
+		return <b>This {data.type == "statuses" ? "toot" : "account"} doesn't use any custom emoji</b>;
+	}
+
+	return (
+		<CopyEmojiForm
+			localEmojiCodes={localEmojiCodes}
+			type={data.type}
+			domain={data.domain}
+			emojiList={data.list}
+		/>
+	);
+}
+
+function CopyEmojiForm({ localEmojiCodes, type, emojiList }) {
+	const form = {
+		selectedEmoji: useCheckListInput("selectedEmoji", {
+			entries: emojiList,
+			uniqueKey: "shortcode"
+		}),
+		category: useComboBoxInput("category")
+	};
+
+	const [formSubmit, result] = useFormSubmit(form, query.usePatchRemoteEmojisMutation(), { changedOnly: false });
+	console.log("action:", result.action);
+
+	const buttonsInactive = form.selectedEmoji.someSelected
 		? {}
 		: {
 			disabled: true,
 			title: "No emoji selected, cannot perform any actions"
 		};
 
-	function submit(action) {
-		Promise.try(() => {
-			setError(null);
-			const selectedShortcodes = emojiCheckList.selectedValues.map(([shortcode, entry]) => {
-				if (action == "copy" && !entry.valid) {
-					throw `One or more selected emoji have non-unique shortcodes (${shortcode}), unselect them or pick a different local shortcode`;
-				}
-				return {
-					shortcode,
-					localShortcode: entry.shortcode
-				};
-			});
+	// function submit(action) {
+	// 	Promise.try(() => {
+	// 		setError(null);
+	// 		const selectedShortcodes = emojiCheckList.selectedValues.map(([shortcode, entry]) => {
+	// 			if (action == "copy" && !entry.valid) {
+	// 				throw `One or more selected emoji have non-unique shortcodes (${shortcode}), unselect them or pick a different local shortcode`;
+	// 			}
+	// 			return {
+	// 				shortcode,
+	// 				localShortcode: entry.shortcode
+	// 			};
+	// 		});
 
-			return patchRemoteEmojis({
-				action,
-				domain,
-				list: selectedShortcodes,
-				category
-			}).unwrap();
-		}).then(() => {
-			emojiCheckList.reset();
-			resetCategory();
-		}).catch((e) => {
-			if (Array.isArray(e)) {
-				setError(e.map(([shortcode, msg]) => (
-					<div key={shortcode}>
-						{shortcode}: <span style={{ fontWeight: "initial" }}>{msg}</span>
-					</div>
-				)));
-			} else {
-				setError(e);
-			}
-		});
-	}
+	// 		return patchRemoteEmojis({
+	// 			action,
+	// 			domain,
+	// 			list: selectedShortcodes,
+	// 			category
+	// 		}).unwrap();
+	// 	}).then(() => {
+	// 		emojiCheckList.reset();
+	// 		resetCategory();
+	// 	}).catch((e) => {
+	// 		if (Array.isArray(e)) {
+	// 			setError(e.map(([shortcode, msg]) => (
+	// 				<div key={shortcode}>
+	// 					{shortcode}: <span style={{ fontWeight: "initial" }}>{msg}</span>
+	// 				</div>
+	// 			)));
+	// 		} else {
+	// 			setError(e);
+	// 		}
+	// 	});
+	// }
 
 	return (
 		<div className="parsed">
 			<span>This {type == "statuses" ? "toot" : "account"} uses the following custom emoji, select the ones you want to copy/disable:</span>
-			<CheckList
-				field={emojiCheckList}
-				Component={EmojiEntry}
-				localEmojiCodes={localEmojiCodes}
-			/>
+			<form onSubmit={formSubmit}>
+				<CheckList
+					field={form.selectedEmoji}
+					Component={EmojiEntry}
+					localEmojiCodes={localEmojiCodes}
+				/>
 
-			<CategorySelect
-				value={category}
-				categoryState={categoryState}
-			/>
+				<CategorySelect
+					field={form.category}
+				/>
 
-			<div className="action-buttons row">
-				<MutationButton label="Copy to local emoji" type="button" result={patchResult} {...buttonsInactive} />
-				<MutationButton label="Disable" type="button" result={patchResult} className="button danger" {...buttonsInactive} />
-			</div>
-			{err && <div className="error">
-				{err}
-			</div>}
-			{patchResult.isSuccess && <div>
-				Action applied to {patchResult.data.length} emoji
-			</div>}
+				<div className="action-buttons row">
+					<MutationButton name="copy" label="Copy to local emoji" result={result} showError={false} {...buttonsInactive} />
+					<MutationButton name="disable" label="Disable" result={result} className="button danger" showError={false} {...buttonsInactive} />
+				</div>
+				{result.error && (
+					Array.isArray(result.error)
+						? <ErrorList errors={result.error} />
+						: <Error error={result.error} />
+				)}
+			</form>
+		</div>
+	);
+}
+
+function ErrorList({ errors }) {
+	return (
+		<div className="error">
+			One or multiple emoji failed to process:
+			{errors.map(([shortcode, err]) => (
+				<div key={shortcode}>
+					<b>{shortcode}:</b> {err}
+				</div>
+			))}
 		</div>
 	);
 }

@@ -18,31 +18,57 @@
 
 "use strict";
 
+const Promise = require("bluebird");
+const React = require("react");
 const syncpipe = require("syncpipe");
 
 module.exports = function useFormSubmit(form, [mutationQuery, result], { changedOnly = true } = {}) {
+	const [usedAction, setUsedAction] = React.useState();
 	return [
 		function submitForm(e) {
-			e.preventDefault();
-
+			let action;
+			if (e?.preventDefault) {
+				e.preventDefault();
+				action = e.nativeEvent.submitter.name;
+			} else {
+				action = e;
+			}
+			setUsedAction(action);
 			// transform the field definitions into an object with just their values 
 			let updatedFields = [];
 			const mutationData = syncpipe(form, [
 				(_) => Object.values(_),
 				(_) => _.map((field) => {
-					if (!changedOnly || field.hasChanged()) {
+					if (field.selectedValues != undefined) {
+						let selected = field.selectedValues();
+						if (!changedOnly || selected.length > 0) {
+							return [field.name, selected];
+						}
+					} else if (!changedOnly || field.hasChanged()) {
 						updatedFields.push(field);
 						return [field.name, field.value];
-					} else {
-						return null;
 					}
+					return null;
 				}),
 				(_) => _.filter((value) => value != null),
 				(_) => Object.fromEntries(_)
 			]);
 
-			return mutationQuery(mutationData);
+			mutationData.action = action;
+
+			return Promise.try(() => {
+				return mutationQuery(mutationData);
+			}).then((res) => {
+				if (res.error == undefined) {
+					updatedFields.forEach((field) => {
+						field.reset();
+					});
+				}
+			});
 		},
-		result
+		{
+			...result,
+			action: usedAction
+		}
 	];
 };

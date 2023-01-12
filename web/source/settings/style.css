@@ -16,6 +16,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+$fa-fw: 1.28571429em; /* Fork-Awesome 'fa-fw' fixed icon width */
+
 body {
 	grid-template-rows: auto 1fr;
 }
@@ -225,6 +227,7 @@ section.with-sidebar > div, section.with-sidebar > form {
 
 	.button-inline {
 		width: auto;
+		align-self: flex-start;
 	}
 
 	input[type=checkbox] {
@@ -344,8 +347,12 @@ form {
 }
 
 .form-field.file label {
-	width: 100%;
-	display: flex;
+	display: grid;
+	grid-template-columns: auto 1fr;
+
+	.label {
+		grid-column: 1 / span 2;
+	}
 }
 
 span.form-info {
@@ -598,6 +605,12 @@ span.form-info {
 		align-items: center;
 		gap: 0.5rem;
 
+		div {
+			display: flex;
+			flex-direction: column;
+			gap: 0.5rem;
+		}
+
 		img {
 			height: 8.5rem;
 			width: 8.5rem;
@@ -608,15 +621,13 @@ span.form-info {
 	}
 
 	.update-category {
-		margin-bottom: 1rem;
 		.combobox-wrapper button {
 			font-size: 1rem;
 			margin: 0.15rem 0;
 		}
 	
 		.row {
-			margin-top: 0.4rem;
-			gap: 0.5rem;
+			margin-top: 0.1rem;
 		}
 	}
 
@@ -681,8 +692,14 @@ span.form-info {
 	}
 }
 
-button .fa.with-text {
-	margin-left: -1.28571429em;
+button.with-icon {
+	display: flex;
+	align-content: center;
+	padding-right: calc(0.5rem + $fa-fw);
+
+	.fa {
+		align-self: center;
+	}
 }
 
 .fadeout {

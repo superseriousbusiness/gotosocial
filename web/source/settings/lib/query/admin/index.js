@@ -22,8 +22,8 @@ const {
 	replaceCacheOnMutation,
 	appendCacheOnMutation,
 	spliceCacheOnMutation
-} = require("./lib");
-const base = require("./base");
+} = require("../lib");
+const base = require("../base");
 
 const endpoints = (build) => ({
 	updateInstance: build.mutation({
@@ -70,7 +70,8 @@ const endpoints = (build) => ({
 				return draft.findIndex((block) => block.id == newData.id);
 			}
 		})
-	})
+	}),
+	...require("./federation-bulk")(build)
 });
 
 module.exports = base.injectEndpoints({ endpoints });

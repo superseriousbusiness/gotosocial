@@ -19,23 +19,30 @@
 "use strict";
 
 const React = require("react");
+const { Error } = require("../error");
 
-module.exports = function MutationButton({ label, result, disabled, ...inputProps }) {
+module.exports = function MutationButton({ label, result, disabled, showError = true, className = "", ...inputProps }) {
 	let iconClass = "";
+	const targetsThisButton = result.action == inputProps.name; // can also both be undefined, which is correct
 
-	if (result.isLoading) {
-		iconClass = "fa-spin fa-refresh";
-	} else if (result.isSuccess) {
-		iconClass = "fa-check fadeout";
+	/* FIXME? submitting an unchanged form will never transition to isLoading,
+		and check icon will stay faded out because the css animation doesn't restart
+	*/
+	if (targetsThisButton) {
+		if (result.isLoading) {
+			iconClass = "fa-spin fa-refresh";
+		} else if (result.isSuccess) {
+			iconClass = "fa-check fadeout";
+		}
 	}
 
 	return (<div>
-		{result.error &&
-			<section className="error">{result.error.status}: {result.error.data.error}</section>
+		{(showError && targetsThisButton && result.error) &&
+			<Error error={result.error} />
 		}
-		<button type="submit" disabled={result.isLoading || disabled}	{...inputProps}>
-			<i className={`fa fa-fw with-text ${iconClass}`} aria-hidden="true"></i>
-			{result.isLoading
+		<button type="submit" className={"with-icon " + className} disabled={result.isLoading || disabled}	{...inputProps}>
+			<i className={`fa fa-fw ${iconClass}`} aria-hidden="true"></i>
+			{(targetsThisButton && result.isLoading)
 				? "Processing..."
 				: label
 			}

@@ -25,13 +25,14 @@ const baseUrl = `/settings/admin/federation`;
 
 const InstanceOverview = require("./overview");
 const InstanceDetail = require("./detail");
+const InstanceImportExport = require("./import-export");
 
 module.exports = function Federation({ }) {
 	return (
 		<Switch>
-			{/* <Route path={`${baseUrl}/import-export`}>
+			<Route path={`${baseUrl}/import-export`}>
 				<InstanceImportExport />
-			</Route> */}
+			</Route>
 
 			<Route path={`${baseUrl}/:domain`}>
 				<InstanceDetail baseUrl={baseUrl} />

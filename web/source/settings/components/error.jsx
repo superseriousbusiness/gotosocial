@@ -20,7 +20,7 @@
 
 const React = require("react");
 
-module.exports = function ErrorFallback({error, resetErrorBoundary}) {
+function ErrorFallback({ error, resetErrorBoundary }) {
 	return (
 		<div className="error">
 			<p>
@@ -28,7 +28,7 @@ module.exports = function ErrorFallback({error, resetErrorBoundary}) {
 				<a href="https://github.com/superseriousbusiness/gotosocial/issues">GoToSocial issue tracker</a>
 				{" or "}
 				<a href="https://matrix.to/#/#gotosocial-help:superseriousbusiness.org">Matrix support room</a>.
-				<br/>Include the details below:
+				<br />Include the details below:
 			</p>
 			<pre>
 				{error.name}: {error.message}
@@ -41,4 +41,33 @@ module.exports = function ErrorFallback({error, resetErrorBoundary}) {
 			</p>
 		</div>
 	);
-};
+}
+
+function Error({ error }) {
+	console.error("Rendering:", error);
+	let message;
+
+	if (error.data != undefined) { // RTK Query error with data
+		if (error.status) {
+			message = (<>
+				<b>{error.status}:</b> {error.data.error}
+			</>);
+		} else {
+			message = error.data.error;
+		}
+	} else if (error.name != undefined || error.type != undefined) { // JS error
+		message = (<>
+			<b>{error.type && error.name}:</b> {error.message}
+		</>);
+	} else {
+		message = error.message ?? error;
+	}
+
+	return (
+		<div className="error">
+			{message}
+		</div>
+	);
+}
+
+module.exports = { ErrorFallback, Error };

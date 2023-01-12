@@ -6,12 +6,16 @@ const Loading = require("../../components/loading");
 
 // Wrap Form component inside component that fires the RTK Query call,
 // so Form will only be rendered when data is available to generate form-fields for
-module.exports = function FormWithData({dataQuery, DataForm}) {
-	const {data, isLoading} = dataQuery();
+module.exports = function FormWithData({ dataQuery, DataForm, arg }) {
+	const { data, isLoading } = dataQuery(arg);
 
 	if (isLoading) {
-		return <Loading/>;
+		return (
+			<div>
+				<Loading />
+			</div>
+		);
 	} else {
-		return <DataForm data={data}/>;
+		return <DataForm data={data} />;
 	}
 };

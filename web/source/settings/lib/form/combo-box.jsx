@@ -18,9 +18,13 @@
 
 "use strict";
 
+const React = require("react");
+
 const { useComboboxState } = require("ariakit/combobox");
 
 module.exports = function useComboBoxInput({ name, Name }, { defaultValue } = {}) {
+	const [isNew, setIsNew] = React.useState(false);
+
 	const state = useComboboxState({
 		defaultValue,
 		gutter: 0,
@@ -36,11 +40,17 @@ module.exports = function useComboBoxInput({ name, Name }, { defaultValue } = {}
 		reset,
 		{
 			[name]: state.value,
-			name
+			name,
+			[`${name}IsNew`]: isNew,
+			[`set${Name}IsNew`]: setIsNew
 		}
 	], {
 		name,
+		state,
 		value: state.value,
+		hasChanged: () => state.value != defaultValue,
+		isNew,
+		setIsNew,
 		reset
 	});
 };

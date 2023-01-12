@@ -12,10 +12,10 @@
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 	GNU Affero General Public License for more details.
 
-  You should have received a copy of the GNU Affero General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU Affero General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-	
+
 "use strict";
 
 const Promise = require("bluebird");
@@ -24,11 +24,12 @@ const Redux = require("react-redux");
 
 const { setInstance } = require("../redux/reducers/oauth").actions;
 const api = require("../lib/api");
+const { Error } = require("./error");
 
-module.exports = function Login({error}) {
+module.exports = function Login({ error }) {
 	const dispatch = Redux.useDispatch();
-	const [ instanceField, setInstanceField ] = React.useState("");
-	const [ errorMsg, setErrorMsg ] = React.useState();
+	const [instanceField, setInstanceField] = React.useState("");
+	const [loginError, setLoginError] = React.useState();
 	const instanceFieldRef = React.useRef("");
 
 	React.useEffect(() => {
@@ -65,12 +66,7 @@ module.exports = function Login({error}) {
 		}).then(() => {
 			return dispatch(api.oauth.authorize()); // will send user off-page
 		}).catch((e) => {
-			setErrorMsg(
-				<>
-					<b>{e.type}</b>
-					<span>{e.message}</span>
-				</>
-			);
+			setLoginError(e);
 		});
 	}
 
@@ -89,11 +85,9 @@ module.exports = function Login({error}) {
 			{error}
 			<form onSubmit={(e) => e.preventDefault()}>
 				<label htmlFor="instance">Instance: </label>
-				<input value={instanceField} onChange={updateInstanceField} id="instance"/>
-				{errorMsg && 
-				<div className="error">
-					{errorMsg}
-				</div>
+				<input value={instanceField} onChange={updateInstanceField} id="instance" />
+				{loginError &&
+					<Error error={loginError} />
 				}
 				<button onClick={tryInstance}>Authenticate</button>
 			</form>

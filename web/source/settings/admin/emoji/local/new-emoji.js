@@ -21,98 +21,65 @@
 const Promise = require('bluebird');
 const React = require("react");
 
-const FakeToot = require("../../../components/fake-toot");
-const MutationButton = require("../../../components/form/mutation-button");
+const query = require("../../../lib/query");
 
 const {
 	useTextInput,
 	useFileInput,
 	useComboBoxInput
 } = require("../../../lib/form");
+const useShortcode = require("./use-shortcode");
 
-const query = require("../../../lib/query");
+const useFormSubmit = require("../../../lib/form/submit");
+
+const {
+	TextInput, FileInput
+} = require("../../../components/form/inputs");
+
 const { CategorySelect } = require('../category-select');
+const FakeToot = require("../../../components/fake-toot");
+const MutationButton = require("../../../components/form/mutation-button");
 
-const shortcodeRegex = /^[a-z0-9_]+$/;
+module.exports = function NewEmojiForm() {
+	const shortcode = useShortcode();
 
-module.exports = function NewEmojiForm({ emoji }) {
-	const emojiCodes = React.useMemo(() => {
-		return new Set(emoji.map((e) => e.shortcode));
-	}, [emoji]);
-
-	const [addEmoji, result] = query.useAddEmojiMutation();
-
-	const [onFileChange, resetFile, { image, imageURL, imageInfo }] = useFileInput("image", {
+	const image = useFileInput("image", {
 		withPreview: true,
-		maxSize: 50 * 1024
+		maxSize: 50 * 1024 // TODO: get from instance api?
 	});
 
-	const [onShortcodeChange, resetShortcode, { shortcode, setShortcode, shortcodeRef }] = useTextInput("shortcode", {
-		validator: function validateShortcode(code) {
-			// technically invalid, but hacky fix to prevent validation error on page load
-			if (shortcode == "") { return ""; }
+	const category = useComboBoxInput("category");
 
-			if (emojiCodes.has(code)) {
-				return "Shortcode already in use";
-			}
+	const [submitForm, result] = useFormSubmit({
+		shortcode, image, category
+	}, query.useAddEmojiMutation());
 
-			if (code.length < 2 || code.length > 30) {
-				return "Shortcode must be between 2 and 30 characters";
-			}
+	// const [onFileChange, resetFile, { image, imageURL, imageInfo }] = useFileInput("image", {
+	// 	withPreview: true,
+	// 	maxSize: 50 * 1024
+	// });
 
-			if (code.toLowerCase() != code) {
-				return "Shortcode must be lowercase";
-			}
-
-			if (!shortcodeRegex.test(code)) {
-				return "Shortcode must only contain lowercase letters, numbers, and underscores";
-			}
-
-			return "";
-		}
-	});
-
-	const [categoryState, resetCategory, { category }] = useComboBoxInput("category");
+	// const [categoryState, resetCategory, { category }] = useComboBoxInput("category");
 
 	React.useEffect(() => {
-		if (shortcode.length == 0) {
-			if (image != undefined) {
-				let [name, _ext] = image.name.split(".");
-				setShortcode(name);
+		if (shortcode.value.length == 0) {
+			if (image.value != undefined) {
+				let [name, _ext] = image.value.name.split(".");
+				shortcode.setter(name);
 			}
 		}
 		// we explicitly don't want to add 'shortcode' as a dependency here
 		// because we only want this to update to the filename if the field is empty
 		// at the moment the file is selected, not some time after when the field is emptied
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [image]);
+	}, [image.value]);
 
-	function uploadEmoji(e) {
-		if (e) {
-			e.preventDefault();
-		}
+	let emojiOrShortcode = `:${shortcode.value}:`;
 
-		Promise.try(() => {
-			return addEmoji({
-				image,
-				shortcode,
-				category
-			});
-		}).then((res) => {
-			if (res.error == undefined) {
-				resetFile();
-				resetShortcode();
-				resetCategory();
-			}
-		});
-	}
-
-	let emojiOrShortcode = `:${shortcode}:`;
-
-	if (imageURL != undefined) {
+	if (image.previewValue != undefined) {
 		emojiOrShortcode = <img
 			className="emoji"
-			src={imageURL}
+			src={image.previewValue}
 			title={`:${shortcode}:`}
 			alt={shortcode}
 		/>;
@@ -126,39 +93,19 @@ module.exports = function NewEmojiForm({ emoji }) {
 				Look at this new custom emoji {emojiOrShortcode} isn&apos;t it cool?
 			</FakeToot>
 
-			<form onSubmit={uploadEmoji} className="form-flex">
-				<div className="form-field file">
-					<label className="file-input button" htmlFor="image">
-						Browse
-					</label>
-					{imageInfo}
-					<input
-						className="hidden"
-						type="file"
-						id="image"
-						name="Image"
-						accept="image/png,image/gif"
-						onChange={onFileChange}
-					/>
-				</div>
+			<form onSubmit={submitForm} className="form-flex">
+				<FileInput
+					field={image}
+					accept="image/png,image/gif"
+				/>
 
-				<div className="form-field text">
-					<label htmlFor="shortcode">
-						Shortcode, must be unique among the instance's local emoji
-					</label>
-					<input
-						type="text"
-						id="shortcode"
-						name="Shortcode"
-						ref={shortcodeRef}
-						onChange={onShortcodeChange}
-						value={shortcode}
-					/>
-				</div>
+				<TextInput
+					field={shortcode}
+					label="Shortcode, must be unique among the instance's local emoji"
+				/>
 
 				<CategorySelect
-					value={category}
-					categoryState={categoryState}
+					field={category}
 				/>
 
 				<MutationButton label="Upload emoji" result={result} />

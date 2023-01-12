@@ -72,7 +72,7 @@ module.exports = function InstanceOverview({ baseUrl }) {
 					<span>
 						{blockedInstances.length} blocked instance{blockedInstances.length != 1 ? "s" : ""} {filtered > 0 && `(${filtered} filtered)`}
 					</span>
-					<div className="list">
+					<div className="list scrolling">
 						{filteredInstances.map((entry) => {
 							return (
 								<Link key={entry.domain} to={`${baseUrl}/${entry.domain}`}>
@@ -90,8 +90,7 @@ module.exports = function InstanceOverview({ baseUrl }) {
 					</div>
 				</div>
 			</div>
-
-			<ImportExport />
+			<Link to={`${baseUrl}/import-export`}><a>Or use the bulk import/export interface</a></Link>
 		</>
 	);
 };
