@@ -702,6 +702,10 @@ button.with-icon {
 	}
 }
 
+.loading-icon {
+	align-self: flex-start;
+}
+
 .fadeout {
 	animation-name: fadeout;
 	animation-duration: 0.5s;
