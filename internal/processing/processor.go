@@ -235,6 +235,8 @@ type Processor interface {
 
 	// ReportsGet returns reports created by the given user.
 	ReportsGet(ctx context.Context, authed *oauth.Auth, limit int, maxID string, minID string) (*apimodel.PageableResponse, gtserror.WithCode)
+	// ReportGet returns one report created by the given user.
+	ReportGet(ctx context.Context, authed *oauth.Auth, id string) (*apimodel.Report, gtserror.WithCode)
 	// ReportCreate creates a new report using the given account and form.
 	ReportCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.ReportCreateRequest) (*apimodel.Report, gtserror.WithCode)
 

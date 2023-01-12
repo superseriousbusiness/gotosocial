@@ -32,6 +32,7 @@ import (
 
 type Processor interface {
 	ReportsGet(ctx context.Context, account *gtsmodel.Account, limit int, maxID string, minID string) (*apimodel.PageableResponse, gtserror.WithCode)
+	ReportGet(ctx context.Context, account *gtsmodel.Account, id string) (*apimodel.Report, gtserror.WithCode)
 	Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.ReportCreateRequest) (*apimodel.Report, gtserror.WithCode)
 }
 

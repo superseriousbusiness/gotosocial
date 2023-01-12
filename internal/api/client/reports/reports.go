@@ -26,10 +26,12 @@ import (
 )
 
 const (
-	BasePath = "/v1/reports"
-	LimitKey = "limit"
-	MaxIDKey = "max_id"
-	MinIDKey = "min_id"
+	BasePath       = "/v1/reports"
+	IDKey          = "id"
+	LimitKey       = "limit"
+	MaxIDKey       = "max_id"
+	MinIDKey       = "min_id"
+	BasePathWithID = BasePath + "/:" + IDKey
 )
 
 type Module struct {
@@ -45,4 +47,5 @@ func New(processor processing.Processor) *Module {
 func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
 	attachHandler(http.MethodGet, BasePath, m.ReportsGETHandler)
 	attachHandler(http.MethodPost, BasePath, m.ReportPOSTHandler)
+	attachHandler(http.MethodGet, BasePathWithID, m.ReportGETHandler)
 }

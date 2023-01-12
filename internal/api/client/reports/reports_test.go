@@ -50,6 +50,7 @@ type ReportsStandardTestSuite struct {
 	testUsers        map[string]*gtsmodel.User
 	testAccounts     map[string]*gtsmodel.Account
 	testStatuses     map[string]*gtsmodel.Status
+	testReports      map[string]*gtsmodel.Report
 
 	// module being tested
 	reportsModule *reports.Module
@@ -62,6 +63,7 @@ func (suite *ReportsStandardTestSuite) SetupSuite() {
 	suite.testUsers = testrig.NewTestUsers()
 	suite.testAccounts = testrig.NewTestAccounts()
 	suite.testStatuses = testrig.NewTestStatuses()
+	suite.testReports = testrig.NewTestReports()
 }
 
 func (suite *ReportsStandardTestSuite) SetupTest() {

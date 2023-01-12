@@ -16,24 +16,36 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package processing
+package report
 
 import (
 	"context"
+	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) ReportsGet(ctx context.Context, authed *oauth.Auth, limit int, maxID string, minID string) (*apimodel.PageableResponse, gtserror.WithCode) {
-	return p.reportProcessor.ReportsGet(ctx, authed.Account, limit, maxID, minID)
-}
+func (p *processor) ReportGet(ctx context.Context, account *gtsmodel.Account, id string) (*apimodel.Report, gtserror.WithCode) {
+	report, err := p.db.GetReportByID(ctx, id)
+	if err != nil {
+		if err == db.ErrNoEntries {
+			return nil, gtserror.NewErrorNotFound(err)
+		}
+		return nil, gtserror.NewErrorInternalError(err)
+	}
 
-func (p *processor) ReportGet(ctx context.Context, authed *oauth.Auth, id string) (*apimodel.Report, gtserror.WithCode) {
-	return p.reportProcessor.ReportGet(ctx, authed.Account, id)
-}
+	if report.AccountID != account.ID {
+		err = fmt.Errorf("report with id %s does not belong to account %s", report.ID, account.ID)
+		return nil, gtserror.NewErrorNotFound(err)
+	}
 
-func (p *processor) ReportCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.ReportCreateRequest) (*apimodel.Report, gtserror.WithCode) {
-	return p.reportProcessor.Create(ctx, authed.Account, form)
+	apiReport, err := p.tc.ReportToAPIReport(ctx, report)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting report to api: %s", err))
+	}
+
+	return apiReport, nil
 }

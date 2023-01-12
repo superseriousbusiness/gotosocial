@@ -4109,6 +4109,38 @@ paths:
             summary: Create a new user report with the given parameters.
             tags:
                 - reports
+    /api/v1/reports/{id}:
+        get:
+            operationId: reportGet
+            parameters:
+                - description: ID of the report
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The requested report.
+                    schema:
+                        $ref: '#/definitions/report'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:reports
+            summary: Get one report with the given id.
+            tags:
+                - reports
     /api/v1/search:
         get:
             description: If statuses are in the result, they will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
