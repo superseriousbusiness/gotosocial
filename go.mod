@@ -13,6 +13,7 @@ require (
 	codeberg.org/gruf/go-mutexes v1.1.5
 	codeberg.org/gruf/go-runners v1.4.0
 	codeberg.org/gruf/go-store/v2 v2.2.1
+	github.com/KimMachineGun/automemlimit v0.2.4
 	github.com/abema/go-mp4 v0.9.0
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/coreos/go-oidc/v3 v3.5.0
@@ -49,6 +50,7 @@ require (
 	github.com/uptrace/bun/dialect/sqlitedialect v1.1.9
 	github.com/wagslane/go-password-validator v0.3.0
 	github.com/yuin/goldmark v1.5.3
+	go.uber.org/automaxprocs v1.5.1
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
 	golang.org/x/image v0.3.0
@@ -75,7 +77,11 @@ require (
 	codeberg.org/gruf/go-pools v1.1.0 // indirect
 	codeberg.org/gruf/go-sched v1.2.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
+	github.com/cilium/ebpf v0.4.0 // indirect
+	github.com/containerd/cgroups v1.0.4 // indirect
+	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dsoprea/go-exif/v3 v3.0.0-20210625224831-a6301f85c82b // indirect
 	github.com/dsoprea/go-iptc v0.0.0-20200610044640-bc9ca208b413 // indirect
 	github.com/dsoprea/go-logging v0.0.0-20200710184922-b02d349568dd // indirect
@@ -91,6 +97,8 @@ require (
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-xmlfmt/xmlfmt v0.0.0-20211206191508-7fd73a941850 // indirect
 	github.com/goccy/go-json v0.9.11 // indirect
+	github.com/godbus/dbus/v5 v5.0.4 // indirect
+	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
@@ -118,6 +126,7 @@ require (
 	github.com/minio/sha256-simd v1.0.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/opencontainers/runtime-spec v1.0.2 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
