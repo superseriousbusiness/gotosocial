@@ -19,7 +19,9 @@
 package followrequests_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -28,7 +30,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/followrequests"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -77,9 +78,25 @@ func (suite *AuthorizeTestSuite) TestAuthorize() {
 
 	// check the response
 	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
-
-	suite.Equal(`{"id":"01FHMQX3GAABWSM0S2VZEC2SWC","following":false,"showing_reblogs":false,"notifying":false,"followed_by":true,"blocking":false,"blocked_by":false,"muting":false,"muting_notifications":false,"requested":false,"domain_blocking":false,"endorsed":false,"note":""}`, string(b))
+	suite.NoError(err)
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, b, "", "  ")
+	suite.NoError(err)
+	suite.Equal(`{
+  "id": "01FHMQX3GAABWSM0S2VZEC2SWC",
+  "following": false,
+  "showing_reblogs": false,
+  "notifying": false,
+  "followed_by": true,
+  "blocking": false,
+  "blocked_by": false,
+  "muting": false,
+  "muting_notifications": false,
+  "requested": false,
+  "domain_blocking": false,
+  "endorsed": false,
+  "note": ""
+}`, dst.String())
 }
 
 func (suite *AuthorizeTestSuite) TestAuthorizeNoFR() {
@@ -105,7 +122,7 @@ func (suite *AuthorizeTestSuite) TestAuthorizeNoFR() {
 
 	// check the response
 	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	suite.Equal(`{"error":"Not Found"}`, string(b))
 }

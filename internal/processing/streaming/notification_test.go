@@ -19,7 +19,9 @@
 package streaming_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -52,7 +54,35 @@ func (suite *NotificationTestSuite) TestStreamNotification() {
 	suite.NoError(err)
 
 	msg := <-openStream.Messages
-	suite.Equal(`{"id":"01FH57SJCMDWQGEAJ0X08CE3WV","type":"follow","created_at":"2021-10-04T08:52:36.000Z","account":{"id":"01F8MH5ZK5VRH73AKHQM6Y9VNX","username":"foss_satan","acct":"foss_satan@fossbros-anonymous.io","display_name":"big gerald","locked":false,"bot":false,"created_at":"2021-09-26T10:52:36.000Z","note":"i post about like, i dunno, stuff, or whatever!!!!","url":"http://fossbros-anonymous.io/@foss_satan","avatar":"","avatar_static":"","header":"http://localhost:8080/assets/default_header.png","header_static":"http://localhost:8080/assets/default_header.png","followers_count":0,"following_count":0,"statuses_count":1,"last_status_at":"2021-09-20T10:40:37.000Z","emojis":[],"fields":[]}}`, msg.Payload)
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, []byte(msg.Payload), "", "  ")
+	suite.NoError(err)
+	suite.Equal(`{
+  "id": "01FH57SJCMDWQGEAJ0X08CE3WV",
+  "type": "follow",
+  "created_at": "2021-10-04T08:52:36.000Z",
+  "account": {
+    "id": "01F8MH5ZK5VRH73AKHQM6Y9VNX",
+    "username": "foss_satan",
+    "acct": "foss_satan@fossbros-anonymous.io",
+    "display_name": "big gerald",
+    "locked": false,
+    "bot": false,
+    "created_at": "2021-09-26T10:52:36.000Z",
+    "note": "i post about like, i dunno, stuff, or whatever!!!!",
+    "url": "http://fossbros-anonymous.io/@foss_satan",
+    "avatar": "",
+    "avatar_static": "",
+    "header": "http://localhost:8080/assets/default_header.png",
+    "header_static": "http://localhost:8080/assets/default_header.png",
+    "followers_count": 0,
+    "following_count": 0,
+    "statuses_count": 1,
+    "last_status_at": "2021-09-20T10:40:37.000Z",
+    "emojis": [],
+    "fields": []
+  }
+}`, dst.String())
 }
 
 func TestNotificationTestSuite(t *testing.T) {

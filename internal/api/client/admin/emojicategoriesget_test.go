@@ -19,6 +19,8 @@
 package admin_test
 
 import (
+	"bytes"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -44,8 +46,19 @@ func (suite *EmojiCategoriesGetTestSuite) TestEmojiCategoriesGet() {
 	b, err := io.ReadAll(recorder.Body)
 	suite.NoError(err)
 	suite.NotNil(b)
-
-	suite.Equal(`[{"id":"01GGQ989PTT9PMRN4FZ1WWK2B9","name":"cute stuff"},{"id":"01GGQ8V4993XK67B2JB396YFB7","name":"reactions"}]`, string(b))
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, b, "", "  ")
+	suite.NoError(err)
+	suite.Equal(`[
+  {
+    "id": "01GGQ989PTT9PMRN4FZ1WWK2B9",
+    "name": "cute stuff"
+  },
+  {
+    "id": "01GGQ8V4993XK67B2JB396YFB7",
+    "name": "reactions"
+  }
+]`, dst.String())
 }
 
 func TestEmojiCategoriesGetTestSuite(t *testing.T) {
