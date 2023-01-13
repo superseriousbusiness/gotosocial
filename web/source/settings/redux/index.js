@@ -38,7 +38,6 @@ const combinedReducers = combineReducers({
 	instances: require("./reducers/instances").reducer,
 	temporary: require("./reducers/temporary").reducer,
 	user: require("./reducers/user").reducer,
-	admin: require("./reducers/admin").reducer,
 	[query.reducerPath]: query.reducer
 });
 
