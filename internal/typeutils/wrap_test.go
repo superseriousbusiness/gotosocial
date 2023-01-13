@@ -44,10 +44,19 @@ func (suite *WrapTestSuite) TestWrapNoteInCreateIRIOnly() {
 	createI, err := streams.Serialize(create)
 	suite.NoError(err)
 
-	bytes, err := json.Marshal(createI)
+	bytes, err := json.MarshalIndent(createI, "", "  ")
 	suite.NoError(err)
 
-	suite.Equal(`{"@context":"https://www.w3.org/ns/activitystreams","actor":"http://localhost:8080/users/the_mighty_zork","cc":"http://localhost:8080/users/the_mighty_zork/followers","id":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity","object":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY","published":"2021-10-20T12:40:37+02:00","to":"https://www.w3.org/ns/activitystreams#Public","type":"Create"}`, string(bytes))
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": "http://localhost:8080/users/the_mighty_zork",
+  "cc": "http://localhost:8080/users/the_mighty_zork/followers",
+  "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity",
+  "object": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
+  "published": "2021-10-20T12:40:37+02:00",
+  "to": "https://www.w3.org/ns/activitystreams#Public",
+  "type": "Create"
+}`, string(bytes))
 }
 
 func (suite *WrapTestSuite) TestWrapNoteInCreate() {
@@ -63,10 +72,42 @@ func (suite *WrapTestSuite) TestWrapNoteInCreate() {
 	createI, err := streams.Serialize(create)
 	suite.NoError(err)
 
-	bytes, err := json.Marshal(createI)
+	bytes, err := json.MarshalIndent(createI, "", "  ")
 	suite.NoError(err)
 
-	suite.Equal(`{"@context":"https://www.w3.org/ns/activitystreams","actor":"http://localhost:8080/users/the_mighty_zork","cc":"http://localhost:8080/users/the_mighty_zork/followers","id":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity","object":{"attachment":[],"attributedTo":"http://localhost:8080/users/the_mighty_zork","cc":"http://localhost:8080/users/the_mighty_zork/followers","content":"hello everyone!","id":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY","published":"2021-10-20T12:40:37+02:00","replies":{"first":{"id":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?page=true","next":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?only_other_accounts=false\u0026page=true","partOf":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies","type":"CollectionPage"},"id":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies","type":"Collection"},"sensitive":true,"summary":"introduction post","tag":[],"to":"https://www.w3.org/ns/activitystreams#Public","type":"Note","url":"http://localhost:8080/@the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY"},"published":"2021-10-20T12:40:37+02:00","to":"https://www.w3.org/ns/activitystreams#Public","type":"Create"}`, string(bytes))
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": "http://localhost:8080/users/the_mighty_zork",
+  "cc": "http://localhost:8080/users/the_mighty_zork/followers",
+  "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity",
+  "object": {
+    "attachment": [],
+    "attributedTo": "http://localhost:8080/users/the_mighty_zork",
+    "cc": "http://localhost:8080/users/the_mighty_zork/followers",
+    "content": "hello everyone!",
+    "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
+    "published": "2021-10-20T12:40:37+02:00",
+    "replies": {
+      "first": {
+        "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?page=true",
+        "next": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?only_other_accounts=false\u0026page=true",
+        "partOf": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies",
+        "type": "CollectionPage"
+      },
+      "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies",
+      "type": "Collection"
+    },
+    "sensitive": true,
+    "summary": "introduction post",
+    "tag": [],
+    "to": "https://www.w3.org/ns/activitystreams#Public",
+    "type": "Note",
+    "url": "http://localhost:8080/@the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY"
+  },
+  "published": "2021-10-20T12:40:37+02:00",
+  "to": "https://www.w3.org/ns/activitystreams#Public",
+  "type": "Create"
+}`, string(bytes))
 }
 
 func TestWrapTestSuite(t *testing.T) {

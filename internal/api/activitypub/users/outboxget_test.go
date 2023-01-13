@@ -19,6 +19,7 @@
 package users_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io/ioutil"
@@ -76,7 +77,15 @@ func (suite *OutboxGetTestSuite) TestGetOutbox() {
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
-	suite.Equal(`{"@context":"https://www.w3.org/ns/activitystreams","first":"http://localhost:8080/users/the_mighty_zork/outbox?page=true","id":"http://localhost:8080/users/the_mighty_zork/outbox","type":"OrderedCollection"}`, string(b))
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, b, "", "  ")
+	suite.NoError(err)
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "first": "http://localhost:8080/users/the_mighty_zork/outbox?page=true",
+  "id": "http://localhost:8080/users/the_mighty_zork/outbox",
+  "type": "OrderedCollection"
+}`, dst.String())
 
 	m := make(map[string]interface{})
 	err = json.Unmarshal(b, &m)
@@ -135,7 +144,26 @@ func (suite *OutboxGetTestSuite) TestGetOutboxFirstPage() {
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
-	suite.Equal(`{"@context":"https://www.w3.org/ns/activitystreams","id":"http://localhost:8080/users/the_mighty_zork/outbox?page=true","next":"http://localhost:8080/users/the_mighty_zork/outbox?page=true\u0026max_id=01F8MHAMCHF6Y650WCRSCP4WMY","orderedItems":{"actor":"http://localhost:8080/users/the_mighty_zork","cc":"http://localhost:8080/users/the_mighty_zork/followers","id":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity","object":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY","published":"2021-10-20T10:40:37Z","to":"https://www.w3.org/ns/activitystreams#Public","type":"Create"},"partOf":"http://localhost:8080/users/the_mighty_zork/outbox","prev":"http://localhost:8080/users/the_mighty_zork/outbox?page=true\u0026min_id=01F8MHAMCHF6Y650WCRSCP4WMY","type":"OrderedCollectionPage"}`, string(b))
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, b, "", "  ")
+	suite.NoError(err)
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "http://localhost:8080/users/the_mighty_zork/outbox?page=true",
+  "next": "http://localhost:8080/users/the_mighty_zork/outbox?page=true\u0026max_id=01F8MHAMCHF6Y650WCRSCP4WMY",
+  "orderedItems": {
+    "actor": "http://localhost:8080/users/the_mighty_zork",
+    "cc": "http://localhost:8080/users/the_mighty_zork/followers",
+    "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity",
+    "object": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
+    "published": "2021-10-20T10:40:37Z",
+    "to": "https://www.w3.org/ns/activitystreams#Public",
+    "type": "Create"
+  },
+  "partOf": "http://localhost:8080/users/the_mighty_zork/outbox",
+  "prev": "http://localhost:8080/users/the_mighty_zork/outbox?page=true\u0026min_id=01F8MHAMCHF6Y650WCRSCP4WMY",
+  "type": "OrderedCollectionPage"
+}`, dst.String())
 
 	m := make(map[string]interface{})
 	err = json.Unmarshal(b, &m)
@@ -198,7 +226,16 @@ func (suite *OutboxGetTestSuite) TestGetOutboxNextPage() {
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
-	suite.Equal(`{"@context":"https://www.w3.org/ns/activitystreams","id":"http://localhost:8080/users/the_mighty_zork/outbox?page=true\u0026maxID=01F8MHAMCHF6Y650WCRSCP4WMY","orderedItems":[],"partOf":"http://localhost:8080/users/the_mighty_zork/outbox","type":"OrderedCollectionPage"}`, string(b))
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, b, "", "  ")
+	suite.NoError(err)
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "http://localhost:8080/users/the_mighty_zork/outbox?page=true\u0026maxID=01F8MHAMCHF6Y650WCRSCP4WMY",
+  "orderedItems": [],
+  "partOf": "http://localhost:8080/users/the_mighty_zork/outbox",
+  "type": "OrderedCollectionPage"
+}`, dst.String())
 
 	m := make(map[string]interface{})
 	err = json.Unmarshal(b, &m)

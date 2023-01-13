@@ -19,7 +19,9 @@
 package followrequests_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -69,8 +71,32 @@ func (suite *GetTestSuite) TestGet() {
 	// check the response
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
-
-	suite.Equal(`[{"id":"01FHMQX3GAABWSM0S2VZEC2SWC","username":"Some_User","acct":"Some_User@example.org","display_name":"some user","locked":true,"bot":false,"created_at":"2020-08-10T12:13:28.000Z","note":"i'm a real son of a gun","url":"http://example.org/@Some_User","avatar":"","avatar_static":"","header":"http://localhost:8080/assets/default_header.png","header_static":"http://localhost:8080/assets/default_header.png","followers_count":0,"following_count":0,"statuses_count":0,"last_status_at":null,"emojis":[],"fields":[]}]`, string(b))
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, b, "", "  ")
+	suite.NoError(err)
+	suite.Equal(`[
+  {
+    "id": "01FHMQX3GAABWSM0S2VZEC2SWC",
+    "username": "Some_User",
+    "acct": "Some_User@example.org",
+    "display_name": "some user",
+    "locked": true,
+    "bot": false,
+    "created_at": "2020-08-10T12:13:28.000Z",
+    "note": "i'm a real son of a gun",
+    "url": "http://example.org/@Some_User",
+    "avatar": "",
+    "avatar_static": "",
+    "header": "http://localhost:8080/assets/default_header.png",
+    "header_static": "http://localhost:8080/assets/default_header.png",
+    "followers_count": 0,
+    "following_count": 0,
+    "statuses_count": 0,
+    "last_status_at": null,
+    "emojis": [],
+    "fields": []
+  }
+]`, dst.String())
 }
 
 func TestGetTestSuite(t *testing.T) {

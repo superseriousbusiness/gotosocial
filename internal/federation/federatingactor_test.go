@@ -19,7 +19,9 @@
 package federation_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"net/url"
 	"testing"
 	"time"
@@ -130,7 +132,27 @@ func (suite *FederatingActorTestSuite) TestSendRemoteFollower() {
 		suite.FailNow("timed out waiting for message")
 	}
 
-	suite.Equal(`{"@context":"https://www.w3.org/ns/activitystreams","actor":"http://localhost:8080/users/the_mighty_zork","id":"http://localhost:8080/whatever_some_create","object":{"attributedTo":"http://localhost:8080/users/the_mighty_zork","content":"boobies","id":"http://localhost:8080/users/the_mighty_zork/statuses/01G1TR6BADACCZWQMNF9X21TV5","published":"2022-06-02T12:22:21+02:00","tag":[],"to":"http://localhost:8080/users/the_mighty_zork/followers","type":"Note","url":"http://localhost:8080/@the_mighty_zork/statuses/01G1TR6BADACCZWQMNF9X21TV5"},"published":"2022-06-02T12:22:21+02:00","to":"http://localhost:8080/users/the_mighty_zork/followers","type":"Create"}`, string(sent[0]))
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, sent[0], "", "  ")
+	suite.NoError(err)
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": "http://localhost:8080/users/the_mighty_zork",
+  "id": "http://localhost:8080/whatever_some_create",
+  "object": {
+    "attributedTo": "http://localhost:8080/users/the_mighty_zork",
+    "content": "boobies",
+    "id": "http://localhost:8080/users/the_mighty_zork/statuses/01G1TR6BADACCZWQMNF9X21TV5",
+    "published": "2022-06-02T12:22:21+02:00",
+    "tag": [],
+    "to": "http://localhost:8080/users/the_mighty_zork/followers",
+    "type": "Note",
+    "url": "http://localhost:8080/@the_mighty_zork/statuses/01G1TR6BADACCZWQMNF9X21TV5"
+  },
+  "published": "2022-06-02T12:22:21+02:00",
+  "to": "http://localhost:8080/users/the_mighty_zork/followers",
+  "type": "Create"
+}`, dst.String())
 }
 
 func TestFederatingActorTestSuite(t *testing.T) {

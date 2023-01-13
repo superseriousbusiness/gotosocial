@@ -41,11 +41,18 @@ func (suite *FollowingTestSuite) TestGetFollowing() {
 	fi, err := streams.Serialize(f)
 	suite.NoError(err)
 
-	fJson, err := json.Marshal(fi)
+	fJson, err := json.MarshalIndent(fi, "", "  ")
 	suite.NoError(err)
 
 	// zork follows admin account and local_account_1
-	suite.Equal(`{"@context":"https://www.w3.org/ns/activitystreams","items":["http://localhost:8080/users/admin","http://localhost:8080/users/1happyturtle"],"type":"Collection"}`, string(fJson))
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "items": [
+    "http://localhost:8080/users/admin",
+    "http://localhost:8080/users/1happyturtle"
+  ],
+  "type": "Collection"
+}`, string(fJson))
 }
 
 func TestFollowingTestSuite(t *testing.T) {

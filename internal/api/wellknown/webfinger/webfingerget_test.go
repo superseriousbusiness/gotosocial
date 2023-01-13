@@ -19,14 +19,15 @@
 package webfinger_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/wellknown/webfinger"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
@@ -61,9 +62,29 @@ func (suite *WebfingerGetTestSuite) TestFingerUser() {
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
-
-	suite.Equal(`{"subject":"acct:the_mighty_zork@localhost:8080","aliases":["http://localhost:8080/users/the_mighty_zork","http://localhost:8080/@the_mighty_zork"],"links":[{"rel":"http://webfinger.net/rel/profile-page","type":"text/html","href":"http://localhost:8080/@the_mighty_zork"},{"rel":"self","type":"application/activity+json","href":"http://localhost:8080/users/the_mighty_zork"}]}`, string(b))
+	suite.NoError(err)
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, b, "", "  ")
+	suite.NoError(err)
+	suite.Equal(`{
+  "subject": "acct:the_mighty_zork@localhost:8080",
+  "aliases": [
+    "http://localhost:8080/users/the_mighty_zork",
+    "http://localhost:8080/@the_mighty_zork"
+  ],
+  "links": [
+    {
+      "rel": "http://webfinger.net/rel/profile-page",
+      "type": "text/html",
+      "href": "http://localhost:8080/@the_mighty_zork"
+    },
+    {
+      "rel": "self",
+      "type": "application/activity+json",
+      "href": "http://localhost:8080/users/the_mighty_zork"
+    }
+  ]
+}`, dst.String())
 }
 
 func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByHost() {
@@ -98,9 +119,29 @@ func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByHo
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
-
-	suite.Equal(`{"subject":"acct:aaaaa@example.org","aliases":["http://gts.example.org/users/aaaaa","http://gts.example.org/@aaaaa"],"links":[{"rel":"http://webfinger.net/rel/profile-page","type":"text/html","href":"http://gts.example.org/@aaaaa"},{"rel":"self","type":"application/activity+json","href":"http://gts.example.org/users/aaaaa"}]}`, string(b))
+	suite.NoError(err)
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, b, "", "  ")
+	suite.NoError(err)
+	suite.Equal(`{
+  "subject": "acct:aaaaa@example.org",
+  "aliases": [
+    "http://gts.example.org/users/aaaaa",
+    "http://gts.example.org/@aaaaa"
+  ],
+  "links": [
+    {
+      "rel": "http://webfinger.net/rel/profile-page",
+      "type": "text/html",
+      "href": "http://gts.example.org/@aaaaa"
+    },
+    {
+      "rel": "self",
+      "type": "application/activity+json",
+      "href": "http://gts.example.org/users/aaaaa"
+    }
+  ]
+}`, dst.String())
 }
 
 func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByAccountDomain() {
@@ -135,9 +176,29 @@ func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByAc
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
-
-	suite.Equal(`{"subject":"acct:aaaaa@example.org","aliases":["http://gts.example.org/users/aaaaa","http://gts.example.org/@aaaaa"],"links":[{"rel":"http://webfinger.net/rel/profile-page","type":"text/html","href":"http://gts.example.org/@aaaaa"},{"rel":"self","type":"application/activity+json","href":"http://gts.example.org/users/aaaaa"}]}`, string(b))
+	suite.NoError(err)
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, b, "", "  ")
+	suite.NoError(err)
+	suite.Equal(`{
+  "subject": "acct:aaaaa@example.org",
+  "aliases": [
+    "http://gts.example.org/users/aaaaa",
+    "http://gts.example.org/@aaaaa"
+  ],
+  "links": [
+    {
+      "rel": "http://webfinger.net/rel/profile-page",
+      "type": "text/html",
+      "href": "http://gts.example.org/@aaaaa"
+    },
+    {
+      "rel": "self",
+      "type": "application/activity+json",
+      "href": "http://gts.example.org/users/aaaaa"
+    }
+  ]
+}`, dst.String())
 }
 
 func (suite *WebfingerGetTestSuite) TestFingerUserWithoutAcct() {
@@ -161,9 +222,29 @@ func (suite *WebfingerGetTestSuite) TestFingerUserWithoutAcct() {
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
-
-	suite.Equal(`{"subject":"acct:the_mighty_zork@localhost:8080","aliases":["http://localhost:8080/users/the_mighty_zork","http://localhost:8080/@the_mighty_zork"],"links":[{"rel":"http://webfinger.net/rel/profile-page","type":"text/html","href":"http://localhost:8080/@the_mighty_zork"},{"rel":"self","type":"application/activity+json","href":"http://localhost:8080/users/the_mighty_zork"}]}`, string(b))
+	suite.NoError(err)
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, b, "", "  ")
+	suite.NoError(err)
+	suite.Equal(`{
+  "subject": "acct:the_mighty_zork@localhost:8080",
+  "aliases": [
+    "http://localhost:8080/users/the_mighty_zork",
+    "http://localhost:8080/@the_mighty_zork"
+  ],
+  "links": [
+    {
+      "rel": "http://webfinger.net/rel/profile-page",
+      "type": "text/html",
+      "href": "http://localhost:8080/@the_mighty_zork"
+    },
+    {
+      "rel": "self",
+      "type": "application/activity+json",
+      "href": "http://localhost:8080/users/the_mighty_zork"
+    }
+  ]
+}`, dst.String())
 }
 
 func TestWebfingerGetTestSuite(t *testing.T) {
