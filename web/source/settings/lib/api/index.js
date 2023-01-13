@@ -73,7 +73,7 @@ function apiCall(method, route, payload, type = "json") {
 			if (!res.ok) {
 				if (auth != undefined && (res.status == 401 || res.status == 403)) {
 					// stored access token is invalid
-					throw new AuthenticationError("401: Authentication error", {json, status: res.status});
+					throw new AuthenticationError("401: Authentication error", { json, status: res.status });
 				} else {
 					throw new APIError(json.error, { json });
 				}

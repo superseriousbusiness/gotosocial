@@ -18,7 +18,7 @@
 
 "use strict";
 
-const {createSlice} = require("@reduxjs/toolkit");
+const { createSlice } = require("@reduxjs/toolkit");
 const d = require("dotty");
 
 module.exports = createSlice({
@@ -27,15 +27,15 @@ module.exports = createSlice({
 		info: {},
 	},
 	reducers: {
-		setNamedInstanceInfo: (state, {payload}) => {
+		setNamedInstanceInfo: (state, { payload }) => {
 			let [key, info] = payload;
 			state.info[key] = info;
 		},
-		setInstanceInfo: (state, {payload}) => {
+		setInstanceInfo: (state, { payload }) => {
 			state.current = payload;
 			state.adminSettings = payload;
 		},
-		setAdminSettingsVal: (state, {payload: [key, val]}) => {
+		setAdminSettingsVal: (state, { payload: [key, val] }) => {
 			d.put(state.adminSettings, key, val);
 		}
 	}

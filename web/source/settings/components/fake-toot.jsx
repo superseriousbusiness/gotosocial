@@ -21,14 +21,14 @@
 const React = require("react");
 const Redux = require("react-redux");
 
-module.exports = function FakeToot({children}) {
+module.exports = function FakeToot({ children }) {
 	const account = Redux.useSelector((state) => state.user.profile);
 
 	return (
 		<div className="toot expanded">
 			<div className="contentgrid">
 				<span className="avatar">
-					<img src={account.avatar} alt=""/>
+					<img src={account.avatar} alt="" />
 				</span>
 				<span className="displayname">{account.display_name.trim().length > 0 ? account.display_name : account.username}</span>
 				<span className="username">@{account.username}</span>

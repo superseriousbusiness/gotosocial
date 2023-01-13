@@ -18,14 +18,14 @@
 
 "use strict";
 
-const {createSlice} = require("@reduxjs/toolkit");
+const { createSlice } = require("@reduxjs/toolkit");
 
 module.exports = createSlice({
 	name: "temporary",
 	initialState: {
 	},
 	reducers: {
-		setStatus: function(state, {payload}) {
+		setStatus: function (state, { payload }) {
 			state.status = payload;
 		}
 	}

@@ -32,7 +32,7 @@ const prodCfg = {
 			global: true,
 			exts: ".js"
 		}],
-		["@browserify/envify", {global: true}]
+		["@browserify/envify", { global: true }]
 	]
 };
 

@@ -20,11 +20,11 @@
 
 const React = require("react");
 
-module.exports = function Submit({onClick, label, errorMsg, statusMsg}) {
+module.exports = function Submit({ onClick, label, errorMsg, statusMsg }) {
 	return (
 		<div className="messagebutton">
-			<button type="submit" onClick={onClick}>{ label }</button>
-			{errorMsg.length > 0 && 
+			<button type="submit" onClick={onClick}>{label}</button>
+			{errorMsg.length > 0 &&
 				<div className="error accent">{errorMsg}</div>
 			}
 			{statusMsg.length > 0 &&

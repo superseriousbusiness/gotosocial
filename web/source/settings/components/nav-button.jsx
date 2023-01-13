@@ -21,7 +21,7 @@
 const React = require("react");
 const { Link, useRoute } = require("wouter");
 
-module.exports = function NavButton({href, name}) {
+module.exports = function NavButton({ href, name }) {
 	const [isActive] = useRoute(`${href}/:anything?`);
 	return (
 		<Link href={href}>
