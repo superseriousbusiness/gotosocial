@@ -20,7 +20,6 @@
 
 const {
 	replaceCacheOnMutation,
-	appendCacheOnMutation,
 	removeFromCacheOnMutation,
 	domainListToObject
 } = require("../lib");
@@ -60,7 +59,12 @@ const endpoints = (build) => ({
 			body: formData,
 			discardEmpty: true
 		}),
-		...appendCacheOnMutation("instanceBlocks")
+		transformResponse: (data) => {
+			return {
+				[data.domain]: data
+			};
+		},
+		...replaceCacheOnMutation("instanceBlocks")
 	}),
 	removeInstanceBlock: build.mutation({
 		query: (id) => ({
