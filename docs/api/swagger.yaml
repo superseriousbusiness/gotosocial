@@ -3988,19 +3988,31 @@ paths:
                 ````
             operationId: reports
             parameters:
-                - default: 20
-                  description: Number of reports to return.
+                - description: If set to true, only resolved reports will be returned. If false, only unresolved reports will be returned. If unset, reports will not be filtered on their resolved status.
                   in: query
-                  name: limit
-                  type: integer
+                  name: resolved
+                  type: boolean
+                - description: Return only reports that target the given account id.
+                  in: query
+                  name: target_account_id
+                  type: string
                 - description: Return only reports *OLDER* than the given max ID. The report with the specified ID will not be included in the response.
                   in: query
                   name: max_id
                   type: string
-                - description: Return only reports *NEWER* than the given min ID. The report with the specified ID will not be included in the response.
+                - description: Return only reports *NEWER* than the given since ID. The report with the specified ID will not be included in the response. This parameter is functionally equivalent to min_id.
+                  in: query
+                  name: since_id
+                  type: string
+                - description: Return only reports *NEWER* than the given min ID. The report with the specified ID will not be included in the response. This parameter is functionally equivalent to since_id.
                   in: query
                   name: min_id
                   type: string
+                - default: 20
+                  description: Number of reports to return. If less than 1, will be clamped to 1. If more than 100, will be clamped to 100.
+                  in: query
+                  name: limit
+                  type: integer
             produces:
                 - application/json
             responses:
