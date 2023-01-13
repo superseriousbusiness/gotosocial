@@ -67,6 +67,13 @@ module.exports = function ImportExport() {
 		reader.readAsText(e.target.files[0]);
 	}
 
+	React.useEffect(() => {
+		if (exportResult.isSuccess) {
+			form.domains.setter(exportResult.data);
+		}
+		/* eslint-disable-next-line react-hooks/exhaustive-deps */
+	}, [exportResult]);
+
 	const [_location, setLocation] = useLocation();
 
 	if (updateFromFile) {
@@ -98,15 +105,15 @@ module.exports = function ImportExport() {
 				{parseResult.isSuccess && <Redirect to={`${baseUrl}/list`} />}
 				<h2>Import / Export suspended domains</h2>
 
-				<form onSubmit={submitParse}>
-					<TextArea
-						field={form.domains}
-						label="Domains, one per line (plaintext) or JSON"
-						placeholder={`google.com\nfacebook.com`}
-						rows={8}
-					/>
+				<div>
+					<form onSubmit={submitParse}>
+						<TextArea
+							field={form.domains}
+							label="Domains, one per line (plaintext) or JSON"
+							placeholder={`google.com\nfacebook.com`}
+							rows={8}
+						/>
 
-					<div className="row">
 						<div className="row">
 							<MutationButton label="Import" result={parseResult} showError={false} />
 							<button type="button" className="with-padding">
@@ -116,9 +123,11 @@ module.exports = function ImportExport() {
 								</label>
 							</button>
 						</div>
+					</form>
+					<form onSubmit={submitExport}>
 						<div className="row">
-							<MutationButton form="export-form" name="export" label="Export" result={exportResult} showError={false} />
-							<MutationButton form="export-form" name="export-file" label="Export file" result={exportResult} showError={false} />
+							<MutationButton name="export" label="Export" result={exportResult} showError={false} />
+							<MutationButton name="export-file" label="Export file" result={exportResult} showError={false} />
 							<Select
 								field={form.exportType}
 								options={<>
@@ -127,10 +136,10 @@ module.exports = function ImportExport() {
 								</>}
 							/>
 						</div>
-					</div>
+					</form>
 					{parseResult.error && <Error error={parseResult.error} />}
-				</form>
-				<form id="export-form" onSubmit={submitExport} />
+					{exportResult.error && <Error error={exportResult.error} />}
+				</div>
 			</Route>
 		</Switch>
 	);
