@@ -52,12 +52,18 @@ import (
 //
 //	parameters:
 //	-
-//		name: limit
-//		type: integer
-//		description: Number of reports to return.
-//		default: 20
+//		name: resolved
+//		type: boolean
+//		description: >-
+//			If set to true, only resolved reports will be returned.
+//			If false, only unresolved reports will be returned.
+//			If unset, reports will not be filtered on their resolved status.
 //		in: query
-//		required: false
+//	-
+//		name: target_account_id
+//		type: string
+//		description: Return only reports that target the given account id.
+//		in: query
 //	-
 //		name: max_id
 //		type: string
@@ -66,13 +72,30 @@ import (
 //			The report with the specified ID will not be included in the response.
 //		in: query
 //	-
+//		name: since_id
+//		type: string
+//		description: >-
+//			Return only reports *NEWER* than the given since ID.
+//			The report with the specified ID will not be included in the response.
+//			This parameter is functionally equivalent to min_id.
+//		in: query
+//	-
 //		name: min_id
 //		type: string
 //		description: >-
 //			Return only reports *NEWER* than the given min ID.
 //			The report with the specified ID will not be included in the response.
+//			This parameter is functionally equivalent to since_id.
 //		in: query
-//		required: false
+//	-
+//		name: limit
+//		type: integer
+//		description: >-
+//			Number of reports to return.
+//			If less than 1, will be clamped to 1.
+//			If more than 100, will be clamped to 100.
+//		default: 20
+//		in: query
 //
 //	security:
 //	- OAuth2 Bearer:
@@ -108,22 +131,36 @@ func (m *Module) ReportsGETHandler(c *gin.Context) {
 		return
 	}
 
+	var resolved *bool
+	if resolvedString := c.Query(ResolvedKey); resolvedString != "" {
+		i, err := strconv.ParseBool(resolvedString)
+		if err != nil {
+			err := fmt.Errorf("error parsing %s: %s", ResolvedKey, err)
+			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+			return
+		}
+		resolved = &i
+	}
+
 	limit := 20
-	limitString := c.Query(LimitKey)
-	if limitString != "" {
+	if limitString := c.Query(LimitKey); limitString != "" {
 		i, err := strconv.Atoi(limitString)
 		if err != nil {
 			err := fmt.Errorf("error parsing %s: %s", LimitKey, err)
 			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
+
+		// normalize
+		if i <= 0 {
+			i = 1
+		} else if i >= 100 {
+			i = 100
+		}
 		limit = i
 	}
 
-	maxID := c.Query(MaxIDKey)
-	minID := c.Query(MinIDKey)
-
-	resp, errWithCode := m.processor.ReportsGet(c.Request.Context(), authed, limit, maxID, minID)
+	resp, errWithCode := m.processor.ReportsGet(c.Request.Context(), authed, resolved, c.Query(TargetAccountIDKey), c.Query(MaxIDKey), c.Query(SinceIDKey), c.Query(MinIDKey), limit)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return

@@ -45,9 +45,12 @@ func (suite *ReportsGetTestSuite) getReports(
 	token *gtsmodel.Token,
 	user *gtsmodel.User,
 	expectedHTTPStatus int,
-	limit int,
+	resolved *bool,
+	targetAccountID string,
 	maxID string,
+	sinceID string,
 	minID string,
+	limit int,
 ) ([]*apimodel.Report, error) {
 	// instantiate recorder + test context
 	recorder := httptest.NewRecorder()
@@ -59,8 +62,17 @@ func (suite *ReportsGetTestSuite) getReports(
 
 	// create the request URI
 	requestPath := reports.BasePath + "?" + reports.LimitKey + "=" + strconv.Itoa(limit)
+	if resolved != nil {
+		requestPath = requestPath + "&" + reports.ResolvedKey + "=" + strconv.FormatBool(*resolved)
+	}
+	if targetAccountID != "" {
+		requestPath = requestPath + "&" + reports.TargetAccountIDKey + "=" + targetAccountID
+	}
 	if maxID != "" {
 		requestPath = requestPath + "&" + reports.MaxIDKey + "=" + maxID
+	}
+	if sinceID != "" {
+		requestPath = requestPath + "&" + reports.SinceIDKey + "=" + sinceID
 	}
 	if minID != "" {
 		requestPath = requestPath + "&" + reports.MinIDKey + "=" + minID
@@ -101,7 +113,7 @@ func (suite *ReportsGetTestSuite) TestGetReports() {
 	testToken := suite.testTokens["local_account_2"]
 	testUser := suite.testUsers["local_account_2"]
 
-	reports, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, 20, "", "")
+	reports, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, nil, "", "", "", "", 20)
 	suite.NoError(err)
 	suite.NotEmpty(reports)
 
@@ -152,7 +164,7 @@ func (suite *ReportsGetTestSuite) TestGetReports2() {
 	testToken := suite.testTokens["local_account_2"]
 	testUser := suite.testUsers["local_account_2"]
 
-	reports, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, 20, "01GP3AWY4CRDVRNZKW0TEAMB5R", "")
+	reports, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, nil, "", "01GP3AWY4CRDVRNZKW0TEAMB5R", "", "", 20)
 	suite.NoError(err)
 	suite.Empty(reports)
 
@@ -167,7 +179,7 @@ func (suite *ReportsGetTestSuite) TestGetReports3() {
 	testToken := suite.testTokens["local_account_1"]
 	testUser := suite.testUsers["local_account_1"]
 
-	reports, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, 20, "", "")
+	reports, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, nil, "", "", "", "", 20)
 	suite.NoError(err)
 	suite.Empty(reports)
 
@@ -175,6 +187,125 @@ func (suite *ReportsGetTestSuite) TestGetReports3() {
 	suite.NoError(err)
 
 	suite.Equal(`[]`, string(b))
+}
+
+func (suite *ReportsGetTestSuite) TestGetReports4() {
+	testAccount := suite.testAccounts["local_account_2"]
+	testToken := suite.testTokens["local_account_2"]
+	testUser := suite.testUsers["local_account_2"]
+	resolved := testrig.FalseBool()
+
+	reports, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, resolved, "", "", "", "", 20)
+	suite.NoError(err)
+	suite.NotEmpty(reports)
+
+	b, err := json.MarshalIndent(&reports, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`[
+  {
+    "id": "01GP3AWY4CRDVRNZKW0TEAMB5R",
+    "created_at": "2022-05-14T10:20:03.000Z",
+    "action_taken": false,
+    "action_taken_at": null,
+    "action_taken_comment": null,
+    "category": "other",
+    "comment": "dark souls sucks, please yeet this nerd",
+    "forwarded": true,
+    "status_ids": [
+      "01FVW7JHQFSFK166WWKR8CBA6M"
+    ],
+    "rule_ids": [],
+    "target_account": {
+      "id": "01F8MH5ZK5VRH73AKHQM6Y9VNX",
+      "username": "foss_satan",
+      "acct": "foss_satan@fossbros-anonymous.io",
+      "display_name": "big gerald",
+      "locked": false,
+      "bot": false,
+      "created_at": "2021-09-26T10:52:36.000Z",
+      "note": "i post about like, i dunno, stuff, or whatever!!!!",
+      "url": "http://fossbros-anonymous.io/@foss_satan",
+      "avatar": "",
+      "avatar_static": "",
+      "header": "http://localhost:8080/assets/default_header.png",
+      "header_static": "http://localhost:8080/assets/default_header.png",
+      "followers_count": 0,
+      "following_count": 0,
+      "statuses_count": 1,
+      "last_status_at": "2021-09-20T10:40:37.000Z",
+      "emojis": [],
+      "fields": []
+    }
+  }
+]`, string(b))
+}
+
+func (suite *ReportsGetTestSuite) TestGetReports5() {
+	testAccount := suite.testAccounts["local_account_1"]
+	testToken := suite.testTokens["local_account_1"]
+	testUser := suite.testUsers["local_account_1"]
+	resolved := testrig.TrueBool()
+
+	reports, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, resolved, "", "", "", "", 20)
+	suite.NoError(err)
+	suite.Empty(reports)
+
+	b, err := json.MarshalIndent(&reports, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`[]`, string(b))
+}
+
+func (suite *ReportsGetTestSuite) TestGetReports6() {
+	testAccount := suite.testAccounts["local_account_2"]
+	testToken := suite.testTokens["local_account_2"]
+	testUser := suite.testUsers["local_account_2"]
+
+	reports, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, nil, "01F8MH5ZK5VRH73AKHQM6Y9VNX", "", "", "", 20)
+	suite.NoError(err)
+	suite.NotEmpty(reports)
+
+	b, err := json.MarshalIndent(&reports, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`[
+  {
+    "id": "01GP3AWY4CRDVRNZKW0TEAMB5R",
+    "created_at": "2022-05-14T10:20:03.000Z",
+    "action_taken": false,
+    "action_taken_at": null,
+    "action_taken_comment": null,
+    "category": "other",
+    "comment": "dark souls sucks, please yeet this nerd",
+    "forwarded": true,
+    "status_ids": [
+      "01FVW7JHQFSFK166WWKR8CBA6M"
+    ],
+    "rule_ids": [],
+    "target_account": {
+      "id": "01F8MH5ZK5VRH73AKHQM6Y9VNX",
+      "username": "foss_satan",
+      "acct": "foss_satan@fossbros-anonymous.io",
+      "display_name": "big gerald",
+      "locked": false,
+      "bot": false,
+      "created_at": "2021-09-26T10:52:36.000Z",
+      "note": "i post about like, i dunno, stuff, or whatever!!!!",
+      "url": "http://fossbros-anonymous.io/@foss_satan",
+      "avatar": "",
+      "avatar_static": "",
+      "header": "http://localhost:8080/assets/default_header.png",
+      "header_static": "http://localhost:8080/assets/default_header.png",
+      "followers_count": 0,
+      "following_count": 0,
+      "statuses_count": 1,
+      "last_status_at": "2021-09-20T10:40:37.000Z",
+      "emojis": [],
+      "fields": []
+    }
+  }
+]`, string(b))
 }
 
 func TestReportsGetTestSuite(t *testing.T) {

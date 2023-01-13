@@ -29,8 +29,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *processor) ReportsGet(ctx context.Context, account *gtsmodel.Account, limit int, maxID string, minID string) (*apimodel.PageableResponse, gtserror.WithCode) {
-	reports, err := p.db.GetReports(ctx, account.ID, limit, maxID, minID)
+func (p *processor) ReportsGet(ctx context.Context, account *gtsmodel.Account, resolved *bool, targetAccountID string, maxID string, sinceID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
+	reports, err := p.db.GetReports(ctx, resolved, account.ID, targetAccountID, maxID, sinceID, minID, limit)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return util.EmptyPageableResponse(), nil

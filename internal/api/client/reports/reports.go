@@ -26,12 +26,15 @@ import (
 )
 
 const (
-	BasePath       = "/v1/reports"
-	IDKey          = "id"
-	LimitKey       = "limit"
-	MaxIDKey       = "max_id"
-	MinIDKey       = "min_id"
-	BasePathWithID = BasePath + "/:" + IDKey
+	BasePath           = "/v1/reports"
+	IDKey              = "id"
+	ResolvedKey        = "resolved"
+	TargetAccountIDKey = "target_account_id"
+	MaxIDKey           = "max_id"
+	SinceIDKey         = "since_id"
+	MinIDKey           = "min_id"
+	LimitKey           = "limit"
+	BasePathWithID     = BasePath + "/:" + IDKey
 )
 
 type Module struct {

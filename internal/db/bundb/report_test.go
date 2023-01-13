@@ -61,14 +61,14 @@ func (suite *ReportTestSuite) TestGetReportByURI() {
 }
 
 func (suite *ReportTestSuite) TestGetAllReports() {
-	reports, err := suite.db.GetReports(context.Background(), "", 0, "", "")
+	reports, err := suite.db.GetReports(context.Background(), nil, "", "", "", "", "", 0)
 	suite.NoError(err)
 	suite.NotEmpty(reports)
 }
 
 func (suite *ReportTestSuite) TestGetAllReportsByAccountID() {
 	accountID := suite.testAccounts["local_account_2"].ID
-	reports, err := suite.db.GetReports(context.Background(), accountID, 0, "", "")
+	reports, err := suite.db.GetReports(context.Background(), nil, accountID, "", "", "", "", 0)
 	suite.NoError(err)
 	suite.NotEmpty(reports)
 	for _, r := range reports {

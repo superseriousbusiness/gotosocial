@@ -28,8 +28,9 @@ import (
 type Report interface {
 	// GetReportByID gets one report by its db id
 	GetReportByID(ctx context.Context, id string) (*gtsmodel.Report, Error)
-	// GetReports gets limit n reports created by the given accountID, older than maxID, and newer than minID.
-	GetReports(ctx context.Context, accountID string, limit int, maxID string, minID string) ([]*gtsmodel.Report, Error)
+	// GetReports gets limit n reports using the given parameters.
+	// Parameters that are empty / zero are ignored.
+	GetReports(ctx context.Context, resolved *bool, accountID string, targetAccountID string, maxID string, sinceID string, minID string, limit int) ([]*gtsmodel.Report, Error)
 	// PutReport puts the given report in the database.
 	PutReport(ctx context.Context, report *gtsmodel.Report) Error
 	// UpdateReport updates one report by its db id.

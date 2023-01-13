@@ -50,7 +50,7 @@ func (r *reportDB) GetReportByID(ctx context.Context, id string) (*gtsmodel.Repo
 	)
 }
 
-func (r *reportDB) GetReports(ctx context.Context, accountID string, limit int, maxID string, minID string) ([]*gtsmodel.Report, db.Error) {
+func (r *reportDB) GetReports(ctx context.Context, resolved *bool, accountID string, targetAccountID string, maxID string, sinceID string, minID string, limit int) ([]*gtsmodel.Report, db.Error) {
 	reportIDs := []string{}
 
 	q := r.conn.
@@ -59,20 +59,37 @@ func (r *reportDB) GetReports(ctx context.Context, accountID string, limit int, 
 		Column("report.id").
 		Order("report.id DESC")
 
+	if resolved != nil {
+		i := bun.Ident("report.action_taken_by_account_id")
+		if *resolved {
+			q = q.Where("? IS NOT NULL", i)
+		} else {
+			q = q.Where("? IS NULL", i)
+		}
+	}
+
 	if accountID != "" {
 		q = q.Where("? = ?", bun.Ident("report.account_id"), accountID)
 	}
 
-	if limit != 0 {
-		q = q.Limit(limit)
+	if targetAccountID != "" {
+		q = q.Where("? = ?", bun.Ident("report.target_account_id"), targetAccountID)
 	}
 
 	if maxID != "" {
 		q = q.Where("? < ?", bun.Ident("report.id"), maxID)
 	}
 
+	if sinceID != "" {
+		q = q.Where("? > ?", bun.Ident("report.id"), minID)
+	}
+
 	if minID != "" {
 		q = q.Where("? > ?", bun.Ident("report.id"), minID)
+	}
+
+	if limit != 0 {
+		q = q.Limit(limit)
 	}
 
 	if err := q.Scan(ctx, &reportIDs); err != nil {

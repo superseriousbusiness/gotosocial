@@ -26,8 +26,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (p *processor) ReportsGet(ctx context.Context, authed *oauth.Auth, limit int, maxID string, minID string) (*apimodel.PageableResponse, gtserror.WithCode) {
-	return p.reportProcessor.ReportsGet(ctx, authed.Account, limit, maxID, minID)
+func (p *processor) ReportsGet(ctx context.Context, authed *oauth.Auth, resolved *bool, targetAccountID string, maxID string, sinceID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
+	return p.reportProcessor.ReportsGet(ctx, authed.Account, resolved, targetAccountID, maxID, sinceID, minID, limit)
 }
 
 func (p *processor) ReportGet(ctx context.Context, authed *oauth.Auth, id string) (*apimodel.Report, gtserror.WithCode) {

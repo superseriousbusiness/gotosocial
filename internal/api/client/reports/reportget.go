@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// ReportsGETHandler swagger:operation GET /api/v1/reports/{id} reportGet
+// ReportGETHandler swagger:operation GET /api/v1/reports/{id} reportGet
 //
 // Get one report with the given id.
 //
