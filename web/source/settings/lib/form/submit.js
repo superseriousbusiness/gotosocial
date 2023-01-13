@@ -33,6 +33,10 @@ module.exports = function useFormSubmit(form, [mutationQuery, result], { changed
 			} else {
 				action = e;
 			}
+
+			if (action == "") {
+				action = undefined;
+			}
 			setUsedAction(action);
 			// transform the field definitions into an object with just their values 
 			let updatedFields = [];
@@ -42,6 +46,7 @@ module.exports = function useFormSubmit(form, [mutationQuery, result], { changed
 					if (field.selectedValues != undefined) {
 						let selected = field.selectedValues();
 						if (!changedOnly || selected.length > 0) {
+							updatedFields.push(field);
 							return [field.name, selected];
 						}
 					} else if (!changedOnly || field.hasChanged()) {

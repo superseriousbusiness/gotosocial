@@ -29,7 +29,6 @@ const { TextInput } = require("../../components/form/inputs");
 const query = require("../../lib/query");
 
 const Loading = require("../../components/loading");
-const ImportExport = require("./import-export");
 
 module.exports = function InstanceOverview({ baseUrl }) {
 	const { data: blockedInstances = [], isLoading } = query.useInstanceBlocksQuery();
@@ -39,11 +38,15 @@ module.exports = function InstanceOverview({ baseUrl }) {
 	const filterField = useTextInput("filter");
 	const filter = filterField.value;
 
-	const filteredInstances = React.useMemo(() => {
-		return matchSorter(Object.values(blockedInstances), filter, { keys: ["domain"] });
-	}, [blockedInstances, filter]);
+	const blockedInstancesList = React.useMemo(() => {
+		return Object.values(blockedInstances);
+	}, [blockedInstances]);
 
-	let filtered = blockedInstances.length - filteredInstances.length;
+	const filteredInstances = React.useMemo(() => {
+		return matchSorter(blockedInstancesList, filter, { keys: ["domain"] });
+	}, [blockedInstancesList, filter]);
+
+	let filtered = blockedInstancesList.length - filteredInstances.length;
 
 	function filterFormSubmit(e) {
 		e.preventDefault();
@@ -70,7 +73,7 @@ module.exports = function InstanceOverview({ baseUrl }) {
 				</form>
 				<div>
 					<span>
-						{blockedInstances.length} blocked instance{blockedInstances.length != 1 ? "s" : ""} {filtered > 0 && `(${filtered} filtered)`}
+						{blockedInstancesList.length} blocked instance{blockedInstancesList.length != 1 ? "s" : ""} {filtered > 0 && `(${filtered} filtered by search)`}
 					</span>
 					<div className="list scrolling">
 						{filteredInstances.map((entry) => {

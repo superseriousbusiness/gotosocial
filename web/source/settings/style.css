@@ -220,14 +220,15 @@ section.with-sidebar > div, section.with-sidebar > form {
 	flex-direction: column;
 	gap: 1rem;
 
-	input, textarea, button {
+	input, textarea {
 		width: 100%;
 		line-height: 1.5rem;
 	}
 
-	.button-inline {
+	button {
 		width: auto;
 		align-self: flex-start;
+		line-height: 1.5rem;
 	}
 
 	input[type=checkbox] {
@@ -702,6 +703,10 @@ button.with-icon {
 	}
 }
 
+button.with-padding {
+	padding: 0.5rem calc(0.5rem + $fa-fw);
+}
+
 .loading-icon {
 	align-self: flex-start;
 }
@@ -711,6 +716,43 @@ button.with-icon {
 	animation-duration: 0.5s;
 	animation-delay: 2s;
 	animation-fill-mode: forwards;
+}
+
+.suspend-import-list {
+	.checkbox-list {
+		.header, .entry {
+			display: grid;
+			grid-template-columns: auto 25ch auto 1fr;
+		}
+	}
+
+	.entry {
+		#icon {
+			margin-left: -0.5rem;
+			align-self: center;
+		}
+
+		#icon .already-blocked {
+			color: $green1;
+		}
+
+		p {
+			align-self: center;
+			margin: 0;
+		}
+	}
+}
+
+.form-field.radio {
+	&, label {
+		display: flex;
+		gap: 0.5rem;
+	}
+
+	input {
+		width: auto;
+		place-self: center;
+	}
 }
 
 @keyframes fadeout {

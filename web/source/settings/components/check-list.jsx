@@ -20,7 +20,7 @@
 
 const React = require("react");
 
-module.exports = function CheckList({ field, Component, ...componentProps }) {
+module.exports = function CheckList({ field, Component, header = " All", ...componentProps }) {
 	return (
 		<div className="checkbox-list list">
 			<label className="header">
@@ -29,7 +29,7 @@ module.exports = function CheckList({ field, Component, ...componentProps }) {
 					type="checkbox"
 					onChange={field.toggleAll.onChange}
 					checked={field.toggleAll.value === 1}
-				/> All
+				/> {header}
 			</label>
 			{Object.values(field.value).map((entry) => (
 				<CheckListEntry

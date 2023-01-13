@@ -20,7 +20,7 @@
 
 const React = require("react");
 
-module.exports = function useTextInput({name, Name}, {validator, defaultValue=""} = {}) {
+module.exports = function useTextInput({ name, Name }, { validator, defaultValue = "", dontReset = false } = {}) {
 	const [text, setText] = React.useState(defaultValue);
 	const [valid, setValid] = React.useState(true);
 	const textRef = React.useRef(null);
@@ -31,7 +31,9 @@ module.exports = function useTextInput({name, Name}, {validator, defaultValue=""
 	}
 
 	function reset() {
-		setText("");
+		if (!dontReset) {
+			setText(defaultValue);
+		}
 	}
 
 	React.useEffect(() => {

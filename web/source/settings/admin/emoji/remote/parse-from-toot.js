@@ -65,7 +65,7 @@ module.exports = function ParseFromToot({ emojiCodes }) {
 							onChange={onURLChange}
 							value={url}
 						/>
-						<button className="button-inline" disabled={result.isLoading}>
+						<button disabled={result.isLoading}>
 							<i className={[
 								"fa fa-fw",
 								(result.isLoading
@@ -121,7 +121,6 @@ function CopyEmojiForm({ localEmojiCodes, type, emojiList }) {
 	};
 
 	const [formSubmit, result] = useFormSubmit(form, query.usePatchRemoteEmojisMutation(), { changedOnly: false });
-	console.log("action:", result.action);
 
 	const buttonsInactive = form.selectedEmoji.someSelected
 		? {}
@@ -129,41 +128,6 @@ function CopyEmojiForm({ localEmojiCodes, type, emojiList }) {
 			disabled: true,
 			title: "No emoji selected, cannot perform any actions"
 		};
-
-	// function submit(action) {
-	// 	Promise.try(() => {
-	// 		setError(null);
-	// 		const selectedShortcodes = emojiCheckList.selectedValues.map(([shortcode, entry]) => {
-	// 			if (action == "copy" && !entry.valid) {
-	// 				throw `One or more selected emoji have non-unique shortcodes (${shortcode}), unselect them or pick a different local shortcode`;
-	// 			}
-	// 			return {
-	// 				shortcode,
-	// 				localShortcode: entry.shortcode
-	// 			};
-	// 		});
-
-	// 		return patchRemoteEmojis({
-	// 			action,
-	// 			domain,
-	// 			list: selectedShortcodes,
-	// 			category
-	// 		}).unwrap();
-	// 	}).then(() => {
-	// 		emojiCheckList.reset();
-	// 		resetCategory();
-	// 	}).catch((e) => {
-	// 		if (Array.isArray(e)) {
-	// 			setError(e.map(([shortcode, msg]) => (
-	// 				<div key={shortcode}>
-	// 					{shortcode}: <span style={{ fontWeight: "initial" }}>{msg}</span>
-	// 				</div>
-	// 			)));
-	// 		} else {
-	// 			setError(e);
-	// 		}
-	// 	});
-	// }
 
 	return (
 		<div className="parsed">

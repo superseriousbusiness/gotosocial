@@ -19,14 +19,15 @@
 "use strict";
 
 const React = require("react");
+const { Switch, Route, Redirect, useLocation } = require("wouter");
 
 const query = require("../../lib/query");
-const processDomainList = require("../../lib/import-export");
 
 const {
 	useTextInput,
 	useBoolInput,
-	useFileInput
+	useRadioInput,
+	useCheckListInput
 } = require("../../lib/form");
 
 const useFormSubmit = require("../../lib/form/submit");
@@ -35,93 +36,263 @@ const {
 	TextInput,
 	TextArea,
 	Checkbox,
-	FileInput,
-	useCheckListInput
+	Select,
+	RadioGroup
 } = require("../../components/form/inputs");
 
-const FormWithData = require("../../lib/form/form-with-data");
 const CheckList = require("../../components/check-list");
 const MutationButton = require("../../components/form/mutation-button");
+const isValidDomain = require("is-valid-domain");
+const FormWithData = require("../../lib/form/form-with-data");
+const { Error } = require("../../components/error");
+
+const baseUrl = "/settings/admin/federation/import-export";
 
 module.exports = function ImportExport() {
-	const [parsedList, setParsedList] = React.useState();
-
+	const [updateFromFile, setUpdateFromFile] = React.useState(false);
 	const form = {
 		domains: useTextInput("domains"),
-		obfuscate: useBoolInput("obfuscate"),
-		commentPrivate: useTextInput("private_comment"),
-		commentPublic: useTextInput("public_comment"),
-		// json: useFileInput("json")
+		exportType: useTextInput("exportType", { defaultValue: "plain", dontReset: true })
 	};
 
-	function submitImport(e) {
-		e.preventDefault();
+	const [submitParse, parseResult] = useFormSubmit(form, query.useProcessDomainListMutation());
+	const [submitExport, exportResult] = useFormSubmit(form, query.useExportDomainListMutation());
 
-		Promise.try(() => {
-			return processDomainList(form.domains.value);
-		}).then((processed) => {
-			setParsedList(processed);
-		}).catch((e) => {
-			console.error(e);
-		});
+	function fileChanged(e) {
+		const reader = new FileReader();
+		reader.onload = function (read) {
+			form.domains.setter(read.target.result);
+			setUpdateFromFile(true);
+		};
+		reader.readAsText(e.target.files[0]);
+	}
+
+	const [_location, setLocation] = useLocation();
+
+	if (updateFromFile) {
+		setUpdateFromFile(false);
+		submitParse();
 	}
 
 	return (
-		<div className="import-export">
-			<h2>Import / Export</h2>
-			<div>
-				{
-					parsedList
-						? <ImportExportList list={parsedList} />
-						: <ImportExportForm form={form} submitImport={submitImport} />
-				}
-			</div>
-		</div>
+		<Switch>
+			<Route path={`${baseUrl}/list`}>
+				{!parseResult.isSuccess && <Redirect to={baseUrl} />}
+
+				<h1>
+					<span className="button" onClick={() => {
+						parseResult.reset();
+						setLocation(baseUrl);
+					}}>
+						&lt; back
+					</span> Confirm import:
+				</h1>
+				<FormWithData
+					dataQuery={query.useInstanceBlocksQuery}
+					DataForm={ImportList}
+					list={parseResult.data}
+				/>
+			</Route>
+
+			<Route>
+				{parseResult.isSuccess && <Redirect to={`${baseUrl}/list`} />}
+				<h2>Import / Export suspended domains</h2>
+
+				<form onSubmit={submitParse}>
+					<TextArea
+						field={form.domains}
+						label="Domains, one per line (plaintext) or JSON"
+						placeholder={`google.com\nfacebook.com`}
+						rows={8}
+					/>
+
+					<div className="row">
+						<div className="row">
+							<MutationButton label="Import" result={parseResult} showError={false} />
+							<button type="button" className="with-padding">
+								<label>
+									Import file
+									<input className="hidden" type="file" onChange={fileChanged} accept="application/json,text/plain" />
+								</label>
+							</button>
+						</div>
+						<div className="row">
+							<MutationButton form="export-form" name="export" label="Export" result={exportResult} showError={false} />
+							<MutationButton form="export-form" name="export-file" label="Export file" result={exportResult} showError={false} />
+							<Select
+								field={form.exportType}
+								options={<>
+									<option value="plain">Text</option>
+									<option value="json">JSON</option>
+								</>}
+							/>
+						</div>
+					</div>
+					{parseResult.error && <Error error={parseResult.error} />}
+				</form>
+				<form id="export-form" onSubmit={submitExport} />
+			</Route>
+		</Switch>
 	);
 };
 
-function ImportExportList({ list }) {
-	const entryCheckList = useCheckListInput("selectedDomains", {
-		entries: list,
-		uniqueKey: "domain"
-	});
+function ImportList({ list, data: blockedInstances }) {
+	const hasComment = React.useMemo(() => {
+		let hasPublic = false;
+		let hasPrivate = false;
+
+		list.some((entry) => {
+			if (entry.public_comment?.length > 0) {
+				hasPublic = true;
+			}
+
+			if (entry.private_comment?.length > 0) {
+				hasPrivate = true;
+			}
+
+			return hasPublic && hasPrivate;
+		});
+
+		if (hasPublic && hasPrivate) {
+			return { both: true };
+		} else if (hasPublic) {
+			return { type: "public_comment" };
+		} else if (hasPrivate) {
+			return { type: "private_comment" };
+		} else {
+			return {};
+		}
+	}, [list]);
+
+	const showComment = useTextInput("showComment", { defaultValue: hasComment.type ?? "public_comment" });
+	let commentName = "";
+	if (showComment.value == "public_comment") { commentName = "Public comment"; }
+	if (showComment.value == "private_comment") { commentName = "Private comment"; }
+
+	const form = {
+		domains: useCheckListInput("domains", {
+			entries: list,
+			uniqueKey: "domain"
+		}),
+		obfuscate: useBoolInput("obfuscate"),
+		privateComment: useTextInput("private_comment", {
+			defaultValue: `Imported on ${new Date().toLocaleString()}`
+		}),
+		privateCommentBehavior: useRadioInput("private_comment_behavior", {
+			defaultValue: "append",
+			options: {
+				append: "Append to",
+				replace: "Replace"
+			}
+		}),
+		publicComment: useTextInput("public_comment"),
+		publicCommentBehavior: useRadioInput("public_comment_behavior", {
+			defaultValue: "append",
+			options: {
+				append: "Append to",
+				replace: "Replace"
+			}
+		}),
+	};
+
+	const [importDomains, importResult] = useFormSubmit(form, query.useImportDomainListMutation(), { changedOnly: false });
 
 	return (
-		<CheckList
-		/>
+		<>
+			<form onSubmit={importDomains} className="suspend-import-list">
+				<span>{list.length} domain{list.length != 1 ? "s" : ""} in this list</span>
+
+				{hasComment.both &&
+					<Select field={showComment} options={
+						<>
+							<option value="public_comment">Show public comments</option>
+							<option value="private_comment">Show private comments</option>
+						</>
+					} />
+				}
+
+				<CheckList
+					field={form.domains}
+					Component={DomainEntry}
+					header={
+						<>
+							<b>Domain</b>
+							<b></b>
+							<b>{commentName}</b>
+						</>
+					}
+					blockedInstances={blockedInstances}
+					commentType={showComment.value}
+				/>
+
+				<TextArea
+					field={form.privateComment}
+					label="Private comment"
+					rows={3}
+				/>
+				<RadioGroup
+					field={form.privateCommentBehavior}
+					label="imported private comment"
+				/>
+
+				<TextArea
+					field={form.publicComment}
+					label="Public comment"
+					rows={3}
+				/>
+				<RadioGroup
+					field={form.publicCommentBehavior}
+					label="imported public comment"
+				/>
+
+				<Checkbox
+					field={form.obfuscate}
+					label="Obfuscate domains in public lists"
+				/>
+
+				<MutationButton label="Import" result={importResult} />
+			</form>
+		</>
 	);
 }
 
-function ImportExportForm({ form, submitImport }) {
+function DomainEntry({ entry, onChange, blockedInstances, commentType }) {
+	const domainField = useTextInput("domain", {
+		defaultValue: entry.domain,
+		validator: (value) => {
+			return (entry.checked && !isValidDomain(value, { wildcard: true, allowUnicode: true }))
+				? "Invalid domain"
+				: "";
+		}
+	});
+
+	React.useEffect(() => {
+		onChange({ valid: domainField.valid });
+		/* eslint-disable-next-line react-hooks/exhaustive-deps */
+	}, [domainField.valid]);
+
+	let icon = null;
+
+	if (blockedInstances[domainField.value] != undefined) {
+		icon = (
+			<>
+				<i className="fa fa-history already-blocked" aria-hidden="true" title="Domain block already exists"></i>
+				<span className="sr-only">Domain block already exists.</span>
+			</>
+		);
+	}
+
 	return (
-		<form onSubmit={submitImport}>
-			<TextArea
-				field={form.domains}
-				label="Domains, one per line (plaintext) or JSON"
-				placeholder={`google.com\nfacebook.com`}
-				rows={8}
+		<>
+			<TextInput
+				field={domainField}
+				onChange={(e) => {
+					domainField.onChange(e);
+					onChange({ domain: e.target.value, checked: true });
+				}}
 			/>
-
-			<TextArea
-				field={form.commentPrivate}
-				label="Private comment"
-				rows={3}
-			/>
-
-			<TextArea
-				field={form.commentPublic}
-				label="Public comment"
-				rows={3}
-			/>
-
-			<Checkbox
-				field={form.obfuscate}
-				label="Obfuscate domain in public lists"
-			/>
-
-			<div>
-				<MutationButton label="Import" result={importResult} /> {/* default form action */}
-			</div>
-		</form>
+			<span id="icon">{icon}</span>
+			<p>{entry[commentType]}</p>
+		</>
 	);
 }

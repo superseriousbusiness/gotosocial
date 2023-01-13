@@ -110,10 +110,32 @@ function Select({ label, field, options, ...inputProps }) {
 	);
 }
 
+function RadioGroup({ field, label, ...inputProps }) {
+	return (
+		<div className="form-field radio">
+			{Object.entries(field.options).map(([value, radioLabel]) => (
+				<label key={value}>
+					<input
+						type="radio"
+						name={field.name}
+						value={value}
+						checked={field.value == value}
+						onChange={field.onChange}
+						{...inputProps}
+					/>
+					{radioLabel}
+				</label>
+			))}
+			{label}
+		</div>
+	);
+}
+
 module.exports = {
 	TextInput,
 	TextArea,
 	FileInput,
 	Checkbox,
-	Select
+	Select,
+	RadioGroup
 };

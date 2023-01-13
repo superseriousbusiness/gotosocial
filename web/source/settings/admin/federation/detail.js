@@ -34,7 +34,7 @@ const BackButton = require("../../components/back-button");
 const MutationButton = require("../../components/form/mutation-button");
 
 module.exports = function InstanceDetail({ baseUrl }) {
-	const { data: blockedInstances = [], isLoading } = query.useInstanceBlocksQuery();
+	const { data: blockedInstances = {}, isLoading } = query.useInstanceBlocksQuery();
 
 	let [_match, { domain }] = useRoute(`${baseUrl}/:domain`);
 
@@ -43,7 +43,7 @@ module.exports = function InstanceDetail({ baseUrl }) {
 	}
 
 	const existingBlock = React.useMemo(() => {
-		return blockedInstances.find((block) => block.domain == domain);
+		return blockedInstances[domain];
 	}, [blockedInstances, domain]);
 
 	if (domain == undefined) {

@@ -49,6 +49,8 @@ $error2: #ff9796; /* Error background text, can be used with $error1 (5.0), $gra
 $error3: #dd2c2c; /* Error button background text, can be used with $white1 (4.51) */
 $error-link: #01318C; /* Error link text, can be used with $error2 (5.56) */
 
+$green1: #94E749; /* Green for positive/confirmation, similar contrast (luminance) as $blue2 */
+
 $info-fg: $gray1;
 $info-bg: #b3ddff;
 $info-link: $error-link;

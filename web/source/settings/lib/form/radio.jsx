@@ -18,7 +18,34 @@
 
 "use strict";
 
-module.exports = (build) => ({
-	// importInstanceBlocks: build.mutation({
-	// })
-});
+const React = require("react");
+
+module.exports = function useRadioInput({ name, Name }, { defaultValue, options } = {}) {
+	const [value, setValue] = React.useState(defaultValue);
+
+	function onChange(e) {
+		setValue(e.target.value);
+	}
+
+	function reset() {
+		setValue(defaultValue);
+	}
+
+	// Array / Object hybrid, for easier access in different contexts
+	return Object.assign([
+		onChange,
+		reset,
+		{
+			[name]: value,
+			[`set${Name}`]: setValue
+		}
+	], {
+		name,
+		onChange,
+		reset,
+		value,
+		setter: setValue,
+		options,
+		hasChanged: () => value != defaultValue
+	});
+};

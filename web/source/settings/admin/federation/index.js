@@ -30,7 +30,7 @@ const InstanceImportExport = require("./import-export");
 module.exports = function Federation({ }) {
 	return (
 		<Switch>
-			<Route path={`${baseUrl}/import-export`}>
+			<Route path={`${baseUrl}/import-export/:list?`}>
 				<InstanceImportExport />
 			</Route>
 

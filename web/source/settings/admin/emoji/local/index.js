@@ -28,13 +28,11 @@ const base = "/settings/custom-emoji/local";
 
 module.exports = function CustomEmoji() {
 	return (
-		<>
-			<Switch>
-				<Route path={`${base}/:emojiId`}>
-					<EmojiDetail baseUrl={base} />
-				</Route>
-				<EmojiOverview baseUrl={base} />
-			</Switch>
-		</>
+		<Switch>
+			<Route path={`${base}/:emojiId`}>
+				<EmojiDetail baseUrl={base} />
+			</Route>
+			<EmojiOverview baseUrl={base} />
+		</Switch>
 	);
 };

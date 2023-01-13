@@ -18,6 +18,7 @@
 
 "use strict";
 
+const syncpipe = require("syncpipe");
 const base = require("./base");
 
 module.exports = {
@@ -28,26 +29,36 @@ module.exports = {
 			return res.data;
 		}
 	},
+	domainListToObject: (data) => {
+		// Turn flat Array into Object keyed by block's domain
+		return syncpipe(data, [
+			(_) => _.map((entry) => [entry.domain, entry]),
+			(_) => Object.fromEntries(_)
+		]);
+	},
 	replaceCacheOnMutation: makeCacheMutation((draft, newData) => {
 		Object.assign(draft, newData);
 	}),
 	appendCacheOnMutation: makeCacheMutation((draft, newData) => {
 		draft.push(newData);
 	}),
-	spliceCacheOnMutation: makeCacheMutation((draft, newData, key) => {
+	spliceCacheOnMutation: makeCacheMutation((draft, newData, { key }) => {
 		draft.splice(key, 1);
 	}),
-	updateCacheOnMutation: makeCacheMutation((draft, newData, key) => {
+	updateCacheOnMutation: makeCacheMutation((draft, newData, { key }) => {
 		draft[key] = newData;
 	}),
-	removeFromCacheOnMutation: makeCacheMutation((draft, newData, key) => {
+	removeFromCacheOnMutation: makeCacheMutation((draft, newData, { key }) => {
 		delete draft[key];
+	}),
+	editCacheOnMutation: makeCacheMutation((draft, newData, { update }) => {
+		update(draft, newData);
 	})
 };
 
 // https://redux-toolkit.js.org/rtk-query/usage/manual-cache-updates#pessimistic-updates
 function makeCacheMutation(action) {
-	return function cacheMutation(queryName, { key, findKey, arg } = {}) {
+	return function cacheMutation(queryName, { key, findKey, arg, ...opts } = {}) {
 		return {
 			onQueryStarted: (_, { dispatch, queryFulfilled }) => {
 				queryFulfilled.then(({ data: newData }) => {
@@ -55,7 +66,7 @@ function makeCacheMutation(action) {
 						if (findKey != undefined) {
 							key = findKey(draft, newData);
 						}
-						action(draft, newData, key);
+						action(draft, newData, { key, ...opts });
 					}));
 				});
 			}

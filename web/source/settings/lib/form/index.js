@@ -33,6 +33,7 @@ module.exports = {
 	useTextInput: makeHook(require("./text")),
 	useFileInput: makeHook(require("./file")),
 	useBoolInput: makeHook(require("./bool")),
+	useRadioInput: makeHook(require("./radio")),
 	useComboBoxInput: makeHook(require("./combo-box")),
 	useCheckListInput: makeHook(require("./check-list")),
 	useValue: function (name, value) {

@@ -21,7 +21,8 @@
 const {
 	replaceCacheOnMutation,
 	appendCacheOnMutation,
-	spliceCacheOnMutation
+	removeFromCacheOnMutation,
+	domainListToObject
 } = require("../lib");
 const base = require("../base");
 
@@ -48,7 +49,8 @@ const endpoints = (build) => ({
 	instanceBlocks: build.query({
 		query: () => ({
 			url: `/api/v1/admin/domain_blocks`
-		})
+		}),
+		transformResponse: domainListToObject
 	}),
 	addInstanceBlock: build.mutation({
 		query: (formData) => ({
@@ -65,13 +67,13 @@ const endpoints = (build) => ({
 			method: "DELETE",
 			url: `/api/v1/admin/domain_blocks/${id}`,
 		}),
-		...spliceCacheOnMutation("instanceBlocks", {
-			findKey: (draft, newData) => {
-				return draft.findIndex((block) => block.id == newData.id);
+		...removeFromCacheOnMutation("instanceBlocks", {
+			findKey: (_draft, newData) => {
+				return newData.domain;
 			}
 		})
 	}),
-	...require("./federation-bulk")(build)
+	...require("./import-export")(build)
 });
 
 module.exports = base.injectEndpoints({ endpoints });

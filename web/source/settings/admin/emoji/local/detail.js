@@ -45,7 +45,7 @@ module.exports = function EmojiDetailRoute() {
 		return (
 			<div className="emoji-detail">
 				<Link to={base}><a>&lt; go back</a></Link>
-				<FormWithData dataQuery={query.useGetEmojiQuery} arg={params.emojiId} DataForm={EmojiDetailForm} />
+				<FormWithData dataQuery={query.useGetEmojiQuery} queryArg={params.emojiId} DataForm={EmojiDetailForm} />
 			</div>
 		);
 	}
@@ -91,7 +91,7 @@ function EmojiDetailForm({ data: emoji }) {
 						label="Delete"
 						type="button"
 						onClick={() => deleteEmoji(emoji.id)}
-						className="danger button-inline"
+						className="danger"
 						showError={false}
 						result={deleteResult}
 					/>
@@ -126,7 +126,6 @@ function EmojiDetailForm({ data: emoji }) {
 						name="image"
 						label="Replace image"
 						showError={false}
-						className="button-inline"
 						result={result}
 					/>
 

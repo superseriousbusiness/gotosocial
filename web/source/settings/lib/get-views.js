@@ -64,7 +64,7 @@ module.exports = function getViews(struct) {
 			}
 
 			panelRouterEl.push((
-				<Route path={`${url}/:page?`} key={url}>
+				<Route path={`${url}/:page*`} key={url}>
 					<ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => { }}>
 						{/* FIXME: implement onReset */}
 						<ViewComponent />
