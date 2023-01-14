@@ -98,40 +98,12 @@ type Attachment struct {
 //
 // swagger:model mediaMeta
 type MediaMeta struct {
-	Length string `json:"length,omitempty"`
-	// Duration of the media in seconds.
-	// Only set for video and audio.
-	// example: 5.43
-	Duration float32 `json:"duration,omitempty"`
-	// Framerate of the media.
-	// Only set for video and gifs.
-	// example: 30
-	FPS uint16 `json:"fps,omitempty"`
-	// Size of the media, in the format `[width]x[height]`.
-	// Not set for audio.
-	// example: 1920x1080
-	Size string `json:"size,omitempty"`
-	// Width of the media in pixels.
-	// Not set for audio.
-	// example: 1920
-	Width int `json:"width,omitempty"`
-	// Height of the media in pixels.
-	// Not set for audio.
-	// example: 1080
-	Height int `json:"height,omitempty"`
-	// Aspect ratio of the media.
-	// Equal to width / height.
-	// example: 1.777777778
-	Aspect        float32 `json:"aspect,omitempty"`
-	AudioEncode   string  `json:"audio_encode,omitempty"`
-	AudioBitrate  string  `json:"audio_bitrate,omitempty"`
-	AudioChannels string  `json:"audio_channels,omitempty"`
 	// Dimensions of the original media.
 	Original MediaDimensions `json:"original"`
 	// Dimensions of the thumbnail/small version of the media.
 	Small MediaDimensions `json:"small,omitempty"`
 	// Focus data for the media.
-	Focus MediaFocus `json:"focus,omitempty"`
+	Focus *MediaFocus `json:"focus,omitempty"`
 }
 
 // MediaFocus models the focal point of a piece of media.

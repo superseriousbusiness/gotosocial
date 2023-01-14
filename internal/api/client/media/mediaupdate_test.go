@@ -172,7 +172,7 @@ func (suite *MediaUpdateTestSuite) TestUpdateImage() {
 	suite.EqualValues(apimodel.MediaMeta{
 		Original: apimodel.MediaDimensions{Width: 800, Height: 450, FrameRate: "", Duration: 0, Bitrate: 0, Size: "800x450", Aspect: 1.7777778},
 		Small:    apimodel.MediaDimensions{Width: 256, Height: 144, FrameRate: "", Duration: 0, Bitrate: 0, Size: "256x144", Aspect: 1.7777778},
-		Focus:    apimodel.MediaFocus{X: -0.1, Y: 0.3},
+		Focus:    &apimodel.MediaFocus{X: -0.1, Y: 0.3},
 	}, attachmentReply.Meta)
 	suite.Equal(toUpdate.Blurhash, attachmentReply.Blurhash)
 	suite.Equal(toUpdate.ID, attachmentReply.ID)
