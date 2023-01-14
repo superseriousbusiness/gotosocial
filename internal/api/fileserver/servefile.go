@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -128,8 +129,45 @@ func (m *Module) ServeFile(c *gin.Context) {
 		return
 	}
 
-	// we're good, return the slurped bytes + the rest of the content
-	c.DataFromReader(http.StatusOK, content.ContentLength, format, io.MultiReader(
-		bytes.NewReader(b), content.Content,
-	), nil)
+	// reconstruct the original content reader
+	r := io.MultiReader(bytes.NewReader(b), content.Content)
+
+	// Check the Range header: if this is a simple query for the whole file, we can return it now.
+	if c.GetHeader("Range") == "" && c.GetHeader("If-Range") == "" {
+		c.DataFromReader(http.StatusOK, content.ContentLength, format, r, nil)
+		return
+	}
+
+	// The range header is set, so we're being asked for only part of the file.
+	// See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Range
+	//
+	// To serve only part of the file, we'll need a readseeker, which we can do
+	// by copying the content reader into a temporary file.
+	tmp, err := os.CreateTemp(os.TempDir(), "gotosocial-")
+	if err != nil {
+		err = fmt.Errorf("ServeFile: error creating temporary file: %w", err)
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+		return
+	}
+
+	// whatever happens, clean up the temporary file when we leave this function
+	defer func() {
+		tmp.Close()
+		os.Remove(tmp.Name())
+	}()
+
+	// Now copy the reconstructed reader into the temporary file
+	if _, err := io.Copy(tmp, r); err != nil {
+		err = fmt.Errorf("ServeFile: error copying into temporary file: %w", err)
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+		return
+	}
+
+	// to avoid ServeContent wasting time seeking for the
+	// mime type, set this header already since we know it
+	c.Header("Content-Type", format)
+
+	// allow ServeContent to handle the rest of the request;
+	// it will handle Range as appropriate
+	http.ServeContent(c.Writer, c.Request, fileName, content.ContentUpdated, tmp)
 }
