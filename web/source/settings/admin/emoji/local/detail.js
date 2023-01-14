@@ -71,6 +71,7 @@ function EmojiDetailForm({ data: emoji }) {
 			!form.category.isNew) {
 			modifyEmoji();
 		}
+		/* eslint-disable-next-line react-hooks/exhaustive-deps */
 	}, [form.category.hasChanged(), form.category.isNew, form.category.state.open]);
 
 	const [deleteEmoji, deleteResult] = query.useDeleteEmojiMutation();
@@ -143,23 +144,5 @@ function EmojiDetailForm({ data: emoji }) {
 				</div>
 			</form>
 		</>
-	);
-}
-
-function DeleteButton({ id }) {
-	// TODO: confirmation dialog?
-	const [deleteEmoji, deleteResult] = query.useDeleteEmojiMutation();
-
-	let text = "Delete";
-	if (deleteResult.isLoading) {
-		text = "Deleting...";
-	}
-
-	if (deleteResult.isSuccess) {
-		return <Redirect to={base} />;
-	}
-
-	return (
-		<button className="danger" onClick={() => deleteEmoji(id)} disabled={deleteResult.isLoading}>{text}</button>
 	);
 }

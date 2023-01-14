@@ -18,13 +18,11 @@
 
 "use strict";
 
-const Promise = require('bluebird');
 const React = require("react");
 
 const query = require("../../../lib/query");
 
 const {
-	useTextInput,
 	useFileInput,
 	useComboBoxInput
 } = require("../../../lib/form");
