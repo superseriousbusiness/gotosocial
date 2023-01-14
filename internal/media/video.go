@@ -63,16 +63,29 @@ func decodeVideoFrame(r io.Reader) (*gtsVideo, error) {
 	}
 
 	var (
-		width  int
-		height int
-		video  gtsVideo
+		width        int
+		height       int
+		videoBitrate uint64
+		audioBitrate uint64
+		video        gtsVideo
 	)
 
 	for _, tr := range info.Tracks {
 		if tr.AVC == nil {
+			// audio track
+			if br := tr.Samples.GetBitrate(tr.Timescale); br > audioBitrate {
+				audioBitrate = br
+			} else if br := info.Segments.GetBitrate(tr.TrackID, tr.Timescale); br > audioBitrate {
+				audioBitrate = br
+			}
+
+			if d := float64(tr.Duration) / float64(tr.Timescale); d > float64(video.duration) {
+				video.duration = float32(d)
+			}
 			continue
 		}
 
+		// video track
 		if w := int(tr.AVC.Width); w > width {
 			width = w
 		}
@@ -81,10 +94,10 @@ func decodeVideoFrame(r io.Reader) (*gtsVideo, error) {
 			height = h
 		}
 
-		if br := tr.Samples.GetBitrate(tr.Timescale); br > video.bitrate {
-			video.bitrate = br
-		} else if br := info.Segments.GetBitrate(tr.TrackID, tr.Timescale); br > video.bitrate {
-			video.bitrate = br
+		if br := tr.Samples.GetBitrate(tr.Timescale); br > videoBitrate {
+			videoBitrate = br
+		} else if br := info.Segments.GetBitrate(tr.TrackID, tr.Timescale); br > videoBitrate {
+			videoBitrate = br
 		}
 
 		if d := float64(tr.Duration) / float64(tr.Timescale); d > float64(video.duration) {
@@ -92,6 +105,10 @@ func decodeVideoFrame(r io.Reader) (*gtsVideo, error) {
 			video.duration = float32(d)
 		}
 	}
+
+	// overall bitrate should be audio + video combined
+	// (since they're both playing at the same time)
+	video.bitrate = audioBitrate + videoBitrate
 
 	// Check for empty video metadata.
 	var empty []string
