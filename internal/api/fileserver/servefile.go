@@ -23,13 +23,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/iotools"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -138,36 +138,25 @@ func (m *Module) ServeFile(c *gin.Context) {
 		return
 	}
 
-	// The range header is set, so we're being asked for only part of the file.
-	// See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Range
-	//
-	// To serve only part of the file, we'll need a readseeker, which we can do
-	// by copying the content reader into a temporary file.
-	tmp, err := os.CreateTemp(os.TempDir(), "gotosocial-")
+	// Range is set, so we need a ReadSeeker to pass to the ServeContent function.
+	tfs, err := iotools.TempFileSeeker(r)
 	if err != nil {
-		err = fmt.Errorf("ServeFile: error creating temporary file: %w", err)
+		err = fmt.Errorf("ServeFile: error creating temp file seeker: %w", err)
 		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
 		return
 	}
-
-	// whatever happens, clean up the temporary file when we leave this function
 	defer func() {
-		tmp.Close()
-		os.Remove(tmp.Name())
+		if err := tfs.Close(); err != nil {
+			log.Errorf("ServeFile: error closing temp file seeker: %s", err)
+		}
 	}()
-
-	// Now copy the reconstructed reader into the temporary file
-	if _, err := io.Copy(tmp, r); err != nil {
-		err = fmt.Errorf("ServeFile: error copying into temporary file: %w", err)
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
-		return
-	}
 
 	// to avoid ServeContent wasting time seeking for the
 	// mime type, set this header already since we know it
 	c.Header("Content-Type", format)
 
 	// allow ServeContent to handle the rest of the request;
-	// it will handle Range as appropriate
-	http.ServeContent(c.Writer, c.Request, fileName, content.ContentUpdated, tmp)
+	// it will handle Range as appropriate, and write correct
+	// response headers, http code, etc
+	http.ServeContent(c.Writer, c.Request, fileName, content.ContentUpdated, tfs)
 }
