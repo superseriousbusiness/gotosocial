@@ -441,19 +441,13 @@ func (suite *InternalToFrontendTestSuite) TestVideoAttachmentToFrontend() {
       "height": 404,
       "frame_rate": "30/1",
       "duration": 15.033334,
-      "bitrate": 1206522,
-      "size": "720x404",
-      "aspect": 1.7821782
+      "bitrate": 1206522
     },
     "small": {
       "width": 720,
       "height": 404,
       "size": "720x404",
       "aspect": 1.7821782
-    },
-    "focus": {
-      "x": 0,
-      "y": 0
     }
   },
   "description": "A cow adorably licking another cow!"
