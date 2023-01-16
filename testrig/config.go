@@ -19,6 +19,7 @@
 package testrig
 
 import (
+	"codeberg.org/gruf/go-bytesize"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
@@ -43,12 +44,15 @@ var testDefaults = config.Configuration{
 	Port:            8080,
 	TrustedProxies:  []string{"127.0.0.1/32", "::1"},
 
-	DbType:     "sqlite",
-	DbAddress:  ":memory:",
-	DbPort:     5432,
-	DbUser:     "postgres",
-	DbPassword: "postgres",
-	DbDatabase: "postgres",
+	DbType:              "sqlite",
+	DbAddress:           ":memory:",
+	DbPort:              5432,
+	DbUser:              "postgres",
+	DbPassword:          "postgres",
+	DbDatabase:          "postgres",
+	DbSqliteJournalMode: "WAL",
+	DbSqliteSynchronous: "NORMAL",
+	DbSqliteCacheSize:   64 * bytesize.MiB,
 
 	WebTemplateBaseDir: "./web/template/",
 	WebAssetBaseDir:    "./web/assets/",

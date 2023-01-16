@@ -107,4 +107,19 @@ db-tls-mode: "disable"
 # Examples: ["/path/to/some/cert.crt"]
 # Default: ""
 db-tls-ca-cert: ""
+
+# String. SQLite journaling mode.
+# SQLite only -- unused otherwise.
+# See: https://www.sqlite.org/pragma.html#pragma_journal_mode
+db-sqlite-journal-mode: "WAL"
+
+# String. SQLite synchronous mode.
+# SQLite only -- unused otherwise.
+# See: https://www.sqlite.org/pragma.html#pragma_synchronous
+db-sqlite-synchronous: "NORMAL"
+
+# Byte size. SQlite cache size.
+# SQLite only -- unused otherwise.
+# See: https://www.sqlite.org/pragma.html#pragma_cache_size
+db-sqlite-cache-size: "64MiB"
 ```
