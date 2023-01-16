@@ -24,13 +24,13 @@ func Wrapf(err error, msgf string, args ...interface{}) error {
 	return create(fmt.Sprintf(msgf, args...), err)
 }
 
-// Stacktrace fetches a stored stacktrace of callers from an error, or returns nil.
+// Stacktrace fetches first stored stacktrace of callers from error chain.
 func Stacktrace(err error) Callers {
-	var callers Callers
-	if err, ok := err.(interface { //nolint
+	var e interface {
 		Stacktrace() Callers
-	}); ok {
-		callers = err.Stacktrace()
 	}
-	return callers
+	if !As(err, &e) {
+		return nil
+	}
+	return e.Stacktrace()
 }
