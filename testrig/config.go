@@ -55,7 +55,7 @@ var testDefaults = config.Configuration{
 	DbSqliteJournalMode: "WAL",
 	DbSqliteSynchronous: "NORMAL",
 	DbSqliteCacheSize:   64 * bytesize.MiB,
-	DbSqliteBusyTimeout: time.Millisecond * 20,
+	DbSqliteBusyTimeout: time.Second * 30,
 
 	WebTemplateBaseDir: "./web/template/",
 	WebAssetBaseDir:    "./web/assets/",
