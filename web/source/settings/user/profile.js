@@ -19,7 +19,6 @@
 "use strict";
 
 const React = require("react");
-const Redux = require("react-redux");
 
 const query = require("../lib/query");
 
@@ -64,7 +63,7 @@ function UserProfileForm({ data: profile }) {
 		- string custom_css (if enabled)
 	*/
 
-	const { data: instance, isLoading: isLoadingInstance } = query.useInstanceQuery();
+	const { data: instance } = query.useInstanceQuery();
 	const allowCustomCSS = React.useMemo(() => {
 		return instance?.configuration?.accounts?.allow_custom_css === true;
 	}, [instance]);

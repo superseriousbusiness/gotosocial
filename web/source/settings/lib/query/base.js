@@ -19,8 +19,25 @@
 "use strict";
 
 const { createApi, fetchBaseQuery } = require("@reduxjs/toolkit/query/react");
+const { isPlainObject } = require("is-plain-object");
 
-const { convertToForm } = require("../api");
+function convertToForm(obj) {
+	const formData = new FormData();
+	Object.entries(obj).forEach(([key, val]) => {
+		if (isPlainObject(val)) {
+			Object.entries(val).forEach(([key2, val2]) => {
+				if (val2 != undefined) {
+					formData.set(`${key}[${key2}]`, val2);
+				}
+			});
+		} else {
+			if (val != undefined) {
+				formData.set(key, val);
+			}
+		}
+	});
+	return formData;
+}
 
 function instanceBasedQuery(args, api, extraOptions) {
 	const state = api.getState();
@@ -51,17 +68,7 @@ function instanceBasedQuery(args, api, extraOptions) {
 			headers.set("Accept", "application/json");
 			return headers;
 		},
-	})(args, api, extraOptions).then((res) => {
-		if (res.error != undefined) {
-			const { error } = res;
-			// if (error.status == 401 || error.status == 403) {
-
-			// }
-			return res;
-		} else {
-			return res;
-		}
-	});
+	})(args, api, extraOptions);
 }
 
 module.exports = createApi({
