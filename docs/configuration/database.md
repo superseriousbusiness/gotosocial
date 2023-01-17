@@ -107,4 +107,36 @@ db-tls-mode: "disable"
 # Examples: ["/path/to/some/cert.crt"]
 # Default: ""
 db-tls-ca-cert: ""
+
+# String. SQLite journaling mode.
+# SQLite only -- unused otherwise.
+# If set to empty string, the sqlite default will be used.
+# See: https://www.sqlite.org/pragma.html#pragma_journal_mode
+# Examples: ["DELETE", "TRUNCATE", "PERSIST", "MEMORY", "WAL", "OFF"]
+# Default: "WAL"
+db-sqlite-journal-mode: "WAL"
+
+# String. SQLite synchronous mode.
+# SQLite only -- unused otherwise.
+# If set to empty string, the sqlite default will be used.
+# See: https://www.sqlite.org/pragma.html#pragma_synchronous
+# Examples: ["OFF", "NORMAL", "FULL", "EXTRA"]
+# Default: "NORMAL"
+db-sqlite-synchronous: "NORMAL"
+
+# Byte size. SQlite cache size.
+# SQLite only -- unused otherwise.
+# If set to empty string or zero, the sqlite default will be used.
+# See: https://www.sqlite.org/pragma.html#pragma_cache_size
+# Examples: ["32MiB", "0", "64MiB"]
+# Default: "64MiB"
+db-sqlite-cache-size: "64MiB"
+
+# Duration. SQlite busy timeout.
+# SQLite only -- unused otherwise.
+# If set to empty string or zero, the sqlite default will be used.
+# See: https://www.sqlite.org/pragma.html#pragma_busy_timeout
+# Examples: ["0s", "1s", "30s", "1m", "5m"]
+# Default: "5s"
+db-sqlite-busy-timeout: "30s"
 ```

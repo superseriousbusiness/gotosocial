@@ -3,6 +3,7 @@ package errors
 import (
 	"errors"
 	"reflect"
+	_ "unsafe"
 
 	"codeberg.org/gruf/go-bitutil"
 )
@@ -18,7 +19,7 @@ import (
 func Is(err error, targets ...error) bool {
 	var flags bitutil.Flags64
 
-	// Flags only has 64 bit slots
+	// Flags only has 64 bit-slots
 	if len(targets) > 64 {
 		panic("too many targets")
 	}
@@ -46,26 +47,30 @@ func Is(err error, targets ...error) bool {
 	}
 
 	for err != nil {
-		var errorIs func(error) bool
-
 		// Check if this layer supports .Is interface
 		is, ok := err.(interface{ Is(error) bool })
-		if ok {
-			errorIs = is.Is
-		} else {
-			errorIs = neveris
-		}
 
-		for i := 0; i < len(targets); i++ {
-			// Try directly compare errors
-			if flags.Get(uint8(i)) &&
-				err == targets[i] {
-				return true
+		if !ok {
+			// Error does not support interface
+			//
+			// Only try perform direct compare
+			for i := 0; i < len(targets); i++ {
+				// Try directly compare errors
+				if flags.Get(uint8(i)) &&
+					err == targets[i] {
+					return true
+				}
 			}
-
-			// Try use .Is() interface
-			if errorIs(targets[i]) {
-				return true
+		} else {
+			// Error supports the .Is interface
+			//
+			// Perform direct compare AND .Is()
+			for i := 0; i < len(targets); i++ {
+				if (flags.Get(uint8(i)) &&
+					err == targets[i]) ||
+					is.Is(targets[i]) {
+					return true
+				}
 			}
 		}
 
@@ -92,15 +97,12 @@ func Is(err error, targets ...error) bool {
 //
 // As panics if target is not a non-nil pointer to either a type that implements
 // error, or to any interface type.
-func As(err error, target interface{}) bool {
-	return errors.As(err, target)
-}
+//
+//go:linkname As errors.As
+func As(err error, target interface{}) bool
 
 // Unwrap returns the result of calling the Unwrap method on err, if err's
 // type contains an Unwrap method returning error. Otherwise, Unwrap returns nil.
-func Unwrap(err error) error {
-	return errors.Unwrap(err)
-}
-
-// neveris fits the .Is(error) bool interface function always returning false.
-func neveris(error) bool { return false }
+//
+//go:linkname Unwrap errors.Unwrap
+func Unwrap(err error) error
