@@ -29,12 +29,16 @@ const { Error } = require("../error");
 
 module.exports = function Authorization({ App }) {
 	const loginState = Redux.useSelector((state) => state.oauth.loginState);
-	const { isLoading, isSuccess, data: account, error } = query.useVerifyCredentialsQuery();
+	const [hasStoredLogin] = React.useState(loginState != "none" && loginState != "logout");
+
+	const { isLoading, isSuccess, data: account, error } = query.useVerifyCredentialsQuery(undefined, {
+		skip: loginState == "none" || loginState == "logout"
+	});
 
 	let showLogin = true;
 	let content = null;
 
-	if (isLoading && loginState != "none") {
+	if (isLoading && hasStoredLogin) {
 		showLogin = false;
 
 		let loadingInfo;
@@ -51,7 +55,10 @@ module.exports = function Authorization({ App }) {
 		);
 	} else if (error != undefined) {
 		content = (
-			<Error error={error} />
+			<div>
+				<Error error={error} />
+				You can attempt logging in again below:
+			</div>
 		);
 	}
 

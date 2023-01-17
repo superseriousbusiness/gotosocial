@@ -42,7 +42,7 @@ module.exports = createSlice({
 		remove: (state, { _payload }) => {
 			delete state.token;
 			delete state.registration;
-			state.loginState = "none";
+			state.loginState = "logout";
 		}
 	}
 });

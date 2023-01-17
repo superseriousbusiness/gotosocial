@@ -62,7 +62,7 @@ const endpoints = (build) => ({
 
 						if (app == undefined || app.client_id == undefined) {
 							throw {
-								message: "No stored registration data, can't finish login flow. Please try again:"
+								message: "No stored registration data, can't finish login flow."
 							};
 						}
 
