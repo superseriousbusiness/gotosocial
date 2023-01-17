@@ -7,7 +7,7 @@ require (
 	codeberg.org/gruf/go-byteutil v1.0.2
 	codeberg.org/gruf/go-cache/v3 v3.2.2
 	codeberg.org/gruf/go-debug v1.2.0
-	codeberg.org/gruf/go-errors/v2 v2.0.2
+	codeberg.org/gruf/go-errors/v2 v2.1.1
 	codeberg.org/gruf/go-kv v1.5.2
 	codeberg.org/gruf/go-logger/v2 v2.2.1
 	codeberg.org/gruf/go-mutexes v1.1.5
@@ -32,7 +32,7 @@ require (
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/microcosm-cc/bluemonday v1.0.21
 	github.com/miekg/dns v1.1.50
-	github.com/minio/minio-go/v7 v7.0.44
+	github.com/minio/minio-go/v7 v7.0.47
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/oklog/ulid v1.3.1
 	github.com/robfig/cron/v3 v3.0.1
@@ -53,7 +53,7 @@ require (
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
 	golang.org/x/image v0.3.0
 	golang.org/x/net v0.5.0
-	golang.org/x/oauth2 v0.3.0
+	golang.org/x/oauth2 v0.4.0
 	golang.org/x/text v0.6.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.1

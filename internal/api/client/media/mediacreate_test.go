@@ -201,7 +201,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessful() {
 			Size:   "512x288",
 			Aspect: 1.7777778,
 		},
-		Focus: apimodel.MediaFocus{
+		Focus: &apimodel.MediaFocus{
 			X: -0.5,
 			Y: 0.5,
 		},
@@ -290,7 +290,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessfulV2() {
 			Size:   "512x288",
 			Aspect: 1.7777778,
 		},
-		Focus: apimodel.MediaFocus{
+		Focus: &apimodel.MediaFocus{
 			X: -0.5,
 			Y: 0.5,
 		},

@@ -21,9 +21,10 @@ package media
 import (
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/abema/go-mp4"
+	"github.com/superseriousbusiness/gotosocial/internal/iotools"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 type gtsVideo struct {
@@ -36,43 +37,48 @@ type gtsVideo struct {
 // decodeVideoFrame decodes and returns an image from a single frame in the given video stream.
 // (note: currently this only returns a blank image resized to fit video dimensions).
 func decodeVideoFrame(r io.Reader) (*gtsVideo, error) {
-	// We'll need a readseeker to decode the video. We can get a readseeker
-	// without burning too much mem by first copying the reader into a temp file.
-	// First create the file in the temporary directory...
-	tmp, err := os.CreateTemp(os.TempDir(), "gotosocial-")
+	// we need a readseeker to decode the video...
+	tfs, err := iotools.TempFileSeeker(r)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating temp file seeker: %w", err)
 	}
-
 	defer func() {
-		tmp.Close()
-		os.Remove(tmp.Name())
+		if err := tfs.Close(); err != nil {
+			log.Errorf("error closing temp file seeker: %s", err)
+		}
 	}()
-
-	// Now copy the entire reader we've been provided into the
-	// temporary file; we won't use the reader again after this.
-	if _, err := io.Copy(tmp, r); err != nil {
-		return nil, err
-	}
 
 	// probe the video file to extract useful metadata from it; for methodology, see:
 	// https://github.com/abema/go-mp4/blob/7d8e5a7c5e644e0394261b0cf72fef79ce246d31/mp4tool/probe/probe.go#L85-L154
-	info, err := mp4.Probe(tmp)
+	info, err := mp4.Probe(tfs)
 	if err != nil {
-		return nil, fmt.Errorf("error probing tmp file %s: %w", tmp.Name(), err)
+		return nil, fmt.Errorf("error during mp4 probe: %w", err)
 	}
 
 	var (
-		width  int
-		height int
-		video  gtsVideo
+		width        int
+		height       int
+		videoBitrate uint64
+		audioBitrate uint64
+		video        gtsVideo
 	)
 
 	for _, tr := range info.Tracks {
 		if tr.AVC == nil {
+			// audio track
+			if br := tr.Samples.GetBitrate(tr.Timescale); br > audioBitrate {
+				audioBitrate = br
+			} else if br := info.Segments.GetBitrate(tr.TrackID, tr.Timescale); br > audioBitrate {
+				audioBitrate = br
+			}
+
+			if d := float64(tr.Duration) / float64(tr.Timescale); d > float64(video.duration) {
+				video.duration = float32(d)
+			}
 			continue
 		}
 
+		// video track
 		if w := int(tr.AVC.Width); w > width {
 			width = w
 		}
@@ -81,10 +87,10 @@ func decodeVideoFrame(r io.Reader) (*gtsVideo, error) {
 			height = h
 		}
 
-		if br := tr.Samples.GetBitrate(tr.Timescale); br > video.bitrate {
-			video.bitrate = br
-		} else if br := info.Segments.GetBitrate(tr.TrackID, tr.Timescale); br > video.bitrate {
-			video.bitrate = br
+		if br := tr.Samples.GetBitrate(tr.Timescale); br > videoBitrate {
+			videoBitrate = br
+		} else if br := info.Segments.GetBitrate(tr.TrackID, tr.Timescale); br > videoBitrate {
+			videoBitrate = br
 		}
 
 		if d := float64(tr.Duration) / float64(tr.Timescale); d > float64(video.duration) {
@@ -92,6 +98,10 @@ func decodeVideoFrame(r io.Reader) (*gtsVideo, error) {
 			video.duration = float32(d)
 		}
 	}
+
+	// overall bitrate should be audio + video combined
+	// (since they're both playing at the same time)
+	video.bitrate = audioBitrate + videoBitrate
 
 	// Check for empty video metadata.
 	var empty []string

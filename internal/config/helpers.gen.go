@@ -524,6 +524,106 @@ func GetDbTLSCACert() string { return global.GetDbTLSCACert() }
 // SetDbTLSCACert safely sets the value for global configuration 'DbTLSCACert' field
 func SetDbTLSCACert(v string) { global.SetDbTLSCACert(v) }
 
+// GetDbSqliteJournalMode safely fetches the Configuration value for state's 'DbSqliteJournalMode' field
+func (st *ConfigState) GetDbSqliteJournalMode() (v string) {
+	st.mutex.Lock()
+	v = st.config.DbSqliteJournalMode
+	st.mutex.Unlock()
+	return
+}
+
+// SetDbSqliteJournalMode safely sets the Configuration value for state's 'DbSqliteJournalMode' field
+func (st *ConfigState) SetDbSqliteJournalMode(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.DbSqliteJournalMode = v
+	st.reloadToViper()
+}
+
+// DbSqliteJournalModeFlag returns the flag name for the 'DbSqliteJournalMode' field
+func DbSqliteJournalModeFlag() string { return "db-sqlite-journal-mode" }
+
+// GetDbSqliteJournalMode safely fetches the value for global configuration 'DbSqliteJournalMode' field
+func GetDbSqliteJournalMode() string { return global.GetDbSqliteJournalMode() }
+
+// SetDbSqliteJournalMode safely sets the value for global configuration 'DbSqliteJournalMode' field
+func SetDbSqliteJournalMode(v string) { global.SetDbSqliteJournalMode(v) }
+
+// GetDbSqliteSynchronous safely fetches the Configuration value for state's 'DbSqliteSynchronous' field
+func (st *ConfigState) GetDbSqliteSynchronous() (v string) {
+	st.mutex.Lock()
+	v = st.config.DbSqliteSynchronous
+	st.mutex.Unlock()
+	return
+}
+
+// SetDbSqliteSynchronous safely sets the Configuration value for state's 'DbSqliteSynchronous' field
+func (st *ConfigState) SetDbSqliteSynchronous(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.DbSqliteSynchronous = v
+	st.reloadToViper()
+}
+
+// DbSqliteSynchronousFlag returns the flag name for the 'DbSqliteSynchronous' field
+func DbSqliteSynchronousFlag() string { return "db-sqlite-synchronous" }
+
+// GetDbSqliteSynchronous safely fetches the value for global configuration 'DbSqliteSynchronous' field
+func GetDbSqliteSynchronous() string { return global.GetDbSqliteSynchronous() }
+
+// SetDbSqliteSynchronous safely sets the value for global configuration 'DbSqliteSynchronous' field
+func SetDbSqliteSynchronous(v string) { global.SetDbSqliteSynchronous(v) }
+
+// GetDbSqliteCacheSize safely fetches the Configuration value for state's 'DbSqliteCacheSize' field
+func (st *ConfigState) GetDbSqliteCacheSize() (v bytesize.Size) {
+	st.mutex.Lock()
+	v = st.config.DbSqliteCacheSize
+	st.mutex.Unlock()
+	return
+}
+
+// SetDbSqliteCacheSize safely sets the Configuration value for state's 'DbSqliteCacheSize' field
+func (st *ConfigState) SetDbSqliteCacheSize(v bytesize.Size) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.DbSqliteCacheSize = v
+	st.reloadToViper()
+}
+
+// DbSqliteCacheSizeFlag returns the flag name for the 'DbSqliteCacheSize' field
+func DbSqliteCacheSizeFlag() string { return "db-sqlite-cache-size" }
+
+// GetDbSqliteCacheSize safely fetches the value for global configuration 'DbSqliteCacheSize' field
+func GetDbSqliteCacheSize() bytesize.Size { return global.GetDbSqliteCacheSize() }
+
+// SetDbSqliteCacheSize safely sets the value for global configuration 'DbSqliteCacheSize' field
+func SetDbSqliteCacheSize(v bytesize.Size) { global.SetDbSqliteCacheSize(v) }
+
+// GetDbSqliteBusyTimeout safely fetches the Configuration value for state's 'DbSqliteBusyTimeout' field
+func (st *ConfigState) GetDbSqliteBusyTimeout() (v time.Duration) {
+	st.mutex.Lock()
+	v = st.config.DbSqliteBusyTimeout
+	st.mutex.Unlock()
+	return
+}
+
+// SetDbSqliteBusyTimeout safely sets the Configuration value for state's 'DbSqliteBusyTimeout' field
+func (st *ConfigState) SetDbSqliteBusyTimeout(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.DbSqliteBusyTimeout = v
+	st.reloadToViper()
+}
+
+// DbSqliteBusyTimeoutFlag returns the flag name for the 'DbSqliteBusyTimeout' field
+func DbSqliteBusyTimeoutFlag() string { return "db-sqlite-busy-timeout" }
+
+// GetDbSqliteBusyTimeout safely fetches the value for global configuration 'DbSqliteBusyTimeout' field
+func GetDbSqliteBusyTimeout() time.Duration { return global.GetDbSqliteBusyTimeout() }
+
+// SetDbSqliteBusyTimeout safely sets the value for global configuration 'DbSqliteBusyTimeout' field
+func SetDbSqliteBusyTimeout(v time.Duration) { global.SetDbSqliteBusyTimeout(v) }
+
 // GetWebTemplateBaseDir safely fetches the Configuration value for state's 'WebTemplateBaseDir' field
 func (st *ConfigState) GetWebTemplateBaseDir() (v string) {
 	st.mutex.Lock()

@@ -85,9 +85,6 @@ func (p *processor) GetFile(ctx context.Context, requestingAccount *gtsmodel.Acc
 }
 
 func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount *gtsmodel.Account, wantedMediaID string, owningAccountID string, mediaSize media.Size) (*apimodel.Content, gtserror.WithCode) {
-	attachmentContent := &apimodel.Content{}
-	var storagePath string
-
 	// retrieve attachment from the database and do basic checks on it
 	a, err := p.db.GetAttachmentByID(ctx, wantedMediaID)
 	if err != nil {
@@ -145,6 +142,13 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("error loading recached attachment: %s", err))
 		}
 	}
+
+	var (
+		storagePath       string
+		attachmentContent = &apimodel.Content{
+			ContentUpdated: a.UpdatedAt,
+		}
+	)
 
 	// get file information from the attachment depending on the requested media size
 	switch mediaSize {

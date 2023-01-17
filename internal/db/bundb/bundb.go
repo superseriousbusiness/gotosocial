@@ -28,9 +28,11 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
+	"codeberg.org/gruf/go-bytesize"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
@@ -47,22 +49,6 @@ import (
 	"github.com/uptrace/bun/migrate"
 
 	"modernc.org/sqlite"
-)
-
-const (
-	dbTypePostgres = "postgres"
-	dbTypeSqlite   = "sqlite"
-
-	// dbTLSModeDisable does not attempt to make a TLS connection to the database.
-	dbTLSModeDisable = "disable"
-	// dbTLSModeEnable attempts to make a TLS connection to the database, but doesn't fail if
-	// the certificate passed by the database isn't verified.
-	dbTLSModeEnable = "enable"
-	// dbTLSModeRequire attempts to make a TLS connection to the database, and requires
-	// that the certificate presented by the database is valid.
-	dbTLSModeRequire = "require"
-	// dbTLSModeUnset means that the TLS mode has not been set.
-	dbTLSModeUnset = ""
 )
 
 var registerTables = []interface{}{
@@ -127,25 +113,33 @@ func doMigration(ctx context.Context, db *bun.DB) error {
 func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 	var conn *DBConn
 	var err error
-	dbType := strings.ToLower(config.GetDbType())
+	t := strings.ToLower(config.GetDbType())
 
-	switch dbType {
-	case dbTypePostgres:
+	switch t {
+	case "postgres":
 		conn, err = pgConn(ctx)
 		if err != nil {
 			return nil, err
 		}
-	case dbTypeSqlite:
+	case "sqlite":
 		conn, err = sqliteConn(ctx)
 		if err != nil {
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("database type %s not supported for bundb", dbType)
+		return nil, fmt.Errorf("database type %s not supported for bundb", t)
 	}
 
 	// Add database query hook
 	conn.DB.AddQueryHook(queryHook{})
+
+	// execute sqlite pragmas *after* adding database hook;
+	// this allows the pragma queries to be logged
+	if t == "sqlite" {
+		if err := sqlitePragmas(ctx, conn); err != nil {
+			return nil, err
+		}
+	}
 
 	// table registration is needed for many-to-many, see:
 	// https://bun.uptrace.dev/orm/many-to-many-relation/
@@ -230,37 +224,35 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 
 func sqliteConn(ctx context.Context) (*DBConn, error) {
 	// validate db address has actually been set
-	dbAddress := config.GetDbAddress()
-	if dbAddress == "" {
+	address := config.GetDbAddress()
+	if address == "" {
 		return nil, fmt.Errorf("'%s' was not set when attempting to start sqlite", config.DbAddressFlag())
 	}
 
 	// Drop anything fancy from DB address
-	dbAddress = strings.Split(dbAddress, "?")[0]
-	dbAddress = strings.TrimPrefix(dbAddress, "file:")
+	address = strings.Split(address, "?")[0]
+	address = strings.TrimPrefix(address, "file:")
 
 	// Append our own SQLite preferences
-	dbAddress = "file:" + dbAddress + "?cache=shared"
+	address = "file:" + address
 
 	var inMem bool
 
-	if dbAddress == "file::memory:?cache=shared" {
-		dbAddress = fmt.Sprintf("file:%s?mode=memory&cache=shared", uuid.NewString())
-		log.Infof("using in-memory database address " + dbAddress)
+	if address == "file::memory:" {
+		address = fmt.Sprintf("file:%s?mode=memory&cache=shared", uuid.NewString())
+		log.Infof("using in-memory database address " + address)
 		log.Warn("sqlite in-memory database should only be used for debugging")
 		inMem = true
 	}
 
 	// Open new DB instance
-	sqldb, err := sql.Open("sqlite", dbAddress)
+	sqldb, err := sql.Open("sqlite", address)
 	if err != nil {
 		if errWithCode, ok := err.(*sqlite.Error); ok {
 			err = errors.New(sqlite.ErrorCodeString[errWithCode.Code()])
 		}
 		return nil, fmt.Errorf("could not open sqlite db: %s", err)
 	}
-
-	tweakConnectionValues(sqldb)
 
 	if inMem {
 		// don't close connections on disconnect -- otherwise
@@ -269,6 +261,7 @@ func sqliteConn(ctx context.Context) (*DBConn, error) {
 		sqldb.SetConnMaxLifetime(0)
 	}
 
+	// Wrap Bun database conn in our own wrapper
 	conn := WrapDBConn(bun.NewDB(sqldb, sqlitedialect.New()))
 
 	// ping to check the db is there and listening
@@ -278,9 +271,54 @@ func sqliteConn(ctx context.Context) (*DBConn, error) {
 		}
 		return nil, fmt.Errorf("sqlite ping: %s", err)
 	}
-
 	log.Info("connected to SQLITE database")
+
 	return conn, nil
+}
+
+func sqlitePragmas(ctx context.Context, conn *DBConn) error {
+	var pragmas [][]string
+	if mode := config.GetDbSqliteJournalMode(); mode != "" {
+		// Set the user provided SQLite journal mode
+		pragmas = append(pragmas, []string{"journal_mode", mode})
+	}
+
+	if mode := config.GetDbSqliteSynchronous(); mode != "" {
+		// Set the user provided SQLite synchronous mode
+		pragmas = append(pragmas, []string{"synchronous", mode})
+	}
+
+	if size := config.GetDbSqliteCacheSize(); size > 0 {
+		// Set the user provided SQLite cache size (in kibibytes)
+		// Prepend a '-' character to this to indicate to sqlite
+		// that we're giving kibibytes rather than num pages.
+		// https://www.sqlite.org/pragma.html#pragma_cache_size
+		s := "-" + strconv.FormatUint(uint64(size/bytesize.KiB), 10)
+		pragmas = append(pragmas, []string{"cache_size", s})
+	}
+
+	if timeout := config.GetDbSqliteBusyTimeout(); timeout > 0 {
+		t := strconv.FormatInt(timeout.Milliseconds(), 10)
+		pragmas = append(pragmas, []string{"busy_timeout", t})
+	}
+
+	for _, p := range pragmas {
+		pk := p[0]
+		pv := p[1]
+
+		if _, err := conn.DB.ExecContext(ctx, "PRAGMA ?=?", bun.Ident(pk), bun.Safe(pv)); err != nil {
+			return fmt.Errorf("error executing sqlite pragma %s: %w", pk, err)
+		}
+
+		var res string
+		if err := conn.DB.NewRaw("PRAGMA ?", bun.Ident(pk)).Scan(ctx, &res); err != nil {
+			return fmt.Errorf("error scanning sqlite pragma %s: %w", pv, err)
+		}
+
+		log.Infof("sqlite pragma %s set to %s", pk, res)
+	}
+
+	return nil
 }
 
 func pgConn(ctx context.Context) (*DBConn, error) {
@@ -291,7 +329,10 @@ func pgConn(ctx context.Context) (*DBConn, error) {
 
 	sqldb := stdlib.OpenDB(*opts)
 
-	tweakConnectionValues(sqldb)
+	// https://bun.uptrace.dev/postgres/running-bun-in-production.html#database-sql
+	maxOpenConns := 4 * runtime.GOMAXPROCS(0)
+	sqldb.SetMaxOpenConns(maxOpenConns)
+	sqldb.SetMaxIdleConns(maxOpenConns)
 
 	conn := WrapDBConn(bun.NewDB(sqldb, pgdialect.New()))
 
@@ -311,10 +352,6 @@ func pgConn(ctx context.Context) (*DBConn, error) {
 // deriveBunDBPGOptions takes an application config and returns either a ready-to-use set of options
 // with sensible defaults, or an error if it's not satisfied by the provided config.
 func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
-	if strings.ToUpper(config.GetDbType()) != db.DBTypePostgres {
-		return nil, fmt.Errorf("expected db type of %s but got %s", db.DBTypePostgres, config.DbTypeFlag())
-	}
-
 	// these are all optional, the db adapter figures out defaults
 	address := config.GetDbAddress()
 
@@ -326,14 +363,14 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 
 	var tlsConfig *tls.Config
 	switch config.GetDbTLSMode() {
-	case dbTLSModeDisable, dbTLSModeUnset:
+	case "", "disable":
 		break // nothing to do
-	case dbTLSModeEnable:
+	case "enable":
 		/* #nosec G402 */
 		tlsConfig = &tls.Config{
 			InsecureSkipVerify: true,
 		}
-	case dbTLSModeRequire:
+	case "require":
 		tlsConfig = &tls.Config{
 			InsecureSkipVerify: false,
 			ServerName:         address,
@@ -395,13 +432,6 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 	cfg.RuntimeParams["application_name"] = config.GetApplicationName()
 
 	return cfg, nil
-}
-
-// https://bun.uptrace.dev/postgres/running-bun-in-production.html#database-sql
-func tweakConnectionValues(sqldb *sql.DB) {
-	maxOpenConns := 4 * runtime.GOMAXPROCS(0)
-	sqldb.SetMaxOpenConns(maxOpenConns)
-	sqldb.SetMaxIdleConns(maxOpenConns)
 }
 
 /*
