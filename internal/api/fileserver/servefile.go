@@ -29,6 +29,7 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/iotools"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -128,8 +129,34 @@ func (m *Module) ServeFile(c *gin.Context) {
 		return
 	}
 
-	// we're good, return the slurped bytes + the rest of the content
-	c.DataFromReader(http.StatusOK, content.ContentLength, format, io.MultiReader(
-		bytes.NewReader(b), content.Content,
-	), nil)
+	// reconstruct the original content reader
+	r := io.MultiReader(bytes.NewReader(b), content.Content)
+
+	// Check the Range header: if this is a simple query for the whole file, we can return it now.
+	if c.GetHeader("Range") == "" && c.GetHeader("If-Range") == "" {
+		c.DataFromReader(http.StatusOK, content.ContentLength, format, r, nil)
+		return
+	}
+
+	// Range is set, so we need a ReadSeeker to pass to the ServeContent function.
+	tfs, err := iotools.TempFileSeeker(r)
+	if err != nil {
+		err = fmt.Errorf("ServeFile: error creating temp file seeker: %w", err)
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+		return
+	}
+	defer func() {
+		if err := tfs.Close(); err != nil {
+			log.Errorf("ServeFile: error closing temp file seeker: %s", err)
+		}
+	}()
+
+	// to avoid ServeContent wasting time seeking for the
+	// mime type, set this header already since we know it
+	c.Header("Content-Type", format)
+
+	// allow ServeContent to handle the rest of the request;
+	// it will handle Range as appropriate, and write correct
+	// response headers, http code, etc
+	http.ServeContent(c.Writer, c.Request, fileName, content.ContentUpdated, tfs)
 }

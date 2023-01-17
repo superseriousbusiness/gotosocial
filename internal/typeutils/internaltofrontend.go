@@ -284,18 +284,12 @@ func (c *converter) AttachmentToAPIAttachment(ctx context.Context, a *gtsmodel.M
 			Original: apimodel.MediaDimensions{
 				Width:  a.FileMeta.Original.Width,
 				Height: a.FileMeta.Original.Height,
-				Size:   fmt.Sprintf("%dx%d", a.FileMeta.Original.Width, a.FileMeta.Original.Height),
-				Aspect: float32(a.FileMeta.Original.Aspect),
 			},
 			Small: apimodel.MediaDimensions{
 				Width:  a.FileMeta.Small.Width,
 				Height: a.FileMeta.Small.Height,
-				Size:   fmt.Sprintf("%dx%d", a.FileMeta.Small.Width, a.FileMeta.Small.Height),
+				Size:   strconv.Itoa(a.FileMeta.Small.Width) + "x" + strconv.Itoa(a.FileMeta.Small.Height),
 				Aspect: float32(a.FileMeta.Small.Aspect),
-			},
-			Focus: apimodel.MediaFocus{
-				X: a.FileMeta.Focus.X,
-				Y: a.FileMeta.Focus.Y,
 			},
 		},
 		Blurhash: a.Blurhash,
@@ -318,20 +312,31 @@ func (c *converter) AttachmentToAPIAttachment(ctx context.Context, a *gtsmodel.M
 		apiAttachment.Description = &i
 	}
 
-	if i := a.FileMeta.Original.Duration; i != nil {
-		apiAttachment.Meta.Original.Duration = *i
-	}
+	// type specific fields
+	switch a.Type {
+	case gtsmodel.FileTypeImage:
+		apiAttachment.Meta.Original.Size = strconv.Itoa(a.FileMeta.Original.Width) + "x" + strconv.Itoa(a.FileMeta.Original.Height)
+		apiAttachment.Meta.Original.Aspect = float32(a.FileMeta.Original.Aspect)
+		apiAttachment.Meta.Focus = &apimodel.MediaFocus{
+			X: a.FileMeta.Focus.X,
+			Y: a.FileMeta.Focus.Y,
+		}
+	case gtsmodel.FileTypeVideo:
+		if i := a.FileMeta.Original.Duration; i != nil {
+			apiAttachment.Meta.Original.Duration = *i
+		}
 
-	if i := a.FileMeta.Original.Framerate; i != nil {
-		// the masto api expects this as a string in
-		// the format `integer/1`, so 30fps is `30/1`
-		round := math.Round(float64(*i))
-		fr := strconv.FormatInt(int64(round), 10)
-		apiAttachment.Meta.Original.FrameRate = fr + "/1"
-	}
+		if i := a.FileMeta.Original.Framerate; i != nil {
+			// the masto api expects this as a string in
+			// the format `integer/1`, so 30fps is `30/1`
+			round := math.Round(float64(*i))
+			fr := strconv.FormatInt(int64(round), 10)
+			apiAttachment.Meta.Original.FrameRate = fr + "/1"
+		}
 
-	if i := a.FileMeta.Original.Bitrate; i != nil {
-		apiAttachment.Meta.Original.Bitrate = int(*i)
+		if i := a.FileMeta.Original.Bitrate; i != nil {
+			apiAttachment.Meta.Original.Bitrate = int(*i)
+		}
 	}
 
 	return apiAttachment, nil
