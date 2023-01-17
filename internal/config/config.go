@@ -58,14 +58,18 @@ type Configuration struct {
 	TrustedProxies  []string `name:"trusted-proxies" usage:"Proxies to trust when parsing x-forwarded headers into real IPs."`
 	SoftwareVersion string   `name:"software-version" usage:""`
 
-	DbType      string `name:"db-type" usage:"Database type: eg., postgres"`
-	DbAddress   string `name:"db-address" usage:"Database ipv4 address, hostname, or filename"`
-	DbPort      int    `name:"db-port" usage:"Database port"`
-	DbUser      string `name:"db-user" usage:"Database username"`
-	DbPassword  string `name:"db-password" usage:"Database password"`
-	DbDatabase  string `name:"db-database" usage:"Database name"`
-	DbTLSMode   string `name:"db-tls-mode" usage:"Database tls mode"`
-	DbTLSCACert string `name:"db-tls-ca-cert" usage:"Path to CA cert for db tls connection"`
+	DbType              string        `name:"db-type" usage:"Database type: eg., postgres"`
+	DbAddress           string        `name:"db-address" usage:"Database ipv4 address, hostname, or filename"`
+	DbPort              int           `name:"db-port" usage:"Database port"`
+	DbUser              string        `name:"db-user" usage:"Database username"`
+	DbPassword          string        `name:"db-password" usage:"Database password"`
+	DbDatabase          string        `name:"db-database" usage:"Database name"`
+	DbTLSMode           string        `name:"db-tls-mode" usage:"Database tls mode"`
+	DbTLSCACert         string        `name:"db-tls-ca-cert" usage:"Path to CA cert for db tls connection"`
+	DbSqliteJournalMode string        `name:"db-sqlite-journal-mode" usage:"Sqlite only: see https://www.sqlite.org/pragma.html#pragma_journal_mode"`
+	DbSqliteSynchronous string        `name:"db-sqlite-synchronous" usage:"Sqlite only: see https://www.sqlite.org/pragma.html#pragma_synchronous"`
+	DbSqliteCacheSize   bytesize.Size `name:"db-sqlite-cache-size" usage:"Sqlite only: see https://www.sqlite.org/pragma.html#pragma_cache_size"`
+	DbSqliteBusyTimeout time.Duration `name:"db-sqlite-busy-timeout" usage:"Sqlite only: see https://www.sqlite.org/pragma.html#pragma_busy_timeout"`
 
 	WebTemplateBaseDir string `name:"web-template-base-dir" usage:"Basedir for html templating files for rendering pages and composing emails."`
 	WebAssetBaseDir    string `name:"web-asset-base-dir" usage:"Directory to serve static assets from, accessible at example.org/assets/"`
