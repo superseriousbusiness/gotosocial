@@ -19,6 +19,8 @@
 package admin_test
 
 import (
+	"bytes"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -46,8 +48,22 @@ func (suite *EmojiGetTestSuite) TestEmojiGet1() {
 	b, err := io.ReadAll(recorder.Body)
 	suite.NoError(err)
 	suite.NotNil(b)
-
-	suite.Equal(`{"shortcode":"rainbow","url":"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","static_url":"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","visible_in_picker":true,"category":"reactions","id":"01F8MH9H8E4VG3KDYJR9EGPXCQ","disabled":false,"updated_at":"2021-09-20T10:40:37.000Z","total_file_size":47115,"content_type":"image/png","uri":"http://localhost:8080/emoji/01F8MH9H8E4VG3KDYJR9EGPXCQ"}`, string(b))
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, b, "", "  ")
+	suite.NoError(err)
+	suite.Equal(`{
+  "shortcode": "rainbow",
+  "url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+  "static_url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+  "visible_in_picker": true,
+  "category": "reactions",
+  "id": "01F8MH9H8E4VG3KDYJR9EGPXCQ",
+  "disabled": false,
+  "updated_at": "2021-09-20T10:40:37.000Z",
+  "total_file_size": 47115,
+  "content_type": "image/png",
+  "uri": "http://localhost:8080/emoji/01F8MH9H8E4VG3KDYJR9EGPXCQ"
+}`, dst.String())
 }
 
 func (suite *EmojiGetTestSuite) TestEmojiGet2() {
@@ -64,8 +80,22 @@ func (suite *EmojiGetTestSuite) TestEmojiGet2() {
 	b, err := io.ReadAll(recorder.Body)
 	suite.NoError(err)
 	suite.NotNil(b)
-
-	suite.Equal(`{"shortcode":"yell","url":"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01GD5KP5CQEE1R3X43Y1EHS2CW.png","static_url":"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01GD5KP5CQEE1R3X43Y1EHS2CW.png","visible_in_picker":false,"id":"01GD5KP5CQEE1R3X43Y1EHS2CW","disabled":false,"domain":"fossbros-anonymous.io","updated_at":"2020-03-18T12:12:00.000Z","total_file_size":21697,"content_type":"image/png","uri":"http://fossbros-anonymous.io/emoji/01GD5KP5CQEE1R3X43Y1EHS2CW"}`, string(b))
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, b, "", "  ")
+	suite.NoError(err)
+	suite.Equal(`{
+  "shortcode": "yell",
+  "url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01GD5KP5CQEE1R3X43Y1EHS2CW.png",
+  "static_url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01GD5KP5CQEE1R3X43Y1EHS2CW.png",
+  "visible_in_picker": false,
+  "id": "01GD5KP5CQEE1R3X43Y1EHS2CW",
+  "disabled": false,
+  "domain": "fossbros-anonymous.io",
+  "updated_at": "2020-03-18T12:12:00.000Z",
+  "total_file_size": 21697,
+  "content_type": "image/png",
+  "uri": "http://fossbros-anonymous.io/emoji/01GD5KP5CQEE1R3X43Y1EHS2CW"
+}`, dst.String())
 }
 
 func (suite *EmojiGetTestSuite) TestEmojiGetNotFound() {

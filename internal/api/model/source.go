@@ -26,11 +26,11 @@ type Source struct {
 	//    unlisted = Unlisted post
 	//    private = Followers-only post
 	//    direct = Direct post
-	Privacy Visibility `json:"privacy,omitempty"`
+	Privacy Visibility `json:"privacy"`
 	// Whether new statuses should be marked sensitive by default.
-	Sensitive bool `json:"sensitive,omitempty"`
+	Sensitive bool `json:"sensitive"`
 	// The default posting language for new statuses.
-	Language string `json:"language,omitempty"`
+	Language string `json:"language"`
 	// The default posting format for new statuses.
 	StatusFormat string `json:"status_format"`
 	// Profile bio.
@@ -38,5 +38,5 @@ type Source struct {
 	// Metadata about the account.
 	Fields []Field `json:"fields"`
 	// The number of pending follow requests.
-	FollowRequestsCount int `json:"follow_requests_count,omitempty"`
+	FollowRequestsCount int `json:"follow_requests_count"`
 }

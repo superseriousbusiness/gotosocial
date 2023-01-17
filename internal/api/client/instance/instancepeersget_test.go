@@ -19,7 +19,9 @@
 package instance_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -56,8 +58,13 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetNoParams() {
 
 	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
-
-	suite.Equal(`["example.org","fossbros-anonymous.io"]`, string(b))
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, b, "", "  ")
+	suite.NoError(err)
+	suite.Equal(`[
+  "example.org",
+  "fossbros-anonymous.io"
+]`, dst.String())
 }
 
 func (suite *InstancePeersGetTestSuite) TestInstancePeersGetNoParamsUnauthorized() {
@@ -98,8 +105,13 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetNoParamsAuthorized()
 
 	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
-
-	suite.Equal(`["example.org","fossbros-anonymous.io"]`, string(b))
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, b, "", "  ")
+	suite.NoError(err)
+	suite.Equal(`[
+  "example.org",
+  "fossbros-anonymous.io"
+]`, dst.String())
 }
 
 func (suite *InstancePeersGetTestSuite) TestInstancePeersGetOnlySuspended() {
@@ -117,8 +129,16 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetOnlySuspended() {
 
 	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
-
-	suite.Equal(`[{"domain":"replyguys.com","suspended_at":"2020-05-13T13:29:12.000Z","public_comment":"reply-guying to tech posts"}]`, string(b))
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, b, "", "  ")
+	suite.NoError(err)
+	suite.Equal(`[
+  {
+    "domain": "replyguys.com",
+    "suspended_at": "2020-05-13T13:29:12.000Z",
+    "public_comment": "reply-guying to tech posts"
+  }
+]`, dst.String())
 }
 
 func (suite *InstancePeersGetTestSuite) TestInstancePeersGetOnlySuspendedUnauthorized() {
@@ -159,8 +179,16 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetOnlySuspendedAuthori
 
 	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
-
-	suite.Equal(`[{"domain":"replyguys.com","suspended_at":"2020-05-13T13:29:12.000Z","public_comment":"reply-guying to tech posts"}]`, string(b))
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, b, "", "  ")
+	suite.NoError(err)
+	suite.Equal(`[
+  {
+    "domain": "replyguys.com",
+    "suspended_at": "2020-05-13T13:29:12.000Z",
+    "public_comment": "reply-guying to tech posts"
+  }
+]`, dst.String())
 }
 
 func (suite *InstancePeersGetTestSuite) TestInstancePeersGetAll() {
@@ -178,8 +206,22 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetAll() {
 
 	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
-
-	suite.Equal(`[{"domain":"example.org"},{"domain":"fossbros-anonymous.io"},{"domain":"replyguys.com","suspended_at":"2020-05-13T13:29:12.000Z","public_comment":"reply-guying to tech posts"}]`, string(b))
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, b, "", "  ")
+	suite.NoError(err)
+	suite.Equal(`[
+  {
+    "domain": "example.org"
+  },
+  {
+    "domain": "fossbros-anonymous.io"
+  },
+  {
+    "domain": "replyguys.com",
+    "suspended_at": "2020-05-13T13:29:12.000Z",
+    "public_comment": "reply-guying to tech posts"
+  }
+]`, dst.String())
 }
 
 func (suite *InstancePeersGetTestSuite) TestInstancePeersGetAllWithObfuscated() {
@@ -208,8 +250,27 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetAllWithObfuscated() 
 
 	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
-
-	suite.Equal(`[{"domain":"example.org"},{"domain":"fossbros-anonymous.io"},{"domain":"o*g.*u**.t**.*or*t.*r**ev**","suspended_at":"2021-06-09T10:34:55.000Z","public_comment":"just absolutely the worst, wowza"},{"domain":"replyguys.com","suspended_at":"2020-05-13T13:29:12.000Z","public_comment":"reply-guying to tech posts"}]`, string(b))
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, b, "", "  ")
+	suite.NoError(err)
+	suite.Equal(`[
+  {
+    "domain": "example.org"
+  },
+  {
+    "domain": "fossbros-anonymous.io"
+  },
+  {
+    "domain": "o*g.*u**.t**.*or*t.*r**ev**",
+    "suspended_at": "2021-06-09T10:34:55.000Z",
+    "public_comment": "just absolutely the worst, wowza"
+  },
+  {
+    "domain": "replyguys.com",
+    "suspended_at": "2020-05-13T13:29:12.000Z",
+    "public_comment": "reply-guying to tech posts"
+  }
+]`, dst.String())
 }
 
 func (suite *InstancePeersGetTestSuite) TestInstancePeersGetFunkyParams() {

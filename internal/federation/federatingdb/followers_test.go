@@ -41,11 +41,15 @@ func (suite *FollowersTestSuite) TestGetFollowers() {
 	fi, err := streams.Serialize(f)
 	suite.NoError(err)
 
-	fJson, err := json.Marshal(fi)
+	fJson, err := json.MarshalIndent(fi, "", "  ")
 	suite.NoError(err)
 
 	// zork follows local_account_2 so this should be reflected in the response
-	suite.Equal(`{"@context":"https://www.w3.org/ns/activitystreams","items":"http://localhost:8080/users/the_mighty_zork","type":"Collection"}`, string(fJson))
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "items": "http://localhost:8080/users/the_mighty_zork",
+  "type": "Collection"
+}`, string(fJson))
 }
 
 func TestFollowersTestSuite(t *testing.T) {

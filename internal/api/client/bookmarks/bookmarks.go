@@ -26,8 +26,8 @@ import (
 )
 
 const (
-	// BasePath is the base path for serving the bookmarks API
-	BasePath = "/api/v1/bookmarks"
+	// BasePath is the base path for serving the bookmarks API, minus the 'api' prefix
+	BasePath = "/v1/bookmarks"
 )
 
 type Module struct {

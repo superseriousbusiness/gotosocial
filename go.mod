@@ -32,7 +32,7 @@ require (
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/microcosm-cc/bluemonday v1.0.21
 	github.com/miekg/dns v1.1.50
-	github.com/minio/minio-go/v7 v7.0.44
+	github.com/minio/minio-go/v7 v7.0.47
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/oklog/ulid v1.3.1
 	github.com/robfig/cron/v3 v3.0.1
@@ -53,7 +53,7 @@ require (
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
 	golang.org/x/image v0.3.0
 	golang.org/x/net v0.5.0
-	golang.org/x/oauth2 v0.3.0
+	golang.org/x/oauth2 v0.4.0
 	golang.org/x/text v0.6.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.1

@@ -38,9 +38,31 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontend() {
 	suite.NoError(err)
 	suite.NotNil(apiAccount)
 
-	b, err := json.Marshal(apiAccount)
+	b, err := json.MarshalIndent(apiAccount, "", "  ")
 	suite.NoError(err)
-	suite.Equal(`{"id":"01F8MH1H7YV1Z7D2C8K2730QBF","username":"the_mighty_zork","acct":"the_mighty_zork","display_name":"original zork (he/they)","locked":false,"bot":false,"created_at":"2022-05-20T11:09:18.000Z","note":"\u003cp\u003ehey yo this is my profile!\u003c/p\u003e","url":"http://localhost:8080/@the_mighty_zork","avatar":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg","avatar_static":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg","header":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg","header_static":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg","followers_count":2,"following_count":2,"statuses_count":5,"last_status_at":"2022-05-20T11:37:55.000Z","emojis":[],"fields":[],"enable_rss":true,"role":"user"}`, string(b))
+	suite.Equal(`{
+  "id": "01F8MH1H7YV1Z7D2C8K2730QBF",
+  "username": "the_mighty_zork",
+  "acct": "the_mighty_zork",
+  "display_name": "original zork (he/they)",
+  "locked": false,
+  "bot": false,
+  "created_at": "2022-05-20T11:09:18.000Z",
+  "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
+  "url": "http://localhost:8080/@the_mighty_zork",
+  "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+  "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+  "followers_count": 2,
+  "following_count": 2,
+  "statuses_count": 5,
+  "last_status_at": "2022-05-20T11:37:55.000Z",
+  "emojis": [],
+  "fields": [],
+  "enable_rss": true,
+  "role": "user"
+}`, string(b))
 }
 
 func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiStruct() {
@@ -53,9 +75,39 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiStruct()
 	suite.NoError(err)
 	suite.NotNil(apiAccount)
 
-	b, err := json.Marshal(apiAccount)
+	b, err := json.MarshalIndent(apiAccount, "", "  ")
 	suite.NoError(err)
-	suite.Equal(`{"id":"01F8MH1H7YV1Z7D2C8K2730QBF","username":"the_mighty_zork","acct":"the_mighty_zork","display_name":"original zork (he/they)","locked":false,"bot":false,"created_at":"2022-05-20T11:09:18.000Z","note":"\u003cp\u003ehey yo this is my profile!\u003c/p\u003e","url":"http://localhost:8080/@the_mighty_zork","avatar":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg","avatar_static":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg","header":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg","header_static":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg","followers_count":2,"following_count":2,"statuses_count":5,"last_status_at":"2022-05-20T11:37:55.000Z","emojis":[{"shortcode":"rainbow","url":"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","static_url":"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","visible_in_picker":true,"category":"reactions"}],"fields":[],"enable_rss":true,"role":"user"}`, string(b))
+	suite.Equal(`{
+  "id": "01F8MH1H7YV1Z7D2C8K2730QBF",
+  "username": "the_mighty_zork",
+  "acct": "the_mighty_zork",
+  "display_name": "original zork (he/they)",
+  "locked": false,
+  "bot": false,
+  "created_at": "2022-05-20T11:09:18.000Z",
+  "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
+  "url": "http://localhost:8080/@the_mighty_zork",
+  "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+  "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+  "followers_count": 2,
+  "following_count": 2,
+  "statuses_count": 5,
+  "last_status_at": "2022-05-20T11:37:55.000Z",
+  "emojis": [
+    {
+      "shortcode": "rainbow",
+      "url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+      "static_url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+      "visible_in_picker": true,
+      "category": "reactions"
+    }
+  ],
+  "fields": [],
+  "enable_rss": true,
+  "role": "user"
+}`, string(b))
 }
 
 func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiIDs() {
@@ -68,9 +120,39 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiIDs() {
 	suite.NoError(err)
 	suite.NotNil(apiAccount)
 
-	b, err := json.Marshal(apiAccount)
+	b, err := json.MarshalIndent(apiAccount, "", "  ")
 	suite.NoError(err)
-	suite.Equal(`{"id":"01F8MH1H7YV1Z7D2C8K2730QBF","username":"the_mighty_zork","acct":"the_mighty_zork","display_name":"original zork (he/they)","locked":false,"bot":false,"created_at":"2022-05-20T11:09:18.000Z","note":"\u003cp\u003ehey yo this is my profile!\u003c/p\u003e","url":"http://localhost:8080/@the_mighty_zork","avatar":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg","avatar_static":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg","header":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg","header_static":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg","followers_count":2,"following_count":2,"statuses_count":5,"last_status_at":"2022-05-20T11:37:55.000Z","emojis":[{"shortcode":"rainbow","url":"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","static_url":"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","visible_in_picker":true,"category":"reactions"}],"fields":[],"enable_rss":true,"role":"user"}`, string(b))
+	suite.Equal(`{
+  "id": "01F8MH1H7YV1Z7D2C8K2730QBF",
+  "username": "the_mighty_zork",
+  "acct": "the_mighty_zork",
+  "display_name": "original zork (he/they)",
+  "locked": false,
+  "bot": false,
+  "created_at": "2022-05-20T11:09:18.000Z",
+  "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
+  "url": "http://localhost:8080/@the_mighty_zork",
+  "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+  "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+  "followers_count": 2,
+  "following_count": 2,
+  "statuses_count": 5,
+  "last_status_at": "2022-05-20T11:37:55.000Z",
+  "emojis": [
+    {
+      "shortcode": "rainbow",
+      "url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+      "static_url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+      "visible_in_picker": true,
+      "category": "reactions"
+    }
+  ],
+  "fields": [],
+  "enable_rss": true,
+  "role": "user"
+}`, string(b))
 }
 
 func (suite *InternalToFrontendTestSuite) TestAccountToFrontendSensitive() {
@@ -79,9 +161,40 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendSensitive() {
 	suite.NoError(err)
 	suite.NotNil(apiAccount)
 
-	b, err := json.Marshal(apiAccount)
+	b, err := json.MarshalIndent(apiAccount, "", "  ")
 	suite.NoError(err)
-	suite.Equal(`{"id":"01F8MH1H7YV1Z7D2C8K2730QBF","username":"the_mighty_zork","acct":"the_mighty_zork","display_name":"original zork (he/they)","locked":false,"bot":false,"created_at":"2022-05-20T11:09:18.000Z","note":"\u003cp\u003ehey yo this is my profile!\u003c/p\u003e","url":"http://localhost:8080/@the_mighty_zork","avatar":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg","avatar_static":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg","header":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg","header_static":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg","followers_count":2,"following_count":2,"statuses_count":5,"last_status_at":"2022-05-20T11:37:55.000Z","emojis":[],"fields":[],"source":{"privacy":"public","language":"en","status_format":"plain","note":"hey yo this is my profile!","fields":[]},"enable_rss":true,"role":"user"}`, string(b))
+	suite.Equal(`{
+  "id": "01F8MH1H7YV1Z7D2C8K2730QBF",
+  "username": "the_mighty_zork",
+  "acct": "the_mighty_zork",
+  "display_name": "original zork (he/they)",
+  "locked": false,
+  "bot": false,
+  "created_at": "2022-05-20T11:09:18.000Z",
+  "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
+  "url": "http://localhost:8080/@the_mighty_zork",
+  "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+  "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+  "followers_count": 2,
+  "following_count": 2,
+  "statuses_count": 5,
+  "last_status_at": "2022-05-20T11:37:55.000Z",
+  "emojis": [],
+  "fields": [],
+  "source": {
+    "privacy": "public",
+    "sensitive": false,
+    "language": "en",
+    "status_format": "plain",
+    "note": "hey yo this is my profile!",
+    "fields": [],
+    "follow_requests_count": 0
+  },
+  "enable_rss": true,
+  "role": "user"
+}`, string(b))
 }
 
 func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
@@ -90,10 +203,108 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
 	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount)
 	suite.NoError(err)
 
-	b, err := json.Marshal(apiStatus)
+	b, err := json.MarshalIndent(apiStatus, "", "  ")
 	suite.NoError(err)
 
-	suite.Equal(`{"id":"01F8MH75CBF9JFX4ZAD54N0W0R","created_at":"2021-10-20T11:36:45.000Z","in_reply_to_id":null,"in_reply_to_account_id":null,"sensitive":false,"spoiler_text":"","visibility":"public","language":"en","uri":"http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R","url":"http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R","replies_count":0,"reblogs_count":0,"favourites_count":1,"favourited":true,"reblogged":false,"muted":false,"bookmarked":true,"pinned":false,"content":"hello world! #welcome ! first post on the instance :rainbow: !","reblog":null,"application":{"name":"superseriousbusiness","website":"https://superserious.business"},"account":{"id":"01F8MH17FWEB39HZJ76B6VXSKF","username":"admin","acct":"admin","display_name":"","locked":false,"bot":false,"created_at":"2022-05-17T13:10:59.000Z","note":"","url":"http://localhost:8080/@admin","avatar":"","avatar_static":"","header":"http://localhost:8080/assets/default_header.png","header_static":"http://localhost:8080/assets/default_header.png","followers_count":1,"following_count":1,"statuses_count":4,"last_status_at":"2021-10-20T10:41:37.000Z","emojis":[],"fields":[],"enable_rss":true,"role":"admin"},"media_attachments":[{"id":"01F8MH6NEM8D7527KZAECTCR76","type":"image","url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg","text_url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg","preview_url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.jpg","remote_url":null,"preview_remote_url":null,"meta":{"original":{"width":1200,"height":630,"size":"1200x630","aspect":1.9047619},"small":{"width":256,"height":134,"size":"256x134","aspect":1.9104477},"focus":{"x":0,"y":0}},"description":"Black and white image of some 50's style text saying: Welcome On Board","blurhash":"LNJRdVM{00Rj%Mayt7j[4nWBofRj"}],"mentions":[],"tags":[{"name":"welcome","url":"http://localhost:8080/tags/welcome"}],"emojis":[{"shortcode":"rainbow","url":"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","static_url":"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","visible_in_picker":true,"category":"reactions"}],"card":null,"poll":null,"text":"hello world! #welcome ! first post on the instance :rainbow: !"}`, string(b))
+	suite.Equal(`{
+  "id": "01F8MH75CBF9JFX4ZAD54N0W0R",
+  "created_at": "2021-10-20T11:36:45.000Z",
+  "in_reply_to_id": null,
+  "in_reply_to_account_id": null,
+  "sensitive": false,
+  "spoiler_text": "",
+  "visibility": "public",
+  "language": "en",
+  "uri": "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
+  "url": "http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
+  "replies_count": 0,
+  "reblogs_count": 0,
+  "favourites_count": 1,
+  "favourited": true,
+  "reblogged": false,
+  "muted": false,
+  "bookmarked": true,
+  "pinned": false,
+  "content": "hello world! #welcome ! first post on the instance :rainbow: !",
+  "reblog": null,
+  "application": {
+    "name": "superseriousbusiness",
+    "website": "https://superserious.business"
+  },
+  "account": {
+    "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+    "username": "admin",
+    "acct": "admin",
+    "display_name": "",
+    "locked": false,
+    "bot": false,
+    "created_at": "2022-05-17T13:10:59.000Z",
+    "note": "",
+    "url": "http://localhost:8080/@admin",
+    "avatar": "",
+    "avatar_static": "",
+    "header": "http://localhost:8080/assets/default_header.png",
+    "header_static": "http://localhost:8080/assets/default_header.png",
+    "followers_count": 1,
+    "following_count": 1,
+    "statuses_count": 4,
+    "last_status_at": "2021-10-20T10:41:37.000Z",
+    "emojis": [],
+    "fields": [],
+    "enable_rss": true,
+    "role": "admin"
+  },
+  "media_attachments": [
+    {
+      "id": "01F8MH6NEM8D7527KZAECTCR76",
+      "type": "image",
+      "url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
+      "text_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
+      "preview_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.jpg",
+      "remote_url": null,
+      "preview_remote_url": null,
+      "meta": {
+        "original": {
+          "width": 1200,
+          "height": 630,
+          "size": "1200x630",
+          "aspect": 1.9047619
+        },
+        "small": {
+          "width": 256,
+          "height": 134,
+          "size": "256x134",
+          "aspect": 1.9104477
+        },
+        "focus": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      "description": "Black and white image of some 50's style text saying: Welcome On Board",
+      "blurhash": "LNJRdVM{00Rj%Mayt7j[4nWBofRj"
+    }
+  ],
+  "mentions": [],
+  "tags": [
+    {
+      "name": "welcome",
+      "url": "http://localhost:8080/tags/welcome"
+    }
+  ],
+  "emojis": [
+    {
+      "shortcode": "rainbow",
+      "url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+      "static_url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+      "visible_in_picker": true,
+      "category": "reactions"
+    }
+  ],
+  "card": null,
+  "poll": null,
+  "text": "hello world! #welcome ! first post on the instance :rainbow: !"
+}`, string(b))
 }
 
 func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() {
@@ -104,10 +315,108 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
 	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount)
 	suite.NoError(err)
 
-	b, err := json.Marshal(apiStatus)
+	b, err := json.MarshalIndent(apiStatus, "", "  ")
 	suite.NoError(err)
 
-	suite.Equal(`{"id":"01F8MH75CBF9JFX4ZAD54N0W0R","created_at":"2021-10-20T11:36:45.000Z","in_reply_to_id":null,"in_reply_to_account_id":null,"sensitive":false,"spoiler_text":"","visibility":"public","language":null,"uri":"http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R","url":"http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R","replies_count":0,"reblogs_count":0,"favourites_count":1,"favourited":true,"reblogged":false,"muted":false,"bookmarked":true,"pinned":false,"content":"hello world! #welcome ! first post on the instance :rainbow: !","reblog":null,"application":{"name":"superseriousbusiness","website":"https://superserious.business"},"account":{"id":"01F8MH17FWEB39HZJ76B6VXSKF","username":"admin","acct":"admin","display_name":"","locked":false,"bot":false,"created_at":"2022-05-17T13:10:59.000Z","note":"","url":"http://localhost:8080/@admin","avatar":"","avatar_static":"","header":"http://localhost:8080/assets/default_header.png","header_static":"http://localhost:8080/assets/default_header.png","followers_count":1,"following_count":1,"statuses_count":4,"last_status_at":"2021-10-20T10:41:37.000Z","emojis":[],"fields":[],"enable_rss":true,"role":"admin"},"media_attachments":[{"id":"01F8MH6NEM8D7527KZAECTCR76","type":"image","url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg","text_url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg","preview_url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.jpg","remote_url":null,"preview_remote_url":null,"meta":{"original":{"width":1200,"height":630,"size":"1200x630","aspect":1.9047619},"small":{"width":256,"height":134,"size":"256x134","aspect":1.9104477},"focus":{"x":0,"y":0}},"description":"Black and white image of some 50's style text saying: Welcome On Board","blurhash":"LNJRdVM{00Rj%Mayt7j[4nWBofRj"}],"mentions":[],"tags":[{"name":"welcome","url":"http://localhost:8080/tags/welcome"}],"emojis":[{"shortcode":"rainbow","url":"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","static_url":"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","visible_in_picker":true,"category":"reactions"}],"card":null,"poll":null,"text":"hello world! #welcome ! first post on the instance :rainbow: !"}`, string(b))
+	suite.Equal(`{
+  "id": "01F8MH75CBF9JFX4ZAD54N0W0R",
+  "created_at": "2021-10-20T11:36:45.000Z",
+  "in_reply_to_id": null,
+  "in_reply_to_account_id": null,
+  "sensitive": false,
+  "spoiler_text": "",
+  "visibility": "public",
+  "language": null,
+  "uri": "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
+  "url": "http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
+  "replies_count": 0,
+  "reblogs_count": 0,
+  "favourites_count": 1,
+  "favourited": true,
+  "reblogged": false,
+  "muted": false,
+  "bookmarked": true,
+  "pinned": false,
+  "content": "hello world! #welcome ! first post on the instance :rainbow: !",
+  "reblog": null,
+  "application": {
+    "name": "superseriousbusiness",
+    "website": "https://superserious.business"
+  },
+  "account": {
+    "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+    "username": "admin",
+    "acct": "admin",
+    "display_name": "",
+    "locked": false,
+    "bot": false,
+    "created_at": "2022-05-17T13:10:59.000Z",
+    "note": "",
+    "url": "http://localhost:8080/@admin",
+    "avatar": "",
+    "avatar_static": "",
+    "header": "http://localhost:8080/assets/default_header.png",
+    "header_static": "http://localhost:8080/assets/default_header.png",
+    "followers_count": 1,
+    "following_count": 1,
+    "statuses_count": 4,
+    "last_status_at": "2021-10-20T10:41:37.000Z",
+    "emojis": [],
+    "fields": [],
+    "enable_rss": true,
+    "role": "admin"
+  },
+  "media_attachments": [
+    {
+      "id": "01F8MH6NEM8D7527KZAECTCR76",
+      "type": "image",
+      "url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
+      "text_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
+      "preview_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.jpg",
+      "remote_url": null,
+      "preview_remote_url": null,
+      "meta": {
+        "original": {
+          "width": 1200,
+          "height": 630,
+          "size": "1200x630",
+          "aspect": 1.9047619
+        },
+        "small": {
+          "width": 256,
+          "height": 134,
+          "size": "256x134",
+          "aspect": 1.9104477
+        },
+        "focus": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      "description": "Black and white image of some 50's style text saying: Welcome On Board",
+      "blurhash": "LNJRdVM{00Rj%Mayt7j[4nWBofRj"
+    }
+  ],
+  "mentions": [],
+  "tags": [
+    {
+      "name": "welcome",
+      "url": "http://localhost:8080/tags/welcome"
+    }
+  ],
+  "emojis": [
+    {
+      "shortcode": "rainbow",
+      "url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+      "static_url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+      "visible_in_picker": true,
+      "category": "reactions"
+    }
+  ],
+  "card": null,
+  "poll": null,
+  "text": "hello world! #welcome ! first post on the instance :rainbow: !"
+}`, string(b))
 }
 
 func (suite *InternalToFrontendTestSuite) TestVideoAttachmentToFrontend() {
@@ -115,10 +424,34 @@ func (suite *InternalToFrontendTestSuite) TestVideoAttachmentToFrontend() {
 	apiAttachment, err := suite.typeconverter.AttachmentToAPIAttachment(context.Background(), testAttachment)
 	suite.NoError(err)
 
-	b, err := json.Marshal(apiAttachment)
+	b, err := json.MarshalIndent(apiAttachment, "", "  ")
 	suite.NoError(err)
 
-	suite.Equal(`{"id":"01CDR64G398ADCHXK08WWTHEZ5","type":"video","url":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01CDR64G398ADCHXK08WWTHEZ5.mp4","text_url":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01CDR64G398ADCHXK08WWTHEZ5.mp4","preview_url":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01CDR64G398ADCHXK08WWTHEZ5.jpg","remote_url":null,"preview_remote_url":null,"meta":{"original":{"width":720,"height":404,"frame_rate":"30/1","duration":15.033334,"bitrate":1206522,"size":"720x404","aspect":1.7821782},"small":{"width":720,"height":404,"size":"720x404","aspect":1.7821782},"focus":{"x":0,"y":0}},"description":"A cow adorably licking another cow!"}`, string(b))
+	suite.Equal(`{
+  "id": "01CDR64G398ADCHXK08WWTHEZ5",
+  "type": "video",
+  "url": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01CDR64G398ADCHXK08WWTHEZ5.mp4",
+  "text_url": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01CDR64G398ADCHXK08WWTHEZ5.mp4",
+  "preview_url": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01CDR64G398ADCHXK08WWTHEZ5.jpg",
+  "remote_url": null,
+  "preview_remote_url": null,
+  "meta": {
+    "original": {
+      "width": 720,
+      "height": 404,
+      "frame_rate": "30/1",
+      "duration": 15.033334,
+      "bitrate": 1206522
+    },
+    "small": {
+      "width": 720,
+      "height": 404,
+      "size": "720x404",
+      "aspect": 1.7821782
+    }
+  },
+  "description": "A cow adorably licking another cow!"
+}`, string(b))
 }
 
 func (suite *InternalToFrontendTestSuite) TestInstanceToFrontend() {
@@ -137,10 +470,22 @@ func (suite *InternalToFrontendTestSuite) TestInstanceToFrontend() {
 	apiInstance, err := suite.typeconverter.InstanceToAPIInstance(context.Background(), testInstance)
 	suite.NoError(err)
 
-	b, err := json.Marshal(apiInstance)
+	b, err := json.MarshalIndent(apiInstance, "", "  ")
 	suite.NoError(err)
 
-	suite.Equal(`{"uri":"https://example.org","title":"example instance","description":"a much longer description","short_description":"a little description","email":"someone@example.org","version":"software-from-hell 0.666","registrations":false,"approval_required":false,"invites_enabled":false,"thumbnail":"","max_toot_chars":0}`, string(b))
+	suite.Equal(`{
+  "uri": "https://example.org",
+  "title": "example instance",
+  "description": "a much longer description",
+  "short_description": "a little description",
+  "email": "someone@example.org",
+  "version": "software-from-hell 0.666",
+  "registrations": false,
+  "approval_required": false,
+  "invites_enabled": false,
+  "thumbnail": "",
+  "max_toot_chars": 0
+}`, string(b))
 }
 
 func (suite *InternalToFrontendTestSuite) TestInstanceToFrontendWithAdminAccount() {
@@ -160,40 +505,103 @@ func (suite *InternalToFrontendTestSuite) TestInstanceToFrontendWithAdminAccount
 	apiInstance, err := suite.typeconverter.InstanceToAPIInstance(context.Background(), testInstance)
 	suite.NoError(err)
 
-	b, err := json.Marshal(apiInstance)
+	b, err := json.MarshalIndent(apiInstance, "", "  ")
 	suite.NoError(err)
 
-	suite.Equal(`{"uri":"https://example.org","title":"example instance","description":"a much longer description","short_description":"a little description","email":"someone@example.org","version":"software-from-hell 0.666","registrations":false,"approval_required":false,"invites_enabled":false,"thumbnail":"","contact_account":{"id":"01FHMQX3GAABWSM0S2VZEC2SWC","username":"Some_User","acct":"Some_User@example.org","display_name":"some user","locked":true,"bot":false,"created_at":"2020-08-10T12:13:28.000Z","note":"i'm a real son of a gun","url":"http://example.org/@Some_User","avatar":"","avatar_static":"","header":"http://localhost:8080/assets/default_header.png","header_static":"http://localhost:8080/assets/default_header.png","followers_count":0,"following_count":0,"statuses_count":0,"last_status_at":null,"emojis":[],"fields":[]},"max_toot_chars":0}`, string(b))
+	suite.Equal(`{
+  "uri": "https://example.org",
+  "title": "example instance",
+  "description": "a much longer description",
+  "short_description": "a little description",
+  "email": "someone@example.org",
+  "version": "software-from-hell 0.666",
+  "registrations": false,
+  "approval_required": false,
+  "invites_enabled": false,
+  "thumbnail": "",
+  "contact_account": {
+    "id": "01FHMQX3GAABWSM0S2VZEC2SWC",
+    "username": "Some_User",
+    "acct": "Some_User@example.org",
+    "display_name": "some user",
+    "locked": true,
+    "bot": false,
+    "created_at": "2020-08-10T12:13:28.000Z",
+    "note": "i'm a real son of a gun",
+    "url": "http://example.org/@Some_User",
+    "avatar": "",
+    "avatar_static": "",
+    "header": "http://localhost:8080/assets/default_header.png",
+    "header_static": "http://localhost:8080/assets/default_header.png",
+    "followers_count": 0,
+    "following_count": 0,
+    "statuses_count": 0,
+    "last_status_at": null,
+    "emojis": [],
+    "fields": []
+  },
+  "max_toot_chars": 0
+}`, string(b))
 }
 
 func (suite *InternalToFrontendTestSuite) TestEmojiToFrontend() {
 	emoji, err := suite.typeconverter.EmojiToAPIEmoji(context.Background(), suite.testEmojis["rainbow"])
 	suite.NoError(err)
 
-	b, err := json.Marshal(emoji)
+	b, err := json.MarshalIndent(emoji, "", "  ")
 	suite.NoError(err)
 
-	suite.Equal(`{"shortcode":"rainbow","url":"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","static_url":"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","visible_in_picker":true,"category":"reactions"}`, string(b))
+	suite.Equal(`{
+  "shortcode": "rainbow",
+  "url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+  "static_url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+  "visible_in_picker": true,
+  "category": "reactions"
+}`, string(b))
 }
 
 func (suite *InternalToFrontendTestSuite) TestEmojiToFrontendAdmin1() {
 	emoji, err := suite.typeconverter.EmojiToAdminAPIEmoji(context.Background(), suite.testEmojis["rainbow"])
 	suite.NoError(err)
 
-	b, err := json.Marshal(emoji)
+	b, err := json.MarshalIndent(emoji, "", "  ")
 	suite.NoError(err)
 
-	suite.Equal(`{"shortcode":"rainbow","url":"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","static_url":"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","visible_in_picker":true,"category":"reactions","id":"01F8MH9H8E4VG3KDYJR9EGPXCQ","disabled":false,"updated_at":"2021-09-20T10:40:37.000Z","total_file_size":47115,"content_type":"image/png","uri":"http://localhost:8080/emoji/01F8MH9H8E4VG3KDYJR9EGPXCQ"}`, string(b))
+	suite.Equal(`{
+  "shortcode": "rainbow",
+  "url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+  "static_url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+  "visible_in_picker": true,
+  "category": "reactions",
+  "id": "01F8MH9H8E4VG3KDYJR9EGPXCQ",
+  "disabled": false,
+  "updated_at": "2021-09-20T10:40:37.000Z",
+  "total_file_size": 47115,
+  "content_type": "image/png",
+  "uri": "http://localhost:8080/emoji/01F8MH9H8E4VG3KDYJR9EGPXCQ"
+}`, string(b))
 }
 
 func (suite *InternalToFrontendTestSuite) TestEmojiToFrontendAdmin2() {
 	emoji, err := suite.typeconverter.EmojiToAdminAPIEmoji(context.Background(), suite.testEmojis["yell"])
 	suite.NoError(err)
 
-	b, err := json.Marshal(emoji)
+	b, err := json.MarshalIndent(emoji, "", "  ")
 	suite.NoError(err)
 
-	suite.Equal(`{"shortcode":"yell","url":"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01GD5KP5CQEE1R3X43Y1EHS2CW.png","static_url":"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01GD5KP5CQEE1R3X43Y1EHS2CW.png","visible_in_picker":false,"id":"01GD5KP5CQEE1R3X43Y1EHS2CW","disabled":false,"domain":"fossbros-anonymous.io","updated_at":"2020-03-18T12:12:00.000Z","total_file_size":21697,"content_type":"image/png","uri":"http://fossbros-anonymous.io/emoji/01GD5KP5CQEE1R3X43Y1EHS2CW"}`, string(b))
+	suite.Equal(`{
+  "shortcode": "yell",
+  "url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01GD5KP5CQEE1R3X43Y1EHS2CW.png",
+  "static_url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01GD5KP5CQEE1R3X43Y1EHS2CW.png",
+  "visible_in_picker": false,
+  "id": "01GD5KP5CQEE1R3X43Y1EHS2CW",
+  "disabled": false,
+  "domain": "fossbros-anonymous.io",
+  "updated_at": "2020-03-18T12:12:00.000Z",
+  "total_file_size": 21697,
+  "content_type": "image/png",
+  "uri": "http://fossbros-anonymous.io/emoji/01GD5KP5CQEE1R3X43Y1EHS2CW"
+}`, string(b))
 }
 
 func (suite *InternalToFrontendTestSuite) TestReportToFrontend1() {
