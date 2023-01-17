@@ -608,20 +608,87 @@ func (suite *InternalToFrontendTestSuite) TestReportToFrontend1() {
 	report, err := suite.typeconverter.ReportToAPIReport(context.Background(), suite.testReports["local_account_2_report_remote_account_1"])
 	suite.NoError(err)
 
-	b, err := json.Marshal(report)
+	b, err := json.MarshalIndent(report, "", "  ")
 	suite.NoError(err)
 
-	suite.Equal(`{"id":"01GP3AWY4CRDVRNZKW0TEAMB5R","created_at":"2022-05-14T10:20:03.000Z","action_taken":false,"action_taken_at":null,"action_taken_comment":null,"category":"other","comment":"dark souls sucks, please yeet this nerd","forwarded":true,"status_ids":["01FVW7JHQFSFK166WWKR8CBA6M"],"rule_ids":[],"target_account":{"id":"01F8MH5ZK5VRH73AKHQM6Y9VNX","username":"foss_satan","acct":"foss_satan@fossbros-anonymous.io","display_name":"big gerald","locked":false,"bot":false,"created_at":"2021-09-26T10:52:36.000Z","note":"i post about like, i dunno, stuff, or whatever!!!!","url":"http://fossbros-anonymous.io/@foss_satan","avatar":"","avatar_static":"","header":"http://localhost:8080/assets/default_header.png","header_static":"http://localhost:8080/assets/default_header.png","followers_count":0,"following_count":0,"statuses_count":1,"last_status_at":"2021-09-20T10:40:37.000Z","emojis":[],"fields":[]}}`, string(b))
+	suite.Equal(`{
+  "id": "01GP3AWY4CRDVRNZKW0TEAMB5R",
+  "created_at": "2022-05-14T10:20:03.000Z",
+  "action_taken": false,
+  "action_taken_at": null,
+  "action_taken_comment": null,
+  "category": "other",
+  "comment": "dark souls sucks, please yeet this nerd",
+  "forwarded": true,
+  "status_ids": [
+    "01FVW7JHQFSFK166WWKR8CBA6M"
+  ],
+  "rule_ids": [],
+  "target_account": {
+    "id": "01F8MH5ZK5VRH73AKHQM6Y9VNX",
+    "username": "foss_satan",
+    "acct": "foss_satan@fossbros-anonymous.io",
+    "display_name": "big gerald",
+    "locked": false,
+    "bot": false,
+    "created_at": "2021-09-26T10:52:36.000Z",
+    "note": "i post about like, i dunno, stuff, or whatever!!!!",
+    "url": "http://fossbros-anonymous.io/@foss_satan",
+    "avatar": "",
+    "avatar_static": "",
+    "header": "http://localhost:8080/assets/default_header.png",
+    "header_static": "http://localhost:8080/assets/default_header.png",
+    "followers_count": 0,
+    "following_count": 0,
+    "statuses_count": 1,
+    "last_status_at": "2021-09-20T10:40:37.000Z",
+    "emojis": [],
+    "fields": []
+  }
+}`, string(b))
 }
 
 func (suite *InternalToFrontendTestSuite) TestReportToFrontend2() {
 	report, err := suite.typeconverter.ReportToAPIReport(context.Background(), suite.testReports["remote_account_1_report_local_account_2"])
 	suite.NoError(err)
 
-	b, err := json.Marshal(report)
+	b, err := json.MarshalIndent(report, "", "  ")
 	suite.NoError(err)
 
-	suite.Equal(`{"id":"01GP3DFY9XQ1TJMZT5BGAZPXX7","created_at":"2022-05-15T14:20:12.000Z","action_taken":true,"action_taken_at":"2022-05-15T15:01:56.000Z","action_taken_comment":"user was warned not to be a turtle anymore","category":"other","comment":"this is a turtle, not a person, therefore should not be a poster","forwarded":true,"status_ids":[],"rule_ids":[],"target_account":{"id":"01F8MH5NBDF2MV7CTC4Q5128HF","username":"1happyturtle","acct":"1happyturtle","display_name":"happy little turtle :3","locked":true,"bot":false,"created_at":"2022-06-04T13:12:00.000Z","note":"\u003cp\u003ei post about things that concern me\u003c/p\u003e","url":"http://localhost:8080/@1happyturtle","avatar":"","avatar_static":"","header":"http://localhost:8080/assets/default_header.png","header_static":"http://localhost:8080/assets/default_header.png","followers_count":1,"following_count":1,"statuses_count":7,"last_status_at":"2021-10-20T10:40:37.000Z","emojis":[],"fields":[],"role":"user"}}`, string(b))
+	suite.Equal(`{
+  "id": "01GP3DFY9XQ1TJMZT5BGAZPXX7",
+  "created_at": "2022-05-15T14:20:12.000Z",
+  "action_taken": true,
+  "action_taken_at": "2022-05-15T15:01:56.000Z",
+  "action_taken_comment": "user was warned not to be a turtle anymore",
+  "category": "other",
+  "comment": "this is a turtle, not a person, therefore should not be a poster",
+  "forwarded": true,
+  "status_ids": [],
+  "rule_ids": [],
+  "target_account": {
+    "id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+    "username": "1happyturtle",
+    "acct": "1happyturtle",
+    "display_name": "happy little turtle :3",
+    "locked": true,
+    "bot": false,
+    "created_at": "2022-06-04T13:12:00.000Z",
+    "note": "\u003cp\u003ei post about things that concern me\u003c/p\u003e",
+    "url": "http://localhost:8080/@1happyturtle",
+    "avatar": "",
+    "avatar_static": "",
+    "header": "http://localhost:8080/assets/default_header.png",
+    "header_static": "http://localhost:8080/assets/default_header.png",
+    "followers_count": 1,
+    "following_count": 1,
+    "statuses_count": 7,
+    "last_status_at": "2021-10-20T10:40:37.000Z",
+    "emojis": [],
+    "fields": [],
+    "role": "user"
+  }
+}`, string(b))
 }
 
 func TestInternalToFrontendTestSuite(t *testing.T) {
