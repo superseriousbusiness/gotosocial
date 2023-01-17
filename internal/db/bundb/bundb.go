@@ -294,6 +294,11 @@ func sqlitePragmas(ctx context.Context, conn *DBConn) error {
 		pragmas = append(pragmas, []string{"cache_size", s})
 	}
 
+	if timeout := config.GetDbSqliteBusyTimeout(); timeout > 0 {
+		t := strconv.FormatInt(timeout.Milliseconds(), 10)
+		pragmas = append(pragmas, []string{"busy_timeout", t})
+	}
+
 	for _, p := range pragmas {
 		pk := p[0]
 		pv := p[1]

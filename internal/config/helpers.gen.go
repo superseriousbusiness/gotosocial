@@ -599,6 +599,31 @@ func GetDbSqliteCacheSize() bytesize.Size { return global.GetDbSqliteCacheSize()
 // SetDbSqliteCacheSize safely sets the value for global configuration 'DbSqliteCacheSize' field
 func SetDbSqliteCacheSize(v bytesize.Size) { global.SetDbSqliteCacheSize(v) }
 
+// GetDbSqliteBusyTimeout safely fetches the Configuration value for state's 'DbSqliteBusyTimeout' field
+func (st *ConfigState) GetDbSqliteBusyTimeout() (v time.Duration) {
+	st.mutex.Lock()
+	v = st.config.DbSqliteBusyTimeout
+	st.mutex.Unlock()
+	return
+}
+
+// SetDbSqliteBusyTimeout safely sets the Configuration value for state's 'DbSqliteBusyTimeout' field
+func (st *ConfigState) SetDbSqliteBusyTimeout(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.DbSqliteBusyTimeout = v
+	st.reloadToViper()
+}
+
+// DbSqliteBusyTimeoutFlag returns the flag name for the 'DbSqliteBusyTimeout' field
+func DbSqliteBusyTimeoutFlag() string { return "db-sqlite-busy-timeout" }
+
+// GetDbSqliteBusyTimeout safely fetches the value for global configuration 'DbSqliteBusyTimeout' field
+func GetDbSqliteBusyTimeout() time.Duration { return global.GetDbSqliteBusyTimeout() }
+
+// SetDbSqliteBusyTimeout safely sets the value for global configuration 'DbSqliteBusyTimeout' field
+func SetDbSqliteBusyTimeout(v time.Duration) { global.SetDbSqliteBusyTimeout(v) }
+
 // GetWebTemplateBaseDir safely fetches the Configuration value for state's 'WebTemplateBaseDir' field
 func (st *ConfigState) GetWebTemplateBaseDir() (v string) {
 	st.mutex.Lock()

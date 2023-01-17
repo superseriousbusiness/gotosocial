@@ -19,6 +19,8 @@
 package testrig
 
 import (
+	"time"
+
 	"codeberg.org/gruf/go-bytesize"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -53,6 +55,7 @@ var testDefaults = config.Configuration{
 	DbSqliteJournalMode: "WAL",
 	DbSqliteSynchronous: "NORMAL",
 	DbSqliteCacheSize:   64 * bytesize.MiB,
+	DbSqliteBusyTimeout: time.Millisecond * 20,
 
 	WebTemplateBaseDir: "./web/template/",
 	WebAssetBaseDir:    "./web/assets/",

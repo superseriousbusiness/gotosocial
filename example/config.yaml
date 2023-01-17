@@ -166,18 +166,35 @@ db-tls-ca-cert: ""
 
 # String. SQLite journaling mode.
 # SQLite only -- unused otherwise.
+# If set to empty string, the sqlite default will be used.
 # See: https://www.sqlite.org/pragma.html#pragma_journal_mode
+# Examples: ["DELETE", "TRUNCATE", "PERSIST", "MEMORY", "WAL", "OFF"]
+# Default: "WAL"
 db-sqlite-journal-mode: "WAL"
 
 # String. SQLite synchronous mode.
 # SQLite only -- unused otherwise.
+# If set to empty string, the sqlite default will be used.
 # See: https://www.sqlite.org/pragma.html#pragma_synchronous
+# Examples: ["OFF", "NORMAL", "FULL", "EXTRA"]
+# Default: "NORMAL"
 db-sqlite-synchronous: "NORMAL"
 
 # Byte size. SQlite cache size.
 # SQLite only -- unused otherwise.
+# If set to empty string or zero, the sqlite default will be used.
 # See: https://www.sqlite.org/pragma.html#pragma_cache_size
+# Examples: ["32MiB", "0", "64MiB"]
+# Default: "64MiB"
 db-sqlite-cache-size: "64MiB"
+
+# Duration. SQlite busy timeout.
+# SQLite only -- unused otherwise.
+# If set to empty string or zero, the sqlite default will be used.
+# See: https://www.sqlite.org/pragma.html#pragma_busy_timeout
+# Examples: ["0ms", "20ms", "150ms", "1s"]
+# Default: "20ms"
+db-sqlite-busy-timeout: "20ms"
 
 cache:
   gts:
