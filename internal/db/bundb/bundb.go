@@ -290,7 +290,7 @@ func sqlitePragmas(ctx context.Context, conn *DBConn) error {
 
 	if size := config.GetDbSqliteCacheSize(); size > 0 {
 		// Set the user provided SQLite cache size (in kibibytes)
-		s := strconv.Itoa(int(size / bytesize.KiB))
+		s := strconv.FormatUint(uint64(size/bytesize.KiB), 10)
 		pragmas = append(pragmas, []string{"cache_size", s})
 	}
 
