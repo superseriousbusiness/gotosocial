@@ -48,7 +48,8 @@ module.exports = function UserSettings() {
 	);
 };
 
-function UserSettingsForm({ data: { source } }) {
+function UserSettingsForm({ data }) {
+	const { source } = data;
 	/* form keys
 		- string source[privacy]
 		- bool source[sensitive]
@@ -59,7 +60,7 @@ function UserSettingsForm({ data: { source } }) {
 	const form = {
 		defaultPrivacy: useTextInput("source[privacy]", { defaultValue: source.privacy ?? "unlisted" }),
 		isSensitive: useBoolInput("source[sensitive]", { defaultValue: source.sensitive }),
-		language: useTextInput("source[language]", { defaultValue: source.language ?? "EN" }),
+		language: useTextInput("source[language]", { defaultValue: source.language?.toUpperCase() ?? "EN" }),
 		format: useTextInput("source[status_format]", { defaultValue: source.status_format ?? "plain" }),
 	};
 

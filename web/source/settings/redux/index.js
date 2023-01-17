@@ -34,17 +34,14 @@ const {
 const query = require("../lib/query/base");
 
 const combinedReducers = combineReducers({
-	oauth: require("./reducers/oauth").reducer,
-	instances: require("./reducers/instances").reducer,
-	temporary: require("./reducers/temporary").reducer,
-	user: require("./reducers/user").reducer,
+	oauth: require("./oauth").reducer,
 	[query.reducerPath]: query.reducer
 });
 
 const persistedReducer = persistReducer({
 	key: "gotosocial-settings",
 	storage: require("redux-persist/lib/storage").default,
-	stateReconciler: require("redux-persist/lib/stateReconciler/autoMergeLevel2").default,
+	stateReconciler: require("redux-persist/lib/stateReconciler/autoMergeLevel1").default,
 	whitelist: ["oauth"],
 }, combinedReducers);
 
@@ -53,7 +50,7 @@ const store = configureStore({
 	middleware: (getDefaultMiddleware) => {
 		return getDefaultMiddleware({
 			serializableCheck: {
-				ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER, "temporary/setScrollElement"]
+				ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER]
 			}
 		}).concat(query.middleware);
 	}

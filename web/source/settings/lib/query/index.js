@@ -20,7 +20,7 @@
 
 module.exports = {
 	...require("./base"),
-	...require("./custom-emoji.js"),
+	...require("./oauth"),
 	...require("./user"),
 	...require("./admin")
 };

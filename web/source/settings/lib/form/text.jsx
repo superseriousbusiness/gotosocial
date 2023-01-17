@@ -37,7 +37,7 @@ module.exports = function useTextInput({ name, Name }, { validator, defaultValue
 	}
 
 	React.useEffect(() => {
-		if (validator) {
+		if (validator && textRef.current) {
 			let res = validator(text);
 			setValid(res == "");
 			textRef.current.setCustomValidity(res);

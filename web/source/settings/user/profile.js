@@ -64,6 +64,11 @@ function UserProfileForm({ data: profile }) {
 		- string custom_css (if enabled)
 	*/
 
+	const { data: instance, isLoading: isLoadingInstance } = query.useInstanceQuery();
+	const allowCustomCSS = React.useMemo(() => {
+		return instance?.configuration?.accounts?.allow_custom_css === true;
+	}, [instance]);
+
 	const form = {
 		avatar: useFileInput("avatar", { withPreview: true }),
 		header: useFileInput("header", { withPreview: true }),
@@ -75,7 +80,6 @@ function UserProfileForm({ data: profile }) {
 		enableRSS: useBoolInput("enable_rss", { defaultValue: profile.enable_rss }),
 	};
 
-	const allowCustomCSS = Redux.useSelector(state => state.instances.current.configuration.accounts.allow_custom_css);
 	const [submitForm, result] = useFormSubmit(form, query.useUpdateCredentialsMutation());
 
 	return (

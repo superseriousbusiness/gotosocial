@@ -20,10 +20,9 @@
 
 const Promise = require("bluebird");
 
-const { unwrapRes } = require("./lib");
-const base = require("./base");
+const { unwrapRes } = require("../lib");
 
-const endpoints = (build) => ({
+module.exports = (build) => ({
 	getAllEmoji: build.query({
 		query: (params = {}) => ({
 			url: "/api/v1/admin/custom_emojis",
@@ -195,5 +194,3 @@ function emojiFromSearchResult(searchRes) {
 		list: data.emojis
 	};
 }
-
-module.exports = base.injectEndpoints({ endpoints });

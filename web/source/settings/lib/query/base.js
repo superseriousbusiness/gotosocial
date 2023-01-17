@@ -51,13 +51,23 @@ function instanceBasedQuery(args, api, extraOptions) {
 			headers.set("Accept", "application/json");
 			return headers;
 		},
-	})(args, api, extraOptions);
+	})(args, api, extraOptions).then((res) => {
+		if (res.error != undefined) {
+			const { error } = res;
+			// if (error.status == 401 || error.status == 403) {
+
+			// }
+			return res;
+		} else {
+			return res;
+		}
+	});
 }
 
 module.exports = createApi({
 	reducerPath: "api",
 	baseQuery: instanceBasedQuery,
-	tagTypes: ["Emojis", "User"],
+	tagTypes: ["Auth"],
 	endpoints: (build) => ({
 		instance: build.query({
 			query: () => ({

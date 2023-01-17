@@ -77,7 +77,8 @@ const endpoints = (build) => ({
 			}
 		})
 	}),
-	...require("./import-export")(build)
+	...require("./import-export")(build),
+	...require("./custom-emoji")(build)
 });
 
 module.exports = base.injectEndpoints({ endpoints });

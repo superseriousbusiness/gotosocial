@@ -51,6 +51,11 @@ function Error({ error }) {
 		if (error.status) {
 			message = (<>
 				<b>{error.status}:</b> {error.data.error}
+				{error.data.error_description &&
+					<p>
+						{error.data.error_description}
+					</p>
+				}
 			</>);
 		} else {
 			message = error.data.error;
@@ -58,6 +63,10 @@ function Error({ error }) {
 	} else if (error.name != undefined || error.type != undefined) { // JS error
 		message = (<>
 			<b>{error.type && error.name}:</b> {error.message}
+		</>);
+	} else if (error.status && typeof error.error == "string") {
+		message = (<>
+			<b>{error.status}:</b> {error.error}
 		</>);
 	} else {
 		message = error.message ?? error;

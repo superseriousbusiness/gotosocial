@@ -19,10 +19,15 @@
 "use strict";
 
 const React = require("react");
-const Redux = require("react-redux");
+
+const query = require("../lib/query");
 
 module.exports = function FakeToot({ children }) {
-	const account = Redux.useSelector((state) => state.user.profile);
+	const { data: account = {
+		avatar: "/assets/default_avatars/GoToSocial_icon1.png",
+		display_name: "",
+		username: ""
+	} } = query.useVerifyCredentialsQuery();
 
 	return (
 		<div className="toot expanded">

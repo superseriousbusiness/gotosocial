@@ -18,10 +18,31 @@
 
 "use strict";
 
-const createError = require("create-error");
+const { createSlice } = require("@reduxjs/toolkit");
 
-module.exports = {
-	APIError: createError("APIError"),
-	OAUTHError: createError("OAUTHError"),
-	AuthenticationError: createError("AuthenticationError"),
-};
+module.exports = createSlice({
+	name: "oauth",
+	initialState: {
+		loginState: 'none'
+	},
+	reducers: {
+		setInstance: (state, { payload }) => {
+			return {
+				...state,
+				...payload /* overrides instance, registration keys */
+			};
+		},
+		authorize: (state) => {
+			state.loginState = "callback";
+		},
+		setToken: (state, { payload }) => {
+			state.token = `${payload.token_type} ${payload.access_token}`;
+			state.loginState = "login";
+		},
+		remove: (state, { _payload }) => {
+			delete state.token;
+			delete state.registration;
+			state.loginState = "none";
+		}
+	}
+});

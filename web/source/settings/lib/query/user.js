@@ -22,11 +22,6 @@ const { replaceCacheOnMutation } = require("./lib");
 const base = require("./base");
 
 const endpoints = (build) => ({
-	verifyCredentials: build.query({
-		query: () => ({
-			url: `/api/v1/accounts/verify_credentials`
-		})
-	}),
 	updateCredentials: build.mutation({
 		query: (formData) => ({
 			method: "PATCH",
