@@ -40,33 +40,29 @@ func (f Callers) Frames() []runtime.Frame {
 	return frames
 }
 
-// MarshalJSON implements json.Marshaler to provide an easy, simply default.
+// MarshalJSON implements json.Marshaler to provide an easy, simple default.
 func (f Callers) MarshalJSON() ([]byte, error) {
 	// JSON-able frame type
-	type frame struct {
+	type jsonFrame struct {
 		Func string `json:"func"`
 		File string `json:"file"`
 		Line int    `json:"line"`
 	}
 
-	// Allocate expected frames slice
-	frames := make([]frame, 0, len(f))
+	// Convert to frames
+	frames := f.Frames()
 
-	// Get frames iterator for PCs
-	iter := runtime.CallersFrames(f)
+	// Allocate expected size jsonFrame slice
+	jsonFrames := make([]jsonFrame, 0, len(f))
 
-	for {
-		// Get next frame
-		f, ok := iter.Next()
-		if !ok {
-			break
-		}
+	for i := 0; i < len(frames); i++ {
+		frame := frames[i]
 
-		// Append to frames slice
-		frames = append(frames, frame{
-			Func: funcname(f.Function),
-			File: f.File,
-			Line: f.Line,
+		// Convert each to jsonFrame object
+		jsonFrames = append(jsonFrames, jsonFrame{
+			Func: funcname(frame.Function),
+			File: frame.File,
+			Line: frame.Line,
 		})
 	}
 
@@ -86,8 +82,8 @@ func (f Callers) String() string {
 		frame := frames[i]
 
 		// Append formatted caller info
-		funcname := funcname(frame.Function)
-		buf = append(buf, funcname+"()\n\t"+frame.File+":"...)
+		fn := funcname(frame.Function)
+		buf = append(buf, fn+"()\n\t"+frame.File+":"...)
 		buf = strconv.AppendInt(buf, int64(frame.Line), 10)
 		buf = append(buf, '\n')
 	}
