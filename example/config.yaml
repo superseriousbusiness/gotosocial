@@ -194,7 +194,7 @@ db-sqlite-cache-size: "64MiB"
 # See: https://www.sqlite.org/pragma.html#pragma_busy_timeout
 # Examples: ["0s", "1s", "30s", "1m", "5m"]
 # Default: "5s"
-db-sqlite-busy-timeout: "30s"
+db-sqlite-busy-timeout: "5m"
 
 cache:
   gts:
