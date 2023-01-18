@@ -15,13 +15,3 @@
 	You should have received a copy of the GNU Affero General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
-"use strict";
-
-module.exports = {
-	"extends": ["@joepie91/eslint-config/react"],
-	"plugins": ["license-header"],
-	"rules": {
-		"license-header/header": ["error", ".license-header.js"]
-	}
-};
