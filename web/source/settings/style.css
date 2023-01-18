@@ -16,7 +16,10 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-$fa-fw: 1.28571429em; /* Fork-Awesome 'fa-fw' fixed icon width */
+/* Fork-Awesome 'fa-fw' fixed icon width 
+   keep in sync with https://github.com/ForkAwesome/Fork-Awesome/blob/a99579ae3e735ee70e51ed62dfcee3172b5b2db7/css/fork-awesome.css#L50
+*/
+$fa-fw: 1.28571429em;
 
 body {
 	grid-template-rows: auto 1fr;
