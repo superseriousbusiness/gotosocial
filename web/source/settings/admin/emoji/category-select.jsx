@@ -44,7 +44,7 @@ function CategorySelect({ field, children }) {
 		isLoading,
 		isSuccess,
 		error
-	} = query.useGetAllEmojiQuery({ filter: "domain:local" });
+	} = query.useListEmojiQuery({ filter: "domain:local" });
 
 	const emojiByCategory = useEmojiByCategory(emoji);
 

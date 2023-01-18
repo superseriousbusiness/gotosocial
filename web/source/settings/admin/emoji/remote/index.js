@@ -31,7 +31,7 @@ module.exports = function RemoteEmoji() {
 		data: emoji = [],
 		isLoading,
 		error
-	} = query.useGetAllEmojiQuery({ filter: "domain:local" });
+	} = query.useListEmojiQuery({ filter: "domain:local" });
 
 	const emojiCodes = React.useMemo(() => {
 		return new Set(emoji.map((e) => e.shortcode));

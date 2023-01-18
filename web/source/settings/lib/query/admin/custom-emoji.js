@@ -23,7 +23,7 @@ const Promise = require("bluebird");
 const { unwrapRes } = require("../lib");
 
 module.exports = (build) => ({
-	getAllEmoji: build.query({
+	listEmoji: build.query({
 		query: (params = {}) => ({
 			url: "/api/v1/admin/custom_emojis",
 			params: {
@@ -33,15 +33,15 @@ module.exports = (build) => ({
 		}),
 		providesTags: (res) =>
 			res
-				? [...res.map((emoji) => ({ type: "Emojis", id: emoji.id })), { type: "Emojis", id: "LIST" }]
-				: [{ type: "Emojis", id: "LIST" }]
+				? [...res.map((emoji) => ({ type: "Emoji", id: emoji.id })), { type: "Emoji", id: "LIST" }]
+				: [{ type: "Emoji", id: "LIST" }]
 	}),
 
 	getEmoji: build.query({
 		query: (id) => ({
 			url: `/api/v1/admin/custom_emojis/${id}`
 		}),
-		providesTags: (res, error, id) => [{ type: "Emojis", id }]
+		providesTags: (res, error, id) => [{ type: "Emoji", id }]
 	}),
 
 	addEmoji: build.mutation({
@@ -56,8 +56,8 @@ module.exports = (build) => ({
 		},
 		invalidatesTags: (res) =>
 			res
-				? [{ type: "Emojis", id: "LIST" }, { type: "Emojis", id: res.id }]
-				: [{ type: "Emojis", id: "LIST" }]
+				? [{ type: "Emoji", id: "LIST" }, { type: "Emoji", id: res.id }]
+				: [{ type: "Emoji", id: "LIST" }]
 	}),
 
 	editEmoji: build.mutation({
@@ -74,8 +74,8 @@ module.exports = (build) => ({
 		},
 		invalidatesTags: (res) =>
 			res
-				? [{ type: "Emojis", id: "LIST" }, { type: "Emojis", id: res.id }]
-				: [{ type: "Emojis", id: "LIST" }]
+				? [{ type: "Emoji", id: "LIST" }, { type: "Emoji", id: res.id }]
+				: [{ type: "Emoji", id: "LIST" }]
 	}),
 
 	deleteEmoji: build.mutation({
@@ -83,7 +83,7 @@ module.exports = (build) => ({
 			method: "DELETE",
 			url: `/api/v1/admin/custom_emojis/${id}`
 		}),
-		invalidatesTags: (res, error, id) => [{ type: "Emojis", id }]
+		invalidatesTags: (res, error, id) => [{ type: "Emoji", id }]
 	}),
 
 	searchStatusForEmoji: build.mutation({
@@ -167,7 +167,7 @@ module.exports = (build) => ({
 				}
 			});
 		},
-		invalidatesTags: () => [{ type: "Emojis", id: "LIST" }]
+		invalidatesTags: () => [{ type: "Emoji", id: "LIST" }]
 	})
 });
 
