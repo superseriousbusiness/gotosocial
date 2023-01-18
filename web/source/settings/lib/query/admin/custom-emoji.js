@@ -151,7 +151,6 @@ module.exports = (build) => ({
 				}).then((res) => {
 					data.push([emoji.shortcode, res]);
 				}).catch((e) => {
-					console.error("emoji", action, "for", emoji.shortcode, "failed:", e);
 					let msg = e.message ?? e;
 					if (e.data.error) {
 						msg = e.data.error;

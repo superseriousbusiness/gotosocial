@@ -138,7 +138,6 @@ const endpoints = (build) => ({
 				url.searchParams.set("scope", app.scopes);
 
 				let redirectURL = url.toString();
-				console.log("OAUTH redirect to:", redirectURL);
 				window.location.assign(redirectURL);
 
 				return { data: null };

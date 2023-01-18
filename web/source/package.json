@@ -6,7 +6,7 @@
   "author": "f0x",
   "license": "AGPL-3.0",
   "scripts": {
-    "lint": "eslint .",
+    "lint": "eslint . --ext .js,.jsx",
     "build": "node index.js",
     "dev": "NODE_ENV=development node index.js"
   },

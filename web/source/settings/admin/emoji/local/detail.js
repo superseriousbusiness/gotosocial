@@ -80,8 +80,6 @@ function EmojiDetailForm({ data: emoji }) {
 		return <Redirect to={base} />;
 	}
 
-	console.log(form.category);
-
 	return (
 		<>
 			<div className="emoji-header">

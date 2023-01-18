@@ -25,9 +25,6 @@ module.exports = function MutationButton({ label, result, disabled, showError = 
 	let iconClass = "";
 	const targetsThisButton = result.action == inputProps.name; // can also both be undefined, which is correct
 
-	/* FIXME? submitting an unchanged form will never transition to isLoading,
-		and check icon will stay faded out because the css animation doesn't restart
-	*/
 	if (targetsThisButton) {
 		if (result.isLoading) {
 			iconClass = "fa-spin fa-refresh";

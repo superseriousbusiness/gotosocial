@@ -59,7 +59,7 @@ function updateState(state, key, newValue) {
 	};
 }
 
-module.exports = function useCheckListInput({ name, Name }, { entries, uniqueKey = "key", defaultValue = false }) {
+module.exports = function useCheckListInput({ name }, { entries, uniqueKey = "key", defaultValue = false }) {
 	const [state, setState] = React.useState({});
 
 	const [someSelected, setSomeSelected] = React.useState(false);

@@ -30,10 +30,7 @@ const Loading = require("../loading");
 module.exports = function Login({ }) {
 	const form = {
 		instance: useTextInput("instance", {
-			defaultValue: window.location.origin,
-			validator: (value) => {
-				return "";
-			}
+			defaultValue: window.location.origin
 		}),
 		scopes: useValue("scopes", "user admin")
 	};

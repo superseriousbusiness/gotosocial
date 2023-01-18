@@ -44,7 +44,8 @@ function ErrorFallback({ error, resetErrorBoundary }) {
 }
 
 function Error({ error }) {
-	console.error("Rendering:", error);
+	/* eslint-disable-next-line no-console */
+	console.error("Rendering error:", error);
 	let message;
 
 	if (error.data != undefined) { // RTK Query error with data
