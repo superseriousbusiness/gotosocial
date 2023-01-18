@@ -121,10 +121,11 @@ const endpoints = (build) => ({
 				}).then(unwrapRes).then((app) => {
 					app.scopes = formData.scopes;
 
-					api.dispatch(oauth.setInstance({
+					api.dispatch(oauth.authorize({
 						instance: instance,
 						registration: app,
-						loginState: "callback"
+						loginState: "callback",
+						expectingRedirect: true
 					}));
 
 					return app;

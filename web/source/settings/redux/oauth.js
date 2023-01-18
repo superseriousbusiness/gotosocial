@@ -23,17 +23,12 @@ const { createSlice } = require("@reduxjs/toolkit");
 module.exports = createSlice({
 	name: "oauth",
 	initialState: {
-		loginState: 'none'
+		loginState: 'none',
+		expectingRedirect: false
 	},
 	reducers: {
-		setInstance: (state, { payload }) => {
-			return {
-				...state,
-				...payload /* overrides instance, registration keys */
-			};
-		},
-		authorize: (state) => {
-			state.loginState = "callback";
+		authorize: (state, { payload }) => {
+			return payload; // overrides state
 		},
 		setToken: (state, { payload }) => {
 			state.token = `${payload.token_type} ${payload.access_token}`;
