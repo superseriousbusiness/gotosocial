@@ -63,6 +63,7 @@ var testDefaults = config.Configuration{
 	InstanceExposePeers:            true,
 	InstanceExposeSuspended:        true,
 	InstanceDeliverToSharedInboxes: true,
+	InstanceExposeNodeinfo:         true,
 
 	AccountsRegistrationOpen: true,
 	AccountsApprovalRequired: true,

@@ -22,6 +22,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/wellknown/nodeinfo"
 	"github.com/superseriousbusiness/gotosocial/internal/api/wellknown/webfinger"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
@@ -43,7 +44,9 @@ func (w *WellKnown) Route(r router.Router, m ...gin.HandlerFunc) {
 		middleware.CacheControl("public", "max-age=120"),
 	)
 
-	w.nodeInfo.Route(wellKnownGroup.Handle)
+	if config.GetInstanceExposeNodeinfo() {
+		w.nodeInfo.Route(wellKnownGroup.Handle)
+	}
 	w.webfinger.Route(wellKnownGroup.Handle)
 }
 

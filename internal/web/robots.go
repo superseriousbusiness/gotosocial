@@ -22,6 +22,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 const (
@@ -36,9 +37,6 @@ Disallow: /api/
 # auth/login stuff
 Disallow: /auth/
 Disallow: /oauth/
-Disallow: /check_your_email
-Disallow: /wait_for_approval
-Disallow: /account_disabled
 # well known stuff
 Disallow: /.well-known/
 # files
@@ -57,6 +55,15 @@ Disallow: /settings/`
 //
 // More granular robots meta tags are then applied for web pages
 // depending on user preferences (see internal/web).
-func (m *Module) robotsGETHandler(c *gin.Context) {
-	c.String(http.StatusOK, robotsTxt)
+func (m *Module) robotsGETHandler() gin.HandlerFunc {
+	r := robotsTxt
+
+	if !config.GetInstanceExposeNodeinfo() {
+		r += `# metadata
+Disallow: /nodeinfo/`
+	}
+
+	return func(c *gin.Context) {
+		c.String(http.StatusOK, r)
+	}
 }

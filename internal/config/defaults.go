@@ -59,6 +59,7 @@ var Defaults = Configuration{
 	InstanceExposePeers:            false,
 	InstanceExposeSuspended:        false,
 	InstanceDeliverToSharedInboxes: true,
+	InstanceExposeNodeinfo:         false,
 
 	AccountsRegistrationOpen: true,
 	AccountsApprovalRequired: true,

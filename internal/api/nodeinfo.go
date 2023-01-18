@@ -21,6 +21,7 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/nodeinfo"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
@@ -31,6 +32,11 @@ type NodeInfo struct {
 }
 
 func (w *NodeInfo) Route(r router.Router, m ...gin.HandlerFunc) {
+	// noop if nodeinfo endpoint is disabled
+	if !config.GetInstanceExposeNodeinfo() {
+		return
+	}
+
 	// group nodeinfo endpoints together
 	nodeInfoGroup := r.AttachGroup("nodeinfo")
 

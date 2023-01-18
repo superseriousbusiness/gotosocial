@@ -774,6 +774,31 @@ func GetInstanceDeliverToSharedInboxes() bool { return global.GetInstanceDeliver
 // SetInstanceDeliverToSharedInboxes safely sets the value for global configuration 'InstanceDeliverToSharedInboxes' field
 func SetInstanceDeliverToSharedInboxes(v bool) { global.SetInstanceDeliverToSharedInboxes(v) }
 
+// GetInstanceExposeNodeinfo safely fetches the Configuration value for state's 'InstanceExposeNodeinfo' field
+func (st *ConfigState) GetInstanceExposeNodeinfo() (v bool) {
+	st.mutex.Lock()
+	v = st.config.InstanceExposeNodeinfo
+	st.mutex.Unlock()
+	return
+}
+
+// SetInstanceExposeNodeinfo safely sets the Configuration value for state's 'InstanceExposeNodeinfo' field
+func (st *ConfigState) SetInstanceExposeNodeinfo(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceExposeNodeinfo = v
+	st.reloadToViper()
+}
+
+// InstanceExposeNodeinfoFlag returns the flag name for the 'InstanceExposeNodeinfo' field
+func InstanceExposeNodeinfoFlag() string { return "instance-expose-nodeinfo" }
+
+// GetInstanceExposeNodeinfo safely fetches the value for global configuration 'InstanceExposeNodeinfo' field
+func GetInstanceExposeNodeinfo() bool { return global.GetInstanceExposeNodeinfo() }
+
+// SetInstanceExposeNodeinfo safely sets the value for global configuration 'InstanceExposeNodeinfo' field
+func SetInstanceExposeNodeinfo(v bool) { global.SetInstanceExposeNodeinfo(v) }
+
 // GetAccountsRegistrationOpen safely fetches the Configuration value for state's 'AccountsRegistrationOpen' field
 func (st *ConfigState) GetAccountsRegistrationOpen() (v bool) {
 	st.mutex.Lock()

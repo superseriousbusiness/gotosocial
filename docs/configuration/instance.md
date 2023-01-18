@@ -43,4 +43,18 @@ instance-expose-public-timeline: false
 # Options: [true, false]
 # Default: true
 instance-deliver-to-shared-inboxes: true
+
+# Bool. Expose the nodeinfo endpoint to allow metadata about your instance to be collected publicly.
+# This includes information about total number of users, total number of posts, open registration, etc.
+# See https://nodeinfo.diaspora.software/
+#
+# This is off by default for privacy reasons, but if you want your instance to be more easily indexed
+# by third-party services, then you can enable it.
+#
+# Some client softwares use nodeinfo to determine server software in order to enable/disable features,
+# so changing this setting may also affect client compatibility.
+#
+# Options: [true, false]
+# Default: false
+instance-expose-nodeinfo: false
 ```
