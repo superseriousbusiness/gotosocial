@@ -59,7 +59,8 @@ func (m *Module) robotsGETHandler() gin.HandlerFunc {
 	r := robotsTxt
 
 	if !config.GetInstanceExposeNodeinfo() {
-		r += `# metadata
+		r += `
+# metadata
 Disallow: /nodeinfo/`
 	}
 
