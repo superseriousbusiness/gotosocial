@@ -73,8 +73,8 @@ module.exports = function NewEmojiForm() {
 		emojiOrShortcode = <img
 			className="emoji"
 			src={image.previewValue}
-			title={`:${shortcode}:`}
-			alt={shortcode}
+			title={`:${shortcode.value}:`}
+			alt={shortcode.value}
 		/>;
 	}
 
