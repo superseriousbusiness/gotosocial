@@ -48,7 +48,7 @@ skulk({
 	},
 	servers: {
 		express: {
-			proxy: "http://localhost:8081",
+			proxy: "http://127.0.0.1:8081",
 			assets: "/assets"
 		}
 	},

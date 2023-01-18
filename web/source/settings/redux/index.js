@@ -32,6 +32,7 @@ const {
 } = require("redux-persist");
 
 const query = require("../lib/query/base");
+const { Promise } = require("bluebird");
 
 const combinedReducers = combineReducers({
 	oauth: require("./oauth").reducer,
@@ -43,6 +44,14 @@ const persistedReducer = persistReducer({
 	storage: require("redux-persist/lib/storage").default,
 	stateReconciler: require("redux-persist/lib/stateReconciler/autoMergeLevel1").default,
 	whitelist: ["oauth"],
+	migrate: (state) => {
+		return Promise.try(() => {
+			if (state?.oauth != undefined) {
+				state.oauth.expectingRedirect = false;
+			}
+			return state;
+		});
+	}
 }, combinedReducers);
 
 const store = configureStore({

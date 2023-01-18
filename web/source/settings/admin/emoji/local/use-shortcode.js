@@ -28,7 +28,7 @@ const shortcodeRegex = /^[a-z0-9_]+$/;
 module.exports = function useShortcode() {
 	const {
 		data: emoji = []
-	} = query.useGetAllEmojiQuery({ filter: "domain:local" });
+	} = query.useListEmojiQuery({ filter: "domain:local" });
 
 	const emojiCodes = React.useMemo(() => {
 		return new Set(emoji.map((e) => e.shortcode));

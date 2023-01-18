@@ -28,17 +28,18 @@ const Loading = require("../loading");
 const { Error } = require("../error");
 
 module.exports = function Authorization({ App }) {
-	const loginState = Redux.useSelector((state) => state.oauth.loginState);
-	const [hasStoredLogin] = React.useState(loginState != "none" && loginState != "logout");
+	const { loginState, expectingRedirect } = Redux.useSelector((state) => state.oauth);
 
 	const { isLoading, isSuccess, data: account, error } = query.useVerifyCredentialsQuery(undefined, {
-		skip: loginState == "none" || loginState == "logout"
+		skip: loginState == "none" || loginState == "logout" || expectingRedirect
 	});
+
+	console.log("skip verify:", loginState, expectingRedirect);
 
 	let showLogin = true;
 	let content = null;
 
-	if (isLoading && hasStoredLogin) {
+	if (isLoading) {
 		showLogin = false;
 
 		let loadingInfo;

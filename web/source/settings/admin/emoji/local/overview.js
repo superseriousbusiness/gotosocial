@@ -32,7 +32,7 @@ module.exports = function EmojiOverview({ baseUrl }) {
 		data: emoji = [],
 		isLoading,
 		error
-	} = query.useGetAllEmojiQuery({ filter: "domain:local" });
+	} = query.useListEmojiQuery({ filter: "domain:local" });
 
 	return (
 		<>
