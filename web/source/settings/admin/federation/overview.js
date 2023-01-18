@@ -63,10 +63,11 @@ module.exports = function InstanceOverview({ baseUrl }) {
 
 			<div className="instance-list">
 				<h2>Suspended instances</h2>
-				<span>
+				<p>
 					Suspending a domain blocks all current and future accounts on that instance. Stored content will be removed,
-					and no more data is sent to the remote server.
-				</span>
+					and no more data is sent to the remote server.<br />
+					This extends to all subdomains as well, so blocking 'example.com' also includes 'social.example.com'.
+				</p>
 				<form className="filter" role="search" onSubmit={filterFormSubmit}>
 					<TextInput field={filterField} placeholder="example.com" label="Search or add domain suspension" />
 					<Link to={`${baseUrl}/${filter}`}><a className="button">Suspend</a></Link>

@@ -415,6 +415,10 @@ span.form-info {
 }
 
 .instance-list {
+	p {
+		margin-top: 0;
+	}
+
 	.filter {
 		display: flex;
 		gap: 0.5rem;
