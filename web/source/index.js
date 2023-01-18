@@ -32,7 +32,7 @@ const prodCfg = {
 			global: true,
 			exts: ".js"
 		}],
-		["@browserify/envify", {global: true}]
+		["@browserify/envify", { global: true }]
 	]
 };
 
@@ -66,6 +66,7 @@ skulk({
 			],
 		},
 		settings: {
+			debug: false,
 			entryFile: "settings",
 			outputFile: "settings.js",
 			prodCfg: prodCfg,

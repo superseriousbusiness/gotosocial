@@ -20,35 +20,42 @@
 
 const React = require("react");
 
-const ParseFromToot = require("./parse-from-toot");
-
 const query = require("../../../lib/query");
-const Loading = require("../../../components/loading");
+const { useTextInput } = require("../../../lib/form");
 
-module.exports = function RemoteEmoji() {
-	// local emoji are queried for shortcode collision detection
+const shortcodeRegex = /^[a-z0-9_]+$/;
+
+module.exports = function useShortcode() {
 	const {
-		data: emoji = [],
-		isLoading,
-		error
+		data: emoji = []
 	} = query.useGetAllEmojiQuery({ filter: "domain:local" });
 
 	const emojiCodes = React.useMemo(() => {
 		return new Set(emoji.map((e) => e.shortcode));
 	}, [emoji]);
 
-	return (
-		<>
-			<h1>Custom Emoji (remote)</h1>
-			{error &&
-				<div className="error accent">{error}</div>
+	return useTextInput("shortcode", {
+		validator: function validateShortcode(code) {
+			// technically invalid, but hacky fix to prevent validation error on page load
+			if (code == "") { return ""; }
+
+			if (emojiCodes.has(code)) {
+				return "Shortcode already in use";
 			}
-			{isLoading
-				? <Loading />
-				: <>
-					<ParseFromToot emoji={emoji} emojiCodes={emojiCodes} />
-				</>
+
+			if (code.length < 2 || code.length > 30) {
+				return "Shortcode must be between 2 and 30 characters";
 			}
-		</>
-	);
+
+			if (code.toLowerCase() != code) {
+				return "Shortcode must be lowercase";
+			}
+
+			if (!shortcodeRegex.test(code)) {
+				return "Shortcode must only contain lowercase letters, numbers, and underscores";
+			}
+
+			return "";
+		}
+	});
 };

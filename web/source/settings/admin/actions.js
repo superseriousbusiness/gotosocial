@@ -19,42 +19,43 @@
 "use strict";
 
 const React = require("react");
-const Redux = require("react-redux");
 
-const Submit = require("../components/submit");
+const query = require("../lib/query");
 
-const api = require("../lib/api");
-const submit = require("../lib/submit");
+const { useTextInput } = require("../lib/form");
+const { TextInput } = require("../components/form/inputs");
+
+const MutationButton = require("../components/form/mutation-button");
 
 module.exports = function AdminActionPanel() {
-	const dispatch = Redux.useDispatch();
+	const daysField = useTextInput("days", { defaultValue: 30 });
 
-	const [days, setDays] = React.useState(30);
+	const [mediaCleanup, mediaCleanupResult] = query.useMediaCleanupMutation();
 
-	const [errorMsg, setError] = React.useState("");
-	const [statusMsg, setStatus] = React.useState("");
-
-	const removeMedia = submit(
-		() => dispatch(api.admin.mediaCleanup(days)),
-		{setStatus, setError}
-	);
+	function submitMediaCleanup(e) {
+		e.preventDefault();
+		mediaCleanup(daysField.value);
+	}
 
 	return (
 		<>
 			<h1>Admin Actions</h1>
-			<div>
+			<form onSubmit={submitMediaCleanup}>
 				<h2>Media cleanup</h2>
 				<p>
 					Clean up remote media older than the specified number of days.
 					If the remote instance is still online they will be refetched when needed.
 					Also cleans up unused headers and avatars from the media cache.
 				</p>
-				<div>
-					<label htmlFor="days">Days: </label>
-					<input id="days" type="number" value={days} onChange={(e) => setDays(e.target.value)}/>
-				</div>
-				<Submit onClick={removeMedia} label="Remove media" errorMsg={errorMsg} statusMsg={statusMsg} />
-			</div>
+				<TextInput
+					field={daysField}
+					label="Days"
+					type="number"
+					min="0"
+					placeholder="30"
+				/>
+				<MutationButton label="Remove old media" result={mediaCleanupResult} />
+			</form>
 		</>
 	);
 };

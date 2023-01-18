@@ -18,10 +18,27 @@
 
 "use strict";
 
-module.exports = {
-	"extends": ["@joepie91/eslint-config/react"],
-	"plugins": ["license-header"],
-	"rules": {
-		"license-header/header": ["error", ".license-header.js"]
-	}
-};
+const { replaceCacheOnMutation } = require("./lib");
+const base = require("./base");
+
+const endpoints = (build) => ({
+	updateCredentials: build.mutation({
+		query: (formData) => ({
+			method: "PATCH",
+			url: `/api/v1/accounts/update_credentials`,
+			asForm: true,
+			body: formData,
+			discardEmpty: true
+		}),
+		...replaceCacheOnMutation("verifyCredentials")
+	}),
+	passwordChange: build.mutation({
+		query: (data) => ({
+			method: "POST",
+			url: `/api/v1/user/password_change`,
+			body: data
+		})
+	})
+});
+
+module.exports = base.injectEndpoints({ endpoints });

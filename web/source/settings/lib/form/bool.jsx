@@ -18,25 +18,33 @@
 
 "use strict";
 
-const {createSlice} = require("@reduxjs/toolkit");
-const d = require("dotty");
+const React = require("react");
 
-module.exports = createSlice({
-	name: "instances",
-	initialState: {
-		info: {},
-	},
-	reducers: {
-		setNamedInstanceInfo: (state, {payload}) => {
-			let [key, info] = payload;
-			state.info[key] = info;
-		},
-		setInstanceInfo: (state, {payload}) => {
-			state.current = payload;
-			state.adminSettings = payload;
-		},
-		setAdminSettingsVal: (state, {payload: [key, val]}) => {
-			d.put(state.adminSettings, key, val);
-		}
+module.exports = function useBoolInput({ name, Name }, { defaultValue = false } = {}) {
+	const [value, setValue] = React.useState(defaultValue);
+
+	function onChange(e) {
+		setValue(e.target.checked);
 	}
-});
+
+	function reset() {
+		setValue(defaultValue);
+	}
+
+	// Array / Object hybrid, for easier access in different contexts
+	return Object.assign([
+		onChange,
+		reset,
+		{
+			[name]: value,
+			[`set${Name}`]: setValue
+		}
+	], {
+		name,
+		onChange,
+		reset,
+		value,
+		setter: setValue,
+		hasChanged: () => value != defaultValue
+	});
+};

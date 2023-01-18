@@ -18,35 +18,39 @@
 
 "use strict";
 
-const {createSlice} = require("@reduxjs/toolkit");
+const React = require("react");
 
-module.exports = createSlice({
-	name: "oauth",
-	initialState: {
-		loginState: 'none',
-	},
-	reducers: {
-		setInstance: (state, {payload}) => {
-			state.instance = payload;
-		},
-		setRegistration: (state, {payload}) => {
-			state.registration = payload;
-		},
-		setLoginState: (state, {payload}) => {
-			state.loginState = payload;
-		},
-		login: (state, {payload}) => {
-			state.token = `${payload.token_type} ${payload.access_token}`;
-			state.loginState = "login";
-		},
-		remove: (state, {_payload}) => {
-			delete state.token;
-			delete state.registration;
-			delete state.isAdmin;
-			state.loginState = "none";
-		},
-		setAdmin: (state, {payload}) => {
-			state.isAdmin = payload;
-		}
+const { useComboboxState } = require("ariakit/combobox");
+
+module.exports = function useComboBoxInput({ name, Name }, { defaultValue } = {}) {
+	const [isNew, setIsNew] = React.useState(false);
+
+	const state = useComboboxState({
+		defaultValue,
+		gutter: 0,
+		sameWidth: true
+	});
+
+	function reset() {
+		state.setValue("");
 	}
-});
+
+	return Object.assign([
+		state,
+		reset,
+		{
+			[name]: state.value,
+			name,
+			[`${name}IsNew`]: isNew,
+			[`set${Name}IsNew`]: setIsNew
+		}
+	], {
+		name,
+		state,
+		value: state.value,
+		hasChanged: () => state.value != defaultValue,
+		isNew,
+		setIsNew,
+		reset
+	});
+};

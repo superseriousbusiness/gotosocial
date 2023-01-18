@@ -18,10 +18,27 @@
 
 "use strict";
 
-module.exports = {
-	"extends": ["@joepie91/eslint-config/react"],
-	"plugins": ["license-header"],
-	"rules": {
-		"license-header/header": ["error", ".license-header.js"]
-	}
+const React = require("react");
+const { Switch, Route } = require("wouter");
+
+const baseUrl = `/settings/admin/federation`;
+
+const InstanceOverview = require("./overview");
+const InstanceDetail = require("./detail");
+const InstanceImportExport = require("./import-export");
+
+module.exports = function Federation({ }) {
+	return (
+		<Switch>
+			<Route path={`${baseUrl}/import-export/:list?`}>
+				<InstanceImportExport />
+			</Route>
+
+			<Route path={`${baseUrl}/:domain`}>
+				<InstanceDetail baseUrl={baseUrl} />
+			</Route>
+
+			<InstanceOverview baseUrl={baseUrl} />
+		</Switch>
+	);
 };

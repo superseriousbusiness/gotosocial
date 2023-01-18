@@ -19,24 +19,21 @@
 "use strict";
 
 const React = require("react");
-const Redux = require("react-redux");
 
-module.exports = function FakeProfile({}) {
-	const account = Redux.useSelector(state => state.user.profile);
-
+module.exports = function FakeProfile({ avatar, header, display_name, username, role }) {
 	return ( // Keep in sync with web/template/profile.tmpl
 		<div className="profile">
 			<div className="headerimage">
-				<img className="headerpreview" src={account.header} alt={account.header ? `header image for ${account.username}` : "None set"} />
+				<img className="headerpreview" src={header} alt={header ? `header image for ${username}` : "None set"} />
 			</div>
 			<div className="basic">
 				<div id="profile-basic-filler2"></div>
-				<span className="avatar"><img className="avatarpreview" src={account.avatar} alt={account.avatar ? `avatar image for ${account.username}` : "None set"} /></span>
-				<div className="displayname">{account.display_name.trim().length > 0 ? account.display_name : account.username}</div>
+				<span className="avatar"><img className="avatarpreview" src={avatar} alt={avatar ? `avatar image for ${username}` : "None set"} /></span>
+				<div className="displayname">{display_name.trim().length > 0 ? display_name : username}</div>
 				<div className="usernamecontainer">
-					<div className="username"><span>@{account.username}</span></div>
-					{(account.role && account.role != "user") && 
-						<div className={`role ${account.role}`}>{account.role}</div>
+					<div className="username"><span>@{username}</span></div>
+					{(role && role != "user") &&
+						<div className={`role ${role}`}>{role}</div>
 					}
 				</div>
 			</div>

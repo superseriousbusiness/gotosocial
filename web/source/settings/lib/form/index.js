@@ -18,24 +18,29 @@
 
 "use strict";
 
-const { useComboboxState } = require("ariakit/combobox");
+function capitalizeFirst(str) {
+	return str.slice(0, 1).toUpperCase() + str.slice(1);
+}
 
-module.exports = function useComboBoxInput({name, Name}, {validator, defaultValue} = {}) {
-	const state = useComboboxState({
-		defaultValue,
-		gutter: 0,
-		sameWidth: true
-	});
+function makeHook(func) {
+	return (name, ...args) => func({
+		name,
+		Name: capitalizeFirst(name)
+	}, ...args);
+}
 
-	function reset() {
-		state.setValue("");
+module.exports = {
+	useTextInput: makeHook(require("./text")),
+	useFileInput: makeHook(require("./file")),
+	useBoolInput: makeHook(require("./bool")),
+	useRadioInput: makeHook(require("./radio")),
+	useComboBoxInput: makeHook(require("./combo-box")),
+	useCheckListInput: makeHook(require("./check-list")),
+	useValue: function (name, value) {
+		return {
+			name,
+			value,
+			hasChanged: () => true // always included
+		};
 	}
-
-	return [
-		state,
-		reset,
-		{
-			[name]: state.value,
-		}
-	];
 };

@@ -18,15 +18,31 @@
 
 "use strict";
 
-const {createSlice} = require("@reduxjs/toolkit");
+const { createSlice } = require("@reduxjs/toolkit");
 
 module.exports = createSlice({
-	name: "temporary",
+	name: "oauth",
 	initialState: {
+		loginState: 'none'
 	},
 	reducers: {
-		setStatus: function(state, {payload}) {
-			state.status = payload;
+		setInstance: (state, { payload }) => {
+			return {
+				...state,
+				...payload /* overrides instance, registration keys */
+			};
+		},
+		authorize: (state) => {
+			state.loginState = "callback";
+		},
+		setToken: (state, { payload }) => {
+			state.token = `${payload.token_type} ${payload.access_token}`;
+			state.loginState = "login";
+		},
+		remove: (state, { _payload }) => {
+			delete state.token;
+			delete state.registration;
+			state.loginState = "logout";
 		}
 	}
 });

@@ -20,7 +20,7 @@
 
 const React = require("react");
 
-module.exports = function useTextInput({name, Name}, {validator, defaultValue=""} = {}) {
+module.exports = function useTextInput({ name, Name }, { validator, defaultValue = "", dontReset = false } = {}) {
 	const [text, setText] = React.useState(defaultValue);
 	const [valid, setValid] = React.useState(true);
 	const textRef = React.useRef(null);
@@ -31,26 +31,37 @@ module.exports = function useTextInput({name, Name}, {validator, defaultValue=""
 	}
 
 	function reset() {
-		setText("");
+		if (!dontReset) {
+			setText(defaultValue);
+		}
 	}
 
 	React.useEffect(() => {
-		if (validator) {
+		if (validator && textRef.current) {
 			let res = validator(text);
 			setValid(res == "");
 			textRef.current.setCustomValidity(res);
-			textRef.current.reportValidity();
 		}
 	}, [text, textRef, validator]);
 
-	return [
+	// Array / Object hybrid, for easier access in different contexts
+	return Object.assign([
 		onChange,
 		reset,
 		{
 			[name]: text,
 			[`${name}Ref`]: textRef,
 			[`set${Name}`]: setText,
-			[`${name}Valid`]: valid
+			[`${name}Valid`]: valid,
 		}
-	];
+	], {
+		onChange,
+		reset,
+		name,
+		value: text,
+		ref: textRef,
+		setter: setText,
+		valid,
+		hasChanged: () => text != defaultValue
+	});
 };

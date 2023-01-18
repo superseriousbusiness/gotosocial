@@ -21,11 +21,11 @@
 const React = require("react");
 const prettierBytes = require("prettier-bytes");
 
-module.exports = function useFileInput({name, _Name}, {
+module.exports = function useFileInput({ name, _Name }, {
 	withPreview,
 	maxSize,
 	initialInfo = "no file selected"
-}) {
+} = {}) {
 	const [file, setFile] = React.useState();
 	const [imageURL, setImageURL] = React.useState();
 	const [info, setInfo] = React.useState();
@@ -40,7 +40,7 @@ module.exports = function useFileInput({name, _Name}, {
 			if (withPreview) {
 				setImageURL(URL.createObjectURL(file));
 			}
-	
+
 			let size = prettierBytes(file.size);
 			if (maxSize && file.size > maxSize) {
 				size = <span className="error-text">{size}</span>;
@@ -61,18 +61,31 @@ module.exports = function useFileInput({name, _Name}, {
 		setInfo();
 	}
 
-	return [
+	const infoComponent = (
+		<span className="form-info">
+			{info
+				? info
+				: initialInfo
+			}
+		</span>
+	);
+
+	// Array / Object hybrid, for easier access in different contexts
+	return Object.assign([
 		onChange,
 		reset,
 		{
 			[name]: file,
 			[`${name}URL`]: imageURL,
-			[`${name}Info`]: <span className="form-info">
-				{info
-					? info
-					: initialInfo
-				}
-			</span>
+			[`${name}Info`]: infoComponent,
 		}
-	];
+	], {
+		onChange,
+		reset,
+		name,
+		value: file,
+		previewValue: imageURL,
+		hasChanged: () => file != undefined,
+		infoComponent
+	});
 };

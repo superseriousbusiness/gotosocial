@@ -15,21 +15,3 @@
 	You should have received a copy of the GNU Affero General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
-"use strict";
-
-const React = require("react");
-
-module.exports = function Submit({onClick, label, errorMsg, statusMsg}) {
-	return (
-		<div className="messagebutton">
-			<button type="submit" onClick={onClick}>{ label }</button>
-			{errorMsg.length > 0 && 
-				<div className="error accent">{errorMsg}</div>
-			}
-			{statusMsg.length > 0 &&
-				<div className="accent">{statusMsg}</div>
-			}
-		</div>
-	);
-};

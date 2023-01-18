@@ -20,23 +20,32 @@
 
 const React = require("react");
 
-module.exports = function MutateButton({text, result}) {
-	let buttonText = text;
+module.exports = function useRadioInput({ name, Name }, { defaultValue, options } = {}) {
+	const [value, setValue] = React.useState(defaultValue);
 
-	if (result.isLoading) {
-		buttonText = "Processing...";
+	function onChange(e) {
+		setValue(e.target.value);
 	}
 
-	return (<div>
-		{result.error && 
-			<section className="error">{result.error.status}: {result.error.data.error}</section>
+	function reset() {
+		setValue(defaultValue);
+	}
+
+	// Array / Object hybrid, for easier access in different contexts
+	return Object.assign([
+		onChange,
+		reset,
+		{
+			[name]: value,
+			[`set${Name}`]: setValue
 		}
-		<input
-			className="button"
-			type="submit"
-			disabled={result.isLoading}
-			value={buttonText}
-		/>
-	</div>
-	);
+	], {
+		name,
+		onChange,
+		reset,
+		value,
+		setter: setValue,
+		options,
+		hasChanged: () => value != defaultValue
+	});
 };

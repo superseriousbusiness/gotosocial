@@ -19,88 +19,105 @@
 "use strict";
 
 const React = require("react");
-const Redux = require("react-redux");
 
-const Submit = require("../components/submit");
+const query = require("../lib/query");
 
-const api = require("../lib/api");
-const submit = require("../lib/submit");
+const {
+	useTextInput,
+	useFileInput
+} = require("../lib/form");
 
-const adminActions = require("../redux/reducers/instances").actions;
+const useFormSubmit = require("../lib/form/submit");
 
 const {
 	TextInput,
 	TextArea,
-	File
-} = require("../components/form-fields").formFields(adminActions.setAdminSettingsVal, (state) => state.instances.adminSettings);
+	FileInput
+} = require("../components/form/inputs");
+
+const FormWithData = require("../lib/form/form-with-data");
+const MutationButton = require("../components/form/mutation-button");
 
 module.exports = function AdminSettings() {
-	const dispatch = Redux.useDispatch();
-	const instance = Redux.useSelector(state => state.instances.adminSettings);
-
-	const [errorMsg, setError] = React.useState("");
-	const [statusMsg, setStatus] = React.useState("");
-
-	const updateSettings = submit(
-		() => dispatch(api.admin.updateInstance()),
-		{setStatus, setError}
+	return (
+		<FormWithData
+			dataQuery={query.useInstanceQuery}
+			DataForm={AdminSettingsForm}
+		/>
 	);
+};
+
+function AdminSettingsForm({ data: instance }) {
+	const form = {
+		title: useTextInput("title", { defaultValue: instance.title }),
+		thumbnail: useFileInput("thumbnail", { withPreview: true }),
+		thumbnailDesc: useTextInput("thumbnail_description", { defaultValue: instance.thumbnail_description }),
+		shortDesc: useTextInput("short_description", { defaultValue: instance.short_description }),
+		description: useTextInput("description", { defaultValue: instance.description }),
+		contactUser: useTextInput("contact_username", { defaultValue: instance.contact_account?.username }),
+		contactEmail: useTextInput("contact_email", { defaultValue: instance.email }),
+		terms: useTextInput("terms", { defaultValue: instance.terms })
+	};
+
+	const [submitForm, result] = useFormSubmit(form, query.useUpdateInstanceMutation());
 
 	return (
-		<div>
+		<form onSubmit={submitForm}>
 			<h1>Instance Settings</h1>
 			<TextInput
-				id="title"
-				name="Title"
-				placeHolder="My GoToSocial instance"
+				field={form.title}
+				label="Title"
+				placeholder="My GoToSocial instance"
 			/>
 
 			<div className="file-upload">
 				<h3>Instance thumbnail</h3>
 				<div>
-					<img className="preview avatar" src={instance.thumbnail} alt={instance.thumbnail ? `Thumbnail image for the instance` : "No instance thumbnail image set"} />
-					<File 
-						id="thumbnail"
-						fileType="image/*"
+					<img className="preview avatar" src={form.thumbnail.previewValue ?? instance.thumbnail} alt={form.thumbnailDesc.value ?? (instance.thumbnail ? `Thumbnail image for the instance` : "No instance thumbnail image set")} />
+					<FileInput
+						field={form.thumbnail}
+						accept="image/*"
 					/>
 				</div>
 			</div>
 
 			<TextInput
-				id="thumbnail_description"
-				name="Instance thumbnail description"
-				placeHolder="A cute little picture of a smiling sloth."
+				field={form.thumbnailDesc}
+				label="Instance thumbnail description"
+				placeholder="A cute drawing of a smiling sloth."
 			/>
 
 			<TextArea
-				id="short_description"
-				name="Short description"
-				placeHolder="A small testing instance for the GoToSocial alpha."
+				field={form.shortDesc}
+				label="Short description"
+				placeholder="A small testing instance for the GoToSocial alpha software."
 			/>
+
 			<TextArea
-				id="description"
-				name="Full description"
-				placeHolder="A small testing instance for the GoToSocial alpha."
+				field={form.description}
+				label="Full description"
+				placeholder="A small testing instance for the GoToSocial alpha software. Just trying it out, my main instance is https://example.com"
 			/>
 
 			<TextInput
-				id="contact_account.username"
-				name="Contact user (local account username)"
-				placeHolder="admin"
+				field={form.contactUser}
+				label="Contact user (local account username)"
+				placeholder="admin"
 			/>
+
 			<TextInput
-				id="email"
-				name="Contact email"
-				placeHolder="admin@example.com"
+				field={form.contactEmail}
+				label="Contact email"
+				placeholder="admin@example.com"
 			/>
 
 			<TextArea
-				id="terms"
-				name="Terms & Conditions"
-				placeHolder=""
+				field={form.terms}
+				label="Terms & Conditions"
+				placeholder=""
 			/>
 
-			<Submit onClick={updateSettings} label="Save" errorMsg={errorMsg} statusMsg={statusMsg} />
-		</div>
+			<MutationButton label="Save" result={result} />
+		</form>
 	);
-};
+}

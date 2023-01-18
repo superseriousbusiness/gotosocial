@@ -18,31 +18,22 @@
 
 "use strict";
 
-const Promise = require("bluebird");
+const React = require("react");
 
-module.exports = function submit(func, {
-	setStatus, setError,
-	startStatus="PATCHing", successStatus="Saved!",
-	onSuccess,
-	onError
-}) {
-	return function() {
-		setStatus(startStatus);
-		setError("");
-		return Promise.try(() => {
-			return func();
-		}).then(() => {
-			setStatus(successStatus);
-			if (onSuccess != undefined) {
-				return onSuccess();
-			}
-		}).catch((e) => {
-			setError(e.message);
-			setStatus("");
-			console.error(e);
-			if (onError != undefined) {
-				onError(e);
-			}
-		});
-	};
+const Loading = require("../../components/loading");
+
+// Wrap Form component inside component that fires the RTK Query call,
+// so Form will only be rendered when data is available to generate form-fields for
+module.exports = function FormWithData({ dataQuery, DataForm, queryArg, ...formProps }) {
+	const { data, isLoading } = dataQuery(queryArg);
+
+	if (isLoading) {
+		return (
+			<div>
+				<Loading />
+			</div>
+		);
+	} else {
+		return <DataForm data={data} {...formProps} />;
+	}
 };

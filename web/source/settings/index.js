@@ -18,20 +18,16 @@
 
 "use strict";
 
-const Promise = require("bluebird");
 const React = require("react");
 const ReactDom = require("react-dom/client");
-const Redux = require("react-redux");
-const { Switch, Route, Redirect } = require("wouter");
 const { Provider } = require("react-redux");
 const { PersistGate } = require("redux-persist/integration/react");
+const { Switch, Route, Redirect } = require("wouter");
+
+const query = require("./lib/query");
 
 const { store, persistor } = require("./redux");
-const api = require("./lib/api");
-const oauth = require("./redux/reducers/oauth").actions;
-const { AuthenticationError } = require("./lib/errors");
-
-const Login = require("./components/login");
+const AuthorizationGate = require("./components/authorization");
 const Loading = require("./components/loading");
 
 require("./style.css");
@@ -46,7 +42,7 @@ const nav = {
 		adminOnly: true,
 		"Instance Settings": require("./admin/settings.js"),
 		"Actions": require("./admin/actions"),
-		"Federation": require("./admin/federation.js"),
+		"Federation": require("./admin/federation"),
 	},
 	"Custom Emoji": {
 		adminOnly: true,
@@ -57,123 +53,37 @@ const nav = {
 
 const { sidebar, panelRouter } = require("./lib/get-views")(nav);
 
-function App() {
-	const dispatch = Redux.useDispatch();
+function App({ account }) {
+	const isAdmin = account.role == "admin";
+	const [logoutQuery] = query.useLogoutMutation();
 
-	const { loginState, isAdmin } = Redux.useSelector((state) => state.oauth);
-	const reduxTempStatus = Redux.useSelector((state) => state.temporary.status);
-
-	const [errorMsg, setErrorMsg] = React.useState();
-	const [tokenChecked, setTokenChecked] = React.useState(false);
-
-	React.useEffect(() => {
-		if (loginState == "login" || loginState == "callback") {
-			Promise.try(() => {
-				// Process OAUTH authorization token from URL if available
-				if (loginState == "callback") {
-					let urlParams = new URLSearchParams(window.location.search);
-					let code = urlParams.get("code");
-
-					if (code == undefined) {
-						setErrorMsg(new Error("Waiting for OAUTH callback but no ?code= provided. You can try logging in again:"));
-					} else {
-						return dispatch(api.oauth.tokenize(code));
-					}
-				}
-			}).then(() => {
-				// Fetch current instance info
-				return dispatch(api.instance.fetch());
-			}).then(() => {
-				// Check currently stored auth token for validity if available
-				return dispatch(api.user.fetchAccount());
-			}).then(() => {
-				setTokenChecked(true);
-
-				return dispatch(api.oauth.checkIfAdmin());
-			}).catch((e) => {
-				if (e instanceof AuthenticationError) {
-					dispatch(oauth.remove());
-					e.message = "Stored OAUTH token no longer valid, please log in again.";
-				}
-				setErrorMsg(e);
-				console.error(e);
-			});
-		}
-	}, [loginState, dispatch]);
-
-	let ErrorElement = null;
-	if (errorMsg != undefined) {
-		ErrorElement = (
-			<div className="error">
-				<b>{errorMsg.type}</b>
-				<span>{errorMsg.message}</span>
+	return (
+		<>
+			<div className="sidebar">
+				{sidebar.all}
+				{isAdmin && sidebar.admin}
+				<button className="logout" onClick={logoutQuery}>
+					Log out
+				</button>
 			</div>
-		);
-	}
-
-	const LogoutElement = (
-		<button className="logout" onClick={() => { dispatch(api.oauth.logout()); }}>
-			Log out
-		</button>
+			<section className="with-sidebar">
+				<Switch>
+					{panelRouter.all}
+					{isAdmin && panelRouter.admin}
+					<Route>
+						<Redirect to="/settings/user" />
+					</Route>
+				</Switch>
+			</section>
+		</>
 	);
-
-	if (reduxTempStatus != undefined) {
-		return (
-			<section>
-				{reduxTempStatus}
-			</section>
-		);
-	} else if (tokenChecked && loginState == "login") {
-		return (
-			<>
-				<div className="sidebar">
-					{sidebar.all}
-					{isAdmin && sidebar.admin}
-					{LogoutElement}
-				</div>
-				<section className="with-sidebar">
-					{ErrorElement}
-					<Switch>
-						{panelRouter.all}
-						{isAdmin && panelRouter.admin}
-						<Route> {/* default route */}
-							<Redirect to="/settings/user" />
-						</Route>
-					</Switch>
-				</section>
-			</>
-		);
-	} else if (loginState == "none") {
-		return (
-			<Login error={ErrorElement} />
-		);
-	} else {
-		let status;
-
-		if (loginState == "login") {
-			status = "Verifying stored login...";
-		} else if (loginState == "callback") {
-			status = "Processing OAUTH callback...";
-		}
-
-		return (
-			<section>
-				<div>
-					{status}
-				</div>
-				{ErrorElement}
-				{LogoutElement}
-			</section>
-		);
-	}
-
 }
 
 function Main() {
 	return (
 		<Provider store={store}>
-			<PersistGate loading={<section><Loading/></section>} persistor={persistor}>
-				<App />
+			<PersistGate loading={<section><Loading /></section>} persistor={persistor}>
+				<AuthorizationGate App={App} />
 			</PersistGate>
 		</Provider>
 	);
