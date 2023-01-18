@@ -30,10 +30,8 @@ function convertToForm(obj) {
 					formData.set(`${key}[${key2}]`, val2);
 				}
 			});
-		} else {
-			if (val != undefined) {
-				formData.set(key, val);
-			}
+		} else if (val != undefined) {
+			formData.set(key, val);
 		}
 	});
 	return formData;
