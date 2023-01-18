@@ -52,13 +52,6 @@ module.exports = function NewEmojiForm() {
 		shortcode, image, category
 	}, query.useAddEmojiMutation());
 
-	// const [onFileChange, resetFile, { image, imageURL, imageInfo }] = useFileInput("image", {
-	// 	withPreview: true,
-	// 	maxSize: 50 * 1024
-	// });
-
-	// const [categoryState, resetCategory, { category }] = useComboBoxInput("category");
-
 	React.useEffect(() => {
 		if (shortcode.value.length == 0) {
 			if (image.value != undefined) {
@@ -66,10 +59,12 @@ module.exports = function NewEmojiForm() {
 				shortcode.setter(name);
 			}
 		}
-		// we explicitly don't want to add 'shortcode' as a dependency here
-		// because we only want this to update to the filename if the field is empty
-		// at the moment the file is selected, not some time after when the field is emptied
-		// eslint-disable-next-line react-hooks/exhaustive-deps
+
+		/* We explicitly don't want to have 'shortcode' as a dependency here
+			 because we only want to change the shortcode to the filename if the field is empty
+			 at the moment the file is selected, not some time after when the field is emptied
+		*/
+		/* eslint-disable-next-line react-hooks/exhaustive-deps */
 	}, [image.value]);
 
 	let emojiOrShortcode = `:${shortcode.value}:`;
