@@ -60,6 +60,7 @@ module.exports = function Login({ }) {
 			<TextInput
 				field={form.instance}
 				label="Instance"
+				name="instance"
 			/>
 			<MutationButton label="Login" result={result} />
 		</form>
