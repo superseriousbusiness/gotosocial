@@ -51,7 +51,7 @@ Disallow: /admin
 Disallow: /user
 Disallow: /settings/
 # domain blocklist
-Disallow: /suspended`
+Disallow: /about/suspended`
 )
 
 // robotsGETHandler returns a decent robots.txt that prevents crawling
