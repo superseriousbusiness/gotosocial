@@ -20,7 +20,6 @@ package web
 
 import (
 	"net/http"
-	"fmt"
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
@@ -52,8 +51,6 @@ func (m *Module) domainBlockListGETHandler(c *gin.Context) {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
-
-	fmt.Printf("\n%+v\n", domainBlocks)
 
 	c.HTML(http.StatusOK, "domain-blocklist.tmpl", gin.H{
 		"instance":    instance,

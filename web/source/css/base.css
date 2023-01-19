@@ -430,7 +430,7 @@ label {
 
 	.header {
 		border: 0.1rem solid transparent !important; /* for alignment with .entry border padding */
-		background: $gray2 !important;
+		background: $gray1 !important;
 		display: flex;
 		font-weight: bold;
 	}
@@ -453,21 +453,39 @@ label {
 			background: $list-entry-hover-bg;
 		}
 	
-		&:active, &:focus, &:hover {
+		&:active, &:focus, &:hover, &:target {
 			border-color: $fg-accent;
 		}
 	}
 }
 
 .domain-blocklist {
-	.entry {
-		text-decoration: none;
-		color: $fg;
-		display: flex;
-		flex-wrap: wrap;
+	border: $boxshadow-border;
+	box-shadow: $boxshadow;
 
-		.domain {
-			width: 20rem;
+	.entry {
+		display: grid;
+		grid-template-columns: 15rem 1fr;
+		gap: 0.5rem;
+		align-items: start;
+
+		& > div {
+			display: flex;
+			align-items: center
 		}
+
+		.domain a {
+			font-weight: bold;
+			text-decoration: none;
+			display: inline-block; /* so it wraps properly */
+		}
+
+		.public_comment p {
+			margin: 0;
+		}
+	}
+
+	.header .domain {
+		color: $fg;
 	}
 }

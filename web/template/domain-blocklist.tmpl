@@ -17,28 +17,32 @@
 */ -}}
 
 {{ template "header.tmpl" .}}
-<main class="lightgray">
-	<h1>Suspended Instances</h1>
-	<p>
-		The following list of domains have been blocked by the administrator(s) of this server.
-		All current and future accounts on that instance are blocked, and no data is federated to the remote server.
-		This extends to all subdomains as well, so an entry for 'example.com' includes 'social.example.com' as well.
-	</p>
-	<div class="list domain-blocklist">
-		<div class="header entry">
-			<div class="domain">Domain</div>
-			<div class="public_comment">Public comment</div>
+<main>
+	<section>
+		<h1>Suspended Instances</h1>
+		<p>
+			The following list of domains have been blocked by the administrator(s) of this server.
+			All current and future accounts on that instance are blocked, and no data is federated to the remote server.
+			This extends to all subdomains as well, so an entry for 'example.com' includes 'social.example.com' as well.
+		</p>
+		<div class="list domain-blocklist">
+			<div class="header entry">
+				<div class="domain">Domain</div>
+				<div class="public_comment">Public comment</div>
+			</div>
+			{{range .blocklist}}
+			<div class="entry" id="{{.Domain.Domain}}">
+				<div class="domain">
+					<a class="text-cutoff" href="#{{.Domain.Domain}}" title="{{.Domain.Domain}}">{{.Domain.Domain}}</a>
+				</div>
+				<div class="public_comment">
+					<p>
+						{{.PublicComment}}
+					</p>
+				</div>
+			</div>
+			{{end}}
 		</div>
-		{{range .blocklist}}
-		<a class="entry" id="{{.Domain.Domain}}" href="#{{.Domain.Domain}}">
-			<div class="domain">
-				{{.Domain.Domain}}
-			</div>
-			<div class="public_comment">
-				{{.PublicComment}}
-			</div>
-		</a>
-		{{end}}
-	</div>
+	</section>
 </main>
 {{ template "footer.tmpl" .}}
