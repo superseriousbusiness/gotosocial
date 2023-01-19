@@ -53,12 +53,12 @@ func (m *Module) domainBlockListGETHandler(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "domain-blocklist.tmpl", gin.H{
-		"instance":    instance,
-		"ogMeta":      ogBase(instance),
+		"instance":  instance,
+		"ogMeta":    ogBase(instance),
 		"blocklist": domainBlocks,
 		"stylesheets": []string{
 			assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
 		},
-		"javascript":  []string{distPathPrefix + "/frontend.js"},
+		"javascript": []string{distPathPrefix + "/frontend.js"},
 	})
 }

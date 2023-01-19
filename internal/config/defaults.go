@@ -58,7 +58,7 @@ var Defaults = Configuration{
 
 	InstanceExposePeers:            false,
 	InstanceExposeSuspended:        false,
-	InstanceExposeSuspendedWeb:        false,
+	InstanceExposeSuspendedWeb:     false,
 	InstanceDeliverToSharedInboxes: true,
 
 	AccountsRegistrationOpen: true,
