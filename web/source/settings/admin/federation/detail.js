@@ -67,7 +67,7 @@ module.exports = function InstanceDetail({ baseUrl }) {
 
 	return (
 		<div>
-			<h1><BackButton to={baseUrl} /> Federation settings for: {domain}</h1>
+			<h1 className="text-cutoff"><BackButton to={baseUrl} /> Federation settings for: <span title={domain}>{domain}</span></h1>
 			{infoContent}
 			<DomainBlockForm defaultDomain={domain} block={existingBlock} />
 		</div>
