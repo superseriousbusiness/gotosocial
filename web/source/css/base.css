@@ -414,3 +414,60 @@ label {
 	overflow: hidden;
 	white-space: nowrap;
 }
+
+.list {
+	display: flex;
+	flex-direction: column;
+
+	&.scrolling {
+		max-height: 40rem;
+		overflow: auto;
+	}
+
+	.header, .entry {
+		padding: 0.5rem;
+	}
+
+	.header {
+		border: 0.1rem solid transparent !important; /* for alignment with .entry border padding */
+		background: $gray2 !important;
+		display: flex;
+		font-weight: bold;
+	}
+
+	input[type=checkbox] {
+		margin-left: 0.5rem;
+	}
+
+	.entry {
+		display: flex;
+		flex-wrap: wrap;
+		background: $list-entry-bg;
+		border: 0.1rem solid transparent;
+
+		&:nth-child(even) {
+			background: $list-entry-alternate-bg;
+		}
+	
+		&:hover {
+			background: $list-entry-hover-bg;
+		}
+	
+		&:active, &:focus, &:hover {
+			border-color: $fg-accent;
+		}
+	}
+}
+
+.domain-blocklist {
+	.entry {
+		text-decoration: none;
+		color: $fg;
+		display: flex;
+		flex-wrap: wrap;
+
+		.domain {
+			width: 20rem;
+		}
+	}
+}
