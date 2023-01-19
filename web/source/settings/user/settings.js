@@ -18,42 +18,63 @@
 
 "use strict";
 
-const Promise = require("bluebird");
 const React = require("react");
-const Redux = require("react-redux");
 
-const api = require("../lib/api");
-const user = require("../redux/reducers/user").actions;
-const submit = require("../lib/submit");
-
-const Languages = require("../components/languages");
-const Submit = require("../components/submit");
+const query = require("../lib/query");
 
 const {
-	Checkbox,
+	useTextInput,
+	useBoolInput
+} = require("../lib/form");
+
+const useFormSubmit = require("../lib/form/submit");
+
+const {
 	Select,
-} = require("../components/form-fields").formFields(user.setSettingsVal, (state) => state.user.settings);
+	TextInput,
+	Checkbox
+} = require("../components/form/inputs");
+
+const FormWithData = require("../lib/form/form-with-data");
+const Languages = require("../components/languages");
+const MutationButton = require("../components/form/mutation-button");
 
 module.exports = function UserSettings() {
-	const dispatch = Redux.useDispatch();
-
-	const [errorMsg, setError] = React.useState("");
-	const [statusMsg, setStatus] = React.useState("");
-
-	const updateSettings = submit(
-		() => dispatch(api.user.updateSettings()),
-		{setStatus, setError}
+	return (
+		<FormWithData
+			dataQuery={query.useVerifyCredentialsQuery}
+			DataForm={UserSettingsForm}
+		/>
 	);
+};
+
+function UserSettingsForm({ data }) {
+	const { source } = data;
+	/* form keys
+		- string source[privacy]
+		- bool source[sensitive]
+		- string source[language]
+		- string source[status_format]
+	 */
+
+	const form = {
+		defaultPrivacy: useTextInput("source[privacy]", { defaultValue: source.privacy ?? "unlisted" }),
+		isSensitive: useBoolInput("source[sensitive]", { defaultValue: source.sensitive }),
+		language: useTextInput("source[language]", { defaultValue: source.language?.toUpperCase() ?? "EN" }),
+		format: useTextInput("source[status_format]", { defaultValue: source.status_format ?? "plain" }),
+	};
+
+	const [submitForm, result] = useFormSubmit(form, query.useUpdateCredentialsMutation());
 
 	return (
 		<>
-			<div className="user-settings">
+			<form className="user-settings" onSubmit={submitForm}>
 				<h1>Post settings</h1>
-				<Select id="source.language" name="Default post language" options={
-					<Languages/>
+				<Select field={form.language} label="Default post language" options={
+					<Languages />
 				}>
 				</Select>
-				<Select id="source.privacy" name="Default post privacy" options={
+				<Select field={form.defaultPrivacy} label="Default post privacy" options={
 					<>
 						<option value="private">Private / followers-only</option>
 						<option value="unlisted">Unlisted</option>
@@ -62,7 +83,7 @@ module.exports = function UserSettings() {
 				}>
 					<a href="https://docs.gotosocial.org/en/latest/user_guide/posts/#privacy-settings" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about post privacy settings (opens in a new tab)</a>
 				</Select>
-				<Select id="source.status_format" name="Default post (and bio) format" options={
+				<Select field={form.format} label="Default post (and bio) format" options={
 					<>
 						<option value="plain">Plain (default)</option>
 						<option value="markdown">Markdown</option>
@@ -71,70 +92,50 @@ module.exports = function UserSettings() {
 					<a href="https://docs.gotosocial.org/en/latest/user_guide/posts/#input-types" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about post format settings (opens in a new tab)</a>
 				</Select>
 				<Checkbox
-					id="source.sensitive"
-					name="Mark my posts as sensitive by default"
+					field={form.isSensitive}
+					label="Mark my posts as sensitive by default"
 				/>
 
-				<Submit onClick={updateSettings} label="Save post settings" errorMsg={errorMsg} statusMsg={statusMsg}/>
-			</div>
+				<MutationButton label="Save settings" result={result} />
+			</form>
 			<div>
-				<PasswordChange/>
+				<PasswordChange />
 			</div>
 		</>
 	);
-};
+}
 
 function PasswordChange() {
-	const dispatch = Redux.useDispatch();
+	const form = {
+		oldPassword: useTextInput("old_password"),
+		newPassword: useTextInput("old_password", {
+			validator(val) {
+				if (val != "" && val == form.oldPassword.value) {
+					return "New password same as old password";
+				}
+				return "";
+			}
+		})
+	};
 
-	const [errorMsg, setError] = React.useState("");
-	const [statusMsg, setStatus] = React.useState("");
-
-	const [oldPassword, setOldPassword] = React.useState("");
-	const [newPassword, setNewPassword] = React.useState("");
-	const [newPasswordConfirm, setNewPasswordConfirm] = React.useState("");
-
-	function changePassword() {
-		if (newPassword !== newPasswordConfirm) {
-			setError("New password and confirm new password did not match!");
-			return;
+	const verifyNewPassword = useTextInput("verifyNewPassword", {
+		validator(val) {
+			if (val != "" && val != form.newPassword.value) {
+				return "Passwords do not match";
+			}
+			return "";
 		}
+	});
 
-		setStatus("PATCHing");
-		setError("");
-		return Promise.try(() => {
-			let data = {
-				old_password: oldPassword,
-				new_password: newPassword
-			};
-			return dispatch(api.apiCall("POST", "/api/v1/user/password_change", data, "form"));
-		}).then(() => {
-			setStatus("Saved!");
-			setOldPassword("");
-			setNewPassword("");
-			setNewPasswordConfirm("");
-		}).catch((e) => {
-			setError(e.message);
-			setStatus("");
-		});
-	}
+	const [submitForm, result] = useFormSubmit(form, query.usePasswordChangeMutation());
 
 	return (
-		<>
+		<form className="change-password" onSubmit={submitForm}>
 			<h1>Change password</h1>
-			<div className="labelinput">
-				<label htmlFor="password">Current password</label>
-				<input name="password" id="password" type="password" autoComplete="current-password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
-			</div>
-			<div className="labelinput">
-				<label htmlFor="new-password">New password</label>
-				<input name="new-password" id="new-password" type="password" autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-			</div>
-			<div className="labelinput">
-				<label htmlFor="confirm-new-password">Confirm new password</label>
-				<input name="confirm-new-password" id="confirm-new-password" type="password" autoComplete="new-password" value={newPasswordConfirm} onChange={(e) => setNewPasswordConfirm(e.target.value)} />
-			</div>
-			<Submit onClick={changePassword} label="Save new password" errorMsg={errorMsg} statusMsg={statusMsg}/>
-		</>
+			<TextInput type="password" field={form.oldPassword} label="Current password" />
+			<TextInput type="password" field={form.newPassword} label="New password" />
+			<TextInput type="password" field={verifyNewPassword} label="Confirm new password" />
+			<MutationButton label="Change password" result={result} />
+		</form>
 	);
 }

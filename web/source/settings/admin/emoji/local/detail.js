@@ -19,155 +19,128 @@
 "use strict";
 
 const React = require("react");
-
 const { useRoute, Link, Redirect } = require("wouter");
 
-const { CategorySelect } = require("../category-select");
-const { useComboBoxInput, useFileInput } = require("../../../components/form");
-
 const query = require("../../../lib/query");
+
+const { useComboBoxInput, useFileInput, useValue } = require("../../../lib/form");
+const { CategorySelect } = require("../category-select");
+
+const useFormSubmit = require("../../../lib/form/submit");
+
 const FakeToot = require("../../../components/fake-toot");
+const FormWithData = require("../../../lib/form/form-with-data");
 const Loading = require("../../../components/loading");
+const { FileInput } = require("../../../components/form/inputs");
+const MutationButton = require("../../../components/form/mutation-button");
+const { Error } = require("../../../components/error");
 
 const base = "/settings/custom-emoji/local";
 
 module.exports = function EmojiDetailRoute() {
 	let [_match, params] = useRoute(`${base}/:emojiId`);
 	if (params?.emojiId == undefined) {
-		return <Redirect to={base}/>;
+		return <Redirect to={base} />;
 	} else {
 		return (
 			<div className="emoji-detail">
 				<Link to={base}><a>&lt; go back</a></Link>
-				<EmojiDetailData emojiId={params.emojiId}/>
+				<FormWithData dataQuery={query.useGetEmojiQuery} queryArg={params.emojiId} DataForm={EmojiDetailForm} />
 			</div>
 		);
 	}
 };
 
-function EmojiDetailData({emojiId}) {
-	const {currentData: emoji, isLoading, error} = query.useGetEmojiQuery(emojiId);
+function EmojiDetailForm({ data: emoji }) {
+	const form = {
+		id: useValue("id", emoji.id),
+		category: useComboBoxInput("category", { defaultValue: emoji.category }),
+		image: useFileInput("image", {
+			withPreview: true,
+			maxSize: 50 * 1024 // TODO: get from instance api
+		})
+	};
 
-	if (error) {
-		return (
-			<div className="error accent">
-				{error.status}: {error.data.error}
-			</div>
-		);
-	} else if (isLoading) {
-		return (
-			<div>
-				<Loading/>
-			</div>
-		);
-	} else {
-		return <EmojiDetail emoji={emoji}/>;
-	}
-}
+	const [modifyEmoji, result] = useFormSubmit(form, query.useEditEmojiMutation());
 
-function EmojiDetail({emoji}) {
-	const [modifyEmoji, modifyResult] = query.useEditEmojiMutation();
-
-	const [isNewCategory, setIsNewCategory] = React.useState(false);
-
-	const [categoryState, _resetCategory, { category }] = useComboBoxInput("category", {defaultValue: emoji.category});
-
-	const [onFileChange, _resetFile, { image, imageURL, imageInfo }] = useFileInput("image", {
-		withPreview: true,
-		maxSize: 50 * 1024
-	});
-
-	function modifyCategory() {
-		modifyEmoji({id: emoji.id, category: category.trim()});
-	}
-
-	function modifyImage() {
-		modifyEmoji({id: emoji.id, image: image});
-	}
-
+	// Automatic submitting of category change
 	React.useEffect(() => {
-		if (category != emoji.category && !categoryState.open && !isNewCategory && category.trim().length > 0) {
-			console.log("updating to", category);
-			modifyEmoji({id: emoji.id, category: category.trim()});
+		if (
+			form.category.hasChanged() &&
+			!form.category.state.open &&
+			!form.category.isNew) {
+			modifyEmoji();
 		}
-	}, [isNewCategory, category, categoryState.open, emoji.category, emoji.id, modifyEmoji]);
+		/* eslint-disable-next-line react-hooks/exhaustive-deps */
+	}, [form.category.hasChanged(), form.category.isNew, form.category.state.open]);
+
+	const [deleteEmoji, deleteResult] = query.useDeleteEmojiMutation();
+
+	if (deleteResult.isSuccess) {
+		return <Redirect to={base} />;
+	}
 
 	return (
 		<>
 			<div className="emoji-header">
-				<img src={emoji.url} alt={emoji.shortcode} title={emoji.shortcode}/>
+				<img src={emoji.url} alt={emoji.shortcode} title={emoji.shortcode} />
 				<div>
 					<h2>{emoji.shortcode}</h2>
-					<DeleteButton id={emoji.id}/>
+					<MutationButton
+						label="Delete"
+						type="button"
+						onClick={() => deleteEmoji(emoji.id)}
+						className="danger"
+						showError={false}
+						result={deleteResult}
+					/>
 				</div>
 			</div>
 
-			<div className="left-border">
-				<h2>Modify this emoji {modifyResult.isLoading && "(processing..)"}</h2>
-
-				{modifyResult.error && <div className="error">
-					{modifyResult.error.status}: {modifyResult.error.data.error}
-				</div>}
+			<form onSubmit={modifyEmoji} className="left-border">
+				<h2>Modify this emoji {result.isLoading && <Loading />}</h2>
 
 				<div className="update-category">
 					<CategorySelect
-						value={category}
-						categoryState={categoryState}
-						setIsNew={setIsNewCategory}
+						field={form.category}
 					>
-						<button style={{visibility: (isNewCategory ? "initial" : "hidden")}} onClick={modifyCategory}>
-							Create
-						</button>
+						<MutationButton
+							name="create-category"
+							label="Create"
+							result={result}
+							showError={false}
+							style={{ visibility: (form.category.isNew ? "initial" : "hidden") }}
+						/>
 					</CategorySelect>
 				</div>
 
 				<div className="update-image">
-					<b>Image</b>
-					<div className="form-field file">
-						<label className="file-input button" htmlFor="image">
-							Browse
-						</label>
-						{imageInfo}
-						<input
-							className="hidden"
-							type="file"
-							id="image"
-							name="Image"
-							accept="image/png,image/gif"
-							onChange={onFileChange}
-						/>
-					</div>
+					<FileInput
+						field={form.image}
+						label="Image"
+						accept="image/png,image/gif"
+					/>
 
-					<button onClick={modifyImage} disabled={image == undefined}>Replace image</button>
+					<MutationButton
+						name="image"
+						label="Replace image"
+						showError={false}
+						result={result}
+					/>
 
 					<FakeToot>
 						Look at this new custom emoji <img
 							className="emoji"
-							src={imageURL ?? emoji.url}
+							src={form.image.previewURL ?? emoji.url}
 							title={`:${emoji.shortcode}:`}
 							alt={emoji.shortcode}
 						/> isn&apos;t it cool?
 					</FakeToot>
+
+					{result.error && <Error error={result.error} />}
+					{deleteResult.error && <Error error={deleteResult.error} />}
 				</div>
-			</div>
+			</form>
 		</>
-	);
-}
-
-function DeleteButton({id}) {
-	// TODO: confirmation dialog?
-	const [deleteEmoji, deleteResult] = query.useDeleteEmojiMutation();
-
-	let text = "Delete";
-	if (deleteResult.isLoading) {
-		text = "Deleting...";
-	}
-
-	if (deleteResult.isSuccess) {
-		return <Redirect to={base}/>;
-	}
-
-	return (
-		<button className="danger" onClick={() => deleteEmoji(id)} disabled={deleteResult.isLoading}>{text}</button>
 	);
 }

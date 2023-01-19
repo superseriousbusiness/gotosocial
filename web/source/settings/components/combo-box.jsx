@@ -26,21 +26,21 @@ const {
 	ComboboxPopover,
 } = require("ariakit/combobox");
 
-module.exports = function ComboBox({state, items, label, placeHolder, children}) {
+module.exports = function ComboBox({ field, items, label, children, ...inputProps }) {
 	return (
 		<div className="form-field combobox-wrapper">
 			<label>
 				{label}
 				<div className="row">
 					<Combobox
-						state={state}
-						placeholder={placeHolder}
+						state={field.state}
 						className="combobox input"
+						{...inputProps}
 					/>
 					{children}
 				</div>
 			</label>
-			<ComboboxPopover state={state} className="popover">
+			<ComboboxPopover state={field.state} className="popover">
 				{items.map(([key, value]) => (
 					<ComboboxItem className="combobox-item" key={key} value={key}>
 						{value}

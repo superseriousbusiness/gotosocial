@@ -31,7 +31,7 @@ module.exports = function RemoteEmoji() {
 		data: emoji = [],
 		isLoading,
 		error
-	} = query.useGetAllEmojiQuery({filter: "domain:local"});
+	} = query.useListEmojiQuery({ filter: "domain:local" });
 
 	const emojiCodes = React.useMemo(() => {
 		return new Set(emoji.map((e) => e.shortcode));
@@ -40,11 +40,11 @@ module.exports = function RemoteEmoji() {
 	return (
 		<>
 			<h1>Custom Emoji (remote)</h1>
-			{error && 
+			{error &&
 				<div className="error accent">{error}</div>
 			}
 			{isLoading
-				? <Loading/>
+				? <Loading />
 				: <>
 					<ParseFromToot emoji={emoji} emojiCodes={emojiCodes} />
 				</>

@@ -311,12 +311,16 @@ input, select, textarea, .input {
 	font-size: 1rem;
 	padding: 0.3rem;
 
-	&:focus {
+	&:focus, &:active {
 		border-color: $input-focus-border;
 	}
 
+	&:invalid {
+		border-color: $input-error-border;
+	}
+
 	&:disabled {
-		background: $input-disabled-bg;
+		background: transparent;
 	}
 }
 

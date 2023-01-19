@@ -32,7 +32,7 @@ const prodCfg = {
 			global: true,
 			exts: ".js"
 		}],
-		["@browserify/envify", {global: true}]
+		["@browserify/envify", { global: true }]
 	]
 };
 
@@ -48,7 +48,7 @@ skulk({
 	},
 	servers: {
 		express: {
-			proxy: "http://localhost:8081",
+			proxy: "http://127.0.0.1:8081",
 			assets: "/assets"
 		}
 	},
@@ -66,6 +66,7 @@ skulk({
 			],
 		},
 		settings: {
+			debug: false,
 			entryFile: "settings",
 			outputFile: "settings.js",
 			prodCfg: prodCfg,

@@ -22,7 +22,7 @@ const React = require("react");
 const { Link, Route, Redirect } = require("wouter");
 const { ErrorBoundary } = require("react-error-boundary");
 
-const ErrorFallback = require("../components/error");
+const { ErrorFallback } = require("../components/error");
 const NavButton = require("../components/nav-button");
 
 function urlSafe(str) {
@@ -64,7 +64,7 @@ module.exports = function getViews(struct) {
 			}
 
 			panelRouterEl.push((
-				<Route path={`${url}/:page?`} key={url}>
+				<Route path={`${url}/:page*`} key={url}>
 					<ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => { }}>
 						{/* FIXME: implement onReset */}
 						<ViewComponent />

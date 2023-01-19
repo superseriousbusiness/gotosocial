@@ -19,88 +19,126 @@
 "use strict";
 
 const React = require("react");
-const Redux = require("react-redux");
 
-const Submit = require("../components/submit");
+const query = require("../lib/query");
 
-const api = require("../lib/api");
-const user = require("../redux/reducers/user").actions;
-const submit = require("../lib/submit");
+const {
+	useTextInput,
+	useFileInput,
+	useBoolInput
+} = require("../lib/form");
 
-const FakeProfile = require("../components/fake-profile");
-const { formFields } = require("../components/form-fields");
+const useFormSubmit = require("../lib/form/submit");
 
 const {
 	TextInput,
 	TextArea,
-	Checkbox,
-	File
-} = formFields(user.setProfileVal, (state) => state.user.profile);
+	FileInput,
+	Checkbox
+} = require("../components/form/inputs");
+
+const FormWithData = require("../lib/form/form-with-data");
+const FakeProfile = require("../components/fake-profile");
+const MutationButton = require("../components/form/mutation-button");
 
 module.exports = function UserProfile() {
-	const dispatch = Redux.useDispatch();
-	const instance = Redux.useSelector(state => state.instances.current);
-
-	const allowCustomCSS = instance.configuration.accounts.allow_custom_css;
-
-	const [errorMsg, setError] = React.useState("");
-	const [statusMsg, setStatus] = React.useState("");
-
-	const saveProfile = submit(
-		() => dispatch(api.user.updateProfile()),
-		{setStatus, setError}
+	return (
+		<FormWithData
+			dataQuery={query.useVerifyCredentialsQuery}
+			DataForm={UserProfileForm}
+		/>
 	);
+};
+
+function UserProfileForm({ data: profile }) {
+	/*
+		User profile update form keys
+		- bool bot
+		- bool locked
+		- string display_name
+		- string note
+		- file avatar
+		- file header
+		- bool enable_rss
+		- string custom_css (if enabled)
+	*/
+
+	const { data: instance } = query.useInstanceQuery();
+	const allowCustomCSS = React.useMemo(() => {
+		return instance?.configuration?.accounts?.allow_custom_css === true;
+	}, [instance]);
+
+	const form = {
+		avatar: useFileInput("avatar", { withPreview: true }),
+		header: useFileInput("header", { withPreview: true }),
+		displayName: useTextInput("display_name", { defaultValue: profile.display_name }),
+		note: useTextInput("note", { defaultValue: profile.source?.note }),
+		customCSS: useTextInput("custom_css", { defaultValue: profile.custom_css }),
+		bot: useBoolInput("bot", { defaultValue: profile.bot }),
+		locked: useBoolInput("locked", { defaultValue: profile.locked }),
+		enableRSS: useBoolInput("enable_rss", { defaultValue: profile.enable_rss }),
+	};
+
+	const [submitForm, result] = useFormSubmit(form, query.useUpdateCredentialsMutation());
 
 	return (
-		<div className="user-profile">
+		<form className="user-profile" onSubmit={submitForm}>
 			<h1>Profile</h1>
 			<div className="overview">
-				<FakeProfile/>
+				<FakeProfile
+					avatar={form.avatar.previewValue ?? profile.avatar}
+					header={form.header.previewValue ?? profile.header}
+					display_name={form.displayName.value ?? profile.username}
+					username={profile.username}
+					role={profile.role}
+				/>
 				<div className="files">
 					<div>
 						<h3>Header</h3>
-						<File
-							id="header"
-							fileType="image/*"
+						<FileInput
+							field={form.header}
+							accept="image/*"
 						/>
 					</div>
 					<div>
 						<h3>Avatar</h3>
-						<File
-							id="avatar"
-							fileType="image/*"
+						<FileInput
+							field={form.avatar}
+							accept="image/*"
 						/>
 					</div>
 				</div>
 			</div>
 			<TextInput
-				id="display_name"
-				name="Name"
-				placeHolder="A GoToSocial user"
+				field={form.displayName}
+				label="Name"
+				placeholder="A GoToSocial user"
 			/>
 			<TextArea
-				id="source.note"
-				name="Bio"
-				placeHolder="Just trying out GoToSocial, my pronouns are they/them and I like sloths."
+				field={form.note}
+				label="Bio"
+				placeholder="Just trying out GoToSocial, my pronouns are they/them and I like sloths."
+				rows={8}
 			/>
 			<Checkbox
-				id="locked"
-				name="Manually approve follow requests"
+				field={form.locked}
+				label="Manually approve follow requests"
 			/>
 			<Checkbox
-				id="enable_rss"
-				name="Enable RSS feed of Public posts"
+				field={form.enableRSS}
+				label="Enable RSS feed of Public posts"
 			/>
-			{ !allowCustomCSS ? null :
+			{!allowCustomCSS ? null :
 				<TextArea
-					id="custom_css"
-					name="Custom CSS"
+					field={form.customCSS}
+					label="Custom CSS"
 					className="monospace"
+					rows={8}
 				>
 					<a href="https://docs.gotosocial.org/en/latest/user_guide/custom_css" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about custom profile CSS (opens in a new tab)</a>
 				</TextArea>
 			}
-			<Submit onClick={saveProfile} label="Save profile info" errorMsg={errorMsg} statusMsg={statusMsg} />
-		</div>
+			<MutationButton label="Save profile info" result={result} />
+		</form>
 	);
-};
+}

@@ -22,6 +22,6 @@ const React = require("react");
 
 module.exports = function Loading() {
 	return (
-		<i className="fa fa-spin fa-refresh" aria-label="Loading" title="Loading"/>
+		<i className="fa fa-spin fa-refresh loading-icon" aria-label="Loading" title="Loading" />
 	);
 };

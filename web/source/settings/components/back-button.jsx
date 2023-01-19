@@ -21,7 +21,7 @@
 const React = require("react");
 const { Link } = require("wouter");
 
-module.exports = function BackButton({to}) {
+module.exports = function BackButton({ to }) {
 	return (
 		<Link to={to}>
 			<a className="button">&lt; back</a>

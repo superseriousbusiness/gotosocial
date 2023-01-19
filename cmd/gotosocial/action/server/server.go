@@ -33,6 +33,7 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
+	"go.uber.org/automaxprocs/maxprocs"
 
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -54,10 +55,18 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/web"
+
+	// Inherit memory limit if set from cgroup
+	_ "github.com/KimMachineGun/automemlimit"
 )
 
 // Start creates and starts a gotosocial server
 var Start action.GTSAction = func(ctx context.Context) error {
+	_, err := maxprocs.Set(maxprocs.Logger(log.Errorf))
+	if err != nil {
+		return fmt.Errorf("failed to set CPU limits from cgroup: %s", err)
+	}
+
 	var state state.State
 
 	// Initialize caches
