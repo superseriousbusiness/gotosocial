@@ -21,6 +21,7 @@ package report
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -59,11 +60,20 @@ func (p *processor) ReportsGet(ctx context.Context, account *gtsmodel.Account, r
 		items = append(items, item)
 	}
 
+	extraQueryParams := []string{}
+	if resolved != nil {
+		extraQueryParams = append(extraQueryParams, "resolved="+strconv.FormatBool(*resolved))
+	}
+	if targetAccountID != "" {
+		extraQueryParams = append(extraQueryParams, "target_account_id="+targetAccountID)
+	}
+
 	return util.PackagePageableResponse(util.PageableResponseParams{
-		Items:          items,
-		Path:           "/api/v1/reports",
-		NextMaxIDValue: nextMaxIDValue,
-		PrevMinIDValue: prevMinIDValue,
-		Limit:          limit,
+		Items:            items,
+		Path:             "/api/v1/reports",
+		NextMaxIDValue:   nextMaxIDValue,
+		PrevMinIDValue:   prevMinIDValue,
+		Limit:            limit,
+		ExtraQueryParams: extraQueryParams,
 	})
 }

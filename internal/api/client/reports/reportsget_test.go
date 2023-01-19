@@ -51,7 +51,7 @@ func (suite *ReportsGetTestSuite) getReports(
 	sinceID string,
 	minID string,
 	limit int,
-) ([]*apimodel.Report, error) {
+) ([]*apimodel.Report, string, error) {
 	// instantiate recorder + test context
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
@@ -92,20 +92,20 @@ func (suite *ReportsGetTestSuite) getReports(
 	defer result.Body.Close()
 
 	if resultCode := recorder.Code; expectedHTTPStatus != resultCode {
-		return nil, fmt.Errorf("expected %d got %d", expectedHTTPStatus, resultCode)
+		return nil, "", fmt.Errorf("expected %d got %d", expectedHTTPStatus, resultCode)
 	}
 
 	b, err := ioutil.ReadAll(result.Body)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	resp := []*apimodel.Report{}
 	if err := json.Unmarshal(b, &resp); err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	return resp, nil
+	return resp, result.Header.Get("Link"), nil
 }
 
 func (suite *ReportsGetTestSuite) TestGetReports() {
@@ -113,7 +113,7 @@ func (suite *ReportsGetTestSuite) TestGetReports() {
 	testToken := suite.testTokens["local_account_2"]
 	testUser := suite.testUsers["local_account_2"]
 
-	reports, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, nil, "", "", "", "", 20)
+	reports, link, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, nil, "", "", "", "", 20)
 	suite.NoError(err)
 	suite.NotEmpty(reports)
 
@@ -157,6 +157,8 @@ func (suite *ReportsGetTestSuite) TestGetReports() {
     }
   }
 ]`, string(b))
+
+	suite.Equal(`<http://localhost:8080/api/v1/reports?limit=20&max_id=01GP3AWY4CRDVRNZKW0TEAMB5R>; rel="next", <http://localhost:8080/api/v1/reports?limit=20&min_id=01GP3AWY4CRDVRNZKW0TEAMB5R>; rel="prev"`, link)
 }
 
 func (suite *ReportsGetTestSuite) TestGetReports2() {
@@ -164,7 +166,7 @@ func (suite *ReportsGetTestSuite) TestGetReports2() {
 	testToken := suite.testTokens["local_account_2"]
 	testUser := suite.testUsers["local_account_2"]
 
-	reports, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, nil, "", "01GP3AWY4CRDVRNZKW0TEAMB5R", "", "", 20)
+	reports, link, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, nil, "", "01GP3AWY4CRDVRNZKW0TEAMB5R", "", "", 20)
 	suite.NoError(err)
 	suite.Empty(reports)
 
@@ -172,6 +174,7 @@ func (suite *ReportsGetTestSuite) TestGetReports2() {
 	suite.NoError(err)
 
 	suite.Equal(`[]`, string(b))
+	suite.Empty(link)
 }
 
 func (suite *ReportsGetTestSuite) TestGetReports3() {
@@ -179,7 +182,7 @@ func (suite *ReportsGetTestSuite) TestGetReports3() {
 	testToken := suite.testTokens["local_account_1"]
 	testUser := suite.testUsers["local_account_1"]
 
-	reports, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, nil, "", "", "", "", 20)
+	reports, link, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, nil, "", "", "", "", 20)
 	suite.NoError(err)
 	suite.Empty(reports)
 
@@ -187,6 +190,7 @@ func (suite *ReportsGetTestSuite) TestGetReports3() {
 	suite.NoError(err)
 
 	suite.Equal(`[]`, string(b))
+	suite.Empty(link)
 }
 
 func (suite *ReportsGetTestSuite) TestGetReports4() {
@@ -195,7 +199,7 @@ func (suite *ReportsGetTestSuite) TestGetReports4() {
 	testUser := suite.testUsers["local_account_2"]
 	resolved := testrig.FalseBool()
 
-	reports, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, resolved, "", "", "", "", 20)
+	reports, link, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, resolved, "", "", "", "", 20)
 	suite.NoError(err)
 	suite.NotEmpty(reports)
 
@@ -239,6 +243,8 @@ func (suite *ReportsGetTestSuite) TestGetReports4() {
     }
   }
 ]`, string(b))
+
+	suite.Equal(`<http://localhost:8080/api/v1/reports?limit=20&max_id=01GP3AWY4CRDVRNZKW0TEAMB5R&resolved=false>; rel="next", <http://localhost:8080/api/v1/reports?limit=20&min_id=01GP3AWY4CRDVRNZKW0TEAMB5R&resolved=false>; rel="prev"`, link)
 }
 
 func (suite *ReportsGetTestSuite) TestGetReports5() {
@@ -247,7 +253,7 @@ func (suite *ReportsGetTestSuite) TestGetReports5() {
 	testUser := suite.testUsers["local_account_1"]
 	resolved := testrig.TrueBool()
 
-	reports, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, resolved, "", "", "", "", 20)
+	reports, link, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, resolved, "", "", "", "", 20)
 	suite.NoError(err)
 	suite.Empty(reports)
 
@@ -255,6 +261,7 @@ func (suite *ReportsGetTestSuite) TestGetReports5() {
 	suite.NoError(err)
 
 	suite.Equal(`[]`, string(b))
+	suite.Empty(link)
 }
 
 func (suite *ReportsGetTestSuite) TestGetReports6() {
@@ -262,7 +269,7 @@ func (suite *ReportsGetTestSuite) TestGetReports6() {
 	testToken := suite.testTokens["local_account_2"]
 	testUser := suite.testUsers["local_account_2"]
 
-	reports, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, nil, "01F8MH5ZK5VRH73AKHQM6Y9VNX", "", "", "", 20)
+	reports, link, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, nil, "01F8MH5ZK5VRH73AKHQM6Y9VNX", "", "", "", 20)
 	suite.NoError(err)
 	suite.NotEmpty(reports)
 
@@ -306,6 +313,62 @@ func (suite *ReportsGetTestSuite) TestGetReports6() {
     }
   }
 ]`, string(b))
+
+	suite.Equal(`<http://localhost:8080/api/v1/reports?limit=20&max_id=01GP3AWY4CRDVRNZKW0TEAMB5R&target_account_id=01F8MH5ZK5VRH73AKHQM6Y9VNX>; rel="next", <http://localhost:8080/api/v1/reports?limit=20&min_id=01GP3AWY4CRDVRNZKW0TEAMB5R&target_account_id=01F8MH5ZK5VRH73AKHQM6Y9VNX>; rel="prev"`, link)
+}
+
+func (suite *ReportsGetTestSuite) TestGetReports7() {
+	testAccount := suite.testAccounts["local_account_2"]
+	testToken := suite.testTokens["local_account_2"]
+	testUser := suite.testUsers["local_account_2"]
+	resolved := testrig.FalseBool()
+
+	reports, link, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, resolved, "01F8MH5ZK5VRH73AKHQM6Y9VNX", "", "", "", 20)
+	suite.NoError(err)
+	suite.NotEmpty(reports)
+
+	b, err := json.MarshalIndent(&reports, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`[
+  {
+    "id": "01GP3AWY4CRDVRNZKW0TEAMB5R",
+    "created_at": "2022-05-14T10:20:03.000Z",
+    "action_taken": false,
+    "action_taken_at": null,
+    "action_taken_comment": null,
+    "category": "other",
+    "comment": "dark souls sucks, please yeet this nerd",
+    "forwarded": true,
+    "status_ids": [
+      "01FVW7JHQFSFK166WWKR8CBA6M"
+    ],
+    "rule_ids": [],
+    "target_account": {
+      "id": "01F8MH5ZK5VRH73AKHQM6Y9VNX",
+      "username": "foss_satan",
+      "acct": "foss_satan@fossbros-anonymous.io",
+      "display_name": "big gerald",
+      "locked": false,
+      "bot": false,
+      "created_at": "2021-09-26T10:52:36.000Z",
+      "note": "i post about like, i dunno, stuff, or whatever!!!!",
+      "url": "http://fossbros-anonymous.io/@foss_satan",
+      "avatar": "",
+      "avatar_static": "",
+      "header": "http://localhost:8080/assets/default_header.png",
+      "header_static": "http://localhost:8080/assets/default_header.png",
+      "followers_count": 0,
+      "following_count": 0,
+      "statuses_count": 1,
+      "last_status_at": "2021-09-20T10:40:37.000Z",
+      "emojis": [],
+      "fields": []
+    }
+  }
+]`, string(b))
+
+	suite.Equal(`<http://localhost:8080/api/v1/reports?limit=20&max_id=01GP3AWY4CRDVRNZKW0TEAMB5R&resolved=false&target_account_id=01F8MH5ZK5VRH73AKHQM6Y9VNX>; rel="next", <http://localhost:8080/api/v1/reports?limit=20&min_id=01GP3AWY4CRDVRNZKW0TEAMB5R&resolved=false&target_account_id=01F8MH5ZK5VRH73AKHQM6Y9VNX>; rel="prev"`, link)
 }
 
 func TestReportsGetTestSuite(t *testing.T) {
