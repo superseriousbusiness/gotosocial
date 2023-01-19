@@ -26,27 +26,36 @@ const NewEmojiForm = require("./new-emoji");
 const query = require("../../../lib/query");
 const { useEmojiByCategory } = require("../category-select");
 const Loading = require("../../../components/loading");
+const { Error } = require("../../../components/error");
+const FormWithData = require("../../../lib/form/form-with-data");
 
 module.exports = function EmojiOverview({ baseUrl }) {
 	const {
 		data: emoji = [],
 		isLoading,
+		isError,
 		error
 	} = query.useListEmojiQuery({ filter: "domain:local" });
+
+	let content = null;
+
+	if (isLoading) {
+		content = <Loading />;
+	} else if (isError) {
+		content = <Error error={error} />;
+	} else {
+		content = (
+			<>
+				<EmojiList emoji={emoji} baseUrl={baseUrl} />
+				<NewEmojiForm emoji={emoji} />
+			</>
+		);
+	}
 
 	return (
 		<>
 			<h1>Custom Emoji (local)</h1>
-			{error &&
-				<div className="error accent">{error}</div>
-			}
-			{isLoading
-				? <Loading />
-				: <>
-					<EmojiList emoji={emoji} baseUrl={baseUrl} />
-					<NewEmojiForm emoji={emoji} />
-				</>
-			}
+			{content}
 		</>
 	);
 };
