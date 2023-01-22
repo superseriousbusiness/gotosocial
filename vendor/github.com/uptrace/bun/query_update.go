@@ -47,9 +47,17 @@ func (q *UpdateQuery) Model(model interface{}) *UpdateQuery {
 	return q
 }
 
+func (q *UpdateQuery) Err(err error) *UpdateQuery {
+	q.setErr(err)
+	return q
+}
+
 // Apply calls the fn passing the SelectQuery as an argument.
 func (q *UpdateQuery) Apply(fn func(*UpdateQuery) *UpdateQuery) *UpdateQuery {
-	return fn(q)
+	if fn != nil {
+		return fn(q)
+	}
+	return q
 }
 
 func (q *UpdateQuery) With(name string, query schema.QueryAppender) *UpdateQuery {
@@ -174,13 +182,6 @@ func (q *UpdateQuery) Returning(query string, args ...interface{}) *UpdateQuery 
 	return q
 }
 
-func (q *UpdateQuery) hasReturning() bool {
-	if !q.db.features.Has(feature.Returning) {
-		return false
-	}
-	return q.returningQuery.hasReturning()
-}
-
 //------------------------------------------------------------------------------
 
 func (q *UpdateQuery) Operation() string {
@@ -224,6 +225,14 @@ func (q *UpdateQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte, e
 
 	if !fmter.HasFeature(feature.UpdateMultiTable) {
 		b, err = q.appendOtherTables(fmter, b)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if q.hasFeature(feature.Output) && q.hasReturning() {
+		b = append(b, " OUTPUT "...)
+		b, err = q.appendOutput(fmter, b)
 		if err != nil {
 			return nil, err
 		}
@@ -426,7 +435,18 @@ func (q *UpdateQuery) updateSliceWhere(fmter schema.Formatter, model *sliceTable
 
 //------------------------------------------------------------------------------
 
+func (q *UpdateQuery) Scan(ctx context.Context, dest ...interface{}) error {
+	_, err := q.scanOrExec(ctx, dest, true)
+	return err
+}
+
 func (q *UpdateQuery) Exec(ctx context.Context, dest ...interface{}) (sql.Result, error) {
+	return q.scanOrExec(ctx, dest, len(dest) > 0)
+}
+
+func (q *UpdateQuery) scanOrExec(
+	ctx context.Context, dest []interface{}, hasDest bool,
+) (sql.Result, error) {
 	if q.err != nil {
 		return nil, q.err
 	}
@@ -437,25 +457,33 @@ func (q *UpdateQuery) Exec(ctx context.Context, dest ...interface{}) (sql.Result
 		}
 	}
 
+	// Run append model hooks before generating the query.
 	if err := q.beforeAppendModel(ctx, q); err != nil {
 		return nil, err
 	}
 
+	// Generate the query before checking hasReturning.
 	queryBytes, err := q.AppendQuery(q.db.fmter, q.db.makeQueryBytes())
 	if err != nil {
 		return nil, err
+	}
+
+	useScan := hasDest || (q.hasReturning() && q.hasFeature(feature.Returning|feature.Output))
+	var model Model
+
+	if useScan {
+		var err error
+		model, err = q.getModel(dest)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	query := internal.String(queryBytes)
 
 	var res sql.Result
 
-	if hasDest := len(dest) > 0; hasDest || q.hasReturning() {
-		model, err := q.getModel(dest)
-		if err != nil {
-			return nil, err
-		}
-
+	if useScan {
 		res, err = q.scan(ctx, q, query, model, hasDest)
 		if err != nil {
 			return nil, err
@@ -498,7 +526,7 @@ func (q *UpdateQuery) afterUpdateHook(ctx context.Context) error {
 // table_alias.column_alias.
 func (q *UpdateQuery) FQN(column string) Ident {
 	if q.table == nil {
-		panic("UpdateQuery.SetName requires a model")
+		panic("UpdateQuery.FQN requires a model")
 	}
 	if q.hasTableAlias(q.db.fmter) {
 		return Ident(q.table.Alias + "." + column)
