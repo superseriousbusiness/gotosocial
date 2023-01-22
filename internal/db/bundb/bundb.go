@@ -130,6 +130,12 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 		return nil, fmt.Errorf("database type %s not supported for bundb", t)
 	}
 
+	// https://bun.uptrace.dev/guide/running-bun-in-production.html#database-sql
+	maxOpenConns := 4 * runtime.GOMAXPROCS(0)
+	conn.DB.SetMaxOpenConns(maxOpenConns)
+	conn.DB.SetMaxIdleConns(maxOpenConns)
+	conn.DB.SetConnMaxLifetime(0) // always keep at least one conn open
+
 	// Add database query hook
 	conn.DB.AddQueryHook(queryHook{})
 
@@ -236,13 +242,10 @@ func sqliteConn(ctx context.Context) (*DBConn, error) {
 	// Append our own SQLite preferences
 	address = "file:" + address
 
-	var inMem bool
-
 	if address == "file::memory:" {
 		address = fmt.Sprintf("file:%s?mode=memory&cache=shared", uuid.NewString())
 		log.Infof("using in-memory database address " + address)
 		log.Warn("sqlite in-memory database should only be used for debugging")
-		inMem = true
 	}
 
 	// Open new DB instance
@@ -252,13 +255,6 @@ func sqliteConn(ctx context.Context) (*DBConn, error) {
 			err = errors.New(sqlite.ErrorCodeString[errWithCode.Code()])
 		}
 		return nil, fmt.Errorf("could not open sqlite db: %s", err)
-	}
-
-	if inMem {
-		// don't close connections on disconnect -- otherwise
-		// the SQLite database will be deleted when there
-		// are no active connections
-		sqldb.SetConnMaxLifetime(0)
 	}
 
 	// Wrap Bun database conn in our own wrapper
@@ -327,14 +323,7 @@ func pgConn(ctx context.Context) (*DBConn, error) {
 		return nil, fmt.Errorf("could not create bundb postgres options: %s", err)
 	}
 
-	sqldb := stdlib.OpenDB(*opts)
-
-	// https://bun.uptrace.dev/postgres/running-bun-in-production.html#database-sql
-	maxOpenConns := 4 * runtime.GOMAXPROCS(0)
-	sqldb.SetMaxOpenConns(maxOpenConns)
-	sqldb.SetMaxIdleConns(maxOpenConns)
-
-	conn := WrapDBConn(bun.NewDB(sqldb, pgdialect.New()))
+	conn := WrapDBConn(bun.NewDB(stdlib.OpenDB(*opts), pgdialect.New()))
 
 	// ping to check the db is there and listening
 	if err := conn.PingContext(ctx); err != nil {
