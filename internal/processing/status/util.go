@@ -293,6 +293,18 @@ func (p *processor) ProcessContent(ctx context.Context, form *apimodel.AdvancedS
 		return nil
 	}
 
+	// If content type is present, it should override format.
+	switch form.ContentType {
+	case "":
+		// Defer to format, if present.
+	case apimodel.StatusContentTypePlain:
+		form.Format = apimodel.StatusFormatPlain
+	case apimodel.StatusContentTypeMarkdown:
+		form.Format = apimodel.StatusFormatMarkdown
+	default:
+		form.Format = apimodel.StatusFormatDefault
+	}
+
 	// if format wasn't specified we should try to figure out what format this user prefers
 	if form.Format == "" {
 		acct, err := p.db.GetAccountByID(ctx, accountID)

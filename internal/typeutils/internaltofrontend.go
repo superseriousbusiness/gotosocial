@@ -666,6 +666,10 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 				MaxCharacters:            config.GetStatusesMaxChars(),
 				MaxMediaAttachments:      config.GetStatusesMediaMaxFiles(),
 				CharactersReservedPerURL: instanceStatusesCharactersReservedPerURL,
+				SupportedMimeTypes: []string{
+					string(apimodel.StatusContentTypePlain),
+					string(apimodel.StatusContentTypeMarkdown),
+				},
 			},
 			MediaAttachments: &apimodel.InstanceConfigurationMediaAttachments{
 				SupportedMimeTypes:  media.SupportedMIMETypes,

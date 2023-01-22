@@ -125,6 +125,10 @@ type InstanceConfigurationStatuses struct {
 	//
 	// example: 25
 	CharactersReservedPerURL int `json:"characters_reserved_per_url"`
+	// List of mime types that it's possible to use for statuses on this instance.
+	//
+	// example: ["text/plain","text/markdown"]
+	SupportedMimeTypes []string `json:"supported_mime_types,omitempty"`
 }
 
 // InstanceConfigurationMediaAttachments models instance media attachment config parameters.

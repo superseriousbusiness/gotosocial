@@ -182,6 +182,10 @@ type StatusCreateRequest struct {
 	// Format to use when parsing this status.
 	// in: formData
 	Format StatusFormat `form:"format" json:"format" xml:"format"`
+	// Content type to use when parsing this status.
+	// Takes precedence over Format if both are present.
+	// in: formData
+	ContentType StatusContentType `form:"content_type" json:"content_type" xml:"content_type"`
 }
 
 // Visibility models the visibility of a status.
@@ -239,4 +243,17 @@ const (
 	StatusFormatPlain    StatusFormat = "plain"
 	StatusFormatMarkdown StatusFormat = "markdown"
 	StatusFormatDefault  StatusFormat = StatusFormatPlain
+)
+
+// StatusContentType is the content type with which to parse the submitted status.
+// Can be either text/plain or text/markdown. Empty will default to text/plain.
+//
+// swagger:enum statusContentType
+// swagger:type string
+type StatusContentType string
+
+// Content type to use when parsing submitted status into an html-formatted status
+const (
+	StatusContentTypePlain    StatusContentType = "text/plain"
+	StatusContentTypeMarkdown StatusContentType = "text/markdown"
 )

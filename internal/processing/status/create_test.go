@@ -175,6 +175,40 @@ func (suite *StatusCreateTestSuite) TestProcessStatusMarkdownWithSpoilerTextEmoj
 	suite.NotEmpty(apiStatus.Emojis)
 }
 
+func (suite *StatusCreateTestSuite) TestProcessStatusMarkdownContentType() {
+	ctx := context.Background()
+	creatingAccount := suite.testAccounts["local_account_1"]
+	creatingApplication := suite.testApplications["application_1"]
+
+	statusCreateForm := &apimodel.AdvancedStatusCreateForm{
+		StatusCreateRequest: apimodel.StatusCreateRequest{
+			Status:      "*poopoo peepee*",
+			MediaIDs:    []string{},
+			Poll:        nil,
+			InReplyToID: "",
+			Sensitive:   false,
+			Visibility:  apimodel.VisibilityPublic,
+			ScheduledAt: "",
+			Language:    "en",
+			// The format field should be ignored in favor of the content type field.
+			Format:      apimodel.StatusFormatPlain,
+			ContentType: apimodel.StatusContentTypeMarkdown,
+		},
+		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
+			Federated: nil,
+			Boostable: nil,
+			Replyable: nil,
+			Likeable:  nil,
+		},
+	}
+
+	apiStatus, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
+	suite.NoError(err)
+	suite.NotNil(apiStatus)
+
+	suite.Equal("<p><em>poopoo peepee</em></p>", apiStatus.Content)
+}
+
 func (suite *StatusCreateTestSuite) TestProcessMediaDescriptionTooShort() {
 	ctx := context.Background()
 
