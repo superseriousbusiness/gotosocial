@@ -83,7 +83,11 @@ func (suite *InstancePatchTestSuite) TestInstancePatch1() {
     "statuses": {
       "max_characters": 5000,
       "max_media_attachments": 6,
-      "characters_reserved_per_url": 25
+      "characters_reserved_per_url": 25,
+      "supported_mime_types": [
+        "text/plain",
+        "text/markdown"
+      ]
     },
     "media_attachments": {
       "supported_mime_types": [
@@ -192,7 +196,11 @@ func (suite *InstancePatchTestSuite) TestInstancePatch2() {
     "statuses": {
       "max_characters": 5000,
       "max_media_attachments": 6,
-      "characters_reserved_per_url": 25
+      "characters_reserved_per_url": 25,
+      "supported_mime_types": [
+        "text/plain",
+        "text/markdown"
+      ]
     },
     "media_attachments": {
       "supported_mime_types": [
@@ -301,7 +309,11 @@ func (suite *InstancePatchTestSuite) TestInstancePatch3() {
     "statuses": {
       "max_characters": 5000,
       "max_media_attachments": 6,
-      "characters_reserved_per_url": 25
+      "characters_reserved_per_url": 25,
+      "supported_mime_types": [
+        "text/plain",
+        "text/markdown"
+      ]
     },
     "media_attachments": {
       "supported_mime_types": [
@@ -471,7 +483,11 @@ func (suite *InstancePatchTestSuite) TestInstancePatch6() {
     "statuses": {
       "max_characters": 5000,
       "max_media_attachments": 6,
-      "characters_reserved_per_url": 25
+      "characters_reserved_per_url": 25,
+      "supported_mime_types": [
+        "text/plain",
+        "text/markdown"
+      ]
     },
     "media_attachments": {
       "supported_mime_types": [
@@ -613,7 +629,11 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
     "statuses": {
       "max_characters": 5000,
       "max_media_attachments": 6,
-      "characters_reserved_per_url": 25
+      "characters_reserved_per_url": 25,
+      "supported_mime_types": [
+        "text/plain",
+        "text/markdown"
+      ]
     },
     "media_attachments": {
       "supported_mime_types": [
