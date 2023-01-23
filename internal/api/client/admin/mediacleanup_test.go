@@ -35,7 +35,7 @@ type MediaCleanupTestSuite struct {
 }
 
 func (suite *MediaCleanupTestSuite) TestMediaCleanup() {
-	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_2"]
+	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
 	suite.True(*testAttachment.Cached)
 
 	// set up the request
@@ -60,7 +60,7 @@ func (suite *MediaCleanupTestSuite) TestMediaCleanup() {
 }
 
 func (suite *MediaCleanupTestSuite) TestMediaCleanupNoArg() {
-	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_2"]
+	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
 	suite.True(*testAttachment.Cached)
 	println("TIME: ", testAttachment.CreatedAt.String())
 
@@ -85,7 +85,7 @@ func (suite *MediaCleanupTestSuite) TestMediaCleanupNoArg() {
 }
 
 func (suite *MediaCleanupTestSuite) TestMediaCleanupNotOldEnough() {
-	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_2"]
+	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
 	suite.True(*testAttachment.Cached)
 
 	// set up the request
