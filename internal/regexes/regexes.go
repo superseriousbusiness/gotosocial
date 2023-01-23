@@ -150,6 +150,10 @@ var (
 	// It captures the account id, media type, media size, file name, and file extension, eg
 	// `01F8MH1H7YV1Z7D2C8K2730QBF`, `attachment`, `small`, `01F8MH8RMYQ6MSNY3JM2XT1CQ5`, `jpeg`.
 	FilePath = regexp.MustCompile(filePath)
+
+	// MisskeyReportNotes captures a list of Note URIs from report content created by Misskey.
+	// https://regex101.com/r/EnTOBV/1
+	MisskeyReportNotes = regexp.MustCompile(`(?:^Note: ((?:http|https):\/\/.*)$)`)
 )
 
 // bufpool is a memory pool of byte buffers for use in our regex utility functions.

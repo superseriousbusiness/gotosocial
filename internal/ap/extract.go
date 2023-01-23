@@ -635,6 +635,23 @@ func ExtractObject(i WithObject) (*url.URL, error) {
 	return nil, errors.New("no iri found for object prop")
 }
 
+// ExtractObjects extracts a slice of URL objects from a WithObject interface.
+func ExtractObjects(i WithObject) ([]*url.URL, error) {
+	objectProp := i.GetActivityStreamsObject()
+	if objectProp == nil {
+		return nil, errors.New("object property was nil")
+	}
+
+	urls := make([]*url.URL, 0, objectProp.Len())
+	for iter := objectProp.Begin(); iter != objectProp.End(); iter = iter.Next() {
+		if iter.IsIRI() && iter.GetIRI() != nil {
+			urls = append(urls, iter.GetIRI())
+		}
+	}
+
+	return urls, nil
+}
+
 // ExtractVisibility extracts the gtsmodel.Visibility of a given addressable with a To and CC property.
 //
 // ActorFollowersURI is needed to check whether the visibility is FollowersOnly or not. The passed-in value

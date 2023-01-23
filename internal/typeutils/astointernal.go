@@ -22,12 +22,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/miekg/dns"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable ap.Accountable, accountDomain string, update bool) (*gtsmodel.Account, error) {
@@ -573,4 +576,118 @@ func (c *converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Anno
 
 	// the rest of the fields will be taken from the target status, but it's not our job to do the dereferencing here
 	return status, isNew, nil
+}
+
+func (c *converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) (*gtsmodel.Report, error) {
+	// Extract flag uri.
+	idProp := flaggable.GetJSONLDId()
+	if idProp == nil || !idProp.IsIRI() {
+		return nil, errors.New("ASFlagToReport: no id property set on flaggable, or was not an iri")
+	}
+	uri := idProp.GetIRI().String()
+
+	// Extract account that created the flag / report.
+	// This will usually be an instance actor.
+	actor, err := ap.ExtractActor(flaggable)
+	if err != nil {
+		return nil, fmt.Errorf("ASFlagToReport: error extracting actor: %w", err)
+	}
+	account, err := c.db.GetAccountByURI(ctx, actor.String())
+	if err != nil {
+		return nil, fmt.Errorf("ASFlagToReport: error in db fetching account with uri %s: %w", actor.String(), err)
+	}
+
+	// Get the content of the report.
+	// For Mastodon, this will just be a string, or nothing.
+	// In Misskey's case, it may also contain the URIs of
+	// one or more reported statuses, so extract these too.
+	content := ap.ExtractContent(flaggable)
+
+	// Extract account and statuses targeted by the flag / report.
+	//
+	// Incoming flags from mastodon usually have a target account uri as
+	// first entry in objects, followed by URIs of one or more statuses.
+	// Misskey on the other hand will just contain the target account uri.
+	// We shouldn't assume the order of the objects will correspond to this,
+	// but we can check that he objects slice contains just one account, and
+	// maybe some statuses.
+	//
+	// Throw away anything that's not relevant to us.
+	objects, err := ap.ExtractObjects(flaggable)
+	if err != nil {
+		return nil, fmt.Errorf("ASFlagToReport: error extracting objects: %w", err)
+	}
+	if len(objects) == 0 {
+		return nil, errors.New("ASFlagToReport: flaggable objects empty, can't create report")
+	}
+
+	var (
+		targetAccountURI *url.URL
+		statusURIs       = make([]*url.URL, 0, len(objects)-1)
+	)
+
+	for _, object := range objects {
+		switch {
+		case object.Host != config.GetHost():
+			// object doesn't belong to us, just ignore it
+			continue
+		case uris.IsUserPath(object):
+			if targetAccountURI != nil {
+				return nil, errors.New("ASFlagToReport: flaggable objects contained more than one target account uri")
+			}
+			targetAccountURI = object
+		case uris.IsStatusesPath(object):
+			statusURIs = append(statusURIs, object)
+		}
+	}
+
+	// Make sure we actually have a target account now.
+	if targetAccountURI == nil {
+		return nil, errors.New("ASFlagToReport: flaggable objects contained no recognizable target account uri")
+	}
+	targetAccount, err := c.db.GetAccountByURI(ctx, targetAccountURI.String())
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			return nil, fmt.Errorf("ASFlagToReport: account with uri %s could not be found in the db", targetAccountURI.String())
+		}
+		return nil, fmt.Errorf("ASFlagToReport: db error getting account with uri %s: %w", targetAccountURI.String(), err)
+	}
+
+	// If we got some status URIs, try to get them from the db too.
+	var (
+		statusIDs = make([]string, 0, len(statusURIs))
+		statuses  = make([]*gtsmodel.Status, 0, len(statusURIs))
+	)
+	for _, statusURI := range statusURIs {
+		statusURIString := statusURI.String()
+		status, err := c.db.GetStatusByURI(ctx, statusURIString)
+		if err != nil {
+			if errors.Is(err, db.ErrNoEntries) {
+				log.Warnf("ASFlagToReport: reported status with uri %s could not be found in the db, skipping it", statusURIString)
+				continue
+			}
+			return nil, fmt.Errorf("ASFlagToReport: db error getting status with uri %s: %w", statusURIString, err)
+		}
+
+		if status.AccountID != targetAccount.ID {
+			// status doesn't belong to this account, ignore it
+			continue
+		}
+
+		statusIDs = append(statusIDs, status.ID)
+		statuses = append(statuses, status)
+	}
+
+	
+
+	// id etc should be handled the caller, so just return what we got
+	return &gtsmodel.Report{
+		URI:             uri,
+		AccountID:       account.ID,
+		Account:         account,
+		TargetAccountID: targetAccount.ID,
+		TargetAccount:   targetAccount,
+		StatusIDs:       statusIDs,
+		Statuses:        statuses,
+	}, nil
 }

@@ -157,6 +157,16 @@ type CollectionPageable interface {
 	WithItems
 }
 
+// Flaggable represents the minimum interface for an activitystreams 'Flag' activity.
+type Flaggable interface {
+	WithJSONLDId
+	WithTypeName
+
+	WithActor
+	WithContent
+	WithObject
+}
+
 // WithJSONLDId represents an activity with JSONLDIdProperty
 type WithJSONLDId interface {
 	GetJSONLDId() vocab.JSONLDIdProperty

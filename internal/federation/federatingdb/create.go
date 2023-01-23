@@ -78,6 +78,9 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 	case ap.ActivityLike:
 		// LIKE SOMETHING
 		return f.activityLike(ctx, asType, receivingAccount, requestingAccount)
+	case ap.ActivityFlag:
+		// FLAG / REPORT SOMETHING
+		return f.activityFlag(ctx, asType, receivingAccount, requestingAccount)
 	}
 	return nil
 }
@@ -291,6 +294,41 @@ func (f *federatingDB) activityLike(ctx context.Context, asType vocab.Type, rece
 	}
 
 	fave, err := f.typeConverter.ASLikeToFave(ctx, like)
+	if err != nil {
+		return fmt.Errorf("activityLike: could not convert Like to fave: %s", err)
+	}
+
+	newID, err := id.NewULID()
+	if err != nil {
+		return err
+	}
+	fave.ID = newID
+
+	if err := f.db.Put(ctx, fave); err != nil {
+		return fmt.Errorf("activityLike: database error inserting fave: %s", err)
+	}
+
+	f.fedWorker.Queue(messages.FromFederator{
+		APObjectType:     ap.ActivityLike,
+		APActivityType:   ap.ActivityCreate,
+		GTSModel:         fave,
+		ReceivingAccount: receivingAccount,
+	})
+
+	return nil
+}
+
+/*
+	FLAG HANDLERS
+*/
+
+func (f *federatingDB) activityFlag(ctx context.Context, asType vocab.Type, receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) error {
+	flag, ok := asType.(vocab.ActivityStreamsFlag)
+	if !ok {
+		return errors.New("activityFlag: could not convert type to flag")
+	}
+
+	report, err := f.typeConverter.ASFlagToReport(ctx, flag)
 	if err != nil {
 		return fmt.Errorf("activityLike: could not convert Like to fave: %s", err)
 	}
