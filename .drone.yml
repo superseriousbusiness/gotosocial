@@ -28,7 +28,7 @@ steps:
           - pull_request
 
   - name: test
-    image: golang:1.19.3-alpine
+    image: golang:1.19.5-alpine
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -81,7 +81,7 @@ steps:
       - yarn run build
 
   - name: snapshot
-    image: superseriousbusiness/gotosocial-drone-build:0.0.7 # https://github.com/superseriousbusiness/gotosocial-drone-build
+    image: superseriousbusiness/gotosocial-drone-build:0.0.8 # https://github.com/superseriousbusiness/gotosocial-drone-build
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -110,7 +110,7 @@ steps:
           - main
 
   - name: release
-    image: superseriousbusiness/gotosocial-drone-build:0.0.7 # https://github.com/superseriousbusiness/gotosocial-drone-build
+    image: superseriousbusiness/gotosocial-drone-build:0.0.8 # https://github.com/superseriousbusiness/gotosocial-drone-build
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -169,7 +169,7 @@ clone:
 
 steps:
   - name: mirror
-    image: superseriousbusiness/gotosocial-drone-build:0.0.7
+    image: superseriousbusiness/gotosocial-drone-build:0.0.8
     environment:
       ORIGIN_REPO: https://github.com/superseriousbusiness/gotosocial
       TARGET_REPO: https://codeberg.org/superseriousbusiness/gotosocial
@@ -182,6 +182,6 @@ steps:
 
 ---
 kind: signature
-hmac: 46dd4ce5b5dab76bc64c68f4730663ed0ada81471ffcbfa1bcf935d8e7f6a155
+hmac: 2db9b7ee071069e8f1b6c8b96ea553033502a6cb5d4cf6a8527ce74269bc34fb
 
 ...
