@@ -1548,6 +1548,7 @@ func (*Saiz) GetType() BoxType {
 func BoxTypeAvc1() BoxType { return StrToBoxType("avc1") }
 func BoxTypeEncv() BoxType { return StrToBoxType("encv") }
 func BoxTypeHev1() BoxType { return StrToBoxType("hev1") }
+func BoxTypeHvc1() BoxType { return StrToBoxType("hvc1") }
 func BoxTypeMp4a() BoxType { return StrToBoxType("mp4a") }
 func BoxTypeEnca() BoxType { return StrToBoxType("enca") }
 func BoxTypeAvcC() BoxType { return StrToBoxType("avcC") }
@@ -1557,6 +1558,7 @@ func init() {
 	AddAnyTypeBoxDef(&VisualSampleEntry{}, BoxTypeAvc1())
 	AddAnyTypeBoxDef(&VisualSampleEntry{}, BoxTypeEncv())
 	AddAnyTypeBoxDef(&VisualSampleEntry{}, BoxTypeHev1())
+	AddAnyTypeBoxDef(&VisualSampleEntry{}, BoxTypeHvc1())
 	AddAnyTypeBoxDef(&AudioSampleEntry{}, BoxTypeMp4a())
 	AddAnyTypeBoxDef(&AudioSampleEntry{}, BoxTypeEnca())
 	AddAnyTypeBoxDef(&AVCDecoderConfiguration{}, BoxTypeAvcC())
