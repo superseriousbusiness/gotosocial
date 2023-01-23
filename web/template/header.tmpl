@@ -39,6 +39,7 @@
 	{{ if .ogMeta.ImageWidth }}<meta name="og:image:width" content="{{ .ogMeta.ImageWidth }}">
 	<meta name="og:image:height" content="{{ .ogMeta.ImageHeight }}">
 	{{ end }}{{ end }}<link rel="shortcut icon" href="{{ .instance.Thumbnail }}" type="{{ if .instance.ThumbnailType }}{{ .instance.ThumbnailType }}{{ else }}image/png{{ end }}">
+	{{ if .rssFeed }}<link rel="alternate" type="application/rss+xml" href="{{ .rssFeed }}" title="{{ if .ogMeta }}{{ .ogMeta.Title }}{{ else }}{{.instance.Title}}{{ end }}">{{ end }}
 	<link rel="stylesheet" href="/assets/dist/_colors.css">
 	<link rel="stylesheet" href="/assets/dist/base.css">
 	{{range .stylesheets}}<link rel="stylesheet" href="{{.}}">

@@ -58,26 +58,7 @@ type AdminAccountInfo struct {
 
 // AdminReportInfo models the admin view of a report.
 type AdminReportInfo struct {
-	// The ID of the report in the database.
-	ID string `json:"id"`
-	// The action taken to resolve this report.
-	ActionTaken string `json:"action_taken"`
-	// An optional reason for reporting.
-	Comment string `json:"comment"`
-	// The time the report was filed. (ISO 8601 Datetime)
-	CreatedAt string `json:"created_at"`
-	// The time of last action on this report. (ISO 8601 Datetime)
-	UpdatedAt string `json:"updated_at"`
-	// The account which filed the report.
-	Account *Account `json:"account"`
-	// The account being reported.
-	TargetAccount *Account `json:"target_account"`
-	// The account of the moderator assigned to this report.
-	AssignedAccount *Account `json:"assigned_account"`
-	// The action taken by the moderator who handled the report.
-	ActionTakenByAccount string `json:"action_taken_by_account"`
-	// Statuses attached to the report, for context.
-	Statuses []Status `json:"statuses"`
+	Report
 }
 
 // AdminEmoji models the admin view of a custom emoji.

@@ -25,6 +25,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
 )
@@ -47,6 +48,73 @@ func (r *reportDB) GetReportByID(ctx context.Context, id string) (*gtsmodel.Repo
 		},
 		id,
 	)
+}
+
+func (r *reportDB) GetReports(ctx context.Context, resolved *bool, accountID string, targetAccountID string, maxID string, sinceID string, minID string, limit int) ([]*gtsmodel.Report, db.Error) {
+	reportIDs := []string{}
+
+	q := r.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("reports"), bun.Ident("report")).
+		Column("report.id").
+		Order("report.id DESC")
+
+	if resolved != nil {
+		i := bun.Ident("report.action_taken_by_account_id")
+		if *resolved {
+			q = q.Where("? IS NOT NULL", i)
+		} else {
+			q = q.Where("? IS NULL", i)
+		}
+	}
+
+	if accountID != "" {
+		q = q.Where("? = ?", bun.Ident("report.account_id"), accountID)
+	}
+
+	if targetAccountID != "" {
+		q = q.Where("? = ?", bun.Ident("report.target_account_id"), targetAccountID)
+	}
+
+	if maxID != "" {
+		q = q.Where("? < ?", bun.Ident("report.id"), maxID)
+	}
+
+	if sinceID != "" {
+		q = q.Where("? > ?", bun.Ident("report.id"), minID)
+	}
+
+	if minID != "" {
+		q = q.Where("? > ?", bun.Ident("report.id"), minID)
+	}
+
+	if limit != 0 {
+		q = q.Limit(limit)
+	}
+
+	if err := q.Scan(ctx, &reportIDs); err != nil {
+		return nil, r.conn.ProcessError(err)
+	}
+
+	// Catch case of no reports early
+	if len(reportIDs) == 0 {
+		return nil, db.ErrNoEntries
+	}
+
+	// Allocate return slice (will be at most len reportIDs)
+	reports := make([]*gtsmodel.Report, 0, len(reportIDs))
+	for _, id := range reportIDs {
+		report, err := r.GetReportByID(ctx, id)
+		if err != nil {
+			log.Errorf("GetReports: error getting report %q: %v", id, err)
+			continue
+		}
+
+		// Append to return slice
+		reports = append(reports, report)
+	}
+
+	return reports, nil
 }
 
 func (r *reportDB) getReport(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Report) error, keyParts ...any) (*gtsmodel.Report, db.Error) {
