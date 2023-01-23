@@ -1996,7 +1996,7 @@ func NewTestReports() map[string]*gtsmodel.Report {
 			Forwarded:              TrueBool(),
 			ActionTaken:            "user was warned not to be a turtle anymore",
 			ActionTakenAt:          TimeMustParse("2022-05-15T17:01:56+02:00"),
-			ActionTakenByAccountID: "01AY6P665V14JJR0AFVRT7311Y",
+			ActionTakenByAccountID: "01F8MH17FWEB39HZJ76B6VXSKF",
 		},
 	}
 }

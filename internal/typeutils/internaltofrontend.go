@@ -256,6 +256,83 @@ func (c *converter) AccountToAPIAccountBlocked(ctx context.Context, a *gtsmodel.
 	}, nil
 }
 
+func (c *converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Account) (*apimodel.AdminAccountInfo, error) {
+	var (
+		email                  string
+		ip                     *string
+		domain                 *string
+		locale                 string
+		confirmed              bool
+		inviteRequest          *string
+		approved               bool
+		disabled               bool
+		silenced               bool
+		suspended              bool
+		role                   apimodel.AccountRole = apimodel.AccountRoleUser // assume user by default
+		createdByApplicationID string
+	)
+
+	// take user-level information if possible
+	if a.Domain != "" {
+		domain = &a.Domain
+	} else {
+		user, err := c.db.GetUserByAccountID(ctx, a.ID)
+		if err != nil {
+			return nil, fmt.Errorf("AccountToAdminAPIAccount: error getting user from database for account id %s: %w", a.ID, err)
+		}
+
+		if user.Email != "" {
+			email = user.Email
+		} else {
+			email = user.UnconfirmedEmail
+		}
+
+		if i := user.CurrentSignInIP.String(); i != "<nil>" {
+			ip = &i
+		}
+
+		locale = user.Locale
+		inviteRequest = &user.Account.Reason
+		if *user.Admin {
+			role = apimodel.AccountRoleAdmin
+		} else if *user.Moderator {
+			role = apimodel.AccountRoleModerator
+		}
+		confirmed = !user.ConfirmedAt.IsZero()
+		approved = *user.Approved
+		disabled = *user.Disabled
+		silenced = !user.Account.SilencedAt.IsZero()
+		suspended = !user.Account.SuspendedAt.IsZero()
+		createdByApplicationID = user.CreatedByApplicationID
+	}
+
+	apiAccount, err := c.AccountToAPIAccountPublic(ctx, a)
+	if err != nil {
+		return nil, fmt.Errorf("AccountToAdminAPIAccount: error converting account to api account for account id %s: %w", a.ID, err)
+	}
+
+	return &apimodel.AdminAccountInfo{
+		ID:                     a.ID,
+		Username:               a.Username,
+		Domain:                 domain,
+		CreatedAt:              util.FormatISO8601(a.CreatedAt),
+		Email:                  email,
+		IP:                     ip,
+		IPs:                    []interface{}{}, // not implemented,
+		Locale:                 locale,
+		InviteRequest:          inviteRequest,
+		Role:                   string(role),
+		Confirmed:              confirmed,
+		Approved:               approved,
+		Disabled:               disabled,
+		Silenced:               silenced,
+		Suspended:              suspended,
+		Account:                apiAccount,
+		CreatedByApplicationID: createdByApplicationID,
+		InvitedByAccountID:     "", // not implemented (yet)
+	}, nil
+}
+
 func (c *converter) AppToAPIAppSensitive(ctx context.Context, a *gtsmodel.Application) (*apimodel.Application, error) {
 	return &apimodel.Application{
 		ID:           a.ID,
@@ -825,7 +902,7 @@ func (c *converter) ReportToAPIReport(ctx context.Context, r *gtsmodel.Report) (
 	}
 
 	if actionComment := r.ActionTaken; actionComment != "" {
-		report.ActionComment = &actionComment
+		report.ActionTakenComment = &actionComment
 	}
 
 	if r.TargetAccount == nil {
@@ -843,6 +920,93 @@ func (c *converter) ReportToAPIReport(ctx context.Context, r *gtsmodel.Report) (
 	report.TargetAccount = apiAccount
 
 	return report, nil
+}
+
+func (c *converter) ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Report, requestingAccount *gtsmodel.Account) (*apimodel.AdminReport, error) {
+	var (
+		err                  error
+		actionTakenAt        *string
+		actionTakenComment   *string
+		actionTakenByAccount *apimodel.AdminAccountInfo
+	)
+
+	if !r.ActionTakenAt.IsZero() {
+		ata := util.FormatISO8601(r.ActionTakenAt)
+		actionTakenAt = &ata
+	}
+
+	if r.Account == nil {
+		r.Account, err = c.db.GetAccountByID(ctx, r.AccountID)
+		if err != nil {
+			return nil, fmt.Errorf("ReportToAdminAPIReport: error getting account with id %s from the db: %w", r.AccountID, err)
+		}
+	}
+	account, err := c.AccountToAdminAPIAccount(ctx, r.Account)
+	if err != nil {
+		return nil, fmt.Errorf("ReportToAdminAPIReport: error converting account with id %s to adminAPIAccount: %w", r.AccountID, err)
+	}
+
+	if r.TargetAccount == nil {
+		r.TargetAccount, err = c.db.GetAccountByID(ctx, r.TargetAccountID)
+		if err != nil {
+			return nil, fmt.Errorf("ReportToAdminAPIReport: error getting target account with id %s from the db: %w", r.TargetAccountID, err)
+		}
+	}
+	targetAccount, err := c.AccountToAdminAPIAccount(ctx, r.TargetAccount)
+	if err != nil {
+		return nil, fmt.Errorf("ReportToAdminAPIReport: error converting target account with id %s to adminAPIAccount: %w", r.TargetAccountID, err)
+	}
+
+	if r.ActionTakenByAccountID != "" {
+		if r.ActionTakenByAccount == nil {
+			r.ActionTakenByAccount, err = c.db.GetAccountByID(ctx, r.ActionTakenByAccountID)
+			if err != nil {
+				return nil, fmt.Errorf("ReportToAdminAPIReport: error getting action taken by account with id %s from the db: %w", r.ActionTakenByAccountID, err)
+			}
+		}
+
+		actionTakenByAccount, err = c.AccountToAdminAPIAccount(ctx, r.ActionTakenByAccount)
+		if err != nil {
+			return nil, fmt.Errorf("ReportToAdminAPIReport: error converting action taken by account with id %s to adminAPIAccount: %w", r.ActionTakenByAccountID, err)
+		}
+	}
+
+	statuses := make([]*apimodel.Status, 0, len(r.StatusIDs))
+	if len(r.StatusIDs) != 0 && len(r.Statuses) == 0 {
+		r.Statuses, err = c.db.GetStatuses(ctx, r.StatusIDs)
+		if err != nil {
+			return nil, fmt.Errorf("ReportToAdminAPIReport: error getting statuses from the db: %w", err)
+		}
+	}
+	for _, s := range r.Statuses {
+		status, err := c.StatusToAPIStatus(ctx, s, requestingAccount)
+		if err != nil {
+			return nil, fmt.Errorf("ReportToAdminAPIReport: error converting status with id %s to api status: %w", s.ID, err)
+		}
+		statuses = append(statuses, status)
+	}
+
+	if ac := r.ActionTaken; ac != "" {
+		actionTakenComment = &ac
+	}
+
+	return &apimodel.AdminReport{
+		ID:                   r.ID,
+		ActionTaken:          !r.ActionTakenAt.IsZero(),
+		ActionTakenAt:        actionTakenAt,
+		Category:             "other", // todo: only support default 'other' category right now
+		Comment:              r.Comment,
+		Forwarded:            *r.Forwarded,
+		CreatedAt:            util.FormatISO8601(r.CreatedAt),
+		UpdatedAt:            util.FormatISO8601(r.UpdatedAt),
+		Account:              account,
+		TargetAccount:        targetAccount,
+		AssignedAccount:      actionTakenByAccount,
+		ActionTakenByAccount: actionTakenByAccount,
+		ActionTakenComment:   actionTakenComment,
+		Statuses:             statuses,
+		Rules:                []interface{}{}, // not implemented
+	}, nil
 }
 
 // convertAttachmentsToAPIAttachments will convert a slice of GTS model attachments to frontend API model attachments, falling back to IDs if no GTS models supplied.

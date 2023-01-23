@@ -46,6 +46,12 @@ const (
 	AccountsActionPath = AccountsPathWithID + "/action"
 	MediaCleanupPath   = BasePath + "/media_cleanup"
 	MediaRefetchPath   = BasePath + "/media_refetch"
+	// ReportsPath is for serving admin view of user reports.
+	ReportsPath = BasePath + "/reports"
+	// ReportsPathWithID is for viewing/acting on one report.
+	ReportsPathWithID = ReportsPath + "/:" + IDKey
+	// ReportsResolvePath is for marking one report as resolved.
+	ReportsResolvePath = ReportsPathWithID + "/resolve"
 
 	// ExportQueryKey is for requesting a public export of some data.
 	ExportQueryKey = "export"
@@ -65,6 +71,15 @@ const (
 	LimitKey = "limit"
 	// DomainQueryKey is for specifying a domain during admin actions.
 	DomainQueryKey = "domain"
+	// ResolvedKey is for filtering reports by their resolved status
+	ResolvedKey = "resolved"
+	// AccountIDKey is for selecting account in API paths.
+	AccountIDKey = "account_id"
+	// TargetAccountIDKey is for selecting target account in API paths.
+	TargetAccountIDKey = "target_account_id"
+	MaxIDKey           = "max_id"
+	SinceIDKey         = "since_id"
+	MinIDKey           = "min_id"
 )
 
 type Module struct {
@@ -78,17 +93,29 @@ func New(processor processing.Processor) *Module {
 }
 
 func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
+	// emoji stuff
 	attachHandler(http.MethodPost, EmojiPath, m.EmojiCreatePOSTHandler)
 	attachHandler(http.MethodGet, EmojiPath, m.EmojisGETHandler)
 	attachHandler(http.MethodDelete, EmojiPathWithID, m.EmojiDELETEHandler)
 	attachHandler(http.MethodGet, EmojiPathWithID, m.EmojiGETHandler)
 	attachHandler(http.MethodPatch, EmojiPathWithID, m.EmojiPATCHHandler)
+	attachHandler(http.MethodGet, EmojiCategoriesPath, m.EmojiCategoriesGETHandler)
+
+	// domain block stuff
 	attachHandler(http.MethodPost, DomainBlocksPath, m.DomainBlocksPOSTHandler)
 	attachHandler(http.MethodGet, DomainBlocksPath, m.DomainBlocksGETHandler)
 	attachHandler(http.MethodGet, DomainBlocksPathWithID, m.DomainBlockGETHandler)
 	attachHandler(http.MethodDelete, DomainBlocksPathWithID, m.DomainBlockDELETEHandler)
+
+	// accounts stuff
 	attachHandler(http.MethodPost, AccountsActionPath, m.AccountActionPOSTHandler)
+
+	// media stuff
 	attachHandler(http.MethodPost, MediaCleanupPath, m.MediaCleanupPOSTHandler)
 	attachHandler(http.MethodPost, MediaRefetchPath, m.MediaRefetchPOSTHandler)
-	attachHandler(http.MethodGet, EmojiCategoriesPath, m.EmojiCategoriesGETHandler)
+
+	// reports stuff
+	attachHandler(http.MethodGet, ReportsPath, m.ReportsGETHandler)
+	attachHandler(http.MethodGet, ReportsPathWithID, m.ReportGETHandler)
+	attachHandler(http.MethodPost, ReportsResolvePath, m.ReportResolvePOSTHandler)
 }

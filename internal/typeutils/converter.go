@@ -89,6 +89,8 @@ type TypeConverter interface {
 	DomainBlockToAPIDomainBlock(ctx context.Context, b *gtsmodel.DomainBlock, export bool) (*apimodel.DomainBlock, error)
 	// ReportToAPIReport converts a gts model report into an api model report, for serving at /api/v1/reports
 	ReportToAPIReport(ctx context.Context, r *gtsmodel.Report) (*apimodel.Report, error)
+	// ReportToAdminAPIReport converts a gts model report into an admin view report, for serving at /api/v1/admin/reports
+	ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Report, requestingAccount *gtsmodel.Account) (*apimodel.AdminReport, error)
 
 	/*
 		INTERNAL (gts) MODEL TO FRONTEND (rss) MODEL
