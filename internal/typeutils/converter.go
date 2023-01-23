@@ -87,6 +87,8 @@ type TypeConverter interface {
 	NotificationToAPINotification(ctx context.Context, n *gtsmodel.Notification) (*apimodel.Notification, error)
 	// DomainBlockToAPIDomainBlock converts a gts model domin block into a api domain block, for serving at /api/v1/admin/domain_blocks
 	DomainBlockToAPIDomainBlock(ctx context.Context, b *gtsmodel.DomainBlock, export bool) (*apimodel.DomainBlock, error)
+	// ReportToAPIReport converts a gts model report into an api model report, for serving at /api/v1/reports
+	ReportToAPIReport(ctx context.Context, r *gtsmodel.Report) (*apimodel.Report, error)
 
 	/*
 		INTERNAL (gts) MODEL TO FRONTEND (rss) MODEL
