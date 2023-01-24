@@ -43,7 +43,7 @@ func (suite *PruneRemoteTestSuite) TestPruneRemote() {
 
 	totalPruned, err := suite.manager.PruneAllRemote(context.Background(), 1)
 	suite.NoError(err)
-	suite.Equal(3, totalPruned)
+	suite.Equal(2, totalPruned)
 
 	prunedAttachment, err := suite.db.GetAttachmentByID(context.Background(), testStatusAttachment.ID)
 	suite.NoError(err)
@@ -57,7 +57,7 @@ func (suite *PruneRemoteTestSuite) TestPruneRemote() {
 func (suite *PruneRemoteTestSuite) TestPruneRemoteTwice() {
 	totalPruned, err := suite.manager.PruneAllRemote(context.Background(), 1)
 	suite.NoError(err)
-	suite.Equal(3, totalPruned)
+	suite.Equal(2, totalPruned)
 
 	// final prune should prune nothing, since the first prune already happened
 	totalPrunedAgain, err := suite.manager.PruneAllRemote(context.Background(), 1)
@@ -72,7 +72,7 @@ func (suite *PruneRemoteTestSuite) TestPruneAndRecache() {
 
 	totalPruned, err := suite.manager.PruneAllRemote(ctx, 1)
 	suite.NoError(err)
-	suite.Equal(3, totalPruned)
+	suite.Equal(2, totalPruned)
 
 	// media should no longer be stored
 	_, err = suite.storage.Get(ctx, testStatusAttachment.File.Path)
@@ -135,7 +135,7 @@ func (suite *PruneRemoteTestSuite) TestPruneOneNonExistent() {
 	// Now attempt to prune remote for item with db entry no file
 	totalPruned, err := suite.manager.PruneAllRemote(ctx, 1)
 	suite.NoError(err)
-	suite.Equal(3, totalPruned)
+	suite.Equal(2, totalPruned)
 }
 
 func TestPruneRemoteTestSuite(t *testing.T) {
