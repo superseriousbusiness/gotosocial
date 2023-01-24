@@ -19,6 +19,7 @@
 package web
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -39,6 +40,12 @@ func (m *Module) domainBlockListGETHandler(c *gin.Context) {
 		return
 	}
 
+	if !config.GetInstanceExposeSuspendedWeb() && (authed.Account == nil || authed.User == nil) {
+		err := fmt.Errorf("peers open query requires an authenticated account/user")
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
+		return
+	}
+
 	host := config.GetHost()
 	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
 	if err != nil {
@@ -46,7 +53,7 @@ func (m *Module) domainBlockListGETHandler(c *gin.Context) {
 		return
 	}
 
-	domainBlocks, errWithCode := m.processor.AdminDomainBlocksGet(c.Request.Context(), authed, false)
+	domainBlocks, errWithCode := m.processor.InstancePeersGet(c.Request.Context(), true, false, false)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return

@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 
@@ -105,6 +106,8 @@ func (m *Module) InstancePeersGETHandler(c *gin.Context) {
 		return
 	}
 
+	var isUnauthenticated = authed.Account == nil || authed.User == nil
+
 	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
@@ -136,7 +139,19 @@ func (m *Module) InstancePeersGETHandler(c *gin.Context) {
 		flat = true
 	}
 
-	data, errWithCode := m.processor.InstancePeersGet(c.Request.Context(), authed, includeSuspended, includeOpen, flat)
+	if includeOpen && !config.GetInstanceExposePeers() && isUnauthenticated {
+		err := fmt.Errorf("peers open query requires an authenticated account/user")
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
+		return
+	}
+
+	if includeSuspended && !config.GetInstanceExposeSuspended() && isUnauthenticated {
+		err := fmt.Errorf("peers suspended query requires an authenticated account/user")
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
+		return
+	}
+
+	data, errWithCode := m.processor.InstancePeersGet(c.Request.Context(), includeSuspended, includeOpen, flat)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return

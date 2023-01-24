@@ -172,7 +172,7 @@ type Processor interface {
 
 	// InstanceGet retrieves instance information for serving at api/v1/instance
 	InstanceGet(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode)
-	InstancePeersGet(ctx context.Context, authed *oauth.Auth, includeSuspended bool, includeOpen bool, flat bool) (interface{}, gtserror.WithCode)
+	InstancePeersGet(ctx context.Context, includeSuspended bool, includeOpen bool, flat bool) (interface{}, gtserror.WithCode)
 	// InstancePatch updates this instance according to the given form.
 	//
 	// It should already be ascertained that the requesting account is authenticated and an admin.
