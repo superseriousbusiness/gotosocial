@@ -323,10 +323,32 @@ func (f *federatingDB) activityLike(ctx context.Context, asType vocab.Type, rece
 */
 
 func (f *federatingDB) activityFlag(ctx context.Context, asType vocab.Type, receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) error {
-	_, ok := asType.(vocab.ActivityStreamsFlag)
+	flag, ok := asType.(vocab.ActivityStreamsFlag)
 	if !ok {
 		return errors.New("activityFlag: could not convert type to flag")
 	}
+
+	report, err := f.typeConverter.ASFlagToReport(ctx, flag)
+	if err != nil {
+		return fmt.Errorf("activityFlag: could not convert Flag to report: %w", err)
+	}
+
+	newID, err := id.NewULID()
+	if err != nil {
+		return err
+	}
+	report.ID = newID
+
+	if err := f.db.PutReport(ctx, report); err != nil {
+		return fmt.Errorf("activityFlag: database error inserting report: %w", err)
+	}
+
+	f.fedWorker.Queue(messages.FromFederator{
+		APObjectType:     ap.ActivityFlag,
+		APActivityType:   ap.ActivityCreate,
+		GTSModel:         report,
+		ReceivingAccount: receivingAccount,
+	})
 
 	return nil
 }

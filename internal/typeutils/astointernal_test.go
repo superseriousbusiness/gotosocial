@@ -35,6 +35,20 @@ type ASToInternalTestSuite struct {
 	TypeUtilsTestSuite
 }
 
+func (suite *ASToInternalTestSuite) jsonToType(in string) vocab.Type {
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(in), &m); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	t, err := streams.ToType(context.Background(), m)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	return t
+}
+
 func (suite *ASToInternalTestSuite) TestParsePerson() {
 	testPerson := suite.testPeople["https://unknown-instance.com/users/brand_new_person"]
 
@@ -80,15 +94,11 @@ func (suite *ASToInternalTestSuite) TestParsePersonWithSharedInbox() {
 }
 
 func (suite *ASToInternalTestSuite) TestParsePublicStatus() {
-	m := make(map[string]interface{})
-	err := json.Unmarshal([]byte(publicStatusActivityJson), &m)
-	suite.NoError(err)
-
-	t, err := streams.ToType(context.Background(), m)
-	suite.NoError(err)
-
+	t := suite.jsonToType(publicStatusActivityJson)
 	rep, ok := t.(ap.Statusable)
-	suite.True(ok)
+	if !ok {
+		suite.FailNow("type not coercible")
+	}
 
 	status, err := suite.typeconverter.ASStatusToStatus(context.Background(), rep)
 	suite.NoError(err)
@@ -98,15 +108,11 @@ func (suite *ASToInternalTestSuite) TestParsePublicStatus() {
 }
 
 func (suite *ASToInternalTestSuite) TestParsePublicStatusNoURL() {
-	m := make(map[string]interface{})
-	err := json.Unmarshal([]byte(publicStatusActivityJsonNoURL), &m)
-	suite.NoError(err)
-
-	t, err := streams.ToType(context.Background(), m)
-	suite.NoError(err)
-
+	t := suite.jsonToType(publicStatusActivityJsonNoURL)
 	rep, ok := t.(ap.Statusable)
-	suite.True(ok)
+	if !ok {
+		suite.FailNow("type not coercible")
+	}
 
 	status, err := suite.typeconverter.ASStatusToStatus(context.Background(), rep)
 	suite.NoError(err)
@@ -119,35 +125,23 @@ func (suite *ASToInternalTestSuite) TestParsePublicStatusNoURL() {
 }
 
 func (suite *ASToInternalTestSuite) TestParseGargron() {
-	m := make(map[string]interface{})
-	err := json.Unmarshal([]byte(gargronAsActivityJson), &m)
-	suite.NoError(err)
-
-	t, err := streams.ToType(context.Background(), m)
-	suite.NoError(err)
-
+	t := suite.jsonToType(gargronAsActivityJson)
 	rep, ok := t.(ap.Accountable)
-	suite.True(ok)
+	if !ok {
+		suite.FailNow("type not coercible")
+	}
 
 	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), rep, "", false)
 	suite.NoError(err)
-
 	suite.Equal("https://mastodon.social/inbox", *acct.SharedInboxURI)
-
-	fmt.Printf("%+v", acct)
-	// TODO: write assertions here, rn we're just eyeballing the output
 }
 
 func (suite *ASToInternalTestSuite) TestParseReplyWithMention() {
-	m := make(map[string]interface{})
-	err := json.Unmarshal([]byte(statusWithMentionsActivityJson), &m)
-	suite.NoError(err)
-
-	t, err := streams.ToType(context.Background(), m)
-	suite.NoError(err)
-
+	t := suite.jsonToType(statusWithMentionsActivityJson)
 	create, ok := t.(vocab.ActivityStreamsCreate)
-	suite.True(ok)
+	if !ok {
+		suite.FailNow("type not coercible")
+	}
 
 	object := create.GetActivityStreamsObject()
 	var status *gtsmodel.Status
@@ -183,15 +177,11 @@ func (suite *ASToInternalTestSuite) TestParseReplyWithMention() {
 }
 
 func (suite *ASToInternalTestSuite) TestParseOwncastService() {
-	m := make(map[string]interface{})
-	err := json.Unmarshal([]byte(owncastService), &m)
-	suite.NoError(err)
-
-	t, err := streams.ToType(context.Background(), m)
-	suite.NoError(err)
-
+	t := suite.jsonToType(owncastService)
 	rep, ok := t.(ap.Accountable)
-	suite.True(ok)
+	if !ok {
+		suite.FailNow("type not coercible")
+	}
 
 	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), rep, "", false)
 	suite.NoError(err)
@@ -226,7 +216,193 @@ func (suite *ASToInternalTestSuite) TestParseOwncastService() {
 }
 
 func (suite *ASToInternalTestSuite) TestParseFlag1() {
-	
+	reportedAccount := suite.testAccounts["local_account_1"]
+	reportingAccount := suite.testAccounts["remote_account_1"]
+	reportedStatus := suite.testStatuses["local_account_1_status_1"]
+
+	raw := `{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": "` + reportingAccount.URI + `",
+  "content": "Note: ` + reportedStatus.URL + `\n-----\nban this sick filth ⛔",
+  "id": "http://fossbros-anonymous.io/db22128d-884e-4358-9935-6a7c3940535d",
+  "object": "` + reportedAccount.URI + `",
+  "type": "Flag"
+}`
+
+	t := suite.jsonToType(raw)
+	asFlag, ok := t.(ap.Flaggable)
+	if !ok {
+		suite.FailNow("type not coercible")
+	}
+
+	report, err := suite.typeconverter.ASFlagToReport(context.Background(), asFlag)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal(report.AccountID, reportingAccount.ID)
+	suite.Equal(report.TargetAccountID, reportedAccount.ID)
+	suite.Len(report.StatusIDs, 1)
+	suite.Len(report.Statuses, 1)
+	suite.Equal(report.Statuses[0].ID, reportedStatus.ID)
+	suite.Equal(report.Comment, "Note: "+reportedStatus.URL+"\n-----\nban this sick filth ⛔")
+}
+
+func (suite *ASToInternalTestSuite) TestParseFlag2() {
+	reportedAccount := suite.testAccounts["local_account_1"]
+	reportingAccount := suite.testAccounts["remote_account_1"]
+	// report a status that doesn't exist
+	reportedStatusURL := "http://localhost:8080/@the_mighty_zork/01GQHR6MCQSTCP85ZG4A0VR316"
+
+	raw := `{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": "` + reportingAccount.URI + `",
+  "content": "Note: ` + reportedStatusURL + `\n-----\nban this sick filth ⛔",
+  "id": "http://fossbros-anonymous.io/db22128d-884e-4358-9935-6a7c3940535d",
+  "object": "` + reportedAccount.URI + `",
+  "type": "Flag"
+}`
+
+	t := suite.jsonToType(raw)
+	asFlag, ok := t.(ap.Flaggable)
+	if !ok {
+		suite.FailNow("type not coercible")
+	}
+
+	report, err := suite.typeconverter.ASFlagToReport(context.Background(), asFlag)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal(report.AccountID, reportingAccount.ID)
+	suite.Equal(report.TargetAccountID, reportedAccount.ID)
+
+	// nonexistent status should just be skipped, it'll still be in the content though
+	suite.Len(report.StatusIDs, 0)
+	suite.Len(report.Statuses, 0)
+	suite.Equal(report.Comment, "Note: "+reportedStatusURL+"\n-----\nban this sick filth ⛔")
+}
+
+func (suite *ASToInternalTestSuite) TestParseFlag3() {
+	// flag an account that doesn't exist
+	reportedAccountURI := "http://localhost:8080/users/mr_e_man"
+	reportingAccount := suite.testAccounts["remote_account_1"]
+
+	raw := `{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": "` + reportingAccount.URI + `",
+  "content": "ban this sick filth ⛔",
+  "id": "http://fossbros-anonymous.io/db22128d-884e-4358-9935-6a7c3940535d",
+  "object": "` + reportedAccountURI + `",
+  "type": "Flag"
+}`
+
+	t := suite.jsonToType(raw)
+	asFlag, ok := t.(ap.Flaggable)
+	if !ok {
+		suite.FailNow("type not coercible")
+	}
+
+	report, err := suite.typeconverter.ASFlagToReport(context.Background(), asFlag)
+	suite.Nil(report)
+	suite.EqualError(err, "ASFlagToReport: account with uri http://localhost:8080/users/mr_e_man could not be found in the db")
+}
+
+func (suite *ASToInternalTestSuite) TestParseFlag4() {
+	// flag an account from another instance
+	reportingAccount := suite.testAccounts["remote_account_1"]
+	reportedAccountURI := suite.testAccounts["remote_account_2"].URI
+
+	raw := `{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": "` + reportingAccount.URI + `",
+  "content": "ban this sick filth ⛔",
+  "id": "http://fossbros-anonymous.io/db22128d-884e-4358-9935-6a7c3940535d",
+  "object": "` + reportedAccountURI + `",
+  "type": "Flag"
+}`
+
+	t := suite.jsonToType(raw)
+	asFlag, ok := t.(ap.Flaggable)
+	if !ok {
+		suite.FailNow("type not coercible")
+	}
+
+	report, err := suite.typeconverter.ASFlagToReport(context.Background(), asFlag)
+	suite.Nil(report)
+	suite.EqualError(err, "ASFlagToReport: flaggable objects contained no recognizable target account uri")
+}
+
+func (suite *ASToInternalTestSuite) TestParseFlag5() {
+	reportedAccount := suite.testAccounts["local_account_1"]
+	reportingAccount := suite.testAccounts["remote_account_1"]
+	reportedStatus := suite.testStatuses["local_account_1_status_1"]
+
+	raw := `{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": "` + reportingAccount.URI + `",
+  "content": "misinformation",
+  "id": "http://fossbros-anonymous.io/db22128d-884e-4358-9935-6a7c3940535d",
+  "object": [
+    "` + reportedAccount.URI + `",
+    "` + reportedStatus.URI + `"
+  ],
+  "type": "Flag"
+  }`
+
+	t := suite.jsonToType(raw)
+	asFlag, ok := t.(ap.Flaggable)
+	if !ok {
+		suite.FailNow("type not coercible")
+	}
+
+	report, err := suite.typeconverter.ASFlagToReport(context.Background(), asFlag)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal(report.AccountID, reportingAccount.ID)
+	suite.Equal(report.TargetAccountID, reportedAccount.ID)
+	suite.Len(report.StatusIDs, 1)
+	suite.Len(report.Statuses, 1)
+	suite.Equal(report.Statuses[0].ID, reportedStatus.ID)
+	suite.Equal(report.Comment, "misinformation")
+}
+
+func (suite *ASToInternalTestSuite) TestParseFlag6() {
+	reportedAccount := suite.testAccounts["local_account_1"]
+	reportingAccount := suite.testAccounts["remote_account_1"]
+	// flag a status that belongs to another account
+	reportedStatus := suite.testStatuses["local_account_2_status_1"]
+
+	raw := `{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": "` + reportingAccount.URI + `",
+  "content": "misinformation",
+  "id": "http://fossbros-anonymous.io/db22128d-884e-4358-9935-6a7c3940535d",
+  "object": [
+    "` + reportedAccount.URI + `",
+    "` + reportedStatus.URI + `"
+  ],
+  "type": "Flag"
+  }`
+
+	t := suite.jsonToType(raw)
+	asFlag, ok := t.(ap.Flaggable)
+	if !ok {
+		suite.FailNow("type not coercible")
+	}
+
+	report, err := suite.typeconverter.ASFlagToReport(context.Background(), asFlag)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal(report.AccountID, reportingAccount.ID)
+	suite.Equal(report.TargetAccountID, reportedAccount.ID)
+	suite.Len(report.StatusIDs, 0)
+	suite.Len(report.Statuses, 0)
+	suite.Equal(report.Comment, "misinformation")
 }
 
 func TestASToInternalTestSuite(t *testing.T) {
