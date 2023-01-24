@@ -60,6 +60,22 @@ func (suite *ReportTestSuite) TestGetReportByURI() {
 	suite.NotEmpty(report.URI)
 }
 
+func (suite *ReportTestSuite) TestGetAllReports() {
+	reports, err := suite.db.GetReports(context.Background(), nil, "", "", "", "", "", 0)
+	suite.NoError(err)
+	suite.NotEmpty(reports)
+}
+
+func (suite *ReportTestSuite) TestGetAllReportsByAccountID() {
+	accountID := suite.testAccounts["local_account_2"].ID
+	reports, err := suite.db.GetReports(context.Background(), nil, accountID, "", "", "", "", 0)
+	suite.NoError(err)
+	suite.NotEmpty(reports)
+	for _, r := range reports {
+		suite.Equal(accountID, r.AccountID)
+	}
+}
+
 func (suite *ReportTestSuite) TestPutReport() {
 	ctx := context.Background()
 

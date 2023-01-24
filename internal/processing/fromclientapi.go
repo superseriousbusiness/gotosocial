@@ -121,6 +121,12 @@ func (p *processor) ProcessFromClientAPI(ctx context.Context, clientMsg messages
 			// DELETE ACCOUNT/PROFILE
 			return p.processDeleteAccountFromClientAPI(ctx, clientMsg)
 		}
+	case ap.ActivityFlag:
+		// FLAG
+		if clientMsg.APObjectType == ap.ObjectProfile {
+			// FLAG/REPORT A PROFILE
+			return p.processReportAccountFromClientAPI(ctx, clientMsg)
+		}
 	}
 	return nil
 }
@@ -336,6 +342,13 @@ func (p *processor) processDeleteAccountFromClientAPI(ctx context.Context, clien
 	}
 
 	return p.accountProcessor.Delete(ctx, clientMsg.TargetAccount, origin)
+}
+
+func (p *processor) processReportAccountFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+	// TODO: in a separate PR, handle side effects of flag/report
+	// 1. email admin(s)
+	// 2. federate report if necessary
+	return nil
 }
 
 // TODO: move all the below functions into federation.Federator
