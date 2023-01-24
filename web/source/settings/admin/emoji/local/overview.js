@@ -27,7 +27,6 @@ const query = require("../../../lib/query");
 const { useEmojiByCategory } = require("../category-select");
 const Loading = require("../../../components/loading");
 const { Error } = require("../../../components/error");
-const FormWithData = require("../../../lib/form/form-with-data");
 
 module.exports = function EmojiOverview({ baseUrl }) {
 	const {
