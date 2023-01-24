@@ -460,7 +460,6 @@ label {
 }
 
 .domain-blocklist {
-	border: $boxshadow-border;
 	box-shadow: $boxshadow;
 
 	.entry {
@@ -468,6 +467,8 @@ label {
 		grid-template-columns: 15rem 1fr;
 		gap: 0.5rem;
 		align-items: start;
+		border: $boxshadow-border;
+		border-top-color: transparent;
 
 		& > div {
 			display: flex;
