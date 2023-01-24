@@ -225,6 +225,10 @@ func (suite *ASToInternalTestSuite) TestParseOwncastService() {
 	fmt.Printf("\n\n\n%s\n\n\n", string(b))
 }
 
+func (suite *ASToInternalTestSuite) TestParseFlag1() {
+	
+}
+
 func TestASToInternalTestSuite(t *testing.T) {
 	suite.Run(t, new(ASToInternalTestSuite))
 }

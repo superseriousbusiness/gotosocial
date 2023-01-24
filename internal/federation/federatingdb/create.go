@@ -323,32 +323,10 @@ func (f *federatingDB) activityLike(ctx context.Context, asType vocab.Type, rece
 */
 
 func (f *federatingDB) activityFlag(ctx context.Context, asType vocab.Type, receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) error {
-	flag, ok := asType.(vocab.ActivityStreamsFlag)
+	_, ok := asType.(vocab.ActivityStreamsFlag)
 	if !ok {
 		return errors.New("activityFlag: could not convert type to flag")
 	}
-
-	report, err := f.typeConverter.ASFlagToReport(ctx, flag)
-	if err != nil {
-		return fmt.Errorf("activityLike: could not convert Like to fave: %s", err)
-	}
-
-	newID, err := id.NewULID()
-	if err != nil {
-		return err
-	}
-	fave.ID = newID
-
-	if err := f.db.Put(ctx, fave); err != nil {
-		return fmt.Errorf("activityLike: database error inserting fave: %s", err)
-	}
-
-	f.fedWorker.Queue(messages.FromFederator{
-		APObjectType:     ap.ActivityLike,
-		APActivityType:   ap.ActivityCreate,
-		GTSModel:         fave,
-		ReceivingAccount: receivingAccount,
-	})
 
 	return nil
 }

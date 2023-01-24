@@ -153,7 +153,7 @@ var (
 
 	// MisskeyReportNotes captures a list of Note URIs from report content created by Misskey.
 	// https://regex101.com/r/EnTOBV/1
-	MisskeyReportNotes = regexp.MustCompile(`(?:^Note: ((?:http|https):\/\/.*)$)`)
+	MisskeyReportNotes = regexp.MustCompile(`(?m)(?:^Note: ((?:http|https):\/\/.*)$)`)
 )
 
 // bufpool is a memory pool of byte buffers for use in our regex utility functions.

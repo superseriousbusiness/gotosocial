@@ -599,9 +599,12 @@ func (c *converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) 
 
 	// Get the content of the report.
 	// For Mastodon, this will just be a string, or nothing.
-	// In Misskey's case, it may also contain the URIs of
+	// In Misskey's case, it may also contain the URLs of
 	// one or more reported statuses, so extract these too.
 	content := ap.ExtractContent(flaggable)
+	statusURIs := []*url.URL{}
+	inlineURLs := misskeyReportInlineURLs(content)
+	statusURIs = append(statusURIs, inlineURLs...)
 
 	// Extract account and statuses targeted by the flag / report.
 	//
@@ -621,11 +624,7 @@ func (c *converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) 
 		return nil, errors.New("ASFlagToReport: flaggable objects empty, can't create report")
 	}
 
-	var (
-		targetAccountURI *url.URL
-		statusURIs       = make([]*url.URL, 0, len(objects)-1)
-	)
-
+	var targetAccountURI *url.URL
 	for _, object := range objects {
 		switch {
 		case object.Host != config.GetHost():
@@ -653,20 +652,30 @@ func (c *converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) 
 		return nil, fmt.Errorf("ASFlagToReport: db error getting account with uri %s: %w", targetAccountURI.String(), err)
 	}
 
-	// If we got some status URIs, try to get them from the db too.
+	// If we got some status URIs, try to get them from the db now
 	var (
 		statusIDs = make([]string, 0, len(statusURIs))
 		statuses  = make([]*gtsmodel.Status, 0, len(statusURIs))
 	)
 	for _, statusURI := range statusURIs {
 		statusURIString := statusURI.String()
+
+		// try getting this status by URI first, then URL
 		status, err := c.db.GetStatusByURI(ctx, statusURIString)
 		if err != nil {
-			if errors.Is(err, db.ErrNoEntries) {
-				log.Warnf("ASFlagToReport: reported status with uri %s could not be found in the db, skipping it", statusURIString)
+			if !errors.Is(err, db.ErrNoEntries) {
+				return nil, fmt.Errorf("ASFlagToReport: db error getting status with uri %s: %w", statusURIString, err)
+			}
+
+			status, err = c.db.GetStatusByURL(ctx, statusURIString)
+			if err != nil {
+				if !errors.Is(err, db.ErrNoEntries) {
+					return nil, fmt.Errorf("ASFlagToReport: db error getting status with url %s: %w", statusURIString, err)
+				}
+
+				log.Warnf("ASFlagToReport: reported status %s could not be found in the db, skipping it", statusURIString)
 				continue
 			}
-			return nil, fmt.Errorf("ASFlagToReport: db error getting status with uri %s: %w", statusURIString, err)
 		}
 
 		if status.AccountID != targetAccount.ID {
@@ -678,8 +687,6 @@ func (c *converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) 
 		statuses = append(statuses, status)
 	}
 
-	
-
 	// id etc should be handled the caller, so just return what we got
 	return &gtsmodel.Report{
 		URI:             uri,
@@ -687,6 +694,7 @@ func (c *converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) 
 		Account:         account,
 		TargetAccountID: targetAccount.ID,
 		TargetAccount:   targetAccount,
+		Comment:         content,
 		StatusIDs:       statusIDs,
 		Statuses:        statuses,
 	}, nil
