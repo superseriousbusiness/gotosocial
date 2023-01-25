@@ -41,7 +41,7 @@ func (m *Module) domainBlockListGETHandler(c *gin.Context) {
 	}
 
 	if !config.GetInstanceExposeSuspendedWeb() && (authed.Account == nil || authed.User == nil) {
-		err := fmt.Errorf("This instance does not expose the list of suspended domains publicly.")
+		err := fmt.Errorf("this instance does not expose the list of suspended domains publicly")
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
