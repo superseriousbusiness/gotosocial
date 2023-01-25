@@ -76,21 +76,23 @@ module.exports = function InstanceOverview({ baseUrl }) {
 					<span>
 						{blockedInstancesList.length} blocked instance{blockedInstancesList.length != 1 ? "s" : ""} {filtered > 0 && `(${filtered} filtered by search)`}
 					</span>
-					<div className="list scrolling">
-						{filteredInstances.map((entry) => {
-							return (
-								<Link key={entry.domain} to={`${baseUrl}/${entry.domain}`}>
-									<a className="entry nounderline">
-										<span id="domain">
-											{entry.domain}
-										</span>
-										<span id="date">
-											{new Date(entry.created_at).toLocaleString()}
-										</span>
-									</a>
-								</Link>
-							);
-						})}
+					<div className="list">
+						<div className="entries scrolling">
+							{filteredInstances.map((entry) => {
+								return (
+									<Link key={entry.domain} to={`${baseUrl}/${entry.domain}`}>
+										<a className="entry nounderline">
+											<span id="domain">
+												{entry.domain}
+											</span>
+											<span id="date">
+												{new Date(entry.created_at).toLocaleString()}
+											</span>
+										</a>
+									</Link>
+								);
+							})}
+						</div>
 					</div>
 				</div>
 			</div>

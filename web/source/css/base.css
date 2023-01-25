@@ -419,11 +419,6 @@ label {
 	display: flex;
 	flex-direction: column;
 
-	&.scrolling {
-		max-height: 40rem;
-		overflow: auto;
-	}
-
 	.header, .entry {
 		padding: 0.5rem;
 	}
@@ -433,6 +428,17 @@ label {
 		background: $gray1 !important;
 		display: flex;
 		font-weight: bold;
+	}
+
+	.entries {
+		display: flex;
+		flex-direction: column;
+
+		&.scrolling {
+			height: 20rem;
+			max-height: 20rem;
+			overflow: auto;
+		}
 	}
 
 	input[type=checkbox] {
