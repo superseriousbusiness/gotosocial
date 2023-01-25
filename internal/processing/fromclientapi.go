@@ -345,10 +345,19 @@ func (p *processor) processDeleteAccountFromClientAPI(ctx context.Context, clien
 }
 
 func (p *processor) processReportAccountFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
-	// TODO: in a separate PR, handle side effects of flag/report
-	// 1. email admin(s)
-	// 2. federate report if necessary
-	return nil
+	report, ok := clientMsg.GTSModel.(*gtsmodel.Report)
+	if !ok {
+		return errors.New("report was not parseable as *gtsmodel.Report")
+	}
+
+	// TODO: in a separate PR, also email admin(s)
+
+	if !*report.Forwarded {
+		// nothing to do, don't federate the report
+		return nil
+	}
+
+	return p.federateReport(ctx, report)
 }
 
 // TODO: move all the below functions into federation.Federator
@@ -920,5 +929,53 @@ func (p *processor) federateUnblock(ctx context.Context, block *gtsmodel.Block) 
 		return fmt.Errorf("federateUnblock: error parsing outboxURI %s: %s", block.Account.OutboxURI, err)
 	}
 	_, err = p.federator.FederatingActor().Send(ctx, outboxIRI, undo)
+	return err
+}
+
+func (p *processor) federateReport(ctx context.Context, report *gtsmodel.Report) error {
+	if report.TargetAccount == nil {
+		reportTargetAccount, err := p.db.GetAccountByID(ctx, report.TargetAccountID)
+		if err != nil {
+			return fmt.Errorf("federateReport: error getting report target account from database: %w", err)
+		}
+		report.TargetAccount = reportTargetAccount
+	}
+
+	if len(report.StatusIDs) > 0 && len(report.Statuses) == 0 {
+		statuses, err := p.db.GetStatuses(ctx, report.StatusIDs)
+		if err != nil {
+			return fmt.Errorf("federateReport: error getting report statuses from database: %w", err)
+		}
+		report.Statuses = statuses
+	}
+
+	flag, err := p.tc.ReportToASFlag(ctx, report)
+	if err != nil {
+		return fmt.Errorf("federateReport: error converting report to AS flag: %w", err)
+	}
+
+	// add bto so that our federating actor knows where to
+	// send the Flag; it'll still use a shared inbox if possible
+	reportTargetURI, err := url.Parse(report.TargetAccount.URI)
+	if err != nil {
+		return fmt.Errorf("federateReport: error parsing outboxURI %s: %w", report.TargetAccount.URI, err)
+	}
+	bTo := streams.NewActivityStreamsBtoProperty()
+	bTo.AppendIRI(reportTargetURI)
+	flag.SetActivityStreamsBto(bTo)
+
+	// deliver the flag using the outbox of the
+	// instance account to anonymize the report
+	instanceAccount, err := p.db.GetInstanceAccount(ctx, "")
+	if err != nil {
+		return fmt.Errorf("federateReport: error getting instance account: %w", err)
+	}
+
+	outboxIRI, err := url.Parse(instanceAccount.OutboxURI)
+	if err != nil {
+		return fmt.Errorf("federateReport: error parsing outboxURI %s: %w", instanceAccount.OutboxURI, err)
+	}
+
+	_, err = p.federator.FederatingActor().Send(ctx, outboxIRI, flag)
 	return err
 }

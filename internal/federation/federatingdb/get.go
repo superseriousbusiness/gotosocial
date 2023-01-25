@@ -20,7 +20,7 @@ package federatingdb
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"net/url"
 
 	"codeberg.org/gruf/go-kv"
@@ -33,34 +33,27 @@ import (
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, err error) {
-	l := log.WithFields(kv.Fields{
-		{"id", id},
-	}...)
+	l := log.WithFields(kv.Fields{{"id", id}}...)
 	l.Debug("entering Get")
 
-	if uris.IsUserPath(id) {
+	switch {
+	case uris.IsUserPath(id):
 		acct, err := f.db.GetAccountByURI(ctx, id.String())
 		if err != nil {
 			return nil, err
 		}
 		return f.typeConverter.AccountToAS(ctx, acct)
-	}
-
-	if uris.IsStatusesPath(id) {
+	case uris.IsStatusesPath(id):
 		status, err := f.db.GetStatusByURI(ctx, id.String())
 		if err != nil {
 			return nil, err
 		}
 		return f.typeConverter.StatusToAS(ctx, status)
-	}
-
-	if uris.IsFollowersPath(id) {
+	case uris.IsFollowersPath(id):
 		return f.Followers(ctx, id)
-	}
-
-	if uris.IsFollowingPath(id) {
+	case uris.IsFollowingPath(id):
 		return f.Following(ctx, id)
+	default:
+		return nil, fmt.Errorf("federatingDB: could not Get %s", id.String())
 	}
-
-	return nil, errors.New("could not get")
 }

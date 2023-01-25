@@ -621,7 +621,7 @@ func ExtractActor(i WithActor) (*url.URL, error) {
 	return nil, errors.New("no iri found for actor prop")
 }
 
-// ExtractObject extracts a URL object from a WithObject interface.
+// ExtractObject extracts the first URL object from a WithObject interface.
 func ExtractObject(i WithObject) (*url.URL, error) {
 	objectProp := i.GetActivityStreamsObject()
 	if objectProp == nil {

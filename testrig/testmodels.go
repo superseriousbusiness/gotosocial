@@ -1928,7 +1928,7 @@ func NewTestReports() map[string]*gtsmodel.Report {
 			ID:              "01GP3AWY4CRDVRNZKW0TEAMB5R",
 			CreatedAt:       TimeMustParse("2022-05-14T12:20:03+02:00"),
 			UpdatedAt:       TimeMustParse("2022-05-14T12:20:03+02:00"),
-			URI:             "http://localhost:8080/01GP3AWY4CRDVRNZKW0TEAMB5R",
+			URI:             "http://localhost:8080/reports/01GP3AWY4CRDVRNZKW0TEAMB5R",
 			AccountID:       "01F8MH5NBDF2MV7CTC4Q5128HF",
 			TargetAccountID: "01F8MH5ZK5VRH73AKHQM6Y9VNX",
 			Comment:         "dark souls sucks, please yeet this nerd",
