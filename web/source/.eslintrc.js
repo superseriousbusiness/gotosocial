@@ -22,6 +22,6 @@ module.exports = {
 	"extends": ["@joepie91/eslint-config/react"],
 	"plugins": ["license-header"],
 	"rules": {
-		"license-header/header": ["error", ".license-header.js"]
+		"license-header/header": ["error", __dirname + "/.license-header.js"]
 	}
 };
