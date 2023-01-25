@@ -20,9 +20,11 @@ package federatingdb_test
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -81,6 +83,50 @@ func (suite *CreateTestSuite) TestCreateNoteForward() {
 
 	// but we should have a uri set
 	suite.Equal("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1", msg.APIri.String())
+}
+
+func (suite *CreateTestSuite) TestCreateFlag1() {
+	reportedAccount := suite.testAccounts["local_account_1"]
+	reportingAccount := suite.testAccounts["remote_account_1"]
+	reportedStatus := suite.testStatuses["local_account_1_status_1"]
+
+	raw := `{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": "` + reportingAccount.URI + `",
+  "content": "Note: ` + reportedStatus.URL + `\n-----\nban this sick filth ⛔",
+  "id": "http://fossbros-anonymous.io/db22128d-884e-4358-9935-6a7c3940535d",
+  "object": "` + reportedAccount.URI + `",
+  "type": "Flag"
+}`
+
+	m := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(raw), &m); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	t, err := streams.ToType(context.Background(), m)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	ctx := createTestContext(reportedAccount, reportingAccount)
+	if err := suite.federatingDB.Create(ctx, t); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// should be a message heading to the processor now, which we can intercept here
+	msg := <-suite.fromFederator
+	suite.Equal(ap.ActivityFlag, msg.APObjectType)
+	suite.Equal(ap.ActivityCreate, msg.APActivityType)
+
+	// shiny new report should be defined on the message
+	suite.NotNil(msg.GTSModel)
+	report := msg.GTSModel.(*gtsmodel.Report)
+
+	// report should be in the database
+	if _, err := suite.db.GetReportByID(context.Background(), report.ID); err != nil {
+		suite.FailNow(err.Error())
+	}
 }
 
 func TestCreateTestSuite(t *testing.T) {

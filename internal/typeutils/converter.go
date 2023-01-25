@@ -141,6 +141,8 @@ type TypeConverter interface {
 	//
 	// NOTE -- this is different from one status being boosted multiple times! In this case, new boosts should indeed be created.
 	ASAnnounceToStatus(ctx context.Context, announceable ap.Announceable) (status *gtsmodel.Status, new bool, err error)
+	// ASFlagToReport converts a remote activitystreams 'flag' representation into a gts model report.
+	ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) (report *gtsmodel.Report, err error)
 
 	/*
 		INTERNAL (gts) MODEL TO ACTIVITYSTREAMS MODEL

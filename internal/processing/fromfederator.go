@@ -82,6 +82,9 @@ func (p *processor) ProcessFromFederator(ctx context.Context, federatorMsg messa
 		case ap.ActivityBlock:
 			// CREATE A BLOCK
 			return p.processCreateBlockFromFederator(ctx, federatorMsg)
+		case ap.ActivityFlag:
+			// CREATE A FLAG / REPORT
+			return p.processCreateFlagFromFederator(ctx, federatorMsg)
 		}
 	case ap.ActivityUpdate:
 		// UPDATE SOMETHING
@@ -354,6 +357,13 @@ func (p *processor) processCreateBlockFromFederator(ctx context.Context, federat
 	// TODO: same with notifications
 	// TODO: same with bookmarks
 
+	return nil
+}
+
+func (p *processor) processCreateFlagFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
+	// TODO: handle side effects of flag creation:
+	// - send email to admins
+	// - notify admins
 	return nil
 }
 
