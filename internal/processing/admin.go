@@ -81,3 +81,15 @@ func (p *processor) AdminMediaPrune(ctx context.Context, mediaRemoteCacheDays in
 func (p *processor) AdminMediaRefetch(ctx context.Context, authed *oauth.Auth, domain string) gtserror.WithCode {
 	return p.adminProcessor.MediaRefetch(ctx, authed.Account, domain)
 }
+
+func (p *processor) AdminReportsGet(ctx context.Context, authed *oauth.Auth, resolved *bool, accountID string, targetAccountID string, maxID string, sinceID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
+	return p.adminProcessor.ReportsGet(ctx, authed.Account, resolved, accountID, targetAccountID, maxID, sinceID, minID, limit)
+}
+
+func (p *processor) AdminReportGet(ctx context.Context, authed *oauth.Auth, id string) (*apimodel.AdminReport, gtserror.WithCode) {
+	return p.adminProcessor.ReportGet(ctx, authed.Account, id)
+}
+
+func (p *processor) AdminReportResolve(ctx context.Context, authed *oauth.Auth, id string, actionTakenComment *string) (*apimodel.AdminReport, gtserror.WithCode) {
+	return p.adminProcessor.ReportResolve(ctx, authed.Account, id, actionTakenComment)
+}

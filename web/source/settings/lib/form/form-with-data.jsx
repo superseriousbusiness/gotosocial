@@ -19,19 +19,24 @@
 "use strict";
 
 const React = require("react");
+const { Error } = require("../../components/error");
 
 const Loading = require("../../components/loading");
 
 // Wrap Form component inside component that fires the RTK Query call,
 // so Form will only be rendered when data is available to generate form-fields for
 module.exports = function FormWithData({ dataQuery, DataForm, queryArg, ...formProps }) {
-	const { data, isLoading } = dataQuery(queryArg);
+	const { data, isLoading, isError, error } = dataQuery(queryArg);
 
 	if (isLoading) {
 		return (
 			<div>
 				<Loading />
 			</div>
+		);
+	} else if (isError) {
+		return (
+			<Error error={error} />
 		);
 	} else {
 		return <DataForm data={data} {...formProps} />;
