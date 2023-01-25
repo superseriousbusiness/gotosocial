@@ -54,7 +54,7 @@ var testDefaults = config.Configuration{
 	DbDatabase:          "postgres",
 	DbSqliteJournalMode: "WAL",
 	DbSqliteSynchronous: "NORMAL",
-	DbSqliteCacheSize:   64 * bytesize.MiB,
+	DbSqliteCacheSize:   8 * bytesize.MiB,
 	DbSqliteBusyTimeout: time.Minute * 5,
 
 	WebTemplateBaseDir: "./web/template/",

@@ -131,7 +131,7 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 	}
 
 	// https://bun.uptrace.dev/guide/running-bun-in-production.html#database-sql
-	maxOpenConns := 4 * runtime.GOMAXPROCS(0)
+	maxOpenConns := 2 * runtime.GOMAXPROCS(0)
 	conn.DB.SetMaxOpenConns(maxOpenConns)
 	conn.DB.SetMaxIdleConns(maxOpenConns)
 	conn.DB.SetConnMaxLifetime(0) // always keep at least one conn open

@@ -182,11 +182,11 @@ db-sqlite-synchronous: "NORMAL"
 
 # Byte size. SQlite cache size.
 # SQLite only -- unused otherwise.
-# If set to empty string or zero, the sqlite default will be used.
+# If set to empty string or zero, the sqlite default (2MiB) will be used.
 # See: https://www.sqlite.org/pragma.html#pragma_cache_size
-# Examples: ["32MiB", "0", "64MiB"]
-# Default: "64MiB"
-db-sqlite-cache-size: "64MiB"
+# Examples: ["0", "2MiB", "8MiB", "64MiB"]
+# Default: "8MiB"
+db-sqlite-cache-size: "8MiB"
 
 # Duration. SQlite busy timeout.
 # SQLite only -- unused otherwise.
