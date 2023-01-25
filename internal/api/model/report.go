@@ -38,7 +38,7 @@ type Report struct {
 	// If an action was taken, what comment was made by the admin on the taken action?
 	// Will be null if not set / no action yet taken.
 	// example: Account was suspended.
-	ActionComment *string `json:"action_taken_comment"`
+	ActionTakenComment *string `json:"action_taken_comment"`
 	// Under what category was this report created?
 	// example: spam
 	Category string `json:"category"`

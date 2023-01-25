@@ -356,6 +356,103 @@ definitions:
         type: object
         x-go-name: Relationship
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    adminAccountInfo:
+        properties:
+            account:
+                $ref: '#/definitions/account'
+            approved:
+                description: Whether the account is currently approved.
+                type: boolean
+                x-go-name: Approved
+            confirmed:
+                description: Whether the account has confirmed their email address.
+                type: boolean
+                x-go-name: Confirmed
+            created_at:
+                description: When the account was first discovered. (ISO 8601 Datetime)
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: CreatedAt
+            created_by_application_id:
+                description: The ID of the application that created this account.
+                type: string
+                x-go-name: CreatedByApplicationID
+            disabled:
+                description: Whether the account is currently disabled.
+                type: boolean
+                x-go-name: Disabled
+            domain:
+                description: |-
+                    The domain of the account.
+                    Null for local accounts.
+                example: example.org
+                type: string
+                x-go-name: Domain
+            email:
+                description: |-
+                    The email address associated with the account.
+                    Empty string for remote accounts or accounts with
+                    no known email address.
+                example: someone@somewhere.com
+                type: string
+                x-go-name: Email
+            id:
+                description: The ID of the account in the database.
+                example: 01GQ4PHNT622DQ9X95XQX4KKNR
+                type: string
+                x-go-name: ID
+            invite_request:
+                description: |-
+                    The reason given when requesting an invite.
+                    Null if not known / remote account.
+                example: Pleaaaaaaaaaaaaaaase!!
+                type: string
+                x-go-name: InviteRequest
+            invited_by_account_id:
+                description: The ID of the account that invited this user
+                type: string
+                x-go-name: InvitedByAccountID
+            ip:
+                description: |-
+                    The IP address last used to login to this account.
+                    Null if not known.
+                example: 192.0.2.1
+                type: string
+                x-go-name: IP
+            ips:
+                description: |-
+                    All known IP addresses associated with this account.
+                    NOT IMPLEMENTED (will always be empty array).
+                example: []
+                items: {}
+                type: array
+                x-go-name: IPs
+            locale:
+                description: The locale of the account. (ISO 639 Part 1 two-letter language code)
+                example: en
+                type: string
+                x-go-name: Locale
+            role:
+                description: The current role of the account.
+                type: string
+                x-go-name: Role
+            silenced:
+                description: Whether the account is currently silenced
+                type: boolean
+                x-go-name: Silenced
+            suspended:
+                description: Whether the account is currently suspended.
+                type: boolean
+                x-go-name: Suspended
+            username:
+                description: The username of the account.
+                example: dril
+                type: string
+                x-go-name: Username
+        title: AdminAccountInfo models the admin view of an account's details.
+        type: object
+        x-go-name: AdminAccountInfo
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     adminEmoji:
         properties:
             category:
@@ -422,6 +519,86 @@ definitions:
         title: AdminEmoji models the admin view of a custom emoji.
         type: object
         x-go-name: AdminEmoji
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    adminReport:
+        properties:
+            account:
+                $ref: '#/definitions/adminAccountInfo'
+            action_taken:
+                description: Whether an action has been taken by an admin in response to this report.
+                example: false
+                type: boolean
+                x-go-name: ActionTaken
+            action_taken_at:
+                description: |-
+                    If an action was taken, at what time was this done? (ISO 8601 Datetime)
+                    Will be null if not set / no action yet taken.
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: ActionTakenAt
+            action_taken_by_account:
+                $ref: '#/definitions/adminAccountInfo'
+            action_taken_comment:
+                description: |-
+                    If an action was taken, what comment was made by the admin on the taken action?
+                    Will be null if not set / no action yet taken.
+                example: Account was suspended.
+                type: string
+                x-go-name: ActionTakenComment
+            assigned_account:
+                $ref: '#/definitions/adminAccountInfo'
+            category:
+                description: Under what category was this report created?
+                example: spam
+                type: string
+                x-go-name: Category
+            comment:
+                description: |-
+                    Comment submitted when the report was created.
+                    Will be empty if no comment was submitted.
+                example: This person has been harassing me.
+                type: string
+                x-go-name: Comment
+            created_at:
+                description: The date when this report was created (ISO 8601 Datetime).
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: CreatedAt
+            forwarded:
+                description: Bool to indicate that report should be federated to remote instance.
+                example: true
+                type: boolean
+                x-go-name: Forwarded
+            id:
+                description: ID of the report.
+                example: 01FBVD42CQ3ZEEVMW180SBX03B
+                type: string
+                x-go-name: ID
+            rule_ids:
+                description: |-
+                    Array of rule IDs that were submitted along with this report.
+                    NOT IMPLEMENTED, will always be empty array.
+                items: {}
+                type: array
+                x-go-name: Rules
+            statuses:
+                description: |-
+                    Array of  statuses that were submitted along with this report.
+                    Will be empty if no status IDs were submitted with the report.
+                items:
+                    $ref: '#/definitions/status'
+                type: array
+                x-go-name: Statuses
+            target_account:
+                $ref: '#/definitions/adminAccountInfo'
+            updated_at:
+                description: Time of last action on this report (ISO 8601 Datetime).
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: UpdatedAt
+        title: AdminReport models the admin view of a report.
+        type: object
+        x-go-name: AdminReport
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     advancedVisibilityFlagsForm:
         description: |-
@@ -1278,71 +1455,12 @@ definitions:
     mediaMeta:
         description: This can be metadata about an image, an audio file, video, etc.
         properties:
-            aspect:
-                description: |-
-                    Aspect ratio of the media.
-                    Equal to width / height.
-                example: 1.777777778
-                format: float
-                type: number
-                x-go-name: Aspect
-            audio_bitrate:
-                type: string
-                x-go-name: AudioBitrate
-            audio_channels:
-                type: string
-                x-go-name: AudioChannels
-            audio_encode:
-                type: string
-                x-go-name: AudioEncode
-            duration:
-                description: |-
-                    Duration of the media in seconds.
-                    Only set for video and audio.
-                example: 5.43
-                format: float
-                type: number
-                x-go-name: Duration
             focus:
                 $ref: '#/definitions/mediaFocus'
-            fps:
-                description: |-
-                    Framerate of the media.
-                    Only set for video and gifs.
-                example: 30
-                format: uint16
-                type: integer
-                x-go-name: FPS
-            height:
-                description: |-
-                    Height of the media in pixels.
-                    Not set for audio.
-                example: 1080
-                format: int64
-                type: integer
-                x-go-name: Height
-            length:
-                type: string
-                x-go-name: Length
             original:
                 $ref: '#/definitions/mediaDimensions'
-            size:
-                description: |-
-                    Size of the media, in the format `[width]x[height]`.
-                    Not set for audio.
-                example: 1920x1080
-                type: string
-                x-go-name: Size
             small:
                 $ref: '#/definitions/mediaDimensions'
-            width:
-                description: |-
-                    Width of the media in pixels.
-                    Not set for audio.
-                example: 1920
-                format: int64
-                type: integer
-                x-go-name: Width
         title: MediaMeta models media metadata.
         type: object
         x-go-name: MediaMeta
@@ -1530,7 +1648,7 @@ definitions:
                     Will be null if not set / no action yet taken.
                 example: Account was suspended.
                 type: string
-                x-go-name: ActionComment
+                x-go-name: ActionTakenComment
             category:
                 description: Under what category was this report created?
                 example: spam
@@ -3331,6 +3449,147 @@ paths:
                 - OAuth2 Bearer:
                     - admin
             summary: Refetch media specified in the database but missing from storage.
+            tags:
+                - admin
+    /api/v1/admin/reports:
+        get:
+            description: |-
+                The reports will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
+
+                The next and previous queries can be parsed from the returned Link header.
+
+                Example:
+
+                ```
+                <https://example.org/api/v1/admin/reports?limit=20&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/admin/reports?limit=20&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
+            operationId: adminReports
+            parameters:
+                - description: If set to true, only resolved reports will be returned. If false, only unresolved reports will be returned. If unset, reports will not be filtered on their resolved status.
+                  in: query
+                  name: resolved
+                  type: boolean
+                - description: Return only reports created by the given account id.
+                  in: query
+                  name: account_id
+                  type: string
+                - description: Return only reports that target the given account id.
+                  in: query
+                  name: target_account_id
+                  type: string
+                - description: Return only reports *OLDER* than the given max ID. The report with the specified ID will not be included in the response.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: Return only reports *NEWER* than the given since ID. The report with the specified ID will not be included in the response. This parameter is functionally equivalent to min_id.
+                  in: query
+                  name: since_id
+                  type: string
+                - description: Return only reports *NEWER* than the given min ID. The report with the specified ID will not be included in the response. This parameter is functionally equivalent to since_id.
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 20
+                  description: Number of reports to return. If less than 1, will be clamped to 1. If more than 100, will be clamped to 100.
+                  in: query
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Array of reports.
+                    schema:
+                        items:
+                            $ref: '#/definitions/adminReport'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: View user moderation reports.
+            tags:
+                - admin
+    /api/v1/admin/reports/{id}:
+        get:
+            operationId: adminReportGet
+            parameters:
+                - description: The id of the report.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The requested report.
+                    schema:
+                        $ref: '#/definitions/adminReport'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: View user moderation report with the given id.
+            tags:
+                - admin
+    /api/v1/admin/reports/{id}/resolve:
+        post:
+            consumes:
+                - application/json
+                - application/xml
+                - multipart/form-data
+            operationId: adminReportResolve
+            parameters:
+                - description: The id of the report.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - description: Optional admin comment on the action taken in response to this report. Useful for providing an explanation about what action was taken (if any) before the report was marked as resolved. This will be visible to the user that created the report!
+                  example: The reported account was suspended.
+                  in: formData
+                  name: action_taken_comment
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The resolved report.
+                    schema:
+                        $ref: '#/definitions/adminReport'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Mark a report as resolved.
             tags:
                 - admin
     /api/v1/apps:

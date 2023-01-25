@@ -140,6 +140,13 @@ type Processor interface {
 	AdminMediaPrune(ctx context.Context, mediaRemoteCacheDays int) gtserror.WithCode
 	// AdminMediaRefetch triggers a refetch of remote media for the given domain (or all if domain is empty).
 	AdminMediaRefetch(ctx context.Context, authed *oauth.Auth, domain string) gtserror.WithCode
+	// AdminReportsGet returns a list of user moderation reports.
+	AdminReportsGet(ctx context.Context, authed *oauth.Auth, resolved *bool, accountID string, targetAccountID string, maxID string, sinceID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode)
+	// AdminReportGet returns a single user moderation report, specified by id.
+	AdminReportGet(ctx context.Context, authed *oauth.Auth, id string) (*apimodel.AdminReport, gtserror.WithCode)
+	// AdminReportResolve marks a single user moderation report as resolved, with the given id.
+	// actionTakenComment is optional: if set, this will be stored as a comment on the action taken.
+	AdminReportResolve(ctx context.Context, authed *oauth.Auth, id string, actionTakenComment *string) (*apimodel.AdminReport, gtserror.WithCode)
 
 	// AppCreate processes the creation of a new API application
 	AppCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, gtserror.WithCode)
