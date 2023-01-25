@@ -78,6 +78,7 @@ func (s *ConfigState) AddServerFlags(cmd *cobra.Command) {
 		// Instance
 		cmd.Flags().Bool(InstanceExposePeersFlag(), cfg.InstanceExposePeers, fieldtag("InstanceExposePeers", "usage"))
 		cmd.Flags().Bool(InstanceExposeSuspendedFlag(), cfg.InstanceExposeSuspended, fieldtag("InstanceExposeSuspended", "usage"))
+		cmd.Flags().Bool(InstanceExposeSuspendedWebFlag(), cfg.InstanceExposeSuspendedWeb, fieldtag("InstanceExposeSuspendedWeb", "usage"))
 		cmd.Flags().Bool(InstanceDeliverToSharedInboxesFlag(), cfg.InstanceDeliverToSharedInboxes, fieldtag("InstanceDeliverToSharedInboxes", "usage"))
 
 		// Accounts

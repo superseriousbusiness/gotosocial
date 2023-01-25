@@ -28,7 +28,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
@@ -48,15 +47,10 @@ func (p *processor) InstanceGet(ctx context.Context, domain string) (*apimodel.I
 	return ai, nil
 }
 
-func (p *processor) InstancePeersGet(ctx context.Context, authed *oauth.Auth, includeSuspended bool, includeOpen bool, flat bool) (interface{}, gtserror.WithCode) {
+func (p *processor) InstancePeersGet(ctx context.Context, includeSuspended bool, includeOpen bool, flat bool) (interface{}, gtserror.WithCode) {
 	domains := []*apimodel.Domain{}
 
 	if includeOpen {
-		if !config.GetInstanceExposePeers() && (authed.Account == nil || authed.User == nil) {
-			err := fmt.Errorf("peers open query requires an authenticated account/user")
-			return nil, gtserror.NewErrorUnauthorized(err, err.Error())
-		}
-
 		instances, err := p.db.GetInstancePeers(ctx, false)
 		if err != nil && err != db.ErrNoEntries {
 			err = fmt.Errorf("error selecting instance peers: %s", err)
@@ -70,11 +64,6 @@ func (p *processor) InstancePeersGet(ctx context.Context, authed *oauth.Auth, in
 	}
 
 	if includeSuspended {
-		if !config.GetInstanceExposeSuspended() && (authed.Account == nil || authed.User == nil) {
-			err := fmt.Errorf("peers suspended query requires an authenticated account/user")
-			return nil, gtserror.NewErrorUnauthorized(err, err.Error())
-		}
-
 		domainBlocks := []*gtsmodel.DomainBlock{}
 		if err := p.db.GetAll(ctx, &domainBlocks); err != nil && err != db.ErrNoEntries {
 			return nil, gtserror.NewErrorInternalError(err)

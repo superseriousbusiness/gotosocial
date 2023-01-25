@@ -49,7 +49,9 @@ Disallow: /emoji/
 # panels
 Disallow: /admin
 Disallow: /user
-Disallow: /settings/`
+Disallow: /settings/
+# domain blocklist
+Disallow: /about/suspended`
 )
 
 // robotsGETHandler returns a decent robots.txt that prevents crawling
