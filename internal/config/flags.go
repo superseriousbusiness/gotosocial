@@ -51,6 +51,7 @@ func (s *ConfigState) AddGlobalFlags(cmd *cobra.Command) {
 		cmd.PersistentFlags().String(DbDatabaseFlag(), cfg.DbDatabase, fieldtag("DbDatabase", "usage"))
 		cmd.PersistentFlags().String(DbTLSModeFlag(), cfg.DbTLSMode, fieldtag("DbTLSMode", "usage"))
 		cmd.PersistentFlags().String(DbTLSCACertFlag(), cfg.DbTLSCACert, fieldtag("DbTLSCACert", "usage"))
+		cmd.PersistentFlags().Int(DbMaxOpenConnsMultiplierFlag(), cfg.DbMaxOpenConnsMultiplier, fieldtag("DbMaxOpenConnsMultiplier", "usage"))
 		cmd.PersistentFlags().String(DbSqliteJournalModeFlag(), cfg.DbSqliteJournalMode, fieldtag("DbSqliteJournalMode", "usage"))
 		cmd.PersistentFlags().String(DbSqliteSynchronousFlag(), cfg.DbSqliteSynchronous, fieldtag("DbSqliteSynchronous", "usage"))
 		cmd.PersistentFlags().Uint64(DbSqliteCacheSizeFlag(), uint64(cfg.DbSqliteCacheSize), fieldtag("DbSqliteCacheSize", "usage"))
@@ -78,6 +79,7 @@ func (s *ConfigState) AddServerFlags(cmd *cobra.Command) {
 		// Instance
 		cmd.Flags().Bool(InstanceExposePeersFlag(), cfg.InstanceExposePeers, fieldtag("InstanceExposePeers", "usage"))
 		cmd.Flags().Bool(InstanceExposeSuspendedFlag(), cfg.InstanceExposeSuspended, fieldtag("InstanceExposeSuspended", "usage"))
+		cmd.Flags().Bool(InstanceExposeSuspendedWebFlag(), cfg.InstanceExposeSuspendedWeb, fieldtag("InstanceExposeSuspendedWeb", "usage"))
 		cmd.Flags().Bool(InstanceDeliverToSharedInboxesFlag(), cfg.InstanceDeliverToSharedInboxes, fieldtag("InstanceDeliverToSharedInboxes", "usage"))
 
 		// Accounts

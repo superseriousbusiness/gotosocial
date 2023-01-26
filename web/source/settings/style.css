@@ -368,49 +368,6 @@ span.form-info {
 	font-weight: initial;
 }
 
-.list {
-	display: flex;
-	flex-direction: column;
-
-	&.scrolling {
-		max-height: 40rem;
-		overflow: auto;
-	}
-
-	.header, .entry {
-		padding: 0.5rem;
-	}
-
-	.header {
-		border: 0.1rem solid transparent; /* for alignment with .entry border padding */
-		background: $gray2;
-		display: flex;
-	}
-
-	input[type=checkbox] {
-		margin-left: 0.5rem;
-	}
-
-	.entry {
-		display: flex;
-		flex-wrap: wrap;
-		background: $settings-entry-bg;
-		border: 0.1rem solid transparent;
-
-		&:nth-child(even) {
-			background: $settings-entry-alternate-bg;
-		}
-	
-		&:hover {
-			background: $settings-entry-hover-bg;
-		}
-	
-		&:active, &:focus, &:hover {
-			border-color: $fg-accent;
-		}
-	}
-}
-
 .checkbox-list {
 	.header, .entry {
 		gap: 1rem;
@@ -446,7 +403,7 @@ span.form-info {
 }
 
 .emoji-list {
-	background: $settings-entry-bg;
+	background: $list-entry-bg;
 
 	.entry {
 		flex-direction: column;
@@ -472,7 +429,7 @@ span.form-info {
 				}
 
 				&:hover {
-					background: $settings-entry-hover-bg;
+					background: $list-entry-hover-bg;
 				}
 			}
 		}

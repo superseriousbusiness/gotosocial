@@ -58,24 +58,26 @@ type Configuration struct {
 	TrustedProxies  []string `name:"trusted-proxies" usage:"Proxies to trust when parsing x-forwarded headers into real IPs."`
 	SoftwareVersion string   `name:"software-version" usage:""`
 
-	DbType              string        `name:"db-type" usage:"Database type: eg., postgres"`
-	DbAddress           string        `name:"db-address" usage:"Database ipv4 address, hostname, or filename"`
-	DbPort              int           `name:"db-port" usage:"Database port"`
-	DbUser              string        `name:"db-user" usage:"Database username"`
-	DbPassword          string        `name:"db-password" usage:"Database password"`
-	DbDatabase          string        `name:"db-database" usage:"Database name"`
-	DbTLSMode           string        `name:"db-tls-mode" usage:"Database tls mode"`
-	DbTLSCACert         string        `name:"db-tls-ca-cert" usage:"Path to CA cert for db tls connection"`
-	DbSqliteJournalMode string        `name:"db-sqlite-journal-mode" usage:"Sqlite only: see https://www.sqlite.org/pragma.html#pragma_journal_mode"`
-	DbSqliteSynchronous string        `name:"db-sqlite-synchronous" usage:"Sqlite only: see https://www.sqlite.org/pragma.html#pragma_synchronous"`
-	DbSqliteCacheSize   bytesize.Size `name:"db-sqlite-cache-size" usage:"Sqlite only: see https://www.sqlite.org/pragma.html#pragma_cache_size"`
-	DbSqliteBusyTimeout time.Duration `name:"db-sqlite-busy-timeout" usage:"Sqlite only: see https://www.sqlite.org/pragma.html#pragma_busy_timeout"`
+	DbType                   string        `name:"db-type" usage:"Database type: eg., postgres"`
+	DbAddress                string        `name:"db-address" usage:"Database ipv4 address, hostname, or filename"`
+	DbPort                   int           `name:"db-port" usage:"Database port"`
+	DbUser                   string        `name:"db-user" usage:"Database username"`
+	DbPassword               string        `name:"db-password" usage:"Database password"`
+	DbDatabase               string        `name:"db-database" usage:"Database name"`
+	DbTLSMode                string        `name:"db-tls-mode" usage:"Database tls mode"`
+	DbTLSCACert              string        `name:"db-tls-ca-cert" usage:"Path to CA cert for db tls connection"`
+	DbMaxOpenConnsMultiplier int           `name:"db-max-open-conns-multiplier" usage:"Multiplier to use per cpu for max open database connections. 0 or less is normalized to 1."`
+	DbSqliteJournalMode      string        `name:"db-sqlite-journal-mode" usage:"Sqlite only: see https://www.sqlite.org/pragma.html#pragma_journal_mode"`
+	DbSqliteSynchronous      string        `name:"db-sqlite-synchronous" usage:"Sqlite only: see https://www.sqlite.org/pragma.html#pragma_synchronous"`
+	DbSqliteCacheSize        bytesize.Size `name:"db-sqlite-cache-size" usage:"Sqlite only: see https://www.sqlite.org/pragma.html#pragma_cache_size"`
+	DbSqliteBusyTimeout      time.Duration `name:"db-sqlite-busy-timeout" usage:"Sqlite only: see https://www.sqlite.org/pragma.html#pragma_busy_timeout"`
 
 	WebTemplateBaseDir string `name:"web-template-base-dir" usage:"Basedir for html templating files for rendering pages and composing emails."`
 	WebAssetBaseDir    string `name:"web-asset-base-dir" usage:"Directory to serve static assets from, accessible at example.org/assets/"`
 
 	InstanceExposePeers            bool `name:"instance-expose-peers" usage:"Allow unauthenticated users to query /api/v1/instance/peers?filter=open"`
 	InstanceExposeSuspended        bool `name:"instance-expose-suspended" usage:"Expose suspended instances via web UI, and allow unauthenticated users to query /api/v1/instance/peers?filter=suspended"`
+	InstanceExposeSuspendedWeb     bool `name:"instance-expose-suspended-web" usage:"Expose list of suspended instances as webpage on /about/suspended"`
 	InstanceExposePublicTimeline   bool `name:"instance-expose-public-timeline" usage:"Allow unauthenticated users to query /api/v1/timelines/public"`
 	InstanceDeliverToSharedInboxes bool `name:"instance-deliver-to-shared-inboxes" usage:"Deliver federated messages to shared inboxes, if they're available."`
 

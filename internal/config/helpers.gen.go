@@ -524,6 +524,31 @@ func GetDbTLSCACert() string { return global.GetDbTLSCACert() }
 // SetDbTLSCACert safely sets the value for global configuration 'DbTLSCACert' field
 func SetDbTLSCACert(v string) { global.SetDbTLSCACert(v) }
 
+// GetDbMaxOpenConnsMultiplier safely fetches the Configuration value for state's 'DbMaxOpenConnsMultiplier' field
+func (st *ConfigState) GetDbMaxOpenConnsMultiplier() (v int) {
+	st.mutex.Lock()
+	v = st.config.DbMaxOpenConnsMultiplier
+	st.mutex.Unlock()
+	return
+}
+
+// SetDbMaxOpenConnsMultiplier safely sets the Configuration value for state's 'DbMaxOpenConnsMultiplier' field
+func (st *ConfigState) SetDbMaxOpenConnsMultiplier(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.DbMaxOpenConnsMultiplier = v
+	st.reloadToViper()
+}
+
+// DbMaxOpenConnsMultiplierFlag returns the flag name for the 'DbMaxOpenConnsMultiplier' field
+func DbMaxOpenConnsMultiplierFlag() string { return "db-max-open-conns-multiplier" }
+
+// GetDbMaxOpenConnsMultiplier safely fetches the value for global configuration 'DbMaxOpenConnsMultiplier' field
+func GetDbMaxOpenConnsMultiplier() int { return global.GetDbMaxOpenConnsMultiplier() }
+
+// SetDbMaxOpenConnsMultiplier safely sets the value for global configuration 'DbMaxOpenConnsMultiplier' field
+func SetDbMaxOpenConnsMultiplier(v int) { global.SetDbMaxOpenConnsMultiplier(v) }
+
 // GetDbSqliteJournalMode safely fetches the Configuration value for state's 'DbSqliteJournalMode' field
 func (st *ConfigState) GetDbSqliteJournalMode() (v string) {
 	st.mutex.Lock()
@@ -723,6 +748,31 @@ func GetInstanceExposeSuspended() bool { return global.GetInstanceExposeSuspende
 
 // SetInstanceExposeSuspended safely sets the value for global configuration 'InstanceExposeSuspended' field
 func SetInstanceExposeSuspended(v bool) { global.SetInstanceExposeSuspended(v) }
+
+// GetInstanceExposeSuspendedWeb safely fetches the Configuration value for state's 'InstanceExposeSuspendedWeb' field
+func (st *ConfigState) GetInstanceExposeSuspendedWeb() (v bool) {
+	st.mutex.Lock()
+	v = st.config.InstanceExposeSuspendedWeb
+	st.mutex.Unlock()
+	return
+}
+
+// SetInstanceExposeSuspendedWeb safely sets the Configuration value for state's 'InstanceExposeSuspendedWeb' field
+func (st *ConfigState) SetInstanceExposeSuspendedWeb(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceExposeSuspendedWeb = v
+	st.reloadToViper()
+}
+
+// InstanceExposeSuspendedWebFlag returns the flag name for the 'InstanceExposeSuspendedWeb' field
+func InstanceExposeSuspendedWebFlag() string { return "instance-expose-suspended-web" }
+
+// GetInstanceExposeSuspendedWeb safely fetches the value for global configuration 'InstanceExposeSuspendedWeb' field
+func GetInstanceExposeSuspendedWeb() bool { return global.GetInstanceExposeSuspendedWeb() }
+
+// SetInstanceExposeSuspendedWeb safely sets the value for global configuration 'InstanceExposeSuspendedWeb' field
+func SetInstanceExposeSuspendedWeb(v bool) { global.SetInstanceExposeSuspendedWeb(v) }
 
 // GetInstanceExposePublicTimeline safely fetches the Configuration value for state's 'InstanceExposePublicTimeline' field
 func (st *ConfigState) GetInstanceExposePublicTimeline() (v bool) {

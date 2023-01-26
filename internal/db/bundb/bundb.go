@@ -222,6 +222,32 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 	return ps, nil
 }
 
+func pgConn(ctx context.Context) (*DBConn, error) {
+	opts, err := deriveBunDBPGOptions() //nolint:contextcheck
+	if err != nil {
+		return nil, fmt.Errorf("could not create bundb postgres options: %s", err)
+	}
+
+	sqldb := stdlib.OpenDB(*opts)
+
+	// Tune db connections for postgres, see:
+	// - https://bun.uptrace.dev/guide/running-bun-in-production.html#database-sql
+	// - https://www.alexedwards.net/blog/configuring-sqldb
+	sqldb.SetMaxOpenConns(maxOpenConns())     // x number of conns per CPU
+	sqldb.SetMaxIdleConns(2)                  // assume default 2; if max idle is less than max open, it will be automatically adjusted
+	sqldb.SetConnMaxLifetime(5 * time.Minute) // fine to kill old connections
+
+	conn := WrapDBConn(bun.NewDB(sqldb, pgdialect.New()))
+
+	// ping to check the db is there and listening
+	if err := conn.PingContext(ctx); err != nil {
+		return nil, fmt.Errorf("postgres ping: %s", err)
+	}
+
+	log.Info("connected to POSTGRES database")
+	return conn, nil
+}
+
 func sqliteConn(ctx context.Context) (*DBConn, error) {
 	// validate db address has actually been set
 	address := config.GetDbAddress()
@@ -236,13 +262,10 @@ func sqliteConn(ctx context.Context) (*DBConn, error) {
 	// Append our own SQLite preferences
 	address = "file:" + address
 
-	var inMem bool
-
 	if address == "file::memory:" {
 		address = fmt.Sprintf("file:%s?mode=memory&cache=shared", uuid.NewString())
 		log.Infof("using in-memory database address " + address)
 		log.Warn("sqlite in-memory database should only be used for debugging")
-		inMem = true
 	}
 
 	// Open new DB instance
@@ -254,12 +277,12 @@ func sqliteConn(ctx context.Context) (*DBConn, error) {
 		return nil, fmt.Errorf("could not open sqlite db: %s", err)
 	}
 
-	if inMem {
-		// don't close connections on disconnect -- otherwise
-		// the SQLite database will be deleted when there
-		// are no active connections
-		sqldb.SetConnMaxLifetime(0)
-	}
+	// Tune db connections for sqlite, see:
+	// - https://bun.uptrace.dev/guide/running-bun-in-production.html#database-sql
+	// - https://www.alexedwards.net/blog/configuring-sqldb
+	sqldb.SetMaxOpenConns(maxOpenConns()) // x number of conns per cpu
+	sqldb.SetMaxIdleConns(1)              // only keep max 1 idle connection around
+	sqldb.SetConnMaxLifetime(0)           // don't kill connections due to age
 
 	// Wrap Bun database conn in our own wrapper
 	conn := WrapDBConn(bun.NewDB(sqldb, sqlitedialect.New()))
@@ -276,78 +299,19 @@ func sqliteConn(ctx context.Context) (*DBConn, error) {
 	return conn, nil
 }
 
-func sqlitePragmas(ctx context.Context, conn *DBConn) error {
-	var pragmas [][]string
-	if mode := config.GetDbSqliteJournalMode(); mode != "" {
-		// Set the user provided SQLite journal mode
-		pragmas = append(pragmas, []string{"journal_mode", mode})
-	}
-
-	if mode := config.GetDbSqliteSynchronous(); mode != "" {
-		// Set the user provided SQLite synchronous mode
-		pragmas = append(pragmas, []string{"synchronous", mode})
-	}
-
-	if size := config.GetDbSqliteCacheSize(); size > 0 {
-		// Set the user provided SQLite cache size (in kibibytes)
-		// Prepend a '-' character to this to indicate to sqlite
-		// that we're giving kibibytes rather than num pages.
-		// https://www.sqlite.org/pragma.html#pragma_cache_size
-		s := "-" + strconv.FormatUint(uint64(size/bytesize.KiB), 10)
-		pragmas = append(pragmas, []string{"cache_size", s})
-	}
-
-	if timeout := config.GetDbSqliteBusyTimeout(); timeout > 0 {
-		t := strconv.FormatInt(timeout.Milliseconds(), 10)
-		pragmas = append(pragmas, []string{"busy_timeout", t})
-	}
-
-	for _, p := range pragmas {
-		pk := p[0]
-		pv := p[1]
-
-		if _, err := conn.DB.ExecContext(ctx, "PRAGMA ?=?", bun.Ident(pk), bun.Safe(pv)); err != nil {
-			return fmt.Errorf("error executing sqlite pragma %s: %w", pk, err)
-		}
-
-		var res string
-		if err := conn.DB.NewRaw("PRAGMA ?", bun.Ident(pk)).Scan(ctx, &res); err != nil {
-			return fmt.Errorf("error scanning sqlite pragma %s: %w", pv, err)
-		}
-
-		log.Infof("sqlite pragma %s set to %s", pk, res)
-	}
-
-	return nil
-}
-
-func pgConn(ctx context.Context) (*DBConn, error) {
-	opts, err := deriveBunDBPGOptions() //nolint:contextcheck
-	if err != nil {
-		return nil, fmt.Errorf("could not create bundb postgres options: %s", err)
-	}
-
-	sqldb := stdlib.OpenDB(*opts)
-
-	// https://bun.uptrace.dev/postgres/running-bun-in-production.html#database-sql
-	maxOpenConns := 4 * runtime.GOMAXPROCS(0)
-	sqldb.SetMaxOpenConns(maxOpenConns)
-	sqldb.SetMaxIdleConns(maxOpenConns)
-
-	conn := WrapDBConn(bun.NewDB(sqldb, pgdialect.New()))
-
-	// ping to check the db is there and listening
-	if err := conn.PingContext(ctx); err != nil {
-		return nil, fmt.Errorf("postgres ping: %s", err)
-	}
-
-	log.Info("connected to POSTGRES database")
-	return conn, nil
-}
-
 /*
 	HANDY STUFF
 */
+
+// maxOpenConns returns multiplier * GOMAXPROCS,
+// clamping multiplier to 1 if it was below 1.
+func maxOpenConns() int {
+	multiplier := config.GetDbMaxOpenConnsMultiplier()
+	if multiplier < 1 {
+		multiplier = 1
+	}
+	return multiplier * runtime.GOMAXPROCS(0)
+}
 
 // deriveBunDBPGOptions takes an application config and returns either a ready-to-use set of options
 // with sensible defaults, or an error if it's not satisfied by the provided config.
@@ -432,6 +396,53 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 	cfg.RuntimeParams["application_name"] = config.GetApplicationName()
 
 	return cfg, nil
+}
+
+// sqlitePragmas sets desired sqlite pragmas based on configured values, and
+// logs the results of the pragma queries. Errors if something goes wrong.
+func sqlitePragmas(ctx context.Context, conn *DBConn) error {
+	var pragmas [][]string
+	if mode := config.GetDbSqliteJournalMode(); mode != "" {
+		// Set the user provided SQLite journal mode
+		pragmas = append(pragmas, []string{"journal_mode", mode})
+	}
+
+	if mode := config.GetDbSqliteSynchronous(); mode != "" {
+		// Set the user provided SQLite synchronous mode
+		pragmas = append(pragmas, []string{"synchronous", mode})
+	}
+
+	if size := config.GetDbSqliteCacheSize(); size > 0 {
+		// Set the user provided SQLite cache size (in kibibytes)
+		// Prepend a '-' character to this to indicate to sqlite
+		// that we're giving kibibytes rather than num pages.
+		// https://www.sqlite.org/pragma.html#pragma_cache_size
+		s := "-" + strconv.FormatUint(uint64(size/bytesize.KiB), 10)
+		pragmas = append(pragmas, []string{"cache_size", s})
+	}
+
+	if timeout := config.GetDbSqliteBusyTimeout(); timeout > 0 {
+		t := strconv.FormatInt(timeout.Milliseconds(), 10)
+		pragmas = append(pragmas, []string{"busy_timeout", t})
+	}
+
+	for _, p := range pragmas {
+		pk := p[0]
+		pv := p[1]
+
+		if _, err := conn.DB.ExecContext(ctx, "PRAGMA ?=?", bun.Ident(pk), bun.Safe(pv)); err != nil {
+			return fmt.Errorf("error executing sqlite pragma %s: %w", pk, err)
+		}
+
+		var res string
+		if err := conn.DB.NewRaw("PRAGMA ?", bun.Ident(pk)).Scan(ctx, &res); err != nil {
+			return fmt.Errorf("error scanning sqlite pragma %s: %w", pv, err)
+		}
+
+		log.Infof("sqlite pragma %s set to %s", pk, res)
+	}
+
+	return nil
 }
 
 /*
