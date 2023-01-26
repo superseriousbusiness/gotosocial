@@ -2369,7 +2369,9 @@ func (st *ConfigState) SetCacheGTSEmojiCategorySweepFreq(v time.Duration) {
 func CacheGTSEmojiCategorySweepFreqFlag() string { return "cache-gts-emoji-category-sweep-freq" }
 
 // GetCacheGTSEmojiCategorySweepFreq safely fetches the value for global configuration 'Cache.GTS.EmojiCategorySweepFreq' field
-func GetCacheGTSEmojiCategorySweepFreq() time.Duration { return global.GetCacheGTSEmojiCategorySweepFreq() }
+func GetCacheGTSEmojiCategorySweepFreq() time.Duration {
+	return global.GetCacheGTSEmojiCategorySweepFreq()
+}
 
 // SetCacheGTSEmojiCategorySweepFreq safely sets the value for global configuration 'Cache.GTS.EmojiCategorySweepFreq' field
 func SetCacheGTSEmojiCategorySweepFreq(v time.Duration) { global.SetCacheGTSEmojiCategorySweepFreq(v) }
@@ -2519,7 +2521,9 @@ func (st *ConfigState) SetCacheGTSNotificationSweepFreq(v time.Duration) {
 func CacheGTSNotificationSweepFreqFlag() string { return "cache-gts-notification-sweep-freq" }
 
 // GetCacheGTSNotificationSweepFreq safely fetches the value for global configuration 'Cache.GTS.NotificationSweepFreq' field
-func GetCacheGTSNotificationSweepFreq() time.Duration { return global.GetCacheGTSNotificationSweepFreq() }
+func GetCacheGTSNotificationSweepFreq() time.Duration {
+	return global.GetCacheGTSNotificationSweepFreq()
+}
 
 // SetCacheGTSNotificationSweepFreq safely sets the value for global configuration 'Cache.GTS.NotificationSweepFreq' field
 func SetCacheGTSNotificationSweepFreq(v time.Duration) { global.SetCacheGTSNotificationSweepFreq(v) }
@@ -2948,4 +2952,3 @@ func GetAdminMediaPruneDryRun() bool { return global.GetAdminMediaPruneDryRun() 
 
 // SetAdminMediaPruneDryRun safely sets the value for global configuration 'AdminMediaPruneDryRun' field
 func SetAdminMediaPruneDryRun(v bool) { global.SetAdminMediaPruneDryRun(v) }
-
