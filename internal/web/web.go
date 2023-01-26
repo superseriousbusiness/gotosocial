@@ -100,6 +100,8 @@ func (m *Module) Route(r router.Router, mi ...gin.HandlerFunc) {
 	r.AttachHandler(http.MethodGet, confirmEmailPath, m.confirmEmailGETHandler)
 	r.AttachHandler(http.MethodGet, robotsPath, m.robotsGETHandler)
 
+	r.AttachHandler(http.MethodGet, domainBlockListPath, m.domainBlockListGETHandler)
+
 	/*
 		Attach redirects from old endpoints to current ones for backwards compatibility
 	*/
