@@ -713,6 +713,10 @@ button.with-padding {
 }
 
 .import-export {
+	p {
+		margin: 0;
+	}
+
 	.export-file {
 		display: flex;
 		gap: 0.7rem;
@@ -721,6 +725,7 @@ button.with-padding {
 }
 
 .export-format-table {
+	width: 100%;
 	background: $list-entry-alternate-bg;
 	border-collapse: collapse;
 

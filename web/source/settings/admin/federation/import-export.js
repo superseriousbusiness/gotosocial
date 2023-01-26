@@ -104,15 +104,13 @@ module.exports = function ImportExport() {
 
 			<Route>
 				{parseResult.isSuccess && <Redirect to={`${baseUrl}/list`} />}
-				<h2>Import / Export suspended domains</h2>
-				<div>
-					<p>
-						This page can be used to import and export lists of domains to suspend.
-						Exports can be done in various formats, with varying functionality and support in other software.
-						Imports will automatically detect what format is being processed.
-					</p>
-					<ExportFormatTable />
-				</div>
+				<h1>Import / Export suspended domains</h1>
+				<p>
+					This page can be used to import and export lists of domains to suspend.
+					Exports can be done in various formats, with varying functionality and support in other software.
+					Imports will automatically detect what format is being processed.
+				</p>
+				<ExportFormatTable />
 				<div className="import-export">
 					<TextArea
 						field={form.domains}
