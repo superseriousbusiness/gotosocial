@@ -370,7 +370,8 @@ span.form-info {
 
 .checkbox-list {
 	.header, .entry {
-		gap: 1rem;
+		display: grid;
+		gap: 0 1rem;
 	}
 }
 
@@ -625,7 +626,6 @@ span.form-info {
 
 		.checkbox-list {
 			.entry {
-				display: grid;
 				grid-template-columns: auto auto 1fr;
 			}
 
@@ -684,9 +684,14 @@ button.with-padding {
 
 .suspend-import-list {
 	.checkbox-list {
-		.header, .entry {
-			display: grid;
+		.entry {
 			grid-template-columns: auto 25ch auto 1fr;
+			grid-template-rows: auto 1fr;
+
+			p {
+				grid-column: 4;
+				grid-row: 1 / span 2;
+			}
 		}
 	}
 

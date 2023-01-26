@@ -23,7 +23,7 @@ const React = require("react");
 module.exports = function CheckList({ field, Component, header = " All", ...componentProps }) {
 	return (
 		<div className="checkbox-list list">
-			<label className="header">
+			<label className="header entry">
 				<input
 					ref={field.toggleAll.ref}
 					type="checkbox"
