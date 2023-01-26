@@ -108,6 +108,30 @@ db-tls-mode: "disable"
 # Default: ""
 db-tls-ca-cert: ""
 
+# Int. Number to multiply by CPU count to set permitted total of open database connections (in-use and idle).
+# You can use this setting to tune your database connection behavior, though most admins won't need to touch it.
+#
+# Example values for multiplier 8:
+#
+# 1 cpu = 08 open connections
+# 2 cpu = 16 open connections
+# 4 cpu = 32 open connections
+#
+# Example values for multiplier 4:
+#
+# 1 cpu = 04 open connections
+# 2 cpu = 08 open connections
+# 4 cpu = 16 open connections
+#
+# A multiplier of 8 is a sensible default, but you may wish to increase this for instances
+# running on very performant hardware, or decrease it for instances using v. slow CPUs.
+#
+# If you set this to 0 or less, it will be adjusted to 1.
+#
+# Examples: [16, 8, 10, 2]
+# Default: 8
+db-max-open-conns-multiplier: 8
+
 # String. SQLite journaling mode.
 # SQLite only -- unused otherwise.
 # If set to empty string, the sqlite default will be used.
