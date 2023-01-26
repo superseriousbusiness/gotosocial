@@ -109,30 +109,53 @@ module.exports = (build) => ({
 	}),
 	exportDomainList: build.mutation({
 		queryFn: (formData, api, _extraOpts, baseQuery) => {
+			let process;
+
+			if (formData.exportType == "json") {
+				process = {
+					transformEntry: (entry) => ({
+						domain: entry.domain,
+						public_comment: entry.public_comment,
+						obfuscate: entry.obfuscate
+					}),
+					stringify: (list) => JSON.stringify(list),
+					extension: ".json",
+					mime: "application/json"
+				};
+			} else if (formData.exportType == "csv") {
+				process = {
+					transformEntry: (entry) => [
+						entry.domain,
+						"suspend", // severity
+						false, // reject_media
+						false, // reject_reports
+						entry.public_comment,
+						entry.obfuscate ?? false
+					],
+					stringify: (list) => csv.unparse({
+						fields: "#domain,#severity,#reject_media,#reject_reports,#public_comment,#obfuscate".split(","),
+						data: list
+					}),
+					extension: ".csv",
+					mime: "text/csv"
+				};
+			} else {
+				process = {
+					transformEntry: (entry) => entry.domain,
+					stringify: (list) => list.join("\n"),
+					extension: ".txt",
+					mime: "text/plain"
+				};
+			}
+
 			return Promise.try(() => {
 				return baseQuery({
 					url: `/api/v1/admin/domain_blocks`
 				});
 			}).then(unwrapRes).then((blockedInstances) => {
-				return blockedInstances.map((entry) => {
-					if (formData.exportType == "json") {
-						return {
-							domain: entry.domain,
-							public_comment: entry.public_comment
-						};
-					} else {
-						return entry.domain;
-					}
-				});
+				return blockedInstances.map(process.transformEntry);
 			}).then((exportList) => {
-				if (formData.exportType == "json") {
-					return JSON.stringify(exportList);
-				} else if (formData.exportType == "csv") {
-					let header = `#domain,#severity,#reject_media,#reject_reports,#public_comment,#obfuscate`;
-
-				} else {
-					return exportList.join("\n");
-				}
+				return process.stringify(exportList);
 			}).then((exportAsString) => {
 				if (formData.action == "export") {
 					return {
@@ -141,7 +164,6 @@ module.exports = (build) => ({
 				} else if (formData.action == "export-file") {
 					let domain = new URL(api.getState().oauth.instance).host;
 					let date = new Date();
-					let mime;
 
 					let filename = [
 						domain,
@@ -151,15 +173,11 @@ module.exports = (build) => ({
 						date.getDate().toString().padStart(2, "0"),
 					].join("-");
 
-					if (formData.exportType == "json") {
-						filename += ".json";
-						mime = "application/json";
-					} else {
-						filename += ".txt";
-						mime = "text/plain";
-					}
-
-					fileDownload(exportAsString, filename, mime);
+					fileDownload(
+						exportAsString,
+						filename + process.extension,
+						process.mime
+					);
 				}
 				return { data: null };
 			}).catch((e) => {
