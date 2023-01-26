@@ -45,6 +45,7 @@ const MutationButton = require("../../components/form/mutation-button");
 const isValidDomain = require("is-valid-domain");
 const FormWithData = require("../../lib/form/form-with-data");
 const { Error } = require("../../components/error");
+const ExportFormatTable = require("./export-format-table");
 
 const baseUrl = "/settings/admin/federation/import-export";
 
@@ -104,39 +105,55 @@ module.exports = function ImportExport() {
 			<Route>
 				{parseResult.isSuccess && <Redirect to={`${baseUrl}/list`} />}
 				<h2>Import / Export suspended domains</h2>
-
 				<div>
-					<form onSubmit={submitParse}>
-						<TextArea
-							field={form.domains}
-							label="Domains, one per line (plaintext) or JSON"
-							placeholder={`google.com\nfacebook.com`}
-							rows={8}
-						/>
+					<p>
+						This page can be used to import and export lists of domains to suspend.
+						Exports can be done in various formats, with varying functionality and support in other software.
+						Imports will automatically detect what format is being processed.
+					</p>
+					<ExportFormatTable />
+				</div>
+				<div className="import-export">
+					<TextArea
+						field={form.domains}
+						label="Domains"
+						placeholder={`google.com\nfacebook.com`}
+						rows={8}
+					/>
 
-						<div className="row">
-							<MutationButton label="Import" result={parseResult} showError={false} />
-							<button type="button" className="with-padding">
-								<label>
-									Import file
-									<input className="hidden" type="file" onChange={fileChanged} accept="application/json,text/plain" />
-								</label>
-							</button>
-						</div>
-					</form>
-					<form onSubmit={submitExport}>
-						<div className="row">
-							<MutationButton name="export" label="Export" result={exportResult} showError={false} />
-							<MutationButton name="export-file" label="Export file" result={exportResult} showError={false} />
+					<div className="row">
+						<MutationButton label="Import" type="button" onClick={() => submitParse()} result={parseResult} showError={false} />
+						<MutationButton label="Export" type="button" onClick={() => submitExport("export")} result={exportResult} showError={false} />
+					</div>
+
+					<div className="row">
+						<button type="button" className="with-padding">
+							<label>
+								Import file
+								<input
+									type="file"
+									className="hidden"
+									onChange={fileChanged}
+									accept="application/json,text/plain,text/csv"
+								/>
+							</label>
+						</button>
+						<div className="export-file">
+							<MutationButton label="Export to file" type="button" onClick={() => submitExport("export-file")} result={exportResult} showError={false} />
+							<span>
+								as
+							</span>
 							<Select
 								field={form.exportType}
 								options={<>
 									<option value="plain">Text</option>
 									<option value="json">JSON</option>
+									<option value="csv">CSV</option>
 								</>}
 							/>
 						</div>
-					</form>
+					</div>
+
 					{parseResult.error && <Error error={parseResult.error} />}
 					{exportResult.error && <Error error={exportResult.error} />}
 				</div>

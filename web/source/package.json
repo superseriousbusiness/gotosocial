@@ -19,6 +19,7 @@
     "langs": "^2.0.0",
     "match-sorter": "^6.3.1",
     "modern-normalize": "^1.1.0",
+    "papaparse": "^5.3.2",
     "photoswipe": "^5.3.3",
     "photoswipe-dynamic-caption-plugin": "^1.2.7",
     "photoswipe-video-plugin": "^1.0.2",

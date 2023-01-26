@@ -21,6 +21,7 @@
 const Promise = require("bluebird");
 const isValidDomain = require("is-valid-domain");
 const fileDownload = require("js-file-download");
+const csv = require("papaparse");
 
 const {
 	replaceCacheOnMutation,
@@ -31,6 +32,23 @@ const {
 function parseDomainList(list) {
 	if (list[0] == "[") {
 		return JSON.parse(list);
+	} else if (list.startsWith("#domain")) { // Mastodon CSV
+		const { data, errors } = csv.parse(list, {
+			header: true,
+			transformHeader: (header) => header.slice(1), // removes starting '#'
+			skipEmptyLines: true,
+			dynamicTyping: true
+		});
+
+		if (errors.length > 0) {
+			let error = "";
+			errors.forEach((err) => {
+				error += `${err.message} (line ${err.row})`;
+			});
+			throw error;
+		}
+
+		return data;
 	} else {
 		return list.split("\n").map((line) => {
 			let domain = line.trim();
@@ -109,6 +127,9 @@ module.exports = (build) => ({
 			}).then((exportList) => {
 				if (formData.exportType == "json") {
 					return JSON.stringify(exportList);
+				} else if (formData.exportType == "csv") {
+					let header = `#domain,#severity,#reject_media,#reject_reports,#public_comment,#obfuscate`;
+
 				} else {
 					return exportList.join("\n");
 				}

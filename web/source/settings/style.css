@@ -712,6 +712,40 @@ button.with-padding {
 	}
 }
 
+.import-export {
+	.export-file {
+		display: flex;
+		gap: 0.7rem;
+		align-items: center;
+	}
+}
+
+.export-format-table {
+	background: $list-entry-alternate-bg;
+	border-collapse: collapse;
+
+	th, td {
+		border: 0.1rem solid $gray1;
+		padding: 0.3rem;
+	}
+
+	th {
+		background: $list-entry-bg;
+	}
+
+	td {
+		text-align: center;
+
+		.fa-check {
+			color: $green1;
+		}
+
+		.fa-times {
+			color: $error3;
+		}
+	}
+}
+
 .form-field.radio {
 	&, label {
 		display: flex;
