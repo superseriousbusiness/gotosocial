@@ -87,11 +87,11 @@ var (
 	// like 'example.org', and it has no upper length limit, so will work for long domains.
 	usernameStringRelaxed = `[a-z0-9_\.]{2,}`
 
-	userPathString = fmt.Sprintf(`^?/%s/(%s)$`, users, usernameStringRelaxed)
+	userPathString = fmt.Sprintf(`^/?%s/(%s)$`, users, usernameStringRelaxed)
 	// UserPath parses a path that validates and captures the username part from eg /users/example_username
 	UserPath = regexp.MustCompile(userPathString)
 
-	publicKeyPath = fmt.Sprintf(`^?/%s/(%s)/%s`, users, usernameStringRelaxed, publicKey)
+	publicKeyPath = fmt.Sprintf(`^/?%s/(%s)/%s`, users, usernameStringRelaxed, publicKey)
 	// PublicKeyPath parses a path that validates and captures the username part from eg /users/example_username/main-key
 	PublicKeyPath = regexp.MustCompile(publicKeyPath)
 
@@ -103,7 +103,7 @@ var (
 	// OutboxPath parses a path that validates and captures the username part from eg /users/example_username/outbox
 	OutboxPath = regexp.MustCompile(outboxPath)
 
-	actorPath = fmt.Sprintf(`^?/%s/(%s)$`, actors, usernameStringRelaxed)
+	actorPath = fmt.Sprintf(`^/?%s/(%s)$`, actors, usernameStringRelaxed)
 	// ActorPath parses a path that validates and captures the username part from eg /actors/example_username
 	ActorPath = regexp.MustCompile(actorPath)
 
