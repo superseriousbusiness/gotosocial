@@ -54,14 +54,14 @@ function UserSettingsForm({ data }) {
 		- string source[privacy]
 		- bool source[sensitive]
 		- string source[language]
-		- string source[status_format]
+		- string source[status_content_type]
 	 */
 
 	const form = {
 		defaultPrivacy: useTextInput("source[privacy]", { defaultValue: source.privacy ?? "unlisted" }),
 		isSensitive: useBoolInput("source[sensitive]", { defaultValue: source.sensitive }),
 		language: useTextInput("source[language]", { defaultValue: source.language?.toUpperCase() ?? "EN" }),
-		format: useTextInput("source[status_format]", { defaultValue: source.status_format ?? "plain" }),
+		statusContentType: useTextInput("source[status_content_type]", { defaultValue: source.status_content_type ?? "text/plain" }),
 	};
 
 	const [submitForm, result] = useFormSubmit(form, query.useUpdateCredentialsMutation());
@@ -83,10 +83,10 @@ function UserSettingsForm({ data }) {
 				}>
 					<a href="https://docs.gotosocial.org/en/latest/user_guide/posts/#privacy-settings" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about post privacy settings (opens in a new tab)</a>
 				</Select>
-				<Select field={form.format} label="Default post (and bio) format" options={
+				<Select field={form.statusContentType} label="Default post (and bio) format" options={
 					<>
-						<option value="plain">Plain (default)</option>
-						<option value="markdown">Markdown</option>
+						<option value="text/plain">Plain (default)</option>
+						<option value="text/markdown">Markdown</option>
 					</>
 				}>
 					<a href="https://docs.gotosocial.org/en/latest/user_guide/posts/#input-types" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about post format settings (opens in a new tab)</a>

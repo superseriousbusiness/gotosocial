@@ -56,7 +56,7 @@ func (suite *UtilTestSuite) TestProcessMentions1() {
 			Visibility:  apimodel.VisibilityPublic,
 			ScheduledAt: "",
 			Language:    "en",
-			Format:      apimodel.StatusFormatPlain,
+			ContentType: apimodel.StatusContentTypePlain,
 		},
 		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
@@ -105,7 +105,7 @@ func (suite *UtilTestSuite) TestProcessContentFull1() {
 			Visibility:  apimodel.VisibilityPublic,
 			ScheduledAt: "",
 			Language:    "en",
-			Format:      apimodel.StatusFormatPlain,
+			ContentType: apimodel.StatusContentTypePlain,
 		},
 		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
@@ -153,7 +153,7 @@ func (suite *UtilTestSuite) TestProcessContentPartial1() {
 			Visibility:  apimodel.VisibilityPublic,
 			ScheduledAt: "",
 			Language:    "en",
-			Format:      apimodel.StatusFormatPlain,
+			ContentType: apimodel.StatusContentTypePlain,
 		},
 		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
@@ -195,7 +195,7 @@ func (suite *UtilTestSuite) TestProcessMentions2() {
 			Visibility:  apimodel.VisibilityPublic,
 			ScheduledAt: "",
 			Language:    "en",
-			Format:      apimodel.StatusFormatPlain,
+			ContentType: apimodel.StatusContentTypePlain,
 		},
 		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
@@ -244,7 +244,7 @@ func (suite *UtilTestSuite) TestProcessContentFull2() {
 			Visibility:  apimodel.VisibilityPublic,
 			ScheduledAt: "",
 			Language:    "en",
-			Format:      apimodel.StatusFormatPlain,
+			ContentType: apimodel.StatusContentTypePlain,
 		},
 		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
@@ -293,7 +293,7 @@ func (suite *UtilTestSuite) TestProcessContentPartial2() {
 			Visibility:  apimodel.VisibilityPublic,
 			ScheduledAt: "",
 			Language:    "en",
-			Format:      apimodel.StatusFormatPlain,
+			ContentType: apimodel.StatusContentTypePlain,
 		},
 		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,

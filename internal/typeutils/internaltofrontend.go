@@ -66,16 +66,16 @@ func (c *converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 		frc = len(frs)
 	}
 
-	statusFormat := string(apimodel.StatusFormatDefault)
-	if a.StatusFormat != "" {
-		statusFormat = a.StatusFormat
+	statusContentType := string(apimodel.StatusContentTypeDefault)
+	if a.StatusContentType != "" {
+		statusContentType = a.StatusContentType
 	}
 
 	apiAccount.Source = &apimodel.Source{
 		Privacy:             c.VisToAPIVis(ctx, a.Privacy),
 		Sensitive:           *a.Sensitive,
 		Language:            a.Language,
-		StatusFormat:        statusFormat,
+		StatusContentType:   statusContentType,
 		Note:                a.NoteRaw,
 		Fields:              apiAccount.Fields,
 		FollowRequestsCount: frc,

@@ -99,9 +99,9 @@ import (
 //		description: Default language to use for authored statuses (ISO 6391).
 //		type: string
 //	-
-//		name: source[status_format]
+//		name: source[status_content_type]
 //		in: formData
-//		description: Default format to use for authored statuses (plain or markdown).
+//		description: Default content type to use for authored statuses (text/plain or text/markdown).
 //		type: string
 //	-
 //		name: custom_css
@@ -190,8 +190,8 @@ func parseUpdateAccountForm(c *gin.Context) (*apimodel.UpdateCredentialsRequest,
 		form.Source.Language = &language
 	}
 
-	if statusFormat, ok := sourceMap["status_format"]; ok {
-		form.Source.StatusFormat = &statusFormat
+	if statusContentType, ok := sourceMap["status_content_type"]; ok {
+		form.Source.StatusContentType = &statusContentType
 	}
 
 	if form == nil ||
@@ -205,7 +205,7 @@ func parseUpdateAccountForm(c *gin.Context) (*apimodel.UpdateCredentialsRequest,
 			form.Source.Privacy == nil &&
 			form.Source.Sensitive == nil &&
 			form.Source.Language == nil &&
-			form.Source.StatusFormat == nil &&
+			form.Source.StatusContentType == nil &&
 			form.FieldsAttributes == nil &&
 			form.CustomCSS == nil &&
 			form.EnableRSS == nil) {

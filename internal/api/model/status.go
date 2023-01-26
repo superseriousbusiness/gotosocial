@@ -179,11 +179,7 @@ type StatusCreateRequest struct {
 	// ISO 639 language code for this status.
 	// in: formData
 	Language string `form:"language" json:"language" xml:"language"`
-	// Format to use when parsing this status.
-	// in: formData
-	Format StatusFormat `form:"format" json:"format" xml:"format"`
 	// Content type to use when parsing this status.
-	// Takes precedence over Format if both are present.
 	// in: formData
 	ContentType StatusContentType `form:"content_type" json:"content_type" xml:"content_type"`
 }
@@ -231,20 +227,6 @@ type AdvancedVisibilityFlagsForm struct {
 	Likeable *bool `form:"likeable" json:"likeable" xml:"likeable"`
 }
 
-// StatusFormat is the format in which to parse the submitted status.
-// Can be either plain or markdown. Empty will default to plain.
-//
-// swagger:enum statusFormat
-// swagger:type string
-type StatusFormat string
-
-// Format to use when parsing submitted status into an html-formatted status
-const (
-	StatusFormatPlain    StatusFormat = "plain"
-	StatusFormatMarkdown StatusFormat = "markdown"
-	StatusFormatDefault  StatusFormat = StatusFormatPlain
-)
-
 // StatusContentType is the content type with which to parse the submitted status.
 // Can be either text/plain or text/markdown. Empty will default to text/plain.
 //
@@ -256,4 +238,5 @@ type StatusContentType string
 const (
 	StatusContentTypePlain    StatusContentType = "text/plain"
 	StatusContentTypeMarkdown StatusContentType = "text/markdown"
+	StatusContentTypeDefault                    = StatusContentTypePlain
 )

@@ -89,7 +89,7 @@ func (suite *BasicTestSuite) TestPutAccountWithBunDefaultFields() {
 	suite.Empty(a.Privacy)
 	suite.False(*a.Sensitive)
 	suite.Equal("en", a.Language)
-	suite.Empty(a.StatusFormat)
+	suite.Empty(a.StatusContentType)
 	suite.Equal(testAccount.URI, a.URI)
 	suite.Equal(testAccount.URL, a.URL)
 	suite.Zero(testAccount.LastWebfingeredAt)

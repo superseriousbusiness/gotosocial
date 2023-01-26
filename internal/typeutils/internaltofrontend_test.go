@@ -187,7 +187,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendSensitive() {
     "privacy": "public",
     "sensitive": false,
     "language": "en",
-    "status_format": "plain",
+    "status_content_type": "text/plain",
     "note": "hey yo this is my profile!",
     "fields": [],
     "follow_requests_count": 0

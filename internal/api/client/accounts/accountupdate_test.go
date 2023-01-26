@@ -372,13 +372,13 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerUpd
 	suite.True(apimodelAccount.Locked)
 }
 
-func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerUpdateStatusFormatOK() {
+func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerUpdateStatusContentTypeOK() {
 	// set up the request
 	// we're updating the language of zork
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"", "",
 		map[string]string{
-			"source[status_format]": "markdown",
+			"source[status_content_type]": "text/markdown",
 		})
 	if err != nil {
 		panic(err)
@@ -408,22 +408,22 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerUpd
 
 	// check the returned api model account
 	// fields should be updated
-	suite.Equal("markdown", apimodelAccount.Source.StatusFormat)
+	suite.Equal("text/markdown", apimodelAccount.Source.StatusContentType)
 
 	dbAccount, err := suite.db.GetAccountByID(context.Background(), suite.testAccounts["local_account_1"].ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	suite.Equal(dbAccount.StatusFormat, "markdown")
+	suite.Equal(dbAccount.StatusContentType, "text/markdown")
 }
 
-func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerUpdateStatusFormatBad() {
+func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerUpdateStatusContentTypeBad() {
 	// set up the request
 	// we're updating the language of zork
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"", "",
 		map[string]string{
-			"source[status_format]": "peepeepoopoo",
+			"source[status_content_type]": "peepeepoopoo",
 		})
 	if err != nil {
 		panic(err)
@@ -444,7 +444,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerUpd
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
 
-	suite.Equal(`{"error":"Bad Request: status format 'peepeepoopoo' was not recognized, valid options are 'plain', 'markdown'"}`, string(b))
+	suite.Equal(`{"error":"Bad Request: status content type 'peepeepoopoo' was not recognized, valid options are 'text/plain', 'text/markdown'"}`, string(b))
 }
 
 func TestAccountUpdateTestSuite(t *testing.T) {

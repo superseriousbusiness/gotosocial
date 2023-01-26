@@ -293,44 +293,32 @@ func (p *processor) ProcessContent(ctx context.Context, form *apimodel.AdvancedS
 		return nil
 	}
 
-	// If content type is present, it should override format.
-	switch form.ContentType {
-	case "":
-		// Defer to format, if present.
-	case apimodel.StatusContentTypePlain:
-		form.Format = apimodel.StatusFormatPlain
-	case apimodel.StatusContentTypeMarkdown:
-		form.Format = apimodel.StatusFormatMarkdown
-	default:
-		form.Format = apimodel.StatusFormatDefault
-	}
-
-	// if format wasn't specified we should try to figure out what format this user prefers
-	if form.Format == "" {
+	// if content type wasn't specified we should try to figure out what content type this user prefers
+	if form.ContentType == "" {
 		acct, err := p.db.GetAccountByID(ctx, accountID)
 		if err != nil {
-			return fmt.Errorf("error processing new content: couldn't retrieve account from db to check post format: %s", err)
+			return fmt.Errorf("error processing new content: couldn't retrieve account from db to check post content type: %s", err)
 		}
 
-		switch acct.StatusFormat {
-		case "plain":
-			form.Format = apimodel.StatusFormatPlain
-		case "markdown":
-			form.Format = apimodel.StatusFormatMarkdown
+		switch acct.StatusContentType {
+		case "text/plain":
+			form.ContentType = apimodel.StatusContentTypePlain
+		case "text/markdown":
+			form.ContentType = apimodel.StatusContentTypeMarkdown
 		default:
-			form.Format = apimodel.StatusFormatDefault
+			form.ContentType = apimodel.StatusContentTypeDefault
 		}
 	}
 
 	// parse content out of the status depending on what format has been submitted
 	var formatted string
-	switch form.Format {
-	case apimodel.StatusFormatPlain:
+	switch form.ContentType {
+	case apimodel.StatusContentTypePlain:
 		formatted = p.formatter.FromPlain(ctx, form.Status, status.Mentions, status.Tags)
-	case apimodel.StatusFormatMarkdown:
+	case apimodel.StatusContentTypeMarkdown:
 		formatted = p.formatter.FromMarkdown(ctx, form.Status, status.Mentions, status.Tags, status.Emojis)
 	default:
-		return fmt.Errorf("format %s not recognised as a valid status format", form.Format)
+		return fmt.Errorf("content type %s not recognised as a valid status content type", form.ContentType)
 	}
 
 	status.Content = formatted

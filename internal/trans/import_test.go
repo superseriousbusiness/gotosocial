@@ -107,7 +107,7 @@ func (suite *ImportMinimalTestSuite) TestImportMinimalOK() {
 	suite.Equal(testAccountBefore.Privacy, testAccountAfter.Privacy)
 	suite.Equal(testAccountBefore.Sensitive, testAccountAfter.Sensitive)
 	suite.Equal(testAccountBefore.Language, testAccountAfter.Language)
-	suite.Equal(testAccountBefore.StatusFormat, testAccountAfter.StatusFormat)
+	suite.Equal(testAccountBefore.StatusContentType, testAccountAfter.StatusContentType)
 	suite.Equal(testAccountBefore.URI, testAccountAfter.URI)
 	suite.Equal(testAccountBefore.URL, testAccountAfter.URL)
 	suite.Equal(testAccountBefore.InboxURI, testAccountAfter.InboxURI)

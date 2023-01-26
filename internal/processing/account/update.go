@@ -143,12 +143,12 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 			account.Privacy = privacy
 		}
 
-		if form.Source.StatusFormat != nil {
-			if err := validate.StatusFormat(*form.Source.StatusFormat); err != nil {
+		if form.Source.StatusContentType != nil {
+			if err := validate.StatusContentType(*form.Source.StatusContentType); err != nil {
 				return nil, gtserror.NewErrorBadRequest(err, err.Error())
 			}
 
-			account.StatusFormat = *form.Source.StatusFormat
+			account.StatusContentType = *form.Source.StatusContentType
 		}
 	}
 
@@ -266,7 +266,7 @@ func (p *processor) processNote(ctx context.Context, note string, account *gtsmo
 	// emojiStrings := util.DeriveEmojisFromText(note)
 	// emojis, err := p.db.EmojiStringsToEmojis(ctx, emojiStrings)
 
-	if account.StatusFormat == "markdown" {
+	if account.StatusContentType == "text/markdown" {
 		return p.formatter.FromMarkdown(ctx, note, mentions, tags, nil), nil
 	}
 
