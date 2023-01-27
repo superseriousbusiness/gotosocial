@@ -45,5 +45,3 @@ Note that the `OrderedCollection` itself contains no items. Callers must derefer
 The `orderedItems` array will contain up to 30 entries. To get more entries beyond that, the caller can use the `next` link provided in the response.
 
 Note that in the returned `orderedItems`, all activity types will be `Create`. On each activity, the `object` field will be the AP URI of an original public status created by the Actor who owns the Outbox (ie., a `Note` with `https://www.w3.org/ns/activitystreams#Public` in the `to` field, which is not a reply to another status). Callers can use the returned AP URIs to dereference the content of the notes.
-
-Contrary to the ActivityPub spec, GoToSocial will deny requests that are not HTTP signed--that is, unauthenticated requests. This is consistent with GoToSocial's authentication policies for other federation API endpoints. This is to ensure that GoToSocial can deny requests from domains or users that have been blocked either by the GoToSocial instance itself (domain block), or by the individual owner of the Outbox.
