@@ -56,10 +56,12 @@ nav:
   - "Federation":
     - "federation/index.md"
     - "federation/glossary.md"
-    - "federation/security.md"
-    - "federation/behaviors/outbox.md"
-    - "federation/behaviors/conversation_threads.md"
-    - "federation/behaviors/request_throttling.md"
+    - "Federating With GoToSocial":
+      - "federation/federating_with_gotosocial/http_signatures.md"
+      - "federation/federating_with_gotosocial/access_control.md"
+      - "federation/federating_with_gotosocial/request_throttling.md"
+      - "federation/federating_with_gotosocial/outbox.md"
+      - "federation/federating_with_gotosocial/conversation_threads.md"
   - "API Documentation":
     - "api/swagger.md"
     - "api/ratelimiting.md"
