@@ -405,6 +405,10 @@ span.form-info {
 .emoji-list {
 	background: $list-entry-bg;
 
+	.header .form-field {
+		flex: 1 1 auto;
+	}
+
 	.entry {
 		flex-direction: column;
 
