@@ -91,6 +91,7 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		APActivityType: ap.ActivityFlag,
 		GTSModel:       report,
 		OriginAccount:  account,
+		TargetAccount:  targetAccount,
 	})
 
 	apiReport, err := p.tc.ReportToAPIReport(ctx, report)
