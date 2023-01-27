@@ -62,6 +62,7 @@ nav:
       - "federation/federating_with_gotosocial/request_throttling.md"
       - "federation/federating_with_gotosocial/outbox.md"
       - "federation/federating_with_gotosocial/conversation_threads.md"
+      - "federation/federating_with_gotosocial/reports.md"
   - "API Documentation":
     - "api/swagger.md"
     - "api/ratelimiting.md"
