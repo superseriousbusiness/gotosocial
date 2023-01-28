@@ -17,7 +17,8 @@ package text
 
 import (
 	"context"
-	"unicode"
+	"fmt"
+	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -57,14 +58,13 @@ func (n *hashtag) Kind() ast.NodeKind {
 	return kindHashtag
 }
 
-// Dump is used by goldmark for debugging. It is implemented only minimally because
-// it is not used in our code.
+// Dump can be used for debugging.
 func (n *mention) Dump(source []byte, level int) {
-	ast.DumpHelper(n, source, level, nil, nil)
+	fmt.Printf("%sMention: %s\n", strings.Repeat("    ", level), string(n.Segment.Value(source)))
 }
 
 func (n *hashtag) Dump(source []byte, level int) {
-	ast.DumpHelper(n, source, level, nil, nil)
+	fmt.Printf("%sHashtag: %s\n", strings.Repeat("    ", level), string(n.Segment.Value(source)))
 }
 
 // newMention and newHashtag create a goldmark ast.Node from a goldmark text.Segment.
