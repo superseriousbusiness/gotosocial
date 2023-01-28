@@ -96,6 +96,29 @@ MDCertificateAgreement accepted
 </VirtualHost>
 ```
 
+or, if you have [Apache httpd 2.4.47+](https://httpd.apache.org/docs/2.4/mod/mod_proxy.html#protoupgrade), you can get rid of both `mod_rewrite` and `mod_proxy_wstunnel` and simplify the whole config to:
+
+```apache
+MDomain example.com auto
+MDCertificateAgreement accepted
+
+<VirtualHost *:80 >
+  ServerName example.com
+</VirtualHost>
+
+<VirtualHost *:443>
+  ServerName example.com
+
+  SSLEngine On
+  ProxyPreserveHost On
+  # set to 127.0.0.1 instead of localhost to work around https://stackoverflow.com/a/52550758
+  ProxyPass / http://127.0.0.1:8080/ upgrade=websocket
+  ProxyPassReverse / http://127.0.0.1:8080/
+
+  RequestHeader set "X-Forwarded-Proto" expr=https
+</VirtualHost>
+```
+
 Again, replace occurrences of `example.com` in the above config file with the hostname of your GtS server. If your domain name is `gotosocial.example.com`, then `gotosocial.example.com` would be the correct value.
 
 You should also change `http://127.0.0.1:8080` to the correct address and port (if it's not on `127.0.0.1:8080`) of your GtS server. For example, if you're running GoToSocial on another machine with the local ip of `192.168.178.69` and on port `8080` then `http://192.168.178.69:8080/` would be the correct value.
