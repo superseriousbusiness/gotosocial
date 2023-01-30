@@ -82,6 +82,20 @@ http {
 
 The above configuration [rewrites](https://www.nginx.com/blog/creating-nginx-rewrite-rules/) queries to `example.org/.well-known/webfinger` and `example.org/.well-known/nodeinfo` to their `fedi.example.org` counterparts, which means that query information is preserved, making it easier to follow the redirect.
 
+If `example.org` is running on [Traefik](https://doc.traefik.io/traefik/), we could use labels similar to the following to setup the redirect.
+
+```docker
+  myservice:
+    image: foo
+    # Other stuff
+    labels:
+      - 'traefik.http.routers.myservice.rule=Host(`example.org`)'
+      - 'traefik.http.middlewares.myservice-gts.redirectregex.permanent=true'
+      - 'traefik.http.middlewares.myservice-gts.redirectregex.regex=^https://(.*)/.well-known/(webfinger|nodeinfo)$$'
+      - 'traefik.http.middlewares.myservice-gts.redirectregex.replacement=https://fedi.$${1}/.well-known/$${2}'
+      - 'traefik.http.routers.myservice.middlewares=myservice-gts@docker'
+```
+
 ### Step 3: What now?
 
 Once you've done steps 1 and 2, proceed as normal with the rest of your GoToSocial installation.
