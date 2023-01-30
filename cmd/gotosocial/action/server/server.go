@@ -62,7 +62,7 @@ import (
 
 // Start creates and starts a gotosocial server
 var Start action.GTSAction = func(ctx context.Context) error {
-	_, err := maxprocs.Set(maxprocs.Logger(log.Errorf))
+	_, err := maxprocs.Set(maxprocs.Logger(log.Debugf))
 	if err != nil {
 		return fmt.Errorf("failed to set CPU limits from cgroup: %s", err)
 	}
