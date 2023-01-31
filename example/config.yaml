@@ -182,7 +182,7 @@ db-tls-ca-cert: ""
 # A multiplier of 8 is a sensible default, but you may wish to increase this for instances
 # running on very performant hardware, or decrease it for instances using v. slow CPUs.
 #
-# If you set this to 0 or less, it will be adjusted to 1.
+# If you set the multiplier to less than 1, only one open connection will be used regardless of cpu count.
 #
 # Examples: [16, 8, 10, 2]
 # Default: 8
