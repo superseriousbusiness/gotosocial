@@ -189,9 +189,6 @@ function ImportList({ list, data: blockedInstances }) {
 	}, [list]);
 
 	const showComment = useTextInput("showComment", { defaultValue: hasComment.type ?? "public_comment" });
-	let commentName = "";
-	if (showComment.value == "public_comment") { commentName = "Public comment"; }
-	if (showComment.value == "private_comment") { commentName = "Private comment"; }
 
 	const form = {
 		domains: useCheckListInput("domains", {
@@ -235,16 +232,8 @@ function ImportList({ list, data: blockedInstances }) {
 					} />
 				}
 
-				<CheckList
+				<DomainCheckList
 					field={form.domains}
-					Component={DomainEntry}
-					header={
-						<>
-							<b>Domain</b>
-							<b></b>
-							<b>{commentName}</b>
-						</>
-					}
 					blockedInstances={blockedInstances}
 					commentType={showComment.value}
 				/>
@@ -280,31 +269,55 @@ function ImportList({ list, data: blockedInstances }) {
 	);
 }
 
-function DomainEntry({ entry, onChange, blockedInstances, commentType }) {
+function DomainCheckList({ field, blockedInstances, commentType }) {
+	const getExtraProps = React.useCallback((entry) => {
+		return {
+			comment: entry[commentType],
+			alreadyExists: blockedInstances[entry.domain] != undefined
+		};
+	}, [blockedInstances, commentType]);
+
+	return (
+		<CheckList
+			field={field}
+			header={<>
+				<b>Domain</b>
+				<b></b>
+				<b>
+					{commentType == "public_comment" && "Public comment"}
+					{commentType == "private_comment" && "Private comment"}
+				</b>
+			</>}
+			EntryComponent={DomainEntry}
+			getExtraProps={getExtraProps}
+		/>
+	);
+}
+
+function domainValidationError(isValid) {
+	return isValid ? "" : "Invalid domain";
+}
+
+function DomainEntry({ entry, onChange, extraProps: { alreadyExists, comment } }) {
 	const domainField = useTextInput("domain", {
 		defaultValue: entry.domain,
-		validator: (value) => {
-			return (entry.checked && isValidDomainBlock(value))
-				? "Invalid domain"
-				: "";
-		}
+		initValidation: domainValidationError(entry.valid),
+		validator: (value) => domainValidationError(
+			!entry.checked || isValidDomainBlock(value)
+		)
 	});
 
 	React.useEffect(() => {
-		onChange({ valid: domainField.valid });
-		/* eslint-disable-next-line react-hooks/exhaustive-deps */
-	}, [domainField.valid]);
+		if (entry.valid != domainField.valid) {
+			onChange({ valid: domainField.valid });
+		}
+	}, [onChange, entry.valid, domainField.valid]);
 
-	let icon = null;
-
-	if (blockedInstances[domainField.value] != undefined) {
-		icon = (
-			<>
-				<i className="fa fa-history already-blocked" aria-hidden="true" title="Domain block already exists"></i>
-				<span className="sr-only">Domain block already exists.</span>
-			</>
-		);
-	}
+	React.useEffect(() => {
+		domainField.validate();
+		// only need this update if it's the entry.checked that updated, not domainField
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [entry.checked]);
 
 	return (
 		<>
@@ -315,8 +328,11 @@ function DomainEntry({ entry, onChange, blockedInstances, commentType }) {
 					onChange({ domain: e.target.value, checked: true });
 				}}
 			/>
-			<span id="icon">{icon}</span>
-			<p>{entry[commentType]}</p>
+			<span id="icon">{alreadyExists && <>
+				<i className="fa fa-history already-blocked" aria-hidden="true" title="Domain block already exists"></i>
+				<span className="sr-only">Domain block already exists.</span>
+			</>}</span>
+			<p>{comment}</p>
 		</>
 	);
 }
