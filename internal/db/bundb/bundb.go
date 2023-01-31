@@ -256,16 +256,40 @@ func sqliteConn(ctx context.Context) (*DBConn, error) {
 	}
 
 	// Drop anything fancy from DB address
-	address = strings.Split(address, "?")[0]
-	address = strings.TrimPrefix(address, "file:")
+	address = strings.Split(address, "?")[0]       // drop any provided query strings
+	address = strings.TrimPrefix(address, "file:") // we'll prepend this later ourselves
 
-	// Append our own SQLite preferences
+	// build our own SQLite preferences
+	prefs := []string{
+		// use immediate transaction lock mode to fail quickly if tx can't lock
+		// see https://pkg.go.dev/modernc.org/sqlite#Driver.Open
+		"_txlock=immediate",
+	}
+
+	if address == ":memory:" {
+		log.Warn("using sqlite in-memory mode; all data will be deleted when gts shuts down; this mode should only be used for debugging or running tests")
+
+		// Use random name for in-memory instead of ':memory:', so
+		// multiple in-mem databases can be created without conflict.
+		address = uuid.NewString()
+
+		// in-mem-specific preferences
+		prefs = append(prefs, []string{
+			"mode=memory",  // indicate in-memory mode using query
+			"cache=shared", // shared cache so that tests don't fail
+		}...)
+	}
+
+	// rebuild address string with our derived preferences
 	address = "file:" + address
-
-	if address == "file::memory:" {
-		address = fmt.Sprintf("file:%s?mode=memory&cache=shared", uuid.NewString())
-		log.Infof("using in-memory database address " + address)
-		log.Warn("sqlite in-memory database should only be used for debugging")
+	for i, q := range prefs {
+		var prefix string
+		if i == 0 {
+			prefix = "?"
+		} else {
+			prefix = "&"
+		}
+		address += prefix + q
 	}
 
 	// Open new DB instance
@@ -274,7 +298,7 @@ func sqliteConn(ctx context.Context) (*DBConn, error) {
 		if errWithCode, ok := err.(*sqlite.Error); ok {
 			err = errors.New(sqlite.ErrorCodeString[errWithCode.Code()])
 		}
-		return nil, fmt.Errorf("could not open sqlite db: %s", err)
+		return nil, fmt.Errorf("could not open sqlite db with address %s: %w", address, err)
 	}
 
 	// Tune db connections for sqlite, see:
@@ -294,7 +318,7 @@ func sqliteConn(ctx context.Context) (*DBConn, error) {
 		}
 		return nil, fmt.Errorf("sqlite ping: %s", err)
 	}
-	log.Info("connected to SQLITE database")
+	log.Infof("connected to SQLITE database with address %s", address)
 
 	return conn, nil
 }
