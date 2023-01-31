@@ -31,7 +31,13 @@ import (
 	"github.com/yuin/goldmark/util"
 )
 
-func (f *formatter) FromPlain(ctx context.Context, plain string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string {
+func (f *formatter) FromPlain(ctx context.Context, pmf gtsmodel.ParseMentionFunc, authorID string, statusID string, plain string) *FormatResult {
+	result := &FormatResult{
+		Mentions: []*gtsmodel.Mention{},
+		Tags:     []*gtsmodel.Tag{},
+		Emojis:   []*gtsmodel.Emoji{},
+	}
+
 	// parse markdown text into html, using custom renderer to add hashtag/mention links
 	md := goldmark.New(
 		goldmark.WithRendererOptions(
@@ -46,7 +52,7 @@ func (f *formatter) FromPlain(ctx context.Context, plain string, mentions []*gts
 			),
 		),
 		goldmark.WithExtensions(
-			&customRenderer{f, ctx, mentions, tags},
+			&customRenderer{f, ctx, pmf, authorID, statusID, false, result},
 			extension.Linkify, // turns URLs into links
 		),
 	)
@@ -54,12 +60,15 @@ func (f *formatter) FromPlain(ctx context.Context, plain string, mentions []*gts
 	var htmlContentBytes bytes.Buffer
 	err := md.Convert([]byte(plain), &htmlContentBytes)
 	if err != nil {
-		log.Errorf("error rendering plaintext to HTML: %s", err)
+		log.Errorf("error formatting plaintext to HTML: %s", err)
 	}
-	htmlContent := htmlContentBytes.String()
+	result.HTML = htmlContentBytes.String()
 
-	// clean anything dangerous out of the html
-	htmlContent = SanitizeHTML(htmlContent)
+	// clean anything dangerous out of the HTML
+	result.HTML = SanitizeHTML(result.HTML)
 
-	return minifyHTML(htmlContent)
+	// shrink ray
+	result.HTML = minifyHTML(result.HTML)
+
+	return result
 }

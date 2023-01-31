@@ -21,6 +21,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
@@ -48,8 +49,14 @@ type hashtag struct {
 	Segment text.Segment
 }
 
+type emoji struct {
+	ast.BaseInline
+	Segment text.Segment
+}
+
 var kindMention = ast.NewNodeKind("Mention")
 var kindHashtag = ast.NewNodeKind("Hashtag")
+var kindEmoji = ast.NewNodeKind("Emoji")
 
 func (n *mention) Kind() ast.NodeKind {
 	return kindMention
@@ -59,6 +66,10 @@ func (n *hashtag) Kind() ast.NodeKind {
 	return kindHashtag
 }
 
+func (n *emoji) Kind() ast.NodeKind {
+	return kindEmoji
+}
+
 // Dump can be used for debugging.
 func (n *mention) Dump(source []byte, level int) {
 	fmt.Printf("%sMention: %s\n", strings.Repeat("    ", level), string(n.Segment.Value(source)))
@@ -66,6 +77,10 @@ func (n *mention) Dump(source []byte, level int) {
 
 func (n *hashtag) Dump(source []byte, level int) {
 	fmt.Printf("%sHashtag: %s\n", strings.Repeat("    ", level), string(n.Segment.Value(source)))
+}
+
+func (n *emoji) Dump(source []byte, level int) {
+	fmt.Printf("%sEmoji: %s\n", strings.Repeat("    ", level), string(n.Segment.Value(source)))
 }
 
 // newMention and newHashtag create a goldmark ast.Node from a goldmark text.Segment.
@@ -84,11 +99,21 @@ func newHashtag(s text.Segment) *hashtag {
 	}
 }
 
+func newEmoji(s text.Segment) *emoji {
+	return &emoji{
+		BaseInline: ast.BaseInline{},
+		Segment:    s,
+	}
+}
+
 // mentionParser and hashtagParser fulfil the goldmark parser.InlineParser interface.
 type mentionParser struct {
 }
 
 type hashtagParser struct {
+}
+
+type emojiParser struct {
 }
 
 func (p *mentionParser) Trigger() []byte {
@@ -97,6 +122,10 @@ func (p *mentionParser) Trigger() []byte {
 
 func (p *hashtagParser) Trigger() []byte {
 	return []byte{'#'}
+}
+
+func (p *emojiParser) Trigger() []byte {
+	return []byte{':'}
 }
 
 func (p *mentionParser) Parse(parent ast.Node, block text.Reader, pc parser.Context) ast.Node {
@@ -147,30 +176,54 @@ func (p *hashtagParser) Parse(parent ast.Node, block text.Reader, pc parser.Cont
 	return newHashtag(segment)
 }
 
+func (p *emojiParser) Parse(parent ast.Node, block text.Reader, pc parser.Context) ast.Node {
+	line, segment := block.PeekLine()
+
+	// unideal for performance but makes use of existing regex
+	loc := regexes.EmojiFinder.FindIndex(line)
+	switch {
+	case loc == nil:
+		fallthrough
+	case loc[0] != 0: // fail if not found at start
+		return nil
+	default:
+		block.Advance(loc[1])
+		return newEmoji(segment.WithStop(segment.Start + loc[1]))
+	}
+}
+
 // customRenderer fulfils both the renderer.NodeRenderer and goldmark.Extender interfaces.
 // It is created in FromMarkdown and FromPlain to be used as a goldmark extension, and the
 // fields are used to report tags and mentions to the caller for use as metadata.
 type customRenderer struct {
-	f        *formatter
-	ctx      context.Context
-	mentions []*gtsmodel.Mention
-	tags     []*gtsmodel.Tag
+	f            *formatter
+	ctx          context.Context
+	parseMention gtsmodel.ParseMentionFunc
+	accountID    string
+	statusID     string
+	emojiOnly    bool
+	result       *FormatResult
 }
 
 func (r *customRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
 	reg.Register(kindMention, r.renderMention)
 	reg.Register(kindHashtag, r.renderHashtag)
+	reg.Register(kindEmoji, r.renderEmoji)
 }
 
 func (r *customRenderer) Extend(m goldmark.Markdown) {
+	// 1000 is set as the lowest priority, but it's arbitrary
 	m.Parser().AddOptions(parser.WithInlineParsers(
-		// 500 is pretty arbitrary here, it was copied from example goldmark extension code.
-		// https://github.com/yuin/goldmark/blob/75d8cce5b78c7e1d5d9c4ca32c1164f0a1e57b53/extension/strikethrough.go#L111
-		mdutil.Prioritized(&mentionParser{}, 500),
-		mdutil.Prioritized(&hashtagParser{}, 500),
+		mdutil.Prioritized(&emojiParser{}, 1000),
 	))
+	if !r.emojiOnly {
+		m.Parser().AddOptions(parser.WithInlineParsers(
+			mdutil.Prioritized(&mentionParser{}, 1000),
+			mdutil.Prioritized(&hashtagParser{}, 1000),
+		))
+	}
 	m.Renderer().AddOptions(renderer.WithNodeRenderers(
-		mdutil.Prioritized(r, 500),
+		mdutil.Prioritized(r, 1000),
 	))
 }
 
@@ -186,7 +239,7 @@ func (r *customRenderer) renderMention(w mdutil.BufWriter, source []byte, node a
 	}
 	text := string(n.Segment.Value(source))
 
-	html := r.f.ReplaceMentions(r.ctx, text, r.mentions)
+	html := r.replaceMention(text)
 
 	// we don't have much recourse if this fails
 	if _, err := w.WriteString(html); err != nil {
@@ -206,11 +259,49 @@ func (r *customRenderer) renderHashtag(w mdutil.BufWriter, source []byte, node a
 	}
 	text := string(n.Segment.Value(source))
 
-	html := r.f.ReplaceTags(r.ctx, text, r.tags)
+	html := r.replaceHashtag(text)
 
 	_, err := w.WriteString(html)
 	// we don't have much recourse if this fails
 	if err != nil {
+		log.Errorf("error writing HTML: %s", err)
+	}
+	return ast.WalkSkipChildren, nil
+}
+
+// renderEmoji doesn't turn an emoji into HTML, but adds it to the metadata.
+func (r *customRenderer) renderEmoji(w mdutil.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+	if !entering {
+		return ast.WalkSkipChildren, nil
+	}
+
+	n, ok := node.(*emoji) // this function is only registered for kindEmoji
+	if !ok {
+		log.Errorf("type assertion failed")
+	}
+	text := string(n.Segment.Value(source))
+	shortcode := text[1 : len(text)-1]
+
+	emoji, err := r.f.db.GetEmojiByShortcodeDomain(r.ctx, shortcode, "")
+	if err != nil {
+		if err != db.ErrNoEntries {
+			log.Errorf("error getting local emoji with shortcode %s: %s", shortcode, err)
+		}
+	} else if *emoji.VisibleInPicker && !*emoji.Disabled {
+		listed := false
+		for _, e := range r.result.Emojis {
+			if e.Shortcode == emoji.Shortcode {
+				listed = true
+				break
+			}
+		}
+		if !listed {
+			r.result.Emojis = append(r.result.Emojis, emoji)
+		}
+	}
+
+	// we don't have much recourse if this fails
+	if _, err := w.WriteString(text); err != nil {
 		log.Errorf("error writing HTML: %s", err)
 	}
 	return ast.WalkSkipChildren, nil

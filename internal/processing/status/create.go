@@ -76,18 +76,6 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, appli
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if err := p.ProcessMentions(ctx, form, account.ID, newStatus); err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	if err := p.ProcessTags(ctx, form, account.ID, newStatus); err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	if err := p.ProcessEmojis(ctx, form, account.ID, newStatus); err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
 	if err := p.ProcessContent(ctx, form, account.ID, newStatus); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

@@ -28,8 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
 func (p *processor) ProcessVisibility(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountDefaultVis gtsmodel.Visibility, status *gtsmodel.Status) error {
@@ -212,80 +211,6 @@ func (p *processor) ProcessLanguage(ctx context.Context, form *apimodel.Advanced
 	return nil
 }
 
-func (p *processor) ProcessMentions(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
-	mentionedAccountNames := util.DeriveMentionNamesFromText(form.Status)
-	mentions := []*gtsmodel.Mention{}
-	mentionIDs := []string{}
-
-	for _, mentionedAccountName := range mentionedAccountNames {
-		gtsMention, err := p.parseMention(ctx, mentionedAccountName, accountID, status.ID)
-		if err != nil {
-			log.Errorf("ProcessMentions: error parsing mention %s from status: %s", mentionedAccountName, err)
-			continue
-		}
-
-		if err := p.db.Put(ctx, gtsMention); err != nil {
-			log.Errorf("ProcessMentions: error putting mention in db: %s", err)
-		}
-
-		mentions = append(mentions, gtsMention)
-		mentionIDs = append(mentionIDs, gtsMention.ID)
-	}
-
-	// add full populated gts menchies to the status for passing them around conveniently
-	status.Mentions = mentions
-	// add just the ids of the mentioned accounts to the status for putting in the db
-	status.MentionIDs = mentionIDs
-
-	return nil
-}
-
-func (p *processor) ProcessTags(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
-	tags := []string{}
-	gtsTags, err := p.db.TagStringsToTags(ctx, util.DeriveHashtagsFromText(form.Status), accountID)
-	if err != nil {
-		return fmt.Errorf("error generating hashtags from status: %s", err)
-	}
-	for _, tag := range gtsTags {
-		if err := p.db.Put(ctx, tag); err != nil {
-			if !errors.Is(err, db.ErrAlreadyExists) {
-				return fmt.Errorf("error putting tags in db: %s", err)
-			}
-		}
-		tags = append(tags, tag.ID)
-	}
-	// add full populated gts tags to the status for passing them around conveniently
-	status.Tags = gtsTags
-	// add just the ids of the used tags to the status for putting in the db
-	status.TagIDs = tags
-	return nil
-}
-
-func (p *processor) ProcessEmojis(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
-	// for each emoji shortcode in the text, check if it's an enabled
-	// emoji on this instance, and if so, add it to the status
-	emojiShortcodes := util.DeriveEmojisFromText(form.SpoilerText + "\n\n" + form.Status)
-	status.Emojis = make([]*gtsmodel.Emoji, 0, len(emojiShortcodes))
-	status.EmojiIDs = make([]string, 0, len(emojiShortcodes))
-
-	for _, shortcode := range emojiShortcodes {
-		emoji, err := p.db.GetEmojiByShortcodeDomain(ctx, shortcode, "")
-		if err != nil {
-			if err != db.ErrNoEntries {
-				log.Errorf("error getting local emoji with shortcode %s: %s", shortcode, err)
-			}
-			continue
-		}
-
-		if *emoji.VisibleInPicker && !*emoji.Disabled {
-			status.Emojis = append(status.Emojis, emoji)
-			status.EmojiIDs = append(status.EmojiIDs, emoji.ID)
-		}
-	}
-
-	return nil
-}
-
 func (p *processor) ProcessContent(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
 	// if there's nothing in the status at all we can just return early
 	if form.Status == "" {
@@ -311,16 +236,43 @@ func (p *processor) ProcessContent(ctx context.Context, form *apimodel.AdvancedS
 	}
 
 	// parse content out of the status depending on what format has been submitted
-	var formatted string
+	var f text.FormatFunc
 	switch form.Format {
 	case apimodel.StatusFormatPlain:
-		formatted = p.formatter.FromPlain(ctx, form.Status, status.Mentions, status.Tags)
+		f = p.formatter.FromPlain
 	case apimodel.StatusFormatMarkdown:
-		formatted = p.formatter.FromMarkdown(ctx, form.Status, status.Mentions, status.Tags, status.Emojis)
+		f = p.formatter.FromMarkdown
 	default:
 		return fmt.Errorf("format %s not recognised as a valid status format", form.Format)
 	}
+	formatted := f(ctx, p.parseMention, accountID, status.ID, form.Status)
 
-	status.Content = formatted
+	// add full populated gts {mentions, tags, emojis} to the status for passing them around conveniently
+	// add just their ids to the status for putting in the db
+	status.Mentions = formatted.Mentions
+	status.MentionIDs = make([]string, 0, len(formatted.Mentions))
+	for _, gtsmention := range formatted.Mentions {
+		status.MentionIDs = append(status.MentionIDs, gtsmention.ID)
+	}
+
+	status.Tags = formatted.Tags
+	status.TagIDs = make([]string, 0, len(formatted.Tags))
+	for _, gtstag := range formatted.Tags {
+		status.TagIDs = append(status.TagIDs, gtstag.ID)
+	}
+
+	status.Emojis = formatted.Emojis
+	status.EmojiIDs = make([]string, 0, len(formatted.Emojis))
+	for _, gtsemoji := range formatted.Emojis {
+		status.EmojiIDs = append(status.EmojiIDs, gtsemoji.ID)
+	}
+
+	spoilerformatted := p.formatter.FromPlainEmojiOnly(ctx, p.parseMention, accountID, status.ID, form.SpoilerText)
+	for _, gtsemoji := range spoilerformatted.Emojis {
+		status.Emojis = append(status.Emojis, gtsemoji)
+		status.EmojiIDs = append(status.EmojiIDs, gtsemoji.ID)
+	}
+
+	status.Content = formatted.HTML
 	return nil
 }
