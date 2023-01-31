@@ -36,8 +36,6 @@ type Formatter interface {
 	ReplaceTags(ctx context.Context, in string, tags []*gtsmodel.Tag) string
 	// ReplaceMentions takes a piece of text and a slice of mentions, and returns the same text with the mentions nicely formatted as hrefs.
 	ReplaceMentions(ctx context.Context, in string, mentions []*gtsmodel.Mention) string
-	// ReplaceLinks takes a piece of text, finds all recognizable links in that text, and replaces them with hrefs.
-	ReplaceLinks(ctx context.Context, in string) string
 }
 
 type formatter struct {

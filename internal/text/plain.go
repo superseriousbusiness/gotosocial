@@ -19,42 +19,47 @@
 package text
 
 import (
+	"bytes"
 	"context"
-	"html"
-	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-)
-
-// breakReplacer replaces new-lines with HTML breaks.
-var breakReplacer = strings.NewReplacer(
-	"\r\n", "<br/>",
-	"\n", "<br/>",
+	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/renderer/html"
+	"github.com/yuin/goldmark/util"
 )
 
 func (f *formatter) FromPlain(ctx context.Context, plain string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string {
-	// trim any crap
-	content := strings.TrimSpace(plain)
+	// parse markdown text into html, using custom renderer to add hashtag/mention links
+	md := goldmark.New(
+		goldmark.WithRendererOptions(
+			html.WithXHTML(),
+			html.WithHardWraps(),
+		),
+		goldmark.WithParser(
+			parser.NewParser(
+				parser.WithBlockParsers(
+					util.Prioritized(newPlaintextParser(), 500),
+				),
+			),
+		),
+		goldmark.WithExtensions(
+			&customRenderer{f, ctx, mentions, tags},
+			extension.Linkify, // turns URLs into links
+		),
+	)
 
-	// clean 'er up
-	content = html.EscapeString(content)
+	var htmlContentBytes bytes.Buffer
+	err := md.Convert([]byte(plain), &htmlContentBytes)
+	if err != nil {
+		log.Errorf("error rendering plaintext to HTML: %s", err)
+	}
+	htmlContent := htmlContentBytes.String()
 
-	// format links nicely
-	content = f.ReplaceLinks(ctx, content)
+	// clean anything dangerous out of the html
+	htmlContent = SanitizeHTML(htmlContent)
 
-	// format tags nicely
-	content = f.ReplaceTags(ctx, content, tags)
-
-	// format mentions nicely
-	content = f.ReplaceMentions(ctx, content, mentions)
-
-	// replace newlines with breaks
-	content = breakReplacer.Replace(content)
-
-	// wrap the whole thing in a pee
-	content = `<p>` + content + `</p>`
-
-	content = SanitizeHTML(content)
-
-	return minifyHTML(content)
+	return minifyHTML(htmlContent)
 }
