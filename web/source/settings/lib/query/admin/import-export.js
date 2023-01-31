@@ -19,9 +19,10 @@
 "use strict";
 
 const Promise = require("bluebird");
-const isValidDomain = require("is-valid-domain");
 const fileDownload = require("js-file-download");
 const csv = require("papaparse");
+
+const isValidDomainBlock = require("../../is-valid-domain-block");
 
 const {
 	replaceCacheOnMutation,
@@ -69,7 +70,12 @@ function parseDomainList(list) {
 
 function validateDomainList(list) {
 	list.forEach((entry) => {
-		entry.valid = (entry.valid !== false) && isValidDomain(entry.domain, { wildcard: true, allowUnicode: true });
+		if (entry.domain.startsWith("*.")) {
+			// domain block always includes all subdomains, wildcard is meaningless here
+			entry.domain = entry.domain.slice(2);
+		}
+
+		entry.valid = (entry.valid !== false) && isValidDomainBlock(entry.domain);
 		entry.checked = entry.valid;
 	});
 

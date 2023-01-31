@@ -22,6 +22,7 @@ const React = require("react");
 const { Switch, Route, Redirect, useLocation } = require("wouter");
 
 const query = require("../../lib/query");
+const isValidDomainBlock = require("../../lib/is-valid-domain-block");
 
 const {
 	useTextInput,
@@ -42,7 +43,6 @@ const {
 
 const CheckList = require("../../components/check-list");
 const MutationButton = require("../../components/form/mutation-button");
-const isValidDomain = require("is-valid-domain");
 const FormWithData = require("../../lib/form/form-with-data");
 const { Error } = require("../../components/error");
 const ExportFormatTable = require("./export-format-table");
@@ -284,7 +284,7 @@ function DomainEntry({ entry, onChange, blockedInstances, commentType }) {
 	const domainField = useTextInput("domain", {
 		defaultValue: entry.domain,
 		validator: (value) => {
-			return (entry.checked && !isValidDomain(value, { wildcard: true, allowUnicode: true }))
+			return (entry.checked && isValidDomainBlock(value))
 				? "Invalid domain"
 				: "";
 		}
