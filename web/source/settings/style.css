@@ -726,6 +726,17 @@ button.with-padding {
 		gap: 0.7rem;
 		align-items: center;
 	}
+
+	.button-grid {
+		display: inline-grid;
+		grid-template-columns: auto auto auto;
+		align-self: start;
+		gap: 0.5rem;
+
+		button {
+			width: 100%;
+		}
+	}
 }
 
 .export-format-table {

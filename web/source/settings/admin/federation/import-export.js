@@ -119,12 +119,14 @@ module.exports = function ImportExport() {
 						rows={8}
 					/>
 
-					<div className="row">
-						<MutationButton label="Import" type="button" onClick={() => submitParse()} result={parseResult} showError={false} />
-						<MutationButton label="Export" type="button" onClick={() => submitExport("export")} result={exportResult} showError={false} />
-					</div>
-
-					<div className="row">
+					<div className="button-grid">
+						<MutationButton
+							label="Import"
+							type="button"
+							onClick={() => submitParse()}
+							result={parseResult}
+							showError={false}
+						/>
 						<button type="button" className="with-padding">
 							<label>
 								Import file
@@ -136,8 +138,15 @@ module.exports = function ImportExport() {
 								/>
 							</label>
 						</button>
+						<b /> {/* grid filler */}
+						<MutationButton
+							label="Export"
+							type="button"
+							onClick={() => submitExport("export")}
+							result={exportResult} showError={false}
+						/>
+						<MutationButton label="Export to file" type="button" onClick={() => submitExport("export-file")} result={exportResult} showError={false} />
 						<div className="export-file">
-							<MutationButton label="Export to file" type="button" onClick={() => submitExport("export-file")} result={exportResult} showError={false} />
 							<span>
 								as
 							</span>
@@ -354,7 +363,7 @@ function DomainEntryIcon({ alreadyExists, suggestion }) {
 
 	if (suggestion) {
 		icon = "fa-info-circle suggest-changes";
-		text = `Entry targets a specific subdomain, we recommend changing it to '${suggestion}'.`;
+		text = `Entry targets a specific subdomain, consider changing it to '${suggestion}'.`;
 	} else if (alreadyExists) {
 		icon = "fa-history already-blocked";
 		text = "Domain block already exists.";
