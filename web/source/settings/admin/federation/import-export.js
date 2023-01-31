@@ -22,7 +22,7 @@ const React = require("react");
 const { Switch, Route, Redirect, useLocation } = require("wouter");
 
 const query = require("../../lib/query");
-const { isValidDomainBlock } = require("../../lib/domain-block");
+const { isValidDomainBlock, hasBetterScope } = require("../../lib/domain-block");
 
 const {
 	useTextInput,
@@ -95,11 +95,13 @@ module.exports = function ImportExport() {
 						&lt; back
 					</span> Confirm import:
 				</h1>
-				<FormWithData
-					dataQuery={query.useInstanceBlocksQuery}
-					DataForm={ImportList}
-					list={parseResult.data}
-				/>
+				<div className="without-border">
+					<FormWithData
+						dataQuery={query.useInstanceBlocksQuery}
+						DataForm={ImportList}
+						list={parseResult.data}
+					/>
+				</div>
 			</Route>
 
 			<Route>
@@ -316,9 +318,6 @@ function DomainEntry({ entry, onChange, extraProps: { alreadyExists, comment } }
 		)
 	});
 
-	// FIXME: actually update suggestion when needed
-	const suggest = (entry.suggest != entry.domain) && entry.suggest;
-
 	React.useEffect(() => {
 		if (entry.valid != domainField.valid) {
 			onChange({ valid: domainField.valid });
@@ -330,6 +329,12 @@ function DomainEntry({ entry, onChange, extraProps: { alreadyExists, comment } }
 		// only need this update if it's the entry.checked that updated, not domainField
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [entry.checked]);
+
+	React.useEffect(() => {
+		onChange({ suggest: hasBetterScope(domainField.value) });
+		// only need this update if it's the entry.checked that updated, not onChange
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [domainField.value]);
 
 	function clickIcon(e) {
 		if (entry.suggest) {
@@ -350,7 +355,7 @@ function DomainEntry({ entry, onChange, extraProps: { alreadyExists, comment } }
 				}}
 			/>
 			<span id="icon" onClick={clickIcon}>
-				<DomainEntryIcon alreadyExists={alreadyExists} suggestion={suggest} onChange={onChange} />
+				<DomainEntryIcon alreadyExists={alreadyExists} suggestion={entry.suggest} onChange={onChange} />
 			</span>
 			<p>{comment}</p>
 		</>

@@ -69,6 +69,10 @@ section {
 			&:last-child {
 				margin-bottom: 0;
 			}
+
+			&.without-border {
+				border-left: 0;
+			}
 		}
 	}
 
