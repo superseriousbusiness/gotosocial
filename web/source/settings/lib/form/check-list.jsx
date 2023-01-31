@@ -48,15 +48,9 @@ const slice = createSlice({
 	}
 });
 
-const { reducer: reducer2, actions } = slice;
-
-function reducer() {
-	console.log("REDUCING", ...arguments);
-	return reducer2(...arguments);
-}
+const { reducer, actions } = slice;
 
 function createState({ entries, uniqueKey, defaultValue }, oldState) {
-	console.log("creating state", oldState);
 	return syncpipe(entries, [
 		(_) => _.map((entry) => {
 			let key = entry[uniqueKey];
