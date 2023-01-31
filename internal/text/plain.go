@@ -54,5 +54,7 @@ func (f *formatter) FromPlain(ctx context.Context, plain string, mentions []*gts
 	// wrap the whole thing in a pee
 	content = `<p>` + content + `</p>`
 
-	return SanitizeHTML(content)
+	content = SanitizeHTML(content)
+
+	return minifyHTML(content)
 }

@@ -25,15 +25,9 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/tdewolff/minify/v2"
-	minifyHtml "github.com/tdewolff/minify/v2/html"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/renderer/html"
-)
-
-var (
-	m *minify.M
 )
 
 func (f *formatter) FromMarkdown(ctx context.Context, markdownText string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag, emojis []*gtsmodel.Emoji) string {
@@ -78,18 +72,7 @@ func (f *formatter) FromMarkdown(ctx context.Context, markdownText string, menti
 	// clean anything dangerous out of the html
 	htmlContent = SanitizeHTML(htmlContent)
 
-	if m == nil {
-		m = minify.New()
-		m.Add("text/html", &minifyHtml.Minifier{
-			KeepEndTags: true,
-			KeepQuotes:  true,
-		})
-	}
-
-	minified, err := m.String("text/html", htmlContent)
-	if err != nil {
-		log.Errorf("error minifying markdown text: %s", err)
-	}
+	minified := minifyHTML(htmlContent)
 
 	return minified
 }

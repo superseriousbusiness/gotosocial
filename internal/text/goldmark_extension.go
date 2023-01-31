@@ -19,6 +19,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -147,8 +148,8 @@ func (p *hashtagParser) Parse(parent ast.Node, block text.Reader, pc parser.Cont
 }
 
 // customRenderer fulfils both the renderer.NodeRenderer and goldmark.Extender interfaces.
-// It is created in FromMarkdown to be used a goldmark extension, and the fields are used
-// when rendering mentions and tags.
+// It is created in FromMarkdown and FromPlain to be used as a goldmark extension, and the
+// fields are used to report tags and mentions to the caller for use as metadata.
 type customRenderer struct {
 	f        *formatter
 	ctx      context.Context
@@ -176,7 +177,7 @@ func (r *customRenderer) Extend(m goldmark.Markdown) {
 // renderMention and renderHashtag take a mention or a hashtag ast.Node and render it as HTML.
 func (r *customRenderer) renderMention(w mdutil.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if !entering {
-		return ast.WalkContinue, nil
+		return ast.WalkSkipChildren, nil
 	}
 
 	n, ok := node.(*mention) // this function is only registered for kindMention
@@ -189,14 +190,14 @@ func (r *customRenderer) renderMention(w mdutil.BufWriter, source []byte, node a
 
 	// we don't have much recourse if this fails
 	if _, err := w.WriteString(html); err != nil {
-		log.Errorf("error outputting markdown text: %s", err)
+		log.Errorf("error writing HTML: %s", err)
 	}
-	return ast.WalkContinue, nil
+	return ast.WalkSkipChildren, nil
 }
 
 func (r *customRenderer) renderHashtag(w mdutil.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
 	if !entering {
-		return ast.WalkContinue, nil
+		return ast.WalkSkipChildren, nil
 	}
 
 	n, ok := node.(*hashtag) // this function is only registered for kindHashtag
@@ -207,9 +208,10 @@ func (r *customRenderer) renderHashtag(w mdutil.BufWriter, source []byte, node a
 
 	html := r.f.ReplaceTags(r.ctx, text, r.tags)
 
+	_, err := w.WriteString(html)
 	// we don't have much recourse if this fails
-	if _, err := w.WriteString(html); err != nil {
-		log.Errorf("error outputting markdown text: %s", err)
+	if err != nil {
+		log.Errorf("error writing HTML: %s", err)
 	}
-	return ast.WalkContinue, nil
+	return ast.WalkSkipChildren, nil
 }
