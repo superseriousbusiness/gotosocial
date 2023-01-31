@@ -19,8 +19,9 @@
 "use strict";
 
 const isValidDomain = require("is-valid-domain");
+const psl = require("psl");
 
-module.exports = function isValidDomainBlock(domain) {
+function isValidDomainBlock(domain) {
 	return isValidDomain(domain, {
 		/* 
 			Wildcard prefix *. can be stripped since it's equivalent to not having it,
@@ -29,4 +30,21 @@ module.exports = function isValidDomainBlock(domain) {
 		wildcard: false,
 		allowUnicode: true
 	});
-};
+}
+
+/* 
+	Still can't think of a better function name for this,
+	but we're checking a domain against the Public Suffix List <https://publicsuffix.org/>
+	to see if we should suggest removing subdomain(s) since they're likely owned/ran by the same party
+	social.example.com -> suggests example.com
+*/
+function hasBetterScope(domain) {
+	const lookup = psl.get(domain);
+	if (lookup && lookup != domain) {
+		return lookup;
+	} else {
+		return false;
+	}
+}
+
+module.exports = { isValidDomainBlock, hasBetterScope };

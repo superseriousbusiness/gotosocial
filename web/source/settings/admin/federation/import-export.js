@@ -22,7 +22,7 @@ const React = require("react");
 const { Switch, Route, Redirect, useLocation } = require("wouter");
 
 const query = require("../../lib/query");
-const isValidDomainBlock = require("../../lib/is-valid-domain-block");
+const { isValidDomainBlock } = require("../../lib/domain-block");
 
 const {
 	useTextInput,

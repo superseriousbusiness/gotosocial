@@ -22,7 +22,7 @@ const Promise = require("bluebird");
 const fileDownload = require("js-file-download");
 const csv = require("papaparse");
 
-const isValidDomainBlock = require("../../is-valid-domain-block");
+const { isValidDomainBlock, hasBetterScope } = require("../../domain-block");
 
 const {
 	replaceCacheOnMutation,
@@ -76,6 +76,9 @@ function validateDomainList(list) {
 		}
 
 		entry.valid = (entry.valid !== false) && isValidDomainBlock(entry.domain);
+		if (entry.valid) {
+			entry.suggest = hasBetterScope(entry.domain);
+		}
 		entry.checked = entry.valid;
 	});
 
