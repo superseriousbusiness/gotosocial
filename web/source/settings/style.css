@@ -705,6 +705,10 @@ button.with-padding {
 			color: $green1;
 		}
 
+		#icon .suggest-changes {
+			color: $orange2;
+		}
+
 		p {
 			align-self: center;
 			margin: 0;

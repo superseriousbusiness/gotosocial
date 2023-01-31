@@ -307,6 +307,9 @@ function DomainEntry({ entry, onChange, extraProps: { alreadyExists, comment } }
 		)
 	});
 
+	// FIXME: actually update suggestion when needed
+	const suggest = (entry.suggest != entry.domain) && entry.suggest;
+
 	React.useEffect(() => {
 		if (entry.valid != domainField.valid) {
 			onChange({ valid: domainField.valid });
@@ -319,6 +322,15 @@ function DomainEntry({ entry, onChange, extraProps: { alreadyExists, comment } }
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [entry.checked]);
 
+	function clickIcon(e) {
+		if (entry.suggest) {
+			e.stopPropagation();
+			e.preventDefault();
+			domainField.setter(entry.suggest);
+			onChange({ domain: entry.suggest, checked: true });
+		}
+	}
+
 	return (
 		<>
 			<TextInput
@@ -328,11 +340,34 @@ function DomainEntry({ entry, onChange, extraProps: { alreadyExists, comment } }
 					onChange({ domain: e.target.value, checked: true });
 				}}
 			/>
-			<span id="icon">{alreadyExists && <>
-				<i className="fa fa-history already-blocked" aria-hidden="true" title="Domain block already exists"></i>
-				<span className="sr-only">Domain block already exists.</span>
-			</>}</span>
+			<span id="icon" onClick={clickIcon}>
+				<DomainEntryIcon alreadyExists={alreadyExists} suggestion={suggest} onChange={onChange} />
+			</span>
 			<p>{comment}</p>
+		</>
+	);
+}
+
+function DomainEntryIcon({ alreadyExists, suggestion }) {
+	let icon;
+	let text;
+
+	if (suggestion) {
+		icon = "fa-info-circle suggest-changes";
+		text = `Entry targets a specific subdomain, we recommend changing it to '${suggestion}'.`;
+	} else if (alreadyExists) {
+		icon = "fa-history already-blocked";
+		text = "Domain block already exists.";
+	}
+
+	if (!icon) {
+		return null;
+	}
+
+	return (
+		<>
+			<i className={`fa ${icon}`} aria-hidden="true" title={text}></i>
+			<span className="sr-only">{text}</span>
 		</>
 	);
 }
