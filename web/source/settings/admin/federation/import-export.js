@@ -129,17 +129,15 @@ module.exports = function ImportExport() {
 							result={parseResult}
 							showError={false}
 						/>
-						<button type="button" className="with-padding">
-							<label>
-								Import file
-								<input
-									type="file"
-									className="hidden"
-									onChange={fileChanged}
-									accept="application/json,text/plain,text/csv"
-								/>
-							</label>
-						</button>
+						<label className="button">
+							Import file
+							<input
+								type="file"
+								className="hidden"
+								onChange={fileChanged}
+								accept="application/json,text/plain,text/csv"
+							/>
+						</label>
 						<b /> {/* grid filler */}
 						<MutationButton
 							label="Export"
@@ -289,19 +287,54 @@ function DomainCheckList({ field, blockedInstances, commentType }) {
 	}, [blockedInstances, commentType]);
 
 	return (
-		<CheckList
-			field={field}
-			header={<>
-				<b>Domain</b>
-				<b></b>
-				<b>
-					{commentType == "public_comment" && "Public comment"}
-					{commentType == "private_comment" && "Private comment"}
-				</b>
-			</>}
-			EntryComponent={DomainEntry}
-			getExtraProps={getExtraProps}
-		/>
+		<>
+			<CheckList
+				field={field}
+				header={<>
+					<b>Domain</b>
+					<b></b>
+					<b>
+						{commentType == "public_comment" && "Public comment"}
+						{commentType == "private_comment" && "Private comment"}
+					</b>
+				</>}
+				EntryComponent={DomainEntry}
+				getExtraProps={getExtraProps}
+			/>
+			<UpdateHint field={field} />
+		</>
+	);
+}
+
+function UpdateHint({ field }) {
+	const hints = React.useMemo(() => (
+		Object.values(field.value)
+			.filter((entry) => entry.suggest)
+			.map((entry) => (
+				<React.Fragment key={entry.key}>
+					<span>{entry.domain}</span>
+					<i class="fa fa-long-arrow-right" aria-hidden="true"></i>
+					<span>{entry.suggest}</span>
+					<a>change</a>
+				</React.Fragment>
+			))
+	), [field.value]);
+
+	if (hints.length == 0) {
+		return null;
+	}
+
+	return (
+		<div className="update-hints">
+			<span>
+				{hints.length} {hints.length == 1 ? "entry uses" : "entries use"} a subdomain,
+				that you might want to change to the second-level domain, which includes all subdomains.
+			</span>
+			<div className="hints">
+				{hints}
+			</div>
+			{hints.length > 0 && <a>change all</a>}
+		</div>
 	);
 }
 

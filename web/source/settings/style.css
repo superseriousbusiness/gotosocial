@@ -743,6 +743,24 @@ button.with-padding {
 	}
 }
 
+.update-hints {
+	background: $list-entry-alternate-bg;
+	border: 0.1rem solid $border-accent;
+	/* border-radius: $br; */
+	padding: 0.5rem;
+	display: flex;
+	flex-direction: column;
+
+	.hints {
+		align-self: start;
+		align-items: center;
+		margin: 0.5rem 0;
+		display: inline-grid;
+		grid-template-columns: auto auto auto auto;
+		gap: 1rem;
+	}
+}
+
 .export-format-table {
 	width: 100%;
 	background: $list-entry-alternate-bg;
