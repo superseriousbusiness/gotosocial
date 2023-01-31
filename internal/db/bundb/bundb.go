@@ -328,11 +328,11 @@ func sqliteConn(ctx context.Context) (*DBConn, error) {
 */
 
 // maxOpenConns returns multiplier * GOMAXPROCS,
-// clamping multiplier to 1 if it was below 1.
+// returning just 1 instead if multiplier < 1.
 func maxOpenConns() int {
 	multiplier := config.GetDbMaxOpenConnsMultiplier()
 	if multiplier < 1 {
-		multiplier = 1
+		return 1
 	}
 	return multiplier * runtime.GOMAXPROCS(0)
 }
