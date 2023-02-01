@@ -304,9 +304,9 @@ func sqliteConn(ctx context.Context) (*DBConn, error) {
 	// Tune db connections for sqlite, see:
 	// - https://bun.uptrace.dev/guide/running-bun-in-production.html#database-sql
 	// - https://www.alexedwards.net/blog/configuring-sqldb
-	sqldb.SetMaxOpenConns(maxOpenConns()) // x number of conns per cpu
-	sqldb.SetMaxIdleConns(1)              // only keep max 1 idle connection around
-	sqldb.SetConnMaxLifetime(0)           // don't kill connections due to age
+	sqldb.SetMaxOpenConns(1)    // only 1 connection regardless of multiplier, see https://github.com/superseriousbusiness/gotosocial/issues/1407
+	sqldb.SetMaxIdleConns(1)    // only keep max 1 idle connection around
+	sqldb.SetConnMaxLifetime(0) // don't kill connections due to age
 
 	// Wrap Bun database conn in our own wrapper
 	conn := WrapDBConn(bun.NewDB(sqldb, sqlitedialect.New()))
