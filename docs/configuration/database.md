@@ -128,6 +128,10 @@ db-tls-ca-cert: ""
 #
 # If you set the multiplier to less than 1, only one open connection will be used regardless of cpu count.
 #
+# PLEASE NOTE!!: This setting currently only applies for Postgres. SQLite will always use 1 connection regardless
+# of what is set here. This behavior will change in future when we implement better SQLITE_BUSY handling.
+# See https://github.com/superseriousbusiness/gotosocial/issues/1407 for more details.
+#
 # Examples: [16, 8, 10, 2]
 # Default: 8
 db-max-open-conns-multiplier: 8
