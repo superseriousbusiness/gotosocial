@@ -22,6 +22,12 @@ import (
 	"unicode"
 )
 
+func IsPlausiblyInHashtag(r rune) bool {
+	// Marks are allowed during parsing, prior to normalization, but not after,
+	// since they may be combined into letters during normalization.
+	return unicode.IsLetter(r) || unicode.IsNumber(r) || unicode.IsMark(r)
+}
+
 func IsPermittedInHashtag(r rune) bool {
 	return unicode.IsLetter(r) || unicode.IsNumber(r)
 }

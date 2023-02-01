@@ -22,6 +22,8 @@ import (
 	"errors"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"golang.org/x/text/unicode/norm"
 	"strings"
 )
 
@@ -85,13 +87,23 @@ func (r *customRenderer) replaceMention(text string) string {
 	return b.String()
 }
 
-// replaceMention takes a string in the form #HashedTag
+// replaceMention takes a string in the form #HashedTag, and will normalize it before
+// adding it to the db and turning it into HTML.
 func (r *customRenderer) replaceHashtag(text string) string {
-	if len(text)-1 > maximumHashtagLength {
-		return text
+	// this normalization is specifically to avoid cases where visually-identical
+	// hashtags are stored with different unicode representations (e.g. with combining
+	// diacritics). It allows a tasteful number of combining diacritics to be used,
+	// as long as they can be combined with parent characters to form regular letter
+	// symbols.
+	normalized := norm.NFC.String(text[1:])
+
+	for i, r := range normalized {
+		if i >= maximumHashtagLength || !util.IsPermittedInHashtag(r) {
+			return text
+		}
 	}
 
-	tag, err := r.f.db.TagStringToTag(r.ctx, text[1:], r.accountID)
+	tag, err := r.f.db.TagStringToTag(r.ctx, normalized, r.accountID)
 	if err != nil {
 		log.Errorf("error generating hashtags from status: %s", err)
 		return text
@@ -122,7 +134,7 @@ func (r *customRenderer) replaceHashtag(text string) string {
 	b.WriteString(`<a href="`)
 	b.WriteString(tag.URL)
 	b.WriteString(`" class="mention hashtag" rel="tag">#<span>`)
-	b.WriteString(text[1:])
+	b.WriteString(normalized)
 	b.WriteString(`</span></a>`)
 
 	return b.String()

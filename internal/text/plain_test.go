@@ -135,6 +135,13 @@ func (suite *PlainTestSuite) TestDeriveMultiple() {
 	assert.Len(suite.T(), f.Emojis, 0)
 }
 
+func (suite *PlainTestSuite) TestZalgoHashtag() {
+	statusText := `yo who else loves #praying to #z̸͉̅a̸͚͋l̵͈̊g̸̫͌ỏ̷̪?`
+	f := suite.FromPlain(statusText)
+	assert.Len(suite.T(), f.Tags, 1)
+	assert.Equal(suite.T(), "praying", f.Tags[0].Name)
+}
+
 func TestPlainTestSuite(t *testing.T) {
 	suite.Run(t, new(PlainTestSuite))
 }

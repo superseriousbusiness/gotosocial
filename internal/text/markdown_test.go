@@ -81,6 +81,10 @@ const (
 	mdItalicHashtagExpected         = "<p><em><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag</span></a></em></p>"
 	mdItalicHashtags                = "_#hashtag #hashtag #hashtag_"
 	mdItalicHashtagsExpected        = "<p><em><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag</span></a> <a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag</span></a> <a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag</span></a></em></p>"
+	// BEWARE: sneaky unicode business going on.
+	// the first ö is one rune, the second ö is an o with a combining diacritic.
+	mdUnnormalizedHashtag         = "#hellöthere #hellöthere"
+	mdUnnormalizedHashtagExpected = "<p><a href=\"http://localhost:8080/tags/hell%C3%B6there\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hellöthere</span></a> <a href=\"http://localhost:8080/tags/hell%C3%B6there\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hellöthere</span></a></p>"
 )
 
 type MarkdownTestSuite struct {
@@ -189,6 +193,11 @@ func (suite *MarkdownTestSuite) TestParseItalicHashtag() {
 func (suite *MarkdownTestSuite) TestParseItalicHashtags() {
 	formatted := suite.FromMarkdown(mdItalicHashtags)
 	suite.Equal(mdItalicHashtagsExpected, formatted.HTML)
+}
+
+func (suite *MarkdownTestSuite) TestParseUnnormalizedHashtag() {
+	formatted := suite.FromMarkdown(mdUnnormalizedHashtag)
+	suite.Equal(mdUnnormalizedHashtagExpected, formatted.HTML)
 }
 
 func TestMarkdownTestSuite(t *testing.T) {

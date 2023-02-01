@@ -162,7 +162,7 @@ func (p *hashtagParser) Parse(parent ast.Node, block text.Reader, pc parser.Cont
 		case r == '#' && i == 0:
 			// ignore initial #
 			continue
-		case !util.IsPermittedInHashtag(r) && !util.IsMentionOrHashtagBoundary(r):
+		case !util.IsPlausiblyInHashtag(r) && !util.IsMentionOrHashtagBoundary(r):
 			// Fake hashtag, don't trust it
 			return nil
 		case util.IsMentionOrHashtagBoundary(r):
