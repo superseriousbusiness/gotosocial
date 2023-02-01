@@ -77,6 +77,10 @@ const (
 	mdWithLinkExpected              = "<p>Check out this code, i heard it was written by a sloth <a href=\"https://github.com/superseriousbusiness/gotosocial\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://github.com/superseriousbusiness/gotosocial</a></p>"
 	mdObjectInCodeBlock             = "@foss_satan@fossbros-anonymous.io this is how to mention a user\n```\n@the_mighty_zork hey bud! nice #ObjectOrientedProgramming software you've been writing lately! :rainbow:\n```\nhope that helps"
 	mdObjectInCodeBlockExpected     = "<p><span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span> this is how to mention a user</p><pre><code>@the_mighty_zork hey bud! nice #ObjectOrientedProgramming software you&#39;ve been writing lately! :rainbow:\n</code></pre><p>hope that helps</p>"
+	mdItalicHashtag                 = "_#hashtag_"
+	mdItalicHashtagExpected         = "<p><em><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag</span></a></em></p>"
+	mdItalicHashtags                = "_#hashtag #hashtag #hashtag_"
+	mdItalicHashtagsExpected        = "<p><em><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag</span></a> <a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag</span></a> <a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag</span></a></em></p>"
 )
 
 type MarkdownTestSuite struct {
@@ -175,6 +179,16 @@ func (suite *MarkdownTestSuite) TestParseObjectInCodeBlock() {
 	suite.Equal("@foss_satan@fossbros-anonymous.io", formatted.Mentions[0].NameString)
 	suite.Empty(formatted.Tags)
 	suite.Empty(formatted.Emojis)
+}
+
+func (suite *MarkdownTestSuite) TestParseItalicHashtag() {
+	formatted := suite.FromMarkdown(mdItalicHashtag)
+	suite.Equal(mdItalicHashtagExpected, formatted.HTML)
+}
+
+func (suite *MarkdownTestSuite) TestParseItalicHashtags() {
+	formatted := suite.FromMarkdown(mdItalicHashtags)
+	suite.Equal(mdItalicHashtagsExpected, formatted.HTML)
 }
 
 func TestMarkdownTestSuite(t *testing.T) {

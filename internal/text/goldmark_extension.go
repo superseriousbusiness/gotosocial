@@ -19,7 +19,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"unicode"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -132,7 +131,7 @@ func (p *mentionParser) Parse(parent ast.Node, block text.Reader, pc parser.Cont
 	before := block.PrecendingCharacter()
 	line, segment := block.PeekLine()
 
-	if !unicode.IsSpace(before) {
+	if !util.IsMentionOrHashtagBoundary(before) {
 		return nil
 	}
 
@@ -154,25 +153,30 @@ func (p *hashtagParser) Parse(parent ast.Node, block text.Reader, pc parser.Cont
 	line, segment := block.PeekLine()
 	s := string(line)
 
-	if !util.IsHashtagBoundary(before) {
+	if !util.IsMentionOrHashtagBoundary(before) || len(s) == 1 {
 		return nil
 	}
 
 	for i, r := range s {
 		switch {
 		case r == '#' && i == 0:
+			// ignore initial #
 			continue
-		case !util.IsPermittedInHashtag(r) && !util.IsHashtagBoundary(r):
+		case !util.IsPermittedInHashtag(r) && !util.IsMentionOrHashtagBoundary(r):
 			// Fake hashtag, don't trust it
 			return nil
-		case util.IsHashtagBoundary(r):
+		case util.IsMentionOrHashtagBoundary(r):
+			if i <= 1 {
+				// empty
+				return nil
+			}
 			// End of hashtag
 			block.Advance(i)
 			return newHashtag(segment.WithStop(segment.Start + i))
 		}
 	}
-	// If we don't find invalid characters before the end of the line then it's good
-	block.Advance(len(s))
+	// If we don't find invalid characters before the end of the line then it's all hashtag, babey
+	block.Advance(segment.Len())
 	return newHashtag(segment)
 }
 

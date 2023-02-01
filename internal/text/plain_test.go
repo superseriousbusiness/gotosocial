@@ -87,7 +87,7 @@ func (suite *PlainTestSuite) TestDeriveHashtagsOK() {
 	here's a link with a fragment: https://example.org/whatever#ahhh
 	here's another link with a fragment: https://example.org/whatever/#ahhh
 
-(#ThisShouldAlsoWork) #but_not_this_one
+(#ThisShouldAlsoWork) #this_should_be_split
 
 #111111 thisalsoshouldn'twork#### ##
 
@@ -97,19 +97,20 @@ func (suite *PlainTestSuite) TestDeriveHashtagsOK() {
 `
 
 	tags := suite.FromPlain(statusText).Tags
-	assert.Len(suite.T(), tags, 12)
+	assert.Len(suite.T(), tags, 13)
 	assert.Equal(suite.T(), "testing123", tags[0].Name)
 	assert.Equal(suite.T(), "also", tags[1].Name)
 	assert.Equal(suite.T(), "thisshouldwork", tags[2].Name)
 	assert.Equal(suite.T(), "dupe", tags[3].Name)
 	assert.Equal(suite.T(), "ThisShouldAlsoWork", tags[4].Name)
-	assert.Equal(suite.T(), "111111", tags[5].Name)
-	assert.Equal(suite.T(), "alimentación", tags[6].Name)
-	assert.Equal(suite.T(), "saúde", tags[7].Name)
-	assert.Equal(suite.T(), "lävistää", tags[8].Name)
-	assert.Equal(suite.T(), "ö", tags[9].Name)
-	assert.Equal(suite.T(), "네", tags[10].Name)
-	assert.Equal(suite.T(), "ThisOneIsThirteyCharactersLong", tags[11].Name)
+	assert.Equal(suite.T(), "this", tags[5].Name)
+	assert.Equal(suite.T(), "111111", tags[6].Name)
+	assert.Equal(suite.T(), "alimentación", tags[7].Name)
+	assert.Equal(suite.T(), "saúde", tags[8].Name)
+	assert.Equal(suite.T(), "lävistää", tags[9].Name)
+	assert.Equal(suite.T(), "ö", tags[10].Name)
+	assert.Equal(suite.T(), "네", tags[11].Name)
+	assert.Equal(suite.T(), "ThisOneIsThirteyCharactersLong", tags[12].Name)
 
 	statusText = `#올빼미 hej`
 	tags = suite.FromPlain(statusText).Tags
