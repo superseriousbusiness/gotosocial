@@ -111,7 +111,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		const interval = time.Hour * 48
 
 		// If this account was updated recently (last interval), we return as-is.
-		if next := account.LastWebfingeredAt.Add(interval); time.Now().Before(next) {
+		if next := account.FetchedAt.Add(interval); time.Now().Before(next) {
 			return account, nil
 		}
 	}
@@ -171,9 +171,9 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		return nil, fmt.Errorf("updateAccount: error converting accountable to gts model for account %s: %w", account.URI, err)
 	}
 
-	// Ensure ID is set and update webfinger time.
+	// Ensure ID is set and update fetch time.
 	latestAcc.ID = account.ID
-	latestAcc.LastWebfingeredAt = time.Now()
+	latestAcc.FetchedAt = time.Now()
 
 	// Fetch latest account media (TODO: check for changed URI to previous).
 	if err = d.fetchRemoteAccountMedia(ctx, latestAcc, requestUser, blocking); err != nil {
@@ -190,17 +190,17 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		// CreatedAt will be zero if no local copy was
 		// found in one of the GetAccountBy___() functions.
 		//
-		// Set time of creation from the last-webfinger date.
-		latestAcc.CreatedAt = latestAcc.LastWebfingeredAt
-		latestAcc.UpdatedAt = latestAcc.LastWebfingeredAt
+		// Set time of creation from the last-fetched date.
+		latestAcc.CreatedAt = latestAcc.FetchedAt
+		latestAcc.UpdatedAt = latestAcc.FetchedAt
 
 		// This is a new account, we need to place it in the database.
 		if err := d.db.PutAccount(ctx, latestAcc); err != nil {
 			return nil, fmt.Errorf("updateAccount: error putting in database: %w", err)
 		}
 	} else {
-		// Set time of update from the last-webfinger date.
-		latestAcc.UpdatedAt = latestAcc.LastWebfingeredAt
+		// Set time of update from the last-fetched date.
+		latestAcc.UpdatedAt = latestAcc.FetchedAt
 
 		// Use existing account values.
 		latestAcc.CreatedAt = account.CreatedAt

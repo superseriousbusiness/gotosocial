@@ -66,7 +66,7 @@ func happyAccount() *gtsmodel.Account {
 		StatusFormat:            "plain",
 		URI:                     "http://localhost:8080/users/the_mighty_zork",
 		URL:                     "http://localhost:8080/@the_mighty_zork",
-		LastWebfingeredAt:       time.Time{},
+		FetchedAt:               time.Time{},
 		InboxURI:                "http://localhost:8080/users/the_mighty_zork/inbox",
 		OutboxURI:               "http://localhost:8080/users/the_mighty_zork/outbox",
 		FollowersURI:            "http://localhost:8080/users/the_mighty_zork/followers",
@@ -117,14 +117,14 @@ func (suite *AccountValidateTestSuite) TestValidateAccountNoCreatedAt() {
 	suite.NoError(err)
 }
 
-// LastWebfingeredAt must be defined if remote account
+// FetchedAt must be defined if remote account
 func (suite *AccountValidateTestSuite) TestValidateAccountNoWebfingeredAt() {
 	a := happyAccount()
 
 	a.Domain = "example.org"
-	a.LastWebfingeredAt = time.Time{}
+	a.FetchedAt = time.Time{}
 	err := validate.Struct(*a)
-	suite.EqualError(err, "Key: 'Account.LastWebfingeredAt' Error:Field validation for 'LastWebfingeredAt' failed on the 'required_with' tag")
+	suite.EqualError(err, "Key: 'Account.FetchedAt' Error:Field validation for 'FetchedAt' failed on the 'required_with' tag")
 }
 
 // Username must be set
@@ -139,7 +139,7 @@ func (suite *AccountValidateTestSuite) TestValidateAccountUsername() {
 // Domain must be either empty (for local accounts) or proper fqdn (for remote accounts)
 func (suite *AccountValidateTestSuite) TestValidateAccountDomain() {
 	a := happyAccount()
-	a.LastWebfingeredAt = time.Now()
+	a.FetchedAt = time.Now()
 
 	a.Domain = ""
 	err := validate.Struct(*a)
@@ -204,7 +204,7 @@ func (suite *AccountValidateTestSuite) TestValidateAttachmentRemoteURLs() {
 // Default privacy must be set if account is local
 func (suite *AccountValidateTestSuite) TestValidatePrivacy() {
 	a := happyAccount()
-	a.LastWebfingeredAt = time.Now()
+	a.FetchedAt = time.Now()
 
 	a.Privacy = ""
 	err := validate.Struct(*a)
@@ -261,7 +261,7 @@ func (suite *AccountValidateTestSuite) TestValidateAccountURI() {
 // ActivityPub URIs must be set on account if it's local
 func (suite *AccountValidateTestSuite) TestValidateAccountURIs() {
 	a := happyAccount()
-	a.LastWebfingeredAt = time.Now()
+	a.FetchedAt = time.Now()
 
 	a.InboxURI = "invalid-uri"
 	a.OutboxURI = "invalid-uri"
@@ -319,7 +319,7 @@ func (suite *AccountValidateTestSuite) TestValidateActorType() {
 // Private key must be set on local accounts
 func (suite *AccountValidateTestSuite) TestValidatePrivateKey() {
 	a := happyAccount()
-	a.LastWebfingeredAt = time.Now()
+	a.FetchedAt = time.Now()
 
 	a.PrivateKey = nil
 	err := validate.Struct(*a)

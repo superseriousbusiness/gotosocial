@@ -92,7 +92,7 @@ func (suite *BasicTestSuite) TestPutAccountWithBunDefaultFields() {
 	suite.Empty(a.StatusFormat)
 	suite.Equal(testAccount.URI, a.URI)
 	suite.Equal(testAccount.URL, a.URL)
-	suite.Zero(testAccount.LastWebfingeredAt)
+	suite.Zero(testAccount.FetchedAt)
 	suite.Equal(testAccount.InboxURI, a.InboxURI)
 	suite.Equal(testAccount.OutboxURI, a.OutboxURI)
 	suite.Empty(a.FollowingURI)
