@@ -27,7 +27,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -39,10 +38,12 @@ func (suite *AccountTestSuite) TestDereferenceGroup() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 
 	groupURL := testrig.URLMustParse("https://unknown-instance.com/groups/some_group")
-	group, err := suite.dereferencer.GetAccount(context.Background(), dereferencing.GetAccountParams{
-		RequestingUsername: fetchingAccount.Username,
-		RemoteAccountID:    groupURL,
-	})
+	group, err := suite.dereferencer.GetAccountByURI(
+		context.Background(),
+		fetchingAccount.Username,
+		groupURL,
+		false,
+	)
 	suite.NoError(err)
 	suite.NotNil(group)
 
@@ -62,10 +63,12 @@ func (suite *AccountTestSuite) TestDereferenceService() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 
 	serviceURL := testrig.URLMustParse("https://owncast.example.org/federation/user/rgh")
-	service, err := suite.dereferencer.GetAccount(context.Background(), dereferencing.GetAccountParams{
-		RequestingUsername: fetchingAccount.Username,
-		RemoteAccountID:    serviceURL,
-	})
+	service, err := suite.dereferencer.GetAccountByURI(
+		context.Background(),
+		fetchingAccount.Username,
+		serviceURL,
+		false,
+	)
 	suite.NoError(err)
 	suite.NotNil(service)
 
@@ -93,10 +96,12 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountAsRemoteURL() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 	targetAccount := suite.testAccounts["local_account_2"]
 
-	fetchedAccount, err := suite.dereferencer.GetAccount(context.Background(), dereferencing.GetAccountParams{
-		RequestingUsername: fetchingAccount.Username,
-		RemoteAccountID:    testrig.URLMustParse(targetAccount.URI),
-	})
+	fetchedAccount, err := suite.dereferencer.GetAccountByURI(
+		context.Background(),
+		fetchingAccount.Username,
+		testrig.URLMustParse(targetAccount.URI),
+		false,
+	)
 	suite.NoError(err)
 	suite.NotNil(fetchedAccount)
 	suite.Empty(fetchedAccount.Domain)
@@ -111,10 +116,12 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountAsRemoteURLNoSharedInb
 		suite.FailNow(err.Error())
 	}
 
-	fetchedAccount, err := suite.dereferencer.GetAccount(context.Background(), dereferencing.GetAccountParams{
-		RequestingUsername: fetchingAccount.Username,
-		RemoteAccountID:    testrig.URLMustParse(targetAccount.URI),
-	})
+	fetchedAccount, err := suite.dereferencer.GetAccountByURI(
+		context.Background(),
+		fetchingAccount.Username,
+		testrig.URLMustParse(targetAccount.URI),
+		false,
+	)
 	suite.NoError(err)
 	suite.NotNil(fetchedAccount)
 	suite.Empty(fetchedAccount.Domain)
@@ -124,10 +131,12 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountAsUsername() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 	targetAccount := suite.testAccounts["local_account_2"]
 
-	fetchedAccount, err := suite.dereferencer.GetAccount(context.Background(), dereferencing.GetAccountParams{
-		RequestingUsername:    fetchingAccount.Username,
-		RemoteAccountUsername: targetAccount.Username,
-	})
+	fetchedAccount, err := suite.dereferencer.GetAccountByURI(
+		context.Background(),
+		fetchingAccount.Username,
+		testrig.URLMustParse(targetAccount.URI),
+		false,
+	)
 	suite.NoError(err)
 	suite.NotNil(fetchedAccount)
 	suite.Empty(fetchedAccount.Domain)
@@ -137,11 +146,12 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountAsUsernameDomain() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 	targetAccount := suite.testAccounts["local_account_2"]
 
-	fetchedAccount, err := suite.dereferencer.GetAccount(context.Background(), dereferencing.GetAccountParams{
-		RequestingUsername:    fetchingAccount.Username,
-		RemoteAccountUsername: targetAccount.Username,
-		RemoteAccountHost:     config.GetHost(),
-	})
+	fetchedAccount, err := suite.dereferencer.GetAccountByURI(
+		context.Background(),
+		fetchingAccount.Username,
+		testrig.URLMustParse(targetAccount.URI),
+		false,
+	)
 	suite.NoError(err)
 	suite.NotNil(fetchedAccount)
 	suite.Empty(fetchedAccount.Domain)
@@ -151,12 +161,13 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountAsUsernameDomainAndURL
 	fetchingAccount := suite.testAccounts["local_account_1"]
 	targetAccount := suite.testAccounts["local_account_2"]
 
-	fetchedAccount, err := suite.dereferencer.GetAccount(context.Background(), dereferencing.GetAccountParams{
-		RequestingUsername:    fetchingAccount.Username,
-		RemoteAccountID:       testrig.URLMustParse(targetAccount.URI),
-		RemoteAccountUsername: targetAccount.Username,
-		RemoteAccountHost:     config.GetHost(),
-	})
+	fetchedAccount, err := suite.dereferencer.GetAccountByUsernameDomain(
+		context.Background(),
+		fetchingAccount.Username,
+		targetAccount.Username,
+		config.GetHost(),
+		false,
+	)
 	suite.NoError(err)
 	suite.NotNil(fetchedAccount)
 	suite.Empty(fetchedAccount.Domain)
@@ -165,10 +176,13 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountAsUsernameDomainAndURL
 func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUsername() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 
-	fetchedAccount, err := suite.dereferencer.GetAccount(context.Background(), dereferencing.GetAccountParams{
-		RequestingUsername:    fetchingAccount.Username,
-		RemoteAccountUsername: "thisaccountdoesnotexist",
-	})
+	fetchedAccount, err := suite.dereferencer.GetAccountByUsernameDomain(
+		context.Background(),
+		fetchingAccount.Username,
+		"thisaccountdoesnotexist",
+		config.GetHost(),
+		false,
+	)
 	var errNotRetrievable *dereferencing.ErrNotRetrievable
 	suite.ErrorAs(err, &errNotRetrievable)
 	suite.EqualError(err, "item could not be retrieved: GetRemoteAccount: couldn't retrieve account locally and not allowed to resolve it")
@@ -178,11 +192,13 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUsername() 
 func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUsernameDomain() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 
-	fetchedAccount, err := suite.dereferencer.GetAccount(context.Background(), dereferencing.GetAccountParams{
-		RequestingUsername:    fetchingAccount.Username,
-		RemoteAccountUsername: "thisaccountdoesnotexist",
-		RemoteAccountHost:     "localhost:8080",
-	})
+	fetchedAccount, err := suite.dereferencer.GetAccountByUsernameDomain(
+		context.Background(),
+		fetchingAccount.Username,
+		"thisaccountdoesnotexist",
+		"localhost:8080",
+		false,
+	)
 	var errNotRetrievable *dereferencing.ErrNotRetrievable
 	suite.ErrorAs(err, &errNotRetrievable)
 	suite.EqualError(err, "item could not be retrieved: GetRemoteAccount: couldn't retrieve account locally and not allowed to resolve it")
@@ -192,219 +208,16 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUsernameDom
 func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUserURI() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 
-	fetchedAccount, err := suite.dereferencer.GetAccount(context.Background(), dereferencing.GetAccountParams{
-		RequestingUsername: fetchingAccount.Username,
-		RemoteAccountID:    testrig.URLMustParse("http://localhost:8080/users/thisaccountdoesnotexist"),
-	})
+	fetchedAccount, err := suite.dereferencer.GetAccountByURI(
+		context.Background(),
+		fetchingAccount.Username,
+		testrig.URLMustParse("http://localhost:8080/users/thisaccountdoesnotexist"),
+		false,
+	)
 	var errNotRetrievable *dereferencing.ErrNotRetrievable
 	suite.ErrorAs(err, &errNotRetrievable)
 	suite.EqualError(err, "item could not be retrieved: GetRemoteAccount: couldn't retrieve account locally and not allowed to resolve it")
 	suite.Nil(fetchedAccount)
-}
-
-func (suite *AccountTestSuite) TestDereferenceRemoteAccountWithPartial() {
-	fetchingAccount := suite.testAccounts["local_account_1"]
-
-	remoteAccount := suite.testAccounts["remote_account_1"]
-	remoteAccountPartial := &gtsmodel.Account{
-		ID:                    remoteAccount.ID,
-		ActorType:             remoteAccount.ActorType,
-		Language:              remoteAccount.Language,
-		CreatedAt:             remoteAccount.CreatedAt,
-		UpdatedAt:             remoteAccount.UpdatedAt,
-		Username:              remoteAccount.Username,
-		Domain:                remoteAccount.Domain,
-		DisplayName:           remoteAccount.DisplayName,
-		URI:                   remoteAccount.URI,
-		InboxURI:              remoteAccount.URI,
-		SharedInboxURI:        remoteAccount.SharedInboxURI,
-		PublicKeyURI:          remoteAccount.PublicKeyURI,
-		URL:                   remoteAccount.URL,
-		FollowingURI:          remoteAccount.FollowingURI,
-		FollowersURI:          remoteAccount.FollowersURI,
-		OutboxURI:             remoteAccount.OutboxURI,
-		FeaturedCollectionURI: remoteAccount.FeaturedCollectionURI,
-		Emojis: []*gtsmodel.Emoji{
-			// dereference an emoji we don't have stored yet
-			{
-				URI:             "http://fossbros-anonymous.io/emoji/01GD5HCC2YECT012TK8PAGX4D1",
-				Shortcode:       "kip_van_den_bos",
-				UpdatedAt:       testrig.TimeMustParse("2022-09-13T12:13:12+02:00"),
-				ImageUpdatedAt:  testrig.TimeMustParse("2022-09-13T12:13:12+02:00"),
-				ImageRemoteURL:  "http://fossbros-anonymous.io/emoji/kip.gif",
-				Disabled:        testrig.FalseBool(),
-				VisibleInPicker: testrig.FalseBool(),
-				Domain:          "fossbros-anonymous.io",
-			},
-		},
-	}
-
-	fetchedAccount, err := suite.dereferencer.GetAccount(context.Background(), dereferencing.GetAccountParams{
-		RequestingUsername:    fetchingAccount.Username,
-		RemoteAccountID:       testrig.URLMustParse(remoteAccount.URI),
-		RemoteAccountHost:     remoteAccount.Domain,
-		RemoteAccountUsername: remoteAccount.Username,
-		PartialAccount:        remoteAccountPartial,
-		Blocking:              true,
-	})
-	suite.NoError(err)
-	suite.NotNil(fetchedAccount)
-	suite.NotNil(fetchedAccount.EmojiIDs)
-	suite.NotNil(fetchedAccount.Emojis)
-}
-
-func (suite *AccountTestSuite) TestDereferenceRemoteAccountWithPartial2() {
-	fetchingAccount := suite.testAccounts["local_account_1"]
-
-	knownEmoji := suite.testEmojis["yell"]
-
-	remoteAccount := suite.testAccounts["remote_account_1"]
-	remoteAccountPartial := &gtsmodel.Account{
-		ID:                    remoteAccount.ID,
-		ActorType:             remoteAccount.ActorType,
-		Language:              remoteAccount.Language,
-		CreatedAt:             remoteAccount.CreatedAt,
-		UpdatedAt:             remoteAccount.UpdatedAt,
-		Username:              remoteAccount.Username,
-		Domain:                remoteAccount.Domain,
-		DisplayName:           remoteAccount.DisplayName,
-		URI:                   remoteAccount.URI,
-		InboxURI:              remoteAccount.URI,
-		SharedInboxURI:        remoteAccount.SharedInboxURI,
-		PublicKeyURI:          remoteAccount.PublicKeyURI,
-		URL:                   remoteAccount.URL,
-		FollowingURI:          remoteAccount.FollowingURI,
-		FollowersURI:          remoteAccount.FollowersURI,
-		OutboxURI:             remoteAccount.OutboxURI,
-		FeaturedCollectionURI: remoteAccount.FeaturedCollectionURI,
-		Emojis: []*gtsmodel.Emoji{
-			// an emoji we already have
-			{
-				URI:             knownEmoji.URI,
-				Shortcode:       knownEmoji.Shortcode,
-				UpdatedAt:       knownEmoji.UpdatedAt,
-				ImageUpdatedAt:  knownEmoji.ImageUpdatedAt,
-				ImageRemoteURL:  knownEmoji.ImageRemoteURL,
-				Disabled:        knownEmoji.Disabled,
-				VisibleInPicker: knownEmoji.VisibleInPicker,
-				Domain:          knownEmoji.Domain,
-			},
-		},
-	}
-
-	fetchedAccount, err := suite.dereferencer.GetAccount(context.Background(), dereferencing.GetAccountParams{
-		RequestingUsername:    fetchingAccount.Username,
-		RemoteAccountID:       testrig.URLMustParse(remoteAccount.URI),
-		RemoteAccountHost:     remoteAccount.Domain,
-		RemoteAccountUsername: remoteAccount.Username,
-		PartialAccount:        remoteAccountPartial,
-		Blocking:              true,
-	})
-	suite.NoError(err)
-	suite.NotNil(fetchedAccount)
-	suite.NotNil(fetchedAccount.EmojiIDs)
-	suite.NotNil(fetchedAccount.Emojis)
-}
-
-func (suite *AccountTestSuite) TestDereferenceRemoteAccountWithPartial3() {
-	fetchingAccount := suite.testAccounts["local_account_1"]
-
-	knownEmoji := suite.testEmojis["yell"]
-
-	remoteAccount := suite.testAccounts["remote_account_1"]
-	remoteAccountPartial := &gtsmodel.Account{
-		ID:                    remoteAccount.ID,
-		ActorType:             remoteAccount.ActorType,
-		Language:              remoteAccount.Language,
-		CreatedAt:             remoteAccount.CreatedAt,
-		UpdatedAt:             remoteAccount.UpdatedAt,
-		Username:              remoteAccount.Username,
-		Domain:                remoteAccount.Domain,
-		DisplayName:           remoteAccount.DisplayName,
-		URI:                   remoteAccount.URI,
-		InboxURI:              remoteAccount.URI,
-		SharedInboxURI:        remoteAccount.SharedInboxURI,
-		PublicKeyURI:          remoteAccount.PublicKeyURI,
-		URL:                   remoteAccount.URL,
-		FollowingURI:          remoteAccount.FollowingURI,
-		FollowersURI:          remoteAccount.FollowersURI,
-		OutboxURI:             remoteAccount.OutboxURI,
-		FeaturedCollectionURI: remoteAccount.FeaturedCollectionURI,
-		Emojis: []*gtsmodel.Emoji{
-			// an emoji we already have
-			{
-				URI:             knownEmoji.URI,
-				Shortcode:       knownEmoji.Shortcode,
-				UpdatedAt:       knownEmoji.UpdatedAt,
-				ImageUpdatedAt:  knownEmoji.ImageUpdatedAt,
-				ImageRemoteURL:  knownEmoji.ImageRemoteURL,
-				Disabled:        knownEmoji.Disabled,
-				VisibleInPicker: knownEmoji.VisibleInPicker,
-				Domain:          knownEmoji.Domain,
-			},
-		},
-	}
-
-	fetchedAccount, err := suite.dereferencer.GetAccount(context.Background(), dereferencing.GetAccountParams{
-		RequestingUsername:    fetchingAccount.Username,
-		RemoteAccountID:       testrig.URLMustParse(remoteAccount.URI),
-		RemoteAccountHost:     remoteAccount.Domain,
-		RemoteAccountUsername: remoteAccount.Username,
-		PartialAccount:        remoteAccountPartial,
-		Blocking:              true,
-	})
-	suite.NoError(err)
-	suite.NotNil(fetchedAccount)
-	suite.NotNil(fetchedAccount.EmojiIDs)
-	suite.NotNil(fetchedAccount.Emojis)
-	suite.Equal(knownEmoji.URI, fetchedAccount.Emojis[0].URI)
-
-	remoteAccountPartial2 := &gtsmodel.Account{
-		ID:                    remoteAccount.ID,
-		ActorType:             remoteAccount.ActorType,
-		Language:              remoteAccount.Language,
-		CreatedAt:             remoteAccount.CreatedAt,
-		UpdatedAt:             remoteAccount.UpdatedAt,
-		Username:              remoteAccount.Username,
-		Domain:                remoteAccount.Domain,
-		DisplayName:           remoteAccount.DisplayName,
-		URI:                   remoteAccount.URI,
-		InboxURI:              remoteAccount.URI,
-		SharedInboxURI:        remoteAccount.SharedInboxURI,
-		PublicKeyURI:          remoteAccount.PublicKeyURI,
-		URL:                   remoteAccount.URL,
-		FollowingURI:          remoteAccount.FollowingURI,
-		FollowersURI:          remoteAccount.FollowersURI,
-		OutboxURI:             remoteAccount.OutboxURI,
-		FeaturedCollectionURI: remoteAccount.FeaturedCollectionURI,
-		Emojis: []*gtsmodel.Emoji{
-			// dereference an emoji we don't have stored yet
-			{
-				URI:             "http://fossbros-anonymous.io/emoji/01GD5HCC2YECT012TK8PAGX4D1",
-				Shortcode:       "kip_van_den_bos",
-				UpdatedAt:       testrig.TimeMustParse("2022-09-13T12:13:12+02:00"),
-				ImageUpdatedAt:  testrig.TimeMustParse("2022-09-13T12:13:12+02:00"),
-				ImageRemoteURL:  "http://fossbros-anonymous.io/emoji/kip.gif",
-				Disabled:        testrig.FalseBool(),
-				VisibleInPicker: testrig.FalseBool(),
-				Domain:          "fossbros-anonymous.io",
-			},
-		},
-	}
-
-	fetchedAccount2, err := suite.dereferencer.GetAccount(context.Background(), dereferencing.GetAccountParams{
-		RequestingUsername:    fetchingAccount.Username,
-		RemoteAccountID:       testrig.URLMustParse(remoteAccount.URI),
-		RemoteAccountHost:     remoteAccount.Domain,
-		RemoteAccountUsername: remoteAccount.Username,
-		PartialAccount:        remoteAccountPartial2,
-		Blocking:              true,
-	})
-	suite.NoError(err)
-	suite.NotNil(fetchedAccount2)
-	suite.NotNil(fetchedAccount2.EmojiIDs)
-	suite.NotNil(fetchedAccount2.Emojis)
-	suite.Equal("http://fossbros-anonymous.io/emoji/01GD5HCC2YECT012TK8PAGX4D1", fetchedAccount2.Emojis[0].URI)
 }
 
 func TestAccountTestSuite(t *testing.T) {

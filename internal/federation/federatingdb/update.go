@@ -116,7 +116,7 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 			accountable = i
 		}
 
-		updatedAcct, err := f.typeConverter.ASRepresentationToAccount(ctx, accountable, "", true)
+		updatedAcct, err := f.typeConverter.ASRepresentationToAccount(ctx, accountable, "")
 		if err != nil {
 			return fmt.Errorf("UPDATE: error converting to account: %s", err)
 		}

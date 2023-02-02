@@ -26,7 +26,6 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
@@ -94,13 +93,9 @@ func (p *processor) getAccountFor(ctx context.Context, requestingAccount *gtsmod
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error parsing url %s: %s", targetAccount.URI, err))
 		}
 
-		a, err := p.federator.GetAccount(transport.WithFastfail(ctx), dereferencing.GetAccountParams{
-			RequestingUsername:    requestingAccount.Username,
-			RemoteAccountID:       targetAccountURI,
-			RemoteAccountHost:     targetAccount.Domain,
-			RemoteAccountUsername: targetAccount.Username,
-			Blocking:              true,
-		})
+		a, err := p.federator.GetAccountByURI(
+			transport.WithFastfail(ctx), requestingAccount.Username, targetAccountURI, true,
+		)
 		if err == nil {
 			targetAccount = a
 		}

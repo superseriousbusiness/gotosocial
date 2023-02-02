@@ -33,7 +33,17 @@ import (
 
 // Dereferencer wraps logic and functionality for doing dereferencing of remote accounts, statuses, etc, from federated instances.
 type Dereferencer interface {
-	GetAccount(ctx context.Context, params GetAccountParams) (*gtsmodel.Account, error)
+	// GetAccountByURI will attempt to fetch an account by its URI, first checking the database and in the case of a remote account will either check the
+	// last_fetched (and updating if beyond fetch interval) or dereferencing for the first-time if this remote account has never been encountered before.
+	GetAccountByURI(ctx context.Context, requestUser string, uri *url.URL, block bool) (*gtsmodel.Account, error)
+
+	// GetAccountByUsernameDomain will attempt to fetch an account by username@domain, first checking the database and in the case of a remote account will either
+	// check the last_fetched (and updating if beyond fetch interval) or dereferencing for the first-time if this remote account has never been encountered before.
+	GetAccountByUsernameDomain(ctx context.Context, requestUser string, username string, domain string, block bool) (*gtsmodel.Account, error)
+
+	// UpdateAccount updates the given account if last_fetched is beyond fetch interval (or if force is set). An updated account model is returned, any media fetching is done async.
+	UpdateAccount(ctx context.Context, requestUser string, account *gtsmodel.Account, force bool) (*gtsmodel.Account, error)
+
 	GetStatus(ctx context.Context, username string, remoteStatusID *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, error)
 
 	EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status, includeParent bool) (*gtsmodel.Status, error)
@@ -44,7 +54,7 @@ type Dereferencer interface {
 	GetRemoteMedia(ctx context.Context, requestingUsername string, accountID string, remoteURL string, ai *media.AdditionalMediaInfo) (*media.ProcessingMedia, error)
 	GetRemoteEmoji(ctx context.Context, requestingUsername string, remoteURL string, shortcode string, domain string, id string, emojiURI string, ai *media.AdditionalEmojiInfo, refresh bool) (*media.ProcessingEmoji, error)
 
-	Handshaking(ctx context.Context, username string, remoteAccountID *url.URL) bool
+	Handshaking(username string, remoteAccountID *url.URL) bool
 }
 
 type deref struct {
@@ -53,28 +63,25 @@ type deref struct {
 	transportController      transport.Controller
 	mediaManager             media.Manager
 	dereferencingAvatars     map[string]*media.ProcessingMedia
-	dereferencingAvatarsLock *sync.Mutex
+	dereferencingAvatarsLock sync.Mutex
 	dereferencingHeaders     map[string]*media.ProcessingMedia
-	dereferencingHeadersLock *sync.Mutex
+	dereferencingHeadersLock sync.Mutex
 	dereferencingEmojis      map[string]*media.ProcessingEmoji
-	dereferencingEmojisLock  *sync.Mutex
+	dereferencingEmojisLock  sync.Mutex
 	handshakes               map[string][]*url.URL
-	handshakeSync            *sync.Mutex // mutex to lock/unlock when checking or updating the handshakes map
+	handshakeSync            sync.Mutex // mutex to lock/unlock when checking or updating the handshakes map
 }
 
 // NewDereferencer returns a Dereferencer initialized with the given parameters.
 func NewDereferencer(db db.DB, typeConverter typeutils.TypeConverter, transportController transport.Controller, mediaManager media.Manager) Dereferencer {
 	return &deref{
-		db:                       db,
-		typeConverter:            typeConverter,
-		transportController:      transportController,
-		mediaManager:             mediaManager,
-		dereferencingAvatars:     make(map[string]*media.ProcessingMedia),
-		dereferencingAvatarsLock: &sync.Mutex{},
-		dereferencingHeaders:     make(map[string]*media.ProcessingMedia),
-		dereferencingHeadersLock: &sync.Mutex{},
-		dereferencingEmojis:      make(map[string]*media.ProcessingEmoji),
-		dereferencingEmojisLock:  &sync.Mutex{},
-		handshakeSync:            &sync.Mutex{},
+		db:                   db,
+		typeConverter:        typeConverter,
+		transportController:  transportController,
+		mediaManager:         mediaManager,
+		dereferencingAvatars: make(map[string]*media.ProcessingMedia),
+		dereferencingHeaders: make(map[string]*media.ProcessingMedia),
+		dereferencingEmojis:  make(map[string]*media.ProcessingEmoji),
+		handshakes:           make(map[string][]*url.URL),
 	}
 }

@@ -35,11 +35,7 @@ import (
 
 func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, application *gtsmodel.Application, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, gtserror.WithCode) {
 	accountURIs := uris.GenerateURIsForAccount(account.Username)
-	thisStatusID, err := id.NewULID()
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
+	thisStatusID := id.NewULID()
 	local := true
 	sensitive := form.Sensitive
 

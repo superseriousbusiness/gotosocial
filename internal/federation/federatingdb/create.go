@@ -100,11 +100,7 @@ func (f *federatingDB) activityBlock(ctx context.Context, asType vocab.Type, rec
 		return fmt.Errorf("activityBlock: could not convert Block to gts model block")
 	}
 
-	newID, err := id.NewULID()
-	if err != nil {
-		return err
-	}
-	block.ID = newID
+	block.ID = id.NewULID()
 
 	if err := f.db.PutBlock(ctx, block); err != nil {
 		return fmt.Errorf("activityBlock: database error inserting block: %s", err)
@@ -263,11 +259,7 @@ func (f *federatingDB) activityFollow(ctx context.Context, asType vocab.Type, re
 		return fmt.Errorf("activityFollow: could not convert Follow to follow request: %s", err)
 	}
 
-	newID, err := id.NewULID()
-	if err != nil {
-		return err
-	}
-	followRequest.ID = newID
+	followRequest.ID = id.NewULID()
 
 	if err := f.db.Put(ctx, followRequest); err != nil {
 		return fmt.Errorf("activityFollow: database error inserting follow request: %s", err)
@@ -298,11 +290,7 @@ func (f *federatingDB) activityLike(ctx context.Context, asType vocab.Type, rece
 		return fmt.Errorf("activityLike: could not convert Like to fave: %s", err)
 	}
 
-	newID, err := id.NewULID()
-	if err != nil {
-		return err
-	}
-	fave.ID = newID
+	fave.ID = id.NewULID()
 
 	if err := f.db.Put(ctx, fave); err != nil {
 		return fmt.Errorf("activityLike: database error inserting fave: %s", err)
@@ -333,11 +321,7 @@ func (f *federatingDB) activityFlag(ctx context.Context, asType vocab.Type, rece
 		return fmt.Errorf("activityFlag: could not convert Flag to report: %w", err)
 	}
 
-	newID, err := id.NewULID()
-	if err != nil {
-		return err
-	}
-	report.ID = newID
+	report.ID = id.NewULID()
 
 	if err := f.db.PutReport(ctx, report); err != nil {
 		return fmt.Errorf("activityFlag: database error inserting report: %w", err)

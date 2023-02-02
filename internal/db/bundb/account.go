@@ -21,7 +21,6 @@ package bundb
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -145,11 +144,27 @@ func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(
 		return nil, err
 	}
 
+	if account.AvatarMediaAttachmentID != "" {
+		// Set the account's related avatar
+		account.AvatarMediaAttachment, err = a.state.DB.GetAttachmentByID(ctx, account.AvatarMediaAttachmentID)
+		if err != nil {
+			log.Errorf("error getting account %s avatar: %v", account.ID, err)
+		}
+	}
+
+	if account.HeaderMediaAttachmentID != "" {
+		// Set the account's related header
+		account.HeaderMediaAttachment, err = a.state.DB.GetAttachmentByID(ctx, account.HeaderMediaAttachmentID)
+		if err != nil {
+			log.Errorf("error getting account %s header: %v", account.ID, err)
+		}
+	}
+
 	if len(account.EmojiIDs) > 0 {
 		// Set the account's related emojis
 		account.Emojis, err = a.state.DB.GetEmojisByIDs(ctx, account.EmojiIDs)
 		if err != nil {
-			return nil, fmt.Errorf("error getting account emojis: %w", err)
+			log.Errorf("error getting account %s emojis: %v", account.ID, err)
 		}
 	}
 
