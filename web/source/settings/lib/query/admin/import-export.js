@@ -21,6 +21,7 @@
 const Promise = require("bluebird");
 const fileDownload = require("js-file-download");
 const csv = require("papaparse");
+const { nanoid } = require("nanoid");
 
 const { isValidDomainBlock, hasBetterScope } = require("../../domain-block");
 
@@ -110,6 +111,9 @@ module.exports = (build) => ({
 			}).then((deduped) => {
 				return validateDomainList(deduped);
 			}).then((data) => {
+				data.forEach((entry) => {
+					entry.key = nanoid(); // unique id that stays stable even if domain gets modified by user
+				});
 				return { data };
 			}).catch((e) => {
 				return { error: e.toString() };
@@ -219,6 +223,7 @@ module.exports = (build) => ({
 	})
 });
 
+const internalKeys = new Set("key,suggest,valid,checked".split(","));
 function entryProcessor(formData) {
 	let funcs = [];
 
@@ -252,7 +257,7 @@ function entryProcessor(formData) {
 		entry.obfuscate = formData.obfuscate;
 
 		Object.entries(entry).forEach(([key, val]) => {
-			if (val == undefined) {
+			if (internalKeys.has(key) || val == undefined) {
 				delete entry[key];
 			}
 		});

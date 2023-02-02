@@ -41,7 +41,6 @@ function CheckListHeader({ toggleAll, children }) {
 				ref={toggleAll.ref}
 				type="checkbox"
 				onChange={toggleAll.onChange}
-				checked={toggleAll.value === 1}
 			/> {children}
 		</label>
 	);

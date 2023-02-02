@@ -752,9 +752,10 @@ button.with-padding {
 	flex-direction: column;
 
 	.hints {
+		max-width: 100%;
 		align-self: start;
 		align-items: center;
-		margin: 0.5rem 0;
+		margin: 1rem 0;
 		display: inline-grid;
 		grid-template-columns: auto auto auto auto;
 		gap: 1rem;
@@ -798,6 +799,10 @@ button.with-padding {
 		width: auto;
 		place-self: center;
 	}
+}
+
+[role="button"] {
+	cursor: pointer;
 }
 
 @keyframes fadeout {

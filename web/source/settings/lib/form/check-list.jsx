@@ -21,87 +21,115 @@
 const React = require("react");
 const syncpipe = require("syncpipe");
 const { createSlice } = require("@reduxjs/toolkit");
+const { enableMapSet } = require("immer");
 
-const slice = createSlice({
+enableMapSet(); // for use in reducers
+
+const { reducer, actions } = createSlice({
 	name: "checklist",
-	initialState: {},
+	initialState: {}, // not handled by slice itself
 	reducers: {
-		create: (state, { payload }) => {
-			return createState(payload, state);
-		},
-		updateAll: (state, { payload: value }) => {
-			return syncpipe(state, [
-				(_) => Object.values(_),
-				(_) => _.map((entry) => [entry.key, {
-					...entry,
-					checked: value
-				}]),
-				(_) => Object.fromEntries(_)
-			]);
+		updateAll: (state, { payload: checked }) => {
+			const selectedEntries = new Set();
+			return {
+				entries: syncpipe(state.entries, [
+					(_) => Object.values(_),
+					(_) => _.map((entry) => {
+						if (checked) {
+							selectedEntries.add(entry.key);
+						}
+						return [entry.key, {
+							...entry,
+							checked
+						}];
+					}),
+					(_) => Object.fromEntries(_)
+				]),
+				selectedEntries
+			};
 		},
 		update: (state, { payload: { key, value } }) => {
-			state[key] = {
-				...state[key],
+			if (value.checked !== undefined) {
+				if (value.checked === true) {
+					state.selectedEntries.add(key);
+				} else {
+					state.selectedEntries.delete(key);
+				}
+			}
+
+			state.entries[key] = {
+				...state.entries[key],
 				...value
 			};
+		},
+		updateMultiple: (state, { payload }) => {
+			payload.forEach(([key, value]) => {
+				if (value.checked !== undefined) {
+					if (value.checked === true) {
+						state.selectedEntries.add(key);
+					} else {
+						state.selectedEntries.delete(key);
+					}
+				}
+
+				state.entries[key] = {
+					...state.entries[key],
+					...value
+				};
+			});
 		}
 	}
 });
 
-const { reducer, actions } = slice;
+function initialState({ entries, uniqueKey, defaultValue }) {
+	const selectedEntries = new Set();
+	return {
+		entries: syncpipe(entries, [
+			(_) => _.map((entry) => {
+				let key = entry[uniqueKey];
+				let checked = entry.checked ?? defaultValue;
 
-function createState({ entries, uniqueKey, defaultValue }, oldState) {
-	return syncpipe(entries, [
-		(_) => _.map((entry) => {
-			let key = entry[uniqueKey];
-			return [
-				key,
-				{
-					...entry,
-					key,
-					checked: oldState?.[key]?.checked ?? entry.checked ?? defaultValue
+				if (checked) {
+					selectedEntries.add(key);
+				} else {
+					selectedEntries.delete(key);
 				}
-			];
-		}),
-		(_) => Object.fromEntries(_)
-	]);
+
+				return [
+					key,
+					{
+						...entry,
+						key,
+						checked
+					}
+				];
+			}),
+			(_) => Object.fromEntries(_)
+		]),
+		selectedEntries
+	};
 }
 
 module.exports = function useCheckListInput({ name }, { entries, uniqueKey = "key", defaultValue = false }) {
-	const [state, dispatch] = React.useReducer(reducer, null, () => createState({ entries, uniqueKey, defaultValue }));
+	const [state, dispatch] = React.useReducer(reducer, null,
+		() => initialState({ entries, uniqueKey, defaultValue }) // initial state
+	);
 
-	const [someSelected, setSomeSelected] = React.useState(false);
-	const [toggleAllState, setToggleAllState] = React.useState(0);
 	const toggleAllRef = React.useRef(null);
 
 	React.useEffect(() => {
-		/* Updates (un)check all checkbox, based on shortcode checkboxes
-			 Can be 0 (not checked), 1 (checked) or 2 (indeterminate)
-		 */
-		if (toggleAllRef.current == null) {
-			return;
+		if (toggleAllRef.current != null) {
+			let some = state.selectedEntries.size > 0;
+			let all = false;
+			if (some) {
+				all = state.selectedEntries.size == Object.values(state.entries).length;
+			}
+			toggleAllRef.current.checked = all;
+			toggleAllRef.current.indeterminate = some && !all;
 		}
-
-		let values = Object.values(state);
-		/* one or more boxes are checked */
-		let some = values.some((v) => v.checked);
-
-		let all = false;
-		if (some) {
-			/* there's not at least one unchecked box */
-			all = !values.some((v) => v.checked == false);
-		}
-
-		setSomeSelected(some);
-
-		if (some && !all) {
-			setToggleAllState(2);
-			toggleAllRef.current.indeterminate = true;
-		} else {
-			setToggleAllState(all ? 1 : 0);
-			toggleAllRef.current.indeterminate = false;
-		}
-	}, [state, toggleAllRef]);
+		// only needs to update when state.selectedEntries changes, not state.entries
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [state.selectedEntries]);
 
 	const reset = React.useCallback(
 		() => dispatch(actions.updateAll(defaultValue)),
@@ -113,24 +141,24 @@ module.exports = function useCheckListInput({ name }, { entries, uniqueKey = "ke
 		[]
 	);
 
+	const updateMultiple = React.useCallback(
+		(entries) => dispatch(actions.updateMultiple(entries)),
+		[]
+	);
+
 	return React.useMemo(() => {
 		function toggleAll(e) {
-			let selectAll = e.target.checked;
-
-			if (toggleAllState == 2) { // indeterminate
-				selectAll = false;
+			let checked = e.target.checked;
+			if (e.target.indeterminate) {
+				checked = false;
 			}
-
-			dispatch(actions.updateAll(selectAll));
-			setToggleAllState(selectAll);
+			dispatch(actions.updateAll(checked));
 		}
 
 		function selectedValues() {
-			return syncpipe(state, [
-				(_) => Object.values(_),
-				(_) => _.filter((entry) => entry.checked),
-				(_) => _.map((entry) => ({ ...entry }))
-			]);
+			return Array.from((state.selectedEntries)).map((key) => ({
+				...state.entries[key] // returned as new object, because reducer state is immutable
+			}));
 		}
 
 		return Object.assign([
@@ -139,16 +167,16 @@ module.exports = function useCheckListInput({ name }, { entries, uniqueKey = "ke
 			{ name }
 		], {
 			name,
-			value: state,
+			value: state.entries,
 			onChange,
 			selectedValues,
 			reset,
-			someSelected,
+			someSelected: state.someChecked,
+			updateMultiple,
 			toggleAll: {
 				ref: toggleAllRef,
-				value: toggleAllState,
 				onChange: toggleAll
 			}
 		});
-	}, [name, onChange, reset, someSelected, state, toggleAllState]);
+	}, [state, reset, name, onChange, updateMultiple]);
 };

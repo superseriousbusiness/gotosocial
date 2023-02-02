@@ -24,18 +24,16 @@ module.exports = function useTextInput({ name, Name }, {
 	defaultValue = "",
 	dontReset = false,
 	validator,
-	initValidation: _initValidation
+	showValidation = true,
+	initValidation
 } = {}) {
 
 	const [text, setText] = React.useState(defaultValue);
 	const textRef = React.useRef(null);
 
-	const initValidation = React.useRef(_initValidation); // memoize forever
-	const [validation, setValidation] = React.useState(_initValidation ?? "");
+	const [validation, setValidation] = React.useState(initValidation ?? "");
 	const [_isValidating, startValidation] = React.useTransition();
-	const valid = validation == "";
-
-	const isFirstUpdate = React.useRef(true);
+	let valid = validation == "";
 
 	function onChange(e) {
 		let input = e.target.value;
@@ -43,16 +41,7 @@ module.exports = function useTextInput({ name, Name }, {
 
 		if (validator) {
 			startValidation(() => {
-				let validatorMsg = (isFirstUpdate.current && initValidation.current)
-					? initValidation.current
-					: validator(input);
-
-				if (isFirstUpdate.current) {
-					isFirstUpdate.current = false;
-					return; // No need to update anything
-				}
-
-				setValidation(validatorMsg);
+				setValidation(validator(input));
 			});
 		}
 	}
@@ -65,9 +54,13 @@ module.exports = function useTextInput({ name, Name }, {
 
 	React.useEffect(() => {
 		if (validator && textRef.current) {
-			textRef.current.setCustomValidity(validation);
+			if (showValidation) {
+				textRef.current.setCustomValidity(validation);
+			} else {
+				textRef.current.setCustomValidity("");
+			}
 		}
-	}, [validation, validator]);
+	}, [validation, validator, showValidation]);
 
 	// Array / Object hybrid, for easier access in different contexts
 	return Object.assign([

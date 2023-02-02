@@ -19,19 +19,18 @@
 "use strict";
 
 const React = require("react");
-const { Switch, Route, Redirect, useLocation } = require("wouter");
 
-const query = require("../../lib/query");
-const { isValidDomainBlock, hasBetterScope } = require("../../lib/domain-block");
+const query = require("../../../lib/query");
+const { isValidDomainBlock, hasBetterScope } = require("../../../lib/domain-block");
 
 const {
 	useTextInput,
 	useBoolInput,
 	useRadioInput,
 	useCheckListInput
-} = require("../../lib/form");
+} = require("../../../lib/form");
 
-const useFormSubmit = require("../../lib/form/submit");
+const useFormSubmit = require("../../../lib/form/submit");
 
 const {
 	TextInput,
@@ -39,135 +38,25 @@ const {
 	Checkbox,
 	Select,
 	RadioGroup
-} = require("../../components/form/inputs");
+} = require("../../../components/form/inputs");
 
-const CheckList = require("../../components/check-list");
-const MutationButton = require("../../components/form/mutation-button");
-const FormWithData = require("../../lib/form/form-with-data");
-const { Error } = require("../../components/error");
-const ExportFormatTable = require("./export-format-table");
+const CheckList = require("../../../components/check-list");
+const MutationButton = require("../../../components/form/mutation-button");
+const FormWithData = require("../../../lib/form/form-with-data");
 
-const baseUrl = "/settings/admin/federation/import-export";
-
-module.exports = function ImportExport() {
-	const [updateFromFile, setUpdateFromFile] = React.useState(false);
-	const form = {
-		domains: useTextInput("domains"),
-		exportType: useTextInput("exportType", { defaultValue: "plain", dontReset: true })
-	};
-
-	const [submitParse, parseResult] = useFormSubmit(form, query.useProcessDomainListMutation());
-	const [submitExport, exportResult] = useFormSubmit(form, query.useExportDomainListMutation());
-
-	function fileChanged(e) {
-		const reader = new FileReader();
-		reader.onload = function (read) {
-			form.domains.setter(read.target.result);
-			setUpdateFromFile(true);
-		};
-		reader.readAsText(e.target.files[0]);
+module.exports = React.memo(
+	function ProcessImport({ list }) {
+		return (
+			<div className="without-border">
+				<FormWithData
+					dataQuery={query.useInstanceBlocksQuery}
+					DataForm={ImportList}
+					list={list}
+				/>
+			</div>
+		);
 	}
-
-	React.useEffect(() => {
-		if (exportResult.isSuccess) {
-			form.domains.setter(exportResult.data);
-		}
-		/* eslint-disable-next-line react-hooks/exhaustive-deps */
-	}, [exportResult]);
-
-	const [_location, setLocation] = useLocation();
-
-	if (updateFromFile) {
-		setUpdateFromFile(false);
-		submitParse();
-	}
-
-	return (
-		<Switch>
-			<Route path={`${baseUrl}/list`}>
-				{!parseResult.isSuccess && <Redirect to={baseUrl} />}
-
-				<h1>
-					<span className="button" onClick={() => {
-						parseResult.reset();
-						setLocation(baseUrl);
-					}}>
-						&lt; back
-					</span> Confirm import:
-				</h1>
-				<div className="without-border">
-					<FormWithData
-						dataQuery={query.useInstanceBlocksQuery}
-						DataForm={ImportList}
-						list={parseResult.data}
-					/>
-				</div>
-			</Route>
-
-			<Route>
-				{parseResult.isSuccess && <Redirect to={`${baseUrl}/list`} />}
-				<h1>Import / Export suspended domains</h1>
-				<p>
-					This page can be used to import and export lists of domains to suspend.
-					Exports can be done in various formats, with varying functionality and support in other software.
-					Imports will automatically detect what format is being processed.
-				</p>
-				<ExportFormatTable />
-				<div className="import-export">
-					<TextArea
-						field={form.domains}
-						label="Domains"
-						placeholder={`google.com\nfacebook.com`}
-						rows={8}
-					/>
-
-					<div className="button-grid">
-						<MutationButton
-							label="Import"
-							type="button"
-							onClick={() => submitParse()}
-							result={parseResult}
-							showError={false}
-						/>
-						<label className="button">
-							Import file
-							<input
-								type="file"
-								className="hidden"
-								onChange={fileChanged}
-								accept="application/json,text/plain,text/csv"
-							/>
-						</label>
-						<b /> {/* grid filler */}
-						<MutationButton
-							label="Export"
-							type="button"
-							onClick={() => submitExport("export")}
-							result={exportResult} showError={false}
-						/>
-						<MutationButton label="Export to file" type="button" onClick={() => submitExport("export-file")} result={exportResult} showError={false} />
-						<div className="export-file">
-							<span>
-								as
-							</span>
-							<Select
-								field={form.exportType}
-								options={<>
-									<option value="plain">Text</option>
-									<option value="json">JSON</option>
-									<option value="csv">CSV</option>
-								</>}
-							/>
-						</div>
-					</div>
-
-					{parseResult.error && <Error error={parseResult.error} />}
-					{exportResult.error && <Error error={exportResult.error} />}
-				</div>
-			</Route>
-		</Switch>
-	);
-};
+);
 
 function ImportList({ list, data: blockedInstances }) {
 	const hasComment = React.useMemo(() => {
@@ -200,10 +89,7 @@ function ImportList({ list, data: blockedInstances }) {
 	const showComment = useTextInput("showComment", { defaultValue: hasComment.type ?? "public_comment" });
 
 	const form = {
-		domains: useCheckListInput("domains", {
-			entries: list,
-			uniqueKey: "domain"
-		}),
+		domains: useCheckListInput("domains", { entries: list }),
 		obfuscate: useBoolInput("obfuscate"),
 		privateComment: useTextInput("private_comment", {
 			defaultValue: `Imported on ${new Date().toLocaleString()}`
@@ -286,6 +172,10 @@ function DomainCheckList({ field, blockedInstances, commentType }) {
 		};
 	}, [blockedInstances, commentType]);
 
+	const entriesWithSuggestions = React.useMemo(() => (
+		Object.values(field.value).filter((entry) => entry.suggest)
+	), [field.value]);
+
 	return (
 		<>
 			<CheckList
@@ -301,42 +191,58 @@ function DomainCheckList({ field, blockedInstances, commentType }) {
 				EntryComponent={DomainEntry}
 				getExtraProps={getExtraProps}
 			/>
-			<UpdateHint field={field} />
+			<UpdateHint
+				entries={entriesWithSuggestions}
+				updateEntry={field.onChange}
+				updateMultiple={field.updateMultiple}
+			/>
 		</>
 	);
 }
 
-function UpdateHint({ field }) {
-	const hints = React.useMemo(() => (
-		Object.values(field.value)
-			.filter((entry) => entry.suggest)
-			.map((entry) => (
-				<React.Fragment key={entry.key}>
-					<span>{entry.domain}</span>
-					<i class="fa fa-long-arrow-right" aria-hidden="true"></i>
-					<span>{entry.suggest}</span>
-					<a>change</a>
-				</React.Fragment>
-			))
-	), [field.value]);
+const UpdateHint = React.memo(
+	function UpdateHint({ entries, updateEntry, updateMultiple }) {
+		if (entries.length == 0) {
+			return null;
+		}
 
-	if (hints.length == 0) {
-		return null;
-	}
+		function changeAll() {
+			updateMultiple(
+				entries.map((entry) => [entry.key, { domain: entry.suggest, suggest: null }])
+			);
+		}
 
-	return (
-		<div className="update-hints">
-			<span>
-				{hints.length} {hints.length == 1 ? "entry uses" : "entries use"} a subdomain,
-				that you might want to change to the second-level domain, which includes all subdomains.
-			</span>
-			<div className="hints">
-				{hints}
+		return (
+			<div className="update-hints">
+				<p>
+					{entries.length} {entries.length == 1 ? "entry uses" : "entries use"} a specific subdomain,
+					which you might want to change to the main domain, as that includes all it's (future) subdomains.
+				</p>
+				<div className="hints">
+					{entries.map((entry) => (
+						<UpdateableEntry key={entry.key} entry={entry} updateEntry={updateEntry} />
+					))}
+				</div>
+				{entries.length > 0 && <a onClick={changeAll}>change all</a>}
 			</div>
-			{hints.length > 0 && <a>change all</a>}
-		</div>
-	);
-}
+		);
+	}
+);
+
+const UpdateableEntry = React.memo(
+	function UpdateableEntry({ entry, updateEntry }) {
+		return (
+			<>
+				<span className="text-cutoff">{entry.domain}</span>
+				<i class="fa fa-long-arrow-right" aria-hidden="true"></i>
+				<span>{entry.suggest}</span>
+				<a role="button" onClick={() =>
+					updateEntry(entry.key, { domain: entry.suggest, suggest: null })
+				}>change</a>
+			</>
+		);
+	}
+);
 
 function domainValidationError(isValid) {
 	return isValid ? "" : "Invalid domain";
@@ -345,10 +251,9 @@ function domainValidationError(isValid) {
 function DomainEntry({ entry, onChange, extraProps: { alreadyExists, comment } }) {
 	const domainField = useTextInput("domain", {
 		defaultValue: entry.domain,
+		showValidation: entry.checked,
 		initValidation: domainValidationError(entry.valid),
-		validator: (value) => domainValidationError(
-			!entry.checked || isValidDomainBlock(value)
-		)
+		validator: (value) => domainValidationError(isValidDomainBlock(value))
 	});
 
 	React.useEffect(() => {
@@ -358,10 +263,12 @@ function DomainEntry({ entry, onChange, extraProps: { alreadyExists, comment } }
 	}, [onChange, entry.valid, domainField.valid]);
 
 	React.useEffect(() => {
-		domainField.validate();
-		// only need this update if it's the entry.checked that updated, not domainField
+		if (entry.domain != domainField.value) {
+			domainField.setter(entry.domain);
+		}
+		// domainField.setter is enough, eslint wants domainField
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [entry.checked]);
+	}, [entry.domain, domainField.setter]);
 
 	React.useEffect(() => {
 		onChange({ suggest: hasBetterScope(domainField.value) });

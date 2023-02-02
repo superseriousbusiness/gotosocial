@@ -69,6 +69,12 @@ skulk({
 			entryFile: "settings",
 			outputFile: "settings.js",
 			prodCfg: prodCfg,
+			transform: [
+				["babelify", {
+					global: true,
+					ignore: [/node_modules\/(?!nanoid)/]
+				}]
+			],
 			presets: [
 				"react",
 				["postcss", {
