@@ -215,6 +215,60 @@ func (suite *ASToInternalTestSuite) TestParseOwncastService() {
 	fmt.Printf("\n\n\n%s\n\n\n", string(b))
 }
 
+func (suite *ASToInternalTestSuite) TestParseBookwyrmStatus() {
+	authorAccount := suite.testAccounts["remote_account_1"]
+
+	raw := `{
+  "id": "` + authorAccount.URI + `/review/445260",
+  "type": "Article",
+  "published": "2022-11-09T16:34:28.488375+00:00",
+  "attributedTo": "` + authorAccount.URI + `",
+  "content": "<p>The original novel is a great read. Not just for the way it codified modern vampire lore. But for the way it's built entirely out of diary entries, letters, news fragments, telegrams and so on. For the way it shows modern science coming to grips with ancient superstition and figuring out how to deal with it. For showing an early example of a woman participating in her own rescue. And for some of the parts that <em>didn't</em> make it into general pop culture. (Count Dracula spends an awful lot of time in a shipping box.)</p>\n<p>In some senses it's the written-word equivalent of the \"found footage\" horror genre. Except the \"sources\" are wildly varying. John and Mina write their journals and letters to each other in shorthand. Business letters are of course written formally. Dr. Seward keeps an audio diary on a phonograph. Van Helsing's speech is rendered with every quirk of his Dutch accent and speech patterns. And then halfway through the book, when all the major characters finally come together...they collate all the documents and Mina transcribes them on a typewriter, and they pass around the first half of the book so they can all read up on what the rest of them have been doing! (Literally getting them all on the same page.)</p>\n<p>That's not to say it's flawless. It's unclear why some victims rise again as vampires while others don't. While the science/superstition contrast works well for the most part, eastern Europeans don't exactly come off very well. Especially when they'd talk about the \"gypsies\" carrying Dracula around Transylvania. I mean, it could have been a lot worse, but it's still jarring.</p>\n<p>Overall, though, it's an engaging read, whether approached as a book or, as Dracula Daily did, one day's letters at a time from May 3 through November 7. </p>\n<p>Dracula Daily: <a href=\"https://draculadaily.example.org/archive\">draculadaily.example.org/archive</a></p>\n<p>This review on my website: <a href=\"https://example.org/reviews/books/dracula/\">example.org/reviews/books/dracula/</a></p>",
+  "to": [
+    "https://www.w3.org/ns/activitystreams#Public"
+  ],
+  "cc": [
+    "` + authorAccount.FollowersURI + `"
+  ],
+  "replies": {
+    "id": "` + authorAccount.URI + `/review/445260/replies",
+    "type": "OrderedCollection",
+    "totalItems": 0,
+    "first": "` + authorAccount.URI + `/review/445260/replies?page=1",
+    "last": "` + authorAccount.URI + `/review/445260/replies?page=1",
+    "@context": "https://www.w3.org/ns/activitystreams"
+  },
+  "tag": [],
+  "attachment": [
+    {
+  	"type": "Document",
+  	"url": "` + authorAccount.URI + `/review/445260/images/previews/covers/451118-5f7bd96e-ca03-4865-ab14-baa7addaca8e.jpg",
+  	"name": "Dracula (Paperback, 1992, Signet)",
+  	"@context": "https://www.w3.org/ns/activitystreams"
+    }
+  ],
+  "sensitive": false,
+  "inReplyToBook": "https://bookwyrm.social/book/451118",
+  "name": "Review of \"Dracula\" (5 stars): A great read, not just for codifying vampire lore, but the way it's built from letters and diaries.",
+  "rating": 5,
+  "@context": "https://www.w3.org/ns/activitystreams"
+}`
+
+	t := suite.jsonToType(raw)
+	asArticle, ok := t.(ap.Statusable)
+	if !ok {
+		suite.FailNow("type not coercible")
+	}
+
+	status, err := suite.typeconverter.ASStatusToStatus(context.Background(), asArticle)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal("Review of \"Dracula\" (5 stars): A great read, not just for codifying vampire lore, but the way it's built from letters and diaries.", status.ContentWarning)
+	suite.Len(status.Attachments, 1)
+}
+
 func (suite *ASToInternalTestSuite) TestParseFlag1() {
 	reportedAccount := suite.testAccounts["local_account_1"]
 	reportingAccount := suite.testAccounts["remote_account_1"]
