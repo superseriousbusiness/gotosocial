@@ -44,7 +44,7 @@ func (p *processor) getThisInstance(ctx context.Context) (*gtsmodel.Instance, er
 func (p *processor) InstanceGetV1(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode) {
 	i, err := p.getThisInstance(ctx)
 	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance %s: %s", err))
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance: %s", err))
 	}
 
 	ai, err := p.tc.InstanceToAPIV1Instance(ctx, i)
@@ -58,7 +58,7 @@ func (p *processor) InstanceGetV1(ctx context.Context) (*apimodel.InstanceV1, gt
 func (p *processor) InstanceGetV2(ctx context.Context) (*apimodel.InstanceV2, gtserror.WithCode) {
 	i, err := p.getThisInstance(ctx)
 	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance %s: %s", err))
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance: %s", err))
 	}
 
 	ai, err := p.tc.InstanceToAPIV2Instance(ctx, i)
