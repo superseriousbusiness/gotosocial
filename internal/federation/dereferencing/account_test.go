@@ -50,7 +50,7 @@ func (suite *AccountTestSuite) TestDereferenceGroup() {
 	// group values should be set
 	suite.Equal("https://unknown-instance.com/groups/some_group", group.URI)
 	suite.Equal("https://unknown-instance.com/@some_group", group.URL)
-	suite.WithinDuration(time.Now(), group.LastWebfingeredAt, 5*time.Second)
+	suite.WithinDuration(time.Now(), group.FetchedAt, 5*time.Second)
 
 	// group should be in the database
 	dbGroup, err := suite.db.GetAccountByURI(context.Background(), group.URI)
@@ -75,7 +75,7 @@ func (suite *AccountTestSuite) TestDereferenceService() {
 	// service values should be set
 	suite.Equal("https://owncast.example.org/federation/user/rgh", service.URI)
 	suite.Equal("https://owncast.example.org/federation/user/rgh", service.URL)
-	suite.WithinDuration(time.Now(), service.LastWebfingeredAt, 5*time.Second)
+	suite.WithinDuration(time.Now(), service.FetchedAt, 5*time.Second)
 
 	// service should be in the database
 	dbService, err := suite.db.GetAccountByURI(context.Background(), service.URI)
