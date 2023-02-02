@@ -113,7 +113,7 @@ func dereferenceByAPIV1Instance(ctx context.Context, t *transport, iri *url.URL)
 	}
 
 	// try to parse the returned bytes directly into an Instance model
-	apiResp := &apimodel.Instance{}
+	apiResp := &apimodel.InstanceV1{}
 	if err := json.Unmarshal(b, apiResp); err != nil {
 		return nil, err
 	}

@@ -133,19 +133,19 @@ import (
 func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, false, false, false, false)
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	targetAcctID := c.Param(IDKey)
 	if targetAcctID == "" {
 		err := errors.New("no account id specified")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -155,7 +155,7 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 		i, err := strconv.ParseInt(limitString, 10, 32)
 		if err != nil {
 			err := fmt.Errorf("error parsing %s: %s", LimitKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 			return
 		}
 		limit = int(i)
@@ -167,7 +167,7 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 		i, err := strconv.ParseBool(excludeRepliesString)
 		if err != nil {
 			err := fmt.Errorf("error parsing %s: %s", ExcludeRepliesKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 			return
 		}
 		excludeReplies = i
@@ -179,7 +179,7 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 		i, err := strconv.ParseBool(excludeReblogsString)
 		if err != nil {
 			err := fmt.Errorf("error parsing %s: %s", ExcludeReblogsKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 			return
 		}
 		excludeReblogs = i
@@ -203,7 +203,7 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 		i, err := strconv.ParseBool(pinnedString)
 		if err != nil {
 			err := fmt.Errorf("error parsing %s: %s", PinnedKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 			return
 		}
 		pinnedOnly = i
@@ -215,7 +215,7 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 		i, err := strconv.ParseBool(mediaOnlyString)
 		if err != nil {
 			err := fmt.Errorf("error parsing %s: %s", OnlyMediaKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 			return
 		}
 		mediaOnly = i
@@ -227,7 +227,7 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 		i, err := strconv.ParseBool(publicOnlyString)
 		if err != nil {
 			err := fmt.Errorf("error parsing %s: %s", OnlyPublicKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 			return
 		}
 		publicOnly = i
@@ -235,7 +235,7 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 
 	resp, errWithCode := m.processor.AccountStatusesGet(c.Request.Context(), authed, targetAcctID, limit, excludeReplies, excludeReblogs, maxID, minID, pinnedOnly, mediaOnly, publicOnly)
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

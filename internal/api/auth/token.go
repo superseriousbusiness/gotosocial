@@ -42,7 +42,7 @@ type tokenRequestForm struct {
 // The idea here is to serve an oauth access token to a user, which can be used for authorizing against non-public APIs.
 func (m *Module) TokenPOSTHandler(c *gin.Context) {
 	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 

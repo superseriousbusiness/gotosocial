@@ -122,12 +122,12 @@ import (
 func (m *Module) ReportsGETHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -136,7 +136,7 @@ func (m *Module) ReportsGETHandler(c *gin.Context) {
 		i, err := strconv.ParseBool(resolvedString)
 		if err != nil {
 			err := fmt.Errorf("error parsing %s: %s", ResolvedKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 			return
 		}
 		resolved = &i
@@ -147,7 +147,7 @@ func (m *Module) ReportsGETHandler(c *gin.Context) {
 		i, err := strconv.Atoi(limitString)
 		if err != nil {
 			err := fmt.Errorf("error parsing %s: %s", LimitKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 			return
 		}
 
@@ -162,7 +162,7 @@ func (m *Module) ReportsGETHandler(c *gin.Context) {
 
 	resp, errWithCode := m.processor.ReportsGet(c.Request.Context(), authed, resolved, c.Query(TargetAccountIDKey), c.Query(MaxIDKey), c.Query(SinceIDKey), c.Query(MinIDKey), limit)
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

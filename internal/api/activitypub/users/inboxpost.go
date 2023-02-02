@@ -34,18 +34,18 @@ func (m *Module) InboxPOSTHandler(c *gin.Context) {
 	requestedUsername := strings.ToLower(c.Param(UsernameKey))
 	if requestedUsername == "" {
 		err := errors.New("no username specified in request")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	if posted, err := m.processor.InboxPost(apiutil.TransferSignatureContext(c), c.Writer, c.Request); err != nil {
 		if withCode, ok := err.(gtserror.WithCode); ok {
-			apiutil.ErrorHandler(c, withCode, m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, withCode, m.processor.InstanceGetV1)
 		} else {
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		}
 	} else if !posted {
 		err := errors.New("unable to process request")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 	}
 }

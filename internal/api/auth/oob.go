@@ -28,21 +28,19 @@ import (
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 func (m *Module) OobHandler(c *gin.Context) {
-	host := config.GetHost()
-	instance, errWithCode := m.processor.InstanceGet(c.Request.Context(), host)
+	instance, errWithCode := m.processor.InstanceGetV1(c.Request.Context())
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	instanceGet := func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode) {
+	instanceGet := func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode) {
 		return instance, nil
 	}
 
@@ -69,7 +67,7 @@ func (m *Module) OobHandler(c *gin.Context) {
 
 	if len(errs) != 0 {
 		errs = append(errs, oauth.HelpfulAdvice)
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(errors.New("one or more missing keys on session during OobHandler"), errs...), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(errors.New("one or more missing keys on session during OobHandler"), errs...), m.processor.InstanceGetV1)
 		return
 	}
 

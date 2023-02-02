@@ -41,7 +41,7 @@ import (
 func (m *Module) ServeFile(c *gin.Context) {
 	authed, err := oauth.Authed(c, false, false, false, false)
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -51,28 +51,28 @@ func (m *Module) ServeFile(c *gin.Context) {
 	accountID := c.Param(AccountIDKey)
 	if accountID == "" {
 		err := fmt.Errorf("missing %s from request", AccountIDKey)
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err), m.processor.InstanceGetV1)
 		return
 	}
 
 	mediaType := c.Param(MediaTypeKey)
 	if mediaType == "" {
 		err := fmt.Errorf("missing %s from request", MediaTypeKey)
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err), m.processor.InstanceGetV1)
 		return
 	}
 
 	mediaSize := c.Param(MediaSizeKey)
 	if mediaSize == "" {
 		err := fmt.Errorf("missing %s from request", MediaSizeKey)
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err), m.processor.InstanceGetV1)
 		return
 	}
 
 	fileName := c.Param(FileNameKey)
 	if fileName == "" {
 		err := fmt.Errorf("missing %s from request", FileNameKey)
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -83,7 +83,7 @@ func (m *Module) ServeFile(c *gin.Context) {
 		FileName:  fileName,
 	})
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -106,7 +106,7 @@ func (m *Module) ServeFile(c *gin.Context) {
 	// attempt to look up the content to provide a preview of the link, and they ask for text/html.
 	format, err := apiutil.NegotiateAccept(c, apiutil.MIME(content.ContentType))
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -125,7 +125,7 @@ func (m *Module) ServeFile(c *gin.Context) {
 	if _, err := io.ReadFull(content.Content, b); err != nil &&
 		(err != io.ErrUnexpectedEOF && err != io.EOF) {
 		err = fmt.Errorf("ServeFile: error reading from content: %w", err)
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -142,7 +142,7 @@ func (m *Module) ServeFile(c *gin.Context) {
 	tfs, err := iotools.TempFileSeeker(r)
 	if err != nil {
 		err = fmt.Errorf("ServeFile: error creating temp file seeker: %w", err)
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
 		return
 	}
 	defer func() {

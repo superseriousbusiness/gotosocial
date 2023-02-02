@@ -52,7 +52,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch1() {
 
 	// set up the request
 	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPath, bodyBytes, w.FormDataContentType(), true)
+	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPathV1, bodyBytes, w.FormDataContentType(), true)
 
 	// call the handler
 	suite.instanceModule.InstanceUpdatePATCHHandler(ctx)
@@ -106,7 +106,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch1() {
       "max_expiration": 2629746
     },
     "accounts": {
-      "allow_custom_css": true
+      "allow_custom_css": true,
+      "max_featured_tags": 10
     },
     "emojis": {
       "emoji_size_limit": 51200
@@ -161,7 +162,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch2() {
 
 	// set up the request
 	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPath, bodyBytes, w.FormDataContentType(), true)
+	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPathV1, bodyBytes, w.FormDataContentType(), true)
 
 	// call the handler
 	suite.instanceModule.InstanceUpdatePATCHHandler(ctx)
@@ -215,7 +216,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch2() {
       "max_expiration": 2629746
     },
     "accounts": {
-      "allow_custom_css": true
+      "allow_custom_css": true,
+      "max_featured_tags": 10
     },
     "emojis": {
       "emoji_size_limit": 51200
@@ -270,7 +272,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch3() {
 
 	// set up the request
 	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPath, bodyBytes, w.FormDataContentType(), true)
+	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPathV1, bodyBytes, w.FormDataContentType(), true)
 
 	// call the handler
 	suite.instanceModule.InstanceUpdatePATCHHandler(ctx)
@@ -324,7 +326,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch3() {
       "max_expiration": 2629746
     },
     "accounts": {
-      "allow_custom_css": true
+      "allow_custom_css": true,
+      "max_featured_tags": 10
     },
     "emojis": {
       "emoji_size_limit": 51200
@@ -377,7 +380,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch4() {
 
 	// set up the request
 	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPath, bodyBytes, w.FormDataContentType(), true)
+	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPathV1, bodyBytes, w.FormDataContentType(), true)
 
 	// call the handler
 	suite.instanceModule.InstanceUpdatePATCHHandler(ctx)
@@ -406,7 +409,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch5() {
 
 	// set up the request
 	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPath, bodyBytes, w.FormDataContentType(), true)
+	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPathV1, bodyBytes, w.FormDataContentType(), true)
 
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedToken, oauth.DBTokenToToken(suite.testTokens["local_account_1"]))
@@ -440,7 +443,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch6() {
 
 	// set up the request
 	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPath, bodyBytes, w.FormDataContentType(), true)
+	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPathV1, bodyBytes, w.FormDataContentType(), true)
 
 	// call the handler
 	suite.instanceModule.InstanceUpdatePATCHHandler(ctx)
@@ -494,7 +497,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch6() {
       "max_expiration": 2629746
     },
     "accounts": {
-      "allow_custom_css": true
+      "allow_custom_css": true,
+      "max_featured_tags": 10
     },
     "emojis": {
       "emoji_size_limit": 51200
@@ -549,7 +553,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch7() {
 
 	// set up the request
 	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPath, bodyBytes, w.FormDataContentType(), true)
+	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPathV1, bodyBytes, w.FormDataContentType(), true)
 
 	// call the handler
 	suite.instanceModule.InstanceUpdatePATCHHandler(ctx)
@@ -578,7 +582,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
 
 	// set up the request
 	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPath, bodyBytes, w.FormDataContentType(), true)
+	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPathV1, bodyBytes, w.FormDataContentType(), true)
 
 	// call the handler
 	suite.instanceModule.InstanceUpdatePATCHHandler(ctx)
@@ -636,7 +640,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
       "max_expiration": 2629746
     },
     "accounts": {
-      "allow_custom_css": true
+      "allow_custom_css": true,
+      "max_featured_tags": 10
     },
     "emojis": {
       "emoji_size_limit": 51200
@@ -678,6 +683,24 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
   },
   "max_toot_chars": 5000
 }`, dst.String())
+
+	// extra bonus: check the v2 model thumbnail after the patch
+	instanceV2, err := suite.processor.InstanceGetV2(ctx)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	instanceV2ThumbnailJson, err := json.MarshalIndent(instanceV2.Thumbnail, "", "  ")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal(`{
+  "url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/attachment/original/`+instanceAccount.AvatarMediaAttachment.ID+`.gif",`+`
+  "thumbnail_type": "image/gif",
+  "thumbnail_description": "A bouncing little green peglin.",
+  "blurhash": "LG9t;qRS4YtO.4WDRlt5IXoxtPj["
+}`, string(instanceV2ThumbnailJson))
 }
 
 func TestInstancePatchTestSuite(t *testing.T) {

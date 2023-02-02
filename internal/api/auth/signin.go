@@ -45,14 +45,14 @@ type login struct {
 // If an idp provider is set, then the user will be redirected to that to do their sign in.
 func (m *Module) SignInGETHandler(c *gin.Context) {
 	if _, err := apiutil.NegotiateAccept(c, apiutil.HTMLAcceptHeaders...); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	if !config.GetOIDCEnabled() {
-		instance, errWithCode := m.processor.InstanceGet(c.Request.Context(), config.GetHost())
+		instance, errWithCode := m.processor.InstanceGetV1(c.Request.Context())
 		if errWithCode != nil {
-			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 			return
 		}
 
@@ -71,7 +71,7 @@ func (m *Module) SignInGETHandler(c *gin.Context) {
 	if !ok {
 		m.clearSession(s)
 		err := fmt.Errorf("key %s was not found in session", sessionInternalState)
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -87,7 +87,7 @@ func (m *Module) SignInPOSTHandler(c *gin.Context) {
 	form := &login{}
 	if err := c.ShouldBind(form); err != nil {
 		m.clearSession(s)
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -95,14 +95,14 @@ func (m *Module) SignInPOSTHandler(c *gin.Context) {
 	if errWithCode != nil {
 		// don't clear session here, so the user can just press back and try again
 		// if they accidentally gave the wrong password or something
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
 	s.Set(sessionUserID, userid)
 	if err := s.Save(); err != nil {
 		err := fmt.Errorf("error saving user id onto session: %s", err)
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err, oauth.HelpfulAdvice), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err, oauth.HelpfulAdvice), m.processor.InstanceGetV1)
 	}
 
 	c.Redirect(http.StatusFound, "/oauth"+OauthAuthorizePath)

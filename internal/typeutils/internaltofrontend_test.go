@@ -24,8 +24,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type InternalToFrontendTestSuite struct {
@@ -454,93 +455,207 @@ func (suite *InternalToFrontendTestSuite) TestVideoAttachmentToFrontend() {
 }`, string(b))
 }
 
-func (suite *InternalToFrontendTestSuite) TestInstanceToFrontend() {
-	testInstance := &gtsmodel.Instance{
-		CreatedAt:        testrig.TimeMustParse("2021-10-20T11:36:45Z"),
-		UpdatedAt:        testrig.TimeMustParse("2021-10-20T11:36:45Z"),
-		Domain:           "example.org",
-		Title:            "example instance",
-		URI:              "https://example.org",
-		ShortDescription: "a little description",
-		Description:      "a much longer description",
-		ContactEmail:     "someone@example.org",
-		Version:          "software-from-hell 0.666",
+func (suite *InternalToFrontendTestSuite) TestInstanceV1ToFrontend() {
+	ctx := context.Background()
+
+	i := &gtsmodel.Instance{}
+	if err := suite.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: config.GetHost()}}, i); err != nil {
+		suite.FailNow(err.Error())
 	}
 
-	apiInstance, err := suite.typeconverter.InstanceToAPIInstance(context.Background(), testInstance)
-	suite.NoError(err)
+	instance, err := suite.typeconverter.InstanceToAPIV1Instance(ctx, i)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
 
-	b, err := json.MarshalIndent(apiInstance, "", "  ")
+	b, err := json.MarshalIndent(instance, "", "  ")
 	suite.NoError(err)
 
 	suite.Equal(`{
-  "uri": "https://example.org",
-  "title": "example instance",
-  "description": "a much longer description",
-  "short_description": "a little description",
-  "email": "someone@example.org",
-  "version": "software-from-hell 0.666",
-  "registrations": false,
-  "approval_required": false,
+  "uri": "http://localhost:8080",
+  "account_domain": "localhost:8080",
+  "title": "GoToSocial Testrig Instance",
+  "description": "\u003cp\u003eThis is the GoToSocial testrig. It doesn't federate or anything.\u003c/p\u003e\u003cp\u003eWhen the testrig is shut down, all data on it will be deleted.\u003c/p\u003e\u003cp\u003eDon't use this in production!\u003c/p\u003e",
+  "short_description": "\u003cp\u003eThis is the GoToSocial testrig. It doesn't federate or anything.\u003c/p\u003e\u003cp\u003eWhen the testrig is shut down, all data on it will be deleted.\u003c/p\u003e\u003cp\u003eDon't use this in production!\u003c/p\u003e",
+  "email": "admin@example.org",
+  "version": "0.0.0-testrig",
+  "registrations": true,
+  "approval_required": true,
   "invites_enabled": false,
-  "thumbnail": "",
-  "max_toot_chars": 0
-}`, string(b))
-}
-
-func (suite *InternalToFrontendTestSuite) TestInstanceToFrontendWithAdminAccount() {
-	testInstance := &gtsmodel.Instance{
-		CreatedAt:        testrig.TimeMustParse("2021-10-20T11:36:45Z"),
-		UpdatedAt:        testrig.TimeMustParse("2021-10-20T11:36:45Z"),
-		Domain:           "example.org",
-		Title:            "example instance",
-		URI:              "https://example.org",
-		ShortDescription: "a little description",
-		Description:      "a much longer description",
-		ContactEmail:     "someone@example.org",
-		ContactAccountID: suite.testAccounts["remote_account_2"].ID,
-		Version:          "software-from-hell 0.666",
-	}
-
-	apiInstance, err := suite.typeconverter.InstanceToAPIInstance(context.Background(), testInstance)
-	suite.NoError(err)
-
-	b, err := json.MarshalIndent(apiInstance, "", "  ")
-	suite.NoError(err)
-
-	suite.Equal(`{
-  "uri": "https://example.org",
-  "title": "example instance",
-  "description": "a much longer description",
-  "short_description": "a little description",
-  "email": "someone@example.org",
-  "version": "software-from-hell 0.666",
-  "registrations": false,
-  "approval_required": false,
-  "invites_enabled": false,
-  "thumbnail": "",
+  "configuration": {
+    "statuses": {
+      "max_characters": 5000,
+      "max_media_attachments": 6,
+      "characters_reserved_per_url": 25
+    },
+    "media_attachments": {
+      "supported_mime_types": [
+        "image/jpeg",
+        "image/gif",
+        "image/png",
+        "image/webp",
+        "video/mp4"
+      ],
+      "image_size_limit": 10485760,
+      "image_matrix_limit": 16777216,
+      "video_size_limit": 41943040,
+      "video_frame_rate_limit": 60,
+      "video_matrix_limit": 16777216
+    },
+    "polls": {
+      "max_options": 6,
+      "max_characters_per_option": 50,
+      "min_expiration": 300,
+      "max_expiration": 2629746
+    },
+    "accounts": {
+      "allow_custom_css": true,
+      "max_featured_tags": 10
+    },
+    "emojis": {
+      "emoji_size_limit": 51200
+    }
+  },
+  "urls": {
+    "streaming_api": "wss://localhost:8080"
+  },
+  "stats": {
+    "domain_count": 2,
+    "status_count": 16,
+    "user_count": 4
+  },
+  "thumbnail": "http://localhost:8080/assets/logo.png",
   "contact_account": {
-    "id": "01FHMQX3GAABWSM0S2VZEC2SWC",
-    "username": "Some_User",
-    "acct": "Some_User@example.org",
-    "display_name": "some user",
-    "locked": true,
+    "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+    "username": "admin",
+    "acct": "admin",
+    "display_name": "",
+    "locked": false,
     "bot": false,
-    "created_at": "2020-08-10T12:13:28.000Z",
-    "note": "i'm a real son of a gun",
-    "url": "http://example.org/@Some_User",
+    "created_at": "2022-05-17T13:10:59.000Z",
+    "note": "",
+    "url": "http://localhost:8080/@admin",
     "avatar": "",
     "avatar_static": "",
     "header": "http://localhost:8080/assets/default_header.png",
     "header_static": "http://localhost:8080/assets/default_header.png",
-    "followers_count": 0,
-    "following_count": 0,
-    "statuses_count": 0,
-    "last_status_at": null,
+    "followers_count": 1,
+    "following_count": 1,
+    "statuses_count": 4,
+    "last_status_at": "2021-10-20T10:41:37.000Z",
     "emojis": [],
-    "fields": []
+    "fields": [],
+    "enable_rss": true,
+    "role": "admin"
   },
-  "max_toot_chars": 0
+  "max_toot_chars": 5000
+}`, string(b))
+}
+
+func (suite *InternalToFrontendTestSuite) TestInstanceV2ToFrontend() {
+	ctx := context.Background()
+
+	i := &gtsmodel.Instance{}
+	if err := suite.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: config.GetHost()}}, i); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	instance, err := suite.typeconverter.InstanceToAPIV2Instance(ctx, i)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	b, err := json.MarshalIndent(instance, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "domain": "localhost:8080",
+  "account_domain": "localhost:8080",
+  "title": "GoToSocial Testrig Instance",
+  "version": "0.0.0-testrig",
+  "source_url": "https://github.com/superseriousbusiness/gotosocial",
+  "description": "\u003cp\u003eThis is the GoToSocial testrig. It doesn't federate or anything.\u003c/p\u003e\u003cp\u003eWhen the testrig is shut down, all data on it will be deleted.\u003c/p\u003e\u003cp\u003eDon't use this in production!\u003c/p\u003e",
+  "usage": {
+    "users": {
+      "active_month": 0
+    }
+  },
+  "thumbnail": {
+    "url": "http://localhost:8080/assets/logo.png"
+  },
+  "languages": [],
+  "configuration": {
+    "urls": {
+      "streaming": "wss://localhost:8080"
+    },
+    "accounts": {
+      "allow_custom_css": true,
+      "max_featured_tags": 10
+    },
+    "statuses": {
+      "max_characters": 5000,
+      "max_media_attachments": 6,
+      "characters_reserved_per_url": 25
+    },
+    "media_attachments": {
+      "supported_mime_types": [
+        "image/jpeg",
+        "image/gif",
+        "image/png",
+        "image/webp",
+        "video/mp4"
+      ],
+      "image_size_limit": 10485760,
+      "image_matrix_limit": 16777216,
+      "video_size_limit": 41943040,
+      "video_frame_rate_limit": 60,
+      "video_matrix_limit": 16777216
+    },
+    "polls": {
+      "max_options": 6,
+      "max_characters_per_option": 50,
+      "min_expiration": 300,
+      "max_expiration": 2629746
+    },
+    "translation": {
+      "enabled": false
+    },
+    "emojis": {
+      "emoji_size_limit": 51200
+    }
+  },
+  "registrations": {
+    "enabled": true,
+    "approval_required": true,
+    "message": null
+  },
+  "contact": {
+    "email": "admin@example.org",
+    "account": {
+      "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+      "username": "admin",
+      "acct": "admin",
+      "display_name": "",
+      "locked": false,
+      "bot": false,
+      "created_at": "2022-05-17T13:10:59.000Z",
+      "note": "",
+      "url": "http://localhost:8080/@admin",
+      "avatar": "",
+      "avatar_static": "",
+      "header": "http://localhost:8080/assets/default_header.png",
+      "header_static": "http://localhost:8080/assets/default_header.png",
+      "followers_count": 1,
+      "following_count": 1,
+      "statuses_count": 4,
+      "last_status_at": "2021-10-20T10:41:37.000Z",
+      "emojis": [],
+      "fields": [],
+      "enable_rss": true,
+      "role": "admin"
+    }
+  },
+  "rules": []
 }`, string(b))
 }
 

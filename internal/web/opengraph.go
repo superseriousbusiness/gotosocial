@@ -57,7 +57,7 @@ type ogMeta struct {
 // the base root of an instance. It also serves as a
 // foundation for building account / status ogMeta on
 // top of.
-func ogBase(instance *apimodel.Instance) *ogMeta {
+func ogBase(instance *apimodel.InstanceV1) *ogMeta {
 	var locale string
 	if len(instance.Languages) > 0 {
 		locale = instance.Languages[0]
