@@ -102,14 +102,14 @@ import (
 func (m *Module) InstancePeersGETHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, false, false, false, false)
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	var isUnauthenticated = authed.Account == nil || authed.User == nil
 
 	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -127,7 +127,7 @@ func (m *Module) InstancePeersGETHandler(c *gin.Context) {
 				includeOpen = true
 			default:
 				err := fmt.Errorf("filter %s not recognized; accepted values are 'open', 'suspended'", trimmed)
-				apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+				apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 				return
 			}
 		}
@@ -141,19 +141,19 @@ func (m *Module) InstancePeersGETHandler(c *gin.Context) {
 
 	if includeOpen && !config.GetInstanceExposePeers() && isUnauthenticated {
 		err := fmt.Errorf("peers open query requires an authenticated account/user")
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	if includeSuspended && !config.GetInstanceExposeSuspended() && isUnauthenticated {
 		err := fmt.Errorf("peers suspended query requires an authenticated account/user")
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	data, errWithCode := m.processor.InstancePeersGet(c.Request.Context(), includeSuspended, includeOpen, flat)
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

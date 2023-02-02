@@ -20,10 +20,10 @@ package model
 
 import "mime/multipart"
 
-// Instance models information about this or another instance.
+// InstanceV1 models information about this or another instance.
 //
-// swagger:model instance
-type Instance struct {
+// swagger:model instanceV1
+type InstanceV1 struct {
 	// The URI of the instance.
 	// example: https://gts.example.org
 	URI string `json:"uri,omitempty"`
@@ -91,6 +91,86 @@ type Instance struct {
 	//
 	// example: 5000
 	MaxTootChars uint `json:"max_toot_chars"`
+}
+
+// InstanceV2 models information about this or another instance.
+//
+// swagger:model instanceV2
+type InstanceV2 struct {
+	// The domain of the instance.
+	// example: gts.example.org
+	Domain string `json:"domain"`
+	// The domain of accounts on this instance.
+	// This will not necessarily be the same as
+	// domain.
+	// example: example.org
+	AccountDomain string `json:"account_domain"`
+	// The title of the instance.
+	// example: GoToSocial Example Instance
+	Title string `json:"title"`
+	// The version of GoToSocial installed on the instance.
+	//
+	// This will contain at least a semantic version number.
+	//
+	// It may also contain, after a space, the short git commit ID of the running software.
+	//
+	// example: 0.1.1 cb85f65
+	Version string `json:"version"`
+	// The URL for the source code of the software running on this instance, in keeping with AGPL license requirements.
+	// example: https://github.com/superseriousbusiness/gotosocial
+	SourceURL string `json:"source_url"`
+	// Description of the instance.
+	//
+	// Should be HTML formatted, but might be plaintext.
+	//
+	// This should be displayed on the 'about' page for an instance.
+	Description string `json:"description"`
+
+	Usage InstanceUsage `json:"usage"`
+	// A shorter description of the instance.
+	//
+	// Should be HTML formatted, but might be plaintext.
+	//
+	// This should be displayed on the instance splash/landing page.
+	ShortDescription string `json:"short_description"`
+	// An email address that may be used for inquiries.
+	// example: admin@example.org
+	Email string `json:"email"`
+	// Primary language of the instance.
+	// example: en
+	Languages []string `json:"languages,omitempty"`
+	// New account registrations are enabled on this instance.
+	Registrations bool `json:"registrations"`
+	// New account registrations require admin approval.
+	ApprovalRequired bool `json:"approval_required"`
+	// Invites are enabled on this instance.
+	InvitesEnabled bool `json:"invites_enabled"`
+	// Configuration object containing values about status limits etc.
+	// This key/value will be omitted for remote instances.
+	Configuration *InstanceConfiguration `json:"configuration,omitempty"`
+	// URLs of interest for client applications.
+	URLS *InstanceURLs `json:"urls,omitempty"`
+	// Statistics about the instance: number of posts, accounts, etc.
+	Stats map[string]int `json:"stats,omitempty"`
+	// URL of the instance avatar/banner image.
+	// example: https://example.org/files/instance/thumbnail.jpeg
+	Thumbnail string `json:"thumbnail"`
+	// MIME type of the instance thumbnail.
+	// example: image/png
+	ThumbnailType string `json:"thumbnail_type,omitempty"`
+	// Description of the instance thumbnail.
+	// example: picture of a cute lil' friendly sloth
+	ThumbnailDescription string `json:"thumbnail_description,omitempty"`
+	// Contact account for the instance.
+	ContactAccount *Account `json:"contact_account,omitempty"`
+}
+
+type InstanceUsage struct {
+	Users InstanceUsers `json:"users"`
+}
+
+type InstanceUsers struct {
+	ActiveMonth int `json:"active_month"`
 }
 
 // InstanceConfiguration models instance configuration parameters.

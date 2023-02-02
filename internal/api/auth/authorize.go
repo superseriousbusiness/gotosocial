@@ -29,7 +29,6 @@ import (
 	"github.com/google/uuid"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -43,7 +42,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	s := sessions.Default(c)
 
 	if _, err := apiutil.NegotiateAccept(c, apiutil.HTMLAcceptHeaders...); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -54,13 +53,13 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 		form := &apimodel.OAuthAuthorize{}
 		if err := c.ShouldBind(form); err != nil {
 			m.clearSession(s)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGetV1)
 			return
 		}
 
 		if errWithCode := saveAuthFormToSession(s, form); errWithCode != nil {
 			m.clearSession(s)
-			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 			return
 		}
 
@@ -73,7 +72,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	if !ok || clientID == "" {
 		m.clearSession(s)
 		err := fmt.Errorf("key %s was not found in session", sessionClientID)
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -87,7 +86,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 		} else {
 			errWithCode = gtserror.NewErrorInternalError(err, safe, oauth.HelpfulAdvice)
 		}
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -101,7 +100,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 		} else {
 			errWithCode = gtserror.NewErrorInternalError(err, safe, oauth.HelpfulAdvice)
 		}
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -115,7 +114,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 		} else {
 			errWithCode = gtserror.NewErrorInternalError(err, safe, oauth.HelpfulAdvice)
 		}
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -128,7 +127,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	if !ok || redirect == "" {
 		m.clearSession(s)
 		err := fmt.Errorf("key %s was not found in session", sessionRedirectURI)
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -136,13 +135,13 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	if !ok || scope == "" {
 		m.clearSession(s)
 		err := fmt.Errorf("key %s was not found in session", sessionScope)
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGetV1)
 		return
 	}
 
-	instance, errWithCode := m.processor.InstanceGet(c.Request.Context(), config.GetHost())
+	instance, errWithCode := m.processor.InstanceGetV1(c.Request.Context())
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -206,7 +205,7 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 
 	if len(errs) != 0 {
 		errs = append(errs, oauth.HelpfulAdvice)
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(errors.New("one or more missing keys on session during AuthorizePOSTHandler"), errs...), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(errors.New("one or more missing keys on session during AuthorizePOSTHandler"), errs...), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -220,7 +219,7 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 		} else {
 			errWithCode = gtserror.NewErrorInternalError(err, safe, oauth.HelpfulAdvice)
 		}
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -234,7 +233,7 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 		} else {
 			errWithCode = gtserror.NewErrorInternalError(err, safe, oauth.HelpfulAdvice)
 		}
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -263,7 +262,7 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 	}
 
 	if errWithCode := m.processor.OAuthHandleAuthorizeRequest(c.Writer, c.Request); errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 	}
 }
 

@@ -33,13 +33,35 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
-func (p *processor) InstanceGet(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode) {
+func (p *processor) getThisInstance(ctx context.Context) (*gtsmodel.Instance, error) {
 	i := &gtsmodel.Instance{}
-	if err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: domain}}, i); err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance %s: %s", domain, err))
+	if err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: config.GetHost()}}, i); err != nil {
+		return nil, err
+	}
+	return i, nil
+}
+
+func (p *processor) InstanceGetV1(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode) {
+	i, err := p.getThisInstance(ctx)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance %s: %s", err))
 	}
 
-	ai, err := p.tc.InstanceToAPIInstance(ctx, i)
+	ai, err := p.tc.InstanceToAPIV1Instance(ctx, i)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting instance to api representation: %s", err))
+	}
+
+	return ai, nil
+}
+
+func (p *processor) InstanceGetV2(ctx context.Context) (*apimodel.InstanceV2, gtserror.WithCode) {
+	i, err := p.getThisInstance(ctx)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance %s: %s", err))
+	}
+
+	ai, err := p.tc.InstanceToAPIV2Instance(ctx, i)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting instance to api representation: %s", err))
 	}
@@ -98,7 +120,7 @@ func (p *processor) InstancePeersGet(ctx context.Context, includeSuspended bool,
 	return domains, nil
 }
 
-func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.Instance, gtserror.WithCode) {
+func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.InstanceV1, gtserror.WithCode) {
 	// fetch the instance entry from the db for processing
 	i := &gtsmodel.Instance{}
 	host := config.GetHost()
@@ -235,7 +257,7 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 		}
 	}
 
-	ai, err := p.tc.InstanceToAPIInstance(ctx, i)
+	ai, err := p.tc.InstanceToAPIV1Instance(ctx, i)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting instance to api representation: %s", err))
 	}

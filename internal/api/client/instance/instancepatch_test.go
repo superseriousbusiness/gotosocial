@@ -52,7 +52,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch1() {
 
 	// set up the request
 	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPath, bodyBytes, w.FormDataContentType(), true)
+	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPathV1, bodyBytes, w.FormDataContentType(), true)
 
 	// call the handler
 	suite.instanceModule.InstanceUpdatePATCHHandler(ctx)
@@ -161,7 +161,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch2() {
 
 	// set up the request
 	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPath, bodyBytes, w.FormDataContentType(), true)
+	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPathV1, bodyBytes, w.FormDataContentType(), true)
 
 	// call the handler
 	suite.instanceModule.InstanceUpdatePATCHHandler(ctx)
@@ -270,7 +270,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch3() {
 
 	// set up the request
 	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPath, bodyBytes, w.FormDataContentType(), true)
+	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPathV1, bodyBytes, w.FormDataContentType(), true)
 
 	// call the handler
 	suite.instanceModule.InstanceUpdatePATCHHandler(ctx)
@@ -377,7 +377,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch4() {
 
 	// set up the request
 	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPath, bodyBytes, w.FormDataContentType(), true)
+	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPathV1, bodyBytes, w.FormDataContentType(), true)
 
 	// call the handler
 	suite.instanceModule.InstanceUpdatePATCHHandler(ctx)
@@ -406,7 +406,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch5() {
 
 	// set up the request
 	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPath, bodyBytes, w.FormDataContentType(), true)
+	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPathV1, bodyBytes, w.FormDataContentType(), true)
 
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedToken, oauth.DBTokenToToken(suite.testTokens["local_account_1"]))
@@ -440,7 +440,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch6() {
 
 	// set up the request
 	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPath, bodyBytes, w.FormDataContentType(), true)
+	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPathV1, bodyBytes, w.FormDataContentType(), true)
 
 	// call the handler
 	suite.instanceModule.InstanceUpdatePATCHHandler(ctx)
@@ -549,7 +549,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch7() {
 
 	// set up the request
 	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPath, bodyBytes, w.FormDataContentType(), true)
+	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPathV1, bodyBytes, w.FormDataContentType(), true)
 
 	// call the handler
 	suite.instanceModule.InstanceUpdatePATCHHandler(ctx)
@@ -578,7 +578,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
 
 	// set up the request
 	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPath, bodyBytes, w.FormDataContentType(), true)
+	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPathV1, bodyBytes, w.FormDataContentType(), true)
 
 	// call the handler
 	suite.instanceModule.InstanceUpdatePATCHHandler(ctx)

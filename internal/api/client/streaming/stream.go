@@ -137,7 +137,7 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 	streamType := c.Query(StreamQueryKey)
 	if streamType == "" {
 		err := fmt.Errorf("no stream type provided under query key %s", StreamQueryKey)
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -149,20 +149,20 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 		if token = c.GetHeader(AccessTokenHeader); token == "" {
 			const errStr = "no access token provided"
 			err := gtserror.NewErrorUnauthorized(errors.New(errStr), errStr)
-			apiutil.ErrorHandler(c, err, m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, err, m.processor.InstanceGetV1)
 			return
 		}
 	}
 
 	account, errWithCode := m.processor.AuthorizeStreamingRequest(c.Request.Context(), token)
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
 	stream, errWithCode := m.processor.OpenStreamForAccount(c.Request.Context(), account, streamType)
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

@@ -1127,119 +1127,6 @@ definitions:
         type: object
         x-go-name: Field
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    instance:
-        properties:
-            account_domain:
-                description: |-
-                    The domain of accounts on this instance.
-                    This will not necessarily be the same as
-                    simply the Host part of the URI.
-                example: example.org
-                type: string
-                x-go-name: AccountDomain
-            approval_required:
-                description: New account registrations require admin approval.
-                type: boolean
-                x-go-name: ApprovalRequired
-            configuration:
-                $ref: '#/definitions/instanceConfiguration'
-            contact_account:
-                $ref: '#/definitions/account'
-            description:
-                description: |-
-                    Description of the instance.
-
-                    Should be HTML formatted, but might be plaintext.
-
-                    This should be displayed on the 'about' page for an instance.
-                type: string
-                x-go-name: Description
-            email:
-                description: An email address that may be used for inquiries.
-                example: admin@example.org
-                type: string
-                x-go-name: Email
-            invites_enabled:
-                description: Invites are enabled on this instance.
-                type: boolean
-                x-go-name: InvitesEnabled
-            languages:
-                description: Primary language of the instance.
-                example: en
-                items:
-                    type: string
-                type: array
-                x-go-name: Languages
-            max_toot_chars:
-                description: |-
-                    Maximum allowed length of a post on this instance, in characters.
-
-                    This is provided for compatibility with Tusky and other apps.
-                example: 5000
-                format: uint64
-                type: integer
-                x-go-name: MaxTootChars
-            registrations:
-                description: New account registrations are enabled on this instance.
-                type: boolean
-                x-go-name: Registrations
-            short_description:
-                description: |-
-                    A shorter description of the instance.
-
-                    Should be HTML formatted, but might be plaintext.
-
-                    This should be displayed on the instance splash/landing page.
-                type: string
-                x-go-name: ShortDescription
-            stats:
-                additionalProperties:
-                    format: int64
-                    type: integer
-                description: 'Statistics about the instance: number of posts, accounts, etc.'
-                type: object
-                x-go-name: Stats
-            thumbnail:
-                description: URL of the instance avatar/banner image.
-                example: https://example.org/files/instance/thumbnail.jpeg
-                type: string
-                x-go-name: Thumbnail
-            thumbnail_description:
-                description: Description of the instance thumbnail.
-                example: picture of a cute lil' friendly sloth
-                type: string
-                x-go-name: ThumbnailDescription
-            thumbnail_type:
-                description: MIME type of the instance thumbnail.
-                example: image/png
-                type: string
-                x-go-name: ThumbnailType
-            title:
-                description: The title of the instance.
-                example: GoToSocial Example Instance
-                type: string
-                x-go-name: Title
-            uri:
-                description: The URI of the instance.
-                example: https://gts.example.org
-                type: string
-                x-go-name: URI
-            urls:
-                $ref: '#/definitions/instanceURLs'
-            version:
-                description: |-
-                    The version of GoToSocial installed on the instance.
-
-                    This will contain at least a semantic version number.
-
-                    It may also contain, after a space, the short git commit ID of the running software.
-                example: 0.1.1 cb85f65
-                type: string
-                x-go-name: Version
-        title: Instance models information about this or another instance.
-        type: object
-        x-go-name: Instance
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     instanceConfiguration:
         properties:
             accounts:
@@ -1373,6 +1260,124 @@ definitions:
         title: InstanceURLs models instance-relevant URLs for client application consumption.
         type: object
         x-go-name: InstanceURLs
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    instanceV1:
+        properties:
+            account_domain:
+                description: |-
+                    The domain of accounts on this instance.
+                    This will not necessarily be the same as
+                    simply the Host part of the URI.
+                example: example.org
+                type: string
+                x-go-name: AccountDomain
+            approval_required:
+                description: New account registrations require admin approval.
+                type: boolean
+                x-go-name: ApprovalRequired
+            configuration:
+                $ref: '#/definitions/instanceConfiguration'
+            contact_account:
+                $ref: '#/definitions/account'
+            description:
+                description: |-
+                    Description of the instance.
+
+                    Should be HTML formatted, but might be plaintext.
+
+                    This should be displayed on the 'about' page for an instance.
+                type: string
+                x-go-name: Description
+            email:
+                description: An email address that may be used for inquiries.
+                example: admin@example.org
+                type: string
+                x-go-name: Email
+            invites_enabled:
+                description: Invites are enabled on this instance.
+                type: boolean
+                x-go-name: InvitesEnabled
+            languages:
+                description: Primary language of the instance.
+                example: en
+                items:
+                    type: string
+                type: array
+                x-go-name: Languages
+            max_toot_chars:
+                description: |-
+                    Maximum allowed length of a post on this instance, in characters.
+
+                    This is provided for compatibility with Tusky and other apps.
+                example: 5000
+                format: uint64
+                type: integer
+                x-go-name: MaxTootChars
+            registrations:
+                description: New account registrations are enabled on this instance.
+                type: boolean
+                x-go-name: Registrations
+            short_description:
+                description: |-
+                    A shorter description of the instance.
+
+                    Should be HTML formatted, but might be plaintext.
+
+                    This should be displayed on the instance splash/landing page.
+                type: string
+                x-go-name: ShortDescription
+            stats:
+                additionalProperties:
+                    format: int64
+                    type: integer
+                description: 'Statistics about the instance: number of posts, accounts, etc.'
+                type: object
+                x-go-name: Stats
+            thumbnail:
+                description: URL of the instance avatar/banner image.
+                example: https://example.org/files/instance/thumbnail.jpeg
+                type: string
+                x-go-name: Thumbnail
+            thumbnail_description:
+                description: Description of the instance thumbnail.
+                example: picture of a cute lil' friendly sloth
+                type: string
+                x-go-name: ThumbnailDescription
+            thumbnail_type:
+                description: MIME type of the instance thumbnail.
+                example: image/png
+                type: string
+                x-go-name: ThumbnailType
+            title:
+                description: The title of the instance.
+                example: GoToSocial Example Instance
+                type: string
+                x-go-name: Title
+            uri:
+                description: The URI of the instance.
+                example: https://gts.example.org
+                type: string
+                x-go-name: URI
+            urls:
+                $ref: '#/definitions/instanceURLs'
+            version:
+                description: |-
+                    The version of GoToSocial installed on the instance.
+
+                    This will contain at least a semantic version number.
+
+                    It may also contain, after a space, the short git commit ID of the running software.
+                example: 0.1.1 cb85f65
+                type: string
+                x-go-name: Version
+        title: InstanceV1 models information about this or another instance.
+        type: object
+        x-go-name: InstanceV1
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    instanceV2:
+        title: InstanceV2 models information about this or another instance.
+        type: object
+        x-go-name: InstanceV2
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     mediaDimensions:
         properties:
@@ -3920,14 +3925,14 @@ paths:
                 - follow_requests
     /api/v1/instance:
         get:
-            operationId: instanceGet
+            operationId: instanceGetV1
             produces:
                 - application/json
             responses:
                 "200":
                     description: Instance information.
                     schema:
-                        $ref: '#/definitions/instance'
+                        $ref: '#/definitions/instanceV1'
                 "406":
                     description: not acceptable
                 "500":
@@ -5269,6 +5274,23 @@ paths:
             summary: Change the password of authenticated user.
             tags:
                 - user
+    /api/v2/instance:
+        get:
+            operationId: instanceGetV2
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Instance information.
+                    schema:
+                        $ref: '#/definitions/instanceV2'
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal error
+            summary: View instance information.
+            tags:
+                - instance
     /nodeinfo/2.0:
         get:
             description: 'See: https://nodeinfo.diaspora.software/schema.html'

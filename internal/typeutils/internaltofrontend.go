@@ -675,8 +675,8 @@ func (c *converter) VisToAPIVis(ctx context.Context, m gtsmodel.Visibility) apim
 	return ""
 }
 
-func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Instance) (*apimodel.Instance, error) {
-	mi := &apimodel.Instance{
+func (c *converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Instance) (*apimodel.InstanceV1, error) {
+	mi := &apimodel.InstanceV1{
 		URI:              i.URI,
 		Title:            i.Title,
 		Description:      i.Description,
@@ -782,6 +782,10 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 	}
 
 	return mi, nil
+}
+
+func (c *converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Instance) (*apimodel.InstanceV2, error) {
+	return nil, nil
 }
 
 func (c *converter) RelationshipToAPIRelationship(ctx context.Context, r *gtsmodel.Relationship) (*apimodel.Relationship, error) {

@@ -467,7 +467,7 @@ func (suite *InternalToFrontendTestSuite) TestInstanceToFrontend() {
 		Version:          "software-from-hell 0.666",
 	}
 
-	apiInstance, err := suite.typeconverter.InstanceToAPIInstance(context.Background(), testInstance)
+	apiInstance, err := suite.typeconverter.InstanceToAPIV1Instance(context.Background(), testInstance)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(apiInstance, "", "  ")
@@ -502,7 +502,7 @@ func (suite *InternalToFrontendTestSuite) TestInstanceToFrontendWithAdminAccount
 		Version:          "software-from-hell 0.666",
 	}
 
-	apiInstance, err := suite.typeconverter.InstanceToAPIInstance(context.Background(), testInstance)
+	apiInstance, err := suite.typeconverter.InstanceToAPIV1Instance(context.Background(), testInstance)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(apiInstance, "", "  ")

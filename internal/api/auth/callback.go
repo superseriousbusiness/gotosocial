@@ -49,7 +49,7 @@ type extraInfo struct {
 func (m *Module) CallbackGETHandler(c *gin.Context) {
 	if !config.GetOIDCEnabled() {
 		err := errors.New("oidc is not enabled for this server")
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -62,7 +62,7 @@ func (m *Module) CallbackGETHandler(c *gin.Context) {
 	if returnedInternalState == "" {
 		m.clearSession(s)
 		err := fmt.Errorf("%s parameter not found on callback query", callbackStateParam)
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -71,14 +71,14 @@ func (m *Module) CallbackGETHandler(c *gin.Context) {
 	if !ok {
 		m.clearSession(s)
 		err := fmt.Errorf("key %s was not found in session", sessionInternalState)
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	if returnedInternalState != savedInternalState {
 		m.clearSession(s)
 		err := errors.New("mismatch between callback state and saved state")
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -87,14 +87,14 @@ func (m *Module) CallbackGETHandler(c *gin.Context) {
 	if code == "" {
 		m.clearSession(s)
 		err := fmt.Errorf("%s parameter not found on callback query", callbackCodeParam)
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	claims, errWithCode := m.idp.HandleCallback(c.Request.Context(), code)
 	if errWithCode != nil {
 		m.clearSession(s)
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -104,7 +104,7 @@ func (m *Module) CallbackGETHandler(c *gin.Context) {
 	if !ok || clientID == "" {
 		m.clearSession(s)
 		err := fmt.Errorf("key %s was not found in session", sessionClientID)
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -118,21 +118,21 @@ func (m *Module) CallbackGETHandler(c *gin.Context) {
 		} else {
 			errWithCode = gtserror.NewErrorInternalError(err, safe, oauth.HelpfulAdvice)
 		}
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
 	user, errWithCode := m.fetchUserForClaims(c.Request.Context(), claims, net.IP(c.ClientIP()), app.ID)
 	if errWithCode != nil {
 		m.clearSession(s)
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 	if user == nil {
 		// no user exists yet - let's ask them for their preferred username
-		instance, errWithCode := m.processor.InstanceGet(c.Request.Context(), config.GetHost())
+		instance, errWithCode := m.processor.InstanceGetV1(c.Request.Context())
 		if errWithCode != nil {
-			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 			return
 		}
 
@@ -141,7 +141,7 @@ func (m *Module) CallbackGETHandler(c *gin.Context) {
 		s.Set(sessionAppID, app.ID)
 		if err := s.Save(); err != nil {
 			m.clearSession(s)
-			apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
 			return
 		}
 		c.HTML(http.StatusOK, "finalize.tmpl", gin.H{
@@ -154,7 +154,7 @@ func (m *Module) CallbackGETHandler(c *gin.Context) {
 	s.Set(sessionUserID, user.ID)
 	if err := s.Save(); err != nil {
 		m.clearSession(s)
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
 		return
 	}
 	c.Redirect(http.StatusFound, "/oauth"+OauthAuthorizePath)
@@ -167,15 +167,15 @@ func (m *Module) FinalizePOSTHandler(c *gin.Context) {
 	form := &extraInfo{}
 	if err := c.ShouldBind(form); err != nil {
 		m.clearSession(s)
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGetV1)
 		return
 	}
 
 	// since we have multiple possible validation error, `validationError` is a shorthand for rendering them
 	validationError := func(err error) {
-		instance, errWithCode := m.processor.InstanceGet(c.Request.Context(), config.GetHost())
+		instance, errWithCode := m.processor.InstanceGetV1(c.Request.Context())
 		if errWithCode != nil {
-			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 			return
 		}
 		c.HTML(http.StatusOK, "finalize.tmpl", gin.H{
@@ -195,7 +195,7 @@ func (m *Module) FinalizePOSTHandler(c *gin.Context) {
 	// see if the username is still available
 	usernameAvailable, err := m.db.IsUsernameAvailable(c.Request.Context(), form.Username)
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGetV1)
 		return
 	}
 	if !usernameAvailable {
@@ -207,7 +207,7 @@ func (m *Module) FinalizePOSTHandler(c *gin.Context) {
 	appID, ok := s.Get(sessionAppID).(string)
 	if !ok {
 		err := fmt.Errorf("key %s was not found in session", sessionAppID)
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -215,7 +215,7 @@ func (m *Module) FinalizePOSTHandler(c *gin.Context) {
 	claims, ok := s.Get(sessionClaims).(*oidc.Claims)
 	if !ok {
 		err := fmt.Errorf("key %s was not found in session", sessionClaims)
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -223,7 +223,7 @@ func (m *Module) FinalizePOSTHandler(c *gin.Context) {
 	user, errWithCode := m.createUserFromOIDC(c.Request.Context(), claims, form, net.IP(c.ClientIP()), appID)
 	if errWithCode != nil {
 		m.clearSession(s)
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 	s.Delete(sessionClaims)
@@ -231,7 +231,7 @@ func (m *Module) FinalizePOSTHandler(c *gin.Context) {
 	s.Set(sessionUserID, user.ID)
 	if err := s.Save(); err != nil {
 		m.clearSession(s)
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
 		return
 	}
 	c.Redirect(http.StatusFound, "/oauth"+OauthAuthorizePath)

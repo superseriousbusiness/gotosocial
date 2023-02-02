@@ -36,10 +36,9 @@ func (m *Module) baseHandler(c *gin.Context) {
 		return
 	}
 
-	host := config.GetHost()
-	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
+	instance, err := m.processor.InstanceGetV1(c.Request.Context())
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
 		return
 	}
 

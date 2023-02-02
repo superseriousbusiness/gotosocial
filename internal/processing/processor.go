@@ -170,13 +170,15 @@ type Processor interface {
 	// FollowRequestReject handles the rejection of a follow request from the given account ID.
 	FollowRequestReject(ctx context.Context, auth *oauth.Auth, accountID string) (*apimodel.Relationship, gtserror.WithCode)
 
-	// InstanceGet retrieves instance information for serving at api/v1/instance
-	InstanceGet(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode)
+	// InstanceGetV1 retrieves instance information for serving at api/v1/instance
+	InstanceGetV1(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode)
+	// InstanceGetV1 retrieves instance information for serving at api/v2/instance
+	InstanceGetV2(ctx context.Context) (*apimodel.InstanceV2, gtserror.WithCode)
 	InstancePeersGet(ctx context.Context, includeSuspended bool, includeOpen bool, flat bool) (interface{}, gtserror.WithCode)
 	// InstancePatch updates this instance according to the given form.
 	//
 	// It should already be ascertained that the requesting account is authenticated and an admin.
-	InstancePatch(ctx context.Context, form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.Instance, gtserror.WithCode)
+	InstancePatch(ctx context.Context, form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.InstanceV1, gtserror.WithCode)
 
 	// MediaCreate handles the creation of a media attachment, using the given form.
 	MediaCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.AttachmentRequest) (*apimodel.Attachment, gtserror.WithCode)
