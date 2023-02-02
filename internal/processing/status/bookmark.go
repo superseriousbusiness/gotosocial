@@ -55,14 +55,9 @@ func (p *processor) Bookmark(ctx context.Context, requestingAccount *gtsmodel.Ac
 	}
 
 	if newBookmark {
-		thisBookmarkID, err := id.NewULID()
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-
 		// we need to create a new bookmark in the database
 		gtsBookmark := &gtsmodel.StatusBookmark{
-			ID:              thisBookmarkID,
+			ID:              id.NewULID(),
 			AccountID:       requestingAccount.ID,
 			Account:         requestingAccount,
 			TargetAccountID: targetStatus.AccountID,

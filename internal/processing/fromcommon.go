@@ -76,13 +76,8 @@ func (p *processor) notifyStatus(ctx context.Context, status *gtsmodel.Status) e
 		}
 
 		// if we've reached this point we know the mention is for a local account, and the notification doesn't exist, so create it
-		notifID, err := id.NewULID()
-		if err != nil {
-			return err
-		}
-
 		notif := &gtsmodel.Notification{
-			ID:               notifID,
+			ID:               id.NewULID(),
 			NotificationType: gtsmodel.NotificationMention,
 			TargetAccountID:  m.TargetAccountID,
 			TargetAccount:    m.TargetAccount,
@@ -127,13 +122,8 @@ func (p *processor) notifyFollowRequest(ctx context.Context, followRequest *gtsm
 		return nil
 	}
 
-	notifID, err := id.NewULID()
-	if err != nil {
-		return err
-	}
-
 	notif := &gtsmodel.Notification{
-		ID:               notifID,
+		ID:               id.NewULID(),
 		NotificationType: gtsmodel.NotificationFollowRequest,
 		TargetAccountID:  followRequest.TargetAccountID,
 		OriginAccountID:  followRequest.AccountID,
@@ -172,13 +162,8 @@ func (p *processor) notifyFollow(ctx context.Context, follow *gtsmodel.Follow, t
 	}
 
 	// now create the new follow notification
-	notifID, err := id.NewULID()
-	if err != nil {
-		return err
-	}
-
 	notif := &gtsmodel.Notification{
-		ID:               notifID,
+		ID:               id.NewULID(),
 		NotificationType: gtsmodel.NotificationFollow,
 		TargetAccountID:  follow.TargetAccountID,
 		TargetAccount:    follow.TargetAccount,
@@ -222,13 +207,8 @@ func (p *processor) notifyFave(ctx context.Context, fave *gtsmodel.StatusFave) e
 		return nil
 	}
 
-	notifID, err := id.NewULID()
-	if err != nil {
-		return err
-	}
-
 	notif := &gtsmodel.Notification{
-		ID:               notifID,
+		ID:               id.NewULID(),
 		NotificationType: gtsmodel.NotificationFave,
 		TargetAccountID:  fave.TargetAccountID,
 		TargetAccount:    fave.TargetAccount,
@@ -301,13 +281,8 @@ func (p *processor) notifyAnnounce(ctx context.Context, status *gtsmodel.Status)
 	}
 
 	// now create the new reblog notification
-	notifID, err := id.NewULID()
-	if err != nil {
-		return err
-	}
-
 	notif := &gtsmodel.Notification{
-		ID:               notifID,
+		ID:               id.NewULID(),
 		NotificationType: gtsmodel.NotificationReblog,
 		TargetAccountID:  status.BoostOfAccountID,
 		TargetAccount:    status.BoostOfAccount,

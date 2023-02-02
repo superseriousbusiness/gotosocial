@@ -24,7 +24,10 @@ package gtsmodel
 
 import (
 	"crypto/rsa"
+	"strings"
 	"time"
+
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 // Account represents either a local or a remote fediverse account, gotosocial or otherwise (mastodon, pleroma, etc).
@@ -77,6 +80,24 @@ type Account struct {
 	HideCollections         *bool            `validate:"-" bun:",default:false"`                                                                                     // Hide this account's collections
 	SuspensionOrigin        string           `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                                                // id of the database entry that caused this account to become suspended -- can be an account ID or a domain block ID
 	EnableRSS               *bool            `validate:"-" bun:",default:false"`                                                                                     // enable RSS feed subscription for this account's public posts at [URL]/feed
+}
+
+// IsLocal returns whether account is a local user account.
+func (a Account) IsLocal() bool {
+	return a.Domain == "" || a.Domain == config.GetHost() || a.Domain == config.GetAccountDomain()
+}
+
+// IsRemote returns whether account is a remote user account.
+func (a Account) IsRemote() bool {
+	return !a.IsLocal()
+}
+
+// IsInstance returns whether account is an instance internal actor account.
+func (a Account) IsInstance() bool {
+	return !a.UpdatedAt.IsZero() && (a.Username == a.Domain ||
+		a.FollowersURI == "" ||
+		a.FollowingURI == "" ||
+		(a.Username == "internal.fetch" && strings.Contains(a.Note, "internal service actor")))
 }
 
 // AccountToEmoji is an intermediate struct to facilitate the many2many relationship between an account and one or more emojis.

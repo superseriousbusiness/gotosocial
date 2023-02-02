@@ -63,13 +63,8 @@ func (s *sessionDB) createSession(ctx context.Context) (*gtsmodel.RouterSession,
 		return nil, err
 	}
 
-	id, err := id.NewULID()
-	if err != nil {
-		return nil, err
-	}
-
 	rs := &gtsmodel.RouterSession{
-		ID:    id,
+		ID:    id.NewULID(),
 		Auth:  auth,
 		Crypt: crypt,
 	}

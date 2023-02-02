@@ -25,7 +25,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
-	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
@@ -54,21 +53,24 @@ func GetParseMentionFunc(dbConn db.DB, federator federation.Federator) gtsmodel.
 			mentionedAccount = localAccount
 		} else {
 			var requestingUsername string
+
 			if originAccount.Domain == "" {
 				requestingUsername = originAccount.Username
 			}
-			remoteAccount, err := federator.GetAccount(transport.WithFastfail(ctx), dereferencing.GetAccountParams{
-				RequestingUsername:    requestingUsername,
-				RemoteAccountUsername: username,
-				RemoteAccountHost:     domain,
-			})
+
+			remoteAccount, err := federator.GetAccountByUsernameDomain(
+				transport.WithFastfail(ctx),
+				requestingUsername,
+				username,
+				domain,
+				false,
+			)
 			if err != nil {
-				return nil, fmt.Errorf("error dereferencing account: %s", err)
+				return nil, fmt.Errorf("parseMentionFunc: error fetching account: %s", err)
 			}
 
 			// we were able to resolve it!
 			mentionedAccount = remoteAccount
-
 		}
 
 		mentionID, err := id.NewRandomULID()

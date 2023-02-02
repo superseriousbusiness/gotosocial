@@ -89,8 +89,7 @@ func (suite *UserGetTestSuite) TestGetUser() {
 	suite.True(ok)
 
 	// convert person to account
-	// since this account is already known, we should get a pretty full model of it from the conversion
-	a, err := suite.tc.ASRepresentationToAccount(context.Background(), person, "", false)
+	a, err := suite.tc.ASRepresentationToAccount(context.Background(), person, "")
 	suite.NoError(err)
 	suite.EqualValues(targetAccount.Username, a.Username)
 }
@@ -167,7 +166,7 @@ func (suite *UserGetTestSuite) TestGetUserPublicKeyDeleted() {
 	suite.True(ok)
 
 	// convert person to account
-	a, err := suite.tc.ASRepresentationToAccount(context.Background(), person, "", false)
+	a, err := suite.tc.ASRepresentationToAccount(context.Background(), person, "")
 	suite.NoError(err)
 	suite.EqualValues(targetAccount.Username, a.Username)
 }

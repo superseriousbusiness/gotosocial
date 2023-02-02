@@ -53,10 +53,7 @@ func (p *processor) BlockCreate(ctx context.Context, requestingAccount *gtsmodel
 
 	// make the block
 	block := &gtsmodel.Block{}
-	newBlockID, err := id.NewULID()
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
+	newBlockID := id.NewULID()
 	block.ID = newBlockID
 	block.AccountID = requestingAccount.ID
 	block.Account = requestingAccount

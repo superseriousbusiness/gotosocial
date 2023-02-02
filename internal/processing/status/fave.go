@@ -62,10 +62,7 @@ func (p *processor) Fave(ctx context.Context, requestingAccount *gtsmodel.Accoun
 	}
 
 	if newFave {
-		thisFaveID, err := id.NewULID()
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(err)
-		}
+		thisFaveID := id.NewULID()
 
 		// we need to create a new fave in the database
 		gtsFave := &gtsmodel.StatusFave{

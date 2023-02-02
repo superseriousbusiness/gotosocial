@@ -50,14 +50,8 @@ func (p *processor) DomainBlockCreate(ctx context.Context, account *gtsmodel.Acc
 		}
 
 		// there's no block for this domain yet so create one
-		// note: we take a new ulid from timestamp here in case we need to sort blocks
-		blockID, err := id.NewULID()
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error creating id for new domain block %s: %s", domain, err))
-		}
-
 		newBlock := &gtsmodel.DomainBlock{
-			ID:                 blockID,
+			ID:                 id.NewULID(),
 			Domain:             domain,
 			CreatedByAccountID: account.ID,
 			PrivateComment:     text.SanitizePlaintext(privateComment),
