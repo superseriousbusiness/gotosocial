@@ -312,7 +312,6 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 	// Fetch a transport beforehand for either(or both) avatar / header dereferencing.
 	tsport, err := d.transportController.NewTransportForUsername(ctx, requestingUsername)
 	if err != nil {
-		d.dereferencingAvatarsLock.Unlock()
 		return fmt.Errorf("fetchRemoteAccountMedia: error getting transport for user: %s", err)
 	}
 
