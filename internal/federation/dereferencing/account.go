@@ -59,6 +59,11 @@ func (d *deref) GetAccountByURI(ctx context.Context, requestUser string, uri *ur
 		}
 	}
 
+	// Don't proceed to dereference local account
+	if uri.Host == config.GetHost() || uri.Host == config.GetAccountDomain() {
+		return account, NewErrNotRetrievable(err) // will be null if wrapped err is null
+	}
+
 	if account == nil {
 		// Ensure that this is isn't a search for a local account.
 		if uri.Host == config.GetHost() || uri.Host == config.GetAccountDomain() {
@@ -78,17 +83,22 @@ func (d *deref) GetAccountByURI(ctx context.Context, requestUser string, uri *ur
 }
 
 func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser string, username string, domain string, block bool) (*gtsmodel.Account, error) {
+	// normalize local accounts
+	local := domain == config.GetHost() || domain == config.GetAccountDomain()
+	if local {
+		domain = ""
+	}
+
 	// Search the database for existing account with USERNAME@DOMAIN
 	account, err := d.db.GetAccountByUsernameDomain(ctx, username, domain)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, fmt.Errorf("GetAccountByUsernameDomain: error checking database for account %s@%s: %w", username, domain, err)
 	}
 
-	if account == nil {
-		// Ensure that this is isn't a search for a local account.
-		if domain == config.GetHost() || domain == config.GetAccountDomain() {
-			return nil, err // this will be db.ErrNoEntries
-		}
+	// Don't proceed to dereference local account
+	if local {
+		return account, NewErrNotRetrievable(err) // will be null if wrapped err is null
+	}
 
 		// Create bare-bones model for deref.
 		account = new(gtsmodel.Account)
