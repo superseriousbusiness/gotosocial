@@ -71,6 +71,8 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// Initialize caches
 	state.Caches.Init()
+	state.Caches.Start()
+	defer state.Caches.Stop()
 
 	// Open connection to the database
 	dbService, err := bundb.NewBunDBService(ctx, &state)
