@@ -90,13 +90,13 @@ func (m *Module) OutboxGETHandler(c *gin.Context) {
 	requestedUsername := strings.ToLower(c.Param(UsernameKey))
 	if requestedUsername == "" {
 		err := errors.New("no username specified in request")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	format, err := apiutil.NegotiateAccept(c, apiutil.HTMLOrActivityPubHeaders...)
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -111,7 +111,7 @@ func (m *Module) OutboxGETHandler(c *gin.Context) {
 		i, err := strconv.ParseBool(pageString)
 		if err != nil {
 			err := fmt.Errorf("error parsing %s: %s", PageKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 			return
 		}
 		page = i
@@ -131,13 +131,13 @@ func (m *Module) OutboxGETHandler(c *gin.Context) {
 
 	resp, errWithCode := m.processor.GetFediOutbox(apiutil.TransferSignatureContext(c), requestedUsername, page, maxID, minID, c.Request.URL)
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
 	b, err := json.Marshal(resp)
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
 		return
 	}
 

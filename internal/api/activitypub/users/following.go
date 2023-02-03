@@ -35,13 +35,13 @@ func (m *Module) FollowingGETHandler(c *gin.Context) {
 	requestedUsername := strings.ToLower(c.Param(UsernameKey))
 	if requestedUsername == "" {
 		err := errors.New("no username specified in request")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	format, err := apiutil.NegotiateAccept(c, apiutil.HTMLOrActivityPubHeaders...)
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -53,13 +53,13 @@ func (m *Module) FollowingGETHandler(c *gin.Context) {
 
 	resp, errWithCode := m.processor.GetFediFollowing(apiutil.TransferSignatureContext(c), requestedUsername, c.Request.URL)
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
 	b, err := json.Marshal(resp)
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
 		return
 	}
 

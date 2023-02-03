@@ -99,7 +99,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// attach global no route / 404 handler to the router
 	router.AttachNoRouteHandler(func(c *gin.Context) {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(errors.New(http.StatusText(http.StatusNotFound))), processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(errors.New(http.StatusText(http.StatusNotFound))), processor.InstanceGetV1)
 	})
 
 	// build router modules

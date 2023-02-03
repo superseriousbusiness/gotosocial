@@ -19,11 +19,9 @@
 package text_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 var withCodeBlock = `# Title
@@ -77,6 +75,16 @@ const (
 	mdWithStrikethroughExpected     = "<p>I have <del>mdae</del> made an error</p>"
 	mdWithLink                      = "Check out this code, i heard it was written by a sloth https://github.com/superseriousbusiness/gotosocial"
 	mdWithLinkExpected              = "<p>Check out this code, i heard it was written by a sloth <a href=\"https://github.com/superseriousbusiness/gotosocial\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://github.com/superseriousbusiness/gotosocial</a></p>"
+	mdObjectInCodeBlock             = "@foss_satan@fossbros-anonymous.io this is how to mention a user\n```\n@the_mighty_zork hey bud! nice #ObjectOrientedProgramming software you've been writing lately! :rainbow:\n```\nhope that helps"
+	mdObjectInCodeBlockExpected     = "<p><span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span> this is how to mention a user</p><pre><code>@the_mighty_zork hey bud! nice #ObjectOrientedProgramming software you&#39;ve been writing lately! :rainbow:\n</code></pre><p>hope that helps</p>"
+	mdItalicHashtag                 = "_#hashtag_"
+	mdItalicHashtagExpected         = "<p><em><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag</span></a></em></p>"
+	mdItalicHashtags                = "_#hashtag #hashtag #hashtag_"
+	mdItalicHashtagsExpected        = "<p><em><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag</span></a> <a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag</span></a> <a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag</span></a></em></p>"
+	// BEWARE: sneaky unicode business going on.
+	// the first ö is one rune, the second ö is an o with a combining diacritic.
+	mdUnnormalizedHashtag         = "#hellöthere #hellöthere"
+	mdUnnormalizedHashtagExpected = "<p><a href=\"http://localhost:8080/tags/hell%C3%B6there\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hellöthere</span></a> <a href=\"http://localhost:8080/tags/hell%C3%B6there\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hellöthere</span></a></p>"
 )
 
 type MarkdownTestSuite struct {
@@ -84,101 +92,112 @@ type MarkdownTestSuite struct {
 }
 
 func (suite *MarkdownTestSuite) TestParseSimple() {
-	s := suite.formatter.FromMarkdown(context.Background(), simpleMarkdown, nil, nil, nil)
-	suite.Equal(simpleMarkdownExpected, s)
+	formatted := suite.FromMarkdown(simpleMarkdown)
+	suite.Equal(simpleMarkdownExpected, formatted.HTML)
 }
 
 func (suite *MarkdownTestSuite) TestParseWithCodeBlock() {
-	s := suite.formatter.FromMarkdown(context.Background(), withCodeBlock, nil, nil, nil)
-	suite.Equal(withCodeBlockExpected, s)
+	formatted := suite.FromMarkdown(withCodeBlock)
+	suite.Equal(withCodeBlockExpected, formatted.HTML)
 }
 
 func (suite *MarkdownTestSuite) TestParseWithInlineCode() {
-	s := suite.formatter.FromMarkdown(context.Background(), withInlineCode, nil, nil, nil)
-	suite.Equal(withInlineCodeExpected, s)
+	formatted := suite.FromMarkdown(withInlineCode)
+	suite.Equal(withInlineCodeExpected, formatted.HTML)
 }
 
 func (suite *MarkdownTestSuite) TestParseWithInlineCode2() {
-	s := suite.formatter.FromMarkdown(context.Background(), withInlineCode2, nil, nil, nil)
-	suite.Equal(withInlineCode2Expected, s)
+	formatted := suite.FromMarkdown(withInlineCode2)
+	suite.Equal(withInlineCode2Expected, formatted.HTML)
 }
 
 func (suite *MarkdownTestSuite) TestParseWithHashtag() {
-	foundTags := []*gtsmodel.Tag{
-		suite.testTags["Hashtag"],
-	}
-
-	s := suite.formatter.FromMarkdown(context.Background(), withHashtag, nil, foundTags, nil)
-	suite.Equal(withHashtagExpected, s)
+	formatted := suite.FromMarkdown(withHashtag)
+	suite.Equal(withHashtagExpected, formatted.HTML)
 }
 
 func (suite *MarkdownTestSuite) TestParseWithHTML() {
-	s := suite.formatter.FromMarkdown(context.Background(), mdWithHTML, nil, nil, nil)
-	suite.Equal(mdWithHTMLExpected, s)
+	formatted := suite.FromMarkdown(mdWithHTML)
+	suite.Equal(mdWithHTMLExpected, formatted.HTML)
 }
 
 func (suite *MarkdownTestSuite) TestParseWithCheekyHTML() {
-	s := suite.formatter.FromMarkdown(context.Background(), mdWithCheekyHTML, nil, nil, nil)
-	suite.Equal(mdWithCheekyHTMLExpected, s)
+	formatted := suite.FromMarkdown(mdWithCheekyHTML)
+	suite.Equal(mdWithCheekyHTMLExpected, formatted.HTML)
 }
 
 func (suite *MarkdownTestSuite) TestParseWithHashtagInitial() {
-	s := suite.formatter.FromMarkdown(context.Background(), mdWithHashtagInitial, nil, []*gtsmodel.Tag{
-		suite.testTags["Hashtag"],
-		suite.testTags["welcome"],
-	}, nil)
-	suite.Equal(mdWithHashtagInitialExpected, s)
+	formatted := suite.FromMarkdown(mdWithHashtagInitial)
+	suite.Equal(mdWithHashtagInitialExpected, formatted.HTML)
 }
 
 func (suite *MarkdownTestSuite) TestParseCodeBlockWithNewlines() {
-	s := suite.formatter.FromMarkdown(context.Background(), mdCodeBlockWithNewlines, nil, nil, nil)
-	suite.Equal(mdCodeBlockWithNewlinesExpected, s)
+	formatted := suite.FromMarkdown(mdCodeBlockWithNewlines)
+	suite.Equal(mdCodeBlockWithNewlinesExpected, formatted.HTML)
 }
 
 func (suite *MarkdownTestSuite) TestParseWithFootnote() {
-	s := suite.formatter.FromMarkdown(context.Background(), mdWithFootnote, nil, nil, nil)
-	suite.Equal(mdWithFootnoteExpected, s)
+	formatted := suite.FromMarkdown(mdWithFootnote)
+	suite.Equal(mdWithFootnoteExpected, formatted.HTML)
 }
 
 func (suite *MarkdownTestSuite) TestParseWithBlockquote() {
-	s := suite.formatter.FromMarkdown(context.Background(), mdWithBlockQuote, nil, nil, nil)
-	suite.Equal(mdWithBlockQuoteExpected, s)
+	formatted := suite.FromMarkdown(mdWithBlockQuote)
+	suite.Equal(mdWithBlockQuoteExpected, formatted.HTML)
 }
 
 func (suite *MarkdownTestSuite) TestParseHashtagWithCodeBlock() {
-	s := suite.formatter.FromMarkdown(context.Background(), mdHashtagAndCodeBlock, nil, []*gtsmodel.Tag{
-		suite.testTags["Hashtag"],
-	}, nil)
-	suite.Equal(mdHashtagAndCodeBlockExpected, s)
+	formatted := suite.FromMarkdown(mdHashtagAndCodeBlock)
+	suite.Equal(mdHashtagAndCodeBlockExpected, formatted.HTML)
 }
 
 func (suite *MarkdownTestSuite) TestParseMentionWithCodeBlock() {
-	s := suite.formatter.FromMarkdown(context.Background(), mdMentionAndCodeBlock, []*gtsmodel.Mention{
-		suite.testMentions["local_user_2_mention_zork"],
-	}, nil, nil)
-	suite.Equal(mdMentionAndCodeBlockExpected, s)
+	formatted := suite.FromMarkdown(mdMentionAndCodeBlock)
+	suite.Equal(mdMentionAndCodeBlockExpected, formatted.HTML)
 }
 
 func (suite *MarkdownTestSuite) TestParseSmartypants() {
-	s := suite.formatter.FromMarkdown(context.Background(), mdWithSmartypants, []*gtsmodel.Mention{
-		suite.testMentions["local_user_2_mention_zork"],
-	}, nil, nil)
-	suite.Equal(mdWithSmartypantsExpected, s)
+	formatted := suite.FromMarkdown(mdWithSmartypants)
+	suite.Equal(mdWithSmartypantsExpected, formatted.HTML)
 }
 
 func (suite *MarkdownTestSuite) TestParseAsciiHeart() {
-	s := suite.formatter.FromMarkdown(context.Background(), mdWithAsciiHeart, nil, nil, nil)
-	suite.Equal(mdWithAsciiHeartExpected, s)
+	formatted := suite.FromMarkdown(mdWithAsciiHeart)
+	suite.Equal(mdWithAsciiHeartExpected, formatted.HTML)
 }
 
 func (suite *MarkdownTestSuite) TestParseStrikethrough() {
-	s := suite.formatter.FromMarkdown(context.Background(), mdWithStrikethrough, nil, nil, nil)
-	suite.Equal(mdWithStrikethroughExpected, s)
+	formatted := suite.FromMarkdown(mdWithStrikethrough)
+	suite.Equal(mdWithStrikethroughExpected, formatted.HTML)
 }
 
 func (suite *MarkdownTestSuite) TestParseLink() {
-	s := suite.formatter.FromMarkdown(context.Background(), mdWithLink, nil, nil, nil)
-	suite.Equal(mdWithLinkExpected, s)
+	formatted := suite.FromMarkdown(mdWithLink)
+	suite.Equal(mdWithLinkExpected, formatted.HTML)
+}
+
+func (suite *MarkdownTestSuite) TestParseObjectInCodeBlock() {
+	formatted := suite.FromMarkdown(mdObjectInCodeBlock)
+	suite.Equal(mdObjectInCodeBlockExpected, formatted.HTML)
+	suite.Len(formatted.Mentions, 1)
+	suite.Equal("@foss_satan@fossbros-anonymous.io", formatted.Mentions[0].NameString)
+	suite.Empty(formatted.Tags)
+	suite.Empty(formatted.Emojis)
+}
+
+func (suite *MarkdownTestSuite) TestParseItalicHashtag() {
+	formatted := suite.FromMarkdown(mdItalicHashtag)
+	suite.Equal(mdItalicHashtagExpected, formatted.HTML)
+}
+
+func (suite *MarkdownTestSuite) TestParseItalicHashtags() {
+	formatted := suite.FromMarkdown(mdItalicHashtags)
+	suite.Equal(mdItalicHashtagsExpected, formatted.HTML)
+}
+
+func (suite *MarkdownTestSuite) TestParseUnnormalizedHashtag() {
+	formatted := suite.FromMarkdown(mdUnnormalizedHashtag)
+	suite.Equal(mdUnnormalizedHashtagExpected, formatted.HTML)
 }
 
 func TestMarkdownTestSuite(t *testing.T) {

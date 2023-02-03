@@ -23,15 +23,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 func (m *Module) SettingsPanelHandler(c *gin.Context) {
-	host := config.GetHost()
-	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
+	instance, err := m.processor.InstanceGetV1(c.Request.Context())
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
 		return
 	}
 

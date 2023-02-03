@@ -26,12 +26,10 @@ import (
 )
 
 const (
-	// InstanceInformationPath is for serving instance info requests, minus the 'api' prefix.
-	InstanceInformationPath = "/v1/instance"
-	// InstancePeersPath is for serving instance peers requests.
-	InstancePeersPath = InstanceInformationPath + "/peers"
-	// PeersFilterKey is used to provide filters to /api/v1/instance/peers
-	PeersFilterKey = "filter"
+	InstanceInformationPathV1 = "/v1/instance"
+	InstanceInformationPathV2 = "/v2/instance"
+	InstancePeersPath         = InstanceInformationPathV1 + "/peers"
+	PeersFilterKey            = "filter" // PeersFilterKey is used to provide filters to /api/v1/instance/peers
 )
 
 type Module struct {
@@ -45,7 +43,9 @@ func New(processor processing.Processor) *Module {
 }
 
 func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
-	attachHandler(http.MethodGet, InstanceInformationPath, m.InstanceInformationGETHandler)
-	attachHandler(http.MethodPatch, InstanceInformationPath, m.InstanceUpdatePATCHHandler)
+	attachHandler(http.MethodGet, InstanceInformationPathV1, m.InstanceInformationGETHandlerV1)
+	attachHandler(http.MethodGet, InstanceInformationPathV2, m.InstanceInformationGETHandlerV2)
+
+	attachHandler(http.MethodPatch, InstanceInformationPathV1, m.InstanceUpdatePATCHHandler)
 	attachHandler(http.MethodGet, InstancePeersPath, m.InstancePeersGETHandler)
 }

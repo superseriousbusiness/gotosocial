@@ -76,8 +76,8 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithMention() {
 	var (
 		locked       = true
 		displayName  = "new display name"
-		note         = "#hello here i am!\n\ngo check out @1happyturtle, they have a cool account!\n"
-		noteExpected = "<p><a href=\"http://localhost:8080/tags/hello\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hello</span></a> here i am!<br/><br/>go check out <span class=\"h-card\"><a href=\"http://localhost:8080/@1happyturtle\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>1happyturtle</span></a></span>, they have a cool account!</p>"
+		note         = "#hello here i am!\n\ngo check out @1happyturtle, they have a cool account!"
+		noteExpected = "<p><a href=\"http://localhost:8080/tags/hello\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hello</span></a> here i am!<br><br>go check out <span class=\"h-card\"><a href=\"http://localhost:8080/@1happyturtle\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>1happyturtle</span></a></span>, they have a cool account!</p>"
 	)
 
 	form := &apimodel.UpdateCredentialsRequest{

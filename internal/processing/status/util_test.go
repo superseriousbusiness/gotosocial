@@ -29,22 +29,23 @@ import (
 )
 
 const (
-	statusText1                = "Another test @foss_satan@fossbros-anonymous.io\n\n#Hashtag\n\nText"
-	statusText1ExpectedFull    = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br/><br/><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a><br/><br/>Text</p>"
-	statusText1ExpectedPartial = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br/><br/>#Hashtag<br/><br/>Text</p>"
-	statusText2                = "Another test @foss_satan@fossbros-anonymous.io\n\n#Hashtag\n\n#hashTAG"
-	status2TextExpectedFull    = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br/><br/><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a><br/><br/><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashTAG</span></a></p>"
-	status2TextExpectedPartial = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br/><br/>#Hashtag<br/><br/>#hashTAG</p>"
+	statusText1         = "Another test @foss_satan@fossbros-anonymous.io\n\n#Hashtag\n\nText"
+	statusText1Expected = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br><br><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a><br><br>Text</p>"
+	statusText2         = "Another test @foss_satan@fossbros-anonymous.io\n\n#Hashtag\n\n#hashTAG"
+	status2TextExpected = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br><br><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a><br><br><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashTAG</span></a></p>"
 )
 
 type UtilTestSuite struct {
 	StatusStandardTestSuite
 }
 
-func (suite *UtilTestSuite) TestProcessMentions1() {
+func (suite *UtilTestSuite) TestProcessContent1() {
+	/*
+		TEST PREPARATION
+	*/
+	// we need to partially process the status first since processContent expects a status with some stuff already set on it
 	creatingAccount := suite.testAccounts["local_account_1"]
 	mentionedAccount := suite.testAccounts["remote_account_1"]
-
 	form := &apimodel.AdvancedStatusCreateForm{
 		StatusCreateRequest: apimodel.StatusCreateRequest{
 			Status:      statusText1,
@@ -70,8 +71,13 @@ func (suite *UtilTestSuite) TestProcessMentions1() {
 		ID: "01FCTDD78JJMX3K9KPXQ7ZQ8BJ",
 	}
 
-	err := suite.status.ProcessMentions(context.Background(), form, creatingAccount.ID, status)
+	/*
+		ACTUAL TEST
+	*/
+
+	err := suite.status.ProcessContent(context.Background(), form, creatingAccount.ID, status)
 	suite.NoError(err)
+	suite.Equal(statusText1Expected, status.Content)
 
 	suite.Len(status.Mentions, 1)
 	newMention := status.Mentions[0]
@@ -88,102 +94,13 @@ func (suite *UtilTestSuite) TestProcessMentions1() {
 	suite.Equal(newMention.ID, status.MentionIDs[0])
 }
 
-func (suite *UtilTestSuite) TestProcessContentFull1() {
+func (suite *UtilTestSuite) TestProcessContent2() {
 	/*
 		TEST PREPARATION
 	*/
 	// we need to partially process the status first since processContent expects a status with some stuff already set on it
-	creatingAccount := suite.testAccounts["local_account_1"]
-	form := &apimodel.AdvancedStatusCreateForm{
-		StatusCreateRequest: apimodel.StatusCreateRequest{
-			Status:      statusText1,
-			MediaIDs:    []string{},
-			Poll:        nil,
-			InReplyToID: "",
-			Sensitive:   false,
-			SpoilerText: "",
-			Visibility:  apimodel.VisibilityPublic,
-			ScheduledAt: "",
-			Language:    "en",
-			Format:      apimodel.StatusFormatPlain,
-		},
-		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
-			Federated: nil,
-			Boostable: nil,
-			Replyable: nil,
-			Likeable:  nil,
-		},
-	}
-
-	status := &gtsmodel.Status{
-		ID: "01FCTDD78JJMX3K9KPXQ7ZQ8BJ",
-	}
-
-	err := suite.status.ProcessMentions(context.Background(), form, creatingAccount.ID, status)
-	suite.NoError(err)
-	suite.Empty(status.Content) // shouldn't be set yet
-
-	err = suite.status.ProcessTags(context.Background(), form, creatingAccount.ID, status)
-	suite.NoError(err)
-	suite.Empty(status.Content) // shouldn't be set yet
-
-	/*
-		ACTUAL TEST
-	*/
-
-	err = suite.status.ProcessContent(context.Background(), form, creatingAccount.ID, status)
-	suite.NoError(err)
-	suite.Equal(statusText1ExpectedFull, status.Content)
-}
-
-func (suite *UtilTestSuite) TestProcessContentPartial1() {
-	/*
-		TEST PREPARATION
-	*/
-	// we need to partially process the status first since processContent expects a status with some stuff already set on it
-	creatingAccount := suite.testAccounts["local_account_1"]
-	form := &apimodel.AdvancedStatusCreateForm{
-		StatusCreateRequest: apimodel.StatusCreateRequest{
-			Status:      statusText1,
-			MediaIDs:    []string{},
-			Poll:        nil,
-			InReplyToID: "",
-			Sensitive:   false,
-			SpoilerText: "",
-			Visibility:  apimodel.VisibilityPublic,
-			ScheduledAt: "",
-			Language:    "en",
-			Format:      apimodel.StatusFormatPlain,
-		},
-		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
-			Federated: nil,
-			Boostable: nil,
-			Replyable: nil,
-			Likeable:  nil,
-		},
-	}
-
-	status := &gtsmodel.Status{
-		ID: "01FCTDD78JJMX3K9KPXQ7ZQ8BJ",
-	}
-
-	err := suite.status.ProcessMentions(context.Background(), form, creatingAccount.ID, status)
-	suite.NoError(err)
-	suite.Empty(status.Content) // shouldn't be set yet
-
-	/*
-		ACTUAL TEST
-	*/
-
-	err = suite.status.ProcessContent(context.Background(), form, creatingAccount.ID, status)
-	suite.NoError(err)
-	suite.Equal(statusText1ExpectedPartial, status.Content)
-}
-
-func (suite *UtilTestSuite) TestProcessMentions2() {
 	creatingAccount := suite.testAccounts["local_account_1"]
 	mentionedAccount := suite.testAccounts["remote_account_1"]
-
 	form := &apimodel.AdvancedStatusCreateForm{
 		StatusCreateRequest: apimodel.StatusCreateRequest{
 			Status:      statusText2,
@@ -209,8 +126,14 @@ func (suite *UtilTestSuite) TestProcessMentions2() {
 		ID: "01FCTDD78JJMX3K9KPXQ7ZQ8BJ",
 	}
 
-	err := suite.status.ProcessMentions(context.Background(), form, creatingAccount.ID, status)
+	/*
+		ACTUAL TEST
+	*/
+
+	err := suite.status.ProcessContent(context.Background(), form, creatingAccount.ID, status)
 	suite.NoError(err)
+
+	suite.Equal(status2TextExpected, status.Content)
 
 	suite.Len(status.Mentions, 1)
 	newMention := status.Mentions[0]
@@ -225,96 +148,6 @@ func (suite *UtilTestSuite) TestProcessMentions2() {
 
 	suite.Len(status.MentionIDs, 1)
 	suite.Equal(newMention.ID, status.MentionIDs[0])
-}
-
-func (suite *UtilTestSuite) TestProcessContentFull2() {
-	/*
-		TEST PREPARATION
-	*/
-	// we need to partially process the status first since processContent expects a status with some stuff already set on it
-	creatingAccount := suite.testAccounts["local_account_1"]
-	form := &apimodel.AdvancedStatusCreateForm{
-		StatusCreateRequest: apimodel.StatusCreateRequest{
-			Status:      statusText2,
-			MediaIDs:    []string{},
-			Poll:        nil,
-			InReplyToID: "",
-			Sensitive:   false,
-			SpoilerText: "",
-			Visibility:  apimodel.VisibilityPublic,
-			ScheduledAt: "",
-			Language:    "en",
-			Format:      apimodel.StatusFormatPlain,
-		},
-		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
-			Federated: nil,
-			Boostable: nil,
-			Replyable: nil,
-			Likeable:  nil,
-		},
-	}
-
-	status := &gtsmodel.Status{
-		ID: "01FCTDD78JJMX3K9KPXQ7ZQ8BJ",
-	}
-
-	err := suite.status.ProcessMentions(context.Background(), form, creatingAccount.ID, status)
-	suite.NoError(err)
-	suite.Empty(status.Content) // shouldn't be set yet
-
-	err = suite.status.ProcessTags(context.Background(), form, creatingAccount.ID, status)
-	suite.NoError(err)
-	suite.Empty(status.Content) // shouldn't be set yet
-
-	/*
-		ACTUAL TEST
-	*/
-
-	err = suite.status.ProcessContent(context.Background(), form, creatingAccount.ID, status)
-	suite.NoError(err)
-
-	suite.Equal(status2TextExpectedFull, status.Content)
-}
-
-func (suite *UtilTestSuite) TestProcessContentPartial2() {
-	/*
-		TEST PREPARATION
-	*/
-	// we need to partially process the status first since processContent expects a status with some stuff already set on it
-	creatingAccount := suite.testAccounts["local_account_1"]
-	form := &apimodel.AdvancedStatusCreateForm{
-		StatusCreateRequest: apimodel.StatusCreateRequest{
-			Status:      statusText2,
-			MediaIDs:    []string{},
-			Poll:        nil,
-			InReplyToID: "",
-			Sensitive:   false,
-			SpoilerText: "",
-			Visibility:  apimodel.VisibilityPublic,
-			ScheduledAt: "",
-			Language:    "en",
-			Format:      apimodel.StatusFormatPlain,
-		},
-		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
-			Federated: nil,
-			Boostable: nil,
-			Replyable: nil,
-			Likeable:  nil,
-		},
-	}
-
-	status := &gtsmodel.Status{
-		ID: "01FCTDD78JJMX3K9KPXQ7ZQ8BJ",
-	}
-
-	err := suite.status.ProcessMentions(context.Background(), form, creatingAccount.ID, status)
-	suite.NoError(err)
-	suite.Empty(status.Content)
-
-	err = suite.status.ProcessContent(context.Background(), form, creatingAccount.ID, status)
-	suite.NoError(err)
-
-	suite.Equal(status2TextExpectedPartial, status.Content)
 }
 
 func TestUtilTestSuite(t *testing.T) {

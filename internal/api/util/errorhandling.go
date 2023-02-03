@@ -25,7 +25,6 @@ import (
 	"codeberg.org/gruf/go-kv"
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
@@ -41,11 +40,10 @@ import (
 // 404 header and footer.
 //
 // If an error is returned by InstanceGet, the function will panic.
-func NotFoundHandler(c *gin.Context, instanceGet func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode), accept string) {
+func NotFoundHandler(c *gin.Context, instanceGet func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode), accept string) {
 	switch accept {
 	case string(TextHTML):
-		host := config.GetHost()
-		instance, err := instanceGet(c.Request.Context(), host)
+		instance, err := instanceGet(c.Request.Context())
 		if err != nil {
 			panic(err)
 		}
@@ -61,11 +59,10 @@ func NotFoundHandler(c *gin.Context, instanceGet func(ctx context.Context, domai
 // genericErrorHandler is a more general version of the NotFoundHandler, which can
 // be used for serving either generic error pages with some rendered help text,
 // or just some error json if the caller prefers (or has no preference).
-func genericErrorHandler(c *gin.Context, instanceGet func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode), accept string, errWithCode gtserror.WithCode) {
+func genericErrorHandler(c *gin.Context, instanceGet func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode), accept string, errWithCode gtserror.WithCode) {
 	switch accept {
 	case string(TextHTML):
-		host := config.GetHost()
-		instance, err := instanceGet(c.Request.Context(), host)
+		instance, err := instanceGet(c.Request.Context())
 		if err != nil {
 			panic(err)
 		}
@@ -85,7 +82,7 @@ func genericErrorHandler(c *gin.Context, instanceGet func(ctx context.Context, d
 // the caller prefers to see an html page with the error rendered there. If not, or
 // if something goes wrong during the function, it will recover and just try to serve
 // an appropriate application/json content-type error.
-func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode)) {
+func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode)) {
 	// set the error on the gin context so that it can be logged
 	// in the gin logger middleware (internal/router/logger.go)
 	c.Error(errWithCode) //nolint:errcheck

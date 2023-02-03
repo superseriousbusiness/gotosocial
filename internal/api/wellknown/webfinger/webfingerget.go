@@ -57,33 +57,33 @@ import (
 //				"$ref": "#/definitions/wellKnownResponse"
 func (m *Module) WebfingerGETRequest(c *gin.Context) {
 	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	resourceQuery, set := c.GetQuery("resource")
 	if !set || resourceQuery == "" {
 		err := errors.New("no 'resource' in request query")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	requestedUsername, requestedHost, err := util.ExtractWebfingerParts(resourceQuery)
 	if err != nil {
 		err := fmt.Errorf("bad webfinger request with resource query %s: %w", resourceQuery, err)
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	if requestedHost != config.GetHost() && requestedHost != config.GetAccountDomain() {
 		err := fmt.Errorf("requested host %s does not belong to this instance", requestedHost)
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	resp, errWithCode := m.processor.GetWebfingerAccount(c.Request.Context(), requestedUsername)
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

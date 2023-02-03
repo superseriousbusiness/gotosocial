@@ -19,40 +19,56 @@
 package text
 
 import (
+	"bytes"
 	"context"
-	"html"
-	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/renderer/html"
+	"github.com/yuin/goldmark/util"
 )
 
-// breakReplacer replaces new-lines with HTML breaks.
-var breakReplacer = strings.NewReplacer(
-	"\r\n", "<br/>",
-	"\n", "<br/>",
-)
+func (f *formatter) FromPlain(ctx context.Context, pmf gtsmodel.ParseMentionFunc, authorID string, statusID string, plain string) *FormatResult {
+	result := &FormatResult{
+		Mentions: []*gtsmodel.Mention{},
+		Tags:     []*gtsmodel.Tag{},
+		Emojis:   []*gtsmodel.Emoji{},
+	}
 
-func (f *formatter) FromPlain(ctx context.Context, plain string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string {
-	// trim any crap
-	content := strings.TrimSpace(plain)
+	// parse markdown text into html, using custom renderer to add hashtag/mention links
+	md := goldmark.New(
+		goldmark.WithRendererOptions(
+			html.WithXHTML(),
+			html.WithHardWraps(),
+		),
+		goldmark.WithParser(
+			parser.NewParser(
+				parser.WithBlockParsers(
+					util.Prioritized(newPlaintextParser(), 500),
+				),
+			),
+		),
+		goldmark.WithExtensions(
+			&customRenderer{f, ctx, pmf, authorID, statusID, false, result},
+			extension.Linkify, // turns URLs into links
+		),
+	)
 
-	// clean 'er up
-	content = html.EscapeString(content)
+	var htmlContentBytes bytes.Buffer
+	err := md.Convert([]byte(plain), &htmlContentBytes)
+	if err != nil {
+		log.Errorf("error formatting plaintext to HTML: %s", err)
+	}
+	result.HTML = htmlContentBytes.String()
 
-	// format links nicely
-	content = f.ReplaceLinks(ctx, content)
+	// clean anything dangerous out of the HTML
+	result.HTML = SanitizeHTML(result.HTML)
 
-	// format tags nicely
-	content = f.ReplaceTags(ctx, content, tags)
+	// shrink ray
+	result.HTML = minifyHTML(result.HTML)
 
-	// format mentions nicely
-	content = f.ReplaceMentions(ctx, content, mentions)
-
-	// replace newlines with breaks
-	content = breakReplacer.Replace(content)
-
-	// wrap the whole thing in a pee
-	content = `<p>` + content + `</p>`
-
-	return SanitizeHTML(content)
+	return result
 }

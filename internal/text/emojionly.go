@@ -25,35 +25,39 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/yuin/goldmark"
-	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/renderer/html"
+	"github.com/yuin/goldmark/util"
 )
 
-func (f *formatter) FromMarkdown(ctx context.Context, pmf gtsmodel.ParseMentionFunc, authorID string, statusID string, markdownText string) *FormatResult {
+func (f *formatter) FromPlainEmojiOnly(ctx context.Context, pmf gtsmodel.ParseMentionFunc, authorID string, statusID string, plain string) *FormatResult {
 	result := &FormatResult{
 		Mentions: []*gtsmodel.Mention{},
 		Tags:     []*gtsmodel.Tag{},
 		Emojis:   []*gtsmodel.Emoji{},
 	}
-
 	// parse markdown text into html, using custom renderer to add hashtag/mention links
 	md := goldmark.New(
 		goldmark.WithRendererOptions(
 			html.WithXHTML(),
 			html.WithHardWraps(),
-			html.WithUnsafe(), // allows raw HTML
+		),
+		goldmark.WithParser(
+			parser.NewParser(
+				parser.WithBlockParsers(
+					util.Prioritized(newPlaintextParser(), 500),
+				),
+			),
 		),
 		goldmark.WithExtensions(
-			&customRenderer{f, ctx, pmf, authorID, statusID, false, result},
-			extension.Linkify, // turns URLs into links
-			extension.Strikethrough,
+			&customRenderer{f, ctx, pmf, authorID, statusID, true, result},
 		),
 	)
 
 	var htmlContentBytes bytes.Buffer
-	err := md.Convert([]byte(markdownText), &htmlContentBytes)
+	err := md.Convert([]byte(plain), &htmlContentBytes)
 	if err != nil {
-		log.Errorf("error formatting markdown to HTML: %s", err)
+		log.Errorf("error formatting plaintext to HTML: %s", err)
 	}
 	result.HTML = htmlContentBytes.String()
 

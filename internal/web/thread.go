@@ -40,7 +40,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 
 	authed, err := oauth.Authed(c, false, false, false, false)
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -48,7 +48,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	username := strings.ToLower(c.Param(usernameKey))
 	if username == "" {
 		err := errors.New("no account username specified")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -56,18 +56,17 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	statusID := strings.ToUpper(c.Param(statusIDKey))
 	if statusID == "" {
 		err := errors.New("no status id specified")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
-	host := config.GetHost()
-	instance, err := m.processor.InstanceGet(ctx, host)
+	instance, err := m.processor.InstanceGetV1(ctx)
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
 		return
 	}
 
-	instanceGet := func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode) {
+	instanceGet := func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode) {
 		return instance, nil
 	}
 
@@ -135,14 +134,14 @@ func (m *Module) returnAPStatus(ctx context.Context, c *gin.Context, username st
 
 	status, errWithCode := m.processor.GetFediStatus(ctx, username, statusID, c.Request.URL)
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet) //nolint:contextcheck
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1) //nolint:contextcheck
 		return
 	}
 
 	b, mErr := json.Marshal(status)
 	if mErr != nil {
 		err := fmt.Errorf("could not marshal json: %s", mErr)
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet) //nolint:contextcheck
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1) //nolint:contextcheck
 		return
 	}
 

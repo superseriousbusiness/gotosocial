@@ -74,9 +74,10 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 
 	// display name aka name
 	// we default to the username, but take the more nuanced name property if it exists
-	acct.DisplayName = username
-	if displayName, err := ap.ExtractName(accountable); err == nil {
+	if displayName := ap.ExtractName(accountable); displayName != "" {
 		acct.DisplayName = displayName
+	} else {
+		acct.DisplayName = username
 	}
 
 	// account emojis (used in bio, display name, fields)
@@ -89,10 +90,7 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 	// TODO: fields aka attachment array
 
 	// note aka summary
-	note, err := ap.ExtractSummary(accountable)
-	if err == nil && note != "" {
-		acct.Note = note
-	}
+	acct.Note = ap.ExtractSummary(accountable)
 
 	// check for bot and actor type
 	switch accountable.GetTypeName() {
@@ -207,6 +205,38 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 	return acct, nil
 }
 
+func (c *converter) extractAttachments(i ap.WithAttachment) []*gtsmodel.MediaAttachment {
+	attachmentProp := i.GetActivityStreamsAttachment()
+	if attachmentProp == nil {
+		return nil
+	}
+
+	attachments := make([]*gtsmodel.MediaAttachment, 0, attachmentProp.Len())
+
+	for iter := attachmentProp.Begin(); iter != attachmentProp.End(); iter = iter.Next() {
+		t := iter.GetType()
+		if t == nil {
+			continue
+		}
+
+		attachmentable, ok := t.(ap.Attachmentable)
+		if !ok {
+			log.Error("ap attachment was not attachmentable")
+			continue
+		}
+
+		attachment, err := ap.ExtractAttachment(attachmentable)
+		if err != nil {
+			log.Errorf("error extracting attachment: %s", err)
+			continue
+		}
+
+		attachments = append(attachments, attachment)
+	}
+
+	return attachments
+}
+
 func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusable) (*gtsmodel.Status, error) {
 	status := &gtsmodel.Status{}
 
@@ -231,11 +261,7 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	status.Content = ap.ExtractContent(statusable)
 
 	// attachments to dereference and fetch later on (we don't do that here)
-	if attachments, err := ap.ExtractAttachments(statusable); err != nil {
-		l.Infof("ASStatusToStatus: error extracting status attachments: %s", err)
-	} else {
-		status.Attachments = attachments
-	}
+	status.Attachments = c.extractAttachments(statusable)
 
 	// hashtags to dereference later on
 	if hashtags, err := ap.ExtractHashtags(statusable); err != nil {
@@ -259,10 +285,11 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	}
 
 	// cw string for this status
-	if cw, err := ap.ExtractSummary(statusable); err != nil {
-		l.Infof("ASStatusToStatus: error extracting status summary: %s", err)
+	// prefer Summary, fall back to Name
+	if summary := ap.ExtractSummary(statusable); summary != "" {
+		status.ContentWarning = summary
 	} else {
-		status.ContentWarning = cw
+		status.ContentWarning = ap.ExtractName(statusable)
 	}
 
 	// when was this status created?

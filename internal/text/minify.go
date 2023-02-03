@@ -16,29 +16,30 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package ap_test
+package text
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/activity/streams"
-	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/tdewolff/minify/v2"
+	"github.com/tdewolff/minify/v2/html"
 )
 
-type ExtractAttachmentsTestSuite struct {
-	ExtractTestSuite
-}
+var (
+	m *minify.M
+)
 
-func (suite *ExtractAttachmentsTestSuite) TestExtractAttachmentMissingURL() {
-	d1 := suite.document1
-	d1.SetActivityStreamsUrl(streams.NewActivityStreamsUrlProperty())
+func minifyHTML(content string) string {
+	if m == nil {
+		m = minify.New()
+		m.Add("text/html", &html.Minifier{
+			KeepEndTags: true,
+			KeepQuotes:  true,
+		})
+	}
 
-	attachment, err := ap.ExtractAttachment(d1)
-	suite.EqualError(err, "could not extract url")
-	suite.Nil(attachment)
-}
-
-func TestExtractAttachmentsTestSuite(t *testing.T) {
-	suite.Run(t, &ExtractAttachmentsTestSuite{})
+	minified, err := m.String("text/html", content)
+	if err != nil {
+		log.Errorf("error minifying HTML: %s", err)
+	}
+	return minified
 }

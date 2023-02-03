@@ -4,16 +4,6 @@ definitions:
         title: EmojiUpdateType models an admin update action to take on a custom emoji.
         type: string
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    InstanceConfigurationAccounts:
-        properties:
-            allow_custom_css:
-                description: Whether or not accounts on this instance are allowed to upload custom CSS for profiles and statuses.
-                example: false
-                type: boolean
-                x-go-name: AllowCustomCSS
-        title: InstanceConfigurationAccounts models instance account config parameters.
-        type: object
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     InstanceConfigurationEmojis:
         properties:
             emoji_size_limit:
@@ -1127,134 +1117,23 @@ definitions:
         type: object
         x-go-name: Field
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    instance:
+    instanceConfigurationAccounts:
         properties:
-            account_domain:
-                description: |-
-                    The domain of accounts on this instance.
-                    This will not necessarily be the same as
-                    simply the Host part of the URI.
-                example: example.org
-                type: string
-                x-go-name: AccountDomain
-            approval_required:
-                description: New account registrations require admin approval.
+            allow_custom_css:
+                description: Whether or not accounts on this instance are allowed to upload custom CSS for profiles and statuses.
+                example: false
                 type: boolean
-                x-go-name: ApprovalRequired
-            configuration:
-                $ref: '#/definitions/instanceConfiguration'
-            contact_account:
-                $ref: '#/definitions/account'
-            description:
+                x-go-name: AllowCustomCSS
+            max_featured_tags:
                 description: |-
-                    Description of the instance.
-
-                    Should be HTML formatted, but might be plaintext.
-
-                    This should be displayed on the 'about' page for an instance.
-                type: string
-                x-go-name: Description
-            email:
-                description: An email address that may be used for inquiries.
-                example: admin@example.org
-                type: string
-                x-go-name: Email
-            invites_enabled:
-                description: Invites are enabled on this instance.
-                type: boolean
-                x-go-name: InvitesEnabled
-            languages:
-                description: Primary language of the instance.
-                example: en
-                items:
-                    type: string
-                type: array
-                x-go-name: Languages
-            max_toot_chars:
-                description: |-
-                    Maximum allowed length of a post on this instance, in characters.
-
-                    This is provided for compatibility with Tusky and other apps.
-                example: 5000
-                format: uint64
+                    The maximum number of featured tags allowed for each account.
+                    Currently not implemented, so this is hardcoded to 10.
+                format: int64
                 type: integer
-                x-go-name: MaxTootChars
-            registrations:
-                description: New account registrations are enabled on this instance.
-                type: boolean
-                x-go-name: Registrations
-            short_description:
-                description: |-
-                    A shorter description of the instance.
-
-                    Should be HTML formatted, but might be plaintext.
-
-                    This should be displayed on the instance splash/landing page.
-                type: string
-                x-go-name: ShortDescription
-            stats:
-                additionalProperties:
-                    format: int64
-                    type: integer
-                description: 'Statistics about the instance: number of posts, accounts, etc.'
-                type: object
-                x-go-name: Stats
-            thumbnail:
-                description: URL of the instance avatar/banner image.
-                example: https://example.org/files/instance/thumbnail.jpeg
-                type: string
-                x-go-name: Thumbnail
-            thumbnail_description:
-                description: Description of the instance thumbnail.
-                example: picture of a cute lil' friendly sloth
-                type: string
-                x-go-name: ThumbnailDescription
-            thumbnail_type:
-                description: MIME type of the instance thumbnail.
-                example: image/png
-                type: string
-                x-go-name: ThumbnailType
-            title:
-                description: The title of the instance.
-                example: GoToSocial Example Instance
-                type: string
-                x-go-name: Title
-            uri:
-                description: The URI of the instance.
-                example: https://gts.example.org
-                type: string
-                x-go-name: URI
-            urls:
-                $ref: '#/definitions/instanceURLs'
-            version:
-                description: |-
-                    The version of GoToSocial installed on the instance.
-
-                    This will contain at least a semantic version number.
-
-                    It may also contain, after a space, the short git commit ID of the running software.
-                example: 0.1.1 cb85f65
-                type: string
-                x-go-name: Version
-        title: Instance models information about this or another instance.
+                x-go-name: MaxFeaturedTags
+        title: InstanceConfigurationAccounts models instance account config parameters.
         type: object
-        x-go-name: Instance
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    instanceConfiguration:
-        properties:
-            accounts:
-                $ref: '#/definitions/InstanceConfigurationAccounts'
-            emojis:
-                $ref: '#/definitions/InstanceConfigurationEmojis'
-            media_attachments:
-                $ref: '#/definitions/instanceConfigurationMediaAttachments'
-            polls:
-                $ref: '#/definitions/instanceConfigurationPolls'
-            statuses:
-                $ref: '#/definitions/instanceConfigurationStatuses'
-        title: InstanceConfiguration models instance configuration parameters.
-        type: object
-        x-go-name: InstanceConfiguration
+        x-go-name: InstanceConfigurationAccounts
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     instanceConfigurationMediaAttachments:
         properties:
@@ -1363,16 +1242,362 @@ definitions:
         type: object
         x-go-name: InstanceConfigurationStatuses
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    instanceURLs:
+    instanceV1:
+        properties:
+            account_domain:
+                description: |-
+                    The domain of accounts on this instance.
+                    This will not necessarily be the same as
+                    simply the Host part of the URI.
+                example: example.org
+                type: string
+                x-go-name: AccountDomain
+            approval_required:
+                description: New account registrations require admin approval.
+                type: boolean
+                x-go-name: ApprovalRequired
+            configuration:
+                $ref: '#/definitions/instanceV1Configuration'
+            contact_account:
+                $ref: '#/definitions/account'
+            description:
+                description: |-
+                    Description of the instance.
+
+                    Should be HTML formatted, but might be plaintext.
+
+                    This should be displayed on the 'about' page for an instance.
+                type: string
+                x-go-name: Description
+            email:
+                description: An email address that may be used for inquiries.
+                example: admin@example.org
+                type: string
+                x-go-name: Email
+            invites_enabled:
+                description: Invites are enabled on this instance.
+                type: boolean
+                x-go-name: InvitesEnabled
+            languages:
+                description: Primary language of the instance.
+                example: en
+                items:
+                    type: string
+                type: array
+                x-go-name: Languages
+            max_toot_chars:
+                description: |-
+                    Maximum allowed length of a post on this instance, in characters.
+
+                    This is provided for compatibility with Tusky and other apps.
+                example: 5000
+                format: uint64
+                type: integer
+                x-go-name: MaxTootChars
+            registrations:
+                description: New account registrations are enabled on this instance.
+                type: boolean
+                x-go-name: Registrations
+            short_description:
+                description: |-
+                    A shorter description of the instance.
+
+                    Should be HTML formatted, but might be plaintext.
+
+                    This should be displayed on the instance splash/landing page.
+                type: string
+                x-go-name: ShortDescription
+            stats:
+                additionalProperties:
+                    format: int64
+                    type: integer
+                description: 'Statistics about the instance: number of posts, accounts, etc.'
+                type: object
+                x-go-name: Stats
+            thumbnail:
+                description: URL of the instance avatar/banner image.
+                example: https://example.org/files/instance/thumbnail.jpeg
+                type: string
+                x-go-name: Thumbnail
+            thumbnail_description:
+                description: Description of the instance thumbnail.
+                example: picture of a cute lil' friendly sloth
+                type: string
+                x-go-name: ThumbnailDescription
+            thumbnail_type:
+                description: MIME type of the instance thumbnail.
+                example: image/png
+                type: string
+                x-go-name: ThumbnailType
+            title:
+                description: The title of the instance.
+                example: GoToSocial Example Instance
+                type: string
+                x-go-name: Title
+            uri:
+                description: The URI of the instance.
+                example: https://gts.example.org
+                type: string
+                x-go-name: URI
+            urls:
+                $ref: '#/definitions/instanceV1URLs'
+            version:
+                description: |-
+                    The version of GoToSocial installed on the instance.
+
+                    This will contain at least a semantic version number.
+
+                    It may also contain, after a space, the short git commit ID of the running software.
+                example: 0.1.1 cb85f65
+                type: string
+                x-go-name: Version
+        title: InstanceV1 models information about this instance.
+        type: object
+        x-go-name: InstanceV1
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    instanceV1Configuration:
+        properties:
+            accounts:
+                $ref: '#/definitions/instanceConfigurationAccounts'
+            emojis:
+                $ref: '#/definitions/InstanceConfigurationEmojis'
+            media_attachments:
+                $ref: '#/definitions/instanceConfigurationMediaAttachments'
+            polls:
+                $ref: '#/definitions/instanceConfigurationPolls'
+            statuses:
+                $ref: '#/definitions/instanceConfigurationStatuses'
+        title: InstanceV1Configuration models instance configuration parameters.
+        type: object
+        x-go-name: InstanceV1Configuration
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    instanceV1URLs:
         properties:
             streaming_api:
                 description: Websockets address for status and notification streaming.
                 example: wss://example.org
                 type: string
                 x-go-name: StreamingAPI
-        title: InstanceURLs models instance-relevant URLs for client application consumption.
+        title: InstanceV1URLs models instance-relevant URLs for client application consumption.
         type: object
-        x-go-name: InstanceURLs
+        x-go-name: InstanceV1URLs
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    instanceV2:
+        properties:
+            account_domain:
+                description: |-
+                    The domain of accounts on this instance.
+                    This will not necessarily be the same as
+                    domain.
+                example: example.org
+                type: string
+                x-go-name: AccountDomain
+            configuration:
+                $ref: '#/definitions/instanceV2Configuration'
+            contact:
+                $ref: '#/definitions/instanceV2Contact'
+            description:
+                description: |-
+                    Description of the instance.
+
+                    Should be HTML formatted, but might be plaintext.
+
+                    This should be displayed on the 'about' page for an instance.
+                type: string
+                x-go-name: Description
+            domain:
+                description: The domain of the instance.
+                example: gts.example.org
+                type: string
+                x-go-name: Domain
+            languages:
+                description: Primary languages of the instance + moderators/admins.
+                example:
+                    - en
+                items:
+                    type: string
+                type: array
+                x-go-name: Languages
+            registrations:
+                $ref: '#/definitions/instanceV2Registrations'
+            rules:
+                description: |-
+                    An itemized list of rules for this website.
+                    Currently not implemented (will always be empty array).
+                items: {}
+                type: array
+                x-go-name: Rules
+            source_url:
+                description: The URL for the source code of the software running on this instance, in keeping with AGPL license requirements.
+                example: https://github.com/superseriousbusiness/gotosocial
+                type: string
+                x-go-name: SourceURL
+            thumbnail:
+                $ref: '#/definitions/instanceV2Thumbnail'
+            title:
+                description: The title of the instance.
+                example: GoToSocial Example Instance
+                type: string
+                x-go-name: Title
+            usage:
+                $ref: '#/definitions/instanceV2Usage'
+            version:
+                description: |-
+                    The version of GoToSocial installed on the instance.
+
+                    This will contain at least a semantic version number.
+
+                    It may also contain, after a space, the short git commit ID of the running software.
+                example: 0.1.1 cb85f65
+                type: string
+                x-go-name: Version
+        title: InstanceV2 models information about this instance.
+        type: object
+        x-go-name: InstanceV2
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    instanceV2Configuration:
+        properties:
+            accounts:
+                $ref: '#/definitions/instanceConfigurationAccounts'
+            emojis:
+                $ref: '#/definitions/InstanceConfigurationEmojis'
+            media_attachments:
+                $ref: '#/definitions/instanceConfigurationMediaAttachments'
+            polls:
+                $ref: '#/definitions/instanceConfigurationPolls'
+            statuses:
+                $ref: '#/definitions/instanceConfigurationStatuses'
+            translation:
+                $ref: '#/definitions/instanceV2ConfigurationTranslation'
+            urls:
+                $ref: '#/definitions/instanceV1URLs'
+        title: Configured values and limits for this instance.
+        type: object
+        x-go-name: InstanceV2Configuration
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    instanceV2ConfigurationTranslation:
+        properties:
+            enabled:
+                description: |-
+                    Whether the Translations API is available on this instance.
+                    Not implemented so this value is always false.
+                type: boolean
+                x-go-name: Enabled
+        title: Hints related to translation.
+        type: object
+        x-go-name: InstanceV2ConfigurationTranslation
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    instanceV2Contact:
+        properties:
+            account:
+                $ref: '#/definitions/account'
+            email:
+                description: |-
+                    An email address that can be messaged regarding inquiries or issues.
+                    Empty string if no email address set.
+                example: someone@example.org
+                type: string
+                x-go-name: Email
+        title: Hints related to contacting a representative of the instance.
+        type: object
+        x-go-name: InstanceV2Contact
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    instanceV2Registrations:
+        properties:
+            approval_required:
+                description: Whether registrations require moderator approval.
+                example: true
+                type: boolean
+                x-go-name: ApprovalRequired
+            enabled:
+                description: Whether registrations are enabled.
+                example: false
+                type: boolean
+                x-go-name: Enabled
+            message:
+                description: |-
+                    A custom message (html string) to be shown when registrations are closed.
+                    Value will be null if no message is set.
+                example: <p>Registrations are currently closed on example.org because of spam bots!</p>
+                type: string
+                x-go-name: Message
+        title: Information about registering for this instance.
+        type: object
+        x-go-name: InstanceV2Registrations
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    instanceV2Thumbnail:
+        properties:
+            blurhash:
+                description: |-
+                    A hash computed by the BlurHash algorithm, for generating colorful preview thumbnails when media has not been downloaded yet.
+                    Key/value not set if no blurhash available.
+                example: UeKUpFxuo~R%0nW;WCnhF6RjaJt757oJodS$
+                type: string
+                x-go-name: Blurhash
+            thumbnail_description:
+                description: |-
+                    Description of the instance thumbnail.
+                    Key/value not set if no description available.
+                example: picture of a cute lil' friendly sloth
+                type: string
+                x-go-name: Description
+            thumbnail_type:
+                description: |-
+                    MIME type of the instance thumbnail.
+                    Key/value not set if thumbnail image type unknown.
+                example: image/png
+                type: string
+                x-go-name: Type
+            url:
+                description: The URL for the thumbnail image.
+                example: https://example.org/fileserver/01BPSX2MKCRVMD4YN4D71G9CP5/attachment/original/01H88X0KQ2DFYYDSWYP93VDJZA.png
+                type: string
+                x-go-name: URL
+            versions:
+                $ref: '#/definitions/instanceV2ThumbnailVersions'
+        title: An image used to represent this instance.
+        type: object
+        x-go-name: InstanceV2Thumbnail
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    instanceV2ThumbnailVersions:
+        properties:
+            '@1x':
+                description: |-
+                    The URL for the thumbnail image at 1x resolution.
+                    Key/value not set if scaled versions not available.
+                type: string
+                x-go-name: Size1URL
+            '@2x':
+                description: |-
+                    The URL for the thumbnail image at 2x resolution.
+                    Key/value not set if scaled versions not available.
+                type: string
+                x-go-name: Size2URL
+        title: Links to scaled resolution images, for high DPI screens.
+        type: object
+        x-go-name: InstanceV2ThumbnailVersions
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    instanceV2Usage:
+        properties:
+            users:
+                $ref: '#/definitions/instanceV2Users'
+        title: Usage data for this instance.
+        type: object
+        x-go-name: InstanceV2Usage
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    instanceV2Users:
+        properties:
+            active_month:
+                description: |-
+                    The number of active users in the past 4 weeks.
+                    Currently not implemented: will always be 0.
+                example: 0
+                format: int64
+                type: integer
+                x-go-name: ActiveMonth
+        title: Usage data related to users on this instance.
+        type: object
+        x-go-name: InstanceV2Users
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     mediaDimensions:
         properties:
@@ -3920,14 +4145,14 @@ paths:
                 - follow_requests
     /api/v1/instance:
         get:
-            operationId: instanceGet
+            operationId: instanceGetV1
             produces:
                 - application/json
             responses:
                 "200":
                     description: Instance information.
                     schema:
-                        $ref: '#/definitions/instance'
+                        $ref: '#/definitions/instanceV1'
                 "406":
                     description: not acceptable
                 "500":
@@ -5269,6 +5494,23 @@ paths:
             summary: Change the password of authenticated user.
             tags:
                 - user
+    /api/v2/instance:
+        get:
+            operationId: instanceGetV2
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Instance information.
+                    schema:
+                        $ref: '#/definitions/instanceV2'
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal error
+            summary: View instance information.
+            tags:
+                - instance
     /nodeinfo/2.0:
         get:
             description: 'See: https://nodeinfo.diaspora.software/schema.html'
