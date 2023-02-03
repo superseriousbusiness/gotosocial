@@ -36,9 +36,6 @@ func (err *ErrDB) Error() string {
 }
 
 func newErrDB(err error) error {
-	if err == nil {
-		return nil
-	}
 	return &ErrDB{wrapped: err}
 }
 
@@ -53,9 +50,6 @@ func (err *ErrNotRetrievable) Error() string {
 }
 
 func NewErrNotRetrievable(err error) error {
-	if err == nil {
-		return nil
-	}
 	return &ErrNotRetrievable{wrapped: err}
 }
 
@@ -70,9 +64,6 @@ func (err *ErrTransportError) Error() string {
 }
 
 func newErrTransportError(err error) error {
-	if err == nil {
-		return nil
-	}
 	return &ErrTransportError{wrapped: err}
 }
 
@@ -87,9 +78,6 @@ func (err *ErrWrongType) Error() string {
 }
 
 func newErrWrongType(err error) error {
-	if err == nil {
-		return nil
-	}
 	return &ErrWrongType{wrapped: err}
 }
 
@@ -104,9 +92,6 @@ func (err *ErrOther) Error() string {
 }
 
 func newErrOther(err error) error {
-	if err == nil {
-		return nil
-	}
 	return &ErrOther{wrapped: err}
 }
 
