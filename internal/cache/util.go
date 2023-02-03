@@ -30,7 +30,10 @@ func (*nocopy) Unlock() {}
 
 // tryUntil will attempt to call 'do' for 'count' attempts, before panicking with 'msg'.
 func tryUntil(msg string, count int, do func() bool) {
-	for i := 0; i < count && !do(); i++ {
+	for i := 0; i < count; i++ {
+		if do() {
+			return
+		}
 	}
 	log.Panicf("failed %s after %d tries", msg, count)
 }
