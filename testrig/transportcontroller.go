@@ -278,7 +278,7 @@ func WebfingerResponse(req *http.Request) (responseCode int, responseBytes []byt
 				{
 					Rel:  "self",
 					Type: applicationActivityJSON,
-					Href: "https://fossbros-anonymous.io/users/foss_satan",
+					Href: "http://fossbros-anonymous.io/users/foss_satan",
 				},
 			},
 		}
