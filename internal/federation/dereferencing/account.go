@@ -127,11 +127,13 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		}
 	}
 
+	var fingered bool
 	if account.Username != "" {
 		// Note: we don't webfinger instance accounts.
 		//
 		// A username was provided so we can attempt a webfinger, this ensures up-to-date accountdomain info.
 		accDomain, accURI, err := d.fingerRemoteAccount(ctx, requestUser, account.Username, account.Domain)
+		fingered = true
 
 		if err != nil && account.URI == "" {
 			// this is a new account (to us) with username@domain but failed
@@ -172,6 +174,20 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	apubAcc, err := d.dereferenceAccountable(ctx, requestUser, uri)
 	if err != nil {
 		return nil, fmt.Errorf("enrichAccount: error dereferencing account %s: %w", uri, err)
+	}
+
+	if !fingered {
+		// If we didn't finger earlier to get the proper accountDomain, we can do it now
+		username, err := ap.ExtractPreferredUsername(apubAcc)
+		if err != nil {
+			return nil, fmt.Errorf("enrichAccount: error extracting username from account %s: %w", uri, err)
+		}
+
+		accDomain, _, err := d.fingerRemoteAccount(ctx, requestUser, username, uri.Host)
+		if err == nil {
+			// Update account with latest info.
+			account.Domain = accDomain
+		}
 	}
 
 	// Convert the dereferenced AP account object to our GTS model.
