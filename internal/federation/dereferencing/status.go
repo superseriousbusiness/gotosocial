@@ -100,7 +100,7 @@ func (d *deref) GetStatus(ctx context.Context, username string, statusURI *url.U
 		if status != nil {
 			return status, nil, nil
 		}
-		return nil, nil, newErrNotRetrievable(fmt.Errorf("GetRemoteStatus: uri %s is apparently ours, but we have nothing in the db for it, will not proceed to dereference our own status", uriString))
+		return nil, nil, NewErrNotRetrievable(fmt.Errorf("GetRemoteStatus: uri %s is apparently ours, but we have nothing in the db for it, will not proceed to dereference our own status", uriString))
 	}
 
 	// if we got here, either we didn't have the status
