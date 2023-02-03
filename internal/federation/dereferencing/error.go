@@ -36,6 +36,9 @@ func (err *ErrDB) Error() string {
 }
 
 func newErrDB(err error) error {
+	if err == nil {
+		return nil
+	}
 	return &ErrDB{wrapped: err}
 }
 
@@ -49,7 +52,10 @@ func (err *ErrNotRetrievable) Error() string {
 	return fmt.Sprintf("item could not be retrieved: %v", err.wrapped)
 }
 
-func newErrNotRetrievable(err error) error {
+func NewErrNotRetrievable(err error) error {
+	if err == nil {
+		return nil
+	}
 	return &ErrNotRetrievable{wrapped: err}
 }
 
@@ -64,6 +70,9 @@ func (err *ErrTransportError) Error() string {
 }
 
 func newErrTransportError(err error) error {
+	if err == nil {
+		return nil
+	}
 	return &ErrTransportError{wrapped: err}
 }
 
@@ -78,6 +87,9 @@ func (err *ErrWrongType) Error() string {
 }
 
 func newErrWrongType(err error) error {
+	if err == nil {
+		return nil
+	}
 	return &ErrWrongType{wrapped: err}
 }
 
@@ -92,6 +104,9 @@ func (err *ErrOther) Error() string {
 }
 
 func newErrOther(err error) error {
+	if err == nil {
+		return nil
+	}
 	return &ErrOther{wrapped: err}
 }
 
@@ -107,7 +122,7 @@ func wrapDerefError(derefErr error, fluff string) error {
 
 	switch {
 	case errors.Is(derefErr, transport.ErrGone):
-		err = newErrNotRetrievable(err)
+		err = NewErrNotRetrievable(err)
 	case errors.As(derefErr, &errWrongType):
 		err = newErrWrongType(err)
 	default:
