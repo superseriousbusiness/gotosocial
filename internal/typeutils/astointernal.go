@@ -157,16 +157,12 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 		acct.InboxURI = accountable.GetActivityStreamsInbox().GetIRI().String()
 	}
 
-	// SharedInboxURI
-	if sharedInboxURI := ap.ExtractSharedInbox(accountable); sharedInboxURI != nil {
-		var sharedInbox string
-
-		// only trust shared inbox if it has at least two domains,
-		// from the right, in common with the domain of the account
-		if dns.CompareDomainName(acct.Domain, sharedInboxURI.Host) >= 2 {
-			sharedInbox = sharedInboxURI.String()
-		}
-
+	// SharedInboxURI:
+	// only trust shared inbox if it has at least two domains,
+	// from the right, in common with the domain of the account
+	if sharedInboxURI := ap.ExtractSharedInbox(accountable); // nocollapse
+	sharedInboxURI != nil && dns.CompareDomainName(acct.Domain, sharedInboxURI.Host) >= 2 {
+		sharedInbox := sharedInboxURI.String()
 		acct.SharedInboxURI = &sharedInbox
 	}
 

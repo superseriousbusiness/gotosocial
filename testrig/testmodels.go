@@ -2137,6 +2137,12 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 	}
 	turnipLover6969Pub := &turnipLover6969Priv.PublicKey
 
+	someUserPriv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		panic(err)
+	}
+	someUserPub := &someUserPriv.PublicKey
+
 	return map[string]vocab.ActivityStreamsPerson{
 		"https://unknown-instance.com/users/brand_new_person": newAPPerson(
 			URLMustParse("https://unknown-instance.com/users/brand_new_person"),
@@ -2174,6 +2180,27 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 			true,
 			URLMustParse("https://turnip.farm/users/turniplover6969#main-key"),
 			turnipLover6969Pub,
+			nil,
+			"image/jpeg",
+			nil,
+			"image/png",
+			false,
+		),
+		"https://example.org/users/Some_User": newAPPerson(
+			URLMustParse("https://example.org/users/Some_User"),
+			URLMustParse("https://example.org/users/Some_User/following"),
+			URLMustParse("https://example.org/users/Some_User/followers"),
+			URLMustParse("https://example.org/users/Some_User/inbox"),
+			URLMustParse("https://example.org/sharedInbox"),
+			URLMustParse("https://example.org/users/Some_User/outbox"),
+			URLMustParse("https://example.org/users/Some_User/collections/featured"),
+			"Some_User",
+			"just some user, don't mind me",
+			"Peepee poo poo",
+			URLMustParse("https://example.org/@Some_User"),
+			true,
+			URLMustParse("https://example.org/users/Some_User#main-key"),
+			someUserPub,
 			nil,
 			"image/jpeg",
 			nil,

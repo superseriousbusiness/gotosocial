@@ -65,19 +65,31 @@ func (d *deref) GetAccountByURI(ctx context.Context, requestUser string, uri *ur
 			return nil, err // this will be db.ErrNoEntries
 		}
 
-		// Create bare-bones model for deref.
-		account = new(gtsmodel.Account)
-		account.ID = id.NewULID()
-		account.Domain = uri.Host
-		account.URI = uriStr
-		block = true
+		// Create and pass-through a new bare-bones model for dereferencing.
+		return d.enrichAccount(ctx, requestUser, uri, &gtsmodel.Account{
+			ID:     id.NewULID(),
+			Domain: uri.Host,
+			URI:    uriStr,
+		}, false, true)
 	}
 
-	// Ensure existing account model is up-to-date, or deref new model.
-	return d.enrichAccount(ctx, requestUser, uri, account, false, block)
+	// Try to update existing account model
+	enriched, err := d.enrichAccount(ctx, requestUser, uri, account, false, block)
+	if err != nil {
+		log.Errorf("error enriching remote account: %v", err)
+		return account, nil // fall back to returning existing
+	}
+
+	return enriched, nil
 }
 
 func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser string, username string, domain string, block bool) (*gtsmodel.Account, error) {
+	if domain == config.GetHost() || domain == config.GetAccountDomain() {
+		// We do local lookups using an empty domain,
+		// else it will fail the db search below.
+		domain = ""
+	}
+
 	// Search the database for existing account with USERNAME@DOMAIN
 	account, err := d.db.GetAccountByUsernameDomain(ctx, username, domain)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
@@ -85,21 +97,27 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 	}
 
 	if account == nil {
-		// Ensure that this is isn't a search for a local account.
-		if domain == config.GetHost() || domain == config.GetAccountDomain() {
-			return nil, err // this will be db.ErrNoEntries
+		// Check for failed local lookup.
+		if domain == "" {
+			return nil, err // will be db.ErrNoEntries
 		}
 
-		// Create bare-bones model for deref.
-		account = new(gtsmodel.Account)
-		account.ID = id.NewULID()
-		account.Username = username
-		account.Domain = domain
-		block = true
+		// Create and pass-through a new bare-bones model for dereferencing.
+		return d.enrichAccount(ctx, requestUser, nil, &gtsmodel.Account{
+			ID:       id.NewULID(),
+			Username: username,
+			Domain:   domain,
+		}, false, true)
 	}
 
-	// Ensure existing account model is up-to-date, or deref new model.
-	return d.enrichAccount(ctx, requestUser, nil, account, false, block)
+	// Try to update existing account model
+	enriched, err := d.enrichAccount(ctx, requestUser, nil, account, false, block)
+	if err != nil {
+		log.Errorf("GetAccountByUsernameDomain: error enriching account from remote: %v", err)
+		return account, nil // fall back to returning unchanged existing account model
+	}
+
+	return enriched, nil
 }
 
 func (d *deref) UpdateAccount(ctx context.Context, requestUser string, account *gtsmodel.Account, force bool) (*gtsmodel.Account, error) {
@@ -128,8 +146,6 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	}
 
 	if account.Username != "" {
-		// Note: we don't webfinger instance accounts.
-		//
 		// A username was provided so we can attempt a webfinger, this ensures up-to-date accountdomain info.
 		accDomain, accURI, err := d.fingerRemoteAccount(ctx, requestUser, account.Username, account.Domain)
 
@@ -180,6 +196,18 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	)
 	if err != nil {
 		return nil, fmt.Errorf("enrichAccount: error converting accountable to gts model for account %s: %w", uri, err)
+	}
+
+	if account.Username == "" {
+		// No username was provided, so no webfinger was attempted earlier.
+		//
+		// Now we have a username we can attempt it now, this ensures up-to-date accountdomain info.
+		accDomain, _, err := d.fingerRemoteAccount(ctx, requestUser, latestAcc.Username, uri.Host)
+
+		if err == nil {
+			// Update account with latest info.
+			latestAcc.Domain = accDomain
+		}
 	}
 
 	// Ensure ID is set and update fetch time.

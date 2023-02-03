@@ -27,6 +27,7 @@ import (
 
 	"codeberg.org/gruf/go-kv"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -235,7 +236,10 @@ func (p *processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, 
 			// Else, search the database for existing by ID URL.
 			account, err = p.db.GetAccountByURL(ctx, uriStr)
 			if err != nil {
-				return nil, fmt.Errorf("searchAccountByURI: error checking database for account %s: %w", uriStr, err)
+				if !errors.Is(err, db.ErrNoEntries) {
+					return nil, fmt.Errorf("searchAccountByURI: error checking database for account %s: %w", uriStr, err)
+				}
+				return nil, dereferencing.NewErrNotRetrievable(err)
 			}
 		}
 
@@ -251,11 +255,21 @@ func (p *processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, 
 
 func (p *processor) searchAccountByUsernameDomain(ctx context.Context, authed *oauth.Auth, username string, domain string, resolve bool) (*gtsmodel.Account, error) {
 	if !resolve {
+		if domain == config.GetHost() || domain == config.GetAccountDomain() {
+			// We do local lookups using an empty domain,
+			// else it will fail the db search below.
+			domain = ""
+		}
+
 		// Search the database for existing account with USERNAME@DOMAIN
 		account, err := p.db.GetAccountByUsernameDomain(ctx, username, domain)
 		if err != nil {
-			return nil, fmt.Errorf("searchAccountByUsernameDomain: error checking database for account %s@%s: %w", username, domain, err)
+			if !errors.Is(err, db.ErrNoEntries) {
+				return nil, fmt.Errorf("searchAccountByUsernameDomain: error checking database for account %s@%s: %w", username, domain, err)
+			}
+			return nil, dereferencing.NewErrNotRetrievable(err)
 		}
+
 		return account, nil
 	}
 
