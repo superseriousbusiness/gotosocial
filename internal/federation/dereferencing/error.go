@@ -53,20 +53,6 @@ func newErrNotRetrievable(err error) error {
 	return &ErrNotRetrievable{wrapped: err}
 }
 
-// ErrBadRequest denotes that insufficient or improperly formed parameters
-// were passed into one of the dereference functions.
-type ErrBadRequest struct {
-	wrapped error
-}
-
-func (err *ErrBadRequest) Error() string {
-	return fmt.Sprintf("bad request: %v", err.wrapped)
-}
-
-func newErrBadRequest(err error) error {
-	return &ErrBadRequest{wrapped: err}
-}
-
 // ErrTransportError indicates that something unforeseen went wrong creating
 // a transport, or while making an http call to a remote resource with a transport.
 type ErrTransportError struct {
