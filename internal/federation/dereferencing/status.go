@@ -100,7 +100,7 @@ func (d *deref) GetStatus(ctx context.Context, username string, statusURI *url.U
 		if status != nil {
 			return status, nil, nil
 		}
-		return nil, nil, newErrNotRetrievable(fmt.Errorf("GetRemoteStatus: uri %s is apparently ours, but we have nothing in the db for it, will not proceed to dereference our own status", uriString))
+		return nil, nil, NewErrNotRetrievable(fmt.Errorf("GetRemoteStatus: uri %s is apparently ours, but we have nothing in the db for it, will not proceed to dereference our own status", uriString))
 	}
 
 	// if we got here, either we didn't have the status
@@ -123,11 +123,7 @@ func (d *deref) GetStatus(ctx context.Context, username string, statusURI *url.U
 	}
 
 	// we need to get the author of the status else we can't serialize it properly
-	if _, err = d.GetAccount(ctx, GetAccountParams{
-		RequestingUsername: username,
-		RemoteAccountID:    accountURI,
-		Blocking:           true,
-	}); err != nil {
+	if _, err = d.GetAccountByURI(ctx, username, accountURI, true); err != nil {
 		return nil, nil, newErrOther(fmt.Errorf("GetRemoteStatus: couldn't get status author: %s", err))
 	}
 
@@ -353,10 +349,7 @@ func (d *deref) populateStatusMentions(ctx context.Context, status *gtsmodel.Sta
 		if targetAccount == nil {
 			// we didn't find the account in our database already
 			// check if we can get the account remotely (dereference it)
-			if a, err := d.GetAccount(ctx, GetAccountParams{
-				RequestingUsername: requestingUsername,
-				RemoteAccountID:    targetAccountURI,
-			}); err != nil {
+			if a, err := d.GetAccountByURI(ctx, requestingUsername, targetAccountURI, false); err != nil {
 				errs = append(errs, err.Error())
 			} else {
 				log.Debugf("populateStatusMentions: got target account %s with id %s through GetRemoteAccount", targetAccountURI, a.ID)

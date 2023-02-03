@@ -335,7 +335,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			URI:                     "http://localhost:8080/users/localhost:8080",
 			URL:                     "http://localhost:8080/@localhost:8080",
 			PublicKeyURI:            "http://localhost:8080/users/localhost:8080#main-key",
-			LastWebfingeredAt:       time.Time{},
+			FetchedAt:               time.Time{},
 			InboxURI:                "http://localhost:8080/users/localhost:8080/inbox",
 			OutboxURI:               "http://localhost:8080/users/localhost:8080/outbox",
 			FollowersURI:            "http://localhost:8080/users/localhost:8080/followers",
@@ -373,7 +373,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			Language:                "en",
 			URI:                     "http://localhost:8080/users/weed_lord420",
 			URL:                     "http://localhost:8080/@weed_lord420",
-			LastWebfingeredAt:       time.Time{},
+			FetchedAt:               time.Time{},
 			InboxURI:                "http://localhost:8080/users/weed_lord420/inbox",
 			OutboxURI:               "http://localhost:8080/users/weed_lord420/outbox",
 			FollowersURI:            "http://localhost:8080/users/weed_lord420/followers",
@@ -413,7 +413,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			URI:                     "http://localhost:8080/users/admin",
 			URL:                     "http://localhost:8080/@admin",
 			PublicKeyURI:            "http://localhost:8080/users/admin#main-key",
-			LastWebfingeredAt:       time.Time{},
+			FetchedAt:               time.Time{},
 			InboxURI:                "http://localhost:8080/users/admin/inbox",
 			OutboxURI:               "http://localhost:8080/users/admin/outbox",
 			FollowersURI:            "http://localhost:8080/users/admin/followers",
@@ -452,7 +452,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			Language:                "en",
 			URI:                     "http://localhost:8080/users/the_mighty_zork",
 			URL:                     "http://localhost:8080/@the_mighty_zork",
-			LastWebfingeredAt:       time.Time{},
+			FetchedAt:               time.Time{},
 			InboxURI:                "http://localhost:8080/users/the_mighty_zork/inbox",
 			OutboxURI:               "http://localhost:8080/users/the_mighty_zork/outbox",
 			FollowersURI:            "http://localhost:8080/users/the_mighty_zork/followers",
@@ -492,7 +492,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			Language:                "en",
 			URI:                     "http://localhost:8080/users/1happyturtle",
 			URL:                     "http://localhost:8080/@1happyturtle",
-			LastWebfingeredAt:       time.Time{},
+			FetchedAt:               time.Time{},
 			InboxURI:                "http://localhost:8080/users/1happyturtle/inbox",
 			OutboxURI:               "http://localhost:8080/users/1happyturtle/outbox",
 			FollowersURI:            "http://localhost:8080/users/1happyturtle/followers",
@@ -527,7 +527,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			Language:              "en",
 			URI:                   "http://fossbros-anonymous.io/users/foss_satan",
 			URL:                   "http://fossbros-anonymous.io/@foss_satan",
-			LastWebfingeredAt:     time.Time{},
+			FetchedAt:             time.Time{},
 			InboxURI:              "http://fossbros-anonymous.io/users/foss_satan/inbox",
 			SharedInboxURI:        StringPtr("http://fossbros-anonymous.io/inbox"),
 			OutboxURI:             "http://fossbros-anonymous.io/users/foss_satan/outbox",
@@ -563,7 +563,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			Language:              "en",
 			URI:                   "http://example.org/users/Some_User",
 			URL:                   "http://example.org/@Some_User",
-			LastWebfingeredAt:     time.Time{},
+			FetchedAt:             time.Time{},
 			InboxURI:              "http://example.org/users/Some_User/inbox",
 			SharedInboxURI:        StringPtr(""),
 			OutboxURI:             "http://example.org/users/Some_User/outbox",
@@ -599,7 +599,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			Language:                "en",
 			URI:                     "http://thequeenisstillalive.technology/users/her_fuckin_maj",
 			URL:                     "http://thequeenisstillalive.technology/@her_fuckin_maj",
-			LastWebfingeredAt:       time.Time{},
+			FetchedAt:               time.Time{},
 			InboxURI:                "http://thequeenisstillalive.technology/users/her_fuckin_maj/inbox",
 			SharedInboxURI:          StringPtr(""),
 			OutboxURI:               "http://thequeenisstillalive.technology/users/her_fuckin_maj/outbox",
@@ -2137,6 +2137,12 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 	}
 	turnipLover6969Pub := &turnipLover6969Priv.PublicKey
 
+	someUserPriv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		panic(err)
+	}
+	someUserPub := &someUserPriv.PublicKey
+
 	return map[string]vocab.ActivityStreamsPerson{
 		"https://unknown-instance.com/users/brand_new_person": newAPPerson(
 			URLMustParse("https://unknown-instance.com/users/brand_new_person"),
@@ -2174,6 +2180,27 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 			true,
 			URLMustParse("https://turnip.farm/users/turniplover6969#main-key"),
 			turnipLover6969Pub,
+			nil,
+			"image/jpeg",
+			nil,
+			"image/png",
+			false,
+		),
+		"https://example.org/users/Some_User": newAPPerson(
+			URLMustParse("https://example.org/users/Some_User"),
+			URLMustParse("https://example.org/users/Some_User/following"),
+			URLMustParse("https://example.org/users/Some_User/followers"),
+			URLMustParse("https://example.org/users/Some_User/inbox"),
+			URLMustParse("https://example.org/sharedInbox"),
+			URLMustParse("https://example.org/users/Some_User/outbox"),
+			URLMustParse("https://example.org/users/Some_User/collections/featured"),
+			"Some_User",
+			"just some user, don't mind me",
+			"Peepee poo poo",
+			URLMustParse("https://example.org/@Some_User"),
+			true,
+			URLMustParse("https://example.org/users/Some_User#main-key"),
+			someUserPub,
 			nil,
 			"image/jpeg",
 			nil,

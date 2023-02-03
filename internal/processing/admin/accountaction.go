@@ -18,13 +18,8 @@ func (p *processor) AccountAction(ctx context.Context, account *gtsmodel.Account
 		return gtserror.NewErrorInternalError(err)
 	}
 
-	adminActionID, err := id.NewULID()
-	if err != nil {
-		return gtserror.NewErrorInternalError(err)
-	}
-
 	adminAction := &gtsmodel.AdminAccountAction{
-		ID:              adminActionID,
+		ID:              id.NewULID(),
 		AccountID:       account.ID,
 		TargetAccountID: targetAccount.ID,
 		Text:            form.Text,

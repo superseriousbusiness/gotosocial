@@ -60,13 +60,13 @@ func NewTestTransportController(client pub.HttpClient, db db.DB, fedWorker *conc
 type MockHTTPClient struct {
 	do func(req *http.Request) (*http.Response, error)
 
-	testRemoteStatuses    map[string]vocab.ActivityStreamsNote
-	testRemotePeople      map[string]vocab.ActivityStreamsPerson
-	testRemoteGroups      map[string]vocab.ActivityStreamsGroup
-	testRemoteServices    map[string]vocab.ActivityStreamsService
-	testRemoteAttachments map[string]RemoteAttachmentFile
-	testRemoteEmojis      map[string]vocab.TootEmoji
-	testTombstones        map[string]*gtsmodel.Tombstone
+	TestRemoteStatuses    map[string]vocab.ActivityStreamsNote
+	TestRemotePeople      map[string]vocab.ActivityStreamsPerson
+	TestRemoteGroups      map[string]vocab.ActivityStreamsGroup
+	TestRemoteServices    map[string]vocab.ActivityStreamsService
+	TestRemoteAttachments map[string]RemoteAttachmentFile
+	TestRemoteEmojis      map[string]vocab.TootEmoji
+	TestTombstones        map[string]*gtsmodel.Tombstone
 
 	SentMessages sync.Map
 }
@@ -88,13 +88,13 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 		return mockHTTPClient
 	}
 
-	mockHTTPClient.testRemoteStatuses = NewTestFediStatuses()
-	mockHTTPClient.testRemotePeople = NewTestFediPeople()
-	mockHTTPClient.testRemoteGroups = NewTestFediGroups()
-	mockHTTPClient.testRemoteServices = NewTestFediServices()
-	mockHTTPClient.testRemoteAttachments = NewTestFediAttachments(relativeMediaPath)
-	mockHTTPClient.testRemoteEmojis = NewTestFediEmojis()
-	mockHTTPClient.testTombstones = NewTestTombstones()
+	mockHTTPClient.TestRemoteStatuses = NewTestFediStatuses()
+	mockHTTPClient.TestRemotePeople = NewTestFediPeople()
+	mockHTTPClient.TestRemoteGroups = NewTestFediGroups()
+	mockHTTPClient.TestRemoteServices = NewTestFediServices()
+	mockHTTPClient.TestRemoteAttachments = NewTestFediAttachments(relativeMediaPath)
+	mockHTTPClient.TestRemoteEmojis = NewTestFediEmojis()
+	mockHTTPClient.TestTombstones = NewTestTombstones()
 
 	mockHTTPClient.do = func(req *http.Request) (*http.Response, error) {
 		responseCode := http.StatusNotFound
@@ -123,7 +123,7 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 			responseContentLength = len(responseBytes)
 		} else if strings.Contains(req.URL.String(), ".well-known/webfinger") {
 			responseCode, responseBytes, responseContentType, responseContentLength = WebfingerResponse(req)
-		} else if note, ok := mockHTTPClient.testRemoteStatuses[req.URL.String()]; ok {
+		} else if note, ok := mockHTTPClient.TestRemoteStatuses[req.URL.String()]; ok {
 			// the request is for a note that we have stored
 			noteI, err := streams.Serialize(note)
 			if err != nil {
@@ -137,7 +137,7 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 			responseBytes = noteJSON
 			responseContentType = applicationActivityJSON
 			responseContentLength = len(noteJSON)
-		} else if person, ok := mockHTTPClient.testRemotePeople[req.URL.String()]; ok {
+		} else if person, ok := mockHTTPClient.TestRemotePeople[req.URL.String()]; ok {
 			// the request is for a person that we have stored
 			personI, err := streams.Serialize(person)
 			if err != nil {
@@ -151,7 +151,7 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 			responseBytes = personJSON
 			responseContentType = applicationActivityJSON
 			responseContentLength = len(personJSON)
-		} else if group, ok := mockHTTPClient.testRemoteGroups[req.URL.String()]; ok {
+		} else if group, ok := mockHTTPClient.TestRemoteGroups[req.URL.String()]; ok {
 			// the request is for a person that we have stored
 			groupI, err := streams.Serialize(group)
 			if err != nil {
@@ -165,7 +165,7 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 			responseBytes = groupJSON
 			responseContentType = applicationActivityJSON
 			responseContentLength = len(groupJSON)
-		} else if service, ok := mockHTTPClient.testRemoteServices[req.URL.String()]; ok {
+		} else if service, ok := mockHTTPClient.TestRemoteServices[req.URL.String()]; ok {
 			serviceI, err := streams.Serialize(service)
 			if err != nil {
 				panic(err)
@@ -178,7 +178,7 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 			responseBytes = serviceJSON
 			responseContentType = applicationActivityJSON
 			responseContentLength = len(serviceJSON)
-		} else if emoji, ok := mockHTTPClient.testRemoteEmojis[req.URL.String()]; ok {
+		} else if emoji, ok := mockHTTPClient.TestRemoteEmojis[req.URL.String()]; ok {
 			emojiI, err := streams.Serialize(emoji)
 			if err != nil {
 				panic(err)
@@ -191,12 +191,12 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 			responseBytes = emojiJSON
 			responseContentType = applicationActivityJSON
 			responseContentLength = len(emojiJSON)
-		} else if attachment, ok := mockHTTPClient.testRemoteAttachments[req.URL.String()]; ok {
+		} else if attachment, ok := mockHTTPClient.TestRemoteAttachments[req.URL.String()]; ok {
 			responseCode = http.StatusOK
 			responseBytes = attachment.Data
 			responseContentType = attachment.ContentType
 			responseContentLength = len(attachment.Data)
-		} else if _, ok := mockHTTPClient.testTombstones[req.URL.String()]; ok {
+		} else if _, ok := mockHTTPClient.TestTombstones[req.URL.String()]; ok {
 			responseCode = http.StatusGone
 			responseBytes = []byte{}
 			responseContentType = "text/html"
@@ -278,7 +278,7 @@ func WebfingerResponse(req *http.Request) (responseCode int, responseBytes []byt
 				{
 					Rel:  "self",
 					Type: applicationActivityJSON,
-					Href: "https://fossbros-anonymous.io/users/foss_satan",
+					Href: "http://fossbros-anonymous.io/users/foss_satan",
 				},
 			},
 		}

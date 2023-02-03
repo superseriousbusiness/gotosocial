@@ -35,13 +35,15 @@ const (
 // ULID represents a Universally Unique Lexicographically Sortable Identifier of 26 characters. See https://github.com/oklog/ulid
 type ULID string
 
-// NewULID returns a new ULID string using the current time, or an error if something goes wrong.
-func NewULID() (string, error) {
-	newUlid, err := ulid.New(ulid.Timestamp(time.Now()), rand.Reader)
+// NewULID returns a new ULID string using the current time.
+func NewULID() string {
+	ulid, err := ulid.New(
+		ulid.Timestamp(time.Now()), rand.Reader,
+	)
 	if err != nil {
-		return "", err
+		panic(err)
 	}
-	return newUlid.String(), nil
+	return ulid.String()
 }
 
 // NewULIDFromTime returns a new ULID string using the given time, or an error if something goes wrong.

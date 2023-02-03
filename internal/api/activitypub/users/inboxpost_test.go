@@ -32,6 +32,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -237,10 +238,11 @@ func (suite *InboxPostTestSuite) TestPostUnblock() {
 }
 
 func (suite *InboxPostTestSuite) TestPostUpdate() {
+	receivingAccount := suite.testAccounts["local_account_1"]
 	updatedAccount := *suite.testAccounts["remote_account_1"]
 	updatedAccount.DisplayName = "updated display name!"
 
-	// ad an emoji to the account; because we're serializing this remote
+	// add an emoji to the account; because we're serializing this remote
 	// account from our own instance, we need to cheat a bit to get the emoji
 	// to work properly, just for this test
 	testEmoji := &gtsmodel.Emoji{}
@@ -250,8 +252,6 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 
 	asAccount, err := suite.tc.AccountToAS(context.Background(), &updatedAccount)
 	suite.NoError(err)
-
-	receivingAccount := suite.testAccounts["local_account_1"]
 
 	// create an update
 	update := streams.NewActivityStreamsUpdate()
@@ -294,7 +294,14 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
 	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
 
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker)
+	// use a different version of the mock http client which serves the updated
+	// version of the remote account, as though it had been updated there too;
+	// this is needed so it can be dereferenced + updated properly
+	mockHTTPClient := testrig.NewMockHTTPClient(nil, "../../../../testrig/media")
+	mockHTTPClient.TestRemotePeople = map[string]vocab.ActivityStreamsPerson{
+		updatedAccount.URI: asAccount,
+	}
+	tc := testrig.NewTestTransportController(mockHTTPClient, suite.db, fedWorker)
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager, fedWorker)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager, clientWorker, fedWorker)
@@ -346,8 +353,8 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 	// emojis should be updated
 	suite.Contains(dbUpdatedAccount.EmojiIDs, testEmoji.ID)
 
-	// account should be freshly webfingered
-	suite.WithinDuration(time.Now(), dbUpdatedAccount.LastWebfingeredAt, 10*time.Second)
+	// account should be freshly fetched
+	suite.WithinDuration(time.Now(), dbUpdatedAccount.FetchedAt, 10*time.Second)
 
 	// everything else should be the same as it was before
 	suite.EqualValues(updatedAccount.Username, dbUpdatedAccount.Username)

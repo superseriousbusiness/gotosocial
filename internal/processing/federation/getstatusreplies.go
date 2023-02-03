@@ -25,7 +25,6 @@ import (
 
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
@@ -44,10 +43,9 @@ func (p *processor) GetStatusReplies(ctx context.Context, requestedUsername stri
 		return nil, errWithCode
 	}
 
-	requestingAccount, err := p.federator.GetAccount(transport.WithFastfail(ctx), dereferencing.GetAccountParams{
-		RequestingUsername: requestedUsername,
-		RemoteAccountID:    requestingAccountURI,
-	})
+	requestingAccount, err := p.federator.GetAccountByURI(
+		transport.WithFastfail(ctx), requestedUsername, requestingAccountURI, false,
+	)
 	if err != nil {
 		return nil, gtserror.NewErrorUnauthorized(err)
 	}

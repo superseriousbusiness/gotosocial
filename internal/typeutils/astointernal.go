@@ -33,25 +33,13 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable ap.Accountable, accountDomain string, update bool) (*gtsmodel.Account, error) {
+func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable ap.Accountable, accountDomain string) (*gtsmodel.Account, error) {
 	// first check if we actually already know this account
 	uriProp := accountable.GetJSONLDId()
 	if uriProp == nil || !uriProp.IsIRI() {
 		return nil, errors.New("no id property found on person, or id was not an iri")
 	}
 	uri := uriProp.GetIRI()
-
-	if !update {
-		acct, err := c.db.GetAccountByURI(ctx, uri.String())
-		if err == nil {
-			// we already know this account so we can skip generating it
-			return acct, nil
-		}
-		if err != db.ErrNoEntries {
-			// we don't know the account and there's been a real error
-			return nil, fmt.Errorf("error getting account with uri %s from the database: %s", uri.String(), err)
-		}
-	}
 
 	// we don't know the account, or we're being told to update it, so we need to generate it from the person -- at least we already have the URI!
 	acct := &gtsmodel.Account{}
@@ -169,16 +157,12 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 		acct.InboxURI = accountable.GetActivityStreamsInbox().GetIRI().String()
 	}
 
-	// SharedInboxURI
-	if sharedInboxURI := ap.ExtractSharedInbox(accountable); sharedInboxURI != nil {
-		var sharedInbox string
-
-		// only trust shared inbox if it has at least two domains,
-		// from the right, in common with the domain of the account
-		if dns.CompareDomainName(acct.Domain, sharedInboxURI.Host) >= 2 {
-			sharedInbox = sharedInboxURI.String()
-		}
-
+	// SharedInboxURI:
+	// only trust shared inbox if it has at least two domains,
+	// from the right, in common with the domain of the account
+	if sharedInboxURI := ap.ExtractSharedInbox(accountable); // nocollapse
+	sharedInboxURI != nil && dns.CompareDomainName(acct.Domain, sharedInboxURI.Host) >= 2 {
+		sharedInbox := sharedInboxURI.String()
 		acct.SharedInboxURI = &sharedInbox
 	}
 

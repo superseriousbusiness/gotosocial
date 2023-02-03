@@ -25,20 +25,20 @@ import (
 
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
-	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 func (p *processor) GetUser(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
-	// get the account the request is referring to
+	// Get the instance-local account the request is referring to.
 	requestedAccount, err := p.db.GetAccountByUsernameDomain(ctx, requestedUsername, "")
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
 	}
 
 	var requestedPerson vocab.ActivityStreamsPerson
+
 	if uris.IsPublicKeyPath(requestURL) {
 		// if it's a public key path, we don't need to authenticate but we'll only serve the bare minimum user profile needed for the public key
 		requestedPerson, err = p.tc.AccountToASMinimal(ctx, requestedAccount)
@@ -53,11 +53,10 @@ func (p *processor) GetUser(ctx context.Context, requestedUsername string, reque
 		}
 
 		// if we're not already handshaking/dereferencing a remote account, dereference it now
-		if !p.federator.Handshaking(ctx, requestedUsername, requestingAccountURI) {
-			requestingAccount, err := p.federator.GetAccount(transport.WithFastfail(ctx), dereferencing.GetAccountParams{
-				RequestingUsername: requestedUsername,
-				RemoteAccountID:    requestingAccountURI,
-			})
+		if !p.federator.Handshaking(requestedUsername, requestingAccountURI) {
+			requestingAccount, err := p.federator.GetAccountByURI(
+				transport.WithFastfail(ctx), requestedUsername, requestingAccountURI, false,
+			)
 			if err != nil {
 				return nil, gtserror.NewErrorUnauthorized(err)
 			}

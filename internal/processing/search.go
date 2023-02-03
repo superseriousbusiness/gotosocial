@@ -27,6 +27,8 @@ import (
 
 	"codeberg.org/gruf/go-kv"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -85,7 +87,7 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 
 	if username, domain, err := util.ExtractNamestringParts(maybeNamestring); err == nil {
 		l.Trace("search term is a mention, looking it up...")
-		foundAccount, err := p.searchAccountByMention(ctx, authed, username, domain, search.Resolve)
+		foundAccount, err := p.searchAccountByUsernameDomain(ctx, authed, username, domain, search.Resolve)
 		if err != nil {
 			var errNotRetrievable *dereferencing.ErrNotRetrievable
 			if !errors.As(err, &errNotRetrievable) {
@@ -210,27 +212,70 @@ func (p *processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, u
 
 	if !*status.Local && statusable != nil {
 		// Attempt to dereference the status thread while we are here
-		p.federator.DereferenceRemoteThread(transport.WithFastfail(ctx), authed.Account.Username, uri, status, statusable)
+		p.federator.DereferenceThread(transport.WithFastfail(ctx), authed.Account.Username, uri, status, statusable)
 	}
 
 	return status, nil
 }
 
 func (p *processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Account, error) {
-	return p.federator.GetAccount(transport.WithFastfail(ctx), dereferencing.GetAccountParams{
-		RequestingUsername: authed.Account.Username,
-		RemoteAccountID:    uri,
-		Blocking:           true,
-		SkipResolve:        !resolve,
-	})
+	if !resolve {
+		var (
+			account *gtsmodel.Account
+			err     error
+			uriStr  = uri.String()
+		)
+
+		// Search the database for existing account with ID URI.
+		account, err = p.db.GetAccountByURI(ctx, uriStr)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			return nil, fmt.Errorf("searchAccountByURI: error checking database for account %s: %w", uriStr, err)
+		}
+
+		if account == nil {
+			// Else, search the database for existing by ID URL.
+			account, err = p.db.GetAccountByURL(ctx, uriStr)
+			if err != nil {
+				if !errors.Is(err, db.ErrNoEntries) {
+					return nil, fmt.Errorf("searchAccountByURI: error checking database for account %s: %w", uriStr, err)
+				}
+				return nil, dereferencing.NewErrNotRetrievable(err)
+			}
+		}
+
+		return account, nil
+	}
+
+	return p.federator.GetAccountByURI(
+		transport.WithFastfail(ctx),
+		authed.Account.Username,
+		uri, false,
+	)
 }
 
-func (p *processor) searchAccountByMention(ctx context.Context, authed *oauth.Auth, username string, domain string, resolve bool) (*gtsmodel.Account, error) {
-	return p.federator.GetAccount(transport.WithFastfail(ctx), dereferencing.GetAccountParams{
-		RequestingUsername:    authed.Account.Username,
-		RemoteAccountUsername: username,
-		RemoteAccountHost:     domain,
-		Blocking:              true,
-		SkipResolve:           !resolve,
-	})
+func (p *processor) searchAccountByUsernameDomain(ctx context.Context, authed *oauth.Auth, username string, domain string, resolve bool) (*gtsmodel.Account, error) {
+	if !resolve {
+		if domain == config.GetHost() || domain == config.GetAccountDomain() {
+			// We do local lookups using an empty domain,
+			// else it will fail the db search below.
+			domain = ""
+		}
+
+		// Search the database for existing account with USERNAME@DOMAIN
+		account, err := p.db.GetAccountByUsernameDomain(ctx, username, domain)
+		if err != nil {
+			if !errors.Is(err, db.ErrNoEntries) {
+				return nil, fmt.Errorf("searchAccountByUsernameDomain: error checking database for account %s@%s: %w", username, domain, err)
+			}
+			return nil, dereferencing.NewErrNotRetrievable(err)
+		}
+
+		return account, nil
+	}
+
+	return p.federator.GetAccountByUsernameDomain(
+		transport.WithFastfail(ctx),
+		authed.Account.Username,
+		username, domain, false,
+	)
 }

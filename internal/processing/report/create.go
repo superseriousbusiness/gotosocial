@@ -64,11 +64,7 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		}
 	}
 
-	reportID, err := id.NewULID()
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
+	reportID := id.NewULID()
 	report := &gtsmodel.Report{
 		ID:              reportID,
 		URI:             uris.GenerateURIForReport(reportID),
