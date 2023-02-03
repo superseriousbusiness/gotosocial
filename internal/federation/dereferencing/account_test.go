@@ -185,7 +185,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUsername() 
 	)
 	var errNotRetrievable *dereferencing.ErrNotRetrievable
 	suite.ErrorAs(err, &errNotRetrievable)
-	suite.EqualError(err, "item could not be retrieved: GetRemoteAccount: couldn't retrieve account locally and not allowed to resolve it")
+	suite.EqualError(err, "item could not be retrieved: no entries")
 	suite.Nil(fetchedAccount)
 }
 
@@ -201,7 +201,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUsernameDom
 	)
 	var errNotRetrievable *dereferencing.ErrNotRetrievable
 	suite.ErrorAs(err, &errNotRetrievable)
-	suite.EqualError(err, "item could not be retrieved: GetRemoteAccount: couldn't retrieve account locally and not allowed to resolve it")
+	suite.EqualError(err, "item could not be retrieved: no entries")
 	suite.Nil(fetchedAccount)
 }
 
@@ -216,7 +216,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUserURI() {
 	)
 	var errNotRetrievable *dereferencing.ErrNotRetrievable
 	suite.ErrorAs(err, &errNotRetrievable)
-	suite.EqualError(err, "item could not be retrieved: GetRemoteAccount: couldn't retrieve account locally and not allowed to resolve it")
+	suite.EqualError(err, "item could not be retrieved: no entries")
 	suite.Nil(fetchedAccount)
 }
 
