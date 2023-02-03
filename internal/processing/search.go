@@ -27,6 +27,7 @@ import (
 
 	"codeberg.org/gruf/go-kv"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -251,6 +252,11 @@ func (p *processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, 
 
 func (p *processor) searchAccountByUsernameDomain(ctx context.Context, authed *oauth.Auth, username string, domain string, resolve bool) (*gtsmodel.Account, error) {
 	if !resolve {
+		// Normalize local domain
+		if domain == config.GetHost() || domain == config.GetAccountDomain() {
+			domain = ""
+		}
+
 		// Search the database for existing account with USERNAME@DOMAIN
 		account, err := p.db.GetAccountByUsernameDomain(ctx, username, domain)
 		if err != nil {
