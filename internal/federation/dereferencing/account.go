@@ -62,7 +62,7 @@ func (d *deref) GetAccountByURI(ctx context.Context, requestUser string, uri *ur
 	if account == nil {
 		// Ensure that this is isn't a search for a local account.
 		if uri.Host == config.GetHost() || uri.Host == config.GetAccountDomain() {
-			return nil, err // this will be db.ErrNoEntries
+			return nil, NewErrNotRetrievable(err) // this will be db.ErrNoEntries
 		}
 
 		// Create and pass-through a new bare-bones model for dereferencing.
@@ -99,7 +99,7 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 	if account == nil {
 		// Check for failed local lookup.
 		if domain == "" {
-			return nil, err // will be db.ErrNoEntries
+			return nil, NewErrNotRetrievable(err) // will be db.ErrNoEntries
 		}
 
 		// Create and pass-through a new bare-bones model for dereferencing.
