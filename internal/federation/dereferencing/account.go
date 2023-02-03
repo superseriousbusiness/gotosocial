@@ -76,10 +76,19 @@ func (d *deref) GetAccountByURI(ctx context.Context, requestUser string, uri *ur
 		account.Domain = uri.Host
 		account.URI = uriStr
 		block = true
+
+		// Deref new model
+		return d.enrichAccount(ctx, requestUser, uri, account, false, block)
 	}
 
-	// Ensure existing account model is up-to-date, or deref new model.
-	return d.enrichAccount(ctx, requestUser, uri, account, false, block)
+	// Try to update existing account model
+	enriched, err := d.enrichAccount(ctx, requestUser, uri, account, false, block)
+	if err != nil {
+		log.Errorf("GetAccountByURI: error enriching account from remote: %v", err)
+		return account, nil // fall back to returning unchanged existing account model
+	}
+
+	return enriched, nil
 }
 
 func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser string, username string, domain string, block bool) (*gtsmodel.Account, error) {
@@ -100,16 +109,26 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 		return account, NewErrNotRetrievable(err) // will be null if wrapped err is null
 	}
 
+	if account == nil {
 		// Create bare-bones model for deref.
 		account = new(gtsmodel.Account)
 		account.ID = id.NewULID()
 		account.Username = username
 		account.Domain = domain
 		block = true
+
+		// Deref new model
+		return d.enrichAccount(ctx, requestUser, nil, account, false, block)
 	}
 
-	// Ensure existing account model is up-to-date, or deref new model.
-	return d.enrichAccount(ctx, requestUser, nil, account, false, block)
+	// Try to update existing account model
+	enriched, err := d.enrichAccount(ctx, requestUser, nil, account, false, block)
+	if err != nil {
+		log.Errorf("GetAccountByUsernameDomain: error enriching account from remote: %v", err)
+		return account, nil // fall back to returning unchanged existing account model
+	}
+
+	return enriched, nil
 }
 
 func (d *deref) UpdateAccount(ctx context.Context, requestUser string, account *gtsmodel.Account, force bool) (*gtsmodel.Account, error) {
