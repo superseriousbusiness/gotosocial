@@ -27,14 +27,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
@@ -47,14 +45,20 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		account.Bot = form.Bot
 	}
 
-	var updateEmojis bool
+	account.Emojis = []*gtsmodel.Emoji{}
+	account.EmojiIDs = []string{}
 
 	if form.DisplayName != nil {
 		if err := validate.DisplayName(*form.DisplayName); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err)
 		}
 		account.DisplayName = text.SanitizePlaintext(*form.DisplayName)
-		updateEmojis = true
+
+		formatResult := p.formatter.FromPlainEmojiOnly(ctx, p.parseMention, account.ID, "", account.DisplayName)
+		for _, emoji := range formatResult.Emojis {
+			account.Emojis = append(account.Emojis, emoji)
+			account.EmojiIDs = append(account.EmojiIDs, emoji.ID)
+		}
 	}
 
 	if form.Note != nil {
@@ -66,36 +70,19 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		account.NoteRaw = *form.Note
 
 		// Process note to generate a valid HTML representation
-		note, err := p.processNote(ctx, *form.Note, account)
-		if err != nil {
-			return nil, gtserror.NewErrorBadRequest(err)
+		var f text.FormatFunc
+		if account.StatusFormat == "markdown" {
+			f = p.formatter.FromMarkdown
+		} else {
+			f = p.formatter.FromPlain
 		}
+		formatted := f(ctx, p.parseMention, account.ID, "", *form.Note)
 
 		// Set updated HTML-ified note
-		account.Note = note
-		updateEmojis = true
-	}
-
-	if updateEmojis {
-		// account emojis -- treat the sanitized display name and raw
-		// note like one long text for the purposes of deriving emojis
-		accountEmojiShortcodes := util.DeriveEmojisFromText(account.DisplayName + "\n\n" + account.NoteRaw)
-		account.Emojis = make([]*gtsmodel.Emoji, 0, len(accountEmojiShortcodes))
-		account.EmojiIDs = make([]string, 0, len(accountEmojiShortcodes))
-
-		for _, shortcode := range accountEmojiShortcodes {
-			emoji, err := p.db.GetEmojiByShortcodeDomain(ctx, shortcode, "")
-			if err != nil {
-				if err != db.ErrNoEntries {
-					log.Errorf("error getting local emoji with shortcode %s: %s", shortcode, err)
-				}
-				continue
-			}
-
-			if *emoji.VisibleInPicker && !*emoji.Disabled {
-				account.Emojis = append(account.Emojis, emoji)
-				account.EmojiIDs = append(account.EmojiIDs, emoji.ID)
-			}
+		account.Note = formatted.HTML
+		for _, emoji := range formatted.Emojis {
+			account.Emojis = append(account.Emojis, emoji)
+			account.EmojiIDs = append(account.EmojiIDs, emoji.ID)
 		}
 	}
 
@@ -239,36 +226,4 @@ func (p *processor) UpdateHeader(ctx context.Context, header *multipart.FileHead
 	}
 
 	return processingMedia.LoadAttachment(ctx)
-}
-
-func (p *processor) processNote(ctx context.Context, note string, account *gtsmodel.Account) (string, error) {
-	if note == "" {
-		return "", nil
-	}
-
-	tagStrings := util.DeriveHashtagsFromText(note)
-	tags, err := p.db.TagStringsToTags(ctx, tagStrings, account.ID)
-	if err != nil {
-		return "", err
-	}
-
-	mentionStrings := util.DeriveMentionNamesFromText(note)
-	mentions := []*gtsmodel.Mention{}
-	for _, mentionString := range mentionStrings {
-		mention, err := p.parseMention(ctx, mentionString, account.ID, "")
-		if err != nil {
-			continue
-		}
-		mentions = append(mentions, mention)
-	}
-
-	// TODO: support emojis in account notes
-	// emojiStrings := util.DeriveEmojisFromText(note)
-	// emojis, err := p.db.EmojiStringsToEmojis(ctx, emojiStrings)
-
-	if account.StatusFormat == "markdown" {
-		return p.formatter.FromMarkdown(ctx, note, mentions, tags, nil), nil
-	}
-
-	return p.formatter.FromPlain(ctx, note, mentions, tags), nil
 }

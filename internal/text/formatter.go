@@ -26,19 +26,18 @@ import (
 )
 
 // Formatter wraps some logic and functions for parsing statuses and other text input into nice html.
+// Each of the member functions returns a struct containing the formatted HTML and any tags, mentions, and
+// emoji that were found in the text.
 type Formatter interface {
 	// FromPlain parses an HTML text from a plaintext.
-	FromPlain(ctx context.Context, plain string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string
+	FromPlain(ctx context.Context, pmf gtsmodel.ParseMentionFunc, authorID string, statusID string, plain string) *FormatResult
 	// FromMarkdown parses an HTML text from a markdown-formatted text.
-	FromMarkdown(ctx context.Context, md string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag, emojis []*gtsmodel.Emoji) string
-
-	// ReplaceTags takes a piece of text and a slice of tags, and returns the same text with the tags nicely formatted as hrefs.
-	ReplaceTags(ctx context.Context, in string, tags []*gtsmodel.Tag) string
-	// ReplaceMentions takes a piece of text and a slice of mentions, and returns the same text with the mentions nicely formatted as hrefs.
-	ReplaceMentions(ctx context.Context, in string, mentions []*gtsmodel.Mention) string
-	// ReplaceLinks takes a piece of text, finds all recognizable links in that text, and replaces them with hrefs.
-	ReplaceLinks(ctx context.Context, in string) string
+	FromMarkdown(ctx context.Context, pmf gtsmodel.ParseMentionFunc, authorID string, statusID string, md string) *FormatResult
+	// FromPlainEmojiOnly parses an HTML text from a plaintext, only parsing emojis and not mentions etc.
+	FromPlainEmojiOnly(ctx context.Context, pmf gtsmodel.ParseMentionFunc, authorID string, statusID string, plain string) *FormatResult
 }
+
+type FormatFunc func(ctx context.Context, pmf gtsmodel.ParseMentionFunc, authorID string, statusID string, text string) *FormatResult
 
 type formatter struct {
 	db db.DB
@@ -49,4 +48,11 @@ func NewFormatter(db db.DB) Formatter {
 	return &formatter{
 		db: db,
 	}
+}
+
+type FormatResult struct {
+	HTML     string
+	Mentions []*gtsmodel.Mention
+	Tags     []*gtsmodel.Tag
+	Emojis   []*gtsmodel.Emoji
 }

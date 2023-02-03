@@ -473,43 +473,40 @@ func sqlitePragmas(ctx context.Context, conn *DBConn) error {
 	CONVERSION FUNCTIONS
 */
 
-func (dbService *DBService) TagStringsToTags(ctx context.Context, tags []string, originAccountID string) ([]*gtsmodel.Tag, error) {
+func (dbService *DBService) TagStringToTag(ctx context.Context, t string, originAccountID string) (*gtsmodel.Tag, error) {
 	protocol := config.GetProtocol()
 	host := config.GetHost()
+	now := time.Now()
 
-	newTags := []*gtsmodel.Tag{}
-	for _, t := range tags {
-		tag := &gtsmodel.Tag{}
-		// we can use selectorinsert here to create the new tag if it doesn't exist already
-		// inserted will be true if this is a new tag we just created
-		if err := dbService.conn.NewSelect().Model(tag).Where("LOWER(?) = LOWER(?)", bun.Ident("name"), t).Scan(ctx); err != nil {
-			if err == sql.ErrNoRows {
-				// tag doesn't exist yet so populate it
-				newID, err := id.NewRandomULID()
-				if err != nil {
-					return nil, err
-				}
-				tag.ID = newID
-				tag.URL = fmt.Sprintf("%s://%s/tags/%s", protocol, host, t)
-				tag.Name = t
-				tag.FirstSeenFromAccountID = originAccountID
-				tag.CreatedAt = time.Now()
-				tag.UpdatedAt = time.Now()
-				useable := true
-				tag.Useable = &useable
-				listable := true
-				tag.Listable = &listable
-			} else {
-				return nil, fmt.Errorf("error getting tag with name %s: %s", t, err)
-			}
-		}
-
-		// bail already if the tag isn't useable
-		if !*tag.Useable {
-			continue
-		}
-		tag.LastStatusAt = time.Now()
-		newTags = append(newTags, tag)
+	tag := &gtsmodel.Tag{}
+	// we can use selectorinsert here to create the new tag if it doesn't exist already
+	// inserted will be true if this is a new tag we just created
+	if err := dbService.conn.NewSelect().Model(tag).Where("LOWER(?) = LOWER(?)", bun.Ident("name"), t).Scan(ctx); err != nil && err != sql.ErrNoRows {
+		return nil, fmt.Errorf("error getting tag with name %s: %s", t, err)
 	}
-	return newTags, nil
+
+	if tag.ID == "" {
+		// tag doesn't exist yet so populate it
+		newID, err := id.NewRandomULID()
+		if err != nil {
+			return nil, err
+		}
+		tag.ID = newID
+		tag.URL = protocol + "://" + host + "/tags/" + t
+		tag.Name = t
+		tag.FirstSeenFromAccountID = originAccountID
+		tag.CreatedAt = now
+		tag.UpdatedAt = now
+		useable := true
+		tag.Useable = &useable
+		listable := true
+		tag.Listable = &listable
+	}
+
+	// bail already if the tag isn't useable
+	if !*tag.Useable {
+		return nil, fmt.Errorf("tag %s is not useable", t)
+	}
+	tag.LastStatusAt = now
+	return tag, nil
 }

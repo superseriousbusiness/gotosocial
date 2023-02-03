@@ -16,23 +16,30 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package util
+package text
 
 import (
-	"unicode"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/tdewolff/minify/v2"
+	"github.com/tdewolff/minify/v2/html"
 )
 
-func IsPlausiblyInHashtag(r rune) bool {
-	// Marks are allowed during parsing, prior to normalization, but not after,
-	// since they may be combined into letters during normalization.
-	return unicode.IsLetter(r) || unicode.IsNumber(r) || unicode.IsMark(r)
-}
+var (
+	m *minify.M
+)
 
-func IsPermittedInHashtag(r rune) bool {
-	return unicode.IsLetter(r) || unicode.IsNumber(r)
-}
+func minifyHTML(content string) string {
+	if m == nil {
+		m = minify.New()
+		m.Add("text/html", &html.Minifier{
+			KeepEndTags: true,
+			KeepQuotes:  true,
+		})
+	}
 
-// Decides where to break before or after a #hashtag or @mention
-func IsMentionOrHashtagBoundary(r rune) bool {
-	return unicode.IsSpace(r) || unicode.IsPunct(r)
+	minified, err := m.String("text/html", content)
+	if err != nil {
+		log.Errorf("error minifying HTML: %s", err)
+	}
+	return minified
 }
