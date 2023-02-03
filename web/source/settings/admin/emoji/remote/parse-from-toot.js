@@ -129,14 +129,16 @@ function CopyEmojiForm({ localEmojiCodes, type, emojiList }) {
 			title: "No emoji selected, cannot perform any actions"
 		};
 
+	const checkListExtraProps = React.useCallback(() => ({ localEmojiCodes }), [localEmojiCodes]);
+
 	return (
 		<div className="parsed">
 			<span>This {type == "statuses" ? "toot" : "account"} uses the following custom emoji, select the ones you want to copy/disable:</span>
 			<form onSubmit={formSubmit}>
 				<CheckList
 					field={form.selectedEmoji}
-					Component={EmojiEntry}
-					localEmojiCodes={localEmojiCodes}
+					EntryComponent={EmojiEntry}
+					getExtraProps={checkListExtraProps}
 				/>
 
 				<CategorySelect
@@ -170,7 +172,7 @@ function ErrorList({ errors }) {
 	);
 }
 
-function EmojiEntry({ entry: emoji, localEmojiCodes, onChange }) {
+function EmojiEntry({ entry: emoji, onChange, extraProps: { localEmojiCodes } }) {
 	const shortcodeField = useTextInput("shortcode", {
 		defaultValue: emoji.shortcode,
 		validator: function validateShortcode(code) {
@@ -181,9 +183,16 @@ function EmojiEntry({ entry: emoji, localEmojiCodes, onChange }) {
 	});
 
 	React.useEffect(() => {
-		onChange({ valid: shortcodeField.valid });
-		/* eslint-disable-next-line react-hooks/exhaustive-deps */
-	}, [shortcodeField.valid]);
+		if (emoji.valid != shortcodeField.valid) {
+			onChange({ valid: shortcodeField.valid });
+		}
+	}, [onChange, emoji.valid, shortcodeField.valid]);
+
+	React.useEffect(() => {
+		shortcodeField.validate();
+		// only need this update if it's the emoji.checked that updated, not shortcodeField
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [emoji.checked]);
 
 	return (
 		<>

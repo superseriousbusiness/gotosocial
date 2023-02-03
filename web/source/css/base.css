@@ -315,7 +315,7 @@ input, select, textarea, .input {
 		border-color: $input-focus-border;
 	}
 
-	&:invalid {
+	&:invalid, .invalid & {
 		border-color: $input-error-border;
 	}
 

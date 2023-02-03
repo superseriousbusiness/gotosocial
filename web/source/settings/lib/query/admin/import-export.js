@@ -19,8 +19,11 @@
 "use strict";
 
 const Promise = require("bluebird");
-const isValidDomain = require("is-valid-domain");
 const fileDownload = require("js-file-download");
+const csv = require("papaparse");
+const { nanoid } = require("nanoid");
+
+const { isValidDomainBlock, hasBetterScope } = require("../../domain-block");
 
 const {
 	replaceCacheOnMutation,
@@ -31,6 +34,23 @@ const {
 function parseDomainList(list) {
 	if (list[0] == "[") {
 		return JSON.parse(list);
+	} else if (list.startsWith("#domain")) { // Mastodon CSV
+		const { data, errors } = csv.parse(list, {
+			header: true,
+			transformHeader: (header) => header.slice(1), // removes starting '#'
+			skipEmptyLines: true,
+			dynamicTyping: true
+		});
+
+		if (errors.length > 0) {
+			let error = "";
+			errors.forEach((err) => {
+				error += `${err.message} (line ${err.row})`;
+			});
+			throw error;
+		}
+
+		return data;
 	} else {
 		return list.split("\n").map((line) => {
 			let domain = line.trim();
@@ -51,7 +71,15 @@ function parseDomainList(list) {
 
 function validateDomainList(list) {
 	list.forEach((entry) => {
-		entry.valid = (entry.valid !== false) && isValidDomain(entry.domain, { wildcard: true, allowUnicode: true });
+		if (entry.domain.startsWith("*.")) {
+			// domain block always includes all subdomains, wildcard is meaningless here
+			entry.domain = entry.domain.slice(2);
+		}
+
+		entry.valid = (entry.valid !== false) && isValidDomainBlock(entry.domain);
+		if (entry.valid) {
+			entry.suggest = hasBetterScope(entry.domain);
+		}
 		entry.checked = entry.valid;
 	});
 
@@ -83,6 +111,9 @@ module.exports = (build) => ({
 			}).then((deduped) => {
 				return validateDomainList(deduped);
 			}).then((data) => {
+				data.forEach((entry) => {
+					entry.key = nanoid(); // unique id that stays stable even if domain gets modified by user
+				});
 				return { data };
 			}).catch((e) => {
 				return { error: e.toString() };
@@ -91,27 +122,53 @@ module.exports = (build) => ({
 	}),
 	exportDomainList: build.mutation({
 		queryFn: (formData, api, _extraOpts, baseQuery) => {
+			let process;
+
+			if (formData.exportType == "json") {
+				process = {
+					transformEntry: (entry) => ({
+						domain: entry.domain,
+						public_comment: entry.public_comment,
+						obfuscate: entry.obfuscate
+					}),
+					stringify: (list) => JSON.stringify(list),
+					extension: ".json",
+					mime: "application/json"
+				};
+			} else if (formData.exportType == "csv") {
+				process = {
+					transformEntry: (entry) => [
+						entry.domain,
+						"suspend", // severity
+						false, // reject_media
+						false, // reject_reports
+						entry.public_comment,
+						entry.obfuscate ?? false
+					],
+					stringify: (list) => csv.unparse({
+						fields: "#domain,#severity,#reject_media,#reject_reports,#public_comment,#obfuscate".split(","),
+						data: list
+					}),
+					extension: ".csv",
+					mime: "text/csv"
+				};
+			} else {
+				process = {
+					transformEntry: (entry) => entry.domain,
+					stringify: (list) => list.join("\n"),
+					extension: ".txt",
+					mime: "text/plain"
+				};
+			}
+
 			return Promise.try(() => {
 				return baseQuery({
 					url: `/api/v1/admin/domain_blocks`
 				});
 			}).then(unwrapRes).then((blockedInstances) => {
-				return blockedInstances.map((entry) => {
-					if (formData.exportType == "json") {
-						return {
-							domain: entry.domain,
-							public_comment: entry.public_comment
-						};
-					} else {
-						return entry.domain;
-					}
-				});
+				return blockedInstances.map(process.transformEntry);
 			}).then((exportList) => {
-				if (formData.exportType == "json") {
-					return JSON.stringify(exportList);
-				} else {
-					return exportList.join("\n");
-				}
+				return process.stringify(exportList);
 			}).then((exportAsString) => {
 				if (formData.action == "export") {
 					return {
@@ -120,7 +177,6 @@ module.exports = (build) => ({
 				} else if (formData.action == "export-file") {
 					let domain = new URL(api.getState().oauth.instance).host;
 					let date = new Date();
-					let mime;
 
 					let filename = [
 						domain,
@@ -130,15 +186,11 @@ module.exports = (build) => ({
 						date.getDate().toString().padStart(2, "0"),
 					].join("-");
 
-					if (formData.exportType == "json") {
-						filename += ".json";
-						mime = "application/json";
-					} else {
-						filename += ".txt";
-						mime = "text/plain";
-					}
-
-					fileDownload(exportAsString, filename, mime);
+					fileDownload(
+						exportAsString,
+						filename + process.extension,
+						process.mime
+					);
 				}
 				return { data: null };
 			}).catch((e) => {
@@ -171,6 +223,7 @@ module.exports = (build) => ({
 	})
 });
 
+const internalKeys = new Set("key,suggest,valid,checked".split(","));
 function entryProcessor(formData) {
 	let funcs = [];
 
@@ -204,7 +257,7 @@ function entryProcessor(formData) {
 		entry.obfuscate = formData.obfuscate;
 
 		Object.entries(entry).forEach(([key, val]) => {
-			if (val == undefined) {
+			if (internalKeys.has(key) || val == undefined) {
 				delete entry[key];
 			}
 		});
