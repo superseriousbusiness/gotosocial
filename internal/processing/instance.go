@@ -221,8 +221,8 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 
 	var updateInstanceAccount bool
 
-	// process instance avatar if provided
 	if form.Avatar != nil && form.Avatar.Size != 0 {
+		// process instance avatar image + description
 		avatarInfo, err := p.accountProcessor.UpdateAvatar(ctx, form.Avatar, form.AvatarDescription, ia.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, "error processing avatar")
@@ -230,10 +230,16 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 		ia.AvatarMediaAttachmentID = avatarInfo.ID
 		ia.AvatarMediaAttachment = avatarInfo
 		updateInstanceAccount = true
+	} else if form.AvatarDescription != nil && ia.AvatarMediaAttachment != nil {
+		// process just the description for the existing avatar
+		ia.AvatarMediaAttachment.Description = *form.AvatarDescription
+		if err := p.db.UpdateByID(ctx, ia.AvatarMediaAttachment, ia.AvatarMediaAttachmentID, "description"); err != nil {
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error updating instance avatar description: %s", err))
+		}
 	}
 
-	// process instance header if provided
 	if form.Header != nil && form.Header.Size != 0 {
+		// process instance header image
 		headerInfo, err := p.accountProcessor.UpdateHeader(ctx, form.Header, nil, ia.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, "error processing header")
