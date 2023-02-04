@@ -108,7 +108,7 @@ function UserSettingsForm({ data }) {
 function PasswordChange() {
 	const form = {
 		oldPassword: useTextInput("old_password"),
-		newPassword: useTextInput("old_password", {
+		newPassword: useTextInput("new_password", {
 			validator(val) {
 				if (val != "" && val == form.oldPassword.value) {
 					return "New password same as old password";
