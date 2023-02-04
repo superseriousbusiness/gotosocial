@@ -206,6 +206,10 @@ func scheduleCleanupJobs(m *manager) {
 	done := m.state.Workers.Scheduler.Done()
 	doneCtx := runners.CancelCtx(done)
 
+	// TODO: we'll need to do some thinking to make these
+	// jobs restartable if we want to implement reloads in
+	// the future that make call to Workers.Stop() -> Workers.Start().
+
 	// Schedule the PruneAll task to execute every day at midnight.
 	m.state.Workers.Scheduler.Schedule(sched.NewJob(func(now time.Time) {
 		err := m.PruneAll(doneCtx, config.GetMediaRemoteCacheDays(), true)
