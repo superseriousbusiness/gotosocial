@@ -1373,14 +1373,14 @@ definitions:
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     instanceV1URLs:
         properties:
-            streaming_api:
+            streaming:
                 description: Websockets address for status and notification streaming.
                 example: wss://example.org
                 type: string
-                x-go-name: StreamingAPI
-        title: InstanceV1URLs models instance-relevant URLs for client application consumption.
+                x-go-name: Streaming
+        title: InstanceV2URLs models instance-relevant URLs for client application consumption.
         type: object
-        x-go-name: InstanceV1URLs
+        x-go-name: InstanceV2URLs
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     instanceV2:
         properties:
@@ -4039,6 +4039,35 @@ paths:
             summary: Get an array of statuses that the requesting account has favourited.
             tags:
                 - favourites
+    /api/v1/featured_tags:
+        get:
+            description: 'THIS ENDPOINT IS CURRENTLY NOT FULLY IMPLEMENTED: it will always return an empty array.'
+            operationId: getFeaturedTags
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    schema:
+                        items:
+                            type: object
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:accounts
+            summary: Get an array of all hashtags that you currently have featured on your profile.
+            tags:
+                - featured_tags
     /api/v1/follow_requests:
         get:
             description: Accounts will be sorted in order of follow request date descending (newest first).
