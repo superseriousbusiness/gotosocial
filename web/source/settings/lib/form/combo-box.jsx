@@ -22,7 +22,8 @@ const React = require("react");
 
 const { useComboboxState } = require("ariakit/combobox");
 
-module.exports = function useComboBoxInput({ name, Name }, { initialValue }) {
+const _default = "";
+module.exports = function useComboBoxInput({ name, Name }, { initialValue = _default }) {
 	const [isNew, setIsNew] = React.useState(false);
 
 	const state = useComboboxState({
@@ -32,7 +33,7 @@ module.exports = function useComboBoxInput({ name, Name }, { initialValue }) {
 	});
 
 	function reset() {
-		state.setValue("");
+		state.setValue(initialValue);
 	}
 
 	return Object.assign([
@@ -52,6 +53,7 @@ module.exports = function useComboBoxInput({ name, Name }, { initialValue }) {
 		hasChanged: () => state.value != initialValue,
 		isNew,
 		setIsNew,
-		reset
+		reset,
+		_default
 	});
 };

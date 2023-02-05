@@ -22,7 +22,7 @@ const Promise = require("bluebird");
 const React = require("react");
 const syncpipe = require("syncpipe");
 
-module.exports = function useFormSubmit(form, mutationQuery, { changedOnly = true } = {}) {
+module.exports = function useFormSubmit(form, mutationQuery, { changedOnly = true, formUpdateSelector } = {}) {
 	if (!Array.isArray(mutationQuery)) {
 		throw new ("useFormSubmit: mutationQuery was not an Array. Is a valid useMutation RTK Query provided?");
 	}
@@ -69,14 +69,14 @@ module.exports = function useFormSubmit(form, mutationQuery, { changedOnly = tru
 				return runMutation(mutationData);
 			}).then((res) => {
 				if (res.error == undefined) {
+					let data = res.data;
+					if (formUpdateSelector) {
+						data = formUpdateSelector(data);
+					}
 					updatedFields.forEach((field) => {
-						console.log("update", field);
-						field.updateFromSelector(res.data);
+						field.updateFromSelector(data);
 					});
 				}
-			}).catch((e) => {
-				console.error(e);
-				throw e;
 			});
 		},
 		{

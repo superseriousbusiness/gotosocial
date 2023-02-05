@@ -35,7 +35,7 @@ function selectorByKey(key) {
 
 	return function selector(obj) {
 		if (obj == undefined) {
-			return null;
+			return undefined;
 		} else {
 			return getByDot(obj, key);
 		}
@@ -48,25 +48,22 @@ function makeHook(hookFunction) {
 		const Name = React.useMemo(() => capitalizeFirst(name), [name]);
 
 		const selector = React.useMemo(() => selectorByKey(name), [name]);
+		const valueSelector = opts.valueSelector ?? selector;
 
-		if (opts.valueSelector == undefined) {
-			opts.valueSelector = function selectValue(obj) {
-				return selector(obj) ?? opts.defaultValue;
-			};
-		}
-
-		if (opts.source == undefined) {
-			opts.initialValue = opts.defaultValue;
-		} else {
-			opts.initialValue = opts.valueSelector(opts.source);
-		}
+		opts.initialValue = React.useMemo(() => {
+			if (opts.source == undefined) {
+				return opts.defaultValue;
+			} else {
+				return valueSelector(opts.source) ?? opts.defaultValue;
+			}
+		}, [opts.source, opts.defaultValue, valueSelector]);
 
 		const hook = hookFunction({ name, Name }, opts);
 
 		return Object.assign(hook, {
 			name, Name,
 			valueSelector: opts.valueSelector,
-			updateFromSelector: (u) => hook.setter(opts.valueSelector(u))
+			updateFromSelector: (u) => hook.setter?.(opts.valueSelector(u) ?? opts.defaultValue ?? hook._default)
 		});
 	};
 }

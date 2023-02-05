@@ -20,8 +20,9 @@
 
 const React = require("react");
 
+const _default = "";
 module.exports = function useTextInput({ name, Name }, {
-	initialValue = "",
+	initialValue = _default,
 	dontReset = false,
 	validator,
 	showValidation = true,
@@ -81,6 +82,7 @@ module.exports = function useTextInput({ name, Name }, {
 		setter: setText,
 		valid,
 		validate: () => setValidation(validator(text)),
-		hasChanged: () => text != initialValue
+		hasChanged: () => text != initialValue,
+		_default
 	});
 };

@@ -20,7 +20,8 @@
 
 const React = require("react");
 
-module.exports = function useRadioInput({ name, Name }, { initialValue, options }) {
+const _default = "";
+module.exports = function useRadioInput({ name, Name }, { initialValue = _default, options }) {
 	const [value, setValue] = React.useState(initialValue);
 
 	function onChange(e) {
@@ -46,6 +47,7 @@ module.exports = function useRadioInput({ name, Name }, { initialValue, options 
 		value,
 		setter: setValue,
 		options,
-		hasChanged: () => value != initialValue
+		hasChanged: () => value != initialValue,
+		_default
 	});
 };

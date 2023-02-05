@@ -20,7 +20,8 @@
 
 const React = require("react");
 
-module.exports = function useBoolInput({ name, Name }, { initialValue = false } = {}) {
+const _default = false;
+module.exports = function useBoolInput({ name, Name }, { initialValue = _default }) {
 	const [value, setValue] = React.useState(initialValue);
 
 	function onChange(e) {
@@ -45,6 +46,7 @@ module.exports = function useBoolInput({ name, Name }, { initialValue = false } 
 		reset,
 		value,
 		setter: setValue,
-		hasChanged: () => value != initialValue
+		hasChanged: () => value != initialValue,
+		_default
 	});
 };
