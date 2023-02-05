@@ -22,7 +22,6 @@ const React = require("react");
 
 function TextInput({ label, field, ...inputProps }) {
 	const { onChange, value, ref } = field;
-	console.log(field.name, field.valid, field.value);
 
 	return (
 		<div className={`form-field text${field.valid ? "" : " invalid"}`}>
