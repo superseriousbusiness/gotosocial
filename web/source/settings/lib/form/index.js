@@ -18,15 +18,57 @@
 
 "use strict";
 
+const React = require("react");
+const getByDot = require("get-by-dot").default;
+
 function capitalizeFirst(str) {
-	return str.slice(0, 1).toUpperCase() + str.slice(1);
+	return str.slice(0, 1).toUpperCase + str.slice(1);
 }
 
-function makeHook(func) {
-	return (name, ...args) => func({
-		name,
-		Name: capitalizeFirst(name)
-	}, ...args);
+function selectorByKey(key) {
+	if (key.includes("[")) {
+		// get-by-dot does not support 'nested[deeper][key]' notation, convert to 'nested.deeper.key'
+		key = key
+			.replace(/\[/g, ".") // nested.deeper].key]
+			.replace(/\]/g, ""); // nested.deeper.key
+	}
+
+	return function selector(obj) {
+		if (obj == undefined) {
+			return null;
+		} else {
+			return getByDot(obj, key);
+		}
+	};
+}
+
+function makeHook(hookFunction) {
+	return function (name, opts = {}) {
+		// for dynamically generating attributes like 'setName'
+		const Name = React.useMemo(() => capitalizeFirst(name), [name]);
+
+		const selector = React.useMemo(() => selectorByKey(name), [name]);
+
+		if (opts.valueSelector == undefined) {
+			opts.valueSelector = function selectValue(obj) {
+				return selector(obj) ?? opts.defaultValue;
+			};
+		}
+
+		if (opts.source == undefined) {
+			opts.initialValue = opts.defaultValue;
+		} else {
+			opts.initialValue = opts.valueSelector(opts.source);
+		}
+
+		const hook = hookFunction({ name, Name }, opts);
+
+		return Object.assign(hook, {
+			name, Name,
+			valueSelector: opts.valueSelector,
+			updateFromSelector: (u) => hook.setter(opts.valueSelector(u))
+		});
+	};
 }
 
 module.exports = {

@@ -3091,6 +3091,11 @@ get-assigned-identifiers@^1.1.0, get-assigned-identifiers@^1.2.0:
   resolved "https://registry.yarnpkg.com/get-assigned-identifiers/-/get-assigned-identifiers-1.2.0.tgz#6dbf411de648cbaf8d9169ebb0d2d576191e2ff1"
   integrity sha512-mBBwmeGTrxEMO4pMaaf/uUEFHnYtwr8FTe8Y/mer4rcV/bye0qGm6pw1bGZFGStxC5O76c5ZAVBGnqHmOaJpdQ==
 
+get-by-dot@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/get-by-dot/-/get-by-dot-1.0.2.tgz#8ba0ef82fe3435ce57faa133e45357a9059a7081"
+  integrity sha512-gzOcBY84Hd7vTE5r5pXHSyPGuFAxABCfYV3Oey8Z6RxikkhJbbL9x3vu0cOn53QjZfQI1X5JZuNCVwOlvqLBwQ==
+
 get-intrinsic@^1.0.2, get-intrinsic@^1.1.0, get-intrinsic@^1.1.1, get-intrinsic@^1.1.3:
   version "1.1.3"
   resolved "https://registry.yarnpkg.com/get-intrinsic/-/get-intrinsic-1.1.3.tgz#063c84329ad93e83893c7f4f243ef63ffa351385"

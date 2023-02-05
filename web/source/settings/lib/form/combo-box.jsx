@@ -22,11 +22,11 @@ const React = require("react");
 
 const { useComboboxState } = require("ariakit/combobox");
 
-module.exports = function useComboBoxInput({ name, Name }, { defaultValue } = {}) {
+module.exports = function useComboBoxInput({ name, Name }, { initialValue }) {
 	const [isNew, setIsNew] = React.useState(false);
 
 	const state = useComboboxState({
-		defaultValue,
+		defaultValue: initialValue,
 		gutter: 0,
 		sameWidth: true
 	});
@@ -48,7 +48,8 @@ module.exports = function useComboBoxInput({ name, Name }, { defaultValue } = {}
 		name,
 		state,
 		value: state.value,
-		hasChanged: () => state.value != defaultValue,
+		setter: (val) => state.setValue(val),
+		hasChanged: () => state.value != initialValue,
 		isNew,
 		setIsNew,
 		reset

@@ -70,9 +70,13 @@ module.exports = function useFormSubmit(form, mutationQuery, { changedOnly = tru
 			}).then((res) => {
 				if (res.error == undefined) {
 					updatedFields.forEach((field) => {
-						field.reset();
+						console.log("update", field);
+						field.updateFromSelector(res.data);
 					});
 				}
+			}).catch((e) => {
+				console.error(e);
+				throw e;
 			});
 		},
 		{

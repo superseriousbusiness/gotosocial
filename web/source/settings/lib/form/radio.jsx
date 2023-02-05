@@ -20,15 +20,15 @@
 
 const React = require("react");
 
-module.exports = function useRadioInput({ name, Name }, { defaultValue, options } = {}) {
-	const [value, setValue] = React.useState(defaultValue);
+module.exports = function useRadioInput({ name, Name }, { initialValue, options }) {
+	const [value, setValue] = React.useState(initialValue);
 
 	function onChange(e) {
 		setValue(e.target.value);
 	}
 
 	function reset() {
-		setValue(defaultValue);
+		setValue(initialValue);
 	}
 
 	// Array / Object hybrid, for easier access in different contexts
@@ -46,6 +46,6 @@ module.exports = function useRadioInput({ name, Name }, { defaultValue, options 
 		value,
 		setter: setValue,
 		options,
-		hasChanged: () => value != defaultValue
+		hasChanged: () => value != initialValue
 	});
 };

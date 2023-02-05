@@ -20,15 +20,15 @@
 
 const React = require("react");
 
-module.exports = function useBoolInput({ name, Name }, { defaultValue = false } = {}) {
-	const [value, setValue] = React.useState(defaultValue);
+module.exports = function useBoolInput({ name, Name }, { initialValue = false } = {}) {
+	const [value, setValue] = React.useState(initialValue);
 
 	function onChange(e) {
 		setValue(e.target.checked);
 	}
 
 	function reset() {
-		setValue(defaultValue);
+		setValue(initialValue);
 	}
 
 	// Array / Object hybrid, for easier access in different contexts
@@ -45,6 +45,6 @@ module.exports = function useBoolInput({ name, Name }, { defaultValue = false } 
 		reset,
 		value,
 		setter: setValue,
-		hasChanged: () => value != defaultValue
+		hasChanged: () => value != initialValue
 	});
 };

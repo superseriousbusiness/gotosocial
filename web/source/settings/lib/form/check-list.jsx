@@ -81,13 +81,13 @@ const { reducer, actions } = createSlice({
 	}
 });
 
-function initialState({ entries, uniqueKey, defaultValue }) {
+function initialState({ entries, uniqueKey, initialValue }) {
 	const selectedEntries = new Set();
 	return {
 		entries: syncpipe(entries, [
 			(_) => _.map((entry) => {
 				let key = entry[uniqueKey];
-				let checked = entry.checked ?? defaultValue;
+				let checked = entry.checked ?? initialValue;
 
 				if (checked) {
 					selectedEntries.add(key);
@@ -110,9 +110,9 @@ function initialState({ entries, uniqueKey, defaultValue }) {
 	};
 }
 
-module.exports = function useCheckListInput({ name }, { entries, uniqueKey = "key", defaultValue = false }) {
+module.exports = function useCheckListInput({ name }, { entries, uniqueKey = "key", initialValue = false }) {
 	const [state, dispatch] = React.useReducer(reducer, null,
-		() => initialState({ entries, uniqueKey, defaultValue }) // initial state
+		() => initialState({ entries, uniqueKey, initialValue }) // initial state
 	);
 
 	const toggleAllRef = React.useRef(null);
@@ -132,8 +132,8 @@ module.exports = function useCheckListInput({ name }, { entries, uniqueKey = "ke
 	}, [state.selectedEntries]);
 
 	const reset = React.useCallback(
-		() => dispatch(actions.updateAll(defaultValue)),
-		[defaultValue]
+		() => dispatch(actions.updateAll(initialValue)),
+		[initialValue]
 	);
 
 	const onChange = React.useCallback(

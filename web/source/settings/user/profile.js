@@ -71,12 +71,12 @@ function UserProfileForm({ data: profile }) {
 	const form = {
 		avatar: useFileInput("avatar", { withPreview: true }),
 		header: useFileInput("header", { withPreview: true }),
-		displayName: useTextInput("display_name", { defaultValue: profile.display_name }),
-		note: useTextInput("note", { defaultValue: profile.source?.note }),
-		customCSS: useTextInput("custom_css", { defaultValue: profile.custom_css }),
-		bot: useBoolInput("bot", { defaultValue: profile.bot }),
-		locked: useBoolInput("locked", { defaultValue: profile.locked }),
-		enableRSS: useBoolInput("enable_rss", { defaultValue: profile.enable_rss }),
+		displayName: useTextInput("display_name", { source: profile }),
+		note: useTextInput("note", { source: profile, valueSelector: (p) => p.source?.note }),
+		customCSS: useTextInput("custom_css", { source: profile }),
+		bot: useBoolInput("bot", { source: profile }),
+		locked: useBoolInput("locked", { source: profile }),
+		enableRSS: useBoolInput("enable_rss", { source: profile }),
 	};
 
 	const [submitForm, result] = useFormSubmit(form, query.useUpdateCredentialsMutation());
