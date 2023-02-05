@@ -219,9 +219,9 @@ func serveFileRange(rw http.ResponseWriter, src io.Reader, rng string, size int6
 	}
 
 	// Determine content len
-	length := size - start
+	length := end - start
 
-	if end < size {
+	if end < size-1 {
 		// Range end < file end, limit the reader
 		src = io.LimitReader(src, length)
 	}
