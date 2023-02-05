@@ -61,18 +61,15 @@ function ReportDetailForm({ data: report }) {
 	return (
 		<div className="report detail">
 			<div>
-				<br />
 				<Username user={from} /> reported <Username user={target} />
 			</div>
 
 			{report.action_taken &&
-				<div className="info-block">
-					<h3>Report resolved:</h3>
-					<div className="details">
-						<b>Action: </b><span>{report.action_taken_comment}</span>
-						<b>By: </b><Username user={report.action_taken_by_account} />
-						<b>At: </b><span>{new Date(report.action_taken_at).toLocaleString()}</span>
-					</div>
+				<div className="info">
+					<h3>Resolved by @{report.action_taken_by_account.account.acct}</h3>
+					<span className="timestamp">at {new Date(report.action_taken_at).toLocaleString()}</span>
+					<br />
+					<b>Comment: </b><span>{report.action_taken_comment}</span>
 				</div>
 			}
 

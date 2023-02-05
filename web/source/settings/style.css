@@ -870,9 +870,18 @@ button.with-padding {
 	}
 
 	.report.detail {
+		display: flex;
+		flex-direction: column;
+		margin-top: 1rem;
+		gap: 1rem;
+
 		.info-block {
 			padding: 0.5rem;
 			background: $gray2;
+		}
+
+		.info {
+			display: block;
 		}
 
 		.reported-toots {
