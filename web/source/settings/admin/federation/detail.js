@@ -108,7 +108,6 @@ function DomainBlockForm({ defaultDomain, block = {}, baseUrl }) {
 		if (location != correctUrl) {
 			setLocation(correctUrl);
 		}
-		console.log("submitting form");
 		return submitForm(e);
 	}
 
