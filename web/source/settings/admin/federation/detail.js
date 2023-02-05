@@ -91,10 +91,7 @@ function DomainBlockForm({ defaultDomain, block = {}, baseUrl }) {
 		commentPublic: useTextInput("public_comment", { source: block })
 	};
 
-	const [submitForm, addResult] = useFormSubmit(form, query.useAddInstanceBlockMutation(), {
-		changedOnly: false,
-		formUpdateSelector: (data) => Object.values(data)[0]
-	});
+	const [submitForm, addResult] = useFormSubmit(form, query.useAddInstanceBlockMutation(), { changedOnly: false });
 
 	const [removeBlock, removeResult] = query.useRemoveInstanceBlockMutation({ fixedCacheKey: block.id });
 

@@ -65,19 +65,7 @@ module.exports = function useFormSubmit(form, mutationQuery, { changedOnly = tru
 
 			mutationData.action = action;
 
-			return Promise.try(() => {
-				return runMutation(mutationData);
-			}).then((res) => {
-				if (res.error == undefined) {
-					let data = res.data;
-					if (formUpdateSelector) {
-						data = formUpdateSelector(data);
-					}
-					updatedFields.forEach((field) => {
-						field.updateFromSelector(data);
-					});
-				}
-			});
+			return runMutation(mutationData);
 		},
 		{
 			...result,

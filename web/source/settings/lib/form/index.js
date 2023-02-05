@@ -62,8 +62,6 @@ function makeHook(hookFunction) {
 
 		return Object.assign(hook, {
 			name, Name,
-			valueSelector: opts.valueSelector,
-			updateFromSelector: (u) => hook.setter?.(opts.valueSelector(u) ?? opts.defaultValue ?? hook._default)
 		});
 	};
 }
