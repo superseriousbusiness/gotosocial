@@ -27,6 +27,7 @@ import (
 	"codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-logger/v2/level"
+	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
@@ -35,7 +36,7 @@ import (
 func Logger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Initialize the logging fields
-		fields := make(kv.Fields, 6, 7)
+		fields := make(kv.Fields, 7, 8)
 
 		// Determine pre-handler time
 		before := time.Now()
@@ -73,6 +74,7 @@ func Logger() gin.HandlerFunc {
 			fields[3] = kv.Field{"method", c.Request.Method}
 			fields[4] = kv.Field{"statusCode", code}
 			fields[5] = kv.Field{"path", path}
+			fields[6] = kv.Field{RequestIDKey, requestid.Get(c)}
 
 			// Create log entry with fields
 			l := log.WithFields(fields...)
