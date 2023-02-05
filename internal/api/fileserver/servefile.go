@@ -24,7 +24,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	_ "unsafe"
 
 	"codeberg.org/gruf/go-fastcopy"
 	"github.com/gin-gonic/gin"
