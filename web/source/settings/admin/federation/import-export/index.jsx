@@ -40,7 +40,7 @@ module.exports = function ImportExport() {
 		exportType: useTextInput("exportType", { defaultValue: "plain", dontReset: true })
 	};
 
-	const [submitParse, parseResult] = useFormSubmit(form, query.useProcessDomainListMutation());
+	const [submitParse, parseResult] = useFormSubmit(form, query.useProcessDomainListMutation(), { changedOnly: false });
 
 	const [_location, setLocation] = useLocation();
 

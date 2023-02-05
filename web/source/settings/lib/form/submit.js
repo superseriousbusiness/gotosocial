@@ -18,16 +18,15 @@
 
 "use strict";
 
-const Promise = require("bluebird");
 const React = require("react");
 const syncpipe = require("syncpipe");
 
-module.exports = function useFormSubmit(form, mutationQuery, { changedOnly = true, formUpdateSelector } = {}) {
+module.exports = function useFormSubmit(form, mutationQuery, { changedOnly = true } = {}) {
 	if (!Array.isArray(mutationQuery)) {
 		throw new ("useFormSubmit: mutationQuery was not an Array. Is a valid useMutation RTK Query provided?");
 	}
 	const [runMutation, result] = mutationQuery;
-	const [usedAction, setUsedAction] = React.useState();
+	const usedAction = React.useRef(null);
 	return [
 		function submitForm(e) {
 			let action;
@@ -41,7 +40,7 @@ module.exports = function useFormSubmit(form, mutationQuery, { changedOnly = tru
 			if (action == "") {
 				action = undefined;
 			}
-			setUsedAction(action);
+			usedAction.current = action;
 			// transform the field definitions into an object with just their values 
 			let updatedFields = [];
 			const mutationData = syncpipe(form, [
@@ -69,7 +68,7 @@ module.exports = function useFormSubmit(form, mutationQuery, { changedOnly = tru
 		},
 		{
 			...result,
-			action: usedAction
+			action: usedAction.current
 		}
 	];
 };
