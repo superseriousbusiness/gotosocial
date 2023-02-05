@@ -92,13 +92,16 @@ function ReportEntry({ report }) {
 			<a className={`report entry${report.action_taken ? " resolved" : ""}`}>
 				<div className="byline">
 					<div className="users">
-						<Username user={from} /> reported <Username user={target} />
+						<Username user={from} link={false} /> reported <Username user={target} link={false} />
 					</div>
 					<h3 className="status">
 						{report.action_taken ? "Resolved" : "Open"}
 					</h3>
 				</div>
 				<div className="details">
+					<b>Created: </b>
+					<span>{new Date(report.created_at).toLocaleString()}</span>
+
 					<b>Reason: </b>
 					{comment.length > 0
 						? <p>{comment}</p>

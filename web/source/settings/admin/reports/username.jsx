@@ -21,7 +21,7 @@
 const React = require("react");
 
 module.exports = function Username({ user, link = true }) {
-	let className = "username";
+	let className = "user";
 	let isLocal = user.domain == null;
 
 	if (user.suspended) {
@@ -37,12 +37,15 @@ module.exports = function Username({ user, link = true }) {
 		: { fa: "fa-external-link-square", info: "Remote user" };
 
 	let Element = "span";
+	let href = null;
+
 	if (link) {
 		Element = "a";
+		href = user.account.url;
 	}
 
 	return (
-		<Element className={className} href={user.account.url} target="_blank" >
+		<Element className={className} href={href} target="_blank" rel="noreferrer" >
 			@{user.account.acct}
 			<i className={`fa fa-fw ${icon.fa}`} aria-hidden="true" title={icon.info} />
 			<span className="sr-only">{icon.info}</span>

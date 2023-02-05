@@ -814,7 +814,7 @@ button.with-padding {
 		margin: 0;
 	}
 
-	.report.entry {
+	.report {
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
@@ -840,15 +840,14 @@ button.with-padding {
 		.details {
 			display: grid;
 			grid-template-columns: auto 1fr;
-			gap: 0.5rem;
+			gap: 0.2rem 0.5rem;
+			padding: 0.5rem;
+
+			justify-items: start;
 		}
 
 		h3 {
 			margin: 0;
-		}
-
-		b {
-			color: $fg-accent;
 		}
 
 		&.resolved {
@@ -859,19 +858,50 @@ button.with-padding {
 				color: $fg-reduced;
 			}
 			
-			.username {
+			.user {
 				opacity: 0.8;
+			}
+		}
+
+		&.detail {
+			border: none;
+			padding: 0;
+		}
+	}
+
+	.report.detail {
+		.info-block {
+			padding: 0.5rem;
+			background: $gray2;
+		}
+
+		.reported-toots {
+			margin-top: 0.5rem;
+		}
+
+		.toot .toot-info {
+			padding: 0.5rem;
+			background: $toot-info-bg;
+
+			a {
+				color: $fg-reduced;
+			}
+
+			&:last-child {
+				border-bottom-left-radius: $br;
+				border-bottom-right-radius: $br;
 			}
 		}
 	}
 
-	.username {
+	.user {
 		background: $fg-accent;
 		color: $bg;
 		border-radius: $br;
 		padding: 0.1rem 0.2rem;
 		margin: 0 0.1rem;
 		font-weight: bold;
+		text-decoration: none;
 
 		&.suspended {
 			background: $bg-accent;

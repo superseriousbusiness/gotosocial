@@ -18,10 +18,6 @@
 
 "use strict";
 
-const Promise = require("bluebird");
-
-const { unwrapRes } = require("../lib");
-
 module.exports = (build) => ({
 	listReports: build.query({
 		query: (params = {}) => ({
@@ -41,4 +37,16 @@ module.exports = (build) => ({
 		providesTags: (res, error, id) => [{ type: "Reports", id }]
 	}),
 
+	resolveReport: build.mutation({
+		query: (formData) => ({
+			url: `/api/v1/admin/reports/${formData.id}/resolve`,
+			method: "POST",
+			asForm: true,
+			body: formData
+		}),
+		invalidatesTags: (res) =>
+			res
+				? [{ type: "Reports", id: "LIST" }, { type: "Reports", id: res.id }]
+				: [{ type: "Reports", id: "LIST" }]
+	})
 });
