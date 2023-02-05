@@ -43,7 +43,7 @@ module.exports = function Reports() {
 	);
 };
 
-function ReportOverview({ baseUrl }) {
+function ReportOverview({ _baseUrl }) {
 	return (
 		<>
 			<h1>Reports</h1>
@@ -78,8 +78,6 @@ function ReportsList({ data: reports }) {
 }
 
 function ReportEntry({ report }) {
-	console.log(report);
-
 	const from = report.account;
 	const target = report.target_account;
 
