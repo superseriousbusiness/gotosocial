@@ -67,20 +67,14 @@ func (pool *WorkerPool) Start(workers int, queue int) bool {
 			go func() {
 				defer wait.Done()
 
-				// Run worker function.
-				for !worker_run(ctx, fns) {
-					// retry on panic
+				// Run worker function (retry on panic)
+				for !worker_run(CancelCtx(ctx), fns) {
 				}
 			}()
 		}
 
-		// Set GC finalizer to stop pool on dealloc.
-		runtime.SetFinalizer(pool, func(pool *WorkerPool) {
-			_ = pool.svc.Stop()
-		})
-
 		// Wait on ctx
-		<-ctx.Done()
+		<-ctx
 
 		// Drain function queue.
 		//
@@ -108,6 +102,16 @@ func (pool *WorkerPool) Start(workers int, queue int) bool {
 // Stop will stop the WorkerPool management loop, blocking until stopped.
 func (pool *WorkerPool) Stop() bool {
 	return pool.svc.Stop()
+}
+
+// Running returns if WorkerPool management loop is running (i.e. NOT stopped / stopping).
+func (pool *WorkerPool) Running() bool {
+	return pool.svc.Running()
+}
+
+// Done returns a channel that's closed when WorkerPool.Stop() is called. It is the same channel provided to the currently running worker functions.
+func (pool *WorkerPool) Done() <-chan struct{} {
+	return pool.svc.Done()
 }
 
 // Enqueue will add provided WorkerFunc to the queue to be performed when there is a free worker.
