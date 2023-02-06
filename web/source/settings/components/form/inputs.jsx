@@ -22,7 +22,6 @@ const React = require("react");
 
 function TextInput({ label, field, ...inputProps }) {
 	const { onChange, value, ref } = field;
-	console.log(field.name, field.valid, field.value);
 
 	return (
 		<div className={`form-field text${field.valid ? "" : " invalid"}`}>
@@ -93,13 +92,13 @@ function Checkbox({ label, field, ...inputProps }) {
 	);
 }
 
-function Select({ label, field, options, ...inputProps }) {
+function Select({ label, field, options, children, ...inputProps }) {
 	const { onChange, value, ref } = field;
 
 	return (
 		<div className="form-field select">
 			<label>
-				{label}
+				{label} {children}
 				<select
 					{...{ onChange, value, ref }}
 					{...inputProps}

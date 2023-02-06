@@ -36,13 +36,11 @@ const ExportFormatTable = require("./export-format-table");
 module.exports = function ImportExportForm({ form, submitParse, parseResult }) {
 	const [submitExport, exportResult] = useFormSubmit(form, query.useExportDomainListMutation());
 
-	const [updateFromFile, setUpdateFromFile] = React.useState(false);
-
 	function fileChanged(e) {
 		const reader = new FileReader();
 		reader.onload = function (read) {
-			form.domains.setter(read.target.result);
-			setUpdateFromFile(true);
+			form.domains.value = read.target.result;
+			submitParse();
 		};
 		reader.readAsText(e.target.files[0]);
 	}
@@ -54,10 +52,6 @@ module.exports = function ImportExportForm({ form, submitParse, parseResult }) {
 		/* eslint-disable-next-line react-hooks/exhaustive-deps */
 	}, [exportResult]);
 
-	if (updateFromFile) {
-		setUpdateFromFile(false);
-		submitParse();
-	}
 	return (
 		<>
 			<h1>Import / Export suspended domains</h1>

@@ -234,7 +234,7 @@ const UpdateableEntry = React.memo(
 		return (
 			<>
 				<span className="text-cutoff">{entry.domain}</span>
-				<i class="fa fa-long-arrow-right" aria-hidden="true"></i>
+				<i className="fa fa-long-arrow-right" aria-hidden="true"></i>
 				<span>{entry.suggest}</span>
 				<a role="button" onClick={() =>
 					updateEntry(entry.key, { domain: entry.suggest, suggest: null })

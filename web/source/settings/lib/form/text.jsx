@@ -20,15 +20,16 @@
 
 const React = require("react");
 
+const _default = "";
 module.exports = function useTextInput({ name, Name }, {
-	defaultValue = "",
+	initialValue = _default,
 	dontReset = false,
 	validator,
 	showValidation = true,
 	initValidation
 } = {}) {
 
-	const [text, setText] = React.useState(defaultValue);
+	const [text, setText] = React.useState(initialValue);
 	const textRef = React.useRef(null);
 
 	const [validation, setValidation] = React.useState(initValidation ?? "");
@@ -48,7 +49,7 @@ module.exports = function useTextInput({ name, Name }, {
 
 	function reset() {
 		if (!dontReset) {
-			setText(defaultValue);
+			setText(initialValue);
 		}
 	}
 
@@ -81,6 +82,7 @@ module.exports = function useTextInput({ name, Name }, {
 		setter: setText,
 		valid,
 		validate: () => setValidation(validator(text)),
-		hasChanged: () => text != defaultValue
+		hasChanged: () => text != initialValue,
+		_default
 	});
 };

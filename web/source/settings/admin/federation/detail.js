@@ -19,7 +19,7 @@
 "use strict";
 
 const React = require("react");
-const { useRoute, Redirect } = require("wouter");
+const { useRoute, Redirect, useLocation } = require("wouter");
 
 const query = require("../../lib/query");
 
@@ -69,12 +69,12 @@ module.exports = function InstanceDetail({ baseUrl }) {
 		<div>
 			<h1 className="text-cutoff"><BackButton to={baseUrl} /> Federation settings for: <span title={domain}>{domain}</span></h1>
 			{infoContent}
-			<DomainBlockForm defaultDomain={domain} block={existingBlock} />
+			<DomainBlockForm defaultDomain={domain} block={existingBlock} baseUrl={baseUrl} />
 		</div>
 	);
 };
 
-function DomainBlockForm({ defaultDomain, block = {} }) {
+function DomainBlockForm({ defaultDomain, block = {}, baseUrl }) {
 	const isExistingBlock = block.domain != undefined;
 
 	const disabledForm = isExistingBlock
@@ -85,18 +85,31 @@ function DomainBlockForm({ defaultDomain, block = {} }) {
 		: {};
 
 	const form = {
-		domain: useTextInput("domain", { defaultValue: block.domain ?? defaultDomain }),
-		obfuscate: useBoolInput("obfuscate", { defaultValue: block.obfuscate }),
-		commentPrivate: useTextInput("private_comment", { defaultValue: block.private_comment }),
-		commentPublic: useTextInput("public_comment", { defaultValue: block.public_comment })
+		domain: useTextInput("domain", { source: block, defaultValue: defaultDomain }),
+		obfuscate: useBoolInput("obfuscate", { source: block }),
+		commentPrivate: useTextInput("private_comment", { source: block }),
+		commentPublic: useTextInput("public_comment", { source: block })
 	};
 
 	const [submitForm, addResult] = useFormSubmit(form, query.useAddInstanceBlockMutation(), { changedOnly: false });
 
 	const [removeBlock, removeResult] = query.useRemoveInstanceBlockMutation({ fixedCacheKey: block.id });
 
+	const [location, setLocation] = useLocation();
+
+	function verifyUrlThenSubmit(e) {
+		// Adding a new block happens on /settings/admin/federation/domain.com
+		// but if domain input changes, that doesn't match anymore and causes issues later on
+		// so, before submitting the form, silently change url, then submit
+		let correctUrl = `${baseUrl}/${form.domain.value}`;
+		if (location != correctUrl) {
+			setLocation(correctUrl);
+		}
+		return submitForm(e);
+	}
+
 	return (
-		<form onSubmit={submitForm}>
+		<form onSubmit={verifyUrlThenSubmit}>
 			<TextInput
 				field={form.domain}
 				label="Domain"
