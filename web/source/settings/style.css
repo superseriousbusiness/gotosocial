@@ -663,6 +663,10 @@ span.form-info {
 	a {
 		color: $info-link;
 	}
+
+	p {
+		margin-top: 0;
+	}
 }
 
 button.with-icon {
@@ -802,6 +806,121 @@ button.with-padding {
 	input {
 		width: auto;
 		place-self: center;
+	}
+}
+
+.reports {
+	p {
+		margin: 0;
+	}
+
+	.report {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		margin: 0.5rem 0;
+
+		text-decoration: none;
+		color: $fg;
+
+		padding: 1rem;
+
+		border: none;
+		border-left: 0.3rem solid $border-accent;
+
+		.byline {
+			display: grid;
+			grid-template-columns: 1fr auto;
+
+			.status {
+				color: $border-accent;
+			}
+		}
+
+		.details {
+			display: grid;
+			grid-template-columns: auto 1fr;
+			gap: 0.2rem 0.5rem;
+			padding: 0.5rem;
+
+			justify-items: start;
+		}
+
+		h3 {
+			margin: 0;
+		}
+
+		&.resolved {
+			color: $fg-reduced;
+			border-left: 0.4rem solid $bg;
+
+			.byline .status {
+				color: $fg-reduced;
+			}
+			
+			.user {
+				opacity: 0.8;
+			}
+		}
+
+		&.detail {
+			border: none;
+			padding: 0;
+		}
+	}
+
+	.report.detail {
+		display: flex;
+		flex-direction: column;
+		margin-top: 1rem;
+		gap: 1rem;
+
+		.info-block {
+			padding: 0.5rem;
+			background: $gray2;
+		}
+
+		.info {
+			display: block;
+		}
+
+		.reported-toots {
+			margin-top: 0.5rem;
+		}
+
+		.toot .toot-info {
+			padding: 0.5rem;
+			background: $toot-info-bg;
+
+			a {
+				color: $fg-reduced;
+			}
+
+			&:last-child {
+				border-bottom-left-radius: $br;
+				border-bottom-right-radius: $br;
+			}
+		}
+	}
+
+	.user {
+		background: $fg-accent;
+		color: $bg;
+		border-radius: $br;
+		padding: 0.1rem 0.2rem;
+		margin: 0 0.1rem;
+		font-weight: bold;
+		text-decoration: none;
+
+		&.suspended {
+			background: $bg-accent;
+			color: $fg;
+			text-decoration: line-through;
+		}
+
+		&.local {
+			background: $green1;
+		}
 	}
 }
 
