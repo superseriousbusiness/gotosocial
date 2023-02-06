@@ -49,7 +49,7 @@ require (
 	github.com/uptrace/bun/dialect/pgdialect v1.1.10
 	github.com/uptrace/bun/dialect/sqlitedialect v1.1.10
 	github.com/wagslane/go-password-validator v0.3.0
-	github.com/yuin/goldmark v1.5.3
+	github.com/yuin/goldmark v1.5.4
 	go.uber.org/automaxprocs v1.5.1
 	golang.org/x/crypto v0.5.0
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
