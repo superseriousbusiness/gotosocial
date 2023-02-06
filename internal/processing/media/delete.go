@@ -2,9 +2,11 @@ package media
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
+	"codeberg.org/gruf/go-store/v2/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
@@ -24,14 +26,14 @@ func (p *processor) Delete(ctx context.Context, mediaAttachmentID string) gtserr
 
 	// delete the thumbnail from storage
 	if attachment.Thumbnail.Path != "" {
-		if err := p.storage.Delete(ctx, attachment.Thumbnail.Path); err != nil {
+		if err := p.storage.Delete(ctx, attachment.Thumbnail.Path); err != nil && !errors.Is(err, storage.ErrNotFound) {
 			errs = append(errs, fmt.Sprintf("remove thumbnail at path %s: %s", attachment.Thumbnail.Path, err))
 		}
 	}
 
 	// delete the file from storage
 	if attachment.File.Path != "" {
-		if err := p.storage.Delete(ctx, attachment.File.Path); err != nil {
+		if err := p.storage.Delete(ctx, attachment.File.Path); err != nil && !errors.Is(err, storage.ErrNotFound) {
 			errs = append(errs, fmt.Sprintf("remove file at path %s: %s", attachment.File.Path, err))
 		}
 	}
