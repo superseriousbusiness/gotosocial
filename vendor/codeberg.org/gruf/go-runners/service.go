@@ -8,10 +8,10 @@ import (
 // Service provides a means of tracking a single long-running service, provided protected state
 // changes and preventing multiple instances running. Also providing service state information.
 type Service struct {
-	state uint32     // 0=stopped, 1=running, 2=stopping
-	mutex sync.Mutex // mutext protects overall state changes
-	wait  sync.Mutex // wait is used as a single-entity wait-group, only ever locked within 'mutex'
-	ctx   cancelctx  // ctx is the current context for running function (or nil if not running)
+	state uint32        // 0=stopped, 1=running, 2=stopping
+	mutex sync.Mutex    // mutext protects overall state changes
+	wait  sync.Mutex    // wait is used as a single-entity wait-group, only ever locked within 'mutex'
+	ctx   chan struct{} // ctx is the current context for running function (or nil if not running)
 }
 
 // Run will run the supplied function until completion, using given context to propagate cancel.
@@ -31,8 +31,8 @@ func (svc *Service) Run(fn func(context.Context)) bool {
 		_ = svc.Stop()
 	}()
 
-	// Run
-	fn(ctx)
+	// Run with context.
+	fn(CancelCtx(ctx))
 
 	return true
 }
@@ -55,8 +55,8 @@ func (svc *Service) GoRun(fn func(context.Context)) bool {
 			_ = svc.Stop()
 		}()
 
-		// Run
-		fn(ctx)
+		// Run with context.
+		fn(CancelCtx(ctx))
 	}()
 
 	return true
@@ -104,7 +104,7 @@ func (svc *Service) While(fn func()) {
 }
 
 // doStart will safely set Service state to started, returning a ptr to this context insance.
-func (svc *Service) doStart() (cancelctx, bool) {
+func (svc *Service) doStart() (chan struct{}, bool) {
 	// Protect startup
 	svc.mutex.Lock()
 
@@ -119,7 +119,7 @@ func (svc *Service) doStart() (cancelctx, bool) {
 	if svc.ctx == nil {
 		// this will only have been allocated
 		// if svc.Done() was already called.
-		svc.ctx = make(cancelctx)
+		svc.ctx = make(chan struct{})
 	}
 
 	// Start the waiter
@@ -134,7 +134,7 @@ func (svc *Service) doStart() (cancelctx, bool) {
 }
 
 // doStop will safely set Service state to stopping, returning a ptr to this cancelfunc instance.
-func (svc *Service) doStop() (cancelctx, bool) {
+func (svc *Service) doStop() (chan struct{}, bool) {
 	// Protect stop
 	svc.mutex.Lock()
 
@@ -175,7 +175,7 @@ func (svc *Service) Done() <-chan struct{} {
 			// here we create a new context so that the
 			// returned 'done' channel here will still
 			// be valid for when Service is next started.
-			svc.ctx = make(cancelctx)
+			svc.ctx = make(chan struct{})
 		}
 		done = svc.ctx
 
