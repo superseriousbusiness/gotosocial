@@ -470,7 +470,7 @@ label {
 
 	.entry {
 		display: grid;
-		grid-template-columns: 15rem 1fr;
+		grid-template-columns: max(30%, 10rem) 1fr;
 		gap: 0.5rem;
 		align-items: start;
 		border: $boxshadow-border;
@@ -494,5 +494,12 @@ label {
 
 	.header .domain {
 		color: $fg;
+	}
+}
+
+@media screen and (max-width: 30rem) {
+	.domain-blocklist .entry {
+		grid-template-columns: 1fr;
+		gap: 0;
 	}
 }
