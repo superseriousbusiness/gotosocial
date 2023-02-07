@@ -9,6 +9,16 @@ body:
     attributes:
       value: |
         Thanks for taking the time to fill out this bug report! Please be cautious with the sensitive information/logs while filing the issue.
+  - type: markdown
+    attributes:
+      value: |
+        ⚠️ If you're reporting an interoperability issue with a **closed source**
+        ActivityPub/Mastodon client or server, please report the issue to the
+        developers of that client or server instead. Without access to their
+        source debugging the issue is difficult for us. Since GoToSocial is
+        open source, developers of closed source implementations can run a copy
+        and autonomously debug the issue. We'll gladly address any bugs they
+        raise with us.
   - type: textarea
     id: desc
     attributes:
