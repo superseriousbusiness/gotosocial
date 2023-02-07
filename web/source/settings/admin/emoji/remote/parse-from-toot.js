@@ -115,12 +115,26 @@ function CopyEmojiForm({ localEmojiCodes, type, emojiList }) {
 	const form = {
 		selectedEmoji: useCheckListInput("selectedEmoji", {
 			entries: emojiList,
-			uniqueKey: "shortcode"
+			uniqueKey: "id"
 		}),
 		category: useComboBoxInput("category")
 	};
 
-	const [formSubmit, result] = useFormSubmit(form, query.usePatchRemoteEmojisMutation(), { changedOnly: false });
+	const [formSubmit, result] = useFormSubmit(
+		form,
+		query.usePatchRemoteEmojisMutation(),
+		{
+			changedOnly: false,
+			onFinish: ({ data }) => {
+				if (data != undefined) {
+					form.selectedEmoji.updateMultiple(
+						// uncheck all successfully processed emoji
+						data.map(([id]) => [id, { checked: false }])
+					);
+				}
+			}
+		}
+	);
 
 	const buttonsInactive = form.selectedEmoji.someSelected
 		? {}
