@@ -171,7 +171,7 @@ module.exports = function useCheckListInput({ name }, { entries, uniqueKey = "ke
 			onChange,
 			selectedValues,
 			reset,
-			someSelected: state.someChecked,
+			someSelected: state.selectedEntries.size > 0,
 			updateMultiple,
 			toggleAll: {
 				ref: toggleAllRef,

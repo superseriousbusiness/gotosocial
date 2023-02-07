@@ -149,7 +149,7 @@ module.exports = (build) => ({
 						body: body
 					}).then(unwrapRes);
 				}).then((res) => {
-					data.push([emoji.shortcode, res]);
+					data.push([emoji.id, res]);
 				}).catch((e) => {
 					let msg = e.message ?? e;
 					if (e.data.error) {

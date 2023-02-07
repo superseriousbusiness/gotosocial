@@ -18,10 +18,11 @@
 
 "use strict";
 
+const Promise = require("bluebird");
 const React = require("react");
 const syncpipe = require("syncpipe");
 
-module.exports = function useFormSubmit(form, mutationQuery, { changedOnly = true } = {}) {
+module.exports = function useFormSubmit(form, mutationQuery, { changedOnly = true, onFinish } = {}) {
 	if (!Array.isArray(mutationQuery)) {
 		throw new ("useFormSubmit: mutationQuery was not an Array. Is a valid useMutation RTK Query provided?");
 	}
@@ -64,7 +65,13 @@ module.exports = function useFormSubmit(form, mutationQuery, { changedOnly = tru
 
 			mutationData.action = action;
 
-			return runMutation(mutationData);
+			return Promise.try(() => {
+				return runMutation(mutationData);
+			}).then((res) => {
+				if (onFinish) {
+					return onFinish(res);
+				}
+			});
 		},
 		{
 			...result,
