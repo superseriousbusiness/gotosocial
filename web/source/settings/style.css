@@ -828,12 +828,17 @@ button.with-padding {
 		border: none;
 		border-left: 0.3rem solid $border-accent;
 
+		.usernames {
+			line-height: 2rem;
+		}
+
 		.byline {
 			display: grid;
 			grid-template-columns: 1fr auto;
 
 			.status {
 				color: $border-accent;
+				margin-left: 0.5rem;
 			}
 		}
 
@@ -904,13 +909,19 @@ button.with-padding {
 	}
 
 	.user {
+		line-height: 1.3rem;
+		display: inline-block;
 		background: $fg-accent;
 		color: $bg;
 		border-radius: $br;
-		padding: 0.1rem 0.2rem;
+		padding: 0.15rem 0.15rem;
 		margin: 0 0.1rem;
 		font-weight: bold;
 		text-decoration: none;
+
+		.acct {
+			word-break: break-all;
+		}
 
 		&.suspended {
 			background: $bg-accent;

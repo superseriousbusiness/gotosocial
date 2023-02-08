@@ -89,7 +89,7 @@ function ReportEntry({ report }) {
 		<Link to={`${baseUrl}/${report.id}`}>
 			<a className={`report entry${report.action_taken ? " resolved" : ""}`}>
 				<div className="byline">
-					<div className="users">
+					<div className="usernames">
 						<Username user={from} link={false} /> reported <Username user={target} link={false} />
 					</div>
 					<h3 className="status">
