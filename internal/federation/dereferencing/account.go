@@ -36,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
 func (d *deref) GetAccountByURI(ctx context.Context, requestUser string, uri *url.URL, block bool) (*gtsmodel.Account, error) {
@@ -145,9 +146,14 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		}
 	}
 
+	transport, err := d.transportController.NewTransportForUsername(ctx, requestUser)
+	if err != nil {
+		return nil, fmt.Errorf("enrichAccount: couldn't create transport: %w", err)
+	}
+
 	if account.Username != "" {
 		// A username was provided so we can attempt a webfinger, this ensures up-to-date accountdomain info.
-		accDomain, accURI, err := d.fingerRemoteAccount(ctx, requestUser, account.Username, account.Domain)
+		accDomain, accURI, err := d.fingerRemoteAccount(ctx, transport, account.Username, account.Domain)
 
 		if err != nil && account.URI == "" {
 			// this is a new account (to us) with username@domain but failed
@@ -185,7 +191,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	defer d.stopHandshake(requestUser, uri)
 
 	// Dereference this account to get the latest available.
-	apubAcc, err := d.dereferenceAccountable(ctx, requestUser, uri)
+	apubAcc, err := d.dereferenceAccountable(ctx, transport, uri)
 	if err != nil {
 		return nil, fmt.Errorf("enrichAccount: error dereferencing account %s: %w", uri, err)
 	}
@@ -202,7 +208,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		// No username was provided, so no webfinger was attempted earlier.
 		//
 		// Now we have a username we can attempt it now, this ensures up-to-date accountdomain info.
-		accDomain, _, err := d.fingerRemoteAccount(ctx, requestUser, latestAcc.Username, uri.Host)
+		accDomain, _, err := d.fingerRemoteAccount(ctx, transport, latestAcc.Username, uri.Host)
 
 		if err == nil {
 			// Update account with latest info.
@@ -214,9 +220,32 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	latestAcc.ID = account.ID
 	latestAcc.FetchedAt = time.Now()
 
-	// Fetch latest account media (TODO: check for changed URI to previous).
-	if err = d.fetchRemoteAccountMedia(ctx, latestAcc, requestUser, block); err != nil {
-		log.Errorf("error fetching remote media for account %s: %v", uri, err)
+	// Fetch latest account avatar only if remote URI has changed
+	if latestAcc.AvatarRemoteURL != "" && latestAcc.AvatarRemoteURL != account.AvatarRemoteURL {
+		d.dereferencingAvatarsLock.Lock()
+		newAvatarID, err := d.fetchRemoteAccountMedia(ctx, transport, latestAcc.AvatarRemoteURL, latestAcc.ID, d.dereferencingAvatars, true, false)
+		d.dereferencingAvatarsLock.Unlock()
+		if err != nil {
+			log.Errorf("error fetching remote avatar for account %s: %v", uri, err)
+		} else {
+			latestAcc.AvatarMediaAttachmentID = newAvatarID
+		}
+	} else {
+		latestAcc.AvatarMediaAttachmentID = account.AvatarMediaAttachmentID // no change / empty url
+	}
+
+	// Fetch latest account header only if remote URI has changed
+	if latestAcc.AvatarRemoteURL != "" && latestAcc.AvatarRemoteURL != account.AvatarRemoteURL {
+		d.dereferencingHeadersLock.Lock()
+		newHeaderID, err := d.fetchRemoteAccountMedia(ctx, transport, latestAcc.HeaderRemoteURL, latestAcc.ID, d.dereferencingHeaders, false, true)
+		d.dereferencingHeadersLock.Unlock()
+		if err != nil {
+			log.Errorf("error fetching remote header for account %s: %v", uri, err)
+		} else {
+			latestAcc.HeaderMediaAttachmentID = newHeaderID
+		}
+	} else {
+		latestAcc.HeaderMediaAttachmentID = account.HeaderMediaAttachmentID // no change / empty url
 	}
 
 	// Fetch the latest remote account emoji IDs used in account display name/bio.
@@ -258,12 +287,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 // it finds as something that an account model can be constructed out of.
 //
 // Will work for Person, Application, or Service models.
-func (d *deref) dereferenceAccountable(ctx context.Context, username string, remoteAccountID *url.URL) (ap.Accountable, error) {
-	transport, err := d.transportController.NewTransportForUsername(ctx, username)
-	if err != nil {
-		return nil, fmt.Errorf("DereferenceAccountable: transport err: %w", err)
-	}
-
+func (d *deref) dereferenceAccountable(ctx context.Context, transport transport.Transport, remoteAccountID *url.URL) (ap.Accountable, error) {
 	b, err := transport.Dereference(ctx, remoteAccountID)
 	if err != nil {
 		return nil, fmt.Errorf("DereferenceAccountable: error deferencing %s: %w", remoteAccountID.String(), err)
@@ -279,7 +303,7 @@ func (d *deref) dereferenceAccountable(ctx context.Context, username string, rem
 		return nil, fmt.Errorf("DereferenceAccountable: error resolving json into ap vocab type: %w", err)
 	}
 
-	//nolint shutup linter
+	//nolint:forcetypeassert
 	switch t.GetTypeName() {
 	case ap.ActorApplication:
 		return t.(vocab.ActivityStreamsApplication), nil
@@ -296,156 +320,47 @@ func (d *deref) dereferenceAccountable(ctx context.Context, username string, rem
 	return nil, newErrWrongType(fmt.Errorf("DereferenceAccountable: type name %s not supported as Accountable", t.GetTypeName()))
 }
 
-// fetchRemoteAccountMedia fetches and stores the header and avatar for a remote account,
-// using a transport on behalf of requestingUsername.
-//
-// The returned boolean indicates whether anything changed -- in other words, whether the
-// account should be updated in the database.
-//
-// targetAccount's AvatarMediaAttachmentID and HeaderMediaAttachmentID will be updated as necessary.
-//
-// If refresh is true, then the media will be fetched again even if it's already been fetched before.
-//
-// If blocking is true, then the calls to the media manager made by this function will be blocking:
-// in other words, the function won't return until the header and the avatar have been fully processed.
-func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsmodel.Account, requestingUsername string, blocking bool) error {
-	// Fetch a transport beforehand for either(or both) avatar / header dereferencing.
-	tsport, err := d.transportController.NewTransportForUsername(ctx, requestingUsername)
+func (d *deref) fetchRemoteAccountMedia(
+	ctx context.Context,
+	transport transport.Transport,
+	mediaRemoteURL string,
+	targetAccountID string,
+	dereferencingMap map[string]*media.ProcessingMedia,
+	avatar bool,
+	header bool,
+) (string, error) {
+	// first check if we're already processing this media
+	if alreadyProcessing, ok := dereferencingMap[targetAccountID]; ok {
+		// we're already on it, nothing else to do
+		return alreadyProcessing.AttachmentID(), nil
+	}
+
+	avatarIRI, err := url.Parse(mediaRemoteURL)
 	if err != nil {
-		return fmt.Errorf("fetchRemoteAccountMedia: error getting transport for user: %s", err)
+		return "", err
 	}
 
-	if targetAccount.AvatarRemoteURL != "" {
-		var processingMedia *media.ProcessingMedia
-
-		// Parse the target account's avatar URL into URL object.
-		avatarIRI, err := url.Parse(targetAccount.AvatarRemoteURL)
-		if err != nil {
-			return err
-		}
-
-		d.dereferencingAvatarsLock.Lock() // LOCK HERE
-		// first check if we're already processing this media
-		if alreadyProcessing, ok := d.dereferencingAvatars[targetAccount.ID]; ok {
-			// we're already on it, no worries
-			processingMedia = alreadyProcessing
-		} else {
-			data := func(innerCtx context.Context) (io.ReadCloser, int64, error) {
-				return tsport.DereferenceMedia(innerCtx, avatarIRI)
-			}
-
-			avatar := true
-			newProcessing, err := d.mediaManager.ProcessMedia(ctx, data, nil, targetAccount.ID, &media.AdditionalMediaInfo{
-				RemoteURL: &targetAccount.AvatarRemoteURL,
-				Avatar:    &avatar,
-			})
-			if err != nil {
-				d.dereferencingAvatarsLock.Unlock()
-				return err
-			}
-
-			// store it in our map to indicate it's in process
-			d.dereferencingAvatars[targetAccount.ID] = newProcessing
-			processingMedia = newProcessing
-		}
-		d.dereferencingAvatarsLock.Unlock() // UNLOCK HERE
-
-		load := func(innerCtx context.Context) error {
-			_, err := processingMedia.LoadAttachment(innerCtx)
-			return err
-		}
-
-		cleanup := func() {
-			d.dereferencingAvatarsLock.Lock()
-			delete(d.dereferencingAvatars, targetAccount.ID)
-			d.dereferencingAvatarsLock.Unlock()
-		}
-
-		// block until loaded if required...
-		if blocking {
-			if err := loadAndCleanup(ctx, load, cleanup); err != nil {
-				return err
-			}
-		} else {
-			// ...otherwise do it async
-			go func() {
-				dlCtx, done := context.WithDeadline(context.Background(), time.Now().Add(1*time.Minute))
-				if err := loadAndCleanup(dlCtx, load, cleanup); err != nil {
-					log.Errorf("fetchRemoteAccountMedia: error during async lock and load of avatar: %s", err)
-				}
-				done()
-			}()
-		}
-
-		targetAccount.AvatarMediaAttachmentID = processingMedia.AttachmentID()
+	data := func(innerCtx context.Context) (io.ReadCloser, int64, error) {
+		return transport.DereferenceMedia(innerCtx, avatarIRI)
 	}
 
-	if targetAccount.HeaderRemoteURL != "" {
-		var processingMedia *media.ProcessingMedia
-
-		// Parse the target account's header URL into URL object.
-		headerIRI, err := url.Parse(targetAccount.HeaderRemoteURL)
-		if err != nil {
-			return err
-		}
-
-		d.dereferencingHeadersLock.Lock() // LOCK HERE
-		// first check if we're already processing this media
-		if alreadyProcessing, ok := d.dereferencingHeaders[targetAccount.ID]; ok {
-			// we're already on it, no worries
-			processingMedia = alreadyProcessing
-		} else {
-			data := func(innerCtx context.Context) (io.ReadCloser, int64, error) {
-				return tsport.DereferenceMedia(innerCtx, headerIRI)
-			}
-
-			header := true
-			newProcessing, err := d.mediaManager.ProcessMedia(ctx, data, nil, targetAccount.ID, &media.AdditionalMediaInfo{
-				RemoteURL: &targetAccount.HeaderRemoteURL,
-				Header:    &header,
-			})
-			if err != nil {
-				d.dereferencingAvatarsLock.Unlock()
-				return err
-			}
-
-			// store it in our map to indicate it's in process
-			d.dereferencingHeaders[targetAccount.ID] = newProcessing
-			processingMedia = newProcessing
-		}
-		d.dereferencingHeadersLock.Unlock() // UNLOCK HERE
-
-		load := func(innerCtx context.Context) error {
-			_, err := processingMedia.LoadAttachment(innerCtx)
-			return err
-		}
-
-		cleanup := func() {
-			d.dereferencingHeadersLock.Lock()
-			delete(d.dereferencingHeaders, targetAccount.ID)
-			d.dereferencingHeadersLock.Unlock()
-		}
-
-		// block until loaded if required...
-		if blocking {
-			if err := loadAndCleanup(ctx, load, cleanup); err != nil {
-				return err
-			}
-		} else {
-			// ...otherwise do it async
-			go func() {
-				dlCtx, done := context.WithDeadline(context.Background(), time.Now().Add(1*time.Minute))
-				if err := loadAndCleanup(dlCtx, load, cleanup); err != nil {
-					log.Errorf("fetchRemoteAccountMedia: error during async lock and load of header: %s", err)
-				}
-				done()
-			}()
-		}
-
-		targetAccount.HeaderMediaAttachmentID = processingMedia.AttachmentID()
+	processingMedia, err := d.mediaManager.ProcessMedia(ctx, data, nil, targetAccountID, &media.AdditionalMediaInfo{
+		RemoteURL: &mediaRemoteURL,
+		Avatar:    &avatar,
+		Header:    &header,
+	})
+	if err != nil {
+		return "", err
 	}
 
-	return nil
+	// store it in our map to indicate it's in process
+	dereferencingMap[targetAccountID] = processingMedia
+	defer delete(dereferencingMap, targetAccountID)
+	if _, err := processingMedia.LoadAttachment(ctx); err != nil {
+		return "", err
+	}
+
+	return processingMedia.AttachmentID(), nil
 }
 
 func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gtsmodel.Account, requestingUsername string) (bool, error) {

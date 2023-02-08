@@ -27,17 +27,12 @@ import (
 	"strings"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (d *deref) fingerRemoteAccount(ctx context.Context, username string, targetUsername string, targetHost string) (accountDomain string, accountURI *url.URL, err error) {
-	t, err := d.transportController.NewTransportForUsername(ctx, username)
-	if err != nil {
-		err = fmt.Errorf("fingerRemoteAccount: error getting transport for %s: %s", username, err)
-		return
-	}
-
-	b, err := t.Finger(ctx, targetUsername, targetHost)
+func (d *deref) fingerRemoteAccount(ctx context.Context, transport transport.Transport, targetUsername string, targetHost string) (accountDomain string, accountURI *url.URL, err error) {
+	b, err := transport.Finger(ctx, targetUsername, targetHost)
 	if err != nil {
 		err = fmt.Errorf("fingerRemoteAccount: error fingering @%s@%s: %s", targetUsername, targetHost, err)
 		return
