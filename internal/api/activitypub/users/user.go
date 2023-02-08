@@ -42,8 +42,6 @@ const (
 
 	// BasePath is the base path for serving AP 'users' requests, minus the 'users' prefix.
 	BasePath = "/:" + UsernameKey
-	// PublicKeyPath is a path to a user's public key, for serving bare minimum AP representations.
-	PublicKeyPath = BasePath + "/" + uris.PublicKeyPath
 	// InboxPath is for serving POST requests to a user's inbox with the given username key.
 	InboxPath = BasePath + "/" + uris.InboxPath
 	// OutboxPath is for serving GET requests to a user's outbox with the given username key.
@@ -74,7 +72,6 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	attachHandler(http.MethodGet, FollowersPath, m.FollowersGETHandler)
 	attachHandler(http.MethodGet, FollowingPath, m.FollowingGETHandler)
 	attachHandler(http.MethodGet, StatusPath, m.StatusGETHandler)
-	attachHandler(http.MethodGet, PublicKeyPath, m.PublicKeyGETHandler)
 	attachHandler(http.MethodGet, StatusRepliesPath, m.StatusRepliesGETHandler)
 	attachHandler(http.MethodGet, OutboxPath, m.OutboxGETHandler)
 }

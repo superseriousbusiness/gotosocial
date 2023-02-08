@@ -19,11 +19,9 @@
 package api
 
 import (
-	"context"
-	"net/url"
-
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/emoji"
+	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/publickey"
 	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
@@ -32,10 +30,10 @@ import (
 )
 
 type ActivityPub struct {
-	emoji *emoji.Module
-	users *users.Module
-
-	isURIBlocked func(context.Context, *url.URL) (bool, db.Error)
+	emoji                    *emoji.Module
+	users                    *users.Module
+	publicKey                *publickey.Module
+	signatureCheckMiddleware gin.HandlerFunc
 }
 
 func (a *ActivityPub) Route(r router.Router, m ...gin.HandlerFunc) {
@@ -43,25 +41,29 @@ func (a *ActivityPub) Route(r router.Router, m ...gin.HandlerFunc) {
 	emojiGroup := r.AttachGroup("emoji")
 	usersGroup := r.AttachGroup("users")
 
-	// instantiate + attach shared, non-global middlewares to both of these groups
-	var (
-		signatureCheckMiddleware = middleware.SignatureCheck(a.isURIBlocked)
-		cacheControlMiddleware   = middleware.CacheControl("no-store")
-	)
+	// attach shared, non-global middlewares to both of these groups
+	cacheControlMiddleware := middleware.CacheControl("no-store")
 	emojiGroup.Use(m...)
 	usersGroup.Use(m...)
-	emojiGroup.Use(signatureCheckMiddleware, cacheControlMiddleware)
-	usersGroup.Use(signatureCheckMiddleware, cacheControlMiddleware)
+	emojiGroup.Use(a.signatureCheckMiddleware, cacheControlMiddleware)
+	usersGroup.Use(a.signatureCheckMiddleware, cacheControlMiddleware)
 
 	a.emoji.Route(emojiGroup.Handle)
 	a.users.Route(usersGroup.Handle)
 }
 
+// Public key endpoint requires different middleware + cache policies from other AP endpoints.
+func (a *ActivityPub) RoutePublicKey(r router.Router, m ...gin.HandlerFunc) {
+	publicKeyGroup := r.AttachGroup(publickey.PublicKeyPath)
+	publicKeyGroup.Use(a.signatureCheckMiddleware, middleware.CacheControl("public,max-age=604800"))
+	a.publicKey.Route(publicKeyGroup.Handle)
+}
+
 func NewActivityPub(db db.DB, p processing.Processor) *ActivityPub {
 	return &ActivityPub{
-		emoji: emoji.New(p),
-		users: users.New(p),
-
-		isURIBlocked: db.IsURIBlocked,
+		emoji:                    emoji.New(p),
+		users:                    users.New(p),
+		publicKey:                publickey.New(p),
+		signatureCheckMiddleware: middleware.SignatureCheck(db.IsURIBlocked),
 	}
 }

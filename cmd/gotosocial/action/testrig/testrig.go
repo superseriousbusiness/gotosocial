@@ -139,6 +139,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	wellKnownModule.Route(router)
 	nodeInfoModule.Route(router)
 	activityPubModule.Route(router)
+	activityPubModule.RoutePublicKey(router)
 	webModule.Route(router)
 
 	gts, err := gotosocial.NewServer(dbService, router, federator, mediaManager)
