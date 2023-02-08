@@ -279,36 +279,44 @@ This section contains a number of additional things for configuring nginx.
 
 If you want to harden up your NGINX deployment with advanced configuration options, there are many guides online for doing so ([for example](https://beaglesecurity.com/blog/article/nginx-server-security.html)). Try to find one that's up to date. Mozilla also publishes best-practice ssl configuration [here](https://ssl-config.mozilla.org/).
 
-### Caching Webfinger
+### Caching Webfinger and Public Key responses
 
-It's possible to use nginx to cache the webfinger responses. This may be useful in order to ensure clients still get a response on the webfinger endpoint even if GTS is (temporarily) down.
+It's possible to use nginx to cache webfinger and public key responses. This may be useful in order to ensure clients still get a response on these endpoints even if your GoToSocial instance is (temporarily) down, or requests are being throttled.
 
 You'll need to configure two things:
-* A cache path
-* An additional `location` block for webfinger
 
-First, the cache path which needs to happen in the `http` section, usually inside your `nginx.conf`:
+- A cache path.
+- Additional `location` blocks for webfinger and public key requests.
+
+First, the cache path which needs to happen in the `http` section, usually inside your `nginx.conf` at `/etc/nginx/nginx.conf`:
 
 ```nginx.conf
 http {
   ... there will be other things here ...
-  proxy_cache_path /var/cache/nginx keys_zone=ap_webfinger:10m inactive=1w;
+  proxy_cache_path /var/cache/nginx keys_zone=gotosocial_ap_public_responses:10m inactive=1w;
 }
 ```
 
-This configures a cache of 10MB whose entries will be kept up to one week if they're not accessed. The zone is named `ap_webfinger` but you can name it whatever you want. 10MB is a lot of cache keys, you can probably use a much smaller value on small instances.
+This configures a cache of 10MB whose entries will be kept up to one week if they're not accessed.
 
-Second, actually use the cache for webfinger:
+The zone is named `gotosocial_ap_public_responses` but you can name it whatever you want. 10MB is a lot of cache keys; you can probably use a smaller value on small instances.
+
+Second, we need to update our GoToSocial nginx configuration to actually use the cache for the endpoints we want to cache.
+
+From the below configuration example, copy the entries between `### NEW STUFF STARTS HERE ###` and `### NEW STUFF ENDS HERE ###` and paste them into your GoToSocial nginx configuration.
 
 ```nginx.conf
 server {
   server_name example.org;
+  
+  ### NEW STUFF STARTS HERE ###
+  
   location /.well-known/webfinger {
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-For $remote_addr;
     proxy_set_header X-Forwarded-Proto $scheme;
 
-    proxy_cache ap_webfinger;
+    proxy_cache gotosocial_ap_public_responses;
     proxy_cache_background_update on;
     proxy_cache_key $scheme://$host$uri$is_args$query_string;
     proxy_cache_valid 200 10m;
@@ -319,6 +327,25 @@ server {
     proxy_pass http://localhost:8080;
   }
 
+  location ~ ^\/users\/(?:[a-z0-9_\.]+)\/main-key$ {
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    proxy_cache gotosocial_ap_public_responses;
+    proxy_cache_background_update on;
+    proxy_cache_key $scheme://$host$uri;
+    proxy_cache_valid 200 604800s;
+    proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504 http_429;
+    proxy_cache_lock on;
+    add_header X-Cache-Status $upstream_cache_status;
+
+    proxy_pass http://localhost:8080;
+  }
+
+  ### NEW STUFF ENDS HERE ###
+
+  ### EXISTING STUFF IS BELOW HERE, NOTHING TO CHANGE ###
   location / {
     proxy_pass http://localhost:8080/;
     proxy_set_header Host $host;
@@ -327,28 +354,21 @@ server {
     proxy_set_header X-Forwarded-For $remote_addr;
     proxy_set_header X-Forwarded-Proto $scheme;
   }
-  client_max_body_size 40M;
-
-  listen [::]:443 ssl ipv6only=on; # managed by Certbot
-  listen 443 ssl; # managed by Certbot
-  ssl_certificate /etc/letsencrypt/live/example.org/fullchain.pem; # managed by Certbot
-  ssl_certificate_key /etc/letsencrypt/live/example.org/privkey.pem; # managed by Certbot
-  include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-  ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+  # ....... etc
 }
 ```
 
 The `proxy_pass` and `proxy_set_header` are mostly the same, but the `proxy_cache*` entries warrant some explanation:
 
-* `proxy_cache ap_webfinger` tells it to use the `ap_webfinger` cache zone we previously created. If you named it something else, you should change this value
-* `proxy_cache_background_update on` means nginx will try and refresh a cached resource that's about to expire in the background, to ensure it has a current copy on disk
-* `proxy_cache_key` is configured in such a way that it takes the query string into account for caching. So a request for `.well-known/webfinger?acct=user1@example.org` and `.well-known/webfinger?acct=user2@example.org` are not seen as the same
-* `proxy_cache_valid 200 10m;` means we only cache 200 responses from GTS and for 10 minutes. You can add additional lines of these, like `proxy_cache_valid 404 1m;` to cache 404 responses for 1 minute
-* `proxy_cache_use_stale` tells nginx it's allowed to use a stale cache entry (so older than 10 minutes) in certain cases
-* `proxy_cache_lock on` means that if a resource is not cached and there's multiple concurrent requests for them, the queries will be queued up so that only one request goes through and the rest is then answered from cache
-* `add_header X-Cache-Status $upstream_cache_status` will add an `X-Cache-Status` header to the response so you can check if things are getting cached. You can remove this.
+- `proxy_cache gotosocial_ap_public_responses` tells nginx to use the `gotosocial_ap_public_responses` cache zone we previously created. If you named it something else, you should change this value
+- `proxy_cache_background_update on` means nginx will try and refresh a cached resource that's about to expire in the background, to ensure it has a current copy on disk
+- `proxy_cache_key` is configured in such a way that it takes the query string into account for caching. So a request for `.well-known/webfinger?acct=user1@example.org` and `.well-known/webfinger?acct=user2@example.org` are not seen as the same.
+- `proxy_cache_valid 200 10m;` means we only cache 200 responses from GTS and for 10 minutes. You can add additional lines of these, like `proxy_cache_valid 404 1m;` to cache 404 responses for 1 minute
+- `proxy_cache_use_stale` tells nginx it's allowed to use a stale cache entry (so older than 10 minutes) in certain cases
+- `proxy_cache_lock on` means that if a resource is not cached and there's multiple concurrent requests for them, the queries will be queued up so that only one request goes through and the rest is then answered from cache
+- `add_header X-Cache-Status $upstream_cache_status` will add an `X-Cache-Status` header to the response so you can check if things are getting cached. You can remove this.
 
-Tweaking `proxy_cache_use_stale` is how you can ensure webfinger responses are still answered even if GTS itself is down. The provided configuration will serve a stale response in case there's an error proxying to GTS, if our connection to GTS times out, if GTS returns a 5xx status code or if GTS returns 429 (Too Many Requests). The `updating` value says that we're allowed to serve a stale entry if nginx is currently in the process of refreshing its cache. Because we configured `inactive=1w` in the `proxy_cache_path` directive, nginx may serve a response up to one week old if the conditions in `proxy_cache_use_stale` are met.
+The provided configuration will serve a stale response in case there's an error proxying to GoToSocial, if our connection to GoToSocial times out, if GoToSocial returns a `5xx` status code or if GoToSocial returns 429 (Too Many Requests). The `updating` value says that we're allowed to serve a stale entry if nginx is currently in the process of refreshing its cache. Because we configured `inactive=1w` in the `proxy_cache_path` directive, nginx may serve a response up to one week old if the conditions in `proxy_cache_use_stale` are met.
 
 ### Serving static assets
 
