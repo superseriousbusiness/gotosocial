@@ -52,6 +52,7 @@ func (a *ActivityPub) Route(r router.Router, m ...gin.HandlerFunc) {
 	a.users.Route(usersGroup.Handle)
 }
 
+// Public key endpoint requires different middleware + cache policies from other AP endpoints.
 func (a *ActivityPub) RoutePublicKey(r router.Router, m ...gin.HandlerFunc) {
 	publicKeyGroup := r.AttachGroup(publickey.PublicKeyPath)
 	publicKeyGroup.Use(a.signatureCheckMiddleware, middleware.CacheControl("public,max-age=604800"))

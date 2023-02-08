@@ -206,6 +206,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	clThrottle := middleware.Throttle(cpuMultiplier)  // client api
 	s2sThrottle := middleware.Throttle(cpuMultiplier) // server-to-server (AP)
 	fsThrottle := middleware.Throttle(cpuMultiplier)  // fileserver / web templates
+	pkThrottle := middleware.Throttle(cpuMultiplier)  // throttle public key endpoint separately
 
 	gzip := middleware.Gzip() // applied to all except fileserver
 
@@ -217,7 +218,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	wellKnownModule.Route(router, gzip, s2sLimit, s2sThrottle)
 	nodeInfoModule.Route(router, s2sLimit, s2sThrottle, gzip)
 	activityPubModule.Route(router, s2sLimit, s2sThrottle, gzip)
-	activityPubModule.RoutePublicKey(router, s2sLimit, gzip) // don't throttle public key endpoint
+	activityPubModule.RoutePublicKey(router, s2sLimit, pkThrottle, gzip)
 	webModule.Route(router, fsLimit, fsThrottle, gzip)
 
 	gts, err := gotosocial.NewServer(dbService, router, federator, mediaManager)
