@@ -42,7 +42,7 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	// process the media attachment and load it immediately
-	media, err := p.mediaManager.ProcessMedia(ctx, data, nil, account.ID, &media.AdditionalMediaInfo{
+	media, err := p.mediaManager.PreProcessMedia(ctx, data, nil, account.ID, &media.AdditionalMediaInfo{
 		Description: &form.Description,
 		FocusX:      &focusX,
 		FocusY:      &focusY,

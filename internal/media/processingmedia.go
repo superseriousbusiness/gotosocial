@@ -31,7 +31,6 @@ import (
 	"github.com/h2non/filetype"
 	terminator "github.com/superseriousbusiness/exif-terminator"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
@@ -350,108 +349,4 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 	p.media.File.UpdatedAt = time.Now()
 
 	return nil
-}
-
-func (m *manager) preProcessMedia(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error) {
-	id, err := id.NewRandomULID()
-	if err != nil {
-		return nil, err
-	}
-
-	avatar := false
-	header := false
-	cached := false
-
-	// populate initial fields on the media attachment -- some of these will be overwritten as we proceed
-	attachment := &gtsmodel.MediaAttachment{
-		ID:                id,
-		CreatedAt:         time.Now(),
-		UpdatedAt:         time.Now(),
-		StatusID:          "",
-		URL:               "", // we don't know yet because it depends on the uncalled DataFunc
-		RemoteURL:         "",
-		Type:              gtsmodel.FileTypeUnknown, // we don't know yet because it depends on the uncalled DataFunc
-		FileMeta:          gtsmodel.FileMeta{},
-		AccountID:         accountID,
-		Description:       "",
-		ScheduledStatusID: "",
-		Blurhash:          "",
-		Processing:        gtsmodel.ProcessingStatusReceived,
-		File:              gtsmodel.File{UpdatedAt: time.Now()},
-		Thumbnail:         gtsmodel.Thumbnail{UpdatedAt: time.Now()},
-		Avatar:            &avatar,
-		Header:            &header,
-		Cached:            &cached,
-	}
-
-	// check if we have additional info to add to the attachment,
-	// and overwrite some of the attachment fields if so
-	if ai != nil {
-		if ai.CreatedAt != nil {
-			attachment.CreatedAt = *ai.CreatedAt
-		}
-
-		if ai.StatusID != nil {
-			attachment.StatusID = *ai.StatusID
-		}
-
-		if ai.RemoteURL != nil {
-			attachment.RemoteURL = *ai.RemoteURL
-		}
-
-		if ai.Description != nil {
-			attachment.Description = *ai.Description
-		}
-
-		if ai.ScheduledStatusID != nil {
-			attachment.ScheduledStatusID = *ai.ScheduledStatusID
-		}
-
-		if ai.Blurhash != nil {
-			attachment.Blurhash = *ai.Blurhash
-		}
-
-		if ai.Avatar != nil {
-			attachment.Avatar = ai.Avatar
-		}
-
-		if ai.Header != nil {
-			attachment.Header = ai.Header
-		}
-
-		if ai.FocusX != nil {
-			attachment.FileMeta.Focus.X = *ai.FocusX
-		}
-
-		if ai.FocusY != nil {
-			attachment.FileMeta.Focus.Y = *ai.FocusY
-		}
-	}
-
-	processingMedia := &ProcessingMedia{
-		media:   attachment,
-		dataFn:  data,
-		postFn:  postData,
-		manager: m,
-	}
-
-	return processingMedia, nil
-}
-
-func (m *manager) preProcessRecache(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, id string) (*ProcessingMedia, error) {
-	// get the existing attachment from database.
-	attachment, err := m.state.DB.GetAttachmentByID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	processingMedia := &ProcessingMedia{
-		media:   attachment,
-		dataFn:  data,
-		postFn:  postData,
-		manager: m,
-		recache: true, // indicate it's a recache
-	}
-
-	return processingMedia, nil
 }

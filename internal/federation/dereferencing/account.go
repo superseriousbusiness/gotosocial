@@ -356,7 +356,7 @@ func (d *deref) fetchRemoteAccountAvatar(ctx context.Context, tsport transport.T
 	}
 
 	// Create new media processing request from the media manager instance.
-	processing, err := d.mediaManager.ProcessMedia(ctx, data, nil, accountID, &media.AdditionalMediaInfo{
+	processing, err := d.mediaManager.PreProcessMedia(ctx, data, nil, accountID, &media.AdditionalMediaInfo{
 		Avatar:    func() *bool { v := false; return &v }(),
 		RemoteURL: &avatarURL,
 	})
@@ -407,7 +407,7 @@ func (d *deref) fetchRemoteAccountHeader(ctx context.Context, tsport transport.T
 	}
 
 	// Create new media processing request from the media manager instance.
-	processing, err := d.mediaManager.ProcessMedia(ctx, data, nil, accountID, &media.AdditionalMediaInfo{
+	processing, err := d.mediaManager.PreProcessMedia(ctx, data, nil, accountID, &media.AdditionalMediaInfo{
 		Header:    func() *bool { v := true; return &v }(),
 		RemoteURL: &headerURL,
 	})

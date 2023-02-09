@@ -61,7 +61,7 @@ func (d *deref) GetRemoteEmoji(ctx context.Context, requestingUsername string, r
 			return t.DereferenceMedia(innerCtx, derefURI)
 		}
 
-		newProcessing, err := d.mediaManager.ProcessEmoji(ctx, dataFunc, nil, shortcode, id, emojiURI, ai, refresh)
+		newProcessing, err := d.mediaManager.PreProcessEmoji(ctx, dataFunc, nil, shortcode, id, emojiURI, ai, refresh)
 		if err != nil {
 			return nil, fmt.Errorf("GetRemoteEmoji: error processing emoji %s: %s", shortcodeDomain, err)
 		}
@@ -146,7 +146,6 @@ func (d *deref) populateEmojis(ctx context.Context, rawEmojis []*gtsmodel.Emoji,
 					Disabled:             gotEmoji.Disabled,
 					VisibleInPicker:      gotEmoji.VisibleInPicker,
 				}, refresh)
-
 				if err != nil {
 					log.Errorf("populateEmojis: couldn't refresh remote emoji %s: %s", shortcodeDomain, err)
 					continue
@@ -172,7 +171,6 @@ func (d *deref) populateEmojis(ctx context.Context, rawEmojis []*gtsmodel.Emoji,
 				Disabled:             e.Disabled,
 				VisibleInPicker:      e.VisibleInPicker,
 			}, refresh)
-
 			if err != nil {
 				log.Errorf("populateEmojis: couldn't get remote emoji %s: %s", shortcodeDomain, err)
 				continue

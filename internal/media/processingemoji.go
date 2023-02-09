@@ -21,18 +21,14 @@ package media
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"sync"
-	"time"
 
 	"codeberg.org/gruf/go-bytesize"
-	gostore "codeberg.org/gruf/go-store/v2/storage"
 	"github.com/h2non/filetype"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
@@ -305,130 +301,4 @@ func (p *ProcessingEmoji) finish(ctx context.Context) error {
 	p.emoji.ImageStaticFileSize = int(sz)
 
 	return nil
-}
-
-func (m *manager) preProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, emojiID string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error) {
-	instanceAccount, err := m.state.DB.GetInstanceAccount(ctx, "")
-	if err != nil {
-		return nil, fmt.Errorf("preProcessEmoji: error fetching this instance account from the db: %s", err)
-	}
-
-	var newPathID string
-	var emoji *gtsmodel.Emoji
-	if refresh {
-		emoji, err = m.state.DB.GetEmojiByID(ctx, emojiID)
-		if err != nil {
-			return nil, fmt.Errorf("preProcessEmoji: error fetching emoji to refresh from the db: %s", err)
-		}
-
-		// if this is a refresh, we will end up with new images
-		// stored for this emoji, so we can use the postData function
-		// to perform clean up of the old images from storage
-		originalPostData := postData
-		originalImagePath := emoji.ImagePath
-		originalImageStaticPath := emoji.ImageStaticPath
-		postData = func(innerCtx context.Context) error {
-			// trigger the original postData function if it was provided
-			if originalPostData != nil {
-				if err := originalPostData(innerCtx); err != nil {
-					return err
-				}
-			}
-
-			l := log.WithField("shortcode@domain", emoji.Shortcode+"@"+emoji.Domain)
-			l.Debug("postData: cleaning up old emoji files for refreshed emoji")
-			if err := m.state.Storage.Delete(innerCtx, originalImagePath); err != nil && !errors.Is(err, gostore.ErrNotFound) {
-				l.Errorf("postData: error cleaning up old emoji image at %s for refreshed emoji: %s", originalImagePath, err)
-			}
-			if err := m.state.Storage.Delete(innerCtx, originalImageStaticPath); err != nil && !errors.Is(err, gostore.ErrNotFound) {
-				l.Errorf("postData: error cleaning up old emoji static image at %s for refreshed emoji: %s", originalImageStaticPath, err)
-			}
-
-			return nil
-		}
-
-		newPathID, err = id.NewRandomULID()
-		if err != nil {
-			return nil, fmt.Errorf("preProcessEmoji: error generating alternateID for emoji refresh: %s", err)
-		}
-
-		// store + serve static image at new path ID
-		emoji.ImageStaticURL = uris.GenerateURIForAttachment(instanceAccount.ID, string(TypeEmoji), string(SizeStatic), newPathID, mimePng)
-		emoji.ImageStaticPath = fmt.Sprintf("%s/%s/%s/%s.%s", instanceAccount.ID, TypeEmoji, SizeStatic, newPathID, mimePng)
-
-		emoji.Shortcode = shortcode
-		emoji.URI = uri
-	} else {
-		disabled := false
-		visibleInPicker := true
-
-		// populate initial fields on the emoji -- some of these will be overwritten as we proceed
-		emoji = &gtsmodel.Emoji{
-			ID:                     emojiID,
-			CreatedAt:              time.Now(),
-			Shortcode:              shortcode,
-			Domain:                 "", // assume our own domain unless told otherwise
-			ImageRemoteURL:         "",
-			ImageStaticRemoteURL:   "",
-			ImageURL:               "",                                                                                                         // we don't know yet
-			ImageStaticURL:         uris.GenerateURIForAttachment(instanceAccount.ID, string(TypeEmoji), string(SizeStatic), emojiID, mimePng), // all static emojis are encoded as png
-			ImagePath:              "",                                                                                                         // we don't know yet
-			ImageStaticPath:        fmt.Sprintf("%s/%s/%s/%s.%s", instanceAccount.ID, TypeEmoji, SizeStatic, emojiID, mimePng),                 // all static emojis are encoded as png
-			ImageContentType:       "",                                                                                                         // we don't know yet
-			ImageStaticContentType: mimeImagePng,                                                                                               // all static emojis are encoded as png
-			ImageFileSize:          0,
-			ImageStaticFileSize:    0,
-			Disabled:               &disabled,
-			URI:                    uri,
-			VisibleInPicker:        &visibleInPicker,
-			CategoryID:             "",
-		}
-	}
-
-	emoji.ImageUpdatedAt = time.Now()
-	emoji.UpdatedAt = time.Now()
-
-	// check if we have additional info to add to the emoji,
-	// and overwrite some of the emoji fields if so
-	if ai != nil {
-		if ai.CreatedAt != nil {
-			emoji.CreatedAt = *ai.CreatedAt
-		}
-
-		if ai.Domain != nil {
-			emoji.Domain = *ai.Domain
-		}
-
-		if ai.ImageRemoteURL != nil {
-			emoji.ImageRemoteURL = *ai.ImageRemoteURL
-		}
-
-		if ai.ImageStaticRemoteURL != nil {
-			emoji.ImageStaticRemoteURL = *ai.ImageStaticRemoteURL
-		}
-
-		if ai.Disabled != nil {
-			emoji.Disabled = ai.Disabled
-		}
-
-		if ai.VisibleInPicker != nil {
-			emoji.VisibleInPicker = ai.VisibleInPicker
-		}
-
-		if ai.CategoryID != nil {
-			emoji.CategoryID = *ai.CategoryID
-		}
-	}
-
-	processingEmoji := &ProcessingEmoji{
-		instAccID: instanceAccount.ID,
-		emoji:     emoji,
-		refresh:   refresh,
-		newPathID: newPathID,
-		dataFn:    data,
-		postFn:    postData,
-		manager:   m,
-	}
-
-	return processingEmoji, nil
 }

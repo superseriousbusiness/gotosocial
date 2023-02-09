@@ -70,7 +70,7 @@ func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, 
 		}
 	}
 
-	processingEmoji, err := p.mediaManager.ProcessEmoji(ctx, data, nil, form.Shortcode, emojiID, emojiURI, ai, false)
+	processingEmoji, err := p.mediaManager.PreProcessEmoji(ctx, data, nil, form.Shortcode, emojiID, emojiURI, ai, false)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error processing emoji: %s", err), "error processing emoji")
 	}
