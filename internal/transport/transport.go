@@ -27,6 +27,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -84,35 +85,36 @@ type transport struct {
 }
 
 // GET will perform given http request using transport client, retrying on certain preset errors, or if status code is among retryOn.
-func (t *transport) GET(r *http.Request, retryOn ...int) (*http.Response, error) {
+func (t *transport) GET(r *http.Request) (*http.Response, error) {
 	if r.Method != http.MethodGet {
 		return nil, errors.New("must be GET request")
 	}
 	return t.do(r, func(r *http.Request) error {
 		return t.signGET(r)
-	}, retryOn...)
+	})
 }
 
 // POST will perform given http request using transport client, retrying on certain preset errors, or if status code is among retryOn.
-func (t *transport) POST(r *http.Request, body []byte, retryOn ...int) (*http.Response, error) {
+func (t *transport) POST(r *http.Request, body []byte) (*http.Response, error) {
 	if r.Method != http.MethodPost {
 		return nil, errors.New("must be POST request")
 	}
 	return t.do(r, func(r *http.Request) error {
 		return t.signPOST(r, body)
-	}, retryOn...)
+	})
 }
 
-func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryOn ...int) (*http.Response, error) {
-	const maxRetries = 5
+func (t *transport) do(r *http.Request, signer func(*http.Request) error) (*http.Response, error) {
+	const (
+		// max no. attempts
+		maxRetries = 5
 
-	var (
-		// Initial backoff duration
-		backoff = 2 * time.Second
-
-		// Get request hostname
-		host = r.URL.Hostname()
+		// starting backoff duration.
+		baseBackoff = 2 * time.Second
 	)
+
+	// Get request hostname
+	host := r.URL.Hostname()
 
 	// Check if recently reached max retries for this host
 	// so we don't need to bother reattempting it. The only
@@ -137,6 +139,8 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 	r.Header.Set("User-Agent", t.controller.userAgent)
 
 	for i := 0; i < maxRetries; i++ {
+		var backoff time.Duration
+
 		// Reset signing header fields
 		now := t.controller.clock.Now().UTC()
 		r.Header.Set("Date", now.Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
@@ -152,18 +156,26 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 
 		// Attempt to perform request
 		rsp, err := t.controller.client.Do(r)
-		if err == nil { //nolint shutup linter
+		if err == nil { //nolint:gocritic
 			// TooManyRequest means we need to slow
 			// down and retry our request. Codes over
 			// 500 generally indicate temp. outages.
 			if code := rsp.StatusCode; code < 500 &&
-				code != http.StatusTooManyRequests &&
-				!containsInt(retryOn, rsp.StatusCode) {
+				code != http.StatusTooManyRequests {
 				return rsp, nil
 			}
 
 			// Generate error from status code for logging
 			err = errors.New(`http response "` + rsp.Status + `"`)
+
+			// Search for a provided "Retry-After" header value.
+			if after := rsp.Header.Get("Retry-After"); after != "" {
+				// Attempt to parse this value as integer no. of seconds.
+				if u, _ := strconv.ParseUint(after, 10, 32); u != 0 {
+					backoff = time.Duration(u) * time.Second
+				}
+			}
+
 		} else if errorsv2.Is(err,
 			context.DeadlineExceeded,
 			context.Canceled,
@@ -179,9 +191,16 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 		} else if errors.As(err, &x509.UnknownAuthorityError{}) {
 			// Unknown authority errors we do NOT recover from
 			return nil, err
-		} else if fastFail {
+		}
+
+		if fastFail {
 			// on fast-fail, don't bother backoff/retry
 			return nil, fmt.Errorf("%w (fast fail)", err)
+		}
+
+		if backoff == 0 {
+			// No retry-after found, set our predefined backoff.
+			backoff = time.Duration(i) * baseBackoff
 		}
 
 		l.Errorf("backing off for %s after http request error: %v", backoff.String(), err)
@@ -237,14 +256,4 @@ func (t *transport) safesign(sign func()) {
 
 	// Perform signing
 	sign()
-}
-
-// containsInt checks if slice contains check.
-func containsInt(slice []int, check int) bool {
-	for _, i := range slice {
-		if i == check {
-			return true
-		}
-	}
-	return false
 }

@@ -760,3 +760,9 @@ advanced-rate-limit-requests: 300
 # Examples: [8, 4, 9, 0]
 # Default: 8
 advanced-throttling-multiplier: 8
+
+# Duration. 
+#
+# Examples: [30s, 10s, 5s, 1m]
+# Default: 30s
+advanced-throttling-retry-after: 30s
