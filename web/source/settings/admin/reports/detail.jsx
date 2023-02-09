@@ -60,7 +60,7 @@ function ReportDetailForm({ data: report }) {
 
 	return (
 		<div className="report detail">
-			<div>
+			<div className="usernames">
 				<Username user={from} /> reported <Username user={target} />
 			</div>
 

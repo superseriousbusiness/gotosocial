@@ -36,7 +36,7 @@ module.exports = function Username({ user, link = true }) {
 		? { fa: "fa-home", info: "Local user" }
 		: { fa: "fa-external-link-square", info: "Remote user" };
 
-	let Element = "span";
+	let Element = "div";
 	let href = null;
 
 	if (link) {
@@ -46,7 +46,7 @@ module.exports = function Username({ user, link = true }) {
 
 	return (
 		<Element className={className} href={href} target="_blank" rel="noreferrer" >
-			@{user.account.acct}
+			<span className="acct">@{user.account.acct}</span>
 			<i className={`fa fa-fw ${icon.fa}`} aria-hidden="true" title={icon.info} />
 			<span className="sr-only">{icon.info}</span>
 		</Element>
