@@ -92,8 +92,10 @@ type Manager interface {
 	// 'Pruning' in this context means removing the locally stored data of the attachment (both thumbnail and full size),
 	// and setting 'cached' to false on the associated attachment.
 	//
-	// The returned int is the amount of media that was pruned by this function.
-	PruneAllRemote(ctx context.Context, olderThanDays int) (int, error)
+	// The returned int is the amount of media that was/would be pruned by this function.
+	//
+	// If 'dry' is true, then only a dry run will be performed: nothing will actually be deleted.
+	PruneAllRemote(ctx context.Context, olderThanDays int, dry bool) (int, error)
 	// PruneAllMeta prunes unused/out of date headers and avatars cached on this instance.
 	//
 	// The returned int is the amount of media that was pruned by this function.
@@ -259,7 +261,7 @@ func scheduleCleanupJobs(m *manager) error {
 	if mediaRemoteCacheDays := config.GetMediaRemoteCacheDays(); mediaRemoteCacheDays > 0 {
 		if _, err := c.AddFunc("@midnight", func() {
 			begin := time.Now()
-			pruned, err := m.PruneAllRemote(pruneCtx, mediaRemoteCacheDays)
+			pruned, err := m.PruneAllRemote(pruneCtx, mediaRemoteCacheDays, false)
 			if err != nil {
 				log.Errorf("media manager: error pruning remote cache: %s", err)
 				return

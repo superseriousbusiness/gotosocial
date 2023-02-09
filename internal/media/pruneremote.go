@@ -29,12 +29,21 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-func (m *manager) PruneAllRemote(ctx context.Context, olderThanDays int) (int, error) {
-	var totalPruned int
-
+func (m *manager) PruneAllRemote(ctx context.Context, olderThanDays int, dry bool) (int, error) {
 	olderThan := time.Now().Add(-time.Hour * 24 * time.Duration(olderThanDays))
-	log.Infof("PruneAllRemote: pruning media older than %s", olderThan)
+	
+	eligible, err := m.db.CountRemoteOlderThan(ctx, olderThan)
+	if err != nil {
+		return 0, err
+	}
+	log.Infof("PruneAllRemote: found %d attachments eligible for pruning", eligible)
 
+	if dry {
+		return eligible, nil
+	}
+
+	log.Infof("PruneAllRemote: pruning %d remote media attachments older than %s", eligible, olderThan)
+	var totalPruned int
 	for {
 		// Select "selectPruneLimit" status attacchments at a time for pruning
 		attachments, err := m.db.GetRemoteOlderThan(ctx, olderThan, selectPruneLimit)
@@ -56,8 +65,8 @@ func (m *manager) PruneAllRemote(ctx context.Context, olderThanDays int) (int, e
 			totalPruned++
 		}
 	}
+	log.Infof("PruneAllRemote: finished pruning remote media attachments: pruned %d entries", totalPruned)
 
-	log.Infof("PruneAllRemote: finished pruning remote media: pruned %d entries", totalPruned)
 	return totalPruned, nil
 }
 

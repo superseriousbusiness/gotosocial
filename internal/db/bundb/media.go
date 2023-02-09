@@ -72,6 +72,23 @@ func (m *mediaDB) GetRemoteOlderThan(ctx context.Context, olderThan time.Time, l
 	return attachments, nil
 }
 
+func (m *mediaDB) CountRemoteOlderThan(ctx context.Context, olderThan time.Time) (int, db.Error) {
+	q := m.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("media_attachments"), bun.Ident("media_attachment")).
+		Column("media_attachment.id").
+		Where("? = ?", bun.Ident("media_attachment.cached"), true).
+		Where("? < ?", bun.Ident("media_attachment.created_at"), olderThan).
+		WhereGroup(" AND ", whereNotEmptyAndNotNull("media_attachment.remote_url"))
+
+	count, err := q.Count(ctx)
+	if err != nil {
+		return 0, m.conn.ProcessError(err)
+	}
+
+	return count, nil
+}
+
 func (m *mediaDB) GetAvatarsAndHeaders(ctx context.Context, maxID string, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {
 	attachments := []*gtsmodel.MediaAttachment{}
 

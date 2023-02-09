@@ -37,6 +37,11 @@ type Media interface {
 	// In other words, media attachments that originated remotely, and that we currently have cached locally.
 	GetRemoteOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, Error)
 
+	// CountRemoteOlderThan is like GetRemoteOlderThan, except instead of getting limit n attachments,
+	// it just counts how many remote attachments in the database  (including avatars and headers) meet
+	// the olderThan criteria.
+	CountRemoteOlderThan(ctx context.Context, olderThan time.Time) (int, Error)
+
 	// GetAvatarsAndHeaders fetches limit n avatars and headers with an id < maxID. These headers
 	// and avis may be in use or not; the caller should check this if it's important.
 	GetAvatarsAndHeaders(ctx context.Context, maxID string, limit int) ([]*gtsmodel.MediaAttachment, Error)

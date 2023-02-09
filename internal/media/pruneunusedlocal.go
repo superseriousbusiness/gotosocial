@@ -20,6 +20,7 @@ package media
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"codeberg.org/gruf/go-store/v2/storage"
@@ -65,7 +66,7 @@ func (m *manager) pruneOneLocal(ctx context.Context, attachment *gtsmodel.MediaA
 	if attachment.File.Path != "" {
 		// delete the full size attachment from storage
 		log.Tracef("pruneOneLocal: deleting %s", attachment.File.Path)
-		if err := m.storage.Delete(ctx, attachment.File.Path); err != nil && err != storage.ErrNotFound {
+		if err := m.storage.Delete(ctx, attachment.File.Path); err != nil && !errors.Is(err, storage.ErrNotFound) {
 			return err
 		}
 	}
@@ -73,7 +74,7 @@ func (m *manager) pruneOneLocal(ctx context.Context, attachment *gtsmodel.MediaA
 	if attachment.Thumbnail.Path != "" {
 		// delete the thumbnail from storage
 		log.Tracef("pruneOneLocal: deleting %s", attachment.Thumbnail.Path)
-		if err := m.storage.Delete(ctx, attachment.Thumbnail.Path); err != nil && err != storage.ErrNotFound {
+		if err := m.storage.Delete(ctx, attachment.Thumbnail.Path); err != nil && !errors.Is(err, storage.ErrNotFound) {
 			return err
 		}
 	}

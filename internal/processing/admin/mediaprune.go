@@ -33,7 +33,7 @@ func (p *processor) MediaPrune(ctx context.Context, mediaRemoteCacheDays int) gt
 	}
 
 	go func() {
-		pruned, err := p.mediaManager.PruneAllRemote(context.Background(), mediaRemoteCacheDays)
+		pruned, err := p.mediaManager.PruneAllRemote(context.Background(), mediaRemoteCacheDays, false)
 		if err != nil {
 			log.Errorf("MediaPrune: error pruning remote cache: %s", err)
 		} else {
