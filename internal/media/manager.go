@@ -31,9 +31,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
-// selectPruneLimit is the amount of media entries to select at a time from the db when pruning
-const selectPruneLimit = 20
-
 // UnusedLocalAttachmentCacheDays is the amount of days to keep local media in storage if it
 // is not attached to a status, or was never attached to a status.
 const UnusedLocalAttachmentCacheDays = 3
@@ -85,27 +82,36 @@ type Manager interface {
 	RecacheMedia(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, attachmentID string) (*ProcessingMedia, error)
 
 	/*
-		PRUNING FUNCTIONS
+		PRUNING/UNCACHING FUNCTIONS
 	*/
 
-	// PruneAllRemote prunes all remote media attachments cached on this instance which are older than the given amount of days.
-	// 'Pruning' in this context means removing the locally stored data of the attachment (both thumbnail and full size),
-	// and setting 'cached' to false on the associated attachment.
+	// PruneAll runs all of the below pruning/uncacheing functions, and then cleans up any resulting
+	// empty directories from the storage driver. It can be called as a shortcut for calling the below
+	// pruning functions one by one.
 	//
-	// The returned int is the amount of media that was/would be pruned by this function.
+	// If blocking is true, then any errors encountered during the prune will be combined + returned to
+	// the caller. If blocking is false, the prune is run in the background and errors are just logged
+	// instead.
+	PruneAll(ctx context.Context, mediaCacheRemoteDays int, blocking bool) error
+	// UncacheRemote uncaches all remote media attachments older than the given amount of days.
 	//
-	// If 'dry' is true, then only a dry run will be performed: nothing will actually be deleted.
-	PruneAllRemote(ctx context.Context, olderThanDays int, dry bool) (int, error)
-	// PruneAllMeta prunes unused/out of date headers and avatars cached on this instance.
+	// In this context, uncacheing means deleting media files from storage and marking the attachment
+	// as cached=false in the database.
+	//
+	// If 'dry' is true, then only a dry run will be performed: nothing will actually be changed.
+	//
+	// The returned int is the amount of media that was/would be uncached by this function.
+	UncacheRemote(ctx context.Context, olderThanDays int, dry bool) (int, error)
+	// PruneUnusedRemote prunes unused/out of date headers and avatars cached on this instance.
 	//
 	// The returned int is the amount of media that was pruned by this function.
-	PruneAllMeta(ctx context.Context) (int, error)
-	// PruneUnusedLocalAttachments prunes unused media attachments that were uploaded by
+	PruneUnusedRemote(ctx context.Context) (int, error)
+	// PruneUnusedLocal prunes unused media attachments that were uploaded by
 	// a user on this instance, but never actually attached to a status, or attached but
 	// later detached.
 	//
 	// The returned int is the amount of media that was pruned by this function.
-	PruneUnusedLocalAttachments(ctx context.Context) (int, error)
+	PruneUnusedLocal(ctx context.Context) (int, error)
 	// PruneOrphaned prunes files that exist in storage but which do not have a corresponding
 	// entry in the database.
 	//
@@ -232,45 +238,13 @@ func scheduleCleanupJobs(m *manager) error {
 	pruneCtx, pruneCancel := context.WithCancel(context.Background())
 
 	if _, err := c.AddFunc("@midnight", func() {
-		begin := time.Now()
-		pruned, err := m.PruneAllMeta(pruneCtx)
-		if err != nil {
-			log.Errorf("media manager: error pruning meta: %s", err)
+		if err := m.PruneAll(pruneCtx, config.GetMediaRemoteCacheDays(), true); err != nil {
+			log.Error(err)
 			return
 		}
-		log.Infof("media manager: pruned %d meta entries in %s", pruned, time.Since(begin))
 	}); err != nil {
 		pruneCancel()
-		return fmt.Errorf("error starting media manager meta cleanup job: %s", err)
-	}
-
-	if _, err := c.AddFunc("@midnight", func() {
-		begin := time.Now()
-		pruned, err := m.PruneUnusedLocalAttachments(pruneCtx)
-		if err != nil {
-			log.Errorf("media manager: error pruning unused local attachments: %s", err)
-			return
-		}
-		log.Infof("media manager: pruned %d unused local attachments in %s", pruned, time.Since(begin))
-	}); err != nil {
-		pruneCancel()
-		return fmt.Errorf("error starting media manager unused local attachments cleanup job: %s", err)
-	}
-
-	// start remote cache cleanup cronjob if configured
-	if mediaRemoteCacheDays := config.GetMediaRemoteCacheDays(); mediaRemoteCacheDays > 0 {
-		if _, err := c.AddFunc("@midnight", func() {
-			begin := time.Now()
-			pruned, err := m.PruneAllRemote(pruneCtx, mediaRemoteCacheDays, false)
-			if err != nil {
-				log.Errorf("media manager: error pruning remote cache: %s", err)
-				return
-			}
-			log.Infof("media manager: pruned %d remote cache entries in %s", pruned, time.Since(begin))
-		}); err != nil {
-			pruneCancel()
-			return fmt.Errorf("error starting media manager remote cache cleanup job: %s", err)
-		}
+		return fmt.Errorf("error starting media manager cleanup job: %s", err)
 	}
 
 	// try to stop any jobs gracefully by waiting til they're finished
