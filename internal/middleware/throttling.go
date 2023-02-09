@@ -35,11 +35,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const (
-	errCapacityExceeded = "server capacity exceeded"
-	errContextCanceled  = "context canceled"
-)
-
 // token represents a request that is being processed.
 type token struct{}
 
