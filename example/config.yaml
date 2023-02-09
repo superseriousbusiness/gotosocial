@@ -761,8 +761,9 @@ advanced-rate-limit-requests: 300
 # Default: 8
 advanced-throttling-multiplier: 8
 
-# Duration. 
+# Duration. Time period to use as the "retry-after" header value in response to throttled requests.
+# Minimum resolution is 1 second.
 #
 # Examples: [30s, 10s, 5s, 1m]
 # Default: 30s
-advanced-throttling-retry-after: 30s
+advanced-throttling-retry-after: "30s"
