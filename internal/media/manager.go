@@ -20,11 +20,13 @@ package media
 
 import (
 	"context"
-	"fmt"
+	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"codeberg.org/gruf/go-runners"
+	"codeberg.org/gruf/go-sched"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
 var SupportedMIMETypes = []string{
@@ -42,11 +44,6 @@ var SupportedEmojiMIMETypes = []string{
 
 // Manager provides an interface for managing media: parsing, storing, and retrieving media objects like photos, videos, and gifs.
 type Manager interface {
-	// Stop stops the underlying worker pool of the manager. It should be called
-	// when closing GoToSocial in order to cleanly finish any in-progress jobs.
-	// It will block until workers are finished processing.
-	Stop() error
-
 	/*
 		PROCESSING FUNCTIONS
 	*/
@@ -139,11 +136,7 @@ type Manager interface {
 }
 
 type manager struct {
-	db           db.DB
-	storage      *storage.Driver
-	emojiWorker  *concurrency.WorkerPool[*ProcessingEmoji]
-	mediaWorker  *concurrency.WorkerPool[*ProcessingMedia]
-	stopCronJobs func() error
+	state *state.State
 }
 
 // NewManager returns a media manager with the given db and underlying storage.
@@ -152,88 +145,89 @@ type manager struct {
 // a limited number of media will be processed in parallel. The numbers of workers
 // is determined from the $GOMAXPROCS environment variable (usually no. CPU cores).
 // See internal/concurrency.NewWorkerPool() documentation for further information.
-func NewManager(database db.DB, storage *storage.Driver) (Manager, error) {
-	m := &manager{
-		db:      database,
-		storage: storage,
-	}
-
-	// Prepare the media worker pool.
-	m.mediaWorker = concurrency.NewWorkerPool[*ProcessingMedia](-1, 10)
-	m.mediaWorker.SetProcessor(func(ctx context.Context, media *ProcessingMedia) error {
-		if _, err := media.LoadAttachment(ctx); err != nil {
-			return fmt.Errorf("error loading media %s: %v", media.AttachmentID(), err)
-		}
-		return nil
-	})
-
-	// Prepare the emoji worker pool.
-	m.emojiWorker = concurrency.NewWorkerPool[*ProcessingEmoji](-1, 10)
-	m.emojiWorker.SetProcessor(func(ctx context.Context, emoji *ProcessingEmoji) error {
-		if _, err := emoji.LoadEmoji(ctx); err != nil {
-			return fmt.Errorf("error loading emoji %s: %v", emoji.EmojiID(), err)
-		}
-		return nil
-	})
-
-	// Start the worker pools.
-	if err := m.mediaWorker.Start(); err != nil {
-		return nil, err
-	}
-	if err := m.emojiWorker.Start(); err != nil {
-		return nil, err
-	}
-
-	// Schedule cron job(s) for clean up.
-	if err := scheduleCleanup(m); err != nil {
-		return nil, err
-	}
-
-	return m, nil
+func NewManager(state *state.State) Manager {
+	m := &manager{state: state}
+	scheduleCleanupJobs(m)
+	return m
 }
 
 func (m *manager) ProcessMedia(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error) {
-	processingMedia, err := m.preProcessMedia(ctx, data, postData, accountID, ai)
+	// Create a new processing media object for this media request.
+	media, err := m.preProcessMedia(ctx, data, postData, accountID, ai)
 	if err != nil {
 		return nil, err
 	}
-	m.mediaWorker.Queue(processingMedia)
-	return processingMedia, nil
-}
 
-func (m *manager) ProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error) {
-	processingEmoji, err := m.preProcessEmoji(ctx, data, postData, shortcode, id, uri, ai, refresh)
-	if err != nil {
-		return nil, err
-	}
-	m.emojiWorker.Queue(processingEmoji)
-	return processingEmoji, nil
+	// Attempt to add this media processing item to the worker queue.
+	workerpool_MustEnqueue(&m.state.Workers.Media, ctx, media.Process)
+
+	return media, nil
 }
 
 func (m *manager) RecacheMedia(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, attachmentID string) (*ProcessingMedia, error) {
-	processingRecache, err := m.preProcessRecache(ctx, data, postData, attachmentID)
+	// Create a new processing media object for this media request.
+	media, err := m.preProcessRecache(ctx, data, postData, attachmentID)
 	if err != nil {
 		return nil, err
 	}
-	m.mediaWorker.Queue(processingRecache)
-	return processingRecache, nil
+
+	// Attempt to add this media processing item to the worker queue.
+	workerpool_MustEnqueue(&m.state.Workers.Media, ctx, media.Process)
+
+	return media, nil
 }
 
-func (m *manager) Stop() error {
-	// Stop worker pools.
-	mediaErr := m.mediaWorker.Stop()
-	emojiErr := m.emojiWorker.Stop()
-
-	var cronErr error
-	if m.stopCronJobs != nil {
-		cronErr = m.stopCronJobs()
+func (m *manager) ProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error) {
+	// Create a new processing emoji object for this emoji request.
+	emoji, err := m.preProcessEmoji(ctx, data, postData, shortcode, id, uri, ai, refresh)
+	if err != nil {
+		return nil, err
 	}
 
-	if mediaErr != nil {
-		return mediaErr
-	} else if emojiErr != nil {
-		return emojiErr
+	// Attempt to add this emoji processing item to the worker queue.
+	workerpool_MustEnqueue(&m.state.Workers.Emoji, ctx, emoji.Process)
+
+	return emoji, nil
+}
+
+func scheduleCleanupJobs(m *manager) {
+	const day = time.Hour * 24
+
+	// Calculate closest midnight.
+	now := time.Now()
+	midnight := now.Round(day)
+
+	if midnight.Before(now) {
+		// since <= 11:59am rounds down.
+		midnight = midnight.Add(day)
 	}
 
-	return cronErr
+	// Get ctx associated with scheduler run state.
+	done := m.state.Workers.Scheduler.Done()
+	doneCtx := runners.CancelCtx(done)
+
+	// Schedule the PruneAll task to execute every day at midnight.
+	m.state.Workers.Scheduler.Schedule(sched.NewJob(func(now time.Time) {
+		err := m.PruneAll(doneCtx, config.GetMediaRemoteCacheDays(), true)
+		if err != nil {
+			log.Errorf("error during prune: %v", err)
+		}
+		log.Infof("finished pruning all in %s", time.Since(now))
+	}).EveryAt(midnight, day))
+}
+
+// workerpool_MustEnqueue is a small wrapper func around a runners.WorkerPool to allow block on queue until
+// the given context is cancelled. After which queuing will be done async and function returns to caller.
+func workerpool_MustEnqueue(pool *runners.WorkerPool, ctx context.Context, process runners.WorkerFunc) { //nolint: revive
+	if !pool.EnqueueCtx(ctx, process) && pool.Running() {
+		log.Warnf("context canceled attempting to add to queue")
+
+		// We failed to add this entry to the worker queue before the
+		// incoming context was cancelled. So to ensure processing
+		// we simply queue it asynchronously and return early to caller.
+		// NOTE: a stalled goroutine waiting to add a worker function to
+		//       the queue is preferable to everytime on context cancelled
+		//       processing the media anyway... That could lead to DOS.
+		go pool.Enqueue(process)
+	}
 }

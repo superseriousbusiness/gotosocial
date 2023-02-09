@@ -117,7 +117,7 @@ func (r *router) Start() {
 	// "debug" or "debugenv" build-tag is set pprof stats will be served
 	// at the standard "/debug/pprof" URL.
 	r.srv.Handler = debug.WithPprof(r.srv.Handler)
-	if debug.DEBUG() {
+	if debug.DEBUG {
 		// Profiling requires timeouts longer than 30s, so reset these.
 		log.Warn("resetting http.Server{} timeout to support profiling")
 		r.srv.ReadTimeout = 0

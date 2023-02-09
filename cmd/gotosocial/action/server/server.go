@@ -91,33 +91,35 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating instance instance: %s", err)
 	}
 
-	// Create the client API and federator worker pools
-	// NOTE: these MUST NOT be used until they are passed to the
-	// processor and it is started. The reason being that the processor
-	// sets the Worker process functions and start the underlying pools
-	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
-	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
-
-	federatingDB := federatingdb.New(dbService, fedWorker)
-
-	// build converters and util
-	typeConverter := typeutils.NewConverter(dbService)
-
 	// Open the storage backend
 	storage, err := gtsstorage.AutoConfig()
 	if err != nil {
 		return fmt.Errorf("error creating storage backend: %w", err)
 	}
 
+	// Set the state storage driver
+	state.Storage = storage
+
 	// Build HTTP client (TODO: add configurables here)
 	client := httpclient.New(httpclient.Config{})
 
+	// Initialize workers.
+	state.Workers.Start()
+	defer state.Workers.Stop()
+
+	// Create the client API and federator worker pools
+	// NOTE: these MUST NOT be used until they are passed to the
+	// processor and it is started. The reason being that the processor
+	// sets the Worker process functions and start the underlying pools
+	// TODO: move these into state.Workers (and maybe reformat worker pools).
+	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+
 	// build backend handlers
-	mediaManager, err := media.NewManager(dbService, storage)
-	if err != nil {
-		return fmt.Errorf("error creating media manager: %s", err)
-	}
+	mediaManager := media.NewManager(&state)
 	oauthServer := oauth.New(ctx, dbService)
+	typeConverter := typeutils.NewConverter(dbService)
+	federatingDB := federatingdb.New(dbService, fedWorker, typeConverter)
 	transportController := transport.NewController(dbService, federatingDB, &federation.Clock{}, client)
 	federator := federation.NewFederator(dbService, federatingDB, transportController, typeConverter, mediaManager)
 

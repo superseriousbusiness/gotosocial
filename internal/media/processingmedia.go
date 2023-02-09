@@ -53,8 +53,7 @@ func (p *ProcessingMedia) AttachmentID() string {
 	return p.media.ID // immutable, safe outside mutex.
 }
 
-// LoadAttachment blocks until the thumbnail and fullsize content
-// has been processed, and then returns the completed attachment.
+// LoadAttachment blocks until the thumbnail and fullsize content has been processed, and then returns the completed attachment.
 func (p *ProcessingMedia) LoadAttachment(ctx context.Context) (*gtsmodel.MediaAttachment, error) {
 	// only process once.
 	p.once.Do(func() {
@@ -91,12 +90,12 @@ func (p *ProcessingMedia) LoadAttachment(ctx context.Context) (*gtsmodel.MediaAt
 
 		if p.recache {
 			// Existing attachment we're recaching, so only need to update.
-			err = p.manager.db.UpdateByID(ctx, p.media, p.media.ID)
+			err = p.manager.state.DB.UpdateByID(ctx, p.media, p.media.ID)
 			return
 		}
 
 		// New attachment, first time caching.
-		err = p.manager.db.Put(ctx, p.media)
+		err = p.manager.state.DB.Put(ctx, p.media)
 		return //nolint shutup linter i like this here
 	})
 
@@ -105,6 +104,12 @@ func (p *ProcessingMedia) LoadAttachment(ctx context.Context) (*gtsmodel.MediaAt
 	}
 
 	return p.media, nil
+}
+
+func (p *ProcessingMedia) Process(ctx context.Context) {
+	if _, err := p.LoadAttachment(ctx); err != nil {
+		log.Error("error processing media %s: %v", p.media.ID, err)
+	}
 }
 
 // store calls the data function attached to p if it hasn't been called yet,
@@ -186,17 +191,17 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	)
 
 	// This shouldn't already exist, but we do a check as it's worth logging.
-	if have, _ := p.manager.storage.Has(ctx, p.media.File.Path); have {
+	if have, _ := p.manager.state.Storage.Has(ctx, p.media.File.Path); have {
 		log.Warnf("media already exists at storage path: %s", p.media.File.Path)
 
 		// Attempt to remove existing media at storage path (might be broken / out-of-date)
-		if err := p.manager.storage.Delete(ctx, p.media.File.Path); err != nil {
+		if err := p.manager.state.Storage.Delete(ctx, p.media.File.Path); err != nil {
 			return fmt.Errorf("error removing media from storage: %v", err)
 		}
 	}
 
 	// Write the final image reader stream to our storage.
-	sz, err = p.manager.storage.PutStream(ctx, p.media.File.Path, r)
+	sz, err = p.manager.state.Storage.PutStream(ctx, p.media.File.Path, r)
 	if err != nil {
 		return fmt.Errorf("error writing media to storage: %w", err)
 	}
@@ -221,7 +226,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 
 func (p *ProcessingMedia) finish(ctx context.Context) error {
 	// Fetch a stream to the original file in storage.
-	rc, err := p.manager.storage.GetStream(ctx, p.media.File.Path)
+	rc, err := p.manager.state.Storage.GetStream(ctx, p.media.File.Path)
 	if err != nil {
 		return fmt.Errorf("error loading file from storage: %w", err)
 	}
@@ -299,11 +304,11 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 	p.media.Blurhash = hash
 
 	// This shouldn't already exist, but we do a check as it's worth logging.
-	if have, _ := p.manager.storage.Has(ctx, p.media.Thumbnail.Path); have {
+	if have, _ := p.manager.state.Storage.Has(ctx, p.media.Thumbnail.Path); have {
 		log.Warnf("thumbnail already exists at storage path: %s", p.media.Thumbnail.Path)
 
 		// Attempt to remove existing thumbnail at storage path (might be broken / out-of-date)
-		if err := p.manager.storage.Delete(ctx, p.media.Thumbnail.Path); err != nil {
+		if err := p.manager.state.Storage.Delete(ctx, p.media.Thumbnail.Path); err != nil {
 			return fmt.Errorf("error removing thumbnail from storage: %v", err)
 		}
 	}
@@ -314,7 +319,7 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 	})
 
 	// Stream-encode the JPEG thumbnail image into storage.
-	sz, err := p.manager.storage.PutStream(ctx, p.media.Thumbnail.Path, enc)
+	sz, err := p.manager.state.Storage.PutStream(ctx, p.media.Thumbnail.Path, enc)
 	if err != nil {
 		return fmt.Errorf("error stream-encoding thumbnail to storage: %w", err)
 	}
@@ -435,7 +440,7 @@ func (m *manager) preProcessMedia(ctx context.Context, data DataFunc, postData P
 
 func (m *manager) preProcessRecache(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, id string) (*ProcessingMedia, error) {
 	// get the existing attachment from database.
-	attachment, err := m.db.GetAttachmentByID(ctx, id)
+	attachment, err := m.state.DB.GetAttachmentByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}

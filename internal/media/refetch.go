@@ -47,7 +47,7 @@ func (m *manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 	// page through emojis 20 at a time, looking for those with missing images
 	for {
 		// Fetch next block of emojis from database
-		emojis, err := m.db.GetEmojis(ctx, domain, false, true, "", maxShortcodeDomain, "", 20)
+		emojis, err := m.state.DB.GetEmojis(ctx, domain, false, true, "", maxShortcodeDomain, "", 20)
 		if err != nil {
 			if !errors.Is(err, db.ErrNoEntries) {
 				// an actual error has occurred
@@ -86,7 +86,7 @@ func (m *manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 
 	var totalRefetched int
 	for _, emojiID := range refetchIDs {
-		emoji, err := m.db.GetEmojiByID(ctx, emojiID)
+		emoji, err := m.state.DB.GetEmojiByID(ctx, emojiID)
 		if err != nil {
 			// this shouldn't happen--since we know we have the emoji--so return if it does
 			return 0, fmt.Errorf("error getting emoji %s: %w", emojiID, err)
@@ -133,13 +133,13 @@ func (m *manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 }
 
 func (m *manager) emojiRequiresRefetch(ctx context.Context, emoji *gtsmodel.Emoji) (bool, error) {
-	if has, err := m.storage.Has(ctx, emoji.ImagePath); err != nil {
+	if has, err := m.state.Storage.Has(ctx, emoji.ImagePath); err != nil {
 		return false, err
 	} else if !has {
 		return true, nil
 	}
 
-	if has, err := m.storage.Has(ctx, emoji.ImageStaticPath); err != nil {
+	if has, err := m.state.Storage.Has(ctx, emoji.ImageStaticPath); err != nil {
 		return false, err
 	} else if !has {
 		return true, nil

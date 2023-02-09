@@ -110,12 +110,12 @@ func (p *ProcessingEmoji) LoadEmoji(ctx context.Context) (*gtsmodel.Emoji, error
 			}
 
 			// Existing emoji we're refreshing, so only need to update.
-			_, err = p.manager.db.UpdateEmoji(ctx, p.emoji, columns...)
+			_, err = p.manager.state.DB.UpdateEmoji(ctx, p.emoji, columns...)
 			return
 		}
 
 		// New emoji media, first time caching.
-		err = p.manager.db.PutEmoji(ctx, p.emoji)
+		err = p.manager.state.DB.PutEmoji(ctx, p.emoji)
 		return //nolint shutup linter i like this here
 	})
 
@@ -124,6 +124,12 @@ func (p *ProcessingEmoji) LoadEmoji(ctx context.Context) (*gtsmodel.Emoji, error
 	}
 
 	return p.emoji, nil
+}
+
+func (p *ProcessingEmoji) Process(ctx context.Context) {
+	if _, err := p.LoadEmoji(ctx); err != nil {
+		log.Error("error processing emoji %s: %v", p.emoji.ID, err)
+	}
 }
 
 // store calls the data function attached to p if it hasn't been called yet,
@@ -220,24 +226,24 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	)
 
 	// This shouldn't already exist, but we do a check as it's worth logging.
-	if have, _ := p.manager.storage.Has(ctx, p.emoji.ImagePath); have {
+	if have, _ := p.manager.state.Storage.Has(ctx, p.emoji.ImagePath); have {
 		log.Warnf("emoji already exists at storage path: %s", p.emoji.ImagePath)
 
 		// Attempt to remove existing emoji at storage path (might be broken / out-of-date)
-		if err := p.manager.storage.Delete(ctx, p.emoji.ImagePath); err != nil {
+		if err := p.manager.state.Storage.Delete(ctx, p.emoji.ImagePath); err != nil {
 			return fmt.Errorf("error removing emoji from storage: %v", err)
 		}
 	}
 
 	// Write the final image reader stream to our storage.
-	sz, err = p.manager.storage.PutStream(ctx, p.emoji.ImagePath, r)
+	sz, err = p.manager.state.Storage.PutStream(ctx, p.emoji.ImagePath, r)
 	if err != nil {
 		return fmt.Errorf("error writing emoji to storage: %w", err)
 	}
 
 	// Once again check size in case none was provided previously.
 	if size := bytesize.Size(sz); size > maxSize {
-		if err := p.manager.storage.Delete(ctx, p.emoji.ImagePath); err != nil {
+		if err := p.manager.state.Storage.Delete(ctx, p.emoji.ImagePath); err != nil {
 			log.Errorf("error removing too-large-emoji from storage: %v", err)
 		}
 		return fmt.Errorf("calculated emoji size %s greater than max allowed %s", size, maxSize)
@@ -259,7 +265,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 
 func (p *ProcessingEmoji) finish(ctx context.Context) error {
 	// Fetch a stream to the original file in storage.
-	rc, err := p.manager.storage.GetStream(ctx, p.emoji.ImagePath)
+	rc, err := p.manager.state.Storage.GetStream(ctx, p.emoji.ImagePath)
 	if err != nil {
 		return fmt.Errorf("error loading file from storage: %w", err)
 	}
@@ -277,11 +283,11 @@ func (p *ProcessingEmoji) finish(ctx context.Context) error {
 	}
 
 	// This shouldn't already exist, but we do a check as it's worth logging.
-	if have, _ := p.manager.storage.Has(ctx, p.emoji.ImageStaticPath); have {
+	if have, _ := p.manager.state.Storage.Has(ctx, p.emoji.ImageStaticPath); have {
 		log.Warnf("static emoji already exists at storage path: %s", p.emoji.ImagePath)
 
 		// Attempt to remove static existing emoji at storage path (might be broken / out-of-date)
-		if err := p.manager.storage.Delete(ctx, p.emoji.ImageStaticPath); err != nil {
+		if err := p.manager.state.Storage.Delete(ctx, p.emoji.ImageStaticPath); err != nil {
 			return fmt.Errorf("error removing static emoji from storage: %v", err)
 		}
 	}
@@ -290,7 +296,7 @@ func (p *ProcessingEmoji) finish(ctx context.Context) error {
 	enc := staticImg.ToPNG()
 
 	// Stream-encode the PNG static image into storage.
-	sz, err := p.manager.storage.PutStream(ctx, p.emoji.ImageStaticPath, enc)
+	sz, err := p.manager.state.Storage.PutStream(ctx, p.emoji.ImageStaticPath, enc)
 	if err != nil {
 		return fmt.Errorf("error stream-encoding static emoji to storage: %w", err)
 	}
@@ -302,7 +308,7 @@ func (p *ProcessingEmoji) finish(ctx context.Context) error {
 }
 
 func (m *manager) preProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, emojiID string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error) {
-	instanceAccount, err := m.db.GetInstanceAccount(ctx, "")
+	instanceAccount, err := m.state.DB.GetInstanceAccount(ctx, "")
 	if err != nil {
 		return nil, fmt.Errorf("preProcessEmoji: error fetching this instance account from the db: %s", err)
 	}
@@ -310,7 +316,7 @@ func (m *manager) preProcessEmoji(ctx context.Context, data DataFunc, postData P
 	var newPathID string
 	var emoji *gtsmodel.Emoji
 	if refresh {
-		emoji, err = m.db.GetEmojiByID(ctx, emojiID)
+		emoji, err = m.state.DB.GetEmojiByID(ctx, emojiID)
 		if err != nil {
 			return nil, fmt.Errorf("preProcessEmoji: error fetching emoji to refresh from the db: %s", err)
 		}
@@ -331,10 +337,10 @@ func (m *manager) preProcessEmoji(ctx context.Context, data DataFunc, postData P
 
 			l := log.WithField("shortcode@domain", emoji.Shortcode+"@"+emoji.Domain)
 			l.Debug("postData: cleaning up old emoji files for refreshed emoji")
-			if err := m.storage.Delete(innerCtx, originalImagePath); err != nil && !errors.Is(err, gostore.ErrNotFound) {
+			if err := m.state.Storage.Delete(innerCtx, originalImagePath); err != nil && !errors.Is(err, gostore.ErrNotFound) {
 				l.Errorf("postData: error cleaning up old emoji image at %s for refreshed emoji: %s", originalImagePath, err)
 			}
-			if err := m.storage.Delete(innerCtx, originalImageStaticPath); err != nil && !errors.Is(err, gostore.ErrNotFound) {
+			if err := m.state.Storage.Delete(innerCtx, originalImageStaticPath); err != nil && !errors.Is(err, gostore.ErrNotFound) {
 				l.Errorf("postData: error cleaning up old emoji static image at %s for refreshed emoji: %s", originalImageStaticPath, err)
 			}
 

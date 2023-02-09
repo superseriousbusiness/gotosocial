@@ -72,7 +72,7 @@ func (m *manager) PruneAll(ctx context.Context, mediaCacheRemoteDays int, blocki
 			log.Infof("pruned %d orphaned media", pruned)
 		}
 
-		if err := m.storage.Storage.Clean(innerCtx); err != nil {
+		if err := m.state.Storage.Storage.Clean(innerCtx); err != nil {
 			errs = append(errs, fmt.Sprintf("error cleaning storage: (%s)", err))
 		} else {
 			log.Info("cleaned storage")
@@ -116,7 +116,7 @@ func (m *manager) PruneUnusedRemote(ctx context.Context, dry bool) (int, error) 
 		}
 	}
 
-	for attachments, err = m.db.GetAvatarsAndHeaders(ctx, maxID, selectPruneLimit); err == nil && len(attachments) != 0; attachments, err = m.db.GetAvatarsAndHeaders(ctx, maxID, selectPruneLimit) {
+	for attachments, err = m.state.DB.GetAvatarsAndHeaders(ctx, maxID, selectPruneLimit); err == nil && len(attachments) != 0; attachments, err = m.state.DB.GetAvatarsAndHeaders(ctx, maxID, selectPruneLimit) {
 		maxID = attachments[len(attachments)-1].ID // use the id of the last attachment in the slice as the next 'maxID' value
 
 		// Prune each attachment that meets one of the following criteria:
@@ -157,7 +157,7 @@ func (m *manager) PruneOrphaned(ctx context.Context, dry bool) (int, error) {
 		return false
 	}
 
-	iterator, err := m.storage.Iterator(ctx, match) // make sure this iterator is always released
+	iterator, err := m.state.Storage.Iterator(ctx, match) // make sure this iterator is always released
 	if err != nil {
 		return 0, fmt.Errorf("PruneOrphaned: error getting storage iterator: %w", err)
 	}
@@ -172,7 +172,7 @@ func (m *manager) PruneOrphaned(ctx context.Context, dry bool) (int, error) {
 	// Emojis are stored under the instance account,
 	// so we need the ID of the instance account for
 	// the next part.
-	instanceAccount, err := m.db.GetInstanceAccount(ctx, "")
+	instanceAccount, err := m.state.DB.GetInstanceAccount(ctx, "")
 	if err != nil {
 		iterator.Release()
 		return 0, fmt.Errorf("PruneOrphaned: error getting instance account: %w", err)
@@ -223,7 +223,7 @@ func (m *manager) orphaned(ctx context.Context, key string, instanceAccountID st
 	// Look for keys in storage that we don't have an attachment for.
 	switch Type(mediaType) {
 	case TypeAttachment, TypeHeader, TypeAvatar:
-		if _, err := m.db.GetAttachmentByID(ctx, mediaID); err != nil {
+		if _, err := m.state.DB.GetAttachmentByID(ctx, mediaID); err != nil {
 			if !errors.Is(err, db.ErrNoEntries) {
 				return false, fmt.Errorf("error calling GetAttachmentByID: %w", err)
 			}
@@ -234,7 +234,7 @@ func (m *manager) orphaned(ctx context.Context, key string, instanceAccountID st
 		// the MEDIA_ID part of the key for emojis will not necessarily correspond
 		// to the file that's currently being used as the emoji image.
 		staticURL := uris.GenerateURIForAttachment(instanceAccountID, string(TypeEmoji), string(SizeStatic), mediaID, mimePng)
-		if _, err := m.db.GetEmojiByStaticURL(ctx, staticURL); err != nil {
+		if _, err := m.state.DB.GetEmojiByStaticURL(ctx, staticURL); err != nil {
 			if !errors.Is(err, db.ErrNoEntries) {
 				return false, fmt.Errorf("error calling GetEmojiByStaticURL: %w", err)
 			}
@@ -254,7 +254,7 @@ func (m *manager) UncacheRemote(ctx context.Context, olderThanDays int, dry bool
 
 	if dry {
 		// Dry run, just count eligible entries without removing them.
-		return m.db.CountRemoteOlderThan(ctx, olderThan)
+		return m.state.DB.CountRemoteOlderThan(ctx, olderThan)
 	}
 
 	var (
@@ -263,7 +263,7 @@ func (m *manager) UncacheRemote(ctx context.Context, olderThanDays int, dry bool
 		err         error
 	)
 
-	for attachments, err = m.db.GetRemoteOlderThan(ctx, olderThan, selectPruneLimit); err == nil && len(attachments) != 0; attachments, err = m.db.GetRemoteOlderThan(ctx, olderThan, selectPruneLimit) {
+	for attachments, err = m.state.DB.GetRemoteOlderThan(ctx, olderThan, selectPruneLimit); err == nil && len(attachments) != 0; attachments, err = m.state.DB.GetRemoteOlderThan(ctx, olderThan, selectPruneLimit) {
 		olderThan = attachments[len(attachments)-1].CreatedAt // use the created time of the last attachment in the slice as the next 'olderThan' value
 
 		for _, attachment := range attachments {
@@ -287,7 +287,7 @@ func (m *manager) PruneUnusedLocal(ctx context.Context, dry bool) (int, error) {
 
 	if dry {
 		// Dry run, just count eligible entries without removing them.
-		return m.db.CountLocalUnattachedOlderThan(ctx, olderThan)
+		return m.state.DB.CountLocalUnattachedOlderThan(ctx, olderThan)
 	}
 
 	var (
@@ -296,7 +296,7 @@ func (m *manager) PruneUnusedLocal(ctx context.Context, dry bool) (int, error) {
 		err         error
 	)
 
-	for attachments, err = m.db.GetLocalUnattachedOlderThan(ctx, olderThan, selectPruneLimit); err == nil && len(attachments) != 0; attachments, err = m.db.GetLocalUnattachedOlderThan(ctx, olderThan, selectPruneLimit) {
+	for attachments, err = m.state.DB.GetLocalUnattachedOlderThan(ctx, olderThan, selectPruneLimit); err == nil && len(attachments) != 0; attachments, err = m.state.DB.GetLocalUnattachedOlderThan(ctx, olderThan, selectPruneLimit) {
 		olderThan = attachments[len(attachments)-1].CreatedAt // use the created time of the last attachment in the slice as the next 'olderThan' value
 
 		for _, attachment := range attachments {
@@ -325,7 +325,7 @@ func (m *manager) deleteAttachment(ctx context.Context, attachment *gtsmodel.Med
 	}
 
 	// Delete attachment completely.
-	return m.db.DeleteByID(ctx, attachment.ID, attachment)
+	return m.state.DB.DeleteByID(ctx, attachment.ID, attachment)
 }
 
 func (m *manager) uncacheAttachment(ctx context.Context, attachment *gtsmodel.MediaAttachment) error {
@@ -337,14 +337,14 @@ func (m *manager) uncacheAttachment(ctx context.Context, attachment *gtsmodel.Me
 	attachment.UpdatedAt = time.Now()
 	cached := false
 	attachment.Cached = &cached
-	return m.db.UpdateByID(ctx, attachment, attachment.ID, "updated_at", "cached")
+	return m.state.DB.UpdateByID(ctx, attachment, attachment.ID, "updated_at", "cached")
 }
 
 func (m *manager) removeFiles(ctx context.Context, keys ...string) error {
 	errs := make(gtserror.MultiError, 0, len(keys))
 
 	for _, key := range keys {
-		if err := m.storage.Delete(ctx, key); err != nil && !errors.Is(err, storage.ErrNotFound) {
+		if err := m.state.Storage.Delete(ctx, key); err != nil && !errors.Is(err, storage.ErrNotFound) {
 			errs = append(errs, "storage error removing "+key+": "+err.Error())
 		}
 	}

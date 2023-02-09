@@ -49,10 +49,9 @@ func setupPrune(ctx context.Context) (*prune, error) {
 		return nil, fmt.Errorf("error creating storage backend: %w", err)
 	}
 
-	manager, err := media.NewManager(dbService, storage) //nolint:contextcheck
-	if err != nil {
-		return nil, fmt.Errorf("error instantiating mediamanager: %w", err)
-	}
+	state.DB = dbService
+	state.Storage = storage
+	manager := media.NewManager(&state)
 
 	return &prune{
 		dbService: dbService,
@@ -68,10 +67,6 @@ func (p *prune) shutdown(ctx context.Context) error {
 
 	if err := p.dbService.Stop(ctx); err != nil {
 		return fmt.Errorf("error closing dbservice: %w", err)
-	}
-
-	if err := p.manager.Stop(); err != nil {
-		return fmt.Errorf("error closing media manager: %w", err)
 	}
 
 	return nil

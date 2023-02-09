@@ -5,5 +5,5 @@ package debug
 
 import "os"
 
-// check if debug env variable is set
-var debug = (os.Getenv("DEBUG") != "")
+// DEBUG returns whether debugging is enabled.
+var DEBUG = (os.Getenv("DEBUG") != "")
