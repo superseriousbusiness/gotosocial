@@ -335,6 +335,12 @@ func (d *deref) dereferenceAccountable(ctx context.Context, transport transport.
 }
 
 func (d *deref) fetchRemoteAccountAvatar(ctx context.Context, tsport transport.Transport, avatarURL string, accountID string) (string, error) {
+	// Parse and validate provided media URL.
+	avatarURI, err := url.Parse(avatarURL)
+	if err != nil {
+		return "", err
+	}
+
 	// Use a single, changable defer func.
 	var deferred func()
 	defer func() { deferred() }()
@@ -346,12 +352,6 @@ func (d *deref) fetchRemoteAccountAvatar(ctx context.Context, tsport transport.T
 	if processing, ok := d.dereferencingAvatars[accountID]; ok {
 		// we're already dereferencing it, nothing to do.
 		return processing.AttachmentID(), nil
-	}
-
-	// Parse and validate provided media URL.
-	avatarURI, err := url.Parse(avatarURL)
-	if err != nil {
-		return "", err
 	}
 
 	// Set the media data function to dereference avatar from URI.
@@ -391,6 +391,12 @@ func (d *deref) fetchRemoteAccountAvatar(ctx context.Context, tsport transport.T
 }
 
 func (d *deref) fetchRemoteAccountHeader(ctx context.Context, tsport transport.Transport, headerURL string, accountID string) (string, error) {
+	// Parse and validate provided media URL.
+	headerURI, err := url.Parse(headerURL)
+	if err != nil {
+		return "", err
+	}
+
 	// Use a single, changable defer func.
 	var deferred func()
 	defer func() { deferred() }()
@@ -402,12 +408,6 @@ func (d *deref) fetchRemoteAccountHeader(ctx context.Context, tsport transport.T
 	if processing, ok := d.dereferencingHeaders[accountID]; ok {
 		// we're already dereferencing it, nothing to do.
 		return processing.AttachmentID(), nil
-	}
-
-	// Parse and validate provided media URL.
-	headerURI, err := url.Parse(headerURL)
-	if err != nil {
-		return "", err
 	}
 
 	// Set the media data function to dereference header from URI.
