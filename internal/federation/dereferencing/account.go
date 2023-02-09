@@ -341,15 +341,11 @@ func (d *deref) fetchRemoteAccountAvatar(ctx context.Context, tsport transport.T
 		return "", err
 	}
 
-	// Use a single, changable defer func.
-	var deferred func()
-	defer func() { deferred() }()
+	// Acquire lock for derefs map.
+	unlock := d.derefAvatarsMu.Lock()
+	defer unlock()
 
-	// Acquire lock for existing derefs in progress.
-	d.dereferencingAvatarsLock.Lock()
-	deferred = d.dereferencingAvatarsLock.Unlock
-
-	if processing, ok := d.dereferencingAvatars[accountID]; ok {
+	if processing, ok := d.derefAvatars[accountID]; ok {
 		// we're already dereferencing it, nothing to do.
 		return processing.AttachmentID(), nil
 	}
@@ -370,17 +366,17 @@ func (d *deref) fetchRemoteAccountAvatar(ctx context.Context, tsport transport.T
 
 	// Store media in map to mark as processing.
 	id := processing.AttachmentID()
-	d.dereferencingAvatars[id] = processing
+	d.derefAvatars[id] = processing
 
-	// Unlock the header map mutex.
-	d.dereferencingAvatarsLock.Unlock()
+	// Unlock map.
+	unlock()
 
-	deferred = func() {
+	defer func() {
 		// On exit safely remove media from map.
-		d.dereferencingAvatarsLock.Lock()
-		delete(d.dereferencingAvatars, id)
-		d.dereferencingAvatarsLock.Unlock()
-	}
+		unlock := d.derefAvatarsMu.Lock()
+		delete(d.derefAvatars, id)
+		unlock()
+	}()
 
 	// Start media attachment loading (blocking call).
 	if _, err := processing.LoadAttachment(ctx); err != nil {
@@ -397,15 +393,11 @@ func (d *deref) fetchRemoteAccountHeader(ctx context.Context, tsport transport.T
 		return "", err
 	}
 
-	// Use a single, changable defer func.
-	var deferred func()
-	defer func() { deferred() }()
+	// Acquire lock for derefs map.
+	unlock := d.derefHeadersMu.Lock()
+	defer unlock()
 
-	// Acquire lock for existing derefs in progress.
-	d.dereferencingHeadersLock.Lock()
-	deferred = d.dereferencingHeadersLock.Unlock
-
-	if processing, ok := d.dereferencingHeaders[accountID]; ok {
+	if processing, ok := d.derefHeaders[accountID]; ok {
 		// we're already dereferencing it, nothing to do.
 		return processing.AttachmentID(), nil
 	}
@@ -426,17 +418,17 @@ func (d *deref) fetchRemoteAccountHeader(ctx context.Context, tsport transport.T
 
 	// Store media in map to mark as processing.
 	id := processing.AttachmentID()
-	d.dereferencingHeaders[id] = processing
+	d.derefHeaders[id] = processing
 
-	// Unlock the header map mutex.
-	d.dereferencingHeadersLock.Unlock()
+	// Unlock map.
+	unlock()
 
-	deferred = func() {
+	defer func() {
 		// On exit safely remove media from map.
-		d.dereferencingHeadersLock.Lock()
-		delete(d.dereferencingHeaders, id)
-		d.dereferencingHeadersLock.Unlock()
-	}
+		unlock := d.derefHeadersMu.Lock()
+		delete(d.derefHeaders, id)
+		unlock()
+	}()
 
 	// Start media attachment loading (blocking call).
 	if _, err := processing.LoadAttachment(ctx); err != nil {

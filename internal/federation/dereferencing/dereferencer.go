@@ -23,6 +23,7 @@ import (
 	"net/url"
 	"sync"
 
+	"codeberg.org/gruf/go-mutexes"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -58,30 +59,36 @@ type Dereferencer interface {
 }
 
 type deref struct {
-	db                       db.DB
-	typeConverter            typeutils.TypeConverter
-	transportController      transport.Controller
-	mediaManager             media.Manager
-	dereferencingAvatars     map[string]*media.ProcessingMedia
-	dereferencingAvatarsLock sync.Mutex
-	dereferencingHeaders     map[string]*media.ProcessingMedia
-	dereferencingHeadersLock sync.Mutex
-	dereferencingEmojis      map[string]*media.ProcessingEmoji
-	dereferencingEmojisLock  sync.Mutex
-	handshakes               map[string][]*url.URL
-	handshakeSync            sync.Mutex // mutex to lock/unlock when checking or updating the handshakes map
+	db                  db.DB
+	typeConverter       typeutils.TypeConverter
+	transportController transport.Controller
+	mediaManager        media.Manager
+	derefAvatars        map[string]*media.ProcessingMedia
+	derefAvatarsMu      mutexes.Mutex
+	derefHeaders        map[string]*media.ProcessingMedia
+	derefHeadersMu      mutexes.Mutex
+	derefEmojis         map[string]*media.ProcessingEmoji
+	derefEmojisMu       mutexes.Mutex
+	handshakes          map[string][]*url.URL
+	handshakeSync       sync.Mutex // mutex to lock/unlock when checking or updating the handshakes map
 }
 
 // NewDereferencer returns a Dereferencer initialized with the given parameters.
 func NewDereferencer(db db.DB, typeConverter typeutils.TypeConverter, transportController transport.Controller, mediaManager media.Manager) Dereferencer {
 	return &deref{
-		db:                   db,
-		typeConverter:        typeConverter,
-		transportController:  transportController,
-		mediaManager:         mediaManager,
-		dereferencingAvatars: make(map[string]*media.ProcessingMedia),
-		dereferencingHeaders: make(map[string]*media.ProcessingMedia),
-		dereferencingEmojis:  make(map[string]*media.ProcessingEmoji),
-		handshakes:           make(map[string][]*url.URL),
+		db:                  db,
+		typeConverter:       typeConverter,
+		transportController: transportController,
+		mediaManager:        mediaManager,
+		derefAvatars:        make(map[string]*media.ProcessingMedia),
+		derefHeaders:        make(map[string]*media.ProcessingMedia),
+		derefEmojis:         make(map[string]*media.ProcessingEmoji),
+		handshakes:          make(map[string][]*url.URL),
+
+		// use wrapped mutexes to allow safely deferring unlock
+		// even when more granular locks are required (only unlocks once).
+		derefAvatarsMu: mutexes.WithSafety(mutexes.New()),
+		derefHeadersMu: mutexes.WithSafety(mutexes.New()),
+		derefEmojisMu:  mutexes.WithSafety(mutexes.New()),
 	}
 }
