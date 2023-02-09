@@ -81,8 +81,8 @@ codeberg.org/gruf/go-pools v1.1.0 h1:LbYP24eQLl/YI1fSU2pafiwhGol1Z1zPjRrMsXpF88s
 codeberg.org/gruf/go-pools v1.1.0/go.mod h1:ZMYpt/DjQWYC3zFD3T97QWSFKs62zAUGJ/tzvgB9D68=
 codeberg.org/gruf/go-runners v1.5.1 h1:ekhhxKvO6D/VC7nS/xpv71/iRX01JSqcBEbahqPUghg=
 codeberg.org/gruf/go-runners v1.5.1/go.mod h1:kUM6GYL7dC+f9Sc/XuwdvB/mB4FuI4fJFb150ADMsmw=
-codeberg.org/gruf/go-sched v1.2.2 h1:Kh/S2Z6SCUers88lY5IyhrGn45RlOuTpgbELD7Sy3oo=
-codeberg.org/gruf/go-sched v1.2.2/go.mod h1:vT9uB6KWFIIwnG9vcPY2a0alYNoqdL1mSzRM8I+PK7A=
+codeberg.org/gruf/go-sched v1.2.3 h1:H5ViDxxzOBR3uIyGBCf0eH8b1L8wMybOXcdtUUTXZHk=
+codeberg.org/gruf/go-sched v1.2.3/go.mod h1:vT9uB6KWFIIwnG9vcPY2a0alYNoqdL1mSzRM8I+PK7A=
 codeberg.org/gruf/go-store/v2 v2.2.1 h1:lbvMjhMLebefiaPNLtWvPySKSYM5xN1aztSxxz+vCzU=
 codeberg.org/gruf/go-store/v2 v2.2.1/go.mod h1:pxdyfSzau8fFs1TfZlyRzhDYvZWLaj1sXpcjXpzBB6k=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=

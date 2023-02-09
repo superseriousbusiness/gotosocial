@@ -2,7 +2,6 @@ package sched
 
 import (
 	"context"
-	"runtime"
 	"sort"
 	"sync"
 	"sync/atomic"
@@ -54,11 +53,6 @@ func (sch *Scheduler) Start(gorun func(func())) bool {
 		if sch.rgo = gorun; sch.rgo == nil {
 			sch.rgo = func(f func()) { go f() }
 		}
-
-		// Set GC finalizer to ensure scheduler stopped
-		runtime.SetFinalizer(sch, func(sch *Scheduler) {
-			_ = sch.Stop()
-		})
 
 		// Unlock start routine
 		block.Unlock()
