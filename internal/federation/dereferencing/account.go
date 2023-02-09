@@ -162,6 +162,24 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		}
 
 		if err == nil {
+			if account.Domain != accDomain {
+				// We have the correct accountDomain now; if it was different from
+				// the account domain we were provided, do another db lookup to check
+				// if we already had the account in the db under the account domain we
+				// just discovered, otherwise we risk thinking this is a new account
+				// and trying to put it into the database again (which will cause issues).
+				alreadyAccount, err := d.db.GetAccountByUsernameDomain(ctx, account.Username, accDomain)
+				if err != nil && !errors.Is(err, db.ErrNoEntries) {
+					return nil, fmt.Errorf("enrichAccount: db err looking for account again after webfinger: %w", err)
+				}
+
+				if err == nil {
+					// We already had the account in the database;
+					// continue by enriching that one instead.
+					account = alreadyAccount
+				}
+			}
+
 			// Update account with latest info.
 			account.URI = accURI.String()
 			account.Domain = accDomain
