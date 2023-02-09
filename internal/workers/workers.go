@@ -18,7 +18,6 @@ type Workers struct {
 	Federator runners.WorkerPool
 
 	// Media manager worker pools.
-	Emoji runners.WorkerPool
 	Media runners.WorkerPool
 
 	// prevent pass-by-value.
@@ -41,12 +40,8 @@ func (w *Workers) Start() {
 		return w.Federator.Start(4*maxprocs, 400*maxprocs)
 	})
 
-	tryUntil("starting emoji workerpool", 5, func() bool {
-		return w.Emoji.Start(4*maxprocs, 40*maxprocs)
-	})
-
 	tryUntil("starting media workerpool", 5, func() bool {
-		return w.Media.Start(4*maxprocs, 40*maxprocs)
+		return w.Media.Start(8*maxprocs, 80*maxprocs)
 	})
 }
 
@@ -54,7 +49,6 @@ func (w *Workers) Stop() {
 	tryUntil("stopping scheduler", 5, w.Scheduler.Stop)
 	tryUntil("stopping client API workerpool", 5, w.ClientAPI.Stop)
 	tryUntil("stopping federator workerpool", 5, w.Federator.Stop)
-	tryUntil("stopping emoji workerpool", 5, w.Emoji.Stop)
 	tryUntil("stopping media workerpool", 5, w.Media.Stop)
 }
 

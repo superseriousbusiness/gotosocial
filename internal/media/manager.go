@@ -420,7 +420,7 @@ func (m *manager) ProcessEmoji(ctx context.Context, data DataFunc, postData Post
 	}
 
 	// Attempt to add this emoji processing item to the worker queue.
-	workerpool_MustEnqueue(&m.state.Workers.Emoji, ctx, emoji.Process)
+	workerpool_MustEnqueue(&m.state.Workers.Media, ctx, emoji.Process)
 
 	return emoji, nil
 }
