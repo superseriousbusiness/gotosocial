@@ -178,12 +178,13 @@ func (m *manager) PreProcessMedia(ctx context.Context, data DataFunc, postData P
 	avatar := false
 	header := false
 	cached := false
+	now := time.Now()
 
 	// populate initial fields on the media attachment -- some of these will be overwritten as we proceed
 	attachment := &gtsmodel.MediaAttachment{
 		ID:                id,
-		CreatedAt:         time.Now(),
-		UpdatedAt:         time.Now(),
+		CreatedAt:         now,
+		UpdatedAt:         now,
 		StatusID:          "",
 		URL:               "", // we don't know yet because it depends on the uncalled DataFunc
 		RemoteURL:         "",
@@ -194,8 +195,8 @@ func (m *manager) PreProcessMedia(ctx context.Context, data DataFunc, postData P
 		ScheduledStatusID: "",
 		Blurhash:          "",
 		Processing:        gtsmodel.ProcessingStatusReceived,
-		File:              gtsmodel.File{UpdatedAt: time.Now()},
-		Thumbnail:         gtsmodel.Thumbnail{UpdatedAt: time.Now()},
+		File:              gtsmodel.File{UpdatedAt: now},
+		Thumbnail:         gtsmodel.Thumbnail{UpdatedAt: now},
 		Avatar:            &avatar,
 		Header:            &header,
 		Cached:            &cached,
@@ -292,8 +293,12 @@ func (m *manager) PreProcessEmoji(ctx context.Context, data DataFunc, postData P
 		return nil, fmt.Errorf("preProcessEmoji: error fetching this instance account from the db: %s", err)
 	}
 
-	var newPathID string
-	var emoji *gtsmodel.Emoji
+	var (
+		newPathID string
+		emoji     *gtsmodel.Emoji
+		now       = time.Now()
+	)
+
 	if refresh {
 		emoji, err = m.state.DB.GetEmojiByID(ctx, emojiID)
 		if err != nil {
@@ -344,7 +349,7 @@ func (m *manager) PreProcessEmoji(ctx context.Context, data DataFunc, postData P
 		// populate initial fields on the emoji -- some of these will be overwritten as we proceed
 		emoji = &gtsmodel.Emoji{
 			ID:                     emojiID,
-			CreatedAt:              time.Now(),
+			CreatedAt:              now,
 			Shortcode:              shortcode,
 			Domain:                 "", // assume our own domain unless told otherwise
 			ImageRemoteURL:         "",
@@ -364,8 +369,8 @@ func (m *manager) PreProcessEmoji(ctx context.Context, data DataFunc, postData P
 		}
 	}
 
-	emoji.ImageUpdatedAt = time.Now()
-	emoji.UpdatedAt = time.Now()
+	emoji.ImageUpdatedAt = now
+	emoji.UpdatedAt = now
 
 	// check if we have additional info to add to the emoji,
 	// and overwrite some of the emoji fields if so
