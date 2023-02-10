@@ -33,35 +33,39 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-// amount of media entries to select at a time from the db when pruning
-const selectPruneLimit = 20
+const (
+	selectPruneLimit          = 20 // Amount of media entries to select at a time from the db when pruning.
+	unusedLocalAttachmentDays = 3  // Number of days to keep local media in storage if not attached to a status.
+)
 
 func (m *manager) PruneAll(ctx context.Context, mediaCacheRemoteDays int, blocking bool) error {
+	const dry = false
+
 	f := func(innerCtx context.Context) error {
 		errs := gtserror.MultiError{}
 
-		pruned, err := m.PruneUnusedLocal(innerCtx)
+		pruned, err := m.PruneUnusedLocal(innerCtx, dry)
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("error pruning unused local media (%s)", err))
 		} else {
 			log.Infof("pruned %d unused local media", pruned)
 		}
 
-		pruned, err = m.PruneUnusedRemote(innerCtx)
+		pruned, err = m.PruneUnusedRemote(innerCtx, dry)
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("error pruning unused remote media: (%s)", err))
 		} else {
 			log.Infof("pruned %d unused remote media", pruned)
 		}
 
-		pruned, err = m.UncacheRemote(innerCtx, mediaCacheRemoteDays, false)
+		pruned, err = m.UncacheRemote(innerCtx, mediaCacheRemoteDays, dry)
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("error uncacheing remote media older than %d day(s): (%s)", mediaCacheRemoteDays, err))
 		} else {
 			log.Infof("uncached %d remote media older than %d day(s)", pruned, mediaCacheRemoteDays)
 		}
 
-		pruned, err = m.PruneOrphaned(innerCtx, false)
+		pruned, err = m.PruneOrphaned(innerCtx, dry)
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("error pruning orphaned media: (%s)", err))
 		} else {
@@ -90,57 +94,7 @@ func (m *manager) PruneAll(ctx context.Context, mediaCacheRemoteDays int, blocki
 	return nil
 }
 
-func (m *manager) deleteAttachment(ctx context.Context, attachment *gtsmodel.MediaAttachment) error {
-	if attachment.File.Path != "" {
-		// delete the full size file from storage
-		if err := m.storage.Delete(ctx, attachment.File.Path); err != nil && !errors.Is(err, storage.ErrNotFound) {
-			return err
-		}
-	}
-
-	if attachment.Thumbnail.Path != "" {
-		// delete the thumbnail file from storage
-		if err := m.storage.Delete(ctx, attachment.Thumbnail.Path); err != nil && !errors.Is(err, storage.ErrNotFound) {
-			return err
-		}
-	}
-
-	// delete the attachment completely
-	return m.db.DeleteByID(ctx, attachment.ID, attachment)
-}
-
-func (m *manager) uncacheAttachment(ctx context.Context, attachment *gtsmodel.MediaAttachment) error {
-	var changed bool
-
-	if attachment.File.Path != "" {
-		// delete the full size file from storage
-		if err := m.storage.Delete(ctx, attachment.File.Path); err != nil && !errors.Is(err, storage.ErrNotFound) {
-			return err
-		}
-		cached := false
-		attachment.Cached = &cached
-		changed = true
-	}
-
-	if attachment.Thumbnail.Path != "" {
-		// delete the thumbnail file from storage
-		if err := m.storage.Delete(ctx, attachment.Thumbnail.Path); err != nil && !errors.Is(err, storage.ErrNotFound) {
-			return err
-		}
-		cached := false
-		attachment.Cached = &cached
-		changed = true
-	}
-
-	if !changed {
-		return nil
-	}
-
-	// update the attachment to reflect that we no longer have it cached
-	return m.db.UpdateByID(ctx, attachment, attachment.ID, "updated_at", "cached")
-}
-
-func (m *manager) PruneUnusedRemote(ctx context.Context) (int, error) {
+func (m *manager) PruneUnusedRemote(ctx context.Context, dry bool) (int, error) {
 	var (
 		totalPruned int
 		maxID       string
@@ -148,19 +102,32 @@ func (m *manager) PruneUnusedRemote(ctx context.Context) (int, error) {
 		err         error
 	)
 
+	// We don't know in advance how many remote attachments will meet
+	// our criteria for being 'unused'. So a dry run in this case just
+	// means we iterate through as normal, but do nothing with each entry
+	// instead of removing it. Define this here so we don't do the 'if dry'
+	// check inside the loop a million times.
+	var f func(ctx context.Context, attachment *gtsmodel.MediaAttachment) error
+	if !dry {
+		f = m.deleteAttachment
+	} else {
+		f = func(_ context.Context, _ *gtsmodel.MediaAttachment) error {
+			return nil // noop
+		}
+	}
+
 	for attachments, err = m.db.GetAvatarsAndHeaders(ctx, maxID, selectPruneLimit); err == nil && len(attachments) != 0; attachments, err = m.db.GetAvatarsAndHeaders(ctx, maxID, selectPruneLimit) {
-		// use the id of the last attachment in the slice as the next 'maxID' value
-		maxID = attachments[len(attachments)-1].ID
+		maxID = attachments[len(attachments)-1].ID // use the id of the last attachment in the slice as the next 'maxID' value
 
 		// Prune each attachment that meets one of the following criteria:
-		// - has no owning account in the database
-		// - is a header but isn't the owning account's current header
-		// - is an avatar but isn't the owning account's current avatar
+		// - Has no owning account in the database.
+		// - Is a header but isn't the owning account's current header.
+		// - Is an avatar but isn't the owning account's current avatar.
 		for _, attachment := range attachments {
 			if attachment.Account == nil ||
 				(*attachment.Header && attachment.ID != attachment.Account.HeaderMediaAttachmentID) ||
 				(*attachment.Avatar && attachment.ID != attachment.Account.AvatarMediaAttachmentID) {
-				if err := m.deleteAttachment(ctx, attachment); err != nil {
+				if err := f(ctx, attachment); err != nil {
 					return totalPruned, err
 				}
 				totalPruned++
@@ -168,7 +135,7 @@ func (m *manager) PruneUnusedRemote(ctx context.Context) (int, error) {
 		}
 	}
 
-	// make sure we don't have a real error when we leave the loop
+	// Make sure we don't have a real error when we leave the loop.
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return totalPruned, err
 	}
@@ -227,26 +194,16 @@ func (m *manager) PruneOrphaned(ctx context.Context, dry bool) (int, error) {
 	}
 	iterator.Release()
 
-	// Assume we'll prune all the orphans we found.
-	pruned := len(orphanedKeys)
+	totalPruned := len(orphanedKeys)
 
-	if !dry {
-		// This is not a drill!
-		// We have to delete stuff!
-		for _, key := range orphanedKeys {
-			if err := m.storage.Delete(ctx, key); err != nil {
-				if errors.Is(err, storage.ErrNotFound) {
-					// Weird race condition? we didn't need
-					// to prune this one, so don't count it.
-					pruned--
-					continue
-				}
-				return 0, fmt.Errorf("PruneOrphaned: error deleting item with key %s from storage: %w", key, err)
-			}
-		}
+	if dry {
+		// Dry run: don't remove anything.
+		return totalPruned, nil
 	}
 
-	return pruned, nil
+	// This is not a drill!
+	// We have to delete stuff!
+	return totalPruned, m.removeFiles(ctx, orphanedKeys...)
 }
 
 func (m *manager) orphaned(ctx context.Context, key string, instanceAccountID string) (bool, error) {
@@ -263,6 +220,7 @@ func (m *manager) orphaned(ctx context.Context, key string, instanceAccountID st
 		orphaned  = false
 	)
 
+	// Look for keys in storage that we don't have an attachment for.
 	switch Type(mediaType) {
 	case TypeAttachment, TypeHeader, TypeAvatar:
 		if _, err := m.db.GetAttachmentByID(ctx, mediaID); err != nil {
@@ -294,28 +252,19 @@ func (m *manager) UncacheRemote(ctx context.Context, olderThanDays int, dry bool
 
 	olderThan := time.Now().Add(-time.Hour * 24 * time.Duration(olderThanDays))
 
-	eligible, err := m.db.CountRemoteOlderThan(ctx, olderThan)
-	if err != nil {
-		return 0, err
+	if dry {
+		// Dry run, just count eligible entries without removing them.
+		return m.db.CountRemoteOlderThan(ctx, olderThan)
 	}
 
-	if dry || eligible == 0 {
-		return eligible, nil
-	}
+	var (
+		totalPruned int
+		attachments []*gtsmodel.MediaAttachment
+		err         error
+	)
 
-	var totalPruned int
-	for {
-		// Select "selectPruneLimit" status attacchments at a time for pruning
-		attachments, err := m.db.GetRemoteOlderThan(ctx, olderThan, selectPruneLimit)
-		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			return totalPruned, err
-		} else if len(attachments) == 0 {
-			break
-		}
-
-		// use the age of the oldest attachment (last in slice) as the next 'olderThan' value
-		log.Tracef("PruneAllRemote: got %d status attachments older than %s", len(attachments), olderThan)
-		olderThan = attachments[len(attachments)-1].CreatedAt
+	for attachments, err = m.db.GetRemoteOlderThan(ctx, olderThan, selectPruneLimit); err == nil && len(attachments) != 0; attachments, err = m.db.GetRemoteOlderThan(ctx, olderThan, selectPruneLimit) {
+		olderThan = attachments[len(attachments)-1].CreatedAt // use the created time of the last attachment in the slice as the next 'olderThan' value
 
 		for _, attachment := range attachments {
 			if err := m.uncacheAttachment(ctx, attachment); err != nil {
@@ -325,21 +274,30 @@ func (m *manager) UncacheRemote(ctx context.Context, olderThanDays int, dry bool
 		}
 	}
 
+	// Make sure we don't have a real error when we leave the loop.
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return totalPruned, err
+	}
+
 	return totalPruned, nil
 }
 
-func (m *manager) PruneUnusedLocal(ctx context.Context) (int, error) {
+func (m *manager) PruneUnusedLocal(ctx context.Context, dry bool) (int, error) {
+	olderThan := time.Now().Add(-time.Hour * 24 * time.Duration(unusedLocalAttachmentDays))
+
+	if dry {
+		// Dry run, just count eligible entries without removing them.
+		return m.db.CountLocalUnattachedOlderThan(ctx, olderThan)
+	}
+
 	var (
 		totalPruned int
-		maxID       string
 		attachments []*gtsmodel.MediaAttachment
 		err         error
-		olderThan   = time.Now().Add(-time.Hour * 24 * time.Duration(UnusedLocalAttachmentCacheDays))
 	)
 
-	for attachments, err = m.db.GetLocalUnattachedOlderThan(ctx, olderThan, maxID, selectPruneLimit); err == nil && len(attachments) != 0; attachments, err = m.db.GetLocalUnattachedOlderThan(ctx, olderThan, maxID, selectPruneLimit) {
-		// use the id of the last attachment in the slice as the next 'maxID' value
-		maxID = attachments[len(attachments)-1].ID
+	for attachments, err = m.db.GetLocalUnattachedOlderThan(ctx, olderThan, selectPruneLimit); err == nil && len(attachments) != 0; attachments, err = m.db.GetLocalUnattachedOlderThan(ctx, olderThan, selectPruneLimit) {
+		olderThan = attachments[len(attachments)-1].CreatedAt // use the created time of the last attachment in the slice as the next 'olderThan' value
 
 		for _, attachment := range attachments {
 			if err := m.deleteAttachment(ctx, attachment); err != nil {
@@ -349,10 +307,47 @@ func (m *manager) PruneUnusedLocal(ctx context.Context) (int, error) {
 		}
 	}
 
-	// make sure we don't have a real error when we leave the loop
+	// Make sure we don't have a real error when we leave the loop.
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return totalPruned, err
 	}
 
 	return totalPruned, nil
+}
+
+/*
+	Handy little helpers
+*/
+
+func (m *manager) deleteAttachment(ctx context.Context, attachment *gtsmodel.MediaAttachment) error {
+	if err := m.removeFiles(ctx, attachment.File.Path, attachment.Thumbnail.Path); err != nil {
+		return err
+	}
+
+	// Delete attachment completely.
+	return m.db.DeleteByID(ctx, attachment.ID, attachment)
+}
+
+func (m *manager) uncacheAttachment(ctx context.Context, attachment *gtsmodel.MediaAttachment) error {
+	if err := m.removeFiles(ctx, attachment.File.Path, attachment.Thumbnail.Path); err != nil {
+		return err
+	}
+
+	// Update attachment to reflect that we no longer have it cached.
+	attachment.UpdatedAt = time.Now()
+	cached := false
+	attachment.Cached = &cached
+	return m.db.UpdateByID(ctx, attachment, attachment.ID, "updated_at", "cached")
+}
+
+func (m *manager) removeFiles(ctx context.Context, keys ...string) error {
+	errs := make(gtserror.MultiError, 0, len(keys))
+
+	for _, key := range keys {
+		if err := m.storage.Delete(ctx, key); err != nil && !errors.Is(err, storage.ErrNotFound) {
+			errs = append(errs, "storage error removing "+key+": "+err.Error())
+		}
+	}
+
+	return errs.Combine()
 }

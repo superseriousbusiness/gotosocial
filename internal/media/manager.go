@@ -21,19 +21,24 @@ package media
 import (
 	"context"
 	"fmt"
-	"time"
 
-	"github.com/robfig/cron/v3"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
-// UnusedLocalAttachmentCacheDays is the amount of days to keep local media in storage if it
-// is not attached to a status, or was never attached to a status.
-const UnusedLocalAttachmentCacheDays = 3
+var SupportedMIMETypes = []string{
+	mimeImageJpeg,
+	mimeImageGif,
+	mimeImagePng,
+	mimeImageWebp,
+	mimeVideoMp4,
+}
+
+var SupportedEmojiMIMETypes = []string{
+	mimeImageGif,
+	mimeImagePng,
+}
 
 // Manager provides an interface for managing media: parsing, storing, and retrieving media objects like photos, videos, and gifs.
 type Manager interface {
@@ -105,13 +110,13 @@ type Manager interface {
 	// PruneUnusedRemote prunes unused/out of date headers and avatars cached on this instance.
 	//
 	// The returned int is the amount of media that was pruned by this function.
-	PruneUnusedRemote(ctx context.Context) (int, error)
+	PruneUnusedRemote(ctx context.Context, dry bool) (int, error)
 	// PruneUnusedLocal prunes unused media attachments that were uploaded by
 	// a user on this instance, but never actually attached to a status, or attached but
 	// later detached.
 	//
 	// The returned int is the amount of media that was pruned by this function.
-	PruneUnusedLocal(ctx context.Context) (int, error)
+	PruneUnusedLocal(ctx context.Context, dry bool) (int, error)
 	// PruneOrphaned prunes files that exist in storage but which do not have a corresponding
 	// entry in the database.
 	//
@@ -153,7 +158,7 @@ func NewManager(database db.DB, storage *storage.Driver) (Manager, error) {
 		storage: storage,
 	}
 
-	// Prepare the media worker pool
+	// Prepare the media worker pool.
 	m.mediaWorker = concurrency.NewWorkerPool[*ProcessingMedia](-1, 10)
 	m.mediaWorker.SetProcessor(func(ctx context.Context, media *ProcessingMedia) error {
 		if _, err := media.LoadAttachment(ctx); err != nil {
@@ -162,7 +167,7 @@ func NewManager(database db.DB, storage *storage.Driver) (Manager, error) {
 		return nil
 	})
 
-	// Prepare the emoji worker pool
+	// Prepare the emoji worker pool.
 	m.emojiWorker = concurrency.NewWorkerPool[*ProcessingEmoji](-1, 10)
 	m.emojiWorker.SetProcessor(func(ctx context.Context, emoji *ProcessingEmoji) error {
 		if _, err := emoji.LoadEmoji(ctx); err != nil {
@@ -171,7 +176,7 @@ func NewManager(database db.DB, storage *storage.Driver) (Manager, error) {
 		return nil
 	})
 
-	// Start the worker pools
+	// Start the worker pools.
 	if err := m.mediaWorker.Start(); err != nil {
 		return nil, err
 	}
@@ -179,7 +184,8 @@ func NewManager(database db.DB, storage *storage.Driver) (Manager, error) {
 		return nil, err
 	}
 
-	if err := scheduleCleanupJobs(m); err != nil {
+	// Schedule cron job(s) for clean up.
+	if err := scheduleCleanup(m); err != nil {
 		return nil, err
 	}
 
@@ -214,7 +220,7 @@ func (m *manager) RecacheMedia(ctx context.Context, data DataFunc, postData Post
 }
 
 func (m *manager) Stop() error {
-	// Stop media and emoji worker pools
+	// Stop worker pools.
 	mediaErr := m.mediaWorker.Stop()
 	emojiErr := m.emojiWorker.Stop()
 
@@ -230,39 +236,4 @@ func (m *manager) Stop() error {
 	}
 
 	return cronErr
-}
-
-func scheduleCleanupJobs(m *manager) error {
-	// create a new cron instance for scheduling cleanup jobs
-	c := cron.New(cron.WithLogger(&logrusWrapper{}))
-	pruneCtx, pruneCancel := context.WithCancel(context.Background())
-
-	if _, err := c.AddFunc("@midnight", func() {
-		if err := m.PruneAll(pruneCtx, config.GetMediaRemoteCacheDays(), true); err != nil {
-			log.Error(err)
-			return
-		}
-	}); err != nil {
-		pruneCancel()
-		return fmt.Errorf("error starting media manager cleanup job: %s", err)
-	}
-
-	// try to stop any jobs gracefully by waiting til they're finished
-	m.stopCronJobs = func() error {
-		cronCtx := c.Stop()
-
-		select {
-		case <-cronCtx.Done():
-			log.Infof("media manager: cron finished jobs and stopped gracefully")
-		case <-time.After(1 * time.Minute):
-			log.Infof("media manager: cron didn't stop after 60 seconds, will force close jobs")
-			break
-		}
-
-		pruneCancel()
-		return nil
-	}
-
-	c.Start()
-	return nil
 }

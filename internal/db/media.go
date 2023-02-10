@@ -49,5 +49,9 @@ type Media interface {
 	// GetLocalUnattachedOlderThan fetches limit n local media attachments (including avatars and headers), older than
 	// the given time, which aren't header or avatars, and aren't attached to a status. In other words, attachments which were
 	// uploaded but never used for whatever reason, or attachments that were attached to a status which was subsequently deleted.
-	GetLocalUnattachedOlderThan(ctx context.Context, olderThan time.Time, maxID string, limit int) ([]*gtsmodel.MediaAttachment, Error)
+	GetLocalUnattachedOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, Error)
+
+	// CountLocalUnattachedOlderThan is like GetLocalUnattachedOlderThan, except instead of getting limit n attachments,
+	// it just counts how many local attachments in the database (including avatars and headers) meet the olderThan criteria.
+	CountLocalUnattachedOlderThan(ctx context.Context, olderThan time.Time) (int, Error)
 }

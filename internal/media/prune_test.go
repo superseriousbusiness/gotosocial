@@ -85,7 +85,7 @@ func (suite *PruneTestSuite) TestPruneUnusedLocal() {
 	testAttachment := suite.testAttachments["local_account_1_unattached_1"]
 	suite.True(*testAttachment.Cached)
 
-	totalPruned, err := suite.manager.PruneUnusedLocal(context.Background())
+	totalPruned, err := suite.manager.PruneUnusedLocal(context.Background(), false)
 	suite.NoError(err)
 	suite.Equal(1, totalPruned)
 
@@ -93,13 +93,25 @@ func (suite *PruneTestSuite) TestPruneUnusedLocal() {
 	suite.ErrorIs(err, db.ErrNoEntries)
 }
 
+func (suite *PruneTestSuite) TestPruneUnusedLocalDry() {
+	testAttachment := suite.testAttachments["local_account_1_unattached_1"]
+	suite.True(*testAttachment.Cached)
+
+	totalPruned, err := suite.manager.PruneUnusedLocal(context.Background(), true)
+	suite.NoError(err)
+	suite.Equal(1, totalPruned)
+
+	_, err = suite.db.GetAttachmentByID(context.Background(), testAttachment.ID)
+	suite.NoError(err)
+}
+
 func (suite *PruneTestSuite) TestPruneRemoteTwice() {
-	totalPruned, err := suite.manager.PruneUnusedLocal(context.Background())
+	totalPruned, err := suite.manager.PruneUnusedLocal(context.Background(), false)
 	suite.NoError(err)
 	suite.Equal(1, totalPruned)
 
 	// final prune should prune nothing, since the first prune already happened
-	totalPrunedAgain, err := suite.manager.PruneUnusedLocal(context.Background())
+	totalPrunedAgain, err := suite.manager.PruneUnusedLocal(context.Background(), false)
 	suite.NoError(err)
 	suite.Equal(0, totalPrunedAgain)
 }
@@ -116,7 +128,7 @@ func (suite *PruneTestSuite) TestPruneOneNonExistent() {
 	suite.NoError(err)
 
 	// Now attempt to prune for item with db entry no file
-	totalPruned, err := suite.manager.PruneUnusedLocal(ctx)
+	totalPruned, err := suite.manager.PruneUnusedLocal(ctx, false)
 	suite.NoError(err)
 	suite.Equal(1, totalPruned)
 }
@@ -134,7 +146,7 @@ func (suite *PruneTestSuite) TestPruneUnusedRemote() {
 		panic(err)
 	}
 
-	totalPruned, err := suite.manager.PruneUnusedRemote(ctx)
+	totalPruned, err := suite.manager.PruneUnusedRemote(ctx, false)
 	suite.NoError(err)
 	suite.Equal(2, totalPruned)
 
@@ -166,12 +178,12 @@ func (suite *PruneTestSuite) TestPruneUnusedRemoteTwice() {
 		panic(err)
 	}
 
-	totalPruned, err := suite.manager.PruneUnusedRemote(ctx)
+	totalPruned, err := suite.manager.PruneUnusedRemote(ctx, false)
 	suite.NoError(err)
 	suite.Equal(2, totalPruned)
 
 	// final prune should prune nothing, since the first prune already happened
-	totalPruned, err = suite.manager.PruneUnusedRemote(ctx)
+	totalPruned, err = suite.manager.PruneUnusedRemote(ctx, false)
 	suite.NoError(err)
 	suite.Equal(0, totalPruned)
 }
@@ -196,7 +208,7 @@ func (suite *PruneTestSuite) TestPruneUnusedRemoteMultipleAccounts() {
 		panic(err)
 	}
 
-	totalPruned, err := suite.manager.PruneUnusedRemote(ctx)
+	totalPruned, err := suite.manager.PruneUnusedRemote(ctx, false)
 	suite.NoError(err)
 	suite.Equal(2, totalPruned)
 

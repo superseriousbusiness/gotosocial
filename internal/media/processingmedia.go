@@ -239,7 +239,7 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 
 	// .png image (requires ancillary chunk stripping)
 	case mimeImagePng:
-		fullImg, err = decodeImage(&PNGAncillaryChunkStripper{
+		fullImg, err = decodeImage(&pngAncillaryChunkStripper{
 			Reader: rc,
 		}, imaging.AutoOrientation(true))
 		if err != nil {

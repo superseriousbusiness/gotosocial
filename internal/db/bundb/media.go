@@ -115,7 +115,7 @@ func (m *mediaDB) GetAvatarsAndHeaders(ctx context.Context, maxID string, limit 
 	return attachments, nil
 }
 
-func (m *mediaDB) GetLocalUnattachedOlderThan(ctx context.Context, olderThan time.Time, maxID string, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {
+func (m *mediaDB) GetLocalUnattachedOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {
 	attachments := []*gtsmodel.MediaAttachment{}
 
 	q := m.newMediaQ(&attachments).
@@ -124,11 +124,8 @@ func (m *mediaDB) GetLocalUnattachedOlderThan(ctx context.Context, olderThan tim
 		Where("? = ?", bun.Ident("media_attachment.header"), false).
 		Where("? < ?", bun.Ident("media_attachment.created_at"), olderThan).
 		Where("? IS NULL", bun.Ident("media_attachment.remote_url")).
-		Where("? IS NULL", bun.Ident("media_attachment.status_id"))
-
-	if maxID != "" {
-		q = q.Where("? < ?", bun.Ident("media_attachment.id"), maxID)
-	}
+		Where("? IS NULL", bun.Ident("media_attachment.status_id")).
+		Order("media_attachment.created_at DESC")
 
 	if limit != 0 {
 		q = q.Limit(limit)
@@ -139,4 +136,24 @@ func (m *mediaDB) GetLocalUnattachedOlderThan(ctx context.Context, olderThan tim
 	}
 
 	return attachments, nil
+}
+
+func (m *mediaDB) CountLocalUnattachedOlderThan(ctx context.Context, olderThan time.Time) (int, db.Error) {
+	q := m.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("media_attachments"), bun.Ident("media_attachment")).
+		Column("media_attachment.id").
+		Where("? = ?", bun.Ident("media_attachment.cached"), true).
+		Where("? = ?", bun.Ident("media_attachment.avatar"), false).
+		Where("? = ?", bun.Ident("media_attachment.header"), false).
+		Where("? < ?", bun.Ident("media_attachment.created_at"), olderThan).
+		Where("? IS NULL", bun.Ident("media_attachment.remote_url")).
+		Where("? IS NULL", bun.Ident("media_attachment.status_id"))
+
+	count, err := q.Count(ctx)
+	if err != nil {
+		return 0, m.conn.ProcessError(err)
+	}
+
+	return count, nil
 }
