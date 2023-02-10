@@ -37,23 +37,23 @@ func (d *deref) GetRemoteEmoji(ctx context.Context, requestingUsername string, r
 		processingEmoji *media.ProcessingEmoji
 	)
 
-	d.dereferencingEmojisLock.Lock() // LOCK HERE
+	// Acquire lock for derefs map.
+	unlock := d.derefEmojisMu.Lock()
+	defer unlock()
 
 	// first check if we're already processing this emoji
-	if alreadyProcessing, ok := d.dereferencingEmojis[shortcodeDomain]; ok {
+	if alreadyProcessing, ok := d.derefEmojis[shortcodeDomain]; ok {
 		// we're already on it, no worries
 		processingEmoji = alreadyProcessing
 	} else {
 		// not processing it yet, let's start
 		t, err := d.transportController.NewTransportForUsername(ctx, requestingUsername)
 		if err != nil {
-			d.dereferencingEmojisLock.Unlock()
 			return nil, fmt.Errorf("GetRemoteEmoji: error creating transport to fetch emoji %s: %s", shortcodeDomain, err)
 		}
 
 		derefURI, err := url.Parse(remoteURL)
 		if err != nil {
-			d.dereferencingEmojisLock.Unlock()
 			return nil, fmt.Errorf("GetRemoteEmoji: error parsing url for emoji %s: %s", shortcodeDomain, err)
 		}
 
@@ -63,29 +63,26 @@ func (d *deref) GetRemoteEmoji(ctx context.Context, requestingUsername string, r
 
 		newProcessing, err := d.mediaManager.ProcessEmoji(ctx, dataFunc, nil, shortcode, id, emojiURI, ai, refresh)
 		if err != nil {
-			d.dereferencingEmojisLock.Unlock()
 			return nil, fmt.Errorf("GetRemoteEmoji: error processing emoji %s: %s", shortcodeDomain, err)
 		}
 
 		// store it in our map to indicate it's in process
-		d.dereferencingEmojis[shortcodeDomain] = newProcessing
+		d.derefEmojis[shortcodeDomain] = newProcessing
 		processingEmoji = newProcessing
 	}
 
-	d.dereferencingEmojisLock.Unlock()
+	// Unlock map.
+	unlock()
 
-	load := func(innerCtx context.Context) error {
-		_, err := processingEmoji.LoadEmoji(innerCtx)
-		return err
-	}
+	defer func() {
+		// On exit safely remove emoji from map.
+		unlock := d.derefEmojisMu.Lock()
+		delete(d.derefEmojis, shortcodeDomain)
+		unlock()
+	}()
 
-	cleanup := func() {
-		d.dereferencingEmojisLock.Lock()
-		delete(d.dereferencingHeaders, shortcodeDomain)
-		d.dereferencingEmojisLock.Unlock()
-	}
-
-	if err := loadAndCleanup(ctx, load, cleanup); err != nil {
+	// Start emoji attachment loading (blocking call).
+	if _, err := processingEmoji.LoadEmoji(ctx); err != nil {
 		return nil, err
 	}
 
