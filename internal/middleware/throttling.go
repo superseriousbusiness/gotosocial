@@ -29,15 +29,10 @@ package middleware
 import (
 	"net/http"
 	"runtime"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
-)
-
-const (
-	errCapacityExceeded = "server capacity exceeded"
-	errTimedOut         = "timed out while waiting for a pending request to complete"
-	errContextCanceled  = "context canceled"
 )
 
 // token represents a request that is being processed.
@@ -73,11 +68,13 @@ type token struct{}
 //
 // If the multiplier is <= 0, a noop middleware will be returned instead.
 //
+// RetryAfter determines the Retry-After header value to be sent to throttled requests.
+//
 // Useful links:
 //
 //   - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After
 //   - https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503
-func Throttle(cpuMultiplier int) gin.HandlerFunc {
+func Throttle(cpuMultiplier int, retryAfter time.Duration) gin.HandlerFunc {
 	if cpuMultiplier <= 0 {
 		// throttling is disabled, return a noop middleware
 		return func(c *gin.Context) {}
@@ -89,25 +86,15 @@ func Throttle(cpuMultiplier int) gin.HandlerFunc {
 		backlogChannelSize = limit + backlogLimit
 		tokens             = make(chan token, limit)
 		backlogTokens      = make(chan token, backlogChannelSize)
-		retryAfter         = "30" // seconds
-		backlogDuration    = 30 * time.Second
+		retryAfterStr      = strconv.FormatUint(uint64(retryAfter/time.Second), 10)
 	)
 
 	// prefill token channels
 	for i := 0; i < limit; i++ {
 		tokens <- token{}
 	}
-
 	for i := 0; i < backlogChannelSize; i++ {
 		backlogTokens <- token{}
-	}
-
-	// bail instructs the requester to return after retryAfter seconds, returns a 503,
-	// and writes the given message into the "error" field of a returned json object
-	bail := func(c *gin.Context, msg string) {
-		c.Header("Retry-After", retryAfter)
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": msg})
-		c.Abort()
 	}
 
 	return func(c *gin.Context) {
@@ -115,10 +102,8 @@ func Throttle(cpuMultiplier int) gin.HandlerFunc {
 		select {
 		case <-c.Request.Context().Done():
 			// request context has been canceled already
-			bail(c, errContextCanceled)
+			return
 		case btok := <-backlogTokens:
-			// take a backlog token and wait
-			timer := time.NewTimer(backlogDuration)
 			defer func() {
 				// when we're finished, return the backlog token to the bucket
 				backlogTokens <- btok
@@ -127,16 +112,11 @@ func Throttle(cpuMultiplier int) gin.HandlerFunc {
 			// inside *this* select, the caller has a backlog token,
 			// and they're waiting for their turn to be processed
 			select {
-			case <-timer.C:
-				// waiting too long in the backlog
-				bail(c, errTimedOut)
 			case <-c.Request.Context().Done():
 				// the request context has been canceled already
-				timer.Stop()
-				bail(c, errContextCanceled)
+				return
 			case tok := <-tokens:
 				// the caller gets a token, so their request can now be processed
-				timer.Stop()
 				defer func() {
 					// whatever happens to the request, put the
 					// token back in the bucket when we're finished
@@ -147,7 +127,9 @@ func Throttle(cpuMultiplier int) gin.HandlerFunc {
 
 		default:
 			// we don't have space in the backlog queue
-			bail(c, errCapacityExceeded)
+			c.Header("Retry-After", retryAfterStr)
+			c.JSON(http.StatusTooManyRequests, gin.H{"error": "server capacity exceeded"})
+			c.Abort()
 		}
 	}
 }

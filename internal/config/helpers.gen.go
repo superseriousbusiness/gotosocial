@@ -1999,6 +1999,31 @@ func GetAdvancedThrottlingMultiplier() int { return global.GetAdvancedThrottling
 // SetAdvancedThrottlingMultiplier safely sets the value for global configuration 'AdvancedThrottlingMultiplier' field
 func SetAdvancedThrottlingMultiplier(v int) { global.SetAdvancedThrottlingMultiplier(v) }
 
+// GetAdvancedThrottlingRetryAfter safely fetches the Configuration value for state's 'AdvancedThrottlingRetryAfter' field
+func (st *ConfigState) GetAdvancedThrottlingRetryAfter() (v time.Duration) {
+	st.mutex.Lock()
+	v = st.config.AdvancedThrottlingRetryAfter
+	st.mutex.Unlock()
+	return
+}
+
+// SetAdvancedThrottlingRetryAfter safely sets the Configuration value for state's 'AdvancedThrottlingRetryAfter' field
+func (st *ConfigState) SetAdvancedThrottlingRetryAfter(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.AdvancedThrottlingRetryAfter = v
+	st.reloadToViper()
+}
+
+// AdvancedThrottlingRetryAfterFlag returns the flag name for the 'AdvancedThrottlingRetryAfter' field
+func AdvancedThrottlingRetryAfterFlag() string { return "advanced-throttling-retry-after" }
+
+// GetAdvancedThrottlingRetryAfter safely fetches the value for global configuration 'AdvancedThrottlingRetryAfter' field
+func GetAdvancedThrottlingRetryAfter() time.Duration { return global.GetAdvancedThrottlingRetryAfter() }
+
+// SetAdvancedThrottlingRetryAfter safely sets the value for global configuration 'AdvancedThrottlingRetryAfter' field
+func SetAdvancedThrottlingRetryAfter(v time.Duration) { global.SetAdvancedThrottlingRetryAfter(v) }
+
 // GetCacheGTSAccountMaxSize safely fetches the Configuration value for state's 'Cache.GTS.AccountMaxSize' field
 func (st *ConfigState) GetCacheGTSAccountMaxSize() (v int) {
 	st.mutex.Lock()
