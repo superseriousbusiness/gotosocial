@@ -170,9 +170,18 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error) (*http
 
 			// Search for a provided "Retry-After" header value.
 			if after := rsp.Header.Get("Retry-After"); after != "" {
-				// Attempt to parse this value as integer no. of seconds.
+
 				if u, _ := strconv.ParseUint(after, 10, 32); u != 0 {
+					// An integer number of backoff seconds was provided.
 					backoff = time.Duration(u) * time.Second
+				} else if at, _ := http.ParseTime(after); !at.Before(now) {
+					// An HTTP formatted future date-time was provided.
+					backoff = at.Sub(now)
+				}
+
+				// Don't let their provided backoff exceed our max.
+				if max := baseBackoff * maxRetries; backoff > max {
+					backoff = max
 				}
 			}
 
