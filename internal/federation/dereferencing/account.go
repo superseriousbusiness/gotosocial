@@ -345,7 +345,7 @@ func (d *deref) fetchRemoteAccountAvatar(ctx context.Context, tsport transport.T
 	unlock := d.derefAvatarsMu.Lock()
 	defer unlock()
 
-	if processing, ok := d.derefAvatars[accountID]; ok {
+	if processing, ok := d.derefAvatars[avatarURL]; ok {
 		// we're already dereferencing it, nothing to do.
 		return processing.AttachmentID(), nil
 	}
@@ -365,8 +365,7 @@ func (d *deref) fetchRemoteAccountAvatar(ctx context.Context, tsport transport.T
 	}
 
 	// Store media in map to mark as processing.
-	id := processing.AttachmentID()
-	d.derefAvatars[id] = processing
+	d.derefAvatars[avatarURL] = processing
 
 	// Unlock map.
 	unlock()
@@ -374,7 +373,7 @@ func (d *deref) fetchRemoteAccountAvatar(ctx context.Context, tsport transport.T
 	defer func() {
 		// On exit safely remove media from map.
 		unlock := d.derefAvatarsMu.Lock()
-		delete(d.derefAvatars, id)
+		delete(d.derefAvatars, avatarURL)
 		unlock()
 	}()
 
@@ -383,7 +382,7 @@ func (d *deref) fetchRemoteAccountAvatar(ctx context.Context, tsport transport.T
 		return "", err
 	}
 
-	return id, nil
+	return processing.AttachmentID(), nil
 }
 
 func (d *deref) fetchRemoteAccountHeader(ctx context.Context, tsport transport.Transport, headerURL string, accountID string) (string, error) {
@@ -397,7 +396,7 @@ func (d *deref) fetchRemoteAccountHeader(ctx context.Context, tsport transport.T
 	unlock := d.derefHeadersMu.Lock()
 	defer unlock()
 
-	if processing, ok := d.derefHeaders[accountID]; ok {
+	if processing, ok := d.derefHeaders[headerURL]; ok {
 		// we're already dereferencing it, nothing to do.
 		return processing.AttachmentID(), nil
 	}
@@ -417,8 +416,7 @@ func (d *deref) fetchRemoteAccountHeader(ctx context.Context, tsport transport.T
 	}
 
 	// Store media in map to mark as processing.
-	id := processing.AttachmentID()
-	d.derefHeaders[id] = processing
+	d.derefHeaders[headerURL] = processing
 
 	// Unlock map.
 	unlock()
@@ -426,7 +424,7 @@ func (d *deref) fetchRemoteAccountHeader(ctx context.Context, tsport transport.T
 	defer func() {
 		// On exit safely remove media from map.
 		unlock := d.derefHeadersMu.Lock()
-		delete(d.derefHeaders, id)
+		delete(d.derefHeaders, headerURL)
 		unlock()
 	}()
 
@@ -435,7 +433,7 @@ func (d *deref) fetchRemoteAccountHeader(ctx context.Context, tsport transport.T
 		return "", err
 	}
 
-	return id, nil
+	return processing.AttachmentID(), nil
 }
 
 func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gtsmodel.Account, requestingUsername string) (bool, error) {
