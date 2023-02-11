@@ -34,7 +34,7 @@ import (
 )
 
 const (
-	selectPruneLimit          = 20 // Amount of media entries to select at a time from the db when pruning.
+	selectPruneLimit          = 50 // Amount of media entries to select at a time from the db when pruning.
 	unusedLocalAttachmentDays = 3  // Number of days to keep local media in storage if not attached to a status.
 )
 
