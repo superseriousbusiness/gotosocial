@@ -3608,7 +3608,7 @@ paths:
                 - application/json
                 - application/xml
                 - application/x-www-form-urlencoded
-            description: Also cleans up unused headers + avatars from the media cache.
+            description: Also cleans up unused headers + avatars from the media cache and prunes orphaned items from storage.
             operationId: mediaCleanup
             parameters:
                 - description: |-

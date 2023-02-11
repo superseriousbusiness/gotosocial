@@ -287,3 +287,40 @@ Example (for real):
 ```bash
 gotosocial admin media prune orphaned --dry-run=false
 ```
+
+### gotosocial admin media prune remote
+
+This command can be used to prune unused/stale remote media from your GoToSocial.
+
+Stale media means avatars/headers/status attachments from remote instances that are older than `media-remote-cache-days`.
+
+These items will be refetched later on demand, if necessary.
+
+Unused media means avatars/headers/status attachments which are not currently in use by an account or status.
+
+**This command only works when GoToSocial is not running, since it acquires an exclusive lock on storage. Stop GoToSocial first before running this command!**
+
+```text
+prune unused/stale remote media from storage, older than given number of days
+
+Usage:
+  gotosocial admin media prune remote [flags]
+
+Flags:
+      --dry-run   perform a dry run and only log number of items eligible for pruning (default true)
+  -h, --help      help for remote
+```
+
+By default, this command performs a dry run, which will log how many items can be pruned. To do it for real, add `--dry-run=false` to the command.
+
+Example (dry run):
+
+```bash
+gotosocial admin media prune remote
+```
+
+Example (for real):
+
+```bash
+gotosocial admin media prune remote --dry-run=false
+```
