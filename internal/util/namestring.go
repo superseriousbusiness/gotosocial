@@ -41,19 +41,35 @@ func ExtractNamestringParts(mention string) (username, host string, err error) {
 	}
 }
 
+// ExtractAliasstringParts extracts the username test_user and
+// the domain example.org from a string like https://example.org/users/test_user.
+//
+// If nothing is matched, it will return an error.
+func ExtractAliasstringParts(alias string) (username, host string, err error) {
+	matches := regexes.UserAlias.FindStringSubmatch(alias)
+	if len(matches) == 3 {
+		return matches[2], matches[1], nil
+	} else {
+		return "", "", fmt.Errorf("couldn't match alias %s", alias)
+	}
+}
+
 // ExtractWebfingerParts returns username test_user and
 // domain example.org from a string like acct:test_user@example.org,
 // or acct:@test_user@example.org.
 //
 // If nothing is extracted, it will return an error.
 func ExtractWebfingerParts(webfinger string) (username, host string, err error) {
-	// remove the acct: prefix if it's present
-	webfinger = strings.TrimPrefix(webfinger, "acct:")
+	if strings.HasPrefix(webfinger, "https://") || strings.HasPrefix(webfinger, "http://") {
+		return ExtractAliasstringParts(webfinger)
+	} else {
+		webfinger = strings.TrimPrefix(webfinger, "acct:")
 
-	// prepend an @ if necessary
-	if webfinger[0] != '@' {
-		webfinger = "@" + webfinger
+		// prepend an @ if necessary
+		if webfinger[0] != '@' {
+			webfinger = "@" + webfinger
+		}
+
+		return ExtractNamestringParts(webfinger)
 	}
-
-	return ExtractNamestringParts(webfinger)
 }

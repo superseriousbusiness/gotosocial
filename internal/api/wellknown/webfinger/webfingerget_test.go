@@ -26,6 +26,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -47,6 +48,100 @@ func (suite *WebfingerGetTestSuite) TestFingerUser() {
 	// setup request
 	host := config.GetHost()
 	requestPath := fmt.Sprintf("/%s?resource=acct:%s@%s", webfinger.WebfingerBasePath, targetAccount.Username, host)
+
+	recorder := httptest.NewRecorder()
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
+	ctx.Request = httptest.NewRequest(http.MethodGet, requestPath, nil) // the endpoint we're hitting
+	ctx.Request.Header.Set("accept", "application/json")
+
+	// trigger the function being tested
+	suite.webfingerModule.WebfingerGETRequest(ctx)
+
+	// check response
+	suite.EqualValues(http.StatusOK, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+	b, err := ioutil.ReadAll(result.Body)
+	suite.NoError(err)
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, b, "", "  ")
+	suite.NoError(err)
+	suite.Equal(`{
+  "subject": "acct:the_mighty_zork@localhost:8080",
+  "aliases": [
+    "http://localhost:8080/users/the_mighty_zork",
+    "http://localhost:8080/@the_mighty_zork"
+  ],
+  "links": [
+    {
+      "rel": "http://webfinger.net/rel/profile-page",
+      "type": "text/html",
+      "href": "http://localhost:8080/@the_mighty_zork"
+    },
+    {
+      "rel": "self",
+      "type": "application/activity+json",
+      "href": "http://localhost:8080/users/the_mighty_zork"
+    }
+  ]
+}`, dst.String())
+}
+
+func (suite *WebfingerGetTestSuite) TestFingerUserByURI() {
+	targetAccount := suite.testAccounts["local_account_1"]
+
+	// setup request
+	host := config.GetHost()
+	queryURI := fmt.Sprintf("http://%s/users/%s", host, targetAccount.Username)
+	requestPath := fmt.Sprintf("/%s?resource=%s", webfinger.WebfingerBasePath, url.QueryEscape(queryURI))
+
+	recorder := httptest.NewRecorder()
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
+	ctx.Request = httptest.NewRequest(http.MethodGet, requestPath, nil) // the endpoint we're hitting
+	ctx.Request.Header.Set("accept", "application/json")
+
+	// trigger the function being tested
+	suite.webfingerModule.WebfingerGETRequest(ctx)
+
+	// check response
+	suite.EqualValues(http.StatusOK, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+	b, err := ioutil.ReadAll(result.Body)
+	suite.NoError(err)
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, b, "", "  ")
+	suite.NoError(err)
+	suite.Equal(`{
+  "subject": "acct:the_mighty_zork@localhost:8080",
+  "aliases": [
+    "http://localhost:8080/users/the_mighty_zork",
+    "http://localhost:8080/@the_mighty_zork"
+  ],
+  "links": [
+    {
+      "rel": "http://webfinger.net/rel/profile-page",
+      "type": "text/html",
+      "href": "http://localhost:8080/@the_mighty_zork"
+    },
+    {
+      "rel": "self",
+      "type": "application/activity+json",
+      "href": "http://localhost:8080/users/the_mighty_zork"
+    }
+  ]
+}`, dst.String())
+}
+
+func (suite *WebfingerGetTestSuite) TestFingerUserByURL() {
+	targetAccount := suite.testAccounts["local_account_1"]
+
+	// setup request
+	host := config.GetHost()
+	queryURL := fmt.Sprintf("http://%s/@%s", host, targetAccount.Username)
+	requestPath := fmt.Sprintf("/%s?resource=%s", webfinger.WebfingerBasePath, url.QueryEscape(queryURL))
 
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)

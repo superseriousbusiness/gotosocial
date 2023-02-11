@@ -91,6 +91,10 @@ var (
 	// UserPath parses a path that validates and captures the username part from eg /users/example_username
 	UserPath = regexp.MustCompile(userPathString)
 
+	userAliasString = fmt.Sprintf(`^https?://([\w\-\.:]+)/(?:users/|@)(%s)$`, usernameStringRelaxed)
+	// UserAlias captures the username and domain part from a user URL or URI
+	UserAlias = regexp.MustCompile(userAliasString)
+
 	publicKeyPath = fmt.Sprintf(`^/?%s/(%s)/%s`, users, usernameStringRelaxed, publicKey)
 	// PublicKeyPath parses a path that validates and captures the username part from eg /users/example_username/main-key
 	PublicKeyPath = regexp.MustCompile(publicKeyPath)
