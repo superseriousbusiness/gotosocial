@@ -55,7 +55,7 @@ func (suite *MediaTestSuite) TestGetAvisAndHeaders() {
 func (suite *MediaTestSuite) TestGetLocalUnattachedOlderThan() {
 	ctx := context.Background()
 
-	attachments, err := suite.db.GetLocalUnattachedOlderThan(ctx, testrig.TimeMustParse("2090-06-04T13:12:00Z"), "", 10)
+	attachments, err := suite.db.GetLocalUnattachedOlderThan(ctx, testrig.TimeMustParse("2090-06-04T13:12:00Z"), 10)
 	suite.NoError(err)
 	suite.Len(attachments, 1)
 }

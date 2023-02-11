@@ -23,7 +23,6 @@ import (
 	"fmt"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 func (p *processor) MediaPrune(ctx context.Context, mediaRemoteCacheDays int) gtserror.WithCode {
@@ -32,32 +31,10 @@ func (p *processor) MediaPrune(ctx context.Context, mediaRemoteCacheDays int) gt
 		return gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
-	go func() {
-		pruned, err := p.mediaManager.PruneAllRemote(context.Background(), mediaRemoteCacheDays)
-		if err != nil {
-			log.Errorf("MediaPrune: error pruning remote cache: %s", err)
-		} else {
-			log.Infof("MediaPrune: pruned %d remote cache entries", pruned)
-		}
-	}()
-
-	go func() {
-		pruned, err := p.mediaManager.PruneUnusedLocalAttachments(context.Background())
-		if err != nil {
-			log.Errorf("MediaPrune: error pruning unused local cache: %s", err)
-		} else {
-			log.Infof("MediaPrune: pruned %d unused local cache entries", pruned)
-		}
-	}()
-
-	go func() {
-		pruned, err := p.mediaManager.PruneAllMeta(context.Background())
-		if err != nil {
-			log.Errorf("MediaPrune: error pruning meta: %s", err)
-		} else {
-			log.Infof("MediaPrune: pruned %d meta entries", pruned)
-		}
-	}()
+	if err := p.mediaManager.PruneAll(ctx, mediaRemoteCacheDays, false); err != nil {
+		err = fmt.Errorf("MediaPrune: %w", err)
+		return gtserror.NewErrorInternalError(err)
+	}
 
 	return nil
 }

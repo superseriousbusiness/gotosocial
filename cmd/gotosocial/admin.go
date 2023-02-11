@@ -169,7 +169,6 @@ func adminCommands() *cobra.Command {
 		Use:   "prune",
 		Short: "admin commands for pruning unused/orphaned media from storage",
 	}
-	config.AddAdminMediaPrune(adminMediaPruneCmd)
 
 	adminMediaPruneOrphanedCmd := &cobra.Command{
 		Use:   "orphaned",
@@ -183,6 +182,19 @@ func adminCommands() *cobra.Command {
 	}
 	config.AddAdminMediaPrune(adminMediaPruneOrphanedCmd)
 	adminMediaPruneCmd.AddCommand(adminMediaPruneOrphanedCmd)
+
+	adminMediaPruneRemoteCmd := &cobra.Command{
+		Use:   "remote",
+		Short: "prune unused/stale remote media from storage, older than given number of days",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return preRun(preRunArgs{cmd: cmd})
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd.Context(), prune.Remote)
+		},
+	}
+	config.AddAdminMediaPrune(adminMediaPruneRemoteCmd)
+	adminMediaPruneCmd.AddCommand(adminMediaPruneRemoteCmd)
 
 	adminMediaCmd.AddCommand(adminMediaPruneCmd)
 

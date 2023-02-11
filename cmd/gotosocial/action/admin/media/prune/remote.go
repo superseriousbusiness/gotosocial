@@ -27,8 +27,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-// Orphaned prunes orphaned media from storage.
-var Orphaned action.GTSAction = func(ctx context.Context) error {
+// Remote prunes old and/or unused remote media.
+var Remote action.GTSAction = func(ctx context.Context) error {
 	prune, err := setupPrune(ctx)
 	if err != nil {
 		return err
@@ -36,15 +36,22 @@ var Orphaned action.GTSAction = func(ctx context.Context) error {
 
 	dry := config.GetAdminMediaPruneDryRun()
 
-	pruned, err := prune.manager.PruneOrphaned(ctx, dry)
+	pruned, err := prune.manager.PruneUnusedRemote(ctx, dry)
 	if err != nil {
-		return fmt.Errorf("error pruning: %s", err)
+		return fmt.Errorf("error pruning: %w", err)
 	}
 
+	uncached, err := prune.manager.UncacheRemote(ctx, config.GetMediaRemoteCacheDays(), dry)
+	if err != nil {
+		return fmt.Errorf("error pruning: %w", err)
+	}
+
+	total := pruned + uncached
+
 	if dry /* dick heyyoooooo */ {
-		log.Infof("DRY RUN: %d items are orphaned and eligible to be pruned", pruned)
+		log.Infof("DRY RUN: %d remote items are unused/stale and eligible to be pruned", total)
 	} else {
-		log.Infof("%d orphaned items were pruned", pruned)
+		log.Infof("%d unused/stale remote items were pruned", pruned)
 	}
 
 	return prune.shutdown(ctx)

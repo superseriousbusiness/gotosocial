@@ -82,10 +82,10 @@ import (
 // type (the first of four ASCII letters) is lower-case.
 const chunkTypeAncillaryBit = 0x20000000
 
-// PNGAncillaryChunkStripper wraps another io.Reader to strip ancillary chunks,
+// pngAncillaryChunkStripper wraps another io.Reader to strip ancillary chunks,
 // if the data is in the PNG file format. If the data isn't PNG, it is passed
 // through unmodified.
-type PNGAncillaryChunkStripper struct {
+type pngAncillaryChunkStripper struct {
 	// Reader is the wrapped io.Reader.
 	Reader io.Reader
 
@@ -113,7 +113,7 @@ type PNGAncillaryChunkStripper struct {
 }
 
 // Read implements io.Reader.
-func (r *PNGAncillaryChunkStripper) Read(p []byte) (int, error) {
+func (r *pngAncillaryChunkStripper) Read(p []byte) (int, error) {
 	for {
 		// If the wrapped io.Reader returned a non-nil error, drain r.buffer
 		// (what data we have) and return that error (if fully drained).

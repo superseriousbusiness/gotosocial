@@ -33,7 +33,8 @@ import (
 // MediaCleanupPOSTHandler swagger:operation POST /api/v1/admin/media_cleanup mediaCleanup
 //
 // Clean up remote media older than the specified number of days.
-// Also cleans up unused headers + avatars from the media cache.
+//
+// Also cleans up unused headers + avatars from the media cache and prunes orphaned items from storage.
 //
 //	---
 //	tags:

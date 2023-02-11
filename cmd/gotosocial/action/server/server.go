@@ -231,11 +231,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error starting gotosocial service: %s", err)
 	}
 
-	// perform initial media prune in case value of MediaRemoteCacheDays changed
-	if err := processor.AdminMediaPrune(ctx, config.GetMediaRemoteCacheDays()); err != nil {
-		return fmt.Errorf("error during initial media prune: %s", err)
-	}
-
 	// catch shutdown signals from the operating system
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
