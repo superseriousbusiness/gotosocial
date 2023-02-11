@@ -454,8 +454,8 @@ func scheduleCleanupJobs(m *manager) {
 	m.state.Workers.Scheduler.Schedule(sched.NewJob(func(now time.Time) {
 		err := m.PruneAll(doneCtx, config.GetMediaRemoteCacheDays(), true)
 		if err != nil {
-			log.Errorf("error during prune: %v", err)
+			log.Errorf(nil, "error during prune: %v", err)
 		}
-		log.Infof("finished pruning all in %s", time.Since(now))
+		log.Infof(nil, "finished pruning all in %s", time.Since(now))
 	}).EveryAt(midnight, day))
 }

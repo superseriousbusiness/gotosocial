@@ -19,6 +19,7 @@
 package log
 
 import (
+	"context"
 	"fmt"
 	"log/syslog"
 	"os"
@@ -38,12 +39,20 @@ var (
 	// lvlstrs is the lookup table of log levels to strings.
 	lvlstrs = level.Default()
 
-	// Syslog output, only set if enabled.
+	// syslog output, only set if enabled.
 	sysout *syslog.Writer
 
 	// timefmt is the logging time format used.
 	timefmt = "02/01/2006 15:04:05.000"
+
+	// ctxhooks allows modifying log content based on context.
+	ctxhooks []func(context.Context, []kv.Field) []kv.Field
 )
+
+// Hook adds the given hook to the global logger context hooks stack.
+func Hook(hook func(ctx context.Context, kvs []kv.Field) []kv.Field) {
+	ctxhooks = append(ctxhooks, hook)
+}
 
 // Level returns the currently set log level.
 func Level() level.LEVEL {
@@ -60,82 +69,86 @@ func New() Entry {
 	return Entry{}
 }
 
+func WithContext(ctx context.Context) Entry {
+	return Entry{ctx: ctx}
+}
+
 func WithField(key string, value interface{}) Entry {
-	return Entry{fields: []kv.Field{{K: key, V: value}}}
+	return New().WithField(key, value)
 }
 
 func WithFields(fields ...kv.Field) Entry {
-	return Entry{fields: fields}
+	return New().WithFields(fields...)
 }
 
-func Trace(a ...interface{}) {
-	logf(3, level.TRACE, nil, args(len(a)), a...)
+func Trace(ctx context.Context, a ...interface{}) {
+	logf(ctx, 3, level.TRACE, nil, args(len(a)), a...)
 }
 
-func Tracef(s string, a ...interface{}) {
-	logf(3, level.TRACE, nil, s, a...)
+func Tracef(ctx context.Context, s string, a ...interface{}) {
+	logf(ctx, 3, level.TRACE, nil, s, a...)
 }
 
-func Debug(a ...interface{}) {
-	logf(3, level.DEBUG, nil, args(len(a)), a...)
+func Debug(ctx context.Context, a ...interface{}) {
+	logf(ctx, 3, level.DEBUG, nil, args(len(a)), a...)
 }
 
-func Debugf(s string, a ...interface{}) {
-	logf(3, level.DEBUG, nil, s, a...)
+func Debugf(ctx context.Context, s string, a ...interface{}) {
+	logf(ctx, 3, level.DEBUG, nil, s, a...)
 }
 
-func Info(a ...interface{}) {
-	logf(3, level.INFO, nil, args(len(a)), a...)
+func Info(ctx context.Context, a ...interface{}) {
+	logf(ctx, 3, level.INFO, nil, args(len(a)), a...)
 }
 
-func Infof(s string, a ...interface{}) {
-	logf(3, level.INFO, nil, s, a...)
+func Infof(ctx context.Context, s string, a ...interface{}) {
+	logf(ctx, 3, level.INFO, nil, s, a...)
 }
 
-func Warn(a ...interface{}) {
-	logf(3, level.WARN, nil, args(len(a)), a...)
+func Warn(ctx context.Context, a ...interface{}) {
+	logf(ctx, 3, level.WARN, nil, args(len(a)), a...)
 }
 
-func Warnf(s string, a ...interface{}) {
-	logf(3, level.WARN, nil, s, a...)
+func Warnf(ctx context.Context, s string, a ...interface{}) {
+	logf(ctx, 3, level.WARN, nil, s, a...)
 }
 
-func Error(a ...interface{}) {
-	logf(3, level.ERROR, nil, args(len(a)), a...)
+func Error(ctx context.Context, a ...interface{}) {
+	logf(ctx, 3, level.ERROR, nil, args(len(a)), a...)
 }
 
-func Errorf(s string, a ...interface{}) {
-	logf(3, level.ERROR, nil, s, a...)
+func Errorf(ctx context.Context, s string, a ...interface{}) {
+	logf(ctx, 3, level.ERROR, nil, s, a...)
 }
 
-func Fatal(a ...interface{}) {
+func Fatal(ctx context.Context, a ...interface{}) {
 	defer syscall.Exit(1)
-	logf(3, level.FATAL, nil, args(len(a)), a...)
+	logf(ctx, 3, level.FATAL, nil, args(len(a)), a...)
 }
 
-func Fatalf(s string, a ...interface{}) {
+func Fatalf(ctx context.Context, s string, a ...interface{}) {
 	defer syscall.Exit(1)
-	logf(3, level.FATAL, nil, s, a...)
+	logf(ctx, 3, level.FATAL, nil, s, a...)
 }
 
-func Panic(a ...interface{}) {
+func Panic(ctx context.Context, a ...interface{}) {
 	defer panic(fmt.Sprint(a...))
-	logf(3, level.PANIC, nil, args(len(a)), a...)
+	logf(ctx, 3, level.PANIC, nil, args(len(a)), a...)
 }
 
-func Panicf(s string, a ...interface{}) {
+func Panicf(ctx context.Context, s string, a ...interface{}) {
 	defer panic(fmt.Sprintf(s, a...))
-	logf(3, level.PANIC, nil, s, a...)
+	logf(ctx, 3, level.PANIC, nil, s, a...)
 }
 
 // Log will log formatted args as 'msg' field to the log at given level.
-func Log(lvl level.LEVEL, a ...interface{}) {
-	logf(3, lvl, nil, args(len(a)), a...)
+func Log(ctx context.Context, lvl level.LEVEL, a ...interface{}) {
+	logf(ctx, 3, lvl, nil, args(len(a)), a...)
 }
 
 // Logf will log format string as 'msg' field to the log at given level.
-func Logf(lvl level.LEVEL, s string, a ...interface{}) {
-	logf(3, lvl, nil, s, a...)
+func Logf(ctx context.Context, lvl level.LEVEL, s string, a ...interface{}) {
+	logf(ctx, 3, lvl, nil, s, a...)
 }
 
 // Print will log formatted args to the stdout log output.
@@ -186,7 +199,7 @@ func printf(depth int, fields []kv.Field, s string, a ...interface{}) {
 	putBuf(buf)
 }
 
-func logf(depth int, lvl level.LEVEL, fields []kv.Field, s string, a ...interface{}) {
+func logf(ctx context.Context, depth int, lvl level.LEVEL, fields []kv.Field, s string, a ...interface{}) {
 	var out *os.File
 
 	// Check if enabled.
@@ -219,6 +232,13 @@ func logf(depth int, lvl level.LEVEL, fields []kv.Field, s string, a ...interfac
 	buf.B = append(buf.B, `level=`...)
 	buf.B = append(buf.B, lvlstrs[lvl]...)
 	buf.B = append(buf.B, ' ')
+
+	if ctx != nil {
+		// Pass context through hooks.
+		for _, hook := range ctxhooks {
+			fields = hook(ctx, fields)
+		}
+	}
 
 	// Append formatted fields with msg
 	kv.Fields(append(fields, kv.Field{

@@ -180,12 +180,13 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 
 	if !ok {
 		// No spot acquired, log warning
-		log.WithFields(kv.Fields{
-			{K: "queue", V: len(wait)},
-			{K: "method", V: req.Method},
-			{K: "host", V: req.Host},
-			{K: "uri", V: req.URL.RequestURI()},
-		}...).Warn("full request queue")
+		log.WithContext(req.Context()).
+			WithFields(kv.Fields{
+				{K: "queue", V: len(wait)},
+				{K: "method", V: req.Method},
+				{K: "host", V: req.Host},
+				{K: "uri", V: req.URL.RequestURI()},
+			}...).Warn("full request queue")
 
 		select {
 		case <-req.Context().Done():

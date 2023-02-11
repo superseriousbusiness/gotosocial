@@ -44,7 +44,7 @@ func decodeVideoFrame(r io.Reader) (*gtsVideo, error) {
 	}
 	defer func() {
 		if err := tfs.Close(); err != nil {
-			log.Errorf("error closing temp file seeker: %s", err)
+			log.Errorf(nil, "error closing temp file seeker: %s", err)
 		}
 	}()
 

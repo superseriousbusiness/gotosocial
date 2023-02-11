@@ -67,7 +67,7 @@ func (p *ProcessingMedia) LoadAttachment(ctx context.Context) (*gtsmodel.MediaAt
 	if !done {
 		// Provided context was cancelled, e.g. request cancelled
 		// early. Queue this item for asynchronous processing.
-		log.Warnf("reprocessing media %s after canceled ctx", p.media.ID)
+		log.Warnf(ctx, "reprocessing media %s after canceled ctx", p.media.ID)
 		go p.mgr.state.Workers.Media.Enqueue(p.Process)
 	}
 
@@ -77,7 +77,7 @@ func (p *ProcessingMedia) LoadAttachment(ctx context.Context) (*gtsmodel.MediaAt
 // Process allows the receiving object to fit the runners.WorkerFunc signature. It performs a (blocking) load and logs on error.
 func (p *ProcessingMedia) Process(ctx context.Context) {
 	if _, _, err := p.load(ctx); err != nil {
-		log.Errorf("error processing media: %v", err)
+		log.Errorf(ctx, "error processing media: %v", err)
 	}
 }
 
@@ -151,7 +151,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 
 		// ensure post callback gets called.
 		if err := p.postFn(ctx); err != nil {
-			log.Errorf("error executing postdata function: %v", err)
+			log.Errorf(ctx, "error executing postdata function: %v", err)
 		}
 	}()
 
@@ -164,7 +164,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	defer func() {
 		// Ensure data reader gets closed on return.
 		if err := rc.Close(); err != nil {
-			log.Errorf("error closing data reader: %v", err)
+			log.Errorf(ctx, "error closing data reader: %v", err)
 		}
 	}()
 
@@ -220,7 +220,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 
 	// This shouldn't already exist, but we do a check as it's worth logging.
 	if have, _ := p.mgr.state.Storage.Has(ctx, p.media.File.Path); have {
-		log.Warnf("media already exists at storage path: %s", p.media.File.Path)
+		log.Warnf(ctx, "media already exists at storage path: %s", p.media.File.Path)
 
 		// Attempt to remove existing media at storage path (might be broken / out-of-date)
 		if err := p.mgr.state.Storage.Delete(ctx, p.media.File.Path); err != nil {
@@ -333,7 +333,7 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 
 	// This shouldn't already exist, but we do a check as it's worth logging.
 	if have, _ := p.mgr.state.Storage.Has(ctx, p.media.Thumbnail.Path); have {
-		log.Warnf("thumbnail already exists at storage path: %s", p.media.Thumbnail.Path)
+		log.Warnf(ctx, "thumbnail already exists at storage path: %s", p.media.Thumbnail.Path)
 
 		// Attempt to remove existing thumbnail at storage path (might be broken / out-of-date)
 		if err := p.mgr.state.Storage.Delete(ctx, p.media.Thumbnail.Path); err != nil {

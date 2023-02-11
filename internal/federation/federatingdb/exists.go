@@ -32,10 +32,11 @@ import (
 // The library makes this call only after acquiring a lock first.
 //
 // Implementation note: this just straight up isn't implemented, and doesn't *really* need to be either.
-func (f *federatingDB) Exists(c context.Context, id *url.URL) (exists bool, err error) {
-	l := log.WithFields(kv.Fields{
-		{"id", id},
-	}...)
+func (f *federatingDB) Exists(ctx context.Context, id *url.URL) (exists bool, err error) {
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{
+			{"id", id},
+		}...)
 	l.Debug("entering Exists")
 	return false, nil
 }

@@ -48,34 +48,34 @@ func (m *manager) PruneAll(ctx context.Context, mediaCacheRemoteDays int, blocki
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("error pruning unused local media (%s)", err))
 		} else {
-			log.Infof("pruned %d unused local media", pruned)
+			log.Infof(ctx, "pruned %d unused local media", pruned)
 		}
 
 		pruned, err = m.PruneUnusedRemote(innerCtx, dry)
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("error pruning unused remote media: (%s)", err))
 		} else {
-			log.Infof("pruned %d unused remote media", pruned)
+			log.Infof(ctx, "pruned %d unused remote media", pruned)
 		}
 
 		pruned, err = m.UncacheRemote(innerCtx, mediaCacheRemoteDays, dry)
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("error uncacheing remote media older than %d day(s): (%s)", mediaCacheRemoteDays, err))
 		} else {
-			log.Infof("uncached %d remote media older than %d day(s)", pruned, mediaCacheRemoteDays)
+			log.Infof(ctx, "uncached %d remote media older than %d day(s)", pruned, mediaCacheRemoteDays)
 		}
 
 		pruned, err = m.PruneOrphaned(innerCtx, dry)
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("error pruning orphaned media: (%s)", err))
 		} else {
-			log.Infof("pruned %d orphaned media", pruned)
+			log.Infof(ctx, "pruned %d orphaned media", pruned)
 		}
 
 		if err := m.state.Storage.Storage.Clean(innerCtx); err != nil {
 			errs = append(errs, fmt.Sprintf("error cleaning storage: (%s)", err))
 		} else {
-			log.Info("cleaned storage")
+			log.Info(ctx, "cleaned storage")
 		}
 
 		return errs.Combine()
@@ -87,7 +87,7 @@ func (m *manager) PruneAll(ctx context.Context, mediaCacheRemoteDays int, blocki
 
 	go func() {
 		if err := f(context.Background()); err != nil {
-			log.Error(err)
+			log.Error(ctx, err)
 		}
 	}()
 

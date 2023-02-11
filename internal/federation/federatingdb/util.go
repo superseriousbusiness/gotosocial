@@ -304,7 +304,7 @@ func extractFromCtx(ctx context.Context) (receivingAccount, requestingAccount *g
 		var ok bool
 		receivingAccount, ok = receivingAccountI.(*gtsmodel.Account)
 		if !ok {
-			log.Panicf("extractFromCtx: context entry with key %s could not be asserted to *gtsmodel.Account", ap.ContextReceivingAccount)
+			log.Panicf(ctx, "context entry with key %s could not be asserted to *gtsmodel.Account", ap.ContextReceivingAccount)
 		}
 	}
 
@@ -313,7 +313,7 @@ func extractFromCtx(ctx context.Context) (receivingAccount, requestingAccount *g
 		var ok bool
 		requestingAccount, ok = requestingAcctI.(*gtsmodel.Account)
 		if !ok {
-			log.Panicf("extractFromCtx: context entry with key %s could not be asserted to *gtsmodel.Account", ap.ContextRequestingAccount)
+			log.Panicf(ctx, "context entry with key %s could not be asserted to *gtsmodel.Account", ap.ContextRequestingAccount)
 		}
 	}
 

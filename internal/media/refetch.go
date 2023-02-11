@@ -51,7 +51,7 @@ func (m *manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 		if err != nil {
 			if !errors.Is(err, db.ErrNoEntries) {
 				// an actual error has occurred
-				log.Errorf("error fetching emojis from database: %s", err)
+				log.Errorf(ctx, "error fetching emojis from database: %s", err)
 			}
 			break
 		}
@@ -79,10 +79,10 @@ func (m *manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 	// bail early if we've got nothing to do
 	toRefetchCount := len(refetchIDs)
 	if toRefetchCount == 0 {
-		log.Debug("no remote emojis require a refetch")
+		log.Debug(ctx, "no remote emojis require a refetch")
 		return 0, nil
 	}
-	log.Debugf("%d remote emoji(s) require a refetch, doing that now...", toRefetchCount)
+	log.Debugf(ctx, "%d remote emoji(s) require a refetch, doing that now...", toRefetchCount)
 
 	var totalRefetched int
 	for _, emojiID := range refetchIDs {
@@ -94,13 +94,13 @@ func (m *manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 		shortcodeDomain := util.ShortcodeDomain(emoji)
 
 		if emoji.ImageRemoteURL == "" {
-			log.Errorf("remote emoji %s could not be refreshed because it has no ImageRemoteURL set", shortcodeDomain)
+			log.Errorf(ctx, "remote emoji %s could not be refreshed because it has no ImageRemoteURL set", shortcodeDomain)
 			continue
 		}
 
 		emojiImageIRI, err := url.Parse(emoji.ImageRemoteURL)
 		if err != nil {
-			log.Errorf("remote emoji %s could not be refreshed because its ImageRemoteURL (%s) is not a valid uri: %s", shortcodeDomain, emoji.ImageRemoteURL, err)
+			log.Errorf(ctx, "remote emoji %s could not be refreshed because its ImageRemoteURL (%s) is not a valid uri: %s", shortcodeDomain, emoji.ImageRemoteURL, err)
 			continue
 		}
 
@@ -116,16 +116,16 @@ func (m *manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 			VisibleInPicker:      emoji.VisibleInPicker,
 		}, true)
 		if err != nil {
-			log.Errorf("emoji %s could not be refreshed because of an error during processing: %s", shortcodeDomain, err)
+			log.Errorf(ctx, "emoji %s could not be refreshed because of an error during processing: %s", shortcodeDomain, err)
 			continue
 		}
 
 		if _, err := processingEmoji.LoadEmoji(ctx); err != nil {
-			log.Errorf("emoji %s could not be refreshed because of an error during loading: %s", shortcodeDomain, err)
+			log.Errorf(ctx, "emoji %s could not be refreshed because of an error during loading: %s", shortcodeDomain, err)
 			continue
 		}
 
-		log.Tracef("refetched emoji %s successfully from remote", shortcodeDomain)
+		log.Tracef(ctx, "refetched emoji %s successfully from remote", shortcodeDomain)
 		totalRefetched++
 	}
 

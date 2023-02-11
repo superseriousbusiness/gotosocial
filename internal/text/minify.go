@@ -19,27 +19,16 @@
 package text
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/tdewolff/minify/v2"
 	"github.com/tdewolff/minify/v2/html"
 )
 
-var (
-	m *minify.M
-)
-
-func minifyHTML(content string) string {
-	if m == nil {
-		m = minify.New()
-		m.Add("text/html", &html.Minifier{
-			KeepEndTags: true,
-			KeepQuotes:  true,
-		})
-	}
-
-	minified, err := m.String("text/html", content)
-	if err != nil {
-		log.Errorf("error minifying HTML: %s", err)
-	}
-	return minified
-}
+// m is the global minify instance.
+var m = func() *minify.M {
+	m := minify.New()
+	m.Add("text/html", &html.Minifier{
+		KeepEndTags: true,
+		KeepQuotes:  true,
+	})
+	return m
+}()

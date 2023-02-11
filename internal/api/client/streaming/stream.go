@@ -166,11 +166,12 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 		return
 	}
 
-	l := log.WithFields(kv.Fields{
-		{"account", account.Username},
-		{"streamID", stream.ID},
-		{"streamType", streamType},
-	}...)
+	l := log.WithContext(c.Request.Context()).
+		WithFields(kv.Fields{
+			{"account", account.Username},
+			{"streamID", stream.ID},
+			{"streamType", streamType},
+		}...)
 
 	// Upgrade the incoming HTTP request, which hijacks the underlying
 	// connection and reuses it for the websocket (non-http) protocol.

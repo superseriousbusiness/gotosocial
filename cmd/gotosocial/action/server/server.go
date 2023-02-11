@@ -62,7 +62,7 @@ import (
 
 // Start creates and starts a gotosocial server
 var Start action.GTSAction = func(ctx context.Context) error {
-	_, err := maxprocs.Set(maxprocs.Logger(log.Debugf))
+	_, err := maxprocs.Set(nil)
 	if err != nil {
 		return fmt.Errorf("failed to set CPU limits from cgroup: %s", err)
 	}
@@ -156,6 +156,9 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// attach global middlewares which are used for every request
 	router.AttachGlobalMiddleware(
+		middleware.AddRequestID(config.GetRequestIDHeader()),
+		// note: hooks adding ctx fields must be ABOVE
+		// the logger, otherwise won't be accessible.
 		middleware.Logger(),
 		middleware.UserAgent(),
 		middleware.CORS(),
@@ -237,13 +240,13 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-sigs // block until signal received
-	log.Infof("received signal %s, shutting down", sig)
+	log.Infof(ctx, "received signal %s, shutting down", sig)
 
 	// close down all running services in order
 	if err := gts.Stop(ctx); err != nil {
 		return fmt.Errorf("error closing gotosocial service: %s", err)
 	}
 
-	log.Info("done! exiting...")
+	log.Info(ctx, "done! exiting...")
 	return nil
 }

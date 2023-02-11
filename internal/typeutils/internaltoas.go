@@ -252,7 +252,7 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 			if err == nil {
 				a.AvatarMediaAttachment = avatar
 			} else {
-				log.Errorf("AccountToAS: error getting Avatar with id %s: %s", a.AvatarMediaAttachmentID, err)
+				log.Errorf(ctx, "error getting Avatar with id %s: %s", a.AvatarMediaAttachmentID, err)
 			}
 		}
 
@@ -286,7 +286,7 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 			if err == nil {
 				a.HeaderMediaAttachment = header
 			} else {
-				log.Errorf("AccountToAS: error getting Header with id %s: %s", a.HeaderMediaAttachmentID, err)
+				log.Errorf(ctx, "error getting Header with id %s: %s", a.HeaderMediaAttachmentID, err)
 			}
 		}
 

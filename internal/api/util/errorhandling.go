@@ -27,6 +27,7 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 )
 
 // TODO: add more templated html pages here for different error types
@@ -43,16 +44,20 @@ import (
 func NotFoundHandler(c *gin.Context, instanceGet func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode), accept string) {
 	switch accept {
 	case string(TextHTML):
-		instance, err := instanceGet(c.Request.Context())
+		ctx := c.Request.Context()
+		instance, err := instanceGet(ctx)
 		if err != nil {
 			panic(err)
 		}
 
 		c.HTML(http.StatusNotFound, "404.tmpl", gin.H{
-			"instance": instance,
+			"instance":  instance,
+			"requestID": middleware.RequestID(ctx),
 		})
 	default:
-		c.JSON(http.StatusNotFound, gin.H{"error": http.StatusText(http.StatusNotFound)})
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": http.StatusText(http.StatusNotFound),
+		})
 	}
 }
 
@@ -62,15 +67,17 @@ func NotFoundHandler(c *gin.Context, instanceGet func(ctx context.Context) (*api
 func genericErrorHandler(c *gin.Context, instanceGet func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode), accept string, errWithCode gtserror.WithCode) {
 	switch accept {
 	case string(TextHTML):
-		instance, err := instanceGet(c.Request.Context())
+		ctx := c.Request.Context()
+		instance, err := instanceGet(ctx)
 		if err != nil {
 			panic(err)
 		}
 
 		c.HTML(errWithCode.Code(), "error.tmpl", gin.H{
-			"instance": instance,
-			"code":     errWithCode.Code(),
-			"error":    errWithCode.Safe(),
+			"instance":  instance,
+			"code":      errWithCode.Code(),
+			"error":     errWithCode.Safe(),
+			"requestID": middleware.RequestID(ctx),
 		})
 	default:
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
@@ -108,11 +115,12 @@ func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet fun
 // to pass any detailed errors (that might contain sensitive information) into the
 // errWithCode.Error() field, since the client will see this. Use your noggin!
 func OAuthErrorHandler(c *gin.Context, errWithCode gtserror.WithCode) {
-	l := log.WithFields(kv.Fields{
-		{"path", c.Request.URL.Path},
-		{"error", errWithCode.Error()},
-		{"help", errWithCode.Safe()},
-	}...)
+	l := log.WithContext(c.Request.Context()).
+		WithFields(kv.Fields{
+			{"path", c.Request.URL.Path},
+			{"error", errWithCode.Error()},
+			{"help", errWithCode.Safe()},
+		}...)
 
 	statusCode := errWithCode.Code()
 

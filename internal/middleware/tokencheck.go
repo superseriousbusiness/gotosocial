@@ -52,6 +52,7 @@ import (
 // Bearer token set (eg., for public instance information and so on).
 func TokenCheck(dbConn db.DB, validateBearerToken func(r *http.Request) (oauth2.TokenInfo, error)) func(*gin.Context) {
 	return func(c *gin.Context) {
+		// Acquire context from gin request.
 		ctx := c.Request.Context()
 
 		if c.Request.Header.Get("Authorization") == "" {
@@ -61,38 +62,38 @@ func TokenCheck(dbConn db.DB, validateBearerToken func(r *http.Request) (oauth2.
 
 		ti, err := validateBearerToken(c.Copy().Request)
 		if err != nil {
-			log.Debugf("token was passed in Authorization header but we could not validate it: %s", err)
+			log.Debugf(ctx, "token was passed in Authorization header but we could not validate it: %s", err)
 			return
 		}
 		c.Set(oauth.SessionAuthorizedToken, ti)
 
 		// check for user-level token
 		if userID := ti.GetUserID(); userID != "" {
-			log.Tracef("authenticated user %s with bearer token, scope is %s", userID, ti.GetScope())
+			log.Tracef(ctx, "authenticated user %s with bearer token, scope is %s", userID, ti.GetScope())
 
 			// fetch user for this token
 			user, err := dbConn.GetUserByID(ctx, userID)
 			if err != nil {
 				if err != db.ErrNoEntries {
-					log.Errorf("database error looking for user with id %s: %s", userID, err)
+					log.Errorf(ctx, "database error looking for user with id %s: %s", userID, err)
 					return
 				}
-				log.Warnf("no user found for userID %s", userID)
+				log.Warnf(ctx, "no user found for userID %s", userID)
 				return
 			}
 
 			if user.ConfirmedAt.IsZero() {
-				log.Warnf("authenticated user %s has never confirmed thier email address", userID)
+				log.Warnf(ctx, "authenticated user %s has never confirmed thier email address", userID)
 				return
 			}
 
 			if !*user.Approved {
-				log.Warnf("authenticated user %s's account was never approved by an admin", userID)
+				log.Warnf(ctx, "authenticated user %s's account was never approved by an admin", userID)
 				return
 			}
 
 			if *user.Disabled {
-				log.Warnf("authenticated user %s's account was disabled'", userID)
+				log.Warnf(ctx, "authenticated user %s's account was disabled'", userID)
 				return
 			}
 
@@ -103,17 +104,17 @@ func TokenCheck(dbConn db.DB, validateBearerToken func(r *http.Request) (oauth2.
 				acct, err := dbConn.GetAccountByID(ctx, user.AccountID)
 				if err != nil {
 					if err != db.ErrNoEntries {
-						log.Errorf("database error looking for account with id %s: %s", user.AccountID, err)
+						log.Errorf(ctx, "database error looking for account with id %s: %s", user.AccountID, err)
 						return
 					}
-					log.Warnf("no account found for userID %s", userID)
+					log.Warnf(ctx, "no account found for userID %s", userID)
 					return
 				}
 				user.Account = acct
 			}
 
 			if !user.Account.SuspendedAt.IsZero() {
-				log.Warnf("authenticated user %s's account (accountId=%s) has been suspended", userID, user.AccountID)
+				log.Warnf(ctx, "authenticated user %s's account (accountId=%s) has been suspended", userID, user.AccountID)
 				return
 			}
 
@@ -122,16 +123,16 @@ func TokenCheck(dbConn db.DB, validateBearerToken func(r *http.Request) (oauth2.
 
 		// check for application token
 		if clientID := ti.GetClientID(); clientID != "" {
-			log.Tracef("authenticated client %s with bearer token, scope is %s", clientID, ti.GetScope())
+			log.Tracef(ctx, "authenticated client %s with bearer token, scope is %s", clientID, ti.GetScope())
 
 			// fetch app for this token
 			app := &gtsmodel.Application{}
 			if err := dbConn.GetWhere(ctx, []db.Where{{Key: "client_id", Value: clientID}}, app); err != nil {
 				if err != db.ErrNoEntries {
-					log.Errorf("database error looking for application with clientID %s: %s", clientID, err)
+					log.Errorf(ctx, "database error looking for application with clientID %s: %s", clientID, err)
 					return
 				}
-				log.Warnf("no app found for client %s", clientID)
+				log.Warnf(ctx, "no app found for client %s", clientID)
 				return
 			}
 			c.Set(oauth.SessionAuthorizedApplication, app)

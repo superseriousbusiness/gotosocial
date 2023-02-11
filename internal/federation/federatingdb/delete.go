@@ -35,9 +35,10 @@ import (
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
-	l := log.WithFields(kv.Fields{
-		{"id", id},
-	}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{
+			{"id", id},
+		}...)
 	l.Debug("entering Delete")
 
 	receivingAccount, requestingAccount := extractFromCtx(ctx)

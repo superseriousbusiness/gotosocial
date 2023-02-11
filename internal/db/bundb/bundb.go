@@ -100,11 +100,11 @@ func doMigration(ctx context.Context, db *bun.DB) error {
 	}
 
 	if group.ID == 0 {
-		log.Info("there are no new migrations to run")
+		log.Info(ctx, "there are no new migrations to run")
 		return nil
 	}
 
-	log.Infof("MIGRATED DATABASE TO %s", group)
+	log.Infof(ctx, "MIGRATED DATABASE TO %s", group)
 	return nil
 }
 
@@ -245,7 +245,7 @@ func pgConn(ctx context.Context) (*DBConn, error) {
 		return nil, fmt.Errorf("postgres ping: %s", err)
 	}
 
-	log.Info("connected to POSTGRES database")
+	log.Info(ctx, "connected to POSTGRES database")
 	return conn, nil
 }
 
@@ -268,7 +268,7 @@ func sqliteConn(ctx context.Context) (*DBConn, error) {
 	}
 
 	if address == ":memory:" {
-		log.Warn("using sqlite in-memory mode; all data will be deleted when gts shuts down; this mode should only be used for debugging or running tests")
+		log.Warn(ctx, "using sqlite in-memory mode; all data will be deleted when gts shuts down; this mode should only be used for debugging or running tests")
 
 		// Use random name for in-memory instead of ':memory:', so
 		// multiple in-mem databases can be created without conflict.
@@ -319,7 +319,7 @@ func sqliteConn(ctx context.Context) (*DBConn, error) {
 		}
 		return nil, fmt.Errorf("sqlite ping: %s", err)
 	}
-	log.Infof("connected to SQLITE database with address %s", address)
+	log.Infof(ctx, "connected to SQLITE database with address %s", address)
 
 	return conn, nil
 }
@@ -464,7 +464,7 @@ func sqlitePragmas(ctx context.Context, conn *DBConn) error {
 			return fmt.Errorf("error scanning sqlite pragma %s: %w", pv, err)
 		}
 
-		log.Infof("sqlite pragma %s set to %s", pk, res)
+		log.Infof(ctx, "sqlite pragma %s set to %s", pk, res)
 	}
 
 	return nil

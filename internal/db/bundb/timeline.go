@@ -114,7 +114,7 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 		// Fetch status from db for ID
 		status, err := t.state.DB.GetStatusByID(ctx, id)
 		if err != nil {
-			log.Errorf("GetHomeTimeline: error fetching status %q: %v", id, err)
+			log.Errorf(ctx, "error fetching status %q: %v", id, err)
 			continue
 		}
 
@@ -182,7 +182,7 @@ func (t *timelineDB) GetPublicTimeline(ctx context.Context, maxID string, sinceI
 		// Fetch status from db for ID
 		status, err := t.state.DB.GetStatusByID(ctx, id)
 		if err != nil {
-			log.Errorf("GetPublicTimeline: error fetching status %q: %v", id, err)
+			log.Errorf(ctx, "error fetching status %q: %v", id, err)
 			continue
 		}
 
@@ -242,7 +242,7 @@ func (t *timelineDB) GetFavedTimeline(ctx context.Context, accountID string, max
 		// Fetch status from db for corresponding favourite
 		status, err := t.state.DB.GetStatusByID(ctx, fave.StatusID)
 		if err != nil {
-			log.Errorf("GetFavedTimeline: error fetching status for fave %q: %v", fave.ID, err)
+			log.Errorf(ctx, "error fetching status for fave %q: %v", fave.ID, err)
 			continue
 		}
 

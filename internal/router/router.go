@@ -101,10 +101,10 @@ func (r *router) Start() {
 			)
 
 			// Start the LetsEncrypt autocert manager HTTP server.
-			log.Infof("letsencrypt listening on %s", srv.Addr)
+			log.Infof(nil, "letsencrypt listening on %s", srv.Addr)
 			if err := srv.ListenAndServe(); err != nil &&
 				err != http.ErrServerClosed {
-				log.Fatalf("letsencrypt: listen: %s", err)
+				log.Fatalf(nil, "letsencrypt: listen: %s", err)
 			}
 		}()
 
@@ -119,23 +119,23 @@ func (r *router) Start() {
 	r.srv.Handler = debug.WithPprof(r.srv.Handler)
 	if debug.DEBUG {
 		// Profiling requires timeouts longer than 30s, so reset these.
-		log.Warn("resetting http.Server{} timeout to support profiling")
+		log.Warn(nil, "resetting http.Server{} timeout to support profiling")
 		r.srv.ReadTimeout = 0
 		r.srv.WriteTimeout = 0
 	}
 
 	// Start the main listener.
 	go func() {
-		log.Infof("listening on %s", r.srv.Addr)
+		log.Infof(nil, "listening on %s", r.srv.Addr)
 		if err := listen(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %s", err)
+			log.Fatalf(nil, "listen: %s", err)
 		}
 	}()
 }
 
 // Stop shuts down the router nicely
 func (r *router) Stop(ctx context.Context) error {
-	log.Infof("shutting down http router with %s grace period", shutdownTimeout)
+	log.Infof(nil, "shutting down http router with %s grace period", shutdownTimeout)
 	timeout, cancel := context.WithTimeout(ctx, shutdownTimeout)
 	defer cancel()
 
@@ -143,7 +143,7 @@ func (r *router) Stop(ctx context.Context) error {
 		return fmt.Errorf("error shutting down http router: %s", err)
 	}
 
-	log.Info("http router closed connections and shut down gracefully")
+	log.Info(nil, "http router closed connections and shut down gracefully")
 	return nil
 }
 
