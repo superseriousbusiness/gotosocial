@@ -45,9 +45,17 @@ func (p *Processor) Open(ctx context.Context, account *gtsmodel.Account, streamT
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error generating stream id: %s", err))
 	}
 
+	// Each stream can be subscibed to multiple timelines.
+	// Record them in a set, and include the initial one
+	// if it was given to us
+	timelines := map[string]bool{}
+	if streamTimeline != "" {
+		timelines[streamTimeline] = true
+	}
+
 	thisStream := &stream.Stream{
 		ID:        streamID,
-		Timeline:  streamTimeline,
+		Timelines: timelines,
 		Messages:  make(chan *stream.Message, 100),
 		Hangup:    make(chan interface{}, 1),
 		Connected: true,

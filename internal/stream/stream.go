@@ -63,8 +63,10 @@ type StreamsForAccount struct {
 type Stream struct {
 	// ID of this stream, generated during creation.
 	ID string
-	// Timeline of this stream: user/public/etc
-	Timeline string
+	// A set of timelines of this stream: user/public/etc
+	// a matching key means the timeline is subscribed. The value
+	// is ignored
+	Timelines map[string]bool
 	// Channel of messages for the client to read from
 	Messages chan *Message
 	// Channel to close when the client drops away

@@ -64,12 +64,15 @@ func (p *Processor) toAccount(payload string, event string, timelines []string, 
 		}
 
 		for _, t := range timelines {
-			if s.Timeline == string(t) {
+			if _, found := s.Timelines[t]; found {
 				s.Messages <- &stream.Message{
 					Stream:  []string{string(t)},
 					Event:   string(event),
 					Payload: payload,
 				}
+				// break out to the outer loop, to avoid sending duplicates
+				// of the same event to the same stream
+				break
 			}
 		}
 	}
