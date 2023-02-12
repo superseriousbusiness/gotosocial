@@ -25,6 +25,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/form/v4"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -162,12 +163,39 @@ func (m *Module) AccountUpdateCredentialsPATCHHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, acctSensitive)
 }
 
+type fieldAttributesBinding struct{}
+
+func (fieldAttributesBinding) Name() string {
+	return "FieldAttributes"
+}
+
+func (fieldAttributesBinding) Bind(req *http.Request, obj any) error {
+	if err := req.ParseForm(); err != nil {
+		return err
+	}
+
+	decoder := form.NewDecoder()
+	// change default namespace prefix and suffix to allow correct parsing of the field attributes
+	decoder.SetNamespacePrefix("[")
+	decoder.SetNamespaceSuffix("]")
+	if err := decoder.Decode(obj, req.Form); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func parseUpdateAccountForm(c *gin.Context) (*apimodel.UpdateCredentialsRequest, error) {
 	form := &apimodel.UpdateCredentialsRequest{
 		Source: &apimodel.UpdateSource{},
 	}
 
 	if err := c.ShouldBind(&form); err != nil {
+		return nil, fmt.Errorf("could not parse form from request: %s", err)
+	}
+
+	// use custom form binding to support field attributes in the form data
+	if err := c.ShouldBindWith(&form, fieldAttributesBinding{}); err != nil {
 		return nil, fmt.Errorf("could not parse form from request: %s", err)
 	}
 
