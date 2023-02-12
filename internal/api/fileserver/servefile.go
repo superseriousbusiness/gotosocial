@@ -88,12 +88,6 @@ func (m *Module) ServeFile(c *gin.Context) {
 	}
 
 	if content.URL != nil {
-		// This is a non-local S3 file we're redirecting to.
-		// Rewrite the cache control header to reflect the
-		// TTL of the generated signed link, instead of the
-		// default very long cache.
-		const cacheControl = "private,max-age=86400" // 24h
-		c.Header("Cache-Control", cacheControl)
 		c.Redirect(http.StatusFound, content.URL.String())
 		return
 	}

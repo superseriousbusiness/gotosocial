@@ -21,6 +21,7 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/fileserver"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
@@ -30,21 +31,31 @@ type Fileserver struct {
 	fileserver *fileserver.Module
 }
 
+// maxAge returns an appropriate max-age value for the
+// storage method that's being used.
+//
+// The default max-age is very long to reflect that we
+// never host different files at the same URL (since
+// ULIDs are generated per piece of media), so we can
+// easily prevent clients having to fetch files repeatedly.
+//
+// If we're using non-proxying s3, however, the max age is
+// significantly shorter, to ensure that clients don't
+// cache redirect responses to expired pre-signed URLs.
+func maxAge() string {
+	if config.GetStorageBackend() == "s3" && !config.GetStorageS3Proxy() {
+		return "max-age=86400" // 24h
+	}
+
+	return "max-age=604800" // 7d
+}
+
 func (f *Fileserver) Route(r router.Router, m ...gin.HandlerFunc) {
 	fileserverGroup := r.AttachGroup("fileserver")
 
 	// attach middlewares appropriate for this group
 	fileserverGroup.Use(m...)
-	fileserverGroup.Use(
-		// Since we'll never host different files at the same
-		// URL (bc the ULIDs are generated per piece of media),
-		// it's sensible and safe to use a long cache here, so
-		// that clients don't keep fetching files over + over again.
-		//
-		// Nevertheless, we should use 'private' to indicate
-		// that there might be media in there which are gated by ACLs.
-		middleware.CacheControl("private", "max-age=604800"),
-	)
+	fileserverGroup.Use(middleware.CacheControl("private", maxAge()))
 
 	f.fileserver.Route(fileserverGroup.Handle)
 }
