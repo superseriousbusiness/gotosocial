@@ -232,10 +232,13 @@ func (p *processor) getEmojiContent(ctx context.Context, fileName string, owning
 }
 
 func (p *processor) retrieveFromStorage(ctx context.Context, storagePath string, content *apimodel.Content) (*apimodel.Content, gtserror.WithCode) {
+	// If running on S3 storage with proxying disabled then
+	// just fetch a pre-signed URL instead of serving the content.
 	if url := p.storage.URL(ctx, storagePath); url != nil {
 		content.URL = url
 		return content, nil
 	}
+
 	reader, err := p.storage.GetStream(ctx, storagePath)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error retrieving from storage: %s", err))
