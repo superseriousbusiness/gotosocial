@@ -27,8 +27,9 @@ import (
 
 // NewTestMediaManager returns a media handler with the default test config, and the given db and storage.
 func NewTestMediaManager(db db.DB, storage *storage.Driver) media.Manager {
-	return media.NewManager(&state.State{
-		DB:      db,
-		Storage: storage,
-	})
+	var state state.State
+	state.DB = db
+	state.Storage = storage
+	state.Workers.Start()
+	return media.NewManager(&state)
 }

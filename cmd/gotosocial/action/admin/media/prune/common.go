@@ -38,6 +38,7 @@ type prune struct {
 func setupPrune(ctx context.Context) (*prune, error) {
 	var state state.State
 	state.Caches.Init()
+	state.Workers.Start()
 
 	dbService, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
