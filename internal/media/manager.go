@@ -247,10 +247,10 @@ func (m *manager) PreProcessMedia(ctx context.Context, data DataFunc, postData P
 	}
 
 	processingMedia := &ProcessingMedia{
-		media:   attachment,
-		dataFn:  data,
-		postFn:  postData,
-		manager: m,
+		media:  attachment,
+		dataFn: data,
+		postFn: postData,
+		mgr:    m,
 	}
 
 	return processingMedia, nil
@@ -267,8 +267,8 @@ func (m *manager) PreProcessMediaRecache(ctx context.Context, data DataFunc, pos
 		media:   attachment,
 		dataFn:  data,
 		postFn:  postData,
-		manager: m,
 		recache: true, // indicate it's a recache
+		mgr:     m,
 	}
 
 	return processingMedia, nil
@@ -282,7 +282,7 @@ func (m *manager) ProcessMedia(ctx context.Context, data DataFunc, postData Post
 	}
 
 	// Attempt to add this media processing item to the worker queue.
-	workerpool_MustEnqueue(&m.state.Workers.Media, ctx, media.Process)
+	_ = m.state.Workers.Media.MustEnqueueCtx(ctx, media.Process)
 
 	return media, nil
 }
@@ -411,7 +411,7 @@ func (m *manager) PreProcessEmoji(ctx context.Context, data DataFunc, postData P
 		newPathID: newPathID,
 		dataFn:    data,
 		postFn:    postData,
-		manager:   m,
+		mgr:       m,
 	}
 
 	return processingEmoji, nil
@@ -425,7 +425,7 @@ func (m *manager) ProcessEmoji(ctx context.Context, data DataFunc, postData Post
 	}
 
 	// Attempt to add this emoji processing item to the worker queue.
-	workerpool_MustEnqueue(&m.state.Workers.Media, ctx, emoji.Process)
+	_ = m.state.Workers.Media.MustEnqueueCtx(ctx, emoji.Process)
 
 	return emoji, nil
 }
@@ -458,20 +458,4 @@ func scheduleCleanupJobs(m *manager) {
 		}
 		log.Infof("finished pruning all in %s", time.Since(now))
 	}).EveryAt(midnight, day))
-}
-
-// workerpool_MustEnqueue is a small wrapper func around a runners.WorkerPool to allow block on queue until
-// the given context is cancelled. After which queuing will be done async and function returns to caller.
-func workerpool_MustEnqueue(pool *runners.WorkerPool, ctx context.Context, process runners.WorkerFunc) { //nolint: revive
-	if !pool.EnqueueCtx(ctx, process) && pool.Running() {
-		log.Warnf("context canceled attempting to add to queue")
-
-		// We failed to add this entry to the worker queue before the
-		// incoming context was cancelled. So to ensure processing
-		// we simply queue it asynchronously and return early to caller.
-		// NOTE: a stalled goroutine waiting to add a worker function to
-		//       the queue is preferable to everytime on context cancelled
-		//       processing the media anyway... That could lead to DOS.
-		go pool.Enqueue(process)
-	}
 }

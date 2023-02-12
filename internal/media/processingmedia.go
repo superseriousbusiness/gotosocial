@@ -24,9 +24,10 @@ import (
 	"fmt"
 	"image/jpeg"
 	"io"
-	"sync"
 	"time"
 
+	"codeberg.org/gruf/go-errors/v2"
+	"codeberg.org/gruf/go-runners"
 	"github.com/disintegration/imaging"
 	"github.com/h2non/filetype"
 	terminator "github.com/superseriousbusiness/exif-terminator"
@@ -39,12 +40,13 @@ import (
 // various functions for retrieving data from the process.
 type ProcessingMedia struct {
 	media   *gtsmodel.MediaAttachment // processing media attachment details
-	recache bool                      // recaching existing (uncached) media
 	dataFn  DataFunc                  // load-data function, returns media stream
 	postFn  PostDataCallbackFunc      // post data callback function
-	err     error                     // error encountered during processing
-	manager *manager                  // manager instance (access to db / storage)
-	once    sync.Once                 // once ensures processing only occurs once
+	recache bool                      // recaching existing (uncached) media
+	done    bool                      // done is set when process finishes with non ctx canceled type error
+	proc    runners.Processor         // proc helps synchronize only a singular running processing instance
+	err     error                     // error stores permanent error value when done
+	mgr     *manager                  // mgr instance (access to db / storage)
 }
 
 // AttachmentID returns the ID of the underlying media attachment without blocking processing.
@@ -54,61 +56,83 @@ func (p *ProcessingMedia) AttachmentID() string {
 
 // LoadAttachment blocks until the thumbnail and fullsize content has been processed, and then returns the completed attachment.
 func (p *ProcessingMedia) LoadAttachment(ctx context.Context) (*gtsmodel.MediaAttachment, error) {
-	// only process once.
-	p.once.Do(func() {
-		var err error
+	// Attempt to load synchronously.
+	media, done, err := p.load(ctx)
+
+	if err == nil {
+		// No issue, return media.
+		return media, nil
+	}
+
+	if !done {
+		// Provided context was cancelled, e.g. request cancelled
+		// early. Queue this item for asynchronous processing.
+		log.Warnf("reprocessing media %s after canceled ctx", p.media.ID)
+		go p.mgr.state.Workers.Media.Enqueue(p.Process)
+	}
+
+	return nil, err
+}
+
+// Process ...
+func (p *ProcessingMedia) Process(ctx context.Context) {
+	if _, _, err := p.load(ctx); err != nil {
+		log.Errorf("error processing media: %v", err)
+	}
+}
+
+// load ...
+func (p *ProcessingMedia) load(ctx context.Context) (*gtsmodel.MediaAttachment, bool, error) {
+	var (
+		done bool
+		err  error
+	)
+
+	p.err = p.proc.Process(func() error {
+		if p.done {
+			// Already proc'd.
+			return p.err
+		}
 
 		defer func() {
-			if r := recover(); r != nil {
-				if err != nil {
-					rOld := r // wrap the panic so we don't lose existing returned error
-					r = fmt.Errorf("panic occured after error %q: %v", err.Error(), rOld)
-				}
+			// This is only done when ctx NOT cancelled.
+			done = err == nil || !errors.Is(err,
+				context.Canceled,
+				context.DeadlineExceeded,
+			)
 
-				// Catch any panics and wrap as error.
-				err = fmt.Errorf("caught panic: %v", r)
-			}
-
-			if err != nil {
-				// Store error.
-				p.err = err
-			}
+			// Store done value.
+			p.done = done
 		}()
 
 		// Attempt to store media and calculate
 		// full-size media attachment details.
 		if err = p.store(ctx); err != nil {
-			return
+			return err
 		}
 
 		// Finish processing by reloading media into
 		// memory to get dimension and generate a thumb.
 		if err = p.finish(ctx); err != nil {
-			return
+			return err
 		}
 
 		if p.recache {
 			// Existing attachment we're recaching, so only need to update.
-			err = p.manager.state.DB.UpdateByID(ctx, p.media, p.media.ID)
-			return
+			err = p.mgr.state.DB.UpdateByID(ctx, p.media, p.media.ID)
+			return err
 		}
 
 		// New attachment, first time caching.
-		err = p.manager.state.DB.Put(ctx, p.media)
-		return //nolint shutup linter i like this here
+		err = p.mgr.state.DB.Put(ctx, p.media)
+		return err
 	})
 
-	if p.err != nil {
-		return nil, p.err
+	if err != nil {
+		return nil, done, err
 	}
 
-	return p.media, nil
-}
-
-func (p *ProcessingMedia) Process(ctx context.Context) {
-	if _, err := p.LoadAttachment(ctx); err != nil {
-		log.Error("error processing media %s: %v", p.media.ID, err)
-	}
+	return p.media, done, nil
 }
 
 // store calls the data function attached to p if it hasn't been called yet,
@@ -190,17 +214,17 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	)
 
 	// This shouldn't already exist, but we do a check as it's worth logging.
-	if have, _ := p.manager.state.Storage.Has(ctx, p.media.File.Path); have {
+	if have, _ := p.mgr.state.Storage.Has(ctx, p.media.File.Path); have {
 		log.Warnf("media already exists at storage path: %s", p.media.File.Path)
 
 		// Attempt to remove existing media at storage path (might be broken / out-of-date)
-		if err := p.manager.state.Storage.Delete(ctx, p.media.File.Path); err != nil {
+		if err := p.mgr.state.Storage.Delete(ctx, p.media.File.Path); err != nil {
 			return fmt.Errorf("error removing media from storage: %v", err)
 		}
 	}
 
 	// Write the final image reader stream to our storage.
-	sz, err = p.manager.state.Storage.PutStream(ctx, p.media.File.Path, r)
+	sz, err = p.mgr.state.Storage.PutStream(ctx, p.media.File.Path, r)
 	if err != nil {
 		return fmt.Errorf("error writing media to storage: %w", err)
 	}
@@ -225,7 +249,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 
 func (p *ProcessingMedia) finish(ctx context.Context) error {
 	// Fetch a stream to the original file in storage.
-	rc, err := p.manager.state.Storage.GetStream(ctx, p.media.File.Path)
+	rc, err := p.mgr.state.Storage.GetStream(ctx, p.media.File.Path)
 	if err != nil {
 		return fmt.Errorf("error loading file from storage: %w", err)
 	}
@@ -303,11 +327,11 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 	p.media.Blurhash = hash
 
 	// This shouldn't already exist, but we do a check as it's worth logging.
-	if have, _ := p.manager.state.Storage.Has(ctx, p.media.Thumbnail.Path); have {
+	if have, _ := p.mgr.state.Storage.Has(ctx, p.media.Thumbnail.Path); have {
 		log.Warnf("thumbnail already exists at storage path: %s", p.media.Thumbnail.Path)
 
 		// Attempt to remove existing thumbnail at storage path (might be broken / out-of-date)
-		if err := p.manager.state.Storage.Delete(ctx, p.media.Thumbnail.Path); err != nil {
+		if err := p.mgr.state.Storage.Delete(ctx, p.media.Thumbnail.Path); err != nil {
 			return fmt.Errorf("error removing thumbnail from storage: %v", err)
 		}
 	}
@@ -318,7 +342,7 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 	})
 
 	// Stream-encode the JPEG thumbnail image into storage.
-	sz, err := p.manager.state.Storage.PutStream(ctx, p.media.Thumbnail.Path, enc)
+	sz, err := p.mgr.state.Storage.PutStream(ctx, p.media.Thumbnail.Path, enc)
 	if err != nil {
 		return fmt.Errorf("error stream-encoding thumbnail to storage: %w", err)
 	}
