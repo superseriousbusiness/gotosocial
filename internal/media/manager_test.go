@@ -1200,6 +1200,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
 		Storage: disk,
 	}
 	state.Storage = storage
+	state.DB = suite.db
 
 	diskManager := media.NewManager(&state)
 	suite.manager = diskManager

@@ -88,7 +88,7 @@ func (p *ProcessingMedia) load(ctx context.Context) (*gtsmodel.MediaAttachment, 
 		err  error
 	)
 
-	p.err = p.proc.Process(func() error {
+	err = p.proc.Process(func() error {
 		if p.done {
 			// Already proc'd.
 			return p.err
@@ -101,8 +101,13 @@ func (p *ProcessingMedia) load(ctx context.Context) (*gtsmodel.MediaAttachment, 
 				context.DeadlineExceeded,
 			)
 
-			// Store done value.
-			p.done = done
+			if !done {
+				return
+			}
+
+			// Store final values.
+			p.done = true
+			p.err = err
 		}()
 
 		// Attempt to store media and calculate
