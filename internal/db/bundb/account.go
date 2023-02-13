@@ -41,9 +41,7 @@ type accountDB struct {
 func (a *accountDB) newAccountQ(account *gtsmodel.Account) *bun.SelectQuery {
 	return a.conn.
 		NewSelect().
-		Model(account).
-		Relation("AvatarMediaAttachment").
-		Relation("HeaderMediaAttachment")
+		Model(account)
 }
 
 func (a *accountDB) GetAccountByID(ctx context.Context, id string) (*gtsmodel.Account, db.Error) {

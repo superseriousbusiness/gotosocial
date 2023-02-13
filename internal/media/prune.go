@@ -119,14 +119,24 @@ func (m *manager) PruneUnusedRemote(ctx context.Context, dry bool) (int, error) 
 	for attachments, err = m.state.DB.GetAvatarsAndHeaders(ctx, maxID, selectPruneLimit); err == nil && len(attachments) != 0; attachments, err = m.state.DB.GetAvatarsAndHeaders(ctx, maxID, selectPruneLimit) {
 		maxID = attachments[len(attachments)-1].ID // use the id of the last attachment in the slice as the next 'maxID' value
 
-		// Prune each attachment that meets one of the following criteria:
-		// - Has no owning account in the database.
-		// - Is a header but isn't the owning account's current header.
-		// - Is an avatar but isn't the owning account's current avatar.
 		for _, attachment := range attachments {
-			if attachment.Account == nil ||
-				(*attachment.Header && attachment.ID != attachment.Account.HeaderMediaAttachmentID) ||
-				(*attachment.Avatar && attachment.ID != attachment.Account.AvatarMediaAttachmentID) {
+			// Retrieve owning account if possible.
+			var account *gtsmodel.Account
+			if accountID := attachment.AccountID; accountID != "" {
+				account, err = m.state.DB.GetAccountByID(ctx, attachment.AccountID)
+				if err != nil && !errors.Is(err, db.ErrNoEntries) {
+					// Only return on a real error.
+					return 0, fmt.Errorf("PruneUnusedRemote: error fetching account with id %s: %w", accountID, err)
+				}
+			}
+
+			// Prune each attachment that meets one of the following criteria:
+			// - Has no owning account in the database.
+			// - Is a header but isn't the owning account's current header.
+			// - Is an avatar but isn't the owning account's current avatar.
+			if account == nil ||
+				(*attachment.Header && attachment.ID != account.HeaderMediaAttachmentID) ||
+				(*attachment.Avatar && attachment.ID != account.AvatarMediaAttachmentID) {
 				if err := f(ctx, attachment); err != nil {
 					return totalPruned, err
 				}

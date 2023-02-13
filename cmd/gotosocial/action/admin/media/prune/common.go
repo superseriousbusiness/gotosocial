@@ -33,6 +33,7 @@ type prune struct {
 	dbService db.DB
 	storage   *gtsstorage.Driver
 	manager   media.Manager
+	state     *state.State
 }
 
 func setupPrune(ctx context.Context) (*prune, error) {
@@ -44,6 +45,7 @@ func setupPrune(ctx context.Context) (*prune, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error creating dbservice: %w", err)
 	}
+	state.DB = dbService
 
 	//nolint:contextcheck
 	storage, err := gtsstorage.AutoConfig()
@@ -61,6 +63,7 @@ func setupPrune(ctx context.Context) (*prune, error) {
 		dbService: dbService,
 		storage:   storage,
 		manager:   manager,
+		state:     &state,
 	}, nil
 }
 
@@ -72,6 +75,9 @@ func (p *prune) shutdown(ctx context.Context) error {
 	if err := p.dbService.Stop(ctx); err != nil {
 		return fmt.Errorf("error closing dbservice: %w", err)
 	}
+
+	p.state.Caches.Stop()
+	p.state.Workers.Stop()
 
 	return nil
 }
