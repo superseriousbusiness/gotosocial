@@ -366,40 +366,39 @@ func (d *deref) fetchRemoteAccountAvatar(ctx context.Context, tsport transport.T
 	unlock := d.derefAvatarsMu.Lock()
 	defer unlock()
 
-	if processing, ok := d.derefAvatars[avatarURL]; ok {
-		// we're already dereferencing it, just wait til it's loaded.
-		if _, err := processing.LoadAttachment(ctx); err != nil {
+	// Look for an existing dereference in progress.
+	processing, ok := d.derefAvatars[avatarURL]
+
+	if !ok {
+		var err error
+
+		// Set the media data function to dereference avatar from URI.
+		data := func(ctx context.Context) (io.ReadCloser, int64, error) {
+			return tsport.DereferenceMedia(ctx, avatarURI)
+		}
+
+		// Create new media processing request from the media manager instance.
+		processing, err = d.mediaManager.PreProcessMedia(ctx, data, nil, accountID, &media.AdditionalMediaInfo{
+			Avatar:    func() *bool { v := true; return &v }(),
+			RemoteURL: &avatarURL,
+		})
+		if err != nil {
 			return "", err
 		}
-		return processing.AttachmentID(), nil
-	}
 
-	// Set the media data function to dereference avatar from URI.
-	data := func(ctx context.Context) (io.ReadCloser, int64, error) {
-		return tsport.DereferenceMedia(ctx, avatarURI)
-	}
+		// Store media in map to mark as processing.
+		d.derefAvatars[avatarURL] = processing
 
-	// Create new media processing request from the media manager instance.
-	processing, err := d.mediaManager.PreProcessMedia(ctx, data, nil, accountID, &media.AdditionalMediaInfo{
-		Avatar:    func() *bool { v := true; return &v }(),
-		RemoteURL: &avatarURL,
-	})
-	if err != nil {
-		return "", err
+		defer func() {
+			// On exit safely remove media from map.
+			unlock := d.derefAvatarsMu.Lock()
+			delete(d.derefAvatars, avatarURL)
+			unlock()
+		}()
 	}
-
-	// Store media in map to mark as processing.
-	d.derefAvatars[avatarURL] = processing
 
 	// Unlock map.
 	unlock()
-
-	defer func() {
-		// On exit safely remove media from map.
-		unlock := d.derefAvatarsMu.Lock()
-		delete(d.derefAvatars, avatarURL)
-		unlock()
-	}()
 
 	// Start media attachment loading (blocking call).
 	if _, err := processing.LoadAttachment(ctx); err != nil {
@@ -420,40 +419,39 @@ func (d *deref) fetchRemoteAccountHeader(ctx context.Context, tsport transport.T
 	unlock := d.derefHeadersMu.Lock()
 	defer unlock()
 
-	if processing, ok := d.derefHeaders[headerURL]; ok {
-		// we're already dereferencing it, just wait til it's loaded.
-		if _, err := processing.LoadAttachment(ctx); err != nil {
+	// Look for an existing dereference in progress.
+	processing, ok := d.derefHeaders[headerURL]
+
+	if !ok {
+		var err error
+
+		// Set the media data function to dereference header from URI.
+		data := func(ctx context.Context) (io.ReadCloser, int64, error) {
+			return tsport.DereferenceMedia(ctx, headerURI)
+		}
+
+		// Create new media processing request from the media manager instance.
+		processing, err = d.mediaManager.PreProcessMedia(ctx, data, nil, accountID, &media.AdditionalMediaInfo{
+			Header:    func() *bool { v := true; return &v }(),
+			RemoteURL: &headerURL,
+		})
+		if err != nil {
 			return "", err
 		}
-		return processing.AttachmentID(), nil
-	}
 
-	// Set the media data function to dereference header from URI.
-	data := func(ctx context.Context) (io.ReadCloser, int64, error) {
-		return tsport.DereferenceMedia(ctx, headerURI)
-	}
+		// Store media in map to mark as processing.
+		d.derefHeaders[headerURL] = processing
 
-	// Create new media processing request from the media manager instance.
-	processing, err := d.mediaManager.PreProcessMedia(ctx, data, nil, accountID, &media.AdditionalMediaInfo{
-		Header:    func() *bool { v := true; return &v }(),
-		RemoteURL: &headerURL,
-	})
-	if err != nil {
-		return "", err
+		defer func() {
+			// On exit safely remove media from map.
+			unlock := d.derefHeadersMu.Lock()
+			delete(d.derefHeaders, headerURL)
+			unlock()
+		}()
 	}
-
-	// Store media in map to mark as processing.
-	d.derefHeaders[headerURL] = processing
 
 	// Unlock map.
 	unlock()
-
-	defer func() {
-		// On exit safely remove media from map.
-		unlock := d.derefHeadersMu.Lock()
-		delete(d.derefHeaders, headerURL)
-		unlock()
-	}()
 
 	// Start media attachment loading (blocking call).
 	if _, err := processing.LoadAttachment(ctx); err != nil {
