@@ -58,7 +58,7 @@ func (m *mediaDB) getAttachments(ctx context.Context, ids []string) ([]*gtsmodel
 		// Attempt fetch from DB
 		attachment, err := m.GetAttachmentByID(ctx, id)
 		if err != nil {
-			log.Errorf("GetAttachments: error getting attachment %q: %v", id, err)
+			log.Errorf("error getting attachment %q: %v", id, err)
 			continue
 		}
 
