@@ -42,7 +42,7 @@ Clicking a report shows if it was resolved (with the reasoning if available), mo
 Custom Emoji will be automatically fetched when included in remote toots, but to use them in your own posts they have to be enabled on your instance.
 
 ### Local
-![Local custom emoji section, showing an overview of custom emoji sorted by category. There are a lot of garfields.](../assets/admin-settings-emoji-remote.png)
+![Local custom emoji section, showing an overview of custom emoji sorted by category. There are a lot of garfields.](../assets/admin-settings-emoji-local.png)
 
 This section shows an overview of all the custom emoji enabled on your instance, sorted by their category. Clicking an emoji shows it's details, and provides options to change the category or image, or delete it completely. The shortcode cannot be updated here, you would have to upload it with the new shortcode yourself (and optionally delete the old one).
 

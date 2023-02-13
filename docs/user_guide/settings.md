@@ -55,7 +55,7 @@ RSS (Really Simple Syndication) is a protocol for web feeds separate from Activi
 ### Custom CSS
 If enabled on your instance, [Custom CSS](./custom_css.md) allows you to theme the way your profile looks when visited through a browser. When this setting is not enabled, the field is hidden.
 
-## User Settings
+## Settings
 
 ![Screenshot of the user settings section, providing drop-down menu's to select default post settings, and form fields to change your password](../assets/user-settings-post-settings.png)
 
