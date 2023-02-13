@@ -8,10 +8,11 @@ require (
 	codeberg.org/gruf/go-cache/v3 v3.2.2
 	codeberg.org/gruf/go-debug v1.2.0
 	codeberg.org/gruf/go-errors/v2 v2.1.1
+	codeberg.org/gruf/go-fastcopy v1.1.2
 	codeberg.org/gruf/go-kv v1.5.2
 	codeberg.org/gruf/go-logger/v2 v2.2.1
 	codeberg.org/gruf/go-mutexes v1.1.5
-	codeberg.org/gruf/go-runners v1.5.1
+	codeberg.org/gruf/go-runners v1.6.0
 	codeberg.org/gruf/go-store/v2 v2.2.1
 	github.com/KimMachineGun/automemlimit v0.2.4
 	github.com/abema/go-mp4 v0.10.0
@@ -65,9 +66,8 @@ require (
 
 require (
 	codeberg.org/gruf/go-atomics v1.1.0 // indirect
-	codeberg.org/gruf/go-bitutil v1.0.1 // indirect
+	codeberg.org/gruf/go-bitutil v1.1.0 // indirect
 	codeberg.org/gruf/go-bytes v1.0.2 // indirect
-	codeberg.org/gruf/go-fastcopy v1.1.2 // indirect
 	codeberg.org/gruf/go-fastpath v1.0.3 // indirect
 	codeberg.org/gruf/go-fastpath/v2 v2.0.0 // indirect
 	codeberg.org/gruf/go-hashenc v1.0.2 // indirect

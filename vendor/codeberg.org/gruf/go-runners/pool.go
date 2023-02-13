@@ -157,6 +157,34 @@ func (pool *WorkerPool) EnqueueCtx(ctx context.Context, fn WorkerFunc) bool {
 	}
 }
 
+// MustEnqueueCtx functionally performs similarly to WorkerPool.EnqueueCtx(), but in the case
+// that the provided <-ctx.Done() is closed, it is passed asynchronously to WorkerPool.Enqueue().
+// Return boolean indicates whether function was executed in time before <-ctx.Done() is closed.
+func (pool *WorkerPool) MustEnqueueCtx(ctx context.Context, fn WorkerFunc) (ok bool) {
+	// Check valid fn
+	if fn == nil {
+		return false
+	}
+
+	select {
+	case <-ctx.Done():
+		// We failed to add this entry to the worker queue before the
+		// incoming context was cancelled. So to ensure processing
+		// we simply queue it asynchronously and return early to caller.
+		go pool.Enqueue(fn)
+		return false
+
+	case <-pool.svc.Done():
+		// Pool ctx cancelled
+		fn(closedctx)
+		return false
+
+	case pool.fns <- fn:
+		// Placed fn in queue
+		return true
+	}
+}
+
 // EnqueueNow attempts Enqueue but returns false if not executed.
 func (pool *WorkerPool) EnqueueNow(fn WorkerFunc) bool {
 	// Check valid fn

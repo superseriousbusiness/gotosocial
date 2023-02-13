@@ -1,8 +1,8 @@
 # codeberg.org/gruf/go-atomics v1.1.0
 ## explicit; go 1.16
 codeberg.org/gruf/go-atomics
-# codeberg.org/gruf/go-bitutil v1.0.1
-## explicit; go 1.16
+# codeberg.org/gruf/go-bitutil v1.1.0
+## explicit; go 1.19
 codeberg.org/gruf/go-bitutil
 # codeberg.org/gruf/go-bytes v1.0.2
 ## explicit; go 1.14
@@ -58,8 +58,8 @@ codeberg.org/gruf/go-mutexes
 # codeberg.org/gruf/go-pools v1.1.0
 ## explicit; go 1.16
 codeberg.org/gruf/go-pools
-# codeberg.org/gruf/go-runners v1.5.1
-## explicit; go 1.14
+# codeberg.org/gruf/go-runners v1.6.0
+## explicit; go 1.19
 codeberg.org/gruf/go-runners
 # codeberg.org/gruf/go-sched v1.2.0
 ## explicit; go 1.19
