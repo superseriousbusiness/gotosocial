@@ -239,47 +239,44 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	latestAcc.HeaderMediaAttachmentID = account.HeaderMediaAttachmentID
 
 	if latestAcc.AvatarRemoteURL != account.AvatarRemoteURL {
+		// Reset the avatar media ID (handles removed).
+		latestAcc.AvatarMediaAttachmentID = ""
+
 		if latestAcc.AvatarRemoteURL != "" {
-			// Account avatar has changed to a new one.
-			// Fetch up-to-date copy and use new media ID.
-			id, err := d.fetchRemoteAccountAvatar(ctx,
+			// Avatar has changed to a new one, fetch up-to-date copy and use new ID.
+			latestAcc.AvatarMediaAttachmentID, err = d.fetchRemoteAccountAvatar(ctx,
 				transport,
 				latestAcc.AvatarRemoteURL,
 				latestAcc.ID,
 			)
 			if err != nil {
 				log.Errorf("error fetching remote avatar for account %s: %v", uri, err)
-				// Keep old avi for now, we'll try again in 2 days.
+
+				// Keep old avatar for now, we'll try again in $interval.
+				latestAcc.AvatarMediaAttachmentID = account.AvatarMediaAttachmentID
 				latestAcc.AvatarRemoteURL = account.AvatarRemoteURL
 			}
-			if id != "" {
-				latestAcc.AvatarMediaAttachmentID = id
-			}
-		} else {
-			// Account avatar has been removed.
-			latestAcc.AvatarMediaAttachmentID = ""
 		}
 	}
 
 	if latestAcc.HeaderRemoteURL != account.HeaderRemoteURL {
+		// Reset the header media ID (handles removed).
+		latestAcc.HeaderMediaAttachmentID = ""
+
 		if latestAcc.HeaderRemoteURL != "" {
-			// Account header has changed to a new one.
-			// Fetch up-to-date copy and use new media ID.
-			id, err := d.fetchRemoteAccountHeader(ctx,
+			// Header has changed to a new one, fetch up-to-date copy and use new ID.
+			latestAcc.HeaderMediaAttachmentID, err = d.fetchRemoteAccountHeader(ctx,
 				transport,
 				latestAcc.HeaderRemoteURL,
 				latestAcc.ID,
 			)
 			if err != nil {
 				log.Errorf("error fetching remote header for account %s: %v", uri, err)
-				// Keep old header for now, we'll try again in 2 days.
+
+				// Keep old header for now, we'll try again in $interval.
+				latestAcc.HeaderMediaAttachmentID = account.HeaderMediaAttachmentID
 				latestAcc.HeaderRemoteURL = account.HeaderRemoteURL
-			} else {
-				latestAcc.HeaderMediaAttachmentID = id // we got it
 			}
-		} else {
-			// Account header has been removed.
-			latestAcc.HeaderMediaAttachmentID = ""
 		}
 	}
 
