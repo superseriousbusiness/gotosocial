@@ -34,7 +34,6 @@ type MediaAttachment struct {
 	Type              FileType         `validate:"oneof=Image Gifv Audio Video Unknown" bun:",nullzero,notnull"`                       // Type of file (image/gifv/audio/video)
 	FileMeta          FileMeta         `validate:"required" bun:",embed:,nullzero,notnull"`                                            // Metadata about the file
 	AccountID         string           `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                                 // To which account does this attachment belong
-	Account           *Account         `validate:"-" bun:"rel:belongs-to,join:account_id=id"`                                          // Account corresponding to accountID
 	Description       string           `validate:"-" bun:""`                                                                           // Description of the attachment (for screenreaders)
 	ScheduledStatusID string           `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                        // To which scheduled status does this attachment belong
 	Blurhash          string           `validate:"required_if=Type Image,required_if=Type Gif,required_if=Type Video" bun:",nullzero"` // What is the generated blurhash of this attachment
