@@ -50,7 +50,7 @@ After ticking or unticking the checkbox, be sure to click on the `Save profile i
 
 ### Enable RSS feed of Public posts
 
-RSS (Really Simple Syndication) is a protocol for web feeds separate from ActivityPub, where users can aggregrate various feeds from different sites like blogs and podcasts. It's important to note that this by-passes follow requests, allowing anyone to get updates on your public posts. This feed only includes posts set as 'Public' (see [Privacy Settings](./posts.md#privacy-settings)). 
+RSS feeds for users are disabled by default, but can be opted into with this checkbox. For more information see [RSS](./rss.md). It's important to note that this by-passes follow requests, allowing anyone to get updates on your public posts. This feed only includes posts set as 'Public' (see [Privacy Settings](./posts.md#privacy-settings)). 
 
 ### Custom CSS
 If enabled on your instance, [Custom CSS](./custom_css.md) allows you to theme the way your profile looks when visited through a browser. When this setting is not enabled, the field is hidden.

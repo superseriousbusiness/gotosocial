@@ -12,7 +12,7 @@ After this, you can enter your instance domain in the login field (auto-filled i
 
 
 ## Instance Settings
-![Screenshot of the GoToSocial admin panel, showing the fields to change an instance's settings](../../assets/admin-settings.png)
+![Screenshot of the GoToSocial admin panel, showing the fields to change an instance's settings](../assets/admin-settings.png)
 
 Here you can set various metadata for your instance, like the displayed name, thumbnail image, description texts (HTML), and contact username and email.
 
