@@ -88,6 +88,7 @@ func (m *Module) ServeFile(c *gin.Context) {
 	}
 
 	if content.URL != nil {
+		// This is a non-local, non-proxied S3 file we're redirecting to.
 		c.Redirect(http.StatusFound, content.URL.String())
 		return
 	}
