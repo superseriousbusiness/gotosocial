@@ -38,12 +38,14 @@ type AccountUpdateTestSuite struct {
 
 func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandler() {
 	// set up the request
-	// we're updating the note of zork
+	// we're updating the note and profile fields of zork
 	newBio := "this is my new bio read it and weep"
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"", "",
 		map[string]string{
-			"note": newBio,
+			"note":                        newBio,
+			"fields_attributes[0][name]":  "pronouns",
+			"fields_attributes[0][value]": "they/them",
 		})
 	if err != nil {
 		panic(err)
@@ -74,6 +76,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandler() 
 	// check the returned api model account
 	// fields should be updated
 	suite.Equal("<p>this is my new bio read it and weep</p>", apimodelAccount.Note)
+	suite.Equal("they/them", apimodelAccount.Fields[0].Value)
 	suite.Equal(newBio, apimodelAccount.Source.Note)
 }
 
