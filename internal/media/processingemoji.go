@@ -74,14 +74,14 @@ func (p *ProcessingEmoji) LoadEmoji(ctx context.Context) (*gtsmodel.Emoji, error
 	return nil, err
 }
 
-// Process ...
+// Process allows the receiving object to fit the runners.WorkerFunc signature. It performs a (blocking) load and logs on error.
 func (p *ProcessingEmoji) Process(ctx context.Context) {
 	if _, _, err := p.load(ctx); err != nil {
 		log.Errorf("error processing emoji: %v", err)
 	}
 }
 
-// load ...
+// load performs a concurrency-safe load of ProcessingEmoji, only marking itself as complete when returned error is NOT a context cancel.
 func (p *ProcessingEmoji) load(ctx context.Context) (*gtsmodel.Emoji, bool, error) {
 	var (
 		done bool

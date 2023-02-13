@@ -74,14 +74,14 @@ func (p *ProcessingMedia) LoadAttachment(ctx context.Context) (*gtsmodel.MediaAt
 	return nil, err
 }
 
-// Process ...
+// Process allows the receiving object to fit the runners.WorkerFunc signature. It performs a (blocking) load and logs on error.
 func (p *ProcessingMedia) Process(ctx context.Context) {
 	if _, _, err := p.load(ctx); err != nil {
 		log.Errorf("error processing media: %v", err)
 	}
 }
 
-// load ...
+// load performs a concurrency-safe load of ProcessingMedia, only marking itself as complete when returned error is NOT a context cancel.
 func (p *ProcessingMedia) load(ctx context.Context) (*gtsmodel.MediaAttachment, bool, error) {
 	var (
 		done bool
