@@ -45,13 +45,16 @@ func setupPrune(ctx context.Context) (*prune, error) {
 		return nil, fmt.Errorf("error creating dbservice: %w", err)
 	}
 
-	storage, err := gtsstorage.AutoConfig() //nolint:contextcheck
+	//nolint:contextcheck
+	storage, err := gtsstorage.AutoConfig()
 	if err != nil {
 		return nil, fmt.Errorf("error creating storage backend: %w", err)
 	}
 
 	state.DB = dbService
 	state.Storage = storage
+
+	//nolint:contextcheck
 	manager := media.NewManager(&state)
 
 	return &prune{
