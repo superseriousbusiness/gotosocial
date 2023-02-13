@@ -1,0 +1,49 @@
+{{- /*
+	GoToSocial
+	Copyright (C) 2021-2023 GoToSocial Authors admin@gotosocial.org
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU Affero General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU Affero General Public License for more details.
+
+	You should have received a copy of the GNU Affero General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/ -}}
+
+{{ template "header.tmpl" .}}
+<main>
+	<section>
+		<h1>About</h1>
+		{{.instance.Description |noescape}}
+		<h2>Features</h2>
+		Registration is
+		{{if .instance.Registrations}}
+		enabled{{if .instance.ApprovalRequired}}, but requires admin approval{{end}}
+		{{else}}
+		disabled
+		{{end}}.
+		Toots can contain up to {{.instance.MaxTootChars}} characters.
+		{{if .instance.Configuration.Accounts.AllowCustomCSS}}
+		Users are allowed to set <a href="https://docs.gotosocial.org/en/latest/user_guide/custom_css/" target="_blank"
+			rel="noopener noreferrer">Custom CSS</a> for their profiles.
+		{{end}}
+		<h2>Moderated servers</h2>
+		<p>
+			ActivityPub instances exchange (federate) data with other servers, including accounts and toots.
+			This can be prevented for specific domains by suspending them. None of their content is stored,
+			and interaction with their users is blocked both ways.</br>
+			{{if .blocklistExposed}}
+			<a href="/about/suspended">View the list of suspended domains</a>
+			{{else}}
+			This instance does not publically share this list.
+			{{end}}
+		</p>
+	</section>
+</main>
+{{ template "footer.tmpl" .}}
