@@ -123,7 +123,7 @@ func (m *manager) PruneUnusedRemote(ctx context.Context, dry bool) (int, error) 
 			// Retrieve owning account if possible.
 			var account *gtsmodel.Account
 			if accountID := attachment.AccountID; accountID != "" {
-				account, err = m.db.GetAccountByID(ctx, attachment.AccountID)
+				account, err = m.state.DB.GetAccountByID(ctx, attachment.AccountID)
 				if err != nil && !errors.Is(err, db.ErrNoEntries) {
 					// Only return on a real error.
 					return 0, fmt.Errorf("PruneUnusedRemote: error fetching account with id %s: %w", accountID, err)
