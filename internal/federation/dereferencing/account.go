@@ -238,27 +238,48 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	latestAcc.AvatarMediaAttachmentID = account.AvatarMediaAttachmentID
 	latestAcc.HeaderMediaAttachmentID = account.HeaderMediaAttachmentID
 
-	if latestAcc.AvatarRemoteURL != account.AvatarRemoteURL && latestAcc.AvatarRemoteURL != "" {
-		// Account avatar URL has changed; fetch up-to-date copy and use new media ID.
-		latestAcc.AvatarMediaAttachmentID, err = d.fetchRemoteAccountAvatar(ctx,
-			transport,
-			latestAcc.AvatarRemoteURL,
-			latestAcc.ID,
-		)
-		if err != nil {
-			log.Errorf("error fetching remote avatar for account %s: %v", uri, err)
+	if latestAcc.AvatarRemoteURL != account.AvatarRemoteURL {
+		if latestAcc.AvatarRemoteURL != "" {
+			// Account avatar has changed to a new one.
+			// Fetch up-to-date copy and use new media ID.
+			id, err := d.fetchRemoteAccountAvatar(ctx,
+				transport,
+				latestAcc.AvatarRemoteURL,
+				latestAcc.ID,
+			)
+			if err != nil {
+				log.Errorf("error fetching remote avatar for account %s: %v", uri, err)
+				// Keep old avi for now, we'll try again in 2 days.
+				latestAcc.AvatarRemoteURL = account.AvatarRemoteURL
+			}
+			if id != "" {
+				latestAcc.AvatarMediaAttachmentID = id
+			}
+		} else {
+			// Account avatar has been removed.
+			latestAcc.AvatarMediaAttachmentID = ""
 		}
 	}
 
-	if latestAcc.HeaderRemoteURL != account.HeaderRemoteURL && latestAcc.HeaderRemoteURL != "" {
-		// Account header URL has changed; fetch up-to-date copy and use new media ID.
-		latestAcc.HeaderMediaAttachmentID, err = d.fetchRemoteAccountHeader(ctx,
-			transport,
-			latestAcc.HeaderRemoteURL,
-			latestAcc.ID,
-		)
-		if err != nil {
-			log.Errorf("error fetching remote header for account %s: %v", uri, err)
+	if latestAcc.HeaderRemoteURL != account.HeaderRemoteURL {
+		if latestAcc.HeaderRemoteURL != "" {
+			// Account header has changed to a new one.
+			// Fetch up-to-date copy and use new media ID.
+			id, err := d.fetchRemoteAccountHeader(ctx,
+				transport,
+				latestAcc.HeaderRemoteURL,
+				latestAcc.ID,
+			)
+			if err != nil {
+				log.Errorf("error fetching remote header for account %s: %v", uri, err)
+				// Keep old header for now, we'll try again in 2 days.
+				latestAcc.HeaderRemoteURL = account.HeaderRemoteURL
+			} else {
+				latestAcc.HeaderMediaAttachmentID = id // we got it
+			}
+		} else {
+			// Account header has been removed.
+			latestAcc.HeaderMediaAttachmentID = ""
 		}
 	}
 
@@ -346,7 +367,10 @@ func (d *deref) fetchRemoteAccountAvatar(ctx context.Context, tsport transport.T
 	defer unlock()
 
 	if processing, ok := d.derefAvatars[avatarURL]; ok {
-		// we're already dereferencing it, nothing to do.
+		// we're already dereferencing it, just wait til it's loaded.
+		if _, err := processing.LoadAttachment(ctx); err != nil {
+			return "", err
+		}
 		return processing.AttachmentID(), nil
 	}
 
@@ -357,7 +381,7 @@ func (d *deref) fetchRemoteAccountAvatar(ctx context.Context, tsport transport.T
 
 	// Create new media processing request from the media manager instance.
 	processing, err := d.mediaManager.PreProcessMedia(ctx, data, nil, accountID, &media.AdditionalMediaInfo{
-		Avatar:    func() *bool { v := false; return &v }(),
+		Avatar:    func() *bool { v := true; return &v }(),
 		RemoteURL: &avatarURL,
 	})
 	if err != nil {
@@ -397,7 +421,10 @@ func (d *deref) fetchRemoteAccountHeader(ctx context.Context, tsport transport.T
 	defer unlock()
 
 	if processing, ok := d.derefHeaders[headerURL]; ok {
-		// we're already dereferencing it, nothing to do.
+		// we're already dereferencing it, just wait til it's loaded.
+		if _, err := processing.LoadAttachment(ctx); err != nil {
+			return "", err
+		}
 		return processing.AttachmentID(), nil
 	}
 
