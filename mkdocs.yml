@@ -56,13 +56,7 @@ nav:
   - "Federation":
       - "federation/index.md"
       - "federation/glossary.md"
-      - "Federating With GoToSocial":
-          - "federation/federating_with_gotosocial/http_signatures.md"
-          - "federation/federating_with_gotosocial/access_control.md"
-          - "federation/federating_with_gotosocial/request_throttling.md"
-          - "federation/federating_with_gotosocial/outbox.md"
-          - "federation/federating_with_gotosocial/conversation_threads.md"
-          - "federation/federating_with_gotosocial/reports.md"
+      - "federation/federating_with_gotosocial.md"
   - "API Documentation":
       - "api/swagger.md"
       - "api/ratelimiting.md"

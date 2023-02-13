@@ -2,7 +2,7 @@
 
 ## Change Your Password
 
-You can use the [User Settings Panel](./user_panel.md) to change your password. Just log in to the user panel, scroll to the bottom of the page, and input your old password and desired new password.
+You can use the [User Settings Panel](./settings.md) to change your password. Just log in to the user panel, scroll to the bottom of the page, and input your old password and desired new password.
 
 If the new password you provide is not long/complicated enough, you will see an error and be prompted to try again with a different password.
 
