@@ -1,3 +1,21 @@
+/*
+GoToSocial
+Copyright (C) 2021-2023 GoToSocial Authors admin@gotosocial.org
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package workers
 
 import (
@@ -11,11 +29,10 @@ import (
 type Workers struct {
 	// Main task scheduler instance.
 	Scheduler sched.Scheduler
-	SchedJobs []func(*sched.Scheduler)
 
 	// Processor / federator worker pools.
-	ClientAPI runners.WorkerPool
-	Federator runners.WorkerPool
+	// ClientAPI runners.WorkerPool
+	// Federator runners.WorkerPool
 
 	// Media manager worker pools.
 	Media runners.WorkerPool
@@ -24,6 +41,7 @@ type Workers struct {
 	_ nocopy
 }
 
+// Start will start all of the contained worker pools (and global scheduler).
 func (w *Workers) Start() {
 	// Get currently set GOMAXPROCS.
 	maxprocs := runtime.GOMAXPROCS(0)
@@ -32,23 +50,24 @@ func (w *Workers) Start() {
 		return w.Scheduler.Start(nil)
 	})
 
-	tryUntil("starting client API workerpool", 5, func() bool {
-		return w.ClientAPI.Start(4*maxprocs, 400*maxprocs)
-	})
+	// tryUntil("starting client API workerpool", 5, func() bool {
+	// 	return w.ClientAPI.Start(4*maxprocs, 400*maxprocs)
+	// })
 
-	tryUntil("starting federator workerpool", 5, func() bool {
-		return w.Federator.Start(4*maxprocs, 400*maxprocs)
-	})
+	// tryUntil("starting federator workerpool", 5, func() bool {
+	// 	return w.Federator.Start(4*maxprocs, 400*maxprocs)
+	// })
 
 	tryUntil("starting media workerpool", 5, func() bool {
 		return w.Media.Start(8*maxprocs, 80*maxprocs)
 	})
 }
 
+// Stop will stop all of the contained worker pools (and global scheduler).
 func (w *Workers) Stop() {
 	tryUntil("stopping scheduler", 5, w.Scheduler.Stop)
-	tryUntil("stopping client API workerpool", 5, w.ClientAPI.Stop)
-	tryUntil("stopping federator workerpool", 5, w.Federator.Stop)
+	// tryUntil("stopping client API workerpool", 5, w.ClientAPI.Stop)
+	// tryUntil("stopping federator workerpool", 5, w.Federator.Stop)
 	tryUntil("stopping media workerpool", 5, w.Media.Stop)
 }
 
