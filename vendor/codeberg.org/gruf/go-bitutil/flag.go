@@ -1,11 +1,11 @@
 package bitutil
 
 import (
-	"codeberg.org/gruf/go-byteutil"
+	"unsafe"
 )
 
 // Flags8 is a type-casted unsigned integer with helper
-// methods for easily managing up to 8 bit flags.
+// methods for easily managing up to 8 bit-flags.
 type Flags8 uint8
 
 // Get will fetch the flag bit value at index 'bit'.
@@ -172,80 +172,135 @@ func (f Flags8) Unset7() Flags8 {
 
 // String returns a human readable representation of Flags8.
 func (f Flags8) String() string {
-	var val bool
-	var buf byteutil.Buffer
+	var (
+		i   int
+		val bool
+		buf []byte
+	)
 
-	buf.WriteByte('{')
+	// Make a prealloc est. based on longest-possible value
+	const prealloc = 1 + (len("false ") * 8) - 1 + 1
+	buf = make([]byte, prealloc)
+
+	buf[i] = '{'
+	i++
 
 	val = f.Get0()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get1()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get2()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get3()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get4()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get5()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get6()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get7()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
-	buf.Truncate(1)
-	buf.WriteByte('}')
+	buf[i-1] = '}'
+	buf = buf[:i]
 
-	return buf.String()
+	return *(*string)(unsafe.Pointer(&buf))
 }
 
 // GoString returns a more verbose human readable representation of Flags8.
 func (f Flags8) GoString() string {
-	var val bool
-	var buf byteutil.Buffer
+	var (
+		i   int
+		val bool
+		buf []byte
+	)
 
-	buf.WriteString("bitutil.Flags8{")
+	// Make a prealloc est. based on longest-possible value
+	const prealloc = len("bitutil.Flags8{") + (len("7=false ") * 8) - 1 + 1
+	buf = make([]byte, prealloc)
+
+	i += copy(buf[i:], "bitutil.Flags8{")
 
 	val = f.Get0()
-	buf.WriteString("0=" + bool2str(val) + " ")
+	i += copy(buf[i:], "0=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get1()
-	buf.WriteString("1=" + bool2str(val) + " ")
+	i += copy(buf[i:], "1=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get2()
-	buf.WriteString("2=" + bool2str(val) + " ")
+	i += copy(buf[i:], "2=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get3()
-	buf.WriteString("3=" + bool2str(val) + " ")
+	i += copy(buf[i:], "3=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get4()
-	buf.WriteString("4=" + bool2str(val) + " ")
+	i += copy(buf[i:], "4=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get5()
-	buf.WriteString("5=" + bool2str(val) + " ")
+	i += copy(buf[i:], "5=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get6()
-	buf.WriteString("6=" + bool2str(val) + " ")
+	i += copy(buf[i:], "6=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get7()
-	buf.WriteString("7=" + bool2str(val) + " ")
+	i += copy(buf[i:], "7=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
-	buf.Truncate(1)
-	buf.WriteByte('}')
+	buf[i-1] = '}'
+	buf = buf[:i]
 
-	return buf.String()
+	return *(*string)(unsafe.Pointer(&buf))
 }
 
 // Flags16 is a type-casted unsigned integer with helper
-// methods for easily managing up to 16 bit flags.
+// methods for easily managing up to 16 bit-flags.
 type Flags16 uint16
 
 // Get will fetch the flag bit value at index 'bit'.
@@ -556,128 +611,223 @@ func (f Flags16) Unset15() Flags16 {
 
 // String returns a human readable representation of Flags16.
 func (f Flags16) String() string {
-	var val bool
-	var buf byteutil.Buffer
+	var (
+		i   int
+		val bool
+		buf []byte
+	)
 
-	buf.WriteByte('{')
+	// Make a prealloc est. based on longest-possible value
+	const prealloc = 1 + (len("false ") * 16) - 1 + 1
+	buf = make([]byte, prealloc)
+
+	buf[i] = '{'
+	i++
 
 	val = f.Get0()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get1()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get2()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get3()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get4()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get5()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get6()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get7()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get8()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get9()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get10()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get11()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get12()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get13()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get14()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get15()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
-	buf.Truncate(1)
-	buf.WriteByte('}')
+	buf[i-1] = '}'
+	buf = buf[:i]
 
-	return buf.String()
+	return *(*string)(unsafe.Pointer(&buf))
 }
 
 // GoString returns a more verbose human readable representation of Flags16.
 func (f Flags16) GoString() string {
-	var val bool
-	var buf byteutil.Buffer
+	var (
+		i   int
+		val bool
+		buf []byte
+	)
 
-	buf.WriteString("bitutil.Flags16{")
+	// Make a prealloc est. based on longest-possible value
+	const prealloc = len("bitutil.Flags16{") + (len("15=false ") * 16) - 1 + 1
+	buf = make([]byte, prealloc)
+
+	i += copy(buf[i:], "bitutil.Flags16{")
 
 	val = f.Get0()
-	buf.WriteString("0=" + bool2str(val) + " ")
+	i += copy(buf[i:], "0=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get1()
-	buf.WriteString("1=" + bool2str(val) + " ")
+	i += copy(buf[i:], "1=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get2()
-	buf.WriteString("2=" + bool2str(val) + " ")
+	i += copy(buf[i:], "2=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get3()
-	buf.WriteString("3=" + bool2str(val) + " ")
+	i += copy(buf[i:], "3=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get4()
-	buf.WriteString("4=" + bool2str(val) + " ")
+	i += copy(buf[i:], "4=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get5()
-	buf.WriteString("5=" + bool2str(val) + " ")
+	i += copy(buf[i:], "5=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get6()
-	buf.WriteString("6=" + bool2str(val) + " ")
+	i += copy(buf[i:], "6=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get7()
-	buf.WriteString("7=" + bool2str(val) + " ")
+	i += copy(buf[i:], "7=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get8()
-	buf.WriteString("8=" + bool2str(val) + " ")
+	i += copy(buf[i:], "8=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get9()
-	buf.WriteString("9=" + bool2str(val) + " ")
+	i += copy(buf[i:], "9=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get10()
-	buf.WriteString("10=" + bool2str(val) + " ")
+	i += copy(buf[i:], "10=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get11()
-	buf.WriteString("11=" + bool2str(val) + " ")
+	i += copy(buf[i:], "11=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get12()
-	buf.WriteString("12=" + bool2str(val) + " ")
+	i += copy(buf[i:], "12=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get13()
-	buf.WriteString("13=" + bool2str(val) + " ")
+	i += copy(buf[i:], "13=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get14()
-	buf.WriteString("14=" + bool2str(val) + " ")
+	i += copy(buf[i:], "14=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get15()
-	buf.WriteString("15=" + bool2str(val) + " ")
+	i += copy(buf[i:], "15=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
-	buf.Truncate(1)
-	buf.WriteByte('}')
+	buf[i-1] = '}'
+	buf = buf[:i]
 
-	return buf.String()
+	return *(*string)(unsafe.Pointer(&buf))
 }
 
 // Flags32 is a type-casted unsigned integer with helper
-// methods for easily managing up to 32 bit flags.
+// methods for easily managing up to 32 bit-flags.
 type Flags32 uint32
 
 // Get will fetch the flag bit value at index 'bit'.
@@ -1276,224 +1426,399 @@ func (f Flags32) Unset31() Flags32 {
 
 // String returns a human readable representation of Flags32.
 func (f Flags32) String() string {
-	var val bool
-	var buf byteutil.Buffer
+	var (
+		i   int
+		val bool
+		buf []byte
+	)
 
-	buf.WriteByte('{')
+	// Make a prealloc est. based on longest-possible value
+	const prealloc = 1 + (len("false ") * 32) - 1 + 1
+	buf = make([]byte, prealloc)
+
+	buf[i] = '{'
+	i++
 
 	val = f.Get0()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get1()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get2()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get3()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get4()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get5()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get6()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get7()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get8()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get9()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get10()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get11()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get12()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get13()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get14()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get15()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get16()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get17()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get18()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get19()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get20()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get21()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get22()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get23()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get24()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get25()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get26()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get27()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get28()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get29()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get30()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get31()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
-	buf.Truncate(1)
-	buf.WriteByte('}')
+	buf[i-1] = '}'
+	buf = buf[:i]
 
-	return buf.String()
+	return *(*string)(unsafe.Pointer(&buf))
 }
 
 // GoString returns a more verbose human readable representation of Flags32.
 func (f Flags32) GoString() string {
-	var val bool
-	var buf byteutil.Buffer
+	var (
+		i   int
+		val bool
+		buf []byte
+	)
 
-	buf.WriteString("bitutil.Flags32{")
+	// Make a prealloc est. based on longest-possible value
+	const prealloc = len("bitutil.Flags32{") + (len("31=false ") * 32) - 1 + 1
+	buf = make([]byte, prealloc)
+
+	i += copy(buf[i:], "bitutil.Flags32{")
 
 	val = f.Get0()
-	buf.WriteString("0=" + bool2str(val) + " ")
+	i += copy(buf[i:], "0=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get1()
-	buf.WriteString("1=" + bool2str(val) + " ")
+	i += copy(buf[i:], "1=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get2()
-	buf.WriteString("2=" + bool2str(val) + " ")
+	i += copy(buf[i:], "2=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get3()
-	buf.WriteString("3=" + bool2str(val) + " ")
+	i += copy(buf[i:], "3=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get4()
-	buf.WriteString("4=" + bool2str(val) + " ")
+	i += copy(buf[i:], "4=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get5()
-	buf.WriteString("5=" + bool2str(val) + " ")
+	i += copy(buf[i:], "5=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get6()
-	buf.WriteString("6=" + bool2str(val) + " ")
+	i += copy(buf[i:], "6=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get7()
-	buf.WriteString("7=" + bool2str(val) + " ")
+	i += copy(buf[i:], "7=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get8()
-	buf.WriteString("8=" + bool2str(val) + " ")
+	i += copy(buf[i:], "8=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get9()
-	buf.WriteString("9=" + bool2str(val) + " ")
+	i += copy(buf[i:], "9=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get10()
-	buf.WriteString("10=" + bool2str(val) + " ")
+	i += copy(buf[i:], "10=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get11()
-	buf.WriteString("11=" + bool2str(val) + " ")
+	i += copy(buf[i:], "11=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get12()
-	buf.WriteString("12=" + bool2str(val) + " ")
+	i += copy(buf[i:], "12=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get13()
-	buf.WriteString("13=" + bool2str(val) + " ")
+	i += copy(buf[i:], "13=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get14()
-	buf.WriteString("14=" + bool2str(val) + " ")
+	i += copy(buf[i:], "14=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get15()
-	buf.WriteString("15=" + bool2str(val) + " ")
+	i += copy(buf[i:], "15=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get16()
-	buf.WriteString("16=" + bool2str(val) + " ")
+	i += copy(buf[i:], "16=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get17()
-	buf.WriteString("17=" + bool2str(val) + " ")
+	i += copy(buf[i:], "17=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get18()
-	buf.WriteString("18=" + bool2str(val) + " ")
+	i += copy(buf[i:], "18=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get19()
-	buf.WriteString("19=" + bool2str(val) + " ")
+	i += copy(buf[i:], "19=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get20()
-	buf.WriteString("20=" + bool2str(val) + " ")
+	i += copy(buf[i:], "20=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get21()
-	buf.WriteString("21=" + bool2str(val) + " ")
+	i += copy(buf[i:], "21=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get22()
-	buf.WriteString("22=" + bool2str(val) + " ")
+	i += copy(buf[i:], "22=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get23()
-	buf.WriteString("23=" + bool2str(val) + " ")
+	i += copy(buf[i:], "23=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get24()
-	buf.WriteString("24=" + bool2str(val) + " ")
+	i += copy(buf[i:], "24=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get25()
-	buf.WriteString("25=" + bool2str(val) + " ")
+	i += copy(buf[i:], "25=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get26()
-	buf.WriteString("26=" + bool2str(val) + " ")
+	i += copy(buf[i:], "26=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get27()
-	buf.WriteString("27=" + bool2str(val) + " ")
+	i += copy(buf[i:], "27=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get28()
-	buf.WriteString("28=" + bool2str(val) + " ")
+	i += copy(buf[i:], "28=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get29()
-	buf.WriteString("29=" + bool2str(val) + " ")
+	i += copy(buf[i:], "29=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get30()
-	buf.WriteString("30=" + bool2str(val) + " ")
+	i += copy(buf[i:], "30=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get31()
-	buf.WriteString("31=" + bool2str(val) + " ")
+	i += copy(buf[i:], "31=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
-	buf.Truncate(1)
-	buf.WriteByte('}')
+	buf[i-1] = '}'
+	buf = buf[:i]
 
-	return buf.String()
+	return *(*string)(unsafe.Pointer(&buf))
 }
 
 // Flags64 is a type-casted unsigned integer with helper
-// methods for easily managing up to 64 bit flags.
+// methods for easily managing up to 64 bit-flags.
 type Flags64 uint64
 
 // Get will fetch the flag bit value at index 'bit'.
@@ -2668,412 +2993,747 @@ func (f Flags64) Unset63() Flags64 {
 
 // String returns a human readable representation of Flags64.
 func (f Flags64) String() string {
-	var val bool
-	var buf byteutil.Buffer
+	var (
+		i   int
+		val bool
+		buf []byte
+	)
 
-	buf.WriteByte('{')
+	// Make a prealloc est. based on longest-possible value
+	const prealloc = 1 + (len("false ") * 64) - 1 + 1
+	buf = make([]byte, prealloc)
+
+	buf[i] = '{'
+	i++
 
 	val = f.Get0()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get1()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get2()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get3()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get4()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get5()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get6()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get7()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get8()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get9()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get10()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get11()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get12()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get13()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get14()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get15()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get16()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get17()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get18()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get19()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get20()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get21()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get22()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get23()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get24()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get25()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get26()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get27()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get28()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get29()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get30()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get31()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get32()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get33()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get34()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get35()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get36()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get37()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get38()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get39()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get40()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get41()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get42()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get43()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get44()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get45()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get46()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get47()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get48()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get49()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get50()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get51()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get52()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get53()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get54()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get55()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get56()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get57()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get58()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get59()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get60()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get61()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get62()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get63()
-	buf.WriteString(bool2str(val) + " ")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
-	buf.Truncate(1)
-	buf.WriteByte('}')
+	buf[i-1] = '}'
+	buf = buf[:i]
 
-	return buf.String()
+	return *(*string)(unsafe.Pointer(&buf))
 }
 
 // GoString returns a more verbose human readable representation of Flags64.
 func (f Flags64) GoString() string {
-	var val bool
-	var buf byteutil.Buffer
+	var (
+		i   int
+		val bool
+		buf []byte
+	)
 
-	buf.WriteString("bitutil.Flags64{")
+	// Make a prealloc est. based on longest-possible value
+	const prealloc = len("bitutil.Flags64{") + (len("63=false ") * 64) - 1 + 1
+	buf = make([]byte, prealloc)
+
+	i += copy(buf[i:], "bitutil.Flags64{")
 
 	val = f.Get0()
-	buf.WriteString("0=" + bool2str(val) + " ")
+	i += copy(buf[i:], "0=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get1()
-	buf.WriteString("1=" + bool2str(val) + " ")
+	i += copy(buf[i:], "1=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get2()
-	buf.WriteString("2=" + bool2str(val) + " ")
+	i += copy(buf[i:], "2=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get3()
-	buf.WriteString("3=" + bool2str(val) + " ")
+	i += copy(buf[i:], "3=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get4()
-	buf.WriteString("4=" + bool2str(val) + " ")
+	i += copy(buf[i:], "4=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get5()
-	buf.WriteString("5=" + bool2str(val) + " ")
+	i += copy(buf[i:], "5=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get6()
-	buf.WriteString("6=" + bool2str(val) + " ")
+	i += copy(buf[i:], "6=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get7()
-	buf.WriteString("7=" + bool2str(val) + " ")
+	i += copy(buf[i:], "7=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get8()
-	buf.WriteString("8=" + bool2str(val) + " ")
+	i += copy(buf[i:], "8=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get9()
-	buf.WriteString("9=" + bool2str(val) + " ")
+	i += copy(buf[i:], "9=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get10()
-	buf.WriteString("10=" + bool2str(val) + " ")
+	i += copy(buf[i:], "10=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get11()
-	buf.WriteString("11=" + bool2str(val) + " ")
+	i += copy(buf[i:], "11=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get12()
-	buf.WriteString("12=" + bool2str(val) + " ")
+	i += copy(buf[i:], "12=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get13()
-	buf.WriteString("13=" + bool2str(val) + " ")
+	i += copy(buf[i:], "13=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get14()
-	buf.WriteString("14=" + bool2str(val) + " ")
+	i += copy(buf[i:], "14=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get15()
-	buf.WriteString("15=" + bool2str(val) + " ")
+	i += copy(buf[i:], "15=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get16()
-	buf.WriteString("16=" + bool2str(val) + " ")
+	i += copy(buf[i:], "16=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get17()
-	buf.WriteString("17=" + bool2str(val) + " ")
+	i += copy(buf[i:], "17=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get18()
-	buf.WriteString("18=" + bool2str(val) + " ")
+	i += copy(buf[i:], "18=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get19()
-	buf.WriteString("19=" + bool2str(val) + " ")
+	i += copy(buf[i:], "19=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get20()
-	buf.WriteString("20=" + bool2str(val) + " ")
+	i += copy(buf[i:], "20=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get21()
-	buf.WriteString("21=" + bool2str(val) + " ")
+	i += copy(buf[i:], "21=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get22()
-	buf.WriteString("22=" + bool2str(val) + " ")
+	i += copy(buf[i:], "22=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get23()
-	buf.WriteString("23=" + bool2str(val) + " ")
+	i += copy(buf[i:], "23=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get24()
-	buf.WriteString("24=" + bool2str(val) + " ")
+	i += copy(buf[i:], "24=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get25()
-	buf.WriteString("25=" + bool2str(val) + " ")
+	i += copy(buf[i:], "25=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get26()
-	buf.WriteString("26=" + bool2str(val) + " ")
+	i += copy(buf[i:], "26=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get27()
-	buf.WriteString("27=" + bool2str(val) + " ")
+	i += copy(buf[i:], "27=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get28()
-	buf.WriteString("28=" + bool2str(val) + " ")
+	i += copy(buf[i:], "28=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get29()
-	buf.WriteString("29=" + bool2str(val) + " ")
+	i += copy(buf[i:], "29=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get30()
-	buf.WriteString("30=" + bool2str(val) + " ")
+	i += copy(buf[i:], "30=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get31()
-	buf.WriteString("31=" + bool2str(val) + " ")
+	i += copy(buf[i:], "31=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get32()
-	buf.WriteString("32=" + bool2str(val) + " ")
+	i += copy(buf[i:], "32=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get33()
-	buf.WriteString("33=" + bool2str(val) + " ")
+	i += copy(buf[i:], "33=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get34()
-	buf.WriteString("34=" + bool2str(val) + " ")
+	i += copy(buf[i:], "34=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get35()
-	buf.WriteString("35=" + bool2str(val) + " ")
+	i += copy(buf[i:], "35=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get36()
-	buf.WriteString("36=" + bool2str(val) + " ")
+	i += copy(buf[i:], "36=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get37()
-	buf.WriteString("37=" + bool2str(val) + " ")
+	i += copy(buf[i:], "37=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get38()
-	buf.WriteString("38=" + bool2str(val) + " ")
+	i += copy(buf[i:], "38=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get39()
-	buf.WriteString("39=" + bool2str(val) + " ")
+	i += copy(buf[i:], "39=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get40()
-	buf.WriteString("40=" + bool2str(val) + " ")
+	i += copy(buf[i:], "40=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get41()
-	buf.WriteString("41=" + bool2str(val) + " ")
+	i += copy(buf[i:], "41=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get42()
-	buf.WriteString("42=" + bool2str(val) + " ")
+	i += copy(buf[i:], "42=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get43()
-	buf.WriteString("43=" + bool2str(val) + " ")
+	i += copy(buf[i:], "43=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get44()
-	buf.WriteString("44=" + bool2str(val) + " ")
+	i += copy(buf[i:], "44=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get45()
-	buf.WriteString("45=" + bool2str(val) + " ")
+	i += copy(buf[i:], "45=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get46()
-	buf.WriteString("46=" + bool2str(val) + " ")
+	i += copy(buf[i:], "46=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get47()
-	buf.WriteString("47=" + bool2str(val) + " ")
+	i += copy(buf[i:], "47=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get48()
-	buf.WriteString("48=" + bool2str(val) + " ")
+	i += copy(buf[i:], "48=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get49()
-	buf.WriteString("49=" + bool2str(val) + " ")
+	i += copy(buf[i:], "49=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get50()
-	buf.WriteString("50=" + bool2str(val) + " ")
+	i += copy(buf[i:], "50=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get51()
-	buf.WriteString("51=" + bool2str(val) + " ")
+	i += copy(buf[i:], "51=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get52()
-	buf.WriteString("52=" + bool2str(val) + " ")
+	i += copy(buf[i:], "52=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get53()
-	buf.WriteString("53=" + bool2str(val) + " ")
+	i += copy(buf[i:], "53=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get54()
-	buf.WriteString("54=" + bool2str(val) + " ")
+	i += copy(buf[i:], "54=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get55()
-	buf.WriteString("55=" + bool2str(val) + " ")
+	i += copy(buf[i:], "55=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get56()
-	buf.WriteString("56=" + bool2str(val) + " ")
+	i += copy(buf[i:], "56=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get57()
-	buf.WriteString("57=" + bool2str(val) + " ")
+	i += copy(buf[i:], "57=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get58()
-	buf.WriteString("58=" + bool2str(val) + " ")
+	i += copy(buf[i:], "58=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get59()
-	buf.WriteString("59=" + bool2str(val) + " ")
+	i += copy(buf[i:], "59=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get60()
-	buf.WriteString("60=" + bool2str(val) + " ")
+	i += copy(buf[i:], "60=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get61()
-	buf.WriteString("61=" + bool2str(val) + " ")
+	i += copy(buf[i:], "61=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get62()
-	buf.WriteString("62=" + bool2str(val) + " ")
+	i += copy(buf[i:], "62=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
 	val = f.Get63()
-	buf.WriteString("63=" + bool2str(val) + " ")
+	i += copy(buf[i:], "63=")
+	i += copy(buf[i:], bool2str(val))
+	buf[i] = ' '
+	i++
 
-	buf.Truncate(1)
-	buf.WriteByte('}')
+	buf[i-1] = '}'
+	buf = buf[:i]
 
-	return buf.String()
+	return *(*string)(unsafe.Pointer(&buf))
 }
 
 func bool2str(b bool) string {

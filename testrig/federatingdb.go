@@ -27,5 +27,5 @@ import (
 
 // NewTestFederatingDB returns a federating DB with the underlying db
 func NewTestFederatingDB(db db.DB, fedWorker *concurrency.WorkerPool[messages.FromFederator]) federatingdb.DB {
-	return federatingdb.New(db, fedWorker)
+	return federatingdb.New(db, fedWorker, NewTestTypeConverter(db))
 }

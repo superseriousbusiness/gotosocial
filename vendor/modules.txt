@@ -1,8 +1,8 @@
 # codeberg.org/gruf/go-atomics v1.1.0
 ## explicit; go 1.16
 codeberg.org/gruf/go-atomics
-# codeberg.org/gruf/go-bitutil v1.0.1
-## explicit; go 1.16
+# codeberg.org/gruf/go-bitutil v1.1.0
+## explicit; go 1.19
 codeberg.org/gruf/go-bitutil
 # codeberg.org/gruf/go-bytes v1.0.2
 ## explicit; go 1.14
@@ -18,7 +18,7 @@ codeberg.org/gruf/go-byteutil
 codeberg.org/gruf/go-cache/v3
 codeberg.org/gruf/go-cache/v3/result
 codeberg.org/gruf/go-cache/v3/ttl
-# codeberg.org/gruf/go-debug v1.2.0
+# codeberg.org/gruf/go-debug v1.3.0
 ## explicit; go 1.16
 codeberg.org/gruf/go-debug
 # codeberg.org/gruf/go-errors/v2 v2.1.1
@@ -58,10 +58,10 @@ codeberg.org/gruf/go-mutexes
 # codeberg.org/gruf/go-pools v1.1.0
 ## explicit; go 1.16
 codeberg.org/gruf/go-pools
-# codeberg.org/gruf/go-runners v1.5.1
-## explicit; go 1.14
+# codeberg.org/gruf/go-runners v1.6.0
+## explicit; go 1.19
 codeberg.org/gruf/go-runners
-# codeberg.org/gruf/go-sched v1.2.0
+# codeberg.org/gruf/go-sched v1.2.3
 ## explicit; go 1.19
 codeberg.org/gruf/go-sched
 # codeberg.org/gruf/go-store/v2 v2.2.1
@@ -379,9 +379,6 @@ github.com/quasoft/memstore
 # github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0
 ## explicit; go 1.12
 github.com/remyoudompheng/bigfft
-# github.com/robfig/cron/v3 v3.0.1
-## explicit; go 1.12
-github.com/robfig/cron/v3
 # github.com/rs/xid v1.4.0
 ## explicit; go 1.12
 github.com/rs/xid

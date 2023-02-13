@@ -33,6 +33,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
@@ -1189,15 +1190,19 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
 		panic(err)
 	}
 
+	var state state.State
+
+	state.Workers.Start()
+	defer state.Workers.Stop()
+
 	storage := &gtsstorage.Driver{
 		KVStore: kv.New(disk),
 		Storage: disk,
 	}
+	state.Storage = storage
+	state.DB = suite.db
 
-	diskManager, err := media.NewManager(suite.db, storage)
-	if err != nil {
-		panic(err)
-	}
+	diskManager := media.NewManager(&state)
 	suite.manager = diskManager
 
 	// process the media with no additional info provided

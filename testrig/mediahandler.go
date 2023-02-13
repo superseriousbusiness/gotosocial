@@ -21,14 +21,15 @@ package testrig
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
 // NewTestMediaManager returns a media handler with the default test config, and the given db and storage.
 func NewTestMediaManager(db db.DB, storage *storage.Driver) media.Manager {
-	m, err := media.NewManager(db, storage)
-	if err != nil {
-		panic(err)
-	}
-	return m
+	var state state.State
+	state.DB = db
+	state.Storage = storage
+	state.Workers.Start()
+	return media.NewManager(&state)
 }
