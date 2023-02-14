@@ -87,6 +87,15 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 
 	if username, domain, err := util.ExtractNamestringParts(maybeNamestring); err == nil {
 		l.Trace("search term is a mention, looking it up...")
+		blocked, err := p.db.IsDomainBlocked(ctx, domain)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking domain block: %w", err))
+		}
+		if blocked {
+			l.Debug("domain is blocked")
+			return searchResult, nil
+		}
+
 		foundAccount, err := p.searchAccountByUsernameDomain(ctx, authed, username, domain, search.Resolve)
 		if err != nil {
 			var errNotRetrievable *dereferencing.ErrNotRetrievable
@@ -110,6 +119,15 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 		if uri, err := url.Parse(query); err == nil {
 			if uri.Scheme == "https" || uri.Scheme == "http" {
 				l.Trace("search term is a uri, looking it up...")
+				blocked, err := p.db.IsURIBlocked(ctx, uri)
+				if err != nil {
+					return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking domain block: %w", err))
+				}
+				if blocked {
+					l.Debug("domain is blocked")
+					return searchResult, nil
+				}
+
 				// check if it's a status...
 				foundStatus, err := p.searchStatusByURI(ctx, authed, uri)
 				if err != nil {
