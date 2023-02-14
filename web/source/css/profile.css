@@ -30,7 +30,6 @@ main {
 .profile {
 	background: $bg-accent;
 	display: grid;
-	grid-template-rows: auto auto auto;
 	grid-template-columns: 100%;
 	gap: 0.5rem;
 	margin-bottom: 0.2rem;
