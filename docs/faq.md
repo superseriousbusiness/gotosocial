@@ -10,6 +10,8 @@
 
 - **Why am I getting frequent http 503 error responses?** Code 503 is returned to callers when your instance is under heavy load and requests are being throttled. This behavior can be tuned as desired, or turned off entirely, see [here](./api/throttling.md).
 
+- **I keep getting a 400 Bad Request error, and I have done everything suggested by the error message. What should I do?** Verify that the `host` configuration matches the domain that GoToSocial is served from (the domain that users use to acces the server).
+
 - **My instance is deployed and I'm logged in to a client but my timelines are empty, what's up there?** To see posts, you have to start following people! Once you've followed a few people and they've posted or boosted things, you'll start seeing them in your timelines. Right now GoToSocial doesn't have a way of 'backfilling' posts -- that is, fetching previous posts from other instances -- so you'll only see new posts of people you follow. If you want to interact with an older post of theirs, you can copy the link to the post from their web profile, and paste it in to your client's search bar.
 
 - **How can I sign up for a server?** Right now the only way to create an account is by the server's admin to run a command directly on the server. A web-based signup flow is in the roadmap but not implemented yet.
