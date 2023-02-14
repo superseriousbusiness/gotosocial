@@ -403,7 +403,7 @@ server {
     alias storage-local-base-path/;
     autoindex off;
     expires max;
-    add_header Cache-Control "public, immutable";
+    add_header Cache-Control "private, immutable";
     try_files $uri @fileserver;
   }
 
