@@ -390,11 +390,21 @@ server {
     add_header Cache-Control "public";
   }
 
+  location @fileserver {
+    proxy_pass http://localhost:8080/;
+    proxy_set_header Host $host;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
   location /fileserver/ {
     alias storage-local-base-path/;
     autoindex off;
     expires max;
     add_header Cache-Control "public, immutable";
+    try_files $uri @fileserver;
   }
 
   location / {
@@ -415,6 +425,8 @@ server {
   ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
 }
 ```
+
+The `/fileserver` location is a bit special. When we fail to fetch the media from disk, we want to proxy the request on to GoToSocial so it can try and fetch it. This can be necessary if the media has been removed from disk due to retention settings. The `try_files` directive can't take a `proxy_pass` itself so instead we created the named `@fileserver` location that we pass in last to `try_files`.
 
 The trailing slashes in the new `location` directives and the `alias` are significant, do not remove those. The `expires` directive adds the necessary headers to inform the client how long it may cache the resource. For assets, which may change on each release, 5 minutes is used in this example. For attachments, which should never change once they're created, `max` is used instead setting the cache expiry to the 31st of December 2037. For other options, see the nginx documentation on the [`expires` directive](https://nginx.org/en/docs/http/ngx_http_headers_module.html#expires). Nginx does not add cache headers to 4xx or 5xx response codes so a failure to fetch an asset won't get cached by clients. The `autoindex off` directive tells nginx to not serve a directory listing. This should be the default but it doesn't hurt to be explicit. The added `add_header` lines set additional options for the `Cache-Control` header:
 * `public` is used to indicate that anyone may cache this resource
