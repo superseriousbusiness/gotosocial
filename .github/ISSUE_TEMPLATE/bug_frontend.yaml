@@ -1,7 +1,7 @@
-name: Bug Report
-description: Create a report to help us improve
+name: Frontend Bug Report
+description: Report an issue related to the web frontend
 title: "[bug] Issue Title"
-labels: [bug]
+labels: ["bug", "frontend"]
 assignees: []
 
 body:
@@ -9,20 +9,11 @@ body:
     attributes:
       value: |
         Thanks for taking the time to fill out this bug report! Please be cautious with the sensitive information/logs while filing the issue.
-  - type: markdown
-    attributes:
-      value: |
-        ⚠️ If you're reporting an interoperability issue with a **closed source**
-        ActivityPub/Mastodon client or server, please report the issue to the
-        developers of that client or server instead. Without access to their
-        source debugging the issue is difficult for us. Since GoToSocial is
-        open source, developers of closed source implementations can run a copy
-        and autonomously debug the issue. We'll gladly address any bugs they
-        raise with us.
+
   - type: textarea
     id: desc
     attributes:
-      label: Describe the bug with a clear and concise description of what the bug is.
+      label: Describe the bug with a clear and concise description of what the bug is. Please include screenshots of any visual issues.
     validations:
       required: true
 
@@ -36,13 +27,13 @@ body:
       required: true
 
   - type: input
-    id: GoToSocial-Arch
+    id: Browser-Version
     attributes:
-      label: GoToSocial Arch
-      description: What architecture do you use and did you do a Binary or Docker installation?
-      placeholder: e.g. arm64 Docker or arm64 Binary
+      label: Browser version
+      description: What browser(s) and versions are you using that show this bug?
+      placeholder: Firefox 103.0b9 (64-bit)
     validations:
-      required: false
+      required: true
 
   - type: textarea
     id: what-happened
