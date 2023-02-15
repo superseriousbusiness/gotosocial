@@ -50,7 +50,7 @@ func (m *Module) NodeInfoWellKnownGETHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.GetNodeInfoRel(c.Request.Context())
+	resp, errWithCode := m.processor.FediNodeInfoRelGet(c.Request.Context())
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

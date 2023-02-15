@@ -78,14 +78,14 @@ const (
 
 type Module struct {
 	db        db.DB
-	processor processing.Processor
+	processor *processing.Processor
 	idp       oidc.IDP
 }
 
 // New returns an Auth module which provides both 'oauth' and 'auth' endpoints.
 //
 // It is safe to pass a nil idp if oidc is disabled.
-func New(db db.DB, processor processing.Processor, idp oidc.IDP) *Module {
+func New(db db.DB, processor *processing.Processor, idp oidc.IDP) *Module {
 	return &Module{
 		db:        db,
 		processor: processor,

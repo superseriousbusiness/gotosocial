@@ -233,7 +233,7 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 		publicOnly = i
 	}
 
-	resp, errWithCode := m.processor.AccountStatusesGet(c.Request.Context(), authed, targetAcctID, limit, excludeReplies, excludeReblogs, maxID, minID, pinnedOnly, mediaOnly, publicOnly)
+	resp, errWithCode := m.processor.AccountStatusesGet(c.Request.Context(), authed.Account, targetAcctID, limit, excludeReplies, excludeReblogs, maxID, minID, pinnedOnly, mediaOnly, publicOnly)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

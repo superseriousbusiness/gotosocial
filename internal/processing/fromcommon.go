@@ -30,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
 )
 
-func (p *processor) notifyStatus(ctx context.Context, status *gtsmodel.Status) error {
+func (p *Processor) notifyStatus(ctx context.Context, status *gtsmodel.Status) error {
 	// if there are no mentions in this status then just bail
 	if len(status.MentionIDs) == 0 {
 		return nil
@@ -97,7 +97,7 @@ func (p *processor) notifyStatus(ctx context.Context, status *gtsmodel.Status) e
 			return fmt.Errorf("notifyStatus: error converting notification to api representation: %s", err)
 		}
 
-		if err := p.streamingProcessor.StreamNotificationToAccount(apiNotif, m.TargetAccount); err != nil {
+		if err := p.StreamNotification(apiNotif, m.TargetAccount); err != nil {
 			return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
 		}
 	}
@@ -105,7 +105,7 @@ func (p *processor) notifyStatus(ctx context.Context, status *gtsmodel.Status) e
 	return nil
 }
 
-func (p *processor) notifyFollowRequest(ctx context.Context, followRequest *gtsmodel.FollowRequest) error {
+func (p *Processor) notifyFollowRequest(ctx context.Context, followRequest *gtsmodel.FollowRequest) error {
 	// make sure we have the target account pinned on the follow request
 	if followRequest.TargetAccount == nil {
 		a, err := p.db.GetAccountByID(ctx, followRequest.TargetAccountID)
@@ -139,14 +139,14 @@ func (p *processor) notifyFollowRequest(ctx context.Context, followRequest *gtsm
 		return fmt.Errorf("notifyStatus: error converting notification to api representation: %s", err)
 	}
 
-	if err := p.streamingProcessor.StreamNotificationToAccount(apiNotif, targetAccount); err != nil {
+	if err := p.StreamNotification(apiNotif, targetAccount); err != nil {
 		return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
 	}
 
 	return nil
 }
 
-func (p *processor) notifyFollow(ctx context.Context, follow *gtsmodel.Follow, targetAccount *gtsmodel.Account) error {
+func (p *Processor) notifyFollow(ctx context.Context, follow *gtsmodel.Follow, targetAccount *gtsmodel.Account) error {
 	// return if this isn't a local account
 	if targetAccount.Domain != "" {
 		return nil
@@ -180,14 +180,14 @@ func (p *processor) notifyFollow(ctx context.Context, follow *gtsmodel.Follow, t
 		return fmt.Errorf("notifyStatus: error converting notification to api representation: %s", err)
 	}
 
-	if err := p.streamingProcessor.StreamNotificationToAccount(apiNotif, targetAccount); err != nil {
+	if err := p.StreamNotification(apiNotif, targetAccount); err != nil {
 		return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
 	}
 
 	return nil
 }
 
-func (p *processor) notifyFave(ctx context.Context, fave *gtsmodel.StatusFave) error {
+func (p *Processor) notifyFave(ctx context.Context, fave *gtsmodel.StatusFave) error {
 	// ignore self-faves
 	if fave.TargetAccountID == fave.AccountID {
 		return nil
@@ -228,14 +228,14 @@ func (p *processor) notifyFave(ctx context.Context, fave *gtsmodel.StatusFave) e
 		return fmt.Errorf("notifyStatus: error converting notification to api representation: %s", err)
 	}
 
-	if err := p.streamingProcessor.StreamNotificationToAccount(apiNotif, targetAccount); err != nil {
+	if err := p.StreamNotification(apiNotif, targetAccount); err != nil {
 		return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
 	}
 
 	return nil
 }
 
-func (p *processor) notifyAnnounce(ctx context.Context, status *gtsmodel.Status) error {
+func (p *Processor) notifyAnnounce(ctx context.Context, status *gtsmodel.Status) error {
 	if status.BoostOfID == "" {
 		// not a boost, nothing to do
 		return nil
@@ -302,7 +302,7 @@ func (p *processor) notifyAnnounce(ctx context.Context, status *gtsmodel.Status)
 		return fmt.Errorf("notifyStatus: error converting notification to api representation: %s", err)
 	}
 
-	if err := p.streamingProcessor.StreamNotificationToAccount(apiNotif, status.BoostOfAccount); err != nil {
+	if err := p.StreamNotification(apiNotif, status.BoostOfAccount); err != nil {
 		return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
 	}
 
@@ -311,7 +311,7 @@ func (p *processor) notifyAnnounce(ctx context.Context, status *gtsmodel.Status)
 
 // timelineStatus processes the given new status and inserts it into
 // the HOME timelines of accounts that follow the status author.
-func (p *processor) timelineStatus(ctx context.Context, status *gtsmodel.Status) error {
+func (p *Processor) timelineStatus(ctx context.Context, status *gtsmodel.Status) error {
 	// make sure the author account is pinned onto the status
 	if status.Account == nil {
 		a, err := p.db.GetAccountByID(ctx, status.AccountID)
@@ -370,7 +370,7 @@ func (p *processor) timelineStatus(ctx context.Context, status *gtsmodel.Status)
 //
 // If the status was inserted into the home timeline of the given account,
 // it will also be streamed via websockets to the user.
-func (p *processor) timelineStatusForAccount(ctx context.Context, status *gtsmodel.Status, accountID string, errors chan error, wg *sync.WaitGroup) {
+func (p *Processor) timelineStatusForAccount(ctx context.Context, status *gtsmodel.Status, accountID string, errors chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	// get the timeline owner account
@@ -406,7 +406,7 @@ func (p *processor) timelineStatusForAccount(ctx context.Context, status *gtsmod
 			return
 		}
 
-		if err := p.streamingProcessor.StreamUpdateToAccount(apiStatus, timelineAccount, stream.TimelineHome); err != nil {
+		if err := p.StreamUpdate(apiStatus, timelineAccount, stream.TimelineHome); err != nil {
 			errors <- fmt.Errorf("timelineStatusForAccount: error streaming status %s: %s", status.ID, err)
 		}
 	}
@@ -414,17 +414,17 @@ func (p *processor) timelineStatusForAccount(ctx context.Context, status *gtsmod
 
 // deleteStatusFromTimelines completely removes the given status from all timelines.
 // It will also stream deletion of the status to all open streams.
-func (p *processor) deleteStatusFromTimelines(ctx context.Context, status *gtsmodel.Status) error {
+func (p *Processor) deleteStatusFromTimelines(ctx context.Context, status *gtsmodel.Status) error {
 	if err := p.statusTimelines.WipeItemFromAllTimelines(ctx, status.ID); err != nil {
 		return err
 	}
 
-	return p.streamingProcessor.StreamDelete(status.ID)
+	return p.StreamDelete(status.ID)
 }
 
 // wipeStatus contains common logic used to totally delete a status
 // + all its attachments, notifications, boosts, and timeline entries.
-func (p *processor) wipeStatus(ctx context.Context, statusToDelete *gtsmodel.Status, deleteAttachments bool) error {
+func (p *Processor) wipeStatus(ctx context.Context, statusToDelete *gtsmodel.Status, deleteAttachments bool) error {
 	// either delete all attachments for this status, or simply
 	// unattach all attachments for this status, so they'll be
 	// cleaned later by a separate process; reason to unattach rather
@@ -432,13 +432,13 @@ func (p *processor) wipeStatus(ctx context.Context, statusToDelete *gtsmodel.Sta
 	// to another status immediately (in case of delete + redraft)
 	if deleteAttachments {
 		for _, a := range statusToDelete.AttachmentIDs {
-			if err := p.mediaProcessor.Delete(ctx, a); err != nil {
+			if err := p.MediaDelete(ctx, a); err != nil {
 				return err
 			}
 		}
 	} else {
 		for _, a := range statusToDelete.AttachmentIDs {
-			if _, err := p.mediaProcessor.Unattach(ctx, statusToDelete.Account, a); err != nil {
+			if _, err := p.MediaUnattach(ctx, statusToDelete.Account, a); err != nil {
 				return err
 			}
 		}

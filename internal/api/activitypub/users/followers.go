@@ -51,7 +51,7 @@ func (m *Module) FollowersGETHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.GetFediFollowers(apiutil.TransferSignatureContext(c), requestedUsername, c.Request.URL)
+	resp, errWithCode := m.processor.FediFollowersGet(apiutil.TransferSignatureContext(c), requestedUsername, c.Request.URL)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

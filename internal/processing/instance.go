@@ -33,7 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
-func (p *processor) getThisInstance(ctx context.Context) (*gtsmodel.Instance, error) {
+func (p *Processor) getThisInstance(ctx context.Context) (*gtsmodel.Instance, error) {
 	i := &gtsmodel.Instance{}
 	if err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: config.GetHost()}}, i); err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (p *processor) getThisInstance(ctx context.Context) (*gtsmodel.Instance, er
 	return i, nil
 }
 
-func (p *processor) InstanceGetV1(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode) {
+func (p *Processor) InstanceGetV1(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode) {
 	i, err := p.getThisInstance(ctx)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance: %s", err))
@@ -55,7 +55,7 @@ func (p *processor) InstanceGetV1(ctx context.Context) (*apimodel.InstanceV1, gt
 	return ai, nil
 }
 
-func (p *processor) InstanceGetV2(ctx context.Context) (*apimodel.InstanceV2, gtserror.WithCode) {
+func (p *Processor) InstanceGetV2(ctx context.Context) (*apimodel.InstanceV2, gtserror.WithCode) {
 	i, err := p.getThisInstance(ctx)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance: %s", err))
@@ -69,7 +69,7 @@ func (p *processor) InstanceGetV2(ctx context.Context) (*apimodel.InstanceV2, gt
 	return ai, nil
 }
 
-func (p *processor) InstancePeersGet(ctx context.Context, includeSuspended bool, includeOpen bool, flat bool) (interface{}, gtserror.WithCode) {
+func (p *Processor) InstancePeersGet(ctx context.Context, includeSuspended bool, includeOpen bool, flat bool) (interface{}, gtserror.WithCode) {
 	domains := []*apimodel.Domain{}
 
 	if includeOpen {
@@ -120,7 +120,7 @@ func (p *processor) InstancePeersGet(ctx context.Context, includeSuspended bool,
 	return domains, nil
 }
 
-func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.InstanceV1, gtserror.WithCode) {
+func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.InstanceV1, gtserror.WithCode) {
 	// fetch the instance entry from the db for processing
 	i := &gtsmodel.Instance{}
 	host := config.GetHost()
@@ -223,7 +223,7 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 
 	if form.Avatar != nil && form.Avatar.Size != 0 {
 		// process instance avatar image + description
-		avatarInfo, err := p.accountProcessor.UpdateAvatar(ctx, form.Avatar, form.AvatarDescription, ia.ID)
+		avatarInfo, err := p.AccountUpdateAvatar(ctx, form.Avatar, form.AvatarDescription, ia.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, "error processing avatar")
 		}
@@ -240,7 +240,7 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 
 	if form.Header != nil && form.Header.Size != 0 {
 		// process instance header image
-		headerInfo, err := p.accountProcessor.UpdateHeader(ctx, form.Header, nil, ia.ID)
+		headerInfo, err := p.AccountUpdateHeader(ctx, form.Header, nil, ia.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, "error processing header")
 		}

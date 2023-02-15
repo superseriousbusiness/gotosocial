@@ -43,7 +43,7 @@ func (m *Module) EmojiGetHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.GetFediEmoji(apiutil.TransferSignatureContext(c), requestedEmojiID, c.Request.URL)
+	resp, errWithCode := m.processor.FediEmojiGet(apiutil.TransferSignatureContext(c), requestedEmojiID, c.Request.URL)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

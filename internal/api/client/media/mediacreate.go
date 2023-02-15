@@ -123,7 +123,7 @@ func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	apiAttachment, errWithCode := m.processor.MediaCreate(c.Request.Context(), authed, form)
+	apiAttachment, errWithCode := m.processor.MediaCreate(c.Request.Context(), authed.Account, form)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

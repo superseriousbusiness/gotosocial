@@ -150,7 +150,7 @@ func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
 		minID = minIDString
 	}
 
-	resp, errWithCode := m.processor.GetFediStatusReplies(apiutil.TransferSignatureContext(c), requestedUsername, requestedStatusID, page, onlyOtherAccounts, minID, c.Request.URL)
+	resp, errWithCode := m.processor.FediStatusRepliesGet(apiutil.TransferSignatureContext(c), requestedUsername, requestedStatusID, page, onlyOtherAccounts, minID, c.Request.URL)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

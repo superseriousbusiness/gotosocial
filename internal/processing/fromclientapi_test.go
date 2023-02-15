@@ -46,12 +46,12 @@ func (suite *FromClientAPITestSuite) TestProcessStreamNewStatus() {
 	receivingAccount := suite.testAccounts["local_account_1"]
 
 	// open a home timeline stream for zork
-	wssStream, errWithCode := suite.processor.OpenStreamForAccount(ctx, receivingAccount, stream.TimelineHome)
+	wssStream, errWithCode := suite.processor.StreamOpen(ctx, receivingAccount, stream.TimelineHome)
 	suite.NoError(errWithCode)
 
 	// open another stream for zork, but for a different timeline;
 	// this shouldn't get stuff streamed into it, since it's for the public timeline
-	irrelevantStream, errWithCode := suite.processor.OpenStreamForAccount(ctx, receivingAccount, stream.TimelinePublic)
+	irrelevantStream, errWithCode := suite.processor.StreamOpen(ctx, receivingAccount, stream.TimelinePublic)
 	suite.NoError(errWithCode)
 
 	// make a new status from admin account
@@ -125,7 +125,7 @@ func (suite *FromClientAPITestSuite) TestProcessStatusDelete() {
 	boostOfDeletedStatus := suite.testStatuses["admin_account_status_4"]
 
 	// open a home timeline stream for turtle, who follows zork
-	wssStream, errWithCode := suite.processor.OpenStreamForAccount(ctx, receivingAccount, stream.TimelineHome)
+	wssStream, errWithCode := suite.processor.StreamOpen(ctx, receivingAccount, stream.TimelineHome)
 	suite.NoError(errWithCode)
 
 	// delete the status from the db first, to mimic what would have already happened earlier up the flow

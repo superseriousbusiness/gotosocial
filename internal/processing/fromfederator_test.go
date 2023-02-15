@@ -117,7 +117,7 @@ func (suite *FromFederatorTestSuite) TestProcessReplyMention() {
 		Likeable:            testrig.FalseBool(),
 	}
 
-	wssStream, errWithCode := suite.processor.OpenStreamForAccount(context.Background(), repliedAccount, stream.TimelineHome)
+	wssStream, errWithCode := suite.processor.StreamOpen(context.Background(), repliedAccount, stream.TimelineHome)
 	suite.NoError(errWithCode)
 
 	// id the status based on the time it was created
@@ -183,7 +183,7 @@ func (suite *FromFederatorTestSuite) TestProcessFave() {
 	favedStatus := suite.testStatuses["local_account_1_status_1"]
 	favingAccount := suite.testAccounts["remote_account_1"]
 
-	wssStream, errWithCode := suite.processor.OpenStreamForAccount(context.Background(), favedAccount, stream.TimelineNotifications)
+	wssStream, errWithCode := suite.processor.StreamOpen(context.Background(), favedAccount, stream.TimelineNotifications)
 	suite.NoError(errWithCode)
 
 	fave := &gtsmodel.StatusFave{
@@ -256,7 +256,7 @@ func (suite *FromFederatorTestSuite) TestProcessFaveWithDifferentReceivingAccoun
 	favedStatus := suite.testStatuses["local_account_1_status_1"]
 	favingAccount := suite.testAccounts["remote_account_1"]
 
-	wssStream, errWithCode := suite.processor.OpenStreamForAccount(context.Background(), receivingAccount, stream.TimelineHome)
+	wssStream, errWithCode := suite.processor.StreamOpen(context.Background(), receivingAccount, stream.TimelineHome)
 	suite.NoError(errWithCode)
 
 	fave := &gtsmodel.StatusFave{
@@ -400,7 +400,7 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestLocked() {
 	// target is a locked account
 	targetAccount := suite.testAccounts["local_account_2"]
 
-	wssStream, errWithCode := suite.processor.OpenStreamForAccount(context.Background(), targetAccount, stream.TimelineHome)
+	wssStream, errWithCode := suite.processor.StreamOpen(context.Background(), targetAccount, stream.TimelineHome)
 	suite.NoError(errWithCode)
 
 	// put the follow request in the database as though it had passed through the federating db already
@@ -457,7 +457,7 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestUnlocked() {
 	// target is an unlocked account
 	targetAccount := suite.testAccounts["local_account_1"]
 
-	wssStream, errWithCode := suite.processor.OpenStreamForAccount(context.Background(), targetAccount, stream.TimelineHome)
+	wssStream, errWithCode := suite.processor.StreamOpen(context.Background(), targetAccount, stream.TimelineHome)
 	suite.NoError(errWithCode)
 
 	// put the follow request in the database as though it had passed through the federating db already

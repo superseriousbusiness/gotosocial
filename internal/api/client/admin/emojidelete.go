@@ -100,7 +100,7 @@ func (m *Module) EmojiDELETEHandler(c *gin.Context) {
 		return
 	}
 
-	emoji, errWithCode := m.processor.AdminEmojiDelete(c.Request.Context(), authed, emojiID)
+	emoji, errWithCode := m.processor.AdminEmojiDelete(c.Request.Context(), emojiID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

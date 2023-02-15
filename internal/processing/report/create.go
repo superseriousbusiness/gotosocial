@@ -33,7 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.ReportCreateRequest) (*apimodel.Report, gtserror.WithCode) {
+func (p *ReportProcessor) ReportCreate(ctx context.Context, account *gtsmodel.Account, form *apimodel.ReportCreateRequest) (*apimodel.Report, gtserror.WithCode) {
 	if account.ID == form.AccountID {
 		err := errors.New("cannot report your own account")
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())

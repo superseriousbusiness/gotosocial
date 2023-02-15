@@ -33,7 +33,8 @@ import (
 	"github.com/superseriousbusiness/oauth2/v4"
 )
 
-func (p *processor) Create(ctx context.Context, applicationToken oauth2.TokenInfo, application *gtsmodel.Application, form *apimodel.AccountCreateRequest) (*apimodel.Token, gtserror.WithCode) {
+// AccountCreate processes the given form for creating a new account, returning an oauth token for that account if successful.
+func (p *AccountProcessor) AccountCreate(ctx context.Context, applicationToken oauth2.TokenInfo, application *gtsmodel.Application, form *apimodel.AccountCreateRequest) (*apimodel.Token, gtserror.WithCode) {
 	emailAvailable, err := p.db.IsEmailAvailable(ctx, form.Email)
 	if err != nil {
 		return nil, gtserror.NewErrorBadRequest(err)

@@ -115,7 +115,7 @@ func (m *Module) AccountActionPOSTHandler(c *gin.Context) {
 	}
 	form.TargetAccountID = targetAcctID
 
-	if errWithCode := m.processor.AdminAccountAction(c.Request.Context(), authed, form); errWithCode != nil {
+	if errWithCode := m.processor.AdminAccountAction(c.Request.Context(), authed.Account, form); errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}

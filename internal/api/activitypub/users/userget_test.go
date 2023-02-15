@@ -32,7 +32,6 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -100,13 +99,7 @@ func (suite *UserGetTestSuite) TestGetUserPublicKeyDeleted() {
 	userModule := users.New(suite.processor)
 	targetAccount := suite.testAccounts["local_account_1"]
 
-	// first delete the account, as though zork had deleted himself
-	authed := &oauth.Auth{
-		Application: suite.testApplications["local_account_1"],
-		User:        suite.testUsers["local_account_1"],
-		Account:     suite.testAccounts["local_account_1"],
-	}
-	suite.processor.AccountDeleteLocal(context.Background(), authed, &apimodel.AccountDeleteRequest{
+	suite.processor.AccountDeleteLocal(context.Background(), suite.testAccounts["local_account_1"], &apimodel.AccountDeleteRequest{
 		Password:       "password",
 		DeleteOriginID: targetAccount.ID,
 	})

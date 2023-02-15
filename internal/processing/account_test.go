@@ -53,7 +53,7 @@ func (suite *AccountTestSuite) TestAccountDeleteLocal() {
 	err := suite.db.Put(ctx, follow)
 	suite.NoError(err)
 
-	errWithCode := suite.processor.AccountDeleteLocal(ctx, suite.testAutheds["local_account_1"], &apimodel.AccountDeleteRequest{
+	errWithCode := suite.processor.AccountDeleteLocal(ctx, suite.testAccounts["local_account_1"], &apimodel.AccountDeleteRequest{
 		Password:       "password",
 		DeleteOriginID: deletingAccount.ID,
 	})

@@ -137,7 +137,7 @@ func StatusSkipInsertFunction() timeline.SkipInsertFunction {
 	}
 }
 
-func (p *processor) HomeTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode) {
+func (p *Processor) HomeTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode) {
 	preparedItems, err := p.statusTimelines.GetTimeline(ctx, authed.Account.ID, maxID, sinceID, minID, limit, local)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
@@ -172,7 +172,7 @@ func (p *processor) HomeTimelineGet(ctx context.Context, authed *oauth.Auth, max
 	})
 }
 
-func (p *processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode) {
+func (p *Processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode) {
 	statuses, err := p.db.GetPublicTimeline(ctx, maxID, sinceID, minID, limit, local)
 	if err != nil {
 		if err == db.ErrNoEntries {
@@ -217,7 +217,7 @@ func (p *processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, m
 	})
 }
 
-func (p *processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
+func (p *Processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
 	statuses, nextMaxID, prevMinID, err := p.db.GetFavedTimeline(ctx, authed.Account.ID, maxID, minID, limit)
 	if err != nil {
 		if err == db.ErrNoEntries {
@@ -251,7 +251,7 @@ func (p *processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, ma
 	})
 }
 
-func (p *processor) filterPublicStatuses(ctx context.Context, authed *oauth.Auth, statuses []*gtsmodel.Status) ([]*apimodel.Status, error) {
+func (p *Processor) filterPublicStatuses(ctx context.Context, authed *oauth.Auth, statuses []*gtsmodel.Status) ([]*apimodel.Status, error) {
 	apiStatuses := []*apimodel.Status{}
 	for _, s := range statuses {
 		targetAccount := &gtsmodel.Account{}
@@ -284,7 +284,7 @@ func (p *processor) filterPublicStatuses(ctx context.Context, authed *oauth.Auth
 	return apiStatuses, nil
 }
 
-func (p *processor) filterFavedStatuses(ctx context.Context, authed *oauth.Auth, statuses []*gtsmodel.Status) ([]*apimodel.Status, error) {
+func (p *Processor) filterFavedStatuses(ctx context.Context, authed *oauth.Auth, statuses []*gtsmodel.Status) ([]*apimodel.Status, error) {
 	apiStatuses := []*apimodel.Status{}
 	for _, s := range statuses {
 		targetAccount := &gtsmodel.Account{}

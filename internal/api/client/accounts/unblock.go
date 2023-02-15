@@ -86,7 +86,7 @@ func (m *Module) AccountUnblockPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	relationship, errWithCode := m.processor.AccountBlockRemove(c.Request.Context(), authed, targetAcctID)
+	relationship, errWithCode := m.processor.AccountBlockRemove(c.Request.Context(), authed.Account, targetAcctID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

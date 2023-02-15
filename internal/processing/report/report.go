@@ -19,31 +19,20 @@
 package report
 
 import (
-	"context"
-
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
-type Processor interface {
-	ReportsGet(ctx context.Context, account *gtsmodel.Account, resolved *bool, targetAccountID string, maxID string, sinceID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode)
-	ReportGet(ctx context.Context, account *gtsmodel.Account, id string) (*apimodel.Report, gtserror.WithCode)
-	Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.ReportCreateRequest) (*apimodel.Report, gtserror.WithCode)
-}
-
-type processor struct {
+type ReportProcessor struct { //nolint:revive
 	db           db.DB
 	tc           typeutils.TypeConverter
 	clientWorker *concurrency.WorkerPool[messages.FromClientAPI]
 }
 
-func New(db db.DB, tc typeutils.TypeConverter, clientWorker *concurrency.WorkerPool[messages.FromClientAPI]) Processor {
-	return &processor{
+func New(db db.DB, tc typeutils.TypeConverter, clientWorker *concurrency.WorkerPool[messages.FromClientAPI]) ReportProcessor {
+	return ReportProcessor{
 		tc:           tc,
 		db:           db,
 		clientWorker: clientWorker,

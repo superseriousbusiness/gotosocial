@@ -114,7 +114,7 @@ func (m *Module) AccountFollowPOSTHandler(c *gin.Context) {
 	}
 	form.ID = targetAcctID
 
-	relationship, errWithCode := m.processor.AccountFollowCreate(c.Request.Context(), authed, form)
+	relationship, errWithCode := m.processor.AccountFollowCreate(c.Request.Context(), authed.Account, form)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

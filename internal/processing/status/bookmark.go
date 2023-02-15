@@ -30,7 +30,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
-func (p *processor) Bookmark(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+// StatusBookmark adds a bookmark for the requestingAccount, targeting the given status (no-op if bookmark already exists).
+func (p *StatusProcessor) StatusBookmark(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
 	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
@@ -72,6 +73,46 @@ func (p *processor) Bookmark(ctx context.Context, requestingAccount *gtsmodel.Ac
 	}
 
 	// return the apidon representation of the target status
+	apiStatus, err := p.tc.StatusToAPIStatus(ctx, targetStatus, requestingAccount)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err))
+	}
+
+	return apiStatus, nil
+}
+
+// StatusUnbookmark removes a bookmark for the requesting account, targeting the given status (no-op if bookmark doesn't exist).
+func (p *StatusProcessor) StatusUnbookmark(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
+	if err != nil {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
+	}
+	if targetStatus.Account == nil {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("no status owner for status %s", targetStatusID))
+	}
+	visible, err := p.filter.StatusVisible(ctx, targetStatus, requestingAccount)
+	if err != nil {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is visible: %s", targetStatus.ID, err))
+	}
+	if !visible {
+		return nil, gtserror.NewErrorNotFound(errors.New("status is not visible"))
+	}
+
+	// first check if the status is actually bookmarked
+	toUnbookmark := false
+	gtsBookmark := &gtsmodel.StatusBookmark{}
+	if err := p.db.GetWhere(ctx, []db.Where{{Key: "status_id", Value: targetStatus.ID}, {Key: "account_id", Value: requestingAccount.ID}}, gtsBookmark); err == nil {
+		// we have a bookmark for this status
+		toUnbookmark = true
+	}
+
+	if toUnbookmark {
+		if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "status_id", Value: targetStatus.ID}, {Key: "account_id", Value: requestingAccount.ID}}, gtsBookmark); err != nil {
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error unfaveing status: %s", err))
+		}
+	}
+
+	// return the api representation of the target status
 	apiStatus, err := p.tc.StatusToAPIStatus(ctx, targetStatus, requestingAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err))

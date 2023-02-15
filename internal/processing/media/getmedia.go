@@ -29,7 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) GetMedia(ctx context.Context, account *gtsmodel.Account, mediaAttachmentID string) (*apimodel.Attachment, gtserror.WithCode) {
+func (p *MediaProcessor) MediaGet(ctx context.Context, account *gtsmodel.Account, mediaAttachmentID string) (*apimodel.Attachment, gtserror.WithCode) {
 	attachment, err := p.db.GetAttachmentByID(ctx, mediaAttachmentID)
 	if err != nil {
 		if err == db.ErrNoEntries {

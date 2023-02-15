@@ -91,7 +91,7 @@ func (m *Module) StatusBoostPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	apiStatus, errWithCode := m.processor.StatusBoost(c.Request.Context(), authed, targetStatusID)
+	apiStatus, errWithCode := m.processor.StatusBoost(c.Request.Context(), authed.Account, authed.Application, targetStatusID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

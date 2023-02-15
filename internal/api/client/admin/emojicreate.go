@@ -126,7 +126,7 @@ func (m *Module) EmojiCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	apiEmoji, errWithCode := m.processor.AdminEmojiCreate(c.Request.Context(), authed, form)
+	apiEmoji, errWithCode := m.processor.AdminEmojiCreate(c.Request.Context(), authed.Account, authed.User, form)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

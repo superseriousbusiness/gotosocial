@@ -38,7 +38,7 @@ func (m *Module) InboxPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	if posted, err := m.processor.InboxPost(apiutil.TransferSignatureContext(c), c.Writer, c.Request); err != nil {
+	if posted, err := m.processor.FediInboxPost(apiutil.TransferSignatureContext(c), c.Writer, c.Request); err != nil {
 		if withCode, ok := err.(gtserror.WithCode); ok {
 			apiutil.ErrorHandler(c, withCode, m.processor.InstanceGetV1)
 		} else {

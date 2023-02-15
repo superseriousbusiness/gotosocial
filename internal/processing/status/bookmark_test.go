@@ -36,10 +36,30 @@ func (suite *StatusBookmarkTestSuite) TestBookmark() {
 	bookmarkingAccount1 := suite.testAccounts["local_account_1"]
 	targetStatus1 := suite.testStatuses["admin_account_status_1"]
 
-	bookmark1, err := suite.status.Bookmark(ctx, bookmarkingAccount1, targetStatus1.ID)
+	bookmark1, err := suite.status.StatusBookmark(ctx, bookmarkingAccount1, targetStatus1.ID)
 	suite.NoError(err)
 	suite.NotNil(bookmark1)
 	suite.True(bookmark1.Bookmarked)
+	suite.Equal(targetStatus1.ID, bookmark1.ID)
+}
+
+func (suite *StatusBookmarkTestSuite) TestUnbookmark() {
+	ctx := context.Background()
+
+	// bookmark a status
+	bookmarkingAccount1 := suite.testAccounts["local_account_1"]
+	targetStatus1 := suite.testStatuses["admin_account_status_1"]
+
+	bookmark1, err := suite.status.StatusBookmark(ctx, bookmarkingAccount1, targetStatus1.ID)
+	suite.NoError(err)
+	suite.NotNil(bookmark1)
+	suite.True(bookmark1.Bookmarked)
+	suite.Equal(targetStatus1.ID, bookmark1.ID)
+
+	bookmark2, err := suite.status.StatusUnbookmark(ctx, bookmarkingAccount1, targetStatus1.ID)
+	suite.NoError(err)
+	suite.NotNil(bookmark2)
+	suite.False(bookmark2.Bookmarked)
 	suite.Equal(targetStatus1.ID, bookmark1.ID)
 }
 

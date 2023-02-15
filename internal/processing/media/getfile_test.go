@@ -43,7 +43,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileCached() {
 	fileName := path.Base(testAttachment.File.Path)
 	requestingAccount := suite.testAccounts["local_account_1"]
 
-	content, errWithCode := suite.mediaProcessor.GetFile(ctx, requestingAccount, &apimodel.GetContentRequestForm{
+	content, errWithCode := suite.mediaProcessor.MediaGetFile(ctx, requestingAccount, &apimodel.GetContentRequestForm{
 		AccountID: testAttachment.AccountID,
 		MediaType: string(media.TypeAttachment),
 		MediaSize: string(media.SizeOriginal),
@@ -81,7 +81,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncached() {
 	fileName := path.Base(testAttachment.File.Path)
 	requestingAccount := suite.testAccounts["local_account_1"]
 
-	content, errWithCode := suite.mediaProcessor.GetFile(ctx, requestingAccount, &apimodel.GetContentRequestForm{
+	content, errWithCode := suite.mediaProcessor.MediaGetFile(ctx, requestingAccount, &apimodel.GetContentRequestForm{
 		AccountID: testAttachment.AccountID,
 		MediaType: string(media.TypeAttachment),
 		MediaSize: string(media.SizeOriginal),
@@ -133,7 +133,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncachedInterrupted() {
 	fileName := path.Base(testAttachment.File.Path)
 	requestingAccount := suite.testAccounts["local_account_1"]
 
-	content, errWithCode := suite.mediaProcessor.GetFile(ctx, requestingAccount, &apimodel.GetContentRequestForm{
+	content, errWithCode := suite.mediaProcessor.MediaGetFile(ctx, requestingAccount, &apimodel.GetContentRequestForm{
 		AccountID: testAttachment.AccountID,
 		MediaType: string(media.TypeAttachment),
 		MediaSize: string(media.SizeOriginal),
@@ -190,7 +190,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileThumbnailUncached() {
 	fileName := path.Base(testAttachment.File.Path)
 	requestingAccount := suite.testAccounts["local_account_1"]
 
-	content, errWithCode := suite.mediaProcessor.GetFile(ctx, requestingAccount, &apimodel.GetContentRequestForm{
+	content, errWithCode := suite.mediaProcessor.MediaGetFile(ctx, requestingAccount, &apimodel.GetContentRequestForm{
 		AccountID: testAttachment.AccountID,
 		MediaType: string(media.TypeAttachment),
 		MediaSize: string(media.SizeSmall),

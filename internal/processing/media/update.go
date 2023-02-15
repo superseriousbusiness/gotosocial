@@ -30,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
-func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, mediaAttachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, gtserror.WithCode) {
+func (p *MediaProcessor) MediaUpdate(ctx context.Context, account *gtsmodel.Account, mediaAttachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, gtserror.WithCode) {
 	attachment, err := p.db.GetAttachmentByID(ctx, mediaAttachmentID)
 	if err != nil {
 		if err == db.ErrNoEntries {

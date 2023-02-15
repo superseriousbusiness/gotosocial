@@ -31,7 +31,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
-func (p *processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Account, gtserror.WithCode) {
+// AccountGet processes the given request for account information.
+func (p *AccountProcessor) AccountGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Account, gtserror.WithCode) {
 	targetAccount, err := p.db.GetAccountByID(ctx, targetAccountID)
 	if err != nil {
 		if err == db.ErrNoEntries {
@@ -43,7 +44,8 @@ func (p *processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account
 	return p.getAccountFor(ctx, requestingAccount, targetAccount)
 }
 
-func (p *processor) GetLocalByUsername(ctx context.Context, requestingAccount *gtsmodel.Account, username string) (*apimodel.Account, gtserror.WithCode) {
+// AccountGetLocalByUsername processes the given request for account information targeting a local account by username.
+func (p *AccountProcessor) AccountGetLocalByUsername(ctx context.Context, requestingAccount *gtsmodel.Account, username string) (*apimodel.Account, gtserror.WithCode) {
 	targetAccount, err := p.db.GetAccountByUsernameDomain(ctx, username, "")
 	if err != nil {
 		if err == db.ErrNoEntries {
@@ -55,7 +57,8 @@ func (p *processor) GetLocalByUsername(ctx context.Context, requestingAccount *g
 	return p.getAccountFor(ctx, requestingAccount, targetAccount)
 }
 
-func (p *processor) GetCustomCSSForUsername(ctx context.Context, username string) (string, gtserror.WithCode) {
+// AccountGetCustomCSSForUsername returns custom css for the given local username.
+func (p *AccountProcessor) AccountGetCustomCSSForUsername(ctx context.Context, username string) (string, gtserror.WithCode) {
 	customCSS, err := p.db.GetAccountCustomCSSByUsername(ctx, username)
 	if err != nil {
 		if err == db.ErrNoEntries {
@@ -67,7 +70,7 @@ func (p *processor) GetCustomCSSForUsername(ctx context.Context, username string
 	return customCSS, nil
 }
 
-func (p *processor) getAccountFor(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (*apimodel.Account, gtserror.WithCode) {
+func (p *AccountProcessor) getAccountFor(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (*apimodel.Account, gtserror.WithCode) {
 	var blocked bool
 	var err error
 	if requestingAccount != nil {

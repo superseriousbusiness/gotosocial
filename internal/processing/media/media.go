@@ -19,35 +19,14 @@
 package media
 
 import (
-	"context"
-
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
-// Processor wraps a bunch of functions for processing media actions.
-type Processor interface {
-	// Create creates a new media attachment belonging to the given account, using the request form.
-	Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.AttachmentRequest) (*apimodel.Attachment, gtserror.WithCode)
-	// Delete deletes the media attachment with the given ID, including all files pertaining to that attachment.
-	Delete(ctx context.Context, mediaAttachmentID string) gtserror.WithCode
-	// Unattach unattaches the media attachment with the given ID from any statuses it was attached to, making it available
-	// for reattachment again.
-	Unattach(ctx context.Context, account *gtsmodel.Account, mediaAttachmentID string) (*apimodel.Attachment, gtserror.WithCode)
-	// GetFile retrieves a file from storage and streams it back to the caller via an io.reader embedded in *apimodel.Content.
-	GetFile(ctx context.Context, account *gtsmodel.Account, form *apimodel.GetContentRequestForm) (*apimodel.Content, gtserror.WithCode)
-	GetCustomEmojis(ctx context.Context) ([]*apimodel.Emoji, gtserror.WithCode)
-	GetMedia(ctx context.Context, account *gtsmodel.Account, mediaAttachmentID string) (*apimodel.Attachment, gtserror.WithCode)
-	Update(ctx context.Context, account *gtsmodel.Account, mediaAttachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, gtserror.WithCode)
-}
-
-type processor struct {
+type MediaProcessor struct { //nolint:revive
 	tc                  typeutils.TypeConverter
 	mediaManager        media.Manager
 	transportController transport.Controller
@@ -56,8 +35,8 @@ type processor struct {
 }
 
 // New returns a new media processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, transportController transport.Controller, storage *storage.Driver) Processor {
-	return &processor{
+func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, transportController transport.Controller, storage *storage.Driver) MediaProcessor {
+	return MediaProcessor{
 		tc:                  tc,
 		mediaManager:        mediaManager,
 		transportController: transportController,

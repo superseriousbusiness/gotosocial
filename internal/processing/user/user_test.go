@@ -36,7 +36,7 @@ type UserStandardTestSuite struct {
 
 	sentEmails map[string]string
 
-	user user.Processor
+	user user.UserProcessor
 }
 
 func (suite *UserStandardTestSuite) SetupTest() {

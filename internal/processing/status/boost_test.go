@@ -37,7 +37,7 @@ func (suite *StatusBoostTestSuite) TestBoostOfBoost() {
 	application1 := suite.testApplications["application_1"]
 	targetStatus1 := suite.testStatuses["admin_account_status_1"]
 
-	boost1, err := suite.status.Boost(ctx, boostingAccount1, application1, targetStatus1.ID)
+	boost1, err := suite.status.StatusBoost(ctx, boostingAccount1, application1, targetStatus1.ID)
 	suite.NoError(err)
 	suite.NotNil(boost1)
 	suite.Equal(targetStatus1.ID, boost1.Reblog.ID)
@@ -47,7 +47,7 @@ func (suite *StatusBoostTestSuite) TestBoostOfBoost() {
 	application2 := suite.testApplications["application_2"]
 	targetStatus2ID := boost1.ID
 
-	boost2, err := suite.status.Boost(ctx, boostingAccount2, application2, targetStatus2ID)
+	boost2, err := suite.status.StatusBoost(ctx, boostingAccount2, application2, targetStatus2ID)
 	suite.NoError(err)
 	suite.NotNil(boost2)
 	// the boosted status should not be the boost,

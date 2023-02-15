@@ -101,13 +101,6 @@ type TypeConverter interface {
 	StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*feeds.Item, error)
 
 	/*
-		FRONTEND (api) MODEL TO INTERNAL (gts) MODEL
-	*/
-
-	// APIVisToVis converts an API model visibility into its internal gts equivalent.
-	APIVisToVis(m apimodel.Visibility) gtsmodel.Visibility
-
-	/*
 		ACTIVITYSTREAMS MODEL TO INTERNAL (gts) MODEL
 	*/
 

@@ -49,7 +49,7 @@ import (
 // The only exception to this is when we get a malformed query, in
 // which case we return a bad request error so the user knows they
 // did something funky.
-func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode) {
+func (p *Processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode) {
 	// tidy up the query and make sure it wasn't just spaces
 	query := strings.TrimSpace(search.Query)
 	if query == "" {
@@ -222,7 +222,7 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 	return searchResult, nil
 }
 
-func (p *processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL) (*gtsmodel.Status, error) {
+func (p *Processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL) (*gtsmodel.Status, error) {
 	status, statusable, err := p.federator.GetStatus(transport.WithFastfail(ctx), authed.Account.Username, uri, true, true)
 	if err != nil {
 		return nil, err
@@ -236,7 +236,7 @@ func (p *processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, u
 	return status, nil
 }
 
-func (p *processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Account, error) {
+func (p *Processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Account, error) {
 	if !resolve {
 		var (
 			account *gtsmodel.Account
@@ -271,7 +271,7 @@ func (p *processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, 
 	)
 }
 
-func (p *processor) searchAccountByUsernameDomain(ctx context.Context, authed *oauth.Auth, username string, domain string, resolve bool) (*gtsmodel.Account, error) {
+func (p *Processor) searchAccountByUsernameDomain(ctx context.Context, authed *oauth.Auth, username string, domain string, resolve bool) (*gtsmodel.Account, error) {
 	if !resolve {
 		if domain == config.GetHost() || domain == config.GetAccountDomain() {
 			// We do local lookups using an empty domain,

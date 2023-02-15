@@ -84,7 +84,7 @@ func (m *Module) MediaRefetchPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	if errWithCode := m.processor.AdminMediaRefetch(c.Request.Context(), authed, c.Query(DomainQueryKey)); errWithCode != nil {
+	if errWithCode := m.processor.AdminMediaRefetch(c.Request.Context(), authed.Account, c.Query(DomainQueryKey)); errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}

@@ -51,7 +51,7 @@ func (m *Module) FollowingGETHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.GetFediFollowing(apiutil.TransferSignatureContext(c), requestedUsername, c.Request.URL)
+	resp, errWithCode := m.processor.FediFollowingGet(apiutil.TransferSignatureContext(c), requestedUsername, c.Request.URL)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

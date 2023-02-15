@@ -88,7 +88,7 @@ func (m *Module) AccountFollowersGETHandler(c *gin.Context) {
 		return
 	}
 
-	followers, errWithCode := m.processor.AccountFollowersGet(c.Request.Context(), authed, targetAcctID)
+	followers, errWithCode := m.processor.AccountFollowersGet(c.Request.Context(), authed.Account, targetAcctID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

@@ -85,7 +85,7 @@ func (m *Module) AccountGETHandler(c *gin.Context) {
 		return
 	}
 
-	acctInfo, errWithCode := m.processor.AccountGet(c.Request.Context(), authed, targetAcctID)
+	acctInfo, errWithCode := m.processor.AccountGet(c.Request.Context(), authed.Account, targetAcctID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

@@ -37,7 +37,7 @@ func (m *Module) confirmEmailGETHandler(c *gin.Context) {
 		return
 	}
 
-	user, errWithCode := m.processor.UserConfirmEmail(ctx, token)
+	user, errWithCode := m.processor.UserEmailConfirm(ctx, token)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

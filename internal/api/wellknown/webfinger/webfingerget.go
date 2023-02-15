@@ -81,7 +81,7 @@ func (m *Module) WebfingerGETRequest(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.GetWebfingerAccount(c.Request.Context(), requestedUsername)
+	resp, errWithCode := m.processor.FediWebfingerGet(c.Request.Context(), requestedUsername)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

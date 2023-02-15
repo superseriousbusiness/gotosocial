@@ -60,7 +60,7 @@ func (f *Fileserver) Route(r router.Router, m ...gin.HandlerFunc) {
 	f.fileserver.Route(fileserverGroup.Handle)
 }
 
-func NewFileserver(p processing.Processor) *Fileserver {
+func NewFileserver(p *processing.Processor) *Fileserver {
 	return &Fileserver{
 		fileserver: fileserver.New(p),
 	}

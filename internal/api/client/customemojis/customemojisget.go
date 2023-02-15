@@ -66,7 +66,7 @@ func (m *Module) CustomEmojisGETHandler(c *gin.Context) {
 		return
 	}
 
-	emojis, errWithCode := m.processor.CustomEmojisGet(c)
+	emojis, errWithCode := m.processor.MediaGetCustomEmojis(c)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

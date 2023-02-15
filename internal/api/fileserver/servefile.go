@@ -76,7 +76,7 @@ func (m *Module) ServeFile(c *gin.Context) {
 		return
 	}
 
-	content, errWithCode := m.processor.FileGet(c.Request.Context(), authed, &apimodel.GetContentRequestForm{
+	content, errWithCode := m.processor.MediaGetFile(c.Request.Context(), authed.Account, &apimodel.GetContentRequestForm{
 		AccountID: accountID,
 		MediaType: mediaType,
 		MediaSize: mediaSize,

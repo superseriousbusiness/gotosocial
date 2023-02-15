@@ -29,7 +29,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 )
 
-func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.AttachmentRequest) (*apimodel.Attachment, gtserror.WithCode) {
+// MediaCreate creates a new media attachment belonging to the given account, using the request form.
+func (p *MediaProcessor) MediaCreate(ctx context.Context, account *gtsmodel.Account, form *apimodel.AttachmentRequest) (*apimodel.Attachment, gtserror.WithCode) {
 	data := func(innerCtx context.Context) (io.ReadCloser, int64, error) {
 		f, err := form.File.Open()
 		return f, form.File.Size, err

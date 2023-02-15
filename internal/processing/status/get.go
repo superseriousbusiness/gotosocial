@@ -22,13 +22,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+// StatusGet gets the given status, taking account of privacy settings and blocks etc.
+func (p *StatusProcessor) StatusGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
 	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
@@ -51,4 +53,62 @@ func (p *processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account
 	}
 
 	return apiStatus, nil
+}
+
+// StatusContextGet returns the context (previous and following posts) from the given status ID.
+func (p *StatusProcessor) StatusContextGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Context, gtserror.WithCode) {
+	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
+	if err != nil {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
+	}
+	if targetStatus.Account == nil {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("no status owner for status %s", targetStatusID))
+	}
+
+	visible, err := p.filter.StatusVisible(ctx, targetStatus, requestingAccount)
+	if err != nil {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is visible: %s", targetStatus.ID, err))
+	}
+	if !visible {
+		return nil, gtserror.NewErrorNotFound(errors.New("status is not visible"))
+	}
+
+	context := &apimodel.Context{
+		Ancestors:   []apimodel.Status{},
+		Descendants: []apimodel.Status{},
+	}
+
+	parents, err := p.db.GetStatusParents(ctx, targetStatus, false)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	for _, status := range parents {
+		if v, err := p.filter.StatusVisible(ctx, status, requestingAccount); err == nil && v {
+			apiStatus, err := p.tc.StatusToAPIStatus(ctx, status, requestingAccount)
+			if err == nil {
+				context.Ancestors = append(context.Ancestors, *apiStatus)
+			}
+		}
+	}
+
+	sort.Slice(context.Ancestors, func(i int, j int) bool {
+		return context.Ancestors[i].ID < context.Ancestors[j].ID
+	})
+
+	children, err := p.db.GetStatusChildren(ctx, targetStatus, false, "")
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	for _, status := range children {
+		if v, err := p.filter.StatusVisible(ctx, status, requestingAccount); err == nil && v {
+			apiStatus, err := p.tc.StatusToAPIStatus(ctx, status, requestingAccount)
+			if err == nil {
+				context.Descendants = append(context.Descendants, *apiStatus)
+			}
+		}
+	}
+
+	return context, nil
 }

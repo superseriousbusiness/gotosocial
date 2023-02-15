@@ -49,7 +49,7 @@ import (
 )
 
 type Client struct {
-	processor processing.Processor
+	processor *processing.Processor
 	db        db.DB
 
 	accounts       *accounts.Module       // api/v1/accounts
@@ -110,7 +110,7 @@ func (c *Client) Route(r router.Router, m ...gin.HandlerFunc) {
 	c.user.Route(h)
 }
 
-func NewClient(db db.DB, p processing.Processor) *Client {
+func NewClient(db db.DB, p *processing.Processor) *Client {
 	return &Client{
 		processor: p,
 		db:        db,

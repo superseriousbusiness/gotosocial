@@ -86,7 +86,7 @@ func (m *Module) AccountDeletePOSTHandler(c *gin.Context) {
 
 	form.DeleteOriginID = authed.Account.ID
 
-	if errWithCode := m.processor.AccountDeleteLocal(c.Request.Context(), authed, form); errWithCode != nil {
+	if errWithCode := m.processor.AccountDeleteLocal(c.Request.Context(), authed.Account, form); errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}

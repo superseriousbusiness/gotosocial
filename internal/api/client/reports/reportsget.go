@@ -160,7 +160,7 @@ func (m *Module) ReportsGETHandler(c *gin.Context) {
 		limit = i
 	}
 
-	resp, errWithCode := m.processor.ReportsGet(c.Request.Context(), authed, resolved, c.Query(TargetAccountIDKey), c.Query(MaxIDKey), c.Query(SinceIDKey), c.Query(MinIDKey), limit)
+	resp, errWithCode := m.processor.ReportsGet(c.Request.Context(), authed.Account, resolved, c.Query(TargetAccountIDKey), c.Query(MaxIDKey), c.Query(SinceIDKey), c.Query(MinIDKey), limit)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

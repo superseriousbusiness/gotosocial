@@ -167,7 +167,7 @@ func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
 
 	if imp {
 		// we're importing multiple blocks
-		domainBlocks, errWithCode := m.processor.AdminDomainBlocksImport(c.Request.Context(), authed, form)
+		domainBlocks, errWithCode := m.processor.AdminDomainBlocksImport(c.Request.Context(), authed.Account, form.Domains)
 		if errWithCode != nil {
 			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 			return
@@ -177,7 +177,7 @@ func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
 	}
 
 	// we're just creating one block
-	domainBlock, errWithCode := m.processor.AdminDomainBlockCreate(c.Request.Context(), authed, form)
+	domainBlock, errWithCode := m.processor.AdminDomainBlockCreate(c.Request.Context(), authed.Account, form.Domain, form.Obfuscate, form.PublicComment, form.PrivateComment, "")
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

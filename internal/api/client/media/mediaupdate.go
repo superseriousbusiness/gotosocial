@@ -134,7 +134,7 @@ func (m *Module) MediaPUTHandler(c *gin.Context) {
 		return
 	}
 
-	attachment, errWithCode := m.processor.MediaUpdate(c.Request.Context(), authed, attachmentID, form)
+	attachment, errWithCode := m.processor.MediaUpdate(c.Request.Context(), authed.Account, attachmentID, form)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

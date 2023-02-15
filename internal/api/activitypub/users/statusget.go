@@ -59,7 +59,7 @@ func (m *Module) StatusGETHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.GetFediStatus(apiutil.TransferSignatureContext(c), requestedUsername, requestedStatusID, c.Request.URL)
+	resp, errWithCode := m.processor.FediStatusGet(apiutil.TransferSignatureContext(c), requestedUsername, requestedStatusID, c.Request.URL)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

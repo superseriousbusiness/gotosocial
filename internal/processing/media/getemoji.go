@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-func (p *processor) GetCustomEmojis(ctx context.Context) ([]*apimodel.Emoji, gtserror.WithCode) {
+func (p *MediaProcessor) MediaGetCustomEmojis(ctx context.Context) ([]*apimodel.Emoji, gtserror.WithCode) {
 	emojis, err := p.db.GetUseableEmojis(ctx)
 	if err != nil {
 		if err != db.ErrNoEntries {

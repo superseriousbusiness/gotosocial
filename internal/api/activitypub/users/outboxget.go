@@ -129,7 +129,7 @@ func (m *Module) OutboxGETHandler(c *gin.Context) {
 		maxID = maxIDString
 	}
 
-	resp, errWithCode := m.processor.GetFediOutbox(apiutil.TransferSignatureContext(c), requestedUsername, page, maxID, minID, c.Request.URL)
+	resp, errWithCode := m.processor.FediOutboxGet(apiutil.TransferSignatureContext(c), requestedUsername, page, maxID, minID, c.Request.URL)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

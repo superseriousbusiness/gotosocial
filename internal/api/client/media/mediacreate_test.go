@@ -59,7 +59,7 @@ type MediaCreateTestSuite struct {
 	tc           typeutils.TypeConverter
 	oauthServer  oauth.Server
 	emailSender  email.Sender
-	processor    processing.Processor
+	processor    *processing.Processor
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token

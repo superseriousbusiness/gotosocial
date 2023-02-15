@@ -90,7 +90,7 @@ func (m *Module) StatusContextGETHandler(c *gin.Context) {
 		return
 	}
 
-	statusContext, errWithCode := m.processor.StatusGetContext(c.Request.Context(), authed, targetStatusID)
+	statusContext, errWithCode := m.processor.StatusContextGet(c.Request.Context(), authed.Account, targetStatusID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

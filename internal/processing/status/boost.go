@@ -25,12 +25,14 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
-func (p *processor) Boost(ctx context.Context, requestingAccount *gtsmodel.Account, application *gtsmodel.Application, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+// StatusBoost processes the boost/reblog of a given status, returning the newly-created boost if all is well.
+func (p *StatusProcessor) StatusBoost(ctx context.Context, requestingAccount *gtsmodel.Account, application *gtsmodel.Application, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
 	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
@@ -92,4 +94,154 @@ func (p *processor) Boost(ctx context.Context, requestingAccount *gtsmodel.Accou
 	}
 
 	return apiStatus, nil
+}
+
+// StatusUnboost processes the unboost/unreblog of a given status, returning the status if all is well.
+func (p *StatusProcessor) StatusUnboost(ctx context.Context, requestingAccount *gtsmodel.Account, application *gtsmodel.Application, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
+	if err != nil {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
+	}
+	if targetStatus.Account == nil {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("no status owner for status %s", targetStatusID))
+	}
+
+	visible, err := p.filter.StatusVisible(ctx, targetStatus, requestingAccount)
+	if err != nil {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is visible: %s", targetStatus.ID, err))
+	}
+	if !visible {
+		return nil, gtserror.NewErrorNotFound(errors.New("status is not visible"))
+	}
+
+	// check if we actually have a boost for this status
+	var toUnboost bool
+
+	gtsBoost := &gtsmodel.Status{}
+	where := []db.Where{
+		{
+			Key:   "boost_of_id",
+			Value: targetStatusID,
+		},
+		{
+			Key:   "account_id",
+			Value: requestingAccount.ID,
+		},
+	}
+	err = p.db.GetWhere(ctx, where, gtsBoost)
+	if err == nil {
+		// we have a boost
+		toUnboost = true
+	}
+
+	if err != nil {
+		// something went wrong in the db finding the boost
+		if err != db.ErrNoEntries {
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error fetching existing boost from database: %s", err))
+		}
+		// we just don't have a boost
+		toUnboost = false
+	}
+
+	if toUnboost {
+		// pin some stuff onto the boost while we have it out of the db
+		gtsBoost.Account = requestingAccount
+		gtsBoost.BoostOf = targetStatus
+		gtsBoost.BoostOfAccount = targetStatus.Account
+		gtsBoost.BoostOf.Account = targetStatus.Account
+
+		// send it back to the processor for async processing
+		p.clientWorker.Queue(messages.FromClientAPI{
+			APObjectType:   ap.ActivityAnnounce,
+			APActivityType: ap.ActivityUndo,
+			GTSModel:       gtsBoost,
+			OriginAccount:  requestingAccount,
+			TargetAccount:  targetStatus.Account,
+		})
+	}
+
+	apiStatus, err := p.tc.StatusToAPIStatus(ctx, targetStatus, requestingAccount)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err))
+	}
+
+	return apiStatus, nil
+}
+
+// StatusBoostedBy returns a slice of accounts that have boosted the given status, filtered according to privacy settings.
+func (p *StatusProcessor) StatusBoostedBy(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) ([]*apimodel.Account, gtserror.WithCode) {
+	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
+	if err != nil {
+		wrapped := fmt.Errorf("BoostedBy: error fetching status %s: %s", targetStatusID, err)
+		if !errors.Is(err, db.ErrNoEntries) {
+			return nil, gtserror.NewErrorInternalError(wrapped)
+		}
+		return nil, gtserror.NewErrorNotFound(wrapped)
+	}
+
+	if boostOfID := targetStatus.BoostOfID; boostOfID != "" {
+		// the target status is a boost wrapper, redirect this request to the status it boosts
+		boostedStatus, err := p.db.GetStatusByID(ctx, boostOfID)
+		if err != nil {
+			wrapped := fmt.Errorf("BoostedBy: error fetching status %s: %s", boostOfID, err)
+			if !errors.Is(err, db.ErrNoEntries) {
+				return nil, gtserror.NewErrorInternalError(wrapped)
+			}
+			return nil, gtserror.NewErrorNotFound(wrapped)
+		}
+		targetStatus = boostedStatus
+	}
+
+	visible, err := p.filter.StatusVisible(ctx, targetStatus, requestingAccount)
+	if err != nil {
+		err = fmt.Errorf("BoostedBy: error seeing if status %s is visible: %s", targetStatus.ID, err)
+		return nil, gtserror.NewErrorNotFound(err)
+	}
+	if !visible {
+		err = errors.New("BoostedBy: status is not visible")
+		return nil, gtserror.NewErrorNotFound(err)
+	}
+
+	statusReblogs, err := p.db.GetStatusReblogs(ctx, targetStatus)
+	if err != nil {
+		err = fmt.Errorf("BoostedBy: error seeing who boosted status: %s", err)
+		return nil, gtserror.NewErrorNotFound(err)
+	}
+
+	// filter account IDs so the user doesn't see accounts they blocked or which blocked them
+	accountIDs := make([]string, 0, len(statusReblogs))
+	for _, s := range statusReblogs {
+		blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, s.AccountID, true)
+		if err != nil {
+			err = fmt.Errorf("BoostedBy: error checking blocks: %s", err)
+			return nil, gtserror.NewErrorNotFound(err)
+		}
+		if !blocked {
+			accountIDs = append(accountIDs, s.AccountID)
+		}
+	}
+
+	// TODO: filter other things here? suspended? muted? silenced?
+
+	// fetch accounts + create their API representations
+	apiAccounts := make([]*apimodel.Account, 0, len(accountIDs))
+	for _, accountID := range accountIDs {
+		account, err := p.db.GetAccountByID(ctx, accountID)
+		if err != nil {
+			wrapped := fmt.Errorf("BoostedBy: error fetching account %s: %s", accountID, err)
+			if !errors.Is(err, db.ErrNoEntries) {
+				return nil, gtserror.NewErrorInternalError(wrapped)
+			}
+			return nil, gtserror.NewErrorNotFound(wrapped)
+		}
+
+		apiAccount, err := p.tc.AccountToAPIAccountPublic(ctx, account)
+		if err != nil {
+			err = fmt.Errorf("BoostedBy: error converting account to api model: %s", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+		apiAccounts = append(apiAccounts, apiAccount)
+	}
+
+	return apiAccounts, nil
 }

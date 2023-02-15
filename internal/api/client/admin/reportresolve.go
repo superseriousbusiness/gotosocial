@@ -115,7 +115,7 @@ func (m *Module) ReportResolvePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	report, errWithCode := m.processor.AdminReportResolve(c.Request.Context(), authed, reportID, form.ActionTakenComment)
+	report, errWithCode := m.processor.AdminReportResolve(c.Request.Context(), authed.Account, reportID, form.ActionTakenComment)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

@@ -105,7 +105,7 @@ func (m *Module) DomainBlocksGETHandler(c *gin.Context) {
 		export = i
 	}
 
-	domainBlocks, errWithCode := m.processor.AdminDomainBlocksGet(c.Request.Context(), authed, export)
+	domainBlocks, errWithCode := m.processor.AdminDomainBlocksGet(c.Request.Context(), authed.Account, export)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

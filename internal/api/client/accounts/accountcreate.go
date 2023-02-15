@@ -102,7 +102,7 @@ func (m *Module) AccountCreatePOSTHandler(c *gin.Context) {
 	}
 	form.IP = signUpIP
 
-	ti, errWithCode := m.processor.AccountCreate(c.Request.Context(), authed, form)
+	ti, errWithCode := m.processor.AccountCreate(c.Request.Context(), authed.Token, authed.Application, form)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

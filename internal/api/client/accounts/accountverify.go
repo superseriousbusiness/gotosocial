@@ -68,7 +68,7 @@ func (m *Module) AccountVerifyGETHandler(c *gin.Context) {
 		return
 	}
 
-	acctSensitive, errWithCode := m.processor.AccountGet(c.Request.Context(), authed, authed.Account.ID)
+	acctSensitive, errWithCode := m.processor.AccountGet(c.Request.Context(), authed.Account, authed.Account.ID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

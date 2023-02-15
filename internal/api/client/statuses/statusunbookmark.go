@@ -88,7 +88,7 @@ func (m *Module) StatusUnbookmarkPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	apiStatus, errWithCode := m.processor.StatusUnbookmark(c.Request.Context(), authed, targetStatusID)
+	apiStatus, errWithCode := m.processor.StatusUnbookmark(c.Request.Context(), authed.Account, targetStatusID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

@@ -42,12 +42,12 @@ const (
 )
 
 type Module struct {
-	processor processing.Processor
+	processor *processing.Processor
 	dTicker   time.Duration
 	wsUpgrade websocket.Upgrader
 }
 
-func New(processor processing.Processor, dTicker time.Duration, wsBuf int) *Module {
+func New(processor *processing.Processor, dTicker time.Duration, wsBuf int) *Module {
 	return &Module{
 		processor: processor,
 		dTicker:   dTicker,

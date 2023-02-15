@@ -93,7 +93,7 @@ func (m *Module) ReportGETHandler(c *gin.Context) {
 		return
 	}
 
-	report, errWithCode := m.processor.AdminReportGet(c.Request.Context(), authed, reportID)
+	report, errWithCode := m.processor.AdminReportGet(c.Request.Context(), authed.Account, reportID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

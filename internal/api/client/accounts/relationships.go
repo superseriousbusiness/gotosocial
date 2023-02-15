@@ -81,7 +81,7 @@ func (m *Module) AccountRelationshipsGETHandler(c *gin.Context) {
 	relationships := []apimodel.Relationship{}
 
 	for _, targetAccountID := range targetAccountIDs {
-		r, errWithCode := m.processor.AccountRelationshipGet(c.Request.Context(), authed, targetAccountID)
+		r, errWithCode := m.processor.AccountRelationshipGet(c.Request.Context(), authed.Account, targetAccountID)
 		if errWithCode != nil {
 			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 			return

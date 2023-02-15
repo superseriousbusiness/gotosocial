@@ -95,7 +95,7 @@ func (m *Module) PasswordChangePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	if errWithCode := m.processor.UserChangePassword(c.Request.Context(), authed, form); errWithCode != nil {
+	if errWithCode := m.processor.UserPasswordChange(c.Request.Context(), authed.User, form.OldPassword, form.NewPassword); errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}

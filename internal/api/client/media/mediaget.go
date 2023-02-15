@@ -91,7 +91,7 @@ func (m *Module) MediaGETHandler(c *gin.Context) {
 		return
 	}
 
-	attachment, errWithCode := m.processor.MediaGet(c.Request.Context(), authed, attachmentID)
+	attachment, errWithCode := m.processor.MediaGet(c.Request.Context(), authed.Account, attachmentID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

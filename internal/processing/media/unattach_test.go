@@ -37,7 +37,7 @@ func (suite *UnattachTestSuite) TestUnattachMedia() {
 	testAccount := suite.testAccounts["admin_account"]
 	suite.NotEmpty(testAttachment.StatusID)
 
-	a, err := suite.mediaProcessor.Unattach(ctx, testAccount, testAttachment.ID)
+	a, err := suite.mediaProcessor.MediaUnattach(ctx, testAccount, testAttachment.ID)
 	suite.NoError(err)
 	suite.NotNil(a)
 

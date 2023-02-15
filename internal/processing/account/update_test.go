@@ -45,7 +45,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateSimple() {
 	}
 
 	// should get no error from the update function, and an api model account returned
-	apiAccount, errWithCode := suite.accountProcessor.Update(context.Background(), testAccount, form)
+	apiAccount, errWithCode := suite.accountProcessor.AccountUpdate(context.Background(), testAccount, form)
 	suite.NoError(errWithCode)
 	suite.NotNil(apiAccount)
 
@@ -87,7 +87,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithMention() {
 	}
 
 	// should get no error from the update function, and an api model account returned
-	apiAccount, errWithCode := suite.accountProcessor.Update(context.Background(), testAccount, form)
+	apiAccount, errWithCode := suite.accountProcessor.AccountUpdate(context.Background(), testAccount, form)
 	suite.NoError(errWithCode)
 	suite.NotNil(apiAccount)
 
@@ -126,7 +126,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithMarkdownNote() {
 	testAccount.StatusFormat = "markdown"
 
 	// should get no error from the update function, and an api model account returned
-	apiAccount, errWithCode := suite.accountProcessor.Update(context.Background(), testAccount, form)
+	apiAccount, errWithCode := suite.accountProcessor.AccountUpdate(context.Background(), testAccount, form)
 	// reset test account to avoid breaking other tests
 	testAccount.StatusFormat = "plain"
 	suite.NoError(errWithCode)

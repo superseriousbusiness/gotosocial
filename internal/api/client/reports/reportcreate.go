@@ -102,7 +102,7 @@ func (m *Module) ReportPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	apiReport, errWithCode := m.processor.ReportCreate(c.Request.Context(), authed, form)
+	apiReport, errWithCode := m.processor.ReportCreate(c.Request.Context(), authed.Account, form)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

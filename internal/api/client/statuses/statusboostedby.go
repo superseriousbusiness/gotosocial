@@ -79,7 +79,7 @@ func (m *Module) StatusBoostedByGETHandler(c *gin.Context) {
 		return
 	}
 
-	apiAccounts, errWithCode := m.processor.StatusBoostedBy(c.Request.Context(), authed, targetStatusID)
+	apiAccounts, errWithCode := m.processor.StatusBoostedBy(c.Request.Context(), authed.Account, targetStatusID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

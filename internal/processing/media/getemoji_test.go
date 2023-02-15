@@ -30,7 +30,7 @@ type GetEmojiTestSuite struct {
 }
 
 func (suite *GetEmojiTestSuite) TestGetCustomEmojis() {
-	emojis, err := suite.mediaProcessor.GetCustomEmojis(context.Background())
+	emojis, err := suite.mediaProcessor.MediaGetCustomEmojis(context.Background())
 
 	suite.NoError(err)
 	suite.Equal(1, len(emojis))

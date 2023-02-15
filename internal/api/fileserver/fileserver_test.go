@@ -45,7 +45,7 @@ type FileserverTestSuite struct {
 	storage      *storage.Driver
 	federator    federation.Federator
 	tc           typeutils.TypeConverter
-	processor    processing.Processor
+	processor    *processing.Processor
 	mediaManager media.Manager
 	oauthServer  oauth.Server
 	emailSender  email.Sender
