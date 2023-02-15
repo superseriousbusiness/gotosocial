@@ -209,6 +209,16 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		transport.WithFastfail(ctx), username, publicKeyOwnerURI, false,
 	)
 	if err != nil {
+		if errors.Is(err, transport.ErrGone) {
+			// This is the same case as the http.StatusGone check above.
+			// It can happen here and not there because there's a race
+			// where the sending server starts sending account deletion
+			// notifications out, we start processing, the request above
+			// succeeds, and *then* the profile is removed and starts
+			// returning 410 Gone, at which point _this_ request fails.
+			w.WriteHeader(http.StatusAccepted)
+			return ctx, false, nil
+		}
 		return nil, false, fmt.Errorf("couldn't get requesting account %s: %s", publicKeyOwnerURI, err)
 	}
 
