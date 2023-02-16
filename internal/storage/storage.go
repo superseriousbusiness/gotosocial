@@ -85,16 +85,16 @@ func (d *Driver) URL(ctx context.Context, key string) *PresignedURL {
 	u, err := s3.Client().PresignedGetObject(ctx, d.Bucket, key, urlCacheTTL, url.Values{
 		"response-content-type": []string{mime.TypeByExtension(path.Ext(key))},
 	})
+	if err != nil {
+		// If URL request fails, fallback is to fetch the file. So ignore the error here
+		return nil
+	}
 
 	psu := PresignedURL{
 		URL:    u,
 		Expiry: time.Now().Add(urlCacheTTL), // link expires in 24h time
 	}
 
-	if err != nil {
-		// If URL request fails, fallback is to fetch the file. So ignore the error here
-		return nil
-	}
 	d.PresignedCache.Set(key, psu)
 	return &psu
 }
