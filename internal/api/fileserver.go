@@ -31,11 +31,6 @@ type Fileserver struct {
 	fileserver *fileserver.Module
 }
 
-func maxAge() string {
-
-	return "max-age=604800" // 7d
-}
-
 func (f *Fileserver) Route(r router.Router, m ...gin.HandlerFunc) {
 	fileserverGroup := r.AttachGroup("fileserver")
 
