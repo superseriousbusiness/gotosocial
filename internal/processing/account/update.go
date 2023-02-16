@@ -156,14 +156,18 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	if form.FieldsAttributes != nil && len(*form.FieldsAttributes) != 0 {
+		if err := validate.ProfileFieldsCount(*form.FieldsAttributes); err != nil {
+			return nil, gtserror.NewErrorBadRequest(err)
+		}
+
 		account.Fields = make([]gtsmodel.Field, 0) // reset fields
 		for _, f := range *form.FieldsAttributes {
 			if f.Name != nil && f.Value != nil {
 				if *f.Name != "" && *f.Value != "" {
 					field := gtsmodel.Field{}
 
-					field.Name = *f.Name
-					field.Value = *f.Value
+					field.Name = validate.ProfileField(f.Name)
+					field.Value = validate.ProfileField(f.Value)
 
 					account.Fields = append(account.Fields, field)
 				}
