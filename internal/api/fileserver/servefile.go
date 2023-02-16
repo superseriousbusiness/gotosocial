@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"codeberg.org/gruf/go-fastcopy"
 	"github.com/gin-gonic/gin"
@@ -89,6 +90,10 @@ func (m *Module) ServeFile(c *gin.Context) {
 
 	if content.URL != nil {
 		// This is a non-local, non-proxied S3 file we're redirecting to.
+		// Derive the max-age value from how long the link has left until
+		// it expires.
+		maxAge := int(content.URL.Expiry.Sub(time.Now()).Seconds())
+		c.Header("Cache-Control", "private,max-age="+strconv.Itoa(maxAge))
 		c.Redirect(http.StatusFound, content.URL.String())
 		return
 	}

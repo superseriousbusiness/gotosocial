@@ -31,21 +31,7 @@ type Fileserver struct {
 	fileserver *fileserver.Module
 }
 
-// maxAge returns an appropriate max-age value for the
-// storage method that's being used.
-//
-// The default max-age is very long to reflect that we
-// never host different files at the same URL (since
-// ULIDs are generated per piece of media), so we can
-// easily prevent clients having to fetch files repeatedly.
-//
-// If we're using non-proxying s3, however, the max age is
-// significantly shorter, to ensure that clients don't
-// cache redirect responses to expired pre-signed URLs.
 func maxAge() string {
-	if config.GetStorageBackend() == "s3" && !config.GetStorageS3Proxy() {
-		return "max-age=86400" // 24h
-	}
 
 	return "max-age=604800" // 7d
 }
@@ -53,9 +39,22 @@ func maxAge() string {
 func (f *Fileserver) Route(r router.Router, m ...gin.HandlerFunc) {
 	fileserverGroup := r.AttachGroup("fileserver")
 
-	// attach middlewares appropriate for this group
+	// Attach middlewares appropriate for this group.
 	fileserverGroup.Use(m...)
-	fileserverGroup.Use(middleware.CacheControl("private", maxAge()))
+	// If we're using local storage or proxying s3, we can set a
+	// long max-age on all file requests to reflect that we
+	// never host different files at the same URL (since
+	// ULIDs are generated per piece of media), so we can
+	// easily prevent clients having to fetch files repeatedly.
+	//
+	// If we *are* using non-proxying s3, however, the max age
+	// must be set dynamically within the request handler,
+	// based on how long the signed URL has left to live before
+	// it expires. This ensures that clients won't cache expired
+	// links. This is done within fileserver/servefile.go.
+	if config.GetStorageBackend() == "local" || config.GetStorageS3Proxy() {
+		fileserverGroup.Use(middleware.CacheControl("private", "max-age=86400")) // 7d
+	}
 
 	f.fileserver.Route(fileserverGroup.Handle)
 }
