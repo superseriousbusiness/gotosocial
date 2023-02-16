@@ -45,7 +45,7 @@ type Account struct {
 	// Account manually approves follow requests.
 	Locked bool `json:"locked"`
 	// Account has opted into discovery features.
-	Discoverable bool `json:"discoverable,omitempty"`
+	Discoverable bool `json:"discoverable"`
 	// Account identifies as a bot.
 	Bot bool `json:"bot"`
 	// When the account was created (ISO 8601 Datetime).

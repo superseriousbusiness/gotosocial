@@ -204,6 +204,7 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		Acct:           acct,
 		DisplayName:    a.DisplayName,
 		Locked:         *a.Locked,
+		Discoverable:   *a.Discoverable,
 		Bot:            *a.Bot,
 		CreatedAt:      util.FormatISO8601(a.CreatedAt),
 		Note:           a.Note,
