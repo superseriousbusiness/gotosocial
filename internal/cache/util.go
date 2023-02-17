@@ -35,5 +35,5 @@ func tryUntil(msg string, count int, do func() bool) {
 			return
 		}
 	}
-	log.Panicf("failed %s after %d tries", msg, count)
+	log.Panicf(nil, "failed %s after %d tries", msg, count)
 }

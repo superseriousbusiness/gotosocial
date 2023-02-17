@@ -99,7 +99,7 @@ func (p *AccountProcessor) AccountUpdate(ctx context.Context, account *gtsmodel.
 		}
 		account.AvatarMediaAttachmentID = avatarInfo.ID
 		account.AvatarMediaAttachment = avatarInfo
-		log.Tracef("new avatar info for account %s is %+v", account.ID, avatarInfo)
+		log.Tracef(ctx, "new avatar info for account %s is %+v", account.ID, avatarInfo)
 	}
 
 	if form.Header != nil && form.Header.Size != 0 {
@@ -109,7 +109,7 @@ func (p *AccountProcessor) AccountUpdate(ctx context.Context, account *gtsmodel.
 		}
 		account.HeaderMediaAttachmentID = headerInfo.ID
 		account.HeaderMediaAttachment = headerInfo
-		log.Tracef("new header info for account %s is %+v", account.ID, headerInfo)
+		log.Tracef(ctx, "new header info for account %s is %+v", account.ID, headerInfo)
 	}
 
 	if form.Locked != nil {

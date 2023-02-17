@@ -75,8 +75,7 @@ func (p *AdminProcessor) AdminDomainBlockCreate(ctx context.Context, account *gt
 // 2. Delete the instance account for that instance if it exists.
 // 3. Select all accounts from this instance and pass them through the delete functionality of the processor.
 func (p *AdminProcessor) initiateDomainBlockSideEffects(ctx context.Context, account *gtsmodel.Account, block *gtsmodel.DomainBlock) {
-	l := log.WithFields(kv.Fields{{"domain", block.Domain}}...)
-
+	l := log.WithContext(ctx).WithFields(kv.Fields{{"domain", block.Domain}}...)
 	l.Debug("processing domain block side effects")
 
 	// if we have an instance entry for this domain, update it with the new block ID and clear all fields

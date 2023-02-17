@@ -79,7 +79,7 @@ func (m *Module) Route(r router.Router, mi ...gin.HandlerFunc) {
 	// so that they can use the same cache control middleware.
 	webAssetsAbsFilePath, err := filepath.Abs(config.GetWebAssetBaseDir())
 	if err != nil {
-		log.Panicf("error getting absolute path of assets dir: %s", err)
+		log.Panicf(nil, "error getting absolute path of assets dir: %s", err)
 	}
 	fs := fileSystem{http.Dir(webAssetsAbsFilePath)}
 	assetsGroup := r.AttachGroup(assetsPathPrefix)

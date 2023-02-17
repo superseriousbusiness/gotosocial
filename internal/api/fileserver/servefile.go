@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"codeberg.org/gruf/go-fastcopy"
 	"github.com/gin-gonic/gin"
@@ -76,7 +77,10 @@ func (m *Module) ServeFile(c *gin.Context) {
 		return
 	}
 
-	content, errWithCode := m.processor.MediaGetFile(c.Request.Context(), authed.Account, &apimodel.GetContentRequestForm{
+	// Acquire context from gin request.
+	ctx := c.Request.Context()
+
+	content, errWithCode := m.processor.MediaGetFile(ctx, authed.Account, &apimodel.GetContentRequestForm{
 		AccountID: accountID,
 		MediaType: mediaType,
 		MediaSize: mediaSize,
@@ -89,6 +93,10 @@ func (m *Module) ServeFile(c *gin.Context) {
 
 	if content.URL != nil {
 		// This is a non-local, non-proxied S3 file we're redirecting to.
+		// Derive the max-age value from how long the link has left until
+		// it expires.
+		maxAge := int(time.Until(content.URL.Expiry).Seconds())
+		c.Header("Cache-Control", "private,max-age="+strconv.Itoa(maxAge))
 		c.Redirect(http.StatusFound, content.URL.String())
 		return
 	}
@@ -96,7 +104,7 @@ func (m *Module) ServeFile(c *gin.Context) {
 	defer func() {
 		// Close content when we're done, catch errors.
 		if err := content.Content.Close(); err != nil {
-			log.Errorf("ServeFile: error closing readcloser: %s", err)
+			log.Errorf(ctx, "ServeFile: error closing readcloser: %s", err)
 		}
 	}()
 
@@ -125,15 +133,21 @@ func (m *Module) ServeFile(c *gin.Context) {
 		return
 	}
 
-	// Set known content-type and serve this file range.
+	// Set known content-type and serve range.
 	c.Header("Content-Type", format)
-	serveFileRange(c.Writer, content.Content, rng, content.ContentLength)
+	serveFileRange(
+		c.Writer,
+		c.Request,
+		content.Content,
+		rng,
+		content.ContentLength,
+	)
 }
 
 // serveFileRange serves the range of a file from a given source reader, without the
 // need for implementation of io.Seeker. Instead we read the first 'start' many bytes
 // into a discard reader. Code is adapted from https://codeberg.org/gruf/simplehttp.
-func serveFileRange(rw http.ResponseWriter, src io.Reader, rng string, size int64) {
+func serveFileRange(rw http.ResponseWriter, r *http.Request, src io.Reader, rng string, size int64) {
 	var i int
 
 	if i = strings.IndexByte(rng, '='); i < 0 {
@@ -214,7 +228,7 @@ func serveFileRange(rw http.ResponseWriter, src io.Reader, rng string, size int6
 
 	// Dump the first 'start' many bytes into the void...
 	if _, err := fastcopy.CopyN(io.Discard, src, start); err != nil {
-		log.Errorf("error reading from source: %v", err)
+		log.Errorf(r.Context(), "error reading from source: %v", err)
 		return
 	}
 
@@ -234,7 +248,7 @@ func serveFileRange(rw http.ResponseWriter, src io.Reader, rng string, size int6
 
 	// Read the "seeked" source reader into destination writer.
 	if _, err := fastcopy.Copy(rw, src); err != nil {
-		log.Errorf("error reading from source: %v", err)
+		log.Errorf(r.Context(), "error reading from source: %v", err)
 		return
 	}
 }

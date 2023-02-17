@@ -81,6 +81,7 @@ func (suite *GetTestSuite) TestGet() {
     "acct": "Some_User@example.org",
     "display_name": "some user",
     "locked": true,
+    "discoverable": true,
     "bot": false,
     "created_at": "2020-08-10T12:13:28.000Z",
     "note": "i'm a real son of a gun",

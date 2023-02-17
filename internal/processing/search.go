@@ -57,7 +57,8 @@ func (p *Processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
-	l := log.WithFields(kv.Fields{{"query", query}}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{{"query", query}}...)
 
 	searchResult := &apimodel.SearchResult{
 		Accounts: []apimodel.Account{},

@@ -61,7 +61,7 @@ func (s *noopSender) SendConfirmEmail(toAddress string, data ConfirmData) error 
 		return err
 	}
 
-	log.Tracef("NOT SENDING confirmation email to %s with contents: %s", toAddress, msg)
+	log.Tracef(nil, "NOT SENDING confirmation email to %s with contents: %s", toAddress, msg)
 
 	if s.sendCallback != nil {
 		s.sendCallback(toAddress, string(msg))
@@ -81,7 +81,7 @@ func (s *noopSender) SendResetEmail(toAddress string, data ResetData) error {
 		return err
 	}
 
-	log.Tracef("NOT SENDING reset email to %s with contents: %s", toAddress, msg)
+	log.Tracef(nil, "NOT SENDING reset email to %s with contents: %s", toAddress, msg)
 
 	if s.sendCallback != nil {
 		s.sendCallback(toAddress, string(msg))

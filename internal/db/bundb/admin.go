@@ -93,7 +93,7 @@ func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) (bool, db.
 func (a *adminDB) NewSignup(ctx context.Context, username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string, emailVerified bool, externalID string, admin bool) (*gtsmodel.User, db.Error) {
 	key, err := rsa.GenerateKey(rand.Reader, rsaKeyBits)
 	if err != nil {
-		log.Errorf("error creating new rsa key: %s", err)
+		log.Errorf(ctx, "error creating new rsa key: %s", err)
 		return nil, err
 	}
 
@@ -107,7 +107,7 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 		Scan(ctx); err != nil {
 		err = a.conn.ProcessError(err)
 		if err != db.ErrNoEntries {
-			log.Errorf("error checking for existing account: %s", err)
+			log.Errorf(ctx, "error checking for existing account: %s", err)
 			return nil, err
 		}
 
@@ -207,13 +207,13 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 		return err
 	}
 	if exists {
-		log.Infof("instance account %s already exists", username)
+		log.Infof(ctx, "instance account %s already exists", username)
 		return nil
 	}
 
 	key, err := rsa.GenerateKey(rand.Reader, rsaKeyBits)
 	if err != nil {
-		log.Errorf("error creating new rsa key: %s", err)
+		log.Errorf(ctx, "error creating new rsa key: %s", err)
 		return err
 	}
 
@@ -245,7 +245,7 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 		return err
 	}
 
-	log.Infof("instance account %s CREATED with id %s", username, acct.ID)
+	log.Infof(ctx, "instance account %s CREATED with id %s", username, acct.ID)
 	return nil
 }
 
@@ -265,7 +265,7 @@ func (a *adminDB) CreateInstanceInstance(ctx context.Context) db.Error {
 		return err
 	}
 	if exists {
-		log.Infof("instance entry already exists")
+		log.Infof(ctx, "instance entry already exists")
 		return nil
 	}
 
@@ -290,6 +290,6 @@ func (a *adminDB) CreateInstanceInstance(ctx context.Context) db.Error {
 		return a.conn.ProcessError(err)
 	}
 
-	log.Infof("created instance instance %s with id %s", host, i.ID)
+	log.Infof(ctx, "created instance instance %s with id %s", host, i.ID)
 	return nil
 }

@@ -42,9 +42,9 @@ var Orphaned action.GTSAction = func(ctx context.Context) error {
 	}
 
 	if dry /* dick heyyoooooo */ {
-		log.Infof("DRY RUN: %d items are orphaned and eligible to be pruned", pruned)
+		log.Infof(ctx, "DRY RUN: %d items are orphaned and eligible to be pruned", pruned)
 	} else {
-		log.Infof("%d orphaned items were pruned", pruned)
+		log.Infof(ctx, "%d orphaned items were pruned", pruned)
 	}
 
 	return prune.shutdown(ctx)

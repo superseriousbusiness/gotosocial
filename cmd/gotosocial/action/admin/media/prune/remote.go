@@ -49,9 +49,9 @@ var Remote action.GTSAction = func(ctx context.Context) error {
 	total := pruned + uncached
 
 	if dry /* dick heyyoooooo */ {
-		log.Infof("DRY RUN: %d remote items are unused/stale and eligible to be pruned", total)
+		log.Infof(ctx, "DRY RUN: %d remote items are unused/stale and eligible to be pruned", total)
 	} else {
-		log.Infof("%d unused/stale remote items were pruned", pruned)
+		log.Infof(ctx, "%d unused/stale remote items were pruned", pruned)
 	}
 
 	return prune.shutdown(ctx)

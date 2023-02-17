@@ -155,7 +155,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
 	sig := <-sigs
-	log.Infof("received signal %s, shutting down", sig)
+	log.Infof(ctx, "received signal %s, shutting down", sig)
 
 	testrig.StandardDBTeardown(dbService)
 	testrig.StandardStorageTeardown(storageBackend)
@@ -165,6 +165,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error closing gotosocial service: %s", err)
 	}
 
-	log.Info("done! exiting...")
+	log.Info(ctx, "done! exiting...")
 	return nil
 }

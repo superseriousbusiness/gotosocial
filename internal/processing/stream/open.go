@@ -33,8 +33,7 @@ import (
 
 // StreamOpen returns a new Stream for the given account, which will contain a channel for passing messages back to the caller.
 func (p *StreamProcessor) StreamOpen(ctx context.Context, account *gtsmodel.Account, streamTimeline string) (*stream.Stream, gtserror.WithCode) {
-	l := log.WithFields(kv.Fields{
-
+	l := log.WithContext(ctx).WithFields(kv.Fields{
 		{"account", account.ID},
 		{"streamType", streamTimeline},
 	}...)

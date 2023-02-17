@@ -250,6 +250,48 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerTwo
 	suite.NotEmpty(dbZork.EmojiIDs)
 }
 
+func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerDiscoverable() {
+	requestBody, w, err := testrig.CreateMultipartFormData(
+		"", "",
+		map[string]string{
+			"discoverable": "false",
+		})
+	if err != nil {
+		panic(err)
+	}
+	bodyBytes := requestBody.Bytes()
+	recorder := httptest.NewRecorder()
+	ctx := suite.newContext(recorder, http.MethodPatch, bodyBytes, accounts.UpdateCredentialsPath, w.FormDataContentType())
+
+	// call the handler
+	suite.accountsModule.AccountUpdateCredentialsPATCHHandler(ctx)
+
+	// 1. we should have OK because our request was valid
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	// 2. we should have no error message in the result body
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	// check the response
+	b, err := ioutil.ReadAll(result.Body)
+	suite.NoError(err)
+
+	// unmarshal the returned account
+	apimodelAccount := &apimodel.Account{}
+	err = json.Unmarshal(b, apimodelAccount)
+	suite.NoError(err)
+
+	// check the returned api model account
+	// fields should be updated
+	suite.False(apimodelAccount.Discoverable)
+
+	// check the account in the database
+	dbZork, err := suite.db.GetAccountByID(context.Background(), apimodelAccount.ID)
+	suite.NoError(err)
+	suite.False(*dbZork.Discoverable)
+}
+
 func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerWithMedia() {
 	// set up the request
 	// we're updating the header image, the display name, and the locked status of zork

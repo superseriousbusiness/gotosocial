@@ -55,7 +55,7 @@ func Validate() error {
 		// no problem
 		break
 	case "http":
-		log.Warnf("%s was set to 'http'; this should *only* be used for debugging and tests!", ProtocolFlag())
+		log.Warnf(nil, "%s was set to 'http'; this should *only* be used for debugging and tests!", ProtocolFlag())
 	case "":
 		errs = append(errs, fmt.Errorf("%s must be set", ProtocolFlag()))
 	default:

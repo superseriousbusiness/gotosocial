@@ -45,7 +45,7 @@ func (p *AccountProcessor) AccountDelete(ctx context.Context, account *gtsmodel.
 		})
 	}
 
-	l := log.WithFields(fields...)
+	l := log.WithContext(ctx).WithFields(fields...)
 	l.Trace("beginning account delete process")
 
 	// 1. Delete account's application(s), clients, and oauth tokens

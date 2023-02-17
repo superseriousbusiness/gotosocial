@@ -203,7 +203,7 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 			responseContentLength = 0
 		}
 
-		log.Debugf("returning response %s", string(responseBytes))
+		log.Debugf(nil, "returning response %s", string(responseBytes))
 		reader := bytes.NewReader(responseBytes)
 		readCloser := io.NopCloser(reader)
 		return &http.Response{
@@ -296,7 +296,7 @@ func WebfingerResponse(req *http.Request) (responseCode int, responseBytes []byt
 	}
 
 	if wfr == nil {
-		log.Debugf("webfinger response not available for %s", req.URL)
+		log.Debugf(nil, "webfinger response not available for %s", req.URL)
 		responseCode = http.StatusNotFound
 		responseBytes = []byte(`{"error":"not found"}`)
 		responseContentType = applicationJSON

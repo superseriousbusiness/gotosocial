@@ -19,6 +19,7 @@
 package log
 
 import (
+	"context"
 	"fmt"
 	"syscall"
 
@@ -27,91 +28,97 @@ import (
 )
 
 type Entry struct {
-	fields []kv.Field
+	ctx context.Context
+	kvs []kv.Field
 }
 
-func (e Entry) WithField(key string, value interface{}) Entry {
-	e.fields = append(e.fields, kv.Field{K: key, V: value})
+func (e Entry) WithContext(ctx context.Context) Entry {
+	e.ctx = ctx
 	return e
 }
 
-func (e Entry) WithFields(fields ...kv.Field) Entry {
-	e.fields = append(e.fields, fields...)
+func (e Entry) WithField(key string, value interface{}) Entry {
+	e.kvs = append(e.kvs, kv.Field{K: key, V: value})
+	return e
+}
+
+func (e Entry) WithFields(kvs ...kv.Field) Entry {
+	e.kvs = append(e.kvs, kvs...)
 	return e
 }
 
 func (e Entry) Trace(a ...interface{}) {
-	logf(3, level.TRACE, e.fields, args(len(a)), a...)
+	logf(e.ctx, 3, level.TRACE, e.kvs, args(len(a)), a...)
 }
 
 func (e Entry) Tracef(s string, a ...interface{}) {
-	logf(3, level.TRACE, e.fields, s, a...)
+	logf(e.ctx, 3, level.TRACE, e.kvs, s, a...)
 }
 
 func (e Entry) Debug(a ...interface{}) {
-	logf(3, level.DEBUG, e.fields, args(len(a)), a...)
+	logf(e.ctx, 3, level.DEBUG, e.kvs, args(len(a)), a...)
 }
 
 func (e Entry) Debugf(s string, a ...interface{}) {
-	logf(3, level.DEBUG, e.fields, s, a...)
+	logf(e.ctx, 3, level.DEBUG, e.kvs, s, a...)
 }
 
 func (e Entry) Info(a ...interface{}) {
-	logf(3, level.INFO, e.fields, args(len(a)), a...)
+	logf(e.ctx, 3, level.INFO, e.kvs, args(len(a)), a...)
 }
 
 func (e Entry) Infof(s string, a ...interface{}) {
-	logf(3, level.INFO, e.fields, s, a...)
+	logf(e.ctx, 3, level.INFO, e.kvs, s, a...)
 }
 
 func (e Entry) Warn(a ...interface{}) {
-	logf(3, level.WARN, e.fields, args(len(a)), a...)
+	logf(e.ctx, 3, level.WARN, e.kvs, args(len(a)), a...)
 }
 
 func (e Entry) Warnf(s string, a ...interface{}) {
-	logf(3, level.WARN, e.fields, s, a...)
+	logf(e.ctx, 3, level.WARN, e.kvs, s, a...)
 }
 
 func (e Entry) Error(a ...interface{}) {
-	logf(3, level.ERROR, e.fields, args(len(a)), a...)
+	logf(e.ctx, 3, level.ERROR, e.kvs, args(len(a)), a...)
 }
 
 func (e Entry) Errorf(s string, a ...interface{}) {
-	logf(3, level.ERROR, e.fields, s, a...)
+	logf(e.ctx, 3, level.ERROR, e.kvs, s, a...)
 }
 
 func (e Entry) Fatal(a ...interface{}) {
 	defer syscall.Exit(1)
-	logf(3, level.FATAL, e.fields, args(len(a)), a...)
+	logf(e.ctx, 3, level.FATAL, e.kvs, args(len(a)), a...)
 }
 
 func (e Entry) Fatalf(s string, a ...interface{}) {
 	defer syscall.Exit(1)
-	logf(3, level.FATAL, e.fields, s, a...)
+	logf(e.ctx, 3, level.FATAL, e.kvs, s, a...)
 }
 
 func (e Entry) Panic(a ...interface{}) {
 	defer panic(fmt.Sprint(a...))
-	logf(3, level.PANIC, e.fields, args(len(a)), a...)
+	logf(e.ctx, 3, level.PANIC, e.kvs, args(len(a)), a...)
 }
 
 func (e Entry) Panicf(s string, a ...interface{}) {
 	defer panic(fmt.Sprintf(s, a...))
-	logf(3, level.PANIC, e.fields, s, a...)
+	logf(e.ctx, 3, level.PANIC, e.kvs, s, a...)
 }
 
 func (e Entry) Log(lvl level.LEVEL, a ...interface{}) {
-	logf(3, lvl, e.fields, args(len(a)), a...)
+	logf(e.ctx, 3, lvl, e.kvs, args(len(a)), a...)
 }
 
 func (e Entry) Logf(lvl level.LEVEL, s string, a ...interface{}) {
-	logf(3, lvl, e.fields, s, a...)
+	logf(e.ctx, 3, lvl, e.kvs, s, a...)
 }
 
 func (e Entry) Print(a ...interface{}) {
-	printf(3, e.fields, args(len(a)), a...)
+	printf(3, e.kvs, args(len(a)), a...)
 }
 
 func (e Entry) Printf(s string, a ...interface{}) {
-	printf(3, e.fields, s, a...)
+	printf(3, e.kvs, s, a...)
 }

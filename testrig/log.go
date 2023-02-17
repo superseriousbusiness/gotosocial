@@ -29,7 +29,7 @@ import (
 func InitTestLog() {
 	// Set the global log level from configuration
 	if err := log.ParseLevel(config.GetLogLevel()); err != nil {
-		log.Panicf("error parsing log level: %v", err)
+		log.Panicf(nil, "error parsing log level: %v", err)
 	}
 
 	if config.GetSyslogEnabled() {
@@ -38,7 +38,7 @@ func InitTestLog() {
 			config.GetSyslogProtocol(),
 			config.GetSyslogAddress(),
 		); err != nil {
-			log.Panicf("error enabling syslogging: %v", err)
+			log.Panicf(nil, "error enabling syslogging: %v", err)
 		}
 	}
 }

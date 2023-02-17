@@ -38,7 +38,7 @@ func init() {
 			case dialect.SQLite:
 				q = q.ColumnExpr("? VARCHAR", bun.Ident("emojis"))
 			default:
-				log.Panic("db dialect was neither pg nor sqlite")
+				log.Panic(ctx, "db dialect was neither pg nor sqlite")
 			}
 
 			if _, err := q.Exec(ctx); err != nil {

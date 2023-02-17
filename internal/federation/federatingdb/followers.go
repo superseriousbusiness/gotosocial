@@ -18,9 +18,10 @@ import (
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Followers(ctx context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
-	l := log.WithFields(kv.Fields{
-		{"id", actorIRI},
-	}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{
+			{"id", actorIRI},
+		}...)
 	l.Debug("entering Followers")
 
 	acct, err := f.getAccountForIRI(ctx, actorIRI)

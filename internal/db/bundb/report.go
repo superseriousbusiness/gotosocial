@@ -106,7 +106,7 @@ func (r *reportDB) GetReports(ctx context.Context, resolved *bool, accountID str
 	for _, id := range reportIDs {
 		report, err := r.GetReportByID(ctx, id)
 		if err != nil {
-			log.Errorf("GetReports: error getting report %q: %v", id, err)
+			log.Errorf(ctx, "error getting report %q: %v", id, err)
 			continue
 		}
 

@@ -87,7 +87,7 @@ func noescapeAttr(str string) template.HTMLAttr {
 func timestamp(stamp string) string {
 	t, err := util.ParseISO8601(stamp)
 	if err != nil {
-		log.Errorf("error parsing timestamp %s: %s", stamp, err)
+		log.Errorf(nil, "error parsing timestamp %s: %s", stamp, err)
 		return badTimestamp
 	}
 
@@ -110,7 +110,7 @@ func timestamp(stamp string) string {
 func timestampPrecise(stamp string) string {
 	t, err := util.ParseISO8601(stamp)
 	if err != nil {
-		log.Errorf("error parsing timestamp %s: %s", stamp, err)
+		log.Errorf(nil, "error parsing timestamp %s: %s", stamp, err)
 		return badTimestamp
 	}
 	return t.Local().Format(dateYearTime)
@@ -119,7 +119,7 @@ func timestampPrecise(stamp string) string {
 func timestampVague(stamp string) string {
 	t, err := util.ParseISO8601(stamp)
 	if err != nil {
-		log.Errorf("error parsing timestamp %s: %s", stamp, err)
+		log.Errorf(nil, "error parsing timestamp %s: %s", stamp, err)
 		return badTimestamp
 	}
 	return t.Format(monthYear)

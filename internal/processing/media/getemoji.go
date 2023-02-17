@@ -40,7 +40,7 @@ func (p *MediaProcessor) MediaGetCustomEmojis(ctx context.Context) ([]*apimodel.
 	for _, gtsEmoji := range emojis {
 		apiEmoji, err := p.tc.EmojiToAPIEmoji(ctx, gtsEmoji)
 		if err != nil {
-			log.Errorf("error converting emoji with id %s: %s", gtsEmoji.ID, err)
+			log.Errorf(ctx, "error converting emoji with id %s: %s", gtsEmoji.ID, err)
 			continue
 		}
 		apiEmojis = append(apiEmojis, &apiEmoji)
