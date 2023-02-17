@@ -128,8 +128,9 @@ func NewFileStorage() (*Driver, error) {
 		return nil, fmt.Errorf("error opening disk storage: %w", err)
 	}
 
+	// Perform an initial storage clean to delete old dirs.
 	if err := disk.Clean(context.Background()); err != nil {
-		log.Errorf("error performing storage cleanup: %v", err)
+		log.Errorf(nil, "error performing storage cleanup: %v", err)
 	}
 
 	return &Driver{

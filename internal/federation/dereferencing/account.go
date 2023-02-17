@@ -77,7 +77,7 @@ func (d *deref) GetAccountByURI(ctx context.Context, requestUser string, uri *ur
 	// Try to update existing account model
 	enriched, err := d.enrichAccount(ctx, requestUser, uri, account, false, block)
 	if err != nil {
-		log.Errorf("error enriching remote account: %v", err)
+		log.Errorf(ctx, "error enriching remote account: %v", err)
 		return account, nil // fall back to returning existing
 	}
 
@@ -114,7 +114,7 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 	// Try to update existing account model
 	enriched, err := d.enrichAccount(ctx, requestUser, nil, account, false, block)
 	if err != nil {
-		log.Errorf("GetAccountByUsernameDomain: error enriching account from remote: %v", err)
+		log.Errorf(ctx, "error enriching account from remote: %v", err)
 		return account, nil // fall back to returning unchanged existing account model
 	}
 
@@ -250,7 +250,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 				latestAcc.ID,
 			)
 			if err != nil {
-				log.Errorf("error fetching remote avatar for account %s: %v", uri, err)
+				log.Errorf(ctx, "error fetching remote avatar for account %s: %v", uri, err)
 
 				// Keep old avatar for now, we'll try again in $interval.
 				latestAcc.AvatarMediaAttachmentID = account.AvatarMediaAttachmentID
@@ -271,7 +271,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 				latestAcc.ID,
 			)
 			if err != nil {
-				log.Errorf("error fetching remote header for account %s: %v", uri, err)
+				log.Errorf(ctx, "error fetching remote header for account %s: %v", uri, err)
 
 				// Keep old header for now, we'll try again in $interval.
 				latestAcc.HeaderMediaAttachmentID = account.HeaderMediaAttachmentID
@@ -283,7 +283,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	// Fetch the latest remote account emoji IDs used in account display name/bio.
 	_, err = d.fetchRemoteAccountEmojis(ctx, latestAcc, requestUser)
 	if err != nil {
-		log.Errorf("error fetching remote emojis for account %s: %v", uri, err)
+		log.Errorf(ctx, "error fetching remote emojis for account %s: %v", uri, err)
 	}
 
 	if account.CreatedAt.IsZero() {

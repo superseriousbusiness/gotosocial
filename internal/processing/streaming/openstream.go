@@ -32,11 +32,11 @@ import (
 )
 
 func (p *processor) OpenStreamForAccount(ctx context.Context, account *gtsmodel.Account, streamTimeline string) (*stream.Stream, gtserror.WithCode) {
-	l := log.WithFields(kv.Fields{
-
-		{"account", account.ID},
-		{"streamType", streamTimeline},
-	}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{
+			{"account", account.ID},
+			{"streamType", streamTimeline},
+		}...)
 	l.Debug("received open stream request")
 
 	// each stream needs a unique ID so we know to close it

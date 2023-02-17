@@ -34,7 +34,7 @@ func newETagCache() cache.Cache[string, eTagCacheEntry] {
 	eTagCache := cache.New[string, eTagCacheEntry](0, 1000, 0)
 	eTagCache.SetTTL(time.Hour, false)
 	if !eTagCache.Start(time.Minute) {
-		log.Panic("could not start eTagCache")
+		log.Panic(nil, "could not start eTagCache")
 	}
 	return eTagCache
 }

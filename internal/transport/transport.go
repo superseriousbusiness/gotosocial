@@ -130,11 +130,12 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error) (*http
 	fastFail := IsFastfail(r.Context())
 
 	// Start a log entry for this request
-	l := log.WithFields(kv.Fields{
-		{"pubKeyID", t.pubKeyID},
-		{"method", r.Method},
-		{"url", r.URL.String()},
-	}...)
+	l := log.WithContext(r.Context()).
+		WithFields(kv.Fields{
+			{"pubKeyID", t.pubKeyID},
+			{"method", r.Method},
+			{"url", r.URL.String()},
+		}...)
 
 	r.Header.Set("User-Agent", t.controller.userAgent)
 

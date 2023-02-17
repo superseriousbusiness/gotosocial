@@ -31,7 +31,8 @@ import (
 )
 
 func (t *timeline) PrepareFromTop(ctx context.Context, amount int) error {
-	l := log.WithFields(kv.Fields{{"amount", amount}}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{{"amount", amount}}...)
 
 	// lazily initialize prepared posts if it hasn't been done already
 	if t.preparedItems.data == nil {
@@ -85,12 +86,13 @@ prepareloop:
 }
 
 func (t *timeline) prepareNextQuery(ctx context.Context, amount int, maxID string, sinceID string, minID string) error {
-	l := log.WithFields(kv.Fields{
-		{"amount", amount},
-		{"maxID", maxID},
-		{"sinceID", sinceID},
-		{"minID", minID},
-	}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{
+			{"amount", amount},
+			{"maxID", maxID},
+			{"sinceID", sinceID},
+			{"minID", minID},
+		}...)
 
 	var err error
 	switch {

@@ -98,7 +98,7 @@ func (suite *MediaUpdateTestSuite) SetupSuite() {
 
 func (suite *MediaUpdateTestSuite) TearDownSuite() {
 	if err := suite.db.Stop(context.Background()); err != nil {
-		log.Panicf("error closing db connection: %s", err)
+		log.Panicf(nil, "error closing db connection: %s", err)
 	}
 }
 

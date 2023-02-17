@@ -119,7 +119,7 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		if a.AvatarMediaAttachment == nil {
 			avi, err := c.db.GetAttachmentByID(ctx, a.AvatarMediaAttachmentID)
 			if err != nil {
-				log.Errorf("AccountToAPIAccountPublic: error getting Avatar with id %s: %s", a.AvatarMediaAttachmentID, err)
+				log.Errorf(ctx, "error getting Avatar with id %s: %s", a.AvatarMediaAttachmentID, err)
 			}
 			a.AvatarMediaAttachment = avi
 		}
@@ -136,7 +136,7 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		if a.HeaderMediaAttachment == nil {
 			avi, err := c.db.GetAttachmentByID(ctx, a.HeaderMediaAttachmentID)
 			if err != nil {
-				log.Errorf("AccountToAPIAccountPublic: error getting Header with id %s: %s", a.HeaderMediaAttachmentID, err)
+				log.Errorf(ctx, "error getting Header with id %s: %s", a.HeaderMediaAttachmentID, err)
 			}
 			a.HeaderMediaAttachment = avi
 		}
@@ -164,7 +164,7 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	// convert account gts model emojis to frontend api model emojis
 	apiEmojis, err := c.convertEmojisToAPIEmojis(ctx, a.Emojis, a.EmojiIDs)
 	if err != nil {
-		log.Errorf("error converting account emojis: %v", err)
+		log.Errorf(ctx, "error converting account emojis: %v", err)
 	}
 
 	var (
@@ -577,31 +577,31 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 	// convert status gts model attachments to frontend api model attachments
 	apiAttachments, err := c.convertAttachmentsToAPIAttachments(ctx, s.Attachments, s.AttachmentIDs)
 	if err != nil {
-		log.Errorf("error converting status attachments: %v", err)
+		log.Errorf(ctx, "error converting status attachments: %v", err)
 	}
 
 	// convert status gts model mentions to frontend api model mentions
 	apiMentions, err := c.convertMentionsToAPIMentions(ctx, s.Mentions, s.MentionIDs)
 	if err != nil {
-		log.Errorf("error converting status mentions: %v", err)
+		log.Errorf(ctx, "error converting status mentions: %v", err)
 	}
 
 	// convert status gts model tags to frontend api model tags
 	apiTags, err := c.convertTagsToAPITags(ctx, s.Tags, s.TagIDs)
 	if err != nil {
-		log.Errorf("error converting status tags: %v", err)
+		log.Errorf(ctx, "error converting status tags: %v", err)
 	}
 
 	// convert status gts model emojis to frontend api model emojis
 	apiEmojis, err := c.convertEmojisToAPIEmojis(ctx, s.Emojis, s.EmojiIDs)
 	if err != nil {
-		log.Errorf("error converting status emojis: %v", err)
+		log.Errorf(ctx, "error converting status emojis: %v", err)
 	}
 
 	// Fetch status interaction flags for acccount
 	interacts, err := c.interactionsWithStatusForAccount(ctx, s, requestingAccount)
 	if err != nil {
-		log.Errorf("error getting interactions for status %s for account %s: %v", s.ID, requestingAccount.ID, err)
+		log.Errorf(ctx, "error getting interactions for status %s for account %s: %v", s.ID, requestingAccount.ID, err)
 
 		// Ensure a non nil object
 		interacts = &statusInteractions{}

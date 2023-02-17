@@ -35,58 +35,9 @@ func (t *timeline) ItemIndexLength(ctx context.Context) int {
 	return t.indexedItems.data.Len()
 }
 
-// func (t *timeline) indexBefore(ctx context.Context, itemID string, amount int) error {
-// 	l := log.WithFields(kv.Fields{{"amount", amount}}...)
-
-// 	// lazily initialize index if it hasn't been done already
-// 	if t.indexedItems.data == nil {
-// 		t.indexedItems.data = &list.List{}
-// 		t.indexedItems.data.Init()
-// 	}
-
-// 	toIndex := []Timelineable{}
-// 	offsetID := itemID
-
-// 	l.Trace("entering grabloop")
-// grabloop:
-// 	for i := 0; len(toIndex) < amount && i < 5; i++ { // try the grabloop 5 times only
-// 		// first grab items using the caller-provided grab function
-// 		l.Trace("grabbing...")
-// 		items, stop, err := t.grabFunction(ctx, t.accountID, "", "", offsetID, amount)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		if stop {
-// 			break grabloop
-// 		}
-
-// 		l.Trace("filtering...")
-// 		// now filter each item using the caller-provided filter function
-// 		for _, item := range items {
-// 			shouldIndex, err := t.filterFunction(ctx, t.accountID, item)
-// 			if err != nil {
-// 				return err
-// 			}
-// 			if shouldIndex {
-// 				toIndex = append(toIndex, item)
-// 			}
-// 			offsetID = item.GetID()
-// 		}
-// 	}
-// 	l.Trace("left grabloop")
-
-// 	// index the items we got
-// 	for _, s := range toIndex {
-// 		if _, err := t.IndexOne(ctx, s.GetID(), s.GetBoostOfID(), s.GetAccountID(), s.GetBoostOfAccountID()); err != nil {
-// 			return fmt.Errorf("indexBefore: error indexing item with id %s: %s", s.GetID(), err)
-// 		}
-// 	}
-
-// 	return nil
-// }
-
 func (t *timeline) indexBehind(ctx context.Context, itemID string, amount int) error {
-	l := log.WithFields(kv.Fields{{"amount", amount}}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{{"amount", amount}}...)
 
 	// lazily initialize index if it hasn't been done already
 	if t.indexedItems.data == nil {

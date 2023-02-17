@@ -53,12 +53,12 @@ func newTokenStore(ctx context.Context, db db.Basic) oauth2.TokenStore {
 		for {
 			select {
 			case <-ctx.Done():
-				log.Info("breaking cleanloop")
+				log.Info(ctx, "breaking cleanloop")
 				break cleanloop
 			case <-time.After(1 * time.Minute):
-				log.Trace("sweeping out old oauth entries broom broom")
+				log.Trace(ctx, "sweeping out old oauth entries broom broom")
 				if err := ts.sweep(ctx); err != nil {
-					log.Errorf("error while sweeping oauth entries: %s", err)
+					log.Errorf(ctx, "error while sweeping oauth entries: %s", err)
 				}
 			}
 		}

@@ -53,8 +53,9 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		if err != nil {
 			return err
 		}
-		l := log.WithField("create", i)
-		l.Debug("entering Create")
+		l := log.WithContext(ctx).
+			WithField("create", i)
+		l.Trace("entering Create")
 	}
 
 	receivingAccount, requestingAccount := extractFromCtx(ctx)
@@ -164,10 +165,11 @@ func (f *federatingDB) activityCreate(ctx context.Context, asType vocab.Type, re
 
 // createNote handles a Create activity with a Note type.
 func (f *federatingDB) createNote(ctx context.Context, note vocab.ActivityStreamsNote, receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) error {
-	l := log.WithFields(kv.Fields{
-		{"receivingAccount", receivingAccount.URI},
-		{"requestingAccount", requestingAccount.URI},
-	}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{
+			{"receivingAccount", receivingAccount.URI},
+			{"requestingAccount", requestingAccount.URI},
+		}...)
 
 	// Check if we have a forward.
 	// In other words, was the note posted to our inbox by at least one actor who actually created the note, or are they just forwarding it?

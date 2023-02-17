@@ -67,7 +67,7 @@ func (p *ProcessingEmoji) LoadEmoji(ctx context.Context) (*gtsmodel.Emoji, error
 	if !done {
 		// Provided context was cancelled, e.g. request cancelled
 		// early. Queue this item for asynchronous processing.
-		log.Warnf("reprocessing emoji %s after canceled ctx", p.emoji.ID)
+		log.Warnf(ctx, "reprocessing emoji %s after canceled ctx", p.emoji.ID)
 		go p.mgr.state.Workers.Media.Enqueue(p.Process)
 	}
 
@@ -77,7 +77,7 @@ func (p *ProcessingEmoji) LoadEmoji(ctx context.Context) (*gtsmodel.Emoji, error
 // Process allows the receiving object to fit the runners.WorkerFunc signature. It performs a (blocking) load and logs on error.
 func (p *ProcessingEmoji) Process(ctx context.Context) {
 	if _, _, err := p.load(ctx); err != nil {
-		log.Errorf("error processing emoji: %v", err)
+		log.Errorf(ctx, "error processing emoji: %v", err)
 	}
 }
 
@@ -167,7 +167,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 
 		// Ensure post callback gets called.
 		if err := p.postFn(ctx); err != nil {
-			log.Errorf("error executing postdata function: %v", err)
+			log.Errorf(ctx, "error executing postdata function: %v", err)
 		}
 	}()
 
@@ -180,7 +180,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	defer func() {
 		// Ensure data reader gets closed on return.
 		if err := rc.Close(); err != nil {
-			log.Errorf("error closing data reader: %v", err)
+			log.Errorf(ctx, "error closing data reader: %v", err)
 		}
 	}()
 
@@ -251,7 +251,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 
 	// This shouldn't already exist, but we do a check as it's worth logging.
 	if have, _ := p.mgr.state.Storage.Has(ctx, p.emoji.ImagePath); have {
-		log.Warnf("emoji already exists at storage path: %s", p.emoji.ImagePath)
+		log.Warnf(ctx, "emoji already exists at storage path: %s", p.emoji.ImagePath)
 
 		// Attempt to remove existing emoji at storage path (might be broken / out-of-date)
 		if err := p.mgr.state.Storage.Delete(ctx, p.emoji.ImagePath); err != nil {
@@ -267,8 +267,9 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 
 	// Once again check size in case none was provided previously.
 	if size := bytesize.Size(sz); size > maxSize {
+
 		if err := p.mgr.state.Storage.Delete(ctx, p.emoji.ImagePath); err != nil {
-			log.Errorf("error removing too-large-emoji from storage: %v", err)
+			log.Errorf(ctx, "error removing too-large-emoji from storage: %v", err)
 		}
 		return fmt.Errorf("calculated emoji size %s greater than max allowed %s", size, maxSize)
 	}
@@ -308,8 +309,7 @@ func (p *ProcessingEmoji) finish(ctx context.Context) error {
 
 	// This shouldn't already exist, but we do a check as it's worth logging.
 	if have, _ := p.mgr.state.Storage.Has(ctx, p.emoji.ImageStaticPath); have {
-		log.Warnf("static emoji already exists at storage path: %s", p.emoji.ImagePath)
-
+		log.Warnf(ctx, "static emoji already exists at storage path: %s", p.emoji.ImagePath)
 		// Attempt to remove static existing emoji at storage path (might be broken / out-of-date)
 		if err := p.mgr.state.Storage.Delete(ctx, p.emoji.ImageStaticPath); err != nil {
 			return fmt.Errorf("error removing static emoji from storage: %v", err)

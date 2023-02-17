@@ -76,13 +76,13 @@ func NewController(db db.DB, federatingDB federatingdb.DB, clock pub.Clock, clie
 	// Transport cache has TTL=1hr freq=1min
 	c.trspCache.SetTTL(time.Hour, false)
 	if !c.trspCache.Start(time.Minute) {
-		log.Panic("failed to start transport controller cache")
+		log.Panic(nil, "failed to start transport controller cache")
 	}
 
 	// Bad hosts cache has TTL=15min freq=1min
 	c.badHosts.SetTTL(15*time.Minute, false)
 	if !c.badHosts.Start(time.Minute) {
-		log.Panic("failed to start transport controller cache")
+		log.Panic(nil, "failed to start transport controller cache")
 	}
 
 	return c

@@ -102,6 +102,9 @@ func (m *Module) getAssetETag(filePath string, fs http.FileSystem) (string, erro
 // package along with the other middlewares
 func (m *Module) assetsCacheControlMiddleware(fs http.FileSystem) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Acquire context from gin request.
+		ctx := c.Request.Context()
+
 		// set this Cache-Control header to instruct clients to validate the response with us
 		// before each reuse (https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control)
 		c.Header(cacheControlHeader, cacheControlNoCache)
@@ -118,7 +121,7 @@ func (m *Module) assetsCacheControlMiddleware(fs http.FileSystem) gin.HandlerFun
 		// either fetch etag from ttlcache or generate it
 		eTag, err := m.getAssetETag(assetFilePath, fs)
 		if err != nil {
-			log.Errorf("error getting ETag for %s: %s", assetFilePath, err)
+			log.Errorf(ctx, "error getting ETag for %s: %s", assetFilePath, err)
 			return
 		}
 
