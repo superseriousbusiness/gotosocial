@@ -69,7 +69,8 @@ func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL,
 		if err != nil {
 			return nil, err
 		}
-		l := log.WithField("newID", i)
+		l := log.WithContext(ctx).
+			WithField("newID", i)
 		l.Debug("entering NewID")
 	}
 
