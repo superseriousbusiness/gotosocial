@@ -63,7 +63,9 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontend() {
   "emojis": [],
   "fields": [],
   "enable_rss": true,
-  "role": "user"
+  "role": {
+    "name": "user"
+  }
 }`, string(b))
 }
 
@@ -109,7 +111,9 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiStruct()
   ],
   "fields": [],
   "enable_rss": true,
-  "role": "user"
+  "role": {
+    "name": "user"
+  }
 }`, string(b))
 }
 
@@ -155,7 +159,9 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiIDs() {
   ],
   "fields": [],
   "enable_rss": true,
-  "role": "user"
+  "role": {
+    "name": "user"
+  }
 }`, string(b))
 }
 
@@ -198,7 +204,9 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendSensitive() {
     "follow_requests_count": 0
   },
   "enable_rss": true,
-  "role": "user"
+  "role": {
+    "name": "user"
+  }
 }`, string(b))
 }
 
@@ -258,7 +266,9 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
     "emojis": [],
     "fields": [],
     "enable_rss": true,
-    "role": "admin"
+    "role": {
+      "name": "admin"
+    }
   },
   "media_attachments": [
     {
@@ -371,7 +381,9 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
     "emojis": [],
     "fields": [],
     "enable_rss": true,
-    "role": "admin"
+    "role": {
+      "name": "admin"
+    }
   },
   "media_attachments": [
     {
@@ -553,7 +565,9 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV1ToFrontend() {
     "emojis": [],
     "fields": [],
     "enable_rss": true,
-    "role": "admin"
+    "role": {
+      "name": "admin"
+    }
   },
   "max_toot_chars": 5000
 }`, string(b))
@@ -660,7 +674,9 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV2ToFrontend() {
       "emojis": [],
       "fields": [],
       "enable_rss": true,
-      "role": "admin"
+      "role": {
+        "name": "admin"
+      }
     }
   },
   "rules": []
@@ -811,7 +827,9 @@ func (suite *InternalToFrontendTestSuite) TestReportToFrontend2() {
     "last_status_at": "2021-10-20T10:40:37.000Z",
     "emojis": [],
     "fields": [],
-    "role": "user"
+    "role": {
+      "name": "user"
+    }
   }
 }`, string(b))
 }
@@ -843,7 +861,9 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
     "ips": [],
     "locale": "",
     "invite_request": null,
-    "role": "user",
+    "role": {
+      "name": "user"
+    },
     "confirmed": false,
     "approved": false,
     "disabled": false,
@@ -882,7 +902,9 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
     "ips": [],
     "locale": "en",
     "invite_request": "",
-    "role": "user",
+    "role": {
+      "name": "user"
+    },
     "confirmed": true,
     "approved": true,
     "disabled": false,
@@ -909,7 +931,9 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
       "last_status_at": "2021-10-20T10:40:37.000Z",
       "emojis": [],
       "fields": [],
-      "role": "user"
+      "role": {
+        "name": "user"
+      }
     },
     "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
   },
@@ -923,7 +947,9 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
     "ips": [],
     "locale": "en",
     "invite_request": "",
-    "role": "admin",
+    "role": {
+      "name": "admin"
+    },
     "confirmed": true,
     "approved": true,
     "disabled": false,
@@ -951,7 +977,9 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
       "emojis": [],
       "fields": [],
       "enable_rss": true,
-      "role": "admin"
+      "role": {
+        "name": "admin"
+      }
     },
     "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F"
   },
@@ -965,7 +993,9 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
     "ips": [],
     "locale": "en",
     "invite_request": "",
-    "role": "admin",
+    "role": {
+      "name": "admin"
+    },
     "confirmed": true,
     "approved": true,
     "disabled": false,
@@ -993,7 +1023,9 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
       "emojis": [],
       "fields": [],
       "enable_rss": true,
-      "role": "admin"
+      "role": {
+        "name": "admin"
+      }
     },
     "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F"
   },
@@ -1030,7 +1062,9 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
     "ips": [],
     "locale": "en",
     "invite_request": "",
-    "role": "user",
+    "role": {
+      "name": "user"
+    },
     "confirmed": true,
     "approved": true,
     "disabled": false,
@@ -1057,7 +1091,9 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
       "last_status_at": "2021-10-20T10:40:37.000Z",
       "emojis": [],
       "fields": [],
-      "role": "user"
+      "role": {
+        "name": "user"
+      }
     },
     "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
   },
@@ -1071,7 +1107,9 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
     "ips": [],
     "locale": "",
     "invite_request": null,
-    "role": "user",
+    "role": {
+      "name": "user"
+    },
     "confirmed": false,
     "approved": false,
     "disabled": false,
