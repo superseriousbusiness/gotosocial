@@ -42,7 +42,7 @@ import (
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
-	l := log.Entry{}
+	l := log.Entry{}.WithContext(ctx)
 
 	if log.Level() >= level.DEBUG {
 		i, err := marshalItem(asType)

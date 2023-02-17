@@ -319,7 +319,8 @@ func (m *manager) PreProcessEmoji(ctx context.Context, data DataFunc, postData P
 				}
 			}
 
-			l := log.WithField("shortcode@domain", emoji.Shortcode+"@"+emoji.Domain)
+			l := log.WithContext(ctx).
+				WithField("shortcode@domain", emoji.Shortcode+"@"+emoji.Domain)
 			l.Debug("postData: cleaning up old emoji files for refreshed emoji")
 			if err := m.state.Storage.Delete(innerCtx, originalImagePath); err != nil && !errors.Is(err, storage.ErrNotFound) {
 				l.Errorf("postData: error cleaning up old emoji image at %s for refreshed emoji: %s", originalImagePath, err)

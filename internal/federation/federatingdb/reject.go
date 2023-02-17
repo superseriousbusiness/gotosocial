@@ -38,7 +38,8 @@ func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsR
 		if err != nil {
 			return err
 		}
-		l := log.WithField("reject", i)
+		l := log.WithContext(ctx).
+			WithField("reject", i)
 		l.Debug("entering Reject")
 	}
 
