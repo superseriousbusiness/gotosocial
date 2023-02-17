@@ -97,7 +97,7 @@ type Account struct {
 	// Role of the account on this instance.
 	// Omitted for remote accounts.
 	// example: user
-	Role AccountRole `json:"role,omitempty"`
+	Role *AccountRole `json:"role,omitempty"`
 }
 
 // AccountCreateRequest models account creation parameters.
@@ -215,13 +215,20 @@ type AccountDeleteRequest struct {
 
 // AccountRole models the role of an account.
 //
+// swagger:model role
+type AccountRole struct {
+	Name AccountRoleName `form:"-" json:"name,omitempty" xml:"-"`
+}
+
+// AccountRoleName represent the name of the role of an account.
+//
 // swagger:enum accountRole
 // swagger:type string
-type AccountRole string
+type AccountRoleName string
 
 const (
-	AccountRoleUser      AccountRole = "user"      // Standard user
-	AccountRoleModerator AccountRole = "moderator" // Moderator privileges
-	AccountRoleAdmin     AccountRole = "admin"     // Instance admin
-	AccountRoleUnknown   AccountRole = ""          // We don't know / remote account
+	AccountRoleUser      AccountRoleName = "user"      // Standard user
+	AccountRoleModerator AccountRoleName = "moderator" // Moderator privileges
+	AccountRoleAdmin     AccountRoleName = "admin"     // Instance admin
+	AccountRoleUnknown   AccountRoleName = ""          // We don't know / remote account
 )

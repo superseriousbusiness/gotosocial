@@ -167,10 +167,8 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		log.Errorf(ctx, "error converting account emojis: %v", err)
 	}
 
-	var (
-		acct string
-		role = apimodel.AccountRoleUnknown
-	)
+	var acct string
+	var role *apimodel.AccountRole
 
 	if a.Domain != "" {
 		// this is a remote user
@@ -185,11 +183,11 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 
 		switch {
 		case *user.Admin:
-			role = apimodel.AccountRoleAdmin
+			role = &apimodel.AccountRole{Name: apimodel.AccountRoleAdmin}
 		case *user.Moderator:
-			role = apimodel.AccountRoleModerator
+			role = &apimodel.AccountRole{Name: apimodel.AccountRoleModerator}
 		default:
-			role = apimodel.AccountRoleUser
+			role = &apimodel.AccountRole{Name: apimodel.AccountRoleUser}
 		}
 	}
 
@@ -270,7 +268,7 @@ func (c *converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 		disabled               bool
 		silenced               bool
 		suspended              bool
-		role                   apimodel.AccountRole = apimodel.AccountRoleUser // assume user by default
+		role                   apimodel.AccountRole = apimodel.AccountRole{Name: apimodel.AccountRoleUser} // assume user by default
 		createdByApplicationID string
 	)
 
@@ -296,9 +294,9 @@ func (c *converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 		locale = user.Locale
 		inviteRequest = &user.Account.Reason
 		if *user.Admin {
-			role = apimodel.AccountRoleAdmin
+			role = apimodel.AccountRole{Name: apimodel.AccountRoleAdmin}
 		} else if *user.Moderator {
-			role = apimodel.AccountRoleModerator
+			role = apimodel.AccountRole{Name: apimodel.AccountRoleModerator}
 		}
 		confirmed = !user.ConfirmedAt.IsZero()
 		approved = *user.Approved
@@ -323,7 +321,7 @@ func (c *converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 		IPs:                    []interface{}{}, // not implemented,
 		Locale:                 locale,
 		InviteRequest:          inviteRequest,
-		Role:                   string(role),
+		Role:                   role,
 		Confirmed:              confirmed,
 		Approved:               approved,
 		Disabled:               disabled,
