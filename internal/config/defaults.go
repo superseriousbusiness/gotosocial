@@ -128,7 +128,7 @@ var Defaults = Configuration{
 			DomainBlockTTL:       time.Hour * 24,
 			DomainBlockSweepFreq: time.Minute,
 
-			EmojiMaxSize:   100,
+			EmojiMaxSize:   500,
 			EmojiTTL:       time.Minute * 5,
 			EmojiSweepFreq: time.Second * 30,
 
@@ -144,7 +144,7 @@ var Defaults = Configuration{
 			MentionTTL:       time.Minute * 5,
 			MentionSweepFreq: time.Second * 30,
 
-			NotificationMaxSize:   100,
+			NotificationMaxSize:   500,
 			NotificationTTL:       time.Minute * 5,
 			NotificationSweepFreq: time.Second * 30,
 
