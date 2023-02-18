@@ -51,22 +51,34 @@ func (m *mediaDB) GetAttachmentByID(ctx context.Context, id string) (*gtsmodel.M
 	)
 }
 
-func (m *mediaDB) getAttachments(ctx context.Context, ids []string) ([]*gtsmodel.MediaAttachment, db.Error) {
-	attachments := make([]*gtsmodel.MediaAttachment, 0, len(ids))
+func (m *mediaDB) getAttachment(ctx context.Context, lookup string, dbQuery func(*gtsmodel.MediaAttachment) error, keyParts ...any) (*gtsmodel.MediaAttachment, db.Error) {
+	return m.state.Caches.GTS.Media().Load(lookup, func() (*gtsmodel.MediaAttachment, error) {
+		var attachment gtsmodel.MediaAttachment
 
-	for _, id := range ids {
-		// Attempt fetch from DB
-		attachment, err := m.GetAttachmentByID(ctx, id)
-		if err != nil {
-			log.Errorf(ctx, "error getting attachment %q: %v", id, err)
-			continue
+		// Not cached! Perform database query
+		if err := dbQuery(&attachment); err != nil {
+			return nil, m.conn.ProcessError(err)
 		}
 
-		// Append attachment
-		attachments = append(attachments, attachment)
-	}
+		return &attachment, nil
+	}, keyParts...)
+}
 
-	return attachments, nil
+func (m *mediaDB) PutAttachment(ctx context.Context, media *gtsmodel.MediaAttachment) error {
+	return m.state.Caches.GTS.Media().Store(media, func() error {
+		_, err := m.conn.NewInsert().Model(media).Exec(ctx)
+		return m.conn.ProcessError(err)
+	})
+}
+
+func (m *mediaDB) UpdateAttachment(ctx context.Context, media *gtsmodel.MediaAttachment) error {
+	// Update the media's last-updated
+	media.UpdatedAt = time.Now()
+
+	return m.state.Caches.GTS.Media().Store(media, func() error {
+		_, err := m.conn.NewUpdate().Model(media).Exec(ctx)
+		return err
+	})
 }
 
 func (m *mediaDB) GetRemoteOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {
@@ -183,14 +195,20 @@ func (m *mediaDB) CountLocalUnattachedOlderThan(ctx context.Context, olderThan t
 	return count, nil
 }
 
-func (m *mediaDB) getAttachment(ctx context.Context, lookup string, dbQuery func(*gtsmodel.MediaAttachment) error, keyParts ...any) (*gtsmodel.MediaAttachment, db.Error) {
-	// Fetch attachment from database
-	// todo: cache this lookup
-	attachment := new(gtsmodel.MediaAttachment)
+func (m *mediaDB) getAttachments(ctx context.Context, ids []string) ([]*gtsmodel.MediaAttachment, db.Error) {
+	attachments := make([]*gtsmodel.MediaAttachment, 0, len(ids))
 
-	if err := dbQuery(attachment); err != nil {
-		return nil, m.conn.ProcessError(err)
+	for _, id := range ids {
+		// Attempt fetch from DB
+		attachment, err := m.GetAttachmentByID(ctx, id)
+		if err != nil {
+			log.Errorf(ctx, "error getting attachment %q: %v", id, err)
+			continue
+		}
+
+		// Append attachment
+		attachments = append(attachments, attachment)
 	}
 
-	return attachment, nil
+	return attachments, nil
 }

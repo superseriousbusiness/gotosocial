@@ -54,6 +54,9 @@ type GTSCaches interface {
 	// Mention provides access to the gtsmodel Mention database cache.
 	Mention() *result.Cache[*gtsmodel.Mention]
 
+	// Media provides access to the gtsmodel Media database cache.
+	Media() *result.Cache[*gtsmodel.MediaAttachment]
+
 	// Notification provides access to the gtsmodel Notification database cache.
 	Notification() *result.Cache[*gtsmodel.Notification]
 
@@ -81,6 +84,7 @@ type gtsCaches struct {
 	domainBlock   *domain.BlockCache
 	emoji         *result.Cache[*gtsmodel.Emoji]
 	emojiCategory *result.Cache[*gtsmodel.EmojiCategory]
+	media         *result.Cache[*gtsmodel.MediaAttachment]
 	mention       *result.Cache[*gtsmodel.Mention]
 	notification  *result.Cache[*gtsmodel.Notification]
 	report        *result.Cache[*gtsmodel.Report]
@@ -95,6 +99,7 @@ func (c *gtsCaches) Init() {
 	c.initDomainBlock()
 	c.initEmoji()
 	c.initEmojiCategory()
+	c.initMedia()
 	c.initMention()
 	c.initNotification()
 	c.initReport()
@@ -118,6 +123,9 @@ func (c *gtsCaches) Start() {
 	})
 	tryUntil("starting gtsmodel.EmojiCategory cache", 5, func() bool {
 		return c.emojiCategory.Start(config.GetCacheGTSEmojiCategorySweepFreq())
+	})
+	tryUntil("starting gtsmodel.MediaAttachment cache", 5, func() bool {
+		return c.media.Start(config.GetCacheGTSMediaSweepFreq())
 	})
 	tryUntil("starting gtsmodel.Mention cache", 5, func() bool {
 		return c.mention.Start(config.GetCacheGTSMentionSweepFreq())
@@ -145,6 +153,7 @@ func (c *gtsCaches) Stop() {
 	tryUntil("stopping gtsmodel.DomainBlock cache", 5, c.domainBlock.Stop)
 	tryUntil("stopping gtsmodel.Emoji cache", 5, c.emoji.Stop)
 	tryUntil("stopping gtsmodel.EmojiCategory cache", 5, c.emojiCategory.Stop)
+	tryUntil("stopping gtsmodel.MediaAttention cache", 5, c.media.Stop)
 	tryUntil("stopping gtsmodel.Mention cache", 5, c.mention.Stop)
 	tryUntil("stopping gtsmodel.Notification cache", 5, c.notification.Stop)
 	tryUntil("stopping gtsmodel.Report cache", 5, c.report.Stop)
@@ -171,6 +180,10 @@ func (c *gtsCaches) Emoji() *result.Cache[*gtsmodel.Emoji] {
 
 func (c *gtsCaches) EmojiCategory() *result.Cache[*gtsmodel.EmojiCategory] {
 	return c.emojiCategory
+}
+
+func (c *gtsCaches) Media() *result.Cache[*gtsmodel.MediaAttachment] {
+	return c.media
 }
 
 func (c *gtsCaches) Mention() *result.Cache[*gtsmodel.Mention] {
@@ -256,6 +269,17 @@ func (c *gtsCaches) initEmojiCategory() {
 		return c2
 	}, config.GetCacheGTSEmojiCategoryMaxSize())
 	c.emojiCategory.SetTTL(config.GetCacheGTSEmojiCategoryTTL(), true)
+}
+
+func (c *gtsCaches) initMedia() {
+	c.media = result.New([]result.Lookup{
+		{Name: "ID"},
+	}, func(m1 *gtsmodel.MediaAttachment) *gtsmodel.MediaAttachment {
+		m2 := new(gtsmodel.MediaAttachment)
+		*m2 = *m1
+		return m2
+	}, config.GetCacheGTSMediaMaxSize())
+	c.media.SetTTL(config.GetCacheGTSMediaTTL(), true)
 }
 
 func (c *gtsCaches) initMention() {

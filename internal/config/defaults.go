@@ -116,49 +116,53 @@ var Defaults = Configuration{
 
 	Cache: CacheConfiguration{
 		GTS: GTSCacheConfiguration{
-			AccountMaxSize:   100,
+			AccountMaxSize:   500,
 			AccountTTL:       time.Minute * 5,
-			AccountSweepFreq: time.Second * 10,
+			AccountSweepFreq: time.Second * 30,
 
 			BlockMaxSize:   100,
 			BlockTTL:       time.Minute * 5,
-			BlockSweepFreq: time.Second * 10,
+			BlockSweepFreq: time.Second * 30,
 
 			DomainBlockMaxSize:   1000,
 			DomainBlockTTL:       time.Hour * 24,
 			DomainBlockSweepFreq: time.Minute,
 
-			EmojiMaxSize:   500,
+			EmojiMaxSize:   100,
 			EmojiTTL:       time.Minute * 5,
-			EmojiSweepFreq: time.Second * 10,
+			EmojiSweepFreq: time.Second * 30,
 
 			EmojiCategoryMaxSize:   100,
 			EmojiCategoryTTL:       time.Minute * 5,
-			EmojiCategorySweepFreq: time.Second * 10,
+			EmojiCategorySweepFreq: time.Second * 30,
+
+			MediaMaxSize:   500,
+			MediaTTL:       time.Minute * 5,
+			MediaSweepFreq: time.Second * 30,
 
 			MentionMaxSize:   500,
 			MentionTTL:       time.Minute * 5,
-			MentionSweepFreq: time.Second * 10,
+			MentionSweepFreq: time.Second * 30,
 
-			NotificationMaxSize:   500,
+			NotificationMaxSize:   100,
 			NotificationTTL:       time.Minute * 5,
-			NotificationSweepFreq: time.Second * 10,
+			NotificationSweepFreq: time.Second * 30,
 
 			ReportMaxSize:   100,
 			ReportTTL:       time.Minute * 5,
-			ReportSweepFreq: time.Second * 10,
+			ReportSweepFreq: time.Second * 30,
 
 			StatusMaxSize:   500,
 			StatusTTL:       time.Minute * 5,
-			StatusSweepFreq: time.Second * 10,
+			StatusSweepFreq: time.Second * 30,
 
 			TombstoneMaxSize:   100,
 			TombstoneTTL:       time.Minute * 5,
-			TombstoneSweepFreq: time.Second * 10,
+			TombstoneSweepFreq: time.Second * 30,
 
 			UserMaxSize:   100,
 			UserTTL:       time.Minute * 5,
-			UserSweepFreq: time.Second * 10,
+			UserSweepFreq: time.Second * 30,
 		},
 	},
 

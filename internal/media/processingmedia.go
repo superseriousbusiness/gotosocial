@@ -123,13 +123,13 @@ func (p *ProcessingMedia) load(ctx context.Context) (*gtsmodel.MediaAttachment, 
 		}
 
 		if p.recache {
-			// Existing attachment we're recaching, so only need to update.
-			err = p.mgr.state.DB.UpdateByID(ctx, p.media, p.media.ID)
+			// Existing attachment we're recaching, so only update.
+			err = p.mgr.state.DB.UpdateAttachment(ctx, p.media)
 			return err
 		}
 
-		// New attachment, first time caching.
-		err = p.mgr.state.DB.Put(ctx, p.media)
+		// First time caching this attachment, insert it.
+		err = p.mgr.state.DB.PutAttachment(ctx, p.media)
 		return err
 	})
 
