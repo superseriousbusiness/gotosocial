@@ -27,14 +27,17 @@ import (
 
 // Media contains functions related to creating/getting/removing media attachments.
 type Media interface {
-	// GetAttachmentByID gets a single attachment by its ID
+	// GetAttachmentByID gets a single attachment by its ID.
 	GetAttachmentByID(ctx context.Context, id string) (*gtsmodel.MediaAttachment, Error)
 
 	// PutAttachment inserts the given attachment into the database.
 	PutAttachment(ctx context.Context, media *gtsmodel.MediaAttachment) error
 
 	// UpdateAttachment will update the given attachment in the database.
-	UpdateAttachment(ctx context.Context, media *gtsmodel.MediaAttachment) error
+	UpdateAttachment(ctx context.Context, media *gtsmodel.MediaAttachment, columns ...string) error
+
+	// DeleteAttachment deletes the attachment with given ID from the database.
+	DeleteAttachment(ctx context.Context, id string) error
 
 	// GetRemoteOlderThan gets limit n remote media attachments (including avatars and headers) older than the given
 	// olderThan time. These will be returned in order of attachment.created_at descending (newest to oldest in other words).

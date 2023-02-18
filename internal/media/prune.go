@@ -320,7 +320,7 @@ func (m *manager) deleteAttachment(ctx context.Context, attachment *gtsmodel.Med
 	}
 
 	// Delete attachment completely.
-	return m.state.DB.DeleteByID(ctx, attachment.ID, attachment)
+	return m.state.DB.DeleteAttachment(ctx, attachment.ID)
 }
 
 func (m *manager) uncacheAttachment(ctx context.Context, attachment *gtsmodel.MediaAttachment) error {
@@ -332,7 +332,7 @@ func (m *manager) uncacheAttachment(ctx context.Context, attachment *gtsmodel.Me
 	attachment.UpdatedAt = time.Now()
 	cached := false
 	attachment.Cached = &cached
-	return m.state.DB.UpdateByID(ctx, attachment, attachment.ID, "updated_at", "cached")
+	return m.state.DB.UpdateAttachment(ctx, attachment, "updated_at", "cached")
 }
 
 func (m *manager) removeFiles(ctx context.Context, keys ...string) (int, error) {

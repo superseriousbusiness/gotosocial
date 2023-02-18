@@ -71,14 +71,28 @@ func (m *mediaDB) PutAttachment(ctx context.Context, media *gtsmodel.MediaAttach
 	})
 }
 
-func (m *mediaDB) UpdateAttachment(ctx context.Context, media *gtsmodel.MediaAttachment) error {
+func (m *mediaDB) UpdateAttachment(ctx context.Context, media *gtsmodel.MediaAttachment, columns ...string) error {
 	// Update the media's last-updated
 	media.UpdatedAt = time.Now()
 
 	return m.state.Caches.GTS.Media().Store(media, func() error {
-		_, err := m.conn.NewUpdate().Model(media).Exec(ctx)
+		_, err := m.conn.NewUpdate().Model(media).Column(columns...).Exec(ctx)
 		return err
 	})
+}
+
+func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
+	// Attempt to delete from database.
+	if _, err := m.conn.NewDelete().
+		TableExpr("? AS ?", bun.Ident("media_attachments"), bun.Ident("media_attachment")).
+		Where("? = ?", bun.Ident("media_attachments.id"), id).
+		Exec(ctx); err != nil {
+		return m.conn.ProcessError(err)
+	}
+
+	// Invalidate this media item from the cache.
+	m.state.Caches.GTS.Media().Invalidate("ID", id)
+	return nil
 }
 
 func (m *mediaDB) GetRemoteOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {
