@@ -149,6 +149,7 @@ type Configuration struct {
 	AdminMediaPruneDryRun bool   `name:"dry-run" usage:"perform a dry run and only log number of items eligible for pruning"`
 
 	RequestIDHeader string `name:"request-id-header" usage:"Header to extract the Request ID from. Eg.,'X-Request-Id'"`
+	MetricsEnabled  bool   `name:"metrics-enabled" usage:"When set to true, metrics will be collected and exposed on /metrics in the Prometheus exposition format"`
 }
 
 type CacheConfiguration struct {

@@ -142,6 +142,7 @@ func (s *ConfigState) AddServerFlags(cmd *cobra.Command) {
 		cmd.Flags().Duration(AdvancedThrottlingRetryAfterFlag(), cfg.AdvancedThrottlingRetryAfter, fieldtag("AdvancedThrottlingRetryAfter", "usage"))
 
 		cmd.Flags().String(RequestIDHeaderFlag(), cfg.RequestIDHeader, fieldtag("RequestIDHeader", "usage"))
+		cmd.Flags().Bool(MetricsEnabledFlag(), cfg.MetricsEnabled, fieldtag("MetricsEnabled", "usage"))
 	})
 }
 

@@ -13,4 +13,9 @@ These settings let you tune and configure certain observability related behaviou
 # loadbalancer or proxy.
 # Default: "X-Request-Id"
 request-id-header: "X-Request-Id"
+
+# Bool. Enable the collection of metrics. This will expose the metrics on /metrics
+# Options: [true, false]
+# Default: false
+metrics-enabled: false
 ```

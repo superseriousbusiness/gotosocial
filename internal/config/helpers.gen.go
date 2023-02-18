@@ -2394,9 +2394,7 @@ func (st *ConfigState) SetCacheGTSEmojiCategorySweepFreq(v time.Duration) {
 func CacheGTSEmojiCategorySweepFreqFlag() string { return "cache-gts-emoji-category-sweep-freq" }
 
 // GetCacheGTSEmojiCategorySweepFreq safely fetches the value for global configuration 'Cache.GTS.EmojiCategorySweepFreq' field
-func GetCacheGTSEmojiCategorySweepFreq() time.Duration {
-	return global.GetCacheGTSEmojiCategorySweepFreq()
-}
+func GetCacheGTSEmojiCategorySweepFreq() time.Duration { return global.GetCacheGTSEmojiCategorySweepFreq() }
 
 // SetCacheGTSEmojiCategorySweepFreq safely sets the value for global configuration 'Cache.GTS.EmojiCategorySweepFreq' field
 func SetCacheGTSEmojiCategorySweepFreq(v time.Duration) { global.SetCacheGTSEmojiCategorySweepFreq(v) }
@@ -2546,9 +2544,7 @@ func (st *ConfigState) SetCacheGTSNotificationSweepFreq(v time.Duration) {
 func CacheGTSNotificationSweepFreqFlag() string { return "cache-gts-notification-sweep-freq" }
 
 // GetCacheGTSNotificationSweepFreq safely fetches the value for global configuration 'Cache.GTS.NotificationSweepFreq' field
-func GetCacheGTSNotificationSweepFreq() time.Duration {
-	return global.GetCacheGTSNotificationSweepFreq()
-}
+func GetCacheGTSNotificationSweepFreq() time.Duration { return global.GetCacheGTSNotificationSweepFreq() }
 
 // SetCacheGTSNotificationSweepFreq safely sets the value for global configuration 'Cache.GTS.NotificationSweepFreq' field
 func SetCacheGTSNotificationSweepFreq(v time.Duration) { global.SetCacheGTSNotificationSweepFreq(v) }
@@ -3002,3 +2998,29 @@ func GetRequestIDHeader() string { return global.GetRequestIDHeader() }
 
 // SetRequestIDHeader safely sets the value for global configuration 'RequestIDHeader' field
 func SetRequestIDHeader(v string) { global.SetRequestIDHeader(v) }
+
+// GetMetricsEnabled safely fetches the Configuration value for state's 'MetricsEnabled' field
+func (st *ConfigState) GetMetricsEnabled() (v bool) {
+	st.mutex.Lock()
+	v = st.config.MetricsEnabled
+	st.mutex.Unlock()
+	return
+}
+
+// SetMetricsEnabled safely sets the Configuration value for state's 'MetricsEnabled' field
+func (st *ConfigState) SetMetricsEnabled(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.MetricsEnabled = v
+	st.reloadToViper()
+}
+
+// MetricsEnabledFlag returns the flag name for the 'MetricsEnabled' field
+func MetricsEnabledFlag() string { return "metrics-enabled" }
+
+// GetMetricsEnabled safely fetches the value for global configuration 'MetricsEnabled' field
+func GetMetricsEnabled() bool { return global.GetMetricsEnabled() }
+
+// SetMetricsEnabled safely sets the value for global configuration 'MetricsEnabled' field
+func SetMetricsEnabled(v bool) { global.SetMetricsEnabled(v) }
+

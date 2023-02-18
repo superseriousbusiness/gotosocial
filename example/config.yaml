@@ -701,6 +701,11 @@ syslog-address: "localhost:514"
 # Default: "X-Request-Id"
 request-id-header: "X-Request-Id"
 
+# Bool. Enable the collection of metrics. This will expose the metrics on /metrics
+# Options: [true, false]
+# Default: false
+metrics-enabled: false
+
 #############################
 ##### ADVANCED SETTINGS #####
 #############################

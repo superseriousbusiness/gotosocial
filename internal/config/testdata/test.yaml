@@ -425,3 +425,8 @@ cache:
 # loadbalancer or proxy.
 # Default: "X-Request-Id"
 request-id-header: "X-Trace-Id"
+
+# Bool. Enable the collection of metrics. This will expose the metrics on /metrics
+# Options: [true, false]
+# Default: false
+metrics-enabled: true

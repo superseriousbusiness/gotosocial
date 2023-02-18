@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/metrics"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"go.uber.org/automaxprocs/maxprocs"
 
@@ -216,16 +217,39 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	gzip := middleware.Gzip() // applied to all except fileserver
 
+	// wire up metrics for the different endpoint groups
+	var (
+		clientMetrics     = func(_ *gin.Context) {}
+		federationMetrics = func(_ *gin.Context) {}
+		fileserverMetrics = func(_ *gin.Context) {}
+		frontendMetrics   = func(_ *gin.Context) {}
+	)
+	if config.GetMetricsEnabled() {
+		prom := metrics.NewRegistry()
+		router.AttachHandler(http.MethodGet, metrics.HandlerPath, metrics.ScrapeHandler(prom))
+
+		clm := metrics.NewEndpointMetrics("client", metrics.DefaultBuckets())
+		fedm := metrics.NewEndpointMetrics("federation", metrics.FederationBuckets())
+		fsm := metrics.NewEndpointMetrics("fileserver", metrics.DefaultBuckets())
+		frontm := metrics.NewEndpointMetrics("frontend", metrics.DefaultBuckets())
+		prom.MustRegister(clm, fedm, fsm, frontm)
+
+		clientMetrics = middleware.Instrument(clm)
+		federationMetrics = middleware.Instrument(fedm)
+		fileserverMetrics = middleware.Instrument(fsm)
+		frontendMetrics = middleware.Instrument(frontm)
+	}
+
 	// these should be routed in order;
 	// apply throttling *after* rate limiting
-	authModule.Route(router, clLimit, clThrottle, gzip)
-	clientModule.Route(router, clLimit, clThrottle, gzip)
-	fileserverModule.Route(router, fsLimit, fsThrottle)
-	wellKnownModule.Route(router, gzip, s2sLimit, s2sThrottle)
-	nodeInfoModule.Route(router, s2sLimit, s2sThrottle, gzip)
-	activityPubModule.Route(router, s2sLimit, s2sThrottle, gzip)
-	activityPubModule.RoutePublicKey(router, s2sLimit, pkThrottle, gzip)
-	webModule.Route(router, fsLimit, fsThrottle, gzip)
+	authModule.Route(router, clientMetrics, clLimit, clThrottle, gzip)
+	clientModule.Route(router, clientMetrics, clLimit, clThrottle, gzip)
+	fileserverModule.Route(router, fileserverMetrics, fsLimit, fsThrottle)
+	wellKnownModule.Route(router, federationMetrics, s2sLimit, s2sThrottle, gzip)
+	nodeInfoModule.Route(router, federationMetrics, s2sLimit, s2sThrottle, gzip)
+	activityPubModule.Route(router, federationMetrics, s2sLimit, s2sThrottle, gzip)
+	activityPubModule.RoutePublicKey(router, federationMetrics, s2sLimit, pkThrottle, gzip)
+	webModule.Route(router, frontendMetrics, fsLimit, fsThrottle, gzip)
 
 	gts, err := gotosocial.NewServer(dbService, router, federator, mediaManager)
 	if err != nil {
