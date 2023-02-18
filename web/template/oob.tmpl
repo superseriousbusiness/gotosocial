@@ -17,10 +17,11 @@
 */ -}}
 
 {{ template "header.tmpl" .}}
-    <main>
-        <h1>Hi {{ .user }}!</h1>
-        <p>Here's your out-of-band token with scope <em>{{.scope}}</em>:</p>
-        <p><code>{{ .oobToken }}</code><p>
-        <p>Use it wisely!</p>
-    </main>
+<main>
+	<section class="oob-token">
+		<h1>Hi {{ .user }}!</h1>
+		<p>Here's your out-of-band token with scope "<em>{{.scope}}</em>", use it wisely:</p>
+		<code>{{ .oobToken }}</code>
+	</section>
+</main>
 {{ template "footer.tmpl" .}}
