@@ -5,11 +5,11 @@ go 1.19
 require (
 	codeberg.org/gruf/go-bytesize v1.0.2
 	codeberg.org/gruf/go-byteutil v1.1.2
-	codeberg.org/gruf/go-cache/v3 v3.2.2
+	codeberg.org/gruf/go-cache/v3 v3.2.3
 	codeberg.org/gruf/go-debug v1.3.0
 	codeberg.org/gruf/go-errors/v2 v2.1.1
 	codeberg.org/gruf/go-fastcopy v1.1.2
-	codeberg.org/gruf/go-kv v1.5.2
+	codeberg.org/gruf/go-kv v1.6.0
 	codeberg.org/gruf/go-logger/v2 v2.2.1
 	codeberg.org/gruf/go-mutexes v1.1.5
 	codeberg.org/gruf/go-runners v1.6.0
@@ -54,8 +54,8 @@ require (
 	go.uber.org/automaxprocs v1.5.1
 	golang.org/x/crypto v0.5.0
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
-	golang.org/x/net v0.7.0
 	golang.org/x/image v0.5.0
+	golang.org/x/net v0.7.0
 	golang.org/x/oauth2 v0.4.0
 	golang.org/x/text v0.7.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
@@ -72,7 +72,7 @@ require (
 	codeberg.org/gruf/go-fastpath/v2 v2.0.0 // indirect
 	codeberg.org/gruf/go-hashenc v1.0.2 // indirect
 	codeberg.org/gruf/go-iotools v0.0.0-20221224124424-3386841cb225 // indirect
-	codeberg.org/gruf/go-mangler v1.2.2 // indirect
+	codeberg.org/gruf/go-mangler v1.2.3 // indirect
 	codeberg.org/gruf/go-maps v1.0.3 // indirect
 	codeberg.org/gruf/go-pools v1.1.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
