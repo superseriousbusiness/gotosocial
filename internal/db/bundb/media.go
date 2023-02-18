@@ -76,8 +76,12 @@ func (m *mediaDB) UpdateAttachment(ctx context.Context, media *gtsmodel.MediaAtt
 	media.UpdatedAt = time.Now()
 
 	return m.state.Caches.GTS.Media().Store(media, func() error {
-		_, err := m.conn.NewUpdate().Model(media).Column(columns...).Exec(ctx)
-		return err
+		_, err := m.conn.NewUpdate().
+			Model(media).
+			Where("? = ?", bun.Ident("media_attachment.id"), media.ID).
+			Column(columns...).
+			Exec(ctx)
+		return m.conn.ProcessError(err)
 	})
 }
 
