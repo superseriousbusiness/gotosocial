@@ -78,9 +78,18 @@ import (
 	"io"
 )
 
-// chunkTypeAncillaryBit is whether the first byte of a big-endian uint32 chunk
-// type (the first of four ASCII letters) is lower-case.
-const chunkTypeAncillaryBit = 0x20000000
+var necessaryChunkType = map[uint32]bool{
+	// IHDR
+	0x49484452: true,
+	// PLTE
+	0x504C5445: true,
+	// IDAT
+	0x49444154: true,
+	// IEND
+	0x49454E44: true,
+	// tRNS
+	0x74524e53: true,
+}
 
 // pngAncillaryChunkStripper wraps another io.Reader to strip ancillary chunks,
 // if the data is in the PNG file format. If the data isn't PNG, it is passed
@@ -179,7 +188,7 @@ func (r *pngAncillaryChunkStripper) Read(p []byte) (int, error) {
 			// byte trailer, a checksum.
 			r.pending = int64(binary.BigEndian.Uint32(r.buffer[:4])) + 4
 			chunkType := binary.BigEndian.Uint32(r.buffer[4:])
-			r.discard = (chunkType & chunkTypeAncillaryBit) != 0
+			r.discard = !necessaryChunkType[chunkType]
 			if r.discard {
 				r.rIndex = r.wIndex
 			}
