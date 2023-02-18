@@ -66,7 +66,7 @@ func NewWorkerPool[MsgType any](workers int, queueRatio int) *WorkerPool[MsgType
 	}
 
 	// Log new worker creation with worker type prefix
-	log.Infof("%s created with workers=%d queue=%d",
+	log.Infof(nil, "%s created with workers=%d queue=%d",
 		w.wtype,
 		workers,
 		workers*queueRatio,
@@ -77,7 +77,7 @@ func NewWorkerPool[MsgType any](workers int, queueRatio int) *WorkerPool[MsgType
 
 // Start will attempt to start the underlying worker pool, or return error.
 func (w *WorkerPool[MsgType]) Start() error {
-	log.Infof("%s starting", w.wtype)
+	log.Infof(nil, "%s starting", w.wtype)
 
 	// Check processor was set
 	if w.process == nil {
@@ -94,7 +94,7 @@ func (w *WorkerPool[MsgType]) Start() error {
 
 // Stop will attempt to stop the underlying worker pool, or return error.
 func (w *WorkerPool[MsgType]) Stop() error {
-	log.Infof("%s stopping", w.wtype)
+	log.Infof(nil, "%s stopping", w.wtype)
 
 	// Attempt to stop pool
 	if !w.workers.Stop() {
@@ -107,22 +107,23 @@ func (w *WorkerPool[MsgType]) Stop() error {
 // SetProcessor will set the Worker's processor function, which is called for each queued message.
 func (w *WorkerPool[MsgType]) SetProcessor(fn func(context.Context, MsgType) error) {
 	if w.process != nil {
-		log.Panicf("%s Worker.process is already set", w.wtype)
+		log.Panicf(nil, "%s Worker.process is already set", w.wtype)
 	}
 	w.process = fn
 }
 
 // Queue will queue provided message to be processed with there's a free worker.
 func (w *WorkerPool[MsgType]) Queue(msg MsgType) {
-	log.Tracef("%s queueing message: %+v", w.wtype, msg)
+	log.Tracef(nil, "%s queueing message: %+v", w.wtype, msg)
 
 	// Create new process function for msg
 	process := func(ctx context.Context) {
 		if err := w.process(ctx, msg); err != nil {
-			log.WithFields(kv.Fields{
-				kv.Field{K: "type", V: w.wtype},
-				kv.Field{K: "error", V: err},
-			}...).Error("message processing error")
+			log.WithContext(ctx).
+				WithFields(kv.Fields{
+					kv.Field{K: "type", V: w.wtype},
+					kv.Field{K: "error", V: err},
+				}...).Error("message processing error")
 		}
 	}
 

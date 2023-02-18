@@ -49,6 +49,7 @@ nav:
       - "configuration/smtp.md"
       - "configuration/syslog.md"
       - "configuration/advanced.md"
+      - "configuration/observability.md"
   - "Admin":
       - "admin/settings.md"
       - "admin/cli.md"

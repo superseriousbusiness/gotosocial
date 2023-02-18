@@ -140,6 +140,8 @@ func (s *ConfigState) AddServerFlags(cmd *cobra.Command) {
 		cmd.Flags().Int(AdvancedRateLimitRequestsFlag(), cfg.AdvancedRateLimitRequests, fieldtag("AdvancedRateLimitRequests", "usage"))
 		cmd.Flags().Int(AdvancedThrottlingMultiplierFlag(), cfg.AdvancedThrottlingMultiplier, fieldtag("AdvancedThrottlingMultiplier", "usage"))
 		cmd.Flags().Duration(AdvancedThrottlingRetryAfterFlag(), cfg.AdvancedThrottlingRetryAfter, fieldtag("AdvancedThrottlingRetryAfter", "usage"))
+
+		cmd.Flags().String(RequestIDHeaderFlag(), cfg.RequestIDHeader, fieldtag("RequestIDHeader", "usage"))
 	})
 }
 

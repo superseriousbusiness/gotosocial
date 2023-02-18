@@ -59,7 +59,7 @@ func (p *processor) ProcessFromFederator(ctx context.Context, federatorMsg messa
 	}
 
 	// Log this federated message
-	l := log.WithFields(fields...)
+	l := log.WithContext(ctx).WithFields(fields...)
 	l.Info("processing from federator")
 
 	switch federatorMsg.APActivityType {

@@ -82,7 +82,7 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 
 	// account emojis (used in bio, display name, fields)
 	if emojis, err := ap.ExtractEmojis(accountable); err != nil {
-		log.Infof("ASRepresentationToAccount: error extracting account emojis: %s", err)
+		log.Infof(nil, "error extracting account emojis: %s", err)
 	} else {
 		acct.Emojis = emojis
 	}
@@ -217,13 +217,13 @@ func (c *converter) extractAttachments(i ap.WithAttachment) []*gtsmodel.MediaAtt
 
 		attachmentable, ok := t.(ap.Attachmentable)
 		if !ok {
-			log.Error("ap attachment was not attachmentable")
+			log.Error(nil, "ap attachment was not attachmentable")
 			continue
 		}
 
 		attachment, err := ap.ExtractAttachment(attachmentable)
 		if err != nil {
-			log.Errorf("error extracting attachment: %s", err)
+			log.Errorf(nil, "error extracting attachment: %s", err)
 			continue
 		}
 
@@ -243,7 +243,8 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	}
 	status.URI = uriProp.GetIRI().String()
 
-	l := log.WithField("statusURI", status.URI)
+	l := log.WithContext(ctx).
+		WithField("statusURI", status.URI)
 
 	// web url for viewing this status
 	if statusURL, err := ap.ExtractURL(statusable); err == nil {
@@ -684,7 +685,7 @@ func (c *converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) 
 					return nil, fmt.Errorf("ASFlagToReport: db error getting status with url %s: %w", statusURIString, err)
 				}
 
-				log.Warnf("ASFlagToReport: reported status %s could not be found in the db, skipping it", statusURIString)
+				log.Warnf(nil, "reported status %s could not be found in the db, skipping it", statusURIString)
 				continue
 			}
 		}

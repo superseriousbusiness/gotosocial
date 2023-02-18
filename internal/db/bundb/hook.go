@@ -36,17 +36,18 @@ func (queryHook) BeforeQuery(ctx context.Context, _ *bun.QueryEvent) context.Con
 }
 
 // AfterQuery logs the time taken to query, the operation (select, update, etc), and the query itself as translated by bun.
-func (queryHook) AfterQuery(_ context.Context, event *bun.QueryEvent) {
+func (queryHook) AfterQuery(ctx context.Context, event *bun.QueryEvent) {
 	// Get the DB query duration
 	dur := time.Since(event.StartTime)
 
 	switch {
 	// Warn on slow database queries
 	case dur > time.Second:
-		log.WithFields(kv.Fields{
-			{"duration", dur},
-			{"query", event.Query},
-		}...).Warn("SLOW DATABASE QUERY")
+		log.WithContext(ctx).
+			WithFields(kv.Fields{
+				{"duration", dur},
+				{"query", event.Query},
+			}...).Warn("SLOW DATABASE QUERY")
 
 	// On trace, we log query information,
 	// manually crafting so DB query not escaped.

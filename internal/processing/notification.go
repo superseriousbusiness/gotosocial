@@ -46,7 +46,7 @@ func (p *processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, ex
 	for i, n := range notifs {
 		item, err := p.tc.NotificationToAPINotification(ctx, n)
 		if err != nil {
-			log.Debugf("got an error converting a notification to api, will skip it: %s", err)
+			log.Debugf(ctx, "got an error converting a notification to api, will skip it: %s", err)
 			continue
 		}
 

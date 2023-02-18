@@ -29,7 +29,8 @@ import (
 )
 
 func (f *filter) StatusVisible(ctx context.Context, targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account) (bool, error) {
-	l := log.WithFields(kv.Fields{{"statusID", targetStatus.ID}}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{{"statusID", targetStatus.ID}}...)
 
 	// Fetch any relevant accounts for the target status
 	const getBoosted = true

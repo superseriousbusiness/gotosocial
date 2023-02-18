@@ -1,0 +1,67 @@
+name: Frontend Bug Report
+description: Report an issue related to the web frontend
+title: "[bug] Issue Title"
+labels: ["bug", "frontend"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! Please be cautious with the sensitive information/logs while filing the issue.
+
+  - type: textarea
+    id: desc
+    attributes:
+      label: Describe the bug with a clear and concise description of what the bug is. Please include screenshots of any visual issues.
+    validations:
+      required: true
+
+  - type: input
+    id: GoToSocial-Version
+    attributes:
+      label: What's your GoToSocial Version?
+      description: Enter the Version of your GoToSocial Installation
+      placeholder: e.g. v0.3.4
+    validations:
+      required: true
+
+  - type: input
+    id: Browser-Version
+    attributes:
+      label: Browser version
+      description: What browser(s) and versions are you using that show this bug?
+      placeholder: Firefox 103.0b9 (64-bit)
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Enter exactly what happened.
+    validations:
+      required: false
+
+  - type: textarea
+    id: what-expected
+    attributes:
+      label: What you expected to happen?
+      description: Enter what you expected to happen.
+    validations:
+      required: false
+
+  - type: textarea
+    id: how-to-reproduce
+    attributes:
+      label: How to reproduce it?
+      description: As minimally and precisely as possible.
+    validations:
+      required: false
+
+  - type: textarea
+    id: anything-else
+    attributes:
+      label: Anything else we need to know?
+    validations:
+      required: false

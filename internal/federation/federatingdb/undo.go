@@ -32,7 +32,7 @@ import (
 )
 
 func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo) error {
-	l := log.Entry{}
+	l := log.Entry{}.WithContext(ctx)
 
 	if log.Level() >= level.DEBUG {
 		i, err := marshalItem(undo)

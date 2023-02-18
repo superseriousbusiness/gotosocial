@@ -60,7 +60,7 @@ func (f *formatter) FromPlain(ctx context.Context, pmf gtsmodel.ParseMentionFunc
 	var htmlContentBytes bytes.Buffer
 	err := md.Convert([]byte(plain), &htmlContentBytes)
 	if err != nil {
-		log.Errorf("error formatting plaintext to HTML: %s", err)
+		log.Errorf(ctx, "error formatting plaintext to HTML: %s", err)
 	}
 	result.HTML = htmlContentBytes.String()
 
@@ -68,7 +68,10 @@ func (f *formatter) FromPlain(ctx context.Context, pmf gtsmodel.ParseMentionFunc
 	result.HTML = SanitizeHTML(result.HTML)
 
 	// shrink ray
-	result.HTML = minifyHTML(result.HTML)
+	result.HTML, err = m.String("text/html", result.HTML)
+	if err != nil {
+		log.Errorf(ctx, "error minifying HTML: %s", err)
+	}
 
 	return result
 }

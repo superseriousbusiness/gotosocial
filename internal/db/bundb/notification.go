@@ -94,7 +94,7 @@ func (n *notificationDB) GetNotifications(ctx context.Context, accountID string,
 		// Attempt fetch from DB
 		notif, err := n.GetNotification(ctx, id)
 		if err != nil {
-			log.Errorf("GetNotifications: error getting notification %q: %v", id, err)
+			log.Errorf(ctx, "error getting notification %q: %v", id, err)
 			continue
 		}
 

@@ -69,7 +69,8 @@ func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL,
 		if err != nil {
 			return nil, err
 		}
-		l := log.WithField("newID", i)
+		l := log.WithContext(ctx).
+			WithField("newID", i)
 		l.Debug("entering NewID")
 	}
 
@@ -304,7 +305,7 @@ func extractFromCtx(ctx context.Context) (receivingAccount, requestingAccount *g
 		var ok bool
 		receivingAccount, ok = receivingAccountI.(*gtsmodel.Account)
 		if !ok {
-			log.Panicf("extractFromCtx: context entry with key %s could not be asserted to *gtsmodel.Account", ap.ContextReceivingAccount)
+			log.Panicf(ctx, "context entry with key %s could not be asserted to *gtsmodel.Account", ap.ContextReceivingAccount)
 		}
 	}
 
@@ -313,7 +314,7 @@ func extractFromCtx(ctx context.Context) (receivingAccount, requestingAccount *g
 		var ok bool
 		requestingAccount, ok = requestingAcctI.(*gtsmodel.Account)
 		if !ok {
-			log.Panicf("extractFromCtx: context entry with key %s could not be asserted to *gtsmodel.Account", ap.ContextRequestingAccount)
+			log.Panicf(ctx, "context entry with key %s could not be asserted to *gtsmodel.Account", ap.ContextRequestingAccount)
 		}
 	}
 

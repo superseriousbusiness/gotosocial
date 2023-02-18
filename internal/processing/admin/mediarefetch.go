@@ -35,12 +35,12 @@ func (p *processor) MediaRefetch(ctx context.Context, requestingAccount *gtsmode
 	}
 
 	go func() {
-		log.Info("starting emoji refetch")
+		log.Info(ctx, "starting emoji refetch")
 		refetched, err := p.mediaManager.RefetchEmojis(context.Background(), domain, transport.DereferenceMedia)
 		if err != nil {
-			log.Errorf("error refetching emojis: %s", err)
+			log.Errorf(ctx, "error refetching emojis: %s", err)
 		} else {
-			log.Infof("refetched %d emojis from remote", refetched)
+			log.Infof(ctx, "refetched %d emojis from remote", refetched)
 		}
 	}()
 

@@ -18,16 +18,24 @@
 
 @import "modern-normalize/modern-normalize.css";
 
+/* noto-sans-regular - latin */
 @font-face {
-	font-family: "Noto Sans";
-	font-weight: 400;
-	src: url(../NotoSans-Regular.ttf) format('truetype');
+  font-family: "Noto Sans";
+  font-weight: 400;
+  font-display: swap;
+  font-style: normal;
+  src: url('../fonts/noto-sans-v27-latin-regular.woff2') format('woff2'),
+       url('../fonts/noto-sans-v27-latin-regular.woff') format('woff');
 }
 
+/* noto-sans-700 - latin */
 @font-face {
-	font-family: "Noto Sans";
-	font-weight: bold;
-	src: url(../NotoSans-Bold.ttf) format('truetype');
+  font-family: "Noto Sans";
+  font-weight: 700;
+  font-display: swap;
+  font-style: normal;
+  src: url('../fonts/noto-sans-v27-latin-700.woff2') format('woff2'),
+       url('../fonts/noto-sans-v27-latin-700.woff') format('woff');
 }
 
 /* standard border radius for nice squircles */

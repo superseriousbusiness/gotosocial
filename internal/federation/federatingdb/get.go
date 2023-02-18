@@ -33,7 +33,8 @@ import (
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, err error) {
-	l := log.WithFields(kv.Fields{{"id", id}}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{{"id", id}}...)
 	l.Debug("entering Get")
 
 	switch {

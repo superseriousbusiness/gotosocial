@@ -48,7 +48,7 @@ func (i *importer) Import(ctx context.Context, path string) error {
 		err := decoder.Decode(&entry)
 		if err != nil {
 			if err == io.EOF {
-				log.Infof("Import: reached end of file")
+				log.Infof(ctx, "reached end of file")
 				return neatClose(file)
 			}
 			return fmt.Errorf("Import: error decoding in readLoop: %s", err)
@@ -74,7 +74,7 @@ func (i *importer) inputEntry(ctx context.Context, entry transmodel.Entry) error
 		if err := i.putInDB(ctx, account); err != nil {
 			return fmt.Errorf("inputEntry: error adding account to database: %s", err)
 		}
-		log.Infof("inputEntry: added account with id %s", account.ID)
+		log.Infof(ctx, "added account with id %s", account.ID)
 		return nil
 	case transmodel.TransBlock:
 		block, err := i.blockDecode(entry)
@@ -84,7 +84,7 @@ func (i *importer) inputEntry(ctx context.Context, entry transmodel.Entry) error
 		if err := i.putInDB(ctx, block); err != nil {
 			return fmt.Errorf("inputEntry: error adding block to database: %s", err)
 		}
-		log.Infof("inputEntry: added block with id %s", block.ID)
+		log.Infof(ctx, "added block with id %s", block.ID)
 		return nil
 	case transmodel.TransDomainBlock:
 		block, err := i.domainBlockDecode(entry)
@@ -94,7 +94,7 @@ func (i *importer) inputEntry(ctx context.Context, entry transmodel.Entry) error
 		if err := i.putInDB(ctx, block); err != nil {
 			return fmt.Errorf("inputEntry: error adding domain block to database: %s", err)
 		}
-		log.Infof("inputEntry: added domain block with id %s", block.ID)
+		log.Infof(ctx, "added domain block with id %s", block.ID)
 		return nil
 	case transmodel.TransFollow:
 		follow, err := i.followDecode(entry)
@@ -104,7 +104,7 @@ func (i *importer) inputEntry(ctx context.Context, entry transmodel.Entry) error
 		if err := i.putInDB(ctx, follow); err != nil {
 			return fmt.Errorf("inputEntry: error adding follow to database: %s", err)
 		}
-		log.Infof("inputEntry: added follow with id %s", follow.ID)
+		log.Infof(ctx, "added follow with id %s", follow.ID)
 		return nil
 	case transmodel.TransFollowRequest:
 		fr, err := i.followRequestDecode(entry)
@@ -114,7 +114,7 @@ func (i *importer) inputEntry(ctx context.Context, entry transmodel.Entry) error
 		if err := i.putInDB(ctx, fr); err != nil {
 			return fmt.Errorf("inputEntry: error adding follow request to database: %s", err)
 		}
-		log.Infof("inputEntry: added follow request with id %s", fr.ID)
+		log.Infof(ctx, "added follow request with id %s", fr.ID)
 		return nil
 	case transmodel.TransInstance:
 		inst, err := i.instanceDecode(entry)
@@ -124,7 +124,7 @@ func (i *importer) inputEntry(ctx context.Context, entry transmodel.Entry) error
 		if err := i.putInDB(ctx, inst); err != nil {
 			return fmt.Errorf("inputEntry: error adding instance to database: %s", err)
 		}
-		log.Infof("inputEntry: added instance with id %s", inst.ID)
+		log.Infof(ctx, "added instance with id %s", inst.ID)
 		return nil
 	case transmodel.TransUser:
 		user, err := i.userDecode(entry)
@@ -134,11 +134,11 @@ func (i *importer) inputEntry(ctx context.Context, entry transmodel.Entry) error
 		if err := i.putInDB(ctx, user); err != nil {
 			return fmt.Errorf("inputEntry: error adding user to database: %s", err)
 		}
-		log.Infof("inputEntry: added user with id %s", user.ID)
+		log.Infof(ctx, "added user with id %s", user.ID)
 		return nil
 	}
 
-	log.Errorf("inputEntry: didn't recognize transtype '%s', skipping it", t)
+	log.Errorf(ctx, "didn't recognize transtype '%s', skipping it", t)
 	return nil
 }
 

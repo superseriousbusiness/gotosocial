@@ -146,7 +146,7 @@ func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(
 		// Set the account's related avatar
 		account.AvatarMediaAttachment, err = a.state.DB.GetAttachmentByID(ctx, account.AvatarMediaAttachmentID)
 		if err != nil {
-			log.Errorf("error getting account %s avatar: %v", account.ID, err)
+			log.Errorf(ctx, "error getting account %s avatar: %v", account.ID, err)
 		}
 	}
 
@@ -154,7 +154,7 @@ func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(
 		// Set the account's related header
 		account.HeaderMediaAttachment, err = a.state.DB.GetAttachmentByID(ctx, account.HeaderMediaAttachmentID)
 		if err != nil {
-			log.Errorf("error getting account %s header: %v", account.ID, err)
+			log.Errorf(ctx, "error getting account %s header: %v", account.ID, err)
 		}
 	}
 
@@ -162,7 +162,7 @@ func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(
 		// Set the account's related emojis
 		account.Emojis, err = a.state.DB.GetEmojisByIDs(ctx, account.EmojiIDs)
 		if err != nil {
-			log.Errorf("error getting account %s emojis: %v", account.ID, err)
+			log.Errorf(ctx, "error getting account %s emojis: %v", account.ID, err)
 		}
 	}
 
@@ -412,7 +412,7 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 					Where("? != '{}'", bun.Ident("status.attachments")).
 					Where("? != '[]'", bun.Ident("status.attachments"))
 			default:
-				log.Panic("db dialect was neither pg nor sqlite")
+				log.Panic(ctx, "db dialect was neither pg nor sqlite")
 				return q
 			}
 		})
@@ -540,7 +540,7 @@ func (a *accountDB) statusesFromIDs(ctx context.Context, statusIDs []string) ([]
 		// Fetch from status from database by ID
 		status, err := a.state.DB.GetStatusByID(ctx, id)
 		if err != nil {
-			log.Errorf("statusesFromIDs: error getting status %q: %v", id, err)
+			log.Errorf(ctx, "error getting status %q: %v", id, err)
 			continue
 		}
 

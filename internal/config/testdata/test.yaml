@@ -416,3 +416,12 @@ cache:
     account-max-size: 99
     account-ttl: "3h"
     account-sweep-freq: "1s"
+
+##################################
+##### OBSERVABILITY SETTINGS #####
+##################################
+
+# String. Header name to use to extract a request or trace ID from. Typically set by a
+# loadbalancer or proxy.
+# Default: "X-Request-Id"
+request-id-header: "X-Trace-Id"

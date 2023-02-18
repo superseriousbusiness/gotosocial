@@ -103,12 +103,12 @@ func New(ctx context.Context, database db.Basic) Server {
 
 	srv := server.NewServer(sc, manager)
 	srv.SetInternalErrorHandler(func(err error) *errors.Response {
-		log.Errorf("internal oauth error: %s", err)
+		log.Errorf(nil, "internal oauth error: %s", err)
 		return nil
 	})
 
 	srv.SetResponseErrorHandler(func(re *errors.Response) {
-		log.Errorf("internal response error: %s", re.Error)
+		log.Errorf(nil, "internal response error: %s", re.Error)
 	})
 
 	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (string, error) {
@@ -272,7 +272,7 @@ func (s *s) GenerateUserAccessToken(ctx context.Context, ti oauth2.TokenInfo, cl
 	if authToken == nil {
 		return nil, errors.New("generated auth token was empty")
 	}
-	log.Tracef("obtained auth token: %+v", authToken)
+	log.Tracef(ctx, "obtained auth token: %+v", authToken)
 
 	accessToken, err := s.server.Manager.GenerateAccessToken(ctx, oauth2.AuthorizationCode, &oauth2.TokenGenerateRequest{
 		ClientID:     authToken.GetClientID(),
@@ -287,7 +287,7 @@ func (s *s) GenerateUserAccessToken(ctx context.Context, ti oauth2.TokenInfo, cl
 	if accessToken == nil {
 		return nil, errors.New("generated user-level access token was empty")
 	}
-	log.Tracef("obtained user-level access token: %+v", accessToken)
+	log.Tracef(ctx, "obtained user-level access token: %+v", accessToken)
 	return accessToken, nil
 }
 

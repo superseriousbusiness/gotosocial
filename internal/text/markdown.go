@@ -53,7 +53,7 @@ func (f *formatter) FromMarkdown(ctx context.Context, pmf gtsmodel.ParseMentionF
 	var htmlContentBytes bytes.Buffer
 	err := md.Convert([]byte(markdownText), &htmlContentBytes)
 	if err != nil {
-		log.Errorf("error formatting markdown to HTML: %s", err)
+		log.Errorf(ctx, "error formatting markdown to HTML: %s", err)
 	}
 	result.HTML = htmlContentBytes.String()
 
@@ -61,7 +61,10 @@ func (f *formatter) FromMarkdown(ctx context.Context, pmf gtsmodel.ParseMentionF
 	result.HTML = SanitizeHTML(result.HTML)
 
 	// shrink ray
-	result.HTML = minifyHTML(result.HTML)
+	result.HTML, err = m.String("text/html", result.HTML)
+	if err != nil {
+		log.Errorf(ctx, "error minifying HTML: %s", err)
+	}
 
 	return result
 }
