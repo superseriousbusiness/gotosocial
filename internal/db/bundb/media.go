@@ -85,7 +85,7 @@ func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
 	// Attempt to delete from database.
 	if _, err := m.conn.NewDelete().
 		TableExpr("? AS ?", bun.Ident("media_attachments"), bun.Ident("media_attachment")).
-		Where("? = ?", bun.Ident("media_attachments.id"), id).
+		Where("? = ?", bun.Ident("media_attachment.id"), id).
 		Exec(ctx); err != nil {
 		return m.conn.ProcessError(err)
 	}
