@@ -78,17 +78,28 @@ import (
 	"io"
 )
 
-var necessaryChunkType = map[uint32]bool{
-	// IHDR
-	0x49484452: true,
-	// PLTE
-	0x504C5445: true,
-	// IDAT
-	0x49444154: true,
-	// IEND
-	0x49454E44: true,
-	// tRNS
-	0x74524e53: true,
+const (
+	chunkTypeIHDR = 0x49484452
+	chunkTypePLTE = 0x504C5445
+	chunkTypeIDAT = 0x49444154
+	chunkTypeIEND = 0x49454E44
+	chunkTypeTRNS = 0x74524e53
+)
+
+func isNecessaryChunkType(chunkType uint32) bool {
+	switch chunkType {
+	case chunkTypeIHDR:
+		return true
+	case chunkTypePLTE:
+		return true
+	case chunkTypeIDAT:
+		return true
+	case chunkTypeIEND:
+		return true
+	case chunkTypeTRNS:
+		return true
+	}
+	return false
 }
 
 // pngAncillaryChunkStripper wraps another io.Reader to strip ancillary chunks,
@@ -188,7 +199,7 @@ func (r *pngAncillaryChunkStripper) Read(p []byte) (int, error) {
 			// byte trailer, a checksum.
 			r.pending = int64(binary.BigEndian.Uint32(r.buffer[:4])) + 4
 			chunkType := binary.BigEndian.Uint32(r.buffer[4:])
-			r.discard = !necessaryChunkType[chunkType]
+			r.discard = !isNecessaryChunkType(chunkType)
 			if r.discard {
 				r.rIndex = r.wIndex
 			}
