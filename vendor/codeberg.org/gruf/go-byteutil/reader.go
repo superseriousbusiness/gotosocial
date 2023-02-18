@@ -25,3 +25,12 @@ func (r *Reader) Reset(b []byte) {
 func (r *Reader) Rewind() {
 	r.Reader.Reset(r.B)
 }
+
+// ReadNopCloser wraps a Reader{} to provide nop close method.
+type ReadNopCloser struct {
+	Reader
+}
+
+func (*ReadNopCloser) Close() error {
+	return nil
+}

@@ -19,7 +19,6 @@
 package transport
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"net/http"
@@ -27,6 +26,7 @@ import (
 	"strings"
 	"sync"
 
+	"codeberg.org/gruf/go-byteutil"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
@@ -75,7 +75,11 @@ func (t *transport) Deliver(ctx context.Context, b []byte, to *url.URL) error {
 
 	urlStr := to.String()
 
-	req, err := http.NewRequestWithContext(ctx, "POST", urlStr, bytes.NewReader(b))
+	// Use rewindable bytes reader for body.
+	var body byteutil.ReadNopCloser
+	body.Reset(b)
+
+	req, err := http.NewRequestWithContext(ctx, "POST", urlStr, &body)
 	if err != nil {
 		return err
 	}

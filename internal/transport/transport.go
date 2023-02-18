@@ -32,6 +32,7 @@ import (
 	"sync"
 	"time"
 
+	"codeberg.org/gruf/go-byteutil"
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-kv"
 	"github.com/go-fed/httpsig"
@@ -145,6 +146,12 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error) (*http
 		r.Header.Set("Date", now.Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
 		r.Header.Del("Signature")
 		r.Header.Del("Digest")
+
+		// Rewind body reader and content-length if set.
+		if rc, ok := r.Body.(*byteutil.ReadNopCloser); ok {
+			r.ContentLength = int64(rc.Len())
+			rc.Rewind()
+		}
 
 		// Perform request signing
 		if err := signer(r); err != nil {
