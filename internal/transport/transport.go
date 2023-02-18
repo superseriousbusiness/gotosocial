@@ -84,7 +84,7 @@ type transport struct {
 	signerMu   sync.Mutex
 }
 
-// GET will perform given http request using transport client, retrying on certain preset errors, or if status code is among retryOn.
+// GET will perform given http request using transport client, retrying on certain preset errors.
 func (t *transport) GET(r *http.Request) (*http.Response, error) {
 	if r.Method != http.MethodGet {
 		return nil, errors.New("must be GET request")
@@ -94,7 +94,7 @@ func (t *transport) GET(r *http.Request) (*http.Response, error) {
 	})
 }
 
-// POST will perform given http request using transport client, retrying on certain preset errors, or if status code is among retryOn.
+// POST will perform given http request using transport client, retrying on certain preset errors.
 func (t *transport) POST(r *http.Request, body []byte) (*http.Response, error) {
 	if r.Method != http.MethodPost {
 		return nil, errors.New("must be POST request")
@@ -116,18 +116,17 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error) (*http
 	// Get request hostname
 	host := r.URL.Hostname()
 
-	// Check if recently reached max retries for this host
-	// so we don't need to bother reattempting it. The only
-	// errors that are retried upon are server failure and
-	// domain resolution type errors, so this cached result
-	// indicates this server is likely having issues.
-	if t.controller.badHosts.Has(host) {
-		return nil, errors.New("too many failed attempts")
-	}
-
 	// Check whether request should fast fail, we check this
 	// before loop as each context.Value() requires mutex lock.
 	fastFail := IsFastfail(r.Context())
+	if !fastFail {
+		// Check if recently reached max retries for this host
+		// so we don't bother with a retry-backoff loop. The only
+		// errors that are retried upon are server failure and
+		// domain resolution type errors, so this cached result
+		// indicates this server is likely having issues.
+		fastFail = t.controller.badHosts.Has(host)
+	}
 
 	// Start a log entry for this request
 	l := log.WithFields(kv.Fields{
@@ -225,7 +224,7 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error) (*http
 		}
 	}
 
-	// Add "bad" entry for this host
+	// Add "bad" entry for this host.
 	t.controller.badHosts.Set(host, struct{}{})
 
 	return nil, errors.New("transport reached max retries")

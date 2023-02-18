@@ -49,7 +49,7 @@ func (t *transport) BatchDeliver(ctx context.Context, b []byte, recipients []*ur
 	wg.Wait()
 
 	// receive any buffered errors
-	errs := make([]string, 0, len(recipients))
+	errs := make([]string, 0, len(errCh))
 outer:
 	for {
 		select {
@@ -92,7 +92,7 @@ func (t *transport) Deliver(ctx context.Context, b []byte, to *url.URL) error {
 
 	if code := resp.StatusCode; code != http.StatusOK &&
 		code != http.StatusCreated && code != http.StatusAccepted {
-		return fmt.Errorf("POST request to %s failed (%d): %s", urlStr, resp.StatusCode, resp.Status)
+		return fmt.Errorf("POST request to %s failed: %s", urlStr, resp.Status)
 	}
 
 	return nil

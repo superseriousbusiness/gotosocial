@@ -52,7 +52,7 @@ func (t *transport) Finger(ctx context.Context, targetUsername string, targetDom
 
 	// Check for an expected status code
 	if rsp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GET request to %s failed (%d): %s", urlStr, rsp.StatusCode, rsp.Status)
+		return nil, fmt.Errorf("GET request to %s failed: %s", urlStr, rsp.Status)
 	}
 
 	return io.ReadAll(rsp.Body)

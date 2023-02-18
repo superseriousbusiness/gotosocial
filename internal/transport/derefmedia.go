@@ -46,7 +46,7 @@ func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL) (io.Read
 
 	// Check for an expected status code
 	if rsp.StatusCode != http.StatusOK {
-		return nil, 0, fmt.Errorf("GET request to %s failed (%d): %s", iriStr, rsp.StatusCode, rsp.Status)
+		return nil, 0, fmt.Errorf("GET request to %s failed: %s", iriStr, rsp.Status)
 	}
 
 	return rsp.Body, rsp.ContentLength, nil
