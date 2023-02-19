@@ -11,7 +11,10 @@ const (
 )
 
 func ScrapeHandler(reg prometheus.Gatherer) gin.HandlerFunc {
-	h := promhttp.HandlerFor(reg, promhttp.HandlerOpts{})
+	h := promhttp.HandlerFor(reg,
+		promhttp.HandlerOpts{
+			EnableOpenMetrics: true,
+		})
 	return func(c *gin.Context) {
 		h.ServeHTTP(c.Writer, c.Request)
 	}
