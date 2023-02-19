@@ -153,6 +153,11 @@ func New(cfg Config) *Client {
 // as the standard http.Client{}.Do() implementation except that response body will
 // be wrapped by an io.LimitReader() to limit response body sizes.
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
+	// Ensure this is a valid request
+	if err := ValidateRequest(req); err != nil {
+		return nil, err
+	}
+
 	// Get host's wait queue
 	wait := c.wait(req.Host)
 
@@ -196,11 +201,6 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 		case wait <- struct{}{}:
 			defer func() { <-wait }()
 		}
-	}
-
-	// Firstly, ensure this is a valid request
-	if err := ValidateRequest(req); err != nil {
-		return nil, err
 	}
 
 	// Perform the HTTP request
