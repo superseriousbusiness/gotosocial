@@ -18,21 +18,19 @@ goarch: amd64
 pkg: codeberg.org/gruf/go-mangler
 cpu: 11th Gen Intel(R) Core(TM) i7-1185G7 @ 3.00GHz
 BenchmarkMangle
-BenchmarkMangle-8                         723278              1593 ns/op            1168 B/op        120 allocs/op
+BenchmarkMangle-8                         533011              2003 ns/op            1168 B/op        120 allocs/op
+BenchmarkMangleKnown
+BenchmarkMangleKnown-8                    817060              1458 ns/op            1168 B/op        120 allocs/op
 BenchmarkJSON
-BenchmarkJSON-8                           199360              6116 ns/op            4243 B/op        142 allocs/op
-BenchmarkBinary
-BenchmarkBinary-8                         ------              ---- ns/op            ---- B/op        --- allocs/op
+BenchmarkJSON-8                           188637              5899 ns/op            4211 B/op        142 allocs/op
 BenchmarkFmt
-BenchmarkFmt-8                            168500              7111 ns/op            2256 B/op        161 allocs/op
-BenchmarkKelindarBinary
-BenchmarkKelindarBinary-8                 ------              ---- ns/op            ---- B/op        --- allocs/op
+BenchmarkFmt-8                            162735              7053 ns/op            2257 B/op        161 allocs/op
 BenchmarkFxmackerCbor
-BenchmarkFxmackerCbor-8                   361416              3255 ns/op            1495 B/op        122 allocs/op
+BenchmarkFxmackerCbor-8                   362403              3336 ns/op            1496 B/op        122 allocs/op
 BenchmarkMitchellhHashStructure
-BenchmarkMitchellhHashStructure-8         117672             10493 ns/op            8443 B/op        961 allocs/op
+BenchmarkMitchellhHashStructure-8         113982             10079 ns/op            8443 B/op        961 allocs/op
 BenchmarkCnfStructhash
-BenchmarkCnfStructhash-8                    7078            161926 ns/op          288644 B/op       5843 allocs/op
+BenchmarkCnfStructhash-8                    7162            167613 ns/op          288619 B/op       5841 allocs/op
 PASS
-ok      codeberg.org/gruf/go-mangler    14.377s
+ok      codeberg.org/gruf/go-mangler    11.352s
 ```

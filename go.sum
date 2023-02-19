@@ -49,8 +49,8 @@ codeberg.org/gruf/go-bytesize v1.0.2/go.mod h1:n/GU8HzL9f3UNp/mUKyr1qVmTlj7+xacp
 codeberg.org/gruf/go-byteutil v1.0.0/go.mod h1:cWM3tgMCroSzqoBXUXMhvxTxYJp+TbCr6ioISRY5vSU=
 codeberg.org/gruf/go-byteutil v1.1.2 h1:TQLZtTxTNca9xEfDIndmo7nBYxeS94nrv/9DS3Nk5Tw=
 codeberg.org/gruf/go-byteutil v1.1.2/go.mod h1:cWM3tgMCroSzqoBXUXMhvxTxYJp+TbCr6ioISRY5vSU=
-codeberg.org/gruf/go-cache/v3 v3.2.2 h1:hq6/RITgpcArjzbYSyo3uFxfIw7wW3KqAQjEaN7dj58=
-codeberg.org/gruf/go-cache/v3 v3.2.2/go.mod h1:+Eje6nCvN8QF71VyYjMWMnkdv6t1kHnCO/SvyC4K12Q=
+codeberg.org/gruf/go-cache/v3 v3.2.3 h1:HL7UZN9zks2lsYdGTAZONJqVd2jZtj4NgG/1qi8EcJk=
+codeberg.org/gruf/go-cache/v3 v3.2.3/go.mod h1:up7za8FtNdtttcx6AJ8ffqkrSkXDGTilsd9yJ0IyhfM=
 codeberg.org/gruf/go-debug v1.3.0 h1:PIRxQiWUFKtGOGZFdZ3Y0pqyfI0Xr87j224IYe2snZs=
 codeberg.org/gruf/go-debug v1.3.0/go.mod h1:N+vSy9uJBQgpQcJUqjctvqFz7tBHJf+S/PIjLILzpLg=
 codeberg.org/gruf/go-errors/v2 v2.0.0/go.mod h1:ZRhbdhvgoUA3Yw6e56kd9Ox984RrvbEFC2pOXyHDJP4=
@@ -67,12 +67,12 @@ codeberg.org/gruf/go-hashenc v1.0.2 h1:U3jH6zMXZiL96czD/qaJd8OR2h7LlBzGv/2WxnMHI
 codeberg.org/gruf/go-hashenc v1.0.2/go.mod h1:eK+A8clLcEN/m1nftNsRId0kfYDQnETnuIfBGZ8Gvsg=
 codeberg.org/gruf/go-iotools v0.0.0-20221224124424-3386841cb225 h1:tP9YvEBfADGG3mXkfrALLadlcbrZsFsWKZvFtUZtrt8=
 codeberg.org/gruf/go-iotools v0.0.0-20221224124424-3386841cb225/go.mod h1:B8uq4yHtIcKXhBZT9C/SYisz25lldLHMVpwZPz4ADLQ=
-codeberg.org/gruf/go-kv v1.5.2 h1:B0RkAXLUXYn3Za1NzTXOcUvAc+JUC2ZadTMkCUDa0mc=
-codeberg.org/gruf/go-kv v1.5.2/go.mod h1:al6ASW/2CbGqz2YcM8B00tvWnVi1bU1CH3HYs5tZxo4=
+codeberg.org/gruf/go-kv v1.6.0 h1:mCsERVt1Izsb0ZB7r7y/I6J/5sQhuL2Gmh/SqHWBJUY=
+codeberg.org/gruf/go-kv v1.6.0/go.mod h1:O/YkSvKiS9XsRolM3rqCd9YJmND7dAXu9z+PrlYO4bc=
 codeberg.org/gruf/go-logger/v2 v2.2.1 h1:RP2u059EQKTBFV3cN8X6xDxNk2RkzqdgXGKflKqB7Oc=
 codeberg.org/gruf/go-logger/v2 v2.2.1/go.mod h1:m/vBfG5jNUmYXI8Hg9aVSk7Pn8YgEBITQB/B/CzdRss=
-codeberg.org/gruf/go-mangler v1.2.2 h1:fisdWXa6dW4p1uYdbz5Of3R4lDDFPuRqKavGI9O03Rc=
-codeberg.org/gruf/go-mangler v1.2.2/go.mod h1:X/7URkFhLBAVKkTxmqF11Oxw3A6pSSxgPeHssQaiq28=
+codeberg.org/gruf/go-mangler v1.2.3 h1:sj0dey2lF5GRQL7fXmCY0wPNaI5JrROiThb0VDbzF8A=
+codeberg.org/gruf/go-mangler v1.2.3/go.mod h1:X/7URkFhLBAVKkTxmqF11Oxw3A6pSSxgPeHssQaiq28=
 codeberg.org/gruf/go-maps v1.0.3 h1:VDwhnnaVNUIy5O93CvkcE2IZXnMB1+IJjzfop9V12es=
 codeberg.org/gruf/go-maps v1.0.3/go.mod h1:D5LNDxlC9rsDuVQVM6JObaVGAdHB6g2dTdOdkh1aXWA=
 codeberg.org/gruf/go-mutexes v1.1.5 h1:8Y8DwCGf24MyzOSaPvLrtk/B4ecVx4z+fppL6dY+PG8=
