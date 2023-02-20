@@ -28,7 +28,7 @@
 			<h2>Admin Contact</h2>
 			{{if .instance.ContactAccount}}
 			<a href="{{.instance.ContactAccount.URL}}" class="contact-account-card">
-				<img src="{{.instance.ContactAccount.Avatar}}" alt="" />
+				<img class="avatar" src="{{.instance.ContactAccount.Avatar}}" alt="" />
 				<h3>
 					{{if .instance.ContactAccount.DisplayName}}{{emojify .instance.ContactAccount.Emojis (escape .instance.ContactAccount.DisplayName)}}{{else}}{{.instance.ContactAccount.Username}}{{end}}
 				</h3>

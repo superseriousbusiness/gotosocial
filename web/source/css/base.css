@@ -540,9 +540,10 @@ label {
 		h3 {
 			align-self: end;
 			margin: 0;
+			color: $fg;
 		}
 
-		img {
+		img.avatar {
 			border-radius: 0.5rem;
 			width: 5rem;
 			height: 5rem;
