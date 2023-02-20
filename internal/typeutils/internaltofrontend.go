@@ -268,7 +268,7 @@ func (c *converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 		disabled               bool
 		silenced               bool
 		suspended              bool
-		role                   apimodel.AccountRole = apimodel.AccountRole{Name: apimodel.AccountRoleUser} // assume user by default
+		role                   = apimodel.AccountRole{Name: apimodel.AccountRoleUser} // assume user by default
 		createdByApplicationID string
 	)
 
@@ -294,9 +294,9 @@ func (c *converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 		locale = user.Locale
 		inviteRequest = &user.Account.Reason
 		if *user.Admin {
-			role = apimodel.AccountRole{Name: apimodel.AccountRoleAdmin}
+			role.Name = apimodel.AccountRoleAdmin
 		} else if *user.Moderator {
-			role = apimodel.AccountRole{Name: apimodel.AccountRoleModerator}
+			role.Name = apimodel.AccountRoleModerator
 		}
 		confirmed = !user.ConfirmedAt.IsZero()
 		approved = *user.Approved

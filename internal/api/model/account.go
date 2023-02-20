@@ -96,7 +96,6 @@ type Account struct {
 	EnableRSS bool `json:"enable_rss,omitempty"`
 	// Role of the account on this instance.
 	// Omitted for remote accounts.
-	// example: user
 	Role *AccountRole `json:"role,omitempty"`
 }
 
@@ -215,14 +214,13 @@ type AccountDeleteRequest struct {
 
 // AccountRole models the role of an account.
 //
-// swagger:model role
+// swagger:model accountRole
 type AccountRole struct {
-	Name AccountRoleName `form:"-" json:"name,omitempty" xml:"-"`
+	Name AccountRoleName `json:"name"`
 }
 
 // AccountRoleName represent the name of the role of an account.
 //
-// swagger:enum accountRole
 // swagger:type string
 type AccountRoleName string
 
