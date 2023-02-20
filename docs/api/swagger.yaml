@@ -1375,14 +1375,14 @@ definitions:
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     instanceV1URLs:
         properties:
-            streaming:
+            streaming_api:
                 description: Websockets address for status and notification streaming.
                 example: wss://example.org
                 type: string
-                x-go-name: Streaming
-        title: InstanceV2URLs models instance-relevant URLs for client application consumption.
+                x-go-name: StreamingAPI
+        title: InstanceV1URLs models instance-relevant URLs for client application consumption.
         type: object
-        x-go-name: InstanceV2URLs
+        x-go-name: InstanceV1URLs
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     instanceV2:
         properties:
