@@ -16,6 +16,10 @@
 	--md-footer-bg-color: var(--md-default-bg-color);
 }
 
+[data-md-color-scheme="slate"] .md-nav--primary .md-nav__title {
+	background: var(--md-default-bg-color) !important;
+}
+
 .md-content {
 	background: var(--md-default-bg-color--lightest);
 }
