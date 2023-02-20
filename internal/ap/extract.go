@@ -453,6 +453,7 @@ func ExtractHashtag(i Hashtaggable) (*gtsmodel.Tag, error) {
 // ExtractEmojis returns a slice of emojis on the interface.
 func ExtractEmojis(i WithTag) ([]*gtsmodel.Emoji, error) {
 	emojis := []*gtsmodel.Emoji{}
+	emojiMap := make(map[string]*gtsmodel.Emoji)
 	tagsProp := i.GetActivityStreamsTag()
 	if tagsProp == nil {
 		return emojis, nil
@@ -477,6 +478,9 @@ func ExtractEmojis(i WithTag) ([]*gtsmodel.Emoji, error) {
 			continue
 		}
 
+		emojiMap[emoji.URI] = emoji
+	}
+	for _, emoji := range emojiMap {
 		emojis = append(emojis, emoji)
 	}
 	return emojis, nil

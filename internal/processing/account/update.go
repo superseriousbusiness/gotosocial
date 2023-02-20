@@ -45,23 +45,14 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		account.Bot = form.Bot
 	}
 
-	account.Emojis = []*gtsmodel.Emoji{}
-	account.EmojiIDs = []string{}
+	reparseEmojis := false
 
 	if form.DisplayName != nil {
 		if err := validate.DisplayName(*form.DisplayName); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err)
 		}
 		account.DisplayName = text.SanitizePlaintext(*form.DisplayName)
-	}
-
-	// Re-parse for emojis regardless of whether the DisplayName changed
-	// because we can't otherwise tell which emojis belong to DisplayName
-	// and which belong to Note
-	formatResult := p.formatter.FromPlainEmojiOnly(ctx, p.parseMention, account.ID, "", account.DisplayName)
-	for _, emoji := range formatResult.Emojis {
-		account.Emojis = append(account.Emojis, emoji)
-		account.EmojiIDs = append(account.EmojiIDs, emoji.ID)
+		reparseEmojis = true
 	}
 
 	if form.Note != nil {
@@ -71,23 +62,40 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 
 		// Set the raw note before processing
 		account.NoteRaw = *form.Note
+		reparseEmojis = true
 	}
 
-	// As per DisplayName, we need to reparse regardless to keep emojis straight
-	// Process note to generate a valid HTML representation
-	var f text.FormatFunc
-	if account.StatusFormat == "markdown" {
-		f = p.formatter.FromMarkdown
-	} else {
-		f = p.formatter.FromPlain
-	}
-	formatted := f(ctx, p.parseMention, account.ID, "", account.NoteRaw)
+	if reparseEmojis {
+		// If either DisplayName or Note changed, reparse both, because we
+		// can't otherwise tell which one each emoji belongs to.
+		// Deduplicate emojis between the two fields.
+		emojis := make(map[string]*gtsmodel.Emoji)
+		formatResult := p.formatter.FromPlainEmojiOnly(ctx, p.parseMention, account.ID, "", account.DisplayName)
+		for _, emoji := range formatResult.Emojis {
+			emojis[emoji.ID] = emoji
+		}
 
-	// Set updated HTML-ified note
-	account.Note = formatted.HTML
-	for _, emoji := range formatted.Emojis {
-		account.Emojis = append(account.Emojis, emoji)
-		account.EmojiIDs = append(account.EmojiIDs, emoji.ID)
+		// Process note to generate a valid HTML representation
+		var f text.FormatFunc
+		if account.StatusFormat == "markdown" {
+			f = p.formatter.FromMarkdown
+		} else {
+			f = p.formatter.FromPlain
+		}
+		formatted := f(ctx, p.parseMention, account.ID, "", account.NoteRaw)
+
+		// Set updated HTML-ified note
+		account.Note = formatted.HTML
+		for _, emoji := range formatted.Emojis {
+			emojis[emoji.ID] = emoji
+		}
+
+		account.Emojis = []*gtsmodel.Emoji{}
+		account.EmojiIDs = []string{}
+		for eid, emoji := range emojis {
+			account.Emojis = append(account.Emojis, emoji)
+			account.EmojiIDs = append(account.EmojiIDs, eid)
+		}
 	}
 
 	if form.Avatar != nil && form.Avatar.Size != 0 {
