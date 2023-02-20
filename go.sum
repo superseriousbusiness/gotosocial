@@ -573,10 +573,10 @@ github.com/ugorji/go/codec v1.2.7 h1:YPXUKf7fYbp/y8xloBqZOw2qaVggbfwMlI8WM3wZUJ0
 github.com/ugorji/go/codec v1.2.7/go.mod h1:WGN1fab3R1fzQlVQTkfxVtIBhWDRqOviHU95kRgeqEY=
 github.com/ulule/limiter/v3 v3.11.0 h1:9hXMyS0K8Z+EYfrtwPMwmWYflPimswsC/EOMsO2sHx4=
 github.com/ulule/limiter/v3 v3.11.0/go.mod h1:OiKIiMs9dXLMk5TwtIBZlswhPigov9fGmwO4xYbmFkY=
-github.com/uptrace/bun v1.1.10 h1:wx80lg32mWlOV1gNvmPTbR9znt6A2fYvvURzU5dzSPE=
-github.com/uptrace/bun v1.1.10/go.mod h1:pOWJSVU+W0jp3+cbn/TtHdcG/h+QxagECw4EYdKiaSw=
-github.com/uptrace/bun/dialect/pgdialect v1.1.10 h1:H25ieb5OJV5ywvKvswF++wMTnePRaGRiSNkYCRXrQxc=
-github.com/uptrace/bun/dialect/pgdialect v1.1.10/go.mod h1:leDSw/IC70/GYPIU3zC8fkOZpJaJ28f51OMT1VnZiY8=
+github.com/uptrace/bun v1.1.11 h1:PVT+DHdLX13tIJaBoT0tkjh1TOWOybW/pz3TKiOB9lo=
+github.com/uptrace/bun v1.1.11/go.mod h1:ysoB7l3gioKLBaZH9wKuJAoeBiOthb/hTyKdbXKcaxg=
+github.com/uptrace/bun/dialect/pgdialect v1.1.11 h1:z1CLRQiYtTX1Usn2OEF7EtOBYeTFJiNdTgLuXE+AZZs=
+github.com/uptrace/bun/dialect/pgdialect v1.1.11/go.mod h1:orzsx6UwNnSaTTELzLqc/XiWrR4k0Smid8Bchdg0mk4=
 github.com/uptrace/bun/dialect/sqlitedialect v1.1.10 h1:K/vpRFJc4HqVE03HeyU7TE7E/lj96s6jfj0S3KdZutU=
 github.com/uptrace/bun/dialect/sqlitedialect v1.1.10/go.mod h1:KlD+UbC5Xzd+HKGxScSgG0vPqXQttkNI3P9bN+4xDcM=
 github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6KllzawFIhcdPw=

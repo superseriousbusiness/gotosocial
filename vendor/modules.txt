@@ -643,7 +643,7 @@ github.com/ulule/limiter/v3/drivers/middleware/gin
 github.com/ulule/limiter/v3/drivers/store/common
 github.com/ulule/limiter/v3/drivers/store/memory
 github.com/ulule/limiter/v3/internal/bytebuffer
-# github.com/uptrace/bun v1.1.10
+# github.com/uptrace/bun v1.1.11
 ## explicit; go 1.18
 github.com/uptrace/bun
 github.com/uptrace/bun/dialect
@@ -655,7 +655,7 @@ github.com/uptrace/bun/internal/parser
 github.com/uptrace/bun/internal/tagparser
 github.com/uptrace/bun/migrate
 github.com/uptrace/bun/schema
-# github.com/uptrace/bun/dialect/pgdialect v1.1.10
+# github.com/uptrace/bun/dialect/pgdialect v1.1.11
 ## explicit; go 1.18
 github.com/uptrace/bun/dialect/pgdialect
 # github.com/uptrace/bun/dialect/sqlitedialect v1.1.10
