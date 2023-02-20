@@ -1,19 +1,39 @@
 site_name: GoToSocial Documentation
-theme: readthedocs
+theme:
+  name: material
+  language: en
+  font: false
+  features:
+    - header.autohide
+  palette:
+    - scheme: slate
+      toggle:
+        icon: material/brightness-7
+        name: Switch to light mode
+    - scheme: default
+      toggle:
+        icon: material/brightness-4
+        name: Switch to dark mode
 repo_url: https://github.com/superseriousbusiness/gotosocial
 edit_uri: edit/main/docs/
 copyright: GoToSocial is licensed under the GNU AGPL v3 LICENSE. Copyright (C) 2021-2023 GoToSocial Authors admin@gotosocial.org
 plugins:
-  - render_swagger
-
-markdown_extensions:
-  - markdown.extensions.admonition
-
-extra_javascript:
-  - assets/js/swagger-ui-bundle.js
+  - search:
+      lang: en
+  - social:
+      cards: true
+      cards_color:
+        fill: "#fd6a00"
+        text: "#fafaff"
+  - swagger-ui-tag:
+      supportedSubmitMethods: []
+      syntaxHighlightTheme: obsidian
 
 extra_css:
-  - assets/css/swagger-ui.css
+  - assets/css/colours.css
+
+markdown_extensions:
+  - admonition
 
 nav:
   - "Home": "index.md"
