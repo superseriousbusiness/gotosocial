@@ -13,6 +13,11 @@ copyright: GoToSocial is licensed under the GNU AGPL v3 LICENSE. Copyright (C) 2
 plugins:
   - search:
       lang: en
+  - social:
+      cards: true
+      cards_color:
+        fill: '#fd6a00'
+        text: '#fafaff'
   - swagger-ui-tag:
       supportedSubmitMethods: []
       syntaxHighlightTheme: obsidian
