@@ -502,6 +502,57 @@ label {
 	}
 }
 
+.about {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+
+	h2 {
+		margin: 0.5rem 0;
+	}
+
+	ul {
+		margin-bottom: 0;
+	}
+
+	.contact-account-card {
+		/* display: inline-grid;
+		grid-template-columns: 4rem auto;
+		grid-template-rows: 4rem;
+		gap: 1rem;
+		padding: 0.5rem; */
+		display: inline-grid;
+		grid-template-columns: auto 1fr;
+		grid-template-rows: auto auto;
+		text-decoration: none;
+		gap: 0.5rem 1rem;
+		border-radius: $br;
+		padding: 0.5rem;
+		min-width: 40%;
+		margin-bottom: 0.3rem;
+
+		background: $list-entry-bg;
+
+		&:hover {
+			background: $list-entry-alternate-bg;
+		}
+
+		h3 {
+			align-self: end;
+			margin: 0;
+			color: $fg;
+		}
+
+		img.avatar {
+			border-radius: 0.5rem;
+			width: 5rem;
+			height: 5rem;
+			object-fit: cover;
+			grid-row: 1 / span 2;
+		}
+	}
+}
+
 @media screen and (max-width: 30rem) {
 	.domain-blocklist .entry {
 		grid-template-columns: 1fr;
