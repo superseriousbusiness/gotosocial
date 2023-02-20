@@ -318,3 +318,5 @@ If you modify the GoToSocial source code, and run that modified code in a way th
 > \[I\]f you modify the Program, your modified version must prominently offer all users interacting with it remotely through a computer network (if your version supports such interaction) an opportunity to receive the Corresponding Source of your version by providing access to the Corresponding Source from a network server at no charge, through some standard or customary means of facilitating copying of software.
 
 Copyright (C) 2021-2023 GoToSocial Authors
+
+(I'm adding this here to take the crown of having the 1000th commit ~ kim)

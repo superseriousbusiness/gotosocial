@@ -151,7 +151,9 @@ func (suite *InstancePatchTestSuite) TestInstancePatch1() {
     "emojis": [],
     "fields": [],
     "enable_rss": true,
-    "role": "admin"
+    "role": {
+      "name": "admin"
+    }
   },
   "max_toot_chars": 5000
 }`, dst.String())
@@ -247,7 +249,9 @@ func (suite *InstancePatchTestSuite) TestInstancePatch2() {
     "emojis": [],
     "fields": [],
     "enable_rss": true,
-    "role": "admin"
+    "role": {
+      "name": "admin"
+    }
   },
   "max_toot_chars": 5000
 }`, dst.String())
@@ -343,7 +347,9 @@ func (suite *InstancePatchTestSuite) TestInstancePatch3() {
     "emojis": [],
     "fields": [],
     "enable_rss": true,
-    "role": "admin"
+    "role": {
+      "name": "admin"
+    }
   },
   "max_toot_chars": 5000
 }`, dst.String())
@@ -490,7 +496,9 @@ func (suite *InstancePatchTestSuite) TestInstancePatch6() {
     "emojis": [],
     "fields": [],
     "enable_rss": true,
-    "role": "admin"
+    "role": {
+      "name": "admin"
+    }
   },
   "max_toot_chars": 5000
 }`, dst.String())
@@ -609,7 +617,9 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
     "emojis": [],
     "fields": [],
     "enable_rss": true,
-    "role": "admin"
+    "role": {
+      "name": "admin"
+    }
   },
   "max_toot_chars": 5000
 }`, dst.String())
@@ -740,7 +750,9 @@ func (suite *InstancePatchTestSuite) TestInstancePatch9() {
     "emojis": [],
     "fields": [],
     "enable_rss": true,
-    "role": "admin"
+    "role": {
+      "name": "admin"
+    }
   },
   "max_toot_chars": 5000
 }`, dst.String())

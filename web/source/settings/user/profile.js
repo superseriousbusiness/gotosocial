@@ -90,7 +90,7 @@ function UserProfileForm({ data: profile }) {
 					header={form.header.previewValue ?? profile.header}
 					display_name={form.displayName.value ?? profile.username}
 					username={profile.username}
-					role={profile.role}
+					role={profile.role.name}
 				/>
 				<div className="files">
 					<div>

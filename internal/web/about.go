@@ -19,49 +19,29 @@
 package web
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 const (
-	domainBlockListPath = aboutPath + "/suspended"
+	aboutPath = "/about"
 )
 
-func (m *Module) domainBlockListGETHandler(c *gin.Context) {
-	authed, err := oauth.Authed(c, false, false, false, false)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
-
-	if !config.GetInstanceExposeSuspendedWeb() && (authed.Account == nil || authed.User == nil) {
-		err := fmt.Errorf("this instance does not expose the list of suspended domains publicly")
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
-
+func (m *Module) aboutGETHandler(c *gin.Context) {
 	instance, err := m.processor.InstanceGetV1(c.Request.Context())
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
 		return
 	}
 
-	domainBlocks, errWithCode := m.processor.InstancePeersGet(c.Request.Context(), true, false, false)
-	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-		return
-	}
-
-	c.HTML(http.StatusOK, "domain-blocklist.tmpl", gin.H{
-		"instance":  instance,
-		"ogMeta":    ogBase(instance),
-		"blocklist": domainBlocks,
+	c.HTML(http.StatusOK, "about.tmpl", gin.H{
+		"instance":         instance,
+		"ogMeta":           ogBase(instance),
+		"blocklistExposed": config.GetInstanceExposeSuspendedWeb(),
 		"stylesheets": []string{
 			assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
 		},
