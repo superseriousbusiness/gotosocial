@@ -6,7 +6,14 @@ theme:
   features:
     - header.autohide
   palette:
-    scheme: gotosocial
+    - scheme: slate
+      toggle:
+        icon: material/brightness-7
+        name: Switch to light mode
+    - scheme: default
+      toggle:
+        icon: material/brightness-4
+        name: Switch to dark mode
 repo_url: https://github.com/superseriousbusiness/gotosocial
 edit_uri: edit/main/docs/
 copyright: GoToSocial is licensed under the GNU AGPL v3 LICENSE. Copyright (C) 2021-2023 GoToSocial Authors admin@gotosocial.org
@@ -16,8 +23,8 @@ plugins:
   - social:
       cards: true
       cards_color:
-        fill: '#fd6a00'
-        text: '#fafaff'
+        fill: "#fd6a00"
+        text: "#fafaff"
   - swagger-ui-tag:
       supportedSubmitMethods: []
       syntaxHighlightTheme: obsidian
