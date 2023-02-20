@@ -34,7 +34,7 @@
             <div class="usernamecontainer">
                 <div class="username">@{{ .account.Username }}@{{ .instance.AccountDomain }}</div>
                 {{- /* Only render account role if 1. it's present and 2. it's not equal to the standard 'user' role */ -}}
-                {{ if and (.account.Role) (ne .account.Role "user") }}<div class="role {{ .account.Role }}">{{ .account.Role }}</div>{{ end }}
+                {{ if and (.account.Role) (ne .account.Role.Name "user") }}<div class="role {{ .account.Role.Name }}">{{ .account.Role.Name }}</div>{{ end }}
             </div>
         </div>
         <div class="detailed">
