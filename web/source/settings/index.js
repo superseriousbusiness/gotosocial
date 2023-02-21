@@ -55,7 +55,7 @@ const nav = {
 const { sidebar, panelRouter } = require("./lib/get-views")(nav);
 
 function App({ account }) {
-	const isAdmin = account.role == "admin";
+	const isAdmin = account.role.name == "admin";
 	const [logoutQuery] = query.useLogoutMutation();
 
 	return (

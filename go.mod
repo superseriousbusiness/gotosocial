@@ -4,12 +4,12 @@ go 1.19
 
 require (
 	codeberg.org/gruf/go-bytesize v1.0.2
-	codeberg.org/gruf/go-byteutil v1.0.2
-	codeberg.org/gruf/go-cache/v3 v3.2.2
+	codeberg.org/gruf/go-byteutil v1.1.2
+	codeberg.org/gruf/go-cache/v3 v3.2.3
 	codeberg.org/gruf/go-debug v1.3.0
 	codeberg.org/gruf/go-errors/v2 v2.1.1
 	codeberg.org/gruf/go-fastcopy v1.1.2
-	codeberg.org/gruf/go-kv v1.5.2
+	codeberg.org/gruf/go-kv v1.6.0
 	codeberg.org/gruf/go-logger/v2 v2.2.1
 	codeberg.org/gruf/go-mutexes v1.1.5
 	codeberg.org/gruf/go-runners v1.6.0
@@ -52,10 +52,10 @@ require (
 	github.com/wagslane/go-password-validator v0.3.0
 	github.com/yuin/goldmark v1.5.4
 	go.uber.org/automaxprocs v1.5.1
-	golang.org/x/crypto v0.5.0
+	golang.org/x/crypto v0.6.0
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
-	golang.org/x/image v0.4.0
-	golang.org/x/net v0.5.0
+	golang.org/x/image v0.5.0
+	golang.org/x/net v0.7.0
 	golang.org/x/oauth2 v0.4.0
 	golang.org/x/text v0.7.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
@@ -72,7 +72,7 @@ require (
 	codeberg.org/gruf/go-fastpath/v2 v2.0.0 // indirect
 	codeberg.org/gruf/go-hashenc v1.0.2 // indirect
 	codeberg.org/gruf/go-iotools v0.0.0-20221224124424-3386841cb225 // indirect
-	codeberg.org/gruf/go-mangler v1.2.2 // indirect
+	codeberg.org/gruf/go-mangler v1.2.3 // indirect
 	codeberg.org/gruf/go-maps v1.0.3 // indirect
 	codeberg.org/gruf/go-pools v1.1.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
@@ -145,7 +145,7 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220907135952-02c991387e35 // indirect
-	golang.org/x/sys v0.4.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect

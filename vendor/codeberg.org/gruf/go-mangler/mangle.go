@@ -1,19 +1,13 @@
 package mangler
 
 import (
-	"encoding/binary"
 	"reflect"
 	"sync"
 	"unsafe"
 )
 
-var (
-	// manglers is a map of runtime type ptrs => Mangler functions.
-	manglers = sync.Map{}
-
-	// bin is a short-hand for our chosen byteorder encoding.
-	bin = binary.LittleEndian
-)
+// manglers is a map of runtime type ptrs => Mangler functions.
+var manglers sync.Map
 
 // Mangled is an interface that allows any type to implement a custom
 // Mangler function to improve performance when mangling this type.
@@ -142,9 +136,15 @@ func Append(b []byte, a any) []byte {
 // - float32,float64
 // - complex64,complex128
 // - all type aliases of above
-// - time.Time{}, *url.URL{}
+// - time.Time{}
+// - url.URL{}
+// - net.IPAddr{}
+// - netip.Addr{}, netip.AddrPort{}
 // - mangler.Mangled{}
+// - fmt.Stringer{}
+// - json.Marshaler{}
 // - encoding.BinaryMarshaler{}
+// - encoding.TextMarshaler{}
 // - all pointers to the above
 // - all slices / arrays of the above
 // - all map keys / values of the above

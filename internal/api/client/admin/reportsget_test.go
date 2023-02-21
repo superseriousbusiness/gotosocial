@@ -156,7 +156,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
       "ips": [],
       "locale": "",
       "invite_request": null,
-      "role": "user",
+      "role": {
+        "name": "user"
+      },
       "confirmed": false,
       "approved": false,
       "disabled": false,
@@ -195,7 +197,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
       "ips": [],
       "locale": "en",
       "invite_request": "",
-      "role": "user",
+      "role": {
+        "name": "user"
+      },
       "confirmed": true,
       "approved": true,
       "disabled": false,
@@ -222,7 +226,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
         "last_status_at": "2021-10-20T10:40:37.000Z",
         "emojis": [],
         "fields": [],
-        "role": "user"
+        "role": {
+          "name": "user"
+        }
       },
       "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
     },
@@ -236,7 +242,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
       "ips": [],
       "locale": "en",
       "invite_request": "",
-      "role": "admin",
+      "role": {
+        "name": "admin"
+      },
       "confirmed": true,
       "approved": true,
       "disabled": false,
@@ -264,7 +272,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
         "emojis": [],
         "fields": [],
         "enable_rss": true,
-        "role": "admin"
+        "role": {
+          "name": "admin"
+        }
       },
       "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F"
     },
@@ -278,7 +288,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
       "ips": [],
       "locale": "en",
       "invite_request": "",
-      "role": "admin",
+      "role": {
+        "name": "admin"
+      },
       "confirmed": true,
       "approved": true,
       "disabled": false,
@@ -306,7 +318,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
         "emojis": [],
         "fields": [],
         "enable_rss": true,
-        "role": "admin"
+        "role": {
+          "name": "admin"
+        }
       },
       "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F"
     },
@@ -333,7 +347,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
       "ips": [],
       "locale": "en",
       "invite_request": "",
-      "role": "user",
+      "role": {
+        "name": "user"
+      },
       "confirmed": true,
       "approved": true,
       "disabled": false,
@@ -360,7 +376,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
         "last_status_at": "2021-10-20T10:40:37.000Z",
         "emojis": [],
         "fields": [],
-        "role": "user"
+        "role": {
+          "name": "user"
+        }
       },
       "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
     },
@@ -374,7 +392,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
       "ips": [],
       "locale": "",
       "invite_request": null,
-      "role": "user",
+      "role": {
+        "name": "user"
+      },
       "confirmed": false,
       "approved": false,
       "disabled": false,
@@ -528,7 +548,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet2() {
       "ips": [],
       "locale": "en",
       "invite_request": "",
-      "role": "user",
+      "role": {
+        "name": "user"
+      },
       "confirmed": true,
       "approved": true,
       "disabled": false,
@@ -555,7 +577,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet2() {
         "last_status_at": "2021-10-20T10:40:37.000Z",
         "emojis": [],
         "fields": [],
-        "role": "user"
+        "role": {
+          "name": "user"
+        }
       },
       "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
     },
@@ -569,7 +593,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet2() {
       "ips": [],
       "locale": "",
       "invite_request": null,
-      "role": "user",
+      "role": {
+        "name": "user"
+      },
       "confirmed": false,
       "approved": false,
       "disabled": false,
@@ -723,7 +749,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet3() {
       "ips": [],
       "locale": "en",
       "invite_request": "",
-      "role": "user",
+      "role": {
+        "name": "user"
+      },
       "confirmed": true,
       "approved": true,
       "disabled": false,
@@ -750,7 +778,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet3() {
         "last_status_at": "2021-10-20T10:40:37.000Z",
         "emojis": [],
         "fields": [],
-        "role": "user"
+        "role": {
+          "name": "user"
+        }
       },
       "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
     },
@@ -764,7 +794,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet3() {
       "ips": [],
       "locale": "",
       "invite_request": null,
-      "role": "user",
+      "role": {
+        "name": "user"
+      },
       "confirmed": false,
       "approved": false,
       "disabled": false,

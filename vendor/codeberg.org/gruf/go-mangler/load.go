@@ -1,10 +1,7 @@
 package mangler
 
 import (
-	"encoding"
-	"net/url"
 	"reflect"
-	"time"
 )
 
 // loadMangler is the top-most Mangler load function. It guarantees that a Mangler
@@ -13,6 +10,11 @@ func loadMangler(a any, t reflect.Type) Mangler {
 	// Load mangler function
 	mng, rmng := load(a, t)
 
+	if mng != nil {
+		// Use preferred mangler.
+		return mng
+	}
+
 	if rmng != nil {
 		// Wrap reflect mangler to handle iface
 		return func(buf []byte, a any) []byte {
@@ -20,12 +22,8 @@ func loadMangler(a any, t reflect.Type) Mangler {
 		}
 	}
 
-	if mng == nil {
-		// No mangler function could be determined
-		panic("cannot mangle type: " + t.String())
-	}
-
-	return mng
+	// No mangler function could be determined
+	panic("cannot mangle type: " + t.String())
 }
 
 // load will load a Mangler or reflect Mangler for given type and iface 'a'.
@@ -42,41 +40,33 @@ func load(a any, t reflect.Type) (Mangler, rMangler) {
 		a = v.Interface()
 	}
 
-	// Check in fast iface type switch
-	if mng := loadIface(a); mng != nil {
+	// Check for Mangled implementation.
+	if _, ok := a.(Mangled); ok {
+		return mangle_mangled, nil
+	}
+
+	// Search mangler by reflection.
+	mng, rmng := loadReflect(t)
+	if mng != nil {
 		return mng, nil
 	}
 
-	// Search by reflection
-	return loadReflect(t)
+	// Prefer iface mangler, else, reflected.
+	return loadIface(a), rmng
 }
 
-// loadIface is used as a first-resort interface{} type switcher loader
-// for types implementing Mangled and providing performant alternative
-// Mangler functions for standard library types to avoid reflection.
+// loadIface is used as a near-last-resort interface{} type switch
+// loader for types implementating other known (slower) functions.
 func loadIface(a any) Mangler {
 	switch a.(type) {
-	case Mangled:
-		return mangle_mangled
-
-	case time.Time:
-		return mangle_time
-
-	case *time.Time:
-		return mangle_time_ptr
-
-	case *url.URL:
-		return mangle_stringer
-
-	case encoding.BinaryMarshaler:
+	case binarymarshaler:
 		return mangle_binary
-
-	// NOTE:
-	// we don't just handle ALL fmt.Stringer types as often
-	// the output is large and unwieldy and this interface
-	// switch is for types it would be faster to avoid reflection.
-	// If they want better performance they can implement Mangled{}.
-
+	case stringer:
+		return mangle_stringer
+	case textmarshaler:
+		return mangle_text
+	case jsonmarshaler:
+		return mangle_json
 	default:
 		return nil
 	}
@@ -159,18 +149,19 @@ func loadReflectPtr(et reflect.Type) (Mangler, rMangler) {
 	}
 
 	if et.Kind() == reflect.Array {
+		// Array elem type
+		at := et.Elem()
+
 		// Special case of addressable (sliceable) array
-		if mng := loadReflectKnownSlice(et); mng != nil {
-			if count == 1 {
-				return mng, nil
-			}
-			return nil, deref_ptr_mangler(mng, count-1)
+		if mng := loadReflectKnownSlice(at); mng != nil {
+			rmng := array_to_slice_mangler(mng)
+			return nil, deref_ptr_rmangler(rmng, count)
 		}
 
 		// Look for an array mangler function, this will
 		// access elements by index using reflect.Value and
 		// pass each one to a separate mangler function.
-		if rmng := loadReflectArray(et); rmng != nil {
+		if rmng := loadReflectArray(at); rmng != nil {
 			return nil, deref_ptr_rmangler(rmng, count)
 		}
 
@@ -321,14 +312,14 @@ func loadReflectMap(kt, vt reflect.Type) rMangler {
 	mng, rmng = load(nil, vt)
 
 	switch {
-	// Wrap key mangler to reflect
+	// Wrap value mangler to reflect
 	case mng != nil:
 		mng := mng // take our own ptr
 		vmng = func(buf []byte, v reflect.Value) []byte {
 			return mng(buf, v.Interface())
 		}
 
-	// Use reflect key mangler as-is
+	// Use reflect value mangler as-is
 	case rmng != nil:
 		vmng = rmng
 

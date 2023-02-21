@@ -53,7 +53,7 @@ const (
 	// OOBURI is the out-of-band oauth token uri
 	OOBURI = "urn:ietf:wg:oauth:2.0:oob"
 	// OOBTokenPath is the path to redirect out-of-band token requests to.
-	OOBTokenPath = "/oob"
+	OOBTokenPath = "/oauth/oob" // #nosec G101 else we get a hardcoded credentials warning
 	// HelpfulAdvice is a handy hint to users;
 	// particularly important during the login flow
 	HelpfulAdvice = "If you arrived at this error during a login/oauth flow, please try clearing your session cookies and logging in again; if problems persist, make sure you're using the correct credentials"

@@ -256,12 +256,7 @@ definitions:
                 type: string
                 x-go-name: Note
             role:
-                description: |-
-                    Role of the account on this instance.
-                    Omitted for remote accounts.
-                example: user
-                type: string
-                x-go-name: Role
+                $ref: '#/definitions/accountRole'
             source:
                 $ref: '#/definitions/Source'
             statuses_count:
@@ -346,6 +341,15 @@ definitions:
         type: object
         x-go-name: Relationship
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    accountRole:
+        properties:
+            name:
+                type: string
+                x-go-name: Name
+        title: AccountRole models the role of an account.
+        type: object
+        x-go-name: AccountRole
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     adminAccountInfo:
         properties:
             account:
@@ -423,9 +427,7 @@ definitions:
                 type: string
                 x-go-name: Locale
             role:
-                description: The current role of the account.
-                type: string
-                x-go-name: Role
+                $ref: '#/definitions/accountRole'
             silenced:
                 description: Whether the account is currently silenced
                 type: boolean
@@ -1373,14 +1375,14 @@ definitions:
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     instanceV1URLs:
         properties:
-            streaming:
+            streaming_api:
                 description: Websockets address for status and notification streaming.
                 example: wss://example.org
                 type: string
-                x-go-name: Streaming
-        title: InstanceV2URLs models instance-relevant URLs for client application consumption.
+                x-go-name: StreamingAPI
+        title: InstanceV1URLs models instance-relevant URLs for client application consumption.
         type: object
-        x-go-name: InstanceV2URLs
+        x-go-name: InstanceV1URLs
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     instanceV2:
         properties:

@@ -243,7 +243,8 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	}
 	status.URI = uriProp.GetIRI().String()
 
-	l := log.WithField("statusURI", status.URI)
+	l := log.WithContext(ctx).
+		WithField("statusURI", status.URI)
 
 	// web url for viewing this status
 	if statusURL, err := ap.ExtractURL(statusable); err == nil {

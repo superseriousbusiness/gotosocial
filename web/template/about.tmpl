@@ -1,0 +1,85 @@
+{{- /*
+	GoToSocial
+	Copyright (C) 2021-2023 GoToSocial Authors admin@gotosocial.org
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU Affero General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU Affero General Public License for more details.
+
+	You should have received a copy of the GNU Affero General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/ -}}
+
+{{ template "header.tmpl" .}}
+<main>
+	<section class="about">
+		<h1>About</h1>
+		<div>
+			{{.instance.Description |noescape}}
+		</div>
+
+		<div>
+			<h2>Admin Contact</h2>
+			{{if .instance.ContactAccount}}
+			<a href="{{.instance.ContactAccount.URL}}" class="contact-account-card">
+				<img class="avatar" src="{{.instance.ContactAccount.Avatar}}" alt="" />
+				<h3>
+					{{if .instance.ContactAccount.DisplayName}}{{emojify .instance.ContactAccount.Emojis (escape .instance.ContactAccount.DisplayName)}}{{else}}{{.instance.ContactAccount.Username}}{{end}}
+				</h3>
+				<span>@{{.instance.ContactAccount.Username}}</span>
+			</a><br />
+			{{end}}
+			{{if .instance.Email}}
+			Email: <a href="mailto:{{.instance.Email}}">{{.instance.Email}}</a>
+			{{end}}
+		</div>
+
+		<div>
+			<h2>Features</h2>
+			<ul>
+				<li>
+					Registration is
+					{{if .instance.Registrations}}
+					enabled{{if .instance.ApprovalRequired}}, but requires admin approval{{end}}.
+					{{else}}
+					disabled.
+					{{end}}
+				</li>
+				{{if .instance.Configuration.Accounts.AllowCustomCSS}}
+				<li>
+					Users are allowed to set <a href="https://docs.gotosocial.org/en/latest/user_guide/custom_css/"
+						target="_blank" rel="noopener noreferrer">Custom CSS</a> for their profiles.
+				</li>
+				{{end}}
+				<li>
+					Toots can contain up to {{.instance.Configuration.Statuses.MaxCharacters}} characters and
+					{{.instance.Configuration.Statuses.MaxMediaAttachments}} media attachments.
+				</li>
+				<li>
+					Polls can have up to {{.instance.Configuration.Polls.MaxOptions}} options, with
+					{{.instance.Configuration.Polls.MaxCharactersPerOption}} characters each.
+				</li>
+			</ul>
+		</div>
+		<div>
+			<h2>Moderated servers</h2>
+			<p>
+				ActivityPub instances exchange (federate) data with other servers, including accounts and toots.
+				This can be prevented for specific domains by suspending them. None of their content is stored,
+				and interaction with their users is blocked both ways.</br>
+				{{if .blocklistExposed}}
+				<a href="/about/suspended">View the list of suspended domains</a>
+				{{else}}
+				This instance does not publically share this list.
+				{{end}}
+			</p>
+		</div>
+	</section>
+</main>
+{{ template "footer.tmpl" .}}

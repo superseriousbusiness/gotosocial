@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	domainBlockListPath = "/about/suspended"
+	domainBlockListPath = aboutPath + "/suspended"
 )
 
 func (m *Module) domainBlockListGETHandler(c *gin.Context) {

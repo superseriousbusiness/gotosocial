@@ -35,7 +35,8 @@ func (f *federatingDB) Announce(ctx context.Context, announce vocab.ActivityStre
 		if err != nil {
 			return err
 		}
-		l := log.WithField("announce", i)
+		l := log.WithContext(ctx).
+			WithField("announce", i)
 		l.Debug("entering Announce")
 	}
 

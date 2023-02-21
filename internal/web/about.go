@@ -16,44 +16,35 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package transport
+package web
 
 import (
-	"context"
-	"fmt"
-	"io"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-func (t *transport) Finger(ctx context.Context, targetUsername string, targetDomain string) ([]byte, error) {
-	// Prepare URL string
-	urlStr := "https://" +
-		targetDomain +
-		"/.well-known/webfinger?resource=acct:" +
-		targetUsername + "@" + targetDomain
+const (
+	aboutPath = "/about"
+)
 
-	// Generate new GET request from URL string
-	req, err := http.NewRequestWithContext(ctx, "GET", urlStr, nil)
+func (m *Module) aboutGETHandler(c *gin.Context) {
+	instance, err := m.processor.InstanceGetV1(c.Request.Context())
 	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Accept", string(apiutil.AppJSON))
-	req.Header.Add("Accept", "application/jrd+json")
-	req.Header.Set("Host", req.URL.Host)
-
-	// Perform the HTTP request
-	rsp, err := t.GET(req)
-	if err != nil {
-		return nil, err
-	}
-	defer rsp.Body.Close()
-
-	// Check for an expected status code
-	if rsp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GET request to %s failed: %s", urlStr, rsp.Status)
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
+		return
 	}
 
-	return io.ReadAll(rsp.Body)
+	c.HTML(http.StatusOK, "about.tmpl", gin.H{
+		"instance":         instance,
+		"ogMeta":           ogBase(instance),
+		"blocklistExposed": config.GetInstanceExposeSuspendedWeb(),
+		"stylesheets": []string{
+			assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
+		},
+		"javascript": []string{distPathPrefix + "/frontend.js"},
+	})
 }

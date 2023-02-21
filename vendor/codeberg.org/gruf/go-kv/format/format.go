@@ -166,21 +166,21 @@ func (f format) AppendByte(b byte) {
 	// Always quoted
 	case f.Key():
 		f.Buffer.B = append(f.Buffer.B, '\'')
-		f.Buffer.B = append(f.Buffer.B, byte2str(b)...)
+		f.Buffer.B = append(f.Buffer.B, Byte2Str(b)...)
 		f.Buffer.B = append(f.Buffer.B, '\'')
 
 	// Always quoted ASCII with type
 	case f.Verbose():
 		f._AppendPrimitiveTyped(func(f format) {
 			f.Buffer.B = append(f.Buffer.B, '\'')
-			f.Buffer.B = append(f.Buffer.B, byte2str(b)...)
+			f.Buffer.B = append(f.Buffer.B, Byte2Str(b)...)
 			f.Buffer.B = append(f.Buffer.B, '\'')
 		})
 
 	// Always quoted
 	case f.Value():
 		f.Buffer.B = append(f.Buffer.B, '\'')
-		f.Buffer.B = append(f.Buffer.B, byte2str(b)...)
+		f.Buffer.B = append(f.Buffer.B, Byte2Str(b)...)
 		f.Buffer.B = append(f.Buffer.B, '\'')
 
 	// Append as raw byte
@@ -195,16 +195,16 @@ func (f format) AppendBytes(b []byte) {
 	case b == nil:
 		f.AppendNil()
 
-	// Handle bytes as string key
+	// Quoted only if spaces/requires escaping
 	case f.Key():
-		f.AppendStringKey(b2s(b))
+		f.AppendStringSafe(b2s(b))
 
 	// Append as separate ASCII quoted bytes in slice
 	case f.Verbose():
 		f._AppendArrayTyped(func(f format) {
 			for i := 0; i < len(b); i++ {
 				f.Buffer.B = append(f.Buffer.B, '\'')
-				f.Buffer.B = append(f.Buffer.B, byte2str(b[i])...)
+				f.Buffer.B = append(f.Buffer.B, Byte2Str(b[i])...)
 				f.Buffer.B = append(f.Buffer.B, `',`...)
 			}
 			if len(b) > 0 {
@@ -212,9 +212,9 @@ func (f format) AppendBytes(b []byte) {
 			}
 		})
 
-	// Append as quoted string
+	// Quoted only if spaces/requires escaping
 	case f.Value():
-		f.AppendStringQuoted(b2s(b))
+		f.AppendStringSafe(b2s(b))
 
 	// Append as raw bytes
 	default:
@@ -260,9 +260,9 @@ func (f format) AppendRunes(r []rune) {
 	case r == nil:
 		f.AppendNil()
 
-	// Handle bytes as string key
+	// Quoted only if spaces/requires escaping
 	case f.Key():
-		f.AppendStringKey(string(r))
+		f.AppendStringSafe(string(r))
 
 	// Append as separate ASCII quoted bytes in slice
 	case f.Verbose():
@@ -276,9 +276,9 @@ func (f format) AppendRunes(r []rune) {
 			}
 		})
 
-	// Append as quoted string
+	// Quoted only if spaces/requires escaping
 	case f.Value():
-		f.AppendStringQuoted(string(r))
+		f.AppendStringSafe(string(r))
 
 	// Append as raw bytes
 	default:
@@ -292,7 +292,7 @@ func (f format) AppendString(s string) {
 	switch {
 	// Quoted only if spaces/requires escaping
 	case f.Key():
-		f.AppendStringKey(s)
+		f.AppendStringSafe(s)
 
 	// Always quoted with type
 	case f.Verbose():
@@ -300,9 +300,9 @@ func (f format) AppendString(s string) {
 			f.AppendStringQuoted(s)
 		})
 
-	// Always quoted string
+	// Quoted only if spaces/requires escaping
 	case f.Value():
-		f.AppendStringQuoted(s)
+		f.AppendStringSafe(s)
 
 	// All else
 	default:
@@ -310,15 +310,15 @@ func (f format) AppendString(s string) {
 	}
 }
 
-func (f format) AppendStringKey(s string) {
-	if len(s) > SingleTermLine || !strconv.CanBackquote(s) {
+func (f format) AppendStringSafe(s string) {
+	if len(s) > SingleTermLine || !IsSafeASCII(s) {
 		// Requires quoting AND escaping
 		f.Buffer.B = strconv.AppendQuote(f.Buffer.B, s)
 	} else if ContainsDoubleQuote(s) {
 		// Contains double quotes, needs escaping
 		f.Buffer.B = AppendEscape(f.Buffer.B, s)
-	} else if len(s) < 1 || ContainsSpaceOrTab(s) {
-		// Contains space, needs quotes
+	} else if len(s) == 0 || ContainsSpaceOrTab(s) {
+		// Contains space / empty, needs quotes
 		f.Buffer.B = append(f.Buffer.B, '"')
 		f.Buffer.B = append(f.Buffer.B, s...)
 		f.Buffer.B = append(f.Buffer.B, '"')
@@ -329,7 +329,7 @@ func (f format) AppendStringKey(s string) {
 }
 
 func (f format) AppendStringQuoted(s string) {
-	if len(s) > SingleTermLine || !strconv.CanBackquote(s) {
+	if len(s) > SingleTermLine || !IsSafeASCII(s) {
 		// Requires quoting AND escaping
 		f.Buffer.B = strconv.AppendQuote(f.Buffer.B, s)
 	} else if ContainsDoubleQuote(s) {
@@ -760,7 +760,7 @@ func (f format) AppendStructFields(v reflect.Value, t reflect.Type) {
 		tfield := t.Field(i)
 
 		// Append field name
-		f.AppendStringKey(tfield.Name)
+		f.AppendStringSafe(tfield.Name)
 		f.Buffer.B = append(f.Buffer.B, '=')
 		f.SetValue().AppendInterfaceOrReflectNext(vfield, tfield.Type)
 
@@ -811,7 +811,7 @@ func (f format) _AppendMethodType(method func() string, i interface{}) (ok bool)
 	switch {
 	// Append as key formatted
 	case f.Key():
-		f.AppendStringKey(result)
+		f.AppendStringSafe(result)
 
 	// Append as always quoted
 	case f.Value():
@@ -889,34 +889,4 @@ func (f format) _AppendFieldType(appendFields func(format)) {
 	f.Buffer.B = append(f.Buffer.B, '{')
 	appendFields(f)
 	f.Buffer.B = append(f.Buffer.B, '}')
-}
-
-// byte2str returns 'c' as a string, escaping if necessary.
-func byte2str(c byte) string {
-	switch c {
-	case '\a':
-		return `\a`
-	case '\b':
-		return `\b`
-	case '\f':
-		return `\f`
-	case '\n':
-		return `\n`
-	case '\r':
-		return `\r`
-	case '\t':
-		return `\t`
-	case '\v':
-		return `\v`
-	case '\'':
-		return `\\`
-	default:
-		if c < ' ' {
-			const hex = "0123456789abcdef"
-			return `\x` +
-				string(hex[c>>4]) +
-				string(hex[c&0xF])
-		}
-		return string(c)
-	}
 }
