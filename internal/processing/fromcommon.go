@@ -97,7 +97,7 @@ func (p *Processor) notifyStatus(ctx context.Context, status *gtsmodel.Status) e
 			return fmt.Errorf("notifyStatus: error converting notification to api representation: %s", err)
 		}
 
-		if err := p.StreamNotification(apiNotif, m.TargetAccount); err != nil {
+		if err := p.stream.Notify(apiNotif, m.TargetAccount); err != nil {
 			return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
 		}
 	}
@@ -139,7 +139,7 @@ func (p *Processor) notifyFollowRequest(ctx context.Context, followRequest *gtsm
 		return fmt.Errorf("notifyStatus: error converting notification to api representation: %s", err)
 	}
 
-	if err := p.StreamNotification(apiNotif, targetAccount); err != nil {
+	if err := p.stream.Notify(apiNotif, targetAccount); err != nil {
 		return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
 	}
 
@@ -180,7 +180,7 @@ func (p *Processor) notifyFollow(ctx context.Context, follow *gtsmodel.Follow, t
 		return fmt.Errorf("notifyStatus: error converting notification to api representation: %s", err)
 	}
 
-	if err := p.StreamNotification(apiNotif, targetAccount); err != nil {
+	if err := p.stream.Notify(apiNotif, targetAccount); err != nil {
 		return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
 	}
 
@@ -228,7 +228,7 @@ func (p *Processor) notifyFave(ctx context.Context, fave *gtsmodel.StatusFave) e
 		return fmt.Errorf("notifyStatus: error converting notification to api representation: %s", err)
 	}
 
-	if err := p.StreamNotification(apiNotif, targetAccount); err != nil {
+	if err := p.stream.Notify(apiNotif, targetAccount); err != nil {
 		return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
 	}
 
@@ -302,7 +302,7 @@ func (p *Processor) notifyAnnounce(ctx context.Context, status *gtsmodel.Status)
 		return fmt.Errorf("notifyStatus: error converting notification to api representation: %s", err)
 	}
 
-	if err := p.StreamNotification(apiNotif, status.BoostOfAccount); err != nil {
+	if err := p.stream.Notify(apiNotif, status.BoostOfAccount); err != nil {
 		return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
 	}
 
@@ -406,7 +406,7 @@ func (p *Processor) timelineStatusForAccount(ctx context.Context, status *gtsmod
 			return
 		}
 
-		if err := p.StreamUpdate(apiStatus, timelineAccount, stream.TimelineHome); err != nil {
+		if err := p.stream.Update(apiStatus, timelineAccount, stream.TimelineHome); err != nil {
 			errors <- fmt.Errorf("timelineStatusForAccount: error streaming status %s: %s", status.ID, err)
 		}
 	}
@@ -419,7 +419,7 @@ func (p *Processor) deleteStatusFromTimelines(ctx context.Context, status *gtsmo
 		return err
 	}
 
-	return p.StreamDelete(status.ID)
+	return p.stream.Delete(status.ID)
 }
 
 // wipeStatus contains common logic used to totally delete a status
@@ -432,13 +432,13 @@ func (p *Processor) wipeStatus(ctx context.Context, statusToDelete *gtsmodel.Sta
 	// to another status immediately (in case of delete + redraft)
 	if deleteAttachments {
 		for _, a := range statusToDelete.AttachmentIDs {
-			if err := p.MediaDelete(ctx, a); err != nil {
+			if err := p.media.Delete(ctx, a); err != nil {
 				return err
 			}
 		}
 	} else {
 		for _, a := range statusToDelete.AttachmentIDs {
-			if _, err := p.MediaUnattach(ctx, statusToDelete.Account, a); err != nil {
+			if _, err := p.media.Unattach(ctx, statusToDelete.Account, a); err != nil {
 				return err
 			}
 		}

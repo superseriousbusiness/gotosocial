@@ -34,7 +34,7 @@ type StreamTestSuite struct {
 	db           db.DB
 	oauthServer  oauth.Server
 
-	streamProcessor stream.StreamProcessor
+	streamProcessor stream.Processor
 }
 
 func (suite *StreamTestSuite) SetupTest() {

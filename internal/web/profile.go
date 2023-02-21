@@ -66,7 +66,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		return instance, nil
 	}
 
-	account, errWithCode := m.processor.AccountGetLocalByUsername(ctx, authed.Account, username)
+	account, errWithCode := m.processor.Account().GetLocalByUsername(ctx, authed.Account, username)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, instanceGet)
 		return
@@ -102,7 +102,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		showBackToTop = true
 	}
 
-	statusResp, errWithCode := m.processor.AccountWebStatusesGet(ctx, account.ID, maxStatusID)
+	statusResp, errWithCode := m.processor.Account().WebStatusesGet(ctx, account.ID, maxStatusID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, instanceGet)
 		return
@@ -142,7 +142,7 @@ func (m *Module) returnAPProfile(ctx context.Context, c *gin.Context, username s
 		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeySignature, signature)
 	}
 
-	user, errWithCode := m.processor.FediUserGet(ctx, username, c.Request.URL)
+	user, errWithCode := m.processor.Fedi().UserGet(ctx, username, c.Request.URL)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1) //nolint:contextcheck
 		return

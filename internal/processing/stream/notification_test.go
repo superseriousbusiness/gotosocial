@@ -36,7 +36,7 @@ type NotificationTestSuite struct {
 func (suite *NotificationTestSuite) TestStreamNotification() {
 	account := suite.testAccounts["local_account_1"]
 
-	openStream, errWithCode := suite.streamProcessor.StreamOpen(context.Background(), account, "user")
+	openStream, errWithCode := suite.streamProcessor.Open(context.Background(), account, "user")
 	suite.NoError(errWithCode)
 
 	followAccount := suite.testAccounts["remote_account_1"]
@@ -50,7 +50,7 @@ func (suite *NotificationTestSuite) TestStreamNotification() {
 		Account:   followAccountAPIModel,
 	}
 
-	err = suite.streamProcessor.StreamNotification(notification, account)
+	err = suite.streamProcessor.Notify(notification, account)
 	suite.NoError(err)
 
 	msg := <-openStream.Messages

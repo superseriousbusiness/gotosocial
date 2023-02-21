@@ -36,7 +36,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *AdminProcessor) AdminEmojiCreate(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, gtserror.WithCode) {
+// EmojiCreate creates a custom emoji on this instance.
+func (p *Processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, gtserror.WithCode) {
 	if !*user.Admin {
 		return nil, gtserror.NewErrorUnauthorized(fmt.Errorf("user %s not an admin", user.ID), "user is not an admin")
 	}
@@ -92,7 +93,19 @@ func (p *AdminProcessor) AdminEmojiCreate(ctx context.Context, account *gtsmodel
 	return &apiEmoji, nil
 }
 
-func (p *AdminProcessor) AdminEmojisGet(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
+// EmojisGet returns an admin view of custom emojis, filtered with the given parameters.
+func (p *Processor) EmojisGet(
+	ctx context.Context,
+	account *gtsmodel.Account,
+	user *gtsmodel.User,
+	domain string,
+	includeDisabled bool,
+	includeEnabled bool,
+	shortcode string,
+	maxShortcodeDomain string,
+	minShortcodeDomain string,
+	limit int,
+) (*apimodel.PageableResponse, gtserror.WithCode) {
 	if !*user.Admin {
 		return nil, gtserror.NewErrorUnauthorized(fmt.Errorf("user %s not an admin", user.ID), "user is not an admin")
 	}
@@ -157,7 +170,8 @@ func (p *AdminProcessor) AdminEmojisGet(ctx context.Context, account *gtsmodel.A
 	})
 }
 
-func (p *AdminProcessor) AdminEmojiGet(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, id string) (*apimodel.AdminEmoji, gtserror.WithCode) {
+// EmojiGet returns the admin view of one custom emoji with the given id.
+func (p *Processor) EmojiGet(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, id string) (*apimodel.AdminEmoji, gtserror.WithCode) {
 	if !*user.Admin {
 		return nil, gtserror.NewErrorUnauthorized(fmt.Errorf("user %s not an admin", user.ID), "user is not an admin")
 	}
@@ -181,7 +195,8 @@ func (p *AdminProcessor) AdminEmojiGet(ctx context.Context, account *gtsmodel.Ac
 	return adminEmoji, nil
 }
 
-func (p *AdminProcessor) AdminEmojiDelete(ctx context.Context, id string) (*apimodel.AdminEmoji, gtserror.WithCode) {
+// EmojiDelete deletes one emoji from the database, with the given id.
+func (p *Processor) EmojiDelete(ctx context.Context, id string) (*apimodel.AdminEmoji, gtserror.WithCode) {
 	emoji, err := p.db.GetEmojiByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, db.ErrNoEntries) {
@@ -211,7 +226,8 @@ func (p *AdminProcessor) AdminEmojiDelete(ctx context.Context, id string) (*apim
 	return adminEmoji, nil
 }
 
-func (p *AdminProcessor) AdminEmojiUpdate(ctx context.Context, id string, form *apimodel.EmojiUpdateRequest) (*apimodel.AdminEmoji, gtserror.WithCode) {
+// EmojiUpdate updates one emoji with the given id, using the provided form parameters.
+func (p *Processor) EmojiUpdate(ctx context.Context, id string, form *apimodel.EmojiUpdateRequest) (*apimodel.AdminEmoji, gtserror.WithCode) {
 	emoji, err := p.db.GetEmojiByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, db.ErrNoEntries) {
@@ -235,7 +251,8 @@ func (p *AdminProcessor) AdminEmojiUpdate(ctx context.Context, id string, form *
 	}
 }
 
-func (p *AdminProcessor) AdminEmojiCategoriesGet(ctx context.Context) ([]*apimodel.EmojiCategory, gtserror.WithCode) {
+// EmojiCategoriesGet returns all custom emoji categories that exist on this instance.
+func (p *Processor) EmojiCategoriesGet(ctx context.Context) ([]*apimodel.EmojiCategory, gtserror.WithCode) {
 	categories, err := p.db.GetEmojiCategories(ctx)
 	if err != nil {
 		err := fmt.Errorf("EmojiCategoriesGet: db error: %s", err)
@@ -255,7 +272,11 @@ func (p *AdminProcessor) AdminEmojiCategoriesGet(ctx context.Context) ([]*apimod
 	return apiCategories, nil
 }
 
-func (p *AdminProcessor) getOrCreateEmojiCategory(ctx context.Context, name string) (*gtsmodel.EmojiCategory, error) {
+/*
+	UTIL FUNCTIONS
+*/
+
+func (p *Processor) getOrCreateEmojiCategory(ctx context.Context, name string) (*gtsmodel.EmojiCategory, error) {
 	category, err := p.db.GetEmojiCategoryByName(ctx, name)
 	if err == nil {
 		return category, nil
@@ -287,7 +308,7 @@ func (p *AdminProcessor) getOrCreateEmojiCategory(ctx context.Context, name stri
 }
 
 // copy an emoji from remote to local
-func (p *AdminProcessor) emojiUpdateCopy(ctx context.Context, emoji *gtsmodel.Emoji, shortcode *string, categoryName *string) (*apimodel.AdminEmoji, gtserror.WithCode) {
+func (p *Processor) emojiUpdateCopy(ctx context.Context, emoji *gtsmodel.Emoji, shortcode *string, categoryName *string) (*apimodel.AdminEmoji, gtserror.WithCode) {
 	if emoji.Domain == "" {
 		err := fmt.Errorf("emojiUpdateCopy: emoji %s is not a remote emoji, cannot copy it to local", emoji.ID)
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
@@ -357,7 +378,7 @@ func (p *AdminProcessor) emojiUpdateCopy(ctx context.Context, emoji *gtsmodel.Em
 }
 
 // disable a remote emoji
-func (p *AdminProcessor) emojiUpdateDisable(ctx context.Context, emoji *gtsmodel.Emoji) (*apimodel.AdminEmoji, gtserror.WithCode) {
+func (p *Processor) emojiUpdateDisable(ctx context.Context, emoji *gtsmodel.Emoji) (*apimodel.AdminEmoji, gtserror.WithCode) {
 	if emoji.Domain == "" {
 		err := fmt.Errorf("emojiUpdateDisable: emoji %s is not a remote emoji, cannot disable it via this endpoint", emoji.ID)
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
@@ -381,7 +402,7 @@ func (p *AdminProcessor) emojiUpdateDisable(ctx context.Context, emoji *gtsmodel
 }
 
 // modify a local emoji
-func (p *AdminProcessor) emojiUpdateModify(ctx context.Context, emoji *gtsmodel.Emoji, image *multipart.FileHeader, categoryName *string) (*apimodel.AdminEmoji, gtserror.WithCode) {
+func (p *Processor) emojiUpdateModify(ctx context.Context, emoji *gtsmodel.Emoji, image *multipart.FileHeader, categoryName *string) (*apimodel.AdminEmoji, gtserror.WithCode) {
 	if emoji.Domain != "" {
 		err := fmt.Errorf("emojiUpdateModify: emoji %s is not a local emoji, cannot do a modify action on it", emoji.ID)
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())

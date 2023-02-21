@@ -26,7 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
-type MediaProcessor struct { //nolint:revive
+type Processor struct {
 	tc                  typeutils.TypeConverter
 	mediaManager        media.Manager
 	transportController transport.Controller
@@ -35,8 +35,8 @@ type MediaProcessor struct { //nolint:revive
 }
 
 // New returns a new media processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, transportController transport.Controller, storage *storage.Driver) MediaProcessor {
-	return MediaProcessor{
+func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, transportController transport.Controller, storage *storage.Driver) Processor {
+	return Processor{
 		tc:                  tc,
 		mediaManager:        mediaManager,
 		transportController: transportController,

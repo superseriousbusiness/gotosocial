@@ -30,8 +30,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
-// StatusBookmark adds a bookmark for the requestingAccount, targeting the given status (no-op if bookmark already exists).
-func (p *StatusProcessor) StatusBookmark(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+// BookmarkCreate adds a bookmark for the requestingAccount, targeting the given status (no-op if bookmark already exists).
+func (p *Processor) BookmarkCreate(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
 	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
@@ -81,8 +81,8 @@ func (p *StatusProcessor) StatusBookmark(ctx context.Context, requestingAccount 
 	return apiStatus, nil
 }
 
-// StatusUnbookmark removes a bookmark for the requesting account, targeting the given status (no-op if bookmark doesn't exist).
-func (p *StatusProcessor) StatusUnbookmark(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+// BookmarkRemove removes a bookmark for the requesting account, targeting the given status (no-op if bookmark doesn't exist).
+func (p *Processor) BookmarkRemove(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
 	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))

@@ -30,7 +30,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *ReportProcessor) ReportGet(ctx context.Context, account *gtsmodel.Account, id string) (*apimodel.Report, gtserror.WithCode) {
+// Get returns the user view of a moderation report, with the given id.
+func (p *Processor) Get(ctx context.Context, account *gtsmodel.Account, id string) (*apimodel.Report, gtserror.WithCode) {
 	report, err := p.db.GetReportByID(ctx, id)
 	if err != nil {
 		if err == db.ErrNoEntries {
@@ -52,7 +53,17 @@ func (p *ReportProcessor) ReportGet(ctx context.Context, account *gtsmodel.Accou
 	return apiReport, nil
 }
 
-func (p *ReportProcessor) ReportsGet(ctx context.Context, account *gtsmodel.Account, resolved *bool, targetAccountID string, maxID string, sinceID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
+// GetMultiple returns multiple reports created by the given account, filtered according to the provided parameters.
+func (p *Processor) GetMultiple(
+	ctx context.Context,
+	account *gtsmodel.Account,
+	resolved *bool,
+	targetAccountID string,
+	maxID string,
+	sinceID string,
+	minID string,
+	limit int,
+) (*apimodel.PageableResponse, gtserror.WithCode) {
 	reports, err := p.db.GetReports(ctx, resolved, account.ID, targetAccountID, maxID, sinceID, minID, limit)
 	if err != nil {
 		if err == db.ErrNoEntries {

@@ -30,8 +30,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
-// StatusDelete processes the delete of a given status, returning the deleted status if the delete goes through.
-func (p *StatusProcessor) StatusDelete(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+// Delete processes the delete of a given status, returning the deleted status if the delete goes through.
+func (p *Processor) Delete(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
 	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))

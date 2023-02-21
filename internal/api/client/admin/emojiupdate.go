@@ -156,7 +156,7 @@ func (m *Module) EmojiPATCHHandler(c *gin.Context) {
 		return
 	}
 
-	emoji, errWithCode := m.processor.AdminEmojiUpdate(c.Request.Context(), emojiID, form)
+	emoji, errWithCode := m.processor.Admin().EmojiUpdate(c.Request.Context(), emojiID, form)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

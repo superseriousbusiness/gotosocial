@@ -31,8 +31,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
 )
 
-// StreamOpen returns a new Stream for the given account, which will contain a channel for passing messages back to the caller.
-func (p *StreamProcessor) StreamOpen(ctx context.Context, account *gtsmodel.Account, streamTimeline string) (*stream.Stream, gtserror.WithCode) {
+// Open returns a new Stream for the given account, which will contain a channel for passing messages back to the caller.
+func (p *Processor) Open(ctx context.Context, account *gtsmodel.Account, streamTimeline string) (*stream.Stream, gtserror.WithCode) {
 	l := log.WithContext(ctx).WithFields(kv.Fields{
 		{"account", account.ID},
 		{"streamType", streamTimeline},
@@ -83,7 +83,7 @@ func (p *StreamProcessor) StreamOpen(ctx context.Context, account *gtsmodel.Acco
 // waitToCloseStream waits until the hangup channel is closed for the given stream.
 // It then iterates through the map of streams stored by the processor, removes the stream from it,
 // and then closes the messages channel of the stream to indicate that the channel should no longer be read from.
-func (p *StreamProcessor) waitToCloseStream(account *gtsmodel.Account, thisStream *stream.Stream) {
+func (p *Processor) waitToCloseStream(account *gtsmodel.Account, thisStream *stream.Stream) {
 	<-thisStream.Hangup // wait for a hangup message
 
 	// lock the stream to prevent more messages being put in it while we work

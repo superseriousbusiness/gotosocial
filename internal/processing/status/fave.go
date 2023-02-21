@@ -33,8 +33,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-// StatusFave processes the faving of a given status, returning the updated status if the fave goes through.
-func (p *StatusProcessor) StatusFave(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+// FaveCreate processes the faving of a given status, returning the updated status if the fave goes through.
+func (p *Processor) FaveCreate(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
 	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
@@ -100,8 +100,8 @@ func (p *StatusProcessor) StatusFave(ctx context.Context, requestingAccount *gts
 	return apiStatus, nil
 }
 
-// StatusUnfave processes the unfaving of a given status, returning the updated status if the fave goes through.
-func (p *StatusProcessor) StatusUnfave(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+// FaveRemove processes the unfaving of a given status, returning the updated status if the fave goes through.
+func (p *Processor) FaveRemove(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
 	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
@@ -160,8 +160,8 @@ func (p *StatusProcessor) StatusUnfave(ctx context.Context, requestingAccount *g
 	return apiStatus, nil
 }
 
-// StatusFavedBy returns a slice of accounts that have liked the given status, filtered according to privacy settings.
-func (p *StatusProcessor) StatusFavedBy(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) ([]*apimodel.Account, gtserror.WithCode) {
+// FavedBy returns a slice of accounts that have liked the given status, filtered according to privacy settings.
+func (p *Processor) FavedBy(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) ([]*apimodel.Account, gtserror.WithCode) {
 	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))

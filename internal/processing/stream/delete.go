@@ -25,8 +25,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
 )
 
-// StreamDelete streams the delete of the given statusID to *ALL* open streams.
-func (p *StreamProcessor) StreamDelete(statusID string) error {
+// Delete streams the delete of the given statusID to *ALL* open streams.
+func (p *Processor) Delete(statusID string) error {
 	errs := []string{}
 
 	// get all account IDs with open streams
@@ -43,7 +43,7 @@ func (p *StreamProcessor) StreamDelete(statusID string) error {
 
 	// stream the delete to every account
 	for _, accountID := range accountIDs {
-		if err := p.streamToAccount(statusID, stream.EventTypeDelete, stream.AllStatusTimelines, accountID); err != nil {
+		if err := p.toAccount(statusID, stream.EventTypeDelete, stream.AllStatusTimelines, accountID); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}

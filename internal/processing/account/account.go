@@ -31,10 +31,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
 
-// AccountProcessor wraps functionality for updating, creating, and deleting accounts in response to API requests.
+// Processor wraps functionality for updating, creating, and deleting accounts in response to API requests.
 //
 // It also contains logic for actions towards accounts such as following, blocking, seeing follows, etc.
-type AccountProcessor struct { //nolint:revive
+type Processor struct {
 	tc           typeutils.TypeConverter
 	mediaManager media.Manager
 	clientWorker *concurrency.WorkerPool[messages.FromClientAPI]
@@ -55,8 +55,8 @@ func New(
 	clientWorker *concurrency.WorkerPool[messages.FromClientAPI],
 	federator federation.Federator,
 	parseMention gtsmodel.ParseMentionFunc,
-) AccountProcessor {
-	return AccountProcessor{
+) Processor {
+	return Processor{
 		tc:           tc,
 		mediaManager: mediaManager,
 		clientWorker: clientWorker,

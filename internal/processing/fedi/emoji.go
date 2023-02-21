@@ -27,8 +27,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-// FediEmojiGet handles the GET for a federated emoji originating from this instance.
-func (p *FediProcessor) FediEmojiGet(ctx context.Context, requestedEmojiID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
+// EmojiGet handles the GET for a federated emoji originating from this instance.
+func (p *Processor) EmojiGet(ctx context.Context, requestedEmojiID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
 	if _, errWithCode := p.federator.AuthenticateFederatedRequest(ctx, ""); errWithCode != nil {
 		return nil, errWithCode
 	}

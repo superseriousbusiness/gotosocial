@@ -31,7 +31,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *AdminProcessor) AdminReportsGet(
+// ReportsGet returns all reports stored on this instance, with the given parameters.
+func (p *Processor) ReportsGet(
 	ctx context.Context,
 	account *gtsmodel.Account,
 	resolved *bool,
@@ -92,7 +93,8 @@ func (p *AdminProcessor) AdminReportsGet(
 	})
 }
 
-func (p *AdminProcessor) AdminReportGet(ctx context.Context, account *gtsmodel.Account, id string) (*apimodel.AdminReport, gtserror.WithCode) {
+// ReportGet returns one report, with the given ID.
+func (p *Processor) ReportGet(ctx context.Context, account *gtsmodel.Account, id string) (*apimodel.AdminReport, gtserror.WithCode) {
 	report, err := p.db.GetReportByID(ctx, id)
 	if err != nil {
 		if err == db.ErrNoEntries {
@@ -109,7 +111,8 @@ func (p *AdminProcessor) AdminReportGet(ctx context.Context, account *gtsmodel.A
 	return apimodelReport, nil
 }
 
-func (p *AdminProcessor) AdminReportResolve(ctx context.Context, account *gtsmodel.Account, id string, actionTakenComment *string) (*apimodel.AdminReport, gtserror.WithCode) {
+// ReportResolve marks a report with the given id as resolved, and stores the provided actionTakenComment (if not null).
+func (p *Processor) ReportResolve(ctx context.Context, account *gtsmodel.Account, id string, actionTakenComment *string) (*apimodel.AdminReport, gtserror.WithCode) {
 	report, err := p.db.GetReportByID(ctx, id)
 	if err != nil {
 		if err == db.ErrNoEntries {

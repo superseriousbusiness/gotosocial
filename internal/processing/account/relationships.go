@@ -29,8 +29,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// AccountFollowersGet fetches a list of the target account's followers.
-func (p *AccountProcessor) AccountFollowersGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) ([]apimodel.Account, gtserror.WithCode) {
+// FollowersGet fetches a list of the target account's followers.
+func (p *Processor) FollowersGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) ([]apimodel.Account, gtserror.WithCode) {
 	if blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	} else if blocked {
@@ -75,8 +75,8 @@ func (p *AccountProcessor) AccountFollowersGet(ctx context.Context, requestingAc
 	return accounts, nil
 }
 
-// AccountFollowingGet fetches a list of the accounts that target account is following.
-func (p *AccountProcessor) AccountFollowingGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) ([]apimodel.Account, gtserror.WithCode) {
+// FollowingGet fetches a list of the accounts that target account is following.
+func (p *Processor) FollowingGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) ([]apimodel.Account, gtserror.WithCode) {
 	if blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	} else if blocked {
@@ -121,8 +121,8 @@ func (p *AccountProcessor) AccountFollowingGet(ctx context.Context, requestingAc
 	return accounts, nil
 }
 
-// AccountRelationshipGet returns a relationship model describing the relationship of the targetAccount to the Authed account.
-func (p *AccountProcessor) AccountRelationshipGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
+// RelationshipGet returns a relationship model describing the relationship of the targetAccount to the Authed account.
+func (p *Processor) RelationshipGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
 	if requestingAccount == nil {
 		return nil, gtserror.NewErrorForbidden(errors.New("not authed"))
 	}

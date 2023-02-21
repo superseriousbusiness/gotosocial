@@ -99,7 +99,7 @@ func (m *Module) rssFeedGETHandler(c *gin.Context) {
 	ifNoneMatch := c.Request.Header.Get(ifNoneMatchHeader)
 	ifModifiedSince := extractIfModifiedSince(c.Request)
 
-	getRssFeed, accountLastPostedPublic, errWithCode := m.processor.AccountGetRSSFeedForUsername(ctx, username)
+	getRssFeed, accountLastPostedPublic, errWithCode := m.processor.Account().GetRSSFeedForUsername(ctx, username)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

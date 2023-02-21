@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
-type AdminProcessor struct { //nolint:revive
+type Processor struct {
 	tc                  typeutils.TypeConverter
 	mediaManager        media.Manager
 	transportController transport.Controller
@@ -38,8 +38,8 @@ type AdminProcessor struct { //nolint:revive
 }
 
 // New returns a new admin processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, transportController transport.Controller, storage *storage.Driver, clientWorker *concurrency.WorkerPool[messages.FromClientAPI]) AdminProcessor {
-	return AdminProcessor{
+func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, transportController transport.Controller, storage *storage.Driver, clientWorker *concurrency.WorkerPool[messages.FromClientAPI]) Processor {
+	return Processor{
 		tc:                  tc,
 		mediaManager:        mediaManager,
 		transportController: transportController,

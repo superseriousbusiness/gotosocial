@@ -27,8 +27,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// StreamAuthorize returns an oauth2 token info in response to an access token query from the streaming API
-func (p *StreamProcessor) StreamAuthorize(ctx context.Context, accessToken string) (*gtsmodel.Account, gtserror.WithCode) {
+// Authorize returns an oauth2 token info in response to an access token query from the streaming API
+func (p *Processor) Authorize(ctx context.Context, accessToken string) (*gtsmodel.Account, gtserror.WithCode) {
 	ti, err := p.oauthServer.LoadAccessToken(ctx, accessToken)
 	if err != nil {
 		err := fmt.Errorf("could not load access token: %s", err)

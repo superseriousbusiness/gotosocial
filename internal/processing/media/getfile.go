@@ -33,43 +33,15 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-// ParseMediaType converts s to a recognized MediaType, or returns an error if unrecognized
-func parseMediaType(s string) (media.Type, error) {
-	switch s {
-	case string(media.TypeAttachment):
-		return media.TypeAttachment, nil
-	case string(media.TypeHeader):
-		return media.TypeHeader, nil
-	case string(media.TypeAvatar):
-		return media.TypeAvatar, nil
-	case string(media.TypeEmoji):
-		return media.TypeEmoji, nil
-	}
-	return "", fmt.Errorf("%s not a recognized media.Type", s)
-}
-
-// ParseMediaSize converts s to a recognized MediaSize, or returns an error if unrecognized
-func parseMediaSize(s string) (media.Size, error) {
-	switch s {
-	case string(media.SizeSmall):
-		return media.SizeSmall, nil
-	case string(media.SizeOriginal):
-		return media.SizeOriginal, nil
-	case string(media.SizeStatic):
-		return media.SizeStatic, nil
-	}
-	return "", fmt.Errorf("%s not a recognized media.Size", s)
-}
-
-// MediaGetFile retrieves a file from storage and streams it back to the caller via an io.reader embedded in *apimodel.Content.
-func (p *MediaProcessor) MediaGetFile(ctx context.Context, requestingAccount *gtsmodel.Account, form *apimodel.GetContentRequestForm) (*apimodel.Content, gtserror.WithCode) {
+// GetFile retrieves a file from storage and streams it back to the caller via an io.reader embedded in *apimodel.Content.
+func (p *Processor) GetFile(ctx context.Context, requestingAccount *gtsmodel.Account, form *apimodel.GetContentRequestForm) (*apimodel.Content, gtserror.WithCode) {
 	// parse the form fields
-	mediaSize, err := parseMediaSize(form.MediaSize)
+	mediaSize, err := parseSize(form.MediaSize)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("media size %s not valid", form.MediaSize))
 	}
 
-	mediaType, err := parseMediaType(form.MediaType)
+	mediaType, err := parseType(form.MediaType)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("media type %s not valid", form.MediaType))
 	}
@@ -113,7 +85,37 @@ func (p *MediaProcessor) MediaGetFile(ctx context.Context, requestingAccount *gt
 	}
 }
 
-func (p *MediaProcessor) getAttachmentContent(ctx context.Context, requestingAccount *gtsmodel.Account, wantedMediaID string, owningAccountID string, mediaSize media.Size) (*apimodel.Content, gtserror.WithCode) {
+/*
+	UTIL FUNCTIONS
+*/
+
+func parseType(s string) (media.Type, error) {
+	switch s {
+	case string(media.TypeAttachment):
+		return media.TypeAttachment, nil
+	case string(media.TypeHeader):
+		return media.TypeHeader, nil
+	case string(media.TypeAvatar):
+		return media.TypeAvatar, nil
+	case string(media.TypeEmoji):
+		return media.TypeEmoji, nil
+	}
+	return "", fmt.Errorf("%s not a recognized media.Type", s)
+}
+
+func parseSize(s string) (media.Size, error) {
+	switch s {
+	case string(media.SizeSmall):
+		return media.SizeSmall, nil
+	case string(media.SizeOriginal):
+		return media.SizeOriginal, nil
+	case string(media.SizeStatic):
+		return media.SizeStatic, nil
+	}
+	return "", fmt.Errorf("%s not a recognized media.Size", s)
+}
+
+func (p *Processor) getAttachmentContent(ctx context.Context, requestingAccount *gtsmodel.Account, wantedMediaID string, owningAccountID string, mediaSize media.Size) (*apimodel.Content, gtserror.WithCode) {
 	// retrieve attachment from the database and do basic checks on it
 	a, err := p.db.GetAttachmentByID(ctx, wantedMediaID)
 	if err != nil {
@@ -197,7 +199,7 @@ func (p *MediaProcessor) getAttachmentContent(ctx context.Context, requestingAcc
 	return p.retrieveFromStorage(ctx, storagePath, attachmentContent)
 }
 
-func (p *MediaProcessor) getEmojiContent(ctx context.Context, fileName string, owningAccountID string, emojiSize media.Size) (*apimodel.Content, gtserror.WithCode) {
+func (p *Processor) getEmojiContent(ctx context.Context, fileName string, owningAccountID string, emojiSize media.Size) (*apimodel.Content, gtserror.WithCode) {
 	emojiContent := &apimodel.Content{}
 	var storagePath string
 
@@ -232,7 +234,7 @@ func (p *MediaProcessor) getEmojiContent(ctx context.Context, fileName string, o
 	return p.retrieveFromStorage(ctx, storagePath, emojiContent)
 }
 
-func (p *MediaProcessor) retrieveFromStorage(ctx context.Context, storagePath string, content *apimodel.Content) (*apimodel.Content, gtserror.WithCode) {
+func (p *Processor) retrieveFromStorage(ctx context.Context, storagePath string, content *apimodel.Content) (*apimodel.Content, gtserror.WithCode) {
 	// If running on S3 storage with proxying disabled then
 	// just fetch a pre-signed URL instead of serving the content.
 	if url := p.storage.URL(ctx, storagePath); url != nil {

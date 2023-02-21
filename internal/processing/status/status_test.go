@@ -58,7 +58,7 @@ type StatusStandardTestSuite struct {
 	testMentions     map[string]*gtsmodel.Mention
 
 	// module being tested
-	status status.StatusProcessor
+	status status.Processor
 }
 
 func (suite *StatusStandardTestSuite) SetupSuite() {

@@ -35,7 +35,7 @@ type ChangePasswordTestSuite struct {
 func (suite *ChangePasswordTestSuite) TestChangePasswordOK() {
 	user := suite.testUsers["local_account_1"]
 
-	errWithCode := suite.user.UserPasswordChange(context.Background(), user, "password", "verygoodnewpassword")
+	errWithCode := suite.user.PasswordChange(context.Background(), user, "password", "verygoodnewpassword")
 	suite.NoError(errWithCode)
 
 	err := bcrypt.CompareHashAndPassword([]byte(user.EncryptedPassword), []byte("verygoodnewpassword"))
@@ -54,7 +54,7 @@ func (suite *ChangePasswordTestSuite) TestChangePasswordOK() {
 func (suite *ChangePasswordTestSuite) TestChangePasswordIncorrectOld() {
 	user := suite.testUsers["local_account_1"]
 
-	errWithCode := suite.user.UserPasswordChange(context.Background(), user, "ooooopsydoooopsy", "verygoodnewpassword")
+	errWithCode := suite.user.PasswordChange(context.Background(), user, "ooooopsydoooopsy", "verygoodnewpassword")
 	suite.EqualError(errWithCode, "crypto/bcrypt: hashedPassword is not the hash of the given password")
 	suite.Equal(http.StatusUnauthorized, errWithCode.Code())
 	suite.Equal("Unauthorized: old password was incorrect", errWithCode.Safe())
@@ -72,7 +72,7 @@ func (suite *ChangePasswordTestSuite) TestChangePasswordIncorrectOld() {
 func (suite *ChangePasswordTestSuite) TestChangePasswordWeakNew() {
 	user := suite.testUsers["local_account_1"]
 
-	errWithCode := suite.user.UserPasswordChange(context.Background(), user, "password", "1234")
+	errWithCode := suite.user.PasswordChange(context.Background(), user, "password", "1234")
 	suite.EqualError(errWithCode, "password is only 11% strength, try including more special characters, using lowercase letters, using uppercase letters or using a longer password")
 	suite.Equal(http.StatusBadRequest, errWithCode.Code())
 	suite.Equal("Bad Request: password is only 11% strength, try including more special characters, using lowercase letters, using uppercase letters or using a longer password", errWithCode.Safe())

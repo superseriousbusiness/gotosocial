@@ -62,7 +62,7 @@ type AccountStandardTestSuite struct {
 	testStatuses     map[string]*gtsmodel.Status
 
 	// module being tested
-	accountProcessor account.AccountProcessor
+	accountProcessor account.Processor
 }
 
 func (suite *AccountStandardTestSuite) SetupSuite() {

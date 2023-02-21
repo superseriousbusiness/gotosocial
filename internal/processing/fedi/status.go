@@ -30,9 +30,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
-// FediStatusGet handles the getting of a fedi/activitypub representation of a particular status, performing appropriate
+// StatusGet handles the getting of a fedi/activitypub representation of a particular status, performing appropriate
 // authentication before returning a JSON serializable interface to the caller.
-func (p *FediProcessor) FediStatusGet(ctx context.Context, requestedUsername string, requestedStatusID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
+func (p *Processor) StatusGet(ctx context.Context, requestedUsername string, requestedStatusID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
 	// get the account the request is referring to
 	requestedAccount, err := p.db.GetAccountByUsernameDomain(ctx, requestedUsername, "")
 	if err != nil {
@@ -97,7 +97,7 @@ func (p *FediProcessor) FediStatusGet(ctx context.Context, requestedUsername str
 
 // GetStatus handles the getting of a fedi/activitypub representation of replies to a status, performing appropriate
 // authentication before returning a JSON serializable interface to the caller.
-func (p *FediProcessor) FediStatusRepliesGet(ctx context.Context, requestedUsername string, requestedStatusID string, page bool, onlyOtherAccounts bool, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
+func (p *Processor) StatusRepliesGet(ctx context.Context, requestedUsername string, requestedStatusID string, page bool, onlyOtherAccounts bool, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
 	// get the account the request is referring to
 	requestedAccount, err := p.db.GetAccountByUsernameDomain(ctx, requestedUsername, "")
 	if err != nil {

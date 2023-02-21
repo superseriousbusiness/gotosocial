@@ -198,7 +198,7 @@ func (m *Module) EmojisGETHandler(c *gin.Context) {
 		includeEnabled = true
 	}
 
-	resp, errWithCode := m.processor.AdminEmojisGet(c.Request.Context(), authed.Account, authed.User, domain, includeDisabled, includeEnabled, shortcode, maxShortcodeDomain, minShortcodeDomain, limit)
+	resp, errWithCode := m.processor.Admin().EmojisGet(c.Request.Context(), authed.Account, authed.User, domain, includeDisabled, includeEnabled, shortcode, maxShortcodeDomain, minShortcodeDomain, limit)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

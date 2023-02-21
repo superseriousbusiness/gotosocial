@@ -45,8 +45,8 @@ var (
 	nodeInfoMetadata  = make(map[string]interface{})
 )
 
-// FediNodeInfoRelGet returns a well known response giving the path to node info.
-func (p *FediProcessor) FediNodeInfoRelGet(ctx context.Context) (*apimodel.WellKnownResponse, gtserror.WithCode) {
+// NodeInfoRelGet returns a well known response giving the path to node info.
+func (p *Processor) NodeInfoRelGet(ctx context.Context) (*apimodel.WellKnownResponse, gtserror.WithCode) {
 	protocol := config.GetProtocol()
 	host := config.GetHost()
 
@@ -60,8 +60,8 @@ func (p *FediProcessor) FediNodeInfoRelGet(ctx context.Context) (*apimodel.WellK
 	}, nil
 }
 
-// FediNodeInfoGet returns a node info struct in response to a node info request.
-func (p *FediProcessor) FediNodeInfoGet(ctx context.Context) (*apimodel.Nodeinfo, gtserror.WithCode) {
+// NodeInfoGet returns a node info struct in response to a node info request.
+func (p *Processor) NodeInfoGet(ctx context.Context) (*apimodel.Nodeinfo, gtserror.WithCode) {
 	host := config.GetHost()
 
 	userCount, err := p.db.CountInstanceUsers(ctx, host)
@@ -96,8 +96,8 @@ func (p *FediProcessor) FediNodeInfoGet(ctx context.Context) (*apimodel.Nodeinfo
 	}, nil
 }
 
-// FediWebfingerGet handles the GET for a webfinger resource. Most commonly, it will be used for returning account lookups.
-func (p *FediProcessor) FediWebfingerGet(ctx context.Context, requestedUsername string) (*apimodel.WellKnownResponse, gtserror.WithCode) {
+// WebfingerGet handles the GET for a webfinger resource. Most commonly, it will be used for returning account lookups.
+func (p *Processor) WebfingerGet(ctx context.Context, requestedUsername string) (*apimodel.WellKnownResponse, gtserror.WithCode) {
 	// Get the local account the request is referring to.
 	requestedAccount, err := p.db.GetAccountByUsernameDomain(ctx, requestedUsername, "")
 	if err != nil {

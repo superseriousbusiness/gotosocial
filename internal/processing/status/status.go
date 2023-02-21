@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
 
-type StatusProcessor struct { //nolint:revive
+type Processor struct {
 	tc           typeutils.TypeConverter
 	db           db.DB
 	filter       visibility.Filter
@@ -38,8 +38,8 @@ type StatusProcessor struct { //nolint:revive
 }
 
 // New returns a new status processor.
-func New(db db.DB, tc typeutils.TypeConverter, clientWorker *concurrency.WorkerPool[messages.FromClientAPI], parseMention gtsmodel.ParseMentionFunc) StatusProcessor {
-	return StatusProcessor{
+func New(db db.DB, tc typeutils.TypeConverter, clientWorker *concurrency.WorkerPool[messages.FromClientAPI], parseMention gtsmodel.ParseMentionFunc) Processor {
+	return Processor{
 		tc:           tc,
 		db:           db,
 		filter:       visibility.NewFilter(db),

@@ -52,7 +52,7 @@ type MediaStandardTestSuite struct {
 	testRemoteAttachments map[string]testrig.RemoteAttachmentFile
 
 	// module being tested
-	mediaProcessor mediaprocessing.MediaProcessor
+	mediaProcessor mediaprocessing.Processor
 }
 
 func (suite *MediaStandardTestSuite) SetupSuite() {

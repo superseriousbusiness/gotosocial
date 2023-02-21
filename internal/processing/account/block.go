@@ -33,8 +33,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-// AccountBlockCreate handles the creation of a block from requestingAccount to targetAccountID, either remote or local.
-func (p *AccountProcessor) AccountBlockCreate(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
+// BlockCreate handles the creation of a block from requestingAccount to targetAccountID, either remote or local.
+func (p *Processor) BlockCreate(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
 	// make sure the target account actually exists in our db
 	targetAccount, err := p.db.GetAccountByID(ctx, targetAccountID)
 	if err != nil {
@@ -45,7 +45,7 @@ func (p *AccountProcessor) AccountBlockCreate(ctx context.Context, requestingAcc
 	if blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, targetAccountID, false); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("BlockCreate: error checking existence of block: %s", err))
 	} else if blocked {
-		return p.AccountRelationshipGet(ctx, requestingAccount, targetAccountID)
+		return p.RelationshipGet(ctx, requestingAccount, targetAccountID)
 	}
 
 	// don't block yourself, silly
@@ -154,11 +154,11 @@ func (p *AccountProcessor) AccountBlockCreate(ctx context.Context, requestingAcc
 		TargetAccount:  targetAccount,
 	})
 
-	return p.AccountRelationshipGet(ctx, requestingAccount, targetAccountID)
+	return p.RelationshipGet(ctx, requestingAccount, targetAccountID)
 }
 
-// AccountBlockRemove handles the removal of a block from requestingAccount to targetAccountID, either remote or local.
-func (p *AccountProcessor) AccountBlockRemove(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
+// BlockRemove handles the removal of a block from requestingAccount to targetAccountID, either remote or local.
+func (p *Processor) BlockRemove(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
 	// make sure the target account actually exists in our db
 	targetAccount, err := p.db.GetAccountByID(ctx, targetAccountID)
 	if err != nil {
@@ -188,5 +188,5 @@ func (p *AccountProcessor) AccountBlockRemove(ctx context.Context, requestingAcc
 	}
 
 	// return whatever relationship results from all this
-	return p.AccountRelationshipGet(ctx, requestingAccount, targetAccountID)
+	return p.RelationshipGet(ctx, requestingAccount, targetAccountID)
 }

@@ -223,7 +223,7 @@ func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 
 	if form.Avatar != nil && form.Avatar.Size != 0 {
 		// process instance avatar image + description
-		avatarInfo, err := p.AccountUpdateAvatar(ctx, form.Avatar, form.AvatarDescription, ia.ID)
+		avatarInfo, err := p.account.UpdateAvatar(ctx, form.Avatar, form.AvatarDescription, ia.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, "error processing avatar")
 		}
@@ -240,7 +240,7 @@ func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 
 	if form.Header != nil && form.Header.Size != 0 {
 		// process instance header image
-		headerInfo, err := p.AccountUpdateHeader(ctx, form.Header, nil, ia.ID)
+		headerInfo, err := p.account.UpdateHeader(ctx, form.Header, nil, ia.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, "error processing header")
 		}

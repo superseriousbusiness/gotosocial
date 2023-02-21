@@ -37,8 +37,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
-// AccountUpdate processes the update of an account with the given form.
-func (p *AccountProcessor) AccountUpdate(ctx context.Context, account *gtsmodel.Account, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, gtserror.WithCode) {
+// Update processes the update of an account with the given form.
+func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, gtserror.WithCode) {
 	if form.Discoverable != nil {
 		account.Discoverable = form.Discoverable
 	}
@@ -101,7 +101,7 @@ func (p *AccountProcessor) AccountUpdate(ctx context.Context, account *gtsmodel.
 	}
 
 	if form.Avatar != nil && form.Avatar.Size != 0 {
-		avatarInfo, err := p.AccountUpdateAvatar(ctx, form.Avatar, nil, account.ID)
+		avatarInfo, err := p.UpdateAvatar(ctx, form.Avatar, nil, account.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err)
 		}
@@ -111,7 +111,7 @@ func (p *AccountProcessor) AccountUpdate(ctx context.Context, account *gtsmodel.
 	}
 
 	if form.Header != nil && form.Header.Size != 0 {
-		headerInfo, err := p.AccountUpdateHeader(ctx, form.Header, nil, account.ID)
+		headerInfo, err := p.UpdateHeader(ctx, form.Header, nil, account.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err)
 		}
@@ -184,10 +184,10 @@ func (p *AccountProcessor) AccountUpdate(ctx context.Context, account *gtsmodel.
 	return acctSensitive, nil
 }
 
-// AccountUpdateAvatar does the dirty work of checking the avatar part of an account update form,
+// UpdateAvatar does the dirty work of checking the avatar part of an account update form,
 // parsing and checking the image, and doing the necessary updates in the database for this to become
 // the account's new avatar image.
-func (p *AccountProcessor) AccountUpdateAvatar(ctx context.Context, avatar *multipart.FileHeader, description *string, accountID string) (*gtsmodel.MediaAttachment, error) {
+func (p *Processor) UpdateAvatar(ctx context.Context, avatar *multipart.FileHeader, description *string, accountID string) (*gtsmodel.MediaAttachment, error) {
 	maxImageSize := config.GetMediaImageMaxSize()
 	if avatar.Size > int64(maxImageSize) {
 		return nil, fmt.Errorf("UpdateAvatar: avatar with size %d exceeded max image size of %d bytes", avatar.Size, maxImageSize)
@@ -212,10 +212,10 @@ func (p *AccountProcessor) AccountUpdateAvatar(ctx context.Context, avatar *mult
 	return processingMedia.LoadAttachment(ctx)
 }
 
-// AccountUpdateHeader does the dirty work of checking the header part of an account update form,
+// UpdateHeader does the dirty work of checking the header part of an account update form,
 // parsing and checking the image, and doing the necessary updates in the database for this to become
 // the account's new header image.
-func (p *AccountProcessor) AccountUpdateHeader(ctx context.Context, header *multipart.FileHeader, description *string, accountID string) (*gtsmodel.MediaAttachment, error) {
+func (p *Processor) UpdateHeader(ctx context.Context, header *multipart.FileHeader, description *string, accountID string) (*gtsmodel.MediaAttachment, error) {
 	maxImageSize := config.GetMediaImageMaxSize()
 	if header.Size > int64(maxImageSize) {
 		return nil, fmt.Errorf("UpdateHeader: header with size %d exceeded max image size of %d bytes", header.Size, maxImageSize)

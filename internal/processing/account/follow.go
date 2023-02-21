@@ -14,8 +14,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-// AccountFollowCreate handles a follow request to an account, either remote or local.
-func (p *AccountProcessor) AccountFollowCreate(ctx context.Context, requestingAccount *gtsmodel.Account, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, gtserror.WithCode) {
+// FollowCreate handles a follow request to an account, either remote or local.
+func (p *Processor) FollowCreate(ctx context.Context, requestingAccount *gtsmodel.Account, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, gtserror.WithCode) {
 	// if there's a block between the accounts we shouldn't create the request ofc
 	if blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, form.ID, true); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
@@ -37,7 +37,7 @@ func (p *AccountProcessor) AccountFollowCreate(ctx context.Context, requestingAc
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("accountfollowcreate: error checking follow in db: %s", err))
 	} else if follows {
 		// already follows so just return the relationship
-		return p.AccountRelationshipGet(ctx, requestingAccount, form.ID)
+		return p.RelationshipGet(ctx, requestingAccount, form.ID)
 	}
 
 	// check if a follow request exists already
@@ -45,7 +45,7 @@ func (p *AccountProcessor) AccountFollowCreate(ctx context.Context, requestingAc
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("accountfollowcreate: error checking follow request in db: %s", err))
 	} else if followRequested {
 		// already follow requested so just return the relationship
-		return p.AccountRelationshipGet(ctx, requestingAccount, form.ID)
+		return p.RelationshipGet(ctx, requestingAccount, form.ID)
 	}
 
 	// check for attempt to follow self
@@ -87,7 +87,7 @@ func (p *AccountProcessor) AccountFollowCreate(ctx context.Context, requestingAc
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("accountfollowcreate: error accepting folow request for local unlocked account: %s", err))
 		}
 		// return the new relationship
-		return p.AccountRelationshipGet(ctx, requestingAccount, form.ID)
+		return p.RelationshipGet(ctx, requestingAccount, form.ID)
 	}
 
 	// otherwise we leave the follow request as it is and we handle the rest of the process asynchronously
@@ -100,11 +100,11 @@ func (p *AccountProcessor) AccountFollowCreate(ctx context.Context, requestingAc
 	})
 
 	// return whatever relationship results from this
-	return p.AccountRelationshipGet(ctx, requestingAccount, form.ID)
+	return p.RelationshipGet(ctx, requestingAccount, form.ID)
 }
 
-// AccountFollowRemove handles the removal of a follow/follow request to an account, either remote or local.
-func (p *AccountProcessor) AccountFollowRemove(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
+// FollowRemove handles the removal of a follow/follow request to an account, either remote or local.
+func (p *Processor) FollowRemove(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
 	// if there's a block between the accounts we shouldn't do anything
 	blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true)
 	if err != nil {
@@ -183,5 +183,5 @@ func (p *AccountProcessor) AccountFollowRemove(ctx context.Context, requestingAc
 	}
 
 	// return whatever relationship results from all this
-	return p.AccountRelationshipGet(ctx, requestingAccount, targetAccountID)
+	return p.RelationshipGet(ctx, requestingAccount, targetAccountID)
 }

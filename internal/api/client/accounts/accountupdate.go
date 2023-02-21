@@ -153,7 +153,7 @@ func (m *Module) AccountUpdateCredentialsPATCHHandler(c *gin.Context) {
 		return
 	}
 
-	acctSensitive, errWithCode := m.processor.AccountUpdate(c.Request.Context(), authed.Account, form)
+	acctSensitive, errWithCode := m.processor.Account().Update(c.Request.Context(), authed.Account, form)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

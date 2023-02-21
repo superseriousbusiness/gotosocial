@@ -34,9 +34,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// AccountDelete deletes an account, and all of that account's statuses, media, follows, notifications, etc etc etc.
+// Delete deletes an account, and all of that account's statuses, media, follows, notifications, etc etc etc.
 // The origin passed here should be either the ID of the account doing the delete (can be itself), or the ID of a domain block.
-func (p *AccountProcessor) AccountDelete(ctx context.Context, account *gtsmodel.Account, origin string) gtserror.WithCode {
+func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origin string) gtserror.WithCode {
 	fields := kv.Fields{{"username", account.Username}}
 
 	if account.Domain != "" {
@@ -270,9 +270,9 @@ func (p *AccountProcessor) AccountDelete(ctx context.Context, account *gtsmodel.
 	return nil
 }
 
-// AccountDeleteLocal is like AccountDelete, but specifically for deletion of local accounts rather than federated ones.
-// Unlike AccountDelete, it will propagate the deletion out across the federating API to other instances.
-func (p *AccountProcessor) AccountDeleteLocal(ctx context.Context, account *gtsmodel.Account, form *apimodel.AccountDeleteRequest) gtserror.WithCode {
+// DeleteLocal is like Delete, but specifically for deletion of local accounts rather than federated ones.
+// Unlike Delete, it will propagate the deletion out across the federating API to other instances.
+func (p *Processor) DeleteLocal(ctx context.Context, account *gtsmodel.Account, form *apimodel.AccountDeleteRequest) gtserror.WithCode {
 	fromClientAPIMessage := messages.FromClientAPI{
 		APObjectType:   ap.ActorPerson,
 		APActivityType: ap.ActivityDelete,

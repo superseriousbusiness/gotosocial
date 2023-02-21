@@ -27,12 +27,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
 )
 
-// StreamNotification streams the given notification to any open, appropriate streams belonging to the given account.
-func (p *StreamProcessor) StreamNotification(n *apimodel.Notification, account *gtsmodel.Account) error {
+// Notify streams the given notification to any open, appropriate streams belonging to the given account.
+func (p *Processor) Notify(n *apimodel.Notification, account *gtsmodel.Account) error {
 	bytes, err := json.Marshal(n)
 	if err != nil {
 		return fmt.Errorf("error marshalling notification to json: %s", err)
 	}
 
-	return p.streamToAccount(string(bytes), stream.EventTypeNotification, []string{stream.TimelineNotifications, stream.TimelineHome}, account.ID)
+	return p.toAccount(string(bytes), stream.EventTypeNotification, []string{stream.TimelineNotifications, stream.TimelineHome}, account.ID)
 }

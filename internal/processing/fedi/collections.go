@@ -30,9 +30,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
-// FediFollowersGet handles the getting of a fedi/activitypub representation of a user/account's followers, performing appropriate
+// FollowersGet handles the getting of a fedi/activitypub representation of a user/account's followers, performing appropriate
 // authentication before returning a JSON serializable interface to the caller.
-func (p *FediProcessor) FediFollowersGet(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
+func (p *Processor) FollowersGet(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
 	// get the account the request is referring to
 	requestedAccount, err := p.db.GetAccountByUsernameDomain(ctx, requestedUsername, "")
 	if err != nil {
@@ -79,9 +79,9 @@ func (p *FediProcessor) FediFollowersGet(ctx context.Context, requestedUsername 
 	return data, nil
 }
 
-// FediFollowingGet handles the getting of a fedi/activitypub representation of a user/account's following, performing appropriate
+// FollowingGet handles the getting of a fedi/activitypub representation of a user/account's following, performing appropriate
 // authentication before returning a JSON serializable interface to the caller.
-func (p *FediProcessor) FediFollowingGet(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
+func (p *Processor) FollowingGet(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
 	// get the account the request is referring to
 	requestedAccount, err := p.db.GetAccountByUsernameDomain(ctx, requestedUsername, "")
 	if err != nil {
@@ -128,9 +128,9 @@ func (p *FediProcessor) FediFollowingGet(ctx context.Context, requestedUsername 
 	return data, nil
 }
 
-// FediOutboxGet returns the activitypub representation of a local user's outbox.
+// OutboxGet returns the activitypub representation of a local user's outbox.
 // This contains links to PUBLIC posts made by this user.
-func (p *FediProcessor) FediOutboxGet(ctx context.Context, requestedUsername string, page bool, maxID string, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
+func (p *Processor) OutboxGet(ctx context.Context, requestedUsername string, page bool, maxID string, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
 	// get the account the request is referring to
 	requestedAccount, err := p.db.GetAccountByUsernameDomain(ctx, requestedUsername, "")
 	if err != nil {
@@ -209,9 +209,9 @@ func (p *FediProcessor) FediOutboxGet(ctx context.Context, requestedUsername str
 	return data, nil
 }
 
-// FediInboxPost handles POST requests to a user's inbox for new activitypub messages.
+// InboxPost handles POST requests to a user's inbox for new activitypub messages.
 //
-// FediInboxPost returns true if the request was handled as an ActivityPub POST to an actor's inbox.
+// InboxPost returns true if the request was handled as an ActivityPub POST to an actor's inbox.
 // If false, the request was not an ActivityPub request and may still be handled by the caller in another way, such as serving a web page.
 //
 // If the error is nil, then the ResponseWriter's headers and response has already been written. If a non-nil error is returned, then no response has been written.
@@ -219,6 +219,6 @@ func (p *FediProcessor) FediOutboxGet(ctx context.Context, requestedUsername str
 // If the Actor was constructed with the Federated Protocol enabled, side effects will occur.
 //
 // If the Federated Protocol is not enabled, writes the http.StatusMethodNotAllowed status code in the response. No side effects occur.
-func (p *FediProcessor) FediInboxPost(ctx context.Context, w http.ResponseWriter, r *http.Request) (bool, error) {
+func (p *Processor) InboxPost(ctx context.Context, w http.ResponseWriter, r *http.Request) (bool, error) {
 	return p.federator.FederatingActor().PostInbox(ctx, w, r)
 }

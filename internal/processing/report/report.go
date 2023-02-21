@@ -25,14 +25,14 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
-type ReportProcessor struct { //nolint:revive
+type Processor struct {
 	db           db.DB
 	tc           typeutils.TypeConverter
 	clientWorker *concurrency.WorkerPool[messages.FromClientAPI]
 }
 
-func New(db db.DB, tc typeutils.TypeConverter, clientWorker *concurrency.WorkerPool[messages.FromClientAPI]) ReportProcessor {
-	return ReportProcessor{
+func New(db db.DB, tc typeutils.TypeConverter, clientWorker *concurrency.WorkerPool[messages.FromClientAPI]) Processor {
+	return Processor{
 		tc:           tc,
 		db:           db,
 		clientWorker: clientWorker,

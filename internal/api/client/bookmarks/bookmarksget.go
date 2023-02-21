@@ -89,7 +89,7 @@ func (m *Module) BookmarksGETHandler(c *gin.Context) {
 		minID = minIDString
 	}
 
-	resp, errWithCode := m.processor.AccountBookmarksGet(c.Request.Context(), authed.Account, limit, maxID, minID)
+	resp, errWithCode := m.processor.Account().BookmarksGet(c.Request.Context(), authed.Account, limit, maxID, minID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

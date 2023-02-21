@@ -29,8 +29,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// StatusGet gets the given status, taking account of privacy settings and blocks etc.
-func (p *StatusProcessor) StatusGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+// Get gets the given status, taking account of privacy settings and blocks etc.
+func (p *Processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
 	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
@@ -55,8 +55,8 @@ func (p *StatusProcessor) StatusGet(ctx context.Context, requestingAccount *gtsm
 	return apiStatus, nil
 }
 
-// StatusContextGet returns the context (previous and following posts) from the given status ID.
-func (p *StatusProcessor) StatusContextGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Context, gtserror.WithCode) {
+// ContextGet returns the context (previous and following posts) from the given status ID.
+func (p *Processor) ContextGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Context, gtserror.WithCode) {
 	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))

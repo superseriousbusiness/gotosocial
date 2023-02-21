@@ -88,7 +88,7 @@ func (m *Module) StatusBookmarkPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	apiStatus, errWithCode := m.processor.StatusBookmark(c.Request.Context(), authed.Account, targetStatusID)
+	apiStatus, errWithCode := m.processor.Status().BookmarkCreate(c.Request.Context(), authed.Account, targetStatusID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

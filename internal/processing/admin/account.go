@@ -30,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
-func (p *AdminProcessor) AdminAccountAction(ctx context.Context, account *gtsmodel.Account, form *apimodel.AdminAccountActionRequest) gtserror.WithCode {
+func (p *Processor) AccountAction(ctx context.Context, account *gtsmodel.Account, form *apimodel.AdminAccountActionRequest) gtserror.WithCode {
 	targetAccount, err := p.db.GetAccountByID(ctx, form.TargetAccountID)
 	if err != nil {
 		return gtserror.NewErrorInternalError(err)

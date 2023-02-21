@@ -35,7 +35,8 @@ import (
 
 var oneWeek = 168 * time.Hour
 
-func (p *UserProcessor) UserEmailSendConfirm(ctx context.Context, user *gtsmodel.User, username string) error {
+// EmailSendConfirmation sends an email address confirmation request email to the given user.
+func (p *Processor) EmailSendConfirmation(ctx context.Context, user *gtsmodel.User, username string) error {
 	if user.UnconfirmedEmail == "" || user.UnconfirmedEmail == user.Email {
 		// user has already confirmed this email address, so there's nothing to do
 		return nil
@@ -84,7 +85,9 @@ func (p *UserProcessor) UserEmailSendConfirm(ctx context.Context, user *gtsmodel
 	return nil
 }
 
-func (p *UserProcessor) UserEmailConfirm(ctx context.Context, token string) (*gtsmodel.User, gtserror.WithCode) {
+// EmailConfirm processes an email confirmation request, usually initiated as a result of clicking on a link
+// in a 'confirm your email address' type email.
+func (p *Processor) EmailConfirm(ctx context.Context, token string) (*gtsmodel.User, gtserror.WithCode) {
 	if token == "" {
 		return nil, gtserror.NewErrorNotFound(errors.New("no token provided"))
 	}

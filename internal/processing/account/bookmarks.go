@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *AccountProcessor) AccountBookmarksGet(ctx context.Context, requestingAccount *gtsmodel.Account, limit int, maxID string, minID string) (*apimodel.PageableResponse, gtserror.WithCode) {
+func (p *Processor) BookmarksGet(ctx context.Context, requestingAccount *gtsmodel.Account, limit int, maxID string, minID string) (*apimodel.PageableResponse, gtserror.WithCode) {
 	if requestingAccount == nil {
 		return nil, gtserror.NewErrorForbidden(fmt.Errorf("cannot retrieve bookmarks without a requesting account"))
 	}

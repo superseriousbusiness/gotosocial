@@ -27,7 +27,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-func (p *AdminProcessor) AdminMediaRefetch(ctx context.Context, requestingAccount *gtsmodel.Account, domain string) gtserror.WithCode {
+// MediaRefetch forces a refetch of remote emojis.
+func (p *Processor) MediaRefetch(ctx context.Context, requestingAccount *gtsmodel.Account, domain string) gtserror.WithCode {
 	transport, err := p.transportController.NewTransportForUsername(ctx, requestingAccount.Username)
 	if err != nil {
 		err = fmt.Errorf("error getting transport for user %s during media refetch request: %w", requestingAccount.Username, err)
@@ -47,7 +48,8 @@ func (p *AdminProcessor) AdminMediaRefetch(ctx context.Context, requestingAccoun
 	return nil
 }
 
-func (p *AdminProcessor) AdminMediaPrune(ctx context.Context, mediaRemoteCacheDays int) gtserror.WithCode {
+// MediaPrune triggers a non-blocking prune of remote media, local unused media, etc.
+func (p *Processor) MediaPrune(ctx context.Context, mediaRemoteCacheDays int) gtserror.WithCode {
 	if mediaRemoteCacheDays < 0 {
 		err := fmt.Errorf("MediaPrune: invalid value for mediaRemoteCacheDays prune: value was %d, cannot be less than 0", mediaRemoteCacheDays)
 		return gtserror.NewErrorBadRequest(err, err.Error())

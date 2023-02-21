@@ -32,8 +32,8 @@ import (
 
 const rssFeedLength = 20
 
-// AccountGetRSSFeedForUsername returns RSS feed for the given local username.
-func (p *AccountProcessor) AccountGetRSSFeedForUsername(ctx context.Context, username string) (func() (string, gtserror.WithCode), time.Time, gtserror.WithCode) {
+// GetRSSFeedForUsername returns RSS feed for the given local username.
+func (p *Processor) GetRSSFeedForUsername(ctx context.Context, username string) (func() (string, gtserror.WithCode), time.Time, gtserror.WithCode) {
 	account, err := p.db.GetAccountByUsernameDomain(ctx, username, "")
 	if err != nil {
 		if err == db.ErrNoEntries {

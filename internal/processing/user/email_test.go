@@ -41,7 +41,7 @@ func (suite *EmailConfirmTestSuite) TestSendConfirmEmail() {
 	user.ConfirmationSentAt = time.Time{}
 	user.ConfirmationToken = ""
 
-	err := suite.user.UserEmailSendConfirm(context.Background(), user, "the_mighty_zork")
+	err := suite.user.EmailSendConfirmation(context.Background(), user, "the_mighty_zork")
 	suite.NoError(err)
 
 	// zork should have an email now
@@ -78,7 +78,7 @@ func (suite *EmailConfirmTestSuite) TestConfirmEmail() {
 	suite.NoError(err)
 
 	// confirm with the token set above
-	updatedUser, errWithCode := suite.user.UserEmailConfirm(ctx, "1d1aa44b-afa4-49c8-ac4b-eceb61715cc6")
+	updatedUser, errWithCode := suite.user.EmailConfirm(ctx, "1d1aa44b-afa4-49c8-ac4b-eceb61715cc6")
 	suite.NoError(errWithCode)
 
 	// email should now be confirmed and token cleared
@@ -106,7 +106,7 @@ func (suite *EmailConfirmTestSuite) TestConfirmEmailOldToken() {
 	suite.NoError(err)
 
 	// confirm with the token set above
-	updatedUser, errWithCode := suite.user.UserEmailConfirm(ctx, "1d1aa44b-afa4-49c8-ac4b-eceb61715cc6")
+	updatedUser, errWithCode := suite.user.EmailConfirm(ctx, "1d1aa44b-afa4-49c8-ac4b-eceb61715cc6")
 	suite.Nil(updatedUser)
 	suite.EqualError(errWithCode, "ConfirmEmail: confirmation token expired")
 }

@@ -55,7 +55,7 @@ func (m *Module) PublicKeyGETHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.FediUserGet(apiutil.TransferSignatureContext(c), requestedUsername, c.Request.URL)
+	resp, errWithCode := m.processor.Fedi().UserGet(apiutil.TransferSignatureContext(c), requestedUsername, c.Request.URL)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

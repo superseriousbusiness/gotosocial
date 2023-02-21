@@ -149,7 +149,7 @@ func (p *Processor) processCreateAccountFromClientAPI(ctx context.Context, clien
 	}
 
 	// email a confirmation to this user
-	return p.UserEmailSendConfirm(ctx, user, account.Username)
+	return p.User().EmailSendConfirmation(ctx, user, account.Username)
 }
 
 func (p *Processor) processCreateStatusFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
@@ -341,7 +341,7 @@ func (p *Processor) processDeleteAccountFromClientAPI(ctx context.Context, clien
 		return err
 	}
 
-	return p.AccountDelete(ctx, clientMsg.TargetAccount, origin)
+	return p.account.Delete(ctx, clientMsg.TargetAccount, origin)
 }
 
 func (p *Processor) processReportAccountFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {

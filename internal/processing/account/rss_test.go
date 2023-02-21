@@ -31,7 +31,7 @@ type GetRSSTestSuite struct {
 }
 
 func (suite *GetRSSTestSuite) TestGetAccountRSSAdmin() {
-	getFeed, lastModified, err := suite.accountProcessor.AccountGetRSSFeedForUsername(context.Background(), "admin")
+	getFeed, lastModified, err := suite.accountProcessor.GetRSSFeedForUsername(context.Background(), "admin")
 	suite.NoError(err)
 	suite.EqualValues(1634733405, lastModified.Unix())
 
@@ -44,7 +44,7 @@ func (suite *GetRSSTestSuite) TestGetAccountRSSAdmin() {
 }
 
 func (suite *GetRSSTestSuite) TestGetAccountRSSZork() {
-	getFeed, lastModified, err := suite.accountProcessor.AccountGetRSSFeedForUsername(context.Background(), "the_mighty_zork")
+	getFeed, lastModified, err := suite.accountProcessor.GetRSSFeedForUsername(context.Background(), "the_mighty_zork")
 	suite.NoError(err)
 	suite.EqualValues(1634726437, lastModified.Unix())
 

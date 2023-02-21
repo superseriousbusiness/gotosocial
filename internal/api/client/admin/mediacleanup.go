@@ -98,7 +98,7 @@ func (m *Module) MediaCleanupPOSTHandler(c *gin.Context) {
 		remoteCacheDays = 0
 	}
 
-	if errWithCode := m.processor.AdminMediaPrune(c.Request.Context(), remoteCacheDays); errWithCode != nil {
+	if errWithCode := m.processor.Admin().MediaPrune(c.Request.Context(), remoteCacheDays); errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}

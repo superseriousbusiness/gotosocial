@@ -25,7 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
 
-type FediProcessor struct { //nolint:revive
+type Processor struct {
 	db        db.DB
 	federator federation.Federator
 	tc        typeutils.TypeConverter
@@ -33,8 +33,8 @@ type FediProcessor struct { //nolint:revive
 }
 
 // New returns a new fedi processor.
-func New(db db.DB, tc typeutils.TypeConverter, federator federation.Federator) FediProcessor {
-	return FediProcessor{
+func New(db db.DB, tc typeutils.TypeConverter, federator federation.Federator) Processor {
+	return Processor{
 		db:        db,
 		federator: federator,
 		tc:        tc,

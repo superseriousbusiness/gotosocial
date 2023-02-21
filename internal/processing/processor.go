@@ -57,14 +57,46 @@ type Processor struct {
 		SUB-PROCESSORS
 	*/
 
-	account.AccountProcessor
-	admin.AdminProcessor
-	fedi.FediProcessor
-	media.MediaProcessor
-	report.ReportProcessor
-	status.StatusProcessor
-	stream.StreamProcessor
-	user.UserProcessor
+	account account.Processor
+	admin   admin.Processor
+	fedi    fedi.Processor
+	media   media.Processor
+	report  report.Processor
+	status  status.Processor
+	stream  stream.Processor
+	user    user.Processor
+}
+
+func (p *Processor) Account() *account.Processor {
+	return &p.account
+}
+
+func (p *Processor) Admin() *admin.Processor {
+	return &p.admin
+}
+
+func (p *Processor) Fedi() *fedi.Processor {
+	return &p.fedi
+}
+
+func (p *Processor) Media() *media.Processor {
+	return &p.media
+}
+
+func (p *Processor) Report() *report.Processor {
+	return &p.report
+}
+
+func (p *Processor) Status() *status.Processor {
+	return &p.status
+}
+
+func (p *Processor) Stream() *stream.Processor {
+	return &p.stream
+}
+
+func (p *Processor) User() *user.Processor {
+	return &p.user
 }
 
 // NewProcessor returns a new Processor.
@@ -97,14 +129,14 @@ func NewProcessor(
 		filter:          filter,
 
 		// sub processors
-		AccountProcessor: account.New(db, tc, mediaManager, oauthServer, clientWorker, federator, parseMentionFunc),
-		AdminProcessor:   admin.New(db, tc, mediaManager, federator.TransportController(), storage, clientWorker),
-		FediProcessor:    fedi.New(db, tc, federator),
-		MediaProcessor:   media.New(db, tc, mediaManager, federator.TransportController(), storage),
-		ReportProcessor:  report.New(db, tc, clientWorker),
-		StatusProcessor:  status.New(db, tc, clientWorker, parseMentionFunc),
-		StreamProcessor:  stream.New(db, oauthServer),
-		UserProcessor:    user.New(db, emailSender),
+		account: account.New(db, tc, mediaManager, oauthServer, clientWorker, federator, parseMentionFunc),
+		admin:   admin.New(db, tc, mediaManager, federator.TransportController(), storage, clientWorker),
+		fedi:    fedi.New(db, tc, federator),
+		media:   media.New(db, tc, mediaManager, federator.TransportController(), storage),
+		report:  report.New(db, tc, clientWorker),
+		status:  status.New(db, tc, clientWorker, parseMentionFunc),
+		stream:  stream.New(db, oauthServer),
+		user:    user.New(db, emailSender),
 	}
 }
 

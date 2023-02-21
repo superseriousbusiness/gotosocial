@@ -31,8 +31,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
-// StatusBoost processes the boost/reblog of a given status, returning the newly-created boost if all is well.
-func (p *StatusProcessor) StatusBoost(ctx context.Context, requestingAccount *gtsmodel.Account, application *gtsmodel.Application, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+// BoostCreate processes the boost/reblog of a given status, returning the newly-created boost if all is well.
+func (p *Processor) BoostCreate(ctx context.Context, requestingAccount *gtsmodel.Account, application *gtsmodel.Application, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
 	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
@@ -96,8 +96,8 @@ func (p *StatusProcessor) StatusBoost(ctx context.Context, requestingAccount *gt
 	return apiStatus, nil
 }
 
-// StatusUnboost processes the unboost/unreblog of a given status, returning the status if all is well.
-func (p *StatusProcessor) StatusUnboost(ctx context.Context, requestingAccount *gtsmodel.Account, application *gtsmodel.Application, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+// BoostRemove processes the unboost/unreblog of a given status, returning the status if all is well.
+func (p *Processor) BoostRemove(ctx context.Context, requestingAccount *gtsmodel.Account, application *gtsmodel.Application, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
 	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
@@ -169,7 +169,7 @@ func (p *StatusProcessor) StatusUnboost(ctx context.Context, requestingAccount *
 }
 
 // StatusBoostedBy returns a slice of accounts that have boosted the given status, filtered according to privacy settings.
-func (p *StatusProcessor) StatusBoostedBy(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) ([]*apimodel.Account, gtserror.WithCode) {
+func (p *Processor) StatusBoostedBy(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) ([]*apimodel.Account, gtserror.WithCode) {
 	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		wrapped := fmt.Errorf("BoostedBy: error fetching status %s: %s", targetStatusID, err)

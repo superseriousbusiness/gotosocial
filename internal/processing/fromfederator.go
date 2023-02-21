@@ -411,5 +411,5 @@ func (p *Processor) processDeleteAccountFromFederator(ctx context.Context, feder
 		return errors.New("account delete was not parseable as *gtsmodel.Account")
 	}
 
-	return p.AccountDelete(ctx, account, account.ID)
+	return p.account.Delete(ctx, account, account.ID)
 }

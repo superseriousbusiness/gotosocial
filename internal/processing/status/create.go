@@ -37,8 +37,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-// StatusCreate processes the given form to create a new status, returning the api model representation of that status if it's OK.
-func (p *StatusProcessor) StatusCreate(ctx context.Context, account *gtsmodel.Account, application *gtsmodel.Application, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, gtserror.WithCode) {
+// Create processes the given form to create a new status, returning the api model representation of that status if it's OK.
+func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, application *gtsmodel.Application, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, gtserror.WithCode) {
 	accountURIs := uris.GenerateURIsForAccount(account.Username)
 	thisStatusID := id.NewULID()
 	local := true

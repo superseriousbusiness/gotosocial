@@ -23,14 +23,14 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 )
 
-type UserProcessor struct { //nolint:revive
+type Processor struct {
 	emailSender email.Sender
 	db          db.DB
 }
 
 // New returns a new user processor
-func New(db db.DB, emailSender email.Sender) UserProcessor {
-	return UserProcessor{
+func New(db db.DB, emailSender email.Sender) Processor {
+	return Processor{
 		emailSender: emailSender,
 		db:          db,
 	}

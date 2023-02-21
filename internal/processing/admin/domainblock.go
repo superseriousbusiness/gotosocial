@@ -23,7 +23,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
-func (p *AdminProcessor) AdminDomainBlockCreate(ctx context.Context, account *gtsmodel.Account, domain string, obfuscate bool, publicComment string, privateComment string, subscriptionID string) (*apimodel.DomainBlock, gtserror.WithCode) {
+func (p *Processor) DomainBlockCreate(ctx context.Context, account *gtsmodel.Account, domain string, obfuscate bool, publicComment string, privateComment string, subscriptionID string) (*apimodel.DomainBlock, gtserror.WithCode) {
 	// domain blocks will always be lowercase
 	domain = strings.ToLower(domain)
 
@@ -74,7 +74,7 @@ func (p *AdminProcessor) AdminDomainBlockCreate(ctx context.Context, account *gt
 // 1. Strip most info away from the instance entry for the domain.
 // 2. Delete the instance account for that instance if it exists.
 // 3. Select all accounts from this instance and pass them through the delete functionality of the processor.
-func (p *AdminProcessor) initiateDomainBlockSideEffects(ctx context.Context, account *gtsmodel.Account, block *gtsmodel.DomainBlock) {
+func (p *Processor) initiateDomainBlockSideEffects(ctx context.Context, account *gtsmodel.Account, block *gtsmodel.DomainBlock) {
 	l := log.WithContext(ctx).WithFields(kv.Fields{{"domain", block.Domain}}...)
 	l.Debug("processing domain block side effects")
 
@@ -157,8 +157,8 @@ selectAccountsLoop:
 	}
 }
 
-// AdminDomainBlocksImport handles the import of a bunch of domain blocks at once, by calling the AdminDomainBlockCreate function for each domain in the provided file.
-func (p *AdminProcessor) AdminDomainBlocksImport(ctx context.Context, account *gtsmodel.Account, domains *multipart.FileHeader) ([]*apimodel.DomainBlock, gtserror.WithCode) {
+// DomainBlocksImport handles the import of a bunch of domain blocks at once, by calling the DomainBlockCreate function for each domain in the provided file.
+func (p *Processor) DomainBlocksImport(ctx context.Context, account *gtsmodel.Account, domains *multipart.FileHeader) ([]*apimodel.DomainBlock, gtserror.WithCode) {
 	f, err := domains.Open()
 	if err != nil {
 		return nil, gtserror.NewErrorBadRequest(fmt.Errorf("DomainBlocksImport: error opening attachment: %s", err))
@@ -179,7 +179,7 @@ func (p *AdminProcessor) AdminDomainBlocksImport(ctx context.Context, account *g
 
 	blocks := []*apimodel.DomainBlock{}
 	for _, d := range d {
-		block, err := p.AdminDomainBlockCreate(ctx, account, d.Domain.Domain, false, d.PublicComment, "", "")
+		block, err := p.DomainBlockCreate(ctx, account, d.Domain.Domain, false, d.PublicComment, "", "")
 		if err != nil {
 			return nil, err
 		}
@@ -190,7 +190,9 @@ func (p *AdminProcessor) AdminDomainBlocksImport(ctx context.Context, account *g
 	return blocks, nil
 }
 
-func (p *AdminProcessor) AdminDomainBlocksGet(ctx context.Context, account *gtsmodel.Account, export bool) ([]*apimodel.DomainBlock, gtserror.WithCode) {
+// DomainBlocksGet returns all existing domain blocks.
+// If export is true, the format will be suitable for writing out to an export.
+func (p *Processor) DomainBlocksGet(ctx context.Context, account *gtsmodel.Account, export bool) ([]*apimodel.DomainBlock, gtserror.WithCode) {
 	domainBlocks := []*gtsmodel.DomainBlock{}
 
 	if err := p.db.GetAll(ctx, &domainBlocks); err != nil {
@@ -212,7 +214,9 @@ func (p *AdminProcessor) AdminDomainBlocksGet(ctx context.Context, account *gtsm
 	return apiDomainBlocks, nil
 }
 
-func (p *AdminProcessor) AdminDomainBlockGet(ctx context.Context, account *gtsmodel.Account, id string, export bool) (*apimodel.DomainBlock, gtserror.WithCode) {
+// DomainBlockGet returns one domain block with the given id.
+// If export is true, the format will be suitable for writing out to an export.
+func (p *Processor) DomainBlockGet(ctx context.Context, account *gtsmodel.Account, id string, export bool) (*apimodel.DomainBlock, gtserror.WithCode) {
 	domainBlock := &gtsmodel.DomainBlock{}
 
 	if err := p.db.GetByID(ctx, id, domainBlock); err != nil {
@@ -232,7 +236,8 @@ func (p *AdminProcessor) AdminDomainBlockGet(ctx context.Context, account *gtsmo
 	return apiDomainBlock, nil
 }
 
-func (p *AdminProcessor) AdminDomainBlockDelete(ctx context.Context, account *gtsmodel.Account, id string) (*apimodel.DomainBlock, gtserror.WithCode) {
+// DomainBlockDelete removes one domain block with the given ID.
+func (p *Processor) DomainBlockDelete(ctx context.Context, account *gtsmodel.Account, id string) (*apimodel.DomainBlock, gtserror.WithCode) {
 	domainBlock := &gtsmodel.DomainBlock{}
 
 	if err := p.db.GetByID(ctx, id, domainBlock); err != nil {

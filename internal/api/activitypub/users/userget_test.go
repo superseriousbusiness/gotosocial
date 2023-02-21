@@ -99,7 +99,7 @@ func (suite *UserGetTestSuite) TestGetUserPublicKeyDeleted() {
 	userModule := users.New(suite.processor)
 	targetAccount := suite.testAccounts["local_account_1"]
 
-	suite.processor.AccountDeleteLocal(context.Background(), suite.testAccounts["local_account_1"], &apimodel.AccountDeleteRequest{
+	suite.processor.Account().DeleteLocal(context.Background(), suite.testAccounts["local_account_1"], &apimodel.AccountDeleteRequest{
 		Password:       "password",
 		DeleteOriginID: targetAccount.ID,
 	})

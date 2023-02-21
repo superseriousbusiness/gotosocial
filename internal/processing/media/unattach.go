@@ -30,9 +30,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// MediaUnattach unattaches the media attachment with the given ID from any statuses it was attached to, making it available
+// Unattach unattaches the media attachment with the given ID from any statuses it was attached to, making it available
 // for reattachment again.
-func (p *MediaProcessor) MediaUnattach(ctx context.Context, account *gtsmodel.Account, mediaAttachmentID string) (*apimodel.Attachment, gtserror.WithCode) {
+func (p *Processor) Unattach(ctx context.Context, account *gtsmodel.Account, mediaAttachmentID string) (*apimodel.Attachment, gtserror.WithCode) {
 	attachment, err := p.db.GetAttachmentByID(ctx, mediaAttachmentID)
 	if err != nil {
 		if err == db.ErrNoEntries {

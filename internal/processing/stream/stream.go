@@ -27,22 +27,22 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
 )
 
-type StreamProcessor struct { //nolint:revive
+type Processor struct {
 	db          db.DB
 	oauthServer oauth.Server
 	streamMap   *sync.Map
 }
 
-func New(db db.DB, oauthServer oauth.Server) StreamProcessor {
-	return StreamProcessor{
+func New(db db.DB, oauthServer oauth.Server) Processor {
+	return Processor{
 		db:          db,
 		oauthServer: oauthServer,
 		streamMap:   &sync.Map{},
 	}
 }
 
-// streamToAccount streams the given payload with the given event type to any streams currently open for the given account ID.
-func (p *StreamProcessor) streamToAccount(payload string, event string, timelines []string, accountID string) error {
+// toAccount streams the given payload with the given event type to any streams currently open for the given account ID.
+func (p *Processor) toAccount(payload string, event string, timelines []string, accountID string) error {
 	v, ok := p.streamMap.Load(accountID)
 	if !ok {
 		// no open connections so nothing to stream
