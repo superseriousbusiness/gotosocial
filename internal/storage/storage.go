@@ -33,7 +33,6 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 const (
@@ -126,11 +125,6 @@ func NewFileStorage() (*Driver, error) {
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error opening disk storage: %w", err)
-	}
-
-	// Perform an initial storage clean to delete old dirs.
-	if err := disk.Clean(context.Background()); err != nil {
-		log.Errorf(nil, "error performing storage cleanup: %v", err)
 	}
 
 	return &Driver{
