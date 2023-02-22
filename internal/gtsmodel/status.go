@@ -59,7 +59,6 @@ type Status struct {
 	CreatedWithApplication   *Application       `validate:"-" bun:"rel:belongs-to"`                                                                    // application corresponding to createdWithApplicationID
 	ActivityStreamsType      string             `validate:"required" bun:",nullzero,notnull"`                                                          // What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types. Will probably almost always be Note but who knows!.
 	Text                     string             `validate:"-" bun:""`                                                                                  // Original text of the status without formatting
-	Pinned                   *bool              `validate:"-" bun:",nullzero,notnull,default:false"`                                                   // Has this status been pinned by its owner?
 	Federated                *bool              `validate:"-" bun:",notnull"`                                                                          // This status will be federated beyond the local timeline(s)
 	Boostable                *bool              `validate:"-" bun:",notnull"`                                                                          // This status can be boosted/reblogged
 	Replyable                *bool              `validate:"-" bun:",notnull"`                                                                          // This status can be replied to

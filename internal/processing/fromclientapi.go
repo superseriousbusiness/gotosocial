@@ -127,6 +127,18 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, clientMsg messages
 			// FLAG/REPORT A PROFILE
 			return p.processReportAccountFromClientAPI(ctx, clientMsg)
 		}
+	case ap.ActivityAdd:
+		// ADD
+		if clientMsg.APObjectType == ap.ObjectCollection {
+			// ADD SOMETHING TO A COLLECTION
+			return p.processAddToCollectionFromClientAPI(ctx, clientMsg)
+		}
+	case ap.ActivityRemove:
+		// REMOVE
+		if clientMsg.APObjectType == ap.ObjectCollection {
+			// REMOVE SOMETHING FROM A COLLECTION
+			return p.processRemoveFromCollectionFromClientAPI(ctx, clientMsg)
+		}
 	}
 	return nil
 }
@@ -358,6 +370,16 @@ func (p *Processor) processReportAccountFromClientAPI(ctx context.Context, clien
 	}
 
 	return p.federateReport(ctx, report)
+}
+
+func (p *Processor) processAddToCollectionFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+	// TODO: process adding a status to a collection (pinned)
+	return nil
+}
+
+func (p *Processor) processRemoveFromCollectionFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+	// TODO: process removing a status from a collection (unpinned)
+	return nil
 }
 
 // TODO: move all the below functions into federation.Federator

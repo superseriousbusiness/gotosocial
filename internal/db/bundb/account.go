@@ -350,7 +350,15 @@ func (a *accountDB) CountAccountStatuses(ctx context.Context, accountID string) 
 		Count(ctx)
 }
 
-func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinnedOnly bool, mediaOnly bool, publicOnly bool) ([]*gtsmodel.Status, db.Error) {
+func (a *accountDB) CountAccountPinned(ctx context.Context, accountID string) (int, db.Error) {
+	return a.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("status_pins"), bun.Ident("status_pin")).
+		Where("? = ?", bun.Ident("status_pin.account_id"), accountID).
+		Count(ctx)
+}
+
+func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, mediaOnly bool, publicOnly bool) ([]*gtsmodel.Status, db.Error) {
 	statusIDs := []string{}
 
 	q := a.conn.
@@ -390,10 +398,6 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 		q = q.Where("? > ?", bun.Ident("status.id"), minID)
 	}
 
-	if pinnedOnly {
-		q = q.Where("? = ?", bun.Ident("status.pinned"), true)
-	}
-
 	if mediaOnly {
 		// attachments are stored as a json object;
 		// this implementation differs between sqlite and postgres,
@@ -421,6 +425,23 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 	if publicOnly {
 		q = q.Where("? = ?", bun.Ident("status.visibility"), gtsmodel.VisibilityPublic)
 	}
+
+	if err := q.Scan(ctx, &statusIDs); err != nil {
+		return nil, a.conn.ProcessError(err)
+	}
+
+	return a.statusesFromIDs(ctx, statusIDs)
+}
+
+func (a *accountDB) GetAccountPinnedStatuses(ctx context.Context, accountID string) ([]*gtsmodel.Status, db.Error) {
+	statusIDs := []string{}
+
+	q := a.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("status_pins"), bun.Ident("status_pin")).
+		Column("status_pin.status_id").
+		Where("? = ?", bun.Ident("status_pin.account_id"), accountID).
+		Order("status_pin.id DESC")
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {
 		return nil, a.conn.ProcessError(err)

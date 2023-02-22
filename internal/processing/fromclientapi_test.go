@@ -76,7 +76,6 @@ func (suite *FromClientAPITestSuite) TestProcessStreamNewStatus() {
 		Sensitive:                testrig.FalseBool(),
 		Language:                 "en",
 		CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
-		Pinned:                   testrig.FalseBool(),
 		Federated:                testrig.FalseBool(),
 		Boostable:                testrig.TrueBool(),
 		Replyable:                testrig.TrueBool(),

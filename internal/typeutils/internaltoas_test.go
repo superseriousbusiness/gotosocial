@@ -433,7 +433,7 @@ func (suite *InternalToASTestSuite) TestStatusesToASOutboxPage() {
 	ctx := context.Background()
 
 	// get public statuses from testaccount
-	statuses, err := suite.db.GetAccountStatuses(ctx, testAccount.ID, 30, true, true, "", "", false, false, true)
+	statuses, err := suite.db.GetAccountStatuses(ctx, testAccount.ID, 30, true, true, "", "", false, true)
 	suite.NoError(err)
 
 	page, err := suite.typeconverter.StatusesToASOutboxPage(ctx, testAccount.OutboxURI, "", "", statuses)

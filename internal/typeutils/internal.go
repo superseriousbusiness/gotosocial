@@ -37,7 +37,6 @@ func (c *converter) StatusToBoost(ctx context.Context, s *gtsmodel.Status, boost
 	}
 
 	sensitive := *s.Sensitive
-	pinned := false // can't pin a boost
 	federated := *s.Federated
 	boostable := *s.Boostable
 	replyable := *s.Replyable
@@ -75,7 +74,6 @@ func (c *converter) StatusToBoost(ctx context.Context, s *gtsmodel.Status, boost
 		BoostOfID:           s.ID,
 		BoostOfAccountID:    s.AccountID,
 		Visibility:          s.Visibility,
-		Pinned:              &pinned,
 		Federated:           &federated,
 		Boostable:           &boostable,
 		Replyable:           &replyable,

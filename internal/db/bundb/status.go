@@ -510,6 +510,16 @@ func (s *statusDB) IsStatusBookmarkedBy(ctx context.Context, status *gtsmodel.St
 	return s.conn.Exists(ctx, q)
 }
 
+func (s *statusDB) IsStatusPinnedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, db.Error) {
+	q := s.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("status_pins"), bun.Ident("status_pin")).
+		Where("? = ?", bun.Ident("status_pin.status_id"), status.ID).
+		Where("? = ?", bun.Ident("status_pin.account_id"), accountID)
+
+	return s.conn.Exists(ctx, q)
+}
+
 func (s *statusDB) GetStatusFaves(ctx context.Context, status *gtsmodel.Status) ([]*gtsmodel.StatusFave, db.Error) {
 	faves := []*gtsmodel.StatusFave{}
 

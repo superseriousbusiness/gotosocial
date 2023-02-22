@@ -48,6 +48,7 @@ var testModels = []interface{}{
 	&gtsmodel.StatusFave{},
 	&gtsmodel.StatusBookmark{},
 	&gtsmodel.StatusMute{},
+	&gtsmodel.StatusPin{},
 	&gtsmodel.Tag{},
 	&gtsmodel.User{},
 	&gtsmodel.Emoji{},
@@ -263,6 +264,12 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 	}
 
 	for _, v := range NewTestBookmarks() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(nil, err)
+		}
+	}
+
+	for _, v := range NewTestStatusPins() {
 		if err := db.Put(ctx, v); err != nil {
 			log.Panic(nil, err)
 		}

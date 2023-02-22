@@ -62,15 +62,29 @@ type Account interface {
 	// GetAccountStatusesCount is a shortcut for the common action of counting statuses produced by accountID.
 	CountAccountStatuses(ctx context.Context, accountID string) (int, Error)
 
+	// CountAccountPinned returns the total number of pinned statuses owned by account with the given id.
+	CountAccountPinned(ctx context.Context, accountID string) (int, Error)
+
 	// GetAccountStatuses is a shortcut for getting the most recent statuses. accountID is optional, if not provided
 	// then all statuses will be returned. If limit is set to 0, the size of the returned slice will not be limited. This can
 	// be very memory intensive so you probably shouldn't do this!
-	// In case of no entries, a 'no entries' error will be returned
-	GetAccountStatuses(ctx context.Context, accountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinnedOnly bool, mediaOnly bool, publicOnly bool) ([]*gtsmodel.Status, Error)
+	//
+	// In the case of no statuses, this function will return db.ErrNoEntries.
+	GetAccountStatuses(ctx context.Context, accountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, mediaOnly bool, publicOnly bool) ([]*gtsmodel.Status, Error)
+
+	// GetAccountPinnedStatuses returns ONLY statuses owned by the give accountID for which a corresponding StatusPin
+	// exists in the database. Statuses which are not pinned will not be returned by this function.
+	//
+	// Statuses will be returned in the order in which they were pinned, from latest pinned to oldest pinned (descending).
+	//
+	// In the case of no statuses, this function will return db.ErrNoEntries.
+	GetAccountPinnedStatuses(ctx context.Context, accountID string) ([]*gtsmodel.Status, Error)
 
 	// GetAccountWebStatuses is similar to GetAccountStatuses, but it's specifically for returning statuses that
 	// should be visible via the web view of an account. So, only public, federated statuses that aren't boosts
 	// or replies.
+	//
+	// In the case of no statuses, this function will return db.ErrNoEntries.
 	GetAccountWebStatuses(ctx context.Context, accountID string, limit int, maxID string) ([]*gtsmodel.Status, Error)
 
 	GetBookmarks(ctx context.Context, accountID string, limit int, maxID string, minID string) ([]*gtsmodel.StatusBookmark, Error)

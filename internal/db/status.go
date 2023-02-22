@@ -78,6 +78,9 @@ type Status interface {
 	// IsStatusBookmarkedBy checks if a given status has been bookmarked by a given account ID
 	IsStatusBookmarkedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, Error)
 
+	// IsStatusPinnedBy checks if a given status has been pinned by a given account ID.
+	IsStatusPinnedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, Error)
+
 	// GetStatusFaves returns a slice of faves/likes of the given status.
 	// This slice will be unfiltered, not taking account of blocks and whatnot, so filter it before serving it back to a user.
 	GetStatusFaves(ctx context.Context, status *gtsmodel.Status) ([]*gtsmodel.StatusFave, Error)

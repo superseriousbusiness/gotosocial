@@ -1283,7 +1283,6 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                FalseBool(),
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
-			Pinned:                   FalseBool(),
 			Federated:                TrueBool(),
 			Boostable:                TrueBool(),
 			Replyable:                TrueBool(),
@@ -1308,7 +1307,6 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                TrueBool(),
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
-			Pinned:                   FalseBool(),
 			Federated:                TrueBool(),
 			Boostable:                TrueBool(),
 			Replyable:                TrueBool(),
@@ -1335,7 +1333,6 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                FalseBool(),
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
-			Pinned:                   FalseBool(),
 			Federated:                TrueBool(),
 			Boostable:                TrueBool(),
 			Replyable:                TrueBool(),
@@ -1363,7 +1360,6 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                TrueBool(),
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
-			Pinned:                   FalseBool(),
 			Federated:                TrueBool(),
 			Boostable:                TrueBool(),
 			Replyable:                TrueBool(),
@@ -1388,7 +1384,6 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                TrueBool(),
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
-			Pinned:                   FalseBool(),
 			Federated:                TrueBool(),
 			Boostable:                TrueBool(),
 			Replyable:                TrueBool(),
@@ -1413,7 +1408,6 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                FalseBool(),
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
-			Pinned:                   FalseBool(),
 			Federated:                FalseBool(),
 			Boostable:                TrueBool(),
 			Replyable:                TrueBool(),
@@ -1438,7 +1432,6 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                FalseBool(),
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
-			Pinned:                   FalseBool(),
 			Federated:                TrueBool(),
 			Boostable:                FalseBool(),
 			Replyable:                FalseBool(),
@@ -1464,7 +1457,6 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                FalseBool(),
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
-			Pinned:                   FalseBool(),
 			Federated:                TrueBool(),
 			Boostable:                TrueBool(),
 			Replyable:                TrueBool(),
@@ -1490,7 +1482,6 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                FalseBool(),
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
-			Pinned:                   FalseBool(),
 			Federated:                TrueBool(),
 			Boostable:                TrueBool(),
 			Replyable:                TrueBool(),
@@ -1515,7 +1506,6 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                TrueBool(),
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
-			Pinned:                   FalseBool(),
 			Federated:                TrueBool(),
 			Boostable:                TrueBool(),
 			Replyable:                TrueBool(),
@@ -1540,7 +1530,6 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                TrueBool(),
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
-			Pinned:                   FalseBool(),
 			Federated:                TrueBool(),
 			Boostable:                TrueBool(),
 			Replyable:                FalseBool(),
@@ -1565,7 +1554,6 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                TrueBool(),
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
-			Pinned:                   FalseBool(),
 			Federated:                TrueBool(),
 			Boostable:                TrueBool(),
 			Replyable:                FalseBool(),
@@ -1590,7 +1578,6 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                TrueBool(),
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
-			Pinned:                   FalseBool(),
 			Federated:                FalseBool(),
 			Boostable:                FalseBool(),
 			Replyable:                TrueBool(),
@@ -1619,7 +1606,6 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                FalseBool(),
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
-			Pinned:                   FalseBool(),
 			Federated:                TrueBool(),
 			Boostable:                TrueBool(),
 			Replyable:                TrueBool(),
@@ -1647,7 +1633,6 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                FalseBool(),
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
-			Pinned:                   FalseBool(),
 			Federated:                TrueBool(),
 			Boostable:                TrueBool(),
 			Replyable:                TrueBool(),
@@ -1673,7 +1658,6 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                FalseBool(),
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
-			Pinned:                   FalseBool(),
 			Federated:                TrueBool(),
 			Boostable:                TrueBool(),
 			Replyable:                TrueBool(),
@@ -1701,7 +1685,6 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                FalseBool(),
 			Language:                 "en",
 			CreatedWithApplicationID: "",
-			Pinned:                   FalseBool(),
 			Federated:                TrueBool(),
 			Boostable:                TrueBool(),
 			Replyable:                TrueBool(),
@@ -2450,6 +2433,29 @@ func NewTestBookmarks() map[string]*gtsmodel.StatusBookmark {
 			AccountID:       "01F8MH17FWEB39HZJ76B6VXSKF", // admin account
 			TargetAccountID: "01F8MH1H7YV1Z7D2C8K2730QBF", // local account 1
 			StatusID:        "01F8MHAMCHF6Y650WCRSCP4WMY", // local account status 1
+		},
+	}
+}
+
+func NewTestStatusPins() map[string]*gtsmodel.StatusPin {
+	return map[string]*gtsmodel.StatusPin{
+		"admin_account_pin_1": {
+			ID:        "01GST84MP7QTM4PH8WXQTNHN5T",
+			CreatedAt: TimeMustParse("2022-05-14T13:21:09+02:00"),
+			AccountID: "01F8MH17FWEB39HZJ76B6VXSKF", // admin account
+			StatusID:  "01F8MH75CBF9JFX4ZAD54N0W0R", // admin account status 1
+		},
+		"admin_account_pin_2": {
+			ID:        "01GST86QTV6TBQKX8QNFB9Y7BE",
+			CreatedAt: TimeMustParse("2022-05-14T14:21:09+02:00"),
+			AccountID: "01F8MH17FWEB39HZJ76B6VXSKF", // admin account
+			StatusID:  "01F8MHAAY43M6RJ473VQFCVH37", // admin account status 2
+		},
+		"local_account_2_pin_1": {
+			ID:        "01GSWDJ3FKCTZQY9A6S99X5323",
+			CreatedAt: TimeMustParse("2021-03-18T09:13:55+02:00"),
+			AccountID: "01F8MH5NBDF2MV7CTC4Q5128HF", // local account 2
+			StatusID:  "01G20ZM733MGN8J344T4ZDDFY1", // local account 2 status 7 (followers only)
 		},
 	}
 }

@@ -91,21 +91,35 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		robotsMeta = robotsMetaAllowSome
 	}
 
-	// we should only show the 'back to top' button if the
-	// profile visitor is paging through statuses
-	showBackToTop := false
+	// We need to change our response slightly if the
+	// profile visitor is paging through statuses.
+	var (
+		paging      bool
+		pinnedResp  = &apimodel.PageableResponse{}
+		maxStatusID string
+	)
 
-	maxStatusID := ""
-	maxStatusIDString := c.Query(MaxStatusIDKey)
-	if maxStatusIDString != "" {
+	if maxStatusIDString := c.Query(MaxStatusIDKey); maxStatusIDString != "" {
 		maxStatusID = maxStatusIDString
-		showBackToTop = true
+		paging = true
 	}
 
 	statusResp, errWithCode := m.processor.Account().WebStatusesGet(ctx, account.ID, maxStatusID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, instanceGet)
 		return
+	}
+
+	// If we're not paging, then the profile visitor
+	// is currently just opening the bare profile, so
+	// load pinned statuses so we can show them at the
+	// top of the profile.
+	if !paging {
+		pinnedResp, errWithCode = m.processor.Account().StatusesGet(ctx, authed.Account, account.ID, 0, false, false, "", "", true, false, false)
+		if errWithCode != nil {
+			apiutil.ErrorHandler(c, errWithCode, instanceGet)
+			return
+		}
 	}
 
 	stylesheets := []string{
@@ -125,7 +139,8 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		"robotsMeta":       robotsMeta,
 		"statuses":         statusResp.Items,
 		"statuses_next":    statusResp.NextLink,
-		"show_back_to_top": showBackToTop,
+		"pinned_statuses":  pinnedResp.Items,
+		"show_back_to_top": paging,
 		"stylesheets":      stylesheets,
 		"javascript":       []string{distPathPrefix + "/frontend.js"},
 	})
