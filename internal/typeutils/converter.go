@@ -178,6 +178,8 @@ type TypeConverter interface {
 	//
 	// Appropriate 'next' and 'prev' fields will be created based on the highest and lowest IDs present in the statuses slice.
 	StatusesToASOutboxPage(ctx context.Context, outboxID string, maxID string, minID string, statuses []*gtsmodel.Status) (vocab.ActivityStreamsOrderedCollectionPage, error)
+	// StatusesToASFeaturedCollection returns an ordered collection page using the URIs of given statuses as contents.
+	StatusesToASFeaturedCollection(ctx context.Context, featuredCollectionID string, statuses []*gtsmodel.Status) (vocab.ActivityStreamsOrderedCollection, error)
 	// ReportToASFlag converts a gts model report into an activitystreams FLAG, suitable for federation.
 	ReportToASFlag(ctx context.Context, r *gtsmodel.Report) (vocab.ActivityStreamsFlag, error)
 
