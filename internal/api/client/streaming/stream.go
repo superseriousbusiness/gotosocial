@@ -154,13 +154,13 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 		}
 	}
 
-	account, errWithCode := m.processor.AuthorizeStreamingRequest(c.Request.Context(), token)
+	account, errWithCode := m.processor.Stream().Authorize(c.Request.Context(), token)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	stream, errWithCode := m.processor.OpenStreamForAccount(c.Request.Context(), account, streamType)
+	stream, errWithCode := m.processor.Stream().Open(c.Request.Context(), account, streamType)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

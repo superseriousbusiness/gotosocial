@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, excludeTypes []string, limit int, maxID string, sinceID string) (*apimodel.PageableResponse, gtserror.WithCode) {
+func (p *Processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, excludeTypes []string, limit int, maxID string, sinceID string) (*apimodel.PageableResponse, gtserror.WithCode) {
 	notifs, err := p.db.GetNotifications(ctx, authed.Account.ID, excludeTypes, limit, maxID, sinceID)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
@@ -71,7 +71,7 @@ func (p *processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, ex
 	})
 }
 
-func (p *processor) NotificationsClear(ctx context.Context, authed *oauth.Auth) gtserror.WithCode {
+func (p *Processor) NotificationsClear(ctx context.Context, authed *oauth.Auth) gtserror.WithCode {
 	err := p.db.ClearNotifications(ctx, authed.Account.ID)
 	if err != nil {
 		return gtserror.NewErrorInternalError(err)

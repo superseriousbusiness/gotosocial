@@ -48,7 +48,7 @@ type AdminStandardTestSuite struct {
 	storage      *storage.Driver
 	mediaManager media.Manager
 	federator    federation.Federator
-	processor    processing.Processor
+	processor    *processing.Processor
 	emailSender  email.Sender
 	sentEmails   map[string]string
 

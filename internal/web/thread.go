@@ -72,12 +72,12 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 
 	// do this check to make sure the status is actually from a local account,
 	// we shouldn't render threads from statuses that don't belong to us!
-	if _, errWithCode := m.processor.AccountGetLocalByUsername(ctx, authed, username); errWithCode != nil {
+	if _, errWithCode := m.processor.Account().GetLocalByUsername(ctx, authed.Account, username); errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, instanceGet)
 		return
 	}
 
-	status, errWithCode := m.processor.StatusGet(ctx, authed, statusID)
+	status, errWithCode := m.processor.Status().Get(ctx, authed.Account, statusID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, instanceGet)
 		return
@@ -97,7 +97,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 		return
 	}
 
-	context, errWithCode := m.processor.StatusGetContext(ctx, authed, statusID)
+	context, errWithCode := m.processor.Status().ContextGet(ctx, authed.Account, statusID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, instanceGet)
 		return
@@ -132,7 +132,7 @@ func (m *Module) returnAPStatus(ctx context.Context, c *gin.Context, username st
 		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeySignature, signature)
 	}
 
-	status, errWithCode := m.processor.GetFediStatus(ctx, username, statusID, c.Request.URL)
+	status, errWithCode := m.processor.Fedi().StatusGet(ctx, username, statusID, c.Request.URL)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1) //nolint:contextcheck
 		return

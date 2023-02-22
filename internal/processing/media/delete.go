@@ -11,7 +11,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-func (p *processor) Delete(ctx context.Context, mediaAttachmentID string) gtserror.WithCode {
+// Delete deletes the media attachment with the given ID, including all files pertaining to that attachment.
+func (p *Processor) Delete(ctx context.Context, mediaAttachmentID string) gtserror.WithCode {
 	attachment, err := p.db.GetAttachmentByID(ctx, mediaAttachmentID)
 	if err != nil {
 		if err == db.ErrNoEntries {

@@ -56,7 +56,7 @@ func (a *Auth) Route(r router.Router, m ...gin.HandlerFunc) {
 	a.auth.RouteOauth(oauthGroup.Handle)
 }
 
-func NewAuth(db db.DB, p processing.Processor, idp oidc.IDP, routerSession *gtsmodel.RouterSession, sessionName string) *Auth {
+func NewAuth(db db.DB, p *processing.Processor, idp oidc.IDP, routerSession *gtsmodel.RouterSession, sessionName string) *Auth {
 	return &Auth{
 		routerSession: routerSession,
 		sessionName:   sessionName,

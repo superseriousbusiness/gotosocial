@@ -80,7 +80,7 @@ func (m *Module) ServeFile(c *gin.Context) {
 	// Acquire context from gin request.
 	ctx := c.Request.Context()
 
-	content, errWithCode := m.processor.FileGet(ctx, authed, &apimodel.GetContentRequestForm{
+	content, errWithCode := m.processor.Media().GetFile(ctx, authed.Account, &apimodel.GetContentRequestForm{
 		AccountID: accountID,
 		MediaType: mediaType,
 		MediaSize: mediaSize,

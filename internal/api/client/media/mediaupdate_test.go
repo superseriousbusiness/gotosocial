@@ -57,7 +57,7 @@ type MediaUpdateTestSuite struct {
 	mediaManager media.Manager
 	oauthServer  oauth.Server
 	emailSender  email.Sender
-	processor    processing.Processor
+	processor    *processing.Processor
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
