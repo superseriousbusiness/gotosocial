@@ -141,6 +141,7 @@ func (suite *BookmarkTestSuite) TestGetBookmark() {
 	suite.NoError(err)
 
 	suite.Equal(1, len(statuses))
+	suite.Equal(`<http://localhost:8080/api/v1/bookmarks?limit=30&max_id=01F8MHD2QCZSZ6WQS2ATVPEYJ9>; rel="next", <http://localhost:8080/api/v1/bookmarks?limit=30&min_id=01F8MHD2QCZSZ6WQS2ATVPEYJ9>; rel="prev"`, result.Header.Get("link"))
 }
 
 func TestBookmarkTestSuite(t *testing.T) {

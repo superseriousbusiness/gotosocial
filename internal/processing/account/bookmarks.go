@@ -20,69 +20,82 @@ package account
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
+// BookmarksGet returns a pageable response of statuses that are bookmarked by requestingAccount.
+// Paging for this response is done based on bookmark ID rather than status ID.
 func (p *Processor) BookmarksGet(ctx context.Context, requestingAccount *gtsmodel.Account, limit int, maxID string, minID string) (*apimodel.PageableResponse, gtserror.WithCode) {
-	if requestingAccount == nil {
-		return nil, gtserror.NewErrorForbidden(fmt.Errorf("cannot retrieve bookmarks without a requesting account"))
-	}
-
 	bookmarks, err := p.db.GetBookmarks(ctx, requestingAccount.ID, limit, maxID, minID)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	count := len(bookmarks)
-	filtered := make([]*gtsmodel.Status, 0, len(bookmarks))
-	nextMaxIDValue := ""
-	prevMinIDValue := ""
-	for i, b := range bookmarks {
-		s, err := p.db.GetStatusByID(ctx, b.StatusID)
+	var (
+		count          = len(bookmarks)
+		items          = make([]interface{}, 0, count)
+		nextMaxIDValue string
+		prevMinIDValue string
+	)
+
+	for i, bookmark := range bookmarks {
+		status, err := p.db.GetStatusByID(ctx, bookmark.StatusID)
 		if err != nil {
-			return nil, gtserror.NewErrorInternalError(err)
+			if errors.Is(err, db.ErrNoEntries) {
+				// We just don't have the status for some reason.
+				// Skip this one.
+				continue
+			}
+			return nil, gtserror.NewErrorInternalError(err) // A real error has occurred.
 		}
 
-		visible, err := p.filter.StatusVisible(ctx, s, requestingAccount)
-		if err == nil && visible {
-			if i == count-1 {
-				nextMaxIDValue = b.ID
-			}
+		visible, err := p.filter.StatusVisible(ctx, status, requestingAccount)
+		if err != nil {
+			log.Errorf(ctx, "error checking bookmarked status visibility: %s", err)
+			continue
+		}
 
-			if i == 0 {
-				prevMinIDValue = b.ID
-			}
+		if !visible {
+			continue
+		}
 
-			filtered = append(filtered, s)
+		// Convert the status.
+		item, err := p.tc.StatusToAPIStatus(ctx, status, requestingAccount)
+		if err != nil {
+			log.Errorf(ctx, "error converting bookmarked status to api: %s", err)
+			continue
+		}
+		items = append(items, item)
+
+		// Page based on bookmark ID, not status ID.
+		// Note that we only set these values here
+		// when we're certain that the caller is able
+		// to see the status, *and* we're sure that
+		// we can produce an api model representation.
+		if i == count-1 {
+			nextMaxIDValue = bookmark.ID
+		}
+		if i == 0 {
+			prevMinIDValue = bookmark.ID
 		}
 	}
 
-	count = len(filtered)
-
-	if count == 0 {
+	if len(items) == 0 {
 		return util.EmptyPageableResponse(), nil
 	}
 
-	items := []interface{}{}
-	for _, s := range filtered {
-		item, err := p.tc.StatusToAPIStatus(ctx, s, requestingAccount)
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status to api: %s", err))
-		}
-		items = append(items, item)
-	}
-
 	return util.PackagePageableResponse(util.PageableResponseParams{
-		Items:            items,
-		Path:             "/api/v1/bookmarks",
-		NextMaxIDValue:   nextMaxIDValue,
-		PrevMinIDValue:   prevMinIDValue,
-		Limit:            limit,
-		ExtraQueryParams: []string{},
+		Items:          items,
+		Path:           "/api/v1/bookmarks",
+		NextMaxIDValue: nextMaxIDValue,
+		PrevMinIDValue: prevMinIDValue,
+		Limit:          limit,
 	})
 }
