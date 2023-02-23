@@ -26,6 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -41,11 +42,11 @@ func (p *Processor) BookmarksGet(ctx context.Context, requestingAccount *gtsmode
 	var (
 		count          = len(bookmarks)
 		items          = make([]interface{}, 0, count)
-		nextMaxIDValue string
-		prevMinIDValue string
+		nextMaxIDValue = id.Highest
+		prevMinIDValue = id.Lowest
 	)
 
-	for i, bookmark := range bookmarks {
+	for _, bookmark := range bookmarks {
 		status, err := p.db.GetStatusByID(ctx, bookmark.StatusID)
 		if err != nil {
 			if errors.Is(err, db.ErrNoEntries) {
@@ -79,11 +80,11 @@ func (p *Processor) BookmarksGet(ctx context.Context, requestingAccount *gtsmode
 		// when we're certain that the caller is able
 		// to see the status, *and* we're sure that
 		// we can produce an api model representation.
-		if i == count-1 {
-			nextMaxIDValue = bookmark.ID
+		if bookmark.ID < nextMaxIDValue {
+			nextMaxIDValue = bookmark.ID // Lowest ID (for paging down).
 		}
-		if i == 0 {
-			prevMinIDValue = bookmark.ID
+		if bookmark.ID > prevMinIDValue {
+			prevMinIDValue = bookmark.ID // Highest ID (for paging up).
 		}
 	}
 

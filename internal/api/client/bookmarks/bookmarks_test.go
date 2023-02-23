@@ -19,19 +19,21 @@
 package bookmarks_test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"strings"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/bookmarks"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/statuses"
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -65,6 +67,7 @@ type BookmarkTestSuite struct {
 	testAttachments  map[string]*gtsmodel.MediaAttachment
 	testStatuses     map[string]*gtsmodel.Status
 	testFollows      map[string]*gtsmodel.Follow
+	testBookmarks    map[string]*gtsmodel.StatusBookmark
 
 	// module being tested
 	statusModule   *statuses.Module
@@ -80,6 +83,7 @@ func (suite *BookmarkTestSuite) SetupSuite() {
 	suite.testAttachments = testrig.NewTestAttachments()
 	suite.testStatuses = testrig.NewTestStatuses()
 	suite.testFollows = testrig.NewTestFollows()
+	suite.testBookmarks = testrig.NewTestBookmarks()
 }
 
 func (suite *BookmarkTestSuite) SetupTest() {
@@ -110,38 +114,216 @@ func (suite *BookmarkTestSuite) TearDownTest() {
 	testrig.StandardStorageTeardown(suite.storage)
 }
 
-func (suite *BookmarkTestSuite) TestGetBookmark() {
-	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.DBTokenToToken(t)
-
-	targetStatus := suite.testStatuses["admin_account_status_1"]
-
-	// setup
+func (suite *BookmarkTestSuite) getBookmarks(
+	account *gtsmodel.Account,
+	token *gtsmodel.Token,
+	user *gtsmodel.User,
+	expectedHTTPStatus int,
+	maxID string,
+	minID string,
+	limit int,
+) ([]*apimodel.Status, string, error) {
+	// instantiate recorder + test context
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
+	ctx.Set(oauth.SessionAuthorizedAccount, account)
+	ctx.Set(oauth.SessionAuthorizedToken, oauth.DBTokenToToken(token))
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
-	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(statuses.BookmarkPath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
+	ctx.Set(oauth.SessionAuthorizedUser, user)
+
+	// create the request URI
+	requestPath := bookmarks.BasePath + "?" + bookmarks.LimitKey + "=" + strconv.Itoa(limit)
+	if maxID != "" {
+		requestPath = requestPath + "&" + bookmarks.MaxIDKey + "=" + maxID
+	}
+	if minID != "" {
+		requestPath = requestPath + "&" + bookmarks.MinIDKey + "=" + minID
+	}
+	baseURI := config.GetProtocol() + "://" + config.GetHost()
+	requestURI := baseURI + "/api/" + requestPath
+
+	// create the request
+	ctx.Request = httptest.NewRequest(http.MethodGet, requestURI, nil)
 	ctx.Request.Header.Set("accept", "application/json")
 
+	// trigger the handler
 	suite.bookmarkModule.BookmarksGETHandler(ctx)
 
-	// check response
-	suite.EqualValues(http.StatusOK, recorder.Code)
-
+	// read the response
 	result := recorder.Result()
 	defer result.Body.Close()
+
+	if resultCode := recorder.Code; expectedHTTPStatus != resultCode {
+		return nil, "", fmt.Errorf("expected %d got %d", expectedHTTPStatus, resultCode)
+	}
+
 	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
+	if err != nil {
+		return nil, "", err
+	}
 
-	var statuses []model.Status
-	err = json.Unmarshal(b, &statuses)
-	suite.NoError(err)
+	resp := []*apimodel.Status{}
+	if err := json.Unmarshal(b, &resp); err != nil {
+		return nil, "", err
+	}
 
-	suite.Equal(1, len(statuses))
-	suite.Equal(`<http://localhost:8080/api/v1/bookmarks?limit=30&max_id=01F8MHD2QCZSZ6WQS2ATVPEYJ9>; rel="next", <http://localhost:8080/api/v1/bookmarks?limit=30&min_id=01F8MHD2QCZSZ6WQS2ATVPEYJ9>; rel="prev"`, result.Header.Get("link"))
+	return resp, result.Header.Get("Link"), nil
+}
+
+func (suite *BookmarkTestSuite) TestGetBookmarksSingle() {
+	testAccount := suite.testAccounts["local_account_1"]
+	testToken := suite.testTokens["local_account_1"]
+	testUser := suite.testUsers["local_account_1"]
+
+	statuses, linkHeader, err := suite.getBookmarks(testAccount, testToken, testUser, http.StatusOK, "", "", 10)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(statuses, 1)
+	suite.Equal(`<http://localhost:8080/api/v1/bookmarks?limit=10&max_id=01F8MHD2QCZSZ6WQS2ATVPEYJ9>; rel="next", <http://localhost:8080/api/v1/bookmarks?limit=10&min_id=01F8MHD2QCZSZ6WQS2ATVPEYJ9>; rel="prev"`, linkHeader)
+}
+
+func (suite *BookmarkTestSuite) TestGetBookmarksMultiple() {
+	testAccount := suite.testAccounts["local_account_1"]
+	testToken := suite.testTokens["local_account_1"]
+	testUser := suite.testUsers["local_account_1"]
+
+	// Add a few extra bookmarks for this account.
+	ctx := context.Background()
+	for _, b := range []*gtsmodel.StatusBookmark{
+		{
+			ID:              "01GSZPDQYE9WZ26T501KMM876V", // oldest
+			AccountID:       testAccount.ID,
+			StatusID:        suite.testStatuses["admin_account_status_2"].ID,
+			TargetAccountID: suite.testAccounts["admin_account"].ID,
+		},
+		{
+			ID:              "01GSZPGHY3ACEN11D512V6MR0M",
+			AccountID:       testAccount.ID,
+			StatusID:        suite.testStatuses["admin_account_status_3"].ID,
+			TargetAccountID: suite.testAccounts["admin_account"].ID,
+		},
+		{
+			ID:              "01GSZPGY4ZSHNV0PR3HSBB1DDV", // newest
+			AccountID:       testAccount.ID,
+			StatusID:        suite.testStatuses["admin_account_status_4"].ID,
+			TargetAccountID: suite.testAccounts["admin_account"].ID,
+		},
+	} {
+		if err := suite.db.Put(ctx, b); err != nil {
+			suite.FailNow(err.Error())
+		}
+	}
+
+	statuses, linkHeader, err := suite.getBookmarks(testAccount, testToken, testUser, http.StatusOK, "", "", 10)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(statuses, 4)
+	suite.Equal(`<http://localhost:8080/api/v1/bookmarks?limit=10&max_id=01F8MHD2QCZSZ6WQS2ATVPEYJ9>; rel="next", <http://localhost:8080/api/v1/bookmarks?limit=10&min_id=01GSZPGY4ZSHNV0PR3HSBB1DDV>; rel="prev"`, linkHeader)
+}
+
+func (suite *BookmarkTestSuite) TestGetBookmarksMultiplePaging() {
+	testAccount := suite.testAccounts["local_account_1"]
+	testToken := suite.testTokens["local_account_1"]
+	testUser := suite.testUsers["local_account_1"]
+
+	// Add a few extra bookmarks for this account.
+	ctx := context.Background()
+	for _, b := range []*gtsmodel.StatusBookmark{
+		{
+			ID:              "01GSZPDQYE9WZ26T501KMM876V", // oldest
+			AccountID:       testAccount.ID,
+			StatusID:        suite.testStatuses["admin_account_status_2"].ID,
+			TargetAccountID: suite.testAccounts["admin_account"].ID,
+		},
+		{
+			ID:              "01GSZPGHY3ACEN11D512V6MR0M",
+			AccountID:       testAccount.ID,
+			StatusID:        suite.testStatuses["admin_account_status_3"].ID,
+			TargetAccountID: suite.testAccounts["admin_account"].ID,
+		},
+		{
+			ID:              "01GSZPGY4ZSHNV0PR3HSBB1DDV", // newest
+			AccountID:       testAccount.ID,
+			StatusID:        suite.testStatuses["admin_account_status_4"].ID,
+			TargetAccountID: suite.testAccounts["admin_account"].ID,
+		},
+	} {
+		if err := suite.db.Put(ctx, b); err != nil {
+			suite.FailNow(err.Error())
+		}
+	}
+
+	statuses, linkHeader, err := suite.getBookmarks(testAccount, testToken, testUser, http.StatusOK, "01GSZPGY4ZSHNV0PR3HSBB1DDV", "", 10)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(statuses, 3)
+	suite.Equal(`<http://localhost:8080/api/v1/bookmarks?limit=10&max_id=01F8MHD2QCZSZ6WQS2ATVPEYJ9>; rel="next", <http://localhost:8080/api/v1/bookmarks?limit=10&min_id=01GSZPGHY3ACEN11D512V6MR0M>; rel="prev"`, linkHeader)
+}
+
+func (suite *BookmarkTestSuite) TestGetBookmarksNone() {
+	testAccount := suite.testAccounts["local_account_1"]
+	testToken := suite.testTokens["local_account_1"]
+	testUser := suite.testUsers["local_account_1"]
+
+	// Remove all bookmarks for this account.
+	if err := suite.db.DeleteWhere(context.Background(), []db.Where{{Key: "account_id", Value: testAccount.ID}}, &[]*gtsmodel.StatusBookmark{}); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	statuses, linkHeader, err := suite.getBookmarks(testAccount, testToken, testUser, http.StatusOK, "", "", 10)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Empty(statuses)
+	suite.Empty(linkHeader)
+}
+
+func (suite *BookmarkTestSuite) TestGetBookmarksNonexistentStatus() {
+	testAccount := suite.testAccounts["local_account_1"]
+	testToken := suite.testTokens["local_account_1"]
+	testUser := suite.testUsers["local_account_1"]
+
+	// Add a few extra bookmarks for this account.
+	ctx := context.Background()
+	for _, b := range []*gtsmodel.StatusBookmark{
+		{
+			ID:              "01GSZPDQYE9WZ26T501KMM876V", // oldest
+			AccountID:       testAccount.ID,
+			StatusID:        suite.testStatuses["admin_account_status_2"].ID,
+			TargetAccountID: suite.testAccounts["admin_account"].ID,
+		},
+		{
+			ID:              "01GSZPGHY3ACEN11D512V6MR0M",
+			AccountID:       testAccount.ID,
+			StatusID:        suite.testStatuses["admin_account_status_3"].ID,
+			TargetAccountID: suite.testAccounts["admin_account"].ID,
+		},
+		{
+			ID:              "01GSZPGY4ZSHNV0PR3HSBB1DDV", // newest
+			AccountID:       testAccount.ID,
+			StatusID:        "01GSZQCRX4CXPECWA5M37QNV9F", // <-- THIS ONE DOESN'T EXIST
+			TargetAccountID: suite.testAccounts["admin_account"].ID,
+		},
+	} {
+		if err := suite.db.Put(ctx, b); err != nil {
+			suite.FailNow(err.Error())
+		}
+	}
+
+	statuses, linkHeader, err := suite.getBookmarks(testAccount, testToken, testUser, http.StatusOK, "", "", 10)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(statuses, 3)
+	suite.Equal(`<http://localhost:8080/api/v1/bookmarks?limit=10&max_id=01F8MHD2QCZSZ6WQS2ATVPEYJ9>; rel="next", <http://localhost:8080/api/v1/bookmarks?limit=10&min_id=01GSZPGHY3ACEN11D512V6MR0M>; rel="prev"`, linkHeader)
 }
 
 func TestBookmarkTestSuite(t *testing.T) {
