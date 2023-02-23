@@ -118,9 +118,9 @@ func (suite *AccountStatusesTestSuite) TestGetStatusesPublicOnlyMediaOnly() {
 	suite.Equal(`<http://localhost:8080/api/v1/accounts/01F8MH17FWEB39HZJ76B6VXSKF/statuses?limit=20&max_id=01F8MH75CBF9JFX4ZAD54N0W0R&exclude_replies=false&exclude_reblogs=false&pinned=false&only_media=true&only_public=true>; rel="next", <http://localhost:8080/api/v1/accounts/01F8MH17FWEB39HZJ76B6VXSKF/statuses?limit=20&min_id=01F8MH75CBF9JFX4ZAD54N0W0R&exclude_replies=false&exclude_reblogs=false&pinned=false&only_media=true&only_public=true>; rel="prev"`, result.Header.Get("link"))
 }
 
-func (suite *AccountStatusesTestSuite) TestGetStatusesPinnedOnly1() {
-	// set up the request
-	// we're getting statuses of admin, as local account 1
+func (suite *AccountStatusesTestSuite) TestGetStatusesPinnedOnlyPublicPins() {
+	// admin has a couple statuses pinned
+	// we're getting pinned statuses of admin, as local account 1
 	targetAccount := suite.testAccounts["admin_account"]
 	recorder := httptest.NewRecorder()
 	ctx := suite.newContext(recorder, http.MethodGet, nil, fmt.Sprintf("/api/v1/accounts/%s/statuses?pinned=true", targetAccount.ID), "")
@@ -159,9 +159,9 @@ func (suite *AccountStatusesTestSuite) TestGetStatusesPinnedOnly1() {
 	}
 }
 
-func (suite *AccountStatusesTestSuite) TestGetStatusesPinnedOnly2() {
-	// set up the request
-	// we're getting statuses of local account 2 with an account that doesn't follow it
+func (suite *AccountStatusesTestSuite) TestGetStatusesPinnedOnlyNotFollowing() {
+	// local account 2 has a followers-only status pinned
+	// we're getting pinned statuses of local account 2 with an account that doesn't follow it
 	targetAccount := suite.testAccounts["local_account_2"]
 	recorder := httptest.NewRecorder()
 	ctx := suite.newContext(recorder, http.MethodGet, nil, fmt.Sprintf("/api/v1/accounts/%s/statuses?pinned=true", targetAccount.ID), "")
@@ -198,9 +198,9 @@ func (suite *AccountStatusesTestSuite) TestGetStatusesPinnedOnly2() {
 	suite.Empty(result.Header.Get("link"))
 }
 
-func (suite *AccountStatusesTestSuite) TestGetStatusesPinnedOnly3() {
-	// set up the request
-	// we're getting statuses of local account 2 with an account that *DOES* follow it
+func (suite *AccountStatusesTestSuite) TestGetStatusesPinnedOnlyFollowing() {
+	// local account 2 has a followers-only status pinned
+	// we're getting pinned statuses of local account 2 with an account that *DOES* follow it
 	targetAccount := suite.testAccounts["local_account_2"]
 	recorder := httptest.NewRecorder()
 	ctx := suite.newContext(recorder, http.MethodGet, nil, fmt.Sprintf("/api/v1/accounts/%s/statuses?pinned=true", targetAccount.ID), "")
@@ -243,9 +243,9 @@ func (suite *AccountStatusesTestSuite) TestGetStatusesPinnedOnly3() {
 	}
 }
 
-func (suite *AccountStatusesTestSuite) TestGetStatusesPinnedOnly4() {
-	// set up the request
-	// we're getting statuses of local account 2 with local account 2!
+func (suite *AccountStatusesTestSuite) TestGetStatusesPinnedOnlyGetOwn() {
+	// local account 2 has a followers-only status pinned
+	// we're getting pinned statuses of local account 2 with local account 2!
 	targetAccount := suite.testAccounts["local_account_2"]
 	recorder := httptest.NewRecorder()
 	ctx := suite.newContext(recorder, http.MethodGet, nil, fmt.Sprintf("/api/v1/accounts/%s/statuses?pinned=true", targetAccount.ID), "")
