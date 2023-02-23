@@ -569,3 +569,31 @@ func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gts
 
 	return changed, nil
 }
+
+func fetchRemoteAccountFeatured(ctx context.Context, tsport transport.Transport, featuredCollectionURI string, accountID string) (bool, error) {
+	if featuredCollectionURI == "" {
+		return false, nil
+	}
+
+	uri, err := url.Parse(featuredCollectionURI)
+	if err != nil {
+		return false, err
+	}
+
+	b, err := tsport.Dereference(ctx, uri)
+	if err != nil {
+		return false, fmt.Errorf("fetchRemoteAccountFeatured: error deferencing %s: %w", featuredCollectionURI, err)
+	}
+
+	m := make(map[string]interface{})
+	if err := json.Unmarshal(b, &m); err != nil {
+		return false, fmt.Errorf("fetchRemoteAccountFeatured: error unmarshalling bytes into json: %w", err)
+	}
+
+	t, err := streams.ToType(ctx, m)
+	if err != nil {
+		return false, fmt.Errorf("fetchRemoteAccountFeatured: error resolving json into ap vocab type: %w", err)
+	}
+
+	return false, nil
+}
