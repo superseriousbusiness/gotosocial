@@ -1305,17 +1305,21 @@ func (c *converter) StatusesToASFeaturedCollection(ctx context.Context, featured
 		return nil, fmt.Errorf("error parsing url %s", featuredCollectionID)
 	}
 	collectionIDProp.SetIRI(featuredCollectionIDURI)
+	collection.SetJSONLDId(collectionIDProp)
 
 	itemsProp := streams.NewActivityStreamsOrderedItemsProperty()
 	for _, s := range statuses {
-		note, err := c.StatusToAS(ctx, s)
+		uri, err := url.Parse(s.URI)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error parsing url %s", s.URI)
 		}
-
-		itemsProp.AppendActivityStreamsNote(note)
+		itemsProp.AppendIRI(uri)
 	}
 	collection.SetActivityStreamsOrderedItems(itemsProp)
+
+	totalItemsProp := streams.NewActivityStreamsTotalItemsProperty()
+	totalItemsProp.Set(len(statuses))
+	collection.SetActivityStreamsTotalItems(totalItemsProp)
 
 	return collection, nil
 }

@@ -28,41 +28,7 @@ import (
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
-
-func (p *Processor) authenticateCollectionsRequest(ctx context.Context, requestedUsername string) (requestedAccount, requestingAccount *gtsmodel.Account, errWithCode gtserror.WithCode) {
-	requestedAccount, err := p.db.GetAccountByUsernameDomain(ctx, requestedUsername, "")
-	if err != nil {
-		errWithCode = gtserror.NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
-		return
-	}
-
-	var requestingAccountURI *url.URL
-	requestingAccountURI, errWithCode = p.federator.AuthenticateFederatedRequest(ctx, requestedUsername)
-	if errWithCode != nil {
-		return
-	}
-
-	if requestingAccount, err = p.federator.GetAccountByURI(transport.WithFastfail(ctx), requestedUsername, requestingAccountURI, false); err != nil {
-		errWithCode = gtserror.NewErrorUnauthorized(err)
-		return
-	}
-
-	blocked, err := p.db.IsBlocked(ctx, requestedAccount.ID, requestingAccount.ID, true)
-	if err != nil {
-		errWithCode = gtserror.NewErrorInternalError(err)
-		return
-	}
-
-	if blocked {
-		errWithCode = gtserror.NewErrorUnauthorized(fmt.Errorf("block exists between accounts %s and %s", requestedAccount.ID, requestingAccount.ID))
-	}
-
-	return
-}
 
 // InboxPost handles POST requests to a user's inbox for new activitypub messages.
 //
@@ -80,8 +46,8 @@ func (p *Processor) InboxPost(ctx context.Context, w http.ResponseWriter, r *htt
 
 // OutboxGet returns the activitypub representation of a local user's outbox.
 // This contains links to PUBLIC posts made by this user.
-func (p *Processor) OutboxGet(ctx context.Context, requestedUsername string, page bool, maxID string, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
-	requestedAccount, _, errWithCode := p.authenticateCollectionsRequest(ctx, requestedUsername)
+func (p *Processor) OutboxGet(ctx context.Context, requestedUsername string, page bool, maxID string, minID string) (interface{}, gtserror.WithCode) {
+	requestedAccount, _, errWithCode := p.authenticate(ctx, requestedUsername)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
@@ -137,8 +103,8 @@ func (p *Processor) OutboxGet(ctx context.Context, requestedUsername string, pag
 
 // FollowersGet handles the getting of a fedi/activitypub representation of a user/account's followers, performing appropriate
 // authentication before returning a JSON serializable interface to the caller.
-func (p *Processor) FollowersGet(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
-	requestedAccount, _, errWithCode := p.authenticateCollectionsRequest(ctx, requestedUsername)
+func (p *Processor) FollowersGet(ctx context.Context, requestedUsername string) (interface{}, gtserror.WithCode) {
+	requestedAccount, _, errWithCode := p.authenticate(ctx, requestedUsername)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
@@ -163,8 +129,8 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUsername string, 
 
 // FollowingGet handles the getting of a fedi/activitypub representation of a user/account's following, performing appropriate
 // authentication before returning a JSON serializable interface to the caller.
-func (p *Processor) FollowingGet(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
-	requestedAccount, _, errWithCode := p.authenticateCollectionsRequest(ctx, requestedUsername)
+func (p *Processor) FollowingGet(ctx context.Context, requestedUsername string) (interface{}, gtserror.WithCode) {
+	requestedAccount, _, errWithCode := p.authenticate(ctx, requestedUsername)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
@@ -187,8 +153,10 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUsername string, 
 	return data, nil
 }
 
-func (p *Processor) FeaturedCollectionGet(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
-	requestedAccount, requestingAccount, errWithCode := p.authenticateCollectionsRequest(ctx, requestedUsername)
+// FeaturedCollectionGet returns an ordered collection of the requested username's Pinned posts.
+// The returned collection have an `items` property which contains an ordered list of status URIs.
+func (p *Processor) FeaturedCollectionGet(ctx context.Context, requestedUsername string) (interface{}, gtserror.WithCode) {
+	requestedAccount, _, errWithCode := p.authenticate(ctx, requestedUsername)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
@@ -200,18 +168,15 @@ func (p *Processor) FeaturedCollectionGet(ctx context.Context, requestedUsername
 		}
 	}
 
-	filtered := make([]*gtsmodel.Status, 0, len(statuses))
-	for _, s := range statuses {
-		visible, err := p.filter.StatusVisible(ctx, s, requestingAccount)
-		if err != nil {
-			log.WithContext(ctx).Errorf("error checking visibility of status %s for account %s: %v", s.ID, requestingAccount.ID, err)
-			continue
-		}
-
-		if visible {
-			filtered = append(filtered, s)
-		}
+	collection, err := p.tc.StatusesToASFeaturedCollection(ctx, requestedAccount.FeaturedCollectionURI, statuses)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	
+	data, err := streams.Serialize(collection)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return data, nil
 }

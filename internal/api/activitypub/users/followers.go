@@ -46,12 +46,13 @@ func (m *Module) FollowersGETHandler(c *gin.Context) {
 	}
 
 	if format == string(apiutil.TextHTML) {
-		// redirect to the user's profile
+		// This isn't an ActivityPub request;
+		// redirect to the user's profile.
 		c.Redirect(http.StatusSeeOther, "/@"+requestedUsername)
 		return
 	}
 
-	resp, errWithCode := m.processor.Fedi().FollowersGet(apiutil.TransferSignatureContext(c), requestedUsername, c.Request.URL)
+	resp, errWithCode := m.processor.Fedi().FollowersGet(apiutil.TransferSignatureContext(c), requestedUsername)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
