@@ -353,8 +353,9 @@ func (a *accountDB) CountAccountStatuses(ctx context.Context, accountID string) 
 func (a *accountDB) CountAccountPinned(ctx context.Context, accountID string) (int, db.Error) {
 	return a.conn.
 		NewSelect().
-		TableExpr("? AS ?", bun.Ident("status_pins"), bun.Ident("status_pin")).
-		Where("? = ?", bun.Ident("status_pin.account_id"), accountID).
+		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
+		Where("? = ?", bun.Ident("status.account_id"), accountID).
+		Where("? IS NOT NULL", bun.Ident("status.pinned_at")).
 		Count(ctx)
 }
 
@@ -438,10 +439,11 @@ func (a *accountDB) GetAccountPinnedStatuses(ctx context.Context, accountID stri
 
 	q := a.conn.
 		NewSelect().
-		TableExpr("? AS ?", bun.Ident("status_pins"), bun.Ident("status_pin")).
-		Column("status_pin.status_id").
-		Where("? = ?", bun.Ident("status_pin.account_id"), accountID).
-		Order("status_pin.id DESC")
+		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
+		Column("status.id").
+		Where("? = ?", bun.Ident("status.account_id"), accountID).
+		Where("? IS NOT NULL", bun.Ident("status.pinned_at")).
+		Order("status.pinned_at DESC")
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {
 		return nil, a.conn.ProcessError(err)

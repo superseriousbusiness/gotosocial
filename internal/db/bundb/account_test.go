@@ -215,36 +215,36 @@ func (suite *AccountTestSuite) TestGettingBookmarksWithNoAccount() {
 	suite.Nil(statuses)
 }
 
-func (suite *AccountTestSuite) TestGetAccountPinnedStatuses1() {
+func (suite *AccountTestSuite) TestGetAccountPinnedStatusesSomeResults() {
 	testAccount := suite.testAccounts["admin_account"]
 
 	statuses, err := suite.db.GetAccountPinnedStatuses(context.Background(), testAccount.ID)
 	suite.NoError(err)
-	suite.Len(statuses, 2)
+	suite.Len(statuses, 2) // This account has 2 statuses pinned.
 }
 
-func (suite *AccountTestSuite) TestGetAccountPinnedStatuses2() {
+func (suite *AccountTestSuite) TestGetAccountPinnedStatusesNothingPinned() {
 	testAccount := suite.testAccounts["local_account_1"]
 
 	statuses, err := suite.db.GetAccountPinnedStatuses(context.Background(), testAccount.ID)
 	suite.ErrorIs(err, db.ErrNoEntries)
-	suite.Empty(statuses)
+	suite.Empty(statuses) // This account has nothing pinned.
 }
 
-func (suite *AccountTestSuite) TestCountAccountPinned1() {
+func (suite *AccountTestSuite) TestCountAccountPinnedSomeResults() {
 	testAccount := suite.testAccounts["admin_account"]
 
 	pinned, err := suite.db.CountAccountPinned(context.Background(), testAccount.ID)
 	suite.NoError(err)
-	suite.Equal(pinned, 2)
+	suite.Equal(pinned, 2) // This account has 2 statuses pinned.
 }
 
-func (suite *AccountTestSuite) TestCountAccountPinned2() {
+func (suite *AccountTestSuite) TestCountAccountPinnedNothingPinned() {
 	testAccount := suite.testAccounts["local_account_1"]
 
 	pinned, err := suite.db.CountAccountPinned(context.Background(), testAccount.ID)
 	suite.NoError(err)
-	suite.Equal(pinned, 0)
+	suite.Equal(pinned, 0) // This account has nothing pinned.
 }
 
 func TestAccountTestSuite(t *testing.T) {

@@ -1263,6 +1263,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 	return map[string]*gtsmodel.Status{
 		"admin_account_status_1": {
 			ID:                       "01F8MH75CBF9JFX4ZAD54N0W0R",
+			PinnedAt:                 TimeMustParse("2022-05-14T13:21:09+02:00"),
 			URI:                      "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
 			URL:                      "http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
 			Content:                  "hello world! #welcome ! first post on the instance :rainbow: !",
@@ -1291,6 +1292,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 		},
 		"admin_account_status_2": {
 			ID:                       "01F8MHAAY43M6RJ473VQFCVH37",
+			PinnedAt:                 TimeMustParse("2022-05-14T14:21:09+02:00"),
 			URI:                      "http://localhost:8080/users/admin/statuses/01F8MHAAY43M6RJ473VQFCVH37",
 			URL:                      "http://localhost:8080/@admin/statuses/01F8MHAAY43M6RJ473VQFCVH37",
 			Content:                  "🐕🐕🐕🐕🐕",
@@ -1641,6 +1643,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 		},
 		"local_account_2_status_7": {
 			ID:                       "01G20ZM733MGN8J344T4ZDDFY1",
+			PinnedAt:                 TimeMustParse("2021-03-18T09:13:55+02:00"),
 			URI:                      "http://localhost:8080/users/1happyturtle/statuses/01G20ZM733MGN8J344T4ZDDFY1",
 			URL:                      "http://localhost:8080/@1happyturtle/statuses/01G20ZM733MGN8J344T4ZDDFY1",
 			Content:                  "🐢 hi followers! did u know i'm a turtle? 🐢",
@@ -2433,29 +2436,6 @@ func NewTestBookmarks() map[string]*gtsmodel.StatusBookmark {
 			AccountID:       "01F8MH17FWEB39HZJ76B6VXSKF", // admin account
 			TargetAccountID: "01F8MH1H7YV1Z7D2C8K2730QBF", // local account 1
 			StatusID:        "01F8MHAMCHF6Y650WCRSCP4WMY", // local account status 1
-		},
-	}
-}
-
-func NewTestStatusPins() map[string]*gtsmodel.StatusPin {
-	return map[string]*gtsmodel.StatusPin{
-		"admin_account_pin_1": {
-			ID:        "01GST84MP7QTM4PH8WXQTNHN5T",
-			CreatedAt: TimeMustParse("2022-05-14T13:21:09+02:00"),
-			AccountID: "01F8MH17FWEB39HZJ76B6VXSKF", // admin account
-			StatusID:  "01F8MH75CBF9JFX4ZAD54N0W0R", // admin account status 1
-		},
-		"admin_account_pin_2": {
-			ID:        "01GST86QTV6TBQKX8QNFB9Y7BE",
-			CreatedAt: TimeMustParse("2022-05-14T14:21:09+02:00"),
-			AccountID: "01F8MH17FWEB39HZJ76B6VXSKF", // admin account
-			StatusID:  "01F8MHAAY43M6RJ473VQFCVH37", // admin account status 2
-		},
-		"local_account_2_pin_1": {
-			ID:        "01GSWDJ3FKCTZQY9A6S99X5323",
-			CreatedAt: TimeMustParse("2021-03-18T09:13:55+02:00"),
-			AccountID: "01F8MH5NBDF2MV7CTC4Q5128HF", // local account 2
-			StatusID:  "01G20ZM733MGN8J344T4ZDDFY1", // local account 2 status 7 (followers only)
 		},
 	}
 }

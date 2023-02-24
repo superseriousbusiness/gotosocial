@@ -29,29 +29,25 @@ import (
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			// create the new status pins table
-			if _, err := tx.
-				NewCreateTable().
-				Model(&gtsmodel.StatusPin{}).
-				IfNotExists().
-				Exec(ctx); err != nil {
-				return err
-			}
-
-			// index appropriately
-			if _, err := tx.
-				NewCreateIndex().
-				Model(&gtsmodel.StatusPin{}).
-				Index("status_pins_account_id_id_idx").
-				Column("account_id").
-				ColumnExpr("id DESC").
-				Exec(ctx); err != nil {
-				return err
-			}
-
-			// drop the now unused 'pinned' column in statuses
+			// Drop the now unused 'pinned' column in statuses.
 			if _, err := tx.ExecContext(ctx, "ALTER TABLE ? DROP COLUMN ?", bun.Ident("statuses"), bun.Ident("pinned")); err != nil &&
 				!(strings.Contains(err.Error(), "no such column") || strings.Contains(err.Error(), "does not exist") || strings.Contains(err.Error(), "SQLSTATE 42703")) {
+				return err
+			}
+
+			// Create new (more useful) pinned_at column.
+			if _, err := tx.NewAddColumn().Model(&gtsmodel.Status{}).ColumnExpr("? TIMESTAMPTZ", bun.Ident("pinned_at")).Exec(ctx); err != nil &&
+				!(strings.Contains(err.Error(), "already exists") || strings.Contains(err.Error(), "duplicate column name") || strings.Contains(err.Error(), "SQLSTATE 42701")) {
+				return err
+			}
+
+			// Index new column appropriately.
+			if _, err := tx.
+				NewCreateIndex().
+				Model(&gtsmodel.Status{}).
+				Index("statuses_account_id_pinned_at_idx").
+				Column("account_id", "pinned_at").
+				Exec(ctx); err != nil {
 				return err
 			}
 

@@ -63,14 +63,10 @@ func (c *converter) interactionsWithStatusForAccount(ctx context.Context, s *gts
 		}
 		si.Bookmarked = bookmarked
 
-		// The only time 'pinned' should be true is if the requesting account
-		// is looking at its OWN pinned status; we can save a db call here.
+		// The only time 'pinned' should be true is if the
+		// requesting account is looking at its OWN status.
 		if s.AccountID == requestingAccount.ID {
-			pinned, err := c.db.IsStatusPinnedBy(ctx, s, requestingAccount.ID)
-			if err != nil {
-				return nil, fmt.Errorf("error checking if requesting account has pinned status: %s", err)
-			}
-			si.Pinned = pinned
+			si.Pinned = !s.PinnedAt.IsZero()
 		}
 	}
 	return si, nil

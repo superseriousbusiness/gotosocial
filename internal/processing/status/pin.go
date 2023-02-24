@@ -22,14 +22,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
 const allowedPinnedCount = 10
@@ -51,15 +48,14 @@ func (p *Processor) PinCreate(ctx context.Context, requestingAccount *gtsmodel.A
 		return nil, gtserror.NewErrorUnprocessableEntity(err, err.Error())
 	}
 
-	// First check if the status is already pinned;
-	// if it is then we don't need to do anything.
-	pinned, err := p.db.IsStatusPinnedBy(ctx, targetStatus, requestingAccount.ID)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking if status is pinned: %w", err))
+	if targetStatus.BoostOfID != "" {
+		err = errors.New("cannot pin boosts")
+		return nil, gtserror.NewErrorUnprocessableEntity(err, err.Error())
 	}
 
-	if !pinned {
-		// ensure we have enough slots to pin this
+	// Only pin status if it's not pinned already.
+	if !targetStatus.PinnedAt.IsZero() {
+		// Ensure we have enough slots to pin this.
 		pinnedCount, err := p.db.CountAccountPinned(ctx, requestingAccount.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking number of pinned statuses: %w", err))
@@ -70,29 +66,14 @@ func (p *Processor) PinCreate(ctx context.Context, requestingAccount *gtsmodel.A
 			return nil, gtserror.NewErrorUnprocessableEntity(err, err.Error())
 		}
 
-		// We need to create a new pin in the database!
-		pin := &gtsmodel.StatusPin{
-			ID:        id.NewULID(),
-			AccountID: requestingAccount.ID,
-			Account:   requestingAccount,
-			StatusID:  targetStatus.ID,
-			Status:    targetStatus,
+		// We need to mark this status as pinned!
+		targetStatus.PinnedAt = time.Now()
+		if err := p.db.UpdateStatus(ctx, targetStatus); err != nil {
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error pinning status: %w", err))
 		}
-
-		if err := p.db.Put(ctx, pin); err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error putting pin in database: %w", err))
-		}
-
-		// put the pinned status in the worker channel
-		p.clientWorker.Queue(messages.FromClientAPI{
-			APObjectType:   ap.ObjectCollection,
-			APActivityType: ap.ActivityAdd,
-			GTSModel:       targetStatus,
-			OriginAccount:  requestingAccount,
-		})
 	}
 
-	// return the api representation of the target status
+	// Return the api representation of the target status.
 	apiStatus, err := p.tc.StatusToAPIStatus(ctx, targetStatus, requestingAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %w", targetStatus.ID, err))
@@ -117,26 +98,13 @@ func (p *Processor) PinRemove(ctx context.Context, requestingAccount *gtsmodel.A
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
-	// First check if the status is actually pinned;
-	// if is not then we don't need to do anything.
-	pinned, err := p.db.IsStatusPinnedBy(ctx, targetStatus, requestingAccount.ID)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking if status is pinned: %w", err))
-	}
-
-	if pinned {
-		// remove the pin
-		if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "account_id", Value: requestingAccount.ID}, {Key: "status_id", Value: targetStatus.ID}}, &gtsmodel.StatusPin{}); err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error deleting pin from database: %w", err))
+	// Only unpin status if it's pinned.
+	if targetStatus.PinnedAt.IsZero() {
+		// We need to mark this status as no longer pinned!
+		targetStatus.PinnedAt = time.Time{}
+		if err := p.db.UpdateStatus(ctx, targetStatus); err != nil {
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error unpinning status: %w", err))
 		}
-
-		// put the unpinned status in the worker channel
-		p.clientWorker.Queue(messages.FromClientAPI{
-			APObjectType:   ap.ObjectCollection,
-			APActivityType: ap.ActivityRemove,
-			GTSModel:       targetStatus,
-			OriginAccount:  requestingAccount,
-		})
 	}
 
 	// return the api representation of the target status

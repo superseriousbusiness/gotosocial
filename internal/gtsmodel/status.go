@@ -27,6 +27,7 @@ type Status struct {
 	ID                       string             `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                              // id of this item in the database
 	CreatedAt                time.Time          `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                       // when was item created
 	UpdatedAt                time.Time          `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                       // when was item last updated
+	PinnedAt                 time.Time          `validate:"-" bun:"type:timestamptz,nullzero"`                                                         // Status was pinned by owning account at this time.
 	URI                      string             `validate:"required,url" bun:",unique,nullzero,notnull"`                                               // activitypub URI of this status
 	URL                      string             `validate:"url" bun:",nullzero"`                                                                       // web url for viewing this status
 	Content                  string             `validate:"-" bun:""`                                                                                  // content of this status; likely html-formatted but not guaranteed
