@@ -456,6 +456,11 @@ func (p *Processor) wipeStatus(ctx context.Context, statusToDelete *gtsmodel.Sta
 		return err
 	}
 
+	// delete all bookmarks that point to this status
+	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "status_id", Value: statusToDelete.ID}}, &[]*gtsmodel.StatusBookmark{}); err != nil {
+		return err
+	}
+
 	// delete all boosts for this status + remove them from timelines
 	if boosts, err := p.db.GetStatusReblogs(ctx, statusToDelete); err == nil {
 		for _, b := range boosts {
