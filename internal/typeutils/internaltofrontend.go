@@ -628,7 +628,7 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		Bookmarked:         interacts.Bookmarked,
 		Muted:              interacts.Muted,
 		Reblogged:          interacts.Reblogged,
-		Pinned:             *s.Pinned,
+		Pinned:             interacts.Pinned,
 		Content:            s.Content,
 		Reblog:             nil,
 		Application:        apiApplication,

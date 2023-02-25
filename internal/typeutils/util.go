@@ -32,6 +32,7 @@ type statusInteractions struct {
 	Muted      bool
 	Bookmarked bool
 	Reblogged  bool
+	Pinned     bool
 }
 
 func (c *converter) interactionsWithStatusForAccount(ctx context.Context, s *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*statusInteractions, error) {
@@ -61,6 +62,12 @@ func (c *converter) interactionsWithStatusForAccount(ctx context.Context, s *gts
 			return nil, fmt.Errorf("error checking if requesting account has bookmarked status: %s", err)
 		}
 		si.Bookmarked = bookmarked
+
+		// The only time 'pinned' should be true is if the
+		// requesting account is looking at its OWN status.
+		if s.AccountID == requestingAccount.ID {
+			si.Pinned = !s.PinnedAt.IsZero()
+		}
 	}
 	return si, nil
 }

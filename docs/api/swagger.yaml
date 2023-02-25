@@ -5096,6 +5096,45 @@ paths:
             summary: View accounts that have faved/starred/liked the target status.
             tags:
                 - statuses
+    /api/v1/statuses/{id}/pin:
+        post:
+            description: |-
+                You can only pin original posts (not reblogs) that you authored yourself.
+
+                Supported privacy levels for pinned posts are public, unlisted, and private/followers-only,
+                but only public posts will appear on the web version of your profile.
+            operationId: statusPin
+            parameters:
+                - description: Target status ID.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The status.
+                    schema:
+                        $ref: '#/definitions/status'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:accounts
+            summary: Pin a status to the top of your profile, and add it to your Featured ActivityPub collection.
+            tags:
+                - statuses
     /api/v1/statuses/{id}/reblog:
         post:
             description: |-
@@ -5231,6 +5270,40 @@ paths:
                 - OAuth2 Bearer:
                     - write:statuses
             summary: Unstar/unlike/unfavourite the given status.
+            tags:
+                - statuses
+    /api/v1/statuses/{id}/unpin:
+        post:
+            operationId: statusUnpin
+            parameters:
+                - description: Target status ID.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The status.
+                    schema:
+                        $ref: '#/definitions/status'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:accounts
+            summary: Unpin one of your pinned statuses.
             tags:
                 - statuses
     /api/v1/statuses/{id}/unreblog:

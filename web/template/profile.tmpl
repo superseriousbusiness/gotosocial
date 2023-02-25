@@ -53,6 +53,18 @@
             </div>
         </div>
     </div>
+        {{ if .pinned_statuses }}
+        <h2 id="pinned">
+            <span>Pinned toots</span>
+        </h2>
+        <div class="thread">
+            {{ range .pinned_statuses }}
+            <div class="toot expanded">
+                {{ template "status.tmpl" .}}
+            </div>
+            {{ end }}
+        </div>
+        {{ end }}
     <h2 id="recent">
         <span>Latest public toots</span>
         {{ if .rssFeed }}

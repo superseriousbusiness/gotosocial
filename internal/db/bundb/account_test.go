@@ -28,6 +28,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/uptrace/bun"
@@ -38,25 +39,25 @@ type AccountTestSuite struct {
 }
 
 func (suite *AccountTestSuite) TestGetAccountStatuses() {
-	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, false, false, "", "", false, false, false)
+	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, false, false, "", "", false, false)
 	suite.NoError(err)
 	suite.Len(statuses, 5)
 }
 
 func (suite *AccountTestSuite) TestGetAccountStatusesExcludeRepliesAndReblogs() {
-	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, true, true, "", "", false, false, false)
+	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, true, true, "", "", false, false)
 	suite.NoError(err)
 	suite.Len(statuses, 5)
 }
 
 func (suite *AccountTestSuite) TestGetAccountStatusesExcludeRepliesAndReblogsPublicOnly() {
-	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, true, true, "", "", false, false, true)
+	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, true, true, "", "", false, true)
 	suite.NoError(err)
 	suite.Len(statuses, 1)
 }
 
 func (suite *AccountTestSuite) TestGetAccountStatusesMediaOnly() {
-	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, false, false, "", "", false, true, false)
+	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, false, false, "", "", true, false)
 	suite.NoError(err)
 	suite.Len(statuses, 1)
 }
@@ -212,6 +213,38 @@ func (suite *AccountTestSuite) TestGettingBookmarksWithNoAccount() {
 	statuses, err := suite.db.GetBookmarks(context.Background(), "", 10, "", "")
 	suite.Error(err)
 	suite.Nil(statuses)
+}
+
+func (suite *AccountTestSuite) TestGetAccountPinnedStatusesSomeResults() {
+	testAccount := suite.testAccounts["admin_account"]
+
+	statuses, err := suite.db.GetAccountPinnedStatuses(context.Background(), testAccount.ID)
+	suite.NoError(err)
+	suite.Len(statuses, 2) // This account has 2 statuses pinned.
+}
+
+func (suite *AccountTestSuite) TestGetAccountPinnedStatusesNothingPinned() {
+	testAccount := suite.testAccounts["local_account_1"]
+
+	statuses, err := suite.db.GetAccountPinnedStatuses(context.Background(), testAccount.ID)
+	suite.ErrorIs(err, db.ErrNoEntries)
+	suite.Empty(statuses) // This account has nothing pinned.
+}
+
+func (suite *AccountTestSuite) TestCountAccountPinnedSomeResults() {
+	testAccount := suite.testAccounts["admin_account"]
+
+	pinned, err := suite.db.CountAccountPinned(context.Background(), testAccount.ID)
+	suite.NoError(err)
+	suite.Equal(pinned, 2) // This account has 2 statuses pinned.
+}
+
+func (suite *AccountTestSuite) TestCountAccountPinnedNothingPinned() {
+	testAccount := suite.testAccounts["local_account_1"]
+
+	pinned, err := suite.db.CountAccountPinned(context.Background(), testAccount.ID)
+	suite.NoError(err)
+	suite.Equal(pinned, 0) // This account has nothing pinned.
 }
 
 func TestAccountTestSuite(t *testing.T) {

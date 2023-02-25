@@ -31,7 +31,7 @@ import (
 
 // StatusesGet fetches a number of statuses (in time descending order) from the given account, filtered by visibility for
 // the account given in authed.
-func (p *Processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinnedOnly bool, mediaOnly bool, publicOnly bool) (*apimodel.PageableResponse, gtserror.WithCode) {
+func (p *Processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinned bool, mediaOnly bool, publicOnly bool) (*apimodel.PageableResponse, gtserror.WithCode) {
 	if requestingAccount != nil {
 		if blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true); err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
@@ -40,7 +40,17 @@ func (p *Processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 		}
 	}
 
-	statuses, err := p.db.GetAccountStatuses(ctx, targetAccountID, limit, excludeReplies, excludeReblogs, maxID, minID, pinnedOnly, mediaOnly, publicOnly)
+	var (
+		statuses []*gtsmodel.Status
+		err      error
+	)
+	if pinned {
+		// Get *ONLY* pinned statuses.
+		statuses, err = p.db.GetAccountPinnedStatuses(ctx, targetAccountID)
+	} else {
+		// Get account statuses which *may* include pinned ones.
+		statuses, err = p.db.GetAccountStatuses(ctx, targetAccountID, limit, excludeReplies, excludeReblogs, maxID, minID, mediaOnly, publicOnly)
+	}
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return util.EmptyPageableResponse(), nil
@@ -48,7 +58,9 @@ func (p *Processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	var filtered []*gtsmodel.Status
+	// Filtering + serialization process is the same for
+	// either pinned status queries or 'normal' ones.
+	filtered := make([]*gtsmodel.Status, 0, len(statuses))
 	for _, s := range statuses {
 		visible, err := p.filter.StatusVisible(ctx, s, requestingAccount)
 		if err == nil && visible {
@@ -57,12 +69,11 @@ func (p *Processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 	}
 
 	count := len(filtered)
-
 	if count == 0 {
 		return util.EmptyPageableResponse(), nil
 	}
 
-	items := []interface{}{}
+	items := make([]interface{}, 0, count)
 	nextMaxIDValue := ""
 	prevMinIDValue := ""
 	for i, s := range filtered {
@@ -82,6 +93,14 @@ func (p *Processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 		items = append(items, item)
 	}
 
+	if pinned {
+		// We don't page on pinned status responses,
+		// so we can save some work + just return items.
+		return &apimodel.PageableResponse{
+			Items: items,
+		}, nil
+	}
+
 	return util.PackagePageableResponse(util.PageableResponseParams{
 		Items:          items,
 		Path:           fmt.Sprintf("/api/v1/accounts/%s/statuses", targetAccountID),
@@ -91,7 +110,7 @@ func (p *Processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 		ExtraQueryParams: []string{
 			fmt.Sprintf("exclude_replies=%t", excludeReplies),
 			fmt.Sprintf("exclude_reblogs=%t", excludeReblogs),
-			fmt.Sprintf("pinned_only=%t", pinnedOnly),
+			fmt.Sprintf("pinned=%t", pinned),
 			fmt.Sprintf("only_media=%t", mediaOnly),
 			fmt.Sprintf("only_public=%t", publicOnly),
 		},

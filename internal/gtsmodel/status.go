@@ -27,6 +27,7 @@ type Status struct {
 	ID                       string             `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                              // id of this item in the database
 	CreatedAt                time.Time          `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                       // when was item created
 	UpdatedAt                time.Time          `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                       // when was item last updated
+	PinnedAt                 time.Time          `validate:"-" bun:"type:timestamptz,nullzero"`                                                         // Status was pinned by owning account at this time.
 	URI                      string             `validate:"required,url" bun:",unique,nullzero,notnull"`                                               // activitypub URI of this status
 	URL                      string             `validate:"url" bun:",nullzero"`                                                                       // web url for viewing this status
 	Content                  string             `validate:"-" bun:""`                                                                                  // content of this status; likely html-formatted but not guaranteed
@@ -59,7 +60,6 @@ type Status struct {
 	CreatedWithApplication   *Application       `validate:"-" bun:"rel:belongs-to"`                                                                    // application corresponding to createdWithApplicationID
 	ActivityStreamsType      string             `validate:"required" bun:",nullzero,notnull"`                                                          // What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types. Will probably almost always be Note but who knows!.
 	Text                     string             `validate:"-" bun:""`                                                                                  // Original text of the status without formatting
-	Pinned                   *bool              `validate:"-" bun:",nullzero,notnull,default:false"`                                                   // Has this status been pinned by its owner?
 	Federated                *bool              `validate:"-" bun:",notnull"`                                                                          // This status will be federated beyond the local timeline(s)
 	Boostable                *bool              `validate:"-" bun:",notnull"`                                                                          // This status can be boosted/reblogged
 	Replyable                *bool              `validate:"-" bun:",notnull"`                                                                          // This status can be replied to

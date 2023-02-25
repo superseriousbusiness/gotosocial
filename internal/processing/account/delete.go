@@ -129,7 +129,7 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 
 	for {
 		// Fetch next block of account statuses from database
-		statuses, err := p.db.GetAccountStatuses(ctx, account.ID, 20, false, false, maxID, "", false, false, false)
+		statuses, err := p.db.GetAccountStatuses(ctx, account.ID, 20, false, false, maxID, "", false, false)
 		if err != nil {
 			if !errors.Is(err, db.ErrNoEntries) {
 				// an actual error has occurred

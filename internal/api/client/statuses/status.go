@@ -88,6 +88,10 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	attachHandler(http.MethodPost, UnfavouritePath, m.StatusUnfavePOSTHandler)
 	attachHandler(http.MethodGet, FavouritedPath, m.StatusFavedByGETHandler)
 
+	// pin stuff
+	attachHandler(http.MethodPost, PinPath, m.StatusPinPOSTHandler)
+	attachHandler(http.MethodPost, UnpinPath, m.StatusUnpinPOSTHandler)
+
 	// reblog stuff
 	attachHandler(http.MethodPost, ReblogPath, m.StatusBoostPOSTHandler)
 	attachHandler(http.MethodPost, UnreblogPath, m.StatusUnboostPOSTHandler)
