@@ -20,6 +20,7 @@ package main
 
 import (
 	"log"
+	"os"
 	godebug "runtime/debug"
 	"strings"
 
@@ -66,6 +67,8 @@ func main() {
 	if debug.DEBUG {
 		// only add testrig if debug enabled.
 		rootCmd.AddCommand(testrigCommands())
+	} else if len(os.Args) > 1 && os.Args[1] == "testrig" {
+		log.Fatalln("gotosocial must be built and run with the DEBUG enviroment variable set to enable and access testrig")
 	}
 
 	// run
