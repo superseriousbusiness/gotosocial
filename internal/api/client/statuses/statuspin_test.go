@@ -129,7 +129,7 @@ func (suite *StatusPinTestSuite) TestPinStatusTwiceError() {
 	*targetStatus = *suite.testStatuses["local_account_1_status_5"]
 	targetStatus.PinnedAt = time.Now()
 
-	if err := suite.db.UpdateStatus(context.Background(), targetStatus); err != nil {
+	if err := suite.db.UpdateStatus(context.Background(), targetStatus, "pinned_at"); err != nil {
 		suite.FailNow(err.Error())
 	}
 

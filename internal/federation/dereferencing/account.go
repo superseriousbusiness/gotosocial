@@ -315,6 +315,9 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	// Fetch this account's pinned statuses, now that the account is in the database.
 	// The order is important here: if we tried to fetch the pinned statuses before
 	// storing the account, it might end BLAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+	if err := d.fetchRemoteAccountFeatured(ctx, requestUser, account.FeaturedCollectionURI); err != nil {
+		log.Errorf(ctx, "error fetching featured collection for account %s: %v", uri, err)
+	}
 
 	return latestAcc, nil
 }
@@ -575,7 +578,7 @@ func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gts
 }
 
 // fetchRemoteAccountFeatured
-func (d *deref) fetchRemoteAccountFeatured(ctx context.Context, tsport transport.Transport, featuredCollectionURI string) error {
+func (d *deref) fetchRemoteAccountFeatured(ctx context.Context, requestingUsername string, featuredCollectionURI string) error {
 	if featuredCollectionURI == "" {
 		// Nothing to do lads.
 		return nil
@@ -586,59 +589,88 @@ func (d *deref) fetchRemoteAccountFeatured(ctx context.Context, tsport transport
 		return err
 	}
 
+	tsport, err := d.transportController.NewTransportForUsername(ctx, requestingUsername)
+	if err != nil {
+		return err
+	}
+
 	b, err := tsport.Dereference(ctx, uri)
 	if err != nil {
-		return fmt.Errorf("fetchRemoteAccountFeatured: error deferencing %s: %w", featuredCollectionURI, err)
+		return err
 	}
 
 	m := make(map[string]interface{})
 	if err := json.Unmarshal(b, &m); err != nil {
-		return fmt.Errorf("fetchRemoteAccountFeatured: error unmarshalling bytes into json: %w", err)
+		return fmt.Errorf("error unmarshalling bytes into json: %w", err)
 	}
 
 	t, err := streams.ToType(ctx, m)
 	if err != nil {
-		return fmt.Errorf("fetchRemoteAccountFeatured: error resolving json into ap vocab type: %w", err)
+		return fmt.Errorf("error resolving json into ap vocab type: %w", err)
 	}
 
 	if t.GetTypeName() != ap.ObjectOrderedCollection {
-		return nil
+		return fmt.Errorf("%s was not an OrderedCollection", featuredCollectionURI)
 	}
 
 	collection, ok := t.(vocab.ActivityStreamsOrderedCollection)
 	if !ok {
-		return nil
+		return errors.New("couldn't coerce OrderedCollection")
 	}
 
 	items := collection.GetActivityStreamsOrderedItems()
 	if items == nil {
-		return nil
+		return errors.New("nil orderedItems")
 	}
 
 	statusURIs := make([]*url.URL, 0, items.Len())
 	for iter := items.Begin(); iter != items.End(); iter = iter.Next() {
+		var statusURI *url.URL
 		switch statusable, ok := iter.(ap.Statusable); {
 		case ok:
+			// We got the whole Statusable. Extract the URI.
 			if id := statusable.GetJSONLDId(); id != nil && id.IsIRI() {
-				statusURIs = append(statusURIs, id.GetIRI())
+				statusURI = id.GetIRI()
 			}
 		case iter.IsIRI():
-			statusURIs = append(statusURIs, iter.GetIRI())
+			// We got just the URI.
+			statusURI = iter.GetIRI()
 		}
-	}
 
-	for _, uri := range statusURIs {
-		// Check if we have this status already.
-		status, err := d.db.GetStatusByURI(ctx, uri.String())
+		if statusURI == nil {
+			continue
+		}
+
+		if statusURI.Host != uri.Host {
+			// If this status doesn't share a host with its featured
+			// collection URI, we shouldn't trust it. Just move on.
+			continue
+		}
+
+		statusURIs = append(statusURIs, statusURI)
+
+		status, _, err := d.GetStatus(ctx, requestingUsername, statusURI, false, false)
 		if err != nil {
-			if !errors.Is(err, db.ErrNoEntries) {
-				return err // Proper database error
-			}
+			// We couldn't get the status, bummer.
+			// Just log + move on, we can try later.
+			log.WithContext(ctx).Infof("error getting status from featured collection %s: %s", featuredCollectionURI, err)
+			continue
 		}
 
-		if 
+		// If the status was already pinned, we don't need to do anything.
+		if !status.PinnedAt.IsZero() {
+			continue
+		}
 
+		status.PinnedAt = time.Now()
+		if err := d.db.UpdateStatus(ctx, status, "pinned_at"); err != nil {
+			log.WithContext(ctx).Infof("error updating status in featured collection %s: %s", featuredCollectionURI, err)
+		}
 	}
+
+	// Now that we know which statuses are pinned,
+	// we should *unpin* anything not included.
+	jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj
 
 	return nil
 }
