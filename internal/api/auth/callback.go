@@ -284,10 +284,15 @@ func (m *Module) createUserFromOIDC(ctx context.Context, claims *oidc.Claims, ex
 	}
 
 	// check if the user is in any recognised admin groups
+	adminGroups := config.GetOIDCAdminGroups()
 	var admin bool
+LOOP:
 	for _, g := range claims.Groups {
-		if strings.EqualFold(g, "admin") || strings.EqualFold(g, "admins") {
-			admin = true
+		for _, ag := range adminGroups {
+			if strings.EqualFold(g, ag) {
+				admin = true
+				break LOOP
+			}
 		}
 	}
 
