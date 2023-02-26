@@ -579,8 +579,9 @@ func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gts
 	return changed, nil
 }
 
-// fetchRemoteAccountFeatured dereferences an account's featuredCollectionURI (if not empty),
-// 
+// fetchRemoteAccountFeatured dereferences an account's featuredCollectionURI (if not empty).
+// For each discovered status, this status will be dereferenced (if necessary) and marked as
+// pinned (if necessary). Then, old pins will be removed if they're not included in new pins.
 func (d *deref) fetchRemoteAccountFeatured(ctx context.Context, requestingUsername string, featuredCollectionURI string, accountID string) error {
 	if featuredCollectionURI == "" {
 		// Nothing to do lads.
