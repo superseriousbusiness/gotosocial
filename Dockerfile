@@ -2,7 +2,7 @@
 # Dockerfile reference: https://docs.docker.com/engine/reference/builder/
 
 # stage 1: generate up-to-date swagger.yaml to put in the final container
-FROM --platform=${BUILDPLATFORM} quay.io/goswagger/swagger:v0.30.0 AS swagger
+FROM --platform=${BUILDPLATFORM} quay.io/goswagger/swagger:v0.30.4 AS swagger
 
 COPY go.mod /go/src/github.com/superseriousbusiness/gotosocial/go.mod
 COPY go.sum /go/src/github.com/superseriousbusiness/gotosocial/go.sum
@@ -12,7 +12,7 @@ WORKDIR /go/src/github.com/superseriousbusiness/gotosocial
 RUN swagger generate spec -o /go/src/github.com/superseriousbusiness/gotosocial/swagger.yaml --scan-models
 
 # stage 2: generate the web/assets/dist bundles
-FROM --platform=${BUILDPLATFORM} node:16.15.1-alpine3.15 AS bundler
+FROM --platform=${BUILDPLATFORM} node:16.19.1-alpine3.17 AS bundler
 
 COPY web web
 RUN yarn install --cwd web/source && \
@@ -20,7 +20,7 @@ RUN yarn install --cwd web/source && \
     rm -r web/source
 
 # stage 3: build the executor container
-FROM --platform=${TARGETPLATFORM} alpine:3.15.4 as executor
+FROM --platform=${TARGETPLATFORM} alpine:3.17.2 as executor
 
 # switch to non-root user:group for GtS
 USER 1000:1000
