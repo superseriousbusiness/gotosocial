@@ -28,6 +28,10 @@ import (
 )
 
 const (
+	hostMetaXMLNS                   = "http://docs.oasis-open.org/ns/xri/xrd-1.0"
+	hostMetaRel                     = "lrdd"
+	hostMetaType                    = "application/xrd+xml"
+	hostMetaTemplate                = ".well-known/webfinger?resource={uri}"
 	nodeInfoVersion                 = "2.0"
 	nodeInfoSoftwareName            = "gotosocial"
 	nodeInfoRel                     = "http://nodeinfo.diaspora.software/ns/schema/" + nodeInfoVersion
@@ -94,6 +98,22 @@ func (p *Processor) NodeInfoGet(ctx context.Context) (*apimodel.Nodeinfo, gtserr
 		},
 		Metadata: nodeInfoMetadata,
 	}, nil
+}
+
+// HostMetaGet returns a host-meta struct in response to a host-meta request.
+func (p *Processor) HostMetaGet() *apimodel.HostMeta {
+	protocol := config.GetProtocol()
+	host := config.GetHost()
+	return &apimodel.HostMeta{
+		XMLNS: hostMetaXMLNS,
+		Link: []apimodel.Link{
+			{
+				Rel:      hostMetaRel,
+				Type:     hostMetaType,
+				Template: fmt.Sprintf("%s://%s/%s", protocol, host, hostMetaTemplate),
+			},
+		},
+	}
 }
 
 // WebfingerGet handles the GET for a webfinger resource. Most commonly, it will be used for returning account lookups.

@@ -16,22 +16,30 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package util
+package hostmeta
 
-// MIME represents a mime-type.
-type MIME string
+import (
+	"net/http"
 
-// MIME type
-const (
-	AppJSON           MIME = `application/json`
-	AppXML            MIME = `application/xml`
-	AppXMLXRD         MIME = `application/xrd+xml`
-	AppRSSXML         MIME = `application/rss+xml`
-	AppActivityJSON   MIME = `application/activity+json`
-	AppActivityLDJSON MIME = `application/ld+json; profile="https://www.w3.org/ns/activitystreams"`
-	AppForm           MIME = `application/x-www-form-urlencoded`
-	MultipartForm     MIME = `multipart/form-data`
-	TextXML           MIME = `text/xml`
-	TextHTML          MIME = `text/html`
-	TextCSS           MIME = `text/css`
+	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/processing"
 )
+
+const (
+	HostMetaContentType = "application/xrd+xml"
+	HostMetaPath        = "/host-meta"
+)
+
+type Module struct {
+	processor *processing.Processor
+}
+
+func New(processor *processing.Processor) *Module {
+	return &Module{
+		processor: processor,
+	}
+}
+
+func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
+	attachHandler(http.MethodGet, HostMetaPath, m.HostMetaGETHandler)
+}
