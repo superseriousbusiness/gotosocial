@@ -670,7 +670,7 @@ func (d *deref) fetchRemoteAccountFeatured(ctx context.Context, requestingUserna
 		if err != nil {
 			// We couldn't get the status, bummer.
 			// Just log + move on, we can try later.
-			log.WithContext(ctx).Infof("error getting status from featured collection %s: %s", featuredCollectionURI, err)
+			log.Infof(ctx, "error getting status from featured collection %s: %s", featuredCollectionURI, err)
 			continue
 		}
 
@@ -695,7 +695,7 @@ func (d *deref) fetchRemoteAccountFeatured(ctx context.Context, requestingUserna
 		// be pinned, so we can finally update it.
 		status.PinnedAt = time.Now()
 		if err := d.db.UpdateStatus(ctx, status, "pinned_at"); err != nil {
-			log.WithContext(ctx).Infof("error updating status in featured collection %s: %s", featuredCollectionURI, err)
+			log.Infof(ctx, "error updating status in featured collection %s: %s", featuredCollectionURI, err)
 		}
 	}
 
