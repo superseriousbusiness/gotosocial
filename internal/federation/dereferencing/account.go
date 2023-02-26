@@ -311,14 +311,16 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		}
 	}
 
-	// Fetch this account's pinned statuses, now that the account is in the database.
-	//
-	// The order is important here: if we tried to fetch the pinned statuses before
-	// storing the account, the process might end up calling enrichAccount again,
-	// causing us to get stuck in a loop. By calling it now, we make sure this doesn't
-	// happen!
-	if err := d.fetchRemoteAccountFeatured(ctx, requestUser, latestAcc.FeaturedCollectionURI, latestAcc.ID); err != nil {
-		log.Errorf(ctx, "error fetching featured collection for account %s: %v", uri, err)
+	if latestAcc.FeaturedCollectionURI != "" {
+		// Fetch this account's pinned statuses, now that the account is in the database.
+		//
+		// The order is important here: if we tried to fetch the pinned statuses before
+		// storing the account, the process might end up calling enrichAccount again,
+		// causing us to get stuck in a loop. By calling it now, we make sure this doesn't
+		// happen!
+		if err := d.fetchRemoteAccountFeatured(ctx, requestUser, latestAcc.FeaturedCollectionURI, latestAcc.ID); err != nil {
+			log.Errorf(ctx, "error fetching featured collection for account %s: %v", uri, err)
+		}
 	}
 
 	return latestAcc, nil
@@ -583,11 +585,6 @@ func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gts
 // For each discovered status, this status will be dereferenced (if necessary) and marked as
 // pinned (if necessary). Then, old pins will be removed if they're not included in new pins.
 func (d *deref) fetchRemoteAccountFeatured(ctx context.Context, requestingUsername string, featuredCollectionURI string, accountID string) error {
-	if featuredCollectionURI == "" {
-		// Nothing to do lads.
-		return nil
-	}
-
 	uri, err := url.Parse(featuredCollectionURI)
 	if err != nil {
 		return err
