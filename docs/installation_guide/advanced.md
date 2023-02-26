@@ -32,6 +32,9 @@ host: "localhost"
 # to "gts.example.org/.well-known/webfinger" so that GtS can handle them properly.
 #
 # You should also redirect requests at "example.org/.well-known/nodeinfo" in the same way.
+#
+# You should also redirect requests at "example.org/.well-known/host-meta" in the same way. This endpoint is used by a number of clients to discover the API endpoint to use when the host and account domain are different.
+#
 # An empty string (ie., not set) means that the same value as 'host' will be used.
 #
 # DO NOT change this after your server has already run once, or you will break things!
@@ -71,6 +74,10 @@ http {
             rewrite ^.*$ https://fedi.example.org/.well-known/webfinger permanent;
         }
 
+        location /.well-known/host-meta {
+            rewrite ^.*$ https://fedi.example.org/.well-known/host-meta permanent;
+        }
+
         location /.well-known/nodeinfo {
             rewrite ^.*$ https://fedi.example.org/.well-known/nodeinfo permanent;
         }
@@ -91,7 +98,7 @@ If `example.org` is running on [Traefik](https://doc.traefik.io/traefik/), we co
     labels:
       - 'traefik.http.routers.myservice.rule=Host(`example.org`)'
       - 'traefik.http.middlewares.myservice-gts.redirectregex.permanent=true'
-      - 'traefik.http.middlewares.myservice-gts.redirectregex.regex=^https://(.*)/.well-known/(webfinger|nodeinfo)$$'
+      - 'traefik.http.middlewares.myservice-gts.redirectregex.regex=^https://(.*)/.well-known/(webfinger|nodeinfo|host-meta)$$'
       - 'traefik.http.middlewares.myservice-gts.redirectregex.replacement=https://fedi.$${1}/.well-known/$${2}'
       - 'traefik.http.routers.myservice.middlewares=myservice-gts@docker'
 ```
@@ -279,9 +286,9 @@ This section contains a number of additional things for configuring nginx.
 
 If you want to harden up your NGINX deployment with advanced configuration options, there are many guides online for doing so ([for example](https://beaglesecurity.com/blog/article/nginx-server-security.html)). Try to find one that's up to date. Mozilla also publishes best-practice ssl configuration [here](https://ssl-config.mozilla.org/).
 
-### Caching Webfinger and Public Key responses
+### Caching Webfinger, Webhost Metadata and Public Key responses
 
-It's possible to use nginx to cache webfinger and public key responses. This may be useful in order to ensure clients still get a response on these endpoints even if your GoToSocial instance is (temporarily) down, or requests are being throttled.
+It's possible to use nginx to cache webfinger, host-meta and public key responses. This may be useful in order to ensure clients still get a response on these endpoints even if your GoToSocial instance is (temporarily) down, or requests are being throttled.
 
 You'll need to configure two things:
 
@@ -311,7 +318,7 @@ server {
   
   ### NEW STUFF STARTS HERE ###
   
-  location /.well-known/webfinger {
+  location ~ /.well-known/(webfinger|host-meta)$ {
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-For $remote_addr;
     proxy_set_header X-Forwarded-Proto $scheme;
