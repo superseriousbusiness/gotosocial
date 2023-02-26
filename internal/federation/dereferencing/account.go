@@ -703,23 +703,22 @@ func (d *deref) fetchRemoteAccountFeatured(ctx context.Context, requestingUserna
 	}
 
 	// Now that we know which statuses are pinned, we should
-	// *unpin* previous pinned statuses that weren't included.
+	// *unpin* previous pinned statuses that aren't included.
+outerLoop:
 	for _, status := range wasPinned {
-		unpin := true // assume we have to unpin
-
-	innerLoop:
 		for _, statusURI := range statusURIs {
 			if status.URI == statusURI.String() {
-				unpin = false   // this status is included in most recent pinned uris
-				break innerLoop // no need to keep checking
+				// This status is included in most recent
+				// pinned uris. No need to keep checking.
+				continue outerLoop
 			}
 		}
 
-		if unpin {
-			status.PinnedAt = time.Time{}
-			if err := d.db.UpdateStatus(ctx, status, "pinned_at"); err != nil {
-				return fmt.Errorf("error unpinning status: %w", err)
-			}
+		// Status was pinned before, but is not included
+		// in most recent pinned uris, so unpin it now.
+		status.PinnedAt = time.Time{}
+		if err := d.db.UpdateStatus(ctx, status, "pinned_at"); err != nil {
+			return fmt.Errorf("error unpinning status: %w", err)
 		}
 	}
 
