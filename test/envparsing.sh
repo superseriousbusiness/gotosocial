@@ -94,7 +94,12 @@ echo "$OUTPUT" > "$OUTPUT_OUT"
 EXPECT_OUT=$(mktemp)
 echo "$EXPECT" > "$EXPECT_OUT"
 
-if ! DIFF=$(diff "$OUTPUT_OUT" "$EXPECT_OUT"); then
+DIFFCMD=$(command -v diff 2>&1)
+if command -v jd >/dev/null 2>&1; then
+    DIFFCMD=$(command -v jd 2>&1)
+fi
+
+if ! DIFF=$("$DIFFCMD" "$OUTPUT_OUT" "$EXPECT_OUT"); then
     echo "OUTPUT not equal EXPECTED"
     echo "$DIFF"
     exit 1
