@@ -664,6 +664,10 @@ func (d *deref) fetchRemoteAccountFeatured(ctx context.Context, requestingUserna
 			continue
 		}
 
+		// Already append this status URI to our slice.
+		// We do this here so that even if we can't get
+		// the status in the next part for some reason,
+		// we still know it was *meant* to be pinned.
 		statusURIs = append(statusURIs, statusURI)
 
 		status, _, err := d.GetStatus(ctx, requestingUsername, statusURI, false, false)
