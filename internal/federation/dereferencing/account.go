@@ -635,23 +635,23 @@ func (d *deref) fetchRemoteAccountFeatured(ctx context.Context, requestingUserna
 		var statusURI *url.URL
 
 		switch {
-		case iter.IsIRI():
-			// We got just the URI.
-			statusURI = iter.GetIRI()
 		case iter.IsActivityStreamsNote():
 			// We got a whole Note. Extract the URI.
 			if note := iter.GetActivityStreamsNote(); note != nil {
-				if id := note.GetJSONLDId(); id != nil && id.IsIRI() {
+				if id := note.GetJSONLDId(); id != nil {
 					statusURI = id.GetIRI()
 				}
 			}
 		case iter.IsActivityStreamsArticle():
 			// We got a whole Article. Extract the URI.
 			if article := iter.GetActivityStreamsArticle(); article != nil {
-				if id := article.GetJSONLDId(); id != nil && id.IsIRI() {
+				if id := article.GetJSONLDId(); id != nil {
 					statusURI = id.GetIRI()
 				}
 			}
+		default:
+			// Try to get just the URI.
+			statusURI = iter.GetIRI()
 		}
 
 		if statusURI == nil {
