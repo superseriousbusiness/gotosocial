@@ -1,6 +1,6 @@
 module github.com/superseriousbusiness/gotosocial
 
-go 1.19
+go 1.20
 
 require (
 	codeberg.org/gruf/go-bytesize v1.0.2
