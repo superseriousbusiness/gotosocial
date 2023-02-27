@@ -548,8 +548,8 @@ github.com/superseriousbusiness/exif-terminator v0.5.0 h1:57SO/geyaOl2v/lJSQLVcQ
 github.com/superseriousbusiness/exif-terminator v0.5.0/go.mod h1:d5IkskXco/3XRXzOrI73uGYn+wahJEqPlQSSqn6jxSw=
 github.com/superseriousbusiness/go-jpeg-image-structure/v2 v2.0.0-20220321154430-d89a106fdabe h1:ksl2oCx/Qo8sNDc3Grb8WGKBM9nkvhCm25uvlT86azE=
 github.com/superseriousbusiness/go-jpeg-image-structure/v2 v2.0.0-20220321154430-d89a106fdabe/go.mod h1:gH4P6gN1V+wmIw5o97KGaa1RgXB/tVpC2UNzijhg3E4=
-github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB h1:PtW2w6budTvRV2J5QAoSvThTHBuvh8t/+BXIZFAaBSc=
-github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB/go.mod h1:uYC/W92oVRJ49Vh1GcvTqpeFqHi+Ovrl2sMllQWRAEo=
+github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8 h1:nTIhuP157oOFcscuoK1kCme1xTeGIzztSw70lX9NrDQ=
+github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8/go.mod h1:uYC/W92oVRJ49Vh1GcvTqpeFqHi+Ovrl2sMllQWRAEo=
 github.com/tdewolff/minify/v2 v2.12.4 h1:kejsHQMM17n6/gwdw53qsi6lg0TGddZADVyQOz1KMdE=
 github.com/tdewolff/minify/v2 v2.12.4/go.mod h1:h+SRvSIX3kwgwTFOpSckvSxgax3uy8kZTSF1Ojrr3bk=
 github.com/tdewolff/parse/v2 v2.6.4 h1:KCkDvNUMof10e3QExio9OPZJT8SbdKojLBumw8YZycQ=
