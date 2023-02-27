@@ -1,6 +1,6 @@
 module github.com/superseriousbusiness/gotosocial
 
-go 1.19
+go 1.20
 
 require (
 	codeberg.org/gruf/go-bytesize v1.0.2
@@ -34,8 +34,8 @@ require (
 	github.com/jackc/pgconn v1.13.0
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/microcosm-cc/bluemonday v1.0.22
-	github.com/miekg/dns v1.1.50
-	github.com/minio/minio-go/v7 v7.0.48
+	github.com/miekg/dns v1.1.51
+	github.com/minio/minio-go/v7 v7.0.49
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/oklog/ulid v1.3.1
 	github.com/spf13/cobra v1.6.1
@@ -43,7 +43,7 @@ require (
 	github.com/stretchr/testify v1.8.1
 	github.com/superseriousbusiness/activity v1.2.1-gts
 	github.com/superseriousbusiness/exif-terminator v0.5.0
-	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB
+	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8
 	github.com/tdewolff/minify/v2 v2.12.4
 	github.com/ulule/limiter/v3 v3.11.0
 	github.com/uptrace/bun v1.1.10
@@ -56,7 +56,7 @@ require (
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
 	golang.org/x/image v0.5.0
 	golang.org/x/net v0.7.0
-	golang.org/x/oauth2 v0.4.0
+	golang.org/x/oauth2 v0.5.0
 	golang.org/x/text v0.7.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -89,7 +89,7 @@ require (
 	github.com/dsoprea/go-photoshop-info-format v0.0.0-20200610045659-121dd752914d // indirect
 	github.com/dsoprea/go-png-image-structure/v2 v2.0.0-20210512210324-29b889a6093d // indirect
 	github.com/dsoprea/go-utility/v2 v2.0.0-20200717064901-2fccff4aa15e // indirect
-	github.com/dustin/go-humanize v1.0.0 // indirect
+	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-errors/errors v1.4.1 // indirect
@@ -118,8 +118,8 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/klauspost/compress v1.15.9 // indirect
-	github.com/klauspost/cpuid/v2 v2.1.1 // indirect
+	github.com/klauspost/compress v1.15.15 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.3 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
@@ -148,9 +148,9 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
-	golang.org/x/mod v0.6.0-dev.0.20220907135952-02c991387e35 // indirect
+	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
-	golang.org/x/tools v0.1.12 // indirect
+	golang.org/x/tools v0.3.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect

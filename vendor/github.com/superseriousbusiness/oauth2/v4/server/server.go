@@ -313,6 +313,10 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (oauth2.GrantType, *oau
 		return "", nil, errors.ErrUnsupportedGrantType
 	}
 
+	if !s.CheckGrantType(gt) {
+		return "", nil, errors.ErrUnsupportedGrantType
+	}
+
 	clientID, clientSecret, err := s.ClientInfoHandler(r)
 	if err != nil {
 		return "", nil, err
