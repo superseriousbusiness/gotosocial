@@ -62,30 +62,37 @@ type Driver struct {
 	PresignedCache *ttl.Cache[string, PresignedURL]
 }
 
+// Get returns the byte value for key in storage.
 func (d *Driver) Get(ctx context.Context, key string) ([]byte, error) {
 	return d.Storage.ReadBytes(ctx, key)
 }
 
+// GetStream returns an io.ReadCloser for the value bytes at key in the storage.
 func (d *Driver) GetStream(ctx context.Context, key string) (io.ReadCloser, error) {
 	return d.Storage.ReadStream(ctx, key)
 }
 
+// Put writes the supplied value bytes at key in the storage
 func (d *Driver) Put(ctx context.Context, key string, value []byte) (int, error) {
 	return d.Storage.WriteBytes(ctx, key, value)
 }
 
+// PutStream writes the bytes from supplied reader at key in the storage
 func (d *Driver) PutStream(ctx context.Context, key string, r io.Reader) (int64, error) {
 	return d.Storage.WriteStream(ctx, key, r)
 }
 
+// Remove attempts to remove the supplied key (and corresponding value) from storage.
 func (d *Driver) Delete(ctx context.Context, key string) error {
 	return d.Storage.Remove(ctx, key)
 }
 
+// Has checks if the supplied key is in the storage.
 func (d *Driver) Has(ctx context.Context, key string) (bool, error) {
 	return d.Storage.Stat(ctx, key)
 }
 
+// WalkKeys walks the keys in the storage.
 func (d *Driver) WalkKeys(ctx context.Context, walk func(context.Context, string) error) error {
 	return d.Storage.WalkKeys(ctx, storage.WalkKeysOptions{
 		WalkFn: func(ctx context.Context, entry storage.Entry) error {
@@ -94,6 +101,7 @@ func (d *Driver) WalkKeys(ctx context.Context, walk func(context.Context, string
 	})
 }
 
+// Close will close the storage, releasing any file locks.
 func (d *Driver) Close() error {
 	return d.Storage.Close()
 }
