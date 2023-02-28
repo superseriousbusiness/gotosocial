@@ -19,20 +19,27 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package workers
 
 import (
+	"context"
 	"log"
 	"runtime"
 
 	"codeberg.org/gruf/go-runners"
 	"codeberg.org/gruf/go-sched"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
 type Workers struct {
 	// Main task scheduler instance.
 	Scheduler sched.Scheduler
 
-	// Processor / federator worker pools.
-	// ClientAPI runners.WorkerPool
-	// Federator runners.WorkerPool
+	// ClientAPI / federator worker pools.
+	ClientAPI runners.WorkerPool
+	Federator runners.WorkerPool
+
+	// Enqueue functions for clientAPI / federator worker pools,
+	// these are pointers to Processor.Enqueue___() functions.
+	EnqueueClientAPI func(context.Context, messages.FromClientAPI)
+	EnqueueFederator func(context.Context, messages.FromFederator)
 
 	// Media manager worker pools.
 	Media runners.WorkerPool
@@ -50,13 +57,13 @@ func (w *Workers) Start() {
 		return w.Scheduler.Start(nil)
 	})
 
-	// tryUntil("starting client API workerpool", 5, func() bool {
-	// 	return w.ClientAPI.Start(4*maxprocs, 400*maxprocs)
-	// })
+	tryUntil("starting client API workerpool", 5, func() bool {
+		return w.ClientAPI.Start(4*maxprocs, 400*maxprocs)
+	})
 
-	// tryUntil("starting federator workerpool", 5, func() bool {
-	// 	return w.Federator.Start(4*maxprocs, 400*maxprocs)
-	// })
+	tryUntil("starting federator workerpool", 5, func() bool {
+		return w.Federator.Start(4*maxprocs, 400*maxprocs)
+	})
 
 	tryUntil("starting media workerpool", 5, func() bool {
 		return w.Media.Start(8*maxprocs, 80*maxprocs)
@@ -66,8 +73,8 @@ func (w *Workers) Start() {
 // Stop will stop all of the contained worker pools (and global scheduler).
 func (w *Workers) Stop() {
 	tryUntil("stopping scheduler", 5, w.Scheduler.Stop)
-	// tryUntil("stopping client API workerpool", 5, w.ClientAPI.Stop)
-	// tryUntil("stopping federator workerpool", 5, w.Federator.Stop)
+	tryUntil("stopping client API workerpool", 5, w.ClientAPI.Stop)
+	tryUntil("stopping federator workerpool", 5, w.Federator.Stop)
 	tryUntil("stopping media workerpool", 5, w.Media.Stop)
 }
 

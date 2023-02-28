@@ -22,22 +22,21 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
 )
 
 type Processor struct {
-	db          db.DB
+	state       *state.State
 	oauthServer oauth.Server
-	streamMap   *sync.Map
+	streamMap   sync.Map
 }
 
-func New(db db.DB, oauthServer oauth.Server) Processor {
+func New(state *state.State, oauthServer oauth.Server) Processor {
 	return Processor{
-		db:          db,
+		state:       state,
 		oauthServer: oauthServer,
-		streamMap:   &sync.Map{},
 	}
 }
 

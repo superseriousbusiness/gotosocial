@@ -35,7 +35,7 @@ import (
 
 // FaveCreate processes the faving of a given status, returning the updated status if the fave goes through.
 func (p *Processor) FaveCreate(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
+	targetStatus, err := p.state.DB.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
 	}
@@ -57,7 +57,7 @@ func (p *Processor) FaveCreate(ctx context.Context, requestingAccount *gtsmodel.
 	// first check if the status is already faved, if so we don't need to do anything
 	newFave := true
 	gtsFave := &gtsmodel.StatusFave{}
-	if err := p.db.GetWhere(ctx, []db.Where{{Key: "status_id", Value: targetStatus.ID}, {Key: "account_id", Value: requestingAccount.ID}}, gtsFave); err == nil {
+	if err := p.state.DB.GetWhere(ctx, []db.Where{{Key: "status_id", Value: targetStatus.ID}, {Key: "account_id", Value: requestingAccount.ID}}, gtsFave); err == nil {
 		// we already have a fave for this status
 		newFave = false
 	}
@@ -77,12 +77,12 @@ func (p *Processor) FaveCreate(ctx context.Context, requestingAccount *gtsmodel.
 			URI:             uris.GenerateURIForLike(requestingAccount.Username, thisFaveID),
 		}
 
-		if err := p.db.Put(ctx, gtsFave); err != nil {
+		if err := p.state.DB.Put(ctx, gtsFave); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error putting fave in database: %s", err))
 		}
 
 		// send it back to the processor for async processing
-		p.clientWorker.Queue(messages.FromClientAPI{
+		p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 			APObjectType:   ap.ActivityLike,
 			APActivityType: ap.ActivityCreate,
 			GTSModel:       gtsFave,
@@ -102,7 +102,7 @@ func (p *Processor) FaveCreate(ctx context.Context, requestingAccount *gtsmodel.
 
 // FaveRemove processes the unfaving of a given status, returning the updated status if the fave goes through.
 func (p *Processor) FaveRemove(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
+	targetStatus, err := p.state.DB.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
 	}
@@ -122,7 +122,7 @@ func (p *Processor) FaveRemove(ctx context.Context, requestingAccount *gtsmodel.
 	var toUnfave bool
 
 	gtsFave := &gtsmodel.StatusFave{}
-	err = p.db.GetWhere(ctx, []db.Where{{Key: "status_id", Value: targetStatus.ID}, {Key: "account_id", Value: requestingAccount.ID}}, gtsFave)
+	err = p.state.DB.GetWhere(ctx, []db.Where{{Key: "status_id", Value: targetStatus.ID}, {Key: "account_id", Value: requestingAccount.ID}}, gtsFave)
 	if err == nil {
 		// we have a fave
 		toUnfave = true
@@ -138,12 +138,12 @@ func (p *Processor) FaveRemove(ctx context.Context, requestingAccount *gtsmodel.
 
 	if toUnfave {
 		// we had a fave, so take some action to get rid of it
-		if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "status_id", Value: targetStatus.ID}, {Key: "account_id", Value: requestingAccount.ID}}, gtsFave); err != nil {
+		if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "status_id", Value: targetStatus.ID}, {Key: "account_id", Value: requestingAccount.ID}}, gtsFave); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error unfaveing status: %s", err))
 		}
 
 		// send it back to the processor for async processing
-		p.clientWorker.Queue(messages.FromClientAPI{
+		p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 			APObjectType:   ap.ActivityLike,
 			APActivityType: ap.ActivityUndo,
 			GTSModel:       gtsFave,
@@ -162,7 +162,7 @@ func (p *Processor) FaveRemove(ctx context.Context, requestingAccount *gtsmodel.
 
 // FavedBy returns a slice of accounts that have liked the given status, filtered according to privacy settings.
 func (p *Processor) FavedBy(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) ([]*apimodel.Account, gtserror.WithCode) {
-	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
+	targetStatus, err := p.state.DB.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
 	}
@@ -178,7 +178,7 @@ func (p *Processor) FavedBy(ctx context.Context, requestingAccount *gtsmodel.Acc
 		return nil, gtserror.NewErrorNotFound(errors.New("status is not visible"))
 	}
 
-	statusFaves, err := p.db.GetStatusFaves(ctx, targetStatus)
+	statusFaves, err := p.state.DB.GetStatusFaves(ctx, targetStatus)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing who faved status: %s", err))
 	}
@@ -186,7 +186,7 @@ func (p *Processor) FavedBy(ctx context.Context, requestingAccount *gtsmodel.Acc
 	// filter the list so the user doesn't see accounts they blocked or which blocked them
 	filteredAccounts := []*gtsmodel.Account{}
 	for _, fave := range statusFaves {
-		blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, fave.AccountID, true)
+		blocked, err := p.state.DB.IsBlocked(ctx, requestingAccount.ID, fave.AccountID, true)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking blocks: %s", err))
 		}

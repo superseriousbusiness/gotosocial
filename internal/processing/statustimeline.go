@@ -173,7 +173,7 @@ func (p *Processor) HomeTimelineGet(ctx context.Context, authed *oauth.Auth, max
 }
 
 func (p *Processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode) {
-	statuses, err := p.db.GetPublicTimeline(ctx, maxID, sinceID, minID, limit, local)
+	statuses, err := p.state.DB.GetPublicTimeline(ctx, maxID, sinceID, minID, limit, local)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			// there are just no entries left
@@ -218,7 +218,7 @@ func (p *Processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, m
 }
 
 func (p *Processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
-	statuses, nextMaxID, prevMinID, err := p.db.GetFavedTimeline(ctx, authed.Account.ID, maxID, minID, limit)
+	statuses, nextMaxID, prevMinID, err := p.state.DB.GetFavedTimeline(ctx, authed.Account.ID, maxID, minID, limit)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			// there are just no entries left
@@ -255,7 +255,7 @@ func (p *Processor) filterPublicStatuses(ctx context.Context, authed *oauth.Auth
 	apiStatuses := []*apimodel.Status{}
 	for _, s := range statuses {
 		targetAccount := &gtsmodel.Account{}
-		if err := p.db.GetByID(ctx, s.AccountID, targetAccount); err != nil {
+		if err := p.state.DB.GetByID(ctx, s.AccountID, targetAccount); err != nil {
 			if err == db.ErrNoEntries {
 				log.Debugf(ctx, "skipping status %s because account %s can't be found in the db", s.ID, s.AccountID)
 				continue
@@ -288,7 +288,7 @@ func (p *Processor) filterFavedStatuses(ctx context.Context, authed *oauth.Auth,
 	apiStatuses := []*apimodel.Status{}
 	for _, s := range statuses {
 		targetAccount := &gtsmodel.Account{}
-		if err := p.db.GetByID(ctx, s.AccountID, targetAccount); err != nil {
+		if err := p.state.DB.GetByID(ctx, s.AccountID, targetAccount); err != nil {
 			if err == db.ErrNoEntries {
 				log.Debugf(ctx, "skipping status %s because account %s can't be found in the db", s.ID, s.AccountID)
 				continue

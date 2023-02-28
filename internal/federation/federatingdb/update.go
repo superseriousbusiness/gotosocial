@@ -138,7 +138,7 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 
 		// pass to the processor for further updating of eg., avatar/header, emojis
 		// the actual db insert/update will take place a bit later
-		f.fedWorker.Queue(messages.FromFederator{
+		f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
 			APObjectType:     ap.ObjectProfile,
 			APActivityType:   ap.ActivityUpdate,
 			GTSModel:         updatedAcct,

@@ -88,7 +88,7 @@ func (p *Processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 
 	if username, domain, err := util.ExtractNamestringParts(maybeNamestring); err == nil {
 		l.Trace("search term is a mention, looking it up...")
-		blocked, err := p.db.IsDomainBlocked(ctx, domain)
+		blocked, err := p.state.DB.IsDomainBlocked(ctx, domain)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking domain block: %w", err))
 		}
@@ -120,7 +120,7 @@ func (p *Processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 		if uri, err := url.Parse(query); err == nil {
 			if uri.Scheme == "https" || uri.Scheme == "http" {
 				l.Trace("search term is a uri, looking it up...")
-				blocked, err := p.db.IsURIBlocked(ctx, uri)
+				blocked, err := p.state.DB.IsURIBlocked(ctx, uri)
 				if err != nil {
 					return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking domain block: %w", err))
 				}
@@ -178,7 +178,7 @@ func (p *Processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 	*/
 	for _, foundAccount := range foundAccounts {
 		// make sure there's no block in either direction between the account and the requester
-		blocked, err := p.db.IsBlocked(ctx, authed.Account.ID, foundAccount.ID, true)
+		blocked, err := p.state.DB.IsBlocked(ctx, authed.Account.ID, foundAccount.ID, true)
 		if err != nil {
 			err = fmt.Errorf("SearchGet: error checking block between %s and %s: %s", authed.Account.ID, foundAccount.ID, err)
 			return nil, gtserror.NewErrorInternalError(err)
@@ -246,14 +246,14 @@ func (p *Processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, 
 		)
 
 		// Search the database for existing account with ID URI.
-		account, err = p.db.GetAccountByURI(ctx, uriStr)
+		account, err = p.state.DB.GetAccountByURI(ctx, uriStr)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return nil, fmt.Errorf("searchAccountByURI: error checking database for account %s: %w", uriStr, err)
 		}
 
 		if account == nil {
 			// Else, search the database for existing by ID URL.
-			account, err = p.db.GetAccountByURL(ctx, uriStr)
+			account, err = p.state.DB.GetAccountByURL(ctx, uriStr)
 			if err != nil {
 				if !errors.Is(err, db.ErrNoEntries) {
 					return nil, fmt.Errorf("searchAccountByURI: error checking database for account %s: %w", uriStr, err)
@@ -281,7 +281,7 @@ func (p *Processor) searchAccountByUsernameDomain(ctx context.Context, authed *o
 		}
 
 		// Search the database for existing account with USERNAME@DOMAIN
-		account, err := p.db.GetAccountByUsernameDomain(ctx, username, domain)
+		account, err := p.state.DB.GetAccountByUsernameDomain(ctx, username, domain)
 		if err != nil {
 			if !errors.Is(err, db.ErrNoEntries) {
 				return nil, fmt.Errorf("searchAccountByUsernameDomain: error checking database for account %s@%s: %w", username, domain, err)

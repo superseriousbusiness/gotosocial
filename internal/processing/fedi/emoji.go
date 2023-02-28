@@ -32,7 +32,7 @@ func (p *Processor) EmojiGet(ctx context.Context, requestedEmojiID string) (inte
 		return nil, errWithCode
 	}
 
-	requestedEmoji, err := p.db.GetEmojiByID(ctx, requestedEmojiID)
+	requestedEmoji, err := p.state.DB.GetEmojiByID(ctx, requestedEmojiID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting emoji with id %s: %s", requestedEmojiID, err))
 	}

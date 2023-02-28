@@ -64,12 +64,12 @@ func (p *Processor) NodeInfoRelGet(ctx context.Context) (*apimodel.WellKnownResp
 func (p *Processor) NodeInfoGet(ctx context.Context) (*apimodel.Nodeinfo, gtserror.WithCode) {
 	host := config.GetHost()
 
-	userCount, err := p.db.CountInstanceUsers(ctx, host)
+	userCount, err := p.state.DB.CountInstanceUsers(ctx, host)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	postCount, err := p.db.CountInstanceStatuses(ctx, host)
+	postCount, err := p.state.DB.CountInstanceStatuses(ctx, host)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -99,7 +99,7 @@ func (p *Processor) NodeInfoGet(ctx context.Context) (*apimodel.Nodeinfo, gtserr
 // WebfingerGet handles the GET for a webfinger resource. Most commonly, it will be used for returning account lookups.
 func (p *Processor) WebfingerGet(ctx context.Context, requestedUsername string) (*apimodel.WellKnownResponse, gtserror.WithCode) {
 	// Get the local account the request is referring to.
-	requestedAccount, err := p.db.GetAccountByUsernameDomain(ctx, requestedUsername, "")
+	requestedAccount, err := p.state.DB.GetAccountByUsernameDomain(ctx, requestedUsername, "")
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
 	}

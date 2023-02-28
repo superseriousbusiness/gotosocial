@@ -65,7 +65,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 			if uris.IsFollowPath(acceptedObjectIRI) {
 				// ACCEPT FOLLOW
 				gtsFollowRequest := &gtsmodel.FollowRequest{}
-				if err := f.db.GetWhere(ctx, []db.Where{{Key: "uri", Value: acceptedObjectIRI.String()}}, gtsFollowRequest); err != nil {
+				if err := f.state.DB.GetWhere(ctx, []db.Where{{Key: "uri", Value: acceptedObjectIRI.String()}}, gtsFollowRequest); err != nil {
 					return fmt.Errorf("ACCEPT: couldn't get follow request with id %s from the database: %s", acceptedObjectIRI.String(), err)
 				}
 
@@ -73,12 +73,12 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 				if gtsFollowRequest.AccountID != receivingAccount.ID {
 					return errors.New("ACCEPT: follow object account and inbox account were not the same")
 				}
-				follow, err := f.db.AcceptFollowRequest(ctx, gtsFollowRequest.AccountID, gtsFollowRequest.TargetAccountID)
+				follow, err := f.state.DB.AcceptFollowRequest(ctx, gtsFollowRequest.AccountID, gtsFollowRequest.TargetAccountID)
 				if err != nil {
 					return err
 				}
 
-				f.fedWorker.Queue(messages.FromFederator{
+				f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
 					APObjectType:     ap.ActivityFollow,
 					APActivityType:   ap.ActivityAccept,
 					GTSModel:         follow,
@@ -108,12 +108,12 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 			if gtsFollow.AccountID != receivingAccount.ID {
 				return errors.New("ACCEPT: follow object account and inbox account were not the same")
 			}
-			follow, err := f.db.AcceptFollowRequest(ctx, gtsFollow.AccountID, gtsFollow.TargetAccountID)
+			follow, err := f.state.DB.AcceptFollowRequest(ctx, gtsFollow.AccountID, gtsFollow.TargetAccountID)
 			if err != nil {
 				return err
 			}
 
-			f.fedWorker.Queue(messages.FromFederator{
+			f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
 				APObjectType:     ap.ActivityFollow,
 				APActivityType:   ap.ActivityAccept,
 				GTSModel:         follow,

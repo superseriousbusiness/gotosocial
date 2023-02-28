@@ -19,32 +19,28 @@
 package status
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
 
 type Processor struct {
+	state        *state.State
 	tc           typeutils.TypeConverter
-	db           db.DB
 	filter       visibility.Filter
 	formatter    text.Formatter
-	clientWorker *concurrency.WorkerPool[messages.FromClientAPI]
 	parseMention gtsmodel.ParseMentionFunc
 }
 
 // New returns a new status processor.
-func New(db db.DB, tc typeutils.TypeConverter, clientWorker *concurrency.WorkerPool[messages.FromClientAPI], parseMention gtsmodel.ParseMentionFunc) Processor {
+func New(state *state.State, tc typeutils.TypeConverter, parseMention gtsmodel.ParseMentionFunc) Processor {
 	return Processor{
+		state:        state,
 		tc:           tc,
-		db:           db,
-		filter:       visibility.NewFilter(db),
-		formatter:    text.NewFormatter(db),
-		clientWorker: clientWorker,
+		filter:       visibility.NewFilter(state.DB),
+		formatter:    text.NewFormatter(state.DB),
 		parseMention: parseMention,
 	}
 }

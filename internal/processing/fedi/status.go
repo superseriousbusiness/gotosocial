@@ -36,7 +36,7 @@ func (p *Processor) StatusGet(ctx context.Context, requestedUsername string, req
 		return nil, errWithCode
 	}
 
-	status, err := p.db.GetStatusByID(ctx, requestedStatusID)
+	status, err := p.state.DB.GetStatusByID(ctx, requestedStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(err)
 	}
@@ -74,7 +74,7 @@ func (p *Processor) StatusRepliesGet(ctx context.Context, requestedUsername stri
 		return nil, errWithCode
 	}
 
-	status, err := p.db.GetStatusByID(ctx, requestedStatusID)
+	status, err := p.state.DB.GetStatusByID(ctx, requestedStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(err)
 	}
@@ -125,7 +125,7 @@ func (p *Processor) StatusRepliesGet(ctx context.Context, requestedUsername stri
 	default:
 		// scenario 3
 		// get immediate children
-		replies, err := p.db.GetStatusChildren(ctx, status, true, minID)
+		replies, err := p.state.DB.GetStatusChildren(ctx, status, true, minID)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}

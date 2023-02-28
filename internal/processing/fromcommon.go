@@ -38,7 +38,7 @@ func (p *Processor) notifyStatus(ctx context.Context, status *gtsmodel.Status) e
 
 	if status.Mentions == nil {
 		// there are mentions but they're not fully populated on the status yet so do this
-		menchies, err := p.db.GetMentions(ctx, status.MentionIDs)
+		menchies, err := p.state.DB.GetMentions(ctx, status.MentionIDs)
 		if err != nil {
 			return fmt.Errorf("notifyStatus: error getting mentions for status %s from the db: %s", status.ID, err)
 		}
@@ -49,7 +49,7 @@ func (p *Processor) notifyStatus(ctx context.Context, status *gtsmodel.Status) e
 	for _, m := range status.Mentions {
 		// make sure this is a local account, otherwise we don't need to create a notification for it
 		if m.TargetAccount == nil {
-			a, err := p.db.GetAccountByID(ctx, m.TargetAccountID)
+			a, err := p.state.DB.GetAccountByID(ctx, m.TargetAccountID)
 			if err != nil {
 				// we don't have the account or there's been an error
 				return fmt.Errorf("notifyStatus: error getting account with id %s from the db: %s", m.TargetAccountID, err)
@@ -62,7 +62,7 @@ func (p *Processor) notifyStatus(ctx context.Context, status *gtsmodel.Status) e
 		}
 
 		// make sure a notif doesn't already exist for this mention
-		if err := p.db.GetWhere(ctx, []db.Where{
+		if err := p.state.DB.GetWhere(ctx, []db.Where{
 			{Key: "notification_type", Value: gtsmodel.NotificationMention},
 			{Key: "target_account_id", Value: m.TargetAccountID},
 			{Key: "origin_account_id", Value: m.OriginAccountID},
@@ -87,7 +87,7 @@ func (p *Processor) notifyStatus(ctx context.Context, status *gtsmodel.Status) e
 			Status:           status,
 		}
 
-		if err := p.db.Put(ctx, notif); err != nil {
+		if err := p.state.DB.Put(ctx, notif); err != nil {
 			return fmt.Errorf("notifyStatus: error putting notification in database: %s", err)
 		}
 
@@ -108,7 +108,7 @@ func (p *Processor) notifyStatus(ctx context.Context, status *gtsmodel.Status) e
 func (p *Processor) notifyFollowRequest(ctx context.Context, followRequest *gtsmodel.FollowRequest) error {
 	// make sure we have the target account pinned on the follow request
 	if followRequest.TargetAccount == nil {
-		a, err := p.db.GetAccountByID(ctx, followRequest.TargetAccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, followRequest.TargetAccountID)
 		if err != nil {
 			return err
 		}
@@ -129,7 +129,7 @@ func (p *Processor) notifyFollowRequest(ctx context.Context, followRequest *gtsm
 		OriginAccountID:  followRequest.AccountID,
 	}
 
-	if err := p.db.Put(ctx, notif); err != nil {
+	if err := p.state.DB.Put(ctx, notif); err != nil {
 		return fmt.Errorf("notifyFollowRequest: error putting notification in database: %s", err)
 	}
 
@@ -153,7 +153,7 @@ func (p *Processor) notifyFollow(ctx context.Context, follow *gtsmodel.Follow, t
 	}
 
 	// first remove the follow request notification
-	if err := p.db.DeleteWhere(ctx, []db.Where{
+	if err := p.state.DB.DeleteWhere(ctx, []db.Where{
 		{Key: "notification_type", Value: gtsmodel.NotificationFollowRequest},
 		{Key: "target_account_id", Value: follow.TargetAccountID},
 		{Key: "origin_account_id", Value: follow.AccountID},
@@ -170,7 +170,7 @@ func (p *Processor) notifyFollow(ctx context.Context, follow *gtsmodel.Follow, t
 		OriginAccountID:  follow.AccountID,
 		OriginAccount:    follow.Account,
 	}
-	if err := p.db.Put(ctx, notif); err != nil {
+	if err := p.state.DB.Put(ctx, notif); err != nil {
 		return fmt.Errorf("notifyFollow: error putting notification in database: %s", err)
 	}
 
@@ -194,7 +194,7 @@ func (p *Processor) notifyFave(ctx context.Context, fave *gtsmodel.StatusFave) e
 	}
 
 	if fave.TargetAccount == nil {
-		a, err := p.db.GetAccountByID(ctx, fave.TargetAccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, fave.TargetAccountID)
 		if err != nil {
 			return err
 		}
@@ -218,7 +218,7 @@ func (p *Processor) notifyFave(ctx context.Context, fave *gtsmodel.StatusFave) e
 		Status:           fave.Status,
 	}
 
-	if err := p.db.Put(ctx, notif); err != nil {
+	if err := p.state.DB.Put(ctx, notif); err != nil {
 		return fmt.Errorf("notifyFave: error putting notification in database: %s", err)
 	}
 
@@ -242,7 +242,7 @@ func (p *Processor) notifyAnnounce(ctx context.Context, status *gtsmodel.Status)
 	}
 
 	if status.BoostOf == nil {
-		boostedStatus, err := p.db.GetStatusByID(ctx, status.BoostOfID)
+		boostedStatus, err := p.state.DB.GetStatusByID(ctx, status.BoostOfID)
 		if err != nil {
 			return fmt.Errorf("notifyAnnounce: error getting status with id %s: %s", status.BoostOfID, err)
 		}
@@ -250,7 +250,7 @@ func (p *Processor) notifyAnnounce(ctx context.Context, status *gtsmodel.Status)
 	}
 
 	if status.BoostOfAccount == nil {
-		boostedAcct, err := p.db.GetAccountByID(ctx, status.BoostOfAccountID)
+		boostedAcct, err := p.state.DB.GetAccountByID(ctx, status.BoostOfAccountID)
 		if err != nil {
 			return fmt.Errorf("notifyAnnounce: error getting account with id %s: %s", status.BoostOfAccountID, err)
 		}
@@ -269,7 +269,7 @@ func (p *Processor) notifyAnnounce(ctx context.Context, status *gtsmodel.Status)
 	}
 
 	// make sure a notif doesn't already exist for this announce
-	err := p.db.GetWhere(ctx, []db.Where{
+	err := p.state.DB.GetWhere(ctx, []db.Where{
 		{Key: "notification_type", Value: gtsmodel.NotificationReblog},
 		{Key: "target_account_id", Value: status.BoostOfAccountID},
 		{Key: "origin_account_id", Value: status.AccountID},
@@ -292,7 +292,7 @@ func (p *Processor) notifyAnnounce(ctx context.Context, status *gtsmodel.Status)
 		Status:           status,
 	}
 
-	if err := p.db.Put(ctx, notif); err != nil {
+	if err := p.state.DB.Put(ctx, notif); err != nil {
 		return fmt.Errorf("notifyAnnounce: error putting notification in database: %s", err)
 	}
 
@@ -314,7 +314,7 @@ func (p *Processor) notifyAnnounce(ctx context.Context, status *gtsmodel.Status)
 func (p *Processor) timelineStatus(ctx context.Context, status *gtsmodel.Status) error {
 	// make sure the author account is pinned onto the status
 	if status.Account == nil {
-		a, err := p.db.GetAccountByID(ctx, status.AccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, status.AccountID)
 		if err != nil {
 			return fmt.Errorf("timelineStatus: error getting author account with id %s: %s", status.AccountID, err)
 		}
@@ -322,7 +322,7 @@ func (p *Processor) timelineStatus(ctx context.Context, status *gtsmodel.Status)
 	}
 
 	// get local followers of the account that posted the status
-	follows, err := p.db.GetAccountFollowedBy(ctx, status.AccountID, true)
+	follows, err := p.state.DB.GetAccountFollowedBy(ctx, status.AccountID, true)
 	if err != nil {
 		return fmt.Errorf("timelineStatus: error getting followers for account id %s: %s", status.AccountID, err)
 	}
@@ -374,7 +374,7 @@ func (p *Processor) timelineStatusForAccount(ctx context.Context, status *gtsmod
 	defer wg.Done()
 
 	// get the timeline owner account
-	timelineAccount, err := p.db.GetAccountByID(ctx, accountID)
+	timelineAccount, err := p.state.DB.GetAccountByID(ctx, accountID)
 	if err != nil {
 		errors <- fmt.Errorf("timelineStatusForAccount: error getting account for timeline with id %s: %s", accountID, err)
 		return
@@ -446,28 +446,28 @@ func (p *Processor) wipeStatus(ctx context.Context, statusToDelete *gtsmodel.Sta
 
 	// delete all mention entries generated by this status
 	for _, m := range statusToDelete.MentionIDs {
-		if err := p.db.DeleteByID(ctx, m, &gtsmodel.Mention{}); err != nil {
+		if err := p.state.DB.DeleteByID(ctx, m, &gtsmodel.Mention{}); err != nil {
 			return err
 		}
 	}
 
 	// delete all notification entries generated by this status
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "status_id", Value: statusToDelete.ID}}, &[]*gtsmodel.Notification{}); err != nil {
+	if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "status_id", Value: statusToDelete.ID}}, &[]*gtsmodel.Notification{}); err != nil {
 		return err
 	}
 
 	// delete all bookmarks that point to this status
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "status_id", Value: statusToDelete.ID}}, &[]*gtsmodel.StatusBookmark{}); err != nil {
+	if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "status_id", Value: statusToDelete.ID}}, &[]*gtsmodel.StatusBookmark{}); err != nil {
 		return err
 	}
 
 	// delete all boosts for this status + remove them from timelines
-	if boosts, err := p.db.GetStatusReblogs(ctx, statusToDelete); err == nil {
+	if boosts, err := p.state.DB.GetStatusReblogs(ctx, statusToDelete); err == nil {
 		for _, b := range boosts {
 			if err := p.deleteStatusFromTimelines(ctx, b); err != nil {
 				return err
 			}
-			if err := p.db.DeleteStatusByID(ctx, b.ID); err != nil {
+			if err := p.state.DB.DeleteStatusByID(ctx, b.ID); err != nil {
 				return err
 			}
 		}
@@ -479,7 +479,7 @@ func (p *Processor) wipeStatus(ctx context.Context, statusToDelete *gtsmodel.Sta
 	}
 
 	// delete the status itself
-	if err := p.db.DeleteStatusByID(ctx, statusToDelete.ID); err != nil {
+	if err := p.state.DB.DeleteStatusByID(ctx, statusToDelete.ID); err != nil {
 		return err
 	}
 

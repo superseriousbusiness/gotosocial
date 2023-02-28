@@ -31,7 +31,7 @@ import (
 
 // Get gets the given status, taking account of privacy settings and blocks etc.
 func (p *Processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
+	targetStatus, err := p.state.DB.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
 	}
@@ -57,7 +57,7 @@ func (p *Processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account
 
 // ContextGet returns the context (previous and following posts) from the given status ID.
 func (p *Processor) ContextGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Context, gtserror.WithCode) {
-	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
+	targetStatus, err := p.state.DB.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
 	}
@@ -78,7 +78,7 @@ func (p *Processor) ContextGet(ctx context.Context, requestingAccount *gtsmodel.
 		Descendants: []apimodel.Status{},
 	}
 
-	parents, err := p.db.GetStatusParents(ctx, targetStatus, false)
+	parents, err := p.state.DB.GetStatusParents(ctx, targetStatus, false)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -96,7 +96,7 @@ func (p *Processor) ContextGet(ctx context.Context, requestingAccount *gtsmodel.
 		return context.Ancestors[i].ID < context.Ancestors[j].ID
 	})
 
-	children, err := p.db.GetStatusChildren(ctx, targetStatus, false, "")
+	children, err := p.state.DB.GetStatusChildren(ctx, targetStatus, false, "")
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

@@ -33,7 +33,7 @@ import (
 
 // BoostCreate processes the boost/reblog of a given status, returning the newly-created boost if all is well.
 func (p *Processor) BoostCreate(ctx context.Context, requestingAccount *gtsmodel.Account, application *gtsmodel.Application, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
+	targetStatus, err := p.state.DB.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
 	}
@@ -47,7 +47,7 @@ func (p *Processor) BoostCreate(ctx context.Context, requestingAccount *gtsmodel
 	// boost boosts, and it looks absolutely bizarre in the UI
 	if targetStatus.BoostOfID != "" {
 		if targetStatus.BoostOf == nil {
-			b, err := p.db.GetStatusByID(ctx, targetStatus.BoostOfID)
+			b, err := p.state.DB.GetStatusByID(ctx, targetStatus.BoostOfID)
 			if err != nil {
 				return nil, gtserror.NewErrorNotFound(fmt.Errorf("couldn't fetch boosted status %s", targetStatus.BoostOfID))
 			}
@@ -74,12 +74,12 @@ func (p *Processor) BoostCreate(ctx context.Context, requestingAccount *gtsmodel
 	boostWrapperStatus.BoostOfAccount = targetStatus.Account
 
 	// put the boost in the database
-	if err := p.db.PutStatus(ctx, boostWrapperStatus); err != nil {
+	if err := p.state.DB.PutStatus(ctx, boostWrapperStatus); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// send it back to the processor for async processing
-	p.clientWorker.Queue(messages.FromClientAPI{
+	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 		APObjectType:   ap.ActivityAnnounce,
 		APActivityType: ap.ActivityCreate,
 		GTSModel:       boostWrapperStatus,
@@ -98,7 +98,7 @@ func (p *Processor) BoostCreate(ctx context.Context, requestingAccount *gtsmodel
 
 // BoostRemove processes the unboost/unreblog of a given status, returning the status if all is well.
 func (p *Processor) BoostRemove(ctx context.Context, requestingAccount *gtsmodel.Account, application *gtsmodel.Application, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
+	targetStatus, err := p.state.DB.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
 	}
@@ -128,7 +128,7 @@ func (p *Processor) BoostRemove(ctx context.Context, requestingAccount *gtsmodel
 			Value: requestingAccount.ID,
 		},
 	}
-	err = p.db.GetWhere(ctx, where, gtsBoost)
+	err = p.state.DB.GetWhere(ctx, where, gtsBoost)
 	if err == nil {
 		// we have a boost
 		toUnboost = true
@@ -151,7 +151,7 @@ func (p *Processor) BoostRemove(ctx context.Context, requestingAccount *gtsmodel
 		gtsBoost.BoostOf.Account = targetStatus.Account
 
 		// send it back to the processor for async processing
-		p.clientWorker.Queue(messages.FromClientAPI{
+		p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 			APObjectType:   ap.ActivityAnnounce,
 			APActivityType: ap.ActivityUndo,
 			GTSModel:       gtsBoost,
@@ -170,7 +170,7 @@ func (p *Processor) BoostRemove(ctx context.Context, requestingAccount *gtsmodel
 
 // StatusBoostedBy returns a slice of accounts that have boosted the given status, filtered according to privacy settings.
 func (p *Processor) StatusBoostedBy(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) ([]*apimodel.Account, gtserror.WithCode) {
-	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
+	targetStatus, err := p.state.DB.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		wrapped := fmt.Errorf("BoostedBy: error fetching status %s: %s", targetStatusID, err)
 		if !errors.Is(err, db.ErrNoEntries) {
@@ -181,7 +181,7 @@ func (p *Processor) StatusBoostedBy(ctx context.Context, requestingAccount *gtsm
 
 	if boostOfID := targetStatus.BoostOfID; boostOfID != "" {
 		// the target status is a boost wrapper, redirect this request to the status it boosts
-		boostedStatus, err := p.db.GetStatusByID(ctx, boostOfID)
+		boostedStatus, err := p.state.DB.GetStatusByID(ctx, boostOfID)
 		if err != nil {
 			wrapped := fmt.Errorf("BoostedBy: error fetching status %s: %s", boostOfID, err)
 			if !errors.Is(err, db.ErrNoEntries) {
@@ -202,7 +202,7 @@ func (p *Processor) StatusBoostedBy(ctx context.Context, requestingAccount *gtsm
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	statusReblogs, err := p.db.GetStatusReblogs(ctx, targetStatus)
+	statusReblogs, err := p.state.DB.GetStatusReblogs(ctx, targetStatus)
 	if err != nil {
 		err = fmt.Errorf("BoostedBy: error seeing who boosted status: %s", err)
 		return nil, gtserror.NewErrorNotFound(err)
@@ -211,7 +211,7 @@ func (p *Processor) StatusBoostedBy(ctx context.Context, requestingAccount *gtsm
 	// filter account IDs so the user doesn't see accounts they blocked or which blocked them
 	accountIDs := make([]string, 0, len(statusReblogs))
 	for _, s := range statusReblogs {
-		blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, s.AccountID, true)
+		blocked, err := p.state.DB.IsBlocked(ctx, requestingAccount.ID, s.AccountID, true)
 		if err != nil {
 			err = fmt.Errorf("BoostedBy: error checking blocks: %s", err)
 			return nil, gtserror.NewErrorNotFound(err)
@@ -226,7 +226,7 @@ func (p *Processor) StatusBoostedBy(ctx context.Context, requestingAccount *gtsm
 	// fetch accounts + create their API representations
 	apiAccounts := make([]*apimodel.Account, 0, len(accountIDs))
 	for _, accountID := range accountIDs {
-		account, err := p.db.GetAccountByID(ctx, accountID)
+		account, err := p.state.DB.GetAccountByID(ctx, accountID)
 		if err != nil {
 			wrapped := fmt.Errorf("BoostedBy: error fetching account %s: %s", accountID, err)
 			if !errors.Is(err, db.ErrNoEntries) {

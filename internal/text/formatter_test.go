@@ -20,12 +20,12 @@ package text_test
 
 import (
 	"context"
+
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -66,13 +66,15 @@ func (suite *TextStandardTestSuite) SetupSuite() {
 }
 
 func (suite *TextStandardTestSuite) SetupTest() {
+	var state state.State
+	state.Caches.Init()
+
 	testrig.InitTestLog()
 	testrig.InitTestConfig()
 
-	suite.db = testrig.NewTestDB()
+	suite.db = testrig.NewTestDB(&state)
 
-	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
-	federator := testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../testrig/media"), suite.db, fedWorker), nil, nil, fedWorker)
+	federator := testrig.NewTestFederator(&state, testrig.NewTestTransportController(&state, testrig.NewMockHTTPClient(nil, "../../testrig/media")), nil)
 	suite.parseMention = processing.GetParseMentionFunc(suite.db, federator)
 
 	suite.formatter = text.NewFormatter(suite.db)

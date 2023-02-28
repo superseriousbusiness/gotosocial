@@ -51,9 +51,9 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 
 	// in a delete we only get the URI, we can't know if we have a status or a profile or something else,
 	// so we have to try a few different things...
-	if s, err := f.db.GetStatusByURI(ctx, id.String()); err == nil && requestingAccount.ID == s.AccountID {
+	if s, err := f.state.DB.GetStatusByURI(ctx, id.String()); err == nil && requestingAccount.ID == s.AccountID {
 		l.Debugf("uri is for STATUS with id: %s", s.ID)
-		f.fedWorker.Queue(messages.FromFederator{
+		f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
 			APObjectType:     ap.ObjectNote,
 			APActivityType:   ap.ActivityDelete,
 			GTSModel:         s,
@@ -61,9 +61,9 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 		})
 	}
 
-	if a, err := f.db.GetAccountByURI(ctx, id.String()); err == nil && requestingAccount.ID == a.ID {
+	if a, err := f.state.DB.GetAccountByURI(ctx, id.String()); err == nil && requestingAccount.ID == a.ID {
 		l.Debugf("uri is for ACCOUNT with id %s", a.ID)
-		f.fedWorker.Queue(messages.FromFederator{
+		f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
 			APObjectType:     ap.ObjectProfile,
 			APActivityType:   ap.ActivityDelete,
 			GTSModel:         a,

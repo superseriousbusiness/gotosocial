@@ -33,7 +33,7 @@ import (
 
 // Get processes the given request for account information.
 func (p *Processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Account, gtserror.WithCode) {
-	targetAccount, err := p.db.GetAccountByID(ctx, targetAccountID)
+	targetAccount, err := p.state.DB.GetAccountByID(ctx, targetAccountID)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return nil, gtserror.NewErrorNotFound(errors.New("account not found"))
@@ -46,7 +46,7 @@ func (p *Processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account
 
 // GetLocalByUsername processes the given request for account information targeting a local account by username.
 func (p *Processor) GetLocalByUsername(ctx context.Context, requestingAccount *gtsmodel.Account, username string) (*apimodel.Account, gtserror.WithCode) {
-	targetAccount, err := p.db.GetAccountByUsernameDomain(ctx, username, "")
+	targetAccount, err := p.state.DB.GetAccountByUsernameDomain(ctx, username, "")
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return nil, gtserror.NewErrorNotFound(errors.New("account not found"))
@@ -59,7 +59,7 @@ func (p *Processor) GetLocalByUsername(ctx context.Context, requestingAccount *g
 
 // GetCustomCSSForUsername returns custom css for the given local username.
 func (p *Processor) GetCustomCSSForUsername(ctx context.Context, username string) (string, gtserror.WithCode) {
-	customCSS, err := p.db.GetAccountCustomCSSByUsername(ctx, username)
+	customCSS, err := p.state.DB.GetAccountCustomCSSByUsername(ctx, username)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return "", gtserror.NewErrorNotFound(errors.New("account not found"))
@@ -74,7 +74,7 @@ func (p *Processor) getFor(ctx context.Context, requestingAccount *gtsmodel.Acco
 	var blocked bool
 	var err error
 	if requestingAccount != nil {
-		blocked, err = p.db.IsBlocked(ctx, requestingAccount.ID, targetAccount.ID, true)
+		blocked, err = p.state.DB.IsBlocked(ctx, requestingAccount.ID, targetAccount.ID, true)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking account block: %s", err))
 		}

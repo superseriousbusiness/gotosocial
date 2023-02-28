@@ -44,7 +44,7 @@ func (p *Processor) PasswordChange(ctx context.Context, user *gtsmodel.User, old
 
 	user.EncryptedPassword = string(newPasswordHash)
 
-	if err := p.db.UpdateUser(ctx, user, "encrypted_password"); err != nil {
+	if err := p.state.DB.UpdateUser(ctx, user, "encrypted_password"); err != nil {
 		return gtserror.NewErrorInternalError(err)
 	}
 

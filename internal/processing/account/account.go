@@ -19,13 +19,11 @@
 package account
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
@@ -35,35 +33,32 @@ import (
 //
 // It also contains logic for actions towards accounts such as following, blocking, seeing follows, etc.
 type Processor struct {
+	state        *state.State
 	tc           typeutils.TypeConverter
 	mediaManager media.Manager
-	clientWorker *concurrency.WorkerPool[messages.FromClientAPI]
 	oauthServer  oauth.Server
 	filter       visibility.Filter
 	formatter    text.Formatter
-	db           db.DB
 	federator    federation.Federator
 	parseMention gtsmodel.ParseMentionFunc
 }
 
 // New returns a new account processor.
 func New(
-	db db.DB,
+	state *state.State,
 	tc typeutils.TypeConverter,
 	mediaManager media.Manager,
 	oauthServer oauth.Server,
-	clientWorker *concurrency.WorkerPool[messages.FromClientAPI],
 	federator federation.Federator,
 	parseMention gtsmodel.ParseMentionFunc,
 ) Processor {
 	return Processor{
+		state:        state,
 		tc:           tc,
 		mediaManager: mediaManager,
-		clientWorker: clientWorker,
 		oauthServer:  oauthServer,
-		filter:       visibility.NewFilter(db),
-		formatter:    text.NewFormatter(db),
-		db:           db,
+		filter:       visibility.NewFilter(state.DB),
+		formatter:    text.NewFormatter(state.DB),
 		federator:    federator,
 		parseMention: parseMention,
 	}

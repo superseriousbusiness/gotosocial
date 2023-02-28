@@ -19,19 +19,19 @@
 package user
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
 type Processor struct {
+	state       *state.State
 	emailSender email.Sender
-	db          db.DB
 }
 
 // New returns a new user processor
-func New(db db.DB, emailSender email.Sender) Processor {
+func New(state *state.State, emailSender email.Sender) Processor {
 	return Processor{
+		state:       state,
 		emailSender: emailSender,
-		db:          db,
 	}
 }
