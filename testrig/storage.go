@@ -105,6 +105,6 @@ func StandardStorageTeardown(storage *gtsstorage.Driver) {
 	})
 
 	for _, key := range keys {
-		storage.Delete(context.Background(), key)
+		_ = storage.Delete(context.Background(), key)
 	}
 }
