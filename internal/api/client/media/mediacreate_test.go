@@ -136,15 +136,13 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessful() {
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
 
 	// see what's in storage *before* the request
-	storageKeysBeforeRequest := []string{}
-	iter, err := suite.storage.KVStore.Iterator(context.Background(), nil)
-	if err != nil {
+	var storageKeysBeforeRequest []string
+	if err := suite.storage.WalkKeys(ctx, func(ctx context.Context, key string) error {
+		storageKeysBeforeRequest = append(storageKeysBeforeRequest, key)
+		return nil
+	}); err != nil {
 		panic(err)
 	}
-	for iter.Next() {
-		storageKeysBeforeRequest = append(storageKeysBeforeRequest, iter.Key())
-	}
-	iter.Release()
 
 	// create the request
 	buf, w, err := testrig.CreateMultipartFormData("file", "../../../../testrig/media/test-jpeg.jpg", map[string]string{
@@ -163,15 +161,13 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessful() {
 	suite.mediaModule.MediaCreatePOSTHandler(ctx)
 
 	// check what's in storage *after* the request
-	storageKeysAfterRequest := []string{}
-	iter, err = suite.storage.KVStore.Iterator(context.Background(), nil)
-	if err != nil {
+	var storageKeysAfterRequest []string
+	if err := suite.storage.WalkKeys(ctx, func(ctx context.Context, key string) error {
+		storageKeysAfterRequest = append(storageKeysAfterRequest, key)
+		return nil
+	}); err != nil {
 		panic(err)
 	}
-	for iter.Next() {
-		storageKeysAfterRequest = append(storageKeysAfterRequest, iter.Key())
-	}
-	iter.Release()
 
 	// check response
 	suite.EqualValues(http.StatusOK, recorder.Code)
@@ -225,15 +221,13 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessfulV2() {
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
 
 	// see what's in storage *before* the request
-	storageKeysBeforeRequest := []string{}
-	iter, err := suite.storage.KVStore.Iterator(context.Background(), nil)
-	if err != nil {
+	var storageKeysBeforeRequest []string
+	if err := suite.storage.WalkKeys(ctx, func(ctx context.Context, key string) error {
+		storageKeysBeforeRequest = append(storageKeysBeforeRequest, key)
+		return nil
+	}); err != nil {
 		panic(err)
 	}
-	for iter.Next() {
-		storageKeysBeforeRequest = append(storageKeysBeforeRequest, iter.Key())
-	}
-	iter.Release()
 
 	// create the request
 	buf, w, err := testrig.CreateMultipartFormData("file", "../../../../testrig/media/test-jpeg.jpg", map[string]string{
@@ -252,15 +246,13 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessfulV2() {
 	suite.mediaModule.MediaCreatePOSTHandler(ctx)
 
 	// check what's in storage *after* the request
-	storageKeysAfterRequest := []string{}
-	iter, err = suite.storage.KVStore.Iterator(context.Background(), nil)
-	if err != nil {
+	var storageKeysAfterRequest []string
+	if err := suite.storage.WalkKeys(ctx, func(ctx context.Context, key string) error {
+		storageKeysAfterRequest = append(storageKeysAfterRequest, key)
+		return nil
+	}); err != nil {
 		panic(err)
 	}
-	for iter.Next() {
-		storageKeysAfterRequest = append(storageKeysAfterRequest, iter.Key())
-	}
-	iter.Release()
 
 	// check response
 	suite.EqualValues(http.StatusOK, recorder.Code)

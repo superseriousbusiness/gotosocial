@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"io"
 	"mime"
 	"net/url"
 	"path"
@@ -28,7 +29,6 @@ import (
 
 	"codeberg.org/gruf/go-bytesize"
 	"codeberg.org/gruf/go-cache/v3/ttl"
-	"codeberg.org/gruf/go-store/v2/kv"
 	"codeberg.org/gruf/go-store/v2/storage"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -54,13 +54,44 @@ var ErrAlreadyExists = storage.ErrAlreadyExists
 // Driver wraps a kv.KVStore to also provide S3 presigned GET URLs.
 type Driver struct {
 	// Underlying storage
-	*kv.KVStore
 	Storage storage.Storage
 
 	// S3-only parameters
 	Proxy          bool
 	Bucket         string
 	PresignedCache *ttl.Cache[string, PresignedURL]
+}
+
+func (d *Driver) Get(ctx context.Context, key string) ([]byte, error) {
+	return d.Storage.ReadBytes(ctx, key)
+}
+
+func (d *Driver) GetStream(ctx context.Context, key string) (io.ReadCloser, error) {
+	return d.Storage.ReadStream(ctx, key)
+}
+
+func (d *Driver) Put(ctx context.Context, key string, value []byte) (int, error) {
+	return d.Storage.WriteBytes(ctx, key, value)
+}
+
+func (d *Driver) PutStream(ctx context.Context, key string, r io.Reader) (int64, error) {
+	return d.Storage.WriteStream(ctx, key, r)
+}
+
+func (d *Driver) Delete(ctx context.Context, key string) error {
+	return d.Storage.Remove(ctx, key)
+}
+
+func (d *Driver) Has(ctx context.Context, key string) (bool, error) {
+	return d.Storage.Stat(ctx, key)
+}
+
+func (d *Driver) WalkKeys(ctx context.Context, walk func(context.Context, string) error) error {
+	return d.Storage.WalkKeys(ctx, storage.WalkKeysOptions{
+		WalkFn: func(ctx context.Context, entry storage.Entry) error {
+			return walk(ctx, entry.Key)
+		},
+	})
 }
 
 // URL will return a presigned GET object URL, but only if running on S3 storage with proxying disabled.
@@ -128,7 +159,6 @@ func NewFileStorage() (*Driver, error) {
 	}
 
 	return &Driver{
-		KVStore: kv.New(disk),
 		Storage: disk,
 	}, nil
 }
@@ -163,7 +193,6 @@ func NewS3Storage() (*Driver, error) {
 	presignedCache.Start(urlCacheExpiryFrequency)
 
 	return &Driver{
-		KVStore:        kv.New(s3),
 		Proxy:          config.GetStorageS3Proxy(),
 		Bucket:         config.GetStorageS3BucketName(),
 		Storage:        s3,
