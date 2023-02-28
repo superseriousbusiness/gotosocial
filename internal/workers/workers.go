@@ -37,7 +37,8 @@ type Workers struct {
 	Federator runners.WorkerPool
 
 	// Enqueue functions for clientAPI / federator worker pools,
-	// these are pointers to Processor.Enqueue___() functions.
+	// these are pointers to Processor{}.Enqueue___() msg functions.
+	// This prevents dependency cycling as Processor depends on Workers.
 	EnqueueClientAPI func(context.Context, messages.FromClientAPI)
 	EnqueueFederator func(context.Context, messages.FromFederator)
 
