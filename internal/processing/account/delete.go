@@ -37,161 +37,21 @@ import (
 // Delete deletes an account, and all of that account's statuses, media, follows, notifications, etc etc etc.
 // The origin passed here should be either the ID of the account doing the delete (can be itself), or the ID of a domain block.
 func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origin string) gtserror.WithCode {
-	fields := kv.Fields{{"username", account.Username}}
-
-	if account.Domain != "" {
-		fields = append(fields, kv.Field{
-			"domain", account.Domain,
-		})
-	}
-
-	l := log.WithContext(ctx).WithFields(fields...)
+	l := log.WithContext(ctx).WithFields(kv.Fields{{"username", account.Username}}...)
 	l.Trace("beginning account delete process")
 
-	// 1. Delete account's application(s), clients, and oauth tokens
-	// we only need to do this step for local account since remote ones won't have any tokens or applications on our server
-	var user *gtsmodel.User
-	if account.Domain == "" {
-		// see if we can get a user for this account
-		var err error
-		if user, err = p.db.GetUserByAccountID(ctx, account.ID); err == nil {
-			// we got one! select all tokens with the user's ID
-			tokens := []*gtsmodel.Token{}
-			if err := p.db.GetWhere(ctx, []db.Where{{Key: "user_id", Value: user.ID}}, &tokens); err == nil {
-				// we have some tokens to delete
-				for _, t := range tokens {
-					// delete client(s) associated with this token
-					if err := p.db.DeleteByID(ctx, t.ClientID, &gtsmodel.Client{}); err != nil {
-						l.Errorf("error deleting oauth client: %s", err)
-					}
-					// delete application(s) associated with this token
-					if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "client_id", Value: t.ClientID}}, &gtsmodel.Application{}); err != nil {
-						l.Errorf("error deleting application: %s", err)
-					}
-					// delete the token itself
-					if err := p.db.DeleteByID(ctx, t.ID, t); err != nil {
-						l.Errorf("error deleting oauth token: %s", err)
-					}
-				}
-			}
+	if account.IsLocal() {
+		if err := p.deleteUserAndTokensForAccount(ctx, account); err != nil {
+			return gtserror.NewErrorInternalError(err)
 		}
 	}
 
-	// 2. Delete account's blocks
-	l.Trace("deleting account blocks")
-	// first delete any blocks that this account created
-	if err := p.db.DeleteBlocksByOriginAccountID(ctx, account.ID); err != nil {
-		l.Errorf("error deleting blocks created by account: %s", err)
+	if err := p.deleteRelationshipsForAccount(ctx, account); err != nil {
+		return gtserror.NewErrorInternalError(err)
 	}
 
-	// now delete any blocks that target this account
-	if err := p.db.DeleteBlocksByTargetAccountID(ctx, account.ID); err != nil {
-		l.Errorf("error deleting blocks targeting account: %s", err)
-	}
-
-	// 3. Delete account's emoji
-	// nothing to do here
-
-	// 4. Delete account's follow requests
-	// TODO: federate these if necessary
-	l.Trace("deleting account follow requests")
-	// first delete any follow requests that this account created
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.FollowRequest{}); err != nil {
-		l.Errorf("error deleting follow requests created by account: %s", err)
-	}
-
-	// now delete any follow requests that target this account
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "target_account_id", Value: account.ID}}, &[]*gtsmodel.FollowRequest{}); err != nil {
-		l.Errorf("error deleting follow requests targeting account: %s", err)
-	}
-
-	// 5. Delete account's follows
-	// TODO: federate these if necessary
-	l.Trace("deleting account follows")
-	// first delete any follows that this account created
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.Follow{}); err != nil {
-		l.Errorf("error deleting follows created by account: %s", err)
-	}
-
-	// now delete any follows that target this account
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "target_account_id", Value: account.ID}}, &[]*gtsmodel.Follow{}); err != nil {
-		l.Errorf("error deleting follows targeting account: %s", err)
-	}
-
-	var maxID string
-
-	// 6. Delete account's statuses
-	l.Trace("deleting account statuses")
-
-	// we'll select statuses 20 at a time so we don't wreck the db, and pass them through to the client api channel
-	// Deleting the statuses in this way also handles 7. Delete account's media attachments, 8. Delete account's mentions, and 9. Delete account's polls,
-	// since these are all attached to statuses.
-
-	for {
-		// Fetch next block of account statuses from database
-		statuses, err := p.db.GetAccountStatuses(ctx, account.ID, 20, false, false, maxID, "", false, false)
-		if err != nil {
-			if !errors.Is(err, db.ErrNoEntries) {
-				// an actual error has occurred
-				l.Errorf("Delete: db error selecting statuses for account %s: %s", account.Username, err)
-			}
-			break
-		}
-
-		if len(statuses) == 0 {
-			break // reached end
-		}
-
-		for _, status := range statuses {
-			// Ensure account is set
-			status.Account = account
-
-			l.Tracef("queue client API status delete: %s", status.ID)
-
-			// pass the status delete through the client api channel for processing
-			p.clientWorker.Queue(messages.FromClientAPI{
-				APObjectType:   ap.ObjectNote,
-				APActivityType: ap.ActivityDelete,
-				GTSModel:       status,
-				OriginAccount:  account,
-				TargetAccount:  account,
-			})
-
-			// Look for any boosts of this status in DB
-			boosts, err := p.db.GetStatusReblogs(ctx, status)
-			if err != nil && !errors.Is(err, db.ErrNoEntries) {
-				l.Errorf("error fetching status reblogs for %q: %v", status.ID, err)
-				continue
-			}
-
-			for _, boost := range boosts {
-				if boost.Account == nil {
-					// Fetch the relevant account for this status boost
-					boostAcc, err := p.db.GetAccountByID(ctx, boost.AccountID)
-					if err != nil {
-						l.Errorf("error fetching boosted status account for %q: %v", boost.AccountID, err)
-						continue
-					}
-
-					// Set account model
-					boost.Account = boostAcc
-				}
-
-				l.Tracef("queue client API boost delete: %s", status.ID)
-
-				// pass the boost delete through the client api channel for processing
-				p.clientWorker.Queue(messages.FromClientAPI{
-					APObjectType:   ap.ActivityAnnounce,
-					APActivityType: ap.ActivityUndo,
-					GTSModel:       status,
-					OriginAccount:  boost.Account,
-					TargetAccount:  account,
-				})
-			}
-		}
-
-		// Update next maxID from last status
-		maxID = statuses[len(statuses)-1].ID
+	if err := p.deleteAccountStatuses(ctx, account); err != nil {
+		return gtserror.NewErrorInternalError(err)
 	}
 
 	// 10. Delete account's notifications
