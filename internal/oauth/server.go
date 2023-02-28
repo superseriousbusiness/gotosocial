@@ -20,6 +20,7 @@ package oauth
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -28,7 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/oauth2/v4"
-	"github.com/superseriousbusiness/oauth2/v4/errors"
+	oautherr "github.com/superseriousbusiness/oauth2/v4/errors"
 	"github.com/superseriousbusiness/oauth2/v4/manage"
 	"github.com/superseriousbusiness/oauth2/v4/server"
 )
@@ -56,7 +57,8 @@ const (
 	OOBTokenPath = "/oauth/oob" // #nosec G101 else we get a hardcoded credentials warning
 	// HelpfulAdvice is a handy hint to users;
 	// particularly important during the login flow
-	HelpfulAdvice = "If you arrived at this error during a login/oauth flow, please try clearing your session cookies and logging in again; if problems persist, make sure you're using the correct credentials"
+	HelpfulAdvice      = "If you arrived at this error during a login/oauth flow, please try clearing your session cookies and logging in again; if problems persist, make sure you're using the correct credentials"
+	HelpfulAdviceGrant = "If you arrived at this error during a login/oauth flow, your client is trying to use an unsupported OAuth grant type. Supported grant types are: authorization_code, client_credentials; please reach out to developer of your client"
 )
 
 // Server wraps some oauth2 server functions in an interface, exposing only what is needed
@@ -102,12 +104,12 @@ func New(ctx context.Context, database db.Basic) Server {
 	}
 
 	srv := server.NewServer(sc, manager)
-	srv.SetInternalErrorHandler(func(err error) *errors.Response {
+	srv.SetInternalErrorHandler(func(err error) *oautherr.Response {
 		log.Errorf(nil, "internal oauth error: %s", err)
 		return nil
 	})
 
-	srv.SetResponseErrorHandler(func(re *errors.Response) {
+	srv.SetResponseErrorHandler(func(re *oautherr.Response) {
 		log.Errorf(nil, "internal response error: %s", re.Error)
 	})
 
@@ -131,7 +133,11 @@ func (s *s) HandleTokenRequest(r *http.Request) (map[string]interface{}, gtserro
 	gt, tgr, err := s.server.ValidationTokenRequest(r)
 	if err != nil {
 		help := fmt.Sprintf("could not validate token request: %s", err)
-		return nil, gtserror.NewErrorBadRequest(err, help, HelpfulAdvice)
+		adv := HelpfulAdvice
+		if errors.Is(err, oautherr.ErrUnsupportedGrantType) {
+			adv = HelpfulAdviceGrant
+		}
+		return nil, gtserror.NewErrorBadRequest(err, help, adv)
 	}
 
 	ti, err := s.server.GetAccessToken(ctx, gt, tgr)
