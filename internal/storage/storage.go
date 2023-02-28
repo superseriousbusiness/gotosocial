@@ -94,6 +94,10 @@ func (d *Driver) WalkKeys(ctx context.Context, walk func(context.Context, string
 	})
 }
 
+func (d *Driver) Close() error {
+	return d.Storage.Close()
+}
+
 // URL will return a presigned GET object URL, but only if running on S3 storage with proxying disabled.
 func (d *Driver) URL(ctx context.Context, key string) *PresignedURL {
 	// Check whether S3 *without* proxying is enabled
