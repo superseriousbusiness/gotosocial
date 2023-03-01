@@ -17,7 +17,7 @@ _Dead simple rate limit middleware for Go._
 Using [Go Modules](https://github.com/golang/go/wiki/Modules)
 
 ```bash
-$ go get github.com/ulule/limiter/v3@v3.10.0
+$ go get github.com/ulule/limiter/v3@v3.11.0
 ```
 
 ## Usage

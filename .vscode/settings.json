@@ -2,5 +2,8 @@
 	"go.lintTool":"golangci-lint",
 	"go.lintFlags": [
 	  "--fast"
-	]
+	],
+	"eslint.workingDirectories": ["web/source"],
+	"eslint.lintTask.enable": true,
+	"eslint.lintTask.options": "${workspaceFolder}/web/source"
 }

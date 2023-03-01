@@ -114,6 +114,6 @@ $settings-nav-bg-active: $gray2;
 $error-fg: $error1;
 $error-bg: $error2;
 
-$settings-entry-bg: $gray2;
-$settings-entry-alternate-bg: $gray3;
-$settings-entry-hover-bg: $gray4;
+$list-entry-bg: $gray2;
+$list-entry-alternate-bg: $gray3;
+$list-entry-hover-bg: $gray4;

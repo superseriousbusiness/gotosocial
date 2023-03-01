@@ -24,8 +24,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type InternalToFrontendTestSuite struct {
@@ -46,6 +47,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontend() {
   "acct": "the_mighty_zork",
   "display_name": "original zork (he/they)",
   "locked": false,
+  "discoverable": true,
   "bot": false,
   "created_at": "2022-05-20T11:09:18.000Z",
   "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
@@ -61,7 +63,9 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontend() {
   "emojis": [],
   "fields": [],
   "enable_rss": true,
-  "role": "user"
+  "role": {
+    "name": "user"
+  }
 }`, string(b))
 }
 
@@ -83,6 +87,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiStruct()
   "acct": "the_mighty_zork",
   "display_name": "original zork (he/they)",
   "locked": false,
+  "discoverable": true,
   "bot": false,
   "created_at": "2022-05-20T11:09:18.000Z",
   "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
@@ -106,7 +111,9 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiStruct()
   ],
   "fields": [],
   "enable_rss": true,
-  "role": "user"
+  "role": {
+    "name": "user"
+  }
 }`, string(b))
 }
 
@@ -128,6 +135,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiIDs() {
   "acct": "the_mighty_zork",
   "display_name": "original zork (he/they)",
   "locked": false,
+  "discoverable": true,
   "bot": false,
   "created_at": "2022-05-20T11:09:18.000Z",
   "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
@@ -151,7 +159,9 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiIDs() {
   ],
   "fields": [],
   "enable_rss": true,
-  "role": "user"
+  "role": {
+    "name": "user"
+  }
 }`, string(b))
 }
 
@@ -169,6 +179,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendSensitive() {
   "acct": "the_mighty_zork",
   "display_name": "original zork (he/they)",
   "locked": false,
+  "discoverable": true,
   "bot": false,
   "created_at": "2022-05-20T11:09:18.000Z",
   "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
@@ -193,7 +204,9 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendSensitive() {
     "follow_requests_count": 0
   },
   "enable_rss": true,
-  "role": "user"
+  "role": {
+    "name": "user"
+  }
 }`, string(b))
 }
 
@@ -237,6 +250,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
     "acct": "admin",
     "display_name": "",
     "locked": false,
+    "discoverable": true,
     "bot": false,
     "created_at": "2022-05-17T13:10:59.000Z",
     "note": "",
@@ -252,7 +266,9 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
     "emojis": [],
     "fields": [],
     "enable_rss": true,
-    "role": "admin"
+    "role": {
+      "name": "admin"
+    }
   },
   "media_attachments": [
     {
@@ -349,6 +365,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
     "acct": "admin",
     "display_name": "",
     "locked": false,
+    "discoverable": true,
     "bot": false,
     "created_at": "2022-05-17T13:10:59.000Z",
     "note": "",
@@ -364,7 +381,9 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
     "emojis": [],
     "fields": [],
     "enable_rss": true,
-    "role": "admin"
+    "role": {
+      "name": "admin"
+    }
   },
   "media_attachments": [
     {
@@ -454,93 +473,213 @@ func (suite *InternalToFrontendTestSuite) TestVideoAttachmentToFrontend() {
 }`, string(b))
 }
 
-func (suite *InternalToFrontendTestSuite) TestInstanceToFrontend() {
-	testInstance := &gtsmodel.Instance{
-		CreatedAt:        testrig.TimeMustParse("2021-10-20T11:36:45Z"),
-		UpdatedAt:        testrig.TimeMustParse("2021-10-20T11:36:45Z"),
-		Domain:           "example.org",
-		Title:            "example instance",
-		URI:              "https://example.org",
-		ShortDescription: "a little description",
-		Description:      "a much longer description",
-		ContactEmail:     "someone@example.org",
-		Version:          "software-from-hell 0.666",
+func (suite *InternalToFrontendTestSuite) TestInstanceV1ToFrontend() {
+	ctx := context.Background()
+
+	i := &gtsmodel.Instance{}
+	if err := suite.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: config.GetHost()}}, i); err != nil {
+		suite.FailNow(err.Error())
 	}
 
-	apiInstance, err := suite.typeconverter.InstanceToAPIInstance(context.Background(), testInstance)
-	suite.NoError(err)
+	instance, err := suite.typeconverter.InstanceToAPIV1Instance(ctx, i)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
 
-	b, err := json.MarshalIndent(apiInstance, "", "  ")
+	b, err := json.MarshalIndent(instance, "", "  ")
 	suite.NoError(err)
 
 	suite.Equal(`{
-  "uri": "https://example.org",
-  "title": "example instance",
-  "description": "a much longer description",
-  "short_description": "a little description",
-  "email": "someone@example.org",
-  "version": "software-from-hell 0.666",
-  "registrations": false,
-  "approval_required": false,
+  "uri": "http://localhost:8080",
+  "account_domain": "localhost:8080",
+  "title": "GoToSocial Testrig Instance",
+  "description": "\u003cp\u003eThis is the GoToSocial testrig. It doesn't federate or anything.\u003c/p\u003e\u003cp\u003eWhen the testrig is shut down, all data on it will be deleted.\u003c/p\u003e\u003cp\u003eDon't use this in production!\u003c/p\u003e",
+  "short_description": "\u003cp\u003eThis is the GoToSocial testrig. It doesn't federate or anything.\u003c/p\u003e\u003cp\u003eWhen the testrig is shut down, all data on it will be deleted.\u003c/p\u003e\u003cp\u003eDon't use this in production!\u003c/p\u003e",
+  "email": "admin@example.org",
+  "version": "0.0.0-testrig",
+  "registrations": true,
+  "approval_required": true,
   "invites_enabled": false,
-  "thumbnail": "",
-  "max_toot_chars": 0
-}`, string(b))
-}
-
-func (suite *InternalToFrontendTestSuite) TestInstanceToFrontendWithAdminAccount() {
-	testInstance := &gtsmodel.Instance{
-		CreatedAt:        testrig.TimeMustParse("2021-10-20T11:36:45Z"),
-		UpdatedAt:        testrig.TimeMustParse("2021-10-20T11:36:45Z"),
-		Domain:           "example.org",
-		Title:            "example instance",
-		URI:              "https://example.org",
-		ShortDescription: "a little description",
-		Description:      "a much longer description",
-		ContactEmail:     "someone@example.org",
-		ContactAccountID: suite.testAccounts["remote_account_2"].ID,
-		Version:          "software-from-hell 0.666",
-	}
-
-	apiInstance, err := suite.typeconverter.InstanceToAPIInstance(context.Background(), testInstance)
-	suite.NoError(err)
-
-	b, err := json.MarshalIndent(apiInstance, "", "  ")
-	suite.NoError(err)
-
-	suite.Equal(`{
-  "uri": "https://example.org",
-  "title": "example instance",
-  "description": "a much longer description",
-  "short_description": "a little description",
-  "email": "someone@example.org",
-  "version": "software-from-hell 0.666",
-  "registrations": false,
-  "approval_required": false,
-  "invites_enabled": false,
-  "thumbnail": "",
+  "configuration": {
+    "statuses": {
+      "max_characters": 5000,
+      "max_media_attachments": 6,
+      "characters_reserved_per_url": 25
+    },
+    "media_attachments": {
+      "supported_mime_types": [
+        "image/jpeg",
+        "image/gif",
+        "image/png",
+        "image/webp",
+        "video/mp4"
+      ],
+      "image_size_limit": 10485760,
+      "image_matrix_limit": 16777216,
+      "video_size_limit": 41943040,
+      "video_frame_rate_limit": 60,
+      "video_matrix_limit": 16777216
+    },
+    "polls": {
+      "max_options": 6,
+      "max_characters_per_option": 50,
+      "min_expiration": 300,
+      "max_expiration": 2629746
+    },
+    "accounts": {
+      "allow_custom_css": true,
+      "max_featured_tags": 10
+    },
+    "emojis": {
+      "emoji_size_limit": 51200
+    }
+  },
+  "urls": {
+    "streaming_api": "wss://localhost:8080"
+  },
+  "stats": {
+    "domain_count": 2,
+    "status_count": 16,
+    "user_count": 4
+  },
+  "thumbnail": "http://localhost:8080/assets/logo.png",
   "contact_account": {
-    "id": "01FHMQX3GAABWSM0S2VZEC2SWC",
-    "username": "Some_User",
-    "acct": "Some_User@example.org",
-    "display_name": "some user",
-    "locked": true,
+    "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+    "username": "admin",
+    "acct": "admin",
+    "display_name": "",
+    "locked": false,
+    "discoverable": true,
     "bot": false,
-    "created_at": "2020-08-10T12:13:28.000Z",
-    "note": "i'm a real son of a gun",
-    "url": "http://example.org/@Some_User",
+    "created_at": "2022-05-17T13:10:59.000Z",
+    "note": "",
+    "url": "http://localhost:8080/@admin",
     "avatar": "",
     "avatar_static": "",
     "header": "http://localhost:8080/assets/default_header.png",
     "header_static": "http://localhost:8080/assets/default_header.png",
-    "followers_count": 0,
-    "following_count": 0,
-    "statuses_count": 0,
-    "last_status_at": null,
+    "followers_count": 1,
+    "following_count": 1,
+    "statuses_count": 4,
+    "last_status_at": "2021-10-20T10:41:37.000Z",
     "emojis": [],
-    "fields": []
+    "fields": [],
+    "enable_rss": true,
+    "role": {
+      "name": "admin"
+    }
   },
-  "max_toot_chars": 0
+  "max_toot_chars": 5000
+}`, string(b))
+}
+
+func (suite *InternalToFrontendTestSuite) TestInstanceV2ToFrontend() {
+	ctx := context.Background()
+
+	i := &gtsmodel.Instance{}
+	if err := suite.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: config.GetHost()}}, i); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	instance, err := suite.typeconverter.InstanceToAPIV2Instance(ctx, i)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	b, err := json.MarshalIndent(instance, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "domain": "localhost:8080",
+  "account_domain": "localhost:8080",
+  "title": "GoToSocial Testrig Instance",
+  "version": "0.0.0-testrig",
+  "source_url": "https://github.com/superseriousbusiness/gotosocial",
+  "description": "\u003cp\u003eThis is the GoToSocial testrig. It doesn't federate or anything.\u003c/p\u003e\u003cp\u003eWhen the testrig is shut down, all data on it will be deleted.\u003c/p\u003e\u003cp\u003eDon't use this in production!\u003c/p\u003e",
+  "usage": {
+    "users": {
+      "active_month": 0
+    }
+  },
+  "thumbnail": {
+    "url": "http://localhost:8080/assets/logo.png"
+  },
+  "languages": [],
+  "configuration": {
+    "urls": {
+      "streaming": "wss://localhost:8080"
+    },
+    "accounts": {
+      "allow_custom_css": true,
+      "max_featured_tags": 10
+    },
+    "statuses": {
+      "max_characters": 5000,
+      "max_media_attachments": 6,
+      "characters_reserved_per_url": 25
+    },
+    "media_attachments": {
+      "supported_mime_types": [
+        "image/jpeg",
+        "image/gif",
+        "image/png",
+        "image/webp",
+        "video/mp4"
+      ],
+      "image_size_limit": 10485760,
+      "image_matrix_limit": 16777216,
+      "video_size_limit": 41943040,
+      "video_frame_rate_limit": 60,
+      "video_matrix_limit": 16777216
+    },
+    "polls": {
+      "max_options": 6,
+      "max_characters_per_option": 50,
+      "min_expiration": 300,
+      "max_expiration": 2629746
+    },
+    "translation": {
+      "enabled": false
+    },
+    "emojis": {
+      "emoji_size_limit": 51200
+    }
+  },
+  "registrations": {
+    "enabled": true,
+    "approval_required": true,
+    "message": null
+  },
+  "contact": {
+    "email": "admin@example.org",
+    "account": {
+      "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+      "username": "admin",
+      "acct": "admin",
+      "display_name": "",
+      "locked": false,
+      "discoverable": true,
+      "bot": false,
+      "created_at": "2022-05-17T13:10:59.000Z",
+      "note": "",
+      "url": "http://localhost:8080/@admin",
+      "avatar": "",
+      "avatar_static": "",
+      "header": "http://localhost:8080/assets/default_header.png",
+      "header_static": "http://localhost:8080/assets/default_header.png",
+      "followers_count": 1,
+      "following_count": 1,
+      "statuses_count": 4,
+      "last_status_at": "2021-10-20T10:41:37.000Z",
+      "emojis": [],
+      "fields": [],
+      "enable_rss": true,
+      "role": {
+        "name": "admin"
+      }
+    }
+  },
+  "rules": []
 }`, string(b))
 }
 
@@ -601,6 +740,490 @@ func (suite *InternalToFrontendTestSuite) TestEmojiToFrontendAdmin2() {
   "total_file_size": 21697,
   "content_type": "image/png",
   "uri": "http://fossbros-anonymous.io/emoji/01GD5KP5CQEE1R3X43Y1EHS2CW"
+}`, string(b))
+}
+
+func (suite *InternalToFrontendTestSuite) TestReportToFrontend1() {
+	report, err := suite.typeconverter.ReportToAPIReport(context.Background(), suite.testReports["local_account_2_report_remote_account_1"])
+	suite.NoError(err)
+
+	b, err := json.MarshalIndent(report, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "id": "01GP3AWY4CRDVRNZKW0TEAMB5R",
+  "created_at": "2022-05-14T10:20:03.000Z",
+  "action_taken": false,
+  "action_taken_at": null,
+  "action_taken_comment": null,
+  "category": "other",
+  "comment": "dark souls sucks, please yeet this nerd",
+  "forwarded": true,
+  "status_ids": [
+    "01FVW7JHQFSFK166WWKR8CBA6M"
+  ],
+  "rule_ids": [],
+  "target_account": {
+    "id": "01F8MH5ZK5VRH73AKHQM6Y9VNX",
+    "username": "foss_satan",
+    "acct": "foss_satan@fossbros-anonymous.io",
+    "display_name": "big gerald",
+    "locked": false,
+    "discoverable": true,
+    "bot": false,
+    "created_at": "2021-09-26T10:52:36.000Z",
+    "note": "i post about like, i dunno, stuff, or whatever!!!!",
+    "url": "http://fossbros-anonymous.io/@foss_satan",
+    "avatar": "",
+    "avatar_static": "",
+    "header": "http://localhost:8080/assets/default_header.png",
+    "header_static": "http://localhost:8080/assets/default_header.png",
+    "followers_count": 0,
+    "following_count": 0,
+    "statuses_count": 1,
+    "last_status_at": "2021-09-20T10:40:37.000Z",
+    "emojis": [],
+    "fields": []
+  }
+}`, string(b))
+}
+
+func (suite *InternalToFrontendTestSuite) TestReportToFrontend2() {
+	report, err := suite.typeconverter.ReportToAPIReport(context.Background(), suite.testReports["remote_account_1_report_local_account_2"])
+	suite.NoError(err)
+
+	b, err := json.MarshalIndent(report, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "id": "01GP3DFY9XQ1TJMZT5BGAZPXX7",
+  "created_at": "2022-05-15T14:20:12.000Z",
+  "action_taken": true,
+  "action_taken_at": "2022-05-15T15:01:56.000Z",
+  "action_taken_comment": "user was warned not to be a turtle anymore",
+  "category": "other",
+  "comment": "this is a turtle, not a person, therefore should not be a poster",
+  "forwarded": true,
+  "status_ids": [],
+  "rule_ids": [],
+  "target_account": {
+    "id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+    "username": "1happyturtle",
+    "acct": "1happyturtle",
+    "display_name": "happy little turtle :3",
+    "locked": true,
+    "discoverable": false,
+    "bot": false,
+    "created_at": "2022-06-04T13:12:00.000Z",
+    "note": "\u003cp\u003ei post about things that concern me\u003c/p\u003e",
+    "url": "http://localhost:8080/@1happyturtle",
+    "avatar": "",
+    "avatar_static": "",
+    "header": "http://localhost:8080/assets/default_header.png",
+    "header_static": "http://localhost:8080/assets/default_header.png",
+    "followers_count": 1,
+    "following_count": 1,
+    "statuses_count": 7,
+    "last_status_at": "2021-10-20T10:40:37.000Z",
+    "emojis": [],
+    "fields": [],
+    "role": {
+      "name": "user"
+    }
+  }
+}`, string(b))
+}
+
+func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
+	requestingAccount := suite.testAccounts["admin_account"]
+	adminReport, err := suite.typeconverter.ReportToAdminAPIReport(context.Background(), suite.testReports["remote_account_1_report_local_account_2"], requestingAccount)
+	suite.NoError(err)
+
+	b, err := json.MarshalIndent(adminReport, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "id": "01GP3DFY9XQ1TJMZT5BGAZPXX7",
+  "action_taken": true,
+  "action_taken_at": "2022-05-15T15:01:56.000Z",
+  "category": "other",
+  "comment": "this is a turtle, not a person, therefore should not be a poster",
+  "forwarded": true,
+  "created_at": "2022-05-15T14:20:12.000Z",
+  "updated_at": "2022-05-15T14:20:12.000Z",
+  "account": {
+    "id": "01F8MH5ZK5VRH73AKHQM6Y9VNX",
+    "username": "foss_satan",
+    "domain": "fossbros-anonymous.io",
+    "created_at": "2021-09-26T10:52:36.000Z",
+    "email": "",
+    "ip": null,
+    "ips": [],
+    "locale": "",
+    "invite_request": null,
+    "role": {
+      "name": "user"
+    },
+    "confirmed": false,
+    "approved": false,
+    "disabled": false,
+    "silenced": false,
+    "suspended": false,
+    "account": {
+      "id": "01F8MH5ZK5VRH73AKHQM6Y9VNX",
+      "username": "foss_satan",
+      "acct": "foss_satan@fossbros-anonymous.io",
+      "display_name": "big gerald",
+      "locked": false,
+      "discoverable": true,
+      "bot": false,
+      "created_at": "2021-09-26T10:52:36.000Z",
+      "note": "i post about like, i dunno, stuff, or whatever!!!!",
+      "url": "http://fossbros-anonymous.io/@foss_satan",
+      "avatar": "",
+      "avatar_static": "",
+      "header": "http://localhost:8080/assets/default_header.png",
+      "header_static": "http://localhost:8080/assets/default_header.png",
+      "followers_count": 0,
+      "following_count": 0,
+      "statuses_count": 1,
+      "last_status_at": "2021-09-20T10:40:37.000Z",
+      "emojis": [],
+      "fields": []
+    }
+  },
+  "target_account": {
+    "id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+    "username": "1happyturtle",
+    "domain": null,
+    "created_at": "2022-06-04T13:12:00.000Z",
+    "email": "tortle.dude@example.org",
+    "ip": "118.44.18.196",
+    "ips": [],
+    "locale": "en",
+    "invite_request": "",
+    "role": {
+      "name": "user"
+    },
+    "confirmed": true,
+    "approved": true,
+    "disabled": false,
+    "silenced": false,
+    "suspended": false,
+    "account": {
+      "id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+      "username": "1happyturtle",
+      "acct": "1happyturtle",
+      "display_name": "happy little turtle :3",
+      "locked": true,
+      "discoverable": false,
+      "bot": false,
+      "created_at": "2022-06-04T13:12:00.000Z",
+      "note": "\u003cp\u003ei post about things that concern me\u003c/p\u003e",
+      "url": "http://localhost:8080/@1happyturtle",
+      "avatar": "",
+      "avatar_static": "",
+      "header": "http://localhost:8080/assets/default_header.png",
+      "header_static": "http://localhost:8080/assets/default_header.png",
+      "followers_count": 1,
+      "following_count": 1,
+      "statuses_count": 7,
+      "last_status_at": "2021-10-20T10:40:37.000Z",
+      "emojis": [],
+      "fields": [],
+      "role": {
+        "name": "user"
+      }
+    },
+    "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
+  },
+  "assigned_account": {
+    "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+    "username": "admin",
+    "domain": null,
+    "created_at": "2022-05-17T13:10:59.000Z",
+    "email": "admin@example.org",
+    "ip": "89.122.255.1",
+    "ips": [],
+    "locale": "en",
+    "invite_request": "",
+    "role": {
+      "name": "admin"
+    },
+    "confirmed": true,
+    "approved": true,
+    "disabled": false,
+    "silenced": false,
+    "suspended": false,
+    "account": {
+      "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+      "username": "admin",
+      "acct": "admin",
+      "display_name": "",
+      "locked": false,
+      "discoverable": true,
+      "bot": false,
+      "created_at": "2022-05-17T13:10:59.000Z",
+      "note": "",
+      "url": "http://localhost:8080/@admin",
+      "avatar": "",
+      "avatar_static": "",
+      "header": "http://localhost:8080/assets/default_header.png",
+      "header_static": "http://localhost:8080/assets/default_header.png",
+      "followers_count": 1,
+      "following_count": 1,
+      "statuses_count": 4,
+      "last_status_at": "2021-10-20T10:41:37.000Z",
+      "emojis": [],
+      "fields": [],
+      "enable_rss": true,
+      "role": {
+        "name": "admin"
+      }
+    },
+    "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F"
+  },
+  "action_taken_by_account": {
+    "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+    "username": "admin",
+    "domain": null,
+    "created_at": "2022-05-17T13:10:59.000Z",
+    "email": "admin@example.org",
+    "ip": "89.122.255.1",
+    "ips": [],
+    "locale": "en",
+    "invite_request": "",
+    "role": {
+      "name": "admin"
+    },
+    "confirmed": true,
+    "approved": true,
+    "disabled": false,
+    "silenced": false,
+    "suspended": false,
+    "account": {
+      "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+      "username": "admin",
+      "acct": "admin",
+      "display_name": "",
+      "locked": false,
+      "discoverable": true,
+      "bot": false,
+      "created_at": "2022-05-17T13:10:59.000Z",
+      "note": "",
+      "url": "http://localhost:8080/@admin",
+      "avatar": "",
+      "avatar_static": "",
+      "header": "http://localhost:8080/assets/default_header.png",
+      "header_static": "http://localhost:8080/assets/default_header.png",
+      "followers_count": 1,
+      "following_count": 1,
+      "statuses_count": 4,
+      "last_status_at": "2021-10-20T10:41:37.000Z",
+      "emojis": [],
+      "fields": [],
+      "enable_rss": true,
+      "role": {
+        "name": "admin"
+      }
+    },
+    "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F"
+  },
+  "statuses": [],
+  "rule_ids": [],
+  "action_taken_comment": "user was warned not to be a turtle anymore"
+}`, string(b))
+}
+
+func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
+	requestingAccount := suite.testAccounts["admin_account"]
+	adminReport, err := suite.typeconverter.ReportToAdminAPIReport(context.Background(), suite.testReports["local_account_2_report_remote_account_1"], requestingAccount)
+	suite.NoError(err)
+
+	b, err := json.MarshalIndent(adminReport, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "id": "01GP3AWY4CRDVRNZKW0TEAMB5R",
+  "action_taken": false,
+  "action_taken_at": null,
+  "category": "other",
+  "comment": "dark souls sucks, please yeet this nerd",
+  "forwarded": true,
+  "created_at": "2022-05-14T10:20:03.000Z",
+  "updated_at": "2022-05-14T10:20:03.000Z",
+  "account": {
+    "id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+    "username": "1happyturtle",
+    "domain": null,
+    "created_at": "2022-06-04T13:12:00.000Z",
+    "email": "tortle.dude@example.org",
+    "ip": "118.44.18.196",
+    "ips": [],
+    "locale": "en",
+    "invite_request": "",
+    "role": {
+      "name": "user"
+    },
+    "confirmed": true,
+    "approved": true,
+    "disabled": false,
+    "silenced": false,
+    "suspended": false,
+    "account": {
+      "id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+      "username": "1happyturtle",
+      "acct": "1happyturtle",
+      "display_name": "happy little turtle :3",
+      "locked": true,
+      "discoverable": false,
+      "bot": false,
+      "created_at": "2022-06-04T13:12:00.000Z",
+      "note": "\u003cp\u003ei post about things that concern me\u003c/p\u003e",
+      "url": "http://localhost:8080/@1happyturtle",
+      "avatar": "",
+      "avatar_static": "",
+      "header": "http://localhost:8080/assets/default_header.png",
+      "header_static": "http://localhost:8080/assets/default_header.png",
+      "followers_count": 1,
+      "following_count": 1,
+      "statuses_count": 7,
+      "last_status_at": "2021-10-20T10:40:37.000Z",
+      "emojis": [],
+      "fields": [],
+      "role": {
+        "name": "user"
+      }
+    },
+    "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
+  },
+  "target_account": {
+    "id": "01F8MH5ZK5VRH73AKHQM6Y9VNX",
+    "username": "foss_satan",
+    "domain": "fossbros-anonymous.io",
+    "created_at": "2021-09-26T10:52:36.000Z",
+    "email": "",
+    "ip": null,
+    "ips": [],
+    "locale": "",
+    "invite_request": null,
+    "role": {
+      "name": "user"
+    },
+    "confirmed": false,
+    "approved": false,
+    "disabled": false,
+    "silenced": false,
+    "suspended": false,
+    "account": {
+      "id": "01F8MH5ZK5VRH73AKHQM6Y9VNX",
+      "username": "foss_satan",
+      "acct": "foss_satan@fossbros-anonymous.io",
+      "display_name": "big gerald",
+      "locked": false,
+      "discoverable": true,
+      "bot": false,
+      "created_at": "2021-09-26T10:52:36.000Z",
+      "note": "i post about like, i dunno, stuff, or whatever!!!!",
+      "url": "http://fossbros-anonymous.io/@foss_satan",
+      "avatar": "",
+      "avatar_static": "",
+      "header": "http://localhost:8080/assets/default_header.png",
+      "header_static": "http://localhost:8080/assets/default_header.png",
+      "followers_count": 0,
+      "following_count": 0,
+      "statuses_count": 1,
+      "last_status_at": "2021-09-20T10:40:37.000Z",
+      "emojis": [],
+      "fields": []
+    }
+  },
+  "assigned_account": null,
+  "action_taken_by_account": null,
+  "statuses": [
+    {
+      "id": "01FVW7JHQFSFK166WWKR8CBA6M",
+      "created_at": "2021-09-20T10:40:37.000Z",
+      "in_reply_to_id": null,
+      "in_reply_to_account_id": null,
+      "sensitive": false,
+      "spoiler_text": "",
+      "visibility": "unlisted",
+      "language": "en",
+      "uri": "http://fossbros-anonymous.io/users/foss_satan/statuses/01FVW7JHQFSFK166WWKR8CBA6M",
+      "url": "http://fossbros-anonymous.io/@foss_satan/statuses/01FVW7JHQFSFK166WWKR8CBA6M",
+      "replies_count": 0,
+      "reblogs_count": 0,
+      "favourites_count": 0,
+      "favourited": false,
+      "reblogged": false,
+      "muted": false,
+      "bookmarked": false,
+      "pinned": false,
+      "content": "dark souls status bot: \"thoughts of dog\"",
+      "reblog": null,
+      "account": {
+        "id": "01F8MH5ZK5VRH73AKHQM6Y9VNX",
+        "username": "foss_satan",
+        "acct": "foss_satan@fossbros-anonymous.io",
+        "display_name": "big gerald",
+        "locked": false,
+        "discoverable": true,
+        "bot": false,
+        "created_at": "2021-09-26T10:52:36.000Z",
+        "note": "i post about like, i dunno, stuff, or whatever!!!!",
+        "url": "http://fossbros-anonymous.io/@foss_satan",
+        "avatar": "",
+        "avatar_static": "",
+        "header": "http://localhost:8080/assets/default_header.png",
+        "header_static": "http://localhost:8080/assets/default_header.png",
+        "followers_count": 0,
+        "following_count": 0,
+        "statuses_count": 1,
+        "last_status_at": "2021-09-20T10:40:37.000Z",
+        "emojis": [],
+        "fields": []
+      },
+      "media_attachments": [
+        {
+          "id": "01FVW7RXPQ8YJHTEXYPE7Q8ZY0",
+          "type": "image",
+          "url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg",
+          "text_url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg",
+          "preview_url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg",
+          "remote_url": "http://fossbros-anonymous.io/attachments/original/13bbc3f8-2b5e-46ea-9531-40b4974d9912.jpg",
+          "preview_remote_url": "http://fossbros-anonymous.io/attachments/small/a499f55b-2d1e-4acd-98d2-1ac2ba6d79b9.jpg",
+          "meta": {
+            "original": {
+              "width": 472,
+              "height": 291,
+              "size": "472x291",
+              "aspect": 1.6219932
+            },
+            "small": {
+              "width": 472,
+              "height": 291,
+              "size": "472x291",
+              "aspect": 1.6219932
+            },
+            "focus": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "description": "tweet from thoughts of dog: i drank. all the water. in my bowl. earlier. but just now. i returned. to the same bowl. and it was. full again.. the bowl. is haunted",
+          "blurhash": "LARysgM_IU_3~pD%M_Rj_39FIAt6"
+        }
+      ],
+      "mentions": [],
+      "tags": [],
+      "emojis": [],
+      "card": null,
+      "poll": null
+    }
+  ],
+  "rule_ids": [],
+  "action_taken_comment": null
 }`, string(b))
 }
 

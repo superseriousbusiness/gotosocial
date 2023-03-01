@@ -62,7 +62,7 @@ type ProcessingStandardTestSuite struct {
 	testBlocks       map[string]*gtsmodel.Block
 	testActivities   map[string]testrig.ActivityWithSignature
 
-	processor processing.Processor
+	processor *processing.Processor
 }
 
 func (suite *ProcessingStandardTestSuite) SetupSuite() {

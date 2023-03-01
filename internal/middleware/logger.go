@@ -57,7 +57,8 @@ func Logger() gin.HandlerFunc {
 
 				// Dump a stacktrace to error log
 				callers := errors.GetCallers(3, 10)
-				log.WithField("stacktrace", callers).Error(err)
+				log.WithContext(c.Request.Context()).
+					WithField("stacktrace", callers).Error(err)
 			}
 
 			// NOTE:
@@ -75,7 +76,8 @@ func Logger() gin.HandlerFunc {
 			fields[5] = kv.Field{"path", path}
 
 			// Create log entry with fields
-			l := log.WithFields(fields...)
+			l := log.WithContext(c.Request.Context()).
+				WithFields(fields...)
 
 			// Default is info
 			lvl := level.INFO

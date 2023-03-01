@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"io"
 	"mime"
 	"net/url"
 	"path"
@@ -28,18 +29,23 @@ import (
 
 	"codeberg.org/gruf/go-bytesize"
 	"codeberg.org/gruf/go-cache/v3/ttl"
-	"codeberg.org/gruf/go-store/v2/kv"
 	"codeberg.org/gruf/go-store/v2/storage"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 const (
 	urlCacheTTL             = time.Hour * 24
 	urlCacheExpiryFrequency = time.Minute * 5
 )
+
+// PresignedURL represents a pre signed S3 URL with
+// an expiry time.
+type PresignedURL struct {
+	*url.URL
+	Expiry time.Time // link expires at this time
+}
 
 // ErrAlreadyExists is a ptr to underlying storage.ErrAlreadyExists,
 // to put the related errors in the same package as our storage wrapper.
@@ -48,17 +54,60 @@ var ErrAlreadyExists = storage.ErrAlreadyExists
 // Driver wraps a kv.KVStore to also provide S3 presigned GET URLs.
 type Driver struct {
 	// Underlying storage
-	*kv.KVStore
 	Storage storage.Storage
 
 	// S3-only parameters
 	Proxy          bool
 	Bucket         string
-	PresignedCache *ttl.Cache[string, *url.URL]
+	PresignedCache *ttl.Cache[string, PresignedURL]
+}
+
+// Get returns the byte value for key in storage.
+func (d *Driver) Get(ctx context.Context, key string) ([]byte, error) {
+	return d.Storage.ReadBytes(ctx, key)
+}
+
+// GetStream returns an io.ReadCloser for the value bytes at key in the storage.
+func (d *Driver) GetStream(ctx context.Context, key string) (io.ReadCloser, error) {
+	return d.Storage.ReadStream(ctx, key)
+}
+
+// Put writes the supplied value bytes at key in the storage
+func (d *Driver) Put(ctx context.Context, key string, value []byte) (int, error) {
+	return d.Storage.WriteBytes(ctx, key, value)
+}
+
+// PutStream writes the bytes from supplied reader at key in the storage
+func (d *Driver) PutStream(ctx context.Context, key string, r io.Reader) (int64, error) {
+	return d.Storage.WriteStream(ctx, key, r)
+}
+
+// Remove attempts to remove the supplied key (and corresponding value) from storage.
+func (d *Driver) Delete(ctx context.Context, key string) error {
+	return d.Storage.Remove(ctx, key)
+}
+
+// Has checks if the supplied key is in the storage.
+func (d *Driver) Has(ctx context.Context, key string) (bool, error) {
+	return d.Storage.Stat(ctx, key)
+}
+
+// WalkKeys walks the keys in the storage.
+func (d *Driver) WalkKeys(ctx context.Context, walk func(context.Context, string) error) error {
+	return d.Storage.WalkKeys(ctx, storage.WalkKeysOptions{
+		WalkFn: func(ctx context.Context, entry storage.Entry) error {
+			return walk(ctx, entry.Key)
+		},
+	})
+}
+
+// Close will close the storage, releasing any file locks.
+func (d *Driver) Close() error {
+	return d.Storage.Close()
 }
 
 // URL will return a presigned GET object URL, but only if running on S3 storage with proxying disabled.
-func (d *Driver) URL(ctx context.Context, key string) *url.URL {
+func (d *Driver) URL(ctx context.Context, key string) *PresignedURL {
 	// Check whether S3 *without* proxying is enabled
 	s3, ok := d.Storage.(*storage.S3Storage)
 	if !ok || d.Proxy {
@@ -72,7 +121,7 @@ func (d *Driver) URL(ctx context.Context, key string) *url.URL {
 	d.PresignedCache.Unlock()
 
 	if ok {
-		return e.Value
+		return &e.Value
 	}
 
 	u, err := s3.Client().PresignedGetObject(ctx, d.Bucket, key, urlCacheTTL, url.Values{
@@ -82,8 +131,14 @@ func (d *Driver) URL(ctx context.Context, key string) *url.URL {
 		// If URL request fails, fallback is to fetch the file. So ignore the error here
 		return nil
 	}
-	d.PresignedCache.Set(key, u)
-	return u
+
+	psu := PresignedURL{
+		URL:    u,
+		Expiry: time.Now().Add(urlCacheTTL), // link expires in 24h time
+	}
+
+	d.PresignedCache.Set(key, psu)
+	return &psu
 }
 
 func AutoConfig() (*Driver, error) {
@@ -115,12 +170,7 @@ func NewFileStorage() (*Driver, error) {
 		return nil, fmt.Errorf("error opening disk storage: %w", err)
 	}
 
-	if err := disk.Clean(context.Background()); err != nil {
-		log.Errorf("error performing storage cleanup: %v", err)
-	}
-
 	return &Driver{
-		KVStore: kv.New(disk),
 		Storage: disk,
 	}, nil
 }
@@ -151,11 +201,10 @@ func NewS3Storage() (*Driver, error) {
 	}
 
 	// ttl should be lower than the expiry used by S3 to avoid serving invalid URLs
-	presignedCache := ttl.New[string, *url.URL](0, 1000, urlCacheTTL-urlCacheExpiryFrequency)
+	presignedCache := ttl.New[string, PresignedURL](0, 1000, urlCacheTTL-urlCacheExpiryFrequency)
 	presignedCache.Start(urlCacheExpiryFrequency)
 
 	return &Driver{
-		KVStore:        kv.New(s3),
 		Proxy:          config.GetStorageS3Proxy(),
 		Bucket:         config.GetStorageS3BucketName(),
 		Storage:        s3,

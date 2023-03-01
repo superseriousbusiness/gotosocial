@@ -29,12 +29,14 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/bookmarks"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/customemojis"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/favourites"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/featuredtags"
 	filter "github.com/superseriousbusiness/gotosocial/internal/api/client/filters"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/followrequests"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/instance"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/lists"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/media"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/notifications"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/reports"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/search"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/statuses"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/streaming"
@@ -47,7 +49,7 @@ import (
 )
 
 type Client struct {
-	processor processing.Processor
+	processor *processing.Processor
 	db        db.DB
 
 	accounts       *accounts.Module       // api/v1/accounts
@@ -57,12 +59,14 @@ type Client struct {
 	bookmarks      *bookmarks.Module      // api/v1/bookmarks
 	customEmojis   *customemojis.Module   // api/v1/custom_emojis
 	favourites     *favourites.Module     // api/v1/favourites
+	featuredTags   *featuredtags.Module   // api/v1/featured_tags
 	filters        *filter.Module         // api/v1/filters
 	followRequests *followrequests.Module // api/v1/follow_requests
 	instance       *instance.Module       // api/v1/instance
 	lists          *lists.Module          // api/v1/lists
 	media          *media.Module          // api/v1/media, api/v2/media
 	notifications  *notifications.Module  // api/v1/notifications
+	reports        *reports.Module        // api/v1/reports
 	search         *search.Module         // api/v1/search, api/v2/search
 	statuses       *statuses.Module       // api/v1/statuses
 	streaming      *streaming.Module      // api/v1/streaming
@@ -91,12 +95,14 @@ func (c *Client) Route(r router.Router, m ...gin.HandlerFunc) {
 	c.bookmarks.Route(h)
 	c.customEmojis.Route(h)
 	c.favourites.Route(h)
+	c.featuredTags.Route(h)
 	c.filters.Route(h)
 	c.followRequests.Route(h)
 	c.instance.Route(h)
 	c.lists.Route(h)
 	c.media.Route(h)
 	c.notifications.Route(h)
+	c.reports.Route(h)
 	c.search.Route(h)
 	c.statuses.Route(h)
 	c.streaming.Route(h)
@@ -104,7 +110,7 @@ func (c *Client) Route(r router.Router, m ...gin.HandlerFunc) {
 	c.user.Route(h)
 }
 
-func NewClient(db db.DB, p processing.Processor) *Client {
+func NewClient(db db.DB, p *processing.Processor) *Client {
 	return &Client{
 		processor: p,
 		db:        db,
@@ -116,12 +122,14 @@ func NewClient(db db.DB, p processing.Processor) *Client {
 		bookmarks:      bookmarks.New(p),
 		customEmojis:   customemojis.New(p),
 		favourites:     favourites.New(p),
+		featuredTags:   featuredtags.New(p),
 		filters:        filter.New(p),
 		followRequests: followrequests.New(p),
 		instance:       instance.New(p),
 		lists:          lists.New(p),
 		media:          media.New(p),
 		notifications:  notifications.New(p),
+		reports:        reports.New(p),
 		search:         search.New(p),
 		statuses:       statuses.New(p),
 		streaming:      streaming.New(p, time.Second*30, 4096),

@@ -252,7 +252,7 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 			if err == nil {
 				a.AvatarMediaAttachment = avatar
 			} else {
-				log.Errorf("AccountToAS: error getting Avatar with id %s: %s", a.AvatarMediaAttachmentID, err)
+				log.Errorf(ctx, "error getting Avatar with id %s: %s", a.AvatarMediaAttachmentID, err)
 			}
 		}
 
@@ -286,7 +286,7 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 			if err == nil {
 				a.HeaderMediaAttachment = header
 			} else {
-				log.Errorf("AccountToAS: error getting Header with id %s: %s", a.HeaderMediaAttachmentID, err)
+				log.Errorf(ctx, "error getting Header with id %s: %s", a.HeaderMediaAttachmentID, err)
 			}
 		}
 
@@ -1294,4 +1294,54 @@ func (c *converter) OutboxToASCollection(ctx context.Context, outboxID string) (
 	collection.SetActivityStreamsFirst(collectionFirstProp)
 
 	return collection, nil
+}
+
+func (c *converter) ReportToASFlag(ctx context.Context, r *gtsmodel.Report) (vocab.ActivityStreamsFlag, error) {
+	flag := streams.NewActivityStreamsFlag()
+
+	flagIDProp := streams.NewJSONLDIdProperty()
+	idURI, err := url.Parse(r.URI)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing url %s: %w", r.URI, err)
+	}
+	flagIDProp.SetIRI(idURI)
+	flag.SetJSONLDId(flagIDProp)
+
+	// for privacy, set the actor as the INSTANCE ACTOR,
+	// not as the actor who created the report
+	instanceAccount, err := c.db.GetInstanceAccount(ctx, "")
+	if err != nil {
+		return nil, fmt.Errorf("error getting instance account: %w", err)
+	}
+	instanceAccountIRI, err := url.Parse(instanceAccount.URI)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing url %s: %w", instanceAccount.URI, err)
+	}
+	flagActorProp := streams.NewActivityStreamsActorProperty()
+	flagActorProp.AppendIRI(instanceAccountIRI)
+	flag.SetActivityStreamsActor(flagActorProp)
+
+	// content should be the comment submitted when the report was created
+	contentProp := streams.NewActivityStreamsContentProperty()
+	contentProp.AppendXMLSchemaString(r.Comment)
+	flag.SetActivityStreamsContent(contentProp)
+
+	// set at least the target account uri as the object of the flag
+	objectProp := streams.NewActivityStreamsObjectProperty()
+	targetAccountURI, err := url.Parse(r.TargetAccount.URI)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing url %s: %w", r.TargetAccount.URI, err)
+	}
+	objectProp.AppendIRI(targetAccountURI)
+	// also set status URIs if they were provided with the report
+	for _, s := range r.Statuses {
+		statusURI, err := url.Parse(s.URI)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing url %s: %w", s.URI, err)
+		}
+		objectProp.AppendIRI(statusURI)
+	}
+	flag.SetActivityStreamsObject(objectProp)
+
+	return flag, nil
 }

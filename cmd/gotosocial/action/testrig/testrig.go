@@ -99,7 +99,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// attach global no route / 404 handler to the router
 	router.AttachNoRouteHandler(func(c *gin.Context) {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(errors.New(http.StatusText(http.StatusNotFound))), processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(errors.New(http.StatusText(http.StatusNotFound))), processor.InstanceGetV1)
 	})
 
 	// build router modules
@@ -129,7 +129,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		wellKnownModule   = api.NewWellKnown(processor)                                        // .well-known endpoints
 		nodeInfoModule    = api.NewNodeInfo(processor)                                         // nodeinfo endpoint
 		activityPubModule = api.NewActivityPub(dbService, processor)                           // ActivityPub endpoints
-		webModule         = web.New(processor)                                                 // web pages + user profiles + settings panels etc
+		webModule         = web.New(dbService, processor)                                      // web pages + user profiles + settings panels etc
 	)
 
 	// these should be routed in order
@@ -139,6 +139,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	wellKnownModule.Route(router)
 	nodeInfoModule.Route(router)
 	activityPubModule.Route(router)
+	activityPubModule.RoutePublicKey(router)
 	webModule.Route(router)
 
 	gts, err := gotosocial.NewServer(dbService, router, federator, mediaManager)
@@ -154,7 +155,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
 	sig := <-sigs
-	log.Infof("received signal %s, shutting down", sig)
+	log.Infof(ctx, "received signal %s, shutting down", sig)
 
 	testrig.StandardDBTeardown(dbService)
 	testrig.StandardStorageTeardown(storageBackend)
@@ -164,6 +165,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error closing gotosocial service: %s", err)
 	}
 
-	log.Info("done! exiting...")
+	log.Info(ctx, "done! exiting...")
 	return nil
 }

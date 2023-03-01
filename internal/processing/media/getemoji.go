@@ -28,7 +28,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-func (p *processor) GetCustomEmojis(ctx context.Context) ([]*apimodel.Emoji, gtserror.WithCode) {
+// GetCustomEmojis returns a list of all useable local custom emojis stored on this instance.
+// 'useable' in this context means visible and picker, and not disabled.
+func (p *Processor) GetCustomEmojis(ctx context.Context) ([]*apimodel.Emoji, gtserror.WithCode) {
 	emojis, err := p.db.GetUseableEmojis(ctx)
 	if err != nil {
 		if err != db.ErrNoEntries {
@@ -40,7 +42,7 @@ func (p *processor) GetCustomEmojis(ctx context.Context) ([]*apimodel.Emoji, gts
 	for _, gtsEmoji := range emojis {
 		apiEmoji, err := p.tc.EmojiToAPIEmoji(ctx, gtsEmoji)
 		if err != nil {
-			log.Errorf("error converting emoji with id %s: %s", gtsEmoji.ID, err)
+			log.Errorf(ctx, "error converting emoji with id %s: %s", gtsEmoji.ID, err)
 			continue
 		}
 		apiEmojis = append(apiEmojis, &apiEmoji)

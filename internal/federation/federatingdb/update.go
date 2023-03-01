@@ -42,7 +42,7 @@ import (
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
-	l := log.Entry{}
+	l := log.Entry{}.WithContext(ctx)
 
 	if log.Level() >= level.DEBUG {
 		i, err := marshalItem(asType)
@@ -116,7 +116,7 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 			accountable = i
 		}
 
-		updatedAcct, err := f.typeConverter.ASRepresentationToAccount(ctx, accountable, "", true)
+		updatedAcct, err := f.typeConverter.ASRepresentationToAccount(ctx, accountable, "")
 		if err != nil {
 			return fmt.Errorf("UPDATE: error converting to account: %s", err)
 		}

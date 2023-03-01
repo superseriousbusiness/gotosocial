@@ -7,9 +7,9 @@ import (
 
 // closedctx is an always closed context.
 var closedctx = func() context.Context {
-	ctx := make(cancelctx)
+	ctx := make(chan struct{})
 	close(ctx)
-	return ctx
+	return CancelCtx(ctx)
 }()
 
 // Closed returns an always closed context.
@@ -17,24 +17,25 @@ func Closed() context.Context {
 	return closedctx
 }
 
-// ContextWithCancel returns a new context.Context impl with cancel.
-func ContextWithCancel() (context.Context, context.CancelFunc) {
-	ctx := make(cancelctx)
-	return ctx, func() { close(ctx) }
+// CtxWithCancel returns a new context.Context impl with cancel.
+func CtxWithCancel() (context.Context, context.CancelFunc) {
+	ctx := make(chan struct{})
+	cncl := func() { close(ctx) }
+	return CancelCtx(ctx), cncl
 }
 
-// cancelctx is the simplest possible cancellable context.
-type cancelctx (chan struct{})
+// CancelCtx is the simplest possible cancellable context.
+type CancelCtx (<-chan struct{})
 
-func (cancelctx) Deadline() (time.Time, bool) {
+func (CancelCtx) Deadline() (time.Time, bool) {
 	return time.Time{}, false
 }
 
-func (ctx cancelctx) Done() <-chan struct{} {
+func (ctx CancelCtx) Done() <-chan struct{} {
 	return ctx
 }
 
-func (ctx cancelctx) Err() error {
+func (ctx CancelCtx) Err() error {
 	select {
 	case <-ctx:
 		return context.Canceled
@@ -43,11 +44,11 @@ func (ctx cancelctx) Err() error {
 	}
 }
 
-func (cancelctx) Value(key interface{}) interface{} {
+func (CancelCtx) Value(key interface{}) interface{} {
 	return nil
 }
 
-func (ctx cancelctx) String() string {
+func (ctx CancelCtx) String() string {
 	var state string
 	select {
 	case <-ctx:
@@ -55,9 +56,9 @@ func (ctx cancelctx) String() string {
 	default:
 		state = "open"
 	}
-	return "cancelctx{state:" + state + "}"
+	return "CancelCtx{state:" + state + "}"
 }
 
-func (ctx cancelctx) GoString() string {
+func (ctx CancelCtx) GoString() string {
 	return "runners." + ctx.String()
 }

@@ -108,6 +108,34 @@ db-tls-mode: "disable"
 # Default: ""
 db-tls-ca-cert: ""
 
+# Int. Number to multiply by CPU count to set permitted total of open database connections (in-use and idle).
+# You can use this setting to tune your database connection behavior, though most admins won't need to touch it.
+#
+# Example values for multiplier 8:
+#
+# 1 cpu = 08 open connections
+# 2 cpu = 16 open connections
+# 4 cpu = 32 open connections
+#
+# Example values for multiplier 4:
+#
+# 1 cpu = 04 open connections
+# 2 cpu = 08 open connections
+# 4 cpu = 16 open connections
+#
+# A multiplier of 8 is a sensible default, but you may wish to increase this for instances
+# running on very performant hardware, or decrease it for instances using v. slow CPUs.
+#
+# If you set the multiplier to less than 1, only one open connection will be used regardless of cpu count.
+#
+# PLEASE NOTE!!: This setting currently only applies for Postgres. SQLite will always use 1 connection regardless
+# of what is set here. This behavior will change in future when we implement better SQLITE_BUSY handling.
+# See https://github.com/superseriousbusiness/gotosocial/issues/1407 for more details.
+#
+# Examples: [16, 8, 10, 2]
+# Default: 8
+db-max-open-conns-multiplier: 8
+
 # String. SQLite journaling mode.
 # SQLite only -- unused otherwise.
 # If set to empty string, the sqlite default will be used.
@@ -126,11 +154,11 @@ db-sqlite-synchronous: "NORMAL"
 
 # Byte size. SQlite cache size.
 # SQLite only -- unused otherwise.
-# If set to empty string or zero, the sqlite default will be used.
+# If set to empty string or zero, the sqlite default (2MiB) will be used.
 # See: https://www.sqlite.org/pragma.html#pragma_cache_size
-# Examples: ["32MiB", "0", "64MiB"]
-# Default: "64MiB"
-db-sqlite-cache-size: "64MiB"
+# Examples: ["0", "2MiB", "8MiB", "64MiB"]
+# Default: "8MiB"
+db-sqlite-cache-size: "8MiB"
 
 # Duration. SQlite busy timeout.
 # SQLite only -- unused otherwise.

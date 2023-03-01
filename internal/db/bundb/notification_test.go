@@ -39,10 +39,7 @@ func (suite *NotificationTestSuite) spamNotifs() {
 	zork := suite.testAccounts["local_account_1"]
 
 	for i := 0; i < notifCount; i++ {
-		notifID, err := id.NewULID()
-		if err != nil {
-			panic(err)
-		}
+		notifID := id.NewULID()
 
 		var targetAccountID string
 		if i%2 == 0 {

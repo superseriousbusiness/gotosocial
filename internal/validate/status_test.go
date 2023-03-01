@@ -70,7 +70,6 @@ func happyStatus() *gtsmodel.Status {
 		Likeable:                 testrig.TrueBool(),
 		ActivityStreamsType:      ap.ObjectNote,
 		Text:                     "Test status! #hello",
-		Pinned:                   testrig.FalseBool(),
 	}
 }
 

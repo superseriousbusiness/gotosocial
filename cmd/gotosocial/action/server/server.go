@@ -62,7 +62,7 @@ import (
 
 // Start creates and starts a gotosocial server
 var Start action.GTSAction = func(ctx context.Context) error {
-	_, err := maxprocs.Set(maxprocs.Logger(log.Errorf))
+	_, err := maxprocs.Set(maxprocs.Logger(nil))
 	if err != nil {
 		return fmt.Errorf("failed to set CPU limits from cgroup: %s", err)
 	}
@@ -71,6 +71,8 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// Initialize caches
 	state.Caches.Init()
+	state.Caches.Start()
+	defer state.Caches.Stop()
 
 	// Open connection to the database
 	dbService, err := bundb.NewBunDBService(ctx, &state)
@@ -89,33 +91,35 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating instance instance: %s", err)
 	}
 
-	// Create the client API and federator worker pools
-	// NOTE: these MUST NOT be used until they are passed to the
-	// processor and it is started. The reason being that the processor
-	// sets the Worker process functions and start the underlying pools
-	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
-	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
-
-	federatingDB := federatingdb.New(dbService, fedWorker)
-
-	// build converters and util
-	typeConverter := typeutils.NewConverter(dbService)
-
 	// Open the storage backend
 	storage, err := gtsstorage.AutoConfig()
 	if err != nil {
 		return fmt.Errorf("error creating storage backend: %w", err)
 	}
 
+	// Set the state storage driver
+	state.Storage = storage
+
 	// Build HTTP client (TODO: add configurables here)
 	client := httpclient.New(httpclient.Config{})
 
+	// Initialize workers.
+	state.Workers.Start()
+	defer state.Workers.Stop()
+
+	// Create the client API and federator worker pools
+	// NOTE: these MUST NOT be used until they are passed to the
+	// processor and it is started. The reason being that the processor
+	// sets the Worker process functions and start the underlying pools
+	// TODO: move these into state.Workers (and maybe reformat worker pools).
+	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+
 	// build backend handlers
-	mediaManager, err := media.NewManager(dbService, storage)
-	if err != nil {
-		return fmt.Errorf("error creating media manager: %s", err)
-	}
+	mediaManager := media.NewManager(&state)
 	oauthServer := oauth.New(ctx, dbService)
+	typeConverter := typeutils.NewConverter(dbService)
+	federatingDB := federatingdb.New(dbService, fedWorker, typeConverter)
 	transportController := transport.NewController(dbService, federatingDB, &federation.Clock{}, client)
 	federator := federation.NewFederator(dbService, federatingDB, transportController, typeConverter, mediaManager)
 
@@ -152,6 +156,9 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// attach global middlewares which are used for every request
 	router.AttachGlobalMiddleware(
+		middleware.AddRequestID(config.GetRequestIDHeader()),
+		// note: hooks adding ctx fields must be ABOVE
+		// the logger, otherwise won't be accessible.
 		middleware.Logger(),
 		middleware.UserAgent(),
 		middleware.CORS(),
@@ -160,7 +167,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// attach global no route / 404 handler to the router
 	router.AttachNoRouteHandler(func(c *gin.Context) {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(errors.New(http.StatusText(http.StatusNotFound))), processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(errors.New(http.StatusText(http.StatusNotFound))), processor.InstanceGetV1)
 	})
 
 	// build router modules
@@ -189,7 +196,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		wellKnownModule   = api.NewWellKnown(processor)                                        // .well-known endpoints
 		nodeInfoModule    = api.NewNodeInfo(processor)                                         // nodeinfo endpoint
 		activityPubModule = api.NewActivityPub(dbService, processor)                           // ActivityPub endpoints
-		webModule         = web.New(processor)                                                 // web pages + user profiles + settings panels etc
+		webModule         = web.New(dbService, processor)                                      // web pages + user profiles + settings panels etc
 	)
 
 	// create required middleware
@@ -201,9 +208,11 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// throttling
 	cpuMultiplier := config.GetAdvancedThrottlingMultiplier()
-	clThrottle := middleware.Throttle(cpuMultiplier)  // client api
-	s2sThrottle := middleware.Throttle(cpuMultiplier) // server-to-server (AP)
-	fsThrottle := middleware.Throttle(cpuMultiplier)  // fileserver / web templates
+	retryAfter := config.GetAdvancedThrottlingRetryAfter()
+	clThrottle := middleware.Throttle(cpuMultiplier, retryAfter)  // client api
+	s2sThrottle := middleware.Throttle(cpuMultiplier, retryAfter) // server-to-server (AP)
+	fsThrottle := middleware.Throttle(cpuMultiplier, retryAfter)  // fileserver / web templates
+	pkThrottle := middleware.Throttle(cpuMultiplier, retryAfter)  // throttle public key endpoint separately
 
 	gzip := middleware.Gzip() // applied to all except fileserver
 
@@ -215,6 +224,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	wellKnownModule.Route(router, gzip, s2sLimit, s2sThrottle)
 	nodeInfoModule.Route(router, s2sLimit, s2sThrottle, gzip)
 	activityPubModule.Route(router, s2sLimit, s2sThrottle, gzip)
+	activityPubModule.RoutePublicKey(router, s2sLimit, pkThrottle, gzip)
 	webModule.Route(router, fsLimit, fsThrottle, gzip)
 
 	gts, err := gotosocial.NewServer(dbService, router, federator, mediaManager)
@@ -226,22 +236,17 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error starting gotosocial service: %s", err)
 	}
 
-	// perform initial media prune in case value of MediaRemoteCacheDays changed
-	if err := processor.AdminMediaPrune(ctx, config.GetMediaRemoteCacheDays()); err != nil {
-		return fmt.Errorf("error during initial media prune: %s", err)
-	}
-
 	// catch shutdown signals from the operating system
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-sigs // block until signal received
-	log.Infof("received signal %s, shutting down", sig)
+	log.Infof(ctx, "received signal %s, shutting down", sig)
 
 	// close down all running services in order
 	if err := gts.Stop(ctx); err != nil {
 		return fmt.Errorf("error closing gotosocial service: %s", err)
 	}
 
-	log.Info("done! exiting...")
+	log.Info(ctx, "done! exiting...")
 	return nil
 }

@@ -40,24 +40,26 @@ var Defaults = Configuration{
 	Port:            8080,
 	TrustedProxies:  []string{"127.0.0.1/32", "::1"}, // localhost
 
-	DbType:              "postgres",
-	DbAddress:           "",
-	DbPort:              5432,
-	DbUser:              "",
-	DbPassword:          "",
-	DbDatabase:          "gotosocial",
-	DbTLSMode:           "disable",
-	DbTLSCACert:         "",
-	DbSqliteJournalMode: "WAL",
-	DbSqliteSynchronous: "NORMAL",
-	DbSqliteCacheSize:   64 * bytesize.MiB,
-	DbSqliteBusyTimeout: time.Minute * 5,
+	DbType:                   "postgres",
+	DbAddress:                "",
+	DbPort:                   5432,
+	DbUser:                   "",
+	DbPassword:               "",
+	DbDatabase:               "gotosocial",
+	DbTLSMode:                "disable",
+	DbTLSCACert:              "",
+	DbMaxOpenConnsMultiplier: 8,
+	DbSqliteJournalMode:      "WAL",
+	DbSqliteSynchronous:      "NORMAL",
+	DbSqliteCacheSize:        8 * bytesize.MiB,
+	DbSqliteBusyTimeout:      time.Minute * 5,
 
 	WebTemplateBaseDir: "./web/template/",
 	WebAssetBaseDir:    "./web/assets/",
 
 	InstanceExposePeers:            false,
 	InstanceExposeSuspended:        false,
+	InstanceExposeSuspendedWeb:     false,
 	InstanceDeliverToSharedInboxes: true,
 
 	AccountsRegistrationOpen: true,
@@ -159,4 +161,8 @@ var Defaults = Configuration{
 			UserSweepFreq: time.Second * 10,
 		},
 	},
+
+	AdminMediaPruneDryRun: true,
+
+	RequestIDHeader: "X-Request-Id",
 }

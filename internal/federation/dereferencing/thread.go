@@ -45,10 +45,11 @@ const maxIter = 1000
 //
 // This does not return error, as for robustness we do not want to error-out on a status because another further up / down has issues.
 func (d *deref) DereferenceThread(ctx context.Context, username string, statusIRI *url.URL, status *gtsmodel.Status, statusable ap.Statusable) {
-	l := log.WithFields(kv.Fields{
-		{"username", username},
-		{"statusIRI", status.URI},
-	}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{
+			{"username", username},
+			{"statusIRI", status.URI},
+		}...)
 
 	// Log function start
 	l.Trace("beginning")
@@ -72,10 +73,11 @@ func (d *deref) dereferenceStatusAncestors(ctx context.Context, username string,
 	ogIRI := status.URI
 
 	// Start log entry with fields
-	l := log.WithFields(kv.Fields{
-		{"username", username},
-		{"statusIRI", ogIRI},
-	}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{
+			{"username", username},
+			{"statusIRI", ogIRI},
+		}...)
 
 	// Log function start
 	l.Trace("beginning")
@@ -132,10 +134,11 @@ func (d *deref) dereferenceStatusDescendants(ctx context.Context, username strin
 	ogIRI := statusIRI
 
 	// Start log entry with fields
-	l := log.WithFields(kv.Fields{
-		{"username", username},
-		{"statusIRI", ogIRI},
-	}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{
+			{"username", username},
+			{"statusIRI", ogIRI},
+		}...)
 
 	// Log function start
 	l.Trace("beginning")

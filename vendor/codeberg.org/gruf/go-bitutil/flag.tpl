@@ -2,14 +2,13 @@ package bitutil
 
 import (
     "strings"
-
-    "codeberg.org/gruf/go-byteutil"
+    "unsafe"
 )
 
 {{ range $idx, $size := . }}
 
 // Flags{{ $size.Size }} is a type-casted unsigned integer with helper
-// methods for easily managing up to {{ $size.Size }} bit flags.
+// methods for easily managing up to {{ $size.Size }} bit-flags.
 type Flags{{ $size.Size }} uint{{ $size.Size }}
 
 // Get will fetch the flag bit value at index 'bit'.
@@ -54,34 +53,58 @@ func (f Flags{{ $size.Size }}) Unset{{ $idx }}() Flags{{ $size.Size }} {
 
 // String returns a human readable representation of Flags{{ $size.Size }}.
 func (f Flags{{ $size.Size }}) String() string {
-    var val bool
-    var buf byteutil.Buffer
+    var (
+        i   int
+        val bool
+        buf []byte
+    )
 
-    buf.WriteByte('{')
+    // Make a prealloc est. based on longest-possible value
+    const prealloc = 1+(len("false ")*{{ $size.Size }})-1+1
+    buf = make([]byte, prealloc)
+
+    buf[i] = '{'
+    i++
+
     {{ range $idx := .Bits }}
     val = f.Get{{ $idx }}()
-    buf.WriteString(bool2str(val) + " ")
+    i += copy(buf[i:], bool2str(val))
+    buf[i] = ' '
+    i++
     {{ end }}
-    buf.Truncate(1)
-    buf.WriteByte('}')
 
-    return buf.String()
+    buf[i-1] = '}'
+    buf = buf[:i]
+
+    return *(*string)(unsafe.Pointer(&buf))
 }
 
 // GoString returns a more verbose human readable representation of Flags{{ $size.Size }}.
 func (f Flags{{ $size.Size }})GoString() string {
-    var val bool
-    var buf byteutil.Buffer
+    var (
+        i   int
+        val bool
+        buf []byte
+    )
 
-    buf.WriteString("bitutil.Flags{{ $size.Size }}{")
+    // Make a prealloc est. based on longest-possible value
+    const prealloc = len("bitutil.Flags{{ $size.Size }}{")+(len("{{ sub $size.Size 1 }}=false ")*{{ $size.Size }})-1+1
+    buf = make([]byte, prealloc)
+
+    i += copy(buf[i:], "bitutil.Flags{{ $size.Size }}{")
+
     {{ range $idx := .Bits }}
     val = f.Get{{ $idx }}()
-    buf.WriteString("{{ $idx }}="+bool2str(val)+" ")
+    i += copy(buf[i:], "{{ $idx }}=")
+    i += copy(buf[i:], bool2str(val))
+    buf[i] = ' '
+    i++
     {{ end }}
-    buf.Truncate(1)
-    buf.WriteByte('}')
+ 
+    buf[i-1] = '}'
+    buf = buf[:i]
 
-    return buf.String()
+    return *(*string)(unsafe.Pointer(&buf))
 }
 
 {{ end }}

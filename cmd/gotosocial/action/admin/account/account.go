@@ -36,6 +36,7 @@ import (
 var Create action.GTSAction = func(ctx context.Context) error {
 	var state state.State
 	state.Caches.Init()
+	state.Workers.Start()
 
 	dbConn, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
@@ -97,6 +98,7 @@ var Create action.GTSAction = func(ctx context.Context) error {
 var Confirm action.GTSAction = func(ctx context.Context) error {
 	var state state.State
 	state.Caches.Init()
+	state.Workers.Start()
 
 	dbConn, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
@@ -140,6 +142,7 @@ var Confirm action.GTSAction = func(ctx context.Context) error {
 var Promote action.GTSAction = func(ctx context.Context) error {
 	var state state.State
 	state.Caches.Init()
+	state.Workers.Start()
 
 	dbConn, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
@@ -180,6 +183,7 @@ var Promote action.GTSAction = func(ctx context.Context) error {
 var Demote action.GTSAction = func(ctx context.Context) error {
 	var state state.State
 	state.Caches.Init()
+	state.Workers.Start()
 
 	dbConn, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
@@ -220,6 +224,7 @@ var Demote action.GTSAction = func(ctx context.Context) error {
 var Disable action.GTSAction = func(ctx context.Context) error {
 	var state state.State
 	state.Caches.Init()
+	state.Workers.Start()
 
 	dbConn, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
@@ -260,6 +265,7 @@ var Disable action.GTSAction = func(ctx context.Context) error {
 var Password action.GTSAction = func(ctx context.Context) error {
 	var state state.State
 	state.Caches.Init()
+	state.Workers.Start()
 
 	dbConn, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {

@@ -58,24 +58,26 @@ type Configuration struct {
 	TrustedProxies  []string `name:"trusted-proxies" usage:"Proxies to trust when parsing x-forwarded headers into real IPs."`
 	SoftwareVersion string   `name:"software-version" usage:""`
 
-	DbType              string        `name:"db-type" usage:"Database type: eg., postgres"`
-	DbAddress           string        `name:"db-address" usage:"Database ipv4 address, hostname, or filename"`
-	DbPort              int           `name:"db-port" usage:"Database port"`
-	DbUser              string        `name:"db-user" usage:"Database username"`
-	DbPassword          string        `name:"db-password" usage:"Database password"`
-	DbDatabase          string        `name:"db-database" usage:"Database name"`
-	DbTLSMode           string        `name:"db-tls-mode" usage:"Database tls mode"`
-	DbTLSCACert         string        `name:"db-tls-ca-cert" usage:"Path to CA cert for db tls connection"`
-	DbSqliteJournalMode string        `name:"db-sqlite-journal-mode" usage:"Sqlite only: see https://www.sqlite.org/pragma.html#pragma_journal_mode"`
-	DbSqliteSynchronous string        `name:"db-sqlite-synchronous" usage:"Sqlite only: see https://www.sqlite.org/pragma.html#pragma_synchronous"`
-	DbSqliteCacheSize   bytesize.Size `name:"db-sqlite-cache-size" usage:"Sqlite only: see https://www.sqlite.org/pragma.html#pragma_cache_size"`
-	DbSqliteBusyTimeout time.Duration `name:"db-sqlite-busy-timeout" usage:"Sqlite only: see https://www.sqlite.org/pragma.html#pragma_busy_timeout"`
+	DbType                   string        `name:"db-type" usage:"Database type: eg., postgres"`
+	DbAddress                string        `name:"db-address" usage:"Database ipv4 address, hostname, or filename"`
+	DbPort                   int           `name:"db-port" usage:"Database port"`
+	DbUser                   string        `name:"db-user" usage:"Database username"`
+	DbPassword               string        `name:"db-password" usage:"Database password"`
+	DbDatabase               string        `name:"db-database" usage:"Database name"`
+	DbTLSMode                string        `name:"db-tls-mode" usage:"Database tls mode"`
+	DbTLSCACert              string        `name:"db-tls-ca-cert" usage:"Path to CA cert for db tls connection"`
+	DbMaxOpenConnsMultiplier int           `name:"db-max-open-conns-multiplier" usage:"Multiplier to use per cpu for max open database connections. 0 or less is normalized to 1."`
+	DbSqliteJournalMode      string        `name:"db-sqlite-journal-mode" usage:"Sqlite only: see https://www.sqlite.org/pragma.html#pragma_journal_mode"`
+	DbSqliteSynchronous      string        `name:"db-sqlite-synchronous" usage:"Sqlite only: see https://www.sqlite.org/pragma.html#pragma_synchronous"`
+	DbSqliteCacheSize        bytesize.Size `name:"db-sqlite-cache-size" usage:"Sqlite only: see https://www.sqlite.org/pragma.html#pragma_cache_size"`
+	DbSqliteBusyTimeout      time.Duration `name:"db-sqlite-busy-timeout" usage:"Sqlite only: see https://www.sqlite.org/pragma.html#pragma_busy_timeout"`
 
 	WebTemplateBaseDir string `name:"web-template-base-dir" usage:"Basedir for html templating files for rendering pages and composing emails."`
 	WebAssetBaseDir    string `name:"web-asset-base-dir" usage:"Directory to serve static assets from, accessible at example.org/assets/"`
 
 	InstanceExposePeers            bool `name:"instance-expose-peers" usage:"Allow unauthenticated users to query /api/v1/instance/peers?filter=open"`
 	InstanceExposeSuspended        bool `name:"instance-expose-suspended" usage:"Expose suspended instances via web UI, and allow unauthenticated users to query /api/v1/instance/peers?filter=suspended"`
+	InstanceExposeSuspendedWeb     bool `name:"instance-expose-suspended-web" usage:"Expose list of suspended instances as webpage on /about/suspended"`
 	InstanceExposePublicTimeline   bool `name:"instance-expose-public-timeline" usage:"Allow unauthenticated users to query /api/v1/timelines/public"`
 	InstanceDeliverToSharedInboxes bool `name:"instance-deliver-to-shared-inboxes" usage:"Deliver federated messages to shared inboxes, if they're available."`
 
@@ -120,6 +122,7 @@ type Configuration struct {
 	OIDCClientSecret     string   `name:"oidc-client-secret" usage:"ClientSecret of GoToSocial, as registered with the OIDC provider."`
 	OIDCScopes           []string `name:"oidc-scopes" usage:"OIDC scopes."`
 	OIDCLinkExisting     bool     `name:"oidc-link-existing" usage:"link existing user accounts to OIDC logins based on the stored email value"`
+	OIDCAdminGroups      []string `name:"oidc-admin-groups" usage:"Membership of one of the listed groups makes someone a GtS admin"`
 
 	SMTPHost     string `name:"smtp-host" usage:"Host of the smtp server. Eg., 'smtp.eu.mailgun.org'"`
 	SMTPPort     int    `name:"smtp-port" usage:"Port of the smtp server. Eg., 587"`
@@ -131,9 +134,10 @@ type Configuration struct {
 	SyslogProtocol string `name:"syslog-protocol" usage:"Protocol to use when directing logs to syslog. Leave empty to connect to local syslog."`
 	SyslogAddress  string `name:"syslog-address" usage:"Address:port to send syslog logs to. Leave empty to connect to local syslog."`
 
-	AdvancedCookiesSamesite      string `name:"advanced-cookies-samesite" usage:"'strict' or 'lax', see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite"`
-	AdvancedRateLimitRequests    int    `name:"advanced-rate-limit-requests" usage:"Amount of HTTP requests to permit within a 5 minute window. 0 or less turns rate limiting off."`
-	AdvancedThrottlingMultiplier int    `name:"advanced-throttling-multiplier" usage:"Multiplier to use per cpu for http request throttling. 0 or less turns throttling off."`
+	AdvancedCookiesSamesite      string        `name:"advanced-cookies-samesite" usage:"'strict' or 'lax', see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite"`
+	AdvancedRateLimitRequests    int           `name:"advanced-rate-limit-requests" usage:"Amount of HTTP requests to permit within a 5 minute window. 0 or less turns rate limiting off."`
+	AdvancedThrottlingMultiplier int           `name:"advanced-throttling-multiplier" usage:"Multiplier to use per cpu for http request throttling. 0 or less turns throttling off."`
+	AdvancedThrottlingRetryAfter time.Duration `name:"advanced-throttling-retry-after" usage:"Retry-After duration response to send for throttled requests."`
 
 	// Cache configuration vars.
 	Cache CacheConfiguration `name:"cache"`
@@ -144,6 +148,8 @@ type Configuration struct {
 	AdminAccountPassword  string `name:"password" usage:"the password to set for this account"`
 	AdminTransPath        string `name:"path" usage:"the path of the file to import from/export to"`
 	AdminMediaPruneDryRun bool   `name:"dry-run" usage:"perform a dry run and only log number of items eligible for pruning"`
+
+	RequestIDHeader string `name:"request-id-header" usage:"Header to extract the Request ID from. Eg.,'X-Request-Id'"`
 }
 
 type CacheConfiguration struct {

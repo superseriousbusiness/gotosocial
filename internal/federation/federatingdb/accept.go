@@ -39,7 +39,8 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 		if err != nil {
 			return err
 		}
-		l := log.WithField("accept", i)
+		l := log.WithContext(ctx).
+			WithField("accept", i)
 		l.Debug("entering Accept")
 	}
 

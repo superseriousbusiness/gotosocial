@@ -20,7 +20,6 @@ package typeutils
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -43,6 +42,8 @@ const (
 	instanceMediaAttachmentsVideoFrameRateLimit = 60
 	instancePollsMinExpiration                  = 300     // seconds
 	instancePollsMaxExpiration                  = 2629746 // seconds
+	instanceAccountsMaxFeaturedTags             = 10
+	instanceSourceURL                           = "https://github.com/superseriousbusiness/gotosocial"
 )
 
 func (c *converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
@@ -118,7 +119,7 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		if a.AvatarMediaAttachment == nil {
 			avi, err := c.db.GetAttachmentByID(ctx, a.AvatarMediaAttachmentID)
 			if err != nil {
-				log.Errorf("AccountToAPIAccountPublic: error getting Avatar with id %s: %s", a.AvatarMediaAttachmentID, err)
+				log.Errorf(ctx, "error getting Avatar with id %s: %s", a.AvatarMediaAttachmentID, err)
 			}
 			a.AvatarMediaAttachment = avi
 		}
@@ -135,7 +136,7 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		if a.HeaderMediaAttachment == nil {
 			avi, err := c.db.GetAttachmentByID(ctx, a.HeaderMediaAttachmentID)
 			if err != nil {
-				log.Errorf("AccountToAPIAccountPublic: error getting Header with id %s: %s", a.HeaderMediaAttachmentID, err)
+				log.Errorf(ctx, "error getting Header with id %s: %s", a.HeaderMediaAttachmentID, err)
 			}
 			a.HeaderMediaAttachment = avi
 		}
@@ -163,13 +164,11 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	// convert account gts model emojis to frontend api model emojis
 	apiEmojis, err := c.convertEmojisToAPIEmojis(ctx, a.Emojis, a.EmojiIDs)
 	if err != nil {
-		log.Errorf("error converting account emojis: %v", err)
+		log.Errorf(ctx, "error converting account emojis: %v", err)
 	}
 
-	var (
-		acct string
-		role = apimodel.AccountRoleUnknown
-	)
+	var acct string
+	var role *apimodel.AccountRole
 
 	if a.Domain != "" {
 		// this is a remote user
@@ -184,11 +183,11 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 
 		switch {
 		case *user.Admin:
-			role = apimodel.AccountRoleAdmin
+			role = &apimodel.AccountRole{Name: apimodel.AccountRoleAdmin}
 		case *user.Moderator:
-			role = apimodel.AccountRoleModerator
+			role = &apimodel.AccountRole{Name: apimodel.AccountRoleModerator}
 		default:
-			role = apimodel.AccountRoleUser
+			role = &apimodel.AccountRole{Name: apimodel.AccountRoleUser}
 		}
 	}
 
@@ -203,6 +202,7 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		Acct:           acct,
 		DisplayName:    a.DisplayName,
 		Locked:         *a.Locked,
+		Discoverable:   *a.Discoverable,
 		Bot:            *a.Bot,
 		CreatedAt:      util.FormatISO8601(a.CreatedAt),
 		Note:           a.Note,
@@ -253,6 +253,83 @@ func (c *converter) AccountToAPIAccountBlocked(ctx context.Context, a *gtsmodel.
 		CreatedAt:   util.FormatISO8601(a.CreatedAt),
 		URL:         a.URL,
 		Suspended:   suspended,
+	}, nil
+}
+
+func (c *converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Account) (*apimodel.AdminAccountInfo, error) {
+	var (
+		email                  string
+		ip                     *string
+		domain                 *string
+		locale                 string
+		confirmed              bool
+		inviteRequest          *string
+		approved               bool
+		disabled               bool
+		silenced               bool
+		suspended              bool
+		role                   = apimodel.AccountRole{Name: apimodel.AccountRoleUser} // assume user by default
+		createdByApplicationID string
+	)
+
+	// take user-level information if possible
+	if a.Domain != "" {
+		domain = &a.Domain
+	} else {
+		user, err := c.db.GetUserByAccountID(ctx, a.ID)
+		if err != nil {
+			return nil, fmt.Errorf("AccountToAdminAPIAccount: error getting user from database for account id %s: %w", a.ID, err)
+		}
+
+		if user.Email != "" {
+			email = user.Email
+		} else {
+			email = user.UnconfirmedEmail
+		}
+
+		if i := user.CurrentSignInIP.String(); i != "<nil>" {
+			ip = &i
+		}
+
+		locale = user.Locale
+		inviteRequest = &user.Account.Reason
+		if *user.Admin {
+			role.Name = apimodel.AccountRoleAdmin
+		} else if *user.Moderator {
+			role.Name = apimodel.AccountRoleModerator
+		}
+		confirmed = !user.ConfirmedAt.IsZero()
+		approved = *user.Approved
+		disabled = *user.Disabled
+		silenced = !user.Account.SilencedAt.IsZero()
+		suspended = !user.Account.SuspendedAt.IsZero()
+		createdByApplicationID = user.CreatedByApplicationID
+	}
+
+	apiAccount, err := c.AccountToAPIAccountPublic(ctx, a)
+	if err != nil {
+		return nil, fmt.Errorf("AccountToAdminAPIAccount: error converting account to api account for account id %s: %w", a.ID, err)
+	}
+
+	return &apimodel.AdminAccountInfo{
+		ID:                     a.ID,
+		Username:               a.Username,
+		Domain:                 domain,
+		CreatedAt:              util.FormatISO8601(a.CreatedAt),
+		Email:                  email,
+		IP:                     ip,
+		IPs:                    []interface{}{}, // not implemented,
+		Locale:                 locale,
+		InviteRequest:          inviteRequest,
+		Role:                   role,
+		Confirmed:              confirmed,
+		Approved:               approved,
+		Disabled:               disabled,
+		Silenced:               silenced,
+		Suspended:              suspended,
+		Account:                apiAccount,
+		CreatedByApplicationID: createdByApplicationID,
+		InvitedByAccountID:     "", // not implemented (yet)
 	}, nil
 }
 
@@ -498,31 +575,31 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 	// convert status gts model attachments to frontend api model attachments
 	apiAttachments, err := c.convertAttachmentsToAPIAttachments(ctx, s.Attachments, s.AttachmentIDs)
 	if err != nil {
-		log.Errorf("error converting status attachments: %v", err)
+		log.Errorf(ctx, "error converting status attachments: %v", err)
 	}
 
 	// convert status gts model mentions to frontend api model mentions
 	apiMentions, err := c.convertMentionsToAPIMentions(ctx, s.Mentions, s.MentionIDs)
 	if err != nil {
-		log.Errorf("error converting status mentions: %v", err)
+		log.Errorf(ctx, "error converting status mentions: %v", err)
 	}
 
 	// convert status gts model tags to frontend api model tags
 	apiTags, err := c.convertTagsToAPITags(ctx, s.Tags, s.TagIDs)
 	if err != nil {
-		log.Errorf("error converting status tags: %v", err)
+		log.Errorf(ctx, "error converting status tags: %v", err)
 	}
 
 	// convert status gts model emojis to frontend api model emojis
 	apiEmojis, err := c.convertEmojisToAPIEmojis(ctx, s.Emojis, s.EmojiIDs)
 	if err != nil {
-		log.Errorf("error converting status emojis: %v", err)
+		log.Errorf(ctx, "error converting status emojis: %v", err)
 	}
 
 	// Fetch status interaction flags for acccount
 	interacts, err := c.interactionsWithStatusForAccount(ctx, s, requestingAccount)
 	if err != nil {
-		log.Errorf("error getting interactions for status %s for account %s: %v", s.ID, requestingAccount.ID, err)
+		log.Errorf(ctx, "error getting interactions for status %s for account %s: %v", s.ID, requestingAccount.ID, err)
 
 		// Ensure a non nil object
 		interacts = &statusInteractions{}
@@ -551,7 +628,7 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		Bookmarked:         interacts.Bookmarked,
 		Muted:              interacts.Muted,
 		Reblogged:          interacts.Reblogged,
-		Pinned:             *s.Pinned,
+		Pinned:             interacts.Pinned,
 		Content:            s.Content,
 		Reblog:             nil,
 		Application:        apiApplication,
@@ -598,117 +675,193 @@ func (c *converter) VisToAPIVis(ctx context.Context, m gtsmodel.Visibility) apim
 	return ""
 }
 
-func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Instance) (*apimodel.Instance, error) {
-	mi := &apimodel.Instance{
+func (c *converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Instance) (*apimodel.InstanceV1, error) {
+	instance := &apimodel.InstanceV1{
 		URI:              i.URI,
+		AccountDomain:    config.GetAccountDomain(),
 		Title:            i.Title,
 		Description:      i.Description,
 		ShortDescription: i.ShortDescription,
 		Email:            i.ContactEmail,
-		Version:          i.Version,
-		Stats:            make(map[string]int),
+		Version:          config.GetSoftwareVersion(),
+		Languages:        []string{}, // todo: not supported yet
+		Registrations:    config.GetAccountsRegistrationOpen(),
+		ApprovalRequired: config.GetAccountsApprovalRequired(),
+		InvitesEnabled:   false, // todo: not supported yet
+		MaxTootChars:     uint(config.GetStatusesMaxChars()),
 	}
 
-	// if the requested instance is *this* instance, we can add some extra information
-	if host := config.GetHost(); i.Domain == host {
-		mi.AccountDomain = config.GetAccountDomain()
+	// configuration
+	instance.Configuration.Statuses.MaxCharacters = config.GetStatusesMaxChars()
+	instance.Configuration.Statuses.MaxMediaAttachments = config.GetStatusesMediaMaxFiles()
+	instance.Configuration.Statuses.CharactersReservedPerURL = instanceStatusesCharactersReservedPerURL
+	instance.Configuration.MediaAttachments.SupportedMimeTypes = media.SupportedMIMETypes
+	instance.Configuration.MediaAttachments.ImageSizeLimit = int(config.GetMediaImageMaxSize())
+	instance.Configuration.MediaAttachments.ImageMatrixLimit = instanceMediaAttachmentsImageMatrixLimit
+	instance.Configuration.MediaAttachments.VideoSizeLimit = int(config.GetMediaVideoMaxSize())
+	instance.Configuration.MediaAttachments.VideoFrameRateLimit = instanceMediaAttachmentsVideoFrameRateLimit
+	instance.Configuration.MediaAttachments.VideoMatrixLimit = instanceMediaAttachmentsVideoMatrixLimit
+	instance.Configuration.Polls.MaxOptions = config.GetStatusesPollMaxOptions()
+	instance.Configuration.Polls.MaxCharactersPerOption = config.GetStatusesPollOptionMaxChars()
+	instance.Configuration.Polls.MinExpiration = instancePollsMinExpiration
+	instance.Configuration.Polls.MaxExpiration = instancePollsMaxExpiration
+	instance.Configuration.Accounts.AllowCustomCSS = config.GetAccountsAllowCustomCSS()
+	instance.Configuration.Accounts.MaxFeaturedTags = instanceAccountsMaxFeaturedTags
+	instance.Configuration.Emojis.EmojiSizeLimit = int(config.GetMediaEmojiLocalMaxSize())
 
-		if ia, err := c.db.GetInstanceAccount(ctx, ""); err == nil {
-			// assume default logo
-			mi.Thumbnail = config.GetProtocol() + "://" + host + "/assets/logo.png"
+	// URLs
+	instance.URLs.StreamingAPI = "wss://" + i.Domain
 
-			// take instance account avatar as instance thumbnail if we can
-			if ia.AvatarMediaAttachmentID != "" {
-				if ia.AvatarMediaAttachment == nil {
-					avi, err := c.db.GetAttachmentByID(ctx, ia.AvatarMediaAttachmentID)
-					if err == nil {
-						ia.AvatarMediaAttachment = avi
-					} else if !errors.Is(err, db.ErrNoEntries) {
-						log.Errorf("InstanceToAPIInstance: error getting instance avatar attachment with id %s: %s", ia.AvatarMediaAttachmentID, err)
-					}
-				}
+	// statistics
+	stats := make(map[string]int, 3)
+	userCount, err := c.db.CountInstanceUsers(ctx, i.Domain)
+	if err != nil {
+		return nil, fmt.Errorf("InstanceToAPIV1Instance: db error getting counting instance users: %w", err)
+	}
+	stats["user_count"] = userCount
 
-				if ia.AvatarMediaAttachment != nil {
-					mi.Thumbnail = ia.AvatarMediaAttachment.URL
-					mi.ThumbnailType = ia.AvatarMediaAttachment.File.ContentType
-					mi.ThumbnailDescription = ia.AvatarMediaAttachment.Description
-				}
+	statusCount, err := c.db.CountInstanceStatuses(ctx, i.Domain)
+	if err != nil {
+		return nil, fmt.Errorf("InstanceToAPIV1Instance: db error getting counting instance statuses: %w", err)
+	}
+	stats["status_count"] = statusCount
+
+	domainCount, err := c.db.CountInstanceDomains(ctx, i.Domain)
+	if err != nil {
+		return nil, fmt.Errorf("InstanceToAPIV1Instance: db error getting counting instance domains: %w", err)
+	}
+	stats["domain_count"] = domainCount
+	instance.Stats = stats
+
+	// thumbnail
+	iAccount, err := c.db.GetInstanceAccount(ctx, "")
+	if err != nil {
+		return nil, fmt.Errorf("InstanceToAPIV1Instance: db error getting instance account: %w", err)
+	}
+
+	if iAccount.AvatarMediaAttachmentID != "" {
+		if iAccount.AvatarMediaAttachment == nil {
+			avi, err := c.db.GetAttachmentByID(ctx, iAccount.AvatarMediaAttachmentID)
+			if err != nil {
+				return nil, fmt.Errorf("InstanceToAPIInstance: error getting instance avatar attachment with id %s: %w", iAccount.AvatarMediaAttachmentID, err)
 			}
+			iAccount.AvatarMediaAttachment = avi
 		}
 
-		userCount, err := c.db.CountInstanceUsers(ctx, host)
-		if err == nil {
-			mi.Stats["user_count"] = userCount
-		}
-
-		statusCount, err := c.db.CountInstanceStatuses(ctx, host)
-		if err == nil {
-			mi.Stats["status_count"] = statusCount
-		}
-
-		domainCount, err := c.db.CountInstanceDomains(ctx, host)
-		if err == nil {
-			mi.Stats["domain_count"] = domainCount
-		}
-
-		mi.Registrations = config.GetAccountsRegistrationOpen()
-		mi.ApprovalRequired = config.GetAccountsApprovalRequired()
-		mi.InvitesEnabled = false // TODO
-		mi.MaxTootChars = uint(config.GetStatusesMaxChars())
-		mi.URLS = &apimodel.InstanceURLs{
-			StreamingAPI: "wss://" + host,
-		}
-		mi.Version = config.GetSoftwareVersion()
-
-		// todo: remove hardcoded values and put them in config somewhere
-		mi.Configuration = &apimodel.InstanceConfiguration{
-			Statuses: &apimodel.InstanceConfigurationStatuses{
-				MaxCharacters:            config.GetStatusesMaxChars(),
-				MaxMediaAttachments:      config.GetStatusesMediaMaxFiles(),
-				CharactersReservedPerURL: instanceStatusesCharactersReservedPerURL,
-				SupportedMimeTypes: []string{
-					string(apimodel.StatusContentTypePlain),
-					string(apimodel.StatusContentTypeMarkdown),
-				},
-			},
-			MediaAttachments: &apimodel.InstanceConfigurationMediaAttachments{
-				SupportedMimeTypes:  media.SupportedMIMETypes,
-				ImageSizeLimit:      int(config.GetMediaImageMaxSize()),       // bytes
-				ImageMatrixLimit:    instanceMediaAttachmentsImageMatrixLimit, // height*width
-				VideoSizeLimit:      int(config.GetMediaVideoMaxSize()),       // bytes
-				VideoFrameRateLimit: instanceMediaAttachmentsVideoFrameRateLimit,
-				VideoMatrixLimit:    instanceMediaAttachmentsVideoMatrixLimit, // height*width
-			},
-			Polls: &apimodel.InstanceConfigurationPolls{
-				MaxOptions:             config.GetStatusesPollMaxOptions(),
-				MaxCharactersPerOption: config.GetStatusesPollOptionMaxChars(),
-				MinExpiration:          instancePollsMinExpiration, // seconds
-				MaxExpiration:          instancePollsMaxExpiration, // seconds
-			},
-			Accounts: &apimodel.InstanceConfigurationAccounts{
-				AllowCustomCSS: config.GetAccountsAllowCustomCSS(),
-			},
-			Emojis: &apimodel.InstanceConfigurationEmojis{
-				EmojiSizeLimit: int(config.GetMediaEmojiLocalMaxSize()), // bytes
-			},
-		}
+		instance.Thumbnail = iAccount.AvatarMediaAttachment.URL
+		instance.ThumbnailType = iAccount.AvatarMediaAttachment.File.ContentType
+		instance.ThumbnailDescription = iAccount.AvatarMediaAttachment.Description
+	} else {
+		instance.Thumbnail = config.GetProtocol() + "://" + i.Domain + "/assets/logo.png" // default thumb
 	}
 
-	// contact account is optional but let's try to get it
+	// contact account
 	if i.ContactAccountID != "" {
 		if i.ContactAccount == nil {
 			contactAccount, err := c.db.GetAccountByID(ctx, i.ContactAccountID)
-			if err == nil {
-				i.ContactAccount = contactAccount
+			if err != nil {
+				return nil, fmt.Errorf("InstanceToAPIV1Instance: db error getting instance contact account %s: %w", i.ContactAccountID, err)
 			}
+			i.ContactAccount = contactAccount
 		}
-		ma, err := c.AccountToAPIAccountPublic(ctx, i.ContactAccount)
-		if err == nil {
-			mi.ContactAccount = ma
+
+		account, err := c.AccountToAPIAccountPublic(ctx, i.ContactAccount)
+		if err != nil {
+			return nil, fmt.Errorf("InstanceToAPIV1Instance: error converting instance contact account %s: %w", i.ContactAccountID, err)
 		}
+		instance.ContactAccount = account
 	}
 
-	return mi, nil
+	return instance, nil
+}
+
+func (c *converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Instance) (*apimodel.InstanceV2, error) {
+	instance := &apimodel.InstanceV2{
+		Domain:        i.Domain,
+		AccountDomain: config.GetAccountDomain(),
+		Title:         i.Title,
+		Version:       config.GetSoftwareVersion(),
+		SourceURL:     instanceSourceURL,
+		Description:   i.Description,
+		Usage:         apimodel.InstanceV2Usage{}, // todo: not implemented
+		Languages:     []string{},                 // todo: not implemented
+		Rules:         []interface{}{},            // todo: not implemented
+	}
+
+	// thumbnail
+	thumbnail := apimodel.InstanceV2Thumbnail{}
+
+	iAccount, err := c.db.GetInstanceAccount(ctx, "")
+	if err != nil {
+		return nil, fmt.Errorf("InstanceToAPIV2Instance: db error getting instance account: %w", err)
+	}
+
+	if iAccount.AvatarMediaAttachmentID != "" {
+		if iAccount.AvatarMediaAttachment == nil {
+			avi, err := c.db.GetAttachmentByID(ctx, iAccount.AvatarMediaAttachmentID)
+			if err != nil {
+				return nil, fmt.Errorf("InstanceToAPIV2Instance: error getting instance avatar attachment with id %s: %w", iAccount.AvatarMediaAttachmentID, err)
+			}
+			iAccount.AvatarMediaAttachment = avi
+		}
+
+		thumbnail.URL = iAccount.AvatarMediaAttachment.URL
+		thumbnail.Type = iAccount.AvatarMediaAttachment.File.ContentType
+		thumbnail.Description = iAccount.AvatarMediaAttachment.Description
+		thumbnail.Blurhash = iAccount.AvatarMediaAttachment.Blurhash
+	} else {
+		thumbnail.URL = config.GetProtocol() + "://" + i.Domain + "/assets/logo.png" // default thumb
+	}
+
+	instance.Thumbnail = thumbnail
+
+	// configuration
+	instance.Configuration.URLs.Streaming = "wss://" + i.Domain
+	instance.Configuration.Statuses.MaxCharacters = config.GetStatusesMaxChars()
+	instance.Configuration.Statuses.MaxMediaAttachments = config.GetStatusesMediaMaxFiles()
+	instance.Configuration.Statuses.CharactersReservedPerURL = instanceStatusesCharactersReservedPerURL
+	instance.Configuration.Statuses.SupportedMimeTypes = []string{
+		string(apimodel.StatusContentTypePlain),
+		string(apimodel.StatusContentTypeMarkdown),
+	}
+	instance.Configuration.MediaAttachments.SupportedMimeTypes = media.SupportedMIMETypes
+	instance.Configuration.MediaAttachments.ImageSizeLimit = int(config.GetMediaImageMaxSize())
+	instance.Configuration.MediaAttachments.ImageMatrixLimit = instanceMediaAttachmentsImageMatrixLimit
+	instance.Configuration.MediaAttachments.VideoSizeLimit = int(config.GetMediaVideoMaxSize())
+	instance.Configuration.MediaAttachments.VideoFrameRateLimit = instanceMediaAttachmentsVideoFrameRateLimit
+	instance.Configuration.MediaAttachments.VideoMatrixLimit = instanceMediaAttachmentsVideoMatrixLimit
+	instance.Configuration.Polls.MaxOptions = config.GetStatusesPollMaxOptions()
+	instance.Configuration.Polls.MaxCharactersPerOption = config.GetStatusesPollOptionMaxChars()
+	instance.Configuration.Polls.MinExpiration = instancePollsMinExpiration
+	instance.Configuration.Polls.MaxExpiration = instancePollsMaxExpiration
+	instance.Configuration.Accounts.AllowCustomCSS = config.GetAccountsAllowCustomCSS()
+	instance.Configuration.Accounts.MaxFeaturedTags = instanceAccountsMaxFeaturedTags
+	instance.Configuration.Emojis.EmojiSizeLimit = int(config.GetMediaEmojiLocalMaxSize())
+
+	// registrations
+	instance.Registrations.Enabled = config.GetAccountsRegistrationOpen()
+	instance.Registrations.ApprovalRequired = config.GetAccountsApprovalRequired()
+	instance.Registrations.Message = nil // todo: not implemented
+
+	// contact
+	instance.Contact.Email = i.ContactEmail
+	if i.ContactAccountID != "" {
+		if i.ContactAccount == nil {
+			contactAccount, err := c.db.GetAccountByID(ctx, i.ContactAccountID)
+			if err != nil {
+				return nil, fmt.Errorf("InstanceToAPIV2Instance: db error getting instance contact account %s: %w", i.ContactAccountID, err)
+			}
+			i.ContactAccount = contactAccount
+		}
+
+		account, err := c.AccountToAPIAccountPublic(ctx, i.ContactAccount)
+		if err != nil {
+			return nil, fmt.Errorf("InstanceToAPIV2Instance: error converting instance contact account %s: %w", i.ContactAccountID, err)
+		}
+		instance.Contact.Account = account
+	}
+
+	return instance, nil
 }
 
 func (c *converter) RelationshipToAPIRelationship(ctx context.Context, r *gtsmodel.Relationship) (*apimodel.Relationship, error) {
@@ -809,6 +962,131 @@ func (c *converter) DomainBlockToAPIDomainBlock(ctx context.Context, b *gtsmodel
 	}
 
 	return domainBlock, nil
+}
+
+func (c *converter) ReportToAPIReport(ctx context.Context, r *gtsmodel.Report) (*apimodel.Report, error) {
+	report := &apimodel.Report{
+		ID:          r.ID,
+		CreatedAt:   util.FormatISO8601(r.CreatedAt),
+		ActionTaken: !r.ActionTakenAt.IsZero(),
+		Category:    "other", // todo: only support default 'other' category right now
+		Comment:     r.Comment,
+		Forwarded:   *r.Forwarded,
+		StatusIDs:   r.StatusIDs,
+		RuleIDs:     []int{}, // todo: not supported yet
+	}
+
+	if !r.ActionTakenAt.IsZero() {
+		actionTakenAt := util.FormatISO8601(r.ActionTakenAt)
+		report.ActionTakenAt = &actionTakenAt
+	}
+
+	if actionComment := r.ActionTaken; actionComment != "" {
+		report.ActionTakenComment = &actionComment
+	}
+
+	if r.TargetAccount == nil {
+		tAccount, err := c.db.GetAccountByID(ctx, r.TargetAccountID)
+		if err != nil {
+			return nil, fmt.Errorf("ReportToAPIReport: error getting target account with id %s from the db: %s", r.TargetAccountID, err)
+		}
+		r.TargetAccount = tAccount
+	}
+
+	apiAccount, err := c.AccountToAPIAccountPublic(ctx, r.TargetAccount)
+	if err != nil {
+		return nil, fmt.Errorf("ReportToAPIReport: error converting target account to api: %s", err)
+	}
+	report.TargetAccount = apiAccount
+
+	return report, nil
+}
+
+func (c *converter) ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Report, requestingAccount *gtsmodel.Account) (*apimodel.AdminReport, error) {
+	var (
+		err                  error
+		actionTakenAt        *string
+		actionTakenComment   *string
+		actionTakenByAccount *apimodel.AdminAccountInfo
+	)
+
+	if !r.ActionTakenAt.IsZero() {
+		ata := util.FormatISO8601(r.ActionTakenAt)
+		actionTakenAt = &ata
+	}
+
+	if r.Account == nil {
+		r.Account, err = c.db.GetAccountByID(ctx, r.AccountID)
+		if err != nil {
+			return nil, fmt.Errorf("ReportToAdminAPIReport: error getting account with id %s from the db: %w", r.AccountID, err)
+		}
+	}
+	account, err := c.AccountToAdminAPIAccount(ctx, r.Account)
+	if err != nil {
+		return nil, fmt.Errorf("ReportToAdminAPIReport: error converting account with id %s to adminAPIAccount: %w", r.AccountID, err)
+	}
+
+	if r.TargetAccount == nil {
+		r.TargetAccount, err = c.db.GetAccountByID(ctx, r.TargetAccountID)
+		if err != nil {
+			return nil, fmt.Errorf("ReportToAdminAPIReport: error getting target account with id %s from the db: %w", r.TargetAccountID, err)
+		}
+	}
+	targetAccount, err := c.AccountToAdminAPIAccount(ctx, r.TargetAccount)
+	if err != nil {
+		return nil, fmt.Errorf("ReportToAdminAPIReport: error converting target account with id %s to adminAPIAccount: %w", r.TargetAccountID, err)
+	}
+
+	if r.ActionTakenByAccountID != "" {
+		if r.ActionTakenByAccount == nil {
+			r.ActionTakenByAccount, err = c.db.GetAccountByID(ctx, r.ActionTakenByAccountID)
+			if err != nil {
+				return nil, fmt.Errorf("ReportToAdminAPIReport: error getting action taken by account with id %s from the db: %w", r.ActionTakenByAccountID, err)
+			}
+		}
+
+		actionTakenByAccount, err = c.AccountToAdminAPIAccount(ctx, r.ActionTakenByAccount)
+		if err != nil {
+			return nil, fmt.Errorf("ReportToAdminAPIReport: error converting action taken by account with id %s to adminAPIAccount: %w", r.ActionTakenByAccountID, err)
+		}
+	}
+
+	statuses := make([]*apimodel.Status, 0, len(r.StatusIDs))
+	if len(r.StatusIDs) != 0 && len(r.Statuses) == 0 {
+		r.Statuses, err = c.db.GetStatuses(ctx, r.StatusIDs)
+		if err != nil {
+			return nil, fmt.Errorf("ReportToAdminAPIReport: error getting statuses from the db: %w", err)
+		}
+	}
+	for _, s := range r.Statuses {
+		status, err := c.StatusToAPIStatus(ctx, s, requestingAccount)
+		if err != nil {
+			return nil, fmt.Errorf("ReportToAdminAPIReport: error converting status with id %s to api status: %w", s.ID, err)
+		}
+		statuses = append(statuses, status)
+	}
+
+	if ac := r.ActionTaken; ac != "" {
+		actionTakenComment = &ac
+	}
+
+	return &apimodel.AdminReport{
+		ID:                   r.ID,
+		ActionTaken:          !r.ActionTakenAt.IsZero(),
+		ActionTakenAt:        actionTakenAt,
+		Category:             "other", // todo: only support default 'other' category right now
+		Comment:              r.Comment,
+		Forwarded:            *r.Forwarded,
+		CreatedAt:            util.FormatISO8601(r.CreatedAt),
+		UpdatedAt:            util.FormatISO8601(r.UpdatedAt),
+		Account:              account,
+		TargetAccount:        targetAccount,
+		AssignedAccount:      actionTakenByAccount,
+		ActionTakenByAccount: actionTakenByAccount,
+		ActionTakenComment:   actionTakenComment,
+		Statuses:             statuses,
+		Rules:                []interface{}{}, // not implemented
+	}, nil
 }
 
 // convertAttachmentsToAPIAttachments will convert a slice of GTS model attachments to frontend API model attachments, falling back to IDs if no GTS models supplied.

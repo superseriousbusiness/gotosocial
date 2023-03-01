@@ -27,10 +27,12 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"codeberg.org/gruf/go-byteutil"
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-kv"
 	"github.com/go-fed/httpsig"
@@ -83,65 +85,74 @@ type transport struct {
 	signerMu   sync.Mutex
 }
 
-// GET will perform given http request using transport client, retrying on certain preset errors, or if status code is among retryOn.
-func (t *transport) GET(r *http.Request, retryOn ...int) (*http.Response, error) {
+// GET will perform given http request using transport client, retrying on certain preset errors.
+func (t *transport) GET(r *http.Request) (*http.Response, error) {
 	if r.Method != http.MethodGet {
 		return nil, errors.New("must be GET request")
 	}
 	return t.do(r, func(r *http.Request) error {
 		return t.signGET(r)
-	}, retryOn...)
+	})
 }
 
-// POST will perform given http request using transport client, retrying on certain preset errors, or if status code is among retryOn.
-func (t *transport) POST(r *http.Request, body []byte, retryOn ...int) (*http.Response, error) {
+// POST will perform given http request using transport client, retrying on certain preset errors.
+func (t *transport) POST(r *http.Request, body []byte) (*http.Response, error) {
 	if r.Method != http.MethodPost {
 		return nil, errors.New("must be POST request")
 	}
 	return t.do(r, func(r *http.Request) error {
 		return t.signPOST(r, body)
-	}, retryOn...)
+	})
 }
 
-func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryOn ...int) (*http.Response, error) {
-	const maxRetries = 5
+func (t *transport) do(r *http.Request, signer func(*http.Request) error) (*http.Response, error) {
+	const (
+		// max no. attempts
+		maxRetries = 5
 
-	var (
-		// Initial backoff duration
-		backoff = 2 * time.Second
-
-		// Get request hostname
-		host = r.URL.Hostname()
+		// starting backoff duration.
+		baseBackoff = 2 * time.Second
 	)
 
-	// Check if recently reached max retries for this host
-	// so we don't need to bother reattempting it. The only
-	// errors that are retried upon are server failure and
-	// domain resolution type errors, so this cached result
-	// indicates this server is likely having issues.
-	if t.controller.badHosts.Has(host) {
-		return nil, errors.New("too many failed attempts")
-	}
+	// Get request hostname
+	host := r.URL.Hostname()
 
 	// Check whether request should fast fail, we check this
 	// before loop as each context.Value() requires mutex lock.
 	fastFail := IsFastfail(r.Context())
+	if !fastFail {
+		// Check if recently reached max retries for this host
+		// so we don't bother with a retry-backoff loop. The only
+		// errors that are retried upon are server failure and
+		// domain resolution type errors, so this cached result
+		// indicates this server is likely having issues.
+		fastFail = t.controller.badHosts.Has(host)
+	}
 
 	// Start a log entry for this request
-	l := log.WithFields(kv.Fields{
-		{"pubKeyID", t.pubKeyID},
-		{"method", r.Method},
-		{"url", r.URL.String()},
-	}...)
+	l := log.WithContext(r.Context()).
+		WithFields(kv.Fields{
+			{"pubKeyID", t.pubKeyID},
+			{"method", r.Method},
+			{"url", r.URL.String()},
+		}...)
 
 	r.Header.Set("User-Agent", t.controller.userAgent)
 
 	for i := 0; i < maxRetries; i++ {
+		var backoff time.Duration
+
 		// Reset signing header fields
 		now := t.controller.clock.Now().UTC()
 		r.Header.Set("Date", now.Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
 		r.Header.Del("Signature")
 		r.Header.Del("Digest")
+
+		// Rewind body reader and content-length if set.
+		if rc, ok := r.Body.(*byteutil.ReadNopCloser); ok {
+			r.ContentLength = int64(rc.Len())
+			rc.Rewind()
+		}
 
 		// Perform request signing
 		if err := signer(r); err != nil {
@@ -152,18 +163,35 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 
 		// Attempt to perform request
 		rsp, err := t.controller.client.Do(r)
-		if err == nil { //nolint shutup linter
+		if err == nil { //nolint:gocritic
 			// TooManyRequest means we need to slow
 			// down and retry our request. Codes over
 			// 500 generally indicate temp. outages.
 			if code := rsp.StatusCode; code < 500 &&
-				code != http.StatusTooManyRequests &&
-				!containsInt(retryOn, rsp.StatusCode) {
+				code != http.StatusTooManyRequests {
 				return rsp, nil
 			}
 
 			// Generate error from status code for logging
 			err = errors.New(`http response "` + rsp.Status + `"`)
+
+			// Search for a provided "Retry-After" header value.
+			if after := rsp.Header.Get("Retry-After"); after != "" {
+
+				if u, _ := strconv.ParseUint(after, 10, 32); u != 0 {
+					// An integer number of backoff seconds was provided.
+					backoff = time.Duration(u) * time.Second
+				} else if at, _ := http.ParseTime(after); !at.Before(now) {
+					// An HTTP formatted future date-time was provided.
+					backoff = at.Sub(now)
+				}
+
+				// Don't let their provided backoff exceed our max.
+				if max := baseBackoff * maxRetries; backoff > max {
+					backoff = max
+				}
+			}
+
 		} else if errorsv2.Is(err,
 			context.DeadlineExceeded,
 			context.Canceled,
@@ -179,9 +207,16 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 		} else if errors.As(err, &x509.UnknownAuthorityError{}) {
 			// Unknown authority errors we do NOT recover from
 			return nil, err
-		} else if fastFail {
+		}
+
+		if fastFail {
 			// on fast-fail, don't bother backoff/retry
 			return nil, fmt.Errorf("%w (fast fail)", err)
+		}
+
+		if backoff == 0 {
+			// No retry-after found, set our predefined backoff.
+			backoff = time.Duration(i) * baseBackoff
 		}
 
 		l.Errorf("backing off for %s after http request error: %v", backoff.String(), err)
@@ -197,7 +232,7 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 		}
 	}
 
-	// Add "bad" entry for this host
+	// Add "bad" entry for this host.
 	t.controller.badHosts.Set(host, struct{}{})
 
 	return nil, errors.New("transport reached max retries")
@@ -237,14 +272,4 @@ func (t *transport) safesign(sign func()) {
 
 	// Perform signing
 	sign()
-}
-
-// containsInt checks if slice contains check.
-func containsInt(slice []int, check int) bool {
-	for _, i := range slice {
-		if i == check {
-			return true
-		}
-	}
-	return false
 }

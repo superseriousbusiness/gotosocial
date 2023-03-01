@@ -8,10 +8,10 @@ import (
 // Service provides a means of tracking a single long-running service, provided protected state
 // changes and preventing multiple instances running. Also providing service state information.
 type Service struct {
-	state uint32     // 0=stopped, 1=running, 2=stopping
-	mutex sync.Mutex // mutext protects overall state changes
-	wait  sync.Mutex // wait is used as a single-entity wait-group, only ever locked within 'mutex'
-	ctx   cancelctx  // ctx is the current context for running function (or nil if not running)
+	state uint32        // 0=stopped, 1=running, 2=stopping
+	mutex sync.Mutex    // mutex protects overall state changes
+	wait  sync.Mutex    // wait is used as a single-entity wait-group, only ever locked within 'mutex'
+	ctx   chan struct{} // ctx is the current context for running function (or nil if not running)
 }
 
 // Run will run the supplied function until completion, using given context to propagate cancel.
@@ -31,8 +31,8 @@ func (svc *Service) Run(fn func(context.Context)) bool {
 		_ = svc.Stop()
 	}()
 
-	// Run
-	fn(ctx)
+	// Run with context.
+	fn(CancelCtx(ctx))
 
 	return true
 }
@@ -55,9 +55,32 @@ func (svc *Service) GoRun(fn func(context.Context)) bool {
 			_ = svc.Stop()
 		}()
 
-		// Run
-		fn(ctx)
+		// Run with context.
+		fn(CancelCtx(ctx))
 	}()
+
+	return true
+}
+
+// RunWait is functionally the same as .Run(), but blocks until the first instance of .Run() returns.
+func (svc *Service) RunWait(fn func(context.Context)) bool {
+	// Attempt to start the svc
+	ctx, ok := svc.doStart()
+	if !ok {
+		<-ctx // block
+		return false
+	}
+
+	defer func() {
+		// unlock single wait
+		svc.wait.Unlock()
+
+		// ensure stopped
+		_ = svc.Stop()
+	}()
+
+	// Run with context.
+	fn(CancelCtx(ctx))
 
 	return true
 }
@@ -104,37 +127,38 @@ func (svc *Service) While(fn func()) {
 }
 
 // doStart will safely set Service state to started, returning a ptr to this context insance.
-func (svc *Service) doStart() (cancelctx, bool) {
+func (svc *Service) doStart() (chan struct{}, bool) {
 	// Protect startup
 	svc.mutex.Lock()
-
-	if svc.state != 0 /* not stopped */ {
-		svc.mutex.Unlock()
-		return nil, false
-	}
-
-	// state started
-	svc.state = 1
 
 	if svc.ctx == nil {
 		// this will only have been allocated
 		// if svc.Done() was already called.
-		svc.ctx = make(cancelctx)
+		svc.ctx = make(chan struct{})
 	}
 
-	// Start the waiter
+	// Take our own ptr
+	ctx := svc.ctx
+
+	if svc.state != 0 {
+		// State was not stopped.
+		svc.mutex.Unlock()
+		return ctx, false
+	}
+
+	// Set started.
+	svc.state = 1
+
+	// Start waiter.
 	svc.wait.Lock()
 
-	// Take our own ptr
-	// and unlock state
-	ctx := svc.ctx
+	// Unlock and return
 	svc.mutex.Unlock()
-
 	return ctx, true
 }
 
 // doStop will safely set Service state to stopping, returning a ptr to this cancelfunc instance.
-func (svc *Service) doStop() (cancelctx, bool) {
+func (svc *Service) doStop() (chan struct{}, bool) {
 	// Protect stop
 	svc.mutex.Lock()
 
@@ -175,7 +199,7 @@ func (svc *Service) Done() <-chan struct{} {
 			// here we create a new context so that the
 			// returned 'done' channel here will still
 			// be valid for when Service is next started.
-			svc.ctx = make(cancelctx)
+			svc.ctx = make(chan struct{})
 		}
 		done = svc.ctx
 

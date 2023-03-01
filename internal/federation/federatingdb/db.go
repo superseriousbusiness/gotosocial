@@ -49,12 +49,12 @@ type federatingDB struct {
 }
 
 // New returns a DB interface using the given database and config
-func New(db db.DB, fedWorker *concurrency.WorkerPool[messages.FromFederator]) DB {
+func New(db db.DB, fedWorker *concurrency.WorkerPool[messages.FromFederator], tc typeutils.TypeConverter) DB {
 	fdb := federatingDB{
 		locks:         mutexes.NewMap(-1, -1), // use defaults
 		db:            db,
 		fedWorker:     fedWorker,
-		typeConverter: typeutils.NewConverter(db),
+		typeConverter: tc,
 	}
 	return &fdb
 }

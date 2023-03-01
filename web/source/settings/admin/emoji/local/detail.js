@@ -54,7 +54,7 @@ module.exports = function EmojiDetailRoute() {
 function EmojiDetailForm({ data: emoji }) {
 	const form = {
 		id: useValue("id", emoji.id),
-		category: useComboBoxInput("category", { defaultValue: emoji.category }),
+		category: useComboBoxInput("category", { source: emoji }),
 		image: useFileInput("image", {
 			withPreview: true,
 			maxSize: 50 * 1024 // TODO: get from instance api

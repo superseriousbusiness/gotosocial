@@ -30,53 +30,6 @@ type ExtractAttachmentsTestSuite struct {
 	ExtractTestSuite
 }
 
-func (suite *ExtractAttachmentsTestSuite) TestExtractAttachments() {
-	note := streams.NewActivityStreamsNote()
-	note.SetActivityStreamsAttachment(suite.attachment1)
-
-	attachments, err := ap.ExtractAttachments(note)
-	suite.NoError(err)
-	suite.Len(attachments, 1)
-
-	attachment1 := attachments[0]
-	suite.Equal("image/jpeg", attachment1.File.ContentType)
-	suite.Equal("https://s3-us-west-2.amazonaws.com/plushcity/media_attachments/files/106/867/380/219/163/828/original/88e8758c5f011439.jpg", attachment1.RemoteURL)
-	suite.Equal("It's a cute plushie.", attachment1.Description)
-	suite.Equal("UxQ0EkRP_4tRxtRjWBt7%hozM_ayV@oLf6WB", attachment1.Blurhash)
-}
-
-func (suite *ExtractAttachmentsTestSuite) TestExtractNoAttachments() {
-	note := streams.NewActivityStreamsNote()
-
-	attachments, err := ap.ExtractAttachments(note)
-	suite.NoError(err)
-	suite.Empty(attachments)
-}
-
-func (suite *ExtractAttachmentsTestSuite) TestExtractAttachmentsMissingContentType() {
-	d1 := suite.document1
-	d1.SetActivityStreamsMediaType(streams.NewActivityStreamsMediaTypeProperty())
-
-	a1 := streams.NewActivityStreamsAttachmentProperty()
-	a1.AppendActivityStreamsDocument(d1)
-
-	note := streams.NewActivityStreamsNote()
-	note.SetActivityStreamsAttachment(a1)
-
-	attachments, err := ap.ExtractAttachments(note)
-	suite.NoError(err)
-	suite.Empty(attachments)
-}
-
-func (suite *ExtractAttachmentsTestSuite) TestExtractAttachmentMissingContentType() {
-	d1 := suite.document1
-	d1.SetActivityStreamsMediaType(streams.NewActivityStreamsMediaTypeProperty())
-
-	attachment, err := ap.ExtractAttachment(d1)
-	suite.EqualError(err, "no media type")
-	suite.Nil(attachment)
-}
-
 func (suite *ExtractAttachmentsTestSuite) TestExtractAttachmentMissingURL() {
 	d1 := suite.document1
 	d1.SetActivityStreamsUrl(streams.NewActivityStreamsUrlProperty())

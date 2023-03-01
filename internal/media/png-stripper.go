@@ -78,14 +78,34 @@ import (
 	"io"
 )
 
-// chunkTypeAncillaryBit is whether the first byte of a big-endian uint32 chunk
-// type (the first of four ASCII letters) is lower-case.
-const chunkTypeAncillaryBit = 0x20000000
+const (
+	chunkTypeIHDR = 0x49484452
+	chunkTypePLTE = 0x504C5445
+	chunkTypeIDAT = 0x49444154
+	chunkTypeIEND = 0x49454E44
+	chunkTypeTRNS = 0x74524e53
+)
 
-// PNGAncillaryChunkStripper wraps another io.Reader to strip ancillary chunks,
+func isNecessaryChunkType(chunkType uint32) bool {
+	switch chunkType {
+	case chunkTypeIHDR:
+		return true
+	case chunkTypePLTE:
+		return true
+	case chunkTypeIDAT:
+		return true
+	case chunkTypeIEND:
+		return true
+	case chunkTypeTRNS:
+		return true
+	}
+	return false
+}
+
+// pngAncillaryChunkStripper wraps another io.Reader to strip ancillary chunks,
 // if the data is in the PNG file format. If the data isn't PNG, it is passed
 // through unmodified.
-type PNGAncillaryChunkStripper struct {
+type pngAncillaryChunkStripper struct {
 	// Reader is the wrapped io.Reader.
 	Reader io.Reader
 
@@ -113,7 +133,7 @@ type PNGAncillaryChunkStripper struct {
 }
 
 // Read implements io.Reader.
-func (r *PNGAncillaryChunkStripper) Read(p []byte) (int, error) {
+func (r *pngAncillaryChunkStripper) Read(p []byte) (int, error) {
 	for {
 		// If the wrapped io.Reader returned a non-nil error, drain r.buffer
 		// (what data we have) and return that error (if fully drained).
@@ -179,7 +199,7 @@ func (r *PNGAncillaryChunkStripper) Read(p []byte) (int, error) {
 			// byte trailer, a checksum.
 			r.pending = int64(binary.BigEndian.Uint32(r.buffer[:4])) + 4
 			chunkType := binary.BigEndian.Uint32(r.buffer[4:])
-			r.discard = (chunkType & chunkTypeAncillaryBit) != 0
+			r.discard = !isNecessaryChunkType(chunkType)
 			if r.discard {
 				r.rIndex = r.wIndex
 			}

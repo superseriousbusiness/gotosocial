@@ -1,10 +1,7 @@
 package mangler
 
 import (
-	"encoding"
-	"fmt"
 	"math/bits"
-	"time"
 	_ "unsafe"
 )
 
@@ -87,13 +84,13 @@ func mangle_8bit_slice(buf []byte, a any) []byte {
 }
 
 func mangle_16bit(buf []byte, a any) []byte {
-	return bin.AppendUint16(buf, *(*uint16)(iface_value(a)))
+	return append_uint16(buf, *(*uint16)(iface_value(a)))
 }
 
 func mangle_16bit_ptr(buf []byte, a any) []byte {
 	if ptr := (*uint16)(iface_value(a)); ptr != nil {
 		buf = append(buf, '1')
-		return bin.AppendUint16(buf, *ptr)
+		return append_uint16(buf, *ptr)
 	}
 	buf = append(buf, '0')
 	return buf
@@ -101,19 +98,19 @@ func mangle_16bit_ptr(buf []byte, a any) []byte {
 
 func mangle_16bit_slice(buf []byte, a any) []byte {
 	for _, u := range *(*[]uint16)(iface_value(a)) {
-		buf = bin.AppendUint16(buf, u)
+		buf = append_uint16(buf, u)
 	}
 	return buf
 }
 
 func mangle_32bit(buf []byte, a any) []byte {
-	return bin.AppendUint32(buf, *(*uint32)(iface_value(a)))
+	return append_uint32(buf, *(*uint32)(iface_value(a)))
 }
 
 func mangle_32bit_ptr(buf []byte, a any) []byte {
 	if ptr := (*uint32)(iface_value(a)); ptr != nil {
 		buf = append(buf, '1')
-		return bin.AppendUint32(buf, *ptr)
+		return append_uint32(buf, *ptr)
 	}
 	buf = append(buf, '0')
 	return buf
@@ -121,19 +118,19 @@ func mangle_32bit_ptr(buf []byte, a any) []byte {
 
 func mangle_32bit_slice(buf []byte, a any) []byte {
 	for _, u := range *(*[]uint32)(iface_value(a)) {
-		buf = bin.AppendUint32(buf, u)
+		buf = append_uint32(buf, u)
 	}
 	return buf
 }
 
 func mangle_64bit(buf []byte, a any) []byte {
-	return bin.AppendUint64(buf, *(*uint64)(iface_value(a)))
+	return append_uint64(buf, *(*uint64)(iface_value(a)))
 }
 
 func mangle_64bit_ptr(buf []byte, a any) []byte {
 	if ptr := (*uint64)(iface_value(a)); ptr != nil {
 		buf = append(buf, '1')
-		return bin.AppendUint64(buf, *ptr)
+		return append_uint64(buf, *ptr)
 	}
 	buf = append(buf, '0')
 	return buf
@@ -141,7 +138,7 @@ func mangle_64bit_ptr(buf []byte, a any) []byte {
 
 func mangle_64bit_slice(buf []byte, a any) []byte {
 	for _, u := range *(*[]uint64)(iface_value(a)) {
-		buf = bin.AppendUint64(buf, u)
+		buf = append_uint64(buf, u)
 	}
 	return buf
 }
@@ -187,16 +184,16 @@ type uint128 [2]uint64
 
 func mangle_128bit(buf []byte, a any) []byte {
 	u2 := *(*uint128)(iface_value(a))
-	buf = bin.AppendUint64(buf, u2[0])
-	buf = bin.AppendUint64(buf, u2[1])
+	buf = append_uint64(buf, u2[0])
+	buf = append_uint64(buf, u2[1])
 	return buf
 }
 
 func mangle_128bit_ptr(buf []byte, a any) []byte {
 	if ptr := (*uint128)(iface_value(a)); ptr != nil {
 		buf = append(buf, '1')
-		buf = bin.AppendUint64(buf, (*ptr)[0])
-		buf = bin.AppendUint64(buf, (*ptr)[1])
+		buf = append_uint64(buf, (*ptr)[0])
+		buf = append_uint64(buf, (*ptr)[1])
 	}
 	buf = append(buf, '0')
 	return buf
@@ -204,31 +201,9 @@ func mangle_128bit_ptr(buf []byte, a any) []byte {
 
 func mangle_128bit_slice(buf []byte, a any) []byte {
 	for _, u2 := range *(*[]uint128)(iface_value(a)) {
-		buf = bin.AppendUint64(buf, u2[0])
-		buf = bin.AppendUint64(buf, u2[1])
+		buf = append_uint64(buf, u2[0])
+		buf = append_uint64(buf, u2[1])
 	}
-	return buf
-}
-
-func mangle_time(buf []byte, a any) []byte {
-	t := *(*time.Time)(iface_value(a))
-	b, err := t.MarshalBinary()
-	if err != nil {
-		panic("marshal_time: " + err.Error())
-	}
-	return append(buf, b...)
-}
-
-func mangle_time_ptr(buf []byte, a any) []byte {
-	if ptr := (*time.Time)(iface_value(a)); ptr != nil {
-		b, err := ptr.MarshalBinary()
-		if err != nil {
-			panic("marshal_time: " + err.Error())
-		}
-		buf = append(buf, '1')
-		return append(buf, b...)
-	}
-	buf = append(buf, '0')
 	return buf
 }
 
@@ -242,7 +217,7 @@ func mangle_mangled(buf []byte, a any) []byte {
 }
 
 func mangle_binary(buf []byte, a any) []byte {
-	if v := a.(encoding.BinaryMarshaler); v != nil {
+	if v := a.(binarymarshaler); v != nil {
 		b, err := v.MarshalBinary()
 		if err != nil {
 			panic("mangle_binary: " + err.Error())
@@ -255,9 +230,35 @@ func mangle_binary(buf []byte, a any) []byte {
 }
 
 func mangle_stringer(buf []byte, a any) []byte {
-	if v := a.(fmt.Stringer); v != nil {
+	if v := a.(stringer); v != nil {
 		buf = append(buf, '1')
 		return append(buf, v.String()...)
+	}
+	buf = append(buf, '0')
+	return buf
+}
+
+func mangle_text(buf []byte, a any) []byte {
+	if v := a.(textmarshaler); v != nil {
+		b, err := v.MarshalText()
+		if err != nil {
+			panic("mangle_text: " + err.Error())
+		}
+		buf = append(buf, '1')
+		return append(buf, b...)
+	}
+	buf = append(buf, '0')
+	return buf
+}
+
+func mangle_json(buf []byte, a any) []byte {
+	if v := a.(jsonmarshaler); v != nil {
+		b, err := v.MarshalJSON()
+		if err != nil {
+			panic("mangle_json: " + err.Error())
+		}
+		buf = append(buf, '1')
+		return append(buf, b...)
 	}
 	buf = append(buf, '0')
 	return buf

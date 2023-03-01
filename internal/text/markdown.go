@@ -21,32 +21,19 @@ package text
 import (
 	"bytes"
 	"context"
-	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/tdewolff/minify/v2"
-	minifyHtml "github.com/tdewolff/minify/v2/html"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/renderer/html"
 )
 
-var (
-	m *minify.M
-)
-
-func (f *formatter) FromMarkdown(ctx context.Context, markdownText string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag, emojis []*gtsmodel.Emoji) string {
-
-	// Temporarily replace all found emoji shortcodes in the markdown text with
-	// their ID so that they're not parsed as anything by the markdown parser -
-	// this fixes cases where emojis with some underscores in them are parsed as
-	// words with emphasis, eg `:_some_emoji:` becomes `:<em>some</em>emoji:`
-	//
-	// Since the IDs of the emojis are just uppercase letters + numbers they should
-	// be safe to pass through the markdown parser without unexpected effects.
-	for _, e := range emojis {
-		markdownText = strings.ReplaceAll(markdownText, ":"+e.Shortcode+":", ":"+e.ID+":")
+func (f *formatter) FromMarkdown(ctx context.Context, pmf gtsmodel.ParseMentionFunc, authorID string, statusID string, markdownText string) *FormatResult {
+	result := &FormatResult{
+		Mentions: []*gtsmodel.Mention{},
+		Tags:     []*gtsmodel.Tag{},
+		Emojis:   []*gtsmodel.Emoji{},
 	}
 
 	// parse markdown text into html, using custom renderer to add hashtag/mention links
@@ -57,7 +44,7 @@ func (f *formatter) FromMarkdown(ctx context.Context, markdownText string, menti
 			html.WithUnsafe(), // allows raw HTML
 		),
 		goldmark.WithExtensions(
-			&customRenderer{f, ctx, mentions, tags},
+			&customRenderer{f, ctx, pmf, authorID, statusID, false, result},
 			extension.Linkify, // turns URLs into links
 			extension.Strikethrough,
 		),
@@ -66,30 +53,18 @@ func (f *formatter) FromMarkdown(ctx context.Context, markdownText string, menti
 	var htmlContentBytes bytes.Buffer
 	err := md.Convert([]byte(markdownText), &htmlContentBytes)
 	if err != nil {
-		log.Errorf("error rendering markdown to HTML: %s", err)
+		log.Errorf(ctx, "error formatting markdown to HTML: %s", err)
 	}
-	htmlContent := htmlContentBytes.String()
+	result.HTML = htmlContentBytes.String()
 
-	// Replace emoji IDs in the parsed html content with their shortcodes again
-	for _, e := range emojis {
-		htmlContent = strings.ReplaceAll(htmlContent, ":"+e.ID+":", ":"+e.Shortcode+":")
-	}
+	// clean anything dangerous out of the HTML
+	result.HTML = SanitizeHTML(result.HTML)
 
-	// clean anything dangerous out of the html
-	htmlContent = SanitizeHTML(htmlContent)
-
-	if m == nil {
-		m = minify.New()
-		m.Add("text/html", &minifyHtml.Minifier{
-			KeepEndTags: true,
-			KeepQuotes:  true,
-		})
-	}
-
-	minified, err := m.String("text/html", htmlContent)
+	// shrink ray
+	result.HTML, err = m.String("text/html", result.HTML)
 	if err != nil {
-		log.Errorf("error minifying markdown text: %s", err)
+		log.Errorf(ctx, "error minifying HTML: %s", err)
 	}
 
-	return minified
+	return result
 }

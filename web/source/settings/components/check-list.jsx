@@ -20,39 +20,71 @@
 
 const React = require("react");
 
-module.exports = function CheckList({ field, Component, header = " All", ...componentProps }) {
+module.exports = function CheckList({ field, header = "All", EntryComponent, getExtraProps }) {
 	return (
 		<div className="checkbox-list list">
-			<label className="header">
-				<input
-					ref={field.toggleAll.ref}
-					type="checkbox"
-					onChange={field.toggleAll.onChange}
-					checked={field.toggleAll.value === 1}
-				/> {header}
-			</label>
-			{Object.values(field.value).map((entry) => (
-				<CheckListEntry
-					key={entry.key}
-					onChange={(value) => field.onChange(entry.key, value)}
-					entry={entry}
-					Component={Component}
-					componentProps={componentProps}
-				/>
-			))}
+			<CheckListHeader toggleAll={field.toggleAll}>	{header}</CheckListHeader>
+			<CheckListEntries
+				entries={field.value}
+				updateValue={field.onChange}
+				EntryComponent={EntryComponent}
+				getExtraProps={getExtraProps}
+			/>
 		</div>
 	);
 };
 
-function CheckListEntry({ entry, onChange, Component, componentProps }) {
+function CheckListHeader({ toggleAll, children }) {
 	return (
-		<label className="entry">
+		<label className="header entry">
 			<input
+				ref={toggleAll.ref}
 				type="checkbox"
-				onChange={(e) => onChange({ checked: e.target.checked })}
-				checked={entry.checked}
-			/>
-			<Component entry={entry} onChange={onChange} {...componentProps} />
+				onChange={toggleAll.onChange}
+			/> {children}
 		</label>
 	);
 }
+
+const CheckListEntries = React.memo(
+	function CheckListEntries({ entries, updateValue, EntryComponent, getExtraProps }) {
+		const deferredEntries = React.useDeferredValue(entries);
+
+		return Object.values(deferredEntries).map((entry) => (
+			<CheckListEntry
+				key={entry.key}
+				entry={entry}
+				updateValue={updateValue}
+				EntryComponent={EntryComponent}
+				getExtraProps={getExtraProps}
+			/>
+		));
+	}
+);
+
+/*
+	React.memo is a performance optimization that only re-renders a CheckListEntry
+	when it's props actually change, instead of every time anything
+	in the list (CheckListEntries) updates
+*/
+const CheckListEntry = React.memo(
+	function CheckListEntry({ entry, updateValue, getExtraProps, EntryComponent }) {
+		const onChange = React.useCallback(
+			(value) => updateValue(entry.key, value),
+			[updateValue, entry.key]
+		);
+
+		const extraProps = React.useMemo(() => getExtraProps?.(entry), [getExtraProps, entry]);
+
+		return (
+			<label className="entry">
+				<input
+					type="checkbox"
+					onChange={(e) => onChange({ checked: e.target.checked })}
+					checked={entry.checked}
+				/>
+				<EntryComponent entry={entry} onChange={onChange} extraProps={extraProps} />
+			</label>
+		);
+	}
+);

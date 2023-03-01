@@ -48,7 +48,7 @@ type AdminStandardTestSuite struct {
 	storage      *storage.Driver
 	mediaManager media.Manager
 	federator    federation.Federator
-	processor    processing.Processor
+	processor    *processing.Processor
 	emailSender  email.Sender
 	sentEmails   map[string]string
 
@@ -62,6 +62,7 @@ type AdminStandardTestSuite struct {
 	testStatuses        map[string]*gtsmodel.Status
 	testEmojis          map[string]*gtsmodel.Emoji
 	testEmojiCategories map[string]*gtsmodel.EmojiCategory
+	testReports         map[string]*gtsmodel.Report
 
 	// module being tested
 	adminModule *admin.Module
@@ -77,6 +78,7 @@ func (suite *AdminStandardTestSuite) SetupSuite() {
 	suite.testStatuses = testrig.NewTestStatuses()
 	suite.testEmojis = testrig.NewTestEmojis()
 	suite.testEmojiCategories = testrig.NewTestEmojiCategories()
+	suite.testReports = testrig.NewTestReports()
 }
 
 func (suite *AdminStandardTestSuite) SetupTest() {

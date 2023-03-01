@@ -40,7 +40,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 
 	authed, err := oauth.Authed(c, false, false, false, false)
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -48,7 +48,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	username := strings.ToLower(c.Param(usernameKey))
 	if username == "" {
 		err := errors.New("no account username specified")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -56,29 +56,28 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	statusID := strings.ToUpper(c.Param(statusIDKey))
 	if statusID == "" {
 		err := errors.New("no status id specified")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
-	host := config.GetHost()
-	instance, err := m.processor.InstanceGet(ctx, host)
+	instance, err := m.processor.InstanceGetV1(ctx)
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
 		return
 	}
 
-	instanceGet := func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode) {
+	instanceGet := func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode) {
 		return instance, nil
 	}
 
 	// do this check to make sure the status is actually from a local account,
 	// we shouldn't render threads from statuses that don't belong to us!
-	if _, errWithCode := m.processor.AccountGetLocalByUsername(ctx, authed, username); errWithCode != nil {
+	if _, errWithCode := m.processor.Account().GetLocalByUsername(ctx, authed.Account, username); errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, instanceGet)
 		return
 	}
 
-	status, errWithCode := m.processor.StatusGet(ctx, authed, statusID)
+	status, errWithCode := m.processor.Status().Get(ctx, authed.Account, statusID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, instanceGet)
 		return
@@ -98,7 +97,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 		return
 	}
 
-	context, errWithCode := m.processor.StatusGetContext(ctx, authed, statusID)
+	context, errWithCode := m.processor.Status().ContextGet(ctx, authed.Account, statusID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, instanceGet)
 		return
@@ -133,16 +132,16 @@ func (m *Module) returnAPStatus(ctx context.Context, c *gin.Context, username st
 		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeySignature, signature)
 	}
 
-	status, errWithCode := m.processor.GetFediStatus(ctx, username, statusID, c.Request.URL)
+	status, errWithCode := m.processor.Fedi().StatusGet(ctx, username, statusID, c.Request.URL)
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet) //nolint:contextcheck
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1) //nolint:contextcheck
 		return
 	}
 
 	b, mErr := json.Marshal(status)
 	if mErr != nil {
 		err := fmt.Errorf("could not marshal json: %s", mErr)
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet) //nolint:contextcheck
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1) //nolint:contextcheck
 		return
 	}
 

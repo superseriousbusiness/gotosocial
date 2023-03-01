@@ -53,8 +53,9 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		if err != nil {
 			return err
 		}
-		l := log.WithField("create", i)
-		l.Debug("entering Create")
+		l := log.WithContext(ctx).
+			WithField("create", i)
+		l.Trace("entering Create")
 	}
 
 	receivingAccount, requestingAccount := extractFromCtx(ctx)
@@ -78,6 +79,9 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 	case ap.ActivityLike:
 		// LIKE SOMETHING
 		return f.activityLike(ctx, asType, receivingAccount, requestingAccount)
+	case ap.ActivityFlag:
+		// FLAG / REPORT SOMETHING
+		return f.activityFlag(ctx, asType, receivingAccount, requestingAccount)
 	}
 	return nil
 }
@@ -97,11 +101,7 @@ func (f *federatingDB) activityBlock(ctx context.Context, asType vocab.Type, rec
 		return fmt.Errorf("activityBlock: could not convert Block to gts model block")
 	}
 
-	newID, err := id.NewULID()
-	if err != nil {
-		return err
-	}
-	block.ID = newID
+	block.ID = id.NewULID()
 
 	if err := f.db.PutBlock(ctx, block); err != nil {
 		return fmt.Errorf("activityBlock: database error inserting block: %s", err)
@@ -165,10 +165,11 @@ func (f *federatingDB) activityCreate(ctx context.Context, asType vocab.Type, re
 
 // createNote handles a Create activity with a Note type.
 func (f *federatingDB) createNote(ctx context.Context, note vocab.ActivityStreamsNote, receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) error {
-	l := log.WithFields(kv.Fields{
-		{"receivingAccount", receivingAccount.URI},
-		{"requestingAccount", requestingAccount.URI},
-	}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{
+			{"receivingAccount", receivingAccount.URI},
+			{"requestingAccount", requestingAccount.URI},
+		}...)
 
 	// Check if we have a forward.
 	// In other words, was the note posted to our inbox by at least one actor who actually created the note, or are they just forwarding it?
@@ -260,11 +261,7 @@ func (f *federatingDB) activityFollow(ctx context.Context, asType vocab.Type, re
 		return fmt.Errorf("activityFollow: could not convert Follow to follow request: %s", err)
 	}
 
-	newID, err := id.NewULID()
-	if err != nil {
-		return err
-	}
-	followRequest.ID = newID
+	followRequest.ID = id.NewULID()
 
 	if err := f.db.Put(ctx, followRequest); err != nil {
 		return fmt.Errorf("activityFollow: database error inserting follow request: %s", err)
@@ -295,11 +292,7 @@ func (f *federatingDB) activityLike(ctx context.Context, asType vocab.Type, rece
 		return fmt.Errorf("activityLike: could not convert Like to fave: %s", err)
 	}
 
-	newID, err := id.NewULID()
-	if err != nil {
-		return err
-	}
-	fave.ID = newID
+	fave.ID = id.NewULID()
 
 	if err := f.db.Put(ctx, fave); err != nil {
 		return fmt.Errorf("activityLike: database error inserting fave: %s", err)
@@ -309,6 +302,37 @@ func (f *federatingDB) activityLike(ctx context.Context, asType vocab.Type, rece
 		APObjectType:     ap.ActivityLike,
 		APActivityType:   ap.ActivityCreate,
 		GTSModel:         fave,
+		ReceivingAccount: receivingAccount,
+	})
+
+	return nil
+}
+
+/*
+	FLAG HANDLERS
+*/
+
+func (f *federatingDB) activityFlag(ctx context.Context, asType vocab.Type, receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) error {
+	flag, ok := asType.(vocab.ActivityStreamsFlag)
+	if !ok {
+		return errors.New("activityFlag: could not convert type to flag")
+	}
+
+	report, err := f.typeConverter.ASFlagToReport(ctx, flag)
+	if err != nil {
+		return fmt.Errorf("activityFlag: could not convert Flag to report: %w", err)
+	}
+
+	report.ID = id.NewULID()
+
+	if err := f.db.PutReport(ctx, report); err != nil {
+		return fmt.Errorf("activityFlag: database error inserting report: %w", err)
+	}
+
+	f.fedWorker.Queue(messages.FromFederator{
+		APObjectType:     ap.ActivityFlag,
+		APActivityType:   ap.ActivityCreate,
+		GTSModel:         report,
 		ReceivingAccount: receivingAccount,
 	})
 

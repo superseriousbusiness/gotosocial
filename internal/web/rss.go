@@ -61,14 +61,16 @@ func (m *Module) GetRSSETag(urlPath string, lastModified time.Time, getRSSFeed f
 	return eTag, nil
 }
 
-func extractIfModifiedSince(header string) time.Time {
-	if header == "" {
+func extractIfModifiedSince(r *http.Request) time.Time {
+	hdr := r.Header.Get(ifModifiedSinceHeader)
+
+	if hdr == "" {
 		return time.Time{}
 	}
 
-	t, err := http.ParseTime(header)
+	t, err := http.ParseTime(hdr)
 	if err != nil {
-		log.Errorf("couldn't parse if-modified-since %s: %s", header, err)
+		log.Errorf(r.Context(), "couldn't parse if-modified-since %s: %s", hdr, err)
 		return time.Time{}
 	}
 
@@ -82,7 +84,7 @@ func (m *Module) rssFeedGETHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	if _, err := apiutil.NegotiateAccept(c, apiutil.AppRSSXML); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -90,16 +92,16 @@ func (m *Module) rssFeedGETHandler(c *gin.Context) {
 	username := strings.ToLower(c.Param(usernameKey))
 	if username == "" {
 		err := errors.New("no account username specified")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	ifNoneMatch := c.Request.Header.Get(ifNoneMatchHeader)
-	ifModifiedSince := extractIfModifiedSince(c.Request.Header.Get(ifModifiedSinceHeader))
+	ifModifiedSince := extractIfModifiedSince(c.Request)
 
-	getRssFeed, accountLastPostedPublic, errWithCode := m.processor.AccountGetRSSFeedForUsername(ctx, username)
+	getRssFeed, accountLastPostedPublic, errWithCode := m.processor.Account().GetRSSFeedForUsername(ctx, username)
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -111,13 +113,13 @@ func (m *Module) rssFeedGETHandler(c *gin.Context) {
 		// we either have no cache entry for this, or we have an expired cache entry; generate a new one
 		rssFeed, errWithCode = getRssFeed()
 		if errWithCode != nil {
-			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 			return
 		}
 
 		eTag, err := generateEtag(bytes.NewBufferString(rssFeed))
 		if err != nil {
-			apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
 			return
 		}
 
@@ -145,7 +147,7 @@ func (m *Module) rssFeedGETHandler(c *gin.Context) {
 		// we had a cache entry already so we didn't call to get the rss feed yet
 		rssFeed, errWithCode = getRssFeed()
 		if errWithCode != nil {
-			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 			return
 		}
 	}

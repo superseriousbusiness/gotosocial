@@ -19,11 +19,10 @@
 package dereferencing
 
 import (
-	"context"
 	"net/url"
 )
 
-func (d *deref) Handshaking(ctx context.Context, username string, remoteAccountID *url.URL) bool {
+func (d *deref) Handshaking(username string, remoteAccountID *url.URL) bool {
 	d.handshakeSync.Lock()
 	defer d.handshakeSync.Unlock()
 
@@ -53,11 +52,6 @@ func (d *deref) startHandshake(username string, remoteAccountID *url.URL) {
 	d.handshakeSync.Lock()
 	defer d.handshakeSync.Unlock()
 
-	// lazily initialize handshakes
-	if d.handshakes == nil {
-		d.handshakes = make(map[string][]*url.URL)
-	}
-
 	remoteIDs, ok := d.handshakes[username]
 	if !ok {
 		// there was nothing in there yet, so just add this entry and return
@@ -74,13 +68,8 @@ func (d *deref) stopHandshake(username string, remoteAccountID *url.URL) {
 	d.handshakeSync.Lock()
 	defer d.handshakeSync.Unlock()
 
-	if d.handshakes == nil {
-		return
-	}
-
 	remoteIDs, ok := d.handshakes[username]
 	if !ok {
-		// there was nothing in there yet anyway so just bail
 		return
 	}
 

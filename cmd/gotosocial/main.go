@@ -20,9 +20,11 @@ package main
 
 import (
 	"log"
-	"runtime/debug"
+	"os"
+	godebug "runtime/debug"
 	"strings"
 
+	"codeberg.org/gruf/go-debug"
 	"github.com/spf13/cobra"
 
 	_ "github.com/superseriousbusiness/gotosocial/docs"
@@ -60,9 +62,14 @@ func main() {
 
 	// add subcommands
 	rootCmd.AddCommand(serverCommands())
-	rootCmd.AddCommand(testrigCommands())
 	rootCmd.AddCommand(debugCommands())
 	rootCmd.AddCommand(adminCommands())
+	if debug.DEBUG {
+		// only add testrig if debug enabled.
+		rootCmd.AddCommand(testrigCommands())
+	} else if len(os.Args) > 1 && os.Args[1] == "testrig" {
+		log.Fatalln("gotosocial must be built and run with the DEBUG enviroment variable set to enable and access testrig")
+	}
 
 	// run
 	if err := rootCmd.Execute(); err != nil {
@@ -73,7 +80,7 @@ func main() {
 // version will build a version string from binary's stored build information.
 func version() string {
 	// Read build information from binary
-	build, ok := debug.ReadBuildInfo()
+	build, ok := godebug.ReadBuildInfo()
 	if !ok {
 		return ""
 	}

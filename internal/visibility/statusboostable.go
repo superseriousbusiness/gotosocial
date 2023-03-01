@@ -39,23 +39,23 @@ func (f *filter) StatusBoostable(ctx context.Context, targetStatus *gtsmodel.Sta
 
 	// direct messages are never boostable, even if they're visible
 	if targetStatus.Visibility == gtsmodel.VisibilityDirect {
-		log.Trace("status is not boostable because it is a DM")
+		log.Trace(ctx, "status is not boostable because it is a DM")
 		return false, nil
 	}
 
 	// the original account should always be able to boost its own non-DM statuses
 	if requestingAccount.ID == targetStatus.Account.ID {
-		log.Trace("status is boostable because author is booster")
+		log.Trace(ctx, "status is boostable because author is booster")
 		return true, nil
 	}
 
 	// if status is followers-only and not the author's, it is not boostable
 	if targetStatus.Visibility == gtsmodel.VisibilityFollowersOnly {
-		log.Trace("status not boostable because it is followers-only")
+		log.Trace(ctx, "status not boostable because it is followers-only")
 		return false, nil
 	}
 
 	// otherwise, status is as boostable as it says it is
-	log.Trace("defaulting to status.boostable value")
+	log.Trace(ctx, "defaulting to status.boostable value")
 	return *targetStatus.Boostable, nil
 }

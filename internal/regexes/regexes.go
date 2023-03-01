@@ -77,40 +77,45 @@ var (
 	// EmojiFinder extracts emoji strings from a piece of text.
 	EmojiFinder = regexp.MustCompile(emojiFinderString)
 
-	// usernameString defines an acceptable username on this instance
+	// usernameString defines an acceptable username for a new account on this instance
 	usernameString = fmt.Sprintf(`[a-z0-9_]{2,%d}`, maximumUsernameLength)
 	// Username can be used to validate usernames of new signups
 	Username = regexp.MustCompile(fmt.Sprintf(`^%s$`, usernameString))
 
-	userPathString = fmt.Sprintf(`^?/%s/(%s)$`, users, usernameString)
+	// usernameStringRelaxed is like usernameString, but also allows the '.' character,
+	// so it can also be used to match the instance account, which will have a username
+	// like 'example.org', and it has no upper length limit, so will work for long domains.
+	usernameStringRelaxed = `[a-z0-9_\.]{2,}`
+
+	userPathString = fmt.Sprintf(`^/?%s/(%s)$`, users, usernameStringRelaxed)
 	// UserPath parses a path that validates and captures the username part from eg /users/example_username
 	UserPath = regexp.MustCompile(userPathString)
 
-	publicKeyPath = fmt.Sprintf(`^?/%s/(%s)/%s`, users, usernameString, publicKey)
+	publicKeyPath = fmt.Sprintf(`^/?%s/(%s)/%s`, users, usernameStringRelaxed, publicKey)
 	// PublicKeyPath parses a path that validates and captures the username part from eg /users/example_username/main-key
 	PublicKeyPath = regexp.MustCompile(publicKeyPath)
 
-	inboxPath = fmt.Sprintf(`^/?%s/(%s)/%s$`, users, usernameString, inbox)
+	inboxPath = fmt.Sprintf(`^/?%s/(%s)/%s$`, users, usernameStringRelaxed, inbox)
 	// InboxPath parses a path that validates and captures the username part from eg /users/example_username/inbox
 	InboxPath = regexp.MustCompile(inboxPath)
 
-	outboxPath = fmt.Sprintf(`^/?%s/(%s)/%s$`, users, usernameString, outbox)
+	outboxPath = fmt.Sprintf(`^/?%s/(%s)/%s$`, users, usernameStringRelaxed, outbox)
 	// OutboxPath parses a path that validates and captures the username part from eg /users/example_username/outbox
 	OutboxPath = regexp.MustCompile(outboxPath)
 
-	actorPath = fmt.Sprintf(`^?/%s/(%s)$`, actors, usernameString)
+	actorPath = fmt.Sprintf(`^/?%s/(%s)$`, actors, usernameStringRelaxed)
 	// ActorPath parses a path that validates and captures the username part from eg /actors/example_username
 	ActorPath = regexp.MustCompile(actorPath)
 
-	followersPath = fmt.Sprintf(`^/?%s/(%s)/%s$`, users, usernameString, followers)
+	followersPath = fmt.Sprintf(`^/?%s/(%s)/%s$`, users, usernameStringRelaxed, followers)
 	// FollowersPath parses a path that validates and captures the username part from eg /users/example_username/followers
 	FollowersPath = regexp.MustCompile(followersPath)
 
-	followingPath = fmt.Sprintf(`^/?%s/(%s)/%s$`, users, usernameString, following)
+	followingPath = fmt.Sprintf(`^/?%s/(%s)/%s$`, users, usernameStringRelaxed, following)
 	// FollowingPath parses a path that validates and captures the username part from eg /users/example_username/following
 	FollowingPath = regexp.MustCompile(followingPath)
 
-	followPath = fmt.Sprintf(`^/?%s/(%s)/%s/(%s)$`, users, usernameString, follow, ulid)
+	followPath = fmt.Sprintf(`^/?%s/(%s)/%s/(%s)$`, users, usernameStringRelaxed, follow, ulid)
 	// FollowPath parses a path that validates and captures the username part and the ulid part
 	// from eg /users/example_username/follow/01F7XT5JZW1WMVSW1KADS8PVDH
 	FollowPath = regexp.MustCompile(followPath)
@@ -119,22 +124,22 @@ var (
 	// ULID parses and validate a ULID.
 	ULID = regexp.MustCompile(fmt.Sprintf(`^%s$`, ulid))
 
-	likedPath = fmt.Sprintf(`^/?%s/(%s)/%s$`, users, usernameString, liked)
+	likedPath = fmt.Sprintf(`^/?%s/(%s)/%s$`, users, usernameStringRelaxed, liked)
 	// LikedPath parses a path that validates and captures the username part from eg /users/example_username/liked
 	LikedPath = regexp.MustCompile(likedPath)
 
-	likePath = fmt.Sprintf(`^/?%s/(%s)/%s/(%s)$`, users, usernameString, liked, ulid)
+	likePath = fmt.Sprintf(`^/?%s/(%s)/%s/(%s)$`, users, usernameStringRelaxed, liked, ulid)
 	// LikePath parses a path that validates and captures the username part and the ulid part
 	// from eg /users/example_username/like/01F7XT5JZW1WMVSW1KADS8PVDH
 	LikePath = regexp.MustCompile(likePath)
 
-	statusesPath = fmt.Sprintf(`^/?%s/(%s)/%s/(%s)$`, users, usernameString, statuses, ulid)
+	statusesPath = fmt.Sprintf(`^/?%s/(%s)/%s/(%s)$`, users, usernameStringRelaxed, statuses, ulid)
 	// StatusesPath parses a path that validates and captures the username part and the ulid part
 	// from eg /users/example_username/statuses/01F7XT5JZW1WMVSW1KADS8PVDH
 	// The regex can be played with here: https://regex101.com/r/G9zuxQ/1
 	StatusesPath = regexp.MustCompile(statusesPath)
 
-	blockPath = fmt.Sprintf(`^/?%s/(%s)/%s/(%s)$`, users, usernameString, blocks, ulid)
+	blockPath = fmt.Sprintf(`^/?%s/(%s)/%s/(%s)$`, users, usernameStringRelaxed, blocks, ulid)
 	// BlockPath parses a path that validates and captures the username part and the ulid part
 	// from eg /users/example_username/blocks/01F7XT5JZW1WMVSW1KADS8PVDH
 	BlockPath = regexp.MustCompile(blockPath)
@@ -150,6 +155,10 @@ var (
 	// It captures the account id, media type, media size, file name, and file extension, eg
 	// `01F8MH1H7YV1Z7D2C8K2730QBF`, `attachment`, `small`, `01F8MH8RMYQ6MSNY3JM2XT1CQ5`, `jpeg`.
 	FilePath = regexp.MustCompile(filePath)
+
+	// MisskeyReportNotes captures a list of Note URIs from report content created by Misskey.
+	// https://regex101.com/r/EnTOBV/1
+	MisskeyReportNotes = regexp.MustCompile(`(?m)(?:^Note: ((?:http|https):\/\/.*)$)`)
 )
 
 // bufpool is a memory pool of byte buffers for use in our regex utility functions.

@@ -30,7 +30,8 @@ import (
 )
 
 func (f *filter) StatusHometimelineable(ctx context.Context, targetStatus *gtsmodel.Status, timelineOwnerAccount *gtsmodel.Account) (bool, error) {
-	l := log.WithFields(kv.Fields{{"statusID", targetStatus.ID}}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{{"statusID", targetStatus.ID}}...)
 
 	// don't timeline statuses more than 5 min in the future
 	maxID, err := id.NewULIDFromTime(time.Now().Add(5 * time.Minute))

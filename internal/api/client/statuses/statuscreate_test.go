@@ -219,7 +219,7 @@ func (suite *StatusCreateTestSuite) TestPostAnotherNewStatus() {
 	err = json.Unmarshal(b, statusReply)
 	suite.NoError(err)
 
-	suite.Equal("<p><a href=\"http://localhost:8080/tags/test\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>test</span></a> alright, should be able to post <a href=\"http://localhost:8080/tags/links\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>links</span></a> with fragments in them now, let&#39;s see........<br/><br/><a href=\"https://docs.gotosocial.org/en/latest/user_guide/posts/#links\" rel=\"noopener nofollow noreferrer\" target=\"_blank\">docs.gotosocial.org/en/latest/user_guide/posts/#links</a><br/><br/><a href=\"http://localhost:8080/tags/gotosocial\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>gotosocial</span></a><br/><br/>(tobi remember to pull the docker image challenge)</p>", statusReply.Content)
+	suite.Equal("<p><a href=\"http://localhost:8080/tags/test\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>test</span></a> alright, should be able to post <a href=\"http://localhost:8080/tags/links\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>links</span></a> with fragments in them now, let's see........<br><br><a href=\"https://docs.gotosocial.org/en/latest/user_guide/posts/#links\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://docs.gotosocial.org/en/latest/user_guide/posts/#links</a><br><br><a href=\"http://localhost:8080/tags/gotosocial\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>gotosocial</span></a><br><br>(tobi remember to pull the docker image challenge)</p>", statusReply.Content)
 }
 
 func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
@@ -252,7 +252,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
 	suite.NoError(err)
 
 	suite.Equal("", statusReply.SpoilerText)
-	suite.Equal("<p>here is a rainbow emoji a few times! :rainbow: :rainbow: :rainbow: <br/> here&#39;s an emoji that isn&#39;t in the db: :test_emoji:</p>", statusReply.Content)
+	suite.Equal("<p>here is a rainbow emoji a few times! :rainbow: :rainbow: :rainbow:<br>here's an emoji that isn't in the db: :test_emoji:</p>", statusReply.Content)
 
 	suite.Len(statusReply.Emojis, 1)
 	apiEmoji := statusReply.Emojis[0]
@@ -371,7 +371,7 @@ func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
 	suite.NoError(err)
 
 	suite.Equal("", statusResponse.SpoilerText)
-	suite.Equal("<p>here&#39;s an image attachment</p>", statusResponse.Content)
+	suite.Equal("<p>here's an image attachment</p>", statusResponse.Content)
 	suite.False(statusResponse.Sensitive)
 	suite.Equal(apimodel.VisibilityPublic, statusResponse.Visibility)
 

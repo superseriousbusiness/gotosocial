@@ -22,33 +22,24 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/miekg/dns"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable ap.Accountable, accountDomain string, update bool) (*gtsmodel.Account, error) {
+func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable ap.Accountable, accountDomain string) (*gtsmodel.Account, error) {
 	// first check if we actually already know this account
 	uriProp := accountable.GetJSONLDId()
 	if uriProp == nil || !uriProp.IsIRI() {
 		return nil, errors.New("no id property found on person, or id was not an iri")
 	}
 	uri := uriProp.GetIRI()
-
-	if !update {
-		acct, err := c.db.GetAccountByURI(ctx, uri.String())
-		if err == nil {
-			// we already know this account so we can skip generating it
-			return acct, nil
-		}
-		if err != db.ErrNoEntries {
-			// we don't know the account and there's been a real error
-			return nil, fmt.Errorf("error getting account with uri %s from the database: %s", uri.String(), err)
-		}
-	}
 
 	// we don't know the account, or we're being told to update it, so we need to generate it from the person -- at least we already have the URI!
 	acct := &gtsmodel.Account{}
@@ -83,14 +74,15 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 
 	// display name aka name
 	// we default to the username, but take the more nuanced name property if it exists
-	acct.DisplayName = username
-	if displayName, err := ap.ExtractName(accountable); err == nil {
+	if displayName := ap.ExtractName(accountable); displayName != "" {
 		acct.DisplayName = displayName
+	} else {
+		acct.DisplayName = username
 	}
 
 	// account emojis (used in bio, display name, fields)
 	if emojis, err := ap.ExtractEmojis(accountable); err != nil {
-		log.Infof("ASRepresentationToAccount: error extracting account emojis: %s", err)
+		log.Infof(nil, "error extracting account emojis: %s", err)
 	} else {
 		acct.Emojis = emojis
 	}
@@ -98,10 +90,7 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 	// TODO: fields aka attachment array
 
 	// note aka summary
-	note, err := ap.ExtractSummary(accountable)
-	if err == nil && note != "" {
-		acct.Note = note
-	}
+	acct.Note = ap.ExtractSummary(accountable)
 
 	// check for bot and actor type
 	switch accountable.GetTypeName() {
@@ -168,16 +157,12 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 		acct.InboxURI = accountable.GetActivityStreamsInbox().GetIRI().String()
 	}
 
-	// SharedInboxURI
-	if sharedInboxURI := ap.ExtractSharedInbox(accountable); sharedInboxURI != nil {
-		var sharedInbox string
-
-		// only trust shared inbox if it has at least two domains,
-		// from the right, in common with the domain of the account
-		if dns.CompareDomainName(acct.Domain, sharedInboxURI.Host) >= 2 {
-			sharedInbox = sharedInboxURI.String()
-		}
-
+	// SharedInboxURI:
+	// only trust shared inbox if it has at least two domains,
+	// from the right, in common with the domain of the account
+	if sharedInboxURI := ap.ExtractSharedInbox(accountable); // nocollapse
+	sharedInboxURI != nil && dns.CompareDomainName(acct.Domain, sharedInboxURI.Host) >= 2 {
+		sharedInbox := sharedInboxURI.String()
 		acct.SharedInboxURI = &sharedInbox
 	}
 
@@ -216,6 +201,38 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 	return acct, nil
 }
 
+func (c *converter) extractAttachments(i ap.WithAttachment) []*gtsmodel.MediaAttachment {
+	attachmentProp := i.GetActivityStreamsAttachment()
+	if attachmentProp == nil {
+		return nil
+	}
+
+	attachments := make([]*gtsmodel.MediaAttachment, 0, attachmentProp.Len())
+
+	for iter := attachmentProp.Begin(); iter != attachmentProp.End(); iter = iter.Next() {
+		t := iter.GetType()
+		if t == nil {
+			continue
+		}
+
+		attachmentable, ok := t.(ap.Attachmentable)
+		if !ok {
+			log.Error(nil, "ap attachment was not attachmentable")
+			continue
+		}
+
+		attachment, err := ap.ExtractAttachment(attachmentable)
+		if err != nil {
+			log.Errorf(nil, "error extracting attachment: %s", err)
+			continue
+		}
+
+		attachments = append(attachments, attachment)
+	}
+
+	return attachments
+}
+
 func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusable) (*gtsmodel.Status, error) {
 	status := &gtsmodel.Status{}
 
@@ -226,7 +243,8 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	}
 	status.URI = uriProp.GetIRI().String()
 
-	l := log.WithField("statusURI", status.URI)
+	l := log.WithContext(ctx).
+		WithField("statusURI", status.URI)
 
 	// web url for viewing this status
 	if statusURL, err := ap.ExtractURL(statusable); err == nil {
@@ -240,11 +258,7 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	status.Content = ap.ExtractContent(statusable)
 
 	// attachments to dereference and fetch later on (we don't do that here)
-	if attachments, err := ap.ExtractAttachments(statusable); err != nil {
-		l.Infof("ASStatusToStatus: error extracting status attachments: %s", err)
-	} else {
-		status.Attachments = attachments
-	}
+	status.Attachments = c.extractAttachments(statusable)
 
 	// hashtags to dereference later on
 	if hashtags, err := ap.ExtractHashtags(statusable); err != nil {
@@ -268,10 +282,11 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	}
 
 	// cw string for this status
-	if cw, err := ap.ExtractSummary(statusable); err != nil {
-		l.Infof("ASStatusToStatus: error extracting status summary: %s", err)
+	// prefer Summary, fall back to Name
+	if summary := ap.ExtractSummary(statusable); summary != "" {
+		status.ContentWarning = summary
 	} else {
-		status.ContentWarning = cw
+		status.ContentWarning = ap.ExtractName(statusable)
 	}
 
 	// when was this status created?
@@ -331,17 +346,16 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	// advanced visibility for this status
 	// TODO: a lot of work to be done here -- a new type needs to be created for this in go-fed/activity using ASTOOL
 	// for now we just set everything to true
-	pinned := false
 	federated := true
 	boostable := true
 	replyable := true
 	likeable := true
 
-	status.Pinned = &pinned
 	status.Federated = &federated
 	status.Boostable = &boostable
 	status.Replyable = &replyable
 	status.Likeable = &likeable
+
 	// sensitive
 	sensitive := ap.ExtractSensitive(statusable)
 	status.Sensitive = &sensitive
@@ -573,4 +587,126 @@ func (c *converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Anno
 
 	// the rest of the fields will be taken from the target status, but it's not our job to do the dereferencing here
 	return status, isNew, nil
+}
+
+func (c *converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) (*gtsmodel.Report, error) {
+	// Extract flag uri.
+	idProp := flaggable.GetJSONLDId()
+	if idProp == nil || !idProp.IsIRI() {
+		return nil, errors.New("ASFlagToReport: no id property set on flaggable, or was not an iri")
+	}
+	uri := idProp.GetIRI().String()
+
+	// Extract account that created the flag / report.
+	// This will usually be an instance actor.
+	actor, err := ap.ExtractActor(flaggable)
+	if err != nil {
+		return nil, fmt.Errorf("ASFlagToReport: error extracting actor: %w", err)
+	}
+	account, err := c.db.GetAccountByURI(ctx, actor.String())
+	if err != nil {
+		return nil, fmt.Errorf("ASFlagToReport: error in db fetching account with uri %s: %w", actor.String(), err)
+	}
+
+	// Get the content of the report.
+	// For Mastodon, this will just be a string, or nothing.
+	// In Misskey's case, it may also contain the URLs of
+	// one or more reported statuses, so extract these too.
+	content := ap.ExtractContent(flaggable)
+	statusURIs := []*url.URL{}
+	inlineURLs := misskeyReportInlineURLs(content)
+	statusURIs = append(statusURIs, inlineURLs...)
+
+	// Extract account and statuses targeted by the flag / report.
+	//
+	// Incoming flags from mastodon usually have a target account uri as
+	// first entry in objects, followed by URIs of one or more statuses.
+	// Misskey on the other hand will just contain the target account uri.
+	// We shouldn't assume the order of the objects will correspond to this,
+	// but we can check that he objects slice contains just one account, and
+	// maybe some statuses.
+	//
+	// Throw away anything that's not relevant to us.
+	objects, err := ap.ExtractObjects(flaggable)
+	if err != nil {
+		return nil, fmt.Errorf("ASFlagToReport: error extracting objects: %w", err)
+	}
+	if len(objects) == 0 {
+		return nil, errors.New("ASFlagToReport: flaggable objects empty, can't create report")
+	}
+
+	var targetAccountURI *url.URL
+	for _, object := range objects {
+		switch {
+		case object.Host != config.GetHost():
+			// object doesn't belong to us, just ignore it
+			continue
+		case uris.IsUserPath(object):
+			if targetAccountURI != nil {
+				return nil, errors.New("ASFlagToReport: flaggable objects contained more than one target account uri")
+			}
+			targetAccountURI = object
+		case uris.IsStatusesPath(object):
+			statusURIs = append(statusURIs, object)
+		}
+	}
+
+	// Make sure we actually have a target account now.
+	if targetAccountURI == nil {
+		return nil, errors.New("ASFlagToReport: flaggable objects contained no recognizable target account uri")
+	}
+	targetAccount, err := c.db.GetAccountByURI(ctx, targetAccountURI.String())
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			return nil, fmt.Errorf("ASFlagToReport: account with uri %s could not be found in the db", targetAccountURI.String())
+		}
+		return nil, fmt.Errorf("ASFlagToReport: db error getting account with uri %s: %w", targetAccountURI.String(), err)
+	}
+
+	// If we got some status URIs, try to get them from the db now
+	var (
+		statusIDs = make([]string, 0, len(statusURIs))
+		statuses  = make([]*gtsmodel.Status, 0, len(statusURIs))
+	)
+	for _, statusURI := range statusURIs {
+		statusURIString := statusURI.String()
+
+		// try getting this status by URI first, then URL
+		status, err := c.db.GetStatusByURI(ctx, statusURIString)
+		if err != nil {
+			if !errors.Is(err, db.ErrNoEntries) {
+				return nil, fmt.Errorf("ASFlagToReport: db error getting status with uri %s: %w", statusURIString, err)
+			}
+
+			status, err = c.db.GetStatusByURL(ctx, statusURIString)
+			if err != nil {
+				if !errors.Is(err, db.ErrNoEntries) {
+					return nil, fmt.Errorf("ASFlagToReport: db error getting status with url %s: %w", statusURIString, err)
+				}
+
+				log.Warnf(nil, "reported status %s could not be found in the db, skipping it", statusURIString)
+				continue
+			}
+		}
+
+		if status.AccountID != targetAccount.ID {
+			// status doesn't belong to this account, ignore it
+			continue
+		}
+
+		statusIDs = append(statusIDs, status.ID)
+		statuses = append(statuses, status)
+	}
+
+	// id etc should be handled the caller, so just return what we got
+	return &gtsmodel.Report{
+		URI:             uri,
+		AccountID:       account.ID,
+		Account:         account,
+		TargetAccountID: targetAccount.ID,
+		TargetAccount:   targetAccount,
+		Comment:         content,
+		StatusIDs:       statusIDs,
+		Statuses:        statuses,
+	}, nil
 }

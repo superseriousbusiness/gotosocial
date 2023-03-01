@@ -67,20 +67,14 @@ func (pool *WorkerPool) Start(workers int, queue int) bool {
 			go func() {
 				defer wait.Done()
 
-				// Run worker function.
-				for !worker_run(ctx, fns) {
-					// retry on panic
+				// Run worker function (retry on panic)
+				for !worker_run(CancelCtx(ctx), fns) {
 				}
 			}()
 		}
 
-		// Set GC finalizer to stop pool on dealloc.
-		runtime.SetFinalizer(pool, func(pool *WorkerPool) {
-			_ = pool.svc.Stop()
-		})
-
 		// Wait on ctx
-		<-ctx.Done()
+		<-ctx
 
 		// Drain function queue.
 		//
@@ -108,6 +102,16 @@ func (pool *WorkerPool) Start(workers int, queue int) bool {
 // Stop will stop the WorkerPool management loop, blocking until stopped.
 func (pool *WorkerPool) Stop() bool {
 	return pool.svc.Stop()
+}
+
+// Running returns if WorkerPool management loop is running (i.e. NOT stopped / stopping).
+func (pool *WorkerPool) Running() bool {
+	return pool.svc.Running()
+}
+
+// Done returns a channel that's closed when WorkerPool.Stop() is called. It is the same channel provided to the currently running worker functions.
+func (pool *WorkerPool) Done() <-chan struct{} {
+	return pool.svc.Done()
 }
 
 // Enqueue will add provided WorkerFunc to the queue to be performed when there is a free worker.
@@ -149,6 +153,34 @@ func (pool *WorkerPool) EnqueueCtx(ctx context.Context, fn WorkerFunc) bool {
 
 	// Placed fn in queue
 	case pool.fns <- fn:
+		return true
+	}
+}
+
+// MustEnqueueCtx functionally performs similarly to WorkerPool.EnqueueCtx(), but in the case
+// that the provided <-ctx.Done() is closed, it is passed asynchronously to WorkerPool.Enqueue().
+// Return boolean indicates whether function was executed in time before <-ctx.Done() is closed.
+func (pool *WorkerPool) MustEnqueueCtx(ctx context.Context, fn WorkerFunc) (ok bool) {
+	// Check valid fn
+	if fn == nil {
+		return false
+	}
+
+	select {
+	case <-ctx.Done():
+		// We failed to add this entry to the worker queue before the
+		// incoming context was cancelled. So to ensure processing
+		// we simply queue it asynchronously and return early to caller.
+		go pool.Enqueue(fn)
+		return false
+
+	case <-pool.svc.Done():
+		// Pool ctx cancelled
+		fn(closedctx)
+		return false
+
+	case pool.fns <- fn:
+		// Placed fn in queue
 		return true
 	}
 }

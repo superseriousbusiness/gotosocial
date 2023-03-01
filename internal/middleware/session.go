@@ -41,7 +41,7 @@ func SessionOptions() sessions.Options {
 	case "strict":
 		samesite = http.SameSiteStrictMode
 	default:
-		log.Warnf("%s set to %s which is not recognized, defaulting to 'lax'", config.AdvancedCookiesSamesiteFlag(), config.GetAdvancedCookiesSamesite())
+		log.Warnf(nil, "%s set to %s which is not recognized, defaulting to 'lax'", config.AdvancedCookiesSamesiteFlag(), config.GetAdvancedCookiesSamesite())
 		samesite = http.SameSiteLaxMode
 	}
 

@@ -24,53 +24,28 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
-	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
 // Orphaned prunes orphaned media from storage.
 var Orphaned action.GTSAction = func(ctx context.Context) error {
-	var state state.State
-	state.Caches.Init()
-
-	dbService, err := bundb.NewBunDBService(ctx, &state)
+	prune, err := setupPrune(ctx)
 	if err != nil {
-		return fmt.Errorf("error creating dbservice: %s", err)
-	}
-
-	storage, err := gtsstorage.AutoConfig()
-	if err != nil {
-		return fmt.Errorf("error creating storage backend: %w", err)
-	}
-
-	manager, err := media.NewManager(dbService, storage)
-	if err != nil {
-		return fmt.Errorf("error instantiating mediamanager: %s", err)
+		return err
 	}
 
 	dry := config.GetAdminMediaPruneDryRun()
 
-	pruned, err := manager.PruneOrphaned(ctx, dry)
+	pruned, err := prune.manager.PruneOrphaned(ctx, dry)
 	if err != nil {
 		return fmt.Errorf("error pruning: %s", err)
 	}
 
 	if dry /* dick heyyoooooo */ {
-		log.Infof("DRY RUN: %d stored items are orphaned and eligible to be pruned", pruned)
+		log.Infof(ctx, "DRY RUN: %d items are orphaned and eligible to be pruned", pruned)
 	} else {
-		log.Infof("%d stored items were orphaned and pruned", pruned)
+		log.Infof(ctx, "%d orphaned items were pruned", pruned)
 	}
 
-	if err := storage.Close(); err != nil {
-		return fmt.Errorf("error closing storage backend: %w", err)
-	}
-
-	if err := dbService.Stop(ctx); err != nil {
-		return fmt.Errorf("error closing dbservice: %s", err)
-	}
-
-	return nil
+	return prune.shutdown(ctx)
 }

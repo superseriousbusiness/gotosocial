@@ -37,23 +37,23 @@ func (d *deref) GetRemoteEmoji(ctx context.Context, requestingUsername string, r
 		processingEmoji *media.ProcessingEmoji
 	)
 
-	d.dereferencingEmojisLock.Lock() // LOCK HERE
+	// Acquire lock for derefs map.
+	unlock := d.derefEmojisMu.Lock()
+	defer unlock()
 
 	// first check if we're already processing this emoji
-	if alreadyProcessing, ok := d.dereferencingEmojis[shortcodeDomain]; ok {
+	if alreadyProcessing, ok := d.derefEmojis[shortcodeDomain]; ok {
 		// we're already on it, no worries
 		processingEmoji = alreadyProcessing
 	} else {
 		// not processing it yet, let's start
 		t, err := d.transportController.NewTransportForUsername(ctx, requestingUsername)
 		if err != nil {
-			d.dereferencingEmojisLock.Unlock()
 			return nil, fmt.Errorf("GetRemoteEmoji: error creating transport to fetch emoji %s: %s", shortcodeDomain, err)
 		}
 
 		derefURI, err := url.Parse(remoteURL)
 		if err != nil {
-			d.dereferencingEmojisLock.Unlock()
 			return nil, fmt.Errorf("GetRemoteEmoji: error parsing url for emoji %s: %s", shortcodeDomain, err)
 		}
 
@@ -61,31 +61,28 @@ func (d *deref) GetRemoteEmoji(ctx context.Context, requestingUsername string, r
 			return t.DereferenceMedia(innerCtx, derefURI)
 		}
 
-		newProcessing, err := d.mediaManager.ProcessEmoji(ctx, dataFunc, nil, shortcode, id, emojiURI, ai, refresh)
+		newProcessing, err := d.mediaManager.PreProcessEmoji(ctx, dataFunc, nil, shortcode, id, emojiURI, ai, refresh)
 		if err != nil {
-			d.dereferencingEmojisLock.Unlock()
 			return nil, fmt.Errorf("GetRemoteEmoji: error processing emoji %s: %s", shortcodeDomain, err)
 		}
 
 		// store it in our map to indicate it's in process
-		d.dereferencingEmojis[shortcodeDomain] = newProcessing
+		d.derefEmojis[shortcodeDomain] = newProcessing
 		processingEmoji = newProcessing
 	}
 
-	d.dereferencingEmojisLock.Unlock()
+	// Unlock map.
+	unlock()
 
-	load := func(innerCtx context.Context) error {
-		_, err := processingEmoji.LoadEmoji(innerCtx)
-		return err
-	}
+	defer func() {
+		// On exit safely remove emoji from map.
+		unlock := d.derefEmojisMu.Lock()
+		delete(d.derefEmojis, shortcodeDomain)
+		unlock()
+	}()
 
-	cleanup := func() {
-		d.dereferencingEmojisLock.Lock()
-		delete(d.dereferencingHeaders, shortcodeDomain)
-		d.dereferencingEmojisLock.Unlock()
-	}
-
-	if err := loadAndCleanup(ctx, load, cleanup); err != nil {
+	// Start emoji attachment loading (blocking call).
+	if _, err := processingEmoji.LoadEmoji(ctx); err != nil {
 		return nil, err
 	}
 
@@ -114,7 +111,7 @@ func (d *deref) populateEmojis(ctx context.Context, rawEmojis []*gtsmodel.Emoji,
 			// have to get it from the database again
 			gotEmoji = e
 		} else if gotEmoji, err = d.db.GetEmojiByShortcodeDomain(ctx, e.Shortcode, e.Domain); err != nil && err != db.ErrNoEntries {
-			log.Errorf("populateEmojis: error checking database for emoji %s: %s", shortcodeDomain, err)
+			log.Errorf(ctx, "error checking database for emoji %s: %s", shortcodeDomain, err)
 			continue
 		}
 
@@ -123,24 +120,24 @@ func (d *deref) populateEmojis(ctx context.Context, rawEmojis []*gtsmodel.Emoji,
 		if gotEmoji != nil {
 			// we had the emoji already, but refresh it if necessary
 			if e.UpdatedAt.Unix() > gotEmoji.ImageUpdatedAt.Unix() {
-				log.Tracef("populateEmojis: emoji %s was updated since we last saw it, will refresh", shortcodeDomain)
+				log.Tracef(ctx, "emoji %s was updated since we last saw it, will refresh", shortcodeDomain)
 				refresh = true
 			}
 
 			if !refresh && (e.URI != gotEmoji.URI) {
-				log.Tracef("populateEmojis: emoji %s changed URI since we last saw it, will refresh", shortcodeDomain)
+				log.Tracef(ctx, "emoji %s changed URI since we last saw it, will refresh", shortcodeDomain)
 				refresh = true
 			}
 
 			if !refresh && (e.ImageRemoteURL != gotEmoji.ImageRemoteURL) {
-				log.Tracef("populateEmojis: emoji %s changed image URL since we last saw it, will refresh", shortcodeDomain)
+				log.Tracef(ctx, "emoji %s changed image URL since we last saw it, will refresh", shortcodeDomain)
 				refresh = true
 			}
 
 			if !refresh {
-				log.Tracef("populateEmojis: emoji %s is up to date, will not refresh", shortcodeDomain)
+				log.Tracef(ctx, "emoji %s is up to date, will not refresh", shortcodeDomain)
 			} else {
-				log.Tracef("populateEmojis: refreshing emoji %s", shortcodeDomain)
+				log.Tracef(ctx, "refreshing emoji %s", shortcodeDomain)
 				emojiID := gotEmoji.ID // use existing ID
 				processingEmoji, err := d.GetRemoteEmoji(ctx, requestingUsername, e.ImageRemoteURL, e.Shortcode, e.Domain, emojiID, e.URI, &media.AdditionalEmojiInfo{
 					Domain:               &e.Domain,
@@ -149,14 +146,13 @@ func (d *deref) populateEmojis(ctx context.Context, rawEmojis []*gtsmodel.Emoji,
 					Disabled:             gotEmoji.Disabled,
 					VisibleInPicker:      gotEmoji.VisibleInPicker,
 				}, refresh)
-
 				if err != nil {
-					log.Errorf("populateEmojis: couldn't refresh remote emoji %s: %s", shortcodeDomain, err)
+					log.Errorf(ctx, "couldn't refresh remote emoji %s: %s", shortcodeDomain, err)
 					continue
 				}
 
 				if gotEmoji, err = processingEmoji.LoadEmoji(ctx); err != nil {
-					log.Errorf("populateEmojis: couldn't load refreshed remote emoji %s: %s", shortcodeDomain, err)
+					log.Errorf(ctx, "couldn't load refreshed remote emoji %s: %s", shortcodeDomain, err)
 					continue
 				}
 			}
@@ -164,7 +160,7 @@ func (d *deref) populateEmojis(ctx context.Context, rawEmojis []*gtsmodel.Emoji,
 			// it's new! go get it!
 			newEmojiID, err := id.NewRandomULID()
 			if err != nil {
-				log.Errorf("populateEmojis: error generating id for remote emoji %s: %s", shortcodeDomain, err)
+				log.Errorf(ctx, "error generating id for remote emoji %s: %s", shortcodeDomain, err)
 				continue
 			}
 
@@ -175,14 +171,13 @@ func (d *deref) populateEmojis(ctx context.Context, rawEmojis []*gtsmodel.Emoji,
 				Disabled:             e.Disabled,
 				VisibleInPicker:      e.VisibleInPicker,
 			}, refresh)
-
 			if err != nil {
-				log.Errorf("populateEmojis: couldn't get remote emoji %s: %s", shortcodeDomain, err)
+				log.Errorf(ctx, "couldn't get remote emoji %s: %s", shortcodeDomain, err)
 				continue
 			}
 
 			if gotEmoji, err = processingEmoji.LoadEmoji(ctx); err != nil {
-				log.Errorf("populateEmojis: couldn't load remote emoji %s: %s", shortcodeDomain, err)
+				log.Errorf(ctx, "couldn't load remote emoji %s: %s", shortcodeDomain, err)
 				continue
 			}
 		}

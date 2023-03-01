@@ -51,6 +51,7 @@ type Statusable interface {
 	WithTypeName
 
 	WithSummary
+	WithName
 	WithInReplyTo
 	WithPublished
 	WithURL
@@ -155,6 +156,16 @@ type CollectionPageable interface {
 	WithNext
 	WithPartOf
 	WithItems
+}
+
+// Flaggable represents the minimum interface for an activitystreams 'Flag' activity.
+type Flaggable interface {
+	WithJSONLDId
+	WithTypeName
+
+	WithActor
+	WithContent
+	WithObject
 }
 
 // WithJSONLDId represents an activity with JSONLDIdProperty

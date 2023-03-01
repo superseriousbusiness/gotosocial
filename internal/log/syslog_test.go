@@ -66,14 +66,14 @@ func (suite *SyslogTestSuite) TearDownTest() {
 }
 
 func (suite *SyslogTestSuite) TestSyslog() {
-	log.Info("this is a test of the emergency broadcast system!")
+	log.Info(nil, "this is a test of the emergency broadcast system!")
 
 	entry := <-suite.syslogChannel
 	suite.Regexp(regexp.MustCompile(`timestamp=.* func=.* level=INFO msg="this is a test of the emergency broadcast system!"`), entry["content"])
 }
 
 func (suite *SyslogTestSuite) TestSyslogLongMessage() {
-	log.Warn(longMessage)
+	log.Warn(nil, longMessage)
 
 	funcName := log.Caller(2)
 	prefix := fmt.Sprintf(`timestamp="02/01/2006 15:04:05.000" func=%s level=WARN msg="`, funcName)
@@ -104,7 +104,7 @@ func (suite *SyslogTestSuite) TestSyslogLongMessageUnixgram() {
 
 	testrig.InitTestLog()
 
-	log.Warn(longMessage)
+	log.Warn(nil, longMessage)
 
 	funcName := log.Caller(2)
 	prefix := fmt.Sprintf(`timestamp="02/01/2006 15:04:05.000" func=%s level=WARN msg="`, funcName)

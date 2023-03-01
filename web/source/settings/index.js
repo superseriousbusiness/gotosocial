@@ -43,6 +43,7 @@ const nav = {
 		"Instance Settings": require("./admin/settings.js"),
 		"Actions": require("./admin/actions"),
 		"Federation": require("./admin/federation"),
+		"Reports": require("./admin/reports")
 	},
 	"Custom Emoji": {
 		adminOnly: true,
@@ -54,7 +55,7 @@ const nav = {
 const { sidebar, panelRouter } = require("./lib/get-views")(nav);
 
 function App({ account }) {
-	const isAdmin = account.role == "admin";
+	const isAdmin = account.role.name == "admin";
 	const [logoutQuery] = query.useLogoutMutation();
 
 	return (

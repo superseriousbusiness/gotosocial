@@ -45,29 +45,28 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 
 	authed, err := oauth.Authed(c, false, false, false, false)
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	username := strings.ToLower(c.Param(usernameKey))
 	if username == "" {
 		err := errors.New("no account username specified")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
-	host := config.GetHost()
-	instance, err := m.processor.InstanceGet(ctx, host)
+	instance, err := m.processor.InstanceGetV1(ctx)
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
 		return
 	}
 
-	instanceGet := func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode) {
+	instanceGet := func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode) {
 		return instance, nil
 	}
 
-	account, errWithCode := m.processor.AccountGetLocalByUsername(ctx, authed, username)
+	account, errWithCode := m.processor.Account().GetLocalByUsername(ctx, authed.Account, username)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, instanceGet)
 		return
@@ -92,21 +91,35 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		robotsMeta = robotsMetaAllowSome
 	}
 
-	// we should only show the 'back to top' button if the
-	// profile visitor is paging through statuses
-	showBackToTop := false
+	// We need to change our response slightly if the
+	// profile visitor is paging through statuses.
+	var (
+		paging      bool
+		pinnedResp  = &apimodel.PageableResponse{}
+		maxStatusID string
+	)
 
-	maxStatusID := ""
-	maxStatusIDString := c.Query(MaxStatusIDKey)
-	if maxStatusIDString != "" {
+	if maxStatusIDString := c.Query(MaxStatusIDKey); maxStatusIDString != "" {
 		maxStatusID = maxStatusIDString
-		showBackToTop = true
+		paging = true
 	}
 
-	statusResp, errWithCode := m.processor.AccountWebStatusesGet(ctx, account.ID, maxStatusID)
+	statusResp, errWithCode := m.processor.Account().WebStatusesGet(ctx, account.ID, maxStatusID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, instanceGet)
 		return
+	}
+
+	// If we're not paging, then the profile visitor
+	// is currently just opening the bare profile, so
+	// load pinned statuses so we can show them at the
+	// top of the profile.
+	if !paging {
+		pinnedResp, errWithCode = m.processor.Account().StatusesGet(ctx, authed.Account, account.ID, 0, false, false, "", "", true, false, false)
+		if errWithCode != nil {
+			apiutil.ErrorHandler(c, errWithCode, instanceGet)
+			return
+		}
 	}
 
 	stylesheets := []string{
@@ -126,7 +139,8 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		"robotsMeta":       robotsMeta,
 		"statuses":         statusResp.Items,
 		"statuses_next":    statusResp.NextLink,
-		"show_back_to_top": showBackToTop,
+		"pinned_statuses":  pinnedResp.Items,
+		"show_back_to_top": paging,
 		"stylesheets":      stylesheets,
 		"javascript":       []string{distPathPrefix + "/frontend.js"},
 	})
@@ -143,16 +157,16 @@ func (m *Module) returnAPProfile(ctx context.Context, c *gin.Context, username s
 		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeySignature, signature)
 	}
 
-	user, errWithCode := m.processor.GetFediUser(ctx, username, c.Request.URL)
+	user, errWithCode := m.processor.Fedi().UserGet(ctx, username, c.Request.URL)
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet) //nolint:contextcheck
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1) //nolint:contextcheck
 		return
 	}
 
 	b, mErr := json.Marshal(user)
 	if mErr != nil {
 		err := fmt.Errorf("could not marshal json: %s", mErr)
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet) //nolint:contextcheck
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1) //nolint:contextcheck
 		return
 	}
 

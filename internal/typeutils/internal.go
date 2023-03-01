@@ -27,11 +27,7 @@ func (c *converter) FollowRequestToFollow(ctx context.Context, f *gtsmodel.Follo
 func (c *converter) StatusToBoost(ctx context.Context, s *gtsmodel.Status, boostingAccount *gtsmodel.Account) (*gtsmodel.Status, error) {
 	// the wrapper won't use the same ID as the boosted status so we generate some new UUIDs
 	accountURIs := uris.GenerateURIsForAccount(boostingAccount.Username)
-	boostWrapperStatusID, err := id.NewULID()
-	if err != nil {
-		return nil, err
-	}
-
+	boostWrapperStatusID := id.NewULID()
 	boostWrapperStatusURI := accountURIs.StatusesURI + "/" + boostWrapperStatusID
 	boostWrapperStatusURL := accountURIs.StatusesURL + "/" + boostWrapperStatusID
 
@@ -41,7 +37,6 @@ func (c *converter) StatusToBoost(ctx context.Context, s *gtsmodel.Status, boost
 	}
 
 	sensitive := *s.Sensitive
-	pinned := false // can't pin a boost
 	federated := *s.Federated
 	boostable := *s.Boostable
 	replyable := *s.Replyable
@@ -79,7 +74,6 @@ func (c *converter) StatusToBoost(ctx context.Context, s *gtsmodel.Status, boost
 		BoostOfID:           s.ID,
 		BoostOfAccountID:    s.AccountID,
 		Visibility:          s.Visibility,
-		Pinned:              &pinned,
 		Federated:           &federated,
 		Boostable:           &boostable,
 		Replyable:           &replyable,

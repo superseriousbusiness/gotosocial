@@ -32,7 +32,7 @@ import (
 )
 
 const (
-	maximumPasswordLength         = 64
+	maximumPasswordLength         = 256
 	minimumPasswordEntropy        = 60 // dictates password strength. See https://github.com/wagslane/go-password-validator
 	minimumReasonLength           = 40
 	maximumReasonLength           = 500

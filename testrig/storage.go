@@ -24,7 +24,6 @@ import (
 	"os"
 	"path"
 
-	"codeberg.org/gruf/go-store/v2/kv"
 	"codeberg.org/gruf/go-store/v2/storage"
 	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
 )
@@ -33,7 +32,6 @@ import (
 func NewInMemoryStorage() *gtsstorage.Driver {
 	storage := storage.OpenMemory(200, false)
 	return &gtsstorage.Driver{
-		KVStore: kv.New(storage),
 		Storage: storage,
 	}
 }
@@ -95,30 +93,18 @@ func StandardStorageSetup(storage *gtsstorage.Driver, relativePath string) {
 	}
 }
 
-// StandardStorageTeardown deletes everything in storage so that it's clean for
-// the next test
-// nolint:gocritic // complains about the type switch, but it's the cleanest solution
+// StandardStorageTeardown deletes everything in storage so that it's clean for the next test.
 func StandardStorageTeardown(storage *gtsstorage.Driver) {
 	defer os.RemoveAll(path.Join(os.TempDir(), "gotosocial"))
 
-	// Open a storage iterator
-	iter, err := storage.Iterator(context.Background(), nil)
-	if err != nil {
-		panic(err)
-	}
-
 	var keys []string
 
-	for iter.Next() {
-		// Collate all of the storage keys
-		keys = append(keys, iter.Key())
-	}
-
-	// Done with iter
-	iter.Release()
+	_ = storage.WalkKeys(context.Background(), func(ctx context.Context, key string) error {
+		keys = append(keys, key)
+		return nil
+	})
 
 	for _, key := range keys {
-		// Ignore errors, we just want to attempt delete all
 		_ = storage.Delete(context.Background(), key)
 	}
 }

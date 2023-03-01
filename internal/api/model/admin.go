@@ -19,25 +19,44 @@
 package model
 
 // AdminAccountInfo models the admin view of an account's details.
+//
+// swagger:model adminAccountInfo
 type AdminAccountInfo struct {
 	// The ID of the account in the database.
+	// example: 01GQ4PHNT622DQ9X95XQX4KKNR
 	ID string `json:"id"`
 	// The username of the account.
+	// example: dril
 	Username string `json:"username"`
 	// The domain of the account.
-	Domain string `json:"domain"`
+	// Null for local accounts.
+	// example: example.org
+	Domain *string `json:"domain"`
 	// When the account was first discovered. (ISO 8601 Datetime)
+	// example: 2021-07-30T09:20:25+00:00
 	CreatedAt string `json:"created_at"`
 	// The email address associated with the account.
+	// Empty string for remote accounts or accounts with
+	// no known email address.
+	// example: someone@somewhere.com
 	Email string `json:"email"`
 	// The IP address last used to login to this account.
-	IP string `json:"ip"`
+	// Null if not known.
+	// example: 192.0.2.1
+	IP *string `json:"ip"`
+	// All known IP addresses associated with this account.
+	// NOT IMPLEMENTED (will always be empty array).
+	// example: []
+	IPs []interface{} `json:"ips"`
 	// The locale of the account. (ISO 639 Part 1 two-letter language code)
+	// example: en
 	Locale string `json:"locale"`
-	// Invite request text
-	InviteRequest string `json:"invite_request"`
+	// The reason given when requesting an invite.
+	// Null if not known / remote account.
+	// example: Pleaaaaaaaaaaaaaaase!!
+	InviteRequest *string `json:"invite_request"`
 	// The current role of the account.
-	Role string `json:"role"`
+	Role AccountRole `json:"role"`
 	// Whether the account has confirmed their email address.
 	Confirmed bool `json:"confirmed"`
 	// Whether the account is currently approved.
@@ -53,31 +72,67 @@ type AdminAccountInfo struct {
 	// The ID of the application that created this account.
 	CreatedByApplicationID string `json:"created_by_application_id,omitempty"`
 	// The ID of the account that invited this user
-	InvitedByAccountID string `json:"invited_by_account_id"`
+	InvitedByAccountID string `json:"invited_by_account_id,omitempty"`
 }
 
-// AdminReportInfo models the admin view of a report.
-type AdminReportInfo struct {
-	// The ID of the report in the database.
+// AdminReport models the admin view of a report.
+//
+// swagger:model adminReport
+type AdminReport struct {
+	// ID of the report.
+	// example: 01FBVD42CQ3ZEEVMW180SBX03B
 	ID string `json:"id"`
-	// The action taken to resolve this report.
-	ActionTaken string `json:"action_taken"`
-	// An optional reason for reporting.
+	// Whether an action has been taken by an admin in response to this report.
+	// example: false
+	ActionTaken bool `json:"action_taken"`
+	// If an action was taken, at what time was this done? (ISO 8601 Datetime)
+	// Will be null if not set / no action yet taken.
+	// example: 2021-07-30T09:20:25+00:00
+	ActionTakenAt *string `json:"action_taken_at"`
+	// Under what category was this report created?
+	// example: spam
+	Category string `json:"category"`
+	// Comment submitted when the report was created.
+	// Will be empty if no comment was submitted.
+	// example: This person has been harassing me.
 	Comment string `json:"comment"`
-	// The time the report was filed. (ISO 8601 Datetime)
+	// Bool to indicate that report should be federated to remote instance.
+	// example: true
+	Forwarded bool `json:"forwarded"`
+	// The date when this report was created (ISO 8601 Datetime).
+	// example: 2021-07-30T09:20:25+00:00
 	CreatedAt string `json:"created_at"`
-	// The time of last action on this report. (ISO 8601 Datetime)
+	// Time of last action on this report (ISO 8601 Datetime).
+	// example: 2021-07-30T09:20:25+00:00
 	UpdatedAt string `json:"updated_at"`
-	// The account which filed the report.
-	Account *Account `json:"account"`
-	// The account being reported.
-	TargetAccount *Account `json:"target_account"`
-	// The account of the moderator assigned to this report.
-	AssignedAccount *Account `json:"assigned_account"`
-	// The action taken by the moderator who handled the report.
-	ActionTakenByAccount string `json:"action_taken_by_account"`
-	// Statuses attached to the report, for context.
-	Statuses []Status `json:"statuses"`
+	// The account that created the report.
+	Account *AdminAccountInfo `json:"account"`
+	// Account that was reported.
+	TargetAccount *AdminAccountInfo `json:"target_account"`
+	// The account assigned to handle the report.
+	// Null if no account assigned.
+	AssignedAccount *AdminAccountInfo `json:"assigned_account"`
+	// Account that took admin action (if any).
+	// Null if no action (yet) taken.
+	ActionTakenByAccount *AdminAccountInfo `json:"action_taken_by_account"`
+	// Array of  statuses that were submitted along with this report.
+	// Will be empty if no status IDs were submitted with the report.
+	Statuses []*Status `json:"statuses"`
+	// Array of rule IDs that were submitted along with this report.
+	// NOT IMPLEMENTED, will always be empty array.
+	Rules []interface{} `json:"rule_ids"`
+	// If an action was taken, what comment was made by the admin on the taken action?
+	// Will be null if not set / no action yet taken.
+	// example: Account was suspended.
+	ActionTakenComment *string `json:"action_taken_comment"`
+}
+
+// AdminReportResolveRequest can be submitted along with a POST to /api/v1/admin/reports/{id}/resolve
+//
+// swagger:ignore
+type AdminReportResolveRequest struct {
+	// Comment to show to the creator of the report when an admin marks it as resolved.
+	ActionTakenComment *string `form:"action_taken_comment" json:"action_taken_comment" xml:"action_taken_comment"`
 }
 
 // AdminEmoji models the admin view of a custom emoji.

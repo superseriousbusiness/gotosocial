@@ -24,6 +24,12 @@ instance-expose-peers: false
 # Default: false
 instance-expose-suspended: false
 
+# Bool. Allow unauthenticated users to view /about/suspended,
+# showing the HTML rendered list of instances that this instance blocks/suspends.
+# Options: [true, false]
+# Default: false
+instance-expose-suspended-web: false
+
 # Bool. Allow unauthenticated users to make queries to /api/v1/timelines/public in order
 # to see a list of public posts on this server. Even if set to 'false', then authenticated
 # users (members of the instance) will still be able to query the endpoint.

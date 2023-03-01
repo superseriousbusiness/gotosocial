@@ -130,35 +130,35 @@ import (
 func (m *Module) InstanceUpdatePATCHHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	if !*authed.User.Admin {
 		err := errors.New("user is not an admin so cannot update instance settings")
-		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	form := &apimodel.InstanceSettingsUpdateRequest{}
 	if err := c.ShouldBind(&form); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	if err := validateInstanceUpdate(form); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	i, errWithCode := m.processor.InstancePatch(c.Request.Context(), form)
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -178,19 +178,17 @@ func validateInstanceUpdate(form *apimodel.InstanceSettingsUpdateRequest) error 
 		return errors.New("empty form submitted")
 	}
 
-	maxImageSize := config.GetMediaImageMaxSize()
-	maxDescriptionChars := config.GetMediaDescriptionMaxChars()
-
-	// validate avatar if present
 	if form.Avatar != nil {
+		maxImageSize := config.GetMediaImageMaxSize()
 		if size := form.Avatar.Size; size > int64(maxImageSize) {
 			return fmt.Errorf("file size limit exceeded: limit is %d bytes but desired instance avatar was %d bytes", maxImageSize, size)
 		}
+	}
 
-		if form.AvatarDescription != nil {
-			if length := len([]rune(*form.AvatarDescription)); length > maxDescriptionChars {
-				return fmt.Errorf("avatar description length must be less than %d characters (inclusive), but provided avatar description was %d chars", maxDescriptionChars, length)
-			}
+	if form.AvatarDescription != nil {
+		maxDescriptionChars := config.GetMediaDescriptionMaxChars()
+		if length := len([]rune(*form.AvatarDescription)); length > maxDescriptionChars {
+			return fmt.Errorf("avatar description length must be less than %d characters (inclusive), but provided avatar description was %d chars", maxDescriptionChars, length)
 		}
 	}
 

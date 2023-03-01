@@ -46,7 +46,6 @@ type Account struct {
 	StatusContentType     string          `json:"statusContentType,omitempty" bun:",nullzero"`
 	URI                   string          `json:"uri" bun:",nullzero"`
 	URL                   string          `json:"url" bun:",nullzero"`
-	LastWebfingeredAt     *time.Time      `json:"lastWebfingeredAt,omitempty" bun:",nullzero"`
 	InboxURI              string          `json:"inboxURI" bun:",nullzero"`
 	OutboxURI             string          `json:"outboxURI" bun:",nullzero"`
 	FollowingURI          string          `json:"followingUri" bun:",nullzero"`

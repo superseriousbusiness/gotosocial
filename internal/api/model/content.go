@@ -20,8 +20,9 @@ package model
 
 import (
 	"io"
-	"net/url"
 	"time"
+
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
 // Content wraps everything needed to serve a blob of content (some kind of media) through the API.
@@ -35,7 +36,7 @@ type Content struct {
 	// Actual content
 	Content io.ReadCloser
 	// Resource URL to forward to if the file can be fetched from the storage directly (e.g signed S3 URL)
-	URL *url.URL
+	URL *storage.PresignedURL
 }
 
 // GetContentRequestForm describes a piece of content desired by the caller of the fileserver API.

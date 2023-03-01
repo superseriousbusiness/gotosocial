@@ -34,8 +34,6 @@ module.exports = function Authorization({ App }) {
 		skip: loginState == "none" || loginState == "logout" || expectingRedirect
 	});
 
-	console.log("skip verify:", loginState, expectingRedirect);
-
 	let showLogin = true;
 	let content = null;
 

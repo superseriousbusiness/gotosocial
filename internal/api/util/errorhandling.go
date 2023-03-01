@@ -25,9 +25,9 @@ import (
 	"codeberg.org/gruf/go-kv"
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 )
 
 // TODO: add more templated html pages here for different error types
@@ -41,39 +41,43 @@ import (
 // 404 header and footer.
 //
 // If an error is returned by InstanceGet, the function will panic.
-func NotFoundHandler(c *gin.Context, instanceGet func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode), accept string) {
+func NotFoundHandler(c *gin.Context, instanceGet func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode), accept string) {
 	switch accept {
 	case string(TextHTML):
-		host := config.GetHost()
-		instance, err := instanceGet(c.Request.Context(), host)
+		ctx := c.Request.Context()
+		instance, err := instanceGet(ctx)
 		if err != nil {
 			panic(err)
 		}
 
 		c.HTML(http.StatusNotFound, "404.tmpl", gin.H{
-			"instance": instance,
+			"instance":  instance,
+			"requestID": middleware.RequestID(ctx),
 		})
 	default:
-		c.JSON(http.StatusNotFound, gin.H{"error": http.StatusText(http.StatusNotFound)})
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": http.StatusText(http.StatusNotFound),
+		})
 	}
 }
 
 // genericErrorHandler is a more general version of the NotFoundHandler, which can
 // be used for serving either generic error pages with some rendered help text,
 // or just some error json if the caller prefers (or has no preference).
-func genericErrorHandler(c *gin.Context, instanceGet func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode), accept string, errWithCode gtserror.WithCode) {
+func genericErrorHandler(c *gin.Context, instanceGet func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode), accept string, errWithCode gtserror.WithCode) {
 	switch accept {
 	case string(TextHTML):
-		host := config.GetHost()
-		instance, err := instanceGet(c.Request.Context(), host)
+		ctx := c.Request.Context()
+		instance, err := instanceGet(ctx)
 		if err != nil {
 			panic(err)
 		}
 
 		c.HTML(errWithCode.Code(), "error.tmpl", gin.H{
-			"instance": instance,
-			"code":     errWithCode.Code(),
-			"error":    errWithCode.Safe(),
+			"instance":  instance,
+			"code":      errWithCode.Code(),
+			"error":     errWithCode.Safe(),
+			"requestID": middleware.RequestID(ctx),
 		})
 	default:
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
@@ -85,7 +89,7 @@ func genericErrorHandler(c *gin.Context, instanceGet func(ctx context.Context, d
 // the caller prefers to see an html page with the error rendered there. If not, or
 // if something goes wrong during the function, it will recover and just try to serve
 // an appropriate application/json content-type error.
-func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode)) {
+func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode)) {
 	// set the error on the gin context so that it can be logged
 	// in the gin logger middleware (internal/router/logger.go)
 	c.Error(errWithCode) //nolint:errcheck
@@ -111,11 +115,12 @@ func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet fun
 // to pass any detailed errors (that might contain sensitive information) into the
 // errWithCode.Error() field, since the client will see this. Use your noggin!
 func OAuthErrorHandler(c *gin.Context, errWithCode gtserror.WithCode) {
-	l := log.WithFields(kv.Fields{
-		{"path", c.Request.URL.Path},
-		{"error", errWithCode.Error()},
-		{"help", errWithCode.Safe()},
-	}...)
+	l := log.WithContext(c.Request.Context()).
+		WithFields(kv.Fields{
+			{"path", c.Request.URL.Path},
+			{"error", errWithCode.Error()},
+			{"help", errWithCode.Safe()},
+		}...)
 
 	statusCode := errWithCode.Code()
 

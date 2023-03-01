@@ -23,12 +23,10 @@ import (
 	"net/url"
 
 	"github.com/superseriousbusiness/activity/pub"
-	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -53,20 +51,9 @@ type Federator interface {
 	// If something goes wrong during authentication, nil, false, and an error will be returned.
 	AuthenticateFederatedRequest(ctx context.Context, username string) (*url.URL, gtserror.WithCode)
 
-	/*
-		dereferencing functions
-	*/
-	DereferenceRemoteThread(ctx context.Context, username string, statusURI *url.URL, status *gtsmodel.Status, statusable ap.Statusable)
-	DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) error
-	GetAccount(ctx context.Context, params dereferencing.GetAccountParams) (*gtsmodel.Account, error)
-	GetStatus(ctx context.Context, username string, remoteStatusID *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, error)
-	EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status, includeParent bool) (*gtsmodel.Status, error)
-	GetRemoteInstance(ctx context.Context, username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
-
-	// Handshaking returns true if the given username is currently in the process of dereferencing the remoteAccountID.
-	Handshaking(ctx context.Context, username string, remoteAccountID *url.URL) bool
 	pub.CommonBehavior
 	pub.FederatingProtocol
+	dereferencing.Dereferencer
 }
 
 type federator struct {
@@ -75,9 +62,9 @@ type federator struct {
 	clock               pub.Clock
 	typeConverter       typeutils.TypeConverter
 	transportController transport.Controller
-	dereferencer        dereferencing.Dereferencer
 	mediaManager        media.Manager
 	actor               pub.FederatingActor
+	dereferencing.Dereferencer
 }
 
 // NewFederator returns a new federator
@@ -91,8 +78,8 @@ func NewFederator(db db.DB, federatingDB federatingdb.DB, transportController tr
 		clock:               &Clock{},
 		typeConverter:       typeConverter,
 		transportController: transportController,
-		dereferencer:        dereferencer,
 		mediaManager:        mediaManager,
+		Dereferencer:        dereferencer,
 	}
 	actor := newFederatingActor(f, f, federatingDB, clock)
 	f.actor = actor

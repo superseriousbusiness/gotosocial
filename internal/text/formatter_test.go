@@ -19,9 +19,13 @@
 package text_test
 
 import (
+	"context"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -29,7 +33,8 @@ import (
 type TextStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
-	db db.DB
+	db           db.DB
+	parseMention gtsmodel.ParseMentionFunc
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
@@ -41,6 +46,7 @@ type TextStandardTestSuite struct {
 	testStatuses     map[string]*gtsmodel.Status
 	testTags         map[string]*gtsmodel.Tag
 	testMentions     map[string]*gtsmodel.Mention
+	testEmojis       map[string]*gtsmodel.Emoji
 
 	// module being tested
 	formatter text.Formatter
@@ -56,6 +62,7 @@ func (suite *TextStandardTestSuite) SetupSuite() {
 	suite.testStatuses = testrig.NewTestStatuses()
 	suite.testTags = testrig.NewTestTags()
 	suite.testMentions = testrig.NewTestMentions()
+	suite.testEmojis = testrig.NewTestEmojis()
 }
 
 func (suite *TextStandardTestSuite) SetupTest() {
@@ -63,6 +70,11 @@ func (suite *TextStandardTestSuite) SetupTest() {
 	testrig.InitTestConfig()
 
 	suite.db = testrig.NewTestDB()
+
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+	federator := testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../testrig/media"), suite.db, fedWorker), nil, nil, fedWorker)
+	suite.parseMention = processing.GetParseMentionFunc(suite.db, federator)
+
 	suite.formatter = text.NewFormatter(suite.db)
 
 	testrig.StandardDBSetup(suite.db, nil)
@@ -70,4 +82,12 @@ func (suite *TextStandardTestSuite) SetupTest() {
 
 func (suite *TextStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
+}
+
+func (suite *TextStandardTestSuite) FromMarkdown(text string) *text.FormatResult {
+	return suite.formatter.FromMarkdown(context.Background(), suite.parseMention, suite.testAccounts["local_account_1"].ID, "status_ID", text)
+}
+
+func (suite *TextStandardTestSuite) FromPlain(text string) *text.FormatResult {
+	return suite.formatter.FromPlain(context.Background(), suite.parseMention, suite.testAccounts["local_account_1"].ID, "status_ID", text)
 }

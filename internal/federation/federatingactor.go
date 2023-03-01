@@ -56,7 +56,7 @@ func newFederatingActor(c pub.CommonBehavior, s2s pub.FederatingProtocol, db pub
 // method will guaranteed work for non-custom Actors. For custom actors,
 // care should be used to not call this method if only C2S is supported.
 func (f *federatingActor) Send(c context.Context, outbox *url.URL, t vocab.Type) (pub.Activity, error) {
-	log.Infof("federating actor: send activity %s via outbox %s", t.GetTypeName(), outbox)
+	log.Infof(c, "send activity %s via outbox %s", t.GetTypeName(), outbox)
 	return f.actor.Send(c, outbox, t)
 }
 

@@ -28,19 +28,26 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
-func (p *processor) InstanceGet(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode) {
+func (p *Processor) getThisInstance(ctx context.Context) (*gtsmodel.Instance, error) {
 	i := &gtsmodel.Instance{}
-	if err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: domain}}, i); err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance %s: %s", domain, err))
+	if err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: config.GetHost()}}, i); err != nil {
+		return nil, err
+	}
+	return i, nil
+}
+
+func (p *Processor) InstanceGetV1(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode) {
+	i, err := p.getThisInstance(ctx)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance: %s", err))
 	}
 
-	ai, err := p.tc.InstanceToAPIInstance(ctx, i)
+	ai, err := p.tc.InstanceToAPIV1Instance(ctx, i)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting instance to api representation: %s", err))
 	}
@@ -48,15 +55,24 @@ func (p *processor) InstanceGet(ctx context.Context, domain string) (*apimodel.I
 	return ai, nil
 }
 
-func (p *processor) InstancePeersGet(ctx context.Context, authed *oauth.Auth, includeSuspended bool, includeOpen bool, flat bool) (interface{}, gtserror.WithCode) {
+func (p *Processor) InstanceGetV2(ctx context.Context) (*apimodel.InstanceV2, gtserror.WithCode) {
+	i, err := p.getThisInstance(ctx)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance: %s", err))
+	}
+
+	ai, err := p.tc.InstanceToAPIV2Instance(ctx, i)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting instance to api representation: %s", err))
+	}
+
+	return ai, nil
+}
+
+func (p *Processor) InstancePeersGet(ctx context.Context, includeSuspended bool, includeOpen bool, flat bool) (interface{}, gtserror.WithCode) {
 	domains := []*apimodel.Domain{}
 
 	if includeOpen {
-		if !config.GetInstanceExposePeers() && (authed.Account == nil || authed.User == nil) {
-			err := fmt.Errorf("peers open query requires an authenticated account/user")
-			return nil, gtserror.NewErrorUnauthorized(err, err.Error())
-		}
-
 		instances, err := p.db.GetInstancePeers(ctx, false)
 		if err != nil && err != db.ErrNoEntries {
 			err = fmt.Errorf("error selecting instance peers: %s", err)
@@ -70,11 +86,6 @@ func (p *processor) InstancePeersGet(ctx context.Context, authed *oauth.Auth, in
 	}
 
 	if includeSuspended {
-		if !config.GetInstanceExposeSuspended() && (authed.Account == nil || authed.User == nil) {
-			err := fmt.Errorf("peers suspended query requires an authenticated account/user")
-			return nil, gtserror.NewErrorUnauthorized(err, err.Error())
-		}
-
 		domainBlocks := []*gtsmodel.DomainBlock{}
 		if err := p.db.GetAll(ctx, &domainBlocks); err != nil && err != db.ErrNoEntries {
 			return nil, gtserror.NewErrorInternalError(err)
@@ -109,7 +120,7 @@ func (p *processor) InstancePeersGet(ctx context.Context, authed *oauth.Auth, in
 	return domains, nil
 }
 
-func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.Instance, gtserror.WithCode) {
+func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.InstanceV1, gtserror.WithCode) {
 	// fetch the instance entry from the db for processing
 	i := &gtsmodel.Instance{}
 	host := config.GetHost()
@@ -210,20 +221,26 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 
 	var updateInstanceAccount bool
 
-	// process instance avatar if provided
 	if form.Avatar != nil && form.Avatar.Size != 0 {
-		avatarInfo, err := p.accountProcessor.UpdateAvatar(ctx, form.Avatar, form.AvatarDescription, ia.ID)
+		// process instance avatar image + description
+		avatarInfo, err := p.account.UpdateAvatar(ctx, form.Avatar, form.AvatarDescription, ia.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, "error processing avatar")
 		}
 		ia.AvatarMediaAttachmentID = avatarInfo.ID
 		ia.AvatarMediaAttachment = avatarInfo
 		updateInstanceAccount = true
+	} else if form.AvatarDescription != nil && ia.AvatarMediaAttachment != nil {
+		// process just the description for the existing avatar
+		ia.AvatarMediaAttachment.Description = *form.AvatarDescription
+		if err := p.db.UpdateByID(ctx, ia.AvatarMediaAttachment, ia.AvatarMediaAttachmentID, "description"); err != nil {
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error updating instance avatar description: %s", err))
+		}
 	}
 
-	// process instance header if provided
 	if form.Header != nil && form.Header.Size != 0 {
-		headerInfo, err := p.accountProcessor.UpdateHeader(ctx, form.Header, nil, ia.ID)
+		// process instance header image
+		headerInfo, err := p.account.UpdateHeader(ctx, form.Header, nil, ia.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, "error processing header")
 		}
@@ -246,7 +263,7 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 		}
 	}
 
-	ai, err := p.tc.InstanceToAPIInstance(ctx, i)
+	ai, err := p.tc.InstanceToAPIV1Instance(ctx, i)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting instance to api representation: %s", err))
 	}

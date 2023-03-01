@@ -29,7 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (p *processor) FollowRequestsGet(ctx context.Context, auth *oauth.Auth) ([]apimodel.Account, gtserror.WithCode) {
+func (p *Processor) FollowRequestsGet(ctx context.Context, auth *oauth.Auth) ([]apimodel.Account, gtserror.WithCode) {
 	frs, err := p.db.GetAccountFollowRequests(ctx, auth.Account.ID)
 	if err != nil {
 		if err != db.ErrNoEntries {
@@ -56,7 +56,7 @@ func (p *processor) FollowRequestsGet(ctx context.Context, auth *oauth.Auth) ([]
 	return accts, nil
 }
 
-func (p *processor) FollowRequestAccept(ctx context.Context, auth *oauth.Auth, accountID string) (*apimodel.Relationship, gtserror.WithCode) {
+func (p *Processor) FollowRequestAccept(ctx context.Context, auth *oauth.Auth, accountID string) (*apimodel.Relationship, gtserror.WithCode) {
 	follow, err := p.db.AcceptFollowRequest(ctx, accountID, auth.Account.ID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(err)
@@ -99,7 +99,7 @@ func (p *processor) FollowRequestAccept(ctx context.Context, auth *oauth.Auth, a
 	return r, nil
 }
 
-func (p *processor) FollowRequestReject(ctx context.Context, auth *oauth.Auth, accountID string) (*apimodel.Relationship, gtserror.WithCode) {
+func (p *Processor) FollowRequestReject(ctx context.Context, auth *oauth.Auth, accountID string) (*apimodel.Relationship, gtserror.WithCode) {
 	followRequest, err := p.db.RejectFollowRequest(ctx, accountID, auth.Account.ID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(err)

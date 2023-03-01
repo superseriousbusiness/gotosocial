@@ -49,14 +49,17 @@ module.exports = function AdminSettings() {
 
 function AdminSettingsForm({ data: instance }) {
 	const form = {
-		title: useTextInput("title", { defaultValue: instance.title }),
+		title: useTextInput("title", {
+			source: instance,
+			validator: (val) => val.length <= 40 ? "" : "Instance title must be 40 characters or less"
+		}),
 		thumbnail: useFileInput("thumbnail", { withPreview: true }),
-		thumbnailDesc: useTextInput("thumbnail_description", { defaultValue: instance.thumbnail_description }),
-		shortDesc: useTextInput("short_description", { defaultValue: instance.short_description }),
-		description: useTextInput("description", { defaultValue: instance.description }),
-		contactUser: useTextInput("contact_username", { defaultValue: instance.contact_account?.username }),
-		contactEmail: useTextInput("contact_email", { defaultValue: instance.email }),
-		terms: useTextInput("terms", { defaultValue: instance.terms })
+		thumbnailDesc: useTextInput("thumbnail_description", { source: instance }),
+		shortDesc: useTextInput("short_description", { source: instance }),
+		description: useTextInput("description", { source: instance }),
+		contactUser: useTextInput("contact_username", { source: instance, valueSelector: (s) => s.contact_account?.username }),
+		contactEmail: useTextInput("contact_email", { source: instance, valueSelector: (s) => s.email }),
+		terms: useTextInput("terms", { source: instance })
 	};
 
 	const [submitForm, result] = useFormSubmit(form, query.useUpdateInstanceMutation());

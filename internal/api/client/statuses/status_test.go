@@ -42,7 +42,7 @@ type StatusStandardTestSuite struct {
 	mediaManager media.Manager
 	federator    federation.Federator
 	emailSender  email.Sender
-	processor    processing.Processor
+	processor    *processing.Processor
 	storage      *storage.Driver
 
 	// standard suite models

@@ -17,12 +17,3 @@
 */
 
 package federation
-
-import (
-	"context"
-	"net/url"
-)
-
-func (f *federator) Handshaking(ctx context.Context, username string, remoteAccountID *url.URL) bool {
-	return f.dereferencer.Handshaking(ctx, username, remoteAccountID)
-}

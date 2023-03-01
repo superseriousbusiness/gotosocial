@@ -57,7 +57,7 @@ type ogMeta struct {
 // the base root of an instance. It also serves as a
 // foundation for building account / status ogMeta on
 // top of.
-func ogBase(instance *apimodel.Instance) *ogMeta {
+func ogBase(instance *apimodel.InstanceV1) *ogMeta {
 	var locale string
 	if len(instance.Languages) > 0 {
 		locale = instance.Languages[0]
@@ -134,11 +134,11 @@ func parseTitle(account *apimodel.Account, accountDomain string) string {
 // parseDescription returns a string description which is
 // safe to use as a template.HTMLAttr inside templates.
 func parseDescription(in string) string {
-	i := html.UnescapeString(in)
-	i = text.SanitizePlaintext(i)
-	i = strings.ReplaceAll(i, "\"", "'")
-	i = strings.ReplaceAll(i, `\`, "")
+	i := text.SanitizePlaintext(in)
 	i = strings.ReplaceAll(i, "\n", " ")
+	i = strings.Join(strings.Fields(i), " ")
+	i = html.EscapeString(i)
+	i = strings.ReplaceAll(i, `\`, "&bsol;")
 	i = trim(i, maxOGDescriptionLength)
 	return `content="` + i + `"`
 }

@@ -524,6 +524,31 @@ func GetDbTLSCACert() string { return global.GetDbTLSCACert() }
 // SetDbTLSCACert safely sets the value for global configuration 'DbTLSCACert' field
 func SetDbTLSCACert(v string) { global.SetDbTLSCACert(v) }
 
+// GetDbMaxOpenConnsMultiplier safely fetches the Configuration value for state's 'DbMaxOpenConnsMultiplier' field
+func (st *ConfigState) GetDbMaxOpenConnsMultiplier() (v int) {
+	st.mutex.Lock()
+	v = st.config.DbMaxOpenConnsMultiplier
+	st.mutex.Unlock()
+	return
+}
+
+// SetDbMaxOpenConnsMultiplier safely sets the Configuration value for state's 'DbMaxOpenConnsMultiplier' field
+func (st *ConfigState) SetDbMaxOpenConnsMultiplier(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.DbMaxOpenConnsMultiplier = v
+	st.reloadToViper()
+}
+
+// DbMaxOpenConnsMultiplierFlag returns the flag name for the 'DbMaxOpenConnsMultiplier' field
+func DbMaxOpenConnsMultiplierFlag() string { return "db-max-open-conns-multiplier" }
+
+// GetDbMaxOpenConnsMultiplier safely fetches the value for global configuration 'DbMaxOpenConnsMultiplier' field
+func GetDbMaxOpenConnsMultiplier() int { return global.GetDbMaxOpenConnsMultiplier() }
+
+// SetDbMaxOpenConnsMultiplier safely sets the value for global configuration 'DbMaxOpenConnsMultiplier' field
+func SetDbMaxOpenConnsMultiplier(v int) { global.SetDbMaxOpenConnsMultiplier(v) }
+
 // GetDbSqliteJournalMode safely fetches the Configuration value for state's 'DbSqliteJournalMode' field
 func (st *ConfigState) GetDbSqliteJournalMode() (v string) {
 	st.mutex.Lock()
@@ -723,6 +748,31 @@ func GetInstanceExposeSuspended() bool { return global.GetInstanceExposeSuspende
 
 // SetInstanceExposeSuspended safely sets the value for global configuration 'InstanceExposeSuspended' field
 func SetInstanceExposeSuspended(v bool) { global.SetInstanceExposeSuspended(v) }
+
+// GetInstanceExposeSuspendedWeb safely fetches the Configuration value for state's 'InstanceExposeSuspendedWeb' field
+func (st *ConfigState) GetInstanceExposeSuspendedWeb() (v bool) {
+	st.mutex.Lock()
+	v = st.config.InstanceExposeSuspendedWeb
+	st.mutex.Unlock()
+	return
+}
+
+// SetInstanceExposeSuspendedWeb safely sets the Configuration value for state's 'InstanceExposeSuspendedWeb' field
+func (st *ConfigState) SetInstanceExposeSuspendedWeb(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceExposeSuspendedWeb = v
+	st.reloadToViper()
+}
+
+// InstanceExposeSuspendedWebFlag returns the flag name for the 'InstanceExposeSuspendedWeb' field
+func InstanceExposeSuspendedWebFlag() string { return "instance-expose-suspended-web" }
+
+// GetInstanceExposeSuspendedWeb safely fetches the value for global configuration 'InstanceExposeSuspendedWeb' field
+func GetInstanceExposeSuspendedWeb() bool { return global.GetInstanceExposeSuspendedWeb() }
+
+// SetInstanceExposeSuspendedWeb safely sets the value for global configuration 'InstanceExposeSuspendedWeb' field
+func SetInstanceExposeSuspendedWeb(v bool) { global.SetInstanceExposeSuspendedWeb(v) }
 
 // GetInstanceExposePublicTimeline safely fetches the Configuration value for state's 'InstanceExposePublicTimeline' field
 func (st *ConfigState) GetInstanceExposePublicTimeline() (v bool) {
@@ -1674,6 +1724,31 @@ func GetOIDCLinkExisting() bool { return global.GetOIDCLinkExisting() }
 // SetOIDCLinkExisting safely sets the value for global configuration 'OIDCLinkExisting' field
 func SetOIDCLinkExisting(v bool) { global.SetOIDCLinkExisting(v) }
 
+// GetOIDCAdminGroups safely fetches the Configuration value for state's 'OIDCAdminGroups' field
+func (st *ConfigState) GetOIDCAdminGroups() (v []string) {
+	st.mutex.Lock()
+	v = st.config.OIDCAdminGroups
+	st.mutex.Unlock()
+	return
+}
+
+// SetOIDCAdminGroups safely sets the Configuration value for state's 'OIDCAdminGroups' field
+func (st *ConfigState) SetOIDCAdminGroups(v []string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.OIDCAdminGroups = v
+	st.reloadToViper()
+}
+
+// OIDCAdminGroupsFlag returns the flag name for the 'OIDCAdminGroups' field
+func OIDCAdminGroupsFlag() string { return "oidc-admin-groups" }
+
+// GetOIDCAdminGroups safely fetches the value for global configuration 'OIDCAdminGroups' field
+func GetOIDCAdminGroups() []string { return global.GetOIDCAdminGroups() }
+
+// SetOIDCAdminGroups safely sets the value for global configuration 'OIDCAdminGroups' field
+func SetOIDCAdminGroups(v []string) { global.SetOIDCAdminGroups(v) }
+
 // GetSMTPHost safely fetches the Configuration value for state's 'SMTPHost' field
 func (st *ConfigState) GetSMTPHost() (v string) {
 	st.mutex.Lock()
@@ -1948,6 +2023,31 @@ func GetAdvancedThrottlingMultiplier() int { return global.GetAdvancedThrottling
 
 // SetAdvancedThrottlingMultiplier safely sets the value for global configuration 'AdvancedThrottlingMultiplier' field
 func SetAdvancedThrottlingMultiplier(v int) { global.SetAdvancedThrottlingMultiplier(v) }
+
+// GetAdvancedThrottlingRetryAfter safely fetches the Configuration value for state's 'AdvancedThrottlingRetryAfter' field
+func (st *ConfigState) GetAdvancedThrottlingRetryAfter() (v time.Duration) {
+	st.mutex.Lock()
+	v = st.config.AdvancedThrottlingRetryAfter
+	st.mutex.Unlock()
+	return
+}
+
+// SetAdvancedThrottlingRetryAfter safely sets the Configuration value for state's 'AdvancedThrottlingRetryAfter' field
+func (st *ConfigState) SetAdvancedThrottlingRetryAfter(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.AdvancedThrottlingRetryAfter = v
+	st.reloadToViper()
+}
+
+// AdvancedThrottlingRetryAfterFlag returns the flag name for the 'AdvancedThrottlingRetryAfter' field
+func AdvancedThrottlingRetryAfterFlag() string { return "advanced-throttling-retry-after" }
+
+// GetAdvancedThrottlingRetryAfter safely fetches the value for global configuration 'AdvancedThrottlingRetryAfter' field
+func GetAdvancedThrottlingRetryAfter() time.Duration { return global.GetAdvancedThrottlingRetryAfter() }
+
+// SetAdvancedThrottlingRetryAfter safely sets the value for global configuration 'AdvancedThrottlingRetryAfter' field
+func SetAdvancedThrottlingRetryAfter(v time.Duration) { global.SetAdvancedThrottlingRetryAfter(v) }
 
 // GetCacheGTSAccountMaxSize safely fetches the Configuration value for state's 'Cache.GTS.AccountMaxSize' field
 func (st *ConfigState) GetCacheGTSAccountMaxSize() (v int) {
@@ -2902,3 +3002,28 @@ func GetAdminMediaPruneDryRun() bool { return global.GetAdminMediaPruneDryRun() 
 
 // SetAdminMediaPruneDryRun safely sets the value for global configuration 'AdminMediaPruneDryRun' field
 func SetAdminMediaPruneDryRun(v bool) { global.SetAdminMediaPruneDryRun(v) }
+
+// GetRequestIDHeader safely fetches the Configuration value for state's 'RequestIDHeader' field
+func (st *ConfigState) GetRequestIDHeader() (v string) {
+	st.mutex.Lock()
+	v = st.config.RequestIDHeader
+	st.mutex.Unlock()
+	return
+}
+
+// SetRequestIDHeader safely sets the Configuration value for state's 'RequestIDHeader' field
+func (st *ConfigState) SetRequestIDHeader(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.RequestIDHeader = v
+	st.reloadToViper()
+}
+
+// RequestIDHeaderFlag returns the flag name for the 'RequestIDHeader' field
+func RequestIDHeaderFlag() string { return "request-id-header" }
+
+// GetRequestIDHeader safely fetches the value for global configuration 'RequestIDHeader' field
+func GetRequestIDHeader() string { return global.GetRequestIDHeader() }
+
+// SetRequestIDHeader safely sets the value for global configuration 'RequestIDHeader' field
+func SetRequestIDHeader(v string) { global.SetRequestIDHeader(v) }

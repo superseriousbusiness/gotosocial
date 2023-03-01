@@ -20,48 +20,108 @@
 
 const React = require("react");
 const { Link } = require("wouter");
+const syncpipe = require("syncpipe");
+const { matchSorter } = require("match-sorter");
 
 const NewEmojiForm = require("./new-emoji");
+const { useTextInput } = require("../../../lib/form");
 
 const query = require("../../../lib/query");
 const { useEmojiByCategory } = require("../category-select");
+
 const Loading = require("../../../components/loading");
+const { Error } = require("../../../components/error");
+const { TextInput } = require("../../../components/form/inputs");
 
 module.exports = function EmojiOverview({ baseUrl }) {
 	const {
 		data: emoji = [],
 		isLoading,
+		isError,
 		error
 	} = query.useListEmojiQuery({ filter: "domain:local" });
 
+	let content = null;
+
+	if (isLoading) {
+		content = <Loading />;
+	} else if (isError) {
+		content = <Error error={error} />;
+	} else {
+		content = (
+			<>
+				<EmojiList emoji={emoji} baseUrl={baseUrl} />
+				<NewEmojiForm emoji={emoji} />
+			</>
+		);
+	}
+
 	return (
 		<>
-			<h1>Custom Emoji (local)</h1>
-			{error &&
-				<div className="error accent">{error}</div>
-			}
-			{isLoading
-				? <Loading />
-				: <>
-					<EmojiList emoji={emoji} baseUrl={baseUrl} />
-					<NewEmojiForm emoji={emoji} />
-				</>
-			}
+			<h1>Local Custom Emoji</h1>
+			<p>
+				To use custom emoji in your toots they have to be 'local' to the instance.
+				You can either upload them here directly, or copy from those already
+				present on other (known) instances through the <Link to={`../remote`}>Remote Emoji</Link> page.
+			</p>
+			{content}
 		</>
 	);
 };
 
 function EmojiList({ emoji, baseUrl }) {
+	const filterField = useTextInput("filter");
+	const filter = filterField.value;
+
 	const emojiByCategory = useEmojiByCategory(emoji);
+
+	/* Filter emoji based on shortcode match with user input, hiding empty categories */
+	const { filteredEmoji, hidden } = React.useMemo(() => {
+		let hidden = emoji.length;
+		const filteredEmoji = syncpipe(emojiByCategory, [
+			(_) => Object.entries(emojiByCategory),
+			(_) => _.map(([category, entries]) => {
+				let filteredEntries = matchSorter(entries, filter, { keys: ["shortcode"] });
+				if (filteredEntries.length == 0) {
+					return null;
+				} else {
+					hidden -= filteredEntries.length;
+					return [category, filteredEntries];
+				}
+			}),
+			(_) => _.filter((value) => value !== null)
+		]);
+
+		return { filteredEmoji, hidden };
+	}, [filter, emojiByCategory, emoji.length]);
 
 	return (
 		<div>
 			<h2>Overview</h2>
+			{emoji.length > 0
+				? <span>{emoji.length} custom emoji {hidden > 0 && `(${hidden} filtered)`}</span>
+				: <span>No custom emoji yet, you can add one below.</span>
+			}
 			<div className="list emoji-list">
-				{emoji.length == 0 && "No local emoji yet, add one below"}
-				{Object.entries(emojiByCategory).map(([category, entries]) => {
-					return <EmojiCategory key={category} category={category} entries={entries} baseUrl={baseUrl} />;
-				})}
+				<div className="header">
+					<TextInput
+						field={filterField}
+						name="emoji-shortcode"
+						placeholder="Search"
+					/>
+				</div>
+				<div className="entries scrolling">
+					{filteredEmoji.length > 0
+						? (
+							<div className="entries scrolling">
+								{filteredEmoji.map(([category, entries]) => {
+									return <EmojiCategory key={category} category={category} entries={entries} baseUrl={baseUrl} />;
+								})}
+							</div>
+						)
+						: <div className="entry">No local emoji matched your filter.</div>
+					}
+				</div>
 			</div>
 		</div>
 	);

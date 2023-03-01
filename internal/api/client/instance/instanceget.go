@@ -22,13 +22,12 @@ import (
 	"net/http"
 
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 
 	"github.com/gin-gonic/gin"
 )
 
-// InstanceInformationGETHandler swagger:operation GET /api/v1/instance instanceGet
+// InstanceInformationV1GETHandlerV1 swagger:operation GET /api/v1/instance instanceGetV1
 //
 // View instance information.
 //
@@ -43,20 +42,55 @@ import (
 //		'200':
 //			description: "Instance information."
 //			schema:
-//				"$ref": "#/definitions/instance"
+//				"$ref": "#/definitions/instanceV1"
 //		'406':
 //			description: not acceptable
 //		'500':
 //			description: internal error
-func (m *Module) InstanceInformationGETHandler(c *gin.Context) {
+func (m *Module) InstanceInformationGETHandlerV1(c *gin.Context) {
 	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
-	instance, errWithCode := m.processor.InstanceGet(c.Request.Context(), config.GetHost())
+	instance, errWithCode := m.processor.InstanceGetV1(c.Request.Context())
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	c.JSON(http.StatusOK, instance)
+}
+
+// InstanceInformationGETHandlerV2 swagger:operation GET /api/v2/instance instanceGetV2
+//
+// View instance information.
+//
+//	---
+//	tags:
+//	- instance
+//
+//	produces:
+//	- application/json
+//
+//	responses:
+//		'200':
+//			description: "Instance information."
+//			schema:
+//				"$ref": "#/definitions/instanceV2"
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal error
+func (m *Module) InstanceInformationGETHandlerV2(c *gin.Context) {
+	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	instance, errWithCode := m.processor.InstanceGetV2(c.Request.Context())
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

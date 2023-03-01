@@ -79,14 +79,20 @@ type TypeConverter interface {
 	StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*apimodel.Status, error)
 	// VisToAPIVis converts a gts visibility into its api equivalent
 	VisToAPIVis(ctx context.Context, m gtsmodel.Visibility) apimodel.Visibility
-	// InstanceToAPIInstance converts a gts instance into its api equivalent for serving at /api/v1/instance
-	InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Instance) (*apimodel.Instance, error)
+	// InstanceToAPIV1Instance converts a gts instance into its api equivalent for serving at /api/v1/instance
+	InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Instance) (*apimodel.InstanceV1, error)
+	// InstanceToAPIV2Instance converts a gts instance into its api equivalent for serving at /api/v2/instance
+	InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Instance) (*apimodel.InstanceV2, error)
 	// RelationshipToAPIRelationship converts a gts relationship into its api equivalent for serving in various places
 	RelationshipToAPIRelationship(ctx context.Context, r *gtsmodel.Relationship) (*apimodel.Relationship, error)
 	// NotificationToAPINotification converts a gts notification into a api notification
 	NotificationToAPINotification(ctx context.Context, n *gtsmodel.Notification) (*apimodel.Notification, error)
 	// DomainBlockToAPIDomainBlock converts a gts model domin block into a api domain block, for serving at /api/v1/admin/domain_blocks
 	DomainBlockToAPIDomainBlock(ctx context.Context, b *gtsmodel.DomainBlock, export bool) (*apimodel.DomainBlock, error)
+	// ReportToAPIReport converts a gts model report into an api model report, for serving at /api/v1/reports
+	ReportToAPIReport(ctx context.Context, r *gtsmodel.Report) (*apimodel.Report, error)
+	// ReportToAdminAPIReport converts a gts model report into an admin view report, for serving at /api/v1/admin/reports
+	ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Report, requestingAccount *gtsmodel.Account) (*apimodel.AdminReport, error)
 
 	/*
 		INTERNAL (gts) MODEL TO FRONTEND (rss) MODEL
@@ -95,25 +101,13 @@ type TypeConverter interface {
 	StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*feeds.Item, error)
 
 	/*
-		FRONTEND (api) MODEL TO INTERNAL (gts) MODEL
-	*/
-
-	// APIVisToVis converts an API model visibility into its internal gts equivalent.
-	APIVisToVis(m apimodel.Visibility) gtsmodel.Visibility
-
-	/*
 		ACTIVITYSTREAMS MODEL TO INTERNAL (gts) MODEL
 	*/
 
-	// ASPersonToAccount converts a remote account/person/application representation into a gts model account.
+	// ASRepresentationToAccount converts a remote account/person/application representation into a gts model account.
 	//
-	// If update is false, and the account is already known in the database, then the existing account entry will be returned.
-	// If update is true, then even if the account is already known, all fields in the accountable will be parsed and a new *gtsmodel.Account
-	// will be generated. This is useful when one needs to force refresh of an account, eg., during an Update of a Profile.
-	//
-	// If accountDomain is set (not an empty string) then this value will be used as the account's Domain. If not set,
-	// then the Host of the accountable's AP ID will be used instead.
-	ASRepresentationToAccount(ctx context.Context, accountable ap.Accountable, accountDomain string, update bool) (*gtsmodel.Account, error)
+	// If accountDomain is provided then this value will be used as the account's Domain, else the AP ID host.
+	ASRepresentationToAccount(ctx context.Context, accountable ap.Accountable, accountDomain string) (*gtsmodel.Account, error)
 	// ASStatus converts a remote activitystreams 'status' representation into a gts model status.
 	ASStatusToStatus(ctx context.Context, statusable ap.Statusable) (*gtsmodel.Status, error)
 	// ASFollowToFollowRequest converts a remote activitystreams `follow` representation into gts model follow request.
@@ -137,6 +131,8 @@ type TypeConverter interface {
 	//
 	// NOTE -- this is different from one status being boosted multiple times! In this case, new boosts should indeed be created.
 	ASAnnounceToStatus(ctx context.Context, announceable ap.Announceable) (status *gtsmodel.Status, new bool, err error)
+	// ASFlagToReport converts a remote activitystreams 'flag' representation into a gts model report.
+	ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) (report *gtsmodel.Report, err error)
 
 	/*
 		INTERNAL (gts) MODEL TO ACTIVITYSTREAMS MODEL
@@ -182,6 +178,8 @@ type TypeConverter interface {
 	//
 	// Appropriate 'next' and 'prev' fields will be created based on the highest and lowest IDs present in the statuses slice.
 	StatusesToASOutboxPage(ctx context.Context, outboxID string, maxID string, minID string, statuses []*gtsmodel.Status) (vocab.ActivityStreamsOrderedCollectionPage, error)
+	// ReportToASFlag converts a gts model report into an activitystreams FLAG, suitable for federation.
+	ReportToASFlag(ctx context.Context, r *gtsmodel.Report) (vocab.ActivityStreamsFlag, error)
 
 	/*
 		INTERNAL (gts) MODEL TO INTERNAL MODEL

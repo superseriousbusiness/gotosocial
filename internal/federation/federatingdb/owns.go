@@ -35,9 +35,10 @@ import (
 // the database has an entry for the IRI.
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
-	l := log.WithFields(kv.Fields{
-		{"id", id},
-	}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{
+			{"id", id},
+		}...)
 	l.Debug("entering Owns")
 
 	// if the id host isn't this instance host, we don't own this IRI

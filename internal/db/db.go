@@ -52,12 +52,12 @@ type DB interface {
 		USEFUL CONVERSION FUNCTIONS
 	*/
 
-	// TagStringsToTags takes a slice of deduplicated, lowercase tags in the form "somehashtag", which have been
+	// TagStringToTag takes a lowercase tag in the form "somehashtag", which has been
 	// used in a status. It takes the id of the account that wrote the status, and the id of the status itself, and then
-	// returns a slice of *apimodel.Tag corresponding to the given tags. If the tag already exists in database, that tag
+	// returns an *apimodel.Tag corresponding to the given tags. If the tag already exists in database, that tag
 	// will be returned. Otherwise a pointer to a new tag struct will be created and returned.
 	//
-	// Note: this func doesn't/shouldn't do any manipulation of the tags in the DB, it's just for checking
+	// Note: this func doesn't/shouldn't do any manipulation of tags in the DB, it's just for checking
 	// if they exist in the db already, and conveniently returning them, or creating new tag structs.
-	TagStringsToTags(ctx context.Context, tags []string, originAccountID string) ([]*gtsmodel.Tag, error)
+	TagStringToTag(ctx context.Context, tag string, originAccountID string) (*gtsmodel.Tag, error)
 }

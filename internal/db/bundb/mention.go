@@ -64,7 +64,7 @@ func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.
 		// Attempt fetch from DB
 		mention, err := m.GetMention(ctx, id)
 		if err != nil {
-			log.Errorf("GetMentions: error getting mention %q: %v", id, err)
+			log.Errorf(ctx, "error getting mention %q: %v", id, err)
 			continue
 		}
 

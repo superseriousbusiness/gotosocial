@@ -47,11 +47,11 @@ func (m *manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 	// page through emojis 20 at a time, looking for those with missing images
 	for {
 		// Fetch next block of emojis from database
-		emojis, err := m.db.GetEmojis(ctx, domain, false, true, "", maxShortcodeDomain, "", 20)
+		emojis, err := m.state.DB.GetEmojis(ctx, domain, false, true, "", maxShortcodeDomain, "", 20)
 		if err != nil {
 			if !errors.Is(err, db.ErrNoEntries) {
 				// an actual error has occurred
-				log.Errorf("error fetching emojis from database: %s", err)
+				log.Errorf(ctx, "error fetching emojis from database: %s", err)
 			}
 			break
 		}
@@ -79,14 +79,14 @@ func (m *manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 	// bail early if we've got nothing to do
 	toRefetchCount := len(refetchIDs)
 	if toRefetchCount == 0 {
-		log.Debug("no remote emojis require a refetch")
+		log.Debug(ctx, "no remote emojis require a refetch")
 		return 0, nil
 	}
-	log.Debugf("%d remote emoji(s) require a refetch, doing that now...", toRefetchCount)
+	log.Debugf(ctx, "%d remote emoji(s) require a refetch, doing that now...", toRefetchCount)
 
 	var totalRefetched int
 	for _, emojiID := range refetchIDs {
-		emoji, err := m.db.GetEmojiByID(ctx, emojiID)
+		emoji, err := m.state.DB.GetEmojiByID(ctx, emojiID)
 		if err != nil {
 			// this shouldn't happen--since we know we have the emoji--so return if it does
 			return 0, fmt.Errorf("error getting emoji %s: %w", emojiID, err)
@@ -94,13 +94,13 @@ func (m *manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 		shortcodeDomain := util.ShortcodeDomain(emoji)
 
 		if emoji.ImageRemoteURL == "" {
-			log.Errorf("remote emoji %s could not be refreshed because it has no ImageRemoteURL set", shortcodeDomain)
+			log.Errorf(ctx, "remote emoji %s could not be refreshed because it has no ImageRemoteURL set", shortcodeDomain)
 			continue
 		}
 
 		emojiImageIRI, err := url.Parse(emoji.ImageRemoteURL)
 		if err != nil {
-			log.Errorf("remote emoji %s could not be refreshed because its ImageRemoteURL (%s) is not a valid uri: %s", shortcodeDomain, emoji.ImageRemoteURL, err)
+			log.Errorf(ctx, "remote emoji %s could not be refreshed because its ImageRemoteURL (%s) is not a valid uri: %s", shortcodeDomain, emoji.ImageRemoteURL, err)
 			continue
 		}
 
@@ -108,7 +108,7 @@ func (m *manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 			return dereferenceMedia(ctx, emojiImageIRI)
 		}
 
-		processingEmoji, err := m.ProcessEmoji(ctx, dataFunc, nil, emoji.Shortcode, emoji.ID, emoji.URI, &AdditionalEmojiInfo{
+		processingEmoji, err := m.PreProcessEmoji(ctx, dataFunc, nil, emoji.Shortcode, emoji.ID, emoji.URI, &AdditionalEmojiInfo{
 			Domain:               &emoji.Domain,
 			ImageRemoteURL:       &emoji.ImageRemoteURL,
 			ImageStaticRemoteURL: &emoji.ImageStaticRemoteURL,
@@ -116,16 +116,16 @@ func (m *manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 			VisibleInPicker:      emoji.VisibleInPicker,
 		}, true)
 		if err != nil {
-			log.Errorf("emoji %s could not be refreshed because of an error during processing: %s", shortcodeDomain, err)
+			log.Errorf(ctx, "emoji %s could not be refreshed because of an error during processing: %s", shortcodeDomain, err)
 			continue
 		}
 
 		if _, err := processingEmoji.LoadEmoji(ctx); err != nil {
-			log.Errorf("emoji %s could not be refreshed because of an error during loading: %s", shortcodeDomain, err)
+			log.Errorf(ctx, "emoji %s could not be refreshed because of an error during loading: %s", shortcodeDomain, err)
 			continue
 		}
 
-		log.Tracef("refetched emoji %s successfully from remote", shortcodeDomain)
+		log.Tracef(ctx, "refetched emoji %s successfully from remote", shortcodeDomain)
 		totalRefetched++
 	}
 
@@ -133,13 +133,13 @@ func (m *manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 }
 
 func (m *manager) emojiRequiresRefetch(ctx context.Context, emoji *gtsmodel.Emoji) (bool, error) {
-	if has, err := m.storage.Has(ctx, emoji.ImagePath); err != nil {
+	if has, err := m.state.Storage.Has(ctx, emoji.ImagePath); err != nil {
 		return false, err
 	} else if !has {
 		return true, nil
 	}
 
-	if has, err := m.storage.Has(ctx, emoji.ImageStaticPath); err != nil {
+	if has, err := m.state.Storage.Has(ctx, emoji.ImageStaticPath); err != nil {
 		return false, err
 	} else if !has {
 		return true, nil

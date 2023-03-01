@@ -39,7 +39,7 @@ func (suite *ValidationTestSuite) TestCheckPasswordStrength() {
 	shortPassword := "Ok12"
 	specialPassword := "Ok12%"
 	longPassword := "thisisafuckinglongpasswordbutnospecialchars"
-	tooLong := "Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Quisque a enim nibh. Vestibulum bibendum leo ac porttitor auctor."
+	tooLong := "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed euismod, ante id iaculis suscipit, nibh nibh varius enim, eget euismod augue augue eget mi. Praesent tincidunt, ex id finibus congue, enim nunc euismod nulla, id tincidunt ipsum neque at nunc. Sed id convallis libero. Sed euismod augue augue eget mi. Praesent tincidunt, ex id finibus congue, enim nunc euismod nulla, id tincidunt ipsum neque at nunc. Sed id convallis libero. Sed euismod augue augue eget mi. Praesent tincidunt, ex id finibus congue, enim nunc euismod nulla, id tincidunt ipsum neque at nunc."
 	strongPassword := "3dX5@Zc%mV*W2MBNEy$@"
 	var err error
 
@@ -75,7 +75,7 @@ func (suite *ValidationTestSuite) TestCheckPasswordStrength() {
 
 	err = validate.NewPassword(tooLong)
 	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("password should be no more than 64 chars"), err)
+		assert.Equal(suite.T(), errors.New("password should be no more than 256 chars"), err)
 	}
 
 	err = validate.NewPassword(strongPassword)

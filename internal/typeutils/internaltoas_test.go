@@ -433,7 +433,7 @@ func (suite *InternalToASTestSuite) TestStatusesToASOutboxPage() {
 	ctx := context.Background()
 
 	// get public statuses from testaccount
-	statuses, err := suite.db.GetAccountStatuses(ctx, testAccount.ID, 30, true, true, "", "", false, false, true)
+	statuses, err := suite.db.GetAccountStatuses(ctx, testAccount.ID, 30, true, true, "", "", false, true)
 	suite.NoError(err)
 
 	page, err := suite.typeconverter.StatusesToASOutboxPage(ctx, testAccount.OutboxURI, "", "", statuses)
@@ -507,6 +507,40 @@ func (suite *InternalToASTestSuite) TestSelfBoostFollowersOnlyToAS() {
   "published": "2022-06-09T13:12:00Z",
   "to": "http://localhost:8080/users/the_mighty_zork/followers",
   "type": "Announce"
+}`, string(bytes))
+}
+
+func (suite *InternalToASTestSuite) TestReportToAS() {
+	ctx := context.Background()
+
+	testReport := suite.testReports["local_account_2_report_remote_account_1"]
+	account := suite.testAccounts["local_account_2"]
+	targetAccount := suite.testAccounts["remote_account_1"]
+	statuses := []*gtsmodel.Status{suite.testStatuses["remote_account_1_status_1"]}
+
+	testReport.Account = account
+	testReport.TargetAccount = targetAccount
+	testReport.Statuses = statuses
+
+	flag, err := suite.typeconverter.ReportToASFlag(ctx, testReport)
+	suite.NoError(err)
+
+	ser, err := streams.Serialize(flag)
+	suite.NoError(err)
+
+	bytes, err := json.MarshalIndent(ser, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": "http://localhost:8080/users/localhost:8080",
+  "content": "dark souls sucks, please yeet this nerd",
+  "id": "http://localhost:8080/reports/01GP3AWY4CRDVRNZKW0TEAMB5R",
+  "object": [
+    "http://fossbros-anonymous.io/users/foss_satan",
+    "http://fossbros-anonymous.io/users/foss_satan/statuses/01FVW7JHQFSFK166WWKR8CBA6M"
+  ],
+  "type": "Flag"
 }`, string(bytes))
 }
 

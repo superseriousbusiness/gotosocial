@@ -24,14 +24,18 @@ package gtsmodel
 
 import (
 	"crypto/rsa"
+	"strings"
 	"time"
+
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 // Account represents either a local or a remote fediverse account, gotosocial or otherwise (mastodon, pleroma, etc).
 type Account struct {
 	ID                      string           `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                                               // id of this item in the database
-	CreatedAt               time.Time        `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                                        // when was item created
-	UpdatedAt               time.Time        `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                                        // when was item last updated
+	CreatedAt               time.Time        `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                                        // when was item created.
+	UpdatedAt               time.Time        `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                                        // when was item was last updated.
+	FetchedAt               time.Time        `validate:"required_with=Domain" bun:"type:timestamptz,nullzero"`                                                       // when was item (remote) last fetched.
 	Username                string           `validate:"required" bun:",nullzero,notnull,unique:userdomain"`                                                         // Username of the account, should just be a string of [a-zA-Z0-9_]. Can be added to domain to create the full username in the form ``[username]@[domain]`` eg., ``user_96@example.org``. Username and domain should be unique *with* each other
 	Domain                  string           `validate:"omitempty,fqdn" bun:",nullzero,unique:userdomain"`                                                           // Domain of the account, will be null if this is a local account, otherwise something like ``example.org``. Should be unique with username.
 	AvatarMediaAttachmentID string           `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                                                // Database ID of the media attachment, if present
@@ -60,7 +64,6 @@ type Account struct {
 	CustomCSS               string           `validate:"-" bun:",nullzero"`                                                                                          // Custom CSS that should be displayed for this Account's profile and statuses.
 	URI                     string           `validate:"required,url" bun:",nullzero,notnull,unique"`                                                                // ActivityPub URI for this account.
 	URL                     string           `validate:"required_without=Domain,omitempty,url" bun:",nullzero,unique"`                                               // Web URL for this account's profile
-	LastWebfingeredAt       time.Time        `validate:"required_with=Domain" bun:"type:timestamptz,nullzero"`                                                       // Last time this account was refreshed/located with webfinger.
 	InboxURI                string           `validate:"required_without=Domain,omitempty,url" bun:",nullzero,unique"`                                               // Address of this account's ActivityPub inbox, for sending activity to
 	SharedInboxURI          *string          `validate:"-" bun:""`                                                                                                   // Address of this account's ActivityPub sharedInbox. Gotcha warning: this is a string pointer because it has three possible states: 1. We don't know yet if the account has a shared inbox -- null. 2. We know it doesn't have a shared inbox -- empty string. 3. We know it does have a shared inbox -- url string.
 	OutboxURI               string           `validate:"required_without=Domain,omitempty,url" bun:",nullzero,unique"`                                               // Address of this account's activitypub outbox
@@ -77,6 +80,24 @@ type Account struct {
 	HideCollections         *bool            `validate:"-" bun:",default:false"`                                                                                     // Hide this account's collections
 	SuspensionOrigin        string           `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                                                // id of the database entry that caused this account to become suspended -- can be an account ID or a domain block ID
 	EnableRSS               *bool            `validate:"-" bun:",default:false"`                                                                                     // enable RSS feed subscription for this account's public posts at [URL]/feed
+}
+
+// IsLocal returns whether account is a local user account.
+func (a Account) IsLocal() bool {
+	return a.Domain == "" || a.Domain == config.GetHost() || a.Domain == config.GetAccountDomain()
+}
+
+// IsRemote returns whether account is a remote user account.
+func (a Account) IsRemote() bool {
+	return !a.IsLocal()
+}
+
+// IsInstance returns whether account is an instance internal actor account.
+func (a Account) IsInstance() bool {
+	return a.Username == a.Domain ||
+		a.FollowersURI == "" ||
+		a.FollowingURI == "" ||
+		(a.Username == "internal.fetch" && strings.Contains(a.Note, "internal service actor"))
 }
 
 // AccountToEmoji is an intermediate struct to facilitate the many2many relationship between an account and one or more emojis.
