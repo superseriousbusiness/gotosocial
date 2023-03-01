@@ -2324,9 +2324,11 @@ definitions:
     swaggerCollection:
         properties:
             '@context':
-                description: ActivityStreams context.
+                description: |-
+                    ActivityStreams JSON-LD context.
+                    A string or an array of strings, or more
+                    complex nested items.
                 example: https://www.w3.org/ns/activitystreams
-                type: string
                 x-go-name: Context
             first:
                 $ref: '#/definitions/swaggerCollectionPage'
@@ -2342,7 +2344,7 @@ definitions:
                 example: Collection
                 type: string
                 x-go-name: Type
-        title: SwaggerCollection represents an activitypub collection.
+        title: SwaggerCollection represents an ActivityPub Collection.
         type: object
         x-go-name: SwaggerCollection
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users
@@ -2380,6 +2382,41 @@ definitions:
         title: SwaggerCollectionPage represents one page of a collection.
         type: object
         x-go-name: SwaggerCollectionPage
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users
+    swaggerFeaturedCollection:
+        properties:
+            '@context':
+                description: |-
+                    ActivityStreams JSON-LD context.
+                    A string or an array of strings, or more
+                    complex nested items.
+                example: https://www.w3.org/ns/activitystreams
+                x-go-name: Context
+            TotalItems:
+                description: Number of items in this collection.
+                example: 2
+                format: int64
+                type: integer
+            id:
+                description: ActivityStreams ID.
+                example: https://example.org/users/some_user/collections/featured
+                type: string
+                x-go-name: ID
+            items:
+                description: List of status URIs.
+                example: '[''https://example.org/users/some_user/statuses/01GSZ0F7Q8SJKNRF777GJD271R'', ''https://example.org/users/some_user/statuses/01GSZ0G012CBQ7TEKX689S3QRE'']'
+                items:
+                    type: string
+                type: array
+                x-go-name: Items
+            type:
+                description: ActivityStreams type.
+                example: OrderedCollection
+                type: string
+                x-go-name: Type
+        title: SwaggerFeaturedCollection represents an ActivityPub OrderedCollection.
+        type: object
+        x-go-name: SwaggerFeaturedCollection
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users
     tag:
         properties:
@@ -5629,6 +5666,33 @@ paths:
             summary: Returns a compliant nodeinfo response to node info queries.
             tags:
                 - nodeinfo
+    /users/{username}/collections/featured:
+        get:
+            description: |-
+                The response will contain an ordered collection of Note URIs in the `items` property.
+
+                It is up to the caller to dereference the provided Note URIs (or not, if they already have them cached).
+
+                HTTP signature is required on the request.
+            operationId: s2sFeaturedCollectionGet
+            produces:
+                - application/activity+json
+            responses:
+                "200":
+                    description: ""
+                    schema:
+                        $ref: '#/definitions/swaggerFeaturedCollection'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+            summary: Get the featured collection (pinned posts) for a user.
+            tags:
+                - s2s/federation
     /users/{username}/outbox:
         get:
             description: |-

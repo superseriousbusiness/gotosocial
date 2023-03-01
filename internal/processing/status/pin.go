@@ -95,7 +95,7 @@ func (p *Processor) PinCreate(ctx context.Context, requestingAccount *gtsmodel.A
 	}
 
 	targetStatus.PinnedAt = time.Now()
-	if err := p.db.UpdateStatus(ctx, targetStatus); err != nil {
+	if err := p.db.UpdateStatus(ctx, targetStatus, "pinned_at"); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error pinning status: %w", err))
 	}
 
@@ -126,7 +126,7 @@ func (p *Processor) PinRemove(ctx context.Context, requestingAccount *gtsmodel.A
 
 	if targetStatus.PinnedAt.IsZero() {
 		targetStatus.PinnedAt = time.Time{}
-		if err := p.db.UpdateStatus(ctx, targetStatus); err != nil {
+		if err := p.db.UpdateStatus(ctx, targetStatus, "pinned_at"); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error unpinning status: %w", err))
 		}
 	}

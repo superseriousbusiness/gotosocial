@@ -29,8 +29,37 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-// FollowersGETHandler returns a collection of URIs for followers of the target user, formatted so that other AP servers can understand it.
-func (m *Module) FollowersGETHandler(c *gin.Context) {
+// FeaturedCollectionGETHandler swagger:operation GET /users/{username}/collections/featured s2sFeaturedCollectionGet
+//
+// Get the featured collection (pinned posts) for a user.
+//
+// The response will contain an ordered collection of Note URIs in the `items` property.
+//
+// It is up to the caller to dereference the provided Note URIs (or not, if they already have them cached).
+//
+// HTTP signature is required on the request.
+//
+//	---
+//	tags:
+//	- s2s/federation
+//
+//	produces:
+//	- application/activity+json
+//
+//	responses:
+//		'200':
+//			in: body
+//			schema:
+//				"$ref": "#/definitions/swaggerFeaturedCollection"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'403':
+//			description: forbidden
+//		'404':
+//			description: not found
+func (m *Module) FeaturedCollectionGETHandler(c *gin.Context) {
 	// usernames on our instance are always lowercase
 	requestedUsername := strings.ToLower(c.Param(UsernameKey))
 	if requestedUsername == "" {
@@ -52,7 +81,7 @@ func (m *Module) FollowersGETHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.Fedi().FollowersGet(apiutil.TransferSignatureContext(c), requestedUsername)
+	resp, errWithCode := m.processor.Fedi().FeaturedCollectionGet(apiutil.TransferSignatureContext(c), requestedUsername)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

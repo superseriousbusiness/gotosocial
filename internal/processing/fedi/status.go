@@ -24,65 +24,36 @@ import (
 	"net/url"
 
 	"github.com/superseriousbusiness/activity/streams"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
 // StatusGet handles the getting of a fedi/activitypub representation of a particular status, performing appropriate
 // authentication before returning a JSON serializable interface to the caller.
-func (p *Processor) StatusGet(ctx context.Context, requestedUsername string, requestedStatusID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
-	// get the account the request is referring to
-	requestedAccount, err := p.db.GetAccountByUsernameDomain(ctx, requestedUsername, "")
-	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
-	}
-
-	// authenticate the request
-	requestingAccountURI, errWithCode := p.federator.AuthenticateFederatedRequest(ctx, requestedUsername)
+func (p *Processor) StatusGet(ctx context.Context, requestedUsername string, requestedStatusID string) (interface{}, gtserror.WithCode) {
+	requestedAccount, requestingAccount, errWithCode := p.authenticate(ctx, requestedUsername)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	requestingAccount, err := p.federator.GetAccountByURI(
-		transport.WithFastfail(ctx), requestedUsername, requestingAccountURI, false,
-	)
+	status, err := p.db.GetStatusByID(ctx, requestedStatusID)
 	if err != nil {
-		return nil, gtserror.NewErrorUnauthorized(err)
+		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	// authorize the request:
-	// 1. check if a block exists between the requester and the requestee
-	blocked, err := p.db.IsBlocked(ctx, requestedAccount.ID, requestingAccount.ID, true)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
+	if status.AccountID != requestedAccount.ID {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("status with id %s does not belong to account with id %s", status.ID, requestedAccount.ID))
 	}
 
-	if blocked {
-		return nil, gtserror.NewErrorUnauthorized(fmt.Errorf("block exists between accounts %s and %s", requestedAccount.ID, requestingAccount.ID))
-	}
-
-	// get the status out of the database here
-	s, err := p.db.GetStatusByID(ctx, requestedStatusID)
-	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting status with id %s and account id %s: %s", requestedStatusID, requestedAccount.ID, err))
-	}
-
-	if s.AccountID != requestedAccount.ID {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("status with id %s does not belong to account with id %s", s.ID, requestedAccount.ID))
-	}
-
-	visible, err := p.filter.StatusVisible(ctx, s, requestingAccount)
+	visible, err := p.filter.StatusVisible(ctx, status, requestingAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 	if !visible {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("status with id %s not visible to user with id %s", s.ID, requestingAccount.ID))
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("status with id %s not visible to user with id %s", status.ID, requestingAccount.ID))
 	}
 
-	// requester is authorized to view the status, so convert it to AP representation and serialize it
-	asStatus, err := p.tc.StatusToAS(ctx, s)
+	asStatus, err := p.tc.StatusToAS(ctx, status)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -97,52 +68,27 @@ func (p *Processor) StatusGet(ctx context.Context, requestedUsername string, req
 
 // GetStatus handles the getting of a fedi/activitypub representation of replies to a status, performing appropriate
 // authentication before returning a JSON serializable interface to the caller.
-func (p *Processor) StatusRepliesGet(ctx context.Context, requestedUsername string, requestedStatusID string, page bool, onlyOtherAccounts bool, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
-	// get the account the request is referring to
-	requestedAccount, err := p.db.GetAccountByUsernameDomain(ctx, requestedUsername, "")
-	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
-	}
-
-	// authenticate the request
-	requestingAccountURI, errWithCode := p.federator.AuthenticateFederatedRequest(ctx, requestedUsername)
+func (p *Processor) StatusRepliesGet(ctx context.Context, requestedUsername string, requestedStatusID string, page bool, onlyOtherAccounts bool, onlyOtherAccountsSet bool, minID string) (interface{}, gtserror.WithCode) {
+	requestedAccount, requestingAccount, errWithCode := p.authenticate(ctx, requestedUsername)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	requestingAccount, err := p.federator.GetAccountByURI(
-		transport.WithFastfail(ctx), requestedUsername, requestingAccountURI, false,
-	)
+	status, err := p.db.GetStatusByID(ctx, requestedStatusID)
 	if err != nil {
-		return nil, gtserror.NewErrorUnauthorized(err)
+		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	// authorize the request:
-	// 1. check if a block exists between the requester and the requestee
-	blocked, err := p.db.IsBlocked(ctx, requestedAccount.ID, requestingAccount.ID, true)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
+	if status.AccountID != requestedAccount.ID {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("status with id %s does not belong to account with id %s", status.ID, requestedAccount.ID))
 	}
 
-	if blocked {
-		return nil, gtserror.NewErrorUnauthorized(fmt.Errorf("block exists between accounts %s and %s", requestedAccount.ID, requestingAccount.ID))
-	}
-
-	// get the status out of the database here
-	s := &gtsmodel.Status{}
-	if err := p.db.GetWhere(ctx, []db.Where{
-		{Key: "id", Value: requestedStatusID},
-		{Key: "account_id", Value: requestedAccount.ID},
-	}, s); err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting status with id %s and account id %s: %s", requestedStatusID, requestedAccount.ID, err))
-	}
-
-	visible, err := p.filter.StatusVisible(ctx, s, requestingAccount)
+	visible, err := p.filter.StatusVisible(ctx, status, requestingAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 	if !visible {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("status with id %s not visible to user with id %s", s.ID, requestingAccount.ID))
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("status with id %s not visible to user with id %s", status.ID, requestingAccount.ID))
 	}
 
 	var data map[string]interface{}
@@ -155,7 +101,7 @@ func (p *Processor) StatusRepliesGet(ctx context.Context, requestedUsername stri
 	case !page:
 		// scenario 1
 		// get the collection
-		collection, err := p.tc.StatusToASRepliesCollection(ctx, s, onlyOtherAccounts)
+		collection, err := p.tc.StatusToASRepliesCollection(ctx, status, onlyOtherAccounts)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -164,10 +110,10 @@ func (p *Processor) StatusRepliesGet(ctx context.Context, requestedUsername stri
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
-	case page && requestURL.Query().Get("only_other_accounts") == "":
+	case page && !onlyOtherAccountsSet:
 		// scenario 2
 		// get the collection
-		collection, err := p.tc.StatusToASRepliesCollection(ctx, s, onlyOtherAccounts)
+		collection, err := p.tc.StatusToASRepliesCollection(ctx, status, onlyOtherAccounts)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -179,7 +125,7 @@ func (p *Processor) StatusRepliesGet(ctx context.Context, requestedUsername stri
 	default:
 		// scenario 3
 		// get immediate children
-		replies, err := p.db.GetStatusChildren(ctx, s, true, minID)
+		replies, err := p.db.GetStatusChildren(ctx, status, true, minID)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -217,7 +163,7 @@ func (p *Processor) StatusRepliesGet(ctx context.Context, requestedUsername stri
 			replyURIs[r.ID] = rURI
 		}
 
-		repliesPage, err := p.tc.StatusURIsToASRepliesPage(ctx, s, onlyOtherAccounts, minID, replyURIs)
+		repliesPage, err := p.tc.StatusURIsToASRepliesPage(ctx, status, onlyOtherAccounts, minID, replyURIs)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}

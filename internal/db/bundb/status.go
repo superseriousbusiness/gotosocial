@@ -246,7 +246,13 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Er
 	})
 }
 
-func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status) db.Error {
+func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, columns ...string) db.Error {
+	status.UpdatedAt = time.Now()
+	if len(columns) > 0 {
+		// If we're updating by column, ensure "updated_at" is included.
+		columns = append(columns, "updated_at")
+	}
+
 	if err := s.conn.RunInTx(ctx, func(tx bun.Tx) error {
 		// create links between this status and any emojis it uses
 		for _, i := range status.EmojiIDs {
@@ -298,6 +304,7 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status) db
 		_, err := tx.
 			NewUpdate().
 			Model(status).
+			Column(columns...).
 			Where("? = ?", bun.Ident("status.id"), status.ID).
 			Exec(ctx)
 		return err

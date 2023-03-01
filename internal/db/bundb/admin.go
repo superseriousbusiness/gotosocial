@@ -135,7 +135,7 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 			OutboxURI:             accountURIs.OutboxURI,
 			FollowersURI:          accountURIs.FollowersURI,
 			FollowingURI:          accountURIs.FollowingURI,
-			FeaturedCollectionURI: accountURIs.CollectionURI,
+			FeaturedCollectionURI: accountURIs.FeaturedCollectionURI,
 		}
 
 		// insert the new account!
@@ -237,7 +237,7 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 		OutboxURI:             newAccountURIs.OutboxURI,
 		FollowersURI:          newAccountURIs.FollowersURI,
 		FollowingURI:          newAccountURIs.FollowingURI,
-		FeaturedCollectionURI: newAccountURIs.CollectionURI,
+		FeaturedCollectionURI: newAccountURIs.FeaturedCollectionURI,
 	}
 
 	// insert the new account!

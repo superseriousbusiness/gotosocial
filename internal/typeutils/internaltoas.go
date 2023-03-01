@@ -1296,6 +1296,34 @@ func (c *converter) OutboxToASCollection(ctx context.Context, outboxID string) (
 	return collection, nil
 }
 
+func (c *converter) StatusesToASFeaturedCollection(ctx context.Context, featuredCollectionID string, statuses []*gtsmodel.Status) (vocab.ActivityStreamsOrderedCollection, error) {
+	collection := streams.NewActivityStreamsOrderedCollection()
+
+	collectionIDProp := streams.NewJSONLDIdProperty()
+	featuredCollectionIDURI, err := url.Parse(featuredCollectionID)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing url %s", featuredCollectionID)
+	}
+	collectionIDProp.SetIRI(featuredCollectionIDURI)
+	collection.SetJSONLDId(collectionIDProp)
+
+	itemsProp := streams.NewActivityStreamsOrderedItemsProperty()
+	for _, s := range statuses {
+		uri, err := url.Parse(s.URI)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing url %s", s.URI)
+		}
+		itemsProp.AppendIRI(uri)
+	}
+	collection.SetActivityStreamsOrderedItems(itemsProp)
+
+	totalItemsProp := streams.NewActivityStreamsTotalItemsProperty()
+	totalItemsProp.Set(len(statuses))
+	collection.SetActivityStreamsTotalItems(totalItemsProp)
+
+	return collection, nil
+}
+
 func (c *converter) ReportToASFlag(ctx context.Context, r *gtsmodel.Report) (vocab.ActivityStreamsFlag, error) {
 	flag := streams.NewActivityStreamsFlag()
 

@@ -21,11 +21,13 @@ package typeutils_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -541,6 +543,96 @@ func (suite *InternalToASTestSuite) TestReportToAS() {
     "http://fossbros-anonymous.io/users/foss_satan/statuses/01FVW7JHQFSFK166WWKR8CBA6M"
   ],
   "type": "Flag"
+}`, string(bytes))
+}
+
+func (suite *InternalToASTestSuite) TestPinnedStatusesToASSomeItems() {
+	ctx := context.Background()
+
+	testAccount := suite.testAccounts["admin_account"]
+	statuses, err := suite.db.GetAccountPinnedStatuses(ctx, testAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	collection, err := suite.typeconverter.StatusesToASFeaturedCollection(ctx, testAccount.FeaturedCollectionURI, statuses)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	ser, err := streams.Serialize(collection)
+	suite.NoError(err)
+
+	bytes, err := json.MarshalIndent(ser, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "http://localhost:8080/users/admin/collections/featured",
+  "orderedItems": [
+    "http://localhost:8080/users/admin/statuses/01F8MHAAY43M6RJ473VQFCVH37",
+    "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R"
+  ],
+  "totalItems": 2,
+  "type": "OrderedCollection"
+}`, string(bytes))
+}
+
+func (suite *InternalToASTestSuite) TestPinnedStatusesToASNoItems() {
+	ctx := context.Background()
+
+	testAccount := suite.testAccounts["local_account_1"]
+	statuses, err := suite.db.GetAccountPinnedStatuses(ctx, testAccount.ID)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		suite.FailNow(err.Error())
+	}
+
+	collection, err := suite.typeconverter.StatusesToASFeaturedCollection(ctx, testAccount.FeaturedCollectionURI, statuses)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	ser, err := streams.Serialize(collection)
+	suite.NoError(err)
+
+	bytes, err := json.MarshalIndent(ser, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "http://localhost:8080/users/the_mighty_zork/collections/featured",
+  "orderedItems": [],
+  "totalItems": 0,
+  "type": "OrderedCollection"
+}`, string(bytes))
+}
+
+func (suite *InternalToASTestSuite) TestPinnedStatusesToASOneItem() {
+	ctx := context.Background()
+
+	testAccount := suite.testAccounts["local_account_2"]
+	statuses, err := suite.db.GetAccountPinnedStatuses(ctx, testAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	collection, err := suite.typeconverter.StatusesToASFeaturedCollection(ctx, testAccount.FeaturedCollectionURI, statuses)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	ser, err := streams.Serialize(collection)
+	suite.NoError(err)
+
+	bytes, err := json.MarshalIndent(ser, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "http://localhost:8080/users/1happyturtle/collections/featured",
+  "orderedItems": "http://localhost:8080/users/1happyturtle/statuses/01G20ZM733MGN8J344T4ZDDFY1",
+  "totalItems": 1,
+  "type": "OrderedCollection"
 }`, string(bytes))
 }
 

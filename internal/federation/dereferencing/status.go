@@ -35,6 +35,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
 // EnrichRemoteStatus takes a remote status that's already been inserted into the database in a minimal form,
@@ -105,7 +106,12 @@ func (d *deref) GetStatus(ctx context.Context, username string, statusURI *url.U
 
 	// if we got here, either we didn't have the status
 	// in the db, or we had it but need to refetch it
-	statusable, derefErr := d.dereferenceStatusable(ctx, username, statusURI)
+	tsport, err := d.transportController.NewTransportForUsername(ctx, username)
+	if err != nil {
+		return nil, nil, newErrTransportError(fmt.Errorf("GetRemoteStatus: error creating transport for %s: %w", username, err))
+	}
+
+	statusable, derefErr := d.dereferenceStatusable(ctx, tsport, statusURI)
 	if derefErr != nil {
 		return nil, nil, wrapDerefError(derefErr, "GetRemoteStatus: error dereferencing statusable")
 	}
@@ -149,17 +155,12 @@ func (d *deref) GetStatus(ctx context.Context, username string, statusURI *url.U
 	return status, statusable, nil
 }
 
-func (d *deref) dereferenceStatusable(ctx context.Context, username string, remoteStatusID *url.URL) (ap.Statusable, error) {
+func (d *deref) dereferenceStatusable(ctx context.Context, tsport transport.Transport, remoteStatusID *url.URL) (ap.Statusable, error) {
 	if blocked, err := d.db.IsDomainBlocked(ctx, remoteStatusID.Host); blocked || err != nil {
 		return nil, fmt.Errorf("DereferenceStatusable: domain %s is blocked", remoteStatusID.Host)
 	}
 
-	transport, err := d.transportController.NewTransportForUsername(ctx, username)
-	if err != nil {
-		return nil, fmt.Errorf("DereferenceStatusable: transport err: %s", err)
-	}
-
-	b, err := transport.Dereference(ctx, remoteStatusID)
+	b, err := tsport.Dereference(ctx, remoteStatusID)
 	if err != nil {
 		return nil, fmt.Errorf("DereferenceStatusable: error deferencing %s: %s", remoteStatusID.String(), err)
 	}
