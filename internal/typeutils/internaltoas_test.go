@@ -546,7 +546,7 @@ func (suite *InternalToASTestSuite) TestReportToAS() {
 }`, string(bytes))
 }
 
-func (suite *InternalToASTestSuite) TestPinnedStatusesToAS1() {
+func (suite *InternalToASTestSuite) TestPinnedStatusesToASSomeItems() {
 	ctx := context.Background()
 
 	testAccount := suite.testAccounts["admin_account"]
@@ -578,7 +578,7 @@ func (suite *InternalToASTestSuite) TestPinnedStatusesToAS1() {
 }`, string(bytes))
 }
 
-func (suite *InternalToASTestSuite) TestPinnedStatusesToAS2() {
+func (suite *InternalToASTestSuite) TestPinnedStatusesToASNoItems() {
 	ctx := context.Background()
 
 	testAccount := suite.testAccounts["local_account_1"]
@@ -607,7 +607,7 @@ func (suite *InternalToASTestSuite) TestPinnedStatusesToAS2() {
 }`, string(bytes))
 }
 
-func (suite *InternalToASTestSuite) TestPinnedStatusesToAS3() {
+func (suite *InternalToASTestSuite) TestPinnedStatusesToASOneItem() {
 	ctx := context.Background()
 
 	testAccount := suite.testAccounts["local_account_2"]
