@@ -154,55 +154,41 @@ func (m *manager) PruneUnusedRemote(ctx context.Context, dry bool) (int, error) 
 }
 
 func (m *manager) PruneOrphaned(ctx context.Context, dry bool) (int, error) {
-	// keys in storage will look like the following:
-	// `[ACCOUNT_ID]/[MEDIA_TYPE]/[MEDIA_SIZE]/[MEDIA_ID].[EXTENSION]`
-	// We can filter out keys we're not interested in by
-	// matching through a regex.
-	var matchCount int
-	match := func(storageKey string) bool {
-		if regexes.FilePath.MatchString(storageKey) {
-			matchCount++
-			return true
-		}
-		return false
-	}
-
-	iterator, err := m.state.Storage.Iterator(ctx, match) // make sure this iterator is always released
-	if err != nil {
-		return 0, fmt.Errorf("PruneOrphaned: error getting storage iterator: %w", err)
-	}
-
-	// Ensure we have some keys, and also advance
-	// the iterator to the first non-empty key.
-	if !iterator.Next() {
-		iterator.Release()
-		return 0, nil // nothing else to do here
-	}
-
-	// Emojis are stored under the instance account,
-	// so we need the ID of the instance account for
-	// the next part.
+	// Emojis are stored under the instance account, so we
+	// need the ID of the instance account for the next part.
 	instanceAccount, err := m.state.DB.GetInstanceAccount(ctx, "")
 	if err != nil {
-		iterator.Release()
 		return 0, fmt.Errorf("PruneOrphaned: error getting instance account: %w", err)
 	}
+
 	instanceAccountID := instanceAccount.ID
 
-	// For each key in the iterator, check if entry is orphaned.
-	orphanedKeys := make([]string, 0, matchCount)
-	for key := iterator.Key(); iterator.Next(); key = iterator.Key() {
+	var orphanedKeys []string
+
+	// Keys in storage will look like the following format:
+	// `[ACCOUNT_ID]/[MEDIA_TYPE]/[MEDIA_SIZE]/[MEDIA_ID].[EXTENSION]`
+	// We can filter out keys we're not interested in by matching through a regex.
+	if err := m.state.Storage.WalkKeys(ctx, func(ctx context.Context, key string) error {
+		if !regexes.FilePath.MatchString(key) {
+			// This is not our expected key format.
+			return nil
+		}
+
+		// Check whether this storage entry is orphaned.
 		orphaned, err := m.orphaned(ctx, key, instanceAccountID)
 		if err != nil {
-			iterator.Release()
-			return 0, fmt.Errorf("PruneOrphaned: checking orphaned status: %w", err)
+			return fmt.Errorf("error checking orphaned status: %w", err)
 		}
 
 		if orphaned {
+			// Add this orphaned entry to list of keys.
 			orphanedKeys = append(orphanedKeys, key)
 		}
+
+		return nil
+	}); err != nil {
+		return 0, fmt.Errorf("PruneOrphaned: error walking keys: %w", err)
 	}
-	iterator.Release()
 
 	totalPruned := len(orphanedKeys)
 
@@ -211,9 +197,8 @@ func (m *manager) PruneOrphaned(ctx context.Context, dry bool) (int, error) {
 		return totalPruned, nil
 	}
 
-	// This is not a drill!
-	// We have to delete stuff!
-	return totalPruned, m.removeFiles(ctx, orphanedKeys...)
+	// This is not a drill! We have to delete stuff!
+	return m.removeFiles(ctx, orphanedKeys...)
 }
 
 func (m *manager) orphaned(ctx context.Context, key string, instanceAccountID string) (bool, error) {
@@ -330,7 +315,7 @@ func (m *manager) PruneUnusedLocal(ctx context.Context, dry bool) (int, error) {
 */
 
 func (m *manager) deleteAttachment(ctx context.Context, attachment *gtsmodel.MediaAttachment) error {
-	if err := m.removeFiles(ctx, attachment.File.Path, attachment.Thumbnail.Path); err != nil {
+	if _, err := m.removeFiles(ctx, attachment.File.Path, attachment.Thumbnail.Path); err != nil {
 		return err
 	}
 
@@ -339,7 +324,7 @@ func (m *manager) deleteAttachment(ctx context.Context, attachment *gtsmodel.Med
 }
 
 func (m *manager) uncacheAttachment(ctx context.Context, attachment *gtsmodel.MediaAttachment) error {
-	if err := m.removeFiles(ctx, attachment.File.Path, attachment.Thumbnail.Path); err != nil {
+	if _, err := m.removeFiles(ctx, attachment.File.Path, attachment.Thumbnail.Path); err != nil {
 		return err
 	}
 
@@ -350,7 +335,7 @@ func (m *manager) uncacheAttachment(ctx context.Context, attachment *gtsmodel.Me
 	return m.state.DB.UpdateByID(ctx, attachment, attachment.ID, "updated_at", "cached")
 }
 
-func (m *manager) removeFiles(ctx context.Context, keys ...string) error {
+func (m *manager) removeFiles(ctx context.Context, keys ...string) (int, error) {
 	errs := make(gtserror.MultiError, 0, len(keys))
 
 	for _, key := range keys {
@@ -359,5 +344,5 @@ func (m *manager) removeFiles(ctx context.Context, keys ...string) error {
 		}
 	}
 
-	return errs.Combine()
+	return len(keys) - len(errs), errs.Combine()
 }
