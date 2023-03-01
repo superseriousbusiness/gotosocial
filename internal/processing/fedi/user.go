@@ -34,7 +34,7 @@ import (
 // before returning a JSON serializable interface to the caller.
 func (p *Processor) UserGet(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
 	// Get the instance-local account the request is referring to.
-	requestedAccount, err := p.db.GetAccountByUsernameDomain(ctx, requestedUsername, "")
+	requestedAccount, err := p.state.DB.GetAccountByUsernameDomain(ctx, requestedUsername, "")
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
 	}
@@ -63,7 +63,7 @@ func (p *Processor) UserGet(ctx context.Context, requestedUsername string, reque
 				return nil, gtserror.NewErrorUnauthorized(err)
 			}
 
-			blocked, err := p.db.IsBlocked(ctx, requestedAccount.ID, requestingAccount.ID, true)
+			blocked, err := p.state.DB.IsBlocked(ctx, requestedAccount.ID, requestingAccount.ID, true)
 			if err != nil {
 				return nil, gtserror.NewErrorInternalError(err)
 			}

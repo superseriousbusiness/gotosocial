@@ -139,7 +139,7 @@ func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federa
 
 	// make sure the account is pinned
 	if status.Account == nil {
-		a, err := p.db.GetAccountByID(ctx, status.AccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, status.AccountID)
 		if err != nil {
 			return err
 		}
@@ -185,7 +185,7 @@ func (p *Processor) processCreateFaveFromFederator(ctx context.Context, federato
 
 	// make sure the account is pinned
 	if incomingFave.Account == nil {
-		a, err := p.db.GetAccountByID(ctx, incomingFave.AccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, incomingFave.AccountID)
 		if err != nil {
 			return err
 		}
@@ -227,7 +227,7 @@ func (p *Processor) processCreateFollowRequestFromFederator(ctx context.Context,
 
 	// make sure the account is pinned
 	if followRequest.Account == nil {
-		a, err := p.db.GetAccountByID(ctx, followRequest.AccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, followRequest.AccountID)
 		if err != nil {
 			return err
 		}
@@ -254,7 +254,7 @@ func (p *Processor) processCreateFollowRequestFromFederator(ctx context.Context,
 	}
 
 	if followRequest.TargetAccount == nil {
-		a, err := p.db.GetAccountByID(ctx, followRequest.TargetAccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, followRequest.TargetAccountID)
 		if err != nil {
 			return err
 		}
@@ -267,7 +267,7 @@ func (p *Processor) processCreateFollowRequestFromFederator(ctx context.Context,
 	}
 
 	// if the target account isn't locked, we should already accept the follow and notify about the new follower instead
-	follow, err := p.db.AcceptFollowRequest(ctx, followRequest.AccountID, followRequest.TargetAccountID)
+	follow, err := p.state.DB.AcceptFollowRequest(ctx, followRequest.AccountID, followRequest.TargetAccountID)
 	if err != nil {
 		return err
 	}
@@ -288,7 +288,7 @@ func (p *Processor) processCreateAnnounceFromFederator(ctx context.Context, fede
 
 	// make sure the account is pinned
 	if incomingAnnounce.Account == nil {
-		a, err := p.db.GetAccountByID(ctx, incomingAnnounce.AccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, incomingAnnounce.AccountID)
 		if err != nil {
 			return err
 		}
@@ -324,7 +324,7 @@ func (p *Processor) processCreateAnnounceFromFederator(ctx context.Context, fede
 	}
 	incomingAnnounce.ID = incomingAnnounceID
 
-	if err := p.db.PutStatus(ctx, incomingAnnounce); err != nil {
+	if err := p.state.DB.PutStatus(ctx, incomingAnnounce); err != nil {
 		return fmt.Errorf("error adding dereferenced announce to the db: %s", err)
 	}
 

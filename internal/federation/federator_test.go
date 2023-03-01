@@ -23,6 +23,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -32,6 +33,7 @@ type FederatorStandardTestSuite struct {
 	suite.Suite
 	db             db.DB
 	storage        *storage.Driver
+	state          state.State
 	tc             typeutils.TypeConverter
 	testAccounts   map[string]*gtsmodel.Account
 	testStatuses   map[string]*gtsmodel.Status
@@ -42,8 +44,9 @@ type FederatorStandardTestSuite struct {
 // SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
 func (suite *FederatorStandardTestSuite) SetupSuite() {
 	// setup standard items
+	testrig.StartWorkers(&suite.state)
 	suite.storage = testrig.NewInMemoryStorage()
-	suite.tc = testrig.NewTestTypeConverter(suite.db)
+	suite.state.Storage = suite.storage
 	suite.testAccounts = testrig.NewTestAccounts()
 	suite.testStatuses = testrig.NewTestStatuses()
 	suite.testTombstones = testrig.NewTestTombstones()
@@ -52,7 +55,10 @@ func (suite *FederatorStandardTestSuite) SetupSuite() {
 func (suite *FederatorStandardTestSuite) SetupTest() {
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
-	suite.db = testrig.NewTestDB()
+	suite.state.Caches.Init()
+	suite.db = testrig.NewTestDB(&suite.state)
+	suite.tc = testrig.NewTestTypeConverter(suite.db)
+	suite.state.DB = suite.db
 	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 }

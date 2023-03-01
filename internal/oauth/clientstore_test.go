@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 	"github.com/superseriousbusiness/oauth2/v4/models"
 )
@@ -32,6 +33,7 @@ import (
 type PgClientStoreTestSuite struct {
 	suite.Suite
 	db               db.DB
+	state            state.State
 	testClientID     string
 	testClientSecret string
 	testClientDomain string
@@ -48,9 +50,11 @@ func (suite *PgClientStoreTestSuite) SetupSuite() {
 
 // SetupTest creates a postgres connection and creates the oauth_clients table before each test
 func (suite *PgClientStoreTestSuite) SetupTest() {
+	suite.state.Caches.Init()
 	testrig.InitTestLog()
 	testrig.InitTestConfig()
-	suite.db = testrig.NewTestDB()
+	suite.db = testrig.NewTestDB(&suite.state)
+	suite.state.DB = suite.db
 	testrig.StandardDBSetup(suite.db, nil)
 }
 

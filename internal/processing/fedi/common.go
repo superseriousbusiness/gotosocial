@@ -29,7 +29,7 @@ import (
 )
 
 func (p *Processor) authenticate(ctx context.Context, requestedUsername string) (requestedAccount, requestingAccount *gtsmodel.Account, errWithCode gtserror.WithCode) {
-	requestedAccount, err := p.db.GetAccountByUsernameDomain(ctx, requestedUsername, "")
+	requestedAccount, err := p.state.DB.GetAccountByUsernameDomain(ctx, requestedUsername, "")
 	if err != nil {
 		errWithCode = gtserror.NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
 		return
@@ -46,7 +46,7 @@ func (p *Processor) authenticate(ctx context.Context, requestedUsername string) 
 		return
 	}
 
-	blocked, err := p.db.IsBlocked(ctx, requestedAccount.ID, requestingAccount.ID, true)
+	blocked, err := p.state.DB.IsBlocked(ctx, requestedAccount.ID, requestingAccount.ID, true)
 	if err != nil {
 		errWithCode = gtserror.NewErrorInternalError(err)
 		return

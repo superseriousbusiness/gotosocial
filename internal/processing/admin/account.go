@@ -31,7 +31,7 @@ import (
 )
 
 func (p *Processor) AccountAction(ctx context.Context, account *gtsmodel.Account, form *apimodel.AdminAccountActionRequest) gtserror.WithCode {
-	targetAccount, err := p.db.GetAccountByID(ctx, form.TargetAccountID)
+	targetAccount, err := p.state.DB.GetAccountByID(ctx, form.TargetAccountID)
 	if err != nil {
 		return gtserror.NewErrorInternalError(err)
 	}
@@ -47,7 +47,7 @@ func (p *Processor) AccountAction(ctx context.Context, account *gtsmodel.Account
 	case string(gtsmodel.AdminActionSuspend):
 		adminAction.Type = gtsmodel.AdminActionSuspend
 		// pass the account delete through the client api channel for processing
-		p.clientWorker.Queue(messages.FromClientAPI{
+		p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 			APObjectType:   ap.ActorPerson,
 			APActivityType: ap.ActivityDelete,
 			OriginAccount:  account,
@@ -57,7 +57,7 @@ func (p *Processor) AccountAction(ctx context.Context, account *gtsmodel.Account
 		return gtserror.NewErrorBadRequest(fmt.Errorf("admin action type %s is not supported for this endpoint", form.Type))
 	}
 
-	if err := p.db.Put(ctx, adminAction); err != nil {
+	if err := p.state.DB.Put(ctx, adminAction); err != nil {
 		return gtserror.NewErrorInternalError(err)
 	}
 

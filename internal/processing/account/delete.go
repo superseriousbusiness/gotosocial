@@ -54,22 +54,22 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 	if account.Domain == "" {
 		// see if we can get a user for this account
 		var err error
-		if user, err = p.db.GetUserByAccountID(ctx, account.ID); err == nil {
+		if user, err = p.state.DB.GetUserByAccountID(ctx, account.ID); err == nil {
 			// we got one! select all tokens with the user's ID
 			tokens := []*gtsmodel.Token{}
-			if err := p.db.GetWhere(ctx, []db.Where{{Key: "user_id", Value: user.ID}}, &tokens); err == nil {
+			if err := p.state.DB.GetWhere(ctx, []db.Where{{Key: "user_id", Value: user.ID}}, &tokens); err == nil {
 				// we have some tokens to delete
 				for _, t := range tokens {
 					// delete client(s) associated with this token
-					if err := p.db.DeleteByID(ctx, t.ClientID, &gtsmodel.Client{}); err != nil {
+					if err := p.state.DB.DeleteByID(ctx, t.ClientID, &gtsmodel.Client{}); err != nil {
 						l.Errorf("error deleting oauth client: %s", err)
 					}
 					// delete application(s) associated with this token
-					if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "client_id", Value: t.ClientID}}, &gtsmodel.Application{}); err != nil {
+					if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "client_id", Value: t.ClientID}}, &gtsmodel.Application{}); err != nil {
 						l.Errorf("error deleting application: %s", err)
 					}
 					// delete the token itself
-					if err := p.db.DeleteByID(ctx, t.ID, t); err != nil {
+					if err := p.state.DB.DeleteByID(ctx, t.ID, t); err != nil {
 						l.Errorf("error deleting oauth token: %s", err)
 					}
 				}
@@ -80,12 +80,12 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 	// 2. Delete account's blocks
 	l.Trace("deleting account blocks")
 	// first delete any blocks that this account created
-	if err := p.db.DeleteBlocksByOriginAccountID(ctx, account.ID); err != nil {
+	if err := p.state.DB.DeleteBlocksByOriginAccountID(ctx, account.ID); err != nil {
 		l.Errorf("error deleting blocks created by account: %s", err)
 	}
 
 	// now delete any blocks that target this account
-	if err := p.db.DeleteBlocksByTargetAccountID(ctx, account.ID); err != nil {
+	if err := p.state.DB.DeleteBlocksByTargetAccountID(ctx, account.ID); err != nil {
 		l.Errorf("error deleting blocks targeting account: %s", err)
 	}
 
@@ -96,12 +96,12 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 	// TODO: federate these if necessary
 	l.Trace("deleting account follow requests")
 	// first delete any follow requests that this account created
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.FollowRequest{}); err != nil {
+	if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.FollowRequest{}); err != nil {
 		l.Errorf("error deleting follow requests created by account: %s", err)
 	}
 
 	// now delete any follow requests that target this account
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "target_account_id", Value: account.ID}}, &[]*gtsmodel.FollowRequest{}); err != nil {
+	if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "target_account_id", Value: account.ID}}, &[]*gtsmodel.FollowRequest{}); err != nil {
 		l.Errorf("error deleting follow requests targeting account: %s", err)
 	}
 
@@ -109,12 +109,12 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 	// TODO: federate these if necessary
 	l.Trace("deleting account follows")
 	// first delete any follows that this account created
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.Follow{}); err != nil {
+	if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.Follow{}); err != nil {
 		l.Errorf("error deleting follows created by account: %s", err)
 	}
 
 	// now delete any follows that target this account
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "target_account_id", Value: account.ID}}, &[]*gtsmodel.Follow{}); err != nil {
+	if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "target_account_id", Value: account.ID}}, &[]*gtsmodel.Follow{}); err != nil {
 		l.Errorf("error deleting follows targeting account: %s", err)
 	}
 
@@ -129,7 +129,7 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 
 	for {
 		// Fetch next block of account statuses from database
-		statuses, err := p.db.GetAccountStatuses(ctx, account.ID, 20, false, false, maxID, "", false, false)
+		statuses, err := p.state.DB.GetAccountStatuses(ctx, account.ID, 20, false, false, maxID, "", false, false)
 		if err != nil {
 			if !errors.Is(err, db.ErrNoEntries) {
 				// an actual error has occurred
@@ -149,7 +149,7 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 			l.Tracef("queue client API status delete: %s", status.ID)
 
 			// pass the status delete through the client api channel for processing
-			p.clientWorker.Queue(messages.FromClientAPI{
+			p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 				APObjectType:   ap.ObjectNote,
 				APActivityType: ap.ActivityDelete,
 				GTSModel:       status,
@@ -158,7 +158,7 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 			})
 
 			// Look for any boosts of this status in DB
-			boosts, err := p.db.GetStatusReblogs(ctx, status)
+			boosts, err := p.state.DB.GetStatusReblogs(ctx, status)
 			if err != nil && !errors.Is(err, db.ErrNoEntries) {
 				l.Errorf("error fetching status reblogs for %q: %v", status.ID, err)
 				continue
@@ -167,7 +167,7 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 			for _, boost := range boosts {
 				if boost.Account == nil {
 					// Fetch the relevant account for this status boost
-					boostAcc, err := p.db.GetAccountByID(ctx, boost.AccountID)
+					boostAcc, err := p.state.DB.GetAccountByID(ctx, boost.AccountID)
 					if err != nil {
 						l.Errorf("error fetching boosted status account for %q: %v", boost.AccountID, err)
 						continue
@@ -180,7 +180,7 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 				l.Tracef("queue client API boost delete: %s", status.ID)
 
 				// pass the boost delete through the client api channel for processing
-				p.clientWorker.Queue(messages.FromClientAPI{
+				p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 					APObjectType:   ap.ActivityAnnounce,
 					APActivityType: ap.ActivityUndo,
 					GTSModel:       status,
@@ -197,31 +197,31 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 	// 10. Delete account's notifications
 	l.Trace("deleting account notifications")
 	// first notifications created by account
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "origin_account_id", Value: account.ID}}, &[]*gtsmodel.Notification{}); err != nil {
+	if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "origin_account_id", Value: account.ID}}, &[]*gtsmodel.Notification{}); err != nil {
 		l.Errorf("error deleting notifications created by account: %s", err)
 	}
 
 	// now notifications targeting account
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "target_account_id", Value: account.ID}}, &[]*gtsmodel.Notification{}); err != nil {
+	if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "target_account_id", Value: account.ID}}, &[]*gtsmodel.Notification{}); err != nil {
 		l.Errorf("error deleting notifications targeting account: %s", err)
 	}
 
 	// 11. Delete account's bookmarks
 	l.Trace("deleting account bookmarks")
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.StatusBookmark{}); err != nil {
+	if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.StatusBookmark{}); err != nil {
 		l.Errorf("error deleting bookmarks created by account: %s", err)
 	}
 
 	// 12. Delete account's faves
 	// TODO: federate these if necessary
 	l.Trace("deleting account faves")
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.StatusFave{}); err != nil {
+	if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.StatusFave{}); err != nil {
 		l.Errorf("error deleting faves created by account: %s", err)
 	}
 
 	// 13. Delete account's mutes
 	l.Trace("deleting account mutes")
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.StatusMute{}); err != nil {
+	if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.StatusMute{}); err != nil {
 		l.Errorf("error deleting status mutes created by account: %s", err)
 	}
 
@@ -234,7 +234,7 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 	// 16. Delete account's user
 	if user != nil {
 		l.Trace("deleting account user")
-		if err := p.db.DeleteUserByID(ctx, user.ID); err != nil {
+		if err := p.state.DB.DeleteUserByID(ctx, user.ID); err != nil {
 			return gtserror.NewErrorInternalError(err)
 		}
 	}
@@ -261,7 +261,7 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 	account.Discoverable = &discoverable
 	account.SuspendedAt = time.Now()
 	account.SuspensionOrigin = origin
-	err := p.db.UpdateAccount(ctx, account)
+	err := p.state.DB.UpdateAccount(ctx, account)
 	if err != nil {
 		return gtserror.NewErrorInternalError(err)
 	}
@@ -281,7 +281,7 @@ func (p *Processor) DeleteLocal(ctx context.Context, account *gtsmodel.Account, 
 
 	if form.DeleteOriginID == account.ID {
 		// the account owner themself has requested deletion via the API, get their user from the db
-		user, err := p.db.GetUserByAccountID(ctx, account.ID)
+		user, err := p.state.DB.GetUserByAccountID(ctx, account.ID)
 		if err != nil {
 			return gtserror.NewErrorInternalError(err)
 		}
@@ -301,7 +301,7 @@ func (p *Processor) DeleteLocal(ctx context.Context, account *gtsmodel.Account, 
 	} else {
 		// the delete has been requested by some other account, grab it;
 		// if we've reached this point we know it has permission already
-		requestingAccount, err := p.db.GetAccountByID(ctx, form.DeleteOriginID)
+		requestingAccount, err := p.state.DB.GetAccountByID(ctx, form.DeleteOriginID)
 		if err != nil {
 			return gtserror.NewErrorInternalError(err)
 		}
@@ -310,7 +310,7 @@ func (p *Processor) DeleteLocal(ctx context.Context, account *gtsmodel.Account, 
 	}
 
 	// put the delete in the processor queue to handle the rest of it asynchronously
-	p.clientWorker.Queue(fromClientAPIMessage)
+	p.state.Workers.EnqueueClientAPI(ctx, fromClientAPIMessage)
 
 	return nil
 }

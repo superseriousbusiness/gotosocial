@@ -28,7 +28,7 @@ func (p *Processor) DomainBlockCreate(ctx context.Context, account *gtsmodel.Acc
 	domain = strings.ToLower(domain)
 
 	// first check if we already have a block -- if err == nil we already had a block so we can skip a whole lot of work
-	block, err := p.db.GetDomainBlock(ctx, domain)
+	block, err := p.state.DB.GetDomainBlock(ctx, domain)
 	if err != nil {
 		if !errors.Is(err, db.ErrNoEntries) {
 			// something went wrong in the DB
@@ -47,7 +47,7 @@ func (p *Processor) DomainBlockCreate(ctx context.Context, account *gtsmodel.Acc
 		}
 
 		// Insert the new block into the database
-		if err := p.db.CreateDomainBlock(ctx, newBlock); err != nil {
+		if err := p.state.DB.CreateDomainBlock(ctx, newBlock); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error putting new domain block %s: %s", domain, err))
 		}
 
@@ -80,7 +80,7 @@ func (p *Processor) initiateDomainBlockSideEffects(ctx context.Context, account 
 
 	// if we have an instance entry for this domain, update it with the new block ID and clear all fields
 	instance := &gtsmodel.Instance{}
-	if err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: block.Domain}}, instance); err == nil {
+	if err := p.state.DB.GetWhere(ctx, []db.Where{{Key: "domain", Value: block.Domain}}, instance); err == nil {
 		updatingColumns := []string{
 			"title",
 			"updated_at",
@@ -105,15 +105,15 @@ func (p *Processor) initiateDomainBlockSideEffects(ctx context.Context, account 
 		instance.ContactAccountUsername = ""
 		instance.ContactAccountID = ""
 		instance.Version = ""
-		if err := p.db.UpdateByID(ctx, instance, instance.ID, updatingColumns...); err != nil {
+		if err := p.state.DB.UpdateByID(ctx, instance, instance.ID, updatingColumns...); err != nil {
 			l.Errorf("domainBlockProcessSideEffects: db error updating instance: %s", err)
 		}
 		l.Debug("domainBlockProcessSideEffects: instance entry updated")
 	}
 
 	// if we have an instance account for this instance, delete it
-	if instanceAccount, err := p.db.GetAccountByUsernameDomain(ctx, block.Domain, block.Domain); err == nil {
-		if err := p.db.DeleteAccount(ctx, instanceAccount.ID); err != nil {
+	if instanceAccount, err := p.state.DB.GetAccountByUsernameDomain(ctx, block.Domain, block.Domain); err == nil {
+		if err := p.state.DB.DeleteAccount(ctx, instanceAccount.ID); err != nil {
 			l.Errorf("domainBlockProcessSideEffects: db error deleting instance account: %s", err)
 		}
 	}
@@ -125,7 +125,7 @@ func (p *Processor) initiateDomainBlockSideEffects(ctx context.Context, account 
 
 selectAccountsLoop:
 	for {
-		accounts, err := p.db.GetInstanceAccounts(ctx, block.Domain, maxID, limit)
+		accounts, err := p.state.DB.GetInstanceAccounts(ctx, block.Domain, maxID, limit)
 		if err != nil {
 			if err == db.ErrNoEntries {
 				// no accounts left for this instance so we're done
@@ -141,7 +141,7 @@ selectAccountsLoop:
 			l.Debugf("putting delete for account %s in the clientAPI channel", a.Username)
 
 			// pass the account delete through the client api channel for processing
-			p.clientWorker.Queue(messages.FromClientAPI{
+			p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 				APObjectType:   ap.ActorPerson,
 				APActivityType: ap.ActivityDelete,
 				GTSModel:       block,
@@ -195,7 +195,7 @@ func (p *Processor) DomainBlocksImport(ctx context.Context, account *gtsmodel.Ac
 func (p *Processor) DomainBlocksGet(ctx context.Context, account *gtsmodel.Account, export bool) ([]*apimodel.DomainBlock, gtserror.WithCode) {
 	domainBlocks := []*gtsmodel.DomainBlock{}
 
-	if err := p.db.GetAll(ctx, &domainBlocks); err != nil {
+	if err := p.state.DB.GetAll(ctx, &domainBlocks); err != nil {
 		if !errors.Is(err, db.ErrNoEntries) {
 			// something has gone really wrong
 			return nil, gtserror.NewErrorInternalError(err)
@@ -219,7 +219,7 @@ func (p *Processor) DomainBlocksGet(ctx context.Context, account *gtsmodel.Accou
 func (p *Processor) DomainBlockGet(ctx context.Context, account *gtsmodel.Account, id string, export bool) (*apimodel.DomainBlock, gtserror.WithCode) {
 	domainBlock := &gtsmodel.DomainBlock{}
 
-	if err := p.db.GetByID(ctx, id, domainBlock); err != nil {
+	if err := p.state.DB.GetByID(ctx, id, domainBlock); err != nil {
 		if !errors.Is(err, db.ErrNoEntries) {
 			// something has gone really wrong
 			return nil, gtserror.NewErrorInternalError(err)
@@ -240,7 +240,7 @@ func (p *Processor) DomainBlockGet(ctx context.Context, account *gtsmodel.Accoun
 func (p *Processor) DomainBlockDelete(ctx context.Context, account *gtsmodel.Account, id string) (*apimodel.DomainBlock, gtserror.WithCode) {
 	domainBlock := &gtsmodel.DomainBlock{}
 
-	if err := p.db.GetByID(ctx, id, domainBlock); err != nil {
+	if err := p.state.DB.GetByID(ctx, id, domainBlock); err != nil {
 		if !errors.Is(err, db.ErrNoEntries) {
 			// something has gone really wrong
 			return nil, gtserror.NewErrorInternalError(err)
@@ -256,13 +256,13 @@ func (p *Processor) DomainBlockDelete(ctx context.Context, account *gtsmodel.Acc
 	}
 
 	// Delete the domain block
-	if err := p.db.DeleteDomainBlock(ctx, domainBlock.Domain); err != nil {
+	if err := p.state.DB.DeleteDomainBlock(ctx, domainBlock.Domain); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// remove the domain block reference from the instance, if we have an entry for it
 	i := &gtsmodel.Instance{}
-	if err := p.db.GetWhere(ctx, []db.Where{
+	if err := p.state.DB.GetWhere(ctx, []db.Where{
 		{Key: "domain", Value: domainBlock.Domain},
 		{Key: "domain_block_id", Value: id},
 	}, i); err == nil {
@@ -270,21 +270,21 @@ func (p *Processor) DomainBlockDelete(ctx context.Context, account *gtsmodel.Acc
 		i.SuspendedAt = time.Time{}
 		i.DomainBlockID = ""
 		i.UpdatedAt = time.Now()
-		if err := p.db.UpdateByID(ctx, i, i.ID, updatingColumns...); err != nil {
+		if err := p.state.DB.UpdateByID(ctx, i, i.ID, updatingColumns...); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("couldn't update database entry for instance %s: %s", domainBlock.Domain, err))
 		}
 	}
 
 	// unsuspend all accounts whose suspension origin was this domain block
 	// 1. remove the 'suspended_at' entry from their accounts
-	if err := p.db.UpdateWhere(ctx, []db.Where{
+	if err := p.state.DB.UpdateWhere(ctx, []db.Where{
 		{Key: "suspension_origin", Value: domainBlock.ID},
 	}, "suspended_at", nil, &[]*gtsmodel.Account{}); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("database error removing suspended_at from accounts: %s", err))
 	}
 
 	// 2. remove the 'suspension_origin' entry from their accounts
-	if err := p.db.UpdateWhere(ctx, []db.Where{
+	if err := p.state.DB.UpdateWhere(ctx, []db.Where{
 		{Key: "suspension_origin", Value: domainBlock.ID},
 	}, "suspension_origin", nil, &[]*gtsmodel.Account{}); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("database error removing suspension_origin from accounts: %s", err))

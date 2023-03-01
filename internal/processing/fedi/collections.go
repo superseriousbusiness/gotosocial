@@ -84,8 +84,8 @@ func (p *Processor) OutboxGet(ctx context.Context, requestedUsername string, pag
 
 	// scenario 2 -- get the requested page
 	// limit pages to 30 entries per page
-	publicStatuses, err := p.db.GetAccountStatuses(ctx, requestedAccount.ID, 30, true, true, maxID, minID, false, true)
-	if err != nil && err != db.ErrNoEntries {
+	publicStatuses, err := p.state.DB.GetAccountStatuses(ctx, requestedAccount.ID, 30, true, true, maxID, minID, false, true)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -161,7 +161,7 @@ func (p *Processor) FeaturedCollectionGet(ctx context.Context, requestedUsername
 		return nil, errWithCode
 	}
 
-	statuses, err := p.db.GetAccountPinnedStatuses(ctx, requestedAccount.ID)
+	statuses, err := p.state.DB.GetAccountPinnedStatuses(ctx, requestedAccount.ID)
 	if err != nil {
 		if !errors.Is(err, db.ErrNoEntries) {
 			return nil, gtserror.NewErrorInternalError(err)

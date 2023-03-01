@@ -39,7 +39,7 @@ const allowedPinnedCount = 10
 //   - Status is public, unlisted, or followers-only.
 //   - Status is not a boost.
 func (p *Processor) getPinnableStatus(ctx context.Context, targetStatusID string, requestingAccountID string) (*gtsmodel.Status, gtserror.WithCode) {
-	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
+	targetStatus, err := p.state.DB.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		err = fmt.Errorf("error fetching status %s: %w", targetStatusID, err)
 		return nil, gtserror.NewErrorNotFound(err)
@@ -84,7 +84,7 @@ func (p *Processor) PinCreate(ctx context.Context, requestingAccount *gtsmodel.A
 		return nil, gtserror.NewErrorUnprocessableEntity(err, err.Error())
 	}
 
-	pinnedCount, err := p.db.CountAccountPinned(ctx, requestingAccount.ID)
+	pinnedCount, err := p.state.DB.CountAccountPinned(ctx, requestingAccount.ID)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking number of pinned statuses: %w", err))
 	}
@@ -95,7 +95,7 @@ func (p *Processor) PinCreate(ctx context.Context, requestingAccount *gtsmodel.A
 	}
 
 	targetStatus.PinnedAt = time.Now()
-	if err := p.db.UpdateStatus(ctx, targetStatus, "pinned_at"); err != nil {
+	if err := p.state.DB.UpdateStatus(ctx, targetStatus, "pinned_at"); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error pinning status: %w", err))
 	}
 
@@ -126,7 +126,7 @@ func (p *Processor) PinRemove(ctx context.Context, requestingAccount *gtsmodel.A
 
 	if targetStatus.PinnedAt.IsZero() {
 		targetStatus.PinnedAt = time.Time{}
-		if err := p.db.UpdateStatus(ctx, targetStatus, "pinned_at"); err != nil {
+		if err := p.state.DB.UpdateStatus(ctx, targetStatus, "pinned_at"); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error unpinning status: %w", err))
 		}
 	}

@@ -20,12 +20,11 @@ package media_test
 
 import (
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	mediaprocessing "github.com/superseriousbusiness/gotosocial/internal/processing/media"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -38,6 +37,7 @@ type MediaStandardTestSuite struct {
 	db                  db.DB
 	tc                  typeutils.TypeConverter
 	storage             *storage.Driver
+	state               state.State
 	mediaManager        media.Manager
 	transportController transport.Controller
 
@@ -67,15 +67,19 @@ func (suite *MediaStandardTestSuite) SetupSuite() {
 }
 
 func (suite *MediaStandardTestSuite) SetupTest() {
+	suite.state.Caches.Init()
+
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
 
-	suite.db = testrig.NewTestDB()
+	suite.db = testrig.NewTestDB(&suite.state)
+	suite.state.DB = suite.db
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.storage = testrig.NewInMemoryStorage()
-	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
-	suite.transportController = testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../testrig/media"), suite.db, concurrency.NewWorkerPool[messages.FromFederator](-1, -1))
-	suite.mediaProcessor = mediaprocessing.New(suite.db, suite.tc, suite.mediaManager, suite.transportController, suite.storage)
+	suite.state.Storage = suite.storage
+	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
+	suite.transportController = testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../testrig/media"))
+	suite.mediaProcessor = mediaprocessing.New(&suite.state, suite.tc, suite.mediaManager, suite.transportController)
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 }

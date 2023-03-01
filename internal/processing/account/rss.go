@@ -34,7 +34,7 @@ const rssFeedLength = 20
 
 // GetRSSFeedForUsername returns RSS feed for the given local username.
 func (p *Processor) GetRSSFeedForUsername(ctx context.Context, username string) (func() (string, gtserror.WithCode), time.Time, gtserror.WithCode) {
-	account, err := p.db.GetAccountByUsernameDomain(ctx, username, "")
+	account, err := p.state.DB.GetAccountByUsernameDomain(ctx, username, "")
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return nil, time.Time{}, gtserror.NewErrorNotFound(errors.New("GetRSSFeedForUsername: account not found"))
@@ -46,13 +46,13 @@ func (p *Processor) GetRSSFeedForUsername(ctx context.Context, username string) 
 		return nil, time.Time{}, gtserror.NewErrorNotFound(errors.New("GetRSSFeedForUsername: account RSS feed not enabled"))
 	}
 
-	lastModified, err := p.db.GetAccountLastPosted(ctx, account.ID, true)
+	lastModified, err := p.state.DB.GetAccountLastPosted(ctx, account.ID, true)
 	if err != nil {
 		return nil, time.Time{}, gtserror.NewErrorInternalError(fmt.Errorf("GetRSSFeedForUsername: db error: %s", err))
 	}
 
 	return func() (string, gtserror.WithCode) {
-		statuses, err := p.db.GetAccountWebStatuses(ctx, account.ID, rssFeedLength, "")
+		statuses, err := p.state.DB.GetAccountWebStatuses(ctx, account.ID, rssFeedLength, "")
 		if err != nil && err != db.ErrNoEntries {
 			return "", gtserror.NewErrorInternalError(fmt.Errorf("GetRSSFeedForUsername: db error: %s", err))
 		}
@@ -65,7 +65,7 @@ func (p *Processor) GetRSSFeedForUsername(ctx context.Context, username string) 
 		var image *feeds.Image
 		if account.AvatarMediaAttachmentID != "" {
 			if account.AvatarMediaAttachment == nil {
-				avatar, err := p.db.GetAttachmentByID(ctx, account.AvatarMediaAttachmentID)
+				avatar, err := p.state.DB.GetAttachmentByID(ctx, account.AvatarMediaAttachmentID)
 				if err != nil {
 					return "", gtserror.NewErrorInternalError(fmt.Errorf("GetRSSFeedForUsername: db error fetching avatar attachment: %s", err))
 				}

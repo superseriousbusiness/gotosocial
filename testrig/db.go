@@ -71,7 +71,7 @@ var testModels = []interface{}{
 //
 // If the environment variable GTS_DB_PORT is set, it will take that
 // value as the port instead.
-func NewTestDB() db.DB {
+func NewTestDB(state *state.State) db.DB {
 	if alternateAddress := os.Getenv("GTS_DB_ADDRESS"); alternateAddress != "" {
 		config.SetDbAddress(alternateAddress)
 	}
@@ -88,10 +88,9 @@ func NewTestDB() db.DB {
 		config.SetDbPort(int(port))
 	}
 
-	var state state.State
 	state.Caches.Init()
 
-	testDB, err := bundb.NewBunDBService(context.Background(), &state)
+	testDB, err := bundb.NewBunDBService(context.Background(), state)
 	if err != nil {
 		log.Panic(nil, err)
 	}

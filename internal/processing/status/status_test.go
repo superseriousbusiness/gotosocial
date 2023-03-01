@@ -19,17 +19,14 @@
 package status_test
 
 import (
-	"context"
-
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -42,9 +39,9 @@ type StatusStandardTestSuite struct {
 	typeConverter typeutils.TypeConverter
 	tc            transport.Controller
 	storage       *storage.Driver
+	state         state.State
 	mediaManager  media.Manager
 	federator     federation.Federator
-	clientWorker  *concurrency.WorkerPool[messages.FromClientAPI]
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
@@ -74,21 +71,22 @@ func (suite *StatusStandardTestSuite) SetupSuite() {
 }
 
 func (suite *StatusStandardTestSuite) SetupTest() {
+	suite.state.Caches.Init()
+	testrig.StartWorkers(&suite.state)
+
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
 
-	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
-
-	suite.db = testrig.NewTestDB()
+	suite.db = testrig.NewTestDB(&suite.state)
 	suite.typeConverter = testrig.NewTestTypeConverter(suite.db)
-	suite.clientWorker = concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
-	suite.tc = testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../testrig/media"), suite.db, fedWorker)
+	suite.state.DB = suite.db
+
+	suite.tc = testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../testrig/media"))
 	suite.storage = testrig.NewInMemoryStorage()
-	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
-	suite.federator = testrig.NewTestFederator(suite.db, suite.tc, suite.storage, suite.mediaManager, fedWorker)
-	suite.status = status.New(suite.db, suite.typeConverter, suite.clientWorker, processing.GetParseMentionFunc(suite.db, suite.federator))
-	suite.clientWorker.SetProcessor(func(ctx context.Context, msg messages.FromClientAPI) error { return nil })
-	suite.NoError(suite.clientWorker.Start())
+	suite.state.Storage = suite.storage
+	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
+	suite.federator = testrig.NewTestFederator(&suite.state, suite.tc, suite.mediaManager)
+	suite.status = status.New(&suite.state, suite.typeConverter, processing.GetParseMentionFunc(suite.db, suite.federator))
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
@@ -97,4 +95,5 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 func (suite *StatusStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
+	testrig.StopWorkers(&suite.state)
 }

@@ -42,7 +42,7 @@ func (p *Processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, 
 		return nil, gtserror.NewErrorUnauthorized(fmt.Errorf("user %s not an admin", user.ID), "user is not an admin")
 	}
 
-	maybeExisting, err := p.db.GetEmojiByShortcodeDomain(ctx, form.Shortcode, "")
+	maybeExisting, err := p.state.DB.GetEmojiByShortcodeDomain(ctx, form.Shortcode, "")
 	if maybeExisting != nil {
 		return nil, gtserror.NewErrorConflict(fmt.Errorf("emoji with shortcode %s already exists", form.Shortcode), fmt.Sprintf("emoji with shortcode %s already exists", form.Shortcode))
 	}
@@ -110,7 +110,7 @@ func (p *Processor) EmojisGet(
 		return nil, gtserror.NewErrorUnauthorized(fmt.Errorf("user %s not an admin", user.ID), "user is not an admin")
 	}
 
-	emojis, err := p.db.GetEmojis(ctx, domain, includeDisabled, includeEnabled, shortcode, maxShortcodeDomain, minShortcodeDomain, limit)
+	emojis, err := p.state.DB.GetEmojis(ctx, domain, includeDisabled, includeEnabled, shortcode, maxShortcodeDomain, minShortcodeDomain, limit)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err := fmt.Errorf("EmojisGet: db error: %s", err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -176,7 +176,7 @@ func (p *Processor) EmojiGet(ctx context.Context, account *gtsmodel.Account, use
 		return nil, gtserror.NewErrorUnauthorized(fmt.Errorf("user %s not an admin", user.ID), "user is not an admin")
 	}
 
-	emoji, err := p.db.GetEmojiByID(ctx, id)
+	emoji, err := p.state.DB.GetEmojiByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, db.ErrNoEntries) {
 			err = fmt.Errorf("EmojiGet: no emoji with id %s found in the db", id)
@@ -197,7 +197,7 @@ func (p *Processor) EmojiGet(ctx context.Context, account *gtsmodel.Account, use
 
 // EmojiDelete deletes one emoji from the database, with the given id.
 func (p *Processor) EmojiDelete(ctx context.Context, id string) (*apimodel.AdminEmoji, gtserror.WithCode) {
-	emoji, err := p.db.GetEmojiByID(ctx, id)
+	emoji, err := p.state.DB.GetEmojiByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, db.ErrNoEntries) {
 			err = fmt.Errorf("EmojiDelete: no emoji with id %s found in the db", id)
@@ -218,7 +218,7 @@ func (p *Processor) EmojiDelete(ctx context.Context, id string) (*apimodel.Admin
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if err := p.db.DeleteEmojiByID(ctx, id); err != nil {
+	if err := p.state.DB.DeleteEmojiByID(ctx, id); err != nil {
 		err := fmt.Errorf("EmojiDelete: db error: %s", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -228,7 +228,7 @@ func (p *Processor) EmojiDelete(ctx context.Context, id string) (*apimodel.Admin
 
 // EmojiUpdate updates one emoji with the given id, using the provided form parameters.
 func (p *Processor) EmojiUpdate(ctx context.Context, id string, form *apimodel.EmojiUpdateRequest) (*apimodel.AdminEmoji, gtserror.WithCode) {
-	emoji, err := p.db.GetEmojiByID(ctx, id)
+	emoji, err := p.state.DB.GetEmojiByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, db.ErrNoEntries) {
 			err = fmt.Errorf("EmojiUpdate: no emoji with id %s found in the db", id)
@@ -253,7 +253,7 @@ func (p *Processor) EmojiUpdate(ctx context.Context, id string, form *apimodel.E
 
 // EmojiCategoriesGet returns all custom emoji categories that exist on this instance.
 func (p *Processor) EmojiCategoriesGet(ctx context.Context) ([]*apimodel.EmojiCategory, gtserror.WithCode) {
-	categories, err := p.db.GetEmojiCategories(ctx)
+	categories, err := p.state.DB.GetEmojiCategories(ctx)
 	if err != nil {
 		err := fmt.Errorf("EmojiCategoriesGet: db error: %s", err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -277,7 +277,7 @@ func (p *Processor) EmojiCategoriesGet(ctx context.Context) ([]*apimodel.EmojiCa
 */
 
 func (p *Processor) getOrCreateEmojiCategory(ctx context.Context, name string) (*gtsmodel.EmojiCategory, error) {
-	category, err := p.db.GetEmojiCategoryByName(ctx, name)
+	category, err := p.state.DB.GetEmojiCategoryByName(ctx, name)
 	if err == nil {
 		return category, nil
 	}
@@ -299,7 +299,7 @@ func (p *Processor) getOrCreateEmojiCategory(ctx context.Context, name string) (
 		Name: name,
 	}
 
-	if err := p.db.PutEmojiCategory(ctx, category); err != nil {
+	if err := p.state.DB.PutEmojiCategory(ctx, category); err != nil {
 		err = fmt.Errorf("GetOrCreateEmojiCategory: error putting new emoji category in the database: %s", err)
 		return nil, err
 	}
@@ -319,7 +319,7 @@ func (p *Processor) emojiUpdateCopy(ctx context.Context, emoji *gtsmodel.Emoji, 
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
-	maybeExisting, err := p.db.GetEmojiByShortcodeDomain(ctx, *shortcode, "")
+	maybeExisting, err := p.state.DB.GetEmojiByShortcodeDomain(ctx, *shortcode, "")
 	if maybeExisting != nil {
 		err := fmt.Errorf("emojiUpdateCopy: emoji %s could not be copied, emoji with shortcode %s already exists on this instance", emoji.ID, *shortcode)
 		return nil, gtserror.NewErrorConflict(err, err.Error())
@@ -339,7 +339,7 @@ func (p *Processor) emojiUpdateCopy(ctx context.Context, emoji *gtsmodel.Emoji, 
 	newEmojiURI := uris.GenerateURIForEmoji(newEmojiID)
 
 	data := func(ctx context.Context) (reader io.ReadCloser, fileSize int64, err error) {
-		rc, err := p.storage.GetStream(ctx, emoji.ImagePath)
+		rc, err := p.state.Storage.GetStream(ctx, emoji.ImagePath)
 		return rc, int64(emoji.ImageFileSize), err
 	}
 
@@ -386,7 +386,7 @@ func (p *Processor) emojiUpdateDisable(ctx context.Context, emoji *gtsmodel.Emoj
 
 	emojiDisabled := true
 	emoji.Disabled = &emojiDisabled
-	updatedEmoji, err := p.db.UpdateEmoji(ctx, emoji, "updated_at", "disabled")
+	updatedEmoji, err := p.state.DB.UpdateEmoji(ctx, emoji, "updated_at", "disabled")
 	if err != nil {
 		err = fmt.Errorf("emojiUpdateDisable: error updating emoji %s: %s", emoji.ID, err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -443,7 +443,7 @@ func (p *Processor) emojiUpdateModify(ctx context.Context, emoji *gtsmodel.Emoji
 		}
 
 		var err error
-		updatedEmoji, err = p.db.UpdateEmoji(ctx, emoji, columns...)
+		updatedEmoji, err = p.state.DB.UpdateEmoji(ctx, emoji, columns...)
 		if err != nil {
 			err = fmt.Errorf("emojiUpdateModify: error updating emoji %s: %s", emoji.ID, err)
 			return nil, gtserror.NewErrorInternalError(err)

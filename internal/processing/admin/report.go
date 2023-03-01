@@ -43,7 +43,7 @@ func (p *Processor) ReportsGet(
 	minID string,
 	limit int,
 ) (*apimodel.PageableResponse, gtserror.WithCode) {
-	reports, err := p.db.GetReports(ctx, resolved, accountID, targetAccountID, maxID, sinceID, minID, limit)
+	reports, err := p.state.DB.GetReports(ctx, resolved, accountID, targetAccountID, maxID, sinceID, minID, limit)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return util.EmptyPageableResponse(), nil
@@ -95,7 +95,7 @@ func (p *Processor) ReportsGet(
 
 // ReportGet returns one report, with the given ID.
 func (p *Processor) ReportGet(ctx context.Context, account *gtsmodel.Account, id string) (*apimodel.AdminReport, gtserror.WithCode) {
-	report, err := p.db.GetReportByID(ctx, id)
+	report, err := p.state.DB.GetReportByID(ctx, id)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return nil, gtserror.NewErrorNotFound(err)
@@ -113,7 +113,7 @@ func (p *Processor) ReportGet(ctx context.Context, account *gtsmodel.Account, id
 
 // ReportResolve marks a report with the given id as resolved, and stores the provided actionTakenComment (if not null).
 func (p *Processor) ReportResolve(ctx context.Context, account *gtsmodel.Account, id string, actionTakenComment *string) (*apimodel.AdminReport, gtserror.WithCode) {
-	report, err := p.db.GetReportByID(ctx, id)
+	report, err := p.state.DB.GetReportByID(ctx, id)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return nil, gtserror.NewErrorNotFound(err)
@@ -134,7 +134,7 @@ func (p *Processor) ReportResolve(ctx context.Context, account *gtsmodel.Account
 		columns = append(columns, "action_taken")
 	}
 
-	updatedReport, err := p.db.UpdateReport(ctx, report, columns...)
+	updatedReport, err := p.state.DB.UpdateReport(ctx, report, columns...)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

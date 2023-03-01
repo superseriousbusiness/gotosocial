@@ -23,16 +23,15 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/fileserver"
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -43,6 +42,7 @@ type FileserverTestSuite struct {
 	suite.Suite
 	db           db.DB
 	storage      *storage.Driver
+	state        state.State
 	federator    federation.Federator
 	tc           typeutils.TypeConverter
 	processor    *processing.Processor
@@ -67,26 +67,32 @@ type FileserverTestSuite struct {
 */
 
 func (suite *FileserverTestSuite) SetupSuite() {
+	testrig.StartWorkers(&suite.state)
+
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
 
-	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
-	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
-
-	suite.db = testrig.NewTestDB()
+	suite.db = testrig.NewTestDB(&suite.state)
+	suite.state.DB = suite.db
 	suite.storage = testrig.NewInMemoryStorage()
-	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../testrig/media"), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
-	suite.emailSender = testrig.NewEmailSender("../../../web/template/", nil)
+	suite.state.Storage = suite.storage
 
-	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, testrig.NewTestMediaManager(suite.db, suite.storage), clientWorker, fedWorker)
+	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
+	suite.federator = testrig.NewTestFederator(&suite.state, testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../testrig/media")), suite.mediaManager)
+	suite.processor = testrig.NewTestProcessor(&suite.state, suite.federator, suite.emailSender, suite.mediaManager)
+
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
-	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
+	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
+	suite.emailSender = testrig.NewEmailSender("../../../web/template/", nil)
 
 	suite.fileServer = fileserver.New(suite.processor)
 }
 
 func (suite *FileserverTestSuite) SetupTest() {
+	suite.state.Caches.Init()
+	testrig.StartWorkers(&suite.state)
+
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 	suite.testTokens = testrig.NewTestTokens()
@@ -101,9 +107,11 @@ func (suite *FileserverTestSuite) TearDownSuite() {
 	if err := suite.db.Stop(context.Background()); err != nil {
 		log.Panicf(nil, "error closing db connection: %s", err)
 	}
+	testrig.StopWorkers(&suite.state)
 }
 
 func (suite *FileserverTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
+	testrig.StopWorkers(&suite.state)
 }

@@ -19,32 +19,25 @@
 package admin
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 type Processor struct {
+	state               *state.State
 	tc                  typeutils.TypeConverter
 	mediaManager        media.Manager
 	transportController transport.Controller
-	storage             *storage.Driver
-	clientWorker        *concurrency.WorkerPool[messages.FromClientAPI]
-	db                  db.DB
 }
 
 // New returns a new admin processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, transportController transport.Controller, storage *storage.Driver, clientWorker *concurrency.WorkerPool[messages.FromClientAPI]) Processor {
+func New(state *state.State, tc typeutils.TypeConverter, mediaManager media.Manager, transportController transport.Controller) Processor {
 	return Processor{
+		state:               state,
 		tc:                  tc,
 		mediaManager:        mediaManager,
 		transportController: transportController,
-		storage:             storage,
-		clientWorker:        clientWorker,
-		db:                  db,
 	}
 }

@@ -25,6 +25,7 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
 type AnnounceTestSuite struct {
@@ -73,6 +74,13 @@ func (suite *AnnounceTestSuite) TestAnnounceTwice() {
 	boost, ok := msg.GTSModel.(*gtsmodel.Status)
 	suite.True(ok)
 	suite.Equal(announcingAccount.ID, boost.AccountID)
+
+	// Insert the boost-of status into the
+	// DB cache to emulate processor handling
+	boost.ID, _ = id.NewULIDFromTime(boost.CreatedAt)
+	suite.state.Caches.GTS.Status().Store(boost, func() error {
+		return nil
+	})
 
 	// only the URI will be set on the boosted status because it still needs to be dereferenced
 	suite.NotEmpty(boost.BoostOf.URI)

@@ -31,14 +31,14 @@ import (
 
 // FollowersGet fetches a list of the target account's followers.
 func (p *Processor) FollowersGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) ([]apimodel.Account, gtserror.WithCode) {
-	if blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true); err != nil {
+	if blocked, err := p.state.DB.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	} else if blocked {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts"))
 	}
 
 	accounts := []apimodel.Account{}
-	follows, err := p.db.GetAccountFollowedBy(ctx, targetAccountID, false)
+	follows, err := p.state.DB.GetAccountFollowedBy(ctx, targetAccountID, false)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return accounts, nil
@@ -47,7 +47,7 @@ func (p *Processor) FollowersGet(ctx context.Context, requestingAccount *gtsmode
 	}
 
 	for _, f := range follows {
-		blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, f.AccountID, true)
+		blocked, err := p.state.DB.IsBlocked(ctx, requestingAccount.ID, f.AccountID, true)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -56,7 +56,7 @@ func (p *Processor) FollowersGet(ctx context.Context, requestingAccount *gtsmode
 		}
 
 		if f.Account == nil {
-			a, err := p.db.GetAccountByID(ctx, f.AccountID)
+			a, err := p.state.DB.GetAccountByID(ctx, f.AccountID)
 			if err != nil {
 				if err == db.ErrNoEntries {
 					continue
@@ -77,14 +77,14 @@ func (p *Processor) FollowersGet(ctx context.Context, requestingAccount *gtsmode
 
 // FollowingGet fetches a list of the accounts that target account is following.
 func (p *Processor) FollowingGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) ([]apimodel.Account, gtserror.WithCode) {
-	if blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true); err != nil {
+	if blocked, err := p.state.DB.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	} else if blocked {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts"))
 	}
 
 	accounts := []apimodel.Account{}
-	follows, err := p.db.GetAccountFollows(ctx, targetAccountID)
+	follows, err := p.state.DB.GetAccountFollows(ctx, targetAccountID)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return accounts, nil
@@ -93,7 +93,7 @@ func (p *Processor) FollowingGet(ctx context.Context, requestingAccount *gtsmode
 	}
 
 	for _, f := range follows {
-		blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, f.AccountID, true)
+		blocked, err := p.state.DB.IsBlocked(ctx, requestingAccount.ID, f.AccountID, true)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -102,7 +102,7 @@ func (p *Processor) FollowingGet(ctx context.Context, requestingAccount *gtsmode
 		}
 
 		if f.TargetAccount == nil {
-			a, err := p.db.GetAccountByID(ctx, f.TargetAccountID)
+			a, err := p.state.DB.GetAccountByID(ctx, f.TargetAccountID)
 			if err != nil {
 				if err == db.ErrNoEntries {
 					continue
@@ -127,7 +127,7 @@ func (p *Processor) RelationshipGet(ctx context.Context, requestingAccount *gtsm
 		return nil, gtserror.NewErrorForbidden(errors.New("not authed"))
 	}
 
-	gtsR, err := p.db.GetRelationship(ctx, requestingAccount.ID, targetAccountID)
+	gtsR, err := p.state.DB.GetRelationship(ctx, requestingAccount.ID, targetAccountID)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error getting relationship: %s", err))
 	}

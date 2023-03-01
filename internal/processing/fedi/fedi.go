@@ -19,25 +19,25 @@
 package fedi
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
 
 type Processor struct {
-	db        db.DB
+	state     *state.State
 	federator federation.Federator
 	tc        typeutils.TypeConverter
 	filter    visibility.Filter
 }
 
 // New returns a new fedi processor.
-func New(db db.DB, tc typeutils.TypeConverter, federator federation.Federator) Processor {
+func New(state *state.State, tc typeutils.TypeConverter, federator federation.Federator) Processor {
 	return Processor{
-		db:        db,
+		state:     state,
 		federator: federator,
 		tc:        tc,
-		filter:    visibility.NewFilter(db),
+		filter:    visibility.NewFilter(state.DB),
 	}
 }

@@ -19,22 +19,18 @@
 package report
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 type Processor struct {
-	db           db.DB
-	tc           typeutils.TypeConverter
-	clientWorker *concurrency.WorkerPool[messages.FromClientAPI]
+	state *state.State
+	tc    typeutils.TypeConverter
 }
 
-func New(db db.DB, tc typeutils.TypeConverter, clientWorker *concurrency.WorkerPool[messages.FromClientAPI]) Processor {
+func New(state *state.State, tc typeutils.TypeConverter) Processor {
 	return Processor{
-		tc:           tc,
-		db:           db,
-		clientWorker: clientWorker,
+		state: state,
+		tc:    tc,
 	}
 }
