@@ -25,6 +25,7 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
 type AnnounceTestSuite struct {
@@ -54,39 +55,46 @@ func (suite *AnnounceTestSuite) TestNewAnnounce() {
 	suite.NotEmpty(boost.BoostOf.URI)
 }
 
-// func (suite *AnnounceTestSuite) TestAnnounceTwice() {
-// 	receivingAccount1 := suite.testAccounts["local_account_1"]
-// 	receivingAccount2 := suite.testAccounts["local_account_2"]
+func (suite *AnnounceTestSuite) TestAnnounceTwice() {
+	receivingAccount1 := suite.testAccounts["local_account_1"]
+	receivingAccount2 := suite.testAccounts["local_account_2"]
 
-// 	announcingAccount := suite.testAccounts["remote_account_1"]
+	announcingAccount := suite.testAccounts["remote_account_1"]
 
-// 	ctx1 := createTestContext(receivingAccount1, announcingAccount)
-// 	announce1 := suite.testActivities["announce_forwarded_1_zork"]
+	ctx1 := createTestContext(receivingAccount1, announcingAccount)
+	announce1 := suite.testActivities["announce_forwarded_1_zork"]
 
-// 	err := suite.federatingDB.Announce(ctx1, announce1.Activity.(vocab.ActivityStreamsAnnounce))
-// 	suite.NoError(err)
+	err := suite.federatingDB.Announce(ctx1, announce1.Activity.(vocab.ActivityStreamsAnnounce))
+	suite.NoError(err)
 
-// 	// should be a message heading to the processor now, which we can intercept here
-// 	msg := <-suite.fromFederator
-// 	suite.Equal(ap.ActivityAnnounce, msg.APObjectType)
-// 	suite.Equal(ap.ActivityCreate, msg.APActivityType)
-// 	boost, ok := msg.GTSModel.(*gtsmodel.Status)
-// 	suite.True(ok)
-// 	suite.Equal(announcingAccount.ID, boost.AccountID)
+	// should be a message heading to the processor now, which we can intercept here
+	msg := <-suite.fromFederator
+	suite.Equal(ap.ActivityAnnounce, msg.APObjectType)
+	suite.Equal(ap.ActivityCreate, msg.APActivityType)
+	boost, ok := msg.GTSModel.(*gtsmodel.Status)
+	suite.True(ok)
+	suite.Equal(announcingAccount.ID, boost.AccountID)
 
-// 	// only the URI will be set on the boosted status because it still needs to be dereferenced
-// 	suite.NotEmpty(boost.BoostOf.URI)
+	// Insert the boost-of status into the
+	// DB cache to emulate processor handling
+	boost.ID, _ = id.NewULIDFromTime(boost.CreatedAt)
+	suite.state.Caches.GTS.Status().Store(boost, func() error {
+		return nil
+	})
 
-// 	ctx2 := createTestContext(receivingAccount2, announcingAccount)
-// 	announce2 := suite.testActivities["announce_forwarded_1_turtle"]
+	// only the URI will be set on the boosted status because it still needs to be dereferenced
+	suite.NotEmpty(boost.BoostOf.URI)
 
-// 	err = suite.federatingDB.Announce(ctx2, announce2.Activity.(vocab.ActivityStreamsAnnounce))
-// 	suite.NoError(err)
+	ctx2 := createTestContext(receivingAccount2, announcingAccount)
+	announce2 := suite.testActivities["announce_forwarded_1_turtle"]
 
-// 	// since this is a repeat announce with the same URI, just delivered to a different inbox,
-// 	// we should have nothing in the messages channel...
-// 	suite.Empty(suite.fromFederator)
-// }
+	err = suite.federatingDB.Announce(ctx2, announce2.Activity.(vocab.ActivityStreamsAnnounce))
+	suite.NoError(err)
+
+	// since this is a repeat announce with the same URI, just delivered to a different inbox,
+	// we should have nothing in the messages channel...
+	suite.Empty(suite.fromFederator)
+}
 
 func TestAnnounceTestSuite(t *testing.T) {
 	suite.Run(t, &AnnounceTestSuite{})
