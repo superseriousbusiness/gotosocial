@@ -188,7 +188,7 @@ func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*g
 }
 
 func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Error {
-	return s.state.Caches.GTS.Status().Store(status, func() error {
+	err := s.state.Caches.GTS.Status().Store(status, func() error {
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
 		//
@@ -248,6 +248,17 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Er
 			return err
 		})
 	})
+	if err != nil {
+		// already processed
+		return err
+	}
+
+	for _, id := range status.AttachmentIDs {
+		// Clear updated media attachment IDs from cache
+		s.state.Caches.GTS.Media().Invalidate("ID", id)
+	}
+
+	return nil
 }
 
 func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, columns ...string) db.Error {
@@ -317,11 +328,18 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 			Exec(ctx)
 		return err
 	}); err != nil {
+		// already processed
 		return err
 	}
 
-	// Drop any old value from cache by this ID
+	for _, id := range status.AttachmentIDs {
+		// Clear updated media attachment IDs from cache
+		s.state.Caches.GTS.Media().Invalidate("ID", id)
+	}
+
+	// Drop any old status value from cache by this ID
 	s.state.Caches.GTS.Status().Invalidate("ID", status.ID)
+
 	return nil
 }
 
