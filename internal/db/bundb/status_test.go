@@ -26,6 +26,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 type StatusTestSuite struct {
@@ -176,12 +177,40 @@ func (suite *StatusTestSuite) TestGetStatusChildren() {
 }
 
 func (suite *StatusTestSuite) TestDeleteStatus() {
-	targetStatus := suite.testStatuses["admin_account_status_1"]
+	// Take a copy of the status.
+	targetStatus := &gtsmodel.Status{}
+	*targetStatus = *suite.testStatuses["admin_account_status_1"]
+
 	err := suite.db.DeleteStatusByID(context.Background(), targetStatus.ID)
 	suite.NoError(err)
 
 	_, err = suite.db.GetStatusByID(context.Background(), targetStatus.ID)
 	suite.ErrorIs(err, db.ErrNoEntries)
+}
+
+// This test was added specifically to ensure that Postgres wasn't getting upset
+// about trying to use a transaction in which an error has already occurred, which
+// was previously leading to errors like 'current transaction is aborted, commands
+// ignored until end of transaction block' when updating a status that already had
+// emojis or tags set on it.
+//
+// To run this test for postgres specifically, start a postgres container on localhost
+// and then run:
+//
+// GTS_DB_TYPE=postgres GTS_DB_ADDRESS=localhost go test ./internal/db/bundb -run '^TestStatusTestSuite$' -testify.m '^(TestUpdateStatus)$' github.com/superseriousbusiness/gotosocial/internal/db/bundb
+func (suite *StatusTestSuite) TestUpdateStatus() {
+	// Take a copy of the status.
+	targetStatus := &gtsmodel.Status{}
+	*targetStatus = *suite.testStatuses["admin_account_status_1"]
+
+	targetStatus.PinnedAt = time.Time{}
+
+	err := suite.db.UpdateStatus(context.Background(), targetStatus, "pinned_at")
+	suite.NoError(err)
+
+	updated, err := suite.db.GetStatusByID(context.Background(), targetStatus.ID)
+	suite.NoError(err)
+	suite.True(updated.PinnedAt.IsZero())
 }
 
 func TestStatusTestSuite(t *testing.T) {
