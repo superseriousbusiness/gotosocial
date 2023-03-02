@@ -198,7 +198,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendSensitive() {
     "privacy": "public",
     "sensitive": false,
     "language": "en",
-    "status_format": "plain",
+    "status_content_type": "text/plain",
     "note": "hey yo this is my profile!",
     "fields": [],
     "follow_requests_count": 0
@@ -504,7 +504,11 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV1ToFrontend() {
     "statuses": {
       "max_characters": 5000,
       "max_media_attachments": 6,
-      "characters_reserved_per_url": 25
+      "characters_reserved_per_url": 25,
+      "supported_mime_types": [
+        "text/plain",
+        "text/markdown"
+      ]
     },
     "media_attachments": {
       "supported_mime_types": [
@@ -616,7 +620,11 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV2ToFrontend() {
     "statuses": {
       "max_characters": 5000,
       "max_media_attachments": 6,
-      "characters_reserved_per_url": 25
+      "characters_reserved_per_url": 25,
+      "supported_mime_types": [
+        "text/plain",
+        "text/markdown"
+      ]
     },
     "media_attachments": {
       "supported_mime_types": [

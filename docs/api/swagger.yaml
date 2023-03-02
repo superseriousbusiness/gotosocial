@@ -143,10 +143,10 @@ definitions:
                 description: Whether new statuses should be marked sensitive by default.
                 type: boolean
                 x-go-name: Sensitive
-            status_format:
-                description: The default posting format for new statuses.
+            status_content_type:
+                description: The default posting content type for new statuses.
                 type: string
-                x-go-name: StatusFormat
+                x-go-name: StatusContentType
         title: Source represents display or publishing preferences of user's own account.
         type: object
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
@@ -1240,6 +1240,15 @@ definitions:
                 format: int64
                 type: integer
                 x-go-name: MaxMediaAttachments
+            supported_mime_types:
+                description: List of mime types that it's possible to use for statuses on this instance.
+                example:
+                    - text/plain
+                    - text/markdown
+                items:
+                    type: string
+                type: array
+                x-go-name: SupportedMimeTypes
         title: InstanceConfigurationStatuses models instance status config parameters.
         type: object
         x-go-name: InstanceConfigurationStatuses
@@ -2112,12 +2121,12 @@ definitions:
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     statusCreateRequest:
         properties:
-            format:
+            content_type:
                 description: |-
-                    Format to use when parsing this status.
+                    Content type to use when parsing this status.
                     in: formData
                 type: string
-                x-go-name: Format
+                x-go-name: ContentType
             in_reply_to_id:
                 description: |-
                     ID of the status being replied to, if status is a reply.
@@ -2463,10 +2472,10 @@ definitions:
                 description: Mark authored statuses as sensitive by default.
                 type: boolean
                 x-go-name: Sensitive
-            status_format:
-                description: Default format for authored statuses (plain or markdown).
+            status_content_type:
+                description: Default format for authored statuses (text/plain or text/markdown).
                 type: string
-                x-go-name: StatusFormat
+                x-go-name: StatusContentType
         title: UpdateSource is to be used specifically in an UpdateCredentialsRequest.
         type: object
         x-go-name: UpdateSource
@@ -3081,9 +3090,9 @@ paths:
                   in: formData
                   name: source[language]
                   type: string
-                - description: Default format to use for authored statuses (plain or markdown).
+                - description: Default content type to use for authored statuses (text/plain or text/markdown).
                   in: formData
-                  name: source[status_format]
+                  name: source[status_content_type]
                   type: string
                 - description: Custom CSS to use when rendering this account's profile or statuses. String must be no more than 5,000 characters (~5kb).
                   in: formData
@@ -4874,11 +4883,11 @@ paths:
                   name: language
                   type: string
                   x-go-name: Language
-                - description: Format to use when parsing this status.
+                - description: Content type to use when parsing this status.
                   in: formData
-                  name: format
+                  name: content_type
                   type: string
-                  x-go-name: Format
+                  x-go-name: ContentType
                 - description: This status will be federated beyond the local timeline(s).
                   in: query
                   name: federated

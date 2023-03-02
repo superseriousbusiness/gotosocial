@@ -290,32 +290,32 @@ func processContent(ctx context.Context, dbService db.DB, formatter text.Formatt
 		return nil
 	}
 
-	// if format wasn't specified we should try to figure out what format this user prefers
-	if form.Format == "" {
+	// if content type wasn't specified we should try to figure out what content type this user prefers
+	if form.ContentType == "" {
 		acct, err := dbService.GetAccountByID(ctx, accountID)
 		if err != nil {
 			return fmt.Errorf("error processing new content: couldn't retrieve account from db to check post format: %s", err)
 		}
 
-		switch acct.StatusFormat {
-		case "plain":
-			form.Format = apimodel.StatusFormatPlain
-		case "markdown":
-			form.Format = apimodel.StatusFormatMarkdown
+		switch acct.StatusContentType {
+		case "text/plain":
+			form.ContentType = apimodel.StatusContentTypePlain
+		case "text/markdown":
+			form.ContentType = apimodel.StatusContentTypeMarkdown
 		default:
-			form.Format = apimodel.StatusFormatDefault
+			form.ContentType = apimodel.StatusContentTypeDefault
 		}
 	}
 
-	// parse content out of the status depending on what format has been submitted
+	// parse content out of the status depending on what content type has been submitted
 	var f text.FormatFunc
-	switch form.Format {
-	case apimodel.StatusFormatPlain:
+	switch form.ContentType {
+	case apimodel.StatusContentTypePlain:
 		f = formatter.FromPlain
-	case apimodel.StatusFormatMarkdown:
+	case apimodel.StatusContentTypeMarkdown:
 		f = formatter.FromMarkdown
 	default:
-		return fmt.Errorf("format %s not recognised as a valid status format", form.Format)
+		return fmt.Errorf("format %s not recognised as a valid status format", form.ContentType)
 	}
 	formatted := f(ctx, parseMention, accountID, status.ID, form.Status)
 

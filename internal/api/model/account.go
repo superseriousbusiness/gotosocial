@@ -174,8 +174,8 @@ type UpdateSource struct {
 	Sensitive *bool `form:"sensitive" json:"sensitive" xml:"sensitive"`
 	// Default language to use for authored statuses. (ISO 6391)
 	Language *string `form:"language" json:"language" xml:"language"`
-	// Default format for authored statuses (plain or markdown).
-	StatusFormat *string `form:"status_format" json:"status_format" xml:"status_format"`
+	// Default format for authored statuses (text/plain or text/markdown).
+	StatusContentType *string `form:"status_content_type" json:"status_content_type" xml:"status_content_type"`
 }
 
 // UpdateField is to be used specifically in an UpdateCredentialsRequest.

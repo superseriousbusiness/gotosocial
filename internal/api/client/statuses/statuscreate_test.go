@@ -105,14 +105,14 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 func (suite *StatusCreateTestSuite) TestPostNewStatusMarkdown() {
 	// set default post language of account 1 to markdown
 	testAccount := suite.testAccounts["local_account_1"]
-	testAccount.StatusFormat = "markdown"
+	testAccount.StatusContentType = "text/markdown"
 	a := testAccount
 
 	err := suite.db.UpdateAccount(context.Background(), a)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	suite.Equal(a.StatusFormat, "markdown")
+	suite.Equal(a.StatusContentType, "text/markdown")
 
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.DBTokenToToken(t)
