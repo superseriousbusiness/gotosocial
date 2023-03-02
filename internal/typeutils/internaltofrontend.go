@@ -46,6 +46,11 @@ const (
 	instanceSourceURL                           = "https://github.com/superseriousbusiness/gotosocial"
 )
 
+var instanceStatusesSupportedMimeTypes = []string{
+	string(apimodel.StatusContentTypePlain),
+	string(apimodel.StatusContentTypeMarkdown),
+}
+
 func (c *converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
 	// we can build this sensitive account easily by first getting the public account....
 	apiAccount, err := c.AccountToAPIAccountPublic(ctx, a)
@@ -695,6 +700,7 @@ func (c *converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Configuration.Statuses.MaxCharacters = config.GetStatusesMaxChars()
 	instance.Configuration.Statuses.MaxMediaAttachments = config.GetStatusesMediaMaxFiles()
 	instance.Configuration.Statuses.CharactersReservedPerURL = instanceStatusesCharactersReservedPerURL
+	instance.Configuration.Statuses.SupportedMimeTypes = instanceStatusesSupportedMimeTypes
 	instance.Configuration.MediaAttachments.SupportedMimeTypes = media.SupportedMIMETypes
 	instance.Configuration.MediaAttachments.ImageSizeLimit = int(config.GetMediaImageMaxSize())
 	instance.Configuration.MediaAttachments.ImageMatrixLimit = instanceMediaAttachmentsImageMatrixLimit
@@ -820,10 +826,7 @@ func (c *converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Configuration.Statuses.MaxCharacters = config.GetStatusesMaxChars()
 	instance.Configuration.Statuses.MaxMediaAttachments = config.GetStatusesMediaMaxFiles()
 	instance.Configuration.Statuses.CharactersReservedPerURL = instanceStatusesCharactersReservedPerURL
-	instance.Configuration.Statuses.SupportedMimeTypes = []string{
-		string(apimodel.StatusContentTypePlain),
-		string(apimodel.StatusContentTypeMarkdown),
-	}
+	instance.Configuration.Statuses.SupportedMimeTypes = instanceStatusesSupportedMimeTypes
 	instance.Configuration.MediaAttachments.SupportedMimeTypes = media.SupportedMIMETypes
 	instance.Configuration.MediaAttachments.ImageSizeLimit = int(config.GetMediaImageMaxSize())
 	instance.Configuration.MediaAttachments.ImageMatrixLimit = instanceMediaAttachmentsImageMatrixLimit

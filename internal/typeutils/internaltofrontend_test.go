@@ -616,7 +616,11 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV2ToFrontend() {
     "statuses": {
       "max_characters": 5000,
       "max_media_attachments": 6,
-      "characters_reserved_per_url": 25
+      "characters_reserved_per_url": 25,
+      "supported_mime_types": [
+        "text/plain",
+        "text/markdown"
+      ]
     },
     "media_attachments": {
       "supported_mime_types": [
