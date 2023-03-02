@@ -200,7 +200,9 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Er
 					Model(&gtsmodel.StatusToEmoji{
 						StatusID: status.ID,
 						EmojiID:  i,
-					}).Exec(ctx); err != nil {
+					}).
+					On("CONFLICT (?, ?) DO NOTHING", bun.Ident("status_id"), bun.Ident("emoji_id")).
+					Exec(ctx); err != nil {
 					err = s.conn.ProcessError(err)
 					if !errors.Is(err, db.ErrAlreadyExists) {
 						return err
@@ -215,7 +217,9 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Er
 					Model(&gtsmodel.StatusToTag{
 						StatusID: status.ID,
 						TagID:    i,
-					}).Exec(ctx); err != nil {
+					}).
+					On("CONFLICT (?, ?) DO NOTHING", bun.Ident("status_id"), bun.Ident("tag_id")).
+					Exec(ctx); err != nil {
 					err = s.conn.ProcessError(err)
 					if !errors.Is(err, db.ErrAlreadyExists) {
 						return err
@@ -261,7 +265,9 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 				Model(&gtsmodel.StatusToEmoji{
 					StatusID: status.ID,
 					EmojiID:  i,
-				}).Exec(ctx); err != nil {
+				}).
+				On("CONFLICT (?, ?) DO NOTHING", bun.Ident("status_id"), bun.Ident("emoji_id")).
+				Exec(ctx); err != nil {
 				err = s.conn.ProcessError(err)
 				if !errors.Is(err, db.ErrAlreadyExists) {
 					return err
@@ -276,7 +282,9 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 				Model(&gtsmodel.StatusToTag{
 					StatusID: status.ID,
 					TagID:    i,
-				}).Exec(ctx); err != nil {
+				}).
+				On("CONFLICT (?, ?) DO NOTHING", bun.Ident("status_id"), bun.Ident("tag_id")).
+				Exec(ctx); err != nil {
 				err = s.conn.ProcessError(err)
 				if !errors.Is(err, db.ErrAlreadyExists) {
 					return err
@@ -300,7 +308,7 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 			}
 		}
 
-		// Finally, insert the status
+		// Finally, update the status
 		_, err := tx.
 			NewUpdate().
 			Model(status).
