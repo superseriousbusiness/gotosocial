@@ -35,6 +35,7 @@ const allowedPinnedCount = 10
 // can pin or unpin it.
 //
 // It checks:
+//   - Status is visible to requesting account.
 //   - Status belongs to requesting account.
 //   - Status is public, unlisted, or followers-only.
 //   - Status is not a boost.
@@ -42,6 +43,21 @@ func (p *Processor) getPinnableStatus(ctx context.Context, targetStatusID string
 	targetStatus, err := p.state.DB.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		err = fmt.Errorf("error fetching status %s: %w", targetStatusID, err)
+		return nil, gtserror.NewErrorNotFound(err)
+	}
+
+	requestingAccount, err := p.state.DB.GetAccountByID(ctx, requestingAccountID)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	visible, err := p.filter.StatusVisible(ctx, targetStatus, requestingAccount)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if !visible {
+		err = fmt.Errorf("status %s not visible to account %s", targetStatusID, requestingAccountID)
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
@@ -124,7 +140,7 @@ func (p *Processor) PinRemove(ctx context.Context, requestingAccount *gtsmodel.A
 		return nil, errWithCode
 	}
 
-	if targetStatus.PinnedAt.IsZero() {
+	if !targetStatus.PinnedAt.IsZero() {
 		targetStatus.PinnedAt = time.Time{}
 		if err := p.state.DB.UpdateStatus(ctx, targetStatus, "pinned_at"); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error unpinning status: %w", err))
