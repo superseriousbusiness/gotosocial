@@ -233,7 +233,7 @@ func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 	} else if form.AvatarDescription != nil && ia.AvatarMediaAttachment != nil {
 		// process just the description for the existing avatar
 		ia.AvatarMediaAttachment.Description = *form.AvatarDescription
-		if err := p.state.DB.UpdateByID(ctx, ia.AvatarMediaAttachment, ia.AvatarMediaAttachmentID, "description"); err != nil {
+		if err := p.state.DB.UpdateAttachment(ctx, ia.AvatarMediaAttachment, "description"); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error updating instance avatar description: %s", err))
 		}
 	}

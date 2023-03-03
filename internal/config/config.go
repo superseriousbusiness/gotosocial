@@ -177,6 +177,10 @@ type GTSCacheConfiguration struct {
 	EmojiCategoryTTL       time.Duration `name:"emoji-category-ttl"`
 	EmojiCategorySweepFreq time.Duration `name:"emoji-category-sweep-freq"`
 
+	MediaMaxSize   int           `name:"media-max-size"`
+	MediaTTL       time.Duration `name:"media-ttl"`
+	MediaSweepFreq time.Duration `name:"media-sweep-freq"`
+
 	MentionMaxSize   int           `name:"mention-max-size"`
 	MentionTTL       time.Duration `name:"mention-ttl"`
 	MentionSweepFreq time.Duration `name:"mention-sweep-freq"`

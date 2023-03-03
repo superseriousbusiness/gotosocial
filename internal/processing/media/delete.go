@@ -40,7 +40,7 @@ func (p *Processor) Delete(ctx context.Context, mediaAttachmentID string) gtserr
 	}
 
 	// delete the attachment
-	if err := p.state.DB.DeleteByID(ctx, mediaAttachmentID, attachment); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err := p.state.DB.DeleteAttachment(ctx, mediaAttachmentID); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		errs = append(errs, fmt.Sprintf("remove attachment: %s", err))
 	}
 
