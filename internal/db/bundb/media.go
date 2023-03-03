@@ -34,12 +34,6 @@ type mediaDB struct {
 	state *state.State
 }
 
-func (m *mediaDB) newMediaQ(i *gtsmodel.MediaAttachment) *bun.SelectQuery {
-	return m.conn.
-		NewSelect().
-		Model(i)
-}
-
 func (m *mediaDB) GetAttachmentByID(ctx context.Context, id string) (*gtsmodel.MediaAttachment, db.Error) {
 	return m.getAttachment(
 		ctx,
