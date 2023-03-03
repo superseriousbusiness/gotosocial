@@ -91,14 +91,6 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 	// 15. Delete account's tags
 	// TODO
 
-	// 16. Delete account's user
-	if user != nil {
-		l.Trace("deleting account user")
-		if err := p.state.DB.DeleteUserByID(ctx, user.ID); err != nil {
-			return gtserror.NewErrorInternalError(err)
-		}
-	}
-
 	// 17. Delete account's timeline
 	// TODO
 
