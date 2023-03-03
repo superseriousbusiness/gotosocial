@@ -3763,7 +3763,7 @@ paths:
                   name: min_id
                   type: string
                 - default: 20
-                  description: Number of reports to return. If less than 1, will be clamped to 1. If more than 100, will be clamped to 100.
+                  description: Number of reports to return. If more than 100 or less than 1, will be clamped to 100.
                   in: query
                   name: limit
                   type: integer

@@ -97,8 +97,7 @@ import (
 //		type: integer
 //		description: >-
 //			Number of reports to return.
-//			If less than 1, will be clamped to 1.
-//			If more than 100, will be clamped to 100.
+//			If more than 100 or less than 1, will be clamped to 100.
 //		default: 20
 //		in: query
 //
@@ -163,9 +162,7 @@ func (m *Module) ReportsGETHandler(c *gin.Context) {
 		}
 
 		// normalize
-		if i <= 0 {
-			i = 1
-		} else if i >= 100 {
+		if i < 1 || i > 100 {
 			i = 100
 		}
 		limit = i
