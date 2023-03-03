@@ -45,7 +45,10 @@ func (m *mediaDB) GetAttachmentByID(ctx context.Context, id string) (*gtsmodel.M
 		ctx,
 		"ID",
 		func(attachment *gtsmodel.MediaAttachment) error {
-			return m.newMediaQ(attachment).Where("? = ?", bun.Ident("media_attachment.id"), id).Scan(ctx)
+			return m.conn.NewSelect().
+				Model(attachment).
+				Where("? = ?", bun.Ident("media_attachment.id"), id).
+				Scan(ctx)
 		},
 		id,
 	)
@@ -72,8 +75,11 @@ func (m *mediaDB) PutAttachment(ctx context.Context, media *gtsmodel.MediaAttach
 }
 
 func (m *mediaDB) UpdateAttachment(ctx context.Context, media *gtsmodel.MediaAttachment, columns ...string) error {
-	// Update the media's last-updated
 	media.UpdatedAt = time.Now()
+	if len(columns) > 0 {
+		// If we're updating by column, ensure "updated_at" is included.
+		columns = append(columns, "updated_at")
+	}
 
 	return m.state.Caches.GTS.Media().Store(media, func() error {
 		_, err := m.conn.NewUpdate().
