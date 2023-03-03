@@ -124,7 +124,7 @@ func (suite *ReportsGetTestSuite) getReports(
 	return resp, result.Header.Get("Link"), nil
 }
 
-func (suite *ReportsGetTestSuite) TestReportsGet1() {
+func (suite *ReportsGetTestSuite) TestReportsGetAll() {
 	testAccount := suite.testAccounts["admin_account"]
 	testToken := suite.testTokens["admin_account"]
 	testUser := suite.testUsers["admin_account"]
@@ -515,7 +515,7 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
 	suite.Equal(`<http://localhost:8080/api/v1/admin/reports?limit=20&max_id=01GP3AWY4CRDVRNZKW0TEAMB5R>; rel="next", <http://localhost:8080/api/v1/admin/reports?limit=20&min_id=01GP3DFY9XQ1TJMZT5BGAZPXX7>; rel="prev"`, link)
 }
 
-func (suite *ReportsGetTestSuite) TestReportsGet2() {
+func (suite *ReportsGetTestSuite) TestReportsGetCreatedByAccount() {
 	testAccount := suite.testAccounts["admin_account"]
 	testToken := suite.testTokens["admin_account"]
 	testUser := suite.testUsers["admin_account"]
@@ -716,7 +716,7 @@ func (suite *ReportsGetTestSuite) TestReportsGet2() {
 	suite.Equal(`<http://localhost:8080/api/v1/admin/reports?limit=20&max_id=01GP3AWY4CRDVRNZKW0TEAMB5R&account_id=01F8MH5NBDF2MV7CTC4Q5128HF>; rel="next", <http://localhost:8080/api/v1/admin/reports?limit=20&min_id=01GP3AWY4CRDVRNZKW0TEAMB5R&account_id=01F8MH5NBDF2MV7CTC4Q5128HF>; rel="prev"`, link)
 }
 
-func (suite *ReportsGetTestSuite) TestReportsGet3() {
+func (suite *ReportsGetTestSuite) TestReportsGetTargetAccount() {
 	testAccount := suite.testAccounts["admin_account"]
 	testToken := suite.testTokens["admin_account"]
 	testUser := suite.testUsers["admin_account"]
@@ -917,7 +917,7 @@ func (suite *ReportsGetTestSuite) TestReportsGet3() {
 	suite.Equal(`<http://localhost:8080/api/v1/admin/reports?limit=20&max_id=01GP3AWY4CRDVRNZKW0TEAMB5R&target_account_id=01F8MH5ZK5VRH73AKHQM6Y9VNX>; rel="next", <http://localhost:8080/api/v1/admin/reports?limit=20&min_id=01GP3AWY4CRDVRNZKW0TEAMB5R&target_account_id=01F8MH5ZK5VRH73AKHQM6Y9VNX>; rel="prev"`, link)
 }
 
-func (suite *ReportsGetTestSuite) TestReportsGet4() {
+func (suite *ReportsGetTestSuite) TestReportsGetResolvedTargetAccount() {
 	testAccount := suite.testAccounts["admin_account"]
 	testToken := suite.testTokens["admin_account"]
 	testUser := suite.testUsers["admin_account"]
@@ -935,7 +935,7 @@ func (suite *ReportsGetTestSuite) TestReportsGet4() {
 	suite.Empty(link)
 }
 
-func (suite *ReportsGetTestSuite) TestReportsGet6() {
+func (suite *ReportsGetTestSuite) TestReportsGetNotAdmin() {
 	testAccount := suite.testAccounts["local_account_1"]
 	testToken := suite.testTokens["local_account_1"]
 	testUser := suite.testUsers["local_account_1"]
@@ -943,6 +943,32 @@ func (suite *ReportsGetTestSuite) TestReportsGet6() {
 	reports, _, err := suite.getReports(testAccount, testToken, testUser, http.StatusForbidden, `{"error":"Forbidden: user 01F8MGVGPHQ2D3P3X0454H54Z5 not an admin"}`, nil, "", "", "", "", "", 20)
 	suite.NoError(err)
 	suite.Empty(reports)
+}
+
+func (suite *ReportsGetTestSuite) TestReportsGetZeroLimit() {
+	testAccount := suite.testAccounts["admin_account"]
+	testToken := suite.testTokens["admin_account"]
+	testUser := suite.testUsers["admin_account"]
+
+	reports, link, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, "", nil, "", "", "", "", "", 0)
+	suite.NoError(err)
+	suite.Len(reports, 2)
+
+  // Limit in Link header should be set to 100
+	suite.Equal(`<http://localhost:8080/api/v1/admin/reports?limit=100&max_id=01GP3AWY4CRDVRNZKW0TEAMB5R>; rel="next", <http://localhost:8080/api/v1/admin/reports?limit=100&min_id=01GP3DFY9XQ1TJMZT5BGAZPXX7>; rel="prev"`, link)
+}
+
+func (suite *ReportsGetTestSuite) TestReportsGetHighLimit() {
+	testAccount := suite.testAccounts["admin_account"]
+	testToken := suite.testTokens["admin_account"]
+	testUser := suite.testUsers["admin_account"]
+
+	reports, link, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, "", nil, "", "", "", "", "", 2000)
+	suite.NoError(err)
+	suite.Len(reports, 2)
+
+  // Limit in Link header should be set to 100
+	suite.Equal(`<http://localhost:8080/api/v1/admin/reports?limit=100&max_id=01GP3AWY4CRDVRNZKW0TEAMB5R>; rel="next", <http://localhost:8080/api/v1/admin/reports?limit=100&min_id=01GP3DFY9XQ1TJMZT5BGAZPXX7>; rel="prev"`, link)
 }
 
 func TestReportsGetTestSuite(t *testing.T) {
