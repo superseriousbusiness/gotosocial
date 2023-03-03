@@ -153,7 +153,7 @@ func (c *gtsCaches) Stop() {
 	tryUntil("stopping gtsmodel.DomainBlock cache", 5, c.domainBlock.Stop)
 	tryUntil("stopping gtsmodel.Emoji cache", 5, c.emoji.Stop)
 	tryUntil("stopping gtsmodel.EmojiCategory cache", 5, c.emojiCategory.Stop)
-	tryUntil("stopping gtsmodel.MediaAttention cache", 5, c.media.Stop)
+	tryUntil("stopping gtsmodel.MediaAttachment cache", 5, c.media.Stop)
 	tryUntil("stopping gtsmodel.Mention cache", 5, c.mention.Stop)
 	tryUntil("stopping gtsmodel.Notification cache", 5, c.notification.Stop)
 	tryUntil("stopping gtsmodel.Report cache", 5, c.report.Stop)
