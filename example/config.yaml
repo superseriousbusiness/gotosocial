@@ -458,6 +458,8 @@ storage-local-base-path: "/gotosocial/storage"
 # String. API endpoint of the S3 compatible service.
 # Only required when running with the s3 storage backend.
 # Examples: ["minio:9000", "s3.nl-ams.scw.cloud", "s3.us-west-002.backblazeb2.com"]
+# GoToSocial uses "DNS-style" when accessing buckets. 
+# If you are using Scaleways object storage, please remove the "bucket name" from the endpoint address
 # Default: ""
 storage-s3-endpoint: ""
 
@@ -614,7 +616,7 @@ oidc-client-secret: ""
 # Array of string. Scopes to request from the OIDC provider. The returned values will be used to
 # populate users created in GtS as a result of the authentication flow. 'openid' and 'email' are required.
 # 'profile' is used to extract a username for the newly created user.
-# 'groups' is optional and can be used to determine if a user is an admin (if they're in the group 'admin' or 'admins').
+# 'groups' is optional and can be used to determine if a user is an admin based on oidc-admin-groups.
 # Examples: See eg., https://auth0.com/docs/scopes/openid-connect-scopes
 # Default: ["openid", "email", "profile", "groups"]
 oidc-scopes:
@@ -629,6 +631,11 @@ oidc-scopes:
 # Options: [true, false]
 # Default: false
 oidc-link-existing: false
+
+# Array of string. If the returned ID token contains a 'groups' claim that matches one of the
+# groups in oidc-admin-groups, then this user will be granted admin rights on the GtS instance
+# Default: []
+oidc-admin-groups: []
 
 #######################
 ##### SMTP CONFIG #####
@@ -689,6 +696,15 @@ syslog-protocol: "udp"
 # String. Address:port to send syslog logs to. Leave empty to connect to local syslog.
 # Default: "localhost:514"
 syslog-address: "localhost:514"
+
+##################################
+##### OBSERVABILITY SETTINGS #####
+##################################
+
+# String. Header name to use to extract a request or trace ID from. Typically set by a
+# loadbalancer or proxy.
+# Default: "X-Request-Id"
+request-id-header: "X-Request-Id"
 
 #############################
 ##### ADVANCED SETTINGS #####

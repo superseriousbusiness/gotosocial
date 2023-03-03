@@ -252,6 +252,34 @@ func (suite *SearchGetTestSuite) TestSearchStatusByURL() {
 	suite.NotNil(gotStatus)
 }
 
+func (suite *SearchGetTestSuite) TestSearchBlockedDomainURL() {
+	query := "https://replyguys.com/@someone"
+	resolve := true
+
+	searchResult, err := suite.testSearch(query, resolve, http.StatusOK)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(searchResult.Accounts, 0)
+	suite.Len(searchResult.Statuses, 0)
+	suite.Len(searchResult.Hashtags, 0)
+}
+
+func (suite *SearchGetTestSuite) TestSearchBlockedDomainNamestring() {
+	query := "@someone@replyguys.com"
+	resolve := true
+
+	searchResult, err := suite.testSearch(query, resolve, http.StatusOK)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(searchResult.Accounts, 0)
+	suite.Len(searchResult.Statuses, 0)
+	suite.Len(searchResult.Hashtags, 0)
+}
+
 func TestSearchGetTestSuite(t *testing.T) {
 	suite.Run(t, &SearchGetTestSuite{})
 }

@@ -20,15 +20,14 @@ package processing_test
 
 import (
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -40,6 +39,7 @@ type ProcessingStandardTestSuite struct {
 	suite.Suite
 	db                  db.DB
 	storage             *storage.Driver
+	state               state.State
 	mediaManager        media.Manager
 	typeconverter       typeutils.TypeConverter
 	httpClient          *testrig.MockHTTPClient
@@ -62,7 +62,7 @@ type ProcessingStandardTestSuite struct {
 	testBlocks       map[string]*gtsmodel.Block
 	testActivities   map[string]testrig.ActivityWithSignature
 
-	processor processing.Processor
+	processor *processing.Processor
 }
 
 func (suite *ProcessingStandardTestSuite) SetupSuite() {
@@ -86,25 +86,29 @@ func (suite *ProcessingStandardTestSuite) SetupSuite() {
 }
 
 func (suite *ProcessingStandardTestSuite) SetupTest() {
+	suite.state.Caches.Init()
+	testrig.StartWorkers(&suite.state)
+
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
 
-	suite.db = testrig.NewTestDB()
+	suite.db = testrig.NewTestDB(&suite.state)
+	suite.state.DB = suite.db
 	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
 	suite.storage = testrig.NewInMemoryStorage()
+	suite.state.Storage = suite.storage
 	suite.typeconverter = testrig.NewTestTypeConverter(suite.db)
 	suite.httpClient = testrig.NewMockHTTPClient(nil, "../../testrig/media")
 
-	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
-	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
-
-	suite.transportController = testrig.NewTestTransportController(suite.httpClient, suite.db, fedWorker)
-	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
-	suite.federator = testrig.NewTestFederator(suite.db, suite.transportController, suite.storage, suite.mediaManager, fedWorker)
+	suite.transportController = testrig.NewTestTransportController(&suite.state, suite.httpClient)
+	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
+	suite.federator = testrig.NewTestFederator(&suite.state, suite.transportController, suite.mediaManager)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	suite.emailSender = testrig.NewEmailSender("../../web/template/", nil)
 
-	suite.processor = processing.NewProcessor(suite.typeconverter, suite.federator, suite.oauthServer, suite.mediaManager, suite.storage, suite.db, suite.emailSender, clientWorker, fedWorker)
+	suite.processor = processing.NewProcessor(suite.typeconverter, suite.federator, suite.oauthServer, suite.mediaManager, &suite.state, suite.emailSender)
+	suite.state.Workers.EnqueueClientAPI = suite.processor.EnqueueClientAPI
+	suite.state.Workers.EnqueueFederator = suite.processor.EnqueueFederator
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../testrig/media")
@@ -119,4 +123,5 @@ func (suite *ProcessingStandardTestSuite) TearDownTest() {
 	if err := suite.processor.Stop(); err != nil {
 		panic(err)
 	}
+	testrig.StopWorkers(&suite.state)
 }

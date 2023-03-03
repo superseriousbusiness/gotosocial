@@ -35,6 +35,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
 // EnrichRemoteStatus takes a remote status that's already been inserted into the database in a minimal form,
@@ -105,7 +106,12 @@ func (d *deref) GetStatus(ctx context.Context, username string, statusURI *url.U
 
 	// if we got here, either we didn't have the status
 	// in the db, or we had it but need to refetch it
-	statusable, derefErr := d.dereferenceStatusable(ctx, username, statusURI)
+	tsport, err := d.transportController.NewTransportForUsername(ctx, username)
+	if err != nil {
+		return nil, nil, newErrTransportError(fmt.Errorf("GetRemoteStatus: error creating transport for %s: %w", username, err))
+	}
+
+	statusable, derefErr := d.dereferenceStatusable(ctx, tsport, statusURI)
 	if derefErr != nil {
 		return nil, nil, wrapDerefError(derefErr, "GetRemoteStatus: error dereferencing statusable")
 	}
@@ -149,17 +155,12 @@ func (d *deref) GetStatus(ctx context.Context, username string, statusURI *url.U
 	return status, statusable, nil
 }
 
-func (d *deref) dereferenceStatusable(ctx context.Context, username string, remoteStatusID *url.URL) (ap.Statusable, error) {
+func (d *deref) dereferenceStatusable(ctx context.Context, tsport transport.Transport, remoteStatusID *url.URL) (ap.Statusable, error) {
 	if blocked, err := d.db.IsDomainBlocked(ctx, remoteStatusID.Host); blocked || err != nil {
 		return nil, fmt.Errorf("DereferenceStatusable: domain %s is blocked", remoteStatusID.Host)
 	}
 
-	transport, err := d.transportController.NewTransportForUsername(ctx, username)
-	if err != nil {
-		return nil, fmt.Errorf("DereferenceStatusable: transport err: %s", err)
-	}
-
-	b, err := transport.Dereference(ctx, remoteStatusID)
+	b, err := tsport.Dereference(ctx, remoteStatusID)
 	if err != nil {
 		return nil, fmt.Errorf("DereferenceStatusable: error deferencing %s: %s", remoteStatusID.String(), err)
 	}
@@ -318,20 +319,20 @@ func (d *deref) populateStatusMentions(ctx context.Context, status *gtsmodel.Sta
 	for _, m := range status.Mentions {
 		if m.ID != "" {
 			// we've already populated this mention, since it has an ID
-			log.Debug("populateStatusMentions: mention already populated")
+			log.Debug(ctx, "mention already populated")
 			mentionIDs = append(mentionIDs, m.ID)
 			newMentions = append(newMentions, m)
 			continue
 		}
 
 		if m.TargetAccountURI == "" {
-			log.Debug("populateStatusMentions: target URI not set on mention")
+			log.Debug(ctx, "target URI not set on mention")
 			continue
 		}
 
 		targetAccountURI, err := url.Parse(m.TargetAccountURI)
 		if err != nil {
-			log.Debugf("populateStatusMentions: error parsing mentioned account uri %s: %s", m.TargetAccountURI, err)
+			log.Debugf(ctx, "error parsing mentioned account uri %s: %s", m.TargetAccountURI, err)
 			continue
 		}
 
@@ -342,7 +343,7 @@ func (d *deref) populateStatusMentions(ctx context.Context, status *gtsmodel.Sta
 		if a, err := d.db.GetAccountByURI(ctx, targetAccountURI.String()); err != nil {
 			errs = append(errs, err.Error())
 		} else {
-			log.Debugf("populateStatusMentions: got target account %s with id %s through GetAccountByURI", targetAccountURI, a.ID)
+			log.Debugf(ctx, "got target account %s with id %s through GetAccountByURI", targetAccountURI, a.ID)
 			targetAccount = a
 		}
 
@@ -352,13 +353,13 @@ func (d *deref) populateStatusMentions(ctx context.Context, status *gtsmodel.Sta
 			if a, err := d.GetAccountByURI(ctx, requestingUsername, targetAccountURI, false); err != nil {
 				errs = append(errs, err.Error())
 			} else {
-				log.Debugf("populateStatusMentions: got target account %s with id %s through GetRemoteAccount", targetAccountURI, a.ID)
+				log.Debugf(ctx, "got target account %s with id %s through GetRemoteAccount", targetAccountURI, a.ID)
 				targetAccount = a
 			}
 		}
 
 		if targetAccount == nil {
-			log.Debugf("populateStatusMentions: couldn't get target account %s: %s", m.TargetAccountURI, strings.Join(errs, " : "))
+			log.Debugf(ctx, "couldn't get target account %s: %s", m.TargetAccountURI, strings.Join(errs, " : "))
 			continue
 		}
 
@@ -419,13 +420,13 @@ func (d *deref) populateStatusAttachments(ctx context.Context, status *gtsmodel.
 			Blurhash:    &a.Blurhash,
 		})
 		if err != nil {
-			log.Errorf("populateStatusAttachments: couldn't get remote media %s: %s", a.RemoteURL, err)
+			log.Errorf(ctx, "couldn't get remote media %s: %s", a.RemoteURL, err)
 			continue
 		}
 
 		attachment, err := processingMedia.LoadAttachment(ctx)
 		if err != nil {
-			log.Errorf("populateStatusAttachments: couldn't load remote attachment %s: %s", a.RemoteURL, err)
+			log.Errorf(ctx, "couldn't load remote attachment %s: %s", a.RemoteURL, err)
 			continue
 		}
 

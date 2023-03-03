@@ -75,7 +75,7 @@ type Field struct {
 // Key returns the formatted key string of this Field.
 func (f Field) Key() string {
 	buf := byteutil.Buffer{B: make([]byte, 0, bufsize/2)}
-	AppendQuoteKey(&buf, f.K)
+	AppendQuote(&buf, f.K)
 	return buf.String()
 }
 

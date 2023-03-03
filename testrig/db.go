@@ -71,7 +71,7 @@ var testModels = []interface{}{
 //
 // If the environment variable GTS_DB_PORT is set, it will take that
 // value as the port instead.
-func NewTestDB() db.DB {
+func NewTestDB(state *state.State) db.DB {
 	if alternateAddress := os.Getenv("GTS_DB_ADDRESS"); alternateAddress != "" {
 		config.SetDbAddress(alternateAddress)
 	}
@@ -88,12 +88,11 @@ func NewTestDB() db.DB {
 		config.SetDbPort(int(port))
 	}
 
-	var state state.State
 	state.Caches.Init()
 
-	testDB, err := bundb.NewBunDBService(context.Background(), &state)
+	testDB, err := bundb.NewBunDBService(context.Background(), state)
 	if err != nil {
-		log.Panic(err)
+		log.Panic(nil, err)
 	}
 
 	state.DB = testDB
@@ -106,7 +105,7 @@ func CreateTestTables(db db.DB) {
 	ctx := context.Background()
 	for _, m := range testModels {
 		if err := db.CreateTable(ctx, m); err != nil {
-			log.Panicf("error creating table for %+v: %s", m, err)
+			log.Panicf(nil, "error creating table for %+v: %s", m, err)
 		}
 	}
 }
@@ -121,7 +120,7 @@ func CreateTestTables(db db.DB) {
 // verification will fail.
 func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 	if db == nil {
-		log.Panic("db setup: db was nil")
+		log.Panic(nil, "db setup: db was nil")
 	}
 
 	CreateTestTables(db)
@@ -130,164 +129,164 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 
 	for _, v := range NewTestTokens() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(err)
+			log.Panic(nil, err)
 		}
 	}
 
 	for _, v := range NewTestClients() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(err)
+			log.Panic(nil, err)
 		}
 	}
 
 	for _, v := range NewTestApplications() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(err)
+			log.Panic(nil, err)
 		}
 	}
 
 	for _, v := range NewTestBlocks() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(err)
+			log.Panic(nil, err)
 		}
 	}
 
 	for _, v := range NewTestReports() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(err)
+			log.Panic(nil, err)
 		}
 	}
 
 	for _, v := range NewTestDomainBlocks() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(err)
+			log.Panic(nil, err)
 		}
 	}
 
 	for _, v := range NewTestInstances() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(err)
+			log.Panic(nil, err)
 		}
 	}
 
 	for _, v := range NewTestUsers() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(err)
+			log.Panic(nil, err)
 		}
 	}
 
 	if accounts == nil {
 		for _, v := range NewTestAccounts() {
 			if err := db.Put(ctx, v); err != nil {
-				log.Panic(err)
+				log.Panic(nil, err)
 			}
 		}
 	} else {
 		for _, v := range accounts {
 			if err := db.Put(ctx, v); err != nil {
-				log.Panic(err)
+				log.Panic(nil, err)
 			}
 		}
 	}
 
 	for _, v := range NewTestAttachments() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(err)
+			log.Panic(nil, err)
 		}
 	}
 
 	for _, v := range NewTestStatuses() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(err)
+			log.Panic(nil, err)
 		}
 	}
 
 	for _, v := range NewTestEmojis() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(err)
+			log.Panic(nil, err)
 		}
 	}
 
 	for _, v := range NewTestEmojiCategories() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(err)
+			log.Panic(nil, err)
 		}
 	}
 
 	for _, v := range NewTestStatusToEmojis() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(err)
+			log.Panic(nil, err)
 		}
 	}
 
 	for _, v := range NewTestTags() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(err)
+			log.Panic(nil, err)
 		}
 	}
 
 	for _, v := range NewTestStatusToTags() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(err)
+			log.Panic(nil, err)
 		}
 	}
 
 	for _, v := range NewTestMentions() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(err)
+			log.Panic(nil, err)
 		}
 	}
 
 	for _, v := range NewTestFaves() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(err)
+			log.Panic(nil, err)
 		}
 	}
 
 	for _, v := range NewTestFollows() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(err)
+			log.Panic(nil, err)
 		}
 	}
 
 	for _, v := range NewTestNotifications() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(err)
+			log.Panic(nil, err)
 		}
 	}
 
 	for _, v := range NewTestTombstones() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(err)
+			log.Panic(nil, err)
 		}
 	}
 
 	for _, v := range NewTestBookmarks() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(err)
+			log.Panic(nil, err)
 		}
 	}
 
 	if err := db.CreateInstanceAccount(ctx); err != nil {
-		log.Panic(err)
+		log.Panic(nil, err)
 	}
 
 	if err := db.CreateInstanceInstance(ctx); err != nil {
-		log.Panic(err)
+		log.Panic(nil, err)
 	}
 
-	log.Debug("testing db setup complete")
+	log.Debug(nil, "testing db setup complete")
 }
 
 // StandardDBTeardown drops all the standard testing tables/models from the database to ensure it's clean for the next test.
 func StandardDBTeardown(db db.DB) {
 	ctx := context.Background()
 	if db == nil {
-		log.Panic("db teardown: db was nil")
+		log.Panic(nil, "db was nil")
 	}
 	for _, m := range testModels {
 		if err := db.DropTable(ctx, m); err != nil {
-			log.Panic(err)
+			log.Panic(nil, err)
 		}
 	}
 }

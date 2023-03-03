@@ -41,8 +41,8 @@ type Status interface {
 	// PutStatus stores one status in the database.
 	PutStatus(ctx context.Context, status *gtsmodel.Status) Error
 
-	// UpdateStatus updates one status in the database and returns it to the caller.
-	UpdateStatus(ctx context.Context, status *gtsmodel.Status) Error
+	// UpdateStatus updates one status in the database.
+	UpdateStatus(ctx context.Context, status *gtsmodel.Status, columns ...string) Error
 
 	// DeleteStatusByID deletes one status from the database.
 	DeleteStatusByID(ctx context.Context, id string) Error

@@ -49,7 +49,7 @@ import (
 // The only exception to this is when we get a malformed query, in
 // which case we return a bad request error so the user knows they
 // did something funky.
-func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode) {
+func (p *Processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode) {
 	// tidy up the query and make sure it wasn't just spaces
 	query := strings.TrimSpace(search.Query)
 	if query == "" {
@@ -57,7 +57,8 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
-	l := log.WithFields(kv.Fields{{"query", query}}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{{"query", query}}...)
 
 	searchResult := &apimodel.SearchResult{
 		Accounts: []apimodel.Account{},
@@ -87,6 +88,15 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 
 	if username, domain, err := util.ExtractNamestringParts(maybeNamestring); err == nil {
 		l.Trace("search term is a mention, looking it up...")
+		blocked, err := p.state.DB.IsDomainBlocked(ctx, domain)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking domain block: %w", err))
+		}
+		if blocked {
+			l.Debug("domain is blocked")
+			return searchResult, nil
+		}
+
 		foundAccount, err := p.searchAccountByUsernameDomain(ctx, authed, username, domain, search.Resolve)
 		if err != nil {
 			var errNotRetrievable *dereferencing.ErrNotRetrievable
@@ -110,6 +120,15 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 		if uri, err := url.Parse(query); err == nil {
 			if uri.Scheme == "https" || uri.Scheme == "http" {
 				l.Trace("search term is a uri, looking it up...")
+				blocked, err := p.state.DB.IsURIBlocked(ctx, uri)
+				if err != nil {
+					return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking domain block: %w", err))
+				}
+				if blocked {
+					l.Debug("domain is blocked")
+					return searchResult, nil
+				}
+
 				// check if it's a status...
 				foundStatus, err := p.searchStatusByURI(ctx, authed, uri)
 				if err != nil {
@@ -159,7 +178,7 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 	*/
 	for _, foundAccount := range foundAccounts {
 		// make sure there's no block in either direction between the account and the requester
-		blocked, err := p.db.IsBlocked(ctx, authed.Account.ID, foundAccount.ID, true)
+		blocked, err := p.state.DB.IsBlocked(ctx, authed.Account.ID, foundAccount.ID, true)
 		if err != nil {
 			err = fmt.Errorf("SearchGet: error checking block between %s and %s: %s", authed.Account.ID, foundAccount.ID, err)
 			return nil, gtserror.NewErrorInternalError(err)
@@ -204,7 +223,7 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 	return searchResult, nil
 }
 
-func (p *processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL) (*gtsmodel.Status, error) {
+func (p *Processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL) (*gtsmodel.Status, error) {
 	status, statusable, err := p.federator.GetStatus(transport.WithFastfail(ctx), authed.Account.Username, uri, true, true)
 	if err != nil {
 		return nil, err
@@ -218,7 +237,7 @@ func (p *processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, u
 	return status, nil
 }
 
-func (p *processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Account, error) {
+func (p *Processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Account, error) {
 	if !resolve {
 		var (
 			account *gtsmodel.Account
@@ -227,14 +246,14 @@ func (p *processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, 
 		)
 
 		// Search the database for existing account with ID URI.
-		account, err = p.db.GetAccountByURI(ctx, uriStr)
+		account, err = p.state.DB.GetAccountByURI(ctx, uriStr)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return nil, fmt.Errorf("searchAccountByURI: error checking database for account %s: %w", uriStr, err)
 		}
 
 		if account == nil {
 			// Else, search the database for existing by ID URL.
-			account, err = p.db.GetAccountByURL(ctx, uriStr)
+			account, err = p.state.DB.GetAccountByURL(ctx, uriStr)
 			if err != nil {
 				if !errors.Is(err, db.ErrNoEntries) {
 					return nil, fmt.Errorf("searchAccountByURI: error checking database for account %s: %w", uriStr, err)
@@ -253,7 +272,7 @@ func (p *processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, 
 	)
 }
 
-func (p *processor) searchAccountByUsernameDomain(ctx context.Context, authed *oauth.Auth, username string, domain string, resolve bool) (*gtsmodel.Account, error) {
+func (p *Processor) searchAccountByUsernameDomain(ctx context.Context, authed *oauth.Auth, username string, domain string, resolve bool) (*gtsmodel.Account, error) {
 	if !resolve {
 		if domain == config.GetHost() || domain == config.GetAccountDomain() {
 			// We do local lookups using an empty domain,
@@ -262,7 +281,7 @@ func (p *processor) searchAccountByUsernameDomain(ctx context.Context, authed *o
 		}
 
 		// Search the database for existing account with USERNAME@DOMAIN
-		account, err := p.db.GetAccountByUsernameDomain(ctx, username, domain)
+		account, err := p.state.DB.GetAccountByUsernameDomain(ctx, username, domain)
 		if err != nil {
 			if !errors.Is(err, db.ErrNoEntries) {
 				return nil, fmt.Errorf("searchAccountByUsernameDomain: error checking database for account %s@%s: %w", username, domain, err)

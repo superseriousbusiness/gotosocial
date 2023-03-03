@@ -33,18 +33,19 @@ import (
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, err error) {
-	l := log.WithFields(kv.Fields{{"id", id}}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{{"id", id}}...)
 	l.Debug("entering Get")
 
 	switch {
 	case uris.IsUserPath(id):
-		acct, err := f.db.GetAccountByURI(ctx, id.String())
+		acct, err := f.state.DB.GetAccountByURI(ctx, id.String())
 		if err != nil {
 			return nil, err
 		}
 		return f.typeConverter.AccountToAS(ctx, acct)
 	case uris.IsStatusesPath(id):
-		status, err := f.db.GetStatusByURI(ctx, id.String())
+		status, err := f.state.DB.GetStatusByURI(ctx, id.String())
 		if err != nil {
 			return nil, err
 		}

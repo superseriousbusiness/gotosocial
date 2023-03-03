@@ -33,23 +33,23 @@ func (i *idp) HandleCallback(ctx context.Context, code string) (*Claims, gtserro
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
-	log.Debug("exchanging code for oauth2token")
+	log.Debug(ctx, "exchanging code for oauth2token")
 	oauth2Token, err := i.oauth2Config.Exchange(ctx, code)
 	if err != nil {
 		err := fmt.Errorf("error exchanging code for oauth2token: %s", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	log.Debug("extracting id_token")
+	log.Debug(ctx, "extracting id_token")
 	rawIDToken, ok := oauth2Token.Extra("id_token").(string)
 	if !ok {
 		err := errors.New("no id_token in oauth2token")
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
-	log.Debugf("raw id token: %s", rawIDToken)
+	log.Debugf(ctx, "raw id token: %s", rawIDToken)
 
 	// Parse and verify ID Token payload.
-	log.Debug("verifying id_token")
+	log.Debug(ctx, "verifying id_token")
 	idTokenVerifier := i.provider.Verifier(i.oidcConf)
 	idToken, err := idTokenVerifier.Verify(ctx, rawIDToken)
 	if err != nil {
@@ -57,7 +57,7 @@ func (i *idp) HandleCallback(ctx context.Context, code string) (*Claims, gtserro
 		return nil, gtserror.NewErrorUnauthorized(err, err.Error())
 	}
 
-	log.Debug("extracting claims from id_token")
+	log.Debug(ctx, "extracting claims from id_token")
 	claims := &Claims{}
 	if err := idToken.Claims(claims); err != nil {
 		err := fmt.Errorf("could not parse claims from idToken: %s", err)

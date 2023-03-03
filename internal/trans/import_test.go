@@ -27,6 +27,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/trans"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -57,8 +58,11 @@ func (suite *ImportMinimalTestSuite) TestImportMinimalOK() {
 	suite.NotEmpty(b)
 	fmt.Println(string(b))
 
+	var state state.State
+	state.Caches.Init()
+
 	// create a new database with just the tables created, no entries
-	newDB := testrig.NewTestDB()
+	newDB := testrig.NewTestDB(&state)
 
 	importer := trans.NewImporter(newDB)
 	err = importer.Import(ctx, tempFilePath)
@@ -107,7 +111,7 @@ func (suite *ImportMinimalTestSuite) TestImportMinimalOK() {
 	suite.Equal(testAccountBefore.Privacy, testAccountAfter.Privacy)
 	suite.Equal(testAccountBefore.Sensitive, testAccountAfter.Sensitive)
 	suite.Equal(testAccountBefore.Language, testAccountAfter.Language)
-	suite.Equal(testAccountBefore.StatusFormat, testAccountAfter.StatusFormat)
+	suite.Equal(testAccountBefore.StatusContentType, testAccountAfter.StatusContentType)
 	suite.Equal(testAccountBefore.URI, testAccountAfter.URI)
 	suite.Equal(testAccountBefore.URL, testAccountAfter.URL)
 	suite.Equal(testAccountBefore.InboxURI, testAccountAfter.InboxURI)

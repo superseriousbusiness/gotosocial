@@ -72,7 +72,7 @@ func StatusFilterFunction(database db.DB, filter visibility.Filter) timeline.Fil
 
 		timelineable, err := filter.StatusHometimelineable(ctx, status, requestingAccount)
 		if err != nil {
-			log.Warnf("error checking hometimelineability of status %s for account %s: %s", status.ID, timelineAccountID, err)
+			log.Warnf(ctx, "error checking hometimelineability of status %s for account %s: %s", status.ID, timelineAccountID, err)
 		}
 
 		return timelineable, nil // we don't return the error here because we want to just skip this item if something goes wrong
@@ -137,7 +137,7 @@ func StatusSkipInsertFunction() timeline.SkipInsertFunction {
 	}
 }
 
-func (p *processor) HomeTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode) {
+func (p *Processor) HomeTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode) {
 	preparedItems, err := p.statusTimelines.GetTimeline(ctx, authed.Account.ID, maxID, sinceID, minID, limit, local)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
@@ -172,8 +172,8 @@ func (p *processor) HomeTimelineGet(ctx context.Context, authed *oauth.Auth, max
 	})
 }
 
-func (p *processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode) {
-	statuses, err := p.db.GetPublicTimeline(ctx, maxID, sinceID, minID, limit, local)
+func (p *Processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode) {
+	statuses, err := p.state.DB.GetPublicTimeline(ctx, maxID, sinceID, minID, limit, local)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			// there are just no entries left
@@ -217,8 +217,8 @@ func (p *processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, m
 	})
 }
 
-func (p *processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
-	statuses, nextMaxID, prevMinID, err := p.db.GetFavedTimeline(ctx, authed.Account.ID, maxID, minID, limit)
+func (p *Processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
+	statuses, nextMaxID, prevMinID, err := p.state.DB.GetFavedTimeline(ctx, authed.Account.ID, maxID, minID, limit)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			// there are just no entries left
@@ -251,13 +251,13 @@ func (p *processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, ma
 	})
 }
 
-func (p *processor) filterPublicStatuses(ctx context.Context, authed *oauth.Auth, statuses []*gtsmodel.Status) ([]*apimodel.Status, error) {
+func (p *Processor) filterPublicStatuses(ctx context.Context, authed *oauth.Auth, statuses []*gtsmodel.Status) ([]*apimodel.Status, error) {
 	apiStatuses := []*apimodel.Status{}
 	for _, s := range statuses {
 		targetAccount := &gtsmodel.Account{}
-		if err := p.db.GetByID(ctx, s.AccountID, targetAccount); err != nil {
+		if err := p.state.DB.GetByID(ctx, s.AccountID, targetAccount); err != nil {
 			if err == db.ErrNoEntries {
-				log.Debugf("filterPublicStatuses: skipping status %s because account %s can't be found in the db", s.ID, s.AccountID)
+				log.Debugf(ctx, "skipping status %s because account %s can't be found in the db", s.ID, s.AccountID)
 				continue
 			}
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("filterPublicStatuses: error getting status author: %s", err))
@@ -265,7 +265,7 @@ func (p *processor) filterPublicStatuses(ctx context.Context, authed *oauth.Auth
 
 		timelineable, err := p.filter.StatusPublictimelineable(ctx, s, authed.Account)
 		if err != nil {
-			log.Debugf("filterPublicStatuses: skipping status %s because of an error checking status visibility: %s", s.ID, err)
+			log.Debugf(ctx, "skipping status %s because of an error checking status visibility: %s", s.ID, err)
 			continue
 		}
 		if !timelineable {
@@ -274,7 +274,7 @@ func (p *processor) filterPublicStatuses(ctx context.Context, authed *oauth.Auth
 
 		apiStatus, err := p.tc.StatusToAPIStatus(ctx, s, authed.Account)
 		if err != nil {
-			log.Debugf("filterPublicStatuses: skipping status %s because it couldn't be converted to its api representation: %s", s.ID, err)
+			log.Debugf(ctx, "skipping status %s because it couldn't be converted to its api representation: %s", s.ID, err)
 			continue
 		}
 
@@ -284,13 +284,13 @@ func (p *processor) filterPublicStatuses(ctx context.Context, authed *oauth.Auth
 	return apiStatuses, nil
 }
 
-func (p *processor) filterFavedStatuses(ctx context.Context, authed *oauth.Auth, statuses []*gtsmodel.Status) ([]*apimodel.Status, error) {
+func (p *Processor) filterFavedStatuses(ctx context.Context, authed *oauth.Auth, statuses []*gtsmodel.Status) ([]*apimodel.Status, error) {
 	apiStatuses := []*apimodel.Status{}
 	for _, s := range statuses {
 		targetAccount := &gtsmodel.Account{}
-		if err := p.db.GetByID(ctx, s.AccountID, targetAccount); err != nil {
+		if err := p.state.DB.GetByID(ctx, s.AccountID, targetAccount); err != nil {
 			if err == db.ErrNoEntries {
-				log.Debugf("filterFavedStatuses: skipping status %s because account %s can't be found in the db", s.ID, s.AccountID)
+				log.Debugf(ctx, "skipping status %s because account %s can't be found in the db", s.ID, s.AccountID)
 				continue
 			}
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("filterPublicStatuses: error getting status author: %s", err))
@@ -298,7 +298,7 @@ func (p *processor) filterFavedStatuses(ctx context.Context, authed *oauth.Auth,
 
 		timelineable, err := p.filter.StatusVisible(ctx, s, authed.Account)
 		if err != nil {
-			log.Debugf("filterFavedStatuses: skipping status %s because of an error checking status visibility: %s", s.ID, err)
+			log.Debugf(ctx, "skipping status %s because of an error checking status visibility: %s", s.ID, err)
 			continue
 		}
 		if !timelineable {
@@ -307,7 +307,7 @@ func (p *processor) filterFavedStatuses(ctx context.Context, authed *oauth.Auth,
 
 		apiStatus, err := p.tc.StatusToAPIStatus(ctx, s, authed.Account)
 		if err != nil {
-			log.Debugf("filterFavedStatuses: skipping status %s because it couldn't be converted to its api representation: %s", s.ID, err)
+			log.Debugf(ctx, "skipping status %s because it couldn't be converted to its api representation: %s", s.ID, err)
 			continue
 		}
 

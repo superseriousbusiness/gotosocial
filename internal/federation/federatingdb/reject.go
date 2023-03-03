@@ -38,7 +38,8 @@ func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsR
 		if err != nil {
 			return err
 		}
-		l := log.WithField("reject", i)
+		l := log.WithContext(ctx).
+			WithField("reject", i)
 		l.Debug("entering Reject")
 	}
 
@@ -63,7 +64,7 @@ func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsR
 			if uris.IsFollowPath(rejectedObjectIRI) {
 				// REJECT FOLLOW
 				gtsFollowRequest := &gtsmodel.FollowRequest{}
-				if err := f.db.GetWhere(ctx, []db.Where{{Key: "uri", Value: rejectedObjectIRI.String()}}, gtsFollowRequest); err != nil {
+				if err := f.state.DB.GetWhere(ctx, []db.Where{{Key: "uri", Value: rejectedObjectIRI.String()}}, gtsFollowRequest); err != nil {
 					return fmt.Errorf("Reject: couldn't get follow request with id %s from the database: %s", rejectedObjectIRI.String(), err)
 				}
 
@@ -72,7 +73,7 @@ func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsR
 					return errors.New("Reject: follow object account and inbox account were not the same")
 				}
 
-				if _, err := f.db.RejectFollowRequest(ctx, gtsFollowRequest.AccountID, gtsFollowRequest.TargetAccountID); err != nil {
+				if _, err := f.state.DB.RejectFollowRequest(ctx, gtsFollowRequest.AccountID, gtsFollowRequest.TargetAccountID); err != nil {
 					return err
 				}
 
@@ -101,7 +102,7 @@ func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsR
 			if gtsFollow.AccountID != receivingAccount.ID {
 				return errors.New("Reject: follow object account and inbox account were not the same")
 			}
-			if _, err := f.db.RejectFollowRequest(ctx, gtsFollow.AccountID, gtsFollow.TargetAccountID); err != nil {
+			if _, err := f.state.DB.RejectFollowRequest(ctx, gtsFollow.AccountID, gtsFollow.TargetAccountID); err != nil {
 				return err
 			}
 

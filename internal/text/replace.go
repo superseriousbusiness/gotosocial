@@ -20,11 +20,12 @@ package text
 
 import (
 	"errors"
+	"strings"
+
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"golang.org/x/text/unicode/norm"
-	"strings"
 )
 
 const (
@@ -39,13 +40,13 @@ const (
 func (r *customRenderer) replaceMention(text string) string {
 	menchie, err := r.parseMention(r.ctx, text, r.accountID, r.statusID)
 	if err != nil {
-		log.Errorf("error parsing mention %s from status: %s", text, err)
+		log.Errorf(nil, "error parsing mention %s from status: %s", text, err)
 		return text
 	}
 
 	if r.statusID != "" {
 		if err := r.f.db.Put(r.ctx, menchie); err != nil {
-			log.Errorf("error putting mention in db: %s", err)
+			log.Errorf(nil, "error putting mention in db: %s", err)
 			return text
 		}
 	}
@@ -66,7 +67,7 @@ func (r *customRenderer) replaceMention(text string) string {
 	if menchie.TargetAccount == nil {
 		a, err := r.f.db.GetAccountByID(r.ctx, menchie.TargetAccountID)
 		if err != nil {
-			log.Errorf("error getting account with id %s from the db: %s", menchie.TargetAccountID, err)
+			log.Errorf(nil, "error getting account with id %s from the db: %s", menchie.TargetAccountID, err)
 			return text
 		}
 		menchie.TargetAccount = a
@@ -105,7 +106,7 @@ func (r *customRenderer) replaceHashtag(text string) string {
 
 	tag, err := r.f.db.TagStringToTag(r.ctx, normalized, r.accountID)
 	if err != nil {
-		log.Errorf("error generating hashtags from status: %s", err)
+		log.Errorf(nil, "error generating hashtags from status: %s", err)
 		return text
 	}
 
@@ -121,7 +122,7 @@ func (r *customRenderer) replaceHashtag(text string) string {
 		err = r.f.db.Put(r.ctx, tag)
 		if err != nil {
 			if !errors.Is(err, db.ErrAlreadyExists) {
-				log.Errorf("error putting tags in db: %s", err)
+				log.Errorf(nil, "error putting tags in db: %s", err)
 				return text
 			}
 		}

@@ -3,5 +3,5 @@
 
 package debug
 
-// debug always on.
-const debug = true
+// DEBUG returns whether debugging is enabled.
+const DEBUG = true

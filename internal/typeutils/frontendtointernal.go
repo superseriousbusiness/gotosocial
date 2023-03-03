@@ -23,7 +23,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (c *converter) APIVisToVis(m apimodel.Visibility) gtsmodel.Visibility {
+func APIVisToVis(m apimodel.Visibility) gtsmodel.Visibility {
 	switch m {
 	case apimodel.VisibilityPublic:
 		return gtsmodel.VisibilityPublic

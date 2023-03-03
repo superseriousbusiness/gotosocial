@@ -24,11 +24,21 @@ import (
 
 	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20211113114307_init"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect"
 )
 
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			// SQLite doesn't mind creating multiple constraints with the same name,
+			// but Postgres balks at it, so remove the constraint before we go editing
+			// the emoji tables.
+			if tx.Dialect().Name() == dialect.PG {
+				if _, err := tx.ExecContext(ctx, "ALTER TABLE ? DROP CONSTRAINT ?", bun.Ident("emojis"), bun.Safe("shortcodedomain")); err != nil {
+					return err
+				}
+			}
+
 			// create the new emojis table
 			if _, err := tx.
 				NewCreateTable().
@@ -63,7 +73,7 @@ func init() {
 			}
 
 			// rename the new table to the same name as the old table was
-			if _, err := tx.ExecContext(ctx, "ALTER TABLE new_emojis RENAME TO emojis;"); err != nil {
+			if _, err := tx.ExecContext(ctx, "ALTER TABLE ? RENAME TO ?", bun.Ident("new_emojis"), bun.Ident("emojis")); err != nil {
 				return err
 			}
 

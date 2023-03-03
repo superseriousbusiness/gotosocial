@@ -163,4 +163,6 @@ var Defaults = Configuration{
 	},
 
 	AdminMediaPruneDryRun: true,
+
+	RequestIDHeader: "X-Request-Id",
 }

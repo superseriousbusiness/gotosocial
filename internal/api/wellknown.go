@@ -47,7 +47,7 @@ func (w *WellKnown) Route(r router.Router, m ...gin.HandlerFunc) {
 	w.webfinger.Route(wellKnownGroup.Handle)
 }
 
-func NewWellKnown(p processing.Processor) *WellKnown {
+func NewWellKnown(p *processing.Processor) *WellKnown {
 	return &WellKnown{
 		nodeInfo:  nodeinfo.New(p),
 		webfinger: webfinger.New(p),

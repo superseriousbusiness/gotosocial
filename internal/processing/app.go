@@ -29,7 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (p *processor) AppCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, gtserror.WithCode) {
+func (p *Processor) AppCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, gtserror.WithCode) {
 	// set default 'read' for scopes if it's not set
 	var scopes string
 	if form.Scopes == "" {
@@ -62,7 +62,7 @@ func (p *processor) AppCreate(ctx context.Context, authed *oauth.Auth, form *api
 	}
 
 	// chuck it in the db
-	if err := p.db.Put(ctx, app); err != nil {
+	if err := p.state.DB.Put(ctx, app); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -76,7 +76,7 @@ func (p *processor) AppCreate(ctx context.Context, authed *oauth.Auth, form *api
 	}
 
 	// chuck it in the db
-	if err := p.db.Put(ctx, oc); err != nil {
+	if err := p.state.DB.Put(ctx, oc); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 

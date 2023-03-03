@@ -63,7 +63,7 @@ func happyAccount() *gtsmodel.Account {
 		Privacy:                 gtsmodel.VisibilityPublic,
 		Sensitive:               testrig.FalseBool(),
 		Language:                "en",
-		StatusFormat:            "plain",
+		StatusContentType:       "text/plain",
 		URI:                     "http://localhost:8080/users/the_mighty_zork",
 		URL:                     "http://localhost:8080/@the_mighty_zork",
 		FetchedAt:               time.Time{},

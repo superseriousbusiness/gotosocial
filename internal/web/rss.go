@@ -61,14 +61,16 @@ func (m *Module) GetRSSETag(urlPath string, lastModified time.Time, getRSSFeed f
 	return eTag, nil
 }
 
-func extractIfModifiedSince(header string) time.Time {
-	if header == "" {
+func extractIfModifiedSince(r *http.Request) time.Time {
+	hdr := r.Header.Get(ifModifiedSinceHeader)
+
+	if hdr == "" {
 		return time.Time{}
 	}
 
-	t, err := http.ParseTime(header)
+	t, err := http.ParseTime(hdr)
 	if err != nil {
-		log.Errorf("couldn't parse if-modified-since %s: %s", header, err)
+		log.Errorf(r.Context(), "couldn't parse if-modified-since %s: %s", hdr, err)
 		return time.Time{}
 	}
 
@@ -95,9 +97,9 @@ func (m *Module) rssFeedGETHandler(c *gin.Context) {
 	}
 
 	ifNoneMatch := c.Request.Header.Get(ifNoneMatchHeader)
-	ifModifiedSince := extractIfModifiedSince(c.Request.Header.Get(ifModifiedSinceHeader))
+	ifModifiedSince := extractIfModifiedSince(c.Request)
 
-	getRssFeed, accountLastPostedPublic, errWithCode := m.processor.AccountGetRSSFeedForUsername(ctx, username)
+	getRssFeed, accountLastPostedPublic, errWithCode := m.processor.Account().GetRSSFeedForUsername(ctx, username)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

@@ -33,14 +33,15 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.ReportCreateRequest) (*apimodel.Report, gtserror.WithCode) {
+// Create creates one user report / flag, using the provided form parameters.
+func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.ReportCreateRequest) (*apimodel.Report, gtserror.WithCode) {
 	if account.ID == form.AccountID {
 		err := errors.New("cannot report your own account")
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
 	// validate + fetch target account
-	targetAccount, err := p.db.GetAccountByID(ctx, form.AccountID)
+	targetAccount, err := p.state.DB.GetAccountByID(ctx, form.AccountID)
 	if err != nil {
 		if errors.Is(err, db.ErrNoEntries) {
 			err = fmt.Errorf("account with ID %s does not exist", form.AccountID)
@@ -51,7 +52,7 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	// fetch statuses by IDs given in the report form (noop if no statuses given)
-	statuses, err := p.db.GetStatuses(ctx, form.StatusIDs)
+	statuses, err := p.state.DB.GetStatuses(ctx, form.StatusIDs)
 	if err != nil {
 		err = fmt.Errorf("db error fetching report target statuses: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -78,11 +79,11 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		Forwarded:       &form.Forward,
 	}
 
-	if err := p.db.PutReport(ctx, report); err != nil {
+	if err := p.state.DB.PutReport(ctx, report); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	p.clientWorker.Queue(messages.FromClientAPI{
+	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 		APObjectType:   ap.ObjectProfile,
 		APActivityType: ap.ActivityFlag,
 		GTSModel:       report,

@@ -18,12 +18,14 @@
 
 package users
 
-// SwaggerCollection represents an activitypub collection.
+// SwaggerCollection represents an ActivityPub Collection.
 // swagger:model swaggerCollection
 type SwaggerCollection struct {
-	// ActivityStreams context.
+	// ActivityStreams JSON-LD context.
+	// A string or an array of strings, or more
+	// complex nested items.
 	// example: https://www.w3.org/ns/activitystreams
-	Context string `json:"@context"`
+	Context interface{} `json:"@context"`
 	// ActivityStreams ID.
 	// example: https://example.org/users/some_user/statuses/106717595988259568/replies
 	ID string `json:"id"`
@@ -54,4 +56,26 @@ type SwaggerCollectionPage struct {
 	// Items on this page.
 	// example: ["https://example.org/users/some_other_user/statuses/086417595981111564", "https://another.example.com/users/another_user/statuses/01FCN8XDV3YG7B4R42QA6YQZ9R"]
 	Items []string `json:"items"`
+}
+
+// SwaggerFeaturedCollection represents an ActivityPub OrderedCollection.
+// swagger:model swaggerFeaturedCollection
+type SwaggerFeaturedCollection struct {
+	// ActivityStreams JSON-LD context.
+	// A string or an array of strings, or more
+	// complex nested items.
+	// example: https://www.w3.org/ns/activitystreams
+	Context interface{} `json:"@context"`
+	// ActivityStreams ID.
+	// example: https://example.org/users/some_user/collections/featured
+	ID string `json:"id"`
+	// ActivityStreams type.
+	// example: OrderedCollection
+	Type string `json:"type"`
+	// List of status URIs.
+	// example: ['https://example.org/users/some_user/statuses/01GSZ0F7Q8SJKNRF777GJD271R', 'https://example.org/users/some_user/statuses/01GSZ0G012CBQ7TEKX689S3QRE']
+	Items []string `json:"items"`
+	// Number of items in this collection.
+	// example: 2
+	TotalItems int
 }

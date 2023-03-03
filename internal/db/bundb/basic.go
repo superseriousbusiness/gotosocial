@@ -165,6 +165,6 @@ func (b *basicDB) IsHealthy(ctx context.Context) db.Error {
 }
 
 func (b *basicDB) Stop(ctx context.Context) db.Error {
-	log.Info("closing db connection")
+	log.Info(ctx, "closing db connection")
 	return b.conn.Close()
 }

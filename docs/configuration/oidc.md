@@ -60,7 +60,7 @@ oidc-client-secret: ""
 # Array of string. Scopes to request from the OIDC provider. The returned values will be used to
 # populate users created in GtS as a result of the authentication flow. 'openid' and 'email' are required.
 # 'profile' is used to extract a username for the newly created user.
-# 'groups' is optional and can be used to determine if a user is an admin (if they're in the group 'admin' or 'admins').
+# 'groups' is optional and can be used to determine if a user is an admin based on oidc-admin-groups.
 # Examples: See eg., https://auth0.com/docs/scopes/openid-connect-scopes
 # Default: ["openid", "email", "profile", "groups"]
 oidc-scopes:
@@ -75,6 +75,12 @@ oidc-scopes:
 # Options: [true, false]
 # Default: false
 oidc-link-existing: false
+
+# Array of string. If the returned ID token contains a 'groups' claim that
+# matches one of the groups in oidc-admin-groups, then this user will be granted
+# admin rights on the GtS instance
+# Default: []
+oidc-admin-groups: []
 ```
 
 ## Behavior
@@ -101,7 +107,7 @@ access to your GtS account.
 
 Most OIDC providers allow for the concept of groups and group memberships in returned claims. GoToSocial can use group membership to determine whether or not a user returned from an OIDC flow should be created as an admin account or not.
 
-If the returned OIDC groups information for a user contains membership of the groups `admin` or `admins`, then that user will be created/signed in as though they are an admin.
+If the returned OIDC groups information for a user contains membership of the groups configured in `oidc-admin-groups`, then that user will be created/signed in as though they are an admin.
 
 ## Migrating from old versions
 

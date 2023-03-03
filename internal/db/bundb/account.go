@@ -41,9 +41,7 @@ type accountDB struct {
 func (a *accountDB) newAccountQ(account *gtsmodel.Account) *bun.SelectQuery {
 	return a.conn.
 		NewSelect().
-		Model(account).
-		Relation("AvatarMediaAttachment").
-		Relation("HeaderMediaAttachment")
+		Model(account)
 }
 
 func (a *accountDB) GetAccountByID(ctx context.Context, id string) (*gtsmodel.Account, db.Error) {
@@ -148,7 +146,7 @@ func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(
 		// Set the account's related avatar
 		account.AvatarMediaAttachment, err = a.state.DB.GetAttachmentByID(ctx, account.AvatarMediaAttachmentID)
 		if err != nil {
-			log.Errorf("error getting account %s avatar: %v", account.ID, err)
+			log.Errorf(ctx, "error getting account %s avatar: %v", account.ID, err)
 		}
 	}
 
@@ -156,7 +154,7 @@ func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(
 		// Set the account's related header
 		account.HeaderMediaAttachment, err = a.state.DB.GetAttachmentByID(ctx, account.HeaderMediaAttachmentID)
 		if err != nil {
-			log.Errorf("error getting account %s header: %v", account.ID, err)
+			log.Errorf(ctx, "error getting account %s header: %v", account.ID, err)
 		}
 	}
 
@@ -164,7 +162,7 @@ func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(
 		// Set the account's related emojis
 		account.Emojis, err = a.state.DB.GetEmojisByIDs(ctx, account.EmojiIDs)
 		if err != nil {
-			log.Errorf("error getting account %s emojis: %v", account.ID, err)
+			log.Errorf(ctx, "error getting account %s emojis: %v", account.ID, err)
 		}
 	}
 
@@ -352,7 +350,16 @@ func (a *accountDB) CountAccountStatuses(ctx context.Context, accountID string) 
 		Count(ctx)
 }
 
-func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinnedOnly bool, mediaOnly bool, publicOnly bool) ([]*gtsmodel.Status, db.Error) {
+func (a *accountDB) CountAccountPinned(ctx context.Context, accountID string) (int, db.Error) {
+	return a.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
+		Where("? = ?", bun.Ident("status.account_id"), accountID).
+		Where("? IS NOT NULL", bun.Ident("status.pinned_at")).
+		Count(ctx)
+}
+
+func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, mediaOnly bool, publicOnly bool) ([]*gtsmodel.Status, db.Error) {
 	statusIDs := []string{}
 
 	q := a.conn.
@@ -392,10 +399,6 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 		q = q.Where("? > ?", bun.Ident("status.id"), minID)
 	}
 
-	if pinnedOnly {
-		q = q.Where("? = ?", bun.Ident("status.pinned"), true)
-	}
-
 	if mediaOnly {
 		// attachments are stored as a json object;
 		// this implementation differs between sqlite and postgres,
@@ -414,7 +417,7 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 					Where("? != '{}'", bun.Ident("status.attachments")).
 					Where("? != '[]'", bun.Ident("status.attachments"))
 			default:
-				log.Panic("db dialect was neither pg nor sqlite")
+				log.Panic(ctx, "db dialect was neither pg nor sqlite")
 				return q
 			}
 		})
@@ -423,6 +426,24 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 	if publicOnly {
 		q = q.Where("? = ?", bun.Ident("status.visibility"), gtsmodel.VisibilityPublic)
 	}
+
+	if err := q.Scan(ctx, &statusIDs); err != nil {
+		return nil, a.conn.ProcessError(err)
+	}
+
+	return a.statusesFromIDs(ctx, statusIDs)
+}
+
+func (a *accountDB) GetAccountPinnedStatuses(ctx context.Context, accountID string) ([]*gtsmodel.Status, db.Error) {
+	statusIDs := []string{}
+
+	q := a.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
+		Column("status.id").
+		Where("? = ?", bun.Ident("status.account_id"), accountID).
+		Where("? IS NOT NULL", bun.Ident("status.pinned_at")).
+		Order("status.pinned_at DESC")
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {
 		return nil, a.conn.ProcessError(err)
@@ -542,7 +563,7 @@ func (a *accountDB) statusesFromIDs(ctx context.Context, statusIDs []string) ([]
 		// Fetch from status from database by ID
 		status, err := a.state.DB.GetStatusByID(ctx, id)
 		if err != nil {
-			log.Errorf("statusesFromIDs: error getting status %q: %v", id, err)
+			log.Errorf(ctx, "error getting status %q: %v", id, err)
 			continue
 		}
 

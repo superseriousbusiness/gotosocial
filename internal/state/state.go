@@ -21,6 +21,8 @@ package state
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/workers"
 )
 
 // State provides a means of dependency injection and sharing of resources
@@ -35,6 +37,12 @@ type State struct {
 
 	// DB provides access to the database.
 	DB db.DB
+
+	// Storage provides access to the storage driver.
+	Storage *storage.Driver
+
+	// Workers provides access to this state's collection of worker pools.
+	Workers workers.Workers
 
 	// prevent pass-by-value.
 	_ nocopy

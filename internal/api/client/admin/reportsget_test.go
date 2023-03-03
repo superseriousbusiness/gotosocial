@@ -156,7 +156,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
       "ips": [],
       "locale": "",
       "invite_request": null,
-      "role": "user",
+      "role": {
+        "name": "user"
+      },
       "confirmed": false,
       "approved": false,
       "disabled": false,
@@ -168,6 +170,7 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
         "acct": "foss_satan@fossbros-anonymous.io",
         "display_name": "big gerald",
         "locked": false,
+        "discoverable": true,
         "bot": false,
         "created_at": "2021-09-26T10:52:36.000Z",
         "note": "i post about like, i dunno, stuff, or whatever!!!!",
@@ -194,7 +197,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
       "ips": [],
       "locale": "en",
       "invite_request": "",
-      "role": "user",
+      "role": {
+        "name": "user"
+      },
       "confirmed": true,
       "approved": true,
       "disabled": false,
@@ -206,6 +211,7 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
         "acct": "1happyturtle",
         "display_name": "happy little turtle :3",
         "locked": true,
+        "discoverable": false,
         "bot": false,
         "created_at": "2022-06-04T13:12:00.000Z",
         "note": "\u003cp\u003ei post about things that concern me\u003c/p\u003e",
@@ -220,7 +226,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
         "last_status_at": "2021-10-20T10:40:37.000Z",
         "emojis": [],
         "fields": [],
-        "role": "user"
+        "role": {
+          "name": "user"
+        }
       },
       "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
     },
@@ -234,7 +242,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
       "ips": [],
       "locale": "en",
       "invite_request": "",
-      "role": "admin",
+      "role": {
+        "name": "admin"
+      },
       "confirmed": true,
       "approved": true,
       "disabled": false,
@@ -246,6 +256,7 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
         "acct": "admin",
         "display_name": "",
         "locked": false,
+        "discoverable": true,
         "bot": false,
         "created_at": "2022-05-17T13:10:59.000Z",
         "note": "",
@@ -261,7 +272,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
         "emojis": [],
         "fields": [],
         "enable_rss": true,
-        "role": "admin"
+        "role": {
+          "name": "admin"
+        }
       },
       "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F"
     },
@@ -275,7 +288,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
       "ips": [],
       "locale": "en",
       "invite_request": "",
-      "role": "admin",
+      "role": {
+        "name": "admin"
+      },
       "confirmed": true,
       "approved": true,
       "disabled": false,
@@ -287,6 +302,7 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
         "acct": "admin",
         "display_name": "",
         "locked": false,
+        "discoverable": true,
         "bot": false,
         "created_at": "2022-05-17T13:10:59.000Z",
         "note": "",
@@ -302,7 +318,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
         "emojis": [],
         "fields": [],
         "enable_rss": true,
-        "role": "admin"
+        "role": {
+          "name": "admin"
+        }
       },
       "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F"
     },
@@ -329,7 +347,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
       "ips": [],
       "locale": "en",
       "invite_request": "",
-      "role": "user",
+      "role": {
+        "name": "user"
+      },
       "confirmed": true,
       "approved": true,
       "disabled": false,
@@ -341,6 +361,7 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
         "acct": "1happyturtle",
         "display_name": "happy little turtle :3",
         "locked": true,
+        "discoverable": false,
         "bot": false,
         "created_at": "2022-06-04T13:12:00.000Z",
         "note": "\u003cp\u003ei post about things that concern me\u003c/p\u003e",
@@ -355,7 +376,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
         "last_status_at": "2021-10-20T10:40:37.000Z",
         "emojis": [],
         "fields": [],
-        "role": "user"
+        "role": {
+          "name": "user"
+        }
       },
       "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
     },
@@ -369,7 +392,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
       "ips": [],
       "locale": "",
       "invite_request": null,
-      "role": "user",
+      "role": {
+        "name": "user"
+      },
       "confirmed": false,
       "approved": false,
       "disabled": false,
@@ -381,6 +406,7 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
         "acct": "foss_satan@fossbros-anonymous.io",
         "display_name": "big gerald",
         "locked": false,
+        "discoverable": true,
         "bot": false,
         "created_at": "2021-09-26T10:52:36.000Z",
         "note": "i post about like, i dunno, stuff, or whatever!!!!",
@@ -427,6 +453,7 @@ func (suite *ReportsGetTestSuite) TestReportsGet1() {
           "acct": "foss_satan@fossbros-anonymous.io",
           "display_name": "big gerald",
           "locked": false,
+          "discoverable": true,
           "bot": false,
           "created_at": "2021-09-26T10:52:36.000Z",
           "note": "i post about like, i dunno, stuff, or whatever!!!!",
@@ -521,7 +548,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet2() {
       "ips": [],
       "locale": "en",
       "invite_request": "",
-      "role": "user",
+      "role": {
+        "name": "user"
+      },
       "confirmed": true,
       "approved": true,
       "disabled": false,
@@ -533,6 +562,7 @@ func (suite *ReportsGetTestSuite) TestReportsGet2() {
         "acct": "1happyturtle",
         "display_name": "happy little turtle :3",
         "locked": true,
+        "discoverable": false,
         "bot": false,
         "created_at": "2022-06-04T13:12:00.000Z",
         "note": "\u003cp\u003ei post about things that concern me\u003c/p\u003e",
@@ -547,7 +577,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet2() {
         "last_status_at": "2021-10-20T10:40:37.000Z",
         "emojis": [],
         "fields": [],
-        "role": "user"
+        "role": {
+          "name": "user"
+        }
       },
       "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
     },
@@ -561,7 +593,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet2() {
       "ips": [],
       "locale": "",
       "invite_request": null,
-      "role": "user",
+      "role": {
+        "name": "user"
+      },
       "confirmed": false,
       "approved": false,
       "disabled": false,
@@ -573,6 +607,7 @@ func (suite *ReportsGetTestSuite) TestReportsGet2() {
         "acct": "foss_satan@fossbros-anonymous.io",
         "display_name": "big gerald",
         "locked": false,
+        "discoverable": true,
         "bot": false,
         "created_at": "2021-09-26T10:52:36.000Z",
         "note": "i post about like, i dunno, stuff, or whatever!!!!",
@@ -619,6 +654,7 @@ func (suite *ReportsGetTestSuite) TestReportsGet2() {
           "acct": "foss_satan@fossbros-anonymous.io",
           "display_name": "big gerald",
           "locked": false,
+          "discoverable": true,
           "bot": false,
           "created_at": "2021-09-26T10:52:36.000Z",
           "note": "i post about like, i dunno, stuff, or whatever!!!!",
@@ -713,7 +749,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet3() {
       "ips": [],
       "locale": "en",
       "invite_request": "",
-      "role": "user",
+      "role": {
+        "name": "user"
+      },
       "confirmed": true,
       "approved": true,
       "disabled": false,
@@ -725,6 +763,7 @@ func (suite *ReportsGetTestSuite) TestReportsGet3() {
         "acct": "1happyturtle",
         "display_name": "happy little turtle :3",
         "locked": true,
+        "discoverable": false,
         "bot": false,
         "created_at": "2022-06-04T13:12:00.000Z",
         "note": "\u003cp\u003ei post about things that concern me\u003c/p\u003e",
@@ -739,7 +778,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet3() {
         "last_status_at": "2021-10-20T10:40:37.000Z",
         "emojis": [],
         "fields": [],
-        "role": "user"
+        "role": {
+          "name": "user"
+        }
       },
       "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
     },
@@ -753,7 +794,9 @@ func (suite *ReportsGetTestSuite) TestReportsGet3() {
       "ips": [],
       "locale": "",
       "invite_request": null,
-      "role": "user",
+      "role": {
+        "name": "user"
+      },
       "confirmed": false,
       "approved": false,
       "disabled": false,
@@ -765,6 +808,7 @@ func (suite *ReportsGetTestSuite) TestReportsGet3() {
         "acct": "foss_satan@fossbros-anonymous.io",
         "display_name": "big gerald",
         "locked": false,
+        "discoverable": true,
         "bot": false,
         "created_at": "2021-09-26T10:52:36.000Z",
         "note": "i post about like, i dunno, stuff, or whatever!!!!",
@@ -811,6 +855,7 @@ func (suite *ReportsGetTestSuite) TestReportsGet3() {
           "acct": "foss_satan@fossbros-anonymous.io",
           "display_name": "big gerald",
           "locked": false,
+          "discoverable": true,
           "bot": false,
           "created_at": "2021-09-26T10:52:36.000Z",
           "note": "i post about like, i dunno, stuff, or whatever!!!!",

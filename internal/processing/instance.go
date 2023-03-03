@@ -33,15 +33,15 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
-func (p *processor) getThisInstance(ctx context.Context) (*gtsmodel.Instance, error) {
+func (p *Processor) getThisInstance(ctx context.Context) (*gtsmodel.Instance, error) {
 	i := &gtsmodel.Instance{}
-	if err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: config.GetHost()}}, i); err != nil {
+	if err := p.state.DB.GetWhere(ctx, []db.Where{{Key: "domain", Value: config.GetHost()}}, i); err != nil {
 		return nil, err
 	}
 	return i, nil
 }
 
-func (p *processor) InstanceGetV1(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode) {
+func (p *Processor) InstanceGetV1(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode) {
 	i, err := p.getThisInstance(ctx)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance: %s", err))
@@ -55,7 +55,7 @@ func (p *processor) InstanceGetV1(ctx context.Context) (*apimodel.InstanceV1, gt
 	return ai, nil
 }
 
-func (p *processor) InstanceGetV2(ctx context.Context) (*apimodel.InstanceV2, gtserror.WithCode) {
+func (p *Processor) InstanceGetV2(ctx context.Context) (*apimodel.InstanceV2, gtserror.WithCode) {
 	i, err := p.getThisInstance(ctx)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance: %s", err))
@@ -69,11 +69,11 @@ func (p *processor) InstanceGetV2(ctx context.Context) (*apimodel.InstanceV2, gt
 	return ai, nil
 }
 
-func (p *processor) InstancePeersGet(ctx context.Context, includeSuspended bool, includeOpen bool, flat bool) (interface{}, gtserror.WithCode) {
+func (p *Processor) InstancePeersGet(ctx context.Context, includeSuspended bool, includeOpen bool, flat bool) (interface{}, gtserror.WithCode) {
 	domains := []*apimodel.Domain{}
 
 	if includeOpen {
-		instances, err := p.db.GetInstancePeers(ctx, false)
+		instances, err := p.state.DB.GetInstancePeers(ctx, false)
 		if err != nil && err != db.ErrNoEntries {
 			err = fmt.Errorf("error selecting instance peers: %s", err)
 			return nil, gtserror.NewErrorInternalError(err)
@@ -87,7 +87,7 @@ func (p *processor) InstancePeersGet(ctx context.Context, includeSuspended bool,
 
 	if includeSuspended {
 		domainBlocks := []*gtsmodel.DomainBlock{}
-		if err := p.db.GetAll(ctx, &domainBlocks); err != nil && err != db.ErrNoEntries {
+		if err := p.state.DB.GetAll(ctx, &domainBlocks); err != nil && err != db.ErrNoEntries {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 
@@ -120,16 +120,16 @@ func (p *processor) InstancePeersGet(ctx context.Context, includeSuspended bool,
 	return domains, nil
 }
 
-func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.InstanceV1, gtserror.WithCode) {
+func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.InstanceV1, gtserror.WithCode) {
 	// fetch the instance entry from the db for processing
 	i := &gtsmodel.Instance{}
 	host := config.GetHost()
-	if err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: host}}, i); err != nil {
+	if err := p.state.DB.GetWhere(ctx, []db.Where{{Key: "domain", Value: host}}, i); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance %s: %s", host, err))
 	}
 
 	// fetch the instance account from the db for processing
-	ia, err := p.db.GetInstanceAccount(ctx, "")
+	ia, err := p.state.DB.GetInstanceAccount(ctx, "")
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance account %s: %s", host, err))
 	}
@@ -148,12 +148,12 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 	// validate & update site contact account if it's set on the form
 	if form.ContactUsername != nil {
 		// make sure the account with the given username exists in the db
-		contactAccount, err := p.db.GetAccountByUsernameDomain(ctx, *form.ContactUsername, "")
+		contactAccount, err := p.state.DB.GetAccountByUsernameDomain(ctx, *form.ContactUsername, "")
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, fmt.Sprintf("account with username %s not retrievable", *form.ContactUsername))
 		}
 		// make sure it has a user associated with it
-		contactUser, err := p.db.GetUserByAccountID(ctx, contactAccount.ID)
+		contactUser, err := p.state.DB.GetUserByAccountID(ctx, contactAccount.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, fmt.Sprintf("user for account with username %s not retrievable", *form.ContactUsername))
 		}
@@ -223,7 +223,7 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 
 	if form.Avatar != nil && form.Avatar.Size != 0 {
 		// process instance avatar image + description
-		avatarInfo, err := p.accountProcessor.UpdateAvatar(ctx, form.Avatar, form.AvatarDescription, ia.ID)
+		avatarInfo, err := p.account.UpdateAvatar(ctx, form.Avatar, form.AvatarDescription, ia.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, "error processing avatar")
 		}
@@ -233,14 +233,14 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 	} else if form.AvatarDescription != nil && ia.AvatarMediaAttachment != nil {
 		// process just the description for the existing avatar
 		ia.AvatarMediaAttachment.Description = *form.AvatarDescription
-		if err := p.db.UpdateByID(ctx, ia.AvatarMediaAttachment, ia.AvatarMediaAttachmentID, "description"); err != nil {
+		if err := p.state.DB.UpdateByID(ctx, ia.AvatarMediaAttachment, ia.AvatarMediaAttachmentID, "description"); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error updating instance avatar description: %s", err))
 		}
 	}
 
 	if form.Header != nil && form.Header.Size != 0 {
 		// process instance header image
-		headerInfo, err := p.accountProcessor.UpdateHeader(ctx, form.Header, nil, ia.ID)
+		headerInfo, err := p.account.UpdateHeader(ctx, form.Header, nil, ia.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, "error processing header")
 		}
@@ -252,13 +252,13 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 	if updateInstanceAccount {
 		// if either avatar or header is updated, we need
 		// to update the instance account that stores them
-		if err := p.db.UpdateAccount(ctx, ia); err != nil {
+		if err := p.state.DB.UpdateAccount(ctx, ia); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error updating instance account: %s", err))
 		}
 	}
 
 	if len(updatingColumns) != 0 {
-		if err := p.db.UpdateByID(ctx, i, i.ID, updatingColumns...); err != nil {
+		if err := p.state.DB.UpdateByID(ctx, i, i.ID, updatingColumns...); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error updating instance %s: %s", host, err))
 		}
 	}

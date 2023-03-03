@@ -45,26 +45,26 @@ func (t *transport) DereferenceInstance(ctx context.Context, iri *url.URL) (*gts
 	// This will provide the most complete picture of an instance, and avoid unnecessary api calls.
 	//
 	// This will only work with Mastodon-api compatible instances: Mastodon, some Pleroma instances, GoToSocial.
-	log.Debugf("trying to dereference instance %s by /api/v1/instance", iri.Host)
+	log.Debugf(ctx, "trying to dereference instance %s by /api/v1/instance", iri.Host)
 	i, err = dereferenceByAPIV1Instance(ctx, t, iri)
 	if err == nil {
-		log.Debugf("successfully dereferenced instance using /api/v1/instance")
+		log.Debugf(ctx, "successfully dereferenced instance using /api/v1/instance")
 		return i, nil
 	}
-	log.Debugf("couldn't dereference instance using /api/v1/instance: %s", err)
+	log.Debugf(ctx, "couldn't dereference instance using /api/v1/instance: %s", err)
 
 	// If that doesn't work, try to dereference using /.well-known/nodeinfo.
 	// This will involve two API calls and return less info overall, but should be more widely compatible.
-	log.Debugf("trying to dereference instance %s by /.well-known/nodeinfo", iri.Host)
+	log.Debugf(ctx, "trying to dereference instance %s by /.well-known/nodeinfo", iri.Host)
 	i, err = dereferenceByNodeInfo(ctx, t, iri)
 	if err == nil {
-		log.Debugf("successfully dereferenced instance using /.well-known/nodeinfo")
+		log.Debugf(ctx, "successfully dereferenced instance using /.well-known/nodeinfo")
 		return i, nil
 	}
-	log.Debugf("couldn't dereference instance using /.well-known/nodeinfo: %s", err)
+	log.Debugf(ctx, "couldn't dereference instance using /.well-known/nodeinfo: %s", err)
 
 	// we couldn't dereference the instance using any of the known methods, so just return a minimal representation
-	log.Debugf("returning minimal representation of instance %s", iri.Host)
+	log.Debugf(ctx, "returning minimal representation of instance %s", iri.Host)
 	id, err := id.NewRandomULID()
 	if err != nil {
 		return nil, fmt.Errorf("error creating new id for instance %s: %s", iri.Host, err)
@@ -102,7 +102,7 @@ func dereferenceByAPIV1Instance(ctx context.Context, t *transport, iri *url.URL)
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GET request to %s failed (%d): %s", iriStr, resp.StatusCode, resp.Status)
+		return nil, fmt.Errorf("GET request to %s failed: %s", iriStr, resp.Status)
 	}
 
 	b, err := io.ReadAll(resp.Body)
@@ -252,7 +252,7 @@ func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*ur
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("callNodeInfoWellKnown: GET request to %s failed (%d): %s", iriStr, resp.StatusCode, resp.Status)
+		return nil, fmt.Errorf("callNodeInfoWellKnown: GET request to %s failed: %s", iriStr, resp.Status)
 	}
 
 	b, err := io.ReadAll(resp.Body)
@@ -303,7 +303,7 @@ func callNodeInfo(ctx context.Context, t *transport, iri *url.URL) (*apimodel.No
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("callNodeInfo: GET request to %s failed (%d): %s", iriStr, resp.StatusCode, resp.Status)
+		return nil, fmt.Errorf("callNodeInfo: GET request to %s failed: %s", iriStr, resp.Status)
 	}
 
 	b, err := io.ReadAll(resp.Body)

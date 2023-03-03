@@ -69,7 +69,8 @@ func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL,
 		if err != nil {
 			return nil, err
 		}
-		l := log.WithField("newID", i)
+		l := log.WithContext(ctx).
+			WithField("newID", i)
 		l.Debug("entering NewID")
 	}
 
@@ -94,7 +95,7 @@ func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL,
 				// take the IRI of the first actor we can find (there should only be one)
 				if iter.IsIRI() {
 					// if there's an error here, just use the fallback behavior -- we don't need to return an error here
-					if actorAccount, err := f.db.GetAccountByURI(ctx, iter.GetIRI().String()); err == nil {
+					if actorAccount, err := f.state.DB.GetAccountByURI(ctx, iter.GetIRI().String()); err == nil {
 						newID, err := id.NewRandomULID()
 						if err != nil {
 							return nil, err
@@ -237,7 +238,7 @@ func (f *federatingDB) getAccountForIRI(ctx context.Context, iri *url.URL) (*gts
 
 	switch {
 	case uris.IsUserPath(iri):
-		if acct, err = f.db.GetAccountByURI(ctx, iri.String()); err != nil {
+		if acct, err = f.state.DB.GetAccountByURI(ctx, iri.String()); err != nil {
 			if err == db.ErrNoEntries {
 				return nil, fmt.Errorf("no actor found that corresponds to uri %s", iri.String())
 			}
@@ -245,7 +246,7 @@ func (f *federatingDB) getAccountForIRI(ctx context.Context, iri *url.URL) (*gts
 		}
 		return acct, nil
 	case uris.IsInboxPath(iri):
-		if err = f.db.GetWhere(ctx, []db.Where{{Key: "inbox_uri", Value: iri.String()}}, acct); err != nil {
+		if err = f.state.DB.GetWhere(ctx, []db.Where{{Key: "inbox_uri", Value: iri.String()}}, acct); err != nil {
 			if err == db.ErrNoEntries {
 				return nil, fmt.Errorf("no actor found that corresponds to inbox %s", iri.String())
 			}
@@ -253,7 +254,7 @@ func (f *federatingDB) getAccountForIRI(ctx context.Context, iri *url.URL) (*gts
 		}
 		return acct, nil
 	case uris.IsOutboxPath(iri):
-		if err = f.db.GetWhere(ctx, []db.Where{{Key: "outbox_uri", Value: iri.String()}}, acct); err != nil {
+		if err = f.state.DB.GetWhere(ctx, []db.Where{{Key: "outbox_uri", Value: iri.String()}}, acct); err != nil {
 			if err == db.ErrNoEntries {
 				return nil, fmt.Errorf("no actor found that corresponds to outbox %s", iri.String())
 			}
@@ -261,7 +262,7 @@ func (f *federatingDB) getAccountForIRI(ctx context.Context, iri *url.URL) (*gts
 		}
 		return acct, nil
 	case uris.IsFollowersPath(iri):
-		if err = f.db.GetWhere(ctx, []db.Where{{Key: "followers_uri", Value: iri.String()}}, acct); err != nil {
+		if err = f.state.DB.GetWhere(ctx, []db.Where{{Key: "followers_uri", Value: iri.String()}}, acct); err != nil {
 			if err == db.ErrNoEntries {
 				return nil, fmt.Errorf("no actor found that corresponds to followers_uri %s", iri.String())
 			}
@@ -269,7 +270,7 @@ func (f *federatingDB) getAccountForIRI(ctx context.Context, iri *url.URL) (*gts
 		}
 		return acct, nil
 	case uris.IsFollowingPath(iri):
-		if err = f.db.GetWhere(ctx, []db.Where{{Key: "following_uri", Value: iri.String()}}, acct); err != nil {
+		if err = f.state.DB.GetWhere(ctx, []db.Where{{Key: "following_uri", Value: iri.String()}}, acct); err != nil {
 			if err == db.ErrNoEntries {
 				return nil, fmt.Errorf("no actor found that corresponds to following_uri %s", iri.String())
 			}
@@ -304,7 +305,7 @@ func extractFromCtx(ctx context.Context) (receivingAccount, requestingAccount *g
 		var ok bool
 		receivingAccount, ok = receivingAccountI.(*gtsmodel.Account)
 		if !ok {
-			log.Panicf("extractFromCtx: context entry with key %s could not be asserted to *gtsmodel.Account", ap.ContextReceivingAccount)
+			log.Panicf(ctx, "context entry with key %s could not be asserted to *gtsmodel.Account", ap.ContextReceivingAccount)
 		}
 	}
 
@@ -313,7 +314,7 @@ func extractFromCtx(ctx context.Context) (receivingAccount, requestingAccount *g
 		var ok bool
 		requestingAccount, ok = requestingAcctI.(*gtsmodel.Account)
 		if !ok {
-			log.Panicf("extractFromCtx: context entry with key %s could not be asserted to *gtsmodel.Account", ap.ContextRequestingAccount)
+			log.Panicf(ctx, "context entry with key %s could not be asserted to *gtsmodel.Account", ap.ContextRequestingAccount)
 		}
 	}
 

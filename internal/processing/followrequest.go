@@ -29,8 +29,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (p *processor) FollowRequestsGet(ctx context.Context, auth *oauth.Auth) ([]apimodel.Account, gtserror.WithCode) {
-	frs, err := p.db.GetAccountFollowRequests(ctx, auth.Account.ID)
+func (p *Processor) FollowRequestsGet(ctx context.Context, auth *oauth.Auth) ([]apimodel.Account, gtserror.WithCode) {
+	frs, err := p.state.DB.GetAccountFollowRequests(ctx, auth.Account.ID)
 	if err != nil {
 		if err != db.ErrNoEntries {
 			return nil, gtserror.NewErrorInternalError(err)
@@ -40,7 +40,7 @@ func (p *processor) FollowRequestsGet(ctx context.Context, auth *oauth.Auth) ([]
 	accts := []apimodel.Account{}
 	for _, fr := range frs {
 		if fr.Account == nil {
-			frAcct, err := p.db.GetAccountByID(ctx, fr.AccountID)
+			frAcct, err := p.state.DB.GetAccountByID(ctx, fr.AccountID)
 			if err != nil {
 				return nil, gtserror.NewErrorInternalError(err)
 			}
@@ -56,14 +56,14 @@ func (p *processor) FollowRequestsGet(ctx context.Context, auth *oauth.Auth) ([]
 	return accts, nil
 }
 
-func (p *processor) FollowRequestAccept(ctx context.Context, auth *oauth.Auth, accountID string) (*apimodel.Relationship, gtserror.WithCode) {
-	follow, err := p.db.AcceptFollowRequest(ctx, accountID, auth.Account.ID)
+func (p *Processor) FollowRequestAccept(ctx context.Context, auth *oauth.Auth, accountID string) (*apimodel.Relationship, gtserror.WithCode) {
+	follow, err := p.state.DB.AcceptFollowRequest(ctx, accountID, auth.Account.ID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
 	if follow.Account == nil {
-		followAccount, err := p.db.GetAccountByID(ctx, follow.AccountID)
+		followAccount, err := p.state.DB.GetAccountByID(ctx, follow.AccountID)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -71,14 +71,14 @@ func (p *processor) FollowRequestAccept(ctx context.Context, auth *oauth.Auth, a
 	}
 
 	if follow.TargetAccount == nil {
-		followTargetAccount, err := p.db.GetAccountByID(ctx, follow.TargetAccountID)
+		followTargetAccount, err := p.state.DB.GetAccountByID(ctx, follow.TargetAccountID)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 		follow.TargetAccount = followTargetAccount
 	}
 
-	p.clientWorker.Queue(messages.FromClientAPI{
+	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 		APObjectType:   ap.ActivityFollow,
 		APActivityType: ap.ActivityAccept,
 		GTSModel:       follow,
@@ -86,7 +86,7 @@ func (p *processor) FollowRequestAccept(ctx context.Context, auth *oauth.Auth, a
 		TargetAccount:  follow.TargetAccount,
 	})
 
-	gtsR, err := p.db.GetRelationship(ctx, auth.Account.ID, accountID)
+	gtsR, err := p.state.DB.GetRelationship(ctx, auth.Account.ID, accountID)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -99,14 +99,14 @@ func (p *processor) FollowRequestAccept(ctx context.Context, auth *oauth.Auth, a
 	return r, nil
 }
 
-func (p *processor) FollowRequestReject(ctx context.Context, auth *oauth.Auth, accountID string) (*apimodel.Relationship, gtserror.WithCode) {
-	followRequest, err := p.db.RejectFollowRequest(ctx, accountID, auth.Account.ID)
+func (p *Processor) FollowRequestReject(ctx context.Context, auth *oauth.Auth, accountID string) (*apimodel.Relationship, gtserror.WithCode) {
+	followRequest, err := p.state.DB.RejectFollowRequest(ctx, accountID, auth.Account.ID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
 	if followRequest.Account == nil {
-		a, err := p.db.GetAccountByID(ctx, followRequest.AccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, followRequest.AccountID)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -114,14 +114,14 @@ func (p *processor) FollowRequestReject(ctx context.Context, auth *oauth.Auth, a
 	}
 
 	if followRequest.TargetAccount == nil {
-		a, err := p.db.GetAccountByID(ctx, followRequest.TargetAccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, followRequest.TargetAccountID)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 		followRequest.TargetAccount = a
 	}
 
-	p.clientWorker.Queue(messages.FromClientAPI{
+	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 		APObjectType:   ap.ActivityFollow,
 		APActivityType: ap.ActivityReject,
 		GTSModel:       followRequest,
@@ -129,7 +129,7 @@ func (p *processor) FollowRequestReject(ctx context.Context, auth *oauth.Auth, a
 		TargetAccount:  followRequest.TargetAccount,
 	})
 
-	gtsR, err := p.db.GetRelationship(ctx, auth.Account.ID, accountID)
+	gtsR, err := p.state.DB.GetRelationship(ctx, auth.Account.ID, accountID)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

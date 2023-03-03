@@ -45,7 +45,7 @@ type Account struct {
 	// Account manually approves follow requests.
 	Locked bool `json:"locked"`
 	// Account has opted into discovery features.
-	Discoverable bool `json:"discoverable,omitempty"`
+	Discoverable bool `json:"discoverable"`
 	// Account identifies as a bot.
 	Bot bool `json:"bot"`
 	// When the account was created (ISO 8601 Datetime).
@@ -96,8 +96,7 @@ type Account struct {
 	EnableRSS bool `json:"enable_rss,omitempty"`
 	// Role of the account on this instance.
 	// Omitted for remote accounts.
-	// example: user
-	Role AccountRole `json:"role,omitempty"`
+	Role *AccountRole `json:"role,omitempty"`
 }
 
 // AccountCreateRequest models account creation parameters.
@@ -175,8 +174,8 @@ type UpdateSource struct {
 	Sensitive *bool `form:"sensitive" json:"sensitive" xml:"sensitive"`
 	// Default language to use for authored statuses. (ISO 6391)
 	Language *string `form:"language" json:"language" xml:"language"`
-	// Default format for authored statuses (plain or markdown).
-	StatusFormat *string `form:"status_format" json:"status_format" xml:"status_format"`
+	// Default format for authored statuses (text/plain or text/markdown).
+	StatusContentType *string `form:"status_content_type" json:"status_content_type" xml:"status_content_type"`
 }
 
 // UpdateField is to be used specifically in an UpdateCredentialsRequest.
@@ -215,13 +214,19 @@ type AccountDeleteRequest struct {
 
 // AccountRole models the role of an account.
 //
-// swagger:enum accountRole
+// swagger:model accountRole
+type AccountRole struct {
+	Name AccountRoleName `json:"name"`
+}
+
+// AccountRoleName represent the name of the role of an account.
+//
 // swagger:type string
-type AccountRole string
+type AccountRoleName string
 
 const (
-	AccountRoleUser      AccountRole = "user"      // Standard user
-	AccountRoleModerator AccountRole = "moderator" // Moderator privileges
-	AccountRoleAdmin     AccountRole = "admin"     // Instance admin
-	AccountRoleUnknown   AccountRole = ""          // We don't know / remote account
+	AccountRoleUser      AccountRoleName = "user"      // Standard user
+	AccountRoleModerator AccountRoleName = "moderator" // Moderator privileges
+	AccountRoleAdmin     AccountRoleName = "admin"     // Instance admin
+	AccountRoleUnknown   AccountRoleName = ""          // We don't know / remote account
 )

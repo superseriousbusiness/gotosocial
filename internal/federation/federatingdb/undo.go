@@ -32,7 +32,7 @@ import (
 )
 
 func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo) error {
-	l := log.Entry{}
+	l := log.Entry{}.WithContext(ctx)
 
 	if log.Level() >= level.DEBUG {
 		i, err := marshalItem(undo)
@@ -81,11 +81,11 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 				return errors.New("UNDO: follow object account and inbox account were not the same")
 			}
 			// delete any existing FOLLOW
-			if err := f.db.DeleteWhere(ctx, []db.Where{{Key: "uri", Value: gtsFollow.URI}}, &gtsmodel.Follow{}); err != nil {
+			if err := f.state.DB.DeleteWhere(ctx, []db.Where{{Key: "uri", Value: gtsFollow.URI}}, &gtsmodel.Follow{}); err != nil {
 				return fmt.Errorf("UNDO: db error removing follow: %s", err)
 			}
 			// delete any existing FOLLOW REQUEST
-			if err := f.db.DeleteWhere(ctx, []db.Where{{Key: "uri", Value: gtsFollow.URI}}, &gtsmodel.FollowRequest{}); err != nil {
+			if err := f.state.DB.DeleteWhere(ctx, []db.Where{{Key: "uri", Value: gtsFollow.URI}}, &gtsmodel.FollowRequest{}); err != nil {
 				return fmt.Errorf("UNDO: db error removing follow request: %s", err)
 			}
 			l.Debug("follow undone")
@@ -114,7 +114,7 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 				return errors.New("UNDO: block object account and inbox account were not the same")
 			}
 			// delete any existing BLOCK
-			if err := f.db.DeleteBlockByURI(ctx, gtsBlock.URI); err != nil {
+			if err := f.state.DB.DeleteBlockByURI(ctx, gtsBlock.URI); err != nil {
 				return fmt.Errorf("UNDO: db error removing block: %s", err)
 			}
 			l.Debug("block undone")

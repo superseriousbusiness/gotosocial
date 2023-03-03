@@ -101,7 +101,8 @@ func (m *Module) OutboxGETHandler(c *gin.Context) {
 	}
 
 	if format == string(apiutil.TextHTML) {
-		// redirect to the user's profile
+		// This isn't an ActivityPub request;
+		// redirect to the user's profile.
 		c.Redirect(http.StatusSeeOther, "/@"+requestedUsername)
 		return
 	}
@@ -129,7 +130,7 @@ func (m *Module) OutboxGETHandler(c *gin.Context) {
 		maxID = maxIDString
 	}
 
-	resp, errWithCode := m.processor.GetFediOutbox(apiutil.TransferSignatureContext(c), requestedUsername, page, maxID, minID, c.Request.URL)
+	resp, errWithCode := m.processor.Fedi().OutboxGet(apiutil.TransferSignatureContext(c), requestedUsername, page, maxID, minID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

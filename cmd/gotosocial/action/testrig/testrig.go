@@ -33,14 +33,13 @@ import (
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/web"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -48,37 +47,44 @@ import (
 
 // Start creates and starts a gotosocial testrig server
 var Start action.GTSAction = func(ctx context.Context) error {
+	var state state.State
+
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
 
-	dbService := testrig.NewTestDB()
-	testrig.StandardDBSetup(dbService, nil)
-	var storageBackend *storage.Driver
-	if os.Getenv("GTS_STORAGE_BACKEND") == "s3" {
-		storageBackend, _ = storage.NewS3Storage()
-	} else {
-		storageBackend = testrig.NewInMemoryStorage()
-	}
-	testrig.StandardStorageSetup(storageBackend, "./testrig/media")
+	// Initialize caches
+	state.Caches.Init()
+	state.Caches.Start()
+	defer state.Caches.Stop()
 
-	// Create client API and federator worker pools
-	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
-	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+	state.DB = testrig.NewTestDB(&state)
+	testrig.StandardDBSetup(state.DB, nil)
+
+	if os.Getenv("GTS_STORAGE_BACKEND") == "s3" {
+		state.Storage, _ = storage.NewS3Storage()
+	} else {
+		state.Storage = testrig.NewInMemoryStorage()
+	}
+	testrig.StandardStorageSetup(state.Storage, "./testrig/media")
+
+	// Initialize workers.
+	state.Workers.Start()
+	defer state.Workers.Stop()
 
 	// build backend handlers
-	transportController := testrig.NewTestTransportController(testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
+	transportController := testrig.NewTestTransportController(&state, testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
 		r := io.NopCloser(bytes.NewReader([]byte{}))
 		return &http.Response{
 			StatusCode: 200,
 			Body:       r,
 		}, nil
-	}, ""), dbService, fedWorker)
-	mediaManager := testrig.NewTestMediaManager(dbService, storageBackend)
-	federator := testrig.NewTestFederator(dbService, transportController, storageBackend, mediaManager, fedWorker)
+	}, ""))
+	mediaManager := testrig.NewTestMediaManager(&state)
+	federator := testrig.NewTestFederator(&state, transportController, mediaManager)
 
 	emailSender := testrig.NewEmailSender("./web/template/", nil)
 
-	processor := testrig.NewTestProcessor(dbService, storageBackend, federator, emailSender, mediaManager, clientWorker, fedWorker)
+	processor := testrig.NewTestProcessor(&state, federator, emailSender, mediaManager)
 	if err := processor.Start(); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)
 	}
@@ -87,7 +93,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		HTTP router initialization
 	*/
 
-	router := testrig.NewTestRouter(dbService)
+	router := testrig.NewTestRouter(state.DB)
 
 	// attach global middlewares which are used for every request
 	router.AttachGlobalMiddleware(
@@ -112,7 +118,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		}
 	}
 
-	routerSession, err := dbService.GetSession(ctx)
+	routerSession, err := state.DB.GetSession(ctx)
 	if err != nil {
 		return fmt.Errorf("error retrieving router session for session middleware: %w", err)
 	}
@@ -123,13 +129,13 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	var (
-		authModule        = api.NewAuth(dbService, processor, idp, routerSession, sessionName) // auth/oauth paths
-		clientModule      = api.NewClient(dbService, processor)                                // api client endpoints
-		fileserverModule  = api.NewFileserver(processor)                                       // fileserver endpoints
-		wellKnownModule   = api.NewWellKnown(processor)                                        // .well-known endpoints
-		nodeInfoModule    = api.NewNodeInfo(processor)                                         // nodeinfo endpoint
-		activityPubModule = api.NewActivityPub(dbService, processor)                           // ActivityPub endpoints
-		webModule         = web.New(dbService, processor)                                      // web pages + user profiles + settings panels etc
+		authModule        = api.NewAuth(state.DB, processor, idp, routerSession, sessionName) // auth/oauth paths
+		clientModule      = api.NewClient(state.DB, processor)                                // api client endpoints
+		fileserverModule  = api.NewFileserver(processor)                                      // fileserver endpoints
+		wellKnownModule   = api.NewWellKnown(processor)                                       // .well-known endpoints
+		nodeInfoModule    = api.NewNodeInfo(processor)                                        // nodeinfo endpoint
+		activityPubModule = api.NewActivityPub(state.DB, processor)                           // ActivityPub endpoints
+		webModule         = web.New(state.DB, processor)                                      // web pages + user profiles + settings panels etc
 	)
 
 	// these should be routed in order
@@ -142,7 +148,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	activityPubModule.RoutePublicKey(router)
 	webModule.Route(router)
 
-	gts, err := gotosocial.NewServer(dbService, router, federator, mediaManager)
+	gts, err := gotosocial.NewServer(state.DB, router, federator, mediaManager)
 	if err != nil {
 		return fmt.Errorf("error creating gotosocial service: %s", err)
 	}
@@ -155,16 +161,16 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
 	sig := <-sigs
-	log.Infof("received signal %s, shutting down", sig)
+	log.Infof(ctx, "received signal %s, shutting down", sig)
 
-	testrig.StandardDBTeardown(dbService)
-	testrig.StandardStorageTeardown(storageBackend)
+	testrig.StandardDBTeardown(state.DB)
+	testrig.StandardStorageTeardown(state.Storage)
 
 	// close down all running services in order
 	if err := gts.Stop(ctx); err != nil {
 		return fmt.Errorf("error closing gotosocial service: %s", err)
 	}
 
-	log.Info("done! exiting...")
+	log.Info(ctx, "done! exiting...")
 	return nil
 }

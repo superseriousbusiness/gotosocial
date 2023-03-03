@@ -44,7 +44,7 @@ func (w *NodeInfo) Route(r router.Router, m ...gin.HandlerFunc) {
 	w.nodeInfo.Route(nodeInfoGroup.Handle)
 }
 
-func NewNodeInfo(p processing.Processor) *NodeInfo {
+func NewNodeInfo(p *processing.Processor) *NodeInfo {
 	return &NodeInfo{
 		nodeInfo: nodeinfo.New(p),
 	}

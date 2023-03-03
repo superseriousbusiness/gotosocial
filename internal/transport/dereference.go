@@ -78,6 +78,6 @@ func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, erro
 	case http.StatusGone:
 		return nil, ErrGone
 	default:
-		return nil, fmt.Errorf("GET request to %s failed (%d): %s", iriStr, rsp.StatusCode, rsp.Status)
+		return nil, fmt.Errorf("GET request to %s failed: %s", iriStr, rsp.Status)
 	}
 }

@@ -134,10 +134,11 @@ func (m *manager) Stop() error {
 }
 
 func (m *manager) Ingest(ctx context.Context, item Timelineable, timelineAccountID string) (bool, error) {
-	l := log.WithFields(kv.Fields{
-		{"timelineAccountID", timelineAccountID},
-		{"itemID", item.GetID()},
-	}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{
+			{"timelineAccountID", timelineAccountID},
+			{"itemID", item.GetID()},
+		}...)
 
 	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
 	if err != nil {
@@ -149,10 +150,11 @@ func (m *manager) Ingest(ctx context.Context, item Timelineable, timelineAccount
 }
 
 func (m *manager) IngestAndPrepare(ctx context.Context, item Timelineable, timelineAccountID string) (bool, error) {
-	l := log.WithFields(kv.Fields{
-		{"timelineAccountID", timelineAccountID},
-		{"itemID", item.GetID()},
-	}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{
+			{"timelineAccountID", timelineAccountID},
+			{"itemID", item.GetID()},
+		}...)
 
 	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
 	if err != nil {
@@ -164,10 +166,11 @@ func (m *manager) IngestAndPrepare(ctx context.Context, item Timelineable, timel
 }
 
 func (m *manager) Remove(ctx context.Context, timelineAccountID string, itemID string) (int, error) {
-	l := log.WithFields(kv.Fields{
-		{"timelineAccountID", timelineAccountID},
-		{"itemID", itemID},
-	}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{
+			{"timelineAccountID", timelineAccountID},
+			{"itemID", itemID},
+		}...)
 
 	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
 	if err != nil {
@@ -179,7 +182,8 @@ func (m *manager) Remove(ctx context.Context, timelineAccountID string, itemID s
 }
 
 func (m *manager) GetTimeline(ctx context.Context, timelineAccountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]Preparable, error) {
-	l := log.WithFields(kv.Fields{{"timelineAccountID", timelineAccountID}}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{{"timelineAccountID", timelineAccountID}}...)
 
 	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
 	if err != nil {

@@ -36,7 +36,7 @@ import (
 // ProcessFromFederator reads the APActivityType and APObjectType of an incoming message from the federator,
 // and directs the message into the appropriate side effect handler function, or simply does nothing if there's
 // no handler function defined for the combination of Activity and Object.
-func (p *processor) ProcessFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
+func (p *Processor) ProcessFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
 	// Allocate new log fields slice
 	fields := make([]kv.Field, 3, 5)
 	fields[0] = kv.Field{"activityType", federatorMsg.APActivityType}
@@ -59,7 +59,7 @@ func (p *processor) ProcessFromFederator(ctx context.Context, federatorMsg messa
 	}
 
 	// Log this federated message
-	l := log.WithFields(fields...)
+	l := log.WithContext(ctx).WithFields(fields...)
 	l.Info("processing from federator")
 
 	switch federatorMsg.APActivityType {
@@ -108,7 +108,7 @@ func (p *processor) ProcessFromFederator(ctx context.Context, federatorMsg messa
 }
 
 // processCreateStatusFromFederator handles Activity Create and Object Note
-func (p *processor) processCreateStatusFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
+func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
 	// check for either an IRI that we still need to dereference, OR an already dereferenced
 	// and converted status pinned to the message.
 	var status *gtsmodel.Status
@@ -139,7 +139,7 @@ func (p *processor) processCreateStatusFromFederator(ctx context.Context, federa
 
 	// make sure the account is pinned
 	if status.Account == nil {
-		a, err := p.db.GetAccountByID(ctx, status.AccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, status.AccountID)
 		if err != nil {
 			return err
 		}
@@ -177,7 +177,7 @@ func (p *processor) processCreateStatusFromFederator(ctx context.Context, federa
 }
 
 // processCreateFaveFromFederator handles Activity Create and Object Like
-func (p *processor) processCreateFaveFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
+func (p *Processor) processCreateFaveFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
 	incomingFave, ok := federatorMsg.GTSModel.(*gtsmodel.StatusFave)
 	if !ok {
 		return errors.New("like was not parseable as *gtsmodel.StatusFave")
@@ -185,7 +185,7 @@ func (p *processor) processCreateFaveFromFederator(ctx context.Context, federato
 
 	// make sure the account is pinned
 	if incomingFave.Account == nil {
-		a, err := p.db.GetAccountByID(ctx, incomingFave.AccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, incomingFave.AccountID)
 		if err != nil {
 			return err
 		}
@@ -219,7 +219,7 @@ func (p *processor) processCreateFaveFromFederator(ctx context.Context, federato
 }
 
 // processCreateFollowRequestFromFederator handles Activity Create and Object Follow
-func (p *processor) processCreateFollowRequestFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
+func (p *Processor) processCreateFollowRequestFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
 	followRequest, ok := federatorMsg.GTSModel.(*gtsmodel.FollowRequest)
 	if !ok {
 		return errors.New("incomingFollowRequest was not parseable as *gtsmodel.FollowRequest")
@@ -227,7 +227,7 @@ func (p *processor) processCreateFollowRequestFromFederator(ctx context.Context,
 
 	// make sure the account is pinned
 	if followRequest.Account == nil {
-		a, err := p.db.GetAccountByID(ctx, followRequest.AccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, followRequest.AccountID)
 		if err != nil {
 			return err
 		}
@@ -254,7 +254,7 @@ func (p *processor) processCreateFollowRequestFromFederator(ctx context.Context,
 	}
 
 	if followRequest.TargetAccount == nil {
-		a, err := p.db.GetAccountByID(ctx, followRequest.TargetAccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, followRequest.TargetAccountID)
 		if err != nil {
 			return err
 		}
@@ -267,7 +267,7 @@ func (p *processor) processCreateFollowRequestFromFederator(ctx context.Context,
 	}
 
 	// if the target account isn't locked, we should already accept the follow and notify about the new follower instead
-	follow, err := p.db.AcceptFollowRequest(ctx, followRequest.AccountID, followRequest.TargetAccountID)
+	follow, err := p.state.DB.AcceptFollowRequest(ctx, followRequest.AccountID, followRequest.TargetAccountID)
 	if err != nil {
 		return err
 	}
@@ -280,7 +280,7 @@ func (p *processor) processCreateFollowRequestFromFederator(ctx context.Context,
 }
 
 // processCreateAnnounceFromFederator handles Activity Create and Object Announce
-func (p *processor) processCreateAnnounceFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
+func (p *Processor) processCreateAnnounceFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
 	incomingAnnounce, ok := federatorMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return errors.New("announce was not parseable as *gtsmodel.Status")
@@ -288,7 +288,7 @@ func (p *processor) processCreateAnnounceFromFederator(ctx context.Context, fede
 
 	// make sure the account is pinned
 	if incomingAnnounce.Account == nil {
-		a, err := p.db.GetAccountByID(ctx, incomingAnnounce.AccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, incomingAnnounce.AccountID)
 		if err != nil {
 			return err
 		}
@@ -324,7 +324,7 @@ func (p *processor) processCreateAnnounceFromFederator(ctx context.Context, fede
 	}
 	incomingAnnounce.ID = incomingAnnounceID
 
-	if err := p.db.PutStatus(ctx, incomingAnnounce); err != nil {
+	if err := p.state.DB.PutStatus(ctx, incomingAnnounce); err != nil {
 		return fmt.Errorf("error adding dereferenced announce to the db: %s", err)
 	}
 
@@ -340,7 +340,7 @@ func (p *processor) processCreateAnnounceFromFederator(ctx context.Context, fede
 }
 
 // processCreateBlockFromFederator handles Activity Create and Object Block
-func (p *processor) processCreateBlockFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
+func (p *Processor) processCreateBlockFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
 	block, ok := federatorMsg.GTSModel.(*gtsmodel.Block)
 	if !ok {
 		return errors.New("block was not parseable as *gtsmodel.Block")
@@ -359,7 +359,7 @@ func (p *processor) processCreateBlockFromFederator(ctx context.Context, federat
 	return nil
 }
 
-func (p *processor) processCreateFlagFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
+func (p *Processor) processCreateFlagFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
 	// TODO: handle side effects of flag creation:
 	// - send email to admins
 	// - notify admins
@@ -367,7 +367,7 @@ func (p *processor) processCreateFlagFromFederator(ctx context.Context, federato
 }
 
 // processUpdateAccountFromFederator handles Activity Update and Object Profile
-func (p *processor) processUpdateAccountFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
+func (p *Processor) processUpdateAccountFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
 	incomingAccount, ok := federatorMsg.GTSModel.(*gtsmodel.Account)
 	if !ok {
 		return errors.New("profile was not parseable as *gtsmodel.Account")
@@ -391,7 +391,7 @@ func (p *processor) processUpdateAccountFromFederator(ctx context.Context, feder
 }
 
 // processDeleteStatusFromFederator handles Activity Delete and Object Note
-func (p *processor) processDeleteStatusFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
+func (p *Processor) processDeleteStatusFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
 	statusToDelete, ok := federatorMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return errors.New("note was not parseable as *gtsmodel.Status")
@@ -405,11 +405,11 @@ func (p *processor) processDeleteStatusFromFederator(ctx context.Context, federa
 }
 
 // processDeleteAccountFromFederator handles Activity Delete and Object Profile
-func (p *processor) processDeleteAccountFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
+func (p *Processor) processDeleteAccountFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
 	account, ok := federatorMsg.GTSModel.(*gtsmodel.Account)
 	if !ok {
 		return errors.New("account delete was not parseable as *gtsmodel.Account")
 	}
 
-	return p.accountProcessor.Delete(ctx, account, account.ID)
+	return p.account.Delete(ctx, account, account.ID)
 }

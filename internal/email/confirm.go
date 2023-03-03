@@ -42,7 +42,7 @@ func (s *sender) SendConfirmEmail(toAddress string, data ConfirmData) error {
 	if err != nil {
 		return err
 	}
-	log.Trace(s.hostAddress + "\n" + config.GetSMTPUsername() + ":password" + "\n" + s.from + "\n" + toAddress + "\n\n" + string(msg) + "\n")
+	log.Trace(nil, s.hostAddress+"\n"+config.GetSMTPUsername()+":password"+"\n"+s.from+"\n"+toAddress+"\n\n"+string(msg)+"\n")
 	return smtp.SendMail(s.hostAddress, s.auth, s.from, []string{toAddress}, msg)
 }
 

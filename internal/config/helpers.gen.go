@@ -1724,6 +1724,31 @@ func GetOIDCLinkExisting() bool { return global.GetOIDCLinkExisting() }
 // SetOIDCLinkExisting safely sets the value for global configuration 'OIDCLinkExisting' field
 func SetOIDCLinkExisting(v bool) { global.SetOIDCLinkExisting(v) }
 
+// GetOIDCAdminGroups safely fetches the Configuration value for state's 'OIDCAdminGroups' field
+func (st *ConfigState) GetOIDCAdminGroups() (v []string) {
+	st.mutex.Lock()
+	v = st.config.OIDCAdminGroups
+	st.mutex.Unlock()
+	return
+}
+
+// SetOIDCAdminGroups safely sets the Configuration value for state's 'OIDCAdminGroups' field
+func (st *ConfigState) SetOIDCAdminGroups(v []string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.OIDCAdminGroups = v
+	st.reloadToViper()
+}
+
+// OIDCAdminGroupsFlag returns the flag name for the 'OIDCAdminGroups' field
+func OIDCAdminGroupsFlag() string { return "oidc-admin-groups" }
+
+// GetOIDCAdminGroups safely fetches the value for global configuration 'OIDCAdminGroups' field
+func GetOIDCAdminGroups() []string { return global.GetOIDCAdminGroups() }
+
+// SetOIDCAdminGroups safely sets the value for global configuration 'OIDCAdminGroups' field
+func SetOIDCAdminGroups(v []string) { global.SetOIDCAdminGroups(v) }
+
 // GetSMTPHost safely fetches the Configuration value for state's 'SMTPHost' field
 func (st *ConfigState) GetSMTPHost() (v string) {
 	st.mutex.Lock()
@@ -2977,3 +3002,28 @@ func GetAdminMediaPruneDryRun() bool { return global.GetAdminMediaPruneDryRun() 
 
 // SetAdminMediaPruneDryRun safely sets the value for global configuration 'AdminMediaPruneDryRun' field
 func SetAdminMediaPruneDryRun(v bool) { global.SetAdminMediaPruneDryRun(v) }
+
+// GetRequestIDHeader safely fetches the Configuration value for state's 'RequestIDHeader' field
+func (st *ConfigState) GetRequestIDHeader() (v string) {
+	st.mutex.Lock()
+	v = st.config.RequestIDHeader
+	st.mutex.Unlock()
+	return
+}
+
+// SetRequestIDHeader safely sets the Configuration value for state's 'RequestIDHeader' field
+func (st *ConfigState) SetRequestIDHeader(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.RequestIDHeader = v
+	st.reloadToViper()
+}
+
+// RequestIDHeaderFlag returns the flag name for the 'RequestIDHeader' field
+func RequestIDHeaderFlag() string { return "request-id-header" }
+
+// GetRequestIDHeader safely fetches the value for global configuration 'RequestIDHeader' field
+func GetRequestIDHeader() string { return global.GetRequestIDHeader() }
+
+// SetRequestIDHeader safely sets the value for global configuration 'RequestIDHeader' field
+func SetRequestIDHeader(v string) { global.SetRequestIDHeader(v) }

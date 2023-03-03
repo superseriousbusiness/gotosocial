@@ -26,15 +26,14 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api/wellknown/webfinger"
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -44,11 +43,12 @@ type WebfingerStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
 	db           db.DB
+	state        state.State
 	tc           typeutils.TypeConverter
 	mediaManager media.Manager
 	federator    federation.Federator
 	emailSender  email.Sender
-	processor    processing.Processor
+	processor    *processing.Processor
 	storage      *storage.Driver
 	oauthServer  oauth.Server
 
@@ -76,19 +76,21 @@ func (suite *WebfingerStandardTestSuite) SetupSuite() {
 }
 
 func (suite *WebfingerStandardTestSuite) SetupTest() {
+	suite.state.Caches.Init()
+	testrig.StartWorkers(&suite.state)
+
 	testrig.InitTestLog()
 	testrig.InitTestConfig()
 
-	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
-	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
-
-	suite.db = testrig.NewTestDB()
+	suite.db = testrig.NewTestDB(&suite.state)
+	suite.state.DB = suite.db
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.storage = testrig.NewInMemoryStorage()
-	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
-	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
+	suite.state.Storage = suite.storage
+	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
+	suite.federator = testrig.NewTestFederator(&suite.state, testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../../testrig/media")), suite.mediaManager)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
-	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, suite.mediaManager, clientWorker, fedWorker)
+	suite.processor = testrig.NewTestProcessor(&suite.state, suite.federator, suite.emailSender, suite.mediaManager)
 	suite.webfingerModule = webfinger.New(suite.processor)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
@@ -100,6 +102,7 @@ func (suite *WebfingerStandardTestSuite) SetupTest() {
 func (suite *WebfingerStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
+	testrig.StopWorkers(&suite.state)
 }
 
 func accountDomainAccount() *gtsmodel.Account {

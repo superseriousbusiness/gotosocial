@@ -50,6 +50,8 @@ const (
 	FollowersPath = BasePath + "/" + uris.FollowersPath
 	// FollowingPath is for serving GET request's to a user's following list, with the given username key.
 	FollowingPath = BasePath + "/" + uris.FollowingPath
+	// FeaturedCollectionPath is for serving GET requests to a user's list of featured (pinned) statuses.
+	FeaturedCollectionPath = BasePath + "/" + uris.CollectionsPath + "/" + uris.FeaturedPath
 	// StatusPath is for serving GET requests to a particular status by a user, with the given username key and status ID
 	StatusPath = BasePath + "/" + uris.StatusesPath + "/:" + StatusIDKey
 	// StatusRepliesPath is for serving the replies collection of a status.
@@ -57,10 +59,10 @@ const (
 )
 
 type Module struct {
-	processor processing.Processor
+	processor *processing.Processor
 }
 
-func New(processor processing.Processor) *Module {
+func New(processor *processing.Processor) *Module {
 	return &Module{
 		processor: processor,
 	}
@@ -71,6 +73,7 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	attachHandler(http.MethodPost, InboxPath, m.InboxPOSTHandler)
 	attachHandler(http.MethodGet, FollowersPath, m.FollowersGETHandler)
 	attachHandler(http.MethodGet, FollowingPath, m.FollowingGETHandler)
+	attachHandler(http.MethodGet, FeaturedCollectionPath, m.FeaturedCollectionGETHandler)
 	attachHandler(http.MethodGet, StatusPath, m.StatusGETHandler)
 	attachHandler(http.MethodGet, StatusRepliesPath, m.StatusRepliesGETHandler)
 	attachHandler(http.MethodGet, OutboxPath, m.OutboxGETHandler)

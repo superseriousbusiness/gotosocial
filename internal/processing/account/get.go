@@ -31,8 +31,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
-func (p *processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Account, gtserror.WithCode) {
-	targetAccount, err := p.db.GetAccountByID(ctx, targetAccountID)
+// Get processes the given request for account information.
+func (p *Processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Account, gtserror.WithCode) {
+	targetAccount, err := p.state.DB.GetAccountByID(ctx, targetAccountID)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return nil, gtserror.NewErrorNotFound(errors.New("account not found"))
@@ -40,11 +41,12 @@ func (p *processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error: %s", err))
 	}
 
-	return p.getAccountFor(ctx, requestingAccount, targetAccount)
+	return p.getFor(ctx, requestingAccount, targetAccount)
 }
 
-func (p *processor) GetLocalByUsername(ctx context.Context, requestingAccount *gtsmodel.Account, username string) (*apimodel.Account, gtserror.WithCode) {
-	targetAccount, err := p.db.GetAccountByUsernameDomain(ctx, username, "")
+// GetLocalByUsername processes the given request for account information targeting a local account by username.
+func (p *Processor) GetLocalByUsername(ctx context.Context, requestingAccount *gtsmodel.Account, username string) (*apimodel.Account, gtserror.WithCode) {
+	targetAccount, err := p.state.DB.GetAccountByUsernameDomain(ctx, username, "")
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return nil, gtserror.NewErrorNotFound(errors.New("account not found"))
@@ -52,11 +54,12 @@ func (p *processor) GetLocalByUsername(ctx context.Context, requestingAccount *g
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error: %s", err))
 	}
 
-	return p.getAccountFor(ctx, requestingAccount, targetAccount)
+	return p.getFor(ctx, requestingAccount, targetAccount)
 }
 
-func (p *processor) GetCustomCSSForUsername(ctx context.Context, username string) (string, gtserror.WithCode) {
-	customCSS, err := p.db.GetAccountCustomCSSByUsername(ctx, username)
+// GetCustomCSSForUsername returns custom css for the given local username.
+func (p *Processor) GetCustomCSSForUsername(ctx context.Context, username string) (string, gtserror.WithCode) {
+	customCSS, err := p.state.DB.GetAccountCustomCSSByUsername(ctx, username)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return "", gtserror.NewErrorNotFound(errors.New("account not found"))
@@ -67,11 +70,11 @@ func (p *processor) GetCustomCSSForUsername(ctx context.Context, username string
 	return customCSS, nil
 }
 
-func (p *processor) getAccountFor(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (*apimodel.Account, gtserror.WithCode) {
+func (p *Processor) getFor(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (*apimodel.Account, gtserror.WithCode) {
 	var blocked bool
 	var err error
 	if requestingAccount != nil {
-		blocked, err = p.db.IsBlocked(ctx, requestingAccount.ID, targetAccount.ID, true)
+		blocked, err = p.state.DB.IsBlocked(ctx, requestingAccount.ID, targetAccount.ID, true)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking account block: %s", err))
 		}

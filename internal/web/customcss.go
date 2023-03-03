@@ -51,7 +51,7 @@ func (m *Module) customCSSGETHandler(c *gin.Context) {
 		return
 	}
 
-	customCSS, errWithCode := m.processor.AccountGetCustomCSSForUsername(c.Request.Context(), username)
+	customCSS, errWithCode := m.processor.Account().GetCustomCSSForUsername(c.Request.Context(), username)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

@@ -35,7 +35,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"go.uber.org/automaxprocs/maxprocs"
 
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -45,7 +44,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
@@ -62,7 +60,7 @@ import (
 
 // Start creates and starts a gotosocial server
 var Start action.GTSAction = func(ctx context.Context) error {
-	_, err := maxprocs.Set(maxprocs.Logger(log.Debugf))
+	_, err := maxprocs.Set(maxprocs.Logger(nil))
 	if err != nil {
 		return fmt.Errorf("failed to set CPU limits from cgroup: %s", err)
 	}
@@ -91,33 +89,27 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating instance instance: %s", err)
 	}
 
-	// Create the client API and federator worker pools
-	// NOTE: these MUST NOT be used until they are passed to the
-	// processor and it is started. The reason being that the processor
-	// sets the Worker process functions and start the underlying pools
-	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
-	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
-
-	federatingDB := federatingdb.New(dbService, fedWorker)
-
-	// build converters and util
-	typeConverter := typeutils.NewConverter(dbService)
-
 	// Open the storage backend
 	storage, err := gtsstorage.AutoConfig()
 	if err != nil {
 		return fmt.Errorf("error creating storage backend: %w", err)
 	}
 
+	// Set the state storage driver
+	state.Storage = storage
+
 	// Build HTTP client (TODO: add configurables here)
 	client := httpclient.New(httpclient.Config{})
 
+	// Initialize workers.
+	state.Workers.Start()
+	defer state.Workers.Stop()
+
 	// build backend handlers
-	mediaManager, err := media.NewManager(dbService, storage)
-	if err != nil {
-		return fmt.Errorf("error creating media manager: %s", err)
-	}
+	mediaManager := media.NewManager(&state)
 	oauthServer := oauth.New(ctx, dbService)
+	typeConverter := typeutils.NewConverter(dbService)
+	federatingDB := federatingdb.New(&state, typeConverter)
 	transportController := transport.NewController(dbService, federatingDB, &federation.Clock{}, client)
 	federator := federation.NewFederator(dbService, federatingDB, transportController, typeConverter, mediaManager)
 
@@ -138,10 +130,14 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	// create the message processor using the other services we've created so far
-	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaManager, storage, dbService, emailSender, clientWorker, fedWorker)
+	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaManager, &state, emailSender)
 	if err := processor.Start(); err != nil {
 		return fmt.Errorf("error creating processor: %s", err)
 	}
+
+	// Set state client / federator worker enqueue functions
+	state.Workers.EnqueueClientAPI = processor.EnqueueClientAPI
+	state.Workers.EnqueueFederator = processor.EnqueueFederator
 
 	/*
 		HTTP router initialization
@@ -154,6 +150,9 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// attach global middlewares which are used for every request
 	router.AttachGlobalMiddleware(
+		middleware.AddRequestID(config.GetRequestIDHeader()),
+		// note: hooks adding ctx fields must be ABOVE
+		// the logger, otherwise won't be accessible.
 		middleware.Logger(),
 		middleware.UserAgent(),
 		middleware.CORS(),
@@ -235,13 +234,13 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-sigs // block until signal received
-	log.Infof("received signal %s, shutting down", sig)
+	log.Infof(ctx, "received signal %s, shutting down", sig)
 
 	// close down all running services in order
 	if err := gts.Stop(ctx); err != nil {
 		return fmt.Errorf("error closing gotosocial service: %s", err)
 	}
 
-	log.Info("done! exiting...")
+	log.Info(ctx, "done! exiting...")
 	return nil
 }

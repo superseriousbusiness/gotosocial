@@ -46,6 +46,11 @@ const (
 	instanceSourceURL                           = "https://github.com/superseriousbusiness/gotosocial"
 )
 
+var instanceStatusesSupportedMimeTypes = []string{
+	string(apimodel.StatusContentTypePlain),
+	string(apimodel.StatusContentTypeMarkdown),
+}
+
 func (c *converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
 	// we can build this sensitive account easily by first getting the public account....
 	apiAccount, err := c.AccountToAPIAccountPublic(ctx, a)
@@ -67,16 +72,16 @@ func (c *converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 		frc = len(frs)
 	}
 
-	statusFormat := string(apimodel.StatusFormatDefault)
-	if a.StatusFormat != "" {
-		statusFormat = a.StatusFormat
+	statusContentType := string(apimodel.StatusContentTypeDefault)
+	if a.StatusContentType != "" {
+		statusContentType = a.StatusContentType
 	}
 
 	apiAccount.Source = &apimodel.Source{
 		Privacy:             c.VisToAPIVis(ctx, a.Privacy),
 		Sensitive:           *a.Sensitive,
 		Language:            a.Language,
-		StatusFormat:        statusFormat,
+		StatusContentType:   statusContentType,
 		Note:                a.NoteRaw,
 		Fields:              apiAccount.Fields,
 		FollowRequestsCount: frc,
@@ -119,7 +124,7 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		if a.AvatarMediaAttachment == nil {
 			avi, err := c.db.GetAttachmentByID(ctx, a.AvatarMediaAttachmentID)
 			if err != nil {
-				log.Errorf("AccountToAPIAccountPublic: error getting Avatar with id %s: %s", a.AvatarMediaAttachmentID, err)
+				log.Errorf(ctx, "error getting Avatar with id %s: %s", a.AvatarMediaAttachmentID, err)
 			}
 			a.AvatarMediaAttachment = avi
 		}
@@ -136,7 +141,7 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		if a.HeaderMediaAttachment == nil {
 			avi, err := c.db.GetAttachmentByID(ctx, a.HeaderMediaAttachmentID)
 			if err != nil {
-				log.Errorf("AccountToAPIAccountPublic: error getting Header with id %s: %s", a.HeaderMediaAttachmentID, err)
+				log.Errorf(ctx, "error getting Header with id %s: %s", a.HeaderMediaAttachmentID, err)
 			}
 			a.HeaderMediaAttachment = avi
 		}
@@ -164,13 +169,11 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	// convert account gts model emojis to frontend api model emojis
 	apiEmojis, err := c.convertEmojisToAPIEmojis(ctx, a.Emojis, a.EmojiIDs)
 	if err != nil {
-		log.Errorf("error converting account emojis: %v", err)
+		log.Errorf(ctx, "error converting account emojis: %v", err)
 	}
 
-	var (
-		acct string
-		role = apimodel.AccountRoleUnknown
-	)
+	var acct string
+	var role *apimodel.AccountRole
 
 	if a.Domain != "" {
 		// this is a remote user
@@ -185,11 +188,11 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 
 		switch {
 		case *user.Admin:
-			role = apimodel.AccountRoleAdmin
+			role = &apimodel.AccountRole{Name: apimodel.AccountRoleAdmin}
 		case *user.Moderator:
-			role = apimodel.AccountRoleModerator
+			role = &apimodel.AccountRole{Name: apimodel.AccountRoleModerator}
 		default:
-			role = apimodel.AccountRoleUser
+			role = &apimodel.AccountRole{Name: apimodel.AccountRoleUser}
 		}
 	}
 
@@ -204,6 +207,7 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		Acct:           acct,
 		DisplayName:    a.DisplayName,
 		Locked:         *a.Locked,
+		Discoverable:   *a.Discoverable,
 		Bot:            *a.Bot,
 		CreatedAt:      util.FormatISO8601(a.CreatedAt),
 		Note:           a.Note,
@@ -269,7 +273,7 @@ func (c *converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 		disabled               bool
 		silenced               bool
 		suspended              bool
-		role                   apimodel.AccountRole = apimodel.AccountRoleUser // assume user by default
+		role                   = apimodel.AccountRole{Name: apimodel.AccountRoleUser} // assume user by default
 		createdByApplicationID string
 	)
 
@@ -295,9 +299,9 @@ func (c *converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 		locale = user.Locale
 		inviteRequest = &user.Account.Reason
 		if *user.Admin {
-			role = apimodel.AccountRoleAdmin
+			role.Name = apimodel.AccountRoleAdmin
 		} else if *user.Moderator {
-			role = apimodel.AccountRoleModerator
+			role.Name = apimodel.AccountRoleModerator
 		}
 		confirmed = !user.ConfirmedAt.IsZero()
 		approved = *user.Approved
@@ -322,7 +326,7 @@ func (c *converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 		IPs:                    []interface{}{}, // not implemented,
 		Locale:                 locale,
 		InviteRequest:          inviteRequest,
-		Role:                   string(role),
+		Role:                   role,
 		Confirmed:              confirmed,
 		Approved:               approved,
 		Disabled:               disabled,
@@ -576,31 +580,31 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 	// convert status gts model attachments to frontend api model attachments
 	apiAttachments, err := c.convertAttachmentsToAPIAttachments(ctx, s.Attachments, s.AttachmentIDs)
 	if err != nil {
-		log.Errorf("error converting status attachments: %v", err)
+		log.Errorf(ctx, "error converting status attachments: %v", err)
 	}
 
 	// convert status gts model mentions to frontend api model mentions
 	apiMentions, err := c.convertMentionsToAPIMentions(ctx, s.Mentions, s.MentionIDs)
 	if err != nil {
-		log.Errorf("error converting status mentions: %v", err)
+		log.Errorf(ctx, "error converting status mentions: %v", err)
 	}
 
 	// convert status gts model tags to frontend api model tags
 	apiTags, err := c.convertTagsToAPITags(ctx, s.Tags, s.TagIDs)
 	if err != nil {
-		log.Errorf("error converting status tags: %v", err)
+		log.Errorf(ctx, "error converting status tags: %v", err)
 	}
 
 	// convert status gts model emojis to frontend api model emojis
 	apiEmojis, err := c.convertEmojisToAPIEmojis(ctx, s.Emojis, s.EmojiIDs)
 	if err != nil {
-		log.Errorf("error converting status emojis: %v", err)
+		log.Errorf(ctx, "error converting status emojis: %v", err)
 	}
 
 	// Fetch status interaction flags for acccount
 	interacts, err := c.interactionsWithStatusForAccount(ctx, s, requestingAccount)
 	if err != nil {
-		log.Errorf("error getting interactions for status %s for account %s: %v", s.ID, requestingAccount.ID, err)
+		log.Errorf(ctx, "error getting interactions for status %s for account %s: %v", s.ID, requestingAccount.ID, err)
 
 		// Ensure a non nil object
 		interacts = &statusInteractions{}
@@ -629,7 +633,7 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		Bookmarked:         interacts.Bookmarked,
 		Muted:              interacts.Muted,
 		Reblogged:          interacts.Reblogged,
-		Pinned:             *s.Pinned,
+		Pinned:             interacts.Pinned,
 		Content:            s.Content,
 		Reblog:             nil,
 		Application:        apiApplication,
@@ -696,6 +700,7 @@ func (c *converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Configuration.Statuses.MaxCharacters = config.GetStatusesMaxChars()
 	instance.Configuration.Statuses.MaxMediaAttachments = config.GetStatusesMediaMaxFiles()
 	instance.Configuration.Statuses.CharactersReservedPerURL = instanceStatusesCharactersReservedPerURL
+	instance.Configuration.Statuses.SupportedMimeTypes = instanceStatusesSupportedMimeTypes
 	instance.Configuration.MediaAttachments.SupportedMimeTypes = media.SupportedMIMETypes
 	instance.Configuration.MediaAttachments.ImageSizeLimit = int(config.GetMediaImageMaxSize())
 	instance.Configuration.MediaAttachments.ImageMatrixLimit = instanceMediaAttachmentsImageMatrixLimit
@@ -821,6 +826,7 @@ func (c *converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Configuration.Statuses.MaxCharacters = config.GetStatusesMaxChars()
 	instance.Configuration.Statuses.MaxMediaAttachments = config.GetStatusesMediaMaxFiles()
 	instance.Configuration.Statuses.CharactersReservedPerURL = instanceStatusesCharactersReservedPerURL
+	instance.Configuration.Statuses.SupportedMimeTypes = instanceStatusesSupportedMimeTypes
 	instance.Configuration.MediaAttachments.SupportedMimeTypes = media.SupportedMIMETypes
 	instance.Configuration.MediaAttachments.ImageSizeLimit = int(config.GetMediaImageMaxSize())
 	instance.Configuration.MediaAttachments.ImageMatrixLimit = instanceMediaAttachmentsImageMatrixLimit

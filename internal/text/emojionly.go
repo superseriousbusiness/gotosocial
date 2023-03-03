@@ -57,7 +57,7 @@ func (f *formatter) FromPlainEmojiOnly(ctx context.Context, pmf gtsmodel.ParseMe
 	var htmlContentBytes bytes.Buffer
 	err := md.Convert([]byte(plain), &htmlContentBytes)
 	if err != nil {
-		log.Errorf("error formatting plaintext to HTML: %s", err)
+		log.Errorf(ctx, "error formatting plaintext to HTML: %s", err)
 	}
 	result.HTML = htmlContentBytes.String()
 
@@ -65,7 +65,10 @@ func (f *formatter) FromPlainEmojiOnly(ctx context.Context, pmf gtsmodel.ParseMe
 	result.HTML = SanitizeHTML(result.HTML)
 
 	// shrink ray
-	result.HTML = minifyHTML(result.HTML)
+	result.HTML, err = m.String("text/html", result.HTML)
+	if err != nil {
+		log.Errorf(ctx, "error minifying HTML: %s", err)
+	}
 
 	return result
 }

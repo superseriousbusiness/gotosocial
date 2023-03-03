@@ -61,12 +61,12 @@ const (
 )
 
 type Module struct {
-	processor    processing.Processor
+	processor    *processing.Processor
 	eTagCache    cache.Cache[string, eTagCacheEntry]
 	isURIBlocked func(context.Context, *url.URL) (bool, db.Error)
 }
 
-func New(db db.DB, processor processing.Processor) *Module {
+func New(db db.DB, processor *processing.Processor) *Module {
 	return &Module{
 		processor:    processor,
 		eTagCache:    newETagCache(),
@@ -79,7 +79,7 @@ func (m *Module) Route(r router.Router, mi ...gin.HandlerFunc) {
 	// so that they can use the same cache control middleware.
 	webAssetsAbsFilePath, err := filepath.Abs(config.GetWebAssetBaseDir())
 	if err != nil {
-		log.Panicf("error getting absolute path of assets dir: %s", err)
+		log.Panicf(nil, "error getting absolute path of assets dir: %s", err)
 	}
 	fs := fileSystem{http.Dir(webAssetsAbsFilePath)}
 	assetsGroup := r.AttachGroup(assetsPathPrefix)
@@ -104,6 +104,7 @@ func (m *Module) Route(r router.Router, mi ...gin.HandlerFunc) {
 	r.AttachHandler(http.MethodGet, rssFeedPath, m.rssFeedGETHandler)
 	r.AttachHandler(http.MethodGet, confirmEmailPath, m.confirmEmailGETHandler)
 	r.AttachHandler(http.MethodGet, robotsPath, m.robotsGETHandler)
+	r.AttachHandler(http.MethodGet, aboutPath, m.aboutGETHandler)
 	r.AttachHandler(http.MethodGet, domainBlockListPath, m.domainBlockListGETHandler)
 
 	// Attach redirects from old endpoints to current ones for backwards compatibility

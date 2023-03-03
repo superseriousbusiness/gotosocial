@@ -30,12 +30,10 @@ import (
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
@@ -53,8 +51,8 @@ const (
 // Unlike the other test interfaces provided in this package, you'll probably want to call this function
 // PER TEST rather than per suite, so that the do function can be set on a test by test (or even more granular)
 // basis.
-func NewTestTransportController(client pub.HttpClient, db db.DB, fedWorker *concurrency.WorkerPool[messages.FromFederator]) transport.Controller {
-	return transport.NewController(db, NewTestFederatingDB(db, fedWorker), &federation.Clock{}, client)
+func NewTestTransportController(state *state.State, client pub.HttpClient) transport.Controller {
+	return transport.NewController(state.DB, NewTestFederatingDB(state), &federation.Clock{}, client)
 }
 
 type MockHTTPClient struct {
@@ -203,7 +201,7 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 			responseContentLength = 0
 		}
 
-		log.Debugf("returning response %s", string(responseBytes))
+		log.Debugf(nil, "returning response %s", string(responseBytes))
 		reader := bytes.NewReader(responseBytes)
 		readCloser := io.NopCloser(reader)
 		return &http.Response{
@@ -296,7 +294,7 @@ func WebfingerResponse(req *http.Request) (responseCode int, responseBytes []byt
 	}
 
 	if wfr == nil {
-		log.Debugf("webfinger response not available for %s", req.URL)
+		log.Debugf(nil, "webfinger response not available for %s", req.URL)
 		responseCode = http.StatusNotFound
 		responseBytes = []byte(`{"error":"not found"}`)
 		responseContentType = applicationJSON

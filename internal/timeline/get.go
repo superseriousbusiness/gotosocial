@@ -38,14 +38,15 @@ func (t *timeline) LastGot() time.Time {
 }
 
 func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID string, minID string, prepareNext bool) ([]Preparable, error) {
-	l := log.WithFields(kv.Fields{
-		{"accountID", t.accountID},
-		{"amount", amount},
-		{"maxID", maxID},
-		{"sinceID", sinceID},
-		{"minID", minID},
-	}...)
-	l.Debug("entering get and updating t.lastGot")
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{
+			{"accountID", t.accountID},
+			{"amount", amount},
+			{"maxID", maxID},
+			{"sinceID", sinceID},
+			{"minID", minID},
+		}...)
+	l.Trace("entering get and updating t.lastGot")
 
 	// regardless of what happens below, update the
 	// last time Get was called for this timeline
@@ -154,11 +155,12 @@ func (t *timeline) getXFromTop(ctx context.Context, amount int) ([]Preparable, e
 //
 // This corresponds to an api call to /timelines/home?max_id=WHATEVER
 func (t *timeline) getXBehindID(ctx context.Context, amount int, behindID string, attempts *int) ([]Preparable, error) {
-	l := log.WithFields(kv.Fields{
-		{"amount", amount},
-		{"behindID", behindID},
-		{"attempts", attempts},
-	}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{
+			{"amount", amount},
+			{"behindID", behindID},
+			{"attempts", attempts},
+		}...)
 
 	newAttempts := *attempts
 	newAttempts++

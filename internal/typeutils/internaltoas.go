@@ -252,7 +252,7 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 			if err == nil {
 				a.AvatarMediaAttachment = avatar
 			} else {
-				log.Errorf("AccountToAS: error getting Avatar with id %s: %s", a.AvatarMediaAttachmentID, err)
+				log.Errorf(ctx, "error getting Avatar with id %s: %s", a.AvatarMediaAttachmentID, err)
 			}
 		}
 
@@ -286,7 +286,7 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 			if err == nil {
 				a.HeaderMediaAttachment = header
 			} else {
-				log.Errorf("AccountToAS: error getting Header with id %s: %s", a.HeaderMediaAttachmentID, err)
+				log.Errorf(ctx, "error getting Header with id %s: %s", a.HeaderMediaAttachmentID, err)
 			}
 		}
 
@@ -1292,6 +1292,34 @@ func (c *converter) OutboxToASCollection(ctx context.Context, outboxID string) (
 	}
 	collectionFirstProp.SetIRI(collectionFirstPropIDURI)
 	collection.SetActivityStreamsFirst(collectionFirstProp)
+
+	return collection, nil
+}
+
+func (c *converter) StatusesToASFeaturedCollection(ctx context.Context, featuredCollectionID string, statuses []*gtsmodel.Status) (vocab.ActivityStreamsOrderedCollection, error) {
+	collection := streams.NewActivityStreamsOrderedCollection()
+
+	collectionIDProp := streams.NewJSONLDIdProperty()
+	featuredCollectionIDURI, err := url.Parse(featuredCollectionID)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing url %s", featuredCollectionID)
+	}
+	collectionIDProp.SetIRI(featuredCollectionIDURI)
+	collection.SetJSONLDId(collectionIDProp)
+
+	itemsProp := streams.NewActivityStreamsOrderedItemsProperty()
+	for _, s := range statuses {
+		uri, err := url.Parse(s.URI)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing url %s", s.URI)
+		}
+		itemsProp.AppendIRI(uri)
+	}
+	collection.SetActivityStreamsOrderedItems(itemsProp)
+
+	totalItemsProp := streams.NewActivityStreamsTotalItemsProperty()
+	totalItemsProp.Set(len(statuses))
+	collection.SetActivityStreamsTotalItems(totalItemsProp)
 
 	return collection, nil
 }

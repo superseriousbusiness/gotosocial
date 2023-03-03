@@ -33,10 +33,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
-func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, gtserror.WithCode) {
+// Update processes the update of an account with the given form.
+func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, gtserror.WithCode) {
 	if form.Discoverable != nil {
 		account.Discoverable = form.Discoverable
 	}
@@ -45,23 +47,14 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		account.Bot = form.Bot
 	}
 
-	account.Emojis = []*gtsmodel.Emoji{}
-	account.EmojiIDs = []string{}
+	reparseEmojis := false
 
 	if form.DisplayName != nil {
 		if err := validate.DisplayName(*form.DisplayName); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err)
 		}
 		account.DisplayName = text.SanitizePlaintext(*form.DisplayName)
-	}
-
-	// Re-parse for emojis regardless of whether the DisplayName changed
-	// because we can't otherwise tell which emojis belong to DisplayName
-	// and which belong to Note
-	formatResult := p.formatter.FromPlainEmojiOnly(ctx, p.parseMention, account.ID, "", account.DisplayName)
-	for _, emoji := range formatResult.Emojis {
-		account.Emojis = append(account.Emojis, emoji)
-		account.EmojiIDs = append(account.EmojiIDs, emoji.ID)
+		reparseEmojis = true
 	}
 
 	if form.Note != nil {
@@ -71,23 +64,40 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 
 		// Set the raw note before processing
 		account.NoteRaw = *form.Note
+		reparseEmojis = true
 	}
 
-	// As per DisplayName, we need to reparse regardless to keep emojis straight
-	// Process note to generate a valid HTML representation
-	var f text.FormatFunc
-	if account.StatusFormat == "markdown" {
-		f = p.formatter.FromMarkdown
-	} else {
-		f = p.formatter.FromPlain
-	}
-	formatted := f(ctx, p.parseMention, account.ID, "", account.NoteRaw)
+	if reparseEmojis {
+		// If either DisplayName or Note changed, reparse both, because we
+		// can't otherwise tell which one each emoji belongs to.
+		// Deduplicate emojis between the two fields.
+		emojis := make(map[string]*gtsmodel.Emoji)
+		formatResult := p.formatter.FromPlainEmojiOnly(ctx, p.parseMention, account.ID, "", account.DisplayName)
+		for _, emoji := range formatResult.Emojis {
+			emojis[emoji.ID] = emoji
+		}
 
-	// Set updated HTML-ified note
-	account.Note = formatted.HTML
-	for _, emoji := range formatted.Emojis {
-		account.Emojis = append(account.Emojis, emoji)
-		account.EmojiIDs = append(account.EmojiIDs, emoji.ID)
+		// Process note to generate a valid HTML representation
+		var f text.FormatFunc
+		if account.StatusContentType == "text/markdown" {
+			f = p.formatter.FromMarkdown
+		} else {
+			f = p.formatter.FromPlain
+		}
+		formatted := f(ctx, p.parseMention, account.ID, "", account.NoteRaw)
+
+		// Set updated HTML-ified note
+		account.Note = formatted.HTML
+		for _, emoji := range formatted.Emojis {
+			emojis[emoji.ID] = emoji
+		}
+
+		account.Emojis = []*gtsmodel.Emoji{}
+		account.EmojiIDs = []string{}
+		for eid, emoji := range emojis {
+			account.Emojis = append(account.Emojis, emoji)
+			account.EmojiIDs = append(account.EmojiIDs, eid)
+		}
 	}
 
 	if form.Avatar != nil && form.Avatar.Size != 0 {
@@ -97,7 +107,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		}
 		account.AvatarMediaAttachmentID = avatarInfo.ID
 		account.AvatarMediaAttachment = avatarInfo
-		log.Tracef("new avatar info for account %s is %+v", account.ID, avatarInfo)
+		log.Tracef(ctx, "new avatar info for account %s is %+v", account.ID, avatarInfo)
 	}
 
 	if form.Header != nil && form.Header.Size != 0 {
@@ -107,7 +117,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		}
 		account.HeaderMediaAttachmentID = headerInfo.ID
 		account.HeaderMediaAttachment = headerInfo
-		log.Tracef("new header info for account %s is %+v", account.ID, headerInfo)
+		log.Tracef(ctx, "new header info for account %s is %+v", account.ID, headerInfo)
 	}
 
 	if form.Locked != nil {
@@ -130,16 +140,16 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 			if err := validate.Privacy(*form.Source.Privacy); err != nil {
 				return nil, gtserror.NewErrorBadRequest(err)
 			}
-			privacy := p.tc.APIVisToVis(apimodel.Visibility(*form.Source.Privacy))
+			privacy := typeutils.APIVisToVis(apimodel.Visibility(*form.Source.Privacy))
 			account.Privacy = privacy
 		}
 
-		if form.Source.StatusFormat != nil {
-			if err := validate.StatusFormat(*form.Source.StatusFormat); err != nil {
+		if form.Source.StatusContentType != nil {
+			if err := validate.StatusContentType(*form.Source.StatusContentType); err != nil {
 				return nil, gtserror.NewErrorBadRequest(err, err.Error())
 			}
 
-			account.StatusFormat = *form.Source.StatusFormat
+			account.StatusContentType = *form.Source.StatusContentType
 		}
 	}
 
@@ -175,12 +185,12 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		}
 	}
 
-	err := p.db.UpdateAccount(ctx, account)
+	err := p.state.DB.UpdateAccount(ctx, account)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("could not update account %s: %s", account.ID, err))
 	}
 
-	p.clientWorker.Queue(messages.FromClientAPI{
+	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 		APObjectType:   ap.ObjectProfile,
 		APActivityType: ap.ActivityUpdate,
 		GTSModel:       account,
@@ -197,7 +207,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 // UpdateAvatar does the dirty work of checking the avatar part of an account update form,
 // parsing and checking the image, and doing the necessary updates in the database for this to become
 // the account's new avatar image.
-func (p *processor) UpdateAvatar(ctx context.Context, avatar *multipart.FileHeader, description *string, accountID string) (*gtsmodel.MediaAttachment, error) {
+func (p *Processor) UpdateAvatar(ctx context.Context, avatar *multipart.FileHeader, description *string, accountID string) (*gtsmodel.MediaAttachment, error) {
 	maxImageSize := config.GetMediaImageMaxSize()
 	if avatar.Size > int64(maxImageSize) {
 		return nil, fmt.Errorf("UpdateAvatar: avatar with size %d exceeded max image size of %d bytes", avatar.Size, maxImageSize)
@@ -214,7 +224,7 @@ func (p *processor) UpdateAvatar(ctx context.Context, avatar *multipart.FileHead
 		Description: description,
 	}
 
-	processingMedia, err := p.mediaManager.ProcessMedia(ctx, dataFunc, nil, accountID, ai)
+	processingMedia, err := p.mediaManager.PreProcessMedia(ctx, dataFunc, nil, accountID, ai)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateAvatar: error processing avatar: %s", err)
 	}
@@ -225,7 +235,7 @@ func (p *processor) UpdateAvatar(ctx context.Context, avatar *multipart.FileHead
 // UpdateHeader does the dirty work of checking the header part of an account update form,
 // parsing and checking the image, and doing the necessary updates in the database for this to become
 // the account's new header image.
-func (p *processor) UpdateHeader(ctx context.Context, header *multipart.FileHeader, description *string, accountID string) (*gtsmodel.MediaAttachment, error) {
+func (p *Processor) UpdateHeader(ctx context.Context, header *multipart.FileHeader, description *string, accountID string) (*gtsmodel.MediaAttachment, error) {
 	maxImageSize := config.GetMediaImageMaxSize()
 	if header.Size > int64(maxImageSize) {
 		return nil, fmt.Errorf("UpdateHeader: header with size %d exceeded max image size of %d bytes", header.Size, maxImageSize)
@@ -241,10 +251,7 @@ func (p *processor) UpdateHeader(ctx context.Context, header *multipart.FileHead
 		Header: &isHeader,
 	}
 
-	processingMedia, err := p.mediaManager.ProcessMedia(ctx, dataFunc, nil, accountID, ai)
-	if err != nil {
-		return nil, fmt.Errorf("UpdateHeader: error processing header: %s", err)
-	}
+	processingMedia, err := p.mediaManager.PreProcessMedia(ctx, dataFunc, nil, accountID, ai)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateHeader: error processing header: %s", err)
 	}

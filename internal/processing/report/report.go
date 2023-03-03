@@ -19,33 +19,18 @@
 package report
 
 import (
-	"context"
-
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
-type Processor interface {
-	ReportsGet(ctx context.Context, account *gtsmodel.Account, resolved *bool, targetAccountID string, maxID string, sinceID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode)
-	ReportGet(ctx context.Context, account *gtsmodel.Account, id string) (*apimodel.Report, gtserror.WithCode)
-	Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.ReportCreateRequest) (*apimodel.Report, gtserror.WithCode)
+type Processor struct {
+	state *state.State
+	tc    typeutils.TypeConverter
 }
 
-type processor struct {
-	db           db.DB
-	tc           typeutils.TypeConverter
-	clientWorker *concurrency.WorkerPool[messages.FromClientAPI]
-}
-
-func New(db db.DB, tc typeutils.TypeConverter, clientWorker *concurrency.WorkerPool[messages.FromClientAPI]) Processor {
-	return &processor{
-		tc:           tc,
-		db:           db,
-		clientWorker: clientWorker,
+func New(state *state.State, tc typeutils.TypeConverter) Processor {
+	return Processor{
+		state: state,
+		tc:    tc,
 	}
 }

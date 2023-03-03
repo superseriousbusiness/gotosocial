@@ -27,16 +27,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -48,9 +47,10 @@ type AdminStandardTestSuite struct {
 	storage      *storage.Driver
 	mediaManager media.Manager
 	federator    federation.Federator
-	processor    processing.Processor
+	processor    *processing.Processor
 	emailSender  email.Sender
 	sentEmails   map[string]string
+	state        state.State
 
 	// standard suite models
 	testTokens          map[string]*gtsmodel.Token
@@ -82,19 +82,22 @@ func (suite *AdminStandardTestSuite) SetupSuite() {
 }
 
 func (suite *AdminStandardTestSuite) SetupTest() {
+	suite.state.Caches.Init()
+	testrig.StartWorkers(&suite.state)
+
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
 
-	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
-	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
-
-	suite.db = testrig.NewTestDB()
+	suite.db = testrig.NewTestDB(&suite.state)
+	suite.state.DB = suite.db
 	suite.storage = testrig.NewInMemoryStorage()
-	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
-	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
+	suite.state.Storage = suite.storage
+
+	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
+	suite.federator = testrig.NewTestFederator(&suite.state, testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../../testrig/media")), suite.mediaManager)
 	suite.sentEmails = make(map[string]string)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", suite.sentEmails)
-	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, suite.mediaManager, clientWorker, fedWorker)
+	suite.processor = testrig.NewTestProcessor(&suite.state, suite.federator, suite.emailSender, suite.mediaManager)
 	suite.adminModule = admin.New(suite.processor)
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
@@ -103,6 +106,7 @@ func (suite *AdminStandardTestSuite) SetupTest() {
 func (suite *AdminStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
+	testrig.StopWorkers(&suite.state)
 }
 
 func (suite *AdminStandardTestSuite) newContext(recorder *httptest.ResponseRecorder, requestMethod string, requestBody []byte, requestPath string, bodyContentType string) *gin.Context {

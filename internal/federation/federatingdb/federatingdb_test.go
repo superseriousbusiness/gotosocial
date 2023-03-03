@@ -23,11 +23,11 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -36,9 +36,9 @@ type FederatingDBTestSuite struct {
 	suite.Suite
 	db            db.DB
 	tc            typeutils.TypeConverter
-	fedWorker     *concurrency.WorkerPool[messages.FromFederator]
 	fromFederator chan messages.FromFederator
 	federatingDB  federatingdb.DB
+	state         state.State
 
 	testTokens       map[string]*gtsmodel.Token
 	testClients      map[string]*gtsmodel.Client
@@ -66,22 +66,33 @@ func (suite *FederatingDBTestSuite) SetupTest() {
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
 
-	suite.fedWorker = concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+	suite.state.Caches.Init()
+	testrig.StartWorkers(&suite.state)
+
 	suite.fromFederator = make(chan messages.FromFederator, 10)
-	suite.fedWorker.SetProcessor(func(ctx context.Context, msg messages.FromFederator) error {
+	suite.state.Workers.EnqueueFederator = func(ctx context.Context, msg messages.FromFederator) {
 		suite.fromFederator <- msg
-		return nil
-	})
-	_ = suite.fedWorker.Start()
-	suite.db = testrig.NewTestDB()
+	}
+
+	suite.db = testrig.NewTestDB(&suite.state)
 	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
-	suite.federatingDB = testrig.NewTestFederatingDB(suite.db, suite.fedWorker)
+	suite.federatingDB = testrig.NewTestFederatingDB(&suite.state)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
+
+	suite.state.DB = suite.db
 }
 
 func (suite *FederatingDBTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
+	testrig.StopWorkers(&suite.state)
+	for suite.fromFederator != nil {
+		select {
+		case <-suite.fromFederator:
+		default:
+			return
+		}
+	}
 }
 
 func createTestContext(receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) context.Context {

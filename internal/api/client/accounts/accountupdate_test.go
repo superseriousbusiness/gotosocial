@@ -253,6 +253,48 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerTwo
 	suite.NotEmpty(dbZork.EmojiIDs)
 }
 
+func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerDiscoverable() {
+	requestBody, w, err := testrig.CreateMultipartFormData(
+		"", "",
+		map[string]string{
+			"discoverable": "false",
+		})
+	if err != nil {
+		panic(err)
+	}
+	bodyBytes := requestBody.Bytes()
+	recorder := httptest.NewRecorder()
+	ctx := suite.newContext(recorder, http.MethodPatch, bodyBytes, accounts.UpdateCredentialsPath, w.FormDataContentType())
+
+	// call the handler
+	suite.accountsModule.AccountUpdateCredentialsPATCHHandler(ctx)
+
+	// 1. we should have OK because our request was valid
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	// 2. we should have no error message in the result body
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	// check the response
+	b, err := ioutil.ReadAll(result.Body)
+	suite.NoError(err)
+
+	// unmarshal the returned account
+	apimodelAccount := &apimodel.Account{}
+	err = json.Unmarshal(b, apimodelAccount)
+	suite.NoError(err)
+
+	// check the returned api model account
+	// fields should be updated
+	suite.False(apimodelAccount.Discoverable)
+
+	// check the account in the database
+	dbZork, err := suite.db.GetAccountByID(context.Background(), apimodelAccount.ID)
+	suite.NoError(err)
+	suite.False(*dbZork.Discoverable)
+}
+
 func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerWithMedia() {
 	// set up the request
 	// we're updating the header image, the display name, and the locked status of zork
@@ -375,13 +417,13 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerUpd
 	suite.True(apimodelAccount.Locked)
 }
 
-func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerUpdateStatusFormatOK() {
+func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerUpdateStatusContentTypeOK() {
 	// set up the request
 	// we're updating the language of zork
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"", "",
 		map[string]string{
-			"source[status_format]": "markdown",
+			"source[status_content_type]": "text/markdown",
 		})
 	if err != nil {
 		panic(err)
@@ -411,22 +453,22 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerUpd
 
 	// check the returned api model account
 	// fields should be updated
-	suite.Equal("markdown", apimodelAccount.Source.StatusFormat)
+	suite.Equal("text/markdown", apimodelAccount.Source.StatusContentType)
 
 	dbAccount, err := suite.db.GetAccountByID(context.Background(), suite.testAccounts["local_account_1"].ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	suite.Equal(dbAccount.StatusFormat, "markdown")
+	suite.Equal(dbAccount.StatusContentType, "text/markdown")
 }
 
-func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerUpdateStatusFormatBad() {
+func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerUpdateStatusContentTypeBad() {
 	// set up the request
 	// we're updating the language of zork
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"", "",
 		map[string]string{
-			"source[status_format]": "peepeepoopoo",
+			"source[status_content_type]": "peepeepoopoo",
 		})
 	if err != nil {
 		panic(err)
@@ -447,7 +489,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerUpd
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
 
-	suite.Equal(`{"error":"Bad Request: status format 'peepeepoopoo' was not recognized, valid options are 'plain', 'markdown'"}`, string(b))
+	suite.Equal(`{"error":"Bad Request: status content type 'peepeepoopoo' was not recognized, valid options are 'text/plain', 'text/markdown'"}`, string(b))
 }
 
 func TestAccountUpdateTestSuite(t *testing.T) {

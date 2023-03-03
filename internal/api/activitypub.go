@@ -59,7 +59,7 @@ func (a *ActivityPub) RoutePublicKey(r router.Router, m ...gin.HandlerFunc) {
 	a.publicKey.Route(publicKeyGroup.Handle)
 }
 
-func NewActivityPub(db db.DB, p processing.Processor) *ActivityPub {
+func NewActivityPub(db db.DB, p *processing.Processor) *ActivityPub {
 	return &ActivityPub{
 		emoji:                    emoji.New(p),
 		users:                    users.New(p),

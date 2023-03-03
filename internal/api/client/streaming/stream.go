@@ -154,23 +154,24 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 		}
 	}
 
-	account, errWithCode := m.processor.AuthorizeStreamingRequest(c.Request.Context(), token)
+	account, errWithCode := m.processor.Stream().Authorize(c.Request.Context(), token)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	stream, errWithCode := m.processor.OpenStreamForAccount(c.Request.Context(), account, streamType)
+	stream, errWithCode := m.processor.Stream().Open(c.Request.Context(), account, streamType)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	l := log.WithFields(kv.Fields{
-		{"account", account.Username},
-		{"streamID", stream.ID},
-		{"streamType", streamType},
-	}...)
+	l := log.WithContext(c.Request.Context()).
+		WithFields(kv.Fields{
+			{"account", account.Username},
+			{"streamID", stream.ID},
+			{"streamType", streamType},
+		}...)
 
 	// Upgrade the incoming HTTP request, which hijacks the underlying
 	// connection and reuses it for the websocket (non-http) protocol.

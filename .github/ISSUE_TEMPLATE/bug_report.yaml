@@ -2,8 +2,8 @@ name: Bug Report
 description: Create a report to help us improve
 title: "[bug] Issue Title"
 labels: [bug]
-assignees:
-  - 
+assignees: []
+
 body:
   - type: markdown
     attributes:
@@ -41,15 +41,6 @@ body:
       label: GoToSocial Arch
       description: What architecture do you use and did you do a Binary or Docker installation?
       placeholder: e.g. arm64 Docker or arm64 Binary
-    validations:
-      required: false
-
-  - type: input
-    id: Browser-Version
-    attributes:
-      label: Browser version
-      description: If this is a frontend bug, what browser(s) and versions are you using that show this bug?
-      placeholder: Firefox 103.0b9 (64-bit)
     validations:
       required: false
 

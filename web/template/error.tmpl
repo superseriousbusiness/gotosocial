@@ -17,9 +17,15 @@
 */ -}}
 
 {{ template "header.tmpl" .}}
-    <main>
-        <section class="error">
-          <span>❌</span> <pre>{{.error}}</pre>
-        </section>
-    </main>
+<main>
+	<section class="error">
+		<h1>An error occured:</h1>
+		<pre>{{.error}}</pre>
+		{{if .requestID}}
+		<div>
+			<span>Request ID:</span> <code>{{.requestID}}</code>
+		</div>
+		{{end}}
+	</section>
+</main>
 {{ template "footer.tmpl" .}}

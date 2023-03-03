@@ -18,9 +18,10 @@ import (
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Followers(ctx context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
-	l := log.WithFields(kv.Fields{
-		{"id", actorIRI},
-	}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{
+			{"id", actorIRI},
+		}...)
 	l.Debug("entering Followers")
 
 	acct, err := f.getAccountForIRI(ctx, actorIRI)
@@ -28,7 +29,7 @@ func (f *federatingDB) Followers(ctx context.Context, actorIRI *url.URL) (follow
 		return nil, err
 	}
 
-	acctFollowers, err := f.db.GetAccountFollowedBy(ctx, acct.ID, false)
+	acctFollowers, err := f.state.DB.GetAccountFollowedBy(ctx, acct.ID, false)
 	if err != nil {
 		return nil, fmt.Errorf("Followers: db error getting followers for account id %s: %s", acct.ID, err)
 	}
@@ -36,7 +37,7 @@ func (f *federatingDB) Followers(ctx context.Context, actorIRI *url.URL) (follow
 	iris := []*url.URL{}
 	for _, follow := range acctFollowers {
 		if follow.Account == nil {
-			a, err := f.db.GetAccountByID(ctx, follow.AccountID)
+			a, err := f.state.DB.GetAccountByID(ctx, follow.AccountID)
 			if err != nil {
 				errWrapped := fmt.Errorf("Followers: db error getting account id %s: %s", follow.AccountID, err)
 				if err == db.ErrNoEntries {

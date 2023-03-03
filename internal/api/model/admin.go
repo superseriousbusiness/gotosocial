@@ -56,7 +56,7 @@ type AdminAccountInfo struct {
 	// example: Pleaaaaaaaaaaaaaaase!!
 	InviteRequest *string `json:"invite_request"`
 	// The current role of the account.
-	Role string `json:"role"`
+	Role AccountRole `json:"role"`
 	// Whether the account has confirmed their email address.
 	Confirmed bool `json:"confirmed"`
 	// Whether the account is currently approved.

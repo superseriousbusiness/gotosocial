@@ -32,10 +32,10 @@ const (
 )
 
 type Module struct {
-	processor processing.Processor
+	processor *processing.Processor
 }
 
-func New(processor processing.Processor) *Module {
+func New(processor *processing.Processor) *Module {
 	return &Module{
 		processor: processor,
 	}

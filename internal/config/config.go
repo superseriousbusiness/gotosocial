@@ -122,6 +122,7 @@ type Configuration struct {
 	OIDCClientSecret     string   `name:"oidc-client-secret" usage:"ClientSecret of GoToSocial, as registered with the OIDC provider."`
 	OIDCScopes           []string `name:"oidc-scopes" usage:"OIDC scopes."`
 	OIDCLinkExisting     bool     `name:"oidc-link-existing" usage:"link existing user accounts to OIDC logins based on the stored email value"`
+	OIDCAdminGroups      []string `name:"oidc-admin-groups" usage:"Membership of one of the listed groups makes someone a GtS admin"`
 
 	SMTPHost     string `name:"smtp-host" usage:"Host of the smtp server. Eg., 'smtp.eu.mailgun.org'"`
 	SMTPPort     int    `name:"smtp-port" usage:"Port of the smtp server. Eg., 587"`
@@ -147,6 +148,8 @@ type Configuration struct {
 	AdminAccountPassword  string `name:"password" usage:"the password to set for this account"`
 	AdminTransPath        string `name:"path" usage:"the path of the file to import from/export to"`
 	AdminMediaPruneDryRun bool   `name:"dry-run" usage:"perform a dry run and only log number of items eligible for pruning"`
+
+	RequestIDHeader string `name:"request-id-header" usage:"Header to extract the Request ID from. Eg.,'X-Request-Id'"`
 }
 
 type CacheConfiguration struct {

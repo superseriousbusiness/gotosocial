@@ -138,10 +138,11 @@ func (f *federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Reques
 // authenticated must be true and error nil. The request will continue
 // to be processed.
 func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
-	l := log.WithFields(kv.Fields{
-		{"useragent", r.UserAgent()},
-		{"url", r.URL.String()},
-	}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{
+			{"useragent", r.UserAgent()},
+			{"url", r.URL.String()},
+		}...)
 	l.Trace("received request to authenticate")
 
 	if !uris.IsInboxPath(r.URL) {
@@ -209,6 +210,16 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		transport.WithFastfail(ctx), username, publicKeyOwnerURI, false,
 	)
 	if err != nil {
+		if errors.Is(err, transport.ErrGone) {
+			// This is the same case as the http.StatusGone check above.
+			// It can happen here and not there because there's a race
+			// where the sending server starts sending account deletion
+			// notifications out, we start processing, the request above
+			// succeeds, and *then* the profile is removed and starts
+			// returning 410 Gone, at which point _this_ request fails.
+			w.WriteHeader(http.StatusAccepted)
+			return ctx, false, nil
+		}
 		return nil, false, fmt.Errorf("couldn't get requesting account %s: %s", publicKeyOwnerURI, err)
 	}
 
@@ -232,7 +243,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 // blocked must be false and error nil. The request will continue
 // to be processed.
 func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, error) {
-	log.Debugf("entering BLOCKED function with IRI list: %+v", actorIRIs)
+	log.Tracef(ctx, "entering BLOCKED function with IRI list: %+v", actorIRIs)
 
 	// check domain blocks first for the given actor IRIs
 	blocked, err := f.db.AreURIsBlocked(ctx, actorIRIs)
@@ -247,7 +258,7 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 	otherInvolvedIRIsI := ctx.Value(ap.ContextOtherInvolvedIRIs)
 	otherInvolvedIRIs, ok := otherInvolvedIRIsI.([]*url.URL)
 	if !ok {
-		log.Error("other involved IRIs not set on request context")
+		log.Error(ctx, "other involved IRIs not set on request context")
 		return false, errors.New("other involved IRIs not set on request context, so couldn't determine blocks")
 	}
 	blocked, err = f.db.AreURIsBlocked(ctx, otherInvolvedIRIs)
@@ -262,13 +273,13 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 	receivingAccountI := ctx.Value(ap.ContextReceivingAccount)
 	receivingAccount, ok := receivingAccountI.(*gtsmodel.Account)
 	if !ok {
-		log.Error("receiving account not set on request context")
+		log.Error(ctx, "receiving account not set on request context")
 		return false, errors.New("receiving account not set on request context, so couldn't determine blocks")
 	}
 	requestingAccountI := ctx.Value(ap.ContextRequestingAccount)
 	requestingAccount, ok := requestingAccountI.(*gtsmodel.Account)
 	if !ok {
-		log.Error("requesting account not set on request context")
+		log.Error(ctx, "requesting account not set on request context")
 		return false, errors.New("requesting account not set on request context, so couldn't determine blocks")
 	}
 	// the receiver shouldn't block the sender
@@ -374,10 +385,11 @@ func (f *federator) FederatingCallbacks(ctx context.Context) (wrapped pub.Federa
 // type and extension, so the unhandled ones are passed to
 // DefaultCallback.
 func (f *federator) DefaultCallback(ctx context.Context, activity pub.Activity) error {
-	l := log.WithFields(kv.Fields{
-		{"aptype", activity.GetTypeName()},
-	}...)
-	l.Debugf("received unhandle-able activity type so ignoring it")
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{
+			{"aptype", activity.GetTypeName()},
+		}...)
+	l.Debug("received unhandle-able activity type so ignoring it")
 	return nil
 }
 

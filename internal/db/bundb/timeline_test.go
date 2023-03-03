@@ -113,7 +113,6 @@ func getFutureStatus() *gtsmodel.Status {
 		Sensitive:                testrig.FalseBool(),
 		Language:                 "en",
 		CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
-		Pinned:                   testrig.FalseBool(),
 		Federated:                testrig.TrueBool(),
 		Boostable:                testrig.TrueBool(),
 		Replyable:                testrig.TrueBool(),

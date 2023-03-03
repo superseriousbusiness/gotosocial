@@ -11,8 +11,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-func (p *processor) Delete(ctx context.Context, mediaAttachmentID string) gtserror.WithCode {
-	attachment, err := p.db.GetAttachmentByID(ctx, mediaAttachmentID)
+// Delete deletes the media attachment with the given ID, including all files pertaining to that attachment.
+func (p *Processor) Delete(ctx context.Context, mediaAttachmentID string) gtserror.WithCode {
+	attachment, err := p.state.DB.GetAttachmentByID(ctx, mediaAttachmentID)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			// attachment already gone
@@ -26,20 +27,20 @@ func (p *processor) Delete(ctx context.Context, mediaAttachmentID string) gtserr
 
 	// delete the thumbnail from storage
 	if attachment.Thumbnail.Path != "" {
-		if err := p.storage.Delete(ctx, attachment.Thumbnail.Path); err != nil && !errors.Is(err, storage.ErrNotFound) {
+		if err := p.state.Storage.Delete(ctx, attachment.Thumbnail.Path); err != nil && !errors.Is(err, storage.ErrNotFound) {
 			errs = append(errs, fmt.Sprintf("remove thumbnail at path %s: %s", attachment.Thumbnail.Path, err))
 		}
 	}
 
 	// delete the file from storage
 	if attachment.File.Path != "" {
-		if err := p.storage.Delete(ctx, attachment.File.Path); err != nil && !errors.Is(err, storage.ErrNotFound) {
+		if err := p.state.Storage.Delete(ctx, attachment.File.Path); err != nil && !errors.Is(err, storage.ErrNotFound) {
 			errs = append(errs, fmt.Sprintf("remove file at path %s: %s", attachment.File.Path, err))
 		}
 	}
 
 	// delete the attachment
-	if err := p.db.DeleteByID(ctx, mediaAttachmentID, attachment); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err := p.state.DB.DeleteByID(ctx, mediaAttachmentID, attachment); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		errs = append(errs, fmt.Sprintf("remove attachment: %s", err))
 	}
 

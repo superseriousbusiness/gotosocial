@@ -30,8 +30,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
-func (p *processor) Delete(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
+// Delete processes the delete of a given status, returning the deleted status if the delete goes through.
+func (p *Processor) Delete(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+	targetStatus, err := p.state.DB.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
 	}
@@ -49,7 +50,7 @@ func (p *processor) Delete(ctx context.Context, requestingAccount *gtsmodel.Acco
 	}
 
 	// send the status back to the processor for async processing
-	p.clientWorker.Queue(messages.FromClientAPI{
+	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 		APObjectType:   ap.ObjectNote,
 		APActivityType: ap.ActivityDelete,
 		GTSModel:       targetStatus,

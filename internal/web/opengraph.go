@@ -134,11 +134,11 @@ func parseTitle(account *apimodel.Account, accountDomain string) string {
 // parseDescription returns a string description which is
 // safe to use as a template.HTMLAttr inside templates.
 func parseDescription(in string) string {
-	i := html.UnescapeString(in)
-	i = text.SanitizePlaintext(i)
-	i = strings.ReplaceAll(i, "\"", "'")
-	i = strings.ReplaceAll(i, `\`, "")
+	i := text.SanitizePlaintext(in)
 	i = strings.ReplaceAll(i, "\n", " ")
+	i = strings.Join(strings.Fields(i), " ")
+	i = html.EscapeString(i)
+	i = strings.ReplaceAll(i, `\`, "&bsol;")
 	i = trim(i, maxOGDescriptionLength)
 	return `content="` + i + `"`
 }

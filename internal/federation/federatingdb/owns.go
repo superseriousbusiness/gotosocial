@@ -35,9 +35,10 @@ import (
 // the database has an entry for the IRI.
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
-	l := log.WithFields(kv.Fields{
-		{"id", id},
-	}...)
+	l := log.WithContext(ctx).
+		WithFields(kv.Fields{
+			{"id", id},
+		}...)
 	l.Debug("entering Owns")
 
 	// if the id host isn't this instance host, we don't own this IRI
@@ -53,7 +54,7 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 		if err != nil {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
-		status, err := f.db.GetStatusByURI(ctx, uid)
+		status, err := f.state.DB.GetStatusByURI(ctx, uid)
 		if err != nil {
 			if err == db.ErrNoEntries {
 				// there are no entries for this status
@@ -70,7 +71,7 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 		if err != nil {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
-		if _, err := f.db.GetAccountByUsernameDomain(ctx, username, ""); err != nil {
+		if _, err := f.state.DB.GetAccountByUsernameDomain(ctx, username, ""); err != nil {
 			if err == db.ErrNoEntries {
 				// there are no entries for this username
 				return false, nil
@@ -87,7 +88,7 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 		if err != nil {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
-		if _, err := f.db.GetAccountByUsernameDomain(ctx, username, ""); err != nil {
+		if _, err := f.state.DB.GetAccountByUsernameDomain(ctx, username, ""); err != nil {
 			if err == db.ErrNoEntries {
 				// there are no entries for this username
 				return false, nil
@@ -104,7 +105,7 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 		if err != nil {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
-		if _, err := f.db.GetAccountByUsernameDomain(ctx, username, ""); err != nil {
+		if _, err := f.state.DB.GetAccountByUsernameDomain(ctx, username, ""); err != nil {
 			if err == db.ErrNoEntries {
 				// there are no entries for this username
 				return false, nil
@@ -121,7 +122,7 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 		if err != nil {
 			return false, fmt.Errorf("error parsing like path for url %s: %s", id.String(), err)
 		}
-		if _, err := f.db.GetAccountByUsernameDomain(ctx, username, ""); err != nil {
+		if _, err := f.state.DB.GetAccountByUsernameDomain(ctx, username, ""); err != nil {
 			if err == db.ErrNoEntries {
 				// there are no entries for this username
 				return false, nil
@@ -129,7 +130,7 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 			// an actual error happened
 			return false, fmt.Errorf("database error fetching account with username %s: %s", username, err)
 		}
-		if err := f.db.GetByID(ctx, likeID, &gtsmodel.StatusFave{}); err != nil {
+		if err := f.state.DB.GetByID(ctx, likeID, &gtsmodel.StatusFave{}); err != nil {
 			if err == db.ErrNoEntries {
 				// there are no entries
 				return false, nil
@@ -146,7 +147,7 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 		if err != nil {
 			return false, fmt.Errorf("error parsing block path for url %s: %s", id.String(), err)
 		}
-		if _, err := f.db.GetAccountByUsernameDomain(ctx, username, ""); err != nil {
+		if _, err := f.state.DB.GetAccountByUsernameDomain(ctx, username, ""); err != nil {
 			if err == db.ErrNoEntries {
 				// there are no entries for this username
 				return false, nil
@@ -154,7 +155,7 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 			// an actual error happened
 			return false, fmt.Errorf("database error fetching account with username %s: %s", username, err)
 		}
-		if err := f.db.GetByID(ctx, blockID, &gtsmodel.Block{}); err != nil {
+		if err := f.state.DB.GetByID(ctx, blockID, &gtsmodel.Block{}); err != nil {
 			if err == db.ErrNoEntries {
 				// there are no entries
 				return false, nil

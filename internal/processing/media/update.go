@@ -30,8 +30,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
-func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, mediaAttachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, gtserror.WithCode) {
-	attachment, err := p.db.GetAttachmentByID(ctx, mediaAttachmentID)
+// Update updates a media attachment with the given id, using the provided form parameters.
+func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, mediaAttachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, gtserror.WithCode) {
+	attachment, err := p.state.DB.GetAttachmentByID(ctx, mediaAttachmentID)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			// attachment doesn't exist
@@ -61,7 +62,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, media
 		updatingColumns = append(updatingColumns, "focus_x", "focus_y")
 	}
 
-	if err := p.db.UpdateByID(ctx, attachment, attachment.ID, updatingColumns...); err != nil {
+	if err := p.state.DB.UpdateByID(ctx, attachment, attachment.ID, updatingColumns...); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("database error updating media: %s", err))
 	}
 

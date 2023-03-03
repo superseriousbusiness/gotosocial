@@ -1,69 +1,85 @@
 site_name: GoToSocial Documentation
-theme: readthedocs
+site_url: https://docs.gotosocial.org
+theme:
+  name: material
+  language: en
+  font: false
+  features:
+    - header.autohide
+  palette:
+    - scheme: slate
+      toggle:
+        icon: material/brightness-7
+        name: Switch to light mode
+    - scheme: default
+      toggle:
+        icon: material/brightness-4
+        name: Switch to dark mode
 repo_url: https://github.com/superseriousbusiness/gotosocial
 edit_uri: edit/main/docs/
 copyright: GoToSocial is licensed under the GNU AGPL v3 LICENSE. Copyright (C) 2021-2023 GoToSocial Authors admin@gotosocial.org
 plugins:
-  - render_swagger
-
-markdown_extensions:
-  - markdown.extensions.admonition
-
-extra_javascript:
-  - assets/js/swagger-ui-bundle.js
+  - search:
+      lang: en
+  - social:
+      cards: true
+      cards_color:
+        fill: "#fd6a00"
+        text: "#fafaff"
+  - swagger-ui-tag:
+      supportedSubmitMethods: []
+      syntaxHighlightTheme: obsidian
 
 extra_css:
-  - assets/css/swagger-ui.css
+  - assets/css/colours.css
+
+markdown_extensions:
+  - admonition
 
 nav:
   - "Home": "index.md"
   - "FAQ": "faq.md"
   - "User Guide":
-    - "user_guide/posts.md"
-    - "user_guide/user_panel.md"
-    - "user_guide/custom_css.md"
-    - "user_guide/password_management.md"
-    - "user_guide/rss.md"
+      - "user_guide/posts.md"
+      - "user_guide/settings.md"
+      - "user_guide/custom_css.md"
+      - "user_guide/password_management.md"
+      - "user_guide/rss.md"
   - "Installation Guide":
-    - "installation_guide/index.md"
-    - "installation_guide/binary.md"
-    - "installation_guide/docker.md"
-    - "installation_guide/nginx.md"
-    - "installation_guide/apache-httpd.md"
-    - "installation_guide/caddy.md"
-    - "installation_guide/third_party.md"
-    - "installation_guide/websocket.md"
-    - "installation_guide/advanced.md"
+      - "installation_guide/index.md"
+      - "installation_guide/binary.md"
+      - "installation_guide/docker.md"
+      - "installation_guide/nginx.md"
+      - "installation_guide/apache-httpd.md"
+      - "installation_guide/caddy.md"
+      - "installation_guide/third_party.md"
+      - "installation_guide/websocket.md"
+      - "installation_guide/advanced.md"
   - "Configuration":
-    - "configuration/index.md"
-    - "configuration/general.md"
-    - "configuration/database.md"
-    - "configuration/web.md"
-    - "configuration/instance.md"
-    - "configuration/accounts.md"
-    - "configuration/media.md"
-    - "configuration/storage.md"
-    - "configuration/statuses.md"
-    - "configuration/letsencrypt.md"
-    - "configuration/oidc.md"
-    - "configuration/smtp.md"
-    - "configuration/syslog.md"
-    - "configuration/advanced.md"
+      - "configuration/index.md"
+      - "configuration/general.md"
+      - "configuration/database.md"
+      - "configuration/web.md"
+      - "configuration/instance.md"
+      - "configuration/accounts.md"
+      - "configuration/media.md"
+      - "configuration/storage.md"
+      - "configuration/statuses.md"
+      - "configuration/letsencrypt.md"
+      - "configuration/oidc.md"
+      - "configuration/smtp.md"
+      - "configuration/syslog.md"
+      - "configuration/advanced.md"
+      - "configuration/observability.md"
   - "Admin":
-    - "admin/admin_panel.md"
-    - "admin/cli.md"
-    - "admin/backup_and_restore.md"
+      - "admin/settings.md"
+      - "admin/cli.md"
+      - "admin/backup_and_restore.md"
   - "Federation":
-    - "federation/index.md"
-    - "federation/glossary.md"
-    - "Federating With GoToSocial":
-      - "federation/federating_with_gotosocial/http_signatures.md"
-      - "federation/federating_with_gotosocial/access_control.md"
-      - "federation/federating_with_gotosocial/request_throttling.md"
-      - "federation/federating_with_gotosocial/outbox.md"
-      - "federation/federating_with_gotosocial/conversation_threads.md"
-      - "federation/federating_with_gotosocial/reports.md"
+      - "federation/index.md"
+      - "federation/glossary.md"
+      - "federation/federating_with_gotosocial.md"
   - "API Documentation":
-    - "api/swagger.md"
-    - "api/ratelimiting.md"
-    - "api/throttling.md"
+      - "api/swagger.md"
+      - "api/ratelimiting.md"
+      - "api/throttling.md"

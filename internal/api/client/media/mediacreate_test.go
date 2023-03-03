@@ -33,7 +33,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	mediamodule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -41,9 +40,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -59,7 +58,8 @@ type MediaCreateTestSuite struct {
 	tc           typeutils.TypeConverter
 	oauthServer  oauth.Server
 	emailSender  email.Sender
-	processor    processing.Processor
+	processor    *processing.Processor
+	state        state.State
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
@@ -78,21 +78,24 @@ type MediaCreateTestSuite struct {
 */
 
 func (suite *MediaCreateTestSuite) SetupSuite() {
+	suite.state.Caches.Init()
+	testrig.StartWorkers(&suite.state)
+
 	// setup standard items
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
 
-	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
-	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
-
-	suite.db = testrig.NewTestDB()
+	suite.db = testrig.NewTestDB(&suite.state)
+	suite.state.DB = suite.db
 	suite.storage = testrig.NewInMemoryStorage()
+	suite.state.Storage = suite.storage
+
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
-	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
+	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
-	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
+	suite.federator = testrig.NewTestFederator(&suite.state, testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../../testrig/media")), suite.mediaManager)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
-	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, suite.mediaManager, clientWorker, fedWorker)
+	suite.processor = testrig.NewTestProcessor(&suite.state, suite.federator, suite.emailSender, suite.mediaManager)
 
 	// setup module being tested
 	suite.mediaModule = mediamodule.New(suite.processor)
@@ -100,13 +103,17 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 
 func (suite *MediaCreateTestSuite) TearDownSuite() {
 	if err := suite.db.Stop(context.Background()); err != nil {
-		log.Panicf("error closing db connection: %s", err)
+		log.Panicf(nil, "error closing db connection: %s", err)
 	}
+	testrig.StopWorkers(&suite.state)
 }
 
 func (suite *MediaCreateTestSuite) SetupTest() {
+	suite.state.Caches.Init()
+
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
+
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testClients = testrig.NewTestClients()
 	suite.testApplications = testrig.NewTestApplications()
@@ -136,15 +143,13 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessful() {
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
 
 	// see what's in storage *before* the request
-	storageKeysBeforeRequest := []string{}
-	iter, err := suite.storage.KVStore.Iterator(context.Background(), nil)
-	if err != nil {
+	var storageKeysBeforeRequest []string
+	if err := suite.storage.WalkKeys(ctx, func(ctx context.Context, key string) error {
+		storageKeysBeforeRequest = append(storageKeysBeforeRequest, key)
+		return nil
+	}); err != nil {
 		panic(err)
 	}
-	for iter.Next() {
-		storageKeysBeforeRequest = append(storageKeysBeforeRequest, iter.Key())
-	}
-	iter.Release()
 
 	// create the request
 	buf, w, err := testrig.CreateMultipartFormData("file", "../../../../testrig/media/test-jpeg.jpg", map[string]string{
@@ -163,15 +168,13 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessful() {
 	suite.mediaModule.MediaCreatePOSTHandler(ctx)
 
 	// check what's in storage *after* the request
-	storageKeysAfterRequest := []string{}
-	iter, err = suite.storage.KVStore.Iterator(context.Background(), nil)
-	if err != nil {
+	var storageKeysAfterRequest []string
+	if err := suite.storage.WalkKeys(ctx, func(ctx context.Context, key string) error {
+		storageKeysAfterRequest = append(storageKeysAfterRequest, key)
+		return nil
+	}); err != nil {
 		panic(err)
 	}
-	for iter.Next() {
-		storageKeysAfterRequest = append(storageKeysAfterRequest, iter.Key())
-	}
-	iter.Release()
 
 	// check response
 	suite.EqualValues(http.StatusOK, recorder.Code)
@@ -225,15 +228,13 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessfulV2() {
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
 
 	// see what's in storage *before* the request
-	storageKeysBeforeRequest := []string{}
-	iter, err := suite.storage.KVStore.Iterator(context.Background(), nil)
-	if err != nil {
+	var storageKeysBeforeRequest []string
+	if err := suite.storage.WalkKeys(ctx, func(ctx context.Context, key string) error {
+		storageKeysBeforeRequest = append(storageKeysBeforeRequest, key)
+		return nil
+	}); err != nil {
 		panic(err)
 	}
-	for iter.Next() {
-		storageKeysBeforeRequest = append(storageKeysBeforeRequest, iter.Key())
-	}
-	iter.Release()
 
 	// create the request
 	buf, w, err := testrig.CreateMultipartFormData("file", "../../../../testrig/media/test-jpeg.jpg", map[string]string{
@@ -252,15 +253,13 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessfulV2() {
 	suite.mediaModule.MediaCreatePOSTHandler(ctx)
 
 	// check what's in storage *after* the request
-	storageKeysAfterRequest := []string{}
-	iter, err = suite.storage.KVStore.Iterator(context.Background(), nil)
-	if err != nil {
+	var storageKeysAfterRequest []string
+	if err := suite.storage.WalkKeys(ctx, func(ctx context.Context, key string) error {
+		storageKeysAfterRequest = append(storageKeysAfterRequest, key)
+		return nil
+	}); err != nil {
 		panic(err)
 	}
-	for iter.Next() {
-		storageKeysAfterRequest = append(storageKeysAfterRequest, iter.Key())
-	}
-	iter.Release()
 
 	// check response
 	suite.EqualValues(http.StatusOK, recorder.Code)

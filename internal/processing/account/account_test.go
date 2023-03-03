@@ -22,7 +22,6 @@ import (
 	"context"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -32,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -44,6 +44,7 @@ type AccountStandardTestSuite struct {
 	db                  db.DB
 	tc                  typeutils.TypeConverter
 	storage             *storage.Driver
+	state               state.State
 	mediaManager        media.Manager
 	oauthServer         oauth.Server
 	fromClientAPIChan   chan messages.FromClientAPI
@@ -76,30 +77,30 @@ func (suite *AccountStandardTestSuite) SetupSuite() {
 }
 
 func (suite *AccountStandardTestSuite) SetupTest() {
+	suite.state.Caches.Init()
+	testrig.StartWorkers(&suite.state)
+
 	testrig.InitTestLog()
 	testrig.InitTestConfig()
 
-	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
-	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
-	clientWorker.SetProcessor(func(_ context.Context, msg messages.FromClientAPI) error {
-		suite.fromClientAPIChan <- msg
-		return nil
-	})
-
-	_ = fedWorker.Start()
-	_ = clientWorker.Start()
-
-	suite.db = testrig.NewTestDB()
+	suite.db = testrig.NewTestDB(&suite.state)
+	suite.state.DB = suite.db
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.storage = testrig.NewInMemoryStorage()
-	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
+	suite.state.Storage = suite.storage
+	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
+
 	suite.fromClientAPIChan = make(chan messages.FromClientAPI, 100)
-	suite.transportController = testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../testrig/media"), suite.db, fedWorker)
-	suite.federator = testrig.NewTestFederator(suite.db, suite.transportController, suite.storage, suite.mediaManager, fedWorker)
+	suite.state.Workers.EnqueueClientAPI = func(ctx context.Context, msg messages.FromClientAPI) {
+		suite.fromClientAPIChan <- msg
+	}
+
+	suite.transportController = testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../testrig/media"))
+	suite.federator = testrig.NewTestFederator(&suite.state, suite.transportController, suite.mediaManager)
 	suite.sentEmails = make(map[string]string)
 	suite.emailSender = testrig.NewEmailSender("../../../web/template/", suite.sentEmails)
-	suite.accountProcessor = account.New(suite.db, suite.tc, suite.mediaManager, suite.oauthServer, clientWorker, suite.federator, processing.GetParseMentionFunc(suite.db, suite.federator))
+	suite.accountProcessor = account.New(&suite.state, suite.tc, suite.mediaManager, suite.oauthServer, suite.federator, processing.GetParseMentionFunc(suite.db, suite.federator))
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 }
@@ -107,4 +108,5 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 func (suite *AccountStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
+	testrig.StopWorkers(&suite.state)
 }

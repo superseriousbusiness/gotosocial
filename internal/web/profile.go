@@ -66,7 +66,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		return instance, nil
 	}
 
-	account, errWithCode := m.processor.AccountGetLocalByUsername(ctx, authed, username)
+	account, errWithCode := m.processor.Account().GetLocalByUsername(ctx, authed.Account, username)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, instanceGet)
 		return
@@ -91,21 +91,35 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		robotsMeta = robotsMetaAllowSome
 	}
 
-	// we should only show the 'back to top' button if the
-	// profile visitor is paging through statuses
-	showBackToTop := false
+	// We need to change our response slightly if the
+	// profile visitor is paging through statuses.
+	var (
+		paging      bool
+		pinnedResp  = &apimodel.PageableResponse{}
+		maxStatusID string
+	)
 
-	maxStatusID := ""
-	maxStatusIDString := c.Query(MaxStatusIDKey)
-	if maxStatusIDString != "" {
+	if maxStatusIDString := c.Query(MaxStatusIDKey); maxStatusIDString != "" {
 		maxStatusID = maxStatusIDString
-		showBackToTop = true
+		paging = true
 	}
 
-	statusResp, errWithCode := m.processor.AccountWebStatusesGet(ctx, account.ID, maxStatusID)
+	statusResp, errWithCode := m.processor.Account().WebStatusesGet(ctx, account.ID, maxStatusID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, instanceGet)
 		return
+	}
+
+	// If we're not paging, then the profile visitor
+	// is currently just opening the bare profile, so
+	// load pinned statuses so we can show them at the
+	// top of the profile.
+	if !paging {
+		pinnedResp, errWithCode = m.processor.Account().StatusesGet(ctx, authed.Account, account.ID, 0, false, false, "", "", true, false, false)
+		if errWithCode != nil {
+			apiutil.ErrorHandler(c, errWithCode, instanceGet)
+			return
+		}
 	}
 
 	stylesheets := []string{
@@ -125,7 +139,8 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		"robotsMeta":       robotsMeta,
 		"statuses":         statusResp.Items,
 		"statuses_next":    statusResp.NextLink,
-		"show_back_to_top": showBackToTop,
+		"pinned_statuses":  pinnedResp.Items,
+		"show_back_to_top": paging,
 		"stylesheets":      stylesheets,
 		"javascript":       []string{distPathPrefix + "/frontend.js"},
 	})
@@ -142,7 +157,7 @@ func (m *Module) returnAPProfile(ctx context.Context, c *gin.Context, username s
 		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeySignature, signature)
 	}
 
-	user, errWithCode := m.processor.GetFediUser(ctx, username, c.Request.URL)
+	user, errWithCode := m.processor.Fedi().UserGet(ctx, username, c.Request.URL)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1) //nolint:contextcheck
 		return

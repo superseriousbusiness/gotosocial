@@ -36,13 +36,16 @@ var (
 // In case of an error, the request will be aborted with http code 500 internal server error.
 func SignatureCheck(isURIBlocked func(context.Context, *url.URL) (bool, db.Error)) func(*gin.Context) {
 	return func(c *gin.Context) {
+		// Acquire ctx from gin request.
+		ctx := c.Request.Context()
+
 		// create the verifier from the request, this will error if the request wasn't signed
 		verifier, err := httpsig.NewVerifier(c.Request)
 		if err != nil {
 			// Something went wrong, so we need to return regardless, but only actually
 			// *abort* the request with 401 if a signature was present but malformed
 			if err.Error() != noSignatureError {
-				log.Debugf("http signature was present but invalid: %s", err)
+				log.Debugf(ctx, "http signature was present but invalid: %s", err)
 				c.AbortWithStatus(http.StatusUnauthorized)
 			}
 			return
@@ -54,13 +57,13 @@ func SignatureCheck(isURIBlocked func(context.Context, *url.URL) (bool, db.Error
 		requestingPublicKeyIDString := verifier.KeyId()
 		requestingPublicKeyID, err := url.Parse(requestingPublicKeyIDString)
 		if err != nil {
-			log.Debugf("http signature requesting public key id %s could not be parsed as a url: %s", requestingPublicKeyIDString, err)
+			log.Debugf(ctx, "http signature requesting public key id %s could not be parsed as a url: %s", requestingPublicKeyIDString, err)
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		} else if requestingPublicKeyID == nil {
 			// Key can sometimes be nil, according to url parse function:
 			// 'Trying to parse a hostname and path without a scheme is invalid but may not necessarily return an error, due to parsing ambiguities'
-			log.Debugf("http signature requesting public key id %s was nil after parsing as a url", requestingPublicKeyIDString)
+			log.Debugf(ctx, "http signature requesting public key id %s was nil after parsing as a url", requestingPublicKeyIDString)
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
@@ -68,11 +71,11 @@ func SignatureCheck(isURIBlocked func(context.Context, *url.URL) (bool, db.Error
 		// we managed to parse the url!
 		// if the domain is blocked we want to bail as early as possible
 		if blocked, err := isURIBlocked(c.Request.Context(), requestingPublicKeyID); err != nil {
-			log.Errorf("could not tell if domain %s was blocked or not: %s", requestingPublicKeyID.Host, err)
+			log.Errorf(ctx, "could not tell if domain %s was blocked or not: %s", requestingPublicKeyID.Host, err)
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
 		} else if blocked {
-			log.Infof("domain %s is blocked", requestingPublicKeyID.Host)
+			log.Infof(ctx, "domain %s is blocked", requestingPublicKeyID.Host)
 			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}

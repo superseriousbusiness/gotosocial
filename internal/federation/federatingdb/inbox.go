@@ -85,12 +85,12 @@ func (f *federatingDB) InboxesForIRI(c context.Context, iri *url.URL) (inboxIRIs
 			return nil, fmt.Errorf("couldn't extract local account username from uri %s: %s", iri, err)
 		}
 
-		account, err := f.db.GetAccountByUsernameDomain(c, localAccountUsername, "")
+		account, err := f.state.DB.GetAccountByUsernameDomain(c, localAccountUsername, "")
 		if err != nil {
 			return nil, fmt.Errorf("couldn't find local account with username %s: %s", localAccountUsername, err)
 		}
 
-		follows, err := f.db.GetAccountFollowedBy(c, account.ID, false)
+		follows, err := f.state.DB.GetAccountFollowedBy(c, account.ID, false)
 		if err != nil {
 			return nil, fmt.Errorf("couldn't get followers of local account %s: %s", localAccountUsername, err)
 		}
@@ -98,7 +98,7 @@ func (f *federatingDB) InboxesForIRI(c context.Context, iri *url.URL) (inboxIRIs
 		for _, follow := range follows {
 			// make sure we retrieved the following account from the db
 			if follow.Account == nil {
-				followingAccount, err := f.db.GetAccountByID(c, follow.AccountID)
+				followingAccount, err := f.state.DB.GetAccountByID(c, follow.AccountID)
 				if err != nil {
 					if err == db.ErrNoEntries {
 						continue
@@ -126,7 +126,7 @@ func (f *federatingDB) InboxesForIRI(c context.Context, iri *url.URL) (inboxIRIs
 	}
 
 	// check if this is just an account IRI...
-	if account, err := f.db.GetAccountByURI(c, iri.String()); err == nil {
+	if account, err := f.state.DB.GetAccountByURI(c, iri.String()); err == nil {
 		// deliver to a shared inbox if we have that option
 		var inbox string
 		if config.GetInstanceDeliverToSharedInboxes() && account.SharedInboxURI != nil && *account.SharedInboxURI != "" {

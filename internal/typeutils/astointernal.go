@@ -82,7 +82,7 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 
 	// account emojis (used in bio, display name, fields)
 	if emojis, err := ap.ExtractEmojis(accountable); err != nil {
-		log.Infof("ASRepresentationToAccount: error extracting account emojis: %s", err)
+		log.Infof(nil, "error extracting account emojis: %s", err)
 	} else {
 		acct.Emojis = emojis
 	}
@@ -181,9 +181,14 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 		acct.FollowersURI = accountable.GetActivityStreamsFollowers().GetIRI().String()
 	}
 
-	// FeaturedURI
-	if accountable.GetTootFeatured() != nil && accountable.GetTootFeatured().GetIRI() != nil {
-		acct.FeaturedCollectionURI = accountable.GetTootFeatured().GetIRI().String()
+	// FeaturedURI aka pinned collection:
+	// Only trust featured URI if it has at least two domains,
+	// from the right, in common with the domain of the account
+	if featured := accountable.GetTootFeatured(); featured != nil && featured.IsIRI() {
+		if featuredURI := featured.GetIRI(); // nocollapse
+		featuredURI != nil && dns.CompareDomainName(acct.Domain, featuredURI.Host) >= 2 {
+			acct.FeaturedCollectionURI = featuredURI.String()
+		}
 	}
 
 	// TODO: FeaturedTagsURI
@@ -217,13 +222,13 @@ func (c *converter) extractAttachments(i ap.WithAttachment) []*gtsmodel.MediaAtt
 
 		attachmentable, ok := t.(ap.Attachmentable)
 		if !ok {
-			log.Error("ap attachment was not attachmentable")
+			log.Error(nil, "ap attachment was not attachmentable")
 			continue
 		}
 
 		attachment, err := ap.ExtractAttachment(attachmentable)
 		if err != nil {
-			log.Errorf("error extracting attachment: %s", err)
+			log.Errorf(nil, "error extracting attachment: %s", err)
 			continue
 		}
 
@@ -243,7 +248,8 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	}
 	status.URI = uriProp.GetIRI().String()
 
-	l := log.WithField("statusURI", status.URI)
+	l := log.WithContext(ctx).
+		WithField("statusURI", status.URI)
 
 	// web url for viewing this status
 	if statusURL, err := ap.ExtractURL(statusable); err == nil {
@@ -345,17 +351,16 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	// advanced visibility for this status
 	// TODO: a lot of work to be done here -- a new type needs to be created for this in go-fed/activity using ASTOOL
 	// for now we just set everything to true
-	pinned := false
 	federated := true
 	boostable := true
 	replyable := true
 	likeable := true
 
-	status.Pinned = &pinned
 	status.Federated = &federated
 	status.Boostable = &boostable
 	status.Replyable = &replyable
 	status.Likeable = &likeable
+
 	// sensitive
 	sensitive := ap.ExtractSensitive(statusable)
 	status.Sensitive = &sensitive
@@ -684,7 +689,7 @@ func (c *converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) 
 					return nil, fmt.Errorf("ASFlagToReport: db error getting status with url %s: %w", statusURIString, err)
 				}
 
-				log.Warnf("ASFlagToReport: reported status %s could not be found in the db, skipping it", statusURIString)
+				log.Warnf(nil, "reported status %s could not be found in the db, skipping it", statusURIString)
 				continue
 			}
 		}

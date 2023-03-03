@@ -20,11 +20,10 @@ package media_test
 
 import (
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -35,6 +34,7 @@ type MediaStandardTestSuite struct {
 
 	db                  db.DB
 	storage             *storage.Driver
+	state               state.State
 	manager             media.Manager
 	transportController transport.Controller
 	testAttachments     map[string]*gtsmodel.MediaAttachment
@@ -46,21 +46,27 @@ func (suite *MediaStandardTestSuite) SetupSuite() {
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
 
-	suite.db = testrig.NewTestDB()
+	suite.db = testrig.NewTestDB(&suite.state)
 	suite.storage = testrig.NewInMemoryStorage()
+	suite.state.DB = suite.db
+	suite.state.Storage = suite.storage
 }
 
 func (suite *MediaStandardTestSuite) SetupTest() {
+	suite.state.Caches.Init()
+	testrig.StartWorkers(&suite.state)
+
 	testrig.StandardStorageSetup(suite.storage, "../../testrig/media")
 	testrig.StandardDBSetup(suite.db, nil)
 	suite.testAttachments = testrig.NewTestAttachments()
 	suite.testAccounts = testrig.NewTestAccounts()
 	suite.testEmojis = testrig.NewTestEmojis()
-	suite.manager = testrig.NewTestMediaManager(suite.db, suite.storage)
-	suite.transportController = testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../testrig/media"), suite.db, concurrency.NewWorkerPool[messages.FromFederator](0, 0))
+	suite.manager = testrig.NewTestMediaManager(&suite.state)
+	suite.transportController = testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../testrig/media"))
 }
 
 func (suite *MediaStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
+	testrig.StopWorkers(&suite.state)
 }

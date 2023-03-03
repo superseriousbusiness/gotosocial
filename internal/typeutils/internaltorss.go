@@ -130,7 +130,7 @@ func (c *converter) StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*f
 		for _, gtsEmoji := range s.Emojis {
 			apiEmoji, err := c.EmojiToAPIEmoji(ctx, gtsEmoji)
 			if err != nil {
-				log.Errorf("error converting emoji with id %s: %s", gtsEmoji.ID, err)
+				log.Errorf(ctx, "error converting emoji with id %s: %s", gtsEmoji.ID, err)
 				continue
 			}
 			apiEmojis = append(apiEmojis, apiEmoji)
@@ -141,12 +141,12 @@ func (c *converter) StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*f
 		for _, e := range s.EmojiIDs {
 			gtsEmoji := &gtsmodel.Emoji{}
 			if err := c.db.GetByID(ctx, e, gtsEmoji); err != nil {
-				log.Errorf("error getting emoji with id %s: %s", e, err)
+				log.Errorf(ctx, "error getting emoji with id %s: %s", e, err)
 				continue
 			}
 			apiEmoji, err := c.EmojiToAPIEmoji(ctx, gtsEmoji)
 			if err != nil {
-				log.Errorf("error converting emoji with id %s: %s", gtsEmoji.ID, err)
+				log.Errorf(ctx, "error converting emoji with id %s: %s", gtsEmoji.ID, err)
 				continue
 			}
 			apiEmojis = append(apiEmojis, apiEmoji)

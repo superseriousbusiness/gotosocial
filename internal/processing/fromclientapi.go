@@ -34,7 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
-func (p *processor) ProcessFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+func (p *Processor) ProcessFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
 	// Allocate new log fields slice
 	fields := make([]kv.Field, 3, 4)
 	fields[0] = kv.Field{"activityType", clientMsg.APActivityType}
@@ -50,7 +50,7 @@ func (p *processor) ProcessFromClientAPI(ctx context.Context, clientMsg messages
 	}
 
 	// Log this federated message
-	l := log.WithFields(fields...)
+	l := log.WithContext(ctx).WithFields(fields...)
 	l.Info("processing from client")
 
 	switch clientMsg.APActivityType {
@@ -131,7 +131,7 @@ func (p *processor) ProcessFromClientAPI(ctx context.Context, clientMsg messages
 	return nil
 }
 
-func (p *processor) processCreateAccountFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+func (p *Processor) processCreateAccountFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
 	account, ok := clientMsg.GTSModel.(*gtsmodel.Account)
 	if !ok {
 		return errors.New("account was not parseable as *gtsmodel.Account")
@@ -143,16 +143,16 @@ func (p *processor) processCreateAccountFromClientAPI(ctx context.Context, clien
 	}
 
 	// get the user this account belongs to
-	user, err := p.db.GetUserByAccountID(ctx, account.ID)
+	user, err := p.state.DB.GetUserByAccountID(ctx, account.ID)
 	if err != nil {
 		return err
 	}
 
 	// email a confirmation to this user
-	return p.userProcessor.SendConfirmEmail(ctx, user, account.Username)
+	return p.User().EmailSendConfirmation(ctx, user, account.Username)
 }
 
-func (p *processor) processCreateStatusFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+func (p *Processor) processCreateStatusFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
 	status, ok := clientMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return errors.New("note was not parseable as *gtsmodel.Status")
@@ -169,7 +169,7 @@ func (p *processor) processCreateStatusFromClientAPI(ctx context.Context, client
 	return p.federateStatus(ctx, status)
 }
 
-func (p *processor) processCreateFollowRequestFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+func (p *Processor) processCreateFollowRequestFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
 	followRequest, ok := clientMsg.GTSModel.(*gtsmodel.FollowRequest)
 	if !ok {
 		return errors.New("followrequest was not parseable as *gtsmodel.FollowRequest")
@@ -182,7 +182,7 @@ func (p *processor) processCreateFollowRequestFromClientAPI(ctx context.Context,
 	return p.federateFollow(ctx, followRequest, clientMsg.OriginAccount, clientMsg.TargetAccount)
 }
 
-func (p *processor) processCreateFaveFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+func (p *Processor) processCreateFaveFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
 	fave, ok := clientMsg.GTSModel.(*gtsmodel.StatusFave)
 	if !ok {
 		return errors.New("fave was not parseable as *gtsmodel.StatusFave")
@@ -195,7 +195,7 @@ func (p *processor) processCreateFaveFromClientAPI(ctx context.Context, clientMs
 	return p.federateFave(ctx, fave, clientMsg.OriginAccount, clientMsg.TargetAccount)
 }
 
-func (p *processor) processCreateAnnounceFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+func (p *Processor) processCreateAnnounceFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
 	boostWrapperStatus, ok := clientMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return errors.New("boost was not parseable as *gtsmodel.Status")
@@ -212,7 +212,7 @@ func (p *processor) processCreateAnnounceFromClientAPI(ctx context.Context, clie
 	return p.federateAnnounce(ctx, boostWrapperStatus, clientMsg.OriginAccount, clientMsg.TargetAccount)
 }
 
-func (p *processor) processCreateBlockFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+func (p *Processor) processCreateBlockFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
 	block, ok := clientMsg.GTSModel.(*gtsmodel.Block)
 	if !ok {
 		return errors.New("block was not parseable as *gtsmodel.Block")
@@ -232,7 +232,7 @@ func (p *processor) processCreateBlockFromClientAPI(ctx context.Context, clientM
 	return p.federateBlock(ctx, block)
 }
 
-func (p *processor) processUpdateAccountFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+func (p *Processor) processUpdateAccountFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
 	account, ok := clientMsg.GTSModel.(*gtsmodel.Account)
 	if !ok {
 		return errors.New("account was not parseable as *gtsmodel.Account")
@@ -241,7 +241,7 @@ func (p *processor) processUpdateAccountFromClientAPI(ctx context.Context, clien
 	return p.federateAccountUpdate(ctx, account, clientMsg.OriginAccount)
 }
 
-func (p *processor) processAcceptFollowFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+func (p *Processor) processAcceptFollowFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
 	follow, ok := clientMsg.GTSModel.(*gtsmodel.Follow)
 	if !ok {
 		return errors.New("accept was not parseable as *gtsmodel.Follow")
@@ -254,7 +254,7 @@ func (p *processor) processAcceptFollowFromClientAPI(ctx context.Context, client
 	return p.federateAcceptFollowRequest(ctx, follow)
 }
 
-func (p *processor) processRejectFollowFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+func (p *Processor) processRejectFollowFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
 	followRequest, ok := clientMsg.GTSModel.(*gtsmodel.FollowRequest)
 	if !ok {
 		return errors.New("reject was not parseable as *gtsmodel.FollowRequest")
@@ -263,7 +263,7 @@ func (p *processor) processRejectFollowFromClientAPI(ctx context.Context, client
 	return p.federateRejectFollowRequest(ctx, followRequest)
 }
 
-func (p *processor) processUndoFollowFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+func (p *Processor) processUndoFollowFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
 	follow, ok := clientMsg.GTSModel.(*gtsmodel.Follow)
 	if !ok {
 		return errors.New("undo was not parseable as *gtsmodel.Follow")
@@ -271,7 +271,7 @@ func (p *processor) processUndoFollowFromClientAPI(ctx context.Context, clientMs
 	return p.federateUnfollow(ctx, follow, clientMsg.OriginAccount, clientMsg.TargetAccount)
 }
 
-func (p *processor) processUndoBlockFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+func (p *Processor) processUndoBlockFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
 	block, ok := clientMsg.GTSModel.(*gtsmodel.Block)
 	if !ok {
 		return errors.New("undo was not parseable as *gtsmodel.Block")
@@ -279,7 +279,7 @@ func (p *processor) processUndoBlockFromClientAPI(ctx context.Context, clientMsg
 	return p.federateUnblock(ctx, block)
 }
 
-func (p *processor) processUndoFaveFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+func (p *Processor) processUndoFaveFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
 	fave, ok := clientMsg.GTSModel.(*gtsmodel.StatusFave)
 	if !ok {
 		return errors.New("undo was not parseable as *gtsmodel.StatusFave")
@@ -287,13 +287,13 @@ func (p *processor) processUndoFaveFromClientAPI(ctx context.Context, clientMsg 
 	return p.federateUnfave(ctx, fave, clientMsg.OriginAccount, clientMsg.TargetAccount)
 }
 
-func (p *processor) processUndoAnnounceFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+func (p *Processor) processUndoAnnounceFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
 	boost, ok := clientMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return errors.New("undo was not parseable as *gtsmodel.Status")
 	}
 
-	if err := p.db.DeleteStatusByID(ctx, boost.ID); err != nil {
+	if err := p.state.DB.DeleteStatusByID(ctx, boost.ID); err != nil {
 		return err
 	}
 
@@ -304,7 +304,7 @@ func (p *processor) processUndoAnnounceFromClientAPI(ctx context.Context, client
 	return p.federateUnannounce(ctx, boost, clientMsg.OriginAccount, clientMsg.TargetAccount)
 }
 
-func (p *processor) processDeleteStatusFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+func (p *Processor) processDeleteStatusFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
 	statusToDelete, ok := clientMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return errors.New("note was not parseable as *gtsmodel.Status")
@@ -326,7 +326,7 @@ func (p *processor) processDeleteStatusFromClientAPI(ctx context.Context, client
 	return p.federateStatusDelete(ctx, statusToDelete)
 }
 
-func (p *processor) processDeleteAccountFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+func (p *Processor) processDeleteAccountFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
 	// the origin of the delete could be either a domain block, or an action by another (or this) account
 	var origin string
 	if domainBlock, ok := clientMsg.GTSModel.(*gtsmodel.DomainBlock); ok {
@@ -341,10 +341,10 @@ func (p *processor) processDeleteAccountFromClientAPI(ctx context.Context, clien
 		return err
 	}
 
-	return p.accountProcessor.Delete(ctx, clientMsg.TargetAccount, origin)
+	return p.account.Delete(ctx, clientMsg.TargetAccount, origin)
 }
 
-func (p *processor) processReportAccountFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+func (p *Processor) processReportAccountFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
 	report, ok := clientMsg.GTSModel.(*gtsmodel.Report)
 	if !ok {
 		return errors.New("report was not parseable as *gtsmodel.Report")
@@ -362,7 +362,7 @@ func (p *processor) processReportAccountFromClientAPI(ctx context.Context, clien
 
 // TODO: move all the below functions into federation.Federator
 
-func (p *processor) federateAccountDelete(ctx context.Context, account *gtsmodel.Account) error {
+func (p *Processor) federateAccountDelete(ctx context.Context, account *gtsmodel.Account) error {
 	// do nothing if this isn't our account
 	if account.Domain != "" {
 		return nil
@@ -415,14 +415,14 @@ func (p *processor) federateAccountDelete(ctx context.Context, account *gtsmodel
 	return err
 }
 
-func (p *processor) federateStatus(ctx context.Context, status *gtsmodel.Status) error {
+func (p *Processor) federateStatus(ctx context.Context, status *gtsmodel.Status) error {
 	// do nothing if the status shouldn't be federated
 	if !*status.Federated {
 		return nil
 	}
 
 	if status.Account == nil {
-		statusAccount, err := p.db.GetAccountByID(ctx, status.AccountID)
+		statusAccount, err := p.state.DB.GetAccountByID(ctx, status.AccountID)
 		if err != nil {
 			return fmt.Errorf("federateStatus: error fetching status author account: %s", err)
 		}
@@ -453,9 +453,9 @@ func (p *processor) federateStatus(ctx context.Context, status *gtsmodel.Status)
 	return err
 }
 
-func (p *processor) federateStatusDelete(ctx context.Context, status *gtsmodel.Status) error {
+func (p *Processor) federateStatusDelete(ctx context.Context, status *gtsmodel.Status) error {
 	if status.Account == nil {
-		statusAccount, err := p.db.GetAccountByID(ctx, status.AccountID)
+		statusAccount, err := p.state.DB.GetAccountByID(ctx, status.AccountID)
 		if err != nil {
 			return fmt.Errorf("federateStatusDelete: error fetching status author account: %s", err)
 		}
@@ -503,7 +503,7 @@ func (p *processor) federateStatusDelete(ctx context.Context, status *gtsmodel.S
 	return err
 }
 
-func (p *processor) federateFollow(ctx context.Context, followRequest *gtsmodel.FollowRequest, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+func (p *Processor) federateFollow(ctx context.Context, followRequest *gtsmodel.FollowRequest, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
 	// if both accounts are local there's nothing to do here
 	if originAccount.Domain == "" && targetAccount.Domain == "" {
 		return nil
@@ -525,7 +525,7 @@ func (p *processor) federateFollow(ctx context.Context, followRequest *gtsmodel.
 	return err
 }
 
-func (p *processor) federateUnfollow(ctx context.Context, follow *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+func (p *Processor) federateUnfollow(ctx context.Context, follow *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
 	// if both accounts are local there's nothing to do here
 	if originAccount.Domain == "" && targetAccount.Domain == "" {
 		return nil
@@ -566,7 +566,7 @@ func (p *processor) federateUnfollow(ctx context.Context, follow *gtsmodel.Follo
 	return err
 }
 
-func (p *processor) federateUnfave(ctx context.Context, fave *gtsmodel.StatusFave, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+func (p *Processor) federateUnfave(ctx context.Context, fave *gtsmodel.StatusFave, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
 	// if both accounts are local there's nothing to do here
 	if originAccount.Domain == "" && targetAccount.Domain == "" {
 		return nil
@@ -605,7 +605,7 @@ func (p *processor) federateUnfave(ctx context.Context, fave *gtsmodel.StatusFav
 	return err
 }
 
-func (p *processor) federateUnannounce(ctx context.Context, boost *gtsmodel.Status, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+func (p *Processor) federateUnannounce(ctx context.Context, boost *gtsmodel.Status, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
 	if originAccount.Domain != "" {
 		// nothing to do here
 		return nil
@@ -640,9 +640,9 @@ func (p *processor) federateUnannounce(ctx context.Context, boost *gtsmodel.Stat
 	return err
 }
 
-func (p *processor) federateAcceptFollowRequest(ctx context.Context, follow *gtsmodel.Follow) error {
+func (p *Processor) federateAcceptFollowRequest(ctx context.Context, follow *gtsmodel.Follow) error {
 	if follow.Account == nil {
-		a, err := p.db.GetAccountByID(ctx, follow.AccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, follow.AccountID)
 		if err != nil {
 			return err
 		}
@@ -651,7 +651,7 @@ func (p *processor) federateAcceptFollowRequest(ctx context.Context, follow *gts
 	originAccount := follow.Account
 
 	if follow.TargetAccount == nil {
-		a, err := p.db.GetAccountByID(ctx, follow.TargetAccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, follow.TargetAccountID)
 		if err != nil {
 			return err
 		}
@@ -713,9 +713,9 @@ func (p *processor) federateAcceptFollowRequest(ctx context.Context, follow *gts
 	return err
 }
 
-func (p *processor) federateRejectFollowRequest(ctx context.Context, followRequest *gtsmodel.FollowRequest) error {
+func (p *Processor) federateRejectFollowRequest(ctx context.Context, followRequest *gtsmodel.FollowRequest) error {
 	if followRequest.Account == nil {
-		a, err := p.db.GetAccountByID(ctx, followRequest.AccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, followRequest.AccountID)
 		if err != nil {
 			return err
 		}
@@ -724,7 +724,7 @@ func (p *processor) federateRejectFollowRequest(ctx context.Context, followReque
 	originAccount := followRequest.Account
 
 	if followRequest.TargetAccount == nil {
-		a, err := p.db.GetAccountByID(ctx, followRequest.TargetAccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, followRequest.TargetAccountID)
 		if err != nil {
 			return err
 		}
@@ -787,7 +787,7 @@ func (p *processor) federateRejectFollowRequest(ctx context.Context, followReque
 	return err
 }
 
-func (p *processor) federateFave(ctx context.Context, fave *gtsmodel.StatusFave, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+func (p *Processor) federateFave(ctx context.Context, fave *gtsmodel.StatusFave, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
 	// if both accounts are local there's nothing to do here
 	if originAccount.Domain == "" && targetAccount.Domain == "" {
 		return nil
@@ -807,7 +807,7 @@ func (p *processor) federateFave(ctx context.Context, fave *gtsmodel.StatusFave,
 	return err
 }
 
-func (p *processor) federateAnnounce(ctx context.Context, boostWrapperStatus *gtsmodel.Status, boostingAccount *gtsmodel.Account, boostedAccount *gtsmodel.Account) error {
+func (p *Processor) federateAnnounce(ctx context.Context, boostWrapperStatus *gtsmodel.Status, boostingAccount *gtsmodel.Account, boostedAccount *gtsmodel.Account) error {
 	announce, err := p.tc.BoostToAS(ctx, boostWrapperStatus, boostingAccount, boostedAccount)
 	if err != nil {
 		return fmt.Errorf("federateAnnounce: error converting status to announce: %s", err)
@@ -822,7 +822,7 @@ func (p *processor) federateAnnounce(ctx context.Context, boostWrapperStatus *gt
 	return err
 }
 
-func (p *processor) federateAccountUpdate(ctx context.Context, updatedAccount *gtsmodel.Account, originAccount *gtsmodel.Account) error {
+func (p *Processor) federateAccountUpdate(ctx context.Context, updatedAccount *gtsmodel.Account, originAccount *gtsmodel.Account) error {
 	person, err := p.tc.AccountToAS(ctx, updatedAccount)
 	if err != nil {
 		return fmt.Errorf("federateAccountUpdate: error converting account to person: %s", err)
@@ -842,9 +842,9 @@ func (p *processor) federateAccountUpdate(ctx context.Context, updatedAccount *g
 	return err
 }
 
-func (p *processor) federateBlock(ctx context.Context, block *gtsmodel.Block) error {
+func (p *Processor) federateBlock(ctx context.Context, block *gtsmodel.Block) error {
 	if block.Account == nil {
-		blockAccount, err := p.db.GetAccountByID(ctx, block.AccountID)
+		blockAccount, err := p.state.DB.GetAccountByID(ctx, block.AccountID)
 		if err != nil {
 			return fmt.Errorf("federateBlock: error getting block account from database: %s", err)
 		}
@@ -852,7 +852,7 @@ func (p *processor) federateBlock(ctx context.Context, block *gtsmodel.Block) er
 	}
 
 	if block.TargetAccount == nil {
-		blockTargetAccount, err := p.db.GetAccountByID(ctx, block.TargetAccountID)
+		blockTargetAccount, err := p.state.DB.GetAccountByID(ctx, block.TargetAccountID)
 		if err != nil {
 			return fmt.Errorf("federateBlock: error getting block target account from database: %s", err)
 		}
@@ -878,9 +878,9 @@ func (p *processor) federateBlock(ctx context.Context, block *gtsmodel.Block) er
 	return err
 }
 
-func (p *processor) federateUnblock(ctx context.Context, block *gtsmodel.Block) error {
+func (p *Processor) federateUnblock(ctx context.Context, block *gtsmodel.Block) error {
 	if block.Account == nil {
-		blockAccount, err := p.db.GetAccountByID(ctx, block.AccountID)
+		blockAccount, err := p.state.DB.GetAccountByID(ctx, block.AccountID)
 		if err != nil {
 			return fmt.Errorf("federateUnblock: error getting block account from database: %s", err)
 		}
@@ -888,7 +888,7 @@ func (p *processor) federateUnblock(ctx context.Context, block *gtsmodel.Block) 
 	}
 
 	if block.TargetAccount == nil {
-		blockTargetAccount, err := p.db.GetAccountByID(ctx, block.TargetAccountID)
+		blockTargetAccount, err := p.state.DB.GetAccountByID(ctx, block.TargetAccountID)
 		if err != nil {
 			return fmt.Errorf("federateUnblock: error getting block target account from database: %s", err)
 		}
@@ -932,9 +932,9 @@ func (p *processor) federateUnblock(ctx context.Context, block *gtsmodel.Block) 
 	return err
 }
 
-func (p *processor) federateReport(ctx context.Context, report *gtsmodel.Report) error {
+func (p *Processor) federateReport(ctx context.Context, report *gtsmodel.Report) error {
 	if report.TargetAccount == nil {
-		reportTargetAccount, err := p.db.GetAccountByID(ctx, report.TargetAccountID)
+		reportTargetAccount, err := p.state.DB.GetAccountByID(ctx, report.TargetAccountID)
 		if err != nil {
 			return fmt.Errorf("federateReport: error getting report target account from database: %w", err)
 		}
@@ -942,7 +942,7 @@ func (p *processor) federateReport(ctx context.Context, report *gtsmodel.Report)
 	}
 
 	if len(report.StatusIDs) > 0 && len(report.Statuses) == 0 {
-		statuses, err := p.db.GetStatuses(ctx, report.StatusIDs)
+		statuses, err := p.state.DB.GetStatuses(ctx, report.StatusIDs)
 		if err != nil {
 			return fmt.Errorf("federateReport: error getting report statuses from database: %w", err)
 		}
@@ -966,7 +966,7 @@ func (p *processor) federateReport(ctx context.Context, report *gtsmodel.Report)
 
 	// deliver the flag using the outbox of the
 	// instance account to anonymize the report
-	instanceAccount, err := p.db.GetInstanceAccount(ctx, "")
+	instanceAccount, err := p.state.DB.GetInstanceAccount(ctx, "")
 	if err != nil {
 		return fmt.Errorf("federateReport: error getting instance account: %w", err)
 	}

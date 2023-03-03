@@ -84,7 +84,7 @@ func (m *Module) EmojiCategoriesGETHandler(c *gin.Context) {
 		return
 	}
 
-	categories, errWithCode := m.processor.AdminEmojiCategoriesGet(c.Request.Context())
+	categories, errWithCode := m.processor.Admin().EmojiCategoriesGet(c.Request.Context())
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

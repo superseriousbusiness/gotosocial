@@ -28,8 +28,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, excludeTypes []string, limit int, maxID string, sinceID string) (*apimodel.PageableResponse, gtserror.WithCode) {
-	notifs, err := p.db.GetNotifications(ctx, authed.Account.ID, excludeTypes, limit, maxID, sinceID)
+func (p *Processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, excludeTypes []string, limit int, maxID string, sinceID string) (*apimodel.PageableResponse, gtserror.WithCode) {
+	notifs, err := p.state.DB.GetNotifications(ctx, authed.Account.ID, excludeTypes, limit, maxID, sinceID)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -46,7 +46,7 @@ func (p *processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, ex
 	for i, n := range notifs {
 		item, err := p.tc.NotificationToAPINotification(ctx, n)
 		if err != nil {
-			log.Debugf("got an error converting a notification to api, will skip it: %s", err)
+			log.Debugf(ctx, "got an error converting a notification to api, will skip it: %s", err)
 			continue
 		}
 
@@ -71,8 +71,8 @@ func (p *processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, ex
 	})
 }
 
-func (p *processor) NotificationsClear(ctx context.Context, authed *oauth.Auth) gtserror.WithCode {
-	err := p.db.ClearNotifications(ctx, authed.Account.ID)
+func (p *Processor) NotificationsClear(ctx context.Context, authed *oauth.Auth) gtserror.WithCode {
+	err := p.state.DB.ClearNotifications(ctx, authed.Account.ID)
 	if err != nil {
 		return gtserror.NewErrorInternalError(err)
 	}
