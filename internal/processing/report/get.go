@@ -32,7 +32,7 @@ import (
 
 // Get returns the user view of a moderation report, with the given id.
 func (p *Processor) Get(ctx context.Context, account *gtsmodel.Account, id string) (*apimodel.Report, gtserror.WithCode) {
-	report, err := p.db.GetReportByID(ctx, id)
+	report, err := p.state.DB.GetReportByID(ctx, id)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return nil, gtserror.NewErrorNotFound(err)
@@ -64,7 +64,7 @@ func (p *Processor) GetMultiple(
 	minID string,
 	limit int,
 ) (*apimodel.PageableResponse, gtserror.WithCode) {
-	reports, err := p.db.GetReports(ctx, resolved, account.ID, targetAccountID, maxID, sinceID, minID, limit)
+	reports, err := p.state.DB.GetReports(ctx, resolved, account.ID, targetAccountID, maxID, sinceID, minID, limit)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return util.EmptyPageableResponse(), nil

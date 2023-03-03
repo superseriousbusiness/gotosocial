@@ -29,7 +29,7 @@ func (f *federatingDB) Followers(ctx context.Context, actorIRI *url.URL) (follow
 		return nil, err
 	}
 
-	acctFollowers, err := f.db.GetAccountFollowedBy(ctx, acct.ID, false)
+	acctFollowers, err := f.state.DB.GetAccountFollowedBy(ctx, acct.ID, false)
 	if err != nil {
 		return nil, fmt.Errorf("Followers: db error getting followers for account id %s: %s", acct.ID, err)
 	}
@@ -37,7 +37,7 @@ func (f *federatingDB) Followers(ctx context.Context, actorIRI *url.URL) (follow
 	iris := []*url.URL{}
 	for _, follow := range acctFollowers {
 		if follow.Account == nil {
-			a, err := f.db.GetAccountByID(ctx, follow.AccountID)
+			a, err := f.state.DB.GetAccountByID(ctx, follow.AccountID)
 			if err != nil {
 				errWrapped := fmt.Errorf("Followers: db error getting account id %s: %s", follow.AccountID, err)
 				if err == db.ErrNoEntries {

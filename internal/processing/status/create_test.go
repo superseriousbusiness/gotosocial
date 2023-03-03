@@ -50,7 +50,7 @@ func (suite *StatusCreateTestSuite) TestProcessContentWarningWithQuotationMarks(
 			Visibility:  apimodel.VisibilityPublic,
 			ScheduledAt: "",
 			Language:    "en",
-			Format:      apimodel.StatusFormatPlain,
+			ContentType: apimodel.StatusContentTypePlain,
 		},
 		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
@@ -84,7 +84,7 @@ func (suite *StatusCreateTestSuite) TestProcessContentWarningWithHTMLEscapedQuot
 			Visibility:  apimodel.VisibilityPublic,
 			ScheduledAt: "",
 			Language:    "en",
-			Format:      apimodel.StatusFormatPlain,
+			ContentType: apimodel.StatusContentTypePlain,
 		},
 		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
@@ -122,7 +122,7 @@ func (suite *StatusCreateTestSuite) TestProcessStatusMarkdownWithUnderscoreEmoji
 			Visibility:  apimodel.VisibilityPublic,
 			ScheduledAt: "",
 			Language:    "en",
-			Format:      apimodel.StatusFormatMarkdown,
+			ContentType: apimodel.StatusContentTypeMarkdown,
 		},
 		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
@@ -156,7 +156,7 @@ func (suite *StatusCreateTestSuite) TestProcessStatusMarkdownWithSpoilerTextEmoj
 			Visibility:  apimodel.VisibilityPublic,
 			ScheduledAt: "",
 			Language:    "en",
-			Format:      apimodel.StatusFormatMarkdown,
+			ContentType: apimodel.StatusContentTypeMarkdown,
 		},
 		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
@@ -194,7 +194,7 @@ func (suite *StatusCreateTestSuite) TestProcessMediaDescriptionTooShort() {
 			Visibility:  apimodel.VisibilityPublic,
 			ScheduledAt: "",
 			Language:    "en",
-			Format:      apimodel.StatusFormatPlain,
+			ContentType: apimodel.StatusContentTypePlain,
 		},
 		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,

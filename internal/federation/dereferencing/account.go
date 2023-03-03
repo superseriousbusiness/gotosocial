@@ -281,8 +281,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	}
 
 	// Fetch the latest remote account emoji IDs used in account display name/bio.
-	_, err = d.fetchRemoteAccountEmojis(ctx, latestAcc, requestUser)
-	if err != nil {
+	if _, err = d.fetchRemoteAccountEmojis(ctx, latestAcc, requestUser); err != nil {
 		log.Errorf(ctx, "error fetching remote emojis for account %s: %v", uri, err)
 	}
 
@@ -294,8 +293,15 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		latestAcc.CreatedAt = latestAcc.FetchedAt
 		latestAcc.UpdatedAt = latestAcc.FetchedAt
 
-		// This is a new account, we need to place it in the database.
-		if err := d.db.PutAccount(ctx, latestAcc); err != nil {
+		// This is new, put it in the database.
+		err := d.db.PutAccount(ctx, latestAcc)
+
+		if errors.Is(err, db.ErrAlreadyExists) {
+			// TODO: replace this quick fix with per-URI deref locks.
+			latestAcc, err = d.db.GetAccountByURI(ctx, latestAcc.URI)
+		}
+
+		if err != nil {
 			return nil, fmt.Errorf("enrichAccount: error putting in database: %w", err)
 		}
 	} else {
@@ -309,6 +315,18 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		// This is an existing account, update the model in the database.
 		if err := d.db.UpdateAccount(ctx, latestAcc); err != nil {
 			return nil, fmt.Errorf("enrichAccount: error updating database: %w", err)
+		}
+	}
+
+	if latestAcc.FeaturedCollectionURI != "" {
+		// Fetch this account's pinned statuses, now that the account is in the database.
+		//
+		// The order is important here: if we tried to fetch the pinned statuses before
+		// storing the account, the process might end up calling enrichAccount again,
+		// causing us to get stuck in a loop. By calling it now, we make sure this doesn't
+		// happen!
+		if err := d.fetchRemoteAccountFeatured(ctx, requestUser, latestAcc.FeaturedCollectionURI, latestAcc.ID); err != nil {
+			log.Errorf(ctx, "error fetching featured collection for account %s: %v", uri, err)
 		}
 	}
 
@@ -568,4 +586,149 @@ func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gts
 	}
 
 	return changed, nil
+}
+
+// fetchRemoteAccountFeatured dereferences an account's featuredCollectionURI (if not empty).
+// For each discovered status, this status will be dereferenced (if necessary) and marked as
+// pinned (if necessary). Then, old pins will be removed if they're not included in new pins.
+func (d *deref) fetchRemoteAccountFeatured(ctx context.Context, requestingUsername string, featuredCollectionURI string, accountID string) error {
+	uri, err := url.Parse(featuredCollectionURI)
+	if err != nil {
+		return err
+	}
+
+	tsport, err := d.transportController.NewTransportForUsername(ctx, requestingUsername)
+	if err != nil {
+		return err
+	}
+
+	b, err := tsport.Dereference(ctx, uri)
+	if err != nil {
+		return err
+	}
+
+	m := make(map[string]interface{})
+	if err := json.Unmarshal(b, &m); err != nil {
+		return fmt.Errorf("error unmarshalling bytes into json: %w", err)
+	}
+
+	t, err := streams.ToType(ctx, m)
+	if err != nil {
+		return fmt.Errorf("error resolving json into ap vocab type: %w", err)
+	}
+
+	if t.GetTypeName() != ap.ObjectOrderedCollection {
+		return fmt.Errorf("%s was not an OrderedCollection", featuredCollectionURI)
+	}
+
+	collection, ok := t.(vocab.ActivityStreamsOrderedCollection)
+	if !ok {
+		return errors.New("couldn't coerce OrderedCollection")
+	}
+
+	items := collection.GetActivityStreamsOrderedItems()
+	if items == nil {
+		return errors.New("nil orderedItems")
+	}
+
+	// Get previous pinned statuses (we'll need these later).
+	wasPinned, err := d.db.GetAccountPinnedStatuses(ctx, accountID)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return fmt.Errorf("error getting account pinned statuses: %w", err)
+	}
+
+	statusURIs := make([]*url.URL, 0, items.Len())
+	for iter := items.Begin(); iter != items.End(); iter = iter.Next() {
+		var statusURI *url.URL
+
+		switch {
+		case iter.IsActivityStreamsNote():
+			// We got a whole Note. Extract the URI.
+			if note := iter.GetActivityStreamsNote(); note != nil {
+				if id := note.GetJSONLDId(); id != nil {
+					statusURI = id.GetIRI()
+				}
+			}
+		case iter.IsActivityStreamsArticle():
+			// We got a whole Article. Extract the URI.
+			if article := iter.GetActivityStreamsArticle(); article != nil {
+				if id := article.GetJSONLDId(); id != nil {
+					statusURI = id.GetIRI()
+				}
+			}
+		default:
+			// Try to get just the URI.
+			statusURI = iter.GetIRI()
+		}
+
+		if statusURI == nil {
+			continue
+		}
+
+		if statusURI.Host != uri.Host {
+			// If this status doesn't share a host with its featured
+			// collection URI, we shouldn't trust it. Just move on.
+			continue
+		}
+
+		// Already append this status URI to our slice.
+		// We do this here so that even if we can't get
+		// the status in the next part for some reason,
+		// we still know it was *meant* to be pinned.
+		statusURIs = append(statusURIs, statusURI)
+
+		status, _, err := d.GetStatus(ctx, requestingUsername, statusURI, false, false)
+		if err != nil {
+			// We couldn't get the status, bummer.
+			// Just log + move on, we can try later.
+			log.Errorf(ctx, "error getting status from featured collection %s: %s", featuredCollectionURI, err)
+			continue
+		}
+
+		// If the status was already pinned, we don't need to do anything.
+		if !status.PinnedAt.IsZero() {
+			continue
+		}
+
+		if status.AccountID != accountID {
+			// Someone's pinned a status that doesn't
+			// belong to them, this doesn't work for us.
+			continue
+		}
+
+		if status.BoostOfID != "" {
+			// Someone's pinned a boost. This also
+			// doesn't work for us.
+			continue
+		}
+
+		// All conditions are met for this status to
+		// be pinned, so we can finally update it.
+		status.PinnedAt = time.Now()
+		if err := d.db.UpdateStatus(ctx, status, "pinned_at"); err != nil {
+			log.Errorf(ctx, "error updating status in featured collection %s: %s", featuredCollectionURI, err)
+		}
+	}
+
+	// Now that we know which statuses are pinned, we should
+	// *unpin* previous pinned statuses that aren't included.
+outerLoop:
+	for _, status := range wasPinned {
+		for _, statusURI := range statusURIs {
+			if status.URI == statusURI.String() {
+				// This status is included in most recent
+				// pinned uris. No need to keep checking.
+				continue outerLoop
+			}
+		}
+
+		// Status was pinned before, but is not included
+		// in most recent pinned uris, so unpin it now.
+		status.PinnedAt = time.Time{}
+		if err := d.db.UpdateStatus(ctx, status, "pinned_at"); err != nil {
+			return fmt.Errorf("error unpinning status: %w", err)
+		}
+	}
+
+	return nil
 }

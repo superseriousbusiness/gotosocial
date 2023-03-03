@@ -103,11 +103,11 @@ func (f *federatingDB) activityBlock(ctx context.Context, asType vocab.Type, rec
 
 	block.ID = id.NewULID()
 
-	if err := f.db.PutBlock(ctx, block); err != nil {
+	if err := f.state.DB.PutBlock(ctx, block); err != nil {
 		return fmt.Errorf("activityBlock: database error inserting block: %s", err)
 	}
 
-	f.fedWorker.Queue(messages.FromFederator{
+	f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
 		APObjectType:     ap.ActivityBlock,
 		APActivityType:   ap.ActivityCreate,
 		GTSModel:         block,
@@ -202,7 +202,7 @@ func (f *federatingDB) createNote(ctx context.Context, note vocab.ActivityStream
 			return nil
 		}
 		// pass the note iri into the processor and have it do the dereferencing instead of doing it here
-		f.fedWorker.Queue(messages.FromFederator{
+		f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
 			APObjectType:     ap.ObjectNote,
 			APActivityType:   ap.ActivityCreate,
 			APIri:            id.GetIRI(),
@@ -226,7 +226,7 @@ func (f *federatingDB) createNote(ctx context.Context, note vocab.ActivityStream
 	}
 	status.ID = statusID
 
-	if err := f.db.PutStatus(ctx, status); err != nil {
+	if err := f.state.DB.PutStatus(ctx, status); err != nil {
 		if errors.Is(err, db.ErrAlreadyExists) {
 			// the status already exists in the database, which means we've already handled everything else,
 			// so we can just return nil here and be done with it.
@@ -236,7 +236,7 @@ func (f *federatingDB) createNote(ctx context.Context, note vocab.ActivityStream
 		return fmt.Errorf("createNote: database error inserting status: %s", err)
 	}
 
-	f.fedWorker.Queue(messages.FromFederator{
+	f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
 		APObjectType:     ap.ObjectNote,
 		APActivityType:   ap.ActivityCreate,
 		GTSModel:         status,
@@ -263,11 +263,11 @@ func (f *federatingDB) activityFollow(ctx context.Context, asType vocab.Type, re
 
 	followRequest.ID = id.NewULID()
 
-	if err := f.db.Put(ctx, followRequest); err != nil {
+	if err := f.state.DB.Put(ctx, followRequest); err != nil {
 		return fmt.Errorf("activityFollow: database error inserting follow request: %s", err)
 	}
 
-	f.fedWorker.Queue(messages.FromFederator{
+	f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
 		APObjectType:     ap.ActivityFollow,
 		APActivityType:   ap.ActivityCreate,
 		GTSModel:         followRequest,
@@ -294,11 +294,11 @@ func (f *federatingDB) activityLike(ctx context.Context, asType vocab.Type, rece
 
 	fave.ID = id.NewULID()
 
-	if err := f.db.Put(ctx, fave); err != nil {
+	if err := f.state.DB.Put(ctx, fave); err != nil {
 		return fmt.Errorf("activityLike: database error inserting fave: %s", err)
 	}
 
-	f.fedWorker.Queue(messages.FromFederator{
+	f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
 		APObjectType:     ap.ActivityLike,
 		APActivityType:   ap.ActivityCreate,
 		GTSModel:         fave,
@@ -325,11 +325,11 @@ func (f *federatingDB) activityFlag(ctx context.Context, asType vocab.Type, rece
 
 	report.ID = id.NewULID()
 
-	if err := f.db.PutReport(ctx, report); err != nil {
+	if err := f.state.DB.PutReport(ctx, report); err != nil {
 		return fmt.Errorf("activityFlag: database error inserting report: %w", err)
 	}
 
-	f.fedWorker.Queue(messages.FromFederator{
+	f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
 		APObjectType:     ap.ActivityFlag,
 		APActivityType:   ap.ActivityCreate,
 		GTSModel:         report,

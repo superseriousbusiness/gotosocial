@@ -132,7 +132,7 @@ func (m *Module) returnAPStatus(ctx context.Context, c *gin.Context, username st
 		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeySignature, signature)
 	}
 
-	status, errWithCode := m.processor.Fedi().StatusGet(ctx, username, statusID, c.Request.URL)
+	status, errWithCode := m.processor.Fedi().StatusGet(ctx, username, statusID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1) //nolint:contextcheck
 		return

@@ -56,7 +56,7 @@ func (p *Processor) EmailSendConfirmation(ctx context.Context, user *gtsmodel.Us
 	// pull our instance entry from the database so we can greet the user nicely in the email
 	instance := &gtsmodel.Instance{}
 	host := config.GetHost()
-	if err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: host}}, instance); err != nil {
+	if err := p.state.DB.GetWhere(ctx, []db.Where{{Key: "domain", Value: host}}, instance); err != nil {
 		return fmt.Errorf("SendConfirmEmail: error getting instance: %s", err)
 	}
 
@@ -78,7 +78,7 @@ func (p *Processor) EmailSendConfirmation(ctx context.Context, user *gtsmodel.Us
 	user.LastEmailedAt = time.Now()
 	user.UpdatedAt = time.Now()
 
-	if err := p.db.UpdateByID(ctx, user, user.ID, updatingColumns...); err != nil {
+	if err := p.state.DB.UpdateByID(ctx, user, user.ID, updatingColumns...); err != nil {
 		return fmt.Errorf("SendConfirmEmail: error updating user entry after email sent: %s", err)
 	}
 
@@ -92,7 +92,7 @@ func (p *Processor) EmailConfirm(ctx context.Context, token string) (*gtsmodel.U
 		return nil, gtserror.NewErrorNotFound(errors.New("no token provided"))
 	}
 
-	user, err := p.db.GetUserByConfirmationToken(ctx, token)
+	user, err := p.state.DB.GetUserByConfirmationToken(ctx, token)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return nil, gtserror.NewErrorNotFound(err)
@@ -101,7 +101,7 @@ func (p *Processor) EmailConfirm(ctx context.Context, token string) (*gtsmodel.U
 	}
 
 	if user.Account == nil {
-		a, err := p.db.GetAccountByID(ctx, user.AccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, user.AccountID)
 		if err != nil {
 			return nil, gtserror.NewErrorNotFound(err)
 		}
@@ -129,7 +129,7 @@ func (p *Processor) EmailConfirm(ctx context.Context, token string) (*gtsmodel.U
 	user.ConfirmationToken = ""
 	user.UpdatedAt = time.Now()
 
-	if err := p.db.UpdateByID(ctx, user, user.ID, updatingColumns...); err != nil {
+	if err := p.state.DB.UpdateByID(ctx, user, user.ID, updatingColumns...); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 

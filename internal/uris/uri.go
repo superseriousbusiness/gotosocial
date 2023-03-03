@@ -70,7 +70,7 @@ type UserURIs struct {
 	// The activitypub URI for this user's liked posts eg., https://example.org/users/example_user/liked
 	LikedURI string
 	// The activitypub URI for this user's featured collections, eg., https://example.org/users/example_user/collections/featured
-	CollectionURI string
+	FeaturedCollectionURI string
 	// The URI for this user's public key, eg., https://example.org/users/example_user/publickey
 	PublicKeyURI string
 }
@@ -152,15 +152,15 @@ func GenerateURIsForAccount(username string) *UserURIs {
 		UserURL:     userURL,
 		StatusesURL: statusesURL,
 
-		UserURI:       userURI,
-		StatusesURI:   statusesURI,
-		InboxURI:      inboxURI,
-		OutboxURI:     outboxURI,
-		FollowersURI:  followersURI,
-		FollowingURI:  followingURI,
-		LikedURI:      likedURI,
-		CollectionURI: collectionURI,
-		PublicKeyURI:  publicKeyURI,
+		UserURI:               userURI,
+		StatusesURI:           statusesURI,
+		InboxURI:              inboxURI,
+		OutboxURI:             outboxURI,
+		FollowersURI:          followersURI,
+		FollowingURI:          followingURI,
+		LikedURI:              likedURI,
+		FeaturedCollectionURI: collectionURI,
+		PublicKeyURI:          publicKeyURI,
 	}
 }
 

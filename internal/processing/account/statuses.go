@@ -33,7 +33,7 @@ import (
 // the account given in authed.
 func (p *Processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinned bool, mediaOnly bool, publicOnly bool) (*apimodel.PageableResponse, gtserror.WithCode) {
 	if requestingAccount != nil {
-		if blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true); err != nil {
+		if blocked, err := p.state.DB.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true); err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		} else if blocked {
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts"))
@@ -46,10 +46,10 @@ func (p *Processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 	)
 	if pinned {
 		// Get *ONLY* pinned statuses.
-		statuses, err = p.db.GetAccountPinnedStatuses(ctx, targetAccountID)
+		statuses, err = p.state.DB.GetAccountPinnedStatuses(ctx, targetAccountID)
 	} else {
 		// Get account statuses which *may* include pinned ones.
-		statuses, err = p.db.GetAccountStatuses(ctx, targetAccountID, limit, excludeReplies, excludeReblogs, maxID, minID, mediaOnly, publicOnly)
+		statuses, err = p.state.DB.GetAccountStatuses(ctx, targetAccountID, limit, excludeReplies, excludeReblogs, maxID, minID, mediaOnly, publicOnly)
 	}
 	if err != nil {
 		if err == db.ErrNoEntries {
@@ -120,7 +120,7 @@ func (p *Processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 // WebStatusesGet fetches a number of statuses (in descending order) from the given account. It selects only
 // statuses which are suitable for showing on the public web profile of an account.
 func (p *Processor) WebStatusesGet(ctx context.Context, targetAccountID string, maxID string) (*apimodel.PageableResponse, gtserror.WithCode) {
-	acct, err := p.db.GetAccountByID(ctx, targetAccountID)
+	acct, err := p.state.DB.GetAccountByID(ctx, targetAccountID)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			err := fmt.Errorf("account %s not found in the db, not getting web statuses for it", targetAccountID)
@@ -134,7 +134,7 @@ func (p *Processor) WebStatusesGet(ctx context.Context, targetAccountID string, 
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	statuses, err := p.db.GetAccountWebStatuses(ctx, targetAccountID, 10, maxID)
+	statuses, err := p.state.DB.GetAccountWebStatuses(ctx, targetAccountID, 10, maxID)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return util.EmptyPageableResponse(), nil

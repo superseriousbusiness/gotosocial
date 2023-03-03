@@ -28,7 +28,6 @@ import (
 	"testing"
 	"time"
 
-	"codeberg.org/gruf/go-store/v2/kv"
 	"codeberg.org/gruf/go-store/v2/storage"
 	"github.com/stretchr/testify/suite"
 	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -1196,7 +1195,6 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
 	defer state.Workers.Stop()
 
 	storage := &gtsstorage.Driver{
-		KVStore: kv.New(disk),
 		Storage: disk,
 	}
 	state.Storage = storage

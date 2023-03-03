@@ -79,7 +79,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 
 		// Process note to generate a valid HTML representation
 		var f text.FormatFunc
-		if account.StatusFormat == "markdown" {
+		if account.StatusContentType == "text/markdown" {
 			f = p.formatter.FromMarkdown
 		} else {
 			f = p.formatter.FromPlain
@@ -144,12 +144,12 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 			account.Privacy = privacy
 		}
 
-		if form.Source.StatusFormat != nil {
-			if err := validate.StatusFormat(*form.Source.StatusFormat); err != nil {
+		if form.Source.StatusContentType != nil {
+			if err := validate.StatusContentType(*form.Source.StatusContentType); err != nil {
 				return nil, gtserror.NewErrorBadRequest(err, err.Error())
 			}
 
-			account.StatusFormat = *form.Source.StatusFormat
+			account.StatusContentType = *form.Source.StatusContentType
 		}
 	}
 
@@ -165,12 +165,12 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		account.EnableRSS = form.EnableRSS
 	}
 
-	err := p.db.UpdateAccount(ctx, account)
+	err := p.state.DB.UpdateAccount(ctx, account)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("could not update account %s: %s", account.ID, err))
 	}
 
-	p.clientWorker.Queue(messages.FromClientAPI{
+	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 		APObjectType:   ap.ObjectProfile,
 		APActivityType: ap.ActivityUpdate,
 		GTSModel:       account,

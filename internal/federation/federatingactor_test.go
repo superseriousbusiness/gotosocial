@@ -27,10 +27,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -56,14 +54,12 @@ func (suite *FederatingActorTestSuite) TestSendNoRemoteFollowers() {
 	)
 	testActivity := testrig.WrapAPNoteInCreate(testrig.URLMustParse("http://localhost:8080/whatever_some_create"), testrig.URLMustParse(testAccount.URI), time.Now(), testNote)
 
-	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
-
 	// setup transport controller with a no-op client so we don't make external calls
 	httpClient := testrig.NewMockHTTPClient(nil, "../../testrig/media")
-	tc := testrig.NewTestTransportController(httpClient, suite.db, fedWorker)
+	tc := testrig.NewTestTransportController(&suite.state, httpClient)
 
 	// setup module being tested
-	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
+	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(&suite.state), tc, suite.tc, testrig.NewTestMediaManager(&suite.state))
 
 	activity, err := federator.FederatingActor().Send(ctx, testrig.URLMustParse(testAccount.OutboxURI), testActivity)
 	suite.NoError(err)
@@ -105,12 +101,10 @@ func (suite *FederatingActorTestSuite) TestSendRemoteFollower() {
 	)
 	testActivity := testrig.WrapAPNoteInCreate(testrig.URLMustParse("http://localhost:8080/whatever_some_create"), testrig.URLMustParse(testAccount.URI), testrig.TimeMustParse("2022-06-02T12:22:21+02:00"), testNote)
 
-	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
-
 	httpClient := testrig.NewMockHTTPClient(nil, "../../testrig/media")
-	tc := testrig.NewTestTransportController(httpClient, suite.db, fedWorker)
+	tc := testrig.NewTestTransportController(&suite.state, httpClient)
 	// setup module being tested
-	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
+	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(&suite.state), tc, suite.tc, testrig.NewTestMediaManager(&suite.state))
 
 	activity, err := federator.FederatingActor().Send(ctx, testrig.URLMustParse(testAccount.OutboxURI), testActivity)
 	suite.NoError(err)

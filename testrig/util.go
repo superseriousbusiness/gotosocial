@@ -20,12 +20,33 @@ package testrig
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"mime/multipart"
 	"net/url"
 	"os"
 	"time"
+
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
+
+func StartWorkers(state *state.State) {
+	state.Workers.EnqueueClientAPI = func(context.Context, messages.FromClientAPI) {}
+	state.Workers.EnqueueFederator = func(context.Context, messages.FromFederator) {}
+
+	_ = state.Workers.Scheduler.Start(nil)
+	_ = state.Workers.ClientAPI.Start(1, 10)
+	_ = state.Workers.Federator.Start(1, 10)
+	_ = state.Workers.Media.Start(1, 10)
+}
+
+func StopWorkers(state *state.State) {
+	_ = state.Workers.Scheduler.Stop()
+	_ = state.Workers.ClientAPI.Stop()
+	_ = state.Workers.Federator.Stop()
+	_ = state.Workers.Media.Stop()
+}
 
 // CreateMultipartFormData is a handy function for taking a fieldname and a filename, and creating a multipart form bytes buffer
 // with the file contents set in the given fieldname. The extraFields param can be used to add extra FormFields to the request, as necessary.

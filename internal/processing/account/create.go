@@ -35,7 +35,7 @@ import (
 
 // Create processes the given form for creating a new account, returning an oauth token for that account if successful.
 func (p *Processor) Create(ctx context.Context, applicationToken oauth2.TokenInfo, application *gtsmodel.Application, form *apimodel.AccountCreateRequest) (*apimodel.Token, gtserror.WithCode) {
-	emailAvailable, err := p.db.IsEmailAvailable(ctx, form.Email)
+	emailAvailable, err := p.state.DB.IsEmailAvailable(ctx, form.Email)
 	if err != nil {
 		return nil, gtserror.NewErrorBadRequest(err)
 	}
@@ -43,7 +43,7 @@ func (p *Processor) Create(ctx context.Context, applicationToken oauth2.TokenInf
 		return nil, gtserror.NewErrorConflict(fmt.Errorf("email address %s is not available", form.Email))
 	}
 
-	usernameAvailable, err := p.db.IsUsernameAvailable(ctx, form.Username)
+	usernameAvailable, err := p.state.DB.IsUsernameAvailable(ctx, form.Username)
 	if err != nil {
 		return nil, gtserror.NewErrorBadRequest(err)
 	}
@@ -61,7 +61,7 @@ func (p *Processor) Create(ctx context.Context, applicationToken oauth2.TokenInf
 	}
 
 	log.Trace(ctx, "creating new username and account")
-	user, err := p.db.NewSignup(ctx, form.Username, text.SanitizePlaintext(reason), approvalRequired, form.Email, form.Password, form.IP, form.Locale, application.ID, false, "", false)
+	user, err := p.state.DB.NewSignup(ctx, form.Username, text.SanitizePlaintext(reason), approvalRequired, form.Email, form.Password, form.IP, form.Locale, application.ID, false, "", false)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error creating new signup in the database: %s", err))
 	}
@@ -73,7 +73,7 @@ func (p *Processor) Create(ctx context.Context, applicationToken oauth2.TokenInf
 	}
 
 	if user.Account == nil {
-		a, err := p.db.GetAccountByID(ctx, user.AccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, user.AccountID)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error getting new account from the database: %s", err))
 		}
@@ -82,7 +82,7 @@ func (p *Processor) Create(ctx context.Context, applicationToken oauth2.TokenInf
 
 	// there are side effects for creating a new account (sending confirmation emails etc)
 	// so pass a message to the processor so that it can do it asynchronously
-	p.clientWorker.Queue(messages.FromClientAPI{
+	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 		APObjectType:   ap.ObjectProfile,
 		APActivityType: ap.ActivityCreate,
 		GTSModel:       user.Account,

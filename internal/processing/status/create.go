@@ -61,11 +61,11 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, appli
 		Text:                     form.Status,
 	}
 
-	if errWithCode := processReplyToID(ctx, p.db, form, account.ID, newStatus); errWithCode != nil {
+	if errWithCode := processReplyToID(ctx, p.state.DB, form, account.ID, newStatus); errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	if errWithCode := processMediaIDs(ctx, p.db, form, account.ID, newStatus); errWithCode != nil {
+	if errWithCode := processMediaIDs(ctx, p.state.DB, form, account.ID, newStatus); errWithCode != nil {
 		return nil, errWithCode
 	}
 
@@ -77,17 +77,17 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, appli
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if err := processContent(ctx, p.db, p.formatter, p.parseMention, form, account.ID, newStatus); err != nil {
+	if err := processContent(ctx, p.state.DB, p.formatter, p.parseMention, form, account.ID, newStatus); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// put the new status in the database
-	if err := p.db.PutStatus(ctx, newStatus); err != nil {
+	if err := p.state.DB.PutStatus(ctx, newStatus); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// send it back to the processor for async processing
-	p.clientWorker.Queue(messages.FromClientAPI{
+	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 		APObjectType:   ap.ObjectNote,
 		APActivityType: ap.ActivityCreate,
 		GTSModel:       newStatus,
@@ -290,32 +290,32 @@ func processContent(ctx context.Context, dbService db.DB, formatter text.Formatt
 		return nil
 	}
 
-	// if format wasn't specified we should try to figure out what format this user prefers
-	if form.Format == "" {
+	// if content type wasn't specified we should try to figure out what content type this user prefers
+	if form.ContentType == "" {
 		acct, err := dbService.GetAccountByID(ctx, accountID)
 		if err != nil {
 			return fmt.Errorf("error processing new content: couldn't retrieve account from db to check post format: %s", err)
 		}
 
-		switch acct.StatusFormat {
-		case "plain":
-			form.Format = apimodel.StatusFormatPlain
-		case "markdown":
-			form.Format = apimodel.StatusFormatMarkdown
+		switch acct.StatusContentType {
+		case "text/plain":
+			form.ContentType = apimodel.StatusContentTypePlain
+		case "text/markdown":
+			form.ContentType = apimodel.StatusContentTypeMarkdown
 		default:
-			form.Format = apimodel.StatusFormatDefault
+			form.ContentType = apimodel.StatusContentTypeDefault
 		}
 	}
 
-	// parse content out of the status depending on what format has been submitted
+	// parse content out of the status depending on what content type has been submitted
 	var f text.FormatFunc
-	switch form.Format {
-	case apimodel.StatusFormatPlain:
+	switch form.ContentType {
+	case apimodel.StatusContentTypePlain:
 		f = formatter.FromPlain
-	case apimodel.StatusFormatMarkdown:
+	case apimodel.StatusContentTypeMarkdown:
 		f = formatter.FromMarkdown
 	default:
-		return fmt.Errorf("format %s not recognised as a valid status format", form.Format)
+		return fmt.Errorf("format %s not recognised as a valid status format", form.ContentType)
 	}
 	formatted := f(ctx, parseMention, accountID, status.ID, form.Status)
 

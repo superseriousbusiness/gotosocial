@@ -24,6 +24,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/stream"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -33,19 +34,23 @@ type StreamTestSuite struct {
 	testTokens   map[string]*gtsmodel.Token
 	db           db.DB
 	oauthServer  oauth.Server
+	state        state.State
 
 	streamProcessor stream.Processor
 }
 
 func (suite *StreamTestSuite) SetupTest() {
+	suite.state.Caches.Init()
+
 	testrig.InitTestLog()
 	testrig.InitTestConfig()
 
 	suite.testAccounts = testrig.NewTestAccounts()
 	suite.testTokens = testrig.NewTestTokens()
-	suite.db = testrig.NewTestDB()
+	suite.db = testrig.NewTestDB(&suite.state)
+	suite.state.DB = suite.db
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
-	suite.streamProcessor = stream.New(suite.db, suite.oauthServer)
+	suite.streamProcessor = stream.New(&suite.state, suite.oauthServer)
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 }

@@ -24,6 +24,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/user"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -31,6 +32,7 @@ type UserStandardTestSuite struct {
 	suite.Suite
 	emailSender email.Sender
 	db          db.DB
+	state       state.State
 
 	testUsers map[string]*gtsmodel.User
 
@@ -40,15 +42,19 @@ type UserStandardTestSuite struct {
 }
 
 func (suite *UserStandardTestSuite) SetupTest() {
+	suite.state.Caches.Init()
+
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
 
-	suite.db = testrig.NewTestDB()
+	suite.db = testrig.NewTestDB(&suite.state)
+	suite.state.DB = suite.db
+
 	suite.sentEmails = make(map[string]string)
 	suite.emailSender = testrig.NewEmailSender("../../../web/template/", suite.sentEmails)
 	suite.testUsers = testrig.NewTestUsers()
 
-	suite.user = user.New(suite.db, suite.emailSender)
+	suite.user = user.New(&suite.state, suite.emailSender)
 
 	testrig.StandardDBSetup(suite.db, nil)
 }

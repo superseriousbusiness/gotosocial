@@ -143,7 +143,7 @@ func (p *Processor) processCreateAccountFromClientAPI(ctx context.Context, clien
 	}
 
 	// get the user this account belongs to
-	user, err := p.db.GetUserByAccountID(ctx, account.ID)
+	user, err := p.state.DB.GetUserByAccountID(ctx, account.ID)
 	if err != nil {
 		return err
 	}
@@ -293,7 +293,7 @@ func (p *Processor) processUndoAnnounceFromClientAPI(ctx context.Context, client
 		return errors.New("undo was not parseable as *gtsmodel.Status")
 	}
 
-	if err := p.db.DeleteStatusByID(ctx, boost.ID); err != nil {
+	if err := p.state.DB.DeleteStatusByID(ctx, boost.ID); err != nil {
 		return err
 	}
 
@@ -422,7 +422,7 @@ func (p *Processor) federateStatus(ctx context.Context, status *gtsmodel.Status)
 	}
 
 	if status.Account == nil {
-		statusAccount, err := p.db.GetAccountByID(ctx, status.AccountID)
+		statusAccount, err := p.state.DB.GetAccountByID(ctx, status.AccountID)
 		if err != nil {
 			return fmt.Errorf("federateStatus: error fetching status author account: %s", err)
 		}
@@ -455,7 +455,7 @@ func (p *Processor) federateStatus(ctx context.Context, status *gtsmodel.Status)
 
 func (p *Processor) federateStatusDelete(ctx context.Context, status *gtsmodel.Status) error {
 	if status.Account == nil {
-		statusAccount, err := p.db.GetAccountByID(ctx, status.AccountID)
+		statusAccount, err := p.state.DB.GetAccountByID(ctx, status.AccountID)
 		if err != nil {
 			return fmt.Errorf("federateStatusDelete: error fetching status author account: %s", err)
 		}
@@ -642,7 +642,7 @@ func (p *Processor) federateUnannounce(ctx context.Context, boost *gtsmodel.Stat
 
 func (p *Processor) federateAcceptFollowRequest(ctx context.Context, follow *gtsmodel.Follow) error {
 	if follow.Account == nil {
-		a, err := p.db.GetAccountByID(ctx, follow.AccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, follow.AccountID)
 		if err != nil {
 			return err
 		}
@@ -651,7 +651,7 @@ func (p *Processor) federateAcceptFollowRequest(ctx context.Context, follow *gts
 	originAccount := follow.Account
 
 	if follow.TargetAccount == nil {
-		a, err := p.db.GetAccountByID(ctx, follow.TargetAccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, follow.TargetAccountID)
 		if err != nil {
 			return err
 		}
@@ -715,7 +715,7 @@ func (p *Processor) federateAcceptFollowRequest(ctx context.Context, follow *gts
 
 func (p *Processor) federateRejectFollowRequest(ctx context.Context, followRequest *gtsmodel.FollowRequest) error {
 	if followRequest.Account == nil {
-		a, err := p.db.GetAccountByID(ctx, followRequest.AccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, followRequest.AccountID)
 		if err != nil {
 			return err
 		}
@@ -724,7 +724,7 @@ func (p *Processor) federateRejectFollowRequest(ctx context.Context, followReque
 	originAccount := followRequest.Account
 
 	if followRequest.TargetAccount == nil {
-		a, err := p.db.GetAccountByID(ctx, followRequest.TargetAccountID)
+		a, err := p.state.DB.GetAccountByID(ctx, followRequest.TargetAccountID)
 		if err != nil {
 			return err
 		}
@@ -844,7 +844,7 @@ func (p *Processor) federateAccountUpdate(ctx context.Context, updatedAccount *g
 
 func (p *Processor) federateBlock(ctx context.Context, block *gtsmodel.Block) error {
 	if block.Account == nil {
-		blockAccount, err := p.db.GetAccountByID(ctx, block.AccountID)
+		blockAccount, err := p.state.DB.GetAccountByID(ctx, block.AccountID)
 		if err != nil {
 			return fmt.Errorf("federateBlock: error getting block account from database: %s", err)
 		}
@@ -852,7 +852,7 @@ func (p *Processor) federateBlock(ctx context.Context, block *gtsmodel.Block) er
 	}
 
 	if block.TargetAccount == nil {
-		blockTargetAccount, err := p.db.GetAccountByID(ctx, block.TargetAccountID)
+		blockTargetAccount, err := p.state.DB.GetAccountByID(ctx, block.TargetAccountID)
 		if err != nil {
 			return fmt.Errorf("federateBlock: error getting block target account from database: %s", err)
 		}
@@ -880,7 +880,7 @@ func (p *Processor) federateBlock(ctx context.Context, block *gtsmodel.Block) er
 
 func (p *Processor) federateUnblock(ctx context.Context, block *gtsmodel.Block) error {
 	if block.Account == nil {
-		blockAccount, err := p.db.GetAccountByID(ctx, block.AccountID)
+		blockAccount, err := p.state.DB.GetAccountByID(ctx, block.AccountID)
 		if err != nil {
 			return fmt.Errorf("federateUnblock: error getting block account from database: %s", err)
 		}
@@ -888,7 +888,7 @@ func (p *Processor) federateUnblock(ctx context.Context, block *gtsmodel.Block) 
 	}
 
 	if block.TargetAccount == nil {
-		blockTargetAccount, err := p.db.GetAccountByID(ctx, block.TargetAccountID)
+		blockTargetAccount, err := p.state.DB.GetAccountByID(ctx, block.TargetAccountID)
 		if err != nil {
 			return fmt.Errorf("federateUnblock: error getting block target account from database: %s", err)
 		}
@@ -934,7 +934,7 @@ func (p *Processor) federateUnblock(ctx context.Context, block *gtsmodel.Block) 
 
 func (p *Processor) federateReport(ctx context.Context, report *gtsmodel.Report) error {
 	if report.TargetAccount == nil {
-		reportTargetAccount, err := p.db.GetAccountByID(ctx, report.TargetAccountID)
+		reportTargetAccount, err := p.state.DB.GetAccountByID(ctx, report.TargetAccountID)
 		if err != nil {
 			return fmt.Errorf("federateReport: error getting report target account from database: %w", err)
 		}
@@ -942,7 +942,7 @@ func (p *Processor) federateReport(ctx context.Context, report *gtsmodel.Report)
 	}
 
 	if len(report.StatusIDs) > 0 && len(report.Statuses) == 0 {
-		statuses, err := p.db.GetStatuses(ctx, report.StatusIDs)
+		statuses, err := p.state.DB.GetStatuses(ctx, report.StatusIDs)
 		if err != nil {
 			return fmt.Errorf("federateReport: error getting report statuses from database: %w", err)
 		}
@@ -966,7 +966,7 @@ func (p *Processor) federateReport(ctx context.Context, report *gtsmodel.Report)
 
 	// deliver the flag using the outbox of the
 	// instance account to anonymize the report
-	instanceAccount, err := p.db.GetInstanceAccount(ctx, "")
+	instanceAccount, err := p.state.DB.GetInstanceAccount(ctx, "")
 	if err != nil {
 		return fmt.Errorf("federateReport: error getting instance account: %w", err)
 	}

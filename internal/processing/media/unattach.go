@@ -33,7 +33,7 @@ import (
 // Unattach unattaches the media attachment with the given ID from any statuses it was attached to, making it available
 // for reattachment again.
 func (p *Processor) Unattach(ctx context.Context, account *gtsmodel.Account, mediaAttachmentID string) (*apimodel.Attachment, gtserror.WithCode) {
-	attachment, err := p.db.GetAttachmentByID(ctx, mediaAttachmentID)
+	attachment, err := p.state.DB.GetAttachmentByID(ctx, mediaAttachmentID)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return nil, gtserror.NewErrorNotFound(errors.New("attachment doesn't exist in the db"))
@@ -49,7 +49,7 @@ func (p *Processor) Unattach(ctx context.Context, account *gtsmodel.Account, med
 	attachment.UpdatedAt = time.Now()
 	attachment.StatusID = ""
 
-	if err := p.db.UpdateByID(ctx, attachment, attachment.ID, updatingColumns...); err != nil {
+	if err := p.state.DB.UpdateByID(ctx, attachment, attachment.ID, updatingColumns...); err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("db error updating attachment: %s", err))
 	}
 

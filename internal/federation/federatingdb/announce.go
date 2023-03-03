@@ -59,7 +59,7 @@ func (f *federatingDB) Announce(ctx context.Context, announce vocab.ActivityStre
 	}
 
 	// it's a new announce so pass it back to the processor async for dereferencing etc
-	f.fedWorker.Queue(messages.FromFederator{
+	f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
 		APObjectType:     ap.ActivityAnnounce,
 		APActivityType:   ap.ActivityCreate,
 		GTSModel:         boost,

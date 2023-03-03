@@ -344,7 +344,6 @@ func (suite *FromFederatorTestSuite) TestProcessAccountDelete() {
 	suite.NoError(err)
 
 	// now they are mufos!
-
 	err = suite.processor.ProcessFromFederator(ctx, messages.FromFederator{
 		APObjectType:     ap.ObjectProfile,
 		APActivityType:   ap.ActivityDelete,

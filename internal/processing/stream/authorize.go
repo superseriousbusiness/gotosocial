@@ -41,7 +41,7 @@ func (p *Processor) Authorize(ctx context.Context, accessToken string) (*gtsmode
 		return nil, gtserror.NewErrorUnauthorized(err)
 	}
 
-	user, err := p.db.GetUserByID(ctx, uid)
+	user, err := p.state.DB.GetUserByID(ctx, uid)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			err := fmt.Errorf("no user found for validated uid %s", uid)
@@ -50,7 +50,7 @@ func (p *Processor) Authorize(ctx context.Context, accessToken string) (*gtsmode
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	acct, err := p.db.GetAccountByID(ctx, user.AccountID)
+	acct, err := p.state.DB.GetAccountByID(ctx, user.AccountID)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			err := fmt.Errorf("no account found for validated uid %s", uid)

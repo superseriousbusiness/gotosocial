@@ -21,19 +21,18 @@ package fedi
 import (
 	"context"
 	"fmt"
-	"net/url"
 
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // EmojiGet handles the GET for a federated emoji originating from this instance.
-func (p *Processor) EmojiGet(ctx context.Context, requestedEmojiID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
+func (p *Processor) EmojiGet(ctx context.Context, requestedEmojiID string) (interface{}, gtserror.WithCode) {
 	if _, errWithCode := p.federator.AuthenticateFederatedRequest(ctx, ""); errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	requestedEmoji, err := p.db.GetEmojiByID(ctx, requestedEmojiID)
+	requestedEmoji, err := p.state.DB.GetEmojiByID(ctx, requestedEmojiID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting emoji with id %s: %s", requestedEmojiID, err))
 	}

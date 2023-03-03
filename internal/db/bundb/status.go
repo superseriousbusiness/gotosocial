@@ -200,7 +200,9 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Er
 					Model(&gtsmodel.StatusToEmoji{
 						StatusID: status.ID,
 						EmojiID:  i,
-					}).Exec(ctx); err != nil {
+					}).
+					On("CONFLICT (?, ?) DO NOTHING", bun.Ident("status_id"), bun.Ident("emoji_id")).
+					Exec(ctx); err != nil {
 					err = s.conn.ProcessError(err)
 					if !errors.Is(err, db.ErrAlreadyExists) {
 						return err
@@ -215,7 +217,9 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Er
 					Model(&gtsmodel.StatusToTag{
 						StatusID: status.ID,
 						TagID:    i,
-					}).Exec(ctx); err != nil {
+					}).
+					On("CONFLICT (?, ?) DO NOTHING", bun.Ident("status_id"), bun.Ident("tag_id")).
+					Exec(ctx); err != nil {
 					err = s.conn.ProcessError(err)
 					if !errors.Is(err, db.ErrAlreadyExists) {
 						return err
@@ -246,7 +250,13 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Er
 	})
 }
 
-func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status) db.Error {
+func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, columns ...string) db.Error {
+	status.UpdatedAt = time.Now()
+	if len(columns) > 0 {
+		// If we're updating by column, ensure "updated_at" is included.
+		columns = append(columns, "updated_at")
+	}
+
 	if err := s.conn.RunInTx(ctx, func(tx bun.Tx) error {
 		// create links between this status and any emojis it uses
 		for _, i := range status.EmojiIDs {
@@ -255,7 +265,9 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status) db
 				Model(&gtsmodel.StatusToEmoji{
 					StatusID: status.ID,
 					EmojiID:  i,
-				}).Exec(ctx); err != nil {
+				}).
+				On("CONFLICT (?, ?) DO NOTHING", bun.Ident("status_id"), bun.Ident("emoji_id")).
+				Exec(ctx); err != nil {
 				err = s.conn.ProcessError(err)
 				if !errors.Is(err, db.ErrAlreadyExists) {
 					return err
@@ -270,7 +282,9 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status) db
 				Model(&gtsmodel.StatusToTag{
 					StatusID: status.ID,
 					TagID:    i,
-				}).Exec(ctx); err != nil {
+				}).
+				On("CONFLICT (?, ?) DO NOTHING", bun.Ident("status_id"), bun.Ident("tag_id")).
+				Exec(ctx); err != nil {
 				err = s.conn.ProcessError(err)
 				if !errors.Is(err, db.ErrAlreadyExists) {
 					return err
@@ -294,10 +308,11 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status) db
 			}
 		}
 
-		// Finally, insert the status
+		// Finally, update the status
 		_, err := tx.
 			NewUpdate().
 			Model(status).
+			Column(columns...).
 			Where("? = ?", bun.Ident("status.id"), status.ID).
 			Exec(ctx)
 		return err

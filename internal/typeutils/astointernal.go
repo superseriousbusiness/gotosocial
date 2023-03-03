@@ -181,9 +181,14 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 		acct.FollowersURI = accountable.GetActivityStreamsFollowers().GetIRI().String()
 	}
 
-	// FeaturedURI
-	if accountable.GetTootFeatured() != nil && accountable.GetTootFeatured().GetIRI() != nil {
-		acct.FeaturedCollectionURI = accountable.GetTootFeatured().GetIRI().String()
+	// FeaturedURI aka pinned collection:
+	// Only trust featured URI if it has at least two domains,
+	// from the right, in common with the domain of the account
+	if featured := accountable.GetTootFeatured(); featured != nil && featured.IsIRI() {
+		if featuredURI := featured.GetIRI(); // nocollapse
+		featuredURI != nil && dns.CompareDomainName(acct.Domain, featuredURI.Host) >= 2 {
+			acct.FeaturedCollectionURI = featuredURI.String()
+		}
 	}
 
 	// TODO: FeaturedTagsURI

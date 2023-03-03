@@ -43,7 +43,7 @@ type Account struct {
 	Privacy               string          `json:"privacy,omitempty" bun:",nullzero"`
 	Sensitive             *bool           `json:"sensitive"`
 	Language              string          `json:"language,omitempty" bun:",nullzero"`
-	StatusFormat          string          `json:"statusFormat,omitempty" bun:",nullzero"`
+	StatusContentType     string          `json:"statusContentType,omitempty" bun:",nullzero"`
 	URI                   string          `json:"uri" bun:",nullzero"`
 	URL                   string          `json:"url" bun:",nullzero"`
 	InboxURI              string          `json:"inboxURI" bun:",nullzero"`

@@ -57,31 +57,31 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 	// 10. Delete account's notifications
 	l.Trace("deleting account notifications")
 	// first notifications created by account
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "origin_account_id", Value: account.ID}}, &[]*gtsmodel.Notification{}); err != nil {
+	if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "origin_account_id", Value: account.ID}}, &[]*gtsmodel.Notification{}); err != nil {
 		l.Errorf("error deleting notifications created by account: %s", err)
 	}
 
 	// now notifications targeting account
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "target_account_id", Value: account.ID}}, &[]*gtsmodel.Notification{}); err != nil {
+	if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "target_account_id", Value: account.ID}}, &[]*gtsmodel.Notification{}); err != nil {
 		l.Errorf("error deleting notifications targeting account: %s", err)
 	}
 
 	// 11. Delete account's bookmarks
 	l.Trace("deleting account bookmarks")
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.StatusBookmark{}); err != nil {
+	if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.StatusBookmark{}); err != nil {
 		l.Errorf("error deleting bookmarks created by account: %s", err)
 	}
 
 	// 12. Delete account's faves
 	// TODO: federate these if necessary
 	l.Trace("deleting account faves")
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.StatusFave{}); err != nil {
+	if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.StatusFave{}); err != nil {
 		l.Errorf("error deleting faves created by account: %s", err)
 	}
 
 	// 13. Delete account's mutes
 	l.Trace("deleting account mutes")
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.StatusMute{}); err != nil {
+	if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.StatusMute{}); err != nil {
 		l.Errorf("error deleting status mutes created by account: %s", err)
 	}
 
@@ -94,7 +94,7 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 	// 16. Delete account's user
 	if user != nil {
 		l.Trace("deleting account user")
-		if err := p.db.DeleteUserByID(ctx, user.ID); err != nil {
+		if err := p.state.DB.DeleteUserByID(ctx, user.ID); err != nil {
 			return gtserror.NewErrorInternalError(err)
 		}
 	}
@@ -121,7 +121,7 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 	account.Discoverable = &discoverable
 	account.SuspendedAt = time.Now()
 	account.SuspensionOrigin = origin
-	err := p.db.UpdateAccount(ctx, account)
+	err := p.state.DB.UpdateAccount(ctx, account)
 	if err != nil {
 		return gtserror.NewErrorInternalError(err)
 	}
@@ -141,7 +141,7 @@ func (p *Processor) DeleteLocal(ctx context.Context, account *gtsmodel.Account, 
 
 	if form.DeleteOriginID == account.ID {
 		// the account owner themself has requested deletion via the API, get their user from the db
-		user, err := p.db.GetUserByAccountID(ctx, account.ID)
+		user, err := p.state.DB.GetUserByAccountID(ctx, account.ID)
 		if err != nil {
 			return gtserror.NewErrorInternalError(err)
 		}
@@ -161,7 +161,7 @@ func (p *Processor) DeleteLocal(ctx context.Context, account *gtsmodel.Account, 
 	} else {
 		// the delete has been requested by some other account, grab it;
 		// if we've reached this point we know it has permission already
-		requestingAccount, err := p.db.GetAccountByID(ctx, form.DeleteOriginID)
+		requestingAccount, err := p.state.DB.GetAccountByID(ctx, form.DeleteOriginID)
 		if err != nil {
 			return gtserror.NewErrorInternalError(err)
 		}
@@ -170,7 +170,7 @@ func (p *Processor) DeleteLocal(ctx context.Context, account *gtsmodel.Account, 
 	}
 
 	// put the delete in the processor queue to handle the rest of it asynchronously
-	p.clientWorker.Queue(fromClientAPIMessage)
+	p.state.Workers.EnqueueClientAPI(ctx, fromClientAPIMessage)
 
 	return nil
 }

@@ -35,7 +35,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"go.uber.org/automaxprocs/maxprocs"
 
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -45,7 +44,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
@@ -107,19 +105,11 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	state.Workers.Start()
 	defer state.Workers.Stop()
 
-	// Create the client API and federator worker pools
-	// NOTE: these MUST NOT be used until they are passed to the
-	// processor and it is started. The reason being that the processor
-	// sets the Worker process functions and start the underlying pools
-	// TODO: move these into state.Workers (and maybe reformat worker pools).
-	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
-	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
-
 	// build backend handlers
 	mediaManager := media.NewManager(&state)
 	oauthServer := oauth.New(ctx, dbService)
 	typeConverter := typeutils.NewConverter(dbService)
-	federatingDB := federatingdb.New(dbService, fedWorker, typeConverter)
+	federatingDB := federatingdb.New(&state, typeConverter)
 	transportController := transport.NewController(dbService, federatingDB, &federation.Clock{}, client)
 	federator := federation.NewFederator(dbService, federatingDB, transportController, typeConverter, mediaManager)
 
@@ -140,10 +130,14 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	// create the message processor using the other services we've created so far
-	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaManager, storage, dbService, emailSender, clientWorker, fedWorker)
+	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaManager, &state, emailSender)
 	if err := processor.Start(); err != nil {
 		return fmt.Errorf("error creating processor: %s", err)
 	}
+
+	// Set state client / federator worker enqueue functions
+	state.Workers.EnqueueClientAPI = processor.EnqueueClientAPI
+	state.Workers.EnqueueFederator = processor.EnqueueFederator
 
 	/*
 		HTTP router initialization

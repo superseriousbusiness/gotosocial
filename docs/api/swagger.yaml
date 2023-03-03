@@ -143,10 +143,10 @@ definitions:
                 description: Whether new statuses should be marked sensitive by default.
                 type: boolean
                 x-go-name: Sensitive
-            status_format:
-                description: The default posting format for new statuses.
+            status_content_type:
+                description: The default posting content type for new statuses.
                 type: string
-                x-go-name: StatusFormat
+                x-go-name: StatusContentType
         title: Source represents display or publishing preferences of user's own account.
         type: object
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
@@ -1240,6 +1240,15 @@ definitions:
                 format: int64
                 type: integer
                 x-go-name: MaxMediaAttachments
+            supported_mime_types:
+                description: List of mime types that it's possible to use for statuses on this instance.
+                example:
+                    - text/plain
+                    - text/markdown
+                items:
+                    type: string
+                type: array
+                x-go-name: SupportedMimeTypes
         title: InstanceConfigurationStatuses models instance status config parameters.
         type: object
         x-go-name: InstanceConfigurationStatuses
@@ -2112,12 +2121,12 @@ definitions:
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     statusCreateRequest:
         properties:
-            format:
+            content_type:
                 description: |-
-                    Format to use when parsing this status.
+                    Content type to use when parsing this status.
                     in: formData
                 type: string
-                x-go-name: Format
+                x-go-name: ContentType
             in_reply_to_id:
                 description: |-
                     ID of the status being replied to, if status is a reply.
@@ -2324,9 +2333,11 @@ definitions:
     swaggerCollection:
         properties:
             '@context':
-                description: ActivityStreams context.
+                description: |-
+                    ActivityStreams JSON-LD context.
+                    A string or an array of strings, or more
+                    complex nested items.
                 example: https://www.w3.org/ns/activitystreams
-                type: string
                 x-go-name: Context
             first:
                 $ref: '#/definitions/swaggerCollectionPage'
@@ -2342,7 +2353,7 @@ definitions:
                 example: Collection
                 type: string
                 x-go-name: Type
-        title: SwaggerCollection represents an activitypub collection.
+        title: SwaggerCollection represents an ActivityPub Collection.
         type: object
         x-go-name: SwaggerCollection
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users
@@ -2380,6 +2391,41 @@ definitions:
         title: SwaggerCollectionPage represents one page of a collection.
         type: object
         x-go-name: SwaggerCollectionPage
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users
+    swaggerFeaturedCollection:
+        properties:
+            '@context':
+                description: |-
+                    ActivityStreams JSON-LD context.
+                    A string or an array of strings, or more
+                    complex nested items.
+                example: https://www.w3.org/ns/activitystreams
+                x-go-name: Context
+            TotalItems:
+                description: Number of items in this collection.
+                example: 2
+                format: int64
+                type: integer
+            id:
+                description: ActivityStreams ID.
+                example: https://example.org/users/some_user/collections/featured
+                type: string
+                x-go-name: ID
+            items:
+                description: List of status URIs.
+                example: '[''https://example.org/users/some_user/statuses/01GSZ0F7Q8SJKNRF777GJD271R'', ''https://example.org/users/some_user/statuses/01GSZ0G012CBQ7TEKX689S3QRE'']'
+                items:
+                    type: string
+                type: array
+                x-go-name: Items
+            type:
+                description: ActivityStreams type.
+                example: OrderedCollection
+                type: string
+                x-go-name: Type
+        title: SwaggerFeaturedCollection represents an ActivityPub OrderedCollection.
+        type: object
+        x-go-name: SwaggerFeaturedCollection
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users
     tag:
         properties:
@@ -2426,10 +2472,10 @@ definitions:
                 description: Mark authored statuses as sensitive by default.
                 type: boolean
                 x-go-name: Sensitive
-            status_format:
-                description: Default format for authored statuses (plain or markdown).
+            status_content_type:
+                description: Default format for authored statuses (text/plain or text/markdown).
                 type: string
-                x-go-name: StatusFormat
+                x-go-name: StatusContentType
         title: UpdateSource is to be used specifically in an UpdateCredentialsRequest.
         type: object
         x-go-name: UpdateSource
@@ -3044,9 +3090,9 @@ paths:
                   in: formData
                   name: source[language]
                   type: string
-                - description: Default format to use for authored statuses (plain or markdown).
+                - description: Default content type to use for authored statuses (text/plain or text/markdown).
                   in: formData
-                  name: source[status_format]
+                  name: source[status_content_type]
                   type: string
                 - description: Custom CSS to use when rendering this account's profile or statuses. String must be no more than 5,000 characters (~5kb).
                   in: formData
@@ -4837,11 +4883,11 @@ paths:
                   name: language
                   type: string
                   x-go-name: Language
-                - description: Format to use when parsing this status.
+                - description: Content type to use when parsing this status.
                   in: formData
-                  name: format
+                  name: content_type
                   type: string
-                  x-go-name: Format
+                  x-go-name: ContentType
                 - description: This status will be federated beyond the local timeline(s).
                   in: query
                   name: federated
@@ -5629,6 +5675,33 @@ paths:
             summary: Returns a compliant nodeinfo response to node info queries.
             tags:
                 - nodeinfo
+    /users/{username}/collections/featured:
+        get:
+            description: |-
+                The response will contain an ordered collection of Note URIs in the `items` property.
+
+                It is up to the caller to dereference the provided Note URIs (or not, if they already have them cached).
+
+                HTTP signature is required on the request.
+            operationId: s2sFeaturedCollectionGet
+            produces:
+                - application/activity+json
+            responses:
+                "200":
+                    description: ""
+                    schema:
+                        $ref: '#/definitions/swaggerFeaturedCollection'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+            summary: Get the featured collection (pinned posts) for a user.
+            tags:
+                - s2s/federation
     /users/{username}/outbox:
         get:
             description: |-

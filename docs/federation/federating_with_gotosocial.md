@@ -1,4 +1,5 @@
 # Federating with GoToSocial
+
 Information on the various (ActivityPub) elements needed to federate with GoToSocial.
 
 ## HTTP Signatures
@@ -71,12 +72,11 @@ Remote servers federating with GoToSocial should extract the public key from the
 
 This behavior was introduced as a way of avoiding having remote servers make unsigned `GET` requests to the full Actor endpoint. However, this may change in future as it is not compliant and causes issues. Tracked in [this issue](https://github.com/superseriousbusiness/gotosocial/issues/1186).
 
-
 ## Access Control
 
 GoToSocial uses access control restrictions to protect users and resources from unwanted interactions with remote accounts and instances.
 
-As shown in the [HTTP Signatures](#http_signatures.md) section, GoToSocial requires all incoming `GET` and `POST` requests from remote servers to be signed. Unsigned requests will be denied with http code `401 Unauthorized`.
+As shown in the [HTTP Signatures](#http-signatures) section, GoToSocial requires all incoming `GET` and `POST` requests from remote servers to be signed. Unsigned requests will be denied with http code `401 Unauthorized`.
 
 Access control restrictions are implemented by checking the `keyId` of the signature (who owns the public/private key pair making the request).
 
@@ -85,6 +85,7 @@ First, the host value of the `keyId` uri is checked against the GoToSocial insta
 Next, GoToSocial will check for the existence of a block (in either direction) between the owner of the public key making the http request, and the owner of the resource that the request is targeting. If the GoToSocial user blocks the remote account making the request, then the request will be aborted with http code `403 Forbidden`.
 
 ## Request Throttling & Rate Limiting
+
 GoToSocial applies http request throttling and rate limiting to the ActivityPub API endpoints (inboxes, user endpoints, emojis, etc).
 
 This ensures that remote servers cannot flood a GoToSocial instance with spurious requests. Instead, remote servers making GET or POST requests to the ActivityPub API endpoints should respect 429 and 503 http codes, and take account of the `retry-after` http response header.
@@ -140,6 +141,7 @@ The `orderedItems` array will contain up to 30 entries. To get more entries beyo
 Note that in the returned `orderedItems`, all activity types will be `Create`. On each activity, the `object` field will be the AP URI of an original public status created by the Actor who owns the Outbox (ie., a `Note` with `https://www.w3.org/ns/activitystreams#Public` in the `to` field, which is not a reply to another status). Callers can use the returned AP URIs to dereference the content of the notes.
 
 ## Conversation Threads
+
 Due to the nature of decentralization and federation, it is practically impossible for any one server on the fediverse to be aware of every post in a given conversation thread.
 
 With that said, it is possible to do 'best effort' dereferencing of threads, whereby remote replies are fetched from one server onto another, to try to more fully flesh out a conversation.
@@ -208,4 +210,60 @@ GoToSocial will not assume that the `to` field will be set on an incoming `Flag`
 
 A valid incoming `Flag` Activity will be made available as a report to the admin(s) of the GoToSocial instance that received the report, so that they can take any necessary moderation action against the reported user.
 
-The reported user themself will not see the report, or be notified that they have been reported, unless the GtS admin chooses to share this information with them via some other channel. 
+The reported user themself will not see the report, or be notified that they have been reported, unless the GtS admin chooses to share this information with them via some other channel.
+
+## Featured (aka pinned) Posts
+
+GoToSocial allows users to feature (or 'pin') posts on their profile.
+
+In ActivityPub terms, GoToSocial serves these pinned posts as an [OrderedCollection](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollection) at the endpoint indicated in an Actor's [featured](https://docs.joinmastodon.org/spec/activitypub/#featured) field. The value of this field will be set to something like `https://example.org/users/some_user/collections/featured`.
+
+By making a signed GET request to this endpoint, remote instances can dereference the featured posts collection, which will return an `OrderedCollection` with a list of post URIs in the `orderedItems` field.
+
+Example of a featured collection of a user who has pinned multiple `Note`s:
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://example.org/users/some_user/collections/featured",
+  "orderedItems": [
+    "https://example.org/users/some_user/statuses/01GS7VTYH0S77NNXTP6W4G9EAG",
+    "https://example.org/users/some_user/statuses/01GSFY2SZK9TPCJFQ1WCCPGDRT",
+    "https://example.org/users/some_user/statuses/01GSCXY70MZCBFMH5EKJW9ENC8"
+  ],
+  "totalItems": 3,
+  "type": "OrderedCollection"
+}
+```
+
+Example of a user who has pinned one `Note` (`orderedItems` is just a URL string now!):
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://example.org/users/some_user/collections/featured",
+  "orderedItems": "https://example.org/users/some_user/statuses/01GS7VTYH0S77NNXTP6W4G9EAG",
+  "totalItems": 1,
+  "type": "OrderedCollection"
+}
+```
+
+Example with no pinned `Note`s:
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://example.org/users/some_user/collections/featured",
+  "orderedItems": [],
+  "totalItems": 0,
+  "type": "OrderedCollection"
+}
+```
+
+Unlike Mastodon and some other implementations, GoToSocial does *not* serve full `Note` representations as `orderedItems` values. Instead, it provides just the URI of each `Note`, which the remote server can then dereference (or not, if they already have the `Note` cached locally).
+
+Some of the URIs served as part of the collection may point to followers-only posts which the requesting `Actor` won't necessarily have permission to view. Remote servers should make sure to do their own filtering (as with any other post type) to ensure that these posts are only shown to users who are permitted to view them.
+
+Another difference between GoToSocial and other server implementations is that GoToSocial does not send updates to remote servers when a post is pinned or unpinned by a user. Mastodon does this by sending [Add](https://www.w3.org/TR/activitypub/#add-activity-inbox) and [Remove](https://www.w3.org/TR/activitypub/#remove-activity-inbox) Activity types where the `object` is the post being pinned or unpinned, and the `target` is the sending `Actor`'s `featured` collection. While this conceptually makes sense, it is not in line with what the ActivityPub protocol recommends, since the `target` of the Activity "is not owned by the receiving server, and thus they can't update it".
+
+Instead, to build a view of a GoToSocial user's pinned posts, it is recommended that remote instances simply poll a GoToSocial Actor's `featured` collection every so often, and add/remove posts in their cached representation as appropriate.

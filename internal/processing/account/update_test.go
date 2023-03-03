@@ -122,13 +122,13 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithMarkdownNote() {
 		Note: &note,
 	}
 
-	// set default post language of account 1 to markdown
-	testAccount.StatusFormat = "markdown"
+	// set default post content type of account 1 to markdown
+	testAccount.StatusContentType = "text/markdown"
 
 	// should get no error from the update function, and an api model account returned
 	apiAccount, errWithCode := suite.accountProcessor.Update(context.Background(), testAccount, form)
 	// reset test account to avoid breaking other tests
-	testAccount.StatusFormat = "plain"
+	testAccount.StatusContentType = "text/plain"
 	suite.NoError(errWithCode)
 	suite.NotNil(apiAccount)
 

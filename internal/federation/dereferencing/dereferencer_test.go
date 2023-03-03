@@ -21,11 +21,10 @@ package dereferencing_test
 import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/streams/vocab"
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -34,6 +33,7 @@ type DereferencerStandardTestSuite struct {
 	suite.Suite
 	db      db.DB
 	storage *storage.Driver
+	state   state.State
 
 	testRemoteStatuses    map[string]vocab.ActivityStreamsNote
 	testRemotePeople      map[string]vocab.ActivityStreamsPerson
@@ -58,12 +58,19 @@ func (suite *DereferencerStandardTestSuite) SetupTest() {
 	suite.testRemoteAttachments = testrig.NewTestFediAttachments("../../../testrig/media")
 	suite.testEmojis = testrig.NewTestEmojis()
 
-	suite.db = testrig.NewTestDB()
+	suite.state.Caches.Init()
+	testrig.StartWorkers(&suite.state)
+
+	suite.db = testrig.NewTestDB(&suite.state)
 	suite.storage = testrig.NewInMemoryStorage()
-	suite.dereferencer = dereferencing.NewDereferencer(suite.db, testrig.NewTestTypeConverter(suite.db), testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../testrig/media"), suite.db, concurrency.NewWorkerPool[messages.FromFederator](-1, -1)), testrig.NewTestMediaManager(suite.db, suite.storage))
+	suite.state.DB = suite.db
+	suite.state.Storage = suite.storage
+	media := testrig.NewTestMediaManager(&suite.state)
+	suite.dereferencer = dereferencing.NewDereferencer(suite.db, testrig.NewTestTypeConverter(suite.db), testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../testrig/media")), media)
 	testrig.StandardDBSetup(suite.db, nil)
 }
 
 func (suite *DereferencerStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
+	testrig.StopWorkers(&suite.state)
 }

@@ -31,7 +31,7 @@ import (
 // GetCustomEmojis returns a list of all useable local custom emojis stored on this instance.
 // 'useable' in this context means visible and picker, and not disabled.
 func (p *Processor) GetCustomEmojis(ctx context.Context) ([]*apimodel.Emoji, gtserror.WithCode) {
-	emojis, err := p.db.GetUseableEmojis(ctx)
+	emojis, err := p.state.DB.GetUseableEmojis(ctx)
 	if err != nil {
 		if err != db.ErrNoEntries {
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("db error retrieving custom emojis: %s", err))

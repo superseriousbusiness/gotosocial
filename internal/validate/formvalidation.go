@@ -150,16 +150,16 @@ func Privacy(privacy string) error {
 	return fmt.Errorf("privacy '%s' was not recognized, valid options are 'direct', 'mutuals_only', 'private', 'public', 'unlisted'", privacy)
 }
 
-// StatusFormat checks that the desired status format setting is valid.
-func StatusFormat(statusFormat string) error {
-	if statusFormat == "" {
+// StatusContentType checks that the desired status format setting is valid.
+func StatusContentType(statusContentType string) error {
+	if statusContentType == "" {
 		return fmt.Errorf("empty string for status format not allowed")
 	}
-	switch apimodel.StatusFormat(statusFormat) {
-	case apimodel.StatusFormatPlain, apimodel.StatusFormatMarkdown:
+	switch apimodel.StatusContentType(statusContentType) {
+	case apimodel.StatusContentTypePlain, apimodel.StatusContentTypeMarkdown:
 		return nil
 	}
-	return fmt.Errorf("status format '%s' was not recognized, valid options are 'plain', 'markdown'", statusFormat)
+	return fmt.Errorf("status content type '%s' was not recognized, valid options are 'text/plain', 'text/markdown'", statusContentType)
 }
 
 func CustomCSS(customCSS string) error {

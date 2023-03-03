@@ -39,13 +39,13 @@ func (f *federatingDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, 
 
 	switch {
 	case uris.IsUserPath(id):
-		acct, err := f.db.GetAccountByURI(ctx, id.String())
+		acct, err := f.state.DB.GetAccountByURI(ctx, id.String())
 		if err != nil {
 			return nil, err
 		}
 		return f.typeConverter.AccountToAS(ctx, acct)
 	case uris.IsStatusesPath(id):
-		status, err := f.db.GetStatusByURI(ctx, id.String())
+		status, err := f.state.DB.GetStatusByURI(ctx, id.String())
 		if err != nil {
 			return nil, err
 		}
