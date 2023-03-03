@@ -267,3 +267,58 @@ Some of the URIs served as part of the collection may point to followers-only po
 Another difference between GoToSocial and other server implementations is that GoToSocial does not send updates to remote servers when a post is pinned or unpinned by a user. Mastodon does this by sending [Add](https://www.w3.org/TR/activitypub/#add-activity-inbox) and [Remove](https://www.w3.org/TR/activitypub/#remove-activity-inbox) Activity types where the `object` is the post being pinned or unpinned, and the `target` is the sending `Actor`'s `featured` collection. While this conceptually makes sense, it is not in line with what the ActivityPub protocol recommends, since the `target` of the Activity "is not owned by the receiving server, and thus they can't update it".
 
 Instead, to build a view of a GoToSocial user's pinned posts, it is recommended that remote instances simply poll a GoToSocial Actor's `featured` collection every so often, and add/remove posts in their cached representation as appropriate.
+
+## Post Deletes
+
+GoToSocial allows users to delete posts that they have created. These deletes will be federated out to other instances, which are expected to also delete their local cache of the post.
+
+### Outgoing
+
+When a post is deleted by a GoToSocial user, the server will send a `Delete` activity out to other instances.
+
+The `Delete` will have the ActivityPub URI of the post set as the value of the `Object` entry.
+
+`to` and `cc` will be set according to the visibility of the original post, and any users mentioned/replied to by the original post.
+
+If the original post was not a direct message, the ActivityPub `Public` URI will be addressed in `to`. Otherwise, only mentioned and replied to users will be addressed.
+
+In the following example, the 'admin' user deletes a public post of theirs in which the 'foss_satan' user was mentioned:
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": "http://example.org/users/admin",
+  "cc": [
+    "http://example.org/users/admin/followers",
+    "http://fossbros-anonymous.io/users/foss_satan"
+  ],
+  "object": "http://example.org/users/admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0",
+  "to": "https://www.w3.org/ns/activitystreams#Public",
+  "type": "Delete"
+}
+```
+
+In the next example, the '1happyturtle' user deletes a direct message which was originally addressed to the 'the_mighty_zork' user.
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": "http://example.org/users/1happyturtle",
+  "cc": [],
+  "object": "http://example.org/users/1happyturtle/statuses/01FN3VJGFH10KR7S2PB0GFJZYG",
+  "to": "http://somewhere.com/users/the_mighty_zork",
+  "type": "Delete"
+}
+```
+
+To process a `Delete` activity coming from a GoToSocial instance, remote instances should check if they have the `Object` stored according to the provided URI. If they do, they should remove it from their local cache. If not, then no action is required, since they never had the now-deleted post stored in the first place.
+
+### Incoming
+
+GoToSocial processes `Delete` activities coming in from remote instances as thoroughly as possible in order to respect the privacy of other users.
+
+When a GoToSocial instance receives a `Delete`, it will attempt to derive the deleted post URI from the `Object` field. If the `Object` is just a URI, then this URI will be taken. If the `Object` is a `Note` or another type commonly used to represent a post, then the URI will be extracted from it.
+
+Then, GoToSocial will check if it has a post stored with the given URI. If it does, it will be completely deleted from the database and all user timelines.
+
+GoToSocial will only delete a post if it can be sure that the original post was owned by the `actor` that the `Delete` is attributed to.

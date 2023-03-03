@@ -477,6 +477,7 @@ type TypeUtilsTestSuite struct {
 	testPeople      map[string]vocab.ActivityStreamsPerson
 	testEmojis      map[string]*gtsmodel.Emoji
 	testReports     map[string]*gtsmodel.Report
+	testMentions    map[string]*gtsmodel.Mention
 
 	typeconverter typeutils.TypeConverter
 }
@@ -495,6 +496,7 @@ func (suite *TypeUtilsTestSuite) SetupSuite() {
 	suite.testPeople = testrig.NewTestFediPeople()
 	suite.testEmojis = testrig.NewTestEmojis()
 	suite.testReports = testrig.NewTestReports()
+	suite.testMentions = testrig.NewTestMentions()
 	suite.typeconverter = typeutils.NewConverter(suite.db)
 }
 

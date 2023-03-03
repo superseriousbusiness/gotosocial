@@ -148,6 +148,9 @@ type TypeConverter interface {
 	AccountToASMinimal(ctx context.Context, a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error)
 	// StatusToAS converts a gts model status into an activity streams note, suitable for federation
 	StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.ActivityStreamsNote, error)
+	// StatusToASDelete converts a gts model status into a Delete of that status, using just the
+	// URI of the status as object, and addressing the Delete appropriately.
+	StatusToASDelete(ctx context.Context, status *gtsmodel.Status) (vocab.ActivityStreamsDelete, error)
 	// FollowToASFollow converts a gts model Follow into an activity streams Follow, suitable for federation
 	FollowToAS(ctx context.Context, f *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (vocab.ActivityStreamsFollow, error)
 	// MentionToAS converts a gts model mention into an activity streams Mention, suitable for federation

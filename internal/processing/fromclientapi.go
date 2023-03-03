@@ -467,37 +467,15 @@ func (p *Processor) federateStatusDelete(ctx context.Context, status *gtsmodel.S
 		return nil
 	}
 
-	asStatus, err := p.tc.StatusToAS(ctx, status)
+	delete, err := p.tc.StatusToASDelete(ctx, status)
 	if err != nil {
-		return fmt.Errorf("federateStatusDelete: error converting status to as format: %s", err)
+		return fmt.Errorf("federateStatusDelete: error creating Delete: %w", err)
 	}
 
 	outboxIRI, err := url.Parse(status.Account.OutboxURI)
 	if err != nil {
-		return fmt.Errorf("federateStatusDelete: error parsing outboxURI %s: %s", status.Account.OutboxURI, err)
+		return fmt.Errorf("federateStatusDelete: error parsing outboxURI %s: %w", status.Account.OutboxURI, err)
 	}
-
-	actorIRI, err := url.Parse(status.Account.URI)
-	if err != nil {
-		return fmt.Errorf("federateStatusDelete: error parsing actorIRI %s: %s", status.Account.URI, err)
-	}
-
-	// create a delete and set the appropriate actor on it
-	delete := streams.NewActivityStreamsDelete()
-
-	// set the actor for the delete
-	deleteActor := streams.NewActivityStreamsActorProperty()
-	deleteActor.AppendIRI(actorIRI)
-	delete.SetActivityStreamsActor(deleteActor)
-
-	// Set the status as the 'object' property.
-	deleteObject := streams.NewActivityStreamsObjectProperty()
-	deleteObject.AppendActivityStreamsNote(asStatus)
-	delete.SetActivityStreamsObject(deleteObject)
-
-	// set the to and cc as the original to/cc of the original status
-	delete.SetActivityStreamsTo(asStatus.GetActivityStreamsTo())
-	delete.SetActivityStreamsCc(asStatus.GetActivityStreamsCc())
 
 	_, err = p.federator.FederatingActor().Send(ctx, outboxIRI, delete)
 	return err
