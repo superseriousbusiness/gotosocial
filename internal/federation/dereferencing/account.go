@@ -293,8 +293,15 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		latestAcc.CreatedAt = latestAcc.FetchedAt
 		latestAcc.UpdatedAt = latestAcc.FetchedAt
 
-		// This is a new account, we need to place it in the database.
-		if err := d.db.PutAccount(ctx, latestAcc); err != nil {
+		// This is new, put it in the database.
+		err := d.db.PutAccount(ctx, latestAcc)
+
+		if errors.Is(err, db.ErrAlreadyExists) {
+			// TODO: replace this quick fix with per-URI deref locks.
+			latestAcc, err = d.db.GetAccountByURI(ctx, latestAcc.URI)
+		}
+
+		if err != nil {
 			return nil, fmt.Errorf("enrichAccount: error putting in database: %w", err)
 		}
 	} else {
