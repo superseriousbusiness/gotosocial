@@ -131,6 +131,23 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringNoLeadingAt(
 	suite.NotNil(gotAccount)
 }
 
+func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringWithHostMetaFallback() {
+	query := "someone@misconfigured-instance.com"
+	resolve := true
+
+	searchResult, err := suite.testSearch(query, resolve, http.StatusOK)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	if !suite.Len(searchResult.Accounts, 1) {
+		suite.FailNow("expected 1 account in search results but got 0")
+	}
+
+	gotAccount := searchResult.Accounts[0]
+	suite.NotNil(gotAccount)
+}
+
 func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringNoResolve() {
 	query := "@brand_new_person@unknown-instance.com"
 	resolve := false

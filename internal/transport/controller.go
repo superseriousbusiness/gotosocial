@@ -35,6 +35,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
 // Controller generates transports for use in making federation requests to other servers.
@@ -54,10 +55,12 @@ type controller struct {
 	trspCache cache.Cache[string, *transport]
 	badHosts  cache.Cache[string, struct{}]
 	userAgent string
+
+	state *state.State
 }
 
 // NewController returns an implementation of the Controller interface for creating new transports
-func NewController(db db.DB, federatingDB federatingdb.DB, clock pub.Clock, client pub.HttpClient) Controller {
+func NewController(db db.DB, federatingDB federatingdb.DB, clock pub.Clock, client pub.HttpClient, state *state.State) Controller {
 	applicationName := config.GetApplicationName()
 	host := config.GetHost()
 	proto := config.GetProtocol()
@@ -71,6 +74,7 @@ func NewController(db db.DB, federatingDB federatingdb.DB, clock pub.Clock, clie
 		trspCache: cache.New[string, *transport](0, 100, 0),
 		badHosts:  cache.New[string, struct{}](0, 1000, 0),
 		userAgent: fmt.Sprintf("%s (+%s://%s) gotosocial/%s", applicationName, proto, host, version),
+		state:     state,
 	}
 
 	// Transport cache has TTL=1hr freq=1min

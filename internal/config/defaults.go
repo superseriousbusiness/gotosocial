@@ -166,6 +166,10 @@ var Defaults = Configuration{
 			UserMaxSize:   100,
 			UserTTL:       time.Minute * 5,
 			UserSweepFreq: time.Second * 30,
+
+			WebfingerMaxSize:   100,
+			WebfingerTTL:       time.Hour * 24,
+			WebfingerSweepFreq: time.Minute * 15,
 		},
 	},
 

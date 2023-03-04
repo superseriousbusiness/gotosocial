@@ -207,6 +207,10 @@ type GTSCacheConfiguration struct {
 	UserMaxSize   int           `name:"user-max-size"`
 	UserTTL       time.Duration `name:"user-ttl"`
 	UserSweepFreq time.Duration `name:"user-sweep-freq"`
+
+	WebfingerMaxSize   int           `name:"webfinger-max-size"`
+	WebfingerTTL       time.Duration `name:"webfinger-ttl"`
+	WebfingerSweepFreq time.Duration `name:"webfinger-sweep-freq"`
 }
 
 // MarshalMap will marshal current Configuration into a map structure (useful for JSON/TOML/YAML).

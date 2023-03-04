@@ -110,7 +110,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	oauthServer := oauth.New(ctx, dbService)
 	typeConverter := typeutils.NewConverter(dbService)
 	federatingDB := federatingdb.New(&state, typeConverter)
-	transportController := transport.NewController(dbService, federatingDB, &federation.Clock{}, client)
+	transportController := transport.NewController(dbService, federatingDB, &federation.Clock{}, client, &state)
 	federator := federation.NewFederator(dbService, federatingDB, transportController, typeConverter, mediaManager)
 
 	// decide whether to create a noop email sender (won't send emails) or a real one
