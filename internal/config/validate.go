@@ -67,6 +67,19 @@ func Validate() error {
 		errs = append(errs, fmt.Errorf("%s must be set", WebAssetBaseDirFlag()))
 	}
 
+	tlsChain := GetTLSCertificateChain()
+	tlsKey := GetTLSCertificateKey()
+	tlsChainFlag := TLSCertificateChainFlag()
+	tlsKeyFlag := TLSCertificateKeyFlag()
+
+	if GetLetsEncryptEnabled() && (tlsChain != "" || tlsKey != "") {
+		errs = append(errs, fmt.Errorf("%s cannot be enabled when %s and/or %s are also set", LetsEncryptEnabledFlag(), tlsChainFlag, tlsKeyFlag))
+	}
+
+	if (tlsChain != "" && tlsKey == "") || (tlsChain == "" && tlsKey != "") {
+		errs = append(errs, fmt.Errorf("%s and %s need to both be set or unset", tlsChainFlag, tlsKeyFlag))
+	}
+
 	if len(errs) > 0 {
 		errStrings := []string{}
 		for _, err := range errs {

@@ -1524,6 +1524,56 @@ func GetLetsEncryptEmailAddress() string { return global.GetLetsEncryptEmailAddr
 // SetLetsEncryptEmailAddress safely sets the value for global configuration 'LetsEncryptEmailAddress' field
 func SetLetsEncryptEmailAddress(v string) { global.SetLetsEncryptEmailAddress(v) }
 
+// GetTLSCertificateChain safely fetches the Configuration value for state's 'TLSCertificateChain' field
+func (st *ConfigState) GetTLSCertificateChain() (v string) {
+	st.mutex.Lock()
+	v = st.config.TLSCertificateChain
+	st.mutex.Unlock()
+	return
+}
+
+// SetTLSCertificateChain safely sets the Configuration value for state's 'TLSCertificateChain' field
+func (st *ConfigState) SetTLSCertificateChain(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.TLSCertificateChain = v
+	st.reloadToViper()
+}
+
+// TLSCertificateChainFlag returns the flag name for the 'TLSCertificateChain' field
+func TLSCertificateChainFlag() string { return "tls-certificate-chain" }
+
+// GetTLSCertificateChain safely fetches the value for global configuration 'TLSCertificateChain' field
+func GetTLSCertificateChain() string { return global.GetTLSCertificateChain() }
+
+// SetTLSCertificateChain safely sets the value for global configuration 'TLSCertificateChain' field
+func SetTLSCertificateChain(v string) { global.SetTLSCertificateChain(v) }
+
+// GetTLSCertificateKey safely fetches the Configuration value for state's 'TLSCertificateKey' field
+func (st *ConfigState) GetTLSCertificateKey() (v string) {
+	st.mutex.Lock()
+	v = st.config.TLSCertificateKey
+	st.mutex.Unlock()
+	return
+}
+
+// SetTLSCertificateKey safely sets the Configuration value for state's 'TLSCertificateKey' field
+func (st *ConfigState) SetTLSCertificateKey(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.TLSCertificateKey = v
+	st.reloadToViper()
+}
+
+// TLSCertificateKeyFlag returns the flag name for the 'TLSCertificateKey' field
+func TLSCertificateKeyFlag() string { return "tls-certificate-key" }
+
+// GetTLSCertificateKey safely fetches the value for global configuration 'TLSCertificateKey' field
+func GetTLSCertificateKey() string { return global.GetTLSCertificateKey() }
+
+// SetTLSCertificateKey safely sets the value for global configuration 'TLSCertificateKey' field
+func SetTLSCertificateKey(v string) { global.SetTLSCertificateKey(v) }
+
 // GetOIDCEnabled safely fetches the Configuration value for state's 'OIDCEnabled' field
 func (st *ConfigState) GetOIDCEnabled() (v bool) {
 	st.mutex.Lock()

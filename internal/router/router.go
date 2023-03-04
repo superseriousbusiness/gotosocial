@@ -20,6 +20,7 @@ package router
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
@@ -77,6 +78,26 @@ func (r *router) Start() {
 	// default pointing to regular HTTP listener,
 	// but updated to TLS if LetsEncrypt is enabled.
 	listen := r.srv.ListenAndServe
+
+	// During config validation we already checked that both Chain and Key are set
+	// so we can forego checking for both here
+	if chain := config.GetTLSCertificateChain(); chain != "" {
+		pkey := config.GetTLSCertificateKey()
+		cer, err := tls.LoadX509KeyPair(chain, pkey)
+		if err != nil {
+			log.Fatalf(
+				nil,
+				"tls: failed to load keypair from %s and %s, ensure they are PEM-encoded and can be read by this process: %s",
+				chain, pkey, err,
+			)
+		}
+		r.srv.TLSConfig = &tls.Config{
+			MinVersion:   tls.VersionTLS12,
+			Certificates: []tls.Certificate{cer},
+		}
+		// TLS is enabled, update the listen function
+		listen = func() error { return r.srv.ListenAndServeTLS("", "") }
+	}
 
 	if config.GetLetsEncryptEnabled() {
 		// LetsEncrypt support is enabled
