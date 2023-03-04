@@ -91,6 +91,9 @@ var Defaults = Configuration{
 	LetsEncryptCertDir:      "/gotosocial/storage/certs",
 	LetsEncryptEmailAddress: "",
 
+	TLSCertificateChain: "",
+	TLSCertificateKey:   "",
+
 	OIDCEnabled:          false,
 	OIDCIdpName:          "",
 	OIDCSkipVerification: false,

@@ -29,6 +29,7 @@ These contribution guidelines were adapted from / inspired by those of Gitea (ht
       - [SQLite](#sqlite)
       - [Postgres](#postgres)
     - [CLI Tests](#cli-tests)
+    - [Federation](#federation)
   - [Updating Swagger docs](#updating-swagger-docs)
   - [CI/CD configuration](#cicd-configuration)
   - [Release Checklist](#release-checklist)
@@ -417,6 +418,20 @@ We set `-p 1` when running against Postgres because it requires tests to run in 
 In [./test/envparsing.sh](./test/envparsing.sh) there's a test for making sure that CLI flags, config, and environment variables get parsed as expected.
 
 Although this test *is* part of the CI/CD testing process, you probably won't need to worry too much about running it yourself. That is, unless you're messing about with code inside the `main` package in `cmd/gotosocial`, or inside the `config` package in `internal/config`.
+
+#### Federation
+
+By using the support for loading TLS files from disk it is possible to have two local instances with TLS to allow for (manually) testing federation.
+
+You'll need to set the following configuration options:
+* `GTS_TLS_CERTIFICATE_CHAIN`: poiting to a PEM-encoded certificate chain including the public certificate
+* `GTS_TLS_CERTIFICATE_KEY`: pointing to a PEM-encoded private key
+
+Additionally, for the Go HTTP client to recognise certificates issued by a custom CA as valid, you'll need to set one of:
+* `SSL_CERT_FILE`: pointing to the public key of your custom CA
+* `SSL_CERT_DIR`: a `:`-separated list of directories to load CA certificates from
+
+You'll additionally need functioning DNS for your two instance names which you can achieve through entries in `/etc/hosts` or by running a local DNS server like [dnsmasq](https://thekelleys.org.uk/dnsmasq/doc.html).
 
 ### Updating Swagger docs
 

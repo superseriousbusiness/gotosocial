@@ -1,4 +1,12 @@
-# LetsEncrypt
+# TLS
+
+It's possible to configure TLS support in one of two ways:
+* Built-in support for Lets Encrypt / ACME compatible vendors
+* Loading TLS files from disk
+
+It is not possible to have both methods enabled at the same time.
+
+Note that when using TLS files loaded from disk you are responsible for restarting the instance when the files change. They are not automatically reloaded.
 
 ## Settings
 
@@ -39,4 +47,20 @@ letsencrypt-cert-dir: "/gotosocial/storage/certs"
 # Examples: ["admin@example.org"]
 # Default: ""
 letsencrypt-email-address: ""
+
+##############################
+##### MANUAL TLS CONFIG  #####
+##############################
+
+# String. Path to a PEM-encoded file on disk that includes the certificate chain 
+# and the public key
+# Examples: ["/gotosocial/storage/certs/chain.pem"]
+# Default: ""
+tls-certificate-chain: ""
+
+# String. Path to a PEM-encoded file on disk containing the private key for the
+# associated tls-certificate-chain
+# Examples: ["/gotosocial/storage/certs/private.pem"]
+# Default: ""
+tls-certificate-key: ""
 ```

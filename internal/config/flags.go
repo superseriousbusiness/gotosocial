@@ -114,6 +114,10 @@ func (s *ConfigState) AddServerFlags(cmd *cobra.Command) {
 		cmd.Flags().String(LetsEncryptCertDirFlag(), cfg.LetsEncryptCertDir, fieldtag("LetsEncryptCertDir", "usage"))
 		cmd.Flags().String(LetsEncryptEmailAddressFlag(), cfg.LetsEncryptEmailAddress, fieldtag("LetsEncryptEmailAddress", "usage"))
 
+		// Manual TLS
+		cmd.Flags().String(TLSCertificateChainFlag(), cfg.TLSCertificateChain, fieldtag("TLSCertificateChain", "usage"))
+		cmd.Flags().String(TLSCertificateKeyFlag(), cfg.TLSCertificateKey, fieldtag("TLSCertificateKey", "usage"))
+
 		// OIDC
 		cmd.Flags().Bool(OIDCEnabledFlag(), cfg.OIDCEnabled, fieldtag("OIDCEnabled", "usage"))
 		cmd.Flags().String(OIDCIdpNameFlag(), cfg.OIDCIdpName, fieldtag("OIDCIdpName", "usage"))
