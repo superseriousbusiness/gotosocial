@@ -45,7 +45,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, media
 		return nil, gtserror.NewErrorNotFound(errors.New("attachment not owned by requesting account"))
 	}
 
-	updatingColumns := []string{}
+	var updatingColumns []string
 
 	if form.Description != nil {
 		attachment.Description = text.SanitizePlaintext(*form.Description)
@@ -62,7 +62,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, media
 		updatingColumns = append(updatingColumns, "focus_x", "focus_y")
 	}
 
-	if err := p.state.DB.UpdateByID(ctx, attachment, attachment.ID, updatingColumns...); err != nil {
+	if err := p.state.DB.UpdateAttachment(ctx, attachment, updatingColumns...); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("database error updating media: %s", err))
 	}
 
