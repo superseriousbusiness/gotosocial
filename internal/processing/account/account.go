@@ -36,7 +36,7 @@ type Processor struct {
 	tc           typeutils.TypeConverter
 	mediaManager media.Manager
 	oauthServer  oauth.Server
-	filter       visibility.Filter
+	filter       *visibility.Filter
 	formatter    text.Formatter
 	federator    federation.Federator
 	parseMention gtsmodel.ParseMentionFunc
@@ -49,6 +49,7 @@ func New(
 	mediaManager media.Manager,
 	oauthServer oauth.Server,
 	federator federation.Federator,
+	filter *visibility.Filter,
 	parseMention gtsmodel.ParseMentionFunc,
 ) Processor {
 	return Processor{
@@ -56,7 +57,7 @@ func New(
 		tc:           tc,
 		mediaManager: mediaManager,
 		oauthServer:  oauthServer,
-		filter:       visibility.NewFilter(state.DB),
+		filter:       filter,
 		formatter:    text.NewFormatter(state.DB),
 		federator:    federator,
 		parseMention: parseMention,

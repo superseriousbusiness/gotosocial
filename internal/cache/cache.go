@@ -24,6 +24,9 @@ type Caches struct {
 	// AP provides access to the collection of ActivityPub object caches.
 	AP APCaches
 
+	// Visibility provides access to the item visibility cache.
+	Visibility VisibilityCache
+
 	// prevent pass-by-value.
 	_ nocopy
 }
@@ -44,6 +47,7 @@ func (c *Caches) Init() {
 	// initialize caches
 	c.GTS.Init()
 	c.AP.Init()
+	c.Visibility.Init()
 }
 
 // Start will start both the GTS and AP cache collections.

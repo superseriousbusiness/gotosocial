@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -85,7 +86,9 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 	suite.state.Storage = suite.storage
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
 	suite.federator = testrig.NewTestFederator(&suite.state, suite.tc, suite.mediaManager)
-	suite.status = status.New(&suite.state, suite.typeConverter, processing.GetParseMentionFunc(suite.db, suite.federator))
+
+	filter := visibility.NewFilter(&suite.state)
+	suite.status = status.New(&suite.state, suite.typeConverter, filter, processing.GetParseMentionFunc(suite.db, suite.federator))
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")

@@ -20,11 +20,13 @@ package bundb
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -141,31 +143,56 @@ func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(
 		return nil, err
 	}
 
-	if account.AvatarMediaAttachmentID != "" {
-		// Set the account's related avatar
-		account.AvatarMediaAttachment, err = a.state.DB.GetAttachmentByID(ctx, account.AvatarMediaAttachmentID)
-		if err != nil {
-			log.Errorf(ctx, "error getting account %s avatar: %v", account.ID, err)
-		}
+	if gtscontext.Barebones(ctx) {
+		// no need to fully populate.
+		return account, nil
 	}
 
-	if account.HeaderMediaAttachmentID != "" {
-		// Set the account's related header
-		account.HeaderMediaAttachment, err = a.state.DB.GetAttachmentByID(ctx, account.HeaderMediaAttachmentID)
-		if err != nil {
-			log.Errorf(ctx, "error getting account %s header: %v", account.ID, err)
-		}
-	}
-
-	if len(account.EmojiIDs) > 0 {
-		// Set the account's related emojis
-		account.Emojis, err = a.state.DB.GetEmojisByIDs(ctx, account.EmojiIDs)
-		if err != nil {
-			log.Errorf(ctx, "error getting account %s emojis: %v", account.ID, err)
-		}
+	// Further populate the account fields where applicable.
+	if err := a.PopulateAccount(ctx, account); err != nil {
+		return nil, err
 	}
 
 	return account, nil
+}
+
+func (a *accountDB) PopulateAccount(ctx context.Context, account *gtsmodel.Account) error {
+	var err error
+
+	if account.AvatarMediaAttachment == nil && account.AvatarMediaAttachmentID != "" {
+		// Account avatar attachment is not set, fetch from database.
+		account.AvatarMediaAttachment, err = a.state.DB.GetAttachmentByID(
+			ctx, // these are already barebones
+			account.AvatarMediaAttachmentID,
+		)
+		if err != nil {
+			return fmt.Errorf("error populating account avatar: %w", err)
+		}
+	}
+
+	if account.HeaderMediaAttachment == nil && account.HeaderMediaAttachmentID != "" {
+		// Account header attachment is not set, fetch from database.
+		account.HeaderMediaAttachment, err = a.state.DB.GetAttachmentByID(
+			ctx, // these are already barebones
+			account.HeaderMediaAttachmentID,
+		)
+		if err != nil {
+			return fmt.Errorf("error populating account header: %w", err)
+		}
+	}
+
+	if !account.EmojisPopulated() {
+		// Account emojis are out-of-date with IDs, repopulate.
+		account.Emojis, err = a.state.DB.GetEmojisByIDs(
+			ctx, // these are already barebones
+			account.EmojiIDs,
+		)
+		if err != nil {
+			return fmt.Errorf("error populating account emojis: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func (a *accountDB) PutAccount(ctx context.Context, account *gtsmodel.Account) db.Error {

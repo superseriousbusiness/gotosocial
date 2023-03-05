@@ -57,14 +57,10 @@ func (p *Processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Filtering + serialization process is the same for
-	// either pinned status queries or 'normal' ones.
-	filtered := make([]*gtsmodel.Status, 0, len(statuses))
-	for _, s := range statuses {
-		visible, err := p.filter.StatusVisible(ctx, s, requestingAccount)
-		if err == nil && visible {
-			filtered = append(filtered, s)
-		}
+	// Filtering + serialization process is the same for either pinned status queries or 'normal' ones.
+	filtered, err := p.filter.StatusesVisible(ctx, requestingAccount, statuses)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	count := len(filtered)

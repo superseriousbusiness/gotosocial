@@ -41,6 +41,9 @@ type Account interface {
 	// GetAccountByPubkeyID returns one account with the given public key URI (ID), or an error if something goes wrong.
 	GetAccountByPubkeyID(ctx context.Context, id string) (*gtsmodel.Account, Error)
 
+	// PopulateAccount ensures that all sub-models of an account are populated (e.g. avatar, header etc).
+	PopulateAccount(ctx context.Context, account *gtsmodel.Account) error
+
 	// PutAccount puts one account in the database.
 	PutAccount(ctx context.Context, account *gtsmodel.Account) Error
 

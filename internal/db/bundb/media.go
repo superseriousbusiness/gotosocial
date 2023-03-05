@@ -47,6 +47,24 @@ func (m *mediaDB) GetAttachmentByID(ctx context.Context, id string) (*gtsmodel.M
 	)
 }
 
+func (m *mediaDB) GetAttachmentsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.MediaAttachment, error) {
+	attachments := make([]*gtsmodel.MediaAttachment, 0, len(ids))
+
+	for _, id := range ids {
+		// Attempt fetch from DB
+		attachment, err := m.GetAttachmentByID(ctx, id)
+		if err != nil {
+			log.Errorf(ctx, "error getting attachment %q: %v", id, err)
+			continue
+		}
+
+		// Append attachment
+		attachments = append(attachments, attachment)
+	}
+
+	return attachments, nil
+}
+
 func (m *mediaDB) getAttachment(ctx context.Context, lookup string, dbQuery func(*gtsmodel.MediaAttachment) error, keyParts ...any) (*gtsmodel.MediaAttachment, db.Error) {
 	return m.state.Caches.GTS.Media().Load(lookup, func() (*gtsmodel.MediaAttachment, error) {
 		var attachment gtsmodel.MediaAttachment
@@ -118,7 +136,7 @@ func (m *mediaDB) GetRemoteOlderThan(ctx context.Context, olderThan time.Time, l
 		return nil, m.conn.ProcessError(err)
 	}
 
-	return m.getAttachments(ctx, attachmentIDs)
+	return m.GetAttachmentsByIDs(ctx, attachmentIDs)
 }
 
 func (m *mediaDB) CountRemoteOlderThan(ctx context.Context, olderThan time.Time) (int, db.Error) {
@@ -163,7 +181,7 @@ func (m *mediaDB) GetAvatarsAndHeaders(ctx context.Context, maxID string, limit 
 		return nil, m.conn.ProcessError(err)
 	}
 
-	return m.getAttachments(ctx, attachmentIDs)
+	return m.GetAttachmentsByIDs(ctx, attachmentIDs)
 }
 
 func (m *mediaDB) GetLocalUnattachedOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {
@@ -189,7 +207,7 @@ func (m *mediaDB) GetLocalUnattachedOlderThan(ctx context.Context, olderThan tim
 		return nil, m.conn.ProcessError(err)
 	}
 
-	return m.getAttachments(ctx, attachmentIDs)
+	return m.GetAttachmentsByIDs(ctx, attachmentIDs)
 }
 
 func (m *mediaDB) CountLocalUnattachedOlderThan(ctx context.Context, olderThan time.Time) (int, db.Error) {

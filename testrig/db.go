@@ -281,7 +281,7 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 func StandardDBTeardown(db db.DB) {
 	ctx := context.Background()
 	if db == nil {
-		log.Panic(nil, "db was nil")
+		return
 	}
 	for _, m := range testModels {
 		if err := db.DropTable(ctx, m); err != nil {

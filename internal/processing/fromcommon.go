@@ -454,7 +454,7 @@ func (p *Processor) timelineStatusForAccount(ctx context.Context, status *gtsmod
 	}
 
 	// make sure the status is timelineable
-	if timelineable, err := p.filter.StatusHometimelineable(ctx, status, timelineAccount); err != nil {
+	if timelineable, err := p.filter.StatusHomeTimelineable(ctx, timelineAccount, status); err != nil {
 		return fmt.Errorf("timelineStatusForAccount: error getting timelineability for status for timeline with id %s: %w", accountID, err)
 	} else if !timelineable {
 		return nil

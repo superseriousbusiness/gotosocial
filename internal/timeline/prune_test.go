@@ -25,7 +25,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -41,15 +40,14 @@ func (suite *PruneTestSuite) SetupSuite() {
 }
 
 func (suite *PruneTestSuite) SetupTest() {
-	var state state.State
-	state.Caches.Init()
+	suite.state.Caches.Init()
 
 	testrig.InitTestLog()
 	testrig.InitTestConfig()
 
-	suite.db = testrig.NewTestDB(&state)
+	suite.db = testrig.NewTestDB(&suite.state)
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
-	suite.filter = visibility.NewFilter(suite.db)
+	suite.filter = visibility.NewFilter(&suite.state)
 
 	testrig.StandardDBSetup(suite.db, nil)
 

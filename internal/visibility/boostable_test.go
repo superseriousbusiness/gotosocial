@@ -33,7 +33,7 @@ func (suite *StatusBoostableTestSuite) TestOwnPublicBoostable() {
 	testAccount := suite.testAccounts["local_account_1"]
 	ctx := context.Background()
 
-	boostable, err := suite.filter.StatusBoostable(ctx, testStatus, testAccount)
+	boostable, err := suite.filter.StatusBoostable(ctx, testAccount, testStatus)
 	suite.NoError(err)
 
 	suite.True(boostable)
@@ -44,7 +44,7 @@ func (suite *StatusBoostableTestSuite) TestOwnUnlockedBoostable() {
 	testAccount := suite.testAccounts["local_account_1"]
 	ctx := context.Background()
 
-	boostable, err := suite.filter.StatusBoostable(ctx, testStatus, testAccount)
+	boostable, err := suite.filter.StatusBoostable(ctx, testAccount, testStatus)
 	suite.NoError(err)
 
 	suite.True(boostable)
@@ -55,7 +55,7 @@ func (suite *StatusBoostableTestSuite) TestOwnMutualsOnlyNonInteractiveBoostable
 	testAccount := suite.testAccounts["local_account_1"]
 	ctx := context.Background()
 
-	boostable, err := suite.filter.StatusBoostable(ctx, testStatus, testAccount)
+	boostable, err := suite.filter.StatusBoostable(ctx, testAccount, testStatus)
 	suite.NoError(err)
 
 	suite.True(boostable)
@@ -66,7 +66,7 @@ func (suite *StatusBoostableTestSuite) TestOwnMutualsOnlyBoostable() {
 	testAccount := suite.testAccounts["local_account_1"]
 	ctx := context.Background()
 
-	boostable, err := suite.filter.StatusBoostable(ctx, testStatus, testAccount)
+	boostable, err := suite.filter.StatusBoostable(ctx, testAccount, testStatus)
 	suite.NoError(err)
 
 	suite.True(boostable)
@@ -77,7 +77,7 @@ func (suite *StatusBoostableTestSuite) TestOwnFollowersOnlyBoostable() {
 	testAccount := suite.testAccounts["local_account_1"]
 	ctx := context.Background()
 
-	boostable, err := suite.filter.StatusBoostable(ctx, testStatus, testAccount)
+	boostable, err := suite.filter.StatusBoostable(ctx, testAccount, testStatus)
 	suite.NoError(err)
 
 	suite.True(boostable)
@@ -88,7 +88,7 @@ func (suite *StatusBoostableTestSuite) TestOwnDirectNotBoostable() {
 	testAccount := suite.testAccounts["local_account_2"]
 	ctx := context.Background()
 
-	boostable, err := suite.filter.StatusBoostable(ctx, testStatus, testAccount)
+	boostable, err := suite.filter.StatusBoostable(ctx, testAccount, testStatus)
 	suite.NoError(err)
 
 	suite.False(boostable)
@@ -99,7 +99,7 @@ func (suite *StatusBoostableTestSuite) TestOtherPublicBoostable() {
 	testAccount := suite.testAccounts["local_account_1"]
 	ctx := context.Background()
 
-	boostable, err := suite.filter.StatusBoostable(ctx, testStatus, testAccount)
+	boostable, err := suite.filter.StatusBoostable(ctx, testAccount, testStatus)
 	suite.NoError(err)
 
 	suite.True(boostable)
@@ -110,7 +110,7 @@ func (suite *StatusBoostableTestSuite) TestOtherUnlistedBoostable() {
 	testAccount := suite.testAccounts["local_account_2"]
 	ctx := context.Background()
 
-	boostable, err := suite.filter.StatusBoostable(ctx, testStatus, testAccount)
+	boostable, err := suite.filter.StatusBoostable(ctx, testAccount, testStatus)
 	suite.NoError(err)
 
 	suite.True(boostable)
@@ -121,7 +121,7 @@ func (suite *StatusBoostableTestSuite) TestOtherFollowersOnlyNotBoostable() {
 	testAccount := suite.testAccounts["local_account_1"]
 	ctx := context.Background()
 
-	boostable, err := suite.filter.StatusBoostable(ctx, testStatus, testAccount)
+	boostable, err := suite.filter.StatusBoostable(ctx, testAccount, testStatus)
 	suite.NoError(err)
 
 	suite.False(boostable)
@@ -132,19 +132,19 @@ func (suite *StatusBoostableTestSuite) TestOtherDirectNotBoostable() {
 	testAccount := suite.testAccounts["local_account_1"]
 	ctx := context.Background()
 
-	boostable, err := suite.filter.StatusBoostable(ctx, testStatus, testAccount)
+	boostable, err := suite.filter.StatusBoostable(ctx, testAccount, testStatus)
 	suite.NoError(err)
 
 	suite.False(boostable)
 }
 
-func (suite *StatusBoostableTestSuite) TestRemoteFollowersOnlyNotVisibleError() {
+func (suite *StatusBoostableTestSuite) TestRemoteFollowersOnlyNotVisible() {
 	testStatus := suite.testStatuses["local_account_1_status_5"]
 	testAccount := suite.testAccounts["remote_account_1"]
 	ctx := context.Background()
 
-	boostable, err := suite.filter.StatusBoostable(ctx, testStatus, testAccount)
-	suite.Assert().Error(err)
+	boostable, err := suite.filter.StatusBoostable(ctx, testAccount, testStatus)
+	suite.NoError(err)
 
 	suite.False(boostable)
 }

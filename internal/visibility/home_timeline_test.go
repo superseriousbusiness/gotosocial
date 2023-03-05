@@ -25,86 +25,77 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-type StatusStatusHometimelineableTestSuite struct {
+type StatusStatusHomeTimelineableTestSuite struct {
 	FilterStandardTestSuite
 }
 
-func (suite *StatusStatusHometimelineableTestSuite) TestOwnStatusHometimelineable() {
+func (suite *StatusStatusHomeTimelineableTestSuite) TestOwnStatusHomeTimelineable() {
 	testStatus := suite.testStatuses["local_account_1_status_1"]
 	testAccount := suite.testAccounts["local_account_1"]
 	ctx := context.Background()
 
-	timelineable, err := suite.filter.StatusHometimelineable(ctx, testStatus, testAccount)
+	timelineable, err := suite.filter.StatusHomeTimelineable(ctx, testAccount, testStatus)
 	suite.NoError(err)
 
 	suite.True(timelineable)
 }
 
-func (suite *StatusStatusHometimelineableTestSuite) TestFollowingStatusHometimelineable() {
+func (suite *StatusStatusHomeTimelineableTestSuite) TestFollowingStatusHomeTimelineable() {
 	testStatus := suite.testStatuses["local_account_2_status_1"]
 	testAccount := suite.testAccounts["local_account_1"]
 	ctx := context.Background()
 
-	timelineable, err := suite.filter.StatusHometimelineable(ctx, testStatus, testAccount)
+	timelineable, err := suite.filter.StatusHomeTimelineable(ctx, testAccount, testStatus)
 	suite.NoError(err)
 
 	suite.True(timelineable)
 }
 
-func (suite *StatusStatusHometimelineableTestSuite) TestNotFollowingStatusHometimelineable() {
+func (suite *StatusStatusHomeTimelineableTestSuite) TestNotFollowingStatusHomeTimelineable() {
 	testStatus := suite.testStatuses["remote_account_1_status_1"]
 	testAccount := suite.testAccounts["local_account_1"]
 	ctx := context.Background()
 
-	timelineable, err := suite.filter.StatusHometimelineable(ctx, testStatus, testAccount)
+	timelineable, err := suite.filter.StatusHomeTimelineable(ctx, testAccount, testStatus)
 	suite.NoError(err)
 
 	suite.False(timelineable)
 }
 
-func (suite *StatusStatusHometimelineableTestSuite) TestStatusTooNewNotTimelineable() {
+func (suite *StatusStatusHomeTimelineableTestSuite) TestStatusTooNewNotTimelineable() {
 	testStatus := &gtsmodel.Status{}
 	*testStatus = *suite.testStatuses["local_account_1_status_1"]
 
-	var err error
-	testStatus.ID, err = id.NewULIDFromTime(time.Now().Add(10 * time.Minute))
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
+	testStatus.CreatedAt = time.Now().Add(25 * time.Hour)
 
 	testAccount := suite.testAccounts["local_account_1"]
 	ctx := context.Background()
 
-	timelineable, err := suite.filter.StatusHometimelineable(ctx, testStatus, testAccount)
+	timelineable, err := suite.filter.StatusHomeTimelineable(ctx, testAccount, testStatus)
 	suite.NoError(err)
 
 	suite.False(timelineable)
 }
 
-func (suite *StatusStatusHometimelineableTestSuite) TestStatusNotTooNewTimelineable() {
+func (suite *StatusStatusHomeTimelineableTestSuite) TestStatusNotTooNewTimelineable() {
 	testStatus := &gtsmodel.Status{}
 	*testStatus = *suite.testStatuses["local_account_1_status_1"]
 
-	var err error
-	testStatus.ID, err = id.NewULIDFromTime(time.Now().Add(4 * time.Minute))
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
+	testStatus.CreatedAt = time.Now().Add(23 * time.Hour)
 
 	testAccount := suite.testAccounts["local_account_1"]
 	ctx := context.Background()
 
-	timelineable, err := suite.filter.StatusHometimelineable(ctx, testStatus, testAccount)
+	timelineable, err := suite.filter.StatusHomeTimelineable(ctx, testAccount, testStatus)
 	suite.NoError(err)
 
 	suite.True(timelineable)
 }
 
-func (suite *StatusStatusHometimelineableTestSuite) TestChainReplyFollowersOnly() {
+func (suite *StatusStatusHomeTimelineableTestSuite) TestChainReplyFollowersOnly() {
 	ctx := context.Background()
 
 	// This scenario makes sure that we don't timeline a status which is a followers-only
@@ -112,9 +103,8 @@ func (suite *StatusStatusHometimelineableTestSuite) TestChainReplyFollowersOnly(
 	// timeline owner account doesn't follow.
 	//
 	// In other words, remote_account_1 posts a followers-only status, which local_account_1 replies to;
-	// THEN, local_account_1 replies to their own reply. We don't want this last status to appear
-	// in the timeline of local_account_2, even though they follow local_account_1, because they
-	// *don't* follow remote_account_1.
+	// THEN, local_account_1 replies to their own reply. None of these statuses should appear to
+	// local_account_2 since they don't follow the original parent.
 	//
 	// See: https://github.com/superseriousbusiness/gotosocial/issues/501
 
@@ -152,7 +142,7 @@ func (suite *StatusStatusHometimelineableTestSuite) TestChainReplyFollowersOnly(
 		suite.FailNow(err.Error())
 	}
 	// this status should not be hometimelineable for local_account_2
-	originalStatusTimelineable, err := suite.filter.StatusHometimelineable(ctx, originalStatus, timelineOwnerAccount)
+	originalStatusTimelineable, err := suite.filter.StatusHomeTimelineable(ctx, timelineOwnerAccount, originalStatus)
 	suite.NoError(err)
 	suite.False(originalStatusTimelineable)
 
@@ -185,8 +175,8 @@ func (suite *StatusStatusHometimelineableTestSuite) TestChainReplyFollowersOnly(
 	if err := suite.db.PutStatus(ctx, firstReplyStatus); err != nil {
 		suite.FailNow(err.Error())
 	}
-	// this status should not be hometimelineable for local_account_2
-	firstReplyStatusTimelineable, err := suite.filter.StatusHometimelineable(ctx, firstReplyStatus, timelineOwnerAccount)
+	// this status should be hometimelineable for local_account_2
+	firstReplyStatusTimelineable, err := suite.filter.StatusHomeTimelineable(ctx, timelineOwnerAccount, firstReplyStatus)
 	suite.NoError(err)
 	suite.False(firstReplyStatusTimelineable)
 
@@ -221,12 +211,12 @@ func (suite *StatusStatusHometimelineableTestSuite) TestChainReplyFollowersOnly(
 	}
 
 	// this status should ALSO not be hometimelineable for local_account_2
-	secondReplyStatusTimelineable, err := suite.filter.StatusHometimelineable(ctx, secondReplyStatus, timelineOwnerAccount)
+	secondReplyStatusTimelineable, err := suite.filter.StatusHomeTimelineable(ctx, timelineOwnerAccount, secondReplyStatus)
 	suite.NoError(err)
 	suite.False(secondReplyStatusTimelineable)
 }
 
-func (suite *StatusStatusHometimelineableTestSuite) TestChainReplyPublicAndUnlocked() {
+func (suite *StatusStatusHomeTimelineableTestSuite) TestChainReplyPublicAndUnlocked() {
 	ctx := context.Background()
 
 	// This scenario is exactly the same as the above test, but for a mix of unlocked + public posts
@@ -265,7 +255,7 @@ func (suite *StatusStatusHometimelineableTestSuite) TestChainReplyPublicAndUnloc
 		suite.FailNow(err.Error())
 	}
 	// this status should not be hometimelineable for local_account_2
-	originalStatusTimelineable, err := suite.filter.StatusHometimelineable(ctx, originalStatus, timelineOwnerAccount)
+	originalStatusTimelineable, err := suite.filter.StatusHomeTimelineable(ctx, timelineOwnerAccount, originalStatus)
 	suite.NoError(err)
 	suite.False(originalStatusTimelineable)
 
@@ -299,7 +289,7 @@ func (suite *StatusStatusHometimelineableTestSuite) TestChainReplyPublicAndUnloc
 		suite.FailNow(err.Error())
 	}
 	// this status should not be hometimelineable for local_account_2
-	firstReplyStatusTimelineable, err := suite.filter.StatusHometimelineable(ctx, firstReplyStatus, timelineOwnerAccount)
+	firstReplyStatusTimelineable, err := suite.filter.StatusHomeTimelineable(ctx, timelineOwnerAccount, firstReplyStatus)
 	suite.NoError(err)
 	suite.False(firstReplyStatusTimelineable)
 
@@ -334,11 +324,11 @@ func (suite *StatusStatusHometimelineableTestSuite) TestChainReplyPublicAndUnloc
 	}
 
 	// this status should ALSO not be hometimelineable for local_account_2
-	secondReplyStatusTimelineable, err := suite.filter.StatusHometimelineable(ctx, secondReplyStatus, timelineOwnerAccount)
+	secondReplyStatusTimelineable, err := suite.filter.StatusHomeTimelineable(ctx, timelineOwnerAccount, secondReplyStatus)
 	suite.NoError(err)
 	suite.False(secondReplyStatusTimelineable)
 }
 
-func TestStatusHometimelineableTestSuite(t *testing.T) {
-	suite.Run(t, new(StatusStatusHometimelineableTestSuite))
+func TestStatusHomeTimelineableTestSuite(t *testing.T) {
+	suite.Run(t, new(StatusStatusHomeTimelineableTestSuite))
 }

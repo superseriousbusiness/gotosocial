@@ -57,7 +57,7 @@ func StatusGrabFunction(database db.DB) timeline.GrabFunction {
 }
 
 // StatusFilterFunction returns a function that satisfies the FilterFunction interface in internal/timeline.
-func StatusFilterFunction(database db.DB, filter visibility.Filter) timeline.FilterFunction {
+func StatusFilterFunction(database db.DB, filter *visibility.Filter) timeline.FilterFunction {
 	return func(ctx context.Context, timelineAccountID string, item timeline.Timelineable) (shouldIndex bool, err error) {
 		status, ok := item.(*gtsmodel.Status)
 		if !ok {
@@ -69,7 +69,7 @@ func StatusFilterFunction(database db.DB, filter visibility.Filter) timeline.Fil
 			return false, fmt.Errorf("statusFilterFunction: error getting account with id %s", timelineAccountID)
 		}
 
-		timelineable, err := filter.StatusHometimelineable(ctx, status, requestingAccount)
+		timelineable, err := filter.StatusHomeTimelineable(ctx, requestingAccount, status)
 		if err != nil {
 			log.Warnf(ctx, "error checking hometimelineability of status %s for account %s: %s", status.ID, timelineAccountID, err)
 		}
@@ -262,7 +262,7 @@ func (p *Processor) filterPublicStatuses(ctx context.Context, authed *oauth.Auth
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("filterPublicStatuses: error getting status author: %s", err))
 		}
 
-		timelineable, err := p.filter.StatusPublictimelineable(ctx, s, authed.Account)
+		timelineable, err := p.filter.StatusPublicTimelineable(ctx, authed.Account, s)
 		if err != nil {
 			log.Debugf(ctx, "skipping status %s because of an error checking status visibility: %s", s.ID, err)
 			continue
@@ -295,7 +295,7 @@ func (p *Processor) filterFavedStatuses(ctx context.Context, authed *oauth.Auth,
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("filterPublicStatuses: error getting status author: %s", err))
 		}
 
-		timelineable, err := p.filter.StatusVisible(ctx, s, authed.Account)
+		timelineable, err := p.filter.StatusVisible(ctx, authed.Account, s)
 		if err != nil {
 			log.Debugf(ctx, "skipping status %s because of an error checking status visibility: %s", s.ID, err)
 			continue

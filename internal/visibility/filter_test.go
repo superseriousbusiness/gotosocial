@@ -29,7 +29,8 @@ import (
 type FilterStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
-	db db.DB
+	db    db.DB
+	state state.State
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
@@ -43,7 +44,7 @@ type FilterStandardTestSuite struct {
 	testMentions     map[string]*gtsmodel.Mention
 	testFollows      map[string]*gtsmodel.Follow
 
-	filter visibility.Filter
+	filter *visibility.Filter
 }
 
 func (suite *FilterStandardTestSuite) SetupSuite() {
@@ -60,14 +61,13 @@ func (suite *FilterStandardTestSuite) SetupSuite() {
 }
 
 func (suite *FilterStandardTestSuite) SetupTest() {
-	var state state.State
-	state.Caches.Init()
+	suite.state.Caches.Init()
 
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
 
-	suite.db = testrig.NewTestDB(&state)
-	suite.filter = visibility.NewFilter(suite.db)
+	suite.db = testrig.NewTestDB(&suite.state)
+	suite.filter = visibility.NewFilter(&suite.state)
 
 	testrig.StandardDBSetup(suite.db, nil)
 }

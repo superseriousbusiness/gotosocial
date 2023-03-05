@@ -78,7 +78,7 @@ type GTSCaches interface {
 
 // NewGTS returns a new default implementation of GTSCaches.
 func NewGTS() GTSCaches {
-	return &gtsCaches{}
+	return new(gtsCaches)
 }
 
 type gtsCaches struct {

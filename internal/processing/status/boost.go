@@ -55,7 +55,7 @@ func (p *Processor) BoostCreate(ctx context.Context, requestingAccount *gtsmodel
 		targetStatus = targetStatus.BoostOf
 	}
 
-	boostable, err := p.filter.StatusBoostable(ctx, targetStatus, requestingAccount)
+	boostable, err := p.filter.StatusBoostable(ctx, requestingAccount, targetStatus)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is boostable: %s", targetStatus.ID, err))
 	}
@@ -99,7 +99,7 @@ func (p *Processor) BoostRemove(ctx context.Context, requestingAccount *gtsmodel
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("no status owner for status %s", targetStatusID))
 	}
 
-	visible, err := p.filter.StatusVisible(ctx, targetStatus, requestingAccount)
+	visible, err := p.filter.StatusVisible(ctx, requestingAccount, targetStatus)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is visible: %s", targetStatus.ID, err))
 	}
@@ -180,7 +180,7 @@ func (p *Processor) StatusBoostedBy(ctx context.Context, requestingAccount *gtsm
 		targetStatus = boostedStatus
 	}
 
-	visible, err := p.filter.StatusVisible(ctx, targetStatus, requestingAccount)
+	visible, err := p.filter.StatusVisible(ctx, requestingAccount, targetStatus)
 	if err != nil {
 		err = fmt.Errorf("BoostedBy: error seeing if status %s is visible: %s", targetStatus.ID, err)
 		return nil, gtserror.NewErrorNotFound(err)

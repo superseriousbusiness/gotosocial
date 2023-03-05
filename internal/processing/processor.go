@@ -47,8 +47,8 @@ type Processor struct {
 	mediaManager    mm.Manager
 	statusTimelines timeline.Manager
 	state           *state.State
-	filter          visibility.Filter
 	emailSender     email.Sender
+	filter          *visibility.Filter
 
 	/*
 		SUB-PROCESSORS
@@ -107,7 +107,7 @@ func NewProcessor(
 ) *Processor {
 	parseMentionFunc := GetParseMentionFunc(state.DB, federator)
 
-	filter := visibility.NewFilter(state.DB)
+	filter := visibility.NewFilter(state)
 
 	processor := &Processor{
 		federator:    federator,
@@ -126,12 +126,12 @@ func NewProcessor(
 	}
 
 	// sub processors
-	processor.account = account.New(state, tc, mediaManager, oauthServer, federator, parseMentionFunc)
+	processor.account = account.New(state, tc, mediaManager, oauthServer, federator, filter, parseMentionFunc)
 	processor.admin = admin.New(state, tc, mediaManager, federator.TransportController(), emailSender)
-	processor.fedi = fedi.New(state, tc, federator)
+	processor.fedi = fedi.New(state, tc, federator, filter)
 	processor.media = media.New(state, tc, mediaManager, federator.TransportController())
 	processor.report = report.New(state, tc)
-	processor.status = status.New(state, tc, parseMentionFunc)
+	processor.status = status.New(state, tc, filter, parseMentionFunc)
 	processor.stream = stream.New(state, oauthServer)
 	processor.user = user.New(state, emailSender)
 

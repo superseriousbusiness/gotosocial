@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // Account represents either a local or a remote fediverse account, gotosocial or otherwise (mastodon, pleroma, etc).
@@ -82,21 +83,42 @@ type Account struct {
 }
 
 // IsLocal returns whether account is a local user account.
-func (a Account) IsLocal() bool {
+func (a *Account) IsLocal() bool {
 	return a.Domain == "" || a.Domain == config.GetHost() || a.Domain == config.GetAccountDomain()
 }
 
 // IsRemote returns whether account is a remote user account.
-func (a Account) IsRemote() bool {
+func (a *Account) IsRemote() bool {
 	return !a.IsLocal()
 }
 
 // IsInstance returns whether account is an instance internal actor account.
-func (a Account) IsInstance() bool {
+func (a *Account) IsInstance() bool {
 	return a.Username == a.Domain ||
 		a.FollowersURI == "" ||
 		a.FollowingURI == "" ||
 		(a.Username == "internal.fetch" && strings.Contains(a.Note, "internal service actor"))
+}
+
+// EmojisPopulated returns whether emojis are populated according to current EmojiIDs.
+func (a *Account) EmojisPopulated() bool {
+	if len(a.EmojiIDs) != len(a.Emojis) {
+		// this is the quickest indicator.
+		return false
+	}
+
+	// Emojis must be in same order.
+	for i, id := range a.EmojiIDs {
+		if a.Emojis[i] == nil {
+			log.Warnf(nil, "nil emoji in slice for account %s", a.URI)
+			continue
+		}
+		if a.Emojis[i].ID != id {
+			return false
+		}
+	}
+
+	return true
 }
 
 // AccountToEmoji is an intermediate struct to facilitate the many2many relationship between an account and one or more emojis.

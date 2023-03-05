@@ -44,7 +44,7 @@ func (p *Processor) StatusGet(ctx context.Context, requestedUsername string, req
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("status with id %s does not belong to account with id %s", status.ID, requestedAccount.ID))
 	}
 
-	visible, err := p.filter.StatusVisible(ctx, status, requestingAccount)
+	visible, err := p.filter.StatusVisible(ctx, requestingAccount, status)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -82,7 +82,7 @@ func (p *Processor) StatusRepliesGet(ctx context.Context, requestedUsername stri
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("status with id %s does not belong to account with id %s", status.ID, requestedAccount.ID))
 	}
 
-	visible, err := p.filter.StatusVisible(ctx, status, requestingAccount)
+	visible, err := p.filter.StatusVisible(ctx, requestedAccount, status)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -143,13 +143,13 @@ func (p *Processor) StatusRepliesGet(ctx context.Context, requestedUsername stri
 			}
 
 			// only show replies that the status owner can see
-			visibleToStatusOwner, err := p.filter.StatusVisible(ctx, r, requestedAccount)
+			visibleToStatusOwner, err := p.filter.StatusVisible(ctx, requestedAccount, r)
 			if err != nil || !visibleToStatusOwner {
 				continue
 			}
 
 			// only show replies that the requester can see
-			visibleToRequester, err := p.filter.StatusVisible(ctx, r, requestingAccount)
+			visibleToRequester, err := p.filter.StatusVisible(ctx, requestingAccount, r)
 			if err != nil || !visibleToRequester {
 				continue
 			}
