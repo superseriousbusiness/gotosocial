@@ -22,28 +22,39 @@ import (
 	"codeberg.org/gruf/go-errors/v2"
 )
 
+// package private error key type.
 type errkey int
 
 const (
+	// error value keys.
 	_ errkey = iota
 	statusCodeKey
 	notFoundKey
 )
 
+// StatusCode checks error for a stored status code value. For example
+// an error from an outgoing HTTP request may be stored, or an API handler
+// expected response status code may be stored.
 func StatusCode(err error) int {
 	i, _ := errors.Value(err, statusCodeKey).(int)
 	return i
 }
 
+// WithStatusCode will wrap the given error to store provided status code,
+// returning wrapped error. See StatusCode() for example use-cases.
 func WithStatusCode(err error, code int) error {
 	return errors.WithValue(err, statusCodeKey, code)
 }
 
+// NotFound checks error for a stored "not found" flag. For example
+// an error from an outgoing HTTP request due to DNS lookup.
 func NotFound(err error) bool {
 	_, ok := errors.Value(err, notFoundKey).(struct{})
 	return ok
 }
 
+// SetNotFound will wrap the given error to store a "not found" flag,
+// returning wrapped error. See NotFound() for example use-cases.
 func SetNotFound(err error) error {
 	return errors.WithValue(err, notFoundKey, struct{}{})
 }
