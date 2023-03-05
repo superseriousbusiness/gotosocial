@@ -30,6 +30,7 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -102,7 +103,8 @@ func dereferenceByAPIV1Instance(ctx context.Context, t *transport, iri *url.URL)
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GET request to %s failed: %s", iriStr, resp.Status)
+		err := fmt.Errorf("GET request to %s failed: %s", iriStr, resp.Status)
+		return nil, gtserror.WithStatusCode(err, resp.StatusCode)
 	}
 
 	b, err := io.ReadAll(resp.Body)
@@ -252,7 +254,8 @@ func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*ur
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("callNodeInfoWellKnown: GET request to %s failed: %s", iriStr, resp.Status)
+		err := fmt.Errorf("GET request to %s failed: %s", iriStr, resp.Status)
+		return nil, gtserror.WithStatusCode(err, resp.StatusCode)
 	}
 
 	b, err := io.ReadAll(resp.Body)
@@ -303,7 +306,8 @@ func callNodeInfo(ctx context.Context, t *transport, iri *url.URL) (*apimodel.No
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("callNodeInfo: GET request to %s failed: %s", iriStr, resp.Status)
+		err := fmt.Errorf("GET request to %s failed: %s", iriStr, resp.Status)
+		return nil, gtserror.WithStatusCode(err, resp.StatusCode)
 	}
 
 	b, err := io.ReadAll(resp.Body)

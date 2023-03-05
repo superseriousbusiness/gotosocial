@@ -1,0 +1,49 @@
+/*
+   GoToSocial
+   Copyright (C) 2021-2023 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+package gtserror
+
+import (
+	"codeberg.org/gruf/go-errors/v2"
+)
+
+type errkey int
+
+const (
+	_ errkey = iota
+	statusCodeKey
+	notFoundKey
+)
+
+func StatusCode(err error) int {
+	i, _ := errors.Value(err, statusCodeKey).(int)
+	return i
+}
+
+func WithStatusCode(err error, code int) error {
+	return errors.WithValue(err, statusCodeKey, code)
+}
+
+func NotFound(err error) bool {
+	_, ok := errors.Value(err, notFoundKey).(struct{})
+	return ok
+}
+
+func SetNotFound(err error) error {
+	return errors.WithValue(err, notFoundKey, struct{}{})
+}

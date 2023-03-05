@@ -24,6 +24,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL) (io.ReadCloser, int64, error) {
@@ -46,7 +48,8 @@ func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL) (io.Read
 
 	// Check for an expected status code
 	if rsp.StatusCode != http.StatusOK {
-		return nil, 0, fmt.Errorf("GET request to %s failed: %s", iriStr, rsp.Status)
+		err := fmt.Errorf("GET request to %s failed: %s", iriStr, rsp.Status)
+		return nil, 0, gtserror.WithStatusCode(err, rsp.StatusCode)
 	}
 
 	return rsp.Body, rsp.ContentLength, nil

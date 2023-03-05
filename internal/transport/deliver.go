@@ -29,6 +29,7 @@ import (
 	"codeberg.org/gruf/go-byteutil"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 func (t *transport) BatchDeliver(ctx context.Context, b []byte, recipients []*url.URL) error {
@@ -96,7 +97,8 @@ func (t *transport) Deliver(ctx context.Context, b []byte, to *url.URL) error {
 
 	if code := resp.StatusCode; code != http.StatusOK &&
 		code != http.StatusCreated && code != http.StatusAccepted {
-		return fmt.Errorf("POST request to %s failed: %s", urlStr, resp.Status)
+		err := fmt.Errorf("POST request to %s failed: %s", urlStr, resp.Status)
+		return gtserror.WithStatusCode(err, resp.StatusCode)
 	}
 
 	return nil
