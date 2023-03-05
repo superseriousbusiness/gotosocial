@@ -68,6 +68,9 @@ func (p *Processor) BlockCreate(ctx context.Context, requestingAccount *gtsmodel
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("BlockCreate: error creating block in db: %s", err))
 	}
 
+	// Clear any notifications created by each account targeting the other.
+	aaaaaaaaaaaaaaaaa
+
 	// clear any follows or follow requests from the blocked account to the target account -- this is a simple delete
 	if err := p.state.DB.DeleteWhere(ctx, []db.Where{
 		{Key: "account_id", Value: targetAccountID},

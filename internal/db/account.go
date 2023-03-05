@@ -46,7 +46,7 @@ type Account interface {
 	PutAccount(ctx context.Context, account *gtsmodel.Account) Error
 
 	// UpdateAccount updates one account by ID.
-	UpdateAccount(ctx context.Context, account *gtsmodel.Account) Error
+	UpdateAccount(ctx context.Context, account *gtsmodel.Account, columns ...string) Error
 
 	// DeleteAccount deletes one account from the database by its ID.
 	// DO NOT USE THIS WHEN SUSPENDING ACCOUNTS! In that case you should mark the

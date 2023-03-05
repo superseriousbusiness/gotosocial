@@ -20,8 +20,10 @@ package processing
 
 import (
 	"context"
+	"errors"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -40,7 +42,7 @@ func (p *Processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, ex
 		return util.EmptyPageableResponse(), nil
 	}
 
-	items := []interface{}{}
+	items := make([]interface{}, 0, count)
 	nextMaxIDValue := ""
 	prevMinIDValue := ""
 	for i, n := range notifs {
@@ -72,8 +74,8 @@ func (p *Processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, ex
 }
 
 func (p *Processor) NotificationsClear(ctx context.Context, authed *oauth.Auth) gtserror.WithCode {
-	err := p.state.DB.ClearNotifications(ctx, authed.Account.ID)
-	if err != nil {
+	// Delete all notifications that target the authorized account.
+	if err := p.state.DB.DeleteNotifications(ctx, authed.Account.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return gtserror.NewErrorInternalError(err)
 	}
 

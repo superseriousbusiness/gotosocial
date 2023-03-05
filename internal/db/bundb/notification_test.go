@@ -20,11 +20,13 @@ package bundb_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -113,10 +115,10 @@ func (suite *NotificationTestSuite) TestGetNotificationsWithoutSpam() {
 	}
 }
 
-func (suite *NotificationTestSuite) TestClearNotificationsWithSpam() {
+func (suite *NotificationTestSuite) TestDeleteNotificationsWithSpam() {
 	suite.spamNotifs()
 	testAccount := suite.testAccounts["local_account_1"]
-	err := suite.db.ClearNotifications(context.Background(), testAccount.ID)
+	err := suite.db.DeleteNotifications(context.Background(), testAccount.ID, "")
 	suite.NoError(err)
 
 	notifications, err := suite.db.GetNotifications(context.Background(), testAccount.ID, []string{}, 20, id.Highest, id.Lowest)
@@ -125,10 +127,10 @@ func (suite *NotificationTestSuite) TestClearNotificationsWithSpam() {
 	suite.Empty(notifications)
 }
 
-func (suite *NotificationTestSuite) TestClearNotificationsWithTwoAccounts() {
+func (suite *NotificationTestSuite) TestDeleteNotificationsWithTwoAccounts() {
 	suite.spamNotifs()
 	testAccount := suite.testAccounts["local_account_1"]
-	err := suite.db.ClearNotifications(context.Background(), testAccount.ID)
+	err := suite.db.DeleteNotifications(context.Background(), testAccount.ID, "")
 	suite.NoError(err)
 
 	notifications, err := suite.db.GetNotifications(context.Background(), testAccount.ID, []string{}, 20, id.Highest, id.Lowest)
@@ -140,6 +142,50 @@ func (suite *NotificationTestSuite) TestClearNotificationsWithTwoAccounts() {
 	err = suite.db.GetAll(context.Background(), &notif)
 	suite.NoError(err)
 	suite.NotEmpty(notif)
+}
+
+func (suite *NotificationTestSuite) TestDeleteNotificationsOriginatingFromAccount() {
+	testAccount := suite.testAccounts["local_account_2"]
+
+	if err := suite.db.DeleteNotifications(context.Background(), "", testAccount.ID); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	notif := []*gtsmodel.Notification{}
+	if err := suite.db.GetAll(context.Background(), &notif); err != nil && !errors.Is(err, db.ErrNoEntries) {
+		suite.FailNow(err.Error())
+	}
+
+	for _, n := range notif {
+		if n.OriginAccountID == testAccount.ID {
+			suite.FailNowf("", "no notifications with origin account id %s should remain", testAccount.ID)
+		}
+	}
+}
+
+func (suite *NotificationTestSuite) TestDeleteNotificationsOriginatingFromAndTargetingAccount() {
+	originAccount := suite.testAccounts["local_account_2"]
+	targetAccount := suite.testAccounts["admin_account"]
+
+	if err := suite.db.DeleteNotifications(context.Background(), targetAccount.ID, originAccount.ID); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	notif := []*gtsmodel.Notification{}
+	if err := suite.db.GetAll(context.Background(), &notif); err != nil && !errors.Is(err, db.ErrNoEntries) {
+		suite.FailNow(err.Error())
+	}
+
+	for _, n := range notif {
+		if n.OriginAccountID == originAccount.ID || n.TargetAccountID == targetAccount.ID {
+			suite.FailNowf(
+				"",
+				"no notifications with origin account id %s and target account %s should remain",
+				originAccount.ID,
+				targetAccount.ID,
+			)
+		}
+	}
 }
 
 func TestNotificationTestSuite(t *testing.T) {

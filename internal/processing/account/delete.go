@@ -21,7 +21,6 @@ package account
 import (
 	"context"
 	"errors"
-	"time"
 
 	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -37,8 +36,11 @@ import (
 // Delete deletes an account, and all of that account's statuses, media, follows, notifications, etc etc etc.
 // The origin passed here should be either the ID of the account doing the delete (can be itself), or the ID of a domain block.
 func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origin string) gtserror.WithCode {
-	l := log.WithContext(ctx).WithFields(kv.Fields{{"username", account.Username}}...)
-	l.Trace("beginning account delete process")
+	l := log.WithContext(ctx).WithFields(kv.Fields{
+		{"username", account.Username},
+		{"domain", account.Domain},
+	}...)
+	l.Debug("beginning account delete process")
 
 	if account.IsLocal() {
 		if err := p.deleteUserAndTokensForAccount(ctx, account); err != nil {
@@ -54,16 +56,8 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 		return gtserror.NewErrorInternalError(err)
 	}
 
-	// 10. Delete account's notifications
-	l.Trace("deleting account notifications")
-	// first notifications created by account
-	if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "origin_account_id", Value: account.ID}}, &[]*gtsmodel.Notification{}); err != nil {
-		l.Errorf("error deleting notifications created by account: %s", err)
-	}
-
-	// now notifications targeting account
-	if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "target_account_id", Value: account.ID}}, &[]*gtsmodel.Notification{}); err != nil {
-		l.Errorf("error deleting notifications targeting account: %s", err)
+	if err := p.deleteAccountNotifications(ctx, account); err != nil {
+		return gtserror.NewErrorInternalError(err)
 	}
 
 	// 11. Delete account's bookmarks
@@ -85,40 +79,17 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 		l.Errorf("error deleting status mutes created by account: %s", err)
 	}
 
-	// 14. Delete account's streams
-	// TODO
+	// To prevent the account being created again,
+	// stubbify it and update it in the db.
+	// The account will not be deleted, but it
+	// will become completely unusable.
+	columns := stubbifyAccount(account, origin)
 
-	// 15. Delete account's tags
-	// TODO
-
-	// 17. Delete account's timeline
-	// TODO
-
-	// 18. Delete account itself
-	// to prevent the account being created again, set all these fields and update it in the db
-	// the account won't actually be *removed* from the database but it will be set to just a stub
-	account.Note = ""
-	account.DisplayName = ""
-	account.AvatarMediaAttachmentID = ""
-	account.AvatarRemoteURL = ""
-	account.HeaderMediaAttachmentID = ""
-	account.HeaderRemoteURL = ""
-	account.Reason = ""
-	account.Emojis = []*gtsmodel.Emoji{}
-	account.EmojiIDs = []string{}
-	account.Fields = []gtsmodel.Field{}
-	hideCollections := true
-	account.HideCollections = &hideCollections
-	discoverable := false
-	account.Discoverable = &discoverable
-	account.SuspendedAt = time.Now()
-	account.SuspensionOrigin = origin
-	err := p.state.DB.UpdateAccount(ctx, account)
-	if err != nil {
+	if err := p.state.DB.UpdateAccount(ctx, account, columns...); err != nil {
 		return gtserror.NewErrorInternalError(err)
 	}
 
-	l.Infof("deleted account with username %s from domain %s", account.Username, account.Domain)
+	l.Infof("account deleted")
 	return nil
 }
 

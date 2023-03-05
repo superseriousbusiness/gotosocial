@@ -22,6 +22,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -178,4 +179,84 @@ func (p *Processor) deleteAccountStatuses(ctx context.Context, account *gtsmodel
 	}
 
 	return nil
+}
+
+func (p *Processor) deleteAccountNotifications(ctx context.Context, account *gtsmodel.Account) error {
+	// Delete all notifications targeting given account.
+	if err := p.state.DB.DeleteNotifications(ctx, account.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return err
+	}
+
+	// Delete all notifications originating from given account.
+	if err := p.state.DB.DeleteNotifications(ctx, "", account.ID); err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return err
+	}
+
+	return nil
+}
+
+// stubbifyAccount renders the given account as a stub,
+// removing most information from it and marking it as
+// suspended.
+//
+// The origin parameter refers to the origin of the
+// suspension action; should be an account ID or domain
+// block ID.
+//
+// For caller's convenience, this function returns the db
+// names of all columns that are updated by it.
+func stubbifyAccount(account *gtsmodel.Account, origin string) []string {
+	var (
+		falseBool = func() *bool { b := false; return &b }
+		trueBool  = func() *bool { b := true; return &b }
+		now       = time.Now()
+		never     = time.Time{}
+	)
+
+	account.FetchedAt = never
+	account.AvatarMediaAttachmentID = ""
+	account.AvatarRemoteURL = ""
+	account.HeaderMediaAttachmentID = ""
+	account.HeaderRemoteURL = ""
+	account.DisplayName = ""
+	account.EmojiIDs = nil
+	account.Emojis = nil
+	account.Fields = nil
+	account.Note = ""
+	account.NoteRaw = ""
+	account.Memorial = falseBool()
+	account.AlsoKnownAs = ""
+	account.MovedToAccountID = ""
+	account.Reason = ""
+	account.Discoverable = falseBool()
+	account.StatusContentType = ""
+	account.CustomCSS = ""
+	account.SuspendedAt = now
+	account.SuspensionOrigin = origin
+	account.HideCollections = trueBool()
+	account.EnableRSS = falseBool()
+
+	return []string{
+		"fetched_at",
+		"avatar_media_attachment_id",
+		"avatar_remote_url",
+		"header_media_attachment_id",
+		"header_remote_url",
+		"display_name",
+		"emojis",
+		"fields",
+		"note",
+		"note_raw",
+		"memorial",
+		"also_known_as",
+		"moved_to_account_id",
+		"reason",
+		"discoverable",
+		"status_content_type",
+		"custom_css",
+		"suspended_at",
+		"suspension_origin",
+		"hide_collections",
+		"enable_rss",
+	}
 }
