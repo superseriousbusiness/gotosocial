@@ -225,7 +225,7 @@ func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account
 		columns = append(columns, "updated_at")
 	}
 
-	return a.state.Caches.GTS.Account().Store(account, func() error {
+	err := a.state.Caches.GTS.Account().Store(account, func() error {
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
 		//
@@ -261,6 +261,15 @@ func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account
 			return err
 		})
 	})
+	if err != nil {
+		return err
+	}
+
+	// Invalidate account from all visibility lookups.
+	a.state.Caches.Visibility.Invalidate("RequesterID", account.ID)
+	a.state.Caches.Visibility.Invalidate("ItemID", account.ID)
+
+	return nil
 }
 
 func (a *accountDB) DeleteAccount(ctx context.Context, id string) db.Error {
@@ -285,7 +294,13 @@ func (a *accountDB) DeleteAccount(ctx context.Context, id string) db.Error {
 		return err
 	}
 
+	// Invalidate account from database lookups.
 	a.state.Caches.GTS.Account().Invalidate("ID", id)
+
+	// Invalidate account from all visibility lookups.
+	a.state.Caches.Visibility.Invalidate("RequesterID", id)
+	a.state.Caches.Visibility.Invalidate("ItemID", id)
+
 	return nil
 }
 

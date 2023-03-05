@@ -301,7 +301,6 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Er
 		})
 	})
 	if err != nil {
-		// already processed
 		return err
 	}
 
@@ -429,8 +428,12 @@ func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) db.Error {
 		return err
 	}
 
-	// Drop any old value from cache by this ID
+	// Invalidate status from database lookups.
 	s.state.Caches.GTS.Status().Invalidate("ID", id)
+
+	// Invalidate status from all visibility lookups.
+	s.state.Caches.Visibility.Invalidate("ItemID", id)
+
 	return nil
 }
 
