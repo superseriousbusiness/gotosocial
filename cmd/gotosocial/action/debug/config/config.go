@@ -21,7 +21,7 @@ package config
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"os"
 
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -39,13 +39,8 @@ var Config action.GTSAction = func(ctx context.Context) (err error) {
 		return err
 	}
 
-	// Marshal map to JSON
-	b, err := json.Marshal(raw)
-	if err != nil {
-		return err
-	}
-
-	// Print to stdout
-	fmt.Printf("%s\n", b)
-	return nil
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "    ")
+	err = enc.Encode(raw)
+	return err
 }

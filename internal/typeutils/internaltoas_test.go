@@ -430,6 +430,116 @@ func (suite *InternalToASTestSuite) TestStatusToASWithMentions() {
 }`, string(bytes))
 }
 
+func (suite *InternalToASTestSuite) TestStatusToASDeletePublicReply() {
+	testStatus := suite.testStatuses["admin_account_status_3"]
+	ctx := context.Background()
+
+	asDelete, err := suite.typeconverter.StatusToASDelete(ctx, testStatus)
+	suite.NoError(err)
+
+	ser, err := streams.Serialize(asDelete)
+	suite.NoError(err)
+
+	bytes, err := json.MarshalIndent(ser, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": "http://localhost:8080/users/admin",
+  "cc": [
+    "http://localhost:8080/users/admin/followers",
+    "http://localhost:8080/users/the_mighty_zork"
+  ],
+  "object": "http://localhost:8080/users/admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0",
+  "to": "https://www.w3.org/ns/activitystreams#Public",
+  "type": "Delete"
+}`, string(bytes))
+}
+
+func (suite *InternalToASTestSuite) TestStatusToASDeletePublicReplyOriginalDeleted() {
+	testStatus := suite.testStatuses["admin_account_status_3"]
+	ctx := context.Background()
+
+  // Delete the status this replies to.
+  if err := suite.db.DeleteStatusByID(ctx, testStatus.ID); err != nil {
+    suite.FailNow(err.Error())
+  }
+
+  // Delete the mention the reply created.
+  mention := suite.testMentions["admin_account_mention_zork"]
+  if err := suite.db.DeleteByID(ctx, mention.ID, mention); err != nil {
+    suite.FailNow(err.Error())
+  }
+
+  // The delete should still be created OK.
+	asDelete, err := suite.typeconverter.StatusToASDelete(ctx, testStatus)
+	suite.NoError(err)
+
+	ser, err := streams.Serialize(asDelete)
+	suite.NoError(err)
+
+	bytes, err := json.MarshalIndent(ser, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": "http://localhost:8080/users/admin",
+  "cc": [
+    "http://localhost:8080/users/admin/followers",
+    "http://localhost:8080/users/the_mighty_zork"
+  ],
+  "object": "http://localhost:8080/users/admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0",
+  "to": "https://www.w3.org/ns/activitystreams#Public",
+  "type": "Delete"
+}`, string(bytes))
+}
+
+func (suite *InternalToASTestSuite) TestStatusToASDeletePublic() {
+	testStatus := suite.testStatuses["admin_account_status_1"]
+	ctx := context.Background()
+
+	asDelete, err := suite.typeconverter.StatusToASDelete(ctx, testStatus)
+	suite.NoError(err)
+
+	ser, err := streams.Serialize(asDelete)
+	suite.NoError(err)
+
+	bytes, err := json.MarshalIndent(ser, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": "http://localhost:8080/users/admin",
+  "cc": "http://localhost:8080/users/admin/followers",
+  "object": "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
+  "to": "https://www.w3.org/ns/activitystreams#Public",
+  "type": "Delete"
+}`, string(bytes))
+}
+
+func (suite *InternalToASTestSuite) TestStatusToASDeleteDirectMessage() {
+	testStatus := suite.testStatuses["local_account_2_status_6"]
+	ctx := context.Background()
+
+	asDelete, err := suite.typeconverter.StatusToASDelete(ctx, testStatus)
+	suite.NoError(err)
+
+	ser, err := streams.Serialize(asDelete)
+	suite.NoError(err)
+
+	bytes, err := json.MarshalIndent(ser, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": "http://localhost:8080/users/1happyturtle",
+  "cc": [],
+  "object": "http://localhost:8080/users/1happyturtle/statuses/01FN3VJGFH10KR7S2PB0GFJZYG",
+  "to": "http://localhost:8080/users/the_mighty_zork",
+  "type": "Delete"
+}`, string(bytes))
+}
+
 func (suite *InternalToASTestSuite) TestStatusesToASOutboxPage() {
 	testAccount := suite.testAccounts["admin_account"]
 	ctx := context.Background()

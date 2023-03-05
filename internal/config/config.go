@@ -114,6 +114,9 @@ type Configuration struct {
 	LetsEncryptCertDir      string `name:"letsencrypt-cert-dir" usage:"Directory to store acquired letsencrypt certificates."`
 	LetsEncryptEmailAddress string `name:"letsencrypt-email-address" usage:"Email address to use when requesting letsencrypt certs. Will receive updates on cert expiry etc."`
 
+	TLSCertificateChain string `name:"tls-certificate-chain" usage:"Filesystem path to the certificate chain including any intermediate CAs and the TLS public key"`
+	TLSCertificateKey   string `name:"tls-certificate-key" usage:"Filesystem path to the TLS private key"`
+
 	OIDCEnabled          bool     `name:"oidc-enabled" usage:"Enabled OIDC authorization for this instance. If set to true, then the other OIDC flags must also be set."`
 	OIDCIdpName          string   `name:"oidc-idp-name" usage:"Name of the OIDC identity provider. Will be shown to the user when logging in."`
 	OIDCSkipVerification bool     `name:"oidc-skip-verification" usage:"Skip verification of tokens returned by the OIDC provider. Should only be set to 'true' for testing purposes, never in a production environment!"`
@@ -176,6 +179,10 @@ type GTSCacheConfiguration struct {
 	EmojiCategoryMaxSize   int           `name:"emoji-category-max-size"`
 	EmojiCategoryTTL       time.Duration `name:"emoji-category-ttl"`
 	EmojiCategorySweepFreq time.Duration `name:"emoji-category-sweep-freq"`
+
+	MediaMaxSize   int           `name:"media-max-size"`
+	MediaTTL       time.Duration `name:"media-ttl"`
+	MediaSweepFreq time.Duration `name:"media-sweep-freq"`
 
 	MentionMaxSize   int           `name:"mention-max-size"`
 	MentionTTL       time.Duration `name:"mention-ttl"`

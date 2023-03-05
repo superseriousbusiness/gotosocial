@@ -92,7 +92,7 @@ For example, let's say you created the `~/gotosocial/data` directory for a user 
 
 #### LetsEncrypt (optional)
 
-If you want to use [LetsEncrypt](../configuration/letsencrypt.md) for ssl certificates (https), you should also:
+If you want to use [LetsEncrypt](../configuration/tls.md) for ssl certificates (https), you should also:
 
 1. Change the value of `GTS_LETSENCRYPT_ENABLED` to `"true"`.
 2. Remove the `#` before `- "80:80"` in the `ports` section.

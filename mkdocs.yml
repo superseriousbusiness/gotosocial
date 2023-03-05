@@ -65,7 +65,7 @@ nav:
       - "configuration/media.md"
       - "configuration/storage.md"
       - "configuration/statuses.md"
-      - "configuration/letsencrypt.md"
+      - "configuration/tls.md"
       - "configuration/oidc.md"
       - "configuration/smtp.md"
       - "configuration/syslog.md"

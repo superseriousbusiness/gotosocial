@@ -34,7 +34,7 @@ func InitTestConfig() {
 }
 
 var testDefaults = config.Configuration{
-	LogLevel:        "trace",
+	LogLevel:        "info",
 	LogDbQueries:    true,
 	ApplicationName: "gotosocial",
 	LandingPageUser: "",

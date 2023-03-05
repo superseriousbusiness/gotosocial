@@ -1524,6 +1524,56 @@ func GetLetsEncryptEmailAddress() string { return global.GetLetsEncryptEmailAddr
 // SetLetsEncryptEmailAddress safely sets the value for global configuration 'LetsEncryptEmailAddress' field
 func SetLetsEncryptEmailAddress(v string) { global.SetLetsEncryptEmailAddress(v) }
 
+// GetTLSCertificateChain safely fetches the Configuration value for state's 'TLSCertificateChain' field
+func (st *ConfigState) GetTLSCertificateChain() (v string) {
+	st.mutex.Lock()
+	v = st.config.TLSCertificateChain
+	st.mutex.Unlock()
+	return
+}
+
+// SetTLSCertificateChain safely sets the Configuration value for state's 'TLSCertificateChain' field
+func (st *ConfigState) SetTLSCertificateChain(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.TLSCertificateChain = v
+	st.reloadToViper()
+}
+
+// TLSCertificateChainFlag returns the flag name for the 'TLSCertificateChain' field
+func TLSCertificateChainFlag() string { return "tls-certificate-chain" }
+
+// GetTLSCertificateChain safely fetches the value for global configuration 'TLSCertificateChain' field
+func GetTLSCertificateChain() string { return global.GetTLSCertificateChain() }
+
+// SetTLSCertificateChain safely sets the value for global configuration 'TLSCertificateChain' field
+func SetTLSCertificateChain(v string) { global.SetTLSCertificateChain(v) }
+
+// GetTLSCertificateKey safely fetches the Configuration value for state's 'TLSCertificateKey' field
+func (st *ConfigState) GetTLSCertificateKey() (v string) {
+	st.mutex.Lock()
+	v = st.config.TLSCertificateKey
+	st.mutex.Unlock()
+	return
+}
+
+// SetTLSCertificateKey safely sets the Configuration value for state's 'TLSCertificateKey' field
+func (st *ConfigState) SetTLSCertificateKey(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.TLSCertificateKey = v
+	st.reloadToViper()
+}
+
+// TLSCertificateKeyFlag returns the flag name for the 'TLSCertificateKey' field
+func TLSCertificateKeyFlag() string { return "tls-certificate-key" }
+
+// GetTLSCertificateKey safely fetches the value for global configuration 'TLSCertificateKey' field
+func GetTLSCertificateKey() string { return global.GetTLSCertificateKey() }
+
+// SetTLSCertificateKey safely sets the value for global configuration 'TLSCertificateKey' field
+func SetTLSCertificateKey(v string) { global.SetTLSCertificateKey(v) }
+
 // GetOIDCEnabled safely fetches the Configuration value for state's 'OIDCEnabled' field
 func (st *ConfigState) GetOIDCEnabled() (v bool) {
 	st.mutex.Lock()
@@ -2425,6 +2475,81 @@ func GetCacheGTSEmojiCategorySweepFreq() time.Duration {
 
 // SetCacheGTSEmojiCategorySweepFreq safely sets the value for global configuration 'Cache.GTS.EmojiCategorySweepFreq' field
 func SetCacheGTSEmojiCategorySweepFreq(v time.Duration) { global.SetCacheGTSEmojiCategorySweepFreq(v) }
+
+// GetCacheGTSMediaMaxSize safely fetches the Configuration value for state's 'Cache.GTS.MediaMaxSize' field
+func (st *ConfigState) GetCacheGTSMediaMaxSize() (v int) {
+	st.mutex.Lock()
+	v = st.config.Cache.GTS.MediaMaxSize
+	st.mutex.Unlock()
+	return
+}
+
+// SetCacheGTSMediaMaxSize safely sets the Configuration value for state's 'Cache.GTS.MediaMaxSize' field
+func (st *ConfigState) SetCacheGTSMediaMaxSize(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.MediaMaxSize = v
+	st.reloadToViper()
+}
+
+// CacheGTSMediaMaxSizeFlag returns the flag name for the 'Cache.GTS.MediaMaxSize' field
+func CacheGTSMediaMaxSizeFlag() string { return "cache-gts-media-max-size" }
+
+// GetCacheGTSMediaMaxSize safely fetches the value for global configuration 'Cache.GTS.MediaMaxSize' field
+func GetCacheGTSMediaMaxSize() int { return global.GetCacheGTSMediaMaxSize() }
+
+// SetCacheGTSMediaMaxSize safely sets the value for global configuration 'Cache.GTS.MediaMaxSize' field
+func SetCacheGTSMediaMaxSize(v int) { global.SetCacheGTSMediaMaxSize(v) }
+
+// GetCacheGTSMediaTTL safely fetches the Configuration value for state's 'Cache.GTS.MediaTTL' field
+func (st *ConfigState) GetCacheGTSMediaTTL() (v time.Duration) {
+	st.mutex.Lock()
+	v = st.config.Cache.GTS.MediaTTL
+	st.mutex.Unlock()
+	return
+}
+
+// SetCacheGTSMediaTTL safely sets the Configuration value for state's 'Cache.GTS.MediaTTL' field
+func (st *ConfigState) SetCacheGTSMediaTTL(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.MediaTTL = v
+	st.reloadToViper()
+}
+
+// CacheGTSMediaTTLFlag returns the flag name for the 'Cache.GTS.MediaTTL' field
+func CacheGTSMediaTTLFlag() string { return "cache-gts-media-ttl" }
+
+// GetCacheGTSMediaTTL safely fetches the value for global configuration 'Cache.GTS.MediaTTL' field
+func GetCacheGTSMediaTTL() time.Duration { return global.GetCacheGTSMediaTTL() }
+
+// SetCacheGTSMediaTTL safely sets the value for global configuration 'Cache.GTS.MediaTTL' field
+func SetCacheGTSMediaTTL(v time.Duration) { global.SetCacheGTSMediaTTL(v) }
+
+// GetCacheGTSMediaSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.MediaSweepFreq' field
+func (st *ConfigState) GetCacheGTSMediaSweepFreq() (v time.Duration) {
+	st.mutex.Lock()
+	v = st.config.Cache.GTS.MediaSweepFreq
+	st.mutex.Unlock()
+	return
+}
+
+// SetCacheGTSMediaSweepFreq safely sets the Configuration value for state's 'Cache.GTS.MediaSweepFreq' field
+func (st *ConfigState) SetCacheGTSMediaSweepFreq(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.MediaSweepFreq = v
+	st.reloadToViper()
+}
+
+// CacheGTSMediaSweepFreqFlag returns the flag name for the 'Cache.GTS.MediaSweepFreq' field
+func CacheGTSMediaSweepFreqFlag() string { return "cache-gts-media-sweep-freq" }
+
+// GetCacheGTSMediaSweepFreq safely fetches the value for global configuration 'Cache.GTS.MediaSweepFreq' field
+func GetCacheGTSMediaSweepFreq() time.Duration { return global.GetCacheGTSMediaSweepFreq() }
+
+// SetCacheGTSMediaSweepFreq safely sets the value for global configuration 'Cache.GTS.MediaSweepFreq' field
+func SetCacheGTSMediaSweepFreq(v time.Duration) { global.SetCacheGTSMediaSweepFreq(v) }
 
 // GetCacheGTSMentionMaxSize safely fetches the Configuration value for state's 'Cache.GTS.MentionMaxSize' field
 func (st *ConfigState) GetCacheGTSMentionMaxSize() (v int) {
