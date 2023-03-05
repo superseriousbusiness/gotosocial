@@ -265,7 +265,8 @@ func HostMetaResponse(req *http.Request) (responseCode int, responseBytes []byte
 func OtherWebfingerLocationResponse(req *http.Request) (responseCode int, responseBytes []byte, responseContentType string, responseContentLength int) {
 	var wfr *apimodel.WellKnownResponse
 
-	if req.URL.String() == "https://misconfigured-instance.com/.weird-webfinger-location/webfinger?resource=acct%3Asomeone%40misconfigured-instance.com" {
+	switch req.URL.String() {
+	case "https://misconfigured-instance.com/.weird-webfinger-location/webfinger?resource=acct%3Asomeone%40misconfigured-instance.com":
 		wfr = &apimodel.WellKnownResponse{
 			Subject: "acct:someone@misconfigured-instance.com",
 			Links: []apimodel.Link{
@@ -273,6 +274,17 @@ func OtherWebfingerLocationResponse(req *http.Request) (responseCode int, respon
 					Rel:  "self",
 					Type: applicationActivityJSON,
 					Href: "https://misconfigured-instance.com/users/someone",
+				},
+			},
+		}
+	case "https://misconfigured-instance.com/.weird-webfinger-location/webfinger?resource=acct%3Anobody%40misconfigured-instance.com":
+		wfr = &apimodel.WellKnownResponse{
+			Subject: "acct:nobodymisconfigured-instance.com",
+			Links: []apimodel.Link{
+				{
+					Rel:  "self",
+					Type: applicationActivityJSON,
+					Href: "https://misconfigured-instance.com/users/nobody",
 				},
 			},
 		}

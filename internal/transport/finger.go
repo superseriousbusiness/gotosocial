@@ -34,10 +34,20 @@ import (
 // well as if the URL was retrieved from cache. When the URL is retrieved
 // from cache we don't have to try and do host-meta discovery
 func (t *transport) webfingerURLFor(targetDomain string) (string, bool) {
-	url, ok := t.controller.state.Caches.GTS.Webfinger().Get(targetDomain)
-	if !ok {
-		url = "https://" + targetDomain + "/.well-known/webfinger"
+	url := "https://" + targetDomain + "/.well-known/webfinger"
+
+	wc := t.controller.state.Caches.GTS.Webfinger()
+	// We're doing the manual locking/unlocking here to be able to
+	// safely call Cache.Get instead of Get, as the latter updates the
+	// item expiry which we don't want to do here
+	wc.Lock()
+	item, ok := wc.Cache.Get(targetDomain)
+	wc.Unlock()
+
+	if ok {
+		url = item.Value
 	}
+
 	return url, ok
 }
 
