@@ -31,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
@@ -210,7 +211,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		transport.WithFastfail(ctx), username, publicKeyOwnerURI, false,
 	)
 	if err != nil {
-		if errors.Is(err, transport.ErrGone) {
+		if gtserror.StatusCode(err) == http.StatusGone {
 			// This is the same case as the http.StatusGone check above.
 			// It can happen here and not there because there's a race
 			// where the sending server starts sending account deletion

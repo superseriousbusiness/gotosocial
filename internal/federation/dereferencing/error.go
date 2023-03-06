@@ -19,10 +19,10 @@
 package dereferencing
 
 import (
-	"errors"
 	"fmt"
+	"net/http"
 
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // ErrDB denotes that a proper error has occurred when doing
@@ -96,22 +96,21 @@ func newErrOther(err error) error {
 }
 
 func wrapDerefError(derefErr error, fluff string) error {
-	var (
-		err          error
-		errWrongType *ErrWrongType
-	)
-
+	// Wrap with fluff.
+	err := derefErr
 	if fluff != "" {
 		err = fmt.Errorf("%s: %w", fluff, derefErr)
 	}
 
-	switch {
-	case errors.Is(derefErr, transport.ErrGone):
-		err = NewErrNotRetrievable(err)
-	case errors.As(derefErr, &errWrongType):
-		err = newErrWrongType(err)
-	default:
-		err = newErrTransportError(err)
+	// Check for unretrievable HTTP status code errors.
+	if code := gtserror.StatusCode(derefErr); // nocollapse
+	code == http.StatusGone || code == http.StatusNotFound {
+		return NewErrNotRetrievable(err)
+	}
+
+	// Check for other untrievable errors.
+	if gtserror.NotFound(derefErr) {
+		return NewErrNotRetrievable(err)
 	}
 
 	return err
