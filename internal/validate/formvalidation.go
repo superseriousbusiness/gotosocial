@@ -43,6 +43,8 @@ const (
 	maximumUsernameLength         = 64
 	maximumCustomCSSLength        = 5000
 	maximumEmojiCategoryLength    = 64
+	maximumProfileFieldLength     = 255
+	maximumProfileFields          = 4
 )
 
 // NewPassword returns an error if the given password is not sufficiently strong, or nil if it's ok.
@@ -230,4 +232,21 @@ func SiteTerms(t string) error {
 // ULID returns true if the passed string is a valid ULID.
 func ULID(i string) bool {
 	return regexes.ULID.MatchString(i)
+}
+
+func ProfileFieldsCount(fields []apimodel.UpdateField) error {
+	if length := len(fields); length > maximumProfileFields {
+		return fmt.Errorf("cannot have more than %d profile fields", maximumProfileFields)
+	}
+
+	return nil
+}
+
+func ProfileField(f *string) string {
+	s := []rune(*f)
+	if len(s) > maximumProfileFieldLength {
+		return string(s[:maximumProfileFieldLength]) // trim profile field to maximum allowed length
+	}
+
+	return string(*f)
 }
