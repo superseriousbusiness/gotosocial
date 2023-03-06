@@ -32,8 +32,8 @@ import (
 )
 
 func StartWorkers(state *state.State) {
-	state.Workers.EnqueueClientAPI = func(context.Context, messages.FromClientAPI) {}
-	state.Workers.EnqueueFederator = func(context.Context, messages.FromFederator) {}
+	state.Workers.EnqueueClientAPI = func(context.Context, ...messages.FromClientAPI) {}
+	state.Workers.EnqueueFederator = func(context.Context, ...messages.FromFederator) {}
 
 	_ = state.Workers.Scheduler.Start(nil)
 	_ = state.Workers.ClientAPI.Start(1, 10)

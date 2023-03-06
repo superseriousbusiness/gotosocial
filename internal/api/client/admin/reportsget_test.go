@@ -954,7 +954,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetZeroLimit() {
 	suite.NoError(err)
 	suite.Len(reports, 2)
 
-  // Limit in Link header should be set to 100
+	// Limit in Link header should be set to 100
 	suite.Equal(`<http://localhost:8080/api/v1/admin/reports?limit=100&max_id=01GP3AWY4CRDVRNZKW0TEAMB5R>; rel="next", <http://localhost:8080/api/v1/admin/reports?limit=100&min_id=01GP3DFY9XQ1TJMZT5BGAZPXX7>; rel="prev"`, link)
 }
 
@@ -967,7 +967,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetHighLimit() {
 	suite.NoError(err)
 	suite.Len(reports, 2)
 
-  // Limit in Link header should be set to 100
+	// Limit in Link header should be set to 100
 	suite.Equal(`<http://localhost:8080/api/v1/admin/reports?limit=100&max_id=01GP3AWY4CRDVRNZKW0TEAMB5R>; rel="next", <http://localhost:8080/api/v1/admin/reports?limit=100&min_id=01GP3DFY9XQ1TJMZT5BGAZPXX7>; rel="prev"`, link)
 }
 

@@ -70,8 +70,10 @@ func (suite *FederatingDBTestSuite) SetupTest() {
 	testrig.StartWorkers(&suite.state)
 
 	suite.fromFederator = make(chan messages.FromFederator, 10)
-	suite.state.Workers.EnqueueFederator = func(ctx context.Context, msg messages.FromFederator) {
-		suite.fromFederator <- msg
+	suite.state.Workers.EnqueueFederator = func(ctx context.Context, msgs ...messages.FromFederator) {
+		for _, msg := range msgs {
+			suite.fromFederator <- msg
+		}
 	}
 
 	suite.db = testrig.NewTestDB(&suite.state)

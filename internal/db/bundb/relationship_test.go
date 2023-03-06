@@ -438,6 +438,54 @@ func (suite *RelationshipTestSuite) TestCountAccountFollowedByLocalOnly() {
 	suite.Equal(2, followsCount)
 }
 
+func (suite *RelationshipTestSuite) TestUnfollowExisting() {
+	originAccount := suite.testAccounts["local_account_1"]
+	targetAccount := suite.testAccounts["admin_account"]
+
+	uri, err := suite.db.Unfollow(context.Background(), originAccount.ID, targetAccount.ID)
+	suite.NoError(err)
+	suite.Equal("http://localhost:8080/users/the_mighty_zork/follow/01F8PY8RHWRQZV038T4E8T9YK8", uri)
+}
+
+func (suite *RelationshipTestSuite) TestUnfollowNotExisting() {
+	originAccount := suite.testAccounts["local_account_1"]
+	targetAccountID := "01GTVD9N484CZ6AM90PGGNY7GQ"
+
+	uri, err := suite.db.Unfollow(context.Background(), originAccount.ID, targetAccountID)
+	suite.NoError(err)
+	suite.Empty(uri)
+}
+
+func (suite *RelationshipTestSuite) TestUnfollowRequestExisting() {
+	ctx := context.Background()
+	originAccount := suite.testAccounts["admin_account"]
+	targetAccount := suite.testAccounts["local_account_2"]
+
+	followRequest := &gtsmodel.FollowRequest{
+		ID:              "01GEF753FWHCHRDWR0QEHBXM8W",
+		URI:             "http://localhost:8080/weeeeeeeeeeeeeeeee",
+		AccountID:       originAccount.ID,
+		TargetAccountID: targetAccount.ID,
+	}
+
+	if err := suite.db.Put(ctx, followRequest); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	uri, err := suite.db.UnfollowRequest(context.Background(), originAccount.ID, targetAccount.ID)
+	suite.NoError(err)
+	suite.Equal("http://localhost:8080/weeeeeeeeeeeeeeeee", uri)
+}
+
+func (suite *RelationshipTestSuite) TestUnfollowRequestNotExisting() {
+	originAccount := suite.testAccounts["local_account_1"]
+	targetAccountID := "01GTVD9N484CZ6AM90PGGNY7GQ"
+
+	uri, err := suite.db.UnfollowRequest(context.Background(), originAccount.ID, targetAccountID)
+	suite.NoError(err)
+	suite.Empty(uri)
+}
+
 func TestRelationshipTestSuite(t *testing.T) {
 	suite.Run(t, new(RelationshipTestSuite))
 }

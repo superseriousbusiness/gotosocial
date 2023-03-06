@@ -460,18 +460,18 @@ func (suite *InternalToASTestSuite) TestStatusToASDeletePublicReplyOriginalDelet
 	testStatus := suite.testStatuses["admin_account_status_3"]
 	ctx := context.Background()
 
-  // Delete the status this replies to.
-  if err := suite.db.DeleteStatusByID(ctx, testStatus.ID); err != nil {
-    suite.FailNow(err.Error())
-  }
+	// Delete the status this replies to.
+	if err := suite.db.DeleteStatusByID(ctx, testStatus.ID); err != nil {
+		suite.FailNow(err.Error())
+	}
 
-  // Delete the mention the reply created.
-  mention := suite.testMentions["admin_account_mention_zork"]
-  if err := suite.db.DeleteByID(ctx, mention.ID, mention); err != nil {
-    suite.FailNow(err.Error())
-  }
+	// Delete the mention the reply created.
+	mention := suite.testMentions["admin_account_mention_zork"]
+	if err := suite.db.DeleteByID(ctx, mention.ID, mention); err != nil {
+		suite.FailNow(err.Error())
+	}
 
-  // The delete should still be created OK.
+	// The delete should still be created OK.
 	asDelete, err := suite.typeconverter.StatusToASDelete(ctx, testStatus)
 	suite.NoError(err)
 

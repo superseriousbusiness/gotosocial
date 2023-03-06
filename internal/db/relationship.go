@@ -92,4 +92,25 @@ type Relationship interface {
 
 	// CountAccountFollowedBy returns the amounts that the given ID is followed by.
 	CountAccountFollowedBy(ctx context.Context, accountID string, localOnly bool) (int, Error)
+
+	// Unfollow removes a follow targeting targetAccountID and originating
+	// from originAccountID.
+	//
+	// If a follow was removed this way, the AP URI of the follow will be
+	// returned to the caller, so that further processing can take place
+	// if necessary.
+	//
+	// If no follow was removed this way, the returned string will be empty.
+	Unfollow(ctx context.Context, originAccountID string, targetAccountID string) (string, Error)
+
+	// UnfollowRequest removes a follow request targeting targetAccountID
+	// and originating from originAccountID.
+	//
+	// If a follow request was removed this way, the AP URI of the follow
+	// request will be returned to the caller, so that further processing
+	// can take place if necessary.
+	//
+	// If no follow request was removed this way, the returned string will
+	// be empty.
+	UnfollowRequest(ctx context.Context, originAccountID string, targetAccountID string) (string, Error)
 }

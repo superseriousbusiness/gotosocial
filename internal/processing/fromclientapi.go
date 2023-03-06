@@ -137,8 +137,8 @@ func (p *Processor) processCreateAccountFromClientAPI(ctx context.Context, clien
 		return errors.New("account was not parseable as *gtsmodel.Account")
 	}
 
-	// return if the account isn't from this domain
-	if account.Domain != "" {
+	// Do nothing if this isn't our activity.
+	if !account.IsLocal() {
 		return nil
 	}
 
@@ -363,8 +363,8 @@ func (p *Processor) processReportAccountFromClientAPI(ctx context.Context, clien
 // TODO: move all the below functions into federation.Federator
 
 func (p *Processor) federateAccountDelete(ctx context.Context, account *gtsmodel.Account) error {
-	// do nothing if this isn't our account
-	if account.Domain != "" {
+	// Do nothing if this isn't our activity.
+	if !account.IsLocal() {
 		return nil
 	}
 
@@ -429,8 +429,8 @@ func (p *Processor) federateStatus(ctx context.Context, status *gtsmodel.Status)
 		status.Account = statusAccount
 	}
 
-	// do nothing if this isn't our status
-	if status.Account.Domain != "" {
+	// Do nothing if this isn't our activity.
+	if !status.Account.IsLocal() {
 		return nil
 	}
 
@@ -462,8 +462,8 @@ func (p *Processor) federateStatusDelete(ctx context.Context, status *gtsmodel.S
 		status.Account = statusAccount
 	}
 
-	// do nothing if this isn't our status
-	if status.Account.Domain != "" {
+	// Do nothing if this isn't our activity.
+	if !status.Account.IsLocal() {
 		return nil
 	}
 
@@ -482,8 +482,8 @@ func (p *Processor) federateStatusDelete(ctx context.Context, status *gtsmodel.S
 }
 
 func (p *Processor) federateFollow(ctx context.Context, followRequest *gtsmodel.FollowRequest, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
-	// if both accounts are local there's nothing to do here
-	if originAccount.Domain == "" && targetAccount.Domain == "" {
+	// Do nothing if both accounts are local.
+	if originAccount.IsLocal() && targetAccount.IsLocal() {
 		return nil
 	}
 
@@ -504,8 +504,8 @@ func (p *Processor) federateFollow(ctx context.Context, followRequest *gtsmodel.
 }
 
 func (p *Processor) federateUnfollow(ctx context.Context, follow *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
-	// if both accounts are local there's nothing to do here
-	if originAccount.Domain == "" && targetAccount.Domain == "" {
+	// Do nothing if both accounts are local.
+	if originAccount.IsLocal() && targetAccount.IsLocal() {
 		return nil
 	}
 
@@ -545,8 +545,8 @@ func (p *Processor) federateUnfollow(ctx context.Context, follow *gtsmodel.Follo
 }
 
 func (p *Processor) federateUnfave(ctx context.Context, fave *gtsmodel.StatusFave, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
-	// if both accounts are local there's nothing to do here
-	if originAccount.Domain == "" && targetAccount.Domain == "" {
+	// Do nothing if both accounts are local.
+	if originAccount.IsLocal() && targetAccount.IsLocal() {
 		return nil
 	}
 
@@ -584,8 +584,8 @@ func (p *Processor) federateUnfave(ctx context.Context, fave *gtsmodel.StatusFav
 }
 
 func (p *Processor) federateUnannounce(ctx context.Context, boost *gtsmodel.Status, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
-	if originAccount.Domain != "" {
-		// nothing to do here
+	// Do nothing if this isn't our activity.
+	if !originAccount.IsLocal() {
 		return nil
 	}
 
@@ -637,13 +637,9 @@ func (p *Processor) federateAcceptFollowRequest(ctx context.Context, follow *gts
 	}
 	targetAccount := follow.TargetAccount
 
-	// if target account isn't from our domain we shouldn't do anything
-	if targetAccount.Domain != "" {
-		return nil
-	}
-
-	// if both accounts are local there's nothing to do here
-	if originAccount.Domain == "" && targetAccount.Domain == "" {
+	// Do nothing if target account *isn't* local,
+	// or both origin + target *are* local.
+	if targetAccount.IsRemote() || (originAccount.IsLocal() && targetAccount.IsLocal()) {
 		return nil
 	}
 
@@ -710,13 +706,9 @@ func (p *Processor) federateRejectFollowRequest(ctx context.Context, followReque
 	}
 	targetAccount := followRequest.TargetAccount
 
-	// if target account isn't from our domain we shouldn't do anything
-	if targetAccount.Domain != "" {
-		return nil
-	}
-
-	// if both accounts are local there's nothing to do here
-	if originAccount.Domain == "" && targetAccount.Domain == "" {
+	// Do nothing if target account *isn't* local,
+	// or both origin + target *are* local.
+	if targetAccount.IsRemote() || (originAccount.IsLocal() && targetAccount.IsLocal()) {
 		return nil
 	}
 
@@ -766,8 +758,8 @@ func (p *Processor) federateRejectFollowRequest(ctx context.Context, followReque
 }
 
 func (p *Processor) federateFave(ctx context.Context, fave *gtsmodel.StatusFave, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
-	// if both accounts are local there's nothing to do here
-	if originAccount.Domain == "" && targetAccount.Domain == "" {
+	// Do nothing if both accounts are local.
+	if originAccount.IsLocal() && targetAccount.IsLocal() {
 		return nil
 	}
 
@@ -837,8 +829,8 @@ func (p *Processor) federateBlock(ctx context.Context, block *gtsmodel.Block) er
 		block.TargetAccount = blockTargetAccount
 	}
 
-	// if both accounts are local there's nothing to do here
-	if block.Account.Domain == "" && block.TargetAccount.Domain == "" {
+	// Do nothing if both accounts are local.
+	if block.Account.IsLocal() && block.TargetAccount.IsLocal() {
 		return nil
 	}
 
@@ -873,8 +865,8 @@ func (p *Processor) federateUnblock(ctx context.Context, block *gtsmodel.Block) 
 		block.TargetAccount = blockTargetAccount
 	}
 
-	// if both accounts are local there's nothing to do here
-	if block.Account.Domain == "" && block.TargetAccount.Domain == "" {
+	// Do nothing if both accounts are local.
+	if block.Account.IsLocal() && block.TargetAccount.IsLocal() {
 		return nil
 	}
 

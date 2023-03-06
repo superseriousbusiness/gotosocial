@@ -472,3 +472,39 @@ func (r *relationshipDB) CountAccountFollowedBy(ctx context.Context, accountID s
 
 	return q.Count(ctx)
 }
+
+func (r *relationshipDB) Unfollow(ctx context.Context, originAccountID string, targetAccountID string) (string, db.Error) {
+	uri := new(string)
+
+	_, err := r.conn.
+		NewDelete().
+		TableExpr("? AS ?", bun.Ident("follows"), bun.Ident("follow")).
+		Where("? = ?", bun.Ident("follow.target_account_id"), targetAccountID).
+		Where("? = ?", bun.Ident("follow.account_id"), originAccountID).
+		Returning("?", bun.Ident("uri")).Exec(ctx, uri)
+
+	// Only return proper errors.
+	if err = r.conn.ProcessError(err); err != db.ErrNoEntries {
+		return *uri, err
+	}
+
+	return *uri, nil
+}
+
+func (r *relationshipDB) UnfollowRequest(ctx context.Context, originAccountID string, targetAccountID string) (string, db.Error) {
+	uri := new(string)
+
+	_, err := r.conn.
+		NewDelete().
+		TableExpr("? AS ?", bun.Ident("follow_requests"), bun.Ident("follow_request")).
+		Where("? = ?", bun.Ident("follow_request.target_account_id"), targetAccountID).
+		Where("? = ?", bun.Ident("follow_request.account_id"), originAccountID).
+		Returning("?", bun.Ident("uri")).Exec(ctx, uri)
+
+	// Only return proper errors.
+	if err = r.conn.ProcessError(err); err != db.ErrNoEntries {
+		return *uri, err
+	}
+
+	return *uri, nil
+}
