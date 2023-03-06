@@ -35,21 +35,21 @@ import (
 //
 // This function will call StatusVisible internally, so it's not necessary to call it beforehand.
 func (f *Filter) StatusHomeTimelineable(ctx context.Context, owner *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
+	var ownerID string
+
+	if owner != nil {
+		// Use provided account ID.
+		ownerID = owner.ID
+	} else {
+		// Set a no-auth ID flag.
+		ownerID = "noauth"
+	}
+
 	visibility, err := f.state.Caches.Visibility.Load("Type.RequesterID.ItemID", func() (*cache.CachedVisibility, error) {
 		// Visibility not yet cached, perform timeline visibility lookup.
 		visible, err := f.isStatusHomeTimelineable(ctx, owner, status)
 		if err != nil {
 			return nil, err
-		}
-
-		var ownerID string
-
-		if owner != nil {
-			// Use provided account ID.
-			ownerID = owner.ID
-		} else {
-			// Set a no-auth ID flag.
-			ownerID = "noauth"
 		}
 
 		// Return visibility value.
@@ -59,10 +59,11 @@ func (f *Filter) StatusHomeTimelineable(ctx context.Context, owner *gtsmodel.Acc
 			Type:        "home",
 			Value:       visible,
 		}, nil
-	}, "home", owner.ID, status.ID)
+	}, "home", ownerID, status.ID)
 	if err != nil {
 		return false, err
 	}
+
 	return visibility.Value, nil
 }
 

@@ -29,21 +29,21 @@ import (
 )
 
 func (f *Filter) AccountVisible(ctx context.Context, requester *gtsmodel.Account, account *gtsmodel.Account) (bool, error) {
+	var requesterID string
+
+	if requester != nil {
+		// Use provided account ID.
+		requesterID = requester.ID
+	} else {
+		// Set a no-auth ID flag.
+		requesterID = "noauth"
+	}
+
 	visibility, err := f.state.Caches.Visibility.Load("Type.RequesterID.ItemID", func() (*cache.CachedVisibility, error) {
 		// Visibility not yet cached, perform visibility lookup.
 		visible, err := f.isAccountVisibleTo(ctx, requester, account)
 		if err != nil {
 			return nil, err
-		}
-
-		var requesterID string
-
-		if requester != nil {
-			// Use provided account ID.
-			requesterID = requester.ID
-		} else {
-			// Set a no-auth ID flag.
-			requesterID = "noauth"
 		}
 
 		// Return visibility value.
@@ -53,10 +53,11 @@ func (f *Filter) AccountVisible(ctx context.Context, requester *gtsmodel.Account
 			Type:        "account",
 			Value:       visible,
 		}, nil
-	}, "account", requester.ID, account.ID)
+	}, "account", requesterID, account.ID)
 	if err != nil {
 		return false, err
 	}
+
 	return visibility.Value, nil
 }
 

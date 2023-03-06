@@ -50,21 +50,21 @@ func (f *Filter) StatusesVisible(ctx context.Context, requester *gtsmodel.Accoun
 
 // StatusVisible returns true if targetStatus is visible to requestingAccount, based on the privacy settings of the status, and any blocks/mutes that might exist between the two accounts or account domains.
 func (f *Filter) StatusVisible(ctx context.Context, requester *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
+	var requesterID string
+
+	if requester != nil {
+		// Use provided account ID.
+		requesterID = requester.ID
+	} else {
+		// Set a no-auth ID flag.
+		requesterID = "noauth"
+	}
+
 	visibility, err := f.state.Caches.Visibility.Load("Type.RequesterID.ItemID", func() (*cache.CachedVisibility, error) {
 		// Visibility not yet cached, perform visibility lookup.
 		visible, err := f.isStatusVisible(ctx, requester, status)
 		if err != nil {
 			return nil, err
-		}
-
-		var requesterID string
-
-		if requester != nil {
-			// Use provided account ID.
-			requesterID = requester.ID
-		} else {
-			// Set a no-auth ID flag.
-			requesterID = "noauth"
 		}
 
 		// Return visibility value.
@@ -74,10 +74,11 @@ func (f *Filter) StatusVisible(ctx context.Context, requester *gtsmodel.Account,
 			Type:        "status",
 			Value:       visible,
 		}, nil
-	}, "status", requester.ID, status.ID)
+	}, "status", requesterID, status.ID)
 	if err != nil {
 		return false, err
 	}
+
 	return visibility.Value, nil
 }
 

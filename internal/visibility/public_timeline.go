@@ -32,21 +32,21 @@ import (
 //
 // This function will call StatusVisible internally, so it's not necessary to call it beforehand.
 func (f *Filter) StatusPublicTimelineable(ctx context.Context, requester *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
+	var requesterID string
+
+	if requester != nil {
+		// Use provided account ID.
+		requesterID = requester.ID
+	} else {
+		// Set a no-auth ID flag.
+		requesterID = "noauth"
+	}
+
 	visibility, err := f.state.Caches.Visibility.Load("Type.RequesterID.ItemID", func() (*cache.CachedVisibility, error) {
 		// Visibility not yet cached, perform timeline visibility lookup.
 		visible, err := f.isStatusPublicTimelineable(ctx, requester, status)
 		if err != nil {
 			return nil, err
-		}
-
-		var requesterID string
-
-		if requester != nil {
-			// Use provided account ID.
-			requesterID = requester.ID
-		} else {
-			// Set a no-auth ID flag.
-			requesterID = "noauth"
 		}
 
 		// Return visibility value.
@@ -56,10 +56,11 @@ func (f *Filter) StatusPublicTimelineable(ctx context.Context, requester *gtsmod
 			Type:        "public",
 			Value:       visible,
 		}, nil
-	}, "public", requester.ID, status.ID)
+	}, "public", requesterID, status.ID)
 	if err != nil {
 		return false, err
 	}
+
 	return visibility.Value, nil
 }
 
