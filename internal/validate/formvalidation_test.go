@@ -25,6 +25,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
@@ -282,6 +283,39 @@ func (suite *ValidationTestSuite) TestValidateReason() {
 	if assert.NoError(suite.T(), err) {
 		assert.Equal(suite.T(), nil, err)
 	}
+}
+
+func (suite *ValidationTestSuite) TestValidateProfileFieldsCount() {
+	noFields := []model.UpdateField{}
+	fewFields := []model.UpdateField{{}, {}}
+	tooManyFields := []model.UpdateField{{}, {}, {}, {}, {}}
+	err := validate.ProfileFieldsCount(tooManyFields)
+	if assert.Error(suite.T(), err) {
+		assert.Equal(suite.T(), errors.New("cannot have more than 4 profile fields"), err)
+	}
+
+	err = validate.ProfileFieldsCount(noFields)
+	assert.NoError(suite.T(), err)
+
+	err = validate.ProfileFieldsCount(fewFields)
+	assert.NoError(suite.T(), err)
+}
+
+func (suite *ValidationTestSuite) TestValidateProfileField() {
+	shortProfileField := "pronouns"
+	tooLongProfileField := "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer eu bibendum elit. Sed ac interdum nisi. Vestibulum vulputate eros quis euismod imperdiet. Nulla sit amet dui sit amet lorem consectetur iaculis. Mauris eget lacinia metus. Curabitur nec dui eleifend massa nunc."
+	trimmedProfileField := "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer eu bibendum elit. Sed ac interdum nisi. Vestibulum vulputate eros quis euismod imperdiet. Nulla sit amet dui sit amet lorem consectetur iaculis. Mauris eget lacinia metus. Curabitur nec dui "
+
+	validated := validate.ProfileField(&shortProfileField)
+	assert.Equal(suite.T(), shortProfileField, validated)
+
+	validated = validate.ProfileField(&tooLongProfileField)
+	assert.Len(suite.T(), validated, 255)
+	assert.Equal(suite.T(), trimmedProfileField, validated)
+
+	validated = validate.ProfileField(&trimmedProfileField)
+	assert.Len(suite.T(), validated, 255)
+	assert.Equal(suite.T(), trimmedProfileField, validated)
 }
 
 func TestValidationTestSuite(t *testing.T) {

@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -36,6 +37,7 @@ import (
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-kv"
 	"github.com/go-fed/httpsig"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -56,6 +58,7 @@ type Transport interface {
 
 	// Deliver sends an ActivityStreams object.
 	Deliver(ctx context.Context, b []byte, to *url.URL) error
+
 	// BatchDeliver sends an ActivityStreams object to multiple recipients.
 	BatchDeliver(ctx context.Context, b []byte, recipients []*url.URL) error
 
@@ -65,10 +68,13 @@ type Transport interface {
 
 	// Dereference fetches the ActivityStreams object located at this IRI with a GET request.
 	Dereference(ctx context.Context, iri *url.URL) ([]byte, error)
+
 	// DereferenceMedia fetches the given media attachment IRI, returning the reader and filesize.
 	DereferenceMedia(ctx context.Context, iri *url.URL) (io.ReadCloser, int64, error)
+
 	// DereferenceInstance dereferences remote instance information, first by checking /api/v1/instance, and then by checking /.well-known/nodeinfo.
 	DereferenceInstance(ctx context.Context, iri *url.URL) (*gtsmodel.Instance, error)
+
 	// Finger performs a webfinger request with the given username and domain, and returns the bytes from the response body.
 	Finger(ctx context.Context, targetUsername string, targetDomain string) ([]byte, error)
 }
@@ -207,6 +213,10 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error) (*http
 		} else if errors.As(err, &x509.UnknownAuthorityError{}) {
 			// Unknown authority errors we do NOT recover from
 			return nil, err
+		} else if dnserr := (*net.DNSError)(nil); // nocollapse
+		errors.As(err, &dnserr) && dnserr.IsNotFound {
+			// DNS lookup failure, this domain does not exist
+			return nil, gtserror.SetNotFound(err)
 		}
 
 		if fastFail {
@@ -219,7 +229,7 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error) (*http
 			backoff = time.Duration(i) * baseBackoff
 		}
 
-		l.Errorf("backing off for %s after http request error: %v", backoff.String(), err)
+		l.Errorf("backing off for %s after http request error: %v", backoff, err)
 
 		select {
 		// Request ctx cancelled
@@ -228,7 +238,6 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error) (*http
 
 		// Backoff for some time
 		case <-time.After(backoff):
-			backoff *= 2
 		}
 	}
 

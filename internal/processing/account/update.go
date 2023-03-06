@@ -165,6 +165,26 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		account.EnableRSS = form.EnableRSS
 	}
 
+	if form.FieldsAttributes != nil && len(*form.FieldsAttributes) != 0 {
+		if err := validate.ProfileFieldsCount(*form.FieldsAttributes); err != nil {
+			return nil, gtserror.NewErrorBadRequest(err)
+		}
+
+		account.Fields = make([]gtsmodel.Field, 0) // reset fields
+		for _, f := range *form.FieldsAttributes {
+			if f.Name != nil && f.Value != nil {
+				if *f.Name != "" && *f.Value != "" {
+					field := gtsmodel.Field{}
+
+					field.Name = validate.ProfileField(f.Name)
+					field.Value = validate.ProfileField(f.Value)
+
+					account.Fields = append(account.Fields, field)
+				}
+			}
+		}
+	}
+
 	err := p.state.DB.UpdateAccount(ctx, account)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("could not update account %s: %s", account.ID, err))

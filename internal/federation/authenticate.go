@@ -25,6 +25,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 
@@ -226,7 +227,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		// The actual http call to the remote server is made right here in the Dereference function.
 		b, err := trans.Dereference(ctx, requestingPublicKeyID)
 		if err != nil {
-			if errors.Is(err, transport.ErrGone) {
+			if gtserror.StatusCode(err) == http.StatusGone {
 				// if we get a 410 error it means the account that owns this public key has been deleted;
 				// we should add a tombstone to our database so that we can avoid trying to deref it in future
 				if err := f.HandleGone(ctx, requestingPublicKeyID); err != nil {
