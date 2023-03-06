@@ -686,7 +686,7 @@ github.com/ulule/limiter/v3/drivers/middleware/gin
 github.com/ulule/limiter/v3/drivers/store/common
 github.com/ulule/limiter/v3/drivers/store/memory
 github.com/ulule/limiter/v3/internal/bytebuffer
-# github.com/uptrace/bun v1.1.10
+# github.com/uptrace/bun v1.1.12
 ## explicit; go 1.18
 github.com/uptrace/bun
 github.com/uptrace/bun/dialect
