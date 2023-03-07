@@ -148,6 +148,11 @@ func (p *Processor) getFaveTarget(ctx context.Context, requestingAccount *gtsmod
 		return nil, nil, errWithCode
 	}
 
+	if !*targetStatus.Likeable {
+		err := errors.New("status is not faveable")
+		return nil, nil, gtserror.NewErrorForbidden(err, err.Error())
+	}
+
 	fave, err := p.state.DB.GetStatusFaveByAccountID(ctx, requestingAccount.ID, targetStatusID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = fmt.Errorf("getFaveTarget: error checking existing fave: %w", err)

@@ -124,7 +124,7 @@ func (suite *StatusFaveTestSuite) TestPostUnfaveable() {
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), `{"error":"Forbidden"}`, string(b))
+	assert.Equal(suite.T(), `{"error":"Forbidden: status is not faveable"}`, string(b))
 }
 
 func TestStatusFaveTestSuite(t *testing.T) {

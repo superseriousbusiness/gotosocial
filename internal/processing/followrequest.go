@@ -20,6 +20,7 @@ package processing
 
 import (
 	"context"
+	"errors"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -30,21 +31,17 @@ import (
 )
 
 func (p *Processor) FollowRequestsGet(ctx context.Context, auth *oauth.Auth) ([]apimodel.Account, gtserror.WithCode) {
-	frs, err := p.state.DB.GetAccountFollowRequests(ctx, auth.Account.ID)
-	if err != nil {
-		if err != db.ErrNoEntries {
-			return nil, gtserror.NewErrorInternalError(err)
-		}
+	followRequests, err := p.state.DB.GetFollowRequests(ctx, "", auth.Account.ID)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	accts := []apimodel.Account{}
-	for _, fr := range frs {
+	accts := make([]apimodel.Account, 0, len(followRequests))
+	for _, fr := range followRequests {
 		if fr.Account == nil {
-			frAcct, err := p.state.DB.GetAccountByID(ctx, fr.AccountID)
-			if err != nil {
-				return nil, gtserror.NewErrorInternalError(err)
-			}
-			fr.Account = frAcct
+			// The creator of the follow doesn't exist,
+			// just skip this one.
+			continue
 		}
 
 		apiAcct, err := p.tc.AccountToAPIAccountPublic(ctx, fr.Account)
@@ -63,19 +60,9 @@ func (p *Processor) FollowRequestAccept(ctx context.Context, auth *oauth.Auth, a
 	}
 
 	if follow.Account == nil {
-		followAccount, err := p.state.DB.GetAccountByID(ctx, follow.AccountID)
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-		follow.Account = followAccount
-	}
+		// The creator of the follow doesn't exist,
+		// so we can't do further processing.
 
-	if follow.TargetAccount == nil {
-		followTargetAccount, err := p.state.DB.GetAccountByID(ctx, follow.TargetAccountID)
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-		follow.TargetAccount = followTargetAccount
 	}
 
 	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
@@ -86,39 +73,13 @@ func (p *Processor) FollowRequestAccept(ctx context.Context, auth *oauth.Auth, a
 		TargetAccount:  follow.TargetAccount,
 	})
 
-	gtsR, err := p.state.DB.GetRelationship(ctx, auth.Account.ID, accountID)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	r, err := p.tc.RelationshipToAPIRelationship(ctx, gtsR)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	return r, nil
+	return p.relationship(ctx, auth.Account.ID, accountID)
 }
 
 func (p *Processor) FollowRequestReject(ctx context.Context, auth *oauth.Auth, accountID string) (*apimodel.Relationship, gtserror.WithCode) {
 	followRequest, err := p.state.DB.RejectFollowRequest(ctx, accountID, auth.Account.ID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(err)
-	}
-
-	if followRequest.Account == nil {
-		a, err := p.state.DB.GetAccountByID(ctx, followRequest.AccountID)
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-		followRequest.Account = a
-	}
-
-	if followRequest.TargetAccount == nil {
-		a, err := p.state.DB.GetAccountByID(ctx, followRequest.TargetAccountID)
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-		followRequest.TargetAccount = a
 	}
 
 	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
@@ -129,15 +90,19 @@ func (p *Processor) FollowRequestReject(ctx context.Context, auth *oauth.Auth, a
 		TargetAccount:  followRequest.TargetAccount,
 	})
 
-	gtsR, err := p.state.DB.GetRelationship(ctx, auth.Account.ID, accountID)
+	return p.relationship(ctx, auth.Account.ID, accountID)
+}
+
+func (p *Processor) relationship(ctx context.Context, accountID string, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
+	relationship, err := p.state.DB.GetRelationship(ctx, accountID, targetAccountID)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	r, err := p.tc.RelationshipToAPIRelationship(ctx, gtsR)
+	apiRelationship, err := p.tc.RelationshipToAPIRelationship(ctx, relationship)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return r, nil
+	return apiRelationship, nil
 }

@@ -20,12 +20,12 @@ package bundb
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
 )
@@ -33,14 +33,6 @@ import (
 type relationshipDB struct {
 	conn  *DBConn
 	state *state.State
-}
-
-func (r *relationshipDB) newFollowQ(follow interface{}) *bun.SelectQuery {
-	return r.conn.
-		NewSelect().
-		Model(follow).
-		Relation("Account").
-		Relation("TargetAccount")
 }
 
 func (r *relationshipDB) IsBlocked(ctx context.Context, account1 string, account2 string, eitherDirection bool) (bool, db.Error) {
@@ -387,87 +379,187 @@ func (r *relationshipDB) RejectFollowRequest(ctx context.Context, originAccountI
 	return followRequest, nil
 }
 
-func (r *relationshipDB) GetAccountFollowRequests(ctx context.Context, accountID string) ([]*gtsmodel.FollowRequest, db.Error) {
-	followRequests := []*gtsmodel.FollowRequest{}
+func (r *relationshipDB) getFollow(ctx context.Context, id string) (*gtsmodel.Follow, db.Error) {
+	follow := &gtsmodel.Follow{}
 
-	q := r.newFollowQ(&followRequests).
-		Where("? = ?", bun.Ident("follow_request.target_account_id"), accountID).
-		Order("follow_request.updated_at DESC")
-
-	if err := q.Scan(ctx); err != nil {
+	err := r.conn.
+		NewSelect().
+		Model(follow).
+		Where("? = ?", bun.Ident("follow.id"), id).
+		Scan(ctx)
+	if err != nil {
 		return nil, r.conn.ProcessError(err)
 	}
 
-	return followRequests, nil
+	follow.Account, err = r.state.DB.GetAccountByID(ctx, follow.AccountID)
+	if err != nil {
+		log.Errorf(ctx, "error getting follow account %q: %v", follow.AccountID, err)
+	}
+
+	follow.TargetAccount, err = r.state.DB.GetAccountByID(ctx, follow.TargetAccountID)
+	if err != nil {
+		log.Errorf(ctx, "error getting follow target account %q: %v", follow.TargetAccountID, err)
+	}
+
+	return follow, nil
 }
 
-func (r *relationshipDB) GetAccountFollows(ctx context.Context, accountID string) ([]*gtsmodel.Follow, db.Error) {
-	follows := []*gtsmodel.Follow{}
+func (r *relationshipDB) GetLocalFollowersIDs(ctx context.Context, targetAccountID string) ([]string, db.Error) {
+	accountIDs := []string{}
 
-	q := r.newFollowQ(&follows).
-		Where("? = ?", bun.Ident("follow.account_id"), accountID).
+	// Select only the account ID of each follow.
+	q := r.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("follows"), bun.Ident("follow")).
+		ColumnExpr("? AS ?", bun.Ident("follow.account_id"), bun.Ident("account_id")).
+		Where("? = ?", bun.Ident("follow.target_account_id"), targetAccountID)
+
+	// Join on accounts table to select only
+	// those with NULL domain (local accounts).
+	q = q.
+		Join("JOIN ? AS ? ON ? = ?",
+			bun.Ident("accounts"),
+			bun.Ident("account"),
+			bun.Ident("follow.account_id"),
+			bun.Ident("account.id"),
+		).
+		Where("? IS NULL", bun.Ident("account.domain"))
+
+	// We don't *really* need to order these,
+	// but it makes it more consistent to do so.
+	q = q.Order("account_id DESC")
+
+	if err := q.Scan(ctx, &accountIDs); err != nil {
+		return nil, r.conn.ProcessError(err)
+	}
+
+	return accountIDs, nil
+}
+
+func (r *relationshipDB) GetFollows(ctx context.Context, accountID string, targetAccountID string) ([]*gtsmodel.Follow, db.Error) {
+	ids := []string{}
+
+	q := r.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("follows"), bun.Ident("follow")).
+		Column("follow.id").
 		Order("follow.updated_at DESC")
 
-	if err := q.Scan(ctx); err != nil {
+	if accountID != "" {
+		q = q.Where("? = ?", bun.Ident("follow.account_id"), accountID)
+	}
+
+	if targetAccountID != "" {
+		q = q.Where("? = ?", bun.Ident("follow.target_account_id"), targetAccountID)
+	}
+
+	if err := q.Scan(ctx, &ids); err != nil {
 		return nil, r.conn.ProcessError(err)
+	}
+
+	follows := make([]*gtsmodel.Follow, 0, len(ids))
+	for _, id := range ids {
+		follow, err := r.getFollow(ctx, id)
+		if err != nil {
+			log.Errorf(ctx, "error getting follow %q: %v", id, err)
+			continue
+		}
+
+		follows = append(follows, follow)
 	}
 
 	return follows, nil
 }
 
-func (r *relationshipDB) CountAccountFollows(ctx context.Context, accountID string, localOnly bool) (int, db.Error) {
+func (r *relationshipDB) CountFollows(ctx context.Context, accountID string, targetAccountID string) (int, db.Error) {
 	q := r.conn.
 		NewSelect().
-		TableExpr("? AS ?", bun.Ident("follows"), bun.Ident("follow"))
+		TableExpr("? AS ?", bun.Ident("follows"), bun.Ident("follow")).
+		Column("follow.id")
 
-	if localOnly {
-		q = q.
-			Join("JOIN ? AS ? ON ? = ?", bun.Ident("accounts"), bun.Ident("account"), bun.Ident("follow.target_account_id"), bun.Ident("account.id")).
-			Where("? = ?", bun.Ident("follow.account_id"), accountID).
-			Where("? IS NULL", bun.Ident("account.domain"))
-	} else {
+	if accountID != "" {
 		q = q.Where("? = ?", bun.Ident("follow.account_id"), accountID)
+	}
+
+	if targetAccountID != "" {
+		q = q.Where("? = ?", bun.Ident("follow.target_account_id"), targetAccountID)
 	}
 
 	return q.Count(ctx)
 }
 
-func (r *relationshipDB) GetAccountFollowedBy(ctx context.Context, accountID string, localOnly bool) ([]*gtsmodel.Follow, db.Error) {
-	follows := []*gtsmodel.Follow{}
+func (r *relationshipDB) getFollowRequest(ctx context.Context, id string) (*gtsmodel.FollowRequest, db.Error) {
+	followRequest := &gtsmodel.FollowRequest{}
 
-	q := r.conn.
+	err := r.conn.
 		NewSelect().
-		Model(&follows).
-		Order("follow.updated_at DESC")
-
-	if localOnly {
-		q = q.
-			Join("JOIN ? AS ? ON ? = ?", bun.Ident("accounts"), bun.Ident("account"), bun.Ident("follow.account_id"), bun.Ident("account.id")).
-			Where("? = ?", bun.Ident("follow.target_account_id"), accountID).
-			Where("? IS NULL", bun.Ident("account.domain"))
-	} else {
-		q = q.Where("? = ?", bun.Ident("follow.target_account_id"), accountID)
-	}
-
-	err := q.Scan(ctx)
-	if err != nil && err != sql.ErrNoRows {
+		Model(followRequest).
+		Where("? = ?", bun.Ident("follow_request.id"), id).
+		Scan(ctx)
+	if err != nil {
 		return nil, r.conn.ProcessError(err)
 	}
-	return follows, nil
+
+	followRequest.Account, err = r.state.DB.GetAccountByID(ctx, followRequest.AccountID)
+	if err != nil {
+		log.Errorf(ctx, "error getting follow request account %q: %v", followRequest.AccountID, err)
+	}
+
+	followRequest.TargetAccount, err = r.state.DB.GetAccountByID(ctx, followRequest.TargetAccountID)
+	if err != nil {
+		log.Errorf(ctx, "error getting follow request target account %q: %v", followRequest.TargetAccountID, err)
+	}
+
+	return followRequest, nil
 }
 
-func (r *relationshipDB) CountAccountFollowedBy(ctx context.Context, accountID string, localOnly bool) (int, db.Error) {
+func (r *relationshipDB) GetFollowRequests(ctx context.Context, accountID string, targetAccountID string) ([]*gtsmodel.FollowRequest, db.Error) {
+	ids := []string{}
+
 	q := r.conn.
 		NewSelect().
-		TableExpr("? AS ?", bun.Ident("follows"), bun.Ident("follow"))
+		TableExpr("? AS ?", bun.Ident("follow_requests"), bun.Ident("follow_request")).
+		Column("follow_request.id")
 
-	if localOnly {
-		q = q.
-			Join("JOIN ? AS ? ON ? = ?", bun.Ident("accounts"), bun.Ident("account"), bun.Ident("follow.account_id"), bun.Ident("account.id")).
-			Where("? = ?", bun.Ident("follow.target_account_id"), accountID).
-			Where("? IS NULL", bun.Ident("account.domain"))
-	} else {
-		q = q.Where("? = ?", bun.Ident("follow.target_account_id"), accountID)
+	if accountID != "" {
+		q = q.Where("? = ?", bun.Ident("follow_request.account_id"), accountID)
+	}
+
+	if targetAccountID != "" {
+		q = q.Where("? = ?", bun.Ident("follow_request.target_account_id"), targetAccountID)
+	}
+
+	if err := q.Scan(ctx, &ids); err != nil {
+		return nil, r.conn.ProcessError(err)
+	}
+
+	followRequests := make([]*gtsmodel.FollowRequest, 0, len(ids))
+	for _, id := range ids {
+		followRequest, err := r.getFollowRequest(ctx, id)
+		if err != nil {
+			log.Errorf(ctx, "error getting follow request %q: %v", id, err)
+			continue
+		}
+
+		followRequests = append(followRequests, followRequest)
+	}
+
+	return followRequests, nil
+}
+
+func (r *relationshipDB) CountFollowRequests(ctx context.Context, accountID string, targetAccountID string) (int, db.Error) {
+	q := r.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("follow_requests"), bun.Ident("follow_request")).
+		Column("follow_request.id").
+		Order("follow_request.updated_at DESC")
+
+	if accountID != "" {
+		q = q.Where("? = ?", bun.Ident("follow_request.account_id"), accountID)
+	}
+
+	if targetAccountID != "" {
+		q = q.Where("? = ?", bun.Ident("follow_request.target_account_id"), targetAccountID)
 	}
 
 	return q.Count(ctx)

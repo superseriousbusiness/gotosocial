@@ -87,7 +87,7 @@ func (p *Processor) BoostCreate(ctx context.Context, requestingAccount *gtsmodel
 		TargetAccount:  targetStatus.Account,
 	})
 
-	return p.apiStatus(ctx, targetStatus, requestingAccount)
+	return p.apiStatus(ctx, boostWrapperStatus, requestingAccount)
 }
 
 // BoostRemove processes the unboost/unreblog of a given status, returning the status if all is well.

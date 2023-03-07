@@ -27,7 +27,6 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -61,15 +60,9 @@ func (c *converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 	// then adding the Source object to it...
 
 	// check pending follow requests aimed at this account
-	frs, err := c.db.GetAccountFollowRequests(ctx, a.ID)
+	frc, err := c.db.CountFollowRequests(ctx, "", a.ID)
 	if err != nil {
-		if err != db.ErrNoEntries {
-			return nil, fmt.Errorf("error getting follow requests: %s", err)
-		}
-	}
-	var frc int
-	if frs != nil {
-		frc = len(frs)
+		return nil, fmt.Errorf("error counting follow requests: %s", err)
 	}
 
 	statusContentType := string(apimodel.StatusContentTypeDefault)
@@ -92,13 +85,13 @@ func (c *converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 
 func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
 	// count followers
-	followersCount, err := c.db.CountAccountFollowedBy(ctx, a.ID, false)
+	followersCount, err := c.db.CountFollows(ctx, "", a.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error counting followers: %s", err)
 	}
 
 	// count following
-	followingCount, err := c.db.CountAccountFollows(ctx, a.ID, false)
+	followingCount, err := c.db.CountFollows(ctx, a.ID, "")
 	if err != nil {
 		return nil, fmt.Errorf("error counting following: %s", err)
 	}

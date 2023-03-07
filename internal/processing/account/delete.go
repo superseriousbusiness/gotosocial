@@ -182,105 +182,105 @@ func (p *Processor) deleteRelationshipsForAccount(ctx context.Context, account *
 		return fmt.Errorf("deleteRelationshipsForAccount: db error deleting blocks targeting account %s: %w", account.ID, err)
 	}
 
-	// Use this slice to batch messages if necessary.
-	msgs := []messages.FromClientAPI{}
+	var (
+		// Use this slice to batch messages if necessary.
+		msgs = []messages.FromClientAPI{}
+		// To avoid checking if account is local over + over
+		// inside the subsequent loops, just generate static
+		// side effects function once now.
+		unfollowSideEffects = p.unfollowSideEffectsFunc(account)
+	)
 
-	// Delete follows created by this account.
-	follows, err := p.state.DB.GetAccountFollows(ctx, account.ID)
+	// Delete follows originating from this account.
+	following, err := p.state.DB.GetFollows(ctx, account.ID, "")
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return fmt.Errorf("deleteRelationshipsForAccount: db error getting follows owned by account %s: %w", account.ID, err)
 	}
 
-	for _, follow := range follows {
-		uri, err := p.state.DB.Unfollow(ctx, account.ID, follow.TargetAccountID)
-		if err != nil {
+	// For each follow owned by this account, unfollow
+	// and process side effects (noop if remote account).
+	for _, follow := range following {
+		if uri, err := p.state.DB.Unfollow(ctx, account.ID, follow.TargetAccountID); err != nil {
 			return fmt.Errorf("deleteRelationshipsForAccount: db error unfollowing account: %w", err)
-		}
-
-		if uri == "" {
-			// There wasn't a follow after all; some race condition?
-			// Just move on.
+		} else if uri == "" {
+			// There was no follow after all.
+			// Some race condition? Skip.
 			continue
 		}
 
-		// Follow was removed, ensure we know the target account.
-		if follow.TargetAccount == nil {
-			follow.TargetAccount, err = p.state.DB.GetAccountByID(ctx, follow.TargetAccountID)
-			if err != nil {
-				if errors.Is(err, db.ErrNoEntries) {
-					continue // Target account can't be found, skip it.
-				}
-				// Real error.
-				return fmt.Errorf("deleteRelationshipsForAccount: db error getting account %s: %w", follow.TargetAccountID, err)
-			}
+		if msg := unfollowSideEffects(account, follow); msg != nil {
+			// There was a side effect to process.
+			msgs = append(msgs, *msg)
 		}
-
-		// There was a follow, process side effects.
-		msgs = append(msgs, messages.FromClientAPI{
-			APObjectType:   ap.ActivityFollow,
-			APActivityType: ap.ActivityUndo,
-			GTSModel:       follow,
-			OriginAccount:  account,
-			TargetAccount:  follow.TargetAccount,
-		})
 	}
 
-	// Delete follow requests created by this account.
-	// Delete follows created by this account.
-	followRequests, err := p.state.DB.GetAccountFollowRequests(ctx, account.ID)
+	// Delete follow requests originating from this account.
+	followRequesting, err := p.state.DB.GetFollowRequests(ctx, account.ID, "")
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return fmt.Errorf("deleteRelationshipsForAccount: db error getting follow requests owned by account %s: %w", account.ID, err)
 	}
 
-	for _, followRequest := range followRequests {
+	// For each follow owned by this account, unfollow
+	// and process side effects (noop if remote account).
+	for _, followRequest := range followRequesting {
 		uri, err := p.state.DB.UnfollowRequest(ctx, account.ID, followRequest.TargetAccountID)
 		if err != nil {
 			return fmt.Errorf("deleteRelationshipsForAccount: db error unfollowRequesting account: %w", err)
 		}
 
 		if uri == "" {
-			// There wasn't a follow request after all; some race condition?
-			// Just move on.
+			// There was no follow request after all.
+			// Some race condition? Skip.
 			continue
 		}
 
-		// Follow request was removed, ensure we know the target account.
-		if followRequest.TargetAccount == nil {
-			followRequest.TargetAccount, err = p.state.DB.GetAccountByID(ctx, followRequest.TargetAccountID)
-			if err != nil {
-				if errors.Is(err, db.ErrNoEntries) {
-					continue // Target account can't be found, skip it.
-				}
-				// Real error.
-				return fmt.Errorf("deleteRelationshipsForAccount: db error getting account %s: %w", followRequest.TargetAccountID, err)
-			}
+		// Dummy out a follow so our side effects func
+		// has something to work with. This follow will
+		// never enter the db, it's just for convenience.
+		follow := &gtsmodel.Follow{
+			URI:             uri,
+			AccountID:       followRequest.AccountID,
+			Account:         followRequest.Account,
+			TargetAccountID: followRequest.TargetAccountID,
+			TargetAccount:   followRequest.TargetAccount,
 		}
 
-		// There was a follow request, process side effects.
-		msgs = append(msgs, messages.FromClientAPI{
-			APObjectType:   ap.ActivityFollow,
-			APActivityType: ap.ActivityUndo,
-			GTSModel: &gtsmodel.Follow{
-				URI:             uri,
-				AccountID:       account.ID,
-				TargetAccountID: followRequest.TargetAccount.ID,
-			},
-			OriginAccount: account,
-			TargetAccount: followRequest.TargetAccount,
-		})
+		if msg := unfollowSideEffects(account, follow); msg != nil {
+			// There was a side effect to process.
+			msgs = append(msgs, *msg)
+		}
 	}
 
-	// Delete follow requests targeting this account.
-	if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "target_account_id", Value: account.ID}}, &[]*gtsmodel.FollowRequest{}); err != nil {
-		return fmt.Errorf("deleteRelationshipsForAccount: db error deleting follow requests targeting account %s: %w", account.ID, err)
-	}
-
-	// Delete follows targeting this account.
-	if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "target_account_id", Value: account.ID}}, &[]*gtsmodel.Follow{}); err != nil {
-		return fmt.Errorf("deleteRelationshipsForAccount: db error deleting follow requests targeting account %s: %w", account.ID, err)
-	}
+	// Process accreted messages asynchronously.
+	p.state.Workers.EnqueueClientAPI(ctx, msgs...)
 
 	return nil
+}
+
+func (p *Processor) unfollowSideEffectsFunc(account *gtsmodel.Account) func(account *gtsmodel.Account, follow *gtsmodel.Follow) *messages.FromClientAPI {
+	if !account.IsLocal() {
+		return func(account *gtsmodel.Account, follow *gtsmodel.Follow) *messages.FromClientAPI {
+			// No side effects by default
+			return nil
+		}
+	}
+
+	return func(account *gtsmodel.Account, follow *gtsmodel.Follow) *messages.FromClientAPI {
+		if follow.TargetAccount == nil || follow.TargetAccount.IsLocal() {
+			// TargetAccount seems to have gone, or is a local
+			// account, so no side effects to process.
+			return nil
+		}
+
+		// There was a follow, process side effects.
+		return &messages.FromClientAPI{
+			APObjectType:   ap.ActivityFollow,
+			APActivityType: ap.ActivityUndo,
+			GTSModel:       follow,
+			OriginAccount:  account,
+			TargetAccount:  follow.TargetAccount,
+		}
+	}
 }
 
 // deleteAccountStatuses iterates through all statuses owned by
@@ -325,9 +325,14 @@ func (p *Processor) deleteAccountStatuses(ctx context.Context, account *gtsmodel
 
 			for _, boost := range boosts {
 				if boost.Account == nil {
-					// Fetch the relevant account for this status boost
+					// Fetch the relevant account for this status boost.
 					boostAcc, err := p.state.DB.GetAccountByID(ctx, boost.AccountID)
 					if err != nil {
+						if errors.Is(err, db.ErrNoEntries) {
+							// We don't have an account for this boost
+							// for some reason, so just skip processing.
+							continue
+						}
 						return fmt.Errorf("deleteAccountStatuses: error fetching boosted status account for %s: %w", boost.AccountID, err)
 					}
 

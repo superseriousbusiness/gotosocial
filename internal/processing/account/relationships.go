@@ -32,93 +32,45 @@ import (
 // FollowersGet fetches a list of the target account's followers.
 func (p *Processor) FollowersGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) ([]apimodel.Account, gtserror.WithCode) {
 	if blocked, err := p.state.DB.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true); err != nil {
+		err = fmt.Errorf("FollowersGet: db error checking block: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	} else if blocked {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts"))
+		err = errors.New("FollowersGet: block exists between accounts")
+		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	accounts := []apimodel.Account{}
-	follows, err := p.state.DB.GetAccountFollowedBy(ctx, targetAccountID, false)
+	follows, err := p.state.DB.GetFollows(ctx, "", targetAccountID)
 	if err != nil {
-		if err == db.ErrNoEntries {
-			return accounts, nil
-		}
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	for _, f := range follows {
-		blocked, err := p.state.DB.IsBlocked(ctx, requestingAccount.ID, f.AccountID, true)
-		if err != nil {
+		if !errors.Is(err, db.ErrNoEntries) {
+			err = fmt.Errorf("FollowersGet: db error getting followers: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
-		if blocked {
-			continue
-		}
-
-		if f.Account == nil {
-			a, err := p.state.DB.GetAccountByID(ctx, f.AccountID)
-			if err != nil {
-				if err == db.ErrNoEntries {
-					continue
-				}
-				return nil, gtserror.NewErrorInternalError(err)
-			}
-			f.Account = a
-		}
-
-		account, err := p.tc.AccountToAPIAccountPublic(ctx, f.Account)
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-		accounts = append(accounts, *account)
+		return []apimodel.Account{}, nil
 	}
-	return accounts, nil
+
+	return p.accountsFromFollows(ctx, follows, requestingAccount.ID)
 }
 
 // FollowingGet fetches a list of the accounts that target account is following.
 func (p *Processor) FollowingGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) ([]apimodel.Account, gtserror.WithCode) {
 	if blocked, err := p.state.DB.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true); err != nil {
+		err = fmt.Errorf("FollowingGet: db error checking block: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	} else if blocked {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts"))
+		err = errors.New("FollowingGet: block exists between accounts")
+		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	accounts := []apimodel.Account{}
-	follows, err := p.state.DB.GetAccountFollows(ctx, targetAccountID)
+	follows, err := p.state.DB.GetFollows(ctx, targetAccountID, "")
 	if err != nil {
-		if err == db.ErrNoEntries {
-			return accounts, nil
-		}
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	for _, f := range follows {
-		blocked, err := p.state.DB.IsBlocked(ctx, requestingAccount.ID, f.AccountID, true)
-		if err != nil {
+		if !errors.Is(err, db.ErrNoEntries) {
+			err = fmt.Errorf("FollowingGet: db error getting followers: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
-		if blocked {
-			continue
-		}
-
-		if f.TargetAccount == nil {
-			a, err := p.state.DB.GetAccountByID(ctx, f.TargetAccountID)
-			if err != nil {
-				if err == db.ErrNoEntries {
-					continue
-				}
-				return nil, gtserror.NewErrorInternalError(err)
-			}
-			f.TargetAccount = a
-		}
-
-		account, err := p.tc.AccountToAPIAccountPublic(ctx, f.TargetAccount)
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-		accounts = append(accounts, *account)
+		return []apimodel.Account{}, nil
 	}
-	return accounts, nil
+
+	return p.accountsFromFollows(ctx, follows, requestingAccount.ID)
 }
 
 // RelationshipGet returns a relationship model describing the relationship of the targetAccount to the Authed account.
@@ -138,4 +90,30 @@ func (p *Processor) RelationshipGet(ctx context.Context, requestingAccount *gtsm
 	}
 
 	return r, nil
+}
+
+func (p *Processor) accountsFromFollows(ctx context.Context, follows []*gtsmodel.Follow, requestingAccountID string) ([]apimodel.Account, gtserror.WithCode) {
+	accounts := make([]apimodel.Account, 0, len(follows))
+	for _, f := range follows {
+		if f.Account == nil {
+			// No account set for some reason; just skip.
+			continue
+		}
+
+		if blocked, err := p.state.DB.IsBlocked(ctx, requestingAccountID, f.AccountID, true); err != nil {
+			err = fmt.Errorf("accountsFromFollows: db error checking block: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		} else if blocked {
+			continue
+		}
+
+		account, err := p.tc.AccountToAPIAccountPublic(ctx, f.Account)
+		if err != nil {
+			err = fmt.Errorf("accountsFromFollows: error converting account to api account: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+		accounts = append(accounts, *account)
+	}
+
+	return accounts, nil
 }
