@@ -298,48 +298,50 @@ func (r *relationshipDB) IsMutualFollowing(ctx context.Context, account1 *gtsmod
 }
 
 func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, originAccountID string, targetAccountID string) (*gtsmodel.Follow, db.Error) {
-	var follow *gtsmodel.Follow
+	// Get original follow request.
+	var followRequestID string
+	if err := r.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("follow_requests"), bun.Ident("follow_request")).
+		Column("follow_request.id").
+		Where("? = ?", bun.Ident("follow_request.account_id"), originAccountID).
+		Where("? = ?", bun.Ident("follow_request.target_account_id"), targetAccountID).
+		Scan(ctx, &followRequestID); err != nil {
+		return nil, r.conn.ProcessError(err)
+	}
 
-	if err := r.conn.RunInTx(ctx, func(tx bun.Tx) error {
-		// get original follow request
-		followRequest := &gtsmodel.FollowRequest{}
-		if err := tx.
-			NewSelect().
-			Model(followRequest).
-			Where("? = ?", bun.Ident("follow_request.account_id"), originAccountID).
-			Where("? = ?", bun.Ident("follow_request.target_account_id"), targetAccountID).
-			Scan(ctx); err != nil {
-			return err
-		}
+	followRequest, err := r.getFollowRequest(ctx, followRequestID)
+	if err != nil {
+		return nil, r.conn.ProcessError(err)
+	}
 
-		// create a new follow to 'replace' the request with
-		follow = &gtsmodel.Follow{
-			ID:              followRequest.ID,
-			AccountID:       originAccountID,
-			TargetAccountID: targetAccountID,
-			URI:             followRequest.URI,
-		}
+	// Create a new follow to 'replace'
+	// the original follow request with.
+	follow := &gtsmodel.Follow{
+		ID:              followRequest.ID,
+		AccountID:       originAccountID,
+		Account:         followRequest.Account,
+		TargetAccountID: targetAccountID,
+		TargetAccount:   followRequest.TargetAccount,
+		URI:             followRequest.URI,
+	}
 
-		// if the follow already exists, just update the URI -- we don't need to do anything else
-		if _, err := tx.
-			NewInsert().
-			Model(follow).
-			On("CONFLICT (?,?) DO UPDATE set ? = ?", bun.Ident("account_id"), bun.Ident("target_account_id"), bun.Ident("uri"), follow.URI).
-			Exec(ctx); err != nil {
-			return err
-		}
+	// If the follow already exists, just
+	// replace the URI with the new one.
+	if _, err := r.conn.
+		NewInsert().
+		Model(follow).
+		On("CONFLICT (?,?) DO UPDATE set ? = ?", bun.Ident("account_id"), bun.Ident("target_account_id"), bun.Ident("uri"), follow.URI).
+		Exec(ctx); err != nil {
+		return nil, r.conn.ProcessError(err)
+	}
 
-		// now remove the follow request
-		if _, err := tx.
-			NewDelete().
-			TableExpr("? AS ?", bun.Ident("follow_requests"), bun.Ident("follow_request")).
-			Where("? = ?", bun.Ident("follow_request.id"), followRequest.ID).
-			Exec(ctx); err != nil {
-			return err
-		}
-
-		return nil
-	}); err != nil {
+	// Delete original follow request.
+	if _, err := r.conn.
+		NewDelete().
+		TableExpr("? AS ?", bun.Ident("follow_requests"), bun.Ident("follow_request")).
+		Where("? = ?", bun.Ident("follow_request.id"), followRequest.ID).
+		Exec(ctx); err != nil {
 		return nil, r.conn.ProcessError(err)
 	}
 
@@ -348,34 +350,33 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, originAccountI
 }
 
 func (r *relationshipDB) RejectFollowRequest(ctx context.Context, originAccountID string, targetAccountID string) (*gtsmodel.FollowRequest, db.Error) {
-	followRequest := &gtsmodel.FollowRequest{}
-
-	if err := r.conn.RunInTx(ctx, func(tx bun.Tx) error {
-		// get original follow request
-		if err := tx.
-			NewSelect().
-			Model(followRequest).
-			Where("? = ?", bun.Ident("follow_request.account_id"), originAccountID).
-			Where("? = ?", bun.Ident("follow_request.target_account_id"), targetAccountID).
-			Scan(ctx); err != nil {
-			return err
-		}
-
-		// now delete it from the database by ID
-		if _, err := tx.
-			NewDelete().
-			TableExpr("? AS ?", bun.Ident("follow_requests"), bun.Ident("follow_request")).
-			Where("? = ?", bun.Ident("follow_request.id"), followRequest.ID).
-			Exec(ctx); err != nil {
-			return err
-		}
-
-		return nil
-	}); err != nil {
+	// Get original follow request.
+	var followRequestID string
+	if err := r.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("follow_requests"), bun.Ident("follow_request")).
+		Column("follow_request.id").
+		Where("? = ?", bun.Ident("follow_request.account_id"), originAccountID).
+		Where("? = ?", bun.Ident("follow_request.target_account_id"), targetAccountID).
+		Scan(ctx, &followRequestID); err != nil {
 		return nil, r.conn.ProcessError(err)
 	}
 
-	// return the deleted follow request
+	followRequest, err := r.getFollowRequest(ctx, followRequestID)
+	if err != nil {
+		return nil, r.conn.ProcessError(err)
+	}
+
+	// Delete original follow request.
+	if _, err := r.conn.
+		NewDelete().
+		TableExpr("? AS ?", bun.Ident("follow_requests"), bun.Ident("follow_request")).
+		Where("? = ?", bun.Ident("follow_request.id"), followRequest.ID).
+		Exec(ctx); err != nil {
+		return nil, r.conn.ProcessError(err)
+	}
+
+	// Return the now deleted follow request.
 	return followRequest, nil
 }
 

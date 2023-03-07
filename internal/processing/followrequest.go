@@ -62,7 +62,7 @@ func (p *Processor) FollowRequestAccept(ctx context.Context, auth *oauth.Auth, a
 	if follow.Account == nil {
 		// The creator of the follow doesn't exist,
 		// so we can't do further processing.
-
+		return p.relationship(ctx, auth.Account.ID, accountID)
 	}
 
 	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
@@ -80,6 +80,12 @@ func (p *Processor) FollowRequestReject(ctx context.Context, auth *oauth.Auth, a
 	followRequest, err := p.state.DB.RejectFollowRequest(ctx, accountID, auth.Account.ID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(err)
+	}
+
+	if followRequest.Account == nil {
+		// The creator of the request doesn't exist,
+		// so we can't do further processing.
+		return p.relationship(ctx, auth.Account.ID, accountID)
 	}
 
 	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
