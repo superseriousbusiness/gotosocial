@@ -35,32 +35,13 @@ import (
 
 // BlockCreate handles the creation of a block from requestingAccount to targetAccountID, either remote or local.
 func (p *Processor) BlockCreate(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
-	// Account should not block itself.
-	if requestingAccount.ID == targetAccountID {
-		err := fmt.Errorf("BlockCreate: account %s cannot block itself", requestingAccount.ID)
-		return nil, gtserror.NewErrorNotAcceptable(err, err.Error())
-	}
-aaaaaaaaaaaaaa
-	// Ensure target account retrievable.
-	targetAccount, err := p.state.DB.GetAccountByID(ctx, targetAccountID)
-	if err != nil {
-		if !errors.Is(err, db.ErrNoEntries) {
-			// Real db error.
-			err = fmt.Errorf("BlockCreate: db error looking for target account %s: %w", targetAccountID, err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-		// Account not found.
-		err = fmt.Errorf("BlockCreate: target account %s not found in the db", targetAccountID)
-		return nil, gtserror.NewErrorNotFound(err, err.Error())
+	targetAccount, existingBlock, errWithCode := p.getBlockTarget(ctx, requestingAccount, targetAccountID)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
 
-	// Check if already blocked.
-	if blocked, err := p.state.DB.IsBlocked(ctx, requestingAccount.ID, targetAccountID, false); err != nil {
-		err = fmt.Errorf("BlockCreate: db error checking existence of block: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
-	} else if blocked {
-		// Requesting account already blocks target
-		// account, so we don't need to do anything.
+	if existingBlock != nil {
+		// Block already exists, nothing to do.
 		return p.RelationshipGet(ctx, requestingAccount, targetAccountID)
 	}
 
@@ -88,8 +69,21 @@ aaaaaaaaaaaaaa
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Use this slice to batch queue client
-	// API messages, as necessary.
+	// Remove any bookmarks made by each account
+	// towards the other's statuses.
+	if err := p.deleteMutualAccountBookmarks(ctx, requestingAccount, targetAccount); err != nil {
+		err = fmt.Errorf("BlockCreate: error deleting mutual bookmarks: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Remove any faves made by each account
+	// towards the other's statuses.
+	if err := p.deleteMutualAccountFaves(ctx, requestingAccount, targetAccount); err != nil {
+		err = fmt.Errorf("BlockCreate: error deleting mutual faves: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Ensure each account unfollows the other.
 	msgs, err := p.unfollow(ctx, requestingAccount, targetAccount)
 	if err != nil {
 		err = fmt.Errorf("BlockCreate: error unfollowing: %w", err)
@@ -113,52 +107,31 @@ aaaaaaaaaaaaaa
 
 // BlockRemove handles the removal of a block from requestingAccount to targetAccountID, either remote or local.
 func (p *Processor) BlockRemove(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
-	// Account should not unblock itself.
-	if requestingAccount.ID == targetAccountID {
-		err := fmt.Errorf("BlockRemove: account %s cannot unblock itself", requestingAccount.ID)
-		return nil, gtserror.NewErrorNotAcceptable(err, err.Error())
-	}
-aaaaaaaaaaaa
-	// Ensure target account retrievable.
-	targetAccount, err := p.state.DB.GetAccountByID(ctx, targetAccountID)
-	if err != nil {
-		if !errors.Is(err, db.ErrNoEntries) {
-			// Real db error.
-			err = fmt.Errorf("BlockRemove: db error looking for target account %s: %w", targetAccountID, err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-		// Account not found.
-		err = fmt.Errorf("BlockRemove: target account %s not found in the db", targetAccountID)
-		return nil, gtserror.NewErrorNotFound(err, err.Error())
+	targetAccount, existingBlock, errWithCode := p.getBlockTarget(ctx, requestingAccount, targetAccountID)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
 
-	// Check if block actually exists.
-	block, err := p.state.DB.GetBlock(ctx, requestingAccount.ID, targetAccountID)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err := fmt.Errorf("BlockRemove: error getting block from db: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	if block == nil {
-		// No block existed, nothing to do.
+	if existingBlock == nil {
+		// Already not blocked, nothing to do.
 		return p.RelationshipGet(ctx, requestingAccount, targetAccountID)
 	}
 
 	// We got a block, remove it from the db.
-	if err := p.state.DB.DeleteBlockByID(ctx, block.ID); err != nil {
+	if err := p.state.DB.DeleteBlockByID(ctx, existingBlock.ID); err != nil {
 		err := fmt.Errorf("BlockRemove: error removing block from db: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// Populate account fields for convenience.
-	block.Account = requestingAccount
-	block.TargetAccount = targetAccount
+	existingBlock.Account = requestingAccount
+	existingBlock.TargetAccount = targetAccount
 
 	// Process block removal side effects (federation etc).
 	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 		APObjectType:   ap.ActivityBlock,
 		APActivityType: ap.ActivityUndo,
-		GTSModel:       block,
+		GTSModel:       existingBlock,
 		OriginAccount:  requestingAccount,
 		TargetAccount:  targetAccount,
 	})
@@ -166,14 +139,72 @@ aaaaaaaaaaaa
 	return p.RelationshipGet(ctx, requestingAccount, targetAccountID)
 }
 
+func (p *Processor) getBlockTarget(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*gtsmodel.Account, *gtsmodel.Block, gtserror.WithCode) {
+	// Account should not block or unblock itself.
+	if requestingAccount.ID == targetAccountID {
+		err := fmt.Errorf("getBlockTarget: account %s cannot block or unblock itself", requestingAccount.ID)
+		return nil, nil, gtserror.NewErrorNotAcceptable(err, err.Error())
+	}
+
+	// Ensure target account retrievable.
+	targetAccount, err := p.state.DB.GetAccountByID(ctx, targetAccountID)
+	if err != nil {
+		if !errors.Is(err, db.ErrNoEntries) {
+			// Real db error.
+			err = fmt.Errorf("getBlockTarget: db error looking for target account %s: %w", targetAccountID, err)
+			return nil, nil, gtserror.NewErrorInternalError(err)
+		}
+		// Account not found.
+		err = fmt.Errorf("getBlockTarget: target account %s not found in the db", targetAccountID)
+		return nil, nil, gtserror.NewErrorNotFound(err, err.Error())
+	}
+
+	// Check if currently blocked.
+	block, err := p.state.DB.GetBlock(ctx, requestingAccount.ID, targetAccountID)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err = fmt.Errorf("getBlockTarget: db error checking existing block: %w", err)
+		return nil, nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return targetAccount, block, nil
+}
+
 func (p *Processor) deleteMutualAccountNotifications(ctx context.Context, account1 *gtsmodel.Account, account2 *gtsmodel.Account) error {
 	// Delete all notifications from account2 targeting account1.
-	if err := p.state.DB.DeleteNotifications(ctx, account1.ID, account2.ID); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err := p.state.DB.DeleteNotifications(ctx, account1.ID, account2.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
 	// Delete all notifications from account1 targeting account2.
-	if err := p.state.DB.DeleteNotifications(ctx, account2.ID, account1.ID); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err := p.state.DB.DeleteNotifications(ctx, account2.ID, account1.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return err
+	}
+
+	return nil
+}
+
+func (p *Processor) deleteMutualAccountBookmarks(ctx context.Context, account1 *gtsmodel.Account, account2 *gtsmodel.Account) error {
+	// Delete all bookmarks from account2 targeting account1.
+	if err := p.state.DB.DeleteStatusBookmarks(ctx, account1.ID, account2.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return err
+	}
+
+	// Delete all bookmarks from account1 targeting account2.
+	if err := p.state.DB.DeleteStatusBookmarks(ctx, account2.ID, account1.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return err
+	}
+
+	return nil
+}
+
+func (p *Processor) deleteMutualAccountFaves(ctx context.Context, account1 *gtsmodel.Account, account2 *gtsmodel.Account) error {
+	// Delete all faves from account2 targeting account1.
+	if err := p.state.DB.DeleteStatusFaves(ctx, account1.ID, account2.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return err
+	}
+
+	// Delete all faves from account1 targeting account2.
+	if err := p.state.DB.DeleteStatusFaves(ctx, account2.ID, account1.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 

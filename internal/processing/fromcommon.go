@@ -457,7 +457,7 @@ func (p *Processor) wipeStatus(ctx context.Context, statusToDelete *gtsmodel.Sta
 	}
 
 	// delete all bookmarks that point to this status
-	if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "status_id", Value: statusToDelete.ID}}, &[]*gtsmodel.StatusBookmark{}); err != nil {
+	if err := p.state.DB.DeleteStatusBookmarks(ctx, "", "", statusToDelete.ID); err != nil {
 		return err
 	}
 

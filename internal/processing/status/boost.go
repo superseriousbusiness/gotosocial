@@ -87,13 +87,7 @@ func (p *Processor) BoostCreate(ctx context.Context, requestingAccount *gtsmodel
 		TargetAccount:  targetStatus.Account,
 	})
 
-	// return the frontend representation of the new status to the submitter
-	apiStatus, err := p.tc.StatusToAPIStatus(ctx, boostWrapperStatus, requestingAccount)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err))
-	}
-
-	return apiStatus, nil
+	return p.apiStatus(ctx, targetStatus, requestingAccount)
 }
 
 // BoostRemove processes the unboost/unreblog of a given status, returning the status if all is well.
@@ -160,12 +154,7 @@ func (p *Processor) BoostRemove(ctx context.Context, requestingAccount *gtsmodel
 		})
 	}
 
-	apiStatus, err := p.tc.StatusToAPIStatus(ctx, targetStatus, requestingAccount)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err))
-	}
-
-	return apiStatus, nil
+	return p.apiStatus(ctx, targetStatus, requestingAccount)
 }
 
 // StatusBoostedBy returns a slice of accounts that have boosted the given status, filtered according to privacy settings.

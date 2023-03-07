@@ -360,12 +360,12 @@ func (p *Processor) deleteAccountStatuses(ctx context.Context, account *gtsmodel
 
 func (p *Processor) deleteAccountNotifications(ctx context.Context, account *gtsmodel.Account) error {
 	// Delete all notifications targeting given account.
-	if err := p.state.DB.DeleteNotifications(ctx, account.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err := p.state.DB.DeleteNotifications(ctx, account.ID, "", ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
 	// Delete all notifications originating from given account.
-	if err := p.state.DB.DeleteNotifications(ctx, "", account.ID); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err := p.state.DB.DeleteNotifications(ctx, "", account.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
@@ -373,22 +373,41 @@ func (p *Processor) deleteAccountNotifications(ctx context.Context, account *gts
 }
 
 func (p *Processor) deleteAccountPeripheral(ctx context.Context, account *gtsmodel.Account) error {
-	w := []db.Where{{Key: "account_id", Value: account.ID}}
-
 	// Delete all bookmarks owned by given account.
-	if err := p.state.DB.DeleteWhere(ctx, w, &[]*gtsmodel.StatusBookmark{}); // nocollapse
+	if err := p.state.DB.DeleteStatusBookmarks(ctx, account.ID, "", ""); // nocollapse
+	err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return err
+	}
+
+	// Delete all bookmarks targeting given account.
+	if err := p.state.DB.DeleteStatusBookmarks(ctx, "", account.ID, ""); // nocollapse
 	err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
 	// Delete all faves owned by given account.
-	if err := p.state.DB.DeleteWhere(ctx, w, &[]*gtsmodel.StatusFave{}); // nocollapse
+	if err := p.state.DB.DeleteStatusFaves(ctx, account.ID, "", ""); // nocollapse
 	err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
+	// Delete all faves targeting given account.
+	if err := p.state.DB.DeleteStatusFaves(ctx, "", account.ID, ""); // nocollapse
+	err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return err
+	}
+
+	wOrigin := []db.Where{{Key: "account_id", Value: account.ID}}
+	wTarget := []db.Where{{Key: "target_account_id", Value: account.ID}}
+
 	// Delete all mutes owned by given account.
-	if err := p.state.DB.DeleteWhere(ctx, w, &[]*gtsmodel.StatusMute{}); // nocollapse
+	if err := p.state.DB.DeleteWhere(ctx, wOrigin, &[]*gtsmodel.StatusMute{}); // nocollapse
+	err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return err
+	}
+
+	// Delete all mutes targeting given account.
+	if err := p.state.DB.DeleteWhere(ctx, wTarget, &[]*gtsmodel.StatusMute{}); // nocollapse
 	err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}

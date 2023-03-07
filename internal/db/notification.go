@@ -36,7 +36,10 @@ type Notification interface {
 	// and removes that notification from the in-memory cache.
 	DeleteNotification(ctx context.Context, id string) Error
 	// DeleteNotifications mass deletes notifications targeting targetAccountID
-	// and/or originating from originAccountID.
+	// and/or originating from originAccountID and/or pertaining to statusID.
+	//
+	// To delete all notifications pertaining to statusID from all accounts,
+	// just set statusID.
 	//
 	// If targetAccountID is set and originAccountID isn't, all notifications
 	// that target the given account will be deleted.
@@ -47,8 +50,6 @@ type Notification interface {
 	// If both are set, then notifications that target targetAccountID and
 	// originate from originAccountID will be deleted.
 	//
-	// If neither are set, an error will be returned.
-	//
-	// Each deleted notification will be removed from the in-memory cache.
-	DeleteNotifications(ctx context.Context, targetAccountID string, originAccountID string) Error
+	// At least one parameter out of the three id params must not be an empty string.
+	DeleteNotifications(ctx context.Context, targetAccountID string, originAccountID string, statusID string) Error
 }
