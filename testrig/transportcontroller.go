@@ -123,7 +123,7 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 		} else if strings.Contains(req.URL.String(), ".well-known/webfinger") {
 			responseCode, responseBytes, responseContentType, responseContentLength = WebfingerResponse(req)
 		} else if strings.Contains(req.URL.String(), ".weird-webfinger-location/webfinger") {
-			responseCode, responseBytes, responseContentType, responseContentLength = OtherWebfingerLocationResponse(req)
+			responseCode, responseBytes, responseContentType, responseContentLength = WebfingerResponse(req)
 		} else if strings.Contains(req.URL.String(), ".well-known/host-meta") {
 			responseCode, responseBytes, responseContentType, responseContentLength = HostMetaResponse(req)
 		} else if note, ok := mockHTTPClient.TestRemoteStatuses[req.URL.String()]; ok {
@@ -262,42 +262,6 @@ func HostMetaResponse(req *http.Request) (responseCode int, responseBytes []byte
 	return
 }
 
-func OtherWebfingerLocationResponse(req *http.Request) (responseCode int, responseBytes []byte, responseContentType string, responseContentLength int) {
-	var wfr *apimodel.WellKnownResponse
-
-	if req.URL.String() == "https://misconfigured-instance.com/.weird-webfinger-location/webfinger?resource=acct%3Asomeone%40misconfigured-instance.com" {
-		wfr = &apimodel.WellKnownResponse{
-			Subject: "acct:someone@misconfigured-instance.com",
-			Links: []apimodel.Link{
-				{
-					Rel:  "self",
-					Type: applicationActivityJSON,
-					Href: "https://misconfigured-instance.com/users/someone",
-				},
-			},
-		}
-	}
-
-	if wfr == nil {
-		log.Debugf(nil, "webfinger response not available for %s", req.URL)
-		responseCode = http.StatusNotFound
-		responseBytes = []byte(`{"error":"not found"}`)
-		responseContentType = applicationJSON
-		responseContentLength = len(responseBytes)
-		return
-	}
-
-	wfrJSON, err := json.Marshal(wfr)
-	if err != nil {
-		panic(err)
-	}
-	responseCode = http.StatusOK
-	responseBytes = wfrJSON
-	responseContentType = applicationJSON
-	responseContentLength = len(wfrJSON)
-	return
-}
-
 func WebfingerResponse(req *http.Request) (responseCode int, responseBytes []byte, responseContentType string, responseContentLength int) {
 	var wfr *apimodel.WellKnownResponse
 
@@ -365,6 +329,17 @@ func WebfingerResponse(req *http.Request) (responseCode int, responseBytes []byt
 					Rel:  "self",
 					Type: applicationActivityJSON,
 					Href: "https://example.org/users/Some_User",
+				},
+			},
+		}
+	case "https://misconfigured-instance.com/.weird-webfinger-location/webfinger?resource=acct%3Asomeone%40misconfigured-instance.com":
+		wfr = &apimodel.WellKnownResponse{
+			Subject: "acct:someone@misconfigured-instance.com",
+			Links: []apimodel.Link{
+				{
+					Rel:  "self",
+					Type: applicationActivityJSON,
+					Href: "https://misconfigured-instance.com/users/someone",
 				},
 			},
 		}
