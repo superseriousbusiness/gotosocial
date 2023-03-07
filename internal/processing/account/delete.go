@@ -257,11 +257,12 @@ func (p *Processor) deleteRelationshipsForAccount(ctx context.Context, account *
 	return nil
 }
 
-func (p *Processor) unfollowSideEffectsFunc(account *gtsmodel.Account) func(account *gtsmodel.Account, follow *gtsmodel.Follow) *messages.FromClientAPI {
-	if !account.IsLocal() {
+func (p *Processor) unfollowSideEffectsFunc(deletedAccount *gtsmodel.Account) func(account *gtsmodel.Account, follow *gtsmodel.Follow) *messages.FromClientAPI {
+	if !deletedAccount.IsLocal() {
+		// Don't try to process side effects
+		// for accounts that aren't local.
 		return func(account *gtsmodel.Account, follow *gtsmodel.Follow) *messages.FromClientAPI {
-			// No side effects by default
-			return nil
+			return nil // noop
 		}
 	}
 
@@ -402,20 +403,7 @@ func (p *Processor) deleteAccountPeripheral(ctx context.Context, account *gtsmod
 		return err
 	}
 
-	wOrigin := []db.Where{{Key: "account_id", Value: account.ID}}
-	wTarget := []db.Where{{Key: "target_account_id", Value: account.ID}}
-
-	// Delete all mutes owned by given account.
-	if err := p.state.DB.DeleteWhere(ctx, wOrigin, &[]*gtsmodel.StatusMute{}); // nocollapse
-	err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return err
-	}
-
-	// Delete all mutes targeting given account.
-	if err := p.state.DB.DeleteWhere(ctx, wTarget, &[]*gtsmodel.StatusMute{}); // nocollapse
-	err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return err
-	}
+	// TODO: add status mutes here when they're implemented.
 
 	return nil
 }
