@@ -287,6 +287,10 @@ cache:
     user-ttl: "5m"
     user-sweep-freq: "30s"
 
+    webfinger-max-size": 250
+    webfinger-ttl: "24h"
+    webfinger-sweep-freq": "15m"
+
 ######################
 ##### WEB CONFIG #####
 ######################
