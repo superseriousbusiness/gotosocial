@@ -51,16 +51,14 @@ func (t *transport) webfingerURLFor(targetDomain string) (string, bool) {
 	return url, ok
 }
 
-func prepWebfingerReq(url, domain, username string) (*http.Request, error) {
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+func prepWebfingerReq(ctx context.Context, loc, domain, username string) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, loc, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	q := req.URL.Query()
-
-	q.Add("resource", "acct:"+username+"@"+domain)
-	req.URL.RawQuery = q.Encode()
+	value := url.QueryEscape("acct:" + username + "@" + domain)
+	req.URL.RawQuery = "resource=" + value
 
 	req.Header.Add("Accept", string(apiutil.AppJSON))
 	req.Header.Add("Accept", "application/jrd+json")
@@ -72,11 +70,10 @@ func prepWebfingerReq(url, domain, username string) (*http.Request, error) {
 func (t *transport) Finger(ctx context.Context, targetUsername string, targetDomain string) ([]byte, error) {
 	// Generate new GET request
 	url, cached := t.webfingerURLFor(targetDomain)
-	req, err := prepWebfingerReq(url, targetDomain, targetUsername)
+	req, err := prepWebfingerReq(ctx, url, targetDomain, targetUsername)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
 
 	// Perform the HTTP request
 	rsp, err := t.GET(req)
@@ -125,11 +122,10 @@ func (t *transport) Finger(ctx context.Context, targetUsername string, targetDom
 
 	// Now that we have a different URL for the webfinger
 	// endpoint, try the request against that endpoint instead
-	req, err = prepWebfingerReq(host, targetDomain, targetUsername)
+	req, err = prepWebfingerReq(ctx, host, targetDomain, targetUsername)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
 
 	// Perform the HTTP request
 	rsp, err = t.GET(req)

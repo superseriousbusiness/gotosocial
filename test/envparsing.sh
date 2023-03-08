@@ -53,7 +53,7 @@ EXPECT=$(cat <<"EOF"
             "user-max-size": 100,
             "user-sweep-freq": 30000000000,
             "user-ttl": 300000000000,
-            "webfinger-max-size": 100,
+            "webfinger-max-size": 250,
             "webfinger-sweep-freq": 900000000000,
             "webfinger-ttl": 86400000000000
         }

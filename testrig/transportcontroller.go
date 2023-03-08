@@ -53,7 +53,7 @@ const (
 // PER TEST rather than per suite, so that the do function can be set on a test by test (or even more granular)
 // basis.
 func NewTestTransportController(state *state.State, client pub.HttpClient) transport.Controller {
-	return transport.NewController(state.DB, NewTestFederatingDB(state), &federation.Clock{}, client, state)
+	return transport.NewController(state, NewTestFederatingDB(state), &federation.Clock{}, client)
 }
 
 type MockHTTPClient struct {
