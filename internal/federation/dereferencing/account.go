@@ -156,13 +156,15 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		// A username was provided so we can attempt a webfinger, this ensures up-to-date accountdomain info.
 		accDomain, accURI, err := d.fingerRemoteAccount(ctx, transport, account.Username, account.Domain)
 
-		if err != nil && account.URI == "" {
-			// this is a new account (to us) with username@domain but failed
-			// webfinger, there is nothing more we can do in this situation.
+		switch {
+		case err != nil && account.URI == "":
+			// this is a new account (to us) with username@domain but failed webfinger, nothing more we can do.
 			return nil, fmt.Errorf("enrichAccount: error webfingering account: %w", err)
-		}
 
-		if err == nil {
+		case err != nil:
+			log.Errorf(ctx, "error webfingering[1] remote account %s@%s: %w", account.Username, account.Domain, err)
+
+		case err == nil:
 			if account.Domain != accDomain {
 				// After webfinger, we now have correct account domain from which we can do a final DB check.
 				alreadyAccount, err := d.db.GetAccountByUsernameDomain(ctx, account.Username, accDomain)
@@ -224,7 +226,11 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		// Now we have a username we can attempt it, this ensures up-to-date accountdomain info.
 		accDomain, _, err := d.fingerRemoteAccount(ctx, transport, latestAcc.Username, uri.Host)
 
-		if err == nil {
+		switch {
+		case err != nil:
+			log.Errorf(ctx, "error webfingering[2] remote account %s@%s: %w", latestAcc.Username, uri.Host, err)
+
+		case err == nil:
 			// Update account with latest info.
 			latestAcc.Domain = accDomain
 		}
