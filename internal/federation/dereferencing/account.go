@@ -162,7 +162,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 			return nil, fmt.Errorf("enrichAccount: error webfingering account: %w", err)
 
 		case err != nil:
-			log.Errorf(ctx, "error webfingering[1] remote account %s@%s: %w", account.Username, account.Domain, err)
+			log.Errorf(ctx, "error webfingering[1] remote account %s@%s: %v", account.Username, account.Domain, err)
 
 		case err == nil:
 			if account.Domain != accDomain {
@@ -228,7 +228,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 
 		switch {
 		case err != nil:
-			log.Errorf(ctx, "error webfingering[2] remote account %s@%s: %w", latestAcc.Username, uri.Host, err)
+			log.Errorf(ctx, "error webfingering[2] remote account %s@%s: %v", latestAcc.Username, uri.Host, err)
 
 		case err == nil:
 			// Update account with latest info.
