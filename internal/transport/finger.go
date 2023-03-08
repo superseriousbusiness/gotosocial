@@ -82,13 +82,18 @@ func (t *transport) Finger(ctx context.Context, targetUsername string, targetDom
 	}
 	defer rsp.Body.Close()
 
-	// Check if the request succeeded so we can bail out early
-	if rsp.StatusCode == http.StatusOK {
+	// Check if the request succeeded so we can bail out early or if we explicitly
+	// got a "this resource is gone" response which will happen when a user has
+	// deleted the account
+	if rsp.StatusCode == http.StatusOK || rsp.StatusCode == http.StatusGone {
 		if cached {
-			// If we got a success on a cached URL, i.e one set by us later on when
-			// a host-meta based webfinger request succeeded, set it again here to
-			// renew the TTL
+			// If we got a response we consider successful on a cached URL, i.e one set
+			// by us later on when a host-meta based webfinger request succeeded, set it
+			// again here to renew the TTL
 			t.controller.state.Caches.GTS.Webfinger().Set(targetDomain, url)
+		}
+		if rsp.StatusCode == http.StatusGone {
+			return nil, fmt.Errorf("account has been deleted/is gone")
 		}
 		return io.ReadAll(rsp.Body)
 	}
@@ -135,6 +140,13 @@ func (t *transport) Finger(ctx context.Context, targetUsername string, targetDom
 	defer rsp.Body.Close()
 
 	if rsp.StatusCode != http.StatusOK {
+		// A HTTP 410 indicates we got a response to our webfinger query, but the resource
+		// we asked for is gone. This means the endpoint itself is valid and we should
+		// cache it for future queries to the same domain
+		if rsp.StatusCode == http.StatusGone {
+			t.controller.state.Caches.GTS.Webfinger().Set(targetDomain, host)
+			return nil, fmt.Errorf("account has been deleted/is gone")
+		}
 		// We've reached the end of the line here, both the original request
 		// and our attempt to resolve it through the fallback have failed
 		return nil, fmt.Errorf("GET request to %s failed: %s", req.URL.String(), rsp.Status)
