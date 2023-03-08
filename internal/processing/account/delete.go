@@ -52,7 +52,11 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 		}
 	}
 
-	if err := p.deleteRelationshipsForAccount(ctx, account); err != nil {
+	if err := p.deleteAccountFollows(ctx, account); err != nil {
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	if err := p.deleteAccountBlocks(ctx, account); err != nil {
 		return gtserror.NewErrorInternalError(err)
 	}
 
@@ -167,23 +171,38 @@ func (p *Processor) deleteUserAndTokensForAccount(ctx context.Context, account *
 	return nil
 }
 
-// deleteRelationshipsForAccount deletes:
-//   - Blocks created by or targeting account.
-//   - Follow requests created by or targeting account.
-//   - Follows created by or targeting account.
-func (p *Processor) deleteRelationshipsForAccount(ctx context.Context, account *gtsmodel.Account) error {
-	// Delete blocks created by this account.
-	if err := p.state.DB.DeleteBlocksByOriginAccountID(ctx, account.ID); err != nil {
-		return fmt.Errorf("deleteRelationshipsForAccount: db error deleting blocks created by account %s: %w", account.ID, err)
+// deleteAccountFollows deletes:
+//   - Follows targeting account.
+//   - Follow requests targeting account.
+//   - Follows created by account.
+//   - Follow requests created by account.
+func (p *Processor) deleteAccountFollows(ctx context.Context, account *gtsmodel.Account) error {
+	// Delete follows targeting this account.
+	followedBy, err := p.state.DB.GetFollows(ctx, "", account.ID)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return fmt.Errorf("deleteAccountFollows: db error getting follows targeting account %s: %w", account.ID, err)
 	}
 
-	// Delete blocks targeting this account.
-	if err := p.state.DB.DeleteBlocksByTargetAccountID(ctx, account.ID); err != nil {
-		return fmt.Errorf("deleteRelationshipsForAccount: db error deleting blocks targeting account %s: %w", account.ID, err)
+	for _, follow := range followedBy {
+		if _, err := p.state.DB.Unfollow(ctx, follow.AccountID, account.ID); err != nil {
+			return fmt.Errorf("deleteAccountFollows: db error unfollowing account followedBy: %w", err)
+		}
+	}
+
+	// Delete follow requests targeting this account.
+	followRequestedBy, err := p.state.DB.GetFollowRequests(ctx, "", account.ID)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return fmt.Errorf("deleteAccountFollows: db error getting follow requests targeting account %s: %w", account.ID, err)
+	}
+
+	for _, followRequest := range followRequestedBy {
+		if _, err := p.state.DB.UnfollowRequest(ctx, followRequest.AccountID, account.ID); err != nil {
+			return fmt.Errorf("deleteAccountFollows: db error unfollowing account followRequestedBy: %w", err)
+		}
 	}
 
 	var (
-		// Use this slice to batch messages if necessary.
+		// Use this slice to batch unfollow messages.
 		msgs = []messages.FromClientAPI{}
 		// To avoid checking if account is local over + over
 		// inside the subsequent loops, just generate static
@@ -194,14 +213,14 @@ func (p *Processor) deleteRelationshipsForAccount(ctx context.Context, account *
 	// Delete follows originating from this account.
 	following, err := p.state.DB.GetFollows(ctx, account.ID, "")
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return fmt.Errorf("deleteRelationshipsForAccount: db error getting follows owned by account %s: %w", account.ID, err)
+		return fmt.Errorf("deleteAccountFollows: db error getting follows owned by account %s: %w", account.ID, err)
 	}
 
 	// For each follow owned by this account, unfollow
 	// and process side effects (noop if remote account).
 	for _, follow := range following {
 		if uri, err := p.state.DB.Unfollow(ctx, account.ID, follow.TargetAccountID); err != nil {
-			return fmt.Errorf("deleteRelationshipsForAccount: db error unfollowing account: %w", err)
+			return fmt.Errorf("deleteAccountFollows: db error unfollowing account: %w", err)
 		} else if uri == "" {
 			// There was no follow after all.
 			// Some race condition? Skip.
@@ -217,7 +236,7 @@ func (p *Processor) deleteRelationshipsForAccount(ctx context.Context, account *
 	// Delete follow requests originating from this account.
 	followRequesting, err := p.state.DB.GetFollowRequests(ctx, account.ID, "")
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return fmt.Errorf("deleteRelationshipsForAccount: db error getting follow requests owned by account %s: %w", account.ID, err)
+		return fmt.Errorf("deleteAccountFollows: db error getting follow requests owned by account %s: %w", account.ID, err)
 	}
 
 	// For each follow owned by this account, unfollow
@@ -225,7 +244,7 @@ func (p *Processor) deleteRelationshipsForAccount(ctx context.Context, account *
 	for _, followRequest := range followRequesting {
 		uri, err := p.state.DB.UnfollowRequest(ctx, account.ID, followRequest.TargetAccountID)
 		if err != nil {
-			return fmt.Errorf("deleteRelationshipsForAccount: db error unfollowRequesting account: %w", err)
+			return fmt.Errorf("deleteAccountFollows: db error unfollowRequesting account: %w", err)
 		}
 
 		if uri == "" {
@@ -282,6 +301,20 @@ func (p *Processor) unfollowSideEffectsFunc(deletedAccount *gtsmodel.Account) fu
 			TargetAccount:  follow.TargetAccount,
 		}
 	}
+}
+
+func (p *Processor) deleteAccountBlocks(ctx context.Context, account *gtsmodel.Account) error {
+	// Delete blocks created by this account.
+	if err := p.state.DB.DeleteBlocksByOriginAccountID(ctx, account.ID); err != nil {
+		return fmt.Errorf("deleteAccountBlocks: db error deleting blocks created by account %s: %w", account.ID, err)
+	}
+
+	// Delete blocks targeting this account.
+	if err := p.state.DB.DeleteBlocksByTargetAccountID(ctx, account.ID); err != nil {
+		return fmt.Errorf("deleteAccountBlocks: db error deleting blocks targeting account %s: %w", account.ID, err)
+	}
+
+	return nil
 }
 
 // deleteAccountStatuses iterates through all statuses owned by
