@@ -18,6 +18,8 @@
 
 package model
 
+import "encoding/xml"
+
 // WellKnownResponse represents the response to either a webfinger request for an 'acct' resource, or a request to nodeinfo.
 // For example, it would be returned from https://example.org/.well-known/webfinger?resource=acct:some_username@example.org
 //
@@ -32,12 +34,12 @@ type WellKnownResponse struct {
 
 // Link represents one 'link' in a slice of links returned from a lookup request.
 //
-// See https://webfinger.net/
+// See https://webfinger.net/ and https://www.rfc-editor.org/rfc/rfc6415.html#section-3.1
 type Link struct {
-	Rel      string `json:"rel"`
-	Type     string `json:"type,omitempty"`
-	Href     string `json:"href,omitempty"`
-	Template string `json:"template,omitempty"`
+	Rel      string `json:"rel" xml:"rel,attr"`
+	Type     string `json:"type,omitempty" xml:"type,attr,omitempty"`
+	Href     string `json:"href,omitempty" xml:"href,attr,omitempty"`
+	Template string `json:"template,omitempty" xml:"template,attr,omitempty"`
 }
 
 // Nodeinfo represents a version 2.1 or version 2.0 nodeinfo schema.
@@ -86,4 +88,14 @@ type NodeInfoUsage struct {
 // NodeInfoUsers represents aggregate information about the users on the server.
 type NodeInfoUsers struct {
 	Total int `json:"total"`
+}
+
+// HostMeta represents a hostmeta document.
+// See: https://www.rfc-editor.org/rfc/rfc6415.html#section-3
+//
+// swagger:model hostmeta
+type HostMeta struct {
+	XMLName xml.Name `xml:"XRD"`
+	XMLNS   string   `xml:"xmlns,attr"`
+	Link    []Link   `xml:"Link"`
 }

@@ -32,9 +32,9 @@ import (
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
 // Controller generates transports for use in making federation requests to other servers.
@@ -47,7 +47,7 @@ type Controller interface {
 }
 
 type controller struct {
-	db        db.DB
+	state     *state.State
 	fedDB     federatingdb.DB
 	clock     pub.Clock
 	client    pub.HttpClient
@@ -57,14 +57,14 @@ type controller struct {
 }
 
 // NewController returns an implementation of the Controller interface for creating new transports
-func NewController(db db.DB, federatingDB federatingdb.DB, clock pub.Clock, client pub.HttpClient) Controller {
+func NewController(state *state.State, federatingDB federatingdb.DB, clock pub.Clock, client pub.HttpClient) Controller {
 	applicationName := config.GetApplicationName()
 	host := config.GetHost()
 	proto := config.GetProtocol()
 	version := config.GetSoftwareVersion()
 
 	c := &controller{
-		db:        db,
+		state:     state,
 		fedDB:     federatingDB,
 		clock:     clock,
 		client:    client,
@@ -138,7 +138,7 @@ func (c *controller) NewTransportForUsername(ctx context.Context, username strin
 		u = username
 	}
 
-	ourAccount, err := c.db.GetAccountByUsernameDomain(ctx, u, "")
+	ourAccount, err := c.state.DB.GetAccountByUsernameDomain(ctx, u, "")
 	if err != nil {
 		return nil, fmt.Errorf("error getting account %s from db: %s", username, err)
 	}

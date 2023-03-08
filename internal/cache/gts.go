@@ -20,6 +20,7 @@ package cache
 
 import (
 	"codeberg.org/gruf/go-cache/v3/result"
+	"codeberg.org/gruf/go-cache/v3/ttl"
 	"github.com/superseriousbusiness/gotosocial/internal/cache/domain"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -71,6 +72,9 @@ type GTSCaches interface {
 
 	// User provides access to the gtsmodel User database cache.
 	User() *result.Cache[*gtsmodel.User]
+
+	// Webfinger
+	Webfinger() *ttl.Cache[string, string]
 }
 
 // NewGTS returns a new default implementation of GTSCaches.
@@ -91,6 +95,7 @@ type gtsCaches struct {
 	status        *result.Cache[*gtsmodel.Status]
 	tombstone     *result.Cache[*gtsmodel.Tombstone]
 	user          *result.Cache[*gtsmodel.User]
+	webfinger     *ttl.Cache[string, string]
 }
 
 func (c *gtsCaches) Init() {
@@ -106,6 +111,7 @@ func (c *gtsCaches) Init() {
 	c.initStatus()
 	c.initTombstone()
 	c.initUser()
+	c.initWebfinger()
 }
 
 func (c *gtsCaches) Start() {
@@ -145,6 +151,9 @@ func (c *gtsCaches) Start() {
 	tryUntil("starting gtsmodel.User cache", 5, func() bool {
 		return c.user.Start(config.GetCacheGTSUserSweepFreq())
 	})
+	tryUntil("starting gtsmodel.Webfinger cache", 5, func() bool {
+		return c.webfinger.Start(config.GetCacheGTSWebfingerSweepFreq())
+	})
 }
 
 func (c *gtsCaches) Stop() {
@@ -160,6 +169,7 @@ func (c *gtsCaches) Stop() {
 	tryUntil("stopping gtsmodel.Status cache", 5, c.status.Stop)
 	tryUntil("stopping gtsmodel.Tombstone cache", 5, c.tombstone.Stop)
 	tryUntil("stopping gtsmodel.User cache", 5, c.user.Stop)
+	tryUntil("stopping gtsmodel.Webfinger cache", 5, c.webfinger.Stop)
 }
 
 func (c *gtsCaches) Account() *result.Cache[*gtsmodel.Account] {
@@ -208,6 +218,10 @@ func (c *gtsCaches) Tombstone() *result.Cache[*gtsmodel.Tombstone] {
 
 func (c *gtsCaches) User() *result.Cache[*gtsmodel.User] {
 	return c.user
+}
+
+func (c *gtsCaches) Webfinger() *ttl.Cache[string, string] {
+	return c.webfinger
 }
 
 func (c *gtsCaches) initAccount() {
@@ -354,4 +368,11 @@ func (c *gtsCaches) initUser() {
 		return u2
 	}, config.GetCacheGTSUserMaxSize())
 	c.user.SetTTL(config.GetCacheGTSUserTTL(), true)
+}
+
+func (c *gtsCaches) initWebfinger() {
+	c.webfinger = ttl.New[string, string](
+		0,
+		config.GetCacheGTSWebfingerMaxSize(),
+		config.GetCacheGTSWebfingerTTL())
 }
