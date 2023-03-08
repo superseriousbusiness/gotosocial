@@ -56,7 +56,7 @@ func (p *Processor) getVisibleStatus(ctx context.Context, requestingAccount *gts
 	}
 
 	if !visible {
-		err = fmt.Errorf("getVisibleStatus: status %s is not visible to account %s", targetStatusID, requestingAccount.ID)
+		err = fmt.Errorf("getVisibleStatus: status %s is not visible to requesting account", targetStatusID)
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
