@@ -32,7 +32,6 @@ import (
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -48,15 +47,13 @@ type Controller interface {
 }
 
 type controller struct {
-	db        db.DB
+	state     *state.State
 	fedDB     federatingdb.DB
 	clock     pub.Clock
 	client    pub.HttpClient
 	trspCache cache.Cache[string, *transport]
 	badHosts  cache.Cache[string, struct{}]
 	userAgent string
-
-	state *state.State
 }
 
 // NewController returns an implementation of the Controller interface for creating new transports
@@ -67,14 +64,13 @@ func NewController(state *state.State, federatingDB federatingdb.DB, clock pub.C
 	version := config.GetSoftwareVersion()
 
 	c := &controller{
-		db:        state.DB,
+		state:     state,
 		fedDB:     federatingDB,
 		clock:     clock,
 		client:    client,
 		trspCache: cache.New[string, *transport](0, 100, 0),
 		badHosts:  cache.New[string, struct{}](0, 1000, 0),
 		userAgent: fmt.Sprintf("%s (+%s://%s) gotosocial/%s", applicationName, proto, host, version),
-		state:     state,
 	}
 
 	// Transport cache has TTL=1hr freq=1min
@@ -142,7 +138,7 @@ func (c *controller) NewTransportForUsername(ctx context.Context, username strin
 		u = username
 	}
 
-	ourAccount, err := c.db.GetAccountByUsernameDomain(ctx, u, "")
+	ourAccount, err := c.state.DB.GetAccountByUsernameDomain(ctx, u, "")
 	if err != nil {
 		return nil, fmt.Errorf("error getting account %s from db: %s", username, err)
 	}
