@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 // FaveCreate adds a fave for the requestingAccount, targeting the given status (no-op if fave already exists).
@@ -44,15 +45,17 @@ func (p *Processor) FaveCreate(ctx context.Context, requestingAccount *gtsmodel.
 		return p.apiStatus(ctx, targetStatus, requestingAccount)
 	}
 
-	// Create and store a new fave.
+	// Create and store a new fave
+	faveID := id.NewULID()
 	gtsFave := &gtsmodel.StatusFave{
-		ID:              id.NewULID(),
+		ID:              faveID,
 		AccountID:       requestingAccount.ID,
 		Account:         requestingAccount,
 		TargetAccountID: targetStatus.AccountID,
 		TargetAccount:   targetStatus.Account,
 		StatusID:        targetStatus.ID,
 		Status:          targetStatus,
+		URI:             uris.GenerateURIForLike(requestingAccount.Username, faveID),
 	}
 
 	if err := p.state.DB.PutStatusFave(ctx, gtsFave); err != nil {
