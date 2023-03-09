@@ -27,7 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-// StatusesVisible calls StatusVisible for each status in the statuses slice, and returns a slice of only statuses which are visible to the requestingAccount.
+// StatusesVisible calls StatusVisible for each status in the statuses slice, and returns a slice of only statuses which are visible to the requester.
 func (f *Filter) StatusesVisible(ctx context.Context, requester *gtsmodel.Account, statuses []*gtsmodel.Status) ([]*gtsmodel.Status, error) {
 	// Preallocate slice of maximum possible length.
 	filtered := make([]*gtsmodel.Status, 0, len(statuses))
@@ -48,7 +48,7 @@ func (f *Filter) StatusesVisible(ctx context.Context, requester *gtsmodel.Accoun
 	return filtered, nil
 }
 
-// StatusVisible returns true if targetStatus is visible to requestingAccount, based on the privacy settings of the status, and any blocks/mutes that might exist between the two accounts or account domains.
+// StatusVisible will check if given status is visible to requester, accounting for requester with no auth (i.e is nil), suspensions, disabled local users, account blocks and status privacy.
 func (f *Filter) StatusVisible(ctx context.Context, requester *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
 	// By default we assume no auth.
 	requesterID := "noauth"
@@ -80,13 +80,24 @@ func (f *Filter) StatusVisible(ctx context.Context, requester *gtsmodel.Account,
 	return visibility.Value, nil
 }
 
+// isStatusVisible will check if status is visible to requester. It is the "meat" of the logic to Filter{}.StatusVisible() which is called within cache loader callback.
 func (f *Filter) isStatusVisible(ctx context.Context, requester *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
+	// Ensure that status is fully populated for further processing.
+	if err := f.state.DB.PopulateStatus(ctx, status); err != nil {
+		return false, err
+	}
+
 	// Check whether status accounts are visible to the requester.
 	visible, err := f.areStatusAccountsVisible(ctx, requester, status)
 	if err != nil {
 		return false, fmt.Errorf("isStatusVisible: error checking status %s account visibility: %w", status.ID, err)
 	} else if !visible {
 		return false, nil
+	}
+
+	if requester.ID == status.AccountID {
+		// Author can always see their own status.
+		return true, nil
 	}
 
 	if status.Visibility == gtsmodel.VisibilityPublic {
@@ -98,11 +109,6 @@ func (f *Filter) isStatusVisible(ctx context.Context, requester *gtsmodel.Accoun
 		// This request is WITHOUT auth, and status is NOT public.
 		log.Trace(ctx, "unauthorized request to non-public status")
 		return false, nil
-	}
-
-	if requester.ID == status.AccountID {
-		// This status is made by the requesting account.
-		return true, nil
 	}
 
 	if status.Visibility == gtsmodel.VisibilityUnlocked {
@@ -175,12 +181,8 @@ func (f *Filter) isStatusVisible(ctx context.Context, requester *gtsmodel.Accoun
 	}
 }
 
+// areStatusAccountsVisible calls Filter{}.AccountVisible() on status author and the status boost-of (if set) author, returning visibility of status (and boost-of) to requester.
 func (f *Filter) areStatusAccountsVisible(ctx context.Context, requester *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
-	// Ensure that status is fully populated for further processing.
-	if err := f.state.DB.PopulateStatus(ctx, status); err != nil {
-		return false, err
-	}
-
 	// Check whether status author's account is visible to requester.
 	visible, err := f.AccountVisible(ctx, requester, status.Account)
 	if err != nil {
@@ -192,7 +194,7 @@ func (f *Filter) areStatusAccountsVisible(ctx context.Context, requester *gtsmod
 		return false, nil
 	}
 
-	if status.BoostOf != nil {
+	if status.BoostOfID != "" {
 		// This is a boosted status.
 
 		if status.AccountID == status.BoostOfAccountID {

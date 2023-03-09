@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
+// AccountVisible will check if given account is visible to requester, accounting for requester with no auth (i.e is nil), suspensions, disabled local users and account blocks.
 func (f *Filter) AccountVisible(ctx context.Context, requester *gtsmodel.Account, account *gtsmodel.Account) (bool, error) {
 	// By default we assume no auth.
 	requesterID := "noauth"
@@ -59,6 +60,7 @@ func (f *Filter) AccountVisible(ctx context.Context, requester *gtsmodel.Account
 	return visibility.Value, nil
 }
 
+// isAccountVisibleTo will check if account is visible to requester. It is the "meat" of the logic to Filter{}.AccountVisible() which is called within cache loader callback.
 func (f *Filter) isAccountVisibleTo(ctx context.Context, requester *gtsmodel.Account, account *gtsmodel.Account) (bool, error) {
 	// Check whether target account is visible to anyone.
 	visible, err := f.isAccountVisible(ctx, account)
@@ -106,6 +108,7 @@ func (f *Filter) isAccountVisibleTo(ctx context.Context, requester *gtsmodel.Acc
 	return true, nil
 }
 
+// isAccountVisible will check if given account should be visible at all, e.g. it may not be if suspended or disabled.
 func (f *Filter) isAccountVisible(ctx context.Context, account *gtsmodel.Account) (bool, error) {
 	if account.Domain == "" {
 		// This is a local account.
