@@ -19,7 +19,6 @@
 package hostmeta
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/xml"
 	"net/http"
@@ -56,18 +55,19 @@ func (m *Module) HostMetaGETHandler(c *gin.Context) {
 
 	// this setup with a separate buffer we encode into is used because
 	// xml.Marshal does not emit xml.Header by itself
-	var b bytes.Buffer
-	data := bufio.NewWriter(&b)
-	if _, err := data.Write([]byte(xml.Header)); err != nil {
+	var buf bytes.Buffer
+
+	// Preallocate buffer of reasonable length.
+	buf.Grow(len(xml.Header) + 64)
+
+	// No need to check for error on write to buffer.
+	_, _ = buf.WriteString(xml.Header)
+
+	// Encode host-meta as XML to in-memory buffer.
+	if err := xml.NewEncoder(&buf).Encode(hostMeta); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
 		return
 	}
 
-	enc := xml.NewEncoder(data)
-	if err := enc.Encode(hostMeta); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
-		return
-	}
-
-	c.Data(http.StatusOK, HostMetaContentType, b.Bytes())
+	c.Data(http.StatusOK, HostMetaContentType, buf.Bytes())
 }
