@@ -164,7 +164,7 @@ GtS begins by checking the `inReplyTo` property of the post, which is set when a
 
 Once all of these **ancestors** of a status have been retrieved, GtS will begin working down through the **descendants** of posts.
 
-It does this by checking the `replies` property of a derefenced post, and working through replies, and replies of replies. [See here](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-replies).
+It does this by checking the `replies` property of a dereferenced post, and working through replies, and replies of replies. [See here](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-replies).
 
 This process of thread dereferencing will likely involve making multiple HTTP calls to different servers, especially if the thread is long and complicated.
 
