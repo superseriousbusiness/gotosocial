@@ -61,7 +61,7 @@ func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID st
 	// this is equivalent to a user asking for the top x items from their timeline
 	if maxID == "" && sinceID == "" && minID == "" {
 		items, err = t.getXFromTop(ctx, amount)
-		// aysnchronously prepare the next predicted query so it's ready when the user asks for it
+		// asynchronously prepare the next predicted query so it's ready when the user asks for it
 		if len(items) != 0 {
 			nextMaxID := items[len(items)-1].GetID()
 			if prepareNext {
@@ -81,7 +81,7 @@ func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID st
 	if maxID != "" && sinceID == "" {
 		attempts := 0
 		items, err = t.getXBehindID(ctx, amount, maxID, &attempts)
-		// aysnchronously prepare the next predicted query so it's ready when the user asks for it
+		// asynchronously prepare the next predicted query so it's ready when the user asks for it
 		if len(items) != 0 {
 			nextMaxID := items[len(items)-1].GetID()
 			if prepareNext {
