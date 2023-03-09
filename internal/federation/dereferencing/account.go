@@ -346,7 +346,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 func (d *deref) dereferenceAccountable(ctx context.Context, transport transport.Transport, remoteAccountID *url.URL) (ap.Accountable, error) {
 	b, err := transport.Dereference(ctx, remoteAccountID)
 	if err != nil {
-		return nil, fmt.Errorf("DereferenceAccountable: error deferencing %s: %w", remoteAccountID.String(), err)
+		return nil, fmt.Errorf("DereferenceAccountable: error dereferencing %s: %w", remoteAccountID.String(), err)
 	}
 
 	m := make(map[string]interface{})

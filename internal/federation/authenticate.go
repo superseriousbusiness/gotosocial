@@ -106,7 +106,7 @@ func getPublicKeyFromResponse(c context.Context, b []byte, keyID *url.URL) (voca
 // Authenticate in this case is defined as making sure that the http request is actually signed by whoever claims
 // to have signed it, by fetching the public key from the signature and checking it against the remote public key.
 //
-// The provided username will be used to generate a transport for making remote requests/derefencing the public key ID of the request signature.
+// The provided username will be used to generate a transport for making remote requests/dereferencing the public key ID of the request signature.
 // Ideally you should pass in the username of the user *being requested*, so that the remote server can decide how to handle the request based on who's making it.
 // Ie., if the request on this server is for https://example.org/users/some_username then you should pass in the username 'some_username'.
 // The remote server will then know that this is the user making the dereferencing request, and they can decide to allow or deny the request depending on their settings.

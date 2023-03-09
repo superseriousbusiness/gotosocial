@@ -162,7 +162,7 @@ func (d *deref) dereferenceStatusable(ctx context.Context, tsport transport.Tran
 
 	b, err := tsport.Dereference(ctx, remoteStatusID)
 	if err != nil {
-		return nil, fmt.Errorf("DereferenceStatusable: error deferencing %s: %s", remoteStatusID.String(), err)
+		return nil, fmt.Errorf("DereferenceStatusable: error dereferencing %s: %s", remoteStatusID.String(), err)
 	}
 
 	m := make(map[string]interface{})

@@ -128,7 +128,7 @@ func (c *controller) NewTransport(pubKeyID string, privkey *rsa.PrivateKey) (Tra
 }
 
 func (c *controller) NewTransportForUsername(ctx context.Context, username string) (Transport, error) {
-	// We need an account to use to create a transport for dereferecing something.
+	// We need an account to use to create a transport for dereferencing something.
 	// If a username has been given, we can fetch the account with that username and use it.
 	// Otherwise, we can take the instance account and use those credentials to make the request.
 	var u string

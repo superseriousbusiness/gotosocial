@@ -43,7 +43,7 @@ func (d *deref) DereferenceCollectionPage(ctx context.Context, username string, 
 
 	b, err := transport.Dereference(ctx, pageIRI)
 	if err != nil {
-		return nil, fmt.Errorf("DereferenceCollectionPage: error deferencing %s: %s", pageIRI.String(), err)
+		return nil, fmt.Errorf("DereferenceCollectionPage: error dereferencing %s: %s", pageIRI.String(), err)
 	}
 
 	m := make(map[string]interface{})
