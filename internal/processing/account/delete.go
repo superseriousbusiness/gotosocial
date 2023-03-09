@@ -34,7 +34,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Delete deletes an account, and all of that account's statuses, media, follows, notifications, etc etc etc.
+// Delete deletes an account, and all of that account's statuses, media, follows, notifications, etc., etc., etc.
 // The origin passed here should be either the ID of the account doing the delete (can be itself), or the ID of a domain block.
 func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origin string) gtserror.WithCode {
 	fields := kv.Fields{{"username", account.Username}}
