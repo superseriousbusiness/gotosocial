@@ -198,7 +198,7 @@ func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByAc
 func (suite *WebfingerGetTestSuite) TestFingerUserWithoutAcct() {
 	targetAccount := suite.testAccounts["local_account_1"]
 
-	// setup request -- leave out the 'acct:' prefix, which is prettymuch what pixelfed currently does
+	// setup request -- leave out the 'acct:' prefix, which is pretty much what pixelfed currently does
 	host := config.GetHost()
 	requestPath := fmt.Sprintf("/%s?resource=%s@%s", webfinger.WebfingerBasePath, targetAccount.Username, host)
 
