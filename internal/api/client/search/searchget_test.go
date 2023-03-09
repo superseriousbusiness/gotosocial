@@ -178,7 +178,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalAccountByNamestringWithDomain() 
 }
 
 func (suite *SearchGetTestSuite) TestSearchNonexistingLocalAccountByNamestringResolveTrue() {
-	query := "@somone_made_up@localhost:8080"
+	query := "@someone_made_up@localhost:8080"
 	resolve := true
 
 	searchResult, err := suite.testSearch(query, resolve, http.StatusOK)
