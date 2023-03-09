@@ -174,7 +174,7 @@ func (p *hashtagParser) Parse(parent ast.Node, block text.Reader, pc parser.Cont
 			return newHashtag(segment.WithStop(segment.Start + i))
 		}
 	}
-	// If we don't find invalid characters before the end of the line then it's all hashtag, babey
+	// If we don't find invalid characters before the end of the line then it's all hashtag, baby
 	block.Advance(segment.Len())
 	return newHashtag(segment)
 }
