@@ -66,9 +66,9 @@ type Statusable interface {
 	WithReplies
 }
 
-// Attachmentable represents the minimum activitypub interface for representing a 'mediaAttachment'.
+// Attachable represents the minimum activitypub interface for representing a 'mediaAttachment'.
 // This interface is fulfilled by: Audio, Document, Image, Video
-type Attachmentable interface {
+type Attachable interface {
 	WithTypeName
 	WithMediaType
 	WithURL

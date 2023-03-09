@@ -220,13 +220,13 @@ func (c *converter) extractAttachments(i ap.WithAttachment) []*gtsmodel.MediaAtt
 			continue
 		}
 
-		attachmentable, ok := t.(ap.Attachmentable)
+		attachable, ok := t.(ap.Attachable)
 		if !ok {
-			log.Error(nil, "ap attachment was not attachmentable")
+			log.Error(nil, "ap attachment was not attachable")
 			continue
 		}
 
-		attachment, err := ap.ExtractAttachment(attachmentable)
+		attachment, err := ap.ExtractAttachment(attachable)
 		if err != nil {
 			log.Errorf(nil, "error extracting attachment: %s", err)
 			continue

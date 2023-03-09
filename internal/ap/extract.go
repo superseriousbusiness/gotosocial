@@ -366,8 +366,8 @@ func ExtractContent(i WithContent) string {
 	return ""
 }
 
-// ExtractAttachment returns a gts model of an attachment from an attachmentable interface.
-func ExtractAttachment(i Attachmentable) (*gtsmodel.MediaAttachment, error) {
+// ExtractAttachment returns a gts model of an attachment from an attachable interface.
+func ExtractAttachment(i Attachable) (*gtsmodel.MediaAttachment, error) {
 	attachment := &gtsmodel.MediaAttachment{}
 
 	attachmentURL, err := ExtractURL(i)
