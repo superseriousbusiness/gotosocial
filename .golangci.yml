@@ -18,11 +18,17 @@ linters:
     - goconst
     - gocritic
     - gofmt
+    - goheader
     - gosec
     - nilerr
     - revive
 
 linters-settings:
+  goheader:
+    template-path: scripts/license_header.txt
+    values:
+      regexp:
+        ws: "\\s*"
   govet:
     disable:
       - composites
