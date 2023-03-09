@@ -43,6 +43,9 @@ host: "localhost"
 # to "gts.example.org/.well-known/webfinger" so that GtS can handle them properly.
 #
 # You should also redirect requests at "example.org/.well-known/nodeinfo" in the same way.
+#
+# You should also redirect requests at "example.org/.well-known/host-meta" in the same way. This endpoint is used by a number of clients to discover the API endpoint to use when the host and account domain are different.
+#
 # An empty string (ie., not set) means that the same value as 'host' will be used.
 #
 # DO NOT change this after your server has already run once, or you will break things!

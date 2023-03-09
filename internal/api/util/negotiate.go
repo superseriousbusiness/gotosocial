@@ -58,6 +58,11 @@ var HTMLOrActivityPubHeaders = []MIME{
 	AppActivityLDJSON,
 }
 
+var HostMetaHeaders = []MIME{
+	AppXMLXRD,
+	AppXML,
+}
+
 // NegotiateAccept takes the *gin.Context from an incoming request, and a
 // slice of Offers, and performs content negotiation for the given request
 // with the given content-type offers. It will return a string representation

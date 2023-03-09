@@ -20,6 +20,7 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/api/wellknown/hostmeta"
 	"github.com/superseriousbusiness/gotosocial/internal/api/wellknown/nodeinfo"
 	"github.com/superseriousbusiness/gotosocial/internal/api/wellknown/webfinger"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
@@ -30,6 +31,7 @@ import (
 type WellKnown struct {
 	nodeInfo  *nodeinfo.Module
 	webfinger *webfinger.Module
+	hostMeta  *hostmeta.Module
 }
 
 func (w *WellKnown) Route(r router.Router, m ...gin.HandlerFunc) {
@@ -45,11 +47,13 @@ func (w *WellKnown) Route(r router.Router, m ...gin.HandlerFunc) {
 
 	w.nodeInfo.Route(wellKnownGroup.Handle)
 	w.webfinger.Route(wellKnownGroup.Handle)
+	w.hostMeta.Route(wellKnownGroup.Handle)
 }
 
 func NewWellKnown(p *processing.Processor) *WellKnown {
 	return &WellKnown{
 		nodeInfo:  nodeinfo.New(p),
 		webfinger: webfinger.New(p),
+		hostMeta:  hostmeta.New(p),
 	}
 }
