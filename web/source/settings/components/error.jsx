@@ -24,7 +24,7 @@ function ErrorFallback({ error, resetErrorBoundary }) {
 	return (
 		<div className="error">
 			<p>
-				{"An error occured, please report this on the "}
+				{"An error occurred, please report this on the "}
 				<a href="https://github.com/superseriousbusiness/gotosocial/issues">GoToSocial issue tracker</a>
 				{" or "}
 				<a href="https://matrix.to/#/#gotosocial-help:superseriousbusiness.org">Matrix support room</a>.
