@@ -96,7 +96,7 @@ func StatusPrepareFunction(database db.DB, tc typeutils.TypeConverter) timeline.
 	}
 }
 
-// StatusSkipInsertFunction returns a function that satisifes the SkipInsertFunction interface in internal/timeline.
+// StatusSkipInsertFunction returns a function that satisfies the SkipInsertFunction interface in internal/timeline.
 func StatusSkipInsertFunction() timeline.SkipInsertFunction {
 	return func(
 		ctx context.Context,
