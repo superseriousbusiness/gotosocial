@@ -161,7 +161,7 @@ func (d *deref) dereferenceStatusDescendants(ctx context.Context, username strin
 		// current is the current stack frame
 		current *frame
 
-		// stack is a list of "shelved" descendand iterator
+		// stack is a list of "shelved" descendant iterator
 		// frames. this is pushed to when a child status frame
 		// is found that we need to further iterate down, and
 		// popped from into 'current' when that child's tree
