@@ -36,7 +36,7 @@ The bio accepts either `plain` or `markdown` formatting. This is set by the defa
 
 After updating your display name and bio, click on the `Save profile info` button at the bottom of the Profile Info section to save your changes.
 
-### Manually Approve Followe Requests / Lock Your Account
+### Manually Approve Followed Requests / Lock Your Account
 
 At the bottom of the Profile Info section, there's a checkbox to manually approve follow requests.
 
