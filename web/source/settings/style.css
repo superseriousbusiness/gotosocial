@@ -696,35 +696,56 @@ button.with-padding {
 }
 
 .suspend-import-list {
+	.checkbox-list-wrapper {
+		overflow-x: auto;
+		display: grid;
+		gap: 1rem;
+	}
+
 	.checkbox-list {
+
+		.header {
+			input[type="checkbox"] {
+				align-self: start;
+				height: 1.5rem;
+			}
+		}
+
 		.entry {
-			grid-template-columns: auto 25ch auto 1fr;
+			gap: 0;
+			width: 100%;
+			grid-template-columns: auto minmax(25ch, 2fr) minmax(40ch, 1fr);
 			grid-template-rows: auto 1fr;
 
+			input[type="checkbox"] {
+				margin-right: 1rem;
+			}
+
+			.domain-input {
+				margin-right: 0.5rem;
+				display: grid;
+				grid-template-columns: 1fr $fa-fw;
+				gap: 0.5rem;
+
+				#icon {
+					align-self: center;
+	
+					.already-blocked {
+						color: $green1;
+					}
+		
+					.suggest-changes {
+						color: $orange2;
+					}
+				}
+			}
+
 			p {
+				align-self: center;
+				margin: 0;
 				grid-column: 4;
 				grid-row: 1 / span 2;
 			}
-		}
-	}
-
-	.entry {
-		#icon {
-			margin-left: -0.5rem;
-			align-self: center;
-		}
-
-		#icon .already-blocked {
-			color: $green1;
-		}
-
-		#icon .suggest-changes {
-			color: $orange2;
-		}
-
-		p {
-			align-self: center;
-			margin: 0;
 		}
 	}
 }
