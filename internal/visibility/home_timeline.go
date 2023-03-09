@@ -74,11 +74,6 @@ func (f *Filter) isStatusHomeTimelineable(ctx context.Context, owner *gtsmodel.A
 		return false, nil
 	}
 
-	if status.AccountID == owner.ID {
-		// Author can always see their status.
-		return true, nil
-	}
-
 	// Check whether status is visible to timeline owner.
 	visible, err := f.StatusVisible(ctx, owner, status)
 	if err != nil {
@@ -88,6 +83,11 @@ func (f *Filter) isStatusHomeTimelineable(ctx context.Context, owner *gtsmodel.A
 	if !visible {
 		log.Trace(ctx, "status not visible to timeline owner")
 		return false, nil
+	}
+
+	if status.AccountID == owner.ID {
+		// Author can always see their status.
+		return true, nil
 	}
 
 	if status.MentionsAccount(owner.ID) {
