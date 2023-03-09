@@ -66,8 +66,8 @@ body {
 	display: grid;
 	min-height: 100vh;
 
-	grid-template-columns: auto minmax(auto, 50rem) auto;
-	grid-template-columns: auto min(92%, 50rem) auto;
+	grid-template-columns: 1fr minmax(auto, 50rem) 1fr;
+	grid-template-columns: 1fr min(92%, 50rem) 1fr;
 	grid-template-rows: auto 1fr auto;
 }
 

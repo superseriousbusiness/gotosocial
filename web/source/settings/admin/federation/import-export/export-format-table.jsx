@@ -22,26 +22,28 @@ const React = require("react");
 
 module.exports = function ExportFormatTable() {
 	return (
-		<table className="export-format-table">
-			<thead>
-				<tr>
-					<th rowSpan={2} />
-					<th colSpan={2}>Includes</th>
-					<th colSpan={2}>Importable by</th>
-				</tr>
-				<tr>
-					<th>Domain</th>
-					<th>Public comment</th>
-					<th>GoToSocial</th>
-					<th>Mastodon</th>
-				</tr>
-			</thead>
-			<tbody>
-				<Format name="Text" info={[true, false, true, false]} />
-				<Format name="JSON" info={[true, true, true, false]} />
-				<Format name="CSV" info={[true, true, true, true]} />
-			</tbody>
-		</table>
+		<div className="export-format-table-wrapper without-border">
+			<table className="export-format-table">
+				<thead>
+					<tr>
+						<th rowSpan={2} />
+						<th colSpan={2}>Includes</th>
+						<th colSpan={2}>Importable by</th>
+					</tr>
+					<tr>
+						<th>Domain</th>
+						<th>Public comment</th>
+						<th>GoToSocial</th>
+						<th>Mastodon</th>
+					</tr>
+				</thead>
+				<tbody>
+					<Format name="Text" info={[true, false, true, false]} />
+					<Format name="JSON" info={[true, true, true, false]} />
+					<Format name="CSV" info={[true, true, true, true]} />
+				</tbody>
+			</table>
+		</div>
 	);
 };
 

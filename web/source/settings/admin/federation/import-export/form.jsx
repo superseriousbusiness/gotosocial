@@ -77,7 +77,8 @@ module.exports = function ImportExportForm({ form, submitParse, parseResult }) {
 						result={parseResult}
 						showError={false}
 					/>
-					<label className="button">
+					<label className="button with-icon">
+						<i class="fa fa-fw " aria-hidden="true" />
 						Import file
 						<input
 							type="file"
@@ -93,7 +94,14 @@ module.exports = function ImportExportForm({ form, submitParse, parseResult }) {
 						onClick={() => submitExport("export")}
 						result={exportResult} showError={false}
 					/>
-					<MutationButton label="Export to file" type="button" onClick={() => submitExport("export-file")} result={exportResult} showError={false} />
+					<MutationButton
+						label="Export to file"
+						wrapperClassName="export-file-button"
+						type="button"
+						onClick={() => submitExport("export-file")}
+						result={exportResult}
+						showError={false}
+					/>
 					<div className="export-file">
 						<span>
 							as

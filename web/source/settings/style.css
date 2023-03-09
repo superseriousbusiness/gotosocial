@@ -27,6 +27,7 @@ body {
 
 .content {
 	grid-column: 1 / span 3; /* stretch entire width, to fit panel + sidebar nav */
+	width: 100%;
 }
 
 section {
@@ -51,7 +52,7 @@ section {
 			display: flex;
 			flex-direction: column;
 			gap: 0.5rem;
-			margin: 2rem 0;
+			margin: 1rem 0;
 
 			h2 {
 				margin: 0;
@@ -72,6 +73,7 @@ section {
 
 			&.without-border {
 				border-left: 0;
+				padding-left: 0;
 			}
 		}
 	}
@@ -668,7 +670,7 @@ span.form-info {
 	}
 }
 
-button.with-icon {
+button.with-icon, .button.with-icon {
 	display: flex;
 	align-content: center;
 	padding-right: calc(0.5rem + $fa-fw);
@@ -750,6 +752,27 @@ button.with-padding {
 	}
 }
 
+@media screen and (max-width: 35rem) {
+	.import-export {
+		.button-grid {
+			grid-template-columns: auto auto;
+
+			b { /* filler item */
+				display: none;
+			}
+
+			& > * {
+				grid-column: 1 / span 2;
+				justify-self: start;
+			}
+
+			.export-file-button, .export-file {
+				grid-column: span 1;
+			}
+		}
+	}
+}
+
 .update-hints {
 	background: $list-entry-alternate-bg;
 	border: 0.1rem solid $border-accent;
@@ -769,29 +792,36 @@ button.with-padding {
 	}
 }
 
-.export-format-table {
-	width: 100%;
-	background: $list-entry-alternate-bg;
-	border-collapse: collapse;
+.export-format-table-wrapper {
+	overflow-x: auto;
 
-	th, td {
-		border: 0.1rem solid $gray1;
-		padding: 0.3rem;
+	&, th, td {
+		border: 0.1rem solid $gray1 !important;
 	}
 
-	th {
-		background: $list-entry-bg;
-	}
-
-	td {
-		text-align: center;
-
-		.fa-check {
-			color: $green1;
+	.export-format-table {
+		background: $list-entry-alternate-bg;
+		border-style: hidden;
+		border-collapse: collapse;
+	
+		th, td {
+			padding: 0.3rem;
 		}
-
-		.fa-times {
-			color: $error3;
+	
+		th {
+			background: $list-entry-bg;
+		}
+	
+		td {
+			text-align: center;
+	
+			.fa-check {
+				color: $green1;
+			}
+	
+			.fa-times {
+				color: $error3;
+			}
 		}
 	}
 }
