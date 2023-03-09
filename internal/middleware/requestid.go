@@ -36,7 +36,7 @@ import (
 type ctxType string
 
 var (
-	// ridCtxKey is the key underwhich we store request IDs in a context.
+	// ridCtxKey is the key under which we store request IDs in a context.
 	ridCtxKey ctxType = "id"
 
 	// crand provides buffered reads of random input.
