@@ -85,7 +85,7 @@ func (p *Processor) getPinnableStatus(ctx context.Context, targetStatusID string
 //   - Status belongs to requesting account.
 //   - Status is public, unlisted, or followers-only.
 //   - Status is not a boost.
-//   - Status is not already pinnd.
+//   - Status is not already pinned.
 //   - Limit of pinned statuses not yet met or exceeded.
 //
 // If the conditions can't be met, then code 422 Unprocessable Entity will be returned.
