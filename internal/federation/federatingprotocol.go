@@ -238,7 +238,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 //
 // If no error is returned, but authentication or authorization fails,
 // then blocked must be true and error nil. An http.StatusForbidden
-// will be written in the wresponse.
+// will be written in the response.
 //
 // Finally, if the authentication and authorization succeeds, then
 // blocked must be false and error nil. The request will continue
