@@ -74,7 +74,7 @@ const (
 	ProcessingStatusError      ProcessingStatus = 666 // ProcessingStatusError indicates something went wrong processing the attachment and it won't be tried again--these can be deleted.
 )
 
-// FileType refers to the file type of the media attaachment.
+// FileType refers to the file type of the media attachment.
 type FileType string
 
 // MediaAttachment file types.

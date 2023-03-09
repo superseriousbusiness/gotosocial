@@ -61,7 +61,7 @@ type TypeConverter interface {
 	// if something goes wrong. The returned application should be ready to serialize on an API level, and has sensitive
 	// fields sanitized so that it can be served to non-authorized accounts without revealing any private information.
 	AppToAPIAppPublic(ctx context.Context, application *gtsmodel.Application) (*apimodel.Application, error)
-	// AttachmentToAPIAttachment converts a gts model media attacahment into its api representation for serialization on the API.
+	// AttachmentToAPIAttachment converts a gts model media attachment into its api representation for serialization on the API.
 	AttachmentToAPIAttachment(ctx context.Context, attachment *gtsmodel.MediaAttachment) (apimodel.Attachment, error)
 	// MentionToAPIMention converts a gts model mention into its api (frontend) representation for serialization on the API.
 	MentionToAPIMention(ctx context.Context, m *gtsmodel.Mention) (apimodel.Mention, error)

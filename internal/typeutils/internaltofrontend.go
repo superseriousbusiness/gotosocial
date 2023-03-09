@@ -1120,7 +1120,7 @@ func (c *converter) convertAttachmentsToAPIAttachments(ctx context.Context, atta
 	for _, attachment := range attachments {
 		apiAttachment, err := c.AttachmentToAPIAttachment(ctx, attachment)
 		if err != nil {
-			errs.Appendf("error converting attchment %s to api attachment: %v", attachment.ID, err)
+			errs.Appendf("error converting attachment %s to api attachment: %v", attachment.ID, err)
 			continue
 		}
 		apiAttachments = append(apiAttachments, apiAttachment)
