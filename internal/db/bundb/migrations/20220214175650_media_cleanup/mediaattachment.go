@@ -97,7 +97,7 @@ type Small struct {
 	Width  int     `validate:"required_with=Height Size Aspect"`  // width in pixels
 	Height int     `validate:"required_with=Width Size Aspect"`   // height in pixels
 	Size   int     `validate:"required_with=Width Height Aspect"` // size in pixels (width * height)
-	Aspect float64 `validate:"required_with=Widhth Height Size"`  // aspect ratio (width / height)
+	Aspect float64 `validate:"required_with=Width Height Size"`  // aspect ratio (width / height)
 }
 
 // Original can be used for original metadata for any media type
@@ -105,7 +105,7 @@ type Original struct {
 	Width  int     `validate:"required_with=Height Size Aspect"`  // width in pixels
 	Height int     `validate:"required_with=Width Size Aspect"`   // height in pixels
 	Size   int     `validate:"required_with=Width Height Aspect"` // size in pixels (width * height)
-	Aspect float64 `validate:"required_with=Widhth Height Size"`  // aspect ratio (width / height)
+	Aspect float64 `validate:"required_with=Width Height Size"`  // aspect ratio (width / height)
 }
 
 // Focus describes the 'center' of the image for display purposes.
