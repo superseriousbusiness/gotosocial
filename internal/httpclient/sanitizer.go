@@ -52,7 +52,7 @@ func (s *sanitizer) Sanitize(ntwrk, addr string, _ syscall.RawConn) error {
 		}
 	}
 
-	// Now check if explicity blocked
+	// Now check if explicitly blocked
 	for i := 0; i < len(s.block); i++ {
 		if s.block[i].Contains(ip) {
 			return ErrReservedAddr
