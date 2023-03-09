@@ -424,7 +424,7 @@ Although this test *is* part of the CI/CD testing process, you probably won't ne
 By using the support for loading TLS files from disk it is possible to have two local instances with TLS to allow for (manually) testing federation.
 
 You'll need to set the following configuration options:
-* `GTS_TLS_CERTIFICATE_CHAIN`: poiting to a PEM-encoded certificate chain including the public certificate
+* `GTS_TLS_CERTIFICATE_CHAIN`: pointing to a PEM-encoded certificate chain including the public certificate
 * `GTS_TLS_CERTIFICATE_KEY`: pointing to a PEM-encoded private key
 
 Additionally, for the Go HTTP client to recognise certificates issued by a custom CA as valid, you'll need to set one of:
