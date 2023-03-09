@@ -214,7 +214,7 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 		return nil, ErrBodyTooLarge
 	}
 
-	// Seperate the body implementers
+	// Separate the body implementers
 	rbody := (io.Reader)(rsp.Body)
 	cbody := (io.Closer)(rsp.Body)
 

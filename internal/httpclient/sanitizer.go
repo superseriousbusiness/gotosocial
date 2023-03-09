@@ -42,7 +42,7 @@ func (s *sanitizer) Sanitize(ntwrk, addr string, _ syscall.RawConn) error {
 		return ErrInvalidNetwork
 	}
 
-	// Seperate the IP
+	// Separate the IP
 	ip := ipport.Addr()
 
 	// Check if this is explicitly allowed
