@@ -148,7 +148,7 @@ func (b block) Blocks(labels []string) bool {
 	}
 
 	// Iterate backwards through domain block's
-	// labels, omparing against the incoming domain's.
+	// labels, comparing against the incoming domain's.
 	//
 	// So for the following input:
 	// labels   = []string{"mail", "google", "com"}
