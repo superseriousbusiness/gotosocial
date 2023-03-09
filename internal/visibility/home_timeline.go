@@ -29,9 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-// StatusHometimelineable returns true if targetStatus should be in the home timeline of the requesting account.
-//
-// This function will call StatusVisible internally, so it's not necessary to call it beforehand.
+// StatusHomeTimelineable checks if given status should be included on owner's home timeline. Primarily relying on status visibility to owner and the AP visibility setting, but also taking into account thread replies etc.
 func (f *Filter) StatusHomeTimelineable(ctx context.Context, owner *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
 	// By default we assume no auth.
 	requesterID := noauth

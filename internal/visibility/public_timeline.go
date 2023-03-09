@@ -29,9 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-// StatusPublictimelineable returns true if targetStatus should be in the public timeline of the requesting account.
-//
-// This function will call StatusVisible internally, so it's not necessary to call it beforehand.
+// StatusHomeTimelineable checks if given status should be included on requester's public timeline. Primarily relying on status visibility to requester and the AP visibility setting, and ignoring conversation threads.
 func (f *Filter) StatusPublicTimelineable(ctx context.Context, requester *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
 	// By default we assume no auth.
 	requesterID := noauth
