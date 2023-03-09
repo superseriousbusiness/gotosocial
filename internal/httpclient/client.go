@@ -74,7 +74,7 @@ type Config struct {
 	// AllowRanges allows outgoing communications to given IP nets.
 	AllowRanges []netip.Prefix
 
-	// BlockRanges blocks outgoing communiciations to given IP nets.
+	// BlockRanges blocks outgoing communications to given IP nets.
 	BlockRanges []netip.Prefix
 }
 
