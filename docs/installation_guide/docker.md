@@ -154,7 +154,7 @@ If everything is OK, you should see something similar to the following:
 time=2022-04-19T09:48:35Z level=info msg=connected to SQLITE database
 time=2022-04-19T09:48:35Z level=info msg=MIGRATED DATABASE TO group #1 (20211113114307, 20220214175650, 20220305130328, 20220315160814) func=doMigration
 time=2022-04-19T09:48:36Z level=info msg=instance account example.org CREATED with id 01EXX0TJ9PPPXF2C4N2MMMVK50
-time=2022-04-19T09:48:36Z level=info msg=created instance instance example.org with id 01PQT31C7BZJ1Q2Z4BMEV90ZCV
+time=2022-04-19T09:48:36Z level=info msg=created instance example.org with id 01PQT31C7BZJ1Q2Z4BMEV90ZCV
 time=2022-04-19T09:48:36Z level=info msg=media manager cron logger: start[]
 time=2022-04-19T09:48:36Z level=info msg=media manager cron logger: schedule[now 2022-04-19 09:48:36.096127852 +0000 UTC entry 1 next 2022-04-20 00:00:00 +0000 UTC]
 time=2022-04-19T09:48:36Z level=info msg=started media manager remote cache cleanup job: will run next at 2022-04-20 00:00:00 +0000 UTC

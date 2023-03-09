@@ -290,6 +290,6 @@ func (a *adminDB) CreateInstanceInstance(ctx context.Context) db.Error {
 		return a.conn.ProcessError(err)
 	}
 
-	log.Infof(ctx, "created instance instance %s with id %s", host, i.ID)
+	log.Infof(ctx, "created instance %s with id %s", host, i.ID)
 	return nil
 }
