@@ -19,7 +19,7 @@ sudo apt update
 sudo apt install caddy
 ```
 
-### Fedora, Redhat, Centos
+### Fedora, Red Hat, Centos
 
 ```bash
 dnf install 'dnf-command(copr)'
