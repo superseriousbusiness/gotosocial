@@ -36,7 +36,7 @@ body:
       required: true
 
   - type: textarea
-    id: additional-ctxt
+    id: additional-ctx
     attributes:
       label: Additional context.
       description: Add any other context or screenshots about the feature request here.
