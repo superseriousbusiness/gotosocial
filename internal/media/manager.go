@@ -105,7 +105,7 @@ type Manager interface {
 		PRUNING/UNCACHING FUNCTIONS
 	*/
 
-	// PruneAll runs all of the below pruning/uncacheing functions, and then cleans up any resulting
+	// PruneAll runs all of the below pruning/uncaching functions, and then cleans up any resulting
 	// empty directories from the storage driver. It can be called as a shortcut for calling the below
 	// pruning functions one by one.
 	//
@@ -115,7 +115,7 @@ type Manager interface {
 	PruneAll(ctx context.Context, mediaCacheRemoteDays int, blocking bool) error
 	// UncacheRemote uncaches all remote media attachments older than the given amount of days.
 	//
-	// In this context, uncacheing means deleting media files from storage and marking the attachment
+	// In this context, uncaching means deleting media files from storage and marking the attachment
 	// as cached=false in the database.
 	//
 	// If 'dry' is true, then only a dry run will be performed: nothing will actually be changed.

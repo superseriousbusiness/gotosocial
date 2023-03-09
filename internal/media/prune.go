@@ -60,7 +60,7 @@ func (m *manager) PruneAll(ctx context.Context, mediaCacheRemoteDays int, blocki
 
 		pruned, err = m.UncacheRemote(innerCtx, mediaCacheRemoteDays, dry)
 		if err != nil {
-			errs = append(errs, fmt.Sprintf("error uncacheing remote media older than %d day(s): (%s)", mediaCacheRemoteDays, err))
+			errs = append(errs, fmt.Sprintf("error uncaching remote media older than %d day(s): (%s)", mediaCacheRemoteDays, err))
 		} else {
 			log.Infof(ctx, "uncached %d remote media older than %d day(s)", pruned, mediaCacheRemoteDays)
 		}
