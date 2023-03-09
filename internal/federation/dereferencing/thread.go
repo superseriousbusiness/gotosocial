@@ -33,7 +33,7 @@ import (
 )
 
 // maxIter defines how many iterations of descendants or
-// ancesters we are willing to follow before returning error.
+// ancestors we are willing to follow before returning error.
 const maxIter = 1000
 
 // DereferenceThread takes a statusable (something that has withReplies and withInReplyTo),
