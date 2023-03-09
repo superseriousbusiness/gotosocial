@@ -66,7 +66,7 @@ func NewPassword(password string) error {
 			fmt.Sprintf("password is only %d%% strength", percent)))
 	}
 
-	return nil // pasword OK
+	return nil // password OK
 }
 
 // Username makes sure that a given username is valid (ie., letters, numbers, underscores, check length).
