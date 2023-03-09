@@ -3103,6 +3103,81 @@ func GetCacheGTSWebfingerSweepFreq() time.Duration { return global.GetCacheGTSWe
 // SetCacheGTSWebfingerSweepFreq safely sets the value for global configuration 'Cache.GTS.WebfingerSweepFreq' field
 func SetCacheGTSWebfingerSweepFreq(v time.Duration) { global.SetCacheGTSWebfingerSweepFreq(v) }
 
+// GetCacheVisibilityMaxSize safely fetches the Configuration value for state's 'Cache.VisibilityMaxSize' field
+func (st *ConfigState) GetCacheVisibilityMaxSize() (v int) {
+	st.mutex.Lock()
+	v = st.config.Cache.VisibilityMaxSize
+	st.mutex.Unlock()
+	return
+}
+
+// SetCacheVisibilityMaxSize safely sets the Configuration value for state's 'Cache.VisibilityMaxSize' field
+func (st *ConfigState) SetCacheVisibilityMaxSize(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.VisibilityMaxSize = v
+	st.reloadToViper()
+}
+
+// CacheVisibilityMaxSizeFlag returns the flag name for the 'Cache.VisibilityMaxSize' field
+func CacheVisibilityMaxSizeFlag() string { return "cache-visibility-max-size" }
+
+// GetCacheVisibilityMaxSize safely fetches the value for global configuration 'Cache.VisibilityMaxSize' field
+func GetCacheVisibilityMaxSize() int { return global.GetCacheVisibilityMaxSize() }
+
+// SetCacheVisibilityMaxSize safely sets the value for global configuration 'Cache.VisibilityMaxSize' field
+func SetCacheVisibilityMaxSize(v int) { global.SetCacheVisibilityMaxSize(v) }
+
+// GetCacheVisibilityTTL safely fetches the Configuration value for state's 'Cache.VisibilityTTL' field
+func (st *ConfigState) GetCacheVisibilityTTL() (v time.Duration) {
+	st.mutex.Lock()
+	v = st.config.Cache.VisibilityTTL
+	st.mutex.Unlock()
+	return
+}
+
+// SetCacheVisibilityTTL safely sets the Configuration value for state's 'Cache.VisibilityTTL' field
+func (st *ConfigState) SetCacheVisibilityTTL(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.VisibilityTTL = v
+	st.reloadToViper()
+}
+
+// CacheVisibilityTTLFlag returns the flag name for the 'Cache.VisibilityTTL' field
+func CacheVisibilityTTLFlag() string { return "cache-visibility-ttl" }
+
+// GetCacheVisibilityTTL safely fetches the value for global configuration 'Cache.VisibilityTTL' field
+func GetCacheVisibilityTTL() time.Duration { return global.GetCacheVisibilityTTL() }
+
+// SetCacheVisibilityTTL safely sets the value for global configuration 'Cache.VisibilityTTL' field
+func SetCacheVisibilityTTL(v time.Duration) { global.SetCacheVisibilityTTL(v) }
+
+// GetCacheVisibilitySweepFreq safely fetches the Configuration value for state's 'Cache.VisibilitySweepFreq' field
+func (st *ConfigState) GetCacheVisibilitySweepFreq() (v time.Duration) {
+	st.mutex.Lock()
+	v = st.config.Cache.VisibilitySweepFreq
+	st.mutex.Unlock()
+	return
+}
+
+// SetCacheVisibilitySweepFreq safely sets the Configuration value for state's 'Cache.VisibilitySweepFreq' field
+func (st *ConfigState) SetCacheVisibilitySweepFreq(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.VisibilitySweepFreq = v
+	st.reloadToViper()
+}
+
+// CacheVisibilitySweepFreqFlag returns the flag name for the 'Cache.VisibilitySweepFreq' field
+func CacheVisibilitySweepFreqFlag() string { return "cache-visibility-sweep-freq" }
+
+// GetCacheVisibilitySweepFreq safely fetches the value for global configuration 'Cache.VisibilitySweepFreq' field
+func GetCacheVisibilitySweepFreq() time.Duration { return global.GetCacheVisibilitySweepFreq() }
+
+// SetCacheVisibilitySweepFreq safely sets the value for global configuration 'Cache.VisibilitySweepFreq' field
+func SetCacheVisibilitySweepFreq(v time.Duration) { global.SetCacheVisibilitySweepFreq(v) }
+
 // GetAdminAccountUsername safely fetches the Configuration value for state's 'AdminAccountUsername' field
 func (st *ConfigState) GetAdminAccountUsername() (v string) {
 	st.mutex.Lock()

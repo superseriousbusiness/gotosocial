@@ -157,6 +157,10 @@ type Configuration struct {
 
 type CacheConfiguration struct {
 	GTS GTSCacheConfiguration `name:"gts"`
+
+	VisibilityMaxSize   int           `name:"visibility-max-size"`
+	VisibilityTTL       time.Duration `name:"visibility-ttl"`
+	VisibilitySweepFreq time.Duration `name:"visibility-sweep-freq"`
 }
 
 type GTSCacheConfiguration struct {

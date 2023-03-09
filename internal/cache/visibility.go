@@ -1,15 +1,34 @@
+/*
+   GoToSocial
+   Copyright (C) 2021-2023 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package cache
 
 import (
-	"time"
-
 	"codeberg.org/gruf/go-cache/v3/result"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 type VisibilityCache struct {
 	*result.Cache[*CachedVisibility]
 }
 
+// Init will initialize the visibility cache in this collection.
+// NOTE: the cache MUST NOT be in use anywhere, this is not thread-safe.
 func (c *VisibilityCache) Init() {
 	c.Cache = result.New([]result.Lookup{
 		{Name: "ItemID"},
@@ -19,18 +38,19 @@ func (c *VisibilityCache) Init() {
 		v2 := new(CachedVisibility)
 		*v2 = *v1
 		return v2
-	}, 1000)
-	c.Cache.SetTTL(time.Minute*30, true)
+	}, config.GetCacheVisibilityMaxSize())
+	c.Cache.SetTTL(config.GetCacheVisibilityTTL(), true)
+	c.Cache.IgnoreErrors(ignoreErrors)
 }
 
+// Start will attempt to start the visibility cache, or panic.
 func (c *VisibilityCache) Start() {
-	tryUntil("starting visibility cache", 5, func() bool {
-		return c.Cache.Start(time.Minute)
-	})
+	tryStart(c.Cache, config.GetCacheVisibilitySweepFreq())
 }
 
+// Stop will attempt to stop the visibility cache, or panic.
 func (c *VisibilityCache) Stop() {
-	tryUntil("stopping visibility cache", 5, c.Cache.Stop)
+	tryStop(c.Cache, config.GetCacheVisibilitySweepFreq())
 }
 
 // CachedVisibility represents a cached visibility lookup value.

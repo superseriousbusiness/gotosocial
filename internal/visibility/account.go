@@ -29,14 +29,12 @@ import (
 )
 
 func (f *Filter) AccountVisible(ctx context.Context, requester *gtsmodel.Account, account *gtsmodel.Account) (bool, error) {
-	var requesterID string
+	// By default we assume no auth.
+	requesterID := "noauth"
 
 	if requester != nil {
 		// Use provided account ID.
 		requesterID = requester.ID
-	} else {
-		// Set a no-auth ID flag.
-		requesterID = "noauth"
 	}
 
 	visibility, err := f.state.Caches.Visibility.Load("Type.RequesterID.ItemID", func() (*cache.CachedVisibility, error) {

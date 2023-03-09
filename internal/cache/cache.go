@@ -19,12 +19,15 @@ package cache
 
 type Caches struct {
 	// GTS provides access to the collection of gtsmodel object caches.
+	// (used by the database).
 	GTS GTSCaches
 
 	// AP provides access to the collection of ActivityPub object caches.
+	// (planned to be used by the typeconverter).
 	AP APCaches
 
 	// Visibility provides access to the item visibility cache.
+	// (used by the visibility filter).
 	Visibility VisibilityCache
 
 	// prevent pass-by-value.
@@ -34,17 +37,6 @@ type Caches struct {
 // Init will (re)initialize both the GTS and AP cache collections.
 // NOTE: the cache MUST NOT be in use anywhere, this is not thread-safe.
 func (c *Caches) Init() {
-	if c.GTS == nil {
-		// use default impl
-		c.GTS = NewGTS()
-	}
-
-	if c.AP == nil {
-		// use default impl
-		c.AP = NewAP()
-	}
-
-	// initialize caches
 	c.GTS.Init()
 	c.AP.Init()
 	c.Visibility.Init()
@@ -54,10 +46,12 @@ func (c *Caches) Init() {
 func (c *Caches) Start() {
 	c.GTS.Start()
 	c.AP.Start()
+	c.Visibility.Start()
 }
 
 // Stop will stop both the GTS and AP cache collections.
 func (c *Caches) Stop() {
 	c.GTS.Stop()
 	c.AP.Stop()
+	c.Visibility.Stop()
 }

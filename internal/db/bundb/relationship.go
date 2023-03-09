@@ -23,6 +23,7 @@ import (
 	"fmt"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -36,7 +37,11 @@ type relationshipDB struct {
 
 func (r *relationshipDB) IsBlocked(ctx context.Context, account1 string, account2 string, eitherDirection bool) (bool, db.Error) {
 	// Look for a block in direction of account1->account2
-	block1, err := r.getBlock(ctx, account1, account2)
+	block1, err := r.GetBlock(
+		gtscontext.SetBarebones(ctx),
+		account1,
+		account2,
+	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return false, err
 	}
@@ -50,7 +55,11 @@ func (r *relationshipDB) IsBlocked(ctx context.Context, account1 string, account
 	}
 
 	// Look for a block in direction of account2->account1
-	block2, err := r.getBlock(ctx, account2, account1)
+	block2, err := r.GetBlock(
+		gtscontext.SetBarebones(ctx),
+		account2,
+		account1,
+	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return false, err
 	}
@@ -59,50 +68,115 @@ func (r *relationshipDB) IsBlocked(ctx context.Context, account1 string, account
 }
 
 func (r *relationshipDB) GetBlock(ctx context.Context, account1 string, account2 string) (*gtsmodel.Block, db.Error) {
-	// Fetch block from database
-	block, err := r.getBlock(ctx, account1, account2)
+	return r.getBlock(
+		ctx,
+		"AccountID.TargetAccountID",
+		func(block *gtsmodel.Block) error {
+			return r.conn.NewSelect().Model(block).
+				Where("? = ?", bun.Ident("block.account_id"), account1).
+				Where("? = ?", bun.Ident("block.target_account_id"), account2).
+				Scan(ctx)
+		},
+		account1, account2,
+	)
+}
+
+func (r *relationshipDB) GetBlockByID(ctx context.Context, id string) (*gtsmodel.Block, error) {
+	return r.getBlock(
+		ctx,
+		"ID",
+		func(block *gtsmodel.Block) error {
+			return r.conn.NewSelect().Model(block).
+				Where("? = ?", bun.Ident("block.id"), id).
+				Scan(ctx)
+		},
+		id,
+	)
+}
+
+func (r *relationshipDB) GetBlockByURI(ctx context.Context, uri string) (*gtsmodel.Block, error) {
+	return r.getBlock(
+		ctx,
+		"URI",
+		func(block *gtsmodel.Block) error {
+			return r.conn.NewSelect().Model(block).
+				Where("? = ?", bun.Ident("block.uri"), uri).
+				Scan(ctx)
+		},
+		uri,
+	)
+}
+
+func (r *relationshipDB) getBlock(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Block) error, keyParts ...any) (*gtsmodel.Block, db.Error) {
+	// Fetch block from database cache with loader callback
+	block, err := r.state.Caches.GTS.Block().Load(lookup, func() (*gtsmodel.Block, error) {
+		var block gtsmodel.Block
+
+		if err := dbQuery(&block); err != nil {
+			return nil, r.conn.ProcessError(err)
+		}
+
+		return &block, nil
+	}, keyParts...)
 	if err != nil {
 		return nil, err
+	}
+
+	if gtscontext.Barebones(ctx) {
+		// no need to fully populate.
+		return block, nil
 	}
 
 	// Set the block originating account
-	block.Account, err = r.state.DB.GetAccountByID(ctx, block.AccountID)
+	block.Account, err = r.state.DB.GetAccountByID(
+		gtscontext.SetBarebones(ctx),
+		block.AccountID,
+	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error populating block origin account: %w", err)
 	}
 
 	// Set the block target account
-	block.TargetAccount, err = r.state.DB.GetAccountByID(ctx, block.TargetAccountID)
+	block.TargetAccount, err = r.state.DB.GetAccountByID(
+		gtscontext.SetBarebones(ctx),
+		block.TargetAccountID,
+	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error populating block target account: %w", err)
 	}
 
 	return block, nil
 }
 
-func (r *relationshipDB) getBlock(ctx context.Context, account1 string, account2 string) (*gtsmodel.Block, db.Error) {
-	return r.state.Caches.GTS.Block().Load("AccountID.TargetAccountID", func() (*gtsmodel.Block, error) {
-		var block gtsmodel.Block
-
-		q := r.conn.NewSelect().Model(&block).
-			Where("? = ?", bun.Ident("block.account_id"), account1).
-			Where("? = ?", bun.Ident("block.target_account_id"), account2)
-		if err := q.Scan(ctx); err != nil {
-			return nil, r.conn.ProcessError(err)
-		}
-
-		return &block, nil
-	}, account1, account2)
-}
-
 func (r *relationshipDB) PutBlock(ctx context.Context, block *gtsmodel.Block) db.Error {
-	return r.state.Caches.GTS.Block().Store(block, func() error {
+	// Store the block in the database and set in cache.
+	err := r.state.Caches.GTS.Block().Store(block, func() error {
 		_, err := r.conn.NewInsert().Model(block).Exec(ctx)
 		return r.conn.ProcessError(err)
 	})
+	if err != nil {
+		return err
+	}
+
+	// Invalid accounts from all visibility lookups.
+	r.state.Caches.Visibility.Invalidate("ItemID", block.AccountID)
+	r.state.Caches.Visibility.Invalidate("ItemID", block.TargetAccountID)
+	r.state.Caches.Visibility.Invalidate("RequesterID", block.AccountID)
+	r.state.Caches.Visibility.Invalidate("RequesterID", block.TargetAccountID)
+
+	return nil
 }
 
 func (r *relationshipDB) DeleteBlockByID(ctx context.Context, id string) db.Error {
+	// First, look for block with ID.
+	block, err := r.GetBlockByID(
+		gtscontext.SetBarebones(ctx), id,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Delete from database.
 	if _, err := r.conn.
 		NewDelete().
 		TableExpr("? AS ?", bun.Ident("blocks"), bun.Ident("block")).
@@ -111,12 +185,28 @@ func (r *relationshipDB) DeleteBlockByID(ctx context.Context, id string) db.Erro
 		return r.conn.ProcessError(err)
 	}
 
-	// Drop any old value from cache by this ID
+	// Invalid block from database lookups.
 	r.state.Caches.GTS.Block().Invalidate("ID", id)
+
+	// Invalid accounts from all visibility lookups.
+	r.state.Caches.Visibility.Invalidate("ItemID", block.AccountID)
+	r.state.Caches.Visibility.Invalidate("ItemID", block.TargetAccountID)
+	r.state.Caches.Visibility.Invalidate("RequesterID", block.AccountID)
+	r.state.Caches.Visibility.Invalidate("RequesterID", block.TargetAccountID)
+
 	return nil
 }
 
 func (r *relationshipDB) DeleteBlockByURI(ctx context.Context, uri string) db.Error {
+	// First, look for block with URI.
+	block, err := r.GetBlockByID(
+		gtscontext.SetBarebones(ctx), uri,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Delete from database.
 	if _, err := r.conn.
 		NewDelete().
 		TableExpr("? AS ?", bun.Ident("blocks"), bun.Ident("block")).
@@ -125,8 +215,15 @@ func (r *relationshipDB) DeleteBlockByURI(ctx context.Context, uri string) db.Er
 		return r.conn.ProcessError(err)
 	}
 
-	// Drop any old value from cache by this URI
+	// Invalid block from database lookups.
 	r.state.Caches.GTS.Block().Invalidate("URI", uri)
+
+	// Invalid accounts from all visibility lookups.
+	r.state.Caches.Visibility.Invalidate("ItemID", block.AccountID)
+	r.state.Caches.Visibility.Invalidate("ItemID", block.TargetAccountID)
+	r.state.Caches.Visibility.Invalidate("RequesterID", block.AccountID)
+	r.state.Caches.Visibility.Invalidate("RequesterID", block.TargetAccountID)
+
 	return nil
 }
 
@@ -230,14 +327,22 @@ func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount 
 	rel.Requested = requested
 
 	// check if the requesting account is blocking the target account
-	blockA2T, err := r.getBlock(ctx, requestingAccount, targetAccount)
+	blockA2T, err := r.GetBlock(
+		gtscontext.SetBarebones(ctx),
+		requestingAccount,
+		targetAccount,
+	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, fmt.Errorf("GetRelationship: error checking blocking: %s", err)
 	}
 	rel.Blocking = (blockA2T != nil)
 
 	// check if the requesting account is blocked by the target account
-	blockT2A, err := r.getBlock(ctx, targetAccount, requestingAccount)
+	blockT2A, err := r.GetBlock(
+		gtscontext.SetBarebones(ctx),
+		targetAccount,
+		requestingAccount,
+	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, fmt.Errorf("GetRelationship: error checking blockedBy: %s", err)
 	}
@@ -349,6 +454,12 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, originAccountI
 		return nil, err
 	}
 
+	// Invalid accounts from all visibility lookups.
+	r.state.Caches.Visibility.Invalidate("ItemID", originAccountID)
+	r.state.Caches.Visibility.Invalidate("ItemID", targetAccountID)
+	r.state.Caches.Visibility.Invalidate("RequesterID", originAccountID)
+	r.state.Caches.Visibility.Invalidate("RequesterID", targetAccountID)
+
 	// return the new follow
 	return follow, nil
 }
@@ -385,7 +496,13 @@ func (r *relationshipDB) RejectFollowRequest(ctx context.Context, originAccountI
 		return nil, err
 	}
 
-	// Return the now deleted follow request.
+	// Invalid accounts from all visibility lookups.
+	r.state.Caches.Visibility.Invalidate("ItemID", originAccountID)
+	r.state.Caches.Visibility.Invalidate("ItemID", targetAccountID)
+	r.state.Caches.Visibility.Invalidate("RequesterID", originAccountID)
+	r.state.Caches.Visibility.Invalidate("RequesterID", targetAccountID)
+
+	// return the deleted follow request
 	return followRequest, nil
 }
 

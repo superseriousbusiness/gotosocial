@@ -20,12 +20,10 @@ package visibility
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -35,14 +33,12 @@ import (
 //
 // This function will call StatusVisible internally, so it's not necessary to call it beforehand.
 func (f *Filter) StatusHomeTimelineable(ctx context.Context, owner *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
-	var ownerID string
+	// By default we assume no auth.
+	requesterID := "noauth"
 
 	if owner != nil {
 		// Use provided account ID.
-		ownerID = owner.ID
-	} else {
-		// Set a no-auth ID flag.
-		ownerID = "noauth"
+		requesterID = owner.ID
 	}
 
 	visibility, err := f.state.Caches.Visibility.Load("Type.RequesterID.ItemID", func() (*cache.CachedVisibility, error) {
@@ -55,12 +51,18 @@ func (f *Filter) StatusHomeTimelineable(ctx context.Context, owner *gtsmodel.Acc
 		// Return visibility value.
 		return &cache.CachedVisibility{
 			ItemID:      status.ID,
-			RequesterID: ownerID,
+			RequesterID: requesterID,
 			Type:        "home",
 			Value:       visible,
 		}, nil
-	}, "home", ownerID, status.ID)
+	}, "home", requesterID, status.ID)
 	if err != nil {
+		if err == cache.SentinelError {
+			// Filter-out our temporary
+			// race-condition error.
+			return false, nil
+		}
+
 		return false, err
 	}
 
@@ -74,6 +76,11 @@ func (f *Filter) isStatusHomeTimelineable(ctx context.Context, owner *gtsmodel.A
 		return false, nil
 	}
 
+	if status.AccountID == owner.ID {
+		// Author can always see their status.
+		return true, nil
+	}
+
 	// Check whether status is visible to timeline owner.
 	visible, err := f.StatusVisible(ctx, owner, status)
 	if err != nil {
@@ -85,39 +92,56 @@ func (f *Filter) isStatusHomeTimelineable(ctx context.Context, owner *gtsmodel.A
 		return false, nil
 	}
 
-	if status.AccountID == owner.ID {
-		// Status author can always see their status.
+	if status.MentionsAccount(owner.ID) {
+		// Can always see when you are mentioned.
 		return true, nil
 	}
 
-	if status.InReplyToID != "" {
-		var oldest *gtsmodel.Status
+	var (
+		parent    *gtsmodel.Status
+		included  bool
+		oneAuthor bool
+	)
 
-		// Iteratively get to the oldest status in the reply-chain.
-		for oldest = status.InReplyTo; oldest.InReplyToID != ""; {
-			oldest, err = f.state.DB.GetStatusByID(
-				gtscontext.SetBarebones(ctx),
-				oldest.InReplyToID,
-			)
-			if err != nil && !errors.Is(err, db.ErrNoEntries) {
-				return false, fmt.Errorf("isStatusHomeTimelineable: error getting status %s parent: %w", oldest.InReplyToID, err)
-			}
+	for parent = status; parent.InReplyToURI != ""; {
+		// Fetch next parent to lookup.
+		parentID := parent.InReplyToID
+		if parentID == "" {
+			log.Warnf(ctx, "status not yet deref'd: %s", parent.InReplyToURI)
+			return false, cache.SentinelError
 		}
 
-		if oldest != status {
-			// Check whether owner can see the oldest parent in reply chain.
-			// (this prevents conversation snippets on the home timeline).
-			visible, err := f.StatusHomeTimelineable(ctx, owner, oldest)
-			if err != nil {
-				return false, fmt.Errorf("isStatusHomeTimelineable: error checking grandest parent %s: %w", oldest.ID, err)
-			}
+		// Get the next parent in the chain from DB.
+		parent, err = f.state.DB.GetStatusByID(
+			gtscontext.SetBarebones(ctx),
+			parentID,
+		)
+		if err != nil {
+			return false, fmt.Errorf("isStatusHomeTimelineable: error getting status parent %s: %w", parentID, err)
+		}
 
-			if !visible {
-				log.Trace(ctx, "ignoring visible reply to invisible grandest parent")
-				return false, nil
-			}
+		if (parent.AccountID == owner.ID) ||
+			parent.MentionsAccount(owner.ID) {
+			// Owner is in / mentioned in
+			// this status thread.
+			included = true
+			break
+		}
+
+		if oneAuthor {
+			// Check if this is a single-author status thread.
+			oneAuthor = (parent.AccountID == status.AccountID)
 		}
 	}
+
+	if parent != status && !included && !oneAuthor {
+		log.Trace(ctx, "ignoring visible reply to conversation thread excluding owner")
+		return false, nil
+	}
+
+	// At this point status is either a top-level status, a reply in a single
+	// author thread (e.g. "this is my weird-ass take and here is why 1/10 🧵"),
+	// or a thread mentioning / including timeline owner.
 
 	if status.Visibility == gtsmodel.VisibilityFollowersOnly ||
 		status.Visibility == gtsmodel.VisibilityMutualsOnly {
@@ -126,7 +150,7 @@ func (f *Filter) isStatusHomeTimelineable(ctx context.Context, owner *gtsmodel.A
 		return true, nil
 	}
 
-	// Ensure owner follows the status author.
+	// Ensure owner follows author of public/unlocked status.
 	follow, err := f.state.DB.IsFollowing(ctx,
 		owner,
 		status.Account,

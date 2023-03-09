@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
@@ -32,14 +33,12 @@ import (
 //
 // This function will call StatusVisible internally, so it's not necessary to call it beforehand.
 func (f *Filter) StatusPublicTimelineable(ctx context.Context, requester *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
-	var requesterID string
+	// By default we assume no auth.
+	requesterID := "noauth"
 
 	if requester != nil {
 		// Use provided account ID.
 		requesterID = requester.ID
-	} else {
-		// Set a no-auth ID flag.
-		requesterID = "noauth"
 	}
 
 	visibility, err := f.state.Caches.Visibility.Load("Type.RequesterID.ItemID", func() (*cache.CachedVisibility, error) {
@@ -58,6 +57,12 @@ func (f *Filter) StatusPublicTimelineable(ctx context.Context, requester *gtsmod
 		}, nil
 	}, "public", requesterID, status.ID)
 	if err != nil {
+		if err == cache.SentinelError {
+			// Filter-out our temporary
+			// race-condition error.
+			return false, nil
+		}
+
 		return false, err
 	}
 
@@ -76,40 +81,6 @@ func (f *Filter) isStatusPublicTimelineable(ctx context.Context, requester *gtsm
 		return false, nil
 	}
 
-	if status.InReplyToID != "" {
-		// This is a reply.
-
-		// Don't show replies not coming from original author
-		// (i.e. we only show singular author status threads).
-		if status.InReplyToAccountID != status.AccountID {
-			return false, nil
-		}
-
-		// Get reply's parent.
-		parent := status.InReplyTo
-
-		if parent == nil {
-			var err error
-
-			// Parent of current status needs fetching from the database.
-			parent, err = f.state.DB.GetStatusByID(ctx, status.InReplyToID)
-			if err != nil {
-				return false, fmt.Errorf("isStatusPublicTimelineable: error getting status %s: %w", status.InReplyToID, err)
-			}
-		}
-
-		// Check the public timelineable-ness (?) of parent status to requester.
-		visible, err := f.StatusPublicTimelineable(ctx, requester, parent)
-		if err != nil {
-			return false, err
-		}
-
-		if !visible {
-			log.Trace(ctx, "status parent not visible")
-			return false, nil
-		}
-	}
-
 	// Check whether status is visible to requesting account.
 	visible, err := f.StatusVisible(ctx, requester, status)
 	if err != nil {
@@ -121,5 +92,33 @@ func (f *Filter) isStatusPublicTimelineable(ctx context.Context, requester *gtsm
 		return false, nil
 	}
 
+	for parent := status; parent.InReplyToURI != ""; {
+		// Fetch next parent to lookup.
+		parentID := parent.InReplyToID
+		if parentID == "" {
+			log.Warnf(ctx, "status not yet deref'd: %s", parent.InReplyToURI)
+			return false, cache.SentinelError
+		}
+
+		// Get the next parent in the chain from DB.
+		parent, err = f.state.DB.GetStatusByID(
+			gtscontext.SetBarebones(ctx),
+			parentID,
+		)
+		if err != nil {
+			return false, fmt.Errorf("isStatusHomeTimelineable: error getting status parent %s: %w", parentID, err)
+		}
+
+		if parent.AccountID != status.AccountID {
+			// This is not a single author reply-chain-thread,
+			// instead is an actualy conversation. Don't timeline.
+			log.Trace(ctx, "ignoring multi-author reply-chain")
+			return false, nil
+		}
+	}
+
+	// This is either a visible status in a
+	// single-author thread, or a visible top
+	// level status. Show on public timeline.
 	return true, nil
 }

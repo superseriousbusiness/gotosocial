@@ -119,19 +119,19 @@ var Defaults = Configuration{
 
 	Cache: CacheConfiguration{
 		GTS: GTSCacheConfiguration{
-			AccountMaxSize:   500,
+			AccountMaxSize:   2000,
 			AccountTTL:       time.Minute * 5,
 			AccountSweepFreq: time.Second * 30,
 
-			BlockMaxSize:   100,
+			BlockMaxSize:   1000,
 			BlockTTL:       time.Minute * 5,
 			BlockSweepFreq: time.Second * 30,
 
-			DomainBlockMaxSize:   1000,
+			DomainBlockMaxSize:   2000,
 			DomainBlockTTL:       time.Hour * 24,
 			DomainBlockSweepFreq: time.Minute,
 
-			EmojiMaxSize:   500,
+			EmojiMaxSize:   2000,
 			EmojiTTL:       time.Minute * 5,
 			EmojiSweepFreq: time.Second * 30,
 
@@ -139,15 +139,15 @@ var Defaults = Configuration{
 			EmojiCategoryTTL:       time.Minute * 5,
 			EmojiCategorySweepFreq: time.Second * 30,
 
-			MediaMaxSize:   500,
+			MediaMaxSize:   2000,
 			MediaTTL:       time.Minute * 5,
 			MediaSweepFreq: time.Second * 30,
 
-			MentionMaxSize:   500,
+			MentionMaxSize:   2000,
 			MentionTTL:       time.Minute * 5,
 			MentionSweepFreq: time.Second * 30,
 
-			NotificationMaxSize:   500,
+			NotificationMaxSize:   1000,
 			NotificationTTL:       time.Minute * 5,
 			NotificationSweepFreq: time.Second * 30,
 
@@ -155,15 +155,15 @@ var Defaults = Configuration{
 			ReportTTL:       time.Minute * 5,
 			ReportSweepFreq: time.Second * 30,
 
-			StatusMaxSize:   500,
+			StatusMaxSize:   2000,
 			StatusTTL:       time.Minute * 5,
 			StatusSweepFreq: time.Second * 30,
 
-			TombstoneMaxSize:   100,
+			TombstoneMaxSize:   500,
 			TombstoneTTL:       time.Minute * 5,
 			TombstoneSweepFreq: time.Second * 30,
 
-			UserMaxSize:   100,
+			UserMaxSize:   500,
 			UserTTL:       time.Minute * 5,
 			UserSweepFreq: time.Second * 30,
 
@@ -171,6 +171,10 @@ var Defaults = Configuration{
 			WebfingerTTL:       time.Hour * 24,
 			WebfingerSweepFreq: time.Minute * 15,
 		},
+
+		VisibilityMaxSize:   2000,
+		VisibilityTTL:       time.Minute * 5,
+		VisibilitySweepFreq: time.Second * 30,
 	},
 
 	AdminMediaPruneDryRun: true,
