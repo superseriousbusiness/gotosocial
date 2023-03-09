@@ -31,7 +31,7 @@ import (
 // AccountVisible will check if given account is visible to requester, accounting for requester with no auth (i.e is nil), suspensions, disabled local users and account blocks.
 func (f *Filter) AccountVisible(ctx context.Context, requester *gtsmodel.Account, account *gtsmodel.Account) (bool, error) {
 	// By default we assume no auth.
-	requesterID := "noauth"
+	requesterID := noauth
 
 	if requester != nil {
 		// Use provided account ID.

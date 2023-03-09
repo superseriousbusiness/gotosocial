@@ -51,7 +51,7 @@ func (f *Filter) StatusesVisible(ctx context.Context, requester *gtsmodel.Accoun
 // StatusVisible will check if given status is visible to requester, accounting for requester with no auth (i.e is nil), suspensions, disabled local users, account blocks and status privacy.
 func (f *Filter) StatusVisible(ctx context.Context, requester *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
 	// By default we assume no auth.
-	requesterID := "noauth"
+	requesterID := noauth
 
 	if requester != nil {
 		// Use provided account ID.
