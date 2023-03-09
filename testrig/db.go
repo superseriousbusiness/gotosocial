@@ -110,7 +110,7 @@ func CreateTestTables(db db.DB) {
 	}
 }
 
-// StandardDBSetup populates a given db with all the necessary tables/models for perfoming tests.
+// StandardDBSetup populates a given db with all the necessary tables/models for performing tests.
 //
 // The accounts parameter is provided in case the db should be populated with a certain set of accounts.
 // If accounts is nil, then the standard test accounts will be used.
