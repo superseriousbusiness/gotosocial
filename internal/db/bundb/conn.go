@@ -27,7 +27,7 @@ import (
 	"github.com/uptrace/bun/dialect"
 )
 
-// DBConn wrapps a bun.DB conn to provide SQL-type specific additional functionality
+// DBConn wraps a bun.DB conn to provide SQL-type specific additional functionality
 type DBConn struct {
 	errProc func(error) db.Error // errProc is the SQL-type specific error processor
 	*bun.DB                      // DB is the underlying bun.DB connection
