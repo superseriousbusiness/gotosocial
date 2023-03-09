@@ -111,7 +111,7 @@ func (m *gtsImage) Thumbnail() *gtsImage {
 		maxHeight = 512
 	)
 
-	// Check the receiving image is within max thumnail bounds.
+	// Check the receiving image is within max thumbnail bounds.
 	if m.Width() <= maxWidth && m.Height() <= maxHeight {
 		return &gtsImage{image: imaging.Clone(m.image)}
 	}
