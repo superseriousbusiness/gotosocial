@@ -185,7 +185,7 @@ func processMediaIDs(ctx context.Context, dbService db.DB, form *apimodel.Advanc
 
 		minDescriptionChars := config.GetMediaDescriptionMinChars()
 		if descriptionLength := len([]rune(attachment.Description)); descriptionLength < minDescriptionChars {
-			err = fmt.Errorf("ProcessMediaIDs: description too short! media description of at least %d chararacters is required but %d was provided for media with id %s", minDescriptionChars, descriptionLength, mediaID)
+			err = fmt.Errorf("ProcessMediaIDs: description too short! media description of at least %d characters is required but %d was provided for media with id %s", minDescriptionChars, descriptionLength, mediaID)
 			return gtserror.NewErrorBadRequest(err, err.Error())
 		}
 
