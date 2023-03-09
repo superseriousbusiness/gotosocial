@@ -601,7 +601,7 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		log.Errorf(ctx, "error converting status emojis: %v", err)
 	}
 
-	// Fetch status interaction flags for acccount
+	// Fetch status interaction flags for account
 	interacts, err := c.interactionsWithStatusForAccount(ctx, s, requestingAccount)
 	if err != nil {
 		log.Errorf(ctx, "error getting interactions for status %s for account %s: %v", s.ID, requestingAccount.ID, err)
