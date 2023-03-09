@@ -160,7 +160,7 @@ Now, `remote_1` boosts/reblogs a post from a third account, `remote_2`, residing
 
 What GoToSocial will do now, is 'dereference' the post by `remote_2` to check if it is part of a thread and, if so, whether any other parts of the thread can be obtained.
 
-GtS begins by checking the `inReplyTo` property of the post, which is set when a post is a reply to another post. [See here](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-inreplyto). If `inReplyTo` is set, GoToSocial derefences the replied-to post. If *this* post also has an `inReplyTo` set, then GoToSocial dereferences that too, and so on.
+GtS begins by checking the `inReplyTo` property of the post, which is set when a post is a reply to another post. [See here](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-inreplyto). If `inReplyTo` is set, GoToSocial dereferences the replied-to post. If *this* post also has an `inReplyTo` set, then GoToSocial dereferences that too, and so on.
 
 Once all of these **ancestors** of a status have been retrieved, GtS will begin working down through the **descendants** of posts.
 
