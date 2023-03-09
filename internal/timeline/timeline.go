@@ -45,7 +45,7 @@ type FilterFunction func(ctx context.Context, timelineAccountID string, item Tim
 
 // PrepareFunction converts a Timelineable into a Preparable.
 //
-// For example, this might result in the converstion of a *gtsmodel.Status with the given itemID into a serializable *apimodel.Status.
+// For example, this might result in the conversion of a *gtsmodel.Status with the given itemID into a serializable *apimodel.Status.
 type PrepareFunction func(ctx context.Context, timelineAccountID string, itemID string) (Preparable, error)
 
 // SkipInsertFunction indicates whether a new item about to be inserted in the prepared list should be skipped,
