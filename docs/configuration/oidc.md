@@ -2,7 +2,7 @@
 
 GoToSocial supports [OpenID Connect](https://openid.net/connect/), which is an identification protocol built on top of [OAuth 2.0](https://oauth.net/2/), an industry standard protocol for authorization.
 
-This means that you can connect GoToSocial to an external OIDC provider like [GitLab](https://docs.gitlab.com/ee/integration/openid_connect_provider.html), [Google](https://cloud.google.com/identity-platform/docs/web/oidc), [Keycloak](https://www.keycloak.org/), or [Dex](https://dexidp.io/) and allow users to sign in to GoToSocial using their credentials for that provider.
+This means that you can connect GoToSocial to an external OIDC provider like [GitLab](https://docs.gitlab.com/ee/integration/openid_connect_provider.html), [Google](https://cloud.google.com/identity-platform/docs/web/oidc), [Keycloak](https://www.keycloak.org/), or [Dex](https://dexidp.io/) and allow users to sign into GoToSocial using their credentials for that provider.
 
 This is very convenient in the following cases:
 
@@ -23,7 +23,7 @@ GoToSocial exposes the following configuration settings for OIDC, shown below wi
 
 # Bool. Enable authentication with external OIDC provider. If set to true, then
 # the other OIDC options must be set as well. If this is set to false, then the standard
-# internal oauth flow will be used, where users sign in to GtS with username/password.
+# internal oauth flow will be used, where users sign into GtS with username/password.
 # Options: [true, false]
 # Default: false
 oidc-enabled: false

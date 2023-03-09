@@ -608,7 +608,7 @@ tls-certificate-key: ""
 
 # Bool. Enable authentication with external OIDC provider. If set to true, then
 # the other OIDC options must be set as well. If this is set to false, then the standard
-# internal oauth flow will be used, where users sign in to GtS with username/password.
+# internal oauth flow will be used, where users sign into GtS with username/password.
 # Options: [true, false]
 # Default: false
 oidc-enabled: false
