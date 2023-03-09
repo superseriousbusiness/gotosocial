@@ -210,7 +210,7 @@ GoToSocial will not assume that the `to` field will be set on an incoming `Flag`
 
 A valid incoming `Flag` Activity will be made available as a report to the admin(s) of the GoToSocial instance that received the report, so that they can take any necessary moderation action against the reported user.
 
-The reported user themself will not see the report, or be notified that they have been reported, unless the GtS admin chooses to share this information with them via some other channel.
+The reported user themselves will not see the report, or be notified that they have been reported, unless the GtS admin chooses to share this information with them via some other channel.
 
 ## Featured (aka pinned) Posts
 

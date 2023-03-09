@@ -280,7 +280,7 @@ func (p *Processor) DeleteLocal(ctx context.Context, account *gtsmodel.Account, 
 	}
 
 	if form.DeleteOriginID == account.ID {
-		// the account owner themself has requested deletion via the API, get their user from the db
+		// the account owner themselves has requested deletion via the API, get their user from the db
 		user, err := p.state.DB.GetUserByAccountID(ctx, account.ID)
 		if err != nil {
 			return gtserror.NewErrorInternalError(err)
