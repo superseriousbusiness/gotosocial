@@ -64,21 +64,55 @@ func (s *statusBookmarkDB) GetStatusBookmark(ctx context.Context, id string) (*g
 	return bookmark, nil
 }
 
-func (s *statusBookmarkDB) GetStatusBookmarkByAccountID(ctx context.Context, accountID string, statusID string) (*gtsmodel.StatusBookmark, db.Error) {
-	var id string
+func (s *statusBookmarkDB) GetStatusBookmarks(ctx context.Context, accountID string, limit int, maxID string, minID string) ([]*gtsmodel.StatusBookmark, db.Error) {
+	// Ensure reasonable
+	if limit < 0 {
+		limit = 0
+	}
 
-	err := s.conn.
+	// Guess size of IDs based on limit.
+	ids := make([]string, 0, limit)
+
+	q := s.conn.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("status_bookmarks"), bun.Ident("status_bookmark")).
-		Column("status_bookmark.id").
 		Where("? = ?", bun.Ident("status_bookmark.account_id"), accountID).
-		Where("? = ?", bun.Ident("status_bookmark.status_id"), statusID).
-		Scan(ctx, &id)
-	if err != nil {
+		Order("status_bookmark.id DESC")
+
+	if accountID == "" {
+		return nil, errors.New("must provide an account")
+	}
+
+	if maxID != "" {
+		q = q.Where("? < ?", bun.Ident("status_bookmark.id"), maxID)
+	}
+
+	if minID != "" {
+		q = q.Where("? > ?", bun.Ident("status_bookmark.id"), minID)
+	}
+
+	if limit != 0 {
+		q = q.Limit(limit)
+	}
+
+	if err := q.Scan(ctx, &ids); err != nil {
 		return nil, s.conn.ProcessError(err)
 	}
 
-	return s.GetStatusBookmark(ctx, id)
+	bookmarks := make([]*gtsmodel.StatusBookmark, 0, len(ids))
+
+	for _, id := range ids {
+		bookmark, err := s.GetStatusBookmark(ctx, id)
+		if err != nil {
+			log.Errorf(ctx, "error getting bookmark %q: %v", id, err)
+			continue
+		}
+
+		bookmarks = append(bookmarks, bookmark)
+	}
+
+	return bookmarks, nil
+}
 }
 
 func (s *statusBookmarkDB) PutStatusBookmark(ctx context.Context, statusBookmark *gtsmodel.StatusBookmark) db.Error {

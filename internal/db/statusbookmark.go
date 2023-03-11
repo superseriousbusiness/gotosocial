@@ -28,9 +28,12 @@ type StatusBookmark interface {
 	// GetStatusBookmark gets one status bookmark with the given ID.
 	GetStatusBookmark(ctx context.Context, id string) (*gtsmodel.StatusBookmark, Error)
 
-	// GetStatusBookmarkByAccountID gets one status bookmark created by the given
-	// accountID, targeting the given statusID.
-	GetStatusBookmarkByAccountID(ctx context.Context, accountID string, statusID string) (*gtsmodel.StatusBookmark, Error)
+	// GetStatusBookmarks retrieves status bookmarks created by the given accountID,
+	// and using the provided parameters. If limit is < 0 then no limit will be set.
+	//
+	// This function is primarily useful for paging through bookmarks in a sort of
+	// timeline view.
+	GetStatusBookmarks(ctx context.Context, accountID string, limit int, maxID string, minID string) ([]*gtsmodel.StatusBookmark, Error)
 
 	// PutStatusBookmark inserts the given statusBookmark into the database.
 	PutStatusBookmark(ctx context.Context, statusBookmark *gtsmodel.StatusBookmark) Error

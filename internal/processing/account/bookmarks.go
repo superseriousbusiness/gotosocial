@@ -34,7 +34,7 @@ import (
 // BookmarksGet returns a pageable response of statuses that are bookmarked by requestingAccount.
 // Paging for this response is done based on bookmark ID rather than status ID.
 func (p *Processor) BookmarksGet(ctx context.Context, requestingAccount *gtsmodel.Account, limit int, maxID string, minID string) (*apimodel.PageableResponse, gtserror.WithCode) {
-	bookmarks, err := p.state.DB.GetBookmarks(ctx, requestingAccount.ID, limit, maxID, minID)
+	bookmarks, err := p.state.DB.GetStatusBookmarks(ctx, requestingAccount.ID, limit, maxID, minID)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

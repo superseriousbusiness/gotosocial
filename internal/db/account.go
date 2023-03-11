@@ -87,8 +87,6 @@ type Account interface {
 	// In the case of no statuses, this function will return db.ErrNoEntries.
 	GetAccountWebStatuses(ctx context.Context, accountID string, limit int, maxID string) ([]*gtsmodel.Status, Error)
 
-	GetBookmarks(ctx context.Context, accountID string, limit int, maxID string, minID string) ([]*gtsmodel.StatusBookmark, Error)
-
 	GetAccountBlocks(ctx context.Context, accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, Error)
 
 	// GetAccountLastPosted simply gets the timestamp of the most recent post by the account.
