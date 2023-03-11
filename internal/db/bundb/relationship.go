@@ -789,8 +789,8 @@ func newSelectFollowRequesting(conn *DBConn, accountID string) *bun.SelectQuery 
 // newSelectFollows returns a new select query for all rows in the follows table with account_id = accountID.
 func newSelectFollows(conn *DBConn, accountID string) *bun.SelectQuery {
 	return conn.NewSelect().
-		TableExpr("?", bun.Ident("follows")).
-		ColumnExpr("?", bun.Ident("id")).
+		Table("follows").
+		Column("id").
 		Where("? = ?", bun.Ident("account_id"), accountID).
 		OrderExpr("? DESC", bun.Ident("updated_at"))
 }
@@ -799,24 +799,24 @@ func newSelectFollows(conn *DBConn, accountID string) *bun.SelectQuery {
 // account_id = accountID where the corresponding account ID has a NULL domain (i.e. is local).
 func newSelectLocalFollows(conn *DBConn, accountID string) *bun.SelectQuery {
 	return conn.NewSelect().
-		TableExpr("?", bun.Ident("follows")).
-		ColumnExpr("?", bun.Ident("follows.id")).
+		Table("follows").
+		Column("id").
 		Where("? = ? AND ? IN ( SELECT ? FROM ? WHERE ? IS NULL )",
-			bun.Ident("follows.account_id"),
+			bun.Ident("account_id"),
 			accountID,
-			bun.Ident("follows.account_id"),
-			bun.Ident("accounts.id"),
+			bun.Ident("target_account_id"),
+			bun.Ident("id"),
 			bun.Ident("accounts"),
-			bun.Ident("accounts.domain"),
+			bun.Ident("domain"),
 		).
-		OrderExpr("? DESC", bun.Ident("follows.updated_at"))
+		OrderExpr("? DESC", bun.Ident("updated_at"))
 }
 
 // newSelectFollowers returns a new select query for all rows in the follows table with target_account_id = accountID.
 func newSelectFollowers(conn *DBConn, accountID string) *bun.SelectQuery {
 	return conn.NewSelect().
-		TableExpr("?", bun.Ident("follows")).
-		ColumnExpr("?", bun.Ident("id")).
+		Table("follows").
+		Column("id").
 		Where("? = ?", bun.Ident("target_account_id"), accountID).
 		OrderExpr("? DESC", bun.Ident("updated_at"))
 }
@@ -825,15 +825,15 @@ func newSelectFollowers(conn *DBConn, accountID string) *bun.SelectQuery {
 // target_account_id = accountID where the corresponding account ID has a NULL domain (i.e. is local).
 func newSelectLocalFollowers(conn *DBConn, accountID string) *bun.SelectQuery {
 	return conn.NewSelect().
-		TableExpr("?", bun.Ident("follows")).
-		ColumnExpr("?", bun.Ident("follows.id")).
+		Table("follows").
+		Column("id").
 		Where("? = ? AND ? IN ( SELECT ? FROM ? WHERE ? IS NULL )",
-			bun.Ident("follows.target_account_id"),
+			bun.Ident("target_account_id"),
 			accountID,
-			bun.Ident("follows.target_account_id"),
-			bun.Ident("accounts.id"),
+			bun.Ident("account_id"),
+			bun.Ident("id"),
 			bun.Ident("accounts"),
-			bun.Ident("accounts.domain"),
+			bun.Ident("domain"),
 		).
-		OrderExpr("? DESC", bun.Ident("follows.updated_at"))
+		OrderExpr("? DESC", bun.Ident("updated_at"))
 }

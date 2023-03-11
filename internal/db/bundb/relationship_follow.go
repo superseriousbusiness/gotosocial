@@ -111,7 +111,7 @@ func (r *relationshipDB) IsMutualFollowing(ctx context.Context, accountID1 strin
 		accountID1,
 		accountID2,
 	)
-	if err != nil || !f1 {
+	if !f1 /* f1 = false when err != nil */ {
 		return false, err
 	}
 
@@ -120,7 +120,7 @@ func (r *relationshipDB) IsMutualFollowing(ctx context.Context, accountID1 strin
 		accountID2,
 		accountID1,
 	)
-	if err != nil || !f2 {
+	if !f2 /* f2 = false when err != nil */ {
 		return false, err
 	}
 

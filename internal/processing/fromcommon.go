@@ -403,19 +403,17 @@ func (p *Processor) notifyReportClosed(ctx context.Context, report *gtsmodel.Rep
 // timelineStatus processes the given new status and inserts it into
 // the HOME timelines of accounts that follow the status author.
 func (p *Processor) timelineStatus(ctx context.Context, status *gtsmodel.Status) error {
-	// make sure the author account is pinned onto the status
 	if status.Account == nil {
-		a, err := p.state.DB.GetAccountByID(ctx, status.AccountID)
-		if err != nil {
-			return fmt.Errorf("timelineStatus: error getting author account with id %s: %s", status.AccountID, err)
+		// ensure status fully populated (including account)
+		if err := p.state.DB.PopulateStatus(ctx, status); err != nil {
+			return fmt.Errorf("timelineStatus: error populating status with id %s: %w", status.ID, err)
 		}
-		status.Account = a
 	}
 
 	// get local followers of the account that posted the status
 	follows, err := p.state.DB.GetAccountLocalFollowers(ctx, status.AccountID)
 	if err != nil {
-		return fmt.Errorf("timelineStatus: error getting followers for account id %s: %s", status.AccountID, err)
+		return fmt.Errorf("timelineStatus: error getting followers for account id %s: %w", status.AccountID, err)
 	}
 
 	// If the poster is also local, add a fake entry for them
