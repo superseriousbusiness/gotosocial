@@ -63,7 +63,7 @@ func (p *Processor) GetFile(ctx context.Context, requestingAccount *gtsmodel.Acc
 
 	// make sure the requesting account and the media account don't block each other
 	if requestingAccount != nil {
-		blocked, err := p.state.DB.IsBlocked(ctx, requestingAccount.ID, owningAccountID, true)
+		blocked, err := p.state.DB.IsEitherBlocked(ctx, requestingAccount.ID, owningAccountID)
 		if err != nil {
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("block status could not be established between accounts %s and %s: %s", owningAccountID, requestingAccount.ID, err))
 		}

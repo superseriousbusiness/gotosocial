@@ -31,7 +31,7 @@ import (
 
 // FollowersGet fetches a list of the target account's followers.
 func (p *Processor) FollowersGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) ([]apimodel.Account, gtserror.WithCode) {
-	if blocked, err := p.state.DB.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true); err != nil {
+	if blocked, err := p.state.DB.IsEitherBlocked(ctx, requestingAccount.ID, targetAccountID); err != nil {
 		err = fmt.Errorf("FollowersGet: db error checking block: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	} else if blocked {
@@ -39,7 +39,7 @@ func (p *Processor) FollowersGet(ctx context.Context, requestingAccount *gtsmode
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	follows, err := p.state.DB.GetFollows(ctx, "", targetAccountID)
+	follows, err := p.state.DB.GetAccountFollowers(ctx, targetAccountID)
 	if err != nil {
 		if !errors.Is(err, db.ErrNoEntries) {
 			err = fmt.Errorf("FollowersGet: db error getting followers: %w", err)
@@ -53,7 +53,7 @@ func (p *Processor) FollowersGet(ctx context.Context, requestingAccount *gtsmode
 
 // FollowingGet fetches a list of the accounts that target account is following.
 func (p *Processor) FollowingGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) ([]apimodel.Account, gtserror.WithCode) {
-	if blocked, err := p.state.DB.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true); err != nil {
+	if blocked, err := p.state.DB.IsEitherBlocked(ctx, requestingAccount.ID, targetAccountID); err != nil {
 		err = fmt.Errorf("FollowingGet: db error checking block: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	} else if blocked {
@@ -61,7 +61,7 @@ func (p *Processor) FollowingGet(ctx context.Context, requestingAccount *gtsmode
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	follows, err := p.state.DB.GetFollows(ctx, targetAccountID, "")
+	follows, err := p.state.DB.GetAccountFollows(ctx, targetAccountID)
 	if err != nil {
 		if !errors.Is(err, db.ErrNoEntries) {
 			err = fmt.Errorf("FollowingGet: db error getting followers: %w", err)
@@ -101,7 +101,7 @@ func (p *Processor) accountsFromFollows(ctx context.Context, follows []*gtsmodel
 			continue
 		}
 
-		if blocked, err := p.state.DB.IsBlocked(ctx, requestingAccountID, follow.AccountID, true); err != nil {
+		if blocked, err := p.state.DB.IsEitherBlocked(ctx, requestingAccountID, follow.AccountID); err != nil {
 			err = fmt.Errorf("accountsFromFollows: db error checking block: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
 		} else if blocked {

@@ -177,7 +177,7 @@ func (p *Processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 	*/
 	for _, foundAccount := range foundAccounts {
 		// make sure there's no block in either direction between the account and the requester
-		blocked, err := p.state.DB.IsBlocked(ctx, authed.Account.ID, foundAccount.ID, true)
+		blocked, err := p.state.DB.IsEitherBlocked(ctx, authed.Account.ID, foundAccount.ID)
 		if err != nil {
 			err = fmt.Errorf("SearchGet: error checking block between %s and %s: %s", authed.Account.ID, foundAccount.ID, err)
 			return nil, gtserror.NewErrorInternalError(err)

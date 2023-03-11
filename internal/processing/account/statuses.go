@@ -32,7 +32,7 @@ import (
 // the account given in authed.
 func (p *Processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinned bool, mediaOnly bool, publicOnly bool) (*apimodel.PageableResponse, gtserror.WithCode) {
 	if requestingAccount != nil {
-		if blocked, err := p.state.DB.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true); err != nil {
+		if blocked, err := p.state.DB.IsEitherBlocked(ctx, requestingAccount.ID, targetAccountID); err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		} else if blocked {
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts"))

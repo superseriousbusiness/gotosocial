@@ -184,6 +184,14 @@ type GTSCacheConfiguration struct {
 	EmojiCategoryTTL       time.Duration `name:"emoji-category-ttl"`
 	EmojiCategorySweepFreq time.Duration `name:"emoji-category-sweep-freq"`
 
+	FollowMaxSize   int           `name:"follow-max-size"`
+	FollowTTL       time.Duration `name:"follow-ttl"`
+	FollowSweepFreq time.Duration `name:"follow-sweep-freq"`
+
+	FollowRequestMaxSize   int           `name:"follow-request-max-size"`
+	FollowRequestTTL       time.Duration `name:"follow-request-ttl"`
+	FollowRequestSweepFreq time.Duration `name:"follow-request-sweep-freq"`
+
 	MediaMaxSize   int           `name:"media-max-size"`
 	MediaTTL       time.Duration `name:"media-ttl"`
 	MediaSweepFreq time.Duration `name:"media-sweep-freq"`

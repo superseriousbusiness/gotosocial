@@ -122,7 +122,7 @@ func (p *Processor) FavedBy(ctx context.Context, requestingAccount *gtsmodel.Acc
 	// and which don't block them.
 	apiAccounts := make([]*apimodel.Account, 0, len(statusFaves))
 	for _, fave := range statusFaves {
-		if blocked, err := p.state.DB.IsBlocked(ctx, requestingAccount.ID, fave.AccountID, true); err != nil {
+		if blocked, err := p.state.DB.IsEitherBlocked(ctx, requestingAccount.ID, fave.AccountID); err != nil {
 			err = fmt.Errorf("FavedBy: error checking blocks: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
 		} else if blocked {

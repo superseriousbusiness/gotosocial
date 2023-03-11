@@ -59,7 +59,7 @@ func (c *converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 	// then adding the Source object to it...
 
 	// check pending follow requests aimed at this account
-	frc, err := c.db.CountFollowRequests(ctx, "", a.ID)
+	frc, err := c.db.CountAccountFollowRequests(ctx, a.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error counting follow requests: %s", err)
 	}
@@ -84,13 +84,13 @@ func (c *converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 
 func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
 	// count followers
-	followersCount, err := c.db.CountFollows(ctx, "", a.ID)
+	followersCount, err := c.db.CountAccountFollowers(ctx, a.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error counting followers: %s", err)
 	}
 
 	// count following
-	followingCount, err := c.db.CountFollows(ctx, a.ID, "")
+	followingCount, err := c.db.CountAccountFollows(ctx, a.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error counting following: %s", err)
 	}

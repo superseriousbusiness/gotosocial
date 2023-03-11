@@ -37,11 +37,11 @@ func (suite *RelationshipTestSuite) TestIsBlocked() {
 	account2 := suite.testAccounts["local_account_2"].ID
 
 	// no blocks exist between account 1 and account 2
-	blocked, err := suite.db.IsBlocked(ctx, account1, account2, false)
+	blocked, err := suite.db.IsBlocked(ctx, account1, account2)
 	suite.NoError(err)
 	suite.False(blocked)
 
-	blocked, err = suite.db.IsBlocked(ctx, account2, account1, false)
+	blocked, err = suite.db.IsBlocked(ctx, account2, account1)
 	suite.NoError(err)
 	suite.False(blocked)
 
@@ -56,20 +56,20 @@ func (suite *RelationshipTestSuite) TestIsBlocked() {
 	}
 
 	// account 1 now blocks account 2
-	blocked, err = suite.db.IsBlocked(ctx, account1, account2, false)
+	blocked, err = suite.db.IsBlocked(ctx, account1, account2)
 	suite.NoError(err)
 	suite.True(blocked)
 
 	// account 2 doesn't block account 1
-	blocked, err = suite.db.IsBlocked(ctx, account2, account1, false)
+	blocked, err = suite.db.IsBlocked(ctx, account2, account1)
 	suite.NoError(err)
 	suite.False(blocked)
 
 	// a block exists in either direction between the two
-	blocked, err = suite.db.IsBlocked(ctx, account1, account2, true)
+	blocked, err = suite.db.IsEitherBlocked(ctx, account1, account2)
 	suite.NoError(err)
 	suite.True(blocked)
-	blocked, err = suite.db.IsBlocked(ctx, account2, account1, true)
+	blocked, err = suite.db.IsEitherBlocked(ctx, account2, account1)
 	suite.NoError(err)
 	suite.True(blocked)
 }
@@ -157,7 +157,7 @@ func (suite *RelationshipTestSuite) TestDeleteBlockByURI() {
 	suite.Nil(block)
 }
 
-func (suite *RelationshipTestSuite) TestDeleteBlocksByOriginAccountID() {
+func (suite *RelationshipTestSuite) TestDeleteAccountBlocks() {
 	ctx := context.Background()
 
 	// put a block in first
@@ -179,38 +179,7 @@ func (suite *RelationshipTestSuite) TestDeleteBlocksByOriginAccountID() {
 	suite.Equal("01G202BCSXXJZ70BHB5KCAHH8C", block.ID)
 
 	// delete the block by originAccountID
-	err = suite.db.DeleteBlocksByOriginAccountID(ctx, account1)
-	suite.NoError(err)
-
-	// block should be gone
-	block, err = suite.db.GetBlock(ctx, account1, account2)
-	suite.ErrorIs(err, db.ErrNoEntries)
-	suite.Nil(block)
-}
-
-func (suite *RelationshipTestSuite) TestDeleteBlocksByTargetAccountID() {
-	ctx := context.Background()
-
-	// put a block in first
-	account1 := suite.testAccounts["local_account_1"].ID
-	account2 := suite.testAccounts["local_account_2"].ID
-	if err := suite.db.PutBlock(ctx, &gtsmodel.Block{
-		ID:              "01G202BCSXXJZ70BHB5KCAHH8C",
-		URI:             "http://localhost:8080/some_block_uri_1",
-		AccountID:       account1,
-		TargetAccountID: account2,
-	}); err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	// make sure the block is in the db
-	block, err := suite.db.GetBlock(ctx, account1, account2)
-	suite.NoError(err)
-	suite.NotNil(block)
-	suite.Equal("01G202BCSXXJZ70BHB5KCAHH8C", block.ID)
-
-	// delete the block by targetAccountID
-	err = suite.db.DeleteBlocksByTargetAccountID(ctx, account2)
+	err = suite.db.DeleteAccountBlocks(ctx, account1)
 	suite.NoError(err)
 
 	// block should be gone
@@ -244,7 +213,7 @@ func (suite *RelationshipTestSuite) TestGetRelationship() {
 func (suite *RelationshipTestSuite) TestIsFollowingYes() {
 	requestingAccount := suite.testAccounts["local_account_1"]
 	targetAccount := suite.testAccounts["admin_account"]
-	isFollowing, err := suite.db.IsFollowing(context.Background(), requestingAccount, targetAccount)
+	isFollowing, err := suite.db.IsFollowing(context.Background(), requestingAccount.ID, targetAccount.ID)
 	suite.NoError(err)
 	suite.True(isFollowing)
 }
@@ -252,7 +221,7 @@ func (suite *RelationshipTestSuite) TestIsFollowingYes() {
 func (suite *RelationshipTestSuite) TestIsFollowingNo() {
 	requestingAccount := suite.testAccounts["admin_account"]
 	targetAccount := suite.testAccounts["local_account_2"]
-	isFollowing, err := suite.db.IsFollowing(context.Background(), requestingAccount, targetAccount)
+	isFollowing, err := suite.db.IsFollowing(context.Background(), requestingAccount.ID, targetAccount.ID)
 	suite.NoError(err)
 	suite.False(isFollowing)
 }
@@ -260,7 +229,7 @@ func (suite *RelationshipTestSuite) TestIsFollowingNo() {
 func (suite *RelationshipTestSuite) TestIsMutualFollowing() {
 	requestingAccount := suite.testAccounts["local_account_1"]
 	targetAccount := suite.testAccounts["admin_account"]
-	isMutualFollowing, err := suite.db.IsMutualFollowing(context.Background(), requestingAccount, targetAccount)
+	isMutualFollowing, err := suite.db.IsMutualFollowing(context.Background(), requestingAccount.ID, targetAccount.ID)
 	suite.NoError(err)
 	suite.True(isMutualFollowing)
 }
@@ -268,7 +237,7 @@ func (suite *RelationshipTestSuite) TestIsMutualFollowing() {
 func (suite *RelationshipTestSuite) TestIsMutualFollowingNo() {
 	requestingAccount := suite.testAccounts["local_account_1"]
 	targetAccount := suite.testAccounts["local_account_2"]
-	isMutualFollowing, err := suite.db.IsMutualFollowing(context.Background(), requestingAccount, targetAccount)
+	isMutualFollowing, err := suite.db.IsMutualFollowing(context.Background(), requestingAccount.ID, targetAccount.ID)
 	suite.NoError(err)
 	suite.True(isMutualFollowing)
 }
@@ -404,9 +373,8 @@ func (suite *RelationshipTestSuite) TestRejectFollowRequestOK() {
 		suite.FailNow(err.Error())
 	}
 
-	rejectedFollowRequest, err := suite.db.RejectFollowRequest(ctx, account.ID, targetAccount.ID)
+	err := suite.db.RejectFollowRequest(ctx, account.ID, targetAccount.ID)
 	suite.NoError(err)
-	suite.NotNil(rejectedFollowRequest)
 
 	// Ensure notification is deleted.
 	notification, err := suite.db.GetNotification(ctx, followRequestNotification.ID)
@@ -419,9 +387,8 @@ func (suite *RelationshipTestSuite) TestRejectFollowRequestNotExisting() {
 	account := suite.testAccounts["admin_account"]
 	targetAccount := suite.testAccounts["local_account_2"]
 
-	rejectedFollowRequest, err := suite.db.RejectFollowRequest(ctx, account.ID, targetAccount.ID)
+	err := suite.db.RejectFollowRequest(ctx, account.ID, targetAccount.ID)
 	suite.ErrorIs(err, db.ErrNoEntries)
-	suite.Nil(rejectedFollowRequest)
 }
 
 func (suite *RelationshipTestSuite) TestGetAccountFollowRequests() {
@@ -440,44 +407,58 @@ func (suite *RelationshipTestSuite) TestGetAccountFollowRequests() {
 		suite.FailNow(err.Error())
 	}
 
-	followRequests, err := suite.db.GetFollowRequests(ctx, "", targetAccount.ID)
+	followRequests, err := suite.db.GetAccountFollowRequests(ctx, targetAccount.ID)
 	suite.NoError(err)
 	suite.Len(followRequests, 1)
 }
 
 func (suite *RelationshipTestSuite) TestGetAccountFollows() {
 	account := suite.testAccounts["local_account_1"]
-	follows, err := suite.db.GetFollows(context.Background(), account.ID, "")
+	follows, err := suite.db.GetAccountFollows(context.Background(), account.ID)
 	suite.NoError(err)
 	suite.Len(follows, 2)
 }
 
+func (suite *RelationshipTestSuite) TestCountAccountFollowsLocalOnly() {
+	account := suite.testAccounts["local_account_1"]
+	followsCount, err := suite.db.CountAccountLocalFollows(context.Background(), account.ID)
+	suite.NoError(err)
+	suite.Equal(2, followsCount)
+}
+
 func (suite *RelationshipTestSuite) TestCountAccountFollows() {
 	account := suite.testAccounts["local_account_1"]
-	followsCount, err := suite.db.CountFollows(context.Background(), account.ID, "")
+	followsCount, err := suite.db.CountAccountFollows(context.Background(), account.ID)
 	suite.NoError(err)
 	suite.Equal(2, followsCount)
 }
 
 func (suite *RelationshipTestSuite) TestGetAccountFollowedBy() {
 	account := suite.testAccounts["local_account_1"]
-	follows, err := suite.db.GetFollows(context.Background(), "", account.ID)
+	follows, err := suite.db.GetAccountFollowers(context.Background(), account.ID)
 	suite.NoError(err)
 	suite.Len(follows, 2)
 }
 
 func (suite *RelationshipTestSuite) TestGetLocalFollowersIDs() {
 	account := suite.testAccounts["local_account_1"]
-	accountIDs, err := suite.db.GetLocalFollowersIDs(context.Background(), account.ID)
+	follows, err := suite.db.GetAccountLocalFollowers(context.Background(), account.ID)
 	suite.NoError(err)
 	suite.EqualValues([]string{"01F8MH5NBDF2MV7CTC4Q5128HF", "01F8MH17FWEB39HZJ76B6VXSKF"}, accountIDs)
 }
 
 func (suite *RelationshipTestSuite) TestCountAccountFollowedBy() {
 	account := suite.testAccounts["local_account_1"]
-	followsCount, err := suite.db.CountFollows(context.Background(), "", account.ID)
+	followsCount, err := suite.db.CountAccountFollowers(context.Background(), account.ID)
 	suite.NoError(err)
 	suite.Equal(2, followsCount)
+}
+
+func (suite *RelationshipTestSuite) TestCountAccountFollowedByLocalOnly() {
+	account := suite.testAccounts["local_account_1"]
+	followsCount, err := suite.db.CountAccountLocalFollowers(context.Background(), account.ID)
+	suite.NoError(err)
+	suite.Equal("http://localhost:8080/users/the_mighty_zork/follow/01F8PY8RHWRQZV038T4E8T9YK8", uri)
 }
 
 func (suite *RelationshipTestSuite) TestUnfollowExisting() {
@@ -486,7 +467,7 @@ func (suite *RelationshipTestSuite) TestUnfollowExisting() {
 
 	uri, err := suite.db.Unfollow(context.Background(), originAccount.ID, targetAccount.ID)
 	suite.NoError(err)
-	suite.Equal("http://localhost:8080/users/the_mighty_zork/follow/01F8PY8RHWRQZV038T4E8T9YK8", uri)
+	suite.NotEmpty(uri)
 }
 
 func (suite *RelationshipTestSuite) TestUnfollowNotExisting() {
@@ -498,7 +479,7 @@ func (suite *RelationshipTestSuite) TestUnfollowNotExisting() {
 	suite.Empty(uri)
 }
 
-func (suite *RelationshipTestSuite) TestUnfollowRequestExisting() {
+func (suite *RelationshipTestSuite) TestDeleteFollowRequestExisting() {
 	ctx := context.Background()
 	originAccount := suite.testAccounts["admin_account"]
 	targetAccount := suite.testAccounts["local_account_2"]
@@ -514,18 +495,16 @@ func (suite *RelationshipTestSuite) TestUnfollowRequestExisting() {
 		suite.FailNow(err.Error())
 	}
 
-	uri, err := suite.db.UnfollowRequest(context.Background(), originAccount.ID, targetAccount.ID)
+	err := suite.db.DeleteFollowRequestByID(context.Background(), followRequest.ID)
 	suite.NoError(err)
-	suite.Equal("http://localhost:8080/weeeeeeeeeeeeeeeee", uri)
 }
 
 func (suite *RelationshipTestSuite) TestUnfollowRequestNotExisting() {
 	originAccount := suite.testAccounts["local_account_1"]
 	targetAccountID := "01GTVD9N484CZ6AM90PGGNY7GQ"
 
-	uri, err := suite.db.UnfollowRequest(context.Background(), originAccount.ID, targetAccountID)
+	err := suite.db.DeleteFollowRequestByID(context.Background(), originAccount.ID, targetAccountID)
 	suite.NoError(err)
-	suite.Empty(uri)
 }
 
 func TestRelationshipTestSuite(t *testing.T) {

@@ -25,42 +25,68 @@ import (
 
 // Relationship contains functions for getting or modifying the relationship between two accounts.
 type Relationship interface {
-	// IsBlocked checks whether account 1 has a block in place against account2.
-	// If eitherDirection is true, then the function returns true if account1 blocks account2, OR if account2 blocks account1.
-	IsBlocked(ctx context.Context, account1 string, account2 string, eitherDirection bool) (bool, Error)
+	// IsBlocked checks whether source account has a block in place against target.
+	IsBlocked(ctx context.Context, sourceAccountID string, targetAccountID string) (bool, Error)
+
+	// IsEitherBlocked checks whether there is a block in place between either of account1 and account2.
+	IsEitherBlocked(ctx context.Context, accountID1 string, accountID2 string) (bool, error)
+
+	// GetBlockByID fetches block with given ID from the database.
+	GetBlockByID(ctx context.Context, id string) (*gtsmodel.Block, error)
+
+	// GetBlockByURI fetches block with given AP URI from the database.
+	GetBlockByURI(ctx context.Context, uri string) (*gtsmodel.Block, error)
 
 	// GetBlock returns the block from account1 targeting account2, if it exists, or an error if it doesn't.
-	//
-	// Because this is slower than Blocked, only use it if you need the actual Block struct for some reason,
-	// not if you're just checking for the existence of a block.
-	GetBlock(ctx context.Context, account1 string, account2 string) (*gtsmodel.Block, Error)
+	GetBlock(ctx context.Context, account1 string, account2 string) (*gtsmodel.Block, error)
 
 	// PutBlock attempts to place the given account block in the database.
-	PutBlock(ctx context.Context, block *gtsmodel.Block) Error
+	PutBlock(ctx context.Context, block *gtsmodel.Block) error
 
 	// DeleteBlockByID removes block with given ID from the database.
-	DeleteBlockByID(ctx context.Context, id string) Error
+	DeleteBlockByID(ctx context.Context, id string) error
 
 	// DeleteBlockByURI removes block with given AP URI from the database.
-	DeleteBlockByURI(ctx context.Context, uri string) Error
+	DeleteBlockByURI(ctx context.Context, uri string) error
 
-	// DeleteBlocksByOriginAccountID removes any blocks with accountID equal to originAccountID.
-	DeleteBlocksByOriginAccountID(ctx context.Context, originAccountID string) Error
-
-	// DeleteBlocksByTargetAccountID removes any blocks with given targetAccountID.
-	DeleteBlocksByTargetAccountID(ctx context.Context, targetAccountID string) Error
+	// DeleteAccountBlocks will delete all database blocks to / from the given account ID.
+	DeleteAccountBlocks(ctx context.Context, accountID string) error
 
 	// GetRelationship retrieves the relationship of the targetAccount to the requestingAccount.
 	GetRelationship(ctx context.Context, requestingAccount string, targetAccount string) (*gtsmodel.Relationship, Error)
 
-	// IsFollowing returns true if sourceAccount follows target account, or an error if something goes wrong while finding out.
-	IsFollowing(ctx context.Context, sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, Error)
+	// GetFollowByID fetches follow with given ID from the database.
+	GetFollowByID(ctx context.Context, id string) (*gtsmodel.Follow, error)
 
-	// IsFollowRequested returns true if sourceAccount has requested to follow target account, or an error if something goes wrong while finding out.
-	IsFollowRequested(ctx context.Context, sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, Error)
+	// GetFollowByURI fetches follow with given AP URI from the database.
+	GetFollowByURI(ctx context.Context, uri string) (*gtsmodel.Follow, error)
+
+	// GetFollow retrieves a follow if it exists between source and target accounts.
+	GetFollow(ctx context.Context, sourceAccountID string, targetAccountID string) (*gtsmodel.Follow, error)
+
+	// GetFollowRequestByID fetches follow request with given ID from the database.
+	GetFollowRequestByID(ctx context.Context, id string) (*gtsmodel.FollowRequest, error)
+
+	// GetFollowRequestByURI fetches follow request with given AP URI from the database.
+	GetFollowRequestByURI(ctx context.Context, uri string) (*gtsmodel.FollowRequest, error)
+
+	// GetFollowRequest retrieves a follow request if it exists between source and target accounts.
+	GetFollowRequest(ctx context.Context, sourceAccountID string, targetAccountID string) (*gtsmodel.FollowRequest, error)
+
+	// IsFollowing returns true if sourceAccount follows target account, or an error if something goes wrong while finding out.
+	IsFollowing(ctx context.Context, sourceAccountID string, targetAccountID string) (bool, Error)
 
 	// IsMutualFollowing returns true if account1 and account2 both follow each other, or an error if something goes wrong while finding out.
-	IsMutualFollowing(ctx context.Context, account1 *gtsmodel.Account, account2 *gtsmodel.Account) (bool, Error)
+	IsMutualFollowing(ctx context.Context, sourceAccountID string, targetAccountID string) (bool, Error)
+
+	// IsFollowRequested returns true if sourceAccount has requested to follow target account, or an error if something goes wrong while finding out.
+	IsFollowRequested(ctx context.Context, sourceAccountID string, targetAccountID string) (bool, Error)
+
+	// PutFollow attempts to place the given account follow in the database.
+	PutFollow(ctx context.Context, follow *gtsmodel.Follow) error
+
+	// PutFollowRequest attempts to place the given account follow request in the database.
+	PutFollowRequest(ctx context.Context, follow *gtsmodel.FollowRequest) error
 
 	// DeleteFollowByID deletes a follow from the database with the given ID.
 	DeleteFollowByID(ctx context.Context, id string) error
@@ -78,7 +104,7 @@ type Relationship interface {
 	DeleteAccountFollows(ctx context.Context, accountID string) error
 
 	// DeleteAccountFollowRequests will delete all database follow requests to / from the given account ID.
-	DeleteAccountFollowRequests(ctx context.Context, id string) error
+	DeleteAccountFollowRequests(ctx context.Context, accountID string) error
 
 	// AcceptFollowRequest moves a follow request in the database from the follow_requests table to the follows table.
 	// In other words, it should create the follow, and delete the existing follow request.
@@ -87,65 +113,99 @@ type Relationship interface {
 	AcceptFollowRequest(ctx context.Context, originAccountID string, targetAccountID string) (*gtsmodel.Follow, Error)
 
 	// RejectFollowRequest fetches a follow request from the database, and then deletes it.
-	//
-	// The deleted follow request will be returned so that further processing can be done on it.
-	RejectFollowRequest(ctx context.Context, originAccountID string, targetAccountID string) (*gtsmodel.FollowRequest, Error)
+	RejectFollowRequest(ctx context.Context, originAccountID string, targetAccountID string) Error
 
-	// GetFollows returns a slice of follows owned by the given accountID, and/or
-	// targeting the given account id.
-	//
-	// If accountID is set and targetAccountID isn't, then all follows created by
-	// accountID will be returned.
-	//
-	// If targetAccountID is set and accountID isn't, then all follows targeting
-	// targetAccountID will be returned.
-	//
-	// If both accountID and targetAccountID are set, then only 0 or 1 follows will
-	// be in the returned slice.
-	GetFollows(ctx context.Context, accountID string, targetAccountID string) ([]*gtsmodel.Follow, Error)
+	// // GetFollows returns a slice of follows owned by the given accountID, and/or
+	// // targeting the given account id.
+	// //
+	// // If accountID is set and targetAccountID isn't, then all follows created by
+	// // accountID will be returned.
+	// //
+	// // If targetAccountID is set and accountID isn't, then all follows targeting
+	// // targetAccountID will be returned.
+	// //
+	// // If both accountID and targetAccountID are set, then only 0 or 1 follows will
+	// // be in the returned slice.
+	// GetFollows(ctx context.Context, accountID string, targetAccountID string) ([]*gtsmodel.Follow, Error)
 
-	// GetLocalFollowersIDs returns a list of local account IDs which follow the
-	// targetAccountID. The returned IDs are not guaranteed to be ordered in any
-	// particular way, so take care.
-	GetLocalFollowersIDs(ctx context.Context, targetAccountID string) ([]string, Error)
+	// // GetLocalFollowersIDs returns a list of local account IDs which follow the
+	// // targetAccountID. The returned IDs are not guaranteed to be ordered in any
+	// // particular way, so take care.
+	// GetLocalFollowersIDs(ctx context.Context, targetAccountID string) ([]string, Error)
 
-	// CountFollows is like GetFollows, but just counts rather than returning.
-	CountFollows(ctx context.Context, accountID string, targetAccountID string) (int, Error)
+	// // CountFollows is like GetFollows, but just counts rather than returning.
+	// CountFollows(ctx context.Context, accountID string, targetAccountID string) (int, Error)
 
-	// GetFollowRequests returns a slice of follows requests owned by the given
-	// accountID, and/or targeting the given account id.
-	//
-	// If accountID is set and targetAccountID isn't, then all requests created by
-	// accountID will be returned.
-	//
-	// If targetAccountID is set and accountID isn't, then all requests targeting
-	// targetAccountID will be returned.
-	//
-	// If both accountID and targetAccountID are set, then only 0 or 1 requests will
-	// be in the returned slice.
-	GetFollowRequests(ctx context.Context, accountID string, targetAccountID string) ([]*gtsmodel.FollowRequest, Error)
+	// // GetFollowRequests returns a slice of follows requests owned by the given
+	// // accountID, and/or targeting the given account id.
+	// //
+	// // If accountID is set and targetAccountID isn't, then all requests created by
+	// // accountID will be returned.
+	// //
+	// // If targetAccountID is set and accountID isn't, then all requests targeting
+	// // targetAccountID will be returned.
+	// //
+	// // If both accountID and targetAccountID are set, then only 0 or 1 requests will
+	// // be in the returned slice.
+	// GetFollowRequests(ctx context.Context, accountID string, targetAccountID string) ([]*gtsmodel.FollowRequest, Error)
 
-	// CountFollowRequests is like GetFollowRequests, but just counts rather than returning.
-	CountFollowRequests(ctx context.Context, accountID string, targetAccountID string) (int, Error)
+	// // CountFollowRequests is like GetFollowRequests, but just counts rather than returning.
+	// CountFollowRequests(ctx context.Context, accountID string, targetAccountID string) (int, Error)
 
-	// Unfollow removes a follow targeting targetAccountID and originating
-	// from originAccountID.
-	//
-	// If a follow was removed this way, the AP URI of the follow will be
-	// returned to the caller, so that further processing can take place
-	// if necessary.
-	//
-	// If no follow was removed this way, the returned string will be empty.
-	Unfollow(ctx context.Context, originAccountID string, targetAccountID string) (string, Error)
+	// // Unfollow removes a follow targeting targetAccountID and originating
+	// // from originAccountID.
+	// //
+	// // If a follow was removed this way, the AP URI of the follow will be
+	// // returned to the caller, so that further processing can take place
+	// // if necessary.
+	// //
+	// // If no follow was removed this way, the returned string will be empty.
+	// Unfollow(ctx context.Context, originAccountID string, targetAccountID string) (string, Error)
 
-	// UnfollowRequest removes a follow request targeting targetAccountID
-	// and originating from originAccountID.
-	//
-	// If a follow request was removed this way, the AP URI of the follow
-	// request will be returned to the caller, so that further processing
-	// can take place if necessary.
-	//
-	// If no follow request was removed this way, the returned string will
-	// be empty.
-	UnfollowRequest(ctx context.Context, originAccountID string, targetAccountID string) (string, Error)
+	// // UnfollowRequest removes a follow request targeting targetAccountID
+	// // and originating from originAccountID.
+	// //
+	// // If a follow request was removed this way, the AP URI of the follow
+	// // request will be returned to the caller, so that further processing
+	// // can take place if necessary.
+	// //
+	// // If no follow request was removed this way, the returned string will
+	// // be empty.
+	// UnfollowRequest(ctx context.Context, originAccountID string, targetAccountID string) (string, Error)
+
+	// GetAccountFollows returns a slice of follows owned by the given accountID.
+	GetAccountFollows(ctx context.Context, accountID string) ([]*gtsmodel.Follow, error)
+
+	// GetAccountLocalFollows returns a slice of follows owned by the given accountID, only including follows from this instance.
+	GetAccountLocalFollows(ctx context.Context, accountID string) ([]*gtsmodel.Follow, error)
+
+	// CountAccountFollows returns the amount of accounts that the given accountID is following.
+	CountAccountFollows(ctx context.Context, accountID string) (int, error)
+
+	// CountAccountLocalFollows returns the amount of accounts that the given accountID is following, only including follows from this instance.
+	CountAccountLocalFollows(ctx context.Context, accountID string) (int, error)
+
+	// GetAccountFollowers fetches follows that target given accountID.
+	GetAccountFollowers(ctx context.Context, accountID string) ([]*gtsmodel.Follow, error)
+
+	// GetAccountLocalFollowers fetches follows that target given accountID, only including follows from this instance.
+	GetAccountLocalFollowers(ctx context.Context, accountID string) ([]*gtsmodel.Follow, error)
+
+	// CountAccountFollowers returns the amounts that the given ID is followed by.
+	CountAccountFollowers(ctx context.Context, accountID string) (int, error)
+
+	// CountAccountLocalFollowers returns the amounts that the given ID is followed by, only including follows from this instance.
+	CountAccountLocalFollowers(ctx context.Context, accountID string) (int, error)
+
+	// GetAccountFollowRequests returns all follow requests targeting the given account.
+	GetAccountFollowRequests(ctx context.Context, accountID string) ([]*gtsmodel.FollowRequest, error)
+
+	// GetAccountFollowRequesting returns all follow requests originating from the given account.
+	GetAccountFollowRequesting(ctx context.Context, accountID string) ([]*gtsmodel.FollowRequest, error)
+
+	// CountAccountFollowRequests returns number of follow requests targeting the given account.
+	CountAccountFollowRequests(ctx context.Context, accountID string) (int, error)
+
+	// CountAccountFollowerRequests returns number of follow requests originating from the given account.
+	CountAccountFollowRequesting(ctx context.Context, accountID string) (int, error)
 }

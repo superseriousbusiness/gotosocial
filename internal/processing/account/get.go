@@ -73,7 +73,7 @@ func (p *Processor) getFor(ctx context.Context, requestingAccount *gtsmodel.Acco
 	var blocked bool
 	var err error
 	if requestingAccount != nil {
-		blocked, err = p.state.DB.IsBlocked(ctx, requestingAccount.ID, targetAccount.ID, true)
+		blocked, err = p.state.DB.IsEitherBlocked(ctx, requestingAccount.ID, targetAccount.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking account block: %s", err))
 		}

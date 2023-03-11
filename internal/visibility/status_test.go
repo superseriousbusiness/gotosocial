@@ -126,7 +126,7 @@ func (suite *StatusVisibleTestSuite) TestStatusNotVisibleIfNotMutualsCached() {
 	suite.NoError(err)
 	suite.True(visible)
 
-	err = suite.db.DeleteByID(ctx, suite.testFollows["local_account_2_local_account_1"].ID, &gtsmodel.Follow{})
+	err = suite.db.DeleteFollowByID(ctx, suite.testFollows["local_account_2_local_account_1"].ID)
 	suite.NoError(err)
 
 	// Perform a status visibility check after unfollow, this should be false.
@@ -147,7 +147,7 @@ func (suite *StatusVisibleTestSuite) TestStatusNotVisibleIfNotFollowingCached() 
 	suite.NoError(err)
 	suite.True(visible)
 
-	err = suite.db.DeleteByID(ctx, suite.testFollows["admin_account_local_account_1"].ID, &gtsmodel.Follow{})
+	err = suite.db.DeleteFollowByID(ctx, suite.testFollows["admin_account_local_account_1"].ID)
 	suite.NoError(err)
 
 	// Perform a status visibility check after unfollow, this should be false.

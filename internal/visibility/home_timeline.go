@@ -150,8 +150,8 @@ func (f *Filter) isStatusHomeTimelineable(ctx context.Context, owner *gtsmodel.A
 
 	// Ensure owner follows author of public/unlocked status.
 	follow, err := f.state.DB.IsFollowing(ctx,
-		owner,
-		status.Account,
+		owner.ID,
+		status.AccountID,
 	)
 	if err != nil {
 		return false, fmt.Errorf("isStatusHomeTimelineable: error checking follow %s->%s: %w", owner.ID, status.AccountID, err)

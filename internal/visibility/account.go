@@ -91,10 +91,9 @@ func (f *Filter) isAccountVisibleTo(ctx context.Context, requester *gtsmodel.Acc
 	}
 
 	// Check whether either blocks the other.
-	blocked, err := f.state.DB.IsBlocked(ctx,
+	blocked, err := f.state.DB.IsEitherBlocked(ctx,
 		requester.ID,
 		account.ID,
-		true,
 	)
 	if err != nil {
 		return false, fmt.Errorf("isAccountVisibleTo: error checking account blocks: %w", err)

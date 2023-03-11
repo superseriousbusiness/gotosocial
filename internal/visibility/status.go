@@ -95,11 +95,6 @@ func (f *Filter) isStatusVisible(ctx context.Context, requester *gtsmodel.Accoun
 		return false, nil
 	}
 
-	if requester.ID == status.AccountID {
-		// Author can always see their own status.
-		return true, nil
-	}
-
 	if status.Visibility == gtsmodel.VisibilityPublic {
 		// This status will be visible to all.
 		return true, nil
@@ -113,6 +108,11 @@ func (f *Filter) isStatusVisible(ctx context.Context, requester *gtsmodel.Accoun
 
 	if status.Visibility == gtsmodel.VisibilityUnlocked {
 		// This status is visible to all auth'd accounts.
+		return true, nil
+	}
+
+	if requester.ID == status.AccountID {
+		// Author can always see their own status.
 		return true, nil
 	}
 
@@ -140,8 +140,8 @@ func (f *Filter) isStatusVisible(ctx context.Context, requester *gtsmodel.Accoun
 	case gtsmodel.VisibilityFollowersOnly:
 		// Check requester follows status author.
 		follows, err := f.state.DB.IsFollowing(ctx,
-			requester,
-			status.Account,
+			requester.ID,
+			status.AccountID,
 		)
 		if err != nil {
 			return false, fmt.Errorf("isStatusVisible: error checking follow %s->%s: %w", requester.ID, status.AccountID, err)
@@ -157,8 +157,8 @@ func (f *Filter) isStatusVisible(ctx context.Context, requester *gtsmodel.Accoun
 	case gtsmodel.VisibilityMutualsOnly:
 		// Check mutual following between requester and author.
 		mutuals, err := f.state.DB.IsMutualFollowing(ctx,
-			requester,
-			status.Account,
+			requester.ID,
+			status.AccountID,
 		)
 		if err != nil {
 			return false, fmt.Errorf("isStatusVisible: error checking mutual follow %s<->%s: %w", requester.ID, status.AccountID, err)

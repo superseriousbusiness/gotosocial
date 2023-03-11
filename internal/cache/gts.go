@@ -33,6 +33,8 @@ type GTSCaches struct {
 	domainBlock   *domain.BlockCache
 	emoji         *result.Cache[*gtsmodel.Emoji]
 	emojiCategory *result.Cache[*gtsmodel.EmojiCategory]
+	follow        *result.Cache[*gtsmodel.Follow]
+	followRequest *result.Cache[*gtsmodel.FollowRequest]
 	media         *result.Cache[*gtsmodel.MediaAttachment]
 	mention       *result.Cache[*gtsmodel.Mention]
 	notification  *result.Cache[*gtsmodel.Notification]
@@ -40,7 +42,8 @@ type GTSCaches struct {
 	status        *result.Cache[*gtsmodel.Status]
 	tombstone     *result.Cache[*gtsmodel.Tombstone]
 	user          *result.Cache[*gtsmodel.User]
-	webfinger     *ttl.Cache[string, string]
+	// TODO: move out of GTS caches since not using database models.
+	webfinger *ttl.Cache[string, string]
 }
 
 // Init will initialize all the gtsmodel caches in this collection.
@@ -51,6 +54,8 @@ func (c *GTSCaches) Init() {
 	c.initDomainBlock()
 	c.initEmoji()
 	c.initEmojiCategory()
+	c.initFollow()
+	c.initFollowRequest()
 	c.initMedia()
 	c.initMention()
 	c.initNotification()
@@ -73,6 +78,8 @@ func (c *GTSCaches) Start() {
 	})
 	tryStart(c.emoji, config.GetCacheGTSEmojiSweepFreq())
 	tryStart(c.emojiCategory, config.GetCacheGTSEmojiCategorySweepFreq())
+	tryStart(c.follow, config.GetCacheGTSFollowSweepFreq())
+	tryStart(c.followRequest, config.GetCacheGTSFollowRequestSweepFreq())
 	tryStart(c.media, config.GetCacheGTSMediaSweepFreq())
 	tryStart(c.mention, config.GetCacheGTSMentionSweepFreq())
 	tryStart(c.notification, config.GetCacheGTSNotificationSweepFreq())
@@ -92,6 +99,8 @@ func (c *GTSCaches) Stop() {
 	tryUntil("stopping domain block cache", 5, c.domainBlock.Stop)
 	tryStop(c.emoji, config.GetCacheGTSEmojiSweepFreq())
 	tryStop(c.emojiCategory, config.GetCacheGTSEmojiCategorySweepFreq())
+	tryStop(c.follow, config.GetCacheGTSFollowSweepFreq())
+	tryStop(c.followRequest, config.GetCacheGTSFollowRequestSweepFreq())
 	tryStop(c.media, config.GetCacheGTSMediaSweepFreq())
 	tryStop(c.mention, config.GetCacheGTSNotificationSweepFreq())
 	tryStop(c.notification, config.GetCacheGTSNotificationSweepFreq())
@@ -125,6 +134,16 @@ func (c *GTSCaches) Emoji() *result.Cache[*gtsmodel.Emoji] {
 // EmojiCategory provides access to the gtsmodel EmojiCategory database cache.
 func (c *GTSCaches) EmojiCategory() *result.Cache[*gtsmodel.EmojiCategory] {
 	return c.emojiCategory
+}
+
+// Follow provides access to the gtsmodel Follow database cache.
+func (c *GTSCaches) Follow() *result.Cache[*gtsmodel.Follow] {
+	return c.follow
+}
+
+// FollowRequest provides access to the gtsmodel FollowRequest database cache.
+func (c *GTSCaches) FollowRequest() *result.Cache[*gtsmodel.FollowRequest] {
+	return c.followRequest
 }
 
 // Media provides access to the gtsmodel Media database cache.
@@ -162,6 +181,7 @@ func (c *GTSCaches) User() *result.Cache[*gtsmodel.User] {
 	return c.user
 }
 
+// Webfinger provides access to the webfinger URL cache.
 func (c *GTSCaches) Webfinger() *ttl.Cache[string, string] {
 	return c.webfinger
 }
@@ -185,8 +205,8 @@ func (c *GTSCaches) initAccount() {
 func (c *GTSCaches) initBlock() {
 	c.block = result.New([]result.Lookup{
 		{Name: "ID"},
-		{Name: "AccountID.TargetAccountID"},
 		{Name: "URI"},
+		{Name: "AccountID.TargetAccountID"},
 	}, func(b1 *gtsmodel.Block) *gtsmodel.Block {
 		b2 := new(gtsmodel.Block)
 		*b2 = *b1
@@ -229,6 +249,32 @@ func (c *GTSCaches) initEmojiCategory() {
 	}, config.GetCacheGTSEmojiCategoryMaxSize())
 	c.emojiCategory.SetTTL(config.GetCacheGTSEmojiCategoryTTL(), true)
 	c.emojiCategory.IgnoreErrors(ignoreErrors)
+}
+
+func (c *GTSCaches) initFollow() {
+	c.follow = result.New([]result.Lookup{
+		{Name: "ID"},
+		{Name: "URI"},
+		{Name: "AccountID.TargetAccountID"},
+	}, func(f1 *gtsmodel.Follow) *gtsmodel.Follow {
+		f2 := new(gtsmodel.Follow)
+		*f2 = *f1
+		return f2
+	}, config.GetCacheGTSFollowMaxSize())
+	c.follow.SetTTL(config.GetCacheGTSFollowTTL(), true)
+}
+
+func (c *GTSCaches) initFollowRequest() {
+	c.followRequest = result.New([]result.Lookup{
+		{Name: "ID"},
+		{Name: "URI"},
+		{Name: "AccountID.TargetAccountID"},
+	}, func(f1 *gtsmodel.FollowRequest) *gtsmodel.FollowRequest {
+		f2 := new(gtsmodel.FollowRequest)
+		*f2 = *f1
+		return f2
+	}, config.GetCacheGTSFollowRequestMaxSize())
+	c.followRequest.SetTTL(config.GetCacheGTSFollowRequestTTL(), true)
 }
 
 func (c *GTSCaches) initMedia() {

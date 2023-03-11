@@ -309,12 +309,6 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Er
 		s.state.Caches.GTS.Media().Invalidate("ID", id)
 	}
 
-	// Invalidate status from database lookups.
-	s.state.Caches.GTS.Status().Invalidate("ID", status.ID)
-
-	// Invalidate status from all visibility lookups.
-	s.state.Caches.Visibility.Invalidate("ItemID", status.ID)
-
 	return nil
 }
 

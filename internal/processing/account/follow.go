@@ -40,7 +40,7 @@ func (p *Processor) FollowCreate(ctx context.Context, requestingAccount *gtsmode
 	}
 
 	// Check if a follow exists already.
-	if follows, err := p.state.DB.IsFollowing(ctx, requestingAccount, targetAccount); err != nil {
+	if follows, err := p.state.DB.IsFollowing(ctx, requestingAccount.ID, targetAccount.ID); err != nil {
 		err = fmt.Errorf("FollowCreate: db error checking follow: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	} else if follows {
@@ -49,7 +49,7 @@ func (p *Processor) FollowCreate(ctx context.Context, requestingAccount *gtsmode
 	}
 
 	// Check if a follow request exists already.
-	if followRequested, err := p.state.DB.IsFollowRequested(ctx, requestingAccount, targetAccount); err != nil {
+	if followRequested, err := p.state.DB.IsFollowRequested(ctx, requestingAccount.ID, targetAccount.ID); err != nil {
 		err = fmt.Errorf("FollowCreate: db error checking follow request: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	} else if followRequested {
@@ -141,7 +141,7 @@ func (p *Processor) getFollowTarget(ctx context.Context, requestingAccountID str
 	}
 
 	// Do nothing if a block exists in either direction between accounts.
-	if blocked, err := p.state.DB.IsBlocked(ctx, requestingAccountID, targetAccountID, true); err != nil {
+	if blocked, err := p.state.DB.IsEitherBlocked(ctx, requestingAccountID, targetAccountID); err != nil {
 		err = fmt.Errorf("db error checking block between accounts: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	} else if blocked {
@@ -173,12 +173,30 @@ func (p *Processor) getFollowTarget(ctx context.Context, requestingAccountID str
 // messages will be returned which should then be processed by a client
 // api worker.
 func (p *Processor) unfollow(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) ([]messages.FromClientAPI, error) {
-	msgs := []messages.FromClientAPI{}
+	var msgs []messages.FromClientAPI
 
-	if fURI, err := p.state.DB.Unfollow(ctx, requestingAccount.ID, targetAccount.ID); err != nil {
-		err = fmt.Errorf("unfollow: error deleting follow from %s targeting %s: %w", requestingAccount.ID, targetAccount.ID, err)
+	// Get follow from requesting account to target account.
+	follow, err := p.state.DB.GetFollow(ctx, requestingAccount.ID, targetAccount.ID)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err = fmt.Errorf("unfollow: error getting follow from %s targeting %s: %w", requestingAccount.ID, targetAccount.ID, err)
 		return nil, err
-	} else if fURI != "" {
+	}
+
+	if follow != nil {
+		// Delete known follow from database with ID.
+		err = p.state.DB.DeleteFollowByID(ctx, follow.ID)
+		if err != nil {
+			if !errors.Is(err, db.ErrNoEntries) {
+				err = fmt.Errorf("unfollow: error deleting request from %s targeting %s: %w", requestingAccount.ID, targetAccount.ID, err)
+				return nil, err
+			}
+
+			// If err == db.ErrNoEntries here then it
+			// indicates a race condition with another
+			// unfollow for the same requester->target.
+			return msgs, nil
+		}
+
 		// Follow status changed, process side effects.
 		msgs = append(msgs, messages.FromClientAPI{
 			APObjectType:   ap.ActivityFollow,
@@ -186,25 +204,43 @@ func (p *Processor) unfollow(ctx context.Context, requestingAccount *gtsmodel.Ac
 			GTSModel: &gtsmodel.Follow{
 				AccountID:       requestingAccount.ID,
 				TargetAccountID: targetAccount.ID,
-				URI:             fURI,
+				URI:             follow.URI,
 			},
 			OriginAccount: requestingAccount,
 			TargetAccount: targetAccount,
 		})
 	}
 
-	if frURI, err := p.state.DB.UnfollowRequest(ctx, requestingAccount.ID, targetAccount.ID); err != nil {
-		err = fmt.Errorf("unfollow: error deleting follow request from %s targeting %s: %w", requestingAccount.ID, targetAccount.ID, err)
+	// Get follow request from requesting account to target account.
+	followReq, err := p.state.DB.GetFollowRequest(ctx, requestingAccount.ID, targetAccount.ID)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err = fmt.Errorf("unfollow: error getting follow request from %s targeting %s: %w", requestingAccount.ID, targetAccount.ID, err)
 		return nil, err
-	} else if frURI != "" {
-		// Follow request status changed, process side effects.
+	}
+
+	if followReq != nil {
+		// Delete known follow request from database with ID.
+		err = p.state.DB.DeleteFollowRequestByID(ctx, followReq.ID)
+		if err != nil {
+			if !errors.Is(err, db.ErrNoEntries) {
+				err = fmt.Errorf("unfollow: error deleting follow request from %s targeting %s: %w", requestingAccount.ID, targetAccount.ID, err)
+				return nil, err
+			}
+
+			// If err == db.ErrNoEntries here then it
+			// indicates a race condition with another
+			// unfollow for the same requester->target.
+			return msgs, nil
+		}
+
+		// Follow status changed, process side effects.
 		msgs = append(msgs, messages.FromClientAPI{
 			APObjectType:   ap.ActivityFollow,
 			APActivityType: ap.ActivityUndo,
 			GTSModel: &gtsmodel.Follow{
 				AccountID:       requestingAccount.ID,
 				TargetAccountID: targetAccount.ID,
-				URI:             frURI,
+				URI:             followReq.URI,
 			},
 			OriginAccount: requestingAccount,
 			TargetAccount: targetAccount,
