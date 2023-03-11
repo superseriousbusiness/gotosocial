@@ -62,6 +62,24 @@ type Relationship interface {
 	// IsMutualFollowing returns true if account1 and account2 both follow each other, or an error if something goes wrong while finding out.
 	IsMutualFollowing(ctx context.Context, account1 *gtsmodel.Account, account2 *gtsmodel.Account) (bool, Error)
 
+	// DeleteFollowByID deletes a follow from the database with the given ID.
+	DeleteFollowByID(ctx context.Context, id string) error
+
+	// DeleteFollowByURI deletes a follow from the database with the given URI.
+	DeleteFollowByURI(ctx context.Context, uri string) error
+
+	// DeleteFollowRequestByID deletes a follow request from the database with the given ID.
+	DeleteFollowRequestByID(ctx context.Context, id string) error
+
+	// DeleteFollowRequestByURI deletes a follow request from the database with the given URI.
+	DeleteFollowRequestByURI(ctx context.Context, uri string) error
+
+	// DeleteAccountFollows will delete all database follows to / from the given account ID.
+	DeleteAccountFollows(ctx context.Context, accountID string) error
+
+	// DeleteAccountFollowRequests will delete all database follow requests to / from the given account ID.
+	DeleteAccountFollowRequests(ctx context.Context, id string) error
+
 	// AcceptFollowRequest moves a follow request in the database from the follow_requests table to the follows table.
 	// In other words, it should create the follow, and delete the existing follow request.
 	//
