@@ -113,6 +113,16 @@ func (s *statusBookmarkDB) GetStatusBookmarks(ctx context.Context, accountID str
 
 	return bookmarks, nil
 }
+
+func (s *statusBookmarkDB) StatusBookmarkedByAccountID(ctx context.Context, accountID string, statusID string) (bool, db.Error) {
+	q := s.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("status_bookmarks"), bun.Ident("status_bookmark")).
+		Column("status_bookmark.id").
+		Where("? = ?", bun.Ident("status_bookmark.account_id"), accountID).
+		Where("? = ?", bun.Ident("status_bookmark.status_id"), statusID)
+
+	return s.conn.Exists(ctx, q)
 }
 
 func (s *statusBookmarkDB) PutStatusBookmark(ctx context.Context, statusBookmark *gtsmodel.StatusBookmark) db.Error {

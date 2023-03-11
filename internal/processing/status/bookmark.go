@@ -32,12 +32,12 @@ import (
 
 // BookmarkCreate adds a bookmark for the requestingAccount, targeting the given status (no-op if bookmark already exists).
 func (p *Processor) BookmarkCreate(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	targetStatus, existingBookmark, errWithCode := p.getBookmarkTarget(ctx, requestingAccount, targetStatusID)
+	targetStatus, bookmarked, errWithCode := p.getBookmarkTarget(ctx, requestingAccount, targetStatusID)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	if existingBookmark != nil {
+	if bookmarked {
 		// Status is already bookmarked.
 		return p.apiStatus(ctx, targetStatus, requestingAccount)
 	}
@@ -63,12 +63,12 @@ func (p *Processor) BookmarkCreate(ctx context.Context, requestingAccount *gtsmo
 
 // BookmarkRemove removes a bookmark for the requesting account, targeting the given status (no-op if bookmark doesn't exist).
 func (p *Processor) BookmarkRemove(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	targetStatus, existingBookmark, errWithCode := p.getBookmarkTarget(ctx, requestingAccount, targetStatusID)
+	targetStatus, bookmarked, errWithCode := p.getBookmarkTarget(ctx, requestingAccount, targetStatusID)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	if existingBookmark == nil {
+	if !bookmarked {
 		// Status isn't bookmarked.
 		return p.apiStatus(ctx, targetStatus, requestingAccount)
 	}
@@ -82,17 +82,17 @@ func (p *Processor) BookmarkRemove(ctx context.Context, requestingAccount *gtsmo
 	return p.apiStatus(ctx, targetStatus, requestingAccount)
 }
 
-func (p *Processor) getBookmarkTarget(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*gtsmodel.Status, *gtsmodel.StatusBookmark, gtserror.WithCode) {
+func (p *Processor) getBookmarkTarget(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*gtsmodel.Status, bool, gtserror.WithCode) {
 	targetStatus, errWithCode := p.getVisibleStatus(ctx, requestingAccount, targetStatusID)
 	if errWithCode != nil {
-		return nil, nil, errWithCode
+		return nil, false, errWithCode
 	}
 
-	bookmark, err := p.state.DB.GetStatusBookmarkByAccountID(ctx, requestingAccount.ID, targetStatusID)
+	bookmarked, err := p.state.DB.StatusBookmarkedByAccountID(ctx, requestingAccount.ID, targetStatusID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = fmt.Errorf("getBookmarkTarget: error checking existing bookmark: %w", err)
-		return nil, nil, gtserror.NewErrorInternalError(err)
+		return nil, false, gtserror.NewErrorInternalError(err)
 	}
 
-	return targetStatus, bookmark, nil
+	return targetStatus, bookmarked, nil
 }
