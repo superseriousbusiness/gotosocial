@@ -21,7 +21,7 @@
 const React = require("react");
 const { Error } = require("../error");
 
-module.exports = function MutationButton({ label, result, disabled, showError = true, className = "", ...inputProps }) {
+module.exports = function MutationButton({ label, result, disabled, showError = true, className = "", wrapperClassName = "", ...inputProps }) {
 	let iconClass = "";
 	const targetsThisButton = result.action == inputProps.name; // can also both be undefined, which is correct
 
@@ -33,7 +33,7 @@ module.exports = function MutationButton({ label, result, disabled, showError = 
 		}
 	}
 
-	return (<div>
+	return (<div className={wrapperClassName}>
 		{(showError && targetsThisButton && result.error) &&
 			<Error error={result.error} />
 		}
