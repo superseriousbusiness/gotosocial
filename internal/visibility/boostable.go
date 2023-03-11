@@ -25,7 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-// StatusBoostable will check if given status is boostable by requester, checking boolean status visibility to requester and ultimately the AP status visibility setting.
+// StatusBoostable checks if given status is boostable by requester, checking boolean status visibility to requester and ultimately the AP status visibility setting.
 func (f *Filter) StatusBoostable(ctx context.Context, requester *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
 	if status.Visibility == gtsmodel.VisibilityDirect {
 		log.Trace(ctx, "direct statuses are not boostable")
