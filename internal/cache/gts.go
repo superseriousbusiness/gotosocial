@@ -26,8 +26,10 @@ import (
 )
 
 type GTSCaches struct {
-	account       *result.Cache[*gtsmodel.Account]
-	block         *result.Cache[*gtsmodel.Block]
+	account *result.Cache[*gtsmodel.Account]
+	block   *result.Cache[*gtsmodel.Block]
+	// TODO: maybe should be moved out of here since it's
+	// not actually doing anything with gtsmodel.DomainBlock.
 	domainBlock   *domain.BlockCache
 	emoji         *result.Cache[*gtsmodel.Emoji]
 	emojiCategory *result.Cache[*gtsmodel.EmojiCategory]
@@ -63,7 +65,7 @@ func (c *GTSCaches) Init() {
 func (c *GTSCaches) Start() {
 	tryStart(c.account, config.GetCacheGTSAccountSweepFreq())
 	tryStart(c.block, config.GetCacheGTSBlockSweepFreq())
-	tryUntil("starting gtsmodel.DomainBlock cache", 5, func() bool {
+	tryUntil("starting domain block cache", 5, func() bool {
 		if sweep := config.GetCacheGTSDomainBlockSweepFreq(); sweep > 0 {
 			return c.domainBlock.Start(config.GetCacheGTSDomainBlockSweepFreq())
 		}
@@ -78,7 +80,7 @@ func (c *GTSCaches) Start() {
 	tryStart(c.status, config.GetCacheGTSStatusSweepFreq())
 	tryStart(c.tombstone, config.GetCacheGTSTombstoneSweepFreq())
 	tryStart(c.user, config.GetCacheGTSUserSweepFreq())
-	tryUntil("starting gtsmodel.Webfinger cache", 5, func() bool {
+	tryUntil("starting *gtsmodel.Webfinger cache", 5, func() bool {
 		return c.webfinger.Start(config.GetCacheGTSWebfingerSweepFreq())
 	})
 }
