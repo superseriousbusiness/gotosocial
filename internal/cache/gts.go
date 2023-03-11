@@ -89,7 +89,7 @@ func (c *GTSCaches) Start() {
 func (c *GTSCaches) Stop() {
 	tryStop(c.account, config.GetCacheGTSAccountSweepFreq())
 	tryStop(c.block, config.GetCacheGTSBlockSweepFreq())
-	tryUntil("stopping gtsmodel.DomainBlock cache", 5, c.domainBlock.Stop)
+	tryUntil("stopping domain block cache", 5, c.domainBlock.Stop)
 	tryStop(c.emoji, config.GetCacheGTSEmojiSweepFreq())
 	tryStop(c.emojiCategory, config.GetCacheGTSEmojiCategorySweepFreq())
 	tryStop(c.media, config.GetCacheGTSMediaSweepFreq())
@@ -99,7 +99,7 @@ func (c *GTSCaches) Stop() {
 	tryStop(c.status, config.GetCacheGTSStatusSweepFreq())
 	tryStop(c.tombstone, config.GetCacheGTSTombstoneSweepFreq())
 	tryStop(c.user, config.GetCacheGTSUserSweepFreq())
-	tryUntil("stopping gtsmodel.Webfinger cache", 5, c.webfinger.Stop)
+	tryUntil("stopping *gtsmodel.Webfinger cache", 5, c.webfinger.Stop)
 }
 
 // Account provides access to the gtsmodel Account database cache.
