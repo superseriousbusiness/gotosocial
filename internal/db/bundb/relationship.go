@@ -345,6 +345,11 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, originAccountI
 		return nil, r.conn.ProcessError(err)
 	}
 
+	// Delete original follow request notification.
+	if err := r.deleteFollowRequestNotif(ctx, originAccountID, targetAccountID); err != nil {
+		return nil, err
+	}
+
 	// return the new follow
 	return follow, nil
 }
@@ -376,8 +381,37 @@ func (r *relationshipDB) RejectFollowRequest(ctx context.Context, originAccountI
 		return nil, r.conn.ProcessError(err)
 	}
 
+	// Delete original follow request notification.
+	if err := r.deleteFollowRequestNotif(ctx, originAccountID, targetAccountID); err != nil {
+		return nil, err
+	}
+
 	// Return the now deleted follow request.
 	return followRequest, nil
+}
+
+func (r *relationshipDB) deleteFollowRequestNotif(ctx context.Context, originAccountID string, targetAccountID string) db.Error {
+	var id string
+	if err := r.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("notifications"), bun.Ident("notification")).
+		Column("notification.id").
+		Where("? = ?", bun.Ident("notification.origin_account_id"), originAccountID).
+		Where("? = ?", bun.Ident("notification.target_account_id"), targetAccountID).
+		Where("? = ?", bun.Ident("notification.notification_type"), gtsmodel.NotificationFollowRequest).
+		Limit(1). // There should only be one!
+		Scan(ctx, &id); err != nil {
+		err = r.conn.ProcessError(err)
+		if errors.Is(err, db.ErrNoEntries) {
+			// If no entries, the notif didn't
+			// exist anyway so nothing to do here.
+			return nil
+		}
+		// Return on real error.
+		return err
+	}
+
+	return r.state.DB.DeleteNotification(ctx, id)
 }
 
 func (r *relationshipDB) getFollow(ctx context.Context, id string) (*gtsmodel.Follow, db.Error) {

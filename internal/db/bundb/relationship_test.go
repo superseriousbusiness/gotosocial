@@ -290,6 +290,47 @@ func (suite *RelationshipTestSuite) TestAcceptFollowRequestOK() {
 		suite.FailNow(err.Error())
 	}
 
+	followRequestNotification := &gtsmodel.Notification{
+		ID:               "01GV8MY1Q9KX2ZSWN4FAQ3V1PB",
+		OriginAccountID:  account.ID,
+		TargetAccountID:  targetAccount.ID,
+		NotificationType: gtsmodel.NotificationFollowRequest,
+	}
+
+	if err := suite.db.Put(ctx, followRequestNotification); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	follow, err := suite.db.AcceptFollowRequest(ctx, account.ID, targetAccount.ID)
+	suite.NoError(err)
+	suite.NotNil(follow)
+	suite.Equal(followRequest.URI, follow.URI)
+
+	// Ensure notification is deleted.
+	notification, err := suite.db.GetNotification(ctx, followRequestNotification.ID)
+	suite.ErrorIs(err, db.ErrNoEntries)
+	suite.Nil(notification)
+}
+
+func (suite *RelationshipTestSuite) TestAcceptFollowRequestNoNotification() {
+	ctx := context.Background()
+	account := suite.testAccounts["admin_account"]
+	targetAccount := suite.testAccounts["local_account_2"]
+
+	followRequest := &gtsmodel.FollowRequest{
+		ID:              "01GEF753FWHCHRDWR0QEHBXM8W",
+		URI:             "http://localhost:8080/weeeeeeeeeeeeeeeee",
+		AccountID:       account.ID,
+		TargetAccountID: targetAccount.ID,
+	}
+
+	if err := suite.db.Put(ctx, followRequest); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Unlike the above test, don't create a notification.
+	// Follow request accept should still produce no error.
+
 	follow, err := suite.db.AcceptFollowRequest(ctx, account.ID, targetAccount.ID)
 	suite.NoError(err)
 	suite.NotNil(follow)
@@ -353,9 +394,25 @@ func (suite *RelationshipTestSuite) TestRejectFollowRequestOK() {
 		suite.FailNow(err.Error())
 	}
 
+	followRequestNotification := &gtsmodel.Notification{
+		ID:               "01GV8MY1Q9KX2ZSWN4FAQ3V1PB",
+		OriginAccountID:  account.ID,
+		TargetAccountID:  targetAccount.ID,
+		NotificationType: gtsmodel.NotificationFollowRequest,
+	}
+
+	if err := suite.db.Put(ctx, followRequestNotification); err != nil {
+		suite.FailNow(err.Error())
+	}
+
 	rejectedFollowRequest, err := suite.db.RejectFollowRequest(ctx, account.ID, targetAccount.ID)
 	suite.NoError(err)
 	suite.NotNil(rejectedFollowRequest)
+
+	// Ensure notification is deleted.
+	notification, err := suite.db.GetNotification(ctx, followRequestNotification.ID)
+	suite.ErrorIs(err, db.ErrNoEntries)
+	suite.Nil(notification)
 }
 
 func (suite *RelationshipTestSuite) TestRejectFollowRequestNotExisting() {
