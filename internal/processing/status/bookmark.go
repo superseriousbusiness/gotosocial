@@ -88,7 +88,7 @@ func (p *Processor) getBookmarkTarget(ctx context.Context, requestingAccount *gt
 		return nil, false, errWithCode
 	}
 
-	bookmarked, err := p.state.DB.StatusBookmarkedByAccountID(ctx, requestingAccount.ID, targetStatusID)
+	bookmarked, err := p.state.DB.IsStatusBookmarkedBy(ctx, targetStatus, requestingAccount.ID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = fmt.Errorf("getBookmarkTarget: error checking existing bookmark: %w", err)
 		return nil, false, gtserror.NewErrorInternalError(err)
