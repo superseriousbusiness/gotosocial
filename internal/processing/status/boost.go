@@ -58,9 +58,8 @@ func (p *Processor) BoostCreate(ctx context.Context, requestingAccount *gtsmodel
 	boostable, err := p.filter.StatusBoostable(ctx, requestingAccount, targetStatus)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is boostable: %s", targetStatus.ID, err))
-	}
-	if !boostable {
-		return nil, gtserror.NewErrorForbidden(errors.New("status is not boostable"))
+	} else if !boostable {
+		return nil, gtserror.NewErrorNotFound(errors.New("status is not boostable"))
 	}
 
 	// it's visible! it's boostable! so let's boost the FUCK out of it
