@@ -44,10 +44,17 @@ func (f *federatingDB) Followers(ctx context.Context, actorIRI *url.URL) (follow
 
 	iris := make([]*url.URL, 0, len(follows))
 	for _, follow := range follows {
+		if follow.Account == nil {
+			// Follow account no longer exists,
+			// for some reason. Skip this one.
+			continue
+		}
+
 		u, err := url.Parse(follow.Account.URI)
 		if err != nil {
 			return nil, err
 		}
+
 		iris = append(iris, u)
 	}
 

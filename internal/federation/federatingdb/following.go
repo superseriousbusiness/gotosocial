@@ -44,6 +44,12 @@ func (f *federatingDB) Following(ctx context.Context, actorIRI *url.URL) (follow
 
 	iris := make([]*url.URL, 0, len(follows))
 	for _, follow := range follows {
+		if follow.TargetAccount == nil {
+			// Follow target account no longer exists,
+			// for some reason. Skip this one.
+			continue
+		}
+
 		u, err := url.Parse(follow.TargetAccount.URI)
 		if err != nil {
 			return nil, err
