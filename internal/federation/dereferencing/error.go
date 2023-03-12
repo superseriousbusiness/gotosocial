@@ -108,7 +108,7 @@ func wrapDerefError(derefErr error, fluff string) error {
 		return NewErrNotRetrievable(err)
 	}
 
-	// Check for other untrievable errors.
+	// Check for other unretrievable errors.
 	if gtserror.NotFound(derefErr) {
 		return NewErrNotRetrievable(err)
 	}
