@@ -262,7 +262,7 @@ func (f *federatingDB) activityFollow(ctx context.Context, asType vocab.Type, re
 
 	followRequest.ID = id.NewULID()
 
-	if err := f.state.DB.Put(ctx, followRequest); err != nil {
+	if err := f.state.DB.PutFollowRequest(ctx, followRequest); err != nil {
 		return fmt.Errorf("activityFollow: database error inserting follow request: %s", err)
 	}
 

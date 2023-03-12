@@ -193,6 +193,10 @@ func (c *GTSCaches) initAccount() {
 		{Name: "URL"},
 		{Name: "Username.Domain"},
 		{Name: "PublicKeyURI"},
+		{Name: "InboxURI"},
+		{Name: "OutboxURI"},
+		{Name: "FollowersURI"},
+		{Name: "FollowingURI"},
 	}, func(a1 *gtsmodel.Account) *gtsmodel.Account {
 		a2 := new(gtsmodel.Account)
 		*a2 = *a1

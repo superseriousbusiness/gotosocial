@@ -179,20 +179,13 @@ func (r *relationshipDB) PutFollow(ctx context.Context, follow *gtsmodel.Follow)
 		return err
 	}
 
-	// Invalidate follow from cache lookups.
-	r.state.Caches.GTS.Follow().Invalidate(
-		"AccountID.TargetAccountID",
-		follow.AccountID,
-		follow.TargetAccountID,
-	)
-
-	// Invalidate origin account from all visibility lookups.
-	r.state.Caches.Visibility.Invalidate("RequesterID", follow.AccountID)
+	// Invalidate follow origin account ID cached visibility.
 	r.state.Caches.Visibility.Invalidate("ItemID", follow.AccountID)
+	r.state.Caches.Visibility.Invalidate("RequesterID", follow.AccountID)
 
-	// Invalidate target account from all visibility lookups.
-	r.state.Caches.Visibility.Invalidate("RequesterID", follow.TargetAccountID)
+	// Invalidate follow target account ID cached visibility.
 	r.state.Caches.Visibility.Invalidate("ItemID", follow.TargetAccountID)
+	r.state.Caches.Visibility.Invalidate("RequesterID", follow.TargetAccountID)
 
 	return nil
 }
@@ -223,14 +216,6 @@ func (r *relationshipDB) deleteFollow(ctx context.Context, follow *gtsmodel.Foll
 
 	// Invalidate follow from cache lookups.
 	r.state.Caches.GTS.Follow().Invalidate("ID", follow.ID)
-
-	// Invalidate origin account from all visibility lookups.
-	r.state.Caches.Visibility.Invalidate("RequesterID", follow.AccountID)
-	r.state.Caches.Visibility.Invalidate("ItemID", follow.AccountID)
-
-	// Invalidate target account from all visibility lookups.
-	r.state.Caches.Visibility.Invalidate("RequesterID", follow.TargetAccountID)
-	r.state.Caches.Visibility.Invalidate("ItemID", follow.TargetAccountID)
 
 	return nil
 }

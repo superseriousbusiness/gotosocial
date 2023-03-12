@@ -41,6 +41,18 @@ type Account interface {
 	// GetAccountByPubkeyID returns one account with the given public key URI (ID), or an error if something goes wrong.
 	GetAccountByPubkeyID(ctx context.Context, id string) (*gtsmodel.Account, Error)
 
+	// GetAccountByInboxURI returns one account with the given inbox_uri, or an error if something goes wrong.
+	GetAccountByInboxURI(ctx context.Context, uri string) (*gtsmodel.Account, Error)
+
+	// GetAccountByOutboxURI returns one account with the given outbox_uri, or an error if something goes wrong.
+	GetAccountByOutboxURI(ctx context.Context, uri string) (*gtsmodel.Account, Error)
+
+	// GetAccountByFollowingURI returns one account with the given following_uri, or an error if something goes wrong.
+	GetAccountByFollowingURI(ctx context.Context, uri string) (*gtsmodel.Account, Error)
+
+	// GetAccountByFollowersURI returns one account with the given followers_uri, or an error if something goes wrong.
+	GetAccountByFollowersURI(ctx context.Context, uri string) (*gtsmodel.Account, Error)
+
 	// PopulateAccount ensures that all sub-models of an account are populated (e.g. avatar, header etc).
 	PopulateAccount(ctx context.Context, account *gtsmodel.Account) error
 

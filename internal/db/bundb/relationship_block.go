@@ -151,20 +151,13 @@ func (r *relationshipDB) PutBlock(ctx context.Context, block *gtsmodel.Block) er
 		return err
 	}
 
-	// Invalidate block from cache lookups.
-	r.state.Caches.GTS.Block().Invalidate(
-		"AccountID.TargetAccountID",
-		block.AccountID,
-		block.TargetAccountID,
-	)
-
-	// Invalidate origin account from all visibility lookups.
-	r.state.Caches.Visibility.Invalidate("RequesterID", block.AccountID)
+	// Invalidate block origin account ID cached visibility.
 	r.state.Caches.Visibility.Invalidate("ItemID", block.AccountID)
+	r.state.Caches.Visibility.Invalidate("RequesterID", block.AccountID)
 
-	// Invalidate target account from all visibility lookups.
-	r.state.Caches.Visibility.Invalidate("RequesterID", block.TargetAccountID)
+	// Invalidate block target account ID cached visibility.
 	r.state.Caches.Visibility.Invalidate("ItemID", block.TargetAccountID)
+	r.state.Caches.Visibility.Invalidate("RequesterID", block.TargetAccountID)
 
 	return nil
 }
@@ -196,14 +189,6 @@ func (r *relationshipDB) deleteBlock(ctx context.Context, block *gtsmodel.Block)
 
 	// Invalidate block from cache lookups.
 	r.state.Caches.GTS.Block().Invalidate("ID", block.ID)
-
-	// Invalidate origin account from all visibility lookups.
-	r.state.Caches.Visibility.Invalidate("RequesterID", block.AccountID)
-	r.state.Caches.Visibility.Invalidate("ItemID", block.AccountID)
-
-	// Invalidate target account from all visibility lookups.
-	r.state.Caches.Visibility.Invalidate("RequesterID", block.TargetAccountID)
-	r.state.Caches.Visibility.Invalidate("ItemID", block.TargetAccountID)
 
 	return nil
 }

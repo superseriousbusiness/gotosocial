@@ -39,18 +39,15 @@ type accountDB struct {
 	state *state.State
 }
 
-func (a *accountDB) newAccountQ(account *gtsmodel.Account) *bun.SelectQuery {
-	return a.conn.
-		NewSelect().
-		Model(account)
-}
-
 func (a *accountDB) GetAccountByID(ctx context.Context, id string) (*gtsmodel.Account, db.Error) {
 	return a.getAccount(
 		ctx,
 		"ID",
 		func(account *gtsmodel.Account) error {
-			return a.newAccountQ(account).Where("? = ?", bun.Ident("account.id"), id).Scan(ctx)
+			return a.conn.NewSelect().
+				Model(account).
+				Where("? = ?", bun.Ident("account.id"), id).
+				Scan(ctx)
 		},
 		id,
 	)
@@ -61,7 +58,10 @@ func (a *accountDB) GetAccountByURI(ctx context.Context, uri string) (*gtsmodel.
 		ctx,
 		"URI",
 		func(account *gtsmodel.Account) error {
-			return a.newAccountQ(account).Where("? = ?", bun.Ident("account.uri"), uri).Scan(ctx)
+			return a.conn.NewSelect().
+				Model(account).
+				Where("? = ?", bun.Ident("account.uri"), uri).
+				Scan(ctx)
 		},
 		uri,
 	)
@@ -72,7 +72,10 @@ func (a *accountDB) GetAccountByURL(ctx context.Context, url string) (*gtsmodel.
 		ctx,
 		"URL",
 		func(account *gtsmodel.Account) error {
-			return a.newAccountQ(account).Where("? = ?", bun.Ident("account.url"), url).Scan(ctx)
+			return a.conn.NewSelect().
+				Model(account).
+				Where("? = ?", bun.Ident("account.url"), url).
+				Scan(ctx)
 		},
 		url,
 	)
@@ -83,7 +86,8 @@ func (a *accountDB) GetAccountByUsernameDomain(ctx context.Context, username str
 		ctx,
 		"Username.Domain",
 		func(account *gtsmodel.Account) error {
-			q := a.newAccountQ(account)
+			q := a.conn.NewSelect().
+				Model(account)
 
 			if domain != "" {
 				q = q.
@@ -107,9 +111,68 @@ func (a *accountDB) GetAccountByPubkeyID(ctx context.Context, id string) (*gtsmo
 		ctx,
 		"PublicKeyURI",
 		func(account *gtsmodel.Account) error {
-			return a.newAccountQ(account).Where("? = ?", bun.Ident("account.public_key_uri"), id).Scan(ctx)
+			return a.conn.NewSelect().
+				Model(account).
+				Where("? = ?", bun.Ident("account.public_key_uri"), id).
+				Scan(ctx)
 		},
 		id,
+	)
+}
+
+func (a *accountDB) GetAccountByInboxURI(ctx context.Context, uri string) (*gtsmodel.Account, db.Error) {
+	return a.getAccount(
+		ctx,
+		"InboxURI",
+		func(account *gtsmodel.Account) error {
+			return a.conn.NewSelect().
+				Model(account).
+				Where("? = ?", bun.Ident("account.inbox_uri"), uri).
+				Scan(ctx)
+		},
+		uri,
+	)
+}
+
+func (a *accountDB) GetAccountByOutboxURI(ctx context.Context, uri string) (*gtsmodel.Account, db.Error) {
+	return a.getAccount(
+		ctx,
+		"OutboxURI",
+		func(account *gtsmodel.Account) error {
+			return a.conn.NewSelect().
+				Model(account).
+				Where("? = ?", bun.Ident("account.outbox_uri"), uri).
+				Scan(ctx)
+		},
+		uri,
+	)
+}
+
+func (a *accountDB) GetAccountByFollowersURI(ctx context.Context, uri string) (*gtsmodel.Account, db.Error) {
+	return a.getAccount(
+		ctx,
+		"FollowersURI",
+		func(account *gtsmodel.Account) error {
+			return a.conn.NewSelect().
+				Model(account).
+				Where("? = ?", bun.Ident("account.followers_uri"), uri).
+				Scan(ctx)
+		},
+		uri,
+	)
+}
+
+func (a *accountDB) GetAccountByFollowingURI(ctx context.Context, uri string) (*gtsmodel.Account, db.Error) {
+	return a.getAccount(
+		ctx,
+		"FollowingURI",
+		func(account *gtsmodel.Account) error {
+			return a.conn.NewSelect().
+				Model(account).
+				Where("? = ?", bun.Ident("account.following_uri"), uri).
+				Scan(ctx)
+		},
+		uri,
 	)
 }
 
@@ -265,10 +328,6 @@ func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account
 		return err
 	}
 
-	// Invalidate account from all visibility lookups.
-	a.state.Caches.Visibility.Invalidate("RequesterID", account.ID)
-	a.state.Caches.Visibility.Invalidate("ItemID", account.ID)
-
 	return nil
 }
 
@@ -296,10 +355,6 @@ func (a *accountDB) DeleteAccount(ctx context.Context, id string) db.Error {
 
 	// Invalidate account from database lookups.
 	a.state.Caches.GTS.Account().Invalidate("ID", id)
-
-	// Invalidate account from all visibility lookups.
-	a.state.Caches.Visibility.Invalidate("RequesterID", id)
-	a.state.Caches.Visibility.Invalidate("ItemID", id)
 
 	return nil
 }
