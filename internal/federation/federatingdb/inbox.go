@@ -95,6 +95,12 @@ func (f *federatingDB) InboxesForIRI(c context.Context, iri *url.URL) (inboxIRIs
 		}
 
 		for _, follow := range follows {
+			if follow.Account == nil {
+				// No account exists for this follow,
+				// for some reason. Just skip it.
+				continue
+			}
+
 			// deliver to a shared inbox if we have that option
 			var inbox string
 			if config.GetInstanceDeliverToSharedInboxes() && follow.Account.SharedInboxURI != nil && *follow.Account.SharedInboxURI != "" {
