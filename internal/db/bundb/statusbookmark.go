@@ -64,6 +64,24 @@ func (s *statusBookmarkDB) GetStatusBookmark(ctx context.Context, id string) (*g
 	return bookmark, nil
 }
 
+func (s *statusBookmarkDB) GetStatusBookmarkID(ctx context.Context, accountID string, statusID string) (string, db.Error) {
+	var id string
+
+	q := s.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("status_bookmarks"), bun.Ident("status_bookmark")).
+		Column("status_bookmark.id").
+		Where("? = ?", bun.Ident("status_bookmark.account_id"), accountID).
+		Where("? = ?", bun.Ident("status_bookmark.status_id"), statusID).
+		Limit(1)
+
+	if err := q.Scan(ctx, &id); err != nil {
+		return "", s.conn.ProcessError(err)
+	}
+
+	return id, nil
+}
+
 func (s *statusBookmarkDB) GetStatusBookmarks(ctx context.Context, accountID string, limit int, maxID string, minID string) ([]*gtsmodel.StatusBookmark, db.Error) {
 	// Ensure reasonable
 	if limit < 0 {
@@ -124,9 +142,19 @@ func (s *statusBookmarkDB) PutStatusBookmark(ctx context.Context, statusBookmark
 	return s.conn.ProcessError(err)
 }
 
-func (s *statusBookmarkDB) DeleteStatusBookmarks(ctx context.Context, targetAccountID string, originAccountID string, statusID string) db.Error {
-	if targetAccountID == "" && originAccountID == "" && statusID == "" {
-		return errors.New("DeleteBookmarks: one of targetAccountID, originAccountID, or statusID must be set")
+func (s *statusBookmarkDB) DeleteStatusBookmark(ctx context.Context, id string) db.Error {
+	_, err := s.conn.
+		NewDelete().
+		TableExpr("? AS ?", bun.Ident("status_bookmarks"), bun.Ident("status_bookmark")).
+		Where("? = ?", bun.Ident("status_bookmark.id"), id).
+		Exec(ctx)
+
+	return s.conn.ProcessError(err)
+}
+
+func (s *statusBookmarkDB) DeleteStatusBookmarks(ctx context.Context, targetAccountID string, originAccountID string) db.Error {
+	if targetAccountID == "" && originAccountID == "" {
+		return errors.New("DeleteBookmarks: one of targetAccountID or originAccountID must be set")
 	}
 
 	// TODO: Capture bookmark IDs in a RETURNING
@@ -145,9 +173,22 @@ func (s *statusBookmarkDB) DeleteStatusBookmarks(ctx context.Context, targetAcco
 		q = q.Where("? = ?", bun.Ident("status_bookmark.account_id"), originAccountID)
 	}
 
-	if statusID != "" {
-		q = q.Where("? = ?", bun.Ident("status_bookmark.status_id"), statusID)
+	if _, err := q.Exec(ctx); err != nil {
+		return s.conn.ProcessError(err)
 	}
+
+	return nil
+}
+
+func (s *statusBookmarkDB) DeleteStatusBookmarksForStatus(ctx context.Context, statusID string) db.Error {
+	// TODO: Capture bookmark IDs in a RETURNING
+	// statement (when bookmarks have a cache),
+	// + use the IDs to invalidate cache entries.
+
+	q := s.conn.
+		NewDelete().
+		TableExpr("? AS ?", bun.Ident("status_bookmarks"), bun.Ident("status_bookmark")).
+		Where("? = ?", bun.Ident("status_bookmark.status_id"), statusID)
 
 	if _, err := q.Exec(ctx); err != nil {
 		return s.conn.ProcessError(err)

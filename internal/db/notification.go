@@ -30,16 +30,16 @@ type Notification interface {
 	//
 	// Returned notifications will be ordered ID descending (ie., highest/newest to lowest/oldest).
 	GetNotifications(ctx context.Context, accountID string, excludeTypes []string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, Error)
+
 	// GetNotification returns one notification according to its id.
 	GetNotification(ctx context.Context, id string) (*gtsmodel.Notification, Error)
+
 	// DeleteNotification deletes one notification according to its id,
 	// and removes that notification from the in-memory cache.
 	DeleteNotification(ctx context.Context, id string) Error
+
 	// DeleteNotifications mass deletes notifications targeting targetAccountID
-	// and/or originating from originAccountID and/or pertaining to statusID.
-	//
-	// To delete all notifications pertaining to statusID from all accounts,
-	// just set statusID.
+	// and/or originating from originAccountID.
 	//
 	// If targetAccountID is set and originAccountID isn't, all notifications
 	// that target the given account will be deleted.
@@ -50,6 +50,11 @@ type Notification interface {
 	// If both are set, then notifications that target targetAccountID and
 	// originate from originAccountID will be deleted.
 	//
-	// At least one parameter out of the three id params must not be an empty string.
-	DeleteNotifications(ctx context.Context, targetAccountID string, originAccountID string, statusID string) Error
+	// At least one parameter must not be an empty string.
+	DeleteNotifications(ctx context.Context, targetAccountID string, originAccountID string) Error
+
+	// DeleteNotificationsForStatus deletes all notifications that relate to
+	// the given statusID. This function is useful when a status has been deleted,
+	// and so notifications relating to that status must also be deleted.
+	DeleteNotificationsForStatus(ctx context.Context, statusID string) Error
 }

@@ -118,7 +118,7 @@ func (suite *NotificationTestSuite) TestGetNotificationsWithoutSpam() {
 func (suite *NotificationTestSuite) TestDeleteNotificationsWithSpam() {
 	suite.spamNotifs()
 	testAccount := suite.testAccounts["local_account_1"]
-	err := suite.db.DeleteNotifications(context.Background(), testAccount.ID, "", "")
+	err := suite.db.DeleteNotifications(context.Background(), testAccount.ID, "")
 	suite.NoError(err)
 
 	notifications, err := suite.db.GetNotifications(context.Background(), testAccount.ID, []string{}, 20, id.Highest, id.Lowest)
@@ -130,7 +130,7 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsWithSpam() {
 func (suite *NotificationTestSuite) TestDeleteNotificationsWithTwoAccounts() {
 	suite.spamNotifs()
 	testAccount := suite.testAccounts["local_account_1"]
-	err := suite.db.DeleteNotifications(context.Background(), testAccount.ID, "", "")
+	err := suite.db.DeleteNotifications(context.Background(), testAccount.ID, "")
 	suite.NoError(err)
 
 	notifications, err := suite.db.GetNotifications(context.Background(), testAccount.ID, []string{}, 20, id.Highest, id.Lowest)
@@ -147,7 +147,7 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsWithTwoAccounts() {
 func (suite *NotificationTestSuite) TestDeleteNotificationsOriginatingFromAccount() {
 	testAccount := suite.testAccounts["local_account_2"]
 
-	if err := suite.db.DeleteNotifications(context.Background(), "", testAccount.ID, ""); err != nil {
+	if err := suite.db.DeleteNotifications(context.Background(), "", testAccount.ID); err != nil {
 		suite.FailNow(err.Error())
 	}
 
@@ -167,7 +167,7 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsOriginatingFromAndTar
 	originAccount := suite.testAccounts["local_account_2"]
 	targetAccount := suite.testAccounts["admin_account"]
 
-	if err := suite.db.DeleteNotifications(context.Background(), targetAccount.ID, originAccount.ID, ""); err != nil {
+	if err := suite.db.DeleteNotifications(context.Background(), targetAccount.ID, originAccount.ID); err != nil {
 		suite.FailNow(err.Error())
 	}
 
@@ -191,7 +191,7 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsOriginatingFromAndTar
 func (suite *NotificationTestSuite) TestDeleteNotificationsPertainingToStatusID() {
 	testStatus := suite.testStatuses["local_account_1_status_1"]
 
-	if err := suite.db.DeleteNotifications(context.Background(), "", "", testStatus.ID); err != nil {
+	if err := suite.db.DeleteNotificationsForStatus(context.Background(), testStatus.ID); err != nil {
 		suite.FailNow(err.Error())
 	}
 

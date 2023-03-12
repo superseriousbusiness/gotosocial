@@ -39,10 +39,11 @@ type StatusFave interface {
 	// PutStatusFave inserts the given statusFave into the database.
 	PutStatusFave(ctx context.Context, statusFave *gtsmodel.StatusFave) Error
 
+	// DeleteStatusFave deletes one status fave with the given id.
+	DeleteStatusFave(ctx context.Context, id string) Error
+
 	// DeleteStatusFaves mass deletes status faves targeting targetAccountID
 	// and/or originating from originAccountID and/or faving statusID.
-	//
-	// To delete all faves of statusID from all accounts, just set statusID.
 	//
 	// If targetAccountID is set and originAccountID isn't, all status faves
 	// that target the given account will be deleted.
@@ -53,6 +54,11 @@ type StatusFave interface {
 	// If both are set, then status faves that target targetAccountID and
 	// originate from originAccountID will be deleted.
 	//
-	// At least one parameter out of the three id params must not be an empty string.
-	DeleteStatusFaves(ctx context.Context, targetAccountID string, originAccountID string, statusID string) Error
+	// At least one parameter must not be an empty string.
+	DeleteStatusFaves(ctx context.Context, targetAccountID string, originAccountID string) Error
+
+	// DeleteStatusFavesForStatus deletes all status faves that target the
+	// given status ID. This is useful when a status has been deleted, and you need
+	// to clean up after it.
+	DeleteStatusFavesForStatus(ctx context.Context, statusID string) Error
 }

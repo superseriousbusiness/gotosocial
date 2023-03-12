@@ -119,9 +119,9 @@ func (n *notificationDB) DeleteNotification(ctx context.Context, id string) db.E
 	return nil
 }
 
-func (n *notificationDB) DeleteNotifications(ctx context.Context, targetAccountID string, originAccountID string, statusID string) db.Error {
-	if targetAccountID == "" && originAccountID == "" && statusID == "" {
-		return errors.New("DeleteNotifications: one of targetAccountID, originAccountID, or statusID must be set")
+func (n *notificationDB) DeleteNotifications(ctx context.Context, targetAccountID string, originAccountID string) db.Error {
+	if targetAccountID == "" && originAccountID == "" {
+		return errors.New("DeleteNotifications: one of targetAccountID or originAccountID must be set")
 	}
 
 	// Capture notification IDs in a RETURNING statement.
@@ -140,9 +140,27 @@ func (n *notificationDB) DeleteNotifications(ctx context.Context, targetAccountI
 		q = q.Where("? = ?", bun.Ident("notification.origin_account_id"), originAccountID)
 	}
 
-	if statusID != "" {
-		q = q.Where("? = ?", bun.Ident("notification.status_id"), statusID)
+	if _, err := q.Exec(ctx, &ids); err != nil {
+		return n.conn.ProcessError(err)
 	}
+
+	// Invalidate each returned ID.
+	for _, id := range ids {
+		n.state.Caches.GTS.Notification().Invalidate("ID", id)
+	}
+
+	return nil
+}
+
+func (n *notificationDB) DeleteNotificationsForStatus(ctx context.Context, statusID string) db.Error {
+	// Capture notification IDs in a RETURNING statement.
+	ids := []string{}
+
+	q := n.conn.
+		NewDelete().
+		TableExpr("? AS ?", bun.Ident("notifications"), bun.Ident("notification")).
+		Where("? = ?", bun.Ident("notification.status_id"), statusID).
+		Returning("?", bun.Ident("id"))
 
 	if _, err := q.Exec(ctx, &ids); err != nil {
 		return n.conn.ProcessError(err)

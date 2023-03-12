@@ -28,6 +28,10 @@ type StatusBookmark interface {
 	// GetStatusBookmark gets one status bookmark with the given ID.
 	GetStatusBookmark(ctx context.Context, id string) (*gtsmodel.StatusBookmark, Error)
 
+	// GetStatusBookmarkID is a shortcut function for returning just the database ID
+	// of a status bookmark created by the given accountID, targeting the given statusID.
+	GetStatusBookmarkID(ctx context.Context, accountID string, statusID string) (string, Error)
+
 	// GetStatusBookmarks retrieves status bookmarks created by the given accountID,
 	// and using the provided parameters. If limit is < 0 then no limit will be set.
 	//
@@ -38,10 +42,11 @@ type StatusBookmark interface {
 	// PutStatusBookmark inserts the given statusBookmark into the database.
 	PutStatusBookmark(ctx context.Context, statusBookmark *gtsmodel.StatusBookmark) Error
 
+	// DeleteStatusBookmark deletes one status bookmark with the given ID.
+	DeleteStatusBookmark(ctx context.Context, id string) Error
+
 	// DeleteStatusBookmarks mass deletes status bookmarks targeting targetAccountID
 	// and/or originating from originAccountID and/or bookmarking statusID.
-	//
-	// To delete all bookmarks of statusID from all accounts, just set statusID.
 	//
 	// If targetAccountID is set and originAccountID isn't, all status bookmarks
 	// that target the given account will be deleted.
@@ -52,6 +57,11 @@ type StatusBookmark interface {
 	// If both are set, then status bookmarks that target targetAccountID and
 	// originate from originAccountID will be deleted.
 	//
-	// At least one parameter out of the three id params must not be an empty string.
-	DeleteStatusBookmarks(ctx context.Context, targetAccountID string, originAccountID string, statusID string) Error
+	// At least one parameter must not be an empty string.
+	DeleteStatusBookmarks(ctx context.Context, targetAccountID string, originAccountID string) Error
+
+	// DeleteStatusBookmarksForStatus deletes all status bookmarks that target the
+	// given status ID. This is useful when a status has been deleted, and you need
+	// to clean up after it.
+	DeleteStatusBookmarksForStatus(ctx context.Context, statusID string) Error
 }

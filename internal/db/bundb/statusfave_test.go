@@ -71,7 +71,7 @@ func (suite *StatusFaveTestSuite) TestGetStatusFaveByAccountID() {
 func (suite *StatusFaveTestSuite) TestDeleteStatusFavesOriginatingFromAccount() {
 	testAccount := suite.testAccounts["local_account_1"]
 
-	if err := suite.db.DeleteStatusFaves(context.Background(), "", testAccount.ID, ""); err != nil {
+	if err := suite.db.DeleteStatusFaves(context.Background(), "", testAccount.ID); err != nil {
 		suite.FailNow(err.Error())
 	}
 
@@ -90,7 +90,7 @@ func (suite *StatusFaveTestSuite) TestDeleteStatusFavesOriginatingFromAccount() 
 func (suite *StatusFaveTestSuite) TestDeleteStatusFavesTargetingAccount() {
 	testAccount := suite.testAccounts["local_account_1"]
 
-	if err := suite.db.DeleteStatusFaves(context.Background(), testAccount.ID, "", ""); err != nil {
+	if err := suite.db.DeleteStatusFaves(context.Background(), testAccount.ID, ""); err != nil {
 		suite.FailNow(err.Error())
 	}
 
@@ -109,7 +109,7 @@ func (suite *StatusFaveTestSuite) TestDeleteStatusFavesTargetingAccount() {
 func (suite *StatusFaveTestSuite) TestDeleteStatusFavesTargetingStatus() {
 	testStatus := suite.testStatuses["local_account_1_status_1"]
 
-	if err := suite.db.DeleteStatusFaves(context.Background(), "", "", testStatus.ID); err != nil {
+	if err := suite.db.DeleteStatusFavesForStatus(context.Background(), testStatus.ID); err != nil {
 		suite.FailNow(err.Error())
 	}
 
@@ -123,6 +123,24 @@ func (suite *StatusFaveTestSuite) TestDeleteStatusFavesTargetingStatus() {
 			suite.FailNowf("", "no StatusFaves with status id %s should remain", testStatus.ID)
 		}
 	}
+}
+
+func (suite *StatusFaveTestSuite) TestDeleteStatusFave() {
+	testFave := suite.testFaves["local_account_1_admin_account_status_1"]
+	ctx := context.Background()
+
+	if err := suite.db.DeleteStatusFave(ctx, testFave.ID); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	fave, err := suite.db.GetStatusFave(ctx, testFave.ID)
+	suite.ErrorIs(err, db.ErrNoEntries)
+	suite.Nil(fave)
+}
+
+func (suite *StatusFaveTestSuite) TestDeleteStatusFaveNonExisting() {
+	err := suite.db.DeleteStatusFave(context.Background(), "01GVAV715K6Y2SG9ZKS9ZA8G7G")
+	suite.NoError(err)
 }
 
 func TestStatusFaveTestSuite(t *testing.T) {

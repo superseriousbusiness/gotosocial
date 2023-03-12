@@ -399,12 +399,12 @@ func (p *Processor) deleteAccountStatuses(ctx context.Context, account *gtsmodel
 
 func (p *Processor) deleteAccountNotifications(ctx context.Context, account *gtsmodel.Account) error {
 	// Delete all notifications targeting given account.
-	if err := p.state.DB.DeleteNotifications(ctx, account.ID, "", ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err := p.state.DB.DeleteNotifications(ctx, account.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
 	// Delete all notifications originating from given account.
-	if err := p.state.DB.DeleteNotifications(ctx, "", account.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err := p.state.DB.DeleteNotifications(ctx, "", account.ID); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
@@ -413,25 +413,25 @@ func (p *Processor) deleteAccountNotifications(ctx context.Context, account *gts
 
 func (p *Processor) deleteAccountPeripheral(ctx context.Context, account *gtsmodel.Account) error {
 	// Delete all bookmarks owned by given account.
-	if err := p.state.DB.DeleteStatusBookmarks(ctx, account.ID, "", ""); // nocollapse
+	if err := p.state.DB.DeleteStatusBookmarks(ctx, account.ID, ""); // nocollapse
 	err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
 	// Delete all bookmarks targeting given account.
-	if err := p.state.DB.DeleteStatusBookmarks(ctx, "", account.ID, ""); // nocollapse
+	if err := p.state.DB.DeleteStatusBookmarks(ctx, "", account.ID); // nocollapse
 	err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
 	// Delete all faves owned by given account.
-	if err := p.state.DB.DeleteStatusFaves(ctx, account.ID, "", ""); // nocollapse
+	if err := p.state.DB.DeleteStatusFaves(ctx, account.ID, ""); // nocollapse
 	err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
 	// Delete all faves targeting given account.
-	if err := p.state.DB.DeleteStatusFaves(ctx, "", account.ID, ""); // nocollapse
+	if err := p.state.DB.DeleteStatusFaves(ctx, "", account.ID); // nocollapse
 	err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}

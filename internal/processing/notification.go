@@ -75,7 +75,7 @@ func (p *Processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, ex
 
 func (p *Processor) NotificationsClear(ctx context.Context, authed *oauth.Auth) gtserror.WithCode {
 	// Delete all notifications that target the authorized account.
-	if err := p.state.DB.DeleteNotifications(ctx, authed.Account.ID, "", ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err := p.state.DB.DeleteNotifications(ctx, authed.Account.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return gtserror.NewErrorInternalError(err)
 	}
 

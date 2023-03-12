@@ -88,7 +88,7 @@ func (p *Processor) FaveRemove(ctx context.Context, requestingAccount *gtsmodel.
 	}
 
 	// We have a fave to remove.
-	if err := p.state.DB.DeleteStatusFaves(ctx, "", requestingAccount.ID, targetStatus.ID); err != nil {
+	if err := p.state.DB.DeleteStatusFave(ctx, existingFave.ID); err != nil {
 		err = fmt.Errorf("FaveRemove: error removing status fave: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}

@@ -171,12 +171,12 @@ func (p *Processor) getBlockTarget(ctx context.Context, requestingAccount *gtsmo
 
 func (p *Processor) deleteMutualAccountNotifications(ctx context.Context, account1 *gtsmodel.Account, account2 *gtsmodel.Account) error {
 	// Delete all notifications from account2 targeting account1.
-	if err := p.state.DB.DeleteNotifications(ctx, account1.ID, account2.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err := p.state.DB.DeleteNotifications(ctx, account1.ID, account2.ID); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
 	// Delete all notifications from account1 targeting account2.
-	if err := p.state.DB.DeleteNotifications(ctx, account2.ID, account1.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err := p.state.DB.DeleteNotifications(ctx, account2.ID, account1.ID); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
@@ -185,12 +185,12 @@ func (p *Processor) deleteMutualAccountNotifications(ctx context.Context, accoun
 
 func (p *Processor) deleteMutualAccountBookmarks(ctx context.Context, account1 *gtsmodel.Account, account2 *gtsmodel.Account) error {
 	// Delete all bookmarks from account2 targeting account1.
-	if err := p.state.DB.DeleteStatusBookmarks(ctx, account1.ID, account2.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err := p.state.DB.DeleteStatusBookmarks(ctx, account1.ID, account2.ID); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
 	// Delete all bookmarks from account1 targeting account2.
-	if err := p.state.DB.DeleteStatusBookmarks(ctx, account2.ID, account1.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err := p.state.DB.DeleteStatusBookmarks(ctx, account2.ID, account1.ID); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
@@ -199,12 +199,12 @@ func (p *Processor) deleteMutualAccountBookmarks(ctx context.Context, account1 *
 
 func (p *Processor) deleteMutualAccountFaves(ctx context.Context, account1 *gtsmodel.Account, account2 *gtsmodel.Account) error {
 	// Delete all faves from account2 targeting account1.
-	if err := p.state.DB.DeleteStatusFaves(ctx, account1.ID, account2.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err := p.state.DB.DeleteStatusFaves(ctx, account1.ID, account2.ID); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
 	// Delete all faves from account1 targeting account2.
-	if err := p.state.DB.DeleteStatusFaves(ctx, account2.ID, account1.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err := p.state.DB.DeleteStatusFaves(ctx, account2.ID, account1.ID); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 

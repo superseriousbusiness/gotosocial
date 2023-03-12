@@ -276,7 +276,7 @@ func (suite *BookmarkTestSuite) TestGetBookmarksNone() {
 	testUser := suite.testUsers["local_account_1"]
 
 	// Remove all bookmarks for this account.
-	if err := suite.db.DeleteStatusBookmarks(context.Background(), "", testAccount.ID, ""); err != nil {
+	if err := suite.db.DeleteStatusBookmarks(context.Background(), "", testAccount.ID); err != nil {
 		suite.FailNow(err.Error())
 	}
 
