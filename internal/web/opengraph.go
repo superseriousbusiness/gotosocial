@@ -1,20 +1,19 @@
-/*
-   GoToSocial
-   Copyright (C) 2021-2023 GoToSocial Authors admin@gotosocial.org
-
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU Affero General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU Affero General Public License for more details.
-
-   You should have received a copy of the GNU Affero General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package web
 
@@ -31,26 +30,30 @@ const maxOGDescriptionLength = 300
 
 // ogMeta represents supported OpenGraph Meta tags
 //
-// see eg https://developer.yoast.com/features/opengraph/functional-specification/
+// see eg https://ogp.me/
 type ogMeta struct {
 	// vanilla og tags
+	Title       string // og:title
+	Type        string // og:type
+	Locale      string // og:locale
+	URL         string // og:url
+	SiteName    string // og:site_name
+	Description string // og:description
 
-	Locale       string // og:locale
-	ResourceType string // og:type
-	Title        string // og:title
-	URL          string // og:url
-	SiteName     string // og:site_name
-	Description  string // og:description
-	Image        string // og:image
-	ImageWidth   string // og:image:width
-	ImageHeight  string // og:image:height
+	// image tags
+	Image       string // og:image
+	ImageWidth  string // og:image:width
+	ImageHeight string // og:image:height
+	ImageAlt    string // og:image:alt
 
 	// article tags
-
 	ArticlePublisher     string // article:publisher
 	ArticleAuthor        string // article:author
 	ArticleModifiedTime  string // article:modified_time
 	ArticlePublishedTime string // article:published_time
+
+	// profile tags
+	ProfileUsername string // profile:username
 }
 
 // ogBase returns an *ogMeta suitable for serving at
@@ -64,13 +67,15 @@ func ogBase(instance *apimodel.InstanceV1) *ogMeta {
 	}
 
 	og := &ogMeta{
-		Locale:       locale,
-		ResourceType: "website",
-		Title:        text.SanitizePlaintext(instance.Title) + " - GoToSocial",
-		URL:          instance.URI,
-		SiteName:     instance.AccountDomain,
-		Description:  parseDescription(instance.ShortDescription),
-		Image:        instance.Thumbnail,
+		Title:       text.SanitizePlaintext(instance.Title) + " - GoToSocial",
+		Type:        "website",
+		Locale:      locale,
+		URL:         instance.URI,
+		SiteName:    instance.AccountDomain,
+		Description: parseDescription(instance.ShortDescription),
+
+		Image:    instance.Thumbnail,
+		ImageAlt: instance.ThumbnailDescription,
 	}
 
 	return og
@@ -80,11 +85,20 @@ func ogBase(instance *apimodel.InstanceV1) *ogMeta {
 // struct specific to that account. It's suitable for serving
 // at account profile pages.
 func (og *ogMeta) withAccount(account *apimodel.Account) *ogMeta {
-	og.ResourceType = "profile"
 	og.Title = parseTitle(account, og.SiteName)
+	og.Type = "profile"
 	og.URL = account.URL
-	og.Description = parseDescription(account.Note)
+	if account.Note != "" {
+		og.Description = parseDescription(account.Note)
+	} else {
+		og.Description = "This GoToSocial user hasn't written a bio yet!"
+	}
+
 	og.Image = account.Avatar
+	og.ImageAlt = "Avatar for " + account.Username
+
+	og.ProfileUsername = account.Username
+
 	return og
 }
 
@@ -92,31 +106,39 @@ func (og *ogMeta) withAccount(account *apimodel.Account) *ogMeta {
 // struct specific to that status. It's suitable for serving
 // at status pages.
 func (og *ogMeta) withStatus(status *apimodel.Status) *ogMeta {
+	og.Title = "Post by " + parseTitle(status.Account, og.SiteName)
+	og.Type = "article"
+	if status.Language != nil {
+		og.Locale = *status.Language
+	}
+	og.URL = status.URL
+	switch {
+	case status.SpoilerText != "":
+		og.Description = parseDescription("CW: " + status.SpoilerText)
+	case status.Text != "":
+		og.Description = parseDescription(status.Text)
+	default:
+		og.Description = og.Title
+	}
+
 	if !status.Sensitive && len(status.MediaAttachments) > 0 {
 		a := status.MediaAttachments[0]
 		og.Image = a.PreviewURL
 		og.ImageWidth = strconv.Itoa(a.Meta.Small.Width)
 		og.ImageHeight = strconv.Itoa(a.Meta.Small.Height)
+		if a.Description != nil {
+			og.ImageAlt = *a.Description
+		}
 	} else {
 		og.Image = status.Account.Avatar
+		og.ImageAlt = "Avatar for " + status.Account.Username
 	}
 
-	if status.SpoilerText != "" {
-		og.Description = parseDescription("CW: " + status.SpoilerText)
-	} else {
-		og.Description = parseDescription(status.Text)
-	}
-
-	if status.Language != nil {
-		og.Locale = *status.Language
-	}
-	og.ResourceType = "article"
-	og.Title = "Post by " + parseTitle(status.Account, og.SiteName)
-	og.URL = status.URL
 	og.ArticlePublisher = status.Account.URL
 	og.ArticleAuthor = status.Account.URL
 	og.ArticlePublishedTime = status.CreatedAt
 	og.ArticleModifiedTime = status.CreatedAt
+
 	return og
 }
 

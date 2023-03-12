@@ -1,26 +1,26 @@
-/*
-   GoToSocial
-   Copyright (C) 2021-2023 GoToSocial Authors admin@gotosocial.org
-
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU Affero General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU Affero General Public License for more details.
-
-   You should have received a copy of the GNU Affero General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package testrig
 
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"io"
 	"net/http"
 	"strings"
@@ -52,7 +52,7 @@ const (
 // PER TEST rather than per suite, so that the do function can be set on a test by test (or even more granular)
 // basis.
 func NewTestTransportController(state *state.State, client pub.HttpClient) transport.Controller {
-	return transport.NewController(state.DB, NewTestFederatingDB(state), &federation.Clock{}, client)
+	return transport.NewController(state, NewTestFederatingDB(state), &federation.Clock{}, client)
 }
 
 type MockHTTPClient struct {
@@ -121,6 +121,10 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 			responseContentLength = len(responseBytes)
 		} else if strings.Contains(req.URL.String(), ".well-known/webfinger") {
 			responseCode, responseBytes, responseContentType, responseContentLength = WebfingerResponse(req)
+		} else if strings.Contains(req.URL.String(), ".weird-webfinger-location/webfinger") {
+			responseCode, responseBytes, responseContentType, responseContentLength = WebfingerResponse(req)
+		} else if strings.Contains(req.URL.String(), ".well-known/host-meta") {
+			responseCode, responseBytes, responseContentType, responseContentLength = HostMetaResponse(req)
 		} else if note, ok := mockHTTPClient.TestRemoteStatuses[req.URL.String()]; ok {
 			// the request is for a note that we have stored
 			noteI, err := streams.Serialize(note)
@@ -221,11 +225,47 @@ func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	return m.do(req)
 }
 
+func HostMetaResponse(req *http.Request) (responseCode int, responseBytes []byte, responseContentType string, responseContentLength int) {
+	var hm *apimodel.HostMeta
+
+	if req.URL.String() == "https://misconfigured-instance.com/.well-known/host-meta" {
+		hm = &apimodel.HostMeta{
+			XMLNS: "http://docs.oasis-open.org/ns/xri/xrd-1.0",
+			Link: []apimodel.Link{
+				{
+					Rel:      "lrdd",
+					Type:     "application/xrd+xml",
+					Template: "https://misconfigured-instance.com/.weird-webfinger-location/webfinger?resource={uri}",
+				},
+			},
+		}
+	}
+
+	if hm == nil {
+		log.Debugf(nil, "hostmeta response not available for %s", req.URL)
+		responseCode = http.StatusNotFound
+		responseBytes = []byte(``)
+		responseContentType = "application/xml"
+		responseContentLength = len(responseBytes)
+		return
+	}
+
+	hmXML, err := xml.Marshal(hm)
+	if err != nil {
+		panic(err)
+	}
+	responseCode = http.StatusOK
+	responseBytes = hmXML
+	responseContentType = "application/xml"
+	responseContentLength = len(hmXML)
+	return
+}
+
 func WebfingerResponse(req *http.Request) (responseCode int, responseBytes []byte, responseContentType string, responseContentLength int) {
 	var wfr *apimodel.WellKnownResponse
 
 	switch req.URL.String() {
-	case "https://unknown-instance.com/.well-known/webfinger?resource=acct:some_group@unknown-instance.com":
+	case "https://unknown-instance.com/.well-known/webfinger?resource=acct%3Asome_group%40unknown-instance.com":
 		wfr = &apimodel.WellKnownResponse{
 			Subject: "acct:some_group@unknown-instance.com",
 			Links: []apimodel.Link{
@@ -236,7 +276,7 @@ func WebfingerResponse(req *http.Request) (responseCode int, responseBytes []byt
 				},
 			},
 		}
-	case "https://owncast.example.org/.well-known/webfinger?resource=acct:rgh@owncast.example.org":
+	case "https://owncast.example.org/.well-known/webfinger?resource=acct%3Argh%40owncast.example.org":
 		wfr = &apimodel.WellKnownResponse{
 			Subject: "acct:rgh@example.org",
 			Links: []apimodel.Link{
@@ -247,7 +287,7 @@ func WebfingerResponse(req *http.Request) (responseCode int, responseBytes []byt
 				},
 			},
 		}
-	case "https://unknown-instance.com/.well-known/webfinger?resource=acct:brand_new_person@unknown-instance.com":
+	case "https://unknown-instance.com/.well-known/webfinger?resource=acct%3Abrand_new_person%40unknown-instance.com":
 		wfr = &apimodel.WellKnownResponse{
 			Subject: "acct:brand_new_person@unknown-instance.com",
 			Links: []apimodel.Link{
@@ -258,7 +298,7 @@ func WebfingerResponse(req *http.Request) (responseCode int, responseBytes []byt
 				},
 			},
 		}
-	case "https://turnip.farm/.well-known/webfinger?resource=acct:turniplover6969@turnip.farm":
+	case "https://turnip.farm/.well-known/webfinger?resource=acct%3Aturniplover6969%40turnip.farm":
 		wfr = &apimodel.WellKnownResponse{
 			Subject: "acct:turniplover6969@turnip.farm",
 			Links: []apimodel.Link{
@@ -269,7 +309,7 @@ func WebfingerResponse(req *http.Request) (responseCode int, responseBytes []byt
 				},
 			},
 		}
-	case "https://fossbros-anonymous.io/.well-known/webfinger?resource=acct:foss_satan@fossbros-anonymous.io":
+	case "https://fossbros-anonymous.io/.well-known/webfinger?resource=acct%3Afoss_satan%40fossbros-anonymous.io":
 		wfr = &apimodel.WellKnownResponse{
 			Subject: "acct:foss_satan@fossbros-anonymous.io",
 			Links: []apimodel.Link{
@@ -280,7 +320,7 @@ func WebfingerResponse(req *http.Request) (responseCode int, responseBytes []byt
 				},
 			},
 		}
-	case "https://example.org/.well-known/webfinger?resource=acct:Some_User@example.org":
+	case "https://example.org/.well-known/webfinger?resource=acct%3ASome_User%40example.org":
 		wfr = &apimodel.WellKnownResponse{
 			Subject: "acct:Some_User@example.org",
 			Links: []apimodel.Link{
@@ -288,6 +328,17 @@ func WebfingerResponse(req *http.Request) (responseCode int, responseBytes []byt
 					Rel:  "self",
 					Type: applicationActivityJSON,
 					Href: "https://example.org/users/Some_User",
+				},
+			},
+		}
+	case "https://misconfigured-instance.com/.weird-webfinger-location/webfinger?resource=acct%3Asomeone%40misconfigured-instance.com":
+		wfr = &apimodel.WellKnownResponse{
+			Subject: "acct:someone@misconfigured-instance.com",
+			Links: []apimodel.Link{
+				{
+					Rel:  "self",
+					Type: applicationActivityJSON,
+					Href: "https://misconfigured-instance.com/users/someone",
 				},
 			},
 		}

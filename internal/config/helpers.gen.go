@@ -1,21 +1,21 @@
 // THIS IS A GENERATED FILE, DO NOT EDIT BY HAND
-/*
-   GoToSocial
-   Copyright (C) 2021-2023 GoToSocial Authors admin@gotosocial.org
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU Affero General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU Affero General Public License for more details.
-
-   You should have received a copy of the GNU Affero General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package config
 
 import (
@@ -3002,6 +3002,81 @@ func GetCacheGTSUserSweepFreq() time.Duration { return global.GetCacheGTSUserSwe
 
 // SetCacheGTSUserSweepFreq safely sets the value for global configuration 'Cache.GTS.UserSweepFreq' field
 func SetCacheGTSUserSweepFreq(v time.Duration) { global.SetCacheGTSUserSweepFreq(v) }
+
+// GetCacheGTSWebfingerMaxSize safely fetches the Configuration value for state's 'Cache.GTS.WebfingerMaxSize' field
+func (st *ConfigState) GetCacheGTSWebfingerMaxSize() (v int) {
+	st.mutex.Lock()
+	v = st.config.Cache.GTS.WebfingerMaxSize
+	st.mutex.Unlock()
+	return
+}
+
+// SetCacheGTSWebfingerMaxSize safely sets the Configuration value for state's 'Cache.GTS.WebfingerMaxSize' field
+func (st *ConfigState) SetCacheGTSWebfingerMaxSize(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.WebfingerMaxSize = v
+	st.reloadToViper()
+}
+
+// CacheGTSWebfingerMaxSizeFlag returns the flag name for the 'Cache.GTS.WebfingerMaxSize' field
+func CacheGTSWebfingerMaxSizeFlag() string { return "cache-gts-webfinger-max-size" }
+
+// GetCacheGTSWebfingerMaxSize safely fetches the value for global configuration 'Cache.GTS.WebfingerMaxSize' field
+func GetCacheGTSWebfingerMaxSize() int { return global.GetCacheGTSWebfingerMaxSize() }
+
+// SetCacheGTSWebfingerMaxSize safely sets the value for global configuration 'Cache.GTS.WebfingerMaxSize' field
+func SetCacheGTSWebfingerMaxSize(v int) { global.SetCacheGTSWebfingerMaxSize(v) }
+
+// GetCacheGTSWebfingerTTL safely fetches the Configuration value for state's 'Cache.GTS.WebfingerTTL' field
+func (st *ConfigState) GetCacheGTSWebfingerTTL() (v time.Duration) {
+	st.mutex.Lock()
+	v = st.config.Cache.GTS.WebfingerTTL
+	st.mutex.Unlock()
+	return
+}
+
+// SetCacheGTSWebfingerTTL safely sets the Configuration value for state's 'Cache.GTS.WebfingerTTL' field
+func (st *ConfigState) SetCacheGTSWebfingerTTL(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.WebfingerTTL = v
+	st.reloadToViper()
+}
+
+// CacheGTSWebfingerTTLFlag returns the flag name for the 'Cache.GTS.WebfingerTTL' field
+func CacheGTSWebfingerTTLFlag() string { return "cache-gts-webfinger-ttl" }
+
+// GetCacheGTSWebfingerTTL safely fetches the value for global configuration 'Cache.GTS.WebfingerTTL' field
+func GetCacheGTSWebfingerTTL() time.Duration { return global.GetCacheGTSWebfingerTTL() }
+
+// SetCacheGTSWebfingerTTL safely sets the value for global configuration 'Cache.GTS.WebfingerTTL' field
+func SetCacheGTSWebfingerTTL(v time.Duration) { global.SetCacheGTSWebfingerTTL(v) }
+
+// GetCacheGTSWebfingerSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.WebfingerSweepFreq' field
+func (st *ConfigState) GetCacheGTSWebfingerSweepFreq() (v time.Duration) {
+	st.mutex.Lock()
+	v = st.config.Cache.GTS.WebfingerSweepFreq
+	st.mutex.Unlock()
+	return
+}
+
+// SetCacheGTSWebfingerSweepFreq safely sets the Configuration value for state's 'Cache.GTS.WebfingerSweepFreq' field
+func (st *ConfigState) SetCacheGTSWebfingerSweepFreq(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.WebfingerSweepFreq = v
+	st.reloadToViper()
+}
+
+// CacheGTSWebfingerSweepFreqFlag returns the flag name for the 'Cache.GTS.WebfingerSweepFreq' field
+func CacheGTSWebfingerSweepFreqFlag() string { return "cache-gts-webfinger-sweep-freq" }
+
+// GetCacheGTSWebfingerSweepFreq safely fetches the value for global configuration 'Cache.GTS.WebfingerSweepFreq' field
+func GetCacheGTSWebfingerSweepFreq() time.Duration { return global.GetCacheGTSWebfingerSweepFreq() }
+
+// SetCacheGTSWebfingerSweepFreq safely sets the value for global configuration 'Cache.GTS.WebfingerSweepFreq' field
+func SetCacheGTSWebfingerSweepFreq(v time.Duration) { global.SetCacheGTSWebfingerSweepFreq(v) }
 
 // GetAdminAccountUsername safely fetches the Configuration value for state's 'AdminAccountUsername' field
 func (st *ConfigState) GetAdminAccountUsername() (v string) {

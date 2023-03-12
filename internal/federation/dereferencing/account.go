@@ -1,20 +1,19 @@
-/*
-   GoToSocial
-   Copyright (C) 2021-2023 GoToSocial Authors admin@gotosocial.org
-
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU Affero General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU Affero General Public License for more details.
-
-   You should have received a copy of the GNU Affero General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package dereferencing
 
@@ -156,13 +155,15 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		// A username was provided so we can attempt a webfinger, this ensures up-to-date accountdomain info.
 		accDomain, accURI, err := d.fingerRemoteAccount(ctx, transport, account.Username, account.Domain)
 
-		if err != nil && account.URI == "" {
-			// this is a new account (to us) with username@domain but failed
-			// webfinger, there is nothing more we can do in this situation.
+		switch {
+		case err != nil && account.URI == "":
+			// this is a new account (to us) with username@domain but failed webfinger, nothing more we can do.
 			return nil, fmt.Errorf("enrichAccount: error webfingering account: %w", err)
-		}
 
-		if err == nil {
+		case err != nil:
+			log.Errorf(ctx, "error webfingering[1] remote account %s@%s: %v", account.Username, account.Domain, err)
+
+		case err == nil:
 			if account.Domain != accDomain {
 				// After webfinger, we now have correct account domain from which we can do a final DB check.
 				alreadyAccount, err := d.db.GetAccountByUsernameDomain(ctx, account.Username, accDomain)
@@ -224,7 +225,11 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		// Now we have a username we can attempt it, this ensures up-to-date accountdomain info.
 		accDomain, _, err := d.fingerRemoteAccount(ctx, transport, latestAcc.Username, uri.Host)
 
-		if err == nil {
+		switch {
+		case err != nil:
+			log.Errorf(ctx, "error webfingering[2] remote account %s@%s: %v", latestAcc.Username, uri.Host, err)
+
+		case err == nil:
 			// Update account with latest info.
 			latestAcc.Domain = accDomain
 		}

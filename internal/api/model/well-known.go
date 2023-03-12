@@ -1,22 +1,23 @@
-/*
-   GoToSocial
-   Copyright (C) 2021-2023 GoToSocial Authors admin@gotosocial.org
-
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU Affero General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU Affero General Public License for more details.
-
-   You should have received a copy of the GNU Affero General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package model
+
+import "encoding/xml"
 
 // WellKnownResponse represents the response to either a webfinger request for an 'acct' resource, or a request to nodeinfo.
 // For example, it would be returned from https://example.org/.well-known/webfinger?resource=acct:some_username@example.org
@@ -32,12 +33,12 @@ type WellKnownResponse struct {
 
 // Link represents one 'link' in a slice of links returned from a lookup request.
 //
-// See https://webfinger.net/
+// See https://webfinger.net/ and https://www.rfc-editor.org/rfc/rfc6415.html#section-3.1
 type Link struct {
-	Rel      string `json:"rel"`
-	Type     string `json:"type,omitempty"`
-	Href     string `json:"href,omitempty"`
-	Template string `json:"template,omitempty"`
+	Rel      string `json:"rel" xml:"rel,attr"`
+	Type     string `json:"type,omitempty" xml:"type,attr,omitempty"`
+	Href     string `json:"href,omitempty" xml:"href,attr,omitempty"`
+	Template string `json:"template,omitempty" xml:"template,attr,omitempty"`
 }
 
 // Nodeinfo represents a version 2.1 or version 2.0 nodeinfo schema.
@@ -86,4 +87,14 @@ type NodeInfoUsage struct {
 // NodeInfoUsers represents aggregate information about the users on the server.
 type NodeInfoUsers struct {
 	Total int `json:"total"`
+}
+
+// HostMeta represents a hostmeta document.
+// See: https://www.rfc-editor.org/rfc/rfc6415.html#section-3
+//
+// swagger:model hostmeta
+type HostMeta struct {
+	XMLName xml.Name `xml:"XRD"`
+	XMLNS   string   `xml:"xmlns,attr"`
+	Link    []Link   `xml:"Link"`
 }
