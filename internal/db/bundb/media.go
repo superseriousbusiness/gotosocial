@@ -229,21 +229,3 @@ func (m *mediaDB) CountLocalUnattachedOlderThan(ctx context.Context, olderThan t
 
 	return count, nil
 }
-
-func (m *mediaDB) getAttachments(ctx context.Context, ids []string) ([]*gtsmodel.MediaAttachment, db.Error) {
-	attachments := make([]*gtsmodel.MediaAttachment, 0, len(ids))
-
-	for _, id := range ids {
-		// Attempt fetch from DB
-		attachment, err := m.GetAttachmentByID(ctx, id)
-		if err != nil {
-			log.Errorf(ctx, "error getting attachment %q: %v", id, err)
-			continue
-		}
-
-		// Append attachment
-		attachments = append(attachments, attachment)
-	}
-
-	return attachments, nil
-}
