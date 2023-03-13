@@ -25,7 +25,7 @@ func (f Field) AppendFormat(buf *byteutil.Buffer, vbose bool) {
 	} else /* regular */ {
 		fmtstr = `%+v`
 	}
-	AppendQuote(buf, f.K)
+	AppendQuoteString(buf, f.K)
 	buf.WriteByte('=')
 	appendValuef(buf, fmtstr, f.V)
 }
@@ -50,7 +50,7 @@ func appendValuef(buf *byteutil.Buffer, format string, args ...interface{}) {
 	fmtbuf.B = fmt.Appendf(fmtbuf.B, format, args...)
 
 	// Append quoted value to dst buffer
-	AppendQuote(buf, fmtbuf.String())
+	AppendQuoteValue(buf, fmtbuf.String())
 
 	// Drop overly large capacity buffers
 	if fmtbuf.Cap() > int(^uint16(0)) {

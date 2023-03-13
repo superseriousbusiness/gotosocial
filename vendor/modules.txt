@@ -39,7 +39,7 @@ codeberg.org/gruf/go-hashenc
 # codeberg.org/gruf/go-iotools v0.0.0-20221224124424-3386841cb225
 ## explicit; go 1.19
 codeberg.org/gruf/go-iotools
-# codeberg.org/gruf/go-kv v1.6.0
+# codeberg.org/gruf/go-kv v1.6.1
 ## explicit; go 1.19
 codeberg.org/gruf/go-kv
 codeberg.org/gruf/go-kv/format

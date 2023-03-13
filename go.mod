@@ -9,7 +9,7 @@ require (
 	codeberg.org/gruf/go-debug v1.3.0
 	codeberg.org/gruf/go-errors/v2 v2.1.1
 	codeberg.org/gruf/go-fastcopy v1.1.2
-	codeberg.org/gruf/go-kv v1.6.0
+	codeberg.org/gruf/go-kv v1.6.1
 	codeberg.org/gruf/go-logger/v2 v2.2.1
 	codeberg.org/gruf/go-mutexes v1.1.5
 	codeberg.org/gruf/go-runners v1.6.0
