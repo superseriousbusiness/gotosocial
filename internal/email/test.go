@@ -26,7 +26,7 @@ import (
 
 const (
 	testTemplate = "email_test_text.tmpl"
-	testSubject  = "GoToSocial Email Test"
+	testSubject  = "GoToSocial Test Email"
 )
 
 type TestData struct {
