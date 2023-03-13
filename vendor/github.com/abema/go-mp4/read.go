@@ -148,7 +148,7 @@ func readBoxStructureFromInternal(r io.ReadSeeker, bi *BoxInfo, path BoxPath, ha
 func readBoxStructure(r io.ReadSeeker, totalSize uint64, isRoot bool, path BoxPath, ctx Context, handler ReadHandler, params []interface{}) ([]interface{}, error) {
 	vals := make([]interface{}, 0, 8)
 
-	for isRoot || totalSize != 0 {
+	for isRoot || totalSize >= SmallHeaderSize {
 		bi, err := ReadBoxInfo(r)
 		if isRoot && err == io.EOF {
 			return vals, nil
@@ -174,7 +174,7 @@ func readBoxStructure(r io.ReadSeeker, totalSize uint64, isRoot bool, path BoxPa
 		}
 	}
 
-	if totalSize != 0 {
+	if totalSize != 0 && !ctx.IsQuickTimeCompatible {
 		return nil, errors.New("Unexpected EOF")
 	}
 
