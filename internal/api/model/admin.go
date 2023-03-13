@@ -183,3 +183,9 @@ type MediaCleanupRequest struct {
 	// If value is not specified, the value of media-remote-cache-days in the server config will be used.
 	RemoteCacheDays *int `form:"remote_cache_days" json:"remote_cache_days" xml:"remote_cache_days"`
 }
+
+// AdminSendTestEmailRequest models a test email send request (woah).
+type AdminSendTestEmailRequest struct {
+	// Email address to send the test email to.
+	Email string `form:"email" json:"email" xml:"email"`
+}

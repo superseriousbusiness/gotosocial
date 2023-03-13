@@ -88,3 +88,24 @@ func (s *noopSender) SendResetEmail(toAddress string, data ResetData) error {
 
 	return nil
 }
+
+func (s *noopSender) SendTestEmail(toAddress string, data TestData) error {
+	buf := &bytes.Buffer{}
+	if err := s.template.ExecuteTemplate(buf, testTemplate, data); err != nil {
+		return err
+	}
+	testBody := buf.String()
+
+	msg, err := assembleMessage(testSubject, testBody, toAddress, "test@example.org")
+	if err != nil {
+		return err
+	}
+
+	log.Tracef(nil, "NOT SENDING test email to %s with contents: %s", toAddress, msg)
+
+	if s.sendCallback != nil {
+		s.sendCallback(toAddress, string(msg))
+	}
+
+	return nil
+}

@@ -23,31 +23,27 @@ import (
 )
 
 const (
-	resetTemplate = "email_reset_text.tmpl"
-	resetSubject  = "GoToSocial Password Reset"
+	testTemplate = "email_test_text.tmpl"
+	testSubject  = "GoToSocial Email Test"
 )
 
-// ResetData represents data passed into the reset email address template.
-type ResetData struct {
-	// Username to be addressed.
-	Username string
+type TestData struct {
+	// Username of admin user who sent the test.
+	SendingUsername string
 	// URL of the instance to present to the receiver.
 	InstanceURL string
 	// Name of the instance to present to the receiver.
 	InstanceName string
-	// Link to present to the receiver to click on and begin the reset process.
-	// Should be a full link with protocol eg., https://example.org/reset_password?token=some-reset-password-token
-	ResetLink string
 }
 
-func (s *sender) SendResetEmail(toAddress string, data ResetData) error {
+func (s *sender) SendTestEmail(toAddress string, data TestData) error {
 	buf := &bytes.Buffer{}
-	if err := s.template.ExecuteTemplate(buf, resetTemplate, data); err != nil {
+	if err := s.template.ExecuteTemplate(buf, testTemplate, data); err != nil {
 		return err
 	}
-	resetBody := buf.String()
+	testBody := buf.String()
 
-	msg, err := assembleMessage(resetSubject, resetBody, toAddress, s.from)
+	msg, err := assembleMessage(testSubject, testBody, toAddress, s.from)
 	if err != nil {
 		return err
 	}
