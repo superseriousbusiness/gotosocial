@@ -19,7 +19,6 @@ package admin
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -49,8 +48,7 @@ func (p *Processor) EmailTest(ctx context.Context, account *gtsmodel.Account, to
 	}
 
 	if err := p.emailSender.SendTestEmail(toAddress, testData); err != nil {
-		var smtpError *email.ErrorSMTP
-		if errors.As(err, &smtpError) {
+		if errorType := gtserror.Type(err); errorType == gtserror.TypeSMTP {
 			// An error occurred during the SMTP part.
 			// We should indicate this to the caller, as
 			// it will likely help them debug the issue.

@@ -20,6 +20,8 @@ package email
 import (
 	"bytes"
 	"net/smtp"
+
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 const (
@@ -49,7 +51,7 @@ func (s *sender) SendTestEmail(toAddress string, data TestData) error {
 	}
 
 	if err := smtp.SendMail(s.hostAddress, s.auth, s.from, []string{toAddress}, msg); err != nil {
-		return &ErrorSMTP{err}
+		return gtserror.SetType(err, gtserror.TypeSMTP)
 	}
 
 	return nil
