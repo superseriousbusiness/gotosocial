@@ -73,7 +73,7 @@ codeberg.org/gruf/go-store/v2/util
 ## explicit; go 1.19
 github.com/KimMachineGun/automemlimit
 github.com/KimMachineGun/automemlimit/memlimit
-# github.com/abema/go-mp4 v0.10.0
+# github.com/abema/go-mp4 v0.10.1
 ## explicit; go 1.14
 github.com/abema/go-mp4
 github.com/abema/go-mp4/bitio
