@@ -16,7 +16,7 @@ func (f Field) AppendFormat(buf *byteutil.Buffer, vbose bool) {
 	} else /* regular */ {
 		fmtstr = "{:v}"
 	}
-	AppendQuote(buf, f.K)
+	AppendQuoteString(buf, f.K)
 	buf.WriteByte('=')
 	format.Appendf(buf, fmtstr, f.V)
 }
