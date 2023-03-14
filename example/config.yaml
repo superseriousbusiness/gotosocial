@@ -264,6 +264,14 @@ cache:
     emoji-category-ttl: "5m"
     emoji-category-sweep-freq: "30s"
 
+    follow-max-size: 500
+    follow-ttl: "5m"
+    follow-sweep-freq: "30s"
+
+    follow-request-max-size: 500
+    follow-request-ttl: "5m"
+    follow-request-sweep-freq: "30s"
+
     media-max-size: 500
     media-ttl: "5m"
     media-sweep-freq: "30s"
