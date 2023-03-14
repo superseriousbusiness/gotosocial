@@ -305,7 +305,12 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Er
 	}
 
 	for _, id := range status.AttachmentIDs {
-		// Clear updated media attachment IDs from cache
+		// Invalidate media attachments from cache.
+		//
+		// NOTE: this is needed due to the way in which
+		// we upload status attachments, and only after
+		// update them with a known status ID. This is
+		// not the case for header/avatar attachments.
 		s.state.Caches.GTS.Media().Invalidate("ID", id)
 	}
 
@@ -383,16 +388,8 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 		return err
 	}
 
-	for _, id := range status.AttachmentIDs {
-		// Clear updated media attachment IDs from cache
-		s.state.Caches.GTS.Media().Invalidate("ID", id)
-	}
-
 	// Invalidate status from database lookups.
 	s.state.Caches.GTS.Status().Invalidate("ID", status.ID)
-
-	// Invalidate status from all visibility lookups.
-	s.state.Caches.Visibility.Invalidate("ItemID", status.ID)
 
 	return nil
 }

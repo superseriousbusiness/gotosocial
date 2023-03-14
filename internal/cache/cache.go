@@ -107,6 +107,16 @@ func (c *Caches) setuphooks() {
 	c.GTS.Status().SetInvalidateCallback(func(status *gtsmodel.Status) {
 		// Invalidate status ID cached visibility.
 		c.Visibility.Invalidate("ItemID", status.ID)
+
+		for _, id := range status.AttachmentIDs {
+			// Invalidate media attachments from cache.
+			//
+			// NOTE: this is needed due to the way in which
+			// we upload status attachments, and only after
+			// update them with a known status ID. This is
+			// not the case for header/avatar attachments.
+			c.GTS.Media().Invalidate("ID", id)
+		}
 	})
 
 	c.GTS.User().SetInvalidateCallback(func(user *gtsmodel.User) {
