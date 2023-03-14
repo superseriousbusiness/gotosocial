@@ -113,6 +113,11 @@ var testDefaults = config.Configuration{
 	SMTPFrom:               "GoToSocial",
 	SMTPDiscloseRecipients: false,
 
+	TracingEnabled:           false,
+	TracingEndpoint:          "localhost:4317",
+	TracingTransport:         "grpc",
+	TracingInsecureTransport: true,
+
 	SyslogEnabled:  false,
 	SyslogProtocol: "udp",
 	SyslogAddress:  "localhost:514",

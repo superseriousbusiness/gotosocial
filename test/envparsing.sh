@@ -150,6 +150,10 @@ EXPECT=$(cat <<"EOF"
     "syslog-protocol": "udp",
     "tls-certificate-chain": "",
     "tls-certificate-key": "",
+    "tracing-enabled": false,
+    "tracing-endpoint": "localhost:4317",
+    "tracing-insecure": false,
+    "tracing-transport": "grpc",
     "trusted-proxies": [
         "127.0.0.1/32",
         "docker.host.local"
@@ -239,6 +243,7 @@ GTS_SMTP_DISCLOSE_RECIPIENTS=true \
 GTS_SYSLOG_ENABLED=true \
 GTS_SYSLOG_PROTOCOL='udp' \
 GTS_SYSLOG_ADDRESS='127.0.0.1:6969' \
+GTS_TRACING_ENDPOINT='localhost:4317' \
 GTS_ADVANCED_COOKIES_SAMESITE='strict' \
 GTS_ADVANCED_RATE_LIMIT_REQUESTS=6969 \
 GTS_ADVANCED_THROTTLING_MULTIPLIER=-1 \

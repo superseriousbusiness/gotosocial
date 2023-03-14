@@ -40,6 +40,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/tracing"
 	"github.com/superseriousbusiness/gotosocial/internal/web"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -50,6 +51,10 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
+
+	if err := tracing.Initialize(); err != nil {
+		return fmt.Errorf("error initializing tracing: %w", err)
+	}
 
 	// Initialize caches
 	state.Caches.Init()
@@ -96,6 +101,8 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// attach global middlewares which are used for every request
 	router.AttachGlobalMiddleware(
+		tracing.InstrumentGin(),
+		middleware.AddRequestID(config.GetRequestIDHeader()),
 		middleware.Logger(),
 		middleware.UserAgent(),
 		middleware.CORS(),

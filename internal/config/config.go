@@ -126,6 +126,11 @@ type Configuration struct {
 	OIDCLinkExisting     bool     `name:"oidc-link-existing" usage:"link existing user accounts to OIDC logins based on the stored email value"`
 	OIDCAdminGroups      []string `name:"oidc-admin-groups" usage:"Membership of one of the listed groups makes someone a GtS admin"`
 
+	TracingEnabled           bool   `name:"tracing-enabled" usage:"Enable OTLP Tracing"`
+	TracingTransport         string `name:"tracing-transport" usage:"grpc or jaeger"`
+	TracingEndpoint          string `name:"tracing-endpoint" usage:"Endpoint of your trace collector. Eg., 'localhost:4317' for gRPC, 'http://localhost:14268/api/traces' for jaeger"`
+	TracingInsecureTransport bool   `name:"tracing-insecure" usage:"Disable HTTPS for the gRPC transport protocol"`
+
 	SMTPHost               string `name:"smtp-host" usage:"Host of the smtp server. Eg., 'smtp.eu.mailgun.org'"`
 	SMTPPort               int    `name:"smtp-port" usage:"Port of the smtp server. Eg., 587"`
 	SMTPUsername           string `name:"smtp-username" usage:"Username to authenticate with the smtp server as. Eg., 'postmaster@mail.example.org'"`
@@ -152,7 +157,7 @@ type Configuration struct {
 	AdminTransPath        string `name:"path" usage:"the path of the file to import from/export to"`
 	AdminMediaPruneDryRun bool   `name:"dry-run" usage:"perform a dry run and only log number of items eligible for pruning"`
 
-	RequestIDHeader string `name:"request-id-header" usage:"Header to extract the Request ID from. Eg.,'X-Request-Id'"`
+	RequestIDHeader string `name:"request-id-header" usage:"Header to extract the Request ID from. Eg.,'X-Request-Id'. If tracing is enabled, this option has no effect as the trace ID is used as request id"`
 }
 
 type CacheConfiguration struct {

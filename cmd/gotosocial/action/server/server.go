@@ -32,6 +32,7 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
+	"github.com/superseriousbusiness/gotosocial/internal/tracing"
 	"go.uber.org/automaxprocs/maxprocs"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -69,6 +70,12 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	state.Caches.Init()
 	state.Caches.Start()
 	defer state.Caches.Stop()
+
+	// Initialize Tracing
+
+	if err := tracing.Initialize(); err != nil {
+		return fmt.Errorf("error initializing tracing: %w", err)
+	}
 
 	// Open connection to the database
 	dbService, err := bundb.NewBunDBService(ctx, &state)
@@ -148,6 +155,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// attach global middlewares which are used for every request
 	router.AttachGlobalMiddleware(
+		tracing.InstrumentGin(),
 		middleware.AddRequestID(config.GetRequestIDHeader()),
 		// note: hooks adding ctx fields must be ABOVE
 		// the logger, otherwise won't be accessible.

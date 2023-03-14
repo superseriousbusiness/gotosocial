@@ -1,0 +1,5 @@
+issues:
+  exclude-rules:
+    - text: 'Drivers should implement'
+      linters:
+        - staticcheck

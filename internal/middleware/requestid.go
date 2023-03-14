@@ -28,6 +28,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/tracing"
 )
 
 var (
@@ -65,9 +66,14 @@ func generateID() string {
 // AddRequestID returns a gin middleware which adds a unique ID to each request (both response header and context).
 func AddRequestID(header string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Look for existing ID.
-		id := c.GetHeader(header)
+		// check if we already have a trace id
+		id := tracing.CurrentTraceID(c.Request.Context())
+		if id == "" {
+			// fallback to the request id header
+			id = c.GetHeader(header)
+		}
 
+		// Have we found anything?
 		if id == "" {
 			// Generate new ID.
 			//
