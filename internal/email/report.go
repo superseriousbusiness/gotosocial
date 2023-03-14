@@ -17,10 +17,44 @@
 
 package email
 
-type NewReportData struct {
+import (
+	"bytes"
+	"net/smtp"
 
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+)
+
+const (
+	reportTemplate = "email_report_text.tmpl"
+	reportSubject  = "GoToSocial New Moderation Report"
+)
+
+type NewReportData struct {
+	// URL of the instance to present to the receiver.
+	InstanceURL string
+	// Name of the instance to present to the receiver.
+	InstanceName string
+	// URL to open the report in the settings panel.
+	ReportURL string
+	// Domain from which the report originated.
+	ReportDomain string
 }
 
 func (s *sender) SendNewReportEmail(toAddresses []string, data NewReportData) error {
+	buf := &bytes.Buffer{}
+	if err := s.template.ExecuteTemplate(buf, reportTemplate, data); err != nil {
+		return err
+	}
+	reportBody := buf.String()
+
+	msg, err := assembleMessage(reportSubject, reportBody, s.from, toAddresses...)
+	if err != nil {
+		return err
+	}
+
+	if err := smtp.SendMail(s.hostAddress, s.auth, s.from, toAddresses, msg); err != nil {
+		return gtserror.SetType(err, gtserror.TypeSMTP)
+	}
+
 	return nil
 }

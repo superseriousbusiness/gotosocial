@@ -156,3 +156,12 @@ func (i *instanceDB) GetInstanceAccounts(ctx context.Context, domain string, max
 
 	return accounts, nil
 }
+
+func (i *instanceDB) GetInstanceModeratorAddresses(ctx context.Context) ([]string, db.Error) {
+	addresses := []string{}
+
+	q := i.conn.NewSelect().
+		.
+
+	return addresses, nil
+}

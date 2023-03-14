@@ -42,4 +42,8 @@ type Instance interface {
 
 	// GetInstancePeers returns a slice of instances that the host instance knows about.
 	GetInstancePeers(ctx context.Context, includeSuspended bool) ([]*gtsmodel.Instance, Error)
+
+	// GetInstanceModeratorAddresses returns a slice of email addresses belonging to active
+	// (as in, not suspended) moderators + admins on this instance.
+	GetInstanceModeratorAddresses(ctx context.Context) ([]string, Error)
 }

@@ -23,7 +23,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
@@ -303,6 +305,31 @@ func (p *Processor) notifyAnnounce(ctx context.Context, status *gtsmodel.Status)
 
 	if err := p.stream.Notify(apiNotif, status.BoostOfAccount); err != nil {
 		return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
+	}
+
+	return nil
+}
+
+func (p *Processor) notifyReport(ctx context.Context, report *gtsmodel.Report) error {
+	instance, err := p.state.DB.GetInstance(ctx, config.GetHost())
+	if err != nil {
+		return fmt.Errorf("notifyReport: error getting instance: %w", err)
+	}
+
+	toAddresses, err := p.state.DB.GetInstanceModeratorAddresses(ctx)
+	if err != nil {
+		return fmt.Errorf("notifyReport: error getting instance moderator addresses: %w", err)
+	}
+
+	reportData := email.NewReportData{
+		InstanceURL:  instance.URI,
+		InstanceName: instance.Title,
+		ReportURL:    instance.URI + "/settings/admin/reports/" + report.ID,
+		ReportDomain: report.Account.Domain,
+	}
+
+	if err := p.emailSender.SendNewReportEmail(toAddresses, reportData); err != nil {
+		return fmt.Errorf("notifyReport: error emailing instance moderators: %w", err)
 	}
 
 	return nil

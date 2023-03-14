@@ -64,7 +64,14 @@ func assembleMessage(mailSubject string, mailBody string, mailFrom string, mailT
 	mailBody = strings.ReplaceAll(mailBody, "\n", CRLF)
 
 	msg := bytes.Buffer{}
-	msg.WriteString("To: " + strings.Join(mailTo, ", ") + CRLF)
+	if len(mailTo) == 1 {
+		// Address email directly to the one recipient.
+		msg.WriteString("To: " + mailTo[0] + CRLF)
+	} else {
+		// To group, Bcc the multiple recipients.
+		msg.WriteString("To: Multiple recipients:;" + CRLF)
+		msg.WriteString("Bcc: " + strings.Join(mailTo, ", ") + CRLF)
+	}
 	msg.WriteString("Subject: " + mailSubject + CRLF)
 	msg.WriteString(CRLF)
 	msg.WriteString(mailBody)

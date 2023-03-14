@@ -48,6 +48,7 @@ type Processor struct {
 	statusTimelines timeline.Manager
 	state           *state.State
 	filter          visibility.Filter
+	emailSender     email.Sender
 
 	/*
 		SUB-PROCESSORS
@@ -119,8 +120,9 @@ func NewProcessor(
 			StatusPrepareFunction(state.DB, tc),
 			StatusSkipInsertFunction(),
 		),
-		state:  state,
-		filter: filter,
+		state:       state,
+		filter:      filter,
+		emailSender: emailSender,
 	}
 
 	// sub processors
