@@ -25,31 +25,27 @@ import (
 )
 
 const (
-	confirmTemplate = "email_confirm_text.tmpl"
-	confirmSubject  = "GoToSocial Email Confirmation"
+	testTemplate = "email_test_text.tmpl"
+	testSubject  = "GoToSocial Test Email"
 )
 
-// ConfirmData represents data passed into the confirm email address template.
-type ConfirmData struct {
-	// Username to be addressed.
-	Username string
+type TestData struct {
+	// Username of admin user who sent the test.
+	SendingUsername string
 	// URL of the instance to present to the receiver.
 	InstanceURL string
 	// Name of the instance to present to the receiver.
 	InstanceName string
-	// Link to present to the receiver to click on and do the confirmation.
-	// Should be a full link with protocol eg., https://example.org/confirm_email?token=some-long-token
-	ConfirmLink string
 }
 
-func (s *sender) SendConfirmEmail(toAddress string, data ConfirmData) error {
+func (s *sender) SendTestEmail(toAddress string, data TestData) error {
 	buf := &bytes.Buffer{}
-	if err := s.template.ExecuteTemplate(buf, confirmTemplate, data); err != nil {
+	if err := s.template.ExecuteTemplate(buf, testTemplate, data); err != nil {
 		return err
 	}
-	confirmBody := buf.String()
+	testBody := buf.String()
 
-	msg, err := assembleMessage(confirmSubject, confirmBody, toAddress, s.from)
+	msg, err := assembleMessage(testSubject, testBody, toAddress, s.from)
 	if err != nil {
 		return err
 	}

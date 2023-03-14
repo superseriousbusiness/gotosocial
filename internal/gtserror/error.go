@@ -24,11 +24,18 @@ import (
 // package private error key type.
 type errkey int
 
+// ErrorType denotes the type of an error, if set.
+type ErrorType string
+
 const (
 	// error value keys.
 	_ errkey = iota
 	statusCodeKey
 	notFoundKey
+	errorTypeKey
+
+	// error types
+	TypeSMTP ErrorType = "smtp" // smtp (mail) error
 )
 
 // StatusCode checks error for a stored status code value. For example
@@ -56,4 +63,18 @@ func NotFound(err error) bool {
 // returning wrapped error. See NotFound() for example use-cases.
 func SetNotFound(err error) error {
 	return errors.WithValue(err, notFoundKey, struct{}{})
+}
+
+// Type checks error for a stored "type" value. For example
+// an error from sending an email may set a value of "smtp"
+// to indicate this was an SMTP error.
+func Type(err error) ErrorType {
+	s, _ := errors.Value(err, errorTypeKey).(ErrorType)
+	return s
+}
+
+// SetType will wrap the given error to store a "type" value,
+// returning wrapped error. See Type() for example use-cases.
+func SetType(err error, errType ErrorType) error {
+	return errors.WithValue(err, errorTypeKey, errType)
 }

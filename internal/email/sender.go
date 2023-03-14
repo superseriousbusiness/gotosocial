@@ -32,6 +32,9 @@ type Sender interface {
 
 	// SendResetEmail sends a 'reset your password' style email to the given toAddress, with the given data.
 	SendResetEmail(toAddress string, data ResetData) error
+
+	// SendTestEmail sends a 'testing email sending' style email to the given toAddress, with the given data.
+	SendTestEmail(toAddress string, data TestData) error
 }
 
 // NewSender returns a new email Sender interface with the given configuration, or an error if something goes wrong.

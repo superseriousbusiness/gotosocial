@@ -20,26 +20,14 @@ package email
 import (
 	"bytes"
 	"net/smtp"
+
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 const (
 	resetTemplate = "email_reset_text.tmpl"
 	resetSubject  = "GoToSocial Password Reset"
 )
-
-func (s *sender) SendResetEmail(toAddress string, data ResetData) error {
-	buf := &bytes.Buffer{}
-	if err := s.template.ExecuteTemplate(buf, resetTemplate, data); err != nil {
-		return err
-	}
-	resetBody := buf.String()
-
-	msg, err := assembleMessage(resetSubject, resetBody, toAddress, s.from)
-	if err != nil {
-		return err
-	}
-	return smtp.SendMail(s.hostAddress, s.auth, s.from, []string{toAddress}, msg)
-}
 
 // ResetData represents data passed into the reset email address template.
 type ResetData struct {
@@ -52,4 +40,23 @@ type ResetData struct {
 	// Link to present to the receiver to click on and begin the reset process.
 	// Should be a full link with protocol eg., https://example.org/reset_password?token=some-reset-password-token
 	ResetLink string
+}
+
+func (s *sender) SendResetEmail(toAddress string, data ResetData) error {
+	buf := &bytes.Buffer{}
+	if err := s.template.ExecuteTemplate(buf, resetTemplate, data); err != nil {
+		return err
+	}
+	resetBody := buf.String()
+
+	msg, err := assembleMessage(resetSubject, resetBody, toAddress, s.from)
+	if err != nil {
+		return err
+	}
+
+	if err := smtp.SendMail(s.hostAddress, s.auth, s.from, []string{toAddress}, msg); err != nil {
+		return gtserror.SetType(err, gtserror.TypeSMTP)
+	}
+
+	return nil
 }

@@ -125,7 +125,7 @@ func NewProcessor(
 
 	// sub processors
 	processor.account = account.New(state, tc, mediaManager, oauthServer, federator, parseMentionFunc)
-	processor.admin = admin.New(state, tc, mediaManager, federator.TransportController())
+	processor.admin = admin.New(state, tc, mediaManager, federator.TransportController(), emailSender)
 	processor.fedi = fedi.New(state, tc, federator)
 	processor.media = media.New(state, tc, mediaManager, federator.TransportController())
 	processor.report = report.New(state, tc)

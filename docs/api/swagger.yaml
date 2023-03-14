@@ -3695,6 +3695,46 @@ paths:
             summary: View domain block with the given ID.
             tags:
                 - admin
+    /api/v1/admin/email/test:
+        post:
+            consumes:
+                - multipart/form-data
+            description: |-
+                This can be used to validate an instance's SMTP configuration, and to debug any potential issues.
+
+                If an error is returned by the SMTP connection, this handler will return code 422 to indicate that
+                the request could not be processed, and the SMTP error will be returned to the caller.
+            operationId: testEmailSend
+            parameters:
+                - description: The email address that the test email should be sent to.
+                  in: formData
+                  name: email
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "202":
+                    description: Test email was sent.
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "422":
+                    description: An smtp occurred while the email attempt was in progress. Check the returned json for more information. The smtp error will be included, to help you debug communication with the smtp server.
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Send a generic test email to a specified email address.
+            tags:
+                - admin
     /api/v1/admin/media_cleanup:
         post:
             consumes:

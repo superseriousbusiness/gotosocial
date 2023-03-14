@@ -23,6 +23,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
 type InstanceTestSuite struct {
@@ -57,6 +58,18 @@ func (suite *InstanceTestSuite) TestCountInstanceDomains() {
 	count, err := suite.db.CountInstanceDomains(context.Background(), config.GetHost())
 	suite.NoError(err)
 	suite.Equal(2, count)
+}
+
+func (suite *InstanceTestSuite) TestGetInstanceOK() {
+	instance, err := suite.db.GetInstance(context.Background(), "localhost:8080")
+	suite.NoError(err)
+	suite.NotNil(instance)
+}
+
+func (suite *InstanceTestSuite) TestGetInstanceNonexistent() {
+	instance, err := suite.db.GetInstance(context.Background(), "doesnt.exist.com")
+	suite.ErrorIs(err, db.ErrNoEntries)
+	suite.Nil(instance)
 }
 
 func (suite *InstanceTestSuite) TestGetInstancePeers() {
