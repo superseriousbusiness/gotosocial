@@ -16,7 +16,7 @@ definitions:
         type: object
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     Link:
-        description: See https://webfinger.net/
+        description: See https://webfinger.net/ and https://www.rfc-editor.org/rfc/rfc6415.html#section-3.1
         properties:
             href:
                 type: string
@@ -1119,6 +1119,20 @@ definitions:
         type: object
         x-go-name: Field
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    hostmeta:
+        description: 'See: https://www.rfc-editor.org/rfc/rfc6415.html#section-3'
+        properties:
+            Link:
+                items:
+                    $ref: '#/definitions/Link'
+                type: array
+            XMLNS:
+                type: string
+            XMLName: {}
+        title: HostMeta represents a hostmeta document.
+        type: object
+        x-go-name: HostMeta
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     instanceConfigurationAccounts:
         properties:
             allow_custom_css:
@@ -1481,7 +1495,7 @@ definitions:
             translation:
                 $ref: '#/definitions/instanceV2ConfigurationTranslation'
             urls:
-                $ref: '#/definitions/instanceV1URLs'
+                $ref: '#/definitions/instanceV2URLs'
         title: Configured values and limits for this instance.
         type: object
         x-go-name: InstanceV2Configuration
@@ -1587,6 +1601,17 @@ definitions:
         title: Links to scaled resolution images, for high DPI screens.
         type: object
         x-go-name: InstanceV2ThumbnailVersions
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    instanceV2URLs:
+        properties:
+            streaming:
+                description: Websockets address for status and notification streaming.
+                example: wss://example.org
+                type: string
+                x-go-name: Streaming
+        title: InstanceV2URLs models instance-relevant URLs for client application consumption.
+        type: object
+        x-go-name: InstanceV2URLs
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     instanceV2Usage:
         properties:
@@ -2513,6 +2538,20 @@ info:
     title: GoToSocial Swagger documentation.
     version: REPLACE_ME
 paths:
+    /.well-known/host-meta:
+        get:
+            description: 'See: https://www.rfc-editor.org/rfc/rfc6415.html'
+            operationId: hostMetaGet
+            produces:
+                - application/xrd+xml"
+            responses:
+                "200":
+                    description: ""
+                    schema:
+                        $ref: '#/definitions/hostmeta'
+            summary: Returns a compliant hostmeta response to web host metadata queries.
+            tags:
+                - .well-known
     /.well-known/nodeinfo:
         get:
             description: |-
@@ -3102,6 +3141,12 @@ paths:
                   in: formData
                   name: enable_rss
                   type: boolean
+                - description: Profile fields to be added to this account's profile
+                  in: formData
+                  items:
+                    type: object
+                  name: fields_attributes
+                  type: array
             produces:
                 - application/json
             responses:
