@@ -172,15 +172,22 @@ func (suite *RelationshipTestSuite) TestGetBlockBy() {
 				continue
 			}
 
+			// Check block primitive fields.
+			if checkBlock.ID != block.ID ||
+				checkBlock.AccountID != block.AccountID ||
+				checkBlock.TargetAccountID != block.TargetAccountID {
+				t.Errorf("block does not contain expected data: %+v", checkBlock)
+			}
+
 			// Check that block origin account populated.
 			if checkBlock.Account == nil || checkBlock.Account.ID != block.AccountID {
-				t.Errorf("block origin account not correctly populated for: %+v", block)
+				t.Errorf("block origin account not correctly populated for: %+v", checkBlock)
 				continue
 			}
 
 			// Check that block target account populated.
 			if checkBlock.TargetAccount == nil || checkBlock.TargetAccount.ID != block.TargetAccountID {
-				t.Errorf("block target account not correctly populated for: %+v", block)
+				t.Errorf("block target account not correctly populated for: %+v", checkBlock)
 				continue
 			}
 		}
