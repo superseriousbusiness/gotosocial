@@ -35,8 +35,7 @@ const (
 	errorTypeKey
 
 	// error types
-	TypeSMTP    ErrorType = "smtp" // smtp (mail) error
-	TypeUnknown ErrorType = ""     // unknown or unset error type
+	TypeSMTP ErrorType = "smtp" // smtp (mail) error
 )
 
 // StatusCode checks error for a stored status code value. For example
