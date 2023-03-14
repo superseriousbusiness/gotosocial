@@ -19,11 +19,13 @@ package bundb_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
 type RelationshipTestSuite struct {
@@ -93,6 +95,96 @@ func (suite *RelationshipTestSuite) TestGetBlock() {
 	suite.NoError(err)
 	suite.NotNil(block)
 	suite.Equal("01G202BCSXXJZ70BHB5KCAHH8C", block.ID)
+}
+
+func (suite *RelationshipTestSuite) TestGetBlockBy() {
+	t := suite.T()
+
+	// Create a new context for this test.
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	// Sentinel error to mark avoiding a test case.
+	sentinelErr := errors.New("sentinel")
+
+	var testBlocks []*gtsmodel.Block
+
+	for _, account1 := range suite.testAccounts {
+		for _, account2 := range suite.testAccounts {
+			if account1.ID == account2.ID {
+				// don't block *yourself* ...
+				continue
+			}
+
+			// Create new account block.
+			block := &gtsmodel.Block{
+				ID:              id.NewULID(),
+				URI:             "http://127.0.0.1:8080/block/" + id.NewULID(),
+				AccountID:       account1.ID,
+				TargetAccountID: account2.ID,
+			}
+
+			// Attempt to place the block in database (if not already).
+			if err := suite.db.PutBlock(ctx, block); err != nil {
+				if err != db.ErrAlreadyExists {
+					// Unrecoverable database error.
+					t.Fatalf("error creating block: %v", err)
+				}
+
+				// Fetch existing block from database between accounts.
+				block, _ = suite.db.GetBlock(ctx, account1.ID, account2.ID)
+				continue
+			}
+
+			// Append generated block to test cases.
+			testBlocks = append(testBlocks, block)
+		}
+	}
+
+	for _, block := range testBlocks {
+		for lookup, dbfunc := range map[string]func() (*gtsmodel.Block, error){
+			"id": func() (*gtsmodel.Block, error) {
+				return suite.db.GetBlockByID(ctx, block.ID)
+			},
+
+			"uri": func() (*gtsmodel.Block, error) {
+				return suite.db.GetBlockByURI(ctx, block.URI)
+			},
+
+			"origin_target": func() (*gtsmodel.Block, error) {
+				return suite.db.GetBlock(ctx, block.AccountID, block.TargetAccountID)
+			},
+		} {
+
+			// Clear database caches.
+			suite.state.Caches.Init()
+
+			t.Logf("checking database lookup %q", lookup)
+
+			// Perform database function.
+			checkBlock, err := dbfunc()
+			if err != nil {
+				if err == sentinelErr {
+					continue
+				}
+
+				t.Errorf("error encountered for database lookup %q: %v", lookup, err)
+				continue
+			}
+
+			// Check that block origin account populated.
+			if checkBlock.Account == nil || checkBlock.Account.ID != block.AccountID {
+				t.Errorf("block origin account not correctly populated for: %+v", block)
+				continue
+			}
+
+			// Check that block target account populated.
+			if checkBlock.TargetAccount == nil || checkBlock.TargetAccount.ID != block.TargetAccountID {
+				t.Errorf("block target account not correctly populated for: %+v", block)
+				continue
+			}
+		}
+	}
 }
 
 func (suite *RelationshipTestSuite) TestDeleteBlockByID() {
