@@ -22,7 +22,6 @@ import (
 	"fmt"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -35,8 +34,8 @@ import (
 func (p *Processor) EmailTest(ctx context.Context, account *gtsmodel.Account, toAddress string) gtserror.WithCode {
 	// Pull our instance entry from the database,
 	// so we can greet the email recipient nicely.
-	instance := &gtsmodel.Instance{}
-	if err := p.state.DB.GetWhere(ctx, []db.Where{{Key: "domain", Value: config.GetHost()}}, instance); err != nil {
+	instance, err := p.state.DB.GetInstance(ctx, config.GetHost())
+	if err != nil {
 		err = fmt.Errorf("SendConfirmEmail: error getting instance: %s", err)
 		return gtserror.NewErrorInternalError(err)
 	}

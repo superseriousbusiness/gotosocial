@@ -97,6 +97,20 @@ func (i *instanceDB) CountInstanceDomains(ctx context.Context, domain string) (i
 	return count, nil
 }
 
+func (i *instanceDB) GetInstance(ctx context.Context, domain string) (*gtsmodel.Instance, db.Error) {
+	instance := &gtsmodel.Instance{}
+
+	if err := i.conn.
+		NewSelect().
+		Model(instance).
+		Where("? = ?", bun.Ident("instance.domain"), domain).
+		Scan(ctx); err != nil {
+		return nil, i.conn.ProcessError(err)
+	}
+
+	return instance, nil
+}
+
 func (i *instanceDB) GetInstancePeers(ctx context.Context, includeSuspended bool) ([]*gtsmodel.Instance, db.Error) {
 	instances := []*gtsmodel.Instance{}
 
