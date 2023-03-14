@@ -75,7 +75,7 @@ func (p *Processor) FollowCreate(ctx context.Context, requestingAccount *gtsmode
 		Notify:          form.Notify,
 	}
 
-	if err := p.state.DB.Put(ctx, fr); err != nil {
+	if err := p.state.DB.PutFollowRequest(ctx, fr); err != nil {
 		err = fmt.Errorf("FollowCreate: error creating follow request in db: %s", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
