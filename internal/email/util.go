@@ -18,6 +18,7 @@
 package email
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -39,11 +40,10 @@ func loadTemplates(templateBaseDir string) (*template.Template, error) {
 	return template.ParseGlob(filepath.Join(templateBaseDir, "email_*"))
 }
 
-// https://datatracker.ietf.org/doc/html/rfc2822
-// I did not read the RFC, I just copy and pasted from
-// https://pkg.go.dev/net/smtp#SendMail
-// and it did seem to work.
-func assembleMessage(mailSubject string, mailBody string, mailTo string, mailFrom string) ([]byte, error) {
+// assembleMessage assembles a valid email message following:
+//   - https://datatracker.ietf.org/doc/html/rfc2822
+//   - https://pkg.go.dev/net/smtp#SendMail
+func assembleMessage(mailSubject string, mailBody string, mailFrom string, mailTo ...string) ([]byte, error) {
 	if strings.Contains(mailSubject, "\r") || strings.Contains(mailSubject, "\n") {
 		return nil, errors.New("email subject must not contain newline characters")
 	}
@@ -52,20 +52,23 @@ func assembleMessage(mailSubject string, mailBody string, mailTo string, mailFro
 		return nil, errors.New("email from address must not contain newline characters")
 	}
 
-	if strings.Contains(mailTo, "\r") || strings.Contains(mailTo, "\n") {
-		return nil, errors.New("email to address must not contain newline characters")
+	for _, to := range mailTo {
+		if strings.Contains(to, "\r") || strings.Contains(to, "\n") {
+			return nil, errors.New("email to address must not contain newline characters")
+		}
 	}
 
-	// normalize the message body to use CRLF line endings
-	mailBody = strings.ReplaceAll(mailBody, "\r\n", "\n")
-	mailBody = strings.ReplaceAll(mailBody, "\n", "\r\n")
+	// Normalize the message body to use CRLF line endings
+	const CRLF = "\r\n"
+	mailBody = strings.ReplaceAll(mailBody, CRLF, "\n")
+	mailBody = strings.ReplaceAll(mailBody, "\n", CRLF)
 
-	msg := []byte(
-		"To: " + mailTo + "\r\n" +
-			"Subject: " + mailSubject + "\r\n" +
-			"\r\n" +
-			mailBody + "\r\n",
-	)
+	msg := bytes.Buffer{}
+	msg.WriteString("To: " + strings.Join(mailTo, ", ") + CRLF)
+	msg.WriteString("Subject: " + mailSubject + CRLF)
+	msg.WriteString(CRLF)
+	msg.WriteString(mailBody)
+	msg.WriteString(CRLF)
 
-	return msg, nil
+	return msg.Bytes(), nil
 }

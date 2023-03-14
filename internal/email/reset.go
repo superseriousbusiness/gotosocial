@@ -49,7 +49,7 @@ func (s *sender) SendResetEmail(toAddress string, data ResetData) error {
 	}
 	resetBody := buf.String()
 
-	msg, err := assembleMessage(resetSubject, resetBody, toAddress, s.from)
+	msg, err := assembleMessage(resetSubject, resetBody, s.from, toAddress)
 	if err != nil {
 		return err
 	}

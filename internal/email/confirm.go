@@ -49,7 +49,7 @@ func (s *sender) SendConfirmEmail(toAddress string, data ConfirmData) error {
 	}
 	confirmBody := buf.String()
 
-	msg, err := assembleMessage(confirmSubject, confirmBody, toAddress, s.from)
+	msg, err := assembleMessage(confirmSubject, confirmBody, s.from, toAddress)
 	if err != nil {
 		return err
 	}

@@ -45,7 +45,7 @@ func (s *sender) SendTestEmail(toAddress string, data TestData) error {
 	}
 	testBody := buf.String()
 
-	msg, err := assembleMessage(testSubject, testBody, toAddress, s.from)
+	msg, err := assembleMessage(testSubject, testBody, s.from, toAddress)
 	if err != nil {
 		return err
 	}

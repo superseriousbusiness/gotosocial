@@ -55,7 +55,7 @@ func (s *noopSender) SendConfirmEmail(toAddress string, data ConfirmData) error 
 	}
 	confirmBody := buf.String()
 
-	msg, err := assembleMessage(confirmSubject, confirmBody, toAddress, "test@example.org")
+	msg, err := assembleMessage(confirmSubject, confirmBody, "test@example.org", toAddress)
 	if err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func (s *noopSender) SendResetEmail(toAddress string, data ResetData) error {
 	}
 	resetBody := buf.String()
 
-	msg, err := assembleMessage(resetSubject, resetBody, toAddress, "test@example.org")
+	msg, err := assembleMessage(resetSubject, resetBody, "test@example.org", toAddress)
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func (s *noopSender) SendTestEmail(toAddress string, data TestData) error {
 	}
 	testBody := buf.String()
 
-	msg, err := assembleMessage(testSubject, testBody, toAddress, "test@example.org")
+	msg, err := assembleMessage(testSubject, testBody, "test@example.org", toAddress)
 	if err != nil {
 		return err
 	}
@@ -105,6 +105,27 @@ func (s *noopSender) SendTestEmail(toAddress string, data TestData) error {
 
 	if s.sendCallback != nil {
 		s.sendCallback(toAddress, string(msg))
+	}
+
+	return nil
+}
+
+func (s *noopSender) SendNewReportEmail(toAddresses []string, data NewReportData) error {
+	buf := &bytes.Buffer{}
+	if err := s.template.ExecuteTemplate(buf, testTemplate, data); err != nil {
+		return err
+	}
+	testBody := buf.String()
+
+	msg, err := assembleMessage(testSubject, testBody, "test@example.org", toAddresses...)
+	if err != nil {
+		return err
+	}
+
+	log.Tracef(nil, "NOT SENDING new report email to %s with contents: %s", toAddresses, msg)
+
+	if s.sendCallback != nil {
+		s.sendCallback(toAddresses[0], string(msg))
 	}
 
 	return nil
