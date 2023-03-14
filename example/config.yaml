@@ -230,19 +230,30 @@ db-sqlite-cache-size: "8MiB"
 db-sqlite-busy-timeout: "5m"
 
 cache:
+  # Cache configuration options:
+  #
+  # max-size   = maximum cached objects count
+  # ttl        = cached object lifetime
+  # sweep-freq = frequency to look for stale cache objects
+
+  #############################
+  #### VISIBILITY CACHES ######
+  #############################
+  #
+  # Configure Status and account 
+  # visibility cache.
+
+  visibility-max-size: 2000
+  visibility-ttl: "30m"
+  visibility-sweep-freq: "1m"
+
   gts:
     ###########################
     #### DATABASE CACHES ######
     ###########################
     #
-    # Database cache configuration:
-    #
-    # Allows configuration of caches used
-    # when loading GTS models from the database.
-    #
-    # max-size   = maximum cached objects count
-    # ttl        = cached object lifetime
-    # sweep-freq = frequency to look for stale cache objects
+    # Configure GTS database
+    # model caches.
 
     account-max-size: 500
     account-ttl: "5m"
