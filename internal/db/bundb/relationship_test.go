@@ -222,7 +222,6 @@ func (suite *RelationshipTestSuite) TestGetFollowBy() {
 				return suite.db.GetFollow(ctx, follow.AccountID, follow.TargetAccountID)
 			},
 		} {
-
 			// Clear database caches.
 			suite.state.Caches.Init()
 
