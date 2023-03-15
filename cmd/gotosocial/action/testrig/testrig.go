@@ -103,6 +103,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	router.AttachGlobalMiddleware(
 		tracing.InstrumentGin(),
 		middleware.AddRequestID(config.GetRequestIDHeader()),
+		tracing.InjectRequestID(),
 		middleware.Logger(),
 		middleware.UserAgent(),
 		middleware.CORS(),

@@ -23,12 +23,13 @@ import (
 	"context"
 	"fmt"
 
+	"codeberg.org/gruf/go-kv"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/extra/bunotel"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/propagation"
@@ -36,6 +37,10 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	oteltrace "go.opentelemetry.io/otel/trace"
+
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 func Initialize() error {
@@ -86,6 +91,13 @@ func Initialize() error {
 		propagation.Baggage{},
 	)
 	otel.SetTextMapPropagator(propagator)
+	log.Hook(func(ctx context.Context, kvs []kv.Field) []kv.Field {
+		span := oteltrace.SpanFromContext(ctx)
+		if span != nil && span.SpanContext().HasTraceID() {
+			return append(kvs, kv.Field{K: "traceID", V: span.SpanContext().TraceID().String()})
+		}
+		return kvs
+	})
 	return nil
 }
 
@@ -97,6 +109,16 @@ func InstrumentGin() gin.HandlerFunc {
 	return otelgin.Middleware(config.GetHost())
 }
 
+func InjectRequestID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := gtscontext.RequestID(c.Request.Context())
+		if id != "" {
+			span := oteltrace.SpanFromContext(c.Request.Context())
+			span.SetAttributes(attribute.String("requestID", id))
+		}
+	}
+}
+
 func InstrumentBun() bun.QueryHook {
 	// improves performance and is needed to pass staticheck
 	if !config.GetTracingEnabled() {
@@ -105,12 +127,4 @@ func InstrumentBun() bun.QueryHook {
 	return bunotel.NewQueryHook(
 		bunotel.WithFormattedQueries(true),
 	)
-}
-
-func CurrentTraceID(ctx context.Context) string {
-	span := oteltrace.SpanFromContext(ctx)
-	if span.SpanContext().HasTraceID() {
-		return span.SpanContext().TraceID().String()
-	}
-	return ""
 }

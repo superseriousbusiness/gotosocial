@@ -20,7 +20,6 @@
 package tracing
 
 import (
-	"context"
 	"errors"
 
 	"github.com/gin-gonic/gin"
@@ -43,6 +42,6 @@ func InstrumentBun() bun.QueryHook {
 	return nil
 }
 
-func CurrentTraceID(ctx context.Context) string {
-	return ""
+func InjectRequestID() gin.HandlerFunc {
+	return func(c *gin.Context) {}
 }
