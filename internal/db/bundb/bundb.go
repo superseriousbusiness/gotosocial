@@ -135,9 +135,8 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 	// Add database query hook
 	conn.DB.AddQueryHook(queryHook{})
 
-	tracingHook := tracing.InstrumentBun()
-	if tracingHook != nil {
-		conn.DB.AddQueryHook(tracingHook)
+	if config.GetTracingEnabled() {
+		conn.DB.AddQueryHook(tracing.InstrumentBun())
 	}
 
 	// execute sqlite pragmas *after* adding database hook;
