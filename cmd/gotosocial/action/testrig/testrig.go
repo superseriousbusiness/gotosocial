@@ -98,17 +98,28 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	*/
 
 	router := testrig.NewTestRouter(state.DB)
-
-	// attach global middlewares which are used for every request
-	router.AttachGlobalMiddleware(
-		tracing.InstrumentGin(),
-		middleware.AddRequestID(config.GetRequestIDHeader()),
-		tracing.InjectRequestID(),
+	middlewares := []gin.HandlerFunc{}
+	if config.GetTracingEnabled() {
+		middlewares = append(middlewares, tracing.InstrumentGin())
+	}
+	if config.GetRequestIDEnabled() {
+		middlewares = append(middlewares, middleware.AddRequestID(config.GetRequestIDHeader()))
+		// injecting the trace id can only happen after the span has been created
+		// could be overcome by extracting the needed parts from the otelgin library
+		// and creating our own middleware
+		if config.GetTracingEnabled() {
+			middlewares = append(middlewares, tracing.InjectRequestID())
+		}
+	}
+	middlewares = append(middlewares, []gin.HandlerFunc{
 		middleware.Logger(),
 		middleware.UserAgent(),
 		middleware.CORS(),
 		middleware.ExtraHeaders(),
-	)
+	}...)
+
+	// attach global middlewares which are used for every request
+	router.AttachGlobalMiddleware(middlewares...)
 
 	// attach global no route / 404 handler to the router
 	router.AttachNoRouteHandler(func(c *gin.Context) {

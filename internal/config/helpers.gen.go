@@ -2,7 +2,7 @@
 // GoToSocial
 // Copyright (C) GoToSocial Authors admin@gotosocial.org
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -2594,7 +2594,9 @@ func (st *ConfigState) SetCacheGTSEmojiCategorySweepFreq(v time.Duration) {
 func CacheGTSEmojiCategorySweepFreqFlag() string { return "cache-gts-emoji-category-sweep-freq" }
 
 // GetCacheGTSEmojiCategorySweepFreq safely fetches the value for global configuration 'Cache.GTS.EmojiCategorySweepFreq' field
-func GetCacheGTSEmojiCategorySweepFreq() time.Duration { return global.GetCacheGTSEmojiCategorySweepFreq() }
+func GetCacheGTSEmojiCategorySweepFreq() time.Duration {
+	return global.GetCacheGTSEmojiCategorySweepFreq()
+}
 
 // SetCacheGTSEmojiCategorySweepFreq safely sets the value for global configuration 'Cache.GTS.EmojiCategorySweepFreq' field
 func SetCacheGTSEmojiCategorySweepFreq(v time.Duration) { global.SetCacheGTSEmojiCategorySweepFreq(v) }
@@ -2971,7 +2973,9 @@ func (st *ConfigState) SetCacheGTSNotificationSweepFreq(v time.Duration) {
 func CacheGTSNotificationSweepFreqFlag() string { return "cache-gts-notification-sweep-freq" }
 
 // GetCacheGTSNotificationSweepFreq safely fetches the value for global configuration 'Cache.GTS.NotificationSweepFreq' field
-func GetCacheGTSNotificationSweepFreq() time.Duration { return global.GetCacheGTSNotificationSweepFreq() }
+func GetCacheGTSNotificationSweepFreq() time.Duration {
+	return global.GetCacheGTSNotificationSweepFreq()
+}
 
 // SetCacheGTSNotificationSweepFreq safely sets the value for global configuration 'Cache.GTS.NotificationSweepFreq' field
 func SetCacheGTSNotificationSweepFreq(v time.Duration) { global.SetCacheGTSNotificationSweepFreq(v) }
@@ -3626,6 +3630,31 @@ func GetAdminMediaPruneDryRun() bool { return global.GetAdminMediaPruneDryRun() 
 // SetAdminMediaPruneDryRun safely sets the value for global configuration 'AdminMediaPruneDryRun' field
 func SetAdminMediaPruneDryRun(v bool) { global.SetAdminMediaPruneDryRun(v) }
 
+// GetRequestIDEnabled safely fetches the Configuration value for state's 'RequestIDEnabled' field
+func (st *ConfigState) GetRequestIDEnabled() (v bool) {
+	st.mutex.Lock()
+	v = st.config.RequestIDEnabled
+	st.mutex.Unlock()
+	return
+}
+
+// SetRequestIDEnabled safely sets the Configuration value for state's 'RequestIDEnabled' field
+func (st *ConfigState) SetRequestIDEnabled(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.RequestIDEnabled = v
+	st.reloadToViper()
+}
+
+// RequestIDEnabledFlag returns the flag name for the 'RequestIDEnabled' field
+func RequestIDEnabledFlag() string { return "request-id-enabled" }
+
+// GetRequestIDEnabled safely fetches the value for global configuration 'RequestIDEnabled' field
+func GetRequestIDEnabled() bool { return global.GetRequestIDEnabled() }
+
+// SetRequestIDEnabled safely sets the value for global configuration 'RequestIDEnabled' field
+func SetRequestIDEnabled(v bool) { global.SetRequestIDEnabled(v) }
+
 // GetRequestIDHeader safely fetches the Configuration value for state's 'RequestIDHeader' field
 func (st *ConfigState) GetRequestIDHeader() (v string) {
 	st.mutex.Lock()
@@ -3650,4 +3679,3 @@ func GetRequestIDHeader() string { return global.GetRequestIDHeader() }
 
 // SetRequestIDHeader safely sets the value for global configuration 'RequestIDHeader' field
 func SetRequestIDHeader(v string) { global.SetRequestIDHeader(v) }
-

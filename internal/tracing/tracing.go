@@ -102,10 +102,6 @@ func Initialize() error {
 }
 
 func InstrumentGin() gin.HandlerFunc {
-	// improves performance compared to the noop trace exporter used by default
-	if !config.GetTracingEnabled() {
-		return func(c *gin.Context) {}
-	}
 	return otelgin.Middleware(config.GetHost())
 }
 
@@ -120,10 +116,6 @@ func InjectRequestID() gin.HandlerFunc {
 }
 
 func InstrumentBun() bun.QueryHook {
-	// improves performance and is needed to pass staticheck
-	if !config.GetTracingEnabled() {
-		return nil
-	}
 	return bunotel.NewQueryHook(
 		bunotel.WithFormattedQueries(true),
 	)
