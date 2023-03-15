@@ -22,6 +22,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"errors"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -71,6 +72,33 @@ func (suite *AccountTestSuite) TestGetAccountBy() {
 
 	// Sentinel error to mark avoiding a test case.
 	sentinelErr := errors.New("sentinel")
+
+	// isEqual checks if 2 account models are equal.
+	isEqual := func(a1, a2 gtsmodel.Account) bool {
+		// Clear populated sub-models.
+		a1.HeaderMediaAttachment = nil
+		a2.HeaderMediaAttachment = nil
+		a1.AvatarMediaAttachment = nil
+		a2.AvatarMediaAttachment = nil
+		a1.Emojis = nil
+		a2.Emojis = nil
+
+		// Clear database-set fields.
+		a1.CreatedAt = time.Time{}
+		a2.CreatedAt = time.Time{}
+		a1.UpdatedAt = time.Time{}
+		a2.UpdatedAt = time.Time{}
+
+		// Make sure to use proper
+		// public key .Equals() func.
+		p1 := a1.PublicKey
+		p2 := a2.PublicKey
+		a1.PublicKey = nil
+		a2.PublicKey = nil
+
+		return reflect.DeepEqual(a1, a2) &&
+			p1.Equal(p2)
+	}
 
 	for _, account := range suite.testAccounts {
 		for lookup, dbfunc := range map[string]func() (*gtsmodel.Account, error){
@@ -150,6 +178,12 @@ func (suite *AccountTestSuite) TestGetAccountBy() {
 				}
 
 				t.Errorf("error encountered for database lookup %q: %v", lookup, err)
+				continue
+			}
+
+			// Check received account data.
+			if !isEqual(*checkAcc, *account) {
+				t.Errorf("account does not contain expected data: %+v", checkAcc)
 				continue
 			}
 

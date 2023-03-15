@@ -20,7 +20,9 @@ package bundb_test
 import (
 	"context"
 	"errors"
+	"reflect"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -32,71 +34,6 @@ type RelationshipTestSuite struct {
 	BunDBStandardTestSuite
 }
 
-func (suite *RelationshipTestSuite) TestIsBlocked() {
-	ctx := context.Background()
-
-	account1 := suite.testAccounts["local_account_1"].ID
-	account2 := suite.testAccounts["local_account_2"].ID
-
-	// no blocks exist between account 1 and account 2
-	blocked, err := suite.db.IsBlocked(ctx, account1, account2)
-	suite.NoError(err)
-	suite.False(blocked)
-
-	blocked, err = suite.db.IsBlocked(ctx, account2, account1)
-	suite.NoError(err)
-	suite.False(blocked)
-
-	// have account1 block account2
-	if err := suite.db.PutBlock(ctx, &gtsmodel.Block{
-		ID:              "01G202BCSXXJZ70BHB5KCAHH8C",
-		URI:             "http://localhost:8080/some_block_uri_1",
-		AccountID:       account1,
-		TargetAccountID: account2,
-	}); err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	// account 1 now blocks account 2
-	blocked, err = suite.db.IsBlocked(ctx, account1, account2)
-	suite.NoError(err)
-	suite.True(blocked)
-
-	// account 2 doesn't block account 1
-	blocked, err = suite.db.IsBlocked(ctx, account2, account1)
-	suite.NoError(err)
-	suite.False(blocked)
-
-	// a block exists in either direction between the two
-	blocked, err = suite.db.IsEitherBlocked(ctx, account1, account2)
-	suite.NoError(err)
-	suite.True(blocked)
-	blocked, err = suite.db.IsEitherBlocked(ctx, account2, account1)
-	suite.NoError(err)
-	suite.True(blocked)
-}
-
-func (suite *RelationshipTestSuite) TestGetBlock() {
-	ctx := context.Background()
-
-	account1 := suite.testAccounts["local_account_1"].ID
-	account2 := suite.testAccounts["local_account_2"].ID
-
-	if err := suite.db.PutBlock(ctx, &gtsmodel.Block{
-		ID:              "01G202BCSXXJZ70BHB5KCAHH8C",
-		URI:             "http://localhost:8080/some_block_uri_1",
-		AccountID:       account1,
-		TargetAccountID: account2,
-	}); err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	block, err := suite.db.GetBlock(ctx, account1, account2)
-	suite.NoError(err)
-	suite.NotNil(block)
-	suite.Equal("01G202BCSXXJZ70BHB5KCAHH8C", block.ID)
-}
-
 func (suite *RelationshipTestSuite) TestGetBlockBy() {
 	t := suite.T()
 
@@ -106,6 +43,23 @@ func (suite *RelationshipTestSuite) TestGetBlockBy() {
 
 	// Sentinel error to mark avoiding a test case.
 	sentinelErr := errors.New("sentinel")
+
+	// isEqual checks if 2 block models are equal.
+	isEqual := func(b1, b2 gtsmodel.Block) bool {
+		// Clear populated sub-models.
+		b1.Account = nil
+		b2.Account = nil
+		b1.TargetAccount = nil
+		b2.TargetAccount = nil
+
+		// Clear database-set fields.
+		b1.CreatedAt = time.Time{}
+		b2.CreatedAt = time.Time{}
+		b1.UpdatedAt = time.Time{}
+		b2.UpdatedAt = time.Time{}
+
+		return reflect.DeepEqual(b1, b2)
+	}
 
 	var testBlocks []*gtsmodel.Block
 
@@ -172,11 +126,10 @@ func (suite *RelationshipTestSuite) TestGetBlockBy() {
 				continue
 			}
 
-			// Check block primitive fields.
-			if checkBlock.ID != block.ID ||
-				checkBlock.AccountID != block.AccountID ||
-				checkBlock.TargetAccountID != block.TargetAccountID {
+			// Check received block data.
+			if !isEqual(*checkBlock, *block) {
 				t.Errorf("block does not contain expected data: %+v", checkBlock)
+				continue
 			}
 
 			// Check that block origin account populated.
@@ -192,6 +145,276 @@ func (suite *RelationshipTestSuite) TestGetBlockBy() {
 			}
 		}
 	}
+}
+
+func (suite *RelationshipTestSuite) TestGetFollowBy() {
+	t := suite.T()
+
+	// Create a new context for this test.
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	// Sentinel error to mark avoiding a test case.
+	sentinelErr := errors.New("sentinel")
+
+	// isEqual checks if 2 follow models are equal.
+	isEqual := func(f1, f2 gtsmodel.Follow) bool {
+		// Clear populated sub-models.
+		f1.Account = nil
+		f2.Account = nil
+		f1.TargetAccount = nil
+		f2.TargetAccount = nil
+
+		// Clear database-set fields.
+		f1.CreatedAt = time.Time{}
+		f2.CreatedAt = time.Time{}
+		f1.UpdatedAt = time.Time{}
+		f2.UpdatedAt = time.Time{}
+
+		return reflect.DeepEqual(f1, f2)
+	}
+
+	var testFollows []*gtsmodel.Follow
+
+	for _, account1 := range suite.testAccounts {
+		for _, account2 := range suite.testAccounts {
+			if account1.ID == account2.ID {
+				// don't follow *yourself* ...
+				continue
+			}
+
+			// Create new account follow.
+			follow := &gtsmodel.Follow{
+				ID:              id.NewULID(),
+				URI:             "http://127.0.0.1:8080/block/" + id.NewULID(),
+				AccountID:       account1.ID,
+				TargetAccountID: account2.ID,
+			}
+
+			// Attempt to place the follow in database (if not already).
+			if err := suite.db.PutFollow(ctx, follow); err != nil {
+				if err != db.ErrAlreadyExists {
+					// Unrecoverable database error.
+					t.Fatalf("error creating follow: %v", err)
+				}
+
+				// Fetch existing follow from database between accounts.
+				follow, _ = suite.db.GetFollow(ctx, account1.ID, account2.ID)
+				continue
+			}
+
+			// Append generated follow to test cases.
+			testFollows = append(testFollows, follow)
+		}
+	}
+
+	for _, follow := range testFollows {
+		for lookup, dbfunc := range map[string]func() (*gtsmodel.Follow, error){
+			"id": func() (*gtsmodel.Follow, error) {
+				return suite.db.GetFollowByID(ctx, follow.ID)
+			},
+
+			"uri": func() (*gtsmodel.Follow, error) {
+				return suite.db.GetFollowByURI(ctx, follow.URI)
+			},
+
+			"origin_target": func() (*gtsmodel.Follow, error) {
+				return suite.db.GetFollow(ctx, follow.AccountID, follow.TargetAccountID)
+			},
+		} {
+
+			// Clear database caches.
+			suite.state.Caches.Init()
+
+			t.Logf("checking database lookup %q", lookup)
+
+			// Perform database function.
+			checkFollow, err := dbfunc()
+			if err != nil {
+				if err == sentinelErr {
+					continue
+				}
+
+				t.Errorf("error encountered for database lookup %q: %v", lookup, err)
+				continue
+			}
+
+			// Check received follow data.
+			if !isEqual(*checkFollow, *follow) {
+				t.Errorf("follow does not contain expected data: %+v", checkFollow)
+				continue
+			}
+
+			// Check that follow origin account populated.
+			if checkFollow.Account == nil || checkFollow.Account.ID != follow.AccountID {
+				t.Errorf("follow origin account not correctly populated for: %+v", checkFollow)
+				continue
+			}
+
+			// Check that follow target account populated.
+			if checkFollow.TargetAccount == nil || checkFollow.TargetAccount.ID != follow.TargetAccountID {
+				t.Errorf("follow target account not correctly populated for: %+v", checkFollow)
+				continue
+			}
+		}
+	}
+}
+
+func (suite *RelationshipTestSuite) TestGetFollowRequestBy() {
+	t := suite.T()
+
+	// Create a new context for this test.
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	// Sentinel error to mark avoiding a test case.
+	sentinelErr := errors.New("sentinel")
+
+	// isEqual checks if 2 follow request models are equal.
+	isEqual := func(f1, f2 gtsmodel.FollowRequest) bool {
+		// Clear populated sub-models.
+		f1.Account = nil
+		f2.Account = nil
+		f1.TargetAccount = nil
+		f2.TargetAccount = nil
+
+		// Clear database-set fields.
+		f1.CreatedAt = time.Time{}
+		f2.CreatedAt = time.Time{}
+		f1.UpdatedAt = time.Time{}
+		f2.UpdatedAt = time.Time{}
+
+		return reflect.DeepEqual(f1, f2)
+	}
+
+	var testFollowReqs []*gtsmodel.FollowRequest
+
+	for _, account1 := range suite.testAccounts {
+		for _, account2 := range suite.testAccounts {
+			if account1.ID == account2.ID {
+				// don't follow *yourself* ...
+				continue
+			}
+
+			// Create new account follow request.
+			followReq := &gtsmodel.FollowRequest{
+				ID:              id.NewULID(),
+				URI:             "http://127.0.0.1:8080/block/" + id.NewULID(),
+				AccountID:       account1.ID,
+				TargetAccountID: account2.ID,
+			}
+
+			// Attempt to place the follow in database (if not already).
+			if err := suite.db.PutFollowRequest(ctx, followReq); err != nil {
+				if err != db.ErrAlreadyExists {
+					// Unrecoverable database error.
+					t.Fatalf("error creating follow request: %v", err)
+				}
+
+				// Fetch existing follow request from database between accounts.
+				followReq, _ = suite.db.GetFollowRequest(ctx, account1.ID, account2.ID)
+				continue
+			}
+
+			// Append generated follow request to test cases.
+			testFollowReqs = append(testFollowReqs, followReq)
+		}
+	}
+
+	for _, followReq := range testFollowReqs {
+		for lookup, dbfunc := range map[string]func() (*gtsmodel.FollowRequest, error){
+			"id": func() (*gtsmodel.FollowRequest, error) {
+				return suite.db.GetFollowRequestByID(ctx, followReq.ID)
+			},
+
+			"uri": func() (*gtsmodel.FollowRequest, error) {
+				return suite.db.GetFollowRequestByURI(ctx, followReq.URI)
+			},
+
+			"origin_target": func() (*gtsmodel.FollowRequest, error) {
+				return suite.db.GetFollowRequest(ctx, followReq.AccountID, followReq.TargetAccountID)
+			},
+		} {
+
+			// Clear database caches.
+			suite.state.Caches.Init()
+
+			t.Logf("checking database lookup %q", lookup)
+
+			// Perform database function.
+			checkFollowReq, err := dbfunc()
+			if err != nil {
+				if err == sentinelErr {
+					continue
+				}
+
+				t.Errorf("error encountered for database lookup %q: %v", lookup, err)
+				continue
+			}
+
+			// Check received follow request data.
+			if !isEqual(*checkFollowReq, *followReq) {
+				t.Errorf("follow request does not contain expected data: %+v", checkFollowReq)
+				continue
+			}
+
+			// Check that follow request origin account populated.
+			if checkFollowReq.Account == nil || checkFollowReq.Account.ID != followReq.AccountID {
+				t.Errorf("follow request origin account not correctly populated for: %+v", checkFollowReq)
+				continue
+			}
+
+			// Check that follow request target account populated.
+			if checkFollowReq.TargetAccount == nil || checkFollowReq.TargetAccount.ID != followReq.TargetAccountID {
+				t.Errorf("follow request target account not correctly populated for: %+v", checkFollowReq)
+				continue
+			}
+		}
+	}
+}
+
+func (suite *RelationshipTestSuite) TestIsBlocked() {
+	ctx := context.Background()
+
+	account1 := suite.testAccounts["local_account_1"].ID
+	account2 := suite.testAccounts["local_account_2"].ID
+
+	// no blocks exist between account 1 and account 2
+	blocked, err := suite.db.IsBlocked(ctx, account1, account2)
+	suite.NoError(err)
+	suite.False(blocked)
+
+	blocked, err = suite.db.IsBlocked(ctx, account2, account1)
+	suite.NoError(err)
+	suite.False(blocked)
+
+	// have account1 block account2
+	if err := suite.db.PutBlock(ctx, &gtsmodel.Block{
+		ID:              "01G202BCSXXJZ70BHB5KCAHH8C",
+		URI:             "http://localhost:8080/some_block_uri_1",
+		AccountID:       account1,
+		TargetAccountID: account2,
+	}); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// account 1 now blocks account 2
+	blocked, err = suite.db.IsBlocked(ctx, account1, account2)
+	suite.NoError(err)
+	suite.True(blocked)
+
+	// account 2 doesn't block account 1
+	blocked, err = suite.db.IsBlocked(ctx, account2, account1)
+	suite.NoError(err)
+	suite.False(blocked)
+
+	// a block exists in either direction between the two
+	blocked, err = suite.db.IsEitherBlocked(ctx, account1, account2)
+	suite.NoError(err)
+	suite.True(blocked)
+	blocked, err = suite.db.IsEitherBlocked(ctx, account2, account1)
+	suite.NoError(err)
+	suite.True(blocked)
 }
 
 func (suite *RelationshipTestSuite) TestDeleteBlockByID() {
