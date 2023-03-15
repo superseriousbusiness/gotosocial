@@ -701,6 +701,18 @@ smtp-password: ""
 # Default: ""
 smtp-from: ""
 
+# Bool. If true, when an email is sent that has multiple recipients, each recipient
+# will be included in the To field, so that each recipient can see who else got the
+# email, and they can 'reply all' to the other recipients if they want to.
+#
+# If false, email will be sent to Undisclosed Recipients, and each recipient will not
+# be able to see who else received the email.
+#
+# It might be useful to change this setting to 'true' if you want to be able to discuss
+# new moderation reports with other admins by 'replying-all' to the notification email.
+# Default: false
+smtp-disclose-recipients: false
+
 #########################
 ##### SYSLOG CONFIG #####
 #########################

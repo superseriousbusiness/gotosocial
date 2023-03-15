@@ -349,14 +349,17 @@ func (p *Processor) processReportAccountFromClientAPI(ctx context.Context, clien
 		return errors.New("report was not parseable as *gtsmodel.Report")
 	}
 
-	// TODO: in a separate PR, also email admin(s)
-
-	if !*report.Forwarded {
-		// nothing to do, don't federate the report
-		return nil
+	if *report.Forwarded {
+		if err := p.federateReport(ctx, report); err != nil {
+			return fmt.Errorf("processReportAccountFromClientAPI: error federating report: %w", err)
+		}
 	}
 
-	return p.federateReport(ctx, report)
+	if err := p.notifyReport(ctx, report); err != nil {
+		return fmt.Errorf("processReportAccountFromClientAPI: error notifying report: %w", err)
+	}
+
+	return nil
 }
 
 // TODO: move all the below functions into federation.Federator

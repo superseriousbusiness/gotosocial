@@ -19,6 +19,7 @@ package processing
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -318,14 +319,33 @@ func (p *Processor) notifyReport(ctx context.Context, report *gtsmodel.Report) e
 
 	toAddresses, err := p.state.DB.GetInstanceModeratorAddresses(ctx)
 	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// No registered moderator addresses.
+			return nil
+		}
 		return fmt.Errorf("notifyReport: error getting instance moderator addresses: %w", err)
 	}
 
+	if report.Account == nil {
+		report.Account, err = p.state.DB.GetAccountByID(ctx, report.AccountID)
+		if err != nil {
+			return fmt.Errorf("notifyReport: error getting report account: %w", err)
+		}
+	}
+
+	if report.TargetAccount == nil {
+		report.TargetAccount, err = p.state.DB.GetAccountByID(ctx, report.TargetAccountID)
+		if err != nil {
+			return fmt.Errorf("notifyReport: error getting report target account: %w", err)
+		}
+	}
+
 	reportData := email.NewReportData{
-		InstanceURL:  instance.URI,
-		InstanceName: instance.Title,
-		ReportURL:    instance.URI + "/settings/admin/reports/" + report.ID,
-		ReportDomain: report.Account.Domain,
+		InstanceURL:        instance.URI,
+		InstanceName:       instance.Title,
+		ReportURL:          instance.URI + "/settings/admin/reports/" + report.ID,
+		ReportDomain:       report.Account.Domain,
+		ReportTargetDomain: report.TargetAccount.Domain,
 	}
 
 	if err := p.emailSender.SendNewReportEmail(toAddresses, reportData); err != nil {

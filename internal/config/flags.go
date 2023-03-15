@@ -132,6 +132,7 @@ func (s *ConfigState) AddServerFlags(cmd *cobra.Command) {
 		cmd.Flags().String(SMTPUsernameFlag(), cfg.SMTPUsername, fieldtag("SMTPUsername", "usage"))
 		cmd.Flags().String(SMTPPasswordFlag(), cfg.SMTPPassword, fieldtag("SMTPPassword", "usage"))
 		cmd.Flags().String(SMTPFromFlag(), cfg.SMTPFrom, fieldtag("SMTPFrom", "usage"))
+		// cmd.Flags().Bool(SMTPBccFlag(), cfg.SMTPBcc, fieldtag("SMTPBcc", "usage"))
 
 		// Syslog
 		cmd.Flags().Bool(SyslogEnabledFlag(), cfg.SyslogEnabled, fieldtag("SyslogEnabled", "usage"))

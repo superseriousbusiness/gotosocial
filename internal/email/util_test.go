@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 )
 
@@ -52,6 +53,83 @@ func (suite *UtilTestSuite) TestTemplateReset() {
 	suite.sender.SendResetEmail("user@example.org", resetData)
 	suite.Len(suite.sentEmails, 1)
 	suite.Equal("To: user@example.org\r\nSubject: GoToSocial Password Reset\r\n\r\nHello test!\r\n\r\nYou are receiving this mail because a password reset has been requested for your account on https://example.org.\r\n\r\nTo reset your password, paste the following in your browser's address bar:\r\n\r\nhttps://example.org/reset_email?token=ee24f71d-e615-43f9-afae-385c0799b7fa\r\n\r\nIf you believe you've been sent this email in error, feel free to ignore it, or contact the administrator of https://example.org.\r\n\r\n", suite.sentEmails["user@example.org"])
+}
+
+func (suite *UtilTestSuite) TestTemplateReportRemoteToLocal() {
+	// Someone from a remote instance has reported one of our users.
+	reportData := email.NewReportData{
+		InstanceURL:        "https://example.org",
+		InstanceName:       "Test Instance",
+		ReportURL:          "https://example.org/settings/admin/reports/01GVJHN1RTYZCZTCXVPPPKBX6R",
+		ReportDomain:       "fossbros-anonymous.io",
+		ReportTargetDomain: "",
+	}
+
+	suite.sender.SendNewReportEmail([]string{"user@example.org"}, reportData)
+	suite.Len(suite.sentEmails, 1)
+	suite.Equal("To: user@example.org\r\nSubject: GoToSocial New Moderation Report\r\n\r\nHello moderator of Test Instance (https://example.org)!\r\n\r\nSomeone from fossbros-anonymous.io has reported a user from your instance.\r\n\r\nTo view the report, paste the following link into your browser: https://example.org/settings/admin/reports/01GVJHN1RTYZCZTCXVPPPKBX6R\r\n\r\n", suite.sentEmails["user@example.org"])
+}
+
+func (suite *UtilTestSuite) TestTemplateReportLocalToRemote() {
+	// Someone from our instance has reported a remote user.
+	reportData := email.NewReportData{
+		InstanceURL:        "https://example.org",
+		InstanceName:       "Test Instance",
+		ReportURL:          "https://example.org/settings/admin/reports/01GVJHN1RTYZCZTCXVPPPKBX6R",
+		ReportDomain:       "",
+		ReportTargetDomain: "fossbros-anonymous.io",
+	}
+
+	suite.sender.SendNewReportEmail([]string{"user@example.org"}, reportData)
+	suite.Len(suite.sentEmails, 1)
+	suite.Equal("To: user@example.org\r\nSubject: GoToSocial New Moderation Report\r\n\r\nHello moderator of Test Instance (https://example.org)!\r\n\r\nSomeone from your instance has reported a user from fossbros-anonymous.io.\r\n\r\nTo view the report, paste the following link into your browser: https://example.org/settings/admin/reports/01GVJHN1RTYZCZTCXVPPPKBX6R\r\n\r\n", suite.sentEmails["user@example.org"])
+}
+
+func (suite *UtilTestSuite) TestTemplateReportLocalToLocal() {
+	// Someone from our instance has reported another user on our instance.
+	reportData := email.NewReportData{
+		InstanceURL:        "https://example.org",
+		InstanceName:       "Test Instance",
+		ReportURL:          "https://example.org/settings/admin/reports/01GVJHN1RTYZCZTCXVPPPKBX6R",
+		ReportDomain:       "",
+		ReportTargetDomain: "",
+	}
+
+	suite.sender.SendNewReportEmail([]string{"user@example.org"}, reportData)
+	suite.Len(suite.sentEmails, 1)
+	suite.Equal("To: user@example.org\r\nSubject: GoToSocial New Moderation Report\r\n\r\nHello moderator of Test Instance (https://example.org)!\r\n\r\nSomeone from your instance has reported another user from your instance.\r\n\r\nTo view the report, paste the following link into your browser: https://example.org/settings/admin/reports/01GVJHN1RTYZCZTCXVPPPKBX6R\r\n\r\n", suite.sentEmails["user@example.org"])
+}
+
+func (suite *UtilTestSuite) TestTemplateReportMoreThanOneModeratorAddress() {
+	reportData := email.NewReportData{
+		InstanceURL:        "https://example.org",
+		InstanceName:       "Test Instance",
+		ReportURL:          "https://example.org/settings/admin/reports/01GVJHN1RTYZCZTCXVPPPKBX6R",
+		ReportDomain:       "fossbros-anonymous.io",
+		ReportTargetDomain: "",
+	}
+
+	// Send the email to multiple addresses
+	suite.sender.SendNewReportEmail([]string{"user@example.org", "admin@example.org"}, reportData)
+	suite.Len(suite.sentEmails, 1)
+	suite.Equal("To: Undisclosed Recipients:;\r\nSubject: GoToSocial New Moderation Report\r\n\r\nHello moderator of Test Instance (https://example.org)!\r\n\r\nSomeone from fossbros-anonymous.io has reported a user from your instance.\r\n\r\nTo view the report, paste the following link into your browser: https://example.org/settings/admin/reports/01GVJHN1RTYZCZTCXVPPPKBX6R\r\n\r\n", suite.sentEmails["user@example.org"])
+}
+
+func (suite *UtilTestSuite) TestTemplateReportMoreThanOneModeratorAddressDisclose() {
+	config.SetSMTPDiscloseRecipients(true)
+
+	reportData := email.NewReportData{
+		InstanceURL:        "https://example.org",
+		InstanceName:       "Test Instance",
+		ReportURL:          "https://example.org/settings/admin/reports/01GVJHN1RTYZCZTCXVPPPKBX6R",
+		ReportDomain:       "fossbros-anonymous.io",
+		ReportTargetDomain: "",
+	}
+
+	// Send the email to multiple addresses
+	suite.sender.SendNewReportEmail([]string{"user@example.org", "admin@example.org"}, reportData)
+	suite.Len(suite.sentEmails, 1)
+	suite.Equal("To: user@example.org, admin@example.org\r\nSubject: GoToSocial New Moderation Report\r\n\r\nHello moderator of Test Instance (https://example.org)!\r\n\r\nSomeone from fossbros-anonymous.io has reported a user from your instance.\r\n\r\nTo view the report, paste the following link into your browser: https://example.org/settings/admin/reports/01GVJHN1RTYZCZTCXVPPPKBX6R\r\n\r\n", suite.sentEmails["user@example.org"])
 }
 
 func TestUtilTestSuite(t *testing.T) {

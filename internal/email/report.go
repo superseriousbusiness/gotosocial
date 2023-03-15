@@ -37,7 +37,11 @@ type NewReportData struct {
 	// URL to open the report in the settings panel.
 	ReportURL string
 	// Domain from which the report originated.
+	// Can be empty string for local reports.
 	ReportDomain string
+	// Domain targeted by the report.
+	// Can be empty string for local reports targeting local users.
+	ReportTargetDomain string
 }
 
 func (s *sender) SendNewReportEmail(toAddresses []string, data NewReportData) error {

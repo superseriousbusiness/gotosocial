@@ -1924,6 +1924,31 @@ func GetSMTPFrom() string { return global.GetSMTPFrom() }
 // SetSMTPFrom safely sets the value for global configuration 'SMTPFrom' field
 func SetSMTPFrom(v string) { global.SetSMTPFrom(v) }
 
+// GetSMTPDiscloseRecipients safely fetches the Configuration value for state's 'SMTPDiscloseRecipients' field
+func (st *ConfigState) GetSMTPDiscloseRecipients() (v bool) {
+	st.mutex.Lock()
+	v = st.config.SMTPDiscloseRecipients
+	st.mutex.Unlock()
+	return
+}
+
+// SetSMTPDiscloseRecipients safely sets the Configuration value for state's 'SMTPDiscloseRecipients' field
+func (st *ConfigState) SetSMTPDiscloseRecipients(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.SMTPDiscloseRecipients = v
+	st.reloadToViper()
+}
+
+// SMTPDiscloseRecipientsFlag returns the flag name for the 'SMTPDiscloseRecipients' field
+func SMTPDiscloseRecipientsFlag() string { return "smtp-disclose-recipients" }
+
+// GetSMTPDiscloseRecipients safely fetches the value for global configuration 'SMTPDiscloseRecipients' field
+func GetSMTPDiscloseRecipients() bool { return global.GetSMTPDiscloseRecipients() }
+
+// SetSMTPDiscloseRecipients safely sets the value for global configuration 'SMTPDiscloseRecipients' field
+func SetSMTPDiscloseRecipients(v bool) { global.SetSMTPDiscloseRecipients(v) }
+
 // GetSyslogEnabled safely fetches the Configuration value for state's 'SyslogEnabled' field
 func (st *ConfigState) GetSyslogEnabled() (v bool) {
 	st.mutex.Lock()

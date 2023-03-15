@@ -160,8 +160,30 @@ func (i *instanceDB) GetInstanceAccounts(ctx context.Context, domain string, max
 func (i *instanceDB) GetInstanceModeratorAddresses(ctx context.Context) ([]string, db.Error) {
 	addresses := []string{}
 
-	q := i.conn.NewSelect().
-		.
+	// Select email addresses of approved, confirmed,
+	// and enabled moderators or admins.
+
+	q := i.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("users"), bun.Ident("user")).
+		Column("user.email").
+		Where("? = ?", bun.Ident("user.approved"), true).
+		Where("? IS NOT NULL", bun.Ident("user.confirmed_at")).
+		Where("? = ?", bun.Ident("user.disabled"), false).
+		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.
+				Where("? = ?", bun.Ident("user.moderator"), true).
+				WhereOr("? = ?", bun.Ident("user.admin"), true)
+		}).
+		OrderExpr("? ASC", bun.Ident("user.email"))
+
+	if err := q.Scan(ctx, &addresses); err != nil {
+		return nil, i.conn.ProcessError(err)
+	}
+
+	if len(addresses) == 0 {
+		return nil, db.ErrNoEntries
+	}
 
 	return addresses, nil
 }

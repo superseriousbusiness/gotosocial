@@ -359,10 +359,15 @@ func (p *Processor) processCreateBlockFromFederator(ctx context.Context, federat
 }
 
 func (p *Processor) processCreateFlagFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
-	// TODO: handle side effects of flag creation:
-	// - send email to admins
-	// - notify admins
-	return nil
+	incomingReport, ok := federatorMsg.GTSModel.(*gtsmodel.Report)
+	if !ok {
+		return errors.New("flag was not parseable as *gtsmodel.Report")
+	}
+
+	// TODO: handle additional side effects of flag creation:
+	// - notify admins by dm / notification
+
+	return p.notifyReport(ctx, incomingReport)
 }
 
 // processUpdateAccountFromFederator handles Activity Update and Object Profile

@@ -17,8 +17,10 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-Hello moderator of {{.InstanceName}} ({{.InstanceURL}})!
+Hello moderator of {{ .InstanceName }} ({{ .InstanceURL }})!
 
-Someone from {{.ReportDomain}} has reported a user on your instance.
+{{ if .ReportDomain }}Someone from {{ .ReportDomain }} has reported a user from your instance.
+{{- else if .ReportTargetDomain }}Someone from your instance has reported a user from {{ .ReportTargetDomain }}.
+{{- else }}Someone from your instance has reported another user from your instance.{{ end }}
 
-To view the report, paste the following link into your browser: {{.ReportURL}}
+To view the report, paste the following link into your browser: {{ .ReportURL }}

@@ -112,12 +112,12 @@ func (s *noopSender) SendTestEmail(toAddress string, data TestData) error {
 
 func (s *noopSender) SendNewReportEmail(toAddresses []string, data NewReportData) error {
 	buf := &bytes.Buffer{}
-	if err := s.template.ExecuteTemplate(buf, testTemplate, data); err != nil {
+	if err := s.template.ExecuteTemplate(buf, reportTemplate, data); err != nil {
 		return err
 	}
-	testBody := buf.String()
+	reportBody := buf.String()
 
-	msg, err := assembleMessage(testSubject, testBody, "test@example.org", toAddresses...)
+	msg, err := assembleMessage(reportSubject, reportBody, "test@example.org", toAddresses...)
 	if err != nil {
 		return err
 	}

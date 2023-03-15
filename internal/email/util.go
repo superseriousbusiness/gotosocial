@@ -25,6 +25,8 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 func loadTemplates(templateBaseDir string) (*template.Template, error) {
@@ -64,13 +66,22 @@ func assembleMessage(mailSubject string, mailBody string, mailFrom string, mailT
 	mailBody = strings.ReplaceAll(mailBody, "\n", CRLF)
 
 	msg := bytes.Buffer{}
-	if len(mailTo) == 1 {
+	switch {
+	case len(mailTo) == 1:
 		// Address email directly to the one recipient.
 		msg.WriteString("To: " + mailTo[0] + CRLF)
-	} else {
-		// To group, Bcc the multiple recipients.
-		msg.WriteString("To: Multiple recipients:;" + CRLF)
-		msg.WriteString("Bcc: " + strings.Join(mailTo, ", ") + CRLF)
+	case config.GetSMTPDiscloseRecipients():
+		// Simply address To all recipients.
+		msg.WriteString("To: " + strings.Join(mailTo, ", ") + CRLF)
+	default:
+		// Address To anonymous group.
+		//
+		// Email will be sent to all recipients but we shouldn't include Bcc header.
+		//
+		// From the smtp.SendMail function: 'Sending "Bcc" messages is accomplished by
+		// including an email address in the to parameter but not including it in the
+		// msg headers.'
+		msg.WriteString("To: Undisclosed Recipients:;" + CRLF)
 	}
 	msg.WriteString("Subject: " + mailSubject + CRLF)
 	msg.WriteString(CRLF)
