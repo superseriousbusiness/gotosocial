@@ -21,13 +21,33 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"net/smtp"
 	"os"
 	"path/filepath"
 	"strings"
 	"text/template"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
+
+func (s *sender) sendTemplate(template string, subject string, data any, toAddresses ...string) error {
+	buf := &bytes.Buffer{}
+	if err := s.template.ExecuteTemplate(buf, template, data); err != nil {
+		return err
+	}
+
+	msg, err := assembleMessage(subject, buf.String(), s.from, toAddresses...)
+	if err != nil {
+		return err
+	}
+
+	if err := smtp.SendMail(s.hostAddress, s.auth, s.from, toAddresses, msg); err != nil {
+		return gtserror.SetType(err, gtserror.TypeSMTP)
+	}
+
+	return nil
+}
 
 func loadTemplates(templateBaseDir string) (*template.Template, error) {
 	if !filepath.IsAbs(templateBaseDir) {

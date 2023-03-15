@@ -1,3 +1,4 @@
+{{- /*
 // GoToSocial
 // Copyright (C) GoToSocial Authors admin@gotosocial.org
 // SPDX-License-Identifier: AGPL-3.0-or-later
@@ -14,23 +15,14 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/ -}}
 
-package email
+Hello {{.Username}}!
 
-const (
-	testTemplate = "email_test.tmpl"
-	testSubject  = "GoToSocial Test Email"
-)
+You are receiving this mail because a password reset has been requested for your account on {{.InstanceURL}}.
 
-type TestData struct {
-	// Username of admin user who sent the test.
-	SendingUsername string
-	// URL of the instance to present to the receiver.
-	InstanceURL string
-	// Name of the instance to present to the receiver.
-	InstanceName string
-}
+To reset your password, paste the following in your browser's address bar:
 
-func (s *sender) SendTestEmail(toAddress string, data TestData) error {
-	return s.sendTemplate(testTemplate, testSubject, data, toAddress)
-}
+{{.ResetLink}}
+
+If you believe you've been sent this email in error, feel free to ignore it, or contact the administrator of {{.InstanceURL}}.

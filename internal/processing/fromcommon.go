@@ -355,6 +355,52 @@ func (p *Processor) notifyReport(ctx context.Context, report *gtsmodel.Report) e
 	return nil
 }
 
+func (p *Processor) notifyReportClosed(ctx context.Context, report *gtsmodel.Report) error {
+	user, err := p.state.DB.GetUserByAccountID(ctx, report.Account.ID)
+	if err != nil {
+		return fmt.Errorf("notifyReportClosed: db error getting user: %w", err)
+	}
+
+	if user.ConfirmedAt.IsZero() || !*user.Approved || *user.Disabled || user.Email == "" {
+		// Only email users who:
+		// - are confirmed
+		// - are approved
+		// - are not disabled
+		// - have an email address
+		return nil
+	}
+
+	instance, err := p.state.DB.GetInstance(ctx, config.GetHost())
+	if err != nil {
+		return fmt.Errorf("notifyReportClosed: db error getting instance: %w", err)
+	}
+
+	if report.Account == nil {
+		report.Account, err = p.state.DB.GetAccountByID(ctx, report.AccountID)
+		if err != nil {
+			return fmt.Errorf("notifyReportClosed: error getting report account: %w", err)
+		}
+	}
+
+	if report.TargetAccount == nil {
+		report.TargetAccount, err = p.state.DB.GetAccountByID(ctx, report.TargetAccountID)
+		if err != nil {
+			return fmt.Errorf("notifyReportClosed: error getting report target account: %w", err)
+		}
+	}
+
+	reportClosedData := email.ReportClosedData{
+		Username:             report.Account.Username,
+		InstanceURL:          instance.URI,
+		InstanceName:         instance.Title,
+		ReportTargetUsername: report.TargetAccount.Username,
+		ReportTargetDomain:   report.TargetAccount.Domain,
+		ActionTakenComment:   report.ActionTaken,
+	}
+
+	return p.emailSender.SendReportClosedEmail(user.Email, reportClosedData)
+}
+
 // timelineStatus processes the given new status and inserts it into
 // the HOME timelines of accounts that follow the status author.
 func (p *Processor) timelineStatus(ctx context.Context, status *gtsmodel.Status) error {

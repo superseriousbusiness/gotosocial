@@ -49,80 +49,37 @@ type noopSender struct {
 }
 
 func (s *noopSender) SendConfirmEmail(toAddress string, data ConfirmData) error {
-	buf := &bytes.Buffer{}
-	if err := s.template.ExecuteTemplate(buf, confirmTemplate, data); err != nil {
-		return err
-	}
-	confirmBody := buf.String()
-
-	msg, err := assembleMessage(confirmSubject, confirmBody, "test@example.org", toAddress)
-	if err != nil {
-		return err
-	}
-
-	log.Tracef(nil, "NOT SENDING confirmation email to %s with contents: %s", toAddress, msg)
-
-	if s.sendCallback != nil {
-		s.sendCallback(toAddress, string(msg))
-	}
-	return nil
+	return s.sendTemplate(confirmTemplate, confirmSubject, data, toAddress)
 }
 
 func (s *noopSender) SendResetEmail(toAddress string, data ResetData) error {
-	buf := &bytes.Buffer{}
-	if err := s.template.ExecuteTemplate(buf, resetTemplate, data); err != nil {
-		return err
-	}
-	resetBody := buf.String()
-
-	msg, err := assembleMessage(resetSubject, resetBody, "test@example.org", toAddress)
-	if err != nil {
-		return err
-	}
-
-	log.Tracef(nil, "NOT SENDING reset email to %s with contents: %s", toAddress, msg)
-
-	if s.sendCallback != nil {
-		s.sendCallback(toAddress, string(msg))
-	}
-
-	return nil
+	return s.sendTemplate(resetTemplate, resetSubject, data, toAddress)
 }
 
 func (s *noopSender) SendTestEmail(toAddress string, data TestData) error {
-	buf := &bytes.Buffer{}
-	if err := s.template.ExecuteTemplate(buf, testTemplate, data); err != nil {
-		return err
-	}
-	testBody := buf.String()
-
-	msg, err := assembleMessage(testSubject, testBody, "test@example.org", toAddress)
-	if err != nil {
-		return err
-	}
-
-	log.Tracef(nil, "NOT SENDING test email to %s with contents: %s", toAddress, msg)
-
-	if s.sendCallback != nil {
-		s.sendCallback(toAddress, string(msg))
-	}
-
-	return nil
+	return s.sendTemplate(testTemplate, testSubject, data, toAddress)
 }
 
 func (s *noopSender) SendNewReportEmail(toAddresses []string, data NewReportData) error {
+	return s.sendTemplate(newReportTemplate, newReportSubject, data, toAddresses...)
+}
+
+func (s *noopSender) SendReportClosedEmail(toAddress string, data ReportClosedData) error {
+	return s.sendTemplate(reportClosedTemplate, reportClosedSubject, data, toAddress)
+}
+
+func (s *noopSender) sendTemplate(template string, subject string, data any, toAddresses ...string) error {
 	buf := &bytes.Buffer{}
-	if err := s.template.ExecuteTemplate(buf, reportTemplate, data); err != nil {
+	if err := s.template.ExecuteTemplate(buf, template, data); err != nil {
 		return err
 	}
-	reportBody := buf.String()
 
-	msg, err := assembleMessage(reportSubject, reportBody, "test@example.org", toAddresses...)
+	msg, err := assembleMessage(subject, buf.String(), "test@example.org", toAddresses...)
 	if err != nil {
 		return err
 	}
 
-	log.Tracef(nil, "NOT SENDING new report email to %s with contents: %s", toAddresses, msg)
+	log.Tracef(nil, "NOT SENDING email to %s with contents: %s", toAddresses, msg)
 
 	if s.sendCallback != nil {
 		s.sendCallback(toAddresses[0], string(msg))

@@ -17,16 +17,11 @@
 
 package email
 
-import (
-	"bytes"
-	"net/smtp"
-
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-)
-
 const (
-	reportTemplate = "email_report_text.tmpl"
-	reportSubject  = "GoToSocial New Moderation Report"
+	newReportTemplate    = "email_new_report.tmpl"
+	newReportSubject     = "GoToSocial New Report"
+	reportClosedTemplate = "email_report_closed.tmpl"
+	reportClosedSubject  = "GoToSocial Report Closed"
 )
 
 type NewReportData struct {
@@ -45,20 +40,25 @@ type NewReportData struct {
 }
 
 func (s *sender) SendNewReportEmail(toAddresses []string, data NewReportData) error {
-	buf := &bytes.Buffer{}
-	if err := s.template.ExecuteTemplate(buf, reportTemplate, data); err != nil {
-		return err
-	}
-	reportBody := buf.String()
+	return s.sendTemplate(newReportTemplate, newReportSubject, data, toAddresses...)
+}
 
-	msg, err := assembleMessage(reportSubject, reportBody, s.from, toAddresses...)
-	if err != nil {
-		return err
-	}
+type ReportClosedData struct {
+	// Username to be addressed.
+	Username string
+	// URL of the instance to present to the receiver.
+	InstanceURL string
+	// Name of the instance to present to the receiver.
+	InstanceName string
+	// Username of the report target.
+	ReportTargetUsername string
+	// Domain of the report target.
+	// Can be empty string for local reports targeting local users.
+	ReportTargetDomain string
+	// Comment left by the admin who closed the report.
+	ActionTakenComment string
+}
 
-	if err := smtp.SendMail(s.hostAddress, s.auth, s.from, toAddresses, msg); err != nil {
-		return gtserror.SetType(err, gtserror.TypeSMTP)
-	}
-
-	return nil
+func (s *sender) SendReportClosedEmail(toAddress string, data ReportClosedData) error {
+	return s.sendTemplate(reportClosedTemplate, reportClosedSubject, data, toAddress)
 }

@@ -42,6 +42,10 @@ type Sender interface {
 	// It is expected that the toAddresses have already been filtered to ensure that they
 	// all belong to admins + moderators.
 	SendNewReportEmail(toAddresses []string, data NewReportData) error
+
+	// SendReportClosedEmail sends an email notification to the given address, letting them
+	// know that a report that they created has been closed / resolved by an admin.
+	SendReportClosedEmail(toAddress string, data ReportClosedData) error
 }
 
 // NewSender returns a new email Sender interface with the given configuration, or an error if something goes wrong.
