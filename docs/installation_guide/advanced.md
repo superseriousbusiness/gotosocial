@@ -8,6 +8,10 @@ Yes, you can! This is useful when you have something like a personal page or blo
 
 Please note that you need to do this *BEFORE RUNNING GOTOSOCIAL* for the first time, or things will likely break.
 
+An additional thing to keep in mind is that there is no good way for applications to detect if you're running this style of deployment. Therefor you should recommend that folks use `fedi.example.org` as the instance to login to in any client application.
+
+Some applications do have heuristics built-in to try and detect this situation and make login from either domain possible. That heuristic relies on `/api/v1/instance` or `/api/v1/apps` not responding on `example.org`. When that happens they'll do a fallback lookup by requesting `example.org/.well-known/host-meta`. You need to ensure that this endpoint is properly redirected to `fedi.example.org` as shown in our examples below. It is crucial you don't redirect `/api` or any of its subpaths from `example.org` to `fedi.example.org`, but only the well-known endpoints, to not break this heuristic.
+
 ### Step 1: Configure GoToSocial
 
 This step is easy.
@@ -59,7 +63,7 @@ The next step is more difficult: we need to ensure that when remote instances se
 
 Of course, we don't want to redirect *all* requests from `example.org` to `fedi.example.org` because that negates the purpose of having a separate domain in the first place, so we need to be specific.
 
-In the config.yaml above, there are two endpoints mentioned, both of which we need to redirect: `/.well-known/webfinger` and `/.well-known/nodeinfo`.
+In the config.yaml above, there are three endpoints mentioned, all of which we need to redirect: `/.well-known/webfinger`, `/.well-known/nodeinfo` and `/.well-known/host-meta`.
 
 Assuming we have an [nginx](https://nginx.org) reverse proxy running on `example.org`, we can get the redirect behavior we want by adding the following to the nginx config for `example.org`:
 
@@ -87,7 +91,7 @@ http {
 }
 ```
 
-The above configuration [rewrites](https://www.nginx.com/blog/creating-nginx-rewrite-rules/) queries to `example.org/.well-known/webfinger` and `example.org/.well-known/nodeinfo` to their `fedi.example.org` counterparts, which means that query information is preserved, making it easier to follow the redirect.
+The above configuration [rewrites](https://www.nginx.com/blog/creating-nginx-rewrite-rules/) queries to `example.org/.well-known/webfinger`, `example.org/.well-known/nodeinfo` and `example.org/.well-known/host-meta` to their `fedi.example.org` counterparts while preserving any query arguments, making it easier to follow the redirect.
 
 If `example.org` is running on [Traefik](https://doc.traefik.io/traefik/), we could use labels similar to the following to setup the redirect.
 
