@@ -73,7 +73,7 @@ func (suite *RelationshipTestSuite) TestGetBlockBy() {
 			// Create new account block.
 			block := &gtsmodel.Block{
 				ID:              id.NewULID(),
-				URI:             "http://127.0.0.1:8080/block/" + id.NewULID(),
+				URI:             "http://127.0.0.1:8080/" + id.NewULID(),
 				AccountID:       account1.ID,
 				TargetAccountID: account2.ID,
 			}
@@ -186,7 +186,7 @@ func (suite *RelationshipTestSuite) TestGetFollowBy() {
 			// Create new account follow.
 			follow := &gtsmodel.Follow{
 				ID:              id.NewULID(),
-				URI:             "http://127.0.0.1:8080/block/" + id.NewULID(),
+				URI:             "http://127.0.0.1:8080/" + id.NewULID(),
 				AccountID:       account1.ID,
 				TargetAccountID: account2.ID,
 			}
@@ -299,7 +299,7 @@ func (suite *RelationshipTestSuite) TestGetFollowRequestBy() {
 			// Create new account follow request.
 			followReq := &gtsmodel.FollowRequest{
 				ID:              id.NewULID(),
-				URI:             "http://127.0.0.1:8080/block/" + id.NewULID(),
+				URI:             "http://127.0.0.1:8080/" + id.NewULID(),
 				AccountID:       account1.ID,
 				TargetAccountID: account2.ID,
 			}
