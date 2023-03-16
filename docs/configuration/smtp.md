@@ -75,6 +75,7 @@ Currently, emails are sent:
 
 - To the provided email address of a new user to request email confirmation when a new account is created via the API.
 - To all active instance moderators + admins when a new moderation report is received. By default, recipients are Bcc'd, but you can change this behavior with the setting `smtp-disclose-recipients`.
+- To the creator of a report (on this instance) when the report is closed by a moderator.
 
 ### Can I test if my SMTP configuration is correct?
 
