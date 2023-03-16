@@ -19,6 +19,7 @@ package account
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -35,7 +36,8 @@ func (p *Processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 		if blocked, err := p.state.DB.IsEitherBlocked(ctx, requestingAccount.ID, targetAccountID); err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		} else if blocked {
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts"))
+			err := errors.New("block exists between accounts")
+			return nil, gtserror.NewErrorNotFound(err)
 		}
 	}
 
