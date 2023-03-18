@@ -154,17 +154,11 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	middlewares := []gin.HandlerFunc{}
-	if config.GetTracingEnabled() {
-		middlewares = append(middlewares, tracing.InstrumentGin())
-	}
 	if config.GetRequestIDEnabled() {
 		middlewares = append(middlewares, middleware.AddRequestID(config.GetRequestIDHeader()))
-		// injecting the trace id can only happen after the span has been created
-		// could be overcome by extracting the needed parts from the otelgin library
-		// and creating our own middleware
-		if config.GetTracingEnabled() {
-			middlewares = append(middlewares, tracing.InjectRequestID())
-		}
+	}
+	if config.GetTracingEnabled() {
+		middlewares = append(middlewares, tracing.InstrumentGin())
 	}
 	middlewares = append(middlewares, []gin.HandlerFunc{
 		// note: hooks adding ctx fields must be ABOVE

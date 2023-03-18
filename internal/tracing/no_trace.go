@@ -41,7 +41,3 @@ func InstrumentGin() gin.HandlerFunc {
 func InstrumentBun() bun.QueryHook {
 	return nil
 }
-
-func InjectRequestID() gin.HandlerFunc {
-	return func(c *gin.Context) {}
-}

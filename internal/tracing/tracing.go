@@ -27,7 +27,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/extra/bunotel"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/jaeger"
@@ -36,11 +35,17 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+	"go.opentelemetry.io/otel/semconv/v1.17.0/httpconv"
 	oteltrace "go.opentelemetry.io/otel/trace"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+)
+
+const (
+	tracerKey  = "gotosocial-server-tracer"
+	tracerName = "github.com/superseriousbusiness/gotosocial/internal/tracing"
 )
 
 func Initialize() error {
@@ -101,8 +106,56 @@ func Initialize() error {
 	return nil
 }
 
+// InstrumentGin is a middleware injecting tracing information based on the
+// otelgin implementation found at
+// https://github.com/open-telemetry/opentelemetry-go-contrib/blob/main/instrumentation/github.com/gin-gonic/gin/otelgin/gintrace.go
 func InstrumentGin() gin.HandlerFunc {
-	return otelgin.Middleware(config.GetHost())
+	provider := otel.GetTracerProvider()
+	tracer := provider.Tracer(
+		tracerName,
+		oteltrace.WithInstrumentationVersion(config.GetSoftwareVersion()),
+	)
+	propagator := otel.GetTextMapPropagator()
+	return func(c *gin.Context) {
+		c.Set(tracerKey, tracer)
+		savedCtx := c.Request.Context()
+		defer func() {
+			c.Request = c.Request.WithContext(savedCtx)
+		}()
+		ctx := propagator.Extract(savedCtx, propagation.HeaderCarrier(c.Request.Header))
+		opts := []oteltrace.SpanStartOption{
+			oteltrace.WithAttributes(httpconv.ServerRequest(config.GetHost(), c.Request)...),
+			oteltrace.WithSpanKind(oteltrace.SpanKindServer),
+		}
+		spanName := c.FullPath()
+		if spanName == "" {
+			spanName = fmt.Sprintf("HTTP %s route not found", c.Request.Method)
+		} else {
+			rAttr := semconv.HTTPRoute(spanName)
+			opts = append(opts, oteltrace.WithAttributes(rAttr))
+		}
+		id := gtscontext.RequestID(c.Request.Context())
+		if id != "" {
+			opts = append(opts, oteltrace.WithAttributes(attribute.String("requestID", id)))
+		}
+		ctx, span := tracer.Start(ctx, spanName, opts...)
+		defer span.End()
+
+		// pass the span through the request context
+		c.Request = c.Request.WithContext(ctx)
+
+		// serve the request to the next middleware
+		c.Next()
+
+		status := c.Writer.Status()
+		span.SetStatus(httpconv.ServerStatus(status))
+		if status > 0 {
+			span.SetAttributes(semconv.HTTPStatusCode(status))
+		}
+		if len(c.Errors) > 0 {
+			span.SetAttributes(attribute.String("gin.errors", c.Errors.String()))
+		}
+	}
 }
 
 func InjectRequestID() gin.HandlerFunc {
