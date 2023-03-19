@@ -126,11 +126,12 @@ type Configuration struct {
 	OIDCLinkExisting     bool     `name:"oidc-link-existing" usage:"link existing user accounts to OIDC logins based on the stored email value"`
 	OIDCAdminGroups      []string `name:"oidc-admin-groups" usage:"Membership of one of the listed groups makes someone a GtS admin"`
 
-	SMTPHost     string `name:"smtp-host" usage:"Host of the smtp server. Eg., 'smtp.eu.mailgun.org'"`
-	SMTPPort     int    `name:"smtp-port" usage:"Port of the smtp server. Eg., 587"`
-	SMTPUsername string `name:"smtp-username" usage:"Username to authenticate with the smtp server as. Eg., 'postmaster@mail.example.org'"`
-	SMTPPassword string `name:"smtp-password" usage:"Password to pass to the smtp server."`
-	SMTPFrom     string `name:"smtp-from" usage:"Address to use as the 'from' field of the email. Eg., 'gotosocial@example.org'"`
+	SMTPHost               string `name:"smtp-host" usage:"Host of the smtp server. Eg., 'smtp.eu.mailgun.org'"`
+	SMTPPort               int    `name:"smtp-port" usage:"Port of the smtp server. Eg., 587"`
+	SMTPUsername           string `name:"smtp-username" usage:"Username to authenticate with the smtp server as. Eg., 'postmaster@mail.example.org'"`
+	SMTPPassword           string `name:"smtp-password" usage:"Password to pass to the smtp server."`
+	SMTPFrom               string `name:"smtp-from" usage:"Address to use as the 'from' field of the email. Eg., 'gotosocial@example.org'"`
+	SMTPDiscloseRecipients bool   `name:"smtp-disclose-recipients" usage:"If true, email notifications sent to multiple recipients will be To'd to every recipient at once. If false, recipients will not be disclosed"`
 
 	SyslogEnabled  bool   `name:"syslog-enabled" usage:"Enable the syslog logging hook. Logs will be mirrored to the configured destination."`
 	SyslogProtocol string `name:"syslog-protocol" usage:"Protocol to use when directing logs to syslog. Leave empty to connect to local syslog."`

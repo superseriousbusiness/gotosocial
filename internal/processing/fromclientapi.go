@@ -81,6 +81,9 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, clientMsg messages
 		case ap.ObjectProfile, ap.ActorPerson:
 			// UPDATE ACCOUNT/PROFILE
 			return p.processUpdateAccountFromClientAPI(ctx, clientMsg)
+		case ap.ActivityFlag:
+			// UPDATE A FLAG/REPORT (mark as resolved/closed)
+			return p.processUpdateReportFromClientAPI(ctx, clientMsg)
 		}
 	case ap.ActivityAccept:
 		// ACCEPT
@@ -240,6 +243,21 @@ func (p *Processor) processUpdateAccountFromClientAPI(ctx context.Context, clien
 	return p.federateAccountUpdate(ctx, account, clientMsg.OriginAccount)
 }
 
+func (p *Processor) processUpdateReportFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+	report, ok := clientMsg.GTSModel.(*gtsmodel.Report)
+	if !ok {
+		return errors.New("report was not parseable as *gtsmodel.Report")
+	}
+
+	if report.Account.IsRemote() {
+		// Report creator is a remote account,
+		// we shouldn't email or notify them.
+		return nil
+	}
+
+	return p.notifyReportClosed(ctx, report)
+}
+
 func (p *Processor) processAcceptFollowFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
 	follow, ok := clientMsg.GTSModel.(*gtsmodel.Follow)
 	if !ok {
@@ -349,14 +367,17 @@ func (p *Processor) processReportAccountFromClientAPI(ctx context.Context, clien
 		return errors.New("report was not parseable as *gtsmodel.Report")
 	}
 
-	// TODO: in a separate PR, also email admin(s)
-
-	if !*report.Forwarded {
-		// nothing to do, don't federate the report
-		return nil
+	if *report.Forwarded {
+		if err := p.federateReport(ctx, report); err != nil {
+			return fmt.Errorf("processReportAccountFromClientAPI: error federating report: %w", err)
+		}
 	}
 
-	return p.federateReport(ctx, report)
+	if err := p.notifyReport(ctx, report); err != nil {
+		return fmt.Errorf("processReportAccountFromClientAPI: error notifying report: %w", err)
+	}
+
+	return nil
 }
 
 // TODO: move all the below functions into federation.Federator

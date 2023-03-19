@@ -17,15 +17,8 @@
 
 package email
 
-import (
-	"bytes"
-	"net/smtp"
-
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-)
-
 const (
-	confirmTemplate = "email_confirm_text.tmpl"
+	confirmTemplate = "email_confirm.tmpl"
 	confirmSubject  = "GoToSocial Email Confirmation"
 )
 
@@ -43,20 +36,5 @@ type ConfirmData struct {
 }
 
 func (s *sender) SendConfirmEmail(toAddress string, data ConfirmData) error {
-	buf := &bytes.Buffer{}
-	if err := s.template.ExecuteTemplate(buf, confirmTemplate, data); err != nil {
-		return err
-	}
-	confirmBody := buf.String()
-
-	msg, err := assembleMessage(confirmSubject, confirmBody, toAddress, s.from)
-	if err != nil {
-		return err
-	}
-
-	if err := smtp.SendMail(s.hostAddress, s.auth, s.from, []string{toAddress}, msg); err != nil {
-		return gtserror.SetType(err, gtserror.TypeSMTP)
-	}
-
-	return nil
+	return s.sendTemplate(confirmTemplate, confirmSubject, data, toAddress)
 }

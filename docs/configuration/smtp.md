@@ -45,6 +45,18 @@ smtp-password: ""
 # Examples: ["mail@example.org"]
 # Default: ""
 smtp-from: ""
+
+# Bool. If true, when an email is sent that has multiple recipients, each recipient
+# will be included in the To field, so that each recipient can see who else got the
+# email, and they can 'reply all' to the other recipients if they want to.
+#
+# If false, email will be sent to Undisclosed Recipients, and each recipient will not
+# be able to see who else received the email.
+#
+# It might be useful to change this setting to 'true' if you want to be able to discuss
+# new moderation reports with other admins by 'replying-all' to the notification email.
+# Default: false
+smtp-disclose-recipients: false
 ```
 
 Note that if you don't set `Host`, then email sending via smtp will be disabled, and the other settings will be ignored. GoToSocial will still log (at trace level) emails that *would* have been sent if smtp was enabled.
@@ -59,11 +71,19 @@ The exception to this requirement is if you're running your mail server (or brid
 
 ### When are emails sent?
 
-Currently, emails are only sent to users to request email confirmation when a new account is created, or to serve password reset requests. More email functionality will probably be added later.
+Currently, emails are sent:
+
+- To the provided email address of a new user to request email confirmation when a new account is created via the API.
+- To all active instance moderators + admins when a new moderation report is received. By default, recipients are Bcc'd, but you can change this behavior with the setting `smtp-disclose-recipients`.
+- To the creator of a report (on this instance) when the report is closed by a moderator.
+
+### Can I test if my SMTP configuration is correct?
+
+Yes, you can use the API to send a test email to yourself. Check the API documentation for the `/api/v1/admin/email/test` endpoint.
 
 ### HTML versus Plaintext
 
-Emails are sent in HTML by default. At this point, there is no option to send emails in plaintext, but this is something that might be added later if there's enough demand for it.
+Emails are sent in plaintext by default. At this point, there is no option to send emails in html, but this is something that might be added later if there's enough demand for it.
 
 ## Customization
 

@@ -17,15 +17,8 @@
 
 package email
 
-import (
-	"bytes"
-	"net/smtp"
-
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-)
-
 const (
-	resetTemplate = "email_reset_text.tmpl"
+	resetTemplate = "email_reset.tmpl"
 	resetSubject  = "GoToSocial Password Reset"
 )
 
@@ -43,20 +36,5 @@ type ResetData struct {
 }
 
 func (s *sender) SendResetEmail(toAddress string, data ResetData) error {
-	buf := &bytes.Buffer{}
-	if err := s.template.ExecuteTemplate(buf, resetTemplate, data); err != nil {
-		return err
-	}
-	resetBody := buf.String()
-
-	msg, err := assembleMessage(resetSubject, resetBody, toAddress, s.from)
-	if err != nil {
-		return err
-	}
-
-	if err := smtp.SendMail(s.hostAddress, s.auth, s.from, []string{toAddress}, msg); err != nil {
-		return gtserror.SetType(err, gtserror.TypeSMTP)
-	}
-
-	return nil
+	return s.sendTemplate(resetTemplate, resetSubject, data, toAddress)
 }

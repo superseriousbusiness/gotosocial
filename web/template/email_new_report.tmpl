@@ -1,3 +1,4 @@
+{{- /*
 // GoToSocial
 // Copyright (C) GoToSocial Authors admin@gotosocial.org
 // SPDX-License-Identifier: AGPL-3.0-or-later
@@ -14,23 +15,12 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/ -}}
 
-package email
+Hello moderator of {{ .InstanceName }} ({{ .InstanceURL }})!
 
-const (
-	testTemplate = "email_test.tmpl"
-	testSubject  = "GoToSocial Test Email"
-)
+{{ if .ReportDomain }}Someone from {{ .ReportDomain }} has reported a user from your instance.
+{{- else if .ReportTargetDomain }}Someone from your instance has reported a user from {{ .ReportTargetDomain }}.
+{{- else }}Someone from your instance has reported another user from your instance.{{ end }}
 
-type TestData struct {
-	// Username of admin user who sent the test.
-	SendingUsername string
-	// URL of the instance to present to the receiver.
-	InstanceURL string
-	// Name of the instance to present to the receiver.
-	InstanceName string
-}
-
-func (s *sender) SendTestEmail(toAddress string, data TestData) error {
-	return s.sendTemplate(testTemplate, testSubject, data, toAddress)
-}
+To view the report, paste the following link into your browser: {{ .ReportURL }}
