@@ -66,16 +66,16 @@ func loadTemplates(templateBaseDir string) (*template.Template, error) {
 //   - https://datatracker.ietf.org/doc/html/rfc2822
 //   - https://pkg.go.dev/net/smtp#SendMail
 func assembleMessage(mailSubject string, mailBody string, mailFrom string, mailTo ...string) ([]byte, error) {
-	if strings.Contains(mailSubject, "\r") || strings.Contains(mailSubject, "\n") {
+	if strings.ContainsAny(mailSubject, "\r\n") {
 		return nil, errors.New("email subject must not contain newline characters")
 	}
 
-	if strings.Contains(mailFrom, "\r") || strings.Contains(mailFrom, "\n") {
+	if strings.ContainsAny(mailFrom, "\r\n") {
 		return nil, errors.New("email from address must not contain newline characters")
 	}
 
 	for _, to := range mailTo {
-		if strings.Contains(to, "\r") || strings.Contains(to, "\n") {
+		if strings.ContainsAny(to, "\r\n") {
 			return nil, errors.New("email to address must not contain newline characters")
 		}
 	}
