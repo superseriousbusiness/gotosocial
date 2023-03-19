@@ -222,14 +222,31 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	if account.Username == "" {
 		// No username was provided, so no webfinger was attempted earlier.
 		//
-		// Now we have a username we can attempt it, this ensures up-to-date accountdomain info.
-		accDomain, _, err := d.fingerRemoteAccount(ctx, transport, latestAcc.Username, uri.Host)
+		// Now we have a username we can attempt again, to ensure up-to-date
+		// accountDomain info. For this final attempt we should use the domain
+		// of the ID of the dereffed account, rather than the URI we were given.
+		//
+		// This avoids cases where we were given a URI like
+		// https://example.org/@someone@somewhere.else and we've been redirected
+		// from example.org to somewhere.else: we want to take somewhere.else
+		// as the accountDomain then, not the example.org we were redirected from.
 
-		switch {
-		case err != nil:
-			log.Errorf(ctx, "error webfingering[2] remote account %s@%s: %v", latestAcc.Username, uri.Host, err)
+		// Assume the host from the returned ActivityPub representation.
+		idProp := apubAcc.GetJSONLDId()
+		if idProp == nil || !idProp.IsIRI() {
+			return nil, errors.New("enrichAccount: no id property found on person, or id was not an iri")
+		}
+		accHost := idProp.GetIRI().Host
 
-		case err == nil:
+		accDomain, _, err := d.fingerRemoteAccount(ctx, transport, latestAcc.Username, accHost)
+		if err != nil {
+			// We still couldn't webfinger the account, so we're not certain
+			// what the accountDomain actually is. Still, we can make a solid
+			// guess that it's the Host of the ActivityPub URI of the account.
+			// If we're wrong, we can just try again in a couple days.
+			log.Errorf(ctx, "error webfingering[2] remote account %s@%s: %v", latestAcc.Username, accHost, err)
+			latestAcc.Domain = accHost
+		} else {
 			// Update account with latest info.
 			latestAcc.Domain = accDomain
 		}
