@@ -196,6 +196,7 @@ func (p *Processor) deleteAccountFollows(ctx context.Context, account *gtsmodel.
 		} else if uri == "" {
 			// There was no follow after all.
 			// Some race condition? Skip.
+			log.WithContext(ctx).WithField("follow", follow).Warn("Unfollow did not return uri, likely race condition")
 			continue
 		}
 
@@ -222,6 +223,7 @@ func (p *Processor) deleteAccountFollows(ctx context.Context, account *gtsmodel.
 		if uri == "" {
 			// There was no follow request after all.
 			// Some race condition? Skip.
+			log.WithContext(ctx).WithField("followRequest", followRequest).Warn("UnfollowRequest did not return uri, likely race condition")
 			continue
 		}
 
