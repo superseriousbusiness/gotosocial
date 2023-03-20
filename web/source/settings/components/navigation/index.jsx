@@ -20,24 +20,21 @@
 "use strict";
 
 const React = require("react");
-const { Switch, Route } = require("wouter");
 
-const InstanceOverview = require("./overview");
-const InstanceDetail = require("./detail");
-const InstanceImportExport = require("./import-export");
+function Navigation({ root, children }) {
+	console.log(children);
+}
 
-module.exports = function Federation({ baseUrl }) {
-	return (
-		<Switch>
-			<Route path={`${baseUrl}/import-export/:list?`}>
-				<InstanceImportExport />
-			</Route>
+function NavCategory({ }) {
+	return null;
+}
 
-			<Route path={`${baseUrl}/:domain`}>
-				<InstanceDetail baseUrl={baseUrl} />
-			</Route>
+function NavView({ component }) {
+	return null;
+}
 
-			<InstanceOverview baseUrl={baseUrl} />
-		</Switch>
-	);
+module.exports = {
+	Navigation,
+	NavCategory,
+	NavView
 };

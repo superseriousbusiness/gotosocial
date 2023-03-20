@@ -30,7 +30,114 @@ function urlSafe(str) {
 	return str.toLowerCase().replace(/\s+/g, "-");
 }
 
-module.exports = function getViews(struct) {
+const RoleContext = React.createContext([]);
+
+const rootPath = "/settings";
+
+// function routingTree(tree, rootPath = ["/settings"]) {
+// 	return syncpipe(tree, [
+// 		(_) => Object.entries(_),
+// 		(_) => _.map(([name, data]) => {
+// 			if (name.startsWith("_")) {
+// 				return [name, data];
+// 			}
+
+// 			let path = [...rootPath, data._url ?? urlSafe(name)];
+
+// 			return [
+// 				path.join("/"),
+// 				(typeof data == "function")
+// 					? {
+// 						name,
+// 						component: data
+// 					}
+// 					: routingTree(data, path)
+// 			];
+// 		}),
+// 		(_) => Object.fromEntries(_)
+// 	]);
+// }
+
+module.exports = function createUseNavigation(categories) {
+	const sidebar = [];
+	const viewRouter = [];
+
+	Object.entries(categories).forEach(([categoryName, contents]) => {
+		const {
+			_permissions: permissions = true,
+			_url: url = urlSafe(categoryName),
+			...subCategories
+		} = contents;
+
+		let path = [rootPath, url];
+
+		sidebarCategories.push(<SidebarCategory
+			name={categoryName}
+			key={path.join("/")}
+			path={path}
+			permissions={_permissions}
+			entries={entries}
+		/>);
+
+
+
+	});
+
+	return function useNavigation({ permissions }) {
+		return {
+			sidebar: (
+				<RoleContext.provider value={permissions}>
+					<nav>
+						<ul>
+							{sidebarCategories}
+						</ul>
+					</nav>
+				</RoleContext.provider>
+			),
+			viewRouter
+		};
+	};
+};
+
+function useHasPermission(permissions) {
+	const roles = React.useContext(RoleContext);
+
+	if (permissions === true) {
+		return true;
+	}
+
+	return roles.some((role) => permissions.includes(role));
+}
+
+function SidebarCategory({ name, path, permissions, entries }) {
+	if (!useHasPermission(permissions)) {
+		return null;
+	}
+
+	return (
+		<li className="nav-category">
+			<a className="nav-category-name">{name}</a>
+			<ul className="entries">
+				{entries.forEach(([entryName, entry]) => {
+					let entryPath = path.push(entryName);
+					return (
+						<SidebarEntry
+							key={entryPath.join("/")}
+							path={entryPath}
+							entry={entry}
+						/>
+					);
+				})}
+			</ul>
+		</li>
+	);
+}
+
+function SidebarEntry({ }) {
+
+}
+
+function generateNavigation(struct) {
 	const sidebar = {
 		all: [],
 		admin: [],
@@ -41,7 +148,7 @@ module.exports = function getViews(struct) {
 		admin: [],
 	};
 
-	Object.entries(struct).forEach(([name, entries]) => {
+	Object.entries(struct).forEach(([categoryName, entries]) => {
 		let sidebarEl = sidebar.all;
 		let panelRouterEl = panelRouter.all;
 

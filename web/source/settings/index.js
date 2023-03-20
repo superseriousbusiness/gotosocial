@@ -25,53 +25,68 @@ const { Provider } = require("react-redux");
 const { PersistGate } = require("redux-persist/integration/react");
 const { Switch, Route, Redirect } = require("wouter");
 
-const query = require("./lib/query");
-
 const { store, persistor } = require("./redux");
+const { createNavigation, useNavigation } = require("./lib/navigation");
+
 const AuthorizationGate = require("./components/authorization");
 const Loading = require("./components/loading");
+const UserLogoutCard = require("./components/user-logout-card");
 
 require("./style.css");
 
-// TODO: nested categories?
-const nav = {
-	"User": {
-		"Profile": require("./user/profile.js"),
-		"Settings": require("./user/settings.js"),
-	},
-	"Admin": {
-		adminOnly: true,
-		"Instance Settings": require("./admin/settings.js"),
-		"Actions": require("./admin/actions"),
-		"Federation": require("./admin/federation"),
-		"Reports": require("./admin/reports")
-	},
-	"Custom Emoji": {
-		adminOnly: true,
-		"Local": require("./admin/emoji/local"),
-		"Remote": require("./admin/emoji/remote"),
-	}
-};
-
-const { sidebar, panelRouter } = require("./lib/get-views")(nav);
+const navigation = createNavigation("/settings", ({ Category, View }) => {
+	return [
+		Category("User", [
+			View("Profile", require("./user/profile"), { icon: "fa-user" }),
+			View("Settings", require("./user/settings"), { icon: "fa-cogs" }),
+		]),
+		Category("Moderation", {
+			url: "admin",
+			permissions: ["admin"]
+		}, [
+			View("Reports", require("./admin/reports"), { icon: "fa-flag" }),
+			View("Users", require("./admin/reports"), { icon: "fa-users" }),
+			Category("Federation", { icon: "fa-hubzilla" }, [
+				View("Federation", require("./admin/federation"), { icon: "fa-hubzilla", url: "" }),
+				View("Bulk Import/Export", require("./admin/federation/import-export"), { icon: "fa-floppy-o" }),
+			])
+		]),
+		Category("Administration", {
+			url: "admin",
+			defaultUrl: "/settings/admin/settings",
+			permissions: ["admin"]
+		}, [
+			View("Actions", require("./admin/actions"), { icon: "fa-bolt" }),
+			Category("Custom Emoji", { icon: "fa-smile-o" }, [
+				View("Local", require("./admin/emoji/local"), { icon: "fa-home" }),
+				View("Remote", require("./admin/emoji/remote"), { icon: "fa-cloud" })
+			]),
+			View("Settings", require("./admin/settings"), { icon: "fa-sliders" })
+		])
+	];
+});
 
 function App({ account }) {
-	const isAdmin = account.role.name == "admin";
-	const [logoutQuery] = query.useLogoutMutation();
+	const { sidebar, routedViews, fallbackRoutes } = useNavigation(navigation, {
+		permissions: [account.role.name]
+	});
 
 	return (
 		<>
 			<div className="sidebar">
-				{sidebar.all}
-				{isAdmin && sidebar.admin}
-				<button className="logout" onClick={logoutQuery}>
-					Log out
-				</button>
+				<UserLogoutCard />
+				{sidebar}
+				{/* <div className="nav-container">
+					{sidebar.all}
+					{isAdmin && sidebar.adminOnly}
+				</div> */}
 			</div>
 			<section className="with-sidebar">
 				<Switch>
-					{panelRouter.all}
-					{isAdmin && panelRouter.admin}
+					{/* {viewRouter.all}
+					{isAdmin && viewRouter.adminOnly} */}
+					{routedViews}
+					{fallbackRoutes}
 					<Route>
 						<Redirect to="/settings/user" />
 					</Route>

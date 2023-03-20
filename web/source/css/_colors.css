@@ -101,15 +101,15 @@ $input-border: $blue1;
 $input-error-border: $error3;
 $input-focus-border: $blue3;
 
-$settings-nav-bg: $bg-accent;
-$settings-nav-header-fg: $gray1;
-$settings-nav-header-bg: $orange1;
+$settings-nav-bg: $bg;
+$settings-nav-header-fg: $orange2;
 
 $settings-nav-bg-hover: $gray3;
-/* $settings-nav-fg-hover: $gray1; */
+$settings-nav-fg-hover: $fg;
 
-$settings-nav-bg-active: $gray2;
-/* $settings-nav-fg-active: $orange2; */
+$settings-nav-bg-active: $blue3;
+$settings-nav-border-active: $info-bg;
+$settings-nav-fg-active: $gray2;
 
 $error-fg: $error1;
 $error-bg: $error2;

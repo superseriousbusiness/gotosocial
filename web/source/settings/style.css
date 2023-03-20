@@ -34,11 +34,34 @@ section {
 	grid-column: 2;
 }
 
+header {
+	justify-content: start;
+
+	a {
+		margin: 1.5rem;
+		gap: 1rem;
+
+		h1 {
+			font-size: 1.5rem;
+		}
+
+		img {
+			height: 3rem;
+		}
+	}
+}
+
+main section {
+	box-shadow: none;
+	border-radius: none;
+	border: none;
+}
+
 #root {
 	display: grid;
 	/* keep in sync with base.css .page {} */
-	grid-template-columns: auto minmax(auto, 50rem) auto;
-	grid-template-columns: auto min(92%, 50rem) auto;
+	grid-template-columns: 1fr minmax(auto, 50rem) 1fr;
+	grid-template-columns: 1fr min(92%, 50rem) 1fr;
 	box-sizing: border-box;
 
 	section.with-sidebar {
@@ -79,14 +102,15 @@ section {
 	}
 
 	.sidebar {
+		margin: 0 1rem;
 		align-self: start;
-		justify-self: end;
-		background: $settings-nav-bg;
-		border: $boxshadow-border;
-		box-shadow: $boxshadow;
-		border-radius: $br;
+		justify-self: stretch;
+		background: $bg;
+		/* border: $boxshadow-border; */
+		/* box-shadow: $boxshadow; */
+		/* border-radius: $br;
 		border-top-right-radius: 0;
-		border-bottom-right-radius: 0;
+		border-bottom-right-radius: 0; */
 		display: flex;
 		flex-direction: column;
 		min-width: 12rem;
@@ -95,61 +119,140 @@ section {
 			text-decoration: none;
 		}
 
-		a:first-child h2 {
-			border-top-left-radius: $br;
-		}
+		.account-card {
+			grid-template-columns: auto 1fr auto;
 
-		h2 {
-			margin: 0;
-			padding: 0.5rem;
-			font-size: 0.9rem;
-			font-weight: bold;
-			text-transform: uppercase;
-			color: $settings-nav-header-fg;
-			background: $settings-nav-header-bg;
-		}
-		
-		nav {
-			display: flex;
-			flex-direction: column;
+			img.avatar {
+				width: 4rem;
+				height: 4rem;
+			}
 
-			a {
-				padding: 1rem;
-				text-decoration: none;
-				transition: 0.1s;
-				color: $fg;
-	
-				&:hover {
-					color: $settings-nav-fg-hover;
-					background: $settings-nav-bg-hover;
-				}
-				
-				&.active {
-					color: $settings-nav-fg-active;
-					background: $settings-nav-bg-active;
-					font-weight: bold;
-					text-decoration: underline;
-				}
-	
-				/* reserve space for bold version of the element, so .active doesn't
-					 change container size */
-				&::after { 
-					font-weight: bold;
-					text-decoration: underline;
-					display: block;
-					content: attr(data-content);
-					height: 1px;
-					color: transparent;
-					overflow: hidden;
-					visibility: hidden;
-				}
+			span {
+				grid-row: 2;
+			}
+
+			.logout {
+				font-size: 1.5rem;
+				align-self: center;
+				grid-row: 1 / span 2;
+			}
+
+			&:hover {
+				background: $list-entry-bg;
 			}
 		}
 
+		nav > ul {
+			display: flex;
+			flex-direction: column;
+			gap: 0.3rem;
+			background: $settings-nav-bg;
+			padding: 0.2rem;
+		}
 
-		nav:last-child a:last-child {
-			border-bottom-left-radius: $br;
-			border-bottom: none;
+		ul {
+			list-style-type: none;
+			margin: 0;
+			padding: 0;
+		}
+
+		li.category.top-level {
+			border-top: 0.1rem solid $gray3;
+			display: flex;
+			flex-direction: column;
+			margin: 0;
+
+			& > a {
+				color: $settings-nav-header-fg;
+				padding: 0.5rem;
+				margin: 0;
+				font-size: 0.8rem;
+				font-weight: bold;
+				text-transform: uppercase;
+			}
+
+			.fa-fw {
+				margin-right: 0.5rem;
+			}
+
+			ul {
+				display: flex;
+				flex-direction: column;
+				/* margin-left: 0.5rem; */
+				gap: 0.2rem;
+
+				li {
+					border-radius: $br;
+					border: 0.1rem solid transparent;
+
+					transition: 0.1s;
+					color: $fg;
+	
+					&:hover, &:focus, &:active {
+						color: $settings-nav-fg-hover;
+						background: $settings-nav-bg-hover;
+					}
+
+					&.active {
+						color: $settings-nav-fg-active;
+						background: $settings-nav-bg-active;
+						border: 0.07rem solid $settings-nav-border-active;
+						font-weight: bold;
+
+						&.nested-1 {
+							background: $gray4;
+							overflow: hidden;
+
+							li {
+								margin-left: 1rem;
+								font-weight: normal;
+							}
+
+							li.active {
+								background: $gray4;
+								border: none;
+								color: $fg-accent;
+								font-weight: bold;
+
+								&:hover {
+									background: $settings-nav-bg-hover;
+								}
+							}
+
+							& > a {
+								background: $settings-nav-bg-active;
+								border-radius: 0;
+								font-weight: bold;
+							}
+						}
+					}
+				}
+
+				a {
+					display: block;
+					text-decoration: none;
+					color: inherit;
+					padding: 0.5rem;
+
+					&:focus {
+						border: 0.1rem solid $fg-accent;
+						border-radius: $br;
+					}
+				
+					/* reserve space for bold version of the element, so .active doesn't
+					 	change container size */
+					&::after { 
+						font-weight: bold;
+						text-decoration: underline;
+						display: block;
+						content: attr(data-content);
+						height: 1px;
+						color: transparent;
+						overflow: hidden;
+						visibility: hidden;
+					}
+				}
+			}
 		}
 	}
 }
