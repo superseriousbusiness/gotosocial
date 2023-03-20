@@ -357,6 +357,7 @@ statusLoop:
 						if errors.Is(err, db.ErrNoEntries) {
 							// We don't have an account for this boost
 							// for some reason, so just skip processing.
+							log.WithContext(ctx).WithField("boost", boost).Warnf("no account found with id %s for boost %s", boost.AccountID, boost.ID)
 							continue
 						}
 						return fmt.Errorf("deleteAccountStatuses: error fetching boosted status account for %s: %w", boost.AccountID, err)
