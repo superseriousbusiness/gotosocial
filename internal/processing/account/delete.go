@@ -313,7 +313,12 @@ statusLoop:
 	for {
 		// Page through account's statuses.
 		statuses, err = p.state.DB.GetAccountStatuses(ctx, account.ID, deleteSelectLimit, false, false, maxID, "", false, false)
-		if err != nil || len(statuses) == 0 {
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			// Make sure we don't have a real error.
+			return err
+		}
+
+		if len(statuses) == 0 {
 			break statusLoop
 		}
 
@@ -365,11 +370,6 @@ statusLoop:
 				})
 			}
 		}
-	}
-
-	// Make sure we don't have a real error when we leave the loop.
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return err
 	}
 
 	// Batch process all accreted messages.
