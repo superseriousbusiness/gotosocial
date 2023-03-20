@@ -200,7 +200,7 @@ func (p *Processor) deleteAccountFollows(ctx context.Context, account *gtsmodel.
 			continue
 		}
 
-		if msg := unfollowSideEffects(account, follow); msg != nil {
+		if msg := unfollowSideEffects(ctx, account, follow); msg != nil {
 			// There was a side effect to process.
 			msgs = append(msgs, *msg)
 		}
@@ -238,7 +238,7 @@ func (p *Processor) deleteAccountFollows(ctx context.Context, account *gtsmodel.
 			TargetAccount:   followRequest.TargetAccount,
 		}
 
-		if msg := unfollowSideEffects(account, follow); msg != nil {
+		if msg := unfollowSideEffects(ctx, account, follow); msg != nil {
 			// There was a side effect to process.
 			msgs = append(msgs, *msg)
 		}
@@ -250,19 +250,25 @@ func (p *Processor) deleteAccountFollows(ctx context.Context, account *gtsmodel.
 	return nil
 }
 
-func (p *Processor) unfollowSideEffectsFunc(deletedAccount *gtsmodel.Account) func(account *gtsmodel.Account, follow *gtsmodel.Follow) *messages.FromClientAPI {
+func (p *Processor) unfollowSideEffectsFunc(deletedAccount *gtsmodel.Account) func(ctx context.Context, account *gtsmodel.Account, follow *gtsmodel.Follow) *messages.FromClientAPI {
 	if !deletedAccount.IsLocal() {
 		// Don't try to process side effects
 		// for accounts that aren't local.
-		return func(account *gtsmodel.Account, follow *gtsmodel.Follow) *messages.FromClientAPI {
+		return func(ctx context.Context, account *gtsmodel.Account, follow *gtsmodel.Follow) *messages.FromClientAPI {
 			return nil // noop
 		}
 	}
 
-	return func(account *gtsmodel.Account, follow *gtsmodel.Follow) *messages.FromClientAPI {
-		if follow.TargetAccount == nil || follow.TargetAccount.IsLocal() {
-			// TargetAccount seems to have gone, or is a local
-			// account, so no side effects to process.
+	return func(ctx context.Context, account *gtsmodel.Account, follow *gtsmodel.Follow) *messages.FromClientAPI {
+		if follow.TargetAccount == nil {
+			// TargetAccount seems to have gone;
+			// race condition? db corruption?
+			log.WithContext(ctx).WithField("follow", follow).Warn("follow had no TargetAccount, likely race condition")
+			return nil
+		}
+
+		if follow.TargetAccount.IsLocal() {
+			// No side effects for local unfollows.
 			return nil
 		}
 
