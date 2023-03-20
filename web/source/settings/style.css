@@ -205,6 +205,8 @@ main section {
 
 						&.nested-1 {
 							background: $gray4;
+							border-radius: $br;
+							overflow: hidden;
 
 							ul a, ul li a {
 								border: none;
@@ -222,6 +224,11 @@ main section {
 									outline: none;
 									color: $fg-accent;
 								}
+							}
+
+							a {
+								border-bottom-left-radius: 0;
+								border-bottom-right-radius: 0;
 							}
 
 							li.active a {
