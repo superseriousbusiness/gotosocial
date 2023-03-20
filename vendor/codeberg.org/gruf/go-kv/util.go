@@ -8,8 +8,8 @@ import (
 	"codeberg.org/gruf/go-kv/format"
 )
 
-// AppendQuote will append (and escape/quote where necessary) a formatted field string.
-func AppendQuote(buf *byteutil.Buffer, str string) {
+// AppendQuoteString will append (and escape/quote where necessary) a field string.
+func AppendQuoteString(buf *byteutil.Buffer, str string) {
 	switch {
 	case len(str) == 0:
 		// Append empty quotes.
@@ -27,7 +27,52 @@ func AppendQuote(buf *byteutil.Buffer, str string) {
 		return
 
 	case !isQuoted(str):
-		// Single/double quoted already.
+		// Not single/double quoted already.
+
+		if format.ContainsSpaceOrTab(str) {
+			// Quote un-enclosed spaces.
+			buf.B = append(buf.B, '"')
+			buf.B = append(buf.B, str...)
+			buf.B = append(buf.B, '"')
+			return
+		}
+
+		if format.ContainsDoubleQuote(str) {
+			// Contains double quote, double quote
+			// and append escaped existing.
+			buf.B = append(buf.B, '"')
+			buf.B = format.AppendEscape(buf.B, str)
+			buf.B = append(buf.B, '"')
+			return
+		}
+	}
+
+	// Double quoted, enclosed in braces, or
+	// literally anything else: append as-is.
+	buf.B = append(buf.B, str...)
+	return
+}
+
+// AppendQuoteValue will append (and escape/quote where necessary) a formatted value string.
+func AppendQuoteValue(buf *byteutil.Buffer, str string) {
+	switch {
+	case len(str) == 0:
+		// Append empty quotes.
+		buf.B = append(buf.B, `""`...)
+		return
+
+	case len(str) == 1:
+		// Append quote single byte.
+		appendQuoteByte(buf, str[0])
+		return
+
+	case len(str) > format.SingleTermLine || !format.IsSafeASCII(str):
+		// Long line or contains non-ascii chars.
+		buf.B = strconv.AppendQuote(buf.B, str)
+		return
+
+	case !isQuoted(str):
+		// Not single/double quoted already.
 
 		// Get space / tab indices (if any).
 		s := strings.IndexByte(str, ' ')

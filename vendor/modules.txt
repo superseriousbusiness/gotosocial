@@ -39,7 +39,7 @@ codeberg.org/gruf/go-hashenc
 # codeberg.org/gruf/go-iotools v0.0.0-20221224124424-3386841cb225
 ## explicit; go 1.19
 codeberg.org/gruf/go-iotools
-# codeberg.org/gruf/go-kv v1.6.0
+# codeberg.org/gruf/go-kv v1.6.1
 ## explicit; go 1.19
 codeberg.org/gruf/go-kv
 codeberg.org/gruf/go-kv/format
@@ -73,7 +73,7 @@ codeberg.org/gruf/go-store/v2/util
 ## explicit; go 1.19
 github.com/KimMachineGun/automemlimit
 github.com/KimMachineGun/automemlimit/memlimit
-# github.com/abema/go-mp4 v0.10.0
+# github.com/abema/go-mp4 v0.10.1
 ## explicit; go 1.14
 github.com/abema/go-mp4
 github.com/abema/go-mp4/bitio
@@ -210,7 +210,7 @@ github.com/go-playground/locales/currency
 # github.com/go-playground/universal-translator v0.18.1
 ## explicit; go 1.18
 github.com/go-playground/universal-translator
-# github.com/go-playground/validator/v10 v10.11.2
+# github.com/go-playground/validator/v10 v10.12.0
 ## explicit; go 1.18
 github.com/go-playground/validator/v10
 # github.com/go-xmlfmt/xmlfmt v0.0.0-20211206191508-7fd73a941850
@@ -337,8 +337,8 @@ github.com/klauspost/compress/zlib
 # github.com/klauspost/cpuid/v2 v2.2.3
 ## explicit; go 1.15
 github.com/klauspost/cpuid/v2
-# github.com/leodido/go-urn v1.2.1
-## explicit; go 1.13
+# github.com/leodido/go-urn v1.2.2
+## explicit; go 1.16
 github.com/leodido/go-urn
 # github.com/magiconair/properties v1.8.7
 ## explicit; go 1.19
@@ -346,12 +346,12 @@ github.com/magiconair/properties
 # github.com/mattn/go-isatty v0.0.17
 ## explicit; go 1.15
 github.com/mattn/go-isatty
-# github.com/microcosm-cc/bluemonday v1.0.22
+# github.com/microcosm-cc/bluemonday v1.0.23
 ## explicit; go 1.19
 github.com/microcosm-cc/bluemonday
 github.com/microcosm-cc/bluemonday/css
-# github.com/miekg/dns v1.1.51
-## explicit; go 1.14
+# github.com/miekg/dns v1.1.52
+## explicit; go 1.19
 github.com/miekg/dns
 # github.com/minio/md5-simd v1.1.2
 ## explicit; go 1.14
@@ -440,7 +440,7 @@ github.com/spf13/viper/internal/encoding/javaproperties
 github.com/spf13/viper/internal/encoding/json
 github.com/spf13/viper/internal/encoding/toml
 github.com/spf13/viper/internal/encoding/yaml
-# github.com/stretchr/testify v1.8.1
+# github.com/stretchr/testify v1.8.2
 ## explicit; go 1.13
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
@@ -682,7 +682,7 @@ github.com/twitchyliquid64/golang-asm/unsafeheader
 # github.com/ugorji/go/codec v1.2.9
 ## explicit; go 1.11
 github.com/ugorji/go/codec
-# github.com/ulule/limiter/v3 v3.11.0
+# github.com/ulule/limiter/v3 v3.11.1
 ## explicit; go 1.17
 github.com/ulule/limiter/v3
 github.com/ulule/limiter/v3/drivers/middleware/gin
@@ -730,7 +730,7 @@ github.com/yuin/goldmark/renderer
 github.com/yuin/goldmark/renderer/html
 github.com/yuin/goldmark/text
 github.com/yuin/goldmark/util
-# go.uber.org/automaxprocs v1.5.1
+# go.uber.org/automaxprocs v1.5.2
 ## explicit; go 1.18
 go.uber.org/automaxprocs/internal/cgroups
 go.uber.org/automaxprocs/internal/runtime
@@ -762,7 +762,7 @@ golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 ## explicit; go 1.18
 golang.org/x/exp/constraints
 golang.org/x/exp/slices
-# golang.org/x/image v0.5.0
+# golang.org/x/image v0.6.0
 ## explicit; go 1.12
 golang.org/x/image/bmp
 golang.org/x/image/ccitt

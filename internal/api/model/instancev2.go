@@ -122,7 +122,7 @@ type InstanceV2ThumbnailVersions struct {
 
 // InstanceV2URLs models instance-relevant URLs for client application consumption.
 //
-// swagger:model instanceV1URLs
+// swagger:model instanceV2URLs
 type InstanceV2URLs struct {
 	// Websockets address for status and notification streaming.
 	// example: wss://example.org

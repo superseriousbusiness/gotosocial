@@ -113,6 +113,7 @@ EXPECT=$(cat <<"EOF"
     "port": 6969,
     "protocol": "http",
     "request-id-header": "X-Trace-Id",
+    "smtp-disclose-recipients": true,
     "smtp-from": "queen.rip.in.piss@terfisland.org",
     "smtp-host": "example.com",
     "smtp-password": "hunter2",
@@ -222,6 +223,7 @@ GTS_SMTP_PORT=4269 \
 GTS_SMTP_USERNAME='sex-haver' \
 GTS_SMTP_PASSWORD='hunter2' \
 GTS_SMTP_FROM='queen.rip.in.piss@terfisland.org' \
+GTS_SMTP_DISCLOSE_RECIPIENTS=true \
 GTS_SYSLOG_ENABLED=true \
 GTS_SYSLOG_PROTOCOL='udp' \
 GTS_SYSLOG_ADDRESS='127.0.0.1:6969' \

@@ -34,9 +34,16 @@ type Instance interface {
 	// CountInstanceDomains returns the number of known instances known that the given domain federates with.
 	CountInstanceDomains(ctx context.Context, domain string) (int, Error)
 
+	// GetInstance returns the instance entry for the given domain, if it exists.
+	GetInstance(ctx context.Context, domain string) (*gtsmodel.Instance, Error)
+
 	// GetInstanceAccounts returns a slice of accounts from the given instance, arranged by ID.
 	GetInstanceAccounts(ctx context.Context, domain string, maxID string, limit int) ([]*gtsmodel.Account, Error)
 
 	// GetInstancePeers returns a slice of instances that the host instance knows about.
 	GetInstancePeers(ctx context.Context, includeSuspended bool) ([]*gtsmodel.Instance, Error)
+
+	// GetInstanceModeratorAddresses returns a slice of email addresses belonging to active
+	// (as in, not suspended) moderators + admins on this instance.
+	GetInstanceModeratorAddresses(ctx context.Context) ([]string, Error)
 }

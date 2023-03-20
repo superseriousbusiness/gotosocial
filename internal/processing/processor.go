@@ -48,6 +48,7 @@ type Processor struct {
 	statusTimelines timeline.Manager
 	state           *state.State
 	filter          visibility.Filter
+	emailSender     email.Sender
 
 	/*
 		SUB-PROCESSORS
@@ -119,13 +120,14 @@ func NewProcessor(
 			StatusPrepareFunction(state.DB, tc),
 			StatusSkipInsertFunction(),
 		),
-		state:  state,
-		filter: filter,
+		state:       state,
+		filter:      filter,
+		emailSender: emailSender,
 	}
 
 	// sub processors
 	processor.account = account.New(state, tc, mediaManager, oauthServer, federator, parseMentionFunc)
-	processor.admin = admin.New(state, tc, mediaManager, federator.TransportController())
+	processor.admin = admin.New(state, tc, mediaManager, federator.TransportController(), emailSender)
 	processor.fedi = fedi.New(state, tc, federator)
 	processor.media = media.New(state, tc, mediaManager, federator.TransportController())
 	processor.report = report.New(state, tc)

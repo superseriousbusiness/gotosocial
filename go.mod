@@ -9,14 +9,14 @@ require (
 	codeberg.org/gruf/go-debug v1.3.0
 	codeberg.org/gruf/go-errors/v2 v2.1.1
 	codeberg.org/gruf/go-fastcopy v1.1.2
-	codeberg.org/gruf/go-kv v1.6.0
+	codeberg.org/gruf/go-kv v1.6.1
 	codeberg.org/gruf/go-logger/v2 v2.2.1
 	codeberg.org/gruf/go-mutexes v1.1.5
 	codeberg.org/gruf/go-runners v1.6.0
 	codeberg.org/gruf/go-sched v1.2.3
 	codeberg.org/gruf/go-store/v2 v2.2.1
 	github.com/KimMachineGun/automemlimit v0.2.4
-	github.com/abema/go-mp4 v0.10.0
+	github.com/abema/go-mp4 v0.10.1
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/coreos/go-oidc/v3 v3.5.0
 	github.com/cornelk/hashmap v1.0.8
@@ -27,35 +27,35 @@ require (
 	github.com/gin-gonic/gin v1.9.0
 	github.com/go-fed/httpsig v1.1.0
 	github.com/go-playground/form/v4 v4.2.0
-	github.com/go-playground/validator/v10 v10.11.2
+	github.com/go-playground/validator/v10 v10.12.0
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/feeds v1.1.1
 	github.com/gorilla/websocket v1.5.0
 	github.com/h2non/filetype v1.1.3
 	github.com/jackc/pgconn v1.14.0
 	github.com/jackc/pgx/v4 v4.18.1
-	github.com/microcosm-cc/bluemonday v1.0.22
-	github.com/miekg/dns v1.1.51
+	github.com/microcosm-cc/bluemonday v1.0.23
+	github.com/miekg/dns v1.1.52
 	github.com/minio/minio-go/v7 v7.0.49
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/oklog/ulid v1.3.1
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.15.0
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.2
 	github.com/superseriousbusiness/activity v1.2.1-gts
 	github.com/superseriousbusiness/exif-terminator v0.5.0
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8
 	github.com/tdewolff/minify/v2 v2.12.4
-	github.com/ulule/limiter/v3 v3.11.0
+	github.com/ulule/limiter/v3 v3.11.1
 	github.com/uptrace/bun v1.1.12
 	github.com/uptrace/bun/dialect/pgdialect v1.1.12
 	github.com/uptrace/bun/dialect/sqlitedialect v1.1.12
 	github.com/wagslane/go-password-validator v0.3.0
 	github.com/yuin/goldmark v1.5.4
-	go.uber.org/automaxprocs v1.5.1
+	go.uber.org/automaxprocs v1.5.2
 	golang.org/x/crypto v0.7.0
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
-	golang.org/x/image v0.5.0
+	golang.org/x/image v0.6.0
 	golang.org/x/net v0.8.0
 	golang.org/x/oauth2 v0.6.0
 	golang.org/x/text v0.8.0
@@ -121,7 +121,7 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/klauspost/compress v1.15.15 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.3 // indirect
-	github.com/leodido/go-urn v1.2.1 // indirect
+	github.com/leodido/go-urn v1.2.2 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect

@@ -18,6 +18,7 @@
 package admin
 
 import (
+	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
@@ -29,14 +30,16 @@ type Processor struct {
 	tc                  typeutils.TypeConverter
 	mediaManager        media.Manager
 	transportController transport.Controller
+	emailSender         email.Sender
 }
 
 // New returns a new admin processor.
-func New(state *state.State, tc typeutils.TypeConverter, mediaManager media.Manager, transportController transport.Controller) Processor {
+func New(state *state.State, tc typeutils.TypeConverter, mediaManager media.Manager, transportController transport.Controller, emailSender email.Sender) Processor {
 	return Processor{
 		state:               state,
 		tc:                  tc,
 		mediaManager:        mediaManager,
 		transportController: transportController,
+		emailSender:         emailSender,
 	}
 }

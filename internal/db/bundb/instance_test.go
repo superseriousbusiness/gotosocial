@@ -23,6 +23,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type InstanceTestSuite struct {
@@ -59,6 +62,18 @@ func (suite *InstanceTestSuite) TestCountInstanceDomains() {
 	suite.Equal(2, count)
 }
 
+func (suite *InstanceTestSuite) TestGetInstanceOK() {
+	instance, err := suite.db.GetInstance(context.Background(), "localhost:8080")
+	suite.NoError(err)
+	suite.NotNil(instance)
+}
+
+func (suite *InstanceTestSuite) TestGetInstanceNonexistent() {
+	instance, err := suite.db.GetInstance(context.Background(), "doesnt.exist.com")
+	suite.ErrorIs(err, db.ErrNoEntries)
+	suite.Nil(instance)
+}
+
 func (suite *InstanceTestSuite) TestGetInstancePeers() {
 	peers, err := suite.db.GetInstancePeers(context.Background(), false)
 	suite.NoError(err)
@@ -75,6 +90,42 @@ func (suite *InstanceTestSuite) TestGetInstanceAccounts() {
 	accounts, err := suite.db.GetInstanceAccounts(context.Background(), "fossbros-anonymous.io", "", 10)
 	suite.NoError(err)
 	suite.Len(accounts, 1)
+}
+
+func (suite *InstanceTestSuite) TestGetInstanceModeratorAddressesOK() {
+	// We have one admin user by default.
+	addresses, err := suite.db.GetInstanceModeratorAddresses(context.Background())
+	suite.NoError(err)
+	suite.EqualValues([]string{"admin@example.org"}, addresses)
+}
+
+func (suite *InstanceTestSuite) TestGetInstanceModeratorAddressesZorkAsModerator() {
+	// Promote zork to moderator role.
+	testUser := &gtsmodel.User{}
+	*testUser = *suite.testUsers["local_account_1"]
+	testUser.Moderator = testrig.TrueBool()
+	if err := suite.db.UpdateUser(context.Background(), testUser, "moderator"); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	addresses, err := suite.db.GetInstanceModeratorAddresses(context.Background())
+	suite.NoError(err)
+	suite.EqualValues([]string{"admin@example.org", "zork@example.org"}, addresses)
+}
+
+func (suite *InstanceTestSuite) TestGetInstanceModeratorAddressesNoAdmin() {
+	// Demote admin from admin + moderator roles.
+	testUser := &gtsmodel.User{}
+	*testUser = *suite.testUsers["admin_account"]
+	testUser.Admin = testrig.FalseBool()
+	testUser.Moderator = testrig.FalseBool()
+	if err := suite.db.UpdateUser(context.Background(), testUser, "admin", "moderator"); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	addresses, err := suite.db.GetInstanceModeratorAddresses(context.Background())
+	suite.ErrorIs(err, db.ErrNoEntries)
+	suite.Empty(addresses)
 }
 
 func TestInstanceTestSuite(t *testing.T) {

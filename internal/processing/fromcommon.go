@@ -19,9 +19,12 @@ package processing
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -305,6 +308,96 @@ func (p *Processor) notifyAnnounce(ctx context.Context, status *gtsmodel.Status)
 	}
 
 	return nil
+}
+
+func (p *Processor) notifyReport(ctx context.Context, report *gtsmodel.Report) error {
+	instance, err := p.state.DB.GetInstance(ctx, config.GetHost())
+	if err != nil {
+		return fmt.Errorf("notifyReport: error getting instance: %w", err)
+	}
+
+	toAddresses, err := p.state.DB.GetInstanceModeratorAddresses(ctx)
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// No registered moderator addresses.
+			return nil
+		}
+		return fmt.Errorf("notifyReport: error getting instance moderator addresses: %w", err)
+	}
+
+	if report.Account == nil {
+		report.Account, err = p.state.DB.GetAccountByID(ctx, report.AccountID)
+		if err != nil {
+			return fmt.Errorf("notifyReport: error getting report account: %w", err)
+		}
+	}
+
+	if report.TargetAccount == nil {
+		report.TargetAccount, err = p.state.DB.GetAccountByID(ctx, report.TargetAccountID)
+		if err != nil {
+			return fmt.Errorf("notifyReport: error getting report target account: %w", err)
+		}
+	}
+
+	reportData := email.NewReportData{
+		InstanceURL:        instance.URI,
+		InstanceName:       instance.Title,
+		ReportURL:          instance.URI + "/settings/admin/reports/" + report.ID,
+		ReportDomain:       report.Account.Domain,
+		ReportTargetDomain: report.TargetAccount.Domain,
+	}
+
+	if err := p.emailSender.SendNewReportEmail(toAddresses, reportData); err != nil {
+		return fmt.Errorf("notifyReport: error emailing instance moderators: %w", err)
+	}
+
+	return nil
+}
+
+func (p *Processor) notifyReportClosed(ctx context.Context, report *gtsmodel.Report) error {
+	user, err := p.state.DB.GetUserByAccountID(ctx, report.Account.ID)
+	if err != nil {
+		return fmt.Errorf("notifyReportClosed: db error getting user: %w", err)
+	}
+
+	if user.ConfirmedAt.IsZero() || !*user.Approved || *user.Disabled || user.Email == "" {
+		// Only email users who:
+		// - are confirmed
+		// - are approved
+		// - are not disabled
+		// - have an email address
+		return nil
+	}
+
+	instance, err := p.state.DB.GetInstance(ctx, config.GetHost())
+	if err != nil {
+		return fmt.Errorf("notifyReportClosed: db error getting instance: %w", err)
+	}
+
+	if report.Account == nil {
+		report.Account, err = p.state.DB.GetAccountByID(ctx, report.AccountID)
+		if err != nil {
+			return fmt.Errorf("notifyReportClosed: error getting report account: %w", err)
+		}
+	}
+
+	if report.TargetAccount == nil {
+		report.TargetAccount, err = p.state.DB.GetAccountByID(ctx, report.TargetAccountID)
+		if err != nil {
+			return fmt.Errorf("notifyReportClosed: error getting report target account: %w", err)
+		}
+	}
+
+	reportClosedData := email.ReportClosedData{
+		Username:             report.Account.Username,
+		InstanceURL:          instance.URI,
+		InstanceName:         instance.Title,
+		ReportTargetUsername: report.TargetAccount.Username,
+		ReportTargetDomain:   report.TargetAccount.Domain,
+		ActionTakenComment:   report.ActionTaken,
+	}
+
+	return p.emailSender.SendReportClosedEmail(user.Email, reportClosedData)
 }
 
 // timelineStatus processes the given new status and inserts it into

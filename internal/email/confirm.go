@@ -17,33 +17,10 @@
 
 package email
 
-import (
-	"bytes"
-	"net/smtp"
-
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
-)
-
 const (
-	confirmTemplate = "email_confirm_text.tmpl"
+	confirmTemplate = "email_confirm.tmpl"
 	confirmSubject  = "GoToSocial Email Confirmation"
 )
-
-func (s *sender) SendConfirmEmail(toAddress string, data ConfirmData) error {
-	buf := &bytes.Buffer{}
-	if err := s.template.ExecuteTemplate(buf, confirmTemplate, data); err != nil {
-		return err
-	}
-	confirmBody := buf.String()
-
-	msg, err := assembleMessage(confirmSubject, confirmBody, toAddress, s.from)
-	if err != nil {
-		return err
-	}
-	log.Trace(nil, s.hostAddress+"\n"+config.GetSMTPUsername()+":password"+"\n"+s.from+"\n"+toAddress+"\n\n"+string(msg)+"\n")
-	return smtp.SendMail(s.hostAddress, s.auth, s.from, []string{toAddress}, msg)
-}
 
 // ConfirmData represents data passed into the confirm email address template.
 type ConfirmData struct {
@@ -56,4 +33,8 @@ type ConfirmData struct {
 	// Link to present to the receiver to click on and do the confirmation.
 	// Should be a full link with protocol eg., https://example.org/confirm_email?token=some-long-token
 	ConfirmLink string
+}
+
+func (s *sender) SendConfirmEmail(toAddress string, data ConfirmData) error {
+	return s.sendTemplate(confirmTemplate, confirmSubject, data, toAddress)
 }

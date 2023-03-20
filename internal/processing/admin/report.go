@@ -23,10 +23,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -110,7 +112,10 @@ func (p *Processor) ReportGet(ctx context.Context, account *gtsmodel.Account, id
 	return apimodelReport, nil
 }
 
-// ReportResolve marks a report with the given id as resolved, and stores the provided actionTakenComment (if not null).
+// ReportResolve marks a report with the given id as resolved,
+// and stores the provided actionTakenComment (if not null).
+// If the report creator is from this instance, an email will
+// be sent to them to let them know that the report is resolved.
 func (p *Processor) ReportResolve(ctx context.Context, account *gtsmodel.Account, id string, actionTakenComment *string) (*apimodel.AdminReport, gtserror.WithCode) {
 	report, err := p.state.DB.GetReportByID(ctx, id)
 	if err != nil {
@@ -137,6 +142,15 @@ func (p *Processor) ReportResolve(ctx context.Context, account *gtsmodel.Account
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
+
+	// Process side effects of closing the report.
+	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+		APObjectType:   ap.ActivityFlag,
+		APActivityType: ap.ActivityUpdate,
+		GTSModel:       report,
+		OriginAccount:  account,
+		TargetAccount:  report.Account,
+	})
 
 	apimodelReport, err := p.tc.ReportToAdminAPIReport(ctx, updatedReport, account)
 	if err != nil {
