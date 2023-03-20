@@ -659,7 +659,7 @@ func (p *Processor) federateAcceptFollowRequest(ctx context.Context, follow *gts
 
 	// Do nothing if target account *isn't* local,
 	// or both origin + target *are* local.
-	if targetAccount.IsRemote() || (originAccount.IsLocal() && targetAccount.IsLocal()) {
+	if targetAccount.IsRemote() || originAccount.IsLocal() {
 		return nil
 	}
 
@@ -728,7 +728,7 @@ func (p *Processor) federateRejectFollowRequest(ctx context.Context, followReque
 
 	// Do nothing if target account *isn't* local,
 	// or both origin + target *are* local.
-	if targetAccount.IsRemote() || (originAccount.IsLocal() && targetAccount.IsLocal()) {
+	if targetAccount.IsRemote() || originAccount.IsLocal() {
 		return nil
 	}
 
