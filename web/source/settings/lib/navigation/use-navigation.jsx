@@ -32,10 +32,7 @@ module.exports = function useNavigation(nav, { permissions }) {
 	return {
 		sidebar: <Sidebar nav={nav} permissions={permissions} />,
 		routedViews: nav.views
-			.filter((v) => {
-				console.log(v.name, v.permissions, permissions);
-				return checkPermission(v.permissions, permissions);
-			})
+			.filter((v) => checkPermission(v.permissions, permissions))
 			.map((view) => (
 				<Route path={`${view.url}/:page*`} key={view.url}>
 					<ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => { }}>

@@ -182,48 +182,58 @@ main section {
 				gap: 0.2rem;
 
 				li {
-					border-radius: $br;
-					border: 0.1rem solid transparent;
-
-					transition: 0.1s;
-					color: $fg;
+					a {
+						border-radius: $br;
+						border: 0.1rem solid transparent;
 	
-					&:hover, &:focus, &:active {
-						color: $settings-nav-fg-hover;
-						background: $settings-nav-bg-hover;
+						transition: 0.1s;
+						color: $fg;
+		
+						&:hover, &:focus, &:active {
+							color: $settings-nav-fg-hover;
+							background: $settings-nav-bg-hover;
+						}
 					}
 
 					&.active {
-						color: $settings-nav-fg-active;
-						background: $settings-nav-bg-active;
-						border: 0.07rem solid $settings-nav-border-active;
-						font-weight: bold;
+						a {
+							color: $settings-nav-fg-active;
+							background: $settings-nav-bg-active;
+							border: 0.07rem solid $settings-nav-border-active;
+							font-weight: bold;
+						}
 
 						&.nested-1 {
 							background: $gray4;
-							overflow: hidden;
 
-							li {
-								margin-left: 1rem;
-								font-weight: normal;
+							ul a, ul li a {
+								border: none;
+								border-radius: 0;
 							}
 
-							li.active {
+							li a {
+								padding-left: 1rem;
+								font-weight: normal;
+								color: $fg;
 								background: $gray4;
-								border: none;
-								color: $fg-accent;
-								font-weight: bold;
 
-								&:hover {
+								&:focus, &:hover {
 									background: $settings-nav-bg-hover;
+									outline: none;
+									color: $fg-accent;
 								}
 							}
 
-							& > a {
+							li.active a {
+								color: $fg-accent;
+								font-weight: bold;
+							}
+
+							/* & > a {
 								background: $settings-nav-bg-active;
 								border-radius: 0;
 								font-weight: bold;
-							}
+							} */
 						}
 					}
 				}
@@ -233,10 +243,10 @@ main section {
 					text-decoration: none;
 					color: inherit;
 					padding: 0.5rem;
+					border-radius: $br;
 
 					&:focus {
-						border: 0.1rem solid $fg-accent;
-						border-radius: $br;
+						outline: 0.1rem solid $fg-accent;
 					}
 				
 					/* reserve space for bold version of the element, so .active doesn't
