@@ -26,6 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // FollowersGet fetches a list of the target account's followers.
@@ -93,20 +94,21 @@ func (p *Processor) RelationshipGet(ctx context.Context, requestingAccount *gtsm
 
 func (p *Processor) accountsFromFollows(ctx context.Context, follows []*gtsmodel.Follow, requestingAccountID string) ([]apimodel.Account, gtserror.WithCode) {
 	accounts := make([]apimodel.Account, 0, len(follows))
-	for _, f := range follows {
-		if f.Account == nil {
+	for _, follow := range follows {
+		if follow.Account == nil {
 			// No account set for some reason; just skip.
+			log.WithContext(ctx).WithField("follow", follow).Warn("follow had no associated account")
 			continue
 		}
 
-		if blocked, err := p.state.DB.IsBlocked(ctx, requestingAccountID, f.AccountID, true); err != nil {
+		if blocked, err := p.state.DB.IsBlocked(ctx, requestingAccountID, follow.AccountID, true); err != nil {
 			err = fmt.Errorf("accountsFromFollows: db error checking block: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
 		} else if blocked {
 			continue
 		}
 
-		account, err := p.tc.AccountToAPIAccountPublic(ctx, f.Account)
+		account, err := p.tc.AccountToAPIAccountPublic(ctx, follow.Account)
 		if err != nil {
 			err = fmt.Errorf("accountsFromFollows: error converting account to api account: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
