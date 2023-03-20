@@ -73,22 +73,61 @@ type Relationship interface {
 	// The deleted follow request will be returned so that further processing can be done on it.
 	RejectFollowRequest(ctx context.Context, originAccountID string, targetAccountID string) (*gtsmodel.FollowRequest, Error)
 
-	// GetAccountFollowRequests returns all follow requests targeting the given account.
-	GetAccountFollowRequests(ctx context.Context, accountID string) ([]*gtsmodel.FollowRequest, Error)
-
-	// GetAccountFollows returns a slice of follows owned by the given accountID.
-	GetAccountFollows(ctx context.Context, accountID string) ([]*gtsmodel.Follow, Error)
-
-	// CountAccountFollows returns the amount of accounts that the given accountID is following.
+	// GetFollows returns a slice of follows owned by the given accountID, and/or
+	// targeting the given account id.
 	//
-	// If localOnly is set to true, then only follows from *this instance* will be returned.
-	CountAccountFollows(ctx context.Context, accountID string, localOnly bool) (int, Error)
-
-	// GetAccountFollowedBy fetches follows that target given accountID.
+	// If accountID is set and targetAccountID isn't, then all follows created by
+	// accountID will be returned.
 	//
-	// If localOnly is set to true, then only follows from *this instance* will be returned.
-	GetAccountFollowedBy(ctx context.Context, accountID string, localOnly bool) ([]*gtsmodel.Follow, Error)
+	// If targetAccountID is set and accountID isn't, then all follows targeting
+	// targetAccountID will be returned.
+	//
+	// If both accountID and targetAccountID are set, then only 0 or 1 follows will
+	// be in the returned slice.
+	GetFollows(ctx context.Context, accountID string, targetAccountID string) ([]*gtsmodel.Follow, Error)
 
-	// CountAccountFollowedBy returns the amounts that the given ID is followed by.
-	CountAccountFollowedBy(ctx context.Context, accountID string, localOnly bool) (int, Error)
+	// GetLocalFollowersIDs returns a list of local account IDs which follow the
+	// targetAccountID. The returned IDs are not guaranteed to be ordered in any
+	// particular way, so take care.
+	GetLocalFollowersIDs(ctx context.Context, targetAccountID string) ([]string, Error)
+
+	// CountFollows is like GetFollows, but just counts rather than returning.
+	CountFollows(ctx context.Context, accountID string, targetAccountID string) (int, Error)
+
+	// GetFollowRequests returns a slice of follows requests owned by the given
+	// accountID, and/or targeting the given account id.
+	//
+	// If accountID is set and targetAccountID isn't, then all requests created by
+	// accountID will be returned.
+	//
+	// If targetAccountID is set and accountID isn't, then all requests targeting
+	// targetAccountID will be returned.
+	//
+	// If both accountID and targetAccountID are set, then only 0 or 1 requests will
+	// be in the returned slice.
+	GetFollowRequests(ctx context.Context, accountID string, targetAccountID string) ([]*gtsmodel.FollowRequest, Error)
+
+	// CountFollowRequests is like GetFollowRequests, but just counts rather than returning.
+	CountFollowRequests(ctx context.Context, accountID string, targetAccountID string) (int, Error)
+
+	// Unfollow removes a follow targeting targetAccountID and originating
+	// from originAccountID.
+	//
+	// If a follow was removed this way, the AP URI of the follow will be
+	// returned to the caller, so that further processing can take place
+	// if necessary.
+	//
+	// If no follow was removed this way, the returned string will be empty.
+	Unfollow(ctx context.Context, originAccountID string, targetAccountID string) (string, Error)
+
+	// UnfollowRequest removes a follow request targeting targetAccountID
+	// and originating from originAccountID.
+	//
+	// If a follow request was removed this way, the AP URI of the follow
+	// request will be returned to the caller, so that further processing
+	// can take place if necessary.
+	//
+	// If no follow request was removed this way, the returned string will
+	// be empty.
+	UnfollowRequest(ctx context.Context, originAccountID string, targetAccountID string) (string, Error)
 }

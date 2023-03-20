@@ -206,9 +206,6 @@ type AccountFollowRequest struct {
 type AccountDeleteRequest struct {
 	// Password of the account's user, for confirmation.
 	Password string `form:"password" json:"password" xml:"password"`
-	// The origin of the delete account request.
-	// Can be the ID of the account owner, or the ID of an admin account.
-	DeleteOriginID string `form:"-" json:"-" xml:"-"`
 }
 
 // AccountRole models the role of an account.

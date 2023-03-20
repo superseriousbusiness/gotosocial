@@ -89,22 +89,16 @@ func (f *federatingDB) InboxesForIRI(c context.Context, iri *url.URL) (inboxIRIs
 			return nil, fmt.Errorf("couldn't find local account with username %s: %s", localAccountUsername, err)
 		}
 
-		follows, err := f.state.DB.GetAccountFollowedBy(c, account.ID, false)
+		follows, err := f.state.DB.GetFollows(c, "", account.ID)
 		if err != nil {
 			return nil, fmt.Errorf("couldn't get followers of local account %s: %s", localAccountUsername, err)
 		}
 
 		for _, follow := range follows {
-			// make sure we retrieved the following account from the db
 			if follow.Account == nil {
-				followingAccount, err := f.state.DB.GetAccountByID(c, follow.AccountID)
-				if err != nil {
-					if err == db.ErrNoEntries {
-						continue
-					}
-					return nil, fmt.Errorf("error retrieving account with id %s: %s", follow.AccountID, err)
-				}
-				follow.Account = followingAccount
+				// No account exists for this follow,
+				// for some reason. Just skip it.
+				continue
 			}
 
 			// deliver to a shared inbox if we have that option

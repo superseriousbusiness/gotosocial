@@ -46,15 +46,6 @@ func (s *statusDB) newStatusQ(status interface{}) *bun.SelectQuery {
 		Relation("CreatedWithApplication")
 }
 
-func (s *statusDB) newFaveQ(faves interface{}) *bun.SelectQuery {
-	return s.conn.
-		NewSelect().
-		Model(faves).
-		Relation("Account").
-		Relation("TargetAccount").
-		Relation("Status")
-}
-
 func (s *statusDB) GetStatusByID(ctx context.Context, id string) (*gtsmodel.Status, db.Error) {
 	return s.getStatus(
 		ctx,
@@ -540,20 +531,6 @@ func (s *statusDB) IsStatusBookmarkedBy(ctx context.Context, status *gtsmodel.St
 		Where("? = ?", bun.Ident("status_bookmark.account_id"), accountID)
 
 	return s.conn.Exists(ctx, q)
-}
-
-func (s *statusDB) GetStatusFaves(ctx context.Context, status *gtsmodel.Status) ([]*gtsmodel.StatusFave, db.Error) {
-	faves := []*gtsmodel.StatusFave{}
-
-	q := s.
-		newFaveQ(&faves).
-		Where("? = ?", bun.Ident("status_fave.status_id"), status.ID)
-
-	if err := q.Scan(ctx); err != nil {
-		return nil, s.conn.ProcessError(err)
-	}
-
-	return faves, nil
 }
 
 func (s *statusDB) GetStatusReblogs(ctx context.Context, status *gtsmodel.Status) ([]*gtsmodel.Status, db.Error) {

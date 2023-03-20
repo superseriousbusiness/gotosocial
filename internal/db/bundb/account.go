@@ -191,9 +191,12 @@ func (a *accountDB) PutAccount(ctx context.Context, account *gtsmodel.Account) d
 	})
 }
 
-func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account) db.Error {
-	// Update the account's last-updated
+func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account, columns ...string) db.Error {
 	account.UpdatedAt = time.Now()
+	if len(columns) > 0 {
+		// If we're updating by column, ensure "updated_at" is included.
+		columns = append(columns, "updated_at")
+	}
 
 	return a.state.Caches.GTS.Account().Store(account, func() error {
 		// It is safe to run this database transaction within cache.Store
@@ -226,6 +229,7 @@ func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account
 			_, err := tx.NewUpdate().
 				Model(account).
 				Where("? = ?", bun.Ident("account.id"), account.ID).
+				Column(columns...).
 				Exec(ctx)
 			return err
 		})
@@ -475,38 +479,6 @@ func (a *accountDB) GetAccountWebStatuses(ctx context.Context, accountID string,
 	}
 
 	return a.statusesFromIDs(ctx, statusIDs)
-}
-
-func (a *accountDB) GetBookmarks(ctx context.Context, accountID string, limit int, maxID string, minID string) ([]*gtsmodel.StatusBookmark, db.Error) {
-	bookmarks := []*gtsmodel.StatusBookmark{}
-
-	q := a.conn.
-		NewSelect().
-		TableExpr("? AS ?", bun.Ident("status_bookmarks"), bun.Ident("status_bookmark")).
-		Order("status_bookmark.id DESC").
-		Where("? = ?", bun.Ident("status_bookmark.account_id"), accountID)
-
-	if accountID == "" {
-		return nil, errors.New("must provide an account")
-	}
-
-	if limit != 0 {
-		q = q.Limit(limit)
-	}
-
-	if maxID != "" {
-		q = q.Where("? < ?", bun.Ident("status_bookmark.id"), maxID)
-	}
-
-	if minID != "" {
-		q = q.Where("? > ?", bun.Ident("status_bookmark.id"), minID)
-	}
-
-	if err := q.Scan(ctx, &bookmarks); err != nil {
-		return nil, a.conn.ProcessError(err)
-	}
-
-	return bookmarks, nil
 }
 
 func (a *accountDB) GetAccountBlocks(ctx context.Context, accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, db.Error) {

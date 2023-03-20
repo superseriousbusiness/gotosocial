@@ -93,13 +93,7 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, appli
 		OriginAccount:  account,
 	})
 
-	// return the frontend representation of the new status to the submitter
-	apiStatus, err := p.tc.StatusToAPIStatus(ctx, newStatus, account)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", newStatus.ID, err))
-	}
-
-	return apiStatus, nil
+	return p.apiStatus(ctx, newStatus, account)
 }
 
 func processReplyToID(ctx context.Context, dbService db.DB, form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) gtserror.WithCode {

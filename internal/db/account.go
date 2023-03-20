@@ -45,7 +45,7 @@ type Account interface {
 	PutAccount(ctx context.Context, account *gtsmodel.Account) Error
 
 	// UpdateAccount updates one account by ID.
-	UpdateAccount(ctx context.Context, account *gtsmodel.Account) Error
+	UpdateAccount(ctx context.Context, account *gtsmodel.Account, columns ...string) Error
 
 	// DeleteAccount deletes one account from the database by its ID.
 	// DO NOT USE THIS WHEN SUSPENDING ACCOUNTS! In that case you should mark the
@@ -85,8 +85,6 @@ type Account interface {
 	//
 	// In the case of no statuses, this function will return db.ErrNoEntries.
 	GetAccountWebStatuses(ctx context.Context, accountID string, limit int, maxID string) ([]*gtsmodel.Status, Error)
-
-	GetBookmarks(ctx context.Context, accountID string, limit int, maxID string, minID string) ([]*gtsmodel.StatusBookmark, Error)
 
 	GetAccountBlocks(ctx context.Context, accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, Error)
 

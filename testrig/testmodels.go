@@ -1845,6 +1845,15 @@ func NewTestNotifications() map[string]*gtsmodel.Notification {
 			StatusID:         "01F8MHAMCHF6Y650WCRSCP4WMY",
 			Read:             FalseBool(),
 		},
+		"local_account_2_like": {
+			ID:               "01GTS6PRPXJYZBPFFQ56PP0XR8",
+			NotificationType: gtsmodel.NotificationFave,
+			CreatedAt:        TimeMustParse("2022-01-13T12:45:01+02:00"),
+			TargetAccountID:  "01F8MH17FWEB39HZJ76B6VXSKF",
+			OriginAccountID:  "01F8MH5NBDF2MV7CTC4Q5128HF",
+			StatusID:         "01F8MH75CBF9JFX4ZAD54N0W0R",
+			Read:             FalseBool(),
+		},
 	}
 }
 

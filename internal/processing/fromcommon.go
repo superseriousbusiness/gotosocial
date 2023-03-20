@@ -21,12 +21,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
-	"sync"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
@@ -413,45 +412,30 @@ func (p *Processor) timelineStatus(ctx context.Context, status *gtsmodel.Status)
 		status.Account = a
 	}
 
-	// get local followers of the account that posted the status
-	follows, err := p.state.DB.GetAccountFollowedBy(ctx, status.AccountID, true)
+	// Get LOCAL followers of the account that posted the status;
+	// we know that remote accounts don't have timelines on this
+	// instance, so there's no point selecting them too.
+	accountIDs, err := p.state.DB.GetLocalFollowersIDs(ctx, status.AccountID)
 	if err != nil {
 		return fmt.Errorf("timelineStatus: error getting followers for account id %s: %s", status.AccountID, err)
 	}
 
-	// if the poster is local, add a fake entry for them to the followers list so they can see their own status in their timeline
-	if status.Account.Domain == "" {
-		follows = append(follows, &gtsmodel.Follow{
-			AccountID: status.AccountID,
-			Account:   status.Account,
-		})
+	// If the poster is also local, add a fake entry for them
+	// so they can see their own status in their timeline.
+	if status.Account.IsLocal() {
+		accountIDs = append(accountIDs, status.AccountID)
 	}
 
-	wg := sync.WaitGroup{}
-	wg.Add(len(follows))
-	errors := make(chan error, len(follows))
-
-	for _, f := range follows {
-		go p.timelineStatusForAccount(ctx, status, f.AccountID, errors, &wg)
-	}
-
-	// read any errors that come in from the async functions
-	errs := []string{}
-	go func(errs []string) {
-		for range errors {
-			if e := <-errors; e != nil {
-				errs = append(errs, e.Error())
-			}
+	// Timeline the status for each local following account.
+	errors := gtserror.MultiError{}
+	for _, accountID := range accountIDs {
+		if err := p.timelineStatusForAccount(ctx, status, accountID); err != nil {
+			errors.Append(err)
 		}
-	}(errs)
+	}
 
-	// wait til all functions have returned and then close the error channel
-	wg.Wait()
-	close(errors)
-
-	if len(errs) != 0 {
-		// we have at least one error
-		return fmt.Errorf("timelineStatus: one or more errors timelining statuses: %s", strings.Join(errs, ";"))
+	if len(errors) != 0 {
+		return fmt.Errorf("timelineStatus: one or more errors timelining statuses: %w", errors.Combine())
 	}
 
 	return nil
@@ -462,46 +446,38 @@ func (p *Processor) timelineStatus(ctx context.Context, status *gtsmodel.Status)
 //
 // If the status was inserted into the home timeline of the given account,
 // it will also be streamed via websockets to the user.
-func (p *Processor) timelineStatusForAccount(ctx context.Context, status *gtsmodel.Status, accountID string, errors chan error, wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func (p *Processor) timelineStatusForAccount(ctx context.Context, status *gtsmodel.Status, accountID string) error {
 	// get the timeline owner account
 	timelineAccount, err := p.state.DB.GetAccountByID(ctx, accountID)
 	if err != nil {
-		errors <- fmt.Errorf("timelineStatusForAccount: error getting account for timeline with id %s: %s", accountID, err)
-		return
+		return fmt.Errorf("timelineStatusForAccount: error getting account for timeline with id %s: %w", accountID, err)
 	}
 
 	// make sure the status is timelineable
-	timelineable, err := p.filter.StatusHometimelineable(ctx, status, timelineAccount)
-	if err != nil {
-		errors <- fmt.Errorf("timelineStatusForAccount: error getting timelineability for status for timeline with id %s: %s", accountID, err)
-		return
-	}
-
-	if !timelineable {
-		return
+	if timelineable, err := p.filter.StatusHometimelineable(ctx, status, timelineAccount); err != nil {
+		return fmt.Errorf("timelineStatusForAccount: error getting timelineability for status for timeline with id %s: %w", accountID, err)
+	} else if !timelineable {
+		return nil
 	}
 
 	// stick the status in the timeline for the account and then immediately prepare it so they can see it right away
-	inserted, err := p.statusTimelines.IngestAndPrepare(ctx, status, timelineAccount.ID)
-	if err != nil {
-		errors <- fmt.Errorf("timelineStatusForAccount: error ingesting status %s: %s", status.ID, err)
-		return
+	if inserted, err := p.statusTimelines.IngestAndPrepare(ctx, status, timelineAccount.ID); err != nil {
+		return fmt.Errorf("timelineStatusForAccount: error ingesting status %s: %w", status.ID, err)
+	} else if !inserted {
+		return nil
 	}
 
 	// the status was inserted so stream it to the user
-	if inserted {
-		apiStatus, err := p.tc.StatusToAPIStatus(ctx, status, timelineAccount)
-		if err != nil {
-			errors <- fmt.Errorf("timelineStatusForAccount: error converting status %s to frontend representation: %s", status.ID, err)
-			return
-		}
-
-		if err := p.stream.Update(apiStatus, timelineAccount, stream.TimelineHome); err != nil {
-			errors <- fmt.Errorf("timelineStatusForAccount: error streaming status %s: %s", status.ID, err)
-		}
+	apiStatus, err := p.tc.StatusToAPIStatus(ctx, status, timelineAccount)
+	if err != nil {
+		return fmt.Errorf("timelineStatusForAccount: error converting status %s to frontend representation: %w", status.ID, err)
 	}
+
+	if err := p.stream.Update(apiStatus, timelineAccount, stream.TimelineHome); err != nil {
+		return fmt.Errorf("timelineStatusForAccount: error streaming update for status %s: %w", status.ID, err)
+	}
+
+	return nil
 }
 
 // deleteStatusFromTimelines completely removes the given status from all timelines.
@@ -544,12 +520,17 @@ func (p *Processor) wipeStatus(ctx context.Context, statusToDelete *gtsmodel.Sta
 	}
 
 	// delete all notification entries generated by this status
-	if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "status_id", Value: statusToDelete.ID}}, &[]*gtsmodel.Notification{}); err != nil {
+	if err := p.state.DB.DeleteNotificationsForStatus(ctx, statusToDelete.ID); err != nil {
 		return err
 	}
 
 	// delete all bookmarks that point to this status
-	if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "status_id", Value: statusToDelete.ID}}, &[]*gtsmodel.StatusBookmark{}); err != nil {
+	if err := p.state.DB.DeleteStatusBookmarksForStatus(ctx, statusToDelete.ID); err != nil {
+		return err
+	}
+
+	// delete all faves of this status
+	if err := p.state.DB.DeleteStatusFavesForStatus(ctx, statusToDelete.ID); err != nil {
 		return err
 	}
 

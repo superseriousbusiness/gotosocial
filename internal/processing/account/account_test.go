@@ -91,8 +91,10 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 
 	suite.fromClientAPIChan = make(chan messages.FromClientAPI, 100)
-	suite.state.Workers.EnqueueClientAPI = func(ctx context.Context, msg messages.FromClientAPI) {
-		suite.fromClientAPIChan <- msg
+	suite.state.Workers.EnqueueClientAPI = func(ctx context.Context, msgs ...messages.FromClientAPI) {
+		for _, msg := range msgs {
+			suite.fromClientAPIChan <- msg
+		}
 	}
 
 	suite.transportController = testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../testrig/media"))

@@ -43,6 +43,8 @@ type DB interface {
 	Report
 	Session
 	Status
+	StatusBookmark
+	StatusFave
 	Timeline
 	User
 	Tombstone

@@ -35,6 +35,7 @@ func (p *Processor) Delete(ctx context.Context, requestingAccount *gtsmodel.Acco
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
 	}
+
 	if targetStatus.Account == nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("no status owner for status %s", targetStatusID))
 	}
@@ -43,12 +44,13 @@ func (p *Processor) Delete(ctx context.Context, requestingAccount *gtsmodel.Acco
 		return nil, gtserror.NewErrorForbidden(errors.New("status doesn't belong to requesting account"))
 	}
 
-	apiStatus, err := p.tc.StatusToAPIStatus(ctx, targetStatus, requestingAccount)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err))
+	// Parse the status to API model BEFORE deleting it.
+	apiStatus, errWithCode := p.apiStatus(ctx, targetStatus, requestingAccount)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
 
-	// send the status back to the processor for async processing
+	// Process delete side effects.
 	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 		APObjectType:   ap.ObjectNote,
 		APActivityType: ap.ActivityDelete,

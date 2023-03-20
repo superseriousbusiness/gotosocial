@@ -34,118 +34,53 @@ import (
 
 // BlockCreate handles the creation of a block from requestingAccount to targetAccountID, either remote or local.
 func (p *Processor) BlockCreate(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
-	// make sure the target account actually exists in our db
-	targetAccount, err := p.state.DB.GetAccountByID(ctx, targetAccountID)
-	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("BlockCreate: error getting account %s from the db: %s", targetAccountID, err))
+	targetAccount, existingBlock, errWithCode := p.getBlockTarget(ctx, requestingAccount, targetAccountID)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
 
-	// if requestingAccount already blocks target account, we don't need to do anything
-	if blocked, err := p.state.DB.IsBlocked(ctx, requestingAccount.ID, targetAccountID, false); err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("BlockCreate: error checking existence of block: %s", err))
-	} else if blocked {
+	if existingBlock != nil {
+		// Block already exists, nothing to do.
 		return p.RelationshipGet(ctx, requestingAccount, targetAccountID)
 	}
 
-	// don't block yourself, silly
-	if requestingAccount.ID == targetAccountID {
-		return nil, gtserror.NewErrorNotAcceptable(fmt.Errorf("BlockCreate: account %s cannot block itself", requestingAccount.ID))
+	// Create and store a new block.
+	blockID := id.NewULID()
+	blockURI := uris.GenerateURIForBlock(requestingAccount.Username, blockID)
+	block := &gtsmodel.Block{
+		ID:              blockID,
+		URI:             blockURI,
+		AccountID:       requestingAccount.ID,
+		Account:         requestingAccount,
+		TargetAccountID: targetAccountID,
+		TargetAccount:   targetAccount,
 	}
 
-	// make the block
-	block := &gtsmodel.Block{}
-	newBlockID := id.NewULID()
-	block.ID = newBlockID
-	block.AccountID = requestingAccount.ID
-	block.Account = requestingAccount
-	block.TargetAccountID = targetAccountID
-	block.TargetAccount = targetAccount
-	block.URI = uris.GenerateURIForBlock(requestingAccount.Username, newBlockID)
-
-	// whack it in the database
 	if err := p.state.DB.PutBlock(ctx, block); err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("BlockCreate: error creating block in db: %s", err))
+		err = fmt.Errorf("BlockCreate: error creating block in db: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// clear any follows or follow requests from the blocked account to the target account -- this is a simple delete
-	if err := p.state.DB.DeleteWhere(ctx, []db.Where{
-		{Key: "account_id", Value: targetAccountID},
-		{Key: "target_account_id", Value: requestingAccount.ID},
-	}, &gtsmodel.Follow{}); err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("BlockCreate: error removing follow in db: %s", err))
-	}
-	if err := p.state.DB.DeleteWhere(ctx, []db.Where{
-		{Key: "account_id", Value: targetAccountID},
-		{Key: "target_account_id", Value: requestingAccount.ID},
-	}, &gtsmodel.FollowRequest{}); err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("BlockCreate: error removing follow in db: %s", err))
+	// Ensure each account unfollows the other.
+	// We only care about processing unfollow side
+	// effects from requesting account -> target
+	// account, since requesting account is ours,
+	// and target account might not be.
+	msgs, err := p.unfollow(ctx, requestingAccount, targetAccount)
+	if err != nil {
+		err = fmt.Errorf("BlockCreate: error unfollowing: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// clear any follows or follow requests from the requesting account to the target account --
-	// this might require federation so we need to pass some messages around
-
-	// check if a follow request exists from the requesting account to the target account, and remove it if it does (storing the URI for later)
-	var frChanged bool
-	var frURI string
-	fr := &gtsmodel.FollowRequest{}
-	if err := p.state.DB.GetWhere(ctx, []db.Where{
-		{Key: "account_id", Value: requestingAccount.ID},
-		{Key: "target_account_id", Value: targetAccountID},
-	}, fr); err == nil {
-		frURI = fr.URI
-		if err := p.state.DB.DeleteByID(ctx, fr.ID, fr); err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("BlockCreate: error removing follow request from db: %s", err))
-		}
-		frChanged = true
+	// Ensure unfollowed in other direction;
+	// ignore/don't process returned messages.
+	if _, err := p.unfollow(ctx, targetAccount, requestingAccount); err != nil {
+		err = fmt.Errorf("BlockCreate: error unfollowing: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// now do the same thing for any existing follow
-	var fChanged bool
-	var fURI string
-	f := &gtsmodel.Follow{}
-	if err := p.state.DB.GetWhere(ctx, []db.Where{
-		{Key: "account_id", Value: requestingAccount.ID},
-		{Key: "target_account_id", Value: targetAccountID},
-	}, f); err == nil {
-		fURI = f.URI
-		if err := p.state.DB.DeleteByID(ctx, f.ID, f); err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("BlockCreate: error removing follow from db: %s", err))
-		}
-		fChanged = true
-	}
-
-	// follow request status changed so send the UNDO activity to the channel for async processing
-	if frChanged {
-		p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
-			APObjectType:   ap.ActivityFollow,
-			APActivityType: ap.ActivityUndo,
-			GTSModel: &gtsmodel.Follow{
-				AccountID:       requestingAccount.ID,
-				TargetAccountID: targetAccountID,
-				URI:             frURI,
-			},
-			OriginAccount: requestingAccount,
-			TargetAccount: targetAccount,
-		})
-	}
-
-	// follow status changed so send the UNDO activity to the channel for async processing
-	if fChanged {
-		p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
-			APObjectType:   ap.ActivityFollow,
-			APActivityType: ap.ActivityUndo,
-			GTSModel: &gtsmodel.Follow{
-				AccountID:       requestingAccount.ID,
-				TargetAccountID: targetAccountID,
-				URI:             fURI,
-			},
-			OriginAccount: requestingAccount,
-			TargetAccount: targetAccount,
-		})
-	}
-
-	// handle the rest of the block process asynchronously
-	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+	// Process block side effects (federation etc).
+	msgs = append(msgs, messages.FromClientAPI{
 		APObjectType:   ap.ActivityBlock,
 		APActivityType: ap.ActivityCreate,
 		GTSModel:       block,
@@ -153,39 +88,72 @@ func (p *Processor) BlockCreate(ctx context.Context, requestingAccount *gtsmodel
 		TargetAccount:  targetAccount,
 	})
 
+	// Batch queue accreted client api messages.
+	p.state.Workers.EnqueueClientAPI(ctx, msgs...)
+
 	return p.RelationshipGet(ctx, requestingAccount, targetAccountID)
 }
 
 // BlockRemove handles the removal of a block from requestingAccount to targetAccountID, either remote or local.
 func (p *Processor) BlockRemove(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
-	// make sure the target account actually exists in our db
+	targetAccount, existingBlock, errWithCode := p.getBlockTarget(ctx, requestingAccount, targetAccountID)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	if existingBlock == nil {
+		// Already not blocked, nothing to do.
+		return p.RelationshipGet(ctx, requestingAccount, targetAccountID)
+	}
+
+	// We got a block, remove it from the db.
+	if err := p.state.DB.DeleteBlockByID(ctx, existingBlock.ID); err != nil {
+		err := fmt.Errorf("BlockRemove: error removing block from db: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Populate account fields for convenience.
+	existingBlock.Account = requestingAccount
+	existingBlock.TargetAccount = targetAccount
+
+	// Process block removal side effects (federation etc).
+	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+		APObjectType:   ap.ActivityBlock,
+		APActivityType: ap.ActivityUndo,
+		GTSModel:       existingBlock,
+		OriginAccount:  requestingAccount,
+		TargetAccount:  targetAccount,
+	})
+
+	return p.RelationshipGet(ctx, requestingAccount, targetAccountID)
+}
+
+func (p *Processor) getBlockTarget(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*gtsmodel.Account, *gtsmodel.Block, gtserror.WithCode) {
+	// Account should not block or unblock itself.
+	if requestingAccount.ID == targetAccountID {
+		err := fmt.Errorf("getBlockTarget: account %s cannot block or unblock itself", requestingAccount.ID)
+		return nil, nil, gtserror.NewErrorNotAcceptable(err, err.Error())
+	}
+
+	// Ensure target account retrievable.
 	targetAccount, err := p.state.DB.GetAccountByID(ctx, targetAccountID)
 	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("BlockCreate: error getting account %s from the db: %s", targetAccountID, err))
-	}
-
-	// check if a block exists, and remove it if it does
-	block, err := p.state.DB.GetBlock(ctx, requestingAccount.ID, targetAccountID)
-	if err == nil {
-		// we got a block, remove it
-		block.Account = requestingAccount
-		block.TargetAccount = targetAccount
-		if err := p.state.DB.DeleteBlockByID(ctx, block.ID); err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("BlockRemove: error removing block from db: %s", err))
+		if !errors.Is(err, db.ErrNoEntries) {
+			// Real db error.
+			err = fmt.Errorf("getBlockTarget: db error looking for target account %s: %w", targetAccountID, err)
+			return nil, nil, gtserror.NewErrorInternalError(err)
 		}
-
-		// send the UNDO activity to the client worker for async processing
-		p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
-			APObjectType:   ap.ActivityBlock,
-			APActivityType: ap.ActivityUndo,
-			GTSModel:       block,
-			OriginAccount:  requestingAccount,
-			TargetAccount:  targetAccount,
-		})
-	} else if !errors.Is(err, db.ErrNoEntries) {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("BlockRemove: error getting possible block from db: %s", err))
+		// Account not found.
+		err = fmt.Errorf("getBlockTarget: target account %s not found in the db", targetAccountID)
+		return nil, nil, gtserror.NewErrorNotFound(err, err.Error())
 	}
 
-	// return whatever relationship results from all this
-	return p.RelationshipGet(ctx, requestingAccount, targetAccountID)
+	// Check if currently blocked.
+	block, err := p.state.DB.GetBlock(ctx, requestingAccount.ID, targetAccountID)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err = fmt.Errorf("getBlockTarget: db error checking existing block: %w", err)
+		return nil, nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return targetAccount, block, nil
 }

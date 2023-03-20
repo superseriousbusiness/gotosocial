@@ -26,7 +26,6 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/pub"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -52,10 +51,7 @@ func (suite *AccountTestSuite) TestAccountDeleteLocal() {
 	err := suite.db.Put(ctx, follow)
 	suite.NoError(err)
 
-	errWithCode := suite.processor.Account().DeleteLocal(ctx, suite.testAccounts["local_account_1"], &apimodel.AccountDeleteRequest{
-		Password:       "password",
-		DeleteOriginID: deletingAccount.ID,
-	})
+	errWithCode := suite.processor.Account().DeleteSelf(ctx, suite.testAccounts["local_account_1"])
 	suite.NoError(errWithCode)
 
 	// the delete should be federated outwards to the following account's inbox

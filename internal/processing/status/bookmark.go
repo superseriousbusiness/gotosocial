@@ -31,91 +31,67 @@ import (
 
 // BookmarkCreate adds a bookmark for the requestingAccount, targeting the given status (no-op if bookmark already exists).
 func (p *Processor) BookmarkCreate(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	targetStatus, err := p.state.DB.GetStatusByID(ctx, targetStatusID)
-	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
-	}
-	if targetStatus.Account == nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("no status owner for status %s", targetStatusID))
-	}
-	visible, err := p.filter.StatusVisible(ctx, targetStatus, requestingAccount)
-	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is visible: %s", targetStatus.ID, err))
-	}
-	if !visible {
-		return nil, gtserror.NewErrorNotFound(errors.New("status is not visible"))
+	targetStatus, existingBookmarkID, errWithCode := p.getBookmarkTarget(ctx, requestingAccount, targetStatusID)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
 
-	// first check if the status is already bookmarked, if so we don't need to do anything
-	newBookmark := true
-	gtsBookmark := &gtsmodel.StatusBookmark{}
-	if err := p.state.DB.GetWhere(ctx, []db.Where{{Key: "status_id", Value: targetStatus.ID}, {Key: "account_id", Value: requestingAccount.ID}}, gtsBookmark); err == nil {
-		// we already have a bookmark for this status
-		newBookmark = false
+	if existingBookmarkID != "" {
+		// Status is already bookmarked.
+		return p.apiStatus(ctx, targetStatus, requestingAccount)
 	}
 
-	if newBookmark {
-		// we need to create a new bookmark in the database
-		gtsBookmark := &gtsmodel.StatusBookmark{
-			ID:              id.NewULID(),
-			AccountID:       requestingAccount.ID,
-			Account:         requestingAccount,
-			TargetAccountID: targetStatus.AccountID,
-			TargetAccount:   targetStatus.Account,
-			StatusID:        targetStatus.ID,
-			Status:          targetStatus,
-		}
-
-		if err := p.state.DB.Put(ctx, gtsBookmark); err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error putting bookmark in database: %s", err))
-		}
+	// Create and store a new bookmark.
+	gtsBookmark := &gtsmodel.StatusBookmark{
+		ID:              id.NewULID(),
+		AccountID:       requestingAccount.ID,
+		Account:         requestingAccount,
+		TargetAccountID: targetStatus.AccountID,
+		TargetAccount:   targetStatus.Account,
+		StatusID:        targetStatus.ID,
+		Status:          targetStatus,
 	}
 
-	// return the apidon representation of the target status
-	apiStatus, err := p.tc.StatusToAPIStatus(ctx, targetStatus, requestingAccount)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err))
+	if err := p.state.DB.PutStatusBookmark(ctx, gtsBookmark); err != nil {
+		err = fmt.Errorf("BookmarkCreate: error putting bookmark in database: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return apiStatus, nil
+	return p.apiStatus(ctx, targetStatus, requestingAccount)
 }
 
 // BookmarkRemove removes a bookmark for the requesting account, targeting the given status (no-op if bookmark doesn't exist).
 func (p *Processor) BookmarkRemove(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	targetStatus, err := p.state.DB.GetStatusByID(ctx, targetStatusID)
-	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
-	}
-	if targetStatus.Account == nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("no status owner for status %s", targetStatusID))
-	}
-	visible, err := p.filter.StatusVisible(ctx, targetStatus, requestingAccount)
-	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is visible: %s", targetStatus.ID, err))
-	}
-	if !visible {
-		return nil, gtserror.NewErrorNotFound(errors.New("status is not visible"))
+	targetStatus, existingBookmarkID, errWithCode := p.getBookmarkTarget(ctx, requestingAccount, targetStatusID)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
 
-	// first check if the status is actually bookmarked
-	toUnbookmark := false
-	gtsBookmark := &gtsmodel.StatusBookmark{}
-	if err := p.state.DB.GetWhere(ctx, []db.Where{{Key: "status_id", Value: targetStatus.ID}, {Key: "account_id", Value: requestingAccount.ID}}, gtsBookmark); err == nil {
-		// we have a bookmark for this status
-		toUnbookmark = true
+	if existingBookmarkID == "" {
+		// Status isn't bookmarked.
+		return p.apiStatus(ctx, targetStatus, requestingAccount)
 	}
 
-	if toUnbookmark {
-		if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "status_id", Value: targetStatus.ID}, {Key: "account_id", Value: requestingAccount.ID}}, gtsBookmark); err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error unfaveing status: %s", err))
-		}
+	// We have a bookmark to remove.
+	if err := p.state.DB.DeleteStatusBookmark(ctx, existingBookmarkID); err != nil {
+		err = fmt.Errorf("BookmarkRemove: error removing status bookmark: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// return the api representation of the target status
-	apiStatus, err := p.tc.StatusToAPIStatus(ctx, targetStatus, requestingAccount)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err))
+	return p.apiStatus(ctx, targetStatus, requestingAccount)
+}
+
+func (p *Processor) getBookmarkTarget(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*gtsmodel.Status, string, gtserror.WithCode) {
+	targetStatus, errWithCode := p.getVisibleStatus(ctx, requestingAccount, targetStatusID)
+	if errWithCode != nil {
+		return nil, "", errWithCode
 	}
 
-	return apiStatus, nil
+	bookmarkID, err := p.state.DB.GetStatusBookmarkID(ctx, requestingAccount.ID, targetStatus.ID)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err = fmt.Errorf("getBookmarkTarget: error checking existing bookmark: %w", err)
+		return nil, "", gtserror.NewErrorInternalError(err)
+	}
+
+	return targetStatus, bookmarkID, nil
 }
