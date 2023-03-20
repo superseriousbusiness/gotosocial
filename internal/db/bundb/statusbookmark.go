@@ -20,6 +20,7 @@ package bundb
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -47,17 +48,17 @@ func (s *statusBookmarkDB) GetStatusBookmark(ctx context.Context, id string) (*g
 
 	bookmark.Account, err = s.state.DB.GetAccountByID(ctx, bookmark.AccountID)
 	if err != nil {
-		log.Errorf(ctx, "error getting status bookmark account %q: %v", bookmark.AccountID, err)
+		return nil, fmt.Errorf("error getting status bookmark account %q: %w", bookmark.AccountID, err)
 	}
 
 	bookmark.TargetAccount, err = s.state.DB.GetAccountByID(ctx, bookmark.TargetAccountID)
 	if err != nil {
-		log.Errorf(ctx, "error getting status bookmark target account %q: %v", bookmark.TargetAccountID, err)
+		return nil, fmt.Errorf("error getting status bookmark target account %q: %w", bookmark.TargetAccountID, err)
 	}
 
 	bookmark.Status, err = s.state.DB.GetStatusByID(ctx, bookmark.StatusID)
 	if err != nil {
-		log.Errorf(ctx, "error getting status bookmark status %q: %v", bookmark.StatusID, err)
+		return nil, fmt.Errorf("error getting status bookmark status %q: %w", bookmark.StatusID, err)
 	}
 
 	return bookmark, nil

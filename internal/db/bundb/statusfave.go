@@ -20,6 +20,7 @@ package bundb
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -47,17 +48,17 @@ func (s *statusFaveDB) GetStatusFave(ctx context.Context, id string) (*gtsmodel.
 
 	fave.Account, err = s.state.DB.GetAccountByID(ctx, fave.AccountID)
 	if err != nil {
-		log.Errorf(ctx, "error getting status fave account %q: %v", fave.AccountID, err)
+		return nil, fmt.Errorf("error getting status fave account %q: %w", fave.AccountID, err)
 	}
 
 	fave.TargetAccount, err = s.state.DB.GetAccountByID(ctx, fave.TargetAccountID)
 	if err != nil {
-		log.Errorf(ctx, "error getting status fave target account %q: %v", fave.TargetAccountID, err)
+		return nil, fmt.Errorf("error getting status fave target account %q: %w", fave.TargetAccountID, err)
 	}
 
 	fave.Status, err = s.state.DB.GetStatusByID(ctx, fave.StatusID)
 	if err != nil {
-		log.Errorf(ctx, "error getting status fave status %q: %v", fave.StatusID, err)
+		return nil, fmt.Errorf("error getting status fave status %q: %w", fave.StatusID, err)
 	}
 
 	return fave, nil
