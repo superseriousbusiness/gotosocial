@@ -309,7 +309,14 @@ func (p *Processor) deleteAccountStatuses(ctx context.Context, account *gtsmodel
 		msgs     = []messages.FromClientAPI{}
 	)
 
-	for statuses, err = p.state.DB.GetAccountStatuses(ctx, account.ID, deleteSelectLimit, false, false, maxID, "", false, false); err == nil && len(statuses) != 0; statuses, err = p.state.DB.GetAccountStatuses(ctx, account.ID, deleteSelectLimit, false, false, maxID, "", false, false) {
+statusLoop:
+	for {
+		// Page through account's statuses.
+		statuses, err = p.state.DB.GetAccountStatuses(ctx, account.ID, deleteSelectLimit, false, false, maxID, "", false, false)
+		if err != nil || len(statuses) == 0 {
+			break statusLoop
+		}
+
 		// Update next maxID from last status.
 		maxID = statuses[len(statuses)-1].ID
 
