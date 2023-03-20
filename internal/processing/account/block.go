@@ -61,30 +61,20 @@ func (p *Processor) BlockCreate(ctx context.Context, requestingAccount *gtsmodel
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Clear any notifications created by
-	// each account targeting the other.
-	if err := p.deleteMutualAccountNotifications(ctx, requestingAccount, targetAccount); err != nil {
-		err = fmt.Errorf("BlockCreate: error deleting mutual notifications: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	// Remove any bookmarks made by each account
-	// towards the other's statuses.
-	if err := p.deleteMutualAccountBookmarks(ctx, requestingAccount, targetAccount); err != nil {
-		err = fmt.Errorf("BlockCreate: error deleting mutual bookmarks: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	// Remove any faves made by each account
-	// towards the other's statuses.
-	if err := p.deleteMutualAccountFaves(ctx, requestingAccount, targetAccount); err != nil {
-		err = fmt.Errorf("BlockCreate: error deleting mutual faves: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
 	// Ensure each account unfollows the other.
+	// We only care about processing unfollow side
+	// effects from requesting account -> target
+	// account, since requesting account is ours,
+	// and target account might not be.
 	msgs, err := p.unfollow(ctx, requestingAccount, targetAccount)
 	if err != nil {
+		err = fmt.Errorf("BlockCreate: error unfollowing: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Ensure unfollowed in other direction;
+	// ignore/don't process returned messages.
+	if _, err := p.unfollow(ctx, targetAccount, requestingAccount); err != nil {
 		err = fmt.Errorf("BlockCreate: error unfollowing: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -166,46 +156,4 @@ func (p *Processor) getBlockTarget(ctx context.Context, requestingAccount *gtsmo
 	}
 
 	return targetAccount, block, nil
-}
-
-func (p *Processor) deleteMutualAccountNotifications(ctx context.Context, account1 *gtsmodel.Account, account2 *gtsmodel.Account) error {
-	// Delete all notifications from account2 targeting account1.
-	if err := p.state.DB.DeleteNotifications(ctx, account1.ID, account2.ID); err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return err
-	}
-
-	// Delete all notifications from account1 targeting account2.
-	if err := p.state.DB.DeleteNotifications(ctx, account2.ID, account1.ID); err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return err
-	}
-
-	return nil
-}
-
-func (p *Processor) deleteMutualAccountBookmarks(ctx context.Context, account1 *gtsmodel.Account, account2 *gtsmodel.Account) error {
-	// Delete all bookmarks from account2 targeting account1.
-	if err := p.state.DB.DeleteStatusBookmarks(ctx, account1.ID, account2.ID); err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return err
-	}
-
-	// Delete all bookmarks from account1 targeting account2.
-	if err := p.state.DB.DeleteStatusBookmarks(ctx, account2.ID, account1.ID); err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return err
-	}
-
-	return nil
-}
-
-func (p *Processor) deleteMutualAccountFaves(ctx context.Context, account1 *gtsmodel.Account, account2 *gtsmodel.Account) error {
-	// Delete all faves from account2 targeting account1.
-	if err := p.state.DB.DeleteStatusFaves(ctx, account1.ID, account2.ID); err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return err
-	}
-
-	// Delete all faves from account1 targeting account2.
-	if err := p.state.DB.DeleteStatusFaves(ctx, account2.ID, account1.ID); err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return err
-	}
-
-	return nil
 }
