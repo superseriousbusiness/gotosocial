@@ -25,6 +25,7 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -36,14 +37,15 @@ func (p *Processor) FollowRequestsGet(ctx context.Context, auth *oauth.Auth) ([]
 	}
 
 	accts := make([]apimodel.Account, 0, len(followRequests))
-	for _, fr := range followRequests {
-		if fr.Account == nil {
+	for _, followRequest := range followRequests {
+		if followRequest.Account == nil {
 			// The creator of the follow doesn't exist,
 			// just skip this one.
+			log.WithContext(ctx).WithField("followRequest", followRequest).Warn("follow request had no associated account")
 			continue
 		}
 
-		apiAcct, err := p.tc.AccountToAPIAccountPublic(ctx, fr.Account)
+		apiAcct, err := p.tc.AccountToAPIAccountPublic(ctx, followRequest.Account)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -61,6 +63,7 @@ func (p *Processor) FollowRequestAccept(ctx context.Context, auth *oauth.Auth, a
 	if follow.Account == nil {
 		// The creator of the follow doesn't exist,
 		// so we can't do further processing.
+		log.WithContext(ctx).WithField("follow", follow).Warn("follow had no associated account")
 		return p.relationship(ctx, auth.Account.ID, accountID)
 	}
 
