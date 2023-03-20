@@ -23,6 +23,7 @@ import (
 	"net/url"
 
 	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // Following obtains the Following Collection for an actor with the
@@ -47,6 +48,7 @@ func (f *federatingDB) Following(ctx context.Context, actorIRI *url.URL) (follow
 		if follow.TargetAccount == nil {
 			// Follow target account no longer exists,
 			// for some reason. Skip this one.
+			log.WithContext(ctx).WithField("follow", follow).Warnf("follow missing target account %s", follow.TargetAccountID)
 			continue
 		}
 
