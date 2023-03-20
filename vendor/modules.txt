@@ -639,7 +639,7 @@ github.com/superseriousbusiness/exif-terminator
 # github.com/superseriousbusiness/go-jpeg-image-structure/v2 v2.0.0-20220321154430-d89a106fdabe
 ## explicit; go 1.17
 github.com/superseriousbusiness/go-jpeg-image-structure/v2
-# github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8
+# github.com/superseriousbusiness/oauth2/v4 v4.5.2-SSB
 ## explicit; go 1.13
 github.com/superseriousbusiness/oauth2/v4
 github.com/superseriousbusiness/oauth2/v4/errors

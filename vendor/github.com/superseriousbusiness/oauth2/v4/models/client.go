@@ -40,6 +40,11 @@ func (c *simpleClient) GetDomain() string {
 	return c.domain
 }
 
+// IsPublic public
+func (c *Client) IsPublic() bool {
+	return c.Public
+}
+
 // GetUserID user id
 func (c *simpleClient) GetUserID() string {
 	return c.userID

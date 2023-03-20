@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -22,7 +23,7 @@ type (
 	UserAuthorizationHandler func(w http.ResponseWriter, r *http.Request) (userID string, err error)
 
 	// PasswordAuthorizationHandler get user id from username and password
-	PasswordAuthorizationHandler func(username, password string) (userID string, err error)
+	PasswordAuthorizationHandler func(ctx context.Context, clientID, username, password string) (userID string, err error)
 
 	// RefreshingScopeHandler check the scope of the refreshing token
 	RefreshingScopeHandler func(tgr *oauth2.TokenGenerateRequest, oldScope string) (allowed bool, err error)
@@ -36,6 +37,9 @@ type (
 	// InternalErrorHandler internal error handing
 	InternalErrorHandler func(err error) (re *errors.Response)
 
+	// PreRedirectErrorHandler is used to override "redirect-on-error" behavior
+	PreRedirectErrorHandler func(w http.ResponseWriter, req *AuthorizeRequest, err error) error
+
 	// AuthorizeScopeHandler set the authorized scope
 	AuthorizeScopeHandler func(w http.ResponseWriter, r *http.Request) (scope string, err error)
 
@@ -44,6 +48,9 @@ type (
 
 	// ExtensionFieldsHandler in response to the access token with the extension of the field
 	ExtensionFieldsHandler func(ti oauth2.TokenInfo) (fieldsValue map[string]interface{})
+
+	// ResponseTokenHandler response token handing
+	ResponseTokenHandler func(w http.ResponseWriter, data map[string]interface{}, header http.Header, statusCode ...int) error
 )
 
 // ClientFormHandler get client data from form

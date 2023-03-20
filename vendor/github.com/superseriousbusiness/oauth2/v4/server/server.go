@@ -32,7 +32,7 @@ func NewServer(cfg *Config, manager oauth2.Manager) *Server {
 		return "", errors.ErrAccessDenied
 	}
 
-	srv.PasswordAuthorizationHandler = func(username, password string) (string, error) {
+	srv.PasswordAuthorizationHandler = func(ctx context.Context, clientID, username, password string) (string, error) {
 		return "", errors.ErrAccessDenied
 	}
 	return srv
@@ -48,18 +48,29 @@ type Server struct {
 	UserAuthorizationHandler     UserAuthorizationHandler
 	PasswordAuthorizationHandler PasswordAuthorizationHandler
 	RefreshingValidationHandler  RefreshingValidationHandler
+	PreRedirectErrorHandler      PreRedirectErrorHandler
 	RefreshingScopeHandler       RefreshingScopeHandler
 	ResponseErrorHandler         ResponseErrorHandler
 	InternalErrorHandler         InternalErrorHandler
 	ExtensionFieldsHandler       ExtensionFieldsHandler
 	AccessTokenExpHandler        AccessTokenExpHandler
 	AuthorizeScopeHandler        AuthorizeScopeHandler
+	ResponseTokenHandler         ResponseTokenHandler
+}
+
+func (s *Server) handleError(w http.ResponseWriter, req *AuthorizeRequest, err error) error {
+	if fn := s.PreRedirectErrorHandler; fn != nil {
+		return fn(w, req, err)
+	}
+
+	return s.redirectError(w, req, err)
 }
 
 func (s *Server) redirectError(w http.ResponseWriter, req *AuthorizeRequest, err error) error {
 	if req == nil {
 		return err
 	}
+
 	data, _, _ := s.GetErrorData(err)
 	return s.redirect(w, req, data)
 }
@@ -81,6 +92,9 @@ func (s *Server) tokenError(w http.ResponseWriter, err error) error {
 }
 
 func (s *Server) token(w http.ResponseWriter, data map[string]interface{}, header http.Header, statusCode ...int) error {
+	if fn := s.ResponseTokenHandler; fn != nil {
+		return fn(w, data, header, statusCode...)
+	}
 	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Pragma", "no-cache")
@@ -178,7 +192,7 @@ func (s *Server) ValidationAuthorizeRequest(r *http.Request) (*AuthorizeRequest,
 	if ccm == "" {
 		ccm = oauth2.CodeChallengePlain
 	}
-	if ccm.String() != "" && !s.CheckCodeChallengeMethod(ccm) {
+	if ccm != "" && !s.CheckCodeChallengeMethod(ccm) {
 		return nil, errors.ErrUnsupportedCodeChallengeMethod
 	}
 
@@ -253,13 +267,13 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 
 	req, err := s.ValidationAuthorizeRequest(r)
 	if err != nil {
-		return s.redirectError(w, req, err)
+		return s.handleError(w, req, err)
 	}
 
 	// user authorization
 	userID, err := s.UserAuthorizationHandler(w, r)
 	if err != nil {
-		return s.redirectError(w, req, err)
+		return s.handleError(w, req, err)
 	} else if userID == "" {
 		return nil
 	}
@@ -286,7 +300,7 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 
 	ti, err := s.GetAuthorizeToken(ctx, req)
 	if err != nil {
-		return s.redirectError(w, req, err)
+		return s.handleError(w, req, err)
 	}
 
 	// If the redirect URI is empty, the default domain provided by the client is used.
@@ -347,7 +361,7 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (oauth2.GrantType, *oau
 			return "", nil, errors.ErrInvalidRequest
 		}
 
-		userID, err := s.PasswordAuthorizationHandler(username, password)
+		userID, err := s.PasswordAuthorizationHandler(r.Context(), clientID, username, password)
 		if err != nil {
 			return "", nil, err
 		} else if userID == "" {
@@ -356,7 +370,6 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (oauth2.GrantType, *oau
 		tgr.UserID = userID
 	case oauth2.ClientCredentials:
 		tgr.Scope = r.FormValue("scope")
-		tgr.RedirectURI = r.FormValue("redirect_uri")
 	case oauth2.Refreshing:
 		tgr.Refresh = r.FormValue("refresh_token")
 		tgr.Scope = r.FormValue("scope")

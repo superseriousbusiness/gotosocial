@@ -44,7 +44,7 @@ require (
 	github.com/stretchr/testify v1.8.2
 	github.com/superseriousbusiness/activity v1.2.1-gts
 	github.com/superseriousbusiness/exif-terminator v0.5.0
-	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8
+	github.com/superseriousbusiness/oauth2/v4 v4.5.2-SSB
 	github.com/tdewolff/minify/v2 v2.12.4
 	github.com/ulule/limiter/v3 v3.11.1
 	github.com/uptrace/bun v1.1.12
