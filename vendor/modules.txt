@@ -346,7 +346,7 @@ github.com/magiconair/properties
 # github.com/mattn/go-isatty v0.0.17
 ## explicit; go 1.15
 github.com/mattn/go-isatty
-# github.com/microcosm-cc/bluemonday v1.0.22
+# github.com/microcosm-cc/bluemonday v1.0.23
 ## explicit; go 1.19
 github.com/microcosm-cc/bluemonday
 github.com/microcosm-cc/bluemonday/css
