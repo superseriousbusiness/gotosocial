@@ -26,6 +26,7 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // AccountDeletePOSTHandler swagger:operation POST /api/v1/accounts/delete accountDelete
@@ -77,15 +78,20 @@ func (m *Module) AccountDeletePOSTHandler(c *gin.Context) {
 		return
 	}
 
+	// Self account delete requires password to ensure it's for real.
 	if form.Password == "" {
 		err = errors.New("no password provided in account delete request")
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
-	form.DeleteOriginID = authed.Account.ID
+	if err := bcrypt.CompareHashAndPassword([]byte(authed.User.EncryptedPassword), []byte(form.Password)); err != nil {
+		err = errors.New("invalid password provided in account delete request")
+		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
 
-	if errWithCode := m.processor.Account().DeleteLocal(c.Request.Context(), authed.Account, form); errWithCode != nil {
+	if errWithCode := m.processor.Account().DeleteSelf(c.Request.Context(), authed.Account); errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}

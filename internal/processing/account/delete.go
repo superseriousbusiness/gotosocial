@@ -25,13 +25,11 @@ import (
 
 	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"golang.org/x/crypto/bcrypt"
 )
 
 const deleteSelectLimit = 50
@@ -84,46 +82,21 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 	return nil
 }
 
-// DeleteLocal is like Delete, but specifically for deletion of local accounts rather than federated ones.
-// Unlike Delete, it will propagate the deletion out across the federating API to other instances.
-func (p *Processor) DeleteLocal(ctx context.Context, account *gtsmodel.Account, form *apimodel.AccountDeleteRequest) gtserror.WithCode {
+// DeleteSelf is like Delete, but specifically for local accounts deleting themselves.
+//
+// Calling DeleteSelf results in a delete message being enqueued in the processor,
+// which causes side effects to occur: delete will be federated out to other instances,
+// and the above Delete function will be called afterwards from the processor, to clear
+// out the account's bits and bobs, and stubbify it.
+func (p *Processor) DeleteSelf(ctx context.Context, account *gtsmodel.Account) gtserror.WithCode {
 	fromClientAPIMessage := messages.FromClientAPI{
 		APObjectType:   ap.ActorPerson,
 		APActivityType: ap.ActivityDelete,
+		OriginAccount:  account,
 		TargetAccount:  account,
 	}
 
-	if form.DeleteOriginID == account.ID {
-		// the account owner themself has requested deletion via the API, get their user from the db
-		user, err := p.state.DB.GetUserByAccountID(ctx, account.ID)
-		if err != nil {
-			return gtserror.NewErrorInternalError(err)
-		}
-
-		// now check that the password they supplied is correct
-		// make sure a password is actually set and bail if not
-		if user.EncryptedPassword == "" {
-			return gtserror.NewErrorForbidden(errors.New("user password was not set"))
-		}
-
-		// compare the provided password with the encrypted one from the db, bail if they don't match
-		if err := bcrypt.CompareHashAndPassword([]byte(user.EncryptedPassword), []byte(form.Password)); err != nil {
-			return gtserror.NewErrorForbidden(errors.New("invalid password"))
-		}
-
-		fromClientAPIMessage.OriginAccount = account
-	} else {
-		// the delete has been requested by some other account, grab it;
-		// if we've reached this point we know it has permission already
-		requestingAccount, err := p.state.DB.GetAccountByID(ctx, form.DeleteOriginID)
-		if err != nil {
-			return gtserror.NewErrorInternalError(err)
-		}
-
-		fromClientAPIMessage.OriginAccount = requestingAccount
-	}
-
-	// put the delete in the processor queue to handle the rest of it asynchronously
+	// Process the delete side effects asynchronously.
 	p.state.Workers.EnqueueClientAPI(ctx, fromClientAPIMessage)
 
 	return nil

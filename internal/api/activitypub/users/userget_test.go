@@ -30,7 +30,6 @@ import (
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -98,10 +97,7 @@ func (suite *UserGetTestSuite) TestGetUserPublicKeyDeleted() {
 	userModule := users.New(suite.processor)
 	targetAccount := suite.testAccounts["local_account_1"]
 
-	suite.processor.Account().DeleteLocal(context.Background(), suite.testAccounts["local_account_1"], &apimodel.AccountDeleteRequest{
-		Password:       "password",
-		DeleteOriginID: targetAccount.ID,
-	})
+	suite.processor.Account().DeleteSelf(context.Background(), suite.testAccounts["local_account_1"])
 
 	// wait for the account delete to be processed
 	if !testrig.WaitFor(func() bool {
