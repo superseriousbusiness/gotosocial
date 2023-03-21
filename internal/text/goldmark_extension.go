@@ -240,7 +240,7 @@ func (r *customRenderer) renderMention(w mdutil.BufWriter, source []byte, node a
 
 	n, ok := node.(*mention) // this function is only registered for kindMention
 	if !ok {
-		log.Panic(nil, "type assertion failed")
+		log.Panic(r.ctx, "type assertion failed")
 	}
 	text := string(n.Segment.Value(source))
 
@@ -248,7 +248,7 @@ func (r *customRenderer) renderMention(w mdutil.BufWriter, source []byte, node a
 
 	// we don't have much recourse if this fails
 	if _, err := w.WriteString(html); err != nil {
-		log.Errorf(nil, "error writing HTML: %s", err)
+		log.Errorf(r.ctx, "error writing HTML: %s", err)
 	}
 	return ast.WalkSkipChildren, nil
 }
@@ -260,7 +260,7 @@ func (r *customRenderer) renderHashtag(w mdutil.BufWriter, source []byte, node a
 
 	n, ok := node.(*hashtag) // this function is only registered for kindHashtag
 	if !ok {
-		log.Panic(nil, "type assertion failed")
+		log.Panic(r.ctx, "type assertion failed")
 	}
 	text := string(n.Segment.Value(source))
 
@@ -269,7 +269,7 @@ func (r *customRenderer) renderHashtag(w mdutil.BufWriter, source []byte, node a
 	_, err := w.WriteString(html)
 	// we don't have much recourse if this fails
 	if err != nil {
-		log.Errorf(nil, "error writing HTML: %s", err)
+		log.Errorf(r.ctx, "error writing HTML: %s", err)
 	}
 	return ast.WalkSkipChildren, nil
 }
@@ -282,7 +282,7 @@ func (r *customRenderer) renderEmoji(w mdutil.BufWriter, source []byte, node ast
 
 	n, ok := node.(*emoji) // this function is only registered for kindEmoji
 	if !ok {
-		log.Panic(nil, "type assertion failed")
+		log.Panic(r.ctx, "type assertion failed")
 	}
 	text := string(n.Segment.Value(source))
 	shortcode := text[1 : len(text)-1]
@@ -307,7 +307,7 @@ func (r *customRenderer) renderEmoji(w mdutil.BufWriter, source []byte, node ast
 
 	// we don't have much recourse if this fails
 	if _, err := w.WriteString(text); err != nil {
-		log.Errorf(nil, "error writing HTML: %s", err)
+		log.Errorf(r.ctx, "error writing HTML: %s", err)
 	}
 	return ast.WalkSkipChildren, nil
 }
