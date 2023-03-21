@@ -40,7 +40,7 @@ func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mentio
 
 		q := m.conn.
 			NewSelect().
-			Model(mention).
+			Model(&mention).
 			Where("? = ?", bun.Ident("mention.id"), id)
 
 		if err := q.Scan(ctx); err != nil {
@@ -117,6 +117,7 @@ func (m *mentionDB) DeleteMentionByID(ctx context.Context, id string) error {
 		return m.conn.ProcessError(err)
 	}
 
+	// Invalidate mention from the lookup cache.
 	m.state.Caches.GTS.Mention().Invalidate("ID", id)
 
 	return nil
