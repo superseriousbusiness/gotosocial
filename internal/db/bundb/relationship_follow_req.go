@@ -270,23 +270,23 @@ func (r *relationshipDB) DeleteFollowRequestByURI(ctx context.Context, uri strin
 func (r *relationshipDB) DeleteAccountFollowRequests(ctx context.Context, accountID string) error {
 	var followIDs []string
 
-	if err := r.conn.NewSelect().
+	if _, err := r.conn.
+		NewDelete().
 		Table("follow_requests").
-		ColumnExpr("?", bun.Ident("id")).
 		WhereOr("? = ? OR ? = ?",
 			bun.Ident("account_id"),
 			accountID,
 			bun.Ident("target_account_id"),
 			accountID,
 		).
-		Scan(ctx, &followIDs); err != nil {
+		Returning("?", bun.Ident("id")).
+		Exec(ctx, &followIDs); err != nil {
 		return r.conn.ProcessError(err)
 	}
 
+	// Invalidate each returned ID.
 	for _, id := range followIDs {
-		if err := r.DeleteFollowRequestByID(ctx, id); err != nil {
-			log.Errorf(ctx, "error deleting follow request %q: %v", id, err)
-		}
+		r.state.Caches.GTS.FollowRequest().Invalidate("ID", id)
 	}
 
 	return nil

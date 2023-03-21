@@ -30,4 +30,10 @@ type Mention interface {
 
 	// GetMentions gets multiple mentions.
 	GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.Mention, Error)
+
+	// PutMention will insert the given mention into the database.
+	PutMention(ctx context.Context, mention *gtsmodel.Mention) error
+
+	// DeleteMentionByID will delete mention with given ID from the database.
+	DeleteMentionByID(ctx context.Context, id string) error
 }

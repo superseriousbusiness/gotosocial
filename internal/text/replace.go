@@ -37,14 +37,14 @@ const (
 
 // replaceMention takes a string in the form @username@domain.com or @localusername
 func (r *customRenderer) replaceMention(text string) string {
-	menchie, err := r.parseMention(r.ctx, text, r.accountID, r.statusID)
+	mention, err := r.parseMention(r.ctx, text, r.accountID, r.statusID)
 	if err != nil {
 		log.Errorf(nil, "error parsing mention %s from status: %s", text, err)
 		return text
 	}
 
 	if r.statusID != "" {
-		if err := r.f.db.Put(r.ctx, menchie); err != nil {
+		if err := r.f.db.PutMention(r.ctx, mention); err != nil {
 			log.Errorf(nil, "error putting mention in db: %s", err)
 			return text
 		}
@@ -53,27 +53,17 @@ func (r *customRenderer) replaceMention(text string) string {
 	// only append if it's not been listed yet
 	listed := false
 	for _, m := range r.result.Mentions {
-		if menchie.ID == m.ID {
+		if mention.ID == m.ID {
 			listed = true
 			break
 		}
 	}
 	if !listed {
-		r.result.Mentions = append(r.result.Mentions, menchie)
-	}
-
-	// make sure we have an account attached to this mention
-	if menchie.TargetAccount == nil {
-		a, err := r.f.db.GetAccountByID(r.ctx, menchie.TargetAccountID)
-		if err != nil {
-			log.Errorf(nil, "error getting account with id %s from the db: %s", menchie.TargetAccountID, err)
-			return text
-		}
-		menchie.TargetAccount = a
+		r.result.Mentions = append(r.result.Mentions, mention)
 	}
 
 	// The mention's target is our target
-	targetAccount := menchie.TargetAccount
+	targetAccount := mention.TargetAccount
 
 	var b strings.Builder
 
