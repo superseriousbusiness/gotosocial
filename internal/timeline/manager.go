@@ -23,9 +23,13 @@ import (
 	"sync"
 	"time"
 
-	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+)
+
+const (
+	pruneLengthIndexed  = 400
+	pruneLengthPrepared = 50
 )
 
 // Manager abstracts functions for creating timelines for multiple accounts, and adding, removing, and fetching entries from those timelines.
@@ -48,6 +52,7 @@ type Manager interface {
 	// The returned bool indicates whether the item was actually put in the timeline. This could be false in cases where
 	// the item is a boosted status, but a boost of the original status or the status itself already exists recently in the timeline.
 	Ingest(ctx context.Context, item Timelineable, timelineAccountID string) (bool, error)
+	
 	// IngestAndPrepare takes one timelineable and indexes it into the timeline for the given account ID, and then immediately prepares it for serving.
 	// This is useful in cases where we know the item will need to be shown at the top of a user's timeline immediately (eg., a new status is created).
 	//
@@ -55,24 +60,33 @@ type Manager interface {
 	//
 	// The returned bool indicates whether the item was actually put in the timeline. This could be false in cases where
 	// a status is a boost, but a boost of the original status or the status itself already exists recently in the timeline.
-	IngestAndPrepare(ctx context.Context, item Timelineable, timelineAccountID string) (bool, error)
+	IngestAndPrepare(ctx context.Context, item Timelineable, accountID string) (bool, error)
+	
 	// GetTimeline returns limit n amount of prepared entries from the timeline of the given account ID, in descending chronological order.
 	// If maxID is provided, it will return prepared entries from that maxID onwards, inclusive.
 	GetTimeline(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]Preparable, error)
+	
 	// GetIndexedLength returns the amount of items that have been *indexed* for the given account ID.
-	GetIndexedLength(ctx context.Context, timelineAccountID string) int
+	GetIndexedLength(ctx context.Context, accountID string) int
+	
 	// GetOldestIndexedID returns the id ID for the oldest item that we have indexed for the given account.
-	GetOldestIndexedID(ctx context.Context, timelineAccountID string) (string, error)
+	GetOldestIndexedID(ctx context.Context, accountID string) (string, error)
+	
 	// PrepareXFromTop prepares limit n amount of items, based on their indexed representations, from the top of the index.
-	PrepareXFromTop(ctx context.Context, timelineAccountID string, limit int) error
+	PrepareXFromTop(ctx context.Context, accountID string, limit int) error
+	
 	// Remove removes one item from the timeline of the given timelineAccountID
-	Remove(ctx context.Context, timelineAccountID string, itemID string) (int, error)
+	Remove(ctx context.Context, accountID string, itemID string) (int, error)
+	
 	// WipeItemFromAllTimelines removes one item from the index and prepared items of all timelines
 	WipeItemFromAllTimelines(ctx context.Context, itemID string) error
+	
 	// WipeStatusesFromAccountID removes all items by the given accountID from the timelineAccountID's timelines.
 	WipeItemsFromAccountID(ctx context.Context, timelineAccountID string, accountID string) error
+	
 	// Start starts hourly cleanup jobs for this timeline manager.
 	Start() error
+	
 	// Stop stops the timeline manager (currently a stub, doesn't do anything).
 	Stop() error
 }
@@ -97,31 +111,41 @@ type manager struct {
 }
 
 func (m *manager) Start() error {
-	// range through all timelines in the sync map once per hour + prune as necessary
+	// Start a background goroutine which iterates
+	// through all stored timelines once per hour,
+	// and cleans up old entries if that timeline
+	// hasn't been accessed in the last hour.
 	go func() {
 		for now := range time.NewTicker(1 * time.Hour).C {
-			m.accountTimelines.Range(func(key any, value any) bool {
-				timelineAccountID, ok := key.(string)
+			// Define the range function inside here,
+			// so that we can use the 'now' returned
+			// by the ticker, instead of having to call
+			// time.Now() multiple times.
+			//
+			// Unless it panics, this function always
+			// returns 'true', to continue the Range
+			// call through the sync.Map.
+			f := func(_ any, v any) bool {
+				timeline, ok := v.(Timeline)
 				if !ok {
-					panic("couldn't parse timeline manager sync map key as string, this should never happen so panic")
+					log.Panic(nil, "couldn't parse timeline manager sync map value as Timeline, this should never happen so panic")
 				}
 
-				t, ok := value.(Timeline)
-				if !ok {
-					panic("couldn't parse timeline manager sync map value as Timeline, this should never happen so panic")
+				if now.Sub(timeline.LastGot()) < 1*time.Hour {
+					// Timeline has been fetched in the
+					// last hour, move on to the next one.
+					return true
 				}
 
-				anHourAgo := now.Add(-1 * time.Hour)
-				if lastGot := t.LastGot(); lastGot.Before(anHourAgo) {
-					amountPruned := t.Prune(defaultDesiredPreparedItemsLength, defaultDesiredIndexedItemsLength)
-					log.WithFields(kv.Fields{
-						{"timelineAccountID", timelineAccountID},
-						{"amountPruned", amountPruned},
-					}...).Info("pruned indexed and prepared items from timeline")
+				if amountPruned := timeline.Prune(pruneLengthPrepared, pruneLengthIndexed); amountPruned > 0 {
+					log.WithField("accountID", timeline.AccountID()).Infof("pruned %d indexed and prepared items from timeline", amountPruned)
 				}
 
 				return true
-			})
+			}
+
+			// Execute the function for each timeline.
+			m.accountTimelines.Range(f)
 		}
 	}()
 
@@ -132,84 +156,56 @@ func (m *manager) Stop() error {
 	return nil
 }
 
-func (m *manager) Ingest(ctx context.Context, item Timelineable, timelineAccountID string) (bool, error) {
-	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
-	if err != nil {
-		return false, err
-	}
-
-	return t.IndexOne(ctx, item.GetID(), item.GetBoostOfID(), item.GetAccountID(), item.GetBoostOfAccountID())
+func (m *manager) Ingest(ctx context.Context, item Timelineable, accountID string) (bool, error) {
+	return m.getOrCreateTimeline(ctx, accountID).IndexOne(
+		ctx,
+		item.GetID(),
+		item.GetBoostOfID(),
+		item.GetAccountID(),
+		item.GetBoostOfAccountID(),
+	)
 }
 
-func (m *manager) IngestAndPrepare(ctx context.Context, item Timelineable, timelineAccountID string) (bool, error) {
-	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
-	if err != nil {
-		return false, err
-	}
-
-	return t.IndexAndPrepareOne(ctx, item.GetID(), item.GetBoostOfID(), item.GetAccountID(), item.GetBoostOfAccountID())
+func (m *manager) IngestAndPrepare(ctx context.Context, item Timelineable, accountID string) (bool, error) {
+	return m.getOrCreateTimeline(ctx, accountID).IndexAndPrepareOne(
+		ctx,
+		item.GetID(),
+		item.GetBoostOfID(),
+		item.GetAccountID(),
+		item.GetBoostOfAccountID(),
+	)
 }
 
-func (m *manager) Remove(ctx context.Context, timelineAccountID string, itemID string) (int, error) {
-	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
-	if err != nil {
-		return 0, err
-	}
-
-	return t.Remove(ctx, itemID)
+func (m *manager) Remove(ctx context.Context, accountID string, itemID string) (int, error) {
+	return m.getOrCreateTimeline(ctx, accountID).Remove(ctx, itemID)
 }
 
-func (m *manager) GetTimeline(ctx context.Context, timelineAccountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]Preparable, error) {
-	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
-	if err != nil {
-		return nil, err
-	}
-
-	items, err := t.Get(ctx, limit, maxID, sinceID, minID, true)
-	if err != nil {
-		log.WithContext(ctx).WithField("timelineAccountID", timelineAccountID).Errorf("error getting statuses: %s", err)aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-	}
-
-	return items, nil
+func (m *manager) GetTimeline(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]Preparable, error) {
+	return m.getOrCreateTimeline(ctx, accountID).Get(ctx, limit, maxID, sinceID, minID, true)
 }
 
-func (m *manager) GetIndexedLength(ctx context.Context, timelineAccountID string) int {
-	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
-	if err != nil {
-		return 0
-	}
-
-	return t.ItemIndexLength(ctx)
+func (m *manager) GetIndexedLength(ctx context.Context, accountID string) int {
+	return m.getOrCreateTimeline(ctx, accountID).ItemIndexLength(ctx)
 }
 
-func (m *manager) GetOldestIndexedID(ctx context.Context, timelineAccountID string) (string, error) {
-	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
-	if err != nil {
-		return "", err
-	}
-
-	return t.OldestIndexedItemID(ctx)
+func (m *manager) GetOldestIndexedID(ctx context.Context, accountID string) (string, error) {
+	return m.getOrCreateTimeline(ctx, accountID).OldestIndexedItemID(ctx)
 }
 
-func (m *manager) PrepareXFromTop(ctx context.Context, timelineAccountID string, limit int) error {
-	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
-	if err != nil {
-		return err
-	}
-
-	return t.PrepareFromTop(ctx, limit)
+func (m *manager) PrepareXFromTop(ctx context.Context, accountID string, limit int) error {
+	return m.getOrCreateTimeline(ctx, accountID).PrepareFromTop(ctx, limit)
 }
 
 func (m *manager) WipeItemFromAllTimelines(ctx context.Context, statusID string) error {
 	errors := gtserror.MultiError{}
 
-	m.accountTimelines.Range(func(k interface{}, i interface{}) bool {
-		t, ok := i.(Timeline)
+	m.accountTimelines.Range(func(_ any, v any) bool {
+		timeline, ok := v.(Timeline)
 		if !ok {
-			panic("couldn't parse entry as Timeline, this should never happen so panic")
+			log.Panic(ctx, "couldn't parse timeline manager sync map value as Timeline, this should never happen so panic")
 		}
 
-		if _, err := t.Remove(ctx, statusID); err != nil {
+		if _, err := timeline.Remove(ctx, statusID); err != nil {
 			errors.Append(err)
 		}
 
@@ -224,31 +220,29 @@ func (m *manager) WipeItemFromAllTimelines(ctx context.Context, statusID string)
 }
 
 func (m *manager) WipeItemsFromAccountID(ctx context.Context, timelineAccountID string, accountID string) error {
-	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
-	if err != nil {
-		return err
-	}
-
-	_, err = t.RemoveAllBy(ctx, accountID)
+	_, err := m.getOrCreateTimeline(ctx, timelineAccountID).RemoveAllBy(ctx, accountID)
 	return err
 }
 
-func (m *manager) getOrCreateTimeline(ctx context.Context, timelineAccountID string) (Timeline, error) {
-	var t Timeline
-	i, ok := m.accountTimelines.Load(timelineAccountID)
-	if !ok {
-		var err error
-		t, err = NewTimeline(ctx, timelineAccountID, m.grabFunction, m.filterFunction, m.prepareFunction, m.skipInsertFunction)
-		if err != nil {
-			return nil, err
-		}
-		m.accountTimelines.Store(timelineAccountID, t)
-	} else {
-		t, ok = i.(Timeline)
+// getOrCreateTimeline returns a timeline for the given
+// accountID. If a timeline does not yet exist in the
+// manager's sync.Map, it will be created and stored.
+func (m *manager) getOrCreateTimeline(ctx context.Context, accountID string) Timeline {
+	i, ok := m.accountTimelines.Load(accountID)
+	if ok {
+		// Timeline already existed in sync.Map.
+		timeline, ok := i.(Timeline)
 		if !ok {
-			panic("couldn't parse entry as Timeline, this should never happen so panic")
+			log.Panic(ctx, "couldn't parse timeline manager sync map value as Timeline, this should never happen so panic")
 		}
+
+		return timeline
 	}
 
-	return t, nil
+	// Timeline did not yet exist in sync.Map.
+	// Create + store it.
+	timeline := NewTimeline(ctx, accountID, m.grabFunction, m.filterFunction, m.prepareFunction, m.skipInsertFunction)
+	m.accountTimelines.Store(accountID, timeline)
+	
+	return timeline
 }

@@ -47,70 +47,78 @@ func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID st
 		}...)
 	l.Trace("entering get and updating t.lastGot")
 
-	// regardless of what happens below, update the
-	// last time Get was called for this timeline
+	// Regardless of what happens below, update the
+	// last time Get was called for this timeline.
 	t.Lock()
 	t.lastGot = time.Now()
-	t.Unlock()aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+	t.Unlock()
 
-	var items []Preparable
-	var err error
+	var (
+		items []Preparable
+		err   error
+	)
 
-	// no params are defined to just fetch from the top
-	// this is equivalent to a user asking for the top x items from their timeline
-	if maxID == "" && sinceID == "" && minID == "" {
+	switch {
+	case maxID == "" && sinceID == "" && minID == "":
+		// No params are defined so just fetch from the top.
+		// This is equivalent to a user starting to view
+		// their timeline from newest -> older posts.
 		items, err = t.getXFromTop(ctx, amount)
-		// aysnchronously prepare the next predicted query so it's ready when the user asks for it
-		if len(items) != 0 {
-			nextMaxID := items[len(items)-1].GetID()
-			if prepareNext {
-				// already cache the next query to speed up scrolling
-				go func() {
-					// use context.Background() because we don't want the query to abort when the request finishes
-					if err := t.prepareNextQuery(context.Background(), amount, nextMaxID, "", ""); err != nil {
-						l.Errorf("error preparing next query: %s", err)
-					}
-				}()
-			}
-		}
-	}
 
-	// maxID is defined but sinceID isn't so take from behind
-	// this is equivalent to a user asking for the next x items from their timeline, starting from maxID
-	if maxID != "" && sinceID == "" {
+		// Cache expected next query to speed up scrolling.
+		// We use context.Background() because we don't want
+		// this to break when the current request finishes.
+		if prepareNext && err == nil && len(items) != 0 {
+			nextMaxID := items[len(items)-1].GetID()
+			go func() {
+				if err := t.prepareNextQuery(context.Background(), amount, nextMaxID, "", ""); err != nil {
+					l.Errorf("error preparing next query: %s", err)
+				}
+			}()
+		}
+
+	case maxID != "" && sinceID == "" && minID == "":
+		// Only maxID is defined, so fetch from maxID onwards.
+		// This is equivalent to a user paging further down
+		// their timeline from newer -> older posts.
 		attempts := 0
 		items, err = t.getXBehindID(ctx, amount, maxID, &attempts)
-		// aysnchronously prepare the next predicted query so it's ready when the user asks for it
-		if len(items) != 0 {
+
+		// Cache expected next query to speed up scrolling.
+		// We use context.Background() because we don't want
+		// this to break when the current request finishes.
+		if prepareNext && err == nil && len(items) != 0 {
 			nextMaxID := items[len(items)-1].GetID()
-			if prepareNext {
-				// already cache the next query to speed up scrolling
-				go func() {
-					// use context.Background() because we don't want the query to abort when the request finishes
-					if err := t.prepareNextQuery(context.Background(), amount, nextMaxID, "", ""); err != nil {
-						l.Errorf("error preparing next query: %s", err)
-					}
-				}()
-			}
+			go func() {
+				if err := t.prepareNextQuery(context.Background(), amount, nextMaxID, "", ""); err != nil {
+					l.Errorf("error preparing next query: %s", err)
+				}
+			}()
 		}
-	}
 
-	// maxID is defined and sinceID || minID are as well, so take a slice between them
-	// this is equivalent to a user asking for items older than x but newer than y
-	if maxID != "" && sinceID != "" {
+	// In the next cases, maxID is defined, and so are
+	// either sinceID or minID. This is equivalent to
+	// a user opening an in-progress timeline and asking
+	// for a slice of posts somewhere in the middle, or
+	// trying to "fill in the blanks" between two points.
+	case maxID != "" && sinceID != "":
+		minID = sinceID
+		fallthrough
+	case maxID != "" && minID != "":
 		items, err = t.getXBetweenID(ctx, amount, maxID, minID)
-	}
-	if maxID != "" && minID != "" {
-		items, err = t.getXBetweenID(ctx, amount, maxID, minID)
-	}
 
-	// maxID isn't defined, but sinceID || minID are, so take x before
-	// this is equivalent to a user asking for items newer than x (eg., refreshing the top of their timeline)
-	if maxID == "" && sinceID != "" {
-		items, err = t.getXBeforeID(ctx, amount, sinceID, true)
-	}
-	if maxID == "" && minID != "" {
+	// In the final cases, maxID is not defined, but
+	// either sinceID or minID are. This is equivalent to
+	// a user "pulling up" at the top of their timeline
+	// to refresh it and check if newer posts have come in.
+	case maxID == "" && sinceID != "":
+		minID = sinceID
+		fallthrough
+	case maxID == "" && minID != "":
 		items, err = t.getXBeforeID(ctx, amount, minID, true)
+
+	default:
+		err = errors.New("Get: switch statement exhausted with no results")
 	}
 
 	return items, err
@@ -118,35 +126,38 @@ func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID st
 
 // getXFromTop returns x amount of items from the top of the timeline, from newest to oldest.
 func (t *timeline) getXFromTop(ctx context.Context, amount int) ([]Preparable, error) {
-	// make a slice of preparedItems with the length we need to return
-	preparedItems := make([]Preparable, 0, amount)
+	// Assume length we need to return.
+	items := make([]Preparable, 0, amount)
 
+	// Lazily init prepared items.
 	if t.preparedItems.data == nil {
 		t.preparedItems.data = &list.List{}
 	}
 
-	// make sure we have enough items prepared to return
+	// Make sure we have enough items prepared to return.
 	if t.preparedItems.data.Len() < amount {
 		if err := t.PrepareFromTop(ctx, amount); err != nil {
 			return nil, err
 		}
 	}
 
-	// work through the prepared items from the top and return
+	// Return prepared items from the top.
 	var served int
 	for e := t.preparedItems.data.Front(); e != nil; e = e.Next() {
 		entry, ok := e.Value.(*preparedItemsEntry)
 		if !ok {
-			return nil, errors.New("getXFromTop: could not parse e as a preparedItemsEntry")
+			log.Panic(ctx, "could not parse e as a preparedItemsEntry")
 		}
-		preparedItems = append(preparedItems, entry.prepared)
+
+		items = append(items, entry.prepared)
+
 		served++
 		if served >= amount {
 			break
 		}
 	}
 
-	return preparedItems, nil
+	return items, nil
 }
 
 // getXBehindID returns x amount of items from the given id onwards, from newest to oldest.
@@ -154,7 +165,8 @@ func (t *timeline) getXFromTop(ctx context.Context, amount int) ([]Preparable, e
 //
 // This corresponds to an api call to /timelines/home?max_id=WHATEVER
 func (t *timeline) getXBehindID(ctx context.Context, amount int, behindID string, attempts *int) ([]Preparable, error) {
-	l := log.WithContext(ctx).
+	l := log.
+		WithContext(ctx).
 		WithFields(kv.Fields{
 			{"amount", amount},
 			{"behindID", behindID},
@@ -165,79 +177,96 @@ func (t *timeline) getXBehindID(ctx context.Context, amount int, behindID string
 	newAttempts++
 	attempts = &newAttempts
 
-	// make a slice of items with the length we need to return
+	// Assume length we need to return.
 	items := make([]Preparable, 0, amount)
 
+	// Lazily init prepared items.
 	if t.preparedItems.data == nil {
 		t.preparedItems.data = &list.List{}
 	}
 
-	// iterate through the modified list until we hit the mark we're looking for
-	var position int
-	var behindIDMark *list.Element
+	var (
+		behindIDMark *list.Element
+		markPosition int
+	)
 
-findMarkLoop:
+	// Iterate through the list from the top, until
+	// we reach the mark we're looking for. It doesn't
+	// have to be precisely equal to behindID, because
+	// behindID might have been deleted or something;
+	// just get the nearest we can.
 	for e := t.preparedItems.data.Front(); e != nil; e = e.Next() {
-		position++
+		markPosition++
+
 		entry, ok := e.Value.(*preparedItemsEntry)
 		if !ok {
-			return nil, errors.New("getXBehindID: could not parse e as a preparedPostsEntry")
+			l.Panic(ctx, "could not parse e as a preparedItemsEntry")
 		}
 
 		if entry.itemID <= behindID {
 			l.Trace("found behindID mark")
 			behindIDMark = e
-			break findMarkLoop
+			break
 		}
 	}
 
-	// we didn't find it, so we need to make sure it's indexed and prepared and then try again
-	// this can happen when a user asks for really old items
 	if behindIDMark == nil {
+		// We looked through the whole list, but we didn't
+		// find the mark yet, so we need to make sure it's
+		// indexed and prepared and then try again.
+		//
+		// This can happen when a user asks for really old
+		// items that are no longer prepared because they've
+		// been cleaned up.
 		if err := t.prepareBehind(ctx, behindID, amount); err != nil {
 			return nil, fmt.Errorf("getXBehindID: error preparing behind and including ID %s", behindID)
 		}
+
 		oldestID, err := t.oldestPreparedItemID(ctx)
 		if err != nil {
 			return nil, err
 		}
+
 		if oldestID == "" {
 			l.Tracef("oldestID is empty so we can't return behindID %s", behindID)
 			return items, nil
 		}
+
 		if oldestID == behindID {
 			l.Tracef("given behindID %s is the same as oldestID %s so there's nothing to return behind it", behindID, oldestID)
 			return items, nil
 		}
+
 		if *attempts > retries {
 			l.Tracef("exceeded retries looking for behindID %s", behindID)
 			return items, nil
 		}
+
 		l.Trace("trying getXBehindID again")
 		return t.getXBehindID(ctx, amount, behindID, attempts)
 	}
 
-	// make sure we have enough items prepared behind it to return what we're being asked for
-	if t.preparedItems.data.Len() < amount+position {
+	// Try to make sure we have enough items prepared
+	// *behind* the mark to return requested amount.
+	if t.preparedItems.data.Len() < amount+markPosition {
 		if err := t.prepareBehind(ctx, behindID, amount); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("getXBehindID: error preparing behind and including ID %s", behindID)
 		}
 	}
 
-	// start serving from the entry right after the mark
+	// Return prepared items *from behindIDMark onwards*.
 	var served int
-serveloop:
 	for e := behindIDMark.Next(); e != nil; e = e.Next() {
 		entry, ok := e.Value.(*preparedItemsEntry)
 		if !ok {
-			return nil, errors.New("getXBehindID: could not parse e as a preparedPostsEntry")
+			log.Panic(ctx, "could not parse e as a preparedItemsEntry")
 		}
 
-		// serve up to the amount requested
 		items = append(items, entry.prepared)
+
 		served++
 		if served >= amount {
-			break serveloop
+			break
 		}
 	}
 
@@ -249,7 +278,7 @@ serveloop:
 //
 // This corresponds to an api call to /timelines/home?since_id=WHATEVER
 func (t *timeline) getXBeforeID(ctx context.Context, amount int, beforeID string, startFromTop bool) ([]Preparable, error) {
-	// make a slice of items with the length we need to return
+	aaaaaaaaaa// make a slice of items with the length we need to return
 	items := make([]Preparable, 0, amount)
 
 	if t.preparedItems.data == nil {

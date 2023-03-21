@@ -52,7 +52,7 @@ func (suite *IndexTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db, nil)
 
 	// let's take local_account_1 as the timeline owner, and start with an empty timeline
-	tl, err := timeline.NewTimeline(
+	suite.timeline = timeline.NewTimeline(
 		context.Background(),
 		suite.testAccounts["local_account_1"].ID,
 		processing.StatusGrabFunction(suite.db),
@@ -60,10 +60,6 @@ func (suite *IndexTestSuite) SetupTest() {
 		processing.StatusPrepareFunction(suite.db, suite.tc),
 		processing.StatusSkipInsertFunction(),
 	)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-	suite.timeline = tl
 }
 
 func (suite *IndexTestSuite) TearDownTest() {

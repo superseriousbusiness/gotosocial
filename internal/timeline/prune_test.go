@@ -52,7 +52,7 @@ func (suite *PruneTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db, nil)
 
 	// let's take local_account_1 as the timeline owner
-	tl, err := timeline.NewTimeline(
+	tl := timeline.NewTimeline(
 		context.Background(),
 		suite.testAccounts["local_account_1"].ID,
 		processing.StatusGrabFunction(suite.db),
@@ -60,9 +60,6 @@ func (suite *PruneTestSuite) SetupTest() {
 		processing.StatusPrepareFunction(suite.db, suite.tc),
 		processing.StatusSkipInsertFunction(),
 	)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
 
 	// put the status IDs in a determinate order since we can't trust a map to keep its order
 	statuses := []*gtsmodel.Status{}

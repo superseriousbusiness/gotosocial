@@ -96,7 +96,9 @@ type Timeline interface {
 		INFO FUNCTIONS
 	*/
 
-	// ActualPostIndexLength returns the actual length of the item index at this point in time.
+	// AccountID returns the id of the account this timeline belongs to.
+	AccountID() string
+	// ItemIndexLength returns the length of the item index at this point in time.
 	ItemIndexLength(ctx context.Context) int
 	// OldestIndexedItemID returns the id of the rearmost (ie., the oldest) indexed item, or an error if something goes wrong.
 	// If nothing goes wrong but there's no oldest item, an empty string will be returned so make sure to check for this.
@@ -140,6 +142,10 @@ type timeline struct {
 	sync.Mutex
 }
 
+func (t *timeline) AccountID() string {
+	return t.accountID
+}
+
 // NewTimeline returns a new Timeline for the given account ID
 func NewTimeline(
 	ctx context.Context,
@@ -148,7 +154,7 @@ func NewTimeline(
 	filterFunction FilterFunction,
 	prepareFunction PrepareFunction,
 	skipInsertFunction SkipInsertFunction,
-) (Timeline, error) {
+) Timeline {
 	return &timeline{
 		indexedItems: &indexedItems{
 			skipInsert: skipInsertFunction,
@@ -161,5 +167,5 @@ func NewTimeline(
 		prepareFunction: prepareFunction,
 		accountID:       timelineAccountID,
 		lastGot:         time.Time{},
-	}, nil
+	}
 }

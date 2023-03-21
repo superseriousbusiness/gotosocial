@@ -21,11 +21,6 @@ import (
 	"container/list"
 )
 
-const (
-	defaultDesiredIndexedItemsLength  = 400
-	defaultDesiredPreparedItemsLength = 50
-)
-
 func (t *timeline) Prune(desiredPreparedItemsLength int, desiredIndexedItemsLength int) int {
 	t.Lock()
 	defer t.Unlock()
