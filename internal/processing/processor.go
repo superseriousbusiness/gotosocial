@@ -139,22 +139,24 @@ func NewProcessor(
 }
 
 func (p *Processor) EnqueueClientAPI(ctx context.Context, msgs ...messages.FromClientAPI) {
-	log.Trace(ctx, "enqueuing client API")
+	log.Trace(ctx, "enqueuing")
 	_ = p.state.Workers.ClientAPI.MustEnqueueCtx(ctx, func(ctx context.Context) {
 		for _, msg := range msgs {
+			log.Trace(ctx, "processing: %+v", msg)
 			if err := p.ProcessFromClientAPI(ctx, msg); err != nil {
-				log.WithContext(ctx).WithField("msg", msg).Errorf("error processing client API message: %v", err)
+				log.Errorf(ctx, "error processing client API message: %v", err)
 			}
 		}
 	})
 }
 
 func (p *Processor) EnqueueFederator(ctx context.Context, msgs ...messages.FromFederator) {
-	log.Trace(ctx, "enqueuing federator")
+	log.Trace(ctx, "enqueuing")
 	_ = p.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
 		for _, msg := range msgs {
+			log.Trace(ctx, "processing: %+v", msg)
 			if err := p.ProcessFromFederator(ctx, msg); err != nil {
-				log.WithContext(ctx).WithField("msg", msg).Errorf("error processing federator message: %v", err)
+				log.Errorf(ctx, "error processing federator message: %v", err)
 			}
 		}
 	})

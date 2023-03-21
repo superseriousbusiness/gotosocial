@@ -168,122 +168,101 @@ func (r *relationshipDB) PutFollowRequest(ctx context.Context, follow *gtsmodel.
 }
 
 func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, sourceAccountID string, targetAccountID string) (*gtsmodel.Follow, db.Error) {
-	var follow *gtsmodel.Follow
-
-	if err := r.conn.RunInTx(ctx, func(tx bun.Tx) error {
-		followReq := new(gtsmodel.FollowRequest)
-
-		// get original follow request
-		if err := tx.
-			NewSelect().
-			Model(followReq).
-			Where("? = ?", bun.Ident("follow_request.account_id"), sourceAccountID).
-			Where("? = ?", bun.Ident("follow_request.target_account_id"), targetAccountID).
-			Scan(ctx); err != nil {
-			return err
-		}
-
-		// create a new follow to 'replace' the request with
-		follow = &gtsmodel.Follow{
-			ID:              followReq.ID,
-			AccountID:       sourceAccountID,
-			TargetAccountID: targetAccountID,
-			URI:             followReq.URI,
-		}
-
-		// if the follow already exists, just update the URI -- we don't need to do anything else
-		if _, err := tx.
-			NewInsert().
-			Model(follow).
-			On("CONFLICT (?,?) DO UPDATE set ? = ?", bun.Ident("account_id"), bun.Ident("target_account_id"), bun.Ident("uri"), follow.URI).
-			Exec(ctx); err != nil {
-			return err
-		}
-
-		// now remove the follow request
-		if _, err := tx.
-			NewDelete().
-			TableExpr("? AS ?", bun.Ident("follow_requests"), bun.Ident("follow_request")).
-			Where("? = ?", bun.Ident("follow_request.id"), followReq.ID).
-			Exec(ctx); err != nil {
-			return err
-		}
-
-		return nil
-	}); err != nil {
-		// already processed
+	// Get original follow request.
+	followReq, err := r.GetFollowRequest(ctx, sourceAccountID, targetAccountID)
+	if err != nil {
 		return nil, err
 	}
 
-	// Invalidate follow request from cache lookups (uses same ID as follow).
-	r.state.Caches.GTS.FollowRequest().Invalidate("ID", follow.ID)
+	// Create a new follow to 'replace'
+	// the original follow request with.
+	follow := &gtsmodel.Follow{
+		ID:              followReq.ID,
+		AccountID:       sourceAccountID,
+		Account:         followReq.Account,
+		TargetAccountID: targetAccountID,
+		TargetAccount:   followReq.TargetAccount,
+		URI:             followReq.URI,
+	}
 
-	return follow, nil
-}
+	// If the follow already exists, just
+	// replace the URI with the new one.
+	if _, err := r.conn.
+		NewInsert().
+		Model(follow).
+		On("CONFLICT (?,?) DO UPDATE set ? = ?", bun.Ident("account_id"), bun.Ident("target_account_id"), bun.Ident("uri"), follow.URI).
+		Exec(ctx); err != nil {
+		return nil, r.conn.ProcessError(err)
+	}
 
-func (r *relationshipDB) RejectFollowRequest(ctx context.Context, sourceAccountID string, targetAccountID string) db.Error {
-	var followReq *gtsmodel.FollowRequest
-
-	if err := r.conn.RunInTx(ctx, func(tx bun.Tx) error {
-		followReq = new(gtsmodel.FollowRequest)
-
-		// get original follow request
-		if err := tx.
-			NewSelect().
-			Model(followReq).
-			Where("? = ?", bun.Ident("follow_request.account_id"), sourceAccountID).
-			Where("? = ?", bun.Ident("follow_request.target_account_id"), targetAccountID).
-			Scan(ctx); err != nil {
-			return err
-		}
-
-		// now delete it from the database by ID
-		if _, err := tx.
-			NewDelete().
-			TableExpr("? AS ?", bun.Ident("follow_requests"), bun.Ident("follow_request")).
-			Where("? = ?", bun.Ident("follow_request.id"), followReq.ID).
-			Exec(ctx); err != nil {
-			return err
-		}
-
-		return nil
-	}); err != nil {
-		// already processed
-		return err
+	// Delete original follow request.
+	if _, err := r.conn.
+		NewDelete().
+		Table("follow_requests").
+		Where("? = ?", bun.Ident("id"), followReq.ID).
+		Exec(ctx); err != nil {
+		return nil, r.conn.ProcessError(err)
 	}
 
 	// Invalidate follow request from cache lookups.
 	r.state.Caches.GTS.FollowRequest().Invalidate("ID", followReq.ID)
 
-	return nil
+	// Delete original follow request notification
+	if err := r.state.DB.DeleteNotifications(ctx, []string{
+		string(gtsmodel.NotificationFollowRequest),
+	}, targetAccountID, sourceAccountID); err != nil {
+		return nil, err
+	}
+
+	return follow, nil
 }
 
-func (r *relationshipDB) DeleteFollowRequestByID(ctx context.Context, id string) error {
-	follow, err := r.GetFollowRequestByID(gtscontext.SetBarebones(ctx), id)
+func (r *relationshipDB) RejectFollowRequest(ctx context.Context, sourceAccountID string, targetAccountID string) db.Error {
+	// Get original follow request.
+	followReq, err := r.GetFollowRequest(ctx, sourceAccountID, targetAccountID)
 	if err != nil {
 		return err
 	}
-	return r.deleteFollowRequest(ctx, follow)
-}
 
-func (r *relationshipDB) DeleteFollowRequestByURI(ctx context.Context, uri string) error {
-	follow, err := r.GetFollowRequestByURI(gtscontext.SetBarebones(ctx), uri)
-	if err != nil {
-		return err
-	}
-	return r.deleteFollowRequest(ctx, follow)
-}
-
-func (r *relationshipDB) deleteFollowRequest(ctx context.Context, follow *gtsmodel.FollowRequest) error {
-	if _, err := r.conn.NewDelete().
+	// Delete original follow request.
+	if _, err := r.conn.
+		NewDelete().
 		Table("follow_requests").
-		Where("? = ?", bun.Ident("id"), follow.ID).
+		Where("? = ?", bun.Ident("id"), followReq.ID).
 		Exec(ctx); err != nil {
 		return r.conn.ProcessError(err)
 	}
 
-	// Invalidate follow from cache lookups.
-	r.state.Caches.GTS.Follow().Invalidate("ID", follow.ID)
+	// Delete original follow request notification
+	return r.state.DB.DeleteNotifications(ctx, []string{
+		string(gtsmodel.NotificationFollowRequest),
+	}, targetAccountID, sourceAccountID)
+}
+
+func (r *relationshipDB) DeleteFollowRequestByID(ctx context.Context, id string) error {
+	if _, err := r.conn.NewDelete().
+		Table("follow_requests").
+		Where("? = ?", bun.Ident("id"), id).
+		Exec(ctx); err != nil {
+		return r.conn.ProcessError(err)
+	}
+
+	// Invalidate follow request from cache lookups.
+	r.state.Caches.GTS.FollowRequest().Invalidate("ID", id)
+
+	return nil
+}
+
+func (r *relationshipDB) DeleteFollowRequestByURI(ctx context.Context, uri string) error {
+	if _, err := r.conn.NewDelete().
+		Table("follow_requests").
+		Where("? = ?", bun.Ident("uri"), uri).
+		Exec(ctx); err != nil {
+		return r.conn.ProcessError(err)
+	}
+
+	// Invalidate follow request from cache lookups.
+	r.state.Caches.GTS.FollowRequest().Invalidate("URI", uri)
 
 	return nil
 }

@@ -162,7 +162,7 @@ func (p *Processor) deleteAccountFollows(ctx context.Context, account *gtsmodel.
 	}
 
 	// Delete follow requests targeting this account.
-	followRequestedBy, err := p.state.DB.GetAccountFollowerRequests(ctx, account.ID)
+	followRequestedBy, err := p.state.DB.GetAccountFollowRequests(ctx, account.ID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return fmt.Errorf("deleteAccountFollows: db error getting follow requests targeting account %s: %w", account.ID, err)
 	}
@@ -201,7 +201,7 @@ func (p *Processor) deleteAccountFollows(ctx context.Context, account *gtsmodel.
 	}
 
 	// Delete follow requests originating from this account.
-	followRequesting, err := p.state.DB.GetAccountFollowRequests(ctx, account.ID)
+	followRequesting, err := p.state.DB.GetAccountFollowRequesting(ctx, account.ID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return fmt.Errorf("deleteAccountFollows: db error getting follow requests owned by account %s: %w", account.ID, err)
 	}
@@ -365,13 +365,13 @@ statusLoop:
 }
 
 func (p *Processor) deleteAccountNotifications(ctx context.Context, account *gtsmodel.Account) error {
-	// Delete all notifications targeting given account.
-	if err := p.state.DB.DeleteNotifications(ctx, account.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	// Delete all notifications of all types targeting given account.
+	if err := p.state.DB.DeleteNotifications(ctx, nil, account.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
-	// Delete all notifications originating from given account.
-	if err := p.state.DB.DeleteNotifications(ctx, "", account.ID); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	// Delete all notifications of all types originating from given account.
+	if err := p.state.DB.DeleteNotifications(ctx, nil, "", account.ID); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 

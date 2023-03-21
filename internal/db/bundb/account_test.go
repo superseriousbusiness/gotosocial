@@ -89,15 +89,19 @@ func (suite *AccountTestSuite) TestGetAccountBy() {
 		a1.UpdatedAt = time.Time{}
 		a2.UpdatedAt = time.Time{}
 
-		// Make sure to use proper
-		// public key .Equals() func.
-		p1 := a1.PublicKey
-		p2 := a2.PublicKey
+		// Manually compare keys.
+		pk1 := a1.PublicKey
+		pv1 := a1.PrivateKey
+		pk2 := a2.PublicKey
+		pv2 := a2.PrivateKey
 		a1.PublicKey = nil
+		a1.PrivateKey = nil
 		a2.PublicKey = nil
+		a2.PrivateKey = nil
 
 		return reflect.DeepEqual(a1, a2) &&
-			p1.Equal(p2)
+			((pk1 == nil && pk2 == nil) || pk1.Equal(pk2)) &&
+			((pv1 == nil && pv2 == nil) || pv1.Equal(pv2))
 	}
 
 	for _, account := range suite.testAccounts {

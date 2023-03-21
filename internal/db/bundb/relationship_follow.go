@@ -190,31 +190,29 @@ func (r *relationshipDB) PutFollow(ctx context.Context, follow *gtsmodel.Follow)
 }
 
 func (r *relationshipDB) DeleteFollowByID(ctx context.Context, id string) error {
-	follow, err := r.GetFollowByID(gtscontext.SetBarebones(ctx), id)
-	if err != nil {
-		return err
-	}
-	return r.deleteFollow(ctx, follow)
-}
-
-func (r *relationshipDB) DeleteFollowByURI(ctx context.Context, uri string) error {
-	follow, err := r.GetFollowByURI(gtscontext.SetBarebones(ctx), uri)
-	if err != nil {
-		return err
-	}
-	return r.deleteFollow(ctx, follow)
-}
-
-func (r *relationshipDB) deleteFollow(ctx context.Context, follow *gtsmodel.Follow) error {
 	if _, err := r.conn.NewDelete().
 		Table("follows").
-		Where("? = ?", bun.Ident("id"), follow.ID).
+		Where("? = ?", bun.Ident("id"), id).
 		Exec(ctx); err != nil {
 		return r.conn.ProcessError(err)
 	}
 
 	// Invalidate follow from cache lookups.
-	r.state.Caches.GTS.Follow().Invalidate("ID", follow.ID)
+	r.state.Caches.GTS.Follow().Invalidate("ID", id)
+
+	return nil
+}
+
+func (r *relationshipDB) DeleteFollowByURI(ctx context.Context, uri string) error {
+	if _, err := r.conn.NewDelete().
+		Table("follows").
+		Where("? = ?", bun.Ident("uri"), uri).
+		Exec(ctx); err != nil {
+		return r.conn.ProcessError(err)
+	}
+
+	// Invalidate follow from cache lookups.
+	r.state.Caches.GTS.Follow().Invalidate("URI", uri)
 
 	return nil
 }
