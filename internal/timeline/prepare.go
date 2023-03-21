@@ -148,7 +148,7 @@ prepareloop:
 		if preparing {
 			if err := t.prepare(ctx, entry.itemID); err != nil {
 				// there's been an error
-				if err != db.ErrNoEntries {
+				if !errors.Is(err, db.ErrNoEntries) {
 					// it's a real error
 					return fmt.Errorf("prepareBehind: error preparing item with id %s: %s", entry.itemID, err)
 				}

@@ -20,11 +20,11 @@ package timeline
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
 	"codeberg.org/gruf/go-kv"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
@@ -133,57 +133,33 @@ func (m *manager) Stop() error {
 }
 
 func (m *manager) Ingest(ctx context.Context, item Timelineable, timelineAccountID string) (bool, error) {
-	l := log.WithContext(ctx).
-		WithFields(kv.Fields{
-			{"timelineAccountID", timelineAccountID},
-			{"itemID", item.GetID()},
-		}...)
-
 	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
 	if err != nil {
 		return false, err
 	}
 
-	l.Trace("ingesting item")
 	return t.IndexOne(ctx, item.GetID(), item.GetBoostOfID(), item.GetAccountID(), item.GetBoostOfAccountID())
 }
 
 func (m *manager) IngestAndPrepare(ctx context.Context, item Timelineable, timelineAccountID string) (bool, error) {
-	l := log.WithContext(ctx).
-		WithFields(kv.Fields{
-			{"timelineAccountID", timelineAccountID},
-			{"itemID", item.GetID()},
-		}...)
-
 	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
 	if err != nil {
 		return false, err
 	}
 
-	l.Trace("ingesting item")
 	return t.IndexAndPrepareOne(ctx, item.GetID(), item.GetBoostOfID(), item.GetAccountID(), item.GetBoostOfAccountID())
 }
 
 func (m *manager) Remove(ctx context.Context, timelineAccountID string, itemID string) (int, error) {
-	l := log.WithContext(ctx).
-		WithFields(kv.Fields{
-			{"timelineAccountID", timelineAccountID},
-			{"itemID", itemID},
-		}...)
-
 	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
 	if err != nil {
 		return 0, err
 	}
 
-	l.Trace("removing item")
 	return t.Remove(ctx, itemID)
 }
 
 func (m *manager) GetTimeline(ctx context.Context, timelineAccountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]Preparable, error) {
-	l := log.WithContext(ctx).
-		WithFields(kv.Fields{{"timelineAccountID", timelineAccountID}}...)
-
 	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
 	if err != nil {
 		return nil, err
@@ -191,8 +167,9 @@ func (m *manager) GetTimeline(ctx context.Context, timelineAccountID string, max
 
 	items, err := t.Get(ctx, limit, maxID, sinceID, minID, true)
 	if err != nil {
-		l.Errorf("error getting statuses: %s", err)
+		log.WithContext(ctx).WithField("timelineAccountID", timelineAccountID).Errorf("error getting statuses: %s", err)aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 	}
+
 	return items, nil
 }
 
@@ -224,7 +201,8 @@ func (m *manager) PrepareXFromTop(ctx context.Context, timelineAccountID string,
 }
 
 func (m *manager) WipeItemFromAllTimelines(ctx context.Context, statusID string) error {
-	errors := []string{}
+	errors := gtserror.MultiError{}
+
 	m.accountTimelines.Range(func(k interface{}, i interface{}) bool {
 		t, ok := i.(Timeline)
 		if !ok {
@@ -232,18 +210,17 @@ func (m *manager) WipeItemFromAllTimelines(ctx context.Context, statusID string)
 		}
 
 		if _, err := t.Remove(ctx, statusID); err != nil {
-			errors = append(errors, err.Error())
+			errors.Append(err)
 		}
 
 		return true
 	})
 
-	var err error
 	if len(errors) > 0 {
-		err = fmt.Errorf("one or more errors removing status %s from all timelines: %s", statusID, strings.Join(errors, ";"))
+		return fmt.Errorf("WipeItemFromAllTimelines: one or more errors wiping status %s: %w", statusID, errors.Combine())
 	}
 
-	return err
+	return nil
 }
 
 func (m *manager) WipeItemsFromAccountID(ctx context.Context, timelineAccountID string, accountID string) error {

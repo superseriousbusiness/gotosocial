@@ -51,7 +51,7 @@ func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID st
 	// last time Get was called for this timeline
 	t.Lock()
 	t.lastGot = time.Now()
-	t.Unlock()
+	t.Unlock()aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
 	var items []Preparable
 	var err error
