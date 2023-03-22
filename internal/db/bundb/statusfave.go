@@ -161,7 +161,7 @@ func (s *statusFaveDB) DeleteStatusFaveByID(ctx context.Context, id string) db.E
 		Table("status_faves").
 		Where("? = ?", bun.Ident("id"), id).
 		Exec(ctx); err != nil {
-		s.conn.ProcessError(err)
+		return s.conn.ProcessError(err)
 	}
 
 	s.state.Caches.GTS.StatusFave().Invalidate("ID", id)
