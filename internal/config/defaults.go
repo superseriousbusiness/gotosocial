@@ -139,15 +139,15 @@ var Defaults = Configuration{
 			EmojiCategoryTTL:       time.Minute * 30,
 			EmojiCategorySweepFreq: time.Minute,
 
-			FollowMaxSize:   500,
+			FollowMaxSize:   2000,
 			FollowTTL:       time.Minute * 30,
 			FollowSweepFreq: time.Minute,
 
-			FollowRequestMaxSize:   500,
+			FollowRequestMaxSize:   2000,
 			FollowRequestTTL:       time.Minute * 30,
 			FollowRequestSweepFreq: time.Minute,
 
-			MediaMaxSize:   2000,
+			MediaMaxSize:   1000,
 			MediaTTL:       time.Minute * 30,
 			MediaSweepFreq: time.Minute,
 

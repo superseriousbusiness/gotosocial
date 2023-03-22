@@ -235,6 +235,7 @@ cache:
   # max-size   = maximum cached objects count
   # ttl        = cached object lifetime
   # sweep-freq = frequency to look for stale cache objects
+  #              (zero will disable cache sweeping)
 
   #############################
   #### VISIBILITY CACHES ######
@@ -255,69 +256,69 @@ cache:
     # Configure GTS database
     # model caches.
 
-    account-max-size: 500
-    account-ttl: "5m"
-    account-sweep-freq: "30s"
+    account-max-size: 2000
+    account-ttl: "30m"
+    account-sweep-freq: "1m"
 
     block-max-size: 100
-    block-ttl: "5m"
-    block-sweep-freq: "30s"
+    block-ttl: "30m"
+    block-sweep-freq: "1m"
 
-    domain-block-max-size: 1000
+    domain-block-max-size: 2000
     domain-block-ttl: "24h"
     domain-block-sweep-freq: "1m"
 
-    emoji-max-size: 500
-    emoji-ttl: "5m"
-    emoji-sweep-freq: "30s"
+    emoji-max-size: 2000
+    emoji-ttl: "30m"
+    emoji-sweep-freq: "1m"
 
     emoji-category-max-size: 100
-    emoji-category-ttl: "5m"
-    emoji-category-sweep-freq: "30s"
+    emoji-category-ttl: "30m"
+    emoji-category-sweep-freq: "1m"
 
-    follow-max-size: 500
-    follow-ttl: "5m"
-    follow-sweep-freq: "30s"
+    follow-max-size: 2000
+    follow-ttl: "30m"
+    follow-sweep-freq: "1m"
 
-    follow-request-max-size: 500
-    follow-request-ttl: "5m"
-    follow-request-sweep-freq: "30s"
+    follow-request-max-size: 2000
+    follow-request-ttl: "30m"
+    follow-request-sweep-freq: "1m"
 
-    media-max-size: 500
-    media-ttl: "5m"
-    media-sweep-freq: "30s"
+    media-max-size: 1000
+    media-ttl: "30m"
+    media-sweep-freq: "1m"
 
-    mention-max-size: 500
-    mention-ttl: "5m"
-    mention-sweep-freq: "30s"
+    mention-max-size: 2000
+    mention-ttl: "30m"
+    mention-sweep-freq: "1m"
 
-    notification-max-size: 500
-    notification-ttl: "5m"
-    notification-sweep-freq: "30s"
+    notification-max-size: 1000
+    notification-ttl: "30m"
+    notification-sweep-freq: "1m"
 
     report-max-size: 100
-    report-ttl: "5m"
-    report-sweep-freq: "30s"
+    report-ttl: "30m"
+    report-sweep-freq: "1m"
 
-    status-max-size: 500
-    status-ttl: "5m"
-    status-sweep-freq: "30s"
+    status-max-size: 2000
+    status-ttl: "30m"
+    status-sweep-freq: "1m"
 
-    status-fave-max-size: 500
-    status-fave-ttl: "5m"
-    status-fave-sweep-freq: "30s"
+    status-fave-max-size: 2000
+    status-fave-ttl: "30m"
+    status-fave-sweep-freq: "1m"
 
-    tombstone-max-size: 100
-    tombstone-ttl: "5m"
-    tombstone-sweep-freq: "30s"
+    tombstone-max-size: 500
+    tombstone-ttl: "30m"
+    tombstone-sweep-freq: "1m"
 
-    user-max-size: 100
-    user-ttl: "5m"
-    user-sweep-freq: "30s"
+    user-max-size: 500
+    user-ttl: "30m"
+    user-sweep-freq: "1m"
 
     webfinger-max-size": 250
     webfinger-ttl: "24h"
-    webfinger-sweep-freq": "15m"
+    webfinger-sweep-freq": "1m"
 
 ######################
 ##### WEB CONFIG #####
