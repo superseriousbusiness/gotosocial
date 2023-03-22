@@ -40,6 +40,7 @@ type GTSCaches struct {
 	notification  *result.Cache[*gtsmodel.Notification]
 	report        *result.Cache[*gtsmodel.Report]
 	status        *result.Cache[*gtsmodel.Status]
+	statusFave    *result.Cache[*gtsmodel.StatusFave]
 	tombstone     *result.Cache[*gtsmodel.Tombstone]
 	user          *result.Cache[*gtsmodel.User]
 	// TODO: move out of GTS caches since not using database models.
@@ -61,6 +62,7 @@ func (c *GTSCaches) Init() {
 	c.initNotification()
 	c.initReport()
 	c.initStatus()
+	c.initStatusFave()
 	c.initTombstone()
 	c.initUser()
 	c.initWebfinger()
@@ -169,6 +171,11 @@ func (c *GTSCaches) Report() *result.Cache[*gtsmodel.Report] {
 // Status provides access to the gtsmodel Status database cache.
 func (c *GTSCaches) Status() *result.Cache[*gtsmodel.Status] {
 	return c.status
+}
+
+// StatusFave provides access to the gtsmodel StatusFave database cache.
+func (c *GTSCaches) StatusFave() *result.Cache[*gtsmodel.StatusFave] {
+	return c.statusFave
 }
 
 // Tombstone provides access to the gtsmodel Tombstone database cache.
@@ -338,6 +345,19 @@ func (c *GTSCaches) initStatus() {
 		s2 := new(gtsmodel.Status)
 		*s2 = *s1
 		return s2
+	}, config.GetCacheGTSStatusMaxSize())
+	c.status.SetTTL(config.GetCacheGTSStatusTTL(), true)
+	c.status.IgnoreErrors(ignoreErrors)
+}
+
+func (c *GTSCaches) initStatusFave() {
+	c.statusFave = result.New([]result.Lookup{
+		{Name: "ID"},
+		{Name: "AccountID.StatusID"},
+	}, func(f1 *gtsmodel.StatusFave) *gtsmodel.StatusFave {
+		f2 := new(gtsmodel.StatusFave)
+		*f2 = *f1
+		return f2
 	}, config.GetCacheGTSStatusMaxSize())
 	c.status.SetTTL(config.GetCacheGTSStatusTTL(), true)
 	c.status.IgnoreErrors(ignoreErrors)
