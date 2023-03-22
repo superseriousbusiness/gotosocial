@@ -20,81 +20,130 @@
 "use strict";
 
 const React = require("react");
+const { nanoid } = require("nanoid");
 const { Redirect } = require("wouter");
 
-function createNavigation(rootUrl, creatorFunc) {
-	const Types = {
-		Category: parseType("Category"),
-		View: parseType("View")
+const { urlSafe } = require("./util");
+
+const {
+	Sidebar,
+	ViewRouter,
+	MenuComponent
+} = require("./components");
+
+function createNavigation(rootUrl, menus) {
+	const root = {
+		url: rootUrl
 	};
 
-	return recurseNodes(creatorFunc(Types), rootUrl);
+	const routing = {
+		view: {},
+		fallback: {}
+	};
+
+	const menuTree = menus.map((creatorFunc) =>
+		creatorFunc(root, routing)
+	);
+
+	return {
+		Sidebar: Sidebar(menuTree),
+		ViewRouter: ViewRouter(routing, root.redirectUrl)
+	};
 }
 
-function recurseNodes(nodes, url, { views = [], links = [], fallback = {}, permissions } = {}) {
-	nodes.forEach((node) => {
-		node.url = [url, node.url].join("/");
+function Menu(name, opts, items) {
+	if (items == undefined) { // opts argument is optional
+		items = opts;
+		opts = {};
+	}
 
-		if (permissions && permissions !== true) {
-			if (Array.isArray(node.permissions)) {
-				node.permissions = [...node.permissions, ...permissions];
-			} else {
-				node.permissions = [...permissions];
-			}
+	const menu = {
+		name,
+		key: nanoid(),
+		permissions: opts.permissions ?? true,
+		url: opts.url ?? urlSafe(name),
+		icon: opts.icon
+	};
+
+	return function _menu(root, routing) {
+		if (menu.url != "") {
+			menu.url = [root.url, menu.url].join("/");
+		} else {
+			menu.url = root.url;
 		}
 
-		if (node.type == "View") {
-			links.forEach((link) => {
-				link.push(node.url);
-			});
-			node.data = React.createElement(node.data, { baseUrl: node.url });
-			views.push(node);
-		} else if (node.type == "Category") {
-			node.links = [];
-
-			recurseNodes(node.data, node.url, {
-				views,
-				links: [node.links, ...links],
-				fallback,
-				permissions: node.permissions
-			});
-
-			fallback[node.url] = (
-				<Redirect to={node.defaultUrl ?? node.data[0].url} />
-			);
+		if (root?.permissions && root.permissions !== true) {
+			menu.permissions = root.permissions;
 		}
-	});
-	return { nodes, views, fallback };
+
+		menu.links = [];
+		menu.redirectUrl = menu.defaultUrl;
+		menu.level = (root.level ?? -1) + 1;
+
+		const contents = items.map((creatorFunc) => {
+			return creatorFunc(menu, routing);
+		});
+
+		if (root.links != undefined) {
+			root.links.push(...menu.links);
+		}
+
+		if (menu.redirectUrl != menu.url) {
+			routing.fallback[menu.url] = {
+				permissions: menu.permissions,
+				view: (
+					<Redirect to={menu.redirectUrl} />
+				)
+			};
+			menu.url = menu.redirectUrl;
+		}
+
+		if (root.redirectUrl == undefined) {
+			// first component in (sub)tree
+			root.redirectUrl = menu.url;
+		}
+
+		return React.createElement(MenuComponent, menu, contents);
+	};
 }
 
-function parseType(type) {
-	return (name, data, cfg) => {
-		if (type == "Category") {
-			if (cfg != undefined) {
-				// swap arguments if optional cfg is present
-				let _cfg = cfg;
-				cfg = data;
-				data = _cfg;
-			}
+function Item(name, view, opts) {
+	const item = {
+		name,
+		key: nanoid(),
+		permissions: opts.permissions ?? true,
+		url: opts.url ?? urlSafe(name),
+		icon: opts.icon
+	};
+
+	return function _Item(root, routing) {
+		if (item.url == "") {
+			item.url = root.url;
+		} else {
+			item.url = [root.url, item.url].join("/");
 		}
 
-		return {
-			type,
-			name,
-			url: [cfg?.url ?? urlSafe(name)],
-			permissions: cfg?.permissions ?? true,
-			defaultUrl: cfg?.defaultUrl,
-			icon: cfg?.icon,
-			data
+		if (root?.permissions && root.permissions !== true) {
+			item.permissions = root.permissions;
+		}
+
+		if (root.redirectUrl == undefined) {
+			// first component in (sub)tree
+			root.redirectUrl = item.url;
+		}
+
+		root.links.push(item.url);
+		routing.view[item.url] = {
+			permissions: item.permissions,
+			view: React.createElement(view, { baseUrl: item.url })
 		};
-	};
-}
 
-function urlSafe(str) {
-	return str.toLowerCase().replace(/[\s/]+/g, "-");
+		return React.createElement(MenuComponent, item);
+	};
 }
 
 module.exports = {
 	createNavigation,
-	useNavigation: require("./use-navigation.jsx")
+	Menu,
+	Item
 };

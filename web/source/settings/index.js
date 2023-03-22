@@ -23,76 +23,60 @@ const React = require("react");
 const ReactDom = require("react-dom/client");
 const { Provider } = require("react-redux");
 const { PersistGate } = require("redux-persist/integration/react");
-const { Switch, Route, Redirect } = require("wouter");
 
 const { store, persistor } = require("./redux");
-const { createNavigation, useNavigation } = require("./lib/navigation");
+const { createNavigation, Menu, Item } = require("./lib/navigation");
 
 const AuthorizationGate = require("./components/authorization");
 const Loading = require("./components/loading");
 const UserLogoutCard = require("./components/user-logout-card");
+const { RoleContext } = require("./lib/navigation/util");
 
 require("./style.css");
 
-const navigation = createNavigation("/settings", ({ Category, View }) => {
-	return [
-		Category("User", [
-			View("Profile", require("./user/profile"), { icon: "fa-user" }),
-			View("Settings", require("./user/settings"), { icon: "fa-cogs" }),
-		]),
-		Category("Moderation", {
-			url: "admin",
-			permissions: ["admin"]
-		}, [
-			View("Reports", require("./admin/reports"), { icon: "fa-flag" }),
-			View("Users", require("./admin/reports"), { icon: "fa-users" }),
-			Category("Federation", { icon: "fa-hubzilla" }, [
-				View("Federation", require("./admin/federation"), { icon: "fa-hubzilla", url: "" }),
-				View("Bulk Import/Export", require("./admin/federation/import-export"), { icon: "fa-floppy-o" }),
-			])
-		]),
-		Category("Administration", {
-			url: "admin",
-			defaultUrl: "/settings/admin/settings",
-			permissions: ["admin"]
-		}, [
-			View("Actions", require("./admin/actions"), { icon: "fa-bolt" }),
-			Category("Custom Emoji", { icon: "fa-smile-o" }, [
-				View("Local", require("./admin/emoji/local"), { icon: "fa-home" }),
-				View("Remote", require("./admin/emoji/remote"), { icon: "fa-cloud" })
-			]),
-			View("Settings", require("./admin/settings"), { icon: "fa-sliders" })
+const { Sidebar, ViewRouter } = createNavigation("/settings", [
+	Menu("User", [
+		Item("Profile", require("./user/profile"), { icon: "fa-user" }),
+		Item("Settings", require("./user/settings"), { icon: "fa-cogs" }),
+	]),
+	Menu("Moderation", {
+		url: "admin",
+		permissions: ["admin"]
+	}, [
+		Item("Reports", require("./admin/reports"), { icon: "fa-flag" }),
+		Item("Users", require("./admin/reports"), { icon: "fa-users" }),
+		Menu("Federation", { icon: "fa-hubzilla" }, [
+			Item("Federation", require("./admin/federation"), { icon: "fa-hubzilla", url: "" }),
+			Item("Import/Export", require("./admin/federation/import-export"), { icon: "fa-floppy-o" }),
 		])
-	];
-});
+	]),
+	Menu("Administration", {
+		url: "admin",
+		defaultUrl: "/settings/admin/settings",
+		permissions: ["admin"]
+	}, [
+		Item("Actions", require("./admin/actions"), { icon: "fa-bolt" }),
+		Menu("Custom Emoji", { icon: "fa-smile-o" }, [
+			Item("Local", require("./admin/emoji/local"), { icon: "fa-home" }),
+			Item("Remote", require("./admin/emoji/remote"), { icon: "fa-cloud" })
+		]),
+		Item("Settings", require("./admin/settings"), { icon: "fa-sliders" })
+	])
+]);
 
 function App({ account }) {
-	const { sidebar, routedViews, fallbackRoutes } = useNavigation(navigation, {
-		permissions: [account.role.name]
-	});
+	const permissions = [account.role.name];
 
 	return (
-		<>
+		<RoleContext.Provider value={permissions}>
 			<div className="sidebar">
 				<UserLogoutCard />
-				{sidebar}
-				{/* <div className="nav-container">
-					{sidebar.all}
-					{isAdmin && sidebar.adminOnly}
-				</div> */}
+				<Sidebar />
 			</div>
 			<section className="with-sidebar">
-				<Switch>
-					{/* {viewRouter.all}
-					{isAdmin && viewRouter.adminOnly} */}
-					{routedViews}
-					{fallbackRoutes}
-					<Route>
-						<Redirect to="/settings/user" />
-					</Route>
-				</Switch>
+				<ViewRouter />
 			</section>
-		</>
+		</RoleContext.Provider>
 	);
 }
 

@@ -34,8 +34,10 @@ const { TextArea } = require("../../components/form/inputs");
 
 const MutationButton = require("../../components/form/mutation-button");
 const Username = require("./username");
+const { useBaseUrl } = require("../../lib/navigation/util");
 
-module.exports = function ReportDetail({ baseUrl }) {
+module.exports = function ReportDetail({ }) {
+	const baseUrl = useBaseUrl();
 	let [_match, params] = useRoute(`${baseUrl}/:reportId`);
 	if (params?.reportId == undefined) {
 		return <Redirect to={baseUrl} />;

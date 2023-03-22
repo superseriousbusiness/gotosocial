@@ -20,18 +20,30 @@
 "use strict";
 
 const React = require("react");
-const { Switch, Route } = require("wouter");
+const RoleContext = React.createContext([]);
+const BaseUrlContext = React.createContext(null);
 
-const EmojiOverview = require("./overview");
-const EmojiDetail = require("./detail");
+function urlSafe(str) {
+	return str.toLowerCase().replace(/[\s/]+/g, "-");
+}
 
-module.exports = function CustomEmoji({ baseUrl }) {
-	return (
-		<Switch>
-			<Route path={`${baseUrl}/:emojiId`}>
-				<EmojiDetail />
-			</Route>
-			<EmojiOverview />
-		</Switch>
-	);
+function useHasPermission(permissions) {
+	const roles = React.useContext(RoleContext);
+	return checkPermission(permissions, roles);
+}
+
+function checkPermission(required, user) {
+	if (required === true) {
+		return true;
+	}
+
+	return user.some((role) => required.includes(role));
+}
+
+function useBaseUrl() {
+	return React.useContext(BaseUrlContext);
+}
+
+module.exports = {
+	urlSafe, RoleContext, useHasPermission, checkPermission, BaseUrlContext, useBaseUrl
 };

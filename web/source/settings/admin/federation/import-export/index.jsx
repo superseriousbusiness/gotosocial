@@ -33,9 +33,7 @@ const useFormSubmit = require("../../../lib/form/submit");
 const ProcessImport = require("./process");
 const ImportExportForm = require("./form");
 
-const baseUrl = "/settings/admin/federation/import-export";
-
-module.exports = function ImportExport() {
+module.exports = function ImportExport({ baseUrl }) {
 	const form = {
 		domains: useTextInput("domains"),
 		exportType: useTextInput("exportType", { defaultValue: "plain", dontReset: true })

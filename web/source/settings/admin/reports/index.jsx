@@ -28,23 +28,22 @@ const FormWithData = require("../../lib/form/form-with-data");
 
 const ReportDetail = require("./detail");
 const Username = require("./username");
+const { useBaseUrl } = require("../../lib/navigation/util");
 
-const baseUrl = "/settings/admin/reports";
-
-module.exports = function Reports() {
+module.exports = function Reports({ baseUrl }) {
 	return (
 		<div className="reports">
 			<Switch>
 				<Route path={`${baseUrl}/:reportId`}>
-					<ReportDetail baseUrl={baseUrl} />
+					<ReportDetail />
 				</Route>
-				<ReportOverview baseUrl={baseUrl} />
+				<ReportOverview />
 			</Switch>
 		</div>
 	);
 };
 
-function ReportOverview({ _baseUrl }) {
+function ReportOverview({ }) {
 	return (
 		<>
 			<h1>Reports</h1>
@@ -79,6 +78,7 @@ function ReportsList({ data: reports }) {
 }
 
 function ReportEntry({ report }) {
+	const baseUrl = useBaseUrl();
 	const from = report.account;
 	const target = report.target_account;
 
