@@ -303,6 +303,10 @@ cache:
     status-ttl: "5m"
     status-sweep-freq: "30s"
 
+    status-fave-max-size: 500
+    status-fave-ttl: "5m"
+    status-fave-sweep-freq: "30s"
+
     tombstone-max-size: 100
     tombstone-ttl: "5m"
     tombstone-sweep-freq: "30s"
