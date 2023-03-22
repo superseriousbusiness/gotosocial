@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"codeberg.org/gruf/go-kv"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
@@ -100,22 +101,25 @@ func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID st
 	// either sinceID or minID. This is equivalent to
 	// a user opening an in-progress timeline and asking
 	// for a slice of posts somewhere in the middle, or
-	// trying to "fill in the blanks" between two points.
+	// trying to "fill in the blanks" between two points,
+	// paging either up or down.
 	case maxID != "" && sinceID != "":
-		minID = sinceIDaaaaaaaaaaaaaaaaaa
-		fallthrough
+		items, err = t.getXBetweenID(ctx, amount, maxID, sinceID, true)
 	case maxID != "" && minID != "":
-		items, err = t.getXBetweenID(ctx, amount, maxID, minID)
+		items, err = t.getXBetweenID(ctx, amount, maxID, minID, false)
 
 	// In the final cases, maxID is not defined, but
 	// either sinceID or minID are. This is equivalent to
 	// a user either "pulling up" at the top of their timeline
-	// to refresh it and check if newer posts have come in, or
-	// 
-	case maxID == "" && sinceID != "":aaaaaaaaaaaaaaa
-		items, err = t.getXBeforeID(ctx, amount, sinceID, true)
+	// to refresh it and check if newer posts have come in.
+	//
+	// In these calls, we use the highest possible ulid as
+	// behindID because we don't have a cap for newest that
+	// we're interested in.
+	case maxID == "" && sinceID != "":
+		items, err = t.getXBetweenID(ctx, amount, id.Highest, sinceID, true)
 	case maxID == "" && minID != "":
-		items, err = t.getXBeforeID(ctx, amount, minID, false)
+		items, err = t.getXBetweenID(ctx, amount, id.Highest, minID, false)
 	default:
 		err = errors.New("Get: switch statement exhausted with no results")
 	}
@@ -170,7 +174,7 @@ func (t *timeline) getXBehindID(ctx context.Context, amount int, behindID string
 		WithFields(kv.Fields{
 			{"amount", amount},
 			{"behindID", behindID},
-			{"attempts", attempts},
+			{"attempts", *attempts},
 		}...)
 
 	newAttempts := *attempts
@@ -274,21 +278,23 @@ func (t *timeline) getXBehindID(ctx context.Context, amount int, behindID string
 	return items, nil
 }
 
-// getXBeforeID returns x amount of items up to the given id, from newest to oldest.
-// This will NOT include the item with the given ID.
+// getXBetweenID returns x amount of items somewhere between (not including) the given IDs.
 //
-// This corresponds to an api call to /timelines/home?since_id=WHATEVER.
+// If frontToBack is true, items will be served paging down from behindID.
+// This corresponds to an api call to /timelines/home?max_id=WHATEVER&since_id=WHATEVER
 //
-// If frontToBack is true, items will be served newer -> older (paging down).
-// If false, items will instead be served older -> newer (paging up).
-func (t *timeline) getXBeforeID(ctx context.Context, amount int, beforeID string, frontToBack bool) ([]Preparable, error) {
+// If frontToBack is false, items will be served paging up from beforeID.
+// This corresponds to an api call to /timelines/home?max_id=WHATEVER&min_id=WHATEVER
+func (t *timeline) getXBetweenID(ctx context.Context, amount int, behindID string, beforeID string, frontToBack bool) ([]Preparable, error) {
 	l := log.
 		WithContext(ctx).
 		WithFields(kv.Fields{
 			{"amount", amount},
+			{"behindID", behindID},
 			{"beforeID", beforeID},
 			{"frontToBack", frontToBack},
 		}...)
+	l.Trace("entering getXBetweenID")
 
 	// Assume length we need to return.
 	items := make([]Preparable, 0, amount)
@@ -299,16 +305,26 @@ func (t *timeline) getXBeforeID(ctx context.Context, amount int, beforeID string
 		t.preparedItems.data.Init()
 	}
 
+	if beforeID >= behindID {
+		// This is an impossible situation, we
+		// can't serve anything between these.
+		return items, nil
+	}
+
 	var (
 		beforeIDMark *list.Element
 		served       int
 		// Our behavior while ranging through the
 		// list changes depending on if we're
-		// going frontToBack or backToFront.
+		// going front-to-back or back-to-front.
 		//
-		// To avoid checking what we're doing in
-		// each loop iteration, define our range
+		// To avoid checking which one we're doing
+		// in each loop iteration, define our range
 		// function here outside the loop.
+		//
+		// The bool indicates to the caller whether
+		// iteration should continue (true) or stop
+		// (false).
 		rangeF func(e *list.Element) bool
 	)
 
@@ -316,7 +332,7 @@ func (t *timeline) getXBeforeID(ctx context.Context, amount int, beforeID string
 		// We're going front-to-back, which means we
 		// don't need to look for a mark per se, we
 		// just keep serving items until we've reached
-		// a point where the items are older than what
+		// a point where the items are out of the range
 		// we're interested in.
 		rangeF = func(e *list.Element) bool {
 			entry, ok := e.Value.(*preparedItemsEntry)
@@ -324,8 +340,18 @@ func (t *timeline) getXBeforeID(ctx context.Context, amount int, beforeID string
 				l.Panic(ctx, "could not parse e as a preparedItemsEntry")
 			}
 
+			if entry.itemID >= behindID {
+				// ID of this item is too high,
+				// just keep iterating.
+				l.Trace("item is too new, continuing")
+				return true
+			}
+
 			if entry.itemID <= beforeID {
-				// Exclude item with beforeID.
+				// We've gone as far as we can through
+				// the list and reached entries that are
+				// now too old for us, stop here.
+				l.Trace("reached older items, breaking")
 				return false
 			}
 
@@ -350,14 +376,16 @@ func (t *timeline) getXBeforeID(ctx context.Context, amount int, beforeID string
 				l.Panic(ctx, "could not parse e as a preparedItemsEntry")
 			}
 
+			// Move the mark back one place each loop.
+			beforeIDMark = e
+
 			if entry.itemID <= beforeID {
-				// We've gone as far as we can,
-				// only older items ahead.
+				// We've gone as far as we can through
+				// the list and reached entries that are
+				// now too old for us, stop here.
+				l.Trace("reached older items, breaking")
 				return false
 			}
-
-			// Move the mark back each loop.
-			beforeIDMark = e
 
 			return true
 		}
@@ -380,20 +408,35 @@ func (t *timeline) getXBeforeID(ctx context.Context, amount int, beforeID string
 		return items, nil
 	}
 
-	// We're serving back to front, iterate upwards
-	// to the front of the list from the mark we found,
-	// until we either get to the front, or we've served
-	// enough items. To preserve ordering, we need to
-	// prepend instead of appending.
-	for e := beforeIDMark.Prev(); e != nil; e = e.Prev() {
+	// We're serving back to front, so iterate upwards
+	// towards the front of the list from the mark we found,
+	// until we either get to the front, serve enough
+	// items, or reach behindID.
+	//
+	// To preserve ordering, we need to reverse the slice
+	// when we're finished.
+	for e := beforeIDMark; e != nil; e = e.Prev() {
 		entry, ok := e.Value.(*preparedItemsEntry)
 		if !ok {
 			l.Panic(ctx, "could not parse e as a preparedItemsEntry")
 		}
 
-		// todo: find a way of prepending that doesn't
-		// allocate a new slice every time 😬
-		items = append([]Preparable{entry.prepared}, items...)
+		if entry.itemID == beforeID {
+			// Don't include the beforeID
+			// entry itself, just continue.
+			l.Trace("entry item ID is equal to beforeID, skipping")
+			continue
+		}
+
+		if entry.itemID >= behindID {
+			// We've reached items that are
+			// newer than what we're looking
+			// for, just stop here.
+			l.Trace("reached newer items, breaking")
+			break
+		}
+
+		items = append(items, entry.prepared)
 
 		served++
 		if served >= amount {
@@ -401,70 +444,10 @@ func (t *timeline) getXBeforeID(ctx context.Context, amount int, beforeID string
 		}
 	}
 
-	return items, nil
-}
-
-// getXBetweenID returns x amount of items from the given maxID, up to the given id, from newest to oldest.
-// This will NOT include the item with the given IDs.
-//
-// This corresponds to an api call to /timelines/home?since_id=WHATEVER&max_id=WHATEVER_ELSE
-func (t *timeline) getXBetweenID(ctx context.Context, amount int, behindID string, beforeID string) ([]Preparable, error) {
-	// make a slice of items with the length we need to return
-	items := make([]Preparable, 0, amount)
-
-	if t.preparedItems.data == nil {
-		t.preparedItems.data = &list.List{}
-		t.preparedItems.data.Init()
-	}
-
-	// iterate through the modified list until we hit the mark we're looking for
-	var position int
-	var behindIDMark *list.Element
-findMarkLoop:
-	for e := t.preparedItems.data.Front(); e != nil; e = e.Next() {
-		position++
-		entry, ok := e.Value.(*preparedItemsEntry)
-		if !ok {
-			return nil, errors.New("getXBetweenID: could not parse e as a preparedPostsEntry")
-		}
-
-		if entry.itemID == behindID {
-			behindIDMark = e
-			break findMarkLoop
-		}
-	}
-
-	// we didn't find it
-	if behindIDMark == nil {
-		return nil, fmt.Errorf("getXBetweenID: couldn't find item with ID %s", behindID)
-	}
-
-	// make sure we have enough items prepared behind it to return what we're being asked for
-	if t.preparedItems.data.Len() < amount+position {
-		if err := t.prepareBehind(ctx, behindID, amount); err != nil {
-			return nil, err
-		}
-	}
-
-	// start serving from the entry right after the mark
-	var served int
-serveloop:
-	for e := behindIDMark.Next(); e != nil; e = e.Next() {
-		entry, ok := e.Value.(*preparedItemsEntry)
-		if !ok {
-			return nil, errors.New("getXBetweenID: could not parse e as a preparedPostsEntry")
-		}
-
-		if entry.itemID == beforeID {
-			break serveloop
-		}
-
-		// serve up to the amount requested
-		items = append(items, entry.prepared)
-		served++
-		if served >= amount {
-			break serveloop
-		}
+	// Reverse order of items.
+	// https://zchee.github.io/golang-wiki/SliceTricks/#reversing
+	for l, r := 0, len(items)-1; l < r; l, r = l+1, r-1 {
+		items[l], items[r] = items[r], items[l]
 	}
 
 	return items, nil

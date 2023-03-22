@@ -52,7 +52,7 @@ type Manager interface {
 	// The returned bool indicates whether the item was actually put in the timeline. This could be false in cases where
 	// the item is a boosted status, but a boost of the original status or the status itself already exists recently in the timeline.
 	Ingest(ctx context.Context, item Timelineable, timelineAccountID string) (bool, error)
-	
+
 	// IngestAndPrepare takes one timelineable and indexes it into the timeline for the given account ID, and then immediately prepares it for serving.
 	// This is useful in cases where we know the item will need to be shown at the top of a user's timeline immediately (eg., a new status is created).
 	//
@@ -61,32 +61,32 @@ type Manager interface {
 	// The returned bool indicates whether the item was actually put in the timeline. This could be false in cases where
 	// a status is a boost, but a boost of the original status or the status itself already exists recently in the timeline.
 	IngestAndPrepare(ctx context.Context, item Timelineable, accountID string) (bool, error)
-	
+
 	// GetTimeline returns limit n amount of prepared entries from the timeline of the given account ID, in descending chronological order.
 	// If maxID is provided, it will return prepared entries from that maxID onwards, inclusive.
 	GetTimeline(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]Preparable, error)
-	
+
 	// GetIndexedLength returns the amount of items that have been *indexed* for the given account ID.
 	GetIndexedLength(ctx context.Context, accountID string) int
-	
+
 	// GetOldestIndexedID returns the id ID for the oldest item that we have indexed for the given account.
 	GetOldestIndexedID(ctx context.Context, accountID string) (string, error)
-	
+
 	// PrepareXFromTop prepares limit n amount of items, based on their indexed representations, from the top of the index.
 	PrepareXFromTop(ctx context.Context, accountID string, limit int) error
-	
+
 	// Remove removes one item from the timeline of the given timelineAccountID
 	Remove(ctx context.Context, accountID string, itemID string) (int, error)
-	
+
 	// WipeItemFromAllTimelines removes one item from the index and prepared items of all timelines
 	WipeItemFromAllTimelines(ctx context.Context, itemID string) error
-	
+
 	// WipeStatusesFromAccountID removes all items by the given accountID from the timelineAccountID's timelines.
 	WipeItemsFromAccountID(ctx context.Context, timelineAccountID string, accountID string) error
-	
+
 	// Start starts hourly cleanup jobs for this timeline manager.
 	Start() error
-	
+
 	// Stop stops the timeline manager (currently a stub, doesn't do anything).
 	Stop() error
 }
@@ -243,6 +243,6 @@ func (m *manager) getOrCreateTimeline(ctx context.Context, accountID string) Tim
 	// Create + store it.
 	timeline := NewTimeline(ctx, accountID, m.grabFunction, m.filterFunction, m.prepareFunction, m.skipInsertFunction)
 	m.accountTimelines.Store(accountID, timeline)
-	
+
 	return timeline
 }

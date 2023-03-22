@@ -25,6 +25,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
@@ -43,8 +44,8 @@ func (suite *GetTestSuite) SetupSuite() {
 func (suite *GetTestSuite) SetupTest() {
 	suite.state.Caches.Init()
 
-	testrig.InitTestLog()
 	testrig.InitTestConfig()
+	testrig.InitTestLog()
 
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
@@ -52,7 +53,8 @@ func (suite *GetTestSuite) SetupTest() {
 
 	testrig.StandardDBSetup(suite.db, nil)
 
-	// let's take local_account_1 as the timeline owner
+	// Take local_account_1 as the timeline owner, it
+	// doesn't really matter too much for these tests.
 	tl := timeline.NewTimeline(
 		context.Background(),
 		suite.testAccounts["local_account_1"].ID,
@@ -62,16 +64,26 @@ func (suite *GetTestSuite) SetupTest() {
 		processing.StatusSkipInsertFunction(),
 	)
 
-	// put the status IDs in a determinate order since we can't trust a map to keep its order
+	// Put testrig statuses in a determinate order
+	// since we can't trust a map to keep order.
 	statuses := []*gtsmodel.Status{}
 	for _, s := range suite.testStatuses {
 		statuses = append(statuses, s)
 	}
+
 	sort.Slice(statuses, func(i, j int) bool {
 		return statuses[i].ID > statuses[j].ID
 	})
 
-	// prepare the timeline by just shoving all test statuses in it -- let's not be fussy about who sees what
+	// Statuses are now highest -> lowest.
+	suite.highestStatusID = statuses[0].ID
+	suite.lowestStatusID = statuses[len(statuses)-1].ID
+	if suite.highestStatusID < suite.lowestStatusID {
+		suite.FailNow("", "statuses weren't ordered properly by sort")
+	}
+
+	// Put all test statuses into the timeline; we don't
+	// need to be fussy about who sees what for these tests.
 	for _, s := range statuses {
 		_, err := tl.IndexAndPrepareOne(context.Background(), s.GetID(), s.BoostOfID, s.AccountID, s.BoostOfAccountID)
 		if err != nil {
@@ -86,219 +98,192 @@ func (suite *GetTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 }
 
-func (suite *GetTestSuite) TestGetDefault() {
-	// lastGot should be zero
-	suite.Zero(suite.timeline.LastGot())
-
-	// get 10 20 the top and don't prepare the next query
-	statuses, err := suite.timeline.Get(context.Background(), 20, "", "", "", false)
-	if err != nil {
-		suite.FailNow(err.Error())
+func (suite *GetTestSuite) checkStatuses(statuses []timeline.Preparable, maxID string, minID string, expectedLength int) {
+	if l := len(statuses); l != expectedLength {
+		suite.FailNow("", "expected %d statuses in slice, got %d", expectedLength, l)
+	} else if l == 0 {
+		// Can't test empty slice.
+		return
 	}
 
-	// we only have 16 statuses in the test suite
-	suite.Len(statuses, 17)
+	// Check ordering + bounds of statuses.
+	highest := statuses[0].GetID()
+	for _, status := range statuses {
+		id := status.GetID()
 
-	// statuses should be sorted highest to lowest ID
-	var highest string
-	for i, s := range statuses {
-		if i == 0 {
-			highest = s.GetID()
-		} else {
-			suite.Less(s.GetID(), highest)
-			highest = s.GetID()
+		if id >= maxID {
+			suite.FailNow("", "%s greater than maxID %s", id, maxID)
 		}
-	}
 
-	// lastGot should be up to date
-	suite.WithinDuration(time.Now(), suite.timeline.LastGot(), 1*time.Second)
+		if id <= minID {
+			suite.FailNow("", "%s smaller than minID %s", id, minID)
+		}
+
+		if id > highest {
+			suite.FailNow("", "statuses in slice were not ordered highest -> lowest ID")
+		}
+
+		highest = id
+	}
 }
 
-func (suite *GetTestSuite) TestGetDefaultPrepareNext() {
-	// get 10 from the top and prepare the next query
-	statuses, err := suite.timeline.Get(context.Background(), 10, "", "", "", true)
+func (suite *GetTestSuite) TestGetNoParams() {
+	// Get 10 statuses from the top (no params).
+	statuses, err := suite.timeline.Get(context.Background(), 10, "", "", "", false)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 
-	suite.Len(statuses, 10)
+	suite.checkStatuses(statuses, id.Highest, id.Lowest, 10)
 
-	// statuses should be sorted highest to lowest ID
-	var highest string
-	for i, s := range statuses {
-		if i == 0 {
-			highest = s.GetID()
-		} else {
-			suite.Less(s.GetID(), highest)
-			highest = s.GetID()
-		}
-	}
-
-	// sleep a second so the next query can run
-	time.Sleep(1 * time.Second)
+	// First status should have the highest ID in the testrig.
+	suite.Equal(suite.highestStatusID, statuses[0].GetID())
 }
 
 func (suite *GetTestSuite) TestGetMaxID() {
-	// ask for 10 with a max ID somewhere in the middle of the stack
-	statuses, err := suite.timeline.Get(context.Background(), 10, "01F8MHBQCBTDKN6X5VHGMMN4MA", "", "", false)
+	// Ask for 10 with a max ID somewhere in the middle of the stack.
+	maxID := "01F8MHBQCBTDKN6X5VHGMMN4MA"
+
+	statuses, err := suite.timeline.Get(context.Background(), 10, maxID, "", "", false)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 
-	// we should only get 6 statuses back, since we asked for a max ID that excludes some of our entries
-	suite.Len(statuses, 6)
-
-	// statuses should be sorted highest to lowest ID
-	var highest string
-	for i, s := range statuses {
-		if i == 0 {
-			highest = s.GetID()
-		} else {
-			suite.Less(s.GetID(), highest)
-			highest = s.GetID()
-		}
-	}
-}
-
-func (suite *GetTestSuite) TestGetMaxIDPrepareNext() {
-	// ask for 10 with a max ID somewhere in the middle of the stack
-	statuses, err := suite.timeline.Get(context.Background(), 10, "01F8MHBQCBTDKN6X5VHGMMN4MA", "", "", true)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	// we should only get 6 statuses back, since we asked for a max ID that excludes some of our entries
-	suite.Len(statuses, 6)
-
-	// statuses should be sorted highest to lowest ID
-	var highest string
-	for i, s := range statuses {
-		if i == 0 {
-			highest = s.GetID()
-		} else {
-			suite.Less(s.GetID(), highest)
-			highest = s.GetID()
-		}
-	}
-
-	// sleep a second so the next query can run
-	time.Sleep(1 * time.Second)
-}
-
-func (suite *GetTestSuite) TestGetMinID() {
-	// ask for 15 with a min ID somewhere in the middle of the stack
-	statuses, err := suite.timeline.Get(context.Background(), 10, "", "01F8MHBQCBTDKN6X5VHGMMN4MA", "", false)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	// we should only get 10 statuses back, since we asked for a min ID that excludes some of our entries
-	suite.Len(statuses, 10)
-
-	// statuses should be sorted highest to lowest ID
-	var highest string
-	for i, s := range statuses {
-		if i == 0 {
-			highest = s.GetID()
-		} else {
-			suite.Less(s.GetID(), highest)
-			highest = s.GetID()
-		}
-	}
+	// We'll only get 6 statuses back.
+	suite.checkStatuses(statuses, maxID, id.Lowest, 6)
 }
 
 func (suite *GetTestSuite) TestGetSinceID() {
-	// ask for 15 with a since ID somewhere in the middle of the stack
-	statuses, err := suite.timeline.Get(context.Background(), 15, "", "", "01F8MHBQCBTDKN6X5VHGMMN4MA", false)
+	// Ask for 10 with a since ID somewhere in the middle of the stack.
+	sinceID := "01F8MHBQCBTDKN6X5VHGMMN4MA"
+	statuses, err := suite.timeline.Get(context.Background(), 10, "", sinceID, "", false)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 
-	// we should only get 10 statuses back, since we asked for a since ID that excludes some of our entries
-	suite.Len(statuses, 10)
+	suite.checkStatuses(statuses, id.Highest, sinceID, 10)
 
-	// statuses should be sorted highest to lowest ID
-	var highest string
-	for i, s := range statuses {
-		if i == 0 {
-			highest = s.GetID()
-		} else {
-			suite.Less(s.GetID(), highest)
-			highest = s.GetID()
-		}
-	}
+	// The first status in the stack should have the highest ID of all
+	// in the testrig, because we're paging down.
+	suite.Equal(suite.highestStatusID, statuses[0].GetID())
 }
 
-func (suite *GetTestSuite) TestGetSinceIDPrepareNext() {
-	// ask for 15 with a since ID somewhere in the middle of the stack
-	statuses, err := suite.timeline.Get(context.Background(), 15, "", "", "01F8MHBQCBTDKN6X5VHGMMN4MA", true)
+func (suite *GetTestSuite) TestGetSinceIDOneOnly() {
+	// Ask for 1 with a since ID somewhere in the middle of the stack.
+	sinceID := "01F8MHBQCBTDKN6X5VHGMMN4MA"
+	statuses, err := suite.timeline.Get(context.Background(), 1, "", sinceID, "", false)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 
-	// we should only get 10 statuses back, since we asked for a since ID that excludes some of our entries
-	suite.Len(statuses, 10)
+	suite.checkStatuses(statuses, id.Highest, sinceID, 1)
 
-	// statuses should be sorted highest to lowest ID
-	var highest string
-	for i, s := range statuses {
-		if i == 0 {
-			highest = s.GetID()
-		} else {
-			suite.Less(s.GetID(), highest)
-			highest = s.GetID()
-		}
+	// The one status we got back should have the highest ID of all in
+	// the testrig, because using sinceID means we're paging down.
+	suite.Equal(suite.highestStatusID, statuses[0].GetID())
+}
+
+func (suite *GetTestSuite) TestGetMinID() {
+	// Ask for 5 with a min ID somewhere in the middle of the stack.
+	minID := "01F8MHBQCBTDKN6X5VHGMMN4MA"
+	statuses, err := suite.timeline.Get(context.Background(), 5, "", "", minID, false)
+	if err != nil {
+		suite.FailNow(err.Error())
 	}
 
-	// sleep a second so the next query can run
-	time.Sleep(1 * time.Second)
+	suite.checkStatuses(statuses, id.Highest, minID, 5)
+
+	// We're paging up so even the highest status ID in the pile
+	// shouldn't be the highest ID we have.
+	suite.NotEqual(suite.highestStatusID, statuses[0])
+}
+
+func (suite *GetTestSuite) TestGetMinIDOneOnly() {
+	// Ask for 1 with a min ID somewhere in the middle of the stack.
+	minID := "01F8MHBQCBTDKN6X5VHGMMN4MA"
+	statuses, err := suite.timeline.Get(context.Background(), 1, "", "", minID, false)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.checkStatuses(statuses, id.Highest, minID, 1)
+
+	// The one status we got back should have the an ID equal to the
+	// one ID immediately newer than it.
+	suite.Equal("01F8MHC0H0A7XHTVH5F596ZKBM", statuses[0].GetID())
+}
+
+func (suite *GetTestSuite) TestGetMinIDFromLowestInTestrig() {
+	// Ask for 1 with minID equal to the lowest status in the testrig.
+	minID := suite.lowestStatusID
+	statuses, err := suite.timeline.Get(context.Background(), 1, "", "", minID, false)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.checkStatuses(statuses, id.Highest, minID, 1)
+
+	// The one status we got back should have an id higher than
+	// the lowest status in the testrig, since minID is not inclusive.
+	suite.Greater(statuses[0].GetID(), suite.lowestStatusID)
+}
+
+func (suite *GetTestSuite) TestGetMinIDFromLowestPossible() {
+	// Ask for 1 with the lowest possible min ID.
+	minID := id.Lowest
+	statuses, err := suite.timeline.Get(context.Background(), 1, "", "", minID, false)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.checkStatuses(statuses, id.Highest, minID, 1)
+
+	// The one status we got back should have the an ID equal to the
+	// lowest ID status in the test rig.
+	suite.Equal(suite.lowestStatusID, statuses[0].GetID())
 }
 
 func (suite *GetTestSuite) TestGetBetweenID() {
-	// ask for 10 between these two IDs
-	statuses, err := suite.timeline.Get(context.Background(), 10, "01F8MHCP5P2NWYQ416SBA0XSEV", "", "01F8MHBQCBTDKN6X5VHGMMN4MA", false)
+	// Ask for 10 between these two IDs
+	maxID := "01F8MHCP5P2NWYQ416SBA0XSEV"
+	minID := "01F8MHBQCBTDKN6X5VHGMMN4MA"
+
+	statuses, err := suite.timeline.Get(context.Background(), 10, maxID, "", minID, false)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 
-	// we should only get 2 statuses back, since there are only two statuses between the given IDs
-	suite.Len(statuses, 2)
-
-	// statuses should be sorted highest to lowest ID
-	var highest string
-	for i, s := range statuses {
-		if i == 0 {
-			highest = s.GetID()
-		} else {
-			suite.Less(s.GetID(), highest)
-			highest = s.GetID()
-		}
-	}
+	// There's only two statuses between these two IDs.
+	suite.checkStatuses(statuses, maxID, minID, 2)
 }
 
-func (suite *GetTestSuite) TestGetBetweenIDPrepareNext() {
-	// ask for 10 between these two IDs
-	statuses, err := suite.timeline.Get(context.Background(), 10, "01F8MHCP5P2NWYQ416SBA0XSEV", "", "01F8MHBQCBTDKN6X5VHGMMN4MA", true)
+func (suite *GetTestSuite) TestGetBetweenIDImpossible() {
+	// Ask for 10 between these two IDs which present
+	// an impossible query.
+	maxID := id.Lowest
+	minID := id.Highest
+
+	statuses, err := suite.timeline.Get(context.Background(), 10, maxID, "", minID, false)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 
-	// we should only get 2 statuses back, since there are only two statuses between the given IDs
-	suite.Len(statuses, 2)
+	// We should have nothing back.
+	suite.checkStatuses(statuses, maxID, minID, 0)
+}
 
-	// statuses should be sorted highest to lowest ID
-	var highest string
-	for i, s := range statuses {
-		if i == 0 {
-			highest = s.GetID()
-		} else {
-			suite.Less(s.GetID(), highest)
-			highest = s.GetID()
-		}
+func (suite *GetTestSuite) TestLastGot() {
+	// LastGot should be zero
+	suite.Zero(suite.timeline.LastGot())
+
+	// Get some from the top
+	_, err := suite.timeline.Get(context.Background(), 10, "", "", "", false)
+	if err != nil {
+		suite.FailNow(err.Error())
 	}
 
-	// sleep a second so the next query can run
-	time.Sleep(1 * time.Second)
+	// LastGot should be updated
+	suite.WithinDuration(time.Now(), suite.timeline.LastGot(), 1*time.Second)
 }
 
 func TestGetTestSuite(t *testing.T) {

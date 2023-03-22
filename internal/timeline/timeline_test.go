@@ -34,8 +34,10 @@ type TimelineStandardTestSuite struct {
 	tc     typeutils.TypeConverter
 	filter *visibility.Filter
 
-	testAccounts map[string]*gtsmodel.Account
-	testStatuses map[string]*gtsmodel.Status
+	testAccounts    map[string]*gtsmodel.Account
+	testStatuses    map[string]*gtsmodel.Status
+	highestStatusID string
+	lowestStatusID  string
 
 	timeline timeline.Timeline
 	manager  timeline.Manager
