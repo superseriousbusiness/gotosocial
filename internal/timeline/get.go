@@ -358,11 +358,7 @@ func (t *timeline) getXBetweenID(ctx context.Context, amount int, behindID strin
 			items = append(items, entry.prepared)
 
 			served++
-			if served >= amount {
-				return false
-			}
-
-			return true
+			return served < amount
 		}
 	} else {
 		// Iterate through the list from the top, until
