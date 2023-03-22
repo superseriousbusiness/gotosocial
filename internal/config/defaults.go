@@ -167,6 +167,10 @@ var Defaults = Configuration{
 			StatusTTL:       time.Minute * 30,
 			StatusSweepFreq: time.Minute,
 
+			StatusFaveMaxSize:   2000,
+			StatusFaveTTL:       time.Minute * 30,
+			StatusFaveSweepFreq: time.Minute,
+
 			TombstoneMaxSize:   500,
 			TombstoneTTL:       time.Minute * 30,
 			TombstoneSweepFreq: time.Minute,

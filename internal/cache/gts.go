@@ -74,7 +74,7 @@ func (c *GTSCaches) Start() {
 	tryStart(c.block, config.GetCacheGTSBlockSweepFreq())
 	tryUntil("starting domain block cache", 5, func() bool {
 		if sweep := config.GetCacheGTSDomainBlockSweepFreq(); sweep > 0 {
-			return c.domainBlock.Start(config.GetCacheGTSDomainBlockSweepFreq())
+			return c.domainBlock.Start(sweep)
 		}
 		return true
 	})
@@ -87,10 +87,14 @@ func (c *GTSCaches) Start() {
 	tryStart(c.notification, config.GetCacheGTSNotificationSweepFreq())
 	tryStart(c.report, config.GetCacheGTSReportSweepFreq())
 	tryStart(c.status, config.GetCacheGTSStatusSweepFreq())
+	tryStart(c.statusFave, config.GetCacheGTSStatusFaveSweepFreq())
 	tryStart(c.tombstone, config.GetCacheGTSTombstoneSweepFreq())
 	tryStart(c.user, config.GetCacheGTSUserSweepFreq())
 	tryUntil("starting *gtsmodel.Webfinger cache", 5, func() bool {
-		return c.webfinger.Start(config.GetCacheGTSWebfingerSweepFreq())
+		if sweep := config.GetCacheGTSWebfingerSweepFreq(); sweep > 0 {
+			return c.webfinger.Start(sweep)
+		}
+		return true
 	})
 }
 
@@ -108,6 +112,7 @@ func (c *GTSCaches) Stop() {
 	tryStop(c.notification, config.GetCacheGTSNotificationSweepFreq())
 	tryStop(c.report, config.GetCacheGTSReportSweepFreq())
 	tryStop(c.status, config.GetCacheGTSStatusSweepFreq())
+	tryStop(c.statusFave, config.GetCacheGTSStatusFaveSweepFreq())
 	tryStop(c.tombstone, config.GetCacheGTSTombstoneSweepFreq())
 	tryStop(c.user, config.GetCacheGTSUserSweepFreq())
 	tryUntil("stopping *gtsmodel.Webfinger cache", 5, c.webfinger.Stop)
@@ -358,8 +363,8 @@ func (c *GTSCaches) initStatusFave() {
 		f2 := new(gtsmodel.StatusFave)
 		*f2 = *f1
 		return f2
-	}, config.GetCacheGTSStatusMaxSize())
-	c.status.SetTTL(config.GetCacheGTSStatusTTL(), true)
+	}, config.GetCacheGTSStatusFaveMaxSize())
+	c.status.SetTTL(config.GetCacheGTSStatusFaveTTL(), true)
 	c.status.IgnoreErrors(ignoreErrors)
 }
 

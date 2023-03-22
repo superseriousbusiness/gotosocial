@@ -3030,6 +3030,81 @@ func GetCacheGTSStatusSweepFreq() time.Duration { return global.GetCacheGTSStatu
 // SetCacheGTSStatusSweepFreq safely sets the value for global configuration 'Cache.GTS.StatusSweepFreq' field
 func SetCacheGTSStatusSweepFreq(v time.Duration) { global.SetCacheGTSStatusSweepFreq(v) }
 
+// GetCacheGTSStatusFaveMaxSize safely fetches the Configuration value for state's 'Cache.GTS.StatusFaveMaxSize' field
+func (st *ConfigState) GetCacheGTSStatusFaveMaxSize() (v int) {
+	st.mutex.Lock()
+	v = st.config.Cache.GTS.StatusFaveMaxSize
+	st.mutex.Unlock()
+	return
+}
+
+// SetCacheGTSStatusFaveMaxSize safely sets the Configuration value for state's 'Cache.GTS.StatusFaveMaxSize' field
+func (st *ConfigState) SetCacheGTSStatusFaveMaxSize(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.StatusFaveMaxSize = v
+	st.reloadToViper()
+}
+
+// CacheGTSStatusFaveMaxSizeFlag returns the flag name for the 'Cache.GTS.StatusFaveMaxSize' field
+func CacheGTSStatusFaveMaxSizeFlag() string { return "cache-gts-status-fave-max-size" }
+
+// GetCacheGTSStatusFaveMaxSize safely fetches the value for global configuration 'Cache.GTS.StatusFaveMaxSize' field
+func GetCacheGTSStatusFaveMaxSize() int { return global.GetCacheGTSStatusFaveMaxSize() }
+
+// SetCacheGTSStatusFaveMaxSize safely sets the value for global configuration 'Cache.GTS.StatusFaveMaxSize' field
+func SetCacheGTSStatusFaveMaxSize(v int) { global.SetCacheGTSStatusFaveMaxSize(v) }
+
+// GetCacheGTSStatusFaveTTL safely fetches the Configuration value for state's 'Cache.GTS.StatusFaveTTL' field
+func (st *ConfigState) GetCacheGTSStatusFaveTTL() (v time.Duration) {
+	st.mutex.Lock()
+	v = st.config.Cache.GTS.StatusFaveTTL
+	st.mutex.Unlock()
+	return
+}
+
+// SetCacheGTSStatusFaveTTL safely sets the Configuration value for state's 'Cache.GTS.StatusFaveTTL' field
+func (st *ConfigState) SetCacheGTSStatusFaveTTL(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.StatusFaveTTL = v
+	st.reloadToViper()
+}
+
+// CacheGTSStatusFaveTTLFlag returns the flag name for the 'Cache.GTS.StatusFaveTTL' field
+func CacheGTSStatusFaveTTLFlag() string { return "cache-gts-status-fave-ttl" }
+
+// GetCacheGTSStatusFaveTTL safely fetches the value for global configuration 'Cache.GTS.StatusFaveTTL' field
+func GetCacheGTSStatusFaveTTL() time.Duration { return global.GetCacheGTSStatusFaveTTL() }
+
+// SetCacheGTSStatusFaveTTL safely sets the value for global configuration 'Cache.GTS.StatusFaveTTL' field
+func SetCacheGTSStatusFaveTTL(v time.Duration) { global.SetCacheGTSStatusFaveTTL(v) }
+
+// GetCacheGTSStatusFaveSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.StatusFaveSweepFreq' field
+func (st *ConfigState) GetCacheGTSStatusFaveSweepFreq() (v time.Duration) {
+	st.mutex.Lock()
+	v = st.config.Cache.GTS.StatusFaveSweepFreq
+	st.mutex.Unlock()
+	return
+}
+
+// SetCacheGTSStatusFaveSweepFreq safely sets the Configuration value for state's 'Cache.GTS.StatusFaveSweepFreq' field
+func (st *ConfigState) SetCacheGTSStatusFaveSweepFreq(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.StatusFaveSweepFreq = v
+	st.reloadToViper()
+}
+
+// CacheGTSStatusFaveSweepFreqFlag returns the flag name for the 'Cache.GTS.StatusFaveSweepFreq' field
+func CacheGTSStatusFaveSweepFreqFlag() string { return "cache-gts-status-fave-sweep-freq" }
+
+// GetCacheGTSStatusFaveSweepFreq safely fetches the value for global configuration 'Cache.GTS.StatusFaveSweepFreq' field
+func GetCacheGTSStatusFaveSweepFreq() time.Duration { return global.GetCacheGTSStatusFaveSweepFreq() }
+
+// SetCacheGTSStatusFaveSweepFreq safely sets the value for global configuration 'Cache.GTS.StatusFaveSweepFreq' field
+func SetCacheGTSStatusFaveSweepFreq(v time.Duration) { global.SetCacheGTSStatusFaveSweepFreq(v) }
+
 // GetCacheGTSTombstoneMaxSize safely fetches the Configuration value for state's 'Cache.GTS.TombstoneMaxSize' field
 func (st *ConfigState) GetCacheGTSTombstoneMaxSize() (v int) {
 	st.mutex.Lock()
