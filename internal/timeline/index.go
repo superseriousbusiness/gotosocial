@@ -24,6 +24,7 @@ import (
 	"fmt"
 
 	"codeberg.org/gruf/go-kv"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
@@ -35,74 +36,138 @@ func (t *timeline) ItemIndexLength(ctx context.Context) int {
 }
 
 func (t *timeline) indexBehind(ctx context.Context, itemID string, amount int) error {
-	l := log.WithContext(ctx).
-		WithFields(kv.Fields{{"amount", amount}}...)
+	l := log.WithContext(ctx).WithFields(kv.Fields{
+		{"amount", amount},
+		{"itemID", itemID},
+	}...)
 
-	// lazily initialize index if it hasn't been done already
+	// Lazily init indexed items.
 	if t.indexedItems.data == nil {
 		t.indexedItems.data = &list.List{}
 		t.indexedItems.data.Init()
 	}
 
-	// If we're already indexedBehind given itemID by the required amount, we can return nil.
-	// First find position of itemID (or as near as possible).
+	// If we're already indexedBehind given itemID
+	// by the required amount, we can return nil.
+	// First find position of requested itemID.
 	var position int
-positionLoop:
 	for e := t.indexedItems.data.Front(); e != nil; e = e.Next() {
 		entry, ok := e.Value.(*indexedItemsEntry)
 		if !ok {
-			return errors.New("indexBehind: could not parse e as an itemIndexEntry")
+			l.Panic(ctx, "could not parse e as indexedItemsEntry")
 		}
 
 		if entry.itemID <= itemID {
-			// we've found it
-			break positionLoop
+			// We've found it.
+			break
 		}
+
 		position++
 	}
 
-	// now check if the length of indexed items exceeds the amount of items required (position of itemID, plus amount of posts requested after that)
-	if t.indexedItems.data.Len() > position+amount {
-		// we have enough indexed behind already to satisfy amount, so don't need to make db calls
+	// Check if the length of items already indexed
+	// satisfies the amount of items required.
+	var (
+		requestedPosition       = position + amount
+		additionalItemsRequired = requestedPosition - t.indexedItems.data.Len()
+	)
+
+	if additionalItemsRequired <= 0 {
+		// We already have enough indexed behind the mark to
+		// satisfy amount, so no need to make more db calls.
 		l.Trace("returning nil since we already have enough items indexed")
 		return nil
 	}
 
-	toIndex := []Timelineable{}
-	offsetID := itemID
+	l.Tracef("%d additional items must be indexed to reach requested position %d", additionalItemsRequired, requestedPosition)
 
-	l.Trace("entering grabloop")
-grabloop:
-	for i := 0; len(toIndex) < amount && i < 5; i++ { // try the grabloop 5 times only
-		// first grab items using the caller-provided grab function
-		l.Trace("grabbing...")
-		items, stop, err := t.grabFunction(ctx, t.accountID, offsetID, "", "", amount)
+	var (
+		additionalItems = make([]Timelineable, 0, additionalItemsRequired)
+		offsetID        string
+	)
+
+	// Derive offsetID from the last entry in the list to
+	// avoid making duplicate calls for entries we already
+	// have indexed.
+	if e := t.indexedItems.data.Back(); e != nil {
+		entry, ok := e.Value.(*indexedItemsEntry)
+		if !ok {
+			l.Panic(ctx, "could not parse e as indexedItemsEntry")
+		}
+
+		offsetID = entry.itemID
+	} else {
+		// List was empty, so just use itemID.
+		offsetID = itemID
+	}
+
+	// It's possible that we'll grab items that should be
+	// filtered out, so we can't just grab additionalItemsLen
+	// once and assume we'll end up with enough items.
+	//
+	// Instead, we'll try 5 times to grab the items we need.
+	for attempts := 0; ; attempts++ {
+		innerL := l.WithField("attempts", attempts)
+
+		if attempts > 5 {
+			innerL.Trace("max attempts reached while grabbing, breaking")
+			break
+		}
+
+		innerL.Tracef("trying grab with offsetID %s", offsetID)
+
+		// Check how many items we still need to get.
+		remainingRequiredItems := additionalItemsRequired - len(additionalItems)
+		if remainingRequiredItems <= 0 {
+			innerL.Trace("got all required items while grabbing, breaking")
+			break
+		}
+
+		items, stop, err := t.grabFunction(ctx, t.accountID, offsetID, "", "", remainingRequiredItems)
 		if err != nil {
-			return err
-		}
-		if stop {
-			break grabloop
+			if errors.Is(err, db.ErrNoEntries) {
+				innerL.Trace("no items left to index while grabbing, breaking")
+				break
+			}
+
+			// Real error.
+			return fmt.Errorf("indexBehind: error calling grabFunction: %w", err)
 		}
 
-		l.Trace("filtering...")
-		// now filter each item using the caller-provided filter function
+		if stop {
+			innerL.Trace("grab function returned stop, breaking")
+			break
+		}
+
+		if itemsLen := len(items); itemsLen != 0 {
+			// For the next offset, use the last item (we're paging down).
+			offsetID = items[itemsLen-1].GetID()
+		} else {
+			innerL.Trace("grab function returned 0 items, breaking")
+			break
+		}
+
+		// Filter each item using the caller-provided filter function.
 		for _, item := range items {
 			shouldIndex, err := t.filterFunction(ctx, t.accountID, item)
 			if err != nil {
-				return err
+				innerL.Warnf("error calling filterFunction for item with id %s: %q", item.GetID(), err)
+				continue
 			}
-			if shouldIndex {
-				toIndex = append(toIndex, item)
+
+			if !shouldIndex {
+				continue
 			}
-			offsetID = item.GetID()
+
+			additionalItems = append(additionalItems, item)
 		}
 	}
 	l.Trace("left grabloop")
 
-	// index the items we got
-	for _, s := range toIndex {
+	// Index all the items we got.
+	for _, s := range additionalItems {
 		if _, err := t.IndexOne(ctx, s.GetID(), s.GetBoostOfID(), s.GetAccountID(), s.GetBoostOfAccountID()); err != nil {
-			return fmt.Errorf("indexBehind: error indexing item with id %s: %s", s.GetID(), err)
+			return fmt.Errorf("indexBehind: error indexing item with id %s: %w", s.GetID(), err)
 		}
 	}
 
@@ -136,44 +201,56 @@ func (t *timeline) IndexAndPrepareOne(ctx context.Context, statusID string, boos
 
 	inserted, err := t.indexedItems.insertIndexed(ctx, postIndexEntry)
 	if err != nil {
-		return inserted, fmt.Errorf("IndexAndPrepareOne: error inserting indexed: %s", err)
+		return false, fmt.Errorf("IndexAndPrepareOne: error inserting indexed: %w", err)
 	}
 
-	if inserted {
-		if err := t.prepare(ctx, statusID); err != nil {
-			return inserted, fmt.Errorf("IndexAndPrepareOne: error preparing: %s", err)
-		}
+	if !inserted {
+		// Item wasn't inserted so we
+		// don't need to prepare it.
+		return false, nil
 	}
 
-	return inserted, nil
+	return inserted, t.prepare(ctx, statusID)
 }
 
 func (t *timeline) OldestIndexedItemID(ctx context.Context) (string, error) {
-	var id string
-	if t.indexedItems == nil || t.indexedItems.data == nil || t.indexedItems.data.Back() == nil {
-		// return an empty string if postindex hasn't been initialized yet
-		return id, nil
+	if t.indexedItems == nil || t.indexedItems.data == nil {
+		// indexedItems hasnt been initialized yet.
+		// Return an empty string.
+		return "", nil
 	}
 
 	e := t.indexedItems.data.Back()
+	if e == nil {
+		// List was empty, return empty string.
+		return "", nil
+	}
+
 	entry, ok := e.Value.(*indexedItemsEntry)
 	if !ok {
-		return id, errors.New("OldestIndexedItemID: could not parse e as itemIndexEntry")
+		log.Panic(ctx, "could not parse e as indexedItemsEntry")
 	}
+
 	return entry.itemID, nil
 }
 
 func (t *timeline) NewestIndexedItemID(ctx context.Context) (string, error) {
-	var id string
-	if t.indexedItems == nil || t.indexedItems.data == nil || t.indexedItems.data.Front() == nil {
-		// return an empty string if postindex hasn't been initialized yet
-		return id, nil
+	if t.indexedItems == nil || t.indexedItems.data == nil {
+		// indexedItems hasnt been initialized yet.
+		// Return an empty string.
+		return "", nil
 	}
 
 	e := t.indexedItems.data.Front()
+	if e == nil {
+		// List was empty, return empty string.
+		return "", nil
+	}
+
 	entry, ok := e.Value.(*indexedItemsEntry)
 	if !ok {
-		return id, errors.New("NewestIndexedItemID: could not parse e as itemIndexEntry")
+		log.Panic(ctx, "could not parse e as indexedItemsEntry")
 	}
+
 	return entry.itemID, nil
 }
