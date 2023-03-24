@@ -15,8 +15,7 @@ type Processable func() error
 // that only a single instance of it is ever running at any one time.
 type Processor struct {
 	mutex sync.Mutex
-	state uint32
-	wait  sync.WaitGroup
+	wait  *sync.WaitGroup
 	err   *error
 }
 
@@ -26,24 +25,34 @@ func (p *Processor) Process(proc Processable) (err error) {
 	// Acquire state lock.
 	p.mutex.Lock()
 
-	if p.state != 0 {
+	if p.wait != nil {
 		// Already running.
 		//
-		// Get current err ptr.
+		// Get current ptrs.
+		waitPtr := p.wait
 		errPtr := p.err
 
-		// Wait until finish.
+		// Free state lock.
 		p.mutex.Unlock()
-		p.wait.Wait()
+
+		// Wait for finish.
+		waitPtr.Wait()
 		return *errPtr
 	}
 
-	// Reset error ptr.
-	p.err = new(error)
+	// Alloc waiter for new process.
+	var wait sync.WaitGroup
+
+	// No need to alloc new error as
+	// we use the alloc'd named error
+	// return required for panic handling.
+
+	// Reset ptrs.
+	p.wait = &wait
+	p.err = &err
 
 	// Set started.
-	p.wait.Add(1)
-	p.state = 1
+	wait.Add(1)
 	p.mutex.Unlock()
 
 	defer func() {
@@ -57,15 +66,12 @@ func (p *Processor) Process(proc Processable) (err error) {
 			err = fmt.Errorf("caught panic: %v", r)
 		}
 
-		// Store error.
-		*p.err = err
-
 		// Mark done.
-		p.wait.Done()
+		wait.Done()
 
 		// Set stopped.
 		p.mutex.Lock()
-		p.state = 0
+		p.wait = nil
 		p.mutex.Unlock()
 	}()
 
