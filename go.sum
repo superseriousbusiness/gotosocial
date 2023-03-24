@@ -79,8 +79,8 @@ codeberg.org/gruf/go-mutexes v1.1.5 h1:8Y8DwCGf24MyzOSaPvLrtk/B4ecVx4z+fppL6dY+P
 codeberg.org/gruf/go-mutexes v1.1.5/go.mod h1:1j/6/MBeBQUedAtAtysLLnBKogfOZAxdym0E3wlaBD8=
 codeberg.org/gruf/go-pools v1.1.0 h1:LbYP24eQLl/YI1fSU2pafiwhGol1Z1zPjRrMsXpF88s=
 codeberg.org/gruf/go-pools v1.1.0/go.mod h1:ZMYpt/DjQWYC3zFD3T97QWSFKs62zAUGJ/tzvgB9D68=
-codeberg.org/gruf/go-runners v1.6.0 h1:cAHKxMgtkb3v6it4qZZs4fo+yYgICNCrYvFlayuvSdk=
-codeberg.org/gruf/go-runners v1.6.0/go.mod h1:QRcSExqXX8DM0rm8Xs6qX7baOzyvw0JIe4mu3TsQT+Y=
+codeberg.org/gruf/go-runners v1.6.1 h1:0KNiEfGnmNUs9intqxEAWqIKUyxVOmYTtn3kPVOHsjQ=
+codeberg.org/gruf/go-runners v1.6.1/go.mod h1:QRcSExqXX8DM0rm8Xs6qX7baOzyvw0JIe4mu3TsQT+Y=
 codeberg.org/gruf/go-sched v1.2.3 h1:H5ViDxxzOBR3uIyGBCf0eH8b1L8wMybOXcdtUUTXZHk=
 codeberg.org/gruf/go-sched v1.2.3/go.mod h1:vT9uB6KWFIIwnG9vcPY2a0alYNoqdL1mSzRM8I+PK7A=
 codeberg.org/gruf/go-store/v2 v2.2.1 h1:lbvMjhMLebefiaPNLtWvPySKSYM5xN1aztSxxz+vCzU=
