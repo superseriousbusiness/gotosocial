@@ -79,7 +79,7 @@ module.exports = function ImportExportForm({ form, submitParse, parseResult }) {
 						showError={false}
 					/>
 					<label className="button with-icon">
-						<i class="fa fa-fw " aria-hidden="true" />
+						<i className="fa fa-fw " aria-hidden="true" />
 						Import file
 						<input
 							type="file"
