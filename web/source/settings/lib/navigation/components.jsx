@@ -36,8 +36,8 @@ const {
 function Sidebar(menuTree) {
 	return function SidebarComponent() {
 		return (
-			<nav>
-				<ul>
+			<nav className="menu-tree">
+				<ul className="top-level">
 					{menuTree}
 				</ul>
 			</nav>
@@ -87,23 +87,31 @@ function MenuComponent({ name, url, icon, permissions, links, level = 0, childre
 		return null;
 	}
 
-	const className = [
+	const classes = [
 		children?.length > 0
 			? "category"
-			: "",
-		level > 0
-			? `nested-${level}`
-			: "top-level",
-		isActive
-			? "active"
-			: ""
-	].join(" ");
+			: "item",
+	];
+
+	if (level == 0) {
+		classes.push("top-level");
+	} else if (level == 1) {
+		classes.push("expanding");
+	} else {
+		classes.push("nested");
+	}
+
+	if (isActive) {
+		classes.push("active");
+	}
+
+	const className = classes.join(" ");
 
 	return (
 		<li className={className}>
 			<Link href={url}>
-				<a tabIndex={(level == 0 || isActive) ? "-1" : null}>
-					{icon && <i className={`fa fa-fw ${icon}`} aria-hidden="true" />}
+				<a tabIndex={(level == 0 || (level == 1 && isActive)) ? "-1" : null} className="title">
+					{icon && <i className={`icon fa fa-fw ${icon}`} aria-hidden="true" />}
 					{name}
 				</a>
 			</Link>
