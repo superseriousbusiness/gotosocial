@@ -21,6 +21,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"text/tabwriter"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
@@ -91,6 +93,48 @@ var Create action.GTSAction = func(ctx context.Context) error {
 	}
 
 	return dbConn.Stop(ctx)
+}
+
+// List returns all existing local accounts.
+var List action.GTSAction = func(ctx context.Context) error {
+	var state state.State
+	state.Caches.Init()
+	state.Workers.Start()
+
+	dbConn, err := bundb.NewBunDBService(ctx, &state)
+	if err != nil {
+		return fmt.Errorf("error creating dbservice: %s", err)
+	}
+
+	// Set the state DB connection
+	state.DB = dbConn
+
+	users, err := dbConn.GetAllUsers(ctx)
+	if err != nil {
+		return err
+	}
+
+	fmtBool := func(b *bool) string {
+		if b == nil {
+			return "unknown"
+		}
+		return fmt.Sprintf("%t", *b)
+	}
+
+	fmtDate := func(t time.Time) string {
+		if t.Equal(time.Time{}) {
+			return "no"
+		}
+		return "yes"
+	}
+
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
+	fmt.Fprintln(w, "user\taccount\tapproved\tadmin\tmoderator\tsuspended\tconfirmed")
+	for _, u := range users {
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", u.Account.Username, u.AccountID, fmtBool(u.Approved), fmtBool(u.Admin), fmtBool(u.Moderator), fmtDate(u.Account.SuspendedAt), fmtDate(u.ConfirmedAt))
+	}
+	w.Flush()
+	return nil
 }
 
 // Confirm sets a user to Approved, sets Email to the current UnconfirmedEmail value, and sets ConfirmedAt to now.
