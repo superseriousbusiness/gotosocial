@@ -70,7 +70,7 @@ func (p *Processor) FollowingGet(ctx context.Context, requestingAccount *gtsmode
 		return []apimodel.Account{}, nil
 	}
 
-	return p.accountsFromFollows(ctx, follows, requestingAccount.ID)
+	return p.targetAccountsFromFollows(ctx, follows, requestingAccount.ID)
 }
 
 // RelationshipGet returns a relationship model describing the relationship of the targetAccount to the Authed account.
@@ -113,8 +113,35 @@ func (p *Processor) accountsFromFollows(ctx context.Context, follows []*gtsmodel
 			err = fmt.Errorf("accountsFromFollows: error converting account to api account: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
+
 		accounts = append(accounts, *account)
 	}
+	return accounts, nil
+}
 
+func (p *Processor) targetAccountsFromFollows(ctx context.Context, follows []*gtsmodel.Follow, requestingAccountID string) ([]apimodel.Account, gtserror.WithCode) {
+	accounts := make([]apimodel.Account, 0, len(follows))
+	for _, follow := range follows {
+		if follow.TargetAccount == nil {
+			// No account set for some reason; just skip.
+			log.WithContext(ctx).WithField("follow", follow).Warn("follow had no associated target account")
+			continue
+		}
+
+		if blocked, err := p.state.DB.IsEitherBlocked(ctx, requestingAccountID, follow.TargetAccountID); err != nil {
+			err = fmt.Errorf("targetAccountsFromFollows: db error checking block: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		} else if blocked {
+			continue
+		}
+
+		account, err := p.tc.AccountToAPIAccountPublic(ctx, follow.TargetAccount)
+		if err != nil {
+			err = fmt.Errorf("targetAccountsFromFollows: error converting account to api account: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
+		accounts = append(accounts, *account)
+	}
 	return accounts, nil
 }
