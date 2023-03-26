@@ -118,7 +118,10 @@ var List action.GTSAction = func(ctx context.Context) error {
 		if b == nil {
 			return "unknown"
 		}
-		return fmt.Sprintf("%t", *b)
+		if *b {
+			return "yes"
+		}
+		return "no"
 	}
 
 	fmtDate := func(t time.Time) string {
