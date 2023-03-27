@@ -142,9 +142,12 @@ func (t *timelineDB) GetPublicTimeline(ctx context.Context, maxID string, sinceI
 		Order("status.id DESC")
 
 	if maxID == "" {
+		const future = 24 * time.Hour
+
 		var err error
-		// don't return statuses more than five minutes in the future
-		maxID, err = id.NewULIDFromTime(time.Now().Add(5 * time.Minute))
+
+		// don't return statuses more than 24hr in the future
+		maxID, err = id.NewULIDFromTime(time.Now().Add(future))
 		if err != nil {
 			return nil, err
 		}
