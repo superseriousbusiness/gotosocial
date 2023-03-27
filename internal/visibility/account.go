@@ -108,7 +108,7 @@ func (f *Filter) isAccountVisibleTo(ctx context.Context, requester *gtsmodel.Acc
 
 // isAccountVisible will check if given account should be visible at all, e.g. it may not be if suspended or disabled.
 func (f *Filter) isAccountVisible(ctx context.Context, account *gtsmodel.Account) (bool, error) {
-	if account.Domain == "" {
+	if account.IsLocal() {
 		// This is a local account.
 
 		if account.Username == config.GetHost() {
