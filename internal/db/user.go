@@ -25,6 +25,8 @@ import (
 
 // User contains functions related to user getting/setting/creation.
 type User interface {
+	// GetAllUsers returns all local user accounts, or an error if something goes wrong.
+	GetAllUsers(ctx context.Context) ([]*gtsmodel.User, Error)
 	// GetUserByID returns one user with the given ID, or an error if something goes wrong.
 	GetUserByID(ctx context.Context, id string) (*gtsmodel.User, Error)
 	// GetUserByAccountID returns one user by its account ID, or an error if something goes wrong.

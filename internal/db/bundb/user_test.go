@@ -29,6 +29,12 @@ type UserTestSuite struct {
 	BunDBStandardTestSuite
 }
 
+func (suite *UserTestSuite) TestGetAllUsers() {
+	users, err := suite.db.GetAllUsers(context.Background())
+	suite.NoError(err)
+	suite.Len(users, len(suite.testUsers))
+}
+
 func (suite *UserTestSuite) TestGetUser() {
 	user, err := suite.db.GetUserByID(context.Background(), suite.testUsers["local_account_1"].ID)
 	suite.NoError(err)

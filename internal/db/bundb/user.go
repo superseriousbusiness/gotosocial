@@ -122,6 +122,20 @@ func (u *userDB) GetUserByConfirmationToken(ctx context.Context, confirmationTok
 	}, confirmationToken)
 }
 
+func (u *userDB) GetAllUsers(ctx context.Context) ([]*gtsmodel.User, db.Error) {
+	var users []*gtsmodel.User
+	q := u.conn.
+		NewSelect().
+		Model(&users).
+		Relation("Account")
+
+	if err := q.Scan(ctx); err != nil {
+		return nil, u.conn.ProcessError(err)
+	}
+
+	return users, nil
+}
+
 func (u *userDB) PutUser(ctx context.Context, user *gtsmodel.User) db.Error {
 	return u.state.Caches.GTS.User().Store(user, func() error {
 		_, err := u.conn.

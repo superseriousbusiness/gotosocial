@@ -54,6 +54,18 @@ func adminCommands() *cobra.Command {
 	config.AddAdminAccountCreate(adminAccountCreateCmd)
 	adminAccountCmd.AddCommand(adminAccountCreateCmd)
 
+	adminAccountListCmd := &cobra.Command{
+		Use:   "list",
+		Short: "list all existing local accounts",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return preRun(preRunArgs{cmd: cmd})
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd.Context(), account.List)
+		},
+	}
+	adminAccountCmd.AddCommand(adminAccountListCmd)
+
 	adminAccountConfirmCmd := &cobra.Command{
 		Use:   "confirm",
 		Short: "confirm an existing local account manually, thereby skipping email confirmation",
