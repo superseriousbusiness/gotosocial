@@ -392,12 +392,13 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 						}
 						if attr.Traits&caselessAttr != 0 {
 							val = parse.ToLower(val)
-							if attr.Hash == Enctype || attr.Hash == Codetype || attr.Hash == Accept || attr.Hash == Type && (t.Hash == A || t.Hash == Link || t.Hash == Embed || t.Hash == Object || t.Hash == Source || t.Hash == Script || t.Hash == Style) {
-								val = minify.Mediatype(val)
-							}
 						}
 						if rawTagHash != 0 && attr.Hash == Type {
 							rawTagMediatype = parse.Copy(val)
+						}
+
+						if attr.Hash == Enctype || attr.Hash == Codetype || attr.Hash == Accept || attr.Hash == Type && (t.Hash == A || t.Hash == Link || t.Hash == Embed || t.Hash == Object || t.Hash == Source || t.Hash == Script || t.Hash == Style) {
+							val = minify.Mediatype(val)
 						}
 
 						// default attribute values can be omitted

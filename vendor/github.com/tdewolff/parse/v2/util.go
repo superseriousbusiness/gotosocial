@@ -280,12 +280,7 @@ func replaceEntities(b []byte, i int, entitiesMap map[string][]byte, revEntities
 			} else if r[0] == '&' {
 				// check if for example &amp; is followed by something that could potentially be an entity
 				k := j + 1
-				if k < len(b) && b[k] == '#' {
-					k++
-				}
-				for ; k < len(b) && k-j <= MaxEntityLength && (b[k] >= '0' && b[k] <= '9' || b[k] >= 'a' && b[k] <= 'z' || b[k] >= 'A' && b[k] <= 'Z'); k++ {
-				}
-				if k < len(b) && b[k] == ';' {
+				if k < len(b) && (b[k] >= '0' && b[k] <= '9' || b[k] >= 'a' && b[k] <= 'z' || b[k] >= 'A' && b[k] <= 'Z' || b[k] == '#') {
 					return b, k
 				}
 			}

@@ -18,11 +18,11 @@ var (
 // Epsilon is the closest number to zero that is not considered to be zero.
 var Epsilon = 0.00001
 
-// Mediatype minifies a given mediatype by removing all whitespace.
+// Mediatype minifies a given mediatype by removing all whitespace and lowercasing all parts except strings (which may be case sensitive).
 func Mediatype(b []byte) []byte {
 	j := 0
-	start := 0
 	inString := false
+	start, lastString := 0, 0
 	for i, c := range b {
 		if !inString && parse.IsWhitespace(c) {
 			if start != 0 {
@@ -33,13 +33,20 @@ func Mediatype(b []byte) []byte {
 			start = i + 1
 		} else if c == '"' {
 			inString = !inString
+			if inString {
+				parse.ToLower(b[lastString:i])
+			} else {
+				lastString = j + (i + 1 - start)
+			}
 		}
 	}
 	if start != 0 {
 		j += copy(b[j:], b[start:])
-		return parse.ToLower(b[:j])
+		parse.ToLower(b[lastString:j])
+		return b[:j]
 	}
-	return parse.ToLower(b)
+	parse.ToLower(b[lastString:])
+	return b
 }
 
 // DataURI minifies a data URI and calls a minifier by the specified mediatype. Specifications: https://www.ietf.org/rfc/rfc2397.txt.
