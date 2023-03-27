@@ -20,7 +20,6 @@ package bundb
 import (
 	"context"
 	"errors"
-	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -140,21 +139,7 @@ func (n *notificationDB) DeleteNotifications(ctx context.Context, types []string
 		Returning("?", bun.Ident("id"))
 
 	if len(types) > 0 {
-		// Create slice of query operators.
-		ops := make([]string, len(types))
-		for i := range ops {
-			ops[i] = "?"
-		}
-
-		// Create full slice of query args.
-		args := make([]any, 1+len(types))
-		args[0] = bun.Ident("notification.notification_type")
-		for i := range args[1:] {
-			args[i+1] = types[i]
-		}
-
-		// Assembly the full query string from ops and provide args.
-		q = q.Where("? IN ("+strings.Join(ops, ",")+")", args...)
+		q = q.Where("? IN (?)", bun.Ident("notification.notification_type"), bun.In(types))
 	}
 
 	if targetAccountID != "" {
