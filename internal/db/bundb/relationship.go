@@ -205,13 +205,14 @@ func newSelectLocalFollows(conn *DBConn, accountID string) *bun.SelectQuery {
 	return conn.NewSelect().
 		Table("follows").
 		Column("id").
-		Where("? = ? AND ? IN ( SELECT ? FROM ? WHERE ? IS NULL )",
+		Where("? = ? AND ? IN (?)",
 			bun.Ident("account_id"),
 			accountID,
 			bun.Ident("target_account_id"),
-			bun.Ident("id"),
-			bun.Ident("accounts"),
-			bun.Ident("domain"),
+			conn.NewSelect().
+				Table("accounts").
+				Column("id").
+				Where("? IS NULL", bun.Ident("domain")),
 		).
 		OrderExpr("? DESC", bun.Ident("updated_at"))
 }
@@ -231,13 +232,14 @@ func newSelectLocalFollowers(conn *DBConn, accountID string) *bun.SelectQuery {
 	return conn.NewSelect().
 		Table("follows").
 		Column("id").
-		Where("? = ? AND ? IN ( SELECT ? FROM ? WHERE ? IS NULL )",
+		Where("? = ? AND ? IN (?)",
 			bun.Ident("target_account_id"),
 			accountID,
 			bun.Ident("account_id"),
-			bun.Ident("id"),
-			bun.Ident("accounts"),
-			bun.Ident("domain"),
+			conn.NewSelect().
+				Table("accounts").
+				Column("id").
+				Where("? IS NULL", bun.Ident("domain")),
 		).
 		OrderExpr("? DESC", bun.Ident("updated_at"))
 }
