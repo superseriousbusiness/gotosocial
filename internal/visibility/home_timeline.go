@@ -49,7 +49,7 @@ func (f *Filter) StatusHomeTimelineable(ctx context.Context, owner *gtsmodel.Acc
 		return &cache.CachedVisibility{
 			ItemID:      status.ID,
 			RequesterID: requesterID,
-			Type:        "home",
+			Type:        cache.VisibilityTypeHome,
 			Value:       visible,
 		}, nil
 	}, "home", requesterID, status.ID)

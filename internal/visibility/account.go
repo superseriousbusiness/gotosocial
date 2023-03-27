@@ -48,7 +48,7 @@ func (f *Filter) AccountVisible(ctx context.Context, requester *gtsmodel.Account
 		return &cache.CachedVisibility{
 			ItemID:      account.ID,
 			RequesterID: requesterID,
-			Type:        "account",
+			Type:        cache.VisibilityTypeAccount,
 			Value:       visible,
 		}, nil
 	}, "account", requesterID, account.ID)

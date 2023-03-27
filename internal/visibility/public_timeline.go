@@ -49,7 +49,7 @@ func (f *Filter) StatusPublicTimelineable(ctx context.Context, requester *gtsmod
 		return &cache.CachedVisibility{
 			ItemID:      status.ID,
 			RequesterID: requesterID,
-			Type:        "public",
+			Type:        cache.VisibilityTypePublic,
 			Value:       visible,
 		}, nil
 	}, "public", requesterID, status.ID)

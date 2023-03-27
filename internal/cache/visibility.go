@@ -52,6 +52,19 @@ func (c *VisibilityCache) Stop() {
 	tryStop(c.Cache, config.GetCacheVisibilitySweepFreq())
 }
 
+// VisibilityType represents a visibility lookup type.
+// We use a byte type here to improve performance in the
+// result cache when generating the key.
+type VisibilityType byte
+
+const (
+	// Possible cache visibility lookup types.
+	VisibilityTypeAccount = VisibilityType('a')
+	VisibilityTypeStatus  = VisibilityType('s')
+	VisibilityTypeHome    = VisibilityType('h')
+	VisibilityTypePublic  = VisibilityType('p')
+)
+
 // CachedVisibility represents a cached visibility lookup value.
 type CachedVisibility struct {
 	// ItemID is the ID of the item in question (status / account).
@@ -60,8 +73,8 @@ type CachedVisibility struct {
 	// RequesterID is the ID of the requesting account for this visibility lookup.
 	RequesterID string
 
-	// Type is the visibility lookup type: ["status", "account", "home", "public"]
-	Type string
+	// Type is the visibility lookup type.
+	Type VisibilityType
 
 	// Value is the actual visibility value.
 	Value bool

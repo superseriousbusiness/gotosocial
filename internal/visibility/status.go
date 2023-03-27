@@ -68,7 +68,7 @@ func (f *Filter) StatusVisible(ctx context.Context, requester *gtsmodel.Account,
 		return &cache.CachedVisibility{
 			ItemID:      status.ID,
 			RequesterID: requesterID,
-			Type:        "status",
+			Type:        cache.VisibilityTypeStatus,
 			Value:       visible,
 		}, nil
 	}, "status", requesterID, status.ID)
