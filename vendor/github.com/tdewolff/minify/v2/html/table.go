@@ -137,7 +137,7 @@ var tagMap = map[Hash]traits{
 }
 
 var attrMap = map[Hash]traits{
-	Accept:          caselessAttr,
+	Accept:          trimAttr,
 	Accept_Charset:  caselessAttr,
 	Action:          urlAttr,
 	Align:           caselessAttr,
@@ -156,7 +156,7 @@ var attrMap = map[Hash]traits{
 	Classid:         urlAttr,
 	Clear:           caselessAttr,
 	Codebase:        urlAttr,
-	Codetype:        caselessAttr,
+	Codetype:        trimAttr,
 	Color:           caselessAttr,
 	Cols:            trimAttr,
 	Colspan:         trimAttr,
@@ -172,7 +172,7 @@ var attrMap = map[Hash]traits{
 	Dir:             caselessAttr,
 	Disabled:        booleanAttr,
 	Enabled:         booleanAttr,
-	Enctype:         caselessAttr,
+	Enctype:         trimAttr,
 	Face:            caselessAttr,
 	Formaction:      urlAttr,
 	Formnovalidate:  booleanAttr,
@@ -228,7 +228,7 @@ var attrMap = map[Hash]traits{
 	Text:            caselessAttr,
 	Translate:       caselessAttr,
 	Truespeed:       booleanAttr,
-	Type:            caselessAttr,
+	Type:            trimAttr,
 	Typemustmatch:   booleanAttr,
 	Undeterminate:   booleanAttr,
 	Usemap:          urlAttr,
