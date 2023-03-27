@@ -60,9 +60,13 @@ For bugs and feature requests, please check to see if there's [already an issue]
 
 ## Credits
 
-### Image Attribution
+### Image Attribution and Licensing
 
-Sloth logo by [Anna Abramek](https://abramek.art/), Copyright (C) 2021-2023 the GoToSocial Authors.
+Sloth logo by [Anna Abramek](https://abramek.art/).
+
+<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a><br />The GoToSocial sloth mascot is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+
+For more information on GoToSocial image licensing, see [here](https://github.com/superseriousbusiness/gotosocial#image-attribution-and-licensing).
 
 ### Developers
 

@@ -41,7 +41,7 @@ Here's a screenshot of the instance landing page!
 - [Contact](#contact)
 - [Credits](#credits)
   - [Libraries](#libraries)
-  - [Image Attribution](#image-attribution)
+  - [Image Attribution and Licensing](#image-attribution-and-licensing)
   - [Team](#team)
   - [Special Thanks](#special-thanks)
 - [Sponsorship + Funding](#sponsorship--funding)
@@ -262,9 +262,22 @@ The following libraries and frameworks are used by GoToSocial, with gratitude �
 - [wagslane/go-password-validator](https://github.com/wagslane/go-password-validator); password strength validation. [MIT License](https://spdx.org/licenses/MIT.html).
 - [ulule/limiter](https://github.com/ulule/limiter); http rate limit middleware. [MIT License](https://spdx.org/licenses/MIT.html).
 
-### Image Attribution
+### Image Attribution and Licensing
 
-Sloth logo by [Anna Abramek](https://abramek.art/), Copyright (C) 2021-2023 the GoToSocial Authors.
+Sloth logo by [Anna Abramek](https://abramek.art/).
+
+<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a><br />The GoToSocial sloth mascot is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+
+The Creative Commons Attribution-ShareAlike 4.0 International License license applies specifically to the following files and subdirectories of this repository:
+
+- [sloth logo png](./web/assets/logo.png)
+- [sloth logo svg](./web/assets/logo.svg)
+- [all default avatars](./web/assets/default_avatars)
+
+Under the terms of the license, you are free to:
+
+- Share — copy and redistribute the abovementioned material in any medium or format.
+- Adapt — remix, transform, and build upon the abovementioned material for any purpose, even commercially.
 
 ### Team
 
