@@ -138,8 +138,6 @@ func (t *timelineDB) GetPublicTimeline(ctx context.Context, maxID string, sinceI
 		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
 		Column("status.id").
 		Where("? = ?", bun.Ident("status.visibility"), gtsmodel.VisibilityPublic).
-		WhereGroup(" AND ", whereEmptyOrNull("status.in_reply_to_id")).
-		WhereGroup(" AND ", whereEmptyOrNull("status.in_reply_to_uri")).
 		WhereGroup(" AND ", whereEmptyOrNull("status.boost_of_id")).
 		Order("status.id DESC")
 
