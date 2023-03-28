@@ -19,6 +19,8 @@ package bundb_test
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"testing"
 	"time"
 
@@ -40,6 +42,12 @@ func (suite *BasicTestSuite) TestGetAccountByID() {
 }
 
 func (suite *BasicTestSuite) TestPutAccountWithBunDefaultFields() {
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Create an account that only just matches constraints.
 	testAccount := &gtsmodel.Account{
 		ID:           "01GADR1AH9VCKH8YYCM86XSZ00",
 		Username:     "test",
@@ -49,6 +57,7 @@ func (suite *BasicTestSuite) TestPutAccountWithBunDefaultFields() {
 		OutboxURI:    "https://example.org/users/test/outbox",
 		ActorType:    "Person",
 		PublicKeyURI: "https://example.org/test#main-key",
+		PublicKey:    &key.PublicKey,
 	}
 
 	if err := suite.db.Put(context.Background(), testAccount); err != nil {
@@ -99,7 +108,7 @@ func (suite *BasicTestSuite) TestPutAccountWithBunDefaultFields() {
 	suite.Empty(a.FeaturedCollectionURI)
 	suite.Equal(testAccount.ActorType, a.ActorType)
 	suite.Nil(a.PrivateKey)
-	suite.Nil(a.PublicKey)
+	suite.EqualValues(key.PublicKey, *a.PublicKey)
 	suite.Equal(testAccount.PublicKeyURI, a.PublicKeyURI)
 	suite.Zero(a.SensitizedAt)
 	suite.Zero(a.SilencedAt)
