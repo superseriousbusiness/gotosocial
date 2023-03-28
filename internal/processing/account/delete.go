@@ -150,25 +150,25 @@ func (p *Processor) deleteUserAndTokensForAccount(ctx context.Context, account *
 //   - Follow requests created by account.
 func (p *Processor) deleteAccountFollows(ctx context.Context, account *gtsmodel.Account) error {
 	// Delete follows targeting this account.
-	followedBy, err := p.state.DB.GetFollows(ctx, "", account.ID)
+	followedBy, err := p.state.DB.GetAccountFollowers(ctx, account.ID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return fmt.Errorf("deleteAccountFollows: db error getting follows targeting account %s: %w", account.ID, err)
 	}
 
 	for _, follow := range followedBy {
-		if _, err := p.state.DB.Unfollow(ctx, follow.AccountID, account.ID); err != nil {
+		if err := p.state.DB.DeleteFollowByID(ctx, follow.ID); err != nil {
 			return fmt.Errorf("deleteAccountFollows: db error unfollowing account followedBy: %w", err)
 		}
 	}
 
 	// Delete follow requests targeting this account.
-	followRequestedBy, err := p.state.DB.GetFollowRequests(ctx, "", account.ID)
+	followRequestedBy, err := p.state.DB.GetAccountFollowRequests(ctx, account.ID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return fmt.Errorf("deleteAccountFollows: db error getting follow requests targeting account %s: %w", account.ID, err)
 	}
 
 	for _, followRequest := range followRequestedBy {
-		if _, err := p.state.DB.UnfollowRequest(ctx, followRequest.AccountID, account.ID); err != nil {
+		if err := p.state.DB.DeleteFollowRequestByID(ctx, followRequest.ID); err != nil {
 			return fmt.Errorf("deleteAccountFollows: db error unfollowing account followRequestedBy: %w", err)
 		}
 	}
@@ -183,7 +183,7 @@ func (p *Processor) deleteAccountFollows(ctx context.Context, account *gtsmodel.
 	)
 
 	// Delete follows originating from this account.
-	following, err := p.state.DB.GetFollows(ctx, account.ID, "")
+	following, err := p.state.DB.GetAccountFollows(ctx, account.ID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return fmt.Errorf("deleteAccountFollows: db error getting follows owned by account %s: %w", account.ID, err)
 	}
@@ -191,15 +191,9 @@ func (p *Processor) deleteAccountFollows(ctx context.Context, account *gtsmodel.
 	// For each follow owned by this account, unfollow
 	// and process side effects (noop if remote account).
 	for _, follow := range following {
-		if uri, err := p.state.DB.Unfollow(ctx, account.ID, follow.TargetAccountID); err != nil {
+		if err := p.state.DB.DeleteFollowByID(ctx, follow.ID); err != nil {
 			return fmt.Errorf("deleteAccountFollows: db error unfollowing account: %w", err)
-		} else if uri == "" {
-			// There was no follow after all.
-			// Some race condition? Skip.
-			log.WithContext(ctx).WithField("follow", follow).Warn("Unfollow did not return uri, likely race condition")
-			continue
 		}
-
 		if msg := unfollowSideEffects(ctx, account, follow); msg != nil {
 			// There was a side effect to process.
 			msgs = append(msgs, *msg)
@@ -207,7 +201,7 @@ func (p *Processor) deleteAccountFollows(ctx context.Context, account *gtsmodel.
 	}
 
 	// Delete follow requests originating from this account.
-	followRequesting, err := p.state.DB.GetFollowRequests(ctx, account.ID, "")
+	followRequesting, err := p.state.DB.GetAccountFollowRequesting(ctx, account.ID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return fmt.Errorf("deleteAccountFollows: db error getting follow requests owned by account %s: %w", account.ID, err)
 	}
@@ -215,23 +209,15 @@ func (p *Processor) deleteAccountFollows(ctx context.Context, account *gtsmodel.
 	// For each follow owned by this account, unfollow
 	// and process side effects (noop if remote account).
 	for _, followRequest := range followRequesting {
-		uri, err := p.state.DB.UnfollowRequest(ctx, account.ID, followRequest.TargetAccountID)
-		if err != nil {
-			return fmt.Errorf("deleteAccountFollows: db error unfollowRequesting account: %w", err)
-		}
-
-		if uri == "" {
-			// There was no follow request after all.
-			// Some race condition? Skip.
-			log.WithContext(ctx).WithField("followRequest", followRequest).Warn("UnfollowRequest did not return uri, likely race condition")
-			continue
+		if err := p.state.DB.DeleteFollowRequestByID(ctx, followRequest.ID); err != nil {
+			return fmt.Errorf("deleteAccountFollows: db error unfollowingRequesting account: %w", err)
 		}
 
 		// Dummy out a follow so our side effects func
 		// has something to work with. This follow will
 		// never enter the db, it's just for convenience.
 		follow := &gtsmodel.Follow{
-			URI:             uri,
+			URI:             followRequest.URI,
 			AccountID:       followRequest.AccountID,
 			Account:         followRequest.Account,
 			TargetAccountID: followRequest.TargetAccountID,
@@ -284,16 +270,9 @@ func (p *Processor) unfollowSideEffectsFunc(deletedAccount *gtsmodel.Account) fu
 }
 
 func (p *Processor) deleteAccountBlocks(ctx context.Context, account *gtsmodel.Account) error {
-	// Delete blocks created by this account.
-	if err := p.state.DB.DeleteBlocksByOriginAccountID(ctx, account.ID); err != nil {
-		return fmt.Errorf("deleteAccountBlocks: db error deleting blocks created by account %s: %w", account.ID, err)
+	if err := p.state.DB.DeleteAccountBlocks(ctx, account.ID); err != nil {
+		return fmt.Errorf("deleteAccountBlocks: db error deleting account blocks for %s: %w", account.ID, err)
 	}
-
-	// Delete blocks targeting this account.
-	if err := p.state.DB.DeleteBlocksByTargetAccountID(ctx, account.ID); err != nil {
-		return fmt.Errorf("deleteAccountBlocks: db error deleting blocks targeting account %s: %w", account.ID, err)
-	}
-
 	return nil
 }
 
@@ -386,13 +365,13 @@ statusLoop:
 }
 
 func (p *Processor) deleteAccountNotifications(ctx context.Context, account *gtsmodel.Account) error {
-	// Delete all notifications targeting given account.
-	if err := p.state.DB.DeleteNotifications(ctx, account.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	// Delete all notifications of all types targeting given account.
+	if err := p.state.DB.DeleteNotifications(ctx, nil, account.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
-	// Delete all notifications originating from given account.
-	if err := p.state.DB.DeleteNotifications(ctx, "", account.ID); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	// Delete all notifications of all types originating from given account.
+	if err := p.state.DB.DeleteNotifications(ctx, nil, "", account.ID); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 

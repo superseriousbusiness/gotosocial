@@ -470,6 +470,7 @@ const (
 type TypeUtilsTestSuite struct {
 	suite.Suite
 	db              db.DB
+	state           state.State
 	testAccounts    map[string]*gtsmodel.Account
 	testStatuses    map[string]*gtsmodel.Status
 	testAttachments map[string]*gtsmodel.MediaAttachment
@@ -482,13 +483,12 @@ type TypeUtilsTestSuite struct {
 }
 
 func (suite *TypeUtilsTestSuite) SetupSuite() {
-	var state state.State
-	state.Caches.Init()
+	suite.state.Caches.Init()
 
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
 
-	suite.db = testrig.NewTestDB(&state)
+	suite.db = testrig.NewTestDB(&suite.state)
 	suite.testAccounts = testrig.NewTestAccounts()
 	suite.testStatuses = testrig.NewTestStatuses()
 	suite.testAttachments = testrig.NewTestAttachments()
@@ -500,6 +500,7 @@ func (suite *TypeUtilsTestSuite) SetupSuite() {
 }
 
 func (suite *TypeUtilsTestSuite) SetupTest() {
+	suite.state.Caches.Init() // reset
 	testrig.StandardDBSetup(suite.db, nil)
 }
 

@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // Account represents either a local or a remote fediverse account, gotosocial or otherwise (mastodon, pleroma, etc).
@@ -35,8 +36,8 @@ type Account struct {
 	CreatedAt               time.Time        `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                                        // when was item created.
 	UpdatedAt               time.Time        `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                                        // when was item was last updated.
 	FetchedAt               time.Time        `validate:"required_with=Domain" bun:"type:timestamptz,nullzero"`                                                       // when was item (remote) last fetched.
-	Username                string           `validate:"required" bun:",nullzero,notnull,unique:userdomain"`                                                         // Username of the account, should just be a string of [a-zA-Z0-9_]. Can be added to domain to create the full username in the form ``[username]@[domain]`` eg., ``user_96@example.org``. Username and domain should be unique *with* each other
-	Domain                  string           `validate:"omitempty,fqdn" bun:",nullzero,unique:userdomain"`                                                           // Domain of the account, will be null if this is a local account, otherwise something like ``example.org``. Should be unique with username.
+	Username                string           `validate:"required" bun:",nullzero,notnull,unique:usernamedomain"`                                                     // Username of the account, should just be a string of [a-zA-Z0-9_]. Can be added to domain to create the full username in the form ``[username]@[domain]`` eg., ``user_96@example.org``. Username and domain should be unique *with* each other
+	Domain                  string           `validate:"omitempty,fqdn" bun:",nullzero,unique:usernamedomain"`                                                       // Domain of the account, will be null if this is a local account, otherwise something like ``example.org``. Should be unique with username.
 	AvatarMediaAttachmentID string           `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                                                // Database ID of the media attachment, if present
 	AvatarMediaAttachment   *MediaAttachment `validate:"-" bun:"rel:belongs-to"`                                                                                     // MediaAttachment corresponding to avatarMediaAttachmentID
 	AvatarRemoteURL         string           `validate:"omitempty,url" bun:",nullzero"`                                                                              // For a non-local account, where can the header be fetched?
@@ -70,8 +71,8 @@ type Account struct {
 	FollowersURI            string           `validate:"required_without=Domain,omitempty,url" bun:",nullzero,unique"`                                               // URI for getting the followers list of this account
 	FeaturedCollectionURI   string           `validate:"required_without=Domain,omitempty,url" bun:",nullzero,unique"`                                               // URL for getting the featured collection list of this account
 	ActorType               string           `validate:"oneof=Application Group Organization Person Service" bun:",nullzero,notnull"`                                // What type of activitypub actor is this account?
-	PrivateKey              *rsa.PrivateKey  `validate:"required_without=Domain"`                                                                                    // Privatekey for validating activitypub requests, will only be defined for local accounts
-	PublicKey               *rsa.PublicKey   `validate:"required"`                                                                                                   // Publickey for encoding activitypub requests, will be defined for both local and remote accounts
+	PrivateKey              *rsa.PrivateKey  `validate:"required_without=Domain" bun:""`                                                                             // Privatekey for validating activitypub requests, will only be defined for local accounts
+	PublicKey               *rsa.PublicKey   `validate:"required" bun:",notnull,unique"`                                                                             // Publickey for encoding activitypub requests, will be defined for both local and remote accounts
 	PublicKeyURI            string           `validate:"required,url" bun:",nullzero,notnull,unique"`                                                                // Web-reachable location of this account's public key
 	SensitizedAt            time.Time        `validate:"-" bun:"type:timestamptz,nullzero"`                                                                          // When was this account set to have all its media shown as sensitive?
 	SilencedAt              time.Time        `validate:"-" bun:"type:timestamptz,nullzero"`                                                                          // When was this account silenced (eg., statuses only visible to followers, not public)?
@@ -82,21 +83,42 @@ type Account struct {
 }
 
 // IsLocal returns whether account is a local user account.
-func (a Account) IsLocal() bool {
+func (a *Account) IsLocal() bool {
 	return a.Domain == "" || a.Domain == config.GetHost() || a.Domain == config.GetAccountDomain()
 }
 
 // IsRemote returns whether account is a remote user account.
-func (a Account) IsRemote() bool {
+func (a *Account) IsRemote() bool {
 	return !a.IsLocal()
 }
 
 // IsInstance returns whether account is an instance internal actor account.
-func (a Account) IsInstance() bool {
+func (a *Account) IsInstance() bool {
 	return a.Username == a.Domain ||
 		a.FollowersURI == "" ||
 		a.FollowingURI == "" ||
 		(a.Username == "internal.fetch" && strings.Contains(a.Note, "internal service actor"))
+}
+
+// EmojisPopulated returns whether emojis are populated according to current EmojiIDs.
+func (a *Account) EmojisPopulated() bool {
+	if len(a.EmojiIDs) != len(a.Emojis) {
+		// this is the quickest indicator.
+		return false
+	}
+
+	// Emojis must be in same order.
+	for i, id := range a.EmojiIDs {
+		if a.Emojis[i] == nil {
+			log.Warnf(nil, "nil emoji in slice for account %s", a.URI)
+			continue
+		}
+		if a.Emojis[i].ID != id {
+			return false
+		}
+	}
+
+	return true
 }
 
 // AccountToEmoji is an intermediate struct to facilitate the many2many relationship between an account and one or more emojis.

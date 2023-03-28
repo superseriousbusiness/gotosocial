@@ -47,8 +47,8 @@ type Processor struct {
 	mediaManager    mm.Manager
 	statusTimelines timeline.Manager
 	state           *state.State
-	filter          visibility.Filter
 	emailSender     email.Sender
+	filter          *visibility.Filter
 
 	/*
 		SUB-PROCESSORS
@@ -107,7 +107,7 @@ func NewProcessor(
 ) *Processor {
 	parseMentionFunc := GetParseMentionFunc(state.DB, federator)
 
-	filter := visibility.NewFilter(state.DB)
+	filter := visibility.NewFilter(state)
 
 	processor := &Processor{
 		federator:    federator,
@@ -126,12 +126,12 @@ func NewProcessor(
 	}
 
 	// sub processors
-	processor.account = account.New(state, tc, mediaManager, oauthServer, federator, parseMentionFunc)
+	processor.account = account.New(state, tc, mediaManager, oauthServer, federator, filter, parseMentionFunc)
 	processor.admin = admin.New(state, tc, mediaManager, federator.TransportController(), emailSender)
-	processor.fedi = fedi.New(state, tc, federator)
+	processor.fedi = fedi.New(state, tc, federator, filter)
 	processor.media = media.New(state, tc, mediaManager, federator.TransportController())
 	processor.report = report.New(state, tc)
-	processor.status = status.New(state, tc, parseMentionFunc)
+	processor.status = status.New(state, tc, filter, parseMentionFunc)
 	processor.stream = stream.New(state, oauthServer)
 	processor.user = user.New(state, emailSender)
 
@@ -139,22 +139,24 @@ func NewProcessor(
 }
 
 func (p *Processor) EnqueueClientAPI(ctx context.Context, msgs ...messages.FromClientAPI) {
-	log.Trace(ctx, "enqueuing client API")
+	log.Trace(ctx, "enqueuing")
 	_ = p.state.Workers.ClientAPI.MustEnqueueCtx(ctx, func(ctx context.Context) {
 		for _, msg := range msgs {
+			log.Trace(ctx, "processing: %+v", msg)
 			if err := p.ProcessFromClientAPI(ctx, msg); err != nil {
-				log.WithContext(ctx).WithField("msg", msg).Errorf("error processing client API message: %v", err)
+				log.Errorf(ctx, "error processing client API message: %v", err)
 			}
 		}
 	})
 }
 
 func (p *Processor) EnqueueFederator(ctx context.Context, msgs ...messages.FromFederator) {
-	log.Trace(ctx, "enqueuing federator")
+	log.Trace(ctx, "enqueuing")
 	_ = p.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
 		for _, msg := range msgs {
+			log.Trace(ctx, "processing: %+v", msg)
 			if err := p.ProcessFromFederator(ctx, msg); err != nil {
-				log.WithContext(ctx).WithField("msg", msg).Errorf("error processing federator message: %v", err)
+				log.Errorf(ctx, "error processing federator message: %v", err)
 			}
 		}
 	})

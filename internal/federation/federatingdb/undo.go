@@ -26,7 +26,6 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
@@ -80,11 +79,11 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 				return errors.New("UNDO: follow object account and inbox account were not the same")
 			}
 			// delete any existing FOLLOW
-			if err := f.state.DB.DeleteWhere(ctx, []db.Where{{Key: "uri", Value: gtsFollow.URI}}, &gtsmodel.Follow{}); err != nil {
+			if err := f.state.DB.DeleteFollowByURI(ctx, gtsFollow.URI); err != nil && !errors.Is(err, db.ErrNoEntries) {
 				return fmt.Errorf("UNDO: db error removing follow: %s", err)
 			}
 			// delete any existing FOLLOW REQUEST
-			if err := f.state.DB.DeleteWhere(ctx, []db.Where{{Key: "uri", Value: gtsFollow.URI}}, &gtsmodel.FollowRequest{}); err != nil {
+			if err := f.state.DB.DeleteFollowRequestByURI(ctx, gtsFollow.URI); err != nil && !errors.Is(err, db.ErrNoEntries) {
 				return fmt.Errorf("UNDO: db error removing follow request: %s", err)
 			}
 			l.Debug("follow undone")

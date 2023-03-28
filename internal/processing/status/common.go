@@ -43,12 +43,7 @@ func (p *Processor) getVisibleStatus(ctx context.Context, requestingAccount *gts
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	if targetStatus.Account == nil {
-		err = fmt.Errorf("getVisibleStatus: no status owner for status %s", targetStatusID)
-		return nil, gtserror.NewErrorNotFound(err)
-	}
-
-	visible, err := p.filter.StatusVisible(ctx, targetStatus, requestingAccount)
+	visible, err := p.filter.StatusVisible(ctx, requestingAccount, targetStatus)
 	if err != nil {
 		err = fmt.Errorf("getVisibleStatus: error seeing if status %s is visible: %w", targetStatus.ID, err)
 		return nil, gtserror.NewErrorNotFound(err)

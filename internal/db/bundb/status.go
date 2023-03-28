@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -41,7 +42,6 @@ func (s *statusDB) newStatusQ(status interface{}) *bun.SelectQuery {
 	return s.conn.
 		NewSelect().
 		Model(status).
-		Relation("Attachments").
 		Relation("Tags").
 		Relation("CreatedWithApplication")
 }
@@ -102,79 +102,141 @@ func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*g
 	status, err := s.state.Caches.GTS.Status().Load(lookup, func() (*gtsmodel.Status, error) {
 		var status gtsmodel.Status
 
-		// Not cached! Perform database query
+		// Not cached! Perform database query.
 		if err := dbQuery(&status); err != nil {
 			return nil, s.conn.ProcessError(err)
-		}
-
-		if status.InReplyToID != "" {
-			// Also load in-reply-to status
-			status.InReplyTo = new(gtsmodel.Status)
-			err := s.conn.NewSelect().Model(status.InReplyTo).
-				Where("? = ?", bun.Ident("status.id"), status.InReplyToID).
-				Scan(ctx)
-			if err != nil {
-				return nil, s.conn.ProcessError(err)
-			}
-		}
-
-		if status.BoostOfID != "" {
-			// Also load original boosted status
-			status.BoostOf = new(gtsmodel.Status)
-			err := s.conn.NewSelect().Model(status.BoostOf).
-				Where("? = ?", bun.Ident("status.id"), status.BoostOfID).
-				Scan(ctx)
-			if err != nil {
-				return nil, s.conn.ProcessError(err)
-			}
 		}
 
 		return &status, nil
 	}, keyParts...)
 	if err != nil {
-		// error already processed
 		return nil, err
 	}
 
-	// Set the status author account
-	status.Account, err = s.state.DB.GetAccountByID(ctx, status.AccountID)
-	if err != nil {
-		return nil, fmt.Errorf("error getting status account: %w", err)
+	if gtscontext.Barebones(ctx) {
+		// no need to fully populate.
+		return status, nil
 	}
 
-	if id := status.BoostOfAccountID; id != "" {
-		// Set boost of status' author account
-		status.BoostOfAccount, err = s.state.DB.GetAccountByID(ctx, id)
-		if err != nil {
-			return nil, fmt.Errorf("error getting boosted status account: %w", err)
-		}
-	}
-
-	if id := status.InReplyToAccountID; id != "" {
-		// Set in-reply-to status' author account
-		status.InReplyToAccount, err = s.state.DB.GetAccountByID(ctx, id)
-		if err != nil {
-			return nil, fmt.Errorf("error getting in reply to status account: %w", err)
-		}
-	}
-
-	if len(status.EmojiIDs) > 0 {
-		// Fetch status emojis
-		status.Emojis, err = s.state.DB.GetEmojisByIDs(ctx, status.EmojiIDs)
-		if err != nil {
-			return nil, fmt.Errorf("error getting status emojis: %w", err)
-		}
-	}
-
-	if len(status.MentionIDs) > 0 {
-		// Fetch status mentions
-		status.Mentions, err = s.state.DB.GetMentions(ctx, status.MentionIDs)
-		if err != nil {
-			return nil, fmt.Errorf("error getting status mentions: %w", err)
-		}
+	// Further populate the status fields where applicable.
+	if err := s.PopulateStatus(ctx, status); err != nil {
+		return nil, err
 	}
 
 	return status, nil
+}
+
+func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) error {
+	var err error
+
+	if status.Account == nil {
+		// Status author is not set, fetch from database.
+		status.Account, err = s.state.DB.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			status.AccountID,
+		)
+		if err != nil {
+			return fmt.Errorf("error populating status author: %w", err)
+		}
+	}
+
+	if status.InReplyToID != "" && status.InReplyTo == nil {
+		// Status parent is not set, fetch from database.
+		status.InReplyTo, err = s.GetStatusByID(
+			gtscontext.SetBarebones(ctx),
+			status.InReplyToID,
+		)
+		if err != nil {
+			return fmt.Errorf("error populating status parent: %w", err)
+		}
+	}
+
+	if status.InReplyToID != "" {
+		if status.InReplyTo == nil {
+			// Status parent is not set, fetch from database.
+			status.InReplyTo, err = s.GetStatusByID(
+				gtscontext.SetBarebones(ctx),
+				status.InReplyToID,
+			)
+			if err != nil {
+				return fmt.Errorf("error populating status parent: %w", err)
+			}
+		}
+
+		if status.InReplyToAccount == nil {
+			// Status parent author is not set, fetch from database.
+			status.InReplyToAccount, err = s.state.DB.GetAccountByID(
+				gtscontext.SetBarebones(ctx),
+				status.InReplyToAccountID,
+			)
+			if err != nil {
+				return fmt.Errorf("error populating status parent author: %w", err)
+			}
+		}
+	}
+
+	if status.BoostOfID != "" {
+		if status.BoostOf == nil {
+			// Status boost is not set, fetch from database.
+			status.BoostOf, err = s.GetStatusByID(
+				gtscontext.SetBarebones(ctx),
+				status.BoostOfID,
+			)
+			if err != nil {
+				return fmt.Errorf("error populating status boost: %w", err)
+			}
+		}
+
+		if status.BoostOfAccount == nil {
+			// Status boost author is not set, fetch from database.
+			status.BoostOfAccount, err = s.state.DB.GetAccountByID(
+				gtscontext.SetBarebones(ctx),
+				status.BoostOfAccountID,
+			)
+			if err != nil {
+				return fmt.Errorf("error populating status boost author: %w", err)
+			}
+		}
+	}
+
+	if !status.AttachmentsPopulated() {
+		// Status attachments are out-of-date with IDs, repopulate.
+		status.Attachments, err = s.state.DB.GetAttachmentsByIDs(
+			ctx, // these are already barebones
+			status.AttachmentIDs,
+		)
+		if err != nil {
+			return fmt.Errorf("error populating status attachments: %w", err)
+		}
+	}
+
+	// TODO: once we don't fetch using relations.
+	// if !status.TagsPopulated() {
+	// }
+
+	if !status.MentionsPopulated() {
+		// Status mentions are out-of-date with IDs, repopulate.
+		status.Mentions, err = s.state.DB.GetMentions(
+			ctx, // leave fully populated for now
+			status.MentionIDs,
+		)
+		if err != nil {
+			return fmt.Errorf("error populating status mentions: %w", err)
+		}
+	}
+
+	if !status.EmojisPopulated() {
+		// Status emojis are out-of-date with IDs, repopulate.
+		status.Emojis, err = s.state.DB.GetEmojisByIDs(
+			ctx, // these are already barebones
+			status.EmojiIDs,
+		)
+		if err != nil {
+			return fmt.Errorf("error populating status emojis: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Error {
@@ -239,12 +301,16 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Er
 		})
 	})
 	if err != nil {
-		// already processed
 		return err
 	}
 
 	for _, id := range status.AttachmentIDs {
-		// Clear updated media attachment IDs from cache
+		// Invalidate media attachments from cache.
+		//
+		// NOTE: this is needed due to the way in which
+		// we upload status attachments, and only after
+		// update them with a known status ID. This is
+		// not the case for header/avatar attachments.
 		s.state.Caches.GTS.Media().Invalidate("ID", id)
 	}
 
@@ -322,13 +388,18 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 		return err
 	}
 
+	// Invalidate status from database lookups.
+	s.state.Caches.GTS.Status().Invalidate("ID", status.ID)
+
 	for _, id := range status.AttachmentIDs {
-		// Clear updated media attachment IDs from cache
+		// Invalidate media attachments from cache.
+		//
+		// NOTE: this is needed due to the way in which
+		// we upload status attachments, and only after
+		// update them with a known status ID. This is
+		// not the case for header/avatar attachments.
 		s.state.Caches.GTS.Media().Invalidate("ID", id)
 	}
-
-	// Drop any old status value from cache by this ID
-	s.state.Caches.GTS.Status().Invalidate("ID", status.ID)
 
 	return nil
 }
@@ -367,8 +438,12 @@ func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) db.Error {
 		return err
 	}
 
-	// Drop any old value from cache by this ID
+	// Invalidate status from database lookups.
 	s.state.Caches.GTS.Status().Invalidate("ID", id)
+
+	// Invalidate status from all visibility lookups.
+	s.state.Caches.Visibility.Invalidate("ItemID", id)
+
 	return nil
 }
 

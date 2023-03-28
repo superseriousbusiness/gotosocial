@@ -35,7 +35,7 @@ type StatusFaveTestSuite struct {
 func (suite *StatusFaveTestSuite) TestGetStatusFaves() {
 	testStatus := suite.testStatuses["admin_account_status_1"]
 
-	faves, err := suite.db.GetStatusFaves(context.Background(), testStatus.ID)
+	faves, err := suite.db.GetStatusFavesForStatus(context.Background(), testStatus.ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -51,7 +51,7 @@ func (suite *StatusFaveTestSuite) TestGetStatusFaves() {
 func (suite *StatusFaveTestSuite) TestGetStatusFavesNone() {
 	testStatus := suite.testStatuses["admin_account_status_4"]
 
-	faves, err := suite.db.GetStatusFaves(context.Background(), testStatus.ID)
+	faves, err := suite.db.GetStatusFavesForStatus(context.Background(), testStatus.ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -63,7 +63,7 @@ func (suite *StatusFaveTestSuite) TestGetStatusFaveByAccountID() {
 	testAccount := suite.testAccounts["local_account_1"]
 	testStatus := suite.testStatuses["admin_account_status_1"]
 
-	fave, err := suite.db.GetStatusFaveByAccountID(context.Background(), testAccount.ID, testStatus.ID)
+	fave, err := suite.db.GetStatusFave(context.Background(), testAccount.ID, testStatus.ID)
 	suite.NoError(err)
 	suite.NotNil(fave)
 }
@@ -129,17 +129,17 @@ func (suite *StatusFaveTestSuite) TestDeleteStatusFave() {
 	testFave := suite.testFaves["local_account_1_admin_account_status_1"]
 	ctx := context.Background()
 
-	if err := suite.db.DeleteStatusFave(ctx, testFave.ID); err != nil {
+	if err := suite.db.DeleteStatusFaveByID(ctx, testFave.ID); err != nil {
 		suite.FailNow(err.Error())
 	}
 
-	fave, err := suite.db.GetStatusFave(ctx, testFave.ID)
+	fave, err := suite.db.GetStatusFaveByID(ctx, testFave.ID)
 	suite.ErrorIs(err, db.ErrNoEntries)
 	suite.Nil(fave)
 }
 
 func (suite *StatusFaveTestSuite) TestDeleteStatusFaveNonExisting() {
-	err := suite.db.DeleteStatusFave(context.Background(), "01GVAV715K6Y2SG9ZKS9ZA8G7G")
+	err := suite.db.DeleteStatusFaveByID(context.Background(), "01GVAV715K6Y2SG9ZKS9ZA8G7G")
 	suite.NoError(err)
 }
 

@@ -34,15 +34,32 @@ type TimelineTestSuite struct {
 }
 
 func (suite *TimelineTestSuite) TestGetPublicTimeline() {
-	ctx := context.Background()
+	var count int
 
+	for _, status := range suite.testStatuses {
+		if status.Visibility == gtsmodel.VisibilityPublic &&
+			status.BoostOfID == "" {
+			count++
+		}
+	}
+
+	ctx := context.Background()
 	s, err := suite.db.GetPublicTimeline(ctx, "", "", "", 20, false)
 	suite.NoError(err)
 
-	suite.Len(s, 6)
+	suite.Len(s, count)
 }
 
 func (suite *TimelineTestSuite) TestGetPublicTimelineWithFutureStatus() {
+	var count int
+
+	for _, status := range suite.testStatuses {
+		if status.Visibility == gtsmodel.VisibilityPublic &&
+			status.BoostOfID == "" {
+			count++
+		}
+	}
+
 	ctx := context.Background()
 
 	futureStatus := getFutureStatus()
@@ -53,7 +70,7 @@ func (suite *TimelineTestSuite) TestGetPublicTimelineWithFutureStatus() {
 	suite.NoError(err)
 
 	suite.NotContains(s, futureStatus)
-	suite.Len(s, 6)
+	suite.Len(s, count)
 }
 
 func (suite *TimelineTestSuite) TestGetHomeTimeline() {

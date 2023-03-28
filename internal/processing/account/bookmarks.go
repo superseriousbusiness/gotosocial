@@ -56,7 +56,7 @@ func (p *Processor) BookmarksGet(ctx context.Context, requestingAccount *gtsmode
 			return nil, gtserror.NewErrorInternalError(err) // A real error has occurred.
 		}
 
-		visible, err := p.filter.StatusVisible(ctx, status, requestingAccount)
+		visible, err := p.filter.StatusVisible(ctx, requestingAccount, status)
 		if err != nil {
 			log.Errorf(ctx, "error checking bookmarked status visibility: %s", err)
 			continue

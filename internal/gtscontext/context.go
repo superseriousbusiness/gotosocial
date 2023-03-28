@@ -15,28 +15,29 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package timeline_test
+package gtscontext
 
-import (
-	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/timeline"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/visibility"
+import "context"
+
+// package private context key type.
+type ctxkey uint
+
+const (
+	// context keys.
+	_ ctxkey = iota
+	barebonesKey
 )
 
-type TimelineStandardTestSuite struct {
-	suite.Suite
-	db     db.DB
-	state  state.State
-	tc     typeutils.TypeConverter
-	filter *visibility.Filter
+// Barebones returns whether the "barebones" context key has been set. This
+// can be used to indicate to the database, for example, that only a barebones
+// model need be returned, Allowing it to skip populating sub models.
+func Barebones(ctx context.Context) bool {
+	_, ok := ctx.Value(barebonesKey).(struct{})
+	return ok
+}
 
-	testAccounts map[string]*gtsmodel.Account
-	testStatuses map[string]*gtsmodel.Status
-
-	timeline timeline.Timeline
-	manager  timeline.Manager
+// SetBarebones sets the "barebones" context flag and returns this wrapped context.
+// See Barebones() for further information on the "barebones" context flag..
+func SetBarebones(ctx context.Context) context.Context {
+	return context.WithValue(ctx, barebonesKey, struct{}{})
 }

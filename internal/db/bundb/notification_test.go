@@ -85,11 +85,11 @@ type NotificationTestSuite struct {
 	BunDBStandardTestSuite
 }
 
-func (suite *NotificationTestSuite) TestGetNotificationsWithSpam() {
+func (suite *NotificationTestSuite) TestGetAccountNotificationsWithSpam() {
 	suite.spamNotifs()
 	testAccount := suite.testAccounts["local_account_1"]
 	before := time.Now()
-	notifications, err := suite.db.GetNotifications(context.Background(), testAccount.ID, []string{}, 20, id.Highest, id.Lowest)
+	notifications, err := suite.db.GetAccountNotifications(context.Background(), testAccount.ID, []string{}, 20, id.Highest, id.Lowest)
 	suite.NoError(err)
 	timeTaken := time.Since(before)
 	fmt.Printf("\n\n\n withSpam: got %d notifications in %s\n\n\n", len(notifications), timeTaken)
@@ -100,10 +100,10 @@ func (suite *NotificationTestSuite) TestGetNotificationsWithSpam() {
 	}
 }
 
-func (suite *NotificationTestSuite) TestGetNotificationsWithoutSpam() {
+func (suite *NotificationTestSuite) TestGetAccountNotificationsWithoutSpam() {
 	testAccount := suite.testAccounts["local_account_1"]
 	before := time.Now()
-	notifications, err := suite.db.GetNotifications(context.Background(), testAccount.ID, []string{}, 20, id.Highest, id.Lowest)
+	notifications, err := suite.db.GetAccountNotifications(context.Background(), testAccount.ID, []string{}, 20, id.Highest, id.Lowest)
 	suite.NoError(err)
 	timeTaken := time.Since(before)
 	fmt.Printf("\n\n\n withoutSpam: got %d notifications in %s\n\n\n", len(notifications), timeTaken)
@@ -117,10 +117,10 @@ func (suite *NotificationTestSuite) TestGetNotificationsWithoutSpam() {
 func (suite *NotificationTestSuite) TestDeleteNotificationsWithSpam() {
 	suite.spamNotifs()
 	testAccount := suite.testAccounts["local_account_1"]
-	err := suite.db.DeleteNotifications(context.Background(), testAccount.ID, "")
+	err := suite.db.DeleteNotifications(context.Background(), nil, testAccount.ID, "")
 	suite.NoError(err)
 
-	notifications, err := suite.db.GetNotifications(context.Background(), testAccount.ID, []string{}, 20, id.Highest, id.Lowest)
+	notifications, err := suite.db.GetAccountNotifications(context.Background(), testAccount.ID, []string{}, 20, id.Highest, id.Lowest)
 	suite.NoError(err)
 	suite.NotNil(notifications)
 	suite.Empty(notifications)
@@ -129,10 +129,10 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsWithSpam() {
 func (suite *NotificationTestSuite) TestDeleteNotificationsWithTwoAccounts() {
 	suite.spamNotifs()
 	testAccount := suite.testAccounts["local_account_1"]
-	err := suite.db.DeleteNotifications(context.Background(), testAccount.ID, "")
+	err := suite.db.DeleteNotifications(context.Background(), nil, testAccount.ID, "")
 	suite.NoError(err)
 
-	notifications, err := suite.db.GetNotifications(context.Background(), testAccount.ID, []string{}, 20, id.Highest, id.Lowest)
+	notifications, err := suite.db.GetAccountNotifications(context.Background(), testAccount.ID, []string{}, 20, id.Highest, id.Lowest)
 	suite.NoError(err)
 	suite.NotNil(notifications)
 	suite.Empty(notifications)
@@ -146,7 +146,7 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsWithTwoAccounts() {
 func (suite *NotificationTestSuite) TestDeleteNotificationsOriginatingFromAccount() {
 	testAccount := suite.testAccounts["local_account_2"]
 
-	if err := suite.db.DeleteNotifications(context.Background(), "", testAccount.ID); err != nil {
+	if err := suite.db.DeleteNotifications(context.Background(), nil, "", testAccount.ID); err != nil {
 		suite.FailNow(err.Error())
 	}
 
@@ -166,7 +166,7 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsOriginatingFromAndTar
 	originAccount := suite.testAccounts["local_account_2"]
 	targetAccount := suite.testAccounts["admin_account"]
 
-	if err := suite.db.DeleteNotifications(context.Background(), targetAccount.ID, originAccount.ID); err != nil {
+	if err := suite.db.DeleteNotifications(context.Background(), nil, targetAccount.ID, originAccount.ID); err != nil {
 		suite.FailNow(err.Error())
 	}
 

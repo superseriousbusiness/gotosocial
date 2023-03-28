@@ -31,7 +31,7 @@ import (
 )
 
 func (p *Processor) FollowRequestsGet(ctx context.Context, auth *oauth.Auth) ([]apimodel.Account, gtserror.WithCode) {
-	followRequests, err := p.state.DB.GetFollowRequests(ctx, "", auth.Account.ID)
+	followRequests, err := p.state.DB.GetAccountFollowRequests(ctx, auth.Account.ID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -49,8 +49,10 @@ func (p *Processor) FollowRequestsGet(ctx context.Context, auth *oauth.Auth) ([]
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
+
 		accts = append(accts, *apiAcct)
 	}
+
 	return accts, nil
 }
 
@@ -79,7 +81,12 @@ func (p *Processor) FollowRequestAccept(ctx context.Context, auth *oauth.Auth, a
 }
 
 func (p *Processor) FollowRequestReject(ctx context.Context, auth *oauth.Auth, accountID string) (*apimodel.Relationship, gtserror.WithCode) {
-	followRequest, err := p.state.DB.RejectFollowRequest(ctx, accountID, auth.Account.ID)
+	followRequest, err := p.state.DB.GetFollowRequest(ctx, accountID, auth.Account.ID)
+	if err != nil {
+		return nil, gtserror.NewErrorNotFound(err)
+	}
+
+	err = p.state.DB.RejectFollowRequest(ctx, accountID, auth.Account.ID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(err)
 	}

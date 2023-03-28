@@ -231,7 +231,7 @@ func (f *federatingDB) ActorForInbox(ctx context.Context, inboxIRI *url.URL) (ac
 // getAccountForIRI returns the account that corresponds to or owns the given IRI.
 func (f *federatingDB) getAccountForIRI(ctx context.Context, iri *url.URL) (*gtsmodel.Account, error) {
 	var (
-		acct = &gtsmodel.Account{}
+		acct *gtsmodel.Account
 		err  error
 	)
 
@@ -245,7 +245,7 @@ func (f *federatingDB) getAccountForIRI(ctx context.Context, iri *url.URL) (*gts
 		}
 		return acct, nil
 	case uris.IsInboxPath(iri):
-		if err = f.state.DB.GetWhere(ctx, []db.Where{{Key: "inbox_uri", Value: iri.String()}}, acct); err != nil {
+		if acct, err = f.state.DB.GetAccountByInboxURI(ctx, iri.String()); err != nil {
 			if err == db.ErrNoEntries {
 				return nil, fmt.Errorf("no actor found that corresponds to inbox %s", iri.String())
 			}
@@ -253,7 +253,7 @@ func (f *federatingDB) getAccountForIRI(ctx context.Context, iri *url.URL) (*gts
 		}
 		return acct, nil
 	case uris.IsOutboxPath(iri):
-		if err = f.state.DB.GetWhere(ctx, []db.Where{{Key: "outbox_uri", Value: iri.String()}}, acct); err != nil {
+		if acct, err = f.state.DB.GetAccountByOutboxURI(ctx, iri.String()); err != nil {
 			if err == db.ErrNoEntries {
 				return nil, fmt.Errorf("no actor found that corresponds to outbox %s", iri.String())
 			}
@@ -261,7 +261,7 @@ func (f *federatingDB) getAccountForIRI(ctx context.Context, iri *url.URL) (*gts
 		}
 		return acct, nil
 	case uris.IsFollowersPath(iri):
-		if err = f.state.DB.GetWhere(ctx, []db.Where{{Key: "followers_uri", Value: iri.String()}}, acct); err != nil {
+		if acct, err = f.state.DB.GetAccountByFollowersURI(ctx, iri.String()); err != nil {
 			if err == db.ErrNoEntries {
 				return nil, fmt.Errorf("no actor found that corresponds to followers_uri %s", iri.String())
 			}
@@ -269,7 +269,7 @@ func (f *federatingDB) getAccountForIRI(ctx context.Context, iri *url.URL) (*gts
 		}
 		return acct, nil
 	case uris.IsFollowingPath(iri):
-		if err = f.state.DB.GetWhere(ctx, []db.Where{{Key: "following_uri", Value: iri.String()}}, acct); err != nil {
+		if acct, err = f.state.DB.GetAccountByFollowingURI(ctx, iri.String()); err != nil {
 			if err == db.ErrNoEntries {
 				return nil, fmt.Errorf("no actor found that corresponds to following_uri %s", iri.String())
 			}

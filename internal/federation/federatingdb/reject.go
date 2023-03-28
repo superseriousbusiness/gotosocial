@@ -25,8 +25,6 @@ import (
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
@@ -62,17 +60,17 @@ func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsR
 			rejectedObjectIRI := iter.GetIRI()
 			if uris.IsFollowPath(rejectedObjectIRI) {
 				// REJECT FOLLOW
-				gtsFollowRequest := &gtsmodel.FollowRequest{}
-				if err := f.state.DB.GetWhere(ctx, []db.Where{{Key: "uri", Value: rejectedObjectIRI.String()}}, gtsFollowRequest); err != nil {
+				followReq, err := f.state.DB.GetFollowRequestByURI(ctx, rejectedObjectIRI.String())
+				if err != nil {
 					return fmt.Errorf("Reject: couldn't get follow request with id %s from the database: %s", rejectedObjectIRI.String(), err)
 				}
 
 				// make sure the addressee of the original follow is the same as whatever inbox this landed in
-				if gtsFollowRequest.AccountID != receivingAccount.ID {
+				if followReq.AccountID != receivingAccount.ID {
 					return errors.New("Reject: follow object account and inbox account were not the same")
 				}
 
-				if _, err := f.state.DB.RejectFollowRequest(ctx, gtsFollowRequest.AccountID, gtsFollowRequest.TargetAccountID); err != nil {
+				if err := f.state.DB.RejectFollowRequest(ctx, followReq.AccountID, followReq.TargetAccountID); err != nil {
 					return err
 				}
 
@@ -101,7 +99,7 @@ func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsR
 			if gtsFollow.AccountID != receivingAccount.ID {
 				return errors.New("Reject: follow object account and inbox account were not the same")
 			}
-			if _, err := f.state.DB.RejectFollowRequest(ctx, gtsFollow.AccountID, gtsFollow.TargetAccountID); err != nil {
+			if err := f.state.DB.RejectFollowRequest(ctx, gtsFollow.AccountID, gtsFollow.TargetAccountID); err != nil {
 				return err
 			}
 

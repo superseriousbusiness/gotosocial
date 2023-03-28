@@ -168,7 +168,7 @@ func (suite *StatusBoostTestSuite) TestPostBoostOwnFollowersOnly() {
 	suite.Equal("really cool gts application", responseStatus.Reblog.Application.Name)
 }
 
-// try to boost a status that's not boostable
+// try to boost a status that's not boostable / visible to us
 func (suite *StatusBoostTestSuite) TestPostUnboostable() {
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.DBTokenToToken(t)
@@ -197,13 +197,13 @@ func (suite *StatusBoostTestSuite) TestPostUnboostable() {
 	suite.statusModule.StatusBoostPOSTHandler(ctx)
 
 	// check response
-	suite.Equal(http.StatusForbidden, recorder.Code) // we 403 unboostable statuses
+	suite.Equal(http.StatusNotFound, recorder.Code) // we 404 unboostable statuses
 
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
-	suite.Equal(`{"error":"Forbidden"}`, string(b))
+	suite.Equal(`{"error":"Not Found"}`, string(b))
 }
 
 // try to boost a status that's not visible to the user

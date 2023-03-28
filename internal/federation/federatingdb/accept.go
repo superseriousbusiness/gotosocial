@@ -25,8 +25,6 @@ import (
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
@@ -63,16 +61,16 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 			acceptedObjectIRI := iter.GetIRI()
 			if uris.IsFollowPath(acceptedObjectIRI) {
 				// ACCEPT FOLLOW
-				gtsFollowRequest := &gtsmodel.FollowRequest{}
-				if err := f.state.DB.GetWhere(ctx, []db.Where{{Key: "uri", Value: acceptedObjectIRI.String()}}, gtsFollowRequest); err != nil {
+				followReq, err := f.state.DB.GetFollowRequestByURI(ctx, acceptedObjectIRI.String())
+				if err != nil {
 					return fmt.Errorf("ACCEPT: couldn't get follow request with id %s from the database: %s", acceptedObjectIRI.String(), err)
 				}
 
 				// make sure the addressee of the original follow is the same as whatever inbox this landed in
-				if gtsFollowRequest.AccountID != receivingAccount.ID {
+				if followReq.AccountID != receivingAccount.ID {
 					return errors.New("ACCEPT: follow object account and inbox account were not the same")
 				}
-				follow, err := f.state.DB.AcceptFollowRequest(ctx, gtsFollowRequest.AccountID, gtsFollowRequest.TargetAccountID)
+				follow, err := f.state.DB.AcceptFollowRequest(ctx, followReq.AccountID, followReq.TargetAccountID)
 				if err != nil {
 					return err
 				}

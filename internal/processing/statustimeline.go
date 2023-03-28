@@ -47,9 +47,9 @@ func StatusGrabFunction(database db.DB) timeline.GrabFunction {
 			return nil, false, fmt.Errorf("statusGrabFunction: error getting statuses from db: %s", err)
 		}
 
-		items := []timeline.Timelineable{}
-		for _, s := range statuses {
-			items = append(items, s)
+		items := make([]timeline.Timelineable, len(statuses))
+		for i, s := range statuses {
+			items[i] = s
 		}
 
 		return items, false, nil
@@ -57,7 +57,7 @@ func StatusGrabFunction(database db.DB) timeline.GrabFunction {
 }
 
 // StatusFilterFunction returns a function that satisfies the FilterFunction interface in internal/timeline.
-func StatusFilterFunction(database db.DB, filter visibility.Filter) timeline.FilterFunction {
+func StatusFilterFunction(database db.DB, filter *visibility.Filter) timeline.FilterFunction {
 	return func(ctx context.Context, timelineAccountID string, item timeline.Timelineable) (shouldIndex bool, err error) {
 		status, ok := item.(*gtsmodel.Status)
 		if !ok {
@@ -69,7 +69,7 @@ func StatusFilterFunction(database db.DB, filter visibility.Filter) timeline.Fil
 			return false, fmt.Errorf("statusFilterFunction: error getting account with id %s", timelineAccountID)
 		}
 
-		timelineable, err := filter.StatusHometimelineable(ctx, status, requestingAccount)
+		timelineable, err := filter.StatusHomeTimelineable(ctx, requestingAccount, status)
 		if err != nil {
 			log.Warnf(ctx, "error checking hometimelineability of status %s for account %s: %s", status.ID, timelineAccountID, err)
 		}
@@ -253,8 +253,7 @@ func (p *Processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, ma
 func (p *Processor) filterPublicStatuses(ctx context.Context, authed *oauth.Auth, statuses []*gtsmodel.Status) ([]*apimodel.Status, error) {
 	apiStatuses := []*apimodel.Status{}
 	for _, s := range statuses {
-		targetAccount := &gtsmodel.Account{}
-		if err := p.state.DB.GetByID(ctx, s.AccountID, targetAccount); err != nil {
+		if _, err := p.state.DB.GetAccountByID(ctx, s.AccountID); err != nil {
 			if err == db.ErrNoEntries {
 				log.Debugf(ctx, "skipping status %s because account %s can't be found in the db", s.ID, s.AccountID)
 				continue
@@ -262,7 +261,7 @@ func (p *Processor) filterPublicStatuses(ctx context.Context, authed *oauth.Auth
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("filterPublicStatuses: error getting status author: %s", err))
 		}
 
-		timelineable, err := p.filter.StatusPublictimelineable(ctx, s, authed.Account)
+		timelineable, err := p.filter.StatusPublicTimelineable(ctx, authed.Account, s)
 		if err != nil {
 			log.Debugf(ctx, "skipping status %s because of an error checking status visibility: %s", s.ID, err)
 			continue
@@ -286,8 +285,7 @@ func (p *Processor) filterPublicStatuses(ctx context.Context, authed *oauth.Auth
 func (p *Processor) filterFavedStatuses(ctx context.Context, authed *oauth.Auth, statuses []*gtsmodel.Status) ([]*apimodel.Status, error) {
 	apiStatuses := []*apimodel.Status{}
 	for _, s := range statuses {
-		targetAccount := &gtsmodel.Account{}
-		if err := p.state.DB.GetByID(ctx, s.AccountID, targetAccount); err != nil {
+		if _, err := p.state.DB.GetAccountByID(ctx, s.AccountID); err != nil {
 			if err == db.ErrNoEntries {
 				log.Debugf(ctx, "skipping status %s because account %s can't be found in the db", s.ID, s.AccountID)
 				continue
@@ -295,7 +293,7 @@ func (p *Processor) filterFavedStatuses(ctx context.Context, authed *oauth.Auth,
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("filterPublicStatuses: error getting status author: %s", err))
 		}
 
-		timelineable, err := p.filter.StatusVisible(ctx, s, authed.Account)
+		timelineable, err := p.filter.StatusVisible(ctx, authed.Account, s)
 		if err != nil {
 			log.Debugf(ctx, "skipping status %s because of an error checking status visibility: %s", s.ID, err)
 			continue

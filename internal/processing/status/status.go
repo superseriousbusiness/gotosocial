@@ -28,17 +28,17 @@ import (
 type Processor struct {
 	state        *state.State
 	tc           typeutils.TypeConverter
-	filter       visibility.Filter
+	filter       *visibility.Filter
 	formatter    text.Formatter
 	parseMention gtsmodel.ParseMentionFunc
 }
 
 // New returns a new status processor.
-func New(state *state.State, tc typeutils.TypeConverter, parseMention gtsmodel.ParseMentionFunc) Processor {
+func New(state *state.State, tc typeutils.TypeConverter, filter *visibility.Filter, parseMention gtsmodel.ParseMentionFunc) Processor {
 	return Processor{
 		state:        state,
 		tc:           tc,
-		filter:       visibility.NewFilter(state.DB),
+		filter:       filter,
 		formatter:    text.NewFormatter(state.DB),
 		parseMention: parseMention,
 	}

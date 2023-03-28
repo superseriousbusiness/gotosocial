@@ -88,7 +88,7 @@ func (p *Processor) FaveRemove(ctx context.Context, requestingAccount *gtsmodel.
 	}
 
 	// We have a fave to remove.
-	if err := p.state.DB.DeleteStatusFave(ctx, existingFave.ID); err != nil {
+	if err := p.state.DB.DeleteStatusFaveByID(ctx, existingFave.ID); err != nil {
 		err = fmt.Errorf("FaveRemove: error removing status fave: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -112,7 +112,7 @@ func (p *Processor) FavedBy(ctx context.Context, requestingAccount *gtsmodel.Acc
 		return nil, errWithCode
 	}
 
-	statusFaves, err := p.state.DB.GetStatusFaves(ctx, targetStatus.ID)
+	statusFaves, err := p.state.DB.GetStatusFavesForStatus(ctx, targetStatus.ID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("FavedBy: error seeing who faved status: %s", err))
 	}
@@ -122,7 +122,7 @@ func (p *Processor) FavedBy(ctx context.Context, requestingAccount *gtsmodel.Acc
 	// and which don't block them.
 	apiAccounts := make([]*apimodel.Account, 0, len(statusFaves))
 	for _, fave := range statusFaves {
-		if blocked, err := p.state.DB.IsBlocked(ctx, requestingAccount.ID, fave.AccountID, true); err != nil {
+		if blocked, err := p.state.DB.IsEitherBlocked(ctx, requestingAccount.ID, fave.AccountID); err != nil {
 			err = fmt.Errorf("FavedBy: error checking blocks: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
 		} else if blocked {
@@ -157,7 +157,7 @@ func (p *Processor) getFaveTarget(ctx context.Context, requestingAccount *gtsmod
 		return nil, nil, gtserror.NewErrorForbidden(err, err.Error())
 	}
 
-	fave, err := p.state.DB.GetStatusFaveByAccountID(ctx, requestingAccount.ID, targetStatusID)
+	fave, err := p.state.DB.GetStatusFave(ctx, requestingAccount.ID, targetStatusID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = fmt.Errorf("getFaveTarget: error checking existing fave: %w", err)
 		return nil, nil, gtserror.NewErrorInternalError(err)

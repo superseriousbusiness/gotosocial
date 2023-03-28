@@ -30,7 +30,7 @@ import (
 )
 
 func (p *Processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, excludeTypes []string, limit int, maxID string, sinceID string) (*apimodel.PageableResponse, gtserror.WithCode) {
-	notifs, err := p.state.DB.GetNotifications(ctx, authed.Account.ID, excludeTypes, limit, maxID, sinceID)
+	notifs, err := p.state.DB.GetAccountNotifications(ctx, authed.Account.ID, excludeTypes, limit, maxID, sinceID)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -73,8 +73,8 @@ func (p *Processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, ex
 }
 
 func (p *Processor) NotificationsClear(ctx context.Context, authed *oauth.Auth) gtserror.WithCode {
-	// Delete all notifications that target the authorized account.
-	if err := p.state.DB.DeleteNotifications(ctx, authed.Account.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	// Delete all notifications of all types that target the authorized account.
+	if err := p.state.DB.DeleteNotifications(ctx, nil, authed.Account.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return gtserror.NewErrorInternalError(err)
 	}
 

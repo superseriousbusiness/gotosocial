@@ -283,7 +283,7 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 		return false, errors.New("requesting account not set on request context, so couldn't determine blocks")
 	}
 	// the receiver shouldn't block the sender
-	blocked, err = f.db.IsBlocked(ctx, receivingAccount.ID, requestingAccount.ID, false)
+	blocked, err = f.db.IsBlocked(ctx, receivingAccount.ID, requestingAccount.ID)
 	if err != nil {
 		return false, fmt.Errorf("error checking user-level blocks: %s", err)
 	}
@@ -309,7 +309,7 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 
 	for _, involvedAccountID := range deduped {
 		// the involved account shouldn't block whoever is making this request
-		blocked, err = f.db.IsBlocked(ctx, involvedAccountID, requestingAccount.ID, false)
+		blocked, err = f.db.IsBlocked(ctx, involvedAccountID, requestingAccount.ID)
 		if err != nil {
 			return false, fmt.Errorf("error checking user-level otherInvolvedIRI blocks: %s", err)
 		}
@@ -318,7 +318,7 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 		}
 
 		// whoever is receiving this request shouldn't block the involved account
-		blocked, err = f.db.IsBlocked(ctx, receivingAccount.ID, involvedAccountID, false)
+		blocked, err = f.db.IsBlocked(ctx, receivingAccount.ID, involvedAccountID)
 		if err != nil {
 			return false, fmt.Errorf("error checking user-level otherInvolvedIRI blocks: %s", err)
 		}

@@ -62,7 +62,7 @@ func (p *Processor) UserGet(ctx context.Context, requestedUsername string, reque
 				return nil, gtserror.NewErrorUnauthorized(err)
 			}
 
-			blocked, err := p.state.DB.IsBlocked(ctx, requestedAccount.ID, requestingAccount.ID, true)
+			blocked, err := p.state.DB.IsEitherBlocked(ctx, requestedAccount.ID, requestingAccount.ID)
 			if err != nil {
 				return nil, gtserror.NewErrorInternalError(err)
 			}

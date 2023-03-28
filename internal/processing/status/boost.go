@@ -55,12 +55,11 @@ func (p *Processor) BoostCreate(ctx context.Context, requestingAccount *gtsmodel
 		targetStatus = targetStatus.BoostOf
 	}
 
-	boostable, err := p.filter.StatusBoostable(ctx, targetStatus, requestingAccount)
+	boostable, err := p.filter.StatusBoostable(ctx, requestingAccount, targetStatus)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is boostable: %s", targetStatus.ID, err))
-	}
-	if !boostable {
-		return nil, gtserror.NewErrorForbidden(errors.New("status is not boostable"))
+	} else if !boostable {
+		return nil, gtserror.NewErrorNotFound(errors.New("status is not boostable"))
 	}
 
 	// it's visible! it's boostable! so let's boost the FUCK out of it
@@ -99,7 +98,7 @@ func (p *Processor) BoostRemove(ctx context.Context, requestingAccount *gtsmodel
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("no status owner for status %s", targetStatusID))
 	}
 
-	visible, err := p.filter.StatusVisible(ctx, targetStatus, requestingAccount)
+	visible, err := p.filter.StatusVisible(ctx, requestingAccount, targetStatus)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is visible: %s", targetStatus.ID, err))
 	}
@@ -180,7 +179,7 @@ func (p *Processor) StatusBoostedBy(ctx context.Context, requestingAccount *gtsm
 		targetStatus = boostedStatus
 	}
 
-	visible, err := p.filter.StatusVisible(ctx, targetStatus, requestingAccount)
+	visible, err := p.filter.StatusVisible(ctx, requestingAccount, targetStatus)
 	if err != nil {
 		err = fmt.Errorf("BoostedBy: error seeing if status %s is visible: %s", targetStatus.ID, err)
 		return nil, gtserror.NewErrorNotFound(err)
@@ -199,7 +198,7 @@ func (p *Processor) StatusBoostedBy(ctx context.Context, requestingAccount *gtsm
 	// filter account IDs so the user doesn't see accounts they blocked or which blocked them
 	accountIDs := make([]string, 0, len(statusReblogs))
 	for _, s := range statusReblogs {
-		blocked, err := p.state.DB.IsBlocked(ctx, requestingAccount.ID, s.AccountID, true)
+		blocked, err := p.state.DB.IsEitherBlocked(ctx, requestingAccount.ID, s.AccountID)
 		if err != nil {
 			err = fmt.Errorf("BoostedBy: error checking blocks: %s", err)
 			return nil, gtserror.NewErrorNotFound(err)

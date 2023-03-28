@@ -133,7 +133,7 @@ func processReplyToID(ctx context.Context, dbService db.DB, form *apimodel.Advan
 		return gtserror.NewErrorInternalError(err)
 	}
 
-	if blocked, err := dbService.IsBlocked(ctx, thisAccountID, repliedAccount.ID, true); err != nil {
+	if blocked, err := dbService.IsEitherBlocked(ctx, thisAccountID, repliedAccount.ID); err != nil {
 		err := fmt.Errorf("db error checking block: %s", err)
 		return gtserror.NewErrorInternalError(err)
 	} else if blocked {

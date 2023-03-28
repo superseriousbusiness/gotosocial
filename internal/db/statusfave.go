@@ -24,22 +24,22 @@ import (
 )
 
 type StatusFave interface {
-	// GetStatusFave returns one status fave with the given id.
-	GetStatusFave(ctx context.Context, id string) (*gtsmodel.StatusFave, Error)
-
 	// GetStatusFaveByAccountID gets one status fave created by the given
 	// accountID, targeting the given statusID.
-	GetStatusFaveByAccountID(ctx context.Context, accountID string, statusID string) (*gtsmodel.StatusFave, Error)
+	GetStatusFave(ctx context.Context, accountID string, statusID string) (*gtsmodel.StatusFave, Error)
+
+	// GetStatusFave returns one status fave with the given id.
+	GetStatusFaveByID(ctx context.Context, id string) (*gtsmodel.StatusFave, Error)
 
 	// GetStatusFaves returns a slice of faves/likes of the given status.
 	// This slice will be unfiltered, not taking account of blocks and whatnot, so filter it before serving it back to a user.
-	GetStatusFaves(ctx context.Context, statusID string) ([]*gtsmodel.StatusFave, Error)
+	GetStatusFavesForStatus(ctx context.Context, statusID string) ([]*gtsmodel.StatusFave, Error)
 
 	// PutStatusFave inserts the given statusFave into the database.
 	PutStatusFave(ctx context.Context, statusFave *gtsmodel.StatusFave) Error
 
 	// DeleteStatusFave deletes one status fave with the given id.
-	DeleteStatusFave(ctx context.Context, id string) Error
+	DeleteStatusFaveByID(ctx context.Context, id string) Error
 
 	// DeleteStatusFaves mass deletes status faves targeting targetAccountID
 	// and/or originating from originAccountID and/or faving statusID.

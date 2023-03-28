@@ -39,11 +39,12 @@ func (p *Processor) notifyStatus(ctx context.Context, status *gtsmodel.Status) e
 
 	if status.Mentions == nil {
 		// there are mentions but they're not fully populated on the status yet so do this
-		menchies, err := p.state.DB.GetMentions(ctx, status.MentionIDs)
+		mentions, err := p.state.DB.GetMentions(ctx, status.MentionIDs)
 		if err != nil {
 			return fmt.Errorf("notifyStatus: error getting mentions for status %s from the db: %s", status.ID, err)
 		}
-		status.Mentions = menchies
+
+		status.Mentions = mentions
 	}
 
 	// now we have mentions as full gtsmodel.Mention structs on the status we can continue
@@ -88,7 +89,7 @@ func (p *Processor) notifyStatus(ctx context.Context, status *gtsmodel.Status) e
 			Status:           status,
 		}
 
-		if err := p.state.DB.Put(ctx, notif); err != nil {
+		if err := p.state.DB.PutNotification(ctx, notif); err != nil {
 			return fmt.Errorf("notifyStatus: error putting notification in database: %s", err)
 		}
 
@@ -130,7 +131,7 @@ func (p *Processor) notifyFollowRequest(ctx context.Context, followRequest *gtsm
 		OriginAccountID:  followRequest.AccountID,
 	}
 
-	if err := p.state.DB.Put(ctx, notif); err != nil {
+	if err := p.state.DB.PutNotification(ctx, notif); err != nil {
 		return fmt.Errorf("notifyFollowRequest: error putting notification in database: %s", err)
 	}
 
@@ -171,7 +172,7 @@ func (p *Processor) notifyFollow(ctx context.Context, follow *gtsmodel.Follow, t
 		OriginAccountID:  follow.AccountID,
 		OriginAccount:    follow.Account,
 	}
-	if err := p.state.DB.Put(ctx, notif); err != nil {
+	if err := p.state.DB.PutNotification(ctx, notif); err != nil {
 		return fmt.Errorf("notifyFollow: error putting notification in database: %s", err)
 	}
 
@@ -219,7 +220,7 @@ func (p *Processor) notifyFave(ctx context.Context, fave *gtsmodel.StatusFave) e
 		Status:           fave.Status,
 	}
 
-	if err := p.state.DB.Put(ctx, notif); err != nil {
+	if err := p.state.DB.PutNotification(ctx, notif); err != nil {
 		return fmt.Errorf("notifyFave: error putting notification in database: %s", err)
 	}
 
@@ -293,7 +294,7 @@ func (p *Processor) notifyAnnounce(ctx context.Context, status *gtsmodel.Status)
 		Status:           status,
 	}
 
-	if err := p.state.DB.Put(ctx, notif); err != nil {
+	if err := p.state.DB.PutNotification(ctx, notif); err != nil {
 		return fmt.Errorf("notifyAnnounce: error putting notification in database: %s", err)
 	}
 
@@ -403,39 +404,39 @@ func (p *Processor) notifyReportClosed(ctx context.Context, report *gtsmodel.Rep
 // timelineStatus processes the given new status and inserts it into
 // the HOME timelines of accounts that follow the status author.
 func (p *Processor) timelineStatus(ctx context.Context, status *gtsmodel.Status) error {
-	// make sure the author account is pinned onto the status
 	if status.Account == nil {
-		a, err := p.state.DB.GetAccountByID(ctx, status.AccountID)
-		if err != nil {
-			return fmt.Errorf("timelineStatus: error getting author account with id %s: %s", status.AccountID, err)
+		// ensure status fully populated (including account)
+		if err := p.state.DB.PopulateStatus(ctx, status); err != nil {
+			return fmt.Errorf("timelineStatus: error populating status with id %s: %w", status.ID, err)
 		}
-		status.Account = a
 	}
 
-	// Get LOCAL followers of the account that posted the status;
-	// we know that remote accounts don't have timelines on this
-	// instance, so there's no point selecting them too.
-	accountIDs, err := p.state.DB.GetLocalFollowersIDs(ctx, status.AccountID)
+	// get local followers of the account that posted the status
+	follows, err := p.state.DB.GetAccountLocalFollowers(ctx, status.AccountID)
 	if err != nil {
-		return fmt.Errorf("timelineStatus: error getting followers for account id %s: %s", status.AccountID, err)
+		return fmt.Errorf("timelineStatus: error getting followers for account id %s: %w", status.AccountID, err)
 	}
 
 	// If the poster is also local, add a fake entry for them
 	// so they can see their own status in their timeline.
 	if status.Account.IsLocal() {
-		accountIDs = append(accountIDs, status.AccountID)
+		follows = append(follows, &gtsmodel.Follow{
+			AccountID: status.AccountID,
+			Account:   status.Account,
+		})
 	}
 
-	// Timeline the status for each local following account.
-	errors := gtserror.MultiError{}
-	for _, accountID := range accountIDs {
-		if err := p.timelineStatusForAccount(ctx, status, accountID); err != nil {
-			errors.Append(err)
+	var errs gtserror.MultiError
+
+	for _, follow := range follows {
+		// Timeline the status for each local following account.
+		if err := p.timelineStatusForAccount(ctx, follow.Account, status); err != nil {
+			errs.Append(err)
 		}
 	}
 
-	if len(errors) != 0 {
-		return fmt.Errorf("timelineStatus: one or more errors timelining statuses: %w", errors.Combine())
+	if len(errs) != 0 {
+		return fmt.Errorf("timelineStatus: one or more errors timelining statuses: %w", errs.Combine())
 	}
 
 	return nil
@@ -446,34 +447,28 @@ func (p *Processor) timelineStatus(ctx context.Context, status *gtsmodel.Status)
 //
 // If the status was inserted into the home timeline of the given account,
 // it will also be streamed via websockets to the user.
-func (p *Processor) timelineStatusForAccount(ctx context.Context, status *gtsmodel.Status, accountID string) error {
-	// get the timeline owner account
-	timelineAccount, err := p.state.DB.GetAccountByID(ctx, accountID)
-	if err != nil {
-		return fmt.Errorf("timelineStatusForAccount: error getting account for timeline with id %s: %w", accountID, err)
-	}
-
+func (p *Processor) timelineStatusForAccount(ctx context.Context, account *gtsmodel.Account, status *gtsmodel.Status) error {
 	// make sure the status is timelineable
-	if timelineable, err := p.filter.StatusHometimelineable(ctx, status, timelineAccount); err != nil {
-		return fmt.Errorf("timelineStatusForAccount: error getting timelineability for status for timeline with id %s: %w", accountID, err)
+	if timelineable, err := p.filter.StatusHomeTimelineable(ctx, account, status); err != nil {
+		return fmt.Errorf("timelineStatusForAccount: error getting timelineability for status for timeline with id %s: %w", account.ID, err)
 	} else if !timelineable {
 		return nil
 	}
 
 	// stick the status in the timeline for the account and then immediately prepare it so they can see it right away
-	if inserted, err := p.statusTimelines.IngestAndPrepare(ctx, status, timelineAccount.ID); err != nil {
+	if inserted, err := p.statusTimelines.IngestAndPrepare(ctx, status, account.ID); err != nil {
 		return fmt.Errorf("timelineStatusForAccount: error ingesting status %s: %w", status.ID, err)
 	} else if !inserted {
 		return nil
 	}
 
 	// the status was inserted so stream it to the user
-	apiStatus, err := p.tc.StatusToAPIStatus(ctx, status, timelineAccount)
+	apiStatus, err := p.tc.StatusToAPIStatus(ctx, status, account)
 	if err != nil {
 		return fmt.Errorf("timelineStatusForAccount: error converting status %s to frontend representation: %w", status.ID, err)
 	}
 
-	if err := p.stream.Update(apiStatus, timelineAccount, stream.TimelineHome); err != nil {
+	if err := p.stream.Update(apiStatus, account, stream.TimelineHome); err != nil {
 		return fmt.Errorf("timelineStatusForAccount: error streaming update for status %s: %w", status.ID, err)
 	}
 
@@ -513,8 +508,8 @@ func (p *Processor) wipeStatus(ctx context.Context, statusToDelete *gtsmodel.Sta
 	}
 
 	// delete all mention entries generated by this status
-	for _, m := range statusToDelete.MentionIDs {
-		if err := p.state.DB.DeleteByID(ctx, m, &gtsmodel.Mention{}); err != nil {
+	for _, id := range statusToDelete.MentionIDs {
+		if err := p.state.DB.DeleteMentionByID(ctx, id); err != nil {
 			return err
 		}
 	}

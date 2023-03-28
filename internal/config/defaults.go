@@ -51,7 +51,7 @@ var Defaults = Configuration{
 	DbSqliteJournalMode:      "WAL",
 	DbSqliteSynchronous:      "NORMAL",
 	DbSqliteCacheSize:        8 * bytesize.MiB,
-	DbSqliteBusyTimeout:      time.Minute * 5,
+	DbSqliteBusyTimeout:      time.Minute * 30,
 
 	WebTemplateBaseDir: "./web/template/",
 	WebAssetBaseDir:    "./web/assets/",
@@ -119,58 +119,74 @@ var Defaults = Configuration{
 
 	Cache: CacheConfiguration{
 		GTS: GTSCacheConfiguration{
-			AccountMaxSize:   500,
-			AccountTTL:       time.Minute * 5,
-			AccountSweepFreq: time.Second * 30,
+			AccountMaxSize:   2000,
+			AccountTTL:       time.Minute * 30,
+			AccountSweepFreq: time.Minute,
 
-			BlockMaxSize:   100,
-			BlockTTL:       time.Minute * 5,
-			BlockSweepFreq: time.Second * 30,
+			BlockMaxSize:   1000,
+			BlockTTL:       time.Minute * 30,
+			BlockSweepFreq: time.Minute,
 
-			DomainBlockMaxSize:   1000,
+			DomainBlockMaxSize:   2000,
 			DomainBlockTTL:       time.Hour * 24,
 			DomainBlockSweepFreq: time.Minute,
 
-			EmojiMaxSize:   500,
-			EmojiTTL:       time.Minute * 5,
-			EmojiSweepFreq: time.Second * 30,
+			EmojiMaxSize:   2000,
+			EmojiTTL:       time.Minute * 30,
+			EmojiSweepFreq: time.Minute,
 
 			EmojiCategoryMaxSize:   100,
-			EmojiCategoryTTL:       time.Minute * 5,
-			EmojiCategorySweepFreq: time.Second * 30,
+			EmojiCategoryTTL:       time.Minute * 30,
+			EmojiCategorySweepFreq: time.Minute,
 
-			MediaMaxSize:   500,
-			MediaTTL:       time.Minute * 5,
-			MediaSweepFreq: time.Second * 30,
+			FollowMaxSize:   2000,
+			FollowTTL:       time.Minute * 30,
+			FollowSweepFreq: time.Minute,
 
-			MentionMaxSize:   500,
-			MentionTTL:       time.Minute * 5,
-			MentionSweepFreq: time.Second * 30,
+			FollowRequestMaxSize:   2000,
+			FollowRequestTTL:       time.Minute * 30,
+			FollowRequestSweepFreq: time.Minute,
 
-			NotificationMaxSize:   500,
-			NotificationTTL:       time.Minute * 5,
-			NotificationSweepFreq: time.Second * 30,
+			MediaMaxSize:   1000,
+			MediaTTL:       time.Minute * 30,
+			MediaSweepFreq: time.Minute,
+
+			MentionMaxSize:   2000,
+			MentionTTL:       time.Minute * 30,
+			MentionSweepFreq: time.Minute,
+
+			NotificationMaxSize:   1000,
+			NotificationTTL:       time.Minute * 30,
+			NotificationSweepFreq: time.Minute,
 
 			ReportMaxSize:   100,
-			ReportTTL:       time.Minute * 5,
-			ReportSweepFreq: time.Second * 30,
+			ReportTTL:       time.Minute * 30,
+			ReportSweepFreq: time.Minute,
 
-			StatusMaxSize:   500,
-			StatusTTL:       time.Minute * 5,
-			StatusSweepFreq: time.Second * 30,
+			StatusMaxSize:   2000,
+			StatusTTL:       time.Minute * 30,
+			StatusSweepFreq: time.Minute,
 
-			TombstoneMaxSize:   100,
-			TombstoneTTL:       time.Minute * 5,
-			TombstoneSweepFreq: time.Second * 30,
+			StatusFaveMaxSize:   2000,
+			StatusFaveTTL:       time.Minute * 30,
+			StatusFaveSweepFreq: time.Minute,
 
-			UserMaxSize:   100,
-			UserTTL:       time.Minute * 5,
-			UserSweepFreq: time.Second * 30,
+			TombstoneMaxSize:   500,
+			TombstoneTTL:       time.Minute * 30,
+			TombstoneSweepFreq: time.Minute,
+
+			UserMaxSize:   500,
+			UserTTL:       time.Minute * 30,
+			UserSweepFreq: time.Minute,
 
 			WebfingerMaxSize:   250,
 			WebfingerTTL:       time.Hour * 24,
 			WebfingerSweepFreq: time.Minute * 15,
 		},
+
+		VisibilityMaxSize:   2000,
+		VisibilityTTL:       time.Minute * 30,
+		VisibilitySweepFreq: time.Minute,
 	},
 
 	AdminMediaPruneDryRun: true,

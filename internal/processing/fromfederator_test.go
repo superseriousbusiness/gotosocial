@@ -358,10 +358,10 @@ func (suite *FromFederatorTestSuite) TestProcessAccountDelete() {
 	suite.ErrorIs(err, db.ErrNoEntries)
 
 	// the mufos should be gone now too
-	satanFollowsZork, err := suite.db.IsFollowing(ctx, deletedAccount, receivingAccount)
+	satanFollowsZork, err := suite.db.IsFollowing(ctx, deletedAccount.ID, receivingAccount.ID)
 	suite.NoError(err)
 	suite.False(satanFollowsZork)
-	zorkFollowsSatan, err := suite.db.IsFollowing(ctx, receivingAccount, deletedAccount)
+	zorkFollowsSatan, err := suite.db.IsFollowing(ctx, receivingAccount.ID, deletedAccount.ID)
 	suite.NoError(err)
 	suite.False(zorkFollowsSatan)
 

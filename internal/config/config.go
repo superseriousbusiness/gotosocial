@@ -157,6 +157,10 @@ type Configuration struct {
 
 type CacheConfiguration struct {
 	GTS GTSCacheConfiguration `name:"gts"`
+
+	VisibilityMaxSize   int           `name:"visibility-max-size"`
+	VisibilityTTL       time.Duration `name:"visibility-ttl"`
+	VisibilitySweepFreq time.Duration `name:"visibility-sweep-freq"`
 }
 
 type GTSCacheConfiguration struct {
@@ -180,6 +184,14 @@ type GTSCacheConfiguration struct {
 	EmojiCategoryTTL       time.Duration `name:"emoji-category-ttl"`
 	EmojiCategorySweepFreq time.Duration `name:"emoji-category-sweep-freq"`
 
+	FollowMaxSize   int           `name:"follow-max-size"`
+	FollowTTL       time.Duration `name:"follow-ttl"`
+	FollowSweepFreq time.Duration `name:"follow-sweep-freq"`
+
+	FollowRequestMaxSize   int           `name:"follow-request-max-size"`
+	FollowRequestTTL       time.Duration `name:"follow-request-ttl"`
+	FollowRequestSweepFreq time.Duration `name:"follow-request-sweep-freq"`
+
 	MediaMaxSize   int           `name:"media-max-size"`
 	MediaTTL       time.Duration `name:"media-ttl"`
 	MediaSweepFreq time.Duration `name:"media-sweep-freq"`
@@ -199,6 +211,10 @@ type GTSCacheConfiguration struct {
 	StatusMaxSize   int           `name:"status-max-size"`
 	StatusTTL       time.Duration `name:"status-ttl"`
 	StatusSweepFreq time.Duration `name:"status-sweep-freq"`
+
+	StatusFaveMaxSize   int           `name:"status-fave-max-size"`
+	StatusFaveTTL       time.Duration `name:"status-fave-ttl"`
+	StatusFaveSweepFreq time.Duration `name:"status-fave-sweep-freq"`
 
 	TombstoneMaxSize   int           `name:"tombstone-max-size"`
 	TombstoneTTL       time.Duration `name:"tombstone-ttl"`

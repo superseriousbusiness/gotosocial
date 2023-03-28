@@ -19,6 +19,7 @@ package account
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -32,10 +33,11 @@ import (
 // the account given in authed.
 func (p *Processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinned bool, mediaOnly bool, publicOnly bool) (*apimodel.PageableResponse, gtserror.WithCode) {
 	if requestingAccount != nil {
-		if blocked, err := p.state.DB.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true); err != nil {
+		if blocked, err := p.state.DB.IsEitherBlocked(ctx, requestingAccount.ID, targetAccountID); err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		} else if blocked {
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts"))
+			err := errors.New("block exists between accounts")
+			return nil, gtserror.NewErrorNotFound(err)
 		}
 	}
 
@@ -57,14 +59,10 @@ func (p *Processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Filtering + serialization process is the same for
-	// either pinned status queries or 'normal' ones.
-	filtered := make([]*gtsmodel.Status, 0, len(statuses))
-	for _, s := range statuses {
-		visible, err := p.filter.StatusVisible(ctx, s, requestingAccount)
-		if err == nil && visible {
-			filtered = append(filtered, s)
-		}
+	// Filtering + serialization process is the same for either pinned status queries or 'normal' ones.
+	filtered, err := p.filter.StatusesVisible(ctx, requestingAccount, statuses)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	count := len(filtered)

@@ -29,6 +29,9 @@ type Media interface {
 	// GetAttachmentByID gets a single attachment by its ID.
 	GetAttachmentByID(ctx context.Context, id string) (*gtsmodel.MediaAttachment, Error)
 
+	// GetAttachmentsByIDs fetches a list of media attachments for given IDs.
+	GetAttachmentsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.MediaAttachment, error)
+
 	// PutAttachment inserts the given attachment into the database.
 	PutAttachment(ctx context.Context, media *gtsmodel.MediaAttachment) error
 

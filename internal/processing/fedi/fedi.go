@@ -28,15 +28,15 @@ type Processor struct {
 	state     *state.State
 	federator federation.Federator
 	tc        typeutils.TypeConverter
-	filter    visibility.Filter
+	filter    *visibility.Filter
 }
 
 // New returns a new fedi processor.
-func New(state *state.State, tc typeutils.TypeConverter, federator federation.Federator) Processor {
+func New(state *state.State, tc typeutils.TypeConverter, federator federation.Federator, filter *visibility.Filter) Processor {
 	return Processor{
 		state:     state,
 		federator: federator,
 		tc:        tc,
-		filter:    visibility.NewFilter(state.DB),
+		filter:    filter,
 	}
 }

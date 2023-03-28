@@ -61,9 +61,12 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 		Order("status.id DESC")
 
 	if maxID == "" {
+		const future = 24 * time.Hour
+
 		var err error
-		// don't return statuses more than five minutes in the future
-		maxID, err = id.NewULIDFromTime(time.Now().Add(5 * time.Minute))
+
+		// don't return statuses more than 24hr in the future
+		maxID, err = id.NewULIDFromTime(time.Now().Add(future))
 		if err != nil {
 			return nil, err
 		}
@@ -138,15 +141,16 @@ func (t *timelineDB) GetPublicTimeline(ctx context.Context, maxID string, sinceI
 		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
 		Column("status.id").
 		Where("? = ?", bun.Ident("status.visibility"), gtsmodel.VisibilityPublic).
-		WhereGroup(" AND ", whereEmptyOrNull("status.in_reply_to_id")).
-		WhereGroup(" AND ", whereEmptyOrNull("status.in_reply_to_uri")).
 		WhereGroup(" AND ", whereEmptyOrNull("status.boost_of_id")).
 		Order("status.id DESC")
 
 	if maxID == "" {
+		const future = 24 * time.Hour
+
 		var err error
-		// don't return statuses more than five minutes in the future
-		maxID, err = id.NewULIDFromTime(time.Now().Add(5 * time.Minute))
+
+		// don't return statuses more than 24hr in the future
+		maxID, err = id.NewULIDFromTime(time.Now().Add(future))
 		if err != nil {
 			return nil, err
 		}

@@ -23,6 +23,7 @@ import (
 	"fmt"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -34,29 +35,82 @@ type statusFaveDB struct {
 	state *state.State
 }
 
-func (s *statusFaveDB) GetStatusFave(ctx context.Context, id string) (*gtsmodel.StatusFave, db.Error) {
-	fave := new(gtsmodel.StatusFave)
+func (s *statusFaveDB) GetStatusFave(ctx context.Context, accountID string, statusID string) (*gtsmodel.StatusFave, db.Error) {
+	return s.getStatusFave(
+		ctx,
+		"AccountID.StatusID",
+		func(fave *gtsmodel.StatusFave) error {
+			return s.conn.
+				NewSelect().
+				Model(fave).
+				Where("? = ?", bun.Ident("account_id"), accountID).
+				Where("? = ?", bun.Ident("status_id"), statusID).
+				Scan(ctx)
+		},
+		accountID,
+		statusID,
+	)
+}
 
-	err := s.conn.
-		NewSelect().
-		Model(fave).
-		Where("? = ?", bun.Ident("status_fave.ID"), id).
-		Scan(ctx)
+func (s *statusFaveDB) GetStatusFaveByID(ctx context.Context, id string) (*gtsmodel.StatusFave, db.Error) {
+	return s.getStatusFave(
+		ctx,
+		"ID",
+		func(fave *gtsmodel.StatusFave) error {
+			return s.conn.
+				NewSelect().
+				Model(fave).
+				Where("? = ?", bun.Ident("id"), id).
+				Scan(ctx)
+		},
+		id,
+	)
+}
+
+func (s *statusFaveDB) getStatusFave(ctx context.Context, lookup string, dbQuery func(*gtsmodel.StatusFave) error, keyParts ...any) (*gtsmodel.StatusFave, error) {
+	// Fetch status fave from database cache with loader callback
+	fave, err := s.state.Caches.GTS.StatusFave().Load(lookup, func() (*gtsmodel.StatusFave, error) {
+		var fave gtsmodel.StatusFave
+
+		// Not cached! Perform database query.
+		if err := dbQuery(&fave); err != nil {
+			return nil, s.conn.ProcessError(err)
+		}
+
+		return &fave, nil
+	}, keyParts...)
 	if err != nil {
-		return nil, s.conn.ProcessError(err)
+		return nil, err
 	}
 
-	fave.Account, err = s.state.DB.GetAccountByID(ctx, fave.AccountID)
+	if gtscontext.Barebones(ctx) {
+		// no need to fully populate.
+		return fave, nil
+	}
+
+	// Fetch the status fave author account.
+	fave.Account, err = s.state.DB.GetAccountByID(
+		gtscontext.SetBarebones(ctx),
+		fave.AccountID,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error getting status fave account %q: %w", fave.AccountID, err)
 	}
 
-	fave.TargetAccount, err = s.state.DB.GetAccountByID(ctx, fave.TargetAccountID)
+	// Fetch the status fave target account.
+	fave.TargetAccount, err = s.state.DB.GetAccountByID(
+		gtscontext.SetBarebones(ctx),
+		fave.TargetAccountID,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error getting status fave target account %q: %w", fave.TargetAccountID, err)
 	}
 
-	fave.Status, err = s.state.DB.GetStatusByID(ctx, fave.StatusID)
+	// Fetch the status fave target status.
+	fave.Status, err = s.state.DB.GetStatusByID(
+		gtscontext.SetBarebones(ctx),
+		fave.StatusID,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error getting status fave status %q: %w", fave.StatusID, err)
 	}
@@ -64,38 +118,22 @@ func (s *statusFaveDB) GetStatusFave(ctx context.Context, id string) (*gtsmodel.
 	return fave, nil
 }
 
-func (s *statusFaveDB) GetStatusFaveByAccountID(ctx context.Context, accountID string, statusID string) (*gtsmodel.StatusFave, db.Error) {
-	var id string
-
-	err := s.conn.
-		NewSelect().
-		TableExpr("? AS ?", bun.Ident("status_faves"), bun.Ident("status_fave")).
-		Column("status_fave.id").
-		Where("? = ?", bun.Ident("status_fave.account_id"), accountID).
-		Where("? = ?", bun.Ident("status_fave.status_id"), statusID).
-		Scan(ctx, &id)
-	if err != nil {
-		return nil, s.conn.ProcessError(err)
-	}
-
-	return s.GetStatusFave(ctx, id)
-}
-
-func (s *statusFaveDB) GetStatusFaves(ctx context.Context, statusID string) ([]*gtsmodel.StatusFave, db.Error) {
+func (s *statusFaveDB) GetStatusFavesForStatus(ctx context.Context, statusID string) ([]*gtsmodel.StatusFave, db.Error) {
 	ids := []string{}
 
 	if err := s.conn.
 		NewSelect().
-		TableExpr("? AS ?", bun.Ident("status_faves"), bun.Ident("status_fave")).
-		Column("status_fave.id").
-		Where("? = ?", bun.Ident("status_fave.status_id"), statusID).
+		Table("status_faves").
+		Column("id").
+		Where("? = ?", bun.Ident("status_id"), statusID).
 		Scan(ctx, &ids); err != nil {
 		return nil, s.conn.ProcessError(err)
 	}
 
 	faves := make([]*gtsmodel.StatusFave, 0, len(ids))
+
 	for _, id := range ids {
-		fave, err := s.GetStatusFave(ctx, id)
+		fave, err := s.GetStatusFaveByID(ctx, id)
 		if err != nil {
 			log.Errorf(ctx, "error getting status fave %q: %v", id, err)
 			continue
@@ -107,23 +145,27 @@ func (s *statusFaveDB) GetStatusFaves(ctx context.Context, statusID string) ([]*
 	return faves, nil
 }
 
-func (s *statusFaveDB) PutStatusFave(ctx context.Context, statusFave *gtsmodel.StatusFave) db.Error {
-	_, err := s.conn.
-		NewInsert().
-		Model(statusFave).
-		Exec(ctx)
-
-	return s.conn.ProcessError(err)
+func (s *statusFaveDB) PutStatusFave(ctx context.Context, fave *gtsmodel.StatusFave) db.Error {
+	return s.state.Caches.GTS.StatusFave().Store(fave, func() error {
+		_, err := s.conn.
+			NewInsert().
+			Model(fave).
+			Exec(ctx)
+		return s.conn.ProcessError(err)
+	})
 }
 
-func (s *statusFaveDB) DeleteStatusFave(ctx context.Context, id string) db.Error {
-	_, err := s.conn.
+func (s *statusFaveDB) DeleteStatusFaveByID(ctx context.Context, id string) db.Error {
+	if _, err := s.conn.
 		NewDelete().
-		TableExpr("? AS ?", bun.Ident("status_faves"), bun.Ident("status_fave")).
-		Where("? = ?", bun.Ident("status_fave.id"), id).
-		Exec(ctx)
+		Table("status_faves").
+		Where("? = ?", bun.Ident("id"), id).
+		Exec(ctx); err != nil {
+		return s.conn.ProcessError(err)
+	}
 
-	return s.conn.ProcessError(err)
+	s.state.Caches.GTS.StatusFave().Invalidate("ID", id)
+	return nil
 }
 
 func (s *statusFaveDB) DeleteStatusFaves(ctx context.Context, targetAccountID string, originAccountID string) db.Error {
@@ -131,41 +173,51 @@ func (s *statusFaveDB) DeleteStatusFaves(ctx context.Context, targetAccountID st
 		return errors.New("DeleteStatusFaves: one of targetAccountID or originAccountID must be set")
 	}
 
-	// TODO: Capture fave IDs in a RETURNING
-	// statement (when faves have a cache),
-	// + use the IDs to invalidate cache entries.
+	// Capture fave IDs in a RETURNING statement.
+	var faveIDs []string
 
 	q := s.conn.
 		NewDelete().
-		TableExpr("? AS ?", bun.Ident("status_faves"), bun.Ident("status_fave"))
+		Table("status_faves").
+		Returning("?", bun.Ident("id"))
 
 	if targetAccountID != "" {
-		q = q.Where("? = ?", bun.Ident("status_fave.target_account_id"), targetAccountID)
+		q = q.Where("? = ?", bun.Ident("target_account_id"), targetAccountID)
 	}
 
 	if originAccountID != "" {
-		q = q.Where("? = ?", bun.Ident("status_fave.account_id"), originAccountID)
+		q = q.Where("? = ?", bun.Ident("account_id"), originAccountID)
 	}
 
-	if _, err := q.Exec(ctx); err != nil {
+	if _, err := q.Exec(ctx, &faveIDs); err != nil {
 		return s.conn.ProcessError(err)
+	}
+
+	for _, id := range faveIDs {
+		// Invalidate each of the returned status fave IDs.
+		s.state.Caches.GTS.StatusFave().Invalidate("ID", id)
 	}
 
 	return nil
 }
 
 func (s *statusFaveDB) DeleteStatusFavesForStatus(ctx context.Context, statusID string) db.Error {
-	// TODO: Capture fave IDs in a RETURNING
-	// statement (when faves have a cache),
-	// + use the IDs to invalidate cache entries.
+	// Capture fave IDs in a RETURNING statement.
+	var faveIDs []string
 
 	q := s.conn.
 		NewDelete().
-		TableExpr("? AS ?", bun.Ident("status_faves"), bun.Ident("status_fave")).
-		Where("? = ?", bun.Ident("status_fave.status_id"), statusID)
+		Table("status_faves").
+		Where("? = ?", bun.Ident("status_id"), statusID).
+		Returning("?", bun.Ident("id"))
 
-	if _, err := q.Exec(ctx); err != nil {
+	if _, err := q.Exec(ctx, &faveIDs); err != nil {
 		return s.conn.ProcessError(err)
+	}
+
+	for _, id := range faveIDs {
+		// Invalidate each of the returned status fave IDs.
+		s.state.Caches.GTS.StatusFave().Invalidate("ID", id)
 	}
 
 	return nil

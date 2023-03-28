@@ -33,7 +33,7 @@ type notificationDB struct {
 	state *state.State
 }
 
-func (n *notificationDB) GetNotification(ctx context.Context, id string) (*gtsmodel.Notification, db.Error) {
+func (n *notificationDB) GetNotificationByID(ctx context.Context, id string) (*gtsmodel.Notification, db.Error) {
 	return n.state.Caches.GTS.Notification().Load("ID", func() (*gtsmodel.Notification, error) {
 		var notif gtsmodel.Notification
 
@@ -48,7 +48,7 @@ func (n *notificationDB) GetNotification(ctx context.Context, id string) (*gtsmo
 	}, id)
 }
 
-func (n *notificationDB) GetNotifications(ctx context.Context, accountID string, excludeTypes []string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, db.Error) {
+func (n *notificationDB) GetAccountNotifications(ctx context.Context, accountID string, excludeTypes []string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, db.Error) {
 	// Ensure reasonable
 	if limit < 0 {
 		limit = 0
@@ -92,7 +92,7 @@ func (n *notificationDB) GetNotifications(ctx context.Context, accountID string,
 	// reason for this is that for each notif, we can instead get it from our cache if it's cached
 	for _, id := range notifIDs {
 		// Attempt fetch from DB
-		notif, err := n.GetNotification(ctx, id)
+		notif, err := n.GetNotificationByID(ctx, id)
 		if err != nil {
 			log.Errorf(ctx, "error getting notification %q: %v", id, err)
 			continue
@@ -105,7 +105,14 @@ func (n *notificationDB) GetNotifications(ctx context.Context, accountID string,
 	return notifs, nil
 }
 
-func (n *notificationDB) DeleteNotification(ctx context.Context, id string) db.Error {
+func (n *notificationDB) PutNotification(ctx context.Context, notif *gtsmodel.Notification) error {
+	return n.state.Caches.GTS.Notification().Store(notif, func() error {
+		_, err := n.conn.NewInsert().Model(notif).Exec(ctx)
+		return n.conn.ProcessError(err)
+	})
+}
+
+func (n *notificationDB) DeleteNotificationByID(ctx context.Context, id string) db.Error {
 	if _, err := n.conn.
 		NewDelete().
 		TableExpr("? AS ?", bun.Ident("notifications"), bun.Ident("notification")).
@@ -118,18 +125,22 @@ func (n *notificationDB) DeleteNotification(ctx context.Context, id string) db.E
 	return nil
 }
 
-func (n *notificationDB) DeleteNotifications(ctx context.Context, targetAccountID string, originAccountID string) db.Error {
+func (n *notificationDB) DeleteNotifications(ctx context.Context, types []string, targetAccountID string, originAccountID string) db.Error {
 	if targetAccountID == "" && originAccountID == "" {
 		return errors.New("DeleteNotifications: one of targetAccountID or originAccountID must be set")
 	}
 
 	// Capture notification IDs in a RETURNING statement.
-	ids := []string{}
+	var ids []string
 
 	q := n.conn.
 		NewDelete().
 		TableExpr("? AS ?", bun.Ident("notifications"), bun.Ident("notification")).
 		Returning("?", bun.Ident("id"))
+
+	if len(types) > 0 {
+		q = q.Where("? IN (?)", bun.Ident("notification.notification_type"), bun.In(types))
+	}
 
 	if targetAccountID != "" {
 		q = q.Where("? = ?", bun.Ident("notification.target_account_id"), targetAccountID)
@@ -153,7 +164,7 @@ func (n *notificationDB) DeleteNotifications(ctx context.Context, targetAccountI
 
 func (n *notificationDB) DeleteNotificationsForStatus(ctx context.Context, statusID string) db.Error {
 	// Capture notification IDs in a RETURNING statement.
-	ids := []string{}
+	var ids []string
 
 	q := n.conn.
 		NewDelete().
