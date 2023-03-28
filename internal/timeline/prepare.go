@@ -23,143 +23,115 @@ import (
 	"errors"
 	"fmt"
 
-	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-func (t *timeline) PrepareFromTop(ctx context.Context, amount int) error {
-	l := log.WithContext(ctx).
-		WithFields(kv.Fields{{"amount", amount}}...)
-
-	// lazily initialize prepared posts if it hasn't been done already
+func (t *timeline) PrepareXFromTop(ctx context.Context, amount int) error {
+	// Lazily init prepared items.
 	if t.preparedItems.data == nil {
 		t.preparedItems.data = &list.List{}
 		t.preparedItems.data.Init()
 	}
 
-	// if the postindex is nil, nothing has been indexed yet so index from the highest ID possible
-	if t.indexedItems.data == nil {
-		l.Debug("postindex.data was nil, indexing behind highest possible ID")
-		if err := t.indexBehind(ctx, id.Highest, amount); err != nil {
-			return fmt.Errorf("PrepareFromTop: error indexing behind id %s: %s", id.Highest, err)
-		}
+	// Ensure we have enough items indexed from the top.
+	if err := t.indexBehind(ctx, id.Highest, amount); err != nil {
+		return fmt.Errorf("PrepareFromTop: error indexing behind highest possible id: %w", err)
 	}
 
-	l.Trace("entering prepareloop")
 	t.Lock()
 	defer t.Unlock()
-	var prepared int
-prepareloop:
-	for e := t.indexedItems.data.Front(); e != nil; e = e.Next() {
-		if e == nil {
-			continue
-		}
 
+	// Iterate through indexedItems from the front,
+	// and prepare each entry until we have enough,
+	// or until we just hit the end of the list.
+	var prepared int
+	for e := t.indexedItems.data.Front(); e != nil; e = e.Next() {
 		entry, ok := e.Value.(*indexedItemsEntry)
 		if !ok {
-			return errors.New("PrepareFromTop: could not parse e as a postIndexEntry")
+			log.Panic(ctx, "could not parse e as indexedItemsEntry")
 		}
 
-		if err := t.prepare(ctx, entry.itemID); err != nil {
-			// there's been an error
-			if err != db.ErrNoEntries {
-				// it's a real error
-				return fmt.Errorf("PrepareFromTop: error preparing status with id %s: %s", entry.itemID, err)
+		if err := t.prepareOne(ctx, entry.itemID); err != nil {
+			if errors.Is(err, db.ErrNoEntries) {
+				// Likely the status just doesn't
+				// exist anymore, so continue.
+				continue
 			}
-			// the status just doesn't exist (anymore) so continue to the next one
-			continue
+			// Real error has occurred.
+			return fmt.Errorf("PrepareFromTop: error preparing status with id %s: %w", entry.itemID, err)
 		}
 
 		prepared++
 		if prepared == amount {
-			// we're done
-			l.Trace("leaving prepareloop")
-			break prepareloop
+			break
 		}
 	}
 
-	l.Trace("leaving function")
 	return nil
 }
 
 func (t *timeline) prepareNextQuery(ctx context.Context, amount int, maxID string, sinceID string, minID string) error {
-	l := log.WithContext(ctx).
-		WithFields(kv.Fields{
-			{"amount", amount},
-			{"maxID", maxID},
-			{"sinceID", sinceID},
-			{"minID", minID},
-		}...)
-
-	var err error
 	switch {
 	case maxID != "" && sinceID == "":
-		l.Debug("preparing behind maxID")
-		err = t.prepareBehind(ctx, maxID, amount)
+		return t.prepareXBehindID(ctx, maxID, amount)
 	case maxID == "" && sinceID != "":
-		l.Debug("preparing before sinceID")
-		err = t.prepareBefore(ctx, sinceID, false, amount)
+		return t.prepareBefore(ctx, sinceID, false, amount)
 	case maxID == "" && minID != "":
-		l.Debug("preparing before minID")
-		err = t.prepareBefore(ctx, minID, false, amount)
+		return t.prepareBefore(ctx, minID, false, amount)
+	default:
+		return errors.New("prepareNextQuery: reached end of switch statement")
 	}
-
-	return err
 }
 
-// prepareBehind instructs the timeline to prepare the next amount of entries for serialization, from position onwards.
-// If include is true, then the given item ID will also be prepared, otherwise only entries behind it will be prepared.
-func (t *timeline) prepareBehind(ctx context.Context, itemID string, amount int) error {
-	// lazily initialize prepared items if it hasn't been done already
+// prepareXBehindID instructs the timeline to prepare x amount
+// of entries for serialization, from itemID onwards (inclusive).
+func (t *timeline) prepareXBehindID(ctx context.Context, itemID string, amount int) error {
+	// Lazily init prepared items.
 	if t.preparedItems.data == nil {
 		t.preparedItems.data = &list.List{}
 		t.preparedItems.data.Init()
 	}
 
+	// Ensure we have enough items indexed.
 	if err := t.indexBehind(ctx, itemID, amount); err != nil {
-		return fmt.Errorf("prepareBehind: error indexing behind id %s: %s", itemID, err)
+		return fmt.Errorf("prepareXBehindID: error indexing behind id %s: %w", itemID, err)
 	}
 
-	// if the itemindex is nil, nothing has been indexed yet so there's nothing to prepare
-	if t.indexedItems.data == nil {
-		return nil
-	}
-
-	var prepared int
-	var preparing bool
 	t.Lock()
 	defer t.Unlock()
-prepareloop:
+
+	// Iterate through indexedItems from the front,
+	// until we get to itemID, then prepare each entry
+	// until we have enough, or until we just hit the
+	// end of the list.
+	var prepared int
 	for e := t.indexedItems.data.Front(); e != nil; e = e.Next() {
 		entry, ok := e.Value.(*indexedItemsEntry)
 		if !ok {
-			return errors.New("prepareBehind: could not parse e as itemIndexEntry")
+			log.Panic(ctx, "could not parse e as indexedItemsEntry")
 		}
 
-		if !preparing {
-			// we haven't hit the position we need to prepare from yet
-			if entry.itemID == itemID {
-				preparing = true
-			}
+		if entry.itemID > itemID {
+			// ID of this item is too high,
+			// just keep iterating.
+			continue
 		}
 
-		if preparing {
-			if err := t.prepare(ctx, entry.itemID); err != nil {
-				// there's been an error
-				if !errors.Is(err, db.ErrNoEntries) {
-					// it's a real error
-					return fmt.Errorf("prepareBehind: error preparing item with id %s: %s", entry.itemID, err)
-				}
-				// the status just doesn't exist (anymore) so continue to the next one
+		if err := t.prepareOne(ctx, entry.itemID); err != nil {
+			if errors.Is(err, db.ErrNoEntries) {
+				// Likely the status just doesn't
+				// exist anymore, so continue.
 				continue
 			}
-			if prepared == amount {
-				// we're done
-				break prepareloop
-			}
-			prepared++
+			// Real error has occurred.
+			return fmt.Errorf("prepareXBehindID: error preparing status with id %s: %w", entry.itemID, err)
+		}
+
+		prepared++
+		if prepared == amount {
+			break
 		}
 	}
 
@@ -201,9 +173,9 @@ prepareloop:
 		}
 
 		if preparing {
-			if err := t.prepare(ctx, entry.itemID); err != nil {
+			if err := t.prepareOne(ctx, entry.itemID); err != nil {
 				// there's been an error
-				if err != db.ErrNoEntries {
+				if !errors.Is(err, db.ErrNoEntries) {
 					// it's a real error
 					return fmt.Errorf("prepareBefore: error preparing status with id %s: %s", entry.itemID, err)
 				}
@@ -221,14 +193,12 @@ prepareloop:
 	return nil
 }
 
-func (t *timeline) prepare(ctx context.Context, itemID string) error {
-	// trigger the caller-provided prepare function
+func (t *timeline) prepareOne(ctx context.Context, itemID string) error {
 	prepared, err := t.prepareFunction(ctx, t.accountID, itemID)
 	if err != nil {
 		return err
 	}
 
-	// shove it in prepared items as a prepared items entry
 	preparedItemsEntry := &preparedItemsEntry{
 		itemID:           prepared.GetID(),
 		boostOfID:        prepared.GetBoostOfID(),
@@ -240,25 +210,20 @@ func (t *timeline) prepare(ctx context.Context, itemID string) error {
 	return t.preparedItems.insertPrepared(ctx, preparedItemsEntry)
 }
 
-// oldestPreparedItemID returns the id of the rearmost (ie., the oldest) prepared item, or an error if something goes wrong.
-// If nothing goes wrong but there's no oldest item, an empty string will be returned so make sure to check for this.
-func (t *timeline) oldestPreparedItemID(ctx context.Context) (string, error) {
-	var id string
+func (t *timeline) oldestPreparedItemID(ctx context.Context) string {
 	if t.preparedItems == nil || t.preparedItems.data == nil {
-		// return an empty string if prepared items hasn't been initialized yet
-		return id, nil
+		return ""
 	}
 
 	e := t.preparedItems.data.Back()
 	if e == nil {
-		// return an empty string if there's no back entry (ie., the index list hasn't been initialized yet)
-		return id, nil
+		return ""
 	}
 
 	entry, ok := e.Value.(*preparedItemsEntry)
 	if !ok {
-		return id, errors.New("oldestPreparedItemID: could not parse e as a preparedItemsEntry")
+		log.Panic(ctx, "could not parse e as preparedItemsEntry")
 	}
 
-	return entry.itemID, nil
+	return entry.itemID
 }

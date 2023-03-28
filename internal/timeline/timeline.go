@@ -92,7 +92,7 @@ type Timeline interface {
 	IndexAndPrepareOne(ctx context.Context, itemID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error)
 
 	// PrepareXFromTop instructs the timeline to prepare x amount of items from the top of the timeline, useful during init.
-	PrepareFromTop(ctx context.Context, amount int) error
+	PrepareXFromTop(ctx context.Context, amount int) error
 
 	/*
 		INFO FUNCTIONS

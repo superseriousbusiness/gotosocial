@@ -210,7 +210,7 @@ func (t *timeline) IndexAndPrepareOne(ctx context.Context, statusID string, boos
 		return false, nil
 	}
 
-	return inserted, t.prepare(ctx, statusID)
+	return inserted, t.prepareOne(ctx, statusID)
 }
 
 func (t *timeline) OldestIndexedItemID(ctx context.Context) (string, error) {

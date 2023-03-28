@@ -41,7 +41,7 @@ func StatusGrabFunction(database db.DB) timeline.GrabFunction {
 	return func(ctx context.Context, timelineAccountID string, maxID string, sinceID string, minID string, limit int) ([]timeline.Timelineable, bool, error) {
 		statuses, err := database.GetHomeTimeline(ctx, timelineAccountID, maxID, sinceID, minID, limit, false)
 		if err != nil {
-			if err == db.ErrNoEntries {
+			if errors.Is(err, db.ErrNoEntries) {
 				return nil, true, nil // we just don't have enough statuses left in the db so return stop = true
 			}
 			return nil, false, fmt.Errorf("statusGrabFunction: error getting statuses from db: %s", err)
@@ -192,7 +192,7 @@ func (p *Processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, m
 	)
 
 	for i, status := range statuses {
-		timelineable, err := p.filter.StatusPublictimelineable(ctx, status, authed.Account)
+		timelineable, err := p.filter.StatusPublicTimelineable(ctx, authed.Account, status)
 		if err != nil {
 			log.Warnf(ctx, "error checking Publictimelineability of status %s: %s", status.ID, err)
 			continue
@@ -236,7 +236,7 @@ func (p *Processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, m
 func (p *Processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
 	statuses, nextMaxID, prevMinID, err := p.state.DB.GetFavedTimeline(ctx, authed.Account.ID, maxID, minID, limit)
 	if err != nil {
-		if err == db.ErrNoEntries {
+		if errors.Is(err, db.ErrNoEntries) {
 			// there are just no entries left
 			return util.EmptyPageableResponse(), nil
 		}
@@ -253,9 +253,9 @@ func (p *Processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, ma
 		return util.EmptyPageableResponse(), nil
 	}
 
-	items := []interface{}{}
-	for _, item := range filtered {
-		items = append(items, item)
+	items := make([]interface{}, 0, len(filtered))
+	for i, item := range filtered {
+		items[i] = item
 	}
 
 	return util.PackagePageableResponse(util.PageableResponseParams{
@@ -268,10 +268,11 @@ func (p *Processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, ma
 }
 
 func (p *Processor) filterFavedStatuses(ctx context.Context, authed *oauth.Auth, statuses []*gtsmodel.Status) ([]*apimodel.Status, error) {
-	apiStatuses := []*apimodel.Status{}
+	apiStatuses := make([]*apimodel.Status, 0, len(statuses))
+
 	for _, s := range statuses {
 		if _, err := p.state.DB.GetAccountByID(ctx, s.AccountID); err != nil {
-			if err == db.ErrNoEntries {
+			if errors.Is(err, db.ErrNoEntries) {
 				log.Debugf(ctx, "skipping status %s because account %s can't be found in the db", s.ID, s.AccountID)
 				continue
 			}

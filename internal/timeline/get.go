@@ -104,9 +104,9 @@ func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID st
 	// trying to "fill in the blanks" between two points,
 	// paging either up or down.
 	case maxID != "" && sinceID != "":
-		items, err = t.getXBetweenID(ctx, amount, maxID, sinceID, true)
+		items, err = t.getXBetweenIDs(ctx, amount, maxID, sinceID, true)
 	case maxID != "" && minID != "":
-		items, err = t.getXBetweenID(ctx, amount, maxID, minID, false)
+		items, err = t.getXBetweenIDs(ctx, amount, maxID, minID, false)
 
 	// In the final cases, maxID is not defined, but
 	// either sinceID or minID are. This is equivalent to
@@ -117,9 +117,9 @@ func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID st
 	// behindID because we don't have a cap for newest that
 	// we're interested in.
 	case maxID == "" && sinceID != "":
-		items, err = t.getXBetweenID(ctx, amount, id.Highest, sinceID, true)
+		items, err = t.getXBetweenIDs(ctx, amount, id.Highest, sinceID, true)
 	case maxID == "" && minID != "":
-		items, err = t.getXBetweenID(ctx, amount, id.Highest, minID, false)
+		items, err = t.getXBetweenIDs(ctx, amount, id.Highest, minID, false)
 	default:
 		err = errors.New("Get: switch statement exhausted with no results")
 	}
@@ -140,7 +140,7 @@ func (t *timeline) getXFromTop(ctx context.Context, amount int) ([]Preparable, e
 
 	// Make sure we have enough items prepared to return.
 	if t.preparedItems.data.Len() < amount {
-		if err := t.PrepareFromTop(ctx, amount); err != nil {
+		if err := t.PrepareXFromTop(ctx, amount); err != nil {
 			return nil, err
 		}
 	}
@@ -223,14 +223,11 @@ func (t *timeline) getXBehindID(ctx context.Context, amount int, behindID string
 		// This can happen when a user asks for really old
 		// items that are no longer prepared because they've
 		// been cleaned up.
-		if err := t.prepareBehind(ctx, behindID, amount); err != nil {
+		if err := t.prepareXBehindID(ctx, behindID, amount); err != nil {
 			return nil, fmt.Errorf("getXBehindID: error preparing behind and including ID %s", behindID)
 		}
 
-		oldestID, err := t.oldestPreparedItemID(ctx)
-		if err != nil {
-			return nil, err
-		}
+		oldestID := t.oldestPreparedItemID(ctx)
 
 		if oldestID == "" {
 			l.Tracef("oldestID is empty so we can't return behindID %s", behindID)
@@ -254,7 +251,7 @@ func (t *timeline) getXBehindID(ctx context.Context, amount int, behindID string
 	// Try to make sure we have enough items prepared
 	// *behind* the mark to return requested amount.
 	if t.preparedItems.data.Len() < amount+markPosition {
-		if err := t.prepareBehind(ctx, behindID, amount); err != nil {
+		if err := t.prepareXBehindID(ctx, behindID, amount); err != nil {
 			return nil, fmt.Errorf("getXBehindID: error preparing behind and including ID %s", behindID)
 		}
 	}
@@ -278,14 +275,14 @@ func (t *timeline) getXBehindID(ctx context.Context, amount int, behindID string
 	return items, nil
 }
 
-// getXBetweenID returns x amount of items somewhere between (not including) the given IDs.
+// getXBetweenIDs returns x amount of items somewhere between (not including) the given IDs.
 //
 // If frontToBack is true, items will be served paging down from behindID.
 // This corresponds to an api call to /timelines/home?max_id=WHATEVER&since_id=WHATEVER
 //
 // If frontToBack is false, items will be served paging up from beforeID.
 // This corresponds to an api call to /timelines/home?max_id=WHATEVER&min_id=WHATEVER
-func (t *timeline) getXBetweenID(ctx context.Context, amount int, behindID string, beforeID string, frontToBack bool) ([]Preparable, error) {
+func (t *timeline) getXBetweenIDs(ctx context.Context, amount int, behindID string, beforeID string, frontToBack bool) ([]Preparable, error) {
 	l := log.
 		WithContext(ctx).
 		WithFields(kv.Fields{

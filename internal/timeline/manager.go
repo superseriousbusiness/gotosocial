@@ -193,7 +193,7 @@ func (m *manager) GetOldestIndexedID(ctx context.Context, accountID string) (str
 }
 
 func (m *manager) PrepareXFromTop(ctx context.Context, accountID string, limit int) error {
-	return m.getOrCreateTimeline(ctx, accountID).PrepareFromTop(ctx, limit)
+	return m.getOrCreateTimeline(ctx, accountID).PrepareXFromTop(ctx, limit)
 }
 
 func (m *manager) WipeItemFromAllTimelines(ctx context.Context, statusID string) error {
