@@ -33,117 +33,106 @@ const {
 
 function createNavigation(rootUrl, menus) {
 	const root = {
-		url: rootUrl
+		url: rootUrl,
+		links: [],
 	};
 
-	const routing = {
-		view: {},
-		fallback: {}
-	};
+	const routing = [];
 
 	const menuTree = menus.map((creatorFunc) =>
 		creatorFunc(root, routing)
 	);
 
 	return {
-		Sidebar: Sidebar(menuTree),
+		Sidebar: Sidebar(menuTree, routing),
 		ViewRouter: ViewRouter(routing, root.redirectUrl)
 	};
 }
 
-function Menu(name, opts, items) {
-	if (items == undefined) { // opts argument is optional
-		items = opts;
+function MenuEntry(name, opts, contents) {
+	if (contents == undefined) { // opts argument is optional
+		contents = opts;
 		opts = {};
 	}
 
-	const menu = {
-		name,
-		key: nanoid(),
-		permissions: opts.permissions ?? true,
-		url: opts.url ?? urlSafe(name),
-		icon: opts.icon
-	};
+	return function createMenuEntry(root, routing) {
+		const type = Array.isArray(contents) ? "category" : "view";
 
-	return function _menu(root, routing) {
-		if (menu.url != "") {
-			menu.url = [root.url, menu.url].join("/");
-		} else {
-			menu.url = root.url;
+		let urlParts = [root.url];
+		if (opts.url != "") {
+			urlParts.push(opts.url ?? urlSafe(name));
 		}
 
-		if (root?.permissions && root.permissions !== true) {
-			menu.permissions = root.permissions;
+		const url = urlParts.join("/");
+		let routingUrl = url;
+
+		if (opts.wildcard) {
+			urlParts.push(":wildcard*");
+			routingUrl = urlParts.join("/");
 		}
 
-		menu.links = [];
-		menu.redirectUrl = menu.defaultUrl;
-		menu.level = (root.level ?? -1) + 1;
-
-		const contents = items.map((creatorFunc) => {
-			return creatorFunc(menu, routing);
-		});
-
-		if (root.links != undefined) {
-			root.links.push(...menu.links);
-		}
-
-		if (menu.redirectUrl != menu.url) {
-			routing.fallback[menu.url] = {
-				permissions: menu.permissions,
-				view: (
-					<Redirect to={menu.redirectUrl} />
-				)
-			};
-			menu.url = menu.redirectUrl;
-		}
-
-		if (root.redirectUrl == undefined) {
-			// first component in (sub)tree
-			root.redirectUrl = menu.url;
-		}
-
-		return React.createElement(MenuComponent, menu, contents);
-	};
-}
-
-function Item(name, view, opts) {
-	const item = {
-		name,
-		key: nanoid(),
-		permissions: opts.permissions ?? true,
-		url: opts.url ?? urlSafe(name),
-		icon: opts.icon
-	};
-
-	return function _Item(root, routing) {
-		if (item.url == "") {
-			item.url = root.url;
-		} else {
-			item.url = [root.url, item.url].join("/");
-		}
-
-		if (root?.permissions && root.permissions !== true) {
-			item.permissions = root.permissions;
-		}
-
-		if (root.redirectUrl == undefined) {
-			// first component in (sub)tree
-			root.redirectUrl = item.url;
-		}
-
-		root.links.push(item.url);
-		routing.view[item.url] = {
-			permissions: item.permissions,
-			view: React.createElement(view, { baseUrl: item.url })
+		const entry = {
+			name, type,
+			url, routingUrl,
+			key: nanoid(),
+			permissions: opts.permissions ?? true,
+			icon: opts.icon,
+			links: [routingUrl],
+			level: (root.level ?? -1) + 1,
+			redirectUrl: opts.defaultUrl
 		};
 
-		return React.createElement(MenuComponent, item);
+		if (type == "category") {
+			let entries = contents.map((creatorFunc) => creatorFunc(entry, routing));
+			let routes = [];
+
+			entries.forEach((e) => {
+				// move empty wildcard routes to end of category, to prevent overlap
+				if (e.url == entry.url) {
+					routes.unshift(e);
+				} else {
+					routes.push(e);
+				}
+			});
+			routes.reverse();
+
+			routing.push(...routes);
+			if (opts.redirectUrl != entry.url) {
+				routing.push({
+					key: entry.key,
+					url: entry.url,
+					permissions: entry.permissions,
+					routingUrl: entry.redirectUrl + "/:fallback*",
+					view: React.createElement(Redirect, { to: entry.redirectUrl })
+				});
+				entry.url = entry.redirectUrl;
+			}
+
+			root.links.push(...entry.links);
+
+			entry.MenuEntry = React.createElement(
+				MenuComponent,
+				entry,
+				entries.map((e) => e.MenuEntry)
+			);
+		} else {
+			entry.links.push(routingUrl);
+			root.links.push(routingUrl);
+
+			entry.view = React.createElement(contents, { baseUrl: url });
+			entry.MenuEntry = React.createElement(MenuComponent, entry);
+		}
+
+		if (root.redirectUrl == undefined) {
+			root.redirectUrl = entry.url;
+		}
+
+		return entry;
 	};
 }
 
 module.exports = {
 	createNavigation,
-	Menu,
-	Item
+	Menu: MenuEntry,
+	Item: MenuEntry
 };
