@@ -30,24 +30,97 @@ const {
 	ViewRouter,
 	MenuComponent
 } = require("./components");
+const syncpipe = require("syncpipe");
 
 function createNavigation(rootUrl, menus) {
 	const root = {
-		url: rootUrl
+		url: [rootUrl],
+		routes: []
 	};
 
-	const routing = {
-		view: {},
-		fallback: {}
-	};
+	const routing = [];
 
 	const menuTree = menus.map((creatorFunc) =>
 		creatorFunc(root, routing)
 	);
 
+	console.log(routing);
+
 	return {
 		Sidebar: Sidebar(menuTree),
-		ViewRouter: ViewRouter(routing, root.redirectUrl)
+		ViewRouter: ViewRouter(sortRoutes(routing), root.redirectUrl)
+	};
+}
+
+function sortRoutes(routing) {
+	return syncpipe(routing, [
+		(_) => Object.values(_),
+		(_) => _.map((v) => Object.entries(v)),
+		(_) => _.flat(1),
+		(_) => _.sort(([_urlA, optsA], [_urlB, optsB]) => {
+			// sort with most specific routes first (most path segments)
+			let comp = optsB.path.length - optsA.path.length;
+			if (comp == 0) {
+				if (optsA.wildcard) {
+					comp = 1;
+				} else if (optsB.wildcard) {
+					comp = -1;
+				}
+			}
+			return comp;
+		}),
+		(_) => {
+			_.forEach(([url, opts]) => console.log(url + (opts.wildcard ? "/*" : "")));
+			return _;
+		}
+	]);
+}
+
+function MenuEntry(name, opts, contents) {
+	if (contents == undefined) { // opts argument is optional
+		contents = opts;
+		opts = {};
+	}
+
+	return function createMenuEntry(root, routing) {
+		const type = Array.isArray(contents) ? "category" : "page";
+
+		const path = opts.url ?? urlSafe(name);
+		const url = [...root.url, path];
+
+		const entry = {
+			name, path, url, type,
+			key: nanoid(),
+			permissions: opts.permissions ?? true,
+			icon: opts.icon,
+			links: []
+		};
+
+		if (type == "category") {
+			let entries = contents.map((creatorFunc) => creatorFunc(entry, routing));
+			let routes = [];
+
+			entries.forEach((e) => {
+				if (e.path == "") {
+					routes.unshift(e);
+				} else {
+					routes.push(e);
+				}
+			});
+			routes.reverse();
+
+			entry.routes = routes;
+			routing.push(...routes);
+
+			console.log("name:", name, type, "routes:", routes);
+			console.log("  contents:", routes);
+		} else {
+			if (opts.wildcard) {
+				url.push(":wildcard*");
+			}
+		}
+
+		return entry;
 	};
 }
 
@@ -62,21 +135,22 @@ function Menu(name, opts, items) {
 		key: nanoid(),
 		permissions: opts.permissions ?? true,
 		url: opts.url ?? urlSafe(name),
-		icon: opts.icon
+		icon: opts.icon,
+		links: [],
+		wildcardLinks: []
 	};
 
 	return function _menu(root, routing) {
+		menu.path = [...root.path];
 		if (menu.url != "") {
-			menu.url = [root.url, menu.url].join("/");
-		} else {
-			menu.url = root.url;
+			menu.path.push(menu.url);
 		}
+		menu.url = menu.path.join("/");
 
 		if (root?.permissions && root.permissions !== true) {
 			menu.permissions = root.permissions;
 		}
 
-		menu.links = [];
 		menu.redirectUrl = menu.defaultUrl;
 		menu.level = (root.level ?? -1) + 1;
 
@@ -88,9 +162,15 @@ function Menu(name, opts, items) {
 			root.links.push(...menu.links);
 		}
 
+		if (root.wildcardLinks != undefined) {
+			root.wildcardLinks.push(...menu.wildcardLinks);
+		}
+
 		if (menu.redirectUrl != menu.url) {
 			routing.fallback[menu.url] = {
 				permissions: menu.permissions,
+				path: menu.path,
+				routeUrl: `${menu.url}/:page*`,
 				view: (
 					<Redirect to={menu.redirectUrl} />
 				)
@@ -117,11 +197,12 @@ function Item(name, view, opts) {
 	};
 
 	return function _Item(root, routing) {
-		if (item.url == "") {
-			item.url = root.url;
-		} else {
-			item.url = [root.url, item.url].join("/");
+		item.path = [...root.path];
+		if (item.url != "") {
+			item.path.push(item.url);
 		}
+
+		item.url = item.path.join("/");
 
 		if (root?.permissions && root.permissions !== true) {
 			item.permissions = root.permissions;
@@ -132,9 +213,20 @@ function Item(name, view, opts) {
 			root.redirectUrl = item.url;
 		}
 
+		item.level = (root.level ?? -1) + 1;
+
 		root.links.push(item.url);
+		if (opts.wildcard) {
+			item.wildcardLinks = [item.url];
+			root.wildcardLinks.push(item.url);
+		}
+
+		item.routeUrl = opts.wildcard ? `${item.url}/:page*` : item.url;
+
 		routing.view[item.url] = {
+			path: item.path,
 			permissions: item.permissions,
+			routeUrl: item.routeUrl,
 			view: React.createElement(view, { baseUrl: item.url })
 		};
 
@@ -144,6 +236,6 @@ function Item(name, view, opts) {
 
 module.exports = {
 	createNavigation,
-	Menu,
-	Item
+	Menu: MenuEntry,
+	Item: MenuEntry
 };

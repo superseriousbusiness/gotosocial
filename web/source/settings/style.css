@@ -155,9 +155,11 @@ nav.menu-tree {
 		border-top: 0.1rem solid $gray3;
 		display: flex;
 		flex-direction: column;
+		gap: 0.3rem;
 		margin: 0;
 
 		& > a.title {
+			text-decoration: none;
 			color: $settings-nav-header-fg;
 			padding: 0.5rem;
 			padding-bottom: 0;

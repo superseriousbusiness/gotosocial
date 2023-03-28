@@ -36,18 +36,18 @@ require("./style.css");
 
 const { Sidebar, ViewRouter } = createNavigation("/settings", [
 	Menu("User", [
-		Item("Profile", require("./user/profile"), { icon: "fa-user" }),
-		Item("Settings", require("./user/settings"), { icon: "fa-cogs" }),
+		Item("Profile", { icon: "fa-user" }, require("./user/profile")),
+		Item("Settings", { icon: "fa-cogs" }, require("./user/settings")),
 	]),
 	Menu("Moderation", {
 		url: "admin",
 		permissions: ["admin"]
 	}, [
-		Item("Reports", require("./admin/reports"), { icon: "fa-flag" }),
-		Item("Users", require("./admin/reports"), { icon: "fa-users" }),
+		Item("Reports", { icon: "fa-flag", wildcard: true }, require("./admin/reports")),
+		Item("Users", { icon: "fa-users", wildcard: true }, require("./admin/reports")),
 		Menu("Federation", { icon: "fa-hubzilla" }, [
-			Item("Federation", require("./admin/federation"), { icon: "fa-hubzilla", url: "" }),
-			Item("Import/Export", require("./admin/federation/import-export"), { icon: "fa-floppy-o" }),
+			Item("Federation", { icon: "fa-hubzilla", url: "", wildcard: true }, require("./admin/federation")),
+			Item("Import/Export", { icon: "fa-floppy-o", wildcard: true }, require("./admin/federation/import-export")),
 		])
 	]),
 	Menu("Administration", {
@@ -55,12 +55,12 @@ const { Sidebar, ViewRouter } = createNavigation("/settings", [
 		defaultUrl: "/settings/admin/settings",
 		permissions: ["admin"]
 	}, [
-		Item("Actions", require("./admin/actions"), { icon: "fa-bolt" }),
+		Item("Actions", { icon: "fa-bolt" }, require("./admin/actions")),
 		Menu("Custom Emoji", { icon: "fa-smile-o" }, [
-			Item("Local", require("./admin/emoji/local"), { icon: "fa-home" }),
-			Item("Remote", require("./admin/emoji/remote"), { icon: "fa-cloud" })
+			Item("Local", { icon: "fa-home", wildcard: true }, require("./admin/emoji/local")),
+			Item("Remote", { icon: "fa-cloud" }, require("./admin/emoji/remote"))
 		]),
-		Item("Settings", require("./admin/settings"), { icon: "fa-sliders" })
+		Item("Settings", { icon: "fa-sliders" }, require("./admin/settings"))
 	])
 ]);
 

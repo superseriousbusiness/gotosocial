@@ -20,7 +20,7 @@
 "use strict";
 
 const React = require("react");
-const { Link, Route, Redirect, Switch, useLocation } = require("wouter");
+const { Link, Route, Redirect, Switch, useRoute, useLocation } = require("wouter");
 const { ErrorBoundary } = require("react-error-boundary");
 const syncpipe = require("syncpipe");
 
@@ -51,21 +51,19 @@ function ViewRouter(routing, defaultRoute) {
 
 		const filteredRoutes = React.useMemo(() => {
 			return syncpipe(routing, [
-				(_) => Object.values(_),
-				(_) => _.map((v) => Object.entries(v)),
-				(_) => _.flat(1),
 				(_) => _.filter(([_url, v]) => checkPermission(v.permissions, permissions)),
-				(_) => _.map(([url, item]) => (
-					<Route path={`${url}/:page*`} key={url}>
-						{/* <Route path={url} key={url}> */}
-						<ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => { }}>
-							{/* FIXME: implement onReset */}
-							<BaseUrlContext.Provider value={url}>
-								{item.view}
-							</BaseUrlContext.Provider>
-						</ErrorBoundary>
-					</Route>
-				))
+				(_) => _.map(([url, item]) => {
+					return (
+						<Route path={item.routeUrl} key={url}>
+							<ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => { }}>
+								{/* FIXME: implement onReset */}
+								<BaseUrlContext.Provider value={url}>
+									{item.view}
+								</BaseUrlContext.Provider>
+							</ErrorBoundary>
+						</Route>
+					);
+				})
 			]);
 		}, [permissions]);
 
@@ -78,10 +76,20 @@ function ViewRouter(routing, defaultRoute) {
 	};
 }
 
-function MenuComponent({ name, url, icon, permissions, links, level = 0, children }) {
+function MenuComponent({ name, url, icon, wildcardLinks, routeUrl, permissions, links, level = 0, children }) {
 	let [location] = useLocation();
+	console.log("wildcards:", wildcardLinks);
 	// FIXME: doesn't match quite as well for wildcard routes
-	let isActive = url == location || links?.includes(location) || location.startsWith(url);
+	// let isActive = url == location || links?.includes(location) || location.startsWith(url);
+	let isActive = false;
+
+	if (links?.includes(location)) {
+		isActive = true;
+	} else if (wildcardLinks?.length > 0) {
+		isActive = wildcardLinks.some((l) => location.startsWith(l));
+	} else {
+		isActive = false;
+	}
 
 	if (!useHasPermission(permissions)) {
 		return null;
@@ -110,7 +118,7 @@ function MenuComponent({ name, url, icon, permissions, links, level = 0, childre
 	return (
 		<li className={className}>
 			<Link href={url}>
-				<a tabIndex={(level == 0 || (level == 1 && isActive)) ? "-1" : null} className="title">
+				<a tabIndex={level == 0 ? "-1" : null} className="title">
 					{icon && <i className={`icon fa fa-fw ${icon}`} aria-hidden="true" />}
 					{name}
 				</a>
