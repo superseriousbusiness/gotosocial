@@ -67,8 +67,7 @@ function MenuEntry(name, opts, contents) {
 		let routingUrl = url;
 
 		if (opts.wildcard) {
-			urlParts.push(":wildcard*");
-			routingUrl = urlParts.join("/");
+			routingUrl += "/:wildcard*";
 		}
 
 		const entry = {
@@ -97,6 +96,7 @@ function MenuEntry(name, opts, contents) {
 			routes.reverse();
 
 			routing.push(...routes);
+
 			if (opts.redirectUrl != entry.url) {
 				routing.push({
 					key: entry.key,
