@@ -26,7 +26,7 @@ import (
 
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
-		// To update unique constraint on public key, we need to migrate accounts into a new table.
+		// To update not null constraint on public key, we need to migrate accounts into a new table.
 		// See section 7 here: https://www.sqlite.org/lang_altertable.html
 
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
