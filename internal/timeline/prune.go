@@ -19,15 +19,13 @@ package timeline
 
 import (
 	"container/list"
-
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 func (t *timeline) Prune(desiredPreparedItemsLength int, desiredIndexedItemsLength int) int {
 	t.Lock()
 	defer t.Unlock()
 
-	l := t.indexedItems.data
+	l := t.items.data
 	if l == nil {
 		// Nothing to prune.
 		return 0
@@ -41,7 +39,7 @@ func (t *timeline) Prune(desiredPreparedItemsLength int, desiredIndexedItemsLeng
 
 	// Only initialize toRemove if we know we're
 	// going to need it, otherwise skiperino.
-	if toRemoveLen := t.indexedItems.data.Len() - desiredIndexedItemsLength; toRemoveLen > 0 {
+	if toRemoveLen := t.items.data.Len() - desiredIndexedItemsLength; toRemoveLen > 0 {
 		toRemove = func() *[]*list.Element { tr := make([]*list.Element, 0, toRemoveLen); return &tr }()
 	}
 
@@ -66,14 +64,7 @@ func (t *timeline) Prune(desiredPreparedItemsLength int, desiredIndexedItemsLeng
 			continue
 		}
 
-		// We're still within our allotted indexed
-		// length, so just unprepare this entry.
-		entry, ok := e.Value.(*indexedItemsEntry)
-		if !ok {
-			log.Panic(nil, "could not parse e as indexedItemsEntry")
-		}
-
-		entry.preparable = nil // <- eat this up please garbage collector nom nom nom
+		e.Value.(*indexedItemsEntry).prepared = nil // <- eat this up please garbage collector nom nom nom
 	}
 
 	if toRemove != nil {

@@ -39,8 +39,8 @@ func (t *timeline) Remove(ctx context.Context, statusID string) (int, error) {
 
 	// remove entr(ies) from the post index
 	removeIndexes := []*list.Element{}
-	if t.indexedItems != nil && t.indexedItems.data != nil {
-		for e := t.indexedItems.data.Front(); e != nil; e = e.Next() {
+	if t.items != nil && t.items.data != nil {
+		for e := t.items.data.Front(); e != nil; e = e.Next() {
 			entry, ok := e.Value.(*indexedItemsEntry)
 			if !ok {
 				return removed, errors.New("Remove: could not parse e as a postIndexEntry")
@@ -52,7 +52,7 @@ func (t *timeline) Remove(ctx context.Context, statusID string) (int, error) {
 		}
 	}
 	for _, e := range removeIndexes {
-		t.indexedItems.data.Remove(e)
+		t.items.data.Remove(e)
 		removed++
 	}
 
@@ -73,8 +73,8 @@ func (t *timeline) RemoveAllBy(ctx context.Context, accountID string) (int, erro
 
 	// remove entr(ies) from the post index
 	removeIndexes := []*list.Element{}
-	if t.indexedItems != nil && t.indexedItems.data != nil {
-		for e := t.indexedItems.data.Front(); e != nil; e = e.Next() {
+	if t.items != nil && t.items.data != nil {
+		for e := t.items.data.Front(); e != nil; e = e.Next() {
 			entry, ok := e.Value.(*indexedItemsEntry)
 			if !ok {
 				return removed, errors.New("Remove: could not parse e as a postIndexEntry")
@@ -86,7 +86,7 @@ func (t *timeline) RemoveAllBy(ctx context.Context, accountID string) (int, erro
 		}
 	}
 	for _, e := range removeIndexes {
-		t.indexedItems.data.Remove(e)
+		t.items.data.Remove(e)
 		removed++
 	}
 

@@ -137,7 +137,7 @@ type Timeline interface {
 
 // timeline fulfils the Timeline interface
 type timeline struct {
-	indexedItems    *indexedItems
+	items           *indexedItems
 	grabFunction    GrabFunction
 	filterFunction  FilterFunction
 	prepareFunction PrepareFunction
@@ -160,7 +160,7 @@ func NewTimeline(
 	skipInsertFunction SkipInsertFunction,
 ) Timeline {
 	return &timeline{
-		indexedItems: &indexedItems{
+		items: &indexedItems{
 			skipInsert: skipInsertFunction,
 		},
 		grabFunction:    grabFunction,

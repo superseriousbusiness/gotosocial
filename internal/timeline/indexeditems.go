@@ -35,9 +35,11 @@ type indexedItemsEntry struct {
 	boostOfID        string
 	accountID        string
 	boostOfAccountID string
-	preparable       Preparable
+	prepared         Preparable
 }
 
+// WARNING: ONLY CALL THIS FUNCTION IF YOU ALREADY HAVE
+// A LOCK ON THE TIMELINE CONTAINING THIS INDEXEDITEMS!
 func (i *indexedItems) insertIndexed(ctx context.Context, newEntry *indexedItemsEntry) (bool, error) {
 	// Lazily init indexed items.
 	if i.data == nil {

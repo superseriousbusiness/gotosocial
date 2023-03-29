@@ -28,36 +28,38 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-func (t *timeline) ItemIndexLength(ctx context.Context) int {
-	if t.indexedItems == nil || t.indexedItems.data == nil {
-		return 0
+func (t *timeline) indexXBetweenIDs(ctx context.Context, amount int, behindID string, beforeID string, frontToBack bool) error {
+	l := log.
+		WithContext(ctx).
+		WithFields(kv.Fields{
+			{"amount", amount},
+			{"behindID", behindID},
+			{"beforeID", beforeID},
+			{"frontToBack", frontToBack},
+		}...)
+	l.Trace("entering indexXBetweenIDs")
+	
+	if beforeID >= behindID {
+		// This is an impossible situation, we
+		// can't index anything between these.
+		return nil
 	}
-	return t.indexedItems.data.Len()
-}
 
-func (t *timeline) indexBehind(ctx context.Context, itemID string, amount int) error {
-	l := log.WithContext(ctx).WithFields(kv.Fields{
-		{"amount", amount},
-		{"itemID", itemID},
-	}...)
-
+	t.Lock()
+	defer t.Unlock()
+	
 	// Lazily init indexed items.
-	if t.indexedItems.data == nil {
-		t.indexedItems.data = &list.List{}
-		t.indexedItems.data.Init()
+	if t.items.data == nil {
+		t.items.data = &list.List{}
+		t.items.data.Init()
 	}
 
-	// If we're already indexedBehind given itemID
-	// by the required amount, we can return nil.
-	// First find position of requested itemID.
+	// If we're going front to back, and we already
+	// indexed behind behindID by the required amount,
+	// we can just return nil.
 	var position int
-	for e := t.indexedItems.data.Front(); e != nil; e = e.Next() {
-		entry, ok := e.Value.(*indexedItemsEntry)
-		if !ok {
-			l.Panic(ctx, "could not parse e as indexedItemsEntry")
-		}
-
-		if entry.itemID <= itemID {
+	for e := t.items.data.Front(); e != nil; e = e.Next() {
+		if entry := e.Value.(*indexedItemsEntry); entry.itemID <= itemID {
 			// We've found it.
 			break
 		}
@@ -69,7 +71,7 @@ func (t *timeline) indexBehind(ctx context.Context, itemID string, amount int) e
 	// satisfies the amount of items required.
 	var (
 		requestedPosition       = position + amount
-		additionalItemsRequired = requestedPosition - t.indexedItems.data.Len()
+		additionalItemsRequired = requestedPosition - t.items.data.Len()
 	)
 
 	if additionalItemsRequired <= 0 {
@@ -82,14 +84,14 @@ func (t *timeline) indexBehind(ctx context.Context, itemID string, amount int) e
 	l.Tracef("%d additional items must be indexed to reach requested position %d", additionalItemsRequired, requestedPosition)
 
 	var (
-		additionalItems = make([]Timelineable, 0, additionalItemsRequired)
+		itemsToIndex = make([]Timelineable, 0, additionalItemsRequired)
 		offsetID        string
 	)
 
 	// Derive offsetID from the last entry in the list to
 	// avoid making duplicate calls for entries we already
 	// have indexed.
-	if e := t.indexedItems.data.Back(); e != nil {
+	if e := t.items.data.Back(); e != nil {
 		entry, ok := e.Value.(*indexedItemsEntry)
 		if !ok {
 			l.Panic(ctx, "could not parse e as indexedItemsEntry")
@@ -117,7 +119,7 @@ func (t *timeline) indexBehind(ctx context.Context, itemID string, amount int) e
 		innerL.Tracef("trying grab with offsetID %s", offsetID)
 
 		// Check how many items we still need to get.
-		remainingRequiredItems := additionalItemsRequired - len(additionalItems)
+		remainingRequiredItems := additionalItemsRequired - len(itemsToIndex)
 		if remainingRequiredItems <= 0 {
 			innerL.Trace("got all required items while grabbing, breaking")
 			break
@@ -159,15 +161,25 @@ func (t *timeline) indexBehind(ctx context.Context, itemID string, amount int) e
 				continue
 			}
 
-			additionalItems = append(additionalItems, item)
+			itemsToIndex = append(itemsToIndex, item)
 		}
 	}
 	l.Trace("left grabloop")
 
 	// Index all the items we got.
-	for _, s := range additionalItems {
-		if _, err := t.IndexOne(ctx, s.GetID(), s.GetBoostOfID(), s.GetAccountID(), s.GetBoostOfAccountID()); err != nil {
-			return fmt.Errorf("indexBehind: error indexing item with id %s: %w", s.GetID(), err)
+	// We already have a lock on the timeline,
+	// so don't call IndexOne here, since that
+	// will also try to get a lock!
+	for _, item := range itemsToIndex {
+		entry := &indexedItemsEntry{
+			itemID:           item.GetID(),
+			boostOfID:        item.GetBoostOfID(),
+			accountID:        item.GetAccountID(),
+			boostOfAccountID: item.GetBoostOfAccountID(),
+		}
+
+		if _, err := t.items.insertIndexed(ctx, entry); err != nil {
+
 		}
 	}
 
@@ -185,72 +197,81 @@ func (t *timeline) IndexOne(ctx context.Context, itemID string, boostOfID string
 		boostOfAccountID: boostOfAccountID,
 	}
 
-	return t.indexedItems.insertIndexed(ctx, postIndexEntry)
+	return t.items.insertIndexed(ctx, postIndexEntry)
 }
 
 func (t *timeline) IndexAndPrepareOne(ctx context.Context, statusID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error) {
 	t.Lock()
 	defer t.Unlock()
 
-	preparable, err := t.prepareFunction(ctx, t.accountID, statusID)
-	if err != nil {
-		return false, fmt.Errorf("IndexAndPrepareOne: error preparing: %w", err)
-	}
-
 	postIndexEntry := &indexedItemsEntry{
 		itemID:           statusID,
 		boostOfID:        boostOfID,
 		accountID:        accountID,
 		boostOfAccountID: boostOfAccountID,
-		preparable:       preparable,
 	}
 
-	inserted, err := t.indexedItems.insertIndexed(ctx, postIndexEntry)
-	if err != nil {
+	if inserted, err := t.items.insertIndexed(ctx, postIndexEntry); err != nil {
 		return false, fmt.Errorf("IndexAndPrepareOne: error inserting indexed: %w", err)
+	} else if !inserted {
+		// Entry wasn't inserted, so
+		// don't bother preparing it.
+		return false, nil
 	}
 
-	return inserted, nil
+	preparable, err := t.prepareFunction(ctx, t.accountID, statusID)
+	if err != nil {
+		return true, fmt.Errorf("IndexAndPrepareOne: error preparing: %w", err)
+	}
+	postIndexEntry.prepared = preparable
+
+	return true, nil
+}
+
+func (t *timeline) ItemIndexLength(ctx context.Context) int {
+	t.Lock()
+	defer t.Unlock()
+
+	if t.items == nil || t.items.data == nil {
+		// indexedItems hasnt been initialized yet.
+		return 0
+	}
+
+	return t.items.data.Len()
 }
 
 func (t *timeline) OldestIndexedItemID(ctx context.Context) string {
-	if t.indexedItems == nil || t.indexedItems.data == nil {
+	t.Lock()
+	defer t.Unlock()
+
+	if t.items == nil || t.items.data == nil {
 		// indexedItems hasnt been initialized yet.
-		// Return an empty string.
 		return ""
 	}
 
-	e := t.indexedItems.data.Back()
+	e := t.items.data.Back()
 	if e == nil {
-		// List was empty, return empty string.
+		// List was empty.
 		return ""
 	}
 
-	entry, ok := e.Value.(*indexedItemsEntry)
-	if !ok {
-		log.Panic(ctx, "could not parse e as indexedItemsEntry")
-	}
-
-	return entry.itemID
+	return e.Value.(*indexedItemsEntry).itemID
 }
 
 func (t *timeline) NewestIndexedItemID(ctx context.Context) string {
-	if t.indexedItems == nil || t.indexedItems.data == nil {
+	t.Lock()
+	defer t.Unlock()
+
+	if t.items == nil || t.items.data == nil {
 		// indexedItems hasnt been initialized yet.
-		// Return an empty string.
 		return ""
 	}
 
-	e := t.indexedItems.data.Front()
+	e := t.items.data.Front()
 	if e == nil {
-		// List was empty, return empty string.
+		// List was empty.
 		return ""
 	}
 
-	entry, ok := e.Value.(*indexedItemsEntry)
-	if !ok {
-		log.Panic(ctx, "could not parse e as indexedItemsEntry")
-	}
-
-	return entry.itemID
+	return e.Value.(*indexedItemsEntry).itemID
 }
