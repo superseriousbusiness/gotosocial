@@ -253,7 +253,7 @@ func (p *Processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, ma
 		return util.EmptyPageableResponse(), nil
 	}
 
-	items := make([]interface{}, 0, len(filtered))
+	items := make([]interface{}, len(filtered))
 	for i, item := range filtered {
 		items[i] = item
 	}
