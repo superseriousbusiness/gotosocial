@@ -33,8 +33,8 @@ function useHasPermission(permissions) {
 }
 
 function checkPermission(requiredPermissisons, user) {
-	// requiredPermissions can be 'true', in which case there are no restrictions
-	if (requiredPermissisons === true) {
+	// requiredPermissions can be 'false', in which case there are no restrictions
+	if (requiredPermissisons === false) {
 		return true;
 	}
 

@@ -74,7 +74,7 @@ function MenuEntry(name, opts, contents) {
 			name, type,
 			url, routingUrl,
 			key: nanoid(),
-			permissions: opts.permissions ?? true,
+			permissions: opts.permissions ?? false,
 			icon: opts.icon,
 			links: [routingUrl],
 			level: (root.level ?? -1) + 1,
