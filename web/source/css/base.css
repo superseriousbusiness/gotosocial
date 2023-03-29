@@ -97,7 +97,6 @@ header {
 header a {
 	margin: 2rem;
 	display: flex;
-	/* flex-direction: column; */
 	flex-wrap: wrap;
 	gap: 2rem;
 
@@ -120,7 +119,6 @@ header a {
 }
 
 .excerpt-top {
-	/* margin-top: -1rem; */
 	margin-bottom: 2rem;
 	font-style: italic;
 	font-weight: normal;

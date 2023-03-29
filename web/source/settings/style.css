@@ -59,8 +59,6 @@ main section {
 
 #root {
 	display: grid;
-	/* keep in sync with base.css .page {} */
-	/* grid-template-columns: auto min(92%, 50rem) 1fr; */
 	grid-template-columns: 1fr minmax(auto, 60rem) 1fr;
 	grid-template-columns: 1fr min(92%, 60rem) 1fr;
 	box-sizing: border-box;
@@ -214,7 +212,6 @@ nav.menu-tree {
 
 	li.nested { /* any deeper nesting, just has indent */
 		a.title {
-			/* padding-left: calc($fa-fw + 0.9rem); */
 			padding-left: 1rem;
 			font-weight: normal;
 			color: $fg;
@@ -222,7 +219,6 @@ nav.menu-tree {
 
 			&:focus {
 				color: $fg-accent;
-				/* font-weight: bold; */
 				outline: none;
 			}
 
