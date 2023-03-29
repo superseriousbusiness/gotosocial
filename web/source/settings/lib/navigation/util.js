@@ -32,12 +32,14 @@ function useHasPermission(permissions) {
 	return checkPermission(permissions, roles);
 }
 
-function checkPermission(required, user) {
-	if (required === true) {
+function checkPermission(requiredPermissisons, user) {
+	// requiredPermissions can be 'true', in which case there are no restrictions
+	if (requiredPermissisons === true) {
 		return true;
 	}
 
-	return user.some((role) => required.includes(role));
+	// or an array of roles, check if one of the user's roles is sufficient
+	return user.some((role) => requiredPermissisons.includes(role));
 }
 
 function useBaseUrl() {
