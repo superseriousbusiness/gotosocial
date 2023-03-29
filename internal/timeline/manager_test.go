@@ -72,12 +72,11 @@ func (suite *ManagerTestSuite) TestManagerIntegration() {
 	suite.Equal(0, indexedLen)
 
 	// oldestIndexed should be empty string since there's nothing indexed
-	oldestIndexed, err := suite.manager.GetOldestIndexedID(ctx, testAccount.ID)
-	suite.NoError(err)
+	oldestIndexed := suite.manager.GetOldestIndexedID(ctx, testAccount.ID)
 	suite.Empty(oldestIndexed)
 
 	// trigger status preparation
-	err = suite.manager.PrepareXFromTop(ctx, testAccount.ID, 20)
+	err := suite.manager.PrepareXFromTop(ctx, testAccount.ID, 20)
 	suite.NoError(err)
 
 	// local_account_1 can see 16 statuses out of the testrig statuses in its home timeline
@@ -85,8 +84,7 @@ func (suite *ManagerTestSuite) TestManagerIntegration() {
 	suite.Equal(16, indexedLen)
 
 	// oldest should now be set
-	oldestIndexed, err = suite.manager.GetOldestIndexedID(ctx, testAccount.ID)
-	suite.NoError(err)
+	oldestIndexed = suite.manager.GetOldestIndexedID(ctx, testAccount.ID)
 	suite.Equal("01F8MH75CBF9JFX4ZAD54N0W0R", oldestIndexed)
 
 	// get hometimeline
@@ -103,8 +101,7 @@ func (suite *ManagerTestSuite) TestManagerIntegration() {
 	suite.Equal(15, indexedLen)
 
 	// oldest should now be different
-	oldestIndexed, err = suite.manager.GetOldestIndexedID(ctx, testAccount.ID)
-	suite.NoError(err)
+	oldestIndexed = suite.manager.GetOldestIndexedID(ctx, testAccount.ID)
 	suite.Equal("01F8MH82FYRXD2RC6108DAJ5HB", oldestIndexed)
 
 	// delete the new oldest status specifically from this timeline, as though local_account_1 had muted or blocked it
@@ -117,8 +114,7 @@ func (suite *ManagerTestSuite) TestManagerIntegration() {
 	suite.Equal(14, indexedLen)
 
 	// oldest should now be different
-	oldestIndexed, err = suite.manager.GetOldestIndexedID(ctx, testAccount.ID)
-	suite.NoError(err)
+	oldestIndexed = suite.manager.GetOldestIndexedID(ctx, testAccount.ID)
 	suite.Equal("01F8MHAAY43M6RJ473VQFCVH37", oldestIndexed)
 
 	// now remove all entries by local_account_2 from the timeline

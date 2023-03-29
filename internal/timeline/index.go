@@ -192,11 +192,17 @@ func (t *timeline) IndexAndPrepareOne(ctx context.Context, statusID string, boos
 	t.Lock()
 	defer t.Unlock()
 
+	preparable, err := t.prepareFunction(ctx, t.accountID, statusID)
+	if err != nil {
+		return false, fmt.Errorf("IndexAndPrepareOne: error preparing: %w", err)
+	}
+
 	postIndexEntry := &indexedItemsEntry{
 		itemID:           statusID,
 		boostOfID:        boostOfID,
 		accountID:        accountID,
 		boostOfAccountID: boostOfAccountID,
+		preparable:       preparable,
 	}
 
 	inserted, err := t.indexedItems.insertIndexed(ctx, postIndexEntry)
@@ -204,26 +210,20 @@ func (t *timeline) IndexAndPrepareOne(ctx context.Context, statusID string, boos
 		return false, fmt.Errorf("IndexAndPrepareOne: error inserting indexed: %w", err)
 	}
 
-	if !inserted {
-		// Item wasn't inserted so we
-		// don't need to prepare it.
-		return false, nil
-	}
-
-	return inserted, t.prepareOne(ctx, statusID)
+	return inserted, nil
 }
 
-func (t *timeline) OldestIndexedItemID(ctx context.Context) (string, error) {
+func (t *timeline) OldestIndexedItemID(ctx context.Context) string {
 	if t.indexedItems == nil || t.indexedItems.data == nil {
 		// indexedItems hasnt been initialized yet.
 		// Return an empty string.
-		return "", nil
+		return ""
 	}
 
 	e := t.indexedItems.data.Back()
 	if e == nil {
 		// List was empty, return empty string.
-		return "", nil
+		return ""
 	}
 
 	entry, ok := e.Value.(*indexedItemsEntry)
@@ -231,20 +231,20 @@ func (t *timeline) OldestIndexedItemID(ctx context.Context) (string, error) {
 		log.Panic(ctx, "could not parse e as indexedItemsEntry")
 	}
 
-	return entry.itemID, nil
+	return entry.itemID
 }
 
-func (t *timeline) NewestIndexedItemID(ctx context.Context) (string, error) {
+func (t *timeline) NewestIndexedItemID(ctx context.Context) string {
 	if t.indexedItems == nil || t.indexedItems.data == nil {
 		// indexedItems hasnt been initialized yet.
 		// Return an empty string.
-		return "", nil
+		return ""
 	}
 
 	e := t.indexedItems.data.Front()
 	if e == nil {
 		// List was empty, return empty string.
-		return "", nil
+		return ""
 	}
 
 	entry, ok := e.Value.(*indexedItemsEntry)
@@ -252,5 +252,5 @@ func (t *timeline) NewestIndexedItemID(ctx context.Context) (string, error) {
 		log.Panic(ctx, "could not parse e as indexedItemsEntry")
 	}
 
-	return entry.itemID, nil
+	return entry.itemID
 }

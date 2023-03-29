@@ -19,44 +19,68 @@ package timeline
 
 import (
 	"container/list"
+
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 func (t *timeline) Prune(desiredPreparedItemsLength int, desiredIndexedItemsLength int) int {
 	t.Lock()
 	defer t.Unlock()
 
-	pruneList := func(pruneTo int, listToPrune *list.List) int {
-		if listToPrune == nil {
-			// no need to prune
-			return 0
-		}
-
-		unprunedLength := listToPrune.Len()
-		if unprunedLength <= pruneTo {
-			// no need to prune
-			return 0
-		}
-
-		// work from the back + assemble a slice of entries that we will prune
-		amountStillToPrune := unprunedLength - pruneTo
-		itemsToPrune := make([]*list.Element, 0, amountStillToPrune)
-		for e := listToPrune.Back(); amountStillToPrune > 0; e = e.Prev() {
-			itemsToPrune = append(itemsToPrune, e)
-			amountStillToPrune--
-		}
-
-		// remove the entries we found
-		var totalPruned int
-		for _, e := range itemsToPrune {
-			listToPrune.Remove(e)
-			totalPruned++
-		}
-
-		return totalPruned
+	l := t.indexedItems.data
+	if l == nil {
+		// Nothing to prune.
+		return 0
 	}
 
-	prunedPrepared := pruneList(desiredPreparedItemsLength, t.preparedItems.data)
-	prunedIndexed := pruneList(desiredIndexedItemsLength, t.indexedItems.data)
+	var (
+		position    int
+		totalPruned int
+		toRemove    *[]*list.Element
+	)
 
-	return prunedPrepared + prunedIndexed
+	// Only initialize toRemove if we know we're
+	// going to need it, otherwise skiperino.
+	if toRemoveLen := t.indexedItems.data.Len() - desiredIndexedItemsLength; toRemoveLen > 0 {
+		toRemove = func() *[]*list.Element { tr := make([]*list.Element, 0, toRemoveLen); return &tr }()
+	}
+
+	// Work from the front of the list until we get
+	// to the point where we need to start pruning.
+	for e := l.Front(); e != nil; e = e.Next() {
+		position++
+
+		if position <= desiredPreparedItemsLength {
+			// We're still within our allotted
+			// prepped length, nothing to do yet.
+			continue
+		}
+
+		// We need to *at least* unprepare this entry.
+		totalPruned++
+
+		// If we're beyond our indexed length already,
+		// we can just remove the item completely.
+		if position > desiredIndexedItemsLength {
+			*toRemove = append(*toRemove, e)
+			continue
+		}
+
+		// We're still within our allotted indexed
+		// length, so just unprepare this entry.
+		entry, ok := e.Value.(*indexedItemsEntry)
+		if !ok {
+			log.Panic(nil, "could not parse e as indexedItemsEntry")
+		}
+
+		entry.preparable = nil // <- eat this up please garbage collector nom nom nom
+	}
+
+	if toRemove != nil {
+		for _, e := range *toRemove {
+			l.Remove(e)
+		}
+	}
+
+	return totalPruned
 }

@@ -91,9 +91,6 @@ type Timeline interface {
 	// if the item is a boost and the original item or another boost of it already exists < boostReinsertionDepth back in the timeline.
 	IndexAndPrepareOne(ctx context.Context, itemID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error)
 
-	// PrepareXFromTop instructs the timeline to prepare x amount of items from the top of the timeline, useful during init.
-	PrepareXFromTop(ctx context.Context, amount int) error
-
 	/*
 		INFO FUNCTIONS
 	*/
@@ -104,13 +101,13 @@ type Timeline interface {
 	// ItemIndexLength returns the length of the item index at this point in time.
 	ItemIndexLength(ctx context.Context) int
 
-	// OldestIndexedItemID returns the id of the rearmost (ie., the oldest) indexed item, or an error if something goes wrong.
-	// If nothing goes wrong but there's no oldest item, an empty string will be returned so make sure to check for this.
-	OldestIndexedItemID(ctx context.Context) (string, error)
+	// OldestIndexedItemID returns the id of the rearmost (ie., the oldest) indexed item.
+	// If there's no oldest item, an empty string will be returned so make sure to check for this.
+	OldestIndexedItemID(ctx context.Context) string
 
-	// NewestIndexedItemID returns the id of the frontmost (ie., the newest) indexed item, or an error if something goes wrong.
-	// If nothing goes wrong but there's no newest item, an empty string will be returned so make sure to check for this.
-	NewestIndexedItemID(ctx context.Context) (string, error)
+	// NewestIndexedItemID returns the id of the frontmost (ie., the newest) indexed item.
+	// If there's no newest item, an empty string will be returned so make sure to check for this.
+	NewestIndexedItemID(ctx context.Context) string
 
 	/*
 		UTILITY FUNCTIONS
@@ -141,7 +138,6 @@ type Timeline interface {
 // timeline fulfils the Timeline interface
 type timeline struct {
 	indexedItems    *indexedItems
-	preparedItems   *preparedItems
 	grabFunction    GrabFunction
 	filterFunction  FilterFunction
 	prepareFunction PrepareFunction
@@ -165,9 +161,6 @@ func NewTimeline(
 ) Timeline {
 	return &timeline{
 		indexedItems: &indexedItems{
-			skipInsert: skipInsertFunction,
-		},
-		preparedItems: &preparedItems{
 			skipInsert: skipInsertFunction,
 		},
 		grabFunction:    grabFunction,

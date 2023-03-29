@@ -70,10 +70,8 @@ type Manager interface {
 	GetIndexedLength(ctx context.Context, accountID string) int
 
 	// GetOldestIndexedID returns the id ID for the oldest item that we have indexed for the given account.
-	GetOldestIndexedID(ctx context.Context, accountID string) (string, error)
-
-	// PrepareXFromTop prepares limit n amount of items, based on their indexed representations, from the top of the index.
-	PrepareXFromTop(ctx context.Context, accountID string, limit int) error
+	// Will be an empty string if nothing is (yet) indexed.
+	GetOldestIndexedID(ctx context.Context, accountID string) string
 
 	// Remove removes one item from the timeline of the given timelineAccountID
 	Remove(ctx context.Context, accountID string, itemID string) (int, error)
@@ -188,12 +186,8 @@ func (m *manager) GetIndexedLength(ctx context.Context, accountID string) int {
 	return m.getOrCreateTimeline(ctx, accountID).ItemIndexLength(ctx)
 }
 
-func (m *manager) GetOldestIndexedID(ctx context.Context, accountID string) (string, error) {
+func (m *manager) GetOldestIndexedID(ctx context.Context, accountID string) string {
 	return m.getOrCreateTimeline(ctx, accountID).OldestIndexedItemID(ctx)
-}
-
-func (m *manager) PrepareXFromTop(ctx context.Context, accountID string, limit int) error {
-	return m.getOrCreateTimeline(ctx, accountID).PrepareXFromTop(ctx, limit)
 }
 
 func (m *manager) WipeItemFromAllTimelines(ctx context.Context, statusID string) error {

@@ -68,8 +68,7 @@ func (suite *IndexTestSuite) TearDownTest() {
 
 func (suite *IndexTestSuite) TestOldestIndexedItemIDEmpty() {
 	// the oldest indexed post should be an empty string since there's nothing indexed yet
-	postID, err := suite.timeline.OldestIndexedItemID(context.Background())
-	suite.NoError(err)
+	postID := suite.timeline.OldestIndexedItemID(context.Background())
 	suite.Empty(postID)
 
 	// indexLength should be 0

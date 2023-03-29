@@ -139,19 +139,21 @@ func StatusSkipInsertFunction() timeline.SkipInsertFunction {
 func (p *Processor) HomeTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode) {
 	statuses, err := p.statusTimelines.GetTimeline(ctx, authed.Account.ID, maxID, sinceID, minID, limit, local)
 	if err != nil {
-		err = fmt.Errorf("HomeTimelineGet: %w", err)
+		err = fmt.Errorf("HomeTimelineGet: error getting statuses: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	count := len(statuses)
-
 	if count == 0 {
 		return util.EmptyPageableResponse(), nil
 	}
 
-	items := []interface{}{}
-	nextMaxIDValue := ""
-	prevMinIDValue := ""
+	var (
+		items          = make([]interface{}, count)
+		nextMaxIDValue string
+		prevMinIDValue string
+	)
+
 	for i, item := range statuses {
 		if i == count-1 {
 			nextMaxIDValue = item.GetID()
@@ -160,7 +162,8 @@ func (p *Processor) HomeTimelineGet(ctx context.Context, authed *oauth.Auth, max
 		if i == 0 {
 			prevMinIDValue = item.GetID()
 		}
-		items = append(items, item)
+
+		items[i] = item
 	}
 
 	return util.PackagePageableResponse(util.PageableResponseParams{
@@ -176,7 +179,7 @@ func (p *Processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, m
 	statuses, err := p.state.DB.GetPublicTimeline(ctx, maxID, sinceID, minID, limit, local)
 	if err != nil {
 		if errors.Is(err, db.ErrNoEntries) {
-			// No statuses in public timeline.
+			// No statuses (left) in public timeline.
 			return util.EmptyPageableResponse(), nil
 		}
 		// An actual error has occurred.
@@ -184,17 +187,21 @@ func (p *Processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, m
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	count := len(statuses)
+	if count == 0 {
+		return util.EmptyPageableResponse(), nil
+	}
+
 	var (
-		statusesCount  = len(statuses)
-		items          = make([]interface{}, 0, statusesCount)
+		items          = make([]interface{}, 0, count)
 		nextMaxIDValue string
 		prevMinIDValue string
 	)
 
-	for i, status := range statuses {
-		timelineable, err := p.filter.StatusPublicTimelineable(ctx, authed.Account, status)
+	for i, s := range statuses {
+		timelineable, err := p.filter.StatusPublicTimelineable(ctx, authed.Account, s)
 		if err != nil {
-			log.Warnf(ctx, "error checking Publictimelineability of status %s: %s", status.ID, err)
+			log.Debugf(ctx, "skipping status %s because of an error checking StatusPublicTimelineable: %s", s.ID, err)
 			continue
 		}
 
@@ -202,13 +209,13 @@ func (p *Processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, m
 			continue
 		}
 
-		apiStatus, err := p.tc.StatusToAPIStatus(ctx, status, authed.Account)
+		apiStatus, err := p.tc.StatusToAPIStatus(ctx, s, authed.Account)
 		if err != nil {
-			log.Warnf(ctx, "error converting status %s to apimodel status: %s", status.ID, err)
+			log.Debugf(ctx, "skipping status %s because it couldn't be converted to its api representation: %s", s.ID, err)
 			continue
 		}
 
-		if i == statusesCount-1 {
+		if i == count-1 {
 			nextMaxIDValue = apiStatus.GetID()
 		}
 
@@ -220,6 +227,7 @@ func (p *Processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, m
 	}
 
 	if itemsCount := len(items); itemsCount == 0 {
+		// We filtered out all statuses.
 		// Don't page for an empty response.
 		return util.EmptyPageableResponse(), nil
 	}
@@ -237,15 +245,17 @@ func (p *Processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, ma
 	statuses, nextMaxID, prevMinID, err := p.state.DB.GetFavedTimeline(ctx, authed.Account.ID, maxID, minID, limit)
 	if err != nil {
 		if errors.Is(err, db.ErrNoEntries) {
-			// there are just no entries left
+			// There are just no entries (left).
 			return util.EmptyPageableResponse(), nil
 		}
-		// there's an actual error
+		// An actual error has occurred.
+		err = fmt.Errorf("FavedTimelineGet: db error getting statuses: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	filtered, err := p.filterFavedStatuses(ctx, authed, statuses)
 	if err != nil {
+		err = fmt.Errorf("FavedTimelineGet: error filtering statuses: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -276,7 +286,8 @@ func (p *Processor) filterFavedStatuses(ctx context.Context, authed *oauth.Auth,
 				log.Debugf(ctx, "skipping status %s because account %s can't be found in the db", s.ID, s.AccountID)
 				continue
 			}
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("filterPublicStatuses: error getting status author: %s", err))
+			err = fmt.Errorf("filterFavedStatuses: db error getting status author: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
 		}
 
 		timelineable, err := p.filter.StatusVisible(ctx, authed.Account, s)

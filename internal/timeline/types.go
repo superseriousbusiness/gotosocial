@@ -17,6 +17,15 @@
 
 package timeline
 
+// Timelineable represents any item that can be indexed in a timeline.
+type Timelineable interface {
+	GetID() string
+	GetAccountID() string
+	GetBoostOfID() string
+	GetBoostOfAccountID() string
+}
+
+// Preparable represents any item that can be prepared in a timeline.
 type Preparable interface {
 	GetID() string
 	GetAccountID() string

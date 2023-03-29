@@ -35,6 +35,7 @@ type indexedItemsEntry struct {
 	boostOfID        string
 	accountID        string
 	boostOfAccountID string
+	preparable       Preparable
 }
 
 func (i *indexedItems) insertIndexed(ctx context.Context, newEntry *indexedItemsEntry) (bool, error) {

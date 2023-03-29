@@ -56,25 +56,6 @@ func (t *timeline) Remove(ctx context.Context, statusID string) (int, error) {
 		removed++
 	}
 
-	// remove entr(ies) from prepared posts
-	removePrepared := []*list.Element{}
-	if t.preparedItems != nil && t.preparedItems.data != nil {
-		for e := t.preparedItems.data.Front(); e != nil; e = e.Next() {
-			entry, ok := e.Value.(*preparedItemsEntry)
-			if !ok {
-				return removed, errors.New("Remove: could not parse e as a preparedPostsEntry")
-			}
-			if entry.itemID == statusID {
-				l.Debug("found status in preparedPosts")
-				removePrepared = append(removePrepared, e)
-			}
-		}
-	}
-	for _, e := range removePrepared {
-		t.preparedItems.data.Remove(e)
-		removed++
-	}
-
 	l.Debugf("removed %d entries", removed)
 	return removed, nil
 }
@@ -106,25 +87,6 @@ func (t *timeline) RemoveAllBy(ctx context.Context, accountID string) (int, erro
 	}
 	for _, e := range removeIndexes {
 		t.indexedItems.data.Remove(e)
-		removed++
-	}
-
-	// remove entr(ies) from prepared posts
-	removePrepared := []*list.Element{}
-	if t.preparedItems != nil && t.preparedItems.data != nil {
-		for e := t.preparedItems.data.Front(); e != nil; e = e.Next() {
-			entry, ok := e.Value.(*preparedItemsEntry)
-			if !ok {
-				return removed, errors.New("Remove: could not parse e as a preparedPostsEntry")
-			}
-			if entry.accountID == accountID || entry.boostOfAccountID == accountID {
-				l.Debug("found status in preparedPosts")
-				removePrepared = append(removePrepared, e)
-			}
-		}
-	}
-	for _, e := range removePrepared {
-		t.preparedItems.data.Remove(e)
 		removed++
 	}
 
