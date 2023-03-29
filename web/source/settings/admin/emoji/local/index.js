@@ -25,15 +25,13 @@ const { Switch, Route } = require("wouter");
 const EmojiOverview = require("./overview");
 const EmojiDetail = require("./detail");
 
-const base = "/settings/custom-emoji/local";
-
-module.exports = function CustomEmoji() {
+module.exports = function CustomEmoji({ baseUrl }) {
 	return (
 		<Switch>
-			<Route path={`${base}/:emojiId`}>
-				<EmojiDetail baseUrl={base} />
+			<Route path={`${baseUrl}/:emojiId`}>
+				<EmojiDetail />
 			</Route>
-			<EmojiOverview baseUrl={base} />
+			<EmojiOverview />
 		</Switch>
 	);
 };

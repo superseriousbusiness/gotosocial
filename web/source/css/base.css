@@ -97,11 +97,10 @@ header {
 header a {
 	margin: 2rem;
 	display: flex;
-	flex-direction: column;
 	flex-wrap: wrap;
+	gap: 2rem;
 
 	img {
-		margin-bottom: 1rem;
 		align-self: center;
 		height: 6rem;
 	}
@@ -120,7 +119,6 @@ header a {
 }
 
 .excerpt-top {
-	margin-top: -1rem;
 	margin-bottom: 2rem;
 	font-style: italic;
 	font-weight: normal;
@@ -515,41 +513,37 @@ label {
 		margin-bottom: 0;
 	}
 
-	.contact-account-card {
-		/* display: inline-grid;
-		grid-template-columns: 4rem auto;
-		grid-template-rows: 4rem;
-		gap: 1rem;
-		padding: 0.5rem; */
-		display: inline-grid;
-		grid-template-columns: auto 1fr;
-		grid-template-rows: auto auto;
-		text-decoration: none;
-		gap: 0.5rem 1rem;
-		border-radius: $br;
-		padding: 0.5rem;
-		min-width: 40%;
-		margin-bottom: 0.3rem;
+}
 
-		background: $list-entry-bg;
+.account-card {
+	display: inline-grid;
+	grid-template-columns: auto 1fr;
+	grid-template-rows: auto auto;
+	text-decoration: none;
+	gap: 0.5rem 1rem;
+	border-radius: $br;
+	padding: 0.5rem;
+	min-width: 40%;
+	margin-bottom: 0.3rem;
 
-		&:hover {
-			background: $list-entry-alternate-bg;
-		}
+	background: $list-entry-bg;
 
-		h3 {
-			align-self: end;
-			margin: 0;
-			color: $fg;
-		}
+	&:hover {
+		background: $list-entry-alternate-bg;
+	}
 
-		img.avatar {
-			border-radius: 0.5rem;
-			width: 5rem;
-			height: 5rem;
-			object-fit: cover;
-			grid-row: 1 / span 2;
-		}
+	h3 {
+		align-self: end;
+		margin: 0;
+		color: $fg;
+	}
+
+	img.avatar {
+		border-radius: 0.5rem;
+		width: 5rem;
+		height: 5rem;
+		object-fit: cover;
+		grid-row: 1 / span 2;
 	}
 }
 

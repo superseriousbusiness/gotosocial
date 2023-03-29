@@ -28,6 +28,7 @@ const { useComboBoxInput, useFileInput, useValue } = require("../../../lib/form"
 const { CategorySelect } = require("../category-select");
 
 const useFormSubmit = require("../../../lib/form/submit");
+const { useBaseUrl } = require("../../../lib/navigation/util");
 
 const FakeToot = require("../../../components/fake-toot");
 const FormWithData = require("../../../lib/form/form-with-data");
@@ -36,16 +37,15 @@ const { FileInput } = require("../../../components/form/inputs");
 const MutationButton = require("../../../components/form/mutation-button");
 const { Error } = require("../../../components/error");
 
-const base = "/settings/custom-emoji/local";
-
-module.exports = function EmojiDetailRoute() {
-	let [_match, params] = useRoute(`${base}/:emojiId`);
+module.exports = function EmojiDetailRoute({ }) {
+	const baseUrl = useBaseUrl();
+	let [_match, params] = useRoute(`${baseUrl}/:emojiId`);
 	if (params?.emojiId == undefined) {
-		return <Redirect to={base} />;
+		return <Redirect to={baseUrl} />;
 	} else {
 		return (
 			<div className="emoji-detail">
-				<Link to={base}><a>&lt; go back</a></Link>
+				<Link to={baseUrl}><a>&lt; go back</a></Link>
 				<FormWithData dataQuery={query.useGetEmojiQuery} queryArg={params.emojiId} DataForm={EmojiDetailForm} />
 			</div>
 		);
@@ -53,6 +53,7 @@ module.exports = function EmojiDetailRoute() {
 };
 
 function EmojiDetailForm({ data: emoji }) {
+	const baseUrl = useBaseUrl();
 	const form = {
 		id: useValue("id", emoji.id),
 		category: useComboBoxInput("category", { source: emoji }),
@@ -78,7 +79,7 @@ function EmojiDetailForm({ data: emoji }) {
 	const [deleteEmoji, deleteResult] = query.useDeleteEmojiMutation();
 
 	if (deleteResult.isSuccess) {
-		return <Redirect to={base} />;
+		return <Redirect to={baseUrl} />;
 	}
 
 	return (

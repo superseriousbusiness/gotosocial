@@ -29,12 +29,13 @@ const { useTextInput } = require("../../../lib/form");
 
 const query = require("../../../lib/query");
 const { useEmojiByCategory } = require("../category-select");
+const { useBaseUrl } = require("../../../lib/navigation/util");
 
 const Loading = require("../../../components/loading");
 const { Error } = require("../../../components/error");
 const { TextInput } = require("../../../components/form/inputs");
 
-module.exports = function EmojiOverview({ baseUrl }) {
+module.exports = function EmojiOverview({ }) {
 	const {
 		data: emoji = [],
 		isLoading,
@@ -51,7 +52,7 @@ module.exports = function EmojiOverview({ baseUrl }) {
 	} else {
 		content = (
 			<>
-				<EmojiList emoji={emoji} baseUrl={baseUrl} />
+				<EmojiList emoji={emoji} />
 				<NewEmojiForm emoji={emoji} />
 			</>
 		);
@@ -70,7 +71,7 @@ module.exports = function EmojiOverview({ baseUrl }) {
 	);
 };
 
-function EmojiList({ emoji, baseUrl }) {
+function EmojiList({ emoji }) {
 	const filterField = useTextInput("filter");
 	const filter = filterField.value;
 
@@ -116,7 +117,7 @@ function EmojiList({ emoji, baseUrl }) {
 						? (
 							<div className="entries scrolling">
 								{filteredEmoji.map(([category, entries]) => {
-									return <EmojiCategory key={category} category={category} entries={entries} baseUrl={baseUrl} />;
+									return <EmojiCategory key={category} category={category} entries={entries} />;
 								})}
 							</div>
 						)
@@ -128,7 +129,8 @@ function EmojiList({ emoji, baseUrl }) {
 	);
 }
 
-function EmojiCategory({ category, entries, baseUrl }) {
+function EmojiCategory({ category, entries }) {
+	const baseUrl = useBaseUrl();
 	return (
 		<div className="entry">
 			<b>{category}</b>

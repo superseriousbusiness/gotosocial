@@ -23,61 +23,59 @@ const React = require("react");
 const ReactDom = require("react-dom/client");
 const { Provider } = require("react-redux");
 const { PersistGate } = require("redux-persist/integration/react");
-const { Switch, Route, Redirect } = require("wouter");
-
-const query = require("./lib/query");
 
 const { store, persistor } = require("./redux");
+const { createNavigation, Menu, Item } = require("./lib/navigation");
+
 const AuthorizationGate = require("./components/authorization");
 const Loading = require("./components/loading");
+const UserLogoutCard = require("./components/user-logout-card");
+const { RoleContext } = require("./lib/navigation/util");
 
 require("./style.css");
 
-// TODO: nested categories?
-const nav = {
-	"User": {
-		"Profile": require("./user/profile.js"),
-		"Settings": require("./user/settings.js"),
-	},
-	"Admin": {
-		adminOnly: true,
-		"Instance Settings": require("./admin/settings.js"),
-		"Actions": require("./admin/actions"),
-		"Federation": require("./admin/federation"),
-		"Reports": require("./admin/reports")
-	},
-	"Custom Emoji": {
-		adminOnly: true,
-		"Local": require("./admin/emoji/local"),
-		"Remote": require("./admin/emoji/remote"),
-	}
-};
-
-const { sidebar, panelRouter } = require("./lib/get-views")(nav);
+const { Sidebar, ViewRouter } = createNavigation("/settings", [
+	Menu("User", [
+		Item("Profile", { icon: "fa-user" }, require("./user/profile")),
+		Item("Settings", { icon: "fa-cogs" }, require("./user/settings")),
+	]),
+	Menu("Moderation", {
+		url: "admin",
+		permissions: ["admin"]
+	}, [
+		Item("Reports", { icon: "fa-flag", wildcard: true }, require("./admin/reports")),
+		Menu("Federation", { icon: "fa-hubzilla" }, [
+			Item("Federation", { icon: "fa-hubzilla", url: "", wildcard: true }, require("./admin/federation")),
+			Item("Import/Export", { icon: "fa-floppy-o", wildcard: true }, require("./admin/federation/import-export")),
+		])
+	]),
+	Menu("Administration", {
+		url: "admin",
+		defaultUrl: "/settings/admin/settings",
+		permissions: ["admin"]
+	}, [
+		Item("Actions", { icon: "fa-bolt" }, require("./admin/actions")),
+		Menu("Custom Emoji", { icon: "fa-smile-o" }, [
+			Item("Local", { icon: "fa-home", wildcard: true }, require("./admin/emoji/local")),
+			Item("Remote", { icon: "fa-cloud" }, require("./admin/emoji/remote"))
+		]),
+		Item("Settings", { icon: "fa-sliders" }, require("./admin/settings"))
+	])
+]);
 
 function App({ account }) {
-	const isAdmin = account.role.name == "admin";
-	const [logoutQuery] = query.useLogoutMutation();
+	const permissions = [account.role.name];
 
 	return (
-		<>
+		<RoleContext.Provider value={permissions}>
 			<div className="sidebar">
-				{sidebar.all}
-				{isAdmin && sidebar.admin}
-				<button className="logout" onClick={logoutQuery}>
-					Log out
-				</button>
+				<UserLogoutCard />
+				<Sidebar />
 			</div>
 			<section className="with-sidebar">
-				<Switch>
-					{panelRouter.all}
-					{isAdmin && panelRouter.admin}
-					<Route>
-						<Redirect to="/settings/user" />
-					</Route>
-				</Switch>
+				<ViewRouter />
 			</section>
-		</>
+		</RoleContext.Provider>
 	);
 }
 

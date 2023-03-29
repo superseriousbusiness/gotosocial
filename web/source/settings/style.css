@@ -34,18 +34,36 @@ section {
 	grid-column: 2;
 }
 
+header {
+	justify-content: start;
+
+	a {
+		margin: 1.5rem;
+		gap: 1rem;
+
+		h1 {
+			font-size: 1.5rem;
+		}
+
+		img {
+			height: 3rem;
+		}
+	}
+}
+
+main section {
+	box-shadow: none;
+	border-radius: none;
+	border: none;
+}
+
 #root {
 	display: grid;
-	/* keep in sync with base.css .page {} */
-	grid-template-columns: auto minmax(auto, 50rem) auto;
-	grid-template-columns: auto min(92%, 50rem) auto;
+	grid-template-columns: 1fr minmax(auto, 60rem) 1fr;
+	grid-template-columns: 1fr min(92%, 60rem) 1fr;
 	box-sizing: border-box;
 
 	section.with-sidebar {
-		border-left: none;
-		border-top-left-radius: 0;
-		border-bottom-left-radius: 0;
-
 		& > div, & > form {
 			border-left: 0.2rem solid $border-accent;
 			padding-left: 0.4rem;
@@ -79,77 +97,141 @@ section {
 	}
 
 	.sidebar {
+		margin: 0 1rem;
 		align-self: start;
 		justify-self: end;
-		background: $settings-nav-bg;
-		border: $boxshadow-border;
-		box-shadow: $boxshadow;
-		border-radius: $br;
-		border-top-right-radius: 0;
-		border-bottom-right-radius: 0;
+		background: $bg;
 		display: flex;
 		flex-direction: column;
 		min-width: 12rem;
 
-		a {
+		.account-card {
+			grid-template-columns: auto 1fr auto;
+
+			img.avatar {
+				width: 4rem;
+				height: 4rem;
+			}
+
+			span {
+				grid-row: 2;
+			}
+
+			.logout {
+				font-size: 1.5rem;
+				align-self: center;
+				grid-row: 1 / span 2;
+			}
+
+			&:hover {
+				background: $list-entry-bg;
+			}
+		}
+	}
+}
+
+nav.menu-tree {
+	ul {
+		display: flex;
+		flex-direction: column;
+		list-style-type: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	.icon {
+		margin-right: 0.5rem;
+	}
+
+	/* top-level ul */
+	& > ul {
+		gap: 0.3rem;
+		padding: 0.2rem;
+	}
+
+	li.top-level { /* top-level categories, orange all-caps titles */
+		border-top: 0.1rem solid $gray3;
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+		margin: 0;
+
+		& > a.title {
 			text-decoration: none;
-		}
-
-		a:first-child h2 {
-			border-top-left-radius: $br;
-		}
-
-		h2 {
-			margin: 0;
+			color: $settings-nav-header-fg;
 			padding: 0.5rem;
-			font-size: 0.9rem;
+			padding-bottom: 0;
+			margin: 0;
+			font-size: 0.8rem;
 			font-weight: bold;
 			text-transform: uppercase;
-			color: $settings-nav-header-fg;
-			background: $settings-nav-header-bg;
 		}
-		
-		nav {
-			display: flex;
-			flex-direction: column;
 
-			a {
-				padding: 1rem;
-				text-decoration: none;
-				transition: 0.1s;
-				color: $fg;
-	
-				&:hover {
-					color: $settings-nav-fg-hover;
-					background: $settings-nav-bg-hover;
-				}
-				
-				&.active {
-					color: $settings-nav-fg-active;
-					background: $settings-nav-bg-active;
-					font-weight: bold;
-					text-decoration: underline;
-				}
-	
-				/* reserve space for bold version of the element, so .active doesn't
-					 change container size */
-				&::after { 
-					font-weight: bold;
-					text-decoration: underline;
-					display: block;
-					content: attr(data-content);
-					height: 1px;
-					color: transparent;
-					overflow: hidden;
-					visibility: hidden;
-				}
+		& > ul {
+			gap: 0.2rem;
+		}
+	}
+
+	li.expanding { /* second-level categories, expanding box, active shows nested */
+		a {
+			display: block;
+			color: $fg;
+			text-decoration: none;
+
+			border: 0.1rem solid transparent;
+			border-radius: $br;
+			padding: 0.5rem;
+			transition: background 0.1s;
+
+			&:hover {
+				color: $settings-nav-fg-hover;
+				background: $settings-nav-bg-hover;
+			}
+
+			&:focus, &:active {
+				border-color: $settings-nav-border-active;
+				outline: none;
 			}
 		}
 
+		&.active {
+			border: 0.1rem solid $settings-nav-border-active;
+			border-radius: $br;
+			overflow: hidden;
 
-		nav:last-child a:last-child {
-			border-bottom-left-radius: $br;
-			border-bottom: none;
+			a {
+				transition: background 0s;
+				border: none;
+				color: $settings-nav-fg-active;
+				background: $settings-nav-bg-active;
+				font-weight: bold;
+				border-radius: 0;
+			}
+		}
+	}
+
+	li.nested { /* any deeper nesting, just has indent */
+		a.title {
+			padding-left: 1rem;
+			font-weight: normal;
+			color: $fg;
+			background: $gray4;
+
+			&:focus {
+				color: $fg-accent;
+				outline: none;
+			}
+
+			&:hover {
+				background: $settings-nav-bg-hover;
+			}
+		}
+
+		&.active {
+			a.title {
+				color: $fg-accent;
+				font-weight: bold;
+			}
 		}
 	}
 }

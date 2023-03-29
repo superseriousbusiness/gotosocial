@@ -25,6 +25,7 @@ const ParseFromToot = require("./parse-from-toot");
 
 const query = require("../../../lib/query");
 const Loading = require("../../../components/loading");
+const { Error } = require("../../../components/error");
 
 module.exports = function RemoteEmoji() {
 	// local emoji are queried for shortcode collision detection
@@ -42,7 +43,7 @@ module.exports = function RemoteEmoji() {
 		<>
 			<h1>Custom Emoji (remote)</h1>
 			{error &&
-				<div className="error accent">{error}</div>
+				<Error error={error} />
 			}
 			{isLoading
 				? <Loading />
