@@ -26,7 +26,18 @@ const (
 	// context keys.
 	_ ctxkey = iota
 	barebonesKey
+	fastFailKey
+	signerKey
 )
+
+func IsFastfail(ctx context.Context) bool {
+	_, ok := ctx.Value(fastFailKey).(struct{})
+	return ok
+}
+
+func SetFastFail(ctx context.Context) context.Context {
+	return context.WithValue(ctx, fastFailKey, struct{}{})
+}
 
 // Barebones returns whether the "barebones" context key has been set. This
 // can be used to indicate to the database, for example, that only a barebones

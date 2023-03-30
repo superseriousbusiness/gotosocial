@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
+	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
@@ -49,14 +50,13 @@ type controller struct {
 	state     *state.State
 	fedDB     federatingdb.DB
 	clock     pub.Clock
-	client    pub.HttpClient
+	client    httpclient.SigningClient
 	trspCache cache.Cache[string, *transport]
-	badHosts  cache.Cache[string, struct{}]
 	userAgent string
 }
 
 // NewController returns an implementation of the Controller interface for creating new transports
-func NewController(state *state.State, federatingDB federatingdb.DB, clock pub.Clock, client pub.HttpClient) Controller {
+func NewController(state *state.State, federatingDB federatingdb.DB, clock pub.Clock, client httpclient.SigningClient) Controller {
 	applicationName := config.GetApplicationName()
 	host := config.GetHost()
 	proto := config.GetProtocol()
@@ -68,19 +68,12 @@ func NewController(state *state.State, federatingDB federatingdb.DB, clock pub.C
 		clock:     clock,
 		client:    client,
 		trspCache: cache.New[string, *transport](0, 100, 0),
-		badHosts:  cache.New[string, struct{}](0, 1000, 0),
 		userAgent: fmt.Sprintf("%s (+%s://%s) gotosocial/%s", applicationName, proto, host, version),
 	}
 
 	// Transport cache has TTL=1hr freq=1min
 	c.trspCache.SetTTL(time.Hour, false)
 	if !c.trspCache.Start(time.Minute) {
-		log.Panic(nil, "failed to start transport controller cache")
-	}
-
-	// Bad hosts cache has TTL=15min freq=1min
-	c.badHosts.SetTTL(15*time.Minute, false)
-	if !c.badHosts.Start(time.Minute) {
 		log.Panic(nil, "failed to start transport controller cache")
 	}
 

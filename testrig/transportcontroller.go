@@ -26,12 +26,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
@@ -51,7 +51,7 @@ const (
 // Unlike the other test interfaces provided in this package, you'll probably want to call this function
 // PER TEST rather than per suite, so that the do function can be set on a test by test (or even more granular)
 // basis.
-func NewTestTransportController(state *state.State, client pub.HttpClient) transport.Controller {
+func NewTestTransportController(state *state.State, client httpclient.SigningClient) transport.Controller {
 	return transport.NewController(state, NewTestFederatingDB(state), &federation.Clock{}, client)
 }
 
@@ -221,7 +221,7 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 	return mockHTTPClient
 }
 
-func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
+func (m *MockHTTPClient) DoSigned(pubKeyID string, req *http.Request, sign httpclient.SignFunc) (*http.Response, error) {
 	return m.do(req)
 }
 
