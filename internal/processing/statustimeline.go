@@ -199,6 +199,16 @@ func (p *Processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, m
 	)
 
 	for i, s := range statuses {
+		// Set next + prev values before filtering and API
+		// converting, so caller can still page properly.
+		if i == count-1 {
+			nextMaxIDValue = s.ID
+		}
+
+		if i == 0 {
+			prevMinIDValue = s.ID
+		}
+
 		timelineable, err := p.filter.StatusPublicTimelineable(ctx, authed.Account, s)
 		if err != nil {
 			log.Debugf(ctx, "skipping status %s because of an error checking StatusPublicTimelineable: %s", s.ID, err)
@@ -215,21 +225,7 @@ func (p *Processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, m
 			continue
 		}
 
-		if i == count-1 {
-			nextMaxIDValue = apiStatus.GetID()
-		}
-
-		if i == 0 {
-			prevMinIDValue = apiStatus.GetID()
-		}
-
 		items = append(items, apiStatus)
-	}
-
-	if itemsCount := len(items); itemsCount == 0 {
-		// We filtered out all statuses.
-		// Don't page for an empty response.
-		return util.EmptyPageableResponse(), nil
 	}
 
 	return util.PackagePageableResponse(util.PageableResponseParams{
@@ -253,14 +249,15 @@ func (p *Processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, ma
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	count := len(statuses)
+	if count == 0 {
+		return util.EmptyPageableResponse(), nil
+	}
+
 	filtered, err := p.filterFavedStatuses(ctx, authed, statuses)
 	if err != nil {
 		err = fmt.Errorf("FavedTimelineGet: error filtering statuses: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	if len(filtered) == 0 {
-		return util.EmptyPageableResponse(), nil
 	}
 
 	items := make([]interface{}, len(filtered))
