@@ -15,6 +15,7 @@ var DefaultS3Config = &S3Config{
 	CoreOpts:     minio.Options{},
 	GetOpts:      minio.GetObjectOptions{},
 	PutOpts:      minio.PutObjectOptions{},
+	PutChunkOpts: minio.PutObjectPartOptions{},
 	PutChunkSize: 4 * 1024 * 1024, // 4MiB
 	StatOpts:     minio.StatObjectOptions{},
 	RemoveOpts:   minio.RemoveObjectOptions{},
@@ -36,6 +37,9 @@ type S3Config struct {
 	// PutChunkSize is the chunk size (in bytes) to use when sending
 	// a byte stream reader of unknown size as a multi-part object.
 	PutChunkSize int64
+
+	// PutChunkOpts are S3 client options passed during chunked .Write___() calls.
+	PutChunkOpts minio.PutObjectPartOptions
 
 	// StatOpts are S3 client options passed during .Stat() calls.
 	StatOpts minio.StatObjectOptions
@@ -251,9 +255,7 @@ loop:
 			index,
 			rbuf,
 			int64(n),
-			"",
-			"",
-			nil,
+			st.config.PutChunkOpts,
 		)
 		if err != nil {
 			return 0, err
