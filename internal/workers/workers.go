@@ -39,6 +39,10 @@ type Workers struct {
 	// incoming federated actions, and our own side-effects.
 	Federator runners.WorkerPool
 
+	// Sender provides a worker pool that handles outgoing
+	// delivery requests, but NOT dereference, webfinger etc.
+	Sender runners.WorkerPool
+
 	// Enqueue functions for clientAPI / federator worker pools,
 	// these are pointers to Processor{}.Enqueue___() msg functions.
 	// This prevents dependency cycling as Processor depends on Workers.
@@ -69,6 +73,10 @@ func (w *Workers) Start() {
 		return w.Federator.Start(4*maxprocs, 400*maxprocs)
 	})
 
+	tryUntil("starting sender workerpool", 5, func() bool {
+		return w.Sender.Start(4*maxprocs, 200*maxprocs)
+	})
+
 	tryUntil("starting media workerpool", 5, func() bool {
 		return w.Media.Start(8*maxprocs, 80*maxprocs)
 	})
@@ -79,6 +87,7 @@ func (w *Workers) Stop() {
 	tryUntil("stopping scheduler", 5, w.Scheduler.Stop)
 	tryUntil("stopping client API workerpool", 5, w.ClientAPI.Stop)
 	tryUntil("stopping federator workerpool", 5, w.Federator.Stop)
+	tryUntil("stopping sender workerpool", 5, w.Sender.Stop)
 	tryUntil("stopping media workerpool", 5, w.Media.Stop)
 }
 

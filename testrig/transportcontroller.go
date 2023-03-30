@@ -221,7 +221,7 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 	return mockHTTPClient
 }
 
-func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
+func (m *MockHTTPClient) DoSigned(pubKeyID string, req *http.Request, sign httpclient.SignFunc) (*http.Response, error) {
 	return m.do(req)
 }
 
