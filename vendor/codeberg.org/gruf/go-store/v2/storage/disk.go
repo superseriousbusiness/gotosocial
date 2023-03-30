@@ -195,7 +195,7 @@ func (st *DiskStorage) ReadBytes(ctx context.Context, key string) ([]byte, error
 // ReadStream implements Storage.ReadStream().
 func (st *DiskStorage) ReadStream(ctx context.Context, key string) (io.ReadCloser, error) {
 	// Get file path for key
-	kpath, err := st.filepath(key)
+	kpath, err := st.Filepath(key)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +235,7 @@ func (st *DiskStorage) WriteBytes(ctx context.Context, key string, value []byte)
 // WriteStream implements Storage.WriteStream().
 func (st *DiskStorage) WriteStream(ctx context.Context, key string, r io.Reader) (int64, error) {
 	// Get file path for key
-	kpath, err := st.filepath(key)
+	kpath, err := st.Filepath(key)
 	if err != nil {
 		return 0, err
 	}
@@ -291,7 +291,7 @@ func (st *DiskStorage) WriteStream(ctx context.Context, key string, r io.Reader)
 // Stat implements Storage.Stat().
 func (st *DiskStorage) Stat(ctx context.Context, key string) (bool, error) {
 	// Get file path for key
-	kpath, err := st.filepath(key)
+	kpath, err := st.Filepath(key)
 	if err != nil {
 		return false, err
 	}
@@ -313,7 +313,7 @@ func (st *DiskStorage) Stat(ctx context.Context, key string) (bool, error) {
 // Remove implements Storage.Remove().
 func (st *DiskStorage) Remove(ctx context.Context, key string) error {
 	// Get file path for key
-	kpath, err := st.filepath(key)
+	kpath, err := st.Filepath(key)
 	if err != nil {
 		return err
 	}
@@ -384,8 +384,8 @@ func (st *DiskStorage) WalkKeys(ctx context.Context, opts WalkKeysOptions) error
 	})
 }
 
-// filepath checks and returns a formatted filepath for given key.
-func (st *DiskStorage) filepath(key string) (string, error) {
+// Filepath checks and returns a formatted Filepath for given key.
+func (st *DiskStorage) Filepath(key string) (string, error) {
 	// Calculate transformed key path
 	key = st.config.Transform.KeyToPath(key)
 
