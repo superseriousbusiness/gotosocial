@@ -42,7 +42,10 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 	}
 
 	// Make educated guess for slice size
-	statusIDs := make([]string, 0, limit)
+	var (
+		statusIDs   = make([]string, 0, limit)
+		frontToBack = true
+	)
 
 	q := t.conn.
 		NewSelect().
@@ -56,9 +59,7 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 			bun.Ident("follow.target_account_id"),
 			bun.Ident("status.account_id"),
 			bun.Ident("follow.account_id"),
-			accountID).
-		// Sort by highest ID (newest) to lowest ID (oldest)
-		Order("status.id DESC")
+			accountID)
 
 	if maxID == "" {
 		const future = 24 * time.Hour
@@ -83,6 +84,9 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 	if minID != "" {
 		// return only statuses HIGHER (ie., newer) than minID
 		q = q.Where("? > ?", bun.Ident("status.id"), minID)
+
+		// page up
+		frontToBack = false
 	}
 
 	if local {
@@ -93,6 +97,14 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 	if limit > 0 {
 		// limit amount of statuses returned
 		q = q.Limit(limit)
+	}
+
+	if frontToBack {
+		// Page down.
+		q = q.Order("status.id DESC")
+	} else {
+		// Page up.
+		q = q.Order("status.id ASC")
 	}
 
 	// Use a WhereGroup here to specify that we want EITHER statuses posted by accounts that accountID follows,
@@ -108,6 +120,17 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {
 		return nil, t.conn.ProcessError(err)
+	}
+
+	if len(statusIDs) == 0 {
+		return nil, nil
+	}
+
+	// If we're paging up, we still want statuses
+	// to be sorted by ID desc, so reverse ids slice.
+	// https://zchee.github.io/golang-wiki/SliceTricks/#reversing
+	for l, r := 0, len(statusIDs)-1; l < r; l, r = l+1, r-1 {
+		statusIDs[l], statusIDs[r] = statusIDs[r], statusIDs[l]
 	}
 
 	statuses := make([]*gtsmodel.Status, 0, len(statusIDs))

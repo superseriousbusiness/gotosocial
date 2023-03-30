@@ -38,7 +38,7 @@ func (t *timeline) indexXBetweenIDs(ctx context.Context, amount int, behindID st
 			{"frontToBack", frontToBack},
 		}...)
 	l.Trace("entering indexXBetweenIDs")
-	
+
 	if beforeID >= behindID {
 		// This is an impossible situation, we
 		// can't index anything between these.
@@ -47,130 +47,84 @@ func (t *timeline) indexXBetweenIDs(ctx context.Context, amount int, behindID st
 
 	t.Lock()
 	defer t.Unlock()
-	
+
 	// Lazily init indexed items.
 	if t.items.data == nil {
 		t.items.data = &list.List{}
 		t.items.data.Init()
 	}
 
-	// If we're going front to back, and we already
-	// indexed behind behindID by the required amount,
-	// we can just return nil.
-	var position int
-	for e := t.items.data.Front(); e != nil; e = e.Next() {
-		if entry := e.Value.(*indexedItemsEntry); entry.itemID <= itemID {
-			// We've found it.
-			break
-		}
-
-		position++
-	}
-
-	// Check if the length of items already indexed
-	// satisfies the amount of items required.
+	// Start by mapping out the list so we know what
+	// we have to do. Depending on the current state
+	// of the list we might not have to do *anything*.
 	var (
-		requestedPosition       = position + amount
-		additionalItemsRequired = requestedPosition - t.items.data.Len()
+		position         int
+		listLen          = t.items.data.Len()
+		behindIDPosition int
+		beforeIDPosition int
 	)
 
-	if additionalItemsRequired <= 0 {
-		// We already have enough indexed behind the mark to
-		// satisfy amount, so no need to make more db calls.
-		l.Trace("returning nil since we already have enough items indexed")
+	for e := t.items.data.Front(); e != nil; e = e.Next() {
+		entry := e.Value.(*indexedItemsEntry) //nolint:forcetypeassert
+
+		position++
+
+		if entry.itemID > behindID {
+			l.Trace("item is too new, continuing")
+			continue
+		}
+
+		if behindIDPosition == 0 {
+			// Gone far enough through the list
+			// and found our behindID mark.
+			// We only need to set this once.
+			l.Tracef("found behindID mark %s at position %d", entry.itemID, position)
+			behindIDPosition = position
+		}
+
+		if entry.itemID >= beforeID {
+			// Push the beforeID mark back
+			// one place every iteration.
+			l.Tracef("setting beforeID mark %s at position %d", entry.itemID, position)
+			beforeIDPosition = position
+		}
+
+		if entry.itemID < beforeID {
+			// We've gone beyond the bounds of
+			// items we're interested in; stop.
+			l.Trace("reached older items, breaking")
+			break
+		}
+	}
+
+	// We can now figure out if we need to make db calls.
+	var needMoreItems bool
+	switch {
+	case listLen < amount:
+		// The whole list is shorter than the
+		// amount we're being asked to return.
+		needMoreItems = true
+	case beforeIDPosition-behindIDPosition < amount:
+		// Not enough items between behindID and
+		// beforeID to return amount required.
+		needMoreItems = true
+	}
+
+	if !needMoreItems {
+		// We're good!
 		return nil
 	}
 
-	l.Tracef("%d additional items must be indexed to reach requested position %d", additionalItemsRequired, requestedPosition)
-
-	var (
-		itemsToIndex = make([]Timelineable, 0, additionalItemsRequired)
-		offsetID        string
-	)
-
-	// Derive offsetID from the last entry in the list to
-	// avoid making duplicate calls for entries we already
-	// have indexed.
-	if e := t.items.data.Back(); e != nil {
-		entry, ok := e.Value.(*indexedItemsEntry)
-		if !ok {
-			l.Panic(ctx, "could not parse e as indexedItemsEntry")
-		}
-
-		offsetID = entry.itemID
-	} else {
-		// List was empty, so just use itemID.
-		offsetID = itemID
+	// Fetch additional items.
+	items, err := t.grab(ctx, amount, behindID, beforeID, frontToBack)
+	if err != nil {
+		return err
 	}
 
-	// It's possible that we'll grab items that should be
-	// filtered out, so we can't just grab additionalItemsLen
-	// once and assume we'll end up with enough items.
-	//
-	// Instead, we'll try 5 times to grab the items we need.
-	for attempts := 0; ; attempts++ {
-		innerL := l.WithField("attempts", attempts)
-
-		if attempts > 5 {
-			innerL.Trace("max attempts reached while grabbing, breaking")
-			break
-		}
-
-		innerL.Tracef("trying grab with offsetID %s", offsetID)
-
-		// Check how many items we still need to get.
-		remainingRequiredItems := additionalItemsRequired - len(itemsToIndex)
-		if remainingRequiredItems <= 0 {
-			innerL.Trace("got all required items while grabbing, breaking")
-			break
-		}
-
-		items, stop, err := t.grabFunction(ctx, t.accountID, offsetID, "", "", remainingRequiredItems)
-		if err != nil {
-			if errors.Is(err, db.ErrNoEntries) {
-				innerL.Trace("no items left to index while grabbing, breaking")
-				break
-			}
-
-			// Real error.
-			return fmt.Errorf("indexBehind: error calling grabFunction: %w", err)
-		}
-
-		if stop {
-			innerL.Trace("grab function returned stop, breaking")
-			break
-		}
-
-		if itemsLen := len(items); itemsLen != 0 {
-			// For the next offset, use the last item (we're paging down).
-			offsetID = items[itemsLen-1].GetID()
-		} else {
-			innerL.Trace("grab function returned 0 items, breaking")
-			break
-		}
-
-		// Filter each item using the caller-provided filter function.
-		for _, item := range items {
-			shouldIndex, err := t.filterFunction(ctx, t.accountID, item)
-			if err != nil {
-				innerL.Warnf("error calling filterFunction for item with id %s: %q", item.GetID(), err)
-				continue
-			}
-
-			if !shouldIndex {
-				continue
-			}
-
-			itemsToIndex = append(itemsToIndex, item)
-		}
-	}
-	l.Trace("left grabloop")
-
-	// Index all the items we got.
-	// We already have a lock on the timeline,
-	// so don't call IndexOne here, since that
-	// will also try to get a lock!
-	for _, item := range itemsToIndex {
+	// Index all the items we got. We already have
+	// a lock on the timeline, so don't call IndexOne
+	// here, since that will also try to get a lock!
+	for _, item := range items {
 		entry := &indexedItemsEntry{
 			itemID:           item.GetID(),
 			boostOfID:        item.GetBoostOfID(),
@@ -179,11 +133,93 @@ func (t *timeline) indexXBetweenIDs(ctx context.Context, amount int, behindID st
 		}
 
 		if _, err := t.items.insertIndexed(ctx, entry); err != nil {
-
+			return fmt.Errorf("error inserting entry with itemID %s into index: %w", entry.itemID, err)
 		}
 	}
 
 	return nil
+}
+
+// grab wraps the timeline's grabFunction in paging + filtering logic.
+func (t *timeline) grab(ctx context.Context, amount int, behindID string, beforeID string, frontToBack bool) ([]Timelineable, error) {
+	var (
+		sinceID  string
+		minID    string
+		grabbed  int
+		maxID    = behindID
+		filtered = make([]Timelineable, 0, amount)
+	)
+
+	if frontToBack {
+		sinceID = beforeID
+	} else {
+		minID = beforeID
+	}
+
+	for attempts := 0; attempts < 5; attempts++ {
+		items, stop, err := t.grabFunction(
+			ctx,
+			t.accountID,
+			maxID,
+			sinceID,
+			minID,
+			// Don't grab more than we need to.
+			amount-grabbed,
+		)
+
+		if err != nil {
+			// Grab function already checks for
+			// db.ErrNoEntries, so if an error
+			// is returned then it's a real one.
+			return nil, err
+		}
+
+		if stop || len(items) == 0 {
+			// No items left.
+			break
+		}
+
+		for _, item := range items {
+			ok, err := t.filterFunction(ctx, t.accountID, item)
+			if err != nil {
+				if !errors.Is(err, db.ErrNoEntries) {
+					// Real error here.
+					return nil, err
+				}
+				log.Warnf(ctx, "errNoEntries while filtering item %s: %s", item.GetID(), err)
+				continue
+			}
+
+			if ok {
+				filtered = append(filtered, item)
+				grabbed++ // count this as grabbed
+			}
+
+			if grabbed >= amount {
+				// We got everything we needed.
+				break
+			}
+		}
+
+		// Set next query parameters.
+		if frontToBack {
+			// Page down.
+			maxID = items[len(items)-1].GetID()
+			if maxID <= beforeID {
+				// Can't go any further.
+				break
+			}
+		} else {
+			// Page up.
+			minID = items[0].GetID()
+			if minID >= behindID {
+				// Can't go any further.
+				break
+			}
+		}
+	}
+
+	return filtered, nil
 }
 
 func (t *timeline) IndexOne(ctx context.Context, itemID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error) {
@@ -255,7 +291,7 @@ func (t *timeline) OldestIndexedItemID(ctx context.Context) string {
 		return ""
 	}
 
-	return e.Value.(*indexedItemsEntry).itemID
+	return e.Value.(*indexedItemsEntry).itemID //nolint:forcetypeassert
 }
 
 func (t *timeline) NewestIndexedItemID(ctx context.Context) string {
@@ -273,5 +309,5 @@ func (t *timeline) NewestIndexedItemID(ctx context.Context) string {
 		return ""
 	}
 
-	return e.Value.(*indexedItemsEntry).itemID
+	return e.Value.(*indexedItemsEntry).itemID //nolint:forcetypeassert
 }

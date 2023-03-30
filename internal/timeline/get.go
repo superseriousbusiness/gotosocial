@@ -30,8 +30,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-const retries = 5
-
 func (t *timeline) LastGot() time.Time {
 	t.Lock()
 	defer t.Unlock()
@@ -68,6 +66,8 @@ func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID st
 		items, err = t.getXBetweenIDs(ctx, amount, id.Highest, id.Lowest, true)
 
 		// Cache expected next query to speed up scrolling.
+		// Assume the user will be scrolling downwards from
+		// the final ID in items.
 		if prepareNext && err == nil && len(items) != 0 {
 			nextMaxID := items[len(items)-1].GetID()
 			t.prepareNextQuery(amount, nextMaxID, "", "")
@@ -80,6 +80,8 @@ func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID st
 		items, err = t.getXBetweenIDs(ctx, amount, maxID, id.Lowest, true)
 
 		// Cache expected next query to speed up scrolling.
+		// Assume the user will be scrolling downwards from
+		// the final ID in items.
 		if prepareNext && err == nil && len(items) != 0 {
 			nextMaxID := items[len(items)-1].GetID()
 			t.prepareNextQuery(amount, nextMaxID, "", "")
@@ -93,21 +95,57 @@ func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID st
 	// paging either up or down.
 	case maxID != "" && sinceID != "":
 		items, err = t.getXBetweenIDs(ctx, amount, maxID, sinceID, true)
+
+		// Cache expected next query to speed up scrolling.
+		// We can assume the caller is scrolling downwards.
+		// Guess id.Lowest as sinceID, since we don't actually
+		// know what the next sinceID would be.
+		if prepareNext && err == nil && len(items) != 0 {
+			nextMaxID := items[len(items)-1].GetID()
+			t.prepareNextQuery(amount, nextMaxID, id.Lowest, "")
+		}
+
 	case maxID != "" && minID != "":
 		items, err = t.getXBetweenIDs(ctx, amount, maxID, minID, false)
+
+		// Cache expected next query to speed up scrolling.
+		// We can assume the caller is scrolling upwards.
+		// Guess id.Highest as maxID, since we don't actually
+		// know what the next maxID would be.
+		if prepareNext && err == nil && len(items) != 0 {
+			prevMinID := items[0].GetID()
+			t.prepareNextQuery(amount, id.Highest, "", prevMinID)
+		}
 
 	// In the final cases, maxID is not defined, but
 	// either sinceID or minID are. This is equivalent to
 	// a user either "pulling up" at the top of their timeline
-	// to refresh it and check if newer posts have come in.
+	// to refresh it and check if newer posts have come in, or
+	// trying to scroll upwards from an old post to see what
+	// they missed since then.
 	//
 	// In these calls, we use the highest possible ulid as
 	// behindID because we don't have a cap for newest that
 	// we're interested in.
 	case maxID == "" && sinceID != "":
 		items, err = t.getXBetweenIDs(ctx, amount, id.Highest, sinceID, true)
+
+		// We can't cache an expected next query for this one,
+		// since presumably the caller is at the top of their
+		// timeline already.
+
 	case maxID == "" && minID != "":
 		items, err = t.getXBetweenIDs(ctx, amount, id.Highest, minID, false)
+
+		// Cache expected next query to speed up scrolling.
+		// We can assume the caller is scrolling upwards.
+		// Guess id.Highest as maxID, since we don't actually
+		// know what the next maxID would be.
+		if prepareNext && err == nil && len(items) != 0 {
+			prevMinID := items[0].GetID()
+			t.prepareNextQuery(amount, id.Highest, "", prevMinID)
+		}
+
 	default:
 		err = errors.New("Get: switch statement exhausted with no results")
 	}
@@ -184,7 +222,7 @@ func (t *timeline) getXBetweenIDs(ctx context.Context, amount int, behindID stri
 		// a point where the items are out of the range
 		// we're interested in.
 		rangeF = func(e *list.Element) (bool, error) {
-			entry := e.Value.(*indexedItemsEntry)
+			entry := e.Value.(*indexedItemsEntry) //nolint:forcetypeassert
 
 			if entry.itemID >= behindID {
 				// ID of this item is too high,
@@ -215,7 +253,7 @@ func (t *timeline) getXBetweenIDs(ctx context.Context, amount int, behindID stri
 						return true, nil
 					}
 					// We've got a proper db error.
-					return false, fmt.Errorf("getXBetweenIDs: db error while trying to prepare %s: %w", err)
+					return false, fmt.Errorf("getXBetweenIDs: db error while trying to prepare %s: %w", entry.itemID, err)
 				}
 				entry.prepared = prepared
 			}
@@ -235,6 +273,7 @@ func (t *timeline) getXBetweenIDs(ctx context.Context, amount int, behindID stri
 			// Move the mark back one place each loop.
 			beforeIDMark = e
 
+			//nolint:forcetypeassert
 			if entry := e.Value.(*indexedItemsEntry); entry.itemID <= beforeID {
 				// We've gone as far as we can through
 				// the list and reached entries that are
@@ -277,7 +316,7 @@ func (t *timeline) getXBetweenIDs(ctx context.Context, amount int, behindID stri
 	// To preserve ordering, we need to reverse the slice
 	// when we're finished.
 	for e := beforeIDMark; e != nil; e = e.Prev() {
-		entry := e.Value.(*indexedItemsEntry)
+		entry := e.Value.(*indexedItemsEntry) //nolint:forcetypeassert
 
 		if entry.itemID == beforeID {
 			// Don't include the beforeID
@@ -308,7 +347,7 @@ func (t *timeline) getXBetweenIDs(ctx context.Context, amount int, behindID stri
 					continue
 				}
 				// We've got a proper db error.
-				return nil, fmt.Errorf("getXBetweenIDs: db error while trying to prepare %s: %w", err)
+				return nil, fmt.Errorf("getXBetweenIDs: db error while trying to prepare %s: %w", entry.itemID, err)
 			}
 			entry.prepared = prepared
 		}

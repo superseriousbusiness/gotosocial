@@ -55,16 +55,22 @@ func (t *timeline) Prune(desiredPreparedItemsLength int, desiredIndexedItemsLeng
 		}
 
 		// We need to *at least* unprepare this entry.
-		totalPruned++
-
 		// If we're beyond our indexed length already,
 		// we can just remove the item completely.
 		if position > desiredIndexedItemsLength {
 			*toRemove = append(*toRemove, e)
+			totalPruned++
 			continue
 		}
 
-		e.Value.(*indexedItemsEntry).prepared = nil // <- eat this up please garbage collector nom nom nom
+		entry := e.Value.(*indexedItemsEntry) //nolint:forcetypeassert
+		if entry.prepared == nil {
+			// It's already unprepared (mood).
+			continue
+		}
+
+		entry.prepared = nil // <- eat this up please garbage collector nom nom nom
+		totalPruned++
 	}
 
 	if toRemove != nil {

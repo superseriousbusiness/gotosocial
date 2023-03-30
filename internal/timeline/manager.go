@@ -194,16 +194,11 @@ func (m *manager) WipeItemFromAllTimelines(ctx context.Context, statusID string)
 	errors := gtserror.MultiError{}
 
 	m.accountTimelines.Range(func(_ any, v any) bool {
-		timeline, ok := v.(Timeline)
-		if !ok {
-			log.Panic(ctx, "couldn't parse timeline manager sync map value as Timeline, this should never happen so panic")
-		}
-
-		if _, err := timeline.Remove(ctx, statusID); err != nil {
+		if _, err := v.(Timeline).Remove(ctx, statusID); err != nil {
 			errors.Append(err)
 		}
 
-		return true
+		return true // always continue range
 	})
 
 	if len(errors) > 0 {
@@ -214,7 +209,7 @@ func (m *manager) WipeItemFromAllTimelines(ctx context.Context, statusID string)
 }
 
 func (m *manager) WipeItemsFromAccountID(ctx context.Context, timelineAccountID string, accountID string) error {
-	_, err := m.getOrCreateTimeline(ctx, timelineAccountID).RemoveAllBy(ctx, accountID)
+	_, err := m.getOrCreateTimeline(ctx, timelineAccountID).RemoveAllByOrBoosting(ctx, accountID)
 	return err
 }
 
@@ -225,12 +220,7 @@ func (m *manager) getOrCreateTimeline(ctx context.Context, accountID string) Tim
 	i, ok := m.accountTimelines.Load(accountID)
 	if ok {
 		// Timeline already existed in sync.Map.
-		timeline, ok := i.(Timeline)
-		if !ok {
-			log.Panic(ctx, "couldn't parse timeline manager sync map value as Timeline, this should never happen so panic")
-		}
-
-		return timeline
+		return i.(Timeline) //nolint:forcetypeassert
 	}
 
 	// Timeline did not yet exist in sync.Map.

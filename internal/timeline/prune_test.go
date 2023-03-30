@@ -87,13 +87,23 @@ func (suite *PruneTestSuite) TearDownTest() {
 
 func (suite *PruneTestSuite) TestPrune() {
 	// prune down to 5 prepared + 5 indexed
-	suite.Equal(24, suite.timeline.Prune(5, 5))
+	suite.Equal(12, suite.timeline.Prune(5, 5))
 	suite.Equal(5, suite.timeline.ItemIndexLength(context.Background()))
+}
+
+func (suite *PruneTestSuite) TestPruneTwice() {
+	// prune down to 5 prepared + 10 indexed
+	suite.Equal(12, suite.timeline.Prune(5, 10))
+	suite.Equal(10, suite.timeline.ItemIndexLength(context.Background()))
+
+	// Prune same again, nothing should be pruned this time.
+	suite.Zero(suite.timeline.Prune(5, 10))
+	suite.Equal(10, suite.timeline.ItemIndexLength(context.Background()))
 }
 
 func (suite *PruneTestSuite) TestPruneTo0() {
 	// prune down to 0 prepared + 0 indexed
-	suite.Equal(34, suite.timeline.Prune(0, 0))
+	suite.Equal(17, suite.timeline.Prune(0, 0))
 	suite.Equal(0, suite.timeline.ItemIndexLength(context.Background()))
 }
 

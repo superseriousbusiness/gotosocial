@@ -100,6 +100,32 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineWithFutureStatus() {
 	suite.Len(s, 16)
 }
 
+func (suite *TimelineTestSuite) TestGetHomeTimelineBackToFront() {
+	ctx := context.Background()
+
+	viewingAccount := suite.testAccounts["local_account_1"]
+
+	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, "", "", id.Lowest, 5, false)
+	suite.NoError(err)
+
+	suite.Len(s, 5)
+	suite.Equal("01F8MHAYFKS4KMXF8K5Y1C0KRN", s[0].ID)
+	suite.Equal("01F8MH75CBF9JFX4ZAD54N0W0R", s[len(s)-1].ID)
+}
+
+func (suite *TimelineTestSuite) TestGetHomeTimelineFromHighest() {
+	ctx := context.Background()
+
+	viewingAccount := suite.testAccounts["local_account_1"]
+
+	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, id.Highest, "", "", 5, false)
+	suite.NoError(err)
+
+	suite.Len(s, 5)
+	suite.Equal("01FCTA44PW9H1TB328S9AQXKDS", s[0].ID)
+	suite.Equal("01G36SF3V6Y6V5BF9P4R7PQG7G", s[len(s)-1].ID)
+}
+
 func getFutureStatus() *gtsmodel.Status {
 	theDistantFuture := time.Now().Add(876600 * time.Hour)
 	id, err := id.NewULIDFromTime(theDistantFuture)

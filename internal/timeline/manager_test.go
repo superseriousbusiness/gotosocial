@@ -75,18 +75,6 @@ func (suite *ManagerTestSuite) TestManagerIntegration() {
 	oldestIndexed := suite.manager.GetOldestIndexedID(ctx, testAccount.ID)
 	suite.Empty(oldestIndexed)
 
-	// trigger status preparation
-	err := suite.manager.PrepareXFromTop(ctx, testAccount.ID, 20)
-	suite.NoError(err)
-
-	// local_account_1 can see 16 statuses out of the testrig statuses in its home timeline
-	indexedLen = suite.manager.GetIndexedLength(ctx, testAccount.ID)
-	suite.Equal(16, indexedLen)
-
-	// oldest should now be set
-	oldestIndexed = suite.manager.GetOldestIndexedID(ctx, testAccount.ID)
-	suite.Equal("01F8MH75CBF9JFX4ZAD54N0W0R", oldestIndexed)
-
 	// get hometimeline
 	statuses, err := suite.manager.GetTimeline(ctx, testAccount.ID, "", "", "", 20, false)
 	suite.NoError(err)
@@ -107,7 +95,7 @@ func (suite *ManagerTestSuite) TestManagerIntegration() {
 	// delete the new oldest status specifically from this timeline, as though local_account_1 had muted or blocked it
 	removed, err := suite.manager.Remove(ctx, testAccount.ID, "01F8MH82FYRXD2RC6108DAJ5HB")
 	suite.NoError(err)
-	suite.Equal(2, removed) // 1 status should be removed, but from both indexed and prepared, so 2 removals total
+	suite.Equal(1, removed) // 1 status should be removed
 
 	// timeline should be shorter
 	indexedLen = suite.manager.GetIndexedLength(ctx, testAccount.ID)

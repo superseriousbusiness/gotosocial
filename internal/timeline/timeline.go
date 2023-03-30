@@ -78,14 +78,13 @@ type Timeline interface {
 		INDEXING + PREPARATION FUNCTIONS
 	*/
 
-	// IndexOne puts a item into the timeline at the appropriate place according to its 'createdAt' property.
+	// IndexOne puts a item into the timeline at the appropriate place according to its id.
 	//
 	// The returned bool indicates whether or not the item was actually inserted into the timeline. This will be false
 	// if the item is a boost and the original item or another boost of it already exists < boostReinsertionDepth back in the timeline.
 	IndexOne(ctx context.Context, itemID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error)
 
-	// IndexAndPrepareOne puts a item into the timeline at the appropriate place according to its 'createdAt' property,
-	// and then immediately prepares it.
+	// IndexAndPrepareOne puts a item into the timeline at the appropriate place according to its id, and then immediately prepares it.
 	//
 	// The returned bool indicates whether or not the item was actually inserted into the timeline. This will be false
 	// if the item is a boost and the original item or another boost of it already exists < boostReinsertionDepth back in the timeline.
@@ -116,23 +115,23 @@ type Timeline interface {
 	// LastGot returns the time that Get was last called.
 	LastGot() time.Time
 
-	// Prune prunes preparedItems and indexedItems in this timeline to the desired lengths.
+	// Prune prunes prepared and indexed items in this timeline to the desired lengths.
 	// This will be a no-op if the lengths are already < the desired values.
-	// Prune acquires a lock on the timeline before pruning.
-	// The return value is the combined total of items pruned from preparedItems and indexedItems.
+	//
+	// The returned int indicates the amount of entries that were removed or unprepared.
 	Prune(desiredPreparedItemsLength int, desiredIndexedItemsLength int) int
 
-	// Remove removes a item from both the index and prepared items.
+	// Remove removes an item with the given ID.
 	//
 	// If a item has multiple entries in a timeline, they will all be removed.
 	//
 	// The returned int indicates the amount of entries that were removed.
 	Remove(ctx context.Context, itemID string) (int, error)
 
-	// RemoveAllBy removes all items by the given accountID, from both the index and prepared items.
+	// RemoveAllByOrBoosting removes all items created by or boosting the given accountID.
 	//
 	// The returned int indicates the amount of entries that were removed.
-	RemoveAllBy(ctx context.Context, accountID string) (int, error)
+	RemoveAllByOrBoosting(ctx context.Context, accountID string) (int, error)
 }
 
 // timeline fulfils the Timeline interface

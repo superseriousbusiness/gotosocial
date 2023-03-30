@@ -44,7 +44,7 @@ func StatusGrabFunction(database db.DB) timeline.GrabFunction {
 			if errors.Is(err, db.ErrNoEntries) {
 				return nil, true, nil // we just don't have enough statuses left in the db so return stop = true
 			}
-			return nil, false, fmt.Errorf("statusGrabFunction: error getting statuses from db: %s", err)
+			return nil, false, fmt.Errorf("statusGrabFunction: error getting statuses from db: %w", err)
 		}
 
 		items := make([]timeline.Timelineable, len(statuses))

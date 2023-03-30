@@ -60,8 +60,9 @@ func (t *timeline) Remove(ctx context.Context, statusID string) (int, error) {
 	return removed, nil
 }
 
-func (t *timeline) RemoveAllBy(ctx context.Context, accountID string) (int, error) {
-	l := log.WithContext(ctx).
+func (t *timeline) RemoveAllByOrBoosting(ctx context.Context, accountID string) (int, error) {
+	l := log.
+		WithContext(ctx).
 		WithFields(kv.Fields{
 			{"accountTimeline", t.accountID},
 			{"accountID", accountID},
@@ -69,27 +70,28 @@ func (t *timeline) RemoveAllBy(ctx context.Context, accountID string) (int, erro
 
 	t.Lock()
 	defer t.Unlock()
-	var removed int
 
-	// remove entr(ies) from the post index
-	removeIndexes := []*list.Element{}
-	if t.items != nil && t.items.data != nil {
-		for e := t.items.data.Front(); e != nil; e = e.Next() {
-			entry, ok := e.Value.(*indexedItemsEntry)
-			if !ok {
-				return removed, errors.New("Remove: could not parse e as a postIndexEntry")
-			}
-			if entry.accountID == accountID || entry.boostOfAccountID == accountID {
-				l.Debug("found status in postIndex")
-				removeIndexes = append(removeIndexes, e)
-			}
+	if t.items == nil || t.items.data == nil {
+		// Nothing to do.
+		return 0, nil
+	}
+
+	var toRemove []*list.Element
+	for e := t.items.data.Front(); e != nil; e = e.Next() {
+		entry := e.Value.(*indexedItemsEntry) // nolint:forcetypeassert
+
+		if entry.accountID != accountID && entry.boostOfAccountID != accountID {
+			// Not relevant.
+			continue
 		}
-	}
-	for _, e := range removeIndexes {
-		t.items.data.Remove(e)
-		removed++
+
+		l.Debug("removing item")
+		toRemove = append(toRemove, e)
 	}
 
-	l.Debugf("removed %d entries", removed)
-	return removed, nil
+	for _, e := range toRemove {
+		t.items.data.Remove(e)
+	}
+
+	return len(toRemove), nil
 }

@@ -18,9 +18,13 @@
 package timeline
 
 import (
+	"container/list"
 	"context"
+	"errors"
+	"fmt"
 
 	"codeberg.org/gruf/go-kv"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
@@ -49,6 +53,86 @@ func (t *timeline) prepareXBetweenIDs(ctx context.Context, amount int, behindID 
 
 	t.Lock()
 	defer t.Unlock()
+
+	// Try to prepare everything between (and including) the two points.
+	var (
+		toPrepare      = make(map[*list.Element]*indexedItemsEntry)
+		foundToPrepare int
+	)
+
+	if frontToBack {
+		// Paging forwards / down.
+		for e := t.items.data.Front(); e != nil; e = e.Next() {
+			entry := e.Value.(*indexedItemsEntry) //nolint:forcetypeassert
+
+			if entry.itemID > behindID {
+				l.Trace("item is too new, continuing")
+				continue
+			}
+
+			if entry.itemID < beforeID {
+				// We've gone beyond the bounds of
+				// items we're interested in; stop.
+				l.Trace("reached older items, breaking")
+				break
+			}
+
+			// Only prepare entry if it's not
+			// already prepared, save db calls.
+			if entry.prepared == nil {
+				toPrepare[e] = entry
+			}
+
+			foundToPrepare++
+			if foundToPrepare >= amount {
+				break
+			}
+		}
+	} else {
+		// Paging backwards / up.
+		for e := t.items.data.Back(); e != nil; e = e.Prev() {
+			entry := e.Value.(*indexedItemsEntry) //nolint:forcetypeassert
+
+			if entry.itemID < beforeID {
+				l.Trace("item is too old, continuing")
+				continue
+			}
+
+			if entry.itemID > behindID {
+				// We've gone beyond the bounds of
+				// items we're interested in; stop.
+				l.Trace("reached newer items, breaking")
+				break
+			}
+
+			if entry.prepared == nil {
+				toPrepare[e] = entry
+			}
+
+			// Only prepare entry if it's not
+			// already prepared, save db calls.
+			foundToPrepare++
+			if foundToPrepare >= amount {
+				break
+			}
+		}
+	}
+
+	for e, entry := range toPrepare {
+		prepared, err := t.prepareFunction(ctx, t.accountID, entry.itemID)
+		if err != nil {
+			if errors.Is(err, db.ErrNoEntries) {
+				// ErrNoEntries means something has been deleted,
+				// so we'll likely not be able to ever prepare this.
+				// This means we can remove it and skip past it.
+				l.Debugf("db.ErrNoEntries while trying to prepare %s; will remove from timeline", entry.itemID)
+				t.items.data.Remove(e)
+			}
+			// We've got a proper db error.
+			return fmt.Errorf("prepareXBetweenIDs: db error while trying to prepare %s: %w", entry.itemID, err)
+		}
+		entry.prepared = prepared
+	}
 
 	return nil
 }

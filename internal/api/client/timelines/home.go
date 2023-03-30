@@ -62,14 +62,14 @@ import (
 //		name: since_id
 //		type: string
 //		description: >-
-//			Return only statuses *NEWER* than the given since status ID.
+//			Return only statuses *newer* than the given since status ID.
 //			The status with the specified ID will not be included in the response.
 //		in: query
 //	-
 //		name: min_id
 //		type: string
 //		description: >-
-//			Return only statuses *NEWER* than the given since status ID.
+//			Return only statuses *immediately newer* than the given since status ID.
 //			The status with the specified ID will not be included in the response.
 //		in: query
 //		required: false
