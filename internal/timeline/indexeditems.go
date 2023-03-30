@@ -21,8 +21,6 @@ import (
 	"container/list"
 	"context"
 	"fmt"
-
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 type indexedItems struct {
@@ -66,10 +64,7 @@ func (i *indexedItems) insertIndexed(ctx context.Context, newEntry *indexedItems
 	for e := i.data.Front(); e != nil; e = e.Next() {
 		currentPosition++
 
-		currentEntry, ok := e.Value.(*indexedItemsEntry)
-		if !ok {
-			log.Panic(ctx, "could not parse e as indexedItemsEntry")
-		}
+		currentEntry := e.Value.(*indexedItemsEntry) //nolint:forcetypeassert
 
 		// Check if we need to skip inserting this item based on
 		// the current item.
