@@ -78,12 +78,6 @@ type Timeline interface {
 		INDEXING + PREPARATION FUNCTIONS
 	*/
 
-	// IndexOne puts a item into the timeline at the appropriate place according to its id.
-	//
-	// The returned bool indicates whether or not the item was actually inserted into the timeline. This will be false
-	// if the item is a boost and the original item or another boost of it already exists < boostReinsertionDepth back in the timeline.
-	IndexOne(ctx context.Context, itemID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error)
-
 	// IndexAndPrepareOne puts a item into the timeline at the appropriate place according to its id, and then immediately prepares it.
 	//
 	// The returned bool indicates whether or not the item was actually inserted into the timeline. This will be false
@@ -97,16 +91,12 @@ type Timeline interface {
 	// AccountID returns the id of the account this timeline belongs to.
 	AccountID() string
 
-	// ItemIndexLength returns the length of the item index at this point in time.
-	ItemIndexLength(ctx context.Context) int
+	// Len returns the length of the item index at this point in time.
+	Len() int
 
 	// OldestIndexedItemID returns the id of the rearmost (ie., the oldest) indexed item.
 	// If there's no oldest item, an empty string will be returned so make sure to check for this.
-	OldestIndexedItemID(ctx context.Context) string
-
-	// NewestIndexedItemID returns the id of the frontmost (ie., the newest) indexed item.
-	// If there's no newest item, an empty string will be returned so make sure to check for this.
-	NewestIndexedItemID(ctx context.Context) string
+	OldestIndexedItemID() string
 
 	/*
 		UTILITY FUNCTIONS

@@ -61,7 +61,7 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 			bun.Ident("follow.account_id"),
 			accountID)
 
-	if maxID == "" {
+	if maxID == "" || maxID == id.Highest {
 		const future = 24 * time.Hour
 
 		var err error
@@ -129,12 +129,13 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 	// If we're paging up, we still want statuses
 	// to be sorted by ID desc, so reverse ids slice.
 	// https://zchee.github.io/golang-wiki/SliceTricks/#reversing
-	for l, r := 0, len(statusIDs)-1; l < r; l, r = l+1, r-1 {
-		statusIDs[l], statusIDs[r] = statusIDs[r], statusIDs[l]
+	if !frontToBack {
+		for l, r := 0, len(statusIDs)-1; l < r; l, r = l+1, r-1 {
+			statusIDs[l], statusIDs[r] = statusIDs[r], statusIDs[l]
+		}
 	}
 
 	statuses := make([]*gtsmodel.Status, 0, len(statusIDs))
-
 	for _, id := range statusIDs {
 		// Fetch status from db for ID
 		status, err := t.state.DB.GetStatusByID(ctx, id)

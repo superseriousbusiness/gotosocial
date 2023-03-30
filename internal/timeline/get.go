@@ -239,6 +239,8 @@ func (t *timeline) getXBetweenIDs(ctx context.Context, amount int, behindID stri
 				return false, nil
 			}
 
+			l.Trace("entry is just right")
+
 			if entry.prepared == nil {
 				// Whoops, this entry isn't prepared yet; some
 				// race condition? That's OK, we can do it now.

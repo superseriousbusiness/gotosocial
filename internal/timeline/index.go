@@ -89,7 +89,7 @@ func (t *timeline) indexXBetweenIDs(ctx context.Context, amount int, behindID st
 			beforeIDPosition = position
 		}
 
-		if entry.itemID < beforeID {
+		if entry.itemID <= beforeID {
 			// We've gone beyond the bounds of
 			// items we're interested in; stop.
 			l.Trace("reached older items, breaking")
@@ -98,19 +98,22 @@ func (t *timeline) indexXBetweenIDs(ctx context.Context, amount int, behindID st
 	}
 
 	// We can now figure out if we need to make db calls.
-	var needMoreItems bool
+	var grabMore bool
 	switch {
 	case listLen < amount:
 		// The whole list is shorter than the
-		// amount we're being asked to return.
-		needMoreItems = true
+		// amount we're being asked to return,
+		// make up the difference.
+		grabMore = true
+		amount -= listLen
 	case beforeIDPosition-behindIDPosition < amount:
 		// Not enough items between behindID and
-		// beforeID to return amount required.
-		needMoreItems = true
+		// beforeID to return amount required,
+		// try to get more.
+		grabMore = true
 	}
 
-	if !needMoreItems {
+	if !grabMore {
 		// We're good!
 		return nil
 	}
@@ -157,6 +160,11 @@ func (t *timeline) grab(ctx context.Context, amount int, behindID string, before
 	}
 
 	for attempts := 0; attempts < 5; attempts++ {
+		if grabbed >= amount {
+			// We got everything we needed.
+			break
+		}
+
 		items, stop, err := t.grabFunction(
 			ctx,
 			t.accountID,
@@ -179,28 +187,6 @@ func (t *timeline) grab(ctx context.Context, amount int, behindID string, before
 			break
 		}
 
-		for _, item := range items {
-			ok, err := t.filterFunction(ctx, t.accountID, item)
-			if err != nil {
-				if !errors.Is(err, db.ErrNoEntries) {
-					// Real error here.
-					return nil, err
-				}
-				log.Warnf(ctx, "errNoEntries while filtering item %s: %s", item.GetID(), err)
-				continue
-			}
-
-			if ok {
-				filtered = append(filtered, item)
-				grabbed++ // count this as grabbed
-			}
-
-			if grabbed >= amount {
-				// We got everything we needed.
-				break
-			}
-		}
-
 		// Set next query parameters.
 		if frontToBack {
 			// Page down.
@@ -217,23 +203,26 @@ func (t *timeline) grab(ctx context.Context, amount int, behindID string, before
 				break
 			}
 		}
+
+		for _, item := range items {
+			ok, err := t.filterFunction(ctx, t.accountID, item)
+			if err != nil {
+				if !errors.Is(err, db.ErrNoEntries) {
+					// Real error here.
+					return nil, err
+				}
+				log.Warnf(ctx, "errNoEntries while filtering item %s: %s", item.GetID(), err)
+				continue
+			}
+
+			if ok {
+				filtered = append(filtered, item)
+				grabbed++ // count this as grabbed
+			}
+		}
 	}
 
 	return filtered, nil
-}
-
-func (t *timeline) IndexOne(ctx context.Context, itemID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error) {
-	t.Lock()
-	defer t.Unlock()
-
-	postIndexEntry := &indexedItemsEntry{
-		itemID:           itemID,
-		boostOfID:        boostOfID,
-		accountID:        accountID,
-		boostOfAccountID: boostOfAccountID,
-	}
-
-	return t.items.insertIndexed(ctx, postIndexEntry)
 }
 
 func (t *timeline) IndexAndPrepareOne(ctx context.Context, statusID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error) {
@@ -264,7 +253,7 @@ func (t *timeline) IndexAndPrepareOne(ctx context.Context, statusID string, boos
 	return true, nil
 }
 
-func (t *timeline) ItemIndexLength(ctx context.Context) int {
+func (t *timeline) Len() int {
 	t.Lock()
 	defer t.Unlock()
 
@@ -276,7 +265,7 @@ func (t *timeline) ItemIndexLength(ctx context.Context) int {
 	return t.items.data.Len()
 }
 
-func (t *timeline) OldestIndexedItemID(ctx context.Context) string {
+func (t *timeline) OldestIndexedItemID() string {
 	t.Lock()
 	defer t.Unlock()
 
@@ -286,24 +275,6 @@ func (t *timeline) OldestIndexedItemID(ctx context.Context) string {
 	}
 
 	e := t.items.data.Back()
-	if e == nil {
-		// List was empty.
-		return ""
-	}
-
-	return e.Value.(*indexedItemsEntry).itemID //nolint:forcetypeassert
-}
-
-func (t *timeline) NewestIndexedItemID(ctx context.Context) string {
-	t.Lock()
-	defer t.Unlock()
-
-	if t.items == nil || t.items.data == nil {
-		// indexedItems hasnt been initialized yet.
-		return ""
-	}
-
-	e := t.items.data.Front()
 	if e == nil {
 		// List was empty.
 		return ""

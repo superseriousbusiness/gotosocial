@@ -113,24 +113,18 @@ func (suite *ManagerTestSuite) TestManagerIntegration() {
 	indexedLen = suite.manager.GetIndexedLength(ctx, testAccount.ID)
 	suite.Equal(7, indexedLen)
 
-	// ingest 1 into the timeline
-	status1 := suite.testStatuses["admin_account_status_1"]
-	ingested, err := suite.manager.Ingest(ctx, status1, testAccount.ID)
-	suite.NoError(err)
-	suite.True(ingested)
-
 	// ingest and prepare another one into the timeline
-	status2 := suite.testStatuses["local_account_2_status_1"]
-	ingested, err = suite.manager.IngestAndPrepare(ctx, status2, testAccount.ID)
+	status := suite.testStatuses["local_account_2_status_1"]
+	ingested, err := suite.manager.IngestOne(ctx, testAccount.ID, status)
 	suite.NoError(err)
 	suite.True(ingested)
 
 	// timeline should be longer now
 	indexedLen = suite.manager.GetIndexedLength(ctx, testAccount.ID)
-	suite.Equal(9, indexedLen)
+	suite.Equal(8, indexedLen)
 
-	// try to ingest status 2 again
-	ingested, err = suite.manager.IngestAndPrepare(ctx, status2, testAccount.ID)
+	// try to ingest same status again
+	ingested, err = suite.manager.IngestOne(ctx, testAccount.ID, status)
 	suite.NoError(err)
 	suite.False(ingested) // should be false since it's a duplicate
 }

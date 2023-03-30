@@ -122,8 +122,8 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineFromHighest() {
 	suite.NoError(err)
 
 	suite.Len(s, 5)
-	suite.Equal("01FCTA44PW9H1TB328S9AQXKDS", s[0].ID)
-	suite.Equal("01G36SF3V6Y6V5BF9P4R7PQG7G", s[len(s)-1].ID)
+	suite.Equal("01G36SF3V6Y6V5BF9P4R7PQG7G", s[0].ID)
+	suite.Equal("01FCTA44PW9H1TB328S9AQXKDS", s[len(s)-1].ID)
 }
 
 func getFutureStatus() *gtsmodel.Status {

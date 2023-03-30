@@ -127,6 +127,106 @@ func (suite *GetTestSuite) checkStatuses(statuses []timeline.Preparable, maxID s
 	}
 }
 
+func (suite *GetTestSuite) TestGetNewTimelinePageDown() {
+	// Take a fresh timeline for this test.
+	// This tests whether indexing works
+	// properly against uninitialized timelines.
+	tl := timeline.NewTimeline(
+		context.Background(),
+		suite.testAccounts["local_account_1"].ID,
+		processing.StatusGrabFunction(suite.db),
+		processing.StatusFilterFunction(suite.db, suite.filter),
+		processing.StatusPrepareFunction(suite.db, suite.tc),
+		processing.StatusSkipInsertFunction(),
+	)
+
+	// Get 5 from the top.
+	statuses, err := tl.Get(context.Background(), 5, "", "", "", true)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.checkStatuses(statuses, id.Highest, id.Lowest, 5)
+
+	// Get 5 from next maxID.
+	nextMaxID := statuses[len(statuses)-1].GetID()
+	statuses, err = tl.Get(context.Background(), 5, nextMaxID, "", "", false)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.checkStatuses(statuses, nextMaxID, id.Lowest, 5)
+}
+
+func (suite *GetTestSuite) TestGetNewTimelinePageUp() {
+	// Take a fresh timeline for this test.
+	// This tests whether indexing works
+	// properly against uninitialized timelines.
+	tl := timeline.NewTimeline(
+		context.Background(),
+		suite.testAccounts["local_account_1"].ID,
+		processing.StatusGrabFunction(suite.db),
+		processing.StatusFilterFunction(suite.db, suite.filter),
+		processing.StatusPrepareFunction(suite.db, suite.tc),
+		processing.StatusSkipInsertFunction(),
+	)
+
+	// Get 5 from the back.
+	statuses, err := tl.Get(context.Background(), 5, "", "", id.Lowest, false)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.checkStatuses(statuses, id.Highest, id.Lowest, 5)
+
+	// Page upwards.
+	nextMinID := statuses[len(statuses)-1].GetID()
+	statuses, err = tl.Get(context.Background(), 5, "", "", nextMinID, false)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.checkStatuses(statuses, id.Highest, nextMinID, 5)
+}
+
+func (suite *GetTestSuite) TestGetNewTimelineMoreThanPossible() {
+	// Take a fresh timeline for this test.
+	// This tests whether indexing works
+	// properly against uninitialized timelines.
+	tl := timeline.NewTimeline(
+		context.Background(),
+		suite.testAccounts["local_account_1"].ID,
+		processing.StatusGrabFunction(suite.db),
+		processing.StatusFilterFunction(suite.db, suite.filter),
+		processing.StatusPrepareFunction(suite.db, suite.tc),
+		processing.StatusSkipInsertFunction(),
+	)
+
+	// Get 100 from the top.
+	statuses, err := tl.Get(context.Background(), 100, id.Highest, "", "", false)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.checkStatuses(statuses, id.Highest, id.Lowest, 16)
+}
+
+func (suite *GetTestSuite) TestGetNewTimelineMoreThanPossiblePageUp() {
+	// Take a fresh timeline for this test.
+	// This tests whether indexing works
+	// properly against uninitialized timelines.
+	tl := timeline.NewTimeline(
+		context.Background(),
+		suite.testAccounts["local_account_1"].ID,
+		processing.StatusGrabFunction(suite.db),
+		processing.StatusFilterFunction(suite.db, suite.filter),
+		processing.StatusPrepareFunction(suite.db, suite.tc),
+		processing.StatusSkipInsertFunction(),
+	)
+
+	// Get 100 from the back.
+	statuses, err := tl.Get(context.Background(), 100, "", "", id.Lowest, false)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.checkStatuses(statuses, id.Highest, id.Lowest, 16)
+}
+
 func (suite *GetTestSuite) TestGetNoParams() {
 	// Get 10 statuses from the top (no params).
 	statuses, err := suite.timeline.Get(context.Background(), 10, "", "", "", false)

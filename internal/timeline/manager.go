@@ -45,28 +45,19 @@ const (
 // Prepared items consist of the item's database ID, the time it was created, AND the apimodel representation of that item, for quick serialization.
 // Prepared items of course take up more memory than indexed items, so they should be regularly pruned if they're not being actively served.
 type Manager interface {
-	// Ingest takes one item and indexes it into the timeline for the given account ID.
-	//
-	// It should already be established before calling this function that the item actually belongs in the timeline!
-	//
-	// The returned bool indicates whether the item was actually put in the timeline. This could be false in cases where
-	// the item is a boosted status, but a boost of the original status or the status itself already exists recently in the timeline.
-	Ingest(ctx context.Context, item Timelineable, timelineAccountID string) (bool, error)
-
-	// IngestAndPrepare takes one timelineable and indexes it into the timeline for the given account ID, and then immediately prepares it for serving.
+	// IngestOne takes one timelineable and indexes it into the timeline for the given account ID, and then immediately prepares it for serving.
 	// This is useful in cases where we know the item will need to be shown at the top of a user's timeline immediately (eg., a new status is created).
 	//
 	// It should already be established before calling this function that the item actually belongs in the timeline!
 	//
 	// The returned bool indicates whether the item was actually put in the timeline. This could be false in cases where
 	// a status is a boost, but a boost of the original status or the status itself already exists recently in the timeline.
-	IngestAndPrepare(ctx context.Context, item Timelineable, accountID string) (bool, error)
+	IngestOne(ctx context.Context, accountID string, item Timelineable) (bool, error)
 
 	// GetTimeline returns limit n amount of prepared entries from the timeline of the given account ID, in descending chronological order.
-	// If maxID is provided, it will return prepared entries from that maxID onwards, inclusive.
 	GetTimeline(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]Preparable, error)
 
-	// GetIndexedLength returns the amount of items that have been *indexed* for the given account ID.
+	// GetIndexedLength returns the amount of items that have been indexed for the given account ID.
 	GetIndexedLength(ctx context.Context, accountID string) int
 
 	// GetOldestIndexedID returns the id ID for the oldest item that we have indexed for the given account.
@@ -154,17 +145,7 @@ func (m *manager) Stop() error {
 	return nil
 }
 
-func (m *manager) Ingest(ctx context.Context, item Timelineable, accountID string) (bool, error) {
-	return m.getOrCreateTimeline(ctx, accountID).IndexOne(
-		ctx,
-		item.GetID(),
-		item.GetBoostOfID(),
-		item.GetAccountID(),
-		item.GetBoostOfAccountID(),
-	)
-}
-
-func (m *manager) IngestAndPrepare(ctx context.Context, item Timelineable, accountID string) (bool, error) {
+func (m *manager) IngestOne(ctx context.Context, accountID string, item Timelineable) (bool, error) {
 	return m.getOrCreateTimeline(ctx, accountID).IndexAndPrepareOne(
 		ctx,
 		item.GetID(),
@@ -183,11 +164,11 @@ func (m *manager) GetTimeline(ctx context.Context, accountID string, maxID strin
 }
 
 func (m *manager) GetIndexedLength(ctx context.Context, accountID string) int {
-	return m.getOrCreateTimeline(ctx, accountID).ItemIndexLength(ctx)
+	return m.getOrCreateTimeline(ctx, accountID).Len()
 }
 
 func (m *manager) GetOldestIndexedID(ctx context.Context, accountID string) string {
-	return m.getOrCreateTimeline(ctx, accountID).OldestIndexedItemID(ctx)
+	return m.getOrCreateTimeline(ctx, accountID).OldestIndexedItemID()
 }
 
 func (m *manager) WipeItemFromAllTimelines(ctx context.Context, statusID string) error {

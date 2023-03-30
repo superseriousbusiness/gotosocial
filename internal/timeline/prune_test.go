@@ -88,29 +88,29 @@ func (suite *PruneTestSuite) TearDownTest() {
 func (suite *PruneTestSuite) TestPrune() {
 	// prune down to 5 prepared + 5 indexed
 	suite.Equal(12, suite.timeline.Prune(5, 5))
-	suite.Equal(5, suite.timeline.ItemIndexLength(context.Background()))
+	suite.Equal(5, suite.timeline.Len())
 }
 
 func (suite *PruneTestSuite) TestPruneTwice() {
 	// prune down to 5 prepared + 10 indexed
 	suite.Equal(12, suite.timeline.Prune(5, 10))
-	suite.Equal(10, suite.timeline.ItemIndexLength(context.Background()))
+	suite.Equal(10, suite.timeline.Len())
 
 	// Prune same again, nothing should be pruned this time.
 	suite.Zero(suite.timeline.Prune(5, 10))
-	suite.Equal(10, suite.timeline.ItemIndexLength(context.Background()))
+	suite.Equal(10, suite.timeline.Len())
 }
 
 func (suite *PruneTestSuite) TestPruneTo0() {
 	// prune down to 0 prepared + 0 indexed
 	suite.Equal(17, suite.timeline.Prune(0, 0))
-	suite.Equal(0, suite.timeline.ItemIndexLength(context.Background()))
+	suite.Equal(0, suite.timeline.Len())
 }
 
 func (suite *PruneTestSuite) TestPruneToInfinityAndBeyond() {
 	// prune to 99999, this should result in no entries being pruned
 	suite.Equal(0, suite.timeline.Prune(99999, 99999))
-	suite.Equal(17, suite.timeline.ItemIndexLength(context.Background()))
+	suite.Equal(17, suite.timeline.Len())
 }
 
 func TestPruneTestSuite(t *testing.T) {
