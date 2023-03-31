@@ -483,7 +483,7 @@ type TypeUtilsTestSuite struct {
 	typeconverter typeutils.TypeConverter
 }
 
-func (suite *TypeUtilsTestSuite) SetupSuite() {
+func (suite *TypeUtilsTestSuite) SetupTest() {
 	suite.state.Caches.Init()
 
 	testrig.InitTestConfig()
@@ -502,15 +502,13 @@ func (suite *TypeUtilsTestSuite) SetupSuite() {
 	suite.testReports = testrig.NewTestReports()
 	suite.testMentions = testrig.NewTestMentions()
 	suite.typeconverter = typeutils.NewConverter(suite.db)
-}
 
-func (suite *TypeUtilsTestSuite) SetupTest() {
-	suite.state.Caches.Init() // reset
 	testrig.StandardDBSetup(suite.db, nil)
 }
 
 func (suite *TypeUtilsTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
+	testrig.StopWorkers(&suite.state)
 }
 
 // GetProcessor is a utility function that instantiates a processor.

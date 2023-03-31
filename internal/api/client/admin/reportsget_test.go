@@ -195,7 +195,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
       "ip": "118.44.18.196",
       "ips": [],
       "locale": "en",
-      "invite_request": "",
+      "invite_request": null,
       "role": {
         "name": "user"
       },
@@ -240,7 +240,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
       "ip": "89.122.255.1",
       "ips": [],
       "locale": "en",
-      "invite_request": "",
+      "invite_request": null,
       "role": {
         "name": "admin"
       },
@@ -286,7 +286,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
       "ip": "89.122.255.1",
       "ips": [],
       "locale": "en",
-      "invite_request": "",
+      "invite_request": null,
       "role": {
         "name": "admin"
       },
@@ -345,7 +345,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
       "ip": "118.44.18.196",
       "ips": [],
       "locale": "en",
-      "invite_request": "",
+      "invite_request": null,
       "role": {
         "name": "user"
       },
@@ -546,7 +546,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetCreatedByAccount() {
       "ip": "118.44.18.196",
       "ips": [],
       "locale": "en",
-      "invite_request": "",
+      "invite_request": null,
       "role": {
         "name": "user"
       },
@@ -747,7 +747,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetTargetAccount() {
       "ip": "118.44.18.196",
       "ips": [],
       "locale": "en",
-      "invite_request": "",
+      "invite_request": null,
       "role": {
         "name": "user"
       },

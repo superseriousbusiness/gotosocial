@@ -1246,13 +1246,15 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
 		suite.FailNow(err.Error())
 	}
 
-	// Wait for the delete to process...
+	// Wait for the delete to process. Stubbifying
+	// the account is the last part of the delete,
+	// so once it's stubbified we know we're done.
 	if !testrig.WaitFor(func() bool {
-		count, err := suite.state.DB.CountAccountStatuses(ctx, reportedAccount.ID)
+		dbAccount, err := suite.db.GetAccountByID(ctx, reportedAccount.ID)
 		if err != nil {
 			suite.FailNow(err.Error())
 		}
-		return count == 0
+		return dbAccount.DisplayName == ""
 	}) {
 		suite.FailNow("timed out waiting for account delete")
 	}
