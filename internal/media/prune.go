@@ -328,10 +328,8 @@ func (m *manager) uncacheAttachment(ctx context.Context, attachment *gtsmodel.Me
 	}
 
 	// Update attachment to reflect that we no longer have it cached.
-	attachment.UpdatedAt = time.Now()
-	cached := false
-	attachment.Cached = &cached
-	return m.state.DB.UpdateAttachment(ctx, attachment, "updated_at", "cached")
+	attachment.Cached = func() *bool { i := false; return &i }()
+	return m.state.DB.UpdateAttachment(ctx, attachment, "cached")
 }
 
 func (m *manager) removeFiles(ctx context.Context, keys ...string) (int, error) {

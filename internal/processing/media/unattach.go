@@ -21,7 +21,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -44,11 +43,9 @@ func (p *Processor) Unattach(ctx context.Context, account *gtsmodel.Account, med
 		return nil, gtserror.NewErrorNotFound(errors.New("attachment not owned by requesting account"))
 	}
 
-	updatingColumns := []string{"updated_at", "status_id"}
-	attachment.UpdatedAt = time.Now()
 	attachment.StatusID = ""
 
-	if err := p.state.DB.UpdateAttachment(ctx, attachment, updatingColumns...); err != nil {
+	if err := p.state.DB.UpdateAttachment(ctx, attachment, "status_id"); err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("db error updating attachment: %s", err))
 	}
 

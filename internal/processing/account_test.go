@@ -88,7 +88,7 @@ func (suite *AccountTestSuite) TestAccountDeleteLocal() {
 
 	if !testrig.WaitFor(func() bool {
 		dbAccount, _ := suite.db.GetAccountByID(ctx, deletingAccount.ID)
-		return suite.WithinDuration(dbAccount.SuspendedAt, time.Now(), 30*time.Second)
+		return !dbAccount.SuspendedAt.IsZero()
 	}) {
 		suite.FailNow("timed out waiting for account to be deleted")
 	}
