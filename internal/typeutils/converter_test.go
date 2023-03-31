@@ -22,6 +22,7 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -489,6 +490,10 @@ func (suite *TypeUtilsTestSuite) SetupSuite() {
 	testrig.InitTestLog()
 
 	suite.db = testrig.NewTestDB(&suite.state)
+	suite.state.DB = suite.db
+	storage := testrig.NewInMemoryStorage()
+	suite.state.Storage = storage
+
 	suite.testAccounts = testrig.NewTestAccounts()
 	suite.testStatuses = testrig.NewTestStatuses()
 	suite.testAttachments = testrig.NewTestAttachments()
@@ -506,4 +511,16 @@ func (suite *TypeUtilsTestSuite) SetupTest() {
 
 func (suite *TypeUtilsTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
+}
+
+// GetProcessor is a utility function that instantiates a processor.
+// Useful when a test in the test suite needs to change some state.
+func (suite *TypeUtilsTestSuite) GetProcessor() *processing.Processor {
+	testrig.StartWorkers(&suite.state)
+	httpClient := testrig.NewMockHTTPClient(nil, "../../testrig/media")
+	transportController := testrig.NewTestTransportController(&suite.state, httpClient)
+	mediaManager := testrig.NewTestMediaManager(&suite.state)
+	federator := testrig.NewTestFederator(&suite.state, transportController, mediaManager)
+	emailSender := testrig.NewEmailSender("../../web/template/", nil)
+	return testrig.NewTestProcessor(&suite.state, federator, emailSender, mediaManager)
 }
