@@ -568,6 +568,14 @@ func (suite *RelationshipTestSuite) TestAcceptFollowRequestOK() {
 	account := suite.testAccounts["admin_account"]
 	targetAccount := suite.testAccounts["local_account_2"]
 
+	// Fetch relationship before follow request.
+	relationship, err := suite.db.GetRelationship(ctx, account.ID, targetAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(relationship.Following)
+	suite.False(relationship.Requested)
+
 	followRequest := &gtsmodel.FollowRequest{
 		ID:              "01GEF753FWHCHRDWR0QEHBXM8W",
 		URI:             "http://localhost:8080/weeeeeeeeeeeeeeeee",
@@ -575,9 +583,17 @@ func (suite *RelationshipTestSuite) TestAcceptFollowRequestOK() {
 		TargetAccountID: targetAccount.ID,
 	}
 
-	if err := suite.db.Put(ctx, followRequest); err != nil {
+	if err := suite.db.PutFollowRequest(ctx, followRequest); err != nil {
 		suite.FailNow(err.Error())
 	}
+
+	// Fetch relationship while follow requested.
+	relationship, err = suite.db.GetRelationship(ctx, account.ID, targetAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(relationship.Following)
+	suite.True(relationship.Requested)
 
 	followRequestNotification := &gtsmodel.Notification{
 		ID:               "01GV8MY1Q9KX2ZSWN4FAQ3V1PB",
@@ -586,7 +602,7 @@ func (suite *RelationshipTestSuite) TestAcceptFollowRequestOK() {
 		NotificationType: gtsmodel.NotificationFollowRequest,
 	}
 
-	if err := suite.db.Put(ctx, followRequestNotification); err != nil {
+	if err := suite.db.PutNotification(ctx, followRequestNotification); err != nil {
 		suite.FailNow(err.Error())
 	}
 
@@ -599,6 +615,14 @@ func (suite *RelationshipTestSuite) TestAcceptFollowRequestOK() {
 	notification, err := suite.db.GetNotificationByID(ctx, followRequestNotification.ID)
 	suite.ErrorIs(err, db.ErrNoEntries)
 	suite.Nil(notification)
+
+	// Fetch relationship while followed.
+	relationship, err = suite.db.GetRelationship(ctx, account.ID, targetAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.True(relationship.Following)
+	suite.False(relationship.Requested)
 }
 
 func (suite *RelationshipTestSuite) TestAcceptFollowRequestNoNotification() {

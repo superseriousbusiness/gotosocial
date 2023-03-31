@@ -204,7 +204,8 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, sourceAccountI
 		return nil, r.conn.ProcessError(err)
 	}
 
-	// Invalidate follow request from cache lookups.
+	// Invalidate follow request from cache lookups; this will
+	// invalidate the follow as well via the invalidate hook.
 	r.state.Caches.GTS.FollowRequest().Invalidate("ID", followReq.ID)
 
 	// Delete original follow request notification
@@ -225,12 +226,8 @@ func (r *relationshipDB) RejectFollowRequest(ctx context.Context, sourceAccountI
 	}
 
 	// Delete original follow request.
-	if _, err := r.conn.
-		NewDelete().
-		Table("follow_requests").
-		Where("? = ?", bun.Ident("id"), followReq.ID).
-		Exec(ctx); err != nil {
-		return r.conn.ProcessError(err)
+	if err := r.DeleteFollowRequestByID(ctx, followReq.ID); err != nil {
+		return err
 	}
 
 	// Delete original follow request notification
