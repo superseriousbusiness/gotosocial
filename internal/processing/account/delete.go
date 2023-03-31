@@ -21,15 +21,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"time"
 
 	"codeberg.org/gruf/go-kv"
+	"github.com/google/uuid"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"golang.org/x/crypto/bcrypt"
 )
 
 const deleteSelectLimit = 50
@@ -136,8 +139,13 @@ func (p *Processor) deleteUserAndTokensForAccount(ctx context.Context, account *
 		}
 	}
 
-	if err := p.state.DB.DeleteUserByID(ctx, user.ID); err != nil {
-		return fmt.Errorf("deleteUserAndTokensForAccount: db error deleting user: %w", err)
+	columns, err := stubbifyUser(user)
+	if err != nil {
+		return fmt.Errorf("deleteUserAndTokensForAccount: error stubbifying user: %w", err)
+	}
+
+	if err := p.state.DB.UpdateUser(ctx, user, columns...); err != nil {
+		return fmt.Errorf("deleteUserAndTokensForAccount: db error updating user: %w", err)
 	}
 
 	return nil
@@ -472,4 +480,62 @@ func stubbifyAccount(account *gtsmodel.Account, origin string) []string {
 		"hide_collections",
 		"enable_rss",
 	}
+}
+
+// stubbifyUser renders the given user as a stub,
+// removing sensitive information like IP addresses
+// and sign-in times, but keeping email addresses to
+// prevent the same email address from creating another
+// account on this instance.
+//
+// `encrypted_password` is set to the bcrypt hash of a
+// random uuid, so if the action is reversed, the user
+// will have to reset their password via email.
+//
+// For caller's convenience, this function returns the db
+// names of all columns that are updated by it.
+func stubbifyUser(user *gtsmodel.User) ([]string, error) {
+	uuid, err := uuid.New().MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
+
+	dummyPassword, err := bcrypt.GenerateFromPassword(uuid, bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
+	var never = time.Time{}
+
+	user.EncryptedPassword = string(dummyPassword)
+	user.SignUpIP = net.IPv4zero
+	user.CurrentSignInAt = never
+	user.CurrentSignInIP = net.IPv4zero
+	user.LastSignInAt = never
+	user.LastSignInIP = net.IPv4zero
+	user.SignInCount = 1
+	user.Locale = ""
+	user.CreatedByApplicationID = ""
+	user.LastEmailedAt = never
+	user.ConfirmationToken = ""
+	user.ConfirmationSentAt = never
+	user.ResetPasswordToken = ""
+	user.ResetPasswordSentAt = never
+
+	return []string{
+		"encrypted_password",
+		"sign_up_ip",
+		"current_sign_in_at",
+		"current_sign_in_ip",
+		"last_sign_in_at",
+		"last_sign_in_ip",
+		"sign_in_count",
+		"locale",
+		"created_by_application_id",
+		"last_emailed_at",
+		"confirmation_token",
+		"confirmation_sent_at",
+		"reset_password_token",
+		"reset_password_sent_at",
+	}, nil
 }

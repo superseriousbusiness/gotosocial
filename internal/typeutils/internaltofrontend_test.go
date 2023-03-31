@@ -26,6 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type InternalToFrontendTestSuite struct {
@@ -908,7 +909,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
     "ip": "118.44.18.196",
     "ips": [],
     "locale": "en",
-    "invite_request": "",
+    "invite_request": null,
     "role": {
       "name": "user"
     },
@@ -953,7 +954,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
     "ip": "89.122.255.1",
     "ips": [],
     "locale": "en",
-    "invite_request": "",
+    "invite_request": null,
     "role": {
       "name": "admin"
     },
@@ -999,7 +1000,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
     "ip": "89.122.255.1",
     "ips": [],
     "locale": "en",
-    "invite_request": "",
+    "invite_request": null,
     "role": {
       "name": "admin"
     },
@@ -1068,7 +1069,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
     "ip": "118.44.18.196",
     "ips": [],
     "locale": "en",
-    "invite_request": "",
+    "invite_request": null,
     "role": {
       "name": "user"
     },
@@ -1231,6 +1232,229 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
   ],
   "rule_ids": [],
   "action_taken_comment": null
+}`, string(b))
+}
+
+func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLocalAccount() {
+	ctx := context.Background()
+	requestingAccount := suite.testAccounts["admin_account"]
+	reportedAccount := &gtsmodel.Account{}
+	*reportedAccount = *suite.testAccounts["local_account_2"]
+
+	// Suspend/delete the reported account.
+	if err := suite.GetProcessor().Account().Delete(ctx, reportedAccount, requestingAccount.ID); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Wait for the delete to process. Stubbifying
+	// the account is the last part of the delete,
+	// so once it's stubbified we know we're done.
+	if !testrig.WaitFor(func() bool {
+		dbAccount, err := suite.db.GetAccountByID(ctx, reportedAccount.ID)
+		if err != nil {
+			suite.FailNow(err.Error())
+		}
+		return dbAccount.DisplayName == ""
+	}) {
+		suite.FailNow("timed out waiting for account delete")
+	}
+
+	adminReport, err := suite.typeconverter.ReportToAdminAPIReport(context.Background(), suite.testReports["remote_account_1_report_local_account_2"], requestingAccount)
+	suite.NoError(err)
+
+	b, err := json.MarshalIndent(adminReport, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "id": "01GP3DFY9XQ1TJMZT5BGAZPXX7",
+  "action_taken": true,
+  "action_taken_at": "2022-05-15T15:01:56.000Z",
+  "category": "other",
+  "comment": "this is a turtle, not a person, therefore should not be a poster",
+  "forwarded": true,
+  "created_at": "2022-05-15T14:20:12.000Z",
+  "updated_at": "2022-05-15T14:20:12.000Z",
+  "account": {
+    "id": "01F8MH5ZK5VRH73AKHQM6Y9VNX",
+    "username": "foss_satan",
+    "domain": "fossbros-anonymous.io",
+    "created_at": "2021-09-26T10:52:36.000Z",
+    "email": "",
+    "ip": null,
+    "ips": [],
+    "locale": "",
+    "invite_request": null,
+    "role": {
+      "name": "user"
+    },
+    "confirmed": false,
+    "approved": false,
+    "disabled": false,
+    "silenced": false,
+    "suspended": false,
+    "account": {
+      "id": "01F8MH5ZK5VRH73AKHQM6Y9VNX",
+      "username": "foss_satan",
+      "acct": "foss_satan@fossbros-anonymous.io",
+      "display_name": "big gerald",
+      "locked": false,
+      "discoverable": true,
+      "bot": false,
+      "created_at": "2021-09-26T10:52:36.000Z",
+      "note": "i post about like, i dunno, stuff, or whatever!!!!",
+      "url": "http://fossbros-anonymous.io/@foss_satan",
+      "avatar": "",
+      "avatar_static": "",
+      "header": "http://localhost:8080/assets/default_header.png",
+      "header_static": "http://localhost:8080/assets/default_header.png",
+      "followers_count": 0,
+      "following_count": 0,
+      "statuses_count": 1,
+      "last_status_at": "2021-09-20T10:40:37.000Z",
+      "emojis": [],
+      "fields": []
+    }
+  },
+  "target_account": {
+    "id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+    "username": "1happyturtle",
+    "domain": null,
+    "created_at": "2022-06-04T13:12:00.000Z",
+    "email": "tortle.dude@example.org",
+    "ip": "0.0.0.0",
+    "ips": [],
+    "locale": "",
+    "invite_request": null,
+    "role": {
+      "name": "user"
+    },
+    "confirmed": true,
+    "approved": true,
+    "disabled": false,
+    "silenced": false,
+    "suspended": true,
+    "account": {
+      "id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+      "username": "1happyturtle",
+      "acct": "1happyturtle",
+      "display_name": "",
+      "locked": true,
+      "discoverable": false,
+      "bot": false,
+      "created_at": "2022-06-04T13:12:00.000Z",
+      "note": "",
+      "url": "http://localhost:8080/@1happyturtle",
+      "avatar": "",
+      "avatar_static": "",
+      "header": "http://localhost:8080/assets/default_header.png",
+      "header_static": "http://localhost:8080/assets/default_header.png",
+      "followers_count": 0,
+      "following_count": 0,
+      "statuses_count": 0,
+      "last_status_at": null,
+      "emojis": [],
+      "fields": [],
+      "suspended": true,
+      "role": {
+        "name": "user"
+      }
+    }
+  },
+  "assigned_account": {
+    "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+    "username": "admin",
+    "domain": null,
+    "created_at": "2022-05-17T13:10:59.000Z",
+    "email": "admin@example.org",
+    "ip": "89.122.255.1",
+    "ips": [],
+    "locale": "en",
+    "invite_request": null,
+    "role": {
+      "name": "admin"
+    },
+    "confirmed": true,
+    "approved": true,
+    "disabled": false,
+    "silenced": false,
+    "suspended": false,
+    "account": {
+      "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+      "username": "admin",
+      "acct": "admin",
+      "display_name": "",
+      "locked": false,
+      "discoverable": true,
+      "bot": false,
+      "created_at": "2022-05-17T13:10:59.000Z",
+      "note": "",
+      "url": "http://localhost:8080/@admin",
+      "avatar": "",
+      "avatar_static": "",
+      "header": "http://localhost:8080/assets/default_header.png",
+      "header_static": "http://localhost:8080/assets/default_header.png",
+      "followers_count": 1,
+      "following_count": 1,
+      "statuses_count": 4,
+      "last_status_at": "2021-10-20T10:41:37.000Z",
+      "emojis": [],
+      "fields": [],
+      "enable_rss": true,
+      "role": {
+        "name": "admin"
+      }
+    },
+    "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F"
+  },
+  "action_taken_by_account": {
+    "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+    "username": "admin",
+    "domain": null,
+    "created_at": "2022-05-17T13:10:59.000Z",
+    "email": "admin@example.org",
+    "ip": "89.122.255.1",
+    "ips": [],
+    "locale": "en",
+    "invite_request": null,
+    "role": {
+      "name": "admin"
+    },
+    "confirmed": true,
+    "approved": true,
+    "disabled": false,
+    "silenced": false,
+    "suspended": false,
+    "account": {
+      "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+      "username": "admin",
+      "acct": "admin",
+      "display_name": "",
+      "locked": false,
+      "discoverable": true,
+      "bot": false,
+      "created_at": "2022-05-17T13:10:59.000Z",
+      "note": "",
+      "url": "http://localhost:8080/@admin",
+      "avatar": "",
+      "avatar_static": "",
+      "header": "http://localhost:8080/assets/default_header.png",
+      "header_static": "http://localhost:8080/assets/default_header.png",
+      "followers_count": 1,
+      "following_count": 1,
+      "statuses_count": 4,
+      "last_status_at": "2021-10-20T10:41:37.000Z",
+      "emojis": [],
+      "fields": [],
+      "enable_rss": true,
+      "role": {
+        "name": "admin"
+      }
+    },
+    "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F"
+  },
+  "statuses": [],
+  "rule_ids": [],
+  "action_taken_comment": "user was warned not to be a turtle anymore"
 }`, string(b))
 }
 

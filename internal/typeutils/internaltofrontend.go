@@ -270,7 +270,7 @@ func (c *converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 	)
 
 	// take user-level information if possible
-	if a.Domain != "" {
+	if a.IsRemote() {
 		domain = &a.Domain
 	} else {
 		user, err := c.db.GetUserByAccountID(ctx, a.ID)
@@ -289,7 +289,9 @@ func (c *converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 		}
 
 		locale = user.Locale
-		inviteRequest = &user.Account.Reason
+		if user.Account.Reason != "" {
+			inviteRequest = &user.Account.Reason
+		}
 		if *user.Admin {
 			role.Name = apimodel.AccountRoleAdmin
 		} else if *user.Moderator {
@@ -298,10 +300,11 @@ func (c *converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 		confirmed = !user.ConfirmedAt.IsZero()
 		approved = *user.Approved
 		disabled = *user.Disabled
-		silenced = !user.Account.SilencedAt.IsZero()
-		suspended = !user.Account.SuspendedAt.IsZero()
 		createdByApplicationID = user.CreatedByApplicationID
 	}
+
+	silenced = !a.SilencedAt.IsZero()
+	suspended = !a.SuspendedAt.IsZero()
 
 	apiAccount, err := c.AccountToAPIAccountPublic(ctx, a)
 	if err != nil {
