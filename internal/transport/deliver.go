@@ -58,31 +58,26 @@ func (t *transport) BatchDeliver(ctx context.Context, b []byte, recipients []*ur
 			defer wait.Done()
 
 			for {
-				var to *url.URL
-
 				// Acquire lock.
 				mutex.Lock()
 
-				for len(recipients) > 0 {
-					// Pop next recipient.
-					i := len(recipients) - 1
-					to = recipients[i]
-					recipients = recipients[:i]
-
-					// Skip delivery to recipient if it is "us".
-					if to.Host == host || to.Host == domain {
-						to = nil
-						continue
-					}
-				}
-
-				if to == nil {
+				if len(recipients) == 0 {
 					// Reached end.
 					return
 				}
 
+				// Pop next recipient.
+				i := len(recipients) - 1
+				to := recipients[i]
+				recipients = recipients[:i]
+
 				// Done with lock.
 				mutex.Unlock()
+
+				// Skip delivery to recipient if it is "us".
+				if to.Host == host || to.Host == domain {
+					continue
+				}
 
 				// Attempt to deliver data to recipient.
 				if err := t.deliver(ctx, b, to); err != nil {
