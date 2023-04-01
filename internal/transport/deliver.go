@@ -19,7 +19,6 @@ package transport
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -41,42 +40,53 @@ func (t *transport) BatchDeliver(ctx context.Context, b []byte, recipients []*ur
 		// routines have returned.
 		wait sync.WaitGroup
 
-		// mutex protects the error accumulator.
+		// mutex protects 'recipients' and
+		// 'errs' for concurrent access.
 		mutex sync.Mutex
-
-		// sender is a just a short-hand to sender worker.
-		sender = &t.controller.state.Workers.Sender
 
 		// Get current instance host info.
 		domain = config.GetAccountDomain()
 		host   = config.GetHost()
 	)
 
-	for _, to := range recipients {
-		// Skip delivery to recipient if it is "us".
-		if to.Host == host || to.Host == domain {
-			continue
-		}
-
+	for i := 0; i < t.controller.senders; i++ {
 		// Track sender.
 		wait.Add(1)
 
-		// Rescope to loop.
-		recipient := to
-
-		// Enqueue delivery for each recipient to send worker.
-		if !sender.EnqueueCtx(ctx, func(ctx context.Context) {
+		go func() {
+			// Mark returned.
 			defer wait.Done()
 
-			if err := t.deliver(ctx, b, recipient); err != nil {
-				mutex.Lock() // safely append err to accumulator.
-				errs.Appendf("error delivering to %s: %v", to, err)
+			for {
+				// Acquire lock.
+				mutex.Lock()
+
+				if len(recipients) == 0 {
+					// Reached end.
+					return
+				}
+
+				// Pop next recipient.
+				i := len(recipients) - 1
+				to := recipients[i]
+				recipients = recipients[:i]
+
+				// Done with lock.
 				mutex.Unlock()
+
+				// Skip delivery to recipient if it is "us".
+				if to.Host == host || to.Host == domain {
+					continue
+				}
+
+				// Attempt to deliver data to recipient.
+				if err := t.deliver(ctx, b, to); err != nil {
+					mutex.Lock() // safely append err to accumulator.
+					errs.Appendf("error delivering to %s: %v", to, err)
+					mutex.Unlock()
+				}
 			}
-		}) {
-			// Enqueue failed, i.e. our ctx or worker ctx was canceled.
-			return errors.New("context canceled during batch delivery")
-		}
+		}()
 	}
 
 	// Wait for finish.
@@ -86,24 +96,14 @@ func (t *transport) BatchDeliver(ctx context.Context, b []byte, recipients []*ur
 	return errs.Combine()
 }
 
-func (t *transport) Deliver(ctx context.Context, b []byte, to *url.URL) (err error) {
-	// sender is a just a short-hand to sender worker.
-	sender := &t.controller.state.Workers.Sender
-
+func (t *transport) Deliver(ctx context.Context, b []byte, to *url.URL) error {
 	// if 'to' host is our own, skip as we don't need to deliver to ourselves...
 	if to.Host == config.GetHost() || to.Host == config.GetAccountDomain() {
 		return nil
 	}
 
-	if !sender.EnqueueCtx(ctx, func(ctx context.Context) {
-		// Deliver bytes to recipient.
-		err = t.deliver(ctx, b, to)
-	}) {
-		// Pool/our ctx was canceled.
-		err = context.Canceled
-	}
-
-	return err
+	// Deliver data to recipient.
+	return t.deliver(ctx, b, to)
 }
 
 func (t *transport) deliver(ctx context.Context, b []byte, to *url.URL) error {

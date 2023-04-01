@@ -24,7 +24,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"time"
+	"runtime"
 
 	"codeberg.org/gruf/go-byteutil"
 	"codeberg.org/gruf/go-cache/v3"
@@ -33,7 +33,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
@@ -53,6 +52,7 @@ type controller struct {
 	client    httpclient.SigningClient
 	trspCache cache.Cache[string, *transport]
 	userAgent string
+	senders   int // no. concurrent batch delivery routines.
 }
 
 // NewController returns an implementation of the Controller interface for creating new transports
@@ -69,12 +69,7 @@ func NewController(state *state.State, federatingDB federatingdb.DB, clock pub.C
 		client:    client,
 		trspCache: cache.New[string, *transport](0, 100, 0),
 		userAgent: fmt.Sprintf("%s (+%s://%s) gotosocial/%s", applicationName, proto, host, version),
-	}
-
-	// Transport cache has TTL=1hr freq=1min
-	c.trspCache.SetTTL(time.Hour, false)
-	if !c.trspCache.Start(time.Minute) {
-		log.Panic(nil, "failed to start transport controller cache")
+		senders:   2 * runtime.GOMAXPROCS(0),
 	}
 
 	return c
