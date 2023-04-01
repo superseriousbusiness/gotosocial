@@ -42,7 +42,7 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.15.0
 	github.com/stretchr/testify v1.8.2
-	github.com/superseriousbusiness/activity v1.2.1-gts
+	github.com/superseriousbusiness/activity v1.2.1-gts.0.20230401164820-74f67938e2c8
 	github.com/superseriousbusiness/exif-terminator v0.5.0
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8
 	github.com/tdewolff/minify/v2 v2.12.5

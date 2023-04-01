@@ -60,6 +60,7 @@ type Statusable interface {
 	WithSensitive
 	WithConversation
 	WithContent
+	WithSetContent
 	WithAttachment
 	WithTag
 	WithReplies
@@ -279,6 +280,11 @@ type WithConversation interface { // TODO
 // WithContent represents an activity with ActivityStreamsContentProperty
 type WithContent interface {
 	GetActivityStreamsContent() vocab.ActivityStreamsContentProperty
+}
+
+// WithSetContent represents an activity that can have content set on it.
+type WithSetContent interface {
+	SetActivityStreamsContent(vocab.ActivityStreamsContentProperty)
 }
 
 // WithPublished represents an activity with ActivityStreamsPublishedProperty

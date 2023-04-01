@@ -67,7 +67,8 @@ func NewSocialActor(c CommonBehavior,
 	db Database,
 	clock Clock) Actor {
 	return &baseActor{
-		delegate: &sideEffectActor{
+		// Use SideEffectActor without s2s.
+		delegate: &SideEffectActor{
 			common: c,
 			c2s:    c2s,
 			db:     db,
@@ -96,7 +97,8 @@ func NewFederatingActor(c CommonBehavior,
 	clock Clock) FederatingActor {
 	return &baseActorFederating{
 		baseActor{
-			delegate: &sideEffectActor{
+			// Use SideEffectActor without c2s.
+			delegate: &SideEffectActor{
 				common: c,
 				s2s:    s2s,
 				db:     db,
@@ -124,13 +126,7 @@ func NewActor(c CommonBehavior,
 	clock Clock) FederatingActor {
 	return &baseActorFederating{
 		baseActor{
-			delegate: &sideEffectActor{
-				common: c,
-				c2s:    c2s,
-				s2s:    s2s,
-				db:     db,
-				clock:  clock,
-			},
+			delegate:                NewSideEffectActor(c, s2s, c2s, db, clock),
 			enableSocialProtocol:    true,
 			enableFederatedProtocol: true,
 			clock:                   clock,
@@ -147,6 +143,9 @@ func NewActor(c CommonBehavior,
 //
 // It is possible to create a DelegateActor that is not ActivityPub compliant.
 // Use with due care.
+//
+// If you find yourself passing a SideEffectActor in as the DelegateActor,
+// consider using NewActor, NewFederatingActor, or NewSocialActor instead.
 func NewCustomActor(delegate DelegateActor,
 	enableSocialProtocol, enableFederatedProtocol bool,
 	clock Clock) FederatingActor {
