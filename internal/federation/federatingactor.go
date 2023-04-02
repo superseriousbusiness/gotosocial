@@ -152,9 +152,7 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 	// If activity Object is a Statusable, we'll want to replace the
 	// parsed `content` value with the value from the raw JSON instead.
 	// See https://github.com/superseriousbusiness/gotosocial/issues/1661
-	if obj := activity.GetActivityStreamsObject(); obj != nil {
-		ap.NormalizeObjectContent(obj, m)
-	}
+	ap.NormalizeActivityObject(activity, m)
 
 	// Allow server implementations to set context data with a hook.
 	ctx, err = f.sideEffectActor.PostInboxRequestBodyHook(ctx, r, activity)

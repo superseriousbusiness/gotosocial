@@ -1,3 +1,20 @@
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 package ap_test
 
 import (
@@ -7,43 +24,38 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type NormalizeTestSuite struct {
 	suite.Suite
 }
 
-func (suite *NormalizeTestSuite) GetStatusable() (ap.Statusable, map[string]interface{}) {
+func (suite *NormalizeTestSuite) GetStatusable() (vocab.ActivityStreamsNote, map[string]interface{}) {
 	rawJson := `{
 		"@context": [
 		  "https://www.w3.org/ns/activitystreams",
-		  "https://atomicpoet.org/schemas/litepub-0.1.jsonld",
+		  "https://example.org/schemas/litepub-0.1.jsonld",
 		  {
 			"@language": "und"
 		  }
 		],
-		"actor": "https://atomicpoet.org/users/atomicpoet",
-		"attachment": [
-		  {
-			"mediaType": "image/png",
-			"name": "Chart showing huge spike in Mastodon sign-ups",
-			"type": "Document",
-			"url": "https://atomicpoet.org/media/5af783bf7b425400563acb15b3b2994ffa3932df5598bedf7718842df800a29e.png"
-		  }
-		],
-		"attributedTo": "https://atomicpoet.org/users/atomicpoet",
+		"actor": "https://example.org/users/someone",
+		"attachment": [],
+		"attributedTo": "https://example.org/users/someone",
 		"cc": [
-		  "https://atomicpoet.org/users/atomicpoet/followers"
+		  "https://example.org/users/someone/followers"
 		],
-		"content": "UPDATE: As of this morning there are now more than 7 million Mastodon users, most from the <a class=\"hashtag\" data-tag=\"twittermigration\" href=\"https://atomicpoet.org/tag/twittermigration\" rel=\"tag ugc\">#TwitterMigration</a>.<br><br>In fact, 100,000 new accounts have been created since last night.<br><br>Since last night&#39;s spike 8,000-12,000 new accounts are being created every hour.<br><br>Yesterday, I estimated that Mastodon would have 8 million users by the end of the week. That might happen a lot sooner if this trend continues.",
-		"context": "https://atomicpoet.org/contexts/f03aa94b-e71a-4dd1-911c-dd8e1185b3dd",
-		"conversation": "https://atomicpoet.org/contexts/f03aa94b-e71a-4dd1-911c-dd8e1185b3dd",
-		"id": "https://atomicpoet.org/objects/bd2c6e20-d03d-4c9e-a724-b8738c5df00b",
+		"content": "UPDATE: As of this morning there are now more than 7 million Mastodon users, most from the <a class=\"hashtag\" data-tag=\"twittermigration\" href=\"https://example.org/tag/twittermigration\" rel=\"tag ugc\">#TwitterMigration</a>.<br><br>In fact, 100,000 new accounts have been created since last night.<br><br>Since last night&#39;s spike 8,000-12,000 new accounts are being created every hour.<br><br>Yesterday, I estimated that Mastodon would have 8 million users by the end of the week. That might happen a lot sooner if this trend continues.",
+		"context": "https://example.org/contexts/01GX0MSHPER1E0FT022Q209EJZ",
+		"conversation": "https://example.org/contexts/01GX0MSHPER1E0FT022Q209EJZ",
+		"id": "https://example.org/objects/01GX0MT2PA58JNSMK11MCS65YD",
 		"published": "2022-11-18T17:43:58.489995Z",
 		"replies": {
 		  "items": [
-			"https://atomicpoet.org/objects/1bda3590-19c9-496e-bffc-81ee0e5b32e4"
+			"https://example.org/objects/01GX0MV12MGEG3WF9SWB5K3KRJ"
 		  ],
 		  "type": "Collection"
 		},
@@ -53,7 +65,7 @@ func (suite *NormalizeTestSuite) GetStatusable() (ap.Statusable, map[string]inte
 		"summary": "",
 		"tag": [
 		  {
-			"href": "https://atomicpoet.org/tags/twittermigration",
+			"href": "https://example.org/tags/twittermigration",
 			"name": "#twittermigration",
 			"type": "Hashtag"
 		  }
@@ -64,22 +76,33 @@ func (suite *NormalizeTestSuite) GetStatusable() (ap.Statusable, map[string]inte
 		"type": "Note"
 	  }`
 
-	var jsonAsMap map[string]interface{}
-	err := json.Unmarshal([]byte(rawJson), &jsonAsMap)
+	var rawNote map[string]interface{}
+	err := json.Unmarshal([]byte(rawJson), &rawNote)
 	if err != nil {
 		panic(err)
 	}
 
-	t, err := streams.ToType(context.Background(), jsonAsMap)
+	t, err := streams.ToType(context.Background(), rawNote)
 	if err != nil {
 		panic(err)
 	}
 
-	return t.(ap.Statusable), jsonAsMap
+	return t.(vocab.ActivityStreamsNote), rawNote
 }
 
-func (suite *NormalizeTestSuite) TestNormalizeStatusable() {
-	statusable, rawJson := 
+func (suite *NormalizeTestSuite) TestNormalizeActivityObject() {
+	note, rawNote := suite.GetStatusable()
+	suite.Equal(`update: As of this morning there are now more than 7 million Mastodon users, most from the <a class="hashtag" data-tag="twittermigration" href="https://example.org/tag/twittermigration" rel="tag ugc">#TwitterMigration%3C/a%3E.%3Cbr%3E%3Cbr%3EIn%20fact,%20100,000%20new%20accounts%20have%20been%20created%20since%20last%20night.%3Cbr%3E%3Cbr%3ESince%20last%20night&%2339;s%20spike%208,000-12,000%20new%20accounts%20are%20being%20created%20every%20hour.%3Cbr%3E%3Cbr%3EYesterday,%20I%20estimated%20that%20Mastodon%20would%20have%208%20million%20users%20by%20the%20end%20of%20the%20week.%20That%20might%20happen%20a%20lot%20sooner%20if%20this%20trend%20continues.`, ap.ExtractContent(note))
+
+	create := testrig.WrapAPNoteInCreate(
+		testrig.URLMustParse("https://example.org/create_something"),
+		testrig.URLMustParse("https://example.org/users/someone"),
+		testrig.TimeMustParse("2022-11-18T17:43:58.489995Z"),
+		note,
+	)
+
+	ap.NormalizeActivityObject(create, map[string]interface{}{"object": rawNote})
+	suite.Equal(`UPDATE: As of this morning there are now more than 7 million Mastodon users, most from the <a class="hashtag" data-tag="twittermigration" href="https://example.org/tag/twittermigration" rel="tag ugc">#TwitterMigration</a>.<br><br>In fact, 100,000 new accounts have been created since last night.<br><br>Since last night&#39;s spike 8,000-12,000 new accounts are being created every hour.<br><br>Yesterday, I estimated that Mastodon would have 8 million users by the end of the week. That might happen a lot sooner if this trend continues.`, ap.ExtractContent(note))
 }
 
 func TestNormalizeTestSuite(t *testing.T) {
