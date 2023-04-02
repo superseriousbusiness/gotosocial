@@ -34,12 +34,12 @@ import (
 func ResolveStatusable(ctx context.Context, b []byte) (Statusable, error) {
 	rawStatusable := make(map[string]interface{})
 	if err := json.Unmarshal(b, &rawStatusable); err != nil {
-		return nil, fmt.Errorf("ResolveStatusable: error unmarshalling bytes into json: %s", err)
+		return nil, fmt.Errorf("ResolveStatusable: error unmarshalling bytes into json: %w", err)
 	}
 
 	t, err := streams.ToType(ctx, rawStatusable)
 	if err != nil {
-		return nil, fmt.Errorf("ResolveStatusable: error resolving json into ap vocab type: %s", err)
+		return nil, fmt.Errorf("ResolveStatusable: error resolving json into ap vocab type: %w", err)
 	}
 
 	var (
@@ -68,10 +68,51 @@ func ResolveStatusable(ctx context.Context, b []byte) (Statusable, error) {
 		statusable, ok = t.(vocab.ActivityStreamsProfile)
 	}
 
-	if !ok || statusable == nil {
-		return nil, fmt.Errorf("ResolveStatusable: could not resolve %T to Statusable", t)
+	if !ok {
+		err = fmt.Errorf("ResolveStatusable: could not resolve %T to Statusable", t)
+		return nil, newErrWrongType(err)
 	}
 
 	NormalizeStatusableContent(statusable, rawStatusable)
 	return statusable, nil
+}
+
+// ResolveStatusable tries to resolve the given bytes into an ActivityPub Accountable representation.
+//
+// Works for: Application, Group, Organization, Person, Service
+func ResolveAccountable(ctx context.Context, b []byte) (Accountable, error) {
+	rawAccountable := make(map[string]interface{})
+	if err := json.Unmarshal(b, &rawAccountable); err != nil {
+		return nil, fmt.Errorf("ResolveAccountable: error unmarshalling bytes into json: %w", err)
+	}
+
+	t, err := streams.ToType(ctx, rawAccountable)
+	if err != nil {
+		return nil, fmt.Errorf("ResolveAccountable: error resolving json into ap vocab type: %w", err)
+	}
+
+	var (
+		accountable Accountable
+		ok          bool
+	)
+
+	switch t.GetTypeName() {
+	case ActorApplication:
+		accountable, ok = t.(vocab.ActivityStreamsApplication)
+	case ActorGroup:
+		accountable, ok = t.(vocab.ActivityStreamsGroup)
+	case ActorOrganization:
+		accountable, ok = t.(vocab.ActivityStreamsOrganization)
+	case ActorPerson:
+		accountable, ok = t.(vocab.ActivityStreamsPerson)
+	case ActorService:
+		accountable, ok = t.(vocab.ActivityStreamsService)
+	}
+
+	if !ok {
+		err = fmt.Errorf("ResolveAccountable: could not resolve %T to Accountable", t)
+		return nil, newErrWrongType(err)
+	}
+
+	return accountable, nil
 }

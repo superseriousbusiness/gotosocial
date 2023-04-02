@@ -88,6 +88,11 @@ func NormalizeActivityObject(activity pub.Activity, rawActivity map[string]inter
 	NormalizeStatusableContent(statusable, rawStatusable)
 }
 
+// NormalizeStatusableContent replaces the Content of the given statusable
+// with the raw 'content' value from the given json object map.
+//
+// noop if there was no content in the json object map or the content was
+// not a plain string.
 func NormalizeStatusableContent(statusable Statusable, rawStatusable map[string]interface{}) {
 	content, ok := rawStatusable["content"]
 	if !ok {

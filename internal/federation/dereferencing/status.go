@@ -158,15 +158,10 @@ func (d *deref) dereferenceStatusable(ctx context.Context, tsport transport.Tran
 
 	b, err := tsport.Dereference(ctx, remoteStatusID)
 	if err != nil {
-		return nil, fmt.Errorf("DereferenceStatusable: error deferencing %s: %s", remoteStatusID.String(), err)
+		return nil, fmt.Errorf("dereferenceStatusable: error deferencing %s: %w", remoteStatusID.String(), err)
 	}
 
-	statusable, err := ap.ResolveStatusable(ctx, b)
-	if err != nil {
-		return nil, fmt.Errorf("DereferenceStatusable: %w", err)
-	}
-
-	return statusable, nil
+	return ap.ResolveStatusable(ctx, b)
 }
 
 // populateStatusFields fetches all the information we temporarily pinned to an incoming

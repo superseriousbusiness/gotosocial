@@ -66,20 +66,6 @@ func newErrTransportError(err error) error {
 	return &ErrTransportError{wrapped: err}
 }
 
-// ErrWrongType indicates that an unexpected type was returned from a remote call;
-// for example, we were served a Person when we were looking for a statusable.
-type ErrWrongType struct {
-	wrapped error
-}
-
-func (err *ErrWrongType) Error() string {
-	return fmt.Sprintf("wrong received type: %v", err.wrapped)
-}
-
-func newErrWrongType(err error) error {
-	return &ErrWrongType{wrapped: err}
-}
-
 // ErrOther denotes some other kind of weird error, perhaps from a malformed json
 // or some other weird crapola.
 type ErrOther struct {
