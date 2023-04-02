@@ -18,22 +18,22 @@
 package ap
 
 import (
+	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
-	"github.com/superseriousbusiness/activity/streams/vocab"
 )
 
 // NormalizeActivityObject normalizes the 'object'.'content' field of the given Activity.
 //
-// The rawActivity map should the freshly deserialized json representation of an Activity.
+// The rawActivity map should the freshly deserialized json representation of the Activity.
 //
 // This function is a noop if the type passed in is anything except a Create with a Statusable as its Object.
-func NormalizeActivityObject(t vocab.Type, rawActivity map[string]interface{}) {
-	if t.GetTypeName() != ActivityCreate {
+func NormalizeActivityObject(activity pub.Activity, rawActivity map[string]interface{}) {
+	if activity.GetTypeName() != ActivityCreate {
 		// Only interested in Create right now.
 		return
 	}
 
-	withObject, ok := t.(WithObject)
+	withObject, ok := activity.(WithObject)
 	if !ok {
 		// Create was not a WithObject.
 		return
@@ -50,15 +50,16 @@ func NormalizeActivityObject(t vocab.Type, rawActivity map[string]interface{}) {
 		return
 	}
 
-	// We know length is 1 so get
-	// the first item from the iter.
+	// We now know length is 1 so get the first
+	// item from the iter.  We need this to be
+	// a Statusable if we're to continue.
 	i := createObject.At(0)
 	if i == nil {
 		// This is awkward.
 		return
 	}
 
-	t = i.GetType()
+	t := i.GetType()
 	if t == nil {
 		// This is also awkward.
 		return
@@ -90,22 +91,21 @@ func NormalizeActivityObject(t vocab.Type, rawActivity map[string]interface{}) {
 func NormalizeStatusableContent(statusable Statusable, rawStatusable map[string]interface{}) {
 	content, ok := rawStatusable["content"]
 	if !ok {
-		// No content in object.
+		// No content in rawStatusable.
 		// TODO: In future we might also
 		// look for "contentMap" property.
 		return
 	}
 
-	rawContentString, ok := content.(string)
+	rawContent, ok := content.(string)
 	if !ok {
 		// Not interested in content arrays.
 		return
 	}
 
-	// Set our normalized content property from the raw string.
+	// Set normalized content property from the raw string; this
+	// will replace any existing content property on the statusable.
 	contentProp := streams.NewActivityStreamsContentProperty()
-	contentProp.AppendXMLSchemaString(rawContentString)
-
-	// We're done!
+	contentProp.AppendXMLSchemaString(rawContent)
 	statusable.SetActivityStreamsContent(contentProp)
 }

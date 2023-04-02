@@ -58,7 +58,7 @@ type federatingActor struct {
 // newFederatingProtocol returns a new federatingActor, which
 // implements the pub.FederatingActor interface.
 func newFederatingActor(c pub.CommonBehavior, s2s pub.FederatingProtocol, db pub.Database, clock pub.Clock) pub.FederatingActor {
-	sideEffectActor := newSideEffectActor(c, s2s, db, clock)
+	sideEffectActor := pub.NewSideEffectActor(c, s2s, nil, db, clock)
 	customActor := pub.NewCustomActor(sideEffectActor, false, true, clock)
 
 	return &federatingActor{
@@ -76,6 +76,14 @@ func (f *federatingActor) PostInbox(c context.Context, w http.ResponseWriter, r 
 	return f.PostInboxScheme(c, w, r, "https")
 }
 
+// PostInboxScheme is a reimplementation of the default baseActor
+// implementation of PostInboxScheme in pub/base_actor.go.
+//
+// Key differences from that implementation:
+//   - More explicit debug logging when a request is not processed.
+//   - Normalize content of activity object.
+//   - Return code 202 instead of 200 on successful POST, to reflect
+//     that we process most side effects asynchronously.
 func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWriter, r *http.Request, scheme string) (bool, error) {
 	l := log.
 		WithContext(ctx).
@@ -112,34 +120,39 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 		return true, nil
 	}
 
-	// Begin processing the request, but have not yet applied
-	// authorization (ex: blocks). Obtain the activity reject unknown
-	// activities.
-	raw, err := io.ReadAll(r.Body)
+	// Begin processing the request, but note that we have
+	// not yet applied authorization (ex: blocks).
+	//
+	// Obtain the activity and reject unknown activities.
+	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		err = fmt.Errorf("PostInboxScheme: error reading request body: %w", err)
 		return true, err
 	}
 
-	var m map[string]interface{}
-	if err := json.Unmarshal(raw, &m); err != nil {
+	var rawActivity map[string]interface{}
+	if err := json.Unmarshal(b, &rawActivity); err != nil {
 		err = fmt.Errorf("PostInboxScheme: error unmarshalling request body: %w", err)
 		return true, err
 	}
 
-	asValue, err := streams.ToType(ctx, m)
-	if err != nil && !streams.IsUnmatchedErr(err) {
-		return true, err
-	} else if streams.IsUnmatchedErr(err) {
-		// Respond with bad request -- we do not understand the type.
-		l.Debugf("json could not be resolved to ActivityStreams value")
+	t, err := streams.ToType(ctx, rawActivity)
+	if err != nil {
+		if !streams.IsUnmatchedErr(err) {
+			// Real error.
+			err = fmt.Errorf("PostInboxScheme: error matching json to type: %w", err)
+			return true, err
+		}
+		// Respond with bad request; we just couldn't
+		// match the type to one that we know about.
+		l.Debug("json could not be resolved to ActivityStreams value")
 		w.WriteHeader(http.StatusBadRequest)
 		return true, nil
 	}
 
-	activity, ok := asValue.(pub.Activity)
+	activity, ok := t.(pub.Activity)
 	if !ok {
-		err = fmt.Errorf("ActivityStreams value with type %T is not a pub.Activity", asValue)
+		err = fmt.Errorf("ActivityStreams value with type %T is not a pub.Activity", t)
 		return true, err
 	}
 
@@ -152,7 +165,7 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 	// If activity Object is a Statusable, we'll want to replace the
 	// parsed `content` value with the value from the raw JSON instead.
 	// See https://github.com/superseriousbusiness/gotosocial/issues/1661
-	ap.NormalizeActivityObject(activity, m)
+	ap.NormalizeActivityObject(activity, rawActivity)
 
 	// Allow server implementations to set context data with a hook.
 	ctx, err = f.sideEffectActor.PostInboxRequestBodyHook(ctx, r, activity)
