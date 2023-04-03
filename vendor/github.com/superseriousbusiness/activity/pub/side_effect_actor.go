@@ -12,16 +12,16 @@ import (
 )
 
 // sideEffectActor must satisfy the DelegateActor interface.
-var _ DelegateActor = &sideEffectActor{}
+var _ DelegateActor = &SideEffectActor{}
 
-// sideEffectActor is a DelegateActor that handles the ActivityPub
+// SideEffectActor is a DelegateActor that handles the ActivityPub
 // implementation side effects, but requires a more opinionated application to
 // be written.
 //
-// Note that when using the sideEffectActor with an application that good-faith
+// Note that when using the SideEffectActor with an application that good-faith
 // implements its required interfaces, the ActivityPub specification is
 // guaranteed to be correctly followed.
-type sideEffectActor struct {
+type SideEffectActor struct {
 	common CommonBehavior
 	s2s    FederatingProtocol
 	c2s    SocialProtocol
@@ -29,49 +29,73 @@ type sideEffectActor struct {
 	clock  Clock
 }
 
+// NewSideEffectActor returns a new SideEffectActor, which satisfies the
+// DelegateActor interface. Most of the time you will not need to call this
+// function, and should instead rely on the NewSocialActor, NewFederatingActor,
+// and NewActor functions, all of which use a SideEffectActor under the hood.
+// Nevertheless, this function is exposed in case application developers need
+// a SideEffectActor for some other reason (tests, monkey patches, etc).
+//
+// If you are using the returned SideEffectActor for federation, ensure that s2s
+// is not nil. Likewise, if you are using it for the social protocol, ensure
+// that c2s is not nil. 
+func NewSideEffectActor(c CommonBehavior,
+	s2s FederatingProtocol,
+	c2s SocialProtocol,
+	db Database,
+	clock Clock) *SideEffectActor {
+	return &SideEffectActor{
+		common: c,
+		s2s:    s2s,
+		c2s:    c2s,
+		db:     db,
+		clock:  clock,
+	}
+}
+
 // PostInboxRequestBodyHook defers to the delegate.
-func (a *sideEffectActor) PostInboxRequestBodyHook(c context.Context, r *http.Request, activity Activity) (context.Context, error) {
+func (a *SideEffectActor) PostInboxRequestBodyHook(c context.Context, r *http.Request, activity Activity) (context.Context, error) {
 	return a.s2s.PostInboxRequestBodyHook(c, r, activity)
 }
 
 // PostOutboxRequestBodyHook defers to the delegate.
-func (a *sideEffectActor) PostOutboxRequestBodyHook(c context.Context, r *http.Request, data vocab.Type) (context.Context, error) {
+func (a *SideEffectActor) PostOutboxRequestBodyHook(c context.Context, r *http.Request, data vocab.Type) (context.Context, error) {
 	return a.c2s.PostOutboxRequestBodyHook(c, r, data)
 }
 
 // AuthenticatePostInbox defers to the delegate to authenticate the request.
-func (a *sideEffectActor) AuthenticatePostInbox(c context.Context, w http.ResponseWriter, r *http.Request) (out context.Context, authenticated bool, err error) {
+func (a *SideEffectActor) AuthenticatePostInbox(c context.Context, w http.ResponseWriter, r *http.Request) (out context.Context, authenticated bool, err error) {
 	return a.s2s.AuthenticatePostInbox(c, w, r)
 }
 
 // AuthenticateGetInbox defers to the delegate to authenticate the request.
-func (a *sideEffectActor) AuthenticateGetInbox(c context.Context, w http.ResponseWriter, r *http.Request) (out context.Context, authenticated bool, err error) {
+func (a *SideEffectActor) AuthenticateGetInbox(c context.Context, w http.ResponseWriter, r *http.Request) (out context.Context, authenticated bool, err error) {
 	return a.common.AuthenticateGetInbox(c, w, r)
 }
 
 // AuthenticatePostOutbox defers to the delegate to authenticate the request.
-func (a *sideEffectActor) AuthenticatePostOutbox(c context.Context, w http.ResponseWriter, r *http.Request) (out context.Context, authenticated bool, err error) {
+func (a *SideEffectActor) AuthenticatePostOutbox(c context.Context, w http.ResponseWriter, r *http.Request) (out context.Context, authenticated bool, err error) {
 	return a.c2s.AuthenticatePostOutbox(c, w, r)
 }
 
 // AuthenticateGetOutbox defers to the delegate to authenticate the request.
-func (a *sideEffectActor) AuthenticateGetOutbox(c context.Context, w http.ResponseWriter, r *http.Request) (out context.Context, authenticated bool, err error) {
+func (a *SideEffectActor) AuthenticateGetOutbox(c context.Context, w http.ResponseWriter, r *http.Request) (out context.Context, authenticated bool, err error) {
 	return a.common.AuthenticateGetOutbox(c, w, r)
 }
 
 // GetOutbox delegates to the SocialProtocol.
-func (a *sideEffectActor) GetOutbox(c context.Context, r *http.Request) (vocab.ActivityStreamsOrderedCollectionPage, error) {
+func (a *SideEffectActor) GetOutbox(c context.Context, r *http.Request) (vocab.ActivityStreamsOrderedCollectionPage, error) {
 	return a.common.GetOutbox(c, r)
 }
 
 // GetInbox delegates to the FederatingProtocol.
-func (a *sideEffectActor) GetInbox(c context.Context, r *http.Request) (vocab.ActivityStreamsOrderedCollectionPage, error) {
+func (a *SideEffectActor) GetInbox(c context.Context, r *http.Request) (vocab.ActivityStreamsOrderedCollectionPage, error) {
 	return a.s2s.GetInbox(c, r)
 }
 
 // AuthorizePostInbox defers to the federating protocol whether the peer request
 // is authorized based on the actors' ids.
-func (a *sideEffectActor) AuthorizePostInbox(c context.Context, w http.ResponseWriter, activity Activity) (authorized bool, err error) {
+func (a *SideEffectActor) AuthorizePostInbox(c context.Context, w http.ResponseWriter, activity Activity) (authorized bool, err error) {
 	authorized = false
 	actor := activity.GetActivityStreamsActor()
 	if actor == nil {
@@ -105,7 +129,7 @@ func (a *sideEffectActor) AuthorizePostInbox(c context.Context, w http.ResponseW
 // PostInbox handles the side effects of determining whether to block the peer's
 // request, adding the activity to the actor's inbox, and triggering side
 // effects based on the activity's type.
-func (a *sideEffectActor) PostInbox(c context.Context, inboxIRI *url.URL, activity Activity) error {
+func (a *SideEffectActor) PostInbox(c context.Context, inboxIRI *url.URL, activity Activity) error {
 	isNew, err := a.addToInboxIfNew(c, inboxIRI, activity)
 	if err != nil {
 		return err
@@ -142,7 +166,7 @@ func (a *sideEffectActor) PostInbox(c context.Context, inboxIRI *url.URL, activi
 // outbound requests as a side effect.
 //
 // InboxForwarding sets the federated data in the database.
-func (a *sideEffectActor) InboxForwarding(c context.Context, inboxIRI *url.URL, activity Activity) error {
+func (a *SideEffectActor) InboxForwarding(c context.Context, inboxIRI *url.URL, activity Activity) error {
 	// 1. Must be first time we have seen this Activity.
 	//
 	// Obtain the id of the activity
@@ -322,7 +346,7 @@ func (a *sideEffectActor) InboxForwarding(c context.Context, inboxIRI *url.URL, 
 //
 // This implementation assumes all types are meant to be delivered except for
 // the ActivityStreams Block type.
-func (a *sideEffectActor) PostOutbox(c context.Context, activity Activity, outboxIRI *url.URL, rawJSON map[string]interface{}) (deliverable bool, err error) {
+func (a *SideEffectActor) PostOutbox(c context.Context, activity Activity, outboxIRI *url.URL, rawJSON map[string]interface{}) (deliverable bool, err error) {
 	// TODO: Determine this if c2s is nil
 	deliverable = true
 	if a.c2s != nil {
@@ -363,7 +387,7 @@ func (a *sideEffectActor) PostOutbox(c context.Context, activity Activity, outbo
 
 // AddNewIDs creates new 'id' entries on an activity and its objects if it is a
 // Create activity.
-func (a *sideEffectActor) AddNewIDs(c context.Context, activity Activity) error {
+func (a *SideEffectActor) AddNewIDs(c context.Context, activity Activity) error {
 	id, err := a.db.NewID(c, activity)
 	if err != nil {
 		return err
@@ -399,7 +423,7 @@ func (a *sideEffectActor) AddNewIDs(c context.Context, activity Activity) error 
 // another server.
 //
 // Must be called if at least the federated protocol is supported.
-func (a *sideEffectActor) Deliver(c context.Context, outboxIRI *url.URL, activity Activity) error {
+func (a *SideEffectActor) Deliver(c context.Context, outboxIRI *url.URL, activity Activity) error {
 	recipients, err := a.prepare(c, outboxIRI, activity)
 	if err != nil {
 		return err
@@ -408,7 +432,7 @@ func (a *sideEffectActor) Deliver(c context.Context, outboxIRI *url.URL, activit
 }
 
 // WrapInCreate wraps an object with a Create activity.
-func (a *sideEffectActor) WrapInCreate(c context.Context, obj vocab.Type, outboxIRI *url.URL) (create vocab.ActivityStreamsCreate, err error) {
+func (a *SideEffectActor) WrapInCreate(c context.Context, obj vocab.Type, outboxIRI *url.URL) (create vocab.ActivityStreamsCreate, err error) {
 	var unlock func()
 	unlock, err = a.db.Lock(c, outboxIRI)
 	if err != nil {
@@ -426,7 +450,7 @@ func (a *sideEffectActor) WrapInCreate(c context.Context, obj vocab.Type, outbox
 
 // deliverToRecipients will take a prepared Activity and send it to specific
 // recipients on behalf of an actor.
-func (a *sideEffectActor) deliverToRecipients(c context.Context, boxIRI *url.URL, activity Activity, recipients []*url.URL) error {
+func (a *SideEffectActor) deliverToRecipients(c context.Context, boxIRI *url.URL, activity Activity, recipients []*url.URL) error {
 	m, err := streams.Serialize(activity)
 	if err != nil {
 		return err
@@ -444,7 +468,7 @@ func (a *sideEffectActor) deliverToRecipients(c context.Context, boxIRI *url.URL
 
 // addToOutbox adds the activity to the outbox and creates the activity in the
 // internal database as its own entry.
-func (a *sideEffectActor) addToOutbox(c context.Context, outboxIRI *url.URL, activity Activity) error {
+func (a *SideEffectActor) addToOutbox(c context.Context, outboxIRI *url.URL, activity Activity) error {
 	// Set the activity in the database first.
 	id := activity.GetJSONLDId()
 	unlock, err := a.db.Lock(c, id.Get())
@@ -488,7 +512,7 @@ func (a *sideEffectActor) addToOutbox(c context.Context, outboxIRI *url.URL, act
 // It does not add the activity to this database's know federated data.
 //
 // Returns true when the activity is novel.
-func (a *sideEffectActor) addToInboxIfNew(c context.Context, inboxIRI *url.URL, activity Activity) (isNew bool, err error) {
+func (a *SideEffectActor) addToInboxIfNew(c context.Context, inboxIRI *url.URL, activity Activity) (isNew bool, err error) {
 	// Acquire a lock to read the inbox. Defer release.
 	var unlock func()
 	unlock, err = a.db.Lock(c, inboxIRI)
@@ -528,7 +552,7 @@ func (a *sideEffectActor) addToInboxIfNew(c context.Context, inboxIRI *url.URL, 
 //
 // Recursion may be limited by providing a 'maxDepth' greater than zero. A
 // value of zero or a negative number will result in infinite recursion.
-func (a *sideEffectActor) hasInboxForwardingValues(c context.Context, inboxIRI *url.URL, val vocab.Type, maxDepth, currDepth int) (bool, error) {
+func (a *SideEffectActor) hasInboxForwardingValues(c context.Context, inboxIRI *url.URL, val vocab.Type, maxDepth, currDepth int) (bool, error) {
 	// Stop recurring if we are exceeding the maximum depth and the maximum
 	// is a positive number.
 	if maxDepth > 0 && currDepth >= maxDepth {
@@ -615,7 +639,7 @@ func (a *sideEffectActor) hasInboxForwardingValues(c context.Context, inboxIRI *
 // hidden recipients ("bto" and "bcc") stripped from it.
 //
 // Only call if both the social and federated protocol are supported.
-func (a *sideEffectActor) prepare(c context.Context, outboxIRI *url.URL, activity Activity) (r []*url.URL, err error) {
+func (a *SideEffectActor) prepare(c context.Context, outboxIRI *url.URL, activity Activity) (r []*url.URL, err error) {
 	// Get inboxes of recipients
 	if to := activity.GetActivityStreamsTo(); to != nil {
 		for iter := to.Begin(); iter != to.End(); iter = iter.Next() {
@@ -774,7 +798,7 @@ func (a *sideEffectActor) prepare(c context.Context, outboxIRI *url.URL, activit
 // dereference the collection, WITH the user's credentials.
 //
 // Note that this also applies to CollectionPage and OrderedCollectionPage.
-func (a *sideEffectActor) resolveActors(c context.Context, t Transport, r []*url.URL, depth, maxDepth int) (actors []vocab.Type, err error) {
+func (a *SideEffectActor) resolveActors(c context.Context, t Transport, r []*url.URL, depth, maxDepth int) (actors []vocab.Type, err error) {
 	if maxDepth > 0 && depth >= maxDepth {
 		return
 	}
@@ -806,7 +830,7 @@ func (a *sideEffectActor) resolveActors(c context.Context, t Transport, r []*url
 //
 // The returned actor could be nil, if it wasn't an actor (ex: a Collection or
 // OrderedCollection).
-func (a *sideEffectActor) dereferenceForResolvingInboxes(c context.Context, t Transport, actorIRI *url.URL) (actor vocab.Type, moreActorIRIs []*url.URL, err error) {
+func (a *SideEffectActor) dereferenceForResolvingInboxes(c context.Context, t Transport, actorIRI *url.URL) (actor vocab.Type, moreActorIRIs []*url.URL, err error) {
 	var resp []byte
 	resp, err = t.Dereference(c, actorIRI)
 	if err != nil {
