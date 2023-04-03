@@ -54,6 +54,11 @@ func CORS() gin.HandlerFunc {
 			// needed to pass oauth bearer tokens
 			"Authorization",
 
+			// Some clients require this; see:
+			//   - https://docs.joinmastodon.org/methods/statuses/#headers
+			//   - https://github.com/superseriousbusiness/gotosocial/issues/1664
+			"Idempotency-Key",
+
 			// needed for websocket upgrade requests
 			"Upgrade",
 			"Sec-WebSocket-Extensions",
