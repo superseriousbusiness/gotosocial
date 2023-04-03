@@ -36,6 +36,15 @@ var (
 // If AUTOMEMLIMIT is not set, it defaults to 0.9. (10% is the headroom for memory sources the Go runtime is unaware of.)
 // If GOMEMLIMIT is already set or AUTOMEMLIMIT=off, this function does nothing.
 func SetGoMemLimitWithEnv() {
+	snapshot := debug.SetMemoryLimit(-1)
+	defer func() {
+		err := recover()
+		if err != nil {
+			logger.Printf("panic during SetGoMemLimitWithEnv, rolling back to previous value %d: %v\n", snapshot, err)
+			debug.SetMemoryLimit(snapshot)
+		}
+	}()
+
 	if os.Getenv(envAUTOMEMLIMIT_DEBUG) == "true" {
 		logger = log.Default()
 	}
@@ -97,6 +106,7 @@ func cappedFloat2Int(f float64) int64 {
 	}
 	return int64(f)
 }
+
 // Limit is a helper Provider function that returns the given limit.
 func Limit(limit uint64) func() (uint64, error) {
 	return func() (uint64, error) {

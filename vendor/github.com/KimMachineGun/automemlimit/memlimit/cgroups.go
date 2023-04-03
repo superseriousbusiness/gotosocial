@@ -4,8 +4,9 @@
 package memlimit
 
 import (
-	"github.com/containerd/cgroups"
-	v2 "github.com/containerd/cgroups/v2"
+	"github.com/containerd/cgroups/v3"
+	"github.com/containerd/cgroups/v3/cgroup1"
+	"github.com/containerd/cgroups/v3/cgroup2"
 )
 
 const (
@@ -25,12 +26,14 @@ func FromCgroup() (uint64, error) {
 
 // FromCgroupV1 returns the memory limit from the cgroup v1.
 func FromCgroupV1() (uint64, error) {
-	cg, err := cgroups.Load(cgroups.SingleSubsystem(cgroups.V1, cgroups.Memory), cgroups.RootPath)
+	cg, err := cgroup1.Load(cgroup1.RootPath, cgroup1.WithHiearchy(
+		cgroup1.SingleSubsystem(cgroup1.Default, cgroup1.Memory),
+	))
 	if err != nil {
 		return 0, err
 	}
 
-	metrics, err := cg.Stat(cgroups.IgnoreNotExist)
+	metrics, err := cg.Stat(cgroup1.IgnoreNotExist)
 	if err != nil {
 		return 0, err
 	} else if metrics.Memory == nil {
@@ -42,12 +45,12 @@ func FromCgroupV1() (uint64, error) {
 
 // FromCgroupV2 returns the memory limit from the cgroup v2.
 func FromCgroupV2() (uint64, error) {
-	path, err := v2.NestedGroupPath("")
+	path, err := cgroup2.NestedGroupPath("")
 	if err != nil {
 		return 0, err
 	}
 
-	m, err := v2.LoadManager(cgroupMountPoint, path)
+	m, err := cgroup2.Load(path, cgroup2.WithMountpoint(cgroupMountPoint))
 	if err != nil {
 		return 0, err
 	}
