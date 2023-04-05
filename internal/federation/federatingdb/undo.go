@@ -26,6 +26,7 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
@@ -71,7 +72,7 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 				return err
 			}
 		case ap.ActivityAnnounce:
-			// todo: UNDO BOOST/REBLOG/ANNOUNCE
+			// todo: undo boost / reblog / announce
 		case ap.ActivityBlock:
 			if err := f.undoBlock(ctx, receivingAccount, undo, t); err != nil {
 				return err
@@ -110,17 +111,17 @@ func (f *federatingDB) undoFollow(
 		return nil
 	}
 
-	// Delete any existing follow.
+	// Delete any existing follow with this URI.
 	if err := f.state.DB.DeleteFollowByURI(ctx, follow.URI); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return fmt.Errorf("undoFollow: db error removing follow: %w", err)
 	}
 
-	// Delete any existing follow request.
+	// Delete any existing follow request with this URI.
 	if err := f.state.DB.DeleteFollowRequestByURI(ctx, follow.URI); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return fmt.Errorf("undoFollow: db error removing follow request: %w", err)
 	}
 
-	log.Debug(ctx, "follow undone")
+	log.Debug(ctx, "Follow undone")
 	return nil
 }
 
@@ -146,37 +147,34 @@ func (f *federatingDB) undoLike(
 		return fmt.Errorf("undoLike: error converting ActivityStreams Like to fave: %w", err)
 	}
 
-	// Ensure addressee is follow target.
+	// Ensure addressee is fave target.
 	if fave.TargetAccountID != receivingAccount.ID {
 		// Ignore this Activity.
 		return nil
 	}
 
-	// Ignore URI on likes, since we often
-	// get multiple likes with the same target
-	// with different URIs. Instead, we'll
-	// select using account and target status.
-	fave, err = f.state.DB.GetStatusFave(ctx, fave.AccountID, fave.StatusID)
+	// Ignore URI on Likes, since we often get multiple Likes
+	// with the same target and account ID, but differing URIs.
+	// Instead, we'll select using account and target status.
+	// Regardless of the URI, we can read an Undo Like to mean
+	// "I don't want to fave this post anymore".
+	fave, err = f.state.DB.GetStatusFave(gtscontext.SetBarebones(ctx), fave.AccountID, fave.StatusID)
 	if err != nil {
 		if errors.Is(err, db.ErrNoEntries) {
 			// We didn't have a like/fave
 			// for this combo anyway, ignore.
 			return nil
 		}
-		aaaaaaaaaa
+		// Real error.
+		return fmt.Errorf("undoLike: db error getting fave from %s targeting %s: %w", fave.AccountID, fave.StatusID, err)
 	}
 
-	// Delete any existing FOLLOW.
-	if err := f.state.DB.DeleteFollowByURI(ctx, fave.URI); err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return fmt.Errorf("undoFollow: db error removing follow: %w", err)
+	// Delete the status fave.
+	if err := f.state.DB.DeleteStatusFaveByID(ctx, fave.ID); err != nil {
+		return fmt.Errorf("undoLike: db error deleting fave %s: %w", fave.ID, err)
 	}
 
-	// Delete any existing FOLLOW REQUEST.
-	if err := f.state.DB.DeleteFollowRequestByURI(ctx, fave.URI); err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return fmt.Errorf("undoFollow: db error removing follow request: %w", err)
-	}
-
-	log.Debug(ctx, "like undone")
+	log.Debug(ctx, "Like undone")
 	return nil
 }
 
@@ -213,6 +211,6 @@ func (f *federatingDB) undoBlock(
 		return fmt.Errorf("undoBlock: db error removing block: %w", err)
 	}
 
-	log.Debug(ctx, "block undone")
+	log.Debug(ctx, "Block undone")
 	return nil
 }
