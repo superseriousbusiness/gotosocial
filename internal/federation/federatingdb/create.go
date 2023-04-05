@@ -288,13 +288,19 @@ func (f *federatingDB) activityLike(ctx context.Context, asType vocab.Type, rece
 
 	fave, err := f.typeConverter.ASLikeToFave(ctx, like)
 	if err != nil {
-		return fmt.Errorf("activityLike: could not convert Like to fave: %s", err)
+		return fmt.Errorf("activityLike: could not convert Like to fave: %w", err)
 	}
 
 	fave.ID = id.NewULID()
 
-	if err := f.state.DB.Put(ctx, fave); err != nil {
-		return fmt.Errorf("activityLike: database error inserting fave: %s", err)
+	if err := f.state.DB.PutStatusFave(ctx, fave); err != nil {
+		if errors.Is(err, db.ErrAlreadyExists) {
+			// The Like already exists in the database, which
+			// means we've already handled side effects. We can
+			// just return nil here and be done with it.
+			return nil
+		}
+		return fmt.Errorf("activityLike: database error inserting fave: %w", err)
 	}
 
 	f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{

@@ -26,11 +26,12 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo) error {
-	l := log.Entry{}.WithContext(ctx)
+	l := log.WithContext(ctx)
 
 	if log.Level() >= level.DEBUG {
 		i, err := marshalItem(undo)
@@ -55,70 +56,163 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 	}
 
 	for iter := undoObject.Begin(); iter != undoObject.End(); iter = iter.Next() {
-		if iter.GetType() == nil {
+		t := iter.GetType()
+		if t == nil {
 			continue
 		}
-		switch iter.GetType().GetTypeName() {
+
+		switch t.GetTypeName() {
 		case ap.ActivityFollow:
-			// UNDO FOLLOW
-			ASFollow, ok := iter.GetType().(vocab.ActivityStreamsFollow)
-			if !ok {
-				return errors.New("UNDO: couldn't parse follow into vocab.ActivityStreamsFollow")
+			if err := f.undoFollow(ctx, receivingAccount, undo, t); err != nil {
+				return err
 			}
-			// make sure the actor owns the follow
-			if !sameActor(undo.GetActivityStreamsActor(), ASFollow.GetActivityStreamsActor()) {
-				return errors.New("UNDO: follow actor and activity actor not the same")
-			}
-			// convert the follow to something we can understand
-			gtsFollow, err := f.typeConverter.ASFollowToFollow(ctx, ASFollow)
-			if err != nil {
-				return fmt.Errorf("UNDO: error converting asfollow to gtsfollow: %s", err)
-			}
-			// make sure the addressee of the original follow is the same as whatever inbox this landed in
-			if gtsFollow.TargetAccountID != receivingAccount.ID {
-				return errors.New("UNDO: follow object account and inbox account were not the same")
-			}
-			// delete any existing FOLLOW
-			if err := f.state.DB.DeleteFollowByURI(ctx, gtsFollow.URI); err != nil && !errors.Is(err, db.ErrNoEntries) {
-				return fmt.Errorf("UNDO: db error removing follow: %s", err)
-			}
-			// delete any existing FOLLOW REQUEST
-			if err := f.state.DB.DeleteFollowRequestByURI(ctx, gtsFollow.URI); err != nil && !errors.Is(err, db.ErrNoEntries) {
-				return fmt.Errorf("UNDO: db error removing follow request: %s", err)
-			}
-			l.Debug("follow undone")
-			return nil
 		case ap.ActivityLike:
-			// UNDO LIKE
+			if err := f.undoLike(ctx, receivingAccount, undo, t); err != nil {
+				return err
+			}
 		case ap.ActivityAnnounce:
-			// UNDO BOOST/REBLOG/ANNOUNCE
+			// todo: UNDO BOOST/REBLOG/ANNOUNCE
 		case ap.ActivityBlock:
-			// UNDO BLOCK
-			ASBlock, ok := iter.GetType().(vocab.ActivityStreamsBlock)
-			if !ok {
-				return errors.New("UNDO: couldn't parse block into vocab.ActivityStreamsBlock")
+			if err := f.undoBlock(ctx, receivingAccount, undo, t); err != nil {
+				return err
 			}
-			// make sure the actor owns the follow
-			if !sameActor(undo.GetActivityStreamsActor(), ASBlock.GetActivityStreamsActor()) {
-				return errors.New("UNDO: block actor and activity actor not the same")
-			}
-			// convert the block to something we can understand
-			gtsBlock, err := f.typeConverter.ASBlockToBlock(ctx, ASBlock)
-			if err != nil {
-				return fmt.Errorf("UNDO: error converting asblock to gtsblock: %s", err)
-			}
-			// make sure the addressee of the original block is the same as whatever inbox this landed in
-			if gtsBlock.TargetAccountID != receivingAccount.ID {
-				return errors.New("UNDO: block object account and inbox account were not the same")
-			}
-			// delete any existing BLOCK
-			if err := f.state.DB.DeleteBlockByURI(ctx, gtsBlock.URI); err != nil {
-				return fmt.Errorf("UNDO: db error removing block: %s", err)
-			}
-			l.Debug("block undone")
-			return nil
 		}
 	}
 
+	return nil
+}
+
+func (f *federatingDB) undoFollow(
+	ctx context.Context,
+	receivingAccount *gtsmodel.Account,
+	undo vocab.ActivityStreamsUndo,
+	t vocab.Type,
+) error {
+	Follow, ok := t.(vocab.ActivityStreamsFollow)
+	if !ok {
+		return errors.New("undoFollow: couldn't parse vocab.Type into vocab.ActivityStreamsFollow")
+	}
+
+	// Make sure the undo actor owns the target.
+	if !sameActor(undo.GetActivityStreamsActor(), Follow.GetActivityStreamsActor()) {
+		// Ignore this Activity.
+		return nil
+	}
+
+	follow, err := f.typeConverter.ASFollowToFollow(ctx, Follow)
+	if err != nil {
+		return fmt.Errorf("undoFollow: error converting ActivityStreams Follow to follow: %w", err)
+	}
+
+	// Ensure addressee is follow target.
+	if follow.TargetAccountID != receivingAccount.ID {
+		// Ignore this Activity.
+		return nil
+	}
+
+	// Delete any existing follow.
+	if err := f.state.DB.DeleteFollowByURI(ctx, follow.URI); err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return fmt.Errorf("undoFollow: db error removing follow: %w", err)
+	}
+
+	// Delete any existing follow request.
+	if err := f.state.DB.DeleteFollowRequestByURI(ctx, follow.URI); err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return fmt.Errorf("undoFollow: db error removing follow request: %w", err)
+	}
+
+	log.Debug(ctx, "follow undone")
+	return nil
+}
+
+func (f *federatingDB) undoLike(
+	ctx context.Context,
+	receivingAccount *gtsmodel.Account,
+	undo vocab.ActivityStreamsUndo,
+	t vocab.Type,
+) error {
+	Like, ok := t.(vocab.ActivityStreamsLike)
+	if !ok {
+		return errors.New("undoLike: couldn't parse vocab.Type into vocab.ActivityStreamsLike")
+	}
+
+	// Make sure the undo actor owns the target.
+	if !sameActor(undo.GetActivityStreamsActor(), Like.GetActivityStreamsActor()) {
+		// Ignore this Activity.
+		return nil
+	}
+
+	fave, err := f.typeConverter.ASLikeToFave(ctx, Like)
+	if err != nil {
+		return fmt.Errorf("undoLike: error converting ActivityStreams Like to fave: %w", err)
+	}
+
+	// Ensure addressee is follow target.
+	if fave.TargetAccountID != receivingAccount.ID {
+		// Ignore this Activity.
+		return nil
+	}
+
+	// Ignore URI on likes, since we often
+	// get multiple likes with the same target
+	// with different URIs. Instead, we'll
+	// select using account and target status.
+	fave, err = f.state.DB.GetStatusFave(ctx, fave.AccountID, fave.StatusID)
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// We didn't have a like/fave
+			// for this combo anyway, ignore.
+			return nil
+		}
+		aaaaaaaaaa
+	}
+
+	// Delete any existing FOLLOW.
+	if err := f.state.DB.DeleteFollowByURI(ctx, fave.URI); err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return fmt.Errorf("undoFollow: db error removing follow: %w", err)
+	}
+
+	// Delete any existing FOLLOW REQUEST.
+	if err := f.state.DB.DeleteFollowRequestByURI(ctx, fave.URI); err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return fmt.Errorf("undoFollow: db error removing follow request: %w", err)
+	}
+
+	log.Debug(ctx, "like undone")
+	return nil
+}
+
+func (f *federatingDB) undoBlock(
+	ctx context.Context,
+	receivingAccount *gtsmodel.Account,
+	undo vocab.ActivityStreamsUndo,
+	t vocab.Type,
+) error {
+	Block, ok := t.(vocab.ActivityStreamsBlock)
+	if !ok {
+		return errors.New("undoBlock: couldn't parse vocab.Type into vocab.ActivityStreamsBlock")
+	}
+
+	// Make sure the undo actor owns the target.
+	if !sameActor(undo.GetActivityStreamsActor(), Block.GetActivityStreamsActor()) {
+		// Ignore this Activity.
+		return nil
+	}
+
+	block, err := f.typeConverter.ASBlockToBlock(ctx, Block)
+	if err != nil {
+		return fmt.Errorf("undoBlock: error converting ActivityStreams Block to block: %w", err)
+	}
+
+	// Ensure addressee is block target.
+	if block.TargetAccountID != receivingAccount.ID {
+		// Ignore this Activity.
+		return nil
+	}
+
+	// Delete any existing BLOCK
+	if err := f.state.DB.DeleteBlockByURI(ctx, block.URI); err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return fmt.Errorf("undoBlock: db error removing block: %w", err)
+	}
+
+	log.Debug(ctx, "block undone")
 	return nil
 }
