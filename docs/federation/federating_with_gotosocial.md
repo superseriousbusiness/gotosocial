@@ -236,13 +236,15 @@ Example of a featured collection of a user who has pinned multiple `Note`s:
 }
 ```
 
-Example of a user who has pinned one `Note` (`orderedItems` is just a URL string now!):
+Example of a user who has pinned one `Note`:
 
 ```json
 {
   "@context": "https://www.w3.org/ns/activitystreams",
   "id": "https://example.org/users/some_user/collections/featured",
-  "orderedItems": "https://example.org/users/some_user/statuses/01GS7VTYH0S77NNXTP6W4G9EAG",
+  "orderedItems": [
+    "https://example.org/users/some_user/statuses/01GS7VTYH0S77NNXTP6W4G9EAG"
+  ],
   "totalItems": 1,
   "type": "OrderedCollection"
 }

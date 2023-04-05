@@ -25,6 +25,7 @@ import (
 	"net/url"
 
 	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
@@ -172,7 +173,7 @@ func (p *Processor) FeaturedCollectionGet(ctx context.Context, requestedUsername
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	data, err := streams.Serialize(collection)
+	data, err := ap.SerializeOrderedCollection(collection)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
