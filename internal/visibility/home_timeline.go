@@ -30,6 +30,8 @@ import (
 
 // StatusHomeTimelineable checks if given status should be included on owner's home timeline. Primarily relying on status visibility to owner and the AP visibility setting, but also taking into account thread replies etc.
 func (f *Filter) StatusHomeTimelineable(ctx context.Context, owner *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
+	const vtype = cache.VisibilityTypeHome
+
 	// By default we assume no auth.
 	requesterID := noauth
 
@@ -49,10 +51,10 @@ func (f *Filter) StatusHomeTimelineable(ctx context.Context, owner *gtsmodel.Acc
 		return &cache.CachedVisibility{
 			ItemID:      status.ID,
 			RequesterID: requesterID,
-			Type:        cache.VisibilityTypeHome,
+			Type:        vtype,
 			Value:       visible,
 		}, nil
-	}, "home", requesterID, status.ID)
+	}, vtype, requesterID, status.ID)
 	if err != nil {
 		if err == cache.SentinelError {
 			// Filter-out our temporary
