@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"codeberg.org/gruf/go-kv"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -131,9 +132,10 @@ func (p *Processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 				// check if it's a status...
 				foundStatus, err := p.searchStatusByURI(ctx, authed, uri)
 				if err != nil {
+					// Check for semi-expected error types.
 					var (
 						errNotRetrievable *dereferencing.ErrNotRetrievable
-						errWrongType      *dereferencing.ErrWrongType
+						errWrongType      *ap.ErrWrongType
 					)
 					if !errors.As(err, &errNotRetrievable) && !errors.As(err, &errWrongType) {
 						return nil, gtserror.NewErrorInternalError(fmt.Errorf("error looking up status: %w", err))
@@ -148,9 +150,10 @@ func (p *Processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 				if !foundOne {
 					foundAccount, err := p.searchAccountByURI(ctx, authed, uri, search.Resolve)
 					if err != nil {
+						// Check for semi-expected error types.
 						var (
 							errNotRetrievable *dereferencing.ErrNotRetrievable
-							errWrongType      *dereferencing.ErrWrongType
+							errWrongType      *ap.ErrWrongType
 						)
 						if !errors.As(err, &errNotRetrievable) && !errors.As(err, &errWrongType) {
 							return nil, gtserror.NewErrorInternalError(fmt.Errorf("error looking up account: %w", err))

@@ -15,4 +15,21 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package federation
+package ap
+
+import "fmt"
+
+// ErrWrongType indicates that we tried to resolve a type into
+// an interface that it's not compatible with, eg a Person into
+// a Statusable.
+type ErrWrongType struct {
+	wrapped error
+}
+
+func (err *ErrWrongType) Error() string {
+	return fmt.Sprintf("wrong received type: %v", err.wrapped)
+}
+
+func newErrWrongType(err error) error {
+	return &ErrWrongType{wrapped: err}
+}
