@@ -20,7 +20,7 @@ package timeline
 import (
 	"container/list"
 	"context"
-	"errors"
+	"fmt"
 )
 
 type indexedItems struct {
@@ -33,53 +33,87 @@ type indexedItemsEntry struct {
 	boostOfID        string
 	accountID        string
 	boostOfAccountID string
+	prepared         Preparable
 }
 
+// WARNING: ONLY CALL THIS FUNCTION IF YOU ALREADY HAVE
+// A LOCK ON THE TIMELINE CONTAINING THIS INDEXEDITEMS!
 func (i *indexedItems) insertIndexed(ctx context.Context, newEntry *indexedItemsEntry) (bool, error) {
+	// Lazily init indexed items.
 	if i.data == nil {
 		i.data = &list.List{}
+		i.data.Init()
 	}
 
-	// if we have no entries yet, this is both the newest and oldest entry, so just put it in the front
 	if i.data.Len() == 0 {
+		// We have no entries yet, meaning this is both the
+		// newest + oldest entry, so just put it in the front.
 		i.data.PushFront(newEntry)
 		return true, nil
 	}
 
-	var insertMark *list.Element
-	var position int
-	// We need to iterate through the index to make sure we put this item in the appropriate place according to when it was created.
-	// We also need to make sure we're not inserting a duplicate item -- this can happen sometimes and it's not nice UX (*shudder*).
+	var (
+		insertMark      *list.Element
+		currentPosition int
+	)
+
+	// We need to iterate through the index to make sure we put
+	// this item in the appropriate place according to its id.
+	// We also need to make sure we're not inserting a duplicate
+	// item -- this can happen sometimes and it's sucky UX.
 	for e := i.data.Front(); e != nil; e = e.Next() {
-		position++
+		currentPosition++
 
-		entry, ok := e.Value.(*indexedItemsEntry)
-		if !ok {
-			return false, errors.New("insertIndexed: could not parse e as an indexedItemsEntry")
-		}
+		currentEntry := e.Value.(*indexedItemsEntry) //nolint:forcetypeassert
 
-		skip, err := i.skipInsert(ctx, newEntry.itemID, newEntry.accountID, newEntry.boostOfID, newEntry.boostOfAccountID, entry.itemID, entry.accountID, entry.boostOfID, entry.boostOfAccountID, position)
-		if err != nil {
-			return false, err
-		}
-		if skip {
+		// Check if we need to skip inserting this item based on
+		// the current item.
+		//
+		// For example, if the new item is a boost, and the current
+		// item is the original, we may not want to insert the boost
+		// if it would appear very shortly after the original.
+		if skip, err := i.skipInsert(
+			ctx,
+			newEntry.itemID,
+			newEntry.accountID,
+			newEntry.boostOfID,
+			newEntry.boostOfAccountID,
+			currentEntry.itemID,
+			currentEntry.accountID,
+			currentEntry.boostOfID,
+			currentEntry.boostOfAccountID,
+			currentPosition,
+		); err != nil {
+			return false, fmt.Errorf("insertIndexed: error calling skipInsert: %w", err)
+		} else if skip {
+			// We don't need to insert this at all,
+			// so we can safely bail.
 			return false, nil
 		}
 
-		// if the item to index is newer than e, insert it before e in the list
-		if insertMark == nil {
-			if newEntry.itemID > entry.itemID {
-				insertMark = e
-			}
+		if insertMark != nil {
+			// We already found our mark.
+			continue
 		}
+
+		if currentEntry.itemID > newEntry.itemID {
+			// We're still in items newer than
+			// the one we're trying to insert.
+			continue
+		}
+
+		// We found our spot!
+		insertMark = e
 	}
 
-	if insertMark != nil {
-		i.data.InsertBefore(newEntry, insertMark)
+	if insertMark == nil {
+		// We looked through the whole timeline and didn't find
+		// a mark, so the new item is the oldest item we've seen;
+		// insert it at the back.
+		i.data.PushBack(newEntry)
 		return true, nil
 	}
 
-	// if we reach this point it's the oldest item we've seen so put it at the back
-	i.data.PushBack(newEntry)
+	i.data.InsertBefore(newEntry, insertMark)
 	return true, nil
 }

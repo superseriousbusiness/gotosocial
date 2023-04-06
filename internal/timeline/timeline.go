@@ -78,32 +78,25 @@ type Timeline interface {
 		INDEXING + PREPARATION FUNCTIONS
 	*/
 
-	// IndexOne puts a item into the timeline at the appropriate place according to its 'createdAt' property.
-	//
-	// The returned bool indicates whether or not the item was actually inserted into the timeline. This will be false
-	// if the item is a boost and the original item or another boost of it already exists < boostReinsertionDepth back in the timeline.
-	IndexOne(ctx context.Context, itemID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error)
-	// IndexAndPrepareOne puts a item into the timeline at the appropriate place according to its 'createdAt' property,
-	// and then immediately prepares it.
+	// IndexAndPrepareOne puts a item into the timeline at the appropriate place according to its id, and then immediately prepares it.
 	//
 	// The returned bool indicates whether or not the item was actually inserted into the timeline. This will be false
 	// if the item is a boost and the original item or another boost of it already exists < boostReinsertionDepth back in the timeline.
 	IndexAndPrepareOne(ctx context.Context, itemID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error)
-	// PrepareXFromTop instructs the timeline to prepare x amount of items from the top of the timeline, useful during init.
-	PrepareFromTop(ctx context.Context, amount int) error
 
 	/*
 		INFO FUNCTIONS
 	*/
 
-	// ActualPostIndexLength returns the actual length of the item index at this point in time.
-	ItemIndexLength(ctx context.Context) int
-	// OldestIndexedItemID returns the id of the rearmost (ie., the oldest) indexed item, or an error if something goes wrong.
-	// If nothing goes wrong but there's no oldest item, an empty string will be returned so make sure to check for this.
-	OldestIndexedItemID(ctx context.Context) (string, error)
-	// NewestIndexedItemID returns the id of the frontmost (ie., the newest) indexed item, or an error if something goes wrong.
-	// If nothing goes wrong but there's no newest item, an empty string will be returned so make sure to check for this.
-	NewestIndexedItemID(ctx context.Context) (string, error)
+	// AccountID returns the id of the account this timeline belongs to.
+	AccountID() string
+
+	// Len returns the length of the item index at this point in time.
+	Len() int
+
+	// OldestIndexedItemID returns the id of the rearmost (ie., the oldest) indexed item.
+	// If there's no oldest item, an empty string will be returned so make sure to check for this.
+	OldestIndexedItemID() string
 
 	/*
 		UTILITY FUNCTIONS
@@ -111,33 +104,39 @@ type Timeline interface {
 
 	// LastGot returns the time that Get was last called.
 	LastGot() time.Time
-	// Prune prunes preparedItems and indexedItems in this timeline to the desired lengths.
+
+	// Prune prunes prepared and indexed items in this timeline to the desired lengths.
 	// This will be a no-op if the lengths are already < the desired values.
-	// Prune acquires a lock on the timeline before pruning.
-	// The return value is the combined total of items pruned from preparedItems and indexedItems.
+	//
+	// The returned int indicates the amount of entries that were removed or unprepared.
 	Prune(desiredPreparedItemsLength int, desiredIndexedItemsLength int) int
-	// Remove removes a item from both the index and prepared items.
+
+	// Remove removes an item with the given ID.
 	//
 	// If a item has multiple entries in a timeline, they will all be removed.
 	//
 	// The returned int indicates the amount of entries that were removed.
 	Remove(ctx context.Context, itemID string) (int, error)
-	// RemoveAllBy removes all items by the given accountID, from both the index and prepared items.
+
+	// RemoveAllByOrBoosting removes all items created by or boosting the given accountID.
 	//
 	// The returned int indicates the amount of entries that were removed.
-	RemoveAllBy(ctx context.Context, accountID string) (int, error)
+	RemoveAllByOrBoosting(ctx context.Context, accountID string) (int, error)
 }
 
 // timeline fulfils the Timeline interface
 type timeline struct {
-	indexedItems    *indexedItems
-	preparedItems   *preparedItems
+	items           *indexedItems
 	grabFunction    GrabFunction
 	filterFunction  FilterFunction
 	prepareFunction PrepareFunction
 	accountID       string
 	lastGot         time.Time
 	sync.Mutex
+}
+
+func (t *timeline) AccountID() string {
+	return t.accountID
 }
 
 // NewTimeline returns a new Timeline for the given account ID
@@ -148,12 +147,9 @@ func NewTimeline(
 	filterFunction FilterFunction,
 	prepareFunction PrepareFunction,
 	skipInsertFunction SkipInsertFunction,
-) (Timeline, error) {
+) Timeline {
 	return &timeline{
-		indexedItems: &indexedItems{
-			skipInsert: skipInsertFunction,
-		},
-		preparedItems: &preparedItems{
+		items: &indexedItems{
 			skipInsert: skipInsertFunction,
 		},
 		grabFunction:    grabFunction,
@@ -161,5 +157,5 @@ func NewTimeline(
 		prepareFunction: prepareFunction,
 		accountID:       timelineAccountID,
 		lastGot:         time.Time{},
-	}, nil
+	}
 }

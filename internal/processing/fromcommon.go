@@ -455,8 +455,8 @@ func (p *Processor) timelineStatusForAccount(ctx context.Context, account *gtsmo
 		return nil
 	}
 
-	// stick the status in the timeline for the account and then immediately prepare it so they can see it right away
-	if inserted, err := p.statusTimelines.IngestAndPrepare(ctx, status, account.ID); err != nil {
+	// stick the status in the timeline for the account
+	if inserted, err := p.statusTimelines.IngestOne(ctx, account.ID, status); err != nil {
 		return fmt.Errorf("timelineStatusForAccount: error ingesting status %s: %w", status.ID, err)
 	} else if !inserted {
 		return nil
