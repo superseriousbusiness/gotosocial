@@ -61,7 +61,7 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 			bun.Ident("follow.account_id"),
 			accountID)
 
-	if maxID == "" || maxID == id.Highest {
+	if maxID == "" || maxID >= id.Highest {
 		const future = 24 * time.Hour
 
 		var err error
