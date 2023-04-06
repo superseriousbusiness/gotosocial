@@ -29,6 +29,8 @@ import (
 
 // AccountVisible will check if given account is visible to requester, accounting for requester with no auth (i.e is nil), suspensions, disabled local users and account blocks.
 func (f *Filter) AccountVisible(ctx context.Context, requester *gtsmodel.Account, account *gtsmodel.Account) (bool, error) {
+	const vtype = cache.VisibilityTypeAccount
+
 	// By default we assume no auth.
 	requesterID := noauth
 
@@ -48,10 +50,10 @@ func (f *Filter) AccountVisible(ctx context.Context, requester *gtsmodel.Account
 		return &cache.CachedVisibility{
 			ItemID:      account.ID,
 			RequesterID: requesterID,
-			Type:        cache.VisibilityTypeAccount,
+			Type:        vtype,
 			Value:       visible,
 		}, nil
-	}, "account", requesterID, account.ID)
+	}, vtype, requesterID, account.ID)
 	if err != nil {
 		return false, err
 	}

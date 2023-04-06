@@ -49,6 +49,8 @@ func (f *Filter) StatusesVisible(ctx context.Context, requester *gtsmodel.Accoun
 
 // StatusVisible will check if given status is visible to requester, accounting for requester with no auth (i.e is nil), suspensions, disabled local users, account blocks and status privacy.
 func (f *Filter) StatusVisible(ctx context.Context, requester *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
+	const vtype = cache.VisibilityTypeStatus
+
 	// By default we assume no auth.
 	requesterID := noauth
 
@@ -68,10 +70,10 @@ func (f *Filter) StatusVisible(ctx context.Context, requester *gtsmodel.Account,
 		return &cache.CachedVisibility{
 			ItemID:      status.ID,
 			RequesterID: requesterID,
-			Type:        cache.VisibilityTypeStatus,
+			Type:        vtype,
 			Value:       visible,
 		}, nil
-	}, "status", requesterID, status.ID)
+	}, vtype, requesterID, status.ID)
 	if err != nil {
 		return false, err
 	}
@@ -83,7 +85,7 @@ func (f *Filter) StatusVisible(ctx context.Context, requester *gtsmodel.Account,
 func (f *Filter) isStatusVisible(ctx context.Context, requester *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
 	// Ensure that status is fully populated for further processing.
 	if err := f.state.DB.PopulateStatus(ctx, status); err != nil {
-		return false, err
+		return false, fmt.Errorf("isStatusVisible: error populating status %s: %w", status.ID, err)
 	}
 
 	// Check whether status accounts are visible to the requester.
@@ -185,7 +187,7 @@ func (f *Filter) areStatusAccountsVisible(ctx context.Context, requester *gtsmod
 	// Check whether status author's account is visible to requester.
 	visible, err := f.AccountVisible(ctx, requester, status.Account)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("error checking status author visibility: %w", err)
 	}
 
 	if !visible {
@@ -204,7 +206,7 @@ func (f *Filter) areStatusAccountsVisible(ctx context.Context, requester *gtsmod
 		// Check whether boosted status author's account is visible to requester.
 		visible, err := f.AccountVisible(ctx, requester, status.BoostOfAccount)
 		if err != nil {
-			return false, err
+			return false, fmt.Errorf("error checking boosted author visibility: %w", err)
 		}
 
 		if !visible {

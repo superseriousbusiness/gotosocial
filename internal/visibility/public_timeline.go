@@ -30,6 +30,8 @@ import (
 
 // StatusHomeTimelineable checks if given status should be included on requester's public timeline. Primarily relying on status visibility to requester and the AP visibility setting, and ignoring conversation threads.
 func (f *Filter) StatusPublicTimelineable(ctx context.Context, requester *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
+	const vtype = cache.VisibilityTypePublic
+
 	// By default we assume no auth.
 	requesterID := noauth
 
@@ -49,10 +51,10 @@ func (f *Filter) StatusPublicTimelineable(ctx context.Context, requester *gtsmod
 		return &cache.CachedVisibility{
 			ItemID:      status.ID,
 			RequesterID: requesterID,
-			Type:        cache.VisibilityTypePublic,
+			Type:        vtype,
 			Value:       visible,
 		}, nil
-	}, "public", requesterID, status.ID)
+	}, vtype, requesterID, status.ID)
 	if err != nil {
 		if err == cache.SentinelError {
 			// Filter-out our temporary
@@ -103,7 +105,7 @@ func (f *Filter) isStatusPublicTimelineable(ctx context.Context, requester *gtsm
 			parentID,
 		)
 		if err != nil {
-			return false, fmt.Errorf("isStatusHomeTimelineable: error getting status parent %s: %w", parentID, err)
+			return false, fmt.Errorf("isStatusPublicTimelineable: error getting status parent %s: %w", parentID, err)
 		}
 
 		if parent.AccountID != status.AccountID {
