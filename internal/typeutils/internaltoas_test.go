@@ -26,6 +26,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -669,7 +670,7 @@ func (suite *InternalToASTestSuite) TestPinnedStatusesToASSomeItems() {
 		suite.FailNow(err.Error())
 	}
 
-	ser, err := streams.Serialize(collection)
+	ser, err := ap.SerializeOrderedCollection(collection)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -701,7 +702,7 @@ func (suite *InternalToASTestSuite) TestPinnedStatusesToASNoItems() {
 		suite.FailNow(err.Error())
 	}
 
-	ser, err := streams.Serialize(collection)
+	ser, err := ap.SerializeOrderedCollection(collection)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -730,7 +731,7 @@ func (suite *InternalToASTestSuite) TestPinnedStatusesToASOneItem() {
 		suite.FailNow(err.Error())
 	}
 
-	ser, err := streams.Serialize(collection)
+	ser, err := ap.SerializeOrderedCollection(collection)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -739,7 +740,9 @@ func (suite *InternalToASTestSuite) TestPinnedStatusesToASOneItem() {
 	suite.Equal(`{
   "@context": "https://www.w3.org/ns/activitystreams",
   "id": "http://localhost:8080/users/1happyturtle/collections/featured",
-  "orderedItems": "http://localhost:8080/users/1happyturtle/statuses/01G20ZM733MGN8J344T4ZDDFY1",
+  "orderedItems": [
+    "http://localhost:8080/users/1happyturtle/statuses/01G20ZM733MGN8J344T4ZDDFY1"
+  ],
   "totalItems": 1,
   "type": "OrderedCollection"
 }`, string(bytes))
