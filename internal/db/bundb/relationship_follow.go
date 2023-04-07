@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -187,6 +188,26 @@ func (r *relationshipDB) PutFollow(ctx context.Context, follow *gtsmodel.Follow)
 	r.state.Caches.Visibility.Invalidate("RequesterID", follow.TargetAccountID)
 
 	return nil
+}
+
+func (r *relationshipDB) UpdateFollow(ctx context.Context, follow *gtsmodel.Follow, columns ...string) error {
+	follow.UpdatedAt = time.Now()
+	if len(columns) > 0 {
+		// If we're updating by column, ensure "updated_at" is included.
+		columns = append(columns, "updated_at")
+	}
+
+	return r.state.Caches.GTS.Follow().Store(follow, func() error {
+		if _, err := r.conn.NewUpdate().
+			Model(follow).
+			Where("? = ?", bun.Ident("follow.id"), follow.ID).
+			Column(columns...).
+			Exec(ctx); err != nil {
+			return r.conn.ProcessError(err)
+		}
+
+		return nil
+	})
 }
 
 func (r *relationshipDB) DeleteFollowByID(ctx context.Context, id string) error {

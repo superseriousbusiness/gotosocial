@@ -320,6 +320,7 @@ func (c *GTSCaches) initMention() {
 func (c *GTSCaches) initNotification() {
 	c.notification = result.New([]result.Lookup{
 		{Name: "ID"},
+		{Name: "NotificationType.TargetAccountID.OriginAccountID.StatusID"},
 	}, func(n1 *gtsmodel.Notification) *gtsmodel.Notification {
 		n2 := new(gtsmodel.Notification)
 		*n2 = *n1

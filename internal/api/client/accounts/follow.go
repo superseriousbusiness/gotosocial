@@ -35,6 +35,9 @@ import (
 // The parameters can also be given in the body of the request, as JSON, if the content-type is set to 'application/json'.
 // The parameters can also be given in the body of the request, as XML, if the content-type is set to 'application/xml'.
 //
+// If you already follow (request) the given account, then the follow (request) will be updated instead using the
+// `reblogs` and `notify` parameters.
+//
 //	---
 //	tags:
 //	- accounts
@@ -58,11 +61,11 @@ import (
 //		description: Show reblogs from this account.
 //		in: formData
 //	-
+//		name: notify
+//		type: boolean
 //		default: false
 //		description: Notify when this account posts.
 //		in: formData
-//		name: notify
-//		type: boolean
 //
 //	produces:
 //	- application/json

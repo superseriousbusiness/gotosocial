@@ -164,11 +164,7 @@ func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federa
 		status.Account = a
 	}
 
-	if err := p.timelineStatus(ctx, status); err != nil {
-		return err
-	}
-
-	if err := p.notifyStatus(ctx, status); err != nil {
+	if err := p.timelineAndNotifyStatus(ctx, status); err != nil {
 		return err
 	}
 
@@ -327,10 +323,10 @@ func (p *Processor) processCreateAnnounceFromFederator(ctx context.Context, fede
 		return fmt.Errorf("error adding dereferenced announce to the db: %s", err)
 	}
 
-	if err := p.timelineStatus(ctx, incomingAnnounce); err != nil {
+	if err := p.timelineAndNotifyStatus(ctx, incomingAnnounce); err != nil {
 		return err
 	}
-
+sssssssss
 	if err := p.notifyAnnounce(ctx, incomingAnnounce); err != nil {
 		return err
 	}
@@ -367,7 +363,7 @@ func (p *Processor) processCreateFlagFromFederator(ctx context.Context, federato
 	// TODO: handle additional side effects of flag creation:
 	// - notify admins by dm / notification
 
-	return p.notifyReport(ctx, incomingReport)
+	return p.emailReport(ctx, incomingReport)
 }
 
 // processUpdateAccountFromFederator handles Activity Update and Object Profile
