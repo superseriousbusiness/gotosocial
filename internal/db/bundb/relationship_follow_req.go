@@ -204,6 +204,8 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, sourceAccountI
 		TargetAccountID: targetAccountID,
 		TargetAccount:   followReq.TargetAccount,
 		URI:             followReq.URI,
+		ShowReblogs:     followReq.ShowReblogs,
+		Notify:          followReq.Notify,
 	}
 
 	// If the follow already exists, just
