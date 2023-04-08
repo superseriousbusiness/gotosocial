@@ -98,7 +98,7 @@ func (f *Filter) isStatusHomeTimelineable(ctx context.Context, owner *gtsmodel.A
 
 	var (
 		next      *gtsmodel.Status
-		oneAuthor bool
+		oneAuthor = true // Assume one author until proven otherwise.
 		included  bool
 		converstn bool
 	)
@@ -149,7 +149,7 @@ func (f *Filter) isStatusHomeTimelineable(ctx context.Context, owner *gtsmodel.A
 		}
 
 		if oneAuthor {
-			// Check if this is a single-author status thread.
+			// Check if this continues to be a single-author thread.
 			oneAuthor = (next.AccountID == status.AccountID)
 		}
 	}
