@@ -269,7 +269,7 @@ func (p *Processor) updateFollow(ctx context.Context, requestingAccount *gtsmode
 	}
 
 	// Check what we need to update (if anything).
-	columns := make([]string, 0, 2) // only max two fields will change
+	columns := make([]string, 0, 3) // only max three fields will change (including updated_at)
 
 	if newReblogs := form.Reblogs; newReblogs != nil && *newReblogs != *follow.ShowReblogs {
 		*follow.ShowReblogs = *newReblogs
@@ -313,7 +313,7 @@ func (p *Processor) updateFollowRequest(ctx context.Context, requestingAccount *
 	}
 
 	// Check what we need to update (if anything).
-	columns := make([]string, 0, 2) // only max two fields will change
+	columns := make([]string, 0, 3) // only max three fields will change (including updated_at)
 
 	if newReblogs := form.Reblogs; newReblogs != nil && *newReblogs != *followRequest.ShowReblogs {
 		*followRequest.ShowReblogs = *newReblogs
