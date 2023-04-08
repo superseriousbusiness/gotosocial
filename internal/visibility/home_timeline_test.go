@@ -95,6 +95,54 @@ func (suite *StatusStatusHomeTimelineableTestSuite) TestStatusNotTooNewTimelinea
 	suite.True(timelineable)
 }
 
+func (suite *StatusStatusHomeTimelineableTestSuite) TestThread() {
+	ctx := context.Background()
+
+	threadParentAccount := suite.testAccounts["local_account_1"]
+	timelineOwnerAccount := suite.testAccounts["local_account_2"]
+	originalStatus := suite.testStatuses["local_account_1_status_1"]
+
+	// this status should be hometimelineable for local_account_2
+	originalStatusTimelineable, err := suite.filter.StatusHomeTimelineable(ctx, timelineOwnerAccount, originalStatus)
+	suite.NoError(err)
+	suite.True(originalStatusTimelineable)
+
+	// now a reply from the original status author to their own status
+	firstReplyStatus := &gtsmodel.Status{
+		ID:                       "01G395ESAYPK9161QSQEZKATJN",
+		URI:                      "http://localhost:8080/users/the_mighty_zork/statuses/01G395ESAYPK9161QSQEZKATJN",
+		URL:                      "http://localhost:8080/@the_mighty_zork/statuses/01G395ESAYPK9161QSQEZKATJN",
+		Content:                  "nbnbdy expects dog",
+		CreatedAt:                testrig.TimeMustParse("2021-09-20T12:41:37+02:00"),
+		UpdatedAt:                testrig.TimeMustParse("2021-09-20T12:41:37+02:00"),
+		Local:                    testrig.FalseBool(),
+		AccountURI:               "http://localhost:8080/users/the_mighty_zork",
+		AccountID:                threadParentAccount.ID,
+		InReplyToID:              originalStatus.ID,
+		InReplyToAccountID:       threadParentAccount.ID,
+		InReplyToURI:             originalStatus.URI,
+		BoostOfID:                "",
+		ContentWarning:           "",
+		Visibility:               gtsmodel.VisibilityFollowersOnly,
+		Sensitive:                testrig.FalseBool(),
+		Language:                 "en",
+		CreatedWithApplicationID: "",
+		Federated:                testrig.TrueBool(),
+		Boostable:                testrig.TrueBool(),
+		Replyable:                testrig.TrueBool(),
+		Likeable:                 testrig.TrueBool(),
+		ActivityStreamsType:      ap.ObjectNote,
+	}
+	if err := suite.db.PutStatus(ctx, firstReplyStatus); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// this status should also be hometimelineable for local_account_2
+	firstReplyStatusTimelineable, err := suite.filter.StatusHomeTimelineable(ctx, timelineOwnerAccount, firstReplyStatus)
+	suite.NoError(err)
+	suite.True(firstReplyStatusTimelineable)
+}
+
 func (suite *StatusStatusHomeTimelineableTestSuite) TestChainReplyFollowersOnly() {
 	ctx := context.Background()
 
