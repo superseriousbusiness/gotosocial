@@ -57,12 +57,19 @@ import (
 	_ "github.com/KimMachineGun/automemlimit"
 )
 
+func maxProcs(ctx context.Context) {
+	if _, err := maxprocs.Set(maxprocs.Logger(nil)); err != nil {
+		log.Warnf(ctx, ""+
+			"could not set CPU limits from cgroup (error: %s); "+
+			"this will not prevent GoToSocial from running, but "+
+			"cpu usage and scaling may not be bounded as expected",
+			err)
+	}
+}
+
 // Start creates and starts a gotosocial server
 var Start action.GTSAction = func(ctx context.Context) error {
-	_, err := maxprocs.Set(maxprocs.Logger(nil))
-	if err != nil {
-		return fmt.Errorf("failed to set CPU limits from cgroup: %s", err)
-	}
+	maxProcs(ctx)
 
 	var state state.State
 
