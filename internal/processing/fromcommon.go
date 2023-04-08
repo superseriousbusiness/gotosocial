@@ -75,43 +75,50 @@ func (p *Processor) timelineAndNotifyStatus(ctx context.Context, status *gtsmode
 }
 
 func (p *Processor) timelineAndNotifyStatusForFollowers(ctx context.Context, status *gtsmodel.Status, follows []*gtsmodel.Follow) error {
-	errs := make(gtserror.MultiError, 0, len(follows))
+	var (
+		errs  = make(gtserror.MultiError, 0, len(follows))
+		boost = status.BoostOfID != ""
+		reply = status.InReplyToID != "" || status.InReplyToURI != ""
+	)
 
 	for _, follow := range follows {
-		if sr := follow.ShowReblogs; status.BoostOfID != "" && (sr == nil || !*sr) {
-			// This is a reblog, and this follower doesn't
-			// want to see those, so skip everything.
+		if sr := follow.ShowReblogs; boost && (sr == nil || !*sr) {
+			// This is a boost, but this follower
+			// doesn't want to see those from this
+			// account, so just skip everything.
 			continue
 		}
 
-		timelined, err := p.timelineStatusForAccount(ctx, follow.Account, status)
-		if err != nil {
+		// Add status to home timeline for this
+		// follower, and stream it if applicable.
+		if timelined, err := p.timelineStatusForAccount(ctx, follow.Account, status); err != nil {
 			errs.Append(fmt.Errorf("timelineAndNotifyStatusForFollowers: error timelining status: %w", err))
 			continue
-		}
-
-		if !timelined {
-			// Status wasn't timelined, so
-			// we shouldn't notify it either.
+		} else if !timelined {
+			// Status wasn't added to home tomeline,
+			// so we shouldn't notify it either.
 			continue
 		}
 
 		if n := follow.Notify; n == nil || !*n {
-			// Don't notify this follower.
+			// This follower doesn't have notifications
+			// set for this account's new posts, so bail.
 			continue
 		}
 
-		if status.InReplyToID != "" || status.InReplyToURI != "" {
-			// Don't notify for replies.
+		if boost || reply {
+			// Don't notify for boosts or replies.
 			continue
 		}
 
-		if status.BoostOfID != "" {
-			// Don't notify for boosts.
-			continue
-		}
-
-		// OK, we can officially notify this one.
+		// If we reach here, we know:
+		//
+		//   - This follower wants to be notified when this account posts.
+		//   - This is a top-level post (not a reply).
+		//   - This is not a boost of another post.
+		//   - The post is visible in this follower's home timeline.
+		//
+		// That means we can officially notify this one.
 		if err := p.notify(
 			ctx,
 			gtsmodel.NotificationStatus,
@@ -141,7 +148,7 @@ func (p *Processor) timelineStatusForAccount(ctx context.Context, account *gtsmo
 		return false, nil
 	}
 
-	// stick the status in the timeline for the account
+	// Insert status in the home timeline of account.
 	if inserted, err := p.statusTimelines.IngestOne(ctx, account.ID, status); err != nil {
 		err = fmt.Errorf("timelineStatusForAccount: error ingesting status %s: %w", status.ID, err)
 		return false, err

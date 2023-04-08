@@ -326,7 +326,7 @@ func (p *Processor) processCreateAnnounceFromFederator(ctx context.Context, fede
 	if err := p.timelineAndNotifyStatus(ctx, incomingAnnounce); err != nil {
 		return err
 	}
-sssssssss
+
 	if err := p.notifyAnnounce(ctx, incomingAnnounce); err != nil {
 		return err
 	}
