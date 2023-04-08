@@ -63,6 +63,7 @@ func (t *transport) BatchDeliver(ctx context.Context, b []byte, recipients []*ur
 
 				if len(recipients) == 0 {
 					// Reached end.
+					mutex.Unlock()
 					return
 				}
 
