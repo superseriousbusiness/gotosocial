@@ -25,9 +25,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
@@ -40,24 +42,35 @@ func (p *Processor) FollowCreate(ctx context.Context, requestingAccount *gtsmode
 	}
 
 	// Check if a follow exists already.
-	if follows, err := p.state.DB.IsFollowing(ctx, requestingAccount.ID, targetAccount.ID); err != nil {
-		err = fmt.Errorf("FollowCreate: db error checking follow: %w", err)
+	if follow, err := p.state.DB.GetFollow(
+		gtscontext.SetBarebones(ctx),
+		requestingAccount.ID,
+		targetAccount.ID,
+	); err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err = fmt.Errorf("FollowCreate: db error checking existing follow: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
-	} else if follows {
+	} else if follow != nil {
 		// Already follows, update if necessary + return relationship.
-		return p.updateFollow(ctx, requestingAccount, form)
+		follow.Account = requestingAccount
+		return p.updateFollow(ctx, follow, requestingAccount, form)
 	}
 
 	// Check if a follow request exists already.
-	if followRequested, err := p.state.DB.IsFollowRequested(ctx, requestingAccount.ID, targetAccount.ID); err != nil {
-		err = fmt.Errorf("FollowCreate: db error checking follow request: %w", err)
+	if followRequest, err := p.state.DB.GetFollowRequest(
+		gtscontext.SetBarebones(ctx),
+		requestingAccount.ID,
+		targetAccount.ID,
+	); err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err = fmt.Errorf("FollowCreate: db error checking existing follow request: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
-	} else if followRequested {
-		// Already follow requested, update if necessary + return relationship.
-		return p.updateFollowRequest(ctx, requestingAccount, form)
+	} else if followRequest != nil {
+		// Already requested, update if necessary + return relationship.
+		followRequest.Account = requestingAccount
+		return p.updateFollow(ctx, followRequest, requestingAccount, form)
 	}
 
-	// Create and store a new follow request.
+	// Neither follows nor follow requests, so
+	// create and store a new follow request.
 	followID, err := id.NewRandomULID()
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
@@ -128,6 +141,70 @@ func (p *Processor) FollowRemove(ctx context.Context, requestingAccount *gtsmode
 /*
 	Utility functions.
 */
+
+// updateFollow is a utility function for updating an existing
+// follow or followRequest with the parameters provided in the
+// given form. If nothing changes, this function is a no-op and
+// will just return the existing relationship between follow
+// origin and follow target account.
+func (p *Processor) updateFollow(
+	ctx context.Context,
+	item interface{},
+	requestingAccount *gtsmodel.Account,
+	form *apimodel.AccountFollowRequest,
+) (*apimodel.Relationship, gtserror.WithCode) {
+
+	if form.Reblogs == nil && form.Notify == nil {
+		// There's nothing to update.
+		return p.RelationshipGet(ctx, requestingAccount, form.ID)
+	}
+
+	var (
+		showReblogs *bool
+		notify      *bool
+		update      func() error
+		// Including "updated_at", max 3 columns may change.
+		columns = make([]string, 0, 3)
+	)
+
+	// Call different update function depending on
+	// whether we have a follow or a follow request.
+	switch i := item.(type) {
+	case *gtsmodel.Follow:
+		showReblogs = i.ShowReblogs
+		notify = i.Notify
+		update = func() error { return p.state.DB.UpdateFollow(ctx, i, columns...) }
+	case *gtsmodel.FollowRequest:
+		showReblogs = i.ShowReblogs
+		notify = i.Notify
+		update = func() error { return p.state.DB.UpdateFollowRequest(ctx, i, columns...) }
+	default:
+		log.Panic(ctx, "item was neither *gtsmodel.Follow nor *gtsmodel.FollowRequest")
+	}
+
+	// Check what we need to update (if anything).
+	if newReblogs := form.Reblogs; newReblogs != nil && *newReblogs != *showReblogs {
+		*showReblogs = *newReblogs
+		columns = append(columns, "show_reblogs")
+	}
+
+	if newNotify := form.Notify; newNotify != nil && *newNotify != *notify {
+		*notify = *newNotify
+		columns = append(columns, "notify")
+	}
+
+	if len(columns) == 0 {
+		// Nothing actually changed.
+		return p.RelationshipGet(ctx, requestingAccount, form.ID)
+	}
+
+	if err := update(); err != nil {
+		err = fmt.Errorf("updateFollow: error updating existing follow (request): %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return p.RelationshipGet(ctx, requestingAccount, form.ID)
+}
 
 // getFollowTarget is a convenience function which:
 //   - Checks if account is trying to follow/unfollow itself.
@@ -248,92 +325,4 @@ func (p *Processor) unfollow(ctx context.Context, requestingAccount *gtsmodel.Ac
 	}
 
 	return msgs, nil
-}
-
-func (p *Processor) updateFollow(ctx context.Context, requestingAccount *gtsmodel.Account, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, gtserror.WithCode) {
-	if form.Reblogs == nil && form.Notify == nil {
-		// There's nothing to update.
-		return p.RelationshipGet(ctx, requestingAccount, form.ID)
-	}
-
-	follow, err := p.state.DB.GetFollow(ctx, requestingAccount.ID, form.ID)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			// This is weird, but could be a race condition or
-			// something. Since there's nothing to update just
-			// return existing relationship.
-			return p.RelationshipGet(ctx, requestingAccount, form.ID)
-		}
-		err = fmt.Errorf("updateFollow: error getting existing follow: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	// Check what we need to update (if anything).
-	columns := make([]string, 0, 3) // only max three fields will change (including updated_at)
-
-	if newReblogs := form.Reblogs; newReblogs != nil && *newReblogs != *follow.ShowReblogs {
-		*follow.ShowReblogs = *newReblogs
-		columns = append(columns, "show_reblogs")
-	}
-
-	if newNotify := form.Notify; newNotify != nil && *newNotify != *follow.Notify {
-		*follow.Notify = *newNotify
-		columns = append(columns, "notify")
-	}
-
-	if len(columns) == 0 {
-		// Nothing actually changed.
-		return p.RelationshipGet(ctx, requestingAccount, form.ID)
-	}
-
-	if err := p.state.DB.UpdateFollow(ctx, follow); err != nil {
-		err = fmt.Errorf("updateFollow: error updating existing follow: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	return p.RelationshipGet(ctx, requestingAccount, form.ID)
-}
-
-func (p *Processor) updateFollowRequest(ctx context.Context, requestingAccount *gtsmodel.Account, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, gtserror.WithCode) {
-	if form.Reblogs == nil && form.Notify == nil {
-		// There's nothing to update.
-		return p.RelationshipGet(ctx, requestingAccount, form.ID)
-	}
-
-	followRequest, err := p.state.DB.GetFollowRequest(ctx, requestingAccount.ID, form.ID)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			// This is weird, but could be a race condition or
-			// something. Since there's nothing to update just
-			// return existing relationship.
-			return p.RelationshipGet(ctx, requestingAccount, form.ID)
-		}
-		err = fmt.Errorf("updateFollowRequest: error getting existing followRequest: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	// Check what we need to update (if anything).
-	columns := make([]string, 0, 3) // only max three fields will change (including updated_at)
-
-	if newReblogs := form.Reblogs; newReblogs != nil && *newReblogs != *followRequest.ShowReblogs {
-		*followRequest.ShowReblogs = *newReblogs
-		columns = append(columns, "show_reblogs")
-	}
-
-	if newNotify := form.Notify; newNotify != nil && *newNotify != *followRequest.Notify {
-		*followRequest.Notify = *newNotify
-		columns = append(columns, "notify")
-	}
-
-	if len(columns) == 0 {
-		// Nothing actually changed.
-		return p.RelationshipGet(ctx, requestingAccount, form.ID)
-	}
-
-	if err := p.state.DB.UpdateFollowRequest(ctx, followRequest); err != nil {
-		err = fmt.Errorf("updateFollowRequest: error updating existing followRequest: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	return p.RelationshipGet(ctx, requestingAccount, form.ID)
 }
