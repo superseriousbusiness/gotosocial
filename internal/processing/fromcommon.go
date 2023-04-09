@@ -52,10 +52,10 @@ func (p *Processor) timelineAndNotifyStatus(ctx context.Context, status *gtsmode
 	// so they can see their own status in their timeline.
 	if status.Account.IsLocal() {
 		follows = append(follows, &gtsmodel.Follow{
-			AccountID: status.AccountID,
-			Account:   status.Account,
-			// Ensure account doesn't notify itself.
-			Notify: func() *bool { f := false; return &f }(),
+			AccountID:   status.AccountID,
+			Account:     status.Account,
+			Notify:      func() *bool { b := false; return &b }(), // Account shouldn't notify itself.
+			ShowReblogs: func() *bool { b := true; return &b }(),  // Account should show own reblogs.
 		})
 	}
 
