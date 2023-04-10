@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -167,6 +168,26 @@ func (r *relationshipDB) PutFollowRequest(ctx context.Context, follow *gtsmodel.
 	return nil
 }
 
+func (r *relationshipDB) UpdateFollowRequest(ctx context.Context, followRequest *gtsmodel.FollowRequest, columns ...string) error {
+	followRequest.UpdatedAt = time.Now()
+	if len(columns) > 0 {
+		// If we're updating by column, ensure "updated_at" is included.
+		columns = append(columns, "updated_at")
+	}
+
+	return r.state.Caches.GTS.FollowRequest().Store(followRequest, func() error {
+		if _, err := r.conn.NewUpdate().
+			Model(followRequest).
+			Where("? = ?", bun.Ident("follow_request.id"), followRequest.ID).
+			Column(columns...).
+			Exec(ctx); err != nil {
+			return r.conn.ProcessError(err)
+		}
+
+		return nil
+	})
+}
+
 func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, sourceAccountID string, targetAccountID string) (*gtsmodel.Follow, db.Error) {
 	// Get original follow request.
 	followReq, err := r.GetFollowRequest(ctx, sourceAccountID, targetAccountID)
@@ -183,6 +204,8 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, sourceAccountI
 		TargetAccountID: targetAccountID,
 		TargetAccount:   followReq.TargetAccount,
 		URI:             followReq.URI,
+		ShowReblogs:     followReq.ShowReblogs,
+		Notify:          followReq.Notify,
 	}
 
 	// If the follow already exists, just

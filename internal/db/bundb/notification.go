@@ -48,6 +48,31 @@ func (n *notificationDB) GetNotificationByID(ctx context.Context, id string) (*g
 	}, id)
 }
 
+func (n *notificationDB) GetNotification(
+	ctx context.Context,
+	notificationType gtsmodel.NotificationType,
+	targetAccountID string,
+	originAccountID string,
+	statusID string,
+) (*gtsmodel.Notification, db.Error) {
+	return n.state.Caches.GTS.Notification().Load("NotificationType.TargetAccountID.OriginAccountID.StatusID", func() (*gtsmodel.Notification, error) {
+		var notif gtsmodel.Notification
+
+		q := n.conn.NewSelect().
+			Model(&notif).
+			Where("? = ?", bun.Ident("notification_type"), notificationType).
+			Where("? = ?", bun.Ident("target_account_id"), targetAccountID).
+			Where("? = ?", bun.Ident("origin_account_id"), originAccountID).
+			Where("? = ?", bun.Ident("status_id"), statusID)
+
+		if err := q.Scan(ctx); err != nil {
+			return nil, n.conn.ProcessError(err)
+		}
+
+		return &notif, nil
+	}, notificationType, targetAccountID, originAccountID, statusID)
+}
+
 func (n *notificationDB) GetAccountNotifications(ctx context.Context, accountID string, excludeTypes []string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, db.Error) {
 	// Ensure reasonable
 	if limit < 0 {

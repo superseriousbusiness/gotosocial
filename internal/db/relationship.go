@@ -85,8 +85,14 @@ type Relationship interface {
 	// PutFollow attempts to place the given account follow in the database.
 	PutFollow(ctx context.Context, follow *gtsmodel.Follow) error
 
+	// UpdateFollow updates one follow by ID.
+	UpdateFollow(ctx context.Context, follow *gtsmodel.Follow, columns ...string) error
+
 	// PutFollowRequest attempts to place the given account follow request in the database.
 	PutFollowRequest(ctx context.Context, follow *gtsmodel.FollowRequest) error
+
+	// UpdateFollowRequest updates one follow request by ID.
+	UpdateFollowRequest(ctx context.Context, followRequest *gtsmodel.FollowRequest, columns ...string) error
 
 	// DeleteFollowByID deletes a follow from the database with the given ID.
 	DeleteFollowByID(ctx context.Context, id string) error
