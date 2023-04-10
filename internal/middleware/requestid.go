@@ -30,8 +30,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 )
 
-type ctxType string
-
 var (
 	// crand provides buffered reads of random input.
 	crand = bufio.NewReader(rand.Reader)
