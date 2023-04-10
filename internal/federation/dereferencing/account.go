@@ -38,6 +38,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
+const accountFetchInterval = 6 * time.Hour
+
 func (d *deref) GetAccountByURI(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Account, error) {
 	var (
 		account *gtsmodel.Account
@@ -46,14 +48,14 @@ func (d *deref) GetAccountByURI(ctx context.Context, requestUser string, uri *ur
 	)
 
 	// Search the database for existing account with ID URI.
-	account, err = d.db.GetAccountByURI(ctx, uriStr)
+	account, err = d.state.DB.GetAccountByURI(ctx, uriStr)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, fmt.Errorf("GetAccountByURI: error checking database for account %s by uri: %w", uriStr, err)
 	}
 
 	if account == nil {
 		// Else, search the database for existing by ID URL.
-		account, err = d.db.GetAccountByURL(ctx, uriStr)
+		account, err = d.state.DB.GetAccountByURL(ctx, uriStr)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return nil, fmt.Errorf("GetAccountByURI: error checking database for account %s by url: %w", uriStr, err)
 		}
@@ -70,11 +72,11 @@ func (d *deref) GetAccountByURI(ctx context.Context, requestUser string, uri *ur
 			ID:     id.NewULID(),
 			Domain: uri.Host,
 			URI:    uriStr,
-		}, d.defaultFetchLatest, false)
+		}, true)
 	}
 
 	// Try to update existing account model
-	enriched, err := d.enrichAccount(ctx, requestUser, uri, account, d.defaultFetchLatest, false)
+	enriched, err := d.enrichAccount(ctx, requestUser, uri, account, false)
 	if err != nil {
 		log.Errorf(ctx, "error enriching remote account: %v", err)
 		return account, nil // fall back to returning existing
@@ -91,15 +93,15 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 	}
 
 	// Search the database for existing account with USERNAME@DOMAIN
-	account, err := d.db.GetAccountByUsernameDomain(ctx, username, domain)
+	account, err := d.state.DB.GetAccountByUsernameDomain(ctx, username, domain)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, fmt.Errorf("GetAccountByUsernameDomain: error checking database for account %s@%s: %w", username, domain, err)
 	}
 
 	if account == nil {
-		// Check for failed local lookup.
 		if domain == "" {
-			return nil, NewErrNotRetrievable(err) // wrapped err will be db.ErrNoEntries
+			// failed local lookup, will be db.ErrNoEntries.
+			return nil, NewErrNotRetrievable(err)
 		}
 
 		// Create and pass-through a new bare-bones model for dereferencing.
@@ -108,79 +110,56 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 			Username: username,
 			Domain:   domain,
 		}
-
-		// There's no known account to fall back on,
-		// so return error if we can't enrich account.
-		return d.enrichAccount(ctx, requestUser, nil, account, d.defaultFetchLatest, false)
 	}
 
-	// We knew about this account already;
-	// try to update existing account model.
-	enriched, err := d.enrichAccount(ctx, requestUser, nil, account, d.defaultFetchLatest, false)
+	// Try to update + deref existing account model.
+	enriched, err := d.enrichAccount(ctx, requestUser, nil, account, false)
 	if err != nil {
-		log.Errorf(ctx, "error enriching account from remote: %v", err)
-		return account, nil // fall back to returning unchanged existing account model
+		log.Errorf(ctx, "error enriching remote account: %v", err)
+
+		// Update fetch-at to slow re-attempts.
+		account.FetchedAt = time.Now()
+		_ = d.state.DB.UpdateAccount(ctx, account, "fetched_at")
+
+		// Fallback to existing.
+		return account, nil
 	}
 
 	return enriched, nil
 }
 
-func (d *deref) RefreshAccount(ctx context.Context, requestUser string, accountable ap.Accountable, account *gtsmodel.Account) (*gtsmodel.Account, error) {
-	// To avoid unnecessarily refetching multiple times from remote,
-	// we can just pass in the Accountable object that we received,
-	// if it was defined. If not, fall back to default fetch func.
-	var f fetchLatest
-	if accountable != nil {
-		f = func(
-			_ context.Context,
-			_ transport.Transport,
-			_ *url.URL,
-			_ string,
-		) (ap.Accountable, *gtsmodel.Account, error) {
-			return accountable, account, nil
-		}
-	} else {
-		f = d.defaultFetchLatest
-	}
-
-	// Set 'force' to 'true' to always fetch latest media etc.
-	return d.enrichAccount(ctx, requestUser, nil, account, f, true)
+func (d *deref) UpdateAccount(ctx context.Context, requestUser string, account *gtsmodel.Account, force bool) (*gtsmodel.Account, error) {
+	return d.enrichAccount(ctx, requestUser, nil, account, force)
 }
 
-// fetchLatest defines a function for using a transport and uri to fetch the fetchLatest
-// version of an account (and its AP representation) from a remote instance.
-type fetchLatest func(ctx context.Context, transport transport.Transport, uri *url.URL, accountDomain string) (ap.Accountable, *gtsmodel.Account, error)
-
-// defaultFetchLatest deduplicates latest fetching code that is used in several
-// different functions. It simply calls the remote uri using the given transport,
-// parses a returned AP representation into an account, and then returns both.
-func (d *deref) defaultFetchLatest(ctx context.Context, transport transport.Transport, uri *url.URL, accountDomain string) (ap.Accountable, *gtsmodel.Account, error) {
-	// Dereference this account to get the latest available.
-	apubAcc, err := d.dereferenceAccountable(ctx, transport, uri)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error dereferencing account %s: %w", uri, err)
+func (d *deref) UpdateAccountAsync(ctx context.Context, requestUser string, account *gtsmodel.Account, force bool) {
+	if account.IsLocal() {
+		// Can't update local accounts.
+		return
 	}
 
-	// Convert the dereferenced AP account object to our GTS model.
-	latestAcc, err := d.typeConverter.ASRepresentationToAccount(
-		ctx, apubAcc, accountDomain,
-	)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error converting accountable to gts model for account %s: %w", uri, err)
+	if !account.CreatedAt.IsZero() && account.IsInstance() {
+		// Existing instance account. No need for update.
+		return
 	}
 
-	return apubAcc, latestAcc, nil
+	if !force {
+		// If this account was updated recently (last interval), we return as-is.
+		if next := account.FetchedAt.Add(accountFetchInterval); time.Now().Before(next) {
+			return
+		}
+	}
+
+	// Enqueue a worker function to enrich this account async.
+	d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
+		if _, err := d.enrichAccount(ctx, requestUser, nil, account, force); err != nil {
+			log.Errorf(ctx, "error enriching remote account: %v", err)
+		}
+	})
 }
 
 // enrichAccount will ensure the given account is the most up-to-date model of the account, re-webfingering and re-dereferencing if necessary.
-func (d *deref) enrichAccount(
-	ctx context.Context,
-	requestUser string,
-	uri *url.URL,
-	account *gtsmodel.Account,
-	f fetchLatest,
-	force bool,
-) (*gtsmodel.Account, error) {
+func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.URL, account *gtsmodel.Account, force bool) (*gtsmodel.Account, error) {
 	if account.IsLocal() {
 		// Can't update local accounts.
 		return account, nil
@@ -192,10 +171,8 @@ func (d *deref) enrichAccount(
 	}
 
 	if !force {
-		const interval = time.Hour * 48
-
 		// If this account was updated recently (last interval), we return as-is.
-		if next := account.FetchedAt.Add(interval); time.Now().Before(next) {
+		if next := account.FetchedAt.Add(accountFetchInterval); time.Now().Before(next) {
 			return account, nil
 		}
 	}
@@ -221,7 +198,7 @@ func (d *deref) enrichAccount(
 		case err == nil:
 			if account.Domain != accDomain {
 				// After webfinger, we now have correct account domain from which we can do a final DB check.
-				alreadyAccount, err := d.db.GetAccountByUsernameDomain(ctx, account.Username, accDomain)
+				alreadyAccount, err := d.state.DB.GetAccountByUsernameDomain(ctx, account.Username, accDomain)
 				if err != nil && !errors.Is(err, db.ErrNoEntries) {
 					return nil, fmt.Errorf("enrichAccount: db err looking for account again after webfinger: %w", err)
 				}
@@ -250,7 +227,7 @@ func (d *deref) enrichAccount(
 	}
 
 	// Check whether this account URI is a blocked domain / subdomain.
-	if blocked, err := d.db.IsDomainBlocked(ctx, uri.Host); err != nil {
+	if blocked, err := d.state.DB.IsDomainBlocked(ctx, uri.Host); err != nil {
 		return nil, newErrDB(fmt.Errorf("enrichAccount: error checking blocked domain: %w", err))
 	} else if blocked {
 		return nil, fmt.Errorf("enrichAccount: %s is blocked", uri.Host)
@@ -363,11 +340,11 @@ func (d *deref) enrichAccount(
 		latestAcc.UpdatedAt = latestAcc.FetchedAt
 
 		// This is new, put it in the database.
-		err := d.db.PutAccount(ctx, latestAcc)
+		err := d.state.DB.PutAccount(ctx, latestAcc)
 
 		if errors.Is(err, db.ErrAlreadyExists) {
 			// TODO: replace this quick fix with per-URI deref locks.
-			latestAcc, err = d.db.GetAccountByURI(ctx, latestAcc.URI)
+			latestAcc, err = d.state.DB.GetAccountByURI(ctx, latestAcc.URI)
 		}
 
 		if err != nil {
@@ -382,7 +359,7 @@ func (d *deref) enrichAccount(
 		latestAcc.Language = account.Language
 
 		// This is an existing account, update the model in the database.
-		if err := d.db.UpdateAccount(ctx, latestAcc); err != nil {
+		if err := d.state.DB.UpdateAccount(ctx, latestAcc); err != nil {
 			return nil, fmt.Errorf("enrichAccount: error updating database: %w", err)
 		}
 	}
@@ -392,25 +369,44 @@ func (d *deref) enrichAccount(
 		//
 		// The order is important here: if we tried to fetch the pinned statuses before
 		// storing the account, the process might end up calling enrichAccount again,
-		// causing us to get stuck in a loop. By calling it now, we make sure this doesn't
-		// happen!
-		if err := d.fetchRemoteAccountFeatured(ctx, requestUser, latestAcc.FeaturedCollectionURI, latestAcc.ID); err != nil {
-			log.Errorf(ctx, "error fetching featured collection for account %s: %v", uri, err)
-		}
+		// causing us to get stuck in a loop. We protect against this by calling it async.
+		go d.dereferenceAccountFeatured(context.Background(), requestUser, latestAcc)
 	}
 
 	return latestAcc, nil
 }
 
-// dereferenceAccountable calls remoteAccountID with a GET request, and tries to parse whatever
-// it finds as something that an account model can be constructed out of.
 func (d *deref) dereferenceAccountable(ctx context.Context, transport transport.Transport, remoteAccountID *url.URL) (ap.Accountable, error) {
 	b, err := transport.Dereference(ctx, remoteAccountID)
 	if err != nil {
 		return nil, fmt.Errorf("dereferenceAccountable: error deferencing %s: %w", remoteAccountID.String(), err)
 	}
 
-	return ap.ResolveAccountable(ctx, b)
+	m := make(map[string]interface{})
+	if err := json.Unmarshal(b, &m); err != nil {
+		return nil, fmt.Errorf("dereferenceAccountable: error unmarshalling bytes into json: %w", err)
+	}
+
+	t, err := streams.ToType(ctx, m)
+	if err != nil {
+		return nil, fmt.Errorf("dereferenceAccountable: error resolving json into ap vocab type: %w", err)
+	}
+
+	//nolint:forcetypeassert
+	switch t.GetTypeName() {
+	case ap.ActorApplication:
+		return t.(vocab.ActivityStreamsApplication), nil
+	case ap.ActorGroup:
+		return t.(vocab.ActivityStreamsGroup), nil
+	case ap.ActorOrganization:
+		return t.(vocab.ActivityStreamsOrganization), nil
+	case ap.ActorPerson:
+		return t.(vocab.ActivityStreamsPerson), nil
+	case ap.ActorService:
+		return t.(vocab.ActivityStreamsService), nil
+	}
+
+	return nil, newErrWrongType(fmt.Errorf("DereferenceAccountable: type name %s not supported as Accountable", t.GetTypeName()))
 }
 
 func (d *deref) fetchRemoteAccountAvatar(ctx context.Context, tsport transport.Transport, avatarURL string, accountID string) (string, error) {
@@ -531,7 +527,7 @@ func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gts
 	if len(maybeEmojiIDs) > len(maybeEmojis) {
 		maybeEmojis = make([]*gtsmodel.Emoji, 0, len(maybeEmojiIDs))
 		for _, emojiID := range maybeEmojiIDs {
-			maybeEmoji, err := d.db.GetEmojiByID(ctx, emojiID)
+			maybeEmoji, err := d.state.DB.GetEmojiByID(ctx, emojiID)
 			if err != nil {
 				return false, err
 			}
@@ -634,15 +630,17 @@ func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gts
 // fetchRemoteAccountFeatured dereferences an account's featuredCollectionURI (if not empty).
 // For each discovered status, this status will be dereferenced (if necessary) and marked as
 // pinned (if necessary). Then, old pins will be removed if they're not included in new pins.
-func (d *deref) fetchRemoteAccountFeatured(ctx context.Context, requestingUsername string, featuredCollectionURI string, accountID string) error {
-	uri, err := url.Parse(featuredCollectionURI)
+
+func (d *deref) dereferenceAccountFeatured(ctx context.Context, requestUser string, account *gtsmodel.Account) error {
+	uri, err := url.Parse(account.FeaturedCollectionURI)
 	if err != nil {
 		return err
 	}
 
-	tsport, err := d.transportController.NewTransportForUsername(ctx, requestingUsername)
+	// Pre-fetch a transport for requesting username, used by later deref procedures.
+	tsport, err := d.transportController.NewTransportForUsername(ctx, requestUser)
 	if err != nil {
-		return err
+		return fmt.Errorf("enrichAccount: couldn't create transport: %w", err)
 	}
 
 	b, err := tsport.Dereference(ctx, uri)
@@ -661,7 +659,7 @@ func (d *deref) fetchRemoteAccountFeatured(ctx context.Context, requestingUserna
 	}
 
 	if t.GetTypeName() != ap.ObjectOrderedCollection {
-		return fmt.Errorf("%s was not an OrderedCollection", featuredCollectionURI)
+		return fmt.Errorf("%s was not an OrderedCollection", uri)
 	}
 
 	collection, ok := t.(vocab.ActivityStreamsOrderedCollection)
@@ -675,7 +673,7 @@ func (d *deref) fetchRemoteAccountFeatured(ctx context.Context, requestingUserna
 	}
 
 	// Get previous pinned statuses (we'll need these later).
-	wasPinned, err := d.db.GetAccountPinnedStatuses(ctx, accountID)
+	wasPinned, err := d.state.DB.GetAccountPinnedStatuses(ctx, account.ID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return fmt.Errorf("error getting account pinned statuses: %w", err)
 	}
@@ -720,11 +718,10 @@ func (d *deref) fetchRemoteAccountFeatured(ctx context.Context, requestingUserna
 		// we still know it was *meant* to be pinned.
 		statusURIs = append(statusURIs, statusURI)
 
-		status, _, err := d.GetStatus(ctx, requestingUsername, statusURI, false, false)
+		status, _, err := d.GetStatusByURI(ctx, requestUser, statusURI)
 		if err != nil {
-			// We couldn't get the status, bummer.
-			// Just log + move on, we can try later.
-			log.Errorf(ctx, "error getting status from featured collection %s: %s", featuredCollectionURI, err)
+			// We couldn't get the status, bummer. Just log + move on, we can try later.
+			log.Errorf(ctx, "error getting status from featured collection %s: %v", statusURI, err)
 			continue
 		}
 
@@ -733,7 +730,7 @@ func (d *deref) fetchRemoteAccountFeatured(ctx context.Context, requestingUserna
 			continue
 		}
 
-		if status.AccountID != accountID {
+		if status.AccountID != account.ID {
 			// Someone's pinned a status that doesn't
 			// belong to them, this doesn't work for us.
 			continue
@@ -748,8 +745,9 @@ func (d *deref) fetchRemoteAccountFeatured(ctx context.Context, requestingUserna
 		// All conditions are met for this status to
 		// be pinned, so we can finally update it.
 		status.PinnedAt = time.Now()
-		if err := d.db.UpdateStatus(ctx, status, "pinned_at"); err != nil {
-			log.Errorf(ctx, "error updating status in featured collection %s: %s", featuredCollectionURI, err)
+		if err := d.state.DB.UpdateStatus(ctx, status, "pinned_at"); err != nil {
+			log.Errorf(ctx, "error updating status in featured collection %s: %v", status.URI, err)
+			continue
 		}
 	}
 
@@ -768,8 +766,9 @@ outerLoop:
 		// Status was pinned before, but is not included
 		// in most recent pinned uris, so unpin it now.
 		status.PinnedAt = time.Time{}
-		if err := d.db.UpdateStatus(ctx, status, "pinned_at"); err != nil {
-			return fmt.Errorf("error unpinning status: %w", err)
+		if err := d.state.DB.UpdateStatus(ctx, status, "pinned_at"); err != nil {
+			log.Errorf(ctx, "error unpinning status %s: %v", status.URI, err)
+			continue
 		}
 	}
 

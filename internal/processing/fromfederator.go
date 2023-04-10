@@ -120,7 +120,7 @@ func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federa
 		}
 
 		var err error
-		status, err = p.federator.EnrichRemoteStatus(ctx, federatorMsg.ReceivingAccount.Username, status, true)
+		status, _, err = p.federator.UpdateStatus(ctx, federatorMsg.ReceivingAccount.Username, status, false)
 		if err != nil {
 			return err
 		}
@@ -130,7 +130,7 @@ func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federa
 			return errors.New("ProcessFromFederator: status was not pinned to federatorMsg, and neither was an IRI for us to dereference")
 		}
 		var err error
-		status, _, err = p.federator.GetStatus(ctx, federatorMsg.ReceivingAccount.Username, federatorMsg.APIri, false, false)
+		status, _, err = p.federator.GetStatusByURI(ctx, federatorMsg.ReceivingAccount.Username, federatorMsg.APIri)
 		if err != nil {
 			return err
 		}

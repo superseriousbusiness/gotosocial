@@ -65,7 +65,7 @@ func (suite *DereferencerStandardTestSuite) SetupTest() {
 	suite.state.DB = suite.db
 	suite.state.Storage = suite.storage
 	media := testrig.NewTestMediaManager(&suite.state)
-	suite.dereferencer = dereferencing.NewDereferencer(suite.db, testrig.NewTestTypeConverter(suite.db), testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../testrig/media")), media)
+	suite.dereferencer = dereferencing.NewDereferencer(&suite.state, testrig.NewTestTypeConverter(suite.db), testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../testrig/media")), media)
 	testrig.StandardDBSetup(suite.db, nil)
 }
 

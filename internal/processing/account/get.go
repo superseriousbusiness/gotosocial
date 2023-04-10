@@ -79,13 +79,21 @@ func (p *Processor) getFor(ctx context.Context, requestingAccount *gtsmodel.Acco
 		}
 	}
 
-	var apiAccount *apimodel.Account
 	if blocked {
-		apiAccount, err = p.tc.AccountToAPIAccountBlocked(ctx, targetAccount)
+		apiAccount, err := p.tc.AccountToAPIAccountBlocked(ctx, targetAccount)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting account: %s", err))
 		}
 		return apiAccount, nil
+	}
+
+	if requestingAccount != nil {
+		// Ensure the account is up-to-date.
+		p.federator.UpdateAccountAsync(ctx,
+			requestingAccount.Username,
+			targetAccount,
+			false,
+		)
 	}
 
 	// last-minute check to make sure we have remote account header/avi cached
@@ -95,14 +103,13 @@ func (p *Processor) getFor(ctx context.Context, requestingAccount *gtsmodel.Acco
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error parsing url %s: %s", targetAccount.URI, err))
 		}
 
-		a, err := p.federator.GetAccountByURI(
-			gtscontext.SetFastFail(ctx), requestingAccount.Username, targetAccountURI,
-		)
+		a, err := p.federator.GetAccountByURI(gtscontext.SetFastFail(ctx), requestingAccount.Username, targetAccountURI)
 		if err == nil {
 			targetAccount = a
 		}
 	}
 
+	var apiAccount *apimodel.Account
 	if requestingAccount != nil && targetAccount.ID == requestingAccount.ID {
 		apiAccount, err = p.tc.AccountToAPIAccountSensitive(ctx, targetAccount)
 	} else {

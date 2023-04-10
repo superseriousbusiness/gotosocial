@@ -24,9 +24,9 @@ import (
 
 	"codeberg.org/gruf/go-mutexes"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
@@ -45,21 +45,31 @@ type Dereferencer interface {
 	// An updated account model is returned, but not yet inserted/updated in the database; this is the caller's responsibility.
 	RefreshAccount(ctx context.Context, requestUser string, accountable ap.Accountable, account *gtsmodel.Account) (*gtsmodel.Account, error)
 
-	GetStatus(ctx context.Context, username string, remoteStatusID *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, error)
+	// UpdateAccountAsync ...
+	UpdateAccountAsync(ctx context.Context, requestUser string, account *gtsmodel.Account, force bool)
 
-	EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status, includeParent bool) (*gtsmodel.Status, error)
+	// GetStatusByURI ...
+	GetStatusByURI(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Status, ap.Statusable, error)
+
+	// UpdateStatus ...
+	UpdateStatus(ctx context.Context, requestUser string, status *gtsmodel.Status, force bool) (*gtsmodel.Status, ap.Statusable, error)
+
+	// UpdateStatusAsync ...
+	UpdateStatusAsync(ctx context.Context, requestUser string, status *gtsmodel.Status, force bool)
+
 	GetRemoteInstance(ctx context.Context, username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
+
 	DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) error
-	DereferenceThread(ctx context.Context, username string, statusIRI *url.URL, status *gtsmodel.Status, statusable ap.Statusable)
 
 	GetRemoteMedia(ctx context.Context, requestingUsername string, accountID string, remoteURL string, ai *media.AdditionalMediaInfo) (*media.ProcessingMedia, error)
+
 	GetRemoteEmoji(ctx context.Context, requestingUsername string, remoteURL string, shortcode string, domain string, id string, emojiURI string, ai *media.AdditionalEmojiInfo, refresh bool) (*media.ProcessingEmoji, error)
 
 	Handshaking(username string, remoteAccountID *url.URL) bool
 }
 
 type deref struct {
-	db                  db.DB
+	state               *state.State
 	typeConverter       typeutils.TypeConverter
 	transportController transport.Controller
 	mediaManager        media.Manager
@@ -74,9 +84,9 @@ type deref struct {
 }
 
 // NewDereferencer returns a Dereferencer initialized with the given parameters.
-func NewDereferencer(db db.DB, typeConverter typeutils.TypeConverter, transportController transport.Controller, mediaManager media.Manager) Dereferencer {
+func NewDereferencer(state *state.State, typeConverter typeutils.TypeConverter, transportController transport.Controller, mediaManager media.Manager) Dereferencer {
 	return &deref{
-		db:                  db,
+		state:               state,
 		typeConverter:       typeConverter,
 		transportController: transportController,
 		mediaManager:        mediaManager,

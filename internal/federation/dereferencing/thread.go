@@ -43,26 +43,15 @@ const maxIter = 1000
 // multiple different hosts.
 //
 // This does not return error, as for robustness we do not want to error-out on a status because another further up / down has issues.
-func (d *deref) DereferenceThread(ctx context.Context, username string, statusIRI *url.URL, status *gtsmodel.Status, statusable ap.Statusable) {
-	l := log.WithContext(ctx).
-		WithFields(kv.Fields{
-			{"username", username},
-			{"statusIRI", status.URI},
-		}...)
-
-	// Log function start
-	l.Trace("beginning")
-
+func (d *deref) dereferenceThread(ctx context.Context, username string, statusIRI *url.URL, status *gtsmodel.Status, statusable ap.Statusable) {
 	// Ensure that ancestors have been fully dereferenced
 	if err := d.dereferenceStatusAncestors(ctx, username, status); err != nil {
-		l.Errorf("error dereferencing status ancestors: %v", err)
-		// we don't return error, we have deref'd as much as we can
+		log.Errorf(ctx, "error dereferencing status ancestors: %v", err)
 	}
 
 	// Ensure that descendants have been fully dereferenced
 	if err := d.dereferenceStatusDescendants(ctx, username, statusIRI, statusable); err != nil {
-		l.Errorf("error dereferencing status descendants: %v", err)
-		// we don't return error, we have deref'd as much as we can
+		log.Errorf(ctx, "error dereferencing status descendants: %v", err)
 	}
 }
 
@@ -103,7 +92,7 @@ func (d *deref) dereferenceStatusAncestors(ctx context.Context, username string,
 			}
 
 			// Fetch this status from the database
-			localStatus, err := d.db.GetStatusByID(ctx, id)
+			localStatus, err := d.state.DB.GetStatusByID(ctx, id)
 			if err != nil {
 				return fmt.Errorf("error fetching local status %q: %w", id, err)
 			}
@@ -115,7 +104,7 @@ func (d *deref) dereferenceStatusAncestors(ctx context.Context, username string,
 			l.Tracef("following remote status ancestors: %s", status.InReplyToURI)
 
 			// Fetch the remote status found at this IRI
-			remoteStatus, _, err := d.GetStatus(ctx, username, replyIRI, false, false)
+			remoteStatus, _, err := d.GetStatusByURI(ctx, username, replyIRI)
 			if err != nil {
 				return fmt.Errorf("error fetching remote status %q: %w", status.InReplyToURI, err)
 			}
@@ -277,10 +266,15 @@ stackLoop:
 					continue itemLoop
 				}
 
-				// Dereference the remote status and store in the database
-				_, statusable, err := d.GetStatus(ctx, username, itemIRI, true, false)
+				// Dereference the remote status and store in the database.
+				_, statusable, err := d.GetStatusByURI(ctx, username, itemIRI)
 				if err != nil {
-					l.Errorf("error dereferencing remote status %q: %s", itemIRI.String(), err)
+					l.Errorf("error dereferencing remote status %s: %v", itemIRI, err)
+					continue itemLoop
+				}
+
+				if statusable == nil {
+					// Already up-to-date.
 					continue itemLoop
 				}
 

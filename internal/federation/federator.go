@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
@@ -67,12 +68,12 @@ type federator struct {
 }
 
 // NewFederator returns a new federator
-func NewFederator(db db.DB, federatingDB federatingdb.DB, transportController transport.Controller, typeConverter typeutils.TypeConverter, mediaManager media.Manager) Federator {
-	dereferencer := dereferencing.NewDereferencer(db, typeConverter, transportController, mediaManager)
+func NewFederator(state *state.State, federatingDB federatingdb.DB, transportController transport.Controller, typeConverter typeutils.TypeConverter, mediaManager media.Manager) Federator {
+	dereferencer := dereferencing.NewDereferencer(state, typeConverter, transportController, mediaManager)
 
 	clock := &Clock{}
 	f := &federator{
-		db:                  db,
+		db:                  state.DB,
 		federatingDB:        federatingDB,
 		clock:               &Clock{},
 		typeConverter:       typeConverter,

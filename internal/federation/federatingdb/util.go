@@ -36,27 +36,23 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-func sameActor(actor1 vocab.ActivityStreamsActorProperty, actor2 vocab.ActivityStreamsActorProperty) bool {
-	if actor1 == nil || actor2 == nil {
+func sameActor(activityActor vocab.ActivityStreamsActorProperty, followActor vocab.ActivityStreamsActorProperty) bool {
+	if activityActor == nil || followActor == nil {
 		return false
 	}
-
-	for a1Iter := actor1.Begin(); a1Iter != actor1.End(); a1Iter = a1Iter.Next() {
-		for a2Iter := actor2.Begin(); a2Iter != actor2.End(); a2Iter = a2Iter.Next() {
-			if a1Iter.GetIRI() == nil {
+	for aIter := activityActor.Begin(); aIter != activityActor.End(); aIter = aIter.Next() {
+		for fIter := followActor.Begin(); fIter != followActor.End(); fIter = fIter.Next() {
+			if aIter.GetIRI() == nil {
 				return false
 			}
-
-			if a2Iter.GetIRI() == nil {
+			if fIter.GetIRI() == nil {
 				return false
 			}
-
-			if a1Iter.GetIRI().String() == a2Iter.GetIRI().String() {
+			if aIter.GetIRI().String() == fIter.GetIRI().String() {
 				return true
 			}
 		}
 	}
-
 	return false
 }
 

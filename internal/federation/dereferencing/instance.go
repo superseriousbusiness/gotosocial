@@ -26,7 +26,7 @@ import (
 )
 
 func (d *deref) GetRemoteInstance(ctx context.Context, username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error) {
-	if blocked, err := d.db.IsDomainBlocked(ctx, remoteInstanceURI.Host); blocked || err != nil {
+	if blocked, err := d.state.DB.IsDomainBlocked(ctx, remoteInstanceURI.Host); blocked || err != nil {
 		return nil, fmt.Errorf("GetRemoteInstance: domain %s is blocked", remoteInstanceURI.Host)
 	}
 

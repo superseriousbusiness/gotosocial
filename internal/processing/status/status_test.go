@@ -88,7 +88,7 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 	suite.federator = testrig.NewTestFederator(&suite.state, suite.tc, suite.mediaManager)
 
 	filter := visibility.NewFilter(&suite.state)
-	suite.status = status.New(&suite.state, suite.typeConverter, filter, processing.GetParseMentionFunc(suite.db, suite.federator))
+	suite.status = status.New(&suite.state, suite.federator, suite.typeConverter, filter, processing.GetParseMentionFunc(suite.db, suite.federator))
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")

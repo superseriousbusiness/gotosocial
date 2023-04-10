@@ -226,17 +226,8 @@ func (p *Processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 }
 
 func (p *Processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL) (*gtsmodel.Status, error) {
-	status, statusable, err := p.federator.GetStatus(gtscontext.SetFastFail(ctx), authed.Account.Username, uri, true, true)
-	if err != nil {
-		return nil, err
-	}
-
-	if !*status.Local && statusable != nil {
-		// Attempt to dereference the status thread while we are here
-		p.federator.DereferenceThread(gtscontext.SetFastFail(ctx), authed.Account.Username, uri, status, statusable)
-	}
-
-	return status, nil
+	status, _, err := p.federator.GetStatusByURI(gtscontext.SetFastFail(ctx), authed.Account.Username, uri)
+	return status, err
 }
 
 func (p *Processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Account, error) {
