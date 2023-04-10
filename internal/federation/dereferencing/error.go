@@ -19,24 +19,7 @@ package dereferencing
 
 import (
 	"fmt"
-	"net/http"
-
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
-
-// ErrDB denotes that a proper error has occurred when doing
-// a database call, as opposed to a simple db.ErrNoEntries.
-type ErrDB struct {
-	wrapped error
-}
-
-func (err *ErrDB) Error() string {
-	return fmt.Sprintf("database error during dereferencing: %v", err.wrapped)
-}
-
-func newErrDB(err error) error {
-	return &ErrDB{wrapped: err}
-}
 
 // ErrNotRetrievable denotes that an item could not be dereferenced
 // with the given parameters.
@@ -50,67 +33,4 @@ func (err *ErrNotRetrievable) Error() string {
 
 func NewErrNotRetrievable(err error) error {
 	return &ErrNotRetrievable{wrapped: err}
-}
-
-// ErrTransportError indicates that something unforeseen went wrong creating
-// a transport, or while making an http call to a remote resource with a transport.
-type ErrTransportError struct {
-	wrapped error
-}
-
-func (err *ErrTransportError) Error() string {
-	return fmt.Sprintf("transport error: %v", err.wrapped)
-}
-
-func newErrTransportError(err error) error {
-	return &ErrTransportError{wrapped: err}
-}
-
-// ErrWrongType indicates that an unexpected type was returned from a remote call;
-// for example, we were served a Person when we were looking for a statusable.
-type ErrWrongType struct {
-	wrapped error
-}
-
-func (err *ErrWrongType) Error() string {
-	return fmt.Sprintf("wrong received type: %v", err.wrapped)
-}
-
-func newErrWrongType(err error) error {
-	return &ErrWrongType{wrapped: err}
-}
-
-// ErrOther denotes some other kind of weird error, perhaps from a malformed json
-// or some other weird crapola.
-type ErrOther struct {
-	wrapped error
-}
-
-func (err *ErrOther) Error() string {
-	return fmt.Sprintf("unexpected error: %v", err.wrapped)
-}
-
-func newErrOther(err error) error {
-	return &ErrOther{wrapped: err}
-}
-
-func wrapDerefError(derefErr error, fluff string) error {
-	// Wrap with fluff.
-	err := derefErr
-	if fluff != "" {
-		err = fmt.Errorf("%s: %w", fluff, derefErr)
-	}
-
-	// Check for unretrievable HTTP status code errors.
-	if code := gtserror.StatusCode(derefErr); // nocollapse
-	code == http.StatusGone || code == http.StatusNotFound {
-		return NewErrNotRetrievable(err)
-	}
-
-	// Check for other untrievable errors.
-	if gtserror.NotFound(derefErr) {
-		return NewErrNotRetrievable(err)
-	}
-
-	return err
 }

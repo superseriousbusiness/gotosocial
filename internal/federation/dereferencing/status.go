@@ -181,7 +181,7 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 
 	// Check whether this account URI is a blocked domain / subdomain.
 	if blocked, err := d.state.DB.IsDomainBlocked(ctx, uri.Host); err != nil {
-		return nil, nil, newErrDB(fmt.Errorf("enrichStatus: error checking blocked domain: %w", err))
+		return nil, nil, fmt.Errorf("enrichStatus: error checking blocked domain: %w", err)
 	} else if blocked {
 		return nil, nil, fmt.Errorf("enrichStatus: %s is blocked", uri.Host)
 	}
