@@ -34,3 +34,17 @@ func (err *ErrNotRetrievable) Error() string {
 func NewErrNotRetrievable(err error) error {
 	return &ErrNotRetrievable{wrapped: err}
 }
+
+// ErrWrongType indicates that an unexpected type was returned from a remote call;
+// for example, we were served a Person when we were looking for a statusable.
+type ErrWrongType struct {
+	wrapped error
+}
+
+func (err *ErrWrongType) Error() string {
+	return fmt.Sprintf("wrong received type: %v", err.wrapped)
+}
+
+func newErrWrongType(err error) error {
+	return &ErrWrongType{wrapped: err}
+}
