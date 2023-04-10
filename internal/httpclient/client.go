@@ -149,8 +149,6 @@ func New(cfg Config) *Client {
 
 	// Initiate outgoing bad hosts lookup cache.
 	c.badHosts = cache.New[string, struct{}](0, 1000, 0)
-
-	// Bad hosts cache has TTL=15min freq=1min
 	c.badHosts.SetTTL(15*time.Minute, false)
 	if !c.badHosts.Start(time.Minute) {
 		log.Panic(nil, "failed to start transport controller cache")
@@ -159,8 +157,15 @@ func New(cfg Config) *Client {
 	return &c
 }
 
+// Do ...
+func (c *Client) Do(r *http.Request) (*http.Response, error) {
+	return c.DoSigned(r, func(r *http.Request) error {
+		return nil // no request signing
+	})
+}
+
 // DoSigned ...
-func (c *Client) DoSigned(pubKeyID string, r *http.Request, sign SignFunc) (*http.Response, error) {
+func (c *Client) DoSigned(r *http.Request, sign SignFunc) (*http.Response, error) {
 	const (
 		// max no. attempts.
 		maxRetries = 5
@@ -186,7 +191,6 @@ func (c *Client) DoSigned(pubKeyID string, r *http.Request, sign SignFunc) (*htt
 	// Start a log entry for this request
 	l := log.WithContext(r.Context()).
 		WithFields(kv.Fields{
-			{"pubKeyID", pubKeyID},
 			{"method", r.Method},
 			{"url", r.URL.String()},
 		}...)
@@ -213,8 +217,8 @@ func (c *Client) DoSigned(pubKeyID string, r *http.Request, sign SignFunc) (*htt
 
 		l.Infof("performing request")
 
-		// Attempt to perform request
-		rsp, err := c.client.Do(r)
+		// Perform the request.
+		rsp, err := c.do(r)
 		if err == nil { //nolint:gocritic
 
 			// TooManyRequest means we need to slow

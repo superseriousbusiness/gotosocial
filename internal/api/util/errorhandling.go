@@ -24,9 +24,9 @@ import (
 	"codeberg.org/gruf/go-kv"
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 )
 
 // TODO: add more templated html pages here for different error types
@@ -51,7 +51,7 @@ func NotFoundHandler(c *gin.Context, instanceGet func(ctx context.Context) (*api
 
 		c.HTML(http.StatusNotFound, "404.tmpl", gin.H{
 			"instance":  instance,
-			"requestID": middleware.RequestID(ctx),
+			"requestID": gtscontext.RequestID(ctx),
 		})
 	default:
 		c.JSON(http.StatusNotFound, gin.H{
@@ -76,7 +76,7 @@ func genericErrorHandler(c *gin.Context, instanceGet func(ctx context.Context) (
 			"instance":  instance,
 			"code":      errWithCode.Code(),
 			"error":     errWithCode.Safe(),
-			"requestID": middleware.RequestID(ctx),
+			"requestID": gtscontext.RequestID(ctx),
 		})
 	default:
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})

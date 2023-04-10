@@ -17,7 +17,9 @@
 
 package gtscontext
 
-import "context"
+import (
+	"context"
+)
 
 // package private context key type.
 type ctxkey uint
@@ -27,14 +29,49 @@ const (
 	_ ctxkey = iota
 	barebonesKey
 	fastFailKey
-	signerKey
+	pubKeyIDKey
+	requestIDKey
 )
 
+// RequestID returns the request ID associated with context. This value will usually
+// be set by the request ID middleware handler, either pulling an existing supplied
+// value from request headers, or generating a unique new entry. This is useful for
+// tying together log entries associated with an original incoming request.
+func RequestID(ctx context.Context) string {
+	id, _ := ctx.Value(requestIDKey).(string)
+	return id
+}
+
+// SetRequestID stores the given request ID value and returns the wrapped
+// context. See RequestID() for further information on the request ID value.
+func SetRequestID(ctx context.Context, id string) context.Context {
+	return context.WithValue(ctx, requestIDKey, id)
+}
+
+// PublicKeyID returns the public key ID (URI) associated with context. This
+// value is useful for logging situations in which a given public key URI is
+// relevant, e.g. for outgoing requests being signed by the given key.
+func PublicKeyID(ctx context.Context) string {
+	id, _ := ctx.Value(pubKeyIDKey).(string)
+	return id
+}
+
+// SetPublicKeyID stores the given public key ID value and returns the wrapped
+// context. See PublicKeyID() for further information on the public key ID value.
+func SetPublicKeyID(ctx context.Context, id string) context.Context {
+	return context.WithValue(ctx, pubKeyIDKey, id)
+}
+
+// IsFastFail returns whether the "fastfail" context key has been set. This
+// can be used to indicate to an http client, for example, that the result
+// of an outgoing request is time sensitive and so not to bother with retries.
 func IsFastfail(ctx context.Context) bool {
 	_, ok := ctx.Value(fastFailKey).(struct{})
 	return ok
 }
 
+// SetFastFail sets the "fastfail" context flag and returns this wrapped context.
+// See IsFastFail() for further information on the "fastfail" context flag.
 func SetFastFail(ctx context.Context) context.Context {
 	return context.WithValue(ctx, fastFailKey, struct{}{})
 }
@@ -48,7 +85,7 @@ func Barebones(ctx context.Context) bool {
 }
 
 // SetBarebones sets the "barebones" context flag and returns this wrapped context.
-// See Barebones() for further information on the "barebones" context flag..
+// See Barebones() for further information on the "barebones" context flag.
 func SetBarebones(ctx context.Context) context.Context {
 	return context.WithValue(ctx, barebonesKey, struct{}{})
 }

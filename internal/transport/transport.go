@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/go-fed/httpsig"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 )
@@ -85,8 +86,11 @@ func (t *transport) GET(r *http.Request) (*http.Response, error) {
 	if r.Method != http.MethodGet {
 		return nil, errors.New("must be GET request")
 	}
+	ctx := r.Context() // extract, set pubkey ID.
+	ctx = gtscontext.SetPublicKeyID(ctx, t.pubKeyID)
+	r = r.WithContext(ctx) // replace request ctx.
 	r.Header.Set("User-Agent", t.controller.userAgent)
-	return t.controller.client.DoSigned(t.pubKeyID, r, t.signGET())
+	return t.controller.client.DoSigned(r, t.signGET())
 }
 
 // POST will perform given http request using transport client, retrying on certain preset errors.
@@ -94,8 +98,11 @@ func (t *transport) POST(r *http.Request, body []byte) (*http.Response, error) {
 	if r.Method != http.MethodPost {
 		return nil, errors.New("must be POST request")
 	}
+	ctx := r.Context() // extract, set pubkey ID.
+	ctx = gtscontext.SetPublicKeyID(ctx, t.pubKeyID)
+	r = r.WithContext(ctx) // replace request ctx.
 	r.Header.Set("User-Agent", t.controller.userAgent)
-	return t.controller.client.DoSigned(t.pubKeyID, r, t.signPOST(body))
+	return t.controller.client.DoSigned(r, t.signPOST(body))
 }
 
 // signGET will safely sign an HTTP GET request.
