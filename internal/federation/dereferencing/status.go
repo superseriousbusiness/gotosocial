@@ -153,7 +153,7 @@ func (d *deref) UpdateStatusAsync(ctx context.Context, requestUser string, statu
 	// Parse the URI from status.
 	uri, err := url.Parse(status.URI)
 	if err != nil {
-		log.Errorf(ctx, "UpdateStatusAsync: invalid status uri %q: %w", status.URI, err)
+		log.Errorf(ctx, "UpdateStatusAsync: invalid status uri %q: %v", status.URI, err)
 		return
 	}
 
