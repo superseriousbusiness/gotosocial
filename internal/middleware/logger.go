@@ -72,7 +72,6 @@ func Logger() gin.HandlerFunc {
 			fields[2] = kv.Field{"method", c.Request.Method}
 			fields[3] = kv.Field{"statusCode", code}
 			fields[4] = kv.Field{"path", path}
-
 			if includeClientIP := true; includeClientIP {
 				// TODO: make this configurable.
 				//
