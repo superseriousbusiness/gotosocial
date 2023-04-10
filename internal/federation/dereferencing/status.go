@@ -42,6 +42,23 @@ const statusUpdateInterval = 2 * time.Hour
 
 // GetStatus: implements Dereferencer{}.GetStatus().
 func (d *deref) GetStatusByURI(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Status, ap.Statusable, error) {
+	// Fetch and dereference status if necessary.
+	status, apubStatus, err := d.getStatus(ctx, requestUser, uri)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if apubStatus != nil {
+		// This status was updated, enqueue re-dereferencing the whole thread.
+		d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
+			d.dereferenceThread(ctx, requestUser, uri, status, apubStatus)
+		})
+	}
+
+	return status, apubStatus, nil
+}
+
+func (d *deref) getStatus(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Status, ap.Statusable, error) {
 	var (
 		status *gtsmodel.Status
 		uriStr = uri.String()
@@ -69,17 +86,27 @@ func (d *deref) GetStatusByURI(ctx context.Context, requestUser string, uri *url
 		}
 
 		// Create and pass-through a new bare-bones model for deref.
-		return d.UpdateStatus(ctx, requestUser, &gtsmodel.Status{
+		return d.enrichStatus(ctx, requestUser, uri, &gtsmodel.Status{
 			Local: func() *bool { var false bool; return &false }(),
 			URI:   uriStr,
-		}, true)
+		})
+	}
+
+	if *status.Local {
+		// Can't update local statuses.
+		return status, nil, nil
+	}
+
+	// If this status was updated recently (last interval), we return as-is.
+	if next := status.FetchedAt.Add(statusUpdateInterval); time.Now().Before(next) {
+		return status, nil, nil
 	}
 
 	// Try to update + deref existing status model.
-	enriched, statusable, err := d.UpdateStatus(ctx,
+	enriched, statusable, err := d.enrichStatus(ctx,
 		requestUser,
+		uri,
 		status,
-		false,
 	)
 	if err != nil {
 		log.Errorf(ctx, "error enriching remote status: %v", err)
@@ -120,7 +147,6 @@ func (d *deref) UpdateStatus(ctx context.Context, requestUser string, status *gt
 		requestUser,
 		uri,
 		status,
-		force,
 	)
 	if err != nil {
 		return nil, nil, err
@@ -159,7 +185,7 @@ func (d *deref) UpdateStatusAsync(ctx context.Context, requestUser string, statu
 
 	// Enqueue a worker function to re-fetch this status async.
 	d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
-		_, apubStatus, err := d.enrichStatus(ctx, requestUser, uri, status, force)
+		_, apubStatus, err := d.enrichStatus(ctx, requestUser, uri, status)
 		if err != nil {
 			log.Errorf(ctx, "error enriching remote status: %v", err)
 			return
@@ -172,7 +198,7 @@ func (d *deref) UpdateStatusAsync(ctx context.Context, requestUser string, statu
 	})
 }
 
-func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.URL, status *gtsmodel.Status, force bool) (*gtsmodel.Status, ap.Statusable, error) {
+func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.URL, status *gtsmodel.Status) (*gtsmodel.Status, ap.Statusable, error) {
 	// Pre-fetch a transport for requesting username, used by later dereferencing.
 	tsport, err := d.transportController.NewTransportForUsername(ctx, requestUser)
 	if err != nil {
