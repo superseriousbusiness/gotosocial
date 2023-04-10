@@ -73,10 +73,9 @@ func Logger() gin.HandlerFunc {
 			fields[3] = kv.Field{"statusCode", code}
 			fields[4] = kv.Field{"path", path}
 
-			// TODO: make this configurable.
-			const includeClientIP = true
-
-			if includeClientIP {
+			if includeClientIP := true; includeClientIP {
+				// TODO: make this configurable.
+				//
 				// Include clientIP if enabled.
 				fields = append(fields, kv.Field{
 					"clientIP", c.ClientIP(),
