@@ -78,7 +78,7 @@ func (p *Processor) timelineAndNotifyStatusForFollowers(ctx context.Context, sta
 	var (
 		errs  = make(gtserror.MultiError, 0, len(follows))
 		boost = status.BoostOfID != ""
-		reply = status.InReplyToID != "" || status.InReplyToURI != ""
+		reply = status.InReplyToURI != ""
 	)
 
 	for _, follow := range follows {
