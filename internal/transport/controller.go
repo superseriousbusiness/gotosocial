@@ -78,7 +78,7 @@ func NewController(state *state.State, federatingDB federatingdb.DB, clock pub.C
 		client:    client,
 		trspCache: cache.New[string, *transport](0, 100, 0),
 		userAgent: fmt.Sprintf("%s (+%s://%s) gotosocial/%s", applicationName, proto, host, version),
-		senders:   2 * runtime.GOMAXPROCS(0),
+		senders:   runtime.GOMAXPROCS(0), // on batch delivery, only ever send GOMAXPROCS at a time.
 	}
 
 	return c
