@@ -28,6 +28,7 @@ type Lookup struct {
 // cache would be in wrapping a database, allowing caching of sql.ErrNoRows.
 type Cache[Value any] struct {
 	cache   ttl.Cache[int64, result[Value]] // underlying result cache
+	invalid func(Value)                     // store unwrapped invalidate callback.
 	lookups structKeys                      // pre-determined struct lookups
 	ignore  func(error) bool                // determines cacheable errors
 	copy    func(Value) Value               // copies a Value type
@@ -114,7 +115,8 @@ func (c *Cache[Value]) SetInvalidateCallback(hook func(Value)) {
 	if hook == nil {
 		// Ensure non-nil hook.
 		hook = func(Value) {}
-	}
+	} // store hook.
+	c.invalid = hook
 	c.cache.SetInvalidateCallback(func(item *ttl.Entry[int64, result[Value]]) {
 		for _, key := range item.Value.Keys {
 			// Delete key->pkey lookup
@@ -240,6 +242,9 @@ func (c *Cache[Value]) Store(value Value, store func() error) error {
 
 	// Cache result
 	c.store(result)
+
+	// Call invalidate.
+	c.invalid(value)
 
 	return nil
 }
