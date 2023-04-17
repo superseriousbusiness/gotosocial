@@ -2,7 +2,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/mvdan.cc/xurls/v2.svg)](https://pkg.go.dev/mvdan.cc/xurls/v2)
 
-Extract urls from text using regular expressions. Requires Go 1.16 or later.
+Extract urls from text using regular expressions. Requires Go 1.19 or later.
 
 ```go
 import "mvdan.cc/xurls/v2"
