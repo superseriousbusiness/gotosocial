@@ -19,10 +19,10 @@ type Cache[Key comparable, Value any] struct {
 	// TTL is the cache item TTL.
 	TTL time.Duration
 
-	// Evict is the hook that is called when an item is evicted from the cache, includes manual delete.
+	// Evict is the hook that is called when an item is evicted from the cache.
 	Evict func(*Entry[Key, Value])
 
-	// Invalid is the hook that is called when an item's data in the cache is invalidated.
+	// Invalid is the hook that is called when an item's data in the cache is invalidated, includes Add/Set.
 	Invalid func(*Entry[Key, Value])
 
 	// Cache is the underlying hashmap used for this cache.
@@ -175,7 +175,7 @@ func (c *Cache[K, V]) SetTTL(ttl time.Duration, update bool) {
 
 	if update {
 		// Update existing cache entries with new expiry time
-		c.Cache.Range(0, c.Cache.Len(), func(i int, key K, item *Entry[K, V]) {
+		c.Cache.Range(0, c.Cache.Len(), func(i int, _ K, item *Entry[K, V]) {
 			item.Expiry = item.Expiry.Add(diff)
 		})
 	}
@@ -205,13 +205,14 @@ func (c *Cache[K, V]) Add(key K, value V) bool {
 	c.Lock()
 	defer c.Unlock()
 
-	// If already cached, return
-	if c.Cache.Has(key) {
+	// Check if already exists
+	item, ok := c.Cache.Get(key)
+	if ok {
 		return false
 	}
 
 	// Alloc new item
-	item := c.alloc()
+	item = c.alloc()
 	item.Key = key
 	item.Value = value
 	item.Expiry = time.Now().Add(c.TTL)
@@ -228,6 +229,11 @@ func (c *Cache[K, V]) Add(key K, value V) bool {
 	// Place new item in the map with hook
 	c.Cache.SetWithHook(key, item, hook)
 
+	if c.Invalid != nil {
+		// invalidate old
+		c.Invalid(item)
+	}
+
 	return true
 }
 
@@ -240,16 +246,27 @@ func (c *Cache[K, V]) Set(key K, value V) {
 	// Check if already exists
 	item, ok := c.Cache.Get(key)
 
-	if ok {
-		if c.Invalid != nil {
-			// Invalidate existing
-			c.Invalid(item)
-		}
-	} else {
+	if !ok {
+		var hook func(K, *Entry[K, V])
+
 		// Allocate new item
 		item = c.alloc()
 		item.Key = key
-		c.Cache.Set(key, item)
+
+		if c.Evict != nil {
+			// Pass evicted entry to user hook
+			hook = func(_ K, item *Entry[K, V]) {
+				c.Evict(item)
+			}
+		}
+
+		// Place new item in the map with hook
+		c.Cache.SetWithHook(key, item, hook)
+	}
+
+	if c.Invalid != nil {
+		// invalidate old
+		c.Invalid(item)
 	}
 
 	// Update the item value + expiry
@@ -270,7 +287,7 @@ func (c *Cache[K, V]) CAS(key K, old V, new V, cmp func(V, V) bool) bool {
 	}
 
 	if c.Invalid != nil {
-		// Invalidate item
+		// invalidate old
 		c.Invalid(item)
 	}
 
