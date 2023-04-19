@@ -1,6 +1,6 @@
 # Frequently Asked Questions
 
-- **Where's the user interface?** GoToSocial is just a bare server for the most part and is designed to be used thru external applications. [Pinafore](https://pinafore.social) and [Tusky](https://tusky.app/) are the best-supported, but anything that supports the Mastodon API should work, other than the features GoToSocial doesn't yet have. Permalinks and profile pages are served directly thru GoToSocial as well as the admin panel, but most interaction goes thru the apps.
+- **Where's the user interface?** GoToSocial is just a bare server for the most part and is designed to be used thru external applications. [Pinafore](https://pinafore.social) and [Tusky](https://tusky.app/) are the best-supported, but anything that supports the Mastodon API should work, other than the features GoToSocial doesn't yet have. Permalinks and profile pages are served directly thru GoToSocial as well as the settings panel, but most interaction goes thru the apps.
 
 - **Why aren't my posts showing up on my profile page?** Unlike Mastodon, the default post visibility is Unlisted. If you want something to be visible on your profile page, the post must have Public visibility.
 
@@ -17,13 +17,11 @@
 - **How can I sign up for a server?** Right now the only way to create an account is by the server's admin to run a command directly on the server. A web-based signup flow is in the roadmap but not implemented yet.
 
 - **Why's it still in alpha?** Take a look at the [list of open bugs](https://github.com/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug) and the [roadmap](https://github.com/superseriousbusiness/gotosocial/blob/main/ROADMAP.md) for a more detailed rundown, but the main missing features at the time of this writing are:
-    * reporting posts to admins
     * muting conversations
     * backfill of posts
     * web-based signup
     * profile metadata fields
     * lists of users
-    * pinning posts to your profile
     * polls
     * scheduling posts
     * account migration
