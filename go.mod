@@ -62,7 +62,7 @@ require (
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.21.1
-	mvdan.cc/xurls/v2 v2.4.0
+	mvdan.cc/xurls/v2 v2.5.0
 )
 
 require (
@@ -148,7 +148,7 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
-	golang.org/x/mod v0.8.0 // indirect
+	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/sys v0.7.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
