@@ -74,6 +74,7 @@ func ResolveStatusable(ctx context.Context, b []byte) (Statusable, error) {
 	}
 
 	NormalizeStatusableContent(statusable, rawStatusable)
+	NormalizeStatusableAttachments(statusable, rawStatusable)
 	return statusable, nil
 }
 
@@ -114,5 +115,6 @@ func ResolveAccountable(ctx context.Context, b []byte) (Accountable, error) {
 		return nil, newErrWrongType(err)
 	}
 
+	NormalizeAccountableSummary(accountable, rawAccountable)
 	return accountable, nil
 }

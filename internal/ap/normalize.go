@@ -114,3 +114,25 @@ func NormalizeStatusableContent(statusable Statusable, rawStatusable map[string]
 	contentProp.AppendXMLSchemaString(rawContent)
 	statusable.SetActivityStreamsContent(contentProp)
 }
+
+func NormalizeStatusableAttachments(statusable Statusable, rawStatusable map[string]interface{}) {
+	attachmentProperty := statusable.GetActivityStreamsAttachment()
+	if attachmentProperty.Len() == 0 {
+		// No attachments.
+		return
+	}
+
+	
+
+	for iter := attachmentProperty.Begin(); iter != attachmentProperty.End(); iter = iter.Next() {
+
+	}
+}
+
+func NormalizeAccountableSummary(accountable Accountable, rawAccountable map[string]interface{}) {
+
+}
+
+func NormalizeAttachmentableName(attachmentable Attachmentable, rawAttachmentable map[string]interface{}) {
+
+}
