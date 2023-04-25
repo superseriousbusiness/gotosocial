@@ -33,23 +33,23 @@ type NormalizeTestSuite struct {
 	suite.Suite
 }
 
-func (suite *NormalizeTestSuite) jsonToNote(rawJson string) (vocab.ActivityStreamsNote, map[string]interface{}) {
-	var rawNote map[string]interface{}
-	err := json.Unmarshal([]byte(rawJson), &rawNote)
+func (suite *NormalizeTestSuite) jsonToType(rawJson string) (vocab.Type, map[string]interface{}) {
+	var raw map[string]interface{}
+	err := json.Unmarshal([]byte(rawJson), &raw)
 	if err != nil {
 		panic(err)
 	}
 
-	t, err := streams.ToType(context.Background(), rawNote)
+	t, err := streams.ToType(context.Background(), raw)
 	if err != nil {
 		panic(err)
 	}
 
-	return t.(vocab.ActivityStreamsNote), rawNote
+	return t, raw
 }
 
-func (suite *NormalizeTestSuite) noteToJson(note vocab.ActivityStreamsNote) string {
-	m, err := streams.Serialize(note)
+func (suite *NormalizeTestSuite) typeToJson(t vocab.Type) string {
+	m, err := streams.Serialize(t)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -62,8 +62,8 @@ func (suite *NormalizeTestSuite) noteToJson(note vocab.ActivityStreamsNote) stri
 	return string(b)
 }
 
-func (suite *NormalizeTestSuite) GetStatusable() (vocab.ActivityStreamsNote, map[string]interface{}) {
-	return suite.jsonToNote(`{
+func (suite *NormalizeTestSuite) getStatusable() (vocab.ActivityStreamsNote, map[string]interface{}) {
+	t, raw := suite.jsonToType(`{
 		"@context": [
 		  "https://www.w3.org/ns/activitystreams",
 		  "https://example.org/schemas/litepub-0.1.jsonld",
@@ -104,10 +104,12 @@ func (suite *NormalizeTestSuite) GetStatusable() (vocab.ActivityStreamsNote, map
 		],
 		"type": "Note"
 	  }`)
+
+	return t.(vocab.ActivityStreamsNote), raw
 }
 
-func (suite *NormalizeTestSuite) GetStatusableWithOneAttachment() (vocab.ActivityStreamsNote, map[string]interface{}) {
-	return suite.jsonToNote(`{
+func (suite *NormalizeTestSuite) getStatusableWithOneAttachment() (vocab.ActivityStreamsNote, map[string]interface{}) {
+	t, raw := suite.jsonToType(`{
 		"@context": "https://www.w3.org/ns/activitystreams",
 		"id": "https://example.org/users/hourlycatbot/statuses/01GYW48H311PZ78C5G856MGJJJ",
 		"type": "Note",
@@ -123,10 +125,12 @@ func (suite *NormalizeTestSuite) GetStatusableWithOneAttachment() (vocab.Activit
 		  }
 		]
 	  }`)
+
+	return t.(vocab.ActivityStreamsNote), raw
 }
 
-func (suite *NormalizeTestSuite) GetStatusableWithOneAttachmentEmbedded() (vocab.ActivityStreamsNote, map[string]interface{}) {
-	return suite.jsonToNote(`{
+func (suite *NormalizeTestSuite) getStatusableWithOneAttachmentEmbedded() (vocab.ActivityStreamsNote, map[string]interface{}) {
+	t, raw := suite.jsonToType(`{
 		"@context": "https://www.w3.org/ns/activitystreams",
 		"id": "https://example.org/users/hourlycatbot/statuses/01GYW48H311PZ78C5G856MGJJJ",
 		"type": "Note",
@@ -140,10 +144,12 @@ func (suite *NormalizeTestSuite) GetStatusableWithOneAttachmentEmbedded() (vocab
 		  "name": "DESCRIPTION: here's <<a>> picture of a #cat, it's cute! here's some special characters: \"\" \\ weeee''''"
 		}
 	  }`)
+
+	return t.(vocab.ActivityStreamsNote), raw
 }
 
-func (suite *NormalizeTestSuite) GetStatusableWithMultipleAttachments() (vocab.ActivityStreamsNote, map[string]interface{}) {
-	return suite.jsonToNote(`{
+func (suite *NormalizeTestSuite) getStatusableWithMultipleAttachments() (vocab.ActivityStreamsNote, map[string]interface{}) {
+	t, raw := suite.jsonToType(`{
 		"@context": "https://www.w3.org/ns/activitystreams",
 		"id": "https://example.org/users/hourlycatbot/statuses/01GYW48H311PZ78C5G856MGJJJ",
 		"type": "Note",
@@ -176,10 +182,23 @@ func (suite *NormalizeTestSuite) GetStatusableWithMultipleAttachments() (vocab.A
 		  }
 		]
 	  }`)
+
+	return t.(vocab.ActivityStreamsNote), raw
+}
+
+func (suite *NormalizeTestSuite) getAccountable() (vocab.ActivityStreamsPerson, map[string]interface{}) {
+	t, raw := suite.jsonToType(`{
+		"@context": "https://www.w3.org/ns/activitystreams",
+		"id": "https://example.org/users/someone",
+		"summary": "about: I'm a #Barbie #girl in a #Barbie #world\nLife in plastic, it's fantastic\nYou can brush my hair, undress me everywhere\nImagination, life is your creation\nI'm a blonde bimbo girl\nIn a fantasy world\nDress me up, make it tight\nI'm your dolly\nYou're my doll, rock and roll\nFeel the glamour in pink\nKiss me here, touch me there\nHanky panky",
+		"type": "Person"
+	  }`)
+
+	return t.(vocab.ActivityStreamsPerson), raw
 }
 
 func (suite *NormalizeTestSuite) TestNormalizeActivityObject() {
-	note, rawNote := suite.GetStatusable()
+	note, rawNote := suite.getStatusable()
 	suite.Equal(`update: As of this morning there are now more than 7 million Mastodon users, most from the <a class="hashtag" data-tag="twittermigration" href="https://example.org/tag/twittermigration" rel="tag ugc">#TwitterMigration%3C/a%3E.%3Cbr%3E%3Cbr%3EIn%20fact,%20100,000%20new%20accounts%20have%20been%20created%20since%20last%20night.%3Cbr%3E%3Cbr%3ESince%20last%20night&%2339;s%20spike%208,000-12,000%20new%20accounts%20are%20being%20created%20every%20hour.%3Cbr%3E%3Cbr%3EYesterday,%20I%20estimated%20that%20Mastodon%20would%20have%208%20million%20users%20by%20the%20end%20of%20the%20week.%20That%20might%20happen%20a%20lot%20sooner%20if%20this%20trend%20continues.`, ap.ExtractContent(note))
 
 	create := testrig.WrapAPNoteInCreate(
@@ -194,7 +213,7 @@ func (suite *NormalizeTestSuite) TestNormalizeActivityObject() {
 }
 
 func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsOneAttachment() {
-	note, rawNote := suite.GetStatusableWithOneAttachment()
+	note, rawNote := suite.getStatusableWithOneAttachment()
 
 	// Without normalization, the 'name' field of
 	// the attachment(s) should be all jacked up.
@@ -211,7 +230,7 @@ func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsOneAttachment
   "to": "https://www.w3.org/ns/activitystreams#Public",
   "type": "Note",
   "url": "https://example.org/@hourlycatbot/01GYW48H311PZ78C5G856MGJJJ"
-}`, suite.noteToJson(note))
+}`, suite.typeToJson(note))
 
 	// Normalize it!
 	ap.NormalizeStatusableAttachments(note, rawNote)
@@ -231,11 +250,11 @@ func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsOneAttachment
   "to": "https://www.w3.org/ns/activitystreams#Public",
   "type": "Note",
   "url": "https://example.org/@hourlycatbot/01GYW48H311PZ78C5G856MGJJJ"
-}`, suite.noteToJson(note))
+}`, suite.typeToJson(note))
 }
 
 func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsOneAttachmentEmbedded() {
-	note, rawNote := suite.GetStatusableWithOneAttachmentEmbedded()
+	note, rawNote := suite.getStatusableWithOneAttachmentEmbedded()
 
 	// Without normalization, the 'name' field of
 	// the attachment(s) should be all jacked up.
@@ -252,7 +271,7 @@ func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsOneAttachment
   "to": "https://www.w3.org/ns/activitystreams#Public",
   "type": "Note",
   "url": "https://example.org/@hourlycatbot/01GYW48H311PZ78C5G856MGJJJ"
-}`, suite.noteToJson(note))
+}`, suite.typeToJson(note))
 
 	// Normalize it!
 	ap.NormalizeStatusableAttachments(note, rawNote)
@@ -272,11 +291,11 @@ func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsOneAttachment
   "to": "https://www.w3.org/ns/activitystreams#Public",
   "type": "Note",
   "url": "https://example.org/@hourlycatbot/01GYW48H311PZ78C5G856MGJJJ"
-}`, suite.noteToJson(note))
+}`, suite.typeToJson(note))
 }
 
 func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsMultipleAttachments() {
-	note, rawNote := suite.GetStatusableWithMultipleAttachments()
+	note, rawNote := suite.getStatusableWithMultipleAttachments()
 
 	// Without normalization, the 'name' field of
 	// the attachment(s) should be all jacked up.
@@ -312,7 +331,7 @@ func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsMultipleAttac
   "to": "https://www.w3.org/ns/activitystreams#Public",
   "type": "Note",
   "url": "https://example.org/@hourlycatbot/01GYW48H311PZ78C5G856MGJJJ"
-}`, suite.noteToJson(note))
+}`, suite.typeToJson(note))
 
 	// Normalize it!
 	ap.NormalizeStatusableAttachments(note, rawNote)
@@ -351,7 +370,26 @@ func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsMultipleAttac
   "to": "https://www.w3.org/ns/activitystreams#Public",
   "type": "Note",
   "url": "https://example.org/@hourlycatbot/01GYW48H311PZ78C5G856MGJJJ"
-}`, suite.noteToJson(note))
+}`, suite.typeToJson(note))
+}
+
+func (suite *NormalizeTestSuite) TestNormalizeAccountable() {
+	accountable, rawAccount := suite.getAccountable()
+	suite.Equal(`about: I'm a #Barbie%20%23girl%20in%20a%20%23Barbie%20%23world%0ALife%20in%20plastic,%20it%27s%20fantastic%0AYou%20can%20brush%20my%20hair,%20undress%20me%20everywhere%0AImagination,%20life%20is%20your%20creation%0AI%27m%20a%20blonde%20bimbo%20girl%0AIn%20a%20fantasy%20world%0ADress%20me%20up,%20make%20it%20tight%0AI%27m%20your%20dolly%0AYou%27re%20my%20doll,%20rock%20and%20roll%0AFeel%20the%20glamour%20in%20pink%0AKiss%20me%20here,%20touch%20me%20there%0AHanky%20panky`, ap.ExtractSummary(accountable))
+
+	ap.NormalizeAccountableSummary(accountable, rawAccount)
+	suite.Equal(`about: I'm a #Barbie #girl in a #Barbie #world
+Life in plastic, it's fantastic
+You can brush my hair, undress me everywhere
+Imagination, life is your creation
+I'm a blonde bimbo girl
+In a fantasy world
+Dress me up, make it tight
+I'm your dolly
+You're my doll, rock and roll
+Feel the glamour in pink
+Kiss me here, touch me there
+Hanky panky`, ap.ExtractSummary(accountable))
 }
 
 func TestNormalizeTestSuite(t *testing.T) {

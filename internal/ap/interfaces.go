@@ -30,6 +30,7 @@ type Accountable interface {
 	WithName
 	WithImage
 	WithSummary
+	WithSetSummary
 	WithDiscoverable
 	WithURL
 	WithPublicKey
@@ -207,6 +208,11 @@ type WithImage interface {
 // WithSummary represents an activity with ActivityStreamsSummaryProperty
 type WithSummary interface {
 	GetActivityStreamsSummary() vocab.ActivityStreamsSummaryProperty
+}
+
+// WithSetSummary represents an activity that can have summary set on it.
+type WithSetSummary interface {
+	SetActivityStreamsSummary(vocab.ActivityStreamsSummaryProperty)
 }
 
 // WithDiscoverable represents an activity with TootDiscoverableProperty

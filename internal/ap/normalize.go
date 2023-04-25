@@ -116,6 +116,12 @@ func NormalizeStatusableContent(statusable Statusable, rawStatusable map[string]
 	statusable.SetActivityStreamsContent(contentProp)
 }
 
+// NormalizeStatusableAttachments normalizes all attachments (if any) of the given
+// statusable, replacing the 'name' (aka content warning) field of each attachment
+// with the raw 'name' value from the rawStatusable JSON.
+//
+// noop if there are no attachments; no replacement done for an attachment if it's
+// not in a format we can understand.
 func NormalizeStatusableAttachments(statusable Statusable, rawStatusable map[string]interface{}) {
 	rawAttachments, ok := rawStatusable["attachment"]
 	if !ok {
@@ -130,14 +136,8 @@ func NormalizeStatusableAttachments(statusable Statusable, rawStatusable map[str
 	}
 
 	attachmentProperty := statusable.GetActivityStreamsAttachment()
-	if attachmentProperty == nil {
+	if attachmentProperty == nil || attachmentProperty.Len() == 0 {
 		// Nothing to do here.
-		return
-	}
-
-	attachmentPropertyLen := attachmentProperty.Len()
-	if attachmentPropertyLen == 0 {
-		// Attachments empty.
 		return
 	}
 
@@ -184,5 +184,21 @@ func NormalizeStatusableAttachments(statusable Statusable, rawStatusable map[str
 }
 
 func NormalizeAccountableSummary(accountable Accountable, rawAccountable map[string]interface{}) {
+	summary, ok := rawAccountable["summary"]
+	if !ok {
+		// No summary in rawAccountable.
+		return
+	}
 
+	rawSummary, ok := summary.(string)
+	if !ok {
+		// Not interested in non-string summary.
+		return
+	}
+
+	// Set normalized summary property from the raw string; this
+	// will replace any existing summary property on the accountable.
+	summaryProp := streams.NewActivityStreamsSummaryProperty()
+	summaryProp.AppendXMLSchemaString(rawSummary)
+	accountable.SetActivityStreamsSummary(summaryProp)
 }
