@@ -73,6 +73,7 @@ type Attachmentable interface {
 	WithMediaType
 	WithURL
 	WithName
+	WithSetName
 	WithBlurhash
 }
 
@@ -191,6 +192,11 @@ type WithIcon interface {
 // WithName represents an activity with ActivityStreamsNameProperty
 type WithName interface {
 	GetActivityStreamsName() vocab.ActivityStreamsNameProperty
+}
+
+// WithSetName represents an activity with a settable ActivityStreamsNameProperty
+type WithSetName interface {
+	SetActivityStreamsName(vocab.ActivityStreamsNameProperty)
 }
 
 // WithImage represents an activity with ActivityStreamsImageProperty

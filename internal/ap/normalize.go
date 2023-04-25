@@ -86,6 +86,7 @@ func NormalizeActivityObject(activity pub.Activity, rawActivity map[string]inter
 
 	// Pass in the statusable and its raw JSON representation.
 	NormalizeStatusableContent(statusable, rawStatusable)
+	NormalizeStatusableAttachments(statusable, rawStatusable)
 }
 
 // NormalizeStatusableContent replaces the Content of the given statusable
@@ -116,23 +117,72 @@ func NormalizeStatusableContent(statusable Statusable, rawStatusable map[string]
 }
 
 func NormalizeStatusableAttachments(statusable Statusable, rawStatusable map[string]interface{}) {
-	attachmentProperty := statusable.GetActivityStreamsAttachment()
-	if attachmentProperty.Len() == 0 {
-		// No attachments.
+	rawAttachments, ok := rawStatusable["attachment"]
+	if !ok {
+		// No attachments in rawStatusable.
 		return
 	}
 
-	
+	// Convert to slice if not already.
+	var attachments []interface{}
+	if attachments, ok = rawAttachments.([]interface{}); !ok {
+		attachments = []interface{}{rawAttachments}
+	}
+
+	attachmentProperty := statusable.GetActivityStreamsAttachment()
+	if attachmentProperty == nil {
+		// Nothing to do here.
+		return
+	}
+
+	attachmentPropertyLen := attachmentProperty.Len()
+	if attachmentPropertyLen == 0 {
+		// Attachments empty.
+		return
+	}
+
+	// Keep an index of where we are in the iter;
+	// we need this so we can modify the correct
+	// attachment, in case of multiples.
+	i := -1
 
 	for iter := attachmentProperty.Begin(); iter != attachmentProperty.End(); iter = iter.Next() {
+		i++
 
+		t := iter.GetType()
+		if t == nil {
+			continue
+		}
+
+		attachmentable, ok := t.(Attachmentable)
+		if !ok {
+			continue
+		}
+
+		rawAttachment, ok := attachments[i].(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		rawAttachmentName, ok := rawAttachment["name"]
+		if !ok {
+			continue
+		}
+
+		attachmentNameString, ok := rawAttachmentName.(string)
+		if !ok {
+			continue
+		}
+
+		// We now have the attachmentable and we have
+		// the name string as it came in via the json,
+		// so we can proceed to normalize.
+		nameProp := streams.NewActivityStreamsNameProperty()
+		nameProp.AppendXMLSchemaString(attachmentNameString)
+		attachmentable.SetActivityStreamsName(nameProp)
 	}
 }
 
 func NormalizeAccountableSummary(accountable Accountable, rawAccountable map[string]interface{}) {
-
-}
-
-func NormalizeAttachmentableName(attachmentable Attachmentable, rawAttachmentable map[string]interface{}) {
 
 }

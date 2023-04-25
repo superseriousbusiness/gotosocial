@@ -33,8 +33,37 @@ type NormalizeTestSuite struct {
 	suite.Suite
 }
 
+func (suite *NormalizeTestSuite) jsonToNote(rawJson string) (vocab.ActivityStreamsNote, map[string]interface{}) {
+	var rawNote map[string]interface{}
+	err := json.Unmarshal([]byte(rawJson), &rawNote)
+	if err != nil {
+		panic(err)
+	}
+
+	t, err := streams.ToType(context.Background(), rawNote)
+	if err != nil {
+		panic(err)
+	}
+
+	return t.(vocab.ActivityStreamsNote), rawNote
+}
+
+func (suite *NormalizeTestSuite) noteToJson(note vocab.ActivityStreamsNote) string {
+	m, err := streams.Serialize(note)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	b, err := json.MarshalIndent(m, "", "  ")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	return string(b)
+}
+
 func (suite *NormalizeTestSuite) GetStatusable() (vocab.ActivityStreamsNote, map[string]interface{}) {
-	rawJson := `{
+	return suite.jsonToNote(`{
 		"@context": [
 		  "https://www.w3.org/ns/activitystreams",
 		  "https://example.org/schemas/litepub-0.1.jsonld",
@@ -74,20 +103,79 @@ func (suite *NormalizeTestSuite) GetStatusable() (vocab.ActivityStreamsNote, map
 		  "https://www.w3.org/ns/activitystreams#Public"
 		],
 		"type": "Note"
-	  }`
+	  }`)
+}
 
-	var rawNote map[string]interface{}
-	err := json.Unmarshal([]byte(rawJson), &rawNote)
-	if err != nil {
-		panic(err)
-	}
+func (suite *NormalizeTestSuite) GetStatusableWithOneAttachment() (vocab.ActivityStreamsNote, map[string]interface{}) {
+	return suite.jsonToNote(`{
+		"@context": "https://www.w3.org/ns/activitystreams",
+		"id": "https://example.org/users/hourlycatbot/statuses/01GYW48H311PZ78C5G856MGJJJ",
+		"type": "Note",
+		"url": "https://example.org/@hourlycatbot/01GYW48H311PZ78C5G856MGJJJ",
+		"attributedTo": "https://example.org/users/hourlycatbot",
+		"to": "https://www.w3.org/ns/activitystreams#Public",
+		"attachment": [
+		  {
+			"type": "Document",
+			"mediaType": "image/jpeg",
+			"url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg",
+			"name": "DESCRIPTION: here's <<a>> picture of a #cat, it's cute! here's some special characters: \"\" \\ weeee''''"
+		  }
+		]
+	  }`)
+}
 
-	t, err := streams.ToType(context.Background(), rawNote)
-	if err != nil {
-		panic(err)
-	}
+func (suite *NormalizeTestSuite) GetStatusableWithOneAttachmentEmbedded() (vocab.ActivityStreamsNote, map[string]interface{}) {
+	return suite.jsonToNote(`{
+		"@context": "https://www.w3.org/ns/activitystreams",
+		"id": "https://example.org/users/hourlycatbot/statuses/01GYW48H311PZ78C5G856MGJJJ",
+		"type": "Note",
+		"url": "https://example.org/@hourlycatbot/01GYW48H311PZ78C5G856MGJJJ",
+		"attributedTo": "https://example.org/users/hourlycatbot",
+		"to": "https://www.w3.org/ns/activitystreams#Public",
+		"attachment": {
+		  "type": "Document",
+		  "mediaType": "image/jpeg",
+		  "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg",
+		  "name": "DESCRIPTION: here's <<a>> picture of a #cat, it's cute! here's some special characters: \"\" \\ weeee''''"
+		}
+	  }`)
+}
 
-	return t.(vocab.ActivityStreamsNote), rawNote
+func (suite *NormalizeTestSuite) GetStatusableWithMultipleAttachments() (vocab.ActivityStreamsNote, map[string]interface{}) {
+	return suite.jsonToNote(`{
+		"@context": "https://www.w3.org/ns/activitystreams",
+		"id": "https://example.org/users/hourlycatbot/statuses/01GYW48H311PZ78C5G856MGJJJ",
+		"type": "Note",
+		"url": "https://example.org/@hourlycatbot/01GYW48H311PZ78C5G856MGJJJ",
+		"attributedTo": "https://example.org/users/hourlycatbot",
+		"to": "https://www.w3.org/ns/activitystreams#Public",
+		"attachment": [
+		  {
+			"type": "Document",
+			"mediaType": "image/jpeg",
+			"url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg",
+			"name": "DESCRIPTION: here's <<a>> picture of a #cat, it's cute! here's some special characters: \"\" \\ weeee''''"
+		  },
+		  {
+			"type": "Document",
+			"mediaType": "image/jpeg",
+			"url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg",
+			"name": "hello: here's another #picture #of #a #cat, hope you like it!!!!!!!"
+		  },
+		  {
+			"type": "Document",
+			"mediaType": "image/jpeg",
+			"url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
+		  },
+		  {
+			"type": "Document",
+			"mediaType": "image/jpeg",
+			"url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg",
+			"name": "danger: #cute but will claw you :("
+		  }
+		]
+	  }`)
 }
 
 func (suite *NormalizeTestSuite) TestNormalizeActivityObject() {
@@ -103,6 +191,167 @@ func (suite *NormalizeTestSuite) TestNormalizeActivityObject() {
 
 	ap.NormalizeActivityObject(create, map[string]interface{}{"object": rawNote})
 	suite.Equal(`UPDATE: As of this morning there are now more than 7 million Mastodon users, most from the <a class="hashtag" data-tag="twittermigration" href="https://example.org/tag/twittermigration" rel="tag ugc">#TwitterMigration</a>.<br><br>In fact, 100,000 new accounts have been created since last night.<br><br>Since last night&#39;s spike 8,000-12,000 new accounts are being created every hour.<br><br>Yesterday, I estimated that Mastodon would have 8 million users by the end of the week. That might happen a lot sooner if this trend continues.`, ap.ExtractContent(note))
+}
+
+func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsOneAttachment() {
+	note, rawNote := suite.GetStatusableWithOneAttachment()
+
+	// Without normalization, the 'name' field of
+	// the attachment(s) should be all jacked up.
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "attachment": {
+    "mediaType": "image/jpeg",
+    "name": "description: here's \u003c\u003ca\u003e\u003e picture of a #cat,%20it%27s%20cute!%20here%27s%20some%20special%20characters:%20%22%22%20%5C%20weeee%27%27%27%27",
+    "type": "Document",
+    "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
+  },
+  "attributedTo": "https://example.org/users/hourlycatbot",
+  "id": "https://example.org/users/hourlycatbot/statuses/01GYW48H311PZ78C5G856MGJJJ",
+  "to": "https://www.w3.org/ns/activitystreams#Public",
+  "type": "Note",
+  "url": "https://example.org/@hourlycatbot/01GYW48H311PZ78C5G856MGJJJ"
+}`, suite.noteToJson(note))
+
+	// Normalize it!
+	ap.NormalizeStatusableAttachments(note, rawNote)
+
+	// After normalization, the 'name' field of the
+	// attachment should no longer be all jacked up.
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "attachment": {
+    "mediaType": "image/jpeg",
+    "name": "DESCRIPTION: here's \u003c\u003ca\u003e\u003e picture of a #cat, it's cute! here's some special characters: \"\" \\ weeee''''",
+    "type": "Document",
+    "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
+  },
+  "attributedTo": "https://example.org/users/hourlycatbot",
+  "id": "https://example.org/users/hourlycatbot/statuses/01GYW48H311PZ78C5G856MGJJJ",
+  "to": "https://www.w3.org/ns/activitystreams#Public",
+  "type": "Note",
+  "url": "https://example.org/@hourlycatbot/01GYW48H311PZ78C5G856MGJJJ"
+}`, suite.noteToJson(note))
+}
+
+func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsOneAttachmentEmbedded() {
+	note, rawNote := suite.GetStatusableWithOneAttachmentEmbedded()
+
+	// Without normalization, the 'name' field of
+	// the attachment(s) should be all jacked up.
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "attachment": {
+    "mediaType": "image/jpeg",
+    "name": "description: here's \u003c\u003ca\u003e\u003e picture of a #cat,%20it%27s%20cute!%20here%27s%20some%20special%20characters:%20%22%22%20%5C%20weeee%27%27%27%27",
+    "type": "Document",
+    "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
+  },
+  "attributedTo": "https://example.org/users/hourlycatbot",
+  "id": "https://example.org/users/hourlycatbot/statuses/01GYW48H311PZ78C5G856MGJJJ",
+  "to": "https://www.w3.org/ns/activitystreams#Public",
+  "type": "Note",
+  "url": "https://example.org/@hourlycatbot/01GYW48H311PZ78C5G856MGJJJ"
+}`, suite.noteToJson(note))
+
+	// Normalize it!
+	ap.NormalizeStatusableAttachments(note, rawNote)
+
+	// After normalization, the 'name' field of the
+	// attachment should no longer be all jacked up.
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "attachment": {
+    "mediaType": "image/jpeg",
+    "name": "DESCRIPTION: here's \u003c\u003ca\u003e\u003e picture of a #cat, it's cute! here's some special characters: \"\" \\ weeee''''",
+    "type": "Document",
+    "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
+  },
+  "attributedTo": "https://example.org/users/hourlycatbot",
+  "id": "https://example.org/users/hourlycatbot/statuses/01GYW48H311PZ78C5G856MGJJJ",
+  "to": "https://www.w3.org/ns/activitystreams#Public",
+  "type": "Note",
+  "url": "https://example.org/@hourlycatbot/01GYW48H311PZ78C5G856MGJJJ"
+}`, suite.noteToJson(note))
+}
+
+func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsMultipleAttachments() {
+	note, rawNote := suite.GetStatusableWithMultipleAttachments()
+
+	// Without normalization, the 'name' field of
+	// the attachment(s) should be all jacked up.
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "attachment": [
+    {
+      "mediaType": "image/jpeg",
+      "name": "description: here's \u003c\u003ca\u003e\u003e picture of a #cat,%20it%27s%20cute!%20here%27s%20some%20special%20characters:%20%22%22%20%5C%20weeee%27%27%27%27",
+      "type": "Document",
+      "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
+    },
+    {
+      "mediaType": "image/jpeg",
+      "name": "hello: here's another #picture%20%23of%20%23a%20%23cat,%20hope%20you%20like%20it!!!!!!!",
+      "type": "Document",
+      "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
+    },
+    {
+      "mediaType": "image/jpeg",
+      "type": "Document",
+      "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
+    },
+    {
+      "mediaType": "image/jpeg",
+      "name": "danger: #cute%20but%20will%20claw%20you%20:(",
+      "type": "Document",
+      "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
+    }
+  ],
+  "attributedTo": "https://example.org/users/hourlycatbot",
+  "id": "https://example.org/users/hourlycatbot/statuses/01GYW48H311PZ78C5G856MGJJJ",
+  "to": "https://www.w3.org/ns/activitystreams#Public",
+  "type": "Note",
+  "url": "https://example.org/@hourlycatbot/01GYW48H311PZ78C5G856MGJJJ"
+}`, suite.noteToJson(note))
+
+	// Normalize it!
+	ap.NormalizeStatusableAttachments(note, rawNote)
+
+	// After normalization, the 'name' field of the
+	// attachment should no longer be all jacked up.
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "attachment": [
+    {
+      "mediaType": "image/jpeg",
+      "name": "DESCRIPTION: here's \u003c\u003ca\u003e\u003e picture of a #cat, it's cute! here's some special characters: \"\" \\ weeee''''",
+      "type": "Document",
+      "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
+    },
+    {
+      "mediaType": "image/jpeg",
+      "name": "hello: here's another #picture #of #a #cat, hope you like it!!!!!!!",
+      "type": "Document",
+      "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
+    },
+    {
+      "mediaType": "image/jpeg",
+      "type": "Document",
+      "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
+    },
+    {
+      "mediaType": "image/jpeg",
+      "name": "danger: #cute but will claw you :(",
+      "type": "Document",
+      "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
+    }
+  ],
+  "attributedTo": "https://example.org/users/hourlycatbot",
+  "id": "https://example.org/users/hourlycatbot/statuses/01GYW48H311PZ78C5G856MGJJJ",
+  "to": "https://www.w3.org/ns/activitystreams#Public",
+  "type": "Note",
+  "url": "https://example.org/@hourlycatbot/01GYW48H311PZ78C5G856MGJJJ"
+}`, suite.noteToJson(note))
 }
 
 func TestNormalizeTestSuite(t *testing.T) {
