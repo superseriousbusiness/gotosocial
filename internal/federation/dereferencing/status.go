@@ -301,17 +301,17 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 func (d *deref) dereferenceStatusable(ctx context.Context, tsport transport.Transport, remoteStatusID *url.URL) (ap.Statusable, error) {
 	b, err := tsport.Dereference(ctx, remoteStatusID)
 	if err != nil {
-		return nil, fmt.Errorf("dereferenceStatusable: error deferencing %s: %s", remoteStatusID.String(), err)
+		return nil, fmt.Errorf("dereferenceStatusable: error deferencing %s: %w", remoteStatusID.String(), err)
 	}
 
 	m := make(map[string]interface{})
 	if err := json.Unmarshal(b, &m); err != nil {
-		return nil, fmt.Errorf("dereferenceStatusable: error unmarshalling bytes into json: %s", err)
+		return nil, fmt.Errorf("dereferenceStatusable: error unmarshalling bytes into json: %w", err)
 	}
 
 	t, err := streams.ToType(ctx, m)
 	if err != nil {
-		return nil, fmt.Errorf("dereferenceStatusable: error resolving json into ap vocab type: %s", err)
+		return nil, fmt.Errorf("dereferenceStatusable: error resolving json into ap vocab type: %w", err)
 	}
 
 	//nolint:forcetypeassert
@@ -355,7 +355,7 @@ func (d *deref) populateStatusMentions(ctx context.Context, requestUser string, 
 		// Ensure that mention account URI is parseable.
 		accountURI, err := url.Parse(mention.TargetAccountURI)
 		if err != nil {
-			log.Errorf(ctx, "invalid account uri %q: %w", mention.TargetAccountURI, err)
+			log.Errorf(ctx, "invalid account uri %q: %v", mention.TargetAccountURI, err)
 			continue
 		}
 
@@ -365,14 +365,14 @@ func (d *deref) populateStatusMentions(ctx context.Context, requestUser string, 
 		// Ensure we have the account of the mention target dereferenced.
 		mention.TargetAccount, err = d.GetAccountByURI(ctx, requestUser, accountURI)
 		if err != nil {
-			log.Errorf(ctx, "failed to dereference account %s: %w", accountURI, err)
+			log.Errorf(ctx, "failed to dereference account %s: %v", accountURI, err)
 			continue
 		}
 
 		// Generate new ID according to status creation.
 		mention.ID, err = id.NewULIDFromTime(status.CreatedAt)
 		if err != nil {
-			log.Errorf(ctx, "invalid created at date: %w", err)
+			log.Errorf(ctx, "invalid created at date: %v", err)
 			mention.ID = id.NewULID() // just use "now"
 		}
 
@@ -428,7 +428,7 @@ func (d *deref) populateStatusAttachments(ctx context.Context, tsport transport.
 		// Ensure a valid media attachment remote URL.
 		remoteURL, err := url.Parse(placeholder.RemoteURL)
 		if err != nil {
-			log.Errorf(ctx, "invalid remote media url %q: %w", placeholder.RemoteURL, err)
+			log.Errorf(ctx, "invalid remote media url %q: %v", placeholder.RemoteURL, err)
 			continue
 		}
 
@@ -445,14 +445,14 @@ func (d *deref) populateStatusAttachments(ctx context.Context, tsport transport.
 			Blurhash:    &placeholder.Blurhash,
 		})
 		if err != nil {
-			log.Errorf(ctx, "error processing attachment: %w", err)
+			log.Errorf(ctx, "error processing attachment: %v", err)
 			continue
 		}
 
 		// Force attachment loading *right now*.
 		media, err := processing.LoadAttachment(ctx)
 		if err != nil {
-			log.Errorf(ctx, "error loading attachment: %w", err)
+			log.Errorf(ctx, "error loading attachment: %v", err)
 			continue
 		}
 
