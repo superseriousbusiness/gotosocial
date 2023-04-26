@@ -56,6 +56,7 @@ type ActivityStreamsDescribesProperty struct {
 	activitystreamsPersonMember                vocab.ActivityStreamsPerson
 	activitystreamsPlaceMember                 vocab.ActivityStreamsPlace
 	activitystreamsProfileMember               vocab.ActivityStreamsProfile
+	schemaPropertyValueMember                  vocab.SchemaPropertyValue
 	forgefedPushMember                         vocab.ForgeFedPush
 	activitystreamsQuestionMember              vocab.ActivityStreamsQuestion
 	activitystreamsReadMember                  vocab.ActivityStreamsRead
@@ -359,6 +360,12 @@ func DeserializeDescribesProperty(m map[string]interface{}, aliasMap map[string]
 					alias:                        alias,
 				}
 				return this, nil
+			} else if v, err := mgr.DeserializePropertyValueSchema()(m, aliasMap); err == nil {
+				this := &ActivityStreamsDescribesProperty{
+					alias:                     alias,
+					schemaPropertyValueMember: v,
+				}
+				return this, nil
 			} else if v, err := mgr.DeserializePushForgeFed()(m, aliasMap); err == nil {
 				this := &ActivityStreamsDescribesProperty{
 					alias:              alias,
@@ -528,6 +535,7 @@ func (this *ActivityStreamsDescribesProperty) Clear() {
 	this.activitystreamsPersonMember = nil
 	this.activitystreamsPlaceMember = nil
 	this.activitystreamsProfileMember = nil
+	this.schemaPropertyValueMember = nil
 	this.forgefedPushMember = nil
 	this.activitystreamsQuestionMember = nil
 	this.activitystreamsReadMember = nil
@@ -958,6 +966,13 @@ func (this ActivityStreamsDescribesProperty) GetIRI() *url.URL {
 	return this.iri
 }
 
+// GetSchemaPropertyValue returns the value of this property. When
+// IsSchemaPropertyValue returns false, GetSchemaPropertyValue will return an
+// arbitrary value.
+func (this ActivityStreamsDescribesProperty) GetSchemaPropertyValue() vocab.SchemaPropertyValue {
+	return this.schemaPropertyValueMember
+}
+
 // GetTootEmoji returns the value of this property. When IsTootEmoji returns
 // false, GetTootEmoji will return an arbitrary value.
 func (this ActivityStreamsDescribesProperty) GetTootEmoji() vocab.TootEmoji {
@@ -1100,6 +1115,9 @@ func (this ActivityStreamsDescribesProperty) GetType() vocab.Type {
 	if this.IsActivityStreamsProfile() {
 		return this.GetActivityStreamsProfile()
 	}
+	if this.IsSchemaPropertyValue() {
+		return this.GetSchemaPropertyValue()
+	}
 	if this.IsForgeFedPush() {
 		return this.GetForgeFedPush()
 	}
@@ -1202,6 +1220,7 @@ func (this ActivityStreamsDescribesProperty) HasAny() bool {
 		this.IsActivityStreamsPerson() ||
 		this.IsActivityStreamsPlace() ||
 		this.IsActivityStreamsProfile() ||
+		this.IsSchemaPropertyValue() ||
 		this.IsForgeFedPush() ||
 		this.IsActivityStreamsQuestion() ||
 		this.IsActivityStreamsRead() ||
@@ -1640,6 +1659,13 @@ func (this ActivityStreamsDescribesProperty) IsIRI() bool {
 	return this.iri != nil
 }
 
+// IsSchemaPropertyValue returns true if this property has a type of
+// "PropertyValue". When true, use the GetSchemaPropertyValue and
+// SetSchemaPropertyValue methods to access and set this property.
+func (this ActivityStreamsDescribesProperty) IsSchemaPropertyValue() bool {
+	return this.schemaPropertyValueMember != nil
+}
+
 // IsTootEmoji returns true if this property has a type of "Emoji". When true, use
 // the GetTootEmoji and SetTootEmoji methods to access and set this property.
 func (this ActivityStreamsDescribesProperty) IsTootEmoji() bool {
@@ -1743,6 +1769,8 @@ func (this ActivityStreamsDescribesProperty) JSONLDContext() map[string]string {
 		child = this.GetActivityStreamsPlace().JSONLDContext()
 	} else if this.IsActivityStreamsProfile() {
 		child = this.GetActivityStreamsProfile().JSONLDContext()
+	} else if this.IsSchemaPropertyValue() {
+		child = this.GetSchemaPropertyValue().JSONLDContext()
 	} else if this.IsForgeFedPush() {
 		child = this.GetForgeFedPush().JSONLDContext()
 	} else if this.IsActivityStreamsQuestion() {
@@ -1921,59 +1949,62 @@ func (this ActivityStreamsDescribesProperty) KindIndex() int {
 	if this.IsActivityStreamsProfile() {
 		return 41
 	}
-	if this.IsForgeFedPush() {
+	if this.IsSchemaPropertyValue() {
 		return 42
 	}
-	if this.IsActivityStreamsQuestion() {
+	if this.IsForgeFedPush() {
 		return 43
 	}
-	if this.IsActivityStreamsRead() {
+	if this.IsActivityStreamsQuestion() {
 		return 44
 	}
-	if this.IsActivityStreamsReject() {
+	if this.IsActivityStreamsRead() {
 		return 45
 	}
-	if this.IsActivityStreamsRelationship() {
+	if this.IsActivityStreamsReject() {
 		return 46
 	}
-	if this.IsActivityStreamsRemove() {
+	if this.IsActivityStreamsRelationship() {
 		return 47
 	}
-	if this.IsForgeFedRepository() {
+	if this.IsActivityStreamsRemove() {
 		return 48
 	}
-	if this.IsActivityStreamsService() {
+	if this.IsForgeFedRepository() {
 		return 49
 	}
-	if this.IsActivityStreamsTentativeAccept() {
+	if this.IsActivityStreamsService() {
 		return 50
 	}
-	if this.IsActivityStreamsTentativeReject() {
+	if this.IsActivityStreamsTentativeAccept() {
 		return 51
 	}
-	if this.IsForgeFedTicket() {
+	if this.IsActivityStreamsTentativeReject() {
 		return 52
 	}
-	if this.IsForgeFedTicketDependency() {
+	if this.IsForgeFedTicket() {
 		return 53
 	}
-	if this.IsActivityStreamsTombstone() {
+	if this.IsForgeFedTicketDependency() {
 		return 54
 	}
-	if this.IsActivityStreamsTravel() {
+	if this.IsActivityStreamsTombstone() {
 		return 55
 	}
-	if this.IsActivityStreamsUndo() {
+	if this.IsActivityStreamsTravel() {
 		return 56
 	}
-	if this.IsActivityStreamsUpdate() {
+	if this.IsActivityStreamsUndo() {
 		return 57
 	}
-	if this.IsActivityStreamsVideo() {
+	if this.IsActivityStreamsUpdate() {
 		return 58
 	}
-	if this.IsActivityStreamsView() {
+	if this.IsActivityStreamsVideo() {
 		return 59
+	}
+	if this.IsActivityStreamsView() {
+		return 60
 	}
 	if this.IsIRI() {
 		return -2
@@ -2076,6 +2107,8 @@ func (this ActivityStreamsDescribesProperty) LessThan(o vocab.ActivityStreamsDes
 		return this.GetActivityStreamsPlace().LessThan(o.GetActivityStreamsPlace())
 	} else if this.IsActivityStreamsProfile() {
 		return this.GetActivityStreamsProfile().LessThan(o.GetActivityStreamsProfile())
+	} else if this.IsSchemaPropertyValue() {
+		return this.GetSchemaPropertyValue().LessThan(o.GetSchemaPropertyValue())
 	} else if this.IsForgeFedPush() {
 		return this.GetForgeFedPush().LessThan(o.GetForgeFedPush())
 	} else if this.IsActivityStreamsQuestion() {
@@ -2216,6 +2249,8 @@ func (this ActivityStreamsDescribesProperty) Serialize() (interface{}, error) {
 		return this.GetActivityStreamsPlace().Serialize()
 	} else if this.IsActivityStreamsProfile() {
 		return this.GetActivityStreamsProfile().Serialize()
+	} else if this.IsSchemaPropertyValue() {
+		return this.GetSchemaPropertyValue().Serialize()
 	} else if this.IsForgeFedPush() {
 		return this.GetForgeFedPush().Serialize()
 	} else if this.IsActivityStreamsQuestion() {
@@ -2670,6 +2705,13 @@ func (this *ActivityStreamsDescribesProperty) SetIRI(v *url.URL) {
 	this.iri = v
 }
 
+// SetSchemaPropertyValue sets the value of this property. Calling
+// IsSchemaPropertyValue afterwards returns true.
+func (this *ActivityStreamsDescribesProperty) SetSchemaPropertyValue(v vocab.SchemaPropertyValue) {
+	this.Clear()
+	this.schemaPropertyValueMember = v
+}
+
 // SetTootEmoji sets the value of this property. Calling IsTootEmoji afterwards
 // returns true.
 func (this *ActivityStreamsDescribesProperty) SetTootEmoji(v vocab.TootEmoji) {
@@ -2853,6 +2895,10 @@ func (this *ActivityStreamsDescribesProperty) SetType(t vocab.Type) error {
 	}
 	if v, ok := t.(vocab.ActivityStreamsProfile); ok {
 		this.SetActivityStreamsProfile(v)
+		return nil
+	}
+	if v, ok := t.(vocab.SchemaPropertyValue); ok {
+		this.SetSchemaPropertyValue(v)
 		return nil
 	}
 	if v, ok := t.(vocab.ForgeFedPush); ok {

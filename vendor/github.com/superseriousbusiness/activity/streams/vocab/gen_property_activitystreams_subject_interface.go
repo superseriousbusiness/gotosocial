@@ -270,6 +270,10 @@ type ActivityStreamsSubjectProperty interface {
 	// GetIRI returns the IRI of this property. When IsIRI returns false,
 	// GetIRI will return an arbitrary value.
 	GetIRI() *url.URL
+	// GetSchemaPropertyValue returns the value of this property. When
+	// IsSchemaPropertyValue returns false, GetSchemaPropertyValue will
+	// return an arbitrary value.
+	GetSchemaPropertyValue() SchemaPropertyValue
 	// GetTootEmoji returns the value of this property. When IsTootEmoji
 	// returns false, GetTootEmoji will return an arbitrary value.
 	GetTootEmoji() TootEmoji
@@ -543,6 +547,10 @@ type ActivityStreamsSubjectProperty interface {
 	// IsIRI returns true if this property is an IRI. When true, use GetIRI
 	// and SetIRI to access and set this property
 	IsIRI() bool
+	// IsSchemaPropertyValue returns true if this property has a type of
+	// "PropertyValue". When true, use the GetSchemaPropertyValue and
+	// SetSchemaPropertyValue methods to access and set this property.
+	IsSchemaPropertyValue() bool
 	// IsTootEmoji returns true if this property has a type of "Emoji". When
 	// true, use the GetTootEmoji and SetTootEmoji methods to access and
 	// set this property.
@@ -758,6 +766,9 @@ type ActivityStreamsSubjectProperty interface {
 	// SetIRI sets the value of this property. Calling IsIRI afterwards
 	// returns true.
 	SetIRI(v *url.URL)
+	// SetSchemaPropertyValue sets the value of this property. Calling
+	// IsSchemaPropertyValue afterwards returns true.
+	SetSchemaPropertyValue(v SchemaPropertyValue)
 	// SetTootEmoji sets the value of this property. Calling IsTootEmoji
 	// afterwards returns true.
 	SetTootEmoji(v TootEmoji)

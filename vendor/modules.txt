@@ -445,7 +445,7 @@ github.com/stretchr/testify/suite
 # github.com/subosito/gotenv v1.4.2
 ## explicit; go 1.18
 github.com/subosito/gotenv
-# github.com/superseriousbusiness/activity v1.2.2-gts
+# github.com/superseriousbusiness/activity v1.2.2-gts.0.20230426161321-6dc26a424f4d
 ## explicit; go 1.18
 github.com/superseriousbusiness/activity/pub
 github.com/superseriousbusiness/activity/streams
@@ -606,6 +606,8 @@ github.com/superseriousbusiness/activity/streams/impl/forgefed/type_ticket
 github.com/superseriousbusiness/activity/streams/impl/forgefed/type_ticketdependency
 github.com/superseriousbusiness/activity/streams/impl/jsonld/property_id
 github.com/superseriousbusiness/activity/streams/impl/jsonld/property_type
+github.com/superseriousbusiness/activity/streams/impl/schema/property_value
+github.com/superseriousbusiness/activity/streams/impl/schema/type_propertyvalue
 github.com/superseriousbusiness/activity/streams/impl/toot/property_blurhash
 github.com/superseriousbusiness/activity/streams/impl/toot/property_discoverable
 github.com/superseriousbusiness/activity/streams/impl/toot/property_featured

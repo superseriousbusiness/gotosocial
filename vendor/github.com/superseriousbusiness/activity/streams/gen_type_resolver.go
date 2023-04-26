@@ -118,6 +118,8 @@ func NewTypeResolver(callbacks ...interface{}) (*TypeResolver, error) {
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsProfile) error:
 			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.SchemaPropertyValue) error:
+			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.W3IDSecurityV1PublicKey) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ForgeFedPush) error:
@@ -570,6 +572,15 @@ func (this TypeResolver) Resolve(ctx context.Context, o ActivityStreamsInterface
 		} else if o.VocabularyURI() == "https://www.w3.org/ns/activitystreams" && o.GetTypeName() == "Profile" {
 			if fn, ok := i.(func(context.Context, vocab.ActivityStreamsProfile) error); ok {
 				if v, ok := o.(vocab.ActivityStreamsProfile); ok {
+					return fn(ctx, v)
+				} else {
+					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+					return errCannotTypeAssertType
+				}
+			}
+		} else if o.VocabularyURI() == "http://schema.org" && o.GetTypeName() == "PropertyValue" {
+			if fn, ok := i.(func(context.Context, vocab.SchemaPropertyValue) error); ok {
+				if v, ok := o.(vocab.SchemaPropertyValue); ok {
 					return fn(ctx, v)
 				} else {
 					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
