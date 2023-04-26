@@ -56,10 +56,13 @@ func ExtractName(i WithName) string {
 		return ""
 	}
 
-	// take the first name string we can find
+	// Take the first useful value for the name string we can find.
 	for iter := nameProp.Begin(); iter != nameProp.End(); iter = iter.Next() {
-		if iter.IsXMLSchemaString() && iter.GetXMLSchemaString() != "" {
+		switch {
+		case iter.IsXMLSchemaString():
 			return iter.GetXMLSchemaString()
+		case iter.IsIRI():
+			return iter.GetIRI().String()
 		}
 	}
 
@@ -253,10 +256,10 @@ func ExtractSummary(i WithSummary) string {
 
 	for iter := summaryProp.Begin(); iter != summaryProp.End(); iter = iter.Next() {
 		switch {
-		case iter.IsIRI():
-			return iter.GetIRI().String()
 		case iter.IsXMLSchemaString():
 			return iter.GetXMLSchemaString()
+		case iter.IsIRI():
+			return iter.GetIRI().String()
 		}
 	}
 
@@ -354,10 +357,10 @@ func ExtractContent(i WithContent) string {
 	}
 
 	for iter := contentProperty.Begin(); iter != contentProperty.End(); iter = iter.Next() {
-		if iter.IsXMLSchemaString() {
+		switch {
+		case iter.IsXMLSchemaString():
 			return iter.GetXMLSchemaString()
-		}
-		if iter.IsIRI() && iter.GetIRI() != nil {
+		case iter.IsIRI():
 			return iter.GetIRI().String()
 		}
 	}

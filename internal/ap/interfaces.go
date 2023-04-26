@@ -30,6 +30,7 @@ type Accountable interface {
 	WithName
 	WithImage
 	WithSummary
+	WithSetSummary
 	WithDiscoverable
 	WithURL
 	WithPublicKey
@@ -50,7 +51,9 @@ type Statusable interface {
 	WithTypeName
 
 	WithSummary
+	WithSetSummary
 	WithName
+	WithSetName
 	WithInReplyTo
 	WithPublished
 	WithURL
@@ -73,6 +76,7 @@ type Attachmentable interface {
 	WithMediaType
 	WithURL
 	WithName
+	WithSetName
 	WithBlurhash
 }
 
@@ -193,6 +197,11 @@ type WithName interface {
 	GetActivityStreamsName() vocab.ActivityStreamsNameProperty
 }
 
+// WithSetName represents an activity with a settable ActivityStreamsNameProperty
+type WithSetName interface {
+	SetActivityStreamsName(vocab.ActivityStreamsNameProperty)
+}
+
 // WithImage represents an activity with ActivityStreamsImageProperty
 type WithImage interface {
 	GetActivityStreamsImage() vocab.ActivityStreamsImageProperty
@@ -201,6 +210,11 @@ type WithImage interface {
 // WithSummary represents an activity with ActivityStreamsSummaryProperty
 type WithSummary interface {
 	GetActivityStreamsSummary() vocab.ActivityStreamsSummaryProperty
+}
+
+// WithSetSummary represents an activity that can have summary set on it.
+type WithSetSummary interface {
+	SetActivityStreamsSummary(vocab.ActivityStreamsSummaryProperty)
 }
 
 // WithDiscoverable represents an activity with TootDiscoverableProperty

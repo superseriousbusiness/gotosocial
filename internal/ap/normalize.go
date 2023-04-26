@@ -27,7 +27,7 @@ import (
 // The rawActivity map should the freshly deserialized json representation of the Activity.
 //
 // This function is a noop if the type passed in is anything except a Create with a Statusable as its Object.
-func NormalizeActivityObject(activity pub.Activity, rawActivity map[string]interface{}) {
+func NormalizeActivityObject(activity pub.Activity, rawJSON map[string]interface{}) {
 	if activity.GetTypeName() != ActivityCreate {
 		// Only interested in Create right now.
 		return
@@ -72,45 +72,157 @@ func NormalizeActivityObject(activity pub.Activity, rawActivity map[string]inter
 		return
 	}
 
-	object, ok := rawActivity["object"]
+	rawObject, ok := rawJSON["object"]
 	if !ok {
 		// No object in raw map.
 		return
 	}
 
-	rawStatusable, ok := object.(map[string]interface{})
+	rawStatusableJSON, ok := rawObject.(map[string]interface{})
 	if !ok {
 		// Object wasn't a json object.
 		return
 	}
 
-	// Pass in the statusable and its raw JSON representation.
-	NormalizeStatusableContent(statusable, rawStatusable)
+	// Normalize everything we can on the statusable.
+	NormalizeContent(statusable, rawStatusableJSON)
+	NormalizeAttachments(statusable, rawStatusableJSON)
+	NormalizeSummary(statusable, rawStatusableJSON)
+	NormalizeName(statusable, rawStatusableJSON)
 }
 
-// NormalizeStatusableContent replaces the Content of the given statusable
-// with the raw 'content' value from the given json object map.
+// NormalizeContent replaces the Content of the given item
+// with the raw 'content' value from the raw json object map.
 //
-// noop if there was no content in the json object map or the content was
-// not a plain string.
-func NormalizeStatusableContent(statusable Statusable, rawStatusable map[string]interface{}) {
-	content, ok := rawStatusable["content"]
+// noop if there was no content in the json object map or the
+// content was not a plain string.
+func NormalizeContent(item WithSetContent, rawJSON map[string]interface{}) {
+	rawContent, ok := rawJSON["content"]
 	if !ok {
-		// No content in rawStatusable.
+		// No content in rawJSON.
 		// TODO: In future we might also
 		// look for "contentMap" property.
 		return
 	}
 
-	rawContent, ok := content.(string)
+	content, ok := rawContent.(string)
 	if !ok {
 		// Not interested in content arrays.
 		return
 	}
 
-	// Set normalized content property from the raw string; this
-	// will replace any existing content property on the statusable.
+	// Set normalized content property from the raw string;
+	// this replaces any existing content property on the item.
 	contentProp := streams.NewActivityStreamsContentProperty()
-	contentProp.AppendXMLSchemaString(rawContent)
-	statusable.SetActivityStreamsContent(contentProp)
+	contentProp.AppendXMLSchemaString(content)
+	item.SetActivityStreamsContent(contentProp)
+}
+
+// NormalizeAttachments normalizes all attachments (if any) of the given
+// itm, replacing the 'name' (aka content warning) field of each attachment
+// with the raw 'name' value from the raw json object map.
+//
+// noop if there are no attachments; noop if attachment is not a format
+// we can understand.
+func NormalizeAttachments(item WithAttachment, rawJSON map[string]interface{}) {
+	rawAttachments, ok := rawJSON["attachment"]
+	if !ok {
+		// No attachments in rawJSON.
+		return
+	}
+
+	// Convert to slice if not already,
+	// so we can iterate through it.
+	var attachments []interface{}
+	if attachments, ok = rawAttachments.([]interface{}); !ok {
+		attachments = []interface{}{rawAttachments}
+	}
+
+	attachmentProperty := item.GetActivityStreamsAttachment()
+	if attachmentProperty == nil {
+		// Nothing to do here.
+		return
+	}
+
+	if l := attachmentProperty.Len(); l == 0 || l != len(attachments) {
+		// Mismatch between item and
+		// JSON, can't normalize.
+		return
+	}
+
+	// Keep an index of where we are in the iter;
+	// we need this so we can modify the correct
+	// attachment, in case of multiples.
+	i := -1
+
+	for iter := attachmentProperty.Begin(); iter != attachmentProperty.End(); iter = iter.Next() {
+		i++
+
+		t := iter.GetType()
+		if t == nil {
+			continue
+		}
+
+		attachmentable, ok := t.(Attachmentable)
+		if !ok {
+			continue
+		}
+
+		rawAttachment, ok := attachments[i].(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		NormalizeName(attachmentable, rawAttachment)
+	}
+}
+
+// NormalizeSummary replaces the Summary of the given item
+// with the raw 'summary' value from the raw json object map.
+//
+// noop if there was no summary in the json object map or the
+// summary was not a plain string.
+func NormalizeSummary(item WithSetSummary, rawJSON map[string]interface{}) {
+	rawSummary, ok := rawJSON["summary"]
+	if !ok {
+		// No summary in rawJSON.
+		return
+	}
+
+	summary, ok := rawSummary.(string)
+	if !ok {
+		// Not interested in non-string summary.
+		return
+	}
+
+	// Set normalized summary property from the raw string; this
+	// will replace any existing summary property on the item.
+	summaryProp := streams.NewActivityStreamsSummaryProperty()
+	summaryProp.AppendXMLSchemaString(summary)
+	item.SetActivityStreamsSummary(summaryProp)
+}
+
+// NormalizeName replaces the Name of the given item
+// with the raw 'name' value from the raw json object map.
+//
+// noop if there was no name in the json object map or the
+// name was not a plain string.
+func NormalizeName(item WithSetName, rawJSON map[string]interface{}) {
+	rawName, ok := rawJSON["name"]
+	if !ok {
+		// No name in rawJSON.
+		return
+	}
+
+	name, ok := rawName.(string)
+	if !ok {
+		// Not interested in non-string name.
+		return
+	}
+
+	// Set normalized name property from the raw string; this
+	// will replace any existing name property on the item.
+	nameProp := streams.NewActivityStreamsNameProperty()
+	nameProp.AppendXMLSchemaString(name)
+	item.SetActivityStreamsName(nameProp)
 }
