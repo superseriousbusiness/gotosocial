@@ -352,25 +352,28 @@ func (d *deref) populateStatusMentions(ctx context.Context, requestUser string, 
 			continue
 		}
 
-		// Rescope var to loop.
-		mention := mention
-
 		// Ensure that mention account URI is parseable.
 		accountURI, err := url.Parse(mention.TargetAccountURI)
 		if err != nil {
-			return fmt.Errorf("invalid account uri %q: %w", mention.TargetAccountURI, err)
+			log.Errorf(ctx, "invalid account uri %q: %w", mention.TargetAccountURI, err)
+			continue
 		}
+
+		// Rescope var to loop.
+		mention := mention
 
 		// Ensure we have the account of the mention target dereferenced.
 		mention.TargetAccount, err = d.GetAccountByURI(ctx, requestUser, accountURI)
 		if err != nil {
-			return fmt.Errorf("failed to dereference account %s: %w", accountURI, err)
+			log.Errorf(ctx, "failed to dereference account %s: %w", accountURI, err)
+			continue
 		}
 
 		// Generate new ID according to status creation.
 		mention.ID, err = id.NewULIDFromTime(status.CreatedAt)
 		if err != nil {
-			return fmt.Errorf("invalid created at date: %w", err)
+			log.Errorf(ctx, "invalid created at date: %w", err)
+			mention.ID = id.NewULID() // just use "now"
 		}
 
 		// Set known further mention details.
@@ -395,6 +398,17 @@ func (d *deref) populateStatusMentions(ctx context.Context, requestUser string, 
 		status.MentionIDs[i] = mention.ID
 	}
 
+	for i := 0; i < len(status.MentionIDs); i++ {
+		if status.MentionIDs[i] == "" {
+			// This is a failed mention population, likely due
+			// to invalid incoming data / now-deleted accounts.
+			copy(status.Mentions[i:], status.Mentions[i+1:])
+			copy(status.MentionIDs[i:], status.MentionIDs[i+1:])
+			status.Mentions = status.Mentions[:len(status.Mentions)-1]
+			status.MentionIDs = status.MentionIDs[:len(status.MentionIDs)-1]
+		}
+	}
+
 	return nil
 }
 
@@ -403,23 +417,23 @@ func (d *deref) populateStatusAttachments(ctx context.Context, tsport transport.
 	status.AttachmentIDs = make([]string, len(status.Attachments))
 
 	for i, placeholder := range status.Attachments {
-
 		// Look for existing media attachment with remoet URL first.
 		existing, ok := existing.GetAttachmentByRemoteURL(placeholder.RemoteURL)
-		if ok && existing.ID != "" && existing.Cached != nil && *existing.Cached {
+		if ok && existing.ID != "" {
 			status.Attachments[i] = existing
 			status.AttachmentIDs[i] = existing.ID
 			continue
 		}
 
-		// Rescope var to loop.
-		placeholder := placeholder
-
 		// Ensure a valid media attachment remote URL.
 		remoteURL, err := url.Parse(placeholder.RemoteURL)
 		if err != nil {
-			return fmt.Errorf("invalid remote media url %q: %w", placeholder.RemoteURL, err)
+			log.Errorf(ctx, "invalid remote media url %q: %w", placeholder.RemoteURL, err)
+			continue
 		}
+
+		// Rescope var to loop.
+		placeholder := placeholder
 
 		// Start pre-processing remote media at remote URL.
 		processing, err := d.mediaManager.PreProcessMedia(ctx, func(ctx context.Context) (io.ReadCloser, int64, error) {
@@ -431,18 +445,31 @@ func (d *deref) populateStatusAttachments(ctx context.Context, tsport transport.
 			Blurhash:    &placeholder.Blurhash,
 		})
 		if err != nil {
-			return fmt.Errorf("error processing attachment: %w", err)
+			log.Errorf(ctx, "error processing attachment: %w", err)
+			continue
 		}
 
 		// Force attachment loading *right now*.
 		media, err := processing.LoadAttachment(ctx)
 		if err != nil {
-			return fmt.Errorf("error loading attachment: %w", err)
+			log.Errorf(ctx, "error loading attachment: %w", err)
+			continue
 		}
 
 		// Set the *new* attachment and ID.
 		status.Attachments[i] = media
 		status.AttachmentIDs[i] = media.ID
+	}
+
+	for i := 0; i < len(status.AttachmentIDs); i++ {
+		if status.AttachmentIDs[i] == "" {
+			// This is a failed attachment population, this may
+			// be due to us not currently supporting a media type.
+			copy(status.Attachments[i:], status.Attachments[i+1:])
+			copy(status.AttachmentIDs[i:], status.AttachmentIDs[i+1:])
+			status.Attachments = status.Attachments[:len(status.Attachments)-1]
+			status.AttachmentIDs = status.AttachmentIDs[:len(status.AttachmentIDs)-1]
+		}
 	}
 
 	return nil
