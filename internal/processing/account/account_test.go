@@ -59,6 +59,7 @@ type AccountStandardTestSuite struct {
 	testApplications map[string]*gtsmodel.Application
 	testUsers        map[string]*gtsmodel.User
 	testAccounts     map[string]*gtsmodel.Account
+	testFollows      map[string]*gtsmodel.Follow
 	testAttachments  map[string]*gtsmodel.MediaAttachment
 	testStatuses     map[string]*gtsmodel.Status
 
@@ -72,6 +73,7 @@ func (suite *AccountStandardTestSuite) SetupSuite() {
 	suite.testApplications = testrig.NewTestApplications()
 	suite.testUsers = testrig.NewTestUsers()
 	suite.testAccounts = testrig.NewTestAccounts()
+	suite.testFollows = testrig.NewTestFollows()
 	suite.testAttachments = testrig.NewTestAttachments()
 	suite.testStatuses = testrig.NewTestStatuses()
 }
@@ -80,8 +82,8 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 	suite.state.Caches.Init()
 	testrig.StartWorkers(&suite.state)
 
-	testrig.InitTestLog()
 	testrig.InitTestConfig()
+	testrig.InitTestLog()
 
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.state.DB = suite.db

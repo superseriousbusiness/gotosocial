@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type RelationshipTestSuite struct {
@@ -859,6 +860,32 @@ func (suite *RelationshipTestSuite) TestUnfollowRequestNotExisting() {
 	followRequest, err := suite.db.GetFollowRequest(context.Background(), originAccount.ID, targetAccountID)
 	suite.EqualError(err, db.ErrNoEntries.Error())
 	suite.Nil(followRequest)
+}
+
+func (suite *RelationshipTestSuite) TestUpdateFollow() {
+	ctx := context.Background()
+
+	follow := &gtsmodel.Follow{}
+	*follow = *suite.testFollows["local_account_1_admin_account"]
+
+	follow.Notify = testrig.TrueBool()
+	if err := suite.db.UpdateFollow(ctx, follow, "notify"); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	dbFollow, err := suite.db.GetFollowByID(ctx, follow.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.True(*dbFollow.Notify)
+
+	relationship, err := suite.db.GetRelationship(ctx, follow.AccountID, follow.TargetAccountID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.True(relationship.Notifying)
 }
 
 func TestRelationshipTestSuite(t *testing.T) {

@@ -5,8 +5,8 @@ package xurls
 // TLDs is a sorted list of all public top-level domains.
 //
 // Sources:
-//  * https://data.iana.org/TLD/tlds-alpha-by-domain.txt
-//  * https://publicsuffix.org/list/effective_tld_names.dat
+//   - https://data.iana.org/TLD/tlds-alpha-by-domain.txt
+//   - https://publicsuffix.org/list/effective_tld_names.dat
 var TLDs = []string{
 	`aaa`,
 	`aarp`,
@@ -26,7 +26,6 @@ var TLDs = []string{
 	`aco`,
 	`actor`,
 	`ad`,
-	`adac`,
 	`ads`,
 	`adult`,
 	`ae`,
@@ -185,7 +184,6 @@ var TLDs = []string{
 	`brussels`,
 	`bs`,
 	`bt`,
-	`bugatti`,
 	`build`,
 	`builders`,
 	`business`,
@@ -205,7 +203,6 @@ var TLDs = []string{
 	`cam`,
 	`camera`,
 	`camp`,
-	`cancerresearch`,
 	`canon`,
 	`capetown`,
 	`capital`,
@@ -720,7 +717,6 @@ var TLDs = []string{
 	`limited`,
 	`limo`,
 	`lincoln`,
-	`linde`,
 	`link`,
 	`lipsy`,
 	`live`,
@@ -732,7 +728,6 @@ var TLDs = []string{
 	`loans`,
 	`locker`,
 	`locus`,
-	`loft`,
 	`lol`,
 	`london`,
 	`lotte`,
@@ -752,7 +747,6 @@ var TLDs = []string{
 	`lv`,
 	`ly`,
 	`ma`,
-	`macys`,
 	`madrid`,
 	`maif`,
 	`maison`,
@@ -1070,7 +1064,6 @@ var TLDs = []string{
 	`select`,
 	`sener`,
 	`services`,
-	`ses`,
 	`seven`,
 	`sew`,
 	`sex`,
@@ -1365,6 +1358,7 @@ var TLDs = []string{
 	`укр`,
 	`қаз`,
 	`հայ`,
+	`ישראל`,
 	`קום`,
 	`ابوظبي`,
 	`اتصالات`,
@@ -1489,7 +1483,6 @@ var TLDs = []string{
 	`网络`,
 	`联通`,
 	`臺灣`,
-	`诺基亚`,
 	`谷歌`,
 	`购物`,
 	`通販`,

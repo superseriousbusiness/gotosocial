@@ -33,6 +33,10 @@ type Notification interface {
 	// GetNotification returns one notification according to its id.
 	GetNotificationByID(ctx context.Context, id string) (*gtsmodel.Notification, Error)
 
+	// GetNotification gets one notification according to the provided parameters, if it exists.
+	// Since not all notifications are about a status, statusID can be an empty string.
+	GetNotification(ctx context.Context, notificationType gtsmodel.NotificationType, targetAccountID string, originAccountID string, statusID string) (*gtsmodel.Notification, Error)
+
 	// PutNotification will insert the given notification into the database.
 	PutNotification(ctx context.Context, notif *gtsmodel.Notification) error
 

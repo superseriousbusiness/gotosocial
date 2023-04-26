@@ -106,7 +106,7 @@ When set to `false`, likes/faves of your post will not be accepted by your GoToS
 
 ## Input Types
 
-GoToSocial currently accepts two different types of input for posts (and user bio). These are:
+GoToSocial currently accepts two different types of input for posts (and user bio). The [user settings page](./settings.md) allows you to select between them. These are:
 
 * `plain`
 * `markdown`

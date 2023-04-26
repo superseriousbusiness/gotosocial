@@ -160,11 +160,7 @@ func (p *Processor) processCreateStatusFromClientAPI(ctx context.Context, client
 		return errors.New("note was not parseable as *gtsmodel.Status")
 	}
 
-	if err := p.timelineStatus(ctx, status); err != nil {
-		return err
-	}
-
-	if err := p.notifyStatus(ctx, status); err != nil {
+	if err := p.timelineAndNotifyStatus(ctx, status); err != nil {
 		return err
 	}
 
@@ -203,7 +199,7 @@ func (p *Processor) processCreateAnnounceFromClientAPI(ctx context.Context, clie
 		return errors.New("boost was not parseable as *gtsmodel.Status")
 	}
 
-	if err := p.timelineStatus(ctx, boostWrapperStatus); err != nil {
+	if err := p.timelineAndNotifyStatus(ctx, boostWrapperStatus); err != nil {
 		return err
 	}
 
@@ -255,7 +251,7 @@ func (p *Processor) processUpdateReportFromClientAPI(ctx context.Context, client
 		return nil
 	}
 
-	return p.notifyReportClosed(ctx, report)
+	return p.emailReportClosed(ctx, report)
 }
 
 func (p *Processor) processAcceptFollowFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
@@ -373,7 +369,7 @@ func (p *Processor) processReportAccountFromClientAPI(ctx context.Context, clien
 		}
 	}
 
-	if err := p.notifyReport(ctx, report); err != nil {
+	if err := p.emailReport(ctx, report); err != nil {
 		return fmt.Errorf("processReportAccountFromClientAPI: error notifying report: %w", err)
 	}
 

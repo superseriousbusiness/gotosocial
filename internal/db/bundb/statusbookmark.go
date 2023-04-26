@@ -40,7 +40,7 @@ func (s *statusBookmarkDB) GetStatusBookmark(ctx context.Context, id string) (*g
 	err := s.conn.
 		NewSelect().
 		Model(bookmark).
-		Where("? = ?", bun.Ident("status_bookmark.ID"), id).
+		Where("? = ?", bun.Ident("status_bookmark.id"), id).
 		Scan(ctx)
 	if err != nil {
 		return nil, s.conn.ProcessError(err)

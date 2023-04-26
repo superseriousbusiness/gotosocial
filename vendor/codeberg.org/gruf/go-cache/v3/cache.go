@@ -26,10 +26,10 @@ type Cache[Key comparable, Value any] interface {
 	// Get fetches the value with key from the cache, extending its TTL.
 	Get(key Key) (value Value, ok bool)
 
-	// Add attempts to place the value at key in the cache, doing nothing if a value with this key already exists. Returned bool is success state.
+	// Add attempts to place the value at key in the cache, doing nothing if a value with this key already exists. Returned bool is success state. Calls invalidate callback on success.
 	Add(key Key, value Value) bool
 
-	// Set places the value at key in the cache. This will overwrite any existing value, and call the update callback so. Existing values will have their TTL extended upon update.
+	// Set places the value at key in the cache. This will overwrite any existing value. Existing values will have their TTL extended upon update. Always calls invalidate callback.
 	Set(key Key, value Value)
 
 	// CAS will attempt to perform a CAS operation on 'key', using provided old and new values, and comparator function. Returned bool is success.
@@ -44,7 +44,7 @@ type Cache[Key comparable, Value any] interface {
 	// Invalidate deletes a value from the cache, calling the invalidate callback.
 	Invalidate(key Key) bool
 
-	// Clear empties the cache, calling the invalidate callback.
+	// Clear empties the cache, calling the invalidate callback on each entry.
 	Clear()
 
 	// Len returns the current length of the cache.
