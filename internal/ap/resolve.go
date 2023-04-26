@@ -27,8 +27,7 @@ import (
 )
 
 // ResolveStatusable tries to resolve the given bytes into an ActivityPub Statusable representation.
-// It will then perform normalization on the Statusable by calling NormalizeStatusable, so that
-// callers don't need to bother doing extra steps.
+// It will then perform normalization on the Statusable.
 //
 // Works for: Article, Document, Image, Video, Note, Page, Event, Place, Profile
 func ResolveStatusable(ctx context.Context, b []byte) (Statusable, error) {
@@ -73,12 +72,16 @@ func ResolveStatusable(ctx context.Context, b []byte) (Statusable, error) {
 		return nil, newErrWrongType(err)
 	}
 
-	NormalizeStatusableContent(statusable, rawStatusable)
-	NormalizeStatusableAttachments(statusable, rawStatusable)
+	NormalizeContent(statusable, rawStatusable)
+	NormalizeAttachments(statusable, rawStatusable)
+	NormalizeSummary(statusable, rawStatusable)
+	NormalizeName(statusable, rawStatusable)
+
 	return statusable, nil
 }
 
 // ResolveStatusable tries to resolve the given bytes into an ActivityPub Accountable representation.
+// It will then perform normalization on the Accountable.
 //
 // Works for: Application, Group, Organization, Person, Service
 func ResolveAccountable(ctx context.Context, b []byte) (Accountable, error) {
@@ -115,6 +118,7 @@ func ResolveAccountable(ctx context.Context, b []byte) (Accountable, error) {
 		return nil, newErrWrongType(err)
 	}
 
-	NormalizeAccountableSummary(accountable, rawAccountable)
+	NormalizeSummary(accountable, rawAccountable)
+
 	return accountable, nil
 }

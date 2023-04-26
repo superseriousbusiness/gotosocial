@@ -51,7 +51,9 @@ type Statusable interface {
 	WithTypeName
 
 	WithSummary
+	WithSetSummary
 	WithName
+	WithSetName
 	WithInReplyTo
 	WithPublished
 	WithURL

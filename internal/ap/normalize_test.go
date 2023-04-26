@@ -186,6 +186,21 @@ func (suite *NormalizeTestSuite) getStatusableWithMultipleAttachments() (vocab.A
 	return t.(vocab.ActivityStreamsNote), raw
 }
 
+func (suite *NormalizeTestSuite) getStatusableWithWeirdSummaryAndName() (vocab.ActivityStreamsNote, map[string]interface{}) {
+	t, raw := suite.jsonToType(`{
+		"@context": "https://www.w3.org/ns/activitystreams",
+		"id": "https://example.org/users/hourlycatbot/statuses/01GYW48H311PZ78C5G856MGJJJ",
+		"type": "Note",
+		"url": "https://example.org/@hourlycatbot/01GYW48H311PZ78C5G856MGJJJ",
+		"attributedTo": "https://example.org/users/hourlycatbot",
+		"to": "https://www.w3.org/ns/activitystreams#Public",
+		"summary": "warning: #WEIRD #SUMMARY ;;;;a;;a;asv    khop8273987(*^&^)",
+		"name": "WARNING: #WEIRD #nameEE ;;;;a;;a;asv    khop8273987(*^&^)"
+	  }`)
+
+	return t.(vocab.ActivityStreamsNote), raw
+}
+
 func (suite *NormalizeTestSuite) getAccountable() (vocab.ActivityStreamsPerson, map[string]interface{}) {
 	t, raw := suite.jsonToType(`{
 		"@context": "https://www.w3.org/ns/activitystreams",
@@ -233,7 +248,7 @@ func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsOneAttachment
 }`, suite.typeToJson(note))
 
 	// Normalize it!
-	ap.NormalizeStatusableAttachments(note, rawNote)
+	ap.NormalizeAttachments(note, rawNote)
 
 	// After normalization, the 'name' field of the
 	// attachment should no longer be all jacked up.
@@ -274,7 +289,7 @@ func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsOneAttachment
 }`, suite.typeToJson(note))
 
 	// Normalize it!
-	ap.NormalizeStatusableAttachments(note, rawNote)
+	ap.NormalizeAttachments(note, rawNote)
 
 	// After normalization, the 'name' field of the
 	// attachment should no longer be all jacked up.
@@ -334,7 +349,7 @@ func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsMultipleAttac
 }`, suite.typeToJson(note))
 
 	// Normalize it!
-	ap.NormalizeStatusableAttachments(note, rawNote)
+	ap.NormalizeAttachments(note, rawNote)
 
 	// After normalization, the 'name' field of the
 	// attachment should no longer be all jacked up.
@@ -373,11 +388,11 @@ func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsMultipleAttac
 }`, suite.typeToJson(note))
 }
 
-func (suite *NormalizeTestSuite) TestNormalizeAccountable() {
+func (suite *NormalizeTestSuite) TestNormalizeAccountableSummary() {
 	accountable, rawAccount := suite.getAccountable()
 	suite.Equal(`about: I'm a #Barbie%20%23girl%20in%20a%20%23Barbie%20%23world%0ALife%20in%20plastic,%20it%27s%20fantastic%0AYou%20can%20brush%20my%20hair,%20undress%20me%20everywhere%0AImagination,%20life%20is%20your%20creation%0AI%27m%20a%20blonde%20bimbo%20girl%0AIn%20a%20fantasy%20world%0ADress%20me%20up,%20make%20it%20tight%0AI%27m%20your%20dolly%0AYou%27re%20my%20doll,%20rock%20and%20roll%0AFeel%20the%20glamour%20in%20pink%0AKiss%20me%20here,%20touch%20me%20there%0AHanky%20panky`, ap.ExtractSummary(accountable))
 
-	ap.NormalizeAccountableSummary(accountable, rawAccount)
+	ap.NormalizeSummary(accountable, rawAccount)
 	suite.Equal(`about: I'm a #Barbie #girl in a #Barbie #world
 Life in plastic, it's fantastic
 You can brush my hair, undress me everywhere
@@ -390,6 +405,22 @@ You're my doll, rock and roll
 Feel the glamour in pink
 Kiss me here, touch me there
 Hanky panky`, ap.ExtractSummary(accountable))
+}
+
+func (suite *NormalizeTestSuite) TestNormalizeStatusableSummary() {
+	statusable, rawAccount := suite.getStatusableWithWeirdSummaryAndName()
+	suite.Equal(`warning: #WEIRD%20%23SUMMARY%20;;;;a;;a;asv%20%20%20%20khop8273987(*%5E&%5E)`, ap.ExtractSummary(statusable))
+
+	ap.NormalizeSummary(statusable, rawAccount)
+	suite.Equal(`warning: #WEIRD #SUMMARY ;;;;a;;a;asv    khop8273987(*^&^)`, ap.ExtractSummary(statusable))
+}
+
+func (suite *NormalizeTestSuite) TestNormalizeStatusableName() {
+	statusable, rawAccount := suite.getStatusableWithWeirdSummaryAndName()
+	suite.Equal(`warning: #WEIRD%20%23nameEE%20;;;;a;;a;asv%20%20%20%20khop8273987(*%5E&%5E)`, ap.ExtractName(statusable))
+
+	ap.NormalizeName(statusable, rawAccount)
+	suite.Equal(`WARNING: #WEIRD #nameEE ;;;;a;;a;asv    khop8273987(*^&^)`, ap.ExtractName(statusable))
 }
 
 func TestNormalizeTestSuite(t *testing.T) {
