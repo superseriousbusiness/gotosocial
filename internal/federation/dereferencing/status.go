@@ -125,7 +125,7 @@ func (d *deref) getStatusByURI(ctx context.Context, requestUser string, uri *url
 		return status, nil, nil
 	}
 
-	return enriched, apubStatus, err
+	return enriched, apubStatus, nil
 }
 
 // UpdateStatus: implements Dereferencer{}.UpdateStatus().
