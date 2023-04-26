@@ -38,12 +38,17 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
+// statusUpdateInterval is the interval after which
+// we check for the latest available version of a status.
 const statusUpdateInterval = 2 * time.Hour
 
 // GetStatus: implements Dereferencer{}.GetStatus().
 func (d *deref) GetStatusByURI(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Status, ap.Statusable, error) {
 	// Fetch and dereference status if necessary.
-	status, apubStatus, err := d.getStatus(ctx, requestUser, uri)
+	status, apubStatus, err := d.getStatusByURI(ctx,
+		requestUser,
+		uri,
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -58,7 +63,8 @@ func (d *deref) GetStatusByURI(ctx context.Context, requestUser string, uri *url
 	return status, apubStatus, nil
 }
 
-func (d *deref) getStatus(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Status, ap.Statusable, error) {
+// getStatusByURI is a package internal form of .GetStatusByURI() that doesn't bother dereferencing the whole thread on update.
+func (d *deref) getStatusByURI(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Status, ap.Statusable, error) {
 	var (
 		status *gtsmodel.Status
 		uriStr = uri.String()
@@ -103,7 +109,7 @@ func (d *deref) getStatus(ctx context.Context, requestUser string, uri *url.URL)
 	}
 
 	// Try to update + deref existing status model.
-	enriched, statusable, err := d.enrichStatus(ctx,
+	enriched, apubStatus, err := d.enrichStatus(ctx,
 		requestUser,
 		uri,
 		status,
@@ -119,7 +125,7 @@ func (d *deref) getStatus(ctx context.Context, requestUser string, uri *url.URL)
 		return status, nil, nil
 	}
 
-	return enriched, statusable, err
+	return enriched, apubStatus, err
 }
 
 // UpdateStatus: implements Dereferencer{}.UpdateStatus().
@@ -225,7 +231,7 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 	}
 
 	// Ensure we have the author account of the status dereferenced (+ up-to-date).
-	if author, err := d.GetAccountByURI(ctx, requestUser, attributedTo); err != nil {
+	if author, _, err := d.getAccountByURI(ctx, requestUser, attributedTo); err != nil {
 		if status.AccountID == "" {
 			// Provided status account is nil, i.e. this is a new status / author, so a deref fail is unrecoverable.
 			return nil, nil, fmt.Errorf("enrichStatus: failed to dereference status author %s: %w", uri, err)
@@ -278,14 +284,15 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 		// found in one of the GetStatusBy___() functions.
 		//
 		// This is new, put the status in the database.
-		if err := d.state.DB.PutStatus(ctx, latestStatus); err != nil {
+		err := d.state.DB.PutStatus(ctx, latestStatus)
 
-			if errors.Is(err, db.ErrAlreadyExists) {
-				// TODO: replace this quick fix with per-URI deref locks.
-				status, err := d.state.DB.GetStatusByURI(ctx, latestStatus.URI)
-				return status, nil, err
-			}
+		if errors.Is(err, db.ErrAlreadyExists) {
+			// TODO: replace this quick fix with per-URI deref locks.
+			latestStatus, err = d.state.DB.GetStatusByURI(ctx, latestStatus.URI)
+			apubStatus = nil // don't trigger deref-thread
+		}
 
+		if err != nil {
 			return nil, nil, fmt.Errorf("enrichStatus: error putting in database: %w", err)
 		}
 	} else {
