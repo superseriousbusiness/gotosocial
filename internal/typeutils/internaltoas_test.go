@@ -85,6 +85,57 @@ func (suite *InternalToASTestSuite) TestAccountToAS() {
 }`, trimmed)
 }
 
+func (suite *InternalToASTestSuite) TestAccountToASWithFields() {
+	testAccount := &gtsmodel.Account{}
+	*testAccount = *suite.testAccounts["local_account_2"] // take zork for this test
+
+	asPerson, err := suite.typeconverter.AccountToAS(context.Background(), testAccount)
+	suite.NoError(err)
+
+	ser, err := streams.Serialize(asPerson)
+	suite.NoError(err)
+
+	bytes, err := json.MarshalIndent(ser, "", "  ")
+	suite.NoError(err)
+
+	// trim off everything up to 'attachment';
+	// this is necessary because the order of multiple 'context' entries is not determinate
+	trimmed := strings.Split(string(bytes), "\"attachment\"")[1]
+
+	suite.Equal(`: [
+    {
+      "name": "should you follow me?",
+      "type": "PropertyValue",
+      "value": "maybe!"
+    },
+    {
+      "name": "age",
+      "type": "PropertyValue",
+      "value": "120"
+    }
+  ],
+  "discoverable": false,
+  "featured": "http://localhost:8080/users/1happyturtle/collections/featured",
+  "followers": "http://localhost:8080/users/1happyturtle/followers",
+  "following": "http://localhost:8080/users/1happyturtle/following",
+  "id": "http://localhost:8080/users/1happyturtle",
+  "inbox": "http://localhost:8080/users/1happyturtle/inbox",
+  "manuallyApprovesFollowers": true,
+  "name": "happy little turtle :3",
+  "outbox": "http://localhost:8080/users/1happyturtle/outbox",
+  "preferredUsername": "1happyturtle",
+  "publicKey": {
+    "id": "http://localhost:8080/users/1happyturtle#main-key",
+    "owner": "http://localhost:8080/users/1happyturtle",
+    "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtTc6Jpg6LrRPhVQG4KLz\n2+YqEUUtZPd4YR+TKXuCnwEG9ZNGhgP046xa9h3EWzrZXaOhXvkUQgJuRqPrAcfN\nvc8jBHV2xrUeD8pu/MWKEabAsA/tgCv3nUC47HQ3/c12aHfYoPz3ufWsGGnrkhci\nv8PaveJ3LohO5vjCn1yZ00v6osMJMViEZvZQaazyE9A8FwraIexXabDpoy7tkHRg\nA1fvSkg4FeSG1XMcIz2NN7xyUuFACD+XkuOk7UqzRd4cjPUPLxiDwIsTlcgGOd3E\nUFMWVlPxSGjY2hIKa3lEHytaYK9IMYdSuyCsJshd3/yYC9LqxZY2KdlKJ80VOVyh\nyQIDAQAB\n-----END PUBLIC KEY-----\n"
+  },
+  "summary": "\u003cp\u003ei post about things that concern me\u003c/p\u003e",
+  "tag": [],
+  "type": "Person",
+  "url": "http://localhost:8080/@1happyturtle"
+}`, trimmed)
+}
+
 func (suite *InternalToASTestSuite) TestAccountToASWithEmoji() {
 	testAccount := &gtsmodel.Account{}
 	*testAccount = *suite.testAccounts["local_account_1"] // take zork for this test

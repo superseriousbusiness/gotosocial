@@ -240,7 +240,25 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 
 	// attachment
 	// Used for profile fields.
-	// TODO: The PropertyValue type has to be added: https://schema.org/PropertyValue
+	if len(a.Fields) != 0 {
+		attachmentProp := streams.NewActivityStreamsAttachmentProperty()
+
+		for _, field := range a.Fields {
+			propertyValue := streams.NewSchemaPropertyValue()
+
+			nameProp := streams.NewActivityStreamsNameProperty()
+			nameProp.AppendXMLSchemaString(field.Name)
+			propertyValue.SetActivityStreamsName(nameProp)
+
+			valueProp := streams.NewSchemaValueProperty()
+			valueProp.Set(field.Value)
+			propertyValue.SetSchemaValue(valueProp)
+
+			attachmentProp.AppendSchemaPropertyValue(propertyValue)
+		}
+
+		person.SetActivityStreamsAttachment(attachmentProp)
+	}
 
 	// endpoints
 	// NOT IMPLEMENTED -- this is for shared inbox which we don't use

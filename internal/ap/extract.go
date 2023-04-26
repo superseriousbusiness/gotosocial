@@ -263,6 +263,59 @@ func ExtractSummary(i WithSummary) string {
 	return ""
 }
 
+func ExtractFields(i WithAttachment) []gtsmodel.Field {
+	attachmentProp := i.GetActivityStreamsAttachment()
+	if attachmentProp == nil {
+		// Nothing to do.
+		return nil
+	}
+
+	l := attachmentProp.Len()
+	if l == 0 {
+		// Nothing to do.
+		return nil
+	}
+
+	fields := make([]gtsmodel.Field, 0, l)
+	for iter := attachmentProp.Begin(); iter != attachmentProp.End(); iter = iter.Next() {
+		if !iter.IsSchemaPropertyValue() {
+			continue
+		}
+
+		propertyValue := iter.GetSchemaPropertyValue()
+		if propertyValue == nil {
+			continue
+		}
+
+		nameProp := propertyValue.GetActivityStreamsName()
+		if nameProp == nil || nameProp.Len() != 1 {
+			continue
+		}
+
+		name := nameProp.At(0).GetXMLSchemaString()
+		if name == "" {
+			continue
+		}
+
+		valueProp := propertyValue.GetSchemaValue()
+		if valueProp == nil || valueProp.IsXMLSchemaString() == false {
+			continue
+		}
+
+		value := valueProp.Get()
+		if value == "" {
+			continue
+		}
+
+		fields = append(fields, gtsmodel.Field{
+			Name:  name,
+			Value: value,
+		})
+	}
+
+	return fields
+}
+
 // ExtractDiscoverable extracts the Discoverable boolean of an interface.
 func ExtractDiscoverable(i WithDiscoverable) (bool, error) {
 	if i.GetTootDiscoverable() == nil {
