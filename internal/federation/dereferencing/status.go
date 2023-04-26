@@ -204,6 +204,7 @@ func (d *deref) UpdateStatusAsync(ctx context.Context, requestUser string, statu
 	})
 }
 
+// enrichStatus will enrich the given status, whether a new barebones model, or existing model from the database. It handles necessary dereferencing etc.
 func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.URL, status *gtsmodel.Status) (*gtsmodel.Status, ap.Statusable, error) {
 	// Pre-fetch a transport for requesting username, used by later dereferencing.
 	tsport, err := d.transportController.NewTransportForUsername(ctx, requestUser)

@@ -33,28 +33,33 @@ import (
 
 // Dereferencer wraps logic and functionality for doing dereferencing of remote accounts, statuses, etc, from federated instances.
 type Dereferencer interface {
-	// GetAccountByURI will attempt to fetch an account by its URI, first checking the database and in the case of a remote account will either check the
-	// last_fetched (and updating if beyond fetch interval) or dereferencing for the first-time if this remote account has never been encountered before.
+	// GetAccountByURI will attempt to fetch an accounts by its URI, first checking the database. In the case of a newly-met remote model, or a remote model
+	// whose last_fetched date is beyond a certain interval, the account will be dereferenced. In the case of dereferencing, some low-priority account information
+	// may be enqueued for asynchronous fetching, e.g. featured account statuses (pins).
 	GetAccountByURI(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Account, error)
 
-	// GetAccountByUsernameDomain will attempt to fetch an account by username@domain, first checking the database and in the case of a remote account will either
-	// check the last_fetched (and updating if beyond fetch interval) or dereferencing for the first-time if this remote account has never been encountered before.
+	// GetAccountByUsernameDomain will attempt to fetch an accounts by its username@domain, first checking the database. In the case of a newly-met remote model,
+	// or a remote model whose last_fetched date is beyond a certain interval, the account will be dereferenced. In the case of dereferencing, some low-priority
+	// account information may be enqueued for asynchronous fetching, e.g. featured account statuses (pins).
 	GetAccountByUsernameDomain(ctx context.Context, requestUser string, username string, domain string) (*gtsmodel.Account, error)
 
-	// RefreshAccount forces a refresh of the given account by fetching the current/latest state of the account from the remote instance.
-	// An updated account model is returned, but not yet inserted/updated in the database; this is the caller's responsibility.
-	RefreshAccount(ctx context.Context, requestUser string, accountable ap.Accountable, account *gtsmodel.Account) (*gtsmodel.Account, error)
+	// UpdateAccount updates the given account if remote and last_fetched is beyond fetch interval, or if force is set. An updated account model is returned,
+	// but in the case of dereferencing, some low-priority account information may be enqueued for asynchronous fetching, e.g. featured account statuses (pins).
+	UpdateAccount(ctx context.Context, requestUser string, account *gtsmodel.Account, force bool) (*gtsmodel.Account, error)
 
-	// UpdateAccountAsync ...
+	// UpdateAccountAsync enqueues the given account for an asychronous update fetching, if last_fetched is beyond fetch interval, or if forcc is set.
 	UpdateAccountAsync(ctx context.Context, requestUser string, account *gtsmodel.Account, force bool)
 
-	// GetStatusByURI ...
+	// GetStatusByURI will attempt to fetch a status by its URI, first checking the database. In the case of a newly-met remote model, or a remote model
+	// whose last_fetched date is beyond a certain interval, the status will be dereferenced. In the case of dereferencing, some low-priority status information
+	// may be enqueued for asynchronous fetching, e.g. dereferencing the remainder of the status thread.
 	GetStatusByURI(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Status, ap.Statusable, error)
 
-	// UpdateStatus ...
+	// UpdateStatus updates the given status if remote and last_fetched is beyond fetch interval, or if force is set. An updated status model is returned,
+	// but in the case of dereferencing, some low-priority status information may be enqueued for asynchronous fetching, e.g. dereferencing the remainder of the status thread.
 	UpdateStatus(ctx context.Context, requestUser string, status *gtsmodel.Status, force bool) (*gtsmodel.Status, ap.Statusable, error)
 
-	// UpdateStatusAsync ...
+	// UpdateStatusAsync enqueues the given status for an asychronous update fetching, if last_fetched is beyond fetch interval, or if force is set.
 	UpdateStatusAsync(ctx context.Context, requestUser string, status *gtsmodel.Status, force bool)
 
 	GetRemoteInstance(ctx context.Context, username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)

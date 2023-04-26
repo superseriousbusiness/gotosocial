@@ -278,6 +278,7 @@ func (d *deref) UpdateAccountAsync(ctx context.Context, requestUser string, acco
 	})
 }
 
+// enrichAccount will enrich the given account, whether a new barebones model, or existing model from the database. It handles necessary dereferencing, webfingering etc.
 func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.URL, account *gtsmodel.Account) (*gtsmodel.Account, ap.Accountable, error) {
 	// Pre-fetch a transport for requesting username, used by later deref procedures.
 	transport, err := d.transportController.NewTransportForUsername(ctx, requestUser)
@@ -346,8 +347,9 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	}
 
 	// Convert the dereferenced AP account object to our GTS model.
-	latestAcc, err := d.typeConverter.ASRepresentationToAccount(
-		ctx, apubAcc, account.Domain,
+	latestAcc, err := d.typeConverter.ASRepresentationToAccount(ctx,
+		apubAcc,
+		account.Domain,
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("enrichAccount: error converting accountable to gts model for account %s: %w", uri, err)
