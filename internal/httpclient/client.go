@@ -275,8 +275,9 @@ func (c *Client) DoSigned(r *http.Request, sign SignFunc) (*http.Response, error
 		}
 
 		if backoff == 0 {
-			// No retry-after found, set our predefined backoff.
-			backoff = time.Duration(i) * baseBackoff
+			// No retry-after found, set our predefined
+			// backoff according to a multiplier of 2^n.
+			backoff = baseBackoff * 1 << (i + 1)
 		}
 
 		l.Errorf("backing off for %s after http request error: %v", backoff, err)
