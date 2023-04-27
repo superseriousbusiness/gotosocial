@@ -62,3 +62,39 @@ func normalizeOrderedCollectionData(rawOrderedCollection map[string]interface{})
 
 	return nil
 }
+
+// SerializeAccountable is a custom serializer for any Accountable type.
+// This serializer rewrites the 'attachment' value of the Accountable, if
+// present, to always be an array.
+//
+// While this is not strictly necessary in json-ld terms, most other fedi
+// implementations look for attachment to be an array of PropertyValue (field)
+// entries, and will not parse single-entry, non-array attachments on accounts
+// properly.
+func SerializeAccountable(accountable vocab.Type) (map[string]interface{}, error) {
+	data, err := streams.Serialize(accountable)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, normalizeAccountableAttachments(data)
+}
+
+func normalizeAccountableAttachments(rawAccountable map[string]interface{}) error {
+	attachment, ok := rawAccountable["attachment"]
+	if !ok {
+		// 'attachment' not set,
+		// so nothing to rewrite.
+		return nil
+	}
+
+	if _, ok := attachment.([]interface{}); ok {
+		// Already slice.
+		return nil
+	}
+
+	// Coerce single-object to slice.
+	rawAccountable["attachment"] = []interface{}{attachment}
+
+	return nil
+}

@@ -22,8 +22,8 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
@@ -78,7 +78,7 @@ func (p *Processor) UserGet(ctx context.Context, requestedUsername string, reque
 		}
 	}
 
-	data, err := streams.Serialize(requestedPerson)
+	data, err := ap.SerializeAccountable(requestedPerson)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

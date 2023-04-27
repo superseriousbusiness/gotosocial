@@ -30,6 +30,7 @@ import (
 	"codeberg.org/gruf/go-cache/v3"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -178,7 +179,7 @@ func (c *controller) dereferenceLocalUser(ctx context.Context, iri *url.URL) ([]
 		return nil, err
 	}
 
-	i, err := streams.Serialize(user)
+	i, err := ap.SerializeAccountable(user)
 	if err != nil {
 		return nil, err
 	}
