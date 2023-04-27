@@ -48,6 +48,7 @@ type Dereferencer interface {
 	UpdateAccount(ctx context.Context, requestUser string, account *gtsmodel.Account, force bool) (*gtsmodel.Account, error)
 
 	// UpdateAccountAsync enqueues the given account for an asychronous update fetching, if last_fetched is beyond fetch interval, or if forcc is set.
+	// This is a more optimized form of manually enqueueing .UpdateAccount() to the federation worker, since it only enqueues update if necessary.
 	UpdateAccountAsync(ctx context.Context, requestUser string, account *gtsmodel.Account, force bool)
 
 	// GetStatusByURI will attempt to fetch a status by its URI, first checking the database. In the case of a newly-met remote model, or a remote model
@@ -60,6 +61,7 @@ type Dereferencer interface {
 	UpdateStatus(ctx context.Context, requestUser string, status *gtsmodel.Status, force bool) (*gtsmodel.Status, ap.Statusable, error)
 
 	// UpdateStatusAsync enqueues the given status for an asychronous update fetching, if last_fetched is beyond fetch interval, or if force is set.
+	// This is a more optimized form of manually enqueueing .UpdateStatus() to the federation worker, since it only enqueues update if necessary.
 	UpdateStatusAsync(ctx context.Context, requestUser string, status *gtsmodel.Status, force bool)
 
 	GetRemoteInstance(ctx context.Context, username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
