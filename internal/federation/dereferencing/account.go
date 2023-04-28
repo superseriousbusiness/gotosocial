@@ -212,7 +212,7 @@ func (d *deref) UpdateAccount(ctx context.Context, requestUser string, account *
 	}
 
 	// Try to update + deref existing account model.
-	account, apubAcc, err := d.enrichAccount(ctx,
+	account, _, err = d.enrichAccount(ctx,
 		requestUser,
 		uri,
 		account,
@@ -227,12 +227,10 @@ func (d *deref) UpdateAccount(ctx context.Context, requestUser string, account *
 		return nil, err
 	}
 
-	if apubAcc != nil {
-		// This account was updated, enqueue re-dereference featured posts.
-		d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
-			d.dereferenceAccountFeatured(ctx, requestUser, account)
-		})
-	}
+	// This account was updated, enqueue re-dereference featured posts.
+	d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
+		d.dereferenceAccountFeatured(ctx, requestUser, account)
+	})
 
 	return account, nil
 }
@@ -265,16 +263,14 @@ func (d *deref) UpdateAccountAsync(ctx context.Context, requestUser string, acco
 
 	// Enqueue a worker function to enrich this account async.
 	d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
-		account, apubAccount, err := d.enrichAccount(ctx, requestUser, uri, account)
+		account, _, err := d.enrichAccount(ctx, requestUser, uri, account)
 		if err != nil {
 			log.Errorf(ctx, "error enriching remote account: %v", err)
 			return
 		}
 
-		if apubAccount != nil {
-			// This account was updated, re-dereference featured posts.
-			d.dereferenceAccountFeatured(ctx, requestUser, account)
-		}
+		// This account was updated, re-dereference featured posts.
+		d.dereferenceAccountFeatured(ctx, requestUser, account)
 	})
 }
 

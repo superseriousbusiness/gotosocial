@@ -158,12 +158,10 @@ func (d *deref) UpdateStatus(ctx context.Context, requestUser string, status *gt
 		return nil, nil, err
 	}
 
-	if apubStatus != nil {
-		// This status was updated, enqueue re-dereferencing the whole thread.
-		d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
-			d.dereferenceThread(ctx, requestUser, uri, status, apubStatus)
-		})
-	}
+	// This status was updated, enqueue re-dereferencing the whole thread.
+	d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
+		d.dereferenceThread(ctx, requestUser, uri, status, apubStatus)
+	})
 
 	return status, apubStatus, nil
 }
@@ -191,16 +189,14 @@ func (d *deref) UpdateStatusAsync(ctx context.Context, requestUser string, statu
 
 	// Enqueue a worker function to re-fetch this status async.
 	d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
-		_, apubStatus, err := d.enrichStatus(ctx, requestUser, uri, status)
+		status, apubStatus, err := d.enrichStatus(ctx, requestUser, uri, status)
 		if err != nil {
 			log.Errorf(ctx, "error enriching remote status: %v", err)
 			return
 		}
 
-		if apubStatus != nil {
-			// This status was updated, re-dereference the whole thread.
-			d.dereferenceThread(ctx, requestUser, uri, status, apubStatus)
-		}
+		// This status was updated, re-dereference the whole thread.
+		d.dereferenceThread(ctx, requestUser, uri, status, apubStatus)
 	})
 }
 
