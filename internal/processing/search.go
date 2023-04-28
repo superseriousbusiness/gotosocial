@@ -30,11 +30,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -226,14 +226,14 @@ func (p *Processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *a
 }
 
 func (p *Processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL) (*gtsmodel.Status, error) {
-	status, statusable, err := p.federator.GetStatus(transport.WithFastfail(ctx), authed.Account.Username, uri, true, true)
+	status, statusable, err := p.federator.GetStatus(gtscontext.SetFastFail(ctx), authed.Account.Username, uri, true, true)
 	if err != nil {
 		return nil, err
 	}
 
 	if !*status.Local && statusable != nil {
 		// Attempt to dereference the status thread while we are here
-		p.federator.DereferenceThread(transport.WithFastfail(ctx), authed.Account.Username, uri, status, statusable)
+		p.federator.DereferenceThread(gtscontext.SetFastFail(ctx), authed.Account.Username, uri, status, statusable)
 	}
 
 	return status, nil
@@ -268,7 +268,7 @@ func (p *Processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, 
 	}
 
 	return p.federator.GetAccountByURI(
-		transport.WithFastfail(ctx),
+		gtscontext.SetFastFail(ctx),
 		authed.Account.Username,
 		uri, false,
 	)
@@ -295,7 +295,7 @@ func (p *Processor) searchAccountByUsernameDomain(ctx context.Context, authed *o
 	}
 
 	return p.federator.GetAccountByUsernameDomain(
-		transport.WithFastfail(ctx),
+		gtscontext.SetFastFail(ctx),
 		authed.Account.Username,
 		username, domain, false,
 	)

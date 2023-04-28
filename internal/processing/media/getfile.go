@@ -25,10 +25,10 @@ import (
 	"strings"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
@@ -157,7 +157,7 @@ func (p *Processor) getAttachmentContent(ctx context.Context, requestingAccount 
 			if err != nil {
 				return nil, 0, err
 			}
-			return t.DereferenceMedia(transport.WithFastfail(innerCtx), remoteMediaIRI)
+			return t.DereferenceMedia(gtscontext.SetFastFail(innerCtx), remoteMediaIRI)
 		}
 
 		// Start recaching this media with the prepared data function.

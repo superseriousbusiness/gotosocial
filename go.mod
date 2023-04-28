@@ -19,7 +19,6 @@ require (
 	github.com/abema/go-mp4 v0.10.1
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/coreos/go-oidc/v3 v3.5.0
-	github.com/cornelk/hashmap v1.0.8
 	github.com/disintegration/imaging v1.6.2
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-contrib/gzip v0.0.6
@@ -82,6 +81,7 @@ require (
 	github.com/cilium/ebpf v0.9.1 // indirect
 	github.com/containerd/cgroups/v3 v3.0.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
+	github.com/cornelk/hashmap v1.0.8 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dsoprea/go-exif/v3 v3.0.0-20210625224831-a6301f85c82b // indirect

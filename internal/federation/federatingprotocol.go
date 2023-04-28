@@ -29,10 +29,10 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -191,9 +191,8 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 			return ctx, false, err
 		}
 
-		// We don't yet have an entry for
-		// the instance, go dereference it.
-		instance, err := f.GetRemoteInstance(transport.WithFastfail(ctx), username, &url.URL{
+		// we don't have an entry for this instance yet so dereference it
+		instance, err := f.GetRemoteInstance(gtscontext.SetFastFail(ctx), username, &url.URL{
 			Scheme: publicKeyOwnerURI.Scheme,
 			Host:   publicKeyOwnerURI.Host,
 		})
@@ -212,7 +211,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 	// dereference the remote account (or just get it
 	// from the db if we already have it).
 	requestingAccount, err := f.GetAccountByURI(
-		transport.WithFastfail(ctx), username, publicKeyOwnerURI, false,
+		gtscontext.SetFastFail(ctx), username, publicKeyOwnerURI, false,
 	)
 	if err != nil {
 		if gtserror.StatusCode(err) == http.StatusGone {

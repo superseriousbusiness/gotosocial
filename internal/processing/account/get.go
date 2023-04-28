@@ -25,9 +25,9 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
 // Get processes the given request for account information.
@@ -96,7 +96,7 @@ func (p *Processor) getFor(ctx context.Context, requestingAccount *gtsmodel.Acco
 		}
 
 		a, err := p.federator.GetAccountByURI(
-			transport.WithFastfail(ctx), requestingAccount.Username, targetAccountURI, true,
+			gtscontext.SetFastFail(ctx), requestingAccount.Username, targetAccountURI, true,
 		)
 		if err == nil {
 			targetAccount = a

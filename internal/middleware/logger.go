@@ -34,7 +34,7 @@ import (
 func Logger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Initialize the logging fields
-		fields := make(kv.Fields, 6, 7)
+		fields := make(kv.Fields, 5, 7)
 
 		// Determine pre-handler time
 		before := time.Now()
@@ -68,11 +68,18 @@ func Logger() gin.HandlerFunc {
 
 			// Set request logging fields
 			fields[0] = kv.Field{"latency", time.Since(before)}
-			fields[1] = kv.Field{"clientIP", c.ClientIP()}
-			fields[2] = kv.Field{"userAgent", c.Request.UserAgent()}
-			fields[3] = kv.Field{"method", c.Request.Method}
-			fields[4] = kv.Field{"statusCode", code}
-			fields[5] = kv.Field{"path", path}
+			fields[1] = kv.Field{"userAgent", c.Request.UserAgent()}
+			fields[2] = kv.Field{"method", c.Request.Method}
+			fields[3] = kv.Field{"statusCode", code}
+			fields[4] = kv.Field{"path", path}
+			if includeClientIP := true; includeClientIP {
+				// TODO: make this configurable.
+				//
+				// Include clientIP if enabled.
+				fields = append(fields, kv.Field{
+					"clientIP", c.ClientIP(),
+				})
+			}
 
 			// Create log entry with fields
 			l := log.WithContext(c.Request.Context()).

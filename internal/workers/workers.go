@@ -31,8 +31,12 @@ type Workers struct {
 	// Main task scheduler instance.
 	Scheduler sched.Scheduler
 
-	// ClientAPI / federator worker pools.
+	// ClientAPI provides a worker pool that handles both
+	// incoming client actions, and our own side-effects.
 	ClientAPI runners.WorkerPool
+
+	// Federator provides a worker pool that handles both
+	// incoming federated actions, and our own side-effects.
 	Federator runners.WorkerPool
 
 	// Enqueue functions for clientAPI / federator worker pools,

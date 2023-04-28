@@ -15,19 +15,30 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package transport_test
+package gtscontext
 
 import (
 	"context"
-	"testing"
 
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
+	"codeberg.org/gruf/go-kv"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-func TestFastFailContext(t *testing.T) {
-	ctx := context.Background()
-	ctx = transport.WithFastfail(ctx)
-	if !transport.IsFastfail(ctx) {
-		t.Fatal("failed to set fast-fail context key")
-	}
+func init() {
+	// Add our required logging hooks on application initialization.
+	//
+	// Request ID middleware hook.
+	log.Hook(func(ctx context.Context, kvs []kv.Field) []kv.Field {
+		if id := RequestID(ctx); id != "" {
+			return append(kvs, kv.Field{K: "requestID", V: id})
+		}
+		return kvs
+	})
+	// Client IP middleware hook.
+	log.Hook(func(ctx context.Context, kvs []kv.Field) []kv.Field {
+		if id := PublicKeyID(ctx); id != "" {
+			return append(kvs, kv.Field{K: "pubKeyID", V: id})
+		}
+		return kvs
+	})
 }
