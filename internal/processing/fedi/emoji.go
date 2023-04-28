@@ -21,7 +21,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
@@ -49,7 +49,7 @@ func (p *Processor) EmojiGet(ctx context.Context, requestedEmojiID string) (inte
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting gtsmodel emoji with id %s to ap emoji: %s", requestedEmojiID, err))
 	}
 
-	data, err := streams.Serialize(apEmoji)
+	data, err := ap.Serialize(apEmoji)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

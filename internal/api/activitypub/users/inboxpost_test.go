@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -76,7 +77,7 @@ func (suite *InboxPostTestSuite) TestPostBlock() {
 	targetURI := testrig.URLMustParse(blockedAccount.InboxURI)
 
 	signature, digestHeader, dateHeader := testrig.GetSignatureForActivity(block, blockingAccount.PublicKeyURI, blockingAccount.PrivateKey, targetURI)
-	bodyI, err := streams.Serialize(block)
+	bodyI, err := ap.Serialize(block)
 	suite.NoError(err)
 
 	bodyJson, err := json.Marshal(bodyI)
@@ -177,7 +178,7 @@ func (suite *InboxPostTestSuite) TestPostUnblock() {
 	targetURI := testrig.URLMustParse(blockedAccount.InboxURI)
 
 	signature, digestHeader, dateHeader := testrig.GetSignatureForActivity(undo, blockingAccount.PublicKeyURI, blockingAccount.PrivateKey, targetURI)
-	bodyI, err := streams.Serialize(undo)
+	bodyI, err := ap.Serialize(undo)
 	suite.NoError(err)
 
 	bodyJson, err := json.Marshal(bodyI)
@@ -275,7 +276,7 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 	targetURI := testrig.URLMustParse(receivingAccount.InboxURI)
 
 	signature, digestHeader, dateHeader := testrig.GetSignatureForActivity(update, updatedAccount.PublicKeyURI, updatedAccount.PrivateKey, targetURI)
-	bodyI, err := streams.Serialize(update)
+	bodyI, err := ap.Serialize(update)
 	suite.NoError(err)
 
 	bodyJson, err := json.Marshal(bodyI)
@@ -412,7 +413,7 @@ func (suite *InboxPostTestSuite) TestPostDelete() {
 	targetURI := testrig.URLMustParse(receivingAccount.InboxURI)
 
 	signature, digestHeader, dateHeader := testrig.GetSignatureForActivity(delete, deletedAccount.PublicKeyURI, deletedAccount.PrivateKey, targetURI)
-	bodyI, err := streams.Serialize(delete)
+	bodyI, err := ap.Serialize(delete)
 	suite.NoError(err)
 
 	bodyJson, err := json.Marshal(bodyI)

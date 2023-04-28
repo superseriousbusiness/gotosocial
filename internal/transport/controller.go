@@ -29,7 +29,6 @@ import (
 	"codeberg.org/gruf/go-byteutil"
 	"codeberg.org/gruf/go-cache/v3"
 	"github.com/superseriousbusiness/activity/pub"
-	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
@@ -161,7 +160,7 @@ func (c *controller) dereferenceLocalFollowers(ctx context.Context, iri *url.URL
 		return nil, err
 	}
 
-	i, err := streams.Serialize(followers)
+	i, err := ap.Serialize(followers)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +178,7 @@ func (c *controller) dereferenceLocalUser(ctx context.Context, iri *url.URL) ([]
 		return nil, err
 	}
 
-	i, err := ap.SerializeAccountable(user)
+	i, err := ap.Serialize(user)
 	if err != nil {
 		return nil, err
 	}

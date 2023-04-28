@@ -24,7 +24,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -74,7 +73,7 @@ func (p *Processor) OutboxGet(ctx context.Context, requestedUsername string, pag
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 
-		data, err = streams.Serialize(collection)
+		data, err = ap.Serialize(collection)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -93,7 +92,7 @@ func (p *Processor) OutboxGet(ctx context.Context, requestedUsername string, pag
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
-	data, err = streams.Serialize(outboxPage)
+	data, err = ap.Serialize(outboxPage)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -119,7 +118,7 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUsername string) 
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error fetching followers for uri %s: %s", requestedAccountURI.String(), err))
 	}
 
-	data, err := streams.Serialize(requestedFollowers)
+	data, err := ap.Serialize(requestedFollowers)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -145,7 +144,7 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUsername string) 
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error fetching following for uri %s: %s", requestedAccountURI.String(), err))
 	}
 
-	data, err := streams.Serialize(requestedFollowing)
+	data, err := ap.Serialize(requestedFollowing)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -173,7 +172,7 @@ func (p *Processor) FeaturedCollectionGet(ctx context.Context, requestedUsername
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	data, err := ap.SerializeOrderedCollection(collection)
+	data, err := ap.Serialize(collection)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

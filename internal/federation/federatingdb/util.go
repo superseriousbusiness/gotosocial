@@ -325,7 +325,7 @@ func extractFromCtx(ctx context.Context) (receivingAccount, requestingAccount *g
 }
 
 func marshalItem(item vocab.Type) (string, error) {
-	m, err := streams.Serialize(item)
+	m, err := ap.Serialize(item)
 	if err != nil {
 		return "", err
 	}

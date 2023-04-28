@@ -78,7 +78,7 @@ func (p *Processor) UserGet(ctx context.Context, requestedUsername string, reque
 		}
 	}
 
-	data, err := ap.SerializeAccountable(requestedPerson)
+	data, err := ap.Serialize(requestedPerson)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
