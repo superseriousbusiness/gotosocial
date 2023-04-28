@@ -19,7 +19,6 @@ package middleware
 
 import (
 	"bufio"
-	"context"
 	"crypto/rand"
 	"encoding/base32"
 	"encoding/binary"
@@ -27,17 +26,11 @@ import (
 	"sync"
 	"time"
 
-	"codeberg.org/gruf/go-kv"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 )
 
-type ctxType string
-
 var (
-	// ridCtxKey is the key underwhich we store request IDs in a context.
-	ridCtxKey ctxType = "id"
-
 	// crand provides buffered reads of random input.
 	crand = bufio.NewReader(rand.Reader)
 	mrand sync.Mutex
@@ -69,22 +62,8 @@ func generateID() string {
 	return base32enc.EncodeToString(b)
 }
 
-// RequestID fetches the stored request ID from context.
-func RequestID(ctx context.Context) string {
-	id, _ := ctx.Value(ridCtxKey).(string)
-	return id
-}
-
 // AddRequestID returns a gin middleware which adds a unique ID to each request (both response header and context).
 func AddRequestID(header string) gin.HandlerFunc {
-	log.Hook(func(ctx context.Context, kvs []kv.Field) []kv.Field {
-		if id, _ := ctx.Value(ridCtxKey).(string); id != "" {
-			// Add stored request ID to log entry fields.
-			return append(kvs, kv.Field{K: "requestID", V: id})
-		}
-		return kvs
-	})
-
 	return func(c *gin.Context) {
 		// Look for existing ID.
 		id := c.GetHeader(header)
@@ -100,8 +79,8 @@ func AddRequestID(header string) gin.HandlerFunc {
 			c.Request.Header.Set(header, id)
 		}
 
-		// Store request ID in new request ctx and set new gin request obj.
-		ctx := context.WithValue(c.Request.Context(), ridCtxKey, id)
+		// Store request ID in new request context and set on gin ctx.
+		ctx := gtscontext.SetRequestID(c.Request.Context(), id)
 		c.Request = c.Request.WithContext(ctx)
 
 		// Set the request ID in the rsp header.

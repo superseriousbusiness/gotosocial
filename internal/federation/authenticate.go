@@ -34,10 +34,10 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
 /*
@@ -216,7 +216,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		}
 
 		log.Tracef(ctx, "proceeding with dereference for uncached public key %s", requestingPublicKeyID)
-		trans, err := f.transportController.NewTransportForUsername(transport.WithFastfail(ctx), requestedUsername)
+		trans, err := f.transportController.NewTransportForUsername(gtscontext.SetFastFail(ctx), requestedUsername)
 		if err != nil {
 			errWithCode := gtserror.NewErrorInternalError(fmt.Errorf("error creating transport for %s: %s", requestedUsername, err))
 			log.Debug(ctx, errWithCode)
