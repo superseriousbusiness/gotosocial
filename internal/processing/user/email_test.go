@@ -53,7 +53,7 @@ func (suite *EmailConfirmTestSuite) TestSendConfirmEmail() {
 	suite.NotEmpty(token)
 
 	// email should contain the token
-	emailShould := fmt.Sprintf("To: some.email@example.org\r\nSubject: GoToSocial Email Confirmation\r\n\r\nHello the_mighty_zork!\r\n\r\nYou are receiving this mail because you've requested an account on http://localhost:8080.\r\n\r\nWe just need to confirm that this is your email address. To confirm your email, paste the following in your browser's address bar:\r\n\r\nhttp://localhost:8080/confirm_email?token=%s\r\n\r\nIf you believe you've been sent this email in error, feel free to ignore it, or contact the administrator of http://localhost:8080\r\n\r\n", token)
+	emailShould := fmt.Sprintf("To: some.email@example.org\r\nFrom: test@example.org\r\nSubject: GoToSocial Email Confirmation\r\n\r\nHello the_mighty_zork!\r\n\r\nYou are receiving this mail because you've requested an account on http://localhost:8080.\r\n\r\nWe just need to confirm that this is your email address. To confirm your email, paste the following in your browser's address bar:\r\n\r\nhttp://localhost:8080/confirm_email?token=%s\r\n\r\nIf you believe you've been sent this email in error, feel free to ignore it, or contact the administrator of http://localhost:8080\r\n\r\n", token)
 	suite.Equal(emailShould, email)
 
 	// confirmationSentAt should be recent
