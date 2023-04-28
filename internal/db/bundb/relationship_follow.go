@@ -25,6 +25,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
@@ -171,23 +172,10 @@ func (r *relationshipDB) getFollow(ctx context.Context, lookup string, dbQuery f
 }
 
 func (r *relationshipDB) PutFollow(ctx context.Context, follow *gtsmodel.Follow) error {
-	err := r.state.Caches.GTS.Follow().Store(follow, func() error {
+	return r.state.Caches.GTS.Follow().Store(follow, func() error {
 		_, err := r.conn.NewInsert().Model(follow).Exec(ctx)
 		return r.conn.ProcessError(err)
 	})
-	if err != nil {
-		return err
-	}
-
-	// Invalidate follow origin account ID cached visibility.
-	r.state.Caches.Visibility.Invalidate("ItemID", follow.AccountID)
-	r.state.Caches.Visibility.Invalidate("RequesterID", follow.AccountID)
-
-	// Invalidate follow target account ID cached visibility.
-	r.state.Caches.Visibility.Invalidate("ItemID", follow.TargetAccountID)
-	r.state.Caches.Visibility.Invalidate("RequesterID", follow.TargetAccountID)
-
-	return nil
 }
 
 func (r *relationshipDB) UpdateFollow(ctx context.Context, follow *gtsmodel.Follow, columns ...string) error {
@@ -211,29 +199,47 @@ func (r *relationshipDB) UpdateFollow(ctx context.Context, follow *gtsmodel.Foll
 }
 
 func (r *relationshipDB) DeleteFollowByID(ctx context.Context, id string) error {
-	if _, err := r.conn.NewDelete().
-		Table("follows").
-		Where("? = ?", bun.Ident("id"), id).
-		Exec(ctx); err != nil {
-		return r.conn.ProcessError(err)
+	// Load follow into cache before attempting a delete,
+	// as we need it cached in order to trigger the invalidate
+	// callback. This in turn invalidates others.
+	follow, err := r.GetFollowByID(
+		gtscontext.SetBarebones(ctx),
+		id,
+	)
+	if err != nil {
+		return err
 	}
 
-	// Invalidate follow from cache lookups.
-	r.state.Caches.GTS.Follow().Invalidate("ID", id)
-
-	return nil
+	// finally delete follow from database.
+	return r.deleteFollow(ctx, follow)
 }
 
 func (r *relationshipDB) DeleteFollowByURI(ctx context.Context, uri string) error {
+	// Load follow into cache before attempting a delete,
+	// as we need it cached in order to trigger the invalidate
+	// callback. This in turn invalidates others.
+	follow, err := r.GetFollowByURI(
+		gtscontext.SetBarebones(ctx),
+		uri,
+	)
+	if err != nil {
+		return err
+	}
+
+	// finally delete follow from database.
+	return r.deleteFollow(ctx, follow)
+}
+
+func (r *relationshipDB) deleteFollow(ctx context.Context, follow *gtsmodel.Follow) error {
 	if _, err := r.conn.NewDelete().
 		Table("follows").
-		Where("? = ?", bun.Ident("uri"), uri).
+		Where("? = ?", bun.Ident("id"), follow.ID).
 		Exec(ctx); err != nil {
 		return r.conn.ProcessError(err)
 	}
 
-	// Invalidate follow from cache lookups.
-	r.state.Caches.GTS.Follow().Invalidate("URI", uri)
+	// Invalidate follow from cache lookups (triggers other hooks).
+	r.state.Caches.GTS.Follow().Invalidate("ID", follow.ID)
 
 	return nil
 }
@@ -241,8 +247,10 @@ func (r *relationshipDB) DeleteFollowByURI(ctx context.Context, uri string) erro
 func (r *relationshipDB) DeleteAccountFollows(ctx context.Context, accountID string) error {
 	var followIDs []string
 
+	// Get full list of IDs.
 	if _, err := r.conn.
-		NewDelete().
+		NewSelect().
+		Column("id").
 		Table("follows").
 		WhereOr("? = ? OR ? = ?",
 			bun.Ident("account_id"),
@@ -250,15 +258,19 @@ func (r *relationshipDB) DeleteAccountFollows(ctx context.Context, accountID str
 			bun.Ident("target_account_id"),
 			accountID,
 		).
-		Returning("?", bun.Ident("id")).
 		Exec(ctx, &followIDs); err != nil {
 		return r.conn.ProcessError(err)
 	}
 
-	// Invalidate each returned ID.
+	var errs gtserror.MultiError
+
 	for _, id := range followIDs {
-		r.state.Caches.GTS.Follow().Invalidate("ID", id)
+		// Delete each follow individually in order to trigger
+		// each of the necessary secondary cache callback functions.
+		if err := r.DeleteFollowByID(ctx, id); err != nil {
+			errs.Append(err)
+		}
 	}
 
-	return nil
+	return errs.Combine()
 }

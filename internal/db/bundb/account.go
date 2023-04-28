@@ -302,7 +302,7 @@ func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account
 		columns = append(columns, "updated_at")
 	}
 
-	err := a.state.Caches.GTS.Account().Store(account, func() error {
+	return a.state.Caches.GTS.Account().Store(account, func() error {
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
 		//
@@ -338,14 +338,20 @@ func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account
 			return err
 		})
 	})
+}
+
+func (a *accountDB) DeleteAccount(ctx context.Context, id string) db.Error {
+	// Load account into cache before attempting a delete,
+	// as we need it cached in order to trigger the invalidate
+	// callback. This in turn invalidates others.
+	_, err := a.GetAccountByID(
+		gtscontext.SetBarebones(ctx),
+		id,
+	)
 	if err != nil {
 		return err
 	}
 
-	return nil
-}
-
-func (a *accountDB) DeleteAccount(ctx context.Context, id string) db.Error {
 	if err := a.conn.RunInTx(ctx, func(tx bun.Tx) error {
 		// clear out any emoji links
 		if _, err := tx.
@@ -367,7 +373,7 @@ func (a *accountDB) DeleteAccount(ctx context.Context, id string) db.Error {
 		return err
 	}
 
-	// Invalidate account from database lookups.
+	// Invalidate account from cache lookups (triggers other hooks).
 	a.state.Caches.GTS.Account().Invalidate("ID", id)
 
 	return nil

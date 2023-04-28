@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -192,6 +193,18 @@ func (r *reportDB) UpdateReport(ctx context.Context, report *gtsmodel.Report, co
 }
 
 func (r *reportDB) DeleteReportByID(ctx context.Context, id string) db.Error {
+	// Load status into cache before attempting a delete,
+	// as we need it cached in order to trigger the invalidate
+	// callback. This in turn invalidates others.
+	_, err := r.GetReportByID(
+		gtscontext.SetBarebones(ctx),
+		id,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Attempt to delete from database.
 	if _, err := r.conn.
 		NewDelete().
 		TableExpr("? AS ?", bun.Ident("reports"), bun.Ident("report")).
@@ -200,6 +213,8 @@ func (r *reportDB) DeleteReportByID(ctx context.Context, id string) db.Error {
 		return r.conn.ProcessError(err)
 	}
 
+	// Invalidate report from cache lookups (triggers other hooks).
 	r.state.Caches.GTS.Report().Invalidate("ID", id)
+
 	return nil
 }

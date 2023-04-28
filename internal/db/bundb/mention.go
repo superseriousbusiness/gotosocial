@@ -109,6 +109,17 @@ func (m *mentionDB) PutMention(ctx context.Context, mention *gtsmodel.Mention) e
 }
 
 func (m *mentionDB) DeleteMentionByID(ctx context.Context, id string) error {
+	// Load mention into cache before attempting a delete,
+	// as we need it cached in order to trigger the invalidate
+	// callback. This in turn invalidates others.
+	_, err := m.GetMention(
+		gtscontext.SetBarebones(ctx),
+		id,
+	)
+	if err != nil {
+		return err
+	}
+
 	if _, err := m.conn.
 		NewDelete().
 		Table("mentions").
@@ -117,7 +128,7 @@ func (m *mentionDB) DeleteMentionByID(ctx context.Context, id string) error {
 		return m.conn.ProcessError(err)
 	}
 
-	// Invalidate mention from the lookup cache.
+	// Invalidate status from cache lookups (triggers other hooks).
 	m.state.Caches.GTS.Mention().Invalidate("ID", id)
 
 	return nil

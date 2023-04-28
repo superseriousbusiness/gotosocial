@@ -156,6 +156,18 @@ func (s *statusFaveDB) PutStatusFave(ctx context.Context, fave *gtsmodel.StatusF
 }
 
 func (s *statusFaveDB) DeleteStatusFaveByID(ctx context.Context, id string) db.Error {
+	// Load fave into cache before attempting a delete,
+	// as we need it cached in order to trigger the invalidate
+	// callback. This in turn invalidates others.
+	_, err := s.GetStatusFaveByID(
+		gtscontext.SetBarebones(ctx),
+		id,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Attempt to delete from db.
 	if _, err := s.conn.
 		NewDelete().
 		Table("status_faves").
@@ -164,7 +176,9 @@ func (s *statusFaveDB) DeleteStatusFaveByID(ctx context.Context, id string) db.E
 		return s.conn.ProcessError(err)
 	}
 
+	// Invalidate fave from cache lookups (triggers other hooks).
 	s.state.Caches.GTS.StatusFave().Invalidate("ID", id)
+
 	return nil
 }
 

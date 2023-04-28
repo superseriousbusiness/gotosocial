@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -103,6 +104,17 @@ func (m *mediaDB) UpdateAttachment(ctx context.Context, media *gtsmodel.MediaAtt
 }
 
 func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
+	// Load media into cache before attempting a delete,
+	// as we need it cached in order to trigger the invalidate
+	// callback. This in turn invalidates others.
+	_, err := m.GetAttachmentByID(
+		gtscontext.SetBarebones(ctx),
+		id,
+	)
+	if err != nil {
+		return err
+	}
+
 	// Attempt to delete from database.
 	if _, err := m.conn.NewDelete().
 		TableExpr("? AS ?", bun.Ident("media_attachments"), bun.Ident("media_attachment")).
@@ -111,8 +123,9 @@ func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
 		return m.conn.ProcessError(err)
 	}
 
-	// Invalidate this media item from the cache.
+	// Invalidate media from cache lookups (triggers other hooks).
 	m.state.Caches.GTS.Media().Invalidate("ID", id)
+
 	return nil
 }
 

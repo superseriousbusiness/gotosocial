@@ -75,7 +75,7 @@ func (t *tombstoneDB) DeleteTombstone(ctx context.Context, id string) db.Error {
 		return t.conn.ProcessError(err)
 	}
 
-	// Invalidate from cache by ID
+	// Invalidate tombstone from cache lookups (triggers other hooks).
 	t.state.Caches.GTS.Tombstone().Invalidate("ID", id)
 
 	return nil
