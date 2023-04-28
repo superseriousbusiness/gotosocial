@@ -24,6 +24,10 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 )
 
+func Serialize(a vocab.Type) (m map[string]interface{}, e error) {
+	return streams.Serialize(a)
+}
+
 // SerializeOrderedCollection is a custom serializer for an ActivityStreamsOrderedCollection.
 // Unlike the standard streams.Serialize function, this serializer normalizes the orderedItems
 // value to always be an array/slice, regardless of how many items are contained therein.

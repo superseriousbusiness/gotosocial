@@ -59,11 +59,11 @@ type federatingActor struct {
 // implements the pub.FederatingActor interface.
 func newFederatingActor(c pub.CommonBehavior, s2s pub.FederatingProtocol, db pub.Database, clock pub.Clock) pub.FederatingActor {
 	sideEffectActor := pub.NewSideEffectActor(c, s2s, nil, db, clock)
-	customActor := pub.NewCustomActor(sideEffectActor, false, true, clock)
+	sideEffectActor.Serialize = ap.Serialize // hook in our own custom Serialize function
 
 	return &federatingActor{
 		sideEffectActor: sideEffectActor,
-		wrapped:         customActor,
+		wrapped:         pub.NewCustomActor(sideEffectActor, false, true, clock),
 	}
 }
 
