@@ -1,6 +1,7 @@
 package errors
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -29,7 +30,7 @@ func Stacktrace(err error) Callers {
 	var e interface {
 		Stacktrace() Callers
 	}
-	if !As(err, &e) {
+	if !errors.As(err, &e) {
 		return nil
 	}
 	return e.Stacktrace()

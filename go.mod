@@ -7,7 +7,7 @@ require (
 	codeberg.org/gruf/go-byteutil v1.1.2
 	codeberg.org/gruf/go-cache/v3 v3.2.5
 	codeberg.org/gruf/go-debug v1.3.0
-	codeberg.org/gruf/go-errors/v2 v2.1.1
+	codeberg.org/gruf/go-errors/v2 v2.2.0
 	codeberg.org/gruf/go-fastcopy v1.1.2
 	codeberg.org/gruf/go-kv v1.6.1
 	codeberg.org/gruf/go-logger/v2 v2.2.1
