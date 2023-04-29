@@ -103,6 +103,7 @@ func assembleMessage(mailSubject string, mailBody string, mailFrom string, mailT
 		// msg headers.'
 		msg.WriteString("To: Undisclosed Recipients:;" + CRLF)
 	}
+	msg.WriteString("From: " + mailFrom + CRLF)
 	msg.WriteString("Subject: " + mailSubject + CRLF)
 	msg.WriteString(CRLF)
 	msg.WriteString(mailBody)

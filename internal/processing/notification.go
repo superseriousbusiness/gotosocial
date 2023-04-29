@@ -20,10 +20,12 @@ package processing
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -70,6 +72,35 @@ func (p *Processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, ex
 		PrevMinIDValue: prevMinIDValue,
 		Limit:          limit,
 	})
+}
+
+func (p *Processor) NotificationGet(ctx context.Context, account *gtsmodel.Account, targetNotifID string) (*apimodel.Notification, gtserror.WithCode) {
+	notif, err := p.state.DB.GetNotificationByID(ctx, targetNotifID)
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			return nil, gtserror.NewErrorNotFound(err)
+		}
+
+		// Real error.
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if notifTargetAccountID := notif.TargetAccountID; notifTargetAccountID != account.ID {
+		err = fmt.Errorf("account %s does not have permission to view notification belong to account %s", account.ID, notifTargetAccountID)
+		return nil, gtserror.NewErrorNotFound(err)
+	}
+
+	apiNotif, err := p.tc.NotificationToAPINotification(ctx, notif)
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			return nil, gtserror.NewErrorNotFound(err)
+		}
+
+		// Real error.
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return apiNotif, nil
 }
 
 func (p *Processor) NotificationsClear(ctx context.Context, authed *oauth.Auth) gtserror.WithCode {

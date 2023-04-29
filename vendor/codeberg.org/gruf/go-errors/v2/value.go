@@ -1,5 +1,7 @@
 package errors
 
+import "errors"
+
 // WithValue wraps err to store given key-value pair, accessible via Value() function.
 func WithValue(err error, key any, value any) error {
 	if err == nil {
@@ -16,7 +18,7 @@ func WithValue(err error, key any, value any) error {
 func Value(err error, key any) any {
 	var e *errWithValue
 
-	if !As(err, &e) {
+	if !errors.As(err, &e) {
 		return nil
 	}
 
@@ -47,7 +49,7 @@ func (e *errWithValue) Value(key any) any {
 			return e.val
 		}
 
-		if !As(e.err, &e) {
+		if !errors.As(e.err, &e) {
 			return nil
 		}
 	}

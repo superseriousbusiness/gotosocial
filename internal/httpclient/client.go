@@ -149,7 +149,7 @@ func New(cfg Config) *Client {
 
 	// Initiate outgoing bad hosts lookup cache.
 	c.badHosts = cache.New[string, struct{}](0, 1000, 0)
-	c.badHosts.SetTTL(15*time.Minute, false)
+	c.badHosts.SetTTL(time.Hour, false)
 	if !c.badHosts.Start(time.Minute) {
 		log.Panic(nil, "failed to start transport controller cache")
 	}
@@ -165,7 +165,7 @@ func (c *Client) Do(r *http.Request) (*http.Response, error) {
 }
 
 // DoSigned ...
-func (c *Client) DoSigned(r *http.Request, sign SignFunc) (*http.Response, error) {
+func (c *Client) DoSigned(r *http.Request, sign SignFunc) (rsp *http.Response, err error) {
 	const (
 		// max no. attempts.
 		maxRetries = 5
@@ -182,10 +182,16 @@ func (c *Client) DoSigned(r *http.Request, sign SignFunc) (*http.Response, error
 	if !fastFail {
 		// Check if recently reached max retries for this host
 		// so we don't bother with a retry-backoff loop. The only
-		// errors that are retried upon are server failure and
-		// domain resolution type errors, so this cached result
+		// errors that are retried upon are server failure, TLS
+		// and domain resolution type errors, so this cached result
 		// indicates this server is likely having issues.
 		fastFail = c.badHosts.Has(host)
+		defer func() {
+			if err != nil {
+				// On error return mark as bad-host.
+				c.badHosts.Set(host, struct{}{})
+			}
+		}()
 	}
 
 	// Start a log entry for this request
@@ -218,7 +224,7 @@ func (c *Client) DoSigned(r *http.Request, sign SignFunc) (*http.Response, error
 		l.Infof("performing request")
 
 		// Perform the request.
-		rsp, err := c.do(r)
+		rsp, err = c.do(r)
 		if err == nil { //nolint:gocritic
 
 			// TooManyRequest means we need to slow
@@ -249,19 +255,26 @@ func (c *Client) DoSigned(r *http.Request, sign SignFunc) (*http.Response, error
 				}
 			}
 
-		} else if errorsv2.Is(err,
+			// Ensure unset.
+			rsp = nil
+
+		} else if errorsv2.Comparable(err,
 			context.DeadlineExceeded,
 			context.Canceled,
 			ErrBodyTooLarge,
 			ErrReservedAddr,
 		) {
-			// Return on non-retryable errors
+			// Non-retryable errors.
+			return nil, err
+		} else if errorsv2.Assignable(err,
+			(*x509.CertificateInvalidError)(nil),
+			(*x509.HostnameError)(nil),
+			(*x509.UnknownAuthorityError)(nil),
+		) {
+			// Non-retryable TLS errors.
 			return nil, err
 		} else if strings.Contains(err.Error(), "stopped after 10 redirects") {
 			// Don't bother if net/http returned after too many redirects
-			return nil, err
-		} else if errors.As(err, &x509.UnknownAuthorityError{}) {
-			// Unknown authority errors we do NOT recover from
 			return nil, err
 		} else if dnserr := (*net.DNSError)(nil); // nocollapse
 		errors.As(err, &dnserr) && dnserr.IsNotFound {
@@ -292,10 +305,9 @@ func (c *Client) DoSigned(r *http.Request, sign SignFunc) (*http.Response, error
 		}
 	}
 
-	// Add "bad" entry for this host.
-	c.badHosts.Set(host, struct{}{})
-
-	return nil, errors.New("transport reached max retries")
+	// Set error return to trigger setting "bad host".
+	err = errors.New("transport reached max retries")
+	return
 }
 
 // do ...
