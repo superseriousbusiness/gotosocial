@@ -92,6 +92,13 @@ func serializeOrderedCollection(orderedCollection vocab.Type) (map[string]interf
 // implementations look for attachment to be an array of PropertyValue (field)
 // entries, and will not parse single-entry, non-array attachments on accounts
 // properly.
+//
+// If the accountable is being serialized as a top-level object (eg., for serving
+// in response to an account dereference request), then includeContext should be
+// set to true, so as to include the json-ld '@context' entries in the data.
+// If the accountable is being serialized as part of another object (eg., as the
+// object of an activity), then includeContext should be set to false, as the
+// @context entry should be included on the top-level/wrapping activity/object.
 func serializeAccountable(accountable vocab.Type, includeContext bool) (map[string]interface{}, error) {
 	var (
 		data map[string]interface{}
