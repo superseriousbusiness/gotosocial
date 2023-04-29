@@ -95,7 +95,7 @@ func (p *ProcessingMedia) load(ctx context.Context) (*gtsmodel.MediaAttachment, 
 
 		defer func() {
 			// This is only done when ctx NOT cancelled.
-			done = err == nil || !errors.Is(err,
+			done = err == nil || !errors.Comparable(err,
 				context.Canceled,
 				context.DeadlineExceeded,
 			)

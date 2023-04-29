@@ -8,15 +8,11 @@ import (
 	"codeberg.org/gruf/go-bitutil"
 )
 
-// Is reports whether any error in err's chain matches any of targets
-// (up to a max of 64 targets).
-//
-// The chain consists of err itself followed by the sequence of errors obtained by
-// repeatedly calling Unwrap.
-//
-// An error is considered to match a target if it is equal to that target or if
-// it implements a method Is(error) bool such that Is(target) returns true.
-func Is(err error, targets ...error) bool {
+// errtype is a ptr to the error interface type.
+var errtype = reflect.TypeOf((*error)(nil)).Elem()
+
+// Comparable is functionally equivalent to calling errors.Is() on multiple errors (up to a max of 64).
+func Comparable(err error, targets ...error) bool {
 	var flags bitutil.Flags64
 
 	// Flags only has 64 bit-slots
@@ -24,17 +20,15 @@ func Is(err error, targets ...error) bool {
 		panic("too many targets")
 	}
 
-	// Check if error is nil so we can catch
-	// the fast-case where a target is nil
-	isNil := (err == nil)
-
 	for i := 0; i < len(targets); {
-		// Drop nil targets
 		if targets[i] == nil {
-			if isNil /* match! */ {
+			if err == nil {
 				return true
 			}
-			targets = append(targets[:i], targets[i+1:]...)
+
+			// Drop nil targets from slice.
+			copy(targets[i:], targets[i+1:])
+			targets = targets[:len(targets)-1]
 			continue
 		}
 
@@ -81,11 +75,68 @@ func Is(err error, targets ...error) bool {
 	return false
 }
 
-// As finds the first error in err's chain that matches target, and if one is found, sets
+// Assignable is functionally equivalent to calling errors.As() on multiple errors,
+// except that it only checks assignability as opposed to setting the target.
+func Assignable(err error, targets ...error) bool {
+	if err == nil {
+		// Fastest case.
+		return false
+	}
+
+	for i := 0; i < len(targets); {
+		if targets[i] == nil {
+			// Drop nil targets from slice.
+			copy(targets[i:], targets[i+1:])
+			targets = targets[:len(targets)-1]
+			continue
+		}
+		i++
+	}
+
+	for err != nil {
+		// Check if this layer supports .As interface
+		as, ok := err.(interface{ As(any) bool })
+
+		// Get reflected err type.
+		te := reflect.TypeOf(err)
+
+		if !ok {
+			// Error does not support interface.
+			//
+			// Check assignability using reflection.
+			for i := 0; i < len(targets); i++ {
+				tt := reflect.TypeOf(targets[i])
+				if te.AssignableTo(tt) {
+					return true
+				}
+			}
+		} else {
+			// Error supports the .As interface.
+			//
+			// Check using .As() and reflection.
+			for i := 0; i < len(targets); i++ {
+				if as.As(targets[i]) {
+					return true
+				} else if tt := reflect.TypeOf(targets[i]); // nocollapse
+				te.AssignableTo(tt) {
+					return true
+				}
+			}
+		}
+
+		// Unwrap to next layer.
+		err = errors.Unwrap(err)
+	}
+
+	return false
+}
+
+// As finds the first error in err's tree that matches target, and if one is found, sets
 // target to that error value and returns true. Otherwise, it returns false.
 //
-// The chain consists of err itself followed by the sequence of errors obtained by
-// repeatedly calling Unwrap.
+// The tree consists of err itself, followed by the errors obtained by repeatedly
+// calling Unwrap. When err wraps multiple errors, As examines err followed by a
+// depth-first traversal of its children.
 //
 // An error matches target if the error's concrete value is assignable to the value
 // pointed to by target, or if the error has a method As(interface{}) bool such that
@@ -99,7 +150,7 @@ func Is(err error, targets ...error) bool {
 // error, or to any interface type.
 //
 //go:linkname As errors.As
-func As(err error, target interface{}) bool
+func As(err error, target any) bool
 
 // Unwrap returns the result of calling the Unwrap method on err, if err's
 // type contains an Unwrap method returning error. Otherwise, Unwrap returns nil.
