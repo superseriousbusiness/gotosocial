@@ -138,7 +138,7 @@ func (c *Cache[Value]) SetInvalidateCallback(hook func(Value)) {
 func (c *Cache[Value]) IgnoreErrors(ignore func(error) bool) {
 	if ignore == nil {
 		ignore = func(err error) bool {
-			return errors.Is(
+			return errors.Comparable(
 				err,
 				context.Canceled,
 				context.DeadlineExceeded,
