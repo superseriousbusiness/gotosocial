@@ -115,7 +115,7 @@ func (d *deref) getAccountByURI(ctx context.Context, requestUser string, uri *ur
 	}
 
 	// Try to update existing account model.
-	enriched, apubAcc, err := d.enrichAccount(ctx,
+	latest, apubAcc, err := d.enrichAccount(ctx,
 		requestUser,
 		uri,
 		account,
@@ -131,7 +131,7 @@ func (d *deref) getAccountByURI(ctx context.Context, requestUser string, uri *ur
 		return account, nil, nil
 	}
 
-	return enriched, apubAcc, nil
+	return latest, apubAcc, nil
 }
 
 // GetAccountByUsernameDomain: implements Dereferencer{}.GetAccountByUsernameDomain.
@@ -173,17 +173,18 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 	}
 
 	// Try to update existing account model.
-	enriched, err := d.UpdateAccount(ctx,
+	latest, err := d.UpdateAccount(ctx,
 		requestUser,
 		account,
 		false,
 	)
 	if err != nil {
-		log.Errorf(ctx, "error enriching remote account: %v", err)
-		return account, nil // Fallback to existing.
+		// Fallback to existing.
+		//nolint
+		return account, nil
 	}
 
-	return enriched, nil
+	return latest, nil
 }
 
 // UpdateAccount: implements Dereferencer{}.UpdateAccount.
@@ -212,7 +213,7 @@ func (d *deref) UpdateAccount(ctx context.Context, requestUser string, account *
 	}
 
 	// Try to update + deref existing account model.
-	account, _, err = d.enrichAccount(ctx,
+	latest, _, err := d.enrichAccount(ctx,
 		requestUser,
 		uri,
 		account,
@@ -229,10 +230,10 @@ func (d *deref) UpdateAccount(ctx context.Context, requestUser string, account *
 
 	// This account was updated, enqueue re-dereference featured posts.
 	d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
-		d.dereferenceAccountFeatured(ctx, requestUser, account)
+		d.dereferenceAccountFeatured(ctx, requestUser, latest)
 	})
 
-	return account, nil
+	return latest, nil
 }
 
 // UpdateAccountAsync: implements Dereferencer{}.UpdateAccountAsync.
@@ -263,14 +264,14 @@ func (d *deref) UpdateAccountAsync(ctx context.Context, requestUser string, acco
 
 	// Enqueue a worker function to enrich this account async.
 	d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
-		account, _, err := d.enrichAccount(ctx, requestUser, uri, account)
+		latest, _, err := d.enrichAccount(ctx, requestUser, uri, account)
 		if err != nil {
 			log.Errorf(ctx, "error enriching remote account: %v", err)
 			return
 		}
 
 		// This account was updated, re-dereference featured posts.
-		d.dereferenceAccountFeatured(ctx, requestUser, account)
+		d.dereferenceAccountFeatured(ctx, requestUser, latest)
 	})
 }
 
@@ -372,7 +373,11 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		// Get IRI host value.
 		accHost := idProp.GetIRI().Host
 
-		accDomain, _, err := d.fingerRemoteAccount(ctx, transport, latestAcc.Username, accHost)
+		latestAcc.Domain, _, err = d.fingerRemoteAccount(ctx,
+			transport,
+			latestAcc.Username,
+			accHost,
+		)
 		if err != nil {
 			// We still couldn't webfinger the account, so we're not certain
 			// what the accountDomain actually is. Still, we can make a solid
@@ -380,9 +385,6 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 			// If we're wrong, we can just try again in a couple days.
 			log.Errorf(ctx, "error webfingering[2] remote account %s@%s: %v", latestAcc.Username, accHost, err)
 			latestAcc.Domain = accHost
-		} else {
-			// Update account with latest info.
-			latestAcc.Domain = accDomain
 		}
 	}
 
@@ -455,7 +457,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		if errors.Is(err, db.ErrAlreadyExists) {
 			// TODO: replace this quick fix with per-URI deref locks.
 			latestAcc, err = d.state.DB.GetAccountByURI(ctx, latestAcc.URI)
-			apubAcc = nil // don't trigger deref-featured
+			return latestAcc, nil, err
 		}
 
 		if err != nil {

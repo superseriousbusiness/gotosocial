@@ -109,7 +109,7 @@ func (d *deref) getStatusByURI(ctx context.Context, requestUser string, uri *url
 	}
 
 	// Try to update + deref existing status model.
-	enriched, apubStatus, err := d.enrichStatus(ctx,
+	latest, apubStatus, err := d.enrichStatus(ctx,
 		requestUser,
 		uri,
 		status,
@@ -125,7 +125,7 @@ func (d *deref) getStatusByURI(ctx context.Context, requestUser string, uri *url
 		return status, nil, nil
 	}
 
-	return enriched, apubStatus, nil
+	return latest, apubStatus, nil
 }
 
 // UpdateStatus: implements Dereferencer{}.UpdateStatus().
@@ -149,7 +149,7 @@ func (d *deref) UpdateStatus(ctx context.Context, requestUser string, status *gt
 	}
 
 	// Try to update + deref existing status model.
-	status, apubStatus, err := d.enrichStatus(ctx,
+	latest, apubStatus, err := d.enrichStatus(ctx,
 		requestUser,
 		uri,
 		status,
@@ -160,10 +160,10 @@ func (d *deref) UpdateStatus(ctx context.Context, requestUser string, status *gt
 
 	// This status was updated, enqueue re-dereferencing the whole thread.
 	d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
-		d.dereferenceThread(ctx, requestUser, uri, status, apubStatus)
+		d.dereferenceThread(ctx, requestUser, uri, latest, apubStatus)
 	})
 
-	return status, apubStatus, nil
+	return latest, apubStatus, nil
 }
 
 // UpdateStatusAsync: implements Dereferencer{}.UpdateStatusAsync().
@@ -189,14 +189,14 @@ func (d *deref) UpdateStatusAsync(ctx context.Context, requestUser string, statu
 
 	// Enqueue a worker function to re-fetch this status async.
 	d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
-		status, apubStatus, err := d.enrichStatus(ctx, requestUser, uri, status)
+		latest, apubStatus, err := d.enrichStatus(ctx, requestUser, uri, status)
 		if err != nil {
 			log.Errorf(ctx, "error enriching remote status: %v", err)
 			return
 		}
 
 		// This status was updated, re-dereference the whole thread.
-		d.dereferenceThread(ctx, requestUser, uri, status, apubStatus)
+		d.dereferenceThread(ctx, requestUser, uri, latest, apubStatus)
 	})
 }
 
@@ -286,7 +286,7 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 		if errors.Is(err, db.ErrAlreadyExists) {
 			// TODO: replace this quick fix with per-URI deref locks.
 			latestStatus, err = d.state.DB.GetStatusByURI(ctx, latestStatus.URI)
-			apubStatus = nil // don't trigger deref-thread
+			return latestStatus, nil, err
 		}
 
 		if err != nil {
