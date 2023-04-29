@@ -4535,6 +4535,32 @@ paths:
             summary: Update a media attachment.
             tags:
                 - media
+    /api/v1/notification/{id}:
+        get:
+            operationId: notification
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Requested notification.
+                    schema:
+                        $ref: '#/definitions/notification'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:notifications
+            summary: Get a single notification with the given ID.
+            tags:
+                - notifications
     /api/v1/notifications:
         get:
             description: |-
