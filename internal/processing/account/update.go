@@ -46,18 +46,6 @@ func (p *Processor) selectFormatter(contentType string) text.FormatFunc {
 
 // Update processes the update of an account with the given form.
 func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, gtserror.WithCode) {
-	var (
-		// Via the process of updating the account,
-		// it is possible that the emojis used by
-		// that account in note/display name/fields
-		// may change; we need to keep track of this.
-		//
-		// We use a map here so we can deduplicate the
-		// new emojis by their ID.
-		emojis        = make(map[string]*gtsmodel.Emoji)
-		emojisChanged bool
-	)
-
 	if form.Discoverable != nil {
 		account.Discoverable = form.Discoverable
 	}
@@ -65,6 +53,12 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 	if form.Bot != nil {
 		account.Bot = form.Bot
 	}
+
+	// Via the process of updating the account,
+	// it is possible that the emojis used by
+	// that account in note/display name/fields
+	// may change; we need to keep track of this.
+	var emojisChanged bool
 
 	if form.DisplayName != nil {
 		displayName := *form.DisplayName
@@ -76,15 +70,6 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		account.DisplayName = text.SanitizePlaintext(displayName)
 
 		// If display name has changed, account emojis may have also changed.
-		for _, emoji := range p.formatter.FromPlainEmojiOnly(
-			ctx,
-			p.parseMention,
-			account.ID,
-			"",
-			account.DisplayName,
-		).Emojis {
-			emojis[emoji.ID] = emoji
-		}
 		emojisChanged = true
 	}
 
@@ -94,18 +79,11 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
 
-		// Store raw version of the note.
+		// Store raw version of the note for now,
+		// we'll process the proper version later.
 		account.NoteRaw = note
 
-		// Format + set note according to user prefs.
-		f := p.selectFormatter(account.StatusContentType)
-		formatResult := f(ctx, p.parseMention, account.ID, "", note)
-		account.Note = formatResult.HTML
-
 		// If note has changed, account emojis may have also changed.
-		for _, emoji := range formatResult.Emojis {
-			emojis[emoji.ID] = emoji
-		}
 		emojisChanged = true
 	}
 
@@ -123,11 +101,6 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		account.FieldsRaw = make([]gtsmodel.Field, 0, fieldsLen)
 		account.Fields = make([]gtsmodel.Field, 0, fieldsLen)
 
-		// For each submitted field, we want to:
-		//   1. validate it
-		//   2. store the raw version
-		//   3. store the htmlified version
-		//   4. keep track of emojis
 		for _, updateField := range fieldsAttributes {
 			if updateField.Name == nil || updateField.Value == nil {
 				continue
@@ -148,9 +121,39 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 				Value: validate.ProfileField(text.SanitizePlaintext(value)),
 			}
 			account.FieldsRaw = append(account.FieldsRaw, fieldRaw)
+		}
 
-			// Parse html-ified fields from plaintext,
-			// update accountEmojis based on results.
+		// If fields have changed, account emojis may also have changed.
+		emojisChanged = true
+	}
+
+	if emojisChanged {
+		// Use map to deduplicate emojis by their ID.
+		emojis := make(map[string]*gtsmodel.Emoji)
+
+		// Retrieve display name emojis.
+		for _, emoji := range p.formatter.FromPlainEmojiOnly(
+			ctx,
+			p.parseMention,
+			account.ID,
+			"",
+			account.DisplayName,
+		).Emojis {
+			emojis[emoji.ID] = emoji
+		}
+
+		// Format + set note according to user prefs.
+		f := p.selectFormatter(account.StatusContentType)
+		formatNoteResult := f(ctx, p.parseMention, account.ID, "", account.NoteRaw)
+		account.Note = formatNoteResult.HTML
+
+		// Retrieve note emojis.
+		for _, emoji := range formatNoteResult.Emojis {
+			emojis[emoji.ID] = emoji
+		}
+
+		// Process the raw fields we stored earlier.
+		for _, fieldRaw := range account.FieldsRaw {
 			field := gtsmodel.Field{}
 
 			// Name stays plain, but we still need to
@@ -169,6 +172,8 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 			// Value can be HTML.
 			fieldFormatValueResult := p.formatter.FromPlain(ctx, p.parseMention, account.ID, "", fieldRaw.Value)
 			field.Value = fieldFormatValueResult.HTML
+
+			// Retrieve field emojis.
 			for _, emoji := range fieldFormatValueResult.Emojis {
 				emojis[emoji.ID] = emoji
 			}
@@ -177,10 +182,6 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 			account.Fields = append(account.Fields, field)
 		}
 
-		emojisChanged = true
-	}
-
-	if emojisChanged {
 		emojisCount := len(emojis)
 		account.Emojis = make([]*gtsmodel.Emoji, 0, emojisCount)
 		account.EmojiIDs = make([]string, 0, emojisCount)
