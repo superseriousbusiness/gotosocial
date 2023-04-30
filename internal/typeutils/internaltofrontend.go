@@ -75,7 +75,7 @@ func (c *converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 		Language:            a.Language,
 		StatusContentType:   statusContentType,
 		Note:                a.NoteRaw,
-		Fields:              apiAccount.Fields,
+		Fields:              c.fieldsToAPIFields(a.FieldsRaw),
 		FollowRequestsCount: frc,
 	}
 
@@ -143,20 +143,8 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		}
 	}
 
-	// preallocate frontend fields slice
-	fields := make([]apimodel.Field, len(a.Fields))
-
-	// Convert account GTS model fields to frontend
-	for i, field := range a.Fields {
-		mField := apimodel.Field{
-			Name:  field.Name,
-			Value: field.Value,
-		}
-		if !field.VerifiedAt.IsZero() {
-			mField.VerifiedAt = util.FormatISO8601(field.VerifiedAt)
-		}
-		fields[i] = mField
-	}
+	// convert account gts model fields to front api model fields
+	fields := c.fieldsToAPIFields(a.Fields)
 
 	// convert account gts model emojis to frontend api model emojis
 	apiEmojis, err := c.convertEmojisToAPIEmojis(ctx, a.Emojis, a.EmojiIDs)
@@ -224,6 +212,25 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	c.ensureHeader(accountFrontend)
 
 	return accountFrontend, nil
+}
+
+func (c *converter) fieldsToAPIFields(f []gtsmodel.Field) []apimodel.Field {
+	fields := make([]apimodel.Field, len(f))
+
+	for i, field := range f {
+		mField := apimodel.Field{
+			Name:  field.Name,
+			Value: field.Value,
+		}
+
+		if !field.VerifiedAt.IsZero() {
+			mField.VerifiedAt = func() *string { s := util.FormatISO8601(field.VerifiedAt); return &s }()
+		}
+
+		fields[i] = mField
+	}
+
+	return fields
 }
 
 func (c *converter) AccountToAPIAccountBlocked(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {

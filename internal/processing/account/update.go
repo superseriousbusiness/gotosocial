@@ -36,8 +36,28 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
+func (p *Processor) selectFormatter(contentType string) text.FormatFunc {
+	if contentType == "text/markdown" {
+		return p.formatter.FromMarkdown
+	}
+
+	return p.formatter.FromPlain
+}
+
 // Update processes the update of an account with the given form.
 func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, gtserror.WithCode) {
+	var (
+		// Via the process of updating the account,
+		// it is possible that the emojis used by
+		// that account in note/display name/fields
+		// may change; we need to keep track of this.
+		//
+		// We use a map here so we can deduplicate the
+		// new emojis by their ID.
+		emojis        = make(map[string]*gtsmodel.Emoji)
+		emojisChanged bool
+	)
+
 	if form.Discoverable != nil {
 		account.Discoverable = form.Discoverable
 	}
@@ -46,56 +66,128 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		account.Bot = form.Bot
 	}
 
-	reparseEmojis := false
-
 	if form.DisplayName != nil {
-		if err := validate.DisplayName(*form.DisplayName); err != nil {
-			return nil, gtserror.NewErrorBadRequest(err)
+		displayName := *form.DisplayName
+		if err := validate.DisplayName(displayName); err != nil {
+			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
-		account.DisplayName = text.SanitizePlaintext(*form.DisplayName)
-		reparseEmojis = true
+
+		// Parse new display name (always from plaintext).
+		account.DisplayName = text.SanitizePlaintext(displayName)
+
+		// If display name has changed, account emojis may have also changed.
+		for _, emoji := range p.formatter.FromPlainEmojiOnly(
+			ctx,
+			p.parseMention,
+			account.ID,
+			"",
+			account.DisplayName,
+		).Emojis {
+			emojis[emoji.ID] = emoji
+		}
+		emojisChanged = true
 	}
 
 	if form.Note != nil {
-		if err := validate.Note(*form.Note); err != nil {
-			return nil, gtserror.NewErrorBadRequest(err)
+		note := *form.Note
+		if err := validate.Note(note); err != nil {
+			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
 
-		// Set the raw note before processing
-		account.NoteRaw = *form.Note
-		reparseEmojis = true
-	}
+		// Store raw version of the note.
+		account.NoteRaw = note
 
-	if reparseEmojis {
-		// If either DisplayName or Note changed, reparse both, because we
-		// can't otherwise tell which one each emoji belongs to.
-		// Deduplicate emojis between the two fields.
-		emojis := make(map[string]*gtsmodel.Emoji)
-		formatResult := p.formatter.FromPlainEmojiOnly(ctx, p.parseMention, account.ID, "", account.DisplayName)
+		// Format + set note according to user prefs.
+		f := p.selectFormatter(account.StatusContentType)
+		formatResult := f(ctx, p.parseMention, account.ID, "", note)
+		account.Note = formatResult.HTML
+
+		// If note has changed, account emojis may have also changed.
 		for _, emoji := range formatResult.Emojis {
 			emojis[emoji.ID] = emoji
 		}
+		emojisChanged = true
+	}
 
-		// Process note to generate a valid HTML representation
-		var f text.FormatFunc
-		if account.StatusContentType == "text/markdown" {
-			f = p.formatter.FromMarkdown
-		} else {
-			f = p.formatter.FromPlain
-		}
-		formatted := f(ctx, p.parseMention, account.ID, "", account.NoteRaw)
+	if form.FieldsAttributes != nil {
+		var (
+			fieldsAttributes = *form.FieldsAttributes
+			fieldsLen        = len(fieldsAttributes)
+		)
 
-		// Set updated HTML-ified note
-		account.Note = formatted.HTML
-		for _, emoji := range formatted.Emojis {
-			emojis[emoji.ID] = emoji
+		if err := validate.ProfileFieldsCount(fieldsLen); err != nil {
+			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
 
-		account.Emojis = []*gtsmodel.Emoji{}
-		account.EmojiIDs = []string{}
-		for eid, emoji := range emojis {
+		// Reset account fields before processing new ones.
+		account.FieldsRaw = make([]gtsmodel.Field, 0, fieldsLen)
+		account.Fields = make([]gtsmodel.Field, 0, fieldsLen)
+
+		// For each submitted field, we want to:
+		//   1. validate it
+		//   2. store the raw version
+		//   3. store the htmlified version
+		//   4. keep track of emojis
+		for _, updateField := range fieldsAttributes {
+			if updateField.Name == nil || updateField.Value == nil {
+				continue
+			}
+
+			var (
+				name  string = *updateField.Name
+				value string = *updateField.Value
+			)
+
+			if name == "" || value == "" {
+				continue
+			}
+
+			// Sanitize, trim, + store raw field values.
+			fieldRaw := gtsmodel.Field{
+				Name:  validate.ProfileField(text.SanitizePlaintext(name)),
+				Value: validate.ProfileField(text.SanitizePlaintext(value)),
+			}
+			account.FieldsRaw = append(account.FieldsRaw, fieldRaw)
+
+			// Parse html-ified fields from plaintext,
+			// update accountEmojis based on results.
+			field := gtsmodel.Field{}
+
+			// Name stays plain, but we still need to
+			// see if there are any emojis set in it.
+			field.Name = fieldRaw.Name
+			for _, emoji := range p.formatter.FromPlainEmojiOnly(
+				ctx,
+				p.parseMention,
+				account.ID,
+				"",
+				fieldRaw.Name,
+			).Emojis {
+				emojis[emoji.ID] = emoji
+			}
+
+			// Value can be HTML.
+			fieldFormatValueResult := p.formatter.FromPlain(ctx, p.parseMention, account.ID, "", fieldRaw.Value)
+			field.Value = fieldFormatValueResult.HTML
+			for _, emoji := range fieldFormatValueResult.Emojis {
+				emojis[emoji.ID] = emoji
+			}
+
+			// We're done, append the shiny new field.
+			account.Fields = append(account.Fields, field)
+		}
+
+		emojisChanged = true
+	}
+
+	if emojisChanged {
+		emojisCount := len(emojis)
+		account.Emojis = make([]*gtsmodel.Emoji, 0, emojisCount)
+		account.EmojiIDs = make([]string, 0, emojisCount)
+
+		for id, emoji := range emojis {
 			account.Emojis = append(account.Emojis, emoji)
-			account.EmojiIDs = append(account.EmojiIDs, eid)
+			account.EmojiIDs = append(account.EmojiIDs, id)
 		}
 	}
 
@@ -162,26 +254,6 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 
 	if form.EnableRSS != nil {
 		account.EnableRSS = form.EnableRSS
-	}
-
-	if form.FieldsAttributes != nil && len(*form.FieldsAttributes) != 0 {
-		if err := validate.ProfileFieldsCount(*form.FieldsAttributes); err != nil {
-			return nil, gtserror.NewErrorBadRequest(err)
-		}
-
-		account.Fields = make([]gtsmodel.Field, 0) // reset fields
-		for _, f := range *form.FieldsAttributes {
-			if f.Name != nil && f.Value != nil {
-				if *f.Name != "" && *f.Value != "" {
-					field := gtsmodel.Field{}
-
-					field.Name = validate.ProfileField(f.Name)
-					field.Value = validate.ProfileField(f.Value)
-
-					account.Fields = append(account.Fields, field)
-				}
-			}
-		}
 	}
 
 	err := p.state.DB.UpdateAccount(ctx, account)

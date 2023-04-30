@@ -103,14 +103,14 @@ func (suite *InternalToASTestSuite) TestAccountToASWithFields() {
 
 	suite.Equal(`: [
     {
-      "name": "should you follow me?",
+      "name": "<p>should you follow me?<p>",
       "type": "PropertyValue",
-      "value": "maybe!"
+      "value": "<p>maybe!<p>"
     },
     {
-      "name": "age",
+      "name": "<p>age<p>",
       "type": "PropertyValue",
-      "value": "120"
+      "value": "<p>120<p>"
     }
   ],
   "discoverable": false,
@@ -156,9 +156,9 @@ func (suite *InternalToASTestSuite) TestAccountToASWithOneField() {
 	// Despite only one field being set, attachments should still be a slice/array.
 	suite.Equal(`: [
     {
-      "name": "should you follow me?",
+      "name": "<p>should you follow me?<p>",
       "type": "PropertyValue",
-      "value": "maybe!"
+      "value": "<p>maybe!<p>"
     }
   ],
   "discoverable": false,

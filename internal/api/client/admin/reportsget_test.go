@@ -226,12 +226,14 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
         "emojis": [],
         "fields": [
           {
-            "name": "should you follow me?",
-            "value": "maybe!"
+            "name": "<p>should you follow me?<p>",
+            "value": "<p>maybe!<p>"
+            "verified_at": null
           },
           {
-            "name": "age",
-            "value": "120"
+            "name": "<p>age<p>",
+            "value": "<p>120<p>"
+            "verified_at": null
           }
         ],
         "role": {
@@ -385,12 +387,14 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
         "emojis": [],
         "fields": [
           {
-            "name": "should you follow me?",
-            "value": "maybe!"
+            "name": "<p>should you follow me?<p>",
+            "value": "<p>maybe!<p>"
+            "verified_at": null
           },
           {
-            "name": "age",
-            "value": "120"
+            "name": "<p>age<p>",
+            "value": "<p>120<p>"
+            "verified_at": null
           }
         ],
         "role": {
@@ -595,12 +599,14 @@ func (suite *ReportsGetTestSuite) TestReportsGetCreatedByAccount() {
         "emojis": [],
         "fields": [
           {
-            "name": "should you follow me?",
-            "value": "maybe!"
+            "name": "<p>should you follow me?<p>",
+            "value": "<p>maybe!<p>"
+            "verified_at": null
           },
           {
-            "name": "age",
-            "value": "120"
+            "name": "<p>age<p>",
+            "value": "<p>120<p>"
+            "verified_at": null
           }
         ],
         "role": {
@@ -805,12 +811,14 @@ func (suite *ReportsGetTestSuite) TestReportsGetTargetAccount() {
         "emojis": [],
         "fields": [
           {
-            "name": "should you follow me?",
-            "value": "maybe!"
+            "name": "<p>should you follow me?<p>",
+            "value": "<p>maybe!<p>"
+            "verified_at": null
           },
           {
-            "name": "age",
-            "value": "120"
+            "name": "<p>age<p>",
+            "value": "<p>120<p>"
+            "verified_at": null
           }
         ],
         "role": {
