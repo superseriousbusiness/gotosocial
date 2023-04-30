@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -101,16 +102,18 @@ func (suite *InternalToASTestSuite) TestAccountToASWithFields() {
 	// this is necessary because the order of multiple 'context' entries is not determinate
 	trimmed := strings.Split(string(bytes), "\"attachment\"")[1]
 
+	fmt.Printf("\n\n\n%s\n\n\n", string(bytes))
+
 	suite.Equal(`: [
     {
-      "name": "<p>should you follow me?<p>",
+      "name": "should you follow me?",
       "type": "PropertyValue",
-      "value": "<p>maybe!<p>"
+      "value": "\u003cp\u003emaybe!\u003cp\u003e"
     },
     {
-      "name": "<p>age<p>",
+      "name": "age",
       "type": "PropertyValue",
-      "value": "<p>120<p>"
+      "value": "\u003cp\u003e120\u003cp\u003e"
     }
   ],
   "discoverable": false,
@@ -156,9 +159,9 @@ func (suite *InternalToASTestSuite) TestAccountToASWithOneField() {
 	// Despite only one field being set, attachments should still be a slice/array.
 	suite.Equal(`: [
     {
-      "name": "<p>should you follow me?<p>",
+      "name": "should you follow me?",
       "type": "PropertyValue",
-      "value": "<p>maybe!<p>"
+      "value": "\u003cp\u003emaybe!\u003cp\u003e"
     }
   ],
   "discoverable": false,

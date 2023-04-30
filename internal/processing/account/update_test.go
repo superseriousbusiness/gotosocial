@@ -175,12 +175,12 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithFields() {
 	suite.NotNil(apiAccount)
 	suite.EqualValues([]apimodel.Field{
 		{
-			Name:       "<p>favourite emoji</p>",
+			Name:       "favourite emoji",
 			Value:      "<p>:rainbow:</p>",
 			VerifiedAt: (*string)(nil),
 		},
 		{
-			Name:       "<p>my website</p>",
+			Name:       "my website",
 			Value:      "<p><a href=\"https://example.org\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://example.org</a></p>",
 			VerifiedAt: (*string)(nil),
 		},
@@ -218,9 +218,9 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithFields() {
 	// fields should be updated in the database as well
 	dbAccount, err := suite.db.GetAccountByID(context.Background(), testAccount.ID)
 	suite.NoError(err)
-	suite.Equal("<p>favourite emoji</p>", dbAccount.Fields[0].Name)
+	suite.Equal("favourite emoji", dbAccount.Fields[0].Name)
 	suite.Equal("<p>:rainbow:</p>", dbAccount.Fields[0].Value)
-	suite.Equal("<p>my website</p>", dbAccount.Fields[1].Name)
+	suite.Equal("my website", dbAccount.Fields[1].Name)
 	suite.Equal("<p><a href=\"https://example.org\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://example.org</a></p>", dbAccount.Fields[1].Value)
 	suite.Equal("favourite emoji", dbAccount.FieldsRaw[0].Name)
 	suite.Equal(":rainbow:", dbAccount.FieldsRaw[0].Value)

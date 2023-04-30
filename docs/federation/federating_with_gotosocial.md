@@ -324,3 +324,62 @@ When a GoToSocial instance receives a `Delete`, it will attempt to derive the de
 Then, GoToSocial will check if it has a post stored with the given URI. If it does, it will be completely deleted from the database and all user timelines.
 
 GoToSocial will only delete a post if it can be sure that the original post was owned by the `actor` that the `Delete` is attributed to.
+
+## Profile Fields
+
+Like Mastodon and other fediverse softwares, GoToSocial lets users set key/value pairs on their profile; useful for conveying short pieces of information like links, pronouns, age, etc.
+
+For the sake of compatibility with other implementations, GoToSocial uses the same schema.org PropertyValue extension that Mastodon uses, present as an `attachment` array value on `actor`s that have fields set. For example, the below JSON shows an account with two PropertyValue fields:
+
+```json
+{
+  "@context": [
+    "http://joinmastodon.org/ns",
+    "https://w3id.org/security/v1",
+    "https://www.w3.org/ns/activitystreams",
+    "http://schema.org"
+  ],
+  "attachment": [
+    {
+      "name": "should you follow me?",
+      "type": "PropertyValue",
+      "value": "\u003cp\u003emaybe!\u003c/p\u003e"
+    },
+    {
+      "name": "age",
+      "type": "PropertyValue",
+      "value": "\u003cp\u003e120\u003c/p\u003e"
+    }
+  ],
+  "discoverable": false,
+  "featured": "http://example.org/users/1happyturtle/collections/featured",
+  "followers": "http://example.org/users/1happyturtle/followers",
+  "following": "http://example.org/users/1happyturtle/following",
+  "id": "http://example.org/users/1happyturtle",
+  "inbox": "http://example.org/users/1happyturtle/inbox",
+  "manuallyApprovesFollowers": true,
+  "name": "happy little turtle :3",
+  "outbox": "http://example.org/users/1happyturtle/outbox",
+  "preferredUsername": "1happyturtle",
+  "publicKey": {
+    "id": "http://example.org/users/1happyturtle#main-key",
+    "owner": "http://example.org/users/1happyturtle",
+    "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtTc6Jpg6LrRPhVQG4KLz\n2+YqEUUtZPd4YR+TKXuCnwEG9ZNGhgP046xa9h3EWzrZXaOhXvkUQgJuRqPrAcfN\nvc8jBHV2xrUeD8pu/MWKEabAsA/tgCv3nUC47HQ3/c12aHfYoPz3ufWsGGnrkhci\nv8PaveJ3LohO5vjCn1yZ00v6osMJMViEZvZQaazyE9A8FwraIexXabDpoy7tkHRg\nA1fvSkg4FeSG1XMcIz2NN7xyUuFACD+XkuOk7UqzRd4cjPUPLxiDwIsTlcgGOd3E\nUFMWVlPxSGjY2hIKa3lEHytaYK9IMYdSuyCsJshd3/yYC9LqxZY2KdlKJ80VOVyh\nyQIDAQAB\n-----END PUBLIC KEY-----\n"
+  },
+  "summary": "\u003cp\u003ei post about things that concern me\u003c/p\u003e",
+  "tag": [],
+  "type": "Person",
+  "url": "http://example.org/@1happyturtle"
+}
+```
+
+For `actor`s that have no `PropertyValue` fields set, the `attachment` property will not be set at all. That is, the `attachment` key value will not be present on the `actor` (not even as an empty array or null value).
+
+While `attachment` is not technically an ordered collection, GoToSocial--again, in line with what other implementations do--does present `attachment` `PropertyValue` fields in the order in which they should to be displayed.
+
+GoToSocial will also parse PropertyValue fields from remote `actor`s discovered by the GoToSocial instance, to allow them to be displayed to users on the GoToSocial instance.
+
+Differences from other implementations: 
+
+- `PropertyValue` values will usually be wrapped in `<p>` tags, and may consist of multiple short paragraphs.
+- GoToSocial allows up to 6 `PropertyValue` fields by default, as opposed to Mastodon's default 4.

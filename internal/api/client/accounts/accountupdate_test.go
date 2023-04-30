@@ -75,7 +75,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandler() 
 	// check the returned api model account
 	// fields should be updated
 	suite.Equal("<p>this is my new bio read it and weep</p>", apimodelAccount.Note)
-	suite.Equal("they/them", apimodelAccount.Fields[0].Value)
+	suite.Equal("<p>they/them</p>", apimodelAccount.Fields[0].Value)
 	suite.Equal(newBio, apimodelAccount.Source.Note)
 }
 

@@ -836,13 +836,13 @@ func (suite *InternalToFrontendTestSuite) TestReportToFrontend2() {
     "emojis": [],
     "fields": [
       {
-        "name": "<p>should you follow me?<p>",
-        "value": "<p>maybe!<p>",
+        "name": "should you follow me?",
+        "value": "\u003cp\u003emaybe!\u003cp\u003e",
         "verified_at": null
       },
       {
-        "name": "<p>age<p>",
-        "value": "<p>120<p>",
+        "name": "age",
+        "value": "\u003cp\u003e120\u003cp\u003e",
         "verified_at": null
       }
     ],
@@ -951,13 +951,13 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
       "emojis": [],
       "fields": [
         {
-          "name": "<p>should you follow me?<p>",
-          "value": "<p>maybe!<p>"
+          "name": "should you follow me?",
+          "value": "\u003cp\u003emaybe!\u003cp\u003e",
           "verified_at": null
         },
         {
-          "name": "<p>age<p>",
-          "value": "<p>120<p>"
+          "name": "age",
+          "value": "\u003cp\u003e120\u003cp\u003e",
           "verified_at": null
         }
       ],
@@ -1122,13 +1122,13 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
       "emojis": [],
       "fields": [
         {
-          "name": "<p>should you follow me?<p>",
-          "value": "<p>maybe!<p>"
+          "name": "should you follow me?",
+          "value": "\u003cp\u003emaybe!\u003cp\u003e",
           "verified_at": null
         },
         {
-          "name": "<p>age<p>",
-          "value": "<p>120<p>"
+          "name": "age",
+          "value": "\u003cp\u003e120\u003cp\u003e",
           "verified_at": null
         }
       ],
