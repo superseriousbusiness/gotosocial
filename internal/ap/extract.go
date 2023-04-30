@@ -301,7 +301,7 @@ func ExtractFields(i WithAttachment) []gtsmodel.Field {
 		}
 
 		valueProp := propertyValue.GetSchemaValue()
-		if valueProp == nil || valueProp.IsXMLSchemaString() == false {
+		if valueProp == nil || !valueProp.IsXMLSchemaString() {
 			continue
 		}
 
