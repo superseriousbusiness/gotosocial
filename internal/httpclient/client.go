@@ -19,7 +19,6 @@ package httpclient
 
 import (
 	"context"
-	"crypto/x509"
 	"errors"
 	"fmt"
 	"io"
@@ -266,15 +265,13 @@ func (c *Client) DoSigned(r *http.Request, sign SignFunc) (rsp *http.Response, e
 		) {
 			// Non-retryable errors.
 			return nil, err
-		} else if errorsv2.Assignable(err,
-			(*x509.CertificateInvalidError)(nil),
-			(*x509.HostnameError)(nil),
-			(*x509.UnknownAuthorityError)(nil),
-		) {
-			// Non-retryable TLS errors.
-			return nil, err
-		} else if strings.Contains(err.Error(), "stopped after 10 redirects") {
-			// Don't bother if net/http returned after too many redirects
+		} else if errstr := err.Error(); // nocollapse
+		strings.Contains(errstr, "stopped after 10 redirects") ||
+			strings.Contains(errstr, "tls: ") ||
+			strings.Contains(errstr, "x509: ") {
+			// These error types aren't wrapped
+			// so we have to check the error string.
+			// All are unrecoverable!
 			return nil, err
 		} else if dnserr := (*net.DNSError)(nil); // nocollapse
 		errors.As(err, &dnserr) && dnserr.IsNotFound {
