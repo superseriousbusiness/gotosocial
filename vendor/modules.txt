@@ -69,7 +69,7 @@ codeberg.org/gruf/go-sched
 codeberg.org/gruf/go-store/v2/kv
 codeberg.org/gruf/go-store/v2/storage
 codeberg.org/gruf/go-store/v2/util
-# github.com/KimMachineGun/automemlimit v0.2.5
+# github.com/KimMachineGun/automemlimit v0.2.6
 ## explicit; go 1.19
 github.com/KimMachineGun/automemlimit
 github.com/KimMachineGun/automemlimit/memlimit
