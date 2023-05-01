@@ -72,12 +72,6 @@ func (c *GTSCaches) Init() {
 func (c *GTSCaches) Start() {
 	tryStart(c.account, config.GetCacheGTSAccountSweepFreq())
 	tryStart(c.block, config.GetCacheGTSBlockSweepFreq())
-	tryUntil("starting domain block cache", 5, func() bool {
-		if sweep := config.GetCacheGTSDomainBlockSweepFreq(); sweep > 0 {
-			return c.domainBlock.Start(sweep)
-		}
-		return true
-	})
 	tryStart(c.emoji, config.GetCacheGTSEmojiSweepFreq())
 	tryStart(c.emojiCategory, config.GetCacheGTSEmojiCategorySweepFreq())
 	tryStart(c.follow, config.GetCacheGTSFollowSweepFreq())
@@ -102,7 +96,6 @@ func (c *GTSCaches) Start() {
 func (c *GTSCaches) Stop() {
 	tryStop(c.account, config.GetCacheGTSAccountSweepFreq())
 	tryStop(c.block, config.GetCacheGTSBlockSweepFreq())
-	tryUntil("stopping domain block cache", 5, c.domainBlock.Stop)
 	tryStop(c.emoji, config.GetCacheGTSEmojiSweepFreq())
 	tryStop(c.emojiCategory, config.GetCacheGTSEmojiCategorySweepFreq())
 	tryStop(c.follow, config.GetCacheGTSFollowSweepFreq())
@@ -233,10 +226,7 @@ func (c *GTSCaches) initBlock() {
 }
 
 func (c *GTSCaches) initDomainBlock() {
-	c.domainBlock = domain.New(
-		config.GetCacheGTSDomainBlockMaxSize(),
-		config.GetCacheGTSDomainBlockTTL(),
-	)
+	c.domainBlock = new(domain.BlockCache)
 }
 
 func (c *GTSCaches) initEmoji() {
