@@ -251,6 +251,10 @@ type ActivityStreamsResultPropertyIterator interface {
 	// GetIRI returns the IRI of this property. When IsIRI returns false,
 	// GetIRI will return an arbitrary value.
 	GetIRI() *url.URL
+	// GetSchemaPropertyValue returns the value of this property. When
+	// IsSchemaPropertyValue returns false, GetSchemaPropertyValue will
+	// return an arbitrary value.
+	GetSchemaPropertyValue() SchemaPropertyValue
 	// GetTootEmoji returns the value of this property. When IsTootEmoji
 	// returns false, GetTootEmoji will return an arbitrary value.
 	GetTootEmoji() TootEmoji
@@ -524,6 +528,10 @@ type ActivityStreamsResultPropertyIterator interface {
 	// IsIRI returns true if this property is an IRI. When true, use GetIRI
 	// and SetIRI to access and set this property
 	IsIRI() bool
+	// IsSchemaPropertyValue returns true if this property has a type of
+	// "PropertyValue". When true, use the GetSchemaPropertyValue and
+	// SetSchemaPropertyValue methods to access and set this property.
+	IsSchemaPropertyValue() bool
 	// IsTootEmoji returns true if this property has a type of "Emoji". When
 	// true, use the GetTootEmoji and SetTootEmoji methods to access and
 	// set this property.
@@ -738,6 +746,9 @@ type ActivityStreamsResultPropertyIterator interface {
 	// SetIRI sets the value of this property. Calling IsIRI afterwards
 	// returns true.
 	SetIRI(v *url.URL)
+	// SetSchemaPropertyValue sets the value of this property. Calling
+	// IsSchemaPropertyValue afterwards returns true.
+	SetSchemaPropertyValue(v SchemaPropertyValue)
 	// SetTootEmoji sets the value of this property. Calling IsTootEmoji
 	// afterwards returns true.
 	SetTootEmoji(v TootEmoji)
@@ -1011,6 +1022,10 @@ type ActivityStreamsResultProperty interface {
 	// AppendIRI appends an IRI value to the back of a list of the property
 	// "result"
 	AppendIRI(v *url.URL)
+	// AppendSchemaPropertyValue appends a PropertyValue value to the back of
+	// a list of the property "result". Invalidates iterators that are
+	// traversing using Prev.
+	AppendSchemaPropertyValue(v SchemaPropertyValue)
 	// AppendTootEmoji appends a Emoji value to the back of a list of the
 	// property "result". Invalidates iterators that are traversing using
 	// Prev.
@@ -1287,6 +1302,10 @@ type ActivityStreamsResultProperty interface {
 	// "result". Existing elements at that index and higher are shifted
 	// back once. Invalidates all iterators.
 	InsertIRI(idx int, v *url.URL)
+	// InsertSchemaPropertyValue inserts a PropertyValue value at the
+	// specified index for a property "result". Existing elements at that
+	// index and higher are shifted back once. Invalidates all iterators.
+	InsertSchemaPropertyValue(idx int, v SchemaPropertyValue)
 	// InsertTootEmoji inserts a Emoji value at the specified index for a
 	// property "result". Existing elements at that index and higher are
 	// shifted back once. Invalidates all iterators.
@@ -1511,6 +1530,9 @@ type ActivityStreamsResultProperty interface {
 	// PrependIRI prepends an IRI value to the front of a list of the property
 	// "result".
 	PrependIRI(v *url.URL)
+	// PrependSchemaPropertyValue prepends a PropertyValue value to the front
+	// of a list of the property "result". Invalidates all iterators.
+	PrependSchemaPropertyValue(v SchemaPropertyValue)
 	// PrependTootEmoji prepends a Emoji value to the front of a list of the
 	// property "result". Invalidates all iterators.
 	PrependTootEmoji(v TootEmoji)
@@ -1774,6 +1796,10 @@ type ActivityStreamsResultProperty interface {
 	// SetIRI sets an IRI value to be at the specified index for the property
 	// "result". Panics if the index is out of bounds.
 	SetIRI(idx int, v *url.URL)
+	// SetSchemaPropertyValue sets a PropertyValue value to be at the
+	// specified index for the property "result". Panics if the index is
+	// out of bounds. Invalidates all iterators.
+	SetSchemaPropertyValue(idx int, v SchemaPropertyValue)
 	// SetTootEmoji sets a Emoji value to be at the specified index for the
 	// property "result". Panics if the index is out of bounds.
 	// Invalidates all iterators.

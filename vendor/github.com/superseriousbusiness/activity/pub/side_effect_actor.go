@@ -21,7 +21,25 @@ var _ DelegateActor = &SideEffectActor{}
 // Note that when using the SideEffectActor with an application that good-faith
 // implements its required interfaces, the ActivityPub specification is
 // guaranteed to be correctly followed.
+//
+// When doing deliveries to remote servers via the s2s protocol, the side effect
+// actor will by default use the Serialize function from the streams package.
+// However, this can be overridden after the side effect actor is intantiated,
+// by setting the exposed Serialize function on the struct. For example:
+//
+//	a := NewSideEffectActor(...)
+//	a.Serialize = func(a vocab.Type) (m map[string]interface{}, e error) {
+//	  // Put your custom serializer logic here.
+//	}
+//
+// Note that you should only do this *immediately* after instantiating the side
+// effect actor -- never while your application is already running, as this will
+// likely cause race conditions or other problems! In most cases, you will never
+// need to change this; it's provided solely to allow easier customization by
+// applications.
 type SideEffectActor struct {
+	Serialize func(a vocab.Type) (m map[string]interface{}, e error)
+
 	common CommonBehavior
 	s2s    FederatingProtocol
 	c2s    SocialProtocol
@@ -38,18 +56,19 @@ type SideEffectActor struct {
 //
 // If you are using the returned SideEffectActor for federation, ensure that s2s
 // is not nil. Likewise, if you are using it for the social protocol, ensure
-// that c2s is not nil. 
+// that c2s is not nil.
 func NewSideEffectActor(c CommonBehavior,
 	s2s FederatingProtocol,
 	c2s SocialProtocol,
 	db Database,
 	clock Clock) *SideEffectActor {
 	return &SideEffectActor{
-		common: c,
-		s2s:    s2s,
-		c2s:    c2s,
-		db:     db,
-		clock:  clock,
+		Serialize: streams.Serialize,
+		common:    c,
+		s2s:       s2s,
+		c2s:       c2s,
+		db:        db,
+		clock:     clock,
 	}
 }
 
@@ -451,18 +470,23 @@ func (a *SideEffectActor) WrapInCreate(c context.Context, obj vocab.Type, outbox
 // deliverToRecipients will take a prepared Activity and send it to specific
 // recipients on behalf of an actor.
 func (a *SideEffectActor) deliverToRecipients(c context.Context, boxIRI *url.URL, activity Activity, recipients []*url.URL) error {
-	m, err := streams.Serialize(activity)
+	// Call whichever serializer is
+	// set on the side effect actor.
+	m, err := a.Serialize(activity)
 	if err != nil {
 		return err
 	}
+
 	b, err := json.Marshal(m)
 	if err != nil {
 		return err
 	}
+
 	tp, err := a.common.NewTransport(c, boxIRI, goFedUserAgent())
 	if err != nil {
 		return err
 	}
+
 	return tp.BatchDeliver(c, b, recipients)
 }
 
