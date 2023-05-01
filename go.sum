@@ -88,8 +88,8 @@ codeberg.org/gruf/go-store/v2 v2.2.2/go.mod h1:QRM3LUAfYyoGMWLTqA1WzohxQgYqPFiVv
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
-github.com/KimMachineGun/automemlimit v0.2.5 h1:+wWu5hu/dVqWWauY2rZmlGN+z7SnP02gMVQpcP7xvrk=
-github.com/KimMachineGun/automemlimit v0.2.5/go.mod h1:pJhTW/nWJMj6SnWSU2TEKSlCaM+1N5Mej+IfS/5/Ol0=
+github.com/KimMachineGun/automemlimit v0.2.6 h1:tQFriVTcIteUkV5EgU9iz03eDY36T8JU5RAjP2r6Kt0=
+github.com/KimMachineGun/automemlimit v0.2.6/go.mod h1:pJhTW/nWJMj6SnWSU2TEKSlCaM+1N5Mej+IfS/5/Ol0=
 github.com/Masterminds/semver/v3 v3.1.1 h1:hLg3sBzpNErnxhQtUy/mmLR2I9foDujNK030IGemrRc=
 github.com/Masterminds/semver/v3 v3.1.1/go.mod h1:VPu/7SZ7ePZ3QOrcuXROw5FAcLl4a0cBrbBpGY/8hQs=
 github.com/abema/go-mp4 v0.10.1 h1:wOhZgNxjduc8r4FJdwPa5x/gdBSSX+8MTnfNj/xkJaE=
