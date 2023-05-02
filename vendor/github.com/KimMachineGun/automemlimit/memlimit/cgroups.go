@@ -4,6 +4,8 @@
 package memlimit
 
 import (
+	"path/filepath"
+
 	"github.com/containerd/cgroups/v3"
 	"github.com/containerd/cgroups/v3/cgroup1"
 	"github.com/containerd/cgroups/v3/cgroup2"
@@ -18,7 +20,9 @@ func FromCgroup() (uint64, error) {
 	switch cgroups.Mode() {
 	case cgroups.Legacy:
 		return FromCgroupV1()
-	case cgroups.Hybrid, cgroups.Unified:
+	case cgroups.Hybrid:
+		return fromCgroupHybrid()
+	case cgroups.Unified:
 		return FromCgroupV2()
 	}
 	return 0, ErrNoCgroup
@@ -36,21 +40,41 @@ func FromCgroupV1() (uint64, error) {
 	metrics, err := cg.Stat(cgroup1.IgnoreNotExist)
 	if err != nil {
 		return 0, err
-	} else if metrics.Memory == nil {
-		return 0, ErrNoLimit
 	}
 
-	return metrics.Memory.HierarchicalMemoryLimit, nil
+	if limit := metrics.GetMemory().GetHierarchicalMemoryLimit(); limit != 0 {
+		return limit, nil
+	}
+
+	return 0, ErrNoLimit
+}
+
+// fromCgroupHybrid returns the memory limit from the cgroup v1 or v2.
+// It checks the cgroup v2 first, and if it fails, it falls back to cgroup v1.
+// TODO: make this function public in the next minor version.
+func fromCgroupHybrid() (uint64, error) {
+	limit, err := fromCgroupV2(filepath.Join(cgroupMountPoint, "unified"))
+	if err == nil {
+		return limit, nil
+	} else if err != ErrNoLimit {
+		return 0, err
+	}
+
+	return FromCgroupV1()
 }
 
 // FromCgroupV2 returns the memory limit from the cgroup v2.
 func FromCgroupV2() (uint64, error) {
+	return fromCgroupV2(cgroupMountPoint)
+}
+
+func fromCgroupV2(mountPoint string) (uint64, error) {
 	path, err := cgroup2.NestedGroupPath("")
 	if err != nil {
 		return 0, err
 	}
 
-	m, err := cgroup2.Load(path, cgroup2.WithMountpoint(cgroupMountPoint))
+	m, err := cgroup2.Load(path, cgroup2.WithMountpoint(mountPoint))
 	if err != nil {
 		return 0, err
 	}
@@ -58,9 +82,11 @@ func FromCgroupV2() (uint64, error) {
 	stats, err := m.Stat()
 	if err != nil {
 		return 0, err
-	} else if stats.Memory == nil {
-		return 0, ErrNoLimit
 	}
 
-	return stats.Memory.UsageLimit, nil
+	if limit := stats.GetMemory().GetUsageLimit(); limit != 0 {
+		return limit, nil
+	}
+
+	return 0, ErrNoLimit
 }

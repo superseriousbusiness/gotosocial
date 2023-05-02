@@ -20,13 +20,12 @@ package domain_test
 import (
 	"errors"
 	"testing"
-	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/cache/domain"
 )
 
 func TestBlockCache(t *testing.T) {
-	c := domain.New(100, time.Second)
+	c := new(domain.BlockCache)
 
 	blocks := []string{
 		"google.com",
