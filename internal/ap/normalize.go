@@ -35,10 +35,10 @@ import (
 //
 // The rawActivity map should the freshly deserialized json representation of the Activity.
 //
-// This function is a noop if the type passed in is anything except a Create with a Statusable as its Object.
+// This function is a noop if the type passed in is anything except a Create or Update with a Statusable or Accountable as its Object.
 func NormalizeIncomingActivityObject(activity pub.Activity, rawJSON map[string]interface{}) {
-	if activity.GetTypeName() != ActivityCreate {
-		// Only interested in Create right now.
+	if typeName := activity.GetTypeName(); typeName != ActivityCreate && typeName != ActivityUpdate {
+		// Only interested in Create or Update right now.
 		return
 	}
 
@@ -60,8 +60,8 @@ func NormalizeIncomingActivityObject(activity pub.Activity, rawJSON map[string]i
 	}
 
 	// We now know length is 1 so get the first
-	// item from the iter.  We need this to be
-	// a Statusable if we're to continue.
+	// item from the iter. We need this to be
+	// a Statusable or Accountable if we're to continue.
 	i := createObject.At(0)
 	if i == nil {
 		// This is awkward.
@@ -74,30 +74,55 @@ func NormalizeIncomingActivityObject(activity pub.Activity, rawJSON map[string]i
 		return
 	}
 
-	statusable, ok := t.(Statusable)
-	if !ok {
-		// Object is not Statusable;
-		// we're not interested.
-		return
-	}
+	switch t.GetTypeName() {
+	case ObjectArticle, ObjectDocument, ObjectImage, ObjectVideo, ObjectNote, ObjectPage, ObjectEvent, ObjectPlace, ObjectProfile:
+		statusable, ok := t.(Statusable)
+		if !ok {
+			// Object is not Statusable;
+			// we're not interested.
+			return
+		}
 
-	rawObject, ok := rawJSON["object"]
-	if !ok {
-		// No object in raw map.
-		return
-	}
+		rawObject, ok := rawJSON["object"]
+		if !ok {
+			// No object in raw map.
+			return
+		}
 
-	rawStatusableJSON, ok := rawObject.(map[string]interface{})
-	if !ok {
-		// Object wasn't a json object.
-		return
-	}
+		rawStatusableJSON, ok := rawObject.(map[string]interface{})
+		if !ok {
+			// Object wasn't a json object.
+			return
+		}
 
-	// Normalize everything we can on the statusable.
-	NormalizeIncomingContent(statusable, rawStatusableJSON)
-	NormalizeIncomingAttachments(statusable, rawStatusableJSON)
-	NormalizeIncomingSummary(statusable, rawStatusableJSON)
-	NormalizeIncomingName(statusable, rawStatusableJSON)
+		// Normalize everything we can on the statusable.
+		NormalizeIncomingContent(statusable, rawStatusableJSON)
+		NormalizeIncomingAttachments(statusable, rawStatusableJSON)
+		NormalizeIncomingSummary(statusable, rawStatusableJSON)
+		NormalizeIncomingName(statusable, rawStatusableJSON)
+	case ActorApplication, ActorGroup, ActorOrganization, ActorPerson, ActorService:
+		accountable, ok := t.(Accountable)
+		if !ok {
+			// Object is not Accountable;
+			// we're not interested.
+			return
+		}
+
+		rawObject, ok := rawJSON["object"]
+		if !ok {
+			// No object in raw map.
+			return
+		}
+
+		rawAccountableJSON, ok := rawObject.(map[string]interface{})
+		if !ok {
+			// Object wasn't a json object.
+			return
+		}
+
+		// Normalize everything we can on the accountable.
+		NormalizeIncomingSummary(accountable, rawAccountableJSON)
+	}
 }
 
 // NormalizeIncomingContent replaces the Content of the given item

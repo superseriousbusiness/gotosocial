@@ -165,6 +165,7 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 	// If activity Object is a Statusable, we'll want to replace the
 	// parsed `content` value with the value from the raw JSON instead.
 	// See https://github.com/superseriousbusiness/gotosocial/issues/1661
+	// Likewise, if it's an Accountable, we'll normalize some fields on it.
 	ap.NormalizeIncomingActivityObject(activity, rawActivity)
 
 	// Allow server implementations to set context data with a hook.

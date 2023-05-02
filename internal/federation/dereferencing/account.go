@@ -38,7 +38,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
-func (d *deref) GetAccountByURI(ctx context.Context, requestUser string, uri *url.URL, block bool) (*gtsmodel.Account, error) {
+func (d *deref) GetAccountByURI(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Account, error) {
 	var (
 		account *gtsmodel.Account
 		uriStr  = uri.String()
@@ -70,11 +70,11 @@ func (d *deref) GetAccountByURI(ctx context.Context, requestUser string, uri *ur
 			ID:     id.NewULID(),
 			Domain: uri.Host,
 			URI:    uriStr,
-		}, false, true)
+		}, d.defaultFetchLatest, false)
 	}
 
 	// Try to update existing account model
-	enriched, err := d.enrichAccount(ctx, requestUser, uri, account, false, block)
+	enriched, err := d.enrichAccount(ctx, requestUser, uri, account, d.defaultFetchLatest, false)
 	if err != nil {
 		log.Errorf(ctx, "error enriching remote account: %v", err)
 		return account, nil // fall back to returning existing
@@ -83,7 +83,7 @@ func (d *deref) GetAccountByURI(ctx context.Context, requestUser string, uri *ur
 	return enriched, nil
 }
 
-func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser string, username string, domain string, block bool) (*gtsmodel.Account, error) {
+func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser string, username string, domain string) (*gtsmodel.Account, error) {
 	if domain == config.GetHost() || domain == config.GetAccountDomain() {
 		// We do local lookups using an empty domain,
 		// else it will fail the db search below.
@@ -99,19 +99,24 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 	if account == nil {
 		// Check for failed local lookup.
 		if domain == "" {
-			return nil, NewErrNotRetrievable(err) // will be db.ErrNoEntries
+			return nil, NewErrNotRetrievable(err) // wrapped err will be db.ErrNoEntries
 		}
 
 		// Create and pass-through a new bare-bones model for dereferencing.
-		return d.enrichAccount(ctx, requestUser, nil, &gtsmodel.Account{
+		account = &gtsmodel.Account{
 			ID:       id.NewULID(),
 			Username: username,
 			Domain:   domain,
-		}, false, true)
+		}
+
+		// There's no known account to fall back on,
+		// so return error if we can't enrich account.
+		return d.enrichAccount(ctx, requestUser, nil, account, d.defaultFetchLatest, false)
 	}
 
-	// Try to update existing account model
-	enriched, err := d.enrichAccount(ctx, requestUser, nil, account, false, block)
+	// We knew about this account already;
+	// try to update existing account model.
+	enriched, err := d.enrichAccount(ctx, requestUser, nil, account, d.defaultFetchLatest, false)
 	if err != nil {
 		log.Errorf(ctx, "error enriching account from remote: %v", err)
 		return account, nil // fall back to returning unchanged existing account model
@@ -120,12 +125,62 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 	return enriched, nil
 }
 
-func (d *deref) RefreshAccount(ctx context.Context, requestUser string, account *gtsmodel.Account) (*gtsmodel.Account, error) {
-	return d.enrichAccount(ctx, requestUser, nil, account, true, true)
+func (d *deref) RefreshAccount(ctx context.Context, requestUser string, accountable ap.Accountable, account *gtsmodel.Account) (*gtsmodel.Account, error) {
+	// To avoid unnecessarily refetching multiple times from remote,
+	// we can just pass in the Accountable object that we received,
+	// if it was defined. If not, fall back to default fetch func.
+	var f fetchLatest
+	if accountable != nil {
+		f = func(
+			_ context.Context,
+			_ transport.Transport,
+			_ *url.URL,
+			_ string,
+		) (ap.Accountable, *gtsmodel.Account, error) {
+			return accountable, account, nil
+		}
+	} else {
+		f = d.defaultFetchLatest
+	}
+
+	// Set 'force' to 'true' to always fetch latest media etc.
+	return d.enrichAccount(ctx, requestUser, nil, account, f, true)
+}
+
+// fetchLatest defines a function for using a transport and uri to fetch the fetchLatest
+// version of an account (and its AP representation) from a remote instance.
+type fetchLatest func(ctx context.Context, transport transport.Transport, uri *url.URL, accountDomain string) (ap.Accountable, *gtsmodel.Account, error)
+
+// defaultFetchLatest deduplicates latest fetching code that is used in several
+// different functions. It simply calls the remote uri using the given transport,
+// parses a returned AP representation into an account, and then returns both.
+func (d *deref) defaultFetchLatest(ctx context.Context, transport transport.Transport, uri *url.URL, accountDomain string) (ap.Accountable, *gtsmodel.Account, error) {
+	// Dereference this account to get the latest available.
+	apubAcc, err := d.dereferenceAccountable(ctx, transport, uri)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error dereferencing account %s: %w", uri, err)
+	}
+
+	// Convert the dereferenced AP account object to our GTS model.
+	latestAcc, err := d.typeConverter.ASRepresentationToAccount(
+		ctx, apubAcc, accountDomain,
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error converting accountable to gts model for account %s: %w", uri, err)
+	}
+
+	return apubAcc, latestAcc, nil
 }
 
 // enrichAccount will ensure the given account is the most up-to-date model of the account, re-webfingering and re-dereferencing if necessary.
-func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.URL, account *gtsmodel.Account, force, block bool) (*gtsmodel.Account, error) {
+func (d *deref) enrichAccount(
+	ctx context.Context,
+	requestUser string,
+	uri *url.URL,
+	account *gtsmodel.Account,
+	f fetchLatest,
+	force bool,
+) (*gtsmodel.Account, error) {
 	if account.IsLocal() {
 		// Can't update local accounts.
 		return account, nil
@@ -205,18 +260,10 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	d.startHandshake(requestUser, uri)
 	defer d.stopHandshake(requestUser, uri)
 
-	// Dereference this account to get the latest available.
-	apubAcc, err := d.dereferenceAccountable(ctx, transport, uri)
+	// Fetch latest version of the account, dereferencing if necessary.
+	apubAcc, latestAcc, err := f(ctx, transport, uri, account.Domain)
 	if err != nil {
-		return nil, fmt.Errorf("enrichAccount: error dereferencing account %s: %w", uri, err)
-	}
-
-	// Convert the dereferenced AP account object to our GTS model.
-	latestAcc, err := d.typeConverter.ASRepresentationToAccount(
-		ctx, apubAcc, account.Domain,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("enrichAccount: error converting accountable to gts model for account %s: %w", uri, err)
+		return nil, fmt.Errorf("enrichAccount: error calling fetchLatest function: %w", err)
 	}
 
 	if account.Username == "" {
@@ -256,11 +303,11 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	latestAcc.ID = account.ID
 	latestAcc.FetchedAt = time.Now()
 
-	// Use the existing account media attachments by default.
+	// Reuse the existing account media attachments by default.
 	latestAcc.AvatarMediaAttachmentID = account.AvatarMediaAttachmentID
 	latestAcc.HeaderMediaAttachmentID = account.HeaderMediaAttachmentID
 
-	if latestAcc.AvatarRemoteURL != account.AvatarRemoteURL {
+	if force || (latestAcc.AvatarRemoteURL != account.AvatarRemoteURL) {
 		// Reset the avatar media ID (handles removed).
 		latestAcc.AvatarMediaAttachmentID = ""
 
@@ -281,7 +328,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		}
 	}
 
-	if latestAcc.HeaderRemoteURL != account.HeaderRemoteURL {
+	if force || (latestAcc.HeaderRemoteURL != account.HeaderRemoteURL) {
 		// Reset the header media ID (handles removed).
 		latestAcc.HeaderMediaAttachmentID = ""
 

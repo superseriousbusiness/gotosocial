@@ -54,96 +54,69 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 
 	receivingAccount, _ := extractFromCtx(ctx)
 	if receivingAccount == nil {
-		// If the receiving account wasn't set on the context, that means this request didn't pass
-		// through the API, but came from inside GtS as the result of another activity on this instance. That being so,
-		// we can safely just ignore this activity, since we know we've already processed it elsewhere.
+		// If the receiving account wasn't set on the context, that means
+		// this request didn't pass through the API, but came from inside
+		// GtS as the result of another activity on this instance. As such,
+		// we must have already processed it in order to reach this stage.
 		return nil
 	}
 
 	requestingAcctI := ctx.Value(ap.ContextRequestingAccount)
 	if requestingAcctI == nil {
-		l.Error("UPDATE: requesting account wasn't set on context")
+		return errors.New("Update: requesting account wasn't set on context")
 	}
+
 	requestingAcct, ok := requestingAcctI.(*gtsmodel.Account)
 	if !ok {
-		l.Error("UPDATE: requesting account was set on context but couldn't be parsed")
+		return errors.New("Update: requesting account was set on context but couldn't be parsed")
 	}
 
-	typeName := asType.GetTypeName()
-	if typeName == ap.ActorApplication ||
-		typeName == ap.ActorGroup ||
-		typeName == ap.ActorOrganization ||
-		typeName == ap.ActorPerson ||
-		typeName == ap.ActorService {
-		// it's an UPDATE to some kind of account
-		var accountable ap.Accountable
-		switch typeName {
-		case ap.ActorApplication:
-			l.Debug("got update for APPLICATION")
-			i, ok := asType.(vocab.ActivityStreamsApplication)
-			if !ok {
-				return errors.New("UPDATE: could not convert type to application")
-			}
-			accountable = i
-		case ap.ActorGroup:
-			l.Debug("got update for GROUP")
-			i, ok := asType.(vocab.ActivityStreamsGroup)
-			if !ok {
-				return errors.New("UPDATE: could not convert type to group")
-			}
-			accountable = i
-		case ap.ActorOrganization:
-			l.Debug("got update for ORGANIZATION")
-			i, ok := asType.(vocab.ActivityStreamsOrganization)
-			if !ok {
-				return errors.New("UPDATE: could not convert type to organization")
-			}
-			accountable = i
-		case ap.ActorPerson:
-			l.Debug("got update for PERSON")
-			i, ok := asType.(vocab.ActivityStreamsPerson)
-			if !ok {
-				return errors.New("UPDATE: could not convert type to person")
-			}
-			accountable = i
-		case ap.ActorService:
-			l.Debug("got update for SERVICE")
-			i, ok := asType.(vocab.ActivityStreamsService)
-			if !ok {
-				return errors.New("UPDATE: could not convert type to service")
-			}
-			accountable = i
-		}
-
-		updatedAcct, err := f.typeConverter.ASRepresentationToAccount(ctx, accountable, "")
-		if err != nil {
-			return fmt.Errorf("UPDATE: error converting to account: %s", err)
-		}
-
-		if updatedAcct.Domain == config.GetHost() || updatedAcct.Domain == config.GetAccountDomain() {
-			// no need to update local accounts
-			// in fact, if we do this will break the shit out of things so do NOT
-			return nil
-		}
-
-		if requestingAcct.URI != updatedAcct.URI {
-			return fmt.Errorf("UPDATE: update for account %s was requested by account %s, this is not valid", updatedAcct.URI, requestingAcct.URI)
-		}
-
-		// set some fields here on the updatedAccount representation so we don't run into db issues
-		updatedAcct.CreatedAt = requestingAcct.CreatedAt
-		updatedAcct.ID = requestingAcct.ID
-		updatedAcct.Language = requestingAcct.Language
-
-		// pass to the processor for further updating of eg., avatar/header, emojis
-		// the actual db insert/update will take place a bit later
-		f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
-			APObjectType:     ap.ObjectProfile,
-			APActivityType:   ap.ActivityUpdate,
-			GTSModel:         updatedAcct,
-			ReceivingAccount: receivingAccount,
-		})
+	switch asType.GetTypeName() {
+	case ap.ActorApplication, ap.ActorGroup, ap.ActorOrganization, ap.ActorPerson, ap.ActorService:
+		return f.updateAccountable(ctx, receivingAccount, requestingAcct, asType)
 	}
+
+	return nil
+}
+
+func (f *federatingDB) updateAccountable(ctx context.Context, receivingAcct *gtsmodel.Account, requestingAcct *gtsmodel.Account, asType vocab.Type) error {
+	accountable, ok := asType.(ap.Accountable)
+	if !ok {
+		return errors.New("updateAccountable: could not convert vocab.Type to Accountable")
+	}
+
+	updatedAcct, err := f.typeConverter.ASRepresentationToAccount(ctx, accountable, "")
+	if err != nil {
+		return fmt.Errorf("updateAccountable: error converting to account: %w", err)
+	}
+
+	if updatedAcct.Domain == config.GetHost() || updatedAcct.Domain == config.GetAccountDomain() {
+		// No need to update local accounts; in fact, if we try
+		// this it will break the shit out of things so do NOT.
+		return nil
+	}
+
+	if requestingAcct.URI != updatedAcct.URI {
+		return fmt.Errorf("updateAccountable: update for account %s was requested by account %s, this is not valid", updatedAcct.URI, requestingAcct.URI)
+	}
+
+	// Set some basic fields on the updated account
+	// based on what we already know about the requester.
+	updatedAcct.CreatedAt = requestingAcct.CreatedAt
+	updatedAcct.ID = requestingAcct.ID
+	updatedAcct.Language = requestingAcct.Language
+	updatedAcct.AvatarMediaAttachmentID = requestingAcct.AvatarMediaAttachmentID
+	updatedAcct.HeaderMediaAttachmentID = requestingAcct.HeaderMediaAttachmentID
+
+	// Pass to the processor for further updating of eg., avatar/header,
+	// emojis, etc. The actual db insert/update will take place there.
+	f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
+		APObjectType:     ap.ObjectProfile,
+		APActivityType:   ap.ActivityUpdate,
+		GTSModel:         updatedAcct,
+		APObjectModel:    accountable,
+		ReceivingAccount: receivingAcct,
+	})
 
 	return nil
 }
