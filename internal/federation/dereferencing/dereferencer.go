@@ -41,8 +41,9 @@ type Dereferencer interface {
 	// check the last_fetched (and updating if beyond fetch interval) or dereferencing for the first-time if this remote account has never been encountered before.
 	GetAccountByUsernameDomain(ctx context.Context, requestUser string, username string, domain string, block bool) (*gtsmodel.Account, error)
 
-	// UpdateAccount updates the given account if last_fetched is beyond fetch interval (or if force is set). An updated account model is returned, any media fetching is done async.
-	UpdateAccount(ctx context.Context, requestUser string, account *gtsmodel.Account, force bool) (*gtsmodel.Account, error)
+	// RefreshAccount forces a refresh of the given account by fetching the current/latest state of the account from the remote instance.
+	// An updated account model is returned, but not yet inserted/updated in the database; this is the caller's responsibility.
+	RefreshAccount(ctx context.Context, requestUser string, account *gtsmodel.Account) (*gtsmodel.Account, error)
 
 	GetStatus(ctx context.Context, username string, remoteStatusID *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, error)
 

@@ -120,8 +120,8 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 	return enriched, nil
 }
 
-func (d *deref) UpdateAccount(ctx context.Context, requestUser string, account *gtsmodel.Account, force bool) (*gtsmodel.Account, error) {
-	return d.enrichAccount(ctx, requestUser, nil, account, force, false)
+func (d *deref) RefreshAccount(ctx context.Context, requestUser string, account *gtsmodel.Account) (*gtsmodel.Account, error) {
+	return d.enrichAccount(ctx, requestUser, nil, account, true, true)
 }
 
 // enrichAccount will ensure the given account is the most up-to-date model of the account, re-webfingering and re-dereferencing if necessary.

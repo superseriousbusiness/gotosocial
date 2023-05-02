@@ -373,13 +373,14 @@ func (p *Processor) processUpdateAccountFromFederator(ctx context.Context, feder
 		return errors.New("profile was not parseable as *gtsmodel.Account")
 	}
 
-	// Call UpdateAccount with force to reflect that
-	// we want to fetch new bio, avatar, header, etc.
-	if _, err := p.federator.UpdateAccount(ctx,
-		federatorMsg.ReceivingAccount.Username,
-		incomingAccount,
-		true,
-	); err != nil {
+	// Call RefreshAccount to fetch up-to-date bio, avatar, header, etc.
+	updatedAccount, err := p.federator.RefreshAccount(ctx, federatorMsg.ReceivingAccount.Username, incomingAccount)
+	if err != nil {
+		return fmt.Errorf("error enriching updated account from federator: %s", err)
+	}
+
+	// RefreshAccount doesn't make DB update calls, so do that here.
+	if err := p.state.DB.UpdateAccount(ctx, updatedAccount); err != nil {
 		return fmt.Errorf("error enriching updated account from federator: %s", err)
 	}
 
