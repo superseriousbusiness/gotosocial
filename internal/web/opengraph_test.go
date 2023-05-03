@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 )
 
 type OpenGraphTestSuite struct {
@@ -42,6 +43,72 @@ func (suite *OpenGraphTestSuite) TestParseDescription() {
 			suite.Equal(fmt.Sprintf("content=\"%s\"", tt.exp), parseDescription(tt.in))
 		})
 	}
+}
+
+func (suite *OpenGraphTestSuite) TestWithAccountWithNote() {
+	baseMeta := ogBase(&apimodel.InstanceV1{
+		AccountDomain: "example.org",
+		Languages:     []string{"en"},
+	})
+
+	accountMeta := baseMeta.withAccount(&apimodel.Account{
+		Acct:        "example_account",
+		DisplayName: "example person!!",
+		URL:         "https://example.org/@example_account",
+		Note:        "<p>This is my profile, read it and weep! Weep then!</p>",
+		Username:    "example_account",
+	})
+
+	suite.EqualValues(ogMeta{
+		Title:                "example person!! (@example_account@example.org)",
+		Type:                 "profile",
+		Locale:               "en",
+		URL:                  "https://example.org/@example_account",
+		SiteName:             "example.org",
+		Description:          "content=\"This is my profile, read it and weep! Weep then!\"",
+		Image:                "",
+		ImageWidth:           "",
+		ImageHeight:          "",
+		ImageAlt:             "Avatar for example_account",
+		ArticlePublisher:     "",
+		ArticleAuthor:        "",
+		ArticleModifiedTime:  "",
+		ArticlePublishedTime: "",
+		ProfileUsername:      "example_account",
+	}, *accountMeta)
+}
+
+func (suite *OpenGraphTestSuite) TestWithAccountNoNote() {
+	baseMeta := ogBase(&apimodel.InstanceV1{
+		AccountDomain: "example.org",
+		Languages:     []string{"en"},
+	})
+
+	accountMeta := baseMeta.withAccount(&apimodel.Account{
+		Acct:        "example_account",
+		DisplayName: "example person!!",
+		URL:         "https://example.org/@example_account",
+		Note:        "", // <- empty
+		Username:    "example_account",
+	})
+
+	suite.EqualValues(ogMeta{
+		Title:                "example person!! (@example_account@example.org)",
+		Type:                 "profile",
+		Locale:               "en",
+		URL:                  "https://example.org/@example_account",
+		SiteName:             "example.org",
+		Description:          "content=\"This GoToSocial user hasn't written a bio yet!\"",
+		Image:                "",
+		ImageWidth:           "",
+		ImageHeight:          "",
+		ImageAlt:             "Avatar for example_account",
+		ArticlePublisher:     "",
+		ArticleAuthor:        "",
+		ArticleModifiedTime:  "",
+		ArticlePublishedTime: "",
+		ProfileUsername:      "example_account",
+	}, *accountMeta)
 }
 
 func TestOpenGraphTestSuite(t *testing.T) {
