@@ -36,12 +36,10 @@ const (
 
 	// ExcludeTypes is an array specifying notification types to exclude
 	ExcludeTypesKey = "exclude_types[]"
-	// MaxIDKey is the url query for setting a max notification ID to return
-	MaxIDKey = "max_id"
-	// LimitKey is for specifying maximum number of notifications to return.
-	LimitKey = "limit"
-	// SinceIDKey is for specifying the minimum notification ID to return.
-	SinceIDKey = "since_id"
+	MaxIDKey        = "max_id"
+	LimitKey        = "limit"
+	SinceIDKey      = "since_id"
+	MinIDKey        = "min_id"
 )
 
 type Module struct {

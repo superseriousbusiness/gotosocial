@@ -31,34 +31,69 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *Processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, excludeTypes []string, limit int, maxID string, sinceID string) (*apimodel.PageableResponse, gtserror.WithCode) {
-	notifs, err := p.state.DB.GetAccountNotifications(ctx, authed.Account.ID, excludeTypes, limit, maxID, sinceID)
+func (p *Processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, excludeTypes []string) (*apimodel.PageableResponse, gtserror.WithCode) {
+	notifs, err := p.state.DB.GetAccountNotifications(ctx, authed.Account.ID, maxID, sinceID, minID, limit, excludeTypes)
 	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// No notifs (left).
+			return util.EmptyPageableResponse(), nil
+		}
+		// An actual error has occurred.
+		err = fmt.Errorf("NotificationsGet: db error getting notifications: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	count := len(notifs)
-
 	if count == 0 {
 		return util.EmptyPageableResponse(), nil
 	}
 
-	items := make([]interface{}, 0, count)
-	nextMaxIDValue := ""
-	prevMinIDValue := ""
-	for i, n := range notifs {
-		item, err := p.tc.NotificationToAPINotification(ctx, n)
-		if err != nil {
-			log.Debugf(ctx, "got an error converting a notification to api, will skip it: %s", err)
-			continue
-		}
+	var (
+		items          = make([]interface{}, 0, count)
+		nextMaxIDValue string
+		prevMinIDValue string
+	)
 
+	for i, n := range notifs {
+		// Set next + prev values before filtering and API
+		// converting, so caller can still page properly.
 		if i == count-1 {
-			nextMaxIDValue = item.GetID()
+			nextMaxIDValue = n.ID
 		}
 
 		if i == 0 {
-			prevMinIDValue = item.GetID()
+			prevMinIDValue = n.ID
+		}
+
+		// Ensure this notification should be shown to requester.
+		if n.OriginAccount != nil {
+			// Account is set, ensure it's visible to notif target.
+			visible, err := p.filter.AccountVisible(ctx, authed.Account, n.OriginAccount)
+			if err != nil {
+				log.Debugf(ctx, "skipping notification %s because of an error checking notification visibility: %s", n.ID, err)
+				continue
+			}
+			if !visible {
+				continue
+			}
+		}
+
+		if n.Status != nil {
+			// Status is set, ensure it's visible to notif target.
+			visible, err := p.filter.StatusVisible(ctx, authed.Account, n.Status)
+			if err != nil {
+				log.Debugf(ctx, "skipping notification %s because of an error checking notification visibility: %s", n.ID, err)
+				continue
+			}
+			if !visible {
+				continue
+			}
+		}
+
+		item, err := p.tc.NotificationToAPINotification(ctx, n)
+		if err != nil {
+			log.Debugf(ctx, "skipping notification %s because it couldn't be converted to its api representation: %s", n.ID, err)
+			continue
 		}
 
 		items = append(items, item)
@@ -68,7 +103,6 @@ func (p *Processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, ex
 		Items:          items,
 		Path:           "api/v1/notifications",
 		NextMaxIDValue: nextMaxIDValue,
-		PrevMinIDKey:   "since_id",
 		PrevMinIDValue: prevMinIDValue,
 		Limit:          limit,
 	})
