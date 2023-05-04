@@ -91,7 +91,7 @@ func (og *ogMeta) withAccount(account *apimodel.Account) *ogMeta {
 	if account.Note != "" {
 		og.Description = parseDescription(account.Note)
 	} else {
-		og.Description = "This GoToSocial user hasn't written a bio yet!"
+		og.Description = `content="This GoToSocial user hasn't written a bio yet!"`
 	}
 
 	og.Image = account.Avatar

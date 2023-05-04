@@ -23,6 +23,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
@@ -73,53 +74,93 @@ func (n *notificationDB) GetNotification(
 	}, notificationType, targetAccountID, originAccountID, statusID)
 }
 
-func (n *notificationDB) GetAccountNotifications(ctx context.Context, accountID string, excludeTypes []string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, db.Error) {
+func (n *notificationDB) GetAccountNotifications(
+	ctx context.Context,
+	accountID string,
+	maxID string,
+	sinceID string,
+	minID string,
+	limit int,
+	excludeTypes []string,
+) ([]*gtsmodel.Notification, db.Error) {
 	// Ensure reasonable
 	if limit < 0 {
 		limit = 0
 	}
 
-	// Make a guess for slice size
-	notifIDs := make([]string, 0, limit)
+	// Make educated guess for slice size
+	var (
+		notifIDs    = make([]string, 0, limit)
+		frontToBack = true
+	)
 
 	q := n.conn.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("notifications"), bun.Ident("notification")).
 		Column("notification.id")
 
-	if maxID != "" {
-		q = q.Where("? < ?", bun.Ident("notification.id"), maxID)
+	if maxID == "" {
+		maxID = id.Highest
 	}
 
+	// Return only notifs LOWER (ie., older) than maxID.
+	q = q.Where("? < ?", bun.Ident("notification.id"), maxID)
+
 	if sinceID != "" {
+		// Return only notifs HIGHER (ie., newer) than sinceID.
 		q = q.Where("? > ?", bun.Ident("notification.id"), sinceID)
 	}
 
+	if minID != "" {
+		// Return only notifs HIGHER (ie., newer) than minID.
+		q = q.Where("? > ?", bun.Ident("notification.id"), minID)
+
+		frontToBack = false // page up
+	}
+
 	for _, excludeType := range excludeTypes {
+		// Filter out unwanted notif types.
 		q = q.Where("? != ?", bun.Ident("notification.notification_type"), excludeType)
 	}
 
-	q = q.
-		Where("? = ?", bun.Ident("notification.target_account_id"), accountID).
-		Order("notification.id DESC")
+	// Return only notifs for this account.
+	q = q.Where("? = ?", bun.Ident("notification.target_account_id"), accountID)
 
-	if limit != 0 {
+	if limit > 0 {
 		q = q.Limit(limit)
+	}
+
+	if frontToBack {
+		// Page down.
+		q = q.Order("notification.id DESC")
+	} else {
+		// Page up.
+		q = q.Order("notification.id ASC")
 	}
 
 	if err := q.Scan(ctx, &notifIDs); err != nil {
 		return nil, n.conn.ProcessError(err)
 	}
 
-	notifs := make([]*gtsmodel.Notification, 0, limit)
+	if len(notifIDs) == 0 {
+		return nil, nil
+	}
 
-	// now we have the IDs, select the notifs one by one
-	// reason for this is that for each notif, we can instead get it from our cache if it's cached
+	// If we're paging up, we still want notifications
+	// to be sorted by ID desc, so reverse ids slice.
+	// https://zchee.github.io/golang-wiki/SliceTricks/#reversing
+	if !frontToBack {
+		for l, r := 0, len(notifIDs)-1; l < r; l, r = l+1, r-1 {
+			notifIDs[l], notifIDs[r] = notifIDs[r], notifIDs[l]
+		}
+	}
+
+	notifs := make([]*gtsmodel.Notification, 0, len(notifIDs))
 	for _, id := range notifIDs {
 		// Attempt fetch from DB
 		notif, err := n.GetNotificationByID(ctx, id)
 		if err != nil {
-			log.Errorf(ctx, "error getting notification %q: %v", id, err)
+			log.Errorf(ctx, "error fetching notification %q: %v", id, err)
 			continue
 		}
 

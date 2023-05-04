@@ -18,12 +18,7 @@
 package webfinger_test
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
-	"time"
-
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api/wellknown/webfinger"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -102,35 +97,4 @@ func (suite *WebfingerStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
 	testrig.StopWorkers(&suite.state)
-}
-
-func accountDomainAccount() *gtsmodel.Account {
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		panic(err)
-	}
-	publicKey := &privateKey.PublicKey
-
-	acct := &gtsmodel.Account{
-		ID:                    "01FG1K8EA7SYHEC7V6XKVNC4ZA",
-		CreatedAt:             time.Now(),
-		UpdatedAt:             time.Now(),
-		Username:              "aaaaa",
-		Domain:                "",
-		Privacy:               gtsmodel.VisibilityDefault,
-		Language:              "en",
-		URI:                   "http://gts.example.org/users/aaaaa",
-		URL:                   "http://gts.example.org/@aaaaa",
-		InboxURI:              "http://gts.example.org/users/aaaaa/inbox",
-		OutboxURI:             "http://gts.example.org/users/aaaaa/outbox",
-		FollowingURI:          "http://gts.example.org/users/aaaaa/following",
-		FollowersURI:          "http://gts.example.org/users/aaaaa/followers",
-		FeaturedCollectionURI: "http://gts.example.org/users/aaaaa/collections/featured",
-		ActorType:             ap.ActorPerson,
-		PrivateKey:            privateKey,
-		PublicKey:             publicKey,
-		PublicKeyURI:          "http://gts.example.org/users/aaaaa/main-key",
-	}
-
-	return acct
 }
