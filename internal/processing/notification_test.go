@@ -32,7 +32,7 @@ type NotificationTestSuite struct {
 // get a notification where someone has liked our status
 func (suite *NotificationTestSuite) TestGetNotifications() {
 	receivingAccount := suite.testAccounts["local_account_1"]
-	notifsResponse, err := suite.processor.NotificationsGet(context.Background(), suite.testAutheds["local_account_1"], []string{}, 10, "", "")
+	notifsResponse, err := suite.processor.NotificationsGet(context.Background(), suite.testAutheds["local_account_1"], "", "", "", 10, nil)
 	suite.NoError(err)
 	suite.Len(notifsResponse.Items, 1)
 	notif, ok := notifsResponse.Items[0].(*apimodel.Notification)
@@ -44,7 +44,7 @@ func (suite *NotificationTestSuite) TestGetNotifications() {
 	suite.NotNil(notif.Status)
 	suite.NotNil(notif.Status.Account)
 	suite.Equal(receivingAccount.ID, notif.Status.Account.ID)
-	suite.Equal(`<http://localhost:8080/api/v1/notifications?limit=10&max_id=01F8Q0ANPTWW10DAKTX7BRPBJP>; rel="next", <http://localhost:8080/api/v1/notifications?limit=10&since_id=01F8Q0ANPTWW10DAKTX7BRPBJP>; rel="prev"`, notifsResponse.LinkHeader)
+	suite.Equal(`<http://localhost:8080/api/v1/notifications?limit=10&max_id=01F8Q0ANPTWW10DAKTX7BRPBJP>; rel="next", <http://localhost:8080/api/v1/notifications?limit=10&min_id=01F8Q0ANPTWW10DAKTX7BRPBJP>; rel="prev"`, notifsResponse.LinkHeader)
 }
 
 func TestNotificationTestSuite(t *testing.T) {

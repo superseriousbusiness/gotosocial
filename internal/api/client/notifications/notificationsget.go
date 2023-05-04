@@ -50,6 +50,29 @@ import (
 //
 //	parameters:
 //	-
+//		name: max_id
+//		type: string
+//		description: >-
+//			Return only notifications *OLDER* than the given max notification ID.
+//			The notification with the specified ID will not be included in the response.
+//		in: query
+//		required: false
+//	-
+//		name: since_id
+//		type: string
+//		description: >-
+//			Return only notifications *newer* than the given since notification ID.
+//			The notification with the specified ID will not be included in the response.
+//		in: query
+//	-
+//		name: min_id
+//		type: string
+//		description: >-
+//			Return only notifications *immediately newer* than the given since notification ID.
+//			The notification with the specified ID will not be included in the response.
+//		in: query
+//		required: false
+//	-
 //		name: limit
 //		type: integer
 //		description: Number of notifications to return.
@@ -62,22 +85,6 @@ import (
 //		items:
 //			type: string
 //			description: Array of types of notifications to exclude (follow, favourite, reblog, mention, poll, follow_request)
-//		in: query
-//		required: false
-//	-
-//		name: max_id
-//		type: string
-//		description: >-
-//			Return only notifications *OLDER* than the given max status ID.
-//			The status with the specified ID will not be included in the response.
-//		in: query
-//		required: false
-//	-
-//		name: since_id
-//		type: string
-//		description: |-
-//			Return only notifications *NEWER* than the given since status ID.
-//			The status with the specified ID will not be included in the response.
 //		in: query
 //		required: false
 //
@@ -131,21 +138,15 @@ func (m *Module) NotificationsGETHandler(c *gin.Context) {
 		limit = int(i)
 	}
 
-	maxID := ""
-	maxIDString := c.Query(MaxIDKey)
-	if maxIDString != "" {
-		maxID = maxIDString
-	}
-
-	sinceID := ""
-	sinceIDString := c.Query(SinceIDKey)
-	if sinceIDString != "" {
-		sinceID = sinceIDString
-	}
-
-	excludeTypes := c.QueryArray(ExcludeTypesKey)
-
-	resp, errWithCode := m.processor.NotificationsGet(c.Request.Context(), authed, excludeTypes, limit, maxID, sinceID)
+	resp, errWithCode := m.processor.NotificationsGet(
+		c.Request.Context(),
+		authed,
+		c.Query(MaxIDKey),
+		c.Query(SinceIDKey),
+		c.Query(MinIDKey),
+		limit,
+		c.QueryArray(ExcludeTypesKey),
+	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

@@ -4574,6 +4574,18 @@ paths:
                 ````
             operationId: notifications
             parameters:
+                - description: Return only notifications *OLDER* than the given max notification ID. The notification with the specified ID will not be included in the response.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: Return only notifications *newer* than the given since notification ID. The notification with the specified ID will not be included in the response.
+                  in: query
+                  name: since_id
+                  type: string
+                - description: Return only notifications *immediately newer* than the given since notification ID. The notification with the specified ID will not be included in the response.
+                  in: query
+                  name: min_id
+                  type: string
                 - default: 20
                   description: Number of notifications to return.
                   in: query
@@ -4584,16 +4596,6 @@ paths:
                     type: string
                   name: exclude_types
                   type: array
-                - description: Return only notifications *OLDER* than the given max status ID. The status with the specified ID will not be included in the response.
-                  in: query
-                  name: max_id
-                  type: string
-                - description: |-
-                    Return only notifications *NEWER* than the given since status ID.
-                    The status with the specified ID will not be included in the response.
-                  in: query
-                  name: since_id
-                  type: string
             produces:
                 - application/json
             responses:
