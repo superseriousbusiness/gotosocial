@@ -2582,7 +2582,7 @@ paths:
                 See: https://webfinger.net/
             operationId: webfingerGet
             produces:
-                - application/json
+                - application/jrd+json
             responses:
                 "200":
                     description: ""

@@ -20,16 +20,21 @@ package webfinger_test
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/api/wellknown/webfinger"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -38,31 +43,85 @@ type WebfingerGetTestSuite struct {
 	WebfingerStandardTestSuite
 }
 
-func (suite *WebfingerGetTestSuite) TestFingerUser() {
-	targetAccount := suite.testAccounts["local_account_1"]
-
-	// setup request
-	host := config.GetHost()
-	requestPath := fmt.Sprintf("/%s?resource=acct:%s@%s", webfinger.WebfingerBasePath, targetAccount.Username, host)
-
+func (suite *WebfingerGetTestSuite) finger(requestPath string) string {
+	// Set up the request.
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Request = httptest.NewRequest(http.MethodGet, requestPath, nil) // the endpoint we're hitting
-	ctx.Request.Header.Set("accept", "application/json")
+	ctx.Request = httptest.NewRequest(http.MethodGet, requestPath, nil)
+	ctx.Request.Header.Set("accept", "application/jrd+json")
 
-	// trigger the function being tested
+	// Trigger the handler.
 	suite.webfingerModule.WebfingerGETRequest(ctx)
 
-	// check response
-	suite.EqualValues(http.StatusOK, recorder.Code)
-
+	// Read the result + return it
+	// as nicely indented JSON.
 	result := recorder.Result()
 	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-	dst := new(bytes.Buffer)
-	err = json.Indent(dst, b, "", "  ")
-	suite.NoError(err)
+
+	// Result should always use the
+	// webfinger content-type.
+	if ct := result.Header.Get("content-type"); ct != string(apiutil.AppJRDJSON) {
+		suite.FailNow("", "expected content type %s, got %s", apiutil.AppJRDJSON, ct)
+	}
+
+	b, err := io.ReadAll(result.Body)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	var dst bytes.Buffer
+	if err := json.Indent(&dst, b, "", "  "); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	return dst.String()
+}
+
+func (suite *WebfingerGetTestSuite) funkifyAccountDomain(host string, accountDomain string) *gtsmodel.Account {
+	// Reset suite structs + config
+	// to new host + account domain.
+	config.SetHost(host)
+	config.SetAccountDomain(accountDomain)
+	suite.processor = processing.NewProcessor(suite.tc, suite.federator, testrig.NewTestOauthServer(suite.db), testrig.NewTestMediaManager(&suite.state), &suite.state, suite.emailSender)
+	suite.webfingerModule = webfinger.New(suite.processor)
+
+	// Generate a new account for the
+	// tester, which uses the new host.
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		panic(err)
+	}
+	publicKey := &privateKey.PublicKey
+
+	targetAccount := &gtsmodel.Account{
+		ID:                    "01FG1K8EA7SYHEC7V6XKVNC4ZA",
+		Username:              "new_account_domain_user",
+		Privacy:               gtsmodel.VisibilityDefault,
+		URI:                   "http://" + host + "/users/new_account_domain_user",
+		URL:                   "http://" + host + "/@new_account_domain_user",
+		InboxURI:              "http://" + host + "/users/new_account_domain_user/inbox",
+		OutboxURI:             "http://" + host + "/users/new_account_domain_user/outbox",
+		FollowingURI:          "http://" + host + "/users/new_account_domain_user/following",
+		FollowersURI:          "http://" + host + "/users/new_account_domain_user/followers",
+		FeaturedCollectionURI: "http://" + host + "/users/new_account_domain_user/collections/featured",
+		ActorType:             ap.ActorPerson,
+		PrivateKey:            privateKey,
+		PublicKey:             publicKey,
+		PublicKeyURI:          "http://" + host + "/users/new_account_domain_user/main-key",
+	}
+
+	if err := suite.db.PutAccount(context.Background(), targetAccount); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	return targetAccount
+}
+
+func (suite *WebfingerGetTestSuite) TestFingerUser() {
+	targetAccount := suite.testAccounts["local_account_1"]
+	requestPath := fmt.Sprintf("/%s?resource=acct:%s@%s", webfinger.WebfingerBasePath, targetAccount.Username, config.GetHost())
+
+	resp := suite.finger(requestPath)
 	suite.Equal(`{
   "subject": "acct:the_mighty_zork@localhost:8080",
   "aliases": [
@@ -81,144 +140,68 @@ func (suite *WebfingerGetTestSuite) TestFingerUser() {
       "href": "http://localhost:8080/users/the_mighty_zork"
     }
   ]
-}`, dst.String())
+}`, resp)
 }
 
 func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByHost() {
-	config.SetHost("gts.example.org")
-	config.SetAccountDomain("example.org")
+	targetAccount := suite.funkifyAccountDomain("gts.example.org", "example.org")
+	requestPath := fmt.Sprintf("/%s?resource=acct:%s@%s", webfinger.WebfingerBasePath, targetAccount.Username, config.GetHost())
 
-	suite.processor = processing.NewProcessor(suite.tc, suite.federator, testrig.NewTestOauthServer(suite.db), testrig.NewTestMediaManager(&suite.state), &suite.state, suite.emailSender)
-	suite.webfingerModule = webfinger.New(suite.processor)
-
-	targetAccount := accountDomainAccount()
-	if err := suite.db.Put(context.Background(), targetAccount); err != nil {
-		panic(err)
-	}
-
-	// setup request
-	host := config.GetHost()
-	requestPath := fmt.Sprintf("/%s?resource=acct:%s@%s", webfinger.WebfingerBasePath, targetAccount.Username, host)
-
-	recorder := httptest.NewRecorder()
-	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Request = httptest.NewRequest(http.MethodGet, requestPath, nil) // the endpoint we're hitting
-	ctx.Request.Header.Set("accept", "application/json")
-
-	// trigger the function being tested
-	suite.webfingerModule.WebfingerGETRequest(ctx)
-
-	// check response
-	suite.EqualValues(http.StatusOK, recorder.Code)
-
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-	dst := new(bytes.Buffer)
-	err = json.Indent(dst, b, "", "  ")
-	suite.NoError(err)
+	resp := suite.finger(requestPath)
 	suite.Equal(`{
-  "subject": "acct:aaaaa@example.org",
+  "subject": "acct:new_account_domain_user@example.org",
   "aliases": [
-    "http://gts.example.org/users/aaaaa",
-    "http://gts.example.org/@aaaaa"
+    "http://gts.example.org/users/new_account_domain_user",
+    "http://gts.example.org/@new_account_domain_user"
   ],
   "links": [
     {
       "rel": "http://webfinger.net/rel/profile-page",
       "type": "text/html",
-      "href": "http://gts.example.org/@aaaaa"
+      "href": "http://gts.example.org/@new_account_domain_user"
     },
     {
       "rel": "self",
       "type": "application/activity+json",
-      "href": "http://gts.example.org/users/aaaaa"
+      "href": "http://gts.example.org/users/new_account_domain_user"
     }
   ]
-}`, dst.String())
+}`, resp)
 }
 
 func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByAccountDomain() {
-	config.SetHost("gts.example.org")
-	config.SetAccountDomain("example.org")
+	targetAccount := suite.funkifyAccountDomain("gts.example.org", "example.org")
+	requestPath := fmt.Sprintf("/%s?resource=acct:%s@%s", webfinger.WebfingerBasePath, targetAccount.Username, config.GetAccountDomain())
 
-	suite.processor = processing.NewProcessor(suite.tc, suite.federator, testrig.NewTestOauthServer(suite.db), testrig.NewTestMediaManager(&suite.state), &suite.state, suite.emailSender)
-	suite.webfingerModule = webfinger.New(suite.processor)
-
-	targetAccount := accountDomainAccount()
-	if err := suite.db.Put(context.Background(), targetAccount); err != nil {
-		panic(err)
-	}
-
-	// setup request
-	accountDomain := config.GetAccountDomain()
-	requestPath := fmt.Sprintf("/%s?resource=acct:%s@%s", webfinger.WebfingerBasePath, targetAccount.Username, accountDomain)
-
-	recorder := httptest.NewRecorder()
-	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Request = httptest.NewRequest(http.MethodGet, requestPath, nil) // the endpoint we're hitting
-	ctx.Request.Header.Set("accept", "application/json")
-
-	// trigger the function being tested
-	suite.webfingerModule.WebfingerGETRequest(ctx)
-
-	// check response
-	suite.EqualValues(http.StatusOK, recorder.Code)
-
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-	dst := new(bytes.Buffer)
-	err = json.Indent(dst, b, "", "  ")
-	suite.NoError(err)
+	resp := suite.finger(requestPath)
 	suite.Equal(`{
-  "subject": "acct:aaaaa@example.org",
+  "subject": "acct:new_account_domain_user@example.org",
   "aliases": [
-    "http://gts.example.org/users/aaaaa",
-    "http://gts.example.org/@aaaaa"
+    "http://gts.example.org/users/new_account_domain_user",
+    "http://gts.example.org/@new_account_domain_user"
   ],
   "links": [
     {
       "rel": "http://webfinger.net/rel/profile-page",
       "type": "text/html",
-      "href": "http://gts.example.org/@aaaaa"
+      "href": "http://gts.example.org/@new_account_domain_user"
     },
     {
       "rel": "self",
       "type": "application/activity+json",
-      "href": "http://gts.example.org/users/aaaaa"
+      "href": "http://gts.example.org/users/new_account_domain_user"
     }
   ]
-}`, dst.String())
+}`, resp)
 }
 
 func (suite *WebfingerGetTestSuite) TestFingerUserWithoutAcct() {
+	// Leave out the 'acct:' part in the request path;
+	// the handler should be generous + still work OK.
 	targetAccount := suite.testAccounts["local_account_1"]
+	requestPath := fmt.Sprintf("/%s?resource=%s@%s", webfinger.WebfingerBasePath, targetAccount.Username, config.GetHost())
 
-	// setup request -- leave out the 'acct:' prefix, which is prettymuch what pixelfed currently does
-	host := config.GetHost()
-	requestPath := fmt.Sprintf("/%s?resource=%s@%s", webfinger.WebfingerBasePath, targetAccount.Username, host)
-
-	recorder := httptest.NewRecorder()
-	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Request = httptest.NewRequest(http.MethodGet, requestPath, nil) // the endpoint we're hitting
-	ctx.Request.Header.Set("accept", "application/json")
-
-	// trigger the function being tested
-	suite.webfingerModule.WebfingerGETRequest(ctx)
-
-	// check response
-	suite.EqualValues(http.StatusOK, recorder.Code)
-
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-	dst := new(bytes.Buffer)
-	err = json.Indent(dst, b, "", "  ")
-	suite.NoError(err)
+	resp := suite.finger(requestPath)
 	suite.Equal(`{
   "subject": "acct:the_mighty_zork@localhost:8080",
   "aliases": [
@@ -237,7 +220,7 @@ func (suite *WebfingerGetTestSuite) TestFingerUserWithoutAcct() {
       "href": "http://localhost:8080/users/the_mighty_zork"
     }
   ]
-}`, dst.String())
+}`, resp)
 }
 
 func TestWebfingerGetTestSuite(t *testing.T) {

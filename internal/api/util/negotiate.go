@@ -35,6 +35,15 @@ var JSONAcceptHeaders = []MIME{
 	AppJSON,
 }
 
+// WebfingerJSONAcceptHeaders is a slice of offers that prefers the
+// jrd+json content type, but will be chill and fall back to app/json.
+// This is to be used specifically for webfinger responses.
+// See https://www.rfc-editor.org/rfc/rfc7033#section-10.2
+var WebfingerJSONAcceptHeaders = []MIME{
+	AppJRDJSON,
+	AppJSON,
+}
+
 // HTMLOrJSONAcceptHeaders is a slice of offers that prefers TextHTML and will
 // fall back to JSON if necessary. This is useful for error handling, since it can
 // be used to serve a nice HTML page if the caller accepts that, or just JSON if not.

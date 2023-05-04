@@ -59,8 +59,10 @@ func prepWebfingerReq(ctx context.Context, loc, domain, username string) (*http.
 	value := url.QueryEscape("acct:" + username + "@" + domain)
 	req.URL.RawQuery = "resource=" + value
 
+	// Prefer application/jrd+json, fall back to application/json.
+	// See https://www.rfc-editor.org/rfc/rfc7033#section-10.2.
+	req.Header.Add("Accept", string(apiutil.AppJRDJSON))
 	req.Header.Add("Accept", string(apiutil.AppJSON))
-	req.Header.Add("Accept", "application/jrd+json")
 	req.Header.Set("Host", req.URL.Host)
 
 	return req, nil
