@@ -18,6 +18,7 @@
 package webfinger
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -48,14 +49,14 @@ import (
 //	- .well-known
 //
 //	produces:
-//	- application/json
+//	- application/jrd+json
 //
 //	responses:
 //		'200':
 //			schema:
 //				"$ref": "#/definitions/wellKnownResponse"
 func (m *Module) WebfingerGETRequest(c *gin.Context) {
-	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
+	if _, err := apiutil.NegotiateAccept(c, apiutil.WebfingerJSONAcceptHeaders...); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
@@ -86,5 +87,13 @@ func (m *Module) WebfingerGETRequest(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	b, err := json.Marshal(resp)
+	if err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
+		return
+	}
+
+	// Always return "application/jrd+json" regardless of negotiated
+	// format. See https://www.rfc-editor.org/rfc/rfc7033#section-10.2
+	c.Data(http.StatusOK, string(apiutil.AppJRDJSON), b)
 }
