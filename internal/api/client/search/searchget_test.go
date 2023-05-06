@@ -142,6 +142,30 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringNoResolve() 
 	suite.Len(searchResult.Accounts, 0)
 }
 
+func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringSpecialChars() {
+	query := "@üser@ëxample.org"
+	resolve := false
+
+	searchResult, err := suite.testSearch(query, resolve, http.StatusOK)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(searchResult.Accounts, 1)
+}
+
+func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringSpecialCharsPunycode() {
+	query := "@üser@xn--xample-ova.org"
+	resolve := false
+
+	searchResult, err := suite.testSearch(query, resolve, http.StatusOK)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(searchResult.Accounts, 1)
+}
+
 func (suite *SearchGetTestSuite) TestSearchLocalAccountByNamestring() {
 	query := "@the_mighty_zork"
 	resolve := false

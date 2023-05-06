@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
 )
@@ -82,6 +83,15 @@ func (a *accountDB) GetAccountByURL(ctx context.Context, url string) (*gtsmodel.
 }
 
 func (a *accountDB) GetAccountByUsernameDomain(ctx context.Context, username string, domain string) (*gtsmodel.Account, db.Error) {
+	if domain != "" {
+		// Normalize the domain as punycode
+		var err error
+		domain, err = util.Punify(domain)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return a.getAccount(
 		ctx,
 		"Username.Domain",

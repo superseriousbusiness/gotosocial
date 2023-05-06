@@ -20,14 +20,13 @@ package bundb
 import (
 	"context"
 	"net/url"
-	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/uptrace/bun"
-	"golang.org/x/net/idna"
 )
 
 type domainDB struct {
@@ -35,22 +34,10 @@ type domainDB struct {
 	state *state.State
 }
 
-// normalizeDomain converts the given domain to lowercase
-// then to punycode (for international domain names).
-//
-// Returns the resulting domain or an error if the
-// punycode conversion fails.
-func normalizeDomain(domain string) (out string, err error) {
-	out = strings.ToLower(domain)
-	out, err = idna.ToASCII(out)
-	return out, err
-}
-
 func (d *domainDB) CreateDomainBlock(ctx context.Context, block *gtsmodel.DomainBlock) db.Error {
-	var err error
-
 	// Normalize the domain as punycode
-	block.Domain, err = normalizeDomain(block.Domain)
+	var err error
+	block.Domain, err = util.Punify(block.Domain)
 	if err != nil {
 		return err
 	}
@@ -69,10 +56,8 @@ func (d *domainDB) CreateDomainBlock(ctx context.Context, block *gtsmodel.Domain
 }
 
 func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel.DomainBlock, db.Error) {
-	var err error
-
 	// Normalize the domain as punycode
-	domain, err = normalizeDomain(domain)
+	domain, err := util.Punify(domain)
 	if err != nil {
 		return nil, err
 	}
@@ -98,9 +83,8 @@ func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel
 }
 
 func (d *domainDB) DeleteDomainBlock(ctx context.Context, domain string) db.Error {
-	var err error
-
-	domain, err = normalizeDomain(domain)
+	// Normalize the domain as punycode
+	domain, err := util.Punify(domain)
 	if err != nil {
 		return err
 	}
@@ -121,7 +105,7 @@ func (d *domainDB) DeleteDomainBlock(ctx context.Context, domain string) db.Erro
 
 func (d *domainDB) IsDomainBlocked(ctx context.Context, domain string) (bool, db.Error) {
 	// Normalize the domain as punycode
-	domain, err := normalizeDomain(domain)
+	domain, err := util.Punify(domain)
 	if err != nil {
 		return false, err
 	}
