@@ -4651,6 +4651,47 @@ paths:
             summary: Clear/delete all notifications for currently authorized user.
             tags:
                 - notifications
+    /api/v1/preferences:
+        get:
+            description: |-
+                Example:
+
+                ```
+
+                {
+                "posting:default:visibility": "public",
+                "posting:default:sensitive": false,
+                "posting:default:language": "en",
+                "reading:expand:media": "default",
+                "reading:expand:spoilers": false,
+                "reading:autoplay:gifs": false
+                }
+
+                ````
+            operationId: preferencesGet
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    schema:
+                        type: object
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:accounts
+            summary: Return an object of user preferences.
+            tags:
+                - preferences
     /api/v1/reports:
         get:
             description: |-
