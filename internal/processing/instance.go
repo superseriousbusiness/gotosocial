@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
@@ -79,8 +80,15 @@ func (p *Processor) InstancePeersGet(ctx context.Context, includeSuspended bool,
 		}
 
 		for _, i := range instances {
-			domain := &apimodel.Domain{Domain: i.Domain}
-			domains = append(domains, domain)
+			// Domain may be in Punycode,
+			// de-punify it just in case.
+			d, err := util.DePunify(i.Domain)
+			if err != nil {
+				log.Errorf(ctx, "couldn't depunify domain %s: %s", i.Domain, err)
+				continue
+			}
+
+			domains = append(domains, &apimodel.Domain{Domain: d})
 		}
 	}
 
@@ -90,17 +98,25 @@ func (p *Processor) InstancePeersGet(ctx context.Context, includeSuspended bool,
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 
-		for _, d := range domainBlocks {
-			if *d.Obfuscate {
-				d.Domain = obfuscate(d.Domain)
+		for _, domainBlock := range domainBlocks {
+			// Domain may be in Punycode,
+			// de-punify it just in case.
+			d, err := util.DePunify(domainBlock.Domain)
+			if err != nil {
+				log.Errorf(ctx, "couldn't depunify domain %s: %s", domainBlock.Domain, err)
+				continue
 			}
 
-			domain := &apimodel.Domain{
-				Domain:        d.Domain,
-				SuspendedAt:   util.FormatISO8601(d.CreatedAt),
-				PublicComment: d.PublicComment,
+			if *domainBlock.Obfuscate {
+				// Obfuscate the de-punified version.
+				d = obfuscate(d)
 			}
-			domains = append(domains, domain)
+
+			domains = append(domains, &apimodel.Domain{
+				Domain:        d,
+				SuspendedAt:   util.FormatISO8601(domainBlock.CreatedAt),
+				PublicComment: domainBlock.PublicComment,
+			})
 		}
 	}
 
