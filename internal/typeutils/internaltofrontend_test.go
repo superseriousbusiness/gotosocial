@@ -70,10 +70,12 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontend() {
 }
 
 func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiStruct() {
-	testAccount := suite.testAccounts["local_account_1"] // take zork for this test
+	testAccount := &gtsmodel.Account{}
+	*testAccount = *suite.testAccounts["local_account_1"] // take zork for this test
 	testEmoji := suite.testEmojis["rainbow"]
 
 	testAccount.Emojis = []*gtsmodel.Emoji{testEmoji}
+	testAccount.EmojiIDs = []string{testEmoji.ID}
 
 	apiAccount, err := suite.typeconverter.AccountToAPIAccountPublic(context.Background(), testAccount)
 	suite.NoError(err)
