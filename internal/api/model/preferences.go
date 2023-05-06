@@ -36,4 +36,6 @@ type Preferences struct {
 	ReadingExpandMedia string `json:"reading:expand:media"`
 	// Whether CWs should be expanded by default.
 	ReadingExpandSpoilers bool `json:"reading:expand:spoilers"`
+	// Whether gifs should automatically play.
+	ReadingAutoPlayGifs bool `json:"reading:autoplay:gifs"`
 }
