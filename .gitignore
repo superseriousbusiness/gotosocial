@@ -36,3 +36,6 @@ shell.nix
 # ignore config dirs from IDEs
 /.idea/
 /.fleet/
+
+# ignore cache dir from mkdocs serve
+/.cache
