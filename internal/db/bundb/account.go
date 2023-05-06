@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -230,7 +231,10 @@ func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(
 }
 
 func (a *accountDB) PopulateAccount(ctx context.Context, account *gtsmodel.Account) error {
-	var err error
+	var (
+		err  error
+		errs = make(gtserror.MultiError, 0, 3)
+	)
 
 	if account.AvatarMediaAttachment == nil && account.AvatarMediaAttachmentID != "" {
 		// Account avatar attachment is not set, fetch from database.
@@ -239,7 +243,7 @@ func (a *accountDB) PopulateAccount(ctx context.Context, account *gtsmodel.Accou
 			account.AvatarMediaAttachmentID,
 		)
 		if err != nil {
-			return fmt.Errorf("error populating account avatar: %w", err)
+			errs.Append(fmt.Errorf("error populating account avatar: %w", err))
 		}
 	}
 
@@ -250,7 +254,7 @@ func (a *accountDB) PopulateAccount(ctx context.Context, account *gtsmodel.Accou
 			account.HeaderMediaAttachmentID,
 		)
 		if err != nil {
-			return fmt.Errorf("error populating account header: %w", err)
+			errs.Append(fmt.Errorf("error populating account header: %w", err))
 		}
 	}
 
@@ -261,11 +265,11 @@ func (a *accountDB) PopulateAccount(ctx context.Context, account *gtsmodel.Accou
 			account.EmojiIDs,
 		)
 		if err != nil {
-			return fmt.Errorf("error populating account emojis: %w", err)
+			errs.Append(fmt.Errorf("error populating account emojis: %w", err))
 		}
 	}
 
-	return nil
+	return errs.Combine()
 }
 
 func (a *accountDB) PutAccount(ctx context.Context, account *gtsmodel.Account) db.Error {
