@@ -6,8 +6,7 @@
 version: 2
 
 mkdocs:
-  configuration: mkdocs.yml
+  configuration: "mkdocs.yml"
 
-python:
-   install:
-   - requirements: docs/requirements.txt
+conda:
+  environment: "docs/environment.yml"
