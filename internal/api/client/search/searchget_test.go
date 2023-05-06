@@ -151,7 +151,10 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringSpecialChars
 		suite.FailNow(err.Error())
 	}
 
-	suite.Len(searchResult.Accounts, 1)
+	if l := len(searchResult.Accounts); l != 1 {
+		suite.FailNow("", "expected %d accounts, got %d", 1, l)
+	}
+	suite.Equal("üser@ëxample.org", searchResult.Accounts[0].Acct)
 }
 
 func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringSpecialCharsPunycode() {
@@ -163,7 +166,10 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringSpecialChars
 		suite.FailNow(err.Error())
 	}
 
-	suite.Len(searchResult.Accounts, 1)
+	if l := len(searchResult.Accounts); l != 1 {
+		suite.FailNow("", "expected %d accounts, got %d", 1, l)
+	}
+	suite.Equal("üser@ëxample.org", searchResult.Accounts[0].Acct)
 }
 
 func (suite *SearchGetTestSuite) TestSearchLocalAccountByNamestring() {
