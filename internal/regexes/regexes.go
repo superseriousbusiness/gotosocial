@@ -39,20 +39,19 @@ const (
 	blocks    = "blocks"
 	reports   = "reports"
 
-	schemes                  = `(http|https)://`                                                  // Allowed URI protocols for parsing links in text.
-	scriptChar               = `\p{L}\p{M}`                                                       // A single script character in any language, including chars with accents. Use inside `[]`.
-	usernameChar             = scriptChar + `0-9`                                                 // Same as scriptChar, but adds numbers. Use inside `[]`.
-	usernameCharExt          = usernameChar + `\_\-\.`                                            // Same as usernameChar, but allows underscore, hyphen, and period. Use inside `[]`.
-	domainChar               = usernameChar + `\-\.\:`                                            // Same as usernameChar, but allows hyphen, period, and colon. Use inside `[]`.
-	mentionName              = `^@([` + usernameCharExt + `]+)(?:@([` + domainChar + `]+))?$`     // Extract parts of one mention.
-	mentionFinder            = `(?:^|\s)(@[` + usernameCharExt + `]+(?:@[` + domainChar + `]+)?)` // Extract all mentions from a text.
-	emojiShortcode           = `\w{2,30}`                                                         // Pattern for emoji shortcodes. maximumEmojiShortcodeLength = 30
-	emojiFinder              = `(?:\b)?:(` + emojiShortcode + `):(?:\b)?`                         // Extract all emoji shortcodes from a text.
-	usernameStrict           = `^[a-z0-9_]{2,64}$`                                                // Pattern for usernames on THIS instance. maximumUsernameLength = 64
-	usernameRelaxed          = `[a-z0-9_\.]{2,}`                                                  // Relaxed version of username that can match instance accounts too.
-	misskeyReportNotesFinder = `(?m)(?:^Note: ((?:http|https):\/\/.*)$)`                          // Extract reported Note URIs from the text of a Misskey report/flag.
-	ulid                     = `[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}`                           // Pattern for ULID.
-	ulidValidate             = `^` + ulid + `$`                                                   // Validate one ULID.
+	schemes                  = `(http|https)://`                                         // Allowed URI protocols for parsing links in text.
+	alphaNumeric             = `\p{L}\p{M}*|[0-9]`                                       // A single number or script character in any language, including chars with accents.
+	usernameGrp              = `(?:` + alphaNumeric + `|\.|\-|\_)`                       // Non-capturing group that matches against a single valid username character.
+	domainGrp                = `(?:` + alphaNumeric + `|\.|\-|\:)`                       // Non-capturing group that matches against a single valid domain character.
+	mentionName              = `^@(` + usernameGrp + `+)(?:@(` + domainGrp + `+))?$`     // Extract parts of one mention, maybe including domain.
+	mentionFinder            = `(?:^|\s)(@` + usernameGrp + `+(?:@` + domainGrp + `+)?)` // Extract all mentions from a text, each mention may include domain.
+	emojiShortcode           = `\w{2,30}`                                                // Pattern for emoji shortcodes. maximumEmojiShortcodeLength = 30
+	emojiFinder              = `(?:\b)?:(` + emojiShortcode + `):(?:\b)?`                // Extract all emoji shortcodes from a text.
+	usernameStrict           = `^[a-z0-9_]{2,64}$`                                       // Pattern for usernames on THIS instance. maximumUsernameLength = 64
+	usernameRelaxed          = `[a-z0-9_\.]{2,}`                                         // Relaxed version of username that can match instance accounts too.
+	misskeyReportNotesFinder = `(?m)(?:^Note: ((?:http|https):\/\/.*)$)`                 // Extract reported Note URIs from the text of a Misskey report/flag.
+	ulid                     = `[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}`                  // Pattern for ULID.
+	ulidValidate             = `^` + ulid + `$`                                          // Validate one ULID.
 
 	/*
 		Path parts / capture.
@@ -88,11 +87,10 @@ var (
 	// a mention string such as @whatever_user@example.org,
 	// returning whatever_user and example.org (without the @ symbols).
 	// Will also work for characters with umlauts and other accents.
-	// See: https://regex101.com/r/Xlnom3/2
+	// See: https://regex101.com/r/9tjNUy/1 for explanation and examples.
 	MentionName = regexp.MustCompile(mentionName)
 
 	// MentionFinder extracts whole mentions from a piece of text.
-	// See: https://regex101.com/r/P0vpYG/2
 	MentionFinder = regexp.MustCompile(mentionFinder)
 
 	// EmojiShortcode validates an emoji name.
