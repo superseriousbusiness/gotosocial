@@ -3630,31 +3630,6 @@ func GetAdminMediaPruneDryRun() bool { return global.GetAdminMediaPruneDryRun() 
 // SetAdminMediaPruneDryRun safely sets the value for global configuration 'AdminMediaPruneDryRun' field
 func SetAdminMediaPruneDryRun(v bool) { global.SetAdminMediaPruneDryRun(v) }
 
-// GetRequestIDEnabled safely fetches the Configuration value for state's 'RequestIDEnabled' field
-func (st *ConfigState) GetRequestIDEnabled() (v bool) {
-	st.mutex.Lock()
-	v = st.config.RequestIDEnabled
-	st.mutex.Unlock()
-	return
-}
-
-// SetRequestIDEnabled safely sets the Configuration value for state's 'RequestIDEnabled' field
-func (st *ConfigState) SetRequestIDEnabled(v bool) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.RequestIDEnabled = v
-	st.reloadToViper()
-}
-
-// RequestIDEnabledFlag returns the flag name for the 'RequestIDEnabled' field
-func RequestIDEnabledFlag() string { return "request-id-enabled" }
-
-// GetRequestIDEnabled safely fetches the value for global configuration 'RequestIDEnabled' field
-func GetRequestIDEnabled() bool { return global.GetRequestIDEnabled() }
-
-// SetRequestIDEnabled safely sets the value for global configuration 'RequestIDEnabled' field
-func SetRequestIDEnabled(v bool) { global.SetRequestIDEnabled(v) }
-
 // GetRequestIDHeader safely fetches the Configuration value for state's 'RequestIDHeader' field
 func (st *ConfigState) GetRequestIDHeader() (v string) {
 	st.mutex.Lock()

@@ -153,9 +153,8 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating router: %s", err)
 	}
 
-	middlewares := []gin.HandlerFunc{}
-	if config.GetRequestIDEnabled() {
-		middlewares = append(middlewares, middleware.AddRequestID(config.GetRequestIDHeader()))
+	middlewares := []gin.HandlerFunc{
+		middleware.AddRequestID(config.GetRequestIDHeader()), // requestID middleware must run before tracing
 	}
 	if config.GetTracingEnabled() {
 		middlewares = append(middlewares, tracing.InstrumentGin())

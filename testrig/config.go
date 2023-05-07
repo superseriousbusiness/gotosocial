@@ -118,8 +118,6 @@ var testDefaults = config.Configuration{
 	TracingTransport:         "grpc",
 	TracingInsecureTransport: true,
 
-	RequestIDEnabled: true,
-
 	SyslogEnabled:  false,
 	SyslogProtocol: "udp",
 	SyslogAddress:  "localhost:514",

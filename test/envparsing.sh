@@ -124,7 +124,6 @@ EXPECT=$(cat <<"EOF"
     "path": "",
     "port": 6969,
     "protocol": "http",
-    "request-id-enabled": true,
     "request-id-header": "X-Trace-Id",
     "smtp-disclose-recipients": true,
     "smtp-from": "queen.rip.in.piss@terfisland.org",

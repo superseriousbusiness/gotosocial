@@ -157,8 +157,7 @@ type Configuration struct {
 	AdminTransPath        string `name:"path" usage:"the path of the file to import from/export to"`
 	AdminMediaPruneDryRun bool   `name:"dry-run" usage:"perform a dry run and only log number of items eligible for pruning"`
 
-	RequestIDEnabled bool   `name:"request-id-enabled" usage:"Enable the usage of a request id header which can be passed by external proxies."`
-	RequestIDHeader  string `name:"request-id-header" usage:"Header to extract the Request ID from. Eg.,'X-Request-Id'."`
+	RequestIDHeader string `name:"request-id-header" usage:"Header to extract the Request ID from. Eg.,'X-Request-Id'."`
 }
 
 type CacheConfiguration struct {
