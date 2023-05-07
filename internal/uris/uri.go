@@ -193,11 +193,6 @@ func IsOutboxPath(id *url.URL) bool {
 	return regexes.OutboxPath.MatchString(id.Path)
 }
 
-// IsInstanceActorPath returns true if the given URL path corresponds to eg /actors/example_username
-func IsInstanceActorPath(id *url.URL) bool {
-	return regexes.ActorPath.MatchString(id.Path)
-}
-
 // IsFollowersPath returns true if the given URL path corresponds to eg /users/example_username/followers
 func IsFollowersPath(id *url.URL) bool {
 	return regexes.FollowersPath.MatchString(id.Path)

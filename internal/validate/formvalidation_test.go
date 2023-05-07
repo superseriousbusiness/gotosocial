@@ -95,44 +95,28 @@ func (suite *ValidationTestSuite) TestValidateUsername() {
 	var err error
 
 	err = validate.Username(empty)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("no username provided"), err)
-	}
+	suite.EqualError(err, "no username provided")
 
 	err = validate.Username(tooLong)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", tooLong), err)
-	}
+	suite.EqualError(err, fmt.Sprintf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", tooLong))
 
 	err = validate.Username(withSpaces)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", withSpaces), err)
-	}
+	suite.EqualError(err, fmt.Sprintf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", withSpaces))
 
 	err = validate.Username(weirdChars)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", weirdChars), err)
-	}
+	suite.EqualError(err, fmt.Sprintf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", weirdChars))
 
 	err = validate.Username(leadingSpace)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", leadingSpace), err)
-	}
+	suite.EqualError(err, fmt.Sprintf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", leadingSpace))
 
 	err = validate.Username(trailingSpace)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", trailingSpace), err)
-	}
+	suite.EqualError(err, fmt.Sprintf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", trailingSpace))
 
 	err = validate.Username(newlines)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", newlines), err)
-	}
+	suite.EqualError(err, fmt.Sprintf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", newlines))
 
 	err = validate.Username(goodUsername)
-	if assert.NoError(suite.T(), err) {
-		assert.Equal(suite.T(), nil, err)
-	}
+	suite.NoError(err)
 }
 
 func (suite *ValidationTestSuite) TestValidateEmail() {

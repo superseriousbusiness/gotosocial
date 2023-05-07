@@ -19,6 +19,7 @@ package typeutils
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -26,6 +27,7 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -83,87 +85,99 @@ func (c *converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 }
 
 func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
-	// count followers
+	if err := c.db.PopulateAccount(ctx, a); err != nil {
+		log.Errorf(ctx, "error(s) populating account, will continue: %s", err)
+	}
+
+	// Basic account stats:
+	//   - Followers count
+	//   - Following count
+	//   - Statuses count
+	//   - Last status time
+
 	followersCount, err := c.db.CountAccountFollowers(ctx, a.ID)
-	if err != nil {
-		return nil, fmt.Errorf("error counting followers: %s", err)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, fmt.Errorf("AccountToAPIAccountPublic: error counting followers: %w", err)
 	}
 
-	// count following
 	followingCount, err := c.db.CountAccountFollows(ctx, a.ID)
-	if err != nil {
-		return nil, fmt.Errorf("error counting following: %s", err)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, fmt.Errorf("AccountToAPIAccountPublic: error counting following: %w", err)
 	}
 
-	// count statuses
 	statusesCount, err := c.db.CountAccountStatuses(ctx, a.ID)
-	if err != nil {
-		return nil, fmt.Errorf("error counting statuses: %s", err)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, fmt.Errorf("AccountToAPIAccountPublic: error counting statuses: %w", err)
 	}
 
-	// check when the last status was
 	var lastStatusAt *string
 	lastPosted, err := c.db.GetAccountLastPosted(ctx, a.ID, false)
-	if err == nil && !lastPosted.IsZero() {
-		lastStatusAtTemp := util.FormatISO8601(lastPosted)
-		lastStatusAt = &lastStatusAtTemp
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, fmt.Errorf("AccountToAPIAccountPublic: error counting statuses: %w", err)
 	}
 
-	// set account avatar fields if available
-	var aviURL string
-	var aviURLStatic string
-	if a.AvatarMediaAttachmentID != "" {
-		if a.AvatarMediaAttachment == nil {
-			avi, err := c.db.GetAttachmentByID(ctx, a.AvatarMediaAttachmentID)
-			if err != nil {
-				log.Errorf(ctx, "error getting Avatar with id %s: %s", a.AvatarMediaAttachmentID, err)
-			}
-			a.AvatarMediaAttachment = avi
-		}
-		if a.AvatarMediaAttachment != nil {
-			aviURL = a.AvatarMediaAttachment.URL
-			aviURLStatic = a.AvatarMediaAttachment.Thumbnail.URL
-		}
+	if !lastPosted.IsZero() {
+		lastStatusAt = func() *string { t := util.FormatISO8601(lastPosted); return &t }()
 	}
 
-	// set account header fields if available
-	var headerURL string
-	var headerURLStatic string
-	if a.HeaderMediaAttachmentID != "" {
-		if a.HeaderMediaAttachment == nil {
-			avi, err := c.db.GetAttachmentByID(ctx, a.HeaderMediaAttachmentID)
-			if err != nil {
-				log.Errorf(ctx, "error getting Header with id %s: %s", a.HeaderMediaAttachmentID, err)
-			}
-			a.HeaderMediaAttachment = avi
-		}
-		if a.HeaderMediaAttachment != nil {
-			headerURL = a.HeaderMediaAttachment.URL
-			headerURLStatic = a.HeaderMediaAttachment.Thumbnail.URL
-		}
+	// Profile media + nice extras:
+	//   - Avatar
+	//   - Header
+	//   - Fields
+	//   - Emojis
+
+	var (
+		aviURL          string
+		aviURLStatic    string
+		headerURL       string
+		headerURLStatic string
+		fields          = make([]apimodel.Field, len(a.Fields))
+	)
+
+	if a.AvatarMediaAttachment != nil {
+		aviURL = a.AvatarMediaAttachment.URL
+		aviURLStatic = a.AvatarMediaAttachment.Thumbnail.URL
+	}
+
+	if a.HeaderMediaAttachment != nil {
+		headerURL = a.HeaderMediaAttachment.URL
+		headerURLStatic = a.HeaderMediaAttachment.Thumbnail.URL
 	}
 
 	// convert account gts model fields to front api model fields
 	fields := c.fieldsToAPIFields(a.Fields)
 
-	// convert account gts model emojis to frontend api model emojis
+	// GTS model emojis -> frontend.
 	apiEmojis, err := c.convertEmojisToAPIEmojis(ctx, a.Emojis, a.EmojiIDs)
 	if err != nil {
 		log.Errorf(ctx, "error converting account emojis: %v", err)
 	}
 
-	var acct string
-	var role *apimodel.AccountRole
+	// Bits that vary between remote + local accounts:
+	//   - Account (acct) string.
+	//   - Role.
 
-	if a.Domain != "" {
-		// this is a remote user
-		acct = a.Username + "@" + a.Domain
+	var (
+		acct string
+		role *apimodel.AccountRole
+	)
+
+	if a.IsRemote() {
+		// Domain may be in Punycode,
+		// de-punify it just in case.
+		d, err := util.DePunify(a.Domain)
+		if err != nil {
+			return nil, fmt.Errorf("AccountToAPIAccountPublic: error de-punifying domain %s for account id %s: %w", a.Domain, a.ID, err)
+		}
+
+		acct = a.Username + "@" + d
 	} else {
-		// this is a local user
+		// This is a local user.
 		acct = a.Username
+
 		user, err := c.db.GetUserByAccountID(ctx, a.ID)
 		if err != nil {
-			return nil, fmt.Errorf("AccountToAPIAccountPublic: error getting user from database for account id %s: %s", a.ID, err)
+			return nil, fmt.Errorf("AccountToAPIAccountPublic: error getting user from database for account id %s: %w", a.ID, err)
 		}
 
 		switch {
@@ -176,10 +190,8 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		}
 	}
 
-	var suspended bool
-	if !a.SuspendedAt.IsZero() {
-		suspended = true
-	}
+	// Remaining properties are simple and
+	// can be populated directly below.
 
 	accountFrontend := &apimodel.Account{
 		ID:             a.ID,
@@ -202,12 +214,14 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		LastStatusAt:   lastStatusAt,
 		Emojis:         apiEmojis,
 		Fields:         fields,
-		Suspended:      suspended,
+		Suspended:      !a.SuspendedAt.IsZero(),
 		CustomCSS:      a.CustomCSS,
 		EnableRSS:      *a.EnableRSS,
 		Role:           role,
 	}
 
+	// Bodge default avatar + header in,
+	// if we didn't have one already.
 	c.ensureAvatar(accountFrontend)
 	c.ensureHeader(accountFrontend)
 
@@ -234,18 +248,37 @@ func (c *converter) fieldsToAPIFields(f []gtsmodel.Field) []apimodel.Field {
 }
 
 func (c *converter) AccountToAPIAccountBlocked(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
-	var acct string
-	if a.Domain != "" {
-		// this is a remote user
-		acct = fmt.Sprintf("%s@%s", a.Username, a.Domain)
-	} else {
-		// this is a local user
-		acct = a.Username
-	}
+	var (
+		acct string
+		role *apimodel.AccountRole
+	)
 
-	var suspended bool
-	if !a.SuspendedAt.IsZero() {
-		suspended = true
+	if a.IsRemote() {
+		// Domain may be in Punycode,
+		// de-punify it just in case.
+		d, err := util.DePunify(a.Domain)
+		if err != nil {
+			return nil, fmt.Errorf("AccountToAPIAccountPublic: error de-punifying domain %s for account id %s: %w", a.Domain, a.ID, err)
+		}
+
+		acct = a.Username + "@" + d
+	} else {
+		// This is a local user.
+		acct = a.Username
+
+		user, err := c.db.GetUserByAccountID(ctx, a.ID)
+		if err != nil {
+			return nil, fmt.Errorf("AccountToAPIAccountPublic: error getting user from database for account id %s: %s", a.ID, err)
+		}
+
+		switch {
+		case *user.Admin:
+			role = &apimodel.AccountRole{Name: apimodel.AccountRoleAdmin}
+		case *user.Moderator:
+			role = &apimodel.AccountRole{Name: apimodel.AccountRoleModerator}
+		default:
+			role = &apimodel.AccountRole{Name: apimodel.AccountRoleUser}
+		}
 	}
 
 	return &apimodel.Account{
@@ -256,7 +289,8 @@ func (c *converter) AccountToAPIAccountBlocked(ctx context.Context, a *gtsmodel.
 		Bot:         *a.Bot,
 		CreatedAt:   util.FormatISO8601(a.CreatedAt),
 		URL:         a.URL,
-		Suspended:   suspended,
+		Suspended:   !a.SuspendedAt.IsZero(),
+		Role:        role,
 	}, nil
 }
 
@@ -270,15 +304,20 @@ func (c *converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 		inviteRequest          *string
 		approved               bool
 		disabled               bool
-		silenced               bool
-		suspended              bool
 		role                   = apimodel.AccountRole{Name: apimodel.AccountRoleUser} // assume user by default
 		createdByApplicationID string
 	)
 
 	// take user-level information if possible
 	if a.IsRemote() {
-		domain = &a.Domain
+		// Domain may be in Punycode,
+		// de-punify it just in case.
+		d, err := util.DePunify(a.Domain)
+		if err != nil {
+			return nil, fmt.Errorf("AccountToAdminAPIAccount: error de-punifying domain %s for account id %s: %w", a.Domain, a.ID, err)
+		}
+
+		domain = &d
 	} else {
 		user, err := c.db.GetUserByAccountID(ctx, a.ID)
 		if err != nil {
@@ -310,9 +349,6 @@ func (c *converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 		createdByApplicationID = user.CreatedByApplicationID
 	}
 
-	silenced = !a.SilencedAt.IsZero()
-	suspended = !a.SuspendedAt.IsZero()
-
 	apiAccount, err := c.AccountToAPIAccountPublic(ctx, a)
 	if err != nil {
 		return nil, fmt.Errorf("AccountToAdminAPIAccount: error converting account to api account for account id %s: %w", a.ID, err)
@@ -332,8 +368,8 @@ func (c *converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 		Confirmed:              confirmed,
 		Approved:               approved,
 		Disabled:               disabled,
-		Silenced:               silenced,
-		Suspended:              suspended,
+		Silenced:               !a.SilencedAt.IsZero(),
+		Suspended:              !a.SuspendedAt.IsZero(),
 		Account:                apiAccount,
 		CreatedByApplicationID: createdByApplicationID,
 		InvitedByAccountID:     "", // not implemented (yet)
@@ -435,16 +471,19 @@ func (c *converter) MentionToAPIMention(ctx context.Context, m *gtsmodel.Mention
 		m.TargetAccount = targetAccount
 	}
 
-	var local bool
-	if m.TargetAccount.Domain == "" {
-		local = true
-	}
-
 	var acct string
-	if local {
+	if m.TargetAccount.IsLocal() {
 		acct = m.TargetAccount.Username
 	} else {
-		acct = fmt.Sprintf("%s@%s", m.TargetAccount.Username, m.TargetAccount.Domain)
+		// Domain may be in Punycode,
+		// de-punify it just in case.
+		d, err := util.DePunify(m.TargetAccount.Domain)
+		if err != nil {
+			err = fmt.Errorf("MentionToAPIMention: error de-punifying domain %s for account id %s: %w", m.TargetAccount.Domain, m.TargetAccountID, err)
+			return apimodel.Mention{}, err
+		}
+
+		acct = m.TargetAccount.Username + "@" + d
 	}
 
 	return apimodel.Mention{
@@ -481,6 +520,17 @@ func (c *converter) EmojiToAdminAPIEmoji(ctx context.Context, e *gtsmodel.Emoji)
 	emoji, err := c.EmojiToAPIEmoji(ctx, e)
 	if err != nil {
 		return nil, err
+	}
+
+	if e.Domain != "" {
+		// Domain may be in Punycode,
+		// de-punify it just in case.
+		var err error
+		e.Domain, err = util.DePunify(e.Domain)
+		if err != nil {
+			err = fmt.Errorf("EmojiToAdminAPIEmoji: error de-punifying domain %s for emoji id %s: %w", e.Domain, e.ID, err)
+			return nil, err
+		}
 	}
 
 	return &apimodel.AdminEmoji{
@@ -949,9 +999,16 @@ func (c *converter) NotificationToAPINotification(ctx context.Context, n *gtsmod
 }
 
 func (c *converter) DomainBlockToAPIDomainBlock(ctx context.Context, b *gtsmodel.DomainBlock, export bool) (*apimodel.DomainBlock, error) {
+	// Domain may be in Punycode,
+	// de-punify it just in case.
+	d, err := util.DePunify(b.Domain)
+	if err != nil {
+		return nil, fmt.Errorf("DomainBlockToAPIDomainBlock: error de-punifying domain %s: %w", b.Domain, err)
+	}
+
 	domainBlock := &apimodel.DomainBlock{
 		Domain: apimodel.Domain{
-			Domain:        b.Domain,
+			Domain:        d,
 			PublicComment: b.PublicComment,
 		},
 	}
