@@ -40,7 +40,7 @@ const (
 	reports   = "reports"
 
 	schemes                  = `(http|https)://`                                         // Allowed URI protocols for parsing links in text.
-	alphaNumeric             = `\p{L}\p{M}*|[0-9]`                                       // A single number or script character in any language, including chars with accents.
+	alphaNumeric             = `\p{L}\p{M}*|\p{N}`                                       // A single number or script character in any language, including chars with accents.
 	usernameGrp              = `(?:` + alphaNumeric + `|\.|\-|\_)`                       // Non-capturing group that matches against a single valid username character.
 	domainGrp                = `(?:` + alphaNumeric + `|\.|\-|\:)`                       // Non-capturing group that matches against a single valid domain character.
 	mentionName              = `^@(` + usernameGrp + `+)(?:@(` + domainGrp + `+))?$`     // Extract parts of one mention, maybe including domain.
