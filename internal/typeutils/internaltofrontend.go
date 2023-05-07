@@ -131,7 +131,6 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		aviURLStatic    string
 		headerURL       string
 		headerURLStatic string
-		fields          = make([]apimodel.Field, len(a.Fields))
 	)
 
 	if a.AvatarMediaAttachment != nil {
