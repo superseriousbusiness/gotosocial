@@ -19,7 +19,6 @@ package regexes
 
 import (
 	"bytes"
-	"fmt"
 	"regexp"
 	"sync"
 
@@ -39,15 +38,42 @@ const (
 	follow    = "follow"
 	blocks    = "blocks"
 	reports   = "reports"
-)
 
-const (
-	maximumUsernameLength       = 64
-	maximumEmojiShortcodeLength = 30
+	schemes                  = `(http|https)://`                                         // Allowed URI protocols for parsing links in text.
+	alphaNumeric             = `\p{L}\p{M}*|\p{N}`                                       // A single number or script character in any language, including chars with accents.
+	usernameGrp              = `(?:` + alphaNumeric + `|\.|\-|\_)`                       // Non-capturing group that matches against a single valid username character.
+	domainGrp                = `(?:` + alphaNumeric + `|\.|\-|\:)`                       // Non-capturing group that matches against a single valid domain character.
+	mentionName              = `^@(` + usernameGrp + `+)(?:@(` + domainGrp + `+))?$`     // Extract parts of one mention, maybe including domain.
+	mentionFinder            = `(?:^|\s)(@` + usernameGrp + `+(?:@` + domainGrp + `+)?)` // Extract all mentions from a text, each mention may include domain.
+	emojiShortcode           = `\w{2,30}`                                                // Pattern for emoji shortcodes. maximumEmojiShortcodeLength = 30
+	emojiFinder              = `(?:\b)?:(` + emojiShortcode + `):(?:\b)?`                // Extract all emoji shortcodes from a text.
+	usernameStrict           = `^[a-z0-9_]{2,64}$`                                       // Pattern for usernames on THIS instance. maximumUsernameLength = 64
+	usernameRelaxed          = `[a-z0-9_\.]{2,}`                                         // Relaxed version of username that can match instance accounts too.
+	misskeyReportNotesFinder = `(?m)(?:^Note: ((?:http|https):\/\/.*)$)`                 // Extract reported Note URIs from the text of a Misskey report/flag.
+	ulid                     = `[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}`                  // Pattern for ULID.
+	ulidValidate             = `^` + ulid + `$`                                          // Validate one ULID.
+
+	/*
+		Path parts / capture.
+	*/
+
+	userPathPrefix = `^/?` + users + `/(` + usernameRelaxed + `)`
+	userPath       = userPathPrefix + `$`
+	publicKeyPath  = userPathPrefix + `/` + publicKey + `$`
+	inboxPath      = userPathPrefix + `/` + inbox + `$`
+	outboxPath     = userPathPrefix + `/` + outbox + `$`
+	followersPath  = userPathPrefix + `/` + followers + `$`
+	followingPath  = userPathPrefix + `/` + following + `$`
+	likedPath      = userPathPrefix + `/` + liked + `$`
+	followPath     = userPathPrefix + `/` + follow + `/(` + ulid + `)$`
+	likePath       = userPathPrefix + `/` + liked + `/(` + ulid + `)$`
+	statusesPath   = userPathPrefix + `/` + statuses + `/(` + ulid + `)$`
+	blockPath      = userPathPrefix + `/` + blocks + `/(` + ulid + `)$`
+	reportPath     = `^/?` + reports + `/(` + ulid + `)$`
+	filePath       = `^/?(` + ulid + `)/([a-z]+)/([a-z]+)/(` + ulid + `)\.([a-z]+)$`
 )
 
 var (
-	schemes = `(http|https)://`
 	// LinkScheme captures http/https schemes in URLs.
 	LinkScheme = func() *regexp.Regexp {
 		rgx, err := xurls.StrictMatchingScheme(schemes)
@@ -57,107 +83,80 @@ var (
 		return rgx
 	}()
 
-	mentionName = `^@([\w\-\.]+)(?:@([\w\-\.:]+))?$`
-	// MentionName captures the username and domain part from a mention string
-	// such as @whatever_user@example.org, returning whatever_user and example.org (without the @ symbols)
+	// MentionName captures the username and domain part from
+	// a mention string such as @whatever_user@example.org,
+	// returning whatever_user and example.org (without the @ symbols).
+	// Will also work for characters with umlauts and other accents.
+	// See: https://regex101.com/r/9tjNUy/1 for explanation and examples.
 	MentionName = regexp.MustCompile(mentionName)
 
-	// mention regex can be played around with here: https://regex101.com/r/P0vpYG/1
-	mentionFinder = `(?:^|\s)(@\w+(?:@[a-zA-Z0-9_\-\.]+)?)`
-	// MentionFinder extracts mentions from a piece of text.
+	// MentionFinder extracts whole mentions from a piece of text.
 	MentionFinder = regexp.MustCompile(mentionFinder)
 
-	emojiShortcode = fmt.Sprintf(`\w{2,%d}`, maximumEmojiShortcodeLength)
 	// EmojiShortcode validates an emoji name.
-	EmojiShortcode = regexp.MustCompile(fmt.Sprintf("^%s$", emojiShortcode))
+	EmojiShortcode = regexp.MustCompile(emojiShortcode)
 
-	// emoji regex can be played with here: https://regex101.com/r/478XGM/1
-	emojiFinderString = fmt.Sprintf(`(?:\b)?:(%s):(?:\b)?`, emojiShortcode)
 	// EmojiFinder extracts emoji strings from a piece of text.
-	EmojiFinder = regexp.MustCompile(emojiFinderString)
+	// See: https://regex101.com/r/478XGM/1
+	EmojiFinder = regexp.MustCompile(emojiFinder)
 
-	// usernameString defines an acceptable username for a new account on this instance
-	usernameString = fmt.Sprintf(`[a-z0-9_]{2,%d}`, maximumUsernameLength)
-	// Username can be used to validate usernames of new signups
-	Username = regexp.MustCompile(fmt.Sprintf(`^%s$`, usernameString))
+	// Username can be used to validate usernames of new signups on this instance.
+	Username = regexp.MustCompile(usernameStrict)
 
-	// usernameStringRelaxed is like usernameString, but also allows the '.' character,
-	// so it can also be used to match the instance account, which will have a username
-	// like 'example.org', and it has no upper length limit, so will work for long domains.
-	usernameStringRelaxed = `[a-z0-9_\.]{2,}`
+	// MisskeyReportNotes captures a list of Note URIs from report content created by Misskey.
+	// See: https://regex101.com/r/EnTOBV/1
+	MisskeyReportNotes = regexp.MustCompile(misskeyReportNotesFinder)
 
-	userPathString = fmt.Sprintf(`^/?%s/(%s)$`, users, usernameStringRelaxed)
-	// UserPath parses a path that validates and captures the username part from eg /users/example_username
-	UserPath = regexp.MustCompile(userPathString)
+	// UserPath validates and captures the username part from eg /users/example_username.
+	UserPath = regexp.MustCompile(userPath)
 
-	publicKeyPath = fmt.Sprintf(`^/?%s/(%s)/%s`, users, usernameStringRelaxed, publicKey)
 	// PublicKeyPath parses a path that validates and captures the username part from eg /users/example_username/main-key
 	PublicKeyPath = regexp.MustCompile(publicKeyPath)
 
-	inboxPath = fmt.Sprintf(`^/?%s/(%s)/%s$`, users, usernameStringRelaxed, inbox)
 	// InboxPath parses a path that validates and captures the username part from eg /users/example_username/inbox
 	InboxPath = regexp.MustCompile(inboxPath)
 
-	outboxPath = fmt.Sprintf(`^/?%s/(%s)/%s$`, users, usernameStringRelaxed, outbox)
 	// OutboxPath parses a path that validates and captures the username part from eg /users/example_username/outbox
 	OutboxPath = regexp.MustCompile(outboxPath)
 
-	actorPath = fmt.Sprintf(`^/?%s/(%s)$`, actors, usernameStringRelaxed)
-	// ActorPath parses a path that validates and captures the username part from eg /actors/example_username
-	ActorPath = regexp.MustCompile(actorPath)
-
-	followersPath = fmt.Sprintf(`^/?%s/(%s)/%s$`, users, usernameStringRelaxed, followers)
 	// FollowersPath parses a path that validates and captures the username part from eg /users/example_username/followers
 	FollowersPath = regexp.MustCompile(followersPath)
 
-	followingPath = fmt.Sprintf(`^/?%s/(%s)/%s$`, users, usernameStringRelaxed, following)
 	// FollowingPath parses a path that validates and captures the username part from eg /users/example_username/following
 	FollowingPath = regexp.MustCompile(followingPath)
 
-	followPath = fmt.Sprintf(`^/?%s/(%s)/%s/(%s)$`, users, usernameStringRelaxed, follow, ulid)
+	// LikedPath parses a path that validates and captures the username part from eg /users/example_username/liked
+	LikedPath = regexp.MustCompile(likedPath)
+
+	// ULID parses and validate a ULID.
+	ULID = regexp.MustCompile(ulidValidate)
+
 	// FollowPath parses a path that validates and captures the username part and the ulid part
 	// from eg /users/example_username/follow/01F7XT5JZW1WMVSW1KADS8PVDH
 	FollowPath = regexp.MustCompile(followPath)
 
-	ulid = `[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}`
-	// ULID parses and validate a ULID.
-	ULID = regexp.MustCompile(fmt.Sprintf(`^%s$`, ulid))
-
-	likedPath = fmt.Sprintf(`^/?%s/(%s)/%s$`, users, usernameStringRelaxed, liked)
-	// LikedPath parses a path that validates and captures the username part from eg /users/example_username/liked
-	LikedPath = regexp.MustCompile(likedPath)
-
-	likePath = fmt.Sprintf(`^/?%s/(%s)/%s/(%s)$`, users, usernameStringRelaxed, liked, ulid)
 	// LikePath parses a path that validates and captures the username part and the ulid part
-	// from eg /users/example_username/like/01F7XT5JZW1WMVSW1KADS8PVDH
+	// from eg /users/example_username/liked/01F7XT5JZW1WMVSW1KADS8PVDH
 	LikePath = regexp.MustCompile(likePath)
 
-	statusesPath = fmt.Sprintf(`^/?%s/(%s)/%s/(%s)$`, users, usernameStringRelaxed, statuses, ulid)
 	// StatusesPath parses a path that validates and captures the username part and the ulid part
 	// from eg /users/example_username/statuses/01F7XT5JZW1WMVSW1KADS8PVDH
 	// The regex can be played with here: https://regex101.com/r/G9zuxQ/1
 	StatusesPath = regexp.MustCompile(statusesPath)
 
-	blockPath = fmt.Sprintf(`^/?%s/(%s)/%s/(%s)$`, users, usernameStringRelaxed, blocks, ulid)
 	// BlockPath parses a path that validates and captures the username part and the ulid part
 	// from eg /users/example_username/blocks/01F7XT5JZW1WMVSW1KADS8PVDH
 	BlockPath = regexp.MustCompile(blockPath)
 
-	reportPath = fmt.Sprintf(`^/?%s/(%s)$`, reports, ulid)
 	// ReportPath parses a path that validates and captures the ulid part
 	// from eg /reports/01GP3AWY4CRDVRNZKW0TEAMB5R
 	ReportPath = regexp.MustCompile(reportPath)
 
-	filePath = fmt.Sprintf(`^(%s)/([a-z]+)/([a-z]+)/(%s)\.([a-z]+)$`, ulid, ulid)
 	// FilePath parses a file storage path of the form [ACCOUNT_ID]/[MEDIA_TYPE]/[MEDIA_SIZE]/[FILE_NAME]
 	// eg 01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01F8MH8RMYQ6MSNY3JM2XT1CQ5.jpeg
 	// It captures the account id, media type, media size, file name, and file extension, eg
 	// `01F8MH1H7YV1Z7D2C8K2730QBF`, `attachment`, `small`, `01F8MH8RMYQ6MSNY3JM2XT1CQ5`, `jpeg`.
 	FilePath = regexp.MustCompile(filePath)
-
-	// MisskeyReportNotes captures a list of Note URIs from report content created by Misskey.
-	// https://regex101.com/r/EnTOBV/1
-	MisskeyReportNotes = regexp.MustCompile(`(?m)(?:^Note: ((?:http|https):\/\/.*)$)`)
 )
 
 // bufpool is a memory pool of byte buffers for use in our regex utility functions.

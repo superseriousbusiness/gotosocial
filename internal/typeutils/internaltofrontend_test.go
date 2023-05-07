@@ -70,10 +70,12 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontend() {
 }
 
 func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiStruct() {
-	testAccount := suite.testAccounts["local_account_1"] // take zork for this test
+	testAccount := &gtsmodel.Account{}
+	*testAccount = *suite.testAccounts["local_account_1"] // take zork for this test
 	testEmoji := suite.testEmojis["rainbow"]
 
 	testAccount.Emojis = []*gtsmodel.Emoji{testEmoji}
+	testAccount.EmojiIDs = []string{testEmoji.ID}
 
 	apiAccount, err := suite.typeconverter.AccountToAPIAccountPublic(context.Background(), testAccount)
 	suite.NoError(err)
@@ -207,6 +209,42 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendSensitive() {
   "role": {
     "name": "user"
   }
+}`, string(b))
+}
+
+func (suite *InternalToFrontendTestSuite) TestAccountToFrontendPublicPunycode() {
+	testAccount := suite.testAccounts["remote_account_4"]
+	apiAccount, err := suite.typeconverter.AccountToAPIAccountPublic(context.Background(), testAccount)
+	suite.NoError(err)
+	suite.NotNil(apiAccount)
+
+	b, err := json.MarshalIndent(apiAccount, "", "  ")
+	suite.NoError(err)
+
+	// Even though account domain is stored in
+	// punycode, it should be served in its
+	// unicode representation in the 'acct' field.
+	suite.Equal(`{
+  "id": "07GZRBAEMBNKGZ8Z9VSKSXKR98",
+  "username": "üser",
+  "acct": "üser@ëxample.org",
+  "display_name": "",
+  "locked": false,
+  "discoverable": false,
+  "bot": false,
+  "created_at": "2020-08-10T12:13:28.000Z",
+  "note": "",
+  "url": "https://xn--xample-ova.org/users/@%C3%BCser",
+  "avatar": "",
+  "avatar_static": "",
+  "header": "http://localhost:8080/assets/default_header.png",
+  "header_static": "http://localhost:8080/assets/default_header.png",
+  "followers_count": 0,
+  "following_count": 0,
+  "statuses_count": 0,
+  "last_status_at": null,
+  "emojis": [],
+  "fields": []
 }`, string(b))
 }
 
