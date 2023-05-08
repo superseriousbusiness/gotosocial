@@ -11,6 +11,7 @@ EXPECT=$(cat <<"EOF"
     "accounts-registration-open": true,
     "advanced-cookies-samesite": "strict",
     "advanced-rate-limit-requests": 6969,
+    "advanced-sender-multiplier": -1,
     "advanced-throttling-multiplier": -1,
     "advanced-throttling-retry-after": 10000000000,
     "application-name": "gts",
@@ -241,6 +242,7 @@ GTS_SYSLOG_PROTOCOL='udp' \
 GTS_SYSLOG_ADDRESS='127.0.0.1:6969' \
 GTS_ADVANCED_COOKIES_SAMESITE='strict' \
 GTS_ADVANCED_RATE_LIMIT_REQUESTS=6969 \
+GTS_ADVANCED_SENDER_MULTIPLIER=-1 \
 GTS_ADVANCED_THROTTLING_MULTIPLIER=-1 \
 GTS_ADVANCED_THROTTLING_RETRY_AFTER='10s' \
 GTS_REQUEST_ID_HEADER='X-Trace-Id' \
