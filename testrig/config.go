@@ -120,6 +120,7 @@ var testDefaults = config.Configuration{
 	AdvancedCookiesSamesite:      "lax",
 	AdvancedRateLimitRequests:    0, // disabled
 	AdvancedThrottlingMultiplier: 0, // disabled
+	AdvancedSenderMultiplier:     0, // 1 sender only, regardless of CPU
 
 	SoftwareVersion: "0.0.0-testrig",
 
