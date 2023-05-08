@@ -92,3 +92,7 @@ func (suite *TextStandardTestSuite) FromMarkdown(text string) *text.FormatResult
 func (suite *TextStandardTestSuite) FromPlain(text string) *text.FormatResult {
 	return suite.formatter.FromPlain(context.Background(), suite.parseMention, suite.testAccounts["local_account_1"].ID, "status_ID", text)
 }
+
+func (suite *TextStandardTestSuite) FromPlainNoParagraph(text string) *text.FormatResult {
+	return suite.formatter.FromPlainNoParagraph(context.Background(), suite.parseMention, suite.testAccounts["local_account_1"].ID, "status_ID", text)
+}

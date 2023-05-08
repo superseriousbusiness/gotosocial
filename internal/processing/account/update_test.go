@@ -176,12 +176,12 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithFields() {
 	suite.EqualValues([]apimodel.Field{
 		{
 			Name:       "favourite emoji",
-			Value:      "<p>:rainbow:</p>",
+			Value:      ":rainbow:",
 			VerifiedAt: (*string)(nil),
 		},
 		{
 			Name:       "my website",
-			Value:      "<p><a href=\"https://example.org\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://example.org</a></p>",
+			Value:      "<a href=\"https://example.org\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://example.org</a>",
 			VerifiedAt: (*string)(nil),
 		},
 	}, apiAccount.Fields)
@@ -219,9 +219,9 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithFields() {
 	dbAccount, err := suite.db.GetAccountByID(context.Background(), testAccount.ID)
 	suite.NoError(err)
 	suite.Equal("favourite emoji", dbAccount.Fields[0].Name)
-	suite.Equal("<p>:rainbow:</p>", dbAccount.Fields[0].Value)
+	suite.Equal(":rainbow:", dbAccount.Fields[0].Value)
 	suite.Equal("my website", dbAccount.Fields[1].Name)
-	suite.Equal("<p><a href=\"https://example.org\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://example.org</a></p>", dbAccount.Fields[1].Value)
+	suite.Equal("<a href=\"https://example.org\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://example.org</a>", dbAccount.Fields[1].Value)
 	suite.Equal("favourite emoji", dbAccount.FieldsRaw[0].Name)
 	suite.Equal(":rainbow:", dbAccount.FieldsRaw[0].Value)
 	suite.Equal("my website", dbAccount.FieldsRaw[1].Name)

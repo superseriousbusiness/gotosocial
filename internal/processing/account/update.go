@@ -36,7 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
-func (p *Processor) selectFormatter(contentType string) text.FormatFunc {
+func (p *Processor) selectNoteFormatter(contentType string) text.FormatFunc {
 	if contentType == "text/markdown" {
 		return p.formatter.FromMarkdown
 	}
@@ -143,7 +143,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		}
 
 		// Format + set note according to user prefs.
-		f := p.selectFormatter(account.StatusContentType)
+		f := p.selectNoteFormatter(account.StatusContentType)
 		formatNoteResult := f(ctx, p.parseMention, account.ID, "", account.NoteRaw)
 		account.Note = formatNoteResult.HTML
 
@@ -169,8 +169,9 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 				emojis[emoji.ID] = emoji
 			}
 
-			// Value can be HTML.
-			fieldFormatValueResult := p.formatter.FromPlain(ctx, p.parseMention, account.ID, "", fieldRaw.Value)
+			// Value can be HTML, but we don't want
+			// to wrap the result in <p> tags.
+			fieldFormatValueResult := p.formatter.FromPlainNoParagraph(ctx, p.parseMention, account.ID, "", fieldRaw.Value)
 			field.Value = fieldFormatValueResult.HTML
 
 			// Retrieve field emojis.

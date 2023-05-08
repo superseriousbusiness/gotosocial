@@ -478,11 +478,11 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			Fields: []gtsmodel.Field{
 				{
 					Name:  "should you follow me?",
-					Value: "\u003cp\u003emaybe!\u003cp\u003e",
+					Value: "maybe!",
 				},
 				{
 					Name:  "age",
-					Value: "\u003cp\u003e120\u003cp\u003e",
+					Value: "120",
 				},
 			},
 			FieldsRaw: []gtsmodel.Field{

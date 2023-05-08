@@ -343,12 +343,12 @@ For the sake of compatibility with other implementations, GoToSocial uses the sa
     {
       "name": "should you follow me?",
       "type": "PropertyValue",
-      "value": "\u003cp\u003emaybe!\u003c/p\u003e"
+      "value": "maybe!"
     },
     {
       "name": "age",
       "type": "PropertyValue",
-      "value": "\u003cp\u003e120\u003c/p\u003e"
+      "value": "120"
     }
   ],
   "discoverable": false,
@@ -379,7 +379,4 @@ While `attachment` is not technically an ordered collection, GoToSocial--again, 
 
 GoToSocial will also parse PropertyValue fields from remote `actor`s discovered by the GoToSocial instance, to allow them to be displayed to users on the GoToSocial instance.
 
-Differences from other implementations: 
-
-- `PropertyValue` values will usually be wrapped in `<p>` tags, and may consist of multiple short paragraphs.
-- GoToSocial allows up to 6 `PropertyValue` fields by default, as opposed to Mastodon's default 4.
+GoToSocial allows up to 6 `PropertyValue` fields by default, as opposed to Mastodon's default 4.

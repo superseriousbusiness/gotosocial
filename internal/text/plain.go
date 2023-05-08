@@ -30,26 +30,28 @@ import (
 	"github.com/yuin/goldmark/util"
 )
 
-func (f *formatter) FromPlain(ctx context.Context, pmf gtsmodel.ParseMentionFunc, authorID string, statusID string, plain string) *FormatResult {
+func (f *formatter) fromPlain(
+	ctx context.Context,
+	ptParser parser.Parser,
+	pmf gtsmodel.ParseMentionFunc,
+	authorID string,
+	statusID string,
+	plain string,
+) *FormatResult {
 	result := &FormatResult{
 		Mentions: []*gtsmodel.Mention{},
 		Tags:     []*gtsmodel.Tag{},
 		Emojis:   []*gtsmodel.Emoji{},
 	}
 
-	// parse markdown text into html, using custom renderer to add hashtag/mention links
+	// Parse markdown into html, using custom renderer
+	// to add hashtag/mention links and emoji images.
 	md := goldmark.New(
 		goldmark.WithRendererOptions(
 			html.WithXHTML(),
 			html.WithHardWraps(),
 		),
-		goldmark.WithParser(
-			parser.NewParser(
-				parser.WithBlockParsers(
-					util.Prioritized(newPlaintextParser(), 500),
-				),
-			),
-		),
+		goldmark.WithParser(ptParser), // use parser we were passed
 		goldmark.WithExtensions(
 			&customRenderer{f, ctx, pmf, authorID, statusID, false, result},
 			extension.Linkify, // turns URLs into links
@@ -57,20 +59,40 @@ func (f *formatter) FromPlain(ctx context.Context, pmf gtsmodel.ParseMentionFunc
 	)
 
 	var htmlContentBytes bytes.Buffer
-	err := md.Convert([]byte(plain), &htmlContentBytes)
-	if err != nil {
+	if err := md.Convert([]byte(plain), &htmlContentBytes); err != nil {
 		log.Errorf(ctx, "error formatting plaintext to HTML: %s", err)
 	}
 	result.HTML = htmlContentBytes.String()
 
-	// clean anything dangerous out of the HTML
+	// Clean anything dangerous out of resulting HTML.
 	result.HTML = SanitizeHTML(result.HTML)
 
-	// shrink ray
-	result.HTML, err = m.String("text/html", result.HTML)
-	if err != nil {
+	// Shrink ray!
+	var err error
+	if result.HTML, err = m.String("text/html", result.HTML); err != nil {
 		log.Errorf(ctx, "error minifying HTML: %s", err)
 	}
 
 	return result
+}
+
+func (f *formatter) FromPlain(ctx context.Context, pmf gtsmodel.ParseMentionFunc, authorID string, statusID string, plain string) *FormatResult {
+	ptParser := parser.NewParser(
+		parser.WithBlockParsers(
+			util.Prioritized(newPlaintextParser(), 500),
+		),
+	)
+
+	return f.fromPlain(ctx, ptParser, pmf, authorID, statusID, plain)
+}
+
+func (f *formatter) FromPlainNoParagraph(ctx context.Context, pmf gtsmodel.ParseMentionFunc, authorID string, statusID string, plain string) *FormatResult {
+	ptParser := parser.NewParser(
+		parser.WithBlockParsers(
+			// Initialize block parser that doesn't wrap in <p> tags.
+			util.Prioritized(newPlaintextParserNoParagraph(), 500),
+		),
+	)
+
+	return f.fromPlain(ctx, ptParser, pmf, authorID, statusID, plain)
 }

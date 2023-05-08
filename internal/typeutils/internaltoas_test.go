@@ -108,12 +108,12 @@ func (suite *InternalToASTestSuite) TestAccountToASWithFields() {
     {
       "name": "should you follow me?",
       "type": "PropertyValue",
-      "value": "\u003cp\u003emaybe!\u003cp\u003e"
+      "value": "maybe!"
     },
     {
       "name": "age",
       "type": "PropertyValue",
-      "value": "\u003cp\u003e120\u003cp\u003e"
+      "value": "120"
     }
   ],
   "discoverable": false,
@@ -161,7 +161,7 @@ func (suite *InternalToASTestSuite) TestAccountToASWithOneField() {
     {
       "name": "should you follow me?",
       "type": "PropertyValue",
-      "value": "\u003cp\u003emaybe!\u003cp\u003e"
+      "value": "maybe!"
     }
   ],
   "discoverable": false,

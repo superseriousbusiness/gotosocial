@@ -876,12 +876,12 @@ func (suite *InternalToFrontendTestSuite) TestReportToFrontend2() {
     "fields": [
       {
         "name": "should you follow me?",
-        "value": "\u003cp\u003emaybe!\u003cp\u003e",
+        "value": "maybe!",
         "verified_at": null
       },
       {
         "name": "age",
-        "value": "\u003cp\u003e120\u003cp\u003e",
+        "value": "120",
         "verified_at": null
       }
     ],
@@ -991,12 +991,12 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
       "fields": [
         {
           "name": "should you follow me?",
-          "value": "\u003cp\u003emaybe!\u003cp\u003e",
+          "value": "maybe!",
           "verified_at": null
         },
         {
           "name": "age",
-          "value": "\u003cp\u003e120\u003cp\u003e",
+          "value": "120",
           "verified_at": null
         }
       ],
@@ -1162,12 +1162,12 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
       "fields": [
         {
           "name": "should you follow me?",
-          "value": "\u003cp\u003emaybe!\u003cp\u003e",
+          "value": "maybe!",
           "verified_at": null
         },
         {
           "name": "age",
-          "value": "\u003cp\u003e120\u003cp\u003e",
+          "value": "120",
           "verified_at": null
         }
       ],
