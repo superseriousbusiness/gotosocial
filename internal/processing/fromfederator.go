@@ -379,8 +379,9 @@ func (p *Processor) processUpdateAccountFromFederator(ctx context.Context, feder
 	updatedAccount, err := p.federator.RefreshAccount(
 		ctx,
 		federatorMsg.ReceivingAccount.Username,
-		incomingAccountable,
 		incomingAccount,
+		incomingAccountable,
+		true,
 	)
 	if err != nil {
 		return fmt.Errorf("error enriching updated account from federator: %s", err)

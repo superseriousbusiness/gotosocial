@@ -38,9 +38,25 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
-// accountFetchInterval is the interval after which we
-// check for the latest available version of an account.
-const accountFetchInterval = 6 * time.Hour
+// accountUpToDate ...
+func accountUpToDate(account *gtsmodel.Account) bool {
+	if account.IsLocal() {
+		// Can't update local accounts.
+		return true
+	}
+
+	if !account.CreatedAt.IsZero() && account.IsInstance() {
+		// Existing instance account. No need for update.
+		return true
+	}
+
+	// If this account was updated recently (last interval), we return as-is.
+	if next := account.FetchedAt.Add(6 * time.Hour); time.Now().Before(next) {
+		return true
+	}
+
+	return false
+}
 
 // GetAccountByURI: implements Dereferencer{}.GetAccountByURI.
 func (d *deref) GetAccountByURI(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Account, error) {
@@ -96,21 +112,11 @@ func (d *deref) getAccountByURI(ctx context.Context, requestUser string, uri *ur
 			ID:     id.NewULID(),
 			Domain: uri.Host,
 			URI:    uriStr,
-		})
+		}, nil)
 	}
 
-	if account.IsLocal() {
-		// Can't update local accounts.
-		return account, nil, nil
-	}
-
-	if !account.CreatedAt.IsZero() && account.IsInstance() {
-		// Existing instance account. No need for update.
-		return account, nil, nil
-	}
-
-	// If this account was updated recently (last interval), we return as-is.
-	if next := account.FetchedAt.Add(accountFetchInterval); time.Now().Before(next) {
+	// Check whether needs update.
+	if accountUpToDate(account) {
 		return account, nil, nil
 	}
 
@@ -119,6 +125,7 @@ func (d *deref) getAccountByURI(ctx context.Context, requestUser string, uri *ur
 		requestUser,
 		uri,
 		account,
+		nil,
 	)
 	if err != nil {
 		log.Errorf(ctx, "error enriching remote account: %v", err)
@@ -159,7 +166,7 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 			ID:       id.NewULID(),
 			Username: username,
 			Domain:   domain,
-		})
+		}, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -173,43 +180,31 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 	}
 
 	// Try to update existing account model.
-	latest, err := d.UpdateAccount(ctx,
+	latest, err := d.RefreshAccount(ctx,
 		requestUser,
 		account,
+		nil,
 		false,
 	)
 	if err != nil {
 		// Fallback to existing.
-		//nolint
-		return account, nil
+		return account, nil //nolint
 	}
 
 	return latest, nil
 }
 
-// UpdateAccount: implements Dereferencer{}.UpdateAccount.
-func (d *deref) UpdateAccount(ctx context.Context, requestUser string, account *gtsmodel.Account, force bool) (*gtsmodel.Account, error) {
-	if account.IsLocal() {
-		// Can't update local accounts.
+// RefreshAccount: implements Dereferencer{}.RefreshAccount.
+func (d *deref) RefreshAccount(ctx context.Context, requestUser string, account *gtsmodel.Account, apubAcc ap.Accountable, force bool) (*gtsmodel.Account, error) {
+	// Check whether needs update (and not forced).
+	if accountUpToDate(account) && !force {
 		return account, nil
-	}
-
-	if account.IsInstance() {
-		// No need to update instance.
-		return account, nil
-	}
-
-	if !force {
-		// If this account was updated recently (last interval), we return as-is.
-		if next := account.FetchedAt.Add(accountFetchInterval); time.Now().Before(next) {
-			return account, nil
-		}
 	}
 
 	// Parse the URI from account.
 	uri, err := url.Parse(account.URI)
 	if err != nil {
-		return nil, fmt.Errorf("UpdateAccount: invalid account uri %q: %w", account.URI, err)
+		return nil, fmt.Errorf("RefreshAccount: invalid account uri %q: %w", account.URI, err)
 	}
 
 	// Try to update + deref existing account model.
@@ -217,6 +212,7 @@ func (d *deref) UpdateAccount(ctx context.Context, requestUser string, account *
 		requestUser,
 		uri,
 		account,
+		apubAcc,
 	)
 	if err != nil {
 		log.Errorf(ctx, "error enriching remote account: %v", err)
@@ -236,35 +232,23 @@ func (d *deref) UpdateAccount(ctx context.Context, requestUser string, account *
 	return latest, nil
 }
 
-// UpdateAccountAsync: implements Dereferencer{}.UpdateAccountAsync.
-func (d *deref) UpdateAccountAsync(ctx context.Context, requestUser string, account *gtsmodel.Account, force bool) {
-	if account.IsLocal() {
-		// Can't update local accounts.
+// RefreshAccountAsync: implements Dereferencer{}.RefreshAccountAsync.
+func (d *deref) RefreshAccountAsync(ctx context.Context, requestUser string, account *gtsmodel.Account, apubAcc ap.Accountable, force bool) {
+	// Check whether needs update (and not forced).
+	if accountUpToDate(account) && !force {
 		return
-	}
-
-	if account.IsInstance() {
-		// No need to update instance.
-		return
-	}
-
-	if !force {
-		// If this account was updated recently (last interval), we return as-is.
-		if next := account.FetchedAt.Add(accountFetchInterval); time.Now().Before(next) {
-			return
-		}
 	}
 
 	// Parse the URI from account.
 	uri, err := url.Parse(account.URI)
 	if err != nil {
-		log.Errorf(ctx, "UpdateAccountAsync: invalid account uri %q: %v", account.URI, err)
+		log.Errorf(ctx, "RefreshAccountAsync: invalid account uri %q: %v", account.URI, err)
 		return
 	}
 
 	// Enqueue a worker function to enrich this account async.
 	d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
-		latest, _, err := d.enrichAccount(ctx, requestUser, uri, account)
+		latest, _, err := d.enrichAccount(ctx, requestUser, uri, account, apubAcc)
 		if err != nil {
 			log.Errorf(ctx, "error enriching remote account: %v", err)
 			return
@@ -276,27 +260,32 @@ func (d *deref) UpdateAccountAsync(ctx context.Context, requestUser string, acco
 }
 
 // enrichAccount will enrich the given account, whether a new barebones model, or existing model from the database. It handles necessary dereferencing, webfingering etc.
-func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.URL, account *gtsmodel.Account) (*gtsmodel.Account, ap.Accountable, error) {
+func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.URL, account *gtsmodel.Account, apubAcc ap.Accountable) (*gtsmodel.Account, ap.Accountable, error) {
 	// Pre-fetch a transport for requesting username, used by later deref procedures.
-	transport, err := d.transportController.NewTransportForUsername(ctx, requestUser)
+	tsport, err := d.transportController.NewTransportForUsername(ctx, requestUser)
 	if err != nil {
 		return nil, nil, fmt.Errorf("enrichAccount: couldn't create transport: %w", err)
 	}
 
 	if account.Username != "" {
 		// A username was provided so we can attempt a webfinger, this ensures up-to-date accountdomain info.
-		accDomain, accURI, err := d.fingerRemoteAccount(ctx, transport, account.Username, account.Domain)
+		accDomain, accURI, err := d.fingerRemoteAccount(ctx, tsport, account.Username, account.Domain)
+		if err != nil {
+			if account.URI == "" {
+				// this is a new account (to us) with username@domain but failed webfinger, nothing more we can do.
+				return nil, nil, fmt.Errorf("enrichAccount: error webfingering account: %w", err)
+			}
 
-		switch {
-		case err != nil && account.URI == "":
-			// this is a new account (to us) with username@domain but failed webfinger, nothing more we can do.
-			return nil, nil, fmt.Errorf("enrichAccount: error webfingering account: %w", err)
-
-		case err != nil:
+			// Simply log this error and move on, we already have an account URI.
 			log.Errorf(ctx, "error webfingering[1] remote account %s@%s: %v", account.Username, account.Domain, err)
+		}
 
-		case err == nil:
+		if err == nil {
 			if account.Domain != accDomain {
+				// Domain has changed, assume the activitypub
+				// account data provided is stale or borked(?)
+				apubAcc = nil
+
 				// After webfinger, we now have correct account domain from which we can do a final DB check.
 				alreadyAccount, err := d.state.DB.GetAccountByUsernameDomain(ctx, account.Username, accDomain)
 				if err != nil && !errors.Is(err, db.ErrNoEntries) {
@@ -337,19 +326,25 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	d.startHandshake(requestUser, uri)
 	defer d.stopHandshake(requestUser, uri)
 
-	// Fetch latest version of the account, dereferencing if necessary.
-	apubAcc, latestAcc, err := f(ctx, transport, uri, account.Domain)
-	if err != nil {
-		return nil, nil, fmt.Errorf("enrichAccount: error dereferencing account %s: %w", uri, err)
-	}
+	// By default we assume that apubAcc has been passed,
+	// indicating that the given account is already latest.
+	latestAcc := account
 
-	// Convert the dereferenced AP account object to our GTS model.
-	latestAcc, err := d.typeConverter.ASRepresentationToAccount(ctx,
-		apubAcc,
-		account.Domain,
-	)
-	if err != nil {
-		return nil, nil, fmt.Errorf("enrichAccount: error converting accountable to gts model for account %s: %w", uri, err)
+	if apubAcc == nil {
+		// Fetch latest version of the account, dereferencing if necessary.
+		apubAcc, err = d.dereferenceAccountable(ctx, tsport, uri)
+		if err != nil {
+			return nil, nil, fmt.Errorf("enrichAccount: error dereferencing account %s: %w", uri, err)
+		}
+
+		// Convert the dereferenced AP account object to our GTS model.
+		latestAcc, err = d.typeConverter.ASRepresentationToAccount(ctx,
+			apubAcc,
+			account.Domain,
+		)
+		if err != nil {
+			return nil, nil, fmt.Errorf("enrichAccount: error converting accountable to gts model for account %s: %w", uri, err)
+		}
 	}
 
 	if account.Username == "" {
@@ -374,7 +369,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		accHost := idProp.GetIRI().Host
 
 		latestAcc.Domain, _, err = d.fingerRemoteAccount(ctx,
-			transport,
+			tsport,
 			latestAcc.Username,
 			accHost,
 		)
@@ -404,7 +399,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		if latestAcc.AvatarRemoteURL != "" {
 			// Avatar has changed to a new one, fetch up-to-date copy and use new ID.
 			latestAcc.AvatarMediaAttachmentID, err = d.fetchRemoteAccountAvatar(ctx,
-				transport,
+				tsport,
 				latestAcc.AvatarRemoteURL,
 				latestAcc.ID,
 			)
@@ -426,7 +421,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		if latestAcc.HeaderRemoteURL != "" {
 			// Header has changed to a new one, fetch up-to-date copy and use new ID.
 			latestAcc.HeaderMediaAttachmentID, err = d.fetchRemoteAccountHeader(ctx,
-				transport,
+				tsport,
 				latestAcc.HeaderRemoteURL,
 				latestAcc.ID,
 			)
@@ -482,8 +477,8 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	return latestAcc, apubAcc, nil
 }
 
-func (d *deref) dereferenceAccountable(ctx context.Context, transport transport.Transport, remoteAccountID *url.URL) (ap.Accountable, error) {
-	b, err := transport.Dereference(ctx, remoteAccountID)
+func (d *deref) dereferenceAccountable(ctx context.Context, tsport transport.Transport, remoteAccountID *url.URL) (ap.Accountable, error) {
+	b, err := tsport.Dereference(ctx, remoteAccountID)
 	if err != nil {
 		return nil, fmt.Errorf("dereferenceAccountable: error deferencing %s: %w", remoteAccountID.String(), err)
 	}
