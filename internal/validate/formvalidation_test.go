@@ -276,25 +276,26 @@ func (suite *ValidationTestSuite) TestValidateProfileField() {
 		err                 error
 	)
 
-	field1 := []*gtsmodel.Field{
+	okFields := []*gtsmodel.Field{
 		{
 			Name:  "example",
 			Value: shortProfileField,
 		},
 	}
-	err = validate.ProfileFields(field1)
+	err = validate.ProfileFields(okFields)
 	suite.NoError(err)
-	suite.Equal(shortProfileField, field1[0].Value)
+	suite.Equal(shortProfileField, okFields[0].Value)
 
-	field2 := []*gtsmodel.Field{
+	dodgyFields := []*gtsmodel.Field{
 		{
 			Name:  "example",
 			Value: tooLongProfileField,
 		},
 	}
-	err = validate.ProfileFields(field1)
+	err = validate.ProfileFields(dodgyFields)
 	suite.NoError(err)
-	suite.Equal(trimmedProfileField, field2[0].Value)
+	suite.Equal(trimmedProfileField, dodgyFields[0].Value)
+	suite.Len(dodgyFields[0].Value, 255)
 }
 
 func TestValidationTestSuite(t *testing.T) {
