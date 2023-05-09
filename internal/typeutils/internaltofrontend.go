@@ -227,7 +227,7 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	return accountFrontend, nil
 }
 
-func (c *converter) fieldsToAPIFields(f []gtsmodel.Field) []apimodel.Field {
+func (c *converter) fieldsToAPIFields(f []*gtsmodel.Field) []apimodel.Field {
 	fields := make([]apimodel.Field, len(f))
 
 	for i, field := range f {

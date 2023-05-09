@@ -24,6 +24,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
@@ -268,20 +269,32 @@ func (suite *ValidationTestSuite) TestValidateReason() {
 }
 
 func (suite *ValidationTestSuite) TestValidateProfileField() {
-	shortProfileField := "pronouns"
-	tooLongProfileField := "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer eu bibendum elit. Sed ac interdum nisi. Vestibulum vulputate eros quis euismod imperdiet. Nulla sit amet dui sit amet lorem consectetur iaculis. Mauris eget lacinia metus. Curabitur nec dui eleifend massa nunc."
-	trimmedProfileField := "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer eu bibendum elit. Sed ac interdum nisi. Vestibulum vulputate eros quis euismod imperdiet. Nulla sit amet dui sit amet lorem consectetur iaculis. Mauris eget lacinia metus. Curabitur nec dui "
+	var (
+		shortProfileField   = "pronouns"
+		tooLongProfileField = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer eu bibendum elit. Sed ac interdum nisi. Vestibulum vulputate eros quis euismod imperdiet. Nulla sit amet dui sit amet lorem consectetur iaculis. Mauris eget lacinia metus. Curabitur nec dui eleifend massa nunc."
+		trimmedProfileField = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer eu bibendum elit. Sed ac interdum nisi. Vestibulum vulputate eros quis euismod imperdiet. Nulla sit amet dui sit amet lorem consectetur iaculis. Mauris eget lacinia metus. Curabitur nec dui "
+		err                 error
+	)
 
-	validated := validate.ProfileField(shortProfileField)
-	assert.Equal(suite.T(), shortProfileField, validated)
+	field1 := []*gtsmodel.Field{
+		{
+			Name:  "example",
+			Value: shortProfileField,
+		},
+	}
+	err = validate.ProfileFields(field1)
+	suite.NoError(err)
+	suite.Equal(shortProfileField, field1[0].Value)
 
-	validated = validate.ProfileField(tooLongProfileField)
-	assert.Len(suite.T(), validated, 255)
-	assert.Equal(suite.T(), trimmedProfileField, validated)
-
-	validated = validate.ProfileField(trimmedProfileField)
-	assert.Len(suite.T(), validated, 255)
-	assert.Equal(suite.T(), trimmedProfileField, validated)
+	field2 := []*gtsmodel.Field{
+		{
+			Name:  "example",
+			Value: tooLongProfileField,
+		},
+	}
+	err = validate.ProfileFields(field1)
+	suite.NoError(err)
+	suite.Equal(trimmedProfileField, field2[0].Value)
 }
 
 func TestValidationTestSuite(t *testing.T) {

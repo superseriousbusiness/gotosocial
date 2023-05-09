@@ -25,6 +25,7 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 	pwv "github.com/wagslane/go-password-validator"
 	"golang.org/x/text/language"
@@ -233,19 +234,26 @@ func ULID(i string) bool {
 	return regexes.ULID.MatchString(i)
 }
 
-func ProfileFieldsCount(fieldsLen int) error {
-	if fieldsLen > maximumProfileFields {
+// ProfileFields validates the length of provided fields slice,
+// and also iterates through the fields and trims each name + value
+// to maximumProfileFieldLength, if they were above.
+func ProfileFields(fields []*gtsmodel.Field) error {
+	if len(fields) > maximumProfileFields {
 		return fmt.Errorf("cannot have more than %d profile fields", maximumProfileFields)
 	}
 
-	return nil
-}
+	// Trim each field name + value to maximum allowed length.
+	for _, field := range fields {
+		n := []rune(field.Name)
+		if len(n) > maximumProfileFieldLength {
+			field.Name = string(n[:maximumProfileFieldLength])
+		}
 
-func ProfileField(f string) string {
-	s := []rune(f)
-	if len(s) > maximumProfileFieldLength {
-		return string(s[:maximumProfileFieldLength]) // trim profile field to maximum allowed length
+		v := []rune(field.Value)
+		if len(v) > maximumProfileFieldLength {
+			field.Value = string(v[:maximumProfileFieldLength])
+		}
 	}
 
-	return string(f)
+	return nil
 }

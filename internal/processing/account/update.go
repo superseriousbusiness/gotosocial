@@ -91,15 +91,8 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		var (
 			fieldsAttributes = *form.FieldsAttributes
 			fieldsLen        = len(fieldsAttributes)
+			fieldsRaw        = make([]*gtsmodel.Field, 0, fieldsLen)
 		)
-
-		if err := validate.ProfileFieldsCount(fieldsLen); err != nil {
-			return nil, gtserror.NewErrorBadRequest(err, err.Error())
-		}
-
-		// Reset account fields before processing new ones.
-		account.FieldsRaw = make([]gtsmodel.Field, 0, fieldsLen)
-		account.Fields = make([]gtsmodel.Field, 0, fieldsLen)
 
 		for _, updateField := range fieldsAttributes {
 			if updateField.Name == nil || updateField.Value == nil {
@@ -115,13 +108,22 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 				continue
 			}
 
-			// Sanitize, trim, + store raw field values.
-			fieldRaw := gtsmodel.Field{
-				Name:  validate.ProfileField(text.SanitizePlaintext(name)),
-				Value: validate.ProfileField(text.SanitizePlaintext(value)),
+			// Sanitize raw field values.
+			fieldRaw := &gtsmodel.Field{
+				Name:  text.SanitizePlaintext(name),
+				Value: text.SanitizePlaintext(value),
 			}
-			account.FieldsRaw = append(account.FieldsRaw, fieldRaw)
+			fieldsRaw = append(fieldsRaw, fieldRaw)
 		}
+
+		// Check length of parsed raw fields.
+		if err := validate.ProfileFields(fieldsRaw); err != nil {
+			return nil, gtserror.NewErrorBadRequest(err, err.Error())
+		}
+
+		// OK, new raw fields are valid.
+		account.FieldsRaw = fieldsRaw
+		account.Fields = make([]*gtsmodel.Field, 0, fieldsLen) // process these in a sec
 
 		// If fields have changed, account emojis may also have changed.
 		emojisChanged = true
@@ -154,7 +156,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 
 		// Process the raw fields we stored earlier.
 		for _, fieldRaw := range account.FieldsRaw {
-			field := gtsmodel.Field{}
+			field := &gtsmodel.Field{}
 
 			// Name stays plain, but we still need to
 			// see if there are any emojis set in it.

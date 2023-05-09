@@ -50,7 +50,7 @@ func happyAccount() *gtsmodel.Account {
 		HeaderMediaAttachment:   nil,
 		HeaderRemoteURL:         "",
 		DisplayName:             "original zork (he/they)",
-		Fields:                  []gtsmodel.Field{},
+		Fields:                  []*gtsmodel.Field{},
 		Note:                    "hey yo this is my profile!",
 		Memorial:                testrig.FalseBool(),
 		AlsoKnownAs:             "",

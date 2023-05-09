@@ -266,7 +266,7 @@ func ExtractSummary(i WithSummary) string {
 	return ""
 }
 
-func ExtractFields(i WithAttachment) []gtsmodel.Field {
+func ExtractFields(i WithAttachment) []*gtsmodel.Field {
 	attachmentProp := i.GetActivityStreamsAttachment()
 	if attachmentProp == nil {
 		// Nothing to do.
@@ -279,7 +279,7 @@ func ExtractFields(i WithAttachment) []gtsmodel.Field {
 		return nil
 	}
 
-	fields := make([]gtsmodel.Field, 0, l)
+	fields := make([]*gtsmodel.Field, 0, l)
 	for iter := attachmentProp.Begin(); iter != attachmentProp.End(); iter = iter.Next() {
 		if !iter.IsSchemaPropertyValue() {
 			continue
@@ -310,7 +310,7 @@ func ExtractFields(i WithAttachment) []gtsmodel.Field {
 			continue
 		}
 
-		fields = append(fields, gtsmodel.Field{
+		fields = append(fields, &gtsmodel.Field{
 			Name:  name,
 			Value: value,
 		})
