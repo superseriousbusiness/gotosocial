@@ -59,6 +59,7 @@ type ActivityStreamsFormerTypePropertyIterator struct {
 	activitystreamsPersonMember                vocab.ActivityStreamsPerson
 	activitystreamsPlaceMember                 vocab.ActivityStreamsPlace
 	activitystreamsProfileMember               vocab.ActivityStreamsProfile
+	schemaPropertyValueMember                  vocab.SchemaPropertyValue
 	forgefedPushMember                         vocab.ForgeFedPush
 	activitystreamsQuestionMember              vocab.ActivityStreamsQuestion
 	activitystreamsReadMember                  vocab.ActivityStreamsRead
@@ -360,6 +361,12 @@ func deserializeActivityStreamsFormerTypePropertyIterator(i interface{}, aliasMa
 			this := &ActivityStreamsFormerTypePropertyIterator{
 				activitystreamsProfileMember: v,
 				alias:                        alias,
+			}
+			return this, nil
+		} else if v, err := mgr.DeserializePropertyValueSchema()(m, aliasMap); err == nil {
+			this := &ActivityStreamsFormerTypePropertyIterator{
+				alias:                     alias,
+				schemaPropertyValueMember: v,
 			}
 			return this, nil
 		} else if v, err := mgr.DeserializePushForgeFed()(m, aliasMap); err == nil {
@@ -895,6 +902,13 @@ func (this ActivityStreamsFormerTypePropertyIterator) GetIRI() *url.URL {
 	return this.iri
 }
 
+// GetSchemaPropertyValue returns the value of this property. When
+// IsSchemaPropertyValue returns false, GetSchemaPropertyValue will return an
+// arbitrary value.
+func (this ActivityStreamsFormerTypePropertyIterator) GetSchemaPropertyValue() vocab.SchemaPropertyValue {
+	return this.schemaPropertyValueMember
+}
+
 // GetTootEmoji returns the value of this property. When IsTootEmoji returns
 // false, GetTootEmoji will return an arbitrary value.
 func (this ActivityStreamsFormerTypePropertyIterator) GetTootEmoji() vocab.TootEmoji {
@@ -1037,6 +1051,9 @@ func (this ActivityStreamsFormerTypePropertyIterator) GetType() vocab.Type {
 	if this.IsActivityStreamsProfile() {
 		return this.GetActivityStreamsProfile()
 	}
+	if this.IsSchemaPropertyValue() {
+		return this.GetSchemaPropertyValue()
+	}
 	if this.IsForgeFedPush() {
 		return this.GetForgeFedPush()
 	}
@@ -1146,6 +1163,7 @@ func (this ActivityStreamsFormerTypePropertyIterator) HasAny() bool {
 		this.IsActivityStreamsPerson() ||
 		this.IsActivityStreamsPlace() ||
 		this.IsActivityStreamsProfile() ||
+		this.IsSchemaPropertyValue() ||
 		this.IsForgeFedPush() ||
 		this.IsActivityStreamsQuestion() ||
 		this.IsActivityStreamsRead() ||
@@ -1584,6 +1602,13 @@ func (this ActivityStreamsFormerTypePropertyIterator) IsIRI() bool {
 	return this.iri != nil
 }
 
+// IsSchemaPropertyValue returns true if this property has a type of
+// "PropertyValue". When true, use the GetSchemaPropertyValue and
+// SetSchemaPropertyValue methods to access and set this property.
+func (this ActivityStreamsFormerTypePropertyIterator) IsSchemaPropertyValue() bool {
+	return this.schemaPropertyValueMember != nil
+}
+
 // IsTootEmoji returns true if this property has a type of "Emoji". When true, use
 // the GetTootEmoji and SetTootEmoji methods to access and set this property.
 func (this ActivityStreamsFormerTypePropertyIterator) IsTootEmoji() bool {
@@ -1694,6 +1719,8 @@ func (this ActivityStreamsFormerTypePropertyIterator) JSONLDContext() map[string
 		child = this.GetActivityStreamsPlace().JSONLDContext()
 	} else if this.IsActivityStreamsProfile() {
 		child = this.GetActivityStreamsProfile().JSONLDContext()
+	} else if this.IsSchemaPropertyValue() {
+		child = this.GetSchemaPropertyValue().JSONLDContext()
 	} else if this.IsForgeFedPush() {
 		child = this.GetForgeFedPush().JSONLDContext()
 	} else if this.IsActivityStreamsQuestion() {
@@ -1875,59 +1902,62 @@ func (this ActivityStreamsFormerTypePropertyIterator) KindIndex() int {
 	if this.IsActivityStreamsProfile() {
 		return 42
 	}
-	if this.IsForgeFedPush() {
+	if this.IsSchemaPropertyValue() {
 		return 43
 	}
-	if this.IsActivityStreamsQuestion() {
+	if this.IsForgeFedPush() {
 		return 44
 	}
-	if this.IsActivityStreamsRead() {
+	if this.IsActivityStreamsQuestion() {
 		return 45
 	}
-	if this.IsActivityStreamsReject() {
+	if this.IsActivityStreamsRead() {
 		return 46
 	}
-	if this.IsActivityStreamsRelationship() {
+	if this.IsActivityStreamsReject() {
 		return 47
 	}
-	if this.IsActivityStreamsRemove() {
+	if this.IsActivityStreamsRelationship() {
 		return 48
 	}
-	if this.IsForgeFedRepository() {
+	if this.IsActivityStreamsRemove() {
 		return 49
 	}
-	if this.IsActivityStreamsService() {
+	if this.IsForgeFedRepository() {
 		return 50
 	}
-	if this.IsActivityStreamsTentativeAccept() {
+	if this.IsActivityStreamsService() {
 		return 51
 	}
-	if this.IsActivityStreamsTentativeReject() {
+	if this.IsActivityStreamsTentativeAccept() {
 		return 52
 	}
-	if this.IsForgeFedTicket() {
+	if this.IsActivityStreamsTentativeReject() {
 		return 53
 	}
-	if this.IsForgeFedTicketDependency() {
+	if this.IsForgeFedTicket() {
 		return 54
 	}
-	if this.IsActivityStreamsTombstone() {
+	if this.IsForgeFedTicketDependency() {
 		return 55
 	}
-	if this.IsActivityStreamsTravel() {
+	if this.IsActivityStreamsTombstone() {
 		return 56
 	}
-	if this.IsActivityStreamsUndo() {
+	if this.IsActivityStreamsTravel() {
 		return 57
 	}
-	if this.IsActivityStreamsUpdate() {
+	if this.IsActivityStreamsUndo() {
 		return 58
 	}
-	if this.IsActivityStreamsVideo() {
+	if this.IsActivityStreamsUpdate() {
 		return 59
 	}
-	if this.IsActivityStreamsView() {
+	if this.IsActivityStreamsVideo() {
 		return 60
+	}
+	if this.IsActivityStreamsView() {
+		return 61
 	}
 	if this.IsIRI() {
 		return -2
@@ -2032,6 +2062,8 @@ func (this ActivityStreamsFormerTypePropertyIterator) LessThan(o vocab.ActivityS
 		return this.GetActivityStreamsPlace().LessThan(o.GetActivityStreamsPlace())
 	} else if this.IsActivityStreamsProfile() {
 		return this.GetActivityStreamsProfile().LessThan(o.GetActivityStreamsProfile())
+	} else if this.IsSchemaPropertyValue() {
+		return this.GetSchemaPropertyValue().LessThan(o.GetSchemaPropertyValue())
 	} else if this.IsForgeFedPush() {
 		return this.GetForgeFedPush().LessThan(o.GetForgeFedPush())
 	} else if this.IsActivityStreamsQuestion() {
@@ -2513,6 +2545,13 @@ func (this *ActivityStreamsFormerTypePropertyIterator) SetIRI(v *url.URL) {
 	this.iri = v
 }
 
+// SetSchemaPropertyValue sets the value of this property. Calling
+// IsSchemaPropertyValue afterwards returns true.
+func (this *ActivityStreamsFormerTypePropertyIterator) SetSchemaPropertyValue(v vocab.SchemaPropertyValue) {
+	this.clear()
+	this.schemaPropertyValueMember = v
+}
+
 // SetTootEmoji sets the value of this property. Calling IsTootEmoji afterwards
 // returns true.
 func (this *ActivityStreamsFormerTypePropertyIterator) SetTootEmoji(v vocab.TootEmoji) {
@@ -2698,6 +2737,10 @@ func (this *ActivityStreamsFormerTypePropertyIterator) SetType(t vocab.Type) err
 		this.SetActivityStreamsProfile(v)
 		return nil
 	}
+	if v, ok := t.(vocab.SchemaPropertyValue); ok {
+		this.SetSchemaPropertyValue(v)
+		return nil
+	}
 	if v, ok := t.(vocab.ForgeFedPush); ok {
 		this.SetForgeFedPush(v)
 		return nil
@@ -2828,6 +2871,7 @@ func (this *ActivityStreamsFormerTypePropertyIterator) clear() {
 	this.activitystreamsPersonMember = nil
 	this.activitystreamsPlaceMember = nil
 	this.activitystreamsProfileMember = nil
+	this.schemaPropertyValueMember = nil
 	this.forgefedPushMember = nil
 	this.activitystreamsQuestionMember = nil
 	this.activitystreamsReadMember = nil
@@ -2941,6 +2985,8 @@ func (this ActivityStreamsFormerTypePropertyIterator) serialize() (interface{}, 
 		return this.GetActivityStreamsPlace().Serialize()
 	} else if this.IsActivityStreamsProfile() {
 		return this.GetActivityStreamsProfile().Serialize()
+	} else if this.IsSchemaPropertyValue() {
+		return this.GetSchemaPropertyValue().Serialize()
 	} else if this.IsForgeFedPush() {
 		return this.GetForgeFedPush().Serialize()
 	} else if this.IsActivityStreamsQuestion() {
@@ -3705,6 +3751,18 @@ func (this *ActivityStreamsFormerTypeProperty) AppendIRI(v *url.URL) {
 		iri:    v,
 		myIdx:  this.Len(),
 		parent: this,
+	})
+}
+
+// AppendSchemaPropertyValue appends a PropertyValue value to the back of a list
+// of the property "formerType". Invalidates iterators that are traversing
+// using Prev.
+func (this *ActivityStreamsFormerTypeProperty) AppendSchemaPropertyValue(v vocab.SchemaPropertyValue) {
+	this.properties = append(this.properties, &ActivityStreamsFormerTypePropertyIterator{
+		alias:                     this.alias,
+		myIdx:                     this.Len(),
+		parent:                    this,
+		schemaPropertyValueMember: v,
 	})
 }
 
@@ -4792,6 +4850,23 @@ func (this *ActivityStreamsFormerTypeProperty) InsertIRI(idx int, v *url.URL) {
 	}
 }
 
+// InsertSchemaPropertyValue inserts a PropertyValue value at the specified index
+// for a property "formerType". Existing elements at that index and higher are
+// shifted back once. Invalidates all iterators.
+func (this *ActivityStreamsFormerTypeProperty) InsertSchemaPropertyValue(idx int, v vocab.SchemaPropertyValue) {
+	this.properties = append(this.properties, nil)
+	copy(this.properties[idx+1:], this.properties[idx:])
+	this.properties[idx] = &ActivityStreamsFormerTypePropertyIterator{
+		alias:                     this.alias,
+		myIdx:                     idx,
+		parent:                    this,
+		schemaPropertyValueMember: v,
+	}
+	for i := idx; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
 // InsertTootEmoji inserts a Emoji value at the specified index for a property
 // "formerType". Existing elements at that index and higher are shifted back
 // once. Invalidates all iterators.
@@ -5078,74 +5153,78 @@ func (this ActivityStreamsFormerTypeProperty) Less(i, j int) bool {
 			rhs := this.properties[j].GetActivityStreamsProfile()
 			return lhs.LessThan(rhs)
 		} else if idx1 == 43 {
+			lhs := this.properties[i].GetSchemaPropertyValue()
+			rhs := this.properties[j].GetSchemaPropertyValue()
+			return lhs.LessThan(rhs)
+		} else if idx1 == 44 {
 			lhs := this.properties[i].GetForgeFedPush()
 			rhs := this.properties[j].GetForgeFedPush()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 44 {
+		} else if idx1 == 45 {
 			lhs := this.properties[i].GetActivityStreamsQuestion()
 			rhs := this.properties[j].GetActivityStreamsQuestion()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 45 {
+		} else if idx1 == 46 {
 			lhs := this.properties[i].GetActivityStreamsRead()
 			rhs := this.properties[j].GetActivityStreamsRead()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 46 {
+		} else if idx1 == 47 {
 			lhs := this.properties[i].GetActivityStreamsReject()
 			rhs := this.properties[j].GetActivityStreamsReject()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 47 {
+		} else if idx1 == 48 {
 			lhs := this.properties[i].GetActivityStreamsRelationship()
 			rhs := this.properties[j].GetActivityStreamsRelationship()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 48 {
+		} else if idx1 == 49 {
 			lhs := this.properties[i].GetActivityStreamsRemove()
 			rhs := this.properties[j].GetActivityStreamsRemove()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 49 {
+		} else if idx1 == 50 {
 			lhs := this.properties[i].GetForgeFedRepository()
 			rhs := this.properties[j].GetForgeFedRepository()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 50 {
+		} else if idx1 == 51 {
 			lhs := this.properties[i].GetActivityStreamsService()
 			rhs := this.properties[j].GetActivityStreamsService()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 51 {
+		} else if idx1 == 52 {
 			lhs := this.properties[i].GetActivityStreamsTentativeAccept()
 			rhs := this.properties[j].GetActivityStreamsTentativeAccept()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 52 {
+		} else if idx1 == 53 {
 			lhs := this.properties[i].GetActivityStreamsTentativeReject()
 			rhs := this.properties[j].GetActivityStreamsTentativeReject()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 53 {
+		} else if idx1 == 54 {
 			lhs := this.properties[i].GetForgeFedTicket()
 			rhs := this.properties[j].GetForgeFedTicket()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 54 {
+		} else if idx1 == 55 {
 			lhs := this.properties[i].GetForgeFedTicketDependency()
 			rhs := this.properties[j].GetForgeFedTicketDependency()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 55 {
+		} else if idx1 == 56 {
 			lhs := this.properties[i].GetActivityStreamsTombstone()
 			rhs := this.properties[j].GetActivityStreamsTombstone()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 56 {
+		} else if idx1 == 57 {
 			lhs := this.properties[i].GetActivityStreamsTravel()
 			rhs := this.properties[j].GetActivityStreamsTravel()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 57 {
+		} else if idx1 == 58 {
 			lhs := this.properties[i].GetActivityStreamsUndo()
 			rhs := this.properties[j].GetActivityStreamsUndo()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 58 {
+		} else if idx1 == 59 {
 			lhs := this.properties[i].GetActivityStreamsUpdate()
 			rhs := this.properties[j].GetActivityStreamsUpdate()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 59 {
+		} else if idx1 == 60 {
 			lhs := this.properties[i].GetActivityStreamsVideo()
 			rhs := this.properties[j].GetActivityStreamsVideo()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 60 {
+		} else if idx1 == 61 {
 			lhs := this.properties[i].GetActivityStreamsView()
 			rhs := this.properties[j].GetActivityStreamsView()
 			return lhs.LessThan(rhs)
@@ -6016,6 +6095,20 @@ func (this *ActivityStreamsFormerTypeProperty) PrependIRI(v *url.URL) {
 	}
 }
 
+// PrependSchemaPropertyValue prepends a PropertyValue value to the front of a
+// list of the property "formerType". Invalidates all iterators.
+func (this *ActivityStreamsFormerTypeProperty) PrependSchemaPropertyValue(v vocab.SchemaPropertyValue) {
+	this.properties = append([]*ActivityStreamsFormerTypePropertyIterator{{
+		alias:                     this.alias,
+		myIdx:                     0,
+		parent:                    this,
+		schemaPropertyValueMember: v,
+	}}, this.properties...)
+	for i := 1; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
 // PrependTootEmoji prepends a Emoji value to the front of a list of the property
 // "formerType". Invalidates all iterators.
 func (this *ActivityStreamsFormerTypeProperty) PrependTootEmoji(v vocab.TootEmoji) {
@@ -6874,6 +6967,19 @@ func (this *ActivityStreamsFormerTypeProperty) SetIRI(idx int, v *url.URL) {
 		iri:    v,
 		myIdx:  idx,
 		parent: this,
+	}
+}
+
+// SetSchemaPropertyValue sets a PropertyValue value to be at the specified index
+// for the property "formerType". Panics if the index is out of bounds.
+// Invalidates all iterators.
+func (this *ActivityStreamsFormerTypeProperty) SetSchemaPropertyValue(idx int, v vocab.SchemaPropertyValue) {
+	(this.properties)[idx].parent = nil
+	(this.properties)[idx] = &ActivityStreamsFormerTypePropertyIterator{
+		alias:                     this.alias,
+		myIdx:                     idx,
+		parent:                    this,
+		schemaPropertyValueMember: v,
 	}
 }
 

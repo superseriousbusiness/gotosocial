@@ -5,9 +5,13 @@
 # Required
 version: 2
 
-mkdocs:
-  configuration: mkdocs.yml
+build:
+  os: "ubuntu-20.04"
+  tools:
+    python: "mambaforge-4.10" # https://docs.readthedocs.io/en/stable/guides/conda.html#making-builds-faster-with-mamba
 
-python:
-   install:
-   - requirements: docs/requirements.txt
+mkdocs:
+  configuration: "mkdocs.yml"
+
+conda:
+  environment: "docs/environment.yml"

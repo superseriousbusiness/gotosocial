@@ -29,7 +29,7 @@ import (
 	"codeberg.org/gruf/go-byteutil"
 	"codeberg.org/gruf/go-cache/v3"
 	"github.com/superseriousbusiness/activity/pub"
-	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
@@ -57,10 +57,19 @@ type controller struct {
 
 // NewController returns an implementation of the Controller interface for creating new transports
 func NewController(state *state.State, federatingDB federatingdb.DB, clock pub.Clock, client httpclient.SigningClient) Controller {
-	applicationName := config.GetApplicationName()
-	host := config.GetHost()
-	proto := config.GetProtocol()
-	version := config.GetSoftwareVersion()
+	var (
+		applicationName  = config.GetApplicationName()
+		host             = config.GetHost()
+		proto            = config.GetProtocol()
+		version          = config.GetSoftwareVersion()
+		senderMultiplier = config.GetAdvancedSenderMultiplier()
+	)
+
+	senders := senderMultiplier * runtime.GOMAXPROCS(0)
+	if senders < 1 {
+		// Clamp senders to 1.
+		senders = 1
+	}
 
 	c := &controller{
 		state:     state,
@@ -69,7 +78,7 @@ func NewController(state *state.State, federatingDB federatingdb.DB, clock pub.C
 		client:    client,
 		trspCache: cache.New[string, *transport](0, 100, 0),
 		userAgent: fmt.Sprintf("%s (+%s://%s) gotosocial/%s", applicationName, proto, host, version),
-		senders:   2 * runtime.GOMAXPROCS(0), // on batch delivery, only ever send 2*GOMAXPROCS at a time.
+		senders:   senders,
 	}
 
 	return c
@@ -148,7 +157,7 @@ func (c *controller) dereferenceLocalFollowers(ctx context.Context, iri *url.URL
 		return nil, err
 	}
 
-	i, err := streams.Serialize(followers)
+	i, err := ap.Serialize(followers)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +175,7 @@ func (c *controller) dereferenceLocalUser(ctx context.Context, iri *url.URL) ([]
 		return nil, err
 	}
 
-	i, err := streams.Serialize(user)
+	i, err := ap.Serialize(user)
 	if err != nil {
 		return nil, err
 	}

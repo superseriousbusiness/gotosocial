@@ -30,6 +30,8 @@ import (
 type Formatter interface {
 	// FromPlain parses an HTML text from a plaintext.
 	FromPlain(ctx context.Context, pmf gtsmodel.ParseMentionFunc, authorID string, statusID string, plain string) *FormatResult
+	// FromPlainNoParagraph parses an HTML text from a plaintext, without wrapping the resulting text in <p> tags.
+	FromPlainNoParagraph(ctx context.Context, pmf gtsmodel.ParseMentionFunc, authorID string, statusID string, plain string) *FormatResult
 	// FromMarkdown parses an HTML text from a markdown-formatted text.
 	FromMarkdown(ctx context.Context, pmf gtsmodel.ParseMentionFunc, authorID string, statusID string, md string) *FormatResult
 	// FromPlainEmojiOnly parses an HTML text from a plaintext, only parsing emojis and not mentions etc.

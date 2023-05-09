@@ -1,4 +1,0 @@
-mkdocs-material==9.0.13
-mkdocs-swagger-ui-tag==0.5.2
-CairoSVG==2.6.0
-Pillow==9.4.0

@@ -22,8 +22,8 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
@@ -56,7 +56,7 @@ func (p *Processor) UserGet(ctx context.Context, requestedUsername string, reque
 		// if we're not already handshaking/dereferencing a remote account, dereference it now
 		if !p.federator.Handshaking(requestedUsername, requestingAccountURI) {
 			requestingAccount, err := p.federator.GetAccountByURI(
-				gtscontext.SetFastFail(ctx), requestedUsername, requestingAccountURI, false,
+				gtscontext.SetFastFail(ctx), requestedUsername, requestingAccountURI,
 			)
 			if err != nil {
 				return nil, gtserror.NewErrorUnauthorized(err)
@@ -78,7 +78,7 @@ func (p *Processor) UserGet(ctx context.Context, requestedUsername string, reque
 		}
 	}
 
-	data, err := streams.Serialize(requestedPerson)
+	data, err := ap.Serialize(requestedPerson)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

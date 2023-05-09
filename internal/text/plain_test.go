@@ -25,14 +25,16 @@ import (
 )
 
 const (
-	simple              = "this is a plain and simple status"
-	simpleExpected      = "<p>this is a plain and simple status</p>"
-	withTag             = "here's a simple status that uses hashtag #welcome!"
-	withTagExpected     = "<p>here's a simple status that uses hashtag <a href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>welcome</span></a>!</p>"
-	withHTML            = "<div>blah this should just be html escaped blah</div>"
-	withHTMLExpected    = "<p>&lt;div>blah this should just be html escaped blah&lt;/div></p>"
-	moreComplex         = "Another test @foss_satan@fossbros-anonymous.io\n\n#Hashtag\n\nText\n\n:rainbow:"
-	moreComplexExpected = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br><br><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a><br><br>Text<br><br>:rainbow:</p>"
+	simple                     = "this is a plain and simple status"
+	simpleExpected             = "<p>this is a plain and simple status</p>"
+	simpleExpectedNoParagraph  = "this is a plain and simple status"
+	withTag                    = "here's a simple status that uses hashtag #welcome!"
+	withTagExpected            = "<p>here's a simple status that uses hashtag <a href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>welcome</span></a>!</p>"
+	withTagExpectedNoParagraph = "here's a simple status that uses hashtag <a href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>welcome</span></a>!"
+	withHTML                   = "<div>blah this should just be html escaped blah</div>"
+	withHTMLExpected           = "<p>&lt;div>blah this should just be html escaped blah&lt;/div></p>"
+	moreComplex                = "Another test @foss_satan@fossbros-anonymous.io\n\n#Hashtag\n\nText\n\n:rainbow:"
+	moreComplexExpected        = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br><br><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a><br><br>Text<br><br>:rainbow:</p>"
 )
 
 type PlainTestSuite struct {
@@ -44,9 +46,19 @@ func (suite *PlainTestSuite) TestParseSimple() {
 	suite.Equal(simpleExpected, formatted.HTML)
 }
 
+func (suite *PlainTestSuite) TestParseSimpleNoParagraph() {
+	formatted := suite.FromPlainNoParagraph(simple)
+	suite.Equal(simpleExpectedNoParagraph, formatted.HTML)
+}
+
 func (suite *PlainTestSuite) TestParseWithTag() {
 	formatted := suite.FromPlain(withTag)
 	suite.Equal(withTagExpected, formatted.HTML)
+}
+
+func (suite *PlainTestSuite) TestParseWithTagNoParagraph() {
+	formatted := suite.FromPlainNoParagraph(withTag)
+	suite.Equal(withTagExpectedNoParagraph, formatted.HTML)
 }
 
 func (suite *PlainTestSuite) TestParseWithHTML() {

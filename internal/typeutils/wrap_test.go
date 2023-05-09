@@ -23,7 +23,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 )
 
 type WrapTestSuite struct {
@@ -40,7 +40,7 @@ func (suite *WrapTestSuite) TestWrapNoteInCreateIRIOnly() {
 	suite.NoError(err)
 	suite.NotNil(create)
 
-	createI, err := streams.Serialize(create)
+	createI, err := ap.Serialize(create)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(createI, "", "  ")
@@ -68,7 +68,7 @@ func (suite *WrapTestSuite) TestWrapNoteInCreate() {
 	suite.NoError(err)
 	suite.NotNil(create)
 
-	createI, err := streams.Serialize(create)
+	createI, err := ap.Serialize(create)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(createI, "", "  ")

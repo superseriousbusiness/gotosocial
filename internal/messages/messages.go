@@ -34,9 +34,10 @@ type FromClientAPI struct {
 
 // FromFederator wraps a message that travels from the federator into the processor.
 type FromFederator struct {
-	APObjectType     string            // what is the object type of this message? eg., Note, Profile etc.
-	APActivityType   string            // what is the activity type of this message? eg., Create, Follow etc.
-	APIri            *url.URL          // what is the IRI ID of this activity?
-	GTSModel         interface{}       // representation of this object if it's already been converted into our internal gts model
-	ReceivingAccount *gtsmodel.Account // which account owns the inbox that this activity was posted to?
+	APObjectType     string
+	APActivityType   string
+	APIri            *url.URL
+	APObjectModel    interface{}       // Optional AP model of the Object of the Activity. Should be Accountable or Statusable.
+	GTSModel         interface{}       // Optional GTS model of the Activity or Object.
+	ReceivingAccount *gtsmodel.Account // Local account which owns the inbox that this Activity was posted to.
 }

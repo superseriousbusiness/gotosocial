@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -57,7 +57,7 @@ func (p *Processor) StatusGet(ctx context.Context, requestedUsername string, req
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	data, err := streams.Serialize(asStatus)
+	data, err := ap.Serialize(asStatus)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -105,7 +105,7 @@ func (p *Processor) StatusRepliesGet(ctx context.Context, requestedUsername stri
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 
-		data, err = streams.Serialize(collection)
+		data, err = ap.Serialize(collection)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -117,7 +117,7 @@ func (p *Processor) StatusRepliesGet(ctx context.Context, requestedUsername stri
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 		// but only return the first page
-		data, err = streams.Serialize(collection.GetActivityStreamsFirst().GetActivityStreamsCollectionPage())
+		data, err = ap.Serialize(collection.GetActivityStreamsFirst().GetActivityStreamsCollectionPage())
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -166,7 +166,7 @@ func (p *Processor) StatusRepliesGet(ctx context.Context, requestedUsername stri
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
-		data, err = streams.Serialize(repliesPage)
+		data, err = ap.Serialize(repliesPage)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}

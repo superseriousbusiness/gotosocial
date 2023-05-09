@@ -23,7 +23,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -37,7 +37,7 @@ func (suite *FollowersTestSuite) TestGetFollowers() {
 	f, err := suite.federatingDB.Followers(context.Background(), testrig.URLMustParse(testAccount.URI))
 	suite.NoError(err)
 
-	fi, err := streams.Serialize(f)
+	fi, err := ap.Serialize(f)
 	suite.NoError(err)
 
 	fJson, err := json.MarshalIndent(fi, "", "  ")

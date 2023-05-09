@@ -211,7 +211,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 	// dereference the remote account (or just get it
 	// from the db if we already have it).
 	requestingAccount, err := f.GetAccountByURI(
-		gtscontext.SetFastFail(ctx), username, publicKeyOwnerURI, false,
+		gtscontext.SetFastFail(ctx), username, publicKeyOwnerURI,
 	)
 	if err != nil {
 		if gtserror.StatusCode(err) == http.StatusGone {

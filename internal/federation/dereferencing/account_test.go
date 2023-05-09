@@ -41,7 +41,6 @@ func (suite *AccountTestSuite) TestDereferenceGroup() {
 		context.Background(),
 		fetchingAccount.Username,
 		groupURL,
-		false,
 	)
 	suite.NoError(err)
 	suite.NotNil(group)
@@ -66,7 +65,6 @@ func (suite *AccountTestSuite) TestDereferenceService() {
 		context.Background(),
 		fetchingAccount.Username,
 		serviceURL,
-		false,
 	)
 	suite.NoError(err)
 	suite.NotNil(service)
@@ -99,7 +97,6 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountAsRemoteURL() {
 		context.Background(),
 		fetchingAccount.Username,
 		testrig.URLMustParse(targetAccount.URI),
-		false,
 	)
 	suite.NoError(err)
 	suite.NotNil(fetchedAccount)
@@ -119,7 +116,6 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountAsRemoteURLNoSharedInb
 		context.Background(),
 		fetchingAccount.Username,
 		testrig.URLMustParse(targetAccount.URI),
-		false,
 	)
 	suite.NoError(err)
 	suite.NotNil(fetchedAccount)
@@ -134,7 +130,6 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountAsUsername() {
 		context.Background(),
 		fetchingAccount.Username,
 		testrig.URLMustParse(targetAccount.URI),
-		false,
 	)
 	suite.NoError(err)
 	suite.NotNil(fetchedAccount)
@@ -149,7 +144,6 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountAsUsernameDomain() {
 		context.Background(),
 		fetchingAccount.Username,
 		testrig.URLMustParse(targetAccount.URI),
-		false,
 	)
 	suite.NoError(err)
 	suite.NotNil(fetchedAccount)
@@ -165,7 +159,6 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountAsUsernameDomainAndURL
 		fetchingAccount.Username,
 		targetAccount.Username,
 		config.GetHost(),
-		false,
 	)
 	suite.NoError(err)
 	suite.NotNil(fetchedAccount)
@@ -180,7 +173,6 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUsername() 
 		fetchingAccount.Username,
 		"thisaccountdoesnotexist",
 		config.GetHost(),
-		false,
 	)
 	var errNotRetrievable *dereferencing.ErrNotRetrievable
 	suite.ErrorAs(err, &errNotRetrievable)
@@ -196,7 +188,6 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUsernameDom
 		fetchingAccount.Username,
 		"thisaccountdoesnotexist",
 		"localhost:8080",
-		false,
 	)
 	var errNotRetrievable *dereferencing.ErrNotRetrievable
 	suite.ErrorAs(err, &errNotRetrievable)
@@ -211,7 +202,6 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUserURI() {
 		context.Background(),
 		fetchingAccount.Username,
 		testrig.URLMustParse("http://localhost:8080/users/thisaccountdoesnotexist"),
-		false,
 	)
 	var errNotRetrievable *dereferencing.ErrNotRetrievable
 	suite.ErrorAs(err, &errNotRetrievable)

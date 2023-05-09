@@ -160,6 +160,8 @@ import (
 	typeticketdependency "github.com/superseriousbusiness/activity/streams/impl/forgefed/type_ticketdependency"
 	propertyid "github.com/superseriousbusiness/activity/streams/impl/jsonld/property_id"
 	propertytype "github.com/superseriousbusiness/activity/streams/impl/jsonld/property_type"
+	propertyvalue "github.com/superseriousbusiness/activity/streams/impl/schema/property_value"
+	typepropertyvalue "github.com/superseriousbusiness/activity/streams/impl/schema/type_propertyvalue"
 	propertyblurhash "github.com/superseriousbusiness/activity/streams/impl/toot/property_blurhash"
 	propertydiscoverable "github.com/superseriousbusiness/activity/streams/impl/toot/property_discoverable"
 	propertyfeatured "github.com/superseriousbusiness/activity/streams/impl/toot/property_featured"
@@ -1693,6 +1695,18 @@ func (this Manager) DeserializeProfileActivityStreams() func(map[string]interfac
 	}
 }
 
+// DeserializePropertyValueSchema returns the deserialization method for the
+// "SchemaPropertyValue" non-functional property in the vocabulary "Schema"
+func (this Manager) DeserializePropertyValueSchema() func(map[string]interface{}, map[string]string) (vocab.SchemaPropertyValue, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.SchemaPropertyValue, error) {
+		i, err := typepropertyvalue.DeserializePropertyValue(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
 // DeserializePublicKeyPemPropertyW3IDSecurityV1 returns the deserialization
 // method for the "W3IDSecurityV1PublicKeyPemProperty" non-functional property
 // in the vocabulary "W3IDSecurityV1"
@@ -2304,6 +2318,18 @@ func (this Manager) DeserializeUpdatedPropertyActivityStreams() func(map[string]
 func (this Manager) DeserializeUrlPropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsUrlProperty, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsUrlProperty, error) {
 		i, err := propertyurl.DeserializeUrlProperty(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeValuePropertySchema returns the deserialization method for the
+// "SchemaValueProperty" non-functional property in the vocabulary "Schema"
+func (this Manager) DeserializeValuePropertySchema() func(map[string]interface{}, map[string]string) (vocab.SchemaValueProperty, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.SchemaValueProperty, error) {
+		i, err := propertyvalue.DeserializeValueProperty(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}

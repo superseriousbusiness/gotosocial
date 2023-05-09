@@ -59,11 +59,11 @@ type federatingActor struct {
 // implements the pub.FederatingActor interface.
 func newFederatingActor(c pub.CommonBehavior, s2s pub.FederatingProtocol, db pub.Database, clock pub.Clock) pub.FederatingActor {
 	sideEffectActor := pub.NewSideEffectActor(c, s2s, nil, db, clock)
-	customActor := pub.NewCustomActor(sideEffectActor, false, true, clock)
+	sideEffectActor.Serialize = ap.Serialize // hook in our own custom Serialize function
 
 	return &federatingActor{
 		sideEffectActor: sideEffectActor,
-		wrapped:         customActor,
+		wrapped:         pub.NewCustomActor(sideEffectActor, false, true, clock),
 	}
 }
 
@@ -165,7 +165,8 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 	// If activity Object is a Statusable, we'll want to replace the
 	// parsed `content` value with the value from the raw JSON instead.
 	// See https://github.com/superseriousbusiness/gotosocial/issues/1661
-	ap.NormalizeActivityObject(activity, rawActivity)
+	// Likewise, if it's an Accountable, we'll normalize some fields on it.
+	ap.NormalizeIncomingActivityObject(activity, rawActivity)
 
 	// Allow server implementations to set context data with a hook.
 	ctx, err = f.sideEffectActor.PostInboxRequestBodyHook(ctx, r, activity)

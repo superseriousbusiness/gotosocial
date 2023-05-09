@@ -137,6 +137,9 @@ var ActivityStreamsPlaceName string = "Place"
 // ActivityStreamsProfileName is the string literal of the name for the Profile type in the ActivityStreams vocabulary.
 var ActivityStreamsProfileName string = "Profile"
 
+// SchemaPropertyValueName is the string literal of the name for the PropertyValue type in the Schema vocabulary.
+var SchemaPropertyValueName string = "PropertyValue"
+
 // W3IDSecurityV1PublicKeyName is the string literal of the name for the PublicKey type in the W3IDSecurityV1 vocabulary.
 var W3IDSecurityV1PublicKeyName string = "PublicKey"
 
@@ -508,6 +511,9 @@ var ActivityStreamsUpdatedPropertyName string = "updated"
 
 // ActivityStreamsUrlPropertyName is the string literal of the name for the url property in the ActivityStreams vocabulary.
 var ActivityStreamsUrlPropertyName string = "url"
+
+// SchemaValuePropertyName is the string literal of the name for the value property in the Schema vocabulary.
+var SchemaValuePropertyName string = "value"
 
 // TootVotersCountPropertyName is the string literal of the name for the votersCount property in the Toot vocabulary.
 var TootVotersCountPropertyName string = "votersCount"

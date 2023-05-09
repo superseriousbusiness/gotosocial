@@ -30,6 +30,7 @@ type Accountable interface {
 	WithName
 	WithImage
 	WithSummary
+	WithAttachment
 	WithSetSummary
 	WithDiscoverable
 	WithURL

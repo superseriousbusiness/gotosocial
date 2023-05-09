@@ -24,7 +24,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
@@ -96,44 +96,28 @@ func (suite *ValidationTestSuite) TestValidateUsername() {
 	var err error
 
 	err = validate.Username(empty)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("no username provided"), err)
-	}
+	suite.EqualError(err, "no username provided")
 
 	err = validate.Username(tooLong)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", tooLong), err)
-	}
+	suite.EqualError(err, fmt.Sprintf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", tooLong))
 
 	err = validate.Username(withSpaces)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", withSpaces), err)
-	}
+	suite.EqualError(err, fmt.Sprintf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", withSpaces))
 
 	err = validate.Username(weirdChars)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", weirdChars), err)
-	}
+	suite.EqualError(err, fmt.Sprintf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", weirdChars))
 
 	err = validate.Username(leadingSpace)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", leadingSpace), err)
-	}
+	suite.EqualError(err, fmt.Sprintf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", leadingSpace))
 
 	err = validate.Username(trailingSpace)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", trailingSpace), err)
-	}
+	suite.EqualError(err, fmt.Sprintf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", trailingSpace))
 
 	err = validate.Username(newlines)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", newlines), err)
-	}
+	suite.EqualError(err, fmt.Sprintf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", newlines))
 
 	err = validate.Username(goodUsername)
-	if assert.NoError(suite.T(), err) {
-		assert.Equal(suite.T(), nil, err)
-	}
+	suite.NoError(err)
 }
 
 func (suite *ValidationTestSuite) TestValidateEmail() {
@@ -284,37 +268,34 @@ func (suite *ValidationTestSuite) TestValidateReason() {
 	}
 }
 
-func (suite *ValidationTestSuite) TestValidateProfileFieldsCount() {
-	noFields := []model.UpdateField{}
-	fewFields := []model.UpdateField{{}, {}}
-	tooManyFields := []model.UpdateField{{}, {}, {}, {}, {}}
-	err := validate.ProfileFieldsCount(tooManyFields)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("cannot have more than 4 profile fields"), err)
-	}
-
-	err = validate.ProfileFieldsCount(noFields)
-	assert.NoError(suite.T(), err)
-
-	err = validate.ProfileFieldsCount(fewFields)
-	assert.NoError(suite.T(), err)
-}
-
 func (suite *ValidationTestSuite) TestValidateProfileField() {
-	shortProfileField := "pronouns"
-	tooLongProfileField := "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer eu bibendum elit. Sed ac interdum nisi. Vestibulum vulputate eros quis euismod imperdiet. Nulla sit amet dui sit amet lorem consectetur iaculis. Mauris eget lacinia metus. Curabitur nec dui eleifend massa nunc."
-	trimmedProfileField := "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer eu bibendum elit. Sed ac interdum nisi. Vestibulum vulputate eros quis euismod imperdiet. Nulla sit amet dui sit amet lorem consectetur iaculis. Mauris eget lacinia metus. Curabitur nec dui "
+	var (
+		shortProfileField   = "pronouns"
+		tooLongProfileField = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer eu bibendum elit. Sed ac interdum nisi. Vestibulum vulputate eros quis euismod imperdiet. Nulla sit amet dui sit amet lorem consectetur iaculis. Mauris eget lacinia metus. Curabitur nec dui eleifend massa nunc."
+		trimmedProfileField = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer eu bibendum elit. Sed ac interdum nisi. Vestibulum vulputate eros quis euismod imperdiet. Nulla sit amet dui sit amet lorem consectetur iaculis. Mauris eget lacinia metus. Curabitur nec dui "
+		err                 error
+	)
 
-	validated := validate.ProfileField(&shortProfileField)
-	assert.Equal(suite.T(), shortProfileField, validated)
+	okFields := []*gtsmodel.Field{
+		{
+			Name:  "example",
+			Value: shortProfileField,
+		},
+	}
+	err = validate.ProfileFields(okFields)
+	suite.NoError(err)
+	suite.Equal(shortProfileField, okFields[0].Value)
 
-	validated = validate.ProfileField(&tooLongProfileField)
-	assert.Len(suite.T(), validated, 255)
-	assert.Equal(suite.T(), trimmedProfileField, validated)
-
-	validated = validate.ProfileField(&trimmedProfileField)
-	assert.Len(suite.T(), validated, 255)
-	assert.Equal(suite.T(), trimmedProfileField, validated)
+	dodgyFields := []*gtsmodel.Field{
+		{
+			Name:  "example",
+			Value: tooLongProfileField,
+		},
+	}
+	err = validate.ProfileFields(dodgyFields)
+	suite.NoError(err)
+	suite.Equal(trimmedProfileField, dodgyFields[0].Value)
+	suite.Len(dodgyFields[0].Value, 255)
 }
 
 func TestValidationTestSuite(t *testing.T) {

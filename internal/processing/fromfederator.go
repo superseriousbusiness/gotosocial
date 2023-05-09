@@ -145,7 +145,7 @@ func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federa
 		status.Account = a
 	}
 
-	// do a BLOCKING get of the remote account to make sure the avi and header are cached
+	// Get the remote account to make sure the avi and header are cached.
 	if status.Account.Domain != "" {
 		remoteAccountID, err := url.Parse(status.Account.URI)
 		if err != nil {
@@ -155,7 +155,6 @@ func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federa
 		a, err := p.federator.GetAccountByURI(ctx,
 			federatorMsg.ReceivingAccount.Username,
 			remoteAccountID,
-			true,
 		)
 		if err != nil {
 			return err
@@ -187,7 +186,7 @@ func (p *Processor) processCreateFaveFromFederator(ctx context.Context, federato
 		incomingFave.Account = a
 	}
 
-	// do a BLOCKING get of the remote account to make sure the avi and header are cached
+	// Get the remote account to make sure the avi and header are cached.
 	if incomingFave.Account.Domain != "" {
 		remoteAccountID, err := url.Parse(incomingFave.Account.URI)
 		if err != nil {
@@ -197,7 +196,6 @@ func (p *Processor) processCreateFaveFromFederator(ctx context.Context, federato
 		a, err := p.federator.GetAccountByURI(ctx,
 			federatorMsg.ReceivingAccount.Username,
 			remoteAccountID,
-			true,
 		)
 		if err != nil {
 			return err
@@ -229,7 +227,7 @@ func (p *Processor) processCreateFollowRequestFromFederator(ctx context.Context,
 		followRequest.Account = a
 	}
 
-	// do a BLOCKING get of the remote account to make sure the avi and header are cached
+	// Get the remote account to make sure the avi and header are cached.
 	if followRequest.Account.Domain != "" {
 		remoteAccountID, err := url.Parse(followRequest.Account.URI)
 		if err != nil {
@@ -239,7 +237,6 @@ func (p *Processor) processCreateFollowRequestFromFederator(ctx context.Context,
 		a, err := p.federator.GetAccountByURI(ctx,
 			federatorMsg.ReceivingAccount.Username,
 			remoteAccountID,
-			true,
 		)
 		if err != nil {
 			return err
@@ -290,7 +287,7 @@ func (p *Processor) processCreateAnnounceFromFederator(ctx context.Context, fede
 		incomingAnnounce.Account = a
 	}
 
-	// do a BLOCKING get of the remote account to make sure the avi and header are cached
+	// Get the remote account to make sure the avi and header are cached.
 	if incomingAnnounce.Account.Domain != "" {
 		remoteAccountID, err := url.Parse(incomingAnnounce.Account.URI)
 		if err != nil {
@@ -300,7 +297,6 @@ func (p *Processor) processCreateAnnounceFromFederator(ctx context.Context, fede
 		a, err := p.federator.GetAccountByURI(ctx,
 			federatorMsg.ReceivingAccount.Username,
 			remoteAccountID,
-			true,
 		)
 		if err != nil {
 			return err
@@ -370,16 +366,28 @@ func (p *Processor) processCreateFlagFromFederator(ctx context.Context, federato
 func (p *Processor) processUpdateAccountFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
 	incomingAccount, ok := federatorMsg.GTSModel.(*gtsmodel.Account)
 	if !ok {
-		return errors.New("profile was not parseable as *gtsmodel.Account")
+		return errors.New("*gtsmodel.Account was not parseable on update account message")
 	}
 
-	// Call UpdateAccount with force to reflect that
-	// we want to fetch new bio, avatar, header, etc.
-	if _, err := p.federator.UpdateAccount(ctx,
+	// Because this was an Update, the new AP Object should be set on the message.
+	incomingAccountable, ok := federatorMsg.APObjectModel.(ap.Accountable)
+	if !ok {
+		return errors.New("Accountable was not parseable on update account message")
+	}
+
+	// Call RefreshAccount to fetch up-to-date bio, avatar, header, etc.
+	updatedAccount, err := p.federator.RefreshAccount(
+		ctx,
 		federatorMsg.ReceivingAccount.Username,
+		incomingAccountable,
 		incomingAccount,
-		true,
-	); err != nil {
+	)
+	if err != nil {
+		return fmt.Errorf("error enriching updated account from federator: %s", err)
+	}
+
+	// RefreshAccount doesn't make DB update calls, so do that here.
+	if err := p.state.DB.UpdateAccount(ctx, updatedAccount); err != nil {
 		return fmt.Errorf("error enriching updated account from federator: %s", err)
 	}
 

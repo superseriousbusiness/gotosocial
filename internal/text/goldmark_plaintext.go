@@ -60,3 +60,41 @@ func (b *plaintextParser) CanInterruptParagraph() bool {
 func (b *plaintextParser) CanAcceptIndentedLine() bool {
 	return true
 }
+
+// plaintextParserNoParagraph implements goldmark.parser.BlockParser
+type plaintextParserNoParagraph struct{}
+
+var defaultPlaintextParserNoParagraph = &plaintextParserNoParagraph{}
+
+func newPlaintextParserNoParagraph() parser.BlockParser {
+	return defaultPlaintextParserNoParagraph
+}
+
+func (b *plaintextParserNoParagraph) Trigger() []byte {
+	return nil
+}
+
+func (b *plaintextParserNoParagraph) Open(parent ast.Node, reader text.Reader, pc parser.Context) (ast.Node, parser.State) {
+	_, segment := reader.PeekLine()
+	node := ast.NewDocument()
+	node.Lines().Append(segment)
+	reader.Advance(segment.Len() - 1)
+	return node, parser.NoChildren
+}
+
+func (b *plaintextParserNoParagraph) Continue(node ast.Node, reader text.Reader, pc parser.Context) parser.State {
+	_, segment := reader.PeekLine()
+	node.Lines().Append(segment)
+	reader.Advance(segment.Len() - 1)
+	return parser.Continue | parser.NoChildren
+}
+
+func (b *plaintextParserNoParagraph) Close(node ast.Node, reader text.Reader, pc parser.Context) {}
+
+func (b *plaintextParserNoParagraph) CanInterruptParagraph() bool {
+	return false
+}
+
+func (b *plaintextParserNoParagraph) CanAcceptIndentedLine() bool {
+	return true
+}

@@ -21,11 +21,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -43,7 +43,7 @@ func (suite *InternalToASTestSuite) TestAccountToAS() {
 	asPerson, err := suite.typeconverter.AccountToAS(context.Background(), testAccount)
 	suite.NoError(err)
 
-	ser, err := streams.Serialize(asPerson)
+	ser, err := ap.Serialize(asPerson)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -85,6 +85,107 @@ func (suite *InternalToASTestSuite) TestAccountToAS() {
 }`, trimmed)
 }
 
+func (suite *InternalToASTestSuite) TestAccountToASWithFields() {
+	testAccount := &gtsmodel.Account{}
+	*testAccount = *suite.testAccounts["local_account_2"]
+
+	asPerson, err := suite.typeconverter.AccountToAS(context.Background(), testAccount)
+	suite.NoError(err)
+
+	ser, err := ap.Serialize(asPerson)
+	suite.NoError(err)
+
+	bytes, err := json.MarshalIndent(ser, "", "  ")
+	suite.NoError(err)
+
+	// trim off everything up to 'attachment';
+	// this is necessary because the order of multiple 'context' entries is not determinate
+	trimmed := strings.Split(string(bytes), "\"attachment\"")[1]
+
+	fmt.Printf("\n\n\n%s\n\n\n", string(bytes))
+
+	suite.Equal(`: [
+    {
+      "name": "should you follow me?",
+      "type": "PropertyValue",
+      "value": "maybe!"
+    },
+    {
+      "name": "age",
+      "type": "PropertyValue",
+      "value": "120"
+    }
+  ],
+  "discoverable": false,
+  "featured": "http://localhost:8080/users/1happyturtle/collections/featured",
+  "followers": "http://localhost:8080/users/1happyturtle/followers",
+  "following": "http://localhost:8080/users/1happyturtle/following",
+  "id": "http://localhost:8080/users/1happyturtle",
+  "inbox": "http://localhost:8080/users/1happyturtle/inbox",
+  "manuallyApprovesFollowers": true,
+  "name": "happy little turtle :3",
+  "outbox": "http://localhost:8080/users/1happyturtle/outbox",
+  "preferredUsername": "1happyturtle",
+  "publicKey": {
+    "id": "http://localhost:8080/users/1happyturtle#main-key",
+    "owner": "http://localhost:8080/users/1happyturtle",
+    "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtTc6Jpg6LrRPhVQG4KLz\n2+YqEUUtZPd4YR+TKXuCnwEG9ZNGhgP046xa9h3EWzrZXaOhXvkUQgJuRqPrAcfN\nvc8jBHV2xrUeD8pu/MWKEabAsA/tgCv3nUC47HQ3/c12aHfYoPz3ufWsGGnrkhci\nv8PaveJ3LohO5vjCn1yZ00v6osMJMViEZvZQaazyE9A8FwraIexXabDpoy7tkHRg\nA1fvSkg4FeSG1XMcIz2NN7xyUuFACD+XkuOk7UqzRd4cjPUPLxiDwIsTlcgGOd3E\nUFMWVlPxSGjY2hIKa3lEHytaYK9IMYdSuyCsJshd3/yYC9LqxZY2KdlKJ80VOVyh\nyQIDAQAB\n-----END PUBLIC KEY-----\n"
+  },
+  "summary": "\u003cp\u003ei post about things that concern me\u003c/p\u003e",
+  "tag": [],
+  "type": "Person",
+  "url": "http://localhost:8080/@1happyturtle"
+}`, trimmed)
+}
+
+func (suite *InternalToASTestSuite) TestAccountToASWithOneField() {
+	testAccount := &gtsmodel.Account{}
+	*testAccount = *suite.testAccounts["local_account_2"]
+	testAccount.Fields = testAccount.Fields[0:1] // Take only one field.
+
+	asPerson, err := suite.typeconverter.AccountToAS(context.Background(), testAccount)
+	suite.NoError(err)
+
+	ser, err := ap.Serialize(asPerson)
+	suite.NoError(err)
+
+	bytes, err := json.MarshalIndent(ser, "", "  ")
+	suite.NoError(err)
+
+	// trim off everything up to 'attachment';
+	// this is necessary because the order of multiple 'context' entries is not determinate
+	trimmed := strings.Split(string(bytes), "\"attachment\"")[1]
+
+	// Despite only one field being set, attachments should still be a slice/array.
+	suite.Equal(`: [
+    {
+      "name": "should you follow me?",
+      "type": "PropertyValue",
+      "value": "maybe!"
+    }
+  ],
+  "discoverable": false,
+  "featured": "http://localhost:8080/users/1happyturtle/collections/featured",
+  "followers": "http://localhost:8080/users/1happyturtle/followers",
+  "following": "http://localhost:8080/users/1happyturtle/following",
+  "id": "http://localhost:8080/users/1happyturtle",
+  "inbox": "http://localhost:8080/users/1happyturtle/inbox",
+  "manuallyApprovesFollowers": true,
+  "name": "happy little turtle :3",
+  "outbox": "http://localhost:8080/users/1happyturtle/outbox",
+  "preferredUsername": "1happyturtle",
+  "publicKey": {
+    "id": "http://localhost:8080/users/1happyturtle#main-key",
+    "owner": "http://localhost:8080/users/1happyturtle",
+    "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtTc6Jpg6LrRPhVQG4KLz\n2+YqEUUtZPd4YR+TKXuCnwEG9ZNGhgP046xa9h3EWzrZXaOhXvkUQgJuRqPrAcfN\nvc8jBHV2xrUeD8pu/MWKEabAsA/tgCv3nUC47HQ3/c12aHfYoPz3ufWsGGnrkhci\nv8PaveJ3LohO5vjCn1yZ00v6osMJMViEZvZQaazyE9A8FwraIexXabDpoy7tkHRg\nA1fvSkg4FeSG1XMcIz2NN7xyUuFACD+XkuOk7UqzRd4cjPUPLxiDwIsTlcgGOd3E\nUFMWVlPxSGjY2hIKa3lEHytaYK9IMYdSuyCsJshd3/yYC9LqxZY2KdlKJ80VOVyh\nyQIDAQAB\n-----END PUBLIC KEY-----\n"
+  },
+  "summary": "\u003cp\u003ei post about things that concern me\u003c/p\u003e",
+  "tag": [],
+  "type": "Person",
+  "url": "http://localhost:8080/@1happyturtle"
+}`, trimmed)
+}
+
 func (suite *InternalToASTestSuite) TestAccountToASWithEmoji() {
 	testAccount := &gtsmodel.Account{}
 	*testAccount = *suite.testAccounts["local_account_1"] // take zork for this test
@@ -93,7 +194,7 @@ func (suite *InternalToASTestSuite) TestAccountToASWithEmoji() {
 	asPerson, err := suite.typeconverter.AccountToAS(context.Background(), testAccount)
 	suite.NoError(err)
 
-	ser, err := streams.Serialize(asPerson)
+	ser, err := ap.Serialize(asPerson)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -154,7 +255,7 @@ func (suite *InternalToASTestSuite) TestAccountToASWithSharedInbox() {
 	asPerson, err := suite.typeconverter.AccountToAS(context.Background(), testAccount)
 	suite.NoError(err)
 
-	ser, err := streams.Serialize(asPerson)
+	ser, err := ap.Serialize(asPerson)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -206,7 +307,7 @@ func (suite *InternalToASTestSuite) TestOutboxToASCollection() {
 	collection, err := suite.typeconverter.OutboxToASCollection(ctx, testAccount.OutboxURI)
 	suite.NoError(err)
 
-	ser, err := streams.Serialize(collection)
+	ser, err := ap.Serialize(collection)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -227,7 +328,7 @@ func (suite *InternalToASTestSuite) TestStatusToAS() {
 	asStatus, err := suite.typeconverter.StatusToAS(ctx, testStatus)
 	suite.NoError(err)
 
-	ser, err := streams.Serialize(asStatus)
+	ser, err := ap.Serialize(asStatus)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -268,7 +369,7 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASWithIDs() {
 	asStatus, err := suite.typeconverter.StatusToAS(ctx, testStatus)
 	suite.NoError(err)
 
-	ser, err := streams.Serialize(asStatus)
+	ser, err := ap.Serialize(asStatus)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -328,7 +429,7 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASFromDB() {
 	asStatus, err := suite.typeconverter.StatusToAS(ctx, testStatus)
 	suite.NoError(err)
 
-	ser, err := streams.Serialize(asStatus)
+	ser, err := ap.Serialize(asStatus)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -389,7 +490,7 @@ func (suite *InternalToASTestSuite) TestStatusToASWithMentions() {
 	asStatus, err := suite.typeconverter.StatusToAS(ctx, testStatus)
 	suite.NoError(err)
 
-	ser, err := streams.Serialize(asStatus)
+	ser, err := ap.Serialize(asStatus)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -437,7 +538,7 @@ func (suite *InternalToASTestSuite) TestStatusToASDeletePublicReply() {
 	asDelete, err := suite.typeconverter.StatusToASDelete(ctx, testStatus)
 	suite.NoError(err)
 
-	ser, err := streams.Serialize(asDelete)
+	ser, err := ap.Serialize(asDelete)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -475,7 +576,7 @@ func (suite *InternalToASTestSuite) TestStatusToASDeletePublicReplyOriginalDelet
 	asDelete, err := suite.typeconverter.StatusToASDelete(ctx, testStatus)
 	suite.NoError(err)
 
-	ser, err := streams.Serialize(asDelete)
+	ser, err := ap.Serialize(asDelete)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -501,7 +602,7 @@ func (suite *InternalToASTestSuite) TestStatusToASDeletePublic() {
 	asDelete, err := suite.typeconverter.StatusToASDelete(ctx, testStatus)
 	suite.NoError(err)
 
-	ser, err := streams.Serialize(asDelete)
+	ser, err := ap.Serialize(asDelete)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -524,7 +625,7 @@ func (suite *InternalToASTestSuite) TestStatusToASDeleteDirectMessage() {
 	asDelete, err := suite.typeconverter.StatusToASDelete(ctx, testStatus)
 	suite.NoError(err)
 
-	ser, err := streams.Serialize(asDelete)
+	ser, err := ap.Serialize(asDelete)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -551,7 +652,7 @@ func (suite *InternalToASTestSuite) TestStatusesToASOutboxPage() {
 	page, err := suite.typeconverter.StatusesToASOutboxPage(ctx, testAccount.OutboxURI, "", "", statuses)
 	suite.NoError(err)
 
-	ser, err := streams.Serialize(page)
+	ser, err := ap.Serialize(page)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -604,7 +705,7 @@ func (suite *InternalToASTestSuite) TestSelfBoostFollowersOnlyToAS() {
 	asBoost, err := suite.typeconverter.BoostToAS(ctx, boostWrapperStatus, testAccount, testAccount)
 	suite.NoError(err)
 
-	ser, err := streams.Serialize(asBoost)
+	ser, err := ap.Serialize(asBoost)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -637,7 +738,7 @@ func (suite *InternalToASTestSuite) TestReportToAS() {
 	flag, err := suite.typeconverter.ReportToASFlag(ctx, testReport)
 	suite.NoError(err)
 
-	ser, err := streams.Serialize(flag)
+	ser, err := ap.Serialize(flag)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -670,7 +771,7 @@ func (suite *InternalToASTestSuite) TestPinnedStatusesToASSomeItems() {
 		suite.FailNow(err.Error())
 	}
 
-	ser, err := ap.SerializeOrderedCollection(collection)
+	ser, err := ap.Serialize(collection)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -702,7 +803,7 @@ func (suite *InternalToASTestSuite) TestPinnedStatusesToASNoItems() {
 		suite.FailNow(err.Error())
 	}
 
-	ser, err := ap.SerializeOrderedCollection(collection)
+	ser, err := ap.Serialize(collection)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -731,7 +832,7 @@ func (suite *InternalToASTestSuite) TestPinnedStatusesToASOneItem() {
 		suite.FailNow(err.Error())
 	}
 
-	ser, err := ap.SerializeOrderedCollection(collection)
+	ser, err := ap.Serialize(collection)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
