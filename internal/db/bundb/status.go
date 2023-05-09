@@ -27,6 +27,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -127,7 +128,10 @@ func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*g
 }
 
 func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) error {
-	var err error
+	var (
+		err  error
+		errs = make(gtserror.MultiError, 0, 9)
+	)
 
 	if status.Account == nil {
 		// Status author is not set, fetch from database.
@@ -136,7 +140,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 			status.AccountID,
 		)
 		if err != nil {
-			return fmt.Errorf("error populating status author: %w", err)
+			errs.Append(fmt.Errorf("error populating status author: %w", err))
 		}
 	}
 
@@ -147,7 +151,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 			status.InReplyToID,
 		)
 		if err != nil {
-			return fmt.Errorf("error populating status parent: %w", err)
+			errs.Append(fmt.Errorf("error populating status parent: %w", err))
 		}
 	}
 
@@ -159,7 +163,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 				status.InReplyToID,
 			)
 			if err != nil {
-				return fmt.Errorf("error populating status parent: %w", err)
+				errs.Append(fmt.Errorf("error populating status parent: %w", err))
 			}
 		}
 
@@ -170,7 +174,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 				status.InReplyToAccountID,
 			)
 			if err != nil {
-				return fmt.Errorf("error populating status parent author: %w", err)
+				errs.Append(fmt.Errorf("error populating status parent author: %w", err))
 			}
 		}
 	}
@@ -183,7 +187,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 				status.BoostOfID,
 			)
 			if err != nil {
-				return fmt.Errorf("error populating status boost: %w", err)
+				errs.Append(fmt.Errorf("error populating status boost: %w", err))
 			}
 		}
 
@@ -194,7 +198,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 				status.BoostOfAccountID,
 			)
 			if err != nil {
-				return fmt.Errorf("error populating status boost author: %w", err)
+				errs.Append(fmt.Errorf("error populating status boost author: %w", err))
 			}
 		}
 	}
@@ -206,7 +210,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 			status.AttachmentIDs,
 		)
 		if err != nil {
-			return fmt.Errorf("error populating status attachments: %w", err)
+			errs.Append(fmt.Errorf("error populating status attachments: %w", err))
 		}
 	}
 
@@ -221,7 +225,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 			status.MentionIDs,
 		)
 		if err != nil {
-			return fmt.Errorf("error populating status mentions: %w", err)
+			errs.Append(fmt.Errorf("error populating status mentions: %w", err))
 		}
 	}
 
@@ -232,11 +236,11 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 			status.EmojiIDs,
 		)
 		if err != nil {
-			return fmt.Errorf("error populating status emojis: %w", err)
+			errs.Append(fmt.Errorf("error populating status emojis: %w", err))
 		}
 	}
 
-	return nil
+	return errs.Combine()
 }
 
 func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Error {
