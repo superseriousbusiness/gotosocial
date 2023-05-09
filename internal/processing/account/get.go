@@ -28,16 +28,17 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // Get processes the given request for account information.
 func (p *Processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Account, gtserror.WithCode) {
 	targetAccount, err := p.state.DB.GetAccountByID(ctx, targetAccountID)
 	if err != nil {
-		if err == db.ErrNoEntries {
+		if errors.Is(err, db.ErrNoEntries) {
 			return nil, gtserror.NewErrorNotFound(errors.New("account not found"))
 		}
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error: %s", err))
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error: %w", err))
 	}
 
 	return p.getFor(ctx, requestingAccount, targetAccount)
@@ -47,10 +48,10 @@ func (p *Processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account
 func (p *Processor) GetLocalByUsername(ctx context.Context, requestingAccount *gtsmodel.Account, username string) (*apimodel.Account, gtserror.WithCode) {
 	targetAccount, err := p.state.DB.GetAccountByUsernameDomain(ctx, username, "")
 	if err != nil {
-		if err == db.ErrNoEntries {
+		if errors.Is(err, db.ErrNoEntries) {
 			return nil, gtserror.NewErrorNotFound(errors.New("account not found"))
 		}
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error: %s", err))
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error: %w", err))
 	}
 
 	return p.getFor(ctx, requestingAccount, targetAccount)
@@ -60,63 +61,58 @@ func (p *Processor) GetLocalByUsername(ctx context.Context, requestingAccount *g
 func (p *Processor) GetCustomCSSForUsername(ctx context.Context, username string) (string, gtserror.WithCode) {
 	customCSS, err := p.state.DB.GetAccountCustomCSSByUsername(ctx, username)
 	if err != nil {
-		if err == db.ErrNoEntries {
+		if errors.Is(err, db.ErrNoEntries) {
 			return "", gtserror.NewErrorNotFound(errors.New("account not found"))
 		}
-		return "", gtserror.NewErrorInternalError(fmt.Errorf("db error: %s", err))
+		return "", gtserror.NewErrorInternalError(fmt.Errorf("db error: %w", err))
 	}
 
 	return customCSS, nil
 }
 
 func (p *Processor) getFor(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (*apimodel.Account, gtserror.WithCode) {
-	var blocked bool
 	var err error
+
 	if requestingAccount != nil {
-		blocked, err = p.state.DB.IsEitherBlocked(ctx, requestingAccount.ID, targetAccount.ID)
+		blocked, err := p.state.DB.IsEitherBlocked(ctx, requestingAccount.ID, targetAccount.ID)
 		if err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking account block: %s", err))
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking account block: %w", err))
+		}
+
+		if blocked {
+			apiAccount, err := p.tc.AccountToAPIAccountBlocked(ctx, targetAccount)
+			if err != nil {
+				return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting account: %w", err))
+			}
+			return apiAccount, nil
 		}
 	}
 
-	if blocked {
-		apiAccount, err := p.tc.AccountToAPIAccountBlocked(ctx, targetAccount)
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting account: %s", err))
-		}
-		return apiAccount, nil
-	}
-
-	if requestingAccount != nil {
-		// Ensure the account is up-to-date.
-		p.federator.UpdateAccountAsync(ctx,
-			requestingAccount.Username,
-			targetAccount,
-			false,
-		)
-	}
-
-	// last-minute check to make sure we have remote account header/avi cached
 	if targetAccount.Domain != "" {
 		targetAccountURI, err := url.Parse(targetAccount.URI)
 		if err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error parsing url %s: %s", targetAccount.URI, err))
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error parsing url %s: %w", targetAccount.URI, err))
 		}
 
-		a, err := p.federator.GetAccountByURI(gtscontext.SetFastFail(ctx), requestingAccount.Username, targetAccountURI)
-		if err == nil {
-			targetAccount = a
+		// Perform a last-minute fetch of target account to ensure remote account header / avatar is cached.
+		latest, err := p.federator.GetAccountByURI(gtscontext.SetFastFail(ctx), requestingAccount.Username, targetAccountURI)
+		if err != nil {
+			log.Errorf(ctx, "error fetching latest target account: %v", err)
+		} else {
+			// Use latest account model.
+			targetAccount = latest
 		}
 	}
 
 	var apiAccount *apimodel.Account
+
 	if requestingAccount != nil && targetAccount.ID == requestingAccount.ID {
 		apiAccount, err = p.tc.AccountToAPIAccountSensitive(ctx, targetAccount)
 	} else {
 		apiAccount, err = p.tc.AccountToAPIAccountPublic(ctx, targetAccount)
 	}
 	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting account: %s", err))
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting account: %w", err))
 	}
 
 	return apiAccount, nil

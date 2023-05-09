@@ -245,8 +245,10 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		info.Extension,
 	)
 	p.media.File.ContentType = info.MIME.Value
-	cached := true
-	p.media.Cached = &cached
+	p.media.Cached = func() *bool {
+		ok := true
+		return &ok
+	}()
 
 	return nil
 }

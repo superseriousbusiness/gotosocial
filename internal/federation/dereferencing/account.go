@@ -142,7 +142,7 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 		domain = ""
 	}
 
-	// Search the database for existing account with USERNAME@DOMAIN
+	// Search the database for existing account with USERNAME@DOMAIN.
 	account, err := d.state.DB.GetAccountByUsernameDomain(ctx, username, domain)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, fmt.Errorf("GetAccountByUsernameDomain: error checking database for account %s@%s: %w", username, domain, err)
@@ -194,8 +194,8 @@ func (d *deref) UpdateAccount(ctx context.Context, requestUser string, account *
 		return account, nil
 	}
 
-	if !account.CreatedAt.IsZero() && account.IsInstance() {
-		// Existing instance account. No need for update.
+	if account.IsInstance() {
+		// No need to update instance.
 		return account, nil
 	}
 
@@ -243,8 +243,8 @@ func (d *deref) UpdateAccountAsync(ctx context.Context, requestUser string, acco
 		return
 	}
 
-	if !account.CreatedAt.IsZero() && account.IsInstance() {
-		// Existing instance account. No need for update.
+	if account.IsInstance() {
+		// No need to update instance.
 		return
 	}
 
@@ -303,7 +303,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 					return nil, nil, fmt.Errorf("enrichAccount: db err looking for account again after webfinger: %w", err)
 				}
 
-				if err == nil {
+				if alreadyAccount != nil {
 					// Enrich existing account.
 					account = alreadyAccount
 				}
@@ -396,7 +396,8 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	latestAcc.AvatarMediaAttachmentID = account.AvatarMediaAttachmentID
 	latestAcc.HeaderMediaAttachmentID = account.HeaderMediaAttachmentID
 
-	if force || (latestAcc.AvatarRemoteURL != account.AvatarRemoteURL) {
+	if (latestAcc.AvatarMediaAttachmentID == "") ||
+		(latestAcc.AvatarRemoteURL != account.AvatarRemoteURL) {
 		// Reset the avatar media ID (handles removed).
 		latestAcc.AvatarMediaAttachmentID = ""
 
@@ -417,7 +418,8 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		}
 	}
 
-	if force || (latestAcc.HeaderRemoteURL != account.HeaderRemoteURL) {
+	if (latestAcc.HeaderMediaAttachmentID == "") ||
+		(latestAcc.HeaderRemoteURL != account.HeaderRemoteURL) {
 		// Reset the header media ID (handles removed).
 		latestAcc.HeaderMediaAttachmentID = ""
 
@@ -731,10 +733,9 @@ func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gts
 	return changed, nil
 }
 
-// fetchRemoteAccountFeatured dereferences an account's featuredCollectionURI (if not empty).
+// dereferenceAccountFeatured dereferences an account's featuredCollectionURI (if not empty).
 // For each discovered status, this status will be dereferenced (if necessary) and marked as
 // pinned (if necessary). Then, old pins will be removed if they're not included in new pins.
-
 func (d *deref) dereferenceAccountFeatured(ctx context.Context, requestUser string, account *gtsmodel.Account) error {
 	uri, err := url.Parse(account.FeaturedCollectionURI)
 	if err != nil {
