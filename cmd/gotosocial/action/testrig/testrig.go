@@ -40,6 +40,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/tracing"
 	"github.com/superseriousbusiness/gotosocial/internal/web"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -50,6 +51,10 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
+
+	if err := tracing.Initialize(); err != nil {
+		return fmt.Errorf("error initializing tracing: %w", err)
+	}
 
 	// Initialize caches
 	state.Caches.Init()
@@ -93,14 +98,21 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	*/
 
 	router := testrig.NewTestRouter(state.DB)
-
-	// attach global middlewares which are used for every request
-	router.AttachGlobalMiddleware(
+	middlewares := []gin.HandlerFunc{
+		middleware.AddRequestID(config.GetRequestIDHeader()), // requestID middleware must run before tracing
+	}
+	if config.GetTracingEnabled() {
+		middlewares = append(middlewares, tracing.InstrumentGin())
+	}
+	middlewares = append(middlewares, []gin.HandlerFunc{
 		middleware.Logger(),
 		middleware.UserAgent(),
 		middleware.CORS(),
 		middleware.ExtraHeaders(),
-	)
+	}...)
+
+	// attach global middlewares which are used for every request
+	router.AttachGlobalMiddleware(middlewares...)
 
 	// attach global no route / 404 handler to the router
 	router.AttachNoRouteHandler(func(c *gin.Context) {

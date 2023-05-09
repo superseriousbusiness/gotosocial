@@ -32,6 +32,7 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
+	"github.com/superseriousbusiness/gotosocial/internal/tracing"
 	"go.uber.org/automaxprocs/maxprocs"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -69,6 +70,12 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	state.Caches.Init()
 	state.Caches.Start()
 	defer state.Caches.Stop()
+
+	// Initialize Tracing
+
+	if err := tracing.Initialize(); err != nil {
+		return fmt.Errorf("error initializing tracing: %w", err)
+	}
 
 	// Open connection to the database
 	dbService, err := bundb.NewBunDBService(ctx, &state)
@@ -146,16 +153,23 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating router: %s", err)
 	}
 
-	// attach global middlewares which are used for every request
-	router.AttachGlobalMiddleware(
-		middleware.AddRequestID(config.GetRequestIDHeader()),
+	middlewares := []gin.HandlerFunc{
+		middleware.AddRequestID(config.GetRequestIDHeader()), // requestID middleware must run before tracing
+	}
+	if config.GetTracingEnabled() {
+		middlewares = append(middlewares, tracing.InstrumentGin())
+	}
+	middlewares = append(middlewares, []gin.HandlerFunc{
 		// note: hooks adding ctx fields must be ABOVE
 		// the logger, otherwise won't be accessible.
 		middleware.Logger(),
 		middleware.UserAgent(),
 		middleware.CORS(),
 		middleware.ExtraHeaders(),
-	)
+	}...)
+
+	// attach global middlewares which are used for every request
+	router.AttachGlobalMiddleware(middlewares...)
 
 	// attach global no route / 404 handler to the router
 	router.AttachNoRouteHandler(func(c *gin.Context) {

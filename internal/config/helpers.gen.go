@@ -1799,6 +1799,106 @@ func GetOIDCAdminGroups() []string { return global.GetOIDCAdminGroups() }
 // SetOIDCAdminGroups safely sets the value for global configuration 'OIDCAdminGroups' field
 func SetOIDCAdminGroups(v []string) { global.SetOIDCAdminGroups(v) }
 
+// GetTracingEnabled safely fetches the Configuration value for state's 'TracingEnabled' field
+func (st *ConfigState) GetTracingEnabled() (v bool) {
+	st.mutex.Lock()
+	v = st.config.TracingEnabled
+	st.mutex.Unlock()
+	return
+}
+
+// SetTracingEnabled safely sets the Configuration value for state's 'TracingEnabled' field
+func (st *ConfigState) SetTracingEnabled(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.TracingEnabled = v
+	st.reloadToViper()
+}
+
+// TracingEnabledFlag returns the flag name for the 'TracingEnabled' field
+func TracingEnabledFlag() string { return "tracing-enabled" }
+
+// GetTracingEnabled safely fetches the value for global configuration 'TracingEnabled' field
+func GetTracingEnabled() bool { return global.GetTracingEnabled() }
+
+// SetTracingEnabled safely sets the value for global configuration 'TracingEnabled' field
+func SetTracingEnabled(v bool) { global.SetTracingEnabled(v) }
+
+// GetTracingTransport safely fetches the Configuration value for state's 'TracingTransport' field
+func (st *ConfigState) GetTracingTransport() (v string) {
+	st.mutex.Lock()
+	v = st.config.TracingTransport
+	st.mutex.Unlock()
+	return
+}
+
+// SetTracingTransport safely sets the Configuration value for state's 'TracingTransport' field
+func (st *ConfigState) SetTracingTransport(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.TracingTransport = v
+	st.reloadToViper()
+}
+
+// TracingTransportFlag returns the flag name for the 'TracingTransport' field
+func TracingTransportFlag() string { return "tracing-transport" }
+
+// GetTracingTransport safely fetches the value for global configuration 'TracingTransport' field
+func GetTracingTransport() string { return global.GetTracingTransport() }
+
+// SetTracingTransport safely sets the value for global configuration 'TracingTransport' field
+func SetTracingTransport(v string) { global.SetTracingTransport(v) }
+
+// GetTracingEndpoint safely fetches the Configuration value for state's 'TracingEndpoint' field
+func (st *ConfigState) GetTracingEndpoint() (v string) {
+	st.mutex.Lock()
+	v = st.config.TracingEndpoint
+	st.mutex.Unlock()
+	return
+}
+
+// SetTracingEndpoint safely sets the Configuration value for state's 'TracingEndpoint' field
+func (st *ConfigState) SetTracingEndpoint(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.TracingEndpoint = v
+	st.reloadToViper()
+}
+
+// TracingEndpointFlag returns the flag name for the 'TracingEndpoint' field
+func TracingEndpointFlag() string { return "tracing-endpoint" }
+
+// GetTracingEndpoint safely fetches the value for global configuration 'TracingEndpoint' field
+func GetTracingEndpoint() string { return global.GetTracingEndpoint() }
+
+// SetTracingEndpoint safely sets the value for global configuration 'TracingEndpoint' field
+func SetTracingEndpoint(v string) { global.SetTracingEndpoint(v) }
+
+// GetTracingInsecureTransport safely fetches the Configuration value for state's 'TracingInsecureTransport' field
+func (st *ConfigState) GetTracingInsecureTransport() (v bool) {
+	st.mutex.Lock()
+	v = st.config.TracingInsecureTransport
+	st.mutex.Unlock()
+	return
+}
+
+// SetTracingInsecureTransport safely sets the Configuration value for state's 'TracingInsecureTransport' field
+func (st *ConfigState) SetTracingInsecureTransport(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.TracingInsecureTransport = v
+	st.reloadToViper()
+}
+
+// TracingInsecureTransportFlag returns the flag name for the 'TracingInsecureTransport' field
+func TracingInsecureTransportFlag() string { return "tracing-insecure" }
+
+// GetTracingInsecureTransport safely fetches the value for global configuration 'TracingInsecureTransport' field
+func GetTracingInsecureTransport() bool { return global.GetTracingInsecureTransport() }
+
+// SetTracingInsecureTransport safely sets the value for global configuration 'TracingInsecureTransport' field
+func SetTracingInsecureTransport(v bool) { global.SetTracingInsecureTransport(v) }
+
 // GetSMTPHost safely fetches the Configuration value for state's 'SMTPHost' field
 func (st *ConfigState) GetSMTPHost() (v string) {
 	st.mutex.Lock()

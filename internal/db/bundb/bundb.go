@@ -42,6 +42,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/tracing"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
@@ -133,6 +134,10 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 
 	// Add database query hook
 	conn.DB.AddQueryHook(queryHook{})
+
+	if config.GetTracingEnabled() {
+		conn.DB.AddQueryHook(tracing.InstrumentBun())
+	}
 
 	// execute sqlite pragmas *after* adding database hook;
 	// this allows the pragma queries to be logged

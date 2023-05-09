@@ -109,6 +109,11 @@ var Defaults = Configuration{
 	SMTPFrom:               "GoToSocial",
 	SMTPDiscloseRecipients: false,
 
+	TracingEnabled:           false,
+	TracingTransport:         "grpc",
+	TracingEndpoint:          "",
+	TracingInsecureTransport: false,
+
 	SyslogEnabled:  false,
 	SyslogProtocol: "udp",
 	SyslogAddress:  "localhost:514",
