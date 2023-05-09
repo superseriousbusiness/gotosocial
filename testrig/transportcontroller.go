@@ -229,10 +229,6 @@ func (m *MockHTTPClient) DoSigned(req *http.Request, sign httpclient.SignFunc) (
 	return m.do(req)
 }
 
-func (m *MockHTTPClient) DoSigned(req *http.Request, sign httpclient.SignFunc) (*http.Response, error) {
-	return m.do(req)
-}
-
 func HostMetaResponse(req *http.Request) (responseCode int, responseBytes []byte, responseContentType string, responseContentLength int) {
 	var hm *apimodel.HostMeta
 
