@@ -270,7 +270,7 @@ func (p *Processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, 
 	return p.federator.GetAccountByURI(
 		gtscontext.SetFastFail(ctx),
 		authed.Account.Username,
-		uri, false,
+		uri,
 	)
 }
 
@@ -297,6 +297,6 @@ func (p *Processor) searchAccountByUsernameDomain(ctx context.Context, authed *o
 	return p.federator.GetAccountByUsernameDomain(
 		gtscontext.SetFastFail(ctx),
 		authed.Account.Username,
-		username, domain, false,
+		username, domain,
 	)
 }

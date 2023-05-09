@@ -96,7 +96,7 @@ func (p *Processor) getFor(ctx context.Context, requestingAccount *gtsmodel.Acco
 		}
 
 		a, err := p.federator.GetAccountByURI(
-			gtscontext.SetFastFail(ctx), requestingAccount.Username, targetAccountURI, true,
+			gtscontext.SetFastFail(ctx), requestingAccount.Username, targetAccountURI,
 		)
 		if err == nil {
 			targetAccount = a

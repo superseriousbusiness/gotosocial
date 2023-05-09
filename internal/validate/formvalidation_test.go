@@ -24,7 +24,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
@@ -268,37 +268,34 @@ func (suite *ValidationTestSuite) TestValidateReason() {
 	}
 }
 
-func (suite *ValidationTestSuite) TestValidateProfileFieldsCount() {
-	noFields := []model.UpdateField{}
-	fewFields := []model.UpdateField{{}, {}}
-	tooManyFields := []model.UpdateField{{}, {}, {}, {}, {}}
-	err := validate.ProfileFieldsCount(tooManyFields)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("cannot have more than 4 profile fields"), err)
-	}
-
-	err = validate.ProfileFieldsCount(noFields)
-	assert.NoError(suite.T(), err)
-
-	err = validate.ProfileFieldsCount(fewFields)
-	assert.NoError(suite.T(), err)
-}
-
 func (suite *ValidationTestSuite) TestValidateProfileField() {
-	shortProfileField := "pronouns"
-	tooLongProfileField := "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer eu bibendum elit. Sed ac interdum nisi. Vestibulum vulputate eros quis euismod imperdiet. Nulla sit amet dui sit amet lorem consectetur iaculis. Mauris eget lacinia metus. Curabitur nec dui eleifend massa nunc."
-	trimmedProfileField := "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer eu bibendum elit. Sed ac interdum nisi. Vestibulum vulputate eros quis euismod imperdiet. Nulla sit amet dui sit amet lorem consectetur iaculis. Mauris eget lacinia metus. Curabitur nec dui "
+	var (
+		shortProfileField   = "pronouns"
+		tooLongProfileField = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer eu bibendum elit. Sed ac interdum nisi. Vestibulum vulputate eros quis euismod imperdiet. Nulla sit amet dui sit amet lorem consectetur iaculis. Mauris eget lacinia metus. Curabitur nec dui eleifend massa nunc."
+		trimmedProfileField = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer eu bibendum elit. Sed ac interdum nisi. Vestibulum vulputate eros quis euismod imperdiet. Nulla sit amet dui sit amet lorem consectetur iaculis. Mauris eget lacinia metus. Curabitur nec dui "
+		err                 error
+	)
 
-	validated := validate.ProfileField(&shortProfileField)
-	assert.Equal(suite.T(), shortProfileField, validated)
+	okFields := []*gtsmodel.Field{
+		{
+			Name:  "example",
+			Value: shortProfileField,
+		},
+	}
+	err = validate.ProfileFields(okFields)
+	suite.NoError(err)
+	suite.Equal(shortProfileField, okFields[0].Value)
 
-	validated = validate.ProfileField(&tooLongProfileField)
-	assert.Len(suite.T(), validated, 255)
-	assert.Equal(suite.T(), trimmedProfileField, validated)
-
-	validated = validate.ProfileField(&trimmedProfileField)
-	assert.Len(suite.T(), validated, 255)
-	assert.Equal(suite.T(), trimmedProfileField, validated)
+	dodgyFields := []*gtsmodel.Field{
+		{
+			Name:  "example",
+			Value: tooLongProfileField,
+		},
+	}
+	err = validate.ProfileFields(dodgyFields)
+	suite.NoError(err)
+	suite.Equal(trimmedProfileField, dodgyFields[0].Value)
+	suite.Len(dodgyFields[0].Value, 255)
 }
 
 func TestValidationTestSuite(t *testing.T) {

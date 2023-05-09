@@ -29,5 +29,5 @@ type Field struct {
 	Value string `json:"value"`
 	// If this field has been verified, when did this occur? (ISO 8601 Datetime).
 	// example: 2021-07-30T09:20:25+00:00
-	VerifiedAt string `json:"verified_at,omitempty"`
+	VerifiedAt *string `json:"verified_at"`
 }

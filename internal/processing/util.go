@@ -62,7 +62,6 @@ func GetParseMentionFunc(dbConn db.DB, federator federation.Federator) gtsmodel.
 				requestingUsername,
 				username,
 				domain,
-				false,
 			)
 			if err != nil {
 				return nil, fmt.Errorf("parseMentionFunc: error fetching account: %s", err)

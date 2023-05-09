@@ -86,7 +86,8 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 		acct.Emojis = emojis
 	}
 
-	// TODO: fields aka attachment array
+	// fields aka attachment array
+	acct.Fields = ap.ExtractFields(accountable)
 
 	// note aka summary
 	acct.Note = ap.ExtractSummary(accountable)

@@ -185,6 +185,10 @@ type privateManager interface {
 	// for the "ActivityStreamsProfile" non-functional property in the
 	// vocabulary "ActivityStreams"
 	DeserializeProfileActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsProfile, error)
+	// DeserializePropertyValueSchema returns the deserialization method for
+	// the "SchemaPropertyValue" non-functional property in the vocabulary
+	// "Schema"
+	DeserializePropertyValueSchema() func(map[string]interface{}, map[string]string) (vocab.SchemaPropertyValue, error)
 	// DeserializePushForgeFed returns the deserialization method for the
 	// "ForgeFedPush" non-functional property in the vocabulary "ForgeFed"
 	DeserializePushForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedPush, error)

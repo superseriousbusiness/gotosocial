@@ -148,6 +148,86 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithMarkdownNote() {
 	suite.Equal(expectedNote, dbAccount.Note)
 }
 
+func (suite *AccountUpdateTestSuite) TestAccountUpdateWithFields() {
+	testAccount := suite.testAccounts["local_account_1"]
+
+	updateFields := []apimodel.UpdateField{
+		{
+			Name:  func() *string { s := "favourite emoji"; return &s }(),
+			Value: func() *string { s := ":rainbow:"; return &s }(),
+		},
+		{
+			Name:  func() *string { s := "my website"; return &s }(),
+			Value: func() *string { s := "https://example.org"; return &s }(),
+		},
+	}
+
+	form := &apimodel.UpdateCredentialsRequest{
+		FieldsAttributes: &updateFields,
+	}
+
+	// should get no error from the update function, and an api model account returned
+	apiAccount, errWithCode := suite.accountProcessor.Update(context.Background(), testAccount, form)
+
+	// reset test account to avoid breaking other tests
+	testAccount.StatusContentType = "text/plain"
+	suite.NoError(errWithCode)
+	suite.NotNil(apiAccount)
+	suite.EqualValues([]apimodel.Field{
+		{
+			Name:       "favourite emoji",
+			Value:      ":rainbow:",
+			VerifiedAt: (*string)(nil),
+		},
+		{
+			Name:       "my website",
+			Value:      "<a href=\"https://example.org\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://example.org</a>",
+			VerifiedAt: (*string)(nil),
+		},
+	}, apiAccount.Fields)
+	suite.EqualValues([]apimodel.Field{
+		{
+			Name:       "favourite emoji",
+			Value:      ":rainbow:",
+			VerifiedAt: (*string)(nil),
+		},
+		{
+			Name:       "my website",
+			Value:      "https://example.org",
+			VerifiedAt: (*string)(nil),
+		},
+	}, apiAccount.Source.Fields)
+	suite.EqualValues([]apimodel.Emoji{
+		{
+			Shortcode:       "rainbow",
+			URL:             "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+			StaticURL:       "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+			VisibleInPicker: true,
+			Category:        "reactions",
+		},
+	}, apiAccount.Emojis)
+
+	// we should have an update in the client api channel
+	msg := <-suite.fromClientAPIChan
+	suite.Equal(ap.ActivityUpdate, msg.APActivityType)
+	suite.Equal(ap.ObjectProfile, msg.APObjectType)
+	suite.NotNil(msg.OriginAccount)
+	suite.Equal(testAccount.ID, msg.OriginAccount.ID)
+	suite.Nil(msg.TargetAccount)
+
+	// fields should be updated in the database as well
+	dbAccount, err := suite.db.GetAccountByID(context.Background(), testAccount.ID)
+	suite.NoError(err)
+	suite.Equal("favourite emoji", dbAccount.Fields[0].Name)
+	suite.Equal(":rainbow:", dbAccount.Fields[0].Value)
+	suite.Equal("my website", dbAccount.Fields[1].Name)
+	suite.Equal("<a href=\"https://example.org\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://example.org</a>", dbAccount.Fields[1].Value)
+	suite.Equal("favourite emoji", dbAccount.FieldsRaw[0].Name)
+	suite.Equal(":rainbow:", dbAccount.FieldsRaw[0].Value)
+	suite.Equal("my website", dbAccount.FieldsRaw[1].Name)
+	suite.Equal("https://example.org", dbAccount.FieldsRaw[1].Value)
+}
+
 func TestAccountUpdateTestSuite(t *testing.T) {
 	suite.Run(t, new(AccountUpdateTestSuite))
 }

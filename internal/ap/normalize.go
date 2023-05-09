@@ -22,14 +22,23 @@ import (
 	"github.com/superseriousbusiness/activity/streams"
 )
 
-// NormalizeActivityObject normalizes the 'object'.'content' field of the given Activity.
+/*
+	NORMALIZE INCOMING
+	The below functions should be called to normalize the content
+	of messages *COMING INTO* GoToSocial via the federation API,
+	either as the result of delivery from a remote instance to this
+	instance, or as a result of this instance doing an http call to
+	another instance to dereference something.
+*/
+
+// NormalizeIncomingActivityObject normalizes the 'object'.'content' field of the given Activity.
 //
 // The rawActivity map should the freshly deserialized json representation of the Activity.
 //
-// This function is a noop if the type passed in is anything except a Create with a Statusable as its Object.
-func NormalizeActivityObject(activity pub.Activity, rawJSON map[string]interface{}) {
-	if activity.GetTypeName() != ActivityCreate {
-		// Only interested in Create right now.
+// This function is a noop if the type passed in is anything except a Create or Update with a Statusable or Accountable as its Object.
+func NormalizeIncomingActivityObject(activity pub.Activity, rawJSON map[string]interface{}) {
+	if typeName := activity.GetTypeName(); typeName != ActivityCreate && typeName != ActivityUpdate {
+		// Only interested in Create or Update right now.
 		return
 	}
 
@@ -51,8 +60,8 @@ func NormalizeActivityObject(activity pub.Activity, rawJSON map[string]interface
 	}
 
 	// We now know length is 1 so get the first
-	// item from the iter.  We need this to be
-	// a Statusable if we're to continue.
+	// item from the iter. We need this to be
+	// a Statusable or Accountable if we're to continue.
 	i := createObject.At(0)
 	if i == nil {
 		// This is awkward.
@@ -65,38 +74,63 @@ func NormalizeActivityObject(activity pub.Activity, rawJSON map[string]interface
 		return
 	}
 
-	statusable, ok := t.(Statusable)
-	if !ok {
-		// Object is not Statusable;
-		// we're not interested.
-		return
-	}
+	switch t.GetTypeName() {
+	case ObjectArticle, ObjectDocument, ObjectImage, ObjectVideo, ObjectNote, ObjectPage, ObjectEvent, ObjectPlace, ObjectProfile:
+		statusable, ok := t.(Statusable)
+		if !ok {
+			// Object is not Statusable;
+			// we're not interested.
+			return
+		}
 
-	rawObject, ok := rawJSON["object"]
-	if !ok {
-		// No object in raw map.
-		return
-	}
+		rawObject, ok := rawJSON["object"]
+		if !ok {
+			// No object in raw map.
+			return
+		}
 
-	rawStatusableJSON, ok := rawObject.(map[string]interface{})
-	if !ok {
-		// Object wasn't a json object.
-		return
-	}
+		rawStatusableJSON, ok := rawObject.(map[string]interface{})
+		if !ok {
+			// Object wasn't a json object.
+			return
+		}
 
-	// Normalize everything we can on the statusable.
-	NormalizeContent(statusable, rawStatusableJSON)
-	NormalizeAttachments(statusable, rawStatusableJSON)
-	NormalizeSummary(statusable, rawStatusableJSON)
-	NormalizeName(statusable, rawStatusableJSON)
+		// Normalize everything we can on the statusable.
+		NormalizeIncomingContent(statusable, rawStatusableJSON)
+		NormalizeIncomingAttachments(statusable, rawStatusableJSON)
+		NormalizeIncomingSummary(statusable, rawStatusableJSON)
+		NormalizeIncomingName(statusable, rawStatusableJSON)
+	case ActorApplication, ActorGroup, ActorOrganization, ActorPerson, ActorService:
+		accountable, ok := t.(Accountable)
+		if !ok {
+			// Object is not Accountable;
+			// we're not interested.
+			return
+		}
+
+		rawObject, ok := rawJSON["object"]
+		if !ok {
+			// No object in raw map.
+			return
+		}
+
+		rawAccountableJSON, ok := rawObject.(map[string]interface{})
+		if !ok {
+			// Object wasn't a json object.
+			return
+		}
+
+		// Normalize everything we can on the accountable.
+		NormalizeIncomingSummary(accountable, rawAccountableJSON)
+	}
 }
 
-// NormalizeContent replaces the Content of the given item
+// NormalizeIncomingContent replaces the Content of the given item
 // with the raw 'content' value from the raw json object map.
 //
 // noop if there was no content in the json object map or the
 // content was not a plain string.
-func NormalizeContent(item WithSetContent, rawJSON map[string]interface{}) {
+func NormalizeIncomingContent(item WithSetContent, rawJSON map[string]interface{}) {
 	rawContent, ok := rawJSON["content"]
 	if !ok {
 		// No content in rawJSON.
@@ -118,13 +152,13 @@ func NormalizeContent(item WithSetContent, rawJSON map[string]interface{}) {
 	item.SetActivityStreamsContent(contentProp)
 }
 
-// NormalizeAttachments normalizes all attachments (if any) of the given
-// itm, replacing the 'name' (aka content warning) field of each attachment
+// NormalizeIncomingAttachments normalizes all attachments (if any) of the given
+// item, replacing the 'name' (aka content warning) field of each attachment
 // with the raw 'name' value from the raw json object map.
 //
 // noop if there are no attachments; noop if attachment is not a format
 // we can understand.
-func NormalizeAttachments(item WithAttachment, rawJSON map[string]interface{}) {
+func NormalizeIncomingAttachments(item WithAttachment, rawJSON map[string]interface{}) {
 	rawAttachments, ok := rawJSON["attachment"]
 	if !ok {
 		// No attachments in rawJSON.
@@ -173,16 +207,16 @@ func NormalizeAttachments(item WithAttachment, rawJSON map[string]interface{}) {
 			continue
 		}
 
-		NormalizeName(attachmentable, rawAttachment)
+		NormalizeIncomingName(attachmentable, rawAttachment)
 	}
 }
 
-// NormalizeSummary replaces the Summary of the given item
+// NormalizeIncomingSummary replaces the Summary of the given item
 // with the raw 'summary' value from the raw json object map.
 //
 // noop if there was no summary in the json object map or the
 // summary was not a plain string.
-func NormalizeSummary(item WithSetSummary, rawJSON map[string]interface{}) {
+func NormalizeIncomingSummary(item WithSetSummary, rawJSON map[string]interface{}) {
 	rawSummary, ok := rawJSON["summary"]
 	if !ok {
 		// No summary in rawJSON.
@@ -202,12 +236,12 @@ func NormalizeSummary(item WithSetSummary, rawJSON map[string]interface{}) {
 	item.SetActivityStreamsSummary(summaryProp)
 }
 
-// NormalizeName replaces the Name of the given item
+// NormalizeIncomingName replaces the Name of the given item
 // with the raw 'name' value from the raw json object map.
 //
 // noop if there was no name in the json object map or the
 // name was not a plain string.
-func NormalizeName(item WithSetName, rawJSON map[string]interface{}) {
+func NormalizeIncomingName(item WithSetName, rawJSON map[string]interface{}) {
 	rawName, ok := rawJSON["name"]
 	if !ok {
 		// No name in rawJSON.

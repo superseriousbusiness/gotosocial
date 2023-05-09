@@ -158,6 +158,8 @@ import (
 	typerepository "github.com/superseriousbusiness/activity/streams/impl/forgefed/type_repository"
 	typeticket "github.com/superseriousbusiness/activity/streams/impl/forgefed/type_ticket"
 	typeticketdependency "github.com/superseriousbusiness/activity/streams/impl/forgefed/type_ticketdependency"
+	propertyvalue "github.com/superseriousbusiness/activity/streams/impl/schema/property_value"
+	typepropertyvalue "github.com/superseriousbusiness/activity/streams/impl/schema/type_propertyvalue"
 	propertyblurhash "github.com/superseriousbusiness/activity/streams/impl/toot/property_blurhash"
 	propertydiscoverable "github.com/superseriousbusiness/activity/streams/impl/toot/property_discoverable"
 	propertyfeatured "github.com/superseriousbusiness/activity/streams/impl/toot/property_featured"
@@ -340,6 +342,8 @@ func init() {
 	typerepository.SetManager(mgr)
 	typeticket.SetManager(mgr)
 	typeticketdependency.SetManager(mgr)
+	propertyvalue.SetManager(mgr)
+	typepropertyvalue.SetManager(mgr)
 	propertyblurhash.SetManager(mgr)
 	propertydiscoverable.SetManager(mgr)
 	propertyfeatured.SetManager(mgr)
@@ -413,6 +417,7 @@ func init() {
 	typerepository.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typeticket.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typeticketdependency.SetTypePropertyConstructor(NewJSONLDTypeProperty)
+	typepropertyvalue.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typeemoji.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typeidentityproof.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typepublickey.SetTypePropertyConstructor(NewJSONLDTypeProperty)

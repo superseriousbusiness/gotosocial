@@ -121,6 +121,8 @@ func NewJSONResolver(callbacks ...interface{}) (*JSONResolver, error) {
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsProfile) error:
 			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.SchemaPropertyValue) error:
+			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.W3IDSecurityV1PublicKey) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ForgeFedPush) error:
@@ -251,6 +253,13 @@ func (this JSONResolver) Resolve(ctx context.Context, m map[string]interface{}) 
 		}
 		if len(TootAlias) > 0 {
 			TootAlias += ":"
+		}
+		SchemaAlias, ok := aliasMap["https://schema.org"]
+		if !ok {
+			SchemaAlias = aliasMap["http://schema.org"]
+		}
+		if len(SchemaAlias) > 0 {
+			SchemaAlias += ":"
 		}
 		W3IDSecurityV1Alias, ok := aliasMap["https://w3id.org/security/v1"]
 		if !ok {
@@ -751,6 +760,17 @@ func (this JSONResolver) Resolve(ctx context.Context, m map[string]interface{}) 
 			}
 			for _, i := range this.callbacks {
 				if fn, ok := i.(func(context.Context, vocab.ActivityStreamsProfile) error); ok {
+					return fn(ctx, v)
+				}
+			}
+			return ErrNoCallbackMatch
+		} else if typeString == SchemaAlias+"PropertyValue" {
+			v, err := mgr.DeserializePropertyValueSchema()(m, aliasMap)
+			if err != nil {
+				return err
+			}
+			for _, i := range this.callbacks {
+				if fn, ok := i.(func(context.Context, vocab.SchemaPropertyValue) error); ok {
 					return fn(ctx, v)
 				}
 			}

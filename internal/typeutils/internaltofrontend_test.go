@@ -873,7 +873,18 @@ func (suite *InternalToFrontendTestSuite) TestReportToFrontend2() {
     "statuses_count": 7,
     "last_status_at": "2021-10-20T10:40:37.000Z",
     "emojis": [],
-    "fields": [],
+    "fields": [
+      {
+        "name": "should you follow me?",
+        "value": "maybe!",
+        "verified_at": null
+      },
+      {
+        "name": "age",
+        "value": "120",
+        "verified_at": null
+      }
+    ],
     "role": {
       "name": "user"
     }
@@ -977,7 +988,18 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
       "statuses_count": 7,
       "last_status_at": "2021-10-20T10:40:37.000Z",
       "emojis": [],
-      "fields": [],
+      "fields": [
+        {
+          "name": "should you follow me?",
+          "value": "maybe!",
+          "verified_at": null
+        },
+        {
+          "name": "age",
+          "value": "120",
+          "verified_at": null
+        }
+      ],
       "role": {
         "name": "user"
       }
@@ -1137,7 +1159,18 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
       "statuses_count": 7,
       "last_status_at": "2021-10-20T10:40:37.000Z",
       "emojis": [],
-      "fields": [],
+      "fields": [
+        {
+          "name": "should you follow me?",
+          "value": "maybe!",
+          "verified_at": null
+        },
+        {
+          "name": "age",
+          "value": "120",
+          "verified_at": null
+        }
+      ],
       "role": {
         "name": "user"
       }
