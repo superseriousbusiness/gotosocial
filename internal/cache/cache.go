@@ -65,8 +65,9 @@ func (c *Caches) Stop() {
 }
 
 // setuphooks sets necessary cache invalidation hooks between caches,
-// as an invalidation indicates a database UPDATE / DELETE. INSERT is
-// not handled by invalidation hooks and must be invalidated manually.
+// as an invalidation indicates a database INSERT / UPDATE / DELETE.
+// NOTE THEY ARE ONLY CALLED WHEN THE ITEM IS IN THE CACHE, SO FOR
+// HOOKS TO BE CALLED ON DELETE YOU MUST FIRST POPULATE IT IN THE CACHE.
 func (c *Caches) setuphooks() {
 	c.GTS.Account().SetInvalidateCallback(func(account *gtsmodel.Account) {
 		// Invalidate account ID cached visibility.
@@ -103,13 +104,18 @@ func (c *Caches) setuphooks() {
 		c.Visibility.Invalidate("ItemID", followReq.TargetAccountID)
 		c.Visibility.Invalidate("RequesterID", followReq.TargetAccountID)
 
-		// Invalidate any cached follow corresponding to this request.
-		c.GTS.Follow().Invalidate("AccountID.TargetAccountID", followReq.AccountID, followReq.TargetAccountID)
+		// Invalidate any cached follow with same ID.
+		c.GTS.Follow().Invalidate("ID", followReq.ID)
 	})
 
 	c.GTS.Status().SetInvalidateCallback(func(status *gtsmodel.Status) {
 		// Invalidate status ID cached visibility.
 		c.Visibility.Invalidate("ItemID", status.ID)
+
+		for _, id := range status.AttachmentIDs {
+			// Invalidate cache for attached media IDs,
+			c.GTS.Media().Invalidate("ID", id)
+		}
 	})
 
 	c.GTS.User().SetInvalidateCallback(func(user *gtsmodel.User) {

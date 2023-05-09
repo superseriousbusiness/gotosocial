@@ -208,14 +208,17 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, sourceAccountI
 		Notify:          followReq.Notify,
 	}
 
-	// If the follow already exists, just
-	// replace the URI with the new one.
-	if _, err := r.conn.
-		NewInsert().
-		Model(follow).
-		On("CONFLICT (?,?) DO UPDATE set ? = ?", bun.Ident("account_id"), bun.Ident("target_account_id"), bun.Ident("uri"), follow.URI).
-		Exec(ctx); err != nil {
-		return nil, r.conn.ProcessError(err)
+	if err := r.state.Caches.GTS.Follow().Store(follow, func() error {
+		// If the follow already exists, just
+		// replace the URI with the new one.
+		_, err := r.conn.
+			NewInsert().
+			Model(follow).
+			On("CONFLICT (?,?) DO UPDATE set ? = ?", bun.Ident("account_id"), bun.Ident("target_account_id"), bun.Ident("uri"), follow.URI).
+			Exec(ctx)
+		return r.conn.ProcessError(err)
+	}); err != nil {
+		return nil, err
 	}
 
 	// Delete original follow request.
@@ -227,8 +230,7 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, sourceAccountI
 		return nil, r.conn.ProcessError(err)
 	}
 
-	// Invalidate follow request from cache lookups; this will
-	// invalidate the follow as well via the invalidate hook.
+	// Invalidate follow request from cache lookups
 	r.state.Caches.GTS.FollowRequest().Invalidate("ID", followReq.ID)
 
 	// Delete original follow request notification
