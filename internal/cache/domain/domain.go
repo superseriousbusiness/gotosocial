@@ -254,6 +254,4 @@ func (n *node) writestr(buf *strings.Builder, prefix string) {
 	for _, child := range n.child {
 		child.writestr(buf, prefix)
 	}
-
-	return
 }
