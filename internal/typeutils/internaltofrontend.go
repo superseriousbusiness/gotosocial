@@ -171,22 +171,26 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 
 		acct = a.Username + "@" + d
 	} else {
-		// This is a local user.
-		acct = a.Username
+		// This is a local account, try to
+		// fetch more info. Skip for instance
+		// accounts since they have no user.
+		if !a.IsInstance() {
+			user, err := c.db.GetUserByAccountID(ctx, a.ID)
+			if err != nil {
+				return nil, fmt.Errorf("AccountToAPIAccountPublic: error getting user from database for account id %s: %w", a.ID, err)
+			}
 
-		user, err := c.db.GetUserByAccountID(ctx, a.ID)
-		if err != nil {
-			return nil, fmt.Errorf("AccountToAPIAccountPublic: error getting user from database for account id %s: %w", a.ID, err)
+			switch {
+			case *user.Admin:
+				role = &apimodel.AccountRole{Name: apimodel.AccountRoleAdmin}
+			case *user.Moderator:
+				role = &apimodel.AccountRole{Name: apimodel.AccountRoleModerator}
+			default:
+				role = &apimodel.AccountRole{Name: apimodel.AccountRoleUser}
+			}
 		}
 
-		switch {
-		case *user.Admin:
-			role = &apimodel.AccountRole{Name: apimodel.AccountRoleAdmin}
-		case *user.Moderator:
-			role = &apimodel.AccountRole{Name: apimodel.AccountRoleModerator}
-		default:
-			role = &apimodel.AccountRole{Name: apimodel.AccountRoleUser}
-		}
+		acct = a.Username // omit domain
 	}
 
 	// Remaining properties are simple and
@@ -257,27 +261,31 @@ func (c *converter) AccountToAPIAccountBlocked(ctx context.Context, a *gtsmodel.
 		// de-punify it just in case.
 		d, err := util.DePunify(a.Domain)
 		if err != nil {
-			return nil, fmt.Errorf("AccountToAPIAccountPublic: error de-punifying domain %s for account id %s: %w", a.Domain, a.ID, err)
+			return nil, fmt.Errorf("AccountToAPIAccountBlocked: error de-punifying domain %s for account id %s: %w", a.Domain, a.ID, err)
 		}
 
 		acct = a.Username + "@" + d
 	} else {
-		// This is a local user.
-		acct = a.Username
+		// This is a local account, try to
+		// fetch more info. Skip for instance
+		// accounts since they have no user.
+		if !a.IsInstance() {
+			user, err := c.db.GetUserByAccountID(ctx, a.ID)
+			if err != nil {
+				return nil, fmt.Errorf("AccountToAPIAccountPublic: error getting user from database for account id %s: %w", a.ID, err)
+			}
 
-		user, err := c.db.GetUserByAccountID(ctx, a.ID)
-		if err != nil {
-			return nil, fmt.Errorf("AccountToAPIAccountPublic: error getting user from database for account id %s: %s", a.ID, err)
+			switch {
+			case *user.Admin:
+				role = &apimodel.AccountRole{Name: apimodel.AccountRoleAdmin}
+			case *user.Moderator:
+				role = &apimodel.AccountRole{Name: apimodel.AccountRoleModerator}
+			default:
+				role = &apimodel.AccountRole{Name: apimodel.AccountRoleUser}
+			}
 		}
 
-		switch {
-		case *user.Admin:
-			role = &apimodel.AccountRole{Name: apimodel.AccountRoleAdmin}
-		case *user.Moderator:
-			role = &apimodel.AccountRole{Name: apimodel.AccountRoleModerator}
-		default:
-			role = &apimodel.AccountRole{Name: apimodel.AccountRoleUser}
-		}
+		acct = a.Username // omit domain
 	}
 
 	return &apimodel.Account{
@@ -307,7 +315,6 @@ func (c *converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 		createdByApplicationID string
 	)
 
-	// take user-level information if possible
 	if a.IsRemote() {
 		// Domain may be in Punycode,
 		// de-punify it just in case.
@@ -317,7 +324,9 @@ func (c *converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 		}
 
 		domain = &d
-	} else {
+	} else if !a.IsInstance() {
+		// This is a local, non-instance
+		// acct; we can fetch more info.
 		user, err := c.db.GetUserByAccountID(ctx, a.ID)
 		if err != nil {
 			return nil, fmt.Errorf("AccountToAdminAPIAccount: error getting user from database for account id %s: %w", a.ID, err)
@@ -337,11 +346,13 @@ func (c *converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 		if user.Account.Reason != "" {
 			inviteRequest = &user.Account.Reason
 		}
+
 		if *user.Admin {
 			role.Name = apimodel.AccountRoleAdmin
 		} else if *user.Moderator {
 			role.Name = apimodel.AccountRoleModerator
 		}
+
 		confirmed = !user.ConfirmedAt.IsZero()
 		approved = *user.Approved
 		disabled = *user.Disabled

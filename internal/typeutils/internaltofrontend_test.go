@@ -248,6 +248,82 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendPublicPunycode() 
 }`, string(b))
 }
 
+func (suite *InternalToFrontendTestSuite) TestLocalInstanceAccountToFrontendPublic() {
+	ctx := context.Background()
+	testAccount, err := suite.db.GetInstanceAccount(ctx, "")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	apiAccount, err := suite.typeconverter.AccountToAPIAccountPublic(ctx, testAccount)
+	suite.NoError(err)
+	suite.NotNil(apiAccount)
+
+	b, err := json.MarshalIndent(apiAccount, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "id": "01AY6P665V14JJR0AFVRT7311Y",
+  "username": "localhost:8080",
+  "acct": "localhost:8080",
+  "display_name": "",
+  "locked": false,
+  "discoverable": true,
+  "bot": false,
+  "created_at": "2020-05-17T13:10:59.000Z",
+  "note": "",
+  "url": "http://localhost:8080/@localhost:8080",
+  "avatar": "",
+  "avatar_static": "",
+  "header": "http://localhost:8080/assets/default_header.png",
+  "header_static": "http://localhost:8080/assets/default_header.png",
+  "followers_count": 0,
+  "following_count": 0,
+  "statuses_count": 0,
+  "last_status_at": null,
+  "emojis": [],
+  "fields": []
+}`, string(b))
+}
+
+func (suite *InternalToFrontendTestSuite) TestLocalInstanceAccountToFrontendBlocked() {
+	ctx := context.Background()
+	testAccount, err := suite.db.GetInstanceAccount(ctx, "")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	apiAccount, err := suite.typeconverter.AccountToAPIAccountBlocked(ctx, testAccount)
+	suite.NoError(err)
+	suite.NotNil(apiAccount)
+
+	b, err := json.MarshalIndent(apiAccount, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "id": "01AY6P665V14JJR0AFVRT7311Y",
+  "username": "localhost:8080",
+  "acct": "localhost:8080",
+  "display_name": "",
+  "locked": false,
+  "discoverable": false,
+  "bot": false,
+  "created_at": "2020-05-17T13:10:59.000Z",
+  "note": "",
+  "url": "http://localhost:8080/@localhost:8080",
+  "avatar": "",
+  "avatar_static": "",
+  "header": "",
+  "header_static": "",
+  "followers_count": 0,
+  "following_count": 0,
+  "statuses_count": 0,
+  "last_status_at": null,
+  "emojis": null,
+  "fields": null
+}`, string(b))
+}
+
 func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
 	testStatus := suite.testStatuses["admin_account_status_1"]
 	requestingAccount := suite.testAccounts["local_account_1"]

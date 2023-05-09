@@ -95,6 +95,12 @@ func (a *Account) IsRemote() bool {
 
 // IsInstance returns whether account is an instance internal actor account.
 func (a *Account) IsInstance() bool {
+	if a.IsLocal() {
+		// Check if our instance account.
+		return a.Username == config.GetHost()
+	}
+
+	// Check if remote instance account.
 	return a.Username == a.Domain ||
 		a.FollowersURI == "" ||
 		a.FollowingURI == "" ||
