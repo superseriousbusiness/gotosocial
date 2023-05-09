@@ -2124,6 +2124,31 @@ func GetAdvancedThrottlingRetryAfter() time.Duration { return global.GetAdvanced
 // SetAdvancedThrottlingRetryAfter safely sets the value for global configuration 'AdvancedThrottlingRetryAfter' field
 func SetAdvancedThrottlingRetryAfter(v time.Duration) { global.SetAdvancedThrottlingRetryAfter(v) }
 
+// GetAdvancedSenderMultiplier safely fetches the Configuration value for state's 'AdvancedSenderMultiplier' field
+func (st *ConfigState) GetAdvancedSenderMultiplier() (v int) {
+	st.mutex.Lock()
+	v = st.config.AdvancedSenderMultiplier
+	st.mutex.Unlock()
+	return
+}
+
+// SetAdvancedSenderMultiplier safely sets the Configuration value for state's 'AdvancedSenderMultiplier' field
+func (st *ConfigState) SetAdvancedSenderMultiplier(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.AdvancedSenderMultiplier = v
+	st.reloadToViper()
+}
+
+// AdvancedSenderMultiplierFlag returns the flag name for the 'AdvancedSenderMultiplier' field
+func AdvancedSenderMultiplierFlag() string { return "advanced-sender-multiplier" }
+
+// GetAdvancedSenderMultiplier safely fetches the value for global configuration 'AdvancedSenderMultiplier' field
+func GetAdvancedSenderMultiplier() int { return global.GetAdvancedSenderMultiplier() }
+
+// SetAdvancedSenderMultiplier safely sets the value for global configuration 'AdvancedSenderMultiplier' field
+func SetAdvancedSenderMultiplier(v int) { global.SetAdvancedSenderMultiplier(v) }
+
 // GetCacheGTSAccountMaxSize safely fetches the Configuration value for state's 'Cache.GTS.AccountMaxSize' field
 func (st *ConfigState) GetCacheGTSAccountMaxSize() (v int) {
 	st.mutex.Lock()

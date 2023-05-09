@@ -57,10 +57,19 @@ type controller struct {
 
 // NewController returns an implementation of the Controller interface for creating new transports
 func NewController(state *state.State, federatingDB federatingdb.DB, clock pub.Clock, client httpclient.SigningClient) Controller {
-	applicationName := config.GetApplicationName()
-	host := config.GetHost()
-	proto := config.GetProtocol()
-	version := config.GetSoftwareVersion()
+	var (
+		applicationName  = config.GetApplicationName()
+		host             = config.GetHost()
+		proto            = config.GetProtocol()
+		version          = config.GetSoftwareVersion()
+		senderMultiplier = config.GetAdvancedSenderMultiplier()
+	)
+
+	senders := senderMultiplier * runtime.GOMAXPROCS(0)
+	if senders < 1 {
+		// Clamp senders to 1.
+		senders = 1
+	}
 
 	c := &controller{
 		state:     state,
@@ -69,7 +78,7 @@ func NewController(state *state.State, federatingDB federatingdb.DB, clock pub.C
 		client:    client,
 		trspCache: cache.New[string, *transport](0, 100, 0),
 		userAgent: fmt.Sprintf("%s (+%s://%s) gotosocial/%s", applicationName, proto, host, version),
-		senders:   2 * runtime.GOMAXPROCS(0), // on batch delivery, only ever send 2*GOMAXPROCS at a time.
+		senders:   senders,
 	}
 
 	return c
