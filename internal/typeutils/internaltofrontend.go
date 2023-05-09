@@ -559,100 +559,36 @@ func (c *converter) TagToAPITag(ctx context.Context, t *gtsmodel.Tag) (apimodel.
 }
 
 func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*apimodel.Status, error) {
-	repliesCount, err := c.db.CountStatusReplies(ctx, s)
-	if err != nil {
-		return nil, fmt.Errorf("error counting replies: %s", err)
-	}
-
-	reblogsCount, err := c.db.CountStatusReblogs(ctx, s)
-	if err != nil {
-		return nil, fmt.Errorf("error counting reblogs: %s", err)
-	}
-
-	favesCount, err := c.db.CountStatusFaves(ctx, s)
-	if err != nil {
-		return nil, fmt.Errorf("error counting faves: %s", err)
-	}
-
-	var apiRebloggedStatus *apimodel.Status
-	if s.BoostOfID != "" {
-		// the boosted status might have been set on this struct already so check first before doing db calls
-		if s.BoostOf == nil {
-			// it's not set so fetch it from the db
-			bs, err := c.db.GetStatusByID(ctx, s.BoostOfID)
-			if err != nil {
-				return nil, fmt.Errorf("error getting boosted status with id %s: %s", s.BoostOfID, err)
-			}
-			s.BoostOf = bs
+	if err := c.db.PopulateStatus(ctx, s); err != nil {
+		// Ensure author account present + correct;
+		// can't really go further without this!
+		if s.Account == nil {
+			return nil, fmt.Errorf("error(s) populating status, cannot continue: %w", err)
 		}
 
-		// the boosted account might have been set on this struct already or passed as a param so check first before doing db calls
-		if s.BoostOfAccount == nil {
-			// it's not set so fetch it from the db
-			ba, err := c.db.GetAccountByID(ctx, s.BoostOf.AccountID)
-			if err != nil {
-				return nil, fmt.Errorf("error getting boosted account %s from status with id %s: %s", s.BoostOf.AccountID, s.BoostOfID, err)
-			}
-			s.BoostOfAccount = ba
-			s.BoostOf.Account = ba
-		}
-
-		apiRebloggedStatus, err = c.StatusToAPIStatus(ctx, s.BoostOf, requestingAccount)
-		if err != nil {
-			return nil, fmt.Errorf("error converting boosted status to apitype: %s", err)
-		}
-	}
-
-	var apiApplication *apimodel.Application
-	if s.CreatedWithApplicationID != "" {
-		gtsApplication := &gtsmodel.Application{}
-		if err := c.db.GetByID(ctx, s.CreatedWithApplicationID, gtsApplication); err != nil {
-			return nil, fmt.Errorf("error fetching application used to create status: %s", err)
-		}
-		apiApplication, err = c.AppToAPIAppPublic(ctx, gtsApplication)
-		if err != nil {
-			return nil, fmt.Errorf("error parsing application used to create status: %s", err)
-		}
-	}
-
-	if s.Account == nil {
-		a, err := c.db.GetAccountByID(ctx, s.AccountID)
-		if err != nil {
-			return nil, fmt.Errorf("error getting status author: %s", err)
-		}
-		s.Account = a
+		log.Errorf(ctx, "error(s) populating status, will continue: %v", err)
 	}
 
 	apiAuthorAccount, err := c.AccountToAPIAccountPublic(ctx, s.Account)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing account of status author: %s", err)
+		return nil, fmt.Errorf("error converting status author: %w", err)
 	}
 
-	// convert status gts model attachments to frontend api model attachments
-	apiAttachments, err := c.convertAttachmentsToAPIAttachments(ctx, s.Attachments, s.AttachmentIDs)
+	repliesCount, err := c.db.CountStatusReplies(ctx, s)
 	if err != nil {
-		log.Errorf(ctx, "error converting status attachments: %v", err)
+		return nil, fmt.Errorf("error counting replies: %w", err)
 	}
 
-	// convert status gts model mentions to frontend api model mentions
-	apiMentions, err := c.convertMentionsToAPIMentions(ctx, s.Mentions, s.MentionIDs)
+	reblogsCount, err := c.db.CountStatusReblogs(ctx, s)
 	if err != nil {
-		log.Errorf(ctx, "error converting status mentions: %v", err)
+		return nil, fmt.Errorf("error counting reblogs: %w", err)
 	}
 
-	// convert status gts model tags to frontend api model tags
-	apiTags, err := c.convertTagsToAPITags(ctx, s.Tags, s.TagIDs)
+	favesCount, err := c.db.CountStatusFaves(ctx, s)
 	if err != nil {
-		log.Errorf(ctx, "error converting status tags: %v", err)
+		return nil, fmt.Errorf("error counting faves: %w", err)
 	}
 
-	// convert status gts model emojis to frontend api model emojis
-	apiEmojis, err := c.convertEmojisToAPIEmojis(ctx, s.Emojis, s.EmojiIDs)
-	if err != nil {
-		log.Errorf(ctx, "error converting status emojis: %v", err)
-	}
-
-	// Fetch status interaction flags for acccount
 	interacts, err := c.interactionsWithStatusForAccount(ctx, s, requestingAccount)
 	if err != nil {
 		log.Errorf(ctx, "error getting interactions for status %s for account %s: %v", s.ID, requestingAccount.ID, err)
@@ -661,9 +597,24 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		interacts = &statusInteractions{}
 	}
 
-	var language *string
-	if s.Language != "" {
-		language = &s.Language
+	apiAttachments, err := c.convertAttachmentsToAPIAttachments(ctx, s.Attachments, s.AttachmentIDs)
+	if err != nil {
+		log.Errorf(ctx, "error converting status attachments: %v", err)
+	}
+
+	apiMentions, err := c.convertMentionsToAPIMentions(ctx, s.Mentions, s.MentionIDs)
+	if err != nil {
+		log.Errorf(ctx, "error converting status mentions: %v", err)
+	}
+
+	apiTags, err := c.convertTagsToAPITags(ctx, s.Tags, s.TagIDs)
+	if err != nil {
+		log.Errorf(ctx, "error converting status tags: %v", err)
+	}
+
+	apiEmojis, err := c.convertEmojisToAPIEmojis(ctx, s.Emojis, s.EmojiIDs)
+	if err != nil {
+		log.Errorf(ctx, "error converting status emojis: %v", err)
 	}
 
 	apiStatus := &apimodel.Status{
@@ -674,7 +625,7 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		Sensitive:          *s.Sensitive,
 		SpoilerText:        s.ContentWarning,
 		Visibility:         c.VisToAPIVis(ctx, s.Visibility),
-		Language:           language,
+		Language:           nil,
 		URI:                s.URI,
 		URL:                s.URL,
 		RepliesCount:       repliesCount,
@@ -687,7 +638,7 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		Pinned:             interacts.Pinned,
 		Content:            s.Content,
 		Reblog:             nil,
-		Application:        apiApplication,
+		Application:        nil,
 		Account:            apiAuthorAccount,
 		MediaAttachments:   apiAttachments,
 		Mentions:           apiMentions,
@@ -698,19 +649,49 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		Text:               s.Text,
 	}
 
-	// nullable fields
+	// Nullable fields.
+
 	if s.InReplyToID != "" {
-		i := s.InReplyToID
-		apiStatus.InReplyToID = &i
+		apiStatus.InReplyToID = func() *string { i := s.InReplyToID; return &i }()
 	}
 
 	if s.InReplyToAccountID != "" {
-		i := s.InReplyToAccountID
-		apiStatus.InReplyToAccountID = &i
+		apiStatus.InReplyToAccountID = func() *string { i := s.InReplyToAccountID; return &i }()
 	}
 
-	if apiRebloggedStatus != nil {
-		apiStatus.Reblog = &apimodel.StatusReblogged{Status: apiRebloggedStatus}
+	if s.Language != "" {
+		apiStatus.Language = func() *string { i := s.Language; return &i }()
+	}
+
+	if s.BoostOf != nil {
+		apiBoostOf, err := c.StatusToAPIStatus(ctx, s.BoostOf, requestingAccount)
+		if err != nil {
+			return nil, fmt.Errorf("error converting boosted status: %w", err)
+		}
+
+		apiStatus.Reblog = &apimodel.StatusReblogged{Status: apiBoostOf}
+	}
+
+	if appID := s.CreatedWithApplicationID; appID != "" {
+		app := &gtsmodel.Application{}
+		if err := c.db.GetByID(ctx, appID, app); err != nil {
+			return nil, fmt.Errorf("error getting application %s: %w", appID, err)
+		}
+
+		apiApp, err := c.AppToAPIAppPublic(ctx, app)
+		if err != nil {
+			return nil, fmt.Errorf("error converting application %s: %w", appID, err)
+		}
+
+		apiStatus.Application = apiApp
+	}
+
+	// Normalization.
+
+	if s.URL == "" {
+		// URL was empty for some reason;
+		// provide AP URI as fallback.
+		s.URL = s.URI
 	}
 
 	return apiStatus, nil
