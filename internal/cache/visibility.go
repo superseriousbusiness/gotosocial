@@ -30,8 +30,8 @@ type VisibilityCache struct {
 // NOTE: the cache MUST NOT be in use anywhere, this is not thread-safe.
 func (c *VisibilityCache) Init() {
 	c.Cache = result.New([]result.Lookup{
-		{Name: "ItemID"},
-		{Name: "RequesterID"},
+		{Name: "ItemID", Multi: true},
+		{Name: "RequesterID", Multi: true},
 		{Name: "Type.RequesterID.ItemID"},
 	}, func(v1 *CachedVisibility) *CachedVisibility {
 		v2 := new(CachedVisibility)

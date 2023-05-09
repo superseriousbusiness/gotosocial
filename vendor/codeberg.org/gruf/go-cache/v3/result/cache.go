@@ -19,6 +19,10 @@ type Lookup struct {
 	// under zero value keys, otherwise ignore them.
 	AllowZero bool
 
+	// Multi allows specifying a key capable of storing
+	// multiple results. Note this only supports invalidate.
+	Multi bool
+
 	// TODO: support toggling case sensitive lookups.
 	// CaseSensitive bool
 }
@@ -155,10 +159,14 @@ func (c *Cache[Value]) Load(lookup string, load func() (Value, error), keyParts 
 	var (
 		zero Value
 		res  result[Value]
+		ok   bool
 	)
 
 	// Get lookup key info by name.
 	keyInfo := c.lookups.get(lookup)
+	if !keyInfo.unique {
+		panic("non-unique lookup does not support load: " + lookup)
+	}
 
 	// Generate cache key string.
 	ckey := keyInfo.genKey(keyParts)
@@ -167,11 +175,11 @@ func (c *Cache[Value]) Load(lookup string, load func() (Value, error), keyParts 
 	c.cache.Lock()
 
 	// Look for primary cache key
-	pkey, ok := keyInfo.pkeys[ckey]
+	pkeys := keyInfo.pkeys[ckey]
 
-	if ok {
+	if ok = (len(pkeys) > 0); ok {
 		// Fetch the result for primary key
-		entry, _ := c.cache.Cache.Get(pkey)
+		entry, _ := c.cache.Cache.Get(pkeys[0])
 		res = entry.Value
 	}
 
@@ -252,9 +260,13 @@ func (c *Cache[Value]) Store(value Value, store func() error) error {
 // Has checks the cache for a positive result under the given lookup and key parts.
 func (c *Cache[Value]) Has(lookup string, keyParts ...any) bool {
 	var res result[Value]
+	var ok bool
 
 	// Get lookup key info by name.
 	keyInfo := c.lookups.get(lookup)
+	if !keyInfo.unique {
+		panic("non-unique lookup does not support has: " + lookup)
+	}
 
 	// Generate cache key string.
 	ckey := keyInfo.genKey(keyParts)
@@ -263,11 +275,11 @@ func (c *Cache[Value]) Has(lookup string, keyParts ...any) bool {
 	c.cache.Lock()
 
 	// Look for primary key for cache key
-	pkey, ok := keyInfo.pkeys[ckey]
+	pkeys := keyInfo.pkeys[ckey]
 
-	if ok {
+	if ok = (len(pkeys) > 0); ok {
 		// Fetch the result for primary key
-		entry, _ := c.cache.Cache.Get(pkey)
+		entry, _ := c.cache.Cache.Get(pkeys[0])
 		res = entry.Value
 	}
 
@@ -288,63 +300,60 @@ func (c *Cache[Value]) Invalidate(lookup string, keyParts ...any) {
 
 	// Look for primary key for cache key
 	c.cache.Lock()
-	pkey, ok := keyInfo.pkeys[ckey]
+	pkeys := keyInfo.pkeys[ckey]
 	c.cache.Unlock()
 
-	if !ok {
-		return
+	for _, pkey := range pkeys {
+		// Invalidate each primary key
+		c.cache.Invalidate(pkey)
 	}
-
-	// Invalid by primary key
-	c.cache.Invalidate(pkey)
 }
 
 // Clear empties the cache, calling the invalidate callback.
-func (c *Cache[Value]) Clear() {
-	c.cache.Clear()
-}
+func (c *Cache[Value]) Clear() { c.cache.Clear() }
 
 // store will cache this result under all of its required cache keys.
 func (c *Cache[Value]) store(res result[Value]) {
-	for _, key := range res.Keys {
-		pkeys := key.info.pkeys
-
-		// Look for cache primary key
-		pkey, ok := pkeys[key.key]
-
-		if ok {
-			// Get the overlapping result with this key.
-			entry, _ := c.cache.Cache.Get(pkey)
-
-			// From conflicting entry, drop this key, this
-			// will prevent eviction cleanup key confusion.
-			entry.Value.Keys.drop(key.info.name)
-
-			if len(entry.Value.Keys) == 0 {
-				// We just over-wrote the only lookup key for
-				// this value, so we drop its primary key too.
-				c.cache.Cache.Delete(pkey)
-			}
-		}
-	}
-
 	// Get primary key
-	pkey := c.next
+	pnext := c.next
 	c.next++
-	if pkey > c.next {
+	if pnext > c.next {
 		panic("cache primary key overflow")
 	}
 
-	// Store all primary key lookups
 	for _, key := range res.Keys {
-		pkeys := key.info.pkeys
-		pkeys[key.key] = pkey
+		// Look for cache primary keys.
+		pkeys := key.info.pkeys[key.key]
+
+		if key.info.unique && len(pkeys) > 0 {
+			for _, conflict := range pkeys {
+				// Get the overlapping result with this key.
+				entry, _ := c.cache.Cache.Get(conflict)
+
+				// From conflicting entry, drop this key, this
+				// will prevent eviction cleanup key confusion.
+				entry.Value.Keys.drop(key.info.name)
+
+				if len(entry.Value.Keys) == 0 {
+					// We just over-wrote the only lookup key for
+					// this value, so we drop its primary key too.
+					c.cache.Cache.Delete(conflict)
+				}
+			}
+
+			// Drop these keys.
+			pkeys = pkeys[:0]
+		}
+
+		// Store primary key lookup.
+		pkeys = append(pkeys, pnext)
+		key.info.pkeys[key.key] = pkeys
 	}
 
 	// Store main entry under primary key, using evict hook if needed
-	c.cache.Cache.SetWithHook(pkey, &ttl.Entry[int64, result[Value]]{
+	c.cache.Cache.SetWithHook(pnext, &ttl.Entry[int64, result[Value]]{
 		Expiry: time.Now().Add(c.cache.TTL),
-		Key:    pkey,
+		Key:    pnext,
 		Value:  res,
 	}, func(_ int64, item *ttl.Entry[int64, result[Value]]) {
 		c.cache.Evict(item)
