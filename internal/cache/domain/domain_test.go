@@ -69,7 +69,9 @@ func TestBlockCache(t *testing.T) {
 	}
 
 	// Clear the cache
+	t.Logf("%+v\n", c)
 	c.Clear()
+	t.Logf("%+v\n", c)
 
 	knownErr := errors.New("known error")
 

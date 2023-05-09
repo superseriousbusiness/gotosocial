@@ -80,6 +80,14 @@ func (b *BlockCache) Clear() {
 	atomic.StorePointer(&b.rootptr, nil)
 }
 
+// String returns a string representation of stored domains in block cache.
+func (b *BlockCache) String() string {
+	if ptr := atomic.LoadPointer(&b.rootptr); ptr != nil {
+		return (*root)(ptr).String()
+	}
+	return "<empty>"
+}
+
 // root is the root node in the domain
 // block cache radix trie. this is the
 // singular access point to the trie.
@@ -102,6 +110,13 @@ func (r *root) Match(domain string) bool {
 // to speed up the binary search of node child parts.
 func (r *root) Sort() {
 	r.root.sort()
+}
+
+// String returns a string representation of node (and its descendants).
+func (r *root) String() string {
+	buf := new(strings.Builder)
+	r.root.writestr(buf, "")
+	return buf.String()
 }
 
 type node struct {
@@ -152,12 +167,7 @@ func (n *node) add(parts []string) {
 }
 
 func (n *node) match(parts []string) bool {
-	if len(parts) == 0 {
-		// Invalid domain.
-		return false
-	}
-
-	for {
+	for len(parts) > 0 {
 		// Pop next domain part.
 		i := len(parts) - 1
 		part := parts[i]
@@ -181,6 +191,10 @@ func (n *node) match(parts []string) bool {
 		// child node.
 		n = nn
 	}
+
+	// Ran out of parts
+	// without a match.
+	return false
 }
 
 // getChild fetches child node with given domain part string
@@ -220,5 +234,24 @@ func (n *node) sort() {
 	// Sort each child node's children.
 	for _, child := range n.child {
 		child.sort()
+	}
+}
+
+func (n *node) writestr(buf *strings.Builder, prefix string) {
+	if prefix != "" {
+		// Suffix joining '.'
+		prefix += "."
+	}
+
+	// Append current part.
+	prefix += n.part
+
+	// Dump current prefix state.
+	buf.WriteString(prefix)
+	buf.WriteByte('\n')
+
+	// Iterate through node children.
+	for _, child := range n.child {
+		child.writestr(buf, prefix)
 	}
 }
