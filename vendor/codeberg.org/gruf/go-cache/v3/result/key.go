@@ -122,14 +122,17 @@ type structKey struct {
 	//      zero != "" --> don't allow zero value keys
 	zero string
 
+	// unique determines whether this structKey supports
+	// multiple or just the singular unique result.
+	unique bool
+
 	// fields is a slice of runtime struct field
 	// indices, of the fields encompassed by this key.
-
 	fields []structField
 
 	// pkeys is a lookup of stored struct key values
 	// to the primary cache lookup key (int64).
-	pkeys map[string]int64
+	pkeys map[string][]int64
 }
 
 type structField struct {
@@ -220,8 +223,11 @@ func newStructKey(lk Lookup, t reflect.Type) structKey {
 		sk.zero = sk.genKey(zeros)
 	}
 
+	// Set unique lookup flag.
+	sk.unique = !lk.Multi
+
 	// Allocate primary lookup map
-	sk.pkeys = make(map[string]int64)
+	sk.pkeys = make(map[string][]int64)
 
 	return sk
 }
