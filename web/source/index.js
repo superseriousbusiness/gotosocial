@@ -29,7 +29,7 @@ let cssEntryFiles = fs.readdirSync(path.join(__dirname, "./css")).map((file) => 
 
 const prodCfg = {
 	transform: [
-		["uglifyify", {
+		["@browserify/uglifyify", {
 			global: true,
 			exts: ".js"
 		}],
@@ -62,7 +62,7 @@ skulk({
 			transform: [
 				["babelify", {
 					global: true,
-					ignore: [/node_modules\/(?!(photoswipe.*|plyr.*))/]
+					ignore: [/node_modules\/(?!(photoswipe.*))/]
 				}]
 			],
 		},
