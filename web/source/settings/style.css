@@ -51,12 +51,6 @@ header {
 	}
 }
 
-main section {
-	box-shadow: none;
-	border-radius: none;
-	border: none;
-}
-
 #root {
 	display: grid;
 	grid-template-columns: 1fr minmax(auto, 60rem) 1fr;
@@ -64,6 +58,10 @@ main section {
 	box-sizing: border-box;
 
 	section.with-sidebar {
+		background: $bg-accent;
+		padding: 2rem;
+		border-radius: $br;
+
 		& > div, & > form {
 			border-left: 0.2rem solid $border-accent;
 			padding-left: 0.4rem;
@@ -240,10 +238,6 @@ nav.menu-tree {
 	text-transform: capitalize;
 }
 
-section {
-	margin-bottom: 1rem;
-}
-
 input, select, textarea {
 	box-sizing: border-box;
 }
@@ -405,11 +399,8 @@ section.with-sidebar > div, section.with-sidebar > form {
 		grid-template-rows: 100%;
 		gap: 1rem;
 
-		.profile {
-			.basic {
-				margin-bottom: 0.5rem;
-				/* margin-top: 0; */
-			}
+		.profile .header {
+			border: 0.1rem solid $gray1;
 		}
 
 		.files {

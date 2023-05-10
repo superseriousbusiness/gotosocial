@@ -69,8 +69,10 @@ $border-accent: $orange2;
 
 $link-fg: $fg-accent;
 
-$role-moderator: $orange1;
-$role-admin: $blue2;
+$role-admin: $orange2;
+$role-mod: $blue2;
+
+$profile-bg: $gray4;
 
 $button-bg: $blue2;
 $button-fg: $gray1;
@@ -79,7 +81,6 @@ $button-hover-bg: $blue3;
 $button-danger-bg: $error3;
 $button-danger-fg: $white1;
 $button-danger-hover-bg: $error2;
-
 
 $toot-bg: $gray3;
 $toot-info-bg: $gray2;

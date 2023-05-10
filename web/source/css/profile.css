@@ -21,9 +21,7 @@
 	grid-template-columns: 1fr min(92%, 65rem) 1fr;
 }
 
-main.profile {
-	background: $gray2;
-	background: transparent;
+.profile {
 	padding: 0.5rem;
 	border-radius: $br;
 
@@ -34,8 +32,8 @@ main.profile {
 	}
 }
 
-main.profile .header {
-	background: $bg-accent;
+.profile .header {
+	background: $profile-bg;
 	border-radius: $br;
 	overflow: hidden;
 	margin-bottom: 1rem;
@@ -59,13 +57,13 @@ main.profile .header {
 		Basic info container has the user's avatar, display- and username, and role
 		It's partially overlapped over the header image, by a negative margin-top
 	*/
+	$avatar-size: 8.5rem;
+	$name-size: 3rem;
+	$username-size: 2rem;
+
+	$overlap: calc($avatar-size - $name-size - $username-size);
+
 	.basic-info {
-		$avatar-size: 8.5rem;
-		$name-size: 3rem;
-		$username-size: 2rem;
-
-		$overlap: calc($avatar-size - $name-size - $username-size);
-
 		position: relative;
 		display: grid;
 		box-sizing: border-box;
@@ -98,7 +96,7 @@ main.profile .header {
 		.displayname {
 			grid-area: displayname;
 			line-height: $name-size;
-			font-size: 2rem;
+			font-size: 1.5rem;
 			font-weight: bold;
 		}
 
@@ -114,10 +112,13 @@ main.profile .header {
 		}
 
 		.role {
+			background: $bg;
+			color: $fg;
+			border: 0.13rem solid $bg;
+
 			grid-area: role;
 			align-self: center;
 			justify-self: start;
-			border: 0.13rem solid $gray1;
 			border-radius: $br;
 			padding: 0.3rem;
 			
@@ -127,21 +128,36 @@ main.profile .header {
 			font-weight: bold;
 
 			&.admin {
-				background: $gray1;
-				color: $orange2;
-				border-color: $orange2;
+				color: $role-admin;
+				border-color: $role-admin;
 			}
 
 			&.moderator {
-				background: $gray1;
-				color: $blue2;
-				border-color: $blue1;
+				color: $role-mod;
+				border-color: $role-mod;
 			}
 		}
 	}
 }
 
-main.profile {
+@media screen and (max-width: 750px) {
+	.profile .header {
+		.basic-info {
+			grid-template-columns: auto 1fr;
+			grid-template-rows: $avatar-size $name-size auto;
+			grid-template-areas:
+				"avatar avatar"
+				"displayname displayname"
+				"username role";
+
+			.displayname {
+				font-size: 1.4rem;
+			}
+		}
+	}
+}
+
+.profile {
 	.col-header {
 		display: flex;
 		justify-content: start;
@@ -149,7 +165,7 @@ main.profile {
 		align-items: center; 
 
 		margin: 0;
-		background: $gray4;
+		background: $profile-bg;
 		border-top-left-radius: $br;
 		border-top-right-radius: $br;
 		padding: 0.75rem;
@@ -172,7 +188,7 @@ main.profile {
 	}
 }
 
-main.profile .toots {
+.profile .toots {
 	flex: 65 25rem; 
 	display: flex;
 	flex-direction: column;
@@ -189,7 +205,7 @@ main.profile .toots {
 	}
 }
 
-main.profile .about-user {
+.profile .about-user {
 	flex: 35 14rem;
 	border-radius: $br;
 	overflow: hidden;
@@ -199,10 +215,10 @@ main.profile .about-user {
 	}
 
 	.fields {
-		background: $gray4;
+		background: $profile-bg;
 		display: flex;
 		flex-direction: column;
-		padding: 0.5rem;
+		padding: 0 0.5rem;
 		padding-top: 0.25rem;
 
 		.field {
@@ -219,9 +235,9 @@ main.profile .about-user {
 	}
 
 	.bio {
-		background: $gray4;
-		padding: 0 0.75rem;
-		padding-bottom: 0.75rem;
+		background: $profile-bg;
+		padding: 1rem 0.75rem;
+		padding-bottom: 1.25rem;
 	}
 
 	.accountstats {
