@@ -92,21 +92,21 @@
 	{{end}}
 </section>
 <aside class="info">
-	<time id="date" datetime="{{.CreatedAt}}">{{.CreatedAt | timestampPrecise}}</time>
+	<time datetime="{{.CreatedAt}}">{{.CreatedAt | timestampPrecise}}</time>
 	<div class="stats" role="group">
-		<div id="replies">
+		<div>
 			<span aria-hidden="true">
 				<i class="fa fa-reply-all"></i> {{.RepliesCount}}
 			</span>
 			<span class="sr-only">{{.RepliesCount}} {{if .RepliesCount | eq 1}}reply{{else}}replies{{end}}</span>
 		</div>
-		<div id="favorites">
+		<div>
 			<span aria-hidden="true">
 				<i class="fa fa-star"></i> {{.FavouritesCount}}
 			</span>
 			<span class="sr-only">{{.FavouritesCount}} favourite{{if .FavouritesCount | eq 1 | not}}s{{end}}</span>
 		</div>
-		<div id="boosts">
+		<div>
 			<span aria-hidden="true">
 				<i class="fa fa-retweet"></i> {{.ReblogsCount}}
 			</span>
