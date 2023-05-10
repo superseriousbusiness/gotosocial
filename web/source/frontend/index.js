@@ -45,22 +45,6 @@ new PhotoswipeVideoPlugin(lightbox, {});
 
 lightbox.init();
 
-Array.from(document.getElementsByClassName("spoiler-label")).forEach((label) => {
-	let checkbox = document.getElementById(label.htmlFor);
-	if (checkbox != undefined) {
-		function update() {
-			if (checkbox.checked) {
-				label.innerHTML = "Show more";
-			} else {
-				label.innerHTML = "Show less";
-			}
-		}
-		update();
-
-		label.addEventListener("click", () => { setTimeout(update, 1); });
-	}
-});
-
 Array.from(document.getElementsByClassName("spoiler-details")).forEach((spoiler) => {
 	const button = spoiler.getElementsByClassName("button")[0];
 
