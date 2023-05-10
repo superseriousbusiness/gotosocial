@@ -98,7 +98,7 @@
 			<span aria-hidden="true">
 				<i class="fa fa-reply-all"></i> {{.RepliesCount}}
 			</span>
-			<span class="sr-only">{{.RepliesCount}} replies</span>
+			<span class="sr-only">{{.RepliesCount}} {{if .RepliesCount | eq 1}}reply{{else}}replies{{end}}</span>
 		</div>
 		<div id="favorites">
 			<span aria-hidden="true">
@@ -108,7 +108,7 @@
 		</div>
 		<div id="boosts">
 			<span aria-hidden="true">
-				<i class="fa fa-retweet"></i> 2
+				<i class="fa fa-retweet"></i> {{.ReblogsCount}}
 			</span>
 			<span class="sr-only">{{.ReblogsCount}} boost{{if .ReblogsCount | eq 1 | not}}s{{end}}</span>
 		</div>
