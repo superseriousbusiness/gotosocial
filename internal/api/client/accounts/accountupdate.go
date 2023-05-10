@@ -24,11 +24,13 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/form/v4"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"golang.org/x/exp/slices"
 )
 
 // AccountUpdateCredentialsPATCHHandler swagger:operation PATCH /api/v1/accounts/update_credentials accountUpdate
@@ -41,6 +43,7 @@ import (
 //
 //	consumes:
 //	- multipart/form-data
+//	- application/json
 //
 //	produces:
 //	- application/json
@@ -169,26 +172,26 @@ func (m *Module) AccountUpdateCredentialsPATCHHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, acctSensitive)
 }
 
-type fieldAttributesBinding struct{}
+// fieldsAttributesFormBinding satisfies gin's binding.Binding interface.
+// Should only be used specifically for multipart/form-data MIME type.
+type fieldsAttributesFormBinding struct{}
 
-func (fieldAttributesBinding) Name() string {
-	return "FieldAttributes"
+func (fieldsAttributesFormBinding) Name() string {
+	return "FieldsAttributes"
 }
 
-func (fieldAttributesBinding) Bind(req *http.Request, obj any) error {
+func (fieldsAttributesFormBinding) Bind(req *http.Request, obj any) error {
 	if err := req.ParseForm(); err != nil {
 		return err
 	}
 
+	// Change default namespace prefix and suffix to
+	// allow correct parsing of the field attributes.
 	decoder := form.NewDecoder()
-	// change default namespace prefix and suffix to allow correct parsing of the field attributes
 	decoder.SetNamespacePrefix("[")
 	decoder.SetNamespaceSuffix("]")
-	if err := decoder.Decode(obj, req.Form); err != nil {
-		return err
-	}
 
-	return nil
+	return decoder.Decode(obj, req.Form)
 }
 
 func parseUpdateAccountForm(c *gin.Context) (*apimodel.UpdateCredentialsRequest, error) {
@@ -196,36 +199,34 @@ func parseUpdateAccountForm(c *gin.Context) (*apimodel.UpdateCredentialsRequest,
 		Source: &apimodel.UpdateSource{},
 	}
 
-	if err := c.ShouldBind(&form); err != nil {
-		return nil, fmt.Errorf("could not parse form from request: %s", err)
-	}
-
-	// use custom form binding to support field attributes in the form data
-	if err := c.ShouldBindWith(&form, fieldAttributesBinding{}); err != nil {
-		return nil, fmt.Errorf("could not parse form from request: %s", err)
-	}
-
-	// parse source field-by-field
-	sourceMap := c.PostFormMap("source")
-
-	if privacy, ok := sourceMap["privacy"]; ok {
-		form.Source.Privacy = &privacy
-	}
-
-	if sensitive, ok := sourceMap["sensitive"]; ok {
-		sensitiveBool, err := strconv.ParseBool(sensitive)
-		if err != nil {
-			return nil, fmt.Errorf("error parsing form source[sensitive]: %s", err)
+	switch ct := c.ContentType(); ct {
+	case binding.MIMEJSON:
+		// Bind with default json binding first.
+		if err := c.ShouldBindWith(form, binding.JSON); err != nil {
+			return nil, err
 		}
-		form.Source.Sensitive = &sensitiveBool
-	}
 
-	if language, ok := sourceMap["language"]; ok {
-		form.Source.Language = &language
-	}
+		// Now use custom form binding for
+		// field attributes in the json data.
+		var err error
+		form.FieldsAttributes, err = parseFieldsAttributesFromJSON(form.JSONFieldsAttributes)
+		if err != nil {
+			return nil, fmt.Errorf("custom json binding failed: %w", err)
+		}
+	case binding.MIMEMultipartPOSTForm:
+		// Bind with default form binding first.
+		if err := c.ShouldBindWith(form, binding.FormMultipart); err != nil {
+			return nil, err
+		}
 
-	if statusContentType, ok := sourceMap["status_content_type"]; ok {
-		form.Source.StatusContentType = &statusContentType
+		// Now use custom form binding for
+		// field attributes in the form data.
+		if err := c.ShouldBindWith(form, fieldsAttributesFormBinding{}); err != nil {
+			return nil, fmt.Errorf("custom form binding failed: %w", err)
+		}
+	default:
+		err := fmt.Errorf("content-type %s not supported for this endpoint; supported content-types are %s, %s", ct, binding.MIMEJSON, binding.MIMEMultipartPOSTForm)
+		return nil, err
 	}
 
 	if form == nil ||
@@ -247,4 +248,32 @@ func parseUpdateAccountForm(c *gin.Context) (*apimodel.UpdateCredentialsRequest,
 	}
 
 	return form, nil
+}
+
+func parseFieldsAttributesFromJSON(jsonFieldsAttributes *map[string]apimodel.UpdateField) (*[]apimodel.UpdateField, error) {
+	if jsonFieldsAttributes == nil {
+		// Nothing set, nothing to do.
+		return nil, nil
+	}
+
+	fieldsAttributes := make([]apimodel.UpdateField, 0, len(*jsonFieldsAttributes))
+	for keyStr, updateField := range *jsonFieldsAttributes {
+		key, err := strconv.Atoi(keyStr)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't parse fieldAttributes key %s to int: %w", keyStr, err)
+		}
+
+		fieldsAttributes = append(fieldsAttributes, apimodel.UpdateField{
+			Key:   key,
+			Name:  updateField.Name,
+			Value: updateField.Value,
+		})
+	}
+
+	// Sort slice by the key each field was submitted with.
+	slices.SortFunc(fieldsAttributes, func(a, b apimodel.UpdateField) bool {
+		return a.Key < b.Key
+	})
+
+	return &fieldsAttributes, nil
 }
