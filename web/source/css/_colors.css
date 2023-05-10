@@ -120,3 +120,12 @@ $error-bg: $error2;
 $list-entry-bg: $gray2;
 $list-entry-alternate-bg: $gray3;
 $list-entry-hover-bg: $gray4;
+
+/* Plyr video player */
+$plyr-color-main: $orange2;
+$plyr-video-background: $bg-accent;
+$plyr-badge-background: $bg-accent;
+$plyr-video-controls-background: $bg-accent;
+$plyr-badge-text-color: $fg;
+$plyr-badge-border-radius: $br;
+$plyr-video-progress-buffered-background: $gray8;

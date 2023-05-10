@@ -62,7 +62,7 @@ skulk({
 			transform: [
 				["babelify", {
 					global: true,
-					ignore: [/node_modules\/(?!(photoswipe.*))/]
+					ignore: [/node_modules\/(?!(photoswipe.*|plyr.*))/]
 				}]
 			],
 		},

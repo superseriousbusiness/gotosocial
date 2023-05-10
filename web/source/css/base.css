@@ -44,6 +44,11 @@ $br: 0.4rem;
    inside something with $br, eg avatar, header img */
 $br-inner: 0.2rem; 
 
+/* Fork-Awesome 'fa-fw' fixed icon width 
+   keep in sync with https://github.com/ForkAwesome/Fork-Awesome/blob/a99579ae3e735ee70e51ed62dfcee3172b5b2db7/css/fork-awesome.css#L50
+*/
+$fa-fw: 1.28571429em;
+
 html, body {
 	padding: 0;
 	margin: 0;

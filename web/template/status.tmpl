@@ -34,7 +34,7 @@
 <section class="body">
 	<div class="text">
 		{{if .SpoilerText}}
-		<details class="spoiler-details">
+		<details class="text-spoiler">
 			<summary>
 				<span class="spoiler-text">{{emojify .Emojis (escape .SpoilerText)}}</span>
 				<span class="button" role="button" tabindex="0">Toggle visibility</span>
@@ -52,38 +52,48 @@
 	{{with .MediaAttachments}}
 	<div
 		class="media photoswipe-gallery {{(len .) | oddOrEven }}{{if eq (len .) 1}} single{{end}}{{if eq (len .) 2}} double{{end}}">
-		{{range .}}
+		{{range $index, $media := .}}
+		{{with $media}}
 		<div class="media-wrapper">
-			{{if not .Description}}
+			<!-- {{if not .Description}}
 			<div class="no-image-desc" aria-hidden="true"><i class="fa fa-info-circle"></i><span>Missing media
 					description</span></div>
-			{{end}}
-			<input type="checkbox" id="sensitiveMedia-{{.ID}}" class="sensitive-checkbox hidden"
-				{{if not $.Sensitive}}checked{{end}} />
-			<div class="sensitive">
-				<div class="open">
-					<label for="sensitiveMedia-{{.ID}}" class="button" role="button" tabindex="0">
-						<i class="fa fa-eye-slash" title="Hide sensitive media"></i>
-					</label>
-				</div>
-				<div class="closed" {{if .Description}}title="{{.Description}}" {{end}}>
-					<label for="sensitiveMedia-{{.ID}}" class="button" role="button" tabindex="0">Show sensitive media</label>
-				</div>
-			</div>
-			{{ if eq .Type "video" }}
-			<div class="video-play">
-				<span class="icon-span fa-stack" aria-hidden="true">
-					<i class="icon-bg fa fa-fw fa-circle fa-stack-1x"></i>
-					<i class="icon fa fa-fw fa-play-circle fa-stack-1x"></i>
-				</span>
-			</div>
-			{{ end }}
-			<a href="{{.URL}}" target="_blank" {{if .Description}}title="{{.Description}}" {{end}}
-				data-pswp-width="{{.Meta.Original.Width}}px" data-pswp-height="{{.Meta.Original.Height}}px"
-				{{if eq .Type "video"}}data-pswp-type="video" {{end}} data-cropped="true">
-				<img src="{{.PreviewURL}}" {{if .Description}}alt="{{.Description}}" {{end}} data-blurhash="{{.Blurhash}}" />
-			</a>
+			{{end}} -->
+			<details class="{{.Type}}-spoiler" {{if not $.Sensitive}}open{{end}}>
+				<summary>
+					<div class="show sensitive" aria-hidden="true">
+						<span class="button" role="button" tabindex="0">Show sensitive media</span>
+					</div>
+					<span class="show button" aria-hidden="true">
+						<i class="fa fa-fw fa-eye"></i>
+					</span>
+					<span class="hide button" role="button" tabindex="0">
+						<i class="fa fa-fw fa-eye-slash" aria-label="Hide media"></i>
+					</span>
+					{{if eq .Type "video"}}
+					<video {{if .Description}} title="{{.Description}}" {{end}}>
+						<source type="video/mp4" src="{{.URL}}" />
+					</video>
+					{{else}}
+					<img {{if .Description}} title="{{.Description}}" {{end}} src="{{.PreviewURL}}" />
+					{{end}}
+				</summary>
+				{{if eq .Type "video"}}
+				<video class="plyr-video photoswipe-slide" controls {{if .Description}}alt="{{.Description}}"
+					title="{{.Description}}" {{end}} data-pswp-index="{{$index}}" data-pswp-width="{{.Meta.Original.Width}}px"
+					data-pswp-height="{{.Meta.Original.Height}}px">
+					<source type="video/mp4" src="{{.URL}}" />
+				</video>
+				{{else}}
+				<a class="photoswipe-slide" href="{{.URL}}" target="_blank" {{if .Description}}title="{{.Description}}" {{end}}
+					data-pswp-width="{{.Meta.Original.Width}}px" data-pswp-height="{{.Meta.Original.Height}}px"
+					data-cropped="true">
+					<img src="{{.PreviewURL}}" {{if .Description}}alt="{{.Description}}" {{end}} />
+				</a>
+				{{end}}
+			</details>
 		</div>
+		{{end}}
 		{{end}}
 	</div>
 	{{end}}

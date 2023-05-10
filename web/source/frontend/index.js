@@ -19,10 +19,12 @@
 
 "use strict";
 
+window.HELP_IMPROVE_VIDEOJS = false;
+
 const Photoswipe = require("photoswipe/dist/umd/photoswipe.umd.min.js");
 const PhotoswipeLightbox = require("photoswipe/dist/umd/photoswipe-lightbox.umd.min.js");
 const PhotoswipeCaptionPlugin = require("photoswipe-dynamic-caption-plugin").default;
-const PhotoswipeVideoPlugin = require("photoswipe-video-plugin").default;
+const Plyr = require("plyr");
 
 let [_, _user, type, id] = window.location.pathname.split("/");
 if (type == "statuses") {
@@ -34,18 +36,66 @@ if (type == "statuses") {
 
 const lightbox = new PhotoswipeLightbox({
 	gallery: '.photoswipe-gallery',
-	children: 'a',
+	children: '.photoswipe-slide',
 	pswpModule: Photoswipe,
 });
 
 new PhotoswipeCaptionPlugin(lightbox, {
 	type: 'auto',
+	captionContent(slide) {
+		return slide.data.alt;
+	}
 });
-new PhotoswipeVideoPlugin(lightbox, {});
+
+lightbox.addFilter('itemData', (item) => {
+	const el = item.element;
+	console.log(el);
+	if (el && el.classList.contains("plyr-video")) {
+		const parentNode = el._plyrContainer.parentNode;
+
+		return {
+			alt: el.getAttribute("alt"),
+			_video: {
+				open(c) {
+					c.appendChild(el._plyrContainer);
+				},
+				close() {
+					parentNode.appendChild(el._plyrContainer);
+				}
+			},
+			width: parseInt(el.dataset.pswpWidth),
+			height: parseInt(el.dataset.pswpHeight)
+		};
+	}
+	return item;
+});
+
+lightbox.on("contentActivate", (e) => {
+	const { content } = e;
+	if (content.data._video != undefined) {
+		console.log("activate", e);
+		content.data._video.open(content.element);
+	}
+});
+
+lightbox.on("contentDeactivate", (e) => {
+	const { content } = e;
+	if (content.data._video != undefined) {
+		console.log("deactivate", e);
+		content.data._video.close();
+	}
+});
+
+lightbox.on("close", function () {
+	console.log("close", lightbox.pswp);
+	if (lightbox.pswp.currSlide.data._video != undefined) {
+		lightbox.pswp.currSlide.data._video.close();
+	}
+});
 
 lightbox.init();
 
-Array.from(document.getElementsByClassName("spoiler-details")).forEach((spoiler) => {
+Array.from(document.getElementsByClassName("text-spoiler")).forEach((spoiler) => {
 	const button = spoiler.getElementsByClassName("button")[0];
 
 	if (button != undefined) {
@@ -57,6 +107,42 @@ Array.from(document.getElementsByClassName("spoiler-details")).forEach((spoiler)
 			}
 		}
 		update();
+
+		spoiler.addEventListener("toggle", update);
+	}
+});
+
+Array.from(document.getElementsByClassName("plyr-video")).forEach((video) => {
+	let player = new Plyr(video, {
+		title: video.title,
+		settings: ["loop"],
+		disableContextMenu: false,
+		hideControls: false,
+		tooltips: { contrors: true, seek: true },
+		listeners: {
+			fullscreen: () => {
+				lightbox.loadAndOpen(parseInt(video.dataset.pswpIndex), {
+					gallery: video.closest(".photoswipe-gallery")
+				});
+
+				return false;
+			}
+		}
+	});
+
+	player.elements.container.title = video.title;
+	video._plyrContainer = player.elements.container;
+});
+
+Array.from(document.getElementsByClassName("video-spoiler")).forEach((spoiler) => {
+	const video = spoiler.getElementsByClassName("plyr-video")[0];
+
+	if (video != undefined) {
+		function update() {
+			if (!spoiler.open) {
+				video.pause();
+			}
+		}
 
 		spoiler.addEventListener("toggle", update);
 	}

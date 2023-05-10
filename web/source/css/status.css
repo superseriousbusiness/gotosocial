@@ -18,6 +18,7 @@
 
 @import "photoswipe/dist/photoswipe.css";
 @import "photoswipe-dynamic-caption-plugin/photoswipe-dynamic-caption-plugin.css";
+@import "plyr/dist/plyr.css";
 
 main {
 	background: transparent;
@@ -113,15 +114,16 @@ main {
 	}
 
 	details > summary {
-		list-style: none;
-		padding-bottom: 0.5rem;
 		display: inline-block;
+		list-style: none;
+
+		&::-webkit-details-marker {
+			display: none; /* Safari */
+		}
 
 		.button {
 			white-space: nowrap;
-			padding: 0.2rem 0.3rem;
 			cursor: pointer;
-			font-size: 1rem;
 		}
 	}
 
@@ -134,6 +136,15 @@ main {
 		z-index: 2;
 
 		width: 100%;
+
+		details > summary {
+			padding-bottom: 0.5rem;
+
+			.button {
+				padding: 0.2rem 0.3rem;
+				font-size: 1rem;
+			}
+		}
 
 		a {
 			color: $link-fg;
@@ -200,16 +211,104 @@ main {
 	}
 
 	.media {
-		border-radius: $br;
 		grid-column: span 3;
 		display: grid;
 		grid-template-columns: 50% 50%;
 		grid-auto-rows: 10rem;
 		overflow: hidden;
-		gap: 0.3rem;
 
 		.media-wrapper {
+			height: 100%;
+			width: 100%;
+			box-sizing: border-box;
+			border: 0.15rem solid $gray1;
+			border-radius: $br;
 			position: relative;
+			overflow: hidden;
+			z-index: 2;
+
+			details {
+				position: absolute;
+				height: 100%;
+				width: 100%;
+
+				&[open] summary {
+					height: auto;
+					width: auto;
+					margin: 1rem;
+					padding: 0;
+
+					.show, video, img {
+						display: none;
+					}
+
+					.hide.button {
+						display: inline-block;
+						grid-column: 1 / span 3;
+						grid-row: 1 / span 2;
+					}
+				}
+
+				summary {
+					position: absolute;
+					height: 100%;
+					width: 100%;
+					z-index: 3;
+					overflow: hidden;
+					
+					display: grid;
+					padding: 1rem;
+					grid-template-columns: 1fr auto 1fr;
+					grid-template-rows: 1fr 1fr;
+					grid-template-areas: 
+						"eye sensitive ."
+						".   sensitive  .";
+
+					.show.button, .hide.button {
+						grid-area: eye;
+						align-self: start;
+						justify-self: start;
+						margin: 0;
+						padding: 0.4rem;
+
+						.fa-fw {
+							line-height: $fa-fw;
+						}
+					}
+
+					.show.sensitive {
+						grid-area: sensitive;
+						align-self: center;
+
+						.button {
+							cursor: pointer;
+							align-self: center;
+						}
+					}
+
+					.hide {
+						display: none;
+					}
+
+					video, img {
+						z-index: -1;
+						position: absolute;
+						height: calc(100% + 1.2rem);
+						width: calc(100% + 1.2rem);
+						top: -0.6rem;
+						left: -0.6rem;
+						filter: blur(1.2rem);
+					}
+				}
+
+				video.plyr-video, .plyr {
+					position: absolute;
+					height: 100%;
+					width: 100%;
+					object-fit: contain;
+					background: $gray1;
+				}
+			}
 		}
 
 		&.single .media-wrapper {
@@ -218,101 +317,6 @@ main {
 
 		&.odd .media-wrapper:first-child, &.double .media-wrapper {
 			grid-row: span 2;
-		}
-
-		.open, .open .button {
-			display: none;
-		}
-
-		.closed {
-			z-index: 2;
-		}
-
-		input.sensitive-checkbox:checked { /* Media is shown */
-			& ~ .video-play {
-				display: flex;
-			}
-			& ~ .sensitive {
-				.closed {
-					transition: 0.8s;
-					pointer-events: none;
-					opacity: 0;
-
-					& > * {
-						display: none;
-					}
-				}
-
-				.open {
-					display: flex;
-					justify-content: flex-start;
-
-					.button {
-						align-self: flex-start;
-						display: initial;
-						z-index: 4;
-					}
-				}
-			}
-		}
-
-		.video-play {
-			.icon-span {
-				align-self: center;
-				display: initial;
-				z-index: 4;
-
-				.icon {
-					color: $white1;
-				}
-
-				.icon-bg {
-					color: $gray1;
-					font-size: 1.1em;
-				}
-			}
-
-			display: none;
-			position: absolute;
-			height: 100%;
-			width: 100%;
-			justify-content: center;
-			align-items: center;
-			font-size: 7em;
-			pointer-events: none;
-		}
-
-		.sensitive {
-			position: absolute;
-			height: 100%;
-			width: 100%;
-
-			.open, .closed {
-				display: flex;
-				position: absolute;
-				height: 100%;
-				width: 100%;
-				justify-content: center;
-				padding: 1rem;
-
-				label {
-					z-index: 3;
-				}
-			}
-
-			.closed {
-				transition: 0.3s;
-				background: $bg-sensitive;
-				@supports (backdrop-filter: blur(2rem)) {
-					background: transparent;
-					backdrop-filter: blur(2rem);
-				}
-
-				.button {
-					align-self: center;
-					justify-self: center;
-				}
-			}
 		}
 
 		.no-image-desc {
@@ -406,5 +410,36 @@ main {
 		.info {
 			background: $toot-focus-info-bg;
 		}
+	}
+}
+
+.plyr--video {
+	flex-direction: column-reverse;
+
+	.plyr__video-wrapper {
+		position: relative;
+	}
+
+	.plyr__controls {
+		align-self: stretch;
+		position: initial;
+		padding: 0.1rem;
+		padding-top: 0.2rem;
+	}
+
+	.plyr__control {
+		box-shadow: none;
+	}
+
+	.plyr__control--overlaid {
+		top: calc(50% - 18px);
+	}
+}
+
+.pswp__content {
+	padding: 2rem;
+
+	.plyr {
+		max-height: 100%;
 	}
 }
