@@ -27,22 +27,18 @@ main.profile {
 	padding: 0.5rem;
 	border-radius: $br;
 
-	display: grid;
-	grid-template-rows: auto auto;
-	grid-template-columns: 35fr 65fr;
-	grid-template-areas:
-		"header header"
-		"about toots";
-
-	gap: 1rem;
+	.column-split {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1rem;
+	}
 }
 
 main.profile .header {
-	grid-area: header;
-
 	background: $bg-accent;
 	border-radius: $br;
 	overflow: hidden;
+	margin-bottom: 1rem;
 
 	.header-image {
 		position: relative;
@@ -165,7 +161,6 @@ main.profile {
 		}
 
 		&.pinned {
-			margin: 0 1rem;
 			display: grid;
 			grid-template-columns: auto 1fr;
 			gap: 1rem;
@@ -178,29 +173,12 @@ main.profile {
 }
 
 main.profile .toots {
-	grid-area: toots;
-
+	flex: 65 25rem; 
 	display: flex;
 	flex-direction: column;
 	gap: 0.4rem;
 
-	.col-header {
-		margin: 0;
-		background: $gray4;
-		border-top-left-radius: $br;
-		border-top-right-radius: $br;
-		padding: 0.75rem;
-	}
-
 	.toot {
-		padding-top: 0.75rem;
-		box-shadow: none;
-		border: none;
-
-		.contentgrid {
-			padding: 0 0.75rem;
-		}
-
 		.info {
 			padding: 0.3rem 0.75rem;
 		}
@@ -212,7 +190,7 @@ main.profile .toots {
 }
 
 main.profile .about-user {
-	grid-area: about;
+	flex: 35 14rem;
 	border-radius: $br;
 	overflow: hidden;
 
@@ -236,10 +214,6 @@ main.profile .about-user {
 
 			&:first-child {
 				border-top: 0.1rem solid $gray2;
-			}
-
-			b {
-				color: $fg-accent;
 			}
 		}
 	}

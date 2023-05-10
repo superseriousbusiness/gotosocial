@@ -26,7 +26,7 @@
             <img src="{{.account.Header}}" alt="" />
             {{ end }}
         </div>
-        <div class="basic-info">
+        <div class="basic-info" aria-hidden="true">
             <a class="avatar" href="{{.account.Avatar}}">
                 <img src="{{.account.Avatar}}" alt="">
             </a>
@@ -50,77 +50,92 @@
 				<i class="rss-icon fa fa-rss-square" aria-hidden="true"></i>
 			</a> -->
         </div>
+        <div class="sr-only">
+            Profile for
+            {{if .account.DisplayName}}{{.account.DisplayName}}{{else}}{{.account.Username}}{{end}}.
+            Username @{{.account.Username}}, {{acctInstance .account.Acct}}
+        </div>
     </div>
 
-    <div class="about-user">
-        <div class="col-header">
-            <h3>About</h3>
-        </div>
+    <div class="column-split">
 
-        <div class="fields">
-            {{ range .account.Fields }}
-            <div class="field">
-                <b>{{.Name}}</b>
-                <span>{{.Value}}</span>
+        <section class="about-user">
+            <div class="col-header">
+                <h3>About</h3>
             </div>
-            {{ end }}
-        </div>
 
-        <div class="bio">
-            {{ if .account.Note }}
-            {{emojify .account.Emojis (noescape .account.Note)}}
-            {{else}}
-            This GoToSocial user hasn't written a bio yet!
-            {{end}}
-        </div>
+            <div class="fields">
+                {{ range .account.Fields }}
+                <div class="field">
+                    <b>{{.Name}}</b>
+                    <span>{{.Value}}</span>
+                </div>
+                {{ end }}
+            </div>
 
-        <div class="accountstats">
-            <b>Joined</b><time datetime="{{.account.CreatedAt}}">{{.account.CreatedAt | timestampVague}}</time>
-            <b>Posts</b><span>{{.account.StatusesCount}}</span>
-            <b>Followed by</b><span>{{.account.FollowersCount}}</span>
-            <b>Following</b><span>{{.account.FollowingCount}}</span>
-        </div>
-    </div>
+            <div class="bio">
+                {{ if .account.Note }}
+                {{emojify .account.Emojis (noescape .account.Note)}}
+                {{else}}
+                This GoToSocial user hasn't written a bio yet!
+                {{end}}
+            </div>
 
-    <div class="toots">
-        {{ if .pinned_statuses }}
-        <div class="col-header pinned">
-            <h3>Pinned posts</h3>
-            <a href="#recent">jump to recent</a>
-        </div>
-        <section class="thread">
-            {{ range .pinned_statuses }}
-            <article class="toot expanded" id="{{.ID}}">
-                {{ template "status.tmpl" .}}
-            </article>
-            {{ end }}
-        </section>
-        {{ end }}
+            <div class="sr-only" role="group">
+                <span>Joined on {{.account.CreatedAt | timestampVague}}.</span>
+                <span>{{.account.StatusesCount}} post{{if .account.StatusesCount | eq 1 | not}}s{{end}}.</span>
+                <span>Followed by {{.account.FollowersCount}}.</span>
+                <span>Following {{.account.FollowingCount}}.</span>
+            </div>
 
-        <div class="col-header" id="recent">
-            <h3>Recent posts</h3>
-        </div>
-
-        <section class="thread">
-            {{ if not .statuses }}
-            <div data-nosnippet class="nothinghere">Nothing here!</div>
-            {{ else }}
-            {{ range .statuses }}
-            <article class="toot expanded" id="{{.ID}}">
-                {{ template "status.tmpl" .}}
-            </article>
-            {{ end }}
-            {{ end }}
+            <div class="accountstats" aria-hidden="true">
+                <b>Joined</b><time datetime="{{.account.CreatedAt}}">{{.account.CreatedAt | timestampVague}}</time>
+                <b>Posts</b><span>{{.account.StatusesCount}}</span>
+                <b>Followed by</b><span>{{.account.FollowersCount}}</span>
+                <b>Following</b><span>{{.account.FollowingCount}}</span>
+            </div>
         </section>
 
-        <div class="backnextlinks">
-            {{ if .show_back_to_top }}
-            <a href="/@{{ .account.Username }}">Back to top</a>
+        <section class="toots">
+            {{ if .pinned_statuses }}
+            <div class="col-header pinned">
+                <h3>Pinned posts</h3>
+                <a href="#recent">jump to recent</a>
+            </div>
+            <section class="thread">
+                {{ range .pinned_statuses }}
+                <article class="toot expanded" id="{{.ID}}">
+                    {{ template "status.tmpl" .}}
+                </article>
+                {{ end }}
+            </section>
             {{ end }}
-            {{ if .statuses_next }}
-            <a href="{{ .statuses_next }}" class="next">Show older</a>
-            {{ end }}
-        </div>
+
+            <div class="col-header">
+                <h3 id="recent" tabindex="-1">Recent posts</h3>
+            </div>
+
+            <section class="thread">
+                {{ if not .statuses }}
+                <div data-nosnippet class="nothinghere">Nothing here!</div>
+                {{ else }}
+                {{ range .statuses }}
+                <article class="toot expanded" id="{{.ID}}">
+                    {{ template "status.tmpl" .}}
+                </article>
+                {{ end }}
+                {{ end }}
+            </section>
+
+            <div class="backnextlinks">
+                {{ if .show_back_to_top }}
+                <a href="/@{{ .account.Username }}">Back to top</a>
+                {{ end }}
+                {{ if .statuses_next }}
+                <a href="{{ .statuses_next }}" class="next">Show older</a>
+                {{ end }}
+            </div>
+        </section>
     </div>
 </main>
 
