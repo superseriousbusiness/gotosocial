@@ -31,13 +31,13 @@ main {
 }
 
 .toot {
-	background: $toot-unfocus-bg;
+	background: $toot-bg;
 	box-shadow: $boxshadow;
 	border: $boxshadow-border;
+	border-radius: $br;
 	position: relative;
 	margin-bottom: $br;
-	padding-top: 1.5rem;
-	padding-bottom: 0.7rem;
+	padding-top: 0.75rem;
 
 	a {
 		position: relative;
@@ -46,81 +46,78 @@ main {
 		text-decoration: none;
 	}
 
-	.contentgrid {
-		padding: 0 1.5rem;
+	.author > a {
+		padding: 0 0.75rem;
 		display: grid;
-		grid-template-columns: 4rem 1fr auto;
-		grid-template-rows: 1.5rem auto auto auto;
-		column-gap: 0.5rem;
-	}
+		grid-template-columns: 3.5rem 1fr auto;
+		grid-template-rows: auto auto;
+		grid-template-areas:
+			"avatar display date"
+			"avatar user .";
+		gap: 0 0.5rem;
 
-	.not-expanded {
-		color: $fg-reduced;
-		grid-column: 3;
-		grid-row: 1;
-	}
-
-	.avatar {
-		grid-row: span 3;
-		aspect-ratio: 1/1;
-		display: flex;
-		border: 0.2rem solid $avatar-border;
-		border-radius: 0.4rem;
-		overflow: hidden; /* hides corners from img overflowing */
-	
-		img {
-			height: 100%;
-			width: 100%;
+		.avatar {
+			grid-area: avatar;
+			height: 3.5rem;
+			width: 3.5rem;
 			object-fit: cover;
-			background: $bg;
-		}
-	}
 
-	.displayname, .username {
-		justify-self: start;
-		align-self: start;
+			border: 0.15rem solid $avatar-border;
+			border-radius: $br;
+			overflow: hidden; /* hides corners from img overflowing */
+
+			img {
+				height: 100%;
+				width: 100%;
+				object-fit: cover;
+				background: $bg;
+			}
+		}
+
+		.displayname, .username {
+			justify-self: start;
+			align-self: start;
 		
-		max-width: 100%;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
+			max-width: 100%;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
 	
-	.displayname {
-		font-weight: bold;
-		font-size: 1.5rem;
-		line-height: 2rem;
-		margin-top: -0.5rem;
-	}
-
-	.username {
-		color: $link-fg;
-		font-size: 1rem;
-		line-height: 1.3rem;
-	}
-
-	input.spoiler:checked ~ .content {
-		display: none;
-	}
-
-	.spoiler {
-		padding-bottom: 0.5rem;
-		
-		display: flex;
-		align-items: center;
-		flex-wrap: wrap;
-		gap: 0.4rem;
-
-		.spoiler-text {
-			word-break: break-word;
+		.displayname {
+			grid-area: display;
+			font-weight: bold;
+			font-size: 1rem;
+			line-height: 1.3rem;
+			/* margin-top: -0.5rem; */
 		}
 
-		label {
+		.username {
+			grid-area: user;
+			color: $link-fg;
+			font-size: 1rem;
+			line-height: 1.3rem;
+		}
+
+		.timestamp {
+			grid-area: date;
+			color: $fg-reduced;
+		}
+	}
+
+	.body {
+		padding: 0 0.75rem;
+	}
+
+	details > summary {
+		list-style: none;
+		padding-bottom: 0.5rem;
+		display: inline-block;
+
+		.button {
 			padding: 0.2rem 0.3rem;
 			cursor: pointer;
 			font-size: 1rem;
-		}
-		label:hover {
 		}
 	}
 
@@ -358,14 +355,14 @@ main {
 	}
 
 	.info {
+		display: flex;
 		background: $toot-info-bg;
 		color: $fg-reduced;
-		display: none;
 		border-top: 0.15rem solid $toot-info-border;
-		padding: 0.5rem 1.5rem;
+		padding: 0.5rem 0.75rem;
 
-		div {
-			padding-right: 1.3rem;
+		div, time {
+			padding-right: 1rem;
 		}
 
 		.stats {
@@ -406,39 +403,16 @@ main {
 		background: $toot-focus-bg;
 		padding-bottom: 0;
 
-		.contentgrid {
-			.displayname {
-				grid-column: span 2;
-			}
-
-			.not-expanded {
-				display: none;
-			}
+		.info {
+			background: $toot-focus-info-bg;
 		}
 
-		.info {
-			display: flex;
+		.not-expanded {
+			display: none;
 		}
 
 		.media {
 			margin-bottom: 0.5rem;
-		}
-	}
-}
-
-footer + div { /* something weird from the devstack.. */
-	display: none;
-}
-
-@media screen and (max-width: 89ch) {
-	.toot {
-		.contentgrid {
-			grid-template-rows: 1.5rem 1.3rem 1.3rem auto;
-		}
-
-		.username, .not-expanded {
-			grid-column: 2;
-			grid-row: auto;
 		}
 	}
 }

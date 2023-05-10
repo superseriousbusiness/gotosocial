@@ -19,20 +19,20 @@
 
 {{ template "header.tmpl" .}}
 <main>
-	<div data-nosnippet class="thread">
+	<section data-nosnippet class="thread">
 		{{range .context.Ancestors}}
-		<div class="toot" id="{{.ID}}">
+		<article class="toot" id="{{.ID}}">
 			{{ template "status.tmpl" .}}
-		</div>
+		</article>
 		{{end}}
-		<div class="toot expanded" id="{{.status.ID}}">
+		<article class="toot expanded" id="{{.status.ID}}">
 			{{ template "status.tmpl" .status}}
-		</div>
+		</article>
 		{{range .context.Descendants}}
-		<div class="toot" id="{{.ID}}">
+		<article class="toot" id="{{.ID}}">
 			{{ template "status.tmpl" .}}
-		</div>
+		</article>
 		{{end}}
-	</div>
+	</section>
 </main>
 {{ template "footer.tmpl" .}}

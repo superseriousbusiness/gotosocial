@@ -80,10 +80,12 @@ $button-danger-bg: $error3;
 $button-danger-fg: $white1;
 $button-danger-hover-bg: $error2;
 
-$toot-focus-bg: $gray5;
-$toot-unfocus-bg: $gray2;
 
-$toot-info-bg: $gray4;
+$toot-bg: $gray3;
+$toot-info-bg: $gray2;
+
+$toot-focus-bg: $gray5;
+$toot-focus-info-bg: $gray4;
 
 $no-img-desc-bg: $orange1;
 $no-img-desc-fg: $gray1;
