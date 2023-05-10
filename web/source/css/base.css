@@ -95,14 +95,14 @@ header {
 }
 
 header a {
-	margin: 2rem;
 	display: flex;
 	flex-wrap: wrap;
-	gap: 2rem;
+	margin: 1.5rem;
+	gap: 1rem;
 
 	img {
 		align-self: center;
-		height: 6rem;
+		height: 3rem;
 	}
 
 	div {
@@ -111,6 +111,7 @@ header a {
 		display: flex;
 
 		h1 {
+			font-size: 1.5rem;
 			word-wrap: anywhere;
 			align-self: center;
 			color: $fg;
@@ -132,15 +133,6 @@ header a {
 }
 
 main {
-	section {
-		background: $bg-accent;
-		box-shadow: $boxshadow;
-		border: $boxshadow-border;
-		border-radius: $br;
-		padding: 2rem;
-		margin-bottom: 2rem;
-	}
-
 	p:first-child {
 		margin-top: 0;
 	}

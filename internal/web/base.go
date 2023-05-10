@@ -43,5 +43,8 @@ func (m *Module) baseHandler(c *gin.Context) {
 	c.HTML(http.StatusOK, "index.tmpl", gin.H{
 		"instance": instance,
 		"ogMeta":   ogBase(instance),
+		"stylesheets": []string{
+			distPathPrefix + "/index.css",
+		},
 	})
 }
