@@ -24,22 +24,22 @@ const React = require("react");
 module.exports = function FakeProfile({ avatar, header, display_name, username, role }) {
 	return ( // Keep in sync with web/template/profile.tmpl
 		<div className="profile">
-			<div class="header">
-				<div class="header-image">
+			<div className="header">
+				<div className="header-image">
 					<img src={header} alt={header ? `header image for ${username}` : "None set"} />
 				</div>
-				<div class="basic-info" aria-hidden="true">
-					<a class="avatar" href="{{.account.Avatar}}">
+				<div className="basic-info" aria-hidden="true">
+					<a className="avatar" href="{{.account.Avatar}}">
 						<img src={avatar} alt={avatar ? `avatar image for ${username}` : "None set"} />
 					</a>
-					<span class="displayname text-cutoff">
+					<span className="displayname text-cutoff">
 						{display_name.trim().length > 0 ? display_name : username}
-						<span class="sr-only">.</span>
+						<span className="sr-only">.</span>
 					</span>
-					<span class="username text-cutoff">@{username}</span>
+					<span className="username text-cutoff">@{username}</span>
 					{(role && role != "user") &&
 						<div className={`role ${role}`}>
-							<span class="sr-only">Role: </span>{role}
+							<span className="sr-only">Role: </span>{role}
 						</div>
 					}
 				</div>
