@@ -208,12 +208,15 @@
 	}
 
 	.toot {
+		border-radius: 0;
+
 		.info {
 			padding: 0.3rem 0.75rem;
 		}
 
-		&:first-child {
-			border-radius: 0;
+		&:last-child {
+			border-bottom-left-radius: $br;
+			border-bottom-right-radius: $br;
 		}
 	}
 }
