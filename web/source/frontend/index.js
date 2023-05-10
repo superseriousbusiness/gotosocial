@@ -60,3 +60,20 @@ Array.from(document.getElementsByClassName("spoiler-label")).forEach((label) => 
 		label.addEventListener("click", () => { setTimeout(update, 1); });
 	}
 });
+
+Array.from(document.getElementsByClassName("spoiler-details")).forEach((spoiler) => {
+	const button = spoiler.getElementsByClassName("button")[0];
+
+	if (button != undefined) {
+		function update() {
+			if (spoiler.open) {
+				button.textContent = "Show less";
+			} else {
+				button.textContent = "Show more";
+			}
+		}
+		update();
+
+		spoiler.addEventListener("toggle", update);
+	}
+});

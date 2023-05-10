@@ -18,80 +18,110 @@
 */ -}}
 
 {{ template "header.tmpl" .}}
-<main>
-    <div class="profile">
-        <div class="headerimage">
+
+<main class="profile">
+    <div class="header">
+        <div class="header-image">
             {{ if .account.Header }}
-            <img
-                src="{{.account.Header}}"
-                alt="{{if .account.DisplayName}}{{.account.DisplayName}}{{else}}{{.account.Username}}{{end}}'s header"
-            />
+            <img src="{{.account.Header}}" alt="" />
             {{ end }}
         </div>
-        <div class="basic">
-            <div id="profile-basic-filler2"></div>
-            <a href="{{.account.Avatar}}" class="avatar"><img src="{{.account.Avatar}}" alt="{{if .account.DisplayName}}{{.account.DisplayName}}{{else}}{{.account.Username}}{{end}}'s avatar"></a>
-            <div class="displayname">{{if .account.DisplayName}}{{emojify .account.Emojis (escape .account.DisplayName)}}{{else}}{{.account.Username}}{{end}}</div>
-            <div class="usernamecontainer">
-                <div class="username">@{{ .account.Username }}@{{ .instance.AccountDomain }}</div>
-                {{- /* Only render account role if 1. it's present and 2. it's not equal to the standard 'user' role */ -}}
-                {{ if and (.account.Role) (ne .account.Role.Name "user") }}<div class="role {{ .account.Role.Name }}">{{ .account.Role.Name }}</div>{{ end }}
+        <div class="basic-info">
+            <a class="avatar" href="{{.account.Avatar}}">
+                <img src="{{.account.Avatar}}" alt="">
+            </a>
+            <span class="displayname text-cutoff">
+                {{if .account.DisplayName}}
+                {{emojify .account.Emojis (escape .account.DisplayName)}}
+                {{else}}
+                {{.account.Username}}
+                {{end}}
+                <span class="sr-only">.</span>
+            </span>
+            <span class="username text-cutoff">@{{.account.Username}}<span class="sr-only">,
+                </span>{{acctInstance .account.Acct}}</span>
+            {{- /* Only render account role if 1. it's present and 2. it's not equal to the standard 'user' role */ -}}
+            {{ if and (.account.Role) (ne .account.Role.Name "user") }}
+            <div class="role {{ .account.Role.Name }}">
+                <span class="sr-only">Role: </span>{{ .account.Role.Name }}
             </div>
-        </div>
-        <div class="detailed">
-            <div class="bio">
-                {{ if .account.Note }}{{emojify .account.Emojis (noescape .account.Note)}}{{else}}This GoToSocial user hasn't written a bio yet!{{end}}
-            </div>
-        </div>
-        <div class="accountstats">
-            <div class="entry-group">
-                <div class="entry">Joined <b>{{.account.CreatedAt | timestampVague}}</b></div>
-                <div class="entry">Followed by <b>{{.account.FollowersCount}}</b></div>
-            </div>
-            <div class="entry-group">
-                <div class="entry">Following <b>{{.account.FollowingCount}}</b></div>
-                <div class="entry">Posted <b>{{.account.StatusesCount}}</b></div>
-            </div>
+            {{ end }}
+            <!-- <a class="rss-icon-link" href="/@admin/feed.rss" aria-label="RSS feed">
+				<i class="rss-icon fa fa-rss-square" aria-hidden="true"></i>
+			</a> -->
         </div>
     </div>
+
+    <div class="about-user">
+        <div class="col-header">
+            <h3>About</h3>
+        </div>
+
+        <div class="fields">
+            {{ range .account.Fields }}
+            <div class="field">
+                <b>{{.Name}}</b>
+                <span>{{.Value}}</span>
+            </div>
+            {{ end }}
+        </div>
+
+        <div class="bio">
+            {{ if .account.Note }}
+            {{emojify .account.Emojis (noescape .account.Note)}}
+            {{else}}
+            This GoToSocial user hasn't written a bio yet!
+            {{end}}
+        </div>
+
+        <div class="accountstats">
+            <b>Joined</b><time datetime="{{.account.CreatedAt}}">{{.account.CreatedAt | timestampVague}}</time>
+            <b>Posts</b><span>{{.account.StatusesCount}}</span>
+            <b>Followed by</b><span>{{.account.FollowersCount}}</span>
+            <b>Following</b><span>{{.account.FollowingCount}}</span>
+        </div>
+    </div>
+
+    <div class="toots">
         {{ if .pinned_statuses }}
-        <h2 id="pinned">
-            <span>Pinned toots</span>
-        </h2>
-        <div class="thread">
+        <div class="col-header pinned">
+            <h3>Pinned posts</h3>
+            <a href="#recent">jump to recent</a>
+        </div>
+        <section class="thread">
             {{ range .pinned_statuses }}
-            <div class="toot expanded">
+            <article class="toot expanded" id="{{.ID}}">
                 {{ template "status.tmpl" .}}
-            </div>
+            </article>
             {{ end }}
+        </section>
+        {{ end }}
+
+        <div class="col-header" id="recent">
+            <h3>Recent posts</h3>
         </div>
-        {{ end }}
-    <h2 id="recent">
-        <span>Latest public toots</span>
-        {{ if .rssFeed }}
-            <a href="{{ .rssFeed }}" aria-label="RSS feed">
-                <i class="rss-icon fa fa-rss-square" aria-hidden="true"></i>
-            </a>
-        {{ end }}
-    </h2>
-	    {{ if not .statuses }}
-        <div data-nosnippet class="nothinghere">Nothing here!</div>
-        {{ else }}
-        <div class="thread">
+
+        <section class="thread">
+            {{ if not .statuses }}
+            <div data-nosnippet class="nothinghere">Nothing here!</div>
+            {{ else }}
             {{ range .statuses }}
-            <div class="toot expanded">
+            <article class="toot expanded" id="{{.ID}}">
                 {{ template "status.tmpl" .}}
-            </div>
+            </article>
+            {{ end }}
+            {{ end }}
+        </section>
+
+        <div class="backnextlinks">
+            {{ if .show_back_to_top }}
+            <a href="/@{{ .account.Username }}">Back to top</a>
+            {{ end }}
+            {{ if .statuses_next }}
+            <a href="{{ .statuses_next }}" class="next">Show older</a>
             {{ end }}
         </div>
-        {{ end }}
-    <div class="backnextlinks">
-        {{ if .show_back_to_top }}
-        <a href="/@{{ .account.Username }}">Back to top</a>
-        {{ end }}
-        {{ if .statuses_next }}
-        <a href="{{ .statuses_next }}" class="next">Show older</a>
-        {{ end }}
     </div>
 </main>
+
 {{ template "footer.tmpl" .}}
