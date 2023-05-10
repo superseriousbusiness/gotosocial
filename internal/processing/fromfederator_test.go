@@ -142,15 +142,10 @@ func (suite *FromFederatorTestSuite) TestProcessReplyMention() {
 	suite.NoError(err)
 
 	// 2. a notification should exist for the mention
-	where := []db.Where{
-		{
-			Key:   "status_id",
-			Value: replyingStatus.ID,
-		},
-	}
-
-	notif := &gtsmodel.Notification{}
-	err = suite.db.GetWhere(context.Background(), where, notif)
+	var notif gtsmodel.Notification
+	err = suite.db.GetWhere(context.Background(), []db.Where{
+		{Key: "status_id", Value: replyingStatus.ID},
+	}, &notif)
 	suite.NoError(err)
 	suite.Equal(gtsmodel.NotificationMention, notif.NotificationType)
 	suite.Equal(replyingStatus.InReplyToAccountID, notif.TargetAccountID)

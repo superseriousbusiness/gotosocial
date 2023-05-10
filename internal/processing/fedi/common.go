@@ -40,7 +40,7 @@ func (p *Processor) authenticate(ctx context.Context, requestedUsername string) 
 		return
 	}
 
-	if requestingAccount, err = p.federator.GetAccountByURI(gtscontext.SetFastFail(ctx), requestedUsername, requestingAccountURI); err != nil {
+	if requestingAccount, _, err = p.federator.GetAccountByURI(gtscontext.SetFastFail(ctx), requestedUsername, requestingAccountURI); err != nil {
 		errWithCode = gtserror.NewErrorUnauthorized(err)
 		return
 	}

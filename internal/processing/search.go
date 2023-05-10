@@ -258,11 +258,12 @@ func (p *Processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, 
 		return account, nil
 	}
 
-	return p.federator.GetAccountByURI(
+	account, _, err := p.federator.GetAccountByURI(
 		gtscontext.SetFastFail(ctx),
 		authed.Account.Username,
 		uri,
 	)
+	return account, err
 }
 
 func (p *Processor) searchAccountByUsernameDomain(ctx context.Context, authed *oauth.Auth, username string, domain string, resolve bool) (*gtsmodel.Account, error) {
@@ -285,9 +286,10 @@ func (p *Processor) searchAccountByUsernameDomain(ctx context.Context, authed *o
 		return account, nil
 	}
 
-	return p.federator.GetAccountByUsernameDomain(
+	account, _, err := p.federator.GetAccountByUsernameDomain(
 		gtscontext.SetFastFail(ctx),
 		authed.Account.Username,
 		username, domain,
 	)
+	return account, err
 }

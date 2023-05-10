@@ -59,14 +59,14 @@ func accountUpToDate(account *gtsmodel.Account) bool {
 }
 
 // GetAccountByURI: implements Dereferencer{}.GetAccountByURI.
-func (d *deref) GetAccountByURI(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Account, error) {
+func (d *deref) GetAccountByURI(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Account, ap.Accountable, error) {
 	// Fetch and dereference account if necessary.
 	account, apubAcc, err := d.getAccountByURI(ctx,
 		requestUser,
 		uri,
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if apubAcc != nil {
@@ -76,7 +76,7 @@ func (d *deref) GetAccountByURI(ctx context.Context, requestUser string, uri *ur
 		})
 	}
 
-	return account, nil
+	return account, apubAcc, nil
 }
 
 // getAccountByURI is a package internal form of .GetAccountByURI() that doesn't bother dereferencing featured posts on update.
@@ -142,7 +142,7 @@ func (d *deref) getAccountByURI(ctx context.Context, requestUser string, uri *ur
 }
 
 // GetAccountByUsernameDomain: implements Dereferencer{}.GetAccountByUsernameDomain.
-func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser string, username string, domain string) (*gtsmodel.Account, error) {
+func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser string, username string, domain string) (*gtsmodel.Account, ap.Accountable, error) {
 	if domain == config.GetHost() || domain == config.GetAccountDomain() {
 		// We do local lookups using an empty domain,
 		// else it will fail the db search below.
@@ -152,23 +152,23 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 	// Search the database for existing account with USERNAME@DOMAIN.
 	account, err := d.state.DB.GetAccountByUsernameDomain(ctx, username, domain)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, fmt.Errorf("GetAccountByUsernameDomain: error checking database for account %s@%s: %w", username, domain, err)
+		return nil, nil, fmt.Errorf("GetAccountByUsernameDomain: error checking database for account %s@%s: %w", username, domain, err)
 	}
 
 	if account == nil {
 		if domain == "" {
 			// failed local lookup, will be db.ErrNoEntries.
-			return nil, NewErrNotRetrievable(err)
+			return nil, nil, NewErrNotRetrievable(err)
 		}
 
 		// Create and pass-through a new bare-bones model for dereferencing.
-		account, _, err := d.enrichAccount(ctx, requestUser, nil, &gtsmodel.Account{
+		account, apubAcc, err := d.enrichAccount(ctx, requestUser, nil, &gtsmodel.Account{
 			ID:       id.NewULID(),
 			Username: username,
 			Domain:   domain,
 		}, nil)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		// This account was updated, enqueue dereference featured posts.
@@ -176,11 +176,11 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 			d.dereferenceAccountFeatured(ctx, requestUser, account)
 		})
 
-		return account, nil
+		return account, apubAcc, nil
 	}
 
 	// Try to update existing account model.
-	latest, err := d.RefreshAccount(ctx,
+	latest, apubAcc, err := d.RefreshAccount(ctx,
 		requestUser,
 		account,
 		nil,
@@ -188,27 +188,27 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 	)
 	if err != nil {
 		// Fallback to existing.
-		return account, nil //nolint
+		return account, nil, nil //nolint
 	}
 
-	return latest, nil
+	return latest, apubAcc, nil
 }
 
 // RefreshAccount: implements Dereferencer{}.RefreshAccount.
-func (d *deref) RefreshAccount(ctx context.Context, requestUser string, account *gtsmodel.Account, apubAcc ap.Accountable, force bool) (*gtsmodel.Account, error) {
+func (d *deref) RefreshAccount(ctx context.Context, requestUser string, account *gtsmodel.Account, apubAcc ap.Accountable, force bool) (*gtsmodel.Account, ap.Accountable, error) {
 	// Check whether needs update (and not forced).
 	if accountUpToDate(account) && !force {
-		return account, nil
+		return account, nil, nil
 	}
 
 	// Parse the URI from account.
 	uri, err := url.Parse(account.URI)
 	if err != nil {
-		return nil, fmt.Errorf("RefreshAccount: invalid account uri %q: %w", account.URI, err)
+		return nil, nil, fmt.Errorf("RefreshAccount: invalid account uri %q: %w", account.URI, err)
 	}
 
 	// Try to update + deref existing account model.
-	latest, _, err := d.enrichAccount(ctx,
+	latest, apubAcc, err := d.enrichAccount(ctx,
 		requestUser,
 		uri,
 		account,
@@ -221,7 +221,7 @@ func (d *deref) RefreshAccount(ctx context.Context, requestUser string, account 
 		account.FetchedAt = time.Now()
 		_ = d.state.DB.UpdateAccount(ctx, account, "fetched_at")
 
-		return nil, err
+		return nil, nil, err
 	}
 
 	// This account was updated, enqueue re-dereference featured posts.
@@ -229,7 +229,7 @@ func (d *deref) RefreshAccount(ctx context.Context, requestUser string, account 
 		d.dereferenceAccountFeatured(ctx, requestUser, latest)
 	})
 
-	return latest, nil
+	return latest, apubAcc, nil
 }
 
 // RefreshAccountAsync: implements Dereferencer{}.RefreshAccountAsync.
@@ -273,7 +273,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		if err != nil {
 			if account.URI == "" {
 				// this is a new account (to us) with username@domain but failed webfinger, nothing more we can do.
-				return nil, nil, fmt.Errorf("enrichAccount: error webfingering account: %w", err)
+				return nil, nil, &ErrNotRetrievable{fmt.Errorf("enrichAccount: error webfingering account: %w", err)}
 			}
 
 			// Simply log this error and move on, we already have an account URI.
@@ -283,7 +283,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		if err == nil {
 			if account.Domain != accDomain {
 				// Domain has changed, assume the activitypub
-				// account data provided is stale or borked(?)
+				// account data provided may not be the latest.
 				apubAcc = nil
 
 				// After webfinger, we now have correct account domain from which we can do a final DB check.
@@ -306,8 +306,6 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	}
 
 	if uri == nil {
-		var err error
-
 		// No URI provided / found, must parse from account.
 		uri, err = url.Parse(account.URI)
 		if err != nil {
@@ -334,7 +332,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		// Fetch latest version of the account, dereferencing if necessary.
 		apubAcc, err = d.dereferenceAccountable(ctx, tsport, uri)
 		if err != nil {
-			return nil, nil, fmt.Errorf("enrichAccount: error dereferencing account %s: %w", uri, err)
+			return nil, nil, &ErrNotRetrievable{fmt.Errorf("enrichAccount: error dereferencing account %s: %w", uri, err)}
 		}
 
 		// Convert the dereferenced AP account object to our GTS model.

@@ -38,9 +38,20 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
-// statusUpdateInterval is the interval after which
-// we check for the latest available version of a status.
-const statusUpdateInterval = 2 * time.Hour
+// statusUpToDate ...
+func statusUpToDate(status *gtsmodel.Status) bool {
+	if *status.Local {
+		// Can't update local statuses.
+		return true
+	}
+
+	// If this status was updated recently (last interval), we return as-is.
+	if next := status.FetchedAt.Add(2 * time.Hour); time.Now().Before(next) {
+		return true
+	}
+
+	return false
+}
 
 // GetStatus: implements Dereferencer{}.GetStatus().
 func (d *deref) GetStatusByURI(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Status, ap.Statusable, error) {
@@ -95,17 +106,7 @@ func (d *deref) getStatusByURI(ctx context.Context, requestUser string, uri *url
 		return d.enrichStatus(ctx, requestUser, uri, &gtsmodel.Status{
 			Local: func() *bool { var false bool; return &false }(),
 			URI:   uriStr,
-		})
-	}
-
-	if *status.Local {
-		// Can't update local statuses.
-		return status, nil, nil
-	}
-
-	// If this status was updated recently (last interval), we return as-is.
-	if next := status.FetchedAt.Add(statusUpdateInterval); time.Now().Before(next) {
-		return status, nil, nil
+		}, nil)
 	}
 
 	// Try to update + deref existing status model.
@@ -113,6 +114,7 @@ func (d *deref) getStatusByURI(ctx context.Context, requestUser string, uri *url
 		requestUser,
 		uri,
 		status,
+		nil,
 	)
 	if err != nil {
 		log.Errorf(ctx, "error enriching remote status: %v", err)
@@ -128,24 +130,17 @@ func (d *deref) getStatusByURI(ctx context.Context, requestUser string, uri *url
 	return latest, apubStatus, nil
 }
 
-// UpdateStatus: implements Dereferencer{}.UpdateStatus().
-func (d *deref) UpdateStatus(ctx context.Context, requestUser string, status *gtsmodel.Status, force bool) (*gtsmodel.Status, ap.Statusable, error) {
-	if *status.Local {
-		// Can't update local statuses.
+// RefreshStatus: implements Dereferencer{}.RefreshStatus().
+func (d *deref) RefreshStatus(ctx context.Context, requestUser string, status *gtsmodel.Status, apubStatus ap.Statusable, force bool) (*gtsmodel.Status, ap.Statusable, error) {
+	// Check whether needs update.
+	if statusUpToDate(status) {
 		return status, nil, nil
-	}
-
-	if !force {
-		// If this status was updated recently (last interval), we return as-is.
-		if next := status.FetchedAt.Add(statusUpdateInterval); time.Now().Before(next) {
-			return status, nil, nil
-		}
 	}
 
 	// Parse the URI from status.
 	uri, err := url.Parse(status.URI)
 	if err != nil {
-		return nil, nil, fmt.Errorf("UpdateStatus: invalid status uri %q: %w", status.URI, err)
+		return nil, nil, fmt.Errorf("RefreshStatus: invalid status uri %q: %w", status.URI, err)
 	}
 
 	// Try to update + deref existing status model.
@@ -153,6 +148,7 @@ func (d *deref) UpdateStatus(ctx context.Context, requestUser string, status *gt
 		requestUser,
 		uri,
 		status,
+		apubStatus,
 	)
 	if err != nil {
 		return nil, nil, err
@@ -166,30 +162,23 @@ func (d *deref) UpdateStatus(ctx context.Context, requestUser string, status *gt
 	return latest, apubStatus, nil
 }
 
-// UpdateStatusAsync: implements Dereferencer{}.UpdateStatusAsync().
-func (d *deref) UpdateStatusAsync(ctx context.Context, requestUser string, status *gtsmodel.Status, force bool) {
-	if *status.Local {
-		// Can't update local statuses.
+// RefreshStatusAsync: implements Dereferencer{}.RefreshStatusAsync().
+func (d *deref) RefreshStatusAsync(ctx context.Context, requestUser string, status *gtsmodel.Status, apubStatus ap.Statusable, force bool) {
+	// Check whether needs update.
+	if statusUpToDate(status) {
 		return
-	}
-
-	if !force {
-		// If this status was updated recently (last interval), we return as-is.
-		if next := status.FetchedAt.Add(statusUpdateInterval); time.Now().Before(next) {
-			return
-		}
 	}
 
 	// Parse the URI from status.
 	uri, err := url.Parse(status.URI)
 	if err != nil {
-		log.Errorf(ctx, "UpdateStatusAsync: invalid status uri %q: %v", status.URI, err)
+		log.Errorf(ctx, "RefreshStatusAsync: invalid status uri %q: %v", status.URI, err)
 		return
 	}
 
 	// Enqueue a worker function to re-fetch this status async.
 	d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
-		latest, apubStatus, err := d.enrichStatus(ctx, requestUser, uri, status)
+		latest, apubStatus, err := d.enrichStatus(ctx, requestUser, uri, status, apubStatus)
 		if err != nil {
 			log.Errorf(ctx, "error enriching remote status: %v", err)
 			return
@@ -201,7 +190,7 @@ func (d *deref) UpdateStatusAsync(ctx context.Context, requestUser string, statu
 }
 
 // enrichStatus will enrich the given status, whether a new barebones model, or existing model from the database. It handles necessary dereferencing etc.
-func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.URL, status *gtsmodel.Status) (*gtsmodel.Status, ap.Statusable, error) {
+func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.URL, status *gtsmodel.Status, apubStatus ap.Statusable) (*gtsmodel.Status, ap.Statusable, error) {
 	// Pre-fetch a transport for requesting username, used by later dereferencing.
 	tsport, err := d.transportController.NewTransportForUsername(ctx, requestUser)
 	if err != nil {
@@ -215,10 +204,17 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 		return nil, nil, fmt.Errorf("enrichStatus: %s is blocked", uri.Host)
 	}
 
-	// Deref this status to get the latest available.
-	apubStatus, err := d.dereferenceStatusable(ctx, tsport, uri)
-	if err != nil {
-		return nil, nil, fmt.Errorf("enrichStatus: error dereferencing status %s: %w", uri, err)
+	var derefd bool
+
+	if apubStatus == nil {
+		// Deref this status to get the latest available.
+		apubStatus, err = d.dereferenceStatusable(ctx, tsport, uri)
+		if err != nil {
+			return nil, nil, &ErrNotRetrievable{fmt.Errorf("enrichStatus: error dereferencing status %s: %w", uri, err)}
+		}
+
+		// Mark as deref'd.
+		derefd = true
 	}
 
 	// Get the attributed-to status in order to fetch profile.
@@ -238,10 +234,17 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 		log.Warnf(ctx, "status author account ID changed: old=%s new=%s", status.AccountID, author.ID)
 	}
 
-	// Convert dereferenced AP status object to our GTS model.
-	latestStatus, err := d.typeConverter.ASStatusToStatus(ctx, apubStatus)
-	if err != nil {
-		return nil, nil, fmt.Errorf("enrichStatus: error converting statusable to gts model for status %s: %w", uri, err)
+	// By default we assume that apubStatus has been passed,
+	// indicating that the given status is already latest.
+	latestStatus := status
+
+	if derefd {
+		// ActivityPub model was recently dereferenced, so assume that passed status
+		// may contain out-of-date information, convert AP model to our GTS model.
+		latestStatus, err = d.typeConverter.ASStatusToStatus(ctx, apubStatus)
+		if err != nil {
+			return nil, nil, fmt.Errorf("enrichStatus: error converting statusable to gts model for status %s: %w", uri, err)
+		}
 	}
 
 	// Use existing status ID.
@@ -260,19 +263,19 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 	latestStatus.Local = status.Local
 
 	// Ensure the status' mentions are populated, and pass in existing to check for changes.
-	if err := d.populateStatusMentions(ctx, requestUser, status, latestStatus); err != nil {
+	if err := d.fetchStatusMentions(ctx, requestUser, status, latestStatus); err != nil {
 		return nil, nil, fmt.Errorf("enrichStatus: error populating mentions for status %s: %w", uri, err)
 	}
 
 	// TODO: populateStatusTags()
 
 	// Ensure the status' media attachments are populated, passing in existing to check for changes.
-	if err := d.populateStatusAttachments(ctx, tsport, status, latestStatus); err != nil {
+	if err := d.fetchStatusAttachments(ctx, tsport, status, latestStatus); err != nil {
 		return nil, nil, fmt.Errorf("enrichStatus: error populating attachments for status %s: %w", uri, err)
 	}
 
 	// Ensure the status' emoji attachments are populated, passing in existing to check for changes.
-	if err := d.populateStatusEmojis(ctx, requestUser, status, latestStatus); err != nil {
+	if err := d.fetchStatusEmojis(ctx, requestUser, status, latestStatus); err != nil {
 		return nil, nil, fmt.Errorf("enrichStatus: error populating emojis for status %s: %w", uri, err)
 	}
 
@@ -343,7 +346,7 @@ func (d *deref) dereferenceStatusable(ctx context.Context, tsport transport.Tran
 	return nil, newErrWrongType(fmt.Errorf("dereferenceStatusable: type name %s not supported as Statusable", t.GetTypeName()))
 }
 
-func (d *deref) populateStatusMentions(ctx context.Context, requestUser string, existing *gtsmodel.Status, status *gtsmodel.Status) error {
+func (d *deref) fetchStatusMentions(ctx context.Context, requestUser string, existing *gtsmodel.Status, status *gtsmodel.Status) error {
 	// Allocate new slice to take the yet-to-be created mention IDs.
 	status.MentionIDs = make([]string, len(status.Mentions))
 
@@ -367,7 +370,7 @@ func (d *deref) populateStatusMentions(ctx context.Context, requestUser string, 
 		mention := mention
 
 		// Ensure we have the account of the mention target dereferenced.
-		mention.TargetAccount, err = d.GetAccountByURI(ctx, requestUser, accountURI)
+		mention.TargetAccount, _, err = d.getAccountByURI(ctx, requestUser, accountURI)
 		if err != nil {
 			log.Errorf(ctx, "failed to dereference account %s: %v", accountURI, err)
 			continue
@@ -416,7 +419,7 @@ func (d *deref) populateStatusMentions(ctx context.Context, requestUser string, 
 	return nil
 }
 
-func (d *deref) populateStatusAttachments(ctx context.Context, tsport transport.Transport, existing *gtsmodel.Status, status *gtsmodel.Status) error {
+func (d *deref) fetchStatusAttachments(ctx context.Context, tsport transport.Transport, existing *gtsmodel.Status, status *gtsmodel.Status) error {
 	// Allocate new slice to take the yet-to-be fetched attachment IDs.
 	status.AttachmentIDs = make([]string, len(status.Attachments))
 
@@ -479,7 +482,7 @@ func (d *deref) populateStatusAttachments(ctx context.Context, tsport transport.
 	return nil
 }
 
-func (d *deref) populateStatusEmojis(ctx context.Context, requestUser string, existing *gtsmodel.Status, status *gtsmodel.Status) error {
+func (d *deref) fetchStatusEmojis(ctx context.Context, requestUser string, existing *gtsmodel.Status, status *gtsmodel.Status) error {
 	// Fetch the full-fleshed-out emoji objects for our status.
 	emojis, err := d.populateEmojis(ctx, status.Emojis, requestUser)
 	if err != nil {

@@ -188,7 +188,7 @@ func (n *notificationDB) DeleteNotificationByID(ctx context.Context, id string) 
 		gtscontext.SetBarebones(ctx),
 		id,
 	)
-	if err != nil {
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 

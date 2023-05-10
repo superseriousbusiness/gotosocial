@@ -36,16 +36,16 @@ type Dereferencer interface {
 	// GetAccountByURI will attempt to fetch an accounts by its URI, first checking the database. In the case of a newly-met remote model, or a remote model
 	// whose last_fetched date is beyond a certain interval, the account will be dereferenced. In the case of dereferencing, some low-priority account information
 	// may be enqueued for asynchronous fetching, e.g. featured account statuses (pins).
-	GetAccountByURI(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Account, error)
+	GetAccountByURI(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Account, ap.Accountable, error)
 
 	// GetAccountByUsernameDomain will attempt to fetch an accounts by its username@domain, first checking the database. In the case of a newly-met remote model,
 	// or a remote model whose last_fetched date is beyond a certain interval, the account will be dereferenced. In the case of dereferencing, some low-priority
 	// account information may be enqueued for asynchronous fetching, e.g. featured account statuses (pins).
-	GetAccountByUsernameDomain(ctx context.Context, requestUser string, username string, domain string) (*gtsmodel.Account, error)
+	GetAccountByUsernameDomain(ctx context.Context, requestUser string, username string, domain string) (*gtsmodel.Account, ap.Accountable, error)
 
 	// RefreshAccount updates the given account if remote and last_fetched is beyond fetch interval, or if force is set. An updated account model is returned,
 	// but in the case of dereferencing, some low-priority account information may be enqueued for asynchronous fetching, e.g. featured account statuses (pins).
-	RefreshAccount(ctx context.Context, requestUser string, account *gtsmodel.Account, apubAcc ap.Accountable, force bool) (*gtsmodel.Account, error)
+	RefreshAccount(ctx context.Context, requestUser string, account *gtsmodel.Account, apubAcc ap.Accountable, force bool) (*gtsmodel.Account, ap.Accountable, error)
 
 	// RefreshAccountAsync enqueues the given account for an asychronous update fetching, if last_fetched is beyond fetch interval, or if forcc is set.
 	// This is a more optimized form of manually enqueueing .UpdateAccount() to the federation worker, since it only enqueues update if necessary.
@@ -56,13 +56,13 @@ type Dereferencer interface {
 	// may be enqueued for asynchronous fetching, e.g. dereferencing the remainder of the status thread.
 	GetStatusByURI(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Status, ap.Statusable, error)
 
-	// UpdateStatus updates the given status if remote and last_fetched is beyond fetch interval, or if force is set. An updated status model is returned,
+	// RefreshStatus updates the given status if remote and last_fetched is beyond fetch interval, or if force is set. An updated status model is returned,
 	// but in the case of dereferencing, some low-priority status information may be enqueued for asynchronous fetching, e.g. dereferencing the remainder of the status thread.
-	UpdateStatus(ctx context.Context, requestUser string, status *gtsmodel.Status, force bool) (*gtsmodel.Status, ap.Statusable, error)
+	RefreshStatus(ctx context.Context, requestUser string, status *gtsmodel.Status, apubStatus ap.Statusable, force bool) (*gtsmodel.Status, ap.Statusable, error)
 
-	// UpdateStatusAsync enqueues the given status for an asychronous update fetching, if last_fetched is beyond fetch interval, or if force is set.
+	// RefreshStatusAsync enqueues the given status for an asychronous update fetching, if last_fetched is beyond fetch interval, or if force is set.
 	// This is a more optimized form of manually enqueueing .UpdateStatus() to the federation worker, since it only enqueues update if necessary.
-	UpdateStatusAsync(ctx context.Context, requestUser string, status *gtsmodel.Status, force bool)
+	RefreshStatusAsync(ctx context.Context, requestUser string, status *gtsmodel.Status, apubStatus ap.Statusable, force bool)
 
 	GetRemoteInstance(ctx context.Context, username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
 

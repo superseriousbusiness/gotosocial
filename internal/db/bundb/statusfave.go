@@ -163,7 +163,7 @@ func (s *statusFaveDB) DeleteStatusFaveByID(ctx context.Context, id string) db.E
 		gtscontext.SetBarebones(ctx),
 		id,
 	)
-	if err != nil {
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 

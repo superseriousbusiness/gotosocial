@@ -206,7 +206,7 @@ func (r *relationshipDB) DeleteFollowByID(ctx context.Context, id string) error 
 		gtscontext.SetBarebones(ctx),
 		id,
 	)
-	if err != nil {
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
@@ -222,7 +222,7 @@ func (r *relationshipDB) DeleteFollowByURI(ctx context.Context, uri string) erro
 		gtscontext.SetBarebones(ctx),
 		uri,
 	)
-	if err != nil {
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 

@@ -19,6 +19,7 @@ package bundb
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -116,7 +117,7 @@ func (m *mentionDB) DeleteMentionByID(ctx context.Context, id string) error {
 		gtscontext.SetBarebones(ctx),
 		id,
 	)
-	if err != nil {
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 

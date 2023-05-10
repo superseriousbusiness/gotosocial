@@ -19,6 +19,7 @@ package bundb
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"time"
 
@@ -87,7 +88,7 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 		gtscontext.SetBarebones(ctx),
 		id,
 	)
-	if err != nil {
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 

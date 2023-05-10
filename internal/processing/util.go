@@ -57,7 +57,7 @@ func GetParseMentionFunc(dbConn db.DB, federator federation.Federator) gtsmodel.
 				requestingUsername = originAccount.Username
 			}
 
-			remoteAccount, err := federator.GetAccountByUsernameDomain(
+			remoteAccount, _, err := federator.GetAccountByUsernameDomain(
 				gtscontext.SetFastFail(ctx),
 				requestingUsername,
 				username,

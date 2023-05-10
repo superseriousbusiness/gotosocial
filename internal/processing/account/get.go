@@ -95,7 +95,7 @@ func (p *Processor) getFor(ctx context.Context, requestingAccount *gtsmodel.Acco
 		}
 
 		// Perform a last-minute fetch of target account to ensure remote account header / avatar is cached.
-		latest, err := p.federator.GetAccountByURI(gtscontext.SetFastFail(ctx), requestingAccount.Username, targetAccountURI)
+		latest, _, err := p.federator.GetAccountByURI(gtscontext.SetFastFail(ctx), requestingAccount.Username, targetAccountURI)
 		if err != nil {
 			log.Errorf(ctx, "error fetching latest target account: %v", err)
 		} else {

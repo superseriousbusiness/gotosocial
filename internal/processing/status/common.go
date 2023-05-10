@@ -45,9 +45,10 @@ func (p *Processor) getVisibleStatus(ctx context.Context, requestingAccount *gts
 
 	if requestingAccount != nil {
 		// Ensure the status is up-to-date.
-		p.federator.UpdateStatusAsync(ctx,
+		p.federator.RefreshStatusAsync(ctx,
 			requestingAccount.Username,
 			targetStatus,
+			nil,
 			false,
 		)
 	}

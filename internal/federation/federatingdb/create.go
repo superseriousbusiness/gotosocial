@@ -205,6 +205,7 @@ func (f *federatingDB) createNote(ctx context.Context, note vocab.ActivityStream
 			APObjectType:     ap.ObjectNote,
 			APActivityType:   ap.ActivityCreate,
 			APIri:            id.GetIRI(),
+			APObjectModel:    nil,
 			GTSModel:         nil,
 			ReceivingAccount: receivingAccount,
 		})
@@ -238,6 +239,7 @@ func (f *federatingDB) createNote(ctx context.Context, note vocab.ActivityStream
 	f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
 		APObjectType:     ap.ObjectNote,
 		APActivityType:   ap.ActivityCreate,
+		APObjectModel:    note,
 		GTSModel:         status,
 		ReceivingAccount: receivingAccount,
 	})

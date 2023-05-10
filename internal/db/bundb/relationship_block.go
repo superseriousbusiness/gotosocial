@@ -156,7 +156,7 @@ func (r *relationshipDB) DeleteBlockByID(ctx context.Context, id string) error {
 		gtscontext.SetBarebones(ctx),
 		id,
 	)
-	if err != nil {
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
@@ -172,7 +172,7 @@ func (r *relationshipDB) DeleteBlockByURI(ctx context.Context, uri string) error
 		gtscontext.SetBarebones(ctx),
 		uri,
 	)
-	if err != nil {
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
