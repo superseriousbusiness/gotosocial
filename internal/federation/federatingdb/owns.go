@@ -19,12 +19,14 @@ package federatingdb
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 
 	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
@@ -45,6 +47,11 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 		l.Tracef("we DO NOT own activity because the host is %s not %s", id.Host, host)
 		return false, nil
 	}
+
+	// todo: refactor the below; make sure we use
+	// proper db functions for everything, and
+	// preferably clean up by calling subfuncs
+	// (like we now do for ownsLike).
 
 	// apparently it belongs to this host, so what *is* it?
 	// check if it's a status, eg /users/example_username/statuses/SOME_UUID_OF_A_STATUS
@@ -117,28 +124,7 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 	}
 
 	if uris.IsLikePath(id) {
-		username, likeID, err := uris.ParseLikedPath(id)
-		if err != nil {
-			return false, fmt.Errorf("error parsing like path for url %s: %s", id.String(), err)
-		}
-		if _, err := f.state.DB.GetAccountByUsernameDomain(ctx, username, ""); err != nil {
-			if err == db.ErrNoEntries {
-				// there are no entries for this username
-				return false, nil
-			}
-			// an actual error happened
-			return false, fmt.Errorf("database error fetching account with username %s: %s", username, err)
-		}
-		if err := f.state.DB.GetByID(ctx, likeID, &gtsmodel.StatusFave{}); err != nil {
-			if err == db.ErrNoEntries {
-				// there are no entries
-				return false, nil
-			}
-			// an actual error happened
-			return false, fmt.Errorf("database error fetching like with id %s: %s", likeID, err)
-		}
-		l.Debugf("we own url %s", id.String())
-		return true, nil
+		return f.ownsLike(ctx, id)
 	}
 
 	if uris.IsBlockPath(id) {
@@ -167,4 +153,40 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 	}
 
 	return false, fmt.Errorf("could not match activityID: %s", id.String())
+}
+
+func (f *federatingDB) ownsLike(ctx context.Context, uri *url.URL) (bool, error) {
+	username, id, err := uris.ParseLikedPath(uri)
+	if err != nil {
+		return false, fmt.Errorf("error parsing Like path for url %s: %w", uri.String(), err)
+	}
+
+	// We're only checking for existence,
+	// so use barebones context.
+	bbCtx := gtscontext.SetBarebones(ctx)
+
+	if _, err := f.state.DB.GetAccountByUsernameDomain(bbCtx, username, ""); err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// No entries for this acct,
+			// we don't own this item.
+			return false, nil
+		}
+
+		// Actual error.
+		return false, fmt.Errorf("database error fetching account with username %s: %w", username, err)
+	}
+
+	if _, err := f.state.DB.GetStatusFaveByID(bbCtx, id); err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// No entries for this ID,
+			// we don't own this item.
+			return false, nil
+		}
+
+		// Actual error.
+		return false, fmt.Errorf("database error fetching status fave with id %s: %w", id, err)
+	}
+
+	log.Tracef(ctx, "we own Like %s", uri.String())
+	return true, nil
 }

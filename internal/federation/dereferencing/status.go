@@ -38,7 +38,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
-// statusUpToDate ...
+// statusUpToDate returns whether the given status model is both updateable
+// (i.e. remote status) and whether it needs an update based on `fetched_at`.
 func statusUpToDate(status *gtsmodel.Status) bool {
 	if *status.Local {
 		// Can't update local statuses.

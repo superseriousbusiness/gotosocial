@@ -35,14 +35,7 @@ import (
 // ancesters we are willing to follow before returning error.
 const maxIter = 1000
 
-// DereferenceThread takes a statusable (something that has withReplies and withInReplyTo),
-// and dereferences statusables in the conversation.
-//
-// This process involves working up and down the chain of replies, and parsing through the collections of IDs
-// presented by remote instances as part of their replies collections, and will likely involve making several calls to
-// multiple different hosts.
-//
-// This does not return error, as for robustness we do not want to error-out on a status because another further up / down has issues.
+// dereferenceThread will dereference statuses both above and below the given status in a thread, it returns no error and is intended to be called asychronously.
 func (d *deref) dereferenceThread(ctx context.Context, username string, statusIRI *url.URL, status *gtsmodel.Status, statusable ap.Statusable) {
 	// Ensure that ancestors have been fully dereferenced
 	if err := d.dereferenceStatusAncestors(ctx, username, status); err != nil {
@@ -304,7 +297,10 @@ stackLoop:
 			}
 
 			// Dereference this next collection page by its IRI
-			collectionPage, err := d.DereferenceCollectionPage(ctx, username, pageNextIRI)
+			collectionPage, err := d.dereferenceCollectionPage(ctx,
+				username,
+				pageNextIRI,
+			)
 			if err != nil {
 				l.Errorf("error dereferencing remote collection page %q: %s", pageNextIRI.String(), err)
 				continue stackLoop

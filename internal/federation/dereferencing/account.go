@@ -38,7 +38,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
-// accountUpToDate ...
+// accountUpToDate returns whether the given account model is both updateable (i.e.
+// non-instance remote account) and whether it needs an update based on `fetched_at`.
 func accountUpToDate(account *gtsmodel.Account) bool {
 	if account.IsLocal() {
 		// Can't update local accounts.
@@ -173,7 +174,9 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 
 		// This account was updated, enqueue dereference featured posts.
 		d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
-			d.dereferenceAccountFeatured(ctx, requestUser, account)
+			if err := d.dereferenceAccountFeatured(ctx, requestUser, account); err != nil {
+				log.Errorf(ctx, "error fetching account featured collection: %v", err)
+			}
 		})
 
 		return account, apubAcc, nil
@@ -226,7 +229,9 @@ func (d *deref) RefreshAccount(ctx context.Context, requestUser string, account 
 
 	// This account was updated, enqueue re-dereference featured posts.
 	d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
-		d.dereferenceAccountFeatured(ctx, requestUser, latest)
+		if err := d.dereferenceAccountFeatured(ctx, requestUser, account); err != nil {
+			log.Errorf(ctx, "error fetching account featured collection: %v", err)
+		}
 	})
 
 	return latest, apubAcc, nil
@@ -254,8 +259,10 @@ func (d *deref) RefreshAccountAsync(ctx context.Context, requestUser string, acc
 			return
 		}
 
-		// This account was updated, re-dereference featured posts.
-		d.dereferenceAccountFeatured(ctx, requestUser, latest)
+		// This account was updated, re-dereference account featured posts.
+		if err := d.dereferenceAccountFeatured(ctx, requestUser, latest); err != nil {
+			log.Errorf(ctx, "error fetching account featured collection: %v", err)
+		}
 	})
 }
 
@@ -726,9 +733,8 @@ func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gts
 	return changed, nil
 }
 
-// dereferenceAccountFeatured dereferences an account's featuredCollectionURI (if not empty).
-// For each discovered status, this status will be dereferenced (if necessary) and marked as
-// pinned (if necessary). Then, old pins will be removed if they're not included in new pins.
+// dereferenceAccountFeatured dereferences an account's featuredCollectionURI (if not empty). For each discovered status, this status will
+// be dereferenced (if necessary) and marked as pinned (if necessary). Then, old pins will be removed if they're not included in new pins.
 func (d *deref) dereferenceAccountFeatured(ctx context.Context, requestUser string, account *gtsmodel.Account) error {
 	uri, err := url.Parse(account.FeaturedCollectionURI)
 	if err != nil {
