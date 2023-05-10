@@ -64,8 +64,8 @@
 			<div class="fields">
 				{{ range .account.Fields }}
 				<div class="field">
-					<b>{{.Name}}</b>
-					<span>{{.Value}}</span>
+					<b>{{emojify .account.Emojis (noescape .Name)}}</b>
+					<span>{{emojify .account.Emojis (noescape .Value)}}</span>
 				</div>
 				{{ end }}
 			</div>
