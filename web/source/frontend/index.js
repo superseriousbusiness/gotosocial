@@ -19,8 +19,6 @@
 
 "use strict";
 
-window.HELP_IMPROVE_VIDEOJS = false;
-
 const Photoswipe = require("photoswipe/dist/umd/photoswipe.umd.min.js");
 const PhotoswipeLightbox = require("photoswipe/dist/umd/photoswipe-lightbox.umd.min.js");
 const PhotoswipeCaptionPlugin = require("photoswipe-dynamic-caption-plugin").default;
@@ -49,7 +47,6 @@ new PhotoswipeCaptionPlugin(lightbox, {
 
 lightbox.addFilter('itemData', (item) => {
 	const el = item.element;
-	console.log(el);
 	if (el && el.classList.contains("plyr-video")) {
 		const parentNode = el._plyrContainer.parentNode;
 
@@ -61,6 +58,9 @@ lightbox.addFilter('itemData', (item) => {
 				},
 				close() {
 					parentNode.appendChild(el._plyrContainer);
+				},
+				pause() {
+					el._player.pause();
 				}
 			},
 			width: parseInt(el.dataset.pswpWidth),
@@ -73,7 +73,6 @@ lightbox.addFilter('itemData', (item) => {
 lightbox.on("contentActivate", (e) => {
 	const { content } = e;
 	if (content.data._video != undefined) {
-		console.log("activate", e);
 		content.data._video.open(content.element);
 	}
 });
@@ -81,13 +80,12 @@ lightbox.on("contentActivate", (e) => {
 lightbox.on("contentDeactivate", (e) => {
 	const { content } = e;
 	if (content.data._video != undefined) {
-		console.log("deactivate", e);
+		content.data._video.pause();
 		content.data._video.close();
 	}
 });
 
 lightbox.on("close", function () {
-	console.log("close", lightbox.pswp);
 	if (lightbox.pswp.currSlide.data._video != undefined) {
 		lightbox.pswp.currSlide.data._video.close();
 	}
@@ -112,29 +110,6 @@ Array.from(document.getElementsByClassName("text-spoiler")).forEach((spoiler) =>
 	}
 });
 
-Array.from(document.getElementsByClassName("plyr-video")).forEach((video) => {
-	let player = new Plyr(video, {
-		title: video.title,
-		settings: ["loop"],
-		disableContextMenu: false,
-		hideControls: false,
-		tooltips: { contrors: true, seek: true },
-		iconUrl: "/assets/plyr.svg",
-		listeners: {
-			fullscreen: () => {
-				lightbox.loadAndOpen(parseInt(video.dataset.pswpIndex), {
-					gallery: video.closest(".photoswipe-gallery")
-				});
-
-				return false;
-			}
-		}
-	});
-
-	player.elements.container.title = video.title;
-	video._plyrContainer = player.elements.container;
-});
-
 Array.from(document.getElementsByClassName("video-spoiler")).forEach((spoiler) => {
 	const video = spoiler.getElementsByClassName("plyr-video")[0];
 
@@ -147,4 +122,33 @@ Array.from(document.getElementsByClassName("video-spoiler")).forEach((spoiler) =
 
 		spoiler.addEventListener("toggle", update);
 	}
+});
+
+Array.from(document.getElementsByClassName("plyr-video")).forEach((video) => {
+	let player = new Plyr(video, {
+		title: video.title,
+		settings: ["loop"],
+		disableContextMenu: false,
+		hideControls: false,
+		tooltips: { contrors: true, seek: true },
+		iconUrl: "/assets/plyr.svg",
+		listeners: {
+			fullscreen: () => {
+				if (player.playing) {
+					setTimeout(() => {
+						player.play();
+					}, 1);
+				}
+				lightbox.loadAndOpen(parseInt(video.dataset.pswpIndex), {
+					gallery: video.closest(".photoswipe-gallery")
+				});
+
+				return false;
+			}
+		}
+	});
+
+	player.elements.container.title = video.title;
+	video._player = player;
+	video._plyrContainer = player.elements.container;
 });
