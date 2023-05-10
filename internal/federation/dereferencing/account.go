@@ -73,7 +73,9 @@ func (d *deref) GetAccountByURI(ctx context.Context, requestUser string, uri *ur
 	if apubAcc != nil {
 		// This account was updated, enqueue re-dereference featured posts.
 		d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
-			d.dereferenceAccountFeatured(ctx, requestUser, account)
+			if err := d.dereferenceAccountFeatured(ctx, requestUser, account); err != nil {
+				log.Errorf(ctx, "error fetching account featured collection: %v", err)
+			}
 		})
 	}
 
