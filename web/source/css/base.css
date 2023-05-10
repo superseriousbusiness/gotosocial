@@ -99,23 +99,21 @@ header a {
 	flex-wrap: wrap;
 	margin: 1.5rem;
 	gap: 1rem;
+	justify-content: center;
 
 	img {
 		align-self: center;
 		height: 3rem;
 	}
 
-	div {
+	h1 {
 		flex-grow: 1;
 		align-self: center;
-		display: flex;
+		text-align: center;
 
-		h1 {
-			font-size: 1.5rem;
-			word-wrap: anywhere;
-			align-self: center;
-			color: $fg;
-		}
+		font-size: 1.5rem;
+		word-wrap: anywhere;
+		color: $fg;
 	}
 }
 

@@ -24,10 +24,8 @@ header a {
 		height: 6rem;
 	}
 
-	div {
-		h1 {
-			font-size: 2rem;
-		}
+	h1 {
+		font-size: 2rem;
 	}
 }
 
