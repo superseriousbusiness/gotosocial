@@ -119,6 +119,7 @@ Array.from(document.getElementsByClassName("plyr-video")).forEach((video) => {
 		disableContextMenu: false,
 		hideControls: false,
 		tooltips: { contrors: true, seek: true },
+		iconUrl: "/assets/plyr.svg",
 		listeners: {
 			fullscreen: () => {
 				lightbox.loadAndOpen(parseInt(video.dataset.pswpIndex), {
