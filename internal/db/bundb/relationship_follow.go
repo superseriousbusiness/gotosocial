@@ -25,7 +25,6 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
@@ -262,15 +261,27 @@ func (r *relationshipDB) DeleteAccountFollows(ctx context.Context, accountID str
 		return r.conn.ProcessError(err)
 	}
 
-	var errs gtserror.MultiError
+	defer func() {
+		// Invalidate all IDs on return.
+		for _, id := range followIDs {
+			r.state.Caches.GTS.Follow().Invalidate("ID", id)
+		}
+	}()
 
+	// Load all follows into cache, this *really* isn't great
+	// but it is the only way we can ensure we invalidate all
+	// related caches correctly (e.g. visibility).
 	for _, id := range followIDs {
-		// Delete each follow individually in order to trigger
-		// each of the necessary secondary cache callback functions.
-		if err := r.DeleteFollowByID(ctx, id); err != nil {
-			errs.Append(err)
+		_, err := r.GetFollowByID(ctx, id)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			return err
 		}
 	}
 
-	return errs.Combine()
+	// Finally delete all from DB.
+	_, err := r.conn.NewDelete().
+		Table("follows").
+		Where("? IN ?", bun.Ident("id"), bun.In(followIDs)).
+		Exec(ctx)
+	return r.conn.ProcessError(err)
 }

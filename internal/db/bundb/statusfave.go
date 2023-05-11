@@ -183,13 +183,11 @@ func (s *statusFaveDB) DeleteStatusFaves(ctx context.Context, targetAccountID st
 		return errors.New("DeleteStatusFaves: one of targetAccountID or originAccountID must be set")
 	}
 
-	// Capture fave IDs in a RETURNING statement.
 	var faveIDs []string
 
 	q := s.conn.
-		NewDelete().
-		Table("status_faves").
-		Returning("?", bun.Ident("id"))
+		NewSelect().
+		Table("status_faves")
 
 	if targetAccountID != "" {
 		q = q.Where("? = ?", bun.Ident("target_account_id"), targetAccountID)
@@ -203,12 +201,29 @@ func (s *statusFaveDB) DeleteStatusFaves(ctx context.Context, targetAccountID st
 		return s.conn.ProcessError(err)
 	}
 
+	defer func() {
+		// Invalidate all IDs on return.
+		for _, id := range faveIDs {
+			s.state.Caches.GTS.StatusFave().Invalidate("ID", id)
+		}
+	}()
+
+	// Load all faves into cache, this *really* isn't great
+	// but it is the only way we can ensure we invalidate all
+	// related caches correctly (e.g. visibility).
 	for _, id := range faveIDs {
-		// Invalidate each of the returned status fave IDs.
-		s.state.Caches.GTS.StatusFave().Invalidate("ID", id)
+		_, err := s.GetStatusFaveByID(ctx, id)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			return err
+		}
 	}
 
-	return nil
+	// Finally delete all from DB.
+	_, err := s.conn.NewDelete().
+		Table("status_faves").
+		Where("? IN ?", bun.Ident("id"), bun.In(faveIDs)).
+		Exec(ctx)
+	return s.conn.ProcessError(err)
 }
 
 func (s *statusFaveDB) DeleteStatusFavesForStatus(ctx context.Context, statusID string) db.Error {
@@ -216,19 +231,34 @@ func (s *statusFaveDB) DeleteStatusFavesForStatus(ctx context.Context, statusID 
 	var faveIDs []string
 
 	q := s.conn.
-		NewDelete().
+		NewSelect().
 		Table("status_faves").
-		Where("? = ?", bun.Ident("status_id"), statusID).
-		Returning("?", bun.Ident("id"))
-
+		Where("? = ?", bun.Ident("status_id"), statusID)
 	if _, err := q.Exec(ctx, &faveIDs); err != nil {
 		return s.conn.ProcessError(err)
 	}
 
+	defer func() {
+		// Invalidate all IDs on return.
+		for _, id := range faveIDs {
+			s.state.Caches.GTS.StatusFave().Invalidate("ID", id)
+		}
+	}()
+
+	// Load all faves into cache, this *really* isn't great
+	// but it is the only way we can ensure we invalidate all
+	// related caches correctly (e.g. visibility).
 	for _, id := range faveIDs {
-		// Invalidate each of the returned status fave IDs.
-		s.state.Caches.GTS.StatusFave().Invalidate("ID", id)
+		_, err := s.GetStatusFaveByID(ctx, id)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			return err
+		}
 	}
 
-	return nil
+	// Finally delete all from DB.
+	_, err := s.conn.NewDelete().
+		Table("status_faves").
+		Where("? IN ?", bun.Ident("id"), bun.In(faveIDs)).
+		Exec(ctx)
+	return s.conn.ProcessError(err)
 }

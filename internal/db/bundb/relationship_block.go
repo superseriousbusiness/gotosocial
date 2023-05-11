@@ -24,7 +24,6 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/uptrace/bun"
 )
@@ -211,15 +210,27 @@ func (r *relationshipDB) DeleteAccountBlocks(ctx context.Context, accountID stri
 		return r.conn.ProcessError(err)
 	}
 
-	var errs gtserror.MultiError
+	defer func() {
+		// Invalidate all IDs on return.
+		for _, id := range blockIDs {
+			r.state.Caches.GTS.Block().Invalidate("ID", id)
+		}
+	}()
 
+	// Load all blocks into cache, this *really* isn't great
+	// but it is the only way we can ensure we invalidate all
+	// related caches correctly (e.g. visibility).
 	for _, id := range blockIDs {
-		// Delete each block individually in order to trigger
-		// each of the necessary secondary cache callback functions.
-		if err := r.DeleteBlockByID(ctx, id); err != nil {
-			errs.Append(err)
+		_, err := r.GetBlockByID(ctx, id)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			return err
 		}
 	}
 
-	return errs.Combine()
+	// Finally delete all from DB.
+	_, err := r.conn.NewDelete().
+		Table("blocks").
+		Where("? IN ?", bun.Ident("id"), bun.In(blockIDs)).
+		Exec(ctx)
+	return r.conn.ProcessError(err)
 }
