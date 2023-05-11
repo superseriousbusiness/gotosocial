@@ -242,7 +242,7 @@ main {
 						display: none;
 					}
 
-					.hide.button {
+					.eye.button .hide {
 						display: inline-block;
 						grid-column: 1 / span 3;
 						grid-row: 1 / span 2;
@@ -264,7 +264,7 @@ main {
 						"eye sensitive ."
 						".   sensitive  .";
 
-					.show.button, .hide.button {
+					.eye.button {
 						grid-area: eye;
 						align-self: start;
 						justify-self: start;
@@ -273,6 +273,10 @@ main {
 
 						.fa-fw {
 							line-height: $fa-fw;
+						}
+
+						.hide {
+							display: none;
 						}
 					}
 
@@ -284,10 +288,6 @@ main {
 							cursor: pointer;
 							align-self: center;
 						}
-					}
-
-					.hide {
-						display: none;
 					}
 
 					video, img {

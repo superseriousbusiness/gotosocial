@@ -61,15 +61,14 @@
 			{{end}} -->
 			<details class="{{.Type}}-spoiler" {{if not $.Sensitive}}open{{end}}>
 				<summary>
-					<div class="show sensitive" aria-hidden="true">
-						<span class="button" role="button" tabindex="0">Show sensitive media</span>
+					<div class="show sensitive button" aria-hidden="true">
+						Show sensitive media
 					</div>
-					<span class="show button" aria-hidden="true">
-						<i class="fa fa-fw fa-eye"></i>
+					<span class="eye button" role="button" tabindex="0" aria-label="Toggle media">
+						<i class="hide fa fa-fw fa-eye-slash" aria-hidden="true"></i>
+						<i class="show fa fa-fw fa-eye" aria-hidden="true"></i>
 					</span>
-					<span class="hide button" role="button" tabindex="0">
-						<i class="fa fa-fw fa-eye-slash" aria-label="Hide media"></i>
-					</span>
+
 					{{if eq .Type "video"}}
 					<video {{if .Description}} title="{{.Description}}" {{end}}>
 						<source type="video/mp4" src="{{.URL}}" />
