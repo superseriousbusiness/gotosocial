@@ -17,7 +17,7 @@
 */
 
 .page {
-	grid-template-columns: 1fr minmax(auto, 60rem) 1fr;
+	grid-template-columns: 1fr minmax(auto, 60rem) 1fr; /* fallback for lack of min() support */
 	grid-template-columns: 1fr min(92%, 65rem) 1fr;
 }
 
