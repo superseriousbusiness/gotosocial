@@ -43,14 +43,17 @@
 			{{- /* Only render account role if 1. it's present and 2. it's not equal to the standard 'user' role */ -}}
 			{{ if and (.account.Role) (ne .account.Role.Name "user") }}
 			<div class="role {{ .account.Role.Name }}">
-				<span class="sr-only">Role: </span>{{ .account.Role.Name }}
+				{{ .account.Role.Name }}
 			</div>
 			{{ end }}
 		</div>
 		<div class="sr-only">
 			Profile for
 			{{if .account.DisplayName}}{{.account.DisplayName}}{{else}}{{.account.Username}}{{end}}.
-			Username @{{.account.Username}}, {{acctInstance .account.Acct}}
+			Username @{{.account.Username}}, {{acctInstance .account.Acct}}.
+			{{ if and (.account.Role) (ne .account.Role.Name "user") }}
+			Role: {{ .account.Role.Name }}
+			{{ end }}
 		</div>
 	</div>
 
