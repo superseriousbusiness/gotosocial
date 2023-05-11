@@ -319,38 +319,6 @@ main {
 			grid-row: span 2;
 		}
 
-		.no-image-desc {
-			color: $no-img-desc-fg;
-			background: $no-img-desc-bg;
-			display: flex;
-			position: absolute;
-			bottom: 0.1rem;
-			right: 0.4rem;
-			margin-bottom: 0.4rem;
-			margin-right: 0.4rem;
-			padding: 0.1rem 0.45rem;
-			border-radius: 100%;
-			border: 0.2rem solid $button-fg;
-			z-index: 3;
-
-			i.fa {
-				display: block;
-				line-height: 1.6rem;
-			}
-
-			span {
-				margin-left: 0.3rem;
-				display: none;
-			}
-
-			&:hover {
-				span {
-					display: block;
-				}
-				border-radius: 0.2rem;
-			}
-		}
-
 		img {
 			width: 100%;
 			height: 100%;

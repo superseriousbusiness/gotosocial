@@ -55,10 +55,6 @@
 		{{range $index, $media := .}}
 		{{with $media}}
 		<div class="media-wrapper">
-			<!-- {{if not .Description}}
-			<div class="no-image-desc" aria-hidden="true"><i class="fa fa-info-circle"></i><span>Missing media
-					description</span></div>
-			{{end}} -->
 			<details class="{{.Type}}-spoiler" {{if not $.Sensitive}}open{{end}}>
 				<summary>
 					<div class="show sensitive button" aria-hidden="true">
