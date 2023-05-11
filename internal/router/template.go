@@ -22,6 +22,7 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -158,6 +159,15 @@ func emojify(emojis []apimodel.Emoji, inputText template.HTML) template.HTML {
 	return template.HTML(out)
 }
 
+func acctInstance(acct string) string {
+	parts := strings.Split(acct, "@")
+	if len(parts) > 1 {
+		return "@" + parts[1]
+	}
+
+	return ""
+}
+
 func LoadTemplateFunctions(engine *gin.Engine) {
 	engine.SetFuncMap(template.FuncMap{
 		"escape":           escape,
@@ -169,5 +179,6 @@ func LoadTemplateFunctions(engine *gin.Engine) {
 		"timestampVague":   timestampVague,
 		"timestampPrecise": timestampPrecise,
 		"emojify":          emojify,
+		"acctInstance":     acctInstance,
 	})
 }

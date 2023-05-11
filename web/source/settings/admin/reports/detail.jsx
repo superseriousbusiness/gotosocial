@@ -140,13 +140,18 @@ function ReportedToot({ toot }) {
 	const account = toot.account;
 
 	return (
-		<div className="toot expanded">
-			<div className="contentgrid">
-				<span className="avatar">
-					<img src={account.avatar} alt="" />
-				</span>
-				<span className="displayname">{account.display_name.trim().length > 0 ? account.display_name : account.username}</span>
-				<span className="username">@{account.username}</span>
+		<article className="toot expanded">
+			<section className="author">
+				<a>
+					<img className="avatar" src={account.avatar} alt="" />
+					<span className="displayname">
+						{account.display_name.trim().length > 0 ? account.display_name : account.username}
+						<span className="sr-only">.</span>
+					</span>
+					<span className="username">@{account.username}</span>
+				</a>
+			</section>
+			<section className="body">
 				<div className="text">
 					<div className="content">
 						{toot.spoiler_text?.length > 0
@@ -158,15 +163,11 @@ function ReportedToot({ toot }) {
 				{toot.media_attachments?.length > 0 &&
 					<TootMedia media={toot.media_attachments} sensitive={toot.sensitive} />
 				}
-			</div>
-			<div className="toot-info">
-				<a
-					href={toot.url}
-					target="_blank"
-					rel="noreferrer"
-				>{new Date(toot.created_at).toLocaleString()}</a>
-			</div>
-		</div>
+			</section>
+			<aside className="info">
+				<time datetime={toot.created_at}>{new Date(toot.created_at).toLocaleString()}</time>
+			</aside>
+		</article>
 	);
 }
 

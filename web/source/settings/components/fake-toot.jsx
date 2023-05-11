@@ -31,19 +31,22 @@ module.exports = function FakeToot({ children }) {
 	} } = query.useVerifyCredentialsQuery();
 
 	return (
-		<div className="toot expanded">
-			<div className="contentgrid">
-				<span className="avatar">
-					<img src={account.avatar} alt="" />
-				</span>
-				<span className="displayname">{account.display_name.trim().length > 0 ? account.display_name : account.username}</span>
-				<span className="username">@{account.username}</span>
+		<article className="toot expanded">
+			<section className="author">
+				<a>
+					<img className="avatar" src={account.avatar} alt="" />
+					<span className="displayname">
+						{account.display_name.trim().length > 0 ? account.display_name : account.username}
+						<span className="sr-only">.</span>
+					</span>
+					<span className="username">@{account.username}</span>
+				</a>
+			</section>
+			<section className="body">
 				<div className="text">
-					<div className="content">
-						{children}
-					</div>
+					{children}
 				</div>
-			</div>
-		</div>
+			</section>
+		</article>
 	);
 };

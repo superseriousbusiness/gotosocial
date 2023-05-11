@@ -17,71 +17,110 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-<div data-nosnippet class="contentgrid">
-	<a href="{{.Account.URL}}" class="avatar"><img src="{{.Account.Avatar}}" alt=""></a>
-	<a href="{{.Account.URL}}" class="displayname">{{if .Account.DisplayName}}{{emojify .Account.Emojis (escape .Account.DisplayName)}}{{else}}{{.Account.Username}}{{end}}</a>
-	<a href="{{.Account.URL}}" class="username">@{{.Account.Acct}}</a>
-	<div class="not-expanded">
-		<span class="date">{{.CreatedAt | timestamp}}</span>
-	</div>
+<section class="author">
+	<a href="{{.Account.URL}}">
+		<img class="avatar" src="{{.Account.Avatar}}" alt="">
+		<span class="displayname">
+			{{if .Account.DisplayName}}
+			{{emojify .Account.Emojis (escape .Account.DisplayName)}}
+			{{else}}
+			{{.Account.Username}}
+			{{end}}
+			<span class="sr-only">.</span>
+		</span>
+		<span class="username">@{{.Account.Username}}<span class="sr-only">, </span>{{acctInstance .Account.Acct}}</span>
+	</a>
+</section>
+<section class="body">
 	<div class="text">
 		{{if .SpoilerText}}
-		<input class="spoiler" id="hideSpoiler-{{.ID}}" type="checkbox" style="display: none" aria-hidden="true" checked="true" />
-		<div class="spoiler">
-			<span class="spoiler-text">{{emojify .Emojis (escape .SpoilerText)}}</span>
-			<label class="button spoiler-label" for="hideSpoiler-{{.ID}}" tabindex="0">Toggle visibility</label>
-		</div>
-		{{end}}
+		<details class="text-spoiler">
+			<summary>
+				<span class="spoiler-text">{{emojify .Emojis (escape .SpoilerText)}}</span>
+				<span class="button" role="button" tabindex="0">Toggle visibility</span>
+			</summary>
+			<div class="content">
+				{{emojify .Emojis (noescape .Content)}}
+			</div>
+		</details>
+		{{else}}
 		<div class="content">
 			{{emojify .Emojis (noescape .Content)}}
 		</div>
+		{{end}}
 	</div>
 	{{with .MediaAttachments}}
-	<div class="media photoswipe-gallery {{(len .) | oddOrEven }}{{if eq (len .) 1}} single{{end}}{{if eq (len .) 2}} double{{end}}">
-		{{range .}}
+	<div
+		class="media photoswipe-gallery {{(len .) | oddOrEven }}{{if eq (len .) 1}} single{{end}}{{if eq (len .) 2}} double{{end}}">
+		{{range $index, $media := .}}
+		{{with $media}}
 		<div class="media-wrapper">
-			{{if not .Description}}
-			<div class="no-image-desc" aria-hidden="true" ><i class="fa fa-info-circle"></i><span>Missing media description</span></div>
-			{{end}}	
-			<input type="checkbox" id="sensitiveMedia-{{.ID}}" class="sensitive-checkbox hidden" {{if not $.Sensitive}}checked{{end}}/>
-			<div class="sensitive">
-				<div class="open">
-					<label for="sensitiveMedia-{{.ID}}" class="button" role="button" tabindex="0">
-						<i class="fa fa-eye-slash" title="Hide sensitive media"></i>
-					</label>
-				</div>
-				<div class="closed" {{if .Description}}title="{{.Description}}"{{end}}>
-					<label for="sensitiveMedia-{{.ID}}" class="button" role="button" tabindex="0">Show sensitive media</label>
-				</div>
-			</div>
-			{{ if eq .Type "video" }}
-			<div class="video-play">
-				<span class="icon-span fa-stack" aria-hidden="true">
-					<i class="icon-bg fa fa-fw fa-circle fa-stack-1x"></i>
-					<i class="icon fa fa-fw fa-play-circle fa-stack-1x"></i>
-				</span>
-			</div>
-			{{ end }}
-			<a href="{{.URL}}"
-				 target="_blank"
-				 {{if .Description}}title="{{.Description}}"{{end}}
-				 data-pswp-width="{{.Meta.Original.Width}}px"
-				 data-pswp-height="{{.Meta.Original.Height}}px"
-				 {{if eq .Type "video"}}data-pswp-type="video"{{end}}
-				 data-cropped="true">
-				<img src="{{.PreviewURL}}" {{if .Description}}alt="{{.Description}}"{{end}} data-blurhash="{{.Blurhash}}"/>
-			</a>
+			<details class="{{.Type}}-spoiler" {{if not $.Sensitive}}open{{end}}>
+				<summary>
+					<div class="show sensitive button" aria-hidden="true">
+						Show sensitive media
+					</div>
+					<span class="eye button" role="button" tabindex="0" aria-label="Toggle media">
+						<i class="hide fa fa-fw fa-eye-slash" aria-hidden="true"></i>
+						<i class="show fa fa-fw fa-eye" aria-hidden="true"></i>
+					</span>
+
+					{{if eq .Type "video"}}
+					<video {{if .Description}} title="{{.Description}}" {{end}}>
+						<source type="video/mp4" src="{{.URL}}" />
+					</video>
+					{{else}}
+					<img {{if .Description}} title="{{.Description}}" {{end}} src="{{.PreviewURL}}" />
+					{{end}}
+				</summary>
+				{{if eq .Type "video"}}
+				<video class="plyr-video photoswipe-slide" controls {{if .Description}}alt="{{.Description}}"
+					title="{{.Description}}" {{end}} data-pswp-index="{{$index}}" data-pswp-width="{{.Meta.Original.Width}}px"
+					data-pswp-height="{{.Meta.Original.Height}}px">
+					<source type="video/mp4" src="{{.URL}}" />
+				</video>
+				{{else}}
+				<a class="photoswipe-slide" href="{{.URL}}" target="_blank" {{if .Description}}title="{{.Description}}" {{end}}
+					data-pswp-width="{{.Meta.Original.Width}}px" data-pswp-height="{{.Meta.Original.Height}}px"
+					data-cropped="true">
+					<img src="{{.PreviewURL}}" {{if .Description}}alt="{{.Description}}" {{end}} />
+				</a>
+				{{end}}
+			</details>
 		</div>
+		{{end}}
 		{{end}}
 	</div>
 	{{end}}
-</div>
-<div class="info">
-	<div id="date">{{.CreatedAt | timestampPrecise}}</div>
-	<div class="stats">
-		<div id="replies"><i aria-label="Replies" class="fa fa-reply-all"></i> {{.RepliesCount}}</div>
-		<div id="boosts"><i aria-label="Boosts" class="fa fa-retweet"></i> {{.ReblogsCount}}</div>
-		<div id="favorites"><i aria-label="Favorites" class="fa fa-star"></i> {{.FavouritesCount}}</div>
+</section>
+<aside class="info">
+	<time datetime="{{.CreatedAt}}">{{.CreatedAt | timestampPrecise}}</time>
+	<div class="stats" role="group">
+		<div>
+			<span aria-hidden="true">
+				<i class="fa fa-reply-all"></i> {{.RepliesCount}}
+			</span>
+			<span class="sr-only">{{.RepliesCount}} {{if .RepliesCount | eq 1}}reply{{else}}replies{{end}}</span>
+		</div>
+		<div>
+			<span aria-hidden="true">
+				<i class="fa fa-star"></i> {{.FavouritesCount}}
+			</span>
+			<span class="sr-only">{{.FavouritesCount}} favourite{{if .FavouritesCount | eq 1 | not}}s{{end}}</span>
+		</div>
+		<div>
+			<span aria-hidden="true">
+				<i class="fa fa-retweet"></i> {{.ReblogsCount}}
+			</span>
+			<span class="sr-only">{{.ReblogsCount}} boost{{if .ReblogsCount | eq 1 | not}}s{{end}}</span>
+		</div>
+		{{if .Pinned}}
+		<div>
+			<i class="fa fa-thumb-tack" aria-hidden="true"></i>
+			<span class="sr-only">pinned</span>
+		</div>
+		{{end}}
 	</div>
-</div>
-<a data-nosnippet href="{{.URL}}" class="toot-link">View toot</a>
+</aside>
+<a data-nosnippet href="{{.URL}}" class="toot-link">Open
+	thread</a>
