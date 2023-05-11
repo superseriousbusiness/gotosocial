@@ -19,15 +19,12 @@ package dereferencing
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/url"
 	"time"
 
-	"github.com/superseriousbusiness/activity/streams"
-	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -208,10 +205,16 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 	var derefd bool
 
 	if apubStatus == nil {
-		// Deref this status to get the latest available.
-		apubStatus, err = d.dereferenceStatusable(ctx, tsport, uri)
+		// Dereference latest version of the status.
+		b, err := tsport.Dereference(ctx, uri)
 		if err != nil {
-			return nil, nil, &ErrNotRetrievable{fmt.Errorf("enrichStatus: error dereferencing status %s: %w", uri, err)}
+			return nil, nil, &ErrNotRetrievable{fmt.Errorf("enrichStatus: error deferencing %s: %w", uri, err)}
+		}
+
+		// Attempt to resolve ActivityPub status from data.
+		apubStatus, err = ap.ResolveStatusable(ctx, b)
+		if err != nil {
+			return nil, nil, fmt.Errorf("enrichStatus: error resolving statusable from data for account %s: %w", uri, err)
 		}
 
 		// Mark as deref'd.
@@ -304,47 +307,6 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 	}
 
 	return latestStatus, apubStatus, nil
-}
-
-func (d *deref) dereferenceStatusable(ctx context.Context, tsport transport.Transport, remoteStatusID *url.URL) (ap.Statusable, error) {
-	b, err := tsport.Dereference(ctx, remoteStatusID)
-	if err != nil {
-		return nil, fmt.Errorf("dereferenceStatusable: error deferencing %s: %w", remoteStatusID.String(), err)
-	}
-
-	m := make(map[string]interface{})
-	if err := json.Unmarshal(b, &m); err != nil {
-		return nil, fmt.Errorf("dereferenceStatusable: error unmarshalling bytes into json: %w", err)
-	}
-
-	t, err := streams.ToType(ctx, m)
-	if err != nil {
-		return nil, fmt.Errorf("dereferenceStatusable: error resolving json into ap vocab type: %w", err)
-	}
-
-	//nolint:forcetypeassert
-	switch t.GetTypeName() {
-	case ap.ObjectArticle:
-		return t.(vocab.ActivityStreamsArticle), nil
-	case ap.ObjectDocument:
-		return t.(vocab.ActivityStreamsDocument), nil
-	case ap.ObjectImage:
-		return t.(vocab.ActivityStreamsImage), nil
-	case ap.ObjectVideo:
-		return t.(vocab.ActivityStreamsVideo), nil
-	case ap.ObjectNote:
-		return t.(vocab.ActivityStreamsNote), nil
-	case ap.ObjectPage:
-		return t.(vocab.ActivityStreamsPage), nil
-	case ap.ObjectEvent:
-		return t.(vocab.ActivityStreamsEvent), nil
-	case ap.ObjectPlace:
-		return t.(vocab.ActivityStreamsPlace), nil
-	case ap.ObjectProfile:
-		return t.(vocab.ActivityStreamsProfile), nil
-	}
-
-	return nil, newErrWrongType(fmt.Errorf("dereferenceStatusable: type name %s not supported as Statusable", t.GetTypeName()))
 }
 
 func (d *deref) fetchStatusMentions(ctx context.Context, requestUser string, existing *gtsmodel.Status, status *gtsmodel.Status) error {

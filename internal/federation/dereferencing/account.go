@@ -338,10 +338,16 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	latestAcc := account
 
 	if apubAcc == nil {
-		// Fetch latest version of the account, dereferencing if necessary.
-		apubAcc, err = d.dereferenceAccountable(ctx, tsport, uri)
+		// Dereference latest version of the account.
+		b, err := tsport.Dereference(ctx, uri)
 		if err != nil {
-			return nil, nil, &ErrNotRetrievable{fmt.Errorf("enrichAccount: error dereferencing account %s: %w", uri, err)}
+			return nil, nil, &ErrNotRetrievable{fmt.Errorf("enrichAccount: error deferencing %s: %w", uri, err)}
+		}
+
+		// Attempt to resolve ActivityPub account from data.
+		apubAcc, err = ap.ResolveAccountable(ctx, b)
+		if err != nil {
+			return nil, nil, fmt.Errorf("enrichAccount: error resolving accountable from data for account %s: %w", uri, err)
 		}
 
 		// Convert the dereferenced AP account object to our GTS model.
@@ -482,39 +488,6 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	}
 
 	return latestAcc, apubAcc, nil
-}
-
-func (d *deref) dereferenceAccountable(ctx context.Context, tsport transport.Transport, remoteAccountID *url.URL) (ap.Accountable, error) {
-	b, err := tsport.Dereference(ctx, remoteAccountID)
-	if err != nil {
-		return nil, fmt.Errorf("dereferenceAccountable: error deferencing %s: %w", remoteAccountID.String(), err)
-	}
-
-	m := make(map[string]interface{})
-	if err := json.Unmarshal(b, &m); err != nil {
-		return nil, fmt.Errorf("dereferenceAccountable: error unmarshalling bytes into json: %w", err)
-	}
-
-	t, err := streams.ToType(ctx, m)
-	if err != nil {
-		return nil, fmt.Errorf("dereferenceAccountable: error resolving json into ap vocab type: %w", err)
-	}
-
-	//nolint:forcetypeassert
-	switch t.GetTypeName() {
-	case ap.ActorApplication:
-		return t.(vocab.ActivityStreamsApplication), nil
-	case ap.ActorGroup:
-		return t.(vocab.ActivityStreamsGroup), nil
-	case ap.ActorOrganization:
-		return t.(vocab.ActivityStreamsOrganization), nil
-	case ap.ActorPerson:
-		return t.(vocab.ActivityStreamsPerson), nil
-	case ap.ActorService:
-		return t.(vocab.ActivityStreamsService), nil
-	}
-
-	return nil, newErrWrongType(fmt.Errorf("DereferenceAccountable: type name %s not supported as Accountable", t.GetTypeName()))
 }
 
 func (d *deref) fetchRemoteAccountAvatar(ctx context.Context, tsport transport.Transport, avatarURL string, accountID string) (string, error) {
