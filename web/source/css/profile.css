@@ -169,7 +169,7 @@
 	border-top-right-radius: $br;
 	padding: 0.75rem;
 
-	h3 {
+	h1, h2 {
 		font-size: 1.2rem;
 		line-height: 1.3rem;
 		margin: 0;

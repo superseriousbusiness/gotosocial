@@ -61,7 +61,7 @@
 
 		<section class="about-user">
 			<div class="col-header">
-				<h3>About</h3>
+				<h1>About</h1>
 			</div>
 
 			<div class="fields">
@@ -99,7 +99,7 @@
 		<section class="toots">
 			{{ if .pinned_statuses }}
 			<div class="col-header">
-				<h3>Pinned posts</h3>
+				<h2>Pinned posts</h2>
 				<a href="#recent">jump to recent</a>
 			</div>
 			<section class="thread">
@@ -112,7 +112,7 @@
 			{{ end }}
 
 			<div class="col-header">
-				<h3 id="recent" tabindex="-1">Recent posts</h3>
+				<h2 id="recent" tabindex="-1">Recent posts</h2>
 				{{ if .rssFeed }}
 				<a href="{{ .rssFeed }}" class="rss-icon" aria-label="RSS feed">
 					<i class="fa fa-rss-square" aria-hidden="true"></i>
