@@ -29,7 +29,7 @@ let cssEntryFiles = fs.readdirSync(path.join(__dirname, "./css")).map((file) => 
 
 const prodCfg = {
 	transform: [
-		["uglifyify", {
+		["@browserify/uglifyify", {
 			global: true,
 			exts: ".js"
 		}],

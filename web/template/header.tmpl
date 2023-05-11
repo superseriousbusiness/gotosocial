@@ -21,46 +21,61 @@
 
 <!-- header.tmpl -->
 <html lang="en">
+
 <head>
 	<meta charset="UTF-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta name="robots" content="{{ if .robotsMeta }}{{ .robotsMeta }}{{ else }}noindex, nofollow{{ end }}">
-	{{ if .ogMeta }}{{ if .ogMeta.Locale }}<meta name="og:locale" content="{{ .ogMeta.Locale }}">
-	{{ end }}<meta property="og:type" content="{{ .ogMeta.Type }}">
+	{{ if .ogMeta }}{{ if .ogMeta.Locale }}
+	<meta name="og:locale" content="{{ .ogMeta.Locale }}">
+	{{ end }}
+	<meta property="og:type" content="{{ .ogMeta.Type }}">
 	<meta property="og:title" content="{{ .ogMeta.Title }}">
 	<meta property="og:url" content="{{ .ogMeta.URL }}">
 	<meta property="og:site_name" content="{{ .ogMeta.SiteName }}">
 	<meta property="og:description" {{ .ogMeta.Description | noescapeAttr }}>
-	{{ if .ogMeta.ArticlePublisher }}<meta property="og:article:publisher" content="{{ .ogMeta.ArticlePublisher }}">
+	{{ if .ogMeta.ArticlePublisher }}
+	<meta property="og:article:publisher" content="{{ .ogMeta.ArticlePublisher }}">
 	<meta property="og:article:author" content="{{ .ogMeta.ArticleAuthor }}">
 	<meta property="og:article:modified_time" content="{{ .ogMeta.ArticleModifiedTime }}">
 	<meta property="og:article:published_time" content="{{ .ogMeta.ArticlePublishedTime }}">
-	{{ end }}{{ if .ogMeta.ProfileUsername }}<meta property="og:profile:username" content="{{ .ogMeta.ProfileUsername }}">
-	{{ end }}<meta property="og:image" content="{{ .ogMeta.Image }}">
-	{{ if .ogMeta.ImageAlt }}<meta property="og:image:alt" content="{{ .ogMeta.ImageAlt }}">
-	{{ end }}{{ if .ogMeta.ImageWidth }}<meta property="og:image:width" content="{{ .ogMeta.ImageWidth }}">
+	{{ end }}{{ if .ogMeta.ProfileUsername }}
+	<meta property="og:profile:username" content="{{ .ogMeta.ProfileUsername }}">
+	{{ end }}
+	<meta property="og:image" content="{{ .ogMeta.Image }}">
+	{{ if .ogMeta.ImageAlt }}
+	<meta property="og:image:alt" content="{{ .ogMeta.ImageAlt }}">
+	{{ end }}{{ if .ogMeta.ImageWidth }}
+	<meta property="og:image:width" content="{{ .ogMeta.ImageWidth }}">
 	<meta property="og:image:height" content="{{ .ogMeta.ImageHeight }}">
-	{{ end }}{{ end }}<link rel="shortcut icon" href="{{ .instance.Thumbnail }}" type="{{ if .instance.ThumbnailType }}{{ .instance.ThumbnailType }}{{ else }}image/png{{ end }}">
-	{{ if .rssFeed }}<link rel="alternate" type="application/rss+xml" href="{{ .rssFeed }}" title="{{ if .ogMeta }}{{ .ogMeta.Title }}{{ else }}{{.instance.Title}}{{ end }}">{{ end }}
+	{{ end }}{{ end }}
+	<link rel="shortcut icon" href="{{ .instance.Thumbnail }}"
+		type="{{ if .instance.ThumbnailType }}{{ .instance.ThumbnailType }}{{ else }}image/png{{ end }}">
+	{{ if .rssFeed }}
+	<link rel="alternate" type="application/rss+xml" href="{{ .rssFeed }}"
+		title="{{ if .ogMeta }}{{ .ogMeta.Title }}{{ else }}{{.instance.Title}}{{ end }}">{{ end }}
 	<link rel="preload" href="/assets/dist/_colors.css" as="style">
 	<link rel="preload" href="/assets/dist/base.css" as="style">
-	{{range .stylesheets}}<link rel="preload" href="{{.}}" as="style">
-	{{end}}<link rel="stylesheet" href="/assets/dist/_colors.css">
+	{{range .stylesheets}}
+	<link rel="preload" href="{{.}}" as="style">
+	{{end}}
+	<link rel="stylesheet" href="/assets/dist/_colors.css">
 	<link rel="stylesheet" href="/assets/dist/base.css">
-	{{range .stylesheets}}<link rel="stylesheet" href="{{.}}">
+	{{range .stylesheets}}
+	<link rel="stylesheet" href="{{.}}">
 	{{end}}<title>{{ if .ogMeta }}{{ .ogMeta.Title }}{{ else }}{{.instance.Title}} - GoToSocial{{ end }}</title>
 </head>
+
 <body>
 	<div class="page">
 		<header>
-			<a aria-label="instance homepage" href="/" class="nounderline header">
-				<img src="{{ .instance.Thumbnail }}" alt="{{ if .instance.ThumbnailDescription }}{{ .instance.ThumbnailDescription }}{{ else }}Instance Logo{{ end }}"/>
-				<div>
-					<h1>
-						{{.instance.Title}}
-					</h1>
-				</div>
+			<a aria-label="{{.instance.Title}}. Go to instance homepage" href="/" class="nounderline header">
+				<img src="{{ .instance.Thumbnail }}"
+					alt="{{ if .instance.ThumbnailDescription }}{{ .instance.ThumbnailDescription }}{{ else }}Instance Logo{{ end }}" />
+				<h1>
+					{{.instance.Title}}
+				</h1>
 			</a>
 		</header>
 		<div class="content">

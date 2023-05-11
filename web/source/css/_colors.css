@@ -69,8 +69,10 @@ $border-accent: $orange2;
 
 $link-fg: $fg-accent;
 
-$role-moderator: $orange1;
-$role-admin: $blue2;
+$role-admin: $orange2;
+$role-mod: $blue2;
+
+$profile-bg: $gray4;
 
 $button-bg: $blue2;
 $button-fg: $gray1;
@@ -80,10 +82,11 @@ $button-danger-bg: $error3;
 $button-danger-fg: $white1;
 $button-danger-hover-bg: $error2;
 
-$toot-focus-bg: $gray5;
-$toot-unfocus-bg: $gray2;
+$toot-bg: $gray3;
+$toot-info-bg: $gray2;
 
-$toot-info-bg: $gray4;
+$toot-focus-bg: $gray5;
+$toot-focus-info-bg: $gray4;
 
 $no-img-desc-bg: $orange1;
 $no-img-desc-fg: $gray1;
@@ -117,3 +120,12 @@ $error-bg: $error2;
 $list-entry-bg: $gray2;
 $list-entry-alternate-bg: $gray3;
 $list-entry-hover-bg: $gray4;
+
+/* Plyr video player */
+$plyr-color-main: $orange2;
+$plyr-video-background: $bg-accent;
+$plyr-badge-background: $bg-accent;
+$plyr-video-controls-background: $bg-accent;
+$plyr-badge-text-color: $fg;
+$plyr-badge-border-radius: $br;
+$plyr-video-progress-buffered-background: $gray8;
