@@ -250,7 +250,7 @@ func (n *notificationDB) DeleteNotifications(ctx context.Context, types []string
 	// Finally delete all from DB.
 	_, err := n.conn.NewDelete().
 		Table("notifications").
-		Where("? IN ?", bun.Ident("id"), bun.In(notifIDs)).
+		Where("? IN (?)", bun.Ident("id"), bun.In(notifIDs)).
 		Exec(ctx)
 	return n.conn.ProcessError(err)
 }
@@ -288,7 +288,7 @@ func (n *notificationDB) DeleteNotificationsForStatus(ctx context.Context, statu
 	// Finally delete all from DB.
 	_, err := n.conn.NewDelete().
 		Table("notifications").
-		Where("? IN ?", bun.Ident("id"), bun.In(notifIDs)).
+		Where("? IN (?)", bun.Ident("id"), bun.In(notifIDs)).
 		Exec(ctx)
 	return n.conn.ProcessError(err)
 }

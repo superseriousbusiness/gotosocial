@@ -241,10 +241,6 @@ func (r *relationshipDB) RejectFollowRequest(ctx context.Context, sourceAccountI
 		targetAccountID,
 	)
 	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			// not an issue.
-			err = nil
-		}
 		return err
 	}
 
@@ -257,7 +253,7 @@ func (r *relationshipDB) RejectFollowRequest(ctx context.Context, sourceAccountI
 			bun.Ident("target_account_id"),
 			targetAccountID,
 		).
-		Exec(ctx); err != nil && !errors.Is(err, db.ErrNoEntries) {
+		Exec(ctx); err != nil {
 		return r.conn.ProcessError(err)
 	}
 
@@ -351,7 +347,7 @@ func (r *relationshipDB) DeleteAccountFollowRequests(ctx context.Context, accoun
 	// Finally delete all from DB.
 	_, err := r.conn.NewDelete().
 		Table("follow_requests").
-		Where("? IN ?", bun.Ident("id"), bun.In(followReqIDs)).
+		Where("? IN (?)", bun.Ident("id"), bun.In(followReqIDs)).
 		Exec(ctx)
 	return r.conn.ProcessError(err)
 }

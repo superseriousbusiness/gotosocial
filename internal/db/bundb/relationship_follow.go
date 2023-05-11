@@ -281,7 +281,7 @@ func (r *relationshipDB) DeleteAccountFollows(ctx context.Context, accountID str
 	// Finally delete all from DB.
 	_, err := r.conn.NewDelete().
 		Table("follows").
-		Where("? IN ?", bun.Ident("id"), bun.In(followIDs)).
+		Where("? IN (?)", bun.Ident("id"), bun.In(followIDs)).
 		Exec(ctx)
 	return r.conn.ProcessError(err)
 }

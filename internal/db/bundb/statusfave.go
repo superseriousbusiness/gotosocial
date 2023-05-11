@@ -187,6 +187,7 @@ func (s *statusFaveDB) DeleteStatusFaves(ctx context.Context, targetAccountID st
 
 	q := s.conn.
 		NewSelect().
+		Column("id").
 		Table("status_faves")
 
 	if targetAccountID != "" {
@@ -221,7 +222,7 @@ func (s *statusFaveDB) DeleteStatusFaves(ctx context.Context, targetAccountID st
 	// Finally delete all from DB.
 	_, err := s.conn.NewDelete().
 		Table("status_faves").
-		Where("? IN ?", bun.Ident("id"), bun.In(faveIDs)).
+		Where("? IN (?)", bun.Ident("id"), bun.In(faveIDs)).
 		Exec(ctx)
 	return s.conn.ProcessError(err)
 }
@@ -232,6 +233,7 @@ func (s *statusFaveDB) DeleteStatusFavesForStatus(ctx context.Context, statusID 
 
 	q := s.conn.
 		NewSelect().
+		Column("id").
 		Table("status_faves").
 		Where("? = ?", bun.Ident("status_id"), statusID)
 	if _, err := q.Exec(ctx, &faveIDs); err != nil {
@@ -258,7 +260,7 @@ func (s *statusFaveDB) DeleteStatusFavesForStatus(ctx context.Context, statusID 
 	// Finally delete all from DB.
 	_, err := s.conn.NewDelete().
 		Table("status_faves").
-		Where("? IN ?", bun.Ident("id"), bun.In(faveIDs)).
+		Where("? IN (?)", bun.Ident("id"), bun.In(faveIDs)).
 		Exec(ctx)
 	return s.conn.ProcessError(err)
 }

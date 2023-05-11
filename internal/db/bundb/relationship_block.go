@@ -230,7 +230,7 @@ func (r *relationshipDB) DeleteAccountBlocks(ctx context.Context, accountID stri
 	// Finally delete all from DB.
 	_, err := r.conn.NewDelete().
 		Table("blocks").
-		Where("? IN ?", bun.Ident("id"), bun.In(blockIDs)).
+		Where("? IN (?)", bun.Ident("id"), bun.In(blockIDs)).
 		Exec(ctx)
 	return r.conn.ProcessError(err)
 }
