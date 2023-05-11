@@ -149,50 +149,49 @@ func (r *relationshipDB) PutBlock(ctx context.Context, block *gtsmodel.Block) er
 }
 
 func (r *relationshipDB) DeleteBlockByID(ctx context.Context, id string) error {
+	defer r.state.Caches.GTS.Block().Invalidate("ID", id)
+
 	// Load block into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate
 	// callback. This in turn invalidates others.
-	block, err := r.GetBlockByID(
-		gtscontext.SetBarebones(ctx),
-		id,
-	)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+	_, err := r.GetBlockByID(gtscontext.SetBarebones(ctx), id)
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// not an issue.
+			err = nil
+		}
 		return err
 	}
 
-	// finally delete block from database.
-	return r.deleteBlock(ctx, block)
+	// Finally delete block from DB.
+	_, err = r.conn.NewDelete().
+		Table("blocks").
+		Where("? = ?", bun.Ident("id"), id).
+		Exec(ctx)
+	return r.conn.ProcessError(err)
 }
 
 func (r *relationshipDB) DeleteBlockByURI(ctx context.Context, uri string) error {
+	defer r.state.Caches.GTS.Block().Invalidate("URI", uri)
+
 	// Load block into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate
 	// callback. This in turn invalidates others.
-	block, err := r.GetBlockByURI(
-		gtscontext.SetBarebones(ctx),
-		uri,
-	)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+	_, err := r.GetBlockByURI(gtscontext.SetBarebones(ctx), uri)
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// not an issue.
+			err = nil
+		}
 		return err
 	}
 
-	// finally delete block from database.
-	return r.deleteBlock(ctx, block)
-}
-
-func (r *relationshipDB) deleteBlock(ctx context.Context, block *gtsmodel.Block) error {
-	if _, err := r.conn.
-		NewDelete().
+	// Finally delete block from DB.
+	_, err = r.conn.NewDelete().
 		Table("blocks").
-		Where("? = ?", bun.Ident("id"), block.ID).
-		Exec(ctx); err != nil {
-		return r.conn.ProcessError(err)
-	}
-
-	// Invalidate block from cache lookups.
-	r.state.Caches.GTS.Block().Invalidate("ID", block.ID)
-
-	return nil
+		Where("? = ?", bun.Ident("uri"), uri).
+		Exec(ctx)
+	return r.conn.ProcessError(err)
 }
 
 func (r *relationshipDB) DeleteAccountBlocks(ctx context.Context, accountID string) error {

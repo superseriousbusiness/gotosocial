@@ -181,30 +181,26 @@ func (n *notificationDB) PutNotification(ctx context.Context, notif *gtsmodel.No
 }
 
 func (n *notificationDB) DeleteNotificationByID(ctx context.Context, id string) db.Error {
+	defer n.state.Caches.GTS.Notification().Invalidate("ID", id)
+
 	// Load notif into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate
 	// callback. This in turn invalidates others.
-	_, err := n.GetNotificationByID(
-		gtscontext.SetBarebones(ctx),
-		id,
-	)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+	_, err := n.GetNotificationByID(gtscontext.SetBarebones(ctx), id)
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// not an issue.
+			err = nil
+		}
 		return err
 	}
 
-	// Delete from cache.
-	if _, err := n.conn.
-		NewDelete().
+	// Finally delete notif from DB.
+	_, err = n.conn.NewDelete().
 		TableExpr("? AS ?", bun.Ident("notifications"), bun.Ident("notification")).
 		Where("? = ?", bun.Ident("notification.id"), id).
-		Exec(ctx); err != nil {
-		return n.conn.ProcessError(err)
-	}
-
-	// Invalidate notif from cache lookups (triggers other hooks).
-	n.state.Caches.GTS.Notification().Invalidate("ID", id)
-
-	return nil
+		Exec(ctx)
+	return n.conn.ProcessError(err)
 }
 
 func (n *notificationDB) DeleteNotifications(ctx context.Context, types []string, targetAccountID string, originAccountID string) db.Error {

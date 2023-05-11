@@ -341,18 +341,20 @@ func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account
 }
 
 func (a *accountDB) DeleteAccount(ctx context.Context, id string) db.Error {
+	defer a.state.Caches.GTS.Account().Invalidate("ID", id)
+
 	// Load account into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate
 	// callback. This in turn invalidates others.
-	_, err := a.GetAccountByID(
-		gtscontext.SetBarebones(ctx),
-		id,
-	)
-	if err != nil {
+	_, err := a.GetAccountByID(gtscontext.SetBarebones(ctx), id)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		// NOTE: even if db.ErrNoEntries is returned, we
+		// still run the below transaction to ensure related
+		// objects are appropriately deleted.
 		return err
 	}
 
-	if err := a.conn.RunInTx(ctx, func(tx bun.Tx) error {
+	return a.conn.RunInTx(ctx, func(tx bun.Tx) error {
 		// clear out any emoji links
 		if _, err := tx.
 			NewDelete().
@@ -369,14 +371,7 @@ func (a *accountDB) DeleteAccount(ctx context.Context, id string) db.Error {
 			Where("? = ?", bun.Ident("account.id"), id).
 			Exec(ctx)
 		return err
-	}); err != nil {
-		return err
-	}
-
-	// Invalidate account from cache lookups (triggers other hooks).
-	a.state.Caches.GTS.Account().Invalidate("ID", id)
-
-	return nil
+	})
 }
 
 func (a *accountDB) GetAccountLastPosted(ctx context.Context, accountID string, webOnly bool) (time.Time, db.Error) {

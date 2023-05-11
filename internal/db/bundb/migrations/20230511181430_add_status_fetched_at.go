@@ -19,6 +19,7 @@ package migrations
 
 import (
 	"context"
+	"strings"
 
 	"github.com/uptrace/bun"
 )
@@ -27,7 +28,10 @@ func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 			_, err := tx.ExecContext(ctx, "ALTER TABLE ? ADD COLUMN ? TIMESTAMPTZ", bun.Ident("statuses"), bun.Ident("fetched_at"))
-			return err
+			if err != nil && !(strings.Contains(err.Error(), "already exists") || strings.Contains(err.Error(), "duplicate column name") || strings.Contains(err.Error(), "SQLSTATE 42701")) {
+				return err
+			}
+			return nil
 		})
 	}
 

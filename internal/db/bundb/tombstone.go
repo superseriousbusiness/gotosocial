@@ -67,16 +67,12 @@ func (t *tombstoneDB) PutTombstone(ctx context.Context, tombstone *gtsmodel.Tomb
 }
 
 func (t *tombstoneDB) DeleteTombstone(ctx context.Context, id string) db.Error {
-	if _, err := t.conn.
-		NewDelete().
+	defer t.state.Caches.GTS.Tombstone().Invalidate("ID", id)
+
+	// Delete tombstone from DB.
+	_, err := t.conn.NewDelete().
 		TableExpr("? AS ?", bun.Ident("tombstones"), bun.Ident("tombstone")).
 		Where("? = ?", bun.Ident("tombstone.id"), id).
-		Exec(ctx); err != nil {
-		return t.conn.ProcessError(err)
-	}
-
-	// Invalidate tombstone from cache lookups (triggers other hooks).
-	t.state.Caches.GTS.Tombstone().Invalidate("ID", id)
-
-	return nil
+		Exec(ctx)
+	return t.conn.ProcessError(err)
 }

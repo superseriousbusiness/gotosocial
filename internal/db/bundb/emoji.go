@@ -81,6 +81,8 @@ func (e *emojiDB) UpdateEmoji(ctx context.Context, emoji *gtsmodel.Emoji, column
 }
 
 func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
+	defer e.state.Caches.GTS.Emoji().Invalidate("ID", id)
+
 	// Load emoji into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate
 	// callback. This in turn invalidates others.
@@ -89,10 +91,13 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 		id,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		// NOTE: even if db.ErrNoEntries is returned, we
+		// still run the below transaction to ensure related
+		// objects are appropriately deleted.
 		return err
 	}
 
-	if err := e.conn.RunInTx(ctx, func(tx bun.Tx) error {
+	return e.conn.RunInTx(ctx, func(tx bun.Tx) error {
 		// delete links between this emoji and any statuses that use it
 		if _, err := tx.
 			NewDelete().
@@ -120,14 +125,7 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 		}
 
 		return nil
-	}); err != nil {
-		return err
-	}
-
-	// Invalidate emoji from cache lookups (triggers other hooks).
-	e.state.Caches.GTS.Emoji().Invalidate("ID", id)
-
-	return nil
+	})
 }
 
 func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) ([]*gtsmodel.Emoji, db.Error) {

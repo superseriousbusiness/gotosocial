@@ -209,6 +209,9 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, sourceAccountI
 		return nil, err
 	}
 
+	// Invalidate follow request from cache lookups on return.
+	defer r.state.Caches.GTS.FollowRequest().Invalidate("ID", followReq.ID)
+
 	// Delete original follow request.
 	if _, err := r.conn.
 		NewDelete().
@@ -217,9 +220,6 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, sourceAccountI
 		Exec(ctx); err != nil {
 		return nil, r.conn.ProcessError(err)
 	}
-
-	// Invalidate follow request from cache lookups
-	r.state.Caches.GTS.FollowRequest().Invalidate("ID", followReq.ID)
 
 	// Delete original follow request notification
 	if err := r.state.DB.DeleteNotifications(ctx, []string{
@@ -232,15 +232,34 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, sourceAccountI
 }
 
 func (r *relationshipDB) RejectFollowRequest(ctx context.Context, sourceAccountID string, targetAccountID string) db.Error {
-	// Get original follow request.
-	followReq, err := r.GetFollowRequest(ctx, sourceAccountID, targetAccountID)
+	defer r.state.Caches.GTS.FollowRequest().Invalidate("AccountID.TargetAccountID", sourceAccountID, targetAccountID)
+
+	// Load followreq into cache before attempting a delete,
+	// as we need it cached in order to trigger the invalidate
+	// callback. This in turn invalidates others.
+	_, err := r.GetFollowRequest(gtscontext.SetBarebones(ctx),
+		sourceAccountID,
+		targetAccountID,
+	)
 	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// not an issue.
+			err = nil
+		}
 		return err
 	}
 
-	// Delete original follow request.
-	if err := r.deleteFollowRequest(ctx, followReq); err != nil {
-		return err
+	// Attempt to delete follow request.
+	if _, err = r.conn.NewDelete().
+		Table("follow_requests").
+		Where("? = ? AND ? = ?",
+			bun.Ident("account_id"),
+			sourceAccountID,
+			bun.Ident("target_account_id"),
+			targetAccountID,
+		).
+		Exec(ctx); err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return r.conn.ProcessError(err)
 	}
 
 	// Delete original follow request notification
@@ -250,49 +269,49 @@ func (r *relationshipDB) RejectFollowRequest(ctx context.Context, sourceAccountI
 }
 
 func (r *relationshipDB) DeleteFollowRequestByID(ctx context.Context, id string) error {
+	defer r.state.Caches.GTS.FollowRequest().Invalidate("ID", id)
+
 	// Load followreq into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate
 	// callback. This in turn invalidates others.
-	followReq, err := r.GetFollowRequestByID(
-		gtscontext.SetBarebones(ctx),
-		id,
-	)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+	_, err := r.GetFollowRequestByID(gtscontext.SetBarebones(ctx), id)
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// not an issue.
+			err = nil
+		}
 		return err
 	}
 
-	// finally delete follow from database.
-	return r.deleteFollowRequest(ctx, followReq)
+	// Finally delete followreq from DB.
+	_, err = r.conn.NewDelete().
+		Table("follow_requests").
+		Where("? = ?", bun.Ident("id"), id).
+		Exec(ctx)
+	return r.conn.ProcessError(err)
 }
 
 func (r *relationshipDB) DeleteFollowRequestByURI(ctx context.Context, uri string) error {
+	defer r.state.Caches.GTS.FollowRequest().Invalidate("URI", uri)
+
 	// Load followreq into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate
 	// callback. This in turn invalidates others.
-	followReq, err := r.GetFollowRequestByURI(
-		gtscontext.SetBarebones(ctx),
-		uri,
-	)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+	_, err := r.GetFollowRequestByURI(gtscontext.SetBarebones(ctx), uri)
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// not an issue.
+			err = nil
+		}
 		return err
 	}
 
-	// finally delete follow from database.
-	return r.deleteFollowRequest(ctx, followReq)
-}
-
-func (r *relationshipDB) deleteFollowRequest(ctx context.Context, followReq *gtsmodel.FollowRequest) error {
-	if _, err := r.conn.NewDelete().
+	// Finally delete followreq from DB.
+	_, err = r.conn.NewDelete().
 		Table("follow_requests").
-		Where("? = ?", bun.Ident("id"), followReq.ID).
-		Exec(ctx); err != nil {
-		return r.conn.ProcessError(err)
-	}
-
-	// Invalidate followreq from cache lookups (triggers other hooks).
-	r.state.Caches.GTS.FollowRequest().Invalidate("ID", followReq.ID)
-
-	return nil
+		Where("? = ?", bun.Ident("uri"), uri).
+		Exec(ctx)
+	return r.conn.ProcessError(err)
 }
 
 func (r *relationshipDB) DeleteAccountFollowRequests(ctx context.Context, accountID string) error {

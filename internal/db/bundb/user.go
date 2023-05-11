@@ -19,6 +19,7 @@ package bundb
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -168,28 +169,24 @@ func (u *userDB) UpdateUser(ctx context.Context, user *gtsmodel.User, columns ..
 }
 
 func (u *userDB) DeleteUserByID(ctx context.Context, userID string) db.Error {
+	defer u.state.Caches.GTS.User().Invalidate("ID", userID)
+
 	// Load user into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate
 	// callback. This in turn invalidates others.
-	_, err := u.GetUserByID(
-		gtscontext.SetBarebones(ctx),
-		userID,
-	)
+	_, err := u.GetUserByID(gtscontext.SetBarebones(ctx), userID)
 	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// not an issue.
+			err = nil
+		}
 		return err
 	}
 
-	// Delete the user from database.
-	if _, err := u.conn.
-		NewDelete().
+	// Finally delete user from DB.
+	_, err = u.conn.NewDelete().
 		TableExpr("? AS ?", bun.Ident("users"), bun.Ident("user")).
 		Where("? = ?", bun.Ident("user.id"), userID).
-		Exec(ctx); err != nil {
-		return u.conn.ProcessError(err)
-	}
-
-	// Invalidate user from cache lookups.
-	u.state.Caches.GTS.User().Invalidate("ID", userID)
-
-	return nil
+		Exec(ctx)
+	return u.conn.ProcessError(err)
 }

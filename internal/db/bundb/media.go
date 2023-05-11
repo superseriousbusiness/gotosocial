@@ -105,29 +105,26 @@ func (m *mediaDB) UpdateAttachment(ctx context.Context, media *gtsmodel.MediaAtt
 }
 
 func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
+	defer m.state.Caches.GTS.Media().Invalidate("ID", id)
+
 	// Load media into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate
 	// callback. This in turn invalidates others.
-	_, err := m.GetAttachmentByID(
-		gtscontext.SetBarebones(ctx),
-		id,
-	)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+	_, err := m.GetAttachmentByID(gtscontext.SetBarebones(ctx), id)
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// not an issue.
+			err = nil
+		}
 		return err
 	}
 
-	// Attempt to delete from database.
-	if _, err := m.conn.NewDelete().
+	// Finally delete media from DB.
+	_, err = m.conn.NewDelete().
 		TableExpr("? AS ?", bun.Ident("media_attachments"), bun.Ident("media_attachment")).
 		Where("? = ?", bun.Ident("media_attachment.id"), id).
-		Exec(ctx); err != nil {
-		return m.conn.ProcessError(err)
-	}
-
-	// Invalidate media from cache lookups (triggers other hooks).
-	m.state.Caches.GTS.Media().Invalidate("ID", id)
-
-	return nil
+		Exec(ctx)
+	return m.conn.ProcessError(err)
 }
 
 func (m *mediaDB) GetRemoteOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {

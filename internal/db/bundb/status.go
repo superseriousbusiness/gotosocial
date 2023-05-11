@@ -381,6 +381,8 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 }
 
 func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) db.Error {
+	defer s.state.Caches.GTS.Status().Invalidate("ID", id)
+
 	// Load status into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate
 	// callback. This in turn invalidates others.
@@ -389,10 +391,13 @@ func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) db.Error {
 		id,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		// NOTE: even if db.ErrNoEntries is returned, we
+		// still run the below transaction to ensure related
+		// objects are appropriately deleted.
 		return err
 	}
 
-	if err := s.conn.RunInTx(ctx, func(tx bun.Tx) error {
+	return s.conn.RunInTx(ctx, func(tx bun.Tx) error {
 		// delete links between this status and any emojis it uses
 		if _, err := tx.
 			NewDelete().
@@ -421,14 +426,7 @@ func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) db.Error {
 		}
 
 		return nil
-	}); err != nil {
-		return err
-	}
-
-	// Invalidate status from cache lookups (triggers other hooks).
-	s.state.Caches.GTS.Status().Invalidate("ID", id)
-
-	return nil
+	})
 }
 
 func (s *statusDB) GetStatusParents(ctx context.Context, status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, db.Error) {
