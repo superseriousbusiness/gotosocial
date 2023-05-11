@@ -313,7 +313,9 @@ func (d *deref) fetchStatusMentions(ctx context.Context, requestUser string, exi
 	// Allocate new slice to take the yet-to-be created mention IDs.
 	status.MentionIDs = make([]string, len(status.Mentions))
 
-	for i, mention := range status.Mentions {
+	for i := range status.Mentions {
+		mention := status.Mentions[i]
+
 		// Look for existing mention with target account URI first.
 		existing, ok := existing.GetMentionByTargetURI(mention.TargetAccountURI)
 		if ok && existing.ID != "" {
@@ -328,9 +330,6 @@ func (d *deref) fetchStatusMentions(ctx context.Context, requestUser string, exi
 			log.Errorf(ctx, "invalid account uri %q: %v", mention.TargetAccountURI, err)
 			continue
 		}
-
-		// Rescope var to loop.
-		mention := mention
 
 		// Ensure we have the account of the mention target dereferenced.
 		mention.TargetAccount, _, err = d.getAccountByURI(ctx, requestUser, accountURI)
@@ -386,7 +385,9 @@ func (d *deref) fetchStatusAttachments(ctx context.Context, tsport transport.Tra
 	// Allocate new slice to take the yet-to-be fetched attachment IDs.
 	status.AttachmentIDs = make([]string, len(status.Attachments))
 
-	for i, placeholder := range status.Attachments {
+	for i := range status.Attachments {
+		placeholder := status.Attachments[i]
+
 		// Look for existing media attachment with remoet URL first.
 		existing, ok := existing.GetAttachmentByRemoteURL(placeholder.RemoteURL)
 		if ok && existing.ID != "" {
@@ -401,9 +402,6 @@ func (d *deref) fetchStatusAttachments(ctx context.Context, tsport transport.Tra
 			log.Errorf(ctx, "invalid remote media url %q: %v", placeholder.RemoteURL, err)
 			continue
 		}
-
-		// Rescope var to loop.
-		placeholder := placeholder
 
 		// Start pre-processing remote media at remote URL.
 		processing, err := d.mediaManager.PreProcessMedia(ctx, func(ctx context.Context) (io.ReadCloser, int64, error) {
