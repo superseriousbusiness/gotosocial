@@ -26,7 +26,7 @@ import (
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			_, err := tx.ExecContext(ctx, "ALTER TABLE ? ADD COLUMN ? TIMESTAMP", bun.Ident("statuses"), bun.Ident("fetched_at"))
+			_, err := tx.ExecContext(ctx, "ALTER TABLE ? ADD COLUMN ? TIMESTAMPTZ", bun.Ident("statuses"), bun.Ident("fetched_at"))
 			return err
 		})
 	}
