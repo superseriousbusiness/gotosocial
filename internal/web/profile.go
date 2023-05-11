@@ -44,20 +44,20 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 
 	authed, err := oauth.Authed(c, false, false, false, false)
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+		apiutil.WebErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	username := strings.ToLower(c.Param(usernameKey))
 	if username == "" {
 		err := errors.New("no account username specified")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+		apiutil.WebErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	instance, err := m.processor.InstanceGetV1(ctx)
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
+		apiutil.WebErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -67,7 +67,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 
 	account, errWithCode := m.processor.Account().GetLocalByUsername(ctx, authed.Account, username)
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, instanceGet)
+		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
 		return
 	}
 
@@ -105,7 +105,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 
 	statusResp, errWithCode := m.processor.Account().WebStatusesGet(ctx, account.ID, maxStatusID)
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, instanceGet)
+		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
 		return
 	}
 
@@ -116,7 +116,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 	if !paging {
 		pinnedResp, errWithCode = m.processor.Account().StatusesGet(ctx, authed.Account, account.ID, 0, false, false, "", "", true, false, false)
 		if errWithCode != nil {
-			apiutil.ErrorHandler(c, errWithCode, instanceGet)
+			apiutil.WebErrorHandler(c, errWithCode, instanceGet)
 			return
 		}
 	}
@@ -158,14 +158,14 @@ func (m *Module) returnAPProfile(ctx context.Context, c *gin.Context, username s
 
 	user, errWithCode := m.processor.Fedi().UserGet(ctx, username, c.Request.URL)
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1) //nolint:contextcheck
+		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1) //nolint:contextcheck
 		return
 	}
 
 	b, mErr := json.Marshal(user)
 	if mErr != nil {
 		err := fmt.Errorf("could not marshal json: %s", mErr)
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1) //nolint:contextcheck
+		apiutil.WebErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1) //nolint:contextcheck
 		return
 	}
 

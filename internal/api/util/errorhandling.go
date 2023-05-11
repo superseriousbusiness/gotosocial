@@ -108,6 +108,11 @@ func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet fun
 	}
 }
 
+// WebErrorHandler is like ErrorHandler, but will display HTML over JSON by default.
+func WebErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode)) {
+	ErrorHandler(c, errWithCode, instanceGet, TextHTML, AppJSON)
+}
+
 // OAuthErrorHandler is a lot like ErrorHandler, but it specifically returns errors
 // that are compatible with https://datatracker.ietf.org/doc/html/rfc6749#section-5.2,
 // but serializing errWithCode.Error() in the 'error' field, and putting any help text

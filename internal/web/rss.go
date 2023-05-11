@@ -83,7 +83,7 @@ func (m *Module) rssFeedGETHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	if _, err := apiutil.NegotiateAccept(c, apiutil.AppRSSXML); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
+		apiutil.WebErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -91,7 +91,7 @@ func (m *Module) rssFeedGETHandler(c *gin.Context) {
 	username := strings.ToLower(c.Param(usernameKey))
 	if username == "" {
 		err := errors.New("no account username specified")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+		apiutil.WebErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -100,7 +100,7 @@ func (m *Module) rssFeedGETHandler(c *gin.Context) {
 
 	getRssFeed, accountLastPostedPublic, errWithCode := m.processor.Account().GetRSSFeedForUsername(ctx, username)
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -112,13 +112,13 @@ func (m *Module) rssFeedGETHandler(c *gin.Context) {
 		// we either have no cache entry for this, or we have an expired cache entry; generate a new one
 		rssFeed, errWithCode = getRssFeed()
 		if errWithCode != nil {
-			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+			apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 			return
 		}
 
 		eTag, err := generateEtag(bytes.NewBufferString(rssFeed))
 		if err != nil {
-			apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
+			apiutil.WebErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
 			return
 		}
 
@@ -146,7 +146,7 @@ func (m *Module) rssFeedGETHandler(c *gin.Context) {
 		// we had a cache entry already so we didn't call to get the rss feed yet
 		rssFeed, errWithCode = getRssFeed()
 		if errWithCode != nil {
-			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+			apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 			return
 		}
 	}

@@ -28,7 +28,7 @@ import (
 func (m *Module) SettingsPanelHandler(c *gin.Context) {
 	instance, err := m.processor.InstanceGetV1(c.Request.Context())
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
+		apiutil.WebErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
 		return
 	}
 
