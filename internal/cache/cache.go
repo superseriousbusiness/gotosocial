@@ -19,6 +19,7 @@ package cache
 
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 type Caches struct {
@@ -41,6 +42,8 @@ type Caches struct {
 // Init will (re)initialize both the GTS and AP cache collections.
 // NOTE: the cache MUST NOT be in use anywhere, this is not thread-safe.
 func (c *Caches) Init() {
+	log.Infof(nil, "init: %p", c)
+
 	c.GTS.Init()
 	c.AP.Init()
 	c.Visibility.Init()
@@ -52,6 +55,8 @@ func (c *Caches) Init() {
 
 // Start will start both the GTS and AP cache collections.
 func (c *Caches) Start() {
+	log.Infof(nil, "start: %p", c)
+
 	c.GTS.Start()
 	c.AP.Start()
 	c.Visibility.Start()
@@ -59,6 +64,8 @@ func (c *Caches) Start() {
 
 // Stop will stop both the GTS and AP cache collections.
 func (c *Caches) Stop() {
+	log.Infof(nil, "stop: %p", c)
+
 	c.GTS.Stop()
 	c.AP.Stop()
 	c.Visibility.Stop()

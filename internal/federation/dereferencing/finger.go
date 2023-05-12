@@ -69,6 +69,5 @@ func (d *deref) fingerRemoteAccount(ctx context.Context, transport transport.Tra
 		}
 	}
 
-	err = errors.New("fingerRemoteAccount: no match found in webfinger response")
-	return
+	return "", nil, errors.New("fingerRemoteAccount: no match found in webfinger response")
 }

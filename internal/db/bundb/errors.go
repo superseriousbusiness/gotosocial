@@ -52,7 +52,8 @@ func processSQLiteError(err error) db.Error {
 
 	// Handle supplied error code:
 	switch sqliteErr.Code() {
-	case sqlite3.SQLITE_CONSTRAINT_UNIQUE, sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY:
+	case sqlite3.SQLITE_CONSTRAINT_UNIQUE,
+		sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY:
 		return db.ErrAlreadyExists
 	default:
 		return err

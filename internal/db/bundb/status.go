@@ -244,7 +244,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 }
 
 func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Error {
-	err := s.state.Caches.GTS.Status().Store(status, func() error {
+	return s.state.Caches.GTS.Status().Store(status, func() error {
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
 		//
@@ -304,21 +304,6 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Er
 			return err
 		})
 	})
-	if err != nil {
-		return err
-	}
-
-	for _, id := range status.AttachmentIDs {
-		// Invalidate media attachments from cache.
-		//
-		// NOTE: this is needed due to the way in which
-		// we upload status attachments, and only after
-		// update them with a known status ID. This is
-		// not the case for header/avatar attachments.
-		s.state.Caches.GTS.Media().Invalidate("ID", id)
-	}
-
-	return nil
 }
 
 func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, columns ...string) db.Error {
@@ -328,88 +313,91 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 		columns = append(columns, "updated_at")
 	}
 
-	if err := s.conn.RunInTx(ctx, func(tx bun.Tx) error {
-		// create links between this status and any emojis it uses
-		for _, i := range status.EmojiIDs {
-			if _, err := tx.
-				NewInsert().
-				Model(&gtsmodel.StatusToEmoji{
-					StatusID: status.ID,
-					EmojiID:  i,
-				}).
-				On("CONFLICT (?, ?) DO NOTHING", bun.Ident("status_id"), bun.Ident("emoji_id")).
-				Exec(ctx); err != nil {
-				err = s.conn.ProcessError(err)
-				if !errors.Is(err, db.ErrAlreadyExists) {
-					return err
-				}
-			}
-		}
-
-		// create links between this status and any tags it uses
-		for _, i := range status.TagIDs {
-			if _, err := tx.
-				NewInsert().
-				Model(&gtsmodel.StatusToTag{
-					StatusID: status.ID,
-					TagID:    i,
-				}).
-				On("CONFLICT (?, ?) DO NOTHING", bun.Ident("status_id"), bun.Ident("tag_id")).
-				Exec(ctx); err != nil {
-				err = s.conn.ProcessError(err)
-				if !errors.Is(err, db.ErrAlreadyExists) {
-					return err
-				}
-			}
-		}
-
-		// change the status ID of the media attachments to the new status
-		for _, a := range status.Attachments {
-			a.StatusID = status.ID
-			a.UpdatedAt = time.Now()
-			if _, err := tx.
-				NewUpdate().
-				Model(a).
-				Where("? = ?", bun.Ident("media_attachment.id"), a.ID).
-				Exec(ctx); err != nil {
-				err = s.conn.ProcessError(err)
-				if !errors.Is(err, db.ErrAlreadyExists) {
-					return err
-				}
-			}
-		}
-
-		// Finally, update the status
-		_, err := tx.
-			NewUpdate().
-			Model(status).
-			Column(columns...).
-			Where("? = ?", bun.Ident("status.id"), status.ID).
-			Exec(ctx)
-		return err
-	}); err != nil {
-		// already processed
-		return err
-	}
-
-	// Invalidate status from database lookups.
-	s.state.Caches.GTS.Status().Invalidate("ID", status.ID)
-
-	for _, id := range status.AttachmentIDs {
-		// Invalidate media attachments from cache.
+	return s.state.Caches.GTS.Status().Store(status, func() error {
+		// It is safe to run this database transaction within cache.Store
+		// as the cache does not attempt a mutex lock until AFTER hook.
 		//
-		// NOTE: this is needed due to the way in which
-		// we upload status attachments, and only after
-		// update them with a known status ID. This is
-		// not the case for header/avatar attachments.
-		s.state.Caches.GTS.Media().Invalidate("ID", id)
-	}
+		return s.conn.RunInTx(ctx, func(tx bun.Tx) error {
+			// create links between this status and any emojis it uses
+			for _, i := range status.EmojiIDs {
+				if _, err := tx.
+					NewInsert().
+					Model(&gtsmodel.StatusToEmoji{
+						StatusID: status.ID,
+						EmojiID:  i,
+					}).
+					On("CONFLICT (?, ?) DO NOTHING", bun.Ident("status_id"), bun.Ident("emoji_id")).
+					Exec(ctx); err != nil {
+					err = s.conn.ProcessError(err)
+					if !errors.Is(err, db.ErrAlreadyExists) {
+						return err
+					}
+				}
+			}
 
-	return nil
+			// create links between this status and any tags it uses
+			for _, i := range status.TagIDs {
+				if _, err := tx.
+					NewInsert().
+					Model(&gtsmodel.StatusToTag{
+						StatusID: status.ID,
+						TagID:    i,
+					}).
+					On("CONFLICT (?, ?) DO NOTHING", bun.Ident("status_id"), bun.Ident("tag_id")).
+					Exec(ctx); err != nil {
+					err = s.conn.ProcessError(err)
+					if !errors.Is(err, db.ErrAlreadyExists) {
+						return err
+					}
+				}
+			}
+
+			// change the status ID of the media attachments to the new status
+			for _, a := range status.Attachments {
+				a.StatusID = status.ID
+				a.UpdatedAt = time.Now()
+				if _, err := tx.
+					NewUpdate().
+					Model(a).
+					Where("? = ?", bun.Ident("media_attachment.id"), a.ID).
+					Exec(ctx); err != nil {
+					err = s.conn.ProcessError(err)
+					if !errors.Is(err, db.ErrAlreadyExists) {
+						return err
+					}
+				}
+			}
+
+			// Finally, update the status
+			_, err := tx.
+				NewUpdate().
+				Model(status).
+				Column(columns...).
+				Where("? = ?", bun.Ident("status.id"), status.ID).
+				Exec(ctx)
+			return err
+		})
+	})
 }
 
 func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) db.Error {
-	if err := s.conn.RunInTx(ctx, func(tx bun.Tx) error {
+	defer s.state.Caches.GTS.Status().Invalidate("ID", id)
+
+	// Load status into cache before attempting a delete,
+	// as we need it cached in order to trigger the invalidate
+	// callback. This in turn invalidates others.
+	_, err := s.GetStatusByID(
+		gtscontext.SetBarebones(ctx),
+		id,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		// NOTE: even if db.ErrNoEntries is returned, we
+		// still run the below transaction to ensure related
+		// objects are appropriately deleted.
+		return err
+	}
+
+	return s.conn.RunInTx(ctx, func(tx bun.Tx) error {
 		// delete links between this status and any emojis it uses
 		if _, err := tx.
 			NewDelete().
@@ -438,17 +426,7 @@ func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) db.Error {
 		}
 
 		return nil
-	}); err != nil {
-		return err
-	}
-
-	// Invalidate status from database lookups.
-	s.state.Caches.GTS.Status().Invalidate("ID", id)
-
-	// Invalidate status from all visibility lookups.
-	s.state.Caches.Visibility.Invalidate("ItemID", id)
-
-	return nil
+	})
 }
 
 func (s *statusDB) GetStatusParents(ctx context.Context, status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, db.Error) {

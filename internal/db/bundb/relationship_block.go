@@ -25,7 +25,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 )
 
@@ -142,62 +141,65 @@ func (r *relationshipDB) getBlock(ctx context.Context, lookup string, dbQuery fu
 }
 
 func (r *relationshipDB) PutBlock(ctx context.Context, block *gtsmodel.Block) error {
-	err := r.state.Caches.GTS.Block().Store(block, func() error {
+	return r.state.Caches.GTS.Block().Store(block, func() error {
 		_, err := r.conn.NewInsert().Model(block).Exec(ctx)
 		return r.conn.ProcessError(err)
 	})
-	if err != nil {
-		return err
-	}
-
-	// Invalidate block origin account ID cached visibility.
-	r.state.Caches.Visibility.Invalidate("ItemID", block.AccountID)
-	r.state.Caches.Visibility.Invalidate("RequesterID", block.AccountID)
-
-	// Invalidate block target account ID cached visibility.
-	r.state.Caches.Visibility.Invalidate("ItemID", block.TargetAccountID)
-	r.state.Caches.Visibility.Invalidate("RequesterID", block.TargetAccountID)
-
-	return nil
 }
 
 func (r *relationshipDB) DeleteBlockByID(ctx context.Context, id string) error {
-	block, err := r.GetBlockByID(gtscontext.SetBarebones(ctx), id)
+	defer r.state.Caches.GTS.Block().Invalidate("ID", id)
+
+	// Load block into cache before attempting a delete,
+	// as we need it cached in order to trigger the invalidate
+	// callback. This in turn invalidates others.
+	_, err := r.GetBlockByID(gtscontext.SetBarebones(ctx), id)
 	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// not an issue.
+			err = nil
+		}
 		return err
 	}
-	return r.deleteBlock(ctx, block)
+
+	// Finally delete block from DB.
+	_, err = r.conn.NewDelete().
+		Table("blocks").
+		Where("? = ?", bun.Ident("id"), id).
+		Exec(ctx)
+	return r.conn.ProcessError(err)
 }
 
 func (r *relationshipDB) DeleteBlockByURI(ctx context.Context, uri string) error {
-	block, err := r.GetBlockByURI(gtscontext.SetBarebones(ctx), uri)
+	defer r.state.Caches.GTS.Block().Invalidate("URI", uri)
+
+	// Load block into cache before attempting a delete,
+	// as we need it cached in order to trigger the invalidate
+	// callback. This in turn invalidates others.
+	_, err := r.GetBlockByURI(gtscontext.SetBarebones(ctx), uri)
 	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// not an issue.
+			err = nil
+		}
 		return err
 	}
-	return r.deleteBlock(ctx, block)
-}
 
-func (r *relationshipDB) deleteBlock(ctx context.Context, block *gtsmodel.Block) error {
-	if _, err := r.conn.
-		NewDelete().
+	// Finally delete block from DB.
+	_, err = r.conn.NewDelete().
 		Table("blocks").
-		Where("? = ?", bun.Ident("id"), block.ID).
-		Exec(ctx); err != nil {
-		return r.conn.ProcessError(err)
-	}
-
-	// Invalidate block from cache lookups.
-	r.state.Caches.GTS.Block().Invalidate("ID", block.ID)
-
-	return nil
+		Where("? = ?", bun.Ident("uri"), uri).
+		Exec(ctx)
+	return r.conn.ProcessError(err)
 }
 
 func (r *relationshipDB) DeleteAccountBlocks(ctx context.Context, accountID string) error {
 	var blockIDs []string
 
+	// Get full list of IDs.
 	if err := r.conn.NewSelect().
+		Column("id").
 		Table("blocks").
-		ColumnExpr("?", bun.Ident("id")).
 		WhereOr("? = ? OR ? = ?",
 			bun.Ident("account_id"),
 			accountID,
@@ -208,11 +210,27 @@ func (r *relationshipDB) DeleteAccountBlocks(ctx context.Context, accountID stri
 		return r.conn.ProcessError(err)
 	}
 
+	defer func() {
+		// Invalidate all IDs on return.
+		for _, id := range blockIDs {
+			r.state.Caches.GTS.Block().Invalidate("ID", id)
+		}
+	}()
+
+	// Load all blocks into cache, this *really* isn't great
+	// but it is the only way we can ensure we invalidate all
+	// related caches correctly (e.g. visibility).
 	for _, id := range blockIDs {
-		if err := r.DeleteBlockByID(ctx, id); err != nil {
-			log.Errorf(ctx, "error deleting block %q: %v", id, err)
+		_, err := r.GetBlockByID(ctx, id)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			return err
 		}
 	}
 
-	return nil
+	// Finally delete all from DB.
+	_, err := r.conn.NewDelete().
+		Table("blocks").
+		Where("? IN (?)", bun.Ident("id"), bun.In(blockIDs)).
+		Exec(ctx)
+	return r.conn.ProcessError(err)
 }

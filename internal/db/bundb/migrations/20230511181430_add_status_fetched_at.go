@@ -15,22 +15,33 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package dereferencing
+package migrations
 
 import (
-	"fmt"
+	"context"
+	"strings"
+
+	"github.com/uptrace/bun"
 )
 
-// ErrNotRetrievable denotes that an item could not be dereferenced
-// with the given parameters.
-type ErrNotRetrievable struct {
-	wrapped error
-}
+func init() {
+	up := func(ctx context.Context, db *bun.DB) error {
+		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			_, err := tx.ExecContext(ctx, "ALTER TABLE ? ADD COLUMN ? TIMESTAMPTZ", bun.Ident("statuses"), bun.Ident("fetched_at"))
+			if err != nil && !(strings.Contains(err.Error(), "already exists") || strings.Contains(err.Error(), "duplicate column name") || strings.Contains(err.Error(), "SQLSTATE 42701")) {
+				return err
+			}
+			return nil
+		})
+	}
 
-func (err *ErrNotRetrievable) Error() string {
-	return fmt.Sprintf("item could not be retrieved: %v", err.wrapped)
-}
+	down := func(ctx context.Context, db *bun.DB) error {
+		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			return nil
+		})
+	}
 
-func NewErrNotRetrievable(err error) error {
-	return &ErrNotRetrievable{wrapped: err}
+	if err := Migrations.Register(up, down); err != nil {
+		panic(err)
+	}
 }

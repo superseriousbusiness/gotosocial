@@ -109,7 +109,7 @@ func (d *deref) populateEmojis(ctx context.Context, rawEmojis []*gtsmodel.Emoji,
 			// it should be fleshed out already and we won't
 			// have to get it from the database again
 			gotEmoji = e
-		} else if gotEmoji, err = d.db.GetEmojiByShortcodeDomain(ctx, e.Shortcode, e.Domain); err != nil && err != db.ErrNoEntries {
+		} else if gotEmoji, err = d.state.DB.GetEmojiByShortcodeDomain(ctx, e.Shortcode, e.Domain); err != nil && err != db.ErrNoEntries {
 			log.Errorf(ctx, "error checking database for emoji %s: %s", shortcodeDomain, err)
 			continue
 		}

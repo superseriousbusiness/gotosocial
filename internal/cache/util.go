@@ -74,8 +74,14 @@ func tryStop[ValueType any](cache *result.Cache[ValueType], sweep time.Duration)
 func tryUntil(msg string, count int, do func() bool) {
 	for i := 0; i < count; i++ {
 		if do() {
+			// success.
 			return
 		}
+
+		// Sleep for a little before retry (a bcakoff).
+		time.Sleep(time.Millisecond * 1 << (i + 1))
 	}
+
+	// panic on total failure as this shouldn't happen.
 	log.Panicf(nil, "failed %s after %d tries", msg, count)
 }

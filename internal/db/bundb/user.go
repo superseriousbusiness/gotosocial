@@ -19,9 +19,11 @@ package bundb
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
@@ -155,32 +157,36 @@ func (u *userDB) UpdateUser(ctx context.Context, user *gtsmodel.User, columns ..
 		columns = append(columns, "updated_at")
 	}
 
-	// Update the user in DB
-	_, err := u.conn.
-		NewUpdate().
-		Model(user).
-		Where("? = ?", bun.Ident("user.id"), user.ID).
-		Column(columns...).
-		Exec(ctx)
-	if err != nil {
+	return u.state.Caches.GTS.User().Store(user, func() error {
+		_, err := u.conn.
+			NewUpdate().
+			Model(user).
+			Where("? = ?", bun.Ident("user.id"), user.ID).
+			Column(columns...).
+			Exec(ctx)
 		return u.conn.ProcessError(err)
-	}
-
-	// Invalidate user from cache
-	u.state.Caches.GTS.User().Invalidate("ID", user.ID)
-	return nil
+	})
 }
 
 func (u *userDB) DeleteUserByID(ctx context.Context, userID string) db.Error {
-	if _, err := u.conn.
-		NewDelete().
-		TableExpr("? AS ?", bun.Ident("users"), bun.Ident("user")).
-		Where("? = ?", bun.Ident("user.id"), userID).
-		Exec(ctx); err != nil {
-		return u.conn.ProcessError(err)
+	defer u.state.Caches.GTS.User().Invalidate("ID", userID)
+
+	// Load user into cache before attempting a delete,
+	// as we need it cached in order to trigger the invalidate
+	// callback. This in turn invalidates others.
+	_, err := u.GetUserByID(gtscontext.SetBarebones(ctx), userID)
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// not an issue.
+			err = nil
+		}
+		return err
 	}
 
-	// Invalidate user from cache
-	u.state.Caches.GTS.User().Invalidate("ID", userID)
-	return nil
+	// Finally delete user from DB.
+	_, err = u.conn.NewDelete().
+		TableExpr("? AS ?", bun.Ident("users"), bun.Ident("user")).
+		Where("? = ?", bun.Ident("user.id"), userID).
+		Exec(ctx)
+	return u.conn.ProcessError(err)
 }

@@ -110,17 +110,30 @@ func (p *Processor) ProcessFromFederator(ctx context.Context, federatorMsg messa
 func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
 	// check for either an IRI that we still need to dereference, OR an already dereferenced
 	// and converted status pinned to the message.
-	var status *gtsmodel.Status
+	var (
+		status *gtsmodel.Status
+		err    error
+	)
 
 	if federatorMsg.GTSModel != nil {
-		// there's a gts model already pinned to the message, it should be a status
 		var ok bool
+
+		// there's a gts model already pinned to the message, it should be a status
 		if status, ok = federatorMsg.GTSModel.(*gtsmodel.Status); !ok {
 			return errors.New("ProcessFromFederator: note was not parseable as *gtsmodel.Status")
 		}
 
-		var err error
-		status, err = p.federator.EnrichRemoteStatus(ctx, federatorMsg.ReceivingAccount.Username, status, true)
+		// Since this was a create originating AP object
+		// statusable may have been set on message (no problem if not).
+		statusable, _ := federatorMsg.APObjectModel.(ap.Statusable)
+
+		// Call refresh on status to deref if necessary etc.
+		status, _, err = p.federator.RefreshStatus(ctx,
+			federatorMsg.ReceivingAccount.Username,
+			status,
+			statusable,
+			false,
+		)
 		if err != nil {
 			return err
 		}
@@ -129,38 +142,29 @@ func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federa
 		if federatorMsg.APIri == nil {
 			return errors.New("ProcessFromFederator: status was not pinned to federatorMsg, and neither was an IRI for us to dereference")
 		}
-		var err error
-		status, _, err = p.federator.GetStatus(ctx, federatorMsg.ReceivingAccount.Username, federatorMsg.APIri, false, false)
+
+		status, _, err = p.federator.GetStatusByURI(ctx, federatorMsg.ReceivingAccount.Username, federatorMsg.APIri)
 		if err != nil {
 			return err
 		}
 	}
 
-	// make sure the account is pinned
-	if status.Account == nil {
-		a, err := p.state.DB.GetAccountByID(ctx, status.AccountID)
-		if err != nil {
-			return err
-		}
-		status.Account = a
-	}
-
-	// Get the remote account to make sure the avi and header are cached.
-	if status.Account.Domain != "" {
-		remoteAccountID, err := url.Parse(status.Account.URI)
+	if status.Account == nil || status.Account.IsRemote() {
+		// Either no account attached yet, or a remote account.
+		// Both situations we need to parse account URI to fetch it.
+		remoteAccURI, err := url.Parse(status.AccountURI)
 		if err != nil {
 			return err
 		}
 
-		a, err := p.federator.GetAccountByURI(ctx,
+		// Ensure that account for this status has been deref'd.
+		status.Account, _, err = p.federator.GetAccountByURI(ctx,
 			federatorMsg.ReceivingAccount.Username,
-			remoteAccountID,
+			remoteAccURI,
 		)
 		if err != nil {
 			return err
 		}
-
-		status.Account = a
 	}
 
 	if err := p.timelineAndNotifyStatus(ctx, status); err != nil {
@@ -193,7 +197,7 @@ func (p *Processor) processCreateFaveFromFederator(ctx context.Context, federato
 			return err
 		}
 
-		a, err := p.federator.GetAccountByURI(ctx,
+		a, _, err := p.federator.GetAccountByURI(ctx,
 			federatorMsg.ReceivingAccount.Username,
 			remoteAccountID,
 		)
@@ -234,7 +238,7 @@ func (p *Processor) processCreateFollowRequestFromFederator(ctx context.Context,
 			return err
 		}
 
-		a, err := p.federator.GetAccountByURI(ctx,
+		a, _, err := p.federator.GetAccountByURI(ctx,
 			federatorMsg.ReceivingAccount.Username,
 			remoteAccountID,
 		)
@@ -294,7 +298,7 @@ func (p *Processor) processCreateAnnounceFromFederator(ctx context.Context, fede
 			return err
 		}
 
-		a, err := p.federator.GetAccountByURI(ctx,
+		a, _, err := p.federator.GetAccountByURI(ctx,
 			federatorMsg.ReceivingAccount.Username,
 			remoteAccountID,
 		)
@@ -376,11 +380,12 @@ func (p *Processor) processUpdateAccountFromFederator(ctx context.Context, feder
 	}
 
 	// Call RefreshAccount to fetch up-to-date bio, avatar, header, etc.
-	updatedAccount, err := p.federator.RefreshAccount(
+	updatedAccount, _, err := p.federator.RefreshAccount(
 		ctx,
 		federatorMsg.ReceivingAccount.Username,
-		incomingAccountable,
 		incomingAccount,
+		incomingAccountable,
+		true,
 	)
 	if err != nil {
 		return fmt.Errorf("error enriching updated account from federator: %s", err)

@@ -43,6 +43,16 @@ func (p *Processor) getVisibleStatus(ctx context.Context, requestingAccount *gts
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
+	if requestingAccount != nil {
+		// Ensure the status is up-to-date.
+		p.federator.RefreshStatusAsync(ctx,
+			requestingAccount.Username,
+			targetStatus,
+			nil,
+			false,
+		)
+	}
+
 	visible, err := p.filter.StatusVisible(ctx, requestingAccount, targetStatus)
 	if err != nil {
 		err = fmt.Errorf("getVisibleStatus: error seeing if status %s is visible: %w", targetStatus.ID, err)

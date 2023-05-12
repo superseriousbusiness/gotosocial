@@ -19,10 +19,12 @@ package bundb
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -56,24 +58,46 @@ func (e *emojiDB) PutEmoji(ctx context.Context, emoji *gtsmodel.Emoji) db.Error 
 }
 
 func (e *emojiDB) UpdateEmoji(ctx context.Context, emoji *gtsmodel.Emoji, columns ...string) (*gtsmodel.Emoji, db.Error) {
-	// Update the emoji's last-updated
 	emoji.UpdatedAt = time.Now()
-
-	if _, err := e.conn.
-		NewUpdate().
-		Model(emoji).
-		Where("? = ?", bun.Ident("emoji.id"), emoji.ID).
-		Column(columns...).
-		Exec(ctx); err != nil {
-		return nil, e.conn.ProcessError(err)
+	if len(columns) > 0 {
+		// If we're updating by column, ensure "updated_at" is included.
+		columns = append(columns, "updated_at")
 	}
 
-	e.state.Caches.GTS.Emoji().Invalidate("ID", emoji.ID)
+	err := e.state.Caches.GTS.Emoji().Store(emoji, func() error {
+		_, err := e.conn.
+			NewUpdate().
+			Model(emoji).
+			Where("? = ?", bun.Ident("emoji.id"), emoji.ID).
+			Column(columns...).
+			Exec(ctx)
+		return e.conn.ProcessError(err)
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	return emoji, nil
 }
 
 func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
-	if err := e.conn.RunInTx(ctx, func(tx bun.Tx) error {
+	defer e.state.Caches.GTS.Emoji().Invalidate("ID", id)
+
+	// Load emoji into cache before attempting a delete,
+	// as we need it cached in order to trigger the invalidate
+	// callback. This in turn invalidates others.
+	_, err := e.GetEmojiByID(
+		gtscontext.SetBarebones(ctx),
+		id,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		// NOTE: even if db.ErrNoEntries is returned, we
+		// still run the below transaction to ensure related
+		// objects are appropriately deleted.
+		return err
+	}
+
+	return e.conn.RunInTx(ctx, func(tx bun.Tx) error {
 		// delete links between this emoji and any statuses that use it
 		if _, err := tx.
 			NewDelete().
@@ -101,12 +125,7 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 		}
 
 		return nil
-	}); err != nil {
-		return err
-	}
-
-	e.state.Caches.GTS.Emoji().Invalidate("ID", id)
-	return nil
+	})
 }
 
 func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) ([]*gtsmodel.Emoji, db.Error) {

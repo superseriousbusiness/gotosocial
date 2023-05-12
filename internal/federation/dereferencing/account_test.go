@@ -37,7 +37,7 @@ func (suite *AccountTestSuite) TestDereferenceGroup() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 
 	groupURL := testrig.URLMustParse("https://unknown-instance.com/groups/some_group")
-	group, err := suite.dereferencer.GetAccountByURI(
+	group, _, err := suite.dereferencer.GetAccountByURI(
 		context.Background(),
 		fetchingAccount.Username,
 		groupURL,
@@ -61,7 +61,7 @@ func (suite *AccountTestSuite) TestDereferenceService() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 
 	serviceURL := testrig.URLMustParse("https://owncast.example.org/federation/user/rgh")
-	service, err := suite.dereferencer.GetAccountByURI(
+	service, _, err := suite.dereferencer.GetAccountByURI(
 		context.Background(),
 		fetchingAccount.Username,
 		serviceURL,
@@ -93,7 +93,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountAsRemoteURL() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 	targetAccount := suite.testAccounts["local_account_2"]
 
-	fetchedAccount, err := suite.dereferencer.GetAccountByURI(
+	fetchedAccount, _, err := suite.dereferencer.GetAccountByURI(
 		context.Background(),
 		fetchingAccount.Username,
 		testrig.URLMustParse(targetAccount.URI),
@@ -112,7 +112,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountAsRemoteURLNoSharedInb
 		suite.FailNow(err.Error())
 	}
 
-	fetchedAccount, err := suite.dereferencer.GetAccountByURI(
+	fetchedAccount, _, err := suite.dereferencer.GetAccountByURI(
 		context.Background(),
 		fetchingAccount.Username,
 		testrig.URLMustParse(targetAccount.URI),
@@ -126,7 +126,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountAsUsername() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 	targetAccount := suite.testAccounts["local_account_2"]
 
-	fetchedAccount, err := suite.dereferencer.GetAccountByURI(
+	fetchedAccount, _, err := suite.dereferencer.GetAccountByURI(
 		context.Background(),
 		fetchingAccount.Username,
 		testrig.URLMustParse(targetAccount.URI),
@@ -140,7 +140,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountAsUsernameDomain() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 	targetAccount := suite.testAccounts["local_account_2"]
 
-	fetchedAccount, err := suite.dereferencer.GetAccountByURI(
+	fetchedAccount, _, err := suite.dereferencer.GetAccountByURI(
 		context.Background(),
 		fetchingAccount.Username,
 		testrig.URLMustParse(targetAccount.URI),
@@ -154,7 +154,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountAsUsernameDomainAndURL
 	fetchingAccount := suite.testAccounts["local_account_1"]
 	targetAccount := suite.testAccounts["local_account_2"]
 
-	fetchedAccount, err := suite.dereferencer.GetAccountByUsernameDomain(
+	fetchedAccount, _, err := suite.dereferencer.GetAccountByUsernameDomain(
 		context.Background(),
 		fetchingAccount.Username,
 		targetAccount.Username,
@@ -168,7 +168,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountAsUsernameDomainAndURL
 func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUsername() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 
-	fetchedAccount, err := suite.dereferencer.GetAccountByUsernameDomain(
+	fetchedAccount, _, err := suite.dereferencer.GetAccountByUsernameDomain(
 		context.Background(),
 		fetchingAccount.Username,
 		"thisaccountdoesnotexist",
@@ -183,7 +183,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUsername() 
 func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUsernameDomain() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 
-	fetchedAccount, err := suite.dereferencer.GetAccountByUsernameDomain(
+	fetchedAccount, _, err := suite.dereferencer.GetAccountByUsernameDomain(
 		context.Background(),
 		fetchingAccount.Username,
 		"thisaccountdoesnotexist",
@@ -198,7 +198,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUsernameDom
 func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUserURI() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 
-	fetchedAccount, err := suite.dereferencer.GetAccountByURI(
+	fetchedAccount, _, err := suite.dereferencer.GetAccountByURI(
 		context.Background(),
 		fetchingAccount.Username,
 		testrig.URLMustParse("http://localhost:8080/users/thisaccountdoesnotexist"),

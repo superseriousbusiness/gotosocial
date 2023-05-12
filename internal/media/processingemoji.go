@@ -123,7 +123,6 @@ func (p *ProcessingEmoji) load(ctx context.Context) (*gtsmodel.Emoji, bool, erro
 
 		if p.refresh {
 			columns := []string{
-				"updated_at",
 				"image_remote_url",
 				"image_static_remote_url",
 				"image_url",

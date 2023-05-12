@@ -19,9 +19,11 @@ package bundb
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -103,17 +105,26 @@ func (m *mediaDB) UpdateAttachment(ctx context.Context, media *gtsmodel.MediaAtt
 }
 
 func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
-	// Attempt to delete from database.
-	if _, err := m.conn.NewDelete().
-		TableExpr("? AS ?", bun.Ident("media_attachments"), bun.Ident("media_attachment")).
-		Where("? = ?", bun.Ident("media_attachment.id"), id).
-		Exec(ctx); err != nil {
-		return m.conn.ProcessError(err)
+	defer m.state.Caches.GTS.Media().Invalidate("ID", id)
+
+	// Load media into cache before attempting a delete,
+	// as we need it cached in order to trigger the invalidate
+	// callback. This in turn invalidates others.
+	_, err := m.GetAttachmentByID(gtscontext.SetBarebones(ctx), id)
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// not an issue.
+			err = nil
+		}
+		return err
 	}
 
-	// Invalidate this media item from the cache.
-	m.state.Caches.GTS.Media().Invalidate("ID", id)
-	return nil
+	// Finally delete media from DB.
+	_, err = m.conn.NewDelete().
+		TableExpr("? AS ?", bun.Ident("media_attachments"), bun.Ident("media_attachment")).
+		Where("? = ?", bun.Ident("media_attachment.id"), id).
+		Exec(ctx)
+	return m.conn.ProcessError(err)
 }
 
 func (m *mediaDB) GetRemoteOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {

@@ -28,6 +28,7 @@ type Status struct {
 	ID                       string             `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                              // id of this item in the database
 	CreatedAt                time.Time          `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                       // when was item created
 	UpdatedAt                time.Time          `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                       // when was item last updated
+	FetchedAt                time.Time          `validate:"required_with=!Local" bun:"type:timestamptz,nullzero"`                                      // when was item (remote) last fetched.
 	PinnedAt                 time.Time          `validate:"-" bun:"type:timestamptz,nullzero"`                                                         // Status was pinned by owning account at this time.
 	URI                      string             `validate:"required,url" bun:",unique,nullzero,notnull"`                                               // activitypub URI of this status
 	URL                      string             `validate:"url" bun:",nullzero"`                                                                       // web url for viewing this status
@@ -87,24 +88,43 @@ func (s *Status) GetBoostOfAccountID() string {
 	return s.BoostOfAccountID
 }
 
+func (s *Status) GetAttachmentByID(id string) (*MediaAttachment, bool) {
+	for _, media := range s.Attachments {
+		if media == nil {
+			log.Warnf(nil, "nil attachment in slice for status %s", s.URI)
+			continue
+		}
+		if media.ID == id {
+			return media, true
+		}
+	}
+	return nil, false
+}
+
+func (s *Status) GetAttachmentByRemoteURL(url string) (*MediaAttachment, bool) {
+	for _, media := range s.Attachments {
+		if media == nil {
+			log.Warnf(nil, "nil attachment in slice for status %s", s.URI)
+			continue
+		}
+		if media.RemoteURL == url {
+			return media, true
+		}
+	}
+	return nil, false
+}
+
 // AttachmentsPopulated returns whether media attachments are populated according to current AttachmentIDs.
 func (s *Status) AttachmentsPopulated() bool {
 	if len(s.AttachmentIDs) != len(s.Attachments) {
 		// this is the quickest indicator.
 		return false
 	}
-
-	// Attachments must be in same order.
-	for i, id := range s.AttachmentIDs {
-		if s.Attachments[i] == nil {
-			log.Warnf(nil, "nil attachment in slice for status %s", s.URI)
-			continue
-		}
-		if s.Attachments[i].ID != id {
+	for _, id := range s.AttachmentIDs {
+		if _, ok := s.GetAttachmentByID(id); !ok {
 			return false
 		}
 	}
-
 	return true
 }
 
@@ -129,24 +149,43 @@ func (s *Status) TagsPopulated() bool {
 	return true
 }
 
+func (s *Status) GetMentionByID(id string) (*Mention, bool) {
+	for _, mention := range s.Mentions {
+		if mention == nil {
+			log.Warnf(nil, "nil mention in slice for status %s", s.URI)
+			continue
+		}
+		if mention.ID == id {
+			return mention, true
+		}
+	}
+	return nil, false
+}
+
+func (s *Status) GetMentionByTargetURI(uri string) (*Mention, bool) {
+	for _, mention := range s.Mentions {
+		if mention == nil {
+			log.Warnf(nil, "nil mention in slice for status %s", s.URI)
+			continue
+		}
+		if mention.TargetAccountURI == uri {
+			return mention, true
+		}
+	}
+	return nil, false
+}
+
 // MentionsPopulated returns whether mentions are populated according to current MentionIDs.
 func (s *Status) MentionsPopulated() bool {
 	if len(s.MentionIDs) != len(s.Mentions) {
 		// this is the quickest indicator.
 		return false
 	}
-
-	// Mentions must be in same order.
-	for i, id := range s.MentionIDs {
-		if s.Mentions[i] == nil {
-			log.Warnf(nil, "nil mention in slice for status %s", s.URI)
-			continue
-		}
-		if s.Mentions[i].ID != id {
+	for _, id := range s.MentionIDs {
+		if _, ok := s.GetMentionByID(id); !ok {
 			return false
 		}
 	}
-
 	return true
 }
 
@@ -164,6 +203,36 @@ func (s *Status) EmojisPopulated() bool {
 			continue
 		}
 		if s.Emojis[i].ID != id {
+			return false
+		}
+	}
+
+	return true
+}
+
+// EmojissUpToDate returns whether status emoji attachments of receiving status are up-to-date
+// according to emoji attachments of the passed status, by comparing their emoji URIs. We don't
+// use IDs as this is used to determine whether there are new emojis to fetch.
+func (s *Status) EmojisUpToDate(other *Status) bool {
+	if len(s.Emojis) != len(other.Emojis) {
+		// this is the quickest indicator.
+		return false
+	}
+
+	// Emojis must be in same order.
+	for i := range s.Emojis {
+		if s.Emojis[i] == nil {
+			log.Warnf(nil, "nil emoji in slice for status %s", s.URI)
+			return false
+		}
+
+		if other.Emojis[i] == nil {
+			log.Warnf(nil, "nil emoji in slice for status %s", other.URI)
+			return false
+		}
+
+		if s.Emojis[i].URI != other.Emojis[i].URI {
+			// Emoji URI has changed, not up-to-date!
 			return false
 		}
 	}

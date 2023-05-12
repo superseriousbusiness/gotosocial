@@ -2482,6 +2482,26 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 				),
 			},
 		),
+		"http://fossbros-anonymous.io/users/foss_satan/statuses/106221634728637552": NewAPNote(
+			URLMustParse("http://fossbros-anonymous.io/users/foss_satan/statuses/106221634728637552"),
+			URLMustParse("http://fossbros-anonymous.io/@foss_satan/106221634728637552"),
+			TimeMustParse("2022-07-13T12:13:12+02:00"),
+			`<p><span class="h-card"><a href="http://localhost:8080/@the_mighty_zork" class="u-url mention">@<span>the_mighty_zork</span></a></span> nice there it is:</p><p><a href="http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity" rel="nofollow noopener noreferrer" target="_blank"><span class="invisible">https://</span><span class="ellipsis">social.pixie.town/users/f0x/st</span><span class="invisible">atuses/106221628567855262/activity</span></a></p>`,
+			"",
+			URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
+			[]*url.URL{
+				URLMustParse(pub.PublicActivityPubIRI),
+			},
+			[]*url.URL{},
+			false,
+			[]vocab.ActivityStreamsMention{
+				newAPMention(
+					URLMustParse("http://localhost:8080/users/the_mighty_zork"),
+					"@the_mighty_zork@localhost:8080",
+				),
+			},
+			nil,
+		),
 	}
 }
 

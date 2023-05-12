@@ -385,7 +385,7 @@ func (p *Processor) emojiUpdateDisable(ctx context.Context, emoji *gtsmodel.Emoj
 
 	emojiDisabled := true
 	emoji.Disabled = &emojiDisabled
-	updatedEmoji, err := p.state.DB.UpdateEmoji(ctx, emoji, "updated_at", "disabled")
+	updatedEmoji, err := p.state.DB.UpdateEmoji(ctx, emoji, "disabled")
 	if err != nil {
 		err = fmt.Errorf("emojiUpdateDisable: error updating emoji %s: %s", emoji.ID, err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -434,7 +434,7 @@ func (p *Processor) emojiUpdateModify(ctx context.Context, emoji *gtsmodel.Emoji
 	if !updateImage {
 		// only updating fields, we only need
 		// to do a database update for this
-		columns := []string{"updated_at"}
+		var columns []string
 
 		if updateCategoryID {
 			emoji.CategoryID = updatedCategoryID

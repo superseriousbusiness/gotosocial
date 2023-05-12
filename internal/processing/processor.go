@@ -131,7 +131,7 @@ func NewProcessor(
 	processor.fedi = fedi.New(state, tc, federator, filter)
 	processor.media = media.New(state, tc, mediaManager, federator.TransportController())
 	processor.report = report.New(state, tc)
-	processor.status = status.New(state, tc, filter, parseMentionFunc)
+	processor.status = status.New(state, federator, tc, filter, parseMentionFunc)
 	processor.stream = stream.New(state, oauthServer)
 	processor.user = user.New(state, emailSender)
 

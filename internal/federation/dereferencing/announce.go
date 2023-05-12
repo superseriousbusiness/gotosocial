@@ -40,7 +40,7 @@ func (d *deref) DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Stat
 	}
 
 	// Check whether the originating status is from a blocked host
-	if blocked, err := d.db.IsDomainBlocked(ctx, boostedURI.Host); blocked || err != nil {
+	if blocked, err := d.state.DB.IsDomainBlocked(ctx, boostedURI.Host); blocked || err != nil {
 		return fmt.Errorf("DereferenceAnnounce: domain %s is blocked", boostedURI.Host)
 	}
 
@@ -48,7 +48,7 @@ func (d *deref) DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Stat
 
 	if boostedURI.Host == config.GetHost() {
 		// This is a local status, fetch from the database
-		status, err := d.db.GetStatusByURI(ctx, boostedURI.String())
+		status, err := d.state.DB.GetStatusByURI(ctx, boostedURI.String())
 		if err != nil {
 			return fmt.Errorf("DereferenceAnnounce: error fetching local status %q: %v", announce.BoostOf.URI, err)
 		}
@@ -57,13 +57,10 @@ func (d *deref) DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Stat
 		boostedStatus = status
 	} else {
 		// This is a boost of a remote status, we need to dereference it.
-		status, statusable, err := d.GetStatus(ctx, requestingUsername, boostedURI, true, true)
+		status, _, err := d.GetStatusByURI(ctx, requestingUsername, boostedURI)
 		if err != nil {
 			return fmt.Errorf("DereferenceAnnounce: error dereferencing remote status with id %s: %s", announce.BoostOf.URI, err)
 		}
-
-		// Dereference all statuses in the thread of the boosted status
-		d.DereferenceThread(ctx, requestingUsername, boostedURI, status, statusable)
 
 		// Set boosted status
 		boostedStatus = status

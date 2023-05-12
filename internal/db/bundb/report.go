@@ -19,10 +19,12 @@ package bundb
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -192,14 +194,24 @@ func (r *reportDB) UpdateReport(ctx context.Context, report *gtsmodel.Report, co
 }
 
 func (r *reportDB) DeleteReportByID(ctx context.Context, id string) db.Error {
-	if _, err := r.conn.
-		NewDelete().
-		TableExpr("? AS ?", bun.Ident("reports"), bun.Ident("report")).
-		Where("? = ?", bun.Ident("report.id"), id).
-		Exec(ctx); err != nil {
-		return r.conn.ProcessError(err)
+	defer r.state.Caches.GTS.Report().Invalidate("ID", id)
+
+	// Load status into cache before attempting a delete,
+	// as we need it cached in order to trigger the invalidate
+	// callback. This in turn invalidates others.
+	_, err := r.GetReportByID(gtscontext.SetBarebones(ctx), id)
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// not an issue.
+			err = nil
+		}
+		return err
 	}
 
-	r.state.Caches.GTS.Report().Invalidate("ID", id)
-	return nil
+	// Finally delete report from DB.
+	_, err = r.conn.NewDelete().
+		TableExpr("? AS ?", bun.Ident("reports"), bun.Ident("report")).
+		Where("? = ?", bun.Ident("report.id"), id).
+		Exec(ctx)
+	return r.conn.ProcessError(err)
 }

@@ -22,6 +22,7 @@ import (
 	"errors"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -179,16 +180,26 @@ func (n *notificationDB) PutNotification(ctx context.Context, notif *gtsmodel.No
 }
 
 func (n *notificationDB) DeleteNotificationByID(ctx context.Context, id string) db.Error {
-	if _, err := n.conn.
-		NewDelete().
-		TableExpr("? AS ?", bun.Ident("notifications"), bun.Ident("notification")).
-		Where("? = ?", bun.Ident("notification.id"), id).
-		Exec(ctx); err != nil {
-		return n.conn.ProcessError(err)
+	defer n.state.Caches.GTS.Notification().Invalidate("ID", id)
+
+	// Load notif into cache before attempting a delete,
+	// as we need it cached in order to trigger the invalidate
+	// callback. This in turn invalidates others.
+	_, err := n.GetNotificationByID(gtscontext.SetBarebones(ctx), id)
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// not an issue.
+			err = nil
+		}
+		return err
 	}
 
-	n.state.Caches.GTS.Notification().Invalidate("ID", id)
-	return nil
+	// Finally delete notif from DB.
+	_, err = n.conn.NewDelete().
+		TableExpr("? AS ?", bun.Ident("notifications"), bun.Ident("notification")).
+		Where("? = ?", bun.Ident("notification.id"), id).
+		Exec(ctx)
+	return n.conn.ProcessError(err)
 }
 
 func (n *notificationDB) DeleteNotifications(ctx context.Context, types []string, targetAccountID string, originAccountID string) db.Error {
@@ -196,56 +207,88 @@ func (n *notificationDB) DeleteNotifications(ctx context.Context, types []string
 		return errors.New("DeleteNotifications: one of targetAccountID or originAccountID must be set")
 	}
 
-	// Capture notification IDs in a RETURNING statement.
-	var ids []string
+	var notifIDs []string
 
 	q := n.conn.
-		NewDelete().
-		TableExpr("? AS ?", bun.Ident("notifications"), bun.Ident("notification")).
-		Returning("?", bun.Ident("id"))
+		NewSelect().
+		Column("id").
+		Table("notifications")
 
 	if len(types) > 0 {
-		q = q.Where("? IN (?)", bun.Ident("notification.notification_type"), bun.In(types))
+		q = q.Where("? IN (?)", bun.Ident("notification_type"), bun.In(types))
 	}
 
 	if targetAccountID != "" {
-		q = q.Where("? = ?", bun.Ident("notification.target_account_id"), targetAccountID)
+		q = q.Where("? = ?", bun.Ident("target_account_id"), targetAccountID)
 	}
 
 	if originAccountID != "" {
-		q = q.Where("? = ?", bun.Ident("notification.origin_account_id"), originAccountID)
+		q = q.Where("? = ?", bun.Ident("origin_account_id"), originAccountID)
 	}
 
-	if _, err := q.Exec(ctx, &ids); err != nil {
+	if _, err := q.Exec(ctx, &notifIDs); err != nil {
 		return n.conn.ProcessError(err)
 	}
 
-	// Invalidate each returned ID.
-	for _, id := range ids {
-		n.state.Caches.GTS.Notification().Invalidate("ID", id)
+	defer func() {
+		// Invalidate all IDs on return.
+		for _, id := range notifIDs {
+			n.state.Caches.GTS.Notification().Invalidate("ID", id)
+		}
+	}()
+
+	// Load all notif into cache, this *really* isn't great
+	// but it is the only way we can ensure we invalidate all
+	// related caches correctly (e.g. visibility).
+	for _, id := range notifIDs {
+		_, err := n.GetNotificationByID(ctx, id)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			return err
+		}
 	}
 
-	return nil
+	// Finally delete all from DB.
+	_, err := n.conn.NewDelete().
+		Table("notifications").
+		Where("? IN (?)", bun.Ident("id"), bun.In(notifIDs)).
+		Exec(ctx)
+	return n.conn.ProcessError(err)
 }
 
 func (n *notificationDB) DeleteNotificationsForStatus(ctx context.Context, statusID string) db.Error {
-	// Capture notification IDs in a RETURNING statement.
-	var ids []string
+	var notifIDs []string
 
 	q := n.conn.
-		NewDelete().
-		TableExpr("? AS ?", bun.Ident("notifications"), bun.Ident("notification")).
-		Where("? = ?", bun.Ident("notification.status_id"), statusID).
-		Returning("?", bun.Ident("id"))
+		NewSelect().
+		Column("id").
+		Table("notifications").
+		Where("? = ?", bun.Ident("status_id"), statusID)
 
-	if _, err := q.Exec(ctx, &ids); err != nil {
+	if _, err := q.Exec(ctx, &notifIDs); err != nil {
 		return n.conn.ProcessError(err)
 	}
 
-	// Invalidate each returned ID.
-	for _, id := range ids {
-		n.state.Caches.GTS.Notification().Invalidate("ID", id)
+	defer func() {
+		// Invalidate all IDs on return.
+		for _, id := range notifIDs {
+			n.state.Caches.GTS.Notification().Invalidate("ID", id)
+		}
+	}()
+
+	// Load all notif into cache, this *really* isn't great
+	// but it is the only way we can ensure we invalidate all
+	// related caches correctly (e.g. visibility).
+	for _, id := range notifIDs {
+		_, err := n.GetNotificationByID(ctx, id)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			return err
+		}
 	}
 
-	return nil
+	// Finally delete all from DB.
+	_, err := n.conn.NewDelete().
+		Table("notifications").
+		Where("? IN (?)", bun.Ident("id"), bun.In(notifIDs)).
+		Exec(ctx)
+	return n.conn.ProcessError(err)
 }

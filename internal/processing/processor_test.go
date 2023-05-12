@@ -100,6 +100,8 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 	suite.state.Storage = suite.storage
 	suite.typeconverter = testrig.NewTestTypeConverter(suite.db)
 	suite.httpClient = testrig.NewMockHTTPClient(nil, "../../testrig/media")
+	suite.httpClient.TestRemotePeople = testrig.NewTestFediPeople()
+	suite.httpClient.TestRemoteStatuses = testrig.NewTestFediStatuses()
 
 	suite.transportController = testrig.NewTestTransportController(&suite.state, suite.httpClient)
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)

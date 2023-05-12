@@ -66,9 +66,9 @@ func (suite *BunDBStandardTestSuite) SetupSuite() {
 }
 
 func (suite *BunDBStandardTestSuite) SetupTest() {
-	suite.state.Caches.Init()
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
+	suite.state.Caches.Init()
 	suite.db = testrig.NewTestDB(&suite.state)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 }
