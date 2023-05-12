@@ -55,7 +55,7 @@
 		{{range $index, $media := .}}
 		{{with $media}}
 		<div class="media-wrapper">
-			<details class="{{.Type}}-spoiler" {{if not $.Sensitive}}open{{end}}>
+			<details class="{{.Type}}-spoiler media-spoiler" {{if not $.Sensitive}}open{{end}}>
 				<summary>
 					<div class="show sensitive button" aria-hidden="true">
 						Show sensitive media

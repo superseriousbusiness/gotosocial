@@ -104,31 +104,29 @@ function dynamicSpoiler(className, updateFunc) {
 }
 
 dynamicSpoiler("text-spoiler", (spoiler) => {
-	const button = spoiler.querySelector("button");
+	const button = spoiler.querySelector(".button");
 
-	if (button != undefined) {
-		return () => {
-			button.textContent = spoiler.open
-				? "Show less"
-				: "Show more";
-		};
-	}
+	return () => {
+		button.textContent = spoiler.open
+			? "Show less"
+			: "Show more";
+	};
 });
 
-dynamicSpoiler("video-spoiler", (spoiler) => {
-	const video = spoiler.querySelector(".plyr-video");
+dynamicSpoiler("media-spoiler", (spoiler) => {
 	const eye = spoiler.querySelector(".eye.button");
+	const video = spoiler.querySelector(".plyr-video");
 
-	if (video != undefined) {
-		return () => {
-			if (spoiler.open) {
-				eye.setAttribute("aria-label", "Hide media");
-			} else {
-				eye.setAttribute("aria-label", "Show media");
+	return () => {
+		if (spoiler.open) {
+			eye.setAttribute("aria-label", "Hide media");
+		} else {
+			eye.setAttribute("aria-label", "Show media");
+			if (video) {
 				video.pause();
 			}
-		};
-	}
+		}
+	};
 });
 
 Array.from(document.getElementsByClassName("plyr-video")).forEach((video) => {
