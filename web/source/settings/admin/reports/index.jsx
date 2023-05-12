@@ -48,13 +48,6 @@ function ReportOverview({ }) {
 		<>
 			<h1>Reports</h1>
 			<div>
-				<div className="info">
-					<i className="fa fa-fw fa-exclamation-triangle" aria-hidden="true"></i>
-					<p>
-						<b>This interface is currently very limited</b>, only providing a basic overview. <br />
-						Work is in progress on a more full-fledged moderation experience.
-					</p>
-				</div>
 				<p>
 					Here you can view and resolve reports made to your instance, originating from local and remote users.
 				</p>
