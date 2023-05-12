@@ -39,7 +39,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 
 	authed, err := oauth.Authed(c, false, false, false, false)
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+		apiutil.WebErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -47,7 +47,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	username := strings.ToLower(c.Param(usernameKey))
 	if username == "" {
 		err := errors.New("no account username specified")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+		apiutil.WebErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -55,13 +55,13 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	statusID := strings.ToUpper(c.Param(statusIDKey))
 	if statusID == "" {
 		err := errors.New("no status id specified")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+		apiutil.WebErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	instance, err := m.processor.InstanceGetV1(ctx)
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
+		apiutil.WebErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -72,19 +72,19 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	// do this check to make sure the status is actually from a local account,
 	// we shouldn't render threads from statuses that don't belong to us!
 	if _, errWithCode := m.processor.Account().GetLocalByUsername(ctx, authed.Account, username); errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, instanceGet)
+		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
 		return
 	}
 
 	status, errWithCode := m.processor.Status().Get(ctx, authed.Account, statusID)
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, instanceGet)
+		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
 		return
 	}
 
 	if !strings.EqualFold(username, status.Account.Username) {
 		err := gtserror.NewErrorNotFound(errors.New("path username not equal to status author username"))
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err), instanceGet)
+		apiutil.WebErrorHandler(c, gtserror.NewErrorNotFound(err), instanceGet)
 		return
 	}
 
@@ -98,7 +98,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 
 	context, errWithCode := m.processor.Status().ContextGet(ctx, authed.Account, statusID)
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, instanceGet)
+		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
 		return
 	}
 
@@ -133,14 +133,14 @@ func (m *Module) returnAPStatus(ctx context.Context, c *gin.Context, username st
 
 	status, errWithCode := m.processor.Fedi().StatusGet(ctx, username, statusID)
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1) //nolint:contextcheck
+		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1) //nolint:contextcheck
 		return
 	}
 
 	b, mErr := json.Marshal(status)
 	if mErr != nil {
 		err := fmt.Errorf("could not marshal json: %s", mErr)
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1) //nolint:contextcheck
+		apiutil.WebErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1) //nolint:contextcheck
 		return
 	}
 

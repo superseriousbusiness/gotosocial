@@ -32,19 +32,19 @@ func (m *Module) confirmEmailGETHandler(c *gin.Context) {
 	// if there's no token in the query, just serve the 404 web handler
 	token := c.Query(tokenParam)
 	if token == "" {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(errors.New(http.StatusText(http.StatusNotFound))), m.processor.InstanceGetV1)
+		apiutil.WebErrorHandler(c, gtserror.NewErrorNotFound(errors.New(http.StatusText(http.StatusNotFound))), m.processor.InstanceGetV1)
 		return
 	}
 
 	user, errWithCode := m.processor.User().EmailConfirm(ctx, token)
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
 	instance, err := m.processor.InstanceGetV1(ctx)
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
+		apiutil.WebErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
 		return
 	}
 

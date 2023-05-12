@@ -33,12 +33,12 @@ const textCSSUTF8 = string(apiutil.TextCSS + "; charset=utf-8")
 func (m *Module) customCSSGETHandler(c *gin.Context) {
 	if !config.GetAccountsAllowCustomCSS() {
 		err := errors.New("accounts-allow-custom-css is not enabled on this instance")
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err), m.processor.InstanceGetV1)
+		apiutil.WebErrorHandler(c, gtserror.NewErrorNotFound(err), m.processor.InstanceGetV1)
 		return
 	}
 
 	if _, err := apiutil.NegotiateAccept(c, apiutil.TextCSS); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
+		apiutil.WebErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
@@ -46,13 +46,13 @@ func (m *Module) customCSSGETHandler(c *gin.Context) {
 	username := strings.ToLower(c.Param(usernameKey))
 	if username == "" {
 		err := errors.New("no account username specified")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+		apiutil.WebErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	customCSS, errWithCode := m.processor.Account().GetCustomCSSForUsername(c.Request.Context(), username)
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

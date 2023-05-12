@@ -44,12 +44,12 @@ var WebfingerJSONAcceptHeaders = []MIME{
 	AppJSON,
 }
 
-// HTMLOrJSONAcceptHeaders is a slice of offers that prefers TextHTML and will
-// fall back to JSON if necessary. This is useful for error handling, since it can
+// JSONOrHTMLAcceptHeaders is a slice of offers that prefers AppJSON and will
+// fall back to HTML if necessary. This is useful for error handling, since it can
 // be used to serve a nice HTML page if the caller accepts that, or just JSON if not.
-var HTMLOrJSONAcceptHeaders = []MIME{
-	TextHTML,
+var JSONOrHTMLAcceptHeaders = []MIME{
 	AppJSON,
+	TextHTML,
 }
 
 // HTMLAcceptHeaders is a slice of offers that just contains text/html types.

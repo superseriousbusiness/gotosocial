@@ -88,7 +88,8 @@ func genericErrorHandler(c *gin.Context, instanceGet func(ctx context.Context) (
 // the caller prefers to see an html page with the error rendered there. If not, or
 // if something goes wrong during the function, it will recover and just try to serve
 // an appropriate application/json content-type error.
-func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode)) {
+// To override the default response type, specify `offers`.
+func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode), offers ...MIME) {
 	// set the error on the gin context so that it can be logged
 	// in the gin logger middleware (internal/router/logger.go)
 	c.Error(errWithCode) //nolint:errcheck
@@ -97,7 +98,7 @@ func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet fun
 	// or if we should just use a json. Normally we would want to
 	// check for a returned error, but if an error occurs here we
 	// can just fall back to default behavior (serve json error).
-	accept, _ := NegotiateAccept(c, HTMLOrJSONAcceptHeaders...)
+	accept, _ := NegotiateAccept(c, JSONOrHTMLAcceptHeaders...)
 
 	if errWithCode.Code() == http.StatusNotFound {
 		// use our special not found handler with useful status text
@@ -105,6 +106,11 @@ func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet fun
 	} else {
 		genericErrorHandler(c, instanceGet, accept, errWithCode)
 	}
+}
+
+// WebErrorHandler is like ErrorHandler, but will display HTML over JSON by default.
+func WebErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode)) {
+	ErrorHandler(c, errWithCode, instanceGet, TextHTML, AppJSON)
 }
 
 // OAuthErrorHandler is a lot like ErrorHandler, but it specifically returns errors

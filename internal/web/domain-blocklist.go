@@ -35,25 +35,25 @@ const (
 func (m *Module) domainBlockListGETHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, false, false, false, false)
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+		apiutil.WebErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	if !config.GetInstanceExposeSuspendedWeb() && (authed.Account == nil || authed.User == nil) {
 		err := fmt.Errorf("this instance does not expose the list of suspended domains publicly")
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+		apiutil.WebErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	instance, err := m.processor.InstanceGetV1(c.Request.Context())
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
+		apiutil.WebErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
 		return
 	}
 
 	domainBlocks, errWithCode := m.processor.InstancePeersGet(c.Request.Context(), true, false, false)
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
