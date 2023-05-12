@@ -21,7 +21,7 @@
 
 const React = require("react");
 
-module.exports = function FakeProfile({ avatar, header, display_name, username, role }) {
+module.exports = function FakeProfile({ avatar, header, display_name, username, acct, role }) {
 	return ( // Keep in sync with web/template/profile.tmpl
 		<div className="profile">
 			<div className="header">

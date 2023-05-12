@@ -1063,6 +1063,10 @@ button.with-padding {
 }
 
 .user-detail {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+
 	.profile {
 		overflow: hidden;
 	}

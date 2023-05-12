@@ -58,7 +58,25 @@ module.exports = function UserDetail({ }) {
 };
 
 function UserDetailForm({ data: user }) {
+	let content;
+	if (user.suspended) {
+		content = (
+			<h2 className="error">User is suspended.</h2>
+		);
+	} else {
+		content = <ModifyUser user={user} />;
+	}
 
+	return (
+		<>
+			<FakeProfile {...user} />
+
+			{content}
+		</>
+	);
+}
+
+function ModifyUser(user) {
 	const form = {
 		id: useValue("id", user.id),
 		reason: useTextInput("text", {})
@@ -67,38 +85,30 @@ function UserDetailForm({ data: user }) {
 	const [modifyUser, result] = useFormSubmit(form, query.useActionUserMutation());
 
 	return (
-		<div>
-			<FakeProfile {...user} />
+		<form onSubmit={modifyUser}>
+			<h2>Actions</h2>
+			<TextInput
+				field={form.reason}
+				placeholder="Reason for this action"
+			/>
 
-			{user.suspended &&
-				<h2 style={{ color: "red" }}>NUKED FROM ORBIT</h2>
-			}
-
-			<form onSubmit={modifyUser}>
-				<h2>Actions</h2>
-				<TextInput
-					field={form.reason}
-					placeholder="Reason for this action"
+			<div className="action-buttons">
+				{/* <MutationButton
+					label="Disable"
+					name="disable"
+					result={result}
 				/>
-
-				<div className="action-buttons">
-					{/* <MutationButton
-						label="Disable"
-						name="disable"
-						result={result}
-					/>
-					<MutationButton
-						label="Silence"
-						name="silence"
-						result={result}
-					/> */}
-					<MutationButton
-						label="Suspend"
-						name="suspend"
-						result={result}
-					/>
-				</div>
-			</form>
-		</div>
+				<MutationButton
+					label="Silence"
+					name="silence"
+					result={result}
+				/> */}
+				<MutationButton
+					label="Suspend"
+					name="suspend"
+					result={result}
+				/>
+			</div>
+		</form>
 	);
 }
