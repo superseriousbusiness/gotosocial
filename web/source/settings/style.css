@@ -1062,6 +1062,26 @@ button.with-padding {
 	}
 }
 
+.account-search {
+	form {
+		margin-bottom: 1rem;
+	}
+
+	.list {
+		margin: 0.5rem 0;
+
+		a {
+			color: $fg;
+			text-decoration: none;
+
+			#username {
+				color: $link-fg;
+				margin-left: 0.5em;
+			}
+		}
+	}
+}
+
 .user-detail {
 	display: flex;
 	flex-direction: column;

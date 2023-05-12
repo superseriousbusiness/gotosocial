@@ -96,6 +96,14 @@ const endpoints = (build) => ({
 		}),
 		invalidatesTags: (_, __, { id }) => [{ type: "User", id }]
 	}),
+	searchUser: build.mutation({
+		query: (username) => ({
+			url: `/api/v2/search?q=${encodeURIComponent(username)}&resolve=true`
+		}),
+		transformResponse: (res) => {
+			return res.accounts ?? [];
+		}
+	}),
 	...require("./import-export")(build),
 	...require("./custom-emoji")(build),
 	...require("./reports")(build)
