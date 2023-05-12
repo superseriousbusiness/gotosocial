@@ -69,8 +69,8 @@ function ViewRouter(routing, defaultRoute) {
 				(_) => _.map((route) => {
 					return (
 						<Route path={route.routingUrl} key={route.key}>
-							<ErrorBoundary FallbackComponent={ErrorFallback} onError={(_e, i) => console.log(i)} onReset={() => { }}>
-								{/* FIXME: implement onReset */}
+							<ErrorBoundary>
+								{/* FIXME: implement reset */}
 								<BaseUrlContext.Provider value={route.url}>
 									{route.view}
 								</BaseUrlContext.Provider>
