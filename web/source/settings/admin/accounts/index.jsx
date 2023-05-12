@@ -25,47 +25,47 @@ const { Switch, Route, Link } = require("wouter");
 const query = require("../../lib/query");
 const { useTextInput } = require("../../lib/form");
 
-const UserDetail = require("./detail");
+const AccountDetail = require("./detail");
 const { useBaseUrl } = require("../../lib/navigation/util");
 const { Error } = require("../../components/error");
 
-module.exports = function Users({ baseUrl }) {
+module.exports = function Accounts({ baseUrl }) {
 	return (
-		<div className="users">
+		<div className="accounts">
 			<Switch>
-				<Route path={`${baseUrl}/:userId`}>
-					<UserDetail />
+				<Route path={`${baseUrl}/:accountId`}>
+					<AccountDetail />
 				</Route>
-				<UserOverview />
+				<AccountOverview />
 			</Switch>
 		</div>
 	);
 };
 
-function UserOverview({ }) {
+function AccountOverview({ }) {
 	return (
 		<>
-			<h1>Users</h1>
+			<h1>Accounts</h1>
 			<div>
 				Pending <a href="https://github.com/superseriousbusiness/gotosocial/issues/581">#581</a>,
-				there is currently no way to list user accounts.<br />
-				You can perform actions on reported users by clicking their name in the report, or searching for a username below.
+				there is currently no way to list accounts.<br />
+				You can perform actions on reported accounts by clicking their name in the report, or searching for a username below.
 			</div>
 
-			<UserSearchForm />
+			<AccountSearchForm />
 		</>
 	);
 }
 
-function UserSearchForm() {
-	const [searchUser, result] = query.useSearchUserMutation();
+function AccountSearchForm() {
+	const [searchAccount, result] = query.useSearchAccountMutation();
 
 	const [onAccountChange, _resetAccount, { account }] = useTextInput("account");
 
 	function submitSearch(e) {
 		e.preventDefault();
 		if (account.trim().length != 0) {
-			searchUser(account);
+			searchAccount(account);
 		}
 	}
 
@@ -74,7 +74,7 @@ function UserSearchForm() {
 			<form onSubmit={submitSearch}>
 				<div className="form-field text">
 					<label htmlFor="url">
-						User:
+						Account:
 					</label>
 					<div className="row">
 						<input

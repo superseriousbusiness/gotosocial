@@ -78,13 +78,13 @@ const endpoints = (build) => ({
 			}
 		})
 	}),
-	getUser: build.query({
+	getAccount: build.query({
 		query: (id) => ({
 			url: `/api/v1/accounts/${id}`
 		}),
-		providesTags: (_, __, id) => [{ type: "User", id }]
+		providesTags: (_, __, id) => [{ type: "Account", id }]
 	}),
-	actionUser: build.mutation({
+	actionAccount: build.mutation({
 		query: ({ id, action, reason }) => ({
 			method: "POST",
 			url: `/api/v1/admin/accounts/${id}/action`,
@@ -94,9 +94,9 @@ const endpoints = (build) => ({
 				text: reason
 			}
 		}),
-		invalidatesTags: (_, __, { id }) => [{ type: "User", id }]
+		invalidatesTags: (_, __, { id }) => [{ type: "Account", id }]
 	}),
-	searchUser: build.mutation({
+	searchAccount: build.mutation({
 		query: (username) => ({
 			url: `/api/v2/search?q=${encodeURIComponent(username)}&resolve=true`
 		}),

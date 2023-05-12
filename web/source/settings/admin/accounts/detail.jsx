@@ -34,58 +34,58 @@ const useFormSubmit = require("../../lib/form/submit");
 const { useValue, useTextInput } = require("../../lib/form");
 const { TextInput } = require("../../components/form/inputs");
 
-module.exports = function UserDetail({ }) {
+module.exports = function AccountDetail({ }) {
 	const baseUrl = useBaseUrl();
 
-	let [_match, params] = useRoute(`${baseUrl}/:userId`);
+	let [_match, params] = useRoute(`${baseUrl}/:accountId`);
 
-	if (params?.userId == undefined) {
+	if (params?.accountId == undefined) {
 		return <Redirect to={baseUrl} />;
 	} else {
 		return (
-			<div className="user-detail">
+			<div className="account-detail">
 				<h1>
-					User Details
+					Account Details
 				</h1>
 				<FormWithData
-					dataQuery={query.useGetUserQuery}
-					queryArg={params.userId}
-					DataForm={UserDetailForm}
+					dataQuery={query.useGetAccountQuery}
+					queryArg={params.accountId}
+					DataForm={AccountDetailForm}
 				/>
 			</div>
 		);
 	}
 };
 
-function UserDetailForm({ data: user }) {
+function AccountDetailForm({ data: account }) {
 	let content;
-	if (user.suspended) {
+	if (account.suspended) {
 		content = (
-			<h2 className="error">User is suspended.</h2>
+			<h2 className="error">Account is suspended.</h2>
 		);
 	} else {
-		content = <ModifyUser user={user} />;
+		content = <ModifyAccount account={account} />;
 	}
 
 	return (
 		<>
-			<FakeProfile {...user} />
+			<FakeProfile {...account} />
 
 			{content}
 		</>
 	);
 }
 
-function ModifyUser(user) {
+function ModifyAccount({ account }) {
 	const form = {
-		id: useValue("id", user.id),
+		id: useValue("id", account.id),
 		reason: useTextInput("text", {})
 	};
 
-	const [modifyUser, result] = useFormSubmit(form, query.useActionUserMutation());
+	const [modifyAccount, result] = useFormSubmit(form, query.useActionAccountMutation());
 
 	return (
-		<form onSubmit={modifyUser}>
+		<form onSubmit={modifyAccount}>
 			<h2>Actions</h2>
 			<TextInput
 				field={form.reason}

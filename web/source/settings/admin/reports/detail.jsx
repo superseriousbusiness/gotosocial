@@ -165,7 +165,7 @@ function ReportedToot({ toot }) {
 				}
 			</section>
 			<aside className="info">
-				<time datetime={toot.created_at}>{new Date(toot.created_at).toLocaleString()}</time>
+				<time dateTime={toot.created_at}>{new Date(toot.created_at).toLocaleString()}</time>
 			</aside>
 		</article>
 	);

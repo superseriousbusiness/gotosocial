@@ -43,7 +43,7 @@ module.exports = function Username({ user, link = true }) {
 
 	if (link) {
 		Element = Link;
-		href = `/settings/admin/users/${user.id}`;
+		href = `/settings/admin/accounts/${user.id}`;
 	}
 
 	return (
