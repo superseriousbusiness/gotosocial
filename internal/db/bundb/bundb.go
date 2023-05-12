@@ -98,7 +98,7 @@ func doMigration(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	if group.ID == 0 {
+	if group == nil || group.ID == 0 {
 		log.Info(ctx, "there are no new migrations to run")
 		return nil
 	}
