@@ -33,8 +33,8 @@ import (
 
 	"codeberg.org/gruf/go-bytesize"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/stdlib"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations"
@@ -94,10 +94,7 @@ func doMigration(ctx context.Context, db *bun.DB) error {
 	}
 
 	group, err := migrator.Migrate(ctx)
-	if err != nil {
-		if err.Error() == "migrate: there are no any migrations" {
-			return nil
-		}
+	if err != nil && !strings.Contains(err.Error(), "no migrations") {
 		return err
 	}
 
@@ -132,9 +129,8 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 		return nil, fmt.Errorf("database type %s not supported for bundb", t)
 	}
 
-	// Add database query hook
+	// Add database query hooks.
 	conn.DB.AddQueryHook(queryHook{})
-
 	if config.GetTracingEnabled() {
 		conn.DB.AddQueryHook(tracing.InstrumentBun())
 	}
@@ -431,7 +427,6 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 		cfg.TLSConfig = tlsConfig
 	}
 	cfg.Database = database
-	cfg.PreferSimpleProtocol = true
 	cfg.RuntimeParams["application_name"] = config.GetApplicationName()
 
 	return cfg, nil
