@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/global"
+	"go.opentelemetry.io/otel/metric/instrument"
 	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -53,7 +54,7 @@ func (c *config) formatQuery(query string) string {
 type dbInstrum struct {
 	*config
 
-	queryHistogram metric.Int64Histogram
+	queryHistogram instrument.Int64Histogram
 }
 
 func newDBInstrum(opts []Option) *dbInstrum {
@@ -71,8 +72,8 @@ func newDBInstrum(opts []Option) *dbInstrum {
 	var err error
 	t.queryHistogram, err = t.meter.Int64Histogram(
 		"go.sql.query_timing",
-		metric.WithDescription("Timing of processed queries"),
-		metric.WithUnit("milliseconds"),
+		instrument.WithDescription("Timing of processed queries"),
+		instrument.WithUnit("milliseconds"),
 	)
 	if err != nil {
 		panic(err)
@@ -105,7 +106,7 @@ func (t *dbInstrum) withSpan(
 	span.End()
 
 	if query != "" {
-		t.queryHistogram.Record(ctx, time.Since(startTime).Milliseconds(), metric.WithAttributes(t.attrs...))
+		t.queryHistogram.Record(ctx, time.Since(startTime).Milliseconds(), t.attrs...)
 	}
 
 	if !span.IsRecording() {
@@ -184,57 +185,57 @@ func ReportDBStatsMetrics(db *sql.DB, opts ...Option) {
 
 	maxOpenConns, _ := meter.Int64ObservableGauge(
 		"go.sql.connections_max_open",
-		metric.WithDescription("Maximum number of open connections to the database"),
+		instrument.WithDescription("Maximum number of open connections to the database"),
 	)
 	openConns, _ := meter.Int64ObservableGauge(
 		"go.sql.connections_open",
-		metric.WithDescription("The number of established connections both in use and idle"),
+		instrument.WithDescription("The number of established connections both in use and idle"),
 	)
 	inUseConns, _ := meter.Int64ObservableGauge(
 		"go.sql.connections_in_use",
-		metric.WithDescription("The number of connections currently in use"),
+		instrument.WithDescription("The number of connections currently in use"),
 	)
 	idleConns, _ := meter.Int64ObservableGauge(
 		"go.sql.connections_idle",
-		metric.WithDescription("The number of idle connections"),
+		instrument.WithDescription("The number of idle connections"),
 	)
 	connsWaitCount, _ := meter.Int64ObservableCounter(
 		"go.sql.connections_wait_count",
-		metric.WithDescription("The total number of connections waited for"),
+		instrument.WithDescription("The total number of connections waited for"),
 	)
 	connsWaitDuration, _ := meter.Int64ObservableCounter(
 		"go.sql.connections_wait_duration",
-		metric.WithDescription("The total time blocked waiting for a new connection"),
-		metric.WithUnit("nanoseconds"),
+		instrument.WithDescription("The total time blocked waiting for a new connection"),
+		instrument.WithUnit("nanoseconds"),
 	)
 	connsClosedMaxIdle, _ := meter.Int64ObservableCounter(
 		"go.sql.connections_closed_max_idle",
-		metric.WithDescription("The total number of connections closed due to SetMaxIdleConns"),
+		instrument.WithDescription("The total number of connections closed due to SetMaxIdleConns"),
 	)
 	connsClosedMaxIdleTime, _ := meter.Int64ObservableCounter(
 		"go.sql.connections_closed_max_idle_time",
-		metric.WithDescription("The total number of connections closed due to SetConnMaxIdleTime"),
+		instrument.WithDescription("The total number of connections closed due to SetConnMaxIdleTime"),
 	)
 	connsClosedMaxLifetime, _ := meter.Int64ObservableCounter(
 		"go.sql.connections_closed_max_lifetime",
-		metric.WithDescription("The total number of connections closed due to SetConnMaxLifetime"),
+		instrument.WithDescription("The total number of connections closed due to SetConnMaxLifetime"),
 	)
 
 	if _, err := meter.RegisterCallback(
 		func(ctx context.Context, o metric.Observer) error {
 			stats := db.Stats()
 
-			o.ObserveInt64(maxOpenConns, int64(stats.MaxOpenConnections), metric.WithAttributes(labels...))
+			o.ObserveInt64(maxOpenConns, int64(stats.MaxOpenConnections), labels...)
 
-			o.ObserveInt64(openConns, int64(stats.OpenConnections), metric.WithAttributes(labels...))
-			o.ObserveInt64(inUseConns, int64(stats.InUse), metric.WithAttributes(labels...))
-			o.ObserveInt64(idleConns, int64(stats.Idle), metric.WithAttributes(labels...))
+			o.ObserveInt64(openConns, int64(stats.OpenConnections), labels...)
+			o.ObserveInt64(inUseConns, int64(stats.InUse), labels...)
+			o.ObserveInt64(idleConns, int64(stats.Idle), labels...)
 
-			o.ObserveInt64(connsWaitCount, stats.WaitCount, metric.WithAttributes(labels...))
-			o.ObserveInt64(connsWaitDuration, int64(stats.WaitDuration), metric.WithAttributes(labels...))
-			o.ObserveInt64(connsClosedMaxIdle, stats.MaxIdleClosed, metric.WithAttributes(labels...))
-			o.ObserveInt64(connsClosedMaxIdleTime, stats.MaxIdleTimeClosed, metric.WithAttributes(labels...))
-			o.ObserveInt64(connsClosedMaxLifetime, stats.MaxLifetimeClosed, metric.WithAttributes(labels...))
+			o.ObserveInt64(connsWaitCount, stats.WaitCount, labels...)
+			o.ObserveInt64(connsWaitDuration, int64(stats.WaitDuration), labels...)
+			o.ObserveInt64(connsClosedMaxIdle, stats.MaxIdleClosed, labels...)
+			o.ObserveInt64(connsClosedMaxIdleTime, stats.MaxIdleTimeClosed, labels...)
+			o.ObserveInt64(connsClosedMaxLifetime, stats.MaxLifetimeClosed, labels...)
 
 			return nil
 		},
