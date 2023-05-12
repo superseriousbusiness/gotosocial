@@ -2469,7 +2469,7 @@ definitions:
         x-go-name: Tag
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     updateField:
-        description: By default, max 4 fields and 255 characters per property/value.
+        description: By default, max 6 fields and 255 characters per property/value.
         properties:
             name:
                 description: Name of the field
@@ -3088,6 +3088,7 @@ paths:
         patch:
             consumes:
                 - multipart/form-data
+                - application/json
             operationId: accountUpdate
             parameters:
                 - description: Account should be made discoverable and shown in the profile directory (if enabled).

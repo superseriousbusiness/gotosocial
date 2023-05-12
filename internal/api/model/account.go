@@ -140,27 +140,29 @@ type AccountCreateRequest struct {
 // swagger:ignore
 type UpdateCredentialsRequest struct {
 	// Account should be made discoverable and shown in the profile directory (if enabled).
-	Discoverable *bool `form:"discoverable" json:"discoverable" xml:"discoverable"`
+	Discoverable *bool `form:"discoverable" json:"discoverable"`
 	// Account is flagged as a bot.
-	Bot *bool `form:"bot" json:"bot" xml:"bot"`
+	Bot *bool `form:"bot" json:"bot"`
 	// The display name to use for the account.
-	DisplayName *string `form:"display_name" json:"display_name" xml:"display_name"`
+	DisplayName *string `form:"display_name" json:"display_name"`
 	// Bio/description of this account.
-	Note *string `form:"note" json:"note" xml:"note"`
+	Note *string `form:"note" json:"note"`
 	// Avatar image encoded using multipart/form-data.
-	Avatar *multipart.FileHeader `form:"avatar" json:"avatar" xml:"avatar"`
+	Avatar *multipart.FileHeader `form:"avatar" json:"-"`
 	// Header image encoded using multipart/form-data
-	Header *multipart.FileHeader `form:"header" json:"header" xml:"header"`
+	Header *multipart.FileHeader `form:"header" json:"-"`
 	// Require manual approval of follow requests.
-	Locked *bool `form:"locked" json:"locked" xml:"locked"`
+	Locked *bool `form:"locked" json:"locked"`
 	// New Source values for this account.
-	Source *UpdateSource `form:"source" json:"source" xml:"source"`
-	// Profile metadata name and value
-	FieldsAttributes *[]UpdateField `form:"fields_attributes" json:"fields_attributes" xml:"fields_attributes"`
+	Source *UpdateSource `form:"source" json:"source"`
+	// Profile metadata names and values.
+	FieldsAttributes *[]UpdateField `form:"fields_attributes" json:"-"`
+	// Profile metadata names and values, parsed from JSON.
+	JSONFieldsAttributes *map[string]UpdateField `form:"-" json:"fields_attributes"`
 	// Custom CSS to be included when rendering this account's profile or statuses.
-	CustomCSS *string `form:"custom_css" json:"custom_css" xml:"custom_css"`
+	CustomCSS *string `form:"custom_css" json:"custom_css"`
 	// Enable RSS feed of public toots for this account at /@[username]/feed.rss
-	EnableRSS *bool `form:"enable_rss" json:"enable_rss" xml:"enable_rss"`
+	EnableRSS *bool `form:"enable_rss" json:"enable_rss"`
 }
 
 // UpdateSource is to be used specifically in an UpdateCredentialsRequest.
@@ -168,24 +170,27 @@ type UpdateCredentialsRequest struct {
 // swagger:model updateSource
 type UpdateSource struct {
 	// Default post privacy for authored statuses.
-	Privacy *string `form:"privacy" json:"privacy" xml:"privacy"`
+	Privacy *string `form:"privacy" json:"privacy"`
 	// Mark authored statuses as sensitive by default.
-	Sensitive *bool `form:"sensitive" json:"sensitive" xml:"sensitive"`
+	Sensitive *bool `form:"sensitive" json:"sensitive"`
 	// Default language to use for authored statuses. (ISO 6391)
-	Language *string `form:"language" json:"language" xml:"language"`
+	Language *string `form:"language" json:"language"`
 	// Default format for authored statuses (text/plain or text/markdown).
-	StatusContentType *string `form:"status_content_type" json:"status_content_type" xml:"status_content_type"`
+	StatusContentType *string `form:"status_content_type" json:"status_content_type"`
 }
 
 // UpdateField is to be used specifically in an UpdateCredentialsRequest.
-// By default, max 4 fields and 255 characters per property/value.
+// By default, max 6 fields and 255 characters per property/value.
 //
 // swagger:model updateField
 type UpdateField struct {
+	// Key this form field was submitted with;
+	// only set if it was submitted as JSON.
+	Key int `form:"-" json:"-"`
 	// Name of the field
-	Name *string `form:"name" json:"name" xml:"name"`
+	Name *string `form:"name" json:"name"`
 	// Value of the field
-	Value *string `form:"value" json:"value" xml:"value"`
+	Value *string `form:"value" json:"value"`
 }
 
 // AccountFollowRequest models a request to follow an account.
