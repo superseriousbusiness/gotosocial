@@ -49,14 +49,14 @@ require (
 	github.com/uptrace/bun v1.1.13
 	github.com/uptrace/bun/dialect/pgdialect v1.1.13
 	github.com/uptrace/bun/dialect/sqlitedialect v1.1.13
-	github.com/uptrace/bun/extra/bunotel v1.1.13
+	github.com/uptrace/bun/extra/bunotel v1.1.12
 	github.com/wagslane/go-password-validator v0.3.0
 	github.com/yuin/goldmark v1.5.4
-	go.opentelemetry.io/otel v1.15.1
-	go.opentelemetry.io/otel/exporters/jaeger v1.15.1
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.15.1
-	go.opentelemetry.io/otel/sdk v1.15.1
-	go.opentelemetry.io/otel/trace v1.15.1
+	go.opentelemetry.io/otel v1.14.0
+	go.opentelemetry.io/otel/exporters/jaeger v1.14.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.14.0
+	go.opentelemetry.io/otel/sdk v1.14.0
+	go.opentelemetry.io/otel/trace v1.14.0
 	go.uber.org/automaxprocs v1.5.2
 	golang.org/x/crypto v0.8.0
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
@@ -154,12 +154,12 @@ require (
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.9 // indirect
-	github.com/uptrace/opentelemetry-go-extra/otelsql v0.2.0 // indirect
+	github.com/uptrace/opentelemetry-go-extra/otelsql v0.1.21 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.15.1 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.15.1 // indirect
-	go.opentelemetry.io/otel/metric v0.38.1 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.14.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.14.0 // indirect
+	go.opentelemetry.io/otel/metric v0.37.0 // indirect
 	go.opentelemetry.io/proto/otlp v0.19.0 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
 	golang.org/x/mod v0.10.0 // indirect

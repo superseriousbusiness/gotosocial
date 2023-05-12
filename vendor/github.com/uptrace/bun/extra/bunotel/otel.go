@@ -10,7 +10,6 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/metric/instrument"
 	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
@@ -76,8 +75,7 @@ func (h *QueryHook) AfterQuery(ctx context.Context, event *bun.QueryEvent) {
 		}
 	}
 
-	dur := time.Since(event.StartTime)
-	queryHistogram.Record(ctx, dur.Milliseconds(), metric.WithAttributes(labels...))
+	queryHistogram.Record(ctx, time.Since(event.StartTime).Milliseconds(), labels...)
 
 	span := trace.SpanFromContext(ctx)
 	if !span.IsRecording() {
