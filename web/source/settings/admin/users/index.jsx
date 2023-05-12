@@ -20,37 +20,32 @@
 "use strict";
 
 const React = require("react");
-const { Link } = require("wouter");
+const { Switch, Route } = require("wouter");
 
-module.exports = function Username({ user, link = true }) {
-	let className = "user";
-	let isLocal = user.domain == null;
+const UserDetail = require("./detail");
 
-	if (user.suspended) {
-		className += " suspended";
-	}
-
-	if (isLocal) {
-		className += " local";
-	}
-
-	let icon = isLocal
-		? { fa: "fa-home", info: "Local user" }
-		: { fa: "fa-external-link-square", info: "Remote user" };
-
-	let Element = "div";
-	let href = null;
-
-	if (link) {
-		Element = Link;
-		href = `/settings/admin/users/${user.id}`;
-	}
-
+module.exports = function Users({ baseUrl }) {
 	return (
-		<Element className={className} to={href}>
-			<span className="acct">@{user.account.acct}</span>
-			<i className={`fa fa-fw ${icon.fa}`} aria-hidden="true" title={icon.info} />
-			<span className="sr-only">{icon.info}</span>
-		</Element>
+		<div className="users">
+			<Switch>
+				<Route path={`${baseUrl}/:userId`}>
+					<UserDetail />
+				</Route>
+				<UserOverview />
+			</Switch>
+		</div>
 	);
 };
+
+function UserOverview({ }) {
+	return (
+		<>
+			<h1>Users</h1>
+			<div>
+				Pending <a href="https://github.com/superseriousbusiness/gotosocial/issues/582">#582</a> and <a href="https://github.com/superseriousbusiness/gotosocial/issues/581">#581</a>,
+				there is currently no way to list user accounts.<br />
+				You can perform actions on reported users by clicking their name.
+			</div>
+		</>
+	);
+}

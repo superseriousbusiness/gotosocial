@@ -1062,6 +1062,17 @@ button.with-padding {
 	}
 }
 
+.user-detail {
+	.profile {
+		overflow: hidden;
+	}
+
+	.action-buttons {
+		display: flex;
+		gap: 0.5rem;
+	}
+}
+
 @media screen and (orientation: portrait) {
 	.reports .report .byline {
 		grid-template-columns: 1fr;

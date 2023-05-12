@@ -73,7 +73,7 @@ function instanceBasedQuery(args, api, extraOptions) {
 module.exports = createApi({
 	reducerPath: "api",
 	baseQuery: instanceBasedQuery,
-	tagTypes: ["Auth", "Emoji", "Reports"],
+	tagTypes: ["Auth", "Emoji", "Reports", "User"],
 	endpoints: (build) => ({
 		instance: build.query({
 			query: () => ({
