@@ -31,12 +31,14 @@ function ErrorFallback({ error, resetErrorBoundary }) {
 				<a href="https://matrix.to/#/#gotosocial-help:superseriousbusiness.org">Matrix support room</a>.
 				<br />Include the details below:
 			</p>
-			<pre>
-				{error.name}: {error.message}
-			</pre>
-			<pre>
-				{error.stack}
-			</pre>
+			<div className="details">
+				<pre>
+					{error.name}: {error.message}
+				</pre>
+				<pre>
+					{error.stack}
+				</pre>
+			</div>
 			<p>
 				<button onClick={resetErrorBoundary}>Try again</button> or <a href="">refresh the page</a>
 			</p>

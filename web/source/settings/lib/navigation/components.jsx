@@ -21,10 +21,7 @@
 
 const React = require("react");
 const { Link, Route, Redirect, Switch, useLocation, useRouter } = require("wouter");
-const { ErrorBoundary } = require("react-error-boundary");
 const syncpipe = require("syncpipe");
-
-const { ErrorFallback } = require("../../components/error");
 
 const {
 	RoleContext,
@@ -72,7 +69,7 @@ function ViewRouter(routing, defaultRoute) {
 				(_) => _.map((route) => {
 					return (
 						<Route path={route.routingUrl} key={route.key}>
-							<ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => { }}>
+							<ErrorBoundary FallbackComponent={ErrorFallback} onError={(_e, i) => console.log(i)} onReset={() => { }}>
 								{/* FIXME: implement onReset */}
 								<BaseUrlContext.Provider value={route.url}>
 									{route.view}
@@ -131,6 +128,71 @@ function MenuComponent({ type, name, url, icon, permissions, links, level, child
 				</ul>
 			}
 		</li>
+	);
+}
+
+class ErrorBoundary extends React.Component {
+
+	constructor() {
+		super();
+		this.state = {};
+
+		this.resetErrorBoundary = () => {
+			this.setState({});
+		};
+	}
+
+	static getDerivedStateFromError(error) {
+		return { hadError: true, error };
+	}
+
+	componentDidCatch(_e, info) {
+		this.setState({
+			...this.state,
+			componentStack: info.componentStack
+		});
+	}
+
+	render() {
+		if (this.state.hadError) {
+			return (
+				<ErrorFallback
+					error={this.state.error}
+					componentStack={this.state.componentStack}
+					resetErrorBoundary={this.resetErrorBoundary}
+				/>
+			);
+		} else {
+			return this.props.children;
+		}
+	}
+}
+
+function ErrorFallback({ error, componentStack, resetErrorBoundary }) {
+	return (
+		<div className="error">
+			<p>
+				{"An error occured, please report this on the "}
+				<a href="https://github.com/superseriousbusiness/gotosocial/issues">GoToSocial issue tracker</a>
+				{" or "}
+				<a href="https://matrix.to/#/#gotosocial-help:superseriousbusiness.org">Matrix support room</a>.
+				<br />Include the details below:
+			</p>
+			<div className="details">
+				<pre>
+					{error.name}: {error.message}
+
+					{componentStack && [
+						"\n\nComponent trace:",
+						componentStack
+					]}
+					{["\n\nError trace: ", error.stack]}
+				</pre>
+			</div>
+			<p>
+				<button onClick={resetErrorBoundary}>Try again</button> or <a href="">refresh the page</a>
+			</p>
+		</div>
 	);
 }
 
