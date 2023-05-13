@@ -219,6 +219,15 @@
 			border-bottom-right-radius: $br;
 		}
 	}
+
+	.backnextlinks {
+		display: flex;
+		justify-content: space-between;
+
+		.next {
+			margin-left: auto;
+		}
+	}
 }
 
 .profile .about-user {
