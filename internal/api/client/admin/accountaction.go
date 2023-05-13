@@ -53,7 +53,7 @@ import (
 //	-
 //		name: type
 //		in: formData
-//		description: Type of action to be taken (`disable`, `silence`, or `suspend`).
+//		description: Type of action to be taken, currently only supports `suspend`.
 //		type: string
 //		required: true
 //	-

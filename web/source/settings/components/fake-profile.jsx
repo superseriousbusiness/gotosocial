@@ -29,7 +29,7 @@ module.exports = function FakeProfile({ avatar, header, display_name, username, 
 					<img src={header} alt={header ? `header image for ${username}` : "None set"} />
 				</div>
 				<div className="basic-info" aria-hidden="true">
-					<a className="avatar" href="{{.account.Avatar}}">
+					<a className="avatar" href={avatar}>
 						<img src={avatar} alt={avatar ? `avatar image for ${username}` : "None set"} />
 					</a>
 					<span className="displayname text-cutoff">
@@ -37,9 +37,9 @@ module.exports = function FakeProfile({ avatar, header, display_name, username, 
 						<span className="sr-only">.</span>
 					</span>
 					<span className="username text-cutoff">@{username}</span>
-					{(role && role != "user") &&
-						<div className={`role ${role}`}>
-							<span className="sr-only">Role: </span>{role}
+					{(role && role.name != "user") &&
+						<div className={`role ${role.name}`}>
+							<span className="sr-only">Role: </span>{role.name}
 						</div>
 					}
 				</div>

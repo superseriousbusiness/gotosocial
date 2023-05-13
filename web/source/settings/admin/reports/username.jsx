@@ -20,6 +20,7 @@
 "use strict";
 
 const React = require("react");
+const { Link } = require("wouter");
 
 module.exports = function Username({ user, link = true }) {
 	let className = "user";
@@ -41,12 +42,12 @@ module.exports = function Username({ user, link = true }) {
 	let href = null;
 
 	if (link) {
-		Element = "a";
-		href = user.account.url;
+		Element = Link;
+		href = `/settings/admin/accounts/${user.id}`;
 	}
 
 	return (
-		<Element className={className} href={href} target="_blank" rel="noreferrer" >
+		<Element className={className} to={href}>
 			<span className="acct">@{user.account.acct}</span>
 			<i className={`fa fa-fw ${icon.fa}`} aria-hidden="true" title={icon.info} />
 			<span className="sr-only">{icon.info}</span>

@@ -78,6 +78,32 @@ const endpoints = (build) => ({
 			}
 		})
 	}),
+	getAccount: build.query({
+		query: (id) => ({
+			url: `/api/v1/accounts/${id}`
+		}),
+		providesTags: (_, __, id) => [{ type: "Account", id }]
+	}),
+	actionAccount: build.mutation({
+		query: ({ id, action, reason }) => ({
+			method: "POST",
+			url: `/api/v1/admin/accounts/${id}/action`,
+			asForm: true,
+			body: {
+				type: action,
+				text: reason
+			}
+		}),
+		invalidatesTags: (_, __, { id }) => [{ type: "Account", id }]
+	}),
+	searchAccount: build.mutation({
+		query: (username) => ({
+			url: `/api/v2/search?q=${encodeURIComponent(username)}&resolve=true`
+		}),
+		transformResponse: (res) => {
+			return res.accounts ?? [];
+		}
+	}),
 	...require("./import-export")(build),
 	...require("./custom-emoji")(build),
 	...require("./reports")(build)
