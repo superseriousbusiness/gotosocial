@@ -20,10 +20,10 @@ type Cache[Key comparable, Value any] struct {
 	TTL time.Duration
 
 	// Evict is the hook that is called when an item is evicted from the cache.
-	Evict func(*Entry[Key, Value])
+	Evict func(Key, Value)
 
 	// Invalid is the hook that is called when an item's data in the cache is invalidated, includes Add/Set.
-	Invalid func(*Entry[Key, Value])
+	Invalid func(Key, Value)
 
 	// Cache is the underlying hashmap used for this cache.
 	Cache maps.LRUMap[Key, *Entry[Key, Value]]
@@ -97,66 +97,66 @@ func (c *Cache[K, V]) Stop() (ok bool) {
 
 // Sweep attempts to evict expired items (with callback!) from cache.
 func (c *Cache[K, V]) Sweep(now time.Time) {
-	var after int
+	var (
+		// evicted key-values.
+		kvs []kv[K, V]
 
-	// Sweep within lock
-	c.Lock()
-	defer c.Unlock()
+		// hook func ptrs.
+		evict func(K, V)
+	)
 
-	// Sentinel value
-	after = -1
+	c.locked(func() {
+		// Sentinel value
+		after := -1
 
-	// The cache will be ordered by expiry date, we iterate until we reach the index of
-	// the youngest item that hsa expired, as all succeeding items will also be expired.
-	c.Cache.RangeIf(0, c.Cache.Len(), func(i int, _ K, item *Entry[K, V]) bool {
-		if now.After(item.Expiry) {
-			after = i
+		// The cache will be ordered by expiry date, we iterate until we reach the index of
+		// the youngest item that hsa expired, as all succeeding items will also be expired.
+		c.Cache.RangeIf(0, c.Cache.Len(), func(i int, _ K, item *Entry[K, V]) bool {
+			if now.After(item.Expiry) {
+				after = i
 
-			// All older than this (including) can be dropped
-			return false
+				// evict all older items
+				// than this (inclusive)
+				return false
+			}
+
+			// cont. loop.
+			return true
+		})
+
+		if after == -1 {
+			// No Truncation needed
+			return
 		}
 
-		// Continue looping
-		return true
+		// Set hook func ptr.
+		evict = c.Evict
+
+		// Truncate determined size.
+		sz := c.Cache.Len() - after
+		kvs = c.truncate(sz, evict)
 	})
 
-	if after == -1 {
-		// No Truncation needed
-		return
+	if evict != nil {
+		for x := range kvs {
+			// Pass to eviction hook.
+			evict(kvs[x].K, kvs[x].V)
+		}
 	}
-
-	// Truncate items, calling eviction hook
-	c.truncate(c.Cache.Len()-after, c.Evict)
 }
 
 // SetEvictionCallback: implements cache.Cache's SetEvictionCallback().
-func (c *Cache[K, V]) SetEvictionCallback(hook func(*Entry[K, V])) {
-	// Ensure non-nil hook
-	if hook == nil {
-		hook = func(*Entry[K, V]) {}
-	}
-
-	// Update within lock
-	c.Lock()
-	defer c.Unlock()
-
-	// Update hook
-	c.Evict = hook
+func (c *Cache[K, V]) SetEvictionCallback(hook func(K, V)) {
+	c.locked(func() {
+		c.Evict = hook
+	})
 }
 
 // SetInvalidateCallback: implements cache.Cache's SetInvalidateCallback().
-func (c *Cache[K, V]) SetInvalidateCallback(hook func(*Entry[K, V])) {
-	// Ensure non-nil hook
-	if hook == nil {
-		hook = func(*Entry[K, V]) {}
-	}
-
-	// Update within lock
-	c.Lock()
-	defer c.Unlock()
-
-	// Update hook
-	c.Invalid = hook
+func (c *Cache[K, V]) SetInvalidateCallback(hook func(K, V)) {
+	c.locked(func() {
+		c.Invalid = hook
+	})
 }
 
 // SetTTL: implements cache.Cache's SetTTL().
@@ -165,244 +165,417 @@ func (c *Cache[K, V]) SetTTL(ttl time.Duration, update bool) {
 		panic("ttl must be greater than zero")
 	}
 
-	// Update within lock
-	c.Lock()
-	defer c.Unlock()
+	c.locked(func() {
+		// Set updated TTL
+		diff := ttl - c.TTL
+		c.TTL = ttl
 
-	// Set updated TTL
-	diff := ttl - c.TTL
-	c.TTL = ttl
-
-	if update {
-		// Update existing cache entries with new expiry time
-		c.Cache.Range(0, c.Cache.Len(), func(i int, _ K, item *Entry[K, V]) {
-			item.Expiry = item.Expiry.Add(diff)
-		})
-	}
+		if update {
+			// Update existing cache entries with new expiry time
+			c.Cache.Range(0, c.Cache.Len(), func(i int, _ K, item *Entry[K, V]) {
+				item.Expiry = item.Expiry.Add(diff)
+			})
+		}
+	})
 }
 
 // Get: implements cache.Cache's Get().
 func (c *Cache[K, V]) Get(key K) (V, bool) {
-	// Read within lock
-	c.Lock()
-	defer c.Unlock()
+	var (
+		// did exist in cache?
+		ok bool
 
-	// Check for item in cache
-	item, ok := c.Cache.Get(key)
-	if !ok {
-		var value V
-		return value, false
-	}
+		// cached value.
+		v V
+	)
 
-	// Update item expiry and return
-	item.Expiry = time.Now().Add(c.TTL)
-	return item.Value, true
+	c.locked(func() {
+		var item *Entry[K, V]
+
+		// Check for item in cache
+		item, ok = c.Cache.Get(key)
+		if !ok {
+			return
+		}
+
+		// Update fetched item's expiry
+		item.Expiry = time.Now().Add(c.TTL)
+
+		// Set value.
+		v = item.Value
+	})
+
+	return v, ok
 }
 
 // Add: implements cache.Cache's Add().
 func (c *Cache[K, V]) Add(key K, value V) bool {
-	// Write within lock
-	c.Lock()
-	defer c.Unlock()
+	var (
+		// did exist in cache?
+		ok bool
 
-	// Check if already exists
-	item, ok := c.Cache.Get(key)
-	if ok {
-		return false
-	}
+		// was entry evicted?
+		ev bool
 
-	// Alloc new item
-	item = c.alloc()
-	item.Key = key
-	item.Value = value
-	item.Expiry = time.Now().Add(c.TTL)
+		// evicted key values.
+		evcK K
+		evcV V
 
-	var hook func(K, *Entry[K, V])
+		// hook func ptrs.
+		evict func(K, V)
+	)
 
-	if c.Evict != nil {
-		// Pass evicted entry to user hook
-		hook = func(_ K, item *Entry[K, V]) {
-			c.Evict(item)
+	c.locked(func() {
+		// Check if in cache.
+		ok = c.Cache.Has(key)
+		if ok {
+			return
 		}
+
+		// Alloc new entry.
+		new := c.alloc()
+		new.Expiry = time.Now().Add(c.TTL)
+		new.Key = key
+		new.Value = value
+
+		// Add new entry to cache and catched any evicted item.
+		c.Cache.SetWithHook(key, new, func(_ K, item *Entry[K, V]) {
+			evcK = item.Key
+			evcV = item.Value
+			ev = true
+			c.free(item)
+		})
+
+		// Set hook func ptr.
+		evict = c.Evict
+	})
+
+	if ev && evict != nil {
+		// Pass to eviction hook.
+		evict(evcK, evcV)
 	}
 
-	// Place new item in the map with hook
-	c.Cache.SetWithHook(key, item, hook)
-
-	if c.Invalid != nil {
-		// invalidate old
-		c.Invalid(item)
-	}
-
-	return true
+	return !ok
 }
 
 // Set: implements cache.Cache's Set().
 func (c *Cache[K, V]) Set(key K, value V) {
-	// Write within lock
-	c.Lock()
-	defer c.Unlock()
+	var (
+		// did exist in cache?
+		ok bool
 
-	// Check if already exists
-	item, ok := c.Cache.Get(key)
+		// was entry evicted?
+		ev bool
 
-	if !ok {
-		var hook func(K, *Entry[K, V])
+		// old value.
+		oldV V
 
-		// Allocate new item
-		item = c.alloc()
-		item.Key = key
+		// evicted key values.
+		evcK K
+		evcV V
 
-		if c.Evict != nil {
-			// Pass evicted entry to user hook
-			hook = func(_ K, item *Entry[K, V]) {
-				c.Evict(item)
-			}
+		// hook func ptrs.
+		invalid func(K, V)
+		evict   func(K, V)
+	)
+
+	c.locked(func() {
+		var item *Entry[K, V]
+
+		// Check for item in cache
+		item, ok = c.Cache.Get(key)
+
+		if ok {
+			// Set old value.
+			oldV = item.Value
+
+			// Update the existing item.
+			item.Expiry = time.Now().Add(c.TTL)
+			item.Value = value
+		} else {
+			// Alloc new entry.
+			new := c.alloc()
+			new.Expiry = time.Now().Add(c.TTL)
+			new.Key = key
+			new.Value = value
+
+			// Add new entry to cache and catched any evicted item.
+			c.Cache.SetWithHook(key, new, func(_ K, item *Entry[K, V]) {
+				evcK = item.Key
+				evcV = item.Value
+				ev = true
+				c.free(item)
+			})
 		}
 
-		// Place new item in the map with hook
-		c.Cache.SetWithHook(key, item, hook)
+		// Set hook func ptrs.
+		invalid = c.Invalid
+		evict = c.Evict
+	})
+
+	if ok && invalid != nil {
+		// Pass to invalidate hook.
+		invalid(key, oldV)
 	}
 
-	if c.Invalid != nil {
-		// invalidate old
-		c.Invalid(item)
+	if ev && evict != nil {
+		// Pass to eviction hook.
+		evict(evcK, evcV)
 	}
-
-	// Update the item value + expiry
-	item.Expiry = time.Now().Add(c.TTL)
-	item.Value = value
 }
 
 // CAS: implements cache.Cache's CAS().
 func (c *Cache[K, V]) CAS(key K, old V, new V, cmp func(V, V) bool) bool {
-	// CAS within lock
-	c.Lock()
-	defer c.Unlock()
+	var (
+		// did exist in cache?
+		ok bool
 
-	// Check for item in cache
-	item, ok := c.Cache.Get(key)
-	if !ok || !cmp(item.Value, old) {
-		return false
+		// swapped value.
+		oldV V
+
+		// hook func ptrs.
+		invalid func(K, V)
+	)
+
+	c.locked(func() {
+		var item *Entry[K, V]
+
+		// Check for item in cache
+		item, ok = c.Cache.Get(key)
+		if !ok {
+			return
+		}
+
+		// Perform the comparison
+		if !cmp(old, item.Value) {
+			return
+		}
+
+		// Set old value.
+		oldV = item.Value
+
+		// Update value + expiry.
+		item.Expiry = time.Now().Add(c.TTL)
+		item.Value = new
+
+		// Set hook func ptr.
+		invalid = c.Invalid
+	})
+
+	if ok && invalid != nil {
+		// Pass to invalidate hook.
+		invalid(key, oldV)
 	}
-
-	if c.Invalid != nil {
-		// invalidate old
-		c.Invalid(item)
-	}
-
-	// Update item + Expiry
-	item.Value = new
-	item.Expiry = time.Now().Add(c.TTL)
 
 	return ok
 }
 
 // Swap: implements cache.Cache's Swap().
 func (c *Cache[K, V]) Swap(key K, swp V) V {
-	// Swap within lock
-	c.Lock()
-	defer c.Unlock()
+	var (
+		// did exist in cache?
+		ok bool
 
-	// Check for item in cache
-	item, ok := c.Cache.Get(key)
-	if !ok {
-		var value V
-		return value
+		// swapped value.
+		oldV V
+
+		// hook func ptrs.
+		invalid func(K, V)
+	)
+
+	c.locked(func() {
+		var item *Entry[K, V]
+
+		// Check for item in cache
+		item, ok = c.Cache.Get(key)
+		if !ok {
+			return
+		}
+
+		// Set old value.
+		oldV = item.Value
+
+		// Update value + expiry.
+		item.Expiry = time.Now().Add(c.TTL)
+		item.Value = swp
+
+		// Set hook func ptr.
+		invalid = c.Invalid
+	})
+
+	if ok && invalid != nil {
+		// Pass to invalidate hook.
+		invalid(key, oldV)
 	}
 
-	if c.Invalid != nil {
-		// invalidate old
-		c.Invalid(item)
-	}
-
-	old := item.Value
-
-	// update item + Expiry
-	item.Value = swp
-	item.Expiry = time.Now().Add(c.TTL)
-
-	return old
+	return oldV
 }
 
 // Has: implements cache.Cache's Has().
-func (c *Cache[K, V]) Has(key K) bool {
-	c.Lock()
-	ok := c.Cache.Has(key)
-	c.Unlock()
-	return ok
+func (c *Cache[K, V]) Has(key K) (ok bool) {
+	c.locked(func() {
+		ok = c.Cache.Has(key)
+	})
+	return
 }
 
 // Invalidate: implements cache.Cache's Invalidate().
-func (c *Cache[K, V]) Invalidate(key K) bool {
-	// Delete within lock
-	c.Lock()
-	defer c.Unlock()
+func (c *Cache[K, V]) Invalidate(key K) (ok bool) {
+	var (
+		// old value.
+		oldV V
 
-	// Check if we have item with key
-	item, ok := c.Cache.Get(key)
-	if !ok {
-		return false
+		// hook func ptrs.
+		invalid func(K, V)
+	)
+
+	c.locked(func() {
+		var item *Entry[K, V]
+
+		// Check for item in cache
+		item, ok = c.Cache.Get(key)
+		if !ok {
+			return
+		}
+
+		// Set old value.
+		oldV = item.Value
+
+		// Remove from cache map
+		_ = c.Cache.Delete(key)
+
+		// Free entry
+		c.free(item)
+
+		// Set hook func ptrs.
+		invalid = c.Invalid
+	})
+
+	if ok && invalid != nil {
+		// Pass to invalidate hook.
+		invalid(key, oldV)
 	}
 
-	// Remove from cache map
-	_ = c.Cache.Delete(key)
+	return
+}
 
-	if c.Invalid != nil {
-		// Invalidate item
-		c.Invalid(item)
+// InvalidateAll: implements cache.Cache's InvalidateAll().
+func (c *Cache[K, V]) InvalidateAll(keys ...K) (ok bool) {
+	var (
+		// invalidated kvs.
+		kvs []kv[K, V]
+
+		// hook func ptrs.
+		invalid func(K, V)
+	)
+
+	// Allocate a slice for invalidated.
+	kvs = make([]kv[K, V], 0, len(keys))
+
+	c.locked(func() {
+		for _, key := range keys {
+			var item *Entry[K, V]
+
+			// Check for item in cache
+			item, ok = c.Cache.Get(key)
+			if !ok {
+				return
+			}
+
+			// Append this old value to slice
+			kvs = append(kvs, kv[K, V]{
+				K: key,
+				V: item.Value,
+			})
+
+			// Remove from cache map
+			_ = c.Cache.Delete(key)
+
+			// Free entry
+			c.free(item)
+		}
+
+		// Set hook func ptrs.
+		invalid = c.Invalid
+	})
+
+	if invalid != nil {
+		for x := range kvs {
+			// Pass to invalidate hook.
+			invalid(kvs[x].K, kvs[x].V)
+		}
 	}
 
-	// Return item to pool
-	c.free(item)
-
-	return true
+	return
 }
 
 // Clear: implements cache.Cache's Clear().
 func (c *Cache[K, V]) Clear() {
-	c.Lock()
-	defer c.Unlock()
-	c.truncate(c.Cache.Len(), c.Invalid)
+	var (
+		// deleted key-values.
+		kvs []kv[K, V]
+
+		// hook func ptrs.
+		invalid func(K, V)
+	)
+
+	c.locked(func() {
+		// Set hook func ptr.
+		invalid = c.Invalid
+
+		// Truncate the entire cache length.
+		kvs = c.truncate(c.Cache.Len(), invalid)
+	})
+
+	if invalid != nil {
+		for x := range kvs {
+			// Pass to invalidate hook.
+			invalid(kvs[x].K, kvs[x].V)
+		}
+	}
 }
 
 // Len: implements cache.Cache's Len().
-func (c *Cache[K, V]) Len() int {
-	c.Lock()
-	l := c.Cache.Len()
-	c.Unlock()
-	return l
+func (c *Cache[K, V]) Len() (l int) {
+	c.locked(func() { l = c.Cache.Len() })
+	return
 }
 
 // Cap: implements cache.Cache's Cap().
-func (c *Cache[K, V]) Cap() int {
-	c.Lock()
-	l := c.Cache.Cap()
-	c.Unlock()
-	return l
+func (c *Cache[K, V]) Cap() (l int) {
+	c.locked(func() { l = c.Cache.Cap() })
+	return
 }
 
-// truncate will call Cache.Truncate(sz), and if provided a hook will temporarily store deleted items before passing them to the hook. This is required in order to prevent cache writes during .Truncate().
-func (c *Cache[K, V]) truncate(sz int, hook func(*Entry[K, V])) {
+func (c *Cache[K, V]) locked(fn func()) {
+	c.Lock()
+	fn()
+	c.Unlock()
+}
+
+// truncate will truncate the cache by given size, returning deleted items.
+func (c *Cache[K, V]) truncate(sz int, hook func(K, V)) []kv[K, V] {
 	if hook == nil {
-		// No hook was provided, we can simply truncate and free items immediately.
-		c.Cache.Truncate(sz, func(_ K, item *Entry[K, V]) { c.free(item) })
-		return
+		// No hook to execute, simply free all truncated entries.
+		c.Cache.Truncate(sz, func(_ K, e *Entry[K, V]) { c.free(e) })
+		return nil
 	}
 
-	// Store list of deleted items for later callbacks
-	deleted := make([]*Entry[K, V], 0, sz)
+	// Allocate a slice for deleted k-v pairs.
+	deleted := make([]kv[K, V], 0, sz)
 
-	// Truncate and store list of deleted items
 	c.Cache.Truncate(sz, func(_ K, item *Entry[K, V]) {
-		deleted = append(deleted, item)
+		// Store key-value pair for later access.
+		deleted = append(deleted, kv[K, V]{
+			K: item.Key,
+			V: item.Value,
+		})
+
+		// Free entry.
+		c.free(item)
 	})
 
-	// Pass each deleted to hook, then free
-	for _, item := range deleted {
-		hook(item)
-		c.free(item)
-	}
+	return deleted
 }
 
 // alloc will acquire cache entry from pool, or allocate new.
@@ -416,14 +589,29 @@ func (c *Cache[K, V]) alloc() *Entry[K, V] {
 	return e
 }
 
+// clone allocates a new Entry and copies all info from passed Entry.
+func (c *Cache[K, V]) clone(e *Entry[K, V]) *Entry[K, V] {
+	e2 := c.alloc()
+	e2.Key = e.Key
+	e2.Value = e.Value
+	e2.Expiry = e.Expiry
+	return e2
+}
+
 // free will reset entry fields and place back in pool.
 func (c *Cache[K, V]) free(e *Entry[K, V]) {
 	var (
 		zk K
 		zv V
+		zt time.Time
 	)
+	e.Expiry = zt
 	e.Key = zk
 	e.Value = zv
-	e.Expiry = time.Time{}
 	c.pool = append(c.pool, e)
+}
+
+type kv[K comparable, V any] struct {
+	K K
+	V V
 }

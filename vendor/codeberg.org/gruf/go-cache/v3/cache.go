@@ -15,10 +15,10 @@ type Cache[Key comparable, Value any] interface {
 	Stop() bool
 
 	// SetEvictionCallback sets the eviction callback to the provided hook.
-	SetEvictionCallback(hook func(*ttlcache.Entry[Key, Value]))
+	SetEvictionCallback(hook func(Key, Value))
 
 	// SetInvalidateCallback sets the invalidate callback to the provided hook.
-	SetInvalidateCallback(hook func(*ttlcache.Entry[Key, Value]))
+	SetInvalidateCallback(hook func(Key, Value))
 
 	// SetTTL sets the cache item TTL. Update can be specified to force updates of existing items in the cache, this will simply add the change in TTL to their current expiry time.
 	SetTTL(ttl time.Duration, update bool)
@@ -43,6 +43,9 @@ type Cache[Key comparable, Value any] interface {
 
 	// Invalidate deletes a value from the cache, calling the invalidate callback.
 	Invalidate(key Key) bool
+
+	// InvalidateAll is equivalent to multiple Invalidate calls.
+	InvalidateAll(keys ...Key) bool
 
 	// Clear empties the cache, calling the invalidate callback on each entry.
 	Clear()
