@@ -97,20 +97,22 @@ func (c *Cache[Value]) SetEvictionCallback(hook func(Value)) {
 		// Ensure non-nil hook.
 		hook = func(Value) {}
 	}
-	c.cache.SetEvictionCallback(func(item *ttl.Entry[int64, result[Value]]) {
-		for _, key := range item.Value.Keys {
+	c.cache.SetEvictionCallback(func(pkey int64, res result[Value]) {
+		c.cache.Lock()
+		for _, key := range res.Keys {
 			// Delete key->pkey lookup
 			pkeys := key.info.pkeys
 			delete(pkeys, key.key)
 		}
+		c.cache.Unlock()
 
-		if item.Value.Error != nil {
+		if res.Error != nil {
 			// Skip error hooks
 			return
 		}
 
 		// Call user hook.
-		hook(item.Value.Value)
+		hook(res.Value)
 	})
 }
 
@@ -121,20 +123,22 @@ func (c *Cache[Value]) SetInvalidateCallback(hook func(Value)) {
 		hook = func(Value) {}
 	} // store hook.
 	c.invalid = hook
-	c.cache.SetInvalidateCallback(func(item *ttl.Entry[int64, result[Value]]) {
-		for _, key := range item.Value.Keys {
+	c.cache.SetInvalidateCallback(func(pkey int64, res result[Value]) {
+		c.cache.Lock()
+		for _, key := range res.Keys {
 			// Delete key->pkey lookup
 			pkeys := key.info.pkeys
 			delete(pkeys, key.key)
 		}
+		c.cache.Unlock()
 
-		if item.Value.Error != nil {
+		if res.Error != nil {
 			// Skip error hooks
 			return
 		}
 
 		// Call user hook.
-		hook(item.Value.Value)
+		hook(res.Value)
 	})
 }
 
@@ -178,9 +182,17 @@ func (c *Cache[Value]) Load(lookup string, load func() (Value, error), keyParts 
 	pkeys := keyInfo.pkeys[ckey]
 
 	if ok = (len(pkeys) > 0); ok {
+		var entry *ttl.Entry[int64, result[Value]]
+
 		// Fetch the result for primary key
-		entry, _ := c.cache.Cache.Get(pkeys[0])
-		res = entry.Value
+		entry, ok = c.cache.Cache.Get(pkeys[0])
+		if ok {
+			// Since the invalidation / eviction hooks acquire a mutex
+			// lock separately, and only at this point are the pkeys
+			// updated, there is a chance that a primary key may return
+			// no matching entry. Hence we have to check for it here.
+			res = entry.Value
+		}
 	}
 
 	// Done with lock
@@ -278,9 +290,17 @@ func (c *Cache[Value]) Has(lookup string, keyParts ...any) bool {
 	pkeys := keyInfo.pkeys[ckey]
 
 	if ok = (len(pkeys) > 0); ok {
+		var entry *ttl.Entry[int64, result[Value]]
+
 		// Fetch the result for primary key
-		entry, _ := c.cache.Cache.Get(pkeys[0])
-		res = entry.Value
+		entry, ok = c.cache.Cache.Get(pkeys[0])
+		if ok {
+			// Since the invalidation / eviction hooks acquire a mutex
+			// lock separately, and only at this point are the pkeys
+			// updated, there is a chance that a primary key may return
+			// no matching entry. Hence we have to check for it here.
+			res = entry.Value
+		}
 	}
 
 	// Done with lock
@@ -301,12 +321,11 @@ func (c *Cache[Value]) Invalidate(lookup string, keyParts ...any) {
 	// Look for primary key for cache key
 	c.cache.Lock()
 	pkeys := keyInfo.pkeys[ckey]
+	delete(keyInfo.pkeys, ckey)
 	c.cache.Unlock()
 
-	for _, pkey := range pkeys {
-		// Invalidate each primary key
-		c.cache.Invalidate(pkey)
-	}
+	// Invalidate all primary keys.
+	c.cache.InvalidateAll(pkeys...)
 }
 
 // Clear empties the cache, calling the invalidate callback.
@@ -341,7 +360,7 @@ func (c *Cache[Value]) store(res result[Value]) {
 				}
 			}
 
-			// Drop these keys.
+			// Drop existing.
 			pkeys = pkeys[:0]
 		}
 
@@ -356,7 +375,7 @@ func (c *Cache[Value]) store(res result[Value]) {
 		Key:    pnext,
 		Value:  res,
 	}, func(_ int64, item *ttl.Entry[int64, result[Value]]) {
-		c.cache.Evict(item)
+		c.cache.Evict(item.Key, item.Value)
 	})
 }
 
