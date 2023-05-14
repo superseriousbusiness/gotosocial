@@ -229,8 +229,10 @@ func (c *Cache[Value]) Load(lookup string, load func() (Value, error), keyParts 
 		c.cache.Lock()
 		defer c.cache.Unlock()
 
-		// Cache result
-		c.store(res)
+		// Cache res (defer eviction after unlock).
+		if evict := c.store(res); evict != nil {
+			defer evict()
+		}
 	}
 
 	// Catch and return error
@@ -260,8 +262,10 @@ func (c *Cache[Value]) Store(value Value, store func() error) error {
 	c.cache.Lock()
 	defer c.cache.Unlock()
 
-	// Cache result
-	c.store(result)
+	// Cache result (defer eviction after unlock).
+	if evict := c.store(result); evict != nil {
+		defer evict()
+	}
 
 	// Call invalidate.
 	c.invalid(value)
@@ -332,7 +336,7 @@ func (c *Cache[Value]) Invalidate(lookup string, keyParts ...any) {
 func (c *Cache[Value]) Clear() { c.cache.Clear() }
 
 // store will cache this result under all of its required cache keys.
-func (c *Cache[Value]) store(res result[Value]) {
+func (c *Cache[Value]) store(res result[Value]) (evict func()) {
 	// Get primary key
 	pnext := c.next
 	c.next++
@@ -375,8 +379,10 @@ func (c *Cache[Value]) store(res result[Value]) {
 		Key:    pnext,
 		Value:  res,
 	}, func(_ int64, item *ttl.Entry[int64, result[Value]]) {
-		c.cache.Evict(item.Key, item.Value)
+		evict = func() { c.cache.Evict(item.Key, item.Value) }
 	})
+
+	return evict
 }
 
 type result[Value any] struct {
