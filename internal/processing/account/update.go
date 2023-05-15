@@ -155,6 +155,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		}
 
 		// Process the raw fields we stored earlier.
+		account.Fields = make([]*gtsmodel.Field, 0, len(account.FieldsRaw))
 		for _, fieldRaw := range account.FieldsRaw {
 			field := &gtsmodel.Field{}
 
