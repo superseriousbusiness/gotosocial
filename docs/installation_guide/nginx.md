@@ -154,7 +154,7 @@ server {
   server_name example.org;
   location / {
     # set to 127.0.0.1 instead of localhost to work around https://stackoverflow.com/a/52550758
-    proxy_pass http://127.0.0.1:8080/;
+    proxy_pass http://127.0.0.1:8080;
     proxy_set_header Host $host;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";
