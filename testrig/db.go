@@ -39,6 +39,8 @@ var testModels = []interface{}{
 	&gtsmodel.EmailDomainBlock{},
 	&gtsmodel.Follow{},
 	&gtsmodel.FollowRequest{},
+	&gtsmodel.List{},
+	&gtsmodel.ListEntry{},
 	&gtsmodel.MediaAttachment{},
 	&gtsmodel.Mention{},
 	&gtsmodel.Status{},
@@ -243,6 +245,18 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 	}
 
 	for _, v := range NewTestFollows() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(nil, err)
+		}
+	}
+
+	for _, v := range NewTestLists() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(nil, err)
+		}
+	}
+
+	for _, v := range NewTestListEntries() {
 		if err := db.Put(ctx, v); err != nil {
 			log.Panic(nil, err)
 		}

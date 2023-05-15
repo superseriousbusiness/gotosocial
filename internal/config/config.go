@@ -198,6 +198,14 @@ type GTSCacheConfiguration struct {
 	FollowRequestTTL       time.Duration `name:"follow-request-ttl"`
 	FollowRequestSweepFreq time.Duration `name:"follow-request-sweep-freq"`
 
+	ListMaxSize   int           `name:"list-max-size"`
+	ListTTL       time.Duration `name:"list-ttl"`
+	ListSweepFreq time.Duration `name:"list-sweep-freq"`
+
+	ListEntryMaxSize   int           `name:"list-entry-max-size"`
+	ListEntryTTL       time.Duration `name:"list-entry-ttl"`
+	ListEntrySweepFreq time.Duration `name:"list-entry-sweep-freq"`
+
 	MediaMaxSize   int           `name:"media-max-size"`
 	MediaTTL       time.Duration `name:"media-ttl"`
 	MediaSweepFreq time.Duration `name:"media-sweep-freq"`

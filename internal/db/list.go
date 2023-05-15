@@ -25,10 +25,10 @@ import (
 
 type List interface {
 	// GetListByID gets one list with the given id.
-	GetListByID(ctx context.Context, id string) (*gtsmodel.List, Error)
+	GetListByID(ctx context.Context, id string) (*gtsmodel.List, error)
 
-	// GetLists gets all lists owned by the given accountID.
-	GetLists(ctx context.Context, accountID string) ([]*gtsmodel.List, Error)
+	// GetListsForAccountID gets all lists owned by the given accountID.
+	GetListsForAccountID(ctx context.Context, accountID string) ([]*gtsmodel.List, error)
 
 	// PutList puts a new list in the database.
 	PutList(ctx context.Context, list *gtsmodel.List) error
@@ -41,11 +41,11 @@ type List interface {
 	DeleteListByID(ctx context.Context, id string) error
 
 	// GetListEntryByID gets one list entry with the given ID.
-	GetListEntryByID(ctx context.Context, id string) (*gtsmodel.ListEntry, Error)
+	GetListEntryByID(ctx context.Context, id string) (*gtsmodel.ListEntry, error)
 
 	// GetListEntries gets all list entries for the given listID.
-	GetListEntries(ctx context.Context, listID string) ([]*gtsmodel.ListEntry, Error)
+	GetListEntries(ctx context.Context, listID string) ([]*gtsmodel.ListEntry, error)
 
 	// DeleteListEntry deletes one list entry with the given id.
-	DeleteListEntry(ctx context.Context, id string) Error
+	DeleteListEntry(ctx context.Context, id string) error
 }

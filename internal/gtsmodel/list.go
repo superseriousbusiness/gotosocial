@@ -33,14 +33,12 @@ type List struct {
 
 // ListEntry refers to a single follow entry in a list.
 type ListEntry struct {
-	ID        string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                     // id of this item in the database
-	CreatedAt time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`              // when was item created
-	UpdatedAt time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`              // when was item last updated
-	ListID    string    `validate:"required,ulid" bun:"type:CHAR(26),notnull,nullzero,unique:listentryaccountfollow"` // ID of the list that this entry belongs to.
-	AccountID string    `validate:"required,ulid" bun:"type:CHAR(26),notnull,nullzero"`                               // Account that created/owns the list this entry belongs to.
-	Account   *Account  `validate:"-" bun:"-"`                                                                        // Account corresponding to accountID.
-	FollowID  string    `validate:"required,ulid" bun:"type:CHAR(26),notnull,nullzero,unique:listentryaccountfollow"` // Follow that the account owning this entry wants to see posts of in the timeline.
-	Follow    *Follow   `validate:"-" bun:"-"`                                                                        // Follow corresponding to followID.
+	ID        string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                  // id of this item in the database
+	CreatedAt time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`           // when was item created
+	UpdatedAt time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`           // when was item last updated
+	ListID    string    `validate:"required,ulid" bun:"type:CHAR(26),notnull,nullzero,unique:listentrylistfollow"` // ID of the list that this entry belongs to.
+	FollowID  string    `validate:"required,ulid" bun:"type:CHAR(26),notnull,nullzero,unique:listentrylistfollow"` // Follow that the account owning this entry wants to see posts of in the timeline.
+	Follow    *Follow   `validate:"-" bun:"-"`                                                                     // Follow corresponding to followID.
 }
 
 // RepliesPolicy denotes which replies should be shown in the list.

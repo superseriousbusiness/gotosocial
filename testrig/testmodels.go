@@ -1961,6 +1961,38 @@ func NewTestFollows() map[string]*gtsmodel.Follow {
 	}
 }
 
+func NewTestLists() map[string]*gtsmodel.List {
+	return map[string]*gtsmodel.List{
+		"local_account_1_list_1": {
+			ID:            "01H0G89MWVQE0M58VD2HQYMQWH",
+			CreatedAt:     TimeMustParse("2022-05-14T13:21:09+02:00"),
+			UpdatedAt:     TimeMustParse("2022-05-14T13:21:09+02:00"),
+			Title:         "Cool Ass Posters From This Instance",
+			AccountID:     "01F8MH1H7YV1Z7D2C8K2730QBF",
+			RepliesPolicy: gtsmodel.RepliesPolicyFollowed,
+		},
+	}
+}
+
+func NewTestListEntries() map[string]*gtsmodel.ListEntry {
+	return map[string]*gtsmodel.ListEntry{
+		"local_account_1_list_1_entry_1": {
+			ID:        "01H0G89MWVQE0M58VD2HQYMQWH",
+			CreatedAt: TimeMustParse("2022-05-14T13:21:09+02:00"),
+			UpdatedAt: TimeMustParse("2022-05-14T13:21:09+02:00"),
+			ListID:    "01H0G8E4Q2J3FE3JDWJVWEDCD1",
+			FollowID:  "01F8PYDCE8XE23GRE5DPZJDZDP",
+		},
+		"local_account_1_list_1_entry_2": {
+			ID:        "01H0G8FFM1AGQDRNGBGGX8CYJQ",
+			CreatedAt: TimeMustParse("2022-05-14T13:21:09+02:00"),
+			UpdatedAt: TimeMustParse("2022-05-14T13:21:09+02:00"),
+			ListID:    "01H0G8E4Q2J3FE3JDWJVWEDCD1",
+			FollowID:  "01F8PY8RHWRQZV038T4E8T9YK8",
+		},
+	}
+}
+
 func NewTestBlocks() map[string]*gtsmodel.Block {
 	return map[string]*gtsmodel.Block{
 		"local_account_2_block_remote_account_1": {
