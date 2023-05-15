@@ -242,8 +242,12 @@ func (c *Client) DoSigned(r *http.Request, sign SignFunc) (rsp *http.Response, e
 				return rsp, nil
 			}
 
-			// Generate error from status code for logging
-			err = errors.New(`http response "` + rsp.Status + `"`)
+			// Drain response body for error.
+			body, _ := io.ReadAll(rsp.Body)
+			_ = rsp.Body.Close()
+
+			// Create error from response status code and body (if any).
+			err = fmt.Errorf(`http response "%s" "%s"`, rsp.Status, body)
 
 			// Search for a provided "Retry-After" header value.
 			if after := rsp.Header.Get("Retry-After"); after != "" {
