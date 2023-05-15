@@ -526,6 +526,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			SuspendedAt:           time.Time{},
 			HideCollections:       FalseBool(),
 			SuspensionOrigin:      "",
+			EnableRSS:             FalseBool(),
 		},
 		"remote_account_1": {
 			ID:                    "01F8MH5ZK5VRH73AKHQM6Y9VNX",
