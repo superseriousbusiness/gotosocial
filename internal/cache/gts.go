@@ -35,6 +35,7 @@ type GTSCaches struct {
 	emojiCategory *result.Cache[*gtsmodel.EmojiCategory]
 	follow        *result.Cache[*gtsmodel.Follow]
 	followRequest *result.Cache[*gtsmodel.FollowRequest]
+	list          *result.Cache[*gtsmodel.List]
 	media         *result.Cache[*gtsmodel.MediaAttachment]
 	mention       *result.Cache[*gtsmodel.Mention]
 	notification  *result.Cache[*gtsmodel.Notification]
