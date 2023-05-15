@@ -41,6 +41,9 @@ import (
 )
 
 var (
+	// ErrInvalidRequest is returned if a given HTTP request is invalid and cannot be performed.
+	ErrInvalidRequest = errors.New("invalid http request")
+
 	// ErrInvalidNetwork is returned if the request would not be performed over TCP
 	ErrInvalidNetwork = errors.New("invalid network type")
 
@@ -172,6 +175,11 @@ func (c *Client) DoSigned(r *http.Request, sign SignFunc) (rsp *http.Response, e
 		// starting backoff duration.
 		baseBackoff = 2 * time.Second
 	)
+
+	// First validate incoming request.
+	if err := ValidateRequest(r); err != nil {
+		return nil, err
+	}
 
 	// Get request hostname.
 	host := r.URL.Hostname()
