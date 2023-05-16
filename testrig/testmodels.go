@@ -1964,7 +1964,7 @@ func NewTestFollows() map[string]*gtsmodel.Follow {
 func NewTestLists() map[string]*gtsmodel.List {
 	return map[string]*gtsmodel.List{
 		"local_account_1_list_1": {
-			ID:            "01H0G89MWVQE0M58VD2HQYMQWH",
+			ID:            "01H0G8E4Q2J3FE3JDWJVWEDCD1",
 			CreatedAt:     TimeMustParse("2022-05-14T13:21:09+02:00"),
 			UpdatedAt:     TimeMustParse("2022-05-14T13:21:09+02:00"),
 			Title:         "Cool Ass Posters From This Instance",

@@ -60,6 +60,17 @@ func (l *listDB) getList(ctx context.Context, lookup string, dbQuery func(*gtsmo
 		return list, nil
 	}
 
+	// Set the list entries. Note: don't use barebones
+	// for this, since the caller will likely need to
+	// get the Follow from the listEntry right away.
+	list.ListEntries, err = l.state.DB.GetListEntries(
+		ctx,
+		list.ID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error getting list entries: %w", err)
+	}
+
 	// Set the list account.
 	list.Account, err = l.state.DB.GetAccountByID(
 		gtscontext.SetBarebones(ctx),
@@ -67,15 +78,6 @@ func (l *listDB) getList(ctx context.Context, lookup string, dbQuery func(*gtsmo
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error getting list account: %w", err)
-	}
-
-	// Set the list entries.
-	list.ListEntries, err = l.state.DB.GetListEntries(
-		gtscontext.SetBarebones(ctx),
-		list.ID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error getting list entries: %w", err)
 	}
 
 	return list, nil
