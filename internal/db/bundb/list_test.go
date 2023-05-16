@@ -226,6 +226,32 @@ func (suite *ListTestSuite) TestDeleteListEntry() {
 	suite.checkList(testList, dbList)
 }
 
+func (suite *ListTestSuite) TestDeleteListEntriesForFollowID() {
+	ctx := context.Background()
+	testList, _ := suite.testStructs()
+
+	// Get List in the cache first.
+	if _, err := suite.db.GetListByID(ctx, testList.ID); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Delete the first entry.
+	if err := suite.db.DeleteListEntriesForFollowID(ctx, testList.ListEntries[0].FollowID); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Get list from the db again.
+	dbList, err := suite.db.GetListByID(ctx, testList.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Bodge the testlist as though
+	// we'd removed the first entry.
+	testList.ListEntries = testList.ListEntries[1:]
+	suite.checkList(testList, dbList)
+}
+
 func TestListTestSuite(t *testing.T) {
 	suite.Run(t, new(ListTestSuite))
 }

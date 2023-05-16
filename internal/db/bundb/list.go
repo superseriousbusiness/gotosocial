@@ -273,3 +273,25 @@ func (l *listDB) DeleteListEntry(ctx context.Context, id string) error {
 		Exec(ctx)
 	return l.conn.ProcessError(err)
 }
+
+func (l *listDB) DeleteListEntriesForFollowID(ctx context.Context, followID string) error {
+	// Fetch IDs of all entries that pertain to this follow.
+	var listEntryIDs []string
+	if err := l.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("list_entries"), bun.Ident("list_entry")).
+		Column("list_entry.id").
+		Where("? = ?", bun.Ident("list_entry.follow_id"), followID).
+		Order("list_entry.id DESC").
+		Scan(ctx, &listEntryIDs); err != nil {
+		return l.conn.ProcessError(err)
+	}
+
+	for _, id := range listEntryIDs {
+		if err := l.DeleteListEntry(ctx, id); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
