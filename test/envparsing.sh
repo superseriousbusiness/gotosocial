@@ -98,6 +98,7 @@ EXPECT=$(cat <<"EOF"
     "letsencrypt-email-address": "",
     "letsencrypt-enabled": true,
     "letsencrypt-port": 80,
+    "log-client-ip": false,
     "log-db-queries": true,
     "log-level": "info",
     "media-description-max-chars": 5000,
@@ -170,6 +171,7 @@ EOF
 # ensure that these are parsed without panic
 OUTPUT=$(GTS_LOG_LEVEL='info' \
 GTS_LOG_DB_QUERIES=true \
+GTS_LOG_CLIENT_IP=false \
 GTS_APPLICATION_NAME=gts \
 GTS_LANDING_PAGE_USER=admin \
 GTS_HOST=example.com \

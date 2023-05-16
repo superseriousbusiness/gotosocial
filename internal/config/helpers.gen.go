@@ -3679,3 +3679,28 @@ func GetRequestIDHeader() string { return global.GetRequestIDHeader() }
 
 // SetRequestIDHeader safely sets the value for global configuration 'RequestIDHeader' field
 func SetRequestIDHeader(v string) { global.SetRequestIDHeader(v) }
+
+// GetLogClientIP safely fetches the Configuration value for state's 'LogClientIP' field
+func (st *ConfigState) GetLogClientIP() (v bool) {
+	st.mutex.Lock()
+	v = st.config.LogClientIP
+	st.mutex.Unlock()
+	return
+}
+
+// SetLogClientIP safely sets the Configuration value for state's 'LogClientIP' field
+func (st *ConfigState) SetLogClientIP(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.LogClientIP = v
+	st.reloadToViper()
+}
+
+// LogClientIPFlag returns the flag name for the 'LogClientIP' field
+func LogClientIPFlag() string { return "log-client-ip" }
+
+// GetLogClientIP safely fetches the value for global configuration 'LogClientIP' field
+func GetLogClientIP() bool { return global.GetLogClientIP() }
+
+// SetLogClientIP safely sets the value for global configuration 'LogClientIP' field
+func SetLogClientIP(v bool) { global.SetLogClientIP(v) }

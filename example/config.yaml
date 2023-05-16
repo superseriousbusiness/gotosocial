@@ -30,6 +30,11 @@ log-level: "info"
 # Default: false
 log-db-queries: false
 
+# Bool. Include the client IP in the emitted log lines
+# Options: [true, false]
+# Default: true
+log-client-ip: true
+
 # String. Application name to use internally.
 # Examples: ["My Application","gotosocial"]
 # Default: "gotosocial"
@@ -765,10 +770,6 @@ syslog-address: "localhost:514"
 ##################################
 ##### OBSERVABILITY SETTINGS #####
 ##################################
-
-# Bool. Enable generation/parsing of a request ID for each received HTTP Request.
-# Default: true
-request-id-enabled: true
 
 # String. Header name to use to extract a request or trace ID from. Typically set by a
 # loadbalancer or proxy.
