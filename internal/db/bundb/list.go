@@ -60,17 +60,6 @@ func (l *listDB) getList(ctx context.Context, lookup string, dbQuery func(*gtsmo
 		return list, nil
 	}
 
-	// Set the list entries. Note: don't use barebones
-	// for this, since the caller will likely need to
-	// get the Follow from the listEntry right away.
-	list.ListEntries, err = l.state.DB.GetListEntries(
-		ctx,
-		list.ID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error getting list entries: %w", err)
-	}
-
 	// Set the list account.
 	list.Account, err = l.state.DB.GetAccountByID(
 		gtscontext.SetBarebones(ctx),
@@ -160,8 +149,8 @@ func (l *listDB) UpdateList(ctx context.Context, list *gtsmodel.List, columns ..
 func (l *listDB) DeleteListByID(ctx context.Context, id string) error {
 	defer l.state.Caches.GTS.List().Invalidate("ID", id)
 
-	// Select each entry that belongs to this list.
-	listEntries, err := l.state.DB.GetListEntries(ctx, id)
+	// Select all entries that belong to this list.
+	listEntries, err := l.state.DB.GetListEntries(ctx, id, "", "", "", 0)
 	if err != nil {
 		return fmt.Errorf("error selecting entries from list %q: %w", id, err)
 	}
@@ -232,26 +221,81 @@ func (l *listDB) GetListEntryByID(ctx context.Context, id string) (*gtsmodel.Lis
 	)
 }
 
-func (l *listDB) GetListEntries(ctx context.Context, listID string) ([]*gtsmodel.ListEntry, error) {
-	// Fetch IDs of all entries belonging to this list.
-	var listEntryIDs []string
-	if err := l.conn.
+func (l *listDB) GetListEntries(ctx context.Context,
+	listID string,
+	maxID string,
+	sinceID string,
+	minID string,
+	limit int,
+) ([]*gtsmodel.ListEntry, error) {
+	// Ensure reasonable
+	if limit < 0 {
+		limit = 0
+	}
+
+	// Make educated guess for slice size
+	var (
+		entryIDs    = make([]string, 0, limit)
+		frontToBack = true
+	)
+
+	q := l.conn.
 		NewSelect().
-		TableExpr("? AS ?", bun.Ident("list_entries"), bun.Ident("list_entry")).
-		Column("list_entry.id").
-		Where("? = ?", bun.Ident("list_entry.list_id"), listID).
-		Order("list_entry.id DESC").
-		Scan(ctx, &listEntryIDs); err != nil {
+		TableExpr("? AS ?", bun.Ident("list_entries"), bun.Ident("entry")).
+		// Select only IDs from table
+		Column("entry.id").
+		// Select only entries belonging to listID.
+		Where("? = ?", bun.Ident("entry.list_id"), listID)
+
+	// return only entries LOWER (ie., older) than maxID
+	q = q.Where("? < ?", bun.Ident("entry.id"), maxID)
+
+	if sinceID != "" {
+		// return only entries HIGHER (ie., newer) than sinceID
+		q = q.Where("? > ?", bun.Ident("entry.id"), sinceID)
+	}
+
+	if minID != "" {
+		// return only entries HIGHER (ie., newer) than minID
+		q = q.Where("? > ?", bun.Ident("entry.id"), minID)
+
+		// page up
+		frontToBack = false
+	}
+
+	if limit > 0 {
+		// limit amount of entries returned
+		q = q.Limit(limit)
+	}
+
+	if frontToBack {
+		// Page down.
+		q = q.Order("entry.id DESC")
+	} else {
+		// Page up.
+		q = q.Order("entry.id ASC")
+	}
+
+	if err := q.Scan(ctx, &entryIDs); err != nil {
 		return nil, l.conn.ProcessError(err)
 	}
 
-	if len(listEntryIDs) == 0 {
+	if len(entryIDs) == 0 {
 		return nil, nil
 	}
 
+	// If we're paging up, we still want entries
+	// to be sorted by ID desc, so reverse ids slice.
+	// https://zchee.github.io/golang-wiki/SliceTricks/#reversing
+	if !frontToBack {
+		for l, r := 0, len(entryIDs)-1; l < r; l, r = l+1, r-1 {
+			entryIDs[l], entryIDs[r] = entryIDs[r], entryIDs[l]
+		}
+	}
+
 	// Select each list entry using its ID to ensure cache used.
-	listEntries := make([]*gtsmodel.ListEntry, 0, len(listEntryIDs))
-	for _, id := range listEntryIDs {
+	listEntries := make([]*gtsmodel.ListEntry, 0, len(entryIDs))
+	for _, id := range entryIDs {
 		listEntry, err := l.state.DB.GetListEntryByID(ctx, id)
 		if err != nil {
 			log.Errorf(ctx, "error fetching list entry %q: %v", id, err)

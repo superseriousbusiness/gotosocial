@@ -23,22 +23,43 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
-// Create creates one a new list for the given account, using the provided parameters.
+// Update updates one list for the given account, using the provided parameters.
 // These params should have already been validated by the time they reach this function.
-func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, title string, repliesPolicy gtsmodel.RepliesPolicy) (*apimodel.List, gtserror.WithCode) {
-	list := &gtsmodel.List{
-		ID:            id.NewULID(),
-		Title:         title,
-		AccountID:     account.ID,
-		RepliesPolicy: repliesPolicy,
+func (p *Processor) Update(
+	ctx context.Context,
+	account *gtsmodel.Account,
+	id string,
+	title *string,
+	repliesPolicy *gtsmodel.RepliesPolicy,
+) (*apimodel.List, gtserror.WithCode) {
+	list, errWithCode := p.getList(
+		// Use barebones ctx; no embedded
+		// structs necessary for this call.
+		gtscontext.SetBarebones(ctx),
+		account.ID,
+		id,
+	)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
 
-	if err := p.state.DB.PutList(ctx, list); err != nil {
+	columns := make([]string, 0, 2)
+	if title != nil {
+		list.Title = *title
+		columns = append(columns, "title")
+	}
+
+	if repliesPolicy != nil {
+		list.RepliesPolicy = *repliesPolicy
+		columns = append(columns, "replies_policy")
+	}
+
+	if err := p.state.DB.UpdateList(ctx, list, columns...); err != nil {
 		if errors.Is(err, db.ErrAlreadyExists) {
 			err = errors.New("you already have a list with this title")
 			return nil, gtserror.NewErrorConflict(err, err.Error())

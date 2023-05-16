@@ -43,8 +43,8 @@ type List interface {
 	// GetListEntryByID gets one list entry with the given ID.
 	GetListEntryByID(ctx context.Context, id string) (*gtsmodel.ListEntry, error)
 
-	// GetListEntries gets all list entries for the given listID.
-	GetListEntries(ctx context.Context, listID string) ([]*gtsmodel.ListEntry, error)
+	// GetListEntries gets list entries from the given listID, using the given parameters.
+	GetListEntries(ctx context.Context, listID string, maxID string, sinceID string, minID string, limit int) ([]*gtsmodel.ListEntry, error)
 
 	// DeleteListEntry deletes one list entry with the given id.
 	DeleteListEntry(ctx context.Context, id string) error

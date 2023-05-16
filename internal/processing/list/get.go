@@ -19,6 +19,7 @@ package list
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -26,34 +27,41 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// Get returns the api model of one list with the given ID.
-func (p *Processor) Get(ctx context.Context, account *gtsmodel.Account, id string) (*apimodel.List, gtserror.WithCode) {
-	list, err := p.state.DB.GetListByID(
-		// Use barebones ctx; no embedded
-		// structs necessary for simple GET.
-		gtscontext.SetBarebones(ctx),
-		id,
-	)
+// shortcut to get one list from the db, or error appropriately.
+func (p *Processor) getList(ctx context.Context, accountID string, listID string) (*gtsmodel.List, gtserror.WithCode) {
+	list, err := p.state.DB.GetListByID(ctx, listID)
 	if err != nil {
-		if err == db.ErrNoEntries {
+		if errors.Is(err, db.ErrNoEntries) {
 			return nil, gtserror.NewErrorNotFound(err)
 		}
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if list.AccountID != account.ID {
-		err = fmt.Errorf("list with id %s does not belong to account %s", list.ID, account.ID)
+	if list.AccountID != accountID {
+		err = fmt.Errorf("list with id %s does not belong to account %s", list.ID, accountID)
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	apiList, err := p.tc.ListToAPIList(ctx, list)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting list to api: %s", err))
+	return list, nil
+}
+
+// Get returns the api model of one list with the given ID.
+func (p *Processor) Get(ctx context.Context, account *gtsmodel.Account, id string) (*apimodel.List, gtserror.WithCode) {
+	list, errWithCode := p.getList(
+		// Use barebones ctx; no embedded
+		// structs necessary for this call.
+		gtscontext.SetBarebones(ctx),
+		account.ID,
+		id,
+	)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
 
-	return apiList, nil
+	return p.apiList(ctx, list)
 }
 
 // GetMultiple returns multiple lists created by the given account, sorted by list ID DESC (newest first).
@@ -65,7 +73,7 @@ func (p *Processor) GetMultiple(ctx context.Context, account *gtsmodel.Account, 
 		account.ID,
 	)
 	if err != nil {
-		if err == db.ErrNoEntries {
+		if errors.Is(err, db.ErrNoEntries) {
 			return nil, nil
 		}
 		return nil, gtserror.NewErrorInternalError(err)
@@ -73,9 +81,9 @@ func (p *Processor) GetMultiple(ctx context.Context, account *gtsmodel.Account, 
 
 	apiLists := make([]*apimodel.List, 0, len(lists))
 	for _, list := range lists {
-		apiList, err := p.tc.ListToAPIList(ctx, list)
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting list to api: %s", err))
+		apiList, errWithCode := p.apiList(ctx, list)
+		if errWithCode != nil {
+			return nil, errWithCode
 		}
 
 		apiLists = append(apiLists, apiList)
@@ -84,51 +92,66 @@ func (p *Processor) GetMultiple(ctx context.Context, account *gtsmodel.Account, 
 	return apiLists, nil
 }
 
-// // GetMultiple returns multiple reports created by the given account, filtered according to the provided parameters.
-// func (p *Processor) GetMultiple(ctx context.Context, account *gtsmodel.Account) (*apimodel.PageableResponse, gtserror.WithCode) {
-// 	reports, err := p.state.DB.GetReports(ctx, resolved, account.ID, targetAccountID, maxID, sinceID, minID, limit)
-// 	if err != nil {
-// 		if err == db.ErrNoEntries {
-// 			return util.EmptyPageableResponse(), nil
-// 		}
-// 		return nil, gtserror.NewErrorInternalError(err)
-// 	}
+func (p *Processor) GetListAccounts(ctx context.Context, account *gtsmodel.Account, id string, maxID string, sinceID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
+	if _, errWithCode := p.getList(ctx, account.ID, id); errWithCode != nil {
+		return nil, errWithCode
+	}
 
-// 	count := len(reports)
-// 	items := make([]interface{}, 0, count)
-// 	nextMaxIDValue := ""
-// 	prevMinIDValue := ""
-// 	for i, r := range reports {
-// 		item, err := p.tc.ReportToAPIReport(ctx, r)
-// 		if err != nil {
-// 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting report to api: %s", err))
-// 		}
+	listEntries, err := p.state.DB.GetListEntries(ctx, id, maxID, sinceID, minID, limit)
+	if err != nil {
+		err = fmt.Errorf("GetListAccounts: error getting list entries: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
 
-// 		if i == count-1 {
-// 			nextMaxIDValue = item.ID
-// 		}
+	count := len(listEntries)
+	if count == 0 {
+		return util.EmptyPageableResponse(), nil
+	}
 
-// 		if i == 0 {
-// 			prevMinIDValue = item.ID
-// 		}
+	var (
+		items          = make([]interface{}, count)
+		nextMaxIDValue string
+		prevMinIDValue string
+	)
 
-// 		items = append(items, item)
-// 	}
+	for i, listEntry := range listEntries {
+		if i == count-1 {
+			nextMaxIDValue = listEntry.ID
+		}
 
-// 	extraQueryParams := []string{}
-// 	if resolved != nil {
-// 		extraQueryParams = append(extraQueryParams, "resolved="+strconv.FormatBool(*resolved))
-// 	}
-// 	if targetAccountID != "" {
-// 		extraQueryParams = append(extraQueryParams, "target_account_id="+targetAccountID)
-// 	}
+		if i == 0 {
+			prevMinIDValue = listEntry.ID
+		}
 
-// 	return util.PackagePageableResponse(util.PageableResponseParams{
-// 		Items:            items,
-// 		Path:             "/api/v1/reports",
-// 		NextMaxIDValue:   nextMaxIDValue,
-// 		PrevMinIDValue:   prevMinIDValue,
-// 		Limit:            limit,
-// 		ExtraQueryParams: extraQueryParams,
-// 	})
-// }
+		if listEntry.Follow == nil {
+			listEntry.Follow, err = p.state.DB.GetFollowByID(ctx, listEntry.FollowID)
+			if err != nil {
+				if errors.Is(err, db.ErrNoEntries) {
+jjjjjjjjjjjjjjjjjjj
+				}
+				return nil, gtserror.NewErrorInternalError(err)
+			}	
+		}
+
+		if listEntry.Follow.TargetAccount == nil {
+			listEntry.Follow.TargetAccount, err = p.state.DB.GetAccountByID(ctx, listEntry.Follow.TargetAccountID)
+			if err != nil {
+				if errors.Is(err, db.ErrNoEntries) {
+					jjjjjjjjjjjjjjjjjjj
+				}
+			}
+		}
+
+		targetAccountID := listEntry.Follow.TargetAccountID
+
+		items[i] = listEntry
+	}
+
+	return util.PackagePageableResponse(util.PageableResponseParams{
+		Items:          items,
+		Path:           "api/v1/lists/" + id + "/accounts",
+		NextMaxIDValue: nextMaxIDValue,
+		PrevMinIDValue: prevMinIDValue,
+		Limit:          limit,
+	})
+}

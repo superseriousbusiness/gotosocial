@@ -103,7 +103,6 @@ func (suite *ListTestSuite) TestGetListByID() {
 	}
 
 	suite.checkList(testList, dbList)
-	suite.checkListEntries(testList.ListEntries, dbList.ListEntries)
 }
 
 func (suite *ListTestSuite) TestGetListsForAccountID() {
@@ -119,7 +118,17 @@ func (suite *ListTestSuite) TestGetListsForAccountID() {
 	}
 
 	suite.checkList(testList, dbLists[0])
-	suite.checkListEntries(testList.ListEntries, dbLists[0].ListEntries)
+}
+
+func (suite *ListTestSuite) TestGetListEntries() {
+	testList, _ := suite.testStructs()
+
+	dbListEntries, err := suite.db.GetListEntries(context.Background(), testList.ID, "", "", "", 0)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.checkListEntries(testList.ListEntries, dbListEntries)
 }
 
 func (suite *ListTestSuite) TestPutList() {
@@ -193,7 +202,7 @@ func (suite *ListTestSuite) TestDeleteList() {
 
 	// All entries belonging to this
 	// list should now be deleted.
-	listEntries, err := suite.db.GetListEntries(ctx, testList.ID)
+	listEntries, err := suite.db.GetListEntries(ctx, testList.ID, "", "", "", 0)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

@@ -19,33 +19,28 @@ package list
 
 import (
 	"context"
-	"fmt"
 
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
-type Processor struct {
-	state *state.State
-	tc    typeutils.TypeConverter
-}
-
-func New(state *state.State, tc typeutils.TypeConverter) Processor {
-	return Processor{
-		state: state,
-		tc:    tc,
-	}
-}
-
-// shortcut to return an api version of a list, or error appropriately.
-func (p *Processor) apiList(ctx context.Context, list *gtsmodel.List) (*apimodel.List, gtserror.WithCode) {
-	apiList, err := p.tc.ListToAPIList(ctx, list)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting list to api: %w", err))
+// Delete deletes one list for the given account.
+func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, id string) gtserror.WithCode {
+	list, errWithCode := p.getList(
+		// Use barebones ctx; no embedded
+		// structs necessary for this call.
+		gtscontext.SetBarebones(ctx),
+		account.ID,
+		id,
+	)
+	if errWithCode != nil {
+		return errWithCode
 	}
 
-	return apiList, nil
+	if err := p.state.DB.DeleteListByID(ctx, list.ID); err != nil {
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	return nil
 }
