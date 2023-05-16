@@ -73,7 +73,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 
 	// if we're getting an AP request on this endpoint we
 	// should render the account's AP representation instead
-	accept := c.NegotiateFormat(string(apiutil.TextHTML), string(apiutil.AppActivityJSON), string(apiutil.AppActivityLDJSON))
+	accept := apiutil.NegotiateFormat(c, string(apiutil.TextHTML), string(apiutil.AppActivityJSON), string(apiutil.AppActivityLDJSON))
 	if accept == string(apiutil.AppActivityJSON) || accept == string(apiutil.AppActivityLDJSON) {
 		m.returnAPProfile(ctx, c, username, accept)
 		return
