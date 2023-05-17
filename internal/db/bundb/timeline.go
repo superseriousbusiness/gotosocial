@@ -281,3 +281,132 @@ func (t *timelineDB) GetFavedTimeline(ctx context.Context, accountID string, max
 	prevMinID := faves[0].ID
 	return statuses, nextMaxID, prevMinID, nil
 }
+
+func (t *timelineDB) GetListTimeline(
+	ctx context.Context,
+	listID string,
+	maxID string,
+	sinceID string,
+	minID string,
+	limit int,
+) ([]*gtsmodel.Status, db.Error) {
+	// Ensure reasonable
+	if limit < 0 {
+		limit = 0
+	}
+
+	// Make educated guess for slice size
+	var (
+		statusIDs   = make([]string, 0, limit)
+		frontToBack = true
+	)
+
+	// Fetch all list entries from the database.
+	list, err := t.state.DB.GetListEntries(ctx, listID, "", "", "", 0)
+	if err != nil {
+		return nil, fmt.Errorf("error getting entries for list %s: %w", listID, err)
+	}
+
+	q := t.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
+		// Select only IDs from table
+		Column("status.id").
+		// Find out who accountID follows.
+		Join("LEFT JOIN ? AS ? ON ? = ? AND ? = ?",
+			bun.Ident("follows"),
+			bun.Ident("follow"),
+			bun.Ident("follow.target_account_id"),
+			bun.Ident("status.account_id"),
+			bun.Ident("follow.account_id"),
+			accountID)
+
+	if maxID == "" || maxID >= id.Highest {
+		const future = 24 * time.Hour
+
+		var err error
+
+		// don't return statuses more than 24hr in the future
+		maxID, err = id.NewULIDFromTime(time.Now().Add(future))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// return only statuses LOWER (ie., older) than maxID
+	q = q.Where("? < ?", bun.Ident("status.id"), maxID)
+
+	if sinceID != "" {
+		// return only statuses HIGHER (ie., newer) than sinceID
+		q = q.Where("? > ?", bun.Ident("status.id"), sinceID)
+	}
+
+	if minID != "" {
+		// return only statuses HIGHER (ie., newer) than minID
+		q = q.Where("? > ?", bun.Ident("status.id"), minID)
+
+		// page up
+		frontToBack = false
+	}
+
+	if local {
+		// return only statuses posted by local account havers
+		q = q.Where("? = ?", bun.Ident("status.local"), local)
+	}
+
+	if limit > 0 {
+		// limit amount of statuses returned
+		q = q.Limit(limit)
+	}
+
+	if frontToBack {
+		// Page down.
+		q = q.Order("status.id DESC")
+	} else {
+		// Page up.
+		q = q.Order("status.id ASC")
+	}
+
+	// Use a WhereGroup here to specify that we want EITHER statuses posted by accounts that accountID follows,
+	// OR statuses posted by accountID itself (since a user should be able to see their own statuses).
+	//
+	// This is equivalent to something like WHERE ... AND (... OR ...)
+	// See: https://bun.uptrace.dev/guide/queries.html#select
+	q = q.WhereGroup(" AND ", func(*bun.SelectQuery) *bun.SelectQuery {
+		return q.
+			WhereOr("? = ?", bun.Ident("follow.account_id"), accountID).
+			WhereOr("? = ?", bun.Ident("status.account_id"), accountID)
+	})
+
+	if err := q.Scan(ctx, &statusIDs); err != nil {
+		return nil, t.conn.ProcessError(err)
+	}
+
+	if len(statusIDs) == 0 {
+		return nil, nil
+	}
+
+	// If we're paging up, we still want statuses
+	// to be sorted by ID desc, so reverse ids slice.
+	// https://zchee.github.io/golang-wiki/SliceTricks/#reversing
+	if !frontToBack {
+		for l, r := 0, len(statusIDs)-1; l < r; l, r = l+1, r-1 {
+			statusIDs[l], statusIDs[r] = statusIDs[r], statusIDs[l]
+		}
+	}
+
+	statuses := make([]*gtsmodel.Status, 0, len(statusIDs))
+	for _, id := range statusIDs {
+		// Fetch status from db for ID
+		status, err := t.state.DB.GetStatusByID(ctx, id)
+		if err != nil {
+			log.Errorf(ctx, "error fetching status %q: %v", id, err)
+			continue
+		}
+
+		// Append status to slice
+		statuses = append(statuses, status)
+	}
+
+	return statuses, nil
+}
