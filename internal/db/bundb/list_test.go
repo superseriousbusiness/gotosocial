@@ -23,6 +23,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"golang.org/x/exp/slices"
 )
@@ -66,7 +67,6 @@ func (suite *ListTestSuite) checkListEntry(expected *gtsmodel.ListEntry, actual 
 	suite.Equal(expected.ID, actual.ID)
 	suite.Equal(expected.ListID, actual.ListID)
 	suite.Equal(expected.FollowID, actual.FollowID)
-	suite.NotNil(actual.Follow)
 }
 
 func (suite *ListTestSuite) checkListEntries(expected []*gtsmodel.ListEntry, actual []*gtsmodel.ListEntry) {
@@ -103,6 +103,7 @@ func (suite *ListTestSuite) TestGetListByID() {
 	}
 
 	suite.checkList(testList, dbList)
+	suite.checkListEntries(testList.ListEntries, dbList.ListEntries)
 }
 
 func (suite *ListTestSuite) TestGetListsForAccountID() {
@@ -207,6 +208,54 @@ func (suite *ListTestSuite) TestDeleteList() {
 		suite.FailNow(err.Error())
 	}
 	suite.Empty(listEntries)
+}
+
+func (suite *ListTestSuite) TestPutListEntries() {
+	ctx := context.Background()
+	testList, _ := suite.testStructs()
+
+	listEntries := []*gtsmodel.ListEntry{
+		{
+			ID:       "01H0MKMQY69HWDSDR2SWGA17R4",
+			ListID:   testList.ID,
+			FollowID: "01H0MKNFRFZS8R9WV6DBX31Y03", // random id, doesn't exist
+		},
+		{
+			ID:       "01H0MKPGQF0E7QAVW5BKTHZ630",
+			ListID:   testList.ID,
+			FollowID: "01H0MKP6RR8VEHN3GVWFBP2H30", // random id, doesn't exist
+		},
+		{
+			ID:       "01H0MKPPP2DT68FRBMR1FJM32T",
+			ListID:   testList.ID,
+			FollowID: "01H0MKQ0KA29C6NFJ27GTZD16J", // random id, doesn't exist
+		},
+	}
+
+	if err := suite.db.PutListEntries(ctx, listEntries); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Add these entries to the test list, sort it again
+	// to reflect what we'd expect to get from the db.
+	testList.ListEntries = append(testList.ListEntries, listEntries...)
+	slices.SortFunc(testList.ListEntries, func(a, b *gtsmodel.ListEntry) bool {
+		return b.ID < a.ID
+	})
+
+	// Now get all list entries from the db.
+	// Use barebones for this because the ones
+	// we just added will fail if we try to get
+	// the nonexistent follows.
+	dbListEntries, err := suite.db.GetListEntries(
+		gtscontext.SetBarebones(ctx),
+		testList.ID,
+		"", "", "", 0)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.checkListEntries(testList.ListEntries, dbListEntries)
 }
 
 func (suite *ListTestSuite) TestDeleteListEntry() {

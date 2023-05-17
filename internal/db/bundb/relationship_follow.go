@@ -25,6 +25,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
@@ -149,25 +150,42 @@ func (r *relationshipDB) getFollow(ctx context.Context, lookup string, dbQuery f
 		return follow, nil
 	}
 
-	// Set the follow source account
-	follow.Account, err = r.state.DB.GetAccountByID(
-		gtscontext.SetBarebones(ctx),
-		follow.AccountID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error getting follow source account: %w", err)
-	}
-
-	// Set the follow target account
-	follow.TargetAccount, err = r.state.DB.GetAccountByID(
-		gtscontext.SetBarebones(ctx),
-		follow.TargetAccountID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error getting follow target account: %w", err)
+	if err := r.state.DB.PopulateFollow(ctx, follow); err != nil {
+		return nil, err
 	}
 
 	return follow, nil
+}
+
+func (r *relationshipDB) PopulateFollow(ctx context.Context, follow *gtsmodel.Follow) error {
+	var (
+		err  error
+		errs = make(gtserror.MultiError, 0, 2)
+	)
+
+	if follow.Account == nil {
+		// Follow account is not set, fetch from the database.
+		follow.Account, err = r.state.DB.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			follow.AccountID,
+		)
+		if err != nil {
+			errs.Append(fmt.Errorf("error populating follow account: %w", err))
+		}
+	}
+
+	if follow.TargetAccount == nil {
+		// Follow target account is not set, fetch from the database.
+		follow.TargetAccount, err = r.state.DB.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			follow.TargetAccountID,
+		)
+		if err != nil {
+			errs.Append(fmt.Errorf("error populating follow target account: %w", err))
+		}
+	}
+
+	return errs.Combine()
 }
 
 func (r *relationshipDB) PutFollow(ctx context.Context, follow *gtsmodel.Follow) error {

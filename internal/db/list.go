@@ -30,6 +30,9 @@ type List interface {
 	// GetListsForAccountID gets all lists owned by the given accountID.
 	GetListsForAccountID(ctx context.Context, accountID string) ([]*gtsmodel.List, error)
 
+	// PopulateList ensures that the list's struct fields are populated.
+	PopulateList(ctx context.Context, list *gtsmodel.List) error
+
 	// PutList puts a new list in the database.
 	PutList(ctx context.Context, list *gtsmodel.List) error
 
@@ -45,6 +48,13 @@ type List interface {
 
 	// GetListEntries gets list entries from the given listID, using the given parameters.
 	GetListEntries(ctx context.Context, listID string, maxID string, sinceID string, minID string, limit int) ([]*gtsmodel.ListEntry, error)
+
+	// PopulateListEntry ensures that the listEntry's struct fields are populated.
+	PopulateListEntry(ctx context.Context, listEntry *gtsmodel.ListEntry) error
+
+	// PutListEntries inserts a slice of listEntries into the database.
+	// It uses a transaction to ensure no partial updates.
+	PutListEntries(ctx context.Context, listEntries []*gtsmodel.ListEntry) error
 
 	// DeleteListEntry deletes one list entry with the given id.
 	DeleteListEntry(ctx context.Context, id string) error

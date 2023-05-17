@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -123,28 +124,23 @@ func (p *Processor) GetListAccounts(ctx context.Context, account *gtsmodel.Accou
 			prevMinIDValue = listEntry.ID
 		}
 
-		if listEntry.Follow == nil {
-			listEntry.Follow, err = p.state.DB.GetFollowByID(ctx, listEntry.FollowID)
-			if err != nil {
-				if errors.Is(err, db.ErrNoEntries) {
-jjjjjjjjjjjjjjjjjjj
-				}
-				return nil, gtserror.NewErrorInternalError(err)
-			}	
+		if err := p.state.DB.PopulateListEntry(ctx, listEntry); err != nil {
+			log.Debugf(ctx, "skipping list entry because of error populating it: %q", err)
+			continue
 		}
 
-		if listEntry.Follow.TargetAccount == nil {
-			listEntry.Follow.TargetAccount, err = p.state.DB.GetAccountByID(ctx, listEntry.Follow.TargetAccountID)
-			if err != nil {
-				if errors.Is(err, db.ErrNoEntries) {
-					jjjjjjjjjjjjjjjjjjj
-				}
-			}
+		if err := p.state.DB.PopulateFollow(ctx, listEntry.Follow); err != nil {
+			log.Debugf(ctx, "skipping list entry because of error populating follow: %q", err)
+			continue
 		}
 
-		targetAccountID := listEntry.Follow.TargetAccountID
+		apiAccount, err := p.tc.AccountToAPIAccountPublic(ctx, listEntry.Follow.TargetAccount)
+		if err != nil {
+			log.Debugf(ctx, "skipping list entry because of error converting follow target account: %q", err)
+			continue
+		}
 
-		items[i] = listEntry
+		items[i] = apiAccount
 	}
 
 	return util.PackagePageableResponse(util.PageableResponseParams{

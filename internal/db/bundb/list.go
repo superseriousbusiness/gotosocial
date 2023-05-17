@@ -25,6 +25,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -60,13 +61,8 @@ func (l *listDB) getList(ctx context.Context, lookup string, dbQuery func(*gtsmo
 		return list, nil
 	}
 
-	// Set the list account.
-	list.Account, err = l.state.DB.GetAccountByID(
-		gtscontext.SetBarebones(ctx),
-		list.AccountID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error getting list account: %w", err)
+	if err := l.state.DB.PopulateList(ctx, list); err != nil {
+		return nil, err
 	}
 
 	return list, nil
@@ -117,6 +113,38 @@ func (l *listDB) GetListsForAccountID(ctx context.Context, accountID string) ([]
 	}
 
 	return lists, nil
+}
+
+func (l *listDB) PopulateList(ctx context.Context, list *gtsmodel.List) error {
+	var (
+		err  error
+		errs = make(gtserror.MultiError, 0, 2)
+	)
+
+	if list.Account == nil {
+		// List account is not set, fetch from the database.
+		list.Account, err = l.state.DB.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			list.AccountID,
+		)
+		if err != nil {
+			errs.Append(fmt.Errorf("error populating list account: %w", err))
+		}
+	}
+
+	if list.ListEntries == nil {
+		// List entries are not set, fetch from the database.
+		list.ListEntries, err = l.state.DB.GetListEntries(
+			gtscontext.SetBarebones(ctx),
+			list.ID,
+			"", "", "", 0,
+		)
+		if err != nil {
+			errs.Append(fmt.Errorf("error populating list entries: %w", err))
+		}
+	}
+
+	return errs.Combine()
 }
 
 func (l *listDB) PutList(ctx context.Context, list *gtsmodel.List) error {
@@ -195,13 +223,9 @@ func (l *listDB) getListEntry(ctx context.Context, lookup string, dbQuery func(*
 		return listEntry, nil
 	}
 
-	// Set the list entry follow.
-	listEntry.Follow, err = l.state.DB.GetFollowByID(
-		gtscontext.SetBarebones(ctx),
-		listEntry.FollowID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error getting list entry follow: %w", err)
+	// Further populate the list entry fields where applicable.
+	if err := l.state.DB.PopulateListEntry(ctx, listEntry); err != nil {
+		return nil, err
 	}
 
 	return listEntry, nil
@@ -247,8 +271,10 @@ func (l *listDB) GetListEntries(ctx context.Context,
 		// Select only entries belonging to listID.
 		Where("? = ?", bun.Ident("entry.list_id"), listID)
 
-	// return only entries LOWER (ie., older) than maxID
-	q = q.Where("? < ?", bun.Ident("entry.id"), maxID)
+	if maxID != "" {
+		// return only entries LOWER (ie., older) than maxID
+		q = q.Where("? < ?", bun.Ident("entry.id"), maxID)
+	}
 
 	if sinceID != "" {
 		// return only entries HIGHER (ie., newer) than sinceID
@@ -307,6 +333,38 @@ func (l *listDB) GetListEntries(ctx context.Context,
 	}
 
 	return listEntries, nil
+}
+
+func (l *listDB) PopulateListEntry(ctx context.Context, listEntry *gtsmodel.ListEntry) error {
+	var err error
+
+	if listEntry.Follow == nil {
+		// ListEntry follow is not set, fetch from the database.
+		listEntry.Follow, err = l.state.DB.GetFollowByID(
+			gtscontext.SetBarebones(ctx),
+			listEntry.FollowID,
+		)
+		if err != nil {
+			return fmt.Errorf("error populating listEntry follow: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (l *listDB) PutListEntries(ctx context.Context, listEntries []*gtsmodel.ListEntry) error {
+	return l.conn.RunInTx(ctx, func(tx bun.Tx) error {
+		for _, listEntry := range listEntries {
+			if _, err := tx.
+				NewInsert().
+				Model(listEntry).
+				Exec(ctx); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
 func (l *listDB) DeleteListEntry(ctx context.Context, id string) error {
