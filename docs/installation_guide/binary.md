@@ -103,7 +103,7 @@ Replace `some_username` with the username of the account you just created.
 
 ## 6. Login
 
-You should now be able to log in to your instance using the email address and password of the account you just created. We recommend using [Pinafore](https://pinafore.social) or [Tusky](https://tusky.app) for this.
+You should now be able to log in to your instance using the email address and password of the account you just created. We recommend using [Semaphore](https://semaphore.social) or [Tusky](https://tusky.app) for this.
 
 ## 7. \[Optional\] Enable the systemd service
 

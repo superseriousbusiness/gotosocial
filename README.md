@@ -89,13 +89,13 @@ For a detailed view on what's implemented and what's not, and progress made towa
 
 The Mastodon API has become the de facto standard for client communication with federated servers, so GoToSocial has implemented and extended the API with custom functionality.
 
-In short, this means full support for modern, beautiful apps like [Tusky](https://tusky.app/) and [Pinafore](https://pinafore.social/).
+In short, this means full support for modern, beautiful apps like [Tusky](https://tusky.app/) and [Semaphore](https://semaphore.social/).
 
-Tusky                                                        |  Pinafore
+Tusky                                                        |  Semaphore
 :-----------------------------------------------------------:|:------------------------------------------------------------------:
-![An image of GoToSocial in Tusky](./docs/assets/tusky.png)  | ![An image of GoToSocial in Pinafore](./docs/assets/pinafore.png)
+![An image of GoToSocial in Tusky](./docs/assets/tusky.png)  | ![An image of GoToSocial in Semaphore](./docs/assets/semaphore.png)
 
-If you're used to using Mastodon with Tusky or Pinafore, you'll find using GoToSocial a breeze.
+If you're used to using Mastodon with Tusky or Semaphore, you'll find using GoToSocial a breeze.
 
 ### Granular post settings
 
@@ -183,7 +183,7 @@ Since GoToSocial is still in alpha, there are plenty of bugs. We use [GitHub iss
 
 ### Client App Issues
 
-GoToSocial works great with Tusky and Pinafore, but some other client applications still need work or have issues connecting to GoToSocial. We're tracking them [right here](https://github.com/superseriousbusiness/gotosocial/projects/5). It's our goal to make any app that's compatible with the Mastodon API work seamlessly with GoToSocial.
+GoToSocial works great with Tusky and Semaphore, but some other client applications still need work or have issues connecting to GoToSocial. We're tracking them [right here](https://github.com/superseriousbusiness/gotosocial/projects/5). It's our goal to make any app that's compatible with the Mastodon API work seamlessly with GoToSocial.
 
 ### Federation Issues
 
