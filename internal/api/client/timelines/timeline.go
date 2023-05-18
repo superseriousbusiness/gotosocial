@@ -32,7 +32,7 @@ const (
 	HomeTimeline = BasePath + "/home"
 	// PublicTimeline is the path for the public (and public local) timeline
 	PublicTimeline = BasePath + "/public"
-	ListTimeline   = BasePath + "/lists/:" + IDKey
+	ListTimeline   = BasePath + "/list/:" + IDKey
 	// MaxIDKey is the url query for setting a max status ID to return
 	MaxIDKey = "max_id"
 	// SinceIDKey is the url query for returning results newer than the given ID

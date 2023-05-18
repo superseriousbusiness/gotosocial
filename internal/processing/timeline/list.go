@@ -40,7 +40,7 @@ func (p *Processor) ListTimelineGet(ctx context.Context, authed *oauth.Auth, lis
 	}
 
 	var (
-		items          = make([]interface{}, count)
+		items          = make([]interface{}, 0, count)
 		nextMaxIDValue string
 		prevMinIDValue string
 	)

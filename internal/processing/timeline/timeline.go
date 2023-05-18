@@ -39,8 +39,9 @@ type Processor struct {
 
 func New(state *state.State, tc typeutils.TypeConverter, filter *visibility.Filter) Processor {
 	return Processor{
-		state: state,
-		tc:    tc,
+		state:  state,
+		tc:     tc,
+		filter: filter,
 		HomeTimelines: timeline.NewManager(
 			HomeTimelineGrab(state.DB),
 			HomeTimelineFilter(state.DB, filter),
