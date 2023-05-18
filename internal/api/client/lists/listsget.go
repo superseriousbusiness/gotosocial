@@ -26,9 +26,42 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// ListsGETHandler returns a list of lists created by/for the authed account
+// ListsGETHandler swagger:operation GET /api/v1/lists lists
+//
+// Get all lists for owned by authorized user.
+//
+//	---
+//	tags:
+//	- lists
+//
+//	produces:
+//	- application/json
+//
+//	security:
+//	- OAuth2 Bearer:
+//		- read:lists
+//
+//	responses:
+//		'200':
+//			name: lists
+//			description: Array of all lists owned by the requesting user.
+//			schema:
+//				type: array
+//				items:
+//					"$ref": "#/definitions/list"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) ListsGETHandler(c *gin.Context) {
-	if _, err := oauth.Authed(c, true, true, true, true); err != nil {
+	authed, err := oauth.Authed(c, true, true, true, true)
+	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
@@ -38,6 +71,11 @@ func (m *Module) ListsGETHandler(c *gin.Context) {
 		return
 	}
 
-	// todo: implement this; currently it's a no-op
-	c.JSON(http.StatusOK, []string{})
+	lists, errWithCode := m.processor.List().GetAll(c.Request.Context(), authed.Account)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	c.JSON(http.StatusOK, lists)
 }

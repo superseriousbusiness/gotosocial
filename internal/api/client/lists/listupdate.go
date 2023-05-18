@@ -15,50 +15,59 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package notifications
+package lists
 
 import (
-	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
-// NotificationGETHandler swagger:operation GET /api/v1/notification/{id} notification
+// ListUpdatePUTHandler swagger:operation PUT /api/v1/list listUpdate
 //
-// Get a single notification with the given ID.
+// Update an existing list.
 //
 //	---
 //	tags:
-//	- notifications
+//	- lists
+//
+//	consumes:
+//	- application/json
+//	- application/xml
+//	- application/x-www-form-urlencoded
 //
 //	produces:
 //	- application/json
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- read:notifications
+//		- write:lists
 //
 //	responses:
 //		'200':
-//			name: notifications
-//			description: Requested notification.
+//			description: "The newly updated list."
 //			schema:
-//				"$ref": "#/definitions/notification"
+//				"$ref": "#/definitions/list"
 //		'400':
 //			description: bad request
 //		'401':
 //			description: unauthorized
+//		'403':
+//			description: forbidden
 //		'404':
 //			description: not found
 //		'406':
 //			description: not acceptable
 //		'500':
 //			description: internal server error
-func (m *Module) NotificationGETHandler(c *gin.Context) {
+func (m *Module) ListUpdatePOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
@@ -70,18 +79,28 @@ func (m *Module) NotificationGETHandler(c *gin.Context) {
 		return
 	}
 
-	targetNotifID := c.Param(IDKey)
-	if targetNotifID == "" {
-		err := errors.New("no notification id specified")
+	form := &apimodel.ListUpdateRequest{}
+	if err := c.ShouldBind(form); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
-	resp, errWithCode := m.processor.Timeline().NotificationGet(c.Request.Context(), authed.Account, targetNotifID)
+	if err := validate.ListTitle(form.Title); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	repliesPolicy := gtsmodel.RepliesPolicy(strings.ToLower(form.RepliesPolicy))
+	if err := validate.ListRepliesPolicy(repliesPolicy); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	apiList, errWithCode := m.processor.List().Update(c.Request.Context(), authed.Account, form.Title, repliesPolicy)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	c.JSON(http.StatusOK, apiList)
 }

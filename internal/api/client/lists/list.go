@@ -25,8 +25,10 @@ import (
 )
 
 const (
+	IDKey = "id"
 	// BasePath is the base path for serving the lists API, minus the 'api' prefix
-	BasePath = "/v1/lists"
+	BasePath       = "/v1/lists"
+	BasePathWithID = BasePath + "/:" + IDKey
 )
 
 type Module struct {
@@ -40,5 +42,9 @@ func New(processor *processing.Processor) *Module {
 }
 
 func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
+	// create / get / update / delete lists
+	attachHandler(http.MethodPost, BasePath, m.ListCreatePOSTHandler)
 	attachHandler(http.MethodGet, BasePath, m.ListsGETHandler)
+	attachHandler(http.MethodGet, BasePathWithID, m.ListGETHandler)
+
 }

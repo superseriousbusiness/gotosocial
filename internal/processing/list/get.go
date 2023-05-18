@@ -66,7 +66,7 @@ func (p *Processor) Get(ctx context.Context, account *gtsmodel.Account, id strin
 }
 
 // GetMultiple returns multiple lists created by the given account, sorted by list ID DESC (newest first).
-func (p *Processor) GetMultiple(ctx context.Context, account *gtsmodel.Account, id string) ([]*apimodel.List, gtserror.WithCode) {
+func (p *Processor) GetAll(ctx context.Context, account *gtsmodel.Account) ([]*apimodel.List, gtserror.WithCode) {
 	lists, err := p.state.DB.GetListsForAccountID(
 		// Use barebones ctx; no embedded
 		// structs necessary for simple GET.

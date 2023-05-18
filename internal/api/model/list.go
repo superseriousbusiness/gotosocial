@@ -17,14 +17,36 @@
 
 package model
 
-// List represents a list of some users that the authenticated user follows.
+// List represents a user-created list of accounts that the user follows.
+//
+// swagger:model list
 type List struct {
-	// The internal database ID of the list.
+	// The ID of the list.
 	ID string `json:"id"`
 	// The user-defined title of the list.
 	Title string `json:"title"`
-	// followed = Show replies to any followed user
+	// RepliesPolicy for this list.
+	//	followed = Show replies to any followed user
 	//	list = Show replies to members of the list
 	//	none = Show replies to no one
 	RepliesPolicy string `json:"replies_policy"`
+}
+
+// ListCreateRequest models list creation parameters.
+//
+// swagger:parameters listCreate
+type ListCreateRequest struct {
+	// Title of this list.
+	// example: Cool People
+	// in: formData
+	// required: true
+	Title string `form:"title" json:"title" xml:"title"`
+	// RepliesPolicy for this list.
+	//	followed = Show replies to any followed user
+	//	list = Show replies to members of the list
+	//	none = Show replies to no one
+	// example: list
+	// default: list
+	// in: formData
+	RepliesPolicy string `form:"replies_policy" json:"replies_policy" xml:"replies_policy"`
 }

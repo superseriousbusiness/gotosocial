@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/fedi"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/list"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/media"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/report"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
@@ -56,6 +57,7 @@ type Processor struct {
 	account  account.Processor
 	admin    admin.Processor
 	fedi     fedi.Processor
+	list     list.Processor
 	media    media.Processor
 	report   report.Processor
 	status   status.Processor
@@ -74,6 +76,10 @@ func (p *Processor) Admin() *admin.Processor {
 
 func (p *Processor) Fedi() *fedi.Processor {
 	return &p.fedi
+}
+
+func (p *Processor) List() *list.Processor {
+	return &p.list
 }
 
 func (p *Processor) Media() *media.Processor {
@@ -127,6 +133,7 @@ func NewProcessor(
 	processor.account = account.New(state, tc, mediaManager, oauthServer, federator, filter, parseMentionFunc)
 	processor.admin = admin.New(state, tc, mediaManager, federator.TransportController(), emailSender)
 	processor.fedi = fedi.New(state, tc, federator, filter)
+	processor.list = list.New(state, tc)
 	processor.media = media.New(state, tc, mediaManager, federator.TransportController())
 	processor.report = report.New(state, tc)
 	processor.status = status.New(state, federator, tc, filter, parseMentionFunc)
