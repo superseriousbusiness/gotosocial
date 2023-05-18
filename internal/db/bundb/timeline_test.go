@@ -126,6 +126,17 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineFromHighest() {
 	suite.Equal("01FCTA44PW9H1TB328S9AQXKDS", s[len(s)-1].ID)
 }
 
+func (suite *TimelineTestSuite) TestGetListTimeline() {
+	ctx := context.Background()
+
+	list := suite.testLists["local_account_1_list_1"]
+
+	s, err := suite.db.GetListTimeline(ctx, list.ID, "", "", "", 20)
+	suite.NoError(err)
+
+	suite.Len(s, 11)
+}
+
 func getFutureStatus() *gtsmodel.Status {
 	theDistantFuture := time.Now().Add(876600 * time.Hour)
 	id, err := id.NewULIDFromTime(theDistantFuture)

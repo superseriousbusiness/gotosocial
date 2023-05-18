@@ -24,7 +24,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -55,10 +55,10 @@ func (suite *IndexTestSuite) SetupTest() {
 	suite.timeline = timeline.NewTimeline(
 		context.Background(),
 		suite.testAccounts["local_account_1"].ID,
-		processing.StatusGrabFunction(suite.db),
-		processing.StatusFilterFunction(suite.db, suite.filter),
-		processing.StatusPrepareFunction(suite.db, suite.tc),
-		processing.StatusSkipInsertFunction(),
+		tlprocessor.HomeTimelineGrab(suite.db),
+		tlprocessor.HomeTimelineFilter(suite.db, suite.filter),
+		tlprocessor.StatusPrepare(suite.db, suite.tc),
+		tlprocessor.HomeTimelineSkipInsert(),
 	)
 }
 

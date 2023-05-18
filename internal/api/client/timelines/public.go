@@ -173,7 +173,7 @@ func (m *Module) PublicTimelineGETHandler(c *gin.Context) {
 		local = i
 	}
 
-	resp, errWithCode := m.processor.PublicTimelineGet(c.Request.Context(), authed, maxID, sinceID, minID, limit, local)
+	resp, errWithCode := m.processor.Timeline().PublicTimelineGet(c.Request.Context(), authed, maxID, sinceID, minID, limit, local)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

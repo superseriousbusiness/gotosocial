@@ -149,7 +149,7 @@ func (p *Processor) timelineStatusForAccount(ctx context.Context, account *gtsmo
 	}
 
 	// Insert status in the home timeline of account.
-	if inserted, err := p.statusTimelines.IngestOne(ctx, account.ID, status); err != nil {
+	if inserted, err := p.timeline.HomeTimelines.IngestOne(ctx, account.ID, status); err != nil {
 		err = fmt.Errorf("timelineStatusForAccount: error ingesting status %s: %w", status.ID, err)
 		return false, err
 	} else if !inserted {
@@ -401,7 +401,7 @@ func (p *Processor) wipeStatus(ctx context.Context, statusToDelete *gtsmodel.Sta
 // deleteStatusFromTimelines completely removes the given status from all timelines.
 // It will also stream deletion of the status to all open streams.
 func (p *Processor) deleteStatusFromTimelines(ctx context.Context, status *gtsmodel.Status) error {
-	if err := p.statusTimelines.WipeItemFromAllTimelines(ctx, status.ID); err != nil {
+	if err := p.timeline.HomeTimelines.WipeItemFromAllTimelines(ctx, status.ID); err != nil {
 		return err
 	}
 

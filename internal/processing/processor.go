@@ -33,35 +33,35 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing/report"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/stream"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/user"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
 
 type Processor struct {
-	federator       federation.Federator
-	tc              typeutils.TypeConverter
-	oauthServer     oauth.Server
-	mediaManager    mm.Manager
-	statusTimelines timeline.Manager
-	state           *state.State
-	emailSender     email.Sender
-	filter          *visibility.Filter
+	federator    federation.Federator
+	tc           typeutils.TypeConverter
+	oauthServer  oauth.Server
+	mediaManager mm.Manager
+	state        *state.State
+	emailSender  email.Sender
+	filter       *visibility.Filter
 
 	/*
 		SUB-PROCESSORS
 	*/
 
-	account account.Processor
-	admin   admin.Processor
-	fedi    fedi.Processor
-	media   media.Processor
-	report  report.Processor
-	status  status.Processor
-	stream  stream.Processor
-	user    user.Processor
+	account  account.Processor
+	admin    admin.Processor
+	fedi     fedi.Processor
+	media    media.Processor
+	report   report.Processor
+	status   status.Processor
+	stream   stream.Processor
+	timeline timeline.Processor
+	user     user.Processor
 }
 
 func (p *Processor) Account() *account.Processor {
@@ -92,6 +92,10 @@ func (p *Processor) Stream() *stream.Processor {
 	return &p.stream
 }
 
+func (p *Processor) Timeline() *timeline.Processor {
+	return &p.timeline
+}
+
 func (p *Processor) User() *user.Processor {
 	return &p.user
 }
@@ -114,15 +118,9 @@ func NewProcessor(
 		tc:           tc,
 		oauthServer:  oauthServer,
 		mediaManager: mediaManager,
-		statusTimelines: timeline.NewManager(
-			StatusGrabFunction(state.DB),
-			StatusFilterFunction(state.DB, filter),
-			StatusPrepareFunction(state.DB, tc),
-			StatusSkipInsertFunction(),
-		),
-		state:       state,
-		filter:      filter,
-		emailSender: emailSender,
+		state:        state,
+		filter:       filter,
+		emailSender:  emailSender,
 	}
 
 	// sub processors
@@ -133,6 +131,7 @@ func NewProcessor(
 	processor.report = report.New(state, tc)
 	processor.status = status.New(state, federator, tc, filter, parseMentionFunc)
 	processor.stream = stream.New(state, oauthServer)
+	processor.timeline = timeline.New(state, tc, filter)
 	processor.user = user.New(state, emailSender)
 
 	return processor
@@ -164,10 +163,10 @@ func (p *Processor) EnqueueFederator(ctx context.Context, msgs ...messages.FromF
 
 // Start starts the Processor.
 func (p *Processor) Start() error {
-	return p.statusTimelines.Start()
+	return p.timeline.HomeTimelines.Start()
 }
 
 // Stop stops the processor cleanly.
 func (p *Processor) Stop() error {
-	return p.statusTimelines.Stop()
+	return p.timeline.HomeTimelines.Stop()
 }

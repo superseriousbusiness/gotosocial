@@ -19,9 +19,11 @@ package bundb
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -289,7 +291,7 @@ func (t *timelineDB) GetListTimeline(
 	sinceID string,
 	minID string,
 	limit int,
-) ([]*gtsmodel.Status, db.Error) {
+) ([]*gtsmodel.Status, error) {
 	// Ensure reasonable
 	if limit < 0 {
 		limit = 0
@@ -301,25 +303,39 @@ func (t *timelineDB) GetListTimeline(
 		frontToBack = true
 	)
 
-	// Fetch all list entries from the database.
-	list, err := t.state.DB.GetListEntries(ctx, listID, "", "", "", 0)
+	// Fetch all listEntries entries from the database.
+	listEntries, err := t.state.DB.GetListEntries(
+		// Don't need actual follows
+		// for this, just the IDs.
+		gtscontext.SetBarebones(ctx),
+		listID,
+		"", "", "", 0,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error getting entries for list %s: %w", listID, err)
 	}
 
+	// Extract just the IDs of each follow.
+	followIDs := make([]string, 0, len(listEntries))
+	for _, listEntry := range listEntries {
+		followIDs = append(followIDs, listEntry.FollowID)
+	}
+
+	// Select target account IDs from follows.
+	subQ := t.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("follows"), bun.Ident("follow")).
+		Column("follow.target_account_id").
+		Where("? IN (?)", bun.Ident("follow.id"), bun.In(followIDs))
+
+	// Select only status IDs created
+	// by one of the followed accounts.
 	q := t.conn.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
 		// Select only IDs from table
 		Column("status.id").
-		// Find out who accountID follows.
-		Join("LEFT JOIN ? AS ? ON ? = ? AND ? = ?",
-			bun.Ident("follows"),
-			bun.Ident("follow"),
-			bun.Ident("follow.target_account_id"),
-			bun.Ident("status.account_id"),
-			bun.Ident("follow.account_id"),
-			accountID)
+		Where("? IN (?)", bun.Ident("status.account_id"), subQ)
 
 	if maxID == "" || maxID >= id.Highest {
 		const future = 24 * time.Hour
@@ -349,11 +365,6 @@ func (t *timelineDB) GetListTimeline(
 		frontToBack = false
 	}
 
-	if local {
-		// return only statuses posted by local account havers
-		q = q.Where("? = ?", bun.Ident("status.local"), local)
-	}
-
 	if limit > 0 {
 		// limit amount of statuses returned
 		q = q.Limit(limit)
@@ -366,17 +377,6 @@ func (t *timelineDB) GetListTimeline(
 		// Page up.
 		q = q.Order("status.id ASC")
 	}
-
-	// Use a WhereGroup here to specify that we want EITHER statuses posted by accounts that accountID follows,
-	// OR statuses posted by accountID itself (since a user should be able to see their own statuses).
-	//
-	// This is equivalent to something like WHERE ... AND (... OR ...)
-	// See: https://bun.uptrace.dev/guide/queries.html#select
-	q = q.WhereGroup(" AND ", func(*bun.SelectQuery) *bun.SelectQuery {
-		return q.
-			WhereOr("? = ?", bun.Ident("follow.account_id"), accountID).
-			WhereOr("? = ?", bun.Ident("status.account_id"), accountID)
-	})
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {
 		return nil, t.conn.ProcessError(err)
