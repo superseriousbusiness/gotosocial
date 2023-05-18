@@ -18,6 +18,7 @@
 package lists
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -46,6 +47,14 @@ import (
 //	produces:
 //	- application/json
 //
+//	parameters:
+//	-
+//		name: id
+//		type: string
+//		description: ID of the list
+//		in: path
+//		required: true
+//
 //	security:
 //	- OAuth2 Bearer:
 //		- write:lists
@@ -67,7 +76,7 @@ import (
 //			description: not acceptable
 //		'500':
 //			description: internal server error
-func (m *Module) ListUpdatePOSTHandler(c *gin.Context) {
+func (m *Module) ListUpdatePUTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
@@ -79,24 +88,39 @@ func (m *Module) ListUpdatePOSTHandler(c *gin.Context) {
 		return
 	}
 
+	targetListID := c.Param(IDKey)
+	if targetListID == "" {
+		err := errors.New("no list id specified")
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
 	form := &apimodel.ListUpdateRequest{}
 	if err := c.ShouldBind(form); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
-	if err := validate.ListTitle(form.Title); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-		return
+	if form.Title != nil {
+		if err := validate.ListTitle(*form.Title); err != nil {
+			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+			return
+		}
 	}
 
-	repliesPolicy := gtsmodel.RepliesPolicy(strings.ToLower(form.RepliesPolicy))
-	if err := validate.ListRepliesPolicy(repliesPolicy); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-		return
+	var repliesPolicy *gtsmodel.RepliesPolicy
+	if form.RepliesPolicy != nil {
+		rp := gtsmodel.RepliesPolicy(strings.ToLower(*form.RepliesPolicy))
+
+		if err := validate.ListRepliesPolicy(rp); err != nil {
+			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+			return
+		}
+
+		repliesPolicy = &rp
 	}
 
-	apiList, errWithCode := m.processor.List().Update(c.Request.Context(), authed.Account, form.Title, repliesPolicy)
+	apiList, errWithCode := m.processor.List().Update(c.Request.Context(), authed.Account, targetListID, form.Title, repliesPolicy)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

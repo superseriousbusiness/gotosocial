@@ -10,9 +10,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// ListGETHandler swagger:operation GET /api/v1/list/{id} list
+// ListDELETEHandler swagger:operation DELETE /api/v1/list/{id} listDelete
 //
-// Get a single list with the given ID.
+// Delete a single list with the given ID.
 //
 //	---
 //	tags:
@@ -31,14 +31,11 @@ import (
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- read:lists
+//		- write:lists
 //
 //	responses:
 //		'200':
-//			name: list
-//			description: Requested list.
-//			schema:
-//				"$ref": "#/definitions/list"
+//			description: list deleted
 //		'400':
 //			description: bad request
 //		'401':
@@ -49,7 +46,7 @@ import (
 //			description: not acceptable
 //		'500':
 //			description: internal server error
-func (m *Module) ListGETHandler(c *gin.Context) {
+func (m *Module) ListDELETEHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
@@ -68,11 +65,10 @@ func (m *Module) ListGETHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.List().Get(c.Request.Context(), authed.Account, targetListID)
-	if errWithCode != nil {
+	if errWithCode := m.processor.List().Delete(c.Request.Context(), authed.Account, targetListID); errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	c.JSON(http.StatusOK, gin.H{})
 }

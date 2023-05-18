@@ -50,3 +50,24 @@ type ListCreateRequest struct {
 	// in: formData
 	RepliesPolicy string `form:"replies_policy" json:"replies_policy" xml:"replies_policy"`
 }
+
+// ListUpdateRequest models list update parameters.
+//
+// swagger:parameters listUpdate
+type ListUpdateRequest struct {
+	// Title of this list.
+	// example: Cool People
+	// in: formData
+	Title *string `form:"title" json:"title" xml:"title"`
+	// RepliesPolicy for this list.
+	//	followed = Show replies to any followed user
+	//	list = Show replies to members of the list
+	//	none = Show replies to no one
+	// in: formData
+	RepliesPolicy *string `form:"replies_policy" json:"replies_policy" xml:"replies_policy"`
+}
+
+// swagger:model ignore
+type ListAccountsChangeRequest struct {
+	AccountIDs []string `form:"account_ids[]" json:"account_ids" xml:"account_ids"`
+}

@@ -5,18 +5,24 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// ListGETHandler swagger:operation GET /api/v1/list/{id} list
+// ListAccountsPOSTHandler swagger:operation POST /api/v1/list/{id}/accounts addListAccounts
 //
-// Get a single list with the given ID.
+// Add one or more accounts to the given list.
 //
 //	---
 //	tags:
 //	- lists
+//
+//	consumes:
+//	- application/json
+//	- application/xml
+//	- application/x-www-form-urlencoded
 //
 //	produces:
 //	- application/json
@@ -35,10 +41,7 @@ import (
 //
 //	responses:
 //		'200':
-//			name: list
-//			description: Requested list.
-//			schema:
-//				"$ref": "#/definitions/list"
+//			description: list accounts updated
 //		'400':
 //			description: bad request
 //		'401':
@@ -49,7 +52,7 @@ import (
 //			description: not acceptable
 //		'500':
 //			description: internal server error
-func (m *Module) ListGETHandler(c *gin.Context) {
+func (m *Module) ListAccountsPOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
@@ -68,11 +71,22 @@ func (m *Module) ListGETHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.List().Get(c.Request.Context(), authed.Account, targetListID)
-	if errWithCode != nil {
+	form := &apimodel.ListAccountsChangeRequest{}
+	if err := c.ShouldBind(form); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	if len(form.AccountIDs) == 0 {
+		err := errors.New("no account IDs given")
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	if errWithCode := m.processor.List().AddToList(c.Request.Context(), authed.Account, targetListID, form.AccountIDs); errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	c.JSON(http.StatusOK, gin.H{})
 }

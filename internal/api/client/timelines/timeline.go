@@ -27,10 +27,12 @@ import (
 const (
 	// BasePath is the base URI path for serving timelines, minus the 'api' prefix.
 	BasePath = "/v1/timelines"
+	IDKey    = "id"
 	// HomeTimeline is the path for the home timeline
 	HomeTimeline = BasePath + "/home"
 	// PublicTimeline is the path for the public (and public local) timeline
 	PublicTimeline = BasePath + "/public"
+	ListTimeline   = BasePath + "/lists/:" + IDKey
 	// MaxIDKey is the url query for setting a max status ID to return
 	MaxIDKey = "max_id"
 	// SinceIDKey is the url query for returning results newer than the given ID
@@ -56,4 +58,5 @@ func New(processor *processing.Processor) *Module {
 func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
 	attachHandler(http.MethodGet, HomeTimeline, m.HomeTimelineGETHandler)
 	attachHandler(http.MethodGet, PublicTimeline, m.PublicTimelineGETHandler)
+	attachHandler(http.MethodGet, ListTimeline, m.ListTimelineGETHandler)
 }

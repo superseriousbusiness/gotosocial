@@ -14,6 +14,20 @@ import (
 )
 
 func (p *Processor) ListTimelineGet(ctx context.Context, authed *oauth.Auth, listID string, maxID string, sinceID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
+	// Ensure list exists + is owned by this account.
+	list, err := p.state.DB.GetListByID(ctx, listID)
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			return nil, gtserror.NewErrorNotFound(err)
+		}
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if list.AccountID != authed.Account.ID {
+		err = fmt.Errorf("list with id %s does not belong to account %s", list.ID, authed.Account.ID)
+		return nil, gtserror.NewErrorNotFound(err)
+	}
+
 	statuses, err := p.state.DB.GetListTimeline(ctx, listID, maxID, sinceID, minID, limit)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = fmt.Errorf("ListTimelineGet: db error getting statuses: %w", err)
