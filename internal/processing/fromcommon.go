@@ -107,10 +107,10 @@ func (p *Processor) timelineAndNotifyStatusForFollowers(ctx context.Context, sta
 			if _, err := p.timelineStatus(
 				ctx,
 				p.timeline.ListTimelines.IngestOne,
-				listEntry.ID, // list timelines are keyed by listEntry ID
+				listEntry.ListID, // list timelines are keyed by list ID
 				follow.Account,
 				status,
-				stream.TimelineList+":"+listEntry.ID, // key streamType to this specific list
+				stream.TimelineList+":"+listEntry.ListID, // key streamType to this specific list
 			); err != nil {
 				errs.Append(fmt.Errorf("timelineAndNotifyStatusForFollowers: error list timelining status: %w", err))
 				continue

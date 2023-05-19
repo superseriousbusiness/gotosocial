@@ -18,6 +18,8 @@
 package processing_test
 
 import (
+	"context"
+
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -28,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/stream"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -61,6 +64,7 @@ type ProcessingStandardTestSuite struct {
 	testAutheds      map[string]*oauth.Auth
 	testBlocks       map[string]*gtsmodel.Block
 	testActivities   map[string]testrig.ActivityWithSignature
+	testLists        map[string]*gtsmodel.List
 
 	processor *processing.Processor
 }
@@ -84,6 +88,7 @@ func (suite *ProcessingStandardTestSuite) SetupSuite() {
 		},
 	}
 	suite.testBlocks = testrig.NewTestBlocks()
+	suite.testLists = testrig.NewTestLists()
 }
 
 func (suite *ProcessingStandardTestSuite) SetupTest() {
@@ -127,4 +132,34 @@ func (suite *ProcessingStandardTestSuite) TearDownTest() {
 		panic(err)
 	}
 	testrig.StopWorkers(&suite.state)
+}
+
+func (suite *ProcessingStandardTestSuite) openStreams(ctx context.Context, account *gtsmodel.Account, listIDs []string) map[string]*stream.Stream {
+	streams := make(map[string]*stream.Stream)
+
+	for _, streamType := range []string{
+		stream.TimelineHome,
+		stream.TimelinePublic,
+		stream.TimelineNotifications,
+	} {
+		stream, err := suite.processor.Stream().Open(ctx, account, streamType)
+		if err != nil {
+			suite.FailNow(err.Error())
+		}
+
+		streams[streamType] = stream
+	}
+
+	for _, listID := range listIDs {
+		streamType := stream.TimelineList + ":" + listID
+
+		stream, err := suite.processor.Stream().Open(ctx, account, streamType)
+		if err != nil {
+			suite.FailNow(err.Error())
+		}
+
+		streams[streamType] = stream
+	}
+
+	return streams
 }
