@@ -30,12 +30,14 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
+	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 )
 
 // timelineAndNotifyStatus processes the given new status and inserts it into
-// the HOME timelines of accounts that follow the status author. It will also
-// handle notifications for any mentions attached to the account, and also
-// notifications for any local accounts that want a notif when this account posts.
+// the HOME and LIST timelines of accounts that follow the status author.
+//
+// It will also handle notifications for any mentions attached to the account, and
+// also notifications for any local accounts that want to know when this account posts.
 func (p *Processor) timelineAndNotifyStatus(ctx context.Context, status *gtsmodel.Status) error {
 	// Ensure status fully populated; including account, mentions, etc.
 	if err := p.state.DB.PopulateStatus(ctx, status); err != nil {
@@ -89,10 +91,43 @@ func (p *Processor) timelineAndNotifyStatusForFollowers(ctx context.Context, sta
 			continue
 		}
 
+		// Add status to each list that this follow
+		// is included in, and stream it if applicable.
+		listEntries, err := p.state.DB.GetListEntriesForFollowID(
+			// We only need the list IDs.
+			gtscontext.SetBarebones(ctx),
+			follow.ID,
+		)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			errs.Append(fmt.Errorf("timelineAndNotifyStatusForFollowers: error list timelining status: %w", err))
+			continue
+		}
+
+		for _, listEntry := range listEntries {
+			if _, err := p.timelineStatus(
+				ctx,
+				p.timeline.ListTimelines.IngestOne,
+				listEntry.ID, // list timelines are keyed by listEntry ID
+				follow.Account,
+				status,
+				stream.TimelineList+":"+listEntry.ID, // key streamType to this specific list
+			); err != nil {
+				errs.Append(fmt.Errorf("timelineAndNotifyStatusForFollowers: error list timelining status: %w", err))
+				continue
+			}
+		}
+
 		// Add status to home timeline for this
 		// follower, and stream it if applicable.
-		if timelined, err := p.timelineStatusForAccount(ctx, follow.Account, status); err != nil {
-			errs.Append(fmt.Errorf("timelineAndNotifyStatusForFollowers: error timelining status: %w", err))
+		if timelined, err := p.timelineStatus(
+			ctx,
+			p.timeline.HomeTimelines.IngestOne,
+			follow.AccountID, // home timelines are keyed by account ID
+			follow.Account,
+			status,
+			stream.TimelineHome,
+		); err != nil {
+			errs.Append(fmt.Errorf("timelineAndNotifyStatusForFollowers: error home timelining status: %w", err))
 			continue
 		} else if !timelined {
 			// Status wasn't added to home tomeline,
@@ -133,13 +168,21 @@ func (p *Processor) timelineAndNotifyStatusForFollowers(ctx context.Context, sta
 	return errs.Combine()
 }
 
-// timelineStatusForAccount puts the given status in the HOME timeline
-// of the account with given accountID, if it's HomeTimelineable.
+// timelineStatus uses the provided ingest function to put the given
+// status in a timeline with the given ID, if it's timelineable.
 //
-// If the status was inserted into the home timeline of the given account,
-// true will be returned + it will also be streamed via websockets to the user.
-func (p *Processor) timelineStatusForAccount(ctx context.Context, account *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
+// If the status was inserted into the timeline, true will be returned
+// + it will also be streamed to the user using the given streamType.
+func (p *Processor) timelineStatus(
+	ctx context.Context,
+	ingest func(context.Context, string, timeline.Timelineable) (bool, error),
+	timelineID string,
+	account *gtsmodel.Account,
+	status *gtsmodel.Status,
+	streamType string,
+) (bool, error) {
 	// Make sure the status is timelineable.
+	// This works for both home and list timelines.
 	if timelineable, err := p.filter.StatusHomeTimelineable(ctx, account, status); err != nil {
 		err = fmt.Errorf("timelineStatusForAccount: error getting timelineability for status for timeline with id %s: %w", account.ID, err)
 		return false, err
@@ -148,8 +191,8 @@ func (p *Processor) timelineStatusForAccount(ctx context.Context, account *gtsmo
 		return false, nil
 	}
 
-	// Insert status in the home timeline of account.
-	if inserted, err := p.timeline.HomeTimelines.IngestOne(ctx, account.ID, status); err != nil {
+	// Ingest status into given timeline using provided function.
+	if inserted, err := ingest(ctx, timelineID, status); err != nil {
 		err = fmt.Errorf("timelineStatusForAccount: error ingesting status %s: %w", status.ID, err)
 		return false, err
 	} else if !inserted {
@@ -164,7 +207,7 @@ func (p *Processor) timelineStatusForAccount(ctx context.Context, account *gtsmo
 		return true, err
 	}
 
-	if err := p.stream.Update(apiStatus, account, stream.TimelineHome); err != nil {
+	if err := p.stream.Update(apiStatus, account, []string{streamType}); err != nil {
 		err = fmt.Errorf("timelineStatusForAccount: error streaming update for status %s: %w", status.ID, err)
 		return true, err
 	}

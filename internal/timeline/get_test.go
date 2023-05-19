@@ -60,8 +60,8 @@ func (suite *GetTestSuite) SetupTest() {
 		suite.testAccounts["local_account_1"].ID,
 		tlprocessor.HomeTimelineGrab(suite.db),
 		tlprocessor.HomeTimelineFilter(suite.db, suite.filter),
-		tlprocessor.StatusPrepare(suite.db, suite.tc),
-		tlprocessor.HomeTimelineSkipInsert(),
+		tlprocessor.HomeTimelineStatusPrepare(suite.db, suite.tc),
+		tlprocessor.SkipInsert(),
 	)
 
 	// Put testrig statuses in a determinate order
@@ -136,8 +136,8 @@ func (suite *GetTestSuite) TestGetNewTimelinePageDown() {
 		suite.testAccounts["local_account_1"].ID,
 		tlprocessor.HomeTimelineGrab(suite.db),
 		tlprocessor.HomeTimelineFilter(suite.db, suite.filter),
-		tlprocessor.StatusPrepare(suite.db, suite.tc),
-		tlprocessor.HomeTimelineSkipInsert(),
+		tlprocessor.HomeTimelineStatusPrepare(suite.db, suite.tc),
+		tlprocessor.SkipInsert(),
 	)
 
 	// Get 5 from the top.
@@ -165,8 +165,8 @@ func (suite *GetTestSuite) TestGetNewTimelinePageUp() {
 		suite.testAccounts["local_account_1"].ID,
 		tlprocessor.HomeTimelineGrab(suite.db),
 		tlprocessor.HomeTimelineFilter(suite.db, suite.filter),
-		tlprocessor.StatusPrepare(suite.db, suite.tc),
-		tlprocessor.HomeTimelineSkipInsert(),
+		tlprocessor.HomeTimelineStatusPrepare(suite.db, suite.tc),
+		tlprocessor.SkipInsert(),
 	)
 
 	// Get 5 from the back.
@@ -194,8 +194,8 @@ func (suite *GetTestSuite) TestGetNewTimelineMoreThanPossible() {
 		suite.testAccounts["local_account_1"].ID,
 		tlprocessor.HomeTimelineGrab(suite.db),
 		tlprocessor.HomeTimelineFilter(suite.db, suite.filter),
-		tlprocessor.StatusPrepare(suite.db, suite.tc),
-		tlprocessor.HomeTimelineSkipInsert(),
+		tlprocessor.HomeTimelineStatusPrepare(suite.db, suite.tc),
+		tlprocessor.SkipInsert(),
 	)
 
 	// Get 100 from the top.
@@ -215,8 +215,8 @@ func (suite *GetTestSuite) TestGetNewTimelineMoreThanPossiblePageUp() {
 		suite.testAccounts["local_account_1"].ID,
 		tlprocessor.HomeTimelineGrab(suite.db),
 		tlprocessor.HomeTimelineFilter(suite.db, suite.filter),
-		tlprocessor.StatusPrepare(suite.db, suite.tc),
-		tlprocessor.HomeTimelineSkipInsert(),
+		tlprocessor.HomeTimelineStatusPrepare(suite.db, suite.tc),
+		tlprocessor.SkipInsert(),
 	)
 
 	// Get 100 from the back.

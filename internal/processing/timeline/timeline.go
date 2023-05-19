@@ -18,6 +18,8 @@
 package timeline
 
 import (
+	"context"
+
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -35,6 +37,7 @@ type Processor struct {
 	formatter     text.Formatter
 	parseMention  gtsmodel.ParseMentionFunc
 	HomeTimelines timeline.Manager
+	ListTimelines timeline.Manager
 }
 
 func New(state *state.State, tc typeutils.TypeConverter, filter *visibility.Filter) Processor {
@@ -45,8 +48,61 @@ func New(state *state.State, tc typeutils.TypeConverter, filter *visibility.Filt
 		HomeTimelines: timeline.NewManager(
 			HomeTimelineGrab(state.DB),
 			HomeTimelineFilter(state.DB, filter),
-			StatusPrepare(state.DB, tc),
-			HomeTimelineSkipInsert(),
+			HomeTimelineStatusPrepare(state.DB, tc),
+			SkipInsert(),
 		),
+		ListTimelines: timeline.NewManager(
+			ListTimelineGrab(state.DB),
+			ListTimelineFilter(state.DB, filter),
+			ListTimelineStatusPrepare(state.DB, tc),
+			SkipInsert(),
+		),
+	}
+}
+
+// SkipInsert returns a function that satisifes the SkipInsertFunction interface in internal/timeline.
+func SkipInsert() timeline.SkipInsertFunction {
+	// Gap to allow between a status or boost of status,
+	// and reinsertion of a new boost of that status.
+	// This is useful to avoid a heavily boosted status
+	// showing up way too often in a user's timeline.
+	const boostReinsertionDepth = 50
+
+	return func(
+		ctx context.Context,
+		newItemID string,
+		newItemAccountID string,
+		newItemBoostOfID string,
+		newItemBoostOfAccountID string,
+		nextItemID string,
+		nextItemAccountID string,
+		nextItemBoostOfID string,
+		nextItemBoostOfAccountID string,
+		depth int,
+	) (bool, error) {
+		if newItemID == nextItemID {
+			// Don't insert duplicates.
+			return true, nil
+		}
+
+		if newItemBoostOfID != "" {
+			if newItemBoostOfID == nextItemBoostOfID &&
+				depth < boostReinsertionDepth {
+				// Don't insert boosts of items
+				// we've seen boosted recently.
+				return true, nil
+			}
+
+			if newItemBoostOfID == nextItemID &&
+				depth < boostReinsertionDepth {
+				// Don't insert boosts of items when
+				// we've seen the original recently.
+				return true, nil
+			}
+		}
+
+		// Proceed with insertion
+		// (that's what she said!).
+		return false, nil
 	}
 }

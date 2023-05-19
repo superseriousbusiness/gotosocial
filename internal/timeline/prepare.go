@@ -119,7 +119,7 @@ func (t *timeline) prepareXBetweenIDs(ctx context.Context, amount int, behindID 
 	}
 
 	for e, entry := range toPrepare {
-		prepared, err := t.prepareFunction(ctx, t.accountID, entry.itemID)
+		prepared, err := t.prepareFunction(ctx, t.timelineID, entry.itemID)
 		if err != nil {
 			if errors.Is(err, db.ErrNoEntries) {
 				// ErrNoEntries means something has been deleted,

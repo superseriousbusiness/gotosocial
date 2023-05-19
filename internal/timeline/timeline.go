@@ -28,24 +28,24 @@ import (
 // It should be provided to NewTimeline when the caller is creating a timeline
 // (of statuses, notifications, etc).
 //
-//	timelineAccountID: the owner of the timeline
-//	maxID: the maximum item ID desired.
-//	sinceID: the minimum item ID desired.
-//	minID: see sinceID
-//	limit: the maximum amount of items to be returned
+//   - timelineID: ID of the timeline; usually the same as the account id of the timeline owner
+//   - maxID: the maximum item ID desired.
+//   - sinceID: the minimum item ID desired.
+//   - minID: see sinceID
+//   - limit: the maximum amount of items to be returned
 //
 // If an error is returned, the timeline will stop processing whatever request called GrabFunction,
 // and return the error. If no error is returned, but stop = true, this indicates to the caller of GrabFunction
 // that there are no more items to return, and processing should continue with the items already grabbed.
-type GrabFunction func(ctx context.Context, timelineAccountID string, maxID string, sinceID string, minID string, limit int) (items []Timelineable, stop bool, err error)
+type GrabFunction func(ctx context.Context, timelineID string, maxID string, sinceID string, minID string, limit int) (items []Timelineable, stop bool, err error)
 
 // FilterFunction is used by a Timeline to filter whether or not a grabbed item should be indexed.
-type FilterFunction func(ctx context.Context, timelineAccountID string, item Timelineable) (shouldIndex bool, err error)
+type FilterFunction func(ctx context.Context, timelineID string, item Timelineable) (shouldIndex bool, err error)
 
 // PrepareFunction converts a Timelineable into a Preparable.
 //
 // For example, this might result in the converstion of a *gtsmodel.Status with the given itemID into a serializable *apimodel.Status.
-type PrepareFunction func(ctx context.Context, timelineAccountID string, itemID string) (Preparable, error)
+type PrepareFunction func(ctx context.Context, timelineID string, itemID string) (Preparable, error)
 
 // SkipInsertFunction indicates whether a new item about to be inserted in the prepared list should be skipped,
 // based on the item itself, the next item in the timeline, and the depth at which nextItem has been found in the list.
@@ -88,8 +88,8 @@ type Timeline interface {
 		INFO FUNCTIONS
 	*/
 
-	// AccountID returns the id of the account this timeline belongs to.
-	AccountID() string
+	// TimelineID returns the id of this timeline.
+	TimelineID() string
 
 	// Len returns the length of the item index at this point in time.
 	Len() int
@@ -130,19 +130,19 @@ type timeline struct {
 	grabFunction    GrabFunction
 	filterFunction  FilterFunction
 	prepareFunction PrepareFunction
-	accountID       string
+	timelineID      string
 	lastGot         time.Time
 	sync.Mutex
 }
 
-func (t *timeline) AccountID() string {
-	return t.accountID
+func (t *timeline) TimelineID() string {
+	return t.timelineID
 }
 
-// NewTimeline returns a new Timeline for the given account ID
+// NewTimeline returns a new Timeline for the given ID.
 func NewTimeline(
 	ctx context.Context,
-	timelineAccountID string,
+	timelineID string,
 	grabFunction GrabFunction,
 	filterFunction FilterFunction,
 	prepareFunction PrepareFunction,
@@ -155,7 +155,7 @@ func NewTimeline(
 		grabFunction:    grabFunction,
 		filterFunction:  filterFunction,
 		prepareFunction: prepareFunction,
-		accountID:       timelineAccountID,
+		timelineID:      timelineID,
 		lastGot:         time.Time{},
 	}
 }

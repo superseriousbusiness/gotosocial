@@ -57,8 +57,8 @@ func (suite *IndexTestSuite) SetupTest() {
 		suite.testAccounts["local_account_1"].ID,
 		tlprocessor.HomeTimelineGrab(suite.db),
 		tlprocessor.HomeTimelineFilter(suite.db, suite.filter),
-		tlprocessor.StatusPrepare(suite.db, suite.tc),
-		tlprocessor.HomeTimelineSkipInsert(),
+		tlprocessor.HomeTimelineStatusPrepare(suite.db, suite.tc),
+		tlprocessor.SkipInsert(),
 	)
 }
 

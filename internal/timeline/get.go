@@ -39,7 +39,7 @@ func (t *timeline) LastGot() time.Time {
 func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID string, minID string, prepareNext bool) ([]Preparable, error) {
 	l := log.WithContext(ctx).
 		WithFields(kv.Fields{
-			{"accountID", t.accountID},
+			{"accountID", t.timelineID},
 			{"amount", amount},
 			{"maxID", maxID},
 			{"sinceID", sinceID},
@@ -244,7 +244,7 @@ func (t *timeline) getXBetweenIDs(ctx context.Context, amount int, behindID stri
 			if entry.prepared == nil {
 				// Whoops, this entry isn't prepared yet; some
 				// race condition? That's OK, we can do it now.
-				prepared, err := t.prepareFunction(ctx, t.accountID, entry.itemID)
+				prepared, err := t.prepareFunction(ctx, t.timelineID, entry.itemID)
 				if err != nil {
 					if errors.Is(err, db.ErrNoEntries) {
 						// ErrNoEntries means something has been deleted,
@@ -338,7 +338,7 @@ func (t *timeline) getXBetweenIDs(ctx context.Context, amount int, behindID stri
 		if entry.prepared == nil {
 			// Whoops, this entry isn't prepared yet; some
 			// race condition? That's OK, we can do it now.
-			prepared, err := t.prepareFunction(ctx, t.accountID, entry.itemID)
+			prepared, err := t.prepareFunction(ctx, t.timelineID, entry.itemID)
 			if err != nil {
 				if errors.Is(err, db.ErrNoEntries) {
 					// ErrNoEntries means something has been deleted,

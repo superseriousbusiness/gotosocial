@@ -164,8 +164,16 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 	}
 
 	// Get the initial stream type, if there is one.
-	// streamType will be an empty string if one wasn't supplied. Open() will deal with this
+	// By appending other query params to the streamType,
+	// we can allow for streaming for specific list IDs
+	// or hashtags.
 	streamType := c.Query(StreamQueryKey)
+	if list := c.Query(StreamListKey); list != "" {
+		streamType += ":" + list
+	} else if tag := c.Query(StreamTagKey); tag != "" {
+		streamType += ":" + tag
+	}
+
 	stream, errWithCode := m.processor.Stream().Open(c.Request.Context(), account, streamType)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
@@ -254,11 +262,11 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 				switch action {
 				case "subscribe":
 					stream.Lock()
-					stream.Timelines[streamType] = true
+					stream.StreamTypes[streamType] = true
 					stream.Unlock()
 				case "unsubscribe":
 					stream.Lock()
-					delete(stream.Timelines, streamType)
+					delete(stream.StreamTypes, streamType)
 					stream.Unlock()
 				default:
 					l.Warnf("Invalid 'type' field: %v", msg)

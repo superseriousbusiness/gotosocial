@@ -52,8 +52,8 @@ func (suite *ManagerTestSuite) SetupTest() {
 	manager := timeline.NewManager(
 		tlprocessor.HomeTimelineGrab(suite.db),
 		tlprocessor.HomeTimelineFilter(suite.db, suite.filter),
-		tlprocessor.StatusPrepare(suite.db, suite.tc),
-		tlprocessor.HomeTimelineSkipInsert(),
+		tlprocessor.HomeTimelineStatusPrepare(suite.db, suite.tc),
+		tlprocessor.SkipInsert(),
 	)
 	suite.manager = manager
 }

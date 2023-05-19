@@ -31,60 +31,65 @@ import (
 )
 
 // Open returns a new Stream for the given account, which will contain a channel for passing messages back to the caller.
-func (p *Processor) Open(ctx context.Context, account *gtsmodel.Account, streamTimeline string) (*stream.Stream, gtserror.WithCode) {
+func (p *Processor) Open(ctx context.Context, account *gtsmodel.Account, streamType string) (*stream.Stream, gtserror.WithCode) {
 	l := log.WithContext(ctx).WithFields(kv.Fields{
 		{"account", account.ID},
-		{"streamType", streamTimeline},
+		{"streamType", streamType},
 	}...)
 	l.Debug("received open stream request")
 
-	// each stream needs a unique ID so we know to close it
-	streamID, err := id.NewRandomULID()
+	var (
+		streamID string
+		err      error
+	)
+
+	// Each stream needs a unique ID so we know to close it.
+	streamID, err = id.NewRandomULID()
 	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error generating stream id: %s", err))
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error generating stream id: %w", err))
 	}
 
-	// Each stream can be subscibed to multiple timelines.
+	// Each stream can be subscibed to multiple types.
 	// Record them in a set, and include the initial one
-	// if it was given to us
-	timelines := map[string]bool{}
-	if streamTimeline != "" {
-		timelines[streamTimeline] = true
+	// if it was given to us.
+	streamTypes := map[string]any{}
+	if streamType != "" {
+		streamTypes[streamType] = true
 	}
 
-	thisStream := &stream.Stream{
-		ID:        streamID,
-		Timelines: timelines,
-		Messages:  make(chan *stream.Message, 100),
-		Hangup:    make(chan interface{}, 1),
-		Connected: true,
+	newStream := &stream.Stream{
+		ID:          streamID,
+		StreamTypes: streamTypes,
+		Messages:    make(chan *stream.Message, 100),
+		Hangup:      make(chan interface{}, 1),
+		Connected:   true,
 	}
-	go p.waitToCloseStream(account, thisStream)
+	go p.waitToCloseStream(account, newStream)
 
 	v, ok := p.streamMap.Load(account.ID)
-	if !ok || v == nil {
-		// there is no entry in the streamMap for this account yet, so make one and store it
-		streamsForAccount := &stream.StreamsForAccount{
-			Streams: []*stream.Stream{
-				thisStream,
-			},
-		}
-		p.streamMap.Store(account.ID, streamsForAccount)
-	} else {
-		// there is an entry in the streamMap for this account
-		// parse the interface as a streamsForAccount
+	if ok {
+		// There is an entry in the streamMap
+		// for this account. Parse it out.
 		streamsForAccount, ok := v.(*stream.StreamsForAccount)
 		if !ok {
 			return nil, gtserror.NewErrorInternalError(errors.New("stream map error"))
 		}
 
-		// append this stream to it
+		// Append new stream to existing entry.
 		streamsForAccount.Lock()
-		streamsForAccount.Streams = append(streamsForAccount.Streams, thisStream)
+		streamsForAccount.Streams = append(streamsForAccount.Streams, newStream)
 		streamsForAccount.Unlock()
+	} else {
+		// There is no entry in the streamMap for
+		// this account yet. Create one and store it.
+		p.streamMap.Store(account.ID, &stream.StreamsForAccount{
+			Streams: []*stream.Stream{
+				newStream,
+			},
+		})
 	}
 
-	return thisStream, nil
+	return newStream, nil
 }
 
 // waitToCloseStream waits until the hangup channel is closed for the given stream.
