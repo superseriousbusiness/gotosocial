@@ -34,6 +34,17 @@ import (
 //		description: ID of the list
 //		in: path
 //		required: true
+//	-
+//		name: account_ids
+//		type: array
+//		items:
+//			type: string
+//		description: >-
+//			Array of accountIDs to modify.
+//			Each accountID must correspond to an account
+//			that the requesting account follows.
+//		in: formData
+//		required: true
 //
 //	security:
 //	- OAuth2 Bearer:

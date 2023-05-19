@@ -62,7 +62,7 @@ func (p *Processor) toAccount(payload string, event string, streamTypes []string
 		for _, streamType := range streamTypes {
 			if _, found := s.StreamTypes[streamType]; found {
 				s.Messages <- &stream.Message{
-					Stream:  []string{string(streamType)},
+					Stream:  []string{streamType},
 					Event:   string(event),
 					Payload: payload,
 				}

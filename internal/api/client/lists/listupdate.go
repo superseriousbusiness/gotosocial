@@ -54,6 +54,22 @@ import (
 //		description: ID of the list
 //		in: path
 //		required: true
+//	-
+//		name: title
+//		type: string
+//		description: Title of this list.
+//		in: formData
+//		example: Cool People
+//	-
+//		name: replies_policy
+//		type: string
+//		description: |-
+//		  RepliesPolicy for this list.
+//		  followed = Show replies to any followed user
+//		  list = Show replies to members of the list
+//		  none = Show replies to no one
+//		in: formData
+//		example: list
 //
 //	security:
 //	- OAuth2 Bearer:

@@ -67,7 +67,7 @@ type ListUpdateRequest struct {
 	RepliesPolicy *string `form:"replies_policy" json:"replies_policy" xml:"replies_policy"`
 }
 
-// swagger:model ignore
+// swagger:ignore
 type ListAccountsChangeRequest struct {
 	AccountIDs []string `form:"account_ids[]" json:"account_ids" xml:"account_ids"`
 }
