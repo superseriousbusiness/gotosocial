@@ -19,9 +19,7 @@ package accounts
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
@@ -29,11 +27,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// AccountStatusesGETHandler swagger:operation GET /api/v1/accounts/{id}/statuses accountStatuses
+// AccountListsGETHandler swagger:operation GET /api/v1/accounts/{id}/lists accountLists
 //
-// See statuses posted by the requested account.
-//
-// The statuses will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
+// See all lists of yours that contain requested account.
 //
 //	---
 //	tags:
@@ -49,76 +45,19 @@ import (
 //		description: Account ID.
 //		in: path
 //		required: true
-//	-
-//		name: limit
-//		type: integer
-//		description: Number of statuses to return.
-//		default: 30
-//		in: query
-//		required: false
-//	-
-//		name: exclude_replies
-//		type: boolean
-//		description: Exclude statuses that are a reply to another status.
-//		default: false
-//		in: query
-//		required: false
-//	-
-//		name: exclude_reblogs
-//		type: boolean
-//		description: Exclude statuses that are a reblog/boost of another status.
-//		default: false
-//		in: query
-//		required: false
-//	-
-//		name: max_id
-//		type: string
-//		description: >-
-//			Return only statuses *OLDER* than the given max status ID.
-//			The status with the specified ID will not be included in the response.
-//		in: query
-//	-
-//		name: min_id
-//		type: string
-//		description: >-
-//			Return only statuses *NEWER* than the given min status ID.
-//			The status with the specified ID will not be included in the response.
-//		in: query
-//		required: false
-//	-
-//		name: pinned_only
-//		type: boolean
-//		description: Show only pinned statuses. In other words, exclude statuses that are not pinned to the given account ID.
-//		default: false
-//		in: query
-//		required: false
-//	-
-//		name: only_media
-//		type: boolean
-//		description: Show only statuses with media attachments.
-//		default: false
-//		in: query
-//		required: false
-//	-
-//		name: only_public
-//		type: boolean
-//		description: Show only statuses with a privacy setting of 'public'.
-//		default: false
-//		in: query
-//		required: false
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- read:accounts
+//		- read:lists
 //
 //	responses:
 //		'200':
-//			name: statuses
-//			description: Array of statuses.
+//			name: lists
+//			description: Array of all lists containing this account.
 //			schema:
 //				type: array
 //				items:
-//					"$ref": "#/definitions/status"
+//					"$ref": "#/definitions/list"
 //		'400':
 //			description: bad request
 //		'401':
@@ -148,98 +87,11 @@ func (m *Module) AccountListsGETHandler(c *gin.Context) {
 		return
 	}
 
-	limit := 30
-	limitString := c.Query(LimitKey)
-	if limitString != "" {
-		i, err := strconv.ParseInt(limitString, 10, 32)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", LimitKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		limit = int(i)
-	}
-
-	excludeReplies := false
-	excludeRepliesString := c.Query(ExcludeRepliesKey)
-	if excludeRepliesString != "" {
-		i, err := strconv.ParseBool(excludeRepliesString)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", ExcludeRepliesKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		excludeReplies = i
-	}
-
-	excludeReblogs := false
-	excludeReblogsString := c.Query(ExcludeReblogsKey)
-	if excludeReblogsString != "" {
-		i, err := strconv.ParseBool(excludeReblogsString)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", ExcludeReblogsKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		excludeReblogs = i
-	}
-
-	maxID := ""
-	maxIDString := c.Query(MaxIDKey)
-	if maxIDString != "" {
-		maxID = maxIDString
-	}
-
-	minID := ""
-	minIDString := c.Query(MinIDKey)
-	if minIDString != "" {
-		minID = minIDString
-	}
-
-	pinnedOnly := false
-	pinnedString := c.Query(PinnedKey)
-	if pinnedString != "" {
-		i, err := strconv.ParseBool(pinnedString)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", PinnedKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		pinnedOnly = i
-	}
-
-	mediaOnly := false
-	mediaOnlyString := c.Query(OnlyMediaKey)
-	if mediaOnlyString != "" {
-		i, err := strconv.ParseBool(mediaOnlyString)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", OnlyMediaKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		mediaOnly = i
-	}
-
-	publicOnly := false
-	publicOnlyString := c.Query(OnlyPublicKey)
-	if publicOnlyString != "" {
-		i, err := strconv.ParseBool(publicOnlyString)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", OnlyPublicKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		publicOnly = i
-	}
-
-	resp, errWithCode := m.processor.Account().StatusesGet(c.Request.Context(), authed.Account, targetAcctID, limit, excludeReplies, excludeReblogs, maxID, minID, pinnedOnly, mediaOnly, publicOnly)
+	lists, errWithCode := m.processor.Account().ListsGet(c.Request.Context(), authed.Account, targetAcctID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	if resp.LinkHeader != "" {
-		c.Header("Link", resp.LinkHeader)
-	}
-	c.JSON(http.StatusOK, resp.Items)
+	c.JSON(http.StatusOK, lists)
 }

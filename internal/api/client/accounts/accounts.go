@@ -70,6 +70,8 @@ const (
 	UnblockPath = BasePathWithID + "/unblock"
 	// DeleteAccountPath is for deleting one's account via the API
 	DeleteAccountPath = BasePath + "/delete"
+	// ListsPath is for seeing which lists an account is.
+	ListsPath = BasePathWithID + "/lists"
 )
 
 type Module struct {
@@ -115,4 +117,7 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	// block or unblock account
 	attachHandler(http.MethodPost, BlockPath, m.AccountBlockPOSTHandler)
 	attachHandler(http.MethodPost, UnblockPath, m.AccountUnblockPOSTHandler)
+
+	// account lists
+	attachHandler(http.MethodGet, ListsPath, m.AccountListsGETHandler)
 }

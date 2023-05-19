@@ -15,6 +15,44 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package account
+package util
 
+import (
+	"fmt"
+	"strconv"
 
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+)
+
+const (
+	LimitKey = "limit"
+	LocalKey = "local"
+)
+
+func ParseLimit(limit string, defaultLimit int) (int, gtserror.WithCode) {
+	if limit == "" {
+		return defaultLimit, nil
+	}
+
+	i, err := strconv.Atoi(limit)
+	if err != nil {
+		err := fmt.Errorf("error parsing %s: %w", LimitKey, err)
+		return 0, gtserror.NewErrorBadRequest(err, err.Error())
+	}
+
+	return i, nil
+}
+
+func ParseLocal(local string, defaultLocal bool) (bool, gtserror.WithCode) {
+	if local == "" {
+		return defaultLocal, nil
+	}
+
+	i, err := strconv.ParseBool(local)
+	if err != nil {
+		err := fmt.Errorf("error parsing %s: %w", LocalKey, err)
+		return false, gtserror.NewErrorBadRequest(err, err.Error())
+	}
+
+	return i, nil
+}

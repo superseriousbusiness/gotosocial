@@ -49,6 +49,9 @@ type List interface {
 	// GetListEntries gets list entries from the given listID, using the given parameters.
 	GetListEntries(ctx context.Context, listID string, maxID string, sinceID string, minID string, limit int) ([]*gtsmodel.ListEntry, error)
 
+	// GetListEntriesForFollowID returns all listEntries that pertain to the given followID.
+	GetListEntriesForFollowID(ctx context.Context, followID string) ([]*gtsmodel.ListEntry, error)
+
 	// PopulateListEntry ensures that the listEntry's struct fields are populated.
 	PopulateListEntry(ctx context.Context, listEntry *gtsmodel.ListEntry) error
 

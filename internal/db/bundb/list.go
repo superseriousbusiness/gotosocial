@@ -335,6 +335,40 @@ func (l *listDB) GetListEntries(ctx context.Context,
 	return listEntries, nil
 }
 
+func (l *listDB) GetListEntriesForFollowID(ctx context.Context, followID string) ([]*gtsmodel.ListEntry, error) {
+	entryIDs := []string{}
+
+	if err := l.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("list_entries"), bun.Ident("entry")).
+		// Select only IDs from table
+		Column("entry.id").
+		// Select only entries belonging with given followID.
+		Where("? = ?", bun.Ident("entry.follow_id"), followID).
+		Scan(ctx, &entryIDs); err != nil {
+		return nil, l.conn.ProcessError(err)
+	}
+
+	if len(entryIDs) == 0 {
+		return nil, nil
+	}
+
+	// Select each list entry using its ID to ensure cache used.
+	listEntries := make([]*gtsmodel.ListEntry, 0, len(entryIDs))
+	for _, id := range entryIDs {
+		listEntry, err := l.state.DB.GetListEntryByID(ctx, id)
+		if err != nil {
+			log.Errorf(ctx, "error fetching list entry %q: %v", id, err)
+			continue
+		}
+
+		// Append list entries.
+		listEntries = append(listEntries, listEntry)
+	}
+
+	return listEntries, nil
+}
+
 func (l *listDB) PopulateListEntry(ctx context.Context, listEntry *gtsmodel.ListEntry) error {
 	var err error
 

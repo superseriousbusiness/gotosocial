@@ -62,8 +62,9 @@ func init() {
 
 			// Add indexes to the List entry table.
 			for index, columns := range map[string][]string{
-				"list_entries_id_idx":      {"id"},
-				"list_entries_list_id_idx": {"list_id"},
+				"list_entries_id_idx":        {"id"},
+				"list_entries_list_id_idx":   {"list_id"},
+				"list_entries_follow_id_idx": {"follow_id"},
 			} {
 				if _, err := tx.
 					NewCreateIndex().

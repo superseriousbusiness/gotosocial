@@ -2,9 +2,7 @@ package lists
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
@@ -106,16 +104,10 @@ func (m *Module) ListAccountsGETHandler(c *gin.Context) {
 		return
 	}
 
-	limit := 20
-	limitString := c.Query(LimitKey)
-	if limitString != "" {
-		i, err := strconv.ParseInt(limitString, 10, 32)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", LimitKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		limit = int(i)
+	limit, errWithCode := apiutil.ParseLimit(c.Query(apiutil.LimitKey), 20)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
 	}
 
 	resp, errWithCode := m.processor.List().GetListAccounts(

@@ -19,9 +19,7 @@ package timelines
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
@@ -127,25 +125,19 @@ func (m *Module) ListTimelineGETHandler(c *gin.Context) {
 		return
 	}
 
-	limit := 20
-	limitString := c.Query(LimitKey)
-	if limitString != "" {
-		i, err := strconv.ParseInt(limitString, 10, 32)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", LimitKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		limit = int(i)
+	limit, errWithCode := apiutil.ParseLimit(c.Query(apiutil.LimitKey), 20)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
 	}
 
 	resp, errWithCode := m.processor.Timeline().ListTimelineGet(
 		c.Request.Context(),
 		authed,
 		targetListID,
-		c.Param(MaxIDKey),
-		c.Param(SinceIDKey),
-		c.Param(MinIDKey),
+		c.Query(MaxIDKey),
+		c.Query(SinceIDKey),
+		c.Query(MinIDKey),
 		limit,
 	)
 	if errWithCode != nil {

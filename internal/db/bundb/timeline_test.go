@@ -33,110 +33,6 @@ type TimelineTestSuite struct {
 	BunDBStandardTestSuite
 }
 
-func (suite *TimelineTestSuite) TestGetPublicTimeline() {
-	var count int
-
-	for _, status := range suite.testStatuses {
-		if status.Visibility == gtsmodel.VisibilityPublic &&
-			status.BoostOfID == "" {
-			count++
-		}
-	}
-
-	ctx := context.Background()
-	s, err := suite.db.GetPublicTimeline(ctx, "", "", "", 20, false)
-	suite.NoError(err)
-
-	suite.Len(s, count)
-}
-
-func (suite *TimelineTestSuite) TestGetPublicTimelineWithFutureStatus() {
-	var count int
-
-	for _, status := range suite.testStatuses {
-		if status.Visibility == gtsmodel.VisibilityPublic &&
-			status.BoostOfID == "" {
-			count++
-		}
-	}
-
-	ctx := context.Background()
-
-	futureStatus := getFutureStatus()
-	err := suite.db.PutStatus(ctx, futureStatus)
-	suite.NoError(err)
-
-	s, err := suite.db.GetPublicTimeline(ctx, "", "", "", 20, false)
-	suite.NoError(err)
-
-	suite.NotContains(s, futureStatus)
-	suite.Len(s, count)
-}
-
-func (suite *TimelineTestSuite) TestGetHomeTimeline() {
-	ctx := context.Background()
-
-	viewingAccount := suite.testAccounts["local_account_1"]
-
-	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, "", "", "", 20, false)
-	suite.NoError(err)
-
-	suite.Len(s, 16)
-}
-
-func (suite *TimelineTestSuite) TestGetHomeTimelineWithFutureStatus() {
-	ctx := context.Background()
-
-	viewingAccount := suite.testAccounts["local_account_1"]
-
-	futureStatus := getFutureStatus()
-	err := suite.db.PutStatus(ctx, futureStatus)
-	suite.NoError(err)
-
-	s, err := suite.db.GetHomeTimeline(context.Background(), viewingAccount.ID, "", "", "", 20, false)
-	suite.NoError(err)
-
-	suite.NotContains(s, futureStatus)
-	suite.Len(s, 16)
-}
-
-func (suite *TimelineTestSuite) TestGetHomeTimelineBackToFront() {
-	ctx := context.Background()
-
-	viewingAccount := suite.testAccounts["local_account_1"]
-
-	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, "", "", id.Lowest, 5, false)
-	suite.NoError(err)
-
-	suite.Len(s, 5)
-	suite.Equal("01F8MHAYFKS4KMXF8K5Y1C0KRN", s[0].ID)
-	suite.Equal("01F8MH75CBF9JFX4ZAD54N0W0R", s[len(s)-1].ID)
-}
-
-func (suite *TimelineTestSuite) TestGetHomeTimelineFromHighest() {
-	ctx := context.Background()
-
-	viewingAccount := suite.testAccounts["local_account_1"]
-
-	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, id.Highest, "", "", 5, false)
-	suite.NoError(err)
-
-	suite.Len(s, 5)
-	suite.Equal("01G36SF3V6Y6V5BF9P4R7PQG7G", s[0].ID)
-	suite.Equal("01FCTA44PW9H1TB328S9AQXKDS", s[len(s)-1].ID)
-}
-
-func (suite *TimelineTestSuite) TestGetListTimeline() {
-	ctx := context.Background()
-
-	list := suite.testLists["local_account_1_list_1"]
-
-	s, err := suite.db.GetListTimeline(ctx, list.ID, "", "", "", 20)
-	suite.NoError(err)
-
-	suite.Len(s, 11)
-}
-
 func getFutureStatus() *gtsmodel.Status {
 	theDistantFuture := time.Now().Add(876600 * time.Hour)
 	id, err := id.NewULIDFromTime(theDistantFuture)
@@ -172,6 +68,208 @@ func getFutureStatus() *gtsmodel.Status {
 		Likeable:                 testrig.TrueBool(),
 		ActivityStreamsType:      ap.ObjectNote,
 	}
+}
+
+func (suite *TimelineTestSuite) publicCount() int {
+	var publicCount int
+
+	for _, status := range suite.testStatuses {
+		if status.Visibility == gtsmodel.VisibilityPublic &&
+			status.BoostOfID == "" {
+			publicCount++
+		}
+	}
+
+	return publicCount
+}
+
+func (suite *TimelineTestSuite) checkStatuses(statuses []*gtsmodel.Status, maxID string, minID string, expectedLength int) {
+	if l := len(statuses); l != expectedLength {
+		suite.FailNow("", "expected %d statuses in slice, got %d", expectedLength, l)
+	} else if l == 0 {
+		// Can't test empty slice.
+		return
+	}
+
+	// Check ordering + bounds of statuses.
+	highest := statuses[0].ID
+	for _, status := range statuses {
+		id := status.ID
+
+		if id >= maxID {
+			suite.FailNow("", "%s greater than maxID %s", id, maxID)
+		}
+
+		if id <= minID {
+			suite.FailNow("", "%s smaller than minID %s", id, minID)
+		}
+
+		if id > highest {
+			suite.FailNow("", "statuses in slice were not ordered highest -> lowest ID")
+		}
+
+		highest = id
+	}
+}
+
+func (suite *TimelineTestSuite) TestGetPublicTimeline() {
+	ctx := context.Background()
+
+	s, err := suite.db.GetPublicTimeline(ctx, "", "", "", 20, false)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.checkStatuses(s, id.Highest, id.Lowest, suite.publicCount())
+}
+
+func (suite *TimelineTestSuite) TestGetPublicTimelineWithFutureStatus() {
+	ctx := context.Background()
+
+	// Insert a status set far in the
+	// future, it shouldn't be retrieved.
+	futureStatus := getFutureStatus()
+	if err := suite.db.PutStatus(ctx, futureStatus); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	s, err := suite.db.GetPublicTimeline(ctx, "", "", "", 20, false)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.NotContains(s, futureStatus)
+	suite.checkStatuses(s, id.Highest, id.Lowest, suite.publicCount())
+}
+
+func (suite *TimelineTestSuite) TestGetHomeTimeline() {
+	var (
+		ctx            = context.Background()
+		viewingAccount = suite.testAccounts["local_account_1"]
+	)
+
+	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, "", "", "", 20, false)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.checkStatuses(s, id.Highest, id.Lowest, 16)
+}
+
+func (suite *TimelineTestSuite) TestGetHomeTimelineWithFutureStatus() {
+	var (
+		ctx            = context.Background()
+		viewingAccount = suite.testAccounts["local_account_1"]
+	)
+
+	// Insert a status set far in the
+	// future, it shouldn't be retrieved.
+	futureStatus := getFutureStatus()
+	if err := suite.db.PutStatus(ctx, futureStatus); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, "", "", "", 20, false)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.NotContains(s, futureStatus)
+	suite.checkStatuses(s, id.Highest, id.Lowest, 16)
+}
+
+func (suite *TimelineTestSuite) TestGetHomeTimelineBackToFront() {
+	var (
+		ctx            = context.Background()
+		viewingAccount = suite.testAccounts["local_account_1"]
+	)
+
+	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, "", "", id.Lowest, 5, false)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.checkStatuses(s, id.Highest, id.Lowest, 5)
+	suite.Equal("01F8MHAYFKS4KMXF8K5Y1C0KRN", s[0].ID)
+	suite.Equal("01F8MH75CBF9JFX4ZAD54N0W0R", s[len(s)-1].ID)
+}
+
+func (suite *TimelineTestSuite) TestGetHomeTimelineFromHighest() {
+	var (
+		ctx            = context.Background()
+		viewingAccount = suite.testAccounts["local_account_1"]
+	)
+
+	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, id.Highest, "", "", 5, false)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.checkStatuses(s, id.Highest, id.Lowest, 5)
+	suite.Equal("01G36SF3V6Y6V5BF9P4R7PQG7G", s[0].ID)
+	suite.Equal("01FCTA44PW9H1TB328S9AQXKDS", s[len(s)-1].ID)
+}
+
+func (suite *TimelineTestSuite) TestGetListTimelineNoParams() {
+	var (
+		ctx  = context.Background()
+		list = suite.testLists["local_account_1_list_1"]
+	)
+
+	s, err := suite.db.GetListTimeline(ctx, list.ID, "", "", "", 20)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.checkStatuses(s, id.Highest, id.Lowest, 11)
+}
+
+func (suite *TimelineTestSuite) TestGetListTimelineMaxID() {
+	var (
+		ctx  = context.Background()
+		list = suite.testLists["local_account_1_list_1"]
+	)
+
+	s, err := suite.db.GetListTimeline(ctx, list.ID, id.Highest, "", "", 5)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.checkStatuses(s, id.Highest, id.Lowest, 5)
+	suite.Equal("01G36SF3V6Y6V5BF9P4R7PQG7G", s[0].ID)
+	suite.Equal("01FCQSQ667XHJ9AV9T27SJJSX5", s[len(s)-1].ID)
+}
+
+func (suite *TimelineTestSuite) TestGetListTimelineMinID() {
+	var (
+		ctx  = context.Background()
+		list = suite.testLists["local_account_1_list_1"]
+	)
+
+	s, err := suite.db.GetListTimeline(ctx, list.ID, "", "", id.Lowest, 5)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.checkStatuses(s, id.Highest, id.Lowest, 5)
+	suite.Equal("01F8MHC8VWDRBQR0N1BATDDEM5", s[0].ID)
+	suite.Equal("01F8MH75CBF9JFX4ZAD54N0W0R", s[len(s)-1].ID)
+}
+
+func (suite *TimelineTestSuite) TestGetListTimelineMinIDPagingUp() {
+	var (
+		ctx  = context.Background()
+		list = suite.testLists["local_account_1_list_1"]
+	)
+
+	s, err := suite.db.GetListTimeline(ctx, list.ID, "", "", "01F8MHC8VWDRBQR0N1BATDDEM5", 5)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.checkStatuses(s, id.Highest, "01F8MHC8VWDRBQR0N1BATDDEM5", 5)
+	suite.Equal("01G20ZM733MGN8J344T4ZDDFY1", s[0].ID)
+	suite.Equal("01F8MHCP5P2NWYQ416SBA0XSEV", s[len(s)-1].ID)
 }
 
 func TestTimelineTestSuite(t *testing.T) {
