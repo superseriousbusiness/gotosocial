@@ -30,6 +30,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
+var noLists = make([]*apimodel.List, 0, 0)
+
+// ListsGet returns all lists owned by requestingAccount, which contain a follow for targetAccountID.
 func (p *Processor) ListsGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) ([]*apimodel.List, gtserror.WithCode) {
 	targetAccount, err := p.state.DB.GetAccountByID(ctx, targetAccountID)
 	if err != nil {
@@ -48,8 +51,6 @@ func (p *Processor) ListsGet(ctx context.Context, requestingAccount *gtsmodel.Ac
 		return nil, gtserror.NewErrorNotFound(errors.New("account not found"))
 	}
 
-	apiLists := []*apimodel.List{}
-
 	// Requester has to follow targetAccount
 	// for them to be in any of their lists.
 	follow, err := p.state.DB.GetFollow(
@@ -63,7 +64,7 @@ func (p *Processor) ListsGet(ctx context.Context, requestingAccount *gtsmodel.Ac
 	}
 
 	if follow == nil {
-		return apiLists, nil // by definition we know they're in no lists
+		return noLists, nil // by definition we know they're in no lists
 	}
 
 	listEntries, err := p.state.DB.GetListEntriesForFollowID(
@@ -75,10 +76,12 @@ func (p *Processor) ListsGet(ctx context.Context, requestingAccount *gtsmodel.Ac
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error: %w", err))
 	}
 
-	if len(listEntries) == 0 {
-		return apiLists, nil
+	count := len(listEntries)
+	if count == 0 {
+		return noLists, nil
 	}
 
+	apiLists := make([]*apimodel.List, 0, count)
 	for _, listEntry := range listEntries {
 		list, err := p.state.DB.GetListByID(
 			// Don't populate list.

@@ -48,7 +48,9 @@ func (p *Processor) Update(
 		return nil, errWithCode
 	}
 
+	// Only update columns we're told to update.
 	columns := make([]string, 0, 2)
+
 	if title != nil {
 		list.Title = *title
 		columns = append(columns, "title")

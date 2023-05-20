@@ -136,6 +136,12 @@ func (m *Module) ListUpdatePUTHandler(c *gin.Context) {
 		repliesPolicy = &rp
 	}
 
+	if form.Title == nil && repliesPolicy == nil {
+		err = errors.New("neither title nor replies_policy was set; nothing to update")
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
 	apiList, errWithCode := m.processor.List().Update(c.Request.Context(), authed.Account, targetListID, form.Title, repliesPolicy)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)

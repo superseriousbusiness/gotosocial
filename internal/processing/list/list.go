@@ -18,12 +18,6 @@
 package list
 
 import (
-	"context"
-	"fmt"
-
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
@@ -38,14 +32,4 @@ func New(state *state.State, tc typeutils.TypeConverter) Processor {
 		state: state,
 		tc:    tc,
 	}
-}
-
-// shortcut to return an api version of a list, or error appropriately.
-func (p *Processor) apiList(ctx context.Context, list *gtsmodel.List) (*apimodel.List, gtserror.WithCode) {
-	apiList, err := p.tc.ListToAPIList(ctx, list)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting list to api: %w", err))
-	}
-
-	return apiList, nil
 }

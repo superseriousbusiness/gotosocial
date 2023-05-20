@@ -31,24 +31,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// shortcut to get one list from the db, or error appropriately.
-func (p *Processor) getList(ctx context.Context, accountID string, listID string) (*gtsmodel.List, gtserror.WithCode) {
-	list, err := p.state.DB.GetListByID(ctx, listID)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			return nil, gtserror.NewErrorNotFound(err)
-		}
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	if list.AccountID != accountID {
-		err = fmt.Errorf("list with id %s does not belong to account %s", list.ID, accountID)
-		return nil, gtserror.NewErrorNotFound(err)
-	}
-
-	return list, nil
-}
-
 // Get returns the api model of one list with the given ID.
 func (p *Processor) Get(ctx context.Context, account *gtsmodel.Account, id string) (*apimodel.List, gtserror.WithCode) {
 	list, errWithCode := p.getList(
@@ -93,19 +75,33 @@ func (p *Processor) GetAll(ctx context.Context, account *gtsmodel.Account) ([]*a
 	return apiLists, nil
 }
 
-func (p *Processor) GetListAccounts(ctx context.Context, account *gtsmodel.Account, id string, maxID string, sinceID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
-	if _, errWithCode := p.getList(ctx, account.ID, id); errWithCode != nil {
+// GetListAccounts returns accounts that are in the given list, owned by the given account.
+// The additional parameters can be used for paging.
+func (p *Processor) GetListAccounts(
+	ctx context.Context,
+	account *gtsmodel.Account,
+	listID string,
+	maxID string,
+	sinceID string,
+	minID string,
+	limit int,
+) (*apimodel.PageableResponse, gtserror.WithCode) {
+	// Ensure list exists + is owned by requesting account.
+	if _, errWithCode := p.getList(ctx, account.ID, listID); errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	listEntries, err := p.state.DB.GetListEntries(ctx, id, maxID, sinceID, minID, limit)
-	if err != nil {
+	// To know which accounts are in the list,
+	// we need to first get requested list entries.
+	listEntries, err := p.state.DB.GetListEntries(ctx, listID, maxID, sinceID, minID, limit)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = fmt.Errorf("GetListAccounts: error getting list entries: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	count := len(listEntries)
 	if count == 0 {
+		// No list entries means no accounts.
 		return util.EmptyPageableResponse(), nil
 	}
 
@@ -115,6 +111,12 @@ func (p *Processor) GetListAccounts(ctx context.Context, account *gtsmodel.Accou
 		prevMinIDValue string
 	)
 
+	// For each list entry, we want the account it points to.
+	// To get this, we need to first get the follow that the
+	// list entry pertains to, then extract the target account
+	// from that follow.
+	//
+	// We do paging not by account ID, but by list entry ID.
 	for i, listEntry := range listEntries {
 		if i == count-1 {
 			nextMaxIDValue = listEntry.ID
@@ -145,7 +147,7 @@ func (p *Processor) GetListAccounts(ctx context.Context, account *gtsmodel.Accou
 
 	return util.PackagePageableResponse(util.PageableResponseParams{
 		Items:          items,
-		Path:           "api/v1/lists/" + id + "/accounts",
+		Path:           "api/v1/lists/" + listID + "/accounts",
 		NextMaxIDValue: nextMaxIDValue,
 		PrevMinIDValue: prevMinIDValue,
 		Limit:          limit,

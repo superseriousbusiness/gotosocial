@@ -28,29 +28,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
-// isInList check if thisID is equal to the result of thatID
-// for any entry in the given list.
-//
-// Will return the id of the listEntry if true, empty if false,
-// or an error if the result of thatID returns an error.
-func isInList(
-	list *gtsmodel.List,
-	thisID string,
-	getThatID func(listEntry *gtsmodel.ListEntry) (string, error),
-) (string, error) {
-	for _, listEntry := range list.ListEntries {
-		thatID, err := getThatID(listEntry)
-		if err != nil {
-			return "", err
-		}
-
-		if thisID == thatID {
-			return listEntry.ID, nil
-		}
-	}
-	return "", nil
-}
-
 // AddToList adds targetAccountIDs to the given list, if valid.
 func (p *Processor) AddToList(ctx context.Context, account *gtsmodel.Account, listID string, targetAccountIDs []string) gtserror.WithCode {
 	// Ensure this list exists + account owns it.
@@ -66,6 +43,8 @@ func (p *Processor) AddToList(ctx context.Context, account *gtsmodel.Account, li
 	listEntries := make([]*gtsmodel.ListEntry, 0, len(targetAccountIDs))
 
 	// Check each targetAccountID is valid.
+	//   - Follow must exist.
+	//   - Follow must not already be in the given list.
 	for _, targetAccountID := range targetAccountIDs {
 		// Ensure follow exists.
 		follow, err := p.state.DB.GetFollow(ctx, account.ID, targetAccountID)
@@ -78,19 +57,25 @@ func (p *Processor) AddToList(ctx context.Context, account *gtsmodel.Account, li
 		}
 
 		// Ensure followID not already in list.
-		// This particular call will never error.
-		if entryID, _ := isInList(
+		// This particular call to isInList will
+		// never error, so just check entryID.
+		entryID, _ := isInList(
 			list,
 			follow.ID,
 			func(listEntry *gtsmodel.ListEntry) (string, error) {
+				// Looking for the listEntry follow ID.
 				return listEntry.FollowID, nil
 			},
-		); entryID != "" {
+		)
+
+		// Empty entryID means entry with given
+		// followID wasn't found in the list.
+		if entryID != "" {
 			err = fmt.Errorf("account with id %s is already in list %s with entryID %s", targetAccountID, listID, entryID)
 			return gtserror.NewErrorUnprocessableEntity(err, err.Error())
 		}
 
-		// This is valid! We can do this!
+		// Entry wasn't in the list, we can add it.
 		listEntries = append(listEntries, &gtsmodel.ListEntry{
 			ID:       id.NewULID(),
 			ListID:   listID,
@@ -119,19 +104,31 @@ func (p *Processor) RemoveFromList(ctx context.Context, account *gtsmodel.Accoun
 		return errWithCode
 	}
 
+	// For each targetAccountID, we want to check if
+	// a follow with that targetAccountID is in the
+	// given list. If it is in there, we want to remove
+	// it from the list.
 	for _, targetAccountID := range targetAccountIDs {
+		// Check if targetAccountID is
+		// on a follow in the list.
 		entryID, err := isInList(
 			list,
 			targetAccountID,
 			func(listEntry *gtsmodel.ListEntry) (string, error) {
-				// We need the follow so populate this listEntry.
+				// We need the follow so populate this
+				// entry, if it's not already populated.
 				if err := p.state.DB.PopulateListEntry(ctx, listEntry); err != nil {
 					return "", err
 				}
+
+				// Looking for the list entry targetAccountID.
 				return listEntry.Follow.TargetAccountID, nil
 			},
 		)
 
+		// Error may be returned here if there was an issue
+		// populating the list entry. We only return on proper
+		// DB errors, we can just skip no entry errors.
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			err = fmt.Errorf("error checking if targetAccountID %s was in list %s: %w", targetAccountID, listID, err)
 			return gtserror.NewErrorInternalError(err)
