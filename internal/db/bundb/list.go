@@ -183,7 +183,8 @@ func (l *listDB) DeleteListByID(ctx context.Context, id string) error {
 		return fmt.Errorf("error selecting entries from list %q: %w", id, err)
 	}
 
-	// Delete each entry.
+	// Delete each list entry. This will
+	// invalidate the list timeline too.
 	for _, listEntry := range listEntries {
 		err := l.state.DB.DeleteListEntry(ctx, listEntry.ID)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
@@ -395,6 +396,11 @@ func (l *listDB) PutListEntries(ctx context.Context, listEntries []*gtsmodel.Lis
 				Exec(ctx); err != nil {
 				return err
 			}
+
+			// Invalidate the timeline for the list this entry belongs to.
+			if err := l.state.Timelines.List.RemoveTimeline(ctx, listEntry.ListID); err != nil {
+				log.Errorf(ctx, "PutListEntries: error invalidating list timeline: %q", err)
+			}
 		}
 
 		return nil
@@ -403,11 +409,39 @@ func (l *listDB) PutListEntries(ctx context.Context, listEntries []*gtsmodel.Lis
 
 func (l *listDB) DeleteListEntry(ctx context.Context, id string) error {
 	defer l.state.Caches.GTS.ListEntry().Invalidate("ID", id)
-	_, err := l.conn.NewDelete().
+
+	// Load list entry into cache before attempting a delete,
+	// as we need the followID from it in order to trigger
+	// timeline invalidation.
+	listEntry, err := l.GetListEntryByID(
+		// Don't populate the entry;
+		// we only want the list ID.
+		gtscontext.SetBarebones(ctx),
+		id,
+	)
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// Already gone.
+			return nil
+		}
+		return err
+	}
+
+	defer func() {
+		// Invalidate the timeline for the list this entry belongs to.
+		if err := l.state.Timelines.List.RemoveTimeline(ctx, listEntry.ListID); err != nil {
+			log.Errorf(ctx, "DeleteListEntry: error invalidating list timeline: %q", err)
+		}
+	}()
+
+	if _, err := l.conn.NewDelete().
 		Table("list_entries").
-		Where("? = ?", bun.Ident("id"), id).
-		Exec(ctx)
-	return l.conn.ProcessError(err)
+		Where("? = ?", bun.Ident("id"), listEntry.ID).
+		Exec(ctx); err != nil {
+		return l.conn.ProcessError(err)
+	}
+
+	return nil
 }
 
 func (l *listDB) DeleteListEntriesForFollowID(ctx context.Context, followID string) error {

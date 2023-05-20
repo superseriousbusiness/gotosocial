@@ -93,13 +93,6 @@ func (p *Processor) AddToList(ctx context.Context, account *gtsmodel.Account, li
 		return gtserror.NewErrorInternalError(err)
 	}
 
-	// Invalidate the list timeline by removing it.
-	// When next accessed, it will be recreated and
-	// will include statuses by the added account(s).
-	if err := p.state.Timelines.List.RemoveTimeline(ctx, listID); err != nil {
-		return gtserror.NewErrorInternalError(err)
-	}
-
 	return nil
 }
 
@@ -152,13 +145,6 @@ func (p *Processor) RemoveFromList(ctx context.Context, account *gtsmodel.Accoun
 			err = fmt.Errorf("error removing list entry %s from list %s: %w", entryID, listID, err)
 			return gtserror.NewErrorInternalError(err)
 		}
-	}
-
-	// Invalidate the list timeline by removing it.
-	// When next accessed, it will be recreated and
-	// will not include statuses by removed account(s).
-	if err := p.state.Timelines.List.RemoveTimeline(ctx, listID); err != nil {
-		return gtserror.NewErrorInternalError(err)
 	}
 
 	return nil

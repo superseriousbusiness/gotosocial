@@ -22,6 +22,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -74,6 +75,7 @@ func (suite *BunDBStandardTestSuite) SetupTest() {
 	testrig.InitTestLog()
 	suite.state.Caches.Init()
 	suite.db = testrig.NewTestDB(&suite.state)
+	testrig.StartTimelines(&suite.state, visibility.NewFilter(&suite.state), testrig.NewTestTypeConverter(suite.db))
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 }
 

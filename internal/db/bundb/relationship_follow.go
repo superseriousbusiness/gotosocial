@@ -215,27 +215,40 @@ func (r *relationshipDB) UpdateFollow(ctx context.Context, follow *gtsmodel.Foll
 	})
 }
 
+func (r *relationshipDB) deleteFollow(ctx context.Context, id string) error {
+	// Delete the follow itself using the given ID.
+	if _, err := r.conn.NewDelete().
+		Table("follows").
+		Where("? = ?", bun.Ident("id"), id).
+		Exec(ctx); err != nil {
+		return r.conn.ProcessError(err)
+	}
+
+	// Delete every list entry that used this followID.
+	if err := r.state.DB.DeleteListEntriesForFollowID(ctx, id); err != nil {
+		return fmt.Errorf("deleteFollow: error deleting list entries: %w", err)
+	}
+
+	return nil
+}
+
 func (r *relationshipDB) DeleteFollowByID(ctx context.Context, id string) error {
 	defer r.state.Caches.GTS.Follow().Invalidate("ID", id)
 
 	// Load follow into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate
 	// callback. This in turn invalidates others.
-	_, err := r.GetFollowByID(gtscontext.SetBarebones(ctx), id)
+	follow, err := r.GetFollowByID(gtscontext.SetBarebones(ctx), id)
 	if err != nil {
 		if errors.Is(err, db.ErrNoEntries) {
-			// not an issue.
-			err = nil
+			// Already gone.
+			return nil
 		}
 		return err
 	}
 
 	// Finally delete follow from DB.
-	_, err = r.conn.NewDelete().
-		Table("follows").
-		Where("? = ?", bun.Ident("id"), id).
-		Exec(ctx)
-	return r.conn.ProcessError(err)
+	return r.deleteFollow(ctx, follow.ID)
 }
 
 func (r *relationshipDB) DeleteFollowByURI(ctx context.Context, uri string) error {
@@ -244,21 +257,17 @@ func (r *relationshipDB) DeleteFollowByURI(ctx context.Context, uri string) erro
 	// Load follow into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate
 	// callback. This in turn invalidates others.
-	_, err := r.GetFollowByURI(gtscontext.SetBarebones(ctx), uri)
+	follow, err := r.GetFollowByURI(gtscontext.SetBarebones(ctx), uri)
 	if err != nil {
 		if errors.Is(err, db.ErrNoEntries) {
-			// not an issue.
-			err = nil
+			// Already gone.
+			return nil
 		}
 		return err
 	}
 
 	// Finally delete follow from DB.
-	_, err = r.conn.NewDelete().
-		Table("follows").
-		Where("? = ?", bun.Ident("uri"), uri).
-		Exec(ctx)
-	return r.conn.ProcessError(err)
+	return r.deleteFollow(ctx, follow.ID)
 }
 
 func (r *relationshipDB) DeleteAccountFollows(ctx context.Context, accountID string) error {
@@ -290,16 +299,16 @@ func (r *relationshipDB) DeleteAccountFollows(ctx context.Context, accountID str
 	// but it is the only way we can ensure we invalidate all
 	// related caches correctly (e.g. visibility).
 	for _, id := range followIDs {
-		_, err := r.GetFollowByID(ctx, id)
+		follow, err := r.GetFollowByID(ctx, id)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			return err
+		}
+
+		// Delete each follow from DB.
+		if err := r.deleteFollow(ctx, follow.ID); err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return err
 		}
 	}
 
-	// Finally delete all from DB.
-	_, err := r.conn.NewDelete().
-		Table("follows").
-		Where("? IN (?)", bun.Ident("id"), bun.In(followIDs)).
-		Exec(ctx)
-	return r.conn.ProcessError(err)
+	return nil
 }
