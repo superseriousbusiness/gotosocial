@@ -61,8 +61,11 @@ func prepWebfingerReq(ctx context.Context, loc, domain, username string) (*http.
 
 	// Prefer application/jrd+json, fall back to application/json.
 	// See https://www.rfc-editor.org/rfc/rfc7033#section-10.2.
-	req.Header.Add("Accept", string(apiutil.AppJRDJSON))
-	req.Header.Add("Accept", string(apiutil.AppJSON))
+	//
+	// Some implementations don't handle multiple accept headers properly,
+	// including Gin itself. So concat the accept header with a comma
+	// instead which seems to work reliably
+	req.Header.Add("Accept", string(apiutil.AppJRDJSON)+","+string(apiutil.AppJSON))
 	req.Header.Set("Host", req.URL.Host)
 
 	return req, nil
