@@ -42,5 +42,10 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, id st
 		return gtserror.NewErrorInternalError(err)
 	}
 
+	// Remove the timeline for this list to free up memory.
+	if err := p.state.Timelines.List.RemoveTimeline(ctx, id); err != nil {
+		return gtserror.NewErrorInternalError(err)
+	}
+
 	return nil
 }

@@ -102,7 +102,6 @@ func (suite *StreamingTestSuite) SetupTest() {
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
 	suite.processor = testrig.NewTestProcessor(&suite.state, suite.federator, suite.emailSender, suite.mediaManager)
 	suite.streamingModule = streaming.New(suite.processor, 1, 4096)
-	suite.NoError(suite.processor.Start())
 }
 
 func (suite *StreamingTestSuite) TearDownTest() {

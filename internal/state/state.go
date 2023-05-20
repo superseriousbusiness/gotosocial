@@ -21,6 +21,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/workers"
 )
 
@@ -33,6 +34,9 @@ import (
 type State struct {
 	// Caches provides access to this state's collection of caches.
 	Caches cache.Caches
+
+	// Timelines provides access to this state's collection of timelines.
+	Timelines timeline.Timelines
 
 	// DB provides access to the database.
 	DB db.DB

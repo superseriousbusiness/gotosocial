@@ -120,17 +120,11 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../testrig/media")
-	if err := suite.processor.Start(); err != nil {
-		panic(err)
-	}
 }
 
 func (suite *ProcessingStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
-	if err := suite.processor.Stop(); err != nil {
-		panic(err)
-	}
 	testrig.StopWorkers(&suite.state)
 }
 

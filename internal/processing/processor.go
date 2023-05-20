@@ -129,16 +129,16 @@ func NewProcessor(
 		emailSender:  emailSender,
 	}
 
-	// sub processors
+	// Instantiate sub processors.
 	processor.account = account.New(state, tc, mediaManager, oauthServer, federator, filter, parseMentionFunc)
 	processor.admin = admin.New(state, tc, mediaManager, federator.TransportController(), emailSender)
 	processor.fedi = fedi.New(state, tc, federator, filter)
 	processor.list = list.New(state, tc)
 	processor.media = media.New(state, tc, mediaManager, federator.TransportController())
 	processor.report = report.New(state, tc)
+	processor.timeline = timeline.New(state, tc, filter)
 	processor.status = status.New(state, federator, tc, filter, parseMentionFunc)
 	processor.stream = stream.New(state, oauthServer)
-	processor.timeline = timeline.New(state, tc, filter)
 	processor.user = user.New(state, emailSender)
 
 	return processor
@@ -166,14 +166,4 @@ func (p *Processor) EnqueueFederator(ctx context.Context, msgs ...messages.FromF
 			}
 		}
 	})
-}
-
-// Start starts the Processor.
-func (p *Processor) Start() error {
-	return p.timeline.HomeTimelines.Start()
-}
-
-// Stop stops the processor cleanly.
-func (p *Processor) Stop() error {
-	return p.timeline.HomeTimelines.Stop()
 }

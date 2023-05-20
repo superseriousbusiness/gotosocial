@@ -342,10 +342,10 @@ func (p *Processor) processCreateBlockFromFederator(ctx context.Context, federat
 	}
 
 	// remove any of the blocking account's statuses from the blocked account's timeline, and vice versa
-	if err := p.timeline.HomeTimelines.WipeItemsFromAccountID(ctx, block.AccountID, block.TargetAccountID); err != nil {
+	if err := p.state.Timelines.Home.WipeItemsFromAccountID(ctx, block.AccountID, block.TargetAccountID); err != nil {
 		return err
 	}
-	if err := p.timeline.HomeTimelines.WipeItemsFromAccountID(ctx, block.TargetAccountID, block.AccountID); err != nil {
+	if err := p.state.Timelines.Home.WipeItemsFromAccountID(ctx, block.TargetAccountID, block.AccountID); err != nil {
 		return err
 	}
 	// TODO: same with notifications

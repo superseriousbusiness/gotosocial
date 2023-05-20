@@ -89,7 +89,6 @@ func (suite *InboxPostTestSuite) TestPostBlock() {
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
 	processor := testrig.NewTestProcessor(&suite.state, federator, emailSender, suite.mediaManager)
 	userModule := users.New(processor)
-	suite.NoError(processor.Start())
 
 	// setup request
 	recorder := httptest.NewRecorder()
@@ -190,7 +189,6 @@ func (suite *InboxPostTestSuite) TestPostUnblock() {
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
 	processor := testrig.NewTestProcessor(&suite.state, federator, emailSender, suite.mediaManager)
 	userModule := users.New(processor)
-	suite.NoError(processor.Start())
 
 	// setup request
 	recorder := httptest.NewRecorder()
@@ -296,7 +294,6 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
 	processor := testrig.NewTestProcessor(&suite.state, federator, emailSender, suite.mediaManager)
 	userModule := users.New(processor)
-	suite.NoError(processor.Start())
 
 	// setup request
 	recorder := httptest.NewRecorder()
@@ -425,7 +422,6 @@ func (suite *InboxPostTestSuite) TestPostDelete() {
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
 	processor := testrig.NewTestProcessor(&suite.state, federator, emailSender, suite.mediaManager)
 	userModule := users.New(processor)
-	suite.NoError(processor.Start())
 
 	// setup request
 	recorder := httptest.NewRecorder()

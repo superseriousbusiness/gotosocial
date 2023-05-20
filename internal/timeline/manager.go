@@ -67,6 +67,9 @@ type Manager interface {
 	// Remove removes one item from the given timeline.
 	Remove(ctx context.Context, timelineID string, itemID string) (int, error)
 
+	// RemoveTimeline completely removes one timeline.
+	RemoveTimeline(ctx context.Context, timelineID string) error
+
 	// WipeItemFromAllTimelines removes one item from the index and prepared items of all timelines
 	WipeItemFromAllTimelines(ctx context.Context, itemID string) error
 
@@ -157,6 +160,11 @@ func (m *manager) IngestOne(ctx context.Context, timelineID string, item Timelin
 
 func (m *manager) Remove(ctx context.Context, timelineID string, itemID string) (int, error) {
 	return m.getOrCreateTimeline(ctx, timelineID).Remove(ctx, itemID)
+}
+
+func (m *manager) RemoveTimeline(ctx context.Context, timelineID string) error {
+	m.timelines.Delete(timelineID)
+	return nil
 }
 
 func (m *manager) GetTimeline(ctx context.Context, timelineID string, maxID string, sinceID string, minID string, limit int, local bool) ([]Preparable, error) {

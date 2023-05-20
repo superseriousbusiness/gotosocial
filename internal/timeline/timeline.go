@@ -28,7 +28,7 @@ import (
 // It should be provided to NewTimeline when the caller is creating a timeline
 // (of statuses, notifications, etc).
 //
-//   - timelineID: ID of the timeline; usually the same as the account id of the timeline owner
+//   - timelineID: ID of the timeline.
 //   - maxID: the maximum item ID desired.
 //   - sinceID: the minimum item ID desired.
 //   - minID: see sinceID
@@ -139,7 +139,8 @@ func (t *timeline) TimelineID() string {
 	return t.timelineID
 }
 
-// NewTimeline returns a new Timeline for the given ID.
+// NewTimeline returns a new Timeline with
+// the given ID, using the given functions.
 func NewTimeline(
 	ctx context.Context,
 	timelineID string,

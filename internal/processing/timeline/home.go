@@ -27,16 +27,17 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
 
-// HomeTimelineGrab returns a function that satisfies the GrabFunction interface in internal/timeline.
-func HomeTimelineGrab(database db.DB) timeline.GrabFunction {
+// HomeTimelineGrab returns a function that satisfies GrabFunction for home timelines.
+func HomeTimelineGrab(state *state.State) timeline.GrabFunction {
 	return func(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int) ([]timeline.Timelineable, bool, error) {
-		statuses, err := database.GetHomeTimeline(ctx, accountID, maxID, sinceID, minID, limit, false)
+		statuses, err := state.DB.GetHomeTimeline(ctx, accountID, maxID, sinceID, minID, limit, false)
 		if err != nil {
 			if errors.Is(err, db.ErrNoEntries) {
 				return nil, true, nil // we just don't have enough statuses left in the db so return stop = true
@@ -53,15 +54,15 @@ func HomeTimelineGrab(database db.DB) timeline.GrabFunction {
 	}
 }
 
-// HomeTimelineFilter returns a function that satisfies the FilterFunction interface in internal/timeline.
-func HomeTimelineFilter(database db.DB, filter *visibility.Filter) timeline.FilterFunction {
+// HomeTimelineFilter returns a function that satisfies FilterFunction for home timelines.
+func HomeTimelineFilter(state *state.State, filter *visibility.Filter) timeline.FilterFunction {
 	return func(ctx context.Context, accountID string, item timeline.Timelineable) (shouldIndex bool, err error) {
 		status, ok := item.(*gtsmodel.Status)
 		if !ok {
 			return false, errors.New("HomeTimelineFilter: could not convert item to *gtsmodel.Status")
 		}
 
-		requestingAccount, err := database.GetAccountByID(ctx, accountID)
+		requestingAccount, err := state.DB.GetAccountByID(ctx, accountID)
 		if err != nil {
 			return false, fmt.Errorf("HomeTimelineFilter: error getting account with id %s: %w", accountID, err)
 		}
@@ -75,15 +76,15 @@ func HomeTimelineFilter(database db.DB, filter *visibility.Filter) timeline.Filt
 	}
 }
 
-// HomeTimelineStatusPrepare returns a function that satisfies the PrepareFunction interface in internal/timeline.
-func HomeTimelineStatusPrepare(database db.DB, tc typeutils.TypeConverter) timeline.PrepareFunction {
+// HomeTimelineStatusPrepare returns a function that satisfies PrepareFunction for home timelines.
+func HomeTimelineStatusPrepare(state *state.State, tc typeutils.TypeConverter) timeline.PrepareFunction {
 	return func(ctx context.Context, accountID string, itemID string) (timeline.Preparable, error) {
-		status, err := database.GetStatusByID(ctx, itemID)
+		status, err := state.DB.GetStatusByID(ctx, itemID)
 		if err != nil {
 			return nil, fmt.Errorf("StatusPrepare: error getting status with id %s: %w", itemID, err)
 		}
 
-		requestingAccount, err := database.GetAccountByID(ctx, accountID)
+		requestingAccount, err := state.DB.GetAccountByID(ctx, accountID)
 		if err != nil {
 			return nil, fmt.Errorf("StatusPrepare: error getting account with id %s: %w", accountID, err)
 		}
@@ -93,7 +94,7 @@ func HomeTimelineStatusPrepare(database db.DB, tc typeutils.TypeConverter) timel
 }
 
 func (p *Processor) HomeTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode) {
-	statuses, err := p.HomeTimelines.GetTimeline(ctx, authed.Account.ID, maxID, sinceID, minID, limit, local)
+	statuses, err := p.state.Timelines.Home.GetTimeline(ctx, authed.Account.ID, maxID, sinceID, minID, limit, local)
 	if err != nil {
 		err = fmt.Errorf("HomeTimelineGet: error getting statuses: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)

@@ -89,8 +89,6 @@ func (suite *WebfingerStandardTestSuite) SetupTest() {
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
-
-	suite.NoError(suite.processor.Start())
 }
 
 func (suite *WebfingerStandardTestSuite) TearDownTest() {

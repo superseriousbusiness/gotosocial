@@ -17,22 +17,21 @@
 
 package timeline
 
-import (
-	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/visibility"
-)
+type Timelines struct {
+	// Home provides access to account home timelines.
+	Home Manager
 
-type Processor struct {
-	state  *state.State
-	tc     typeutils.TypeConverter
-	filter *visibility.Filter
+	// List provides access to list timelines.
+	List Manager
+
+	// prevent pass-by-value.
+	_ nocopy
 }
 
-func New(state *state.State, tc typeutils.TypeConverter, filter *visibility.Filter) Processor {
-	return Processor{
-		state:  state,
-		tc:     tc,
-		filter: filter,
-	}
-}
+// nocopy when embedded will signal linter to
+// error on pass-by-value of parent struct.
+type nocopy struct{}
+
+func (*nocopy) Lock() {}
+
+func (*nocopy) Unlock() {}

@@ -50,9 +50,9 @@ func (suite *ManagerTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db, nil)
 
 	manager := timeline.NewManager(
-		tlprocessor.HomeTimelineGrab(suite.db),
-		tlprocessor.HomeTimelineFilter(suite.db, suite.filter),
-		tlprocessor.HomeTimelineStatusPrepare(suite.db, suite.tc),
+		tlprocessor.HomeTimelineGrab(&suite.state),
+		tlprocessor.HomeTimelineFilter(&suite.state, suite.filter),
+		tlprocessor.HomeTimelineStatusPrepare(&suite.state, suite.tc),
 		tlprocessor.SkipInsert(),
 	)
 	suite.manager = manager

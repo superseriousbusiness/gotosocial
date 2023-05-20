@@ -106,7 +106,7 @@ func (p *Processor) timelineAndNotifyStatusForFollowers(ctx context.Context, sta
 		for _, listEntry := range listEntries {
 			if _, err := p.timelineStatus(
 				ctx,
-				p.timeline.ListTimelines.IngestOne,
+				p.state.Timelines.List.IngestOne,
 				listEntry.ListID, // list timelines are keyed by list ID
 				follow.Account,
 				status,
@@ -121,7 +121,7 @@ func (p *Processor) timelineAndNotifyStatusForFollowers(ctx context.Context, sta
 		// follower, and stream it if applicable.
 		if timelined, err := p.timelineStatus(
 			ctx,
-			p.timeline.HomeTimelines.IngestOne,
+			p.state.Timelines.Home.IngestOne,
 			follow.AccountID, // home timelines are keyed by account ID
 			follow.Account,
 			status,
@@ -444,7 +444,7 @@ func (p *Processor) wipeStatus(ctx context.Context, statusToDelete *gtsmodel.Sta
 // deleteStatusFromTimelines completely removes the given status from all timelines.
 // It will also stream deletion of the status to all open streams.
 func (p *Processor) deleteStatusFromTimelines(ctx context.Context, status *gtsmodel.Status) error {
-	if err := p.timeline.HomeTimelines.WipeItemFromAllTimelines(ctx, status.ID); err != nil {
+	if err := p.state.Timelines.Home.WipeItemFromAllTimelines(ctx, status.ID); err != nil {
 		return err
 	}
 

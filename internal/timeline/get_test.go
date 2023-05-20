@@ -58,9 +58,9 @@ func (suite *GetTestSuite) SetupTest() {
 	tl := timeline.NewTimeline(
 		context.Background(),
 		suite.testAccounts["local_account_1"].ID,
-		tlprocessor.HomeTimelineGrab(suite.db),
-		tlprocessor.HomeTimelineFilter(suite.db, suite.filter),
-		tlprocessor.HomeTimelineStatusPrepare(suite.db, suite.tc),
+		tlprocessor.HomeTimelineGrab(&suite.state),
+		tlprocessor.HomeTimelineFilter(&suite.state, suite.filter),
+		tlprocessor.HomeTimelineStatusPrepare(&suite.state, suite.tc),
 		tlprocessor.SkipInsert(),
 	)
 
@@ -134,9 +134,9 @@ func (suite *GetTestSuite) TestGetNewTimelinePageDown() {
 	tl := timeline.NewTimeline(
 		context.Background(),
 		suite.testAccounts["local_account_1"].ID,
-		tlprocessor.HomeTimelineGrab(suite.db),
-		tlprocessor.HomeTimelineFilter(suite.db, suite.filter),
-		tlprocessor.HomeTimelineStatusPrepare(suite.db, suite.tc),
+		tlprocessor.HomeTimelineGrab(&suite.state),
+		tlprocessor.HomeTimelineFilter(&suite.state, suite.filter),
+		tlprocessor.HomeTimelineStatusPrepare(&suite.state, suite.tc),
 		tlprocessor.SkipInsert(),
 	)
 
@@ -163,9 +163,9 @@ func (suite *GetTestSuite) TestGetNewTimelinePageUp() {
 	tl := timeline.NewTimeline(
 		context.Background(),
 		suite.testAccounts["local_account_1"].ID,
-		tlprocessor.HomeTimelineGrab(suite.db),
-		tlprocessor.HomeTimelineFilter(suite.db, suite.filter),
-		tlprocessor.HomeTimelineStatusPrepare(suite.db, suite.tc),
+		tlprocessor.HomeTimelineGrab(&suite.state),
+		tlprocessor.HomeTimelineFilter(&suite.state, suite.filter),
+		tlprocessor.HomeTimelineStatusPrepare(&suite.state, suite.tc),
 		tlprocessor.SkipInsert(),
 	)
 
@@ -192,9 +192,9 @@ func (suite *GetTestSuite) TestGetNewTimelineMoreThanPossible() {
 	tl := timeline.NewTimeline(
 		context.Background(),
 		suite.testAccounts["local_account_1"].ID,
-		tlprocessor.HomeTimelineGrab(suite.db),
-		tlprocessor.HomeTimelineFilter(suite.db, suite.filter),
-		tlprocessor.HomeTimelineStatusPrepare(suite.db, suite.tc),
+		tlprocessor.HomeTimelineGrab(&suite.state),
+		tlprocessor.HomeTimelineFilter(&suite.state, suite.filter),
+		tlprocessor.HomeTimelineStatusPrepare(&suite.state, suite.tc),
 		tlprocessor.SkipInsert(),
 	)
 
@@ -213,9 +213,9 @@ func (suite *GetTestSuite) TestGetNewTimelineMoreThanPossiblePageUp() {
 	tl := timeline.NewTimeline(
 		context.Background(),
 		suite.testAccounts["local_account_1"].ID,
-		tlprocessor.HomeTimelineGrab(suite.db),
-		tlprocessor.HomeTimelineFilter(suite.db, suite.filter),
-		tlprocessor.HomeTimelineStatusPrepare(suite.db, suite.tc),
+		tlprocessor.HomeTimelineGrab(&suite.state),
+		tlprocessor.HomeTimelineFilter(&suite.state, suite.filter),
+		tlprocessor.HomeTimelineStatusPrepare(&suite.state, suite.tc),
 		tlprocessor.SkipInsert(),
 	)
 

@@ -89,8 +89,6 @@ func (suite *TransportTestSuite) SetupTest() {
 		suite.FailNow(err.Error())
 	}
 	suite.transport = ts
-
-	suite.NoError(suite.processor.Start())
 }
 
 func (suite *TransportTestSuite) TearDownTest() {

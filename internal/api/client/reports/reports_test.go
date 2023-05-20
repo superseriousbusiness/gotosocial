@@ -85,8 +85,6 @@ func (suite *ReportsStandardTestSuite) SetupTest() {
 	suite.reportsModule = reports.New(suite.processor)
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
-
-	suite.NoError(suite.processor.Start())
 }
 
 func (suite *ReportsStandardTestSuite) TearDownTest() {

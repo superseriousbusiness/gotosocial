@@ -107,8 +107,6 @@ func (suite *BookmarkTestSuite) SetupTest() {
 	suite.processor = testrig.NewTestProcessor(&suite.state, suite.federator, suite.emailSender, suite.mediaManager)
 	suite.statusModule = statuses.New(suite.processor)
 	suite.bookmarkModule = bookmarks.New(suite.processor)
-
-	suite.NoError(suite.processor.Start())
 }
 
 func (suite *BookmarkTestSuite) TearDownTest() {

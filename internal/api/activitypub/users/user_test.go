@@ -94,8 +94,6 @@ func (suite *UserStandardTestSuite) SetupTest() {
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 
 	suite.signatureCheck = middleware.SignatureCheck(suite.db.IsURIBlocked)
-
-	suite.NoError(suite.processor.Start())
 }
 
 func (suite *UserStandardTestSuite) TearDownTest() {

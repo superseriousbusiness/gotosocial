@@ -89,8 +89,6 @@ func (suite *SearchStandardTestSuite) SetupTest() {
 	suite.searchModule = search.New(suite.processor)
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
-
-	suite.NoError(suite.processor.Start())
 }
 
 func (suite *SearchStandardTestSuite) TearDownTest() {

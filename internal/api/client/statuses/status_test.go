@@ -91,8 +91,6 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
 	suite.processor = testrig.NewTestProcessor(&suite.state, suite.federator, suite.emailSender, suite.mediaManager)
 	suite.statusModule = statuses.New(suite.processor)
-
-	suite.NoError(suite.processor.Start())
 }
 
 func (suite *StatusStandardTestSuite) TearDownTest() {
