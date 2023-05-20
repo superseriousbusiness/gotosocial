@@ -38,7 +38,7 @@ import (
 // Example:
 //
 // ```
-// <https://example.org/api/v1/timelines/public?limit=20&max_id=01FC3GSQ8A3MMJ43BPZSGEG29M>; rel="next", <https://example.org/api/v1/timelines/public?limit=20&min_id=01FC3KJW2GYXSDDRA6RWNDM46M>; rel="prev"
+// <https://example.org/api/v1/timelines/list/01H0W619198FX7J54NF7EH1NG2?limit=20&max_id=01FC3GSQ8A3MMJ43BPZSGEG29M>; rel="next", <https://example.org/api/v1/timelines/list/01H0W619198FX7J54NF7EH1NG2?limit=20&min_id=01FC3KJW2GYXSDDRA6RWNDM46M>; rel="prev"
 // ````
 //
 //	---

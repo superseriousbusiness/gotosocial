@@ -42,7 +42,7 @@ func (p *Processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, ma
 		return util.EmptyPageableResponse(), nil
 	}
 
-	items := make([]interface{}, count)
+	items := make([]interface{}, 0, count)
 	for _, s := range statuses {
 		visible, err := p.filter.StatusVisible(ctx, authed.Account, s)
 		if err != nil {

@@ -20,10 +20,7 @@ package timeline
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/federation"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
@@ -31,11 +28,8 @@ import (
 
 type Processor struct {
 	state         *state.State
-	federator     federation.Federator
 	tc            typeutils.TypeConverter
 	filter        *visibility.Filter
-	formatter     text.Formatter
-	parseMention  gtsmodel.ParseMentionFunc
 	HomeTimelines timeline.Manager
 	ListTimelines timeline.Manager
 }
