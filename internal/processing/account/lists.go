@@ -30,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-var noLists = make([]*apimodel.List, 0, 0)
+var noLists = make([]*apimodel.List, 0)
 
 // ListsGet returns all lists owned by requestingAccount, which contain a follow for targetAccountID.
 func (p *Processor) ListsGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) ([]*apimodel.List, gtserror.WithCode) {
