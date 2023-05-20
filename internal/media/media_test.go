@@ -25,6 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -41,22 +42,27 @@ type MediaStandardTestSuite struct {
 	testEmojis          map[string]*gtsmodel.Emoji
 }
 
-func (suite *MediaStandardTestSuite) SetupSuite() {
+func (suite *MediaStandardTestSuite) SetupTest() {
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
+
+	suite.state.Caches.Init()
+	testrig.StartWorkers(&suite.state)
 
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.DB = suite.db
 	suite.state.Storage = suite.storage
-}
-
-func (suite *MediaStandardTestSuite) SetupTest() {
-	suite.state.Caches.Init()
-	testrig.StartWorkers(&suite.state)
 
 	testrig.StandardStorageSetup(suite.storage, "../../testrig/media")
 	testrig.StandardDBSetup(suite.db, nil)
+
+	testrig.StartTimelines(
+		&suite.state,
+		visibility.NewFilter(&suite.state),
+		testrig.NewTestTypeConverter(suite.db),
+	)
+
 	suite.testAttachments = testrig.NewTestAttachments()
 	suite.testAccounts = testrig.NewTestAccounts()
 	suite.testEmojis = testrig.NewTestEmojis()
