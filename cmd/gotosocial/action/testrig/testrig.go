@@ -58,10 +58,10 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// Initialize caches and database
 	state.DB = testrig.NewTestDB(&state)
-	
+
 	// New test db inits caches so we don't need to do
 	// that twice, we can just start the initialized caches.
-	state.Caches.Start() 
+	state.Caches.Start()
 	defer state.Caches.Stop()
 
 	testrig.StandardDBSetup(state.DB, nil)
