@@ -19,7 +19,6 @@ package transport
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -66,8 +65,7 @@ func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, erro
 	defer rsp.Body.Close()
 
 	if rsp.StatusCode != http.StatusOK {
-		err := fmt.Errorf("GET request to %s failed: %s", iriStr, rsp.Status)
-		return nil, gtserror.WithStatusCode(err, rsp.StatusCode)
+		return nil, gtserror.NewResponseError(rsp)
 	}
 
 	return io.ReadAll(rsp.Body)
