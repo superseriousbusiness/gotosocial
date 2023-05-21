@@ -34,7 +34,7 @@ func init() {
 		}
 		return kvs
 	})
-	// Client IP middleware hook.
+	// Public Key ID middleware hook.
 	log.Hook(func(ctx context.Context, kvs []kv.Field) []kv.Field {
 		if id := PublicKeyID(ctx); id != "" {
 			return append(kvs, kv.Field{K: "pubKeyID", V: id})

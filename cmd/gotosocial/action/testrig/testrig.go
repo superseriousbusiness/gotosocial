@@ -107,7 +107,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		middlewares = append(middlewares, tracing.InstrumentGin())
 	}
 	middlewares = append(middlewares, []gin.HandlerFunc{
-		middleware.Logger(),
+		middleware.Logger(config.GetLogClientIP()),
 		middleware.UserAgent(),
 		middleware.CORS(),
 		middleware.ExtraHeaders(),
