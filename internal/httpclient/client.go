@@ -93,6 +93,9 @@ type Config struct {
 //     cases to protect against forged / unknown content-lengths
 //   - protection from server side request forgery (SSRF) by only dialing
 //     out to known public IP prefixes, configurable with allows/blocks
+//   - retry-backoff logic for error temporary HTTP error responses
+//   - optional request signing
+//   - request logging
 type Client struct {
 	client   http.Client
 	badHosts cache.Cache[string, struct{}]
@@ -159,14 +162,14 @@ func New(cfg Config) *Client {
 	return &c
 }
 
-// Do ...
+// Do will essentially perform http.Client{}.Do() with retry-backoff functionality.
 func (c *Client) Do(r *http.Request) (*http.Response, error) {
 	return c.DoSigned(r, func(r *http.Request) error {
 		return nil // no request signing
 	})
 }
 
-// DoSigned ...
+// DoSigned will essentially perform http.Client{}.Do() with retry-backoff functionality and requesting signing..
 func (c *Client) DoSigned(r *http.Request, sign SignFunc) (rsp *http.Response, err error) {
 	const (
 		// max no. attempts.
@@ -322,7 +325,7 @@ func (c *Client) DoSigned(r *http.Request, sign SignFunc) (rsp *http.Response, e
 	return
 }
 
-// do ...
+// do wraps http.Client{}.Do() to provide safely limited response bodies.
 func (c *Client) do(req *http.Request) (*http.Response, error) {
 	// Perform the HTTP request.
 	rsp, err := c.client.Do(req)
