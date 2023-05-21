@@ -242,11 +242,14 @@ func (c *Client) DoSigned(r *http.Request, sign SignFunc) (rsp *http.Response, e
 				return rsp, nil
 			}
 
-			// Drain response body for error.
-			body, _ := io.ReadAll(rsp.Body)
-			_ = rsp.Body.Close()
+			// Drain error from response body.
+			body := drainErrorBody(rsp.Body)
 
 			// Create error from response status code and body (if any).
+			// Note this is quite a hot code path so we manually quote the
+			// passed string args, as `%q` under the hood in the "fmt" pkg
+			// will use strconv.Quote(...) which can be quite intensive.
+			// (we don't need to worry about escaping, "internal/log" does this).
 			err = fmt.Errorf(`http response "%s" "%s"`, rsp.Status, body)
 
 			// Search for a provided "Retry-After" header value.
@@ -353,4 +356,24 @@ func (c *Client) do(req *http.Request) (*http.Response, error) {
 	}{rbody, cbody}
 
 	return rsp, nil
+}
+
+func drainErrorBody(body io.ReadCloser) string {
+	// Limit response to 256 bytes so we don't
+	// kill the log output with anything huge.
+	buf := make([]byte, 256)
+
+	// Read body into err buffer.
+	n, _ := io.ReadFull(body, buf)
+
+	// Done with body.
+	_ = body.Close()
+
+	if n == 0 {
+		// No error body, return
+		// reasonable error str.
+		return "<empty>"
+	}
+
+	return byteutil.B2S(buf[:n])
 }
