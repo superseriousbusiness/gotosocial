@@ -1,6 +1,6 @@
 # Frequently Asked Questions
 
-- **Where's the user interface?** GoToSocial is just a bare server for the most part and is designed to be used thru external applications. [Pinafore](https://pinafore.social) and [Tusky](https://tusky.app/) are the best-supported, but anything that supports the Mastodon API should work, other than the features GoToSocial doesn't yet have. Permalinks and profile pages are served directly thru GoToSocial as well as the settings panel, but most interaction goes thru the apps.
+- **Where's the user interface?** GoToSocial is just a bare server for the most part and is designed to be used thru external applications. [Semaphore](https://semaphore.social/) and [Tusky](https://tusky.app/) are the best-supported, but anything that supports the Mastodon API should work, other than the features GoToSocial doesn't yet have. Permalinks and profile pages are served directly thru GoToSocial as well as the settings panel, but most interaction goes thru the apps.
 
 - **Why aren't my posts showing up on my profile page?** Unlike Mastodon, the default post visibility is Unlisted. If you want something to be visible on your profile page, the post must have Public visibility.
 

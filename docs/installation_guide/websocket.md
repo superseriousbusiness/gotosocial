@@ -1,6 +1,6 @@
 # WebSocket
 
-GoToSocial uses the secure [WebSocket protocol](https://en.wikipedia.org/wiki/WebSocket) (aka `wss`) to allow for streaming updates of statuses and notifications via client apps like Pinafore.
+GoToSocial uses the secure [WebSocket protocol](https://en.wikipedia.org/wiki/WebSocket) (aka `wss`) to allow for streaming updates of statuses and notifications via client apps like Semaphore.
 
 In order to use this functionality, you need to ensure that whatever proxy you've configured GoToSocial to run behind allows WebSocket connections through.
 

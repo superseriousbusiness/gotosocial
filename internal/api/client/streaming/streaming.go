@@ -54,7 +54,7 @@ func New(processor *processing.Processor, dTicker time.Duration, wsBuf int) *Mod
 			ReadBufferSize:  wsBuf, // we don't expect reads
 			WriteBufferSize: wsBuf,
 
-			// we expect cors requests (via eg., pinafore.social) so be lenient
+			// we expect cors requests (via eg., semaphore.social) so be lenient
 			CheckOrigin: func(r *http.Request) bool { return true },
 		},
 	}

@@ -25,7 +25,7 @@ import (
 )
 
 // CORS returns a new gin middleware which allows CORS requests to be processed.
-// This is necessary in order for web/browser-based clients like Pinafore to work.
+// This is necessary in order for web/browser-based clients like Semaphore to work.
 func CORS() gin.HandlerFunc {
 	cfg := cors.Config{
 		// todo: use config to customize this
