@@ -209,6 +209,7 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 		reader := bytes.NewReader(responseBytes)
 		readCloser := io.NopCloser(reader)
 		return &http.Response{
+			Request:       req,
 			StatusCode:    responseCode,
 			Body:          readCloser,
 			ContentLength: int64(responseContentLength),
