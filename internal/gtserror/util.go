@@ -15,39 +15,28 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package transport
+package gtserror
 
 import (
-	"context"
 	"io"
-	"net/http"
-	"net/url"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"codeberg.org/gruf/go-byteutil"
 )
 
-func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL) (io.ReadCloser, int64, error) {
-	// Build IRI just once
-	iriStr := iri.String()
+// drainBody will produce a truncated output of the content
+// of given io.ReadCloser body, useful for logs / errors.
+func drainBody(body io.ReadCloser, trunc int) string {
+	// Limit response to 'trunc' bytes.
+	buf := make([]byte, trunc)
 
-	// Prepare HTTP request to this media's IRI
-	req, err := http.NewRequestWithContext(ctx, "GET", iriStr, nil)
-	if err != nil {
-		return nil, 0, err
-	}
-	req.Header.Add("Accept", "*/*") // we don't know what kind of media we're going to get here
-	req.Header.Set("Host", iri.Host)
+	// Read body into err buffer.
+	n, _ := io.ReadFull(body, buf)
 
-	// Perform the HTTP request
-	rsp, err := t.GET(req)
-	if err != nil {
-		return nil, 0, err
+	if n == 0 {
+		// No error body, return
+		// reasonable error str.
+		return "<empty>"
 	}
 
-	// Check for an expected status code
-	if rsp.StatusCode != http.StatusOK {
-		return nil, 0, gtserror.NewResponseError(rsp)
-	}
-
-	return rsp.Body, rsp.ContentLength, nil
+	return byteutil.B2S(buf[:n])
 }
