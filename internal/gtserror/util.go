@@ -15,30 +15,28 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package gtscontext
+package gtserror
 
 import (
-	"context"
+	"io"
 
-	"codeberg.org/gruf/go-kv"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"codeberg.org/gruf/go-byteutil"
 )
 
-func init() {
-	// Add our required logging hooks on application initialization.
-	//
-	// Request ID middleware hook.
-	log.Hook(func(ctx context.Context, kvs []kv.Field) []kv.Field {
-		if id := RequestID(ctx); id != "" {
-			return append(kvs, kv.Field{K: "requestID", V: id})
-		}
-		return kvs
-	})
-	// Public Key ID middleware hook.
-	log.Hook(func(ctx context.Context, kvs []kv.Field) []kv.Field {
-		if id := PublicKeyID(ctx); id != "" {
-			return append(kvs, kv.Field{K: "pubKeyID", V: id})
-		}
-		return kvs
-	})
+// drainBody will produce a truncated output of the content
+// of given io.ReadCloser body, useful for logs / errors.
+func drainBody(body io.ReadCloser, trunc int) string {
+	// Limit response to 'trunc' bytes.
+	buf := make([]byte, trunc)
+
+	// Read body into err buffer.
+	n, _ := io.ReadFull(body, buf)
+
+	if n == 0 {
+		// No error body, return
+		// reasonable error str.
+		return "<empty>"
+	}
+
+	return byteutil.B2S(buf[:n])
 }

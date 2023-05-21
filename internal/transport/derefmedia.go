@@ -19,7 +19,6 @@ package transport
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -47,8 +46,7 @@ func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL) (io.Read
 
 	// Check for an expected status code
 	if rsp.StatusCode != http.StatusOK {
-		err := fmt.Errorf("GET request to %s failed: %s", iriStr, rsp.Status)
-		return nil, 0, gtserror.WithStatusCode(err, rsp.StatusCode)
+		return nil, 0, gtserror.NewResponseError(rsp)
 	}
 
 	return rsp.Body, rsp.ContentLength, nil

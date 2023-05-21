@@ -184,7 +184,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	middlewares = append(middlewares, []gin.HandlerFunc{
 		// note: hooks adding ctx fields must be ABOVE
 		// the logger, otherwise won't be accessible.
-		middleware.Logger(),
+		middleware.Logger(config.GetLogClientIP()),
 		middleware.UserAgent(),
 		middleware.CORS(),
 		middleware.ExtraHeaders(),
