@@ -37,7 +37,10 @@ type prune struct {
 
 func setupPrune(ctx context.Context) (*prune, error) {
 	var state state.State
+
 	state.Caches.Init()
+	state.Caches.Start()
+
 	state.Workers.Start()
 
 	dbService, err := bundb.NewBunDBService(ctx, &state)
@@ -51,8 +54,6 @@ func setupPrune(ctx context.Context) (*prune, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error creating storage backend: %w", err)
 	}
-
-	state.DB = dbService
 	state.Storage = storage
 
 	//nolint:contextcheck
@@ -75,8 +76,8 @@ func (p *prune) shutdown(ctx context.Context) error {
 		return fmt.Errorf("error closing dbservice: %w", err)
 	}
 
-	p.state.Caches.Stop()
 	p.state.Workers.Stop()
+	p.state.Caches.Stop()
 
 	return nil
 }

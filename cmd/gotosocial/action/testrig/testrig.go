@@ -56,12 +56,14 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error initializing tracing: %w", err)
 	}
 
-	// Initialize caches
-	state.Caches.Init()
+	// Initialize caches and database
+	state.DB = testrig.NewTestDB(&state)
+
+	// New test db inits caches so we don't need to do
+	// that twice, we can just start the initialized caches.
 	state.Caches.Start()
 	defer state.Caches.Stop()
 
-	state.DB = testrig.NewTestDB(&state)
 	testrig.StandardDBSetup(state.DB, nil)
 
 	if os.Getenv("GTS_STORAGE_BACKEND") == "s3" {
