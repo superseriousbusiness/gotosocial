@@ -49,14 +49,14 @@ func NewResponseError(rsp *http.Response) error {
 	// using "fmt", as chances are this will
 	// be used in a hot code path and we
 	// know all the incoming types involved.
-	buf.WriteString(rsp.Request.Method)
-	buf.WriteString(" request to ")
-	buf.WriteString(urlStr)
-	buf.WriteString(" failed: status=\"")
-	buf.WriteString(rsp.Status)
-	buf.WriteString("\" body=\"")
-	buf.WriteString(drainBody(rsp.Body, 256))
-	buf.WriteString("\"")
+	_, _ = buf.WriteString(rsp.Request.Method)
+	_, _ = buf.WriteString(" request to ")
+	_, _ = buf.WriteString(urlStr)
+	_, _ = buf.WriteString(" failed: status=\"")
+	_, _ = buf.WriteString(rsp.Status)
+	_, _ = buf.WriteString("\" body=\"")
+	_, _ = buf.WriteString(drainBody(rsp.Body, 256))
+	_, _ = buf.WriteString("\"")
 
 	// Create new error from msg.
 	err := errors.New(buf.String())
