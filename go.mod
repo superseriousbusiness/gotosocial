@@ -35,7 +35,7 @@ require (
 	github.com/jackc/pgx/v5 v5.3.1
 	github.com/microcosm-cc/bluemonday v1.0.23
 	github.com/miekg/dns v1.1.54
-	github.com/minio/minio-go/v7 v7.0.52
+	github.com/minio/minio-go/v7 v7.0.53
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/oklog/ulid v1.3.1
 	github.com/spf13/cobra v1.7.0
