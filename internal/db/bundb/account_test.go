@@ -45,6 +45,34 @@ func (suite *AccountTestSuite) TestGetAccountStatuses() {
 	suite.Len(statuses, 5)
 }
 
+func (suite *AccountTestSuite) TestGetAccountStatusesPageDown() {
+	// get the first page
+	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 2, false, false, "", "", false, false)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.Len(statuses, 2)
+
+	// get the second page
+	statuses, err = suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 2, false, false, statuses[len(statuses)-1].ID, "", false, false)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.Len(statuses, 2)
+
+	// get the third page
+	statuses, err = suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 2, false, false, statuses[len(statuses)-1].ID, "", false, false)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.Len(statuses, 1)
+
+	// try to get the last page (should be empty)
+	statuses, err = suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 2, false, false, statuses[len(statuses)-1].ID, "", false, false)
+	suite.ErrorIs(err, db.ErrNoEntries)
+	suite.Empty(statuses)
+}
+
 func (suite *AccountTestSuite) TestGetAccountStatusesExcludeRepliesAndReblogs() {
 	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, true, true, "", "", false, false)
 	suite.NoError(err)
