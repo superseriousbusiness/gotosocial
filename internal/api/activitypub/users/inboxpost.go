@@ -19,32 +19,32 @@ package users
 
 import (
 	"errors"
-	"strings"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror" //nolint:typecheck
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // InboxPOSTHandler deals with incoming POST requests to an actor's inbox.
 // Eg., POST to https://example.org/users/whatever/inbox.
 func (m *Module) InboxPOSTHandler(c *gin.Context) {
-	// usernames on our instance are always lowercase
-	requestedUsername := strings.ToLower(c.Param(UsernameKey))
-	if requestedUsername == "" {
-		err := errors.New("no username specified in request")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
-
-	if posted, err := m.processor.Fedi().InboxPost(apiutil.TransferSignatureContext(c), c.Writer, c.Request); err != nil {
-		if withCode, ok := err.(gtserror.WithCode); ok {
-			apiutil.ErrorHandler(c, withCode, m.processor.InstanceGetV1)
+	_, err := m.processor.Fedi().InboxPost(apiutil.TransferSignatureContext(c), c.Writer, c.Request)
+	if err != nil {
+		if errWithCode := new(gtserror.WithCode); errors.As(err, errWithCode) {
+			// An errWithCode was returned to us, we can be nice and
+			// try to return something informative to the caller.
+			apiutil.ErrorHandler(c, *errWithCode, m.processor.InstanceGetV1)
 		} else {
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+			// Something else went wrong, and someone forgot to return
+			// an errWithCode! It's chill though. Log the error but don't
+			// return it to the caller, to avoid leaking internals.
+			log.WithContext(c.Request.Context()).Errorf("returning Bad Request to caller, err was: %q", err)
+			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err), m.processor.InstanceGetV1)
 		}
-	} else if !posted {
-		err := errors.New("unable to process request")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+	} else {
+		// Inbox POST body was Accepted for processing.
+		c.JSON(http.StatusAccepted, gin.H{"status": http.StatusText(http.StatusAccepted)})
 	}
 }
