@@ -97,6 +97,17 @@ The process for documentation pull requests is a bit looser than the process for
 
 If you see something in the documentation that's missing, wrong, or unclear, feel free to open a pull request addressing it; you don't necessarily need to open an issue first, but please explain why you're opening the PR in the PR comment.
 
+We support a [Conda](https://docs.conda.io/en/latest/)-based workflow for hacking, building & publishing the documentation. Here's how you can get started locally:
+
+* Install [`miniconda`](https://docs.conda.io/en/latest/miniconda.html)
+* Create your conda environment: `conda env create -f ./docs/environment.yml`
+* Activate the environment: `conda activate gotosocial-docs`
+* Serve locally: `mkdocs serve`
+
+Then you can visit [localhost:8000](http://127.0.0.1:8000/) in your browser to view.
+
+If you don't use Conda, you can read the `docs/environment.yml` to see which dependencies are required and `pip install` them manually.
+
 ## Development
 
 ### Golang forking quirks
