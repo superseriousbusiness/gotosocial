@@ -6,6 +6,7 @@ theme:
   font: false
   features:
     - header.autohide
+    - content.code.copy
   palette:
     - scheme: slate
       toggle:
