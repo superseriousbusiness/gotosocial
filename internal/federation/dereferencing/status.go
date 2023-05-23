@@ -406,7 +406,7 @@ func (d *deref) fetchStatusAttachments(ctx context.Context, tsport transport.Tra
 		// Start pre-processing remote media at remote URL.
 		processing, err := d.mediaManager.PreProcessMedia(ctx, func(ctx context.Context) (io.ReadCloser, int64, error) {
 			return tsport.DereferenceMedia(ctx, remoteURL)
-		}, nil, status.AccountID, &media.AdditionalMediaInfo{
+		}, status.AccountID, &media.AdditionalMediaInfo{
 			StatusID:    &status.ID,
 			RemoteURL:   &placeholder.RemoteURL,
 			Description: &placeholder.Description,

@@ -81,7 +81,7 @@ type deref struct {
 	state               *state.State
 	typeConverter       typeutils.TypeConverter
 	transportController transport.Controller
-	mediaManager        media.Manager
+	mediaManager        *media.Manager
 	derefAvatars        map[string]*media.ProcessingMedia
 	derefAvatarsMu      mutexes.Mutex
 	derefHeaders        map[string]*media.ProcessingMedia
@@ -93,7 +93,7 @@ type deref struct {
 }
 
 // NewDereferencer returns a Dereferencer initialized with the given parameters.
-func NewDereferencer(state *state.State, typeConverter typeutils.TypeConverter, transportController transport.Controller, mediaManager media.Manager) Dereferencer {
+func NewDereferencer(state *state.State, typeConverter typeutils.TypeConverter, transportController transport.Controller, mediaManager *media.Manager) Dereferencer {
 	return &deref{
 		state:               state,
 		typeConverter:       typeConverter,

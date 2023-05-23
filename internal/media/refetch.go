@@ -32,7 +32,7 @@ import (
 
 type DereferenceMedia func(ctx context.Context, iri *url.URL) (io.ReadCloser, int64, error)
 
-func (m *manager) RefetchEmojis(ctx context.Context, domain string, dereferenceMedia DereferenceMedia) (int, error) {
+func (m *Manager) RefetchEmojis(ctx context.Context, domain string, dereferenceMedia DereferenceMedia) (int, error) {
 	// normalize domain
 	if domain == "" {
 		domain = db.EmojiAllDomains
@@ -107,7 +107,7 @@ func (m *manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 			return dereferenceMedia(ctx, emojiImageIRI)
 		}
 
-		processingEmoji, err := m.PreProcessEmoji(ctx, dataFunc, nil, emoji.Shortcode, emoji.ID, emoji.URI, &AdditionalEmojiInfo{
+		processingEmoji, err := m.PreProcessEmoji(ctx, dataFunc, emoji.Shortcode, emoji.ID, emoji.URI, &AdditionalEmojiInfo{
 			Domain:               &emoji.Domain,
 			ImageRemoteURL:       &emoji.ImageRemoteURL,
 			ImageStaticRemoteURL: &emoji.ImageStaticRemoteURL,
@@ -131,7 +131,7 @@ func (m *manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 	return totalRefetched, nil
 }
 
-func (m *manager) emojiRequiresRefetch(ctx context.Context, emoji *gtsmodel.Emoji) (bool, error) {
+func (m *Manager) emojiRequiresRefetch(ctx context.Context, emoji *gtsmodel.Emoji) (bool, error) {
 	if has, err := m.state.Storage.Has(ctx, emoji.ImagePath); err != nil {
 		return false, err
 	} else if !has {

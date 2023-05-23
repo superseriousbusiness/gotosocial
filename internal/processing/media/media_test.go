@@ -37,7 +37,7 @@ type MediaStandardTestSuite struct {
 	tc                  typeutils.TypeConverter
 	storage             *storage.Driver
 	state               state.State
-	mediaManager        media.Manager
+	mediaManager        *media.Manager
 	transportController transport.Controller
 
 	// standard suite models

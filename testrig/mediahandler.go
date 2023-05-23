@@ -23,7 +23,7 @@ import (
 )
 
 // NewTestMediaManager returns a media handler with the default test config, and the given db and storage.
-func NewTestMediaManager(state *state.State) media.Manager {
+func NewTestMediaManager(state *state.State) *media.Manager {
 	StartWorkers(state) // ensure started
 	return media.NewManager(state)
 }

@@ -55,7 +55,7 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlocking() {
 	emojiID := "01GDQ9G782X42BAMFASKP64343"
 	emojiURI := "http://localhost:8080/emoji/01GDQ9G782X42BAMFASKP64343"
 
-	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "rainbow_test", emojiID, emojiURI, nil, false)
+	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, "rainbow_test", emojiID, emojiURI, nil, false)
 	suite.NoError(err)
 
 	// do a blocking call to fetch the emoji
@@ -125,7 +125,7 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingRefresh() {
 	emojiID := emojiToUpdate.ID
 	emojiURI := emojiToUpdate.URI
 
-	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "yell", emojiID, emojiURI, &media.AdditionalEmojiInfo{
+	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, "yell", emojiID, emojiURI, &media.AdditionalEmojiInfo{
 		CreatedAt:      &emojiToUpdate.CreatedAt,
 		Domain:         &emojiToUpdate.Domain,
 		ImageRemoteURL: &newImageRemoteURL,
@@ -209,7 +209,7 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingTooLarge() {
 	emojiID := "01GDQ9G782X42BAMFASKP64343"
 	emojiURI := "http://localhost:8080/emoji/01GDQ9G782X42BAMFASKP64343"
 
-	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "big_panda", emojiID, emojiURI, nil, false)
+	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, "big_panda", emojiID, emojiURI, nil, false)
 	suite.NoError(err)
 
 	// do a blocking call to fetch the emoji
@@ -233,7 +233,7 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingTooLargeNoSizeGiven() {
 	emojiID := "01GDQ9G782X42BAMFASKP64343"
 	emojiURI := "http://localhost:8080/emoji/01GDQ9G782X42BAMFASKP64343"
 
-	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "big_panda", emojiID, emojiURI, nil, false)
+	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, "big_panda", emojiID, emojiURI, nil, false)
 	suite.NoError(err)
 
 	// do a blocking call to fetch the emoji
@@ -258,7 +258,7 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingNoFileSizeGiven() {
 	emojiURI := "http://localhost:8080/emoji/01GDQ9G782X42BAMFASKP64343"
 
 	// process the media with no additional info provided
-	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, nil, "rainbow_test", emojiID, emojiURI, nil, false)
+	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, "rainbow_test", emojiID, emojiURI, nil, false)
 	suite.NoError(err)
 
 	// do a blocking call to fetch the emoji
@@ -319,7 +319,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlocking() {
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// process the media with no additional info provided
-	processingMedia, err := suite.manager.ProcessMedia(ctx, data, nil, accountID, nil)
+	processingMedia, err := suite.manager.ProcessMedia(ctx, data, accountID, nil)
 	suite.NoError(err)
 	// fetch the attachment id from the processing media
 	attachmentID := processingMedia.AttachmentID()
@@ -391,7 +391,7 @@ func (suite *ManagerTestSuite) TestSlothVineProcessBlocking() {
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// process the media with no additional info provided
-	processingMedia, err := suite.manager.ProcessMedia(ctx, data, nil, accountID, nil)
+	processingMedia, err := suite.manager.ProcessMedia(ctx, data, accountID, nil)
 	suite.NoError(err)
 	// fetch the attachment id from the processing media
 	attachmentID := processingMedia.AttachmentID()
@@ -467,7 +467,7 @@ func (suite *ManagerTestSuite) TestLongerMp4ProcessBlocking() {
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// process the media with no additional info provided
-	processingMedia, err := suite.manager.ProcessMedia(ctx, data, nil, accountID, nil)
+	processingMedia, err := suite.manager.ProcessMedia(ctx, data, accountID, nil)
 	suite.NoError(err)
 	// fetch the attachment id from the processing media
 	attachmentID := processingMedia.AttachmentID()
@@ -543,7 +543,7 @@ func (suite *ManagerTestSuite) TestBirdnestMp4ProcessBlocking() {
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// process the media with no additional info provided
-	processingMedia, err := suite.manager.ProcessMedia(ctx, data, nil, accountID, nil)
+	processingMedia, err := suite.manager.ProcessMedia(ctx, data, accountID, nil)
 	suite.NoError(err)
 	// fetch the attachment id from the processing media
 	attachmentID := processingMedia.AttachmentID()
@@ -621,7 +621,7 @@ func (suite *ManagerTestSuite) TestNotAnMp4ProcessBlocking() {
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// pre processing should go fine but...
-	processingMedia, err := suite.manager.ProcessMedia(ctx, data, nil, accountID, nil)
+	processingMedia, err := suite.manager.ProcessMedia(ctx, data, accountID, nil)
 	suite.NoError(err)
 
 	// we should get an error while loading
@@ -646,7 +646,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingNoContentLengthGiven
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// process the media with no additional info provided
-	processingMedia, err := suite.manager.ProcessMedia(ctx, data, nil, accountID, nil)
+	processingMedia, err := suite.manager.ProcessMedia(ctx, data, accountID, nil)
 	suite.NoError(err)
 	// fetch the attachment id from the processing media
 	attachmentID := processingMedia.AttachmentID()
@@ -719,7 +719,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingReadCloser() {
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// process the media with no additional info provided
-	processingMedia, err := suite.manager.ProcessMedia(ctx, data, nil, accountID, nil)
+	processingMedia, err := suite.manager.ProcessMedia(ctx, data, accountID, nil)
 	suite.NoError(err)
 	// fetch the attachment id from the processing media
 	attachmentID := processingMedia.AttachmentID()
@@ -791,7 +791,7 @@ func (suite *ManagerTestSuite) TestPngNoAlphaChannelProcessBlocking() {
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// process the media with no additional info provided
-	processingMedia, err := suite.manager.ProcessMedia(ctx, data, nil, accountID, nil)
+	processingMedia, err := suite.manager.ProcessMedia(ctx, data, accountID, nil)
 	suite.NoError(err)
 	// fetch the attachment id from the processing media
 	attachmentID := processingMedia.AttachmentID()
@@ -863,7 +863,7 @@ func (suite *ManagerTestSuite) TestPngAlphaChannelProcessBlocking() {
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// process the media with no additional info provided
-	processingMedia, err := suite.manager.ProcessMedia(ctx, data, nil, accountID, nil)
+	processingMedia, err := suite.manager.ProcessMedia(ctx, data, accountID, nil)
 	suite.NoError(err)
 	// fetch the attachment id from the processing media
 	attachmentID := processingMedia.AttachmentID()
@@ -932,18 +932,10 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithCallback() {
 		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
 	}
 
-	// test the callback function by setting a simple boolean
-	var calledPostData bool
-	postData := func(_ context.Context) error {
-		calledPostData = true
-		return nil
-	}
-	suite.False(calledPostData) // not called yet (obvs)
-
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// process the media with no additional info provided
-	processingMedia, err := suite.manager.ProcessMedia(ctx, data, postData, accountID, nil)
+	processingMedia, err := suite.manager.ProcessMedia(ctx, data, accountID, nil)
 	suite.NoError(err)
 	// fetch the attachment id from the processing media
 	attachmentID := processingMedia.AttachmentID()
@@ -952,9 +944,6 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithCallback() {
 	attachment, err := processingMedia.LoadAttachment(ctx)
 	suite.NoError(err)
 	suite.NotNil(attachment)
-
-	// the post data callback should have been called
-	suite.True(calledPostData)
 
 	// make sure it's got the stuff set on it that we expect
 	// the attachment ID and accountID we expect
@@ -1019,7 +1008,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessAsync() {
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// process the media with no additional info provided
-	processingMedia, err := suite.manager.ProcessMedia(ctx, data, nil, accountID, nil)
+	processingMedia, err := suite.manager.ProcessMedia(ctx, data, accountID, nil)
 	suite.NoError(err)
 
 	// fetch the attachment id from the processing media
@@ -1101,7 +1090,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegQueueSpamming() {
 	inProcess := []*media.ProcessingMedia{}
 	for i := 0; i < spam; i++ {
 		// process the media with no additional info provided
-		processingMedia, err := suite.manager.ProcessMedia(ctx, data, nil, accountID, nil)
+		processingMedia, err := suite.manager.ProcessMedia(ctx, data, accountID, nil)
 		suite.NoError(err)
 		inProcess = append(inProcess, processingMedia)
 	}
@@ -1202,7 +1191,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
 	suite.manager = diskManager
 
 	// process the media with no additional info provided
-	processingMedia, err := diskManager.ProcessMedia(ctx, data, nil, accountID, nil)
+	processingMedia, err := diskManager.ProcessMedia(ctx, data, accountID, nil)
 	suite.NoError(err)
 	// fetch the attachment id from the processing media
 	attachmentID := processingMedia.AttachmentID()

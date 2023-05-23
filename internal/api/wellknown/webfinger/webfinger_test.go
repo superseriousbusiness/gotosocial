@@ -40,7 +40,7 @@ type WebfingerStandardTestSuite struct {
 	db           db.DB
 	state        state.State
 	tc           typeutils.TypeConverter
-	mediaManager media.Manager
+	mediaManager *media.Manager
 	federator    federation.Federator
 	emailSender  email.Sender
 	processor    *processing.Processor

@@ -40,7 +40,6 @@ import (
 type ProcessingMedia struct {
 	media   *gtsmodel.MediaAttachment // processing media attachment details
 	dataFn  DataFunc                  // load-data function, returns media stream
-	postFn  PostDataCallbackFunc      // post data callback function
 	recache bool                      // recaching existing (uncached) media
 	done    bool                      // done is set when process finishes with non ctx canceled type error
 	proc    runners.Processor         // proc helps synchronize only a singular running processing instance
@@ -143,17 +142,6 @@ func (p *ProcessingMedia) load(ctx context.Context) (*gtsmodel.MediaAttachment, 
 // and updates the underlying attachment fields as necessary. It will then stream
 // bytes from p's reader directly into storage so that it can be retrieved later.
 func (p *ProcessingMedia) store(ctx context.Context) error {
-	defer func() {
-		if p.postFn == nil {
-			return
-		}
-
-		// ensure post callback gets called.
-		if err := p.postFn(ctx); err != nil {
-			log.Errorf(ctx, "error executing postdata function: %v", err)
-		}
-	}()
-
 	// Load media from provided data fun
 	rc, sz, err := p.dataFn(ctx)
 	if err != nil {

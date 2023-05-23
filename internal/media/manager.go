@@ -21,8 +21,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"time"
 
+	"codeberg.org/gruf/go-iotools"
 	"codeberg.org/gruf/go-runners"
 	"codeberg.org/gruf/go-sched"
 	"codeberg.org/gruf/go-store/v2/storage"
@@ -48,7 +50,7 @@ var SupportedEmojiMIMETypes = []string{
 }
 
 // Manager provides an interface for managing media: parsing, storing, and retrieving media objects like photos, videos, and gifs.
-type Manager interface {
+type _Manager interface {
 	/*
 		PROCESSING FUNCTIONS
 	*/
@@ -67,15 +69,15 @@ type Manager interface {
 	// ai is optional and can be nil. Any additional information about the attachment provided will be put in the database.
 	//
 	// Note: unlike ProcessMedia, this will NOT queue the media to be asynchronously processed.
-	PreProcessMedia(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error)
+	PreProcessMedia(ctx context.Context, data DataFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error)
 
 	// PreProcessMediaRecache refetches, reprocesses, and recaches an existing attachment that has been uncached via pruneRemote.
 	//
 	// Note: unlike ProcessMedia, this will NOT queue the media to be asychronously processed.
-	PreProcessMediaRecache(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, attachmentID string) (*ProcessingMedia, error)
+	PreProcessMediaRecache(ctx context.Context, data DataFunc, attachmentID string) (*ProcessingMedia, error)
 
 	// ProcessMedia will call PreProcessMedia, followed by queuing the media to be processing in the media worker queue.
-	ProcessMedia(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error)
+	ProcessMedia(ctx context.Context, data DataFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error)
 
 	// PreProcessEmoji begins the process of decoding and storing the given data as an emoji.
 	// It will return a pointer to a ProcessingEmoji struct upon which further actions can be performed, such as getting
@@ -95,10 +97,10 @@ type Manager interface {
 	// ai is optional and can be nil. Any additional information about the emoji provided will be put in the database.
 	//
 	// Note: unlike ProcessEmoji, this will NOT queue the emoji to be asynchronously processed.
-	PreProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error)
+	PreProcessEmoji(ctx context.Context, data DataFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error)
 
 	// ProcessEmoji will call PreProcessEmoji, followed by queuing the emoji to be processing in the emoji worker queue.
-	ProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error)
+	ProcessEmoji(ctx context.Context, data DataFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error)
 
 	/*
 		PRUNING/UNCACHING FUNCTIONS
@@ -152,7 +154,7 @@ type Manager interface {
 	RefetchEmojis(ctx context.Context, domain string, dereferenceMedia DereferenceMedia) (int, error)
 }
 
-type manager struct {
+type Manager struct {
 	state *state.State
 }
 
@@ -162,13 +164,13 @@ type manager struct {
 // a limited number of media will be processed in parallel. The numbers of workers
 // is determined from the $GOMAXPROCS environment variable (usually no. CPU cores).
 // See internal/concurrency.NewWorkerPool() documentation for further information.
-func NewManager(state *state.State) Manager {
-	m := &manager{state: state}
+func NewManager(state *state.State) *Manager {
+	m := &Manager{state: state}
 	scheduleCleanupJobs(m)
 	return m
 }
 
-func (m *manager) PreProcessMedia(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error) {
+func (m *Manager) PreProcessMedia(ctx context.Context, data DataFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error) {
 	id, err := id.NewRandomULID()
 	if err != nil {
 		return nil, err
@@ -248,14 +250,13 @@ func (m *manager) PreProcessMedia(ctx context.Context, data DataFunc, postData P
 	processingMedia := &ProcessingMedia{
 		media:  attachment,
 		dataFn: data,
-		postFn: postData,
 		mgr:    m,
 	}
 
 	return processingMedia, nil
 }
 
-func (m *manager) PreProcessMediaRecache(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, attachmentID string) (*ProcessingMedia, error) {
+func (m *Manager) PreProcessMediaRecache(ctx context.Context, data DataFunc, attachmentID string) (*ProcessingMedia, error) {
 	// get the existing attachment from database.
 	attachment, err := m.state.DB.GetAttachmentByID(ctx, attachmentID)
 	if err != nil {
@@ -265,7 +266,6 @@ func (m *manager) PreProcessMediaRecache(ctx context.Context, data DataFunc, pos
 	processingMedia := &ProcessingMedia{
 		media:   attachment,
 		dataFn:  data,
-		postFn:  postData,
 		recache: true, // indicate it's a recache
 		mgr:     m,
 	}
@@ -273,9 +273,9 @@ func (m *manager) PreProcessMediaRecache(ctx context.Context, data DataFunc, pos
 	return processingMedia, nil
 }
 
-func (m *manager) ProcessMedia(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error) {
+func (m *Manager) ProcessMedia(ctx context.Context, data DataFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error) {
 	// Create a new processing media object for this media request.
-	media, err := m.PreProcessMedia(ctx, data, postData, accountID, ai)
+	media, err := m.PreProcessMedia(ctx, data, accountID, ai)
 	if err != nil {
 		return nil, err
 	}
@@ -286,7 +286,7 @@ func (m *manager) ProcessMedia(ctx context.Context, data DataFunc, postData Post
 	return media, nil
 }
 
-func (m *manager) PreProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, emojiID string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error) {
+func (m *Manager) PreProcessEmoji(ctx context.Context, data DataFunc, shortcode string, emojiID string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error) {
 	instanceAccount, err := m.state.DB.GetInstanceAccount(ctx, "")
 	if err != nil {
 		return nil, fmt.Errorf("preProcessEmoji: error fetching this instance account from the db: %s", err)
@@ -299,6 +299,7 @@ func (m *manager) PreProcessEmoji(ctx context.Context, data DataFunc, postData P
 	)
 
 	if refresh {
+		// Look for existing emoji by given ID.
 		emoji, err = m.state.DB.GetEmojiByID(ctx, emojiID)
 		if err != nil {
 			return nil, fmt.Errorf("preProcessEmoji: error fetching emoji to refresh from the db: %s", err)
@@ -307,28 +308,29 @@ func (m *manager) PreProcessEmoji(ctx context.Context, data DataFunc, postData P
 		// if this is a refresh, we will end up with new images
 		// stored for this emoji, so we can use the postData function
 		// to perform clean up of the old images from storage
-		originalPostData := postData
+		originalData := data
 		originalImagePath := emoji.ImagePath
 		originalImageStaticPath := emoji.ImageStaticPath
-		postData = func(innerCtx context.Context) error {
-			// trigger the original postData function if it was provided
-			if originalPostData != nil {
-				if err := originalPostData(innerCtx); err != nil {
-					return err
+		data = func(ctx context.Context) (io.ReadCloser, int64, error) {
+			// Call original data func.
+			rc, sz, err := originalData(ctx)
+			if err != nil {
+				return nil, 0, err
+			}
+
+			// Wrap closer to cleanup old data.
+			c := iotools.CloserCallback(rc, func() {
+				if err := m.state.Storage.Delete(ctx, originalImagePath); err != nil && !errors.Is(err, storage.ErrNotFound) {
+					log.Errorf(ctx, "error removing old emoji %s@%s from storage: %v", emoji.Shortcode, emoji.Domain, err)
 				}
-			}
 
-			l := log.WithContext(ctx).
-				WithField("shortcode@domain", emoji.Shortcode+"@"+emoji.Domain)
-			l.Debug("postData: cleaning up old emoji files for refreshed emoji")
-			if err := m.state.Storage.Delete(innerCtx, originalImagePath); err != nil && !errors.Is(err, storage.ErrNotFound) {
-				l.Errorf("postData: error cleaning up old emoji image at %s for refreshed emoji: %s", originalImagePath, err)
-			}
-			if err := m.state.Storage.Delete(innerCtx, originalImageStaticPath); err != nil && !errors.Is(err, storage.ErrNotFound) {
-				l.Errorf("postData: error cleaning up old emoji static image at %s for refreshed emoji: %s", originalImageStaticPath, err)
-			}
+				if err := m.state.Storage.Delete(ctx, originalImageStaticPath); err != nil && !errors.Is(err, storage.ErrNotFound) {
+					log.Errorf(ctx, "error removing old static emoji %s@%s from storage: %v", emoji.Shortcode, emoji.Domain, err)
+				}
+			})
 
-			return nil
+			// Return newly wrapped readcloser and size.
+			return iotools.ReadCloser(rc, c), sz, nil
 		}
 
 		newPathID, err = id.NewRandomULID()
@@ -410,16 +412,15 @@ func (m *manager) PreProcessEmoji(ctx context.Context, data DataFunc, postData P
 		refresh:   refresh,
 		newPathID: newPathID,
 		dataFn:    data,
-		postFn:    postData,
 		mgr:       m,
 	}
 
 	return processingEmoji, nil
 }
 
-func (m *manager) ProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error) {
+func (m *Manager) ProcessEmoji(ctx context.Context, data DataFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error) {
 	// Create a new processing emoji object for this emoji request.
-	emoji, err := m.PreProcessEmoji(ctx, data, postData, shortcode, id, uri, ai, refresh)
+	emoji, err := m.PreProcessEmoji(ctx, data, shortcode, id, uri, ai, refresh)
 	if err != nil {
 		return nil, err
 	}
@@ -430,7 +431,7 @@ func (m *manager) ProcessEmoji(ctx context.Context, data DataFunc, postData Post
 	return emoji, nil
 }
 
-func scheduleCleanupJobs(m *manager) {
+func scheduleCleanupJobs(m *Manager) {
 	const day = time.Hour * 24
 
 	// Calculate closest midnight.
