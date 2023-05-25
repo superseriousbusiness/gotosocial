@@ -39,4 +39,11 @@ accounts-reason-required: true
 # Options: [true, false]
 # Default: false
 accounts-allow-custom-css: false
+
+# Int. If accounts-allow-custom-css is true, this is the permitted length in characters for
+# CSS uploaded by accounts on this instance. No effect if accounts-allow-custom-css is false.
+#
+# Examples: [500, 5000, 9999]
+# Default: 10000
+accounts-custom-css-length: 10000
 ```

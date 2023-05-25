@@ -41,7 +41,6 @@ const (
 	maximumDescriptionLength      = 5000
 	maximumSiteTermsLength        = 5000
 	maximumUsernameLength         = 64
-	maximumCustomCSSLength        = 5000
 	maximumEmojiCategoryLength    = 64
 	maximumProfileFieldLength     = 255
 	maximumProfileFields          = 6
@@ -170,9 +169,11 @@ func CustomCSS(customCSS string) error {
 		return errors.New("accounts-allow-custom-css is not enabled for this instance")
 	}
 
+	maximumCustomCSSLength := config.GetAccountsCustomCSSLength()
 	if length := len([]rune(customCSS)); length > maximumCustomCSSLength {
 		return fmt.Errorf("custom_css must be less than %d characters, but submitted custom_css was %d characters", maximumCustomCSSLength, length)
 	}
+
 	return nil
 }
 

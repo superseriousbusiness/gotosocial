@@ -74,6 +74,31 @@ func GetLogDbQueries() bool { return global.GetLogDbQueries() }
 // SetLogDbQueries safely sets the value for global configuration 'LogDbQueries' field
 func SetLogDbQueries(v bool) { global.SetLogDbQueries(v) }
 
+// GetLogClientIP safely fetches the Configuration value for state's 'LogClientIP' field
+func (st *ConfigState) GetLogClientIP() (v bool) {
+	st.mutex.Lock()
+	v = st.config.LogClientIP
+	st.mutex.Unlock()
+	return
+}
+
+// SetLogClientIP safely sets the Configuration value for state's 'LogClientIP' field
+func (st *ConfigState) SetLogClientIP(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.LogClientIP = v
+	st.reloadToViper()
+}
+
+// LogClientIPFlag returns the flag name for the 'LogClientIP' field
+func LogClientIPFlag() string { return "log-client-ip" }
+
+// GetLogClientIP safely fetches the value for global configuration 'LogClientIP' field
+func GetLogClientIP() bool { return global.GetLogClientIP() }
+
+// SetLogClientIP safely sets the value for global configuration 'LogClientIP' field
+func SetLogClientIP(v bool) { global.SetLogClientIP(v) }
+
 // GetApplicationName safely fetches the Configuration value for state's 'ApplicationName' field
 func (st *ConfigState) GetApplicationName() (v string) {
 	st.mutex.Lock()
@@ -923,6 +948,31 @@ func GetAccountsAllowCustomCSS() bool { return global.GetAccountsAllowCustomCSS(
 
 // SetAccountsAllowCustomCSS safely sets the value for global configuration 'AccountsAllowCustomCSS' field
 func SetAccountsAllowCustomCSS(v bool) { global.SetAccountsAllowCustomCSS(v) }
+
+// GetAccountsCustomCSSLength safely fetches the Configuration value for state's 'AccountsCustomCSSLength' field
+func (st *ConfigState) GetAccountsCustomCSSLength() (v int) {
+	st.mutex.Lock()
+	v = st.config.AccountsCustomCSSLength
+	st.mutex.Unlock()
+	return
+}
+
+// SetAccountsCustomCSSLength safely sets the Configuration value for state's 'AccountsCustomCSSLength' field
+func (st *ConfigState) SetAccountsCustomCSSLength(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.AccountsCustomCSSLength = v
+	st.reloadToViper()
+}
+
+// AccountsCustomCSSLengthFlag returns the flag name for the 'AccountsCustomCSSLength' field
+func AccountsCustomCSSLengthFlag() string { return "accounts-custom-css-length" }
+
+// GetAccountsCustomCSSLength safely fetches the value for global configuration 'AccountsCustomCSSLength' field
+func GetAccountsCustomCSSLength() int { return global.GetAccountsCustomCSSLength() }
+
+// SetAccountsCustomCSSLength safely sets the value for global configuration 'AccountsCustomCSSLength' field
+func SetAccountsCustomCSSLength(v int) { global.SetAccountsCustomCSSLength(v) }
 
 // GetMediaImageMaxSize safely fetches the Configuration value for state's 'MediaImageMaxSize' field
 func (st *ConfigState) GetMediaImageMaxSize() (v bytesize.Size) {
@@ -3829,28 +3879,3 @@ func GetRequestIDHeader() string { return global.GetRequestIDHeader() }
 
 // SetRequestIDHeader safely sets the value for global configuration 'RequestIDHeader' field
 func SetRequestIDHeader(v string) { global.SetRequestIDHeader(v) }
-
-// GetLogClientIP safely fetches the Configuration value for state's 'LogClientIP' field
-func (st *ConfigState) GetLogClientIP() (v bool) {
-	st.mutex.Lock()
-	v = st.config.LogClientIP
-	st.mutex.Unlock()
-	return
-}
-
-// SetLogClientIP safely sets the Configuration value for state's 'LogClientIP' field
-func (st *ConfigState) SetLogClientIP(v bool) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.LogClientIP = v
-	st.reloadToViper()
-}
-
-// LogClientIPFlag returns the flag name for the 'LogClientIP' field
-func LogClientIPFlag() string { return "log-client-ip" }
-
-// GetLogClientIP safely fetches the value for global configuration 'LogClientIP' field
-func GetLogClientIP() bool { return global.GetLogClientIP() }
-
-// SetLogClientIP safely sets the value for global configuration 'LogClientIP' field
-func SetLogClientIP(v bool) { global.SetLogClientIP(v) }

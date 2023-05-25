@@ -65,6 +65,7 @@ var Defaults = Configuration{
 	AccountsApprovalRequired: true,
 	AccountsReasonRequired:   true,
 	AccountsAllowCustomCSS:   false,
+	AccountsCustomCSSLength:  10000,
 
 	MediaImageMaxSize:        10 * bytesize.MiB,
 	MediaVideoMaxSize:        40 * bytesize.MiB,
