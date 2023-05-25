@@ -1142,6 +1142,14 @@ func (c *converter) ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Repo
 	}, nil
 }
 
+func (c *converter) ListToAPIList(ctx context.Context, l *gtsmodel.List) (*apimodel.List, error) {
+	return &apimodel.List{
+		ID:            l.ID,
+		Title:         l.Title,
+		RepliesPolicy: string(l.RepliesPolicy),
+	}, nil
+}
+
 // convertAttachmentsToAPIAttachments will convert a slice of GTS model attachments to frontend API model attachments, falling back to IDs if no GTS models supplied.
 func (c *converter) convertAttachmentsToAPIAttachments(ctx context.Context, attachments []*gtsmodel.MediaAttachment, attachmentIDs []string) ([]apimodel.Attachment, error) {
 	var errs gtserror.MultiError

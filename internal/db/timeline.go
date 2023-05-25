@@ -44,4 +44,8 @@ type Timeline interface {
 	//
 	// Also note the extra return values, which correspond to the nextMaxID and prevMinID for building Link headers.
 	GetFavedTimeline(ctx context.Context, accountID string, maxID string, minID string, limit int) ([]*gtsmodel.Status, string, string, Error)
+
+	// GetListTimeline returns a slice of statuses from followed accounts collected within the list with the given listID.
+	// Statuses should be returned in descending order of when they were created (newest first).
+	GetListTimeline(ctx context.Context, listID string, maxID string, sinceID string, minID string, limit int) ([]*gtsmodel.Status, error)
 }

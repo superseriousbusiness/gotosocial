@@ -26,7 +26,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
-	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -58,10 +58,10 @@ func (suite *GetTestSuite) SetupTest() {
 	tl := timeline.NewTimeline(
 		context.Background(),
 		suite.testAccounts["local_account_1"].ID,
-		processing.StatusGrabFunction(suite.db),
-		processing.StatusFilterFunction(suite.db, suite.filter),
-		processing.StatusPrepareFunction(suite.db, suite.tc),
-		processing.StatusSkipInsertFunction(),
+		tlprocessor.HomeTimelineGrab(&suite.state),
+		tlprocessor.HomeTimelineFilter(&suite.state, suite.filter),
+		tlprocessor.HomeTimelineStatusPrepare(&suite.state, suite.tc),
+		tlprocessor.SkipInsert(),
 	)
 
 	// Put testrig statuses in a determinate order
@@ -134,10 +134,10 @@ func (suite *GetTestSuite) TestGetNewTimelinePageDown() {
 	tl := timeline.NewTimeline(
 		context.Background(),
 		suite.testAccounts["local_account_1"].ID,
-		processing.StatusGrabFunction(suite.db),
-		processing.StatusFilterFunction(suite.db, suite.filter),
-		processing.StatusPrepareFunction(suite.db, suite.tc),
-		processing.StatusSkipInsertFunction(),
+		tlprocessor.HomeTimelineGrab(&suite.state),
+		tlprocessor.HomeTimelineFilter(&suite.state, suite.filter),
+		tlprocessor.HomeTimelineStatusPrepare(&suite.state, suite.tc),
+		tlprocessor.SkipInsert(),
 	)
 
 	// Get 5 from the top.
@@ -163,10 +163,10 @@ func (suite *GetTestSuite) TestGetNewTimelinePageUp() {
 	tl := timeline.NewTimeline(
 		context.Background(),
 		suite.testAccounts["local_account_1"].ID,
-		processing.StatusGrabFunction(suite.db),
-		processing.StatusFilterFunction(suite.db, suite.filter),
-		processing.StatusPrepareFunction(suite.db, suite.tc),
-		processing.StatusSkipInsertFunction(),
+		tlprocessor.HomeTimelineGrab(&suite.state),
+		tlprocessor.HomeTimelineFilter(&suite.state, suite.filter),
+		tlprocessor.HomeTimelineStatusPrepare(&suite.state, suite.tc),
+		tlprocessor.SkipInsert(),
 	)
 
 	// Get 5 from the back.
@@ -192,10 +192,10 @@ func (suite *GetTestSuite) TestGetNewTimelineMoreThanPossible() {
 	tl := timeline.NewTimeline(
 		context.Background(),
 		suite.testAccounts["local_account_1"].ID,
-		processing.StatusGrabFunction(suite.db),
-		processing.StatusFilterFunction(suite.db, suite.filter),
-		processing.StatusPrepareFunction(suite.db, suite.tc),
-		processing.StatusSkipInsertFunction(),
+		tlprocessor.HomeTimelineGrab(&suite.state),
+		tlprocessor.HomeTimelineFilter(&suite.state, suite.filter),
+		tlprocessor.HomeTimelineStatusPrepare(&suite.state, suite.tc),
+		tlprocessor.SkipInsert(),
 	)
 
 	// Get 100 from the top.
@@ -213,10 +213,10 @@ func (suite *GetTestSuite) TestGetNewTimelineMoreThanPossiblePageUp() {
 	tl := timeline.NewTimeline(
 		context.Background(),
 		suite.testAccounts["local_account_1"].ID,
-		processing.StatusGrabFunction(suite.db),
-		processing.StatusFilterFunction(suite.db, suite.filter),
-		processing.StatusPrepareFunction(suite.db, suite.tc),
-		processing.StatusSkipInsertFunction(),
+		tlprocessor.HomeTimelineGrab(&suite.state),
+		tlprocessor.HomeTimelineFilter(&suite.state, suite.filter),
+		tlprocessor.HomeTimelineStatusPrepare(&suite.state, suite.tc),
+		tlprocessor.SkipInsert(),
 	)
 
 	// Get 100 from the back.

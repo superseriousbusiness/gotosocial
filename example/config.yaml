@@ -289,6 +289,14 @@ cache:
     follow-request-ttl: "30m"
     follow-request-sweep-freq: "1m"
 
+    list-max-size: 2000
+    list-ttl: "30m"
+    list-sweep-freq: "1m"
+
+    list-entry-max-size: 2000
+    list-entry-ttl: "30m"
+    list-entry-sweep-freq: "1m"
+
     media-max-size: 1000
     media-ttl: "30m"
     media-sweep-freq: "1m"

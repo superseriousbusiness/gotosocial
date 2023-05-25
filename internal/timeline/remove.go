@@ -28,7 +28,7 @@ import (
 func (t *timeline) Remove(ctx context.Context, statusID string) (int, error) {
 	l := log.WithContext(ctx).
 		WithFields(kv.Fields{
-			{"accountTimeline", t.accountID},
+			{"accountTimeline", t.timelineID},
 			{"statusID", statusID},
 		}...)
 
@@ -64,7 +64,7 @@ func (t *timeline) RemoveAllByOrBoosting(ctx context.Context, accountID string) 
 	l := log.
 		WithContext(ctx).
 		WithFields(kv.Fields{
-			{"accountTimeline", t.accountID},
+			{"accountTimeline", t.timelineID},
 			{"accountID", accountID},
 		}...)
 

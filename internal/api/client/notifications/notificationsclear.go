@@ -69,7 +69,7 @@ func (m *Module) NotificationsClearPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	errWithCode := m.processor.NotificationsClear(c.Request.Context(), authed)
+	errWithCode := m.processor.Timeline().NotificationsClear(c.Request.Context(), authed)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
