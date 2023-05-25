@@ -26,7 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// NotificationsClearPOSTHandler swagger:operation POST /api/v1/notifications clearNotifications
+// NotificationsClearPOSTHandler swagger:operation POST /api/v1/notifications/clear clearNotifications
 //
 // Clear/delete all notifications for currently authorized user.
 //

@@ -5019,6 +5019,7 @@ paths:
             summary: Get notifications for currently authorized user.
             tags:
                 - notifications
+    /api/v1/notifications/clear:
         post:
             description: Will return an empty object `{}` to indicate success.
             operationId: clearNotifications
