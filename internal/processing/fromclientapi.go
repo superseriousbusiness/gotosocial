@@ -50,7 +50,7 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, clientMsg messages
 
 	// Log this federated message
 	l := log.WithContext(ctx).WithFields(fields...)
-	l.Info("processing from client")
+	l.Debug("processing from client")
 
 	switch clientMsg.APActivityType {
 	case ap.ActivityCreate:

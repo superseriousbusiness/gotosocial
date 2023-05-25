@@ -68,7 +68,7 @@ func newFederatingActor(c pub.CommonBehavior, s2s pub.FederatingProtocol, db pub
 }
 
 func (f *federatingActor) Send(c context.Context, outbox *url.URL, t vocab.Type) (pub.Activity, error) {
-	log.Infof(c, "send activity %s via outbox %s", t.GetTypeName(), outbox)
+	log.Debugf(c, "send activity %s via outbox %s", t.GetTypeName(), outbox)
 	return f.wrapped.Send(c, outbox, t)
 }
 
