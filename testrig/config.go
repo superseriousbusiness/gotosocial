@@ -71,6 +71,7 @@ var testDefaults = config.Configuration{
 	AccountsApprovalRequired: true,
 	AccountsReasonRequired:   true,
 	AccountsAllowCustomCSS:   true,
+	AccountsCustomCSSLength:  10000,
 
 	MediaImageMaxSize:        10485760, // 10mb
 	MediaVideoMaxSize:        41943040, // 40mb

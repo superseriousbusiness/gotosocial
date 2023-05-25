@@ -22,8 +22,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
@@ -44,43 +44,43 @@ func (suite *ValidationTestSuite) TestCheckPasswordStrength() {
 	var err error
 
 	err = validate.NewPassword(empty)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("no password provided"), err)
+	if suite.Error(err) {
+		suite.Equal(errors.New("no password provided"), err)
 	}
 
 	err = validate.NewPassword(terriblePassword)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("password is only 62% strength, try including more special characters, using uppercase letters, using numbers or using a longer password"), err)
+	if suite.Error(err) {
+		suite.Equal(errors.New("password is only 62% strength, try including more special characters, using uppercase letters, using numbers or using a longer password"), err)
 	}
 
 	err = validate.NewPassword(weakPassword)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("password is only 95% strength, try including more special characters, using numbers or using a longer password"), err)
+	if suite.Error(err) {
+		suite.Equal(errors.New("password is only 95% strength, try including more special characters, using numbers or using a longer password"), err)
 	}
 
 	err = validate.NewPassword(shortPassword)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("password is only 39% strength, try including more special characters or using a longer password"), err)
+	if suite.Error(err) {
+		suite.Equal(errors.New("password is only 39% strength, try including more special characters or using a longer password"), err)
 	}
 
 	err = validate.NewPassword(specialPassword)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("password is only 53% strength, try including more special characters or using a longer password"), err)
+	if suite.Error(err) {
+		suite.Equal(errors.New("password is only 53% strength, try including more special characters or using a longer password"), err)
 	}
 
 	err = validate.NewPassword(longPassword)
-	if assert.NoError(suite.T(), err) {
-		assert.Equal(suite.T(), nil, err)
+	if suite.NoError(err) {
+		suite.Equal(nil, err)
 	}
 
 	err = validate.NewPassword(tooLong)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("password should be no more than 256 chars"), err)
+	if suite.Error(err) {
+		suite.Equal(errors.New("password should be no more than 256 chars"), err)
 	}
 
 	err = validate.NewPassword(strongPassword)
-	if assert.NoError(suite.T(), err) {
-		assert.Equal(suite.T(), nil, err)
+	if suite.NoError(err) {
+		suite.Equal(nil, err)
 	}
 }
 
@@ -133,28 +133,28 @@ func (suite *ValidationTestSuite) TestValidateEmail() {
 	var err error
 
 	err = validate.Email(empty)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("no email provided"), err)
+	if suite.Error(err) {
+		suite.Equal(errors.New("no email provided"), err)
 	}
 
 	err = validate.Email(notAnEmailAddress)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("mail: missing '@' or angle-addr"), err)
+	if suite.Error(err) {
+		suite.Equal(errors.New("mail: missing '@' or angle-addr"), err)
 	}
 
 	err = validate.Email(almostAnEmailAddress)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("mail: no angle-addr"), err)
+	if suite.Error(err) {
+		suite.Equal(errors.New("mail: no angle-addr"), err)
 	}
 
 	err = validate.Email(aWebsite)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("mail: missing '@' or angle-addr"), err)
+	if suite.Error(err) {
+		suite.Equal(errors.New("mail: missing '@' or angle-addr"), err)
 	}
 
 	err = validate.Email(emailAddress)
-	if assert.NoError(suite.T(), err) {
-		assert.Equal(suite.T(), nil, err)
+	if suite.NoError(err) {
+		suite.Equal(nil, err)
 	}
 }
 
@@ -171,48 +171,48 @@ func (suite *ValidationTestSuite) TestValidateLanguage() {
 	var err error
 
 	err = validate.Language(empty)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("no language provided"), err)
+	if suite.Error(err) {
+		suite.Equal(errors.New("no language provided"), err)
 	}
 
 	err = validate.Language(notALanguage)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("language: tag is not well-formed"), err)
+	if suite.Error(err) {
+		suite.Equal(errors.New("language: tag is not well-formed"), err)
 	}
 
 	err = validate.Language(english)
-	if assert.NoError(suite.T(), err) {
-		assert.Equal(suite.T(), nil, err)
+	if suite.NoError(err) {
+		suite.Equal(nil, err)
 	}
 
 	err = validate.Language(capitalEnglish)
-	if assert.NoError(suite.T(), err) {
-		assert.Equal(suite.T(), nil, err)
+	if suite.NoError(err) {
+		suite.Equal(nil, err)
 	}
 
 	err = validate.Language(arabic3Letters)
-	if assert.NoError(suite.T(), err) {
-		assert.Equal(suite.T(), nil, err)
+	if suite.NoError(err) {
+		suite.Equal(nil, err)
 	}
 
 	err = validate.Language(mixedCapsEnglish)
-	if assert.NoError(suite.T(), err) {
-		assert.Equal(suite.T(), nil, err)
+	if suite.NoError(err) {
+		suite.Equal(nil, err)
 	}
 
 	err = validate.Language(englishUS)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("language: tag is not well-formed"), err)
+	if suite.Error(err) {
+		suite.Equal(errors.New("language: tag is not well-formed"), err)
 	}
 
 	err = validate.Language(dutch)
-	if assert.NoError(suite.T(), err) {
-		assert.Equal(suite.T(), nil, err)
+	if suite.NoError(err) {
+		suite.Equal(nil, err)
 	}
 
 	err = validate.Language(german)
-	if assert.NoError(suite.T(), err) {
-		assert.Equal(suite.T(), nil, err)
+	if suite.NoError(err) {
+		suite.Equal(nil, err)
 	}
 }
 
@@ -226,49 +226,49 @@ func (suite *ValidationTestSuite) TestValidateReason() {
 
 	// check with no reason required
 	err = validate.SignUpReason(empty, false)
-	if assert.NoError(suite.T(), err) {
-		assert.Equal(suite.T(), nil, err)
+	if suite.NoError(err) {
+		suite.Equal(nil, err)
 	}
 
 	err = validate.SignUpReason(badReason, false)
-	if assert.NoError(suite.T(), err) {
-		assert.Equal(suite.T(), nil, err)
+	if suite.NoError(err) {
+		suite.Equal(nil, err)
 	}
 
 	err = validate.SignUpReason(tooLong, false)
-	if assert.NoError(suite.T(), err) {
-		assert.Equal(suite.T(), nil, err)
+	if suite.NoError(err) {
+		suite.Equal(nil, err)
 	}
 
 	err = validate.SignUpReason(goodReason, false)
-	if assert.NoError(suite.T(), err) {
-		assert.Equal(suite.T(), nil, err)
+	if suite.NoError(err) {
+		suite.Equal(nil, err)
 	}
 
 	err = validate.SignUpReason(unicode, false)
-	if assert.NoError(suite.T(), err) {
-		assert.Equal(suite.T(), nil, err)
+	if suite.NoError(err) {
+		suite.Equal(nil, err)
 	}
 
 	// check with reason required
 	err = validate.SignUpReason(empty, true)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("no reason provided"), err)
+	if suite.Error(err) {
+		suite.Equal(errors.New("no reason provided"), err)
 	}
 
 	err = validate.SignUpReason(badReason, true)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("reason should be at least 40 chars but 'because' was 7"), err)
+	if suite.Error(err) {
+		suite.Equal(errors.New("reason should be at least 40 chars but 'because' was 7"), err)
 	}
 
 	err = validate.SignUpReason(tooLong, true)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), errors.New("reason should be no more than 500 chars but given reason was 600"), err)
+	if suite.Error(err) {
+		suite.Equal(errors.New("reason should be no more than 500 chars but given reason was 600"), err)
 	}
 
 	err = validate.SignUpReason(goodReason, true)
-	if assert.NoError(suite.T(), err) {
-		assert.Equal(suite.T(), nil, err)
+	if suite.NoError(err) {
+		suite.Equal(nil, err)
 	}
 }
 
@@ -300,6 +300,46 @@ func (suite *ValidationTestSuite) TestValidateProfileField() {
 	suite.NoError(err)
 	suite.Equal(trimmedProfileField, dodgyFields[0].Value)
 	suite.Len(dodgyFields[0].Value, 255)
+}
+
+func (suite *ValidationTestSuite) TestValidateCustomCSSDisabled() {
+	config.SetAccountsAllowCustomCSS(false)
+
+	err := validate.CustomCSS("this will fail")
+	suite.EqualError(err, "accounts-allow-custom-css is not enabled for this instance")
+}
+
+func (suite *ValidationTestSuite) TestValidateCustomCSSEnabled() {
+	config.SetAccountsAllowCustomCSS(true)
+
+	err := validate.CustomCSS("this will pass")
+	suite.NoError(err)
+}
+
+func (suite *ValidationTestSuite) TestValidateCustomCSSTooLong() {
+	config.SetAccountsAllowCustomCSS(true)
+	config.SetAccountsCustomCSSLength(5)
+
+	err := validate.CustomCSS("this will fail")
+	suite.EqualError(err, "custom_css must be less than 5 characters, but submitted custom_css was 14 characters")
+}
+
+func (suite *ValidationTestSuite) TestValidateCustomCSSTooLongZalgo() {
+	config.SetAccountsAllowCustomCSS(true)
+	config.SetAccountsCustomCSSLength(5)
+	zalgo := "p̵̹̜͇̺̜̱͊̓̈́͛̀͊͘͜e̷̡̱̲̼̪̗̙̐͐̃́̄̉͛̔e̷̞̰̜̲̥̘̻͔̜̞̬͚͋̊͑͗̅̓͛͗̎̃̈́̐̂̕͝ ̷̨̢̡̱̖̤͇̻͕̲̤̞̑ͅp̶̰̜̟̠̏̇̇̆̐̒͋̔͘ḛ̵̾͘ę̷̝͙͕͓͓̱̠̤̳̻̜̗͖̞͙̻̆̓̄͋̎͊̀̋̿́̐͛͗̄̈́̚͠ ̵̨̨̫͕̲͚̮͕̳̉̾̔̍͐p̶̘̞̠̘̎̓̍̑̀͗̃̈́͂́̈́͆͘͜͝͝o̶̜͛̒͒̉̑͒̿͗̐̃͝o̵̼̒͌̓ ̵̢̗̦͔͉͈̰̘̋̃̐̑̅̽̏̄̅͐͆̔͊̃̋͝p̵̩̱̆̆͂̂͛̓̋̅͝o̶̪̰̲̝̻̳̦̮̮͔̒ͅơ̸̧̨̟͇̪̰̜̠̦͇̇̎͗̏̏̈́͂̉̏͐́̃̀͆͠ͅ"
+
+	err := validate.CustomCSS(zalgo)
+	suite.EqualError(err, "custom_css must be less than 5 characters, but submitted custom_css was 275 characters")
+}
+
+func (suite *ValidationTestSuite) TestValidateCustomCSSTooLongUnicode() {
+	config.SetAccountsAllowCustomCSS(true)
+	config.SetAccountsCustomCSSLength(5)
+	unicode := "⎾⎿⏀⏁⏂⏃⏄⏅⏆⏇"
+
+	err := validate.CustomCSS(unicode)
+	suite.EqualError(err, "custom_css must be less than 5 characters, but submitted custom_css was 10 characters")
 }
 
 func TestValidationTestSuite(t *testing.T) {
