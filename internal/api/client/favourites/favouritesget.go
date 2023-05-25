@@ -128,7 +128,7 @@ func (m *Module) FavouritesGETHandler(c *gin.Context) {
 		limit = int(i)
 	}
 
-	resp, errWithCode := m.processor.FavedTimelineGet(c.Request.Context(), authed, maxID, minID, limit)
+	resp, errWithCode := m.processor.Timeline().FavedTimelineGet(c.Request.Context(), authed, maxID, minID, limit)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

@@ -39,6 +39,8 @@ const (
 	TimelineNotifications string = "user:notification"
 	// TimelineDirect -- statuses sent to a user directly.
 	TimelineDirect string = "direct"
+	// TimelineList -- statuses for a user's list timeline.
+	TimelineList string = "list"
 )
 
 // AllStatusTimelines contains all Timelines that a status could conceivably be delivered to -- useful for doing deletes.
@@ -47,6 +49,7 @@ var AllStatusTimelines = []string{
 	TimelinePublic,
 	TimelineHome,
 	TimelineDirect,
+	TimelineList,
 }
 
 // StreamsForAccount is a wrapper for the multiple streams that one account can have running at the same time.
@@ -62,10 +65,9 @@ type StreamsForAccount struct {
 type Stream struct {
 	// ID of this stream, generated during creation.
 	ID string
-	// A set of timelines of this stream: user/public/etc
-	// a matching key means the timeline is subscribed. The value
-	// is ignored
-	Timelines map[string]bool
+	// A set of types subscribed to by this stream: user/public/etc.
+	// It's a map to ensure no duplicates; the value is ignored.
+	StreamTypes map[string]any
 	// Channel of messages for the client to read from
 	Messages chan *Message
 	// Channel to close when the client drops away

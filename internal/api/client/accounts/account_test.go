@@ -36,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -86,6 +87,12 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.Storage = suite.storage
 
+	testrig.StartTimelines(
+		&suite.state,
+		visibility.NewFilter(&suite.state),
+		testrig.NewTestTypeConverter(suite.db),
+	)
+
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
 	suite.federator = testrig.NewTestFederator(&suite.state, testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../../testrig/media")), suite.mediaManager)
 	suite.sentEmails = make(map[string]string)
@@ -94,8 +101,6 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 	suite.accountsModule = accounts.New(suite.processor)
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
-
-	suite.NoError(suite.processor.Start())
 }
 
 func (suite *AccountStandardTestSuite) TearDownTest() {

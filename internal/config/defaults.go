@@ -153,6 +153,14 @@ var Defaults = Configuration{
 			FollowRequestTTL:       time.Minute * 30,
 			FollowRequestSweepFreq: time.Minute,
 
+			ListMaxSize:   2000,
+			ListTTL:       time.Minute * 30,
+			ListSweepFreq: time.Minute,
+
+			ListEntryMaxSize:   2000,
+			ListEntryTTL:       time.Minute * 30,
+			ListEntrySweepFreq: time.Minute,
+
 			MediaMaxSize:   1000,
 			MediaTTL:       time.Minute * 30,
 			MediaSweepFreq: time.Minute,

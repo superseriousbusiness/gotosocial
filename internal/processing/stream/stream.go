@@ -18,7 +18,6 @@
 package stream
 
 import (
-	"errors"
 	"sync"
 
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -40,37 +39,38 @@ func New(state *state.State, oauthServer oauth.Server) Processor {
 }
 
 // toAccount streams the given payload with the given event type to any streams currently open for the given account ID.
-func (p *Processor) toAccount(payload string, event string, timelines []string, accountID string) error {
+func (p *Processor) toAccount(payload string, event string, streamTypes []string, accountID string) error {
+	// Load all streams open for this account.
 	v, ok := p.streamMap.Load(accountID)
 	if !ok {
-		// no open connections so nothing to stream
-		return nil
+		return nil // No entry = nothing to stream.
 	}
-
-	streamsForAccount, ok := v.(*stream.StreamsForAccount)
-	if !ok {
-		return errors.New("stream map error")
-	}
+	streamsForAccount := v.(*stream.StreamsForAccount) //nolint:forcetypeassert
 
 	streamsForAccount.Lock()
 	defer streamsForAccount.Unlock()
+
 	for _, s := range streamsForAccount.Streams {
 		s.Lock()
 		defer s.Unlock()
+
 		if !s.Connected {
 			continue
 		}
 
-		for _, t := range timelines {
-			if _, found := s.Timelines[t]; found {
+	typeLoop:
+		for _, streamType := range streamTypes {
+			if _, found := s.StreamTypes[streamType]; found {
 				s.Messages <- &stream.Message{
-					Stream:  []string{string(t)},
+					Stream:  []string{streamType},
 					Event:   string(event),
 					Payload: payload,
 				}
-				// break out to the outer loop, to avoid sending duplicates
-				// of the same event to the same stream
-				break
+
+				// Break out to the outer loop,
+				// to avoid sending duplicates of
+				// the same event to the same stream.
+				break typeLoop
 			}
 		}
 	}

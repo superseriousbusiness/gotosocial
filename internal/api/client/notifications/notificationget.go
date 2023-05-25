@@ -77,7 +77,7 @@ func (m *Module) NotificationGETHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.NotificationGet(c.Request.Context(), authed.Account, targetNotifID)
+	resp, errWithCode := m.processor.Timeline().NotificationGet(c.Request.Context(), authed.Account, targetNotifID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

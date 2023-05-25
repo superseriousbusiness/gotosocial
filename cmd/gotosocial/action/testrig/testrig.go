@@ -38,9 +38,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
+	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/tracing"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/web"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -89,11 +92,31 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	federator := testrig.NewTestFederator(&state, transportController, mediaManager)
 
 	emailSender := testrig.NewEmailSender("./web/template/", nil)
+	typeConverter := testrig.NewTestTypeConverter(state.DB)
+	filter := visibility.NewFilter(&state)
+
+	// Initialize timelines.
+	state.Timelines.Home = timeline.NewManager(
+		tlprocessor.HomeTimelineGrab(&state),
+		tlprocessor.HomeTimelineFilter(&state, filter),
+		tlprocessor.HomeTimelineStatusPrepare(&state, typeConverter),
+		tlprocessor.SkipInsert(),
+	)
+	if err := state.Timelines.Home.Start(); err != nil {
+		return fmt.Errorf("error starting home timeline: %s", err)
+	}
+
+	state.Timelines.List = timeline.NewManager(
+		tlprocessor.ListTimelineGrab(&state),
+		tlprocessor.ListTimelineFilter(&state, filter),
+		tlprocessor.ListTimelineStatusPrepare(&state, typeConverter),
+		tlprocessor.SkipInsert(),
+	)
+	if err := state.Timelines.List.Start(); err != nil {
+		return fmt.Errorf("error starting list timeline: %s", err)
+	}
 
 	processor := testrig.NewTestProcessor(&state, federator, emailSender, mediaManager)
-	if err := processor.Start(); err != nil {
-		return fmt.Errorf("error starting processor: %s", err)
-	}
 
 	/*
 		HTTP router initialization

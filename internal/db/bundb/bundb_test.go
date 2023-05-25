@@ -22,6 +22,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -46,6 +47,8 @@ type BunDBStandardTestSuite struct {
 	testReports      map[string]*gtsmodel.Report
 	testBookmarks    map[string]*gtsmodel.StatusBookmark
 	testFaves        map[string]*gtsmodel.StatusFave
+	testLists        map[string]*gtsmodel.List
+	testListEntries  map[string]*gtsmodel.ListEntry
 }
 
 func (suite *BunDBStandardTestSuite) SetupSuite() {
@@ -63,6 +66,8 @@ func (suite *BunDBStandardTestSuite) SetupSuite() {
 	suite.testReports = testrig.NewTestReports()
 	suite.testBookmarks = testrig.NewTestBookmarks()
 	suite.testFaves = testrig.NewTestFaves()
+	suite.testLists = testrig.NewTestLists()
+	suite.testListEntries = testrig.NewTestListEntries()
 }
 
 func (suite *BunDBStandardTestSuite) SetupTest() {
@@ -70,6 +75,7 @@ func (suite *BunDBStandardTestSuite) SetupTest() {
 	testrig.InitTestLog()
 	suite.state.Caches.Init()
 	suite.db = testrig.NewTestDB(&suite.state)
+	testrig.StartTimelines(&suite.state, visibility.NewFilter(&suite.state), testrig.NewTestTypeConverter(suite.db))
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 }
 

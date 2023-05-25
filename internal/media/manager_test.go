@@ -33,6 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type ManagerTestSuite struct {
@@ -394,9 +395,6 @@ func (suite *ManagerTestSuite) TestSlothVineProcessBlocking() {
 	suite.NoError(err)
 	// fetch the attachment id from the processing media
 	attachmentID := processingMedia.AttachmentID()
-
-	// Give time for processing
-	time.Sleep(time.Second * 3)
 
 	// do a blocking call to fetch the attachment
 	attachment, err := processingMedia.LoadAttachment(ctx)
@@ -1027,13 +1025,14 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessAsync() {
 	// fetch the attachment id from the processing media
 	attachmentID := processingMedia.AttachmentID()
 
-	// Give time for processing to happen.
-	time.Sleep(time.Second * 3)
-
-	// fetch the attachment from the database
-	attachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
-	suite.NoError(err)
-	suite.NotNil(attachment)
+	// wait for processing to complete
+	var attachment *gtsmodel.MediaAttachment
+	if !testrig.WaitFor(func() bool {
+		attachment, err = suite.db.GetAttachmentByID(ctx, attachmentID)
+		return err == nil && attachment != nil
+	}) {
+		suite.FailNow("timed out waiting for attachment to process")
+	}
 
 	// make sure it's got the stuff set on it that we expect
 	// the attachment ID and accountID we expect
