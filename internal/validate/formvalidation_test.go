@@ -93,6 +93,7 @@ func (suite *ValidationTestSuite) TestValidateUsername() {
 	trailingSpace := "thisusername_ends_with_a_space "
 	newlines := "this_is\n_almost_ok"
 	goodUsername := "this_is_a_good_username"
+	singleChar := "s"
 	var err error
 
 	err = validate.Username(empty)
@@ -117,6 +118,9 @@ func (suite *ValidationTestSuite) TestValidateUsername() {
 	suite.EqualError(err, fmt.Sprintf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", newlines))
 
 	err = validate.Username(goodUsername)
+	suite.NoError(err)
+
+	err = validate.Username(singleChar)
 	suite.NoError(err)
 }
 
