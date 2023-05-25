@@ -85,6 +85,7 @@ type Configuration struct {
 	AccountsApprovalRequired bool `name:"accounts-approval-required" usage:"Do account signups require approval by an admin or moderator before user can log in? If false, new registrations will be automatically approved."`
 	AccountsReasonRequired   bool `name:"accounts-reason-required" usage:"Do new account signups require a reason to be submitted on registration?"`
 	AccountsAllowCustomCSS   bool `name:"accounts-allow-custom-css" usage:"Allow accounts to enable custom CSS for their profile pages and statuses."`
+	AccountsCustomCSSLength  int  `name:"accounts-custom-css-length" usage:"Maximum permitted length (characters) of custom CSS for accounts."`
 
 	MediaImageMaxSize        bytesize.Size `name:"media-image-max-size" usage:"Max size of accepted images in bytes"`
 	MediaVideoMaxSize        bytesize.Size `name:"media-video-max-size" usage:"Max size of accepted videos in bytes"`

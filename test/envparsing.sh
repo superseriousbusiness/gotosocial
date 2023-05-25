@@ -7,6 +7,7 @@ EXPECT=$(cat <<"EOF"
     "account-domain": "peepee",
     "accounts-allow-custom-css": true,
     "accounts-approval-required": false,
+    "accounts-custom-css-length": 5000,
     "accounts-reason-required": false,
     "accounts-registration-open": true,
     "advanced-cookies-samesite": "strict",
@@ -207,6 +208,7 @@ GTS_INSTANCE_EXPOSE_SUSPENDED_WEB=true \
 GTS_INSTANCE_EXPOSE_PUBLIC_TIMELINE=true \
 GTS_INSTANCE_DELIVER_TO_SHARED_INBOXES=false \
 GTS_ACCOUNTS_ALLOW_CUSTOM_CSS=true \
+GTS_ACCOUNTS_CUSTOM_CSS_LENGTH=5000 \
 GTS_ACCOUNTS_REGISTRATION_OPEN=true \
 GTS_ACCOUNTS_APPROVAL_REQUIRED=false \
 GTS_ACCOUNTS_REASON_REQUIRED=false \
