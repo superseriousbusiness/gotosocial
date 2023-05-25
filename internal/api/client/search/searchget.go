@@ -160,7 +160,7 @@ func (m *Module) SearchGETHandler(c *gin.Context) {
 		Following:         following,
 	}
 
-	results, errWithCode := m.processor.SearchGet(c.Request.Context(), authed, searchQuery)
+	results, errWithCode := m.processor.Search().Get(c.Request.Context(), authed.Account, searchQuery)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

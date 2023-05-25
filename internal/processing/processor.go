@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing/list"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/media"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/report"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/search"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/stream"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
@@ -60,6 +61,7 @@ type Processor struct {
 	list     list.Processor
 	media    media.Processor
 	report   report.Processor
+	search   search.Processor
 	status   status.Processor
 	stream   stream.Processor
 	timeline timeline.Processor
@@ -88,6 +90,10 @@ func (p *Processor) Media() *media.Processor {
 
 func (p *Processor) Report() *report.Processor {
 	return &p.report
+}
+
+func (p *Processor) Search() *search.Processor {
+	return &p.search
 }
 
 func (p *Processor) Status() *status.Processor {
@@ -137,6 +143,7 @@ func NewProcessor(
 	processor.media = media.New(state, tc, mediaManager, federator.TransportController())
 	processor.report = report.New(state, tc)
 	processor.timeline = timeline.New(state, tc, filter)
+	processor.search = search.New(state, federator, tc, filter)
 	processor.status = status.New(state, federator, tc, filter, parseMentionFunc)
 	processor.stream = stream.New(state, oauthServer)
 	processor.user = user.New(state, emailSender)

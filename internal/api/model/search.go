@@ -84,7 +84,7 @@ type SearchQuery struct {
 //
 // swagger:model searchResult
 type SearchResult struct {
-	Accounts []Account `json:"accounts"`
-	Statuses []Status  `json:"statuses"`
-	Hashtags []Tag     `json:"hashtags"`
+	Accounts []*Account `json:"accounts"`
+	Statuses []*Status  `json:"statuses"`
+	Hashtags []*Tag     `json:"hashtags"`
 }
