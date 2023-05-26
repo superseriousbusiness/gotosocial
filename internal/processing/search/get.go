@@ -548,7 +548,7 @@ func (p *Processor) searchByText(
 		statuses, err := p.state.DB.SearchForStatuses(
 			ctx,
 			requestingAccount.ID,
-			query, "", "", 10, 0)
+			query, maxID, minID, limit, 0)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			err = fmt.Errorf("error checking database for statuses using text %s: %w", query, err)
 			return false, err

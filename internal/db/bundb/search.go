@@ -56,6 +56,10 @@ func (s *searchDB) SearchForAccounts(
 		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
 		// Select only IDs from table
 		Column("account.id").
+		// Try to ignore instance accounts.
+		Where("? != ?", bun.Ident("account.domain"), bun.Ident("account.username")).
+		// Sort by ID. Account ID's are random so
+		// this is not 'newest first' or anything.
 		Order("account.id DESC")
 
 	// Return only items with a LOWER id than maxID.
@@ -144,7 +148,7 @@ func (s *searchDB) SearchForStatuses(
 		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.
 				Where("? = ?", bun.Ident("status.account_id"), accountID).
-				Where("? = ?", bun.Ident("status.in_reply_to_account_id"), accountID)
+				WhereOr("? = ?", bun.Ident("status.in_reply_to_account_id"), accountID)
 		}).
 		// Ignore boosts.
 		Where("? IS NULL", bun.Ident("status.boost_of_id")).
