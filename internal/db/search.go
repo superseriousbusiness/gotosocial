@@ -28,5 +28,5 @@ type Search interface {
 	SearchForAccounts(ctx context.Context, accountID string, query string, maxID string, minID string, limit int, following bool, offset int) ([]*gtsmodel.Account, error)
 
 	// SearchForStatuses uses the given query text to search for statuses created by accountID.
-	SearchForStatuses(ctx context.Context, accountID string, query string, maxID string, minID string, limit int, following bool, offset int) ([]*gtsmodel.Status, error)
+	SearchForStatuses(ctx context.Context, accountID string, query string, maxID string, minID string, limit int, offset int) ([]*gtsmodel.Status, error)
 }

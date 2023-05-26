@@ -22,13 +22,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
 type SearchTestSuite struct {
 	BunDBStandardTestSuite
 }
 
-func (suite *SearchTestSuite) TestSearchAccountsTurtleFollowingOnly() {
+func (suite *SearchTestSuite) TestSearchAccountsTurtleFollowing() {
 	testAccount := suite.testAccounts["local_account_1"]
 
 	accounts, err := suite.db.SearchForAccounts(context.Background(), testAccount.ID, "turtle", "", "", 10, true, 0)
@@ -36,7 +37,7 @@ func (suite *SearchTestSuite) TestSearchAccountsTurtleFollowingOnly() {
 	suite.Len(accounts, 1)
 }
 
-func (suite *SearchTestSuite) TestSearchAccountsPostFollowingOnly() {
+func (suite *SearchTestSuite) TestSearchAccountsPostFollowing() {
 	testAccount := suite.testAccounts["local_account_1"]
 
 	accounts, err := suite.db.SearchForAccounts(context.Background(), testAccount.ID, "post", "", "", 10, true, 0)
@@ -44,12 +45,28 @@ func (suite *SearchTestSuite) TestSearchAccountsPostFollowingOnly() {
 	suite.Len(accounts, 1)
 }
 
-func (suite *SearchTestSuite) TestSearchAccountsPost() {
+func (suite *SearchTestSuite) TestSearchAccountsPostNotFollowing() {
 	testAccount := suite.testAccounts["local_account_1"]
 
 	accounts, err := suite.db.SearchForAccounts(context.Background(), testAccount.ID, "post", "", "", 10, false, 0)
+	suite.ErrorIs(err, db.ErrNoEntries)
+	suite.Empty(accounts)
+}
+
+func (suite *SearchTestSuite) TestSearchAccountsFossNotFollowing() {
+	testAccount := suite.testAccounts["local_account_1"]
+
+	accounts, err := suite.db.SearchForAccounts(context.Background(), testAccount.ID, "foss", "", "", 10, false, 0)
 	suite.NoError(err)
-	suite.Len(accounts, 2)
+	suite.Len(accounts, 1)
+}
+
+func (suite *SearchTestSuite) TestSearchStatuses() {
+	testAccount := suite.testAccounts["local_account_1"]
+
+	accounts, err := suite.db.SearchForStatuses(context.Background(), testAccount.ID, "hello", "", "", 10, 0)
+	suite.NoError(err)
+	suite.Len(accounts, 1)
 }
 
 func TestSearchTestSuite(t *testing.T) {

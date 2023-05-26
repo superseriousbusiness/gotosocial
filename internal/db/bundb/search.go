@@ -6,6 +6,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
@@ -32,16 +33,6 @@ var replacer = strings.NewReplacer(
 	exactlyOne, escExactlyOne,
 )
 
-func normalizeQuery(query string) string {
-	// Escape existing wildcard + escape chars.
-	query = replacer.Replace(query)
-
-	// Add our own wildcards back in.
-	query = zeroOrMore + query + zeroOrMore
-
-	return query
-}
-
 func (s *searchDB) SearchForAccounts(
 	ctx context.Context,
 	accountID string,
@@ -60,49 +51,45 @@ func (s *searchDB) SearchForAccounts(
 	// Make educated guess for slice size
 	accountIDs := make([]string, 0, limit)
 
-	// Assemble a subquery that lowercases + concatenates
-	// account username, displayname, and bio/note. The
-	// main query will search within this subquery.
-	accountText := s.conn.NewSelect()
-	switch s.conn.Dialect().Name() {
-	case dialect.SQLite:
-		accountText = accountText.ColumnExpr(
-			"LOWER(? || ? || ?) AS ?",
-			bun.Ident("account.username"), bun.Ident("account.display_name"), bun.Ident("account.note"),
-			bun.Ident("account_text"))
-	case dialect.PG:
-		accountText = accountText.ColumnExpr(
-			"LOWER(CONCAT(?, ?, ?)) AS ?",
-			bun.Ident("account.username"), bun.Ident("account.display_name"), bun.Ident("account.note"),
-			bun.Ident("account_text"))
-	default:
-		panic("db conn was neither pg not sqlite")
-	}
-
 	q := s.conn.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
 		// Select only IDs from table
 		Column("account.id").
-		// Search within accountText using the provided query.
-		Where("(?) LIKE ? ESCAPE ?", accountText, normalizeQuery(query), escapeChar).
 		Order("account.id DESC")
 
-	if following {
-		// Subquery to select targetAccountID
-		// from all follows owned by this account.
-		followedAccountIDs := s.conn.
-			NewSelect().
-			TableExpr("? AS ?", bun.Ident("follows"), bun.Ident("follow")).
-			Column("follow.target_account_id").
-			Where("? = ?", bun.Ident("follow.account_id"), accountID)
+	// Return only items with a LOWER id than maxID.
+	if maxID == "" {
+		maxID = id.Highest
+	}
+	q = q.Where("? < ?", bun.Ident("account.id"), maxID)
 
-		// Only select from accounts that this accountID follows.
-		q = q.Where("? IN (?)", bun.Ident("account.id"), followedAccountIDs)
+	if minID != "" {
+		// Return only items with a HIGHER id than minID.
+		q = q.Where("? > ?", bun.Ident("account.id"), minID)
 	}
 
+	if following {
+		// Select only from accounts followed by accountID.
+		q = q.Where(
+			"? IN (?)",
+			bun.Ident("account.id"),
+			s.followedAccountIDs(accountID),
+		)
+	}
+
+	// Concatenate account username, displayname,
+	// and bio/note (only if following). The main
+	// query will search within this subquery.
+	q = q.Where(
+		"(?) LIKE ? ESCAPE ?",
+		s.accountText(following),
+		normalizeQuery(query),
+		escapeChar,
+	)
+
 	if limit > 0 {
-		// limit amount of statuses returned
+		// Limit amount of accounts returned.
 		q = q.Limit(limit)
 	}
 
@@ -137,7 +124,6 @@ func (s *searchDB) SearchForStatuses(
 	maxID string,
 	minID string,
 	limit int,
-	following bool,
 	offset int,
 ) ([]*gtsmodel.Status, error) {
 	// Ensure reasonable
@@ -148,49 +134,46 @@ func (s *searchDB) SearchForStatuses(
 	// Make educated guess for slice size
 	statusIDs := make([]string, 0, limit)
 
-	// Assemble a subquery that lowercases + concatenates
-	// status content-warning and note. The main query
-	// will search within this subquery.
-	statusText := s.conn.NewSelect()
-	switch s.conn.Dialect().Name() {
-	case dialect.SQLite:
-		statusText = statusText.ColumnExpr(
-			"LOWER(? || COALESCE(?, ?)) AS ?",
-			bun.Ident("status.content_warning"), "", bun.Ident("status.note"),
-			bun.Ident("status_text"))
-	case dialect.PG:
-		statusText = statusText.ColumnExpr(
-			"LOWER(CONCAT(?, COALESCE(?, ?))) AS ?",
-			bun.Ident("status.content_warning"), "", bun.Ident("status.note"),
-			bun.Ident("status_text"))
-	default:
-		panic("db conn was neither pg not sqlite")
-	}
-
 	q := s.conn.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
 		// Select only IDs from table
 		Column("status.id").
-		// Search within statusText using the provided query.
-		Where("(?) LIKE ? ESCAPE ?", statusText, normalizeQuery(query), escapeChar).
+		// Search only for statuses created by accountID,
+		// or statuses posted as a reply to accountID.
+		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.
+				Where("? = ?", bun.Ident("status.account_id"), accountID).
+				Where("? = ?", bun.Ident("status.in_reply_to_account_id"), accountID)
+		}).
+		// Ignore boosts.
+		Where("? IS NULL", bun.Ident("status.boost_of_id")).
+		// Sort newest -> oldest.
 		Order("status.id DESC")
 
-	if following {
-		// Subquery to select targetAccountID
-		// from all follows owned by this account.
-		followedAccountIDs := s.conn.
-			NewSelect().
-			TableExpr("? AS ?", bun.Ident("follows"), bun.Ident("follow")).
-			Column("follow.target_account_id").
-			Where("? = ?", bun.Ident("follow.account_id"), accountID)
+	// Return only items with a LOWER id than maxID.
+	if maxID == "" {
+		maxID = id.Highest
+	}
+	q = q.Where("? < ?", bun.Ident("status.id"), maxID)
 
-		// Only select statuses from accounts that this accountID follows.
-		q = q.Where("? IN (?)", bun.Ident("status.account_id"), followedAccountIDs)
+	if minID != "" {
+		// Return only items with a HIGHER id than minID.
+		q = q.Where("? > ?", bun.Ident("status.id"), minID)
 	}
 
+	// Concatenate status content warning
+	// and content. The main query will
+	// search within this subquery.
+	q = q.Where(
+		"(?) LIKE ? ESCAPE ?",
+		s.statusText(),
+		normalizeQuery(query),
+		escapeChar,
+	)
+
 	if limit > 0 {
-		// limit amount of statuses returned
+		// Limit amount of statuses returned.
 		q = q.Limit(limit)
 	}
 
@@ -202,18 +185,130 @@ func (s *searchDB) SearchForStatuses(
 		return nil, db.ErrNoEntries
 	}
 
-	accounts := make([]*gtsmodel.Account, 0, len(statusIDs))
+	statuses := make([]*gtsmodel.Status, 0, len(statusIDs))
 	for _, id := range statusIDs {
-		// Fetch account from db for ID
-		account, err := s.state.DB.GetAccountByID(ctx, id)
+		// Fetch status from db for ID
+		status, err := s.state.DB.GetStatusByID(ctx, id)
 		if err != nil {
-			log.Errorf(ctx, "error fetching account %q: %v", id, err)
+			log.Errorf(ctx, "error fetching status %q: %v", id, err)
 			continue
 		}
 
-		// Append account to slice
-		accounts = append(accounts, account)
+		// Append status to slice
+		statuses = append(statuses, status)
 	}
 
-	return accounts, nil
+	return statuses, nil
+}
+
+func normalizeQuery(query string) string {
+	// Escape existing wildcard + escape chars.
+	query = replacer.Replace(query)
+
+	// Add our own wildcards back in.
+	query = zeroOrMore + query + zeroOrMore
+
+	return query
+}
+
+func getPlaceHolders(count int, sep string) string {
+	// Fill a slice with placeholder chars.
+	placeHolders := make([]string, count)
+	for i := 0; i < count; i++ {
+		placeHolders[i] = "?"
+	}
+
+	// Join them with provided separator.
+	return strings.Join(placeHolders, sep)
+}
+
+func (s *searchDB) followedAccountIDs(accountID string) *bun.SelectQuery {
+	return s.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("follows"), bun.Ident("follow")).
+		Column("follow.target_account_id").
+		Where("? = ?", bun.Ident("follow.account_id"), accountID)
+}
+
+func (s *searchDB) accountText(following bool) *bun.SelectQuery {
+	var (
+		accountText = s.conn.NewSelect()
+		query       string
+		args        []interface{}
+		sb          strings.Builder
+	)
+
+	if following {
+		// If querying for accounts we follow,
+		// include note in text search params.
+		args = []interface{}{
+			bun.Ident("account.username"),
+			bun.Ident("account.display_name"),
+			bun.Ident("account.note"),
+			bun.Ident("account_text"),
+		}
+	} else {
+		// If querying for accounts we're not following,
+		// don't include note in text search params.
+		args = []interface{}{
+			bun.Ident("account.username"),
+			bun.Ident("account.display_name"),
+			bun.Ident("account_text"),
+		}
+	}
+
+	// SQLite and Postgres use different
+	// syntaxes for concatenation.
+	switch s.conn.Dialect().Name() {
+
+	case dialect.SQLite:
+		// Produce something like:
+		// "LOWER(? || ? || ?) AS ?"
+		placeHolders := getPlaceHolders(len(args)-1, " || ")
+		_, _ = sb.WriteString("LOWER(")
+		_, _ = sb.WriteString(placeHolders)
+		_, _ = sb.WriteString(") AS ?")
+		query = sb.String()
+
+	case dialect.PG:
+		// Produce something like:
+		// "LOWER(CONCAT(?, ?, ?)) AS ?"
+		placeHolders := getPlaceHolders(len(args)-1, ", ")
+		_, _ = sb.WriteString("LOWER(CONCAT(")
+		_, _ = sb.WriteString(placeHolders)
+		_, _ = sb.WriteString(")) AS ?")
+		query = sb.String()
+
+	default:
+		panic("db conn was neither pg not sqlite")
+	}
+
+	accountText = accountText.ColumnExpr(query, args...)
+	return accountText
+}
+
+func (s *searchDB) statusText() *bun.SelectQuery {
+	statusText := s.conn.NewSelect()
+
+	// SQLite and Postgres use different
+	// syntaxes for concatenation.
+	switch s.conn.Dialect().Name() {
+
+	case dialect.SQLite:
+		statusText = statusText.ColumnExpr(
+			"LOWER(? || ?) AS ?",
+			bun.Ident("status.content_warning"), bun.Ident("status.content"),
+			bun.Ident("status_text"))
+
+	case dialect.PG:
+		statusText = statusText.ColumnExpr(
+			"LOWER(CONCAT(?, ?)) AS ?",
+			bun.Ident("status.content_warning"), bun.Ident("status.content"),
+			bun.Ident("status_text"))
+
+	default:
+		panic("db conn was neither pg not sqlite")
+	}
+
+	return statusText
 }

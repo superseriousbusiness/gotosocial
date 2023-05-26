@@ -38,11 +38,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-var noResults = &apimodel.SearchResult{
-	Accounts: []*apimodel.Account{},
-	Statuses: []*apimodel.Status{},
-	Hashtags: []*apimodel.Tag{},
-}
+const (
+	queryTypeAny      = ""
+	queryTypeAccounts = "accounts"
+	queryTypeStatuses = "statuses"
+	queryTypeHashtags = "hashtags"
+)
 
 // Implementation note: in this function, we tend to log errors
 // at debug level rather than return them. This is because the
@@ -55,11 +56,38 @@ var noResults = &apimodel.SearchResult{
 // The only exception to this is when we get a malformed query, in
 // which case we return a bad request error so the user knows they
 // did something funky.
-func (p *Processor) Get(ctx context.Context, account *gtsmodel.Account, searchQuery *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode) {
-	// Normalize query.
-	query := strings.TrimSpace(searchQuery.Query)
+func (p *Processor) Get(
+	ctx context.Context,
+	account *gtsmodel.Account,
+	search *apimodel.SearchQuery,
+) (*apimodel.SearchResult, gtserror.WithCode) {
+
+	var (
+		_         = search.AccountID
+		maxID     = search.MaxID
+		minID     = search.MinID
+		limit     = search.Limit
+		queryType = strings.TrimSpace(search.Type)
+		query     = strings.TrimSpace(search.Query)
+		resolve   = search.Resolve
+		following = search.Following
+	)
+
+	// Validate query.
 	if query == "" {
 		err := errors.New("search query was empty string after trimming space")
+		return nil, gtserror.NewErrorBadRequest(err, err.Error())
+	}
+
+	// Validate query type.
+	switch queryType {
+	case queryTypeAny, queryTypeAccounts, queryTypeStatuses, queryTypeHashtags:
+		// No problem.
+	default:
+		err := fmt.Errorf(
+			"search query type %s was not recognized, valid options are ['%s', '%s', '%s', '%s']",
+			queryType, queryTypeAny, queryTypeAccounts, queryTypeStatuses, queryTypeHashtags,
+		)
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
@@ -70,10 +98,14 @@ func (p *Processor) Get(ctx context.Context, account *gtsmodel.Account, searchQu
 		}...).
 		Debugf("beginning search with query %s", query)
 
-	// Currently the search will only ever return one result,
-	// so return nothing if the offset is greater than 0.
-	if searchQuery.Offset > 0 {
-		return noResults, nil
+	// Currently the search will only ever return one page of
+	// results; return empty if the offset is greater than 0.
+	if search.Offset > 0 {
+		return &apimodel.SearchResult{
+			Accounts: make([]*apimodel.Account, 0),
+			Statuses: make([]*apimodel.Status, 0),
+			Hashtags: make([]*apimodel.Tag, 0),
+		}, nil
 	}
 
 	var (
@@ -86,7 +118,7 @@ func (p *Processor) Get(ctx context.Context, account *gtsmodel.Account, searchQu
 	)
 
 	// Check if the query is something like '@whatever_user' or '@whatever_user@somewhere.com'.
-	keepLooking, err = p.searchByNamestring(ctx, account, query, searchQuery.Resolve, appendAccount)
+	keepLooking, err = p.searchByNamestring(ctx, account, query, resolve, appendAccount)
 	if err != nil {
 		err = fmt.Errorf("error searching by namestring: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -103,7 +135,7 @@ func (p *Processor) Get(ctx context.Context, account *gtsmodel.Account, searchQu
 	}
 
 	// Check if the query is a URI with a recognizable scheme and use it to look for accounts or statuses.
-	keepLooking, err = p.searchByURI(ctx, account, query, searchQuery.Resolve, appendAccount, appendStatus)
+	keepLooking, err = p.searchByURI(ctx, account, query, queryType, resolve, appendAccount, appendStatus)
 	if err != nil {
 		err = fmt.Errorf("error searching by URI: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -119,24 +151,32 @@ func (p *Processor) Get(ctx context.Context, account *gtsmodel.Account, searchQu
 		)
 	}
 
-	// Search for accounts and statuses using the query as arbitrary text.
-	keepLooking, err = p.searchByText(ctx, account, query, appendAccount, appendStatus)
-	if err != nil {
+	// As a last resort, search for accounts and
+	// statuses using the query as arbitrary text.
+	if _, err = p.searchByText(
+		ctx,
+		account,
+		maxID,
+		minID,
+		limit,
+		query,
+		queryType,
+		following,
+		appendAccount,
+		appendStatus,
+	); err != nil {
 		err = fmt.Errorf("error searching by text: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if !keepLooking {
-		// Return whatever we have.
-		return p.packageSearchResponse(
-			ctx,
-			account,
-			foundAccounts,
-			foundStatuses,
-		)
-	}
-
-	return noResults, nil
+	// Return whatever we ended
+	// up with (could be nothing).
+	return p.packageSearchResponse(
+		ctx,
+		account,
+		foundAccounts,
+		foundStatuses,
+	)
 }
 
 func (p *Processor) searchByNamestring(
@@ -285,6 +325,7 @@ func (p *Processor) searchByURI(
 	ctx context.Context,
 	requestingAccount *gtsmodel.Account,
 	query string,
+	queryType string,
 	resolve bool,
 	appendAccount func(*gtsmodel.Account),
 	appendStatus func(*gtsmodel.Status),
@@ -317,48 +358,52 @@ func (p *Processor) searchByURI(
 		return false, nil
 	}
 
-	// Check if URI points to an account.
-	foundAccount, err := p.searchAccountByURI(ctx, requestingAccount, uri, resolve)
-	if err != nil {
-		// Check for semi-expected error types.
-		// On one of these, we can continue.
-		var (
-			errNotRetrievable = new(*dereferencing.ErrNotRetrievable) // Item can't be dereferenced.
-			errWrongType      = new(*ap.ErrWrongType)                 // Item was dereferenced, but wasn't an account.
-		)
+	if queryType == "" || queryType == "accounts" {
+		// Check if URI points to an account.
+		foundAccount, err := p.searchAccountByURI(ctx, requestingAccount, uri, resolve)
+		if err != nil {
+			// Check for semi-expected error types.
+			// On one of these, we can continue.
+			var (
+				errNotRetrievable = new(*dereferencing.ErrNotRetrievable) // Item can't be dereferenced.
+				errWrongType      = new(*ap.ErrWrongType)                 // Item was dereferenced, but wasn't an account.
+			)
 
-		if !errors.As(err, errNotRetrievable) && !errors.As(err, errWrongType) {
-			err = fmt.Errorf("error looking up %s as account: %w", uri, err)
-			return false, gtserror.NewErrorInternalError(err)
+			if !errors.As(err, errNotRetrievable) && !errors.As(err, errWrongType) {
+				err = fmt.Errorf("error looking up %s as account: %w", uri, err)
+				return false, gtserror.NewErrorInternalError(err)
+			}
+		} else {
+			// Hit; return false to indicate caller should
+			// stop looking, since it's extremely unlikely
+			// a status and an account will have the same URL.
+			appendAccount(foundAccount)
+			return false, nil
 		}
-	} else {
-		// Hit; return false to indicate caller should
-		// stop looking, since it's extremely unlikely
-		// a status and an account will have the same URL.
-		appendAccount(foundAccount)
-		return false, nil
 	}
 
-	// Check if URI points to a status.
-	foundStatus, err := p.searchStatusByURI(ctx, requestingAccount, uri, resolve)
-	if err != nil {
-		// Check for semi-expected error types.
-		// On one of these, we can continue.
-		var (
-			errNotRetrievable = new(*dereferencing.ErrNotRetrievable) // Item can't be dereferenced.
-			errWrongType      = new(*ap.ErrWrongType)                 // Item was dereferenced, but wasn't a status.
-		)
+	if queryType == "" || queryType == "statuses" {
+		// Check if URI points to a status.
+		foundStatus, err := p.searchStatusByURI(ctx, requestingAccount, uri, resolve)
+		if err != nil {
+			// Check for semi-expected error types.
+			// On one of these, we can continue.
+			var (
+				errNotRetrievable = new(*dereferencing.ErrNotRetrievable) // Item can't be dereferenced.
+				errWrongType      = new(*ap.ErrWrongType)                 // Item was dereferenced, but wasn't a status.
+			)
 
-		if !errors.As(err, errNotRetrievable) && !errors.As(err, errWrongType) {
-			err = fmt.Errorf("error looking up %s as status: %w", uri, err)
-			return false, gtserror.NewErrorInternalError(err)
+			if !errors.As(err, errNotRetrievable) && !errors.As(err, errWrongType) {
+				err = fmt.Errorf("error looking up %s as status: %w", uri, err)
+				return false, gtserror.NewErrorInternalError(err)
+			}
+		} else {
+			// Hit; return false to indicate caller should
+			// stop looking, since it's extremely unlikely
+			// a status and an account will have the same URL.
+			appendStatus(foundStatus)
+			return false, nil
 		}
-	} else {
-		// Hit; return false to indicate caller should
-		// stop looking, since it's extremely unlikely
-		// a status and an account will have the same URL.
-		appendStatus(foundStatus)
-		return false, nil
 	}
 
 	// No errors, but no hits either; since this
@@ -473,11 +518,47 @@ func (p *Processor) searchStatusByURI(
 func (p *Processor) searchByText(
 	ctx context.Context,
 	requestingAccount *gtsmodel.Account,
+	maxID string,
+	minID string,
+	limit int,
 	query string,
+	queryType string,
+	following bool,
 	appendAccount func(*gtsmodel.Account),
 	appendStatus func(*gtsmodel.Status),
 ) (bool, error) {
-	// Search for accounts using the given text.
+	if queryType == "" || queryType == "accounts" {
+		// Search for accounts using the given text.
+		accounts, err := p.state.DB.SearchForAccounts(
+			ctx,
+			requestingAccount.ID,
+			query, maxID, minID, limit, following, 0)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			err = fmt.Errorf("error checking database for accounts using text %s: %w", query, err)
+			return false, err
+		}
+
+		for _, account := range accounts {
+			appendAccount(account)
+		}
+	}
+
+	if queryType == "" || queryType == "statuses" {
+		// Search for statuses using the given text.
+		statuses, err := p.state.DB.SearchForStatuses(
+			ctx,
+			requestingAccount.ID,
+			query, "", "", 10, 0)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			err = fmt.Errorf("error checking database for statuses using text %s: %w", query, err)
+			return false, err
+		}
+
+		for _, status := range statuses {
+			appendStatus(status)
+		}
+	}
+
 	return true, nil
 }
 
@@ -490,6 +571,7 @@ func (p *Processor) packageSearchResponse(
 	result := &apimodel.SearchResult{
 		Accounts: make([]*apimodel.Account, 0, len(accounts)),
 		Statuses: make([]*apimodel.Status, 0, len(statuses)),
+		Hashtags: make([]*apimodel.Tag, 0),
 	}
 
 	for _, account := range accounts {
