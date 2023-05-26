@@ -42,6 +42,7 @@ type DB interface {
 	Notification
 	Relationship
 	Report
+	Search
 	Session
 	Status
 	StatusBookmark
