@@ -121,6 +121,15 @@ func (s *searchDB) SearchForAccounts(
 	return accounts, nil
 }
 
+// Query example (SQLite):
+//
+//	SELECT "status"."id"
+//	FROM "statuses" AS "status"
+//	WHERE (("status"."account_id" = '01F8MH1H7YV1Z7D2C8K2730QBF') OR ("status"."in_reply_to_account_id" = '01F8MH1H7YV1Z7D2C8K2730QBF'))
+//	AND ("status"."boost_of_id" IS NULL)
+//	AND ("status"."id" < 'ZZZZZZZZZZZZZZZZZZZZZZZZZZ')
+//	AND ((SELECT LOWER("status"."content" || COALESCE("status"."content_warning", '')) AS "status_text") LIKE '%hello%' ESCAPE '\')
+//	ORDER BY "status"."id" DESC LIMIT 10
 func (s *searchDB) SearchForStatuses(
 	ctx context.Context,
 	accountID string,
@@ -300,14 +309,14 @@ func (s *searchDB) statusText() *bun.SelectQuery {
 
 	case dialect.SQLite:
 		statusText = statusText.ColumnExpr(
-			"LOWER(? || ?) AS ?",
-			bun.Ident("status.content_warning"), bun.Ident("status.content"),
+			"LOWER(? || COALESCE(?, ?)) AS ?",
+			bun.Ident("status.content"), bun.Ident("status.content_warning"), "",
 			bun.Ident("status_text"))
 
 	case dialect.PG:
 		statusText = statusText.ColumnExpr(
-			"LOWER(CONCAT(?, ?)) AS ?",
-			bun.Ident("status.content_warning"), bun.Ident("status.content"),
+			"LOWER(CONCAT(?, COALESCE(?, ?))) AS ?",
+			bun.Ident("status.content"), bun.Ident("status.content_warning"), "",
 			bun.Ident("status_text"))
 
 	default:

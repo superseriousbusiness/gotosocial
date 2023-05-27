@@ -64,9 +64,9 @@ func (suite *SearchTestSuite) TestSearchAccountsFossNotFollowing() {
 func (suite *SearchTestSuite) TestSearchStatuses() {
 	testAccount := suite.testAccounts["local_account_1"]
 
-	accounts, err := suite.db.SearchForStatuses(context.Background(), testAccount.ID, "hello", "", "", 10, 0)
+	statuses, err := suite.db.SearchForStatuses(context.Background(), testAccount.ID, "hello", "", "", 10, 0)
 	suite.NoError(err)
-	suite.Len(accounts, 1)
+	suite.Len(statuses, 1)
 }
 
 func TestSearchTestSuite(t *testing.T) {
