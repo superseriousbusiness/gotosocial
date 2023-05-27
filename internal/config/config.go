@@ -46,6 +46,7 @@ func fieldtag(field, tag string) string {
 type Configuration struct {
 	LogLevel        string   `name:"log-level" usage:"Log level to run at: [trace, debug, info, warn, fatal]"`
 	LogDbQueries    bool     `name:"log-db-queries" usage:"Log database queries verbosely when log-level is trace or debug"`
+	LogClientIP     bool     `name:"log-client-ip" usage:"Include the client IP in logs"`
 	ApplicationName string   `name:"application-name" usage:"Name of the application, used in various places internally"`
 	LandingPageUser string   `name:"landing-page-user" usage:"the user that should be shown on the instance's landing page"`
 	ConfigPath      string   `name:"config-path" usage:"Path to a file containing gotosocial configuration. Values set in this file will be overwritten by values set as env vars or arguments"`
@@ -84,6 +85,7 @@ type Configuration struct {
 	AccountsApprovalRequired bool `name:"accounts-approval-required" usage:"Do account signups require approval by an admin or moderator before user can log in? If false, new registrations will be automatically approved."`
 	AccountsReasonRequired   bool `name:"accounts-reason-required" usage:"Do new account signups require a reason to be submitted on registration?"`
 	AccountsAllowCustomCSS   bool `name:"accounts-allow-custom-css" usage:"Allow accounts to enable custom CSS for their profile pages and statuses."`
+	AccountsCustomCSSLength  int  `name:"accounts-custom-css-length" usage:"Maximum permitted length (characters) of custom CSS for accounts."`
 
 	MediaImageMaxSize        bytesize.Size `name:"media-image-max-size" usage:"Max size of accepted images in bytes"`
 	MediaVideoMaxSize        bytesize.Size `name:"media-video-max-size" usage:"Max size of accepted videos in bytes"`
@@ -197,6 +199,14 @@ type GTSCacheConfiguration struct {
 	FollowRequestMaxSize   int           `name:"follow-request-max-size"`
 	FollowRequestTTL       time.Duration `name:"follow-request-ttl"`
 	FollowRequestSweepFreq time.Duration `name:"follow-request-sweep-freq"`
+
+	ListMaxSize   int           `name:"list-max-size"`
+	ListTTL       time.Duration `name:"list-ttl"`
+	ListSweepFreq time.Duration `name:"list-sweep-freq"`
+
+	ListEntryMaxSize   int           `name:"list-entry-max-size"`
+	ListEntryTTL       time.Duration `name:"list-entry-ttl"`
+	ListEntrySweepFreq time.Duration `name:"list-entry-sweep-freq"`
 
 	MediaMaxSize   int           `name:"media-max-size"`
 	MediaTTL       time.Duration `name:"media-ttl"`

@@ -19,7 +19,6 @@ package transport
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/url"
 	"sync"
@@ -131,8 +130,7 @@ func (t *transport) deliver(ctx context.Context, b []byte, to *url.URL) error {
 
 	if code := rsp.StatusCode; code != http.StatusOK &&
 		code != http.StatusCreated && code != http.StatusAccepted {
-		err := fmt.Errorf("POST request to %s failed: %s", url, rsp.Status)
-		return gtserror.WithStatusCode(err, rsp.StatusCode)
+		return gtserror.NewResponseError(rsp)
 	}
 
 	return nil

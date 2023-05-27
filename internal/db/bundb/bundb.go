@@ -65,6 +65,7 @@ type DBService struct {
 	db.Domain
 	db.Emoji
 	db.Instance
+	db.List
 	db.Media
 	db.Mention
 	db.Notification
@@ -178,6 +179,10 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 		},
 		Instance: &instanceDB{
 			conn: conn,
+		},
+		List: &listDB{
+			conn:  conn,
+			state: state,
 		},
 		Media: &mediaDB{
 			conn:  conn,

@@ -74,6 +74,31 @@ func GetLogDbQueries() bool { return global.GetLogDbQueries() }
 // SetLogDbQueries safely sets the value for global configuration 'LogDbQueries' field
 func SetLogDbQueries(v bool) { global.SetLogDbQueries(v) }
 
+// GetLogClientIP safely fetches the Configuration value for state's 'LogClientIP' field
+func (st *ConfigState) GetLogClientIP() (v bool) {
+	st.mutex.Lock()
+	v = st.config.LogClientIP
+	st.mutex.Unlock()
+	return
+}
+
+// SetLogClientIP safely sets the Configuration value for state's 'LogClientIP' field
+func (st *ConfigState) SetLogClientIP(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.LogClientIP = v
+	st.reloadToViper()
+}
+
+// LogClientIPFlag returns the flag name for the 'LogClientIP' field
+func LogClientIPFlag() string { return "log-client-ip" }
+
+// GetLogClientIP safely fetches the value for global configuration 'LogClientIP' field
+func GetLogClientIP() bool { return global.GetLogClientIP() }
+
+// SetLogClientIP safely sets the value for global configuration 'LogClientIP' field
+func SetLogClientIP(v bool) { global.SetLogClientIP(v) }
+
 // GetApplicationName safely fetches the Configuration value for state's 'ApplicationName' field
 func (st *ConfigState) GetApplicationName() (v string) {
 	st.mutex.Lock()
@@ -923,6 +948,31 @@ func GetAccountsAllowCustomCSS() bool { return global.GetAccountsAllowCustomCSS(
 
 // SetAccountsAllowCustomCSS safely sets the value for global configuration 'AccountsAllowCustomCSS' field
 func SetAccountsAllowCustomCSS(v bool) { global.SetAccountsAllowCustomCSS(v) }
+
+// GetAccountsCustomCSSLength safely fetches the Configuration value for state's 'AccountsCustomCSSLength' field
+func (st *ConfigState) GetAccountsCustomCSSLength() (v int) {
+	st.mutex.Lock()
+	v = st.config.AccountsCustomCSSLength
+	st.mutex.Unlock()
+	return
+}
+
+// SetAccountsCustomCSSLength safely sets the Configuration value for state's 'AccountsCustomCSSLength' field
+func (st *ConfigState) SetAccountsCustomCSSLength(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.AccountsCustomCSSLength = v
+	st.reloadToViper()
+}
+
+// AccountsCustomCSSLengthFlag returns the flag name for the 'AccountsCustomCSSLength' field
+func AccountsCustomCSSLengthFlag() string { return "accounts-custom-css-length" }
+
+// GetAccountsCustomCSSLength safely fetches the value for global configuration 'AccountsCustomCSSLength' field
+func GetAccountsCustomCSSLength() int { return global.GetAccountsCustomCSSLength() }
+
+// SetAccountsCustomCSSLength safely sets the value for global configuration 'AccountsCustomCSSLength' field
+func SetAccountsCustomCSSLength(v int) { global.SetAccountsCustomCSSLength(v) }
 
 // GetMediaImageMaxSize safely fetches the Configuration value for state's 'MediaImageMaxSize' field
 func (st *ConfigState) GetMediaImageMaxSize() (v bytesize.Size) {
@@ -2777,6 +2827,156 @@ func GetCacheGTSFollowRequestSweepFreq() time.Duration {
 
 // SetCacheGTSFollowRequestSweepFreq safely sets the value for global configuration 'Cache.GTS.FollowRequestSweepFreq' field
 func SetCacheGTSFollowRequestSweepFreq(v time.Duration) { global.SetCacheGTSFollowRequestSweepFreq(v) }
+
+// GetCacheGTSListMaxSize safely fetches the Configuration value for state's 'Cache.GTS.ListMaxSize' field
+func (st *ConfigState) GetCacheGTSListMaxSize() (v int) {
+	st.mutex.Lock()
+	v = st.config.Cache.GTS.ListMaxSize
+	st.mutex.Unlock()
+	return
+}
+
+// SetCacheGTSListMaxSize safely sets the Configuration value for state's 'Cache.GTS.ListMaxSize' field
+func (st *ConfigState) SetCacheGTSListMaxSize(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.ListMaxSize = v
+	st.reloadToViper()
+}
+
+// CacheGTSListMaxSizeFlag returns the flag name for the 'Cache.GTS.ListMaxSize' field
+func CacheGTSListMaxSizeFlag() string { return "cache-gts-list-max-size" }
+
+// GetCacheGTSListMaxSize safely fetches the value for global configuration 'Cache.GTS.ListMaxSize' field
+func GetCacheGTSListMaxSize() int { return global.GetCacheGTSListMaxSize() }
+
+// SetCacheGTSListMaxSize safely sets the value for global configuration 'Cache.GTS.ListMaxSize' field
+func SetCacheGTSListMaxSize(v int) { global.SetCacheGTSListMaxSize(v) }
+
+// GetCacheGTSListTTL safely fetches the Configuration value for state's 'Cache.GTS.ListTTL' field
+func (st *ConfigState) GetCacheGTSListTTL() (v time.Duration) {
+	st.mutex.Lock()
+	v = st.config.Cache.GTS.ListTTL
+	st.mutex.Unlock()
+	return
+}
+
+// SetCacheGTSListTTL safely sets the Configuration value for state's 'Cache.GTS.ListTTL' field
+func (st *ConfigState) SetCacheGTSListTTL(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.ListTTL = v
+	st.reloadToViper()
+}
+
+// CacheGTSListTTLFlag returns the flag name for the 'Cache.GTS.ListTTL' field
+func CacheGTSListTTLFlag() string { return "cache-gts-list-ttl" }
+
+// GetCacheGTSListTTL safely fetches the value for global configuration 'Cache.GTS.ListTTL' field
+func GetCacheGTSListTTL() time.Duration { return global.GetCacheGTSListTTL() }
+
+// SetCacheGTSListTTL safely sets the value for global configuration 'Cache.GTS.ListTTL' field
+func SetCacheGTSListTTL(v time.Duration) { global.SetCacheGTSListTTL(v) }
+
+// GetCacheGTSListSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.ListSweepFreq' field
+func (st *ConfigState) GetCacheGTSListSweepFreq() (v time.Duration) {
+	st.mutex.Lock()
+	v = st.config.Cache.GTS.ListSweepFreq
+	st.mutex.Unlock()
+	return
+}
+
+// SetCacheGTSListSweepFreq safely sets the Configuration value for state's 'Cache.GTS.ListSweepFreq' field
+func (st *ConfigState) SetCacheGTSListSweepFreq(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.ListSweepFreq = v
+	st.reloadToViper()
+}
+
+// CacheGTSListSweepFreqFlag returns the flag name for the 'Cache.GTS.ListSweepFreq' field
+func CacheGTSListSweepFreqFlag() string { return "cache-gts-list-sweep-freq" }
+
+// GetCacheGTSListSweepFreq safely fetches the value for global configuration 'Cache.GTS.ListSweepFreq' field
+func GetCacheGTSListSweepFreq() time.Duration { return global.GetCacheGTSListSweepFreq() }
+
+// SetCacheGTSListSweepFreq safely sets the value for global configuration 'Cache.GTS.ListSweepFreq' field
+func SetCacheGTSListSweepFreq(v time.Duration) { global.SetCacheGTSListSweepFreq(v) }
+
+// GetCacheGTSListEntryMaxSize safely fetches the Configuration value for state's 'Cache.GTS.ListEntryMaxSize' field
+func (st *ConfigState) GetCacheGTSListEntryMaxSize() (v int) {
+	st.mutex.Lock()
+	v = st.config.Cache.GTS.ListEntryMaxSize
+	st.mutex.Unlock()
+	return
+}
+
+// SetCacheGTSListEntryMaxSize safely sets the Configuration value for state's 'Cache.GTS.ListEntryMaxSize' field
+func (st *ConfigState) SetCacheGTSListEntryMaxSize(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.ListEntryMaxSize = v
+	st.reloadToViper()
+}
+
+// CacheGTSListEntryMaxSizeFlag returns the flag name for the 'Cache.GTS.ListEntryMaxSize' field
+func CacheGTSListEntryMaxSizeFlag() string { return "cache-gts-list-entry-max-size" }
+
+// GetCacheGTSListEntryMaxSize safely fetches the value for global configuration 'Cache.GTS.ListEntryMaxSize' field
+func GetCacheGTSListEntryMaxSize() int { return global.GetCacheGTSListEntryMaxSize() }
+
+// SetCacheGTSListEntryMaxSize safely sets the value for global configuration 'Cache.GTS.ListEntryMaxSize' field
+func SetCacheGTSListEntryMaxSize(v int) { global.SetCacheGTSListEntryMaxSize(v) }
+
+// GetCacheGTSListEntryTTL safely fetches the Configuration value for state's 'Cache.GTS.ListEntryTTL' field
+func (st *ConfigState) GetCacheGTSListEntryTTL() (v time.Duration) {
+	st.mutex.Lock()
+	v = st.config.Cache.GTS.ListEntryTTL
+	st.mutex.Unlock()
+	return
+}
+
+// SetCacheGTSListEntryTTL safely sets the Configuration value for state's 'Cache.GTS.ListEntryTTL' field
+func (st *ConfigState) SetCacheGTSListEntryTTL(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.ListEntryTTL = v
+	st.reloadToViper()
+}
+
+// CacheGTSListEntryTTLFlag returns the flag name for the 'Cache.GTS.ListEntryTTL' field
+func CacheGTSListEntryTTLFlag() string { return "cache-gts-list-entry-ttl" }
+
+// GetCacheGTSListEntryTTL safely fetches the value for global configuration 'Cache.GTS.ListEntryTTL' field
+func GetCacheGTSListEntryTTL() time.Duration { return global.GetCacheGTSListEntryTTL() }
+
+// SetCacheGTSListEntryTTL safely sets the value for global configuration 'Cache.GTS.ListEntryTTL' field
+func SetCacheGTSListEntryTTL(v time.Duration) { global.SetCacheGTSListEntryTTL(v) }
+
+// GetCacheGTSListEntrySweepFreq safely fetches the Configuration value for state's 'Cache.GTS.ListEntrySweepFreq' field
+func (st *ConfigState) GetCacheGTSListEntrySweepFreq() (v time.Duration) {
+	st.mutex.Lock()
+	v = st.config.Cache.GTS.ListEntrySweepFreq
+	st.mutex.Unlock()
+	return
+}
+
+// SetCacheGTSListEntrySweepFreq safely sets the Configuration value for state's 'Cache.GTS.ListEntrySweepFreq' field
+func (st *ConfigState) SetCacheGTSListEntrySweepFreq(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.ListEntrySweepFreq = v
+	st.reloadToViper()
+}
+
+// CacheGTSListEntrySweepFreqFlag returns the flag name for the 'Cache.GTS.ListEntrySweepFreq' field
+func CacheGTSListEntrySweepFreqFlag() string { return "cache-gts-list-entry-sweep-freq" }
+
+// GetCacheGTSListEntrySweepFreq safely fetches the value for global configuration 'Cache.GTS.ListEntrySweepFreq' field
+func GetCacheGTSListEntrySweepFreq() time.Duration { return global.GetCacheGTSListEntrySweepFreq() }
+
+// SetCacheGTSListEntrySweepFreq safely sets the value for global configuration 'Cache.GTS.ListEntrySweepFreq' field
+func SetCacheGTSListEntrySweepFreq(v time.Duration) { global.SetCacheGTSListEntrySweepFreq(v) }
 
 // GetCacheGTSMediaMaxSize safely fetches the Configuration value for state's 'Cache.GTS.MediaMaxSize' field
 func (st *ConfigState) GetCacheGTSMediaMaxSize() (v int) {

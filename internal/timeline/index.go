@@ -167,7 +167,7 @@ func (t *timeline) grab(ctx context.Context, amount int, behindID string, before
 
 		items, stop, err := t.grabFunction(
 			ctx,
-			t.accountID,
+			t.timelineID,
 			maxID,
 			sinceID,
 			minID,
@@ -205,7 +205,7 @@ func (t *timeline) grab(ctx context.Context, amount int, behindID string, before
 		}
 
 		for _, item := range items {
-			ok, err := t.filterFunction(ctx, t.accountID, item)
+			ok, err := t.filterFunction(ctx, t.timelineID, item)
 			if err != nil {
 				if !errors.Is(err, db.ErrNoEntries) {
 					// Real error here.
@@ -244,7 +244,7 @@ func (t *timeline) IndexAndPrepareOne(ctx context.Context, statusID string, boos
 		return false, nil
 	}
 
-	preparable, err := t.prepareFunction(ctx, t.accountID, statusID)
+	preparable, err := t.prepareFunction(ctx, t.timelineID, statusID)
 	if err != nil {
 		return true, fmt.Errorf("IndexAndPrepareOne: error preparing: %w", err)
 	}

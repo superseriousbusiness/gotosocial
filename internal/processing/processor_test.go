@@ -18,6 +18,8 @@
 package processing_test
 
 import (
+	"context"
+
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -28,8 +30,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/stream"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -61,6 +65,7 @@ type ProcessingStandardTestSuite struct {
 	testAutheds      map[string]*oauth.Auth
 	testBlocks       map[string]*gtsmodel.Block
 	testActivities   map[string]testrig.ActivityWithSignature
+	testLists        map[string]*gtsmodel.List
 
 	processor *processing.Processor
 }
@@ -84,6 +89,7 @@ func (suite *ProcessingStandardTestSuite) SetupSuite() {
 		},
 	}
 	suite.testBlocks = testrig.NewTestBlocks()
+	suite.testLists = testrig.NewTestLists()
 }
 
 func (suite *ProcessingStandardTestSuite) SetupTest() {
@@ -99,6 +105,13 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.Storage = suite.storage
 	suite.typeconverter = testrig.NewTestTypeConverter(suite.db)
+
+	testrig.StartTimelines(
+		&suite.state,
+		visibility.NewFilter(&suite.state),
+		suite.typeconverter,
+	)
+
 	suite.httpClient = testrig.NewMockHTTPClient(nil, "../../testrig/media")
 	suite.httpClient.TestRemotePeople = testrig.NewTestFediPeople()
 	suite.httpClient.TestRemoteStatuses = testrig.NewTestFediStatuses()
@@ -115,16 +128,40 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../testrig/media")
-	if err := suite.processor.Start(); err != nil {
-		panic(err)
-	}
 }
 
 func (suite *ProcessingStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
-	if err := suite.processor.Stop(); err != nil {
-		panic(err)
-	}
 	testrig.StopWorkers(&suite.state)
+}
+
+func (suite *ProcessingStandardTestSuite) openStreams(ctx context.Context, account *gtsmodel.Account, listIDs []string) map[string]*stream.Stream {
+	streams := make(map[string]*stream.Stream)
+
+	for _, streamType := range []string{
+		stream.TimelineHome,
+		stream.TimelinePublic,
+		stream.TimelineNotifications,
+	} {
+		stream, err := suite.processor.Stream().Open(ctx, account, streamType)
+		if err != nil {
+			suite.FailNow(err.Error())
+		}
+
+		streams[streamType] = stream
+	}
+
+	for _, listID := range listIDs {
+		streamType := stream.TimelineList + ":" + listID
+
+		stream, err := suite.processor.Stream().Open(ctx, account, streamType)
+		if err != nil {
+			suite.FailNow(err.Error())
+		}
+
+		streams[streamType] = stream
+	}
+
+	return streams
 }

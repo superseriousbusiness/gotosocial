@@ -26,16 +26,32 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// StatusesGet fetches a number of statuses (in time descending order) from the given account, filtered by visibility for
-// the account given in authed.
-func (p *Processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinned bool, mediaOnly bool, publicOnly bool) (*apimodel.PageableResponse, gtserror.WithCode) {
+// StatusesGet fetches a number of statuses (in time descending order) from the
+// target account, filtered by visibility according to the requesting account.
+func (p *Processor) StatusesGet(
+	ctx context.Context,
+	requestingAccount *gtsmodel.Account,
+	targetAccountID string,
+	limit int,
+	excludeReplies bool,
+	excludeReblogs bool,
+	maxID string,
+	minID string,
+	pinned bool,
+	mediaOnly bool,
+	publicOnly bool,
+) (*apimodel.PageableResponse, gtserror.WithCode) {
 	if requestingAccount != nil {
-		if blocked, err := p.state.DB.IsEitherBlocked(ctx, requestingAccount.ID, targetAccountID); err != nil {
+		blocked, err := p.state.DB.IsEitherBlocked(ctx, requestingAccount.ID, targetAccountID)
+		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
-		} else if blocked {
+		}
+
+		if blocked {
 			err := errors.New("block exists between accounts")
 			return nil, gtserror.NewErrorNotFound(err)
 		}
@@ -45,6 +61,7 @@ func (p *Processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 		statuses []*gtsmodel.Status
 		err      error
 	)
+
 	if pinned {
 		// Get *ONLY* pinned statuses.
 		statuses, err = p.state.DB.GetAccountPinnedStatuses(ctx, targetAccountID)
@@ -52,14 +69,17 @@ func (p *Processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 		// Get account statuses which *may* include pinned ones.
 		statuses, err = p.state.DB.GetAccountStatuses(ctx, targetAccountID, limit, excludeReplies, excludeReblogs, maxID, minID, mediaOnly, publicOnly)
 	}
-	if err != nil {
-		if err == db.ErrNoEntries {
-			return util.EmptyPageableResponse(), nil
-		}
+
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Filtering + serialization process is the same for either pinned status queries or 'normal' ones.
+	if len(statuses) == 0 {
+		return util.EmptyPageableResponse(), nil
+	}
+
+	// Filtering + serialization process is the same for
+	// both pinned status queries and 'normal' ones.
 	filtered, err := p.filter.StatusesVisible(ctx, requestingAccount, statuses)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
@@ -67,24 +87,32 @@ func (p *Processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 
 	count := len(filtered)
 	if count == 0 {
+		// After filtering there were
+		// no statuses left to serve.
 		return util.EmptyPageableResponse(), nil
 	}
 
-	items := make([]interface{}, 0, count)
-	nextMaxIDValue := ""
-	prevMinIDValue := ""
-	for i, s := range filtered {
-		item, err := p.tc.StatusToAPIStatus(ctx, s, requestingAccount)
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status to api: %s", err))
-		}
+	var (
+		items          = make([]interface{}, 0, count)
+		nextMaxIDValue string
+		prevMinIDValue string
+	)
 
+	for i, s := range filtered {
+		// Set next + prev values before filtering and API
+		// converting, so caller can still page properly.
 		if i == count-1 {
-			nextMaxIDValue = item.GetID()
+			nextMaxIDValue = s.ID
 		}
 
 		if i == 0 {
-			prevMinIDValue = item.GetID()
+			prevMinIDValue = s.ID
+		}
+
+		item, err := p.tc.StatusToAPIStatus(ctx, s, requestingAccount)
+		if err != nil {
+			log.Debugf(ctx, "skipping status %s because it couldn't be converted to its api representation: %s", s.ID, err)
+			continue
 		}
 
 		items = append(items, item)
@@ -100,7 +128,7 @@ func (p *Processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 
 	return util.PackagePageableResponse(util.PageableResponseParams{
 		Items:          items,
-		Path:           fmt.Sprintf("/api/v1/accounts/%s/statuses", targetAccountID),
+		Path:           "/api/v1/accounts/" + targetAccountID + "/statuses",
 		NextMaxIDValue: nextMaxIDValue,
 		PrevMinIDValue: prevMinIDValue,
 		Limit:          limit,
@@ -114,62 +142,58 @@ func (p *Processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 	})
 }
 
-// WebStatusesGet fetches a number of statuses (in descending order) from the given account. It selects only
-// statuses which are suitable for showing on the public web profile of an account.
+// WebStatusesGet fetches a number of statuses (in descending order)
+// from the given account. It selects only statuses which are suitable
+// for showing on the public web profile of an account.
 func (p *Processor) WebStatusesGet(ctx context.Context, targetAccountID string, maxID string) (*apimodel.PageableResponse, gtserror.WithCode) {
-	acct, err := p.state.DB.GetAccountByID(ctx, targetAccountID)
+	account, err := p.state.DB.GetAccountByID(ctx, targetAccountID)
 	if err != nil {
-		if err == db.ErrNoEntries {
+		if errors.Is(err, db.ErrNoEntries) {
 			err := fmt.Errorf("account %s not found in the db, not getting web statuses for it", targetAccountID)
 			return nil, gtserror.NewErrorNotFound(err)
 		}
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if acct.Domain != "" {
+	if account.Domain != "" {
 		err := fmt.Errorf("account %s was not a local account, not getting web statuses for it", targetAccountID)
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
 	statuses, err := p.state.DB.GetAccountWebStatuses(ctx, targetAccountID, 10, maxID)
-	if err != nil {
-		if err == db.ErrNoEntries {
-			return util.EmptyPageableResponse(), nil
-		}
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	count := len(statuses)
-
 	if count == 0 {
 		return util.EmptyPageableResponse(), nil
 	}
 
-	items := []interface{}{}
-	nextMaxIDValue := ""
-	prevMinIDValue := ""
+	var (
+		items          = make([]interface{}, 0, count)
+		nextMaxIDValue string
+	)
+
 	for i, s := range statuses {
+		// Set next value before API converting,
+		// so caller can still page properly.
+		if i == count-1 {
+			nextMaxIDValue = s.ID
+		}
+
 		item, err := p.tc.StatusToAPIStatus(ctx, s, nil)
 		if err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status to api: %s", err))
-		}
-
-		if i == count-1 {
-			nextMaxIDValue = item.GetID()
-		}
-
-		if i == 0 {
-			prevMinIDValue = item.GetID()
+			log.Debugf(ctx, "skipping status %s because it couldn't be converted to its api representation: %s", s.ID, err)
+			continue
 		}
 
 		items = append(items, item)
 	}
 
 	return util.PackagePageableResponse(util.PageableResponseParams{
-		Items:            items,
-		Path:             "/@" + acct.Username,
-		NextMaxIDValue:   nextMaxIDValue,
-		PrevMinIDValue:   prevMinIDValue,
-		ExtraQueryParams: []string{},
+		Items:          items,
+		Path:           "/@" + account.Username,
+		NextMaxIDValue: nextMaxIDValue,
 	})
 }

@@ -20,6 +20,7 @@ package util
 import (
 	"fmt"
 	"net/url"
+	"strings"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -47,6 +48,13 @@ type PageableResponseParams struct {
 // a bunch of pageable items (notifications, statuses, etc), as well
 // as a Link header to inform callers of where to find next/prev items.
 func PackagePageableResponse(params PageableResponseParams) (*apimodel.PageableResponse, gtserror.WithCode) {
+	if len(params.Items) == 0 {
+		// No items to page through.
+		return EmptyPageableResponse(), nil
+	}
+
+	// Set default paging values, if
+	// they weren't set by the caller.
 	if params.NextMaxIDKey == "" {
 		params.NextMaxIDKey = "max_id"
 	}
@@ -55,58 +63,70 @@ func PackagePageableResponse(params PageableResponseParams) (*apimodel.PageableR
 		params.PrevMinIDKey = "min_id"
 	}
 
-	pageableResponse := EmptyPageableResponse()
+	var (
+		protocol        = config.GetProtocol()
+		host            = config.GetHost()
+		nextLink        string
+		prevLink        string
+		linkHeaderParts = make([]string, 0, 2)
+	)
 
-	if len(params.Items) == 0 {
-		return pageableResponse, nil
+	// Parse next link.
+	if params.NextMaxIDValue != "" {
+		nextRaw := params.NextMaxIDKey + "=" + params.NextMaxIDValue
+
+		if params.Limit != 0 {
+			nextRaw = fmt.Sprintf("limit=%d&", params.Limit) + nextRaw
+		}
+
+		for _, p := range params.ExtraQueryParams {
+			nextRaw += "&" + p
+		}
+
+		nextLink = func() string {
+			u := &url.URL{
+				Scheme:   protocol,
+				Host:     host,
+				Path:     params.Path,
+				RawQuery: nextRaw,
+			}
+			return u.String()
+		}()
+
+		linkHeaderParts = append(linkHeaderParts, `<`+nextLink+`>; rel="next"`)
 	}
 
-	// items
-	pageableResponse.Items = params.Items
+	// Parse prev link.
+	if params.PrevMinIDValue != "" {
+		prevRaw := params.PrevMinIDKey + "=" + params.PrevMinIDValue
 
-	protocol := config.GetProtocol()
-	host := config.GetHost()
+		if params.Limit != 0 {
+			prevRaw = fmt.Sprintf("limit=%d&", params.Limit) + prevRaw
+		}
 
-	// next
-	nextRaw := params.NextMaxIDKey + "=" + params.NextMaxIDValue
-	if params.Limit != 0 {
-		nextRaw = fmt.Sprintf("limit=%d&", params.Limit) + nextRaw
-	}
-	for _, p := range params.ExtraQueryParams {
-		nextRaw = nextRaw + "&" + p
-	}
-	nextLink := &url.URL{
-		Scheme:   protocol,
-		Host:     host,
-		Path:     params.Path,
-		RawQuery: nextRaw,
-	}
-	nextLinkString := nextLink.String()
-	pageableResponse.NextLink = nextLinkString
+		for _, p := range params.ExtraQueryParams {
+			prevRaw = prevRaw + "&" + p
+		}
 
-	// prev
-	prevRaw := params.PrevMinIDKey + "=" + params.PrevMinIDValue
-	if params.Limit != 0 {
-		prevRaw = fmt.Sprintf("limit=%d&", params.Limit) + prevRaw
-	}
-	for _, p := range params.ExtraQueryParams {
-		prevRaw = prevRaw + "&" + p
-	}
-	prevLink := &url.URL{
-		Scheme:   protocol,
-		Host:     host,
-		Path:     params.Path,
-		RawQuery: prevRaw,
-	}
-	prevLinkString := prevLink.String()
-	pageableResponse.PrevLink = prevLinkString
+		prevLink = func() string {
+			u := &url.URL{
+				Scheme:   protocol,
+				Host:     host,
+				Path:     params.Path,
+				RawQuery: prevRaw,
+			}
+			return u.String()
+		}()
 
-	// link header
-	next := fmt.Sprintf("<%s>; rel=\"next\"", nextLinkString)
-	prev := fmt.Sprintf("<%s>; rel=\"prev\"", prevLinkString)
-	pageableResponse.LinkHeader = next + ", " + prev
+		linkHeaderParts = append(linkHeaderParts, `<`+prevLink+`>; rel="prev"`)
+	}
 
-	return pageableResponse, nil
+	return &apimodel.PageableResponse{
+		Items:      params.Items,
+		LinkHeader: strings.Join(linkHeaderParts, ", "),
+		NextLink:   nextLink,
+		PrevLink:   prevLink,
+	}, nil
 }
 
 // EmptyPageableResponse just returns an empty

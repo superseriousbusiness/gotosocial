@@ -18,9 +18,7 @@
 package timelines
 
 import (
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
@@ -131,49 +129,27 @@ func (m *Module) PublicTimelineGETHandler(c *gin.Context) {
 		return
 	}
 
-	maxID := ""
-	maxIDString := c.Query(MaxIDKey)
-	if maxIDString != "" {
-		maxID = maxIDString
+	limit, errWithCode := apiutil.ParseLimit(c.Query(apiutil.LimitKey), 20)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
 	}
 
-	sinceID := ""
-	sinceIDString := c.Query(SinceIDKey)
-	if sinceIDString != "" {
-		sinceID = sinceIDString
+	local, errWithCode := apiutil.ParseLocal(c.Query(apiutil.LocalKey), false)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
 	}
 
-	minID := ""
-	minIDString := c.Query(MinIDKey)
-	if minIDString != "" {
-		minID = minIDString
-	}
-
-	limit := 20
-	limitString := c.Query(LimitKey)
-	if limitString != "" {
-		i, err := strconv.ParseInt(limitString, 10, 32)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", LimitKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		limit = int(i)
-	}
-
-	local := false
-	localString := c.Query(LocalKey)
-	if localString != "" {
-		i, err := strconv.ParseBool(localString)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", LocalKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		local = i
-	}
-
-	resp, errWithCode := m.processor.PublicTimelineGet(c.Request.Context(), authed, maxID, sinceID, minID, limit, local)
+	resp, errWithCode := m.processor.Timeline().PublicTimelineGet(
+		c.Request.Context(),
+		authed,
+		c.Query(MaxIDKey),
+		c.Query(SinceIDKey),
+		c.Query(MinIDKey),
+		limit,
+		local,
+	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

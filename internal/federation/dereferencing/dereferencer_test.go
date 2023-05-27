@@ -25,6 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -61,6 +62,13 @@ func (suite *DereferencerStandardTestSuite) SetupTest() {
 	testrig.StartWorkers(&suite.state)
 
 	suite.db = testrig.NewTestDB(&suite.state)
+
+	testrig.StartTimelines(
+		&suite.state,
+		visibility.NewFilter(&suite.state),
+		testrig.NewTestTypeConverter(suite.db),
+	)
+
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.DB = suite.db
 	suite.state.Storage = suite.storage

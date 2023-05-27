@@ -34,8 +34,8 @@ const (
 	notFoundKey
 	errorTypeKey
 
-	// error types
-	TypeSMTP ErrorType = "smtp" // smtp (mail) error
+	// Types returnable from Type(...).
+	TypeSMTP ErrorType = "smtp" // smtp (mail)
 )
 
 // StatusCode checks error for a stored status code value. For example

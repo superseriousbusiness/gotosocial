@@ -22,7 +22,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -50,10 +50,10 @@ func (suite *ManagerTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db, nil)
 
 	manager := timeline.NewManager(
-		processing.StatusGrabFunction(suite.db),
-		processing.StatusFilterFunction(suite.db, suite.filter),
-		processing.StatusPrepareFunction(suite.db, suite.tc),
-		processing.StatusSkipInsertFunction(),
+		tlprocessor.HomeTimelineGrab(&suite.state),
+		tlprocessor.HomeTimelineFilter(&suite.state, suite.filter),
+		tlprocessor.HomeTimelineStatusPrepare(&suite.state, suite.tc),
+		tlprocessor.SkipInsert(),
 	)
 	suite.manager = manager
 }

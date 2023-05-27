@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package processing
+package timeline
 
 import (
 	"context"
@@ -33,12 +33,7 @@ import (
 
 func (p *Processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, excludeTypes []string) (*apimodel.PageableResponse, gtserror.WithCode) {
 	notifs, err := p.state.DB.GetAccountNotifications(ctx, authed.Account.ID, maxID, sinceID, minID, limit, excludeTypes)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			// No notifs (left).
-			return util.EmptyPageableResponse(), nil
-		}
-		// An actual error has occurred.
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = fmt.Errorf("NotificationsGet: db error getting notifications: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -73,6 +68,7 @@ func (p *Processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, ma
 				log.Debugf(ctx, "skipping notification %s because of an error checking notification visibility: %s", n.ID, err)
 				continue
 			}
+
 			if !visible {
 				continue
 			}
@@ -85,6 +81,7 @@ func (p *Processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, ma
 				log.Debugf(ctx, "skipping notification %s because of an error checking notification visibility: %s", n.ID, err)
 				continue
 			}
+
 			if !visible {
 				continue
 			}

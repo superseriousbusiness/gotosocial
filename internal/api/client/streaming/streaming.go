@@ -27,17 +27,12 @@ import (
 )
 
 const (
-	// BasePath is the path for the streaming api, minus the 'api' prefix
-	BasePath = "/v1/streaming"
-
-	// StreamQueryKey is the query key for the type of stream being requested
-	StreamQueryKey = "stream"
-
-	// AccessTokenQueryKey is the query key for an oauth access token that should be passed in streaming requests.
-	AccessTokenQueryKey = "access_token"
-	// AccessTokenHeader is the header for an oauth access token that can be passed in streaming requests instead of AccessTokenQueryKey
-	//nolint:gosec
-	AccessTokenHeader = "Sec-Websocket-Protocol"
+	BasePath            = "/v1/streaming"          // path for the streaming api, minus the 'api' prefix
+	StreamQueryKey      = "stream"                 // type of stream being requested
+	StreamListKey       = "list"                   // id of list being requested
+	StreamTagKey        = "tag"                    // name of tag being requested
+	AccessTokenQueryKey = "access_token"           // oauth access token
+	AccessTokenHeader   = "Sec-Websocket-Protocol" //nolint:gosec
 )
 
 type Module struct {

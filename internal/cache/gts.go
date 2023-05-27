@@ -35,6 +35,8 @@ type GTSCaches struct {
 	emojiCategory *result.Cache[*gtsmodel.EmojiCategory]
 	follow        *result.Cache[*gtsmodel.Follow]
 	followRequest *result.Cache[*gtsmodel.FollowRequest]
+	list          *result.Cache[*gtsmodel.List]
+	listEntry     *result.Cache[*gtsmodel.ListEntry]
 	media         *result.Cache[*gtsmodel.MediaAttachment]
 	mention       *result.Cache[*gtsmodel.Mention]
 	notification  *result.Cache[*gtsmodel.Notification]
@@ -57,6 +59,8 @@ func (c *GTSCaches) Init() {
 	c.initEmojiCategory()
 	c.initFollow()
 	c.initFollowRequest()
+	c.initList()
+	c.initListEntry()
 	c.initMedia()
 	c.initMention()
 	c.initNotification()
@@ -76,6 +80,8 @@ func (c *GTSCaches) Start() {
 	tryStart(c.emojiCategory, config.GetCacheGTSEmojiCategorySweepFreq())
 	tryStart(c.follow, config.GetCacheGTSFollowSweepFreq())
 	tryStart(c.followRequest, config.GetCacheGTSFollowRequestSweepFreq())
+	tryStart(c.list, config.GetCacheGTSListSweepFreq())
+	tryStart(c.listEntry, config.GetCacheGTSListEntrySweepFreq())
 	tryStart(c.media, config.GetCacheGTSMediaSweepFreq())
 	tryStart(c.mention, config.GetCacheGTSMentionSweepFreq())
 	tryStart(c.notification, config.GetCacheGTSNotificationSweepFreq())
@@ -100,6 +106,8 @@ func (c *GTSCaches) Stop() {
 	tryStop(c.emojiCategory, config.GetCacheGTSEmojiCategorySweepFreq())
 	tryStop(c.follow, config.GetCacheGTSFollowSweepFreq())
 	tryStop(c.followRequest, config.GetCacheGTSFollowRequestSweepFreq())
+	tryStop(c.list, config.GetCacheGTSListSweepFreq())
+	tryStop(c.listEntry, config.GetCacheGTSListEntrySweepFreq())
 	tryStop(c.media, config.GetCacheGTSMediaSweepFreq())
 	tryStop(c.mention, config.GetCacheGTSNotificationSweepFreq())
 	tryStop(c.notification, config.GetCacheGTSNotificationSweepFreq())
@@ -144,6 +152,16 @@ func (c *GTSCaches) Follow() *result.Cache[*gtsmodel.Follow] {
 // FollowRequest provides access to the gtsmodel FollowRequest database cache.
 func (c *GTSCaches) FollowRequest() *result.Cache[*gtsmodel.FollowRequest] {
 	return c.followRequest
+}
+
+// List provides access to the gtsmodel List database cache.
+func (c *GTSCaches) List() *result.Cache[*gtsmodel.List] {
+	return c.list
+}
+
+// ListEntry provides access to the gtsmodel ListEntry database cache.
+func (c *GTSCaches) ListEntry() *result.Cache[*gtsmodel.ListEntry] {
+	return c.listEntry
 }
 
 // Media provides access to the gtsmodel Media database cache.
@@ -283,6 +301,30 @@ func (c *GTSCaches) initFollowRequest() {
 	c.followRequest.SetTTL(config.GetCacheGTSFollowRequestTTL(), true)
 }
 
+func (c *GTSCaches) initList() {
+	c.list = result.New([]result.Lookup{
+		{Name: "ID"},
+	}, func(l1 *gtsmodel.List) *gtsmodel.List {
+		l2 := new(gtsmodel.List)
+		*l2 = *l1
+		return l2
+	}, config.GetCacheGTSListMaxSize())
+	c.list.SetTTL(config.GetCacheGTSListTTL(), true)
+	c.list.IgnoreErrors(ignoreErrors)
+}
+
+func (c *GTSCaches) initListEntry() {
+	c.listEntry = result.New([]result.Lookup{
+		{Name: "ID"},
+	}, func(l1 *gtsmodel.ListEntry) *gtsmodel.ListEntry {
+		l2 := new(gtsmodel.ListEntry)
+		*l2 = *l1
+		return l2
+	}, config.GetCacheGTSListEntryMaxSize())
+	c.list.SetTTL(config.GetCacheGTSListEntryTTL(), true)
+	c.list.IgnoreErrors(ignoreErrors)
+}
+
 func (c *GTSCaches) initMedia() {
 	c.media = result.New([]result.Lookup{
 		{Name: "ID"},
@@ -359,7 +401,6 @@ func (c *GTSCaches) initStatusFave() {
 	c.status.IgnoreErrors(ignoreErrors)
 }
 
-// initTombstone will initialize the gtsmodel.Tombstone cache.
 func (c *GTSCaches) initTombstone() {
 	c.tombstone = result.New([]result.Lookup{
 		{Name: "ID"},

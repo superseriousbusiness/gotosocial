@@ -32,7 +32,10 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
+	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
+	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/tracing"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"go.uber.org/automaxprocs/maxprocs"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -72,7 +75,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	defer state.Caches.Stop()
 
 	// Initialize Tracing
-
 	if err := tracing.Initialize(); err != nil {
 		return fmt.Errorf("error initializing tracing: %w", err)
 	}
@@ -110,35 +112,55 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	state.Workers.Start()
 	defer state.Workers.Stop()
 
-	// build backend handlers
+	// Build handlers used in later initializations.
 	mediaManager := media.NewManager(&state)
 	oauthServer := oauth.New(ctx, dbService)
 	typeConverter := typeutils.NewConverter(dbService)
+	filter := visibility.NewFilter(&state)
 	federatingDB := federatingdb.New(&state, typeConverter)
 	transportController := transport.NewController(&state, federatingDB, &federation.Clock{}, client)
 	federator := federation.NewFederator(&state, federatingDB, transportController, typeConverter, mediaManager)
 
-	// decide whether to create a noop email sender (won't send emails) or a real one
+	// Decide whether to create a noop email
+	// sender (won't send emails) or a real one.
 	var emailSender email.Sender
 	if smtpHost := config.GetSMTPHost(); smtpHost != "" {
-		// host is defined so create a proper sender
+		// Host is defined; create a proper sender.
 		emailSender, err = email.NewSender()
 		if err != nil {
 			return fmt.Errorf("error creating email sender: %s", err)
 		}
 	} else {
-		// no host is defined so create a noop sender
+		// No host is defined; create a noop sender.
 		emailSender, err = email.NewNoopSender(nil)
 		if err != nil {
 			return fmt.Errorf("error creating noop email sender: %s", err)
 		}
 	}
 
-	// create the message processor using the other services we've created so far
-	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaManager, &state, emailSender)
-	if err := processor.Start(); err != nil {
-		return fmt.Errorf("error creating processor: %s", err)
+	// Initialize timelines.
+	state.Timelines.Home = timeline.NewManager(
+		tlprocessor.HomeTimelineGrab(&state),
+		tlprocessor.HomeTimelineFilter(&state, filter),
+		tlprocessor.HomeTimelineStatusPrepare(&state, typeConverter),
+		tlprocessor.SkipInsert(),
+	)
+	if err := state.Timelines.Home.Start(); err != nil {
+		return fmt.Errorf("error starting home timeline: %s", err)
 	}
+
+	state.Timelines.List = timeline.NewManager(
+		tlprocessor.ListTimelineGrab(&state),
+		tlprocessor.ListTimelineFilter(&state, filter),
+		tlprocessor.ListTimelineStatusPrepare(&state, typeConverter),
+		tlprocessor.SkipInsert(),
+	)
+	if err := state.Timelines.List.Start(); err != nil {
+		return fmt.Errorf("error starting list timeline: %s", err)
+	}
+
+	// Create the processor using all the other services we've created so far.
+	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaManager, &state, emailSender)
 
 	// Set state client / federator worker enqueue functions
 	state.Workers.EnqueueClientAPI = processor.EnqueueClientAPI
@@ -162,7 +184,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	middlewares = append(middlewares, []gin.HandlerFunc{
 		// note: hooks adding ctx fields must be ABOVE
 		// the logger, otherwise won't be accessible.
-		middleware.Logger(),
+		middleware.Logger(config.GetLogClientIP()),
 		middleware.UserAgent(),
 		middleware.CORS(),
 		middleware.ExtraHeaders(),

@@ -27,11 +27,11 @@ import (
 )
 
 // Update streams the given update to any open, appropriate streams belonging to the given account.
-func (p *Processor) Update(s *apimodel.Status, account *gtsmodel.Account, timeline string) error {
+func (p *Processor) Update(s *apimodel.Status, account *gtsmodel.Account, streamTypes []string) error {
 	bytes, err := json.Marshal(s)
 	if err != nil {
 		return fmt.Errorf("error marshalling status to json: %s", err)
 	}
 
-	return p.toAccount(string(bytes), stream.EventTypeUpdate, []string{timeline}, account.ID)
+	return p.toAccount(string(bytes), stream.EventTypeUpdate, streamTypes, account.ID)
 }
