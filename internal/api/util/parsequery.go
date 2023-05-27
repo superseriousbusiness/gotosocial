@@ -25,34 +25,149 @@ import (
 )
 
 const (
+	/* Common keys */
+
 	LimitKey = "limit"
 	LocalKey = "local"
+
+	/* Search keys */
+
+	SearchExcludeUnreviewedKey = "exclude_unreviewed"
+	SearchFollowingKey         = "following"
+	SearchOffsetKey            = "offset"
+	SearchQueryKey             = "q"
+	SearchResolveKey           = "resolve"
+	SearchTypeKey              = "type"
 )
 
-func ParseLimit(limit string, defaultLimit int) (int, gtserror.WithCode) {
-	if limit == "" {
-		return defaultLimit, nil
+// parseError returns gtserror.WithCode set to 400 Bad Request, to indicate
+// to the caller that a key was set to a value that could not be parsed.
+func parseError(key string, value, defaultValue any, err error) gtserror.WithCode {
+	err = fmt.Errorf("error parsing key %s with value %s as %T: %w", key, value, defaultValue, err)
+	return gtserror.NewErrorBadRequest(err, err.Error())
+}
+
+func requiredError(key string) gtserror.WithCode {
+	err := fmt.Errorf("required key %s was not set or had empty value", key)
+	return gtserror.NewErrorBadRequest(err, err.Error())
+}
+
+/*
+	Parse functions for *OPTIONAL* parameters with default values.
+*/
+
+func ParseLimit(value string, defaultValue int, max, min int) (int, gtserror.WithCode) {
+	key := LimitKey
+
+	if value == "" {
+		return defaultValue, nil
 	}
 
-	i, err := strconv.Atoi(limit)
+	i, err := strconv.Atoi(value)
 	if err != nil {
-		err := fmt.Errorf("error parsing %s: %w", LimitKey, err)
-		return 0, gtserror.NewErrorBadRequest(err, err.Error())
+		return defaultValue, parseError(key, value, defaultValue, err)
+	}
+
+	if i > max {
+		i = max
+	} else if i < min {
+		i = min
 	}
 
 	return i, nil
 }
 
-func ParseLocal(local string, defaultLocal bool) (bool, gtserror.WithCode) {
-	if local == "" {
-		return defaultLocal, nil
+func ParseLocal(value string, defaultValue bool) (bool, gtserror.WithCode) {
+	key := LimitKey
+
+	if value == "" {
+		return defaultValue, nil
 	}
 
-	i, err := strconv.ParseBool(local)
+	i, err := strconv.ParseBool(value)
 	if err != nil {
-		err := fmt.Errorf("error parsing %s: %w", LocalKey, err)
-		return false, gtserror.NewErrorBadRequest(err, err.Error())
+		return defaultValue, parseError(key, value, defaultValue, err)
 	}
 
 	return i, nil
+}
+
+func ParseSearchExcludeUnreviewed(value string, defaultValue bool) (bool, gtserror.WithCode) {
+	key := SearchExcludeUnreviewedKey
+
+	if value == "" {
+		return defaultValue, nil
+	}
+
+	i, err := strconv.ParseBool(value)
+	if err != nil {
+		return defaultValue, parseError(key, value, defaultValue, err)
+	}
+
+	return i, nil
+}
+
+func ParseSearchFollowing(value string, defaultValue bool) (bool, gtserror.WithCode) {
+	key := SearchFollowingKey
+
+	if value == "" {
+		return defaultValue, nil
+	}
+
+	i, err := strconv.ParseBool(value)
+	if err != nil {
+		return defaultValue, parseError(key, value, defaultValue, err)
+	}
+
+	return i, nil
+}
+
+func ParseSearchOffset(value string, defaultValue int, max, min int) (int, gtserror.WithCode) {
+	key := SearchOffsetKey
+
+	if value == "" {
+		return defaultValue, nil
+	}
+
+	i, err := strconv.Atoi(value)
+	if err != nil {
+		return defaultValue, parseError(key, value, defaultValue, err)
+	}
+
+	if i > max {
+		i = max
+	} else if i < min {
+		i = min
+	}
+
+	return i, nil
+}
+
+func ParseSearchResolve(value string, defaultValue bool) (bool, gtserror.WithCode) {
+	key := SearchResolveKey
+
+	if value == "" {
+		return defaultValue, nil
+	}
+
+	i, err := strconv.ParseBool(value)
+	if err != nil {
+		return defaultValue, parseError(key, value, defaultValue, err)
+	}
+
+	return i, nil
+}
+
+/*
+	Parse functions for *REQUIRED* parameters.
+*/
+
+func ParseSearchQuery(value string) (string, gtserror.WithCode) {
+	key := SearchQueryKey
+
+	if value == "" {
+		return "", requiredError(key)
+	}
+
+	return value, nil
 }

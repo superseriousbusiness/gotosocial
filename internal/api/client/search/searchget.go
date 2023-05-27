@@ -18,10 +18,7 @@
 package search
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -74,77 +71,40 @@ func (m *Module) SearchGETHandler(c *gin.Context) {
 		return
 	}
 
-	excludeUnreviewed := false
-	excludeUnreviewedString := c.Query(ExcludeUnreviewedKey)
-	if excludeUnreviewedString != "" {
-		var err error
-		excludeUnreviewed, err = strconv.ParseBool(excludeUnreviewedString)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", ExcludeUnreviewedKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-	}
-
-	query := c.Query(QueryKey)
-	if query == "" {
-		err := errors.New("query parameter q was empty")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+	excludeUnreviewed, errWithCode := apiutil.ParseSearchExcludeUnreviewed(c.Query(apiutil.SearchExcludeUnreviewedKey), false)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	resolve := false
-	resolveString := c.Query(ResolveKey)
-	if resolveString != "" {
-		var err error
-		resolve, err = strconv.ParseBool(resolveString)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", ResolveKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
+	query, errWithCode := apiutil.ParseSearchQuery(c.Query(apiutil.SearchQueryKey))
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
 	}
 
-	limit := 20
-	limitString := c.Query(LimitKey)
-	if limitString != "" {
-		i, err := strconv.Atoi(limitString)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", LimitKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		limit = int(i)
-	}
-	if limit > 40 {
-		limit = 40
-	}
-	if limit < 1 {
-		limit = 1
+	resolve, errWithCode := apiutil.ParseSearchResolve(c.Query(apiutil.SearchResolveKey), false)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
 	}
 
-	offset := 0
-	offsetString := c.Query(OffsetKey)
-	if offsetString != "" {
-		i, err := strconv.Atoi(offsetString)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", OffsetKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		offset = int(i)
+	limit, errWithCode := apiutil.ParseLimit(c.Query(apiutil.LimitKey), 20, 40, 1)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
 	}
 
-	following := false
-	followingString := c.Query(FollowingKey)
-	if followingString != "" {
-		var err error
-		following, err = strconv.ParseBool(followingString)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", FollowingKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
+	offset, errWithCode := apiutil.ParseSearchOffset(c.Query(apiutil.SearchOffsetKey), 0, 10, 0)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	following, errWithCode := apiutil.ParseSearchFollowing(c.Query(apiutil.SearchFollowingKey), false)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
 	}
 
 	searchQuery := &apimodel.SearchQuery{

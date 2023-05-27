@@ -238,7 +238,13 @@ func (p *Processor) searchByNamestring(
 	}
 
 	// Check if username + domain points to an account.
-	foundAccount, err := p.searchAccountByUsernameDomain(ctx, requestingAccount, username, domain, resolve)
+	foundAccount, err := p.searchAccountByUsernameDomain(
+		ctx,
+		requestingAccount,
+		username,
+		domain,
+		resolve,
+	)
 	if err != nil {
 		// Check for semi-expected error types.
 		// On one of these, we can continue.
@@ -358,7 +364,7 @@ func (p *Processor) searchByURI(
 		return false, nil
 	}
 
-	if queryType == "" || queryType == "accounts" {
+	if queryType == queryTypeAny || queryType == queryTypeAccounts {
 		// Check if URI points to an account.
 		foundAccount, err := p.searchAccountByURI(ctx, requestingAccount, uri, resolve)
 		if err != nil {
@@ -382,7 +388,7 @@ func (p *Processor) searchByURI(
 		}
 	}
 
-	if queryType == "" || queryType == "statuses" {
+	if queryType == queryTypeAny || queryType == queryTypeStatuses {
 		// Check if URI points to a status.
 		foundStatus, err := p.searchStatusByURI(ctx, requestingAccount, uri, resolve)
 		if err != nil {
@@ -527,7 +533,7 @@ func (p *Processor) searchByText(
 	appendAccount func(*gtsmodel.Account),
 	appendStatus func(*gtsmodel.Status),
 ) (bool, error) {
-	if queryType == "" || queryType == "accounts" {
+	if queryType == queryTypeAny || queryType == queryTypeAccounts {
 		// Search for accounts using the given text.
 		accounts, err := p.state.DB.SearchForAccounts(
 			ctx,
@@ -543,7 +549,7 @@ func (p *Processor) searchByText(
 		}
 	}
 
-	if queryType == "" || queryType == "statuses" {
+	if queryType == queryTypeAny || queryType == queryTypeStatuses {
 		// Search for statuses using the given text.
 		statuses, err := p.state.DB.SearchForStatuses(
 			ctx,
