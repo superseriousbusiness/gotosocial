@@ -32,15 +32,14 @@ import (
 func (m *Module) InboxPOSTHandler(c *gin.Context) {
 	_, err := m.processor.Fedi().InboxPost(apiutil.TransferSignatureContext(c), c.Writer, c.Request)
 	if err != nil {
-		var errWithCode *gtserror.WithCode
+		errWithCode := new(gtserror.WithCode)
 
 		if !errors.As(err, errWithCode) {
 			// Something else went wrong, and someone forgot to return
 			// an errWithCode! It's chill though. Log the error but don't
 			// return it as-is to the caller, to avoid leaking internals.
 			log.WithContext(c.Request.Context()).Errorf("returning Bad Request to caller, err was: %q", err)
-			e := gtserror.NewErrorBadRequest(err)
-			errWithCode = &e
+			*errWithCode = gtserror.NewErrorBadRequest(err)
 		}
 
 		// Pass along confirmed error with code to the main error handler
