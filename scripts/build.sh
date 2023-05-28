@@ -11,8 +11,7 @@ DEBUG() { [ ! -z "${DEBUG-}" ]; }
 # - noerrcaller: disables caller function prefix in errors                   (slightly better performance)
 # - debug:       enables /debug/pprof endpoint                               (adds debug, at performance cost)
 # - debugenv:    enables /debug/pprof endpoint if DEBUG=1 env during runtime (adds debug, at performance cost)
-GOAMD64=v3 CGO_ENABLED=0 go build -trimpath -v \
+CGO_ENABLED=0 go build -trimpath -v \
                        -tags "netgo osusergo static_build kvformat notracing $(DEBUG && echo 'debugenv')" \
                        -ldflags="-s -w -extldflags '-static' -X 'main.Version=${VERSION:-$(git describe --tags --abbrev=0)}'" \
-                       -gcflags=all='-B -C -l=4' \
                        ./cmd/gotosocial
