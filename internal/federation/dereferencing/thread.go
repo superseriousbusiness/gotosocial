@@ -19,13 +19,13 @@ package dereferencing
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 
 	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
@@ -39,12 +39,12 @@ const maxIter = 1000
 func (d *deref) dereferenceThread(ctx context.Context, username string, statusIRI *url.URL, status *gtsmodel.Status, statusable ap.Statusable) {
 	// Ensure that ancestors have been fully dereferenced
 	if err := d.dereferenceStatusAncestors(ctx, username, status); err != nil {
-		log.Errorf(ctx, "error dereferencing status ancestors: %v", err)
+		log.Error(ctx, err) // log entry and error will include caller prefixes
 	}
 
 	// Ensure that descendants have been fully dereferenced
 	if err := d.dereferenceStatusDescendants(ctx, username, statusIRI, statusable); err != nil {
-		log.Errorf(ctx, "error dereferencing status descendants: %v", err)
+		log.Error(ctx, err) // log entry and error will include caller prefixes
 	}
 }
 
@@ -72,7 +72,7 @@ func (d *deref) dereferenceStatusAncestors(ctx context.Context, username string,
 		// Parse this status's replied IRI
 		replyIRI, err := url.Parse(status.InReplyToURI)
 		if err != nil {
-			return fmt.Errorf("invalid status InReplyToURI %q: %w", status.InReplyToURI, err)
+			return gtserror.Newf("invalid status InReplyToURI %q: %w", status.InReplyToURI, err)
 		}
 
 		if replyIRI.Host == config.GetHost() {
@@ -81,13 +81,13 @@ func (d *deref) dereferenceStatusAncestors(ctx context.Context, username string,
 			// This is our status, extract ID from path
 			_, id, err := uris.ParseStatusesPath(replyIRI)
 			if err != nil {
-				return fmt.Errorf("invalid local status IRI %q: %w", status.InReplyToURI, err)
+				return gtserror.Newf("invalid local status IRI %q: %w", status.InReplyToURI, err)
 			}
 
 			// Fetch this status from the database
 			localStatus, err := d.state.DB.GetStatusByID(ctx, id)
 			if err != nil {
-				return fmt.Errorf("error fetching local status %q: %w", id, err)
+				return gtserror.Newf("error fetching local status %q: %w", id, err)
 			}
 
 			// Set the fetched status
@@ -102,7 +102,7 @@ func (d *deref) dereferenceStatusAncestors(ctx context.Context, username string,
 				replyIRI,
 			)
 			if err != nil {
-				return fmt.Errorf("error fetching remote status %q: %w", status.InReplyToURI, err)
+				return gtserror.Newf("error fetching remote status %q: %w", status.InReplyToURI, err)
 			}
 
 			// Set the fetched status
@@ -110,7 +110,7 @@ func (d *deref) dereferenceStatusAncestors(ctx context.Context, username string,
 		}
 	}
 
-	return fmt.Errorf("reached %d ancestor iterations for %q", maxIter, ogIRI)
+	return gtserror.Newf("reached %d ancestor iterations for %q", maxIter, ogIRI)
 }
 
 func (d *deref) dereferenceStatusDescendants(ctx context.Context, username string, statusIRI *url.URL, parent ap.Statusable) error {
@@ -312,5 +312,5 @@ stackLoop:
 		}
 	}
 
-	return fmt.Errorf("reached %d descendant iterations for %q", maxIter, ogIRI.String())
+	return gtserror.Newf("reached %d descendant iterations for %q", maxIter, ogIRI.String())
 }

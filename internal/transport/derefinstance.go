@@ -102,7 +102,7 @@ func dereferenceByAPIV1Instance(ctx context.Context, t *transport, iri *url.URL)
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, gtserror.NewResponseError(resp)
+		return nil, gtserror.NewFromResponse(resp)
 	}
 
 	b, err := io.ReadAll(resp.Body)

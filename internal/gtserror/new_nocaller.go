@@ -15,39 +15,24 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package log
+//go:build noerrcaller
+
+package gtserror
 
 import (
-	"runtime"
-	"strings"
+	"errors"
+	"fmt"
 )
 
-// Caller fetches the calling function name, skipping 'depth'. Results are cached per PC.
-func Caller(depth int) string {
-	var pcs [1]uintptr
+// Caller returns whether created errors will prepend calling function name.
+const Caller = false
 
-	// Fetch calling function using calldepth
-	_ = runtime.Callers(depth, pcs[:])
-	fn := runtime.FuncForPC(pcs[0])
+// newAt is the same as New() but allows specifying calldepth.
+func newAt(_ int, msg string) error {
+	return errors.New(msg)
+}
 
-	if fn == nil {
-		return ""
-	}
-
-	// Get func name.
-	name := fn.Name()
-
-	// Drop all but the package name and function name, no mod path
-	if idx := strings.LastIndex(name, "/"); idx >= 0 {
-		name = name[idx+1:]
-	}
-
-	const params = `[...]`
-
-	// Drop any generic type parameter markers
-	if idx := strings.Index(name, params); idx >= 0 {
-		name = name[:idx] + name[idx+len(params):]
-	}
-
-	return name
+// newfAt is the same as Newf() but allows specifying calldepth.
+func newfAt(_ int, msgf string, args ...any) error {
+	return fmt.Errorf(msgf, args...)
 }

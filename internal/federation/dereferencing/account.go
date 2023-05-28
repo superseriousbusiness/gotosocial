@@ -21,7 +21,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/url"
 	"time"
@@ -31,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -93,14 +93,14 @@ func (d *deref) getAccountByURI(ctx context.Context, requestUser string, uri *ur
 	// Search the database for existing account with ID URI.
 	account, err = d.state.DB.GetAccountByURI(ctx, uriStr)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, nil, fmt.Errorf("GetAccountByURI: error checking database for account %s by uri: %w", uriStr, err)
+		return nil, nil, gtserror.Newf("error checking database for account %s by uri: %w", uriStr, err)
 	}
 
 	if account == nil {
 		// Else, search the database for existing by ID URL.
 		account, err = d.state.DB.GetAccountByURL(ctx, uriStr)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			return nil, nil, fmt.Errorf("GetAccountByURI: error checking database for account %s by url: %w", uriStr, err)
+			return nil, nil, gtserror.Newf("error checking database for account %s by url: %w", uriStr, err)
 		}
 	}
 
@@ -155,7 +155,7 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 	// Search the database for existing account with USERNAME@DOMAIN.
 	account, err := d.state.DB.GetAccountByUsernameDomain(ctx, username, domain)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, nil, fmt.Errorf("GetAccountByUsernameDomain: error checking database for account %s@%s: %w", username, domain, err)
+		return nil, nil, gtserror.Newf("error checking database for account %s@%s: %w", username, domain, err)
 	}
 
 	if account == nil {
@@ -209,7 +209,7 @@ func (d *deref) RefreshAccount(ctx context.Context, requestUser string, account 
 	// Parse the URI from account.
 	uri, err := url.Parse(account.URI)
 	if err != nil {
-		return nil, nil, fmt.Errorf("RefreshAccount: invalid account uri %q: %w", account.URI, err)
+		return nil, nil, gtserror.Newf("invalid account uri %q: %w", account.URI, err)
 	}
 
 	// Try to update + deref existing account model.
@@ -249,7 +249,7 @@ func (d *deref) RefreshAccountAsync(ctx context.Context, requestUser string, acc
 	// Parse the URI from account.
 	uri, err := url.Parse(account.URI)
 	if err != nil {
-		log.Errorf(ctx, "RefreshAccountAsync: invalid account uri %q: %v", account.URI, err)
+		log.Errorf(ctx, "invalid account uri %q: %v", account.URI, err)
 		return
 	}
 
@@ -273,7 +273,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	// Pre-fetch a transport for requesting username, used by later deref procedures.
 	tsport, err := d.transportController.NewTransportForUsername(ctx, requestUser)
 	if err != nil {
-		return nil, nil, fmt.Errorf("enrichAccount: couldn't create transport: %w", err)
+		return nil, nil, gtserror.Newf("couldn't create transport: %w", err)
 	}
 
 	if account.Username != "" {
@@ -282,7 +282,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		if err != nil {
 			if account.URI == "" {
 				// this is a new account (to us) with username@domain but failed webfinger, nothing more we can do.
-				return nil, nil, &ErrNotRetrievable{fmt.Errorf("enrichAccount: error webfingering account: %w", err)}
+				return nil, nil, &ErrNotRetrievable{gtserror.Newf("error webfingering account: %w", err)}
 			}
 
 			// Simply log this error and move on, we already have an account URI.
@@ -298,7 +298,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 				// After webfinger, we now have correct account domain from which we can do a final DB check.
 				alreadyAccount, err := d.state.DB.GetAccountByUsernameDomain(ctx, account.Username, accDomain)
 				if err != nil && !errors.Is(err, db.ErrNoEntries) {
-					return nil, nil, fmt.Errorf("enrichAccount: db err looking for account again after webfinger: %w", err)
+					return nil, nil, gtserror.Newf("db err looking for account again after webfinger: %w", err)
 				}
 
 				if alreadyAccount != nil {
@@ -318,15 +318,15 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		// No URI provided / found, must parse from account.
 		uri, err = url.Parse(account.URI)
 		if err != nil {
-			return nil, nil, fmt.Errorf("enrichAccount: invalid uri %q: %w", account.URI, err)
+			return nil, nil, gtserror.Newf("invalid uri %q: %w", account.URI, err)
 		}
 	}
 
 	// Check whether this account URI is a blocked domain / subdomain.
 	if blocked, err := d.state.DB.IsDomainBlocked(ctx, uri.Host); err != nil {
-		return nil, nil, fmt.Errorf("enrichAccount: error checking blocked domain: %w", err)
+		return nil, nil, gtserror.Newf("error checking blocked domain: %w", err)
 	} else if blocked {
-		return nil, nil, fmt.Errorf("enrichAccount: %s is blocked", uri.Host)
+		return nil, nil, gtserror.Newf("%s is blocked", uri.Host)
 	}
 
 	// Mark deref+update handshake start.
@@ -341,13 +341,13 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		// Dereference latest version of the account.
 		b, err := tsport.Dereference(ctx, uri)
 		if err != nil {
-			return nil, nil, &ErrNotRetrievable{fmt.Errorf("enrichAccount: error deferencing %s: %w", uri, err)}
+			return nil, nil, &ErrNotRetrievable{gtserror.Newf("error deferencing %s: %w", uri, err)}
 		}
 
 		// Attempt to resolve ActivityPub account from data.
 		apubAcc, err = ap.ResolveAccountable(ctx, b)
 		if err != nil {
-			return nil, nil, fmt.Errorf("enrichAccount: error resolving accountable from data for account %s: %w", uri, err)
+			return nil, nil, gtserror.Newf("error resolving accountable from data for account %s: %w", uri, err)
 		}
 
 		// Convert the dereferenced AP account object to our GTS model.
@@ -356,7 +356,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 			account.Domain,
 		)
 		if err != nil {
-			return nil, nil, fmt.Errorf("enrichAccount: error converting accountable to gts model for account %s: %w", uri, err)
+			return nil, nil, gtserror.Newf("error converting accountable to gts model for account %s: %w", uri, err)
 		}
 	}
 
@@ -375,7 +375,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		// Assume the host from the returned ActivityPub representation.
 		idProp := apubAcc.GetJSONLDId()
 		if idProp == nil || !idProp.IsIRI() {
-			return nil, nil, errors.New("enrichAccount: no id property found on person, or id was not an iri")
+			return nil, nil, gtserror.New("no id property found on person, or id was not an iri")
 		}
 
 		// Get IRI host value.
@@ -471,7 +471,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		}
 
 		if err != nil {
-			return nil, nil, fmt.Errorf("enrichAccount: error putting in database: %w", err)
+			return nil, nil, gtserror.Newf("error putting in database: %w", err)
 		}
 	} else {
 		// Set time of update from the last-fetched date.
@@ -483,7 +483,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 
 		// This is an existing account, update the model in the database.
 		if err := d.state.DB.UpdateAccount(ctx, latestAcc); err != nil {
-			return nil, nil, fmt.Errorf("enrichAccount: error updating database: %w", err)
+			return nil, nil, gtserror.Newf("error updating database: %w", err)
 		}
 	}
 
@@ -719,7 +719,7 @@ func (d *deref) dereferenceAccountFeatured(ctx context.Context, requestUser stri
 	// Pre-fetch a transport for requesting username, used by later deref procedures.
 	tsport, err := d.transportController.NewTransportForUsername(ctx, requestUser)
 	if err != nil {
-		return fmt.Errorf("enrichAccount: couldn't create transport: %w", err)
+		return gtserror.Newf("couldn't create transport: %w", err)
 	}
 
 	b, err := tsport.Dereference(ctx, uri)
@@ -729,32 +729,32 @@ func (d *deref) dereferenceAccountFeatured(ctx context.Context, requestUser stri
 
 	m := make(map[string]interface{})
 	if err := json.Unmarshal(b, &m); err != nil {
-		return fmt.Errorf("error unmarshalling bytes into json: %w", err)
+		return gtserror.Newf("error unmarshalling bytes into json: %w", err)
 	}
 
 	t, err := streams.ToType(ctx, m)
 	if err != nil {
-		return fmt.Errorf("error resolving json into ap vocab type: %w", err)
+		return gtserror.Newf("error resolving json into ap vocab type: %w", err)
 	}
 
 	if t.GetTypeName() != ap.ObjectOrderedCollection {
-		return fmt.Errorf("%s was not an OrderedCollection", uri)
+		return gtserror.Newf("%s was not an OrderedCollection", uri)
 	}
 
 	collection, ok := t.(vocab.ActivityStreamsOrderedCollection)
 	if !ok {
-		return errors.New("couldn't coerce OrderedCollection")
+		return gtserror.New("couldn't coerce OrderedCollection")
 	}
 
 	items := collection.GetActivityStreamsOrderedItems()
 	if items == nil {
-		return errors.New("nil orderedItems")
+		return gtserror.New("nil orderedItems")
 	}
 
 	// Get previous pinned statuses (we'll need these later).
 	wasPinned, err := d.state.DB.GetAccountPinnedStatuses(ctx, account.ID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return fmt.Errorf("error getting account pinned statuses: %w", err)
+		return gtserror.Newf("error getting account pinned statuses: %w", err)
 	}
 
 	statusURIs := make([]*url.URL, 0, items.Len())
