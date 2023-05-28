@@ -37,18 +37,51 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-// Potential incoming Content-Type header values; be
-// lenient with whitespace and quotation mark placement.
-var activityStreamsMediaTypes = []string{
-	"application/activity+json",
-	"application/ld+json;profile=https://www.w3.org/ns/activitystreams",
-	"application/ld+json;profile=\"https://www.w3.org/ns/activitystreams\"",
-	"application/ld+json ;profile=https://www.w3.org/ns/activitystreams",
-	"application/ld+json ;profile=\"https://www.w3.org/ns/activitystreams\"",
-	"application/ld+json ; profile=https://www.w3.org/ns/activitystreams",
-	"application/ld+json ; profile=\"https://www.w3.org/ns/activitystreams\"",
-	"application/ld+json; profile=https://www.w3.org/ns/activitystreams",
-	"application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"",
+// IsASMediaType will return whether the given content-type string
+// matches one of the 2 possible ActivityStreams incoming content types:
+// - application/activity+json
+// - application/ld+json;profile=https://w3.org/ns/activitystreams
+//
+// Where for the above we are leniant with whitespace and quotes.
+func IsASMediaType(ct string) bool {
+	var (
+		// First content-type part,
+		// contains the application/...
+		p1 string = ct //nolint:revive
+
+		// Second content-type part,
+		// contains AS IRI if provided
+		p2 string
+	)
+
+	// Split content-type by semi-colon.
+	sep := strings.IndexByte(ct, ';')
+	if sep >= 0 {
+		p1 = ct[:sep]
+		p2 = ct[sep+1:]
+	}
+
+	// Trim any ending space from the
+	// main content-type part of string.
+	p1 = strings.TrimRight(p1, " ")
+
+	switch p1 {
+	case "application/activity+json":
+		return p2 == ""
+
+	case "application/ld+json":
+		// Trim all start/end space.
+		p2 = strings.Trim(p2, " ")
+
+		// Drop any quotes around the URI str.
+		p2 = strings.ReplaceAll(p2, "\"", "")
+
+		// End part must be a ref to the main AS namespace IRI.
+		return p2 == "profile=https://www.w3.org/ns/activitystreams"
+
+	default:
+		return false
+	}
 }
 
 // federatingActor wraps the pub.FederatingActor interface
@@ -89,8 +122,11 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 
 	// Ensure valid ActivityPub Content-Type.
 	// https://www.w3.org/TR/activitypub/#server-to-server-interactions
-	if errWithCode := contentType(r.Header.Get("Content-Type")); errWithCode != nil {
-		return false, errWithCode
+	if ct := r.Header.Get("Content-Type"); !IsASMediaType(ct) {
+		const ct1 = "application/activity+json"
+		const ct2 = "application/ld+json;profile=https://w3.org/ns/activitystreams"
+		err := fmt.Errorf("Content-Type %s not acceptable, this endpoint accepts: [%q %q]", ct, ct1, ct2)
+		return false, gtserror.NewErrorNotAcceptable(err)
 	}
 
 	// Authenticate request by checking http signature.
@@ -183,24 +219,6 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 	// Request is now undergoing processing. Caller
 	// of this function will handle writing Accepted.
 	return true, nil
-}
-
-// contentType is a util function for ensuring valid
-// content-type of incoming ActivityPub POST requests.
-func contentType(contentType string) gtserror.WithCode {
-	for _, mediaType := range activityStreamsMediaTypes {
-		if strings.Contains(contentType, mediaType) {
-			return nil
-		}
-	}
-
-	err := fmt.Errorf(
-		"Content-Type %s not acceptable, this endpoint accepts the following types: [%s]",
-		contentType,
-		strings.Join(activityStreamsMediaTypes, ", "),
-	)
-
-	return gtserror.NewErrorNotAcceptable(err, err.Error())
 }
 
 // resolveActivity is a util function for pulling a
