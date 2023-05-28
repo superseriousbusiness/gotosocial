@@ -27,12 +27,12 @@ import (
 type Processor struct {
 	state               *state.State
 	tc                  typeutils.TypeConverter
-	mediaManager        media.Manager
+	mediaManager        *media.Manager
 	transportController transport.Controller
 }
 
 // New returns a new media processor.
-func New(state *state.State, tc typeutils.TypeConverter, mediaManager media.Manager, transportController transport.Controller) Processor {
+func New(state *state.State, tc typeutils.TypeConverter, mediaManager *media.Manager, transportController transport.Controller) Processor {
 	return Processor{
 		state:               state,
 		tc:                  tc,

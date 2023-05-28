@@ -74,7 +74,7 @@ func (p *Processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, 
 		}
 	}
 
-	processingEmoji, err := p.mediaManager.PreProcessEmoji(ctx, data, nil, form.Shortcode, emojiID, emojiURI, ai, false)
+	processingEmoji, err := p.mediaManager.PreProcessEmoji(ctx, data, form.Shortcode, emojiID, emojiURI, ai, false)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error processing emoji: %s", err), "error processing emoji")
 	}
@@ -355,7 +355,7 @@ func (p *Processor) emojiUpdateCopy(ctx context.Context, emoji *gtsmodel.Emoji, 
 		}
 	}
 
-	processingEmoji, err := p.mediaManager.PreProcessEmoji(ctx, data, nil, *shortcode, newEmojiID, newEmojiURI, ai, false)
+	processingEmoji, err := p.mediaManager.PreProcessEmoji(ctx, data, *shortcode, newEmojiID, newEmojiURI, ai, false)
 	if err != nil {
 		err = fmt.Errorf("emojiUpdateCopy: error processing emoji %s: %s", emoji.ID, err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -461,7 +461,7 @@ func (p *Processor) emojiUpdateModify(ctx context.Context, emoji *gtsmodel.Emoji
 			}
 		}
 
-		processingEmoji, err := p.mediaManager.PreProcessEmoji(ctx, data, nil, emoji.Shortcode, emoji.ID, emoji.URI, ai, true)
+		processingEmoji, err := p.mediaManager.PreProcessEmoji(ctx, data, emoji.Shortcode, emoji.ID, emoji.URI, ai, true)
 		if err != nil {
 			err = fmt.Errorf("emojiUpdateModify: error processing emoji %s: %s", emoji.ID, err)
 			return nil, gtserror.NewErrorInternalError(err)

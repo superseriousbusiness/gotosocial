@@ -28,13 +28,13 @@ import (
 type Processor struct {
 	state               *state.State
 	tc                  typeutils.TypeConverter
-	mediaManager        media.Manager
+	mediaManager        *media.Manager
 	transportController transport.Controller
 	emailSender         email.Sender
 }
 
 // New returns a new admin processor.
-func New(state *state.State, tc typeutils.TypeConverter, mediaManager media.Manager, transportController transport.Controller, emailSender email.Sender) Processor {
+func New(state *state.State, tc typeutils.TypeConverter, mediaManager *media.Manager, transportController transport.Controller, emailSender email.Sender) Processor {
 	return Processor{
 		state:               state,
 		tc:                  tc,

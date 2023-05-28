@@ -110,9 +110,3 @@ type AdditionalEmojiInfo struct {
 
 // DataFunc represents a function used to retrieve the raw bytes of a piece of media.
 type DataFunc func(ctx context.Context) (reader io.ReadCloser, fileSize int64, err error)
-
-// PostDataCallbackFunc represents a function executed after the DataFunc has been executed,
-// and the returned reader has been read. It can be used to clean up any remaining resources.
-//
-// This can be set to nil, and will then not be executed.
-type PostDataCallbackFunc func(ctx context.Context) error

@@ -32,7 +32,13 @@ import (
 
 type DereferenceMedia func(ctx context.Context, iri *url.URL) (io.ReadCloser, int64, error)
 
-func (m *manager) RefetchEmojis(ctx context.Context, domain string, dereferenceMedia DereferenceMedia) (int, error) {
+// RefetchEmojis iterates through remote emojis (for the given domain, or all if domain is empty string).
+//
+// For each emoji, the manager will check whether both the full size and static images are present in storage.
+// If not, the manager will refetch and reprocess full size and static images for the emoji.
+//
+// The provided DereferenceMedia function will be used when it's necessary to refetch something this way.
+func (m *Manager) RefetchEmojis(ctx context.Context, domain string, dereferenceMedia DereferenceMedia) (int, error) {
 	// normalize domain
 	if domain == "" {
 		domain = db.EmojiAllDomains
@@ -107,7 +113,7 @@ func (m *manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 			return dereferenceMedia(ctx, emojiImageIRI)
 		}
 
-		processingEmoji, err := m.PreProcessEmoji(ctx, dataFunc, nil, emoji.Shortcode, emoji.ID, emoji.URI, &AdditionalEmojiInfo{
+		processingEmoji, err := m.PreProcessEmoji(ctx, dataFunc, emoji.Shortcode, emoji.ID, emoji.URI, &AdditionalEmojiInfo{
 			Domain:               &emoji.Domain,
 			ImageRemoteURL:       &emoji.ImageRemoteURL,
 			ImageStaticRemoteURL: &emoji.ImageStaticRemoteURL,
@@ -131,7 +137,7 @@ func (m *manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 	return totalRefetched, nil
 }
 
-func (m *manager) emojiRequiresRefetch(ctx context.Context, emoji *gtsmodel.Emoji) (bool, error) {
+func (m *Manager) emojiRequiresRefetch(ctx context.Context, emoji *gtsmodel.Emoji) (bool, error) {
 	if has, err := m.state.Storage.Has(ctx, emoji.ImagePath); err != nil {
 		return false, err
 	} else if !has {

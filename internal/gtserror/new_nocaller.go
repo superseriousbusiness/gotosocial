@@ -15,16 +15,24 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package testrig
+//go:build noerrcaller
+
+package gtserror
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/federation"
-	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
+	"errors"
+	"fmt"
 )
 
-// NewTestFederator returns a federator with the given database and (mock!!) transport controller.
-func NewTestFederator(state *state.State, tc transport.Controller, mediaManager *media.Manager) federation.Federator {
-	return federation.NewFederator(state, NewTestFederatingDB(state), tc, NewTestTypeConverter(state.DB), mediaManager)
+// Caller returns whether created errors will prepend calling function name.
+const Caller = false
+
+// newAt is the same as New() but allows specifying calldepth.
+func newAt(_ int, msg string) error {
+	return errors.New(msg)
+}
+
+// newfAt is the same as Newf() but allows specifying calldepth.
+func newfAt(_ int, msgf string, args ...any) error {
+	return fmt.Errorf(msgf, args...)
 }

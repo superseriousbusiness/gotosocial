@@ -46,7 +46,7 @@ type Processor struct {
 	federator    federation.Federator
 	tc           typeutils.TypeConverter
 	oauthServer  oauth.Server
-	mediaManager mm.Manager
+	mediaManager *mm.Manager
 	state        *state.State
 	emailSender  email.Sender
 	filter       *visibility.Filter
@@ -117,7 +117,7 @@ func NewProcessor(
 	tc typeutils.TypeConverter,
 	federator federation.Federator,
 	oauthServer oauth.Server,
-	mediaManager mm.Manager,
+	mediaManager *mm.Manager,
 	state *state.State,
 	emailSender email.Sender,
 ) *Processor {

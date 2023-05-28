@@ -35,7 +35,7 @@ type MediaStandardTestSuite struct {
 	db                  db.DB
 	storage             *storage.Driver
 	state               state.State
-	manager             media.Manager
+	manager             *media.Manager
 	transportController transport.Controller
 	testAttachments     map[string]*gtsmodel.MediaAttachment
 	testAccounts        map[string]*gtsmodel.Account

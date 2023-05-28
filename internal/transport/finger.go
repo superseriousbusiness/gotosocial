@@ -156,7 +156,7 @@ func (t *transport) Finger(ctx context.Context, targetUsername string, targetDom
 		}
 		// We've reached the end of the line here, both the original request
 		// and our attempt to resolve it through the fallback have failed
-		return nil, gtserror.NewResponseError(rsp)
+		return nil, gtserror.NewFromResponse(rsp)
 	}
 
 	// Set the URL in cache here, since host-meta told us this should be the

@@ -130,7 +130,7 @@ func (t *transport) deliver(ctx context.Context, b []byte, to *url.URL) error {
 
 	if code := rsp.StatusCode; code != http.StatusOK &&
 		code != http.StatusCreated && code != http.StatusAccepted {
-		return gtserror.NewResponseError(rsp)
+		return gtserror.NewFromResponse(rsp)
 	}
 
 	return nil
