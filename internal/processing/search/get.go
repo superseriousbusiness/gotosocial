@@ -164,7 +164,7 @@ func (p *Processor) Get(
 
 	// As a last resort, search for accounts and
 	// statuses using the query as arbitrary text.
-	if _, err = p.searchByText(
+	if err := p.searchByText(
 		ctx,
 		account,
 		maxID,
@@ -545,7 +545,15 @@ func (p *Processor) searchByText(
 	following bool,
 	appendAccount func(*gtsmodel.Account),
 	appendStatus func(*gtsmodel.Status),
-) (bool, error) {
+) error {
+	if queryType == queryTypeAny {
+		// If search type is any, ignore maxID and minID
+		// parameters, since we can't use them to page
+		// on both accounts and statuses simultaneously.
+		maxID = ""
+		minID = ""
+	}
+
 	if queryType == queryTypeAny || queryType == queryTypeAccounts {
 		// Search for accounts using the given text.
 		accounts, err := p.state.DB.SearchForAccounts(
@@ -553,8 +561,7 @@ func (p *Processor) searchByText(
 			requestingAccount.ID,
 			query, maxID, minID, limit, following, offset)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			err = fmt.Errorf("error checking database for accounts using text %s: %w", query, err)
-			return false, err
+			return fmt.Errorf("error checking database for accounts using text %s: %w", query, err)
 		}
 
 		for _, account := range accounts {
@@ -569,8 +576,7 @@ func (p *Processor) searchByText(
 			requestingAccount.ID,
 			query, maxID, minID, limit, offset)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			err = fmt.Errorf("error checking database for statuses using text %s: %w", query, err)
-			return false, err
+			return fmt.Errorf("error checking database for statuses using text %s: %w", query, err)
 		}
 
 		for _, status := range statuses {
@@ -578,7 +584,7 @@ func (p *Processor) searchByText(
 		}
 	}
 
-	return true, nil
+	return nil
 }
 
 func (p *Processor) packageSearchResponse(
