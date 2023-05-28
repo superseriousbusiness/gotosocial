@@ -79,7 +79,7 @@ var replacer = strings.NewReplacer(
 // Query example (SQLite):
 //
 //	SELECT "account"."id" FROM "accounts" AS "account"
-//	WHERE (COALESCE("account"."domain", '') != "account"."username")
+//	WHERE (("account"."domain" IS NULL) OR ("account"."domain" != "account"."username"))
 //	AND ("account"."id" < 'ZZZZZZZZZZZZZZZZZZZZZZZZZZ')
 //	AND ("account"."id" IN (SELECT "target_account_id" FROM "follows" WHERE ("account_id" = '016T5Q3SQKBT337DAKVSKNXXW1')))
 //	AND ((SELECT LOWER("account"."username" || COALESCE("account"."display_name", '') || COALESCE("account"."note", '')) AS "account_text") LIKE '%turtle%' ESCAPE '\')
@@ -110,13 +110,15 @@ func (s *searchDB) SearchForAccounts(
 		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
 		// Select only IDs from table.
 		Column("account.id").
-		// Try to ignore instance accounts (domain is null
-		// for local accounts so coalesce to empty string).
-		Where(
-			"COALESCE(?, ?) != ?",
-			bun.Ident("account.domain"), "",
-			bun.Ident("account.username"),
-		)
+		// Try to ignore instance accounts. Account domain must
+		// be either nil or, if set, not equal to the account's
+		// username (which is commonly used to indicate it's an
+		// instance service account).
+		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.
+				Where("? IS NULL", bun.Ident("account.domain")).
+				WhereOr("? != ?", bun.Ident("account.domain"), bun.Ident("account.username"))
+		})
 
 	// Return only items with a LOWER id than maxID.
 	if maxID == "" {
