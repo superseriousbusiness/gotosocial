@@ -38,12 +38,13 @@ func (m *Module) InboxPOSTHandler(c *gin.Context) {
 			// Something else went wrong, and someone forgot to return
 			// an errWithCode! It's chill though. Log the error but don't
 			// return it as-is to the caller, to avoid leaking internals.
-			log.WithContext(c.Request.Context()).Errorf("returning Bad Request to caller, err was: %q", err)
+			log.Errorf(c.Request.Context(), "returning Bad Request to caller, err was: %q", err)
 			*errWithCode = gtserror.NewErrorBadRequest(err)
 		}
 
 		// Pass along confirmed error with code to the main error handler
 		apiutil.ErrorHandler(c, *errWithCode, m.processor.InstanceGetV1)
+		return
 	}
 
 	// Inbox POST body was Accepted for processing.
