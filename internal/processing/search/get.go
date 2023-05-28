@@ -59,19 +59,18 @@ const (
 func (p *Processor) Get(
 	ctx context.Context,
 	account *gtsmodel.Account,
-	search *apimodel.SearchQuery,
+	req *apimodel.SearchRequest,
 ) (*apimodel.SearchResult, gtserror.WithCode) {
 
 	var (
-		_         = search.AccountID
-		maxID     = search.MaxID
-		minID     = search.MinID
-		limit     = search.Limit
-		offset    = search.Offset
-		query     = strings.TrimSpace(search.Query)                 // Trim trailing/leading whitespace.
-		queryType = strings.TrimSpace(strings.ToLower(search.Type)) // Trim trailing/leading whitespace; convert to lowercase.
-		resolve   = search.Resolve
-		following = search.Following
+		maxID     = req.MaxID
+		minID     = req.MinID
+		limit     = req.Limit
+		offset    = req.Offset
+		query     = strings.TrimSpace(req.Query)                      // Trim trailing/leading whitespace.
+		queryType = strings.TrimSpace(strings.ToLower(req.QueryType)) // Trim trailing/leading whitespace; convert to lowercase.
+		resolve   = req.Resolve
+		following = req.Following
 	)
 
 	// Validate query.
@@ -103,7 +102,7 @@ func (p *Processor) Get(
 	// a caller can page using maxID or minID, but if they
 	// supply an offset greater than 0, return nothing as
 	// though there were no additional results.
-	if search.Offset > 0 {
+	if req.Offset > 0 {
 		return &apimodel.SearchResult{
 			Accounts: make([]*apimodel.Account, 0),
 			Statuses: make([]*apimodel.Status, 0),
@@ -122,7 +121,7 @@ func (p *Processor) Get(
 
 	// Check if the query is something like '@whatever_user' or '@whatever_user@somewhere.com'.
 	keepLooking, err = p.searchByNamestring(ctx, account, query, resolve, appendAccount)
-	if err != nil {
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = fmt.Errorf("error searching by namestring: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -148,7 +147,7 @@ func (p *Processor) Get(
 		appendAccount,
 		appendStatus,
 	)
-	if err != nil {
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = fmt.Errorf("error searching by URI: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -177,7 +176,7 @@ func (p *Processor) Get(
 		following,
 		appendAccount,
 		appendStatus,
-	); err != nil {
+	); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = fmt.Errorf("error searching by text: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}

@@ -37,6 +37,98 @@ import (
 //	tags:
 //	- search
 //
+//	produces:
+//	- application/json
+//
+//	parameters:
+//	-
+//		name: max_id
+//		type: string
+//		description: >-
+//			Return only items *OLDER* than the given max ID.
+//			The item with the specified ID will not be included in the response.
+//			Currently only used if 'type' is set to a specific type.
+//		in: query
+//		required: false
+//	-
+//		name: min_id
+//		type: string
+//		description: >-
+//			Return only items *immediately newer* than the given min ID.
+//			The item with the specified ID will not be included in the response.
+//			Currently only used if 'type' is set to a specific type.
+//		in: query
+//		required: false
+//	-
+//		name: limit
+//		type: integer
+//		description: Number of each type of item to return.
+//		default: 20
+//		maximum: 40
+//		minimum: 1
+//		in: query
+//		required: false
+//	-
+//		name: offset
+//		type: integer
+//		description: >-
+//			Page number of results to return (starts at 0).
+//			This parameter is currently not used, page by selecting
+//			a specific query type and using maxID and minID instead.
+//		default: 0
+//		maximum: 10
+//		minimum: 0
+//		in: query
+//		required: false
+//	-
+//		name: q
+//		type: string
+//		description: |-
+//			Query string to search for. This can be in the following forms:
+//			- `@[username]` -- search for a local account with the given username. Will only ever return 1 result.
+//			- `@[username]@[domain]` -- search for a remote account with the given username and domain. Will only ever return 1 result.
+//			- `https://example.org/some/arbitrary/url` -- search for an account OR a status with the given URL. Will almost always return 1 result.
+//			- any arbitrary string -- search for accounts or statuses containing the given string. Can return multiple results.
+//		in: query
+//		required: true
+//	-
+//		name: type
+//		type: string
+//		description: |-
+//			Type of item to return. One of:
+//			- `` -- empty string; return any/all results.
+//			- `accounts` -- return account(s).
+//			- `statuses` -- return status(es).
+//			- `hashtags` -- return hashtag(s).
+//			If `type` is specified, paging can be performed using max_id and min_id parameters.
+//			If `type` is not specified, see the `offset` parameter for paging.
+//		in: query
+//	-
+//		name: resolve
+//		type: boolean
+//		description: >-
+//			If searching query is for `@[username]`, `@[username]@[domain]`, or a URL, allow the GoToSocial
+//			instance to resolve the search by making calls to remote instances (webfinger, ActivityPub, etc).
+//		default: false
+//		in: query
+//	-
+//		name: following
+//		type: boolean
+//		description: >-
+//			If search type includes accounts, and search query is an arbitrary string, show only accounts
+//			that the requesting account follows. If this is set to `true`, then the GoToSocial instance will
+//			enhance the search by also searching within account notes, not just in usernames and display names.
+//		default: false
+//		in: query
+//	-
+//		name: exclude_unreviewed
+//		type: boolean
+//		description: >-
+//			If searching for hashtags, exclude those not yet approved by instance admin.
+//			Currently this parameter is unused.
+//		default: false
+//		in: query
+//
 //	security:
 //	- OAuth2 Bearer:
 //		- read:search
@@ -71,7 +163,13 @@ func (m *Module) SearchGETHandler(c *gin.Context) {
 		return
 	}
 
-	excludeUnreviewed, errWithCode := apiutil.ParseSearchExcludeUnreviewed(c.Query(apiutil.SearchExcludeUnreviewedKey), false)
+	limit, errWithCode := apiutil.ParseLimit(c.Query(apiutil.LimitKey), 20, 40, 1)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	offset, errWithCode := apiutil.ParseSearchOffset(c.Query(apiutil.SearchOffsetKey), 0, 10, 0)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
@@ -89,38 +187,31 @@ func (m *Module) SearchGETHandler(c *gin.Context) {
 		return
 	}
 
-	limit, errWithCode := apiutil.ParseLimit(c.Query(apiutil.LimitKey), 20, 40, 1)
-	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-		return
-	}
-
-	offset, errWithCode := apiutil.ParseSearchOffset(c.Query(apiutil.SearchOffsetKey), 0, 10, 0)
-	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-		return
-	}
-
 	following, errWithCode := apiutil.ParseSearchFollowing(c.Query(apiutil.SearchFollowingKey), false)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	searchQuery := &apimodel.SearchQuery{
-		AccountID:         c.Query(AccountIDKey),
-		MaxID:             c.Query(MaxIDKey),
-		MinID:             c.Query(MinIDKey),
-		Type:              c.Query(TypeKey),
-		ExcludeUnreviewed: excludeUnreviewed,
-		Query:             query,
-		Resolve:           resolve,
-		Limit:             limit,
-		Offset:            offset,
-		Following:         following,
+	excludeUnreviewed, errWithCode := apiutil.ParseSearchExcludeUnreviewed(c.Query(apiutil.SearchExcludeUnreviewedKey), false)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
 	}
 
-	results, errWithCode := m.processor.Search().Get(c.Request.Context(), authed.Account, searchQuery)
+	searchRequest := &apimodel.SearchRequest{
+		MaxID:             c.Query(apiutil.MaxIDKey),
+		MinID:             c.Query(apiutil.MinIDKey),
+		Limit:             limit,
+		Offset:            offset,
+		Query:             query,
+		QueryType:         c.Query(apiutil.SearchTypeKey),
+		Resolve:           resolve,
+		Following:         following,
+		ExcludeUnreviewed: excludeUnreviewed,
+	}
+
+	results, errWithCode := m.processor.Search().Get(c.Request.Context(), authed.Account, searchRequest)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

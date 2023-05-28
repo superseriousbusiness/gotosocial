@@ -29,6 +29,8 @@ const (
 
 	LimitKey = "limit"
 	LocalKey = "local"
+	MaxIDKey = "max_id"
+	MinIDKey = "min_id"
 
 	/* Search keys */
 

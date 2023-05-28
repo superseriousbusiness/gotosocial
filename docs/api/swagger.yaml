@@ -5270,81 +5270,66 @@ paths:
             description: If statuses are in the result, they will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
             operationId: searchGet
             parameters:
-                - description: If type is `statuses`, then statuses returned will be authored only by this account.
-                  in: query
-                  name: account_id
-                  type: string
-                  x-go-name: AccountID
-                - description: |-
-                    Return results *older* than this id.
-
-                    The entry with this ID will not be included in the search results.
+                - description: Return only items *OLDER* than the given max ID. The item with the specified ID will not be included in the response. Currently only used if 'type' is set to a specific type.
                   in: query
                   name: max_id
                   type: string
-                  x-go-name: MaxID
-                - description: |-
-                    Return results *newer* than this id.
-
-                    The entry with this ID will not be included in the search results.
+                - description: Return only items *immediately newer* than the given min ID. The item with the specified ID will not be included in the response. Currently only used if 'type' is set to a specific type.
                   in: query
                   name: min_id
                   type: string
-                  x-go-name: MinID
-                - description: |-
-                    Type of the search query to perform.
-
-                    Must be one of: `accounts`, `hashtags`, `statuses`.
-                  in: query
-                  name: type
-                  required: true
-                  type: string
-                  x-go-name: Type
-                - default: false
-                  description: Filter out tags that haven't been reviewed and approved by an instance admin.
-                  in: query
-                  name: exclude_unreviewed
-                  type: boolean
-                  x-go-name: ExcludeUnreviewed
-                - description: |-
-                    String to use as a search query.
-
-                    For accounts, this should be in the format `@someaccount@some.instance.com`, or the format `https://some.instance.com/@someaccount`
-
-                    For a status, this can be in the format: `https://some.instance.com/@someaccount/SOME_ID_OF_A_STATUS`
-                  in: query
-                  name: q
-                  required: true
-                  type: string
-                  x-go-name: Query
-                - default: false
-                  description: Attempt to resolve the query by performing a remote webfinger lookup, if the query includes a remote host.
-                  in: query
-                  name: resolve
-                  type: boolean
-                  x-go-name: Resolve
                 - default: 20
-                  description: Maximum number of results to load, per type.
-                  format: int64
+                  description: Number of each type of item to return.
                   in: query
                   maximum: 40
                   minimum: 1
                   name: limit
                   type: integer
-                  x-go-name: Limit
                 - default: 0
-                  description: Offset for paginating search results.
-                  format: int64
+                  description: Page number of results to return (starts at 0). This parameter is currently not used, page by selecting a specific query type and using maxID and minID instead.
                   in: query
+                  maximum: 10
+                  minimum: 0
                   name: offset
                   type: integer
-                  x-go-name: Offset
+                - description: |-
+                    Query string to search for. This can be in the following forms:
+                    - `@[username]` -- search for a local account with the given username. Will only ever return 1 result.
+                    - `@[username]@[domain]` -- search for a remote account with the given username and domain. Will only ever return 1 result.
+                    - `https://example.org/some/arbitrary/url` -- search for an account OR a status with the given URL. Will almost always return 1 result.
+                    - any arbitrary string -- search for accounts or statuses containing the given string. Can return multiple results.
+                  in: query
+                  name: q
+                  required: true
+                  type: string
+                - description: |-
+                    Type of item to return. One of:
+                    - `` -- empty string; return any/all results.
+                    - `accounts` -- return account(s).
+                    - `statuses` -- return status(es).
+                    - `hashtags` -- return hashtag(s).
+                    If `type` is specified, paging can be performed using max_id and min_id parameters.
+                    If `type` is not specified, see the `offset` parameter for paging.
+                  in: query
+                  name: type
+                  type: string
                 - default: false
-                  description: Only include accounts that the searching account is following.
+                  description: If searching query is for `@[username]`, `@[username]@[domain]`, or a URL, allow the GoToSocial instance to resolve the search by making calls to remote instances (webfinger, ActivityPub, etc).
+                  in: query
+                  name: resolve
+                  type: boolean
+                - default: false
+                  description: If search type includes accounts, and search query is an arbitrary string, show only accounts that the requesting account follows. If this is set to `true`, then the GoToSocial instance will enhance the search by also searching within account notes, not just in usernames and display names.
                   in: query
                   name: following
                   type: boolean
-                  x-go-name: Following
+                - default: false
+                  description: If searching for hashtags, exclude those not yet approved by instance admin. Currently this parameter is unused.
+                  in: query
+                  name: exclude_unreviewed
+                  type: boolean
+            produces:
+                - application/json
             responses:
                 "200":
                     description: Results of the search.

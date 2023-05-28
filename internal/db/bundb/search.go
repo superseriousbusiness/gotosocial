@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -76,7 +75,10 @@ func (s *searchDB) SearchForAccounts(
 	}
 
 	// Make educated guess for slice size
-	accountIDs := make([]string, 0, limit)
+	var (
+		accountIDs  = make([]string, 0, limit)
+		frontToBack = true
+	)
 
 	q := s.conn.
 		NewSelect().
@@ -84,10 +86,7 @@ func (s *searchDB) SearchForAccounts(
 		// Select only IDs from table
 		Column("account.id").
 		// Try to ignore instance accounts.
-		Where("? != ?", bun.Ident("account.domain"), bun.Ident("account.username")).
-		// Sort by ID. Account ID's are random so
-		// this is not 'newest first' or anything.
-		Order("account.id DESC")
+		Where("? != ?", bun.Ident("account.domain"), bun.Ident("account.username"))
 
 	// Return only items with a LOWER id than maxID.
 	if maxID == "" {
@@ -98,6 +97,9 @@ func (s *searchDB) SearchForAccounts(
 	if minID != "" {
 		// Return only items with a HIGHER id than minID.
 		q = q.Where("? > ?", bun.Ident("account.id"), minID)
+
+		// page up
+		frontToBack = false
 	}
 
 	if following {
@@ -124,12 +126,29 @@ func (s *searchDB) SearchForAccounts(
 		q = q.Limit(limit)
 	}
 
+	if frontToBack {
+		// Page down.
+		q = q.Order("account.id DESC")
+	} else {
+		// Page up.
+		q = q.Order("account.id ASC")
+	}
+
 	if err := q.Scan(ctx, &accountIDs); err != nil {
 		return nil, s.conn.ProcessError(err)
 	}
 
 	if len(accountIDs) == 0 {
-		return nil, db.ErrNoEntries
+		return nil, nil
+	}
+
+	// If we're paging up, we still want accounts
+	// to be sorted by ID desc, so reverse ids slice.
+	// https://zchee.github.io/golang-wiki/SliceTricks/#reversing
+	if !frontToBack {
+		for l, r := 0, len(accountIDs)-1; l < r; l, r = l+1, r-1 {
+			accountIDs[l], accountIDs[r] = accountIDs[r], accountIDs[l]
+		}
 	}
 
 	accounts := make([]*gtsmodel.Account, 0, len(accountIDs))
@@ -172,7 +191,10 @@ func (s *searchDB) SearchForStatuses(
 	}
 
 	// Make educated guess for slice size
-	statusIDs := make([]string, 0, limit)
+	var (
+		statusIDs   = make([]string, 0, limit)
+		frontToBack = true
+	)
 
 	q := s.conn.
 		NewSelect().
@@ -187,9 +209,7 @@ func (s *searchDB) SearchForStatuses(
 				WhereOr("? = ?", bun.Ident("status.in_reply_to_account_id"), accountID)
 		}).
 		// Ignore boosts.
-		Where("? IS NULL", bun.Ident("status.boost_of_id")).
-		// Sort newest -> oldest.
-		Order("status.id DESC")
+		Where("? IS NULL", bun.Ident("status.boost_of_id"))
 
 	// Return only items with a LOWER id than maxID.
 	if maxID == "" {
@@ -198,8 +218,11 @@ func (s *searchDB) SearchForStatuses(
 	q = q.Where("? < ?", bun.Ident("status.id"), maxID)
 
 	if minID != "" {
-		// Return only items with a HIGHER id than minID.
+		// return only statuses HIGHER (ie., newer) than minID
 		q = q.Where("? > ?", bun.Ident("status.id"), minID)
+
+		// page up
+		frontToBack = false
 	}
 
 	// Concatenate status content warning
@@ -217,12 +240,29 @@ func (s *searchDB) SearchForStatuses(
 		q = q.Limit(limit)
 	}
 
+	if frontToBack {
+		// Page down.
+		q = q.Order("status.id DESC")
+	} else {
+		// Page up.
+		q = q.Order("status.id ASC")
+	}
+
 	if err := q.Scan(ctx, &statusIDs); err != nil {
 		return nil, s.conn.ProcessError(err)
 	}
 
 	if len(statusIDs) == 0 {
-		return nil, db.ErrNoEntries
+		return nil, nil
+	}
+
+	// If we're paging up, we still want statuses
+	// to be sorted by ID desc, so reverse ids slice.
+	// https://zchee.github.io/golang-wiki/SliceTricks/#reversing
+	if !frontToBack {
+		for l, r := 0, len(statusIDs)-1; l < r; l, r = l+1, r-1 {
+			statusIDs[l], statusIDs[r] = statusIDs[r], statusIDs[l]
+		}
 	}
 
 	statuses := make([]*gtsmodel.Status, 0, len(statusIDs))

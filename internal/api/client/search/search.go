@@ -25,39 +25,8 @@ import (
 )
 
 const (
-	// BasePathV1 is the base path for serving v1 of the search API, minus the 'api' prefix
-	BasePathV1 = "/v1/search"
-
-	// BasePathV2 is the base path for serving v2 of the search API, minus the 'api' prefix
-	BasePathV2 = "/v2/search"
-
-	// AccountIDKey -- If provided, statuses returned will be authored only by this account
-	AccountIDKey = "account_id"
-	// MaxIDKey -- Return results older than this id
-	MaxIDKey = "max_id"
-	// MinIDKey -- Return results immediately newer than this id
-	MinIDKey = "min_id"
-	// TypeKey -- Enum(accounts, hashtags, statuses)
-	TypeKey = "type"
-	// ExcludeUnreviewedKey -- Filter out unreviewed tags? Defaults to false. Use true when trying to find trending tags.
-	ExcludeUnreviewedKey = "exclude_unreviewed"
-	// QueryKey -- The search query
-	QueryKey = "q"
-	// ResolveKey -- Attempt WebFinger lookup. Defaults to false.
-	ResolveKey = "resolve"
-	// LimitKey -- Maximum number of results to load, per type. Defaults to 20. Max 40.
-	LimitKey = "limit"
-	// OffsetKey -- Offset in search results. Used for pagination. Defaults to 0.
-	OffsetKey = "offset"
-	// FollowingKey -- Only include accounts that the user is following. Defaults to false.
-	FollowingKey = "following"
-
-	// TypeAccounts --
-	TypeAccounts = "accounts"
-	// TypeHashtags --
-	TypeHashtags = "hashtags"
-	// TypeStatuses --
-	TypeStatuses = "statuses"
+	BasePathV1 = "/v1/search" // Base path for serving v1 of the search API, minus the 'api' prefix.
+	BasePathV2 = "/v2/search" // Base path for serving v2 of the search API, minus the 'api' prefix.
 )
 
 type Module struct {
