@@ -32,19 +32,21 @@ import (
 func (m *Module) InboxPOSTHandler(c *gin.Context) {
 	_, err := m.processor.Fedi().InboxPost(apiutil.TransferSignatureContext(c), c.Writer, c.Request)
 	if err != nil {
-		if errWithCode := new(gtserror.WithCode); errors.As(err, errWithCode) {
-			// An errWithCode was returned to us, we can be nice and
-			// try to return something informative to the caller.
-			apiutil.ErrorHandler(c, *errWithCode, m.processor.InstanceGetV1)
-		} else {
+		var errWithCode *gtserror.WithCode
+
+		if !errors.As(err, errWithCode) {
 			// Something else went wrong, and someone forgot to return
 			// an errWithCode! It's chill though. Log the error but don't
-			// return it to the caller, to avoid leaking internals.
+			// return it as-is to the caller, to avoid leaking internals.
 			log.WithContext(c.Request.Context()).Errorf("returning Bad Request to caller, err was: %q", err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err), m.processor.InstanceGetV1)
+			e := gtserror.NewErrorBadRequest(err)
+			errWithCode = &e
 		}
-	} else {
-		// Inbox POST body was Accepted for processing.
-		c.JSON(http.StatusAccepted, gin.H{"status": http.StatusText(http.StatusAccepted)})
+
+		// Pass along confirmed error with code to the main error handler
+		apiutil.ErrorHandler(c, *errWithCode, m.processor.InstanceGetV1)
 	}
+
+	// Inbox POST body was Accepted for processing.
+	c.JSON(http.StatusAccepted, gin.H{"status": http.StatusText(http.StatusAccepted)})
 }
