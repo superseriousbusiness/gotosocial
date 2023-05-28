@@ -36,16 +36,15 @@ import (
 // ProcessingEmoji represents an emoji currently processing. It exposes
 // various functions for retrieving data from the process.
 type ProcessingEmoji struct {
-	instAccID string               // instance account ID
-	emoji     *gtsmodel.Emoji      // processing emoji details
-	refresh   bool                 // whether this is an existing emoji being refreshed
-	newPathID string               // new emoji path ID to use if refreshed
-	dataFn    DataFunc             // load-data function, returns media stream
-	postFn    PostDataCallbackFunc // post data callback function
-	done      bool                 // done is set when process finishes with non ctx canceled type error
-	proc      runners.Processor    // proc helps synchronize only a singular running processing instance
-	err       error                // error stores permanent error value when done
-	mgr       *manager             // mgr instance (access to db / storage)
+	instAccID string            // instance account ID
+	emoji     *gtsmodel.Emoji   // processing emoji details
+	refresh   bool              // whether this is an existing emoji being refreshed
+	newPathID string            // new emoji path ID to use if refreshed
+	dataFn    DataFunc          // load-data function, returns media stream
+	done      bool              // done is set when process finishes with non ctx canceled type error
+	proc      runners.Processor // proc helps synchronize only a singular running processing instance
+	err       error             // error stores permanent error value when done
+	mgr       *Manager          // mgr instance (access to db / storage)
 }
 
 // EmojiID returns the ID of the underlying emoji without blocking processing.
@@ -158,17 +157,6 @@ func (p *ProcessingEmoji) load(ctx context.Context) (*gtsmodel.Emoji, bool, erro
 // and updates the underlying attachment fields as necessary. It will then stream
 // bytes from p's reader directly into storage so that it can be retrieved later.
 func (p *ProcessingEmoji) store(ctx context.Context) error {
-	defer func() {
-		if p.postFn == nil {
-			return
-		}
-
-		// Ensure post callback gets called.
-		if err := p.postFn(ctx); err != nil {
-			log.Errorf(ctx, "error executing postdata function: %v", err)
-		}
-	}()
-
 	// Load media from provided data fn.
 	rc, sz, err := p.dataFn(ctx)
 	if err != nil {

@@ -31,7 +31,7 @@ import (
 type prune struct {
 	dbService db.DB
 	storage   *gtsstorage.Driver
-	manager   media.Manager
+	manager   *media.Manager
 	state     *state.State
 }
 

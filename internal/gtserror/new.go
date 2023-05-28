@@ -18,48 +18,38 @@
 package gtserror
 
 import (
-	"errors"
 	"net/http"
-
-	"codeberg.org/gruf/go-byteutil"
 )
+
+// New returns a new error, prepended with caller function name if gtserror.Caller is enabled.
+func New(msg string) error {
+	return newAt(3, msg)
+}
+
+// Newf returns a new formatted error, prepended with caller function name if gtserror.Caller is enabled.
+func Newf(msgf string, args ...any) error {
+	return newfAt(3, msgf, args...)
+}
 
 // NewResponseError crafts an error from provided HTTP response
 // including the method, status and body (if any provided). This
-// will also wrap the returned error using WithStatusCode().
-func NewResponseError(rsp *http.Response) error {
-	var buf byteutil.Buffer
-
-	// Get URL string ahead of time.
-	urlStr := rsp.Request.URL.String()
-
-	// Alloc guesstimate of required buf size.
-	buf.Guarantee(0 +
-		len(rsp.Request.Method) +
-		12 + //  request to
-		len(urlStr) +
-		17 + //  failed: status="
-		len(rsp.Status) +
-		8 + // " body="
-		256 + // max body size
-		1, // "
-	)
-
-	// Build error message string without
+// will also wrap the returned error using WithStatusCode() and
+// will include the caller function name as a prefix.
+func NewFromResponse(rsp *http.Response) error {
+	// Build error with message without
 	// using "fmt", as chances are this will
 	// be used in a hot code path and we
 	// know all the incoming types involved.
-	_, _ = buf.WriteString(rsp.Request.Method)
-	_, _ = buf.WriteString(" request to ")
-	_, _ = buf.WriteString(urlStr)
-	_, _ = buf.WriteString(" failed: status=\"")
-	_, _ = buf.WriteString(rsp.Status)
-	_, _ = buf.WriteString("\" body=\"")
-	_, _ = buf.WriteString(drainBody(rsp.Body, 256))
-	_, _ = buf.WriteString("\"")
-
-	// Create new error from msg.
-	err := errors.New(buf.String())
+	err := newAt(3, ""+
+		rsp.Request.Method+
+		" request to "+
+		rsp.Request.URL.String()+
+		" failed: status=\""+
+		rsp.Status+
+		"\" body=\""+
+		drainBody(rsp.Body, 256)+
+		"\"",
+	)
 
 	// Wrap error to provide status code.
 	return WithStatusCode(err, rsp.StatusCode)

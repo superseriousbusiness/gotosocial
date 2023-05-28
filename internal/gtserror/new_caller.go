@@ -15,15 +15,54 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package log
+//go:build !noerrcaller
+
+package gtserror
 
 import (
+	"errors"
+	"fmt"
 	"runtime"
 	"strings"
 )
 
-// Caller fetches the calling function name, skipping 'depth'. Results are cached per PC.
-func Caller(depth int) string {
+// Caller returns whether created errors will prepend calling function name.
+const Caller = true
+
+// cerror wraps an error with a string
+// prefix of the caller function name.
+type cerror struct {
+	c string
+	e error
+}
+
+func (ce *cerror) Error() string {
+	msg := ce.e.Error()
+	return ce.c + ": " + msg
+}
+
+func (ce *cerror) Unwrap() error {
+	return ce.e
+}
+
+// newAt is the same as New() but allows specifying calldepth.
+func newAt(calldepth int, msg string) error {
+	return &cerror{
+		c: caller(calldepth + 1),
+		e: errors.New(msg),
+	}
+}
+
+// newfAt is the same as Newf() but allows specifying calldepth.
+func newfAt(calldepth int, msgf string, args ...any) error {
+	return &cerror{
+		c: caller(calldepth + 1),
+		e: fmt.Errorf(msgf, args...),
+	}
+}
+
+// caller fetches the calling function name, skipping 'depth'. Results are cached per PC.
+func caller(depth int) string {
 	var pcs [1]uintptr
 
 	// Fetch calling function using calldepth
@@ -37,8 +76,8 @@ func Caller(depth int) string {
 	// Get func name.
 	name := fn.Name()
 
-	// Drop all but the package name and function name, no mod path
-	if idx := strings.LastIndex(name, "/"); idx >= 0 {
+	// Drop everything but but function name itself
+	if idx := strings.LastIndexByte(name, '.'); idx >= 0 {
 		name = name[idx+1:]
 	}
 

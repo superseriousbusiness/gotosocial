@@ -37,7 +37,14 @@ const (
 	unusedLocalAttachmentDays = 3  // Number of days to keep local media in storage if not attached to a status.
 )
 
-func (m *manager) PruneAll(ctx context.Context, mediaCacheRemoteDays int, blocking bool) error {
+// PruneAll runs all of the below pruning/uncacheing functions, and then cleans up any resulting
+// empty directories from the storage driver. It can be called as a shortcut for calling the below
+// pruning functions one by one.
+//
+// If blocking is true, then any errors encountered during the prune will be combined + returned to
+// the caller. If blocking is false, the prune is run in the background and errors are just logged
+// instead.
+func (m *Manager) PruneAll(ctx context.Context, mediaCacheRemoteDays int, blocking bool) error {
 	const dry = false
 
 	f := func(innerCtx context.Context) error {
@@ -93,7 +100,10 @@ func (m *manager) PruneAll(ctx context.Context, mediaCacheRemoteDays int, blocki
 	return nil
 }
 
-func (m *manager) PruneUnusedRemote(ctx context.Context, dry bool) (int, error) {
+// PruneUnusedRemote prunes unused/out of date headers and avatars cached on this instance.
+//
+// The returned int is the amount of media that was pruned by this function.
+func (m *Manager) PruneUnusedRemote(ctx context.Context, dry bool) (int, error) {
 	var (
 		totalPruned int
 		maxID       string
@@ -152,7 +162,12 @@ func (m *manager) PruneUnusedRemote(ctx context.Context, dry bool) (int, error) 
 	return totalPruned, nil
 }
 
-func (m *manager) PruneOrphaned(ctx context.Context, dry bool) (int, error) {
+// PruneOrphaned prunes files that exist in storage but which do not have a corresponding
+// entry in the database.
+//
+// If dry is true, then nothing will be changed, only the amount that *would* be removed
+// is returned to the caller.
+func (m *Manager) PruneOrphaned(ctx context.Context, dry bool) (int, error) {
 	// Emojis are stored under the instance account, so we
 	// need the ID of the instance account for the next part.
 	instanceAccount, err := m.state.DB.GetInstanceAccount(ctx, "")
@@ -200,7 +215,7 @@ func (m *manager) PruneOrphaned(ctx context.Context, dry bool) (int, error) {
 	return m.removeFiles(ctx, orphanedKeys...)
 }
 
-func (m *manager) orphaned(ctx context.Context, key string, instanceAccountID string) (bool, error) {
+func (m *Manager) orphaned(ctx context.Context, key string, instanceAccountID string) (bool, error) {
 	pathParts := regexes.FilePath.FindStringSubmatch(key)
 	if len(pathParts) != 6 {
 		// This doesn't match our expectations so
@@ -239,7 +254,15 @@ func (m *manager) orphaned(ctx context.Context, key string, instanceAccountID st
 	return orphaned, nil
 }
 
-func (m *manager) UncacheRemote(ctx context.Context, olderThanDays int, dry bool) (int, error) {
+// UncacheRemote uncaches all remote media attachments older than the given amount of days.
+//
+// In this context, uncacheing means deleting media files from storage and marking the attachment
+// as cached=false in the database.
+//
+// If 'dry' is true, then only a dry run will be performed: nothing will actually be changed.
+//
+// The returned int is the amount of media that was/would be uncached by this function.
+func (m *Manager) UncacheRemote(ctx context.Context, olderThanDays int, dry bool) (int, error) {
 	if olderThanDays < 0 {
 		return 0, nil
 	}
@@ -276,7 +299,12 @@ func (m *manager) UncacheRemote(ctx context.Context, olderThanDays int, dry bool
 	return totalPruned, nil
 }
 
-func (m *manager) PruneUnusedLocal(ctx context.Context, dry bool) (int, error) {
+// PruneUnusedLocal prunes unused media attachments that were uploaded by
+// a user on this instance, but never actually attached to a status, or attached but
+// later detached.
+//
+// The returned int is the amount of media that was pruned by this function.
+func (m *Manager) PruneUnusedLocal(ctx context.Context, dry bool) (int, error) {
 	olderThan := time.Now().Add(-time.Hour * 24 * time.Duration(unusedLocalAttachmentDays))
 
 	if dry {
@@ -313,7 +341,7 @@ func (m *manager) PruneUnusedLocal(ctx context.Context, dry bool) (int, error) {
 	Handy little helpers
 */
 
-func (m *manager) deleteAttachment(ctx context.Context, attachment *gtsmodel.MediaAttachment) error {
+func (m *Manager) deleteAttachment(ctx context.Context, attachment *gtsmodel.MediaAttachment) error {
 	if _, err := m.removeFiles(ctx, attachment.File.Path, attachment.Thumbnail.Path); err != nil {
 		return err
 	}
@@ -322,7 +350,7 @@ func (m *manager) deleteAttachment(ctx context.Context, attachment *gtsmodel.Med
 	return m.state.DB.DeleteAttachment(ctx, attachment.ID)
 }
 
-func (m *manager) uncacheAttachment(ctx context.Context, attachment *gtsmodel.MediaAttachment) error {
+func (m *Manager) uncacheAttachment(ctx context.Context, attachment *gtsmodel.MediaAttachment) error {
 	if _, err := m.removeFiles(ctx, attachment.File.Path, attachment.Thumbnail.Path); err != nil {
 		return err
 	}
@@ -332,7 +360,7 @@ func (m *manager) uncacheAttachment(ctx context.Context, attachment *gtsmodel.Me
 	return m.state.DB.UpdateAttachment(ctx, attachment, "cached")
 }
 
-func (m *manager) removeFiles(ctx context.Context, keys ...string) (int, error) {
+func (m *Manager) removeFiles(ctx context.Context, keys ...string) (int, error) {
 	errs := make(gtserror.MultiError, 0, len(keys))
 
 	for _, key := range keys {
