@@ -32,6 +32,12 @@ import (
 
 type DereferenceMedia func(ctx context.Context, iri *url.URL) (io.ReadCloser, int64, error)
 
+// RefetchEmojis iterates through remote emojis (for the given domain, or all if domain is empty string).
+//
+// For each emoji, the manager will check whether both the full size and static images are present in storage.
+// If not, the manager will refetch and reprocess full size and static images for the emoji.
+//
+// The provided DereferenceMedia function will be used when it's necessary to refetch something this way.
 func (m *Manager) RefetchEmojis(ctx context.Context, domain string, dereferenceMedia DereferenceMedia) (int, error) {
 	// normalize domain
 	if domain == "" {

@@ -37,6 +37,13 @@ const (
 	unusedLocalAttachmentDays = 3  // Number of days to keep local media in storage if not attached to a status.
 )
 
+// PruneAll runs all of the below pruning/uncacheing functions, and then cleans up any resulting
+// empty directories from the storage driver. It can be called as a shortcut for calling the below
+// pruning functions one by one.
+//
+// If blocking is true, then any errors encountered during the prune will be combined + returned to
+// the caller. If blocking is false, the prune is run in the background and errors are just logged
+// instead.
 func (m *Manager) PruneAll(ctx context.Context, mediaCacheRemoteDays int, blocking bool) error {
 	const dry = false
 
@@ -93,6 +100,9 @@ func (m *Manager) PruneAll(ctx context.Context, mediaCacheRemoteDays int, blocki
 	return nil
 }
 
+// PruneUnusedRemote prunes unused/out of date headers and avatars cached on this instance.
+//
+// The returned int is the amount of media that was pruned by this function.
 func (m *Manager) PruneUnusedRemote(ctx context.Context, dry bool) (int, error) {
 	var (
 		totalPruned int
@@ -152,6 +162,11 @@ func (m *Manager) PruneUnusedRemote(ctx context.Context, dry bool) (int, error) 
 	return totalPruned, nil
 }
 
+// PruneOrphaned prunes files that exist in storage but which do not have a corresponding
+// entry in the database.
+//
+// If dry is true, then nothing will be changed, only the amount that *would* be removed
+// is returned to the caller.
 func (m *Manager) PruneOrphaned(ctx context.Context, dry bool) (int, error) {
 	// Emojis are stored under the instance account, so we
 	// need the ID of the instance account for the next part.
@@ -239,6 +254,14 @@ func (m *Manager) orphaned(ctx context.Context, key string, instanceAccountID st
 	return orphaned, nil
 }
 
+// UncacheRemote uncaches all remote media attachments older than the given amount of days.
+//
+// In this context, uncacheing means deleting media files from storage and marking the attachment
+// as cached=false in the database.
+//
+// If 'dry' is true, then only a dry run will be performed: nothing will actually be changed.
+//
+// The returned int is the amount of media that was/would be uncached by this function.
 func (m *Manager) UncacheRemote(ctx context.Context, olderThanDays int, dry bool) (int, error) {
 	if olderThanDays < 0 {
 		return 0, nil
@@ -276,6 +299,11 @@ func (m *Manager) UncacheRemote(ctx context.Context, olderThanDays int, dry bool
 	return totalPruned, nil
 }
 
+// PruneUnusedLocal prunes unused media attachments that were uploaded by
+// a user on this instance, but never actually attached to a status, or attached but
+// later detached.
+//
+// The returned int is the amount of media that was pruned by this function.
 func (m *Manager) PruneUnusedLocal(ctx context.Context, dry bool) (int, error) {
 	olderThan := time.Now().Add(-time.Hour * 24 * time.Duration(unusedLocalAttachmentDays))
 

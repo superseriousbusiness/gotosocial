@@ -44,7 +44,7 @@ type ProcessingMedia struct {
 	done    bool                      // done is set when process finishes with non ctx canceled type error
 	proc    runners.Processor         // proc helps synchronize only a singular running processing instance
 	err     error                     // error stores permanent error value when done
-	mgr     *manager                  // mgr instance (access to db / storage)
+	mgr     *Manager                  // mgr instance (access to db / storage)
 }
 
 // AttachmentID returns the ID of the underlying media attachment without blocking processing.
