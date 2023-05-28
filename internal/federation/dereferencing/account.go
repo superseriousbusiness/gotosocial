@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -90,15 +91,23 @@ func (d *deref) getAccountByURI(ctx context.Context, requestUser string, uri *ur
 		err     error
 	)
 
-	// Search the database for existing account with ID URI.
-	account, err = d.state.DB.GetAccountByURI(ctx, uriStr)
+	// Search the database for existing account with URI.
+	account, err = d.state.DB.GetAccountByURI(
+		// request a barebones object, it may be in the
+		// db but with related models not yet dereferenced.
+		gtscontext.SetBarebones(ctx),
+		uriStr,
+	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, nil, gtserror.Newf("error checking database for account %s by uri: %w", uriStr, err)
 	}
 
 	if account == nil {
-		// Else, search the database for existing by ID URL.
-		account, err = d.state.DB.GetAccountByURL(ctx, uriStr)
+		// Else, search the database for existing by URL.
+		account, err = d.state.DB.GetAccountByURL(
+			gtscontext.SetBarebones(ctx),
+			uriStr,
+		)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return nil, nil, gtserror.Newf("error checking database for account %s by url: %w", uriStr, err)
 		}
@@ -120,6 +129,10 @@ func (d *deref) getAccountByURI(ctx context.Context, requestUser string, uri *ur
 
 	// Check whether needs update.
 	if accountUpToDate(account) {
+		// This is existing up-to-date account, ensure it is populated.
+		if err := d.state.DB.PopulateAccount(ctx, account); err != nil {
+			log.Errorf(ctx, "error populating existing account: %v", err)
+		}
 		return account, nil, nil
 	}
 
@@ -153,7 +166,12 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 	}
 
 	// Search the database for existing account with USERNAME@DOMAIN.
-	account, err := d.state.DB.GetAccountByUsernameDomain(ctx, username, domain)
+	account, err := d.state.DB.GetAccountByUsernameDomain(
+		// request a barebones object, it may be in the
+		// db but with related models not yet dereferenced.
+		gtscontext.SetBarebones(ctx),
+		username, domain,
+	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, nil, gtserror.Newf("error checking database for account %s@%s: %w", username, domain, err)
 	}
@@ -194,6 +212,13 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 	if err != nil {
 		// Fallback to existing.
 		return account, nil, nil //nolint
+	}
+
+	if apubAcc == nil {
+		// This is existing up-to-date account, ensure it is populated.
+		if err := d.state.DB.PopulateAccount(ctx, account); err != nil {
+			log.Errorf(ctx, "error populating existing account: %v", err)
+		}
 	}
 
 	return latest, apubAcc, nil
