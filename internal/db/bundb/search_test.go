@@ -29,6 +29,14 @@ type SearchTestSuite struct {
 	BunDBStandardTestSuite
 }
 
+func (suite *SearchTestSuite) TestSearchAccountsTurtleAny() {
+	testAccount := suite.testAccounts["local_account_1"]
+
+	accounts, err := suite.db.SearchForAccounts(context.Background(), testAccount.ID, "turtle", "", "", 10, false, 0)
+	suite.NoError(err)
+	suite.Len(accounts, 1)
+}
+
 func (suite *SearchTestSuite) TestSearchAccountsTurtleFollowing() {
 	testAccount := suite.testAccounts["local_account_1"]
 
@@ -45,15 +53,15 @@ func (suite *SearchTestSuite) TestSearchAccountsPostFollowing() {
 	suite.Len(accounts, 1)
 }
 
-func (suite *SearchTestSuite) TestSearchAccountsPostNotFollowing() {
+func (suite *SearchTestSuite) TestSearchAccountsPostAny() {
 	testAccount := suite.testAccounts["local_account_1"]
 
 	accounts, err := suite.db.SearchForAccounts(context.Background(), testAccount.ID, "post", "", "", 10, false, 0)
-	suite.ErrorIs(err, db.ErrNoEntries)
+	suite.NoError(err, db.ErrNoEntries)
 	suite.Empty(accounts)
 }
 
-func (suite *SearchTestSuite) TestSearchAccountsFossNotFollowing() {
+func (suite *SearchTestSuite) TestSearchAccountsFossAny() {
 	testAccount := suite.testAccounts["local_account_1"]
 
 	accounts, err := suite.db.SearchForAccounts(context.Background(), testAccount.ID, "foss", "", "", 10, false, 0)

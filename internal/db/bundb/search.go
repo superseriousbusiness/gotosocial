@@ -76,6 +76,14 @@ var replacer = strings.NewReplacer(
 	exactlyOne, escExactlyOne,
 )
 
+// Query example (SQLite):
+//
+//	SELECT "account"."id" FROM "accounts" AS "account"
+//	WHERE (COALESCE("account"."domain", '') != "account"."username")
+//	AND ("account"."id" < 'ZZZZZZZZZZZZZZZZZZZZZZZZZZ')
+//	AND ("account"."id" IN (SELECT "target_account_id" FROM "follows" WHERE ("account_id" = '016T5Q3SQKBT337DAKVSKNXXW1')))
+//	AND ((SELECT LOWER("account"."username" || COALESCE("account"."display_name", '') || COALESCE("account"."note", '')) AS "account_text") LIKE '%turtle%' ESCAPE '\')
+//	ORDER BY "account"."id" DESC LIMIT 10
 func (s *searchDB) SearchForAccounts(
 	ctx context.Context,
 	accountID string,
@@ -100,10 +108,15 @@ func (s *searchDB) SearchForAccounts(
 	q := s.conn.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
-		// Select only IDs from table
+		// Select only IDs from table.
 		Column("account.id").
-		// Try to ignore instance accounts.
-		Where("? != ?", bun.Ident("account.domain"), bun.Ident("account.username"))
+		// Try to ignore instance accounts (domain is null
+		// for local accounts so coalesce to empty string).
+		Where(
+			"COALESCE(?, ?) != ?",
+			bun.Ident("account.domain"), "",
+			bun.Ident("account.username"),
+		)
 
 	// Return only items with a LOWER id than maxID.
 	if maxID == "" {
@@ -308,17 +321,6 @@ func normalizeQuery(query string) string {
 	return query
 }
 
-func getPlaceHolders(count int, sep string) string {
-	// Fill a slice with placeholder chars.
-	placeHolders := make([]string, count)
-	for i := 0; i < count; i++ {
-		placeHolders[i] = "?"
-	}
-
-	// Join them with provided separator.
-	return strings.Join(placeHolders, sep)
-}
-
 func (s *searchDB) followedAccountIDs(accountID string) *bun.SelectQuery {
 	return s.conn.
 		NewSelect().
@@ -332,7 +334,6 @@ func (s *searchDB) accountText(following bool) *bun.SelectQuery {
 		accountText = s.conn.NewSelect()
 		query       string
 		args        []interface{}
-		sb          strings.Builder
 	)
 
 	if following {
@@ -340,8 +341,8 @@ func (s *searchDB) accountText(following bool) *bun.SelectQuery {
 		// include note in text search params.
 		args = []interface{}{
 			bun.Ident("account.username"),
-			bun.Ident("account.display_name"),
-			bun.Ident("account.note"),
+			bun.Ident("account.display_name"), "",
+			bun.Ident("account.note"), "",
 			bun.Ident("account_text"),
 		}
 	} else {
@@ -349,39 +350,36 @@ func (s *searchDB) accountText(following bool) *bun.SelectQuery {
 		// don't include note in text search params.
 		args = []interface{}{
 			bun.Ident("account.username"),
-			bun.Ident("account.display_name"),
+			bun.Ident("account.display_name"), "",
 			bun.Ident("account_text"),
 		}
 	}
 
-	// SQLite and Postgres use different
-	// syntaxes for concatenation.
-	switch s.conn.Dialect().Name() {
+	// SQLite and Postgres use different syntaxes for
+	// concatenation, and we also need to use a
+	// different number of placeholders depending on
+	// following/not following. COALESCE calls ensure
+	// that we're not trying to concatenate null values.
+	d := s.conn.Dialect().Name()
+	switch {
 
-	case dialect.SQLite:
-		// Produce something like:
-		// "LOWER(? || ? || ?) AS ?"
-		placeHolders := getPlaceHolders(len(args)-1, " || ")
-		_, _ = sb.WriteString("LOWER(")
-		_, _ = sb.WriteString(placeHolders)
-		_, _ = sb.WriteString(") AS ?")
-		query = sb.String()
+	case d == dialect.SQLite && following:
+		query = "LOWER(? || COALESCE(?, ?) || COALESCE(?, ?)) AS ?"
 
-	case dialect.PG:
-		// Produce something like:
-		// "LOWER(CONCAT(?, ?, ?)) AS ?"
-		placeHolders := getPlaceHolders(len(args)-1, ", ")
-		_, _ = sb.WriteString("LOWER(CONCAT(")
-		_, _ = sb.WriteString(placeHolders)
-		_, _ = sb.WriteString(")) AS ?")
-		query = sb.String()
+	case d == dialect.SQLite && !following:
+		query = "LOWER(? || COALESCE(?, ?)) AS ?"
+
+	case d == dialect.PG && following:
+		query = "LOWER(CONCAT(?, COALESCE(?, ?), COALESCE(?, ?))) AS ?"
+
+	case d == dialect.PG && !following:
+		query = "LOWER(CONCAT(?, COALESCE(?, ?))) AS ?"
 
 	default:
 		panic("db conn was neither pg not sqlite")
 	}
 
-	accountText = accountText.ColumnExpr(query, args...)
-	return accountText
+	return accountText.ColumnExpr(query, args...)
 }
 
 func (s *searchDB) statusText() *bun.SelectQuery {
