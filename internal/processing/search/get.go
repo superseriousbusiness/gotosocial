@@ -67,8 +67,9 @@ func (p *Processor) Get(
 		maxID     = search.MaxID
 		minID     = search.MinID
 		limit     = search.Limit
-		queryType = strings.TrimSpace(search.Type)
-		query     = strings.TrimSpace(search.Query)
+		offset    = search.Offset
+		query     = strings.TrimSpace(search.Query)                 // Trim trailing/leading whitespace.
+		queryType = strings.TrimSpace(strings.ToLower(search.Type)) // Trim trailing/leading whitespace; convert to lowercase.
 		resolve   = search.Resolve
 		following = search.Following
 	)
@@ -98,8 +99,10 @@ func (p *Processor) Get(
 		}...).
 		Debugf("beginning search with query %s", query)
 
-	// Currently the search will only ever return one page of
-	// results; return empty if the offset is greater than 0.
+	// todo: Currently we don't support offset for paging;
+	// a caller can page using maxID or minID, but if they
+	// supply an offset greater than 0, return nothing as
+	// though there were no additional results.
 	if search.Offset > 0 {
 		return &apimodel.SearchResult{
 			Accounts: make([]*apimodel.Account, 0),
@@ -134,8 +137,17 @@ func (p *Processor) Get(
 		)
 	}
 
-	// Check if the query is a URI with a recognizable scheme and use it to look for accounts or statuses.
-	keepLooking, err = p.searchByURI(ctx, account, query, queryType, resolve, appendAccount, appendStatus)
+	// Check if the query is a URI with a recognizable
+	// scheme and use it to look for accounts or statuses.
+	keepLooking, err = p.searchByURI(
+		ctx,
+		account,
+		query,
+		queryType,
+		resolve,
+		appendAccount,
+		appendStatus,
+	)
 	if err != nil {
 		err = fmt.Errorf("error searching by URI: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -159,6 +171,7 @@ func (p *Processor) Get(
 		maxID,
 		minID,
 		limit,
+		offset,
 		query,
 		queryType,
 		following,
@@ -527,6 +540,7 @@ func (p *Processor) searchByText(
 	maxID string,
 	minID string,
 	limit int,
+	offset int,
 	query string,
 	queryType string,
 	following bool,
@@ -538,7 +552,7 @@ func (p *Processor) searchByText(
 		accounts, err := p.state.DB.SearchForAccounts(
 			ctx,
 			requestingAccount.ID,
-			query, maxID, minID, limit, following, 0)
+			query, maxID, minID, limit, following, offset)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			err = fmt.Errorf("error checking database for accounts using text %s: %w", query, err)
 			return false, err
@@ -554,7 +568,7 @@ func (p *Processor) searchByText(
 		statuses, err := p.state.DB.SearchForStatuses(
 			ctx,
 			requestingAccount.ID,
-			query, maxID, minID, limit, 0)
+			query, maxID, minID, limit, offset)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			err = fmt.Errorf("error checking database for statuses using text %s: %w", query, err)
 			return false, err

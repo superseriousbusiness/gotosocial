@@ -13,6 +13,33 @@ import (
 	"github.com/uptrace/bun/dialect"
 )
 
+// todo: currently we pass an 'offset' parameter into functions owned by this struct,
+// which is ignored.
+//
+// The idea of 'offset' is to allow callers to page through results without supplying
+// maxID or minID params; they simply use the offset as more or less a 'page number'.
+// This works fine when you're dealing with something like Elasticsearch, but for
+// SQLite or Postgres 'LIKE' queries it doesn't really, because for each higher offset
+// you have to calculate the value of all the previous offsets as well *within the
+// execution time of the query*. It's MUCH more efficient to page using maxID and
+// minID for queries like this. For now, then, we just ignore the offset and hope that
+// the caller will page using maxID and minID instead.
+//
+// In future, however, it would be good to support offset in a way that doesn't totally
+// destroy database queries. One option would be to cache previous offsets when paging
+// down (which is the most common use case).
+//
+// For example, say a caller makes a call with offset 0: we run the query as normal,
+// and in a 10 minute cache or something, store the next maxID value as it would be for
+// offset 1, for the supplied query, limit, following, etc. Then when they call for
+// offset 1, instead of supplying 'offset' in the query and causing slowdown, we check
+// the cache to see if we have the next maxID value stored for that query, and use that
+// instead. If a caller out of the blue requests offset 4 or something, on an empty cache,
+// we could run the previous 4 queries and store the offsets for those before making the
+// 5th call for page 4.
+//
+// This isn't ideal, of course, but at least we could cover the most common use case of
+// a caller paging down through results.
 type searchDB struct {
 	conn  *DBConn
 	state *state.State
