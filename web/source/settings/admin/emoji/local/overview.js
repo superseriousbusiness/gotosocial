@@ -64,7 +64,7 @@ module.exports = function EmojiOverview({ }) {
 			<p>
 				To use custom emoji in your toots they have to be 'local' to the instance.
 				You can either upload them here directly, or copy from those already
-				present on other (known) instances through the <Link to={`../remote`}>Remote Emoji</Link> page.
+				present on other (known) instances through the <Link to={`./remote`}>Remote Emoji</Link> page.
 			</p>
 			{content}
 		</>
