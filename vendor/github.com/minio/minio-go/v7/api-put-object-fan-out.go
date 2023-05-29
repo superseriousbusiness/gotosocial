@@ -27,11 +27,12 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/minio/minio-go/v7/pkg/encrypt"
 )
 
-// PutObjectFanOutRequest this is the request structure sent
-// to the server to fan-out the stream to multiple objects.
-type PutObjectFanOutRequest struct {
+// PutObjectFanOutEntry is per object entry fan-out metadata
+type PutObjectFanOutEntry struct {
 	Key                string            `json:"key"`
 	UserMetadata       map[string]string `json:"metadata,omitempty"`
 	UserTags           map[string]string `json:"tags,omitempty"`
@@ -44,9 +45,17 @@ type PutObjectFanOutRequest struct {
 	RetainUntilDate    *time.Time        `json:"retainUntil,omitempty"`
 }
 
+// PutObjectFanOutRequest this is the request structure sent
+// to the server to fan-out the stream to multiple objects.
+type PutObjectFanOutRequest struct {
+	Entries  []PutObjectFanOutEntry
+	Checksum Checksum
+	SSE      encrypt.ServerSide
+}
+
 // PutObjectFanOutResponse this is the response structure sent
 // by the server upon success or failure for each object
-// fan-out keys. Additionally this response carries ETag,
+// fan-out keys. Additionally, this response carries ETag,
 // VersionID and LastModified for each object fan-out.
 type PutObjectFanOutResponse struct {
 	Key          string     `json:"key"`
@@ -60,8 +69,8 @@ type PutObjectFanOutResponse struct {
 // stream multiple objects are written, defined via a list of PutObjectFanOutRequests. Each entry
 // in PutObjectFanOutRequest carries an object keyname and its relevant metadata if any. `Key` is
 // mandatory, rest of the other options in PutObjectFanOutRequest are optional.
-func (c *Client) PutObjectFanOut(ctx context.Context, bucket string, body io.Reader, fanOutReq ...PutObjectFanOutRequest) ([]PutObjectFanOutResponse, error) {
-	if len(fanOutReq) == 0 {
+func (c *Client) PutObjectFanOut(ctx context.Context, bucket string, fanOutData io.Reader, fanOutReq PutObjectFanOutRequest) ([]PutObjectFanOutResponse, error) {
+	if len(fanOutReq.Entries) == 0 {
 		return nil, errInvalidArgument("fan out requests cannot be empty")
 	}
 
@@ -71,6 +80,12 @@ func (c *Client) PutObjectFanOut(ctx context.Context, bucket string, body io.Rea
 
 	// Expires in 15 minutes.
 	policy.SetExpires(time.Now().UTC().Add(15 * time.Minute))
+
+	// Set encryption headers if any.
+	policy.SetEncryption(fanOutReq.SSE)
+
+	// Set checksum headers if any.
+	policy.SetChecksum(fanOutReq.Checksum)
 
 	url, formData, err := c.PresignedPostPolicy(ctx, policy)
 	if err != nil {
@@ -87,7 +102,7 @@ func (c *Client) PutObjectFanOut(ctx context.Context, bucket string, body io.Rea
 
 	var b strings.Builder
 	enc := json.NewEncoder(&b)
-	for _, req := range fanOutReq {
+	for _, req := range fanOutReq.Entries {
 		if req.Key == "" {
 			w.Close()
 			return nil, errors.New("PutObjectFanOutRequest.Key is mandatory and cannot be empty")
@@ -120,7 +135,7 @@ func (c *Client) PutObjectFanOut(ctx context.Context, bucket string, body io.Rea
 			return
 		}
 
-		if _, err = io.Copy(mw, body); err != nil {
+		if _, err = io.Copy(mw, fanOutData); err != nil {
 			return
 		}
 	}()
@@ -136,7 +151,7 @@ func (c *Client) PutObjectFanOut(ctx context.Context, bucket string, body io.Rea
 	}
 
 	dec := json.NewDecoder(resp.Body)
-	fanOutResp := make([]PutObjectFanOutResponse, 0, len(fanOutReq))
+	fanOutResp := make([]PutObjectFanOutResponse, 0, len(fanOutReq.Entries))
 	for dec.More() {
 		var m PutObjectFanOutResponse
 		if err = dec.Decode(&m); err != nil {
