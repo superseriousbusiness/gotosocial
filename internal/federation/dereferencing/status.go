@@ -116,6 +116,15 @@ func (d *deref) getStatusByURI(ctx context.Context, requestUser string, uri *url
 		}, nil)
 	}
 
+	// Check whether needs update.
+	if statusUpToDate(status) {
+		// This is existing up-to-date status, ensure it is populated.
+		if err := d.state.DB.PopulateStatus(ctx, status); err != nil {
+			log.Errorf(ctx, "error populating existing status: %v", err)
+		}
+		return status, nil, nil
+	}
+
 	// Try to update + deref existing status model.
 	latest, apubStatus, err := d.enrichStatus(ctx,
 		requestUser,
