@@ -712,13 +712,12 @@ github.com/twitchyliquid64/golang-asm/unsafeheader
 # github.com/ugorji/go/codec v1.2.9
 ## explicit; go 1.11
 github.com/ugorji/go/codec
-# github.com/ulule/limiter/v3 v3.11.1
+# github.com/ulule/limiter/v3 v3.11.2
 ## explicit; go 1.17
 github.com/ulule/limiter/v3
 github.com/ulule/limiter/v3/drivers/middleware/gin
 github.com/ulule/limiter/v3/drivers/store/common
 github.com/ulule/limiter/v3/drivers/store/memory
-github.com/ulule/limiter/v3/internal/bytebuffer
 # github.com/uptrace/bun v1.1.13
 ## explicit; go 1.18
 github.com/uptrace/bun
