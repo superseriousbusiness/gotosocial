@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 func TestResponseError(t *testing.T) {
@@ -53,13 +54,19 @@ func testResponseError(t *testing.T, rsp http.Response) {
 		body = string(b[:trunc])
 	}
 	expect := fmt.Sprintf(
-		"%s request to %s failed: status=\"%s\" body=\"%s\"",
+		"%s%s request to %s failed: status=\"%s\" body=\"%s\"",
+		func() string {
+			if gtserror.Caller {
+				return strings.Split(log.Caller(3), ".")[1] + ": "
+			}
+			return ""
+		}(),
 		rsp.Request.Method,
 		rsp.Request.URL.String(),
 		rsp.Status,
 		body,
 	)
-	err := gtserror.NewResponseError(&rsp)
+	err := gtserror.NewFromResponse(&rsp)
 	if str := err.Error(); str != expect {
 		t.Errorf("unexpected error string: recv=%q expct=%q", str, expect)
 	}

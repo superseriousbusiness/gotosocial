@@ -45,7 +45,7 @@ func (d *deref) GetRemoteMedia(ctx context.Context, requestingUsername string, a
 		return t.DereferenceMedia(innerCtx, derefURI)
 	}
 
-	processingMedia, err := d.mediaManager.ProcessMedia(ctx, dataFunc, nil, accountID, ai)
+	processingMedia, err := d.mediaManager.ProcessMedia(ctx, dataFunc, accountID, ai)
 	if err != nil {
 		return nil, fmt.Errorf("GetRemoteMedia: error processing attachment: %s", err)
 	}

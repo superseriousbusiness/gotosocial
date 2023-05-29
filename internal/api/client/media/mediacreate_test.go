@@ -53,7 +53,7 @@ type MediaCreateTestSuite struct {
 	suite.Suite
 	db           db.DB
 	storage      *storage.Driver
-	mediaManager media.Manager
+	mediaManager *media.Manager
 	federator    federation.Federator
 	tc           typeutils.TypeConverter
 	oauthServer  oauth.Server

@@ -36,7 +36,7 @@ type ReportsStandardTestSuite struct {
 	suite.Suite
 	db           db.DB
 	storage      *storage.Driver
-	mediaManager media.Manager
+	mediaManager *media.Manager
 	federator    federation.Federator
 	processor    *processing.Processor
 	emailSender  email.Sender

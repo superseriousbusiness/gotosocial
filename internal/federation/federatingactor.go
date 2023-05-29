@@ -20,6 +20,7 @@ package federation
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -31,21 +32,56 @@ import (
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-// Potential incoming Content-Type header values; be
-// lenient with whitespace and quotation mark placement.
-var activityStreamsMediaTypes = []string{
-	"application/activity+json",
-	"application/ld+json;profile=https://www.w3.org/ns/activitystreams",
-	"application/ld+json;profile=\"https://www.w3.org/ns/activitystreams\"",
-	"application/ld+json ;profile=https://www.w3.org/ns/activitystreams",
-	"application/ld+json ;profile=\"https://www.w3.org/ns/activitystreams\"",
-	"application/ld+json ; profile=https://www.w3.org/ns/activitystreams",
-	"application/ld+json ; profile=\"https://www.w3.org/ns/activitystreams\"",
-	"application/ld+json; profile=https://www.w3.org/ns/activitystreams",
-	"application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"",
+// IsASMediaType will return whether the given content-type string
+// matches one of the 2 possible ActivityStreams incoming content types:
+// - application/activity+json
+// - application/ld+json;profile=https://w3.org/ns/activitystreams
+//
+// Where for the above we are leniant with whitespace and quotes.
+func IsASMediaType(ct string) bool {
+	var (
+		// First content-type part,
+		// contains the application/...
+		p1 string = ct //nolint:revive
+
+		// Second content-type part,
+		// contains AS IRI if provided
+		p2 string
+	)
+
+	// Split content-type by semi-colon.
+	sep := strings.IndexByte(ct, ';')
+	if sep >= 0 {
+		p1 = ct[:sep]
+		p2 = ct[sep+1:]
+	}
+
+	// Trim any ending space from the
+	// main content-type part of string.
+	p1 = strings.TrimRight(p1, " ")
+
+	switch p1 {
+	case "application/activity+json":
+		return p2 == ""
+
+	case "application/ld+json":
+		// Trim all start/end space.
+		p2 = strings.Trim(p2, " ")
+
+		// Drop any quotes around the URI str.
+		p2 = strings.ReplaceAll(p2, "\"", "")
+
+		// End part must be a ref to the main AS namespace IRI.
+		return p2 == "profile=https://www.w3.org/ns/activitystreams"
+
+	default:
+		return false
+	}
 }
 
 // federatingActor wraps the pub.FederatingActor interface
@@ -67,99 +103,165 @@ func newFederatingActor(c pub.CommonBehavior, s2s pub.FederatingProtocol, db pub
 	}
 }
 
-func (f *federatingActor) Send(c context.Context, outbox *url.URL, t vocab.Type) (pub.Activity, error) {
-	log.Infof(c, "send activity %s via outbox %s", t.GetTypeName(), outbox)
-	return f.wrapped.Send(c, outbox, t)
-}
-
-func (f *federatingActor) PostInbox(c context.Context, w http.ResponseWriter, r *http.Request) (bool, error) {
-	return f.PostInboxScheme(c, w, r, "https")
-}
-
 // PostInboxScheme is a reimplementation of the default baseActor
 // implementation of PostInboxScheme in pub/base_actor.go.
 //
 // Key differences from that implementation:
 //   - More explicit debug logging when a request is not processed.
 //   - Normalize content of activity object.
+//   - *ALWAYS* return gtserror.WithCode if there's an issue, to
+//     provide more helpful messages to remote callers.
 //   - Return code 202 instead of 200 on successful POST, to reflect
 //     that we process most side effects asynchronously.
 func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWriter, r *http.Request, scheme string) (bool, error) {
-	l := log.
-		WithContext(ctx).
+	l := log.WithContext(ctx).
 		WithFields([]kv.Field{
 			{"userAgent", r.UserAgent()},
 			{"path", r.URL.Path},
 		}...)
 
-	// Do nothing if this is not an ActivityPub POST request.
-	if !func() bool {
-		if r.Method != http.MethodPost {
-			l.Debugf("inbox request was %s rather than required POST", r.Method)
-			return false
-		}
-
-		contentType := r.Header.Get("Content-Type")
-		for _, mediaType := range activityStreamsMediaTypes {
-			if strings.Contains(contentType, mediaType) {
-				return true
-			}
-		}
-
-		l.Debugf("inbox POST request content-type %s was not recognized", contentType)
-		return false
-	}() {
-		return false, nil
+	// Ensure valid ActivityPub Content-Type.
+	// https://www.w3.org/TR/activitypub/#server-to-server-interactions
+	if ct := r.Header.Get("Content-Type"); !IsASMediaType(ct) {
+		const ct1 = "application/activity+json"
+		const ct2 = "application/ld+json;profile=https://w3.org/ns/activitystreams"
+		err := fmt.Errorf("Content-Type %s not acceptable, this endpoint accepts: [%q %q]", ct, ct1, ct2)
+		return false, gtserror.NewErrorNotAcceptable(err)
 	}
 
-	// Check the peer request is authentic.
+	// Authenticate request by checking http signature.
 	ctx, authenticated, err := f.sideEffectActor.AuthenticatePostInbox(ctx, w, r)
 	if err != nil {
-		return true, err
+		return false, gtserror.NewErrorInternalError(err)
 	} else if !authenticated {
-		return true, nil
+		return false, gtserror.NewErrorUnauthorized(errors.New("unauthorized"))
 	}
 
-	// Begin processing the request, but note that we have
-	// not yet applied authorization (ex: blocks).
+	/*
+		Begin processing the request, but note that we
+		have not yet applied authorization (ie., blocks).
+	*/
+
+	// Obtain the activity; reject unknown activities.
+	activity, errWithCode := resolveActivity(ctx, r)
+	if errWithCode != nil {
+		return false, errWithCode
+	}
+
+	// Set additional context data.
+	ctx, err = f.sideEffectActor.PostInboxRequestBodyHook(ctx, r, activity)
+	if err != nil {
+		return false, gtserror.NewErrorInternalError(err)
+	}
+
+	// Check authorization of the activity.
+	authorized, err := f.sideEffectActor.AuthorizePostInbox(ctx, w, activity)
+	if err != nil {
+		return false, gtserror.NewErrorInternalError(err)
+	}
+
+	if !authorized {
+		return false, gtserror.NewErrorForbidden(errors.New("blocked"))
+	}
+
+	// Copy existing URL + add request host and scheme.
+	inboxID := func() *url.URL {
+		u := new(url.URL)
+		*u = *r.URL
+		u.Host = r.Host
+		u.Scheme = scheme
+		return u
+	}()
+
+	// At this point we have everything we need, and have verified that
+	// the POST request is authentic (properly signed) and authorized
+	// (permitted to interact with the target inbox).
 	//
-	// Obtain the activity and reject unknown activities.
+	// Post the activity to the Actor's inbox and trigger side effects .
+	if err := f.sideEffectActor.PostInbox(ctx, inboxID, activity); err != nil {
+		// Special case: We know it is a bad request if the object or
+		// target properties needed to be populated, but weren't.
+		// Send the rejection to the peer.
+		if errors.Is(err, pub.ErrObjectRequired) || errors.Is(err, pub.ErrTargetRequired) {
+			// Log the original error but return something a bit more generic.
+			l.Debugf("malformed incoming Activity: %q", err)
+			err = errors.New("malformed incoming Activity: an Object and/or Target was required but not set")
+			return false, gtserror.NewErrorBadRequest(err, err.Error())
+		}
+
+		// There's been some real error.
+		err = fmt.Errorf("PostInboxScheme: error calling sideEffectActor.PostInbox: %w", err)
+		return false, gtserror.NewErrorInternalError(err)
+	}
+
+	// Side effects are complete. Now delegate determining whether
+	// to do inbox forwarding, as well as the action to do it.
+	if err := f.sideEffectActor.InboxForwarding(ctx, inboxID, activity); err != nil {
+		// As a not-ideal side-effect, InboxForwarding will try
+		// to create entries if the federatingDB returns `false`
+		// when calling `Exists()` to determine whether the Activity
+		// is in the database.
+		//
+		// Since our `Exists()` function currently *always*
+		// returns false, it will *always* attempt to insert
+		// the Activity. Therefore, we ignore AlreadyExists
+		// errors.
+		//
+		// This check may be removed when the `Exists()` func
+		// is updated, and/or federating callbacks are handled
+		// properly.
+		if !errors.Is(err, db.ErrAlreadyExists) {
+			err = fmt.Errorf("PostInboxScheme: error calling sideEffectActor.InboxForwarding: %w", err)
+			return false, gtserror.NewErrorInternalError(err)
+		}
+	}
+
+	// Request is now undergoing processing. Caller
+	// of this function will handle writing Accepted.
+	return true, nil
+}
+
+// resolveActivity is a util function for pulling a
+// pub.Activity type out of an incoming POST request.
+func resolveActivity(ctx context.Context, r *http.Request) (pub.Activity, gtserror.WithCode) {
+	// Tidy up when done.
+	defer r.Body.Close()
+
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
-		err = fmt.Errorf("PostInboxScheme: error reading request body: %w", err)
-		return true, err
+		err = fmt.Errorf("error reading request body: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	var rawActivity map[string]interface{}
 	if err := json.Unmarshal(b, &rawActivity); err != nil {
-		err = fmt.Errorf("PostInboxScheme: error unmarshalling request body: %w", err)
-		return true, err
+		err = fmt.Errorf("error unmarshalling request body: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	t, err := streams.ToType(ctx, rawActivity)
 	if err != nil {
 		if !streams.IsUnmatchedErr(err) {
 			// Real error.
-			err = fmt.Errorf("PostInboxScheme: error matching json to type: %w", err)
-			return true, err
+			err = fmt.Errorf("error matching json to type: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
 		}
+
 		// Respond with bad request; we just couldn't
 		// match the type to one that we know about.
-		l.Debug("json could not be resolved to ActivityStreams value")
-		w.WriteHeader(http.StatusBadRequest)
-		return true, nil
+		err = errors.New("body json could not be resolved to ActivityStreams value")
+		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
 	activity, ok := t.(pub.Activity)
 	if !ok {
 		err = fmt.Errorf("ActivityStreams value with type %T is not a pub.Activity", t)
-		return true, err
+		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
 	if activity.GetJSONLDId() == nil {
-		l.Debugf("incoming Activity %s did not have required id property set", activity.GetTypeName())
-		w.WriteHeader(http.StatusBadRequest)
-		return true, nil
+		err = fmt.Errorf("incoming Activity %s did not have required id property set", activity.GetTypeName())
+		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
 	// If activity Object is a Statusable, we'll want to replace the
@@ -168,56 +270,21 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 	// Likewise, if it's an Accountable, we'll normalize some fields on it.
 	ap.NormalizeIncomingActivityObject(activity, rawActivity)
 
-	// Allow server implementations to set context data with a hook.
-	ctx, err = f.sideEffectActor.PostInboxRequestBodyHook(ctx, r, activity)
-	if err != nil {
-		return true, err
-	}
+	return activity, nil
+}
 
-	// Check authorization of the activity.
-	authorized, err := f.sideEffectActor.AuthorizePostInbox(ctx, w, activity)
-	if err != nil {
-		return true, err
-	} else if !authorized {
-		return true, nil
-	}
+/*
+	Functions below are just lightly wrapped versions
+	of the original go-fed federatingActor functions.
+*/
 
-	// Copy existing URL + add request host and scheme.
-	inboxID := func() *url.URL {
-		id := &url.URL{}
-		*id = *r.URL
-		id.Host = r.Host
-		id.Scheme = scheme
-		return id
-	}()
+func (f *federatingActor) PostInbox(c context.Context, w http.ResponseWriter, r *http.Request) (bool, error) {
+	return f.PostInboxScheme(c, w, r, "https")
+}
 
-	// Post the activity to the actor's inbox and trigger side effects for
-	// that particular Activity type. It is up to the delegate to resolve
-	// the given map.
-	if err := f.sideEffectActor.PostInbox(ctx, inboxID, activity); err != nil {
-		// Special case: We know it is a bad request if the object or
-		// target properties needed to be populated, but weren't.
-		//
-		// Send the rejection to the peer.
-		if err == pub.ErrObjectRequired || err == pub.ErrTargetRequired {
-			l.Debugf("malformed incoming Activity: %s", err)
-			w.WriteHeader(http.StatusBadRequest)
-			return true, nil
-		}
-		err = fmt.Errorf("PostInboxScheme: error calling sideEffectActor.PostInbox: %w", err)
-		return true, err
-	}
-
-	// Our side effects are complete, now delegate determining whether to do inbox forwarding, as well as the action to do it.
-	if err := f.sideEffectActor.InboxForwarding(ctx, inboxID, activity); err != nil {
-		err = fmt.Errorf("PostInboxScheme: error calling sideEffectActor.InboxForwarding: %w", err)
-		return true, err
-	}
-
-	// Request is now undergoing processing.
-	// Respond with an Accepted status.
-	w.WriteHeader(http.StatusAccepted)
-	return true, nil
+func (f *federatingActor) Send(c context.Context, outbox *url.URL, t vocab.Type) (pub.Activity, error) {
+	log.Infof(c, "send activity %s via outbox %s", t.GetTypeName(), outbox)
+	return f.wrapped.Send(c, outbox, t)
 }
 
 func (f *federatingActor) GetInbox(c context.Context, w http.ResponseWriter, r *http.Request) (bool, error) {

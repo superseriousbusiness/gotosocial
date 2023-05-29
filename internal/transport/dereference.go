@@ -65,7 +65,7 @@ func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, erro
 	defer rsp.Body.Close()
 
 	if rsp.StatusCode != http.StatusOK {
-		return nil, gtserror.NewResponseError(rsp)
+		return nil, gtserror.NewFromResponse(rsp)
 	}
 
 	return io.ReadAll(rsp.Body)

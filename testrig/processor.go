@@ -26,7 +26,7 @@ import (
 )
 
 // NewTestProcessor returns a Processor suitable for testing purposes
-func NewTestProcessor(state *state.State, federator federation.Federator, emailSender email.Sender, mediaManager media.Manager) *processing.Processor {
+func NewTestProcessor(state *state.State, federator federation.Federator, emailSender email.Sender, mediaManager *media.Manager) *processing.Processor {
 	p := processing.NewProcessor(NewTestTypeConverter(state.DB), federator, NewTestOauthServer(state.DB), mediaManager, state, emailSender)
 	state.Workers.EnqueueClientAPI = p.EnqueueClientAPI
 	state.Workers.EnqueueFederator = p.EnqueueFederator

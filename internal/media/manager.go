@@ -21,8 +21,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"time"
 
+	"codeberg.org/gruf/go-iotools"
 	"codeberg.org/gruf/go-runners"
 	"codeberg.org/gruf/go-sched"
 	"codeberg.org/gruf/go-store/v2/storage"
@@ -47,112 +49,7 @@ var SupportedEmojiMIMETypes = []string{
 	mimeImagePng,
 }
 
-// Manager provides an interface for managing media: parsing, storing, and retrieving media objects like photos, videos, and gifs.
-type Manager interface {
-	/*
-		PROCESSING FUNCTIONS
-	*/
-
-	// PreProcessMedia begins the process of decoding and storing the given data as an attachment.
-	// It will return a pointer to a ProcessingMedia struct upon which further actions can be performed, such as getting
-	// the finished media, thumbnail, attachment, etc.
-	//
-	// data should be a function that the media manager can call to return a reader containing the media data.
-	//
-	// postData will be called after data has been called; it can be used to clean up any remaining resources.
-	// The provided function can be nil, in which case it will not be executed.
-	//
-	// accountID should be the account that the media belongs to.
-	//
-	// ai is optional and can be nil. Any additional information about the attachment provided will be put in the database.
-	//
-	// Note: unlike ProcessMedia, this will NOT queue the media to be asynchronously processed.
-	PreProcessMedia(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error)
-
-	// PreProcessMediaRecache refetches, reprocesses, and recaches an existing attachment that has been uncached via pruneRemote.
-	//
-	// Note: unlike ProcessMedia, this will NOT queue the media to be asychronously processed.
-	PreProcessMediaRecache(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, attachmentID string) (*ProcessingMedia, error)
-
-	// ProcessMedia will call PreProcessMedia, followed by queuing the media to be processing in the media worker queue.
-	ProcessMedia(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error)
-
-	// PreProcessEmoji begins the process of decoding and storing the given data as an emoji.
-	// It will return a pointer to a ProcessingEmoji struct upon which further actions can be performed, such as getting
-	// the finished media, thumbnail, attachment, etc.
-	//
-	// data should be a function that the media manager can call to return a reader containing the emoji data.
-	//
-	// postData will be called after data has been called; it can be used to clean up any remaining resources.
-	// The provided function can be nil, in which case it will not be executed.
-	//
-	// shortcode should be the emoji shortcode without the ':'s around it.
-	//
-	// id is the database ID that should be used to store the emoji.
-	//
-	// uri is the ActivityPub URI/ID of the emoji.
-	//
-	// ai is optional and can be nil. Any additional information about the emoji provided will be put in the database.
-	//
-	// Note: unlike ProcessEmoji, this will NOT queue the emoji to be asynchronously processed.
-	PreProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error)
-
-	// ProcessEmoji will call PreProcessEmoji, followed by queuing the emoji to be processing in the emoji worker queue.
-	ProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error)
-
-	/*
-		PRUNING/UNCACHING FUNCTIONS
-	*/
-
-	// PruneAll runs all of the below pruning/uncacheing functions, and then cleans up any resulting
-	// empty directories from the storage driver. It can be called as a shortcut for calling the below
-	// pruning functions one by one.
-	//
-	// If blocking is true, then any errors encountered during the prune will be combined + returned to
-	// the caller. If blocking is false, the prune is run in the background and errors are just logged
-	// instead.
-	PruneAll(ctx context.Context, mediaCacheRemoteDays int, blocking bool) error
-	// UncacheRemote uncaches all remote media attachments older than the given amount of days.
-	//
-	// In this context, uncacheing means deleting media files from storage and marking the attachment
-	// as cached=false in the database.
-	//
-	// If 'dry' is true, then only a dry run will be performed: nothing will actually be changed.
-	//
-	// The returned int is the amount of media that was/would be uncached by this function.
-	UncacheRemote(ctx context.Context, olderThanDays int, dry bool) (int, error)
-	// PruneUnusedRemote prunes unused/out of date headers and avatars cached on this instance.
-	//
-	// The returned int is the amount of media that was pruned by this function.
-	PruneUnusedRemote(ctx context.Context, dry bool) (int, error)
-	// PruneUnusedLocal prunes unused media attachments that were uploaded by
-	// a user on this instance, but never actually attached to a status, or attached but
-	// later detached.
-	//
-	// The returned int is the amount of media that was pruned by this function.
-	PruneUnusedLocal(ctx context.Context, dry bool) (int, error)
-	// PruneOrphaned prunes files that exist in storage but which do not have a corresponding
-	// entry in the database.
-	//
-	// If dry is true, then nothing will be changed, only the amount that *would* be removed
-	// is returned to the caller.
-	PruneOrphaned(ctx context.Context, dry bool) (int, error)
-
-	/*
-		REFETCHING FUNCTIONS
-		Useful when data loss has occurred.
-	*/
-
-	// RefetchEmojis iterates through remote emojis (for the given domain, or all if domain is empty string).
-	//
-	// For each emoji, the manager will check whether both the full size and static images are present in storage.
-	// If not, the manager will refetch and reprocess full size and static images for the emoji.
-	//
-	// The provided DereferenceMedia function will be used when it's necessary to refetch something this way.
-	RefetchEmojis(ctx context.Context, domain string, dereferenceMedia DereferenceMedia) (int, error)
-}
-
-type manager struct {
+type Manager struct {
 	state *state.State
 }
 
@@ -162,13 +59,24 @@ type manager struct {
 // a limited number of media will be processed in parallel. The numbers of workers
 // is determined from the $GOMAXPROCS environment variable (usually no. CPU cores).
 // See internal/concurrency.NewWorkerPool() documentation for further information.
-func NewManager(state *state.State) Manager {
-	m := &manager{state: state}
+func NewManager(state *state.State) *Manager {
+	m := &Manager{state: state}
 	scheduleCleanupJobs(m)
 	return m
 }
 
-func (m *manager) PreProcessMedia(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error) {
+// PreProcessMedia begins the process of decoding and storing the given data as an attachment.
+// It will return a pointer to a ProcessingMedia struct upon which further actions can be performed, such as getting
+// the finished media, thumbnail, attachment, etc.
+//
+// data should be a function that the media manager can call to return a reader containing the media data.
+//
+// accountID should be the account that the media belongs to.
+//
+// ai is optional and can be nil. Any additional information about the attachment provided will be put in the database.
+//
+// Note: unlike ProcessMedia, this will NOT queue the media to be asynchronously processed.
+func (m *Manager) PreProcessMedia(ctx context.Context, data DataFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error) {
 	id, err := id.NewRandomULID()
 	if err != nil {
 		return nil, err
@@ -248,14 +156,16 @@ func (m *manager) PreProcessMedia(ctx context.Context, data DataFunc, postData P
 	processingMedia := &ProcessingMedia{
 		media:  attachment,
 		dataFn: data,
-		postFn: postData,
 		mgr:    m,
 	}
 
 	return processingMedia, nil
 }
 
-func (m *manager) PreProcessMediaRecache(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, attachmentID string) (*ProcessingMedia, error) {
+// PreProcessMediaRecache refetches, reprocesses, and recaches an existing attachment that has been uncached via pruneRemote.
+//
+// Note: unlike ProcessMedia, this will NOT queue the media to be asychronously processed.
+func (m *Manager) PreProcessMediaRecache(ctx context.Context, data DataFunc, attachmentID string) (*ProcessingMedia, error) {
 	// get the existing attachment from database.
 	attachment, err := m.state.DB.GetAttachmentByID(ctx, attachmentID)
 	if err != nil {
@@ -265,7 +175,6 @@ func (m *manager) PreProcessMediaRecache(ctx context.Context, data DataFunc, pos
 	processingMedia := &ProcessingMedia{
 		media:   attachment,
 		dataFn:  data,
-		postFn:  postData,
 		recache: true, // indicate it's a recache
 		mgr:     m,
 	}
@@ -273,9 +182,10 @@ func (m *manager) PreProcessMediaRecache(ctx context.Context, data DataFunc, pos
 	return processingMedia, nil
 }
 
-func (m *manager) ProcessMedia(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error) {
+// ProcessMedia will call PreProcessMedia, followed by queuing the media to be processing in the media worker queue.
+func (m *Manager) ProcessMedia(ctx context.Context, data DataFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error) {
 	// Create a new processing media object for this media request.
-	media, err := m.PreProcessMedia(ctx, data, postData, accountID, ai)
+	media, err := m.PreProcessMedia(ctx, data, accountID, ai)
 	if err != nil {
 		return nil, err
 	}
@@ -286,7 +196,22 @@ func (m *manager) ProcessMedia(ctx context.Context, data DataFunc, postData Post
 	return media, nil
 }
 
-func (m *manager) PreProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, emojiID string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error) {
+// PreProcessEmoji begins the process of decoding and storing the given data as an emoji.
+// It will return a pointer to a ProcessingEmoji struct upon which further actions can be performed, such as getting
+// the finished media, thumbnail, attachment, etc.
+//
+// data should be a function that the media manager can call to return a reader containing the emoji data.
+//
+// shortcode should be the emoji shortcode without the ':'s around it.
+//
+// id is the database ID that should be used to store the emoji.
+//
+// uri is the ActivityPub URI/ID of the emoji.
+//
+// ai is optional and can be nil. Any additional information about the emoji provided will be put in the database.
+//
+// Note: unlike ProcessEmoji, this will NOT queue the emoji to be asynchronously processed.
+func (m *Manager) PreProcessEmoji(ctx context.Context, data DataFunc, shortcode string, emojiID string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error) {
 	instanceAccount, err := m.state.DB.GetInstanceAccount(ctx, "")
 	if err != nil {
 		return nil, fmt.Errorf("preProcessEmoji: error fetching this instance account from the db: %s", err)
@@ -299,36 +224,38 @@ func (m *manager) PreProcessEmoji(ctx context.Context, data DataFunc, postData P
 	)
 
 	if refresh {
+		// Look for existing emoji by given ID.
 		emoji, err = m.state.DB.GetEmojiByID(ctx, emojiID)
 		if err != nil {
 			return nil, fmt.Errorf("preProcessEmoji: error fetching emoji to refresh from the db: %s", err)
 		}
 
 		// if this is a refresh, we will end up with new images
-		// stored for this emoji, so we can use the postData function
+		// stored for this emoji, so we can use an io.Closer callback
 		// to perform clean up of the old images from storage
-		originalPostData := postData
+		originalData := data
 		originalImagePath := emoji.ImagePath
 		originalImageStaticPath := emoji.ImageStaticPath
-		postData = func(innerCtx context.Context) error {
-			// trigger the original postData function if it was provided
-			if originalPostData != nil {
-				if err := originalPostData(innerCtx); err != nil {
-					return err
+		data = func(ctx context.Context) (io.ReadCloser, int64, error) {
+			// Call original data func.
+			rc, sz, err := originalData(ctx)
+			if err != nil {
+				return nil, 0, err
+			}
+
+			// Wrap closer to cleanup old data.
+			c := iotools.CloserCallback(rc, func() {
+				if err := m.state.Storage.Delete(ctx, originalImagePath); err != nil && !errors.Is(err, storage.ErrNotFound) {
+					log.Errorf(ctx, "error removing old emoji %s@%s from storage: %v", emoji.Shortcode, emoji.Domain, err)
 				}
-			}
 
-			l := log.WithContext(ctx).
-				WithField("shortcode@domain", emoji.Shortcode+"@"+emoji.Domain)
-			l.Debug("postData: cleaning up old emoji files for refreshed emoji")
-			if err := m.state.Storage.Delete(innerCtx, originalImagePath); err != nil && !errors.Is(err, storage.ErrNotFound) {
-				l.Errorf("postData: error cleaning up old emoji image at %s for refreshed emoji: %s", originalImagePath, err)
-			}
-			if err := m.state.Storage.Delete(innerCtx, originalImageStaticPath); err != nil && !errors.Is(err, storage.ErrNotFound) {
-				l.Errorf("postData: error cleaning up old emoji static image at %s for refreshed emoji: %s", originalImageStaticPath, err)
-			}
+				if err := m.state.Storage.Delete(ctx, originalImageStaticPath); err != nil && !errors.Is(err, storage.ErrNotFound) {
+					log.Errorf(ctx, "error removing old static emoji %s@%s from storage: %v", emoji.Shortcode, emoji.Domain, err)
+				}
+			})
 
-			return nil
+			// Return newly wrapped readcloser and size.
+			return iotools.ReadCloser(rc, c), sz, nil
 		}
 
 		newPathID, err = id.NewRandomULID()
@@ -410,16 +337,16 @@ func (m *manager) PreProcessEmoji(ctx context.Context, data DataFunc, postData P
 		refresh:   refresh,
 		newPathID: newPathID,
 		dataFn:    data,
-		postFn:    postData,
 		mgr:       m,
 	}
 
 	return processingEmoji, nil
 }
 
-func (m *manager) ProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error) {
+// ProcessEmoji will call PreProcessEmoji, followed by queuing the emoji to be processing in the emoji worker queue.
+func (m *Manager) ProcessEmoji(ctx context.Context, data DataFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error) {
 	// Create a new processing emoji object for this emoji request.
-	emoji, err := m.PreProcessEmoji(ctx, data, postData, shortcode, id, uri, ai, refresh)
+	emoji, err := m.PreProcessEmoji(ctx, data, shortcode, id, uri, ai, refresh)
 	if err != nil {
 		return nil, err
 	}
@@ -430,7 +357,7 @@ func (m *manager) ProcessEmoji(ctx context.Context, data DataFunc, postData Post
 	return emoji, nil
 }
 
-func scheduleCleanupJobs(m *manager) {
+func scheduleCleanupJobs(m *Manager) {
 	const day = time.Hour * 24
 
 	// Calculate closest midnight.

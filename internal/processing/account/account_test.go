@@ -45,7 +45,7 @@ type AccountStandardTestSuite struct {
 	tc                  typeutils.TypeConverter
 	storage             *storage.Driver
 	state               state.State
-	mediaManager        media.Manager
+	mediaManager        *media.Manager
 	oauthServer         oauth.Server
 	fromClientAPIChan   chan messages.FromClientAPI
 	transportController transport.Controller

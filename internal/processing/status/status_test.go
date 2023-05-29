@@ -40,7 +40,7 @@ type StatusStandardTestSuite struct {
 	tc            transport.Controller
 	storage       *storage.Driver
 	state         state.State
-	mediaManager  media.Manager
+	mediaManager  *media.Manager
 	federator     federation.Federator
 
 	// standard suite models
