@@ -19,7 +19,7 @@ require (
 	github.com/KimMachineGun/automemlimit v0.2.6
 	github.com/abema/go-mp4 v0.10.1
 	github.com/buckket/go-blurhash v1.1.0
-	github.com/coreos/go-oidc/v3 v3.5.0
+	github.com/coreos/go-oidc/v3 v3.6.0
 	github.com/disintegration/imaging v1.6.2
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-contrib/gzip v0.0.6
