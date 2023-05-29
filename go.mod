@@ -9,6 +9,7 @@ require (
 	codeberg.org/gruf/go-debug v1.3.0
 	codeberg.org/gruf/go-errors/v2 v2.2.0
 	codeberg.org/gruf/go-fastcopy v1.1.2
+	codeberg.org/gruf/go-iotools v0.0.0-20221224124424-3386841cb225
 	codeberg.org/gruf/go-kv v1.6.1
 	codeberg.org/gruf/go-logger/v2 v2.2.1
 	codeberg.org/gruf/go-mutexes v1.1.5
@@ -40,12 +41,12 @@ require (
 	github.com/oklog/ulid v1.3.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.3
 	github.com/superseriousbusiness/activity v1.3.0-gts
 	github.com/superseriousbusiness/exif-terminator v0.5.0
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8
 	github.com/tdewolff/minify/v2 v2.12.5
-	github.com/ulule/limiter/v3 v3.11.1
+	github.com/ulule/limiter/v3 v3.11.2
 	github.com/uptrace/bun v1.1.13
 	github.com/uptrace/bun/dialect/pgdialect v1.1.13
 	github.com/uptrace/bun/dialect/sqlitedialect v1.1.13
@@ -77,7 +78,6 @@ require (
 	codeberg.org/gruf/go-fastpath v1.0.3 // indirect
 	codeberg.org/gruf/go-fastpath/v2 v2.0.0 // indirect
 	codeberg.org/gruf/go-hashenc v1.0.2 // indirect
-	codeberg.org/gruf/go-iotools v0.0.0-20221224124424-3386841cb225 // indirect
 	codeberg.org/gruf/go-mangler v1.2.3 // indirect
 	codeberg.org/gruf/go-maps v1.0.3 // indirect
 	codeberg.org/gruf/go-pools v1.1.0 // indirect

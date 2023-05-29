@@ -468,8 +468,8 @@ github.com/spf13/viper/internal/encoding/javaproperties
 github.com/spf13/viper/internal/encoding/json
 github.com/spf13/viper/internal/encoding/toml
 github.com/spf13/viper/internal/encoding/yaml
-# github.com/stretchr/testify v1.8.2
-## explicit; go 1.13
+# github.com/stretchr/testify v1.8.3
+## explicit; go 1.20
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 github.com/stretchr/testify/suite
@@ -712,13 +712,12 @@ github.com/twitchyliquid64/golang-asm/unsafeheader
 # github.com/ugorji/go/codec v1.2.9
 ## explicit; go 1.11
 github.com/ugorji/go/codec
-# github.com/ulule/limiter/v3 v3.11.1
+# github.com/ulule/limiter/v3 v3.11.2
 ## explicit; go 1.17
 github.com/ulule/limiter/v3
 github.com/ulule/limiter/v3/drivers/middleware/gin
 github.com/ulule/limiter/v3/drivers/store/common
 github.com/ulule/limiter/v3/drivers/store/memory
-github.com/ulule/limiter/v3/internal/bytebuffer
 # github.com/uptrace/bun v1.1.13
 ## explicit; go 1.18
 github.com/uptrace/bun
