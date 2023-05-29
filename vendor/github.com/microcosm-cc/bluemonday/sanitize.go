@@ -852,6 +852,7 @@ func (p *Policy) sanitizeStyles(attr html.Attribute, elementName string) html.At
 	}
 
 	//Add semi-colon to end to fix parsing issue
+	attr.Val = strings.TrimRight(attr.Val, " ")
 	if len(attr.Val) > 0 && attr.Val[len(attr.Val)-1] != ';' {
 		attr.Val = attr.Val + ";"
 	}
@@ -969,6 +970,11 @@ func (p *Policy) validURL(rawurl string) (string, bool) {
 		}
 
 		if u.Scheme != "" {
+			for _, r := range p.allowURLSchemeRegexps {
+				if r.MatchString(u.Scheme) {
+					return u.String(), true
+				}
+			}
 
 			urlPolicies, ok := p.allowURLSchemes[u.Scheme]
 			if !ok {
