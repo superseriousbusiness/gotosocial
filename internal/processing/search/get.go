@@ -45,17 +45,18 @@ const (
 	queryTypeHashtags = "hashtags"
 )
 
-// Implementation note: in this function, we tend to log errors
-// at debug level rather than return them. This is because the
-// search has a sort of fallthrough logic: if we can't get a result
-// with x search, we should try with y search rather than returning.
+// Get performs a search for accounts and/or statuses using the
+// provided request parameters.
 //
-// If we get to the end and still haven't found anything, even then
-// we shouldn't return an error, just return an empty search result.
+// Implementation note: in this function, we try to only return
+// an error to the caller they've submitted a bad request, or when
+// a serious error has occurred. This is because the search has a
+// sort of fallthrough logic: if we can't get a result with one
+// type of search, we should proceed with y search rather than
+// returning an early error.
 //
-// The only exception to this is when we get a malformed query, in
-// which case we return a bad request error so the user knows they
-// did something funky.
+// If we get to the end and still haven't found anything, even
+// then we shouldn't return an error, just return an empty result.
 func (p *Processor) Get(
 	ctx context.Context,
 	account *gtsmodel.Account,
@@ -94,25 +95,28 @@ func (p *Processor) Get(
 	log.
 		WithContext(ctx).
 		WithFields(kv.Fields{
+			{"maxID", maxID},
+			{"minID", minID},
+			{"limit", limit},
+			{"offset", offset},
 			{"query", query},
+			{"queryType", queryType},
+			{"resolve", resolve},
+			{"following", following},
 		}...).
-		Debugf("beginning search with query %s", query)
+		Debugf("beginning search")
 
 	// todo: Currently we don't support offset for paging;
 	// a caller can page using maxID or minID, but if they
 	// supply an offset greater than 0, return nothing as
 	// though there were no additional results.
 	if req.Offset > 0 {
-		return &apimodel.SearchResult{
-			Accounts: make([]*apimodel.Account, 0),
-			Statuses: make([]*apimodel.Status, 0),
-			Hashtags: make([]*apimodel.Tag, 0),
-		}, nil
+		return p.packageSearchResponse(ctx, account, nil, nil)
 	}
 
 	var (
-		foundStatuses = []*gtsmodel.Status{}
-		foundAccounts = []*gtsmodel.Account{}
+		foundStatuses = make([]*gtsmodel.Status, 0, limit)
+		foundAccounts = make([]*gtsmodel.Account, 0, limit)
 		appendStatus  = func(foundStatus *gtsmodel.Status) { foundStatuses = append(foundStatuses, foundStatus) }
 		appendAccount = func(foundAccount *gtsmodel.Account) { foundAccounts = append(foundAccounts, foundAccount) }
 		keepLooking   bool
@@ -122,7 +126,7 @@ func (p *Processor) Get(
 	// Check if the query is something like '@whatever_user' or '@whatever_user@somewhere.com'.
 	keepLooking, err = p.searchByNamestring(ctx, account, query, resolve, appendAccount)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err = fmt.Errorf("error searching by namestring: %w", err)
+		err = gtserror.Newf("error searching by namestring: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -148,7 +152,7 @@ func (p *Processor) Get(
 		appendStatus,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err = fmt.Errorf("error searching by URI: %w", err)
+		err = gtserror.Newf("error searching by URI: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -177,7 +181,7 @@ func (p *Processor) Get(
 		appendAccount,
 		appendStatus,
 	); err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err = fmt.Errorf("error searching by text: %w", err)
+		err = gtserror.Newf("error searching by text: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -238,7 +242,7 @@ func (p *Processor) searchByNamestring(
 	if domain != "" {
 		blocked, err := p.state.DB.IsDomainBlocked(ctx, domain)
 		if err != nil {
-			err = fmt.Errorf("error checking domain block: %w", err)
+			err = gtserror.Newf("error checking domain block: %w", err)
 			return false, gtserror.NewErrorInternalError(err)
 		}
 
@@ -266,7 +270,7 @@ func (p *Processor) searchByNamestring(
 		)
 
 		if !errors.As(err, errNotRetrievable) && !errors.As(err, errWrongType) {
-			err = fmt.Errorf("error looking up %s as account: %w", query, err)
+			err = gtserror.Newf("error looking up %s as account: %w", query, err)
 			return false, gtserror.NewErrorInternalError(err)
 		}
 	} else {
@@ -282,6 +286,7 @@ func (p *Processor) searchByNamestring(
 
 // searchAccountByUsernameDomain looks for one account with the given
 // username and domain. If domain is empty, or equal to our domain,
+// search will be confined to local accounts.
 //
 // Will return either a hit, an ErrNotRetrievable, an ErrWrongType,
 // or a real error that the caller should handle.
@@ -318,7 +323,7 @@ func (p *Processor) searchAccountByUsernameDomain(
 	// Search the database for existing account with USERNAME@DOMAIN
 	account, err := p.state.DB.GetAccountByUsernameDomain(ctx, username, domain)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err = fmt.Errorf("error checking database for account %s: %w", usernameDomain, err)
+		err = gtserror.Newf("error checking database for account %s: %w", usernameDomain, err)
 		return nil, err
 	}
 
@@ -366,7 +371,7 @@ func (p *Processor) searchByURI(
 
 	blocked, err := p.state.DB.IsURIBlocked(ctx, uri)
 	if err != nil {
-		err = fmt.Errorf("error checking domain block: %w", err)
+		err = gtserror.Newf("error checking domain block: %w", err)
 		return false, gtserror.NewErrorInternalError(err)
 	}
 
@@ -388,7 +393,7 @@ func (p *Processor) searchByURI(
 			)
 
 			if !errors.As(err, errNotRetrievable) && !errors.As(err, errWrongType) {
-				err = fmt.Errorf("error looking up %s as account: %w", uri, err)
+				err = gtserror.Newf("error looking up %s as account: %w", uri, err)
 				return false, gtserror.NewErrorInternalError(err)
 			}
 		} else {
@@ -412,7 +417,7 @@ func (p *Processor) searchByURI(
 			)
 
 			if !errors.As(err, errNotRetrievable) && !errors.As(err, errWrongType) {
-				err = fmt.Errorf("error looking up %s as status: %w", uri, err)
+				err = gtserror.Newf("error looking up %s as status: %w", uri, err)
 				return false, gtserror.NewErrorInternalError(err)
 			}
 		} else {
@@ -456,7 +461,7 @@ func (p *Processor) searchAccountByURI(
 	// Search by ActivityPub URI.
 	account, err := p.state.DB.GetAccountByURI(ctx, uriStr)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err = fmt.Errorf("error checking database for account using URI %s: %w", uriStr, err)
+		err = gtserror.Newf("error checking database for account using URI %s: %w", uriStr, err)
 		return nil, err
 	}
 
@@ -468,7 +473,7 @@ func (p *Processor) searchAccountByURI(
 	// No hit yet. Fallback to try by URL.
 	account, err = p.state.DB.GetAccountByURL(ctx, uriStr)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err = fmt.Errorf("error checking database for account using URL %s: %w", uriStr, err)
+		err = gtserror.Newf("error checking database for account using URL %s: %w", uriStr, err)
 		return nil, err
 	}
 
@@ -508,7 +513,7 @@ func (p *Processor) searchStatusByURI(
 	// Search by ActivityPub URI.
 	status, err := p.state.DB.GetStatusByURI(ctx, uriStr)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err = fmt.Errorf("error checking database for status using URI %s: %w", uriStr, err)
+		err = gtserror.Newf("error checking database for status using URI %s: %w", uriStr, err)
 		return nil, err
 	}
 
@@ -520,7 +525,7 @@ func (p *Processor) searchStatusByURI(
 	// No hit yet. Fallback to try by URL.
 	status, err = p.state.DB.GetStatusByURL(ctx, uriStr)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err = fmt.Errorf("error checking database for status using URL %s: %w", uriStr, err)
+		err = gtserror.Newf("error checking database for status using URL %s: %w", uriStr, err)
 		return nil, err
 	}
 
@@ -561,7 +566,7 @@ func (p *Processor) searchByText(
 			requestingAccount.ID,
 			query, maxID, minID, limit, following, offset)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			return fmt.Errorf("error checking database for accounts using text %s: %w", query, err)
+			return gtserror.Newf("error checking database for accounts using text %s: %w", query, err)
 		}
 
 		for _, account := range accounts {
@@ -576,7 +581,7 @@ func (p *Processor) searchByText(
 			requestingAccount.ID,
 			query, maxID, minID, limit, offset)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			return fmt.Errorf("error checking database for statuses using text %s: %w", query, err)
+			return gtserror.Newf("error checking database for statuses using text %s: %w", query, err)
 		}
 
 		for _, status := range statuses {
@@ -587,61 +592,28 @@ func (p *Processor) searchByText(
 	return nil
 }
 
+// packageSearchResponse wraps up the given accounts
+// and statuses into an apimodel SearchResult that
+// can be serialized to an API caller as JSON.
 func (p *Processor) packageSearchResponse(
 	ctx context.Context,
 	requestingAccount *gtsmodel.Account,
 	accounts []*gtsmodel.Account,
 	statuses []*gtsmodel.Status,
 ) (*apimodel.SearchResult, gtserror.WithCode) {
-	result := &apimodel.SearchResult{
-		Accounts: make([]*apimodel.Account, 0, len(accounts)),
-		Statuses: make([]*apimodel.Status, 0, len(statuses)),
+	apiAccounts, errWithCode := p.packageAccounts(ctx, requestingAccount, accounts)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	apiStatuses, errWithCode := p.packageStatuses(ctx, requestingAccount, statuses)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	return &apimodel.SearchResult{
+		Accounts: apiAccounts,
+		Statuses: apiStatuses,
 		Hashtags: make([]*apimodel.Tag, 0),
-	}
-
-	for _, account := range accounts {
-		// Ensure requester can see result account.
-		visible, err := p.filter.AccountVisible(ctx, requestingAccount, account)
-		if err != nil {
-			err = fmt.Errorf("error checking visibility of account %s for account %s: %w", account.ID, requestingAccount.ID, err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-
-		if !visible {
-			log.Debugf(ctx, "account %s is not visible to account %s, skipping this result", account.ID, requestingAccount.ID)
-			continue
-		}
-
-		apiAccount, err := p.tc.AccountToAPIAccountPublic(ctx, account)
-		if err != nil {
-			log.Debugf(ctx, "skipping account %s because it couldn't be converted to its api representation: %s", account.ID, err)
-			continue
-		}
-
-		result.Accounts = append(result.Accounts, apiAccount)
-	}
-
-	for _, status := range statuses {
-		// Ensure requester can see result status.
-		visible, err := p.filter.StatusVisible(ctx, requestingAccount, status)
-		if err != nil {
-			err = fmt.Errorf("error checking visibility of status %s for account %s: %w", status.ID, requestingAccount.ID, err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-
-		if !visible {
-			log.Debugf(ctx, "status %s is not visible to account %s, skipping this result", status.ID, requestingAccount.ID)
-			continue
-		}
-
-		apiStatus, err := p.tc.StatusToAPIStatus(ctx, status, requestingAccount)
-		if err != nil {
-			log.Debugf(ctx, "skipping status %s because it couldn't be converted to its api representation: %s", status.ID, err)
-			continue
-		}
-
-		result.Statuses = append(result.Statuses, apiStatus)
-	}
-
-	return result, nil
+	}, nil
 }
