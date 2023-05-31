@@ -21,7 +21,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -35,6 +37,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -44,11 +47,82 @@ type InboxPostTestSuite struct {
 	UserStandardTestSuite
 }
 
-func (suite *InboxPostTestSuite) TestPostBlock() {
-	blockingAccount := suite.testAccounts["remote_account_1"]
-	blockedAccount := suite.testAccounts["local_account_1"]
-	blockURI := testrig.URLMustParse("http://fossbros-anonymous.io/users/foss_satan/blocks/01FG9C441MCTW3R2W117V2PQK3")
+func (suite *InboxPostTestSuite) inboxPost(
+	activity pub.Activity,
+	requestingAccount *gtsmodel.Account,
+	targetAccount *gtsmodel.Account,
+	expectedHTTPStatus int,
+	expectedBody string,
+	middlewares ...func(*gin.Context),
+) {
+	var (
+		recorder = httptest.NewRecorder()
+		ctx, _   = testrig.CreateGinTestContext(recorder, nil)
+	)
 
+	// Prepare the requst body bytes.
+	bodyI, err := ap.Serialize(activity)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	b, err := json.MarshalIndent(bodyI, "", "  ")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.T().Logf("prepared POST body:\n%s", string(b))
+
+	// Prepare signature headers for this Activity.
+	signature, digestHeader, dateHeader := testrig.GetSignatureForActivity(
+		activity,
+		requestingAccount.PublicKeyURI,
+		requestingAccount.PrivateKey,
+		testrig.URLMustParse(targetAccount.InboxURI),
+	)
+
+	// Put the request together.
+	ctx.AddParam(users.UsernameKey, targetAccount.Username)
+	ctx.Request = httptest.NewRequest(http.MethodPost, targetAccount.InboxURI, bytes.NewReader(b))
+	ctx.Request.Header.Set("Signature", signature)
+	ctx.Request.Header.Set("Date", dateHeader)
+	ctx.Request.Header.Set("Digest", digestHeader)
+	ctx.Request.Header.Set("Content-Type", "application/activity+json")
+
+	// Pass the context through provided middlewares.
+	for _, middleware := range middlewares {
+		middleware(ctx)
+	}
+
+	// Trigger the function being tested.
+	suite.userModule.InboxPOSTHandler(ctx)
+
+	// Read the result.
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	b, err = io.ReadAll(result.Body)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	errs := gtserror.MultiError{}
+
+	// Check expected code + body.
+	if resultCode := recorder.Code; expectedHTTPStatus != resultCode {
+		errs = append(errs, fmt.Sprintf("expected %d got %d", expectedHTTPStatus, resultCode))
+	}
+
+	// If we got an expected body, return early.
+	if expectedBody != "" && string(b) != expectedBody {
+		errs = append(errs, fmt.Sprintf("expected %s got %s", expectedBody, string(b)))
+	}
+
+	if err := errs.Combine(); err != nil {
+		suite.FailNow("", "%v (body %s)", err, string(b))
+	}
+}
+
+func (suite *InboxPostTestSuite) newBlock(blockID string, blockingAccount *gtsmodel.Account, blockedAccount *gtsmodel.Account) vocab.ActivityStreamsBlock {
 	block := streams.NewActivityStreamsBlock()
 
 	// set the actor property to the block-ing account's URI
@@ -59,7 +133,7 @@ func (suite *InboxPostTestSuite) TestPostBlock() {
 
 	// set the ID property to the blocks's URI
 	idProp := streams.NewJSONLDIdProperty()
-	idProp.Set(blockURI)
+	idProp.Set(testrig.URLMustParse(blockID))
 	block.SetJSONLDId(idProp)
 
 	// set the object property to the target account's URI
@@ -74,186 +148,48 @@ func (suite *InboxPostTestSuite) TestPostBlock() {
 	toProp.AppendIRI(toIRI)
 	block.SetActivityStreamsTo(toProp)
 
-	targetURI := testrig.URLMustParse(blockedAccount.InboxURI)
-
-	signature, digestHeader, dateHeader := testrig.GetSignatureForActivity(block, blockingAccount.PublicKeyURI, blockingAccount.PrivateKey, targetURI)
-	bodyI, err := ap.Serialize(block)
-	suite.NoError(err)
-
-	bodyJson, err := json.Marshal(bodyI)
-	suite.NoError(err)
-	body := bytes.NewReader(bodyJson)
-
-	tc := testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../../testrig/media"))
-	federator := testrig.NewTestFederator(&suite.state, tc, suite.mediaManager)
-	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(&suite.state, federator, emailSender, suite.mediaManager)
-	userModule := users.New(processor)
-
-	// setup request
-	recorder := httptest.NewRecorder()
-	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Request = httptest.NewRequest(http.MethodPost, targetURI.String(), body) // the endpoint we're hitting
-	ctx.Request.Header.Set("Signature", signature)
-	ctx.Request.Header.Set("Date", dateHeader)
-	ctx.Request.Header.Set("Digest", digestHeader)
-	ctx.Request.Header.Set("Content-Type", "application/activity+json")
-
-	// we need to pass the context through signature check first to set appropriate values on it
-	suite.signatureCheck(ctx)
-
-	// normally the router would populate these params from the path values,
-	// but because we're calling the function directly, we need to set them manually.
-	ctx.Params = gin.Params{
-		gin.Param{
-			Key:   users.UsernameKey,
-			Value: blockedAccount.Username,
-		},
-	}
-
-	// trigger the function being tested
-	userModule.InboxPOSTHandler(ctx)
-
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-	suite.Empty(b)
-
-	// there should be a block in the database now between the accounts
-	dbBlock, err := suite.db.GetBlock(context.Background(), blockingAccount.ID, blockedAccount.ID)
-	suite.NoError(err)
-	suite.NotNil(dbBlock)
-	suite.WithinDuration(time.Now(), dbBlock.CreatedAt, 30*time.Second)
-	suite.WithinDuration(time.Now(), dbBlock.UpdatedAt, 30*time.Second)
-	suite.Equal("http://fossbros-anonymous.io/users/foss_satan/blocks/01FG9C441MCTW3R2W117V2PQK3", dbBlock.URI)
+	return block
 }
 
-// TestPostUnblock verifies that a remote account with a block targeting one of our instance users should be able to undo that block.
-func (suite *InboxPostTestSuite) TestPostUnblock() {
-	blockingAccount := suite.testAccounts["remote_account_1"]
-	blockedAccount := suite.testAccounts["local_account_1"]
-
-	// first put a block in the database so we have something to undo
-	blockURI := "http://fossbros-anonymous.io/users/foss_satan/blocks/01FG9C441MCTW3R2W117V2PQK3"
-	dbBlockID, err := id.NewRandomULID()
-	suite.NoError(err)
-
-	dbBlock := &gtsmodel.Block{
-		ID:              dbBlockID,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
-		URI:             blockURI,
-		AccountID:       blockingAccount.ID,
-		TargetAccountID: blockedAccount.ID,
-	}
-
-	err = suite.db.PutBlock(context.Background(), dbBlock)
-	suite.NoError(err)
-
-	asBlock, err := suite.tc.BlockToAS(context.Background(), dbBlock)
-	suite.NoError(err)
-
-	targetAccountURI := testrig.URLMustParse(blockedAccount.URI)
-
-	// create an Undo and set the appropriate actor on it
+func (suite *InboxPostTestSuite) newUndo(
+	originalActivity pub.Activity,
+	objectF func() vocab.ActivityStreamsObjectProperty,
+	to string,
+	undoIRI string,
+) vocab.ActivityStreamsUndo {
 	undo := streams.NewActivityStreamsUndo()
-	undo.SetActivityStreamsActor(asBlock.GetActivityStreamsActor())
 
-	// Set the block as the 'object' property.
-	undoObject := streams.NewActivityStreamsObjectProperty()
-	undoObject.AppendActivityStreamsBlock(asBlock)
-	undo.SetActivityStreamsObject(undoObject)
+	// Set the appropriate actor.
+	undo.SetActivityStreamsActor(originalActivity.GetActivityStreamsActor())
 
-	// Set the To of the undo as the target of the block
+	// Set the original activity uri as the 'object' property.
+	undo.SetActivityStreamsObject(objectF())
+
+	// Set the To of the undo as the target of the activity.
 	undoTo := streams.NewActivityStreamsToProperty()
-	undoTo.AppendIRI(targetAccountURI)
+	undoTo.AppendIRI(testrig.URLMustParse(to))
 	undo.SetActivityStreamsTo(undoTo)
 
+	// Set the ID property to the undo's URI.
 	undoID := streams.NewJSONLDIdProperty()
-	undoID.SetIRI(testrig.URLMustParse("http://fossbros-anonymous.io/72cc96a3-f742-4daf-b9f5-3407667260c5"))
+	undoID.SetIRI(testrig.URLMustParse(undoIRI))
 	undo.SetJSONLDId(undoID)
 
-	targetURI := testrig.URLMustParse(blockedAccount.InboxURI)
-
-	signature, digestHeader, dateHeader := testrig.GetSignatureForActivity(undo, blockingAccount.PublicKeyURI, blockingAccount.PrivateKey, targetURI)
-	bodyI, err := ap.Serialize(undo)
-	suite.NoError(err)
-
-	bodyJson, err := json.Marshal(bodyI)
-	suite.NoError(err)
-	body := bytes.NewReader(bodyJson)
-
-	tc := testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../../testrig/media"))
-	federator := testrig.NewTestFederator(&suite.state, tc, suite.mediaManager)
-	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(&suite.state, federator, emailSender, suite.mediaManager)
-	userModule := users.New(processor)
-
-	// setup request
-	recorder := httptest.NewRecorder()
-	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Request = httptest.NewRequest(http.MethodPost, targetURI.String(), body) // the endpoint we're hitting
-	ctx.Request.Header.Set("Signature", signature)
-	ctx.Request.Header.Set("Date", dateHeader)
-	ctx.Request.Header.Set("Digest", digestHeader)
-	ctx.Request.Header.Set("Content-Type", "application/activity+json")
-
-	// we need to pass the context through signature check first to set appropriate values on it
-	suite.signatureCheck(ctx)
-
-	// normally the router would populate these params from the path values,
-	// but because we're calling the function directly, we need to set them manually.
-	ctx.Params = gin.Params{
-		gin.Param{
-			Key:   users.UsernameKey,
-			Value: blockedAccount.Username,
-		},
-	}
-
-	// trigger the function being tested
-	userModule.InboxPOSTHandler(ctx)
-
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-	suite.Empty(b)
-	suite.Equal(http.StatusOK, result.StatusCode)
-
-	// the block should be undone
-	block, err := suite.db.GetBlock(context.Background(), blockingAccount.ID, blockedAccount.ID)
-	suite.ErrorIs(err, db.ErrNoEntries)
-	suite.Nil(block)
+	return undo
 }
 
-func (suite *InboxPostTestSuite) TestPostUpdate() {
-	receivingAccount := suite.testAccounts["local_account_1"]
-	updatedAccount := *suite.testAccounts["remote_account_1"]
-	updatedAccount.DisplayName = "updated display name!"
-
-	// add an emoji to the account; because we're serializing this remote
-	// account from our own instance, we need to cheat a bit to get the emoji
-	// to work properly, just for this test
-	testEmoji := &gtsmodel.Emoji{}
-	*testEmoji = *testrig.NewTestEmojis()["yell"]
-	testEmoji.ImageURL = testEmoji.ImageRemoteURL // <- here's the cheat
-	updatedAccount.Emojis = []*gtsmodel.Emoji{testEmoji}
-
-	asAccount, err := suite.tc.AccountToAS(context.Background(), &updatedAccount)
-	suite.NoError(err)
-
+func (suite *InboxPostTestSuite) newUpdatePerson(person vocab.ActivityStreamsPerson, cc string, updateIRI string) vocab.ActivityStreamsUpdate {
 	// create an update
 	update := streams.NewActivityStreamsUpdate()
 
 	// set the appropriate actor on it
 	updateActor := streams.NewActivityStreamsActorProperty()
-	updateActor.AppendIRI(testrig.URLMustParse(updatedAccount.URI))
+	updateActor.AppendIRI(person.GetJSONLDId().Get())
 	update.SetActivityStreamsActor(updateActor)
 
-	// Set the account as the 'object' property.
+	// Set the person as the 'object' property.
 	updateObject := streams.NewActivityStreamsObjectProperty()
-	updateObject.AppendActivityStreamsPerson(asAccount)
+	updateObject.AppendActivityStreamsPerson(person)
 	update.SetActivityStreamsObject(updateObject)
 
 	// Set the To of the update as public
@@ -263,76 +199,179 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 
 	// set the cc of the update to the receivingAccount
 	updateCC := streams.NewActivityStreamsCcProperty()
-	updateCC.AppendIRI(testrig.URLMustParse(receivingAccount.URI))
+	updateCC.AppendIRI(testrig.URLMustParse(cc))
 	update.SetActivityStreamsCc(updateCC)
 
 	// set some random-ass ID for the activity
-	undoID := streams.NewJSONLDIdProperty()
-	undoID.SetIRI(testrig.URLMustParse("http://fossbros-anonymous.io/d360613a-dc8d-4563-8f0b-b6161caf0f2b"))
-	update.SetJSONLDId(undoID)
+	updateID := streams.NewJSONLDIdProperty()
+	updateID.SetIRI(testrig.URLMustParse(updateIRI))
+	update.SetJSONLDId(updateID)
 
-	targetURI := testrig.URLMustParse(receivingAccount.InboxURI)
+	return update
+}
 
-	signature, digestHeader, dateHeader := testrig.GetSignatureForActivity(update, updatedAccount.PublicKeyURI, updatedAccount.PrivateKey, targetURI)
-	bodyI, err := ap.Serialize(update)
-	suite.NoError(err)
+func (suite *InboxPostTestSuite) newDelete(actorIRI string, objectIRI string, deleteIRI string) vocab.ActivityStreamsDelete {
+	// create a delete
+	delete := streams.NewActivityStreamsDelete()
 
-	bodyJson, err := json.Marshal(bodyI)
-	suite.NoError(err)
-	body := bytes.NewReader(bodyJson)
+	// set the appropriate actor on it
+	deleteActor := streams.NewActivityStreamsActorProperty()
+	deleteActor.AppendIRI(testrig.URLMustParse(actorIRI))
+	delete.SetActivityStreamsActor(deleteActor)
 
-	// use a different version of the mock http client which serves the updated
-	// version of the remote account, as though it had been updated there too;
-	// this is needed so it can be dereferenced + updated properly
-	mockHTTPClient := testrig.NewMockHTTPClient(nil, "../../../../testrig/media")
-	mockHTTPClient.TestRemotePeople = map[string]vocab.ActivityStreamsPerson{
-		updatedAccount.URI: asAccount,
+	// Set 'object' property.
+	deleteObject := streams.NewActivityStreamsObjectProperty()
+	deleteObject.AppendIRI(testrig.URLMustParse(objectIRI))
+	delete.SetActivityStreamsObject(deleteObject)
+
+	// Set the To of the delete as public
+	deleteTo := streams.NewActivityStreamsToProperty()
+	deleteTo.AppendIRI(testrig.URLMustParse(pub.PublicActivityPubIRI))
+	delete.SetActivityStreamsTo(deleteTo)
+
+	// set some random-ass ID for the activity
+	deleteID := streams.NewJSONLDIdProperty()
+	deleteID.SetIRI(testrig.URLMustParse(deleteIRI))
+	delete.SetJSONLDId(deleteID)
+
+	return delete
+}
+
+// TestPostBlock verifies that a remote account can block one of
+// our instance users.
+func (suite *InboxPostTestSuite) TestPostBlock() {
+	var (
+		requestingAccount = suite.testAccounts["remote_account_1"]
+		targetAccount     = suite.testAccounts["local_account_1"]
+		activityID        = requestingAccount.URI + "/some-new-activity/01FG9C441MCTW3R2W117V2PQK3"
+	)
+
+	block := suite.newBlock(activityID, requestingAccount, targetAccount)
+
+	// Block.
+	suite.inboxPost(
+		block,
+		requestingAccount,
+		targetAccount,
+		http.StatusAccepted,
+		`{"status":"Accepted"}`,
+		suite.signatureCheck,
+	)
+
+	// Ensure block created in the database.
+	var (
+		dbBlock *gtsmodel.Block
+		err     error
+	)
+
+	if !testrig.WaitFor(func() bool {
+		dbBlock, err = suite.db.GetBlock(context.Background(), requestingAccount.ID, targetAccount.ID)
+		return err == nil && dbBlock != nil
+	}) {
+		suite.FailNow("timed out waiting for block to be created")
+	}
+}
+
+// TestPostUnblock verifies that a remote account who blocks
+// one of our instance users should be able to undo that block.
+func (suite *InboxPostTestSuite) TestPostUnblock() {
+	var (
+		ctx               = context.Background()
+		requestingAccount = suite.testAccounts["remote_account_1"]
+		targetAccount     = suite.testAccounts["local_account_1"]
+		blockID           = "http://fossbros-anonymous.io/blocks/01H1462TPRTVG2RTQCTSQ7N6Q0"
+		undoID            = "http://fossbros-anonymous.io/some-activity/01H1463RDQNG5H98F29BXYHW6B"
+	)
+
+	// Put a block in the database so we have something to undo.
+	block := &gtsmodel.Block{
+		ID:              id.NewULID(),
+		URI:             blockID,
+		AccountID:       requestingAccount.ID,
+		TargetAccountID: targetAccount.ID,
+	}
+	if err := suite.db.PutBlock(ctx, block); err != nil {
+		suite.FailNow(err.Error())
 	}
 
-	tc := testrig.NewTestTransportController(&suite.state, mockHTTPClient)
-	federator := testrig.NewTestFederator(&suite.state, tc, suite.mediaManager)
-	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(&suite.state, federator, emailSender, suite.mediaManager)
-	userModule := users.New(processor)
-
-	// setup request
-	recorder := httptest.NewRecorder()
-	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Request = httptest.NewRequest(http.MethodPost, targetURI.String(), body) // the endpoint we're hitting
-	ctx.Request.Header.Set("Signature", signature)
-	ctx.Request.Header.Set("Date", dateHeader)
-	ctx.Request.Header.Set("Digest", digestHeader)
-	ctx.Request.Header.Set("Content-Type", "application/activity+json")
-
-	// we need to pass the context through signature check first to set appropriate values on it
-	suite.signatureCheck(ctx)
-
-	// normally the router would populate these params from the path values,
-	// but because we're calling the function directly, we need to set them manually.
-	ctx.Params = gin.Params{
-		gin.Param{
-			Key:   users.UsernameKey,
-			Value: receivingAccount.Username,
-		},
+	// Create the undo from the AS model block.
+	asBlock, err := suite.tc.BlockToAS(ctx, block)
+	if err != nil {
+		suite.FailNow(err.Error())
 	}
 
-	// trigger the function being tested
-	userModule.InboxPOSTHandler(ctx)
+	undo := suite.newUndo(asBlock, func() vocab.ActivityStreamsObjectProperty {
+		// Append the whole block as Object.
+		op := streams.NewActivityStreamsObjectProperty()
+		op.AppendActivityStreamsBlock(asBlock)
+		return op
+	}, targetAccount.URI, undoID)
 
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-	suite.Empty(b)
-	suite.Equal(http.StatusOK, result.StatusCode)
+	// Undo.
+	suite.inboxPost(
+		undo,
+		requestingAccount,
+		targetAccount,
+		http.StatusAccepted,
+		`{"status":"Accepted"}`,
+		suite.signatureCheck,
+	)
+
+	// Ensure block removed from the database.
+	if !testrig.WaitFor(func() bool {
+		_, err := suite.db.GetBlockByID(ctx, block.ID)
+		return errors.Is(err, db.ErrNoEntries)
+	}) {
+		suite.FailNow("timed out waiting for block to be removed")
+	}
+}
+
+func (suite *InboxPostTestSuite) TestPostUpdate() {
+	var (
+		requestingAccount  = new(gtsmodel.Account)
+		targetAccount      = suite.testAccounts["local_account_1"]
+		activityID         = "http://fossbros-anonymous.io/72cc96a3-f742-4daf-b9f5-3407667260c5"
+		updatedDisplayName = "updated display name!"
+	)
+
+	// Copy the requesting account, since we'll be changing it.
+	*requestingAccount = *suite.testAccounts["remote_account_1"]
+
+	// Update the account's display name.
+	requestingAccount.DisplayName = updatedDisplayName
+
+	// Add an emoji to the account; because we're serializing this
+	// remote account from our own instance, we need to cheat a bit
+	// to get the emoji to work properly, just for this test.
+	testEmoji := &gtsmodel.Emoji{}
+	*testEmoji = *testrig.NewTestEmojis()["yell"]
+	testEmoji.ImageURL = testEmoji.ImageRemoteURL // <- here's the cheat
+	requestingAccount.Emojis = []*gtsmodel.Emoji{testEmoji}
+
+	// Create an update from the account.
+	asAccount, err := suite.tc.AccountToAS(context.Background(), requestingAccount)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	update := suite.newUpdatePerson(asAccount, targetAccount.URI, activityID)
+
+	// Update.
+	suite.inboxPost(
+		update,
+		requestingAccount,
+		targetAccount,
+		http.StatusAccepted,
+		`{"status":"Accepted"}`,
+		suite.signatureCheck,
+	)
 
 	// account should be changed in the database now
 	var dbUpdatedAccount *gtsmodel.Account
 
 	if !testrig.WaitFor(func() bool {
 		// displayName should be updated
-		dbUpdatedAccount, _ = suite.db.GetAccountByID(context.Background(), updatedAccount.ID)
-		return dbUpdatedAccount.DisplayName == "updated display name!"
+		dbUpdatedAccount, _ = suite.db.GetAccountByID(context.Background(), requestingAccount.ID)
+		return dbUpdatedAccount.DisplayName == updatedDisplayName
 	}) {
 		suite.FailNow("timed out waiting for account update")
 	}
@@ -344,133 +383,82 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 	suite.WithinDuration(time.Now(), dbUpdatedAccount.FetchedAt, 10*time.Second)
 
 	// everything else should be the same as it was before
-	suite.EqualValues(updatedAccount.Username, dbUpdatedAccount.Username)
-	suite.EqualValues(updatedAccount.Domain, dbUpdatedAccount.Domain)
-	suite.EqualValues(updatedAccount.AvatarMediaAttachmentID, dbUpdatedAccount.AvatarMediaAttachmentID)
-	suite.EqualValues(updatedAccount.AvatarMediaAttachment, dbUpdatedAccount.AvatarMediaAttachment)
-	suite.EqualValues(updatedAccount.AvatarRemoteURL, dbUpdatedAccount.AvatarRemoteURL)
-	suite.EqualValues(updatedAccount.HeaderMediaAttachmentID, dbUpdatedAccount.HeaderMediaAttachmentID)
-	suite.EqualValues(updatedAccount.HeaderMediaAttachment, dbUpdatedAccount.HeaderMediaAttachment)
-	suite.EqualValues(updatedAccount.HeaderRemoteURL, dbUpdatedAccount.HeaderRemoteURL)
-	suite.EqualValues(updatedAccount.Note, dbUpdatedAccount.Note)
-	suite.EqualValues(updatedAccount.Memorial, dbUpdatedAccount.Memorial)
-	suite.EqualValues(updatedAccount.AlsoKnownAs, dbUpdatedAccount.AlsoKnownAs)
-	suite.EqualValues(updatedAccount.MovedToAccountID, dbUpdatedAccount.MovedToAccountID)
-	suite.EqualValues(updatedAccount.Bot, dbUpdatedAccount.Bot)
-	suite.EqualValues(updatedAccount.Reason, dbUpdatedAccount.Reason)
-	suite.EqualValues(updatedAccount.Locked, dbUpdatedAccount.Locked)
-	suite.EqualValues(updatedAccount.Discoverable, dbUpdatedAccount.Discoverable)
-	suite.EqualValues(updatedAccount.Privacy, dbUpdatedAccount.Privacy)
-	suite.EqualValues(updatedAccount.Sensitive, dbUpdatedAccount.Sensitive)
-	suite.EqualValues(updatedAccount.Language, dbUpdatedAccount.Language)
-	suite.EqualValues(updatedAccount.URI, dbUpdatedAccount.URI)
-	suite.EqualValues(updatedAccount.URL, dbUpdatedAccount.URL)
-	suite.EqualValues(updatedAccount.InboxURI, dbUpdatedAccount.InboxURI)
-	suite.EqualValues(updatedAccount.OutboxURI, dbUpdatedAccount.OutboxURI)
-	suite.EqualValues(updatedAccount.FollowingURI, dbUpdatedAccount.FollowingURI)
-	suite.EqualValues(updatedAccount.FollowersURI, dbUpdatedAccount.FollowersURI)
-	suite.EqualValues(updatedAccount.FeaturedCollectionURI, dbUpdatedAccount.FeaturedCollectionURI)
-	suite.EqualValues(updatedAccount.ActorType, dbUpdatedAccount.ActorType)
-	suite.EqualValues(updatedAccount.PublicKey, dbUpdatedAccount.PublicKey)
-	suite.EqualValues(updatedAccount.PublicKeyURI, dbUpdatedAccount.PublicKeyURI)
-	suite.EqualValues(updatedAccount.SensitizedAt, dbUpdatedAccount.SensitizedAt)
-	suite.EqualValues(updatedAccount.SilencedAt, dbUpdatedAccount.SilencedAt)
-	suite.EqualValues(updatedAccount.SuspendedAt, dbUpdatedAccount.SuspendedAt)
-	suite.EqualValues(updatedAccount.HideCollections, dbUpdatedAccount.HideCollections)
-	suite.EqualValues(updatedAccount.SuspensionOrigin, dbUpdatedAccount.SuspensionOrigin)
+	suite.EqualValues(requestingAccount.Username, dbUpdatedAccount.Username)
+	suite.EqualValues(requestingAccount.Domain, dbUpdatedAccount.Domain)
+	suite.EqualValues(requestingAccount.AvatarMediaAttachmentID, dbUpdatedAccount.AvatarMediaAttachmentID)
+	suite.EqualValues(requestingAccount.AvatarMediaAttachment, dbUpdatedAccount.AvatarMediaAttachment)
+	suite.EqualValues(requestingAccount.AvatarRemoteURL, dbUpdatedAccount.AvatarRemoteURL)
+	suite.EqualValues(requestingAccount.HeaderMediaAttachmentID, dbUpdatedAccount.HeaderMediaAttachmentID)
+	suite.EqualValues(requestingAccount.HeaderMediaAttachment, dbUpdatedAccount.HeaderMediaAttachment)
+	suite.EqualValues(requestingAccount.HeaderRemoteURL, dbUpdatedAccount.HeaderRemoteURL)
+	suite.EqualValues(requestingAccount.Note, dbUpdatedAccount.Note)
+	suite.EqualValues(requestingAccount.Memorial, dbUpdatedAccount.Memorial)
+	suite.EqualValues(requestingAccount.AlsoKnownAs, dbUpdatedAccount.AlsoKnownAs)
+	suite.EqualValues(requestingAccount.MovedToAccountID, dbUpdatedAccount.MovedToAccountID)
+	suite.EqualValues(requestingAccount.Bot, dbUpdatedAccount.Bot)
+	suite.EqualValues(requestingAccount.Reason, dbUpdatedAccount.Reason)
+	suite.EqualValues(requestingAccount.Locked, dbUpdatedAccount.Locked)
+	suite.EqualValues(requestingAccount.Discoverable, dbUpdatedAccount.Discoverable)
+	suite.EqualValues(requestingAccount.Privacy, dbUpdatedAccount.Privacy)
+	suite.EqualValues(requestingAccount.Sensitive, dbUpdatedAccount.Sensitive)
+	suite.EqualValues(requestingAccount.Language, dbUpdatedAccount.Language)
+	suite.EqualValues(requestingAccount.URI, dbUpdatedAccount.URI)
+	suite.EqualValues(requestingAccount.URL, dbUpdatedAccount.URL)
+	suite.EqualValues(requestingAccount.InboxURI, dbUpdatedAccount.InboxURI)
+	suite.EqualValues(requestingAccount.OutboxURI, dbUpdatedAccount.OutboxURI)
+	suite.EqualValues(requestingAccount.FollowingURI, dbUpdatedAccount.FollowingURI)
+	suite.EqualValues(requestingAccount.FollowersURI, dbUpdatedAccount.FollowersURI)
+	suite.EqualValues(requestingAccount.FeaturedCollectionURI, dbUpdatedAccount.FeaturedCollectionURI)
+	suite.EqualValues(requestingAccount.ActorType, dbUpdatedAccount.ActorType)
+	suite.EqualValues(requestingAccount.PublicKey, dbUpdatedAccount.PublicKey)
+	suite.EqualValues(requestingAccount.PublicKeyURI, dbUpdatedAccount.PublicKeyURI)
+	suite.EqualValues(requestingAccount.SensitizedAt, dbUpdatedAccount.SensitizedAt)
+	suite.EqualValues(requestingAccount.SilencedAt, dbUpdatedAccount.SilencedAt)
+	suite.EqualValues(requestingAccount.SuspendedAt, dbUpdatedAccount.SuspendedAt)
+	suite.EqualValues(requestingAccount.HideCollections, dbUpdatedAccount.HideCollections)
+	suite.EqualValues(requestingAccount.SuspensionOrigin, dbUpdatedAccount.SuspensionOrigin)
 }
 
 func (suite *InboxPostTestSuite) TestPostDelete() {
-	deletedAccount := *suite.testAccounts["remote_account_1"]
-	receivingAccount := suite.testAccounts["local_account_1"]
+	var (
+		ctx               = context.Background()
+		requestingAccount = suite.testAccounts["remote_account_1"]
+		targetAccount     = suite.testAccounts["local_account_1"]
+		activityID        = requestingAccount.URI + "/some-new-activity/01FG9C441MCTW3R2W117V2PQK3"
+	)
 
-	// create a delete
-	delete := streams.NewActivityStreamsDelete()
+	delete := suite.newDelete(requestingAccount.URI, requestingAccount.URI, activityID)
 
-	// set the appropriate actor on it
-	deleteActor := streams.NewActivityStreamsActorProperty()
-	deleteActor.AppendIRI(testrig.URLMustParse(deletedAccount.URI))
-	delete.SetActivityStreamsActor(deleteActor)
-
-	// Set the account iri as the 'object' property.
-	deleteObject := streams.NewActivityStreamsObjectProperty()
-	deleteObject.AppendIRI(testrig.URLMustParse(deletedAccount.URI))
-	delete.SetActivityStreamsObject(deleteObject)
-
-	// Set the To of the delete as public
-	deleteTo := streams.NewActivityStreamsToProperty()
-	deleteTo.AppendIRI(testrig.URLMustParse(pub.PublicActivityPubIRI))
-	delete.SetActivityStreamsTo(deleteTo)
-
-	// set some random-ass ID for the activity
-	deleteID := streams.NewJSONLDIdProperty()
-	deleteID.SetIRI(testrig.URLMustParse("http://fossbros-anonymous.io/d360613a-dc8d-4563-8f0b-b6161caf0f2b"))
-	delete.SetJSONLDId(deleteID)
-
-	targetURI := testrig.URLMustParse(receivingAccount.InboxURI)
-
-	signature, digestHeader, dateHeader := testrig.GetSignatureForActivity(delete, deletedAccount.PublicKeyURI, deletedAccount.PrivateKey, targetURI)
-	bodyI, err := ap.Serialize(delete)
-	suite.NoError(err)
-
-	bodyJson, err := json.Marshal(bodyI)
-	suite.NoError(err)
-	body := bytes.NewReader(bodyJson)
-
-	tc := testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../../testrig/media"))
-	federator := testrig.NewTestFederator(&suite.state, tc, suite.mediaManager)
-	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(&suite.state, federator, emailSender, suite.mediaManager)
-	userModule := users.New(processor)
-
-	// setup request
-	recorder := httptest.NewRecorder()
-	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Request = httptest.NewRequest(http.MethodPost, targetURI.String(), body) // the endpoint we're hitting
-	ctx.Request.Header.Set("Signature", signature)
-	ctx.Request.Header.Set("Date", dateHeader)
-	ctx.Request.Header.Set("Digest", digestHeader)
-	ctx.Request.Header.Set("Content-Type", "application/activity+json")
-
-	// we need to pass the context through signature check first to set appropriate values on it
-	suite.signatureCheck(ctx)
-
-	// normally the router would populate these params from the path values,
-	// but because we're calling the function directly, we need to set them manually.
-	ctx.Params = gin.Params{
-		gin.Param{
-			Key:   users.UsernameKey,
-			Value: receivingAccount.Username,
-		},
-	}
-
-	// trigger the function being tested
-	userModule.InboxPOSTHandler(ctx)
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-	suite.Empty(b)
-	suite.Equal(http.StatusOK, result.StatusCode)
+	// Delete.
+	suite.inboxPost(
+		delete,
+		requestingAccount,
+		targetAccount,
+		http.StatusAccepted,
+		`{"status":"Accepted"}`,
+		suite.signatureCheck,
+	)
 
 	if !testrig.WaitFor(func() bool {
 		// local account 2 blocked foss_satan, that block should be gone now
 		testBlock := suite.testBlocks["local_account_2_block_remote_account_1"]
-		dbBlock := &gtsmodel.Block{}
-		err = suite.db.GetByID(ctx, testBlock.ID, dbBlock)
+		_, err := suite.db.GetBlockByID(ctx, testBlock.ID)
 		return suite.ErrorIs(err, db.ErrNoEntries)
 	}) {
 		suite.FailNow("timed out waiting for block to be removed")
 	}
 
-	// no statuses from foss satan should be left in the database
-	dbStatuses, err := suite.db.GetAccountStatuses(ctx, deletedAccount.ID, 0, false, false, "", "", false, false)
-	suite.ErrorIs(err, db.ErrNoEntries)
-	suite.Empty(dbStatuses)
+	if !testrig.WaitFor(func() bool {
+		// no statuses from foss satan should be left in the database
+		dbStatuses, err := suite.db.GetAccountStatuses(ctx, requestingAccount.ID, 0, false, false, "", "", false, false)
+		return len(dbStatuses) == 0 && errors.Is(err, db.ErrNoEntries)
+	}) {
+		suite.FailNow("timed out waiting for statuses to be removed")
+	}
 
-	dbAccount, err := suite.db.GetAccountByID(ctx, deletedAccount.ID)
+	// Account should be stubbified.
+	dbAccount, err := suite.db.GetAccountByID(ctx, requestingAccount.ID)
 	suite.NoError(err)
-
 	suite.Empty(dbAccount.Note)
 	suite.Empty(dbAccount.DisplayName)
 	suite.Empty(dbAccount.AvatarMediaAttachmentID)
@@ -483,6 +471,69 @@ func (suite *InboxPostTestSuite) TestPostDelete() {
 	suite.False(*dbAccount.Discoverable)
 	suite.WithinDuration(time.Now(), dbAccount.SuspendedAt, 30*time.Second)
 	suite.Equal(dbAccount.ID, dbAccount.SuspensionOrigin)
+}
+
+func (suite *InboxPostTestSuite) TestPostEmptyCreate() {
+	var (
+		requestingAccount = suite.testAccounts["remote_account_1"]
+		targetAccount     = suite.testAccounts["local_account_1"]
+	)
+
+	// Post a create with no object.
+	create := streams.NewActivityStreamsCreate()
+
+	suite.inboxPost(
+		create,
+		requestingAccount,
+		targetAccount,
+		http.StatusBadRequest,
+		`{"error":"Bad Request: incoming Activity Create did not have required id property set"}`,
+		suite.signatureCheck,
+	)
+}
+
+func (suite *InboxPostTestSuite) TestPostFromBlockedAccount() {
+	var (
+		requestingAccount = suite.testAccounts["remote_account_1"]
+		targetAccount     = suite.testAccounts["local_account_2"]
+		activityID        = requestingAccount.URI + "/some-new-activity/01FG9C441MCTW3R2W117V2PQK3"
+	)
+
+	person, err := suite.tc.AccountToAS(context.Background(), requestingAccount)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Post an update from foss satan to turtle, who blocks him.
+	update := suite.newUpdatePerson(person, targetAccount.URI, activityID)
+
+	suite.inboxPost(
+		update,
+		requestingAccount,
+		targetAccount,
+		http.StatusForbidden,
+		`{"error":"Forbidden"}`,
+		suite.signatureCheck,
+	)
+}
+
+func (suite *InboxPostTestSuite) TestPostUnauthorized() {
+	var (
+		requestingAccount = suite.testAccounts["remote_account_1"]
+		targetAccount     = suite.testAccounts["local_account_1"]
+	)
+
+	// Post an empty create.
+	create := streams.NewActivityStreamsCreate()
+
+	suite.inboxPost(
+		create,
+		requestingAccount,
+		targetAccount,
+		http.StatusUnauthorized,
+		`{"error":"Unauthorized"}`,
+		// Omit signature check middleware.
+	)
 }
 
 func TestInboxPostTestSuite(t *testing.T) {

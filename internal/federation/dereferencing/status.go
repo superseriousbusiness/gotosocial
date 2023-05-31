@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -80,15 +81,23 @@ func (d *deref) getStatusByURI(ctx context.Context, requestUser string, uri *url
 		err    error
 	)
 
-	// Search the database for existing status with ID URI.
-	status, err = d.state.DB.GetStatusByURI(ctx, uriStr)
+	// Search the database for existing status with URI.
+	status, err = d.state.DB.GetStatusByURI(
+		// request a barebones object, it may be in the
+		// db but with related models not yet dereferenced.
+		gtscontext.SetBarebones(ctx),
+		uriStr,
+	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, nil, gtserror.Newf("error checking database for status %s by uri: %w", uriStr, err)
 	}
 
 	if status == nil {
-		// Else, search the database for existing by ID URL.
-		status, err = d.state.DB.GetStatusByURL(ctx, uriStr)
+		// Else, search the database for existing by URL.
+		status, err = d.state.DB.GetStatusByURL(
+			gtscontext.SetBarebones(ctx),
+			uriStr,
+		)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return nil, nil, gtserror.Newf("error checking database for status %s by url: %w", uriStr, err)
 		}
@@ -105,6 +114,15 @@ func (d *deref) getStatusByURI(ctx context.Context, requestUser string, uri *url
 			Local: func() *bool { var false bool; return &false }(),
 			URI:   uriStr,
 		}, nil)
+	}
+
+	// Check whether needs update.
+	if statusUpToDate(status) {
+		// This is existing up-to-date status, ensure it is populated.
+		if err := d.state.DB.PopulateStatus(ctx, status); err != nil {
+			log.Errorf(ctx, "error populating existing status: %v", err)
+		}
+		return status, nil, nil
 	}
 
 	// Try to update + deref existing status model.
