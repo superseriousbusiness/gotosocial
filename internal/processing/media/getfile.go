@@ -148,8 +148,7 @@ func (p *Processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		// [
 		//   the reason it was removed was because a slow
 		//   client connection could hold open a storage
-		//   recache operation, and so holding open a media
-		//   worker worker.
+		//   recache operation -> holding open a media worker.
 		// ]
 
 		dataFn := func(innerCtx context.Context) (io.ReadCloser, int64, error) {
@@ -161,7 +160,7 @@ func (p *Processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		}
 
 		// Start recaching this media with the prepared data function.
-		processingMedia, err := p.mediaManager.PreProcessMediaRecache(ctx, dataFn, nil, wantedMediaID)
+		processingMedia, err := p.mediaManager.PreProcessMediaRecache(ctx, dataFn, wantedMediaID)
 		if err != nil {
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("error recaching media: %s", err))
 		}

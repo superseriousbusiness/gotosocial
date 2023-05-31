@@ -102,8 +102,7 @@ func dereferenceByAPIV1Instance(ctx context.Context, t *transport, iri *url.URL)
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		err := fmt.Errorf("GET request to %s failed: %s", iriStr, resp.Status)
-		return nil, gtserror.WithStatusCode(err, resp.StatusCode)
+		return nil, gtserror.NewFromResponse(resp)
 	}
 
 	b, err := io.ReadAll(resp.Body)
@@ -133,7 +132,7 @@ func dereferenceByAPIV1Instance(ctx context.Context, t *transport, iri *url.URL)
 		ID:                     ulid,
 		Domain:                 iri.Host,
 		Title:                  apiResp.Title,
-		URI:                    fmt.Sprintf("%s://%s", iri.Scheme, iri.Host),
+		URI:                    iri.Scheme + "://" + iri.Host,
 		ShortDescription:       apiResp.ShortDescription,
 		Description:            apiResp.Description,
 		ContactEmail:           apiResp.Email,
@@ -253,8 +252,7 @@ func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*ur
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		err := fmt.Errorf("GET request to %s failed: %s", iriStr, resp.Status)
-		return nil, gtserror.WithStatusCode(err, resp.StatusCode)
+		return nil, gtserror.NewFromResponse(resp)
 	}
 
 	b, err := io.ReadAll(resp.Body)
@@ -305,8 +303,7 @@ func callNodeInfo(ctx context.Context, t *transport, iri *url.URL) (*apimodel.No
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		err := fmt.Errorf("GET request to %s failed: %s", iriStr, resp.Status)
-		return nil, gtserror.WithStatusCode(err, resp.StatusCode)
+		return nil, gtserror.NewFromResponse(resp)
 	}
 
 	b, err := io.ReadAll(resp.Body)

@@ -20,7 +20,6 @@ package dereferencing
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"net/url"
 	"time"
@@ -28,6 +27,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -80,17 +81,25 @@ func (d *deref) getStatusByURI(ctx context.Context, requestUser string, uri *url
 		err    error
 	)
 
-	// Search the database for existing status with ID URI.
-	status, err = d.state.DB.GetStatusByURI(ctx, uriStr)
+	// Search the database for existing status with URI.
+	status, err = d.state.DB.GetStatusByURI(
+		// request a barebones object, it may be in the
+		// db but with related models not yet dereferenced.
+		gtscontext.SetBarebones(ctx),
+		uriStr,
+	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, nil, fmt.Errorf("GetStatusByURI: error checking database for status %s by uri: %w", uriStr, err)
+		return nil, nil, gtserror.Newf("error checking database for status %s by uri: %w", uriStr, err)
 	}
 
 	if status == nil {
-		// Else, search the database for existing by ID URL.
-		status, err = d.state.DB.GetStatusByURL(ctx, uriStr)
+		// Else, search the database for existing by URL.
+		status, err = d.state.DB.GetStatusByURL(
+			gtscontext.SetBarebones(ctx),
+			uriStr,
+		)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			return nil, nil, fmt.Errorf("GetStatusByURI: error checking database for status %s by url: %w", uriStr, err)
+			return nil, nil, gtserror.Newf("error checking database for status %s by url: %w", uriStr, err)
 		}
 	}
 
@@ -105,6 +114,15 @@ func (d *deref) getStatusByURI(ctx context.Context, requestUser string, uri *url
 			Local: func() *bool { var false bool; return &false }(),
 			URI:   uriStr,
 		}, nil)
+	}
+
+	// Check whether needs update.
+	if statusUpToDate(status) {
+		// This is existing up-to-date status, ensure it is populated.
+		if err := d.state.DB.PopulateStatus(ctx, status); err != nil {
+			log.Errorf(ctx, "error populating existing status: %v", err)
+		}
+		return status, nil, nil
 	}
 
 	// Try to update + deref existing status model.
@@ -138,7 +156,7 @@ func (d *deref) RefreshStatus(ctx context.Context, requestUser string, status *g
 	// Parse the URI from status.
 	uri, err := url.Parse(status.URI)
 	if err != nil {
-		return nil, nil, fmt.Errorf("RefreshStatus: invalid status uri %q: %w", status.URI, err)
+		return nil, nil, gtserror.Newf("invalid status uri %q: %w", status.URI, err)
 	}
 
 	// Try to update + deref existing status model.
@@ -170,7 +188,7 @@ func (d *deref) RefreshStatusAsync(ctx context.Context, requestUser string, stat
 	// Parse the URI from status.
 	uri, err := url.Parse(status.URI)
 	if err != nil {
-		log.Errorf(ctx, "RefreshStatusAsync: invalid status uri %q: %v", status.URI, err)
+		log.Errorf(ctx, "invalid status uri %q: %v", status.URI, err)
 		return
 	}
 
@@ -192,14 +210,14 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 	// Pre-fetch a transport for requesting username, used by later dereferencing.
 	tsport, err := d.transportController.NewTransportForUsername(ctx, requestUser)
 	if err != nil {
-		return nil, nil, fmt.Errorf("enrichStatus: couldn't create transport: %w", err)
+		return nil, nil, gtserror.Newf("couldn't create transport: %w", err)
 	}
 
 	// Check whether this account URI is a blocked domain / subdomain.
 	if blocked, err := d.state.DB.IsDomainBlocked(ctx, uri.Host); err != nil {
-		return nil, nil, fmt.Errorf("enrichStatus: error checking blocked domain: %w", err)
+		return nil, nil, gtserror.Newf("error checking blocked domain: %w", err)
 	} else if blocked {
-		return nil, nil, fmt.Errorf("enrichStatus: %s is blocked", uri.Host)
+		return nil, nil, gtserror.Newf("%s is blocked", uri.Host)
 	}
 
 	var derefd bool
@@ -208,13 +226,13 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 		// Dereference latest version of the status.
 		b, err := tsport.Dereference(ctx, uri)
 		if err != nil {
-			return nil, nil, &ErrNotRetrievable{fmt.Errorf("enrichStatus: error deferencing %s: %w", uri, err)}
+			return nil, nil, &ErrNotRetrievable{gtserror.Newf("error deferencing %s: %w", uri, err)}
 		}
 
 		// Attempt to resolve ActivityPub status from data.
 		apubStatus, err = ap.ResolveStatusable(ctx, b)
 		if err != nil {
-			return nil, nil, fmt.Errorf("enrichStatus: error resolving statusable from data for account %s: %w", uri, err)
+			return nil, nil, gtserror.Newf("error resolving statusable from data for account %s: %w", uri, err)
 		}
 
 		// Mark as deref'd.
@@ -224,14 +242,14 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 	// Get the attributed-to status in order to fetch profile.
 	attributedTo, err := ap.ExtractAttributedTo(apubStatus)
 	if err != nil {
-		return nil, nil, errors.New("enrichStatus: attributedTo was empty")
+		return nil, nil, gtserror.New("attributedTo was empty")
 	}
 
 	// Ensure we have the author account of the status dereferenced (+ up-to-date).
 	if author, _, err := d.getAccountByURI(ctx, requestUser, attributedTo); err != nil {
 		if status.AccountID == "" {
 			// Provided status account is nil, i.e. this is a new status / author, so a deref fail is unrecoverable.
-			return nil, nil, fmt.Errorf("enrichStatus: failed to dereference status author %s: %w", uri, err)
+			return nil, nil, gtserror.Newf("failed to dereference status author %s: %w", uri, err)
 		}
 	} else if status.AccountID != "" && status.AccountID != author.ID {
 		// There already existed an account for this status author, but account ID changed. This shouldn't happen!
@@ -247,7 +265,7 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 		// may contain out-of-date information, convert AP model to our GTS model.
 		latestStatus, err = d.typeConverter.ASStatusToStatus(ctx, apubStatus)
 		if err != nil {
-			return nil, nil, fmt.Errorf("enrichStatus: error converting statusable to gts model for status %s: %w", uri, err)
+			return nil, nil, gtserror.Newf("error converting statusable to gts model for status %s: %w", uri, err)
 		}
 	}
 
@@ -258,7 +276,7 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 		// Generate new status ID from the provided creation date.
 		latestStatus.ID, err = id.NewULIDFromTime(latestStatus.CreatedAt)
 		if err != nil {
-			return nil, nil, fmt.Errorf("enrichStatus: invalid created at date: %w", err)
+			return nil, nil, gtserror.Newf("invalid created at date: %w", err)
 		}
 	}
 
@@ -268,19 +286,19 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 
 	// Ensure the status' mentions are populated, and pass in existing to check for changes.
 	if err := d.fetchStatusMentions(ctx, requestUser, status, latestStatus); err != nil {
-		return nil, nil, fmt.Errorf("enrichStatus: error populating mentions for status %s: %w", uri, err)
+		return nil, nil, gtserror.Newf("error populating mentions for status %s: %w", uri, err)
 	}
 
 	// TODO: populateStatusTags()
 
 	// Ensure the status' media attachments are populated, passing in existing to check for changes.
 	if err := d.fetchStatusAttachments(ctx, tsport, status, latestStatus); err != nil {
-		return nil, nil, fmt.Errorf("enrichStatus: error populating attachments for status %s: %w", uri, err)
+		return nil, nil, gtserror.Newf("error populating attachments for status %s: %w", uri, err)
 	}
 
 	// Ensure the status' emoji attachments are populated, passing in existing to check for changes.
 	if err := d.fetchStatusEmojis(ctx, requestUser, status, latestStatus); err != nil {
-		return nil, nil, fmt.Errorf("enrichStatus: error populating emojis for status %s: %w", uri, err)
+		return nil, nil, gtserror.Newf("error populating emojis for status %s: %w", uri, err)
 	}
 
 	if status.CreatedAt.IsZero() {
@@ -297,12 +315,12 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 		}
 
 		if err != nil {
-			return nil, nil, fmt.Errorf("enrichStatus: error putting in database: %w", err)
+			return nil, nil, gtserror.Newf("error putting in database: %w", err)
 		}
 	} else {
 		// This is an existing status, update the model in the database.
 		if err := d.state.DB.UpdateStatus(ctx, latestStatus); err != nil {
-			return nil, nil, fmt.Errorf("enrichStatus: error updating database: %w", err)
+			return nil, nil, gtserror.Newf("error updating database: %w", err)
 		}
 	}
 
@@ -359,7 +377,7 @@ func (d *deref) fetchStatusMentions(ctx context.Context, requestUser string, exi
 
 		// Place the new mention into the database.
 		if err := d.state.DB.PutMention(ctx, mention); err != nil {
-			return fmt.Errorf("error putting mention in database: %w", err)
+			return gtserror.Newf("error putting mention in database: %w", err)
 		}
 
 		// Set the *new* mention and ID.
@@ -406,7 +424,7 @@ func (d *deref) fetchStatusAttachments(ctx context.Context, tsport transport.Tra
 		// Start pre-processing remote media at remote URL.
 		processing, err := d.mediaManager.PreProcessMedia(ctx, func(ctx context.Context) (io.ReadCloser, int64, error) {
 			return tsport.DereferenceMedia(ctx, remoteURL)
-		}, nil, status.AccountID, &media.AdditionalMediaInfo{
+		}, status.AccountID, &media.AdditionalMediaInfo{
 			StatusID:    &status.ID,
 			RemoteURL:   &placeholder.RemoteURL,
 			Description: &placeholder.Description,
@@ -447,7 +465,7 @@ func (d *deref) fetchStatusEmojis(ctx context.Context, requestUser string, exist
 	// Fetch the full-fleshed-out emoji objects for our status.
 	emojis, err := d.populateEmojis(ctx, status.Emojis, requestUser)
 	if err != nil {
-		return fmt.Errorf("failed to populate emojis: %w", err)
+		return gtserror.Newf("failed to populate emojis: %w", err)
 	}
 
 	// Iterate over and get their IDs.

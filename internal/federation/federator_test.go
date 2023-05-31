@@ -25,6 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -58,6 +59,13 @@ func (suite *FederatorStandardTestSuite) SetupTest() {
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.state.DB = suite.db
+
+	testrig.StartTimelines(
+		&suite.state,
+		visibility.NewFilter(&suite.state),
+		suite.tc,
+	)
+
 	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 }

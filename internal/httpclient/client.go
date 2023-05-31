@@ -41,6 +41,9 @@ import (
 )
 
 var (
+	// ErrInvalidRequest is returned if a given HTTP request is invalid and cannot be performed.
+	ErrInvalidRequest = errors.New("invalid http request")
+
 	// ErrInvalidNetwork is returned if the request would not be performed over TCP
 	ErrInvalidNetwork = errors.New("invalid network type")
 
@@ -90,6 +93,9 @@ type Config struct {
 //     cases to protect against forged / unknown content-lengths
 //   - protection from server side request forgery (SSRF) by only dialing
 //     out to known public IP prefixes, configurable with allows/blocks
+//   - retry-backoff logic for error temporary HTTP error responses
+//   - optional request signing
+//   - request logging
 type Client struct {
 	client   http.Client
 	badHosts cache.Cache[string, struct{}]
@@ -156,14 +162,14 @@ func New(cfg Config) *Client {
 	return &c
 }
 
-// Do ...
+// Do will essentially perform http.Client{}.Do() with retry-backoff functionality.
 func (c *Client) Do(r *http.Request) (*http.Response, error) {
 	return c.DoSigned(r, func(r *http.Request) error {
 		return nil // no request signing
 	})
 }
 
-// DoSigned ...
+// DoSigned will essentially perform http.Client{}.Do() with retry-backoff functionality and requesting signing..
 func (c *Client) DoSigned(r *http.Request, sign SignFunc) (rsp *http.Response, err error) {
 	const (
 		// max no. attempts.
@@ -172,6 +178,11 @@ func (c *Client) DoSigned(r *http.Request, sign SignFunc) (rsp *http.Response, e
 		// starting backoff duration.
 		baseBackoff = 2 * time.Second
 	)
+
+	// First validate incoming request.
+	if err := ValidateRequest(r); err != nil {
+		return nil, err
+	}
 
 	// Get request hostname.
 	host := r.URL.Hostname()
@@ -234,8 +245,8 @@ func (c *Client) DoSigned(r *http.Request, sign SignFunc) (rsp *http.Response, e
 				return rsp, nil
 			}
 
-			// Generate error from status code for logging
-			err = errors.New(`http response "` + rsp.Status + `"`)
+			// Create loggable error from response status code.
+			err = fmt.Errorf(`http response: %s`, rsp.Status)
 
 			// Search for a provided "Retry-After" header value.
 			if after := rsp.Header.Get("Retry-After"); after != "" {
@@ -307,7 +318,7 @@ func (c *Client) DoSigned(r *http.Request, sign SignFunc) (rsp *http.Response, e
 	return
 }
 
-// do ...
+// do wraps http.Client{}.Do() to provide safely limited response bodies.
 func (c *Client) do(req *http.Request) (*http.Response, error) {
 	// Perform the HTTP request.
 	rsp, err := c.client.Do(req)

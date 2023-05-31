@@ -138,7 +138,7 @@ func (m *Module) NotificationsGETHandler(c *gin.Context) {
 		limit = int(i)
 	}
 
-	resp, errWithCode := m.processor.NotificationsGet(
+	resp, errWithCode := m.processor.Timeline().NotificationsGet(
 		c.Request.Context(),
 		authed,
 		c.Query(MaxIDKey),

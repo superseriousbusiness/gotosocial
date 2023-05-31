@@ -35,6 +35,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -43,7 +44,7 @@ type InstanceStandardTestSuite struct {
 	suite.Suite
 	db           db.DB
 	storage      *storage.Driver
-	mediaManager media.Manager
+	mediaManager *media.Manager
 	federator    federation.Federator
 	processor    *processing.Processor
 	emailSender  email.Sender
@@ -84,6 +85,12 @@ func (suite *InstanceStandardTestSuite) SetupTest() {
 	suite.state.DB = suite.db
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.Storage = suite.storage
+
+	testrig.StartTimelines(
+		&suite.state,
+		visibility.NewFilter(&suite.state),
+		testrig.NewTestTypeConverter(suite.db),
+	)
 
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
 	suite.federator = testrig.NewTestFederator(&suite.state, testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../../testrig/media")), suite.mediaManager)

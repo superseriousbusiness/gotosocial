@@ -300,7 +300,7 @@ func (p *Processor) UpdateAvatar(ctx context.Context, avatar *multipart.FileHead
 		Description: description,
 	}
 
-	processingMedia, err := p.mediaManager.PreProcessMedia(ctx, dataFunc, nil, accountID, ai)
+	processingMedia, err := p.mediaManager.PreProcessMedia(ctx, dataFunc, accountID, ai)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateAvatar: error processing avatar: %s", err)
 	}
@@ -327,7 +327,7 @@ func (p *Processor) UpdateHeader(ctx context.Context, header *multipart.FileHead
 		Header: &isHeader,
 	}
 
-	processingMedia, err := p.mediaManager.PreProcessMedia(ctx, dataFunc, nil, accountID, ai)
+	processingMedia, err := p.mediaManager.PreProcessMedia(ctx, dataFunc, accountID, ai)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateHeader: error processing header: %s", err)
 	}

@@ -1635,6 +1635,28 @@ definitions:
         type: object
         x-go-name: InstanceV2Users
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    list:
+        properties:
+            id:
+                description: The ID of the list.
+                type: string
+                x-go-name: ID
+            replies_policy:
+                description: |-
+                    RepliesPolicy for this list.
+                    followed = Show replies to any followed user
+                    list = Show replies to members of the list
+                    none = Show replies to no one
+                type: string
+                x-go-name: RepliesPolicy
+            title:
+                description: The user-defined title of the list.
+                type: string
+                x-go-name: Title
+        title: List represents a user-created list of accounts that the user follows.
+        type: object
+        x-go-name: List
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     mediaDimensions:
         properties:
             aspect:
@@ -2881,6 +2903,40 @@ paths:
             summary: See accounts followed by given account id.
             tags:
                 - accounts
+    /api/v1/accounts/{id}/lists:
+        get:
+            operationId: accountLists
+            parameters:
+                - description: Account ID.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Array of all lists containing this account.
+                    schema:
+                        items:
+                            $ref: '#/definitions/list'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:lists
+            summary: See all lists of yours that contain requested account.
+            tags:
+                - accounts
     /api/v1/accounts/{id}/statuses:
         get:
             description: The statuses will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
@@ -3211,7 +3267,7 @@ paths:
                   name: id
                   required: true
                   type: string
-                - description: Type of action to be taken (`disable`, `silence`, or `suspend`).
+                - description: Type of action to be taken, currently only supports `suspend`.
                   in: formData
                   name: type
                   required: true
@@ -4453,6 +4509,343 @@ paths:
                     description: internal server error
             tags:
                 - instance
+    /api/v1/list:
+        post:
+            consumes:
+                - application/json
+                - application/xml
+                - application/x-www-form-urlencoded
+            operationId: listCreate
+            parameters:
+                - description: Title of this list.
+                  example: Cool People
+                  in: formData
+                  name: title
+                  required: true
+                  type: string
+                  x-go-name: Title
+                - default: list
+                  description: |-
+                    RepliesPolicy for this list.
+                    followed = Show replies to any followed user
+                    list = Show replies to members of the list
+                    none = Show replies to no one
+                  example: list
+                  in: formData
+                  name: replies_policy
+                  type: string
+                  x-go-name: RepliesPolicy
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The newly created list.
+                    schema:
+                        $ref: '#/definitions/list'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:lists
+            summary: Create a new list.
+            tags:
+                - lists
+        put:
+            consumes:
+                - application/json
+                - application/xml
+                - application/x-www-form-urlencoded
+            operationId: listUpdate
+            parameters:
+                - description: ID of the list
+                  example: Cool People
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                  x-go-name: Title
+                - description: Title of this list.
+                  example: Cool People
+                  in: formData
+                  name: title
+                  type: string
+                  x-go-name: RepliesPolicy
+                - description: |-
+                    RepliesPolicy for this list.
+                    followed = Show replies to any followed user
+                    list = Show replies to members of the list
+                    none = Show replies to no one
+                  example: list
+                  in: formData
+                  name: replies_policy
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The newly updated list.
+                    schema:
+                        $ref: '#/definitions/list'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:lists
+            summary: Update an existing list.
+            tags:
+                - lists
+    /api/v1/list/{id}:
+        delete:
+            operationId: listDelete
+            parameters:
+                - description: ID of the list
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: list deleted
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:lists
+            summary: Delete a single list with the given ID.
+            tags:
+                - lists
+        get:
+            operationId: list
+            parameters:
+                - description: ID of the list
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Requested list.
+                    schema:
+                        $ref: '#/definitions/list'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:lists
+            summary: Get a single list with the given ID.
+            tags:
+                - lists
+    /api/v1/list/{id}/accounts:
+        delete:
+            consumes:
+                - application/json
+                - application/xml
+                - application/x-www-form-urlencoded
+            operationId: removeListAccounts
+            parameters:
+                - description: ID of the list
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - description: Array of accountIDs to modify. Each accountID must correspond to an account that the requesting account follows.
+                  in: formData
+                  items:
+                    type: string
+                  name: account_ids
+                  required: true
+                  type: array
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: list accounts updated
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:lists
+            summary: Remove one or more accounts from the given list.
+            tags:
+                - lists
+        get:
+            description: |-
+                The returned Link header can be used to generate the previous and next queries when scrolling up or down a timeline.
+
+                Example:
+
+                ```
+                <https://example.org/api/v1/list/01H0W619198FX7J54NF7EH1NG2/accounts?limit=20&max_id=01FC3GSQ8A3MMJ43BPZSGEG29M>; rel="next", <https://example.org/api/v1/list/01H0W619198FX7J54NF7EH1NG2/accounts?limit=20&min_id=01FC3KJW2GYXSDDRA6RWNDM46M>; rel="prev"
+                ````
+            operationId: listAccounts
+            parameters:
+                - description: ID of the list
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - description: Return only list entries *OLDER* than the given max ID. The account from the list entry with the specified ID will not be included in the response.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: Return only list entries *NEWER* than the given since ID. The account from the list entry with the specified ID will not be included in the response.
+                  in: query
+                  name: since_id
+                  type: string
+                - description: Return only list entries *IMMEDIATELY NEWER* than the given min ID. The account from the list entry with the specified ID will not be included in the response.
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 20
+                  description: Number of accounts to return.
+                  in: query
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Array of accounts.
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/account'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:lists
+            summary: Page through accounts in this list.
+            tags:
+                - lists
+        post:
+            consumes:
+                - application/json
+                - application/xml
+                - application/x-www-form-urlencoded
+            operationId: addListAccounts
+            parameters:
+                - description: ID of the list
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - description: Array of accountIDs to modify. Each accountID must correspond to an account that the requesting account follows.
+                  in: formData
+                  items:
+                    type: string
+                  name: account_ids
+                  required: true
+                  type: array
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: list accounts updated
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:lists
+            summary: Add one or more accounts to the given list.
+            tags:
+                - lists
+    /api/v1/lists:
+        get:
+            operationId: lists
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Array of all lists owned by the requesting user.
+                    schema:
+                        items:
+                            $ref: '#/definitions/list'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:lists
+            summary: Get all lists for owned by authorized user.
+            tags:
+                - lists
     /api/v1/media/{id}:
         get:
             operationId: mediaGet
@@ -4626,6 +5019,7 @@ paths:
             summary: Get notifications for currently authorized user.
             tags:
                 - notifications
+    /api/v1/notifications/clear:
         post:
             description: Will return an empty object `{}` to indicate success.
             operationId: clearNotifications
@@ -5579,6 +5973,18 @@ paths:
                   name: stream
                   required: true
                   type: string
+                - description: |-
+                    ID of the list to subscribe to.
+                    Only used if stream type is 'list'.
+                  in: query
+                  name: list
+                  type: string
+                - description: |-
+                    Name of the tag to subscribe to.
+                    Only used if stream type is 'hashtag' or 'hashtag:local'.
+                  in: query
+                  name: tag
+                  type: string
             produces:
                 - application/json
             responses:
@@ -5694,6 +6100,65 @@ paths:
                 - OAuth2 Bearer:
                     - read:statuses
             summary: See statuses/posts by accounts you follow.
+            tags:
+                - timelines
+    /api/v1/timelines/list/{id}:
+        get:
+            description: |-
+                The statuses will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
+
+                The returned Link header can be used to generate the previous and next queries when scrolling up or down a timeline.
+
+                Example:
+
+                ```
+                <https://example.org/api/v1/timelines/list/01H0W619198FX7J54NF7EH1NG2?limit=20&max_id=01FC3GSQ8A3MMJ43BPZSGEG29M>; rel="next", <https://example.org/api/v1/timelines/list/01H0W619198FX7J54NF7EH1NG2?limit=20&min_id=01FC3KJW2GYXSDDRA6RWNDM46M>; rel="prev"
+                ````
+            operationId: listTimeline
+            parameters:
+                - description: ID of the list
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - description: Return only statuses *OLDER* than the given max status ID. The status with the specified ID will not be included in the response.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: Return only statuses *NEWER* than the given since status ID. The status with the specified ID will not be included in the response.
+                  in: query
+                  name: since_id
+                  type: string
+                - description: Return only statuses *NEWER* than the given since status ID. The status with the specified ID will not be included in the response.
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 20
+                  description: Number of statuses to return.
+                  in: query
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Array of statuses.
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/status'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+            security:
+                - OAuth2 Bearer:
+                    - read:lists
+            summary: See statuses/posts from the given list timeline.
             tags:
                 - timelines
     /api/v1/timelines/public:
@@ -5980,6 +6445,7 @@ securityDefinitions:
             read:custom_emojis: grant read access to custom_emojis
             read:favourites: grant read access to favourites
             read:follows: grant read access to follows
+            read:lists: grant read access to lists
             read:media: grant read access to media
             read:notifications: grants read access to notifications
             read:search: grant read access to searches
@@ -5990,6 +6456,7 @@ securityDefinitions:
             write:accounts: grants write access to accounts
             write:blocks: grants write access to blocks
             write:follows: grants write access to follows
+            write:lists: grants write access to lists
             write:media: grants write access to media
             write:statuses: grants write access to statuses
             write:user: grants write access to user-level info

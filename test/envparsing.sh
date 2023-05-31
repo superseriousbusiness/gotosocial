@@ -7,6 +7,7 @@ EXPECT=$(cat <<"EOF"
     "account-domain": "peepee",
     "accounts-allow-custom-css": true,
     "accounts-approval-required": false,
+    "accounts-custom-css-length": 5000,
     "accounts-reason-required": false,
     "accounts-registration-open": true,
     "advanced-cookies-samesite": "strict",
@@ -39,6 +40,12 @@ EXPECT=$(cat <<"EOF"
             "follow-request-ttl": 1800000000000,
             "follow-sweep-freq": 60000000000,
             "follow-ttl": 1800000000000,
+            "list-entry-max-size": 2000,
+            "list-entry-sweep-freq": 60000000000,
+            "list-entry-ttl": 1800000000000,
+            "list-max-size": 2000,
+            "list-sweep-freq": 60000000000,
+            "list-ttl": 1800000000000,
             "media-max-size": 1000,
             "media-sweep-freq": 60000000000,
             "media-ttl": 1800000000000,
@@ -98,6 +105,7 @@ EXPECT=$(cat <<"EOF"
     "letsencrypt-email-address": "",
     "letsencrypt-enabled": true,
     "letsencrypt-port": 80,
+    "log-client-ip": false,
     "log-db-queries": true,
     "log-level": "info",
     "media-description-max-chars": 5000,
@@ -170,6 +178,7 @@ EOF
 # ensure that these are parsed without panic
 OUTPUT=$(GTS_LOG_LEVEL='info' \
 GTS_LOG_DB_QUERIES=true \
+GTS_LOG_CLIENT_IP=false \
 GTS_APPLICATION_NAME=gts \
 GTS_LANDING_PAGE_USER=admin \
 GTS_HOST=example.com \
@@ -199,6 +208,7 @@ GTS_INSTANCE_EXPOSE_SUSPENDED_WEB=true \
 GTS_INSTANCE_EXPOSE_PUBLIC_TIMELINE=true \
 GTS_INSTANCE_DELIVER_TO_SHARED_INBOXES=false \
 GTS_ACCOUNTS_ALLOW_CUSTOM_CSS=true \
+GTS_ACCOUNTS_CUSTOM_CSS_LENGTH=5000 \
 GTS_ACCOUNTS_REGISTRATION_OPEN=true \
 GTS_ACCOUNTS_APPROVAL_REQUIRED=false \
 GTS_ACCOUNTS_REASON_REQUIRED=false \

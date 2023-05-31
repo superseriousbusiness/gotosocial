@@ -33,6 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -45,7 +46,7 @@ type FileserverTestSuite struct {
 	federator    federation.Federator
 	tc           typeutils.TypeConverter
 	processor    *processing.Processor
-	mediaManager media.Manager
+	mediaManager *media.Manager
 	oauthServer  oauth.Server
 	emailSender  email.Sender
 
@@ -81,6 +82,13 @@ func (suite *FileserverTestSuite) SetupSuite() {
 	suite.processor = testrig.NewTestProcessor(&suite.state, suite.federator, suite.emailSender, suite.mediaManager)
 
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
+
+	testrig.StartTimelines(
+		&suite.state,
+		visibility.NewFilter(&suite.state),
+		suite.tc,
+	)
+
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	suite.emailSender = testrig.NewEmailSender("../../../web/template/", nil)

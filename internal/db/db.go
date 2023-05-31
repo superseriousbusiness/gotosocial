@@ -36,6 +36,7 @@ type DB interface {
 	Domain
 	Emoji
 	Instance
+	List
 	Media
 	Mention
 	Notification

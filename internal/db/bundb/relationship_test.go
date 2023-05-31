@@ -807,16 +807,27 @@ func (suite *RelationshipTestSuite) TestUnfollowExisting() {
 	follow, err := suite.db.GetFollow(context.Background(), originAccount.ID, targetAccount.ID)
 	suite.NoError(err)
 	suite.NotNil(follow)
+	followID := follow.ID
 
-	err = suite.db.DeleteFollowByID(context.Background(), follow.ID)
+	// We should have list entries for this follow.
+	listEntries, err := suite.db.GetListEntriesForFollowID(context.Background(), followID)
+	suite.NoError(err)
+	suite.NotEmpty(listEntries)
+
+	err = suite.db.DeleteFollowByID(context.Background(), followID)
 	suite.NoError(err)
 
 	follow, err = suite.db.GetFollow(context.Background(), originAccount.ID, targetAccount.ID)
 	suite.EqualError(err, db.ErrNoEntries.Error())
 	suite.Nil(follow)
+
+	// ListEntries pertaining to this follow should be deleted too.
+	listEntries, err = suite.db.GetListEntriesForFollowID(context.Background(), followID)
+	suite.NoError(err)
+	suite.Empty(listEntries)
 }
 
-func (suite *RelationshipTestSuite) TestUnfollowNotExisting() {
+func (suite *RelationshipTestSuite) TestGetFollowNotExisting() {
 	originAccount := suite.testAccounts["local_account_1"]
 	targetAccountID := "01GTVD9N484CZ6AM90PGGNY7GQ"
 

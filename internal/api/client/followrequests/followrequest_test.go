@@ -35,6 +35,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -42,7 +43,7 @@ type FollowRequestStandardTestSuite struct {
 	suite.Suite
 	db           db.DB
 	storage      *storage.Driver
-	mediaManager media.Manager
+	mediaManager *media.Manager
 	federator    federation.Federator
 	processor    *processing.Processor
 	emailSender  email.Sender
@@ -83,6 +84,12 @@ func (suite *FollowRequestStandardTestSuite) SetupTest() {
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.Storage = suite.storage
 
+	testrig.StartTimelines(
+		&suite.state,
+		visibility.NewFilter(&suite.state),
+		testrig.NewTestTypeConverter(suite.db),
+	)
+
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
 	suite.federator = testrig.NewTestFederator(&suite.state, testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../../testrig/media")), suite.mediaManager)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
@@ -90,8 +97,6 @@ func (suite *FollowRequestStandardTestSuite) SetupTest() {
 	suite.followRequestModule = followrequests.New(suite.processor)
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
-
-	suite.NoError(suite.processor.Start())
 }
 
 func (suite *FollowRequestStandardTestSuite) TearDownTest() {

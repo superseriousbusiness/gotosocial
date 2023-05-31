@@ -342,10 +342,10 @@ func (p *Processor) processCreateBlockFromFederator(ctx context.Context, federat
 	}
 
 	// remove any of the blocking account's statuses from the blocked account's timeline, and vice versa
-	if err := p.statusTimelines.WipeItemsFromAccountID(ctx, block.AccountID, block.TargetAccountID); err != nil {
+	if err := p.state.Timelines.Home.WipeItemsFromAccountID(ctx, block.AccountID, block.TargetAccountID); err != nil {
 		return err
 	}
-	if err := p.statusTimelines.WipeItemsFromAccountID(ctx, block.TargetAccountID, block.AccountID); err != nil {
+	if err := p.state.Timelines.Home.WipeItemsFromAccountID(ctx, block.TargetAccountID, block.AccountID); err != nil {
 		return err
 	}
 	// TODO: same with notifications
@@ -379,8 +379,8 @@ func (p *Processor) processUpdateAccountFromFederator(ctx context.Context, feder
 		return errors.New("Accountable was not parseable on update account message")
 	}
 
-	// Call RefreshAccount to fetch up-to-date bio, avatar, header, etc.
-	updatedAccount, _, err := p.federator.RefreshAccount(
+	// Fetch up-to-date bio, avatar, header, etc.
+	_, _, err := p.federator.RefreshAccount(
 		ctx,
 		federatorMsg.ReceivingAccount.Username,
 		incomingAccount,
@@ -388,11 +388,6 @@ func (p *Processor) processUpdateAccountFromFederator(ctx context.Context, feder
 		true,
 	)
 	if err != nil {
-		return fmt.Errorf("error enriching updated account from federator: %s", err)
-	}
-
-	// RefreshAccount doesn't make DB update calls, so do that here.
-	if err := p.state.DB.UpdateAccount(ctx, updatedAccount); err != nil {
 		return fmt.Errorf("error enriching updated account from federator: %s", err)
 	}
 

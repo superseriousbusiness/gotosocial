@@ -15,29 +15,32 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package lists
+package list
 
 import (
-	"net/http"
+	"context"
 
-	"github.com/gin-gonic/gin"
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// ListsGETHandler returns a list of lists created by/for the authed account
-func (m *Module) ListsGETHandler(c *gin.Context) {
-	if _, err := oauth.Authed(c, true, true, true, true); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
-		return
+// Delete deletes one list for the given account.
+func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, id string) gtserror.WithCode {
+	list, errWithCode := p.getList(
+		// Use barebones ctx; no embedded
+		// structs necessary for this call.
+		gtscontext.SetBarebones(ctx),
+		account.ID,
+		id,
+	)
+	if errWithCode != nil {
+		return errWithCode
 	}
 
-	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
-		return
+	if err := p.state.DB.DeleteListByID(ctx, list.ID); err != nil {
+		return gtserror.NewErrorInternalError(err)
 	}
 
-	// todo: implement this; currently it's a no-op
-	c.JSON(http.StatusOK, []string{})
+	return nil
 }

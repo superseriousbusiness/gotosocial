@@ -44,6 +44,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -52,7 +53,7 @@ type MediaCreateTestSuite struct {
 	suite.Suite
 	db           db.DB
 	storage      *storage.Driver
-	mediaManager media.Manager
+	mediaManager *media.Manager
 	federator    federation.Federator
 	tc           typeutils.TypeConverter
 	oauthServer  oauth.Server
@@ -90,6 +91,13 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 	suite.state.Storage = suite.storage
 
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
+
+	testrig.StartTimelines(
+		&suite.state,
+		visibility.NewFilter(&suite.state),
+		suite.tc,
+	)
+
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	suite.federator = testrig.NewTestFederator(&suite.state, testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../../testrig/media")), suite.mediaManager)

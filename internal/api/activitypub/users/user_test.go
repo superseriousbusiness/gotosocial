@@ -31,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -39,7 +40,7 @@ type UserStandardTestSuite struct {
 	suite.Suite
 	db           db.DB
 	tc           typeutils.TypeConverter
-	mediaManager media.Manager
+	mediaManager *media.Manager
 	federator    federation.Federator
 	emailSender  email.Sender
 	processor    *processing.Processor
@@ -83,6 +84,13 @@ func (suite *UserStandardTestSuite) SetupTest() {
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.state.DB = suite.db
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
+
+	testrig.StartTimelines(
+		&suite.state,
+		visibility.NewFilter(&suite.state),
+		suite.tc,
+	)
+
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.Storage = suite.storage
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
@@ -94,8 +102,6 @@ func (suite *UserStandardTestSuite) SetupTest() {
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 
 	suite.signatureCheck = middleware.SignatureCheck(suite.db.IsURIBlocked)
-
-	suite.NoError(suite.processor.Start())
 }
 
 func (suite *UserStandardTestSuite) TearDownTest() {

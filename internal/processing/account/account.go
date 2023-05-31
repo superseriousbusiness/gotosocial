@@ -34,7 +34,7 @@ import (
 type Processor struct {
 	state        *state.State
 	tc           typeutils.TypeConverter
-	mediaManager media.Manager
+	mediaManager *media.Manager
 	oauthServer  oauth.Server
 	filter       *visibility.Filter
 	formatter    text.Formatter
@@ -46,7 +46,7 @@ type Processor struct {
 func New(
 	state *state.State,
 	tc typeutils.TypeConverter,
-	mediaManager media.Manager,
+	mediaManager *media.Manager,
 	oauthServer oauth.Server,
 	federator federation.Federator,
 	filter *visibility.Filter,

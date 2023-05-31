@@ -26,7 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// NotificationsClearPOSTHandler swagger:operation POST /api/v1/notifications clearNotifications
+// NotificationsClearPOSTHandler swagger:operation POST /api/v1/notifications/clear clearNotifications
 //
 // Clear/delete all notifications for currently authorized user.
 //
@@ -69,7 +69,7 @@ func (m *Module) NotificationsClearPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	errWithCode := m.processor.NotificationsClear(c.Request.Context(), authed)
+	errWithCode := m.processor.Timeline().NotificationsClear(c.Request.Context(), authed)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

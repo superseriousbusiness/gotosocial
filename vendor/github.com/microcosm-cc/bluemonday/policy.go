@@ -117,6 +117,10 @@ type Policy struct {
 	// returning true are allowed.
 	allowURLSchemes map[string][]urlPolicy
 
+	// These regexps are used to match allowed URL schemes, for example
+	// if one would want to allow all URL schemes, they would add `.+`
+	allowURLSchemeRegexps []*regexp.Regexp
+
 	// If an element has had all attributes removed as a result of a policy
 	// being applied, then the element would be removed from the output.
 	//
@@ -221,6 +225,7 @@ func (p *Policy) init() {
 		p.elsMatchingAndStyles = make(map[*regexp.Regexp]map[string][]stylePolicy)
 		p.globalStyles = make(map[string][]stylePolicy)
 		p.allowURLSchemes = make(map[string][]urlPolicy)
+		p.allowURLSchemeRegexps = make([]*regexp.Regexp, 0)
 		p.setOfElementsAllowedWithoutAttrs = make(map[string]struct{})
 		p.setOfElementsToSkipContent = make(map[string]struct{})
 		p.initialized = true
@@ -560,6 +565,13 @@ func (p *Policy) AllowElementsMatching(regex *regexp.Regexp) *Policy {
 	if _, ok := p.elsMatchingAndAttrs[regex]; !ok {
 		p.elsMatchingAndAttrs[regex] = make(map[string][]attrPolicy)
 	}
+	return p
+}
+
+// AllowURLSchemesMatching will append URL schemes to the allowlist if they
+// match a regexp.
+func (p *Policy) AllowURLSchemesMatching(r *regexp.Regexp) *Policy {
+	p.allowURLSchemeRegexps = append(p.allowURLSchemeRegexps, r)
 	return p
 }
 

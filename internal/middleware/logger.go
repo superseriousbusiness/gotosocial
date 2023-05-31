@@ -31,7 +31,7 @@ import (
 )
 
 // Logger returns a gin middleware which provides request logging and panic recovery.
-func Logger() gin.HandlerFunc {
+func Logger(logClientIP bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Initialize the logging fields
 		fields := make(kv.Fields, 5, 7)
@@ -72,10 +72,7 @@ func Logger() gin.HandlerFunc {
 			fields[2] = kv.Field{"method", c.Request.Method}
 			fields[3] = kv.Field{"statusCode", code}
 			fields[4] = kv.Field{"path", path}
-			if includeClientIP := true; includeClientIP {
-				// TODO: make this configurable.
-				//
-				// Include clientIP if enabled.
+			if logClientIP {
 				fields = append(fields, kv.Field{
 					"clientIP", c.ClientIP(),
 				})

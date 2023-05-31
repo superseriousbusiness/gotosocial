@@ -42,6 +42,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -50,7 +51,7 @@ type BookmarkTestSuite struct {
 	suite.Suite
 	db           db.DB
 	tc           typeutils.TypeConverter
-	mediaManager media.Manager
+	mediaManager *media.Manager
 	federator    federation.Federator
 	emailSender  email.Sender
 	processor    *processing.Processor
@@ -98,6 +99,13 @@ func (suite *BookmarkTestSuite) SetupTest() {
 	suite.state.Storage = suite.storage
 
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
+
+	testrig.StartTimelines(
+		&suite.state,
+		visibility.NewFilter(&suite.state),
+		suite.tc,
+	)
+
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 
@@ -107,8 +115,6 @@ func (suite *BookmarkTestSuite) SetupTest() {
 	suite.processor = testrig.NewTestProcessor(&suite.state, suite.federator, suite.emailSender, suite.mediaManager)
 	suite.statusModule = statuses.New(suite.processor)
 	suite.bookmarkModule = bookmarks.New(suite.processor)
-
-	suite.NoError(suite.processor.Start())
 }
 
 func (suite *BookmarkTestSuite) TearDownTest() {

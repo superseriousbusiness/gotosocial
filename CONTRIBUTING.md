@@ -24,7 +24,7 @@ These contribution guidelines were adapted from / inspired by those of Gitea (ht
     - [Finding your way around the code](#finding-your-way-around-the-code)
   - [Style / Linting / Formatting](#style--linting--formatting)
   - [Testing](#testing)
-    - [Standalone Testrig with Pinafore](#standalone-testrig-with-pinafore)
+    - [Standalone Testrig with Semaphore](#standalone-testrig-with-semaphore)
     - [Running automated tests](#running-automated-tests)
       - [SQLite](#sqlite)
       - [Postgres](#postgres)
@@ -96,6 +96,17 @@ If you open a code pull request without following the above process, we may clos
 The process for documentation pull requests is a bit looser than the process for code.
 
 If you see something in the documentation that's missing, wrong, or unclear, feel free to open a pull request addressing it; you don't necessarily need to open an issue first, but please explain why you're opening the PR in the PR comment.
+
+We support a [Conda](https://docs.conda.io/en/latest/)-based workflow for hacking, building & publishing the documentation. Here's how you can get started locally:
+
+* Install [`miniconda`](https://docs.conda.io/en/latest/miniconda.html)
+* Create your conda environment: `conda env create -f ./docs/environment.yml`
+* Activate the environment: `conda activate gotosocial-docs`
+* Serve locally: `mkdocs serve`
+
+Then you can visit [localhost:8000](http://127.0.0.1:8000/) in your browser to view.
+
+If you don't use Conda, you can read the `docs/environment.yml` to see which dependencies are required and `pip install` them manually.
 
 ## Development
 
@@ -210,6 +221,8 @@ And: [exhaustive list of possible values for docker's `--platform`](https://gith
 GoToSocial uses Gin templates in the `web/template` folder. Static assets are stored in `web/assets`. Source files for stylesheets and JS bundles (for frontend enhancement, and the settings interface) are stored in `web/source`, and bundled from there to the `web/assets/dist` folder (gitignored).
 
 To bundle changes, you need [Node.js](https://nodejs.org/en/download/) and [Yarn](https://classic.yarnpkg.com/en/docs/install).
+
+Using [NVM](https://github.com/nvm-sh/nvm) is one convenient way to install them which also supports managing different Node versions.
 
 To install Yarn dependencies:
 
@@ -359,25 +372,26 @@ GoToSocial provides a [testrig](https://github.com/superseriousbusiness/gotosoci
 
 One thing that *isn't* mocked is the Database interface because it's just easier to use an in-memory SQLite database than to mock everything out.
 
-#### Standalone Testrig with Pinafore
+#### Standalone Testrig with Semaphore
 
-You can launch a testrig as a standalone server running at localhost, which you can connect to using something like [Pinafore](https://github.com/nolanlawson/pinafore).
+You can launch a testrig as a standalone server running at localhost, which you can connect to using something like [Semaphore](https://github.com/NickColley/semaphore/).
 
-To do this, first build the gotosocial binary with `./scripts/build.sh`.
+To do this, first build the gotosocial binary with `DEBUG=1 ./scripts/build.sh`.
 
-Then, launch the testrig by invoking the binary as follows:
+Then, launch the testrig with the `DEBUG` environment variable set by invoking the binary as follows:
 
 ```bash
-./gotosocial testrig start
+DEBUG=1 ./gotosocial testrig start
 ```
 
-To run Pinafore locally in dev mode, first clone the [Pinafore](https://github.com/nolanlawson/pinafore) repository, and then run the following command in the cloned directory:
+To run Semaphore locally in dev mode, first clone the [Semaphore](https://github.com/NickColley/semaphore/) repository, and then run the following commands in the cloned directory:
 
 ```bash
+yarn # install dependencies
 yarn run dev
 ```
 
-The Pinafore instance will start running on `localhost:4002`.
+The Semaphore instance will start running on `localhost:4002`.
 
 To connect to the testrig, navigate to `http://localhost:4002` and enter your instance name as `localhost:8080`.
 

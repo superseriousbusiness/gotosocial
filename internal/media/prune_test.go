@@ -312,7 +312,7 @@ func (suite *PruneTestSuite) TestUncacheAndRecache() {
 		testStatusAttachment,
 		testHeader,
 	} {
-		processingRecache, err := suite.manager.PreProcessMediaRecache(ctx, data, nil, original.ID)
+		processingRecache, err := suite.manager.PreProcessMediaRecache(ctx, data, original.ID)
 		suite.NoError(err)
 
 		// synchronously load the recached attachment

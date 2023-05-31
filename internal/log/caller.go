@@ -34,12 +34,7 @@ func Caller(depth int) string {
 		return ""
 	}
 
-	// return formatted name
-	return callername(fn)
-}
-
-// callername generates a human-readable calling function name.
-func callername(fn *runtime.Func) string {
+	// Get func name.
 	name := fn.Name()
 
 	// Drop all but the package name and function name, no mod path

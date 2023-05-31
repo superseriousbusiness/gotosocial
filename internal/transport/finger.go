@@ -27,6 +27,7 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // webfingerURLFor returns the URL to try a webfinger request against, as
@@ -105,14 +106,16 @@ func (t *transport) Finger(ctx context.Context, targetUsername string, targetDom
 	// From here on out, we're handling different failure scenarios and
 	// deciding whether we should do a host-meta based fallback or not
 
-	if (rsp.StatusCode >= 500 && rsp.StatusCode < 600) || cached {
-		// In case we got a 5xx, bail out irrespective of if the value
-		// was cached or not. The target may be broken or be signalling
-		// us to back-off.
-		//
-		// If it's any error but the URL was cached, bail out too
-		return nil, fmt.Errorf("GET request to %s failed: %s", req.URL.String(), rsp.Status)
-	}
+	// Response status codes >= 500 are returned as errors by the wrapped HTTP client.
+	//
+	// if (rsp.StatusCode >= 500 && rsp.StatusCode < 600) || cached {
+	// In case we got a 5xx, bail out irrespective of if the value
+	// was cached or not. The target may be broken or be signalling
+	// us to back-off.
+	//
+	// If it's any error but the URL was cached, bail out too
+	// return nil, gtserror.NewResponseError(rsp)
+	// }
 
 	// So far we've failed to get a successful response from the expected
 	// webfinger endpoint. Lets try and discover the webfinger endpoint
@@ -153,7 +156,7 @@ func (t *transport) Finger(ctx context.Context, targetUsername string, targetDom
 		}
 		// We've reached the end of the line here, both the original request
 		// and our attempt to resolve it through the fallback have failed
-		return nil, fmt.Errorf("GET request to %s failed: %s", req.URL.String(), rsp.Status)
+		return nil, gtserror.NewFromResponse(rsp)
 	}
 
 	// Set the URL in cache here, since host-meta told us this should be the

@@ -60,7 +60,7 @@ func (d *deref) GetRemoteEmoji(ctx context.Context, requestingUsername string, r
 			return t.DereferenceMedia(innerCtx, derefURI)
 		}
 
-		newProcessing, err := d.mediaManager.PreProcessEmoji(ctx, dataFunc, nil, shortcode, id, emojiURI, ai, refresh)
+		newProcessing, err := d.mediaManager.PreProcessEmoji(ctx, dataFunc, shortcode, id, emojiURI, ai, refresh)
 		if err != nil {
 			return nil, fmt.Errorf("GetRemoteEmoji: error processing emoji %s: %s", shortcodeDomain, err)
 		}

@@ -25,6 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -515,6 +516,12 @@ func (suite *TypeUtilsTestSuite) TearDownTest() {
 // Useful when a test in the test suite needs to change some state.
 func (suite *TypeUtilsTestSuite) GetProcessor() *processing.Processor {
 	testrig.StartWorkers(&suite.state)
+	testrig.StartTimelines(
+		&suite.state,
+		visibility.NewFilter(&suite.state),
+		testrig.NewTestTypeConverter(suite.db),
+	)
+
 	httpClient := testrig.NewMockHTTPClient(nil, "../../testrig/media")
 	transportController := testrig.NewTestTransportController(&suite.state, httpClient)
 	mediaManager := testrig.NewTestMediaManager(&suite.state)

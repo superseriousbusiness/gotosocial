@@ -41,10 +41,10 @@ const (
 	maximumDescriptionLength      = 5000
 	maximumSiteTermsLength        = 5000
 	maximumUsernameLength         = 64
-	maximumCustomCSSLength        = 5000
 	maximumEmojiCategoryLength    = 64
 	maximumProfileFieldLength     = 255
 	maximumProfileFields          = 6
+	maximumListTitleLength        = 200
 )
 
 // NewPassword returns an error if the given password is not sufficiently strong, or nil if it's ok.
@@ -169,9 +169,11 @@ func CustomCSS(customCSS string) error {
 		return errors.New("accounts-allow-custom-css is not enabled for this instance")
 	}
 
+	maximumCustomCSSLength := config.GetAccountsCustomCSSLength()
 	if length := len([]rune(customCSS)); length > maximumCustomCSSLength {
 		return fmt.Errorf("custom_css must be less than %d characters, but submitted custom_css was %d characters", maximumCustomCSSLength, length)
 	}
+
 	return nil
 }
 
@@ -256,4 +258,29 @@ func ProfileFields(fields []*gtsmodel.Field) error {
 	}
 
 	return nil
+}
+
+// ListTitle validates the title of a new or updated List.
+func ListTitle(title string) error {
+	if title == "" {
+		return fmt.Errorf("list title must be provided, and must be no more than %d chars", maximumListTitleLength)
+	}
+
+	if length := len([]rune(title)); length > maximumListTitleLength {
+		return fmt.Errorf("list title length must be no more than %d chars, provided title was %d chars", maximumListTitleLength, length)
+	}
+
+	return nil
+}
+
+// ListRepliesPolicy validates the replies_policy of a new or updated list.
+func ListRepliesPolicy(repliesPolicy gtsmodel.RepliesPolicy) error {
+	switch repliesPolicy {
+	case "", gtsmodel.RepliesPolicyFollowed, gtsmodel.RepliesPolicyList, gtsmodel.RepliesPolicyNone:
+		// No problem.
+		return nil
+	default:
+		// Uh oh.
+		return fmt.Errorf("list replies_policy must be either empty or one of 'followed', 'list', 'none'")
+	}
 }

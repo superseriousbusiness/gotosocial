@@ -65,6 +65,7 @@ var Defaults = Configuration{
 	AccountsApprovalRequired: true,
 	AccountsReasonRequired:   true,
 	AccountsAllowCustomCSS:   false,
+	AccountsCustomCSSLength:  10000,
 
 	MediaImageMaxSize:        10 * bytesize.MiB,
 	MediaVideoMaxSize:        40 * bytesize.MiB,
@@ -153,6 +154,14 @@ var Defaults = Configuration{
 			FollowRequestTTL:       time.Minute * 30,
 			FollowRequestSweepFreq: time.Minute,
 
+			ListMaxSize:   2000,
+			ListTTL:       time.Minute * 30,
+			ListSweepFreq: time.Minute,
+
+			ListEntryMaxSize:   2000,
+			ListEntryTTL:       time.Minute * 30,
+			ListEntrySweepFreq: time.Minute,
+
 			MediaMaxSize:   1000,
 			MediaTTL:       time.Minute * 30,
 			MediaSweepFreq: time.Minute,
@@ -198,4 +207,6 @@ var Defaults = Configuration{
 	AdminMediaPruneDryRun: true,
 
 	RequestIDHeader: "X-Request-Id",
+
+	LogClientIP: true,
 }
