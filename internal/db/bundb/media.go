@@ -127,19 +127,11 @@ func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
 
 	// Delete media attachment in new transaction.
 	err = m.conn.RunInTx(ctx, func(tx bun.Tx) error {
-		// Attempt to delete this media.
-		if _, err := m.conn.NewDelete().
-			Table("media_attachments").
-			Where("? = ?", bun.Ident("id"), id).
-			Exec(ctx); err != nil {
-			return gtserror.Newf("error deleting media: %w", err)
-		}
-
 		if media.AccountID != "" {
 			var account gtsmodel.Account
 
 			// Get related account model.
-			if _, err := m.conn.NewSelect().
+			if _, err := tx.NewSelect().
 				Model(&account).
 				Where("? = ?", bun.Ident("id"), media.AccountID).
 				Exec(ctx); err != nil && !errors.Is(err, db.ErrNoEntries) {
@@ -163,7 +155,7 @@ func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
 				// Note: this handles not found.
 				//
 				// Update the account model.
-				q := m.conn.NewUpdate().
+				q := tx.NewUpdate().
 					Table("accounts").
 					Where("? = ?", bun.Ident("id"), account.ID)
 				if _, err := set(q).Exec(ctx); err != nil {
@@ -179,7 +171,7 @@ func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
 			var status gtsmodel.Status
 
 			// Get related status model.
-			if _, err := m.conn.NewSelect().
+			if _, err := tx.NewSelect().
 				Model(&status).
 				Where("? = ?", bun.Ident("id"), media.StatusID).
 				Exec(ctx); err != nil && !errors.Is(err, db.ErrNoEntries) {
@@ -203,7 +195,7 @@ func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
 				// Note: this accounts for status not found.
 				//
 				// Attachments changed, update the status.
-				if _, err := m.conn.NewUpdate().
+				if _, err := tx.NewUpdate().
 					Table("statuses").
 					Where("? = ?", bun.Ident("id"), status.ID).
 					Set("? = ?", bun.Ident("attachment_ids"), status.AttachmentIDs).
@@ -214,6 +206,14 @@ func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
 				// Mark as needing invalidate.
 				invalidateStatus = true
 			}
+		}
+
+		// Finally delete this media.
+		if _, err := tx.NewDelete().
+			Table("media_attachments").
+			Where("? = ?", bun.Ident("id"), id).
+			Exec(ctx); err != nil {
+			return gtserror.Newf("error deleting media: %w", err)
 		}
 
 		return nil
@@ -276,12 +276,12 @@ func (m *mediaDB) GetAttachments(ctx context.Context, maxID string, limit int) (
 	attachmentIDs := []string{}
 
 	q := m.conn.NewSelect().
-		TableExpr("? AS ?", bun.Ident("media_attachments"), bun.Ident("media_attachment")).
-		Column("media_attachment.id").
-		Order("media_attachment.id DESC")
+		Table("media_attachments").
+		Column("id").
+		Order("id DESC")
 
 	if maxID != "" {
-		q = q.Where("? < ?", bun.Ident("media_attachment.id"), maxID)
+		q = q.Where("? < ?", bun.Ident("id"), maxID)
 	}
 
 	if limit != 0 {

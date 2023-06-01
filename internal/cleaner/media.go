@@ -41,16 +41,17 @@ type Media struct {
 // All will execute all cleaner.Media utilities synchronously, including output logging.
 // Context will be checked for `gtscontext.DryRun()` in order to actually perform the action.
 func (m *Media) All(ctx context.Context, maxRemoteDays int) {
-	t := time.Now().Add(-time.Duration(maxRemoteDays))
+	t := time.Now().Add(-24 * time.Hour * time.Duration(maxRemoteDays))
 	m.LogUncacheRemote(ctx, t)
 	m.LogPruneOrphaned(ctx)
 	m.LogPruneUnused(ctx)
 	m.LogFixCacheStates(ctx)
+	_ = m.state.Storage.Storage.Clean(ctx)
 }
 
 // LogUncacheRemote performs Media.UncacheRemote(...), logging the start and outcome.
 func (m *Media) LogUncacheRemote(ctx context.Context, olderThan time.Time) {
-	log.Info(ctx, "start older than: %s", olderThan.Format(time.Stamp))
+	log.Infof(ctx, "start older than: %s", olderThan.Format(time.Stamp))
 	if n, err := m.UncacheRemote(ctx, olderThan); err != nil {
 		log.Error(ctx, err)
 	} else {
@@ -400,21 +401,34 @@ func (m *Media) fixCacheState(ctx context.Context, media *gtsmodel.MediaAttachme
 }
 
 func (m *Media) uncacheRemote(ctx context.Context, after time.Time, media *gtsmodel.MediaAttachment) (bool, error) {
-	if *media.Avatar || *media.Header {
-		// Load the account related to this media.
-		account, err := m.state.DB.GetAccountByID(
-			gtscontext.SetBarebones(ctx),
-			media.AccountID,
-		)
-		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			return false, gtserror.Newf("error fetching account by id %s: %w", media.AccountID, err)
-		}
+	// Check whether we have the required account for media.
+	account, missing, err := m.getRelatedAccount(ctx, media)
+	if err != nil {
+		return false, err
+	} else if missing {
+		// Account missing, skip it.
+		return false, nil
+	}
 
-		if account != nil && account.FetchedAt.After(after) {
-			// This is a recently loaded account,
-			// no need to uncache this media.
-			return false, nil
-		}
+	if account != nil && account.FetchedAt.After(after) {
+		// This is a recently loaded account,
+		// no need to uncache this media.
+		return false, nil
+	}
+
+	// Check whether we have the required status for media.
+	status, missing, err := m.getRelatedStatus(ctx, media)
+	if err != nil {
+		return false, err
+	} else if missing {
+		// Status missing, skip it.
+		return false, nil
+	}
+
+	if status != nil && status.FetchedAt.After(after) {
+		// This is a recently loaded status,
+		// no need to uncache this media.
+		return false, nil
 	}
 
 	// This media is too old, uncache it.
@@ -422,34 +436,49 @@ func (m *Media) uncacheRemote(ctx context.Context, after time.Time, media *gtsmo
 }
 
 func (m *Media) getRelatedAccount(ctx context.Context, media *gtsmodel.MediaAttachment) (*gtsmodel.Account, bool, error) {
-	if media.AccountID != "" {
-		// Load the account related to this media.
-		account, err := m.state.DB.GetAccountByID(
-			gtscontext.SetBarebones(ctx),
-			media.AccountID,
-		)
-		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			return nil, false, gtserror.Newf("error fetching account by id %s: %w", media.AccountID, err)
-		}
-
-		return account, (account == nil), nil
+	if media.AccountID == "" {
+		// no related account.
+		return nil, false, nil
 	}
-	return nil, false, nil
+
+	// Load the account related to this media.
+	account, err := m.state.DB.GetAccountByID(
+		gtscontext.SetBarebones(ctx),
+		media.AccountID,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, false, gtserror.Newf("error fetching account by id %s: %w", media.AccountID, err)
+	}
+
+	if account == nil {
+		// Account is missing.
+		return nil, true, nil
+	}
+
+	return account, false, nil
 }
 
 func (m *Media) getRelatedStatus(ctx context.Context, media *gtsmodel.MediaAttachment) (*gtsmodel.Status, bool, error) {
-	if media.AccountID != "" {
-		// Load the status related to this media.
-		status, err := m.state.DB.GetStatusByID(
-			gtscontext.SetBarebones(ctx),
-			media.AccountID,
-		)
-		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			return nil, false, gtserror.Newf("error fetching status by id %s: %w", media.StatusID, err)
-		}
-		return status, (status == nil), nil
+	if media.StatusID == "" {
+		// no related status.
+		return nil, false, nil
 	}
-	return nil, false, nil
+
+	// Load the status related to this media.
+	status, err := m.state.DB.GetStatusByID(
+		gtscontext.SetBarebones(ctx),
+		media.StatusID,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, false, gtserror.Newf("error fetching status by id %s: %w", media.StatusID, err)
+	}
+
+	if status == nil {
+		// Status is missing.
+		return nil, true, nil
+	}
+
+	return status, false, nil
 }
 
 func (m *Media) uncache(ctx context.Context, media *gtsmodel.MediaAttachment) error {

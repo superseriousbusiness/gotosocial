@@ -207,6 +207,19 @@ func adminCommands() *cobra.Command {
 	config.AddAdminMediaPrune(adminMediaPruneRemoteCmd)
 	adminMediaPruneCmd.AddCommand(adminMediaPruneRemoteCmd)
 
+	adminMediaPruneAllCmd := &cobra.Command{
+		Use:   "all",
+		Short: "perform all media prune / cleaning commands",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return preRun(preRunArgs{cmd: cmd})
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd.Context(), prune.All)
+		},
+	}
+	config.AddAdminMediaPrune(adminMediaPruneAllCmd)
+	adminMediaPruneCmd.AddCommand(adminMediaPruneAllCmd)
+
 	adminMediaCmd.AddCommand(adminMediaPruneCmd)
 
 	adminCmd.AddCommand(adminMediaCmd)
