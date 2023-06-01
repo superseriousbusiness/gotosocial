@@ -45,6 +45,7 @@ func New(state *state.State) *Cleaner {
 	c := new(Cleaner)
 	c.state = state
 	c.media.Cleaner = c
+	scheduleJobs(c)
 	return c
 }
 
