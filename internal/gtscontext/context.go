@@ -41,7 +41,19 @@ const (
 	httpSigVerifierKey
 	httpSigKey
 	httpSigPubKeyIDKey
+	dryRunKey
 )
+
+// DryRun ...
+func DryRun(ctx context.Context) bool {
+	_, ok := ctx.Value(dryRunKey).(struct{})
+	return ok
+}
+
+// SetDryRun ...
+func SetDryRun(ctx context.Context) context.Context {
+	return context.WithValue(ctx, dryRunKey, struct{}{})
+}
 
 // RequestID returns the request ID associated with context. This value will usually
 // be set by the request ID middleware handler, either pulling an existing supplied

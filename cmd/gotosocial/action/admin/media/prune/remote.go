@@ -20,9 +20,11 @@ package prune
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
@@ -33,21 +35,24 @@ var Remote action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	dry := config.GetAdminMediaPruneDryRun()
+	if config.GetAdminMediaPruneDryRun() {
+		ctx = gtscontext.SetDryRun(ctx)
+	}
 
-	pruned, err := prune.manager.PruneUnusedRemote(ctx, dry)
+	pruned, err := prune.cleaner.Media().PruneUnused(ctx)
 	if err != nil {
 		return fmt.Errorf("error pruning: %w", err)
 	}
 
-	uncached, err := prune.manager.UncacheRemote(ctx, config.GetMediaRemoteCacheDays(), dry)
+	t := time.Now().Add(-24 * time.Hour * time.Duration(config.GetMediaRemoteCacheDays()))
+	uncached, err := prune.cleaner.Media().UncacheRemote(ctx, t)
 	if err != nil {
 		return fmt.Errorf("error pruning: %w", err)
 	}
 
 	total := pruned + uncached
 
-	if dry /* dick heyyoooooo */ {
+	if config.GetAdminMediaPruneDryRun() /* dick heyyoooooo */ {
 		log.Infof(ctx, "DRY RUN: %d remote items are unused/stale and eligible to be pruned", total)
 	} else {
 		log.Infof(ctx, "%d unused/stale remote items were pruned", pruned)

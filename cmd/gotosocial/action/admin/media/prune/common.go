@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -32,6 +33,7 @@ type prune struct {
 	dbService db.DB
 	storage   *gtsstorage.Driver
 	manager   *media.Manager
+	cleaner   *cleaner.Cleaner
 	state     *state.State
 }
 
@@ -59,10 +61,14 @@ func setupPrune(ctx context.Context) (*prune, error) {
 	//nolint:contextcheck
 	manager := media.NewManager(&state)
 
+	//nolint:contextcheck
+	cleaner := cleaner.New(&state)
+
 	return &prune{
 		dbService: dbService,
 		storage:   storage,
 		manager:   manager,
+		cleaner:   cleaner,
 		state:     &state,
 	}, nil
 }

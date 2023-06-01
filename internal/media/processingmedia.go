@@ -30,6 +30,7 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/h2non/filetype"
 	terminator "github.com/superseriousbusiness/exif-terminator"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
@@ -145,7 +146,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	// Load media from provided data fun
 	rc, sz, err := p.dataFn(ctx)
 	if err != nil {
-		return fmt.Errorf("error executing data function: %w", err)
+		return gtserror.Newf("error executing data function: %w", err)
 	}
 
 	defer func() {
@@ -162,13 +163,13 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 
 	// Read the first 261 header bytes into buffer.
 	if _, err := io.ReadFull(rc, hdrBuf); err != nil {
-		return fmt.Errorf("error reading incoming media: %w", err)
+		return gtserror.Newf("error reading incoming media: %w", err)
 	}
 
 	// Parse file type info from header buffer.
 	info, err := filetype.Match(hdrBuf)
 	if err != nil {
-		return fmt.Errorf("error parsing file type: %w", err)
+		return gtserror.Newf("error parsing file type: %w", err)
 	}
 
 	// Recombine header bytes with remaining stream
@@ -187,12 +188,12 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 			// A file size was provided so we can clean exif data from image.
 			r, err = terminator.Terminate(r, int(sz), info.Extension)
 			if err != nil {
-				return fmt.Errorf("error cleaning exif data: %w", err)
+				return gtserror.Newf("error cleaning exif data: %w", err)
 			}
 		}
 
 	default:
-		return fmt.Errorf("unsupported file type: %s", info.Extension)
+		return gtserror.Newf("unsupported file type: %s", info.Extension)
 	}
 
 	// Calculate attachment file path.
@@ -211,14 +212,14 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 
 		// Attempt to remove existing media at storage path (might be broken / out-of-date)
 		if err := p.mgr.state.Storage.Delete(ctx, p.media.File.Path); err != nil {
-			return fmt.Errorf("error removing media from storage: %v", err)
+			return gtserror.Newf("error removing media from storage: %v", err)
 		}
 	}
 
 	// Write the final image reader stream to our storage.
 	sz, err = p.mgr.state.Storage.PutStream(ctx, p.media.File.Path, r)
 	if err != nil {
-		return fmt.Errorf("error writing media to storage: %w", err)
+		return gtserror.Newf("error writing media to storage: %w", err)
 	}
 
 	// Set written image size.
@@ -245,7 +246,7 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 	// Fetch a stream to the original file in storage.
 	rc, err := p.mgr.state.Storage.GetStream(ctx, p.media.File.Path)
 	if err != nil {
-		return fmt.Errorf("error loading file from storage: %w", err)
+		return gtserror.Newf("error loading file from storage: %w", err)
 	}
 	defer rc.Close()
 
@@ -256,7 +257,7 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 	case mimeImageJpeg, mimeImageGif, mimeImageWebp:
 		fullImg, err = decodeImage(rc, imaging.AutoOrientation(true))
 		if err != nil {
-			return fmt.Errorf("error decoding image: %w", err)
+			return gtserror.Newf("error decoding image: %w", err)
 		}
 
 	// .png image (requires ancillary chunk stripping)
@@ -265,14 +266,14 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 			Reader: rc,
 		}, imaging.AutoOrientation(true))
 		if err != nil {
-			return fmt.Errorf("error decoding image: %w", err)
+			return gtserror.Newf("error decoding image: %w", err)
 		}
 
 	// .mp4 video type
 	case mimeVideoMp4:
 		video, err := decodeVideoFrame(rc)
 		if err != nil {
-			return fmt.Errorf("error decoding video: %w", err)
+			return gtserror.Newf("error decoding video: %w", err)
 		}
 
 		// Set video frame as image.
@@ -286,7 +287,7 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 
 	// The image should be in-memory by now.
 	if err := rc.Close(); err != nil {
-		return fmt.Errorf("error closing file: %w", err)
+		return gtserror.Newf("error closing file: %w", err)
 	}
 
 	// Set full-size dimensions in attachment info.
@@ -314,7 +315,7 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 	// Blurhash needs generating from thumb.
 	hash, err := thumbImg.Blurhash()
 	if err != nil {
-		return fmt.Errorf("error generating blurhash: %w", err)
+		return gtserror.Newf("error generating blurhash: %w", err)
 	}
 
 	// Set the attachment blurhash.
@@ -326,7 +327,7 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 
 		// Attempt to remove existing thumbnail at storage path (might be broken / out-of-date)
 		if err := p.mgr.state.Storage.Delete(ctx, p.media.Thumbnail.Path); err != nil {
-			return fmt.Errorf("error removing thumbnail from storage: %v", err)
+			return gtserror.Newf("error removing thumbnail from storage: %v", err)
 		}
 	}
 
@@ -338,7 +339,7 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 	// Stream-encode the JPEG thumbnail image into storage.
 	sz, err := p.mgr.state.Storage.PutStream(ctx, p.media.Thumbnail.Path, enc)
 	if err != nil {
-		return fmt.Errorf("error stream-encoding thumbnail to storage: %w", err)
+		return gtserror.Newf("error stream-encoding thumbnail to storage: %w", err)
 	}
 
 	// Fill in remaining thumbnail now it's stored

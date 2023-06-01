@@ -46,9 +46,11 @@ type PresignedURL struct {
 	Expiry time.Time // link expires at this time
 }
 
-// ErrAlreadyExists is a ptr to underlying storage.ErrAlreadyExists,
-// to put the related errors in the same package as our storage wrapper.
-var ErrAlreadyExists = storage.ErrAlreadyExists
+var (
+	// Ptrs to underlying storage library errors.
+	ErrAlreadyExists = storage.ErrAlreadyExists
+	ErrNotFound      = storage.ErrNotFound
+)
 
 // Driver wraps a kv.KVStore to also provide S3 presigned GET URLs.
 type Driver struct {

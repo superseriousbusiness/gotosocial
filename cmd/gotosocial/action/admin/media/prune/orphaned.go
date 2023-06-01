@@ -23,6 +23,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
@@ -33,14 +34,16 @@ var Orphaned action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	dry := config.GetAdminMediaPruneDryRun()
+	if config.GetAdminMediaPruneDryRun() {
+		ctx = gtscontext.SetDryRun(ctx)
+	}
 
-	pruned, err := prune.manager.PruneOrphaned(ctx, dry)
+	pruned, err := prune.cleaner.Media().PruneOrphaned(ctx)
 	if err != nil {
 		return fmt.Errorf("error pruning: %s", err)
 	}
 
-	if dry /* dick heyyoooooo */ {
+	if config.GetAdminMediaPruneDryRun() /* dick heyyoooooo */ {
 		log.Infof(ctx, "DRY RUN: %d items are orphaned and eligible to be pruned", pruned)
 	} else {
 		log.Infof(ctx, "%d orphaned items were pruned", pruned)

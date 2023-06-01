@@ -28,6 +28,7 @@ import (
 	"codeberg.org/gruf/go-runners"
 	"github.com/h2non/filetype"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
@@ -160,7 +161,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	// Load media from provided data fn.
 	rc, sz, err := p.dataFn(ctx)
 	if err != nil {
-		return fmt.Errorf("error executing data function: %w", err)
+		return gtserror.Newf("error executing data function: %w", err)
 	}
 
 	defer func() {
@@ -177,13 +178,13 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 
 	// Read the first 261 header bytes into buffer.
 	if _, err := io.ReadFull(rc, hdrBuf); err != nil {
-		return fmt.Errorf("error reading incoming media: %w", err)
+		return gtserror.Newf("error reading incoming media: %w", err)
 	}
 
 	// Parse file type info from header buffer.
 	info, err := filetype.Match(hdrBuf)
 	if err != nil {
-		return fmt.Errorf("error parsing file type: %w", err)
+		return gtserror.Newf("error parsing file type: %w", err)
 	}
 
 	switch info.Extension {
@@ -192,7 +193,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 
 	// unhandled
 	default:
-		return fmt.Errorf("unsupported emoji filetype: %s", info.Extension)
+		return gtserror.Newf("unsupported emoji filetype: %s", info.Extension)
 	}
 
 	// Recombine header bytes with remaining stream
@@ -211,7 +212,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	// Check that provided size isn't beyond max. We check beforehand
 	// so that we don't attempt to stream the emoji into storage if not needed.
 	if size := bytesize.Size(sz); sz > 0 && size > maxSize {
-		return fmt.Errorf("given emoji size %s greater than max allowed %s", size, maxSize)
+		return gtserror.Newf("given emoji size %s greater than max allowed %s", size, maxSize)
 	}
 
 	var pathID string
@@ -241,14 +242,14 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 
 		// Attempt to remove existing emoji at storage path (might be broken / out-of-date)
 		if err := p.mgr.state.Storage.Delete(ctx, p.emoji.ImagePath); err != nil {
-			return fmt.Errorf("error removing emoji from storage: %v", err)
+			return gtserror.Newf("error removing emoji from storage: %v", err)
 		}
 	}
 
 	// Write the final image reader stream to our storage.
 	sz, err = p.mgr.state.Storage.PutStream(ctx, p.emoji.ImagePath, r)
 	if err != nil {
-		return fmt.Errorf("error writing emoji to storage: %w", err)
+		return gtserror.Newf("error writing emoji to storage: %w", err)
 	}
 
 	// Once again check size in case none was provided previously.
@@ -257,7 +258,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 		if err := p.mgr.state.Storage.Delete(ctx, p.emoji.ImagePath); err != nil {
 			log.Errorf(ctx, "error removing too-large-emoji from storage: %v", err)
 		}
-		return fmt.Errorf("calculated emoji size %s greater than max allowed %s", size, maxSize)
+		return gtserror.Newf("calculated emoji size %s greater than max allowed %s", size, maxSize)
 	}
 
 	// Fill in remaining attachment data now it's stored.
@@ -278,19 +279,19 @@ func (p *ProcessingEmoji) finish(ctx context.Context) error {
 	// Fetch a stream to the original file in storage.
 	rc, err := p.mgr.state.Storage.GetStream(ctx, p.emoji.ImagePath)
 	if err != nil {
-		return fmt.Errorf("error loading file from storage: %w", err)
+		return gtserror.Newf("error loading file from storage: %w", err)
 	}
 	defer rc.Close()
 
 	// Decode the image from storage.
 	staticImg, err := decodeImage(rc)
 	if err != nil {
-		return fmt.Errorf("error decoding image: %w", err)
+		return gtserror.Newf("error decoding image: %w", err)
 	}
 
 	// The image should be in-memory by now.
 	if err := rc.Close(); err != nil {
-		return fmt.Errorf("error closing file: %w", err)
+		return gtserror.Newf("error closing file: %w", err)
 	}
 
 	// This shouldn't already exist, but we do a check as it's worth logging.
@@ -298,7 +299,7 @@ func (p *ProcessingEmoji) finish(ctx context.Context) error {
 		log.Warnf(ctx, "static emoji already exists at storage path: %s", p.emoji.ImagePath)
 		// Attempt to remove static existing emoji at storage path (might be broken / out-of-date)
 		if err := p.mgr.state.Storage.Delete(ctx, p.emoji.ImageStaticPath); err != nil {
-			return fmt.Errorf("error removing static emoji from storage: %v", err)
+			return gtserror.Newf("error removing static emoji from storage: %v", err)
 		}
 	}
 
@@ -308,7 +309,7 @@ func (p *ProcessingEmoji) finish(ctx context.Context) error {
 	// Stream-encode the PNG static image into storage.
 	sz, err := p.mgr.state.Storage.PutStream(ctx, p.emoji.ImageStaticPath, enc)
 	if err != nil {
-		return fmt.Errorf("error stream-encoding static emoji to storage: %w", err)
+		return gtserror.Newf("error stream-encoding static emoji to storage: %w", err)
 	}
 
 	// Set written image size.

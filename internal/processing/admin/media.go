@@ -47,17 +47,15 @@ func (p *Processor) MediaRefetch(ctx context.Context, requestingAccount *gtsmode
 	return nil
 }
 
-// MediaPrune triggers a non-blocking prune of remote media, local unused media, etc.
+// MediaPrune triggers a non-blocking prune of unused media, orphaned, uncaching remote and fixing cache states.
 func (p *Processor) MediaPrune(ctx context.Context, mediaRemoteCacheDays int) gtserror.WithCode {
 	if mediaRemoteCacheDays < 0 {
 		err := fmt.Errorf("MediaPrune: invalid value for mediaRemoteCacheDays prune: value was %d, cannot be less than 0", mediaRemoteCacheDays)
 		return gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
-	if err := p.mediaManager.PruneAll(ctx, mediaRemoteCacheDays, false); err != nil {
-		err = fmt.Errorf("MediaPrune: %w", err)
-		return gtserror.NewErrorInternalError(err)
-	}
+	// Start background task performing all media cleanup tasks.
+	go p.cleaner.Media().All(context.Background(), mediaRemoteCacheDays)
 
 	return nil
 }
