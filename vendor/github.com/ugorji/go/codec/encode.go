@@ -893,6 +893,7 @@ func (e *Encoder) kMapCanonical(ti *typeInfo, rv, rvv reflect.Value, keyFn, valF
 				v := &mksbv[i]
 				l := len(mksv)
 
+				e.c = containerMapKey
 				e.encodeValue(k, nil)
 				e.atEndOfEncode()
 				e.w().end()
