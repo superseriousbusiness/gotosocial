@@ -26,6 +26,16 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
+// return true if given queryType should include accounts.
+func includeAccounts(queryType string) bool {
+	return queryType == queryTypeAny || queryType == queryTypeAccounts
+}
+
+// return true if given queryType should include statuses.
+func includeStatuses(queryType string) bool {
+	return queryType == queryTypeAny || queryType == queryTypeStatuses
+}
+
 // packageAccounts is a util function that just
 // converts the given accounts into an apimodel
 // account slice, or errors appropriately.

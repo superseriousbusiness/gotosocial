@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/mail"
 	"net/url"
 	"strings"
 
@@ -122,33 +123,50 @@ func (p *Processor) Get(
 		err           error
 	)
 
-	// Check if the query is something like
-	// '@someone' or '@someone@somewhere.com'.
-	keepLooking, err = p.accountsByNamestring(
-		ctx,
-		account,
-		maxID,
-		minID,
-		limit,
-		offset,
-		query,
-		resolve,
-		following,
-		appendAccount,
-	)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err = gtserror.Newf("error searching by namestring: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
+	// Only try to search by namestring if search type includes
+	// accounts, since this is all namestring search can return.
+	if includeAccounts(queryType) {
+		// Copy query to avoid altering original.
+		var queryC = query
 
-	if !keepLooking {
-		// Return whatever we have.
-		return p.packageSearchResult(
+		// If query looks vaguely like an email address, ie. it doesn't
+		// start with '@' but it has '@' in it somewhere, it's probably
+		// a poorly-formed namestring. Be generous and correct for this.
+		if strings.Contains(queryC, "@") && queryC[0] != '@' {
+			if _, err := mail.ParseAddress(queryC); err == nil {
+				// Yep, really does look like
+				// an email address! Be nice.
+				queryC = "@" + queryC
+			}
+		}
+
+		// Search using what may or may not be a namestring.
+		keepLooking, err = p.accountsByNamestring(
 			ctx,
 			account,
-			foundAccounts,
-			foundStatuses,
+			maxID,
+			minID,
+			limit,
+			offset,
+			queryC,
+			resolve,
+			following,
+			appendAccount,
 		)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			err = gtserror.Newf("error searching by namestring: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
+		if !keepLooking {
+			// Return whatever we have.
+			return p.packageSearchResult(
+				ctx,
+				account,
+				foundAccounts,
+				foundStatuses,
+			)
+		}
 	}
 
 	// Check if the query is a URI with a recognizable
@@ -395,7 +413,7 @@ func (p *Processor) byURI(
 		return false, nil
 	}
 
-	if queryType == queryTypeAny || queryType == queryTypeAccounts {
+	if includeAccounts(queryType) {
 		// Check if URI points to an account.
 		foundAccount, err := p.accountByURI(ctx, requestingAccount, uri, resolve)
 		if err != nil {
@@ -419,7 +437,7 @@ func (p *Processor) byURI(
 		}
 	}
 
-	if queryType == queryTypeAny || queryType == queryTypeStatuses {
+	if includeStatuses(queryType) {
 		// Check if URI points to a status.
 		foundStatus, err := p.statusByURI(ctx, requestingAccount, uri, resolve)
 		if err != nil {
@@ -588,7 +606,7 @@ func (p *Processor) byText(
 		minID = ""
 	}
 
-	if queryType == queryTypeAny || queryType == queryTypeAccounts {
+	if includeAccounts(queryType) {
 		// Search for accounts using the given text.
 		if err := p.accountsByText(ctx,
 			requestingAccount.ID,
@@ -604,7 +622,7 @@ func (p *Processor) byText(
 		}
 	}
 
-	if queryType == queryTypeAny || queryType == queryTypeStatuses {
+	if includeStatuses(queryType) {
 		// Search for statuses using the given text.
 		if err := p.statusesByText(ctx,
 			requestingAccount.ID,
